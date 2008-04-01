@@ -945,6 +945,7 @@ static const char *glogentrynam(int i)
 
 void llmgr_core::print_llog()
 {
+#define XPTR_FMT(P) (P).layer, (int)(P).addr
 
 	logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
@@ -955,6 +956,12 @@ void llmgr_core::print_llog()
 	LONG_LSN lsn = mem_head->base_addr + sizeof(logical_log_file_head), end_lsn = mem_head->last_lsn;
 
 	printf("Start of logical log...\n");
+    printf("Header info: last_lsn = %016llx, nextlsn = %016llx, last_phys_lsn = %016llx, last_chkp_lsn = %016llx, timestamp = %016llx\n",
+             mem_head->last_lsn,
+             mem_head->next_lsn,
+             mem_head->last_chain_lsn,
+             mem_head->last_checkpoint_lsn,
+             mem_head->ts);
 
 	while (lsn <= end_lsn)
 	{
@@ -1010,7 +1017,42 @@ void llmgr_core::print_llog()
 		    offs += sizeof(xptr);
 		    memcpy(&parent, body_beg + offs, sizeof(xptr));
 
-		    #define XPTR_FMT(P) (P).layer, (int)(P).addr
+		    printf("%016llx %s self=%08x%08x left=%08x%08x right=%08x%08x parent=%08x%08x\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	XPTR_FMT(self),
+		   		XPTR_FMT(left),
+		    	XPTR_FMT(right),
+		    	XPTR_FMT(parent)
+		    );
+		}
+		else if (type == LL_INSERT_ELEM || type == LL_DELETE_ELEM)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+		    const char *name, *uri, *prefix;
+		    xmlscm_type xtype;
+		    xptr self, left, right, parent;
+			
+			name = body_beg + offs;
+			offs += strlen(name) + 1;
+			uri = body_beg + offs;
+			offs += strlen(uri) + 1;
+			prefix = body_beg + offs;
+			offs += strlen(prefix) + 1;
+		    memcpy(&xtype, body_beg + offs, sizeof(xmlscm_type));
+		    offs += sizeof(xmlscm_type);
+		    memcpy(&self, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&left, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&right, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&parent, body_beg + offs, sizeof(xptr));
 
 		    printf("%016llx %s self=%08x%08x left=%08x%08x right=%08x%08x parent=%08x%08x\n", 
 		    	lsn,
@@ -1021,12 +1063,71 @@ void llmgr_core::print_llog()
 		    	XPTR_FMT(parent)
 		    );
 		}
-		else if (type == LL_COMMIT || type == LL_ROLLBACK)
+		else if (type == LL_INSERT_TEXT || type == LL_DELETE_TEXT)
 		{
+
 			memcpy(&trid, body_beg + offs, sizeof(int));
 			offs += sizeof(int);
 
 			printf("Transaction id = %d\n", trid);
+
+		    const char *value;
+		    xptr self, left, right, parent;
+			int value_size;
+
+		    memcpy(&value_size, body_beg + offs, sizeof(int));
+		    offs += sizeof(int);
+		    value = body_beg + offs;
+		    offs += value_size;
+		    memcpy(&self, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&left, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&right, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&parent, body_beg + offs, sizeof(xptr));
+
+		    printf("%016llx %s self=%08x%08x left=%08x%08x right=%08x%08x parent=%08x%08x\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	XPTR_FMT(self),
+		   		XPTR_FMT(left),
+		    	XPTR_FMT(right),
+		    	XPTR_FMT(parent)
+		    );
+		}
+		else if (type == LL_INSERT_LEFT_TEXT || type == LL_DELETE_LEFT_TEXT || type == LL_INSERT_RIGHT_TEXT || type == LL_DELETE_RIGHT_TEXT)
+		{
+
+				memcpy(&trid, body_beg + offs, sizeof(int));
+				offs += sizeof(int);
+
+				printf("Transaction id = %d\n", trid);
+
+			    const char *value;
+			    xptr self;
+				int value_size;
+
+		 	    memcpy(&value_size, body_beg + offs, sizeof(int));
+			    offs += sizeof(int);
+			    value = body_beg + offs;
+			    offs += value_size;
+			    memcpy(&self, body_beg + offs, sizeof(xptr));
+		
+			    printf("%016llx %s self=%08x%08x\n", 
+			    	lsn,
+			    	glogentrynam(type),
+		    		XPTR_FMT(self)
+			    );
+		}
+		else if (type == LL_COMMIT || type == LL_ROLLBACK)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
 		    printf("%016llx %s\n", 
 		    	lsn,
 		    	glogentrynam(type)
@@ -1034,12 +1135,14 @@ void llmgr_core::print_llog()
 		}
 		else if (type == LL_INSERT_DOC || type == LL_DELETE_DOC)
 		{
-		    const char *name, *coll;
-		    xptr self;
 
 			memcpy(&trid, body_beg + offs, sizeof(int));
 			offs += sizeof(int);
+
 			printf("Transaction id = %d\n", trid);
+
+		    const char *name, *coll;
+		    xptr self;
 
 		    name = body_beg + offs;
 		    offs += strlen(name) + 1;
@@ -1055,7 +1158,268 @@ void llmgr_core::print_llog()
 		    	XPTR_FMT(self)
 		    );
 		}
-		
-		lsn += get_record_length(rec);
+		else if (type == LL_INSERT_COMMENT || type == LL_DELETE_COMMENT)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+		    xptr self, left, right, parent;
+		    const char *value;
+			int value_size;
+     
+		    memcpy(&value_size, body_beg + offs, sizeof(int));
+		    offs += sizeof(int);
+		    value = body_beg + offs;
+		    offs += value_size;
+		    memcpy(&self, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&left, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&right, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&parent, body_beg + offs, sizeof(xptr));
+
+		    printf("%016llx %s self=%08x%08x left=%08x%08x right=%08x%08x parent=%08x%08x\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	XPTR_FMT(self),
+		   		XPTR_FMT(left),
+		    	XPTR_FMT(right),
+		    	XPTR_FMT(parent)
+		    );
+		}
+		else if (type == LL_INSERT_PI || type == LL_DELETE_PI)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+			int total_size;
+			shft target_size;
+			const char *value;
+			xptr self, left, right, parent;
+
+		    memcpy(&total_size, body_beg + offs, sizeof(int));
+		    offs += sizeof(int);
+		    memcpy(&target_size, body_beg + offs, sizeof(shft));
+	  	    offs += sizeof(shft);
+		    value = body_beg + offs;
+		    offs += total_size;
+	     	memcpy(&self, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&left, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&right, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&parent, body_beg + offs, sizeof(xptr));
+
+		    printf("%016llx %s self=%08x%08x left=%08x%08x right=%08x%08x parent=%08x%08x\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	XPTR_FMT(self),
+		   		XPTR_FMT(left),
+		    	XPTR_FMT(right),
+		    	XPTR_FMT(parent)
+		    );
+		}
+		else if (type == LL_INSERT_COLLECTION || type == LL_DELETE_COLLECTION)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+			const char *name;
+
+		    name = body_beg + offs;
+
+		    printf("%016llx %s name=%s\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	name
+		    );
+		}
+		else if (type == LL_INSERT_NS || type == LL_DELETE_NS)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+		    const char *uri, *prefix;
+		    xptr self, left, right, parent;
+		    
+		    uri = body_beg + offs;
+		    offs += strlen(uri) + 1;
+		    prefix = body_beg + offs;
+		    offs += strlen(prefix) + 1;
+		    memcpy(&self, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&left, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&right, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&parent, body_beg + offs, sizeof(xptr));
+
+		    printf("%016llx %s self=%08x%08x left=%08x%08x right=%08x%08x parent=%08x%08x\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	XPTR_FMT(self),
+		   		XPTR_FMT(left),
+		    	XPTR_FMT(right),
+		    	XPTR_FMT(parent)
+		    );
+		}
+		else if (type == LL_INSERT_DOC_INDEX || type == LL_DELETE_DOC_INDEX || type == LL_INSERT_COL_INDEX || type == LL_DELETE_COL_INDEX)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+		     const char *obj_path, *key_path, *ind_name, *doc_name;
+		     xmlscm_type key_type;
+
+		     obj_path = body_beg + offs;
+		     offs += strlen(obj_path) + 1;
+		     key_path = body_beg + offs;
+		     offs += strlen(key_path) + 1;
+		     memcpy(&key_type, body_beg + offs, sizeof(xmlscm_type));
+		     offs += sizeof(xmlscm_type);
+		     ind_name = body_beg + offs;
+		     offs += strlen(ind_name) + 1;
+		     doc_name = body_beg + offs;
+
+			 printf("%016llx %s obj_path=%s key_path=%s ind_name=%s name=%s\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	obj_path,
+		    	key_path,
+		    	ind_name,
+		    	doc_name
+		     );
+        }
+		else if(type == LL_INSERT_DOC_FTS_INDEX || type == LL_DELETE_DOC_FTS_INDEX || type == LL_INSERT_COL_FTS_INDEX || type == LL_DELETE_COL_FTS_INDEX)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+		     const char *obj_path, *ind_name, *doc_name;
+		     xmlscm_type key_type;
+		     int itconst;
+
+		     obj_path = body_beg + offs;
+		     offs += strlen(obj_path) + 1;
+		     memcpy(&itconst, body_beg + offs, sizeof(int));
+		     offs += sizeof(int);
+		     ind_name = body_beg + offs;
+		     offs += strlen(ind_name) + 1;
+		     doc_name = body_beg + offs;
+
+			 printf("%016llx %s obj_path=%s ind_name=%s name=%s\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	obj_path,
+		    	ind_name,
+		    	doc_name
+		     );
+        }
+		else if (type == LL_INSERT_DOC_TRG || type == LL_DELETE_DOC_TRG || type == LL_INSERT_COL_TRG || type == LL_DELETE_COL_TRG)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+			 printf("%016llx %s", 
+		    	lsn,
+		    	glogentrynam(type)
+		     );	
+		}
+	    else if (type == LL_CHECKPOINT)
+	    {
+	    	int state = *((int *)(body_beg + sizeof(char)));
+    		int lsn_offs = sizeof(char) + sizeof(int);
+
+    		if (state == 0)
+    			lsn_offs += sizeof(bm_masterblock) + sizeof(LONG_LSN);
+  	 
+    		// isGarbage
+    		lsn_offs += sizeof(int);
+
+	    	// count
+	    	size_t count = *(size_t *)(body_beg + lsn_offs);
+	    	lsn_offs += sizeof(size_t);
+
+    		lsn_offs += count * sizeof(WuVersionEntry);
+
+    		LONG_LSN plsn = *(LONG_LSN *)(body_beg + lsn_offs);
+    		printf("%016llx %s state=%d count=%d prev_lsn=%016llx\n",
+    			lsn,
+    			glogentrynam(type),
+    			state,
+    			count,
+    			plsn
+    		);
+		}
+        else if (type == LL_FREE_BLOCKS)
+        {
+	    	int free_blk_info_size = *((int *)(body_beg + sizeof(char)));
+	    	xptr free_blk_info_xptr = *(xptr *)(body_beg + sizeof(char) + sizeof(int));
+	    	LONG_LSN plsn = *(LONG_LSN *)(body_beg + sizeof(char) + sizeof(int) + sizeof(xptr) + free_blk_info_size);
+
+            printf("%016llx %s block_size=%d fbxptr=%08x%08x prev_lsn=%016llx\n",
+            	lsn,
+            	glogentrynam(type),
+            	free_blk_info_size,
+		    	XPTR_FMT(free_blk_info_xptr),
+		    	plsn
+            );
+        }
+        else if (type == LL_PERS_SNAPSHOT_ADD)
+        {
+	    	TIMESTAMP ts = *((TIMESTAMP *)(body_beg + sizeof(char) + sizeof(WuVersionEntry)));
+    		WuVersionEntry *blocks_info = (WuVersionEntry *)(body_beg + sizeof(char));
+        	LONG_LSN plsn = *(LONG_LSN *)(body_beg + sizeof(char) + sizeof(WuVersionEntry) + sizeof(TIMESTAMP) + sizeof(int));  
+
+            printf("%016llx %s ts=%016llx, lxptr=%016llx, xptr=%016llx, prev_lsn=%016llx\n",
+            	lsn,
+            	glogentrynam(type),
+            	ts,
+            	blocks_info->lxptr,
+            	blocks_info->xptr,
+            	plsn
+            );
+        }
+        else if (type == LL_DECREASE)
+        {
+        	__int64 old_size = *(__int64 *)(body_beg + sizeof(char));
+        	 LONG_LSN plsn = *(LONG_LSN *)(body_beg + sizeof(char) + sizeof(__int64));  
+
+			 printf("%016llx %s old_size=%016llx prev_lsn=%016llx\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	old_size,
+		    	plsn
+		     );	
+        }       
+        else
+			 printf("%016llx Unknown type of record\n");
+
+		lsn += get_record_length(rec);		
 	}
+
+#undef XPTR_FMT
 }
