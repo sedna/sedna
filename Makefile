@@ -1,4 +1,4 @@
-#
+
 # Makefile for Sedna (GNU make)
 #
 
@@ -36,8 +36,6 @@ PERM2 :=
 PERM3 := 
 PERM4 := 
 endif
-
-
 
 
 
@@ -93,66 +91,53 @@ endif
 
 
 ifeq ($(JAVA_DRIVER), 1)
+DOC_DIRLIST := $(shell (find ./driver/java/doc -type d))
 DOC_FILELIST := $(shell (find ./driver/java/doc -type f))
 endif
 
 
-# grouped_install goal
 # Installs everything into $(SEDNA_INSTALL) directory. Use this goal if you want to
 # install "all in one catalog".
 # This is the default installation goal for Windows and installation goal for binary 
-# distribution for Linux
+# distribution for Linux/FreeBSD/Mac OS X
 grouped_install:
-	$(INSTALL) -Dp $(PERM1) bin/se_gov$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_gov$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_stop$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_stop$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_rc$(EXE_EXT)   $(SEDNA_INSTALL)/sedna/bin/se_rc$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_cdb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_cdb$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_sm$(EXE_EXT)   $(SEDNA_INSTALL)/sedna/bin/se_sm$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_smsd$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_smsd$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_trn$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_trn$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_rcv$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_rcv$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_ddb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_ddb$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM2) bin/se_term$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_term$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM2) bin/se_exp$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_exp$(EXE_EXT)
+	$(INSTALL) -d $(PERM1) $(SEDNA_INSTALL)/sedna/bin
+
+	$(INSTALL) -p $(PERM1) bin/se_gov$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_gov$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_stop$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_stop$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_rc$(EXE_EXT)   $(SEDNA_INSTALL)/sedna/bin/se_rc$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_cdb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_cdb$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_sm$(EXE_EXT)   $(SEDNA_INSTALL)/sedna/bin/se_sm$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_smsd$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_smsd$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_trn$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_trn$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_rcv$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_rcv$(EXE_EXT)
+	$(INSTALL) -p $(PERM1) bin/se_ddb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_ddb$(EXE_EXT)
+	$(INSTALL) -p $(PERM2) bin/se_term$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_term$(EXE_EXT)
+	$(INSTALL) -p $(PERM2) bin/se_exp$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_exp$(EXE_EXT)
 ifeq ($(INSTALL_DOC), 1)
-	$(INSTALL) -Dp $(PERM3) doc/AdminGuide/AdminGuide.pdf $(SEDNA_INSTALL)/sedna/doc/AdminGuide.pdf
-	$(INSTALL) -Dp $(PERM3) doc/ProgGuide/ProgGuide.pdf $(SEDNA_INSTALL)/sedna/doc/ProgGuide.pdf
-	$(INSTALL) -Dp $(PERM3) doc/ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf $(SEDNA_INSTALL)/sedna/doc/ClientServerProtocol.pdf
-	$(INSTALL) -Dp $(PERM3) doc/QuickStart/QuickStart.pdf $(SEDNA_INSTALL)/sedna/doc/QuickStart.pdf
+	$(INSTALL) -d $(PERM3) $(SEDNA_INSTALL)/sedna/doc/{AdminGuide,ProgGuide,ProgGuide/ClientServerProtocol,QuickStart}
+
+	$(INSTALL) -p $(PERM3) doc/AdminGuide/AdminGuide.pdf $(SEDNA_INSTALL)/sedna/doc/AdminGuide.pdf
+	$(INSTALL) -p $(PERM3) doc/ProgGuide/ProgGuide.pdf $(SEDNA_INSTALL)/sedna/doc/ProgGuide.pdf
+	$(INSTALL) -p $(PERM3) doc/ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf $(SEDNA_INSTALL)/sedna/doc/ClientServerProtocol.pdf
+	$(INSTALL) -p $(PERM3) doc/QuickStart/QuickStart.pdf $(SEDNA_INSTALL)/sedna/doc/QuickStart.pdf
 endif
 ifeq ($(JAVA_DRIVER), 1)
-	$(INSTALL) -Dp $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
+	for arg in $(DOC_DIRLIST) ;do $(INSTALL) $(PERM3) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
 
-	for arg in $(DOC_FILELIST) ;do $(INSTALL) -Dp $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
+	$(INSTALL) -p $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
 	
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/package-list $(SEDNA_INSTALL)/sedna/driver/java/doc/package-list
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/allclasses-frame.html $(SEDNA_INSTALL)/sedna/driver/java/doc/allclasses-frame.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/allclasses-noframe.html $(SEDNA_INSTALL)/sedna/driver/java/doc/allclasses-noframe.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/constant-values.html $(SEDNA_INSTALL)/sedna/driver/java/doc/constant-values.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/deprecated-list.html $(SEDNA_INSTALL)/sedna/driver/java/doc/deprecated-list.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/help-doc.html $(SEDNA_INSTALL)/sedna/driver/java/doc/help-doc.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/index.html $(SEDNA_INSTALL)/sedna/driver/java/doc/index.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/index-all.html $(SEDNA_INSTALL)/sedna/driver/java/doc/index-all.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/overview-tree.html $(SEDNA_INSTALL)/sedna/driver/java/doc/overview-tree.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/serialized-form.html $(SEDNA_INSTALL)/sedna/driver/java/doc/serialized-form.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/stylesheet.css $(SEDNA_INSTALL)/sedna/driver/java/doc/stylesheet.css
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/DatabaseManager.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/DatabaseManager.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/DriverException.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/DriverException.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/package-frame.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/package-frame.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/package-summary.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/package-summary.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/package-tree.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/package-tree.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/ResultType.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/ResultType.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/SednaConnection.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/SednaConnection.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/SednaSerializedResult.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/SednaSerializedResult.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/SednaStatement.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/SednaStatement.html
-	#$(INSTALL) -Dp $(PERM3) driver/java/doc/resources/inherit.gif $(SEDNA_INSTALL)/sedna/driver/java/doc/resources/inherit.gif
-
+	for arg in $(DOC_FILELIST) ;do $(INSTALL) -p $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
+	
 endif
 ifeq ($(PLATFORM), UNIX)
-	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a
-	$(INSTALL) -Dp $(PERM2) examples/api/c/build.sh $(SEDNA_INSTALL)/sedna/examples/api/c/build.sh
-	$(INSTALL) -Dp $(PERM2) examples/api/java/Clientbuild.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.sh
-	$(INSTALL) -Dp $(PERM2) examples/api/java/Client.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Client.sh
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/{c,java}
+
+	$(INSTALL) -p $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a
+	$(INSTALL) -p $(PERM2) examples/api/c/build.sh $(SEDNA_INSTALL)/sedna/examples/api/c/build.sh
+	$(INSTALL) -p $(PERM2) examples/api/java/Clientbuild.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.sh
+	$(INSTALL) -p $(PERM2) examples/api/java/Client.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Client.sh
 else
 	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.lib $(SEDNA_INSTALL)/sedna/driver/c/libsedna.lib
 	$(INSTALL) -Dp $(PERM3) driver/c/libsednamt.lib $(SEDNA_INSTALL)/sedna/driver/c/libsednamt.lib
@@ -160,39 +145,43 @@ else
 	$(INSTALL) -Dp $(PERM2) examples/api/java/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.bat
 	$(INSTALL) -Dp $(PERM2) examples/api/java/Client.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Client.bat
 endif
-	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.h $(SEDNA_INSTALL)/sedna/driver/c/libsedna.h
-	$(INSTALL) -Dp $(PERM3) driver/c/sp_defs.h $(SEDNA_INSTALL)/sedna/driver/c/sp_defs.h
-	$(INSTALL) -Dp $(PERM3) driver/scheme/collect-sedna-plt.scm $(SEDNA_INSTALL)/sedna/driver/scheme/collect-sedna-plt.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/collect-sedna-chicken.scm $(SEDNA_INSTALL)/sedna/driver/scheme/collect-sedna-chicken.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/srfi-12.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/srfi-12.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/plt/common.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/plt/common.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/plt/myenv.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/plt/myenv.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/chicken/common.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/chicken/common.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/chicken/myenv.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/chicken/myenv.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-api.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-api.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-low.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-low.scm
-	$(INSTALL) -Dp $(PERM3) etc/sednaconf.xml.sample $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml.sample
-	$(INSTALL) -Dp $(PERM3) examples/api/scheme/client.scm $(SEDNA_INSTALL)/sedna/examples/api/scheme/client.scm
-	$(INSTALL) -Dp $(PERM3) examples/api/c/*.c $(SEDNA_INSTALL)/sedna/examples/api/c/
-	$(INSTALL) -Dp $(PERM3) examples/api/c/math.xqlib $(SEDNA_INSTALL)/sedna/examples/api/c/math.xqlib
-	$(INSTALL) -Dp $(PERM3) examples/api/java/Client.java $(SEDNA_INSTALL)/sedna/examples/api/java/Client.java
-	$(INSTALL) -Dp $(PERM3) examples/commandline/auction.xml $(SEDNA_INSTALL)/sedna/examples/commandline/auction.xml
-	$(INSTALL) -Dp $(PERM3) examples/commandline/*.xquery $(SEDNA_INSTALL)/sedna/examples/commandline/
-	$(INSTALL) -Dp $(PERM3) examples/api/external-functions/c/sample.xquery $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/sample.xquery
-	$(INSTALL) -Dp $(PERM3) examples/api/external-functions/c/sample.cpp $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/sample.cpp
-	$(INSTALL) -Dp $(PERM3) examples/api/external-functions/c/Makefile $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/Makefile
-	$(INSTALL) -Dp $(PERM3) include/sedna_ef.h $(SEDNA_INSTALL)/sedna/include/sedna_ef.h
-	$(INSTALL) -Dp $(PERM3) examples/api/data/categories.xml $(SEDNA_INSTALL)/sedna/examples/api/data/categories.xml
-	$(INSTALL) -Dp $(PERM3) examples/api/data/*.xml $(SEDNA_INSTALL)/sedna/examples/api/data/
-	$(INSTALL) -Dp $(PERM3) share/sedna_auth_md.xml $(SEDNA_INSTALL)/sedna/share/sedna_auth_md.xml
-	$(INSTALL) -Dp $(PERM3) AUTHORS   $(SEDNA_INSTALL)/sedna/AUTHORS
-	$(INSTALL) -Dp $(PERM3) COPYRIGHT $(SEDNA_INSTALL)/sedna/COPYRIGHT
-	$(INSTALL) -Dp $(PERM3) FAQ.html  $(SEDNA_INSTALL)/sedna/FAQ.html
-	$(INSTALL) -Dp $(PERM3) HISTORY   $(SEDNA_INSTALL)/sedna/HISTORY
-	$(INSTALL) -Dp $(PERM3) LICENSE   $(SEDNA_INSTALL)/sedna/LICENSE
-	$(INSTALL) -Dp $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
-	$(INSTALL) -p $(PERM4) -d $(SEDNA_INSTALL)/sedna/cfg
-	$(INSTALL) -p $(PERM4) -d $(SEDNA_INSTALL)/sedna/data
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/scheme/{libs/{plt,chicken},sedna-api}
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/{etc,include,share}
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/{commandline,api/external-functions/c}
+
+	$(INSTALL) -p $(PERM3) driver/c/libsedna.h $(SEDNA_INSTALL)/sedna/driver/c/libsedna.h
+	$(INSTALL) -p $(PERM3) driver/c/sp_defs.h $(SEDNA_INSTALL)/sedna/driver/c/sp_defs.h
+	$(INSTALL) -p $(PERM3) driver/scheme/collect-sedna-plt.scm $(SEDNA_INSTALL)/sedna/driver/scheme/collect-sedna-plt.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/collect-sedna-chicken.scm $(SEDNA_INSTALL)/sedna/driver/scheme/collect-sedna-chicken.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/libs/srfi-12.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/srfi-12.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/libs/plt/common.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/plt/common.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/libs/plt/myenv.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/plt/myenv.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/libs/chicken/common.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/chicken/common.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/libs/chicken/myenv.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/chicken/myenv.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/sedna-api/sedna-api.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-api.scm
+	$(INSTALL) -p $(PERM3) driver/scheme/sedna-api/sedna-low.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-low.scm
+	$(INSTALL) -p $(PERM3) etc/sednaconf.xml.sample $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml.sample
+	$(INSTALL) -p $(PERM3) examples/api/scheme/client.scm $(SEDNA_INSTALL)/sedna/examples/api/scheme/client.scm
+	$(INSTALL) -p $(PERM3) examples/api/c/*.c $(SEDNA_INSTALL)/sedna/examples/api/c/
+	$(INSTALL) -p $(PERM3) examples/api/c/math.xqlib $(SEDNA_INSTALL)/sedna/examples/api/c/math.xqlib
+	$(INSTALL) -p $(PERM3) examples/api/java/Client.java $(SEDNA_INSTALL)/sedna/examples/api/java/Client.java
+	$(INSTALL) -p $(PERM3) examples/commandline/auction.xml $(SEDNA_INSTALL)/sedna/examples/commandline/auction.xml
+	$(INSTALL) -p $(PERM3) examples/commandline/*.xquery $(SEDNA_INSTALL)/sedna/examples/commandline/
+	$(INSTALL) -p $(PERM3) examples/api/external-functions/c/sample.xquery $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/sample.xquery
+	$(INSTALL) -p $(PERM3) examples/api/external-functions/c/sample.cpp $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/sample.cpp
+	$(INSTALL) -p $(PERM3) examples/api/external-functions/c/Makefile $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/Makefile
+	$(INSTALL) -p $(PERM3) include/sedna_ef.h $(SEDNA_INSTALL)/sedna/include/sedna_ef.h
+	$(INSTALL) -p $(PERM3) examples/api/data/categories.xml $(SEDNA_INSTALL)/sedna/examples/api/data/categories.xml
+	$(INSTALL) -p $(PERM3) examples/api/data/*.xml $(SEDNA_INSTALL)/sedna/examples/api/data/
+	$(INSTALL) -p $(PERM3) share/sedna_auth_md.xml $(SEDNA_INSTALL)/sedna/share/sedna_auth_md.xml
+	$(INSTALL) -p $(PERM3) AUTHORS   $(SEDNA_INSTALL)/sedna/AUTHORS
+	$(INSTALL) -p $(PERM3) COPYRIGHT $(SEDNA_INSTALL)/sedna/COPYRIGHT
+	$(INSTALL) -p $(PERM3) FAQ.html  $(SEDNA_INSTALL)/sedna/FAQ.html
+	$(INSTALL) -p $(PERM3) HISTORY   $(SEDNA_INSTALL)/sedna/HISTORY
+	$(INSTALL) -p $(PERM3) LICENSE   $(SEDNA_INSTALL)/sedna/LICENSE
+	$(INSTALL) -p $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
+	$(INSTALL) $(PERM4) -d $(SEDNA_INSTALL)/sedna/cfg
+	$(INSTALL) $(PERM4) -d $(SEDNA_INSTALL)/sedna/data
 
 ifndef PREFIX
 SHARE_PREFIX := /usr/share
@@ -210,17 +199,15 @@ ETC_PREFIX := $(PREFIX)/etc
 endif
 endif
 
-SEDNA_DIR := sedna-$(SEDNA_VERSION).$(SEDNA_BUILD)
 
+SEDNA_DIR := sedna-$(SEDNA_VERSION).$(SEDNA_BUILD)
 
 
 install: grouped_install
 
 
-
 uninstall:
 	echo "Not implemented"
-
 
 
 
