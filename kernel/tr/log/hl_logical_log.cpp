@@ -356,8 +356,7 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,
   tr_llmgr->ll_log_text_edit(trid, self, (char*)value, data_size, begin, inserted, true);
 #endif
 #ifdef LOG_TRACE
-  const char *op_name = (begin) ? (inserted ? "Insert left text":"Delete left text"):(inserted ? "Insert right text":"Delete right text");
-  	elog(EL_LOG, ("LOG_TRACE:  %s: trid=%d, self=%016llx", trid, op_name, self.layer, (int)self.addr));
+  	elog(EL_LOG, ("LOG_TRACE:  Text Edit: trid=%d, self=%016llx", trid,	self.layer, (int)self.addr));
 #endif
 }
 void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted ) 
