@@ -236,7 +236,9 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 	// processing security information
 	if (sec_import==1 &&
-		check_feature_to_import(path, CHECK_SECURITY, log) == SEDNA_FEATURE_ENABLED ) {
+		check_feature_to_import(path, CHECK_SECURITY, log) == SEDNA_FEATURE_ENABLED &&
+        check_sedna_feature(&conn, check_sec_enabled_query, log))    // added by MarG
+        {
 			if (security_feature != SEDNA_FEATURE_ENABLED) {
 				ETRACE((log,"WARNING: security feature in target Sedna database is disabled.\n"));
 			} else {
