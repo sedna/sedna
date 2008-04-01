@@ -31,6 +31,7 @@
    Sedna runs on the following platforms:
    - Windows 2000/XP
    - Linux x86 kernel version 2.4 or higher
+   - Mac OS X (PPC/Intel)
 
 
    _______________________________________________________________________
@@ -54,7 +55,7 @@ Windows platform:
    2) Add the bin subdirectory of sedna installation to the environment 
       variable PATH (for example "c:\sedna\bin").
 
-Linux platform:
+Linux/MacOS platform:
 
    Sedna is distributed as a single self-extracting script.
    The installation process consists of running self-extracting script
