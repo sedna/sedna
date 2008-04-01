@@ -132,7 +132,7 @@ ifeq ($(JAVA_DRIVER), 1)
 endif
 ifeq ($(PLATFORM), UNIX)
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
-	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/{c,java}
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/{c,java,scheme,data}
 
 	$(INSTALL) -p $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a
 	$(INSTALL) -p $(PERM2) examples/api/c/build.sh $(SEDNA_INSTALL)/sedna/examples/api/c/build.sh
