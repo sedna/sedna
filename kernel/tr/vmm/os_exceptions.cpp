@@ -4,20 +4,53 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+/*	I could be more happy if this file extension was *.c 
+	ZN */ 
+
 #include "common/errdbg/d_printf.h"
+#include "common/commutil.h"
+#include "common/sedna.h"
+#include "tr/vmm/os_exceptions.h"
 
-extern "C" int TRmain(int argc, char **argv);
-
-enum HitType {HIT_UNKNOWN, HIT_READ, HIT_WRITE};
-
-extern "C" int IsAccessViolationNonFatal(void *addr,
-										 HitType hitType,
-										 void *context)
+EXTERN_C int IsAccessViolationNonFatal(void *addr, void *context)
 {
 	return 0;
 }
 
-#define ABORT_CONDITIONAL_HALT()
+enum WriteFaultFileKind
+{
+	WFF_UNKNOWN_ERROR,
+	WFF_ACCESS_VIOLATION,
+	WFF_STACK_OVERFLOW,
+	WFF_SEDNA_SOFT_FAULT
+};
+
+static void WriteFaultFile(WriteFaultFileKind kind, ...)
+{
+}
+
+typedef struct AbortSourceInfo_tag_
+{
+	const char *file;
+	const char *function;
+	int line;
+}
+AbortSourceInfo;
+
+/* abort due to unrecoverable exception - call from exception filter/signal handler ONLY! */ 
+void AbortUnrecoverableException()
+{
+}
+
+/* just abort */ 
+void AbortCriticalError(const AbortSourceInfo *sourceInfo, const char *message)
+{
+}
+
+/* abort due to failed assertion */ 
+void AbortAssertFailed(const AbortSourceInfo *sourceInfo, const char *message)
+{
+}
 
 #ifdef _WIN32
 #include <windows.h>
@@ -34,7 +67,7 @@ int main(int argc, char **argv)
 	}
 	__except(WinExceptFilter(GetExceptionCode(), GetExceptionInformation()))
 	{
-		/* will not get here normally */ 
+		/* will never get here normally */ 
 		TerminateProcess(GetCurrentProcess(), exitCode);
 	}
 	return exitCode;
@@ -43,38 +76,179 @@ int main(int argc, char **argv)
 DWORD WinExceptFilter(DWORD exceptCode,
 					  LPEXCEPTION_POINTERS exceptPtrs)
 {
-	DWORD resolution = EXCEPTION_CONTINUE_SEARCH;
+	void *hitAddr = NULL;
+	DWORD resolution = 0;
 	switch(exceptCode)
 	{
 		case EXCEPTION_ACCESS_VIOLATION:
-		{
-			void *hitAddr = (void *)exceptPtrs->ExceptionRecord->ExceptionInformation[1];
-			HitType hitType = (exceptPtrs->ExceptionRecord->ExceptionInformation[0] ? HIT_WRITE : HIT_READ);
-
-			if (IsAccessViolationNonFatal(hitAddr, hitType, exceptPtrs->ContextRecord))
+			/* check if we can survive from A/V, if not die horribly */ 
+			hitAddr = (void *)(exceptPtrs->ExceptionRecord->ExceptionInformation[1]);
+			if (IsAccessViolationNonFatal(hitAddr, exceptPtrs->ContextRecord))
 			{
 				resolution = EXCEPTION_CONTINUE_EXECUTION;
 			}
 			else 
 			{
-				ABORT_CONDITIONAL_HALT(); 
+				/*	A/V is fatal:
+					write fault file(if enabled), and act according to abnormal termination policy 
+					temination routine can return control if termination policy is 'Native',
+					in the later case exception filter should return EXCEPTION_CONTINUE_SEARCH
+					to let the remaining exception handlers to be called and the standard
+					'Program is Fucked Up' dialog to pop up */ 
+				WriteFaultFile(WFF_ACCESS_VIOLATION, exceptPtrs->ExceptionRecord, exceptPtrs->ContextRecord);
+				AbortUnrecoverableException();
+				resolution = EXCEPTION_CONTINUE_SEARCH;
 			}
-		}
+			break;
+
+		case EXCEPTION_STACK_OVERFLOW:
+			WriteFaultFile(WFF_STACK_OVERFLOW, exceptPtrs->ExceptionRecord, exceptPtrs->ContextRecord);
+			AbortUnrecoverableException();
+			resolution = EXCEPTION_CONTINUE_SEARCH;
+			break;
+
+		default:
+			resolution = EXCEPTION_CONTINUE_SEARCH;
+			break;
 	}
 	return resolution;
 }
 
 #else
+#include <unistd.h>
+#include <signal.h>
+#include <mman.h>
+#include <alloca.h>
+#include <stdlib.h>
+#include <string.h>
 
-static void UnixSegvSignalHandler()
+/* enable sigaltstack() - 
+	note: stack overflow is not reported unless alt stack is enabled 
+	note2: alt stack is thread-local setting hence current implementation
+	provides alt stack for the main thread only */ 
+#define ENABLE_ALTSTACK
+
+/* secure alt stack with guard pages to detect alt stack overflow */ 
+#define ENABLE_ALTSTACK_GUARD_PAGES
+
+/*	allocate alternative stack inside the primary thread stack 
+	this is required for old LinuxThreads which stored thread descriptor
+	at the bottom of the stack and applyed some math to the stack pointer
+	to access the descriptor */ 
+#define ENABLE_ALTSTACK_INSIDE_PRIMARY_STACK
+
+/* the alternative stack size for SIGSEGV processing - should be SMALL! */ 
+#define ALTSTACK_SZ		0xD000
+
+static void UnixSegvSignalHandler(int sigNum, siginfo_t *sigInfo, void *sigCtx)
 {
+	/*	attempt to parse /proc/{$PID}/maps to determine whether the A/V occured next to stack segment 
+		to determine whether A/V is due to overflowed stack */ 
 }
 
 int main(int argc, char **argv)
 {
-	int exitCode=-1;
+	int exitCode = -1;
+	void *altStackMem = NULL;
+	stack_t altStackNew = {0}, altStackOld = {0};
+	int pageSize = 0;
+	int altStackPagesNum = 0;
+	int altStackPagesTotal = 0;
+	int altStackPagesOffset = 0;
+	struct sigaction segvSigActionNew = {0}, segvSigActionOld = {0};
 
+	pageSize = getpagesize();
+#ifdef ENABLE_ALTSTACK
+	altStackPagesNum = ROUND_SIZE_UP(ALTSTACK_SZ, pageSize) / pageSize;
+#ifdef ENABLE_ALTSTACK_GUARD_PAGES
+	altStackPagesTotal = altStackPagesNum+2;
+	altStackPagesOffset = 1;
+#else
+	altStackPagesTotal = altStackPagesNum;
+	altStackPagesOffset = 0;
+#endif
+#ifdef ENABLE_ALTSTACK_INSIDE_PRIMARY_STACK
+	/*	allocate alt stack mem with alloca and align pointer on page boundary
+		the extra page is for alignment 
+		memset is to ensure no stack overflow occured due to alloca() */ 
+	altStackMem = alloca(pageSize * (1+altStackPagesTotal));
+	altStackMem = ALIGN_PTR(altStackMem, pageSize);
+	memset(altStackMem, 0, pageSize * altStackPagesTotal);
+#else
+	/* allocate alt stack mem with mmap, the resulting address is already aligned */ 
+	altStackMem = mmap(NULL, pageSize * altStackPagesTotal, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+	if (altStackMem == MAP_FAILED)
+	{
+		perror("mmap");
+		abort();
+	}
+#endif
+#ifdef ENABLE_ALTSTACK_GUARD_PAGES
+	/* create guard pages on top and on the bottom of alt stack */ 
+	if (0 != mprotect(altStackMem, pageSize, PROT_NONE) ||
+		0 != mprotect(OFFSET_PTR(altStackMem, pageSize*(1+altStackPagesNum)), pageSize, PROT_NONE))
+	{
+		perror("mprotect");
+		abort();
+	}
+#endif 
+	/* install alt stack */ 
+	altStackNew.ss_sp = OFFSET_PTR(altStackMem, pageSize * altStackPagesOffset);
+	altStackNew.ss_size = pageSize * altStackPagesNum;
+	altStackNew.ss_flags = 0;
+	if (0 != sigaltstack(&altStackNew, &altStackOld))
+	{
+		perror("sigaltstack");
+		abort();
+	}
+#endif /* ENABLE_ALTSTACK */ 
+
+	/* install SEGV signal handler */ 
+	segvSigActionNew.sa_sigaction = UnixSegvSignalHandler;
+	segvSigActionNew.sa_flags = SA_ONSTACK|SA_SIGINFO;
+	sigemptyset(&segvSigActionNew.sa_mask);
+	if (0 != sigaction(SIGSEGV, &segvSigActionNew, &segvSigActionOld))
+	{
+		perror("sigaction");
+		abort();
+	}
+
+	/* THE REAL MAIN CALLED */ 
 	exitCode = TRmain(argc, argv);
+
+	/* restore SEGV signal handler */ 
+	if (0 != sigaction(SIGSEGV, &segSigActionOld, NULL))
+	{
+		perror("sigaction");
+		abort(); 
+	}
+
+#ifdef ENABLE_ALTSTACK
+	/* remove alt stack */ 
+	if (0 != sigaltstack(&altStackOld, NULL))
+	{
+		perror("sigaltstack");
+		abort();
+	}
+#ifdef ENABLE_ALTSTACK_GUARD_PAGES
+	/* destroy guard pages */ 
+	if (0 != mprotect(altStackMem, pageSize, PROT_READ|PROT_WRITE) ||
+		0 != mprotect(OFFSET_PTR(altStackMem, pageSize*(1+altStackPagesNum)), pageSize, PROT_READ|PROT_WRITE))
+	{
+		perror("mprotect");
+		abort();
+	}
+#endif
+	/* reclaim memory */ 
+#ifndef ENABLE_ALTSTACK_INSIDE_PRIMARY_STACK
+	if (0 != munmap(altStackMem,  pageSize * altStackPagesTotal))
+	{
+		perror("munmap");
+		abort();
+	}
+#endif
+	altStackMem = NULL;
+#endif /* ENABLE_SIGALTSTACK */ 
 
 	return exitCode;
 }
