@@ -694,9 +694,10 @@ void PPAttributeConstructor::next  (tuple &t)
 				if (prefix != NULL) { delete prefix; prefix = NULL; }  /// We should clear memory here ... (IS)
 				throw XQUERY_EXCEPTION(XQDY0044);
 			}
-			if (prefix!=NULL && my_strcmp(prefix,"")!=0)               /// Note: default namespace is not applied to the attributes (IS)
+			if (prefix!=NULL)
 			{
-				ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
+			    if(my_strcmp(prefix,"")!=0) 
+			        ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);               /// Note: default namespace is not applied to the attributes (IS)
 				delete prefix;			
 			}
 		}

@@ -161,8 +161,11 @@ void sequence::get(tuple &t, const iterator& it)
 void sequence::get(tuple &t, int pos)
 {
     t.eos = false;
+    bool cleared = false;
+    
     if (t.cells_number != tuple_size)
     {
+        cleared = true;
         t.clear();
         t.cells = se_new tuple_cell[tuple_size];
         t.cells_number = tuple_size;
@@ -173,6 +176,12 @@ void sequence::get(tuple &t, int pos)
         for (int i = 0; i < tuple_size; i++) 
             t.cells[i] = mem_tuples[pos][i];
         return;
+    }
+
+    if(!cleared) /// We MUST release tuple cells before use them! (IS)
+    {
+        for (int i = 0; i < tuple_size; i++) 
+            t.cells[i].set_eos();
     }
 
     int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
