@@ -130,20 +130,21 @@ ifeq ($(JAVA_DRIVER), 1)
 	for arg in $(DOC_FILELIST) ;do $(INSTALL) -p $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
 	
 endif
-ifeq ($(PLATFORM), UNIX)
-	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
+
+    $(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/{c,java,scheme,data}
 
+ifeq ($(PLATFORM), UNIX)
 	$(INSTALL) -p $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a
 	$(INSTALL) -p $(PERM2) examples/api/c/build.sh $(SEDNA_INSTALL)/sedna/examples/api/c/build.sh
 	$(INSTALL) -p $(PERM2) examples/api/java/Clientbuild.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.sh
 	$(INSTALL) -p $(PERM2) examples/api/java/Client.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Client.sh
 else
-	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.lib $(SEDNA_INSTALL)/sedna/driver/c/libsedna.lib
-	$(INSTALL) -Dp $(PERM3) driver/c/libsednamt.lib $(SEDNA_INSTALL)/sedna/driver/c/libsednamt.lib
-	$(INSTALL) -Dp $(PERM2) examples/api/c/build.bat $(SEDNA_INSTALL)/sedna/examples/api/c/build.bat
-	$(INSTALL) -Dp $(PERM2) examples/api/java/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.bat
-	$(INSTALL) -Dp $(PERM2) examples/api/java/Client.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Client.bat
+	$(INSTALL) -p $(PERM3) driver/c/libsedna.lib $(SEDNA_INSTALL)/sedna/driver/c/libsedna.lib
+	$(INSTALL) -p $(PERM3) driver/c/libsednamt.lib $(SEDNA_INSTALL)/sedna/driver/c/libsednamt.lib
+	$(INSTALL) -p $(PERM2) examples/api/c/build.bat $(SEDNA_INSTALL)/sedna/examples/api/c/build.bat
+	$(INSTALL) -p $(PERM2) examples/api/java/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.bat
+	$(INSTALL) -p $(PERM2) examples/api/java/Client.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Client.bat
 endif
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/scheme/{libs/{plt,chicken},sedna-api}
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/{etc,include,share}
