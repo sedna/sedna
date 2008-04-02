@@ -126,12 +126,12 @@ ifeq ($(JAVA_DRIVER), 1)
 	for arg in $(DOC_DIRLIST) ;do $(INSTALL) $(PERM3) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
 
 	$(INSTALL) -p $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
-	
+
 	for arg in $(DOC_FILELIST) ;do $(INSTALL) -p $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
-	
+
 endif
 
-    $(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/{c,java,scheme,data}
 
 ifeq ($(PLATFORM), UNIX)
