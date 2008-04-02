@@ -115,7 +115,7 @@ grouped_install:
 	$(INSTALL) -p $(PERM2) bin/se_term$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_term$(EXE_EXT)
 	$(INSTALL) -p $(PERM2) bin/se_exp$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_exp$(EXE_EXT)
 ifeq ($(INSTALL_DOC), 1)
-	$(INSTALL) -d $(PERM3) $(SEDNA_INSTALL)/sedna/doc/{AdminGuide,ProgGuide,ProgGuide/ClientServerProtocol,QuickStart}
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/doc/{AdminGuide,ProgGuide,ProgGuide/ClientServerProtocol,QuickStart}
 
 	$(INSTALL) -p $(PERM3) doc/AdminGuide/AdminGuide.pdf $(SEDNA_INSTALL)/sedna/doc/AdminGuide.pdf
 	$(INSTALL) -p $(PERM3) doc/ProgGuide/ProgGuide.pdf $(SEDNA_INSTALL)/sedna/doc/ProgGuide.pdf
@@ -123,7 +123,7 @@ ifeq ($(INSTALL_DOC), 1)
 	$(INSTALL) -p $(PERM3) doc/QuickStart/QuickStart.pdf $(SEDNA_INSTALL)/sedna/doc/QuickStart.pdf
 endif
 ifeq ($(JAVA_DRIVER), 1)
-	for arg in $(DOC_DIRLIST) ;do $(INSTALL) $(PERM3) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
+	for arg in $(DOC_DIRLIST) ;do $(INSTALL) $(PERM2) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
 
 	$(INSTALL) -p $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
 
