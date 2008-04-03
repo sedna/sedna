@@ -224,7 +224,9 @@ DL_EXT  = .so
 PLD = ld -Ur
 PLDOUT = -o 
 ifeq ("$(STATIC_SYS_LIBS)","1")
+ifneq ("$(SUB_PLATFORM)","Darwin")
 STATIC_FLAG = -static
+endif
 else
 STATIC_FLAG =
 endif
