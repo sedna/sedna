@@ -959,22 +959,57 @@
 ;             (type *)
 ;             (const (type !xs!string) "non-nil"))))))
 ;      (fun-def ((xs:anyType (var ("" "x")))) (var ("" "x")))))))
+;
+;(go
+; '(update
+;  (module (declare-namespace xy (const (type !xs!string) "http://www.mydomain.org/xy")) (declare-function
+;     (const (type !xs!QName) ("http://www.mydomain.org/xy" "getRandomId" "xy"))
+;     ()
+;     (result-type (one !xs!double))
+;     (body (const (type !xs!decimal) "0.0"))))
+;  (prolog)
+;  (delete
+;    (ddo
+;     (child
+;      (!fn!document (const (type !xs!string) "test") 3)
+;      (type
+;       (elem-test
+;         (ename
+;          (const (type !xs!QName) ("" "a" ""))
+;          (type *)
+;          (const (type !xs!string) "non-nil")))))))))
 
 (go
- '(update
-  (module (declare-namespace xy (const (type !xs!string) "http://www.mydomain.org/xy")) (declare-function
-     (const (type !xs!QName) ("http://www.mydomain.org/xy" "getRandomId" "xy"))
-     ()
-     (result-type (one !xs!double))
-     (body (const (type !xs!decimal) "0.0"))))
-  (prolog)
-  (delete
-    (ddo
-     (child
-      (!fn!document (const (type !xs!string) "test") 3)
-      (type
-       (elem-test
-         (ename
-          (const (type !xs!QName) ("" "a" ""))
-          (type *)
-          (const (type !xs!string) "non-nil")))))))))
+ '(query
+ (prolog)
+ (query-body
+   (ddo
+    (child
+     (ddo
+      (descendant-or-self
+        (predicate
+          (ddo
+           (child
+            (ddo
+             (descendant-or-self
+               (ddo
+                (parent
+                  (sequence
+                    (element (const (type !xs!QName) ("" "a")) (sequence))
+                    (element (const (type !xs!QName) ("" "b")) (sequence)))
+                  (type (node-test))))
+               (type (node-test))))
+            (type
+             (elem-test
+               (ename
+                (const (type !xs!QName) ("" "section" ""))
+                (type *)
+                (const (type !xs!string) "non-nil"))))))
+          (fun-def ((!xs!anyType (var ("" "$%v")))) (const (type !xs!integer) "3")))
+        (type (node-test))))
+     (type
+      (elem-test
+        (ename
+         (const (type !xs!QName) ("" "para" ""))
+         (type *)
+         (const (type !xs!string) "non-nil")))))))))
