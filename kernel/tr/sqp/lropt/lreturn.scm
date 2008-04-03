@@ -1,6 +1,7 @@
 
 ; File:  lreturn.scm
-; Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+; Copyright (C) 2004 The Institute for System Programming
+; of the Russian Academy of Sciences (ISP RAS)
 
 (declare (unit lreturn) (uses xquery-lr))
 
@@ -61,14 +62,17 @@
 ;  single-level? - whether all nodes on a single level
 ;  processed-funcs - as in In-part
 ;  order-for-variables - whether order required for variables encountered inside
-(define (lropt:expr expr called-once? order-required?
+(define (lropt:expr expr called-once?
+                    order-required? distinct-required?
+                    order-desired? distinct-desired?
+                    mode-ordered?
                     var-types prolog processed-funcs)
   (if
    (not (pair? expr))
    (lropt:input-error expr processed-funcs)
    (case (xlr:op-name expr)  ; operation name
      ((var)
-      (lropt:var expr called-once? order-required?
+      (lropt:var expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                  var-types prolog processed-funcs))
      ;-------------------
      ; 2.2 Constants
@@ -78,37 +82,40 @@
      ;-------------------
      ; Axes
      ((ancestor ancestor-or-self)
-      (lropt:ancestor expr called-once? order-required?
+      (lropt:ancestor expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                       var-types prolog processed-funcs))     
      ((attr-axis child)
-      (lropt:attr-axis expr called-once? order-required?
+      (lropt:attr-axis expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                        var-types prolog processed-funcs))
      ((descendant descendant-or-self)
-      (lropt:descendant expr called-once? order-required?
+      (lropt:descendant expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                         var-types prolog processed-funcs))
      ((following)
-      (lropt:following expr called-once? order-required?
+      (lropt:following expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                        var-types prolog processed-funcs))
      ((following-sibling)
-      (lropt:following-sibling expr called-once? order-required?
+      (lropt:following-sibling expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                                var-types prolog processed-funcs))
      ; ATTENTION: namespace axis
      ((parent)
-      (lropt:parent expr called-once? order-required?
+      (lropt:parent expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                     var-types prolog processed-funcs))
      ((preceding)
-      (lropt:preceding expr called-once? order-required?
+      (lropt:preceding expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                        var-types prolog processed-funcs))
      ((preceding)
-      (lropt:preceding-sibling expr called-once? order-required?
+      (lropt:preceding-sibling expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                                var-types prolog processed-funcs))
      ((self)
-      (lropt:self expr called-once? order-required?
+      (lropt:self expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                   var-types prolog processed-funcs))
      ;-------------------
      ; 2.4 Sequence
      ((sequence space-sequence spaceseq)
-      (lropt:propagate expr called-once? order-required?
+      (lropt:propagate expr called-once?
+                       order-required? distinct-required?
+                       order-desired? distinct-desired?
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #f  ; no automatical DDO
                        #f  ; not zero-or-one
@@ -119,7 +126,8 @@
       ; is bound with a single item exactly. Ordering is thus not
       ; required for unio arguments.
       ; This supposition requires attention in the future, however.
-      (lropt:propagate expr called-once? #f
+      (lropt:propagate expr called-once? #f #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ;-------------------
@@ -130,11 +138,15 @@
       ; since an argument may consist of several duplicate values
       (lropt:propagate expr called-once?
                        #f  ; see attention comment [*] above
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((to@)
       (lropt:propagate expr called-once?
                        #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t  ; values can be considered ordered
                        #f  ; in general, contains more than one value
@@ -142,6 +154,8 @@
      ((=@ !=@ <@ <=@ >@ >=@)
       (lropt:propagate expr called-once?
                        #f  ; the order of arguments is not important
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ;-------------------
@@ -153,6 +167,10 @@
         (lropt:propagate expr called-once?
                          ; order not required for test condition
                          (list #f order-required? order-required?)
+                         (list #f distinct-required? distinct-required?)
+                         (list #f order-desired? order-desired?)
+                         (list #f distinct-desired? distinct-desired?)
+                         mode-ordered?
                          var-types prolog processed-funcs
                          and-last-two and-last-two and-last-two)))
      ;-------------------
@@ -162,6 +180,8 @@
       ; TODO: think of introducing a function for this
       (lropt:propagate expr called-once?
                        #f  ; EBW is taken => order not important
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ;-------------------
@@ -171,66 +191,82 @@
                        ; Only a single item in name => order not important,
                        ; minus duplicates [*]
                        (list #f order-required?)  ; Was: (list #f #t)
+                       (list #f distinct-required?)
+                       (list #f order-desired?)
+                       (list #f distinct-desired?)
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((document text comment)
       (lropt:propagate expr called-once?
-                       order-required?
-                       ; Was: #t  ; spaceseq implicitly taken => order is important
+                       ; spaceseq implicitly taken => order is important
+                       order-required? distinct-required?
+                       order-desired? distinct-desired?
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ;-------------------
      ; 2.10 FLWOR Operations
      ((let@)
-      (lropt:let expr called-once? order-required?
+      (lropt:let expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                  var-types prolog processed-funcs))
      ((return)
-      (lropt:return expr called-once? order-required?
+      (lropt:return expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                     var-types prolog processed-funcs))
      ((predicate)
-      (lropt:predicate expr called-once? order-required?
+      (lropt:predicate expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                        var-types prolog processed-funcs))
      ((order-by)
-      (lropt:order-by expr called-once? order-required?
+      (lropt:order-by expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                       var-types prolog processed-funcs))
      ((orderspecs)
-      (lropt:orderspecs expr called-once? order-required?
+      (lropt:orderspecs expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                         var-types prolog processed-funcs))
      ;-------------------
      ; 2.11 Expressions on Sequence Types
      ((ts)
-      (lropt:ts expr called-once? order-required?
+      (lropt:ts expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                 var-types prolog processed-funcs))
      ((cast treat)
-      (lropt:cast+treat expr called-once? order-required?
+      (lropt:cast+treat expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                           var-types prolog processed-funcs))
      ((instance-of castable)
-      (lropt:instance-of+castable expr called-once? order-required?
+      (lropt:instance-of+castable expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                                   var-types prolog processed-funcs))
      ;-------------------
      ; 2.14 Distinct document order
      ((ddo)
-      (lropt:ddo expr called-once? order-required?
+      (lropt:ddo expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                  var-types prolog processed-funcs))
      ((ordered)
       (lropt:expr (car (xlr:op-args expr))
-                  called-once? #t  ; ordering required
+                  called-once?
+                  #t  ; ordering required
+                  #t #t #t
+                  #t
                   var-types prolog processed-funcs))
      ;-------------------
      ; 3.6. Quantified expressions
      ((some every)
-      (lropt:some-every expr called-once? order-required?
+      (lropt:some-every expr called-once?
+                        order-required? distinct-required?
+                        order-desired? distinct-desired?
+                        mode-ordered?
                         var-types prolog processed-funcs))
      ;-------------------
      ; 3.7 XQuery 1.0 Functions
      ((!fn!document)
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t
                        #t  ; only a single item
                        #t))
      ((!fn!collection)
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t
                        #f  ; generally, more than one item
@@ -240,9 +276,17 @@
                     !se!checkpoint !fn!current-dateTime !fn!static-base-uri
                     !fn!default-collation)
       (values expr #t #t #t processed-funcs '()))
-     ((!fn!count !fn!deep-equal !fn!sum !fn!avg !fn!max !fn!min)
+     ((!fn!count !fn!sum !fn!avg !fn!max !fn!min)
       (lropt:propagate expr called-once?
-                       #t  ; argument ordering required
+                       ; Was: #t  ; argument ordering required
+                       #f #t #f #t
+                       mode-ordered?
+                       var-types prolog processed-funcs
+                       #t #t #t))
+     ((!fn!deep-equal)
+      (lropt:propagate expr called-once?
+                       #t #t #t #t
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ; Accept zero-or-one items for each argument,
@@ -284,45 +328,75 @@
        !fn!doc-available)
       ; The same semantics as for !fn!document
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!index-of)
       (lropt:propagate expr called-once?
+                       ; Was:
+;                       (lambda (arg-lng)
+;                         (cons #t  ; order required for first argument
+;                               (xlr:make-list #f (- arg-lng 1))))
                        (lambda (arg-lng)
-                         (cons #t  ; order required for first argument
+                         (cons (and order-required? mode-ordered?)
                                (xlr:make-list #f (- arg-lng 1))))
+                       (lambda (arg-lng)
+                         (cons distinct-required?
+                               (xlr:make-list #f (- arg-lng 1))))
+                       (lambda (arg-lng)
+                         (cons (and order-desired? mode-ordered?)
+                               (xlr:make-list #f (- arg-lng 1))))
+                       (lambda (arg-lng)
+                         (cons distinct-desired?
+                               (xlr:make-list #f (- arg-lng 1))))
+                       mode-ordered?
                        var-types prolog processed-funcs
                        (lambda x (car x))  ; ddo-auto of the first argument
                        #f  ; several atomic values are returned
                        #t))
      ((!fn!empty !fn!exists)
       (lropt:propagate expr called-once? #f  ; order not required
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!distinct-values)
       (let ((return-first  ; NOTE: number of arguments may differ
              (lambda x (car x))))
-        (lropt:propagate expr called-once? order-required?
+        (lropt:propagate expr called-once?
+                         order-required? distinct-required?
+                         order-desired? distinct-desired?
+                         mode-ordered?
                          var-types prolog processed-funcs
                          return-first return-first return-first)))
-     ((!fn!unordered unordered)
-;      (let ((identity (lambda (x) x)))
-;        (lropt:propagate expr called-once? #f  ; order not required
-;                         var-types prolog processed-funcs
-;                         identity identity identity))
+     ((!fn!unordered)
       ; Function call is removed
       (lropt:expr (car (xlr:op-args expr))
                   called-once? #f  ; order not required
+                  #t #f #t
+                  mode-ordered?
+                  var-types prolog processed-funcs))
+     ((unordered)
+      (lropt:expr (car (xlr:op-args expr))
+                  called-once? #f  ; order not required
+                  #t #f #t
+                  #f  ; difference with fn:unordered
                   var-types prolog processed-funcs))
      ((!fn!data !fn!zero-or-one !fn!one-or-more)
       (let ((identity (lambda x (car x))))
         ; NOTE: Should be updated when collations are introduced to
         ; fn:distinct-values in Sedna
-        (lropt:propagate expr called-once? order-required?
+        (lropt:propagate expr called-once?
+                         order-required? distinct-required?
+                         order-desired? distinct-desired?
+                         mode-ordered?
                          var-types prolog processed-funcs
                          identity identity identity)))
      ((!fn!id !fn!idref)
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #f #f #f))
      ((!fn!error)  ; 3 The Error Function
@@ -331,6 +405,19 @@
                          (if (= arg-lng 3)
                              '(#f #f #t)
                              (xlr:make-list #f arg-lng)))
+                       (lambda (arg-lng)
+                         (if (= arg-lng 3)
+                             '(#f #f #t)
+                             (xlr:make-list #f arg-lng)))
+                       (lambda (arg-lng)
+                         (if (= arg-lng 3)
+                             '(#f #f #t)
+                             (xlr:make-list #f arg-lng)))
+                       (lambda (arg-lng)
+                         (if (= arg-lng 3)
+                             '(#f #f #t)
+                             (xlr:make-list #f arg-lng)))
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!trace)  ; 4 The Trace Function
@@ -341,6 +428,10 @@
              (lambda x (car x))))
         (lropt:propagate expr called-once?
                          (list order-required? #f #f)
+                         (list distinct-required? #f #f)
+                         (list order-desired? #f #f)
+                         (list distinct-desired? #f #f)
+                         mode-ordered?
                          var-types prolog processed-funcs
                          return-first return-first return-first)))
      ((!fn!insert-before)
@@ -348,19 +439,36 @@
                        (list #t
                              #f  ; see [*]
                              #t #f)
+                       (list #t
+                             #f  ; see [*]
+                             #t #f)
+                       (list #t
+                             #f  ; see [*]
+                             #t #f)
+                       (list #t
+                             #f  ; see [*]
+                             #t #f)
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #f #f #f))
      ((!fn!remove)
       (let ((return-first (lambda x (car x))))
         (lropt:propagate expr called-once?
                          (list #t #f #f)
+                         (list #t #f #f)
+                         (list #t #f #f)
+                         (list #t #f #f)
+                         mode-ordered?
                          var-types prolog processed-funcs
                          ; Order, zero-or-one and single-level are preserved
                          ; when an item is removed from a sequences
                          return-first return-first return-first)))
      ((!fn!reverse)
       (let ((identity (lambda x (car x))))
-        (lropt:propagate expr called-once? order-required?
+        (lropt:propagate expr called-once?
+                         order-required? distinct-required?
+                         order-desired? distinct-desired?
+                         mode-ordered?
                          var-types prolog processed-funcs
                          #f  ; order not preserved
                          ; zero-or-one and single-level are preserved after
@@ -368,12 +476,14 @@
                          identity identity)))
      ((!fn!subsequence)
       (let ((return-first  ; can be supplied with either 2 or 3 arguments
-             (lambda x (car x))))
+             (lambda x (car x)))
+            (func (lambda (arg-lng)
+                    (if (= arg-lng 3)
+                        '(#t #f #f)
+                        '(#t #f #f #f)))))
         (lropt:propagate expr called-once?
-                         (lambda (arg-lng)
-                           (if (= arg-lng 3)
-                               '(#t #f #f)
-                               '(#t #f #f #f)))
+                         func func func func
+                         mode-ordered?
                          var-types prolog processed-funcs
                          ; Order, zero-or-one and single-level are preserved
                          ; when selecting a subsequence
@@ -390,21 +500,27 @@
        !fn!adjust-dateTime-to-timezone !fn!adjust-date-to-timezone
        !fn!adjust-time-to-timezone)
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ; SQL connection functions
      ((!fn!sql-connect !fn!sql-close !fn!sql-commit !fn!sql-rollback
                        !fn!sql-prepare !fn!sql-exec-update)
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!sql-execute)
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #f #f #f))
      ; Index scan functions and full-text search functions
      ((!fn!index-scan !fn!index-scan-between !fn!ftindex-scan !fn!ftindex-scan2)
-      (lropt:sedna-index-fun-calls expr called-once? order-required?
+      (lropt:sedna-index-fun-calls expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                                    var-types prolog processed-funcs))
      ((!fn!ftscan)
       (let ((return-first  ; can be supplied with either 2 or 3 arguments
@@ -414,30 +530,57 @@
                            (if (= arg-lng 4) ; line number
                                (list order-required? #f #f #f)
                                (list order-required? #f #f #f #f)))
+                         (lambda (arg-lng)
+                           (if (= arg-lng 4) ; line number
+                               (list distinct-required? #f #f #f)
+                               (list distinct-required? #f #f #f #f)))
+                         (lambda (arg-lng)
+                           (if (= arg-lng 4) ; line number
+                               (list order-desired? #f #f #f)
+                               (list order-desired? #f #f #f #f)))
+                         (lambda (arg-lng)
+                           (if (= arg-lng 4) ; line number
+                               (list distinct-desired? #f #f #f)
+                               (list distinct-desired? #f #f #f #f)))
+                         mode-ordered?
                          var-types prolog processed-funcs
                          return-first return-first return-first)))
      ((!fn!fthighlight !fn!fthighlight2)
       ; I failed to find any documentation for highlight functions, so
       ; I do not care much about correct ordering for them
       (lropt:propagate expr called-once? #f  ; [*]
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #f #f #f))
      ((!fn!is_ancestor)
       (lropt:propagate expr called-once? #t
+                       #t #t #t
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!filter_entry_level)
       (let ((identity (lambda x (car x))))
-        (lropt:propagate expr called-once? order-required?
+        (lropt:propagate expr called-once?
+                         order-required? distinct-required?
+                         order-desired? distinct-desired?
+                         mode-ordered?
                          var-types prolog processed-funcs
                          identity identity identity)))
      ((!fn!item-at)
-      (lropt:propagate expr called-once? (list #t #f #f)
+      (lropt:propagate expr called-once?
+                       (list #t #f #f)
+                       (list #t #f #f)
+                       (list #t #f #f)
+                       (list #t #f #f)
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!test)
       ; Do not know the correct semantics
       (lropt:propagate expr called-once? #f
+                       #f #f #f
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #f #f #f))
      ;-------------------
@@ -447,12 +590,14 @@
        (lropt:wrap-union-intersect-except expr)
        called-once?
        #t  ; order required for union operations to work properly
+       #t #t #t
+       mode-ordered?
        var-types prolog processed-funcs
        #t #f #f))
      ;-------------------
      ; Function call
      ((fun-call ext-fun-call)
-      (lropt:fun-call expr called-once? order-required?
+      (lropt:fun-call expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                       var-types prolog processed-funcs))
      ;-------------------    
      (else  ; unknown operations
@@ -511,7 +656,10 @@
 ;  order-required-for-args is a list when different arguments require
 ;  different ordering specifications. 
 ;  (length (listof order-required?)) = (length (xlr:op-args expr))
-(define (lropt:propagate expr called-once? order-required-for-args
+(define (lropt:propagate expr called-once?
+                         order-required-for-args distinct-required-for-args
+                         order-desired-for-args distinct-desired-for-args
+                         mode-ordered?
                          var-types prolog processed-funcs
                          ddo-auto-for-result zero-or-one single-level)
   (if  ; optimizing the case for an expression with no arguments
@@ -533,54 +681,100 @@
           (if (procedure? order-required-for-args)
               (order-required-for-args  ; for the variable number of arguments
                (length (xlr:op-args expr)))
-              order-required-for-args)))
+              order-required-for-args))
+         (distinct-required-for-args
+          (if (procedure? distinct-required-for-args)
+              (distinct-required-for-args  ; for the variable number of arguments
+               (length (xlr:op-args expr)))
+              distinct-required-for-args))
+         (order-desired-for-args
+          (if (procedure? order-desired-for-args)
+              (order-desired-for-args  ; for the variable number of arguments
+               (length (xlr:op-args expr)))
+              order-desired-for-args))
+         (distinct-desired-for-args
+          (if (procedure? distinct-desired-for-args)
+              (distinct-desired-for-args  ; for the variable number of arguments
+               (length (xlr:op-args expr)))
+              distinct-desired-for-args)))
      (call-with-values
       (lambda ()
         (if (pair? order-required-for-args)
             (values car cdr)
             (values (lambda (x) x) (lambda (x) x))))
       (lambda (order-accessor order-next)
-        (let loop ((args (xlr:op-args expr))
-                   (order-required-for-args order-required-for-args)
-                   (res '())
-                   (processed-funcs processed-funcs)
-                   (order-for-variables '())
-                   (ddo-auto-lst '())
-                   (zero-or-1-lst '())
-                   (level-lst '()))
-          (if
-           (null? args)  ; everyone processed
-           (values (cons (xlr:op-name expr)
-                         (reverse res))
-                   (if (procedure? ddo-auto-for-result)
-                       (apply ddo-auto-for-result (reverse ddo-auto-lst))
-                       ddo-auto-for-result)
-                   (if (procedure? zero-or-one)
-                       (apply zero-or-one (reverse zero-or-1-lst))
-                       zero-or-one)
-                   (if (procedure? single-level)
-                       (apply single-level (reverse level-lst))
-                       single-level)
-                   processed-funcs order-for-variables)
+        (call-with-values
+         (lambda ()
+           (if (pair? distinct-required-for-args)
+               (values car cdr)
+               (values (lambda (x) x) (lambda (x) x))))
+         (lambda (distinct-req-accessor distinct-req-next)
            (call-with-values
-            (lambda () (lropt:expr (car args)
-                                   called-once?
-                                   (order-accessor order-required-for-args)
-                                   var-types prolog processed-funcs))
-            (lambda (new-arg auto? zero-or-1? level?
-                             processed-funcs order-for-vars-in-arg)
-              (loop (cdr args)
-                    (order-next order-required-for-args)
-                    (cons new-arg res)
-                    processed-funcs
-                    (if (null? order-for-variables)
-                        order-for-vars-in-arg
-                        (lropt:unite-order-for-variables
-                         order-for-vars-in-arg  ; this list is generally shorter
-                         order-for-variables))
-                    (cons auto? ddo-auto-lst)
-                    (cons zero-or-1? zero-or-1-lst)
-                    (cons level? level-lst)))))))))))
+            (lambda ()
+              (if (pair? order-desired-for-args)
+                  (values car cdr)
+                  (values (lambda (x) x) (lambda (x) x))))
+            (lambda (order-des-accessor order-des-next)
+              (call-with-values
+               (lambda ()
+                 (if (pair? distinct-desired-for-args)
+                     (values car cdr)
+                     (values (lambda (x) x) (lambda (x) x))))
+               (lambda (distinct-des-accessor distinct-des-next)
+                 (let loop ((args (xlr:op-args expr))
+                            (order-required-for-args order-required-for-args)
+                            (distinct-required-for-args distinct-required-for-args)
+                            (order-desired-for-args order-desired-for-args)
+                            (distinct-desired-for-args distinct-desired-for-args)
+                            (res '())
+                            (processed-funcs processed-funcs)
+                            (order-for-variables '())
+                            (ddo-auto-lst '())
+                            (zero-or-1-lst '())
+                            (level-lst '()))
+                   (if
+                    (null? args)  ; everyone processed
+                    (values (cons (xlr:op-name expr)
+                                  (reverse res))
+                            (if (procedure? ddo-auto-for-result)
+                                (apply ddo-auto-for-result (reverse ddo-auto-lst))
+                                ddo-auto-for-result)
+                            (if (procedure? zero-or-one)
+                                (apply zero-or-one (reverse zero-or-1-lst))
+                                zero-or-one)
+                            (if (procedure? single-level)
+                                (apply single-level (reverse level-lst))
+                                single-level)
+                            processed-funcs order-for-variables)
+                    (call-with-values
+                     (lambda ()
+                       (lropt:expr
+                        (car args)
+                        called-once?
+                        (order-accessor order-required-for-args)
+                        (distinct-req-accessor distinct-required-for-args)
+                        (order-des-accessor order-desired-for-args)
+                        (distinct-des-accessor distinct-desired-for-args)
+                        mode-ordered?
+                        var-types prolog processed-funcs))
+                     (lambda (new-arg auto? zero-or-1? level?
+                                      processed-funcs order-for-vars-in-arg)
+                       (loop (cdr args)
+                             (order-next order-required-for-args)
+                             (distinct-req-next distinct-required-for-args)
+                             (order-des-next order-desired-for-args)
+                             (distinct-des-next distinct-desired-for-args)
+                             (cons new-arg res)
+                             processed-funcs
+                             (if
+                              (null? order-for-variables)
+                              order-for-vars-in-arg
+                              (lropt:unite-order-for-variables
+                               order-for-vars-in-arg  ; this list is generally shorter
+                               order-for-variables))
+                             (cons auto? ddo-auto-lst)
+                             (cons zero-or-1? zero-or-1-lst)
+                             (cons level? level-lst)))))))))))))))))
 
 
 ;=========================================================================
@@ -597,7 +791,7 @@
         (not (memq type-spec '(xs:anyType !xs!anyType !xs!anytype))))))
   
 ; Variable reference
-(define (lropt:var expr called-once? order-required?
+(define (lropt:var expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                    var-types prolog processed-funcs)
   (let* ((var-name (car (xlr:op-args expr)))
          ;(var-name (list (car var-name) (cadr var-name)))
@@ -650,7 +844,10 @@
 ;  axis capable of producing the automatically ordered result
 (define (lropt:axis-helper can-sustain-order? ddo-auto-handler
                            zero-or-one-handler single-level-handler)
-  (lambda (expr called-once? order-required?
+  (lambda (expr called-once?
+                order-required? distinct-required?
+                order-desired? distinct-desired?
+                mode-ordered?
                 var-types prolog processed-funcs)
     (call-with-values
      (lambda ()
@@ -658,6 +855,9 @@
         (car (xlr:op-args expr))  ; child expression
         called-once?
         (and order-required? can-sustain-order?)
+        distinct-required?
+        order-desired? distinct-desired?
+        mode-ordered?
         var-types prolog processed-funcs))
      (lambda (new-expr ddo-auto? zero-or-one? single-level?
                        processed-funcs order-for-vars)
@@ -682,7 +882,7 @@
 (define lropt:ancestor-or-self lropt:ancestor)
 
 ; ATTENTION: lropt:child is implemented as an alias for this function
-(define (lropt:attr-axis expr called-once? order-required?
+(define (lropt:attr-axis expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                          var-types prolog processed-funcs)
   (if
    (and
@@ -695,7 +895,7 @@
      (lambda (zero-or-one? single-level?) #f)  ; zero-or-one-handler
      ; single-level-handler
      (lambda (zero-or-one? single-level?) single-level?))
-    expr called-once? order-required?
+    expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
     var-types prolog processed-funcs)))
 
 (define lropt:child lropt:attr-axis)
@@ -779,7 +979,7 @@
   (pp x)
   x)
 
-;(define (lropt:let expr called-once? order-required?
+;(define (lropt:let expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
 ;                   var-types prolog processed-funcs)
 ;  (let* ((fun-def (cadr (xlr:op-args expr)))
 ;         (arg  ; fun-def argument
@@ -837,7 +1037,10 @@
 
 ; Previous let@ processing implementation that always required the
 ; identifier-bound value to be ordered
-(define (lropt:let expr called-once? order-required?
+(define (lropt:let expr called-once?
+                   order-required? distinct-required?
+                   order-desired? distinct-desired?
+                   mode-ordered?
                    var-types prolog processed-funcs)
   (let* ((fun-def (cadr (xlr:op-args expr)))
          (arg  ; fun-def argument
@@ -852,6 +1055,8 @@
         (car (xlr:op-args expr))  ; child expr inside let@
         called-once?
         #t  ; we will always require ordering
+        #t #t #t
+        mode-ordered?
         var-types
         prolog processed-funcs))
      (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
@@ -861,7 +1066,9 @@
           (lropt:expr
            (cadr (xlr:op-args fun-def))  ; function body
            called-once?
-           order-required?
+           order-required? distinct-required?
+           order-desired? distinct-desired?
+           mode-ordered?
            (cons (list var-name
                        (car arg)  ; argument type
                        child-ddo-auto?  ; child expr was ordered
@@ -886,7 +1093,7 @@
 
 ; Previous exponential implementations
 ;; Let-expression
-;(define (lropt:let expr called-once? order-required?
+;(define (lropt:let expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
 ;                   var-types prolog processed-funcs)
 ;  (let* ((fun-def (cadr (xlr:op-args expr)))
 ;         (arg  ; fun-def argument
@@ -959,7 +1166,7 @@
 ;                child-order-for-vars))))))))))
 
 ; Return
-(define (lropt:return expr called-once? order-required?
+(define (lropt:return expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                       var-types prolog processed-funcs)
   (let* ((fun-def (cadr (xlr:op-args expr)))
          (args  ; fun-def arguments
@@ -976,7 +1183,9 @@
        (lropt:expr
         (cadr (xlr:op-args fun-def))  ; function body
         #f  ; called more than once
-        order-required?
+        order-required? distinct-required?
+        order-desired? distinct-desired?
+        mode-ordered?
         (append
          (map
           (lambda (name pair)
@@ -995,7 +1204,9 @@
           (lropt:expr
            (car (xlr:op-args expr))  ; child expr inside return
            called-once?
-           order-required?
+           order-required? distinct-required?
+           order-desired? distinct-desired?
+           mode-ordered?
            var-types
            prolog processed-funcs))
         (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
@@ -1023,7 +1234,7 @@
 
 ; Predicate
 ; Implemented by analogue with `lropt:return'
-(define (lropt:predicate expr called-once? order-required?
+(define (lropt:predicate expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                          var-types prolog processed-funcs)
   (let* ((fun-def (cadr (xlr:op-args expr)))
          (args  ; fun-def arguments
@@ -1041,6 +1252,8 @@
         (cadr (xlr:op-args fun-def))  ; function body
         #f  ; called more than once
         #f  ; order not required for fun-def body, see also: [*]
+        #f #f #f
+        mode-ordered?
         (append
          (map
           (lambda (name pair)
@@ -1059,7 +1272,9 @@
           (lropt:expr
            (car (xlr:op-args expr))  ; child expr inside return
            called-once?
-           order-required?
+           order-required? distinct-required?
+           order-desired? distinct-desired?
+           mode-ordered?
            var-types
            prolog processed-funcs))
         (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
@@ -1086,7 +1301,10 @@
 ;     '() |
 ;     (list arg-ddo-auto? arg-zero-or-one? arg-single-level?)
 ; Additional return value: (listof argument-name)
-(define (lropt:fun-def expr called-once? order-required?
+(define (lropt:fun-def expr called-once?
+                       order-required? distinct-required?
+                       order-desired? distinct-desired?
+                       mode-ordered?
                        var-types prolog processed-funcs
                        arg-cardinality-one? additional-arg-info)
   (let* ((args  ; fun-def arguments
@@ -1102,7 +1320,10 @@
      (lambda ()
        (lropt:expr
         (cadr (xlr:op-args expr))  ; function body
-        called-once? order-required?
+        called-once?
+        order-required? distinct-required?
+        order-desired? distinct-desired?
+        mode-ordered?
         (append         
          (map
           (if
@@ -1131,13 +1352,15 @@
         processed-funcs body-order-for-vars
         var-names)))))
 
-(define (lropt:order-by expr called-once? order-required?
+(define (lropt:order-by expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                         var-types prolog processed-funcs)
   (call-with-values
    (lambda ()
      (lropt:fun-def (cadr (xlr:op-args expr))  ; fun-def
                     called-once?
                     #f  ; order not required
+                    #f #f #f
+                    mode-ordered?
                     var-types prolog processed-funcs
                     #t  ; value for arg-cardinality-one?
                     '()  ; additional-arg-info
@@ -1150,6 +1373,8 @@
          (car (xlr:op-args expr))  ; child expr inside return
          called-once?
          #f  ; order not required - child is reordered anyway
+         #f #f #f
+         mode-ordered?
          var-types
          prolog processed-funcs))
       (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
@@ -1164,7 +1389,7 @@
           (lropt:remove-vars-from-alist var-names def-order-for-vars)
           child-order-for-vars)))))))
 
-(define (lropt:orderspecs expr called-once? order-required?
+(define (lropt:orderspecs expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                           var-types prolog processed-funcs)
   (let loop ((src (xlr:op-args expr))
              (res '())
@@ -1185,6 +1410,8 @@
            (cadr (xlr:op-args (car src)))  ; expr in ordermodifier
            called-once?
            #f  ; order not required
+           #f #f #f
+           mode-ordered?
            var-types
            prolog processed-funcs))
         (lambda (new-child dummy-ddo-auto? dummy-0-or-1? dummy-level?
@@ -1225,7 +1452,10 @@
 ;     (element
 ;      (const (type !xs!QName) ("" "wrap"))
 ;      (const (type !xs!string) "test failed"))))))
-(define (lropt:ts expr called-once? order-required?
+(define (lropt:ts expr called-once?
+                  order-required? distinct-required?
+                  order-desired? distinct-desired?
+                  mode-ordered?
                   var-types prolog processed-funcs)
   (letrec
       ((probe-subexpr
@@ -1236,6 +1466,9 @@
               (car (xlr:op-args expr))  ; subexpr inside typeswitch
               called-once?
               demand-order?
+              distinct-required?
+              order-desired? distinct-desired?
+              mode-ordered?
               var-types
               prolog processed-funcs))
            (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
@@ -1276,7 +1509,10 @@
                          (lambda ()
                            (lropt:fun-def
                             fun-def
-                            called-once? order-required?
+                            called-once?
+                            order-required? distinct-required?
+                            order-desired? distinct-desired?
+                            mode-ordered?
                             var-types prolog processed-funcs
                             (lropt:var-type-zero-or-one?  ; Cardinality-one?
                              (car (xlr:op-args type)))
@@ -1311,7 +1547,10 @@
                      (lambda ()
                        (lropt:fun-def
                         (car (xlr:op-args (car src)))
-                        called-once? order-required?
+                        called-once?
+                        order-required? distinct-required?
+                        order-desired? distinct-desired?
+                        mode-ordered?
                         var-types prolog processed-funcs
                         #f  ; cardinality-one?
                         (list  ; Additional-arg-info
@@ -1346,12 +1585,14 @@
     (probe-subexpr #f)))
 
 ; Processing for instance-of and castable
-(define (lropt:instance-of+castable expr called-once? order-required?
+(define (lropt:instance-of+castable expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                                     var-types prolog processed-funcs)
   (call-with-values
    (lambda () (lropt:expr (car (xlr:op-args expr))
                           called-once?
                           #f  ; [*]
+                          #f #f #f
+                          mode-ordered?
                           var-types prolog processed-funcs))
    (lambda (child ddo-auto? zero-or-one? single-level?
                   processed-funcs order-for-variables)
@@ -1364,7 +1605,7 @@
       processed-funcs order-for-variables))))
   
 ; cast and treat operations
-(define (lropt:cast+treat expr called-once? order-required?
+(define (lropt:cast+treat expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                           var-types prolog processed-funcs)
   (let ((type-0-or-1?
          (lropt:var-type-zero-or-one?
@@ -1376,6 +1617,9 @@
                             called-once?
                             (and (not type-0-or-1?)  ; see [*]
                                  order-required?)
+                            distinct-required?
+                            order-desired? distinct-desired?
+                            mode-ordered?
                             var-types prolog processed-funcs))
      (lambda (child ddo-auto? zero-or-one? single-level?
                     processed-funcs order-for-variables)
@@ -1393,7 +1637,10 @@
 ; 2.14 Distinct document order
 
 ; DDO
-(define (lropt:ddo expr called-once? order-required?
+(define (lropt:ddo expr called-once?
+                   order-required? distinct-required?
+                   order-desired? distinct-desired?
+                   mode-ordered?
                    var-types prolog processed-funcs)
   (let ((arg0 (car (xlr:op-args expr))))
     (if
@@ -1420,6 +1667,11 @@
              (lambda () (lropt:expr (car (xlr:op-args arg2))
                                     called-once?
                                     #f  ; as if already ordered
+                                    #f
+                                    order-required?
+                                    (or order-required? distinct-required?
+                                        order-desired? distinct-desired?)
+                                    mode-ordered?
                                     var-types prolog processed-funcs))
              (lambda (new-arg2 ddo-auto? zero-or-one? single-level?
                                processed-funcs order-for-variables)
@@ -1437,16 +1689,22 @@
                        (cadr (xlr:op-args arg0))  ; node test
                        )))
                  (values
-                  (if (or
-                       (and
-                        ddo-auto?  ; order achieved automatically
-                        ; all nodes on single level => the result of applying
-                        ; descendant axis is ordered automatically
-                        single-level?)
-                       (not order-required?))
-                      new-arg0
-                      (list (xlr:op-name expr)  ; == 'ddo
-                            new-arg0))
+                  (cond
+                    ((or
+                      (and  ; order achieved automatically
+                       ddo-auto?
+                       ; all nodes on single level => the result of applying
+                       ; descendant axis is ordered automatically
+                       single-level?)
+                      (and  ; ddo and distinct not required
+                       (not order-required?)
+                       (not distinct-required?)))
+                      new-arg0)
+                    ((and (not order-required?) distinct-required?)
+                     `(distinct ,new-arg0))
+                    (else
+                     (list (xlr:op-name expr)  ; == 'ddo
+                           new-arg0)))
                   (or order-required?  ; if order required, it is achieved
                       (and ddo-auto? single-level?)  ; or automatically
                       )
@@ -1465,6 +1723,9 @@
             (call-with-values
              (lambda () (lropt:ddo arg1 called-once?
                                    order-required?  ; was: #f
+                                   distinct-required?
+                                   order-desired? distinct-desired?
+                                   mode-ordered?
                                    var-types prolog processed-funcs))
              (lambda (new-arg1 ddo-auto? zero-or-one? single-level?
                                processed-funcs order-for-variables)
@@ -1484,27 +1745,41 @@
          (call-with-values
           (lambda () (lropt:expr arg1 called-once?
                                  #f  ; as if order achieved
+                                 #f
+                                 order-required?
+                                 (or order-required? distinct-required?
+                                     order-desired? distinct-desired?)
+                                 mode-ordered?
                                  var-types prolog processed-funcs))
           (lambda (new-arg1 ddo-auto? zero-or-one? single-level?
                             processed-funcs order-for-variables)
             (values
              (cond
-               ((or ddo-auto? (not order-required?))
+               ((or ddo-auto?
+                    (and (not order-required?) (not distinct-required?)))
                 (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
                       new-arg1
                       (cadr (xlr:op-args arg0))))
-               ; order required
                ((eq? (xlr:op-name arg0) 'self)
                 ; Self axis => order after filtering
                 (list
-                 (xlr:op-name expr)  ; == 'ddo
-                 (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
+                 (if
+                  (and (not order-required?) distinct-required?)
+                  'distinct
+                  (xlr:op-name expr)  ; == 'ddo
+                  )
+                 (list (xlr:op-name arg0)  ; 'self
                        new-arg1
                        (cadr (xlr:op-args arg0)))))
                (else  ; order before applying the axis
                 (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
-                      (list (xlr:op-name expr)  ; == 'ddo
-                            new-arg1)
+                      (list
+                       (if
+                        (and (not order-required?) distinct-required?)
+                        'distinct
+                        (xlr:op-name expr)  ; == 'ddo
+                        )
+                       new-arg1)
                       (cadr (xlr:op-args arg0)))))
              ; Order _not_ achieved when
              ; 1. It was not required, and
@@ -1523,15 +1798,25 @@
        (call-with-values
         (lambda () (lropt:expr arg0 called-once?
                                #f  ; as if already ordered
+                               #f
+                               order-required?
+                               (or order-required? distinct-required?
+                                   order-desired? distinct-desired?)
+                               mode-ordered?
                                var-types prolog processed-funcs))
         (lambda (new-arg0 ddo-auto? zero-or-one? single-level?
                           processed-funcs order-for-variables)
           (values
-           (if (or ddo-auto?  ; order achieved automatically
-                   (not order-required?))
-               new-arg0
-               (list (xlr:op-name expr)  ; == 'ddo
-                     new-arg0))
+           (cond
+             ((or ddo-auto?  ; order achieved automatically
+                  (and (not order-required?) (not distinct-required?)))
+               new-arg0)
+             ((and (not order-required?) distinct-required?)
+              ; TODO: or distinct-auto?
+              `(distinct ,new-arg0))
+             (else
+              (list (xlr:op-name expr)  ; == 'ddo
+                    new-arg0)))
            (or order-required?  ; if order is required, it is achieved
                ddo-auto?)
            zero-or-one? single-level?
@@ -1542,7 +1827,7 @@
      
 ; Some and every
 ; Implemented by analogue with `lropt:return'
-(define (lropt:some-every expr called-once? order-required?
+(define (lropt:some-every expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                           var-types prolog processed-funcs)
   (let* ((fun-def (cadr (xlr:op-args expr)))
          (args  ; fun-def arguments
@@ -1560,6 +1845,8 @@
         (cadr (xlr:op-args fun-def))  ; function body
         #f  ; called more than once
         #f  ; no order for result required, see also: [*]
+        #f #f #f
+        mode-ordered?
         (append
          (map
           (lambda (name pair)
@@ -1579,6 +1866,8 @@
            (car (xlr:op-args expr))  ; child expr inside return
            called-once?
            #f  ; order not required
+           #f #f #f
+           mode-ordered?
            var-types
            prolog processed-funcs))
         (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
@@ -1613,12 +1902,14 @@
 
 ; !fn!index-scan and the like
 ; Additional ddo is to be inserted iff the order-required
-(define (lropt:sedna-index-fun-calls expr called-once? order-required?
+(define (lropt:sedna-index-fun-calls expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                                      var-types prolog processed-funcs)
   (if
    order-required?
    (call-with-values
     (lambda () (lropt:propagate expr called-once? #f  ; [*]
+                                #f #f #f
+                                mode-ordered?
                                 var-types prolog processed-funcs
                                 #f #f #f))
     (lambda (rewritten ddo-auto-dummy? zero-or-one? single-level?
@@ -1629,6 +1920,8 @@
        zero-or-one? single-level?
        processed-funcs order-for-variables)))
    (lropt:propagate expr called-once? #f  ; [*]
+                    #f #f #f
+                    mode-ordered?
                    var-types prolog processed-funcs
                    #f #f #f)))
 
@@ -1676,7 +1969,10 @@
 ; `var-types' should thus be null.
 ; In the result returned, `order-for-variables' contains information about
 ; function arguments.
-(define (lropt:function-declaration expr called-once? order-required?
+(define (lropt:function-declaration expr called-once?
+                                    order-required? distinct-required?
+                                    order-desired? distinct-desired?
+                                    mode-ordered?
                                     var-types prolog processed-funcs)
   (let ((args
          ; Argument specification, e.g.
@@ -1696,7 +1992,9 @@
         ; DL: Legacy value for `called-once?' is #t, although I am not
         ; sure this is always appropriate
         #t  ; called-once?
-        order-required?
+        order-required? distinct-required?
+        order-desired? distinct-desired?
+        mode-ordered?
         (append
          (map 
           (lambda (pair)
@@ -1745,7 +2043,10 @@
 ;                            rewritten-declare-function-clause
 ;                            ddo-auto? zero-or-one? single-level?)
 ; Returns: (values processed-func new-processed-funcs)
-(define (lropt:get+add-processed-func func-name called-once? order-required?
+(define (lropt:get+add-processed-func func-name called-once?
+                                      order-required? distinct-required?
+                                      order-desired? distinct-desired?
+                                      mode-ordered?
                                       var-types prolog processed-funcs
                                       arity)
   (let ((func-name (lropt:qname->uri+local func-name)))
@@ -1792,7 +2093,10 @@
              (lambda ()
                (lropt:function-declaration
                 declaration
-                called-once? order-required?
+                called-once?
+                order-required? distinct-required?
+                order-desired? distinct-desired?
+                mode-ordered?
                 '()  ; var-types
                 ; ATTENTION: when global variable declarations are added
                 ; to query prolog in Sedna, their variable types are to be
@@ -1869,12 +2173,18 @@
    (lambda (x) (not (number? x)))
    lst))
 
-(define (lropt:fun-call expr called-once? order-required?
+(define (lropt:fun-call expr called-once?
+                        order-required? distinct-required?
+                        order-desired? distinct-desired?
+                        mode-ordered?
                         var-types prolog processed-funcs)
   (call-with-values
    (lambda ()
      (lropt:get+add-processed-func (car (xlr:op-args expr))  ; func-name
-                                   called-once? order-required?
+                                   called-once?
+                                   order-required? distinct-required?
+                                   order-desired? distinct-desired?
+                                   mode-ordered?
                                    var-types prolog processed-funcs
                                    (length  ; arity
                                     (lropt:discard-numbers
@@ -1883,21 +2193,25 @@
    (lambda (entry processed-funcs)
      (if
       entry
-      (lropt:propagate expr
-                       called-once?
-                       (cons #f  ; for function name
-                             (append
-                              (lropt:procced-func-for-args entry)
-                              (list #f)  ; line number
-                              ))
-                       var-types prolog processed-funcs
-                       (lropt:procced-func-ddo-auto? entry)
-                       (lropt:procced-func-0-or-1? entry)
-                       (lropt:procced-func-single-level? entry))
+      (let ((lst (cons #f  ; for function name
+                       (append
+                        (lropt:procced-func-for-args entry)
+                        (list #f)  ; line number
+                        ))))
+        (lropt:propagate expr
+                         called-once?
+                         lst lst lst lst
+                         mode-ordered?
+                         var-types prolog processed-funcs
+                         (lropt:procced-func-ddo-auto? entry)
+                         (lropt:procced-func-0-or-1? entry)
+                         (lropt:procced-func-single-level? entry)))
       ; declare-function for this function not found in prolog
       ; Recover
       (lropt:propagate expr called-once?
                        #t  ; order-required for subexprs
+                       #t #t #t
+                       mode-ordered?
                        var-types prolog processed-funcs
                        #f #f #f)))))
 
@@ -1946,6 +2260,8 @@
              ; We will always require ordering, unless the variable is
              ; specified to have a zero-or-one type
              (not zero-or-one?)
+             #t #t #t
+             #t  ; mode-ordered?
              var-types
              prolog processed-funcs))
           (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
@@ -1977,7 +2293,7 @@
 ; processed analogues.
 ; Returns rewritten prolog
 ; The function should be called after a query body is processed
-(define (lropt:rewrite-prolog prolog processed-funcs var-types)
+(define (lropt:rewrite-prolog prolog mode-ordered? processed-funcs var-types)
   (let loop ((src prolog)
              (processed-funcs processed-funcs)
              (res '()))
@@ -1992,6 +2308,8 @@
            (car (xlr:op-args (car src)))  ; func-name
            #f  ; called-once? - we do not care
            #f  ; order-required? - bind to 0 to choose any existing entry
+           #f #f #f
+           mode-ordered?
            var-types
            prolog processed-funcs
            (length  ; arity
@@ -2019,7 +2337,10 @@
 ; Update
 
 ; Update replace operation
-(define (lropt:replace expr called-once? order-required?
+(define (lropt:replace expr called-once?
+                       order-required? distinct-required?
+                       order-desired? distinct-desired?
+                       mode-ordered?
                        var-types prolog processed-funcs)
   (let* ((fun-def (cadr (xlr:op-args expr)))
          (args  ; fun-def arguments
@@ -2036,7 +2357,9 @@
        (lropt:expr
         (cadr (xlr:op-args fun-def))  ; function body
         #f  ; called more than once
-        order-required?
+        order-required? distinct-required?
+        order-desired? distinct-desired?
+        mode-ordered?
         (append
          (map
           (lambda (name pair)
@@ -2055,7 +2378,9 @@
           (lropt:expr
            (car (xlr:op-args expr))  ; child expr inside return
            called-once?
-           order-required?
+           order-required? distinct-required?
+           order-desired? distinct-desired?
+           mode-ordered?
            var-types
            prolog processed-funcs))
         (lambda (target child-ddo-auto? child-0-or-1? child-level?
@@ -2083,13 +2408,16 @@
             child-order-for-vars))))))))
          
 ; Update operation
-(define (lropt:update expr called-once? order-required?
+(define (lropt:update expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                       var-types prolog processed-funcs)
   (if
    (and (pair? expr) (eq? (car expr) 'replace))
-   (lropt:replace expr called-once? order-required?
+   (lropt:replace expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                   var-types prolog processed-funcs)
-   (lropt:propagate expr called-once? order-required?
+   (lropt:propagate expr called-once?
+                    order-required? distinct-required?
+                    order-desired? distinct-desired?
+                    mode-ordered?
                     var-types prolog processed-funcs
                     #f #f #f)))
 
@@ -2097,19 +2425,28 @@
 ; Manage
 
 ; Create index operation
-(define (lropt:create-index expr called-once? order-required?
+(define (lropt:create-index expr called-once?
+                            order-required? distinct-required?
+                            order-desired? distinct-desired?
+                            mode-ordered?
                             var-types prolog processed-funcs)
   (call-with-values
    (lambda ()
      (lropt:expr (cadr (xlr:op-args expr))  ; second argument
-                 called-once? order-required?
+                 called-once? 
+                 order-required? distinct-required?
+                 order-desired? distinct-desired?
+                 mode-ordered?
                  var-types prolog processed-funcs))
    (lambda (second second-ddo-auto? second-0-or-1? second-level?
                    processed-funcs second-order-for-vars)
      (call-with-values
       (lambda ()
         (lropt:expr (caddr (xlr:op-args expr))  ; third argument
-                    called-once? order-required?
+                    called-once?
+                    order-required? distinct-required?
+                    order-desired? distinct-desired?
+                    mode-ordered?
                     var-types prolog processed-funcs))
       (lambda (third third-ddo-auto? third-0-or-1? third-level?
                      processed-funcs third-order-for-vars)
@@ -2127,12 +2464,18 @@
          (lropt:unite-order-for-variables
           second-order-for-vars third-order-for-vars)))))))
 
-(define (lropt:trigger-create expr called-once? order-required?                        
+(define (lropt:trigger-create expr called-once?
+                              order-required? distinct-required?
+                              order-desired? distinct-desired?
+                              mode-ordered?
                               var-types prolog processed-funcs)
   (call-with-values
    (lambda ()
      (lropt:expr (cadddr (xlr:op-args expr))  ; fourth argument
-                 called-once? order-required?
+                 called-once?
+                 order-required? distinct-required?
+                 order-desired? distinct-desired?
+                 mode-ordered?
                  var-types prolog processed-funcs))
    (lambda (fourth fourth-ddo-auto? fourth-0-or-1? fourth-level?
                    processed-funcs fourth-order-for-vars)
@@ -2142,7 +2485,10 @@
                (call-with-values
                 (lambda ()
                   (lropt:update statement
-                                called-once? order-required?
+                                called-once?
+                                order-required? distinct-required?
+                                order-desired? distinct-desired?
+                                mode-ordered?
                                 var-types prolog processed-funcs))
                 (lambda (rewritten . rest) rewritten)))
              (list-ref (xlr:op-args expr) 5))))
@@ -2165,17 +2511,20 @@
   
 ; Manage operation
 ; TODO: add create-trigger here
-(define (lropt:manage expr called-once? order-required?
+(define (lropt:manage expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
                       var-types prolog processed-funcs)
   (cond
    ((and (pair? expr) (eq? (car expr) 'create-index))
-    (lropt:create-index expr called-once? order-required?                        
+    (lropt:create-index expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?                        
                         var-types prolog processed-funcs))
    ((and (pair? expr) (eq? (car expr) 'create-trigger))
-    (lropt:trigger-create expr called-once? order-required?                        
+    (lropt:trigger-create expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?                        
                           var-types prolog processed-funcs))
    (else
-    (lropt:propagate expr called-once? order-required?
+    (lropt:propagate expr called-once?
+                     order-required? distinct-required?
+                     order-desired? distinct-desired?
+                     mode-ordered?
                      var-types prolog processed-funcs
                      #f #f #f))))
 
@@ -2195,51 +2544,57 @@
     (lambda ()
       (lropt:declare-vars-from-prolog (xlr:get-query-prolog query)))
     (lambda (prolog var-types processed-funcs)
-      (call-with-values
-       (lambda ()
-         (if
-          (memq (xlr:op-name query) '(query retrieve-metadata))
-          (let ((identity (lambda (x) x)))
-            (lropt:propagate
-             ;(assq 'query-body (xlr:op-args query))
-             (car (reverse (xlr:op-args query)))
-             #t  ; called once
-             (let  ; ordered/unordered depending on prolog
-                 ; TODO: think of duplicate elimination
-                 ((order-decl
-                   (assq 'declare-order (filter pair? prolog))))
+      (let ((mode-ordered?  ; ordered/unordered depending on prolog
+             (let ((order-decl
+                    (assq 'declare-order (filter pair? prolog))))
                (not
                 (and order-decl
                      (equal? (car (xlr:op-args order-decl))
-                             '(const (type !xs!string) "unordered")))))
-             var-types
-             prolog
-             processed-funcs
-             identity identity identity))
-          ((case (xlr:op-name query)
-             ((update) lropt:update)
-             ((manage) lropt:manage)
-             (else  ; this should not happen
-              lropt:expr))
-           (cadr (filter
-                   (lambda (x)
-                     (not (and (pair? x) (eq? (xlr:op-name x) 'module))))
-                   (xlr:op-args query)))
-           #t #t
-           var-types prolog processed-funcs)))
-       (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
-                     processed-funcs dummy-order-for-variables)
-         (cons
-          (xlr:op-name query)
-          (append
-           (filter
-            (lambda (x)
-              (and (pair? x) (eq? (xlr:op-name x) 'module)))
-            (xlr:op-args query))
-           (list
-            (cons 'prolog
-                  (lropt:rewrite-prolog prolog processed-funcs var-types))
-            body)))))))))
+                             '(const (type !xs!string) "unordered")))))))
+        (call-with-values
+         (lambda ()
+           (if
+            (memq (xlr:op-name query) '(query retrieve-metadata))
+            (let ((identity (lambda (x) x)))
+              (lropt:propagate
+               (car (reverse (xlr:op-args query)))
+               ; Was: (assq 'query-body (xlr:op-args query))
+               #t  ; called once
+               mode-ordered?  ; order-required?
+               #t  ; distinct-required?
+               mode-ordered? #t  ; desired?
+               mode-ordered?  ; self             
+               var-types
+               prolog
+               processed-funcs
+               identity identity identity))
+            ((case (xlr:op-name query)
+               ((update) lropt:update)
+               ((manage) lropt:manage)
+               (else  ; this should not happen
+                lropt:expr))
+             (cadr (filter
+                    (lambda (x)
+                      (not (and (pair? x) (eq? (xlr:op-name x) 'module))))
+                    (xlr:op-args query)))
+             #t  ; called once
+             mode-ordered? #t mode-ordered? #t
+             mode-ordered?
+             var-types prolog processed-funcs)))
+         (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
+                       processed-funcs dummy-order-for-variables)
+           (cons
+            (xlr:op-name query)
+            (append
+             (filter
+              (lambda (x)
+                (and (pair? x) (eq? (xlr:op-name x) 'module)))
+              (xlr:op-args query))
+             (list
+              (cons 'prolog
+                    (lropt:rewrite-prolog prolog mode-ordered?
+                                          processed-funcs var-types))
+              body))))))))))
 
 ; Alias for backward compatibility
 (define mlr:rewrite-query lropt:rewrite-query)
@@ -2456,6 +2811,8 @@
          ; func-name includes `(const (type !xs!QName) ...)         
          #f  ; called-once?
          #t  ; order-required?
+         #t #t #t
+         #t  ; mode-ordered?
          var-types prolog processed-funcs
          (length  ; arity
           (cadr (xlr:op-args expr))  ; argument list 
@@ -2485,4 +2842,6 @@
               (car (xlr:op-args query))  ; ModuleDecl
               (cons
                'prolog
-               (lropt:rewrite-prolog prolog processed-funcs var-types))))))))
+               (lropt:rewrite-prolog prolog
+                                     #t  ; mode-ordered?
+                                     processed-funcs var-types))))))))

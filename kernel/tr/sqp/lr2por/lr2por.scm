@@ -858,7 +858,9 @@
 
              ; *** ddo ***
              ((eq? op-name 'ddo)
-              `(1 (PPDDO ,(l2p:any-lr-node2por (car node)))))    
+              `(1 (PPDDO ,(l2p:any-lr-node2por (car node)))))
+             ((eq? op-name 'distinct)
+              `(1 (PPSXptr ,(l2p:any-lr-node2por (car node)))))
 
 
              ; *** sequence ***
