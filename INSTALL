@@ -58,7 +58,8 @@ chown <sedna-user> cfg data
        3.x.x or higher is required. GCC is also required for the Windows platform 
        for making dependencies (so it is recommended to use Cygwin package with 
        GCC in it).
-     * For Mac OS X Sedna can not be compiled with gcc 4.0. Use gcc 3.3 instead.
+     * For Mac OS X Sedna can NOT be compiled with gcc 4.0. Use gcc 3.3, 4.1 or 
+       higher instead. 
      * gzip is needed to unpack the distribution in the first place. If
        you are reading this, you probably already got past that hurdle.
      * For building documentation you need LaTex package. For the Windows platform it is 

@@ -55,7 +55,7 @@ Windows platform:
    2) Add the bin subdirectory of sedna installation to the environment 
       variable PATH (for example "c:\sedna\bin").
 
-Linux/MacOS platform:
+Linux platform:
 
    Sedna is distributed as a single self-extracting script.
    The installation process consists of running self-extracting script
@@ -74,6 +74,10 @@ $SEDNA_INSTALL/cfg
    that is going to run Sedna):
 
 chown <sedna-user> cfg data
+
+MacOS platform:
+
+   See file INSTALL supplied with the source code package.
 
    _______________________________________________________________________
 

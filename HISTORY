@@ -3,6 +3,32 @@
 
      _________________________________________________________________
 
+                             Release 3.0
+
+     Release date: 2008-04-15
+     _________________________________________________________________
+
+New:
+
+- Improved transaction management. 
+    * Now you can define a transaction as read-only. Such a transaction 
+      will not conflict with any other concurrent transactions.
+    * Physical logging based recovery used in the previous versions of 
+      Sedna is now replaced with a new version-based recovery. 
+
+- Support for Mac OS 10.4 and higher (PPC/Intel)
+
+- Query execution timeout. Allows to set the limit on transaction execution time.
+
+- Bug fixes
+
+Important note: Databases created with previous versions of Sedna will not work 
+properly with Sedna 3.0. Please, use Sedna import/export utility to migrate your 
+data to Sedna 3.0 (see Sedna Administration Guide, section 2.5).
+
+     
+     _________________________________________________________________
+
                              Release 2.2
 
      Release date: 2007-10-23
@@ -23,7 +49,9 @@ New (since the previous release 2.1):
 
 - Comprehensive testing now covers Red Hat Enterprise Linux 5.
 
-Important note: Databases created with previous versions of Sedna will not work properly with Sedna 2.2. Please, use Sedna import/export utility to migrate your data to Sedna 2.2 (see Sedna Administration Guide, section 2.5).
+Important note: Databases created with previous versions of Sedna will not work 
+properly with Sedna 2.2. Please, use Sedna import/export utility to migrate your 
+data to Sedna 2.2 (see Sedna Administration Guide, section 2.5).
 
 
      _________________________________________________________________
