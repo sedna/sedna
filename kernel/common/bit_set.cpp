@@ -47,7 +47,7 @@ int bit_set::getNextSetBitIdx(int startPos) const
 		}
 
 		while (i<bitsPerInt && 0==(sample & ~((~(unsigned)1)<<i))) ++i;
-		res = (int)PTR_DISTANCE(istart,bits)*bitsPerInt/4 + i;
+		res = (int)PTR_DISTANCE(bits,istart)*bitsPerInt/4 + i;
 		
 		if (res>=size) res=-1;
 	}

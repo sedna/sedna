@@ -184,6 +184,9 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
     }
     else
     {
+		// we need to update mapped_blocks here
+	    mapped_pages->setAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
+
         m = file_mapping.map;
     }
     
@@ -214,19 +217,6 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 #endif
         return -1;
     }
-
-/*
-    
-    if (offs != RAMOFFS_OUT_OFF_BOUNDS && isWrite)
-    {
-        xptr p = ((vmm_sm_blk_hdr *)addr)->p;
-        write_table.insert(p, addr);
-    }
-*/
-
-    // we need to update mapped_blocks here
-    if (offs != RAMOFFS_OUT_OFF_BOUNDS)
-	    mapped_pages->setAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
     
     return 0;
 }
@@ -465,11 +455,7 @@ bool _vmm_is_address_busy(void * p)
     bool is_busy = true;
 
 #   ifdef _WIN32
-    try {
-        if (((vmm_sm_blk_hdr*)p)->p == NULL) is_busy = false;
-    } catch (win32_access_violation& e) {
-        is_busy = false;
-    }
+    if (((vmm_sm_blk_hdr*)p)->p == NULL) is_busy = false;
 #   else
     vmm_is_busy_called = true;
     if (setjmp(vmm_is_busy_env) != 0) is_busy = false;
