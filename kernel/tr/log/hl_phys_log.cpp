@@ -231,6 +231,7 @@ void hl_phys_log_create_node_blk(const void* p)
 }
 */
 
+#if 0
 int get_phys_record_block_parts(const void * p, int size)
 {
 	int i=(shft)((int)p- ((int)p & PAGE_BIT_MASK));
@@ -245,3 +246,4 @@ int get_phys_record_block_parts(const void * p, int size)
 //    d_printf2("ret value=%d\n", BLOCK_PARTS*(i-part)+part);
     return  BLOCK_PARTS*(i-part)+part;
 }
+#endif
