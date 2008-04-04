@@ -29,7 +29,7 @@ struct vmm_sm_blk_hdr
 		memset(hdr->versionsHeader.xptr, 0, sizeof hdr->versionsHeader.xptr);
 		memset(hdr->versionsHeader.creatorTs, -1, sizeof hdr->versionsHeader.creatorTs);
 		hdr->roffs = 0;
-		hdr->blockType = 0;
+		memcpy(&hdr->blockType, "AKNZ", 4);
 		hdr->is_changed = false;
 		hdr->trid_wr_access = -1;
 	}
