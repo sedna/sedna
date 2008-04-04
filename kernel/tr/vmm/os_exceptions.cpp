@@ -140,7 +140,7 @@ DWORD WinExceptFilter(DWORD exceptCode,
 /* the alternative stack size for SIGSEGV processing - should be SMALL! */ 
 #define ALTSTACK_SZ		0xD000
 
-void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
+void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt);
 
 static void UnixSegvSignalHandler(int sigNum, siginfo_t *sigInfo, void *sigCtx)
 {
