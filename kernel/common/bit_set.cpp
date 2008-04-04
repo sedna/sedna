@@ -7,7 +7,7 @@
 
 #define OFFSET_PTR(P,OFS)		(void *)((char*)(P)+(OFS))
 #define ROUND_SIZE_UP(SZ,K)		(((SZ)+(K)-1)&~((K)-1))
-#define PTR_DISTANCE(A,B)		((char*)(A)-(char*)(B))
+#define PTR_DISTANCE(B,A)		((char*)(A)-(char*)(B))
 
 bit_set::bit_set (int _size_): size(_size_),
                                external_memory(false)

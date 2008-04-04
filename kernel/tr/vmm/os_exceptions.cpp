@@ -118,7 +118,7 @@ DWORD WinExceptFilter(DWORD exceptCode,
 #include <unistd.h>
 #include <signal.h>
 #include <sys/mman.h>
-#include <alloca.h>
+//#include <alloca.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -126,7 +126,7 @@ DWORD WinExceptFilter(DWORD exceptCode,
 	note: stack overflow is not reported unless alt stack is enabled 
 	note2: alt stack is thread-local setting hence current implementation
 	provides alt stack for the main thread only */ 
-#define ENABLE_ALTSTACK
+//#define ENABLE_ALTSTACK
 
 /* secure alt stack with guard pages to detect alt stack overflow */ 
 #define ENABLE_ALTSTACK_GUARD_PAGES
@@ -140,10 +140,11 @@ DWORD WinExceptFilter(DWORD exceptCode,
 /* the alternative stack size for SIGSEGV processing - should be SMALL! */ 
 #define ALTSTACK_SZ		0xD000
 
+void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
+
 static void UnixSegvSignalHandler(int sigNum, siginfo_t *sigInfo, void *sigCtx)
 {
-	/*	attempt to parse /proc/{$PID}/maps to determine whether the A/V occured next to stack segment 
-		to determine whether A/V is due to overflowed stack */ 
+	unix_sigsegv_signal_handler(sigNum, sigInfo, sigCtx);
 }
 
 int main(int argc, char **argv)
