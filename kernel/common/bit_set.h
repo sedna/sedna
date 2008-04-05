@@ -29,7 +29,7 @@ public:
     void setAt   (int i);
     void clearAt (int i);
     bool testAt  (int i) const;
-    int getNextSetBitIdx(int startPos = 0) const;
+    int getNextSetBitIdx(unsigned int startPos = 0) const;
 
     void clear();           //set all bits to zero
     int  get_size() const;  //return size in bits
