@@ -89,6 +89,9 @@
 #endif
 #endif
 
+#if (defined(_PPC_))
+#define BIG_ENDIAN_ORDER
+#endif
 
 #if (defined(DARWIN) || defined(FreeBSD) || defined(__cygwin__))
 /* don't have /proc */
