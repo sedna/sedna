@@ -353,7 +353,7 @@ int PPDDO::get_size (tuple& t, const void * Udata)
 {
 	xptr node=t.cells[0].get_node();
 	CHECKP(node);
-	int sz=((n_dsc*)XADDR(node))->nid.size;
+	shft sz=((n_dsc*)XADDR(node))->nid.size;
 	if (!sz)sz=*(shft*)(((n_dsc*)XADDR(node))->nid.prefix+sizeof(xptr));
 	sz+=(sizeof(xptr)+sizeof(shft));
 	return (sz>DATA_BLK_SIZE)?2*sizeof(xptr)+sizeof(shft):sz;	
@@ -362,7 +362,7 @@ void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 {
 	xptr node=t.cells[0].get_node();
 	CHECKP(node);
-	int sz=((n_dsc*)XADDR(node))->nid.size;
+	shft sz=((n_dsc*)XADDR(node))->nid.size;
 	xptr addr=(sz)? ADDR2XPTR(((n_dsc*)XADDR(node))->nid.prefix):*(xptr*)(((n_dsc*)XADDR(node))->nid.prefix);
 	if (!sz)
 	{
@@ -392,7 +392,7 @@ void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void 
 {
 	xptr node=t.cells[0].get_node();
 	CHECKP(node);
-	int sz=((n_dsc*)XADDR(node))->nid.size;
+	shft sz=((n_dsc*)XADDR(node))->nid.size;
 	xptr addr=(sz)? ADDR2XPTR(((n_dsc*)XADDR(node))->nid.prefix):*(xptr*)(((n_dsc*)XADDR(node))->nid.prefix);
 	if (!sz)
 	{
