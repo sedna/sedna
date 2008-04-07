@@ -179,6 +179,23 @@ inline void shed_state(xptr &p)
 }
 
 
+inline int xptr_compare(const xptr& p1, const xptr& p2)
+{
+    if (p1.addr == NULL && p2.addr == NULL) return 0;
+    if (p1.addr == NULL) return 1;
+    if (p2.addr == NULL) return -1;
+
+    if(p1.layer != p2.layer)
+    {
+        return p1.layer < p2.layer ? -1 : 1;
+    }
+    else
+    {
+        if((__uint32)(p1.addr) < (__uint32)(p2.addr)) return -1;
+        else if((__uint32)(p1.addr) == (__uint32)(p2.addr)) return 0;
+        return 1;
+    }    
+}
 
 /* NULL for xpointers */
 extern xptr XNULL;

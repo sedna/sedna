@@ -19,6 +19,8 @@ protected:
 
     // obtained parameters and local data
     bool tug_first, tug_second;
+    bool need_reopen_first, need_reopen_second;
+
     xptr xptr1, xptr2;
 
     void children(PPOpIn& _child1_, PPOpIn& _child2_) { _child1_ = child1; _child2_ = child2; }
