@@ -316,7 +316,7 @@ void sm_llmgr::restorePh()
 
   //find first ph file
 
-  if ( (dsc = _findfirst("*seph", &ph_file)) == -1L)
+  if ( (dsc = _findfirst("*.seph", &ph_file)) == -1L)
      throw USER_EXCEPTION2(SE4044, "persistent heap file");
 
   do 
@@ -361,7 +361,7 @@ void sm_llmgr::restorePh()
 //d_printf2("IS_LLOG=%s\n", is_llog.c_str());
 
      p = strrchr(ph_name.c_str(),'.');
-     if ( p && 0!=strcmp(p,".seph") ) continue;
+     if (p == NULL || 0!=strcmp(p,".seph") ) continue;
 
 //     ph_number = ph_number.erase(0, db_name.size() + 1);
 //d_printf2("7log_number =%s\n", log_number.c_str());
