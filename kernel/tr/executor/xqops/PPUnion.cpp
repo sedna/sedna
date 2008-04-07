@@ -61,7 +61,8 @@ void PPUnion::next  (tuple &t)
         }
         else
         {
-            if (!child1.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of union is not a node");
+            if (!child1.get(t).is_node()) 
+                throw XQUERY_EXCEPTION2(XPTY0004, "Second argument of union operation contains item which is not a node");
             xptr1 = child1.get(t).get_node();
         }
 
@@ -77,14 +78,17 @@ void PPUnion::next  (tuple &t)
         }
         else
         {
-            if (!child2.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of union is not a node");
+            if (!child2.get(t).is_node()) 
+                throw XQUERY_EXCEPTION2(XPTY0004, "Second argument of union operation contains item which is not a node");
             xptr2 = child2.get(t).get_node();
         }
 
         tug_second = false;
     }
 
-    switch (doc_order_merge_cmp(&xptr1, &xptr2))
+    /// XNULL by definition is equal to any xptr with addr == NULL;
+    /// XNULL by definition is > of any xptr (except itself);
+    switch (xptr_compare(xptr1, xptr2))
     {
         case -1: /// 1 < 2
         {
@@ -94,7 +98,7 @@ void PPUnion::next  (tuple &t)
         }
         case  0: /// 1 == 2
         {
-            if (xptr1 == NULL)
+            if (xptr1 == XNULL)
                 t.set_eos();
             else
                 t.copy(tuple_cell::node(xptr1));

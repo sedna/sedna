@@ -129,15 +129,12 @@ static inline void restore_serialized_xptr(const xptr &serialized, xptr &result)
     }
 }
 
-
 int PPSXptr::compare_less (xptr v1, xptr v2, const void *Udata)
 {
     xptr res1, res2;
     restore_serialized_xptr(v1, res1);
     restore_serialized_xptr(v2, res2);
-    if     (res1 <  res2)  return 1;
-    else if(res1 == res2)  return 0;
-    else                   return -1;
+    return xptr_compare(res1, res2);
 }
 
 int PPSXptr::get_size (tuple& t, const void * Udata)
