@@ -2973,10 +2973,11 @@
 (define (sa:analyze-union-intersect expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
-   (let ((args-res (map
-                    (lambda (arg)
-                      (sa:analyze-expr arg vars funcs ns-binding default-ns uri modules))
-                    (sa:op-args expr))))
+   (let ((args-res
+          (map
+           (lambda (arg)
+             (sa:analyze-expr arg vars funcs ns-binding default-ns uri modules))
+           (sa:op-args expr))))
      (cond
        ((memv #f args-res)  ; error detected for args-res
         #f)
@@ -2984,7 +2985,7 @@
         (cl:signal-user-error XPTY0004  ; was: SE5052
                               expr))
        (else  ; form new expr            
-        (cons (cons (sa:op-name expr) (map car args-res))
+        (cons `(ddo ,(cons (sa:op-name expr) (map car args-res)))
               sa:type-nodes))))))
 
 ;-------------------------------------------------
@@ -4474,8 +4475,13 @@
                      (const (type !xs!string) "GE")
                      (const (type !xs!string) "LE")
                      (const (type !xs!string) "EQ")))
-           pair   ; everything is ok
-           (cl:signal-user-error SE5050 "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)"))))
+           ; everything is ok
+           (cons `(ddo ,expr) (cdr pair))
+           (cl:signal-user-error
+            SE5050
+            (string-append
+             "index scan condition must be predefined string constant "
+             "(GT, LT, GE, LE or EQ)")))))
       ((!fn!index-scan-between)
        (let ((fourth (list-ref (sa:op-args expr) 3)))
          (if (member fourth
@@ -4483,8 +4489,15 @@
                        (const (type !xs!string) "SEG")
                        (const (type !xs!string) "HINTL")
                        (const (type !xs!string) "HINTR")))
-             pair   ; everything is ok
-             (cl:signal-user-error SE5051 "index scan range must be predefined string constant (INT, SEG, HINTL or HINTR)"))))
+             ; everything is ok
+             (cons `(ddo ,expr) (cdr pair))
+             (cl:signal-user-error
+              SE5051
+              (string-append
+               "index scan range must be predefined string constant "
+               "(INT, SEG, HINTL or HINTR)")))))
+      ((!fn!ftindex-scan !fn!ftindex-scan2)
+       (cons `(ddo ,expr) (cdr pair)))
       ((!fn!name !fn!namespace-uri !fn!string-length !fn!normalize-space
                  !fn!string !fn!local-name !fn!number !fn!base-uri
                  !fn!root)
