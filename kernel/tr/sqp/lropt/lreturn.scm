@@ -520,7 +520,10 @@
                        #f #f #f))
      ; Index scan functions and full-text search functions
      ((!fn!index-scan !fn!index-scan-between !fn!ftindex-scan !fn!ftindex-scan2)
-      (lropt:sedna-index-fun-calls expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
+      (lropt:sedna-index-fun-calls expr called-once?
+                                   order-required? distinct-required?
+                                   order-desired? distinct-desired?
+                                   mode-ordered?
                                    var-types prolog processed-funcs))
      ((!fn!ftscan)
       (let ((return-first  ; can be supplied with either 2 or 3 arguments
@@ -586,14 +589,21 @@
      ;-------------------
      ; Union operations
      ((union@ intersect@ except@)       
-      (lropt:propagate
-       (lropt:wrap-union-intersect-except expr)
-       called-once?
-       #t  ; order required for union operations to work properly
-       #t #t #t
-       mode-ordered?
-       var-types prolog processed-funcs
-       #t #f #f))
+      (lropt:union-intersect-except expr called-once?
+                                    order-required? distinct-required?
+                                    order-desired? distinct-desired?
+                                    mode-ordered?
+                                    var-types prolog processed-funcs)
+      ; Was:
+;      (lropt:propagate
+;       (lropt:wrap-union-intersect-except expr)
+;       called-once?
+;       #t  ; order required for union operations to work properly
+;       #t #t #t
+;       mode-ordered?
+;       var-types prolog processed-funcs
+;       #t #f #f)
+      )
      ;-------------------
      ; Function call
      ((fun-call ext-fun-call)
@@ -1700,7 +1710,9 @@
                        (not order-required?)
                        (not distinct-required?)))
                       new-arg0)
-                    ((and (not order-required?) distinct-required?)
+                    ((or
+                      (and (not order-required?) distinct-required?)
+                      (not mode-ordered?))
                      `(distinct ,new-arg0))
                     (else
                      (list (xlr:op-name expr)  ; == 'ddo
@@ -1764,7 +1776,9 @@
                 ; Self axis => order after filtering
                 (list
                  (if
-                  (and (not order-required?) distinct-required?)
+                  (or
+                   (and (not order-required?) distinct-required?)
+                   (not mode-ordered?))
                   'distinct
                   (xlr:op-name expr)  ; == 'ddo
                   )
@@ -1775,7 +1789,9 @@
                 (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
                       (list
                        (if
-                        (and (not order-required?) distinct-required?)
+                        (or
+                         (and (not order-required?) distinct-required?)
+                         (not mode-ordered?))
                         'distinct
                         (xlr:op-name expr)  ; == 'ddo
                         )
@@ -1811,7 +1827,8 @@
              ((or ddo-auto?  ; order achieved automatically
                   (and (not order-required?) (not distinct-required?)))
                new-arg0)
-             ((and (not order-required?) distinct-required?)
+             ((or (and (not order-required?) distinct-required?)
+                  (not mode-ordered?))
               ; TODO: or distinct-auto?
               `(distinct ,new-arg0))
              (else
@@ -1902,10 +1919,14 @@
 
 ; !fn!index-scan and the like
 ; Additional ddo is to be inserted iff the order-required
-(define (lropt:sedna-index-fun-calls expr called-once? order-required? distinct-required? order-desired? distinct-desired? mode-ordered?
+(define (lropt:sedna-index-fun-calls expr called-once?
+                                     order-required? distinct-required?
+                                     order-desired? distinct-desired?
+                                     mode-ordered?
                                      var-types prolog processed-funcs)
   (if
-   order-required?
+   ; Now ddo is added on sa step
+   #f  ; Was: order-required?
    (call-with-values
     (lambda () (lropt:propagate expr called-once? #f  ; [*]
                                 #f #f #f
@@ -2156,6 +2177,29 @@
 ;     (write func-name)
 ;     (newline)
      (values #f processed-funcs)))))
+
+(define (lropt:union-intersect-except expr called-once?
+                                      order-required? distinct-required?
+                                      order-desired? distinct-desired?
+                                      mode-ordered?
+                                      var-types prolog processed-funcs)
+  (call-with-values
+   (lambda ()
+     (lropt:propagate expr called-once?
+                      #f #f #f #f  ; no ordering required
+                      mode-ordered?
+                      var-types prolog processed-funcs
+                      #f #f #f))
+   (lambda (new-expr expr-ddo-auto? expr-0-or-1? expr-level?
+                     processed-funcs expr-order-for-vars)
+     (values
+      (cons
+       (xlr:op-name new-expr)
+       (map
+        (lambda (kid) `(distinct ,kid))
+        (xlr:op-args new-expr)))
+      #f #f #f  ; ddo-auto? and such 
+      processed-funcs expr-order-for-vars))))
 
 (define (lropt:wrap-union-intersect-except expr)
  (cons (xlr:op-name expr)
