@@ -33,6 +33,8 @@ void PPExcept::open  ()
 
     tug_first = true;
     tug_second = true;
+
+    need_reopen_second = false;
 }
 
 void PPExcept::reopen()
@@ -42,6 +44,8 @@ void PPExcept::reopen()
 
     tug_first = true;
     tug_second = true;
+
+    need_reopen_second = false;
 }
 
 void PPExcept::close ()
@@ -54,6 +58,8 @@ void PPExcept::next  (tuple &t)
 {
     SET_CURRENT_PP(this);
     
+    if(need_reopen_second)  {child1.op->reopen(); need_reopen_second = false;}
+    
     while (true)
     {
         if (tug_first)
@@ -65,7 +71,8 @@ void PPExcept::next  (tuple &t)
             }
             else
             {
-                if (!child1.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of except is not a node");
+                if (!child1.get(t).is_node()) 
+                    throw XQUERY_EXCEPTION2(XPTY0004, "First argument of except operation contains item which is not a node");
                 xptr1 = child1.get(t).get_node();
             }
             tug_first = false;
@@ -80,13 +87,16 @@ void PPExcept::next  (tuple &t)
             }
             else
             {
-                if (!child2.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of except is not a node");
+                if (!child2.get(t).is_node()) 
+                    throw XQUERY_EXCEPTION2(XPTY0004, "Second argument of except operation contains item which is not a node");
                 xptr2 = child2.get(t).get_node();
             }
             tug_second = false;
         }
 
-        switch (doc_order_merge_cmp(&xptr1, &xptr2))
+        /// XNULL by definition is equal to any xptr with addr == NULL;
+        /// XNULL by definition is > of any xptr (except itself);
+        switch (xptr_compare(xptr1, xptr2))
         {
             case -1: /// (1) < (2)
             {
@@ -109,6 +119,14 @@ void PPExcept::next  (tuple &t)
             }
             case  1: /// (1) > (2)
             {
+                if(xptr1 == XNULL) /// Small optimization. In this case we do not need to obtain remain items from the child1.
+                {
+                    need_reopen_second = true;
+                    t.set_eos();
+                    tug_first = true;
+                    tug_second = true;
+                    {RESTORE_CURRENT_PP; return;}
+                }
                 tug_second = true;
                 break;
             }
