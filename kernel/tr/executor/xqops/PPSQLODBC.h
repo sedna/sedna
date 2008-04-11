@@ -173,7 +173,7 @@ public:
 	static SQLODBCExecutor* create(SQLHDBC hdbc);
 	void prepare(char *query, int query_len, PPOpIn *options);
 
-	virtual void execute_query (char *query, int query_len, PPOpIn *options);
+	virtual void execute_query (const char *query, int query_len, PPOpIn *options);
 	virtual void execute_prepared(arr_of_PPOpIn params);
 	virtual void close_query();
 	virtual void fetch(tuple &t, xptr virt_root, xptr &last_elem);
