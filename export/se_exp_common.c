@@ -102,18 +102,23 @@ int getSednaErrorStatus(char *errorMessage) {
 int check_sedna_feature(struct SednaConnection *conn, const char *query, FILE* log) {
 	int res;
 	char *result;
+    char needBeginCommit = 1;
     
-	if ((res = SEbegin(conn))!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
-		ETRACE((log,"ERROR: failed to begin transaction\n"));
-	}
+    if (SEtransactionStatus(conn) != SEDNA_TRANSACTION_ACTIVE) {
+        if ((res = SEbegin(conn))!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
+            ETRACE((log,"ERROR: failed to begin transaction\n"));
+	    }
+    }else 
+        needBeginCommit = 0;
     
 	if ((res = SEexecute(conn,query))!= SEDNA_QUERY_SUCCEEDED) 
 		return SEDNA_FEATURE_DISABLED;
 	else {
-		if(SEcommit(conn) != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) {
-			FTRACE((log, "WARNING: Commit transaction failed.Details:\n%s\n",SEgetLastErrorMsg(conn)));
-			return SEDNA_FEATURE_DISABLED; // TODO - need to review
-		}
+		if (needBeginCommit)
+            if(SEcommit(conn) != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) {
+                FTRACE((log, "WARNING: Commit transaction failed.Details:\n%s\n",SEgetLastErrorMsg(conn)));
+                return SEDNA_FEATURE_DISABLED; // TODO - need to review
+            }
 		return SEDNA_FEATURE_ENABLED;
 	}
 }
