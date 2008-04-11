@@ -62,7 +62,7 @@ void PPUnion::next  (tuple &t)
         else
         {
             if (!child1.get(t).is_node()) 
-                throw XQUERY_EXCEPTION2(XPTY0004, "Second argument of union operation contains item which is not a node");
+                throw XQUERY_EXCEPTION2(XPTY0004, "First argument of union operation contains item which is not a node");
             xptr1 = child1.get(t).get_node();
         }
 
