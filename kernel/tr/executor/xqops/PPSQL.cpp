@@ -278,7 +278,7 @@ static char *getStringParameter(PPOpIn content)
 //	int charsize=1;
 	while (!(value.is_eos()))
 	{
-		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPConstructor");
+		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPSQL");
 		at_vals.add(value);		
 	}
 	sequence::iterator it=at_vals.begin();
@@ -487,11 +487,8 @@ void PPFnSQLExecute::next(tuple &t)
 				}
 
 				{
-					char *query	= NULL;
-					int	query_len = 0;
-					tmp_cell = getStringParameter(arr[1]);
-					query		= tmp_cell.get_str_mem();
-					query_len	= tmp_cell.get_strlen_mem();
+					const char *query	= getStringParameter(arr[1]);
+					int	query_len = strlen(query);
 
 					//TODO - options
 					executor->execute_query(query, query_len, NULL);
@@ -601,7 +598,7 @@ void PPFnSQLPrepare::next(tuple &t)
 	{
 		SQLHandle *handle;
 		tuple tmp(1);
-		tuple_cell tmp_cell;
+		//tuple_cell tmp_cell;
 
 		first_time = false;
 
@@ -624,9 +621,8 @@ void PPFnSQLPrepare::next(tuple &t)
 
 		char *query	= NULL;
 		int	query_len = 0;
-		tmp_cell	= getStringParameter(statement);
-		query		= tmp_cell.get_str_mem();
-		query_len	= tmp_cell.get_strlen_mem();
+		query		= getStringParameter(statement);
+		query_len	= strlen(query);
 
 		SQLHandle *stmt;
 		if (has_options)

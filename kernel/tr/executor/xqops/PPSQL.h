@@ -42,7 +42,7 @@ public:
 class SQLExecutor
 {
 public:
-	virtual void execute_query (char *query, int query_len, PPOpIn *options) = 0;
+	virtual void execute_query (const char *query, int query_len, PPOpIn *options) = 0;
 	virtual void execute_prepared(arr_of_PPOpIn params) = 0;
 	virtual void close_query() = 0;
 	virtual void fetch(tuple &t, xptr virt_root, xptr &last_elem) = 0;

@@ -434,7 +434,7 @@ void SQLODBCExecutor::prepare_results()
 	}
 }
 
-void SQLODBCExecutor::execute_query (char *query, int query_len, PPOpIn *options)
+void SQLODBCExecutor::execute_query (const char *query, int query_len, PPOpIn *options)
 {
 	SQLRETURN rc;
 
