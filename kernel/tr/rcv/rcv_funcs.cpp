@@ -844,8 +844,8 @@ try{
        insert_namespace(removeIndirection(left),
                         removeIndirection(right),
                         removeIndirection(parent),
-                        uri,
-                        prefix);
+                        strlen(uri) ? uri : NULL,
+                        strlen(prefix) ? prefix : NULL);
 
        xptr self_res = get_last_indir();
 //       if (self_res != self) indir_map[self] = self_res;
