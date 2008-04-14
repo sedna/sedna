@@ -14,10 +14,8 @@
 #include "sm/cdb_globals.h"
 #include "sm/sm_functions.h"
 #include "common/ph/pers_heap.h"
-#include "sm/plmgr/plmgr_core.h"
 #include "sm/llmgr/llmgr_core.h"
 #include "sm/db_utils.h"
-#include "sm/plmgr/plmgr.h"
 #include "common/errdbg/d_printf.h"
 #include "common/u/uhdd.h"
 #include "common/version.h"
@@ -171,9 +169,7 @@ void create_db(__int64 data_file_max_size,
         throw USER_EXCEPTION2(SE4045, "data file");
 
     // flush master block to disk
-    xptr tmp_p = XNULL;
-    indirection_table_free_entry = &tmp_p;
-    flush_master_block(false);
+    flush_master_block();
 
     // close opened files
     if (uCloseFile(data_file_handler, __sys_call_error) == 0)
@@ -183,131 +179,6 @@ void create_db(__int64 data_file_max_size,
         throw USER_EXCEPTION(SE4305);
 
     if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
-}
-
-// buffer for physical log
-char phys_log_buf[0x100000]; //1MB
-
-void create_phys_log(int phys_log_size)
-{
-#ifdef PHYS_LOG
-  UFile phys_log_handle;
-  USECURITY_ATTRIBUTES *sa;
-  
-  string phys_log_file_name = string(db_files_path) + string(db_name) + ".seplog";
-
-  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
-  //create phys log file
-  phys_log_handle = uCreateFile(
-                            phys_log_file_name.c_str(),
-                            0,
-                            U_READ_WRITE,
-                            U_WRITE_THROUGH,
-                            sa,
-                            __sys_call_error
-                            );
-
-
-  if (phys_log_handle == U_INVALID_FD)
-     throw USER_EXCEPTION2(SE4040, "physical log file");
-
-  
-  if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
-  
-  //write the header of phys log
-  file_head pl_head;
-  int res, sector_size;
-
-  res = uGetDiskSectorSize(&sector_size, db_files_path, __sys_call_error);
-  
-
-  if ( res == 0 )
-     throw USER_EXCEPTION(SE4051);
-
-  pl_head.version = 0;
-  pl_head.next_lsn = sector_size;
-  pl_head.prev_lsn = NULL_LSN;
-  pl_head.ph_bu_to_ph= true;
-  pl_head.last_checkpoint_lsn = NULL_LSN;
-  pl_head.cp_num = 0;
-  pl_head.is_stopped_successfully = true;
-  pl_head.sedna_db_version=SEDNA_DATA_STRUCTURES_VER;
-
-  int nbytes_written;
-
-  res = uWriteFile(
-               phys_log_handle,
-               &pl_head,
-               sizeof(file_head),
-               &nbytes_written,
-               __sys_call_error
-              );
-
-
-  if ( res == 0 || nbytes_written != sizeof(file_head))
-     throw USER_EXCEPTION2(SE4045, "physical log");
-
-
-  //set the size of the phys log file and 
-  //set the headers of sectors to initial state
-
-  res = uSetFilePointer(
-                     phys_log_handle,
-                     sector_size,
-                     NULL,
-                     U_FILE_BEGIN,
-                     __sys_call_error
-                   );
-
-  if ( res == 0 )
-     throw USER_EXCEPTION2(SE4046, "physical log");
-
-
-  int file_rmndr = phys_log_size - sector_size;
-  sector_head sect_head;
-  sect_head.durable_lsn = NULL_LSN;
-  sect_head.version = -1;
-
-  d_printf2("phys_log_size=%d\n", phys_log_size);
-
-  //init remainder of phys log
-  int offs = 0;
-
-  //init buf to write in phys log
-  while (offs < 0x100000)
-  {
-    memcpy(((char*)phys_log_buf)+offs, &sect_head, sizeof(sector_head));        
-    offs += sector_size;
-  }
-
-
-  //write n times buf to phys log. n is equal to number of Mb of phys log  
-  for (int i=0; i<(phys_log_size/0x100000); i++)
-  {
-    res = uWriteFile(
-                 phys_log_handle,
-                 phys_log_buf,
-                 0x100000,
-                 &nbytes_written,
-                 __sys_call_error                 
-                );
-
-    if (res == 0 || nbytes_written != 0x100000)
-      throw SYSTEM_EXCEPTION("Can't write to phys log file");
-
-  }
-
-
-  res = uSetEndOfFile(phys_log_handle, 0, U_FILE_CURRENT, __sys_call_error);
-
-  if (res == 0)
-      throw USER_EXCEPTION2(SE4047, "physical log");
-
-  res = uCloseFile(phys_log_handle, __sys_call_error);
-
-  if ( res == 0 )
-      throw USER_EXCEPTION2(SE4043, "physical log");
-#endif
 }
 
 static inline void cleanup_db_and_check_result(const char* db_name)
@@ -330,14 +201,11 @@ int main(int argc, char **argv)
     int data_file_initial_size = 1600;			// = 10Mb (in pages)
     int tmp_file_initial_size = 1600;			// = 10Mb (in pages)
     int persistent_heap_size = 0xA00000;		// = 10Mb
-//    int phys_log_size = 0xA00000;               // = 10Mb
-//    int phys_log_ext_portion = 0xA00000;        // = 10Mb
     pping_client *ppc = NULL;
     SednaUserException ppc_ex = USER_EXCEPTION(SE4400);
 
     bool is_ppc_started         = false;
     bool is_bm_started          = false;
-    bool is_ll_phys_log_started = false;
 
     UShMem gov_mem_dsc;
     int db_id = -1;
@@ -369,9 +237,7 @@ int main(int argc, char **argv)
                                  tmp_file_extending_portion,
                                  data_file_initial_size,
                                  tmp_file_initial_size,
-                                 persistent_heap_size,
-                                 phys_log_size,
-                                 phys_log_ext_portion);
+                                 persistent_heap_size);
 
 
         if (_cdb_s_help_ == 1 || _cdb_l_help_ == 1)
@@ -419,8 +285,6 @@ int main(int argc, char **argv)
                                       db_name,
                                       bufs_num,
                                       max_trs_num,
-                                      phys_log_ext_portion,
-                                      phys_log_size,
                                       LOG_FILE_PORTION_SIZE,
                                       upd_crt);
 
@@ -440,8 +304,6 @@ int main(int argc, char **argv)
              create_cfg_file(db_name,
                              max_trs_num,
                              bufs_num,
-                             (phys_log_size / 0x100000),
-                             (phys_log_ext_portion / 0x100000),
                              upd_crt
                             );
 
@@ -455,10 +317,6 @@ int main(int argc, char **argv)
                       );
 
              d_printf1("create_db call successful\n");
-
-             create_phys_log(phys_log_size);
-
-             d_printf1("create_phys_log call successful\n");
 
              create_logical_log((string(db_files_path) + string(db_name) + ".0llog").c_str(),
                                 0,
@@ -476,18 +334,7 @@ int main(int argc, char **argv)
 
              d_printf1("create_logical_log call successful\n");
 
-
-
              init_checkpoint_sems();
-
-             ll_phys_log_startup(sedna_db_version);
-             is_ll_phys_log_started = true;
-             d_printf1("phys_log_startup call successful\n");
-
-             ll_phys_log_set_phys_log_flag(false);
-
-             ll_phys_log_startup_shared_mem();
-             d_printf1("ll_phys_log_startup_shared_mem call successful\n");
 
 			 ll_logical_log_startup(sedna_db_version);
              d_printf1("logical_log_startup call successful\n");
@@ -497,7 +344,6 @@ int main(int argc, char **argv)
              d_printf1("bm_startup call successful\n");
 
              WuSetTimestamp(0x10000);
-//             WuInitExn(0,0, 0x10000);
 
              extend_data_file(data_file_initial_size);
              d_printf1("extend_data_file call successful\n");
@@ -508,19 +354,6 @@ int main(int argc, char **argv)
              is_bm_started = false;
              bm_shutdown();
              d_printf1("bm_shutdown call successful\n");
-
-//		     WuReleaseExn();
-//       		 elog(EL_LOG, ("cdb : Wu is released"));
-
-             ll_phys_log_clear((LONG_LSN)(-1));
-             d_printf1("ll_phys_log_clear call successful\n");
-
-             ll_phys_log_set_ph_bu_to_ph(true);
-             d_printf1("ll_phys_log_set_ph_bu_to_ph\n");
-
-             is_ll_phys_log_started = false;
-             ll_phys_log_shutdown();
-             d_printf1("phys_log_shutdown call successful\n");
 
 	         ll_logical_log_shutdown();
              d_printf1("logical_log_shutdown call successful\n");
@@ -548,19 +381,16 @@ int main(int argc, char **argv)
              event_logger_release();
              if (is_ppc_started) {if (ppc) ppc->shutdown();}
              if (is_bm_started) bm_shutdown();
-             if (is_ll_phys_log_started) ll_phys_log_shutdown();
              cleanup_db_and_check_result(db_name);
              uSocketCleanup(__sys_call_error);  
              erase_database_cell_in_gov_shm(db_id, (gov_config_struct*)gov_shm_pointer);
              return 1;
         } catch (SednaException &e) {
              if (is_bm_started) bm_shutdown();
-             if (is_ll_phys_log_started) ll_phys_log_shutdown();
              cleanup_db_and_check_result(db_name);            
              sedna_soft_fault(e, EL_CDB);
         } catch (ANY_SE_EXCEPTION) {
              if (is_bm_started) bm_shutdown();
-             if (is_ll_phys_log_started) ll_phys_log_shutdown();
              cleanup_db_and_check_result(db_name);            
              sedna_soft_fault(EL_CDB);
         }

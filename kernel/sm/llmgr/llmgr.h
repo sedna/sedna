@@ -15,21 +15,13 @@ bool ll_logical_log_startup(int &sedna_db_version);
 
 void ll_logical_log_shutdown();
 
-//LONG_LSN ll_logical_log_checkpoint();
-//void ll_logical_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
 int ll_logical_log_checkpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage);
 
 void ll_logical_log_flush();
 
-//void ll_log_flush_last_records();
-
 void ll_logical_log_flush_lsn(LONG_LSN lsn);
 
-//void ll_logical_log_flush_last_record();
-
 void ll_truncate_logical_log();
-
-//void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn);
 
 void ll_add_free_blocks_info(xptr phys_xptr, void *block, int size);
 
@@ -38,8 +30,6 @@ void ll_add_decrease_info(__int64 old_size);
 LONG_LSN ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info, TIMESTAMP ts);
 
 TIMESTAMP ll_returnTimestampOfPersSnapshot();
-
-//LONG_LSN ll_getLastChainLSN();
 
 void ll_updateMinRcvLSN();
 
@@ -53,7 +43,6 @@ LONG_LSN ll_recover_db_by_phys_records(); // physical recovery by log; returns l
 
 void ll_recover_pers_heap();
 
-//void ll_flush_file_head();
 bool ll_log_get_checkpoint_on_flag();
 
 #endif

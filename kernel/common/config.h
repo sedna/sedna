@@ -24,8 +24,6 @@ struct gov_db_struct
    int bufs_num;
    int max_trs_num;
    double upd_crt;
-   int phys_log_ext_portion;
-   int phys_log_size;
    int logical_log_file_size; //size of one logical log's file
 };
 

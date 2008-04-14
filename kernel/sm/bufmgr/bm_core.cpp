@@ -8,7 +8,6 @@
 #include "common/sm_vmm_data.h"
 #include "common/ph/pers_heap.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/plmgr/plmgr.h"
 #include "sm/llmgr/llmgr.h"
 #include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
@@ -43,7 +42,6 @@ ramoffs buffer_on_stake = -1;
 // File mappings
 UMMap  file_mapping;
 UShMem p_sm_callback_file_mapping;
-UShMem itfe_file_mapping;
 
 #ifdef LRU
 // LRU global stamp counter
@@ -83,9 +81,6 @@ USemaphore ft_index_sem;
 USemaphore trigger_sem;
 #endif
 
-// Pointer to shared memory where xptr to indirection table is stored
-xptr* indirection_table_free_entry = NULL;
-
 // File handlers
 UFile data_file_handler;
 UFile tmp_file_handler;
@@ -120,17 +115,10 @@ void read_master_block()
     int res = uReadFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
-
-    *indirection_table_free_entry = mb->indirection_table_free_entry;
 }
 
-void flush_master_block(bool is_write_plog)
+void flush_master_block()
 {
-    mb->indirection_table_free_entry = *indirection_table_free_entry;
-	
-	if (is_write_plog)
-		ll_phys_log_master_blk(mb, sizeof(bm_masterblock));
-
     if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
@@ -195,7 +183,7 @@ void read_block(const xptr &p, ramoffs offs) throw (SednaException)
 }
 
 
-void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (SednaException)
+void write_block(const xptr &p, ramoffs offs) throw (SednaException)
 {
 #if 0
 	/* moved to flush_buffer */ 
@@ -314,7 +302,7 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
         //if (it == trs.end()) break; // successfully approved
     }
 
-    flush_buffer(*offs,false);
+    flush_buffer(*offs);
 	buffer_table.remove((*phys_xptrs)[*offs/PAGE_SIZE]);
 	
 	(*phys_xptrs)[*offs/PAGE_SIZE]=XNULL;
@@ -374,7 +362,7 @@ xptr put_block_to_buffer(session_id sid,
     return swapped;
 }
 
-void flush_buffer(ramoffs offs, bool sync_phys_log)
+void flush_buffer(ramoffs offs)
 {
 	vmm_sm_blk_hdr *blk = NULL;
 	int ind = offs / PAGE_SIZE;
@@ -390,14 +378,14 @@ void flush_buffer(ramoffs offs, bool sync_phys_log)
 			ll_logical_log_flush_lsn(blk->lsn);
 		}
 		WuOnFlushBufferExn(physXptr);
-        write_block(physXptr, offs, sync_phys_log);
+        write_block(physXptr, offs);
 		blk->is_changed = false;
 		/*	TODO: it will introduce bugs if flushed a buffer which a transaction is modifying now,
 			anyway it will lead to unpredictable results even w/o is_changed issue */ 
 	}
 }
 
-void flush_buffers(bool sync_phys_log)
+void flush_buffers()
 {
 	vmm_sm_blk_hdr *blk = NULL;
     t_buffer_table::iterator it;
@@ -411,7 +399,7 @@ void flush_buffers(bool sync_phys_log)
         //d_printf2("record 		(offs = %d) xptr = ", (ramoffs)(*it));
         blk->p.print();
 
-		flush_buffer((ramoffs)(*it), sync_phys_log);
+		flush_buffer((ramoffs)(*it));
     }
 
     d_printf1("Flush buffers: complete\n");
@@ -435,7 +423,7 @@ void flush_data_buffers()
 
         if (IS_DATA_BLOCK(blk->p))
         {
-			flush_buffer((ramoffs)(*it), false);
+			flush_buffer((ramoffs)(*it));
         }
     }
 

@@ -70,7 +70,6 @@ extern ramoffs buffer_on_stake;
 // File mappings
 extern UMMap  file_mapping;
 extern UShMem p_sm_callback_file_mapping;
-extern UShMem itfe_file_mapping;
 
 #ifdef LRU
 // LRU global stamp counter
@@ -123,9 +122,6 @@ extern USemaphore ft_index_sem;
 extern USemaphore trigger_sem;
 #endif
 
-// Pointer to shared memory where xptr to indirection table is stored
-extern xptr* indirection_table_free_entry;
-
 // File handlers
 extern UFile data_file_handler;
 extern UFile tmp_file_handler;
@@ -175,7 +171,7 @@ void init_master_block();
 void release_master_block();
 */
 void read_master_block();
-void flush_master_block(bool is_write_plog = true);
+void flush_master_block();
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Buffer functions
@@ -190,8 +186,8 @@ xptr put_block_to_buffer(session_id sid,
 bool find_block_in_buffers(const xptr &p,
 						   ramoffs *offs);
 
-void flush_buffer(ramoffs offs, bool sync_phys_log = true); // this function flushes block with a given offset from the buffer
-void flush_buffers(bool sync_phys_log = true);
+void flush_buffer(ramoffs offs); // this function flushes block with a given offset from the buffer
+void flush_buffers();
 void flush_data_buffers();
 
 ////////////////////////////////////////////////////////////////////////////////

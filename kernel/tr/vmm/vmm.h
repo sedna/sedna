@@ -132,13 +132,6 @@ void vmm_exit_exclusive_mode() throw (SednaException);
 
 void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaException);
 
-// VMM recovery functions
-//void vmm_rcv_alloc_data_block(xptr /*out*/ *p) throw (SednaException);
-void vmm_rcv_alloc_indir_block(xptr p) throw (SednaException);
-void vmm_rcv_add_to_indir_block_set(xptr p) throw (SednaException);
-void vmm_rcv_clear_indir_block_set() throw (SednaException);
-
-
 // Internal VMM functions
 void vmm_unswap_block(xptr p) throw (SednaException);
 void vmm_unswap_block_write(xptr p) throw (SednaException);

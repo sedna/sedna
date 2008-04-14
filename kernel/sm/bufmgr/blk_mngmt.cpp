@@ -6,7 +6,6 @@
 #include "common/sm_vmm_data.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
-#include "sm/plmgr/plmgr.h"
 #include "sm/llmgr/llmgr.h"
 #include "sm/wu/wu.h"
 
@@ -25,10 +24,6 @@ struct free_blk_hdr
 
 	static void init(void *p);
 };
-
-#define LOG_FREE_BLK_HDR_ADDITIONAL_PART(p)		ll_phys_log_change((char*)(p) + sizeof(vmm_sm_blk_hdr), (shft)(sizeof(xptr) + sizeof(int)))
-#define LOG_FREE_BLK_HDR_NUM(p)					ll_phys_log_change((char*)(p) + sizeof(vmm_sm_blk_hdr) + sizeof(xptr), (shft)sizeof(int))
-#define LOG_FREE_BLK_CELL(p)					ll_phys_log_change((char*)(p) + (PAGE_SIZE - p->num * sizeof(xptr)), (shft)sizeof(xptr))
 
 void free_blk_hdr::init(void *p)
 {
@@ -51,7 +46,6 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         put_block_to_buffer(-1, p, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        //if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
         if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(p, (void *)blk, PAGE_SIZE);
 
         free_blk_hdr::init(blk);
@@ -70,7 +64,6 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         put_block_to_buffer(-1, p, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        //if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
         if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(p, (void *)blk, PAGE_SIZE);
 
         free_blk_hdr::init(blk);
@@ -79,7 +72,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
     }
     else
     {
-        if (IS_DATA_BLOCK_LP(blk))// LOG_FREE_BLK_HDR_NUM(blk);
+        if (IS_DATA_BLOCK_LP(blk))
         {
         	if (blk->ts < pers_ts)
         		ll_add_free_blocks_info(*hd, (void *)blk, PAGE_SIZE);
@@ -88,7 +81,6 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
 
         blk->num++;
 
-//		if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_CELL(blk);
         *(xptr*)((char*)blk + (PAGE_SIZE - blk->num * sizeof(xptr))) = p;
     }
 
@@ -127,7 +119,6 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
     {
         *p = *(xptr*)((char*)blk + (PAGE_SIZE - blk->num * sizeof(xptr)));
 
-//        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_NUM(blk);
         if (IS_DATA_BLOCK_LP(blk))
         {
         	if (blk->ts < pers_ts)
@@ -173,8 +164,6 @@ int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)
         put_block_to_buffer(-1, tmp, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
-
         free_blk_hdr::init(blk);
         *hd = tmp;
     }
@@ -191,17 +180,12 @@ int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)
         put_block_to_buffer(-1, tmp, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
-
         free_blk_hdr::init(blk);
         blk->nblk = *hd;
         *hd = tmp;
     }
-    else if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_NUM(blk);
 
     blk->num++;
-
-    if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_CELL(blk);
 
     *(xptr*)((char*)blk + (PAGE_SIZE - blk->num * sizeof(xptr))) = p;
 
@@ -231,8 +215,6 @@ int pop_from_persistent_used_blocks_stack(xptr *hd, xptr *p)
     {
         *p = *(xptr*)((char*)blk + (PAGE_SIZE - blk->num * sizeof(xptr)));
 
-        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_NUM(blk);
-
         blk->num--;
 
         blk->sm_vmm.is_changed = true;
@@ -255,8 +237,6 @@ void extend_data_file(int extend_portion) throw (SednaException)
         (__int64)PAGE_SIZE > mb->data_file_max_size + (__int64)PAGE_SIZE)
         throw USER_EXCEPTION(SE1011);
     
-//    ll_phys_log_decrease(mb->data_file_cur_size);
-//    ll_phys_log_flush();
 	ll_add_decrease_info(mb->data_file_cur_size);
     
     int res = 0;

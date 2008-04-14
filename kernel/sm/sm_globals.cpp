@@ -61,11 +61,8 @@ void setup_sm_globals(gov_config_struct* cfg)
    strcat(db_files_path, db_name);
    strcat(db_files_path, "_files/");
 
-
    bufs_num =  cfg->db_vars[db_id].bufs_num;
    max_trs_num = cfg->db_vars[db_id].max_trs_num;
-   phys_log_ext_portion = cfg->db_vars[db_id].phys_log_ext_portion;
-   phys_log_size = cfg->db_vars[db_id].phys_log_size;
    upd_crt = cfg->db_vars[db_id].upd_crt;
 
    if ( __bufs_num__ > 0 )
@@ -139,7 +136,6 @@ int sm_version = 0;
 int background_mode = 0; 
 int __bufs_num__ = 0;
 int __max_trs_num__ = 0;
-int write_phys_log = 1;
 
 double __upd_crt__ = 0;
 
@@ -154,9 +150,6 @@ arg_rec sm_argtable[] =
 {"-bufs-num",        " N",       arg_int,  &__bufs_num__,            "-1",  "\t\t   the number of buffers in main memory, \n\t\t\t   (default value retrieved from config file)" },
 {"-max-trs-num",     " N",       arg_int,  &__max_trs_num__,         "-1",  "\t   the number of concurrent micro transactions over \n\t\t\t   database, (default value retrieved from config file)" },
 {"-upd-crt",         " N",       arg_dbl,  &__upd_crt__,             "-1.0","\t\t   criterion parameter to advance snapshots, \n\t\t\t (default value retrieved from config file)"},
-/*
-{"-write-phys-log",  " on/off",  arg_bool, &write_phys_log,          "on",  "   write to physical log (default on)"},
-*/
 {NULL,               " db-name", arg_str,   db_name,                 "???", "\t\t   the name of the database "}
 };
 

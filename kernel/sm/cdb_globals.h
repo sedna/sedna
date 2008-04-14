@@ -36,9 +36,9 @@ extern const size_t cdb_narg;
 
 void print_cdb_usage();
 
-void setup_cdb_globals(int, char**, __int64 &, __int64 &, int &, int &, int &, int &, int &, int &, int &);
+void setup_cdb_globals(int, char**, __int64 &, __int64 &, int &, int &, int &, int &, int &);
 
-void create_cfg_file(char *, int, int, int, int, double);
+void create_cfg_file(char *, int, int, double);
 
 void create_data_directory();
 

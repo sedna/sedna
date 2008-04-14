@@ -11,7 +11,6 @@
 #include "common/errdbg/d_printf.h"
 #include "common/tr_debug.h"
 #include "common/base.h"
-#include "sm/plmgr/plmgr.h"
 #include "sm/llmgr/sm_llmgr.h"
 
 using namespace std;
@@ -93,23 +92,6 @@ void ll_logical_log_flush_lsn(LONG_LSN lsn)
 #endif
 }
 
-/*
-void ll_logical_log_flush_last_record()
-{
-#ifdef LOGICAL_LOG
-  logical_log_mgr->ll_log_flush_last_record(true);
-#endif
-}
-
-
-void ll_log_flush_last_records()
-{
-#ifdef LOGICAL_LOG
-  logical_log_mgr->ll_log_flush_all_last_records(true);
-#endif
-}
-*/
-
 void ll_truncate_logical_log()
 {
 #ifdef LOGICAL_LOG
@@ -117,15 +99,6 @@ void ll_truncate_logical_log()
 #endif
 
 }
-
-/*
-void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn)
-{
-#ifdef LOGICAL_LOG
-  logical_log_mgr->freePrevCheckpointBlocks(last_lsn, true);
-#endif
-}
-*/
 
 void ll_add_free_blocks_info(xptr phys_xptr, void *block, int size)
 {
@@ -169,14 +142,6 @@ TIMESTAMP ll_returnTimestampOfPersSnapshot()
   return 0x10000;
 #endif
 }
-
-/*LONG_LSN ll_getLastChainLSN()
-{
-#ifdef LOGICAL_LOG
-  logical_log_mgr->getLastChainLSN();
-#endif
-}
-*/
 
 void ll_updateMinRcvLSN()
 {
@@ -230,12 +195,3 @@ void ll_recover_pers_heap()
 	logical_log_mgr->restorePh();
 #endif
 }
-
-/*
-void ll_flush_file_head()
-{
-#ifdef LOGICAL_LOG
-	logical_log_mgr->flush_file_head(true);
-#endif
-}
-*/

@@ -18,7 +18,6 @@
 #include "common/u/usem.h"
 #include "common/u/uevent.h"
 #include "common/u/ushm.h"
-#include "sm/plmgr/plmgr_core.h"
 #include "common/mmgr/memutils.h"
 
 #include <stdint.h>
@@ -46,41 +45,25 @@
 //#define MAX_ALL_LOG_FILE_SIZE 10*LOG_FILE_PORTION_SIZE
 
 enum {LL_INSERT_ELEM,
-      LL_INDIR_INSERT_ELEM,
       LL_DELETE_ELEM,
-      LL_INDIR_DELETE_ELEM,
       LL_INSERT_ATTR,
-      LL_INDIR_INSERT_ATTR,
       LL_DELETE_ATTR,
-      LL_INDIR_DELETE_ATTR,
       LL_INSERT_TEXT,
-      LL_INDIR_INSERT_TEXT,
       LL_DELETE_TEXT,
-      LL_INDIR_DELETE_TEXT,
       LL_INSERT_LEFT_TEXT,
       LL_DELETE_LEFT_TEXT,
       LL_INSERT_RIGHT_TEXT,
       LL_DELETE_RIGHT_TEXT,
       LL_INSERT_DOC,
-      LL_INDIR_INSERT_DOC,
       LL_DELETE_DOC,
-      LL_INDIR_DELETE_DOC,
       LL_INSERT_COMMENT,
-      LL_INDIR_INSERT_COMMENT,
       LL_DELETE_COMMENT,
-      LL_INDIR_DELETE_COMMENT,
       LL_INSERT_PI,
-      LL_INDIR_INSERT_PI,
       LL_DELETE_PI,
-      LL_INDIR_DELETE_PI,
       LL_INSERT_COLLECTION,
-      LL_INDIR_INSERT_COLLECTION,
       LL_DELETE_COLLECTION,
-      LL_INDIR_DELETE_COLLECTION,
       LL_INSERT_NS,
-      LL_INDIR_INSERT_NS,
       LL_DELETE_NS,
-      LL_INDIR_DELETE_NS,
       LL_INSERT_DOC_INDEX,
       LL_DELETE_DOC_INDEX,
       LL_INSERT_COL_INDEX,
@@ -120,11 +103,9 @@ struct logical_log_file_head
   LONG_LSN last_checkpoint_lsn; //lsn of the last checkpoint record
   LONG_LSN last_chain_lsn; // lsn of the last record in physical records chain
   TIMESTAMP ts; // timestamp of the last persistent snapshot
-//  __int64 ph_cp_counter; // last checkpoint counter of the ph file
-//  __int64 ph_cur_counter; // current counter of the ph file
   bool is_stopped_successfully; // true, if the database was stopped correctly
   int sedna_db_version;
-  //new gield must be appended in the end of structure
+  //new fields must be appended to the end of the structure
 };
 
 struct trn_cell
@@ -196,7 +177,6 @@ struct logical_log_sh_mem_head
   LONG_LSN min_rcv_lsn; // lsn of the start record of logical recovery
   LONG_LSN last_chain_lsn; // lsn of the last record in LL_CHECKPOINT-LL_PERS_SNAPSHOT_ADD chain
   LONG_LSN last_lsn;  // lsnof the last record in log
-//  int number_of_cp_records; // number of continous checkpoint records
   TIMESTAMP ts; // timestamp of the last persistent snapshot
   trn_tbl t_tbl;//transaction table
   int ll_files_arr[MAX_LL_LOG_FILES_NUMBER];//list of logical log files numbers (last element in the list is a tail of log)
@@ -227,20 +207,12 @@ protected:
   void *shared_mem;
   char* read_buf;//
   int read_buf_size;
-//  char small_read_buf[LOGICAL_LOG_UNDO_READ_PORTION];
-//  char *large_read_buf;//this var is used when size of small_read_buf is not enough
 
   bool rollback_active;//used only from transaction (not used from sm)
   bool recovery_active;//used only from rcv_db process and if recovery_active == true the recovery process must not write to phys log
 
   bool checkpoint_active; // true if checkpoint record was added to buffer; used to flush next_lsn
 
-//  __int64 last_checkpoint_ph_counter;
-//  __int64 ph_file_counter; // counter for the ph files
-
-  char* indir_rec;//pointer to indirection log record; it must be appended to the next micro op log record and set to NULL
-  int indir_rec_len;
-  int indir_rec_buf_size;
   std::vector<log_file_dsc> ll_open_files;//this structure is ordered in sm and is unordered in transaction (may contain duplicates)
 
 //  plmgr_core* _phys_log_mgr_; //used to activate checkpoint
@@ -263,14 +235,14 @@ public:
   void print_llog();
 
   //create and release functions; called in sm
-  bool ll_log_create(std::string _db_files_path_, std::string _db_name_, int &sedna_db_version/*, plmgr_core* _phys_log_mgr_*/);
+  bool ll_log_create(std::string _db_files_path_, std::string _db_name_, int &sedna_db_version);
   void ll_log_create_shared_mem();
   void ll_log_release();
   void ll_log_release_shared_mem();
 
 
   //on session functions
-  void ll_log_open(std::string db_files_path, std::string db_name, /*plmgr_core* _phys_log_mgr_,*/ bool rcv_active = false);
+  void ll_log_open(std::string db_files_path, std::string db_name, bool rcv_active = false);
   void ll_log_open_shared_mem();
   void ll_log_close();
   void ll_log_close_shared_mem();
@@ -297,9 +269,6 @@ public:
 
   LONG_LSN ll_log_commit(transaction_id _trid, bool sync);
   void ll_log_rollback(transaction_id _trid, bool sync);
-//  LONG_LSN ll_log_checkpoint(bool sync);
-//  void ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
-  void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
   void ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool sync);
   LONG_LSN ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, TIMESTAMP ts, bool sync);
@@ -320,25 +289,17 @@ public:
 #ifdef SE_ENABLE_FTSEARCH
 void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
                                void (*exec_micro_op) (const char*, int, bool),
-                               void(*switch_indirection)(int),
-                               void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
-                               void (*_vmm_rcv_clear_indir_block_set_)(),
-                               void (*_sync_indirection_table_)(),
                                const LONG_LSN& last_cp_lsn,
-                               int undo_indir_mode,
-                               int redo_indir_mode,
                                bool sync);
 #else
-void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_vmm_rcv_add_to_indir_block_set_)(xptr p), void (*_vmm_rcv_clear_indir_block_set_)(),void (*_sync_indirection_table_)(), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
-
+void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
+							   const LONG_LSN& last_cp_lsn, 
+							   bool sync);
 #endif
-
-//  void freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync);
 
   TIMESTAMP returnTimestampOfPersSnapshot(bool sync);
 
   void flush_last_commit_lsn(LONG_LSN &commit_lsn);//flushes to header last commit lsn
-  //void flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn);
   void flush_file_head(bool sync);
   void flush_file_head_lsn(LONG_LSN llsn, LONG_LSN nlsn, LONG_LSN plsn, bool sync);
   void writeIsStoppedCorrectly(bool is_stopped_correctly);
@@ -348,9 +309,6 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
   void open_all_log_files();//fills ll_open_files structure
   void close_all_log_files();//close file descriptors of all log files
   void extend_logical_log(bool sync);
-
-//  __int64 getNewPhCounter(); // returns file counter for the new ph-file
-//  __int64 getCurPhCounter(); // returns file counter for the last ph-file
 
   void updateMinRcvLSN();
 
@@ -366,27 +324,22 @@ protected:
   LONG_LSN ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync);
   void writeSharedMemoryWithCheck(const void *header, const void* rec_addr);
   void writeSharedMemory(const void*, int len);
-//  logical_log_file_head read_log_file_header();
-//  logical_log_file_head read_tail_log_file_header();
   logical_log_file_head read_log_file_header(UFile file_dsc);
   UFile get_log_file_descriptor(int log_file_number);
 
-//  void flush_log_file_header(const logical_log_file_head &head);
   void set_file_pointer(LONG_LSN &lsn);
   const char* get_record_from_disk(LONG_LSN& lsn);
   int get_record_length(const void* rec);
   const char* get_record_from_shared_memory(int end_offs, int len);
-//  void undo_trn(LONG_LSN& start_lsn, void (*exec_micro_op) (const char*, int, bool));
   void redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
-  void get_undo_redo_trns_list(LONG_LSN &start_lsn, LONG_LSN &end_lsn, /*trns_undo_analysis_list& undo_list,*/ /*out*/trns_redo_analysis_list& redo_list /*out*/, void (*_vmm_rcv_add_to_indir_block_set_)(xptr p));
+  void get_undo_redo_trns_list(LONG_LSN &start_lsn, 
+  							   LONG_LSN &end_lsn /*out*/,
+  							   trns_redo_analysis_list& redo_list /*out*/); 
 
   bool find_redo_trn_cell(transaction_id trid,
                           trns_redo_analysis_list& redo_list,
                           LONG_LSN lsn,
                           trn_cell_analysis_redo& redo_trn_cell/*out*/);
-
-//  bool find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/);
-//  void set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/);
 
   bool find_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list, trn_cell_analysis_redo& redo_trn_cell/*out*/);
   void set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list,trn_cell_analysis_redo& redo_trn_cell/*in*/);
@@ -453,7 +406,6 @@ UFile create_logical_log(const char* log_file_name,
   						 LONG_LSN last_checkpoint_lsn, 
   						 LONG_LSN last_chain_lsn, 
   						 TIMESTAMP ts,
-//                         __int64 ph_cp_counter,
 
                          bool is_close_file = false 
                         );

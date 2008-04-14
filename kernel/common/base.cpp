@@ -66,7 +66,6 @@ static UGlobalNamesRegistryItem globalNamesRegistry[] =
 	{"SHMEM_PERS_HEAP_SNAPSHOT_1",		POLICY_INSTANCE_PER_DB()}, /* PH for snapshot with id #1 */ 
 	{"SEMAP_PERS_HEAP_SNAPSHOT_1",		POLICY_INSTANCE_PER_DB()}, /* dummy sem */ 
 
-	{"SHMEM_INDIRECTION",				POLICY_INSTANCE_PER_DB()}, /* indirection table free entry (?) */ 
 	{"SEMAP_INDIRECTION",				POLICY_INSTANCE_PER_DB()}, /* sync of some kind */ 
 
 	{"SEMAP_METADATA",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to metadata registry in PH */ 
@@ -83,9 +82,6 @@ static UGlobalNamesRegistryItem globalNamesRegistry[] =
 	{"SEMAP_TRN_REGULATION",			POLICY_INSTANCE_PER_DB()}, /* currently if checkpoint is active no updater transactions are allowed and vice-versa (earlier mutual exclusion applied to micro-ops but not transactions) */ 
 	{"EVENT_NEW_JOB_4_CHECKPOINT_THREAD", POLICY_INSTANCE_PER_DB()}, /* signals that a checkpoint must be activated or snapshots must be advanced */ 
 	{"EVENT_READONLY_TRN_COMPLETED",	POLICY_INSTANCE_PER_DB()}, /* signals read-only transaction completion */ 
-
-	{"SHMEM_PHYSICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* physical log state & buffer in shared memory */ 
-	{"SEMAP_PHYSICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* synchronises operation with physical log */ 
 
 	{"SHMEM_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* logical log state & buffer in shared memory */ 
 	{"SEMAP_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* synchronises operation with logical log */ 
@@ -174,7 +170,6 @@ void SetGlobalNames()
 
 /* empty string is invalid as a global name but NULL is valid, so we use empty string as initializer  */ 
 global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME = "";
-global_name CHARISMA_ITFE_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_BUFFER_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_PH_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME = "";
@@ -191,8 +186,6 @@ global_name METADATA_SEMAPHORE_STR = "";
 global_name INDEX_SEMAPHORE_STR = "";
 global_name FT_INDEX_SEMAPHORE_STR = "";
 global_name TRIGGER_SEMAPHORE_STR = "";
-global_name PHYS_LOG_SHARED_MEM_NAME = "";
-global_name PHYS_LOG_PROTECTION_SEMAPHORE_NAME = "";
 global_name CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME = "";
 global_name CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME = "";
 global_name CHARISMA_CHECKPOINT_SEM = "";
@@ -211,7 +204,6 @@ void SetGlobalNamesDB(int databaseId)
 {
 	static char
 		CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME__buf__  [128],
-		CHARISMA_ITFE_SHARED_MEMORY_NAME__buf__			[128],
 		CHARISMA_BUFFER_SHARED_MEMORY_NAME__buf__		[128],
 		CHARISMA_PH_SHARED_MEMORY_NAME__buf__			[128],
 		CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME__buf__		[128],
@@ -228,8 +220,6 @@ void SetGlobalNamesDB(int databaseId)
 		INDEX_SEMAPHORE_STR__buf__						[128],
 		FT_INDEX_SEMAPHORE_STR__buf__					[128],
 		TRIGGER_SEMAPHORE_STR__buf__					[128],
-		PHYS_LOG_SHARED_MEM_NAME__buf__					[128],
-		PHYS_LOG_PROTECTION_SEMAPHORE_NAME__buf__		[128],
 		CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__		[128],
 		CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME__buf__	[128],
 		SEDNA_TRNS_FINISHED__buf__						[128],
@@ -242,9 +232,6 @@ void SetGlobalNamesDB(int databaseId)
 
 	CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME = 
 		UCreateGlobalName("SHMEM_VMM_CALLBACK_PARAMS", databaseId, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME__buf__, 128);
-
-	CHARISMA_ITFE_SHARED_MEMORY_NAME =
-		UCreateGlobalName("SHMEM_INDIRECTION", databaseId, CHARISMA_ITFE_SHARED_MEMORY_NAME__buf__, 128);
 
 	CHARISMA_BUFFER_SHARED_MEMORY_NAME =
 		UCreateGlobalName("SHMEM_BUFFERS", databaseId, CHARISMA_BUFFER_SHARED_MEMORY_NAME__buf__, 128);
@@ -293,12 +280,6 @@ void SetGlobalNamesDB(int databaseId)
 
 	TRIGGER_SEMAPHORE_STR =
 		UCreateGlobalName("SEMAP_TRIGGERS", databaseId, TRIGGER_SEMAPHORE_STR__buf__, 128);
-
-	PHYS_LOG_SHARED_MEM_NAME =
-		UCreateGlobalName("SHMEM_PHYSICAL_LOG", databaseId, PHYS_LOG_SHARED_MEM_NAME__buf__, 128);
-
-	PHYS_LOG_PROTECTION_SEMAPHORE_NAME =
-		UCreateGlobalName("SEMAP_PHYSICAL_LOG", databaseId, PHYS_LOG_PROTECTION_SEMAPHORE_NAME__buf__, 128);
 
 	CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME =
 		UCreateGlobalName("SHMEM_LOGICAL_LOG", databaseId, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__, 128);

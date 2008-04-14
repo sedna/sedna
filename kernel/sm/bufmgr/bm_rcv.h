@@ -30,7 +30,7 @@ void bm_rcv_ph(bool ph_bu_to_ph = true);
 //void bm_rcv_create_node_blk(const xptr& blk);
 
 /******************************************************************************
-  Database recovery plan:
+  Database recovery plan (obsolete now due to versioning recovery):
       1. call bm_rcv_init()
       2. call bm_rcv_ph()
       3.  +->-+

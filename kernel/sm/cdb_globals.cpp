@@ -78,9 +78,7 @@ void setup_cdb_globals(int argc,
                       int &tmp_file_extending_portion,
                       int &data_file_initial_size,
                       int &tmp_file_initial_size,
-                      int &persistent_heap_size,
-                      int &phys_log_size,
-                      int &phys_log_ext_portion
+                      int &persistent_heap_size
                      )
 {
    int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
@@ -137,8 +135,6 @@ void setup_cdb_globals(int argc,
 void create_cfg_file(char *db_name,
                      int max_trs_num,
                      int bufs_num,
-                     int phys_log_size,
-                     int phys_log_ext_portion,
                      double upd_crt
                     )
 {
@@ -176,9 +172,6 @@ void create_cfg_file(char *db_name,
    cfg_file_content += "   <name>" + string(db_name) + string("</name>\n");
    cfg_file_content += "   <bufs_num>" + int2string(bufs_num) + string("</bufs_num>\n");
    cfg_file_content += "   <max_trs_num>" + int2string(max_trs_num) + string("</max_trs_num>\n");
-
-   cfg_file_content += "   <init_phys_log_size>" + int2string(phys_log_size) + string("</init_phys_log_size>\n");
-   cfg_file_content += "   <phys_log_ext_portion>" + int2string(phys_log_ext_portion) + string("</phys_log_ext_portion>\n");
 
    char buf[100];
    sprintf(buf, "%.2f", upd_crt);

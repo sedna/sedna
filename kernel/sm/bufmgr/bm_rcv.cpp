@@ -80,9 +80,6 @@ void bm_rcv_decrease(__int64 old_size)
 
 void bm_rcv_master_block(const void* p)
 {
-    //__int64 tmp_file_cur_size = ((bm_masterblock*)p)->tmp_file_cur_size;
-    //((bm_masterblock*)p)->tmp_file_cur_size = (__int64)0;
-
     memset(mb, '\0', MASTER_BLOCK_SIZE);
     memcpy(mb, p, sizeof(bm_masterblock));
 
@@ -144,7 +141,7 @@ void bm_rcv_ph(bool ph_bu_to_ph)
 
 
 /******************************************************************************
-  Persistent Heap recovery plan:
+  Persistent Heap recovery plan (obsolete now due to versioning recovery):
 
 
         ph_bu_to_ph = true        ph_bu_to_ph = false    ph_bu_to_ph = true

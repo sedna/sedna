@@ -42,7 +42,6 @@ static inline void intl_alloc_blk(const xptr desc, xptr &new_blk)
 	if (IS_DATA_BLOCK(desc))
 	{
 		vmm_alloc_data_block(&new_blk);
-		hl_phys_log_create_node_blk(XADDR(new_blk));
 	}
 	else
 		vmm_alloc_tmp_block(&new_blk);
@@ -59,8 +58,6 @@ static inline void intl_alloc_string_block(const xptr desc, const bool plog)
 	((pstr_long_blk_hdr*)XADDR(new_blk))->prev_blk = intl_last_blk;
 	CHECKP(intl_last_blk);
 	VMM_SIGNAL_MODIFICATION(intl_last_blk);
-	if (plog && IS_DATA_BLOCK(intl_last_blk))
-		hl_phys_log_change(&((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk, sizeof(xptr));
 	((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk = new_blk;
 
 	if (intl_last_blk != BLOCKXPTR(intl_ftr.start))
@@ -204,8 +201,6 @@ static inline bool intl_append_str_pc(const xptr desc, const char *data, pstr_lo
 
 	while (size > avail)
 	{
-		if (plog && IS_DATA_BLOCK(intl_last_blk))
-			hl_phys_log_change((char *)XADDR(intl_last_blk) + intl_ftr.cursor, avail);
 		memcpy((char *)XADDR(intl_last_blk) + intl_ftr.cursor, data, avail);
 		intl_ftr.char_count += intl_char_counter->count_chars(data, avail);
 		data += avail;
@@ -222,8 +217,6 @@ static inline bool intl_append_str_pc(const xptr desc, const char *data, pstr_lo
 		VMM_SIGNAL_MODIFICATION(intl_last_blk);
 	}
 
-	if (plog && IS_DATA_BLOCK(intl_last_blk))
-		hl_phys_log_change((char *)XADDR(intl_last_blk) + intl_ftr.cursor, size);
 	memcpy((char *)XADDR(intl_last_blk) + intl_ftr.cursor, data, size);
 	intl_ftr.cursor += size;
 	intl_ftr.char_count += intl_char_counter->count_chars(data, size);
@@ -252,8 +245,6 @@ static inline void intl_finalize_str(const xptr desc, bool plog)
 		intl_ftr.cursor = -intl_ftr.cursor;
 		avail = PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE - PSTR_LONG_LAST_BLK_FTR_SIZE - (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
 	}
-	if (plog && IS_DATA_BLOCK(intl_last_blk) && (((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk != XNULL))
-		hl_phys_log_change(&((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk, sizeof(xptr));
 	((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk = XNULL;
 
 	if (intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE > avail)
@@ -271,8 +262,6 @@ static inline void intl_finalize_str(const xptr desc, bool plog)
 	char *ptr = (char*)ftr;
 	const int map_bytes = intl_ftr.block_list_map_size * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE;
 	const int blocklist_bytes = intl_ftr.block_list_size * PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
-	if (plog && IS_DATA_BLOCK(intl_last_blk))
-		hl_phys_log_change(ptr - (map_bytes + blocklist_bytes), map_bytes + blocklist_bytes + sizeof(*ftr));
 
 	//TODO: use memcpy here
 
@@ -320,11 +309,6 @@ static xptr pstr_long_create_str(xptr desc, const char *data, pstr_long_off_t si
 
 	CHECKP(desc);
 	VMM_SIGNAL_MODIFICATION(desc);
-	if (IS_DATA_BLOCK(desc))
-	{
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->data, sizeof(((struct t_dsc *)XADDR(desc))->data));
-	}
 	((struct t_dsc *)XADDR(desc))->size = size0;
 	((struct t_dsc *)XADDR(desc))->data = intl_last_blk;
 
@@ -383,8 +367,6 @@ inline void intl_copy_map_to_buf()
 //delete block with log
 static inline void intl_delete_blk(const xptr &blk)
 {
-	if (IS_DATA_BLOCK(blk))
-		hl_phys_log_change_blk(XADDR(blk));
 	vmm_delete_block(blk);
 	RECOVERY_CRASH;
 	DBGBLOCKS_PRITNF(("delete_blk: 0x%08lx %08lx\n", blk.layer, blk.addr));
@@ -500,11 +482,6 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 			memcpy((char*)XADDR(prev) + cursor, data, size);
 			CHECKP(intl_last_blk);
 			VMM_SIGNAL_MODIFICATION(intl_last_blk);
-			if (IS_DATA_BLOCK(intl_last_blk))
-			{
-				hl_phys_log_change(&ftr->cursor, sizeof(ftr->cursor));
-				hl_phys_log_change(&ftr->char_count, sizeof(ftr->char_count));
-			}
 			if (avail == size)
 				ftr->cursor = PSTR_LONG_BLK_HDR_SIZE;
 			else
@@ -513,8 +490,6 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 			ftr->char_count += intl_char_counter->count_chars(data, size);
 			CHECKP(desc);
 			VMM_SIGNAL_MODIFICATION(desc);
-			if (IS_DATA_BLOCK(desc))
-				hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 			((struct t_dsc *)XADDR(desc))->size += size;
 
 			charset_handler->free_char_counter(intl_char_counter);
@@ -540,18 +515,11 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 		intl_ftr.cursor += size;
 		intl_ftr.char_count += intl_char_counter->count_chars(data, size);
 
-		if (IS_DATA_BLOCK(desc))
-		{
-			hl_phys_log_change(&ftr->cursor, sizeof(ftr->cursor));
-			hl_phys_log_change(&ftr->char_count, sizeof(ftr->char_count));
-		}
 		ftr->cursor		= intl_ftr.cursor;
 		ftr->char_count	= intl_ftr.char_count;
 
 		CHECKP(desc);
 		VMM_SIGNAL_MODIFICATION(desc);
-		if (IS_DATA_BLOCK(desc))
-			hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 		((struct t_dsc *)XADDR(desc))->size += size0;
 
 		charset_handler->free_char_counter(intl_char_counter);
@@ -591,8 +559,6 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 			pstr_long_block_list_map_entry * const blk_me = (pstr_long_block_list_map_entry *)((char*)PSTR_LONG_LAST_BLK_FTR(intl_last_blk) - intl_ftr.block_list_map_size * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
 			CHECKP(intl_last_blk);
 			VMM_SIGNAL_MODIFICATION(intl_last_blk);
-			if (IS_DATA_BLOCK(desc))
-				hl_phys_log_change(&blk_me->char_count, sizeof(blk_me->char_count));
 			blk_me->char_count = intl_last_map_entry->char_count;
 		}
 		if (avail < size + bls)
@@ -607,8 +573,6 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 			
 			intl_ftr.block_list_map_size = mapsize + 1;
 			char * const dst = ((char*)PSTR_LONG_LAST_BLK_FTR(intl_last_blk) - intl_ftr.block_list_map_size * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
-			if (IS_DATA_BLOCK(desc))
-				hl_phys_log_change(dst, PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
 			memcpy(dst,
 				intl_last_map_entry,
 				PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
@@ -623,26 +587,18 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 				char *ptr = (char*)PSTR_LONG_LAST_BLK_FTR(intl_last_blk) - (intl_ftr.block_list_map_size * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
 				const int blocklist_bytes = intl_ftr.block_list_size * PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
 				ptr -= blocklist_bytes;
-				if (IS_DATA_BLOCK(intl_last_block_list_block))
-					hl_phys_log_change(ptr, blocklist_bytes);
 				memcpy(ptr, intl_last_block_list_entry, blocklist_bytes);
 			}
 		}
 		//FIXME: log only part that intersects block list/map?
-		if (IS_DATA_BLOCK(desc))
-			hl_phys_log_change((char*)XADDR(intl_last_blk + intl_ftr.cursor), size);
 		memcpy((char*)XADDR(intl_last_blk + intl_ftr.cursor), data, size);
 		intl_ftr.cursor += size;
 		intl_ftr.char_count += intl_char_counter->count_chars(data, size);
 
-		if (IS_DATA_BLOCK(desc))
-			hl_phys_log_change(ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
 		memcpy(ftr, &intl_ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
 
 		CHECKP(desc);
 		VMM_SIGNAL_MODIFICATION(desc);
-		if (IS_DATA_BLOCK(desc))
-			hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 		((struct t_dsc *)XADDR(desc))->size += size0;
 
 		charset_handler->free_char_counter(intl_char_counter);
@@ -660,11 +616,6 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 
 	CHECKP(desc);
 	VMM_SIGNAL_MODIFICATION(desc);
-	if (IS_DATA_BLOCK(desc))
-	{
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->data, sizeof(((struct t_dsc *)XADDR(desc))->data));
-	}
 	((struct t_dsc *)XADDR(desc))->size += size0;
 	((struct t_dsc *)XADDR(desc))->data = intl_last_blk;
 }
@@ -934,11 +885,6 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 
 		CHECKP(dst_desc);
 		VMM_SIGNAL_MODIFICATION(dst_desc);
-		if (IS_DATA_BLOCK(dst_desc))
-		{
-			hl_phys_log_change(&((struct t_dsc *)XADDR(dst_desc))->size, sizeof(((struct t_dsc *)XADDR(dst_desc))->size));
-			hl_phys_log_change(&((struct t_dsc *)XADDR(dst_desc))->data, sizeof(((struct t_dsc *)XADDR(dst_desc))->data));
-		}
 		((struct t_dsc *)XADDR(dst_desc))->size += size0;
 		((struct t_dsc *)XADDR(dst_desc))->data = intl_last_blk;
 	}
@@ -1167,13 +1113,6 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 
 				
 				ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
-				if (IS_DATA_BLOCK(intl_last_blk))
-				{
-					hl_phys_log_change(&((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk, sizeof(((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk));
-					//cursor is OLD value of ftr->cursor, log this part: [bl_start, cursor)
-					if (bl_start < cursor)
-						hl_phys_log_change((char*)XADDR(intl_last_blk) + bl_start, cursor - bl_start);
-				}
 				((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk = XNULL;
 
 				memcpy((char*)XADDR(intl_last_blk) + bl_start, intl_last_block_list_entry, bls);
@@ -1182,11 +1121,6 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 
 				CHECKP(desc);
 				VMM_SIGNAL_MODIFICATION(desc);
-				if (IS_DATA_BLOCK(desc))
-				{
-					hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
-					hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->data, sizeof(((struct t_dsc *)XADDR(desc))->data));
-				}
 				((struct t_dsc *)XADDR(desc))->size -= size;
 				((struct t_dsc *)XADDR(desc))->data = intl_last_blk;
 
@@ -1208,24 +1142,15 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				pstr_long_block_list_entry *ent = intl_last_blk_last_ble(intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE, bls);
 				U_ASSERT(ent->str_blk == pred_blk);
 
-				if (IS_DATA_BLOCK(intl_last_blk))
-				{
-					hl_phys_log_change(&ent->char_count, sizeof(ent->char_count));
-					hl_phys_log_change(&ftr->cursor, sizeof(ftr->cursor));
-				}
 				ent->char_count -= cnt;
 				ftr->cursor = intl_ftr.cursor;
 				if (pred_blk == BLOCKXPTR(intl_ftr.start))
 				{
-					if (IS_DATA_BLOCK(intl_last_blk))
-						hl_phys_log_change(&ftr->first_blk_char_count, sizeof(ftr->first_blk_char_count));
 					ftr->first_blk_char_count -= cnt;
 				}
 
 				CHECKP(desc);
 				VMM_SIGNAL_MODIFICATION(desc);
-				if (IS_DATA_BLOCK(desc))
-					hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 				((struct t_dsc *)XADDR(desc))->size -= size;
 
 				charset_handler->free_char_counter(intl_char_counter);
@@ -1243,24 +1168,15 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 			intl_ftr.cursor -= size;
 			const int cnt = intl_char_counter->count_chars((char*)XADDR(intl_last_blk) + intl_ftr.cursor, size);
 			
-			if (IS_DATA_BLOCK(intl_last_blk))
-			{
-				hl_phys_log_change(&ftr->char_count, sizeof(ftr->char_count));
-				hl_phys_log_change(&ftr->cursor, sizeof(ftr->cursor));
-			}
 			ftr->char_count -= cnt;
 			ftr->cursor = intl_ftr.cursor;
 			if (intl_last_blk == BLOCKXPTR(intl_ftr.start))
 			{
-				if (IS_DATA_BLOCK(intl_last_blk))
-					hl_phys_log_change(&ftr->first_blk_char_count, sizeof(ftr->first_blk_char_count));
 				ftr->first_blk_char_count -= cnt;
 			}
 
 			CHECKP(desc);
 			VMM_SIGNAL_MODIFICATION(desc);
-			if (IS_DATA_BLOCK(desc))
-				hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 			((struct t_dsc *)XADDR(desc))->size -= size;
 
 			charset_handler->free_char_counter(intl_char_counter);
@@ -1355,11 +1271,6 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 
 	CHECKP(desc);
 	VMM_SIGNAL_MODIFICATION(desc);
-	if (IS_DATA_BLOCK(desc))
-	{
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->data, sizeof(((struct t_dsc *)XADDR(desc))->data));
-	}
 	((struct t_dsc *)XADDR(desc))->size -= size;
 	((struct t_dsc *)XADDR(desc))->data = intl_last_blk;
 }
@@ -1393,11 +1304,6 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		//FIXME!: first_blk may also be last_blk
 		intl_ftr.first_blk_char_count += intl_char_counter->count_chars(data, size);
 		intl_ftr.start -= size;
-		if (IS_DATA_BLOCK(intl_last_blk))
-		{
-			hl_phys_log_change(&ftr->start, sizeof(ftr->start));
-			hl_phys_log_change(&ftr->first_blk_char_count, sizeof(ftr->first_blk_char_count));
-		}
 		ftr->start = intl_ftr.start;
 		ftr->first_blk_char_count = intl_ftr.first_blk_char_count;
 
@@ -1409,8 +1315,6 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 		CHECKP(desc);
 		VMM_SIGNAL_MODIFICATION(desc);
-		if (IS_DATA_BLOCK(desc))
-			hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 		((struct t_dsc *)XADDR(desc))->size += size;
 
 		charset_handler->free_char_counter(intl_char_counter);
@@ -1503,8 +1407,6 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	U_ASSERT(size == first_blk_avail);
 	CHECKP(first_blk);
 	VMM_SIGNAL_MODIFICATION(first_blk);
-	if (IS_DATA_BLOCK(first_blk))
-		hl_phys_log_change(&((pstr_long_blk_hdr*)XADDR(first_blk))->prev_blk, sizeof(xptr));
 	((pstr_long_blk_hdr*)XADDR(first_blk))->prev_blk = last_new_blk;
 	if (first_blk_avail > 0)
 	{
@@ -1564,8 +1466,6 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		U_ASSERT(real_maps > 0);
 		pstr_long_block_list_map_entry *first_me = (pstr_long_block_list_map_entry *)((char*)PSTR_LONG_LAST_BLK_FTR(intl_last_blk) - PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
 
-		if (IS_DATA_BLOCK(intl_last_blk))
-			hl_phys_log_change(&first_me->char_count, sizeof(first_me->char_count));
 		first_me->char_count += intl_block_list_char_count();
 
 		intl_set_empty_block_list();
@@ -1625,11 +1525,6 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 		CHECKP(desc);
 		VMM_SIGNAL_MODIFICATION(desc);
-		if (IS_DATA_BLOCK(desc))
-		{
-			hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
-			hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->data, sizeof(((struct t_dsc *)XADDR(desc))->data));
-		}
 		((struct t_dsc *)XADDR(desc))->size += size0;
 		((struct t_dsc *)XADDR(desc))->data = intl_last_blk;
 
@@ -1640,14 +1535,10 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	intl_ftr.block_list_map_size = real_maps;
 	intl_ftr.block_list_size = real_bls;
 
-	if (IS_DATA_BLOCK(intl_last_blk))
-		hl_phys_log_change(ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
 	memcpy(ftr, &intl_ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
 
 	CHECKP(desc);
 	VMM_SIGNAL_MODIFICATION(desc);
-	if (IS_DATA_BLOCK(desc))
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 	((struct t_dsc *)XADDR(desc))->size += size0;
 
 	charset_handler->free_char_counter(intl_char_counter);
@@ -1738,18 +1629,11 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 
 		CHECKP(intl_last_blk);
 		VMM_SIGNAL_MODIFICATION(intl_last_blk);
-		if (IS_DATA_BLOCK(intl_last_blk))
-		{
-			hl_phys_log_change(&ftr->start, sizeof(ftr->start));
-			hl_phys_log_change(&ftr->first_blk_char_count, sizeof(ftr->first_blk_char_count));
-		}
 		ftr->start = intl_ftr.start;
 		ftr->first_blk_char_count = intl_ftr.first_blk_char_count;
 
 		CHECKP(desc);
 		VMM_SIGNAL_MODIFICATION(desc);
-		if (IS_DATA_BLOCK(desc))
-			hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
 		((struct t_dsc *)XADDR(desc))->size -= size;
 
 		charset_handler->free_char_counter(intl_char_counter);
@@ -1901,11 +1785,6 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 
 	CHECKP(desc);
 	VMM_SIGNAL_MODIFICATION(desc);
-	if (IS_DATA_BLOCK(desc))
-	{
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->size, sizeof(((struct t_dsc *)XADDR(desc))->size));
-		hl_phys_log_change(&((struct t_dsc *)XADDR(desc))->data, sizeof(((struct t_dsc *)XADDR(desc))->data));
-	}
 	((struct t_dsc *)XADDR(desc))->size -= size;
 	((struct t_dsc *)XADDR(desc))->data = intl_last_blk;
 

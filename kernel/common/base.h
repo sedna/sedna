@@ -142,7 +142,6 @@ extern global_name CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME;
 extern global_name CHARISMA_BUFFER_SHARED_MEMORY_NAME;
 extern global_name SEDNA_GLOBAL_MEMORY_MAPPING;
 extern global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME;
-extern global_name CHARISMA_ITFE_SHARED_MEMORY_NAME;
 extern global_name VMM_SM_SEMAPHORE_STR;
 extern global_name INDIRECTION_TABLE_SEMAPHORE_STR;
 extern global_name VMM_SM_EXCLUSIVE_MODE_SEM_STR;
@@ -164,8 +163,6 @@ extern global_name TRIGGER_SEMAPHORE_STR;
 
 extern global_name CHARISMA_SSMMSG_GOV_ID;
 extern global_name CHARISMA_GOVERNOR_IS_READY;
-extern global_name PHYS_LOG_SHARED_MEM_NAME;
-extern global_name PHYS_LOG_PROTECTION_SEMAPHORE_NAME;	
 extern global_name CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME;
 extern global_name CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME;
 extern global_name CHARISMA_SM_WAIT_FOR_SHUTDOWN;
