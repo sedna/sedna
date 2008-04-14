@@ -44,8 +44,6 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                                    const char* db_name, 
                                    int bufs_num,
                                    int max_trs_num,
-                                   int phys_log_ext_portion,
-                                   int phys_log_size,
                                    int logical_log_file_size,
                                    double upd_crt);
 

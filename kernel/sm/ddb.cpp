@@ -34,8 +34,6 @@ char db_name[1000];
 char db_files_path[U_MAX_PATH + 1];
 int bufs_num = 0;
 int max_trs_num = 0;
-int phys_log_size = 0;
-int phys_log_ext_portion = 0;
 
 arg_rec ddb_argtable[] =
 {

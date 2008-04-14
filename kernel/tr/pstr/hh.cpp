@@ -34,17 +34,11 @@ void hh_insert(xptr blk, hh_slot s) {
 	int			hh_size =HHSIZE(blk);
 	int			i = hh_size;
 	while (i>1 && HH_SLOT(blk, HH_PARENT(i))->hole_size < s.hole_size) {
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(HH_SLOT(blk, i),sizeof(hh_slot));
 		*HH_SLOT(blk, i)=*HH_SLOT(blk, HH_PARENT(i));
 		i = HH_PARENT(i);
 	}
 	/* debug */
 	/* hh_slot*	debug = HH_SLOT(blk, i); */
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-		hl_phys_log_change(HH_SLOT(blk, i),sizeof(hh_slot));
 	*HH_SLOT(blk, i)=s;
 }
 
@@ -55,14 +49,8 @@ void hh_remove_max(xptr blk) {
 		throw SYSTEM_EXCEPTION("[hh_remove_max()] HH is empty");
 	if (hh_size != 1)
 	{
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(HH_SLOT(blk, 1),sizeof(hh_slot));
 		*HH_SLOT(blk, 1) = *HH_SLOT(blk, hh_size);
 	}
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-		hl_phys_log_change(HHSIZE_ADDR(blk),sizeof(shft));
 	(*(shft*)HHSIZE_ADDR(blk))-=1;
 	hh_heapify(blk, 1);
 }
@@ -74,14 +62,8 @@ void hh_remove(xptr blk, int i) {
 		throw  SYSTEM_EXCEPTION("[hh_remove()] trying to remove non-existing element");
 	if (hh_size != i)
 	{
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(HH_SLOT(blk, i),sizeof(hh_slot));	
 		*HH_SLOT(blk, i) = *HH_SLOT(blk, hh_size);
 	}
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-		hl_phys_log_change(HHSIZE_ADDR(blk),sizeof(shft));
 	(*(shft*)HHSIZE_ADDR(blk))-=1;
 	hh_heapify(blk, i);
 }
@@ -100,12 +82,6 @@ void hh_heapify(xptr blk, int i) {
 		largest = r;
 	if (largest != i) {
 		tmp = *HH_SLOT(blk, i);
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-		{
-			hl_phys_log_change(HH_SLOT(blk, i),sizeof(hh_slot));
-			hl_phys_log_change(HH_SLOT(blk, largest),sizeof(hh_slot));
-		}
 		*HH_SLOT(blk, i) =  *HH_SLOT(blk, largest);
 		*HH_SLOT(blk, largest) = tmp;
 		hh_heapify(blk, largest);

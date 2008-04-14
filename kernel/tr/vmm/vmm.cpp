@@ -88,8 +88,6 @@ static bool vmm_transaction_initialized = false;
 static sm_msg_struct msg;
 
 static bool vmm_is_recovery_mode = false;
-// indirection block set (used for recovery)
-static std::set<xptr> indir_block_set;
 
 // if vmm_determine_region failes is writes out log to this stream
 FILE *f_se_trn_log;
@@ -1006,31 +1004,11 @@ void _vmm_alloc_data_block(xptr *p) throw (SednaException)
 
 void vmm_alloc_data_block(xptr *p) throw (SednaException)
 {
-    if (vmm_is_recovery_mode)
-    {
-        vector<xptr> d;
-        int i = 0;
-
-        while (true)
-        {
-            _vmm_alloc_data_block(p);
-            if (indir_block_set.find(*p) == indir_block_set.end())
-                break;
-            else
-                d.push_back(*p);
-        }
-
-        for (i = 0; i < d.size(); i++)
-            vmm_delete_block(d[i]);
-    }
-    else
-    {
         _vmm_alloc_data_block(p);
 
         VMM_INC_DATA_BLOCK_COUNT
         VMM_TRACE_ALLOC_DATA_BLOCK
         //printf("vmm_alloc_data_block (%d, 0x%x)\n", p->layer, p->addr);
-    }
 }
 
 void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
@@ -1312,53 +1290,7 @@ void _vmm_pseudo_delete_block(xptr p) throw (SednaException)
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
-void vmm_rcv_alloc_data_block(xptr *p) throw (SednaException)
-{
-    vector<xptr> d;
-    int i = 0;
-
-    while (true)
-    {
-        __vmm_alloc_data_block(p);
-        if (indir_block_set.find(*p) == indir_block_set.end())
-            break;
-        else
-            d.push_back(*p);
-    }
-
-    for (i = 0; i < d.size(); i++)
-        vmm_delete_block(d[i]);
-}
 */
-void vmm_rcv_alloc_indir_block(xptr p) throw (SednaException)
-{
-    vector<xptr> d;
-    int i = 0;
-    xptr cur;
-
-    while (true)
-    {
-        _vmm_alloc_data_block(&cur);
-        if (cur == p)
-            break;
-        else
-            d.push_back(cur);
-    }
-
-    for (i = 0; i < d.size(); i++)
-        vmm_delete_block(d[i]);
-}
-
-void vmm_rcv_add_to_indir_block_set(xptr p) throw (SednaException)
-{
-    indir_block_set.insert(p);
-}
-
-void vmm_rcv_clear_indir_block_set() throw (SednaException)
-{
-    indir_block_set.clear();
-}
-
 
 /*******************************************************************************
 ********************************************************************************

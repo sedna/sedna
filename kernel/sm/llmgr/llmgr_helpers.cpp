@@ -111,7 +111,6 @@ void llmgr_core::flush_file_head(bool sync)
 
   int res;
   int written;
-//  LONG_LSN next_lsn = commit_lsn + COMMIT_LOG_RECORD_LEN; 
 
   file_head.last_lsn = mem_head->last_lsn;
   file_head.next_lsn = mem_head->next_lsn;
@@ -119,11 +118,6 @@ void llmgr_core::flush_file_head(bool sync)
   file_head.last_checkpoint_lsn = mem_head->last_checkpoint_lsn;
   file_head.last_chain_lsn = mem_head->last_chain_lsn;
   file_head.ts = mem_head->ts;
-//  file_head.ph_cp_counter = this->last_checkpoint_ph_counter;
-//  file_head.ph_cur_counter = this->ph_file_counter;
-//  char buf[sizeof(LONG_LSN) + sizeof(LONG_LSN)];
-//  memcpy(buf, &commit_lsn, sizeof(LONG_LSN));
-//  memcpy(buf+sizeof(LONG_LSN), &next_lsn, sizeof(LONG_LSN));
 
   RECOVERY_CRASH;
 
@@ -194,11 +188,6 @@ void llmgr_core::flush_file_head_lsn(LONG_LSN llsn, LONG_LSN nlsn, LONG_LSN lcls
   file_head.last_checkpoint_lsn = mem_head->last_checkpoint_lsn;
   file_head.last_chain_lsn = lclsn;
   file_head.ts = mem_head->ts;
-//  file_head.ph_cp_counter = this->last_checkpoint_ph_counter;
-//  file_head.ph_cur_counter = this->ph_file_counter;
-//  char buf[sizeof(LONG_LSN) + sizeof(LONG_LSN)];
-//  memcpy(buf, &commit_lsn, sizeof(LONG_LSN));
-//  memcpy(buf+sizeof(LONG_LSN), &next_lsn, sizeof(LONG_LSN));
 
   RECOVERY_CRASH;
 
@@ -214,24 +203,6 @@ void llmgr_core::flush_file_head_lsn(LONG_LSN llsn, LONG_LSN nlsn, LONG_LSN lcls
 
   ll_log_unlock(sync);
 }
-
-/*
-void llmgr_core::flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn)
-{
-  set_file_pointer(2*sizeof(LONG_LSN));
-
-  int res;
-  int written;
-
-  res = uWriteFile(ll_curr_file_dsc,
-                   &checkpoint_lsn,
-                   sizeof(LONG_LSN),
-                   &written
-                  );
-  if (res == 0 || written != sizeof(LONG_LSN))
-     throw SYSTEM_EXCEPTION("Can't write to logical log file last checkpoint lsn");
-}
-*/
 
 void llmgr_core::set_file_pointer(LONG_LSN &lsn)
 {
@@ -769,44 +740,6 @@ bool llmgr_core::find_redo_trn_cell(transaction_id trid,
    return false;
 }
 
-
-
-//bool llmgr_core::find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/)
-/*
-{
-  trns_undo_analysis_list_iterator it;
-  for (it = undo_list.begin(); it != undo_list.end(); it++)
-  {
-    if (it->trid == trid)
-    {
-       undo_trn_cell = *it;
-       return true;
-    }
-  }
-
-  return false;
-}
-*/
-
-//void llmgr_core::set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/)
-/*
-{
-  trns_undo_analysis_list_iterator it;
-  for (it = undo_list.begin(); it != undo_list.end(); it++)
-  {
-    if (it->trid == trid)
-    {
-       *it = undo_trn_cell;
-       return;
-    }
-  }
-
-  d_printf1("!!!TRID NOT FOUND\n");
-  return;
-
-}
-*/
-
 bool llmgr_core::find_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list, trn_cell_analysis_redo& redo_trn_cell/*out*/)
 {
   trns_redo_analysis_list_reverse_iterator it;
@@ -839,12 +772,6 @@ void llmgr_core::set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_
   return;
 }
 
-/*LONG_LSN llmgr_core::getLastChainLSN()
-{
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-
-  return mem_head->last_chain_lsn;
-} */
 // this function returns lsn of the first record in the bunch of chckpoint records
 LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
 {

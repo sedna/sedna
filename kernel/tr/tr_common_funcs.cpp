@@ -78,10 +78,6 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    init_local_lock_mgr(sm_server);
    d_printf1("OK\n");
 
-   d_printf1("Initializing high level physical log...");
-   hl_phys_log_on_session_begin(log_files_path + string(db_name) + string(".seplog"));
-   d_printf1("OK\n");
-
    d_printf1("Initializing logical log...");
    hl_logical_log_on_session_begin(log_files_path, rcv_active);
    d_printf1("OK\n");
@@ -91,10 +87,6 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
 
 void on_session_end(SSMMsg* &sm_server)
 {
-   d_printf1("Releasing high level physical log...");
-   hl_phys_log_on_session_end();
-   d_printf1("OK\n");
-
    d_printf1("Releasing logical log...");
    hl_logical_log_on_session_end();
    d_printf1("OK\n");
@@ -177,10 +169,6 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
    d_printf1("OK\n");
    
    event_logger_set_trid(trid);
-
-   d_printf1("Phys log on transaction begin...");
-   hl_phys_log_on_transaction_begin();
-   d_printf1("OK\n");
 
    d_printf1("Initializing VMM...");
    vmm_on_transaction_begin(is_ro_mode, ts, type_of_snp);
@@ -310,10 +298,6 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
    
    d_printf1("Releasing VMM...");
    vmm_on_transaction_end();
-   d_printf1("OK\n");
-
-   d_printf1("Releasing high level physical log...");
-   hl_phys_log_on_transaction_end();
    d_printf1("OK\n");
 
    d_printf1("Releasing locks...");

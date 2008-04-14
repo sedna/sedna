@@ -8,7 +8,6 @@
 #include "sm/sm_functions.h"
 #include "sm/sm_globals.h"
 #include "sm/llmgr/llmgr.h"
-#include "sm/plmgr/plmgr.h"
 #include "sm/bufmgr/bm_core.h"
 #include "common/u/usem.h"
 #include "common/u/umutex.h"
@@ -42,16 +41,6 @@ void endElement_sm_cfg(void *cnt, const char *name)
   if ( _tag_name_ == "max_trs_num" )
   {
      max_trs_num = atoi(_content_.c_str());
-  }
-
-  if ( _tag_name_ == "phys_log_ext_portion")
-  {
-    phys_log_ext_portion = atoi(_content_.c_str()) * 0x100000;
-  }
-
-  if ( _tag_name_ == "phys_log_size")
-  {
-    phys_log_size = atoi(_content_.c_str()) * 0x100000;
   }
 
   if ( _tag_name_ == "upd_crt" )

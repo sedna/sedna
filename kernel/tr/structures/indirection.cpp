@@ -268,11 +268,8 @@ xptr add_record_to_indirection_table(xptr p)
 	VMM_SIGNAL_MODIFICATION(rba);
 
 	node_blk_hdr * nbi=(GETBLOCKBYNODE(rba));
-	hl_phys_log_change(&(nbi->free_first_indir),sizeof(shft));
-	hl_phys_log_change(&(nbi->indir_count),sizeof(shft));
 	nbi->indir_count++;
 	nbi->free_first_indir=*((shft*)((char*)nbi+nbi->free_first_indir));
-	hl_phys_log_change(XADDR(rba),sizeof(xptr));
 	*(xptr*)(XADDR(rba)) = p;
 	if (nbh!=nbi)
 	{
@@ -291,7 +288,6 @@ xptr add_record_to_indirection_table(xptr p)
 				CHECKP(l_bl);
 				VMM_SIGNAL_MODIFICATION(l_bl);
 				node_blk_hdr * lbi=(GETBLOCKBYNODE(l_bl));
-				hl_phys_log_change(&(lbi->nblk_indir),sizeof(xptr));
 				lbi->nblk_indir=r_bl;
 			}
 			if (r_bl!=XNULL)
@@ -299,7 +295,6 @@ xptr add_record_to_indirection_table(xptr p)
 				CHECKP(r_bl);
 				VMM_SIGNAL_MODIFICATION(r_bl);
 				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
-				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
 				rbi->pblk_indir=l_bl;
 			}
 			
@@ -314,7 +309,6 @@ xptr add_record_to_indirection_table(xptr p)
 			nbh->snode->bblk_indir!=nbh->sm_vmm.p))
 		{
 			VMM_SIGNAL_MODIFICATION(p);
-			hl_phys_log_change(&(nbh->nblk_indir),sizeof(xptr));
 			nbh->nblk_indir=nbh->snode->bblk_indir;
 			nbh->snode->bblk_indir=nbh->sm_vmm.p;
 			xptr r_bl=nbh->nblk_indir;
@@ -323,7 +317,6 @@ xptr add_record_to_indirection_table(xptr p)
 				CHECKP(r_bl);
 				VMM_SIGNAL_MODIFICATION(r_bl);
 				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
-				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
 				rbi->pblk_indir=rbi->snode->bblk_indir;
 			}
 		}
@@ -408,9 +401,6 @@ void del_record_from_indirection_table(xptr p)
 	xptr node=*((xptr*)XADDR(p));
 	node_blk_hdr* nbi=GETBLOCKBYNODE(p);
 	node_blk_hdr* nbh=GETBLOCKBYNODE(node);
-	hl_phys_log_change(&(nbi->free_first_indir),sizeof(shft));
-	hl_phys_log_change(&(nbi->indir_count),sizeof(shft));
-	hl_phys_log_change(XADDR(p),sizeof(shft));
 	nbi->indir_count--;	
 	if (nbi->count+nbi->indir_count==0)
 			add_predeleted_block(ADDR2XPTR(nbi));
@@ -425,7 +415,6 @@ void del_record_from_indirection_table(xptr p)
 			nbi->snode->bblk_indir!=nbi->sm_vmm.p))
 		{
 			VMM_SIGNAL_MODIFICATION(p);
-			hl_phys_log_change(&(nbi->nblk_indir),sizeof(xptr));
 			nbi->nblk_indir=nbi->snode->bblk_indir;
 			nbi->snode->bblk_indir=nbi->sm_vmm.p;
 			xptr r_bl=nbi->nblk_indir;
@@ -434,7 +423,6 @@ void del_record_from_indirection_table(xptr p)
 				CHECKP(r_bl);
 				VMM_SIGNAL_MODIFICATION(r_bl);
 				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
-				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
 				rbi->pblk_indir=rbi->snode->bblk_indir;
 			}
 		}
@@ -455,7 +443,6 @@ void del_record_from_indirection_table(xptr p)
 				CHECKP(l_bl);
 				VMM_SIGNAL_MODIFICATION(l_bl);
 				node_blk_hdr * lbi=(GETBLOCKBYNODE(l_bl));
-				hl_phys_log_change(&(lbi->nblk_indir),sizeof(xptr));
 				lbi->nblk_indir=r_bl;
 			}
 			if (r_bl!=XNULL)
@@ -463,7 +450,6 @@ void del_record_from_indirection_table(xptr p)
 				CHECKP(r_bl);
 				VMM_SIGNAL_MODIFICATION(r_bl);
 				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
-				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
 				rbi->pblk_indir=l_bl;
 			}
 	

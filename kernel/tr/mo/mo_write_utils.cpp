@@ -51,18 +51,12 @@ void deleteBlock(node_blk_hdr * block)
 	{
 		CHECKP(tmp1);
 		VMM_SIGNAL_MODIFICATION(tmp1);
-		//PHYS LOG REC
-		if (IS_DATA_BLOCK(tmp1))
-			hl_phys_log_change(&((node_blk_hdr *)XADDR(tmp1))->pblk,sizeof(xptr));
 		((node_blk_hdr *)XADDR(tmp1))->pblk=tmp2;
 	}
 	if (tmp2!=XNULL)
 	{
 		CHECKP(tmp2);
 		VMM_SIGNAL_MODIFICATION(tmp2);
-		//PHYS LOG REC
-		if (IS_DATA_BLOCK(tmp2))
-			hl_phys_log_change(&((node_blk_hdr *)XADDR(tmp2))->nblk,sizeof(xptr));
 		((node_blk_hdr *)XADDR(tmp2))->nblk=tmp1;
 		CHECKP(bladdr);
 	}
@@ -73,11 +67,6 @@ void deleteBlock(node_blk_hdr * block)
 	  UPDATEFIRSTBLOCKPOINTER(scm,tmp1);
 	}
 	block->snode->blockcnt--;
-	//PHYS LOG REC
-	if (IS_DATA_BLOCK(bladdr))
-	{
-		hl_phys_log_change_blk(XADDR(bladdr));
-	}
 	vmm_delete_block(bladdr) ;
 }
 
@@ -154,9 +143,6 @@ void updateChildPointer (n_dsc* parent,xptr old_xptr,xptr dest)
  xptr* childx=(xptr*)((char*)parent+size_of_node(GETBLOCKBYNODE_ADDR(parent)));
 
  while (*childx!=old_xptr)   childx+=1;
- //PHYS LOG
- if (IS_DATA_BLOCK(ADDR2XPTR(parent))) 
-	 hl_phys_log_change(childx,sizeof(xptr));
  *childx=dest;
 }
 void shiftNodeToTheNewBlockExpanded(n_dsc* source,xptr dest,shft new_size,shft old_size,node_blk_hdr * block)
@@ -203,8 +189,6 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 	node_blk_hdr* new_block= GETBLOCKBYNODE(next_blk);
 	shft next_first=*((shft*)((char*)new_block+new_block->free_first));
 	xptr dest=ADDR2XPTR(GETPOINTERTODESC(new_block,new_block->free_first));
-	if (IS_DATA_BLOCK(dest)) 
-		hl_phys_log_change(XADDR(dest),new_block->dsc_size);
 	CHECKP(old_xptr);
 	copyDescriptor (source, dest,size);
 	if (new_block->dsc_size>size)
@@ -212,8 +196,6 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 		
 		int chcnt=((int)((new_block->dsc_size-size)/ sizeof(xptr)));
 		xptr* childx=(xptr*)((char*)XADDR(dest)+size);
-		if (IS_DATA_BLOCK(dest))
-			hl_phys_log_change(childx,sizeof(xptr)*chcnt);
 		for (int i=0;i<chcnt;i++)
 		{
 			*childx=XNULL;
@@ -234,25 +216,16 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 	{
 		CHECKP(tmp1);
 		VMM_SIGNAL_MODIFICATION(tmp1);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(tmp1)) 
-			hl_phys_log_change(&(((n_dsc*)XADDR(tmp1))->rdsc),sizeof(xptr));
 		UPDATERIGHTPOINTER(tmp1,dest);
 	}
 	if  (tmp2!=XNULL)
 	{
 		CHECKP(tmp2);
 		VMM_SIGNAL_MODIFICATION(tmp2);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(tmp1)) 
-			hl_phys_log_change(&(((n_dsc*)XADDR(tmp2))->ldsc),sizeof(xptr));
 		UPDATELEFTPOINTER(tmp2,dest); 
 	}
 	CHECKP(indir);
 	VMM_SIGNAL_MODIFICATION(indir);
-	//PHYS LOG
-	if (IS_DATA_BLOCK(indir)) 
-		hl_phys_log_change(XADDR(indir),sizeof(xptr));
 	*((xptr*)XADDR(indir))=dest;
 	CHECKP( dest );
 	indir=new_pointer->pdsc;
@@ -266,15 +239,6 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 	}
 	CHECKP(old_xptr);
 	//restoring the order in the previous block
-	if (IS_DATA_BLOCK(old_xptr)) 
-	{
-		hl_phys_log_change(&(block->desc_last),sizeof(shft));
-		hl_phys_log_change(&(block->free_first),sizeof(shft));
-		hl_phys_log_change(&(block->count),sizeof(shft));
-		hl_phys_log_change(source,sizeof(shft));
-		hl_phys_log_change(&((GETPOINTERTODESC(block,source->desc_prev))->desc_next),sizeof(shft));
-	}
-
 	VMM_SIGNAL_MODIFICATION(old_xptr);
 
 	block->desc_last=source->desc_prev;
@@ -288,16 +252,6 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 	*((shft*)source)=block->free_first;
 	block->free_first=CALCSHIFT(source,block);
 	CHECKP(dest);
-	if (IS_DATA_BLOCK(dest)) 
-	{
-		hl_phys_log_change(&(new_block->desc_first),sizeof(shft));
-		hl_phys_log_change(&(new_block->count),sizeof(shft));
-		hl_phys_log_change(&(new_block->free_first),sizeof(shft));
-		if (new_block->count>0)
-			hl_phys_log_change(&((GETPOINTERTODESC(new_block,new_block->desc_first))->desc_prev),sizeof(shft));
-		else
-			hl_phys_log_change(&(new_block->desc_last),sizeof(shft));
-	}
 	increment_count(new_block);
 	if (new_block->count>1)
 		(GETPOINTERTODESC(new_block,new_block->desc_first))->desc_prev=new_block->free_first;
@@ -323,8 +277,6 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 
 	shft next_first=*((shft*)((char*)pr_blk+pr_blk->free_first));
 	xptr dest=ADDR2XPTR(GETPOINTERTODESC(pr_blk,pr_blk->free_first));
-	if (IS_DATA_BLOCK(dest)) 
-		hl_phys_log_change(XADDR(dest),pr_blk->dsc_size);
 	CHECKP(old_xptr);
 	copyDescriptor (source, dest,size);
 	if (pr_blk->dsc_size>size)
@@ -348,25 +300,16 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 	{
 		CHECKP(tmp1);
 		VMM_SIGNAL_MODIFICATION(tmp1);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(tmp1)) 
-			hl_phys_log_change(&(((n_dsc*)XADDR(tmp1))->rdsc),sizeof(xptr));
 		UPDATERIGHTPOINTER(tmp1,dest);
 	}
 	if  (tmp2!=XNULL)
 	{
 		CHECKP(tmp2);
 		VMM_SIGNAL_MODIFICATION(tmp2);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(tmp1)) 
-			hl_phys_log_change(&(((n_dsc*)XADDR(tmp2))->ldsc),sizeof(xptr));
 		UPDATELEFTPOINTER(tmp2,dest); 
 	}
 	CHECKP(indir);
 	VMM_SIGNAL_MODIFICATION(indir);
-	//PHYS LOG
-	if (IS_DATA_BLOCK(indir)) 
-		hl_phys_log_change(XADDR(indir),sizeof(xptr));
 	*((xptr*)XADDR(indir))=dest;
 	CHECKP( dest );
 	indir=new_pointer->pdsc;
@@ -380,14 +323,6 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 	}
 	CHECKP(old_xptr);
 	//restoring the order in the previous block
-	if (IS_DATA_BLOCK(old_xptr)) 
-	{
-		hl_phys_log_change(&(block->desc_first),sizeof(shft));
-		hl_phys_log_change(&(block->free_first),sizeof(shft));
-		hl_phys_log_change(&(block->count),sizeof(shft));
-		hl_phys_log_change(source,sizeof(shft));
-		hl_phys_log_change(&((GETPOINTERTODESC(block,source->desc_next))->desc_prev),sizeof(shft));
-	}
 
 	VMM_SIGNAL_MODIFICATION(old_xptr);
 
@@ -402,16 +337,6 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 	*((shft*)source)=block->free_first;
 	block->free_first=CALCSHIFT(source,block);
 	CHECKP(dest);
-	if (IS_DATA_BLOCK(dest)) 
-	{
-		hl_phys_log_change(&(pr_blk->desc_last),sizeof(shft));
-		hl_phys_log_change(&(pr_blk->count),sizeof(shft));
-		hl_phys_log_change(&(pr_blk->free_first),sizeof(shft));
-		if (pr_blk->count>0)
-			hl_phys_log_change(&((GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next),sizeof(shft));			
-		else
-			hl_phys_log_change(&(pr_blk->desc_first),sizeof(shft));		
-	}
 	increment_count(pr_blk);
 	if (pr_blk->count>1)
 		(GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next=pr_blk->free_first;
@@ -467,26 +392,17 @@ void shiftNodeToTheNewBlock(n_dsc* source,xptr dest,shft size,node_blk_hdr * blo
 	{
 		CHECKP(tmp1);
 		VMM_SIGNAL_MODIFICATION(tmp1);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(tmp1)) 
-			hl_phys_log_change(&(((n_dsc*)XADDR(tmp1))->rdsc),sizeof(xptr));
 		UPDATERIGHTPOINTER(tmp1,dest);
 	}
 	if  (tmp2!=XNULL)
 	{
 		CHECKP(tmp2);
 		VMM_SIGNAL_MODIFICATION(tmp2);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(tmp1)) 
-			hl_phys_log_change(&(((n_dsc*)XADDR(tmp2))->ldsc),sizeof(xptr));
 		UPDATELEFTPOINTER(tmp2,dest); 
 	}
 	
 	CHECKP(indir);
 	VMM_SIGNAL_MODIFICATION(indir);
-	//PHYS LOG
-	if (IS_DATA_BLOCK(indir)) 
-		hl_phys_log_change(XADDR(indir),sizeof(xptr));
 	*((xptr*)XADDR(indir))=dest;
 	CHECKP( dest );
 	indir=new_pointer->pdsc;
@@ -513,8 +429,6 @@ xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block, const xptr & undo_h
 		if (persistent)
 		{
 			vmm_alloc_data_block(&new_block);
-			//PHYS LOG
-			hl_phys_log_create_node_blk(XADDR(new_block));
 		}
 		else
 			vmm_alloc_tmp_block(&new_block);
@@ -534,14 +448,9 @@ xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block, const xptr & undo_h
 		VMM_SIGNAL_MODIFICATION(tmp1);
 		//PHYS LOG REC
 		node_blk_hdr * tmp_b=(node_blk_hdr *)(XADDR(tmp1));
-		if (IS_DATA_BLOCK(tmp1))
-			hl_phys_log_change(&(tmp_b->pblk),sizeof(xptr));
 		tmp_b->pblk=new_block;
 	}
 	CHECKP(old_blk);
-	//PHYS LOG REC
-	if (IS_DATA_BLOCK(old_blk))
-		hl_phys_log_change(&(block->nblk),sizeof(xptr));
 	VMM_SIGNAL_MODIFICATION(old_blk);
 	block->nblk=new_block;
 	block->snode->blockcnt++;
@@ -551,6 +460,7 @@ xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block, const xptr & undo_h
 	delete tmp;
 	return new_block;
 }
+/*
 void redoBlockCreation(xptr block,xptr left_n,xptr right_n, int desc_size)
 {
 	vmm_rcv_alloc_indir_block(block);
@@ -586,6 +496,7 @@ void redoBlockCreation(xptr block,xptr left_n,xptr right_n, int desc_size)
 	new_block_hdr->snode=snde;
 
 }
+*/
 int splitBlockIfFullAfterLeftInsert(xptr& nodex)
 {
 	shft shift;
@@ -943,14 +854,6 @@ xptr splitBlockIfFullAndCheckWhereTheNodeIs(xptr nodex)
 			VMM_SIGNAL_MODIFICATION(nodex);
 			nodex= new_pointer;
 			new_pointer+=shift_size;
-			//PHYS LOG
-			if (IS_DATA_BLOCK(nodex)) 
-			{
-				hl_phys_log_change(&block_node->free_first,sizeof(shft));
-				hl_phys_log_change(&block_node->desc_last,sizeof(shft));
-				hl_phys_log_change(&block_node->count,sizeof(shft));
-				hl_phys_log_change(node,sizeof(shft));
-			}
 
 			makeBlockConsistentAfterCuttingTheEnd(block_node,node,counter);
 			CHECKP(new_block) ;
@@ -959,9 +862,6 @@ xptr splitBlockIfFullAndCheckWhereTheNodeIs(xptr nodex)
 		}
 		else
 		{	
-			//PHYS LOG
-			if (IS_DATA_BLOCK(nodex)) 
-				hl_phys_log_change_blk(block_node);
 			med=findMedianNodeDescriptor(block_node);
 			tmp=(n_dsc*)(XADDR(med));
 			mark=getNearestBorder(block_node,node)<0; 
@@ -998,18 +898,12 @@ xptr insertBetween ( xptr left_sib, xptr right_sib, n_dsc* new_node)
 	{ 
 		CHECKP(right_sib); 
 		VMM_SIGNAL_MODIFICATION(right_sib);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(right_sib)) 
-			hl_phys_log_change(&((n_dsc*)XADDR(right_sib))->ldsc,sizeof(xptr));
 		UPDATELEFTPOINTER(right_sib, nodex);
 	}
 	if (left_sib!=XNULL)  
 	{ 
 		CHECKP(left_sib);  
 		VMM_SIGNAL_MODIFICATION(left_sib);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(left_sib)) 
-			hl_phys_log_change(&((n_dsc*)XADDR(left_sib))->rdsc,sizeof(xptr));
 		UPDATERIGHTPOINTER(left_sib,nodex);
 	}
 	CHECKP(nodex);
@@ -1032,16 +926,10 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
 	
 	n_dsc* new_node= GETBLOCKFIRSTFREESPACEABSOLUTE  (block_namesake);
 	VMM_SIGNAL_MODIFICATION(namesake);
-	//PHYS LOG
-	if (IS_DATA_BLOCK(namesake)) 
-		hl_phys_log_change(&block_namesake->free_first,sizeof(shft));
 
 	VMM_SIGNAL_MODIFICATION(n_blk);
 	block_namesake->free_first=GETPOINTERTONEXTFREESPACE(new_node);
 
-	//PHYS LOG
-	if (IS_DATA_BLOCK(namesake)) 
-		hl_phys_log_change(new_node,block_namesake->dsc_size);
 	switch (node_typ)
 	{
 	case(element):
@@ -1070,22 +958,13 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
 		{
 			new_node->desc_next=oldnode->desc_next;
 			new_node->desc_prev= CALCSHIFT(oldnode,block_namesake);
-			//PHYS LOG
-			if (IS_DATA_BLOCK(namesake))
-				hl_phys_log_change(&((n_dsc*)XADDR(namesake))->desc_next,sizeof(shft));
 			UPDATENEXTDESCRIPTOR(namesake, CALCSHIFT(new_node,block_namesake));
 			if (new_node->desc_next!=0)
 			{
-				//PHYS LOG
-				if (IS_DATA_BLOCK(namesake)) 
-					hl_phys_log_change(&((n_dsc*)((char*)block_namesake+new_node->desc_next))->desc_prev,sizeof(shft));	
 				((n_dsc*)((char*)block_namesake+new_node->desc_next))->desc_prev=CALCSHIFT(new_node,block_namesake);
 			}
 			else
 			{
-				//PHYS LOG
-				if (IS_DATA_BLOCK(namesake)) 
-					hl_phys_log_change(&block_namesake->desc_last,sizeof(shft));
 				UPDATEPOINTERTOLASTDESCRIPTOR(block_namesake, CALCSHIFT(new_node,block_namesake));
 			}
 			break;
@@ -1096,11 +975,6 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
 			new_node->desc_prev=0;
 			n_dsc* tmn=GETPOINTERTODESC(block_namesake,block_namesake->desc_first);
 			//assumption that block not empty
-			if (IS_DATA_BLOCK(namesake))
-			{
-				hl_phys_log_change(&(tmn->desc_prev),sizeof(shft));
-				hl_phys_log_change(&(block_namesake->desc_first),sizeof(shft));
-			}
 			tmn->desc_prev=CALCSHIFT(new_node,block_namesake);
 			block_namesake->desc_first=tmn->desc_prev;
 			break;
@@ -1110,19 +984,11 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
 			new_node->desc_next=0;
 			new_node->desc_prev=0;
 			//assumption that block not empty
-			if (IS_DATA_BLOCK(namesake))
-			{
-				hl_phys_log_change(&(block_namesake->desc_last),sizeof(shft));
-				hl_phys_log_change(&(block_namesake->desc_first),sizeof(shft));
-			}
 			block_namesake->desc_last=CALCSHIFT(new_node,block_namesake);
 			block_namesake->desc_first=block_namesake->desc_last;
 			break;
 		}
 	}
-	//PHYS LOG
-	if (IS_DATA_BLOCK(namesake)) 
-		hl_phys_log_change(&block_namesake->count,sizeof(shft));
 	INCREMENTCOUNT(block_namesake);
 	xptr nodex=ADDR2XPTR(new_node);
 	tmp=add_record_to_indirection_table(nodex);
@@ -1153,15 +1019,8 @@ xptr addNewNodeOfSameSortBefore(xptr namesake, xptr left_sib,xptr right_sib, xpt
 	n_dsc* new_node= GETBLOCKFIRSTFREESPACEABSOLUTE  (block_namesake);
 	VMM_SIGNAL_MODIFICATION(namesake);
 	
-	//PHYS LOG
-	if (IS_DATA_BLOCK(namesake)) 
-		hl_phys_log_change(&block_namesake->free_first,sizeof(shft));
-
 	VMM_SIGNAL_MODIFICATION(n_blk);
 	block_namesake->free_first=GETPOINTERTONEXTFREESPACE(new_node);
-	//PHYS LOG
-	if (IS_DATA_BLOCK(namesake)) 
-		hl_phys_log_change(new_node,block_namesake->dsc_size);
 	switch (node_typ)
 	{
 	case(element):
@@ -1190,22 +1049,13 @@ xptr addNewNodeOfSameSortBefore(xptr namesake, xptr left_sib,xptr right_sib, xpt
 		{
 			new_node->desc_prev=oldnode->desc_prev;
 			new_node->desc_next= CALCSHIFT(oldnode,block_namesake);
-			//PHYS LOG
-			if (IS_DATA_BLOCK(namesake))
-				hl_phys_log_change(&oldnode->desc_prev,sizeof(shft));
 			UPDATEPREVIOUSDESCRIPTOR(namesake, CALCSHIFT(new_node,block_namesake));
 			if (new_node->desc_prev!=0)
 			{
-				//PHYS LOG
-				if (IS_DATA_BLOCK(namesake)) 
-					hl_phys_log_change(&((n_dsc*)((char*)block_namesake+new_node->desc_prev))->desc_next,sizeof(shft));
 				((n_dsc*)((char*)block_namesake+new_node->desc_prev))->desc_next=CALCSHIFT(new_node,block_namesake);
 			}
 			else
 			{
-				//PHYS LOG
-				if (IS_DATA_BLOCK(namesake)) 
-					hl_phys_log_change(&block_namesake->desc_first,sizeof(shft));
 				block_namesake->desc_first=CALCSHIFT(new_node,block_namesake);
 			}
 			break;
@@ -1216,20 +1066,12 @@ xptr addNewNodeOfSameSortBefore(xptr namesake, xptr left_sib,xptr right_sib, xpt
 			new_node->desc_prev=block_namesake->desc_last;
 			n_dsc* tmn=GETPOINTERTODESC(block_namesake,block_namesake->desc_last);
 			//assumption that block not empty
-			if (IS_DATA_BLOCK(namesake))
-			{
-				hl_phys_log_change(&(tmn->desc_next),sizeof(shft));
-				hl_phys_log_change(&(block_namesake->desc_last),sizeof(shft));
-			}
 			tmn->desc_next=CALCSHIFT(new_node,block_namesake);
 			block_namesake->desc_last=tmn->desc_next;
 			break;
 		}
 	
 	}
-	//PHYS LOG
-	if (IS_DATA_BLOCK(namesake)) 
-		hl_phys_log_change(&block_namesake->count,sizeof(shft));
 	INCREMENTCOUNT(block_namesake);
 	xptr nodex=ADDR2XPTR(new_node);
 	tmp=add_record_to_indirection_table(nodex);
@@ -1249,8 +1091,6 @@ xptr createNewBlock(schema_node* scm,bool persistent)
 	if (persistent)
 	{
 		vmm_alloc_data_block(&new_block);
-		//PHYS LOG
-		hl_phys_log_create_node_blk(XADDR(new_block));
 	}
 	else
 		vmm_alloc_tmp_block(&new_block);
@@ -1344,8 +1184,6 @@ xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	if (persistent)
 	{
 		vmm_alloc_data_block(&new_block);
-		//PHYS LOG
-		hl_phys_log_create_node_blk(XADDR(new_block));
 	}
 	else
 		vmm_alloc_tmp_block(&new_block);
@@ -1361,15 +1199,10 @@ xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	{
 		CHECKP(tmp1);
 		VMM_SIGNAL_MODIFICATION(tmp1);
-		//PHYS LOG REC
 		node_blk_hdr * tmp_b=(node_blk_hdr *)(XADDR(tmp1));
-		if (IS_DATA_BLOCK(tmp1))
-			hl_phys_log_change(&(tmp_b->pblk),sizeof(xptr));
 		tmp_b->pblk=new_block;
 	}
     CHECKP(tmp2);
-	if (IS_DATA_BLOCK(tmp2))
-			hl_phys_log_change(&block->nblk,sizeof(xptr));
 	VMM_SIGNAL_MODIFICATION(tmp2);
 	block->nblk=new_block;
 	block->snode->blockcnt++;
@@ -1395,10 +1228,7 @@ xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	bool persistent= IS_DATA_BLOCK(old_blk);
 	if (persistent)
 	{
-	    //PHYS LOG
-		//hl_phys_log_create_node_blk(XADDR(new_block));	
 		vmm_alloc_data_block(&new_block);
-		hl_phys_log_create_node_blk(XADDR(new_block));
 	}
 	else
 		vmm_alloc_tmp_block(&new_block);
@@ -1414,19 +1244,13 @@ xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	{
 		CHECKP(tmp1);
 		VMM_SIGNAL_MODIFICATION(tmp1);
-		//PHYS LOG REC
 		node_blk_hdr * tmp_b=(node_blk_hdr *)(XADDR(tmp1));
-		if (IS_DATA_BLOCK(tmp1))
-			hl_phys_log_change(&tmp_b->nblk,sizeof(xptr));
 		tmp_b->nblk=new_block;
 	}
 	else
 		UPDATEFIRSTBLOCKPOINTER(tmp->snode,new_block);
 	CHECKP(tmp2);
 	VMM_SIGNAL_MODIFICATION(tmp2);
-	//PHYS LOG REC
-	if (IS_DATA_BLOCK(tmp2))
-		hl_phys_log_change(&block->pblk,sizeof(xptr));
 	block->pblk=new_block;
 	CHECKP(new_block);
 	new_block_hdr->snode->blockcnt++;
@@ -1458,8 +1282,6 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 		)		
 		/*&& CALCSHIFT (XADDR(parent),parent_block)==sizeof(node_blk_hdr)*/
 	{
-		if (IS_DATA_BLOCK(parent)) 
-			hl_phys_log_change_blk(parent_block);
 		n_dsc* par_dsc=(n_dsc*)XADDR(parent);
 		char* ptr=((char*)parent_block)+sizeof(node_blk_hdr);
 		if (ptr!=((char*)par_dsc))
@@ -1472,7 +1294,6 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 			xptr tmp=par_dsc->indir;
 			CHECKP(tmp);
 			VMM_SIGNAL_MODIFICATION(tmp);
-			if (IS_DATA_BLOCK(tmp))	hl_phys_log_change(XADDR(tmp),sizeof(xptr));
 			*((xptr*)XADDR(tmp))=new_pos;
 			//1.1.2 left
 			CHECKP(parent);
@@ -1481,7 +1302,6 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 			{
 				CHECKP(tmp);
 				VMM_SIGNAL_MODIFICATION(tmp);
-				if (IS_DATA_BLOCK(tmp))	hl_phys_log_change(&(((n_dsc*)XADDR(tmp))->rdsc),sizeof(xptr));
 				((n_dsc*)XADDR(tmp))->rdsc=new_pos;
 			}
 			//1.1.3 right
@@ -1491,7 +1311,6 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 			{
 				CHECKP(tmp);
 				VMM_SIGNAL_MODIFICATION(tmp);
-				if (IS_DATA_BLOCK(tmp))	hl_phys_log_change(&(((n_dsc*)XADDR(tmp))->ldsc),sizeof(xptr));
 				((n_dsc*)XADDR(tmp))->ldsc=new_pos;
 			}
 			//1.1.4 parent
@@ -1565,9 +1384,6 @@ shft desci=parent_block->free_first_indir;
 	}
 	else
 	{
-		//PHYS LOG
-		if (IS_DATA_BLOCK(parent)) 
-			hl_phys_log_change_blk(parent_block);
 		int mark=0;
 		if (GETTYPE(parent_block->snode)==document) mark=1;
 		if (getNearestBorder(parent_block,(n_dsc*)XADDR(parent))>0)
@@ -1992,11 +1808,6 @@ void addTextValue(xptr node,const void* text, unsigned int size,text_type ttype)
 
 	if (size<1)
 	{
-		if (IS_DATA_BLOCK(node)) 
-		{
-			hl_phys_log_change(&test_desc->data,sizeof(xptr));
-			hl_phys_log_change(&test_desc->size,sizeof(int));
-		}
 		VMM_SIGNAL_MODIFICATION(node);
 		test_desc->data=XNULL;
 		test_desc->size=0;
@@ -2422,7 +2233,6 @@ void decrement_count(node_blk_hdr* pr_blk,shft count)
 				CHECKP(l_bl);
 				VMM_SIGNAL_MODIFICATION(l_bl);
 				node_blk_hdr * lbi=(GETBLOCKBYNODE(l_bl));
-				hl_phys_log_change(&(lbi->nblk_indir),sizeof(xptr));
 				lbi->nblk_indir=r_bl;
 			}
 			if (r_bl!=XNULL)
@@ -2430,7 +2240,6 @@ void decrement_count(node_blk_hdr* pr_blk,shft count)
 				CHECKP(r_bl);
 				VMM_SIGNAL_MODIFICATION(r_bl);
 				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
-				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
 				rbi->pblk_indir=l_bl;
 			}
 
@@ -2453,7 +2262,6 @@ void increment_count(node_blk_hdr* pr_blk,shft count)
 			pr_blk->snode->bblk_indir!=pr_blk->sm_vmm.p))
 		{
 			
-			hl_phys_log_change(&(pr_blk->nblk_indir),sizeof(xptr));
 			pr_blk->nblk_indir=pr_blk->snode->bblk_indir;
 			pr_blk->snode->bblk_indir=pr_blk->sm_vmm.p;
 			xptr r_bl=pr_blk->nblk_indir;
@@ -2463,7 +2271,6 @@ void increment_count(node_blk_hdr* pr_blk,shft count)
 				CHECKP(r_bl);
 				VMM_SIGNAL_MODIFICATION(r_bl);
 				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
-				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
 				rbi->pblk_indir=rbi->snode->bblk_indir;
 				CHECKP(blk);
 				VMM_SIGNAL_MODIFICATION(blk);

@@ -294,7 +294,7 @@ void register_session_on_gov()
 //returns true if all database files exists
 bool check_database_existence(const char* db_name)
 {
-   bool res1 = false, res2 = false, res3 = false, res4 = false, res5 = false, res6 = false;
+   bool res1 = false, res2 = false, res3 = false, res4 = false;
 
    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 
@@ -302,13 +302,9 @@ bool check_database_existence(const char* db_name)
 
    res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
 
-   //res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seplog").c_str(), __sys_call_error);
-
-   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
-
-//   res6 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.sebu").c_str(), __sys_call_error);
+   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
 
 
-   if (res1 && res2 && res3  && res5) return true;
+   if (res1 && res2 && res3  && res4) return true;
    else return false;
 }	

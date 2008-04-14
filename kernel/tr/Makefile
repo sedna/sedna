@@ -43,7 +43,6 @@ endif
 
 
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
-PHYS_LOG_LIB = $(PP)/kernel/sm/plmgr/plmgr_tr$(LIB_EXT)
 LOGICAL_LOG_LIB = $(PP)/kernel/sm/llmgr/tr_llmgr$(LIB_EXT)
 
 
@@ -66,7 +65,7 @@ else
 FT_ADD_LIB = 
 endif
 
-ADD_LIBS = $(COMMON_FILES_LIB) $(PHYS_LOG_LIB) $(LOGICAL_LOG_LIB)
+ADD_LIBS = $(COMMON_FILES_LIB) $(LOGICAL_LOG_LIB)
 
 ADD_LIBS_2 = $(FT_ADD_LIB)
 	   

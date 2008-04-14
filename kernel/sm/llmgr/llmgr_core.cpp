@@ -12,13 +12,10 @@
 #include "sm/sm_globals.h"
 #include "common/utils.h"
 #include "common/tr_debug.h"
-#include "sm/plmgr/plmgr_core.h"
 #include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
 #include "sm/trmgr.h"
-#include "tr/vmm/vmm.h"
-#include "tr/structures/indirection.h"
-
+#include "common/sm_vmm_data.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/bm_rcv.h"
 #include "sm/bufmgr/blk_mngmt.h"
@@ -106,7 +103,7 @@ void llmgr_core::ll_log_release_simple()
 }
 
 /*                 !!!These Functions called on sm !!!                         */
-bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &sedna_db_version/*, plmgr_core* phys_log_mgr_*/)
+bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &sedna_db_version)
 {
 
   int res;
@@ -140,9 +137,6 @@ bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &se
   _is_stopped_correctly = file_head.is_stopped_successfully;
   sedna_db_version = file_head.sedna_db_version;
 
-//  this->last_checkpoint_ph_counter = file_head.ph_cp_counter;
-//  this->ph_file_counter = file_head.ph_cp_counter;
-
   //delete unnessary files
   int i,j;
   char buf[20];
@@ -160,25 +154,17 @@ bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &se
   for (j=0; j <i; j++)
        ll_open_files.erase(ll_open_files.begin());
   
-//  if (sizeof(small_read_buf) < sizeof(logical_log_head))
-//     throw USER_EXCEPTION(SE4150);
-
   rollback_active = false;
   recovery_active = false;
 
   checkpoint_active = false;
 
-  indir_rec = NULL;
-  indir_rec_len = 0;
-  
   internal_buf = se_new_cxt(TopMemoryContext) char[2*PAGE_SIZE];
   internal_buf_size = 2*PAGE_SIZE;
-  indir_rec_buf_size = 0;
 
   read_buf = se_new_cxt(TopMemoryContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
   read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
 
-//  this->_phys_log_mgr_ = phys_log_mgr_;
   return _is_stopped_correctly;
 }
 
@@ -188,8 +174,6 @@ bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &se
 void llmgr_core::ll_log_release()
 {
   int res;
-
-//  writeIsStoppedCorrectly(true);
 
   res = USemaphoreRelease(sem_dsc, __sys_call_error);  
 
@@ -322,7 +306,6 @@ void llmgr_core::ll_log_release_shared_mem()
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4020, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
-
 }
 
 
@@ -346,20 +329,6 @@ void llmgr_core::ll_log_open(string _db_files_path_, string _db_name_, /*plmgr_c
 
   db_files_path = _db_files_path_;
   db_name = _db_name_;
-
-
-//  this->_phys_log_mgr_ = phys_log_mgr_;
-/*
-  ll_file_curr_dsc = uOpenFile(
-                       db_files_path.c_str(),
-                       U_SHARE_READ | U_SHARE_WRITE,
-                       U_READ_WRITE,
-                       U_WRITE_THROUGH 
-                     );
-
-  if ( ll_file_curr_dsc == U_INVALID_FD )
-     throw USER_EXCEPTION2(SE4042, db_files_path.c_str());  
-*/
 }
 
 
@@ -413,14 +382,6 @@ void llmgr_core::ll_log_close()
 
   if (UEventClose(&init_checkpoint_event, __sys_call_error) != 0) 
      throw USER_EXCEPTION2(SE4013, "SNAPSHOT_CHECKPOINT_EVENT");  
-
-/*
-  res = uCloseFile(ll_file_curr_dsc);
-  
-  if (res == 0)
-     throw USER_EXCEPTION2(SE4043, "logical log file");
-*/
-
 }
 
 
@@ -432,12 +393,8 @@ void llmgr_core::ll_log_on_transaction_begin(bool rcv_active, transaction_id &tr
   rollback_active = false;
   recovery_active = rcv_active;
 
-  indir_rec = NULL;
-  indir_rec_len = 0;
-
   internal_buf = se_new_cxt(TransactionContext) char[2*PAGE_SIZE];
   internal_buf_size = 2*PAGE_SIZE;
-  indir_rec_buf_size = 0;
 
   read_buf = se_new_cxt(TransactionContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
   read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
@@ -484,7 +441,6 @@ void llmgr_core::ll_log_on_transaction_end(transaction_id &trid, bool sync)
   close_all_log_files();
 
   if (internal_buf_size > 0) se_delete(internal_buf);
-  if (indir_rec_buf_size > 0) se_delete(indir_rec);
   if (read_buf_size > 0) se_delete(read_buf);
 
   ll_log_unlock(sync);
@@ -498,7 +454,6 @@ void llmgr_core::ll_log_on_transaction_end(transaction_id &trid, bool sync)
 /*element record body format:
   op_type(1 byte),
   trid (2byte)
-  indir_table info
   name ('\0' terminated string)
   uri ('\0' terminated string)
   prefix ('\0' terminated prefix)
@@ -521,7 +476,6 @@ void llmgr_core::ll_log_element(transaction_id& trid, const xptr& self,const xpt
 
   rec_len = sizeof(char) +
             sizeof(transaction_id) + 
-            indir_rec_len +
             strlen(name)+1 +
             uri_len +
             prefix_len +
@@ -530,22 +484,15 @@ void llmgr_core::ll_log_element(transaction_id& trid, const xptr& self,const xpt
 
   tmp_rec = ll_log_malloc(rec_len);
 
-  //char op = (inserted) ? LL_INSERT_ELEM: LL_DELETE_ELEM;
   char op;
 
-  if (indir_rec_len == 0)
-     op = (inserted) ? LL_INSERT_ELEM : LL_DELETE_ELEM;
-  else
-     op = (inserted) ? LL_INDIR_INSERT_ELEM : LL_INDIR_DELETE_ELEM;
+  op = (inserted) ? LL_INSERT_ELEM : LL_DELETE_ELEM;
   
   int offs=0;
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
   inc_mem_copy(tmp_rec, offs, name, strlen(name)+1);
   inc_mem_copy(tmp_rec, offs, ((uri != NULL ) ? uri: ""), uri_len);
   inc_mem_copy(tmp_rec, offs, ((prefix != NULL ) ? prefix: ""), prefix_len);
@@ -557,14 +504,11 @@ void llmgr_core::ll_log_element(transaction_id& trid, const xptr& self,const xpt
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-  indir_rec_len = 0;
 }
 
 /* attribute record body format:
   op-type (1byte)
   trid (2byte)
-  indirection table info
   name ('\0' terminated string)
   uri ('\0' terminated string)
   prefix ('\0' terminated string)
@@ -591,7 +535,6 @@ void llmgr_core::ll_log_attribute(transaction_id& trid, const xptr &self,const x
 
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
-            indir_rec_len +
             strlen(name)+1 +
             uri_len +
             prefix_len +
@@ -604,19 +547,13 @@ void llmgr_core::ll_log_attribute(transaction_id& trid, const xptr &self,const x
 
   char op;
 
-  if (indir_rec_len == 0)
-     op = (inserted) ? LL_INSERT_ATTR: LL_DELETE_ATTR;
-  else
-     op = (inserted) ? LL_INDIR_INSERT_ATTR : LL_INDIR_DELETE_ATTR;
+  op = (inserted) ? LL_INSERT_ATTR: LL_DELETE_ATTR;
+
   int offs=0;
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
-
   inc_mem_copy(tmp_rec, offs, name, strlen(name)+1);
   inc_mem_copy(tmp_rec, offs, ((uri != NULL ) ? uri: ""), uri_len);
   inc_mem_copy(tmp_rec, offs, ((prefix != NULL ) ? prefix: ""), prefix_len);
@@ -630,15 +567,12 @@ void llmgr_core::ll_log_attribute(transaction_id& trid, const xptr &self,const x
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-  indir_rec_len = 0;
 }
 
 /*
  text log record format:
  op (1byte)
  trid (2byte)
- indirection table info
  value_size (4bytes)
  value (without '\0')
  self-xptr(8byte)
@@ -658,7 +592,6 @@ void llmgr_core::ll_log_text(transaction_id& trid, const xptr &self,const xptr &
 
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
-            indir_rec_len +
             sizeof(int) +
             value_size +
             4*sizeof(xptr);
@@ -667,18 +600,13 @@ void llmgr_core::ll_log_text(transaction_id& trid, const xptr &self,const xptr &
 
   char op;
 
-  if (indir_rec_len == 0)
-     op = (inserted) ? LL_INSERT_TEXT: LL_DELETE_TEXT;
-  else
-     op = (inserted) ? LL_INDIR_INSERT_TEXT: LL_INDIR_DELETE_TEXT;
+  op = (inserted) ? LL_INSERT_TEXT: LL_DELETE_TEXT;
+
   int offs = 0;
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
   inc_mem_copy(tmp_rec, offs, &value_size, sizeof(int));
   inc_mem_copy(tmp_rec, offs, value, value_size);
   inc_mem_copy(tmp_rec, offs, &self, sizeof(xptr));
@@ -688,8 +616,6 @@ void llmgr_core::ll_log_text(transaction_id& trid, const xptr &self,const xptr &
 
   //inert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-  indir_rec_len = 0;
 }
 
 
@@ -762,7 +688,6 @@ void llmgr_core::ll_log_document(transaction_id& trid, const xptr &self,const  c
 
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
-            indir_rec_len +
             strlen(name)+1 +
             col_len +
             sizeof(xptr);
@@ -771,34 +696,25 @@ void llmgr_core::ll_log_document(transaction_id& trid, const xptr &self,const  c
 
   char op;
 
-  if (indir_rec_len == 0)
-     op = inserted ? LL_INSERT_DOC : LL_DELETE_DOC;
-  else
-     op = inserted ? LL_INDIR_INSERT_DOC : LL_INDIR_DELETE_DOC;
+  op = inserted ? LL_INSERT_DOC : LL_DELETE_DOC;
 
   int offs =0;
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char)); 
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
   inc_mem_copy(tmp_rec, offs, name, strlen(name)+1);
   inc_mem_copy(tmp_rec, offs, (collection != NULL) ? collection : "", col_len);
   inc_mem_copy(tmp_rec, offs, &self, sizeof(xptr));
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-  indir_rec_len = 0;
 }
 
 /*
   pi log record format:
   op (1 byte)
   trid (transaction_id)
-  indirection table info
   total_size (4 bytes)
   target_size (2 bytes)
   value (without '\0')
@@ -819,7 +735,6 @@ void llmgr_core::ll_log_pi(transaction_id& trid, const xptr &self,const xptr &le
 
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
-            indir_rec_len +
             sizeof(int) +
             sizeof(shft) +
             total_size +
@@ -829,18 +744,12 @@ void llmgr_core::ll_log_pi(transaction_id& trid, const xptr &self,const xptr &le
 
   char op;
    
-  if (indir_rec_len == 0)
-     op = inserted ? LL_INSERT_PI : LL_DELETE_PI;
-  else
-     op = inserted ? LL_INDIR_INSERT_PI : LL_INDIR_DELETE_PI;
+  op = inserted ? LL_INSERT_PI : LL_DELETE_PI;
 
   int offs=0;
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
   inc_mem_copy(tmp_rec, offs, &total_size, sizeof(int));
   inc_mem_copy(tmp_rec, offs, &target_size, sizeof(shft));
   inc_mem_copy(tmp_rec, offs, value, total_size);
@@ -851,16 +760,12 @@ void llmgr_core::ll_log_pi(transaction_id& trid, const xptr &self,const xptr &le
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-
-  indir_rec_len = 0;
 }
 
 /*
   comment log record format:
   op (1 byte)
   trid (transaction_id)
-  indirection table info
   value_size (4 bytes)
   value (without '\0')
   self-xptr(8byte)
@@ -879,7 +784,6 @@ void llmgr_core::ll_log_comment(transaction_id& trid, const xptr &self,const xpt
 
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
-            indir_rec_len +
             sizeof(int) +
             value_size +
             4*sizeof(xptr);
@@ -888,20 +792,13 @@ void llmgr_core::ll_log_comment(transaction_id& trid, const xptr &self,const xpt
 
   char op;
 
-  if (indir_rec_len == 0)
-     op = inserted ? LL_INSERT_COMMENT : LL_DELETE_COMMENT;
-  else
-     op = inserted ? LL_INDIR_INSERT_COMMENT : LL_INDIR_DELETE_COMMENT;
-
+  op = inserted ? LL_INSERT_COMMENT : LL_DELETE_COMMENT;
 
   int offs =0;
   
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
   inc_mem_copy(tmp_rec, offs, &value_size, sizeof(int));
   inc_mem_copy(tmp_rec, offs, value, value_size);
   inc_mem_copy(tmp_rec, offs, &self, sizeof(xptr));
@@ -911,16 +808,12 @@ void llmgr_core::ll_log_comment(transaction_id& trid, const xptr &self,const xpt
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-
-  indir_rec_len = 0;
 }
 
 /*
  collection log record format:
   op (1 byte)
   trid (transaction_id)
-  indirection table info
   name ('\0' terminated string)
 */
 
@@ -935,41 +828,29 @@ void llmgr_core::ll_log_collection(transaction_id& trid, const  char* name,bool 
 
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
-            indir_rec_len +
             strlen(name)+1;
   
   tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
-  if (indir_rec_len == 0)
-     op = inserted ? LL_INSERT_COLLECTION : LL_DELETE_COLLECTION;
-  else
-     op = inserted ? LL_INDIR_INSERT_COLLECTION : LL_INDIR_DELETE_COLLECTION;
-
+  op = inserted ? LL_INSERT_COLLECTION : LL_DELETE_COLLECTION;
 
   int offs = 0;
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
   inc_mem_copy(tmp_rec, offs, name, strlen(name)+1);
   
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-
-  indir_rec_len = 0;
 }
 
 /*
  namespace log record format:
  op (1 byte)
  trid (transaction_id)
- indirection table info
  uri ('\0' terminated string)
  prefix ('\0' terminated string)
  self-xptr(8byte)
@@ -990,7 +871,6 @@ void llmgr_core::ll_log_ns(transaction_id& trid, const xptr &self,const xptr &le
  
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
-            indir_rec_len +
             strlen(uri)+1 +
             prefix_len +
             4*sizeof(xptr);
@@ -999,20 +879,13 @@ void llmgr_core::ll_log_ns(transaction_id& trid, const xptr &self,const xptr &le
 
   char op;
 
-  if (indir_rec_len == 0)
-     op = inserted ? LL_INSERT_NS : LL_DELETE_NS;
-  else
-     op = inserted ? LL_INDIR_INSERT_NS : LL_INDIR_DELETE_NS;
-
+  op = inserted ? LL_INSERT_NS : LL_DELETE_NS;
 
   int offs = 0;
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-  inc_mem_copy(tmp_rec, offs, indir_rec, indir_rec_len);
-
   inc_mem_copy(tmp_rec, offs, uri, strlen(uri)+1);
   inc_mem_copy(tmp_rec, offs, (prefix != NULL) ? prefix : "", prefix_len);
   inc_mem_copy(tmp_rec, offs, &self, sizeof(xptr));
@@ -1022,8 +895,6 @@ void llmgr_core::ll_log_ns(transaction_id& trid, const xptr &self,const xptr &le
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-  indir_rec_len = 0;
 }
 
 
@@ -1232,7 +1103,6 @@ LONG_LSN llmgr_core::ll_log_commit(transaction_id trid, bool sync)
   LONG_LSN ret_lsn;
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
-
   ll_log_lock(sync);
 
   rec_len = sizeof(char) + sizeof(transaction_id);
@@ -1290,200 +1160,6 @@ void llmgr_core::ll_log_rollback(transaction_id trid, bool sync)
 }
 
 /*
- checkpoint log record format:
- op (1 byte)
- num (int) number of active transactions (including aborting)
- trid (4byte)     | num times
- LONG_LSN (8byte) |
-*/
-
-/* 
- checkpoint log record format:
- op (1 byte)
- state of record  0-begin 2-inprocess 1-end   
-
- master_block                                                                |
- min_lsn (LONG_LSN)     | first lsn from which to begin recovery             | 
-                  
- isGarbage (int) are all recorded blocks belong to garbage?
- count (size_t) number of blocks of persistent snapshot stored in this record
- SnapshotsVersion | count times
-
- prevLSN // lsn of the previous record in physical records chain
-
-*/
-
-
-
-/*
-
-LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
-{
-  char *tmp_rec;  
-  int rec_len;
-  char op = LL_CHECKPOINT;
-  int num = CHARISMA_MAX_TRNS_NUMBER;
-  int offs = 0;
-  LONG_LSN ret_lsn;
-
-  ll_log_lock(sync);  
-
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-
-
-  rec_len = sizeof(char) + sizeof(int) + CHARISMA_MAX_TRNS_NUMBER*(sizeof(LONG_LSN) + sizeof(transaction_id));
-  //check that log file will not be overflowed
-
-  if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
-	  (sizeof(logical_log_head) + rec_len))
-  {//current log must be flushed and new file created
-     ll_log_flush(false);
-     extend_logical_log(false);
-  }
-
-
-  tmp_rec = ll_log_malloc(rec_len);
-  ret_lsn = mem_head->next_lsn;
-
-  //create record body
-  inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
-  inc_mem_copy(tmp_rec, offs, &num, sizeof(int));
-  for (int i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
-  {
-    inc_mem_copy(tmp_rec, offs, &i, sizeof(transaction_id));
-
-    if (mem_head->t_tbl[i].is_ended)
-    {
-       LONG_LSN last_lsn = NULL_LSN;
-       inc_mem_copy(tmp_rec, offs, &last_lsn, sizeof(LONG_LSN));
-    }
-    else
-    {
-       if (mem_head->t_tbl[i].mode == ROLLBACK_MODE)
-          inc_mem_copy(tmp_rec, offs, &(mem_head->t_tbl[i].prev_rollback_lsn), sizeof(LONG_LSN));
-       else
-          inc_mem_copy(tmp_rec, offs, &(mem_head->t_tbl[i].last_lsn), sizeof(LONG_LSN));
-    }
-  }
-
-  //insert record in shared memory
-  logical_log_head log_head;
-  log_head.prev_trn_offs = NULL_OFFS;
-  log_head.body_len = rec_len;
-
-
-
-  //insert log record into shared memory
-  writeSharedMemory(&log_head, sizeof(logical_log_head));
-  writeSharedMemory(tmp_rec, rec_len);
-
-  mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
-
-  checkpoint_active = true;
-
-  ll_log_flush(false);
-
-  ll_log_unlock(sync);
-
-  //std::cout << "ll_log_checkpoint ret_lsn=" << ret_lsn << endl;;
-
-  return ret_lsn;
-/*
-  char *tmp_rec;  
-  int rec_len;
-  char op = LL_CHECKPOINT;
-  int num = CHARISMA_MAX_TRNS_NUMBER;
-  int offs = 0;
-  int ret_lsn;
-  transaction_id _trid = -1;
-
-  ll_log_lock(sync);  
-
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-
-  rec_len = sizeof(char) + sizeof(transaction_id) + sizeof(int) + CHARISMA_MAX_TRNS_NUMBER*(sizeof(LONG_LSN) + sizeof(transaction_id));
-  tmp_rec = new char[rec_len];
-  ret_lsn = mem_head->next_lsn;
-
-  //obtain identifier of active transaction
-  int i;
-  for (i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
-      if (mem_head->t_tbl[i].last_lsn != NULL_LSN)
-      {
-         _trid = i;
-         d_printf2("transaction id of checkpoint=%d\n", i);
-         break;
-      }
- 
-  if (_trid == -1)
-     throw SYSTEM_EXCEPTION("there is no any active transaction during checkpoint");     
-
-  //create record body
-  inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
-  inc_mem_copy(tmp_rec, offs, &_trid, sizeof(transaction_id));
-  inc_mem_copy(tmp_rec, offs, &num, sizeof(int));
-  for (i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
-  {
-    inc_mem_copy(tmp_rec, offs, &i, sizeof(transaction_id));
-    inc_mem_copy(tmp_rec, offs, &(mem_head->t_tbl[i].last_lsn), sizeof(LONG_LSN));
-  }
-
-  //insert record in shared memory
-  ll_log_insert_record(tmp_rec, rec_len, _trid, false);
-
-  delete [] tmp_rec;
-
-  ll_log_unlock(sync);
-
-  return ret_lsn;
-*/
-//}
-
-/*
- indirection log record format: !!! this record appended to the next micro operation
- cl_hint (int)
- num (int) - number of indirection table blocks
- xptr | several blocks, size derived from vector
-*/
-void llmgr_core::ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync)
-{
-  int _indir_rec_len;
-  int offs = 0;
-
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-
-  int blocks_len;
-
-  if (blocks == NULL)
-     blocks_len = 0;
-  else
-     blocks_len = sizeof(xptr)* blocks->size();
-
-  _indir_rec_len = sizeof(int) +
-                   sizeof(int) +
-                   blocks_len;
-
-  if (_indir_rec_len > indir_rec_buf_size)
-  {
-    if (indir_rec_buf_size > 0) se_delete(indir_rec);
-    indir_rec = se_new_cxt(TransactionContext) char[_indir_rec_len];
-    indir_rec_buf_size = _indir_rec_len;
-  }
-//  indir_rec = new char[_indir_rec_len];  
-  indir_rec_len = _indir_rec_len;
-
-  //create record body
-  int blocks_num = (blocks == NULL) ? 0: blocks-> size();
-
-  inc_mem_copy(indir_rec, offs, &cl_hint, sizeof(int));
-  inc_mem_copy(indir_rec, offs, &blocks_num, sizeof(int));
-
-  if (blocks != NULL)
-     for (int i=blocks->size() - 1; i >=0; i--)
-         inc_mem_copy(indir_rec, offs, &(blocks->at(i)), sizeof(xptr));
-}
-
-/*
  free blocks log record format:
  op (1 byte)
  size (4 bytes?)
@@ -1514,7 +1190,6 @@ void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &size, sizeof(int));
-//  inc_mem_copy(tmp_rec, offs, &log_xptr, sizeof(LXPTR));
   inc_mem_copy(tmp_rec, offs, &phys_xptr, sizeof(xptr));
   inc_mem_copy(tmp_rec, offs, block, size);
   inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
@@ -1534,8 +1209,6 @@ void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool 
 
   //insert log record into shared memory
   writeSharedMemoryWithCheck(&log_head, tmp_rec);
-//  writeSharedMemory(&log_head, sizeof(logical_log_head));
-//  writeSharedMemory(tmp_rec, rec_len);
 
   ret_lsn = mem_head->next_lsn;
 
@@ -1579,18 +1252,10 @@ LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGa
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
-//  inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
   inc_mem_copy(tmp_rec, offs, blk_info, sizeof(WuVersionEntry));
   inc_mem_copy(tmp_rec, offs, &ts, sizeof(TIMESTAMP));
   inc_mem_copy(tmp_rec, offs, &isGarbage, sizeof(int));
   inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
-
-//  inc_mem_copy(tmp_rec, offs, &(blk_info->lxptr), sizeof(LXPTR));
-//  inc_mem_copy(tmp_rec, offs, &(blk_info->xptr), sizeof(XPTR));
-
-  //insert record in shared memory
-  
-//  ret_lsn = ll_log_insert_record(tmp_rec, rec_len, trid, false);
 
   //insert record in shared memory
   if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
@@ -1608,8 +1273,6 @@ LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGa
 
   //insert log record into shared memory
   writeSharedMemoryWithCheck(&log_head, tmp_rec);
-//  writeSharedMemory(&log_head, sizeof(logical_log_head));
-//  writeSharedMemory(tmp_rec, rec_len);
 
   ret_lsn = mem_head->next_lsn;
 
@@ -1669,8 +1332,6 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
 
   //insert log record into shared memory
   writeSharedMemoryWithCheck(&log_head, tmp_rec);
-//  writeSharedMemory(&log_head, sizeof(logical_log_head));
-//  writeSharedMemory(tmp_rec, rec_len);
 
   ret_lsn = mem_head->next_lsn;
   
@@ -1724,9 +1385,6 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
 
   //insert log record into shared memory
   writeSharedMemoryWithCheck(&log_head, addr);
-//  writeSharedMemory(&log_head, sizeof(logical_log_head));
-//  writeSharedMemory(addr, len);
-
   
   //reinit shared memory header (only lsns)
   mem_head->t_tbl[trid].last_rec_mem_offs = rec_offs;
@@ -1923,134 +1581,6 @@ void llmgr_core::ll_log_flush_all_last_records(bool sync)
 
   //d_printf1("flush of logical log finished\n");
 }
-
-/*
-void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
-{
-  RECOVERY_CRASH;
-
-  //d_printf1("flushing of logical log started\n");
-  ll_log_lock(sync);
- 
-
-  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
-  char* mem_beg = (char*)shared_mem;
-
-  int rmndr_len;
-
-  if( mem_head->t_tbl[trid].last_rec_mem_offs == NULL_OFFS)
-  {
-     ll_log_unlock(sync);
-     return; //ok all trid records on disk
-  }
-
-  //d_printf2("last_rec_mem_offs=%d\n", mem_head->t_tbl[trid].last_rec_mem_offs);
-  int last_rec_len;
-  //obtaqin last rec len
-  if ((mem_head->t_tbl[trid].last_rec_mem_offs + sizeof(logical_log_head)) <= mem_head->size) 
-  {
-     logical_log_head hd;
-     memcpy(&hd, (mem_beg + mem_head->t_tbl[trid].last_rec_mem_offs), sizeof(logical_log_head));
-     last_rec_len = sizeof(logical_log_head) + hd.body_len;
-  }
-  else
-  {//record header is not contiguous
-   //1. obtain record header
-      logical_log_head rec_head;
-      int first_portion = mem_head->size - mem_head->t_tbl[trid].last_rec_mem_offs;
-      int second_portion = sizeof(logical_log_head) - first_portion;
-
-      memcpy(&rec_head, mem_beg + mem_head->t_tbl[trid].last_rec_mem_offs, first_portion);
-      memcpy(((char*)(&rec_head))+first_portion, mem_beg + sizeof(logical_log_sh_mem_head), second_portion);   
-
-      last_rec_len = sizeof(logical_log_head) + rec_head.body_len; 
-  }
-
-  //check that there are records of the transaction which are not fluhed
-  if ( (mem_head->t_tbl[trid].last_lsn + last_rec_len) <= mem_head->next_durable_lsn)
-  {//case when all records of the transaction already flushed by means of flush calls for another transactions
-      mem_head->t_tbl[trid].last_rec_mem_offs = NULL_OFFS;
-	  ll_log_unlock(sync);
-	  return;
-  }
-
-  //compute number of bytes to be flushed 
-  if (mem_head->begin_not_drbl_offs < (mem_head->t_tbl[trid].last_rec_mem_offs + last_rec_len))
-     rmndr_len = mem_head->t_tbl[trid].last_rec_mem_offs + last_rec_len - 
-                 mem_head->begin_not_drbl_offs;
-  else
-     rmndr_len = mem_head->size - sizeof(logical_log_sh_mem_head) - 
-                 (mem_head->begin_not_drbl_offs - (mem_head->t_tbl[trid].last_rec_mem_offs + last_rec_len));
-
-  
-  int res;
-  int bytes_to_flush = rmndr_len;
-  int offs = mem_head->begin_not_drbl_offs;
-  int to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
-                      rmndr_len,
-                      mem_head->size - offs);
-  int written, i;
-
-  //set file pointer to the end  
-  set_file_pointer(mem_head->next_durable_lsn);
-
-
-  //d_printf2("need to write bytes=%d\n", rmndr_len);
-  //flush needed records;
-  while (rmndr_len > 0)
-  {
-     res = uWriteFile(ll_curr_file_dsc,
-                      (char*)shared_mem + offs,
-                      to_write,
-                      &written,
-                      __sys_call_error
-                    );
-
-     U_ASSERT(res != 0 && to_write == written);
-     if (res == 0 || to_write != written)
-       throw SYSTEM_EXCEPTION("Can't write to logical log");
-
-     if ( (offs + to_write) > mem_head->size)
-        throw SYSTEM_EXCEPTION("Internal Error in Logical Log");
-
-
-     if(( offs + to_write) == mem_head->size) 
-        offs =  sizeof(logical_log_sh_mem_head);
-     else
-        offs += to_write;
-
-     rmndr_len-= to_write;
-     to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
-                     rmndr_len,
-                     mem_head->size - offs);
-     
-  }
-
-  //change sh memory header
-  if ((mem_head->size - mem_head->begin_not_drbl_offs) > bytes_to_flush )
-    mem_head->begin_not_drbl_offs += bytes_to_flush;
-  else
-    mem_head->begin_not_drbl_offs = sizeof(logical_log_sh_mem_head) +
-                                    bytes_to_flush - 
-                                    (mem_head->size - mem_head->begin_not_drbl_offs);
-
-  mem_head->free_bytes += bytes_to_flush;
-  mem_head->keep_bytes -= bytes_to_flush;
-  mem_head->t_tbl[trid].last_rec_mem_offs = NULL_OFFS;
-
-  for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
-  {
-     if (i != trid && mem_head->t_tbl[i].last_lsn <= mem_head->t_tbl[trid].last_lsn)
-        mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
-        
-  }
-  mem_head->next_durable_lsn += bytes_to_flush;
-
-  ll_log_unlock(sync);
-
-  //d_printf1("flush of logical log finished\n");
-}
-*/
 
 void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 {
@@ -2395,18 +1925,11 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   lsn = mem_head->t_tbl[trid].last_lsn;
   rec_beg = get_record_from_disk(lsn);
   log_head = (logical_log_head*)rec_beg;
-  //cout << "rollback record lsn=" << lsn << endl;
 
-//#ifdef LOGICAL_LOG_TEST
   int i=1;
-//#endif
   while(true)
   {
-//#ifdef LOGICAL_LOG_TEST
-	//  d_printf3("record number=%d\n",i);
-//	 cout << "rollback lsn=" << lsn << endl;
 	 i++;
-//#endif
      if (log_head->prev_trn_offs == NULL_LSN)
         set_hint_lsn_for_prev_rollback_record(trid, (LONG_LSN)NULL_LSN);
      else
@@ -2429,244 +1952,17 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   }
 
   rollback_active = false;
-//  ll_log_unlock(sync);
 }
-
-/*
-//function is used for onlne rollback
-void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool), bool sync)
-{//before this call all log records are completed
-  ll_log_lock(sync);
-
-  rollback_active = true;
-
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-  char * mem_beg = (char*)shared_mem;
-  const char * rec_beg; 
-  logical_log_head* log_head; 
-
-
-  if ( mem_head->t_tbl[trid].last_lsn == NULL_LSN )
-  {//ok such transaction already rolled back
-     rollback_active = false;
-     ll_log_unlock(sync);
-     return;
-  }
-
-
-  //there is at least one record for tr to be rolled back
-  LONG_LSN lsn;
-  int offs;
-  bool InShMem;
-  int rmndr_mem_len;
- 
-  if (mem_head->t_tbl[trid].last_rec_mem_offs != NULL_OFFS)
-  {
-     offs = mem_head->t_tbl[trid].last_rec_mem_offs;
-     rec_beg = mem_beg + offs;
-     InShMem = true;
-     log_head = (logical_log_head*)rec_beg;
-     if(mem_head->begin_not_drbl_offs <= mem_head->t_tbl[trid].last_rec_mem_offs)
-        rmndr_mem_len = mem_head->t_tbl[trid].last_rec_mem_offs - mem_head->begin_not_drbl_offs;
-	 else
-        rmndr_mem_len = mem_head->size - sizeof(logical_log_sh_mem_head) -
-                        (mem_head->begin_not_drbl_offs - mem_head->t_tbl[trid].last_rec_mem_offs);	    
-  }
-  else
-  {
-     rec_beg = get_record_from_disk(lsn);
-     InShMem = false;
-     log_head = (logical_log_head*)rec_beg;
-	 rmndr_mem_len = 0;
-  }
-
-  lsn = mem_head->t_tbl[trid].last_lsn;
-  //cout << "rollback record lsn=" << lsn << endl;
-
-//#ifdef LOGICAL_LOG_TEST
-  int i=1;
-//#endif
-  while(true)
-  {
-//#ifdef LOGICAL_LOG_TEST
-	  //d_printf2("record number=%d\n",i);
-	  i++;
-//#endif
-     exec_micro_op_func(rec_beg + sizeof(logical_log_head),
-                        ((logical_log_head*)rec_beg)->body_len,
-
-						true);
-     if (log_head->prev_trn_offs == NULL_OFFS)
-        break;//all operations rolled back
-
-     if( InShMem && rmndr_mem_len >= log_head->prev_trn_offs)
-     {//next record in shared memory
-        if ( (offs - log_head->prev_trn_offs) >= (int)sizeof(logical_log_sh_mem_head))//next record is contiguous
-		{
-           offs -= log_head->prev_trn_offs;
-           rec_beg = mem_beg + offs;
-		}
-		else//next record is not contiguous
-		{
-		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
-
-           offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
-
-		}			 
-        rmndr_mem_len -= log_head->prev_trn_offs;
-		lsn -= log_head->prev_trn_offs;
-        InShMem = true;
-        log_head = (logical_log_head*)rec_beg;
-	 }
-     else
-     {//next record on disk
-
-        lsn -= log_head->prev_trn_offs;
-        rec_beg = get_record_from_disk(lsn);
-        InShMem = false;
-        log_head = (logical_log_head*)rec_beg;
-        rmndr_mem_len = 0;
-     }
-
-//     cout << "rollback record lsn=" << lsn << endl;
-
-  }
-
-  rollback_active = false;
-  ll_log_unlock(sync);
-}
-*/
-/*
-// this function frees blocks from previous persistent snapshot
-//!!! offset correction needed in case of format change
-void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
-{
-  const char *rec;
-  const char *body_beg;
-
-  __int64 file_size, old_size;
-
-  int state;
-  int free_blk_info_size;
-
-//  std::vector<SnapshotsVersionInfo> prevPersSnapshotBlocks; // info about blocks from previous pers. snapshot
-  
-  SnapshotsVersion *blocks_info;
-  int isGarbage;
-  size_t count;
-  char *blocks_offs;
-  
-  ll_log_lock(sync);
-
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-  
-//  last_cp_lsn = mem_head->last_checkpoint_lsn;
-//  last_lsn = mem_head->last_chain_lsn;
-
-  if (last_lsn == NULL_LSN) 
-  {
-    ll_log_unlock(sync);
-  	return;
-  }
-
-  LONG_LSN lsn = last_lsn;
-
-  while (lsn != NULL_LSN)
-  {
-  	set_file_pointer(lsn);
-  	if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
-    	throw SYSTEM_EXCEPTION("Can't get file size");
-  
-  	if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
-    	lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
-  
-  	rec = get_record_from_disk(lsn);
-  	body_beg = rec + sizeof(logical_log_head);
-
-  	if (body_beg[0] == LL_PERS_SNAPSHOT_ADD)
-  	{
-		blocks_info = (SnapshotsVersion *)(body_beg + sizeof(char));
-//  		prevPersSnapshotBlocks.push_back(*blocks_info);
-   		isGarbage = *((int *)(body_beg + sizeof(char) + sizeof(SnapshotsVersion)));
-   		if (!isGarbage)
-   			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), *((xptr *)(blocks_info->xptr)));
-
-  		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(SnapshotsVersion) + sizeof(int)));
-  	}
-  	else
-  	if (body_beg[0] == LL_CHECKPOINT)
-  	{
-  		state = *((int *)(body_beg + sizeof(char)));
-  		blocks_offs = const_cast<char *>(body_beg) + sizeof(char) + sizeof(int);
-  		
-  		if (state == 0)
-  		*/
-//  			blocks_offs += /*sizeof(TIMESTAMP) +*/ sizeof(LONG_LSN) + sizeof(bm_masterblock);
-/*
-  		isGarbage = *((int *)blocks_offs);
-  		blocks_offs += sizeof(int);
-
-  		count = *((size_t *)blocks_offs);
-  		blocks_offs += sizeof(size_t);
-
-  		blocks_info = (SnapshotsVersion *)blocks_offs;
-  		
-   		if (!isGarbage)
-	  	{	
-	  		for (int i = 0; i < count; i++)
-				push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), *((xptr *)(blocks_info[i].xptr)));
-//  			prevPersSnapshotBlocks.push_back(blocks_info[i]);
-		}
-
-  		lsn = *((LONG_LSN *)(blocks_offs + count * sizeof(SnapshotsVersion)));
-  	}
-  	else
-  	if (body_beg[0] == LL_FREE_BLOCKS)
-  	{
-    	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
-  		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(int) + sizeof(xptr) + free_blk_info_size));
-  	}	
-  	if (body_beg[0] == LL_DECREASE)
-  	{
-  		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(__int64)));
-  	}	
-  	else
-  		throw USER_EXCEPTION(SE4154);
-  }
-
-//  for (int i = 0; i < prevPersSnapshotBlocks.size(); i++)
- // {
- //  	if (!prevPersSnapshotBlocks[i].isGarbage)
-//   		push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), prevPersSnapshotBlocks[i].xptr);
-//  }
-
-  ll_log_unlock(sync);
-}
-*/
 
 //this function is run from the special recovery process
-// TODO: look for indirection table calls
-// TODO: check for index_op call
 #ifdef SE_ENABLE_FTSEARCH
 void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
 					   					   void (*exec_micro_op) (const char*, int, bool),
-                                           void(*switch_indirection)(int),
-                                           void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
-                                           void (*_vmm_rcv_clear_indir_block_set_)(),
-                                           void (*_sync_indirection_table_)(),
                                            const LONG_LSN& last_cp_lsn,
-                                           int undo_indir_mode,
-                                           int redo_indir_mode,
                                            bool sync)
 #else
 void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
-                                           void(*switch_indirection)(int),
-                                           void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
-                                           void (*_vmm_rcv_clear_indir_block_set_)(),
-                                           void (*_sync_indirection_table_)(),
                                            const LONG_LSN& last_cp_lsn,
-                                           int undo_indir_mode,
-                                           int redo_indir_mode,
                                            bool sync)
 #endif
 {
@@ -2679,12 +1975,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   LONG_LSN last_checkpoint_lsn = last_cp_lsn;
   LONG_LSN last_lsn = file_head.last_lsn;
 
-  //cout << "last_checkpoint_lsn=" << last_checkpoint_lsn << "\n";
-  //cout << "last_commit_lsn=" << last_commit_lsn << "\n";
-
-//  d_printf2("last_checkpoint_lsn=%d, last_commit_lsn=%d\n", last_checkpoint_lsn, last_commit_lsn);
   string str = string("llmgr_core::recover_db_by_logical_log last_checkpoint_lsn=") + int2string(last_checkpoint_lsn) + string("\n");
-//  str += string("llmgr_core::recover_db_by_logical_log last_commit_lsn=") + int2string(last_commit_lsn) + string("\n");
   WRITE_DEBUG_LOG(str.c_str());
 
   if (last_checkpoint_lsn == NULL_LSN || last_lsn == NULL_LSN) 
@@ -2695,9 +1986,6 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
      ll_log_unlock(sync);
      return;//all already recovered
   }
-
-//  trns_analysis_map undo_redo_trns_map;
-
 
   trns_undo_analysis_list undo_list;
   trns_redo_analysis_list redo_list;
@@ -2722,27 +2010,9 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   else // if we are here, we are in trouble
   	 start_analysis_lsn = sizeof(logical_log_file_head);
 
-//  d_printf3("get_undo_redo_trns_map last_cp_lsn=%lld, last_commit_lsn=%lld\n", last_checkpoint_lsn, last_commit_lsn);
   get_undo_redo_trns_list(start_analysis_lsn,
                           last_lsn,
-//                          undo_list, /*out*/
-                          redo_list, /*out*/
-                          _vmm_rcv_add_to_indir_block_set_
-                         );
-
-
-/*  trns_undo_analysis_list_iterator it;
-
-#ifdef EL_DEBUG
-#if (EL_DEBUG == 1)
-  for (it = undo_list.begin(); it != undo_list.end(); it++)
-  {
-//       std::cout << "trid=" << it->trid << " trn_undo_rcv_lsn=" << it->trn_undo_rcv_lsn;     
-     std::cout << "trid=" << it->trid <<  " trn_undo_rcv_lsn=" << it->trn_undo_rcv_lsn << "first_lsn_after_cp=" << it->first_lsn_after_cp << " finish_status=" << it->finish_status << endl;
-  }
-#endif
-#endif
-*/
+                          redo_list/*out*/);
 
   trns_redo_analysis_list_iterator it2;
 
@@ -2755,25 +2025,8 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 #endif
 #endif
 
-  switch_indirection(undo_indir_mode);
-
-/*  d_printf2("undo loseres num=%d\n", undo_list.size());
-  //undo losers
-  trns_undo_analysis_list_iterator it1;
-  for(it1=undo_list.begin(); it1 != undo_list.end(); it1++)
-     undo_trn(it1->trn_undo_rcv_lsn, exec_micro_op);
-*/
-  _sync_indirection_table_();
-
   //redo committed transactions
   LONG_LSN start_redo_lsn = start_analysis_lsn;
-//  const char* checkpoint_rec = get_record_from_disk(last_checkpoint_lsn);
-
-//  get_record_length(checkpoint_rec);
-//  start_redo_lsn = (last_checkpoint_lsn != NULL_LSN) ? last_checkpoint_lsn + get_record_length(checkpoint_rec) :
-//                                                       sizeof(logical_log_file_head);
-
-  switch_indirection(redo_indir_mode);
 
   d_printf2("redo list size=%d\n", redo_list.size());
 
@@ -2784,39 +2037,14 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   
   RECOVERY_CRASH;
  
-//  _sync_indirection_table_();
 #ifdef SE_ENABLE_FTSEARCH
   index_op(undo_list, redo_list, last_checkpoint_lsn);
 #endif
-
-  _vmm_rcv_clear_indir_block_set_();
 
   //close all open log files
   close_all_log_files();
   ll_log_unlock(sync);
 }
-/*
-void llmgr_core::undo_trn(LONG_LSN& start_undo_lsn, void (*_exec_micro_op_) (const char*, int, bool))
-{
-  LONG_LSN lsn = start_undo_lsn;
-  const char* rec;
-
-  if (start_undo_lsn == NULL_LSN)
-	  return; 
-
-  do
-  {
-     rec = get_record_from_disk(lsn);
-
-#ifdef RECOVERY_EXEC_MICRO_OP
-     _exec_micro_op_(rec + sizeof(logical_log_head), get_record_length(rec) - sizeof(logical_log_head), true);
-#endif
-   
-     lsn-= ((logical_log_head*)rec)->prev_trn_offs;
-
-  } while(((logical_log_head*)rec)->prev_trn_offs != NULL_OFFS);
-
-}*/
 
 void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*_exec_micro_op_) (const char*, int, bool))
 {
@@ -2894,58 +2122,15 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
   } while(lsn <= end_lsn);
 }
 
-// TODO: look for indirection table calls
 void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
                                         LONG_LSN &end_lsn,
-                                        /*trns_undo_analysis_list& undo_list, /*out*/
-                                        trns_redo_analysis_list& redo_list, /*out*/
-                                        void (*_vmm_rcv_add_to_indir_block_set_)(xptr p)
-                                       )
+                                        trns_redo_analysis_list& redo_list/*out*/)
 {
   LONG_LSN lsn = start_lsn;
   const char *rec;
   const char *body_beg;
-//  trns_undo_analysis_list _undo_list_;
   trns_redo_analysis_list _redo_list_;
-//  LONG_LSN next_lsn_after_cp;
 
-
-  //init trns_map from checkpoint record
-
-//  if (start_lsn == NULL_LSN)//there is no checkpoint -> pass from log begin
-//     lsn = sizeof(logical_log_file_head);
-//  else
-//  {
-//    rec = get_record_from_disk(start_lsn);
-/*    body_beg = rec + sizeof(logical_log_head);
-    
-    if (body_beg[0] != LL_CHECKPOINT)
-       throw USER_EXCEPTION(SE4153);
-
-    //init map from checkpoint
-    int num = *((int*)(body_beg + sizeof(char)));
-
-    for (int i=0; i< num; i++)
-    {
-       transaction_id *trid;
-       LONG_LSN *last_lsn;
-
-       trid = (transaction_id*)(body_beg + sizeof(char) + sizeof(int) + i*(sizeof(transaction_id) + sizeof(LONG_LSN)));
-       last_lsn = (LONG_LSN*)(body_beg + sizeof(char) + sizeof(int) + i*(sizeof(transaction_id) + sizeof(LONG_LSN)) + sizeof(transaction_id));
-       if (*last_lsn != NULL_LSN)_undo_list_.push_back(trn_cell_analysis_undo(*trid, *last_lsn));
-
-//       trns_map.insert(trn_pair(*trid, trn_cell_analysis(0, *last_lsn)));
-    }
-*/
-//    lsn = start_lsn + get_record_length(rec);    
-//  }
-
-//  next_lsn_after_cp = lsn;
-
-
-  //pass the log
-//  trns_analysis_map trns_map_after_checkpoint;//map of transactions began after checkpoint
-//  trns_analysis_map::iterator it;
   __int64 file_size;
 
   while (lsn <= end_lsn)
@@ -2965,36 +2150,24 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
 
-//    if (body_beg[0] == LL_CHECKPOINT)
-//       throw USER_EXCEPTION(SE4153);
-
     transaction_id *trid;
 
     if (body_beg[0] != LL_FREE_BLOCKS)
 	    trid = (transaction_id*)(body_beg + sizeof(char));
-//    trn_cell_analysis_undo undo_trn_cell(-1, NULL_LSN);
     trn_cell_analysis_redo redo_trn_cell(-1, NULL_LSN, NULL_LSN);
     bool res1, res2;
 
 
     if (body_beg[0] == LL_INSERT_ELEM || body_beg[0] == LL_DELETE_ELEM ||
-        body_beg[0] == LL_INDIR_INSERT_ELEM || body_beg[0] == LL_INDIR_DELETE_ELEM ||
         body_beg[0] == LL_INSERT_ATTR || body_beg[0] == LL_DELETE_ATTR ||
-        body_beg[0] == LL_INDIR_INSERT_ATTR || body_beg[0] == LL_INDIR_DELETE_ATTR ||
         body_beg[0] == LL_INSERT_TEXT || body_beg[0] == LL_DELETE_TEXT ||
-        body_beg[0] == LL_INDIR_INSERT_TEXT || body_beg[0] == LL_INDIR_DELETE_TEXT ||
         body_beg[0] == LL_INSERT_LEFT_TEXT || body_beg[0] == LL_DELETE_LEFT_TEXT ||
         body_beg[0] == LL_INSERT_RIGHT_TEXT || body_beg[0] == LL_DELETE_RIGHT_TEXT ||
         body_beg[0] == LL_INSERT_DOC  || body_beg[0] == LL_DELETE_DOC  ||
-        body_beg[0] == LL_INDIR_INSERT_DOC  || body_beg[0] == LL_INDIR_DELETE_DOC  ||
         body_beg[0] == LL_INSERT_COMMENT || body_beg[0] == LL_DELETE_COMMENT ||
-        body_beg[0] == LL_INDIR_INSERT_COMMENT || body_beg[0] == LL_INDIR_DELETE_COMMENT ||
         body_beg[0] == LL_INSERT_PI   || body_beg[0] == LL_DELETE_PI ||
-        body_beg[0] == LL_INDIR_INSERT_PI   || body_beg[0] == LL_INDIR_DELETE_PI ||
         body_beg[0] == LL_INSERT_COLLECTION || body_beg[0] == LL_DELETE_COLLECTION ||
-        body_beg[0] == LL_INDIR_INSERT_COLLECTION || body_beg[0] == LL_INDIR_DELETE_COLLECTION ||
         body_beg[0] == LL_INSERT_NS   || body_beg[0] == LL_DELETE_NS ||
-        body_beg[0] == LL_INDIR_INSERT_NS   || body_beg[0] == LL_INDIR_DELETE_NS ||
         body_beg[0] == LL_INSERT_DOC_INDEX  || body_beg[0] == LL_DELETE_DOC_INDEX ||
         body_beg[0] == LL_INSERT_COL_INDEX  || body_beg[0] == LL_DELETE_COL_INDEX ||
         body_beg[0] == LL_INSERT_DOC_FTS_INDEX  || body_beg[0] == LL_DELETE_DOC_FTS_INDEX ||
@@ -3003,73 +2176,16 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
         body_beg[0] == LL_INSERT_COL_TRG  || body_beg[0] == LL_DELETE_COL_TRG)
 
     {
-//      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
-/*      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
-      {
-         if (undo_trn_cell.first_lsn_after_cp == NULL_LSN)
-         {
-            undo_trn_cell.first_lsn_after_cp = lsn;
-            set_undo_trn_cell(*trid, _undo_list_, undo_trn_cell);
-         }
-      }
-      else
-      {//need to check in redo list
-*/               
          res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
          if (!res2 || redo_trn_cell.finish_status != TRN_NOT_FINISHED)
          {//first record of transaction
             _redo_list_.push_back(trn_cell_analysis_redo(*trid, lsn, NULL_LSN));
          
          }
-         
-//      }
-
-     
-      if (
-          body_beg[0] == LL_INDIR_INSERT_ELEM || body_beg[0] == LL_INDIR_DELETE_ELEM ||
-          body_beg[0] == LL_INDIR_INSERT_ATTR || body_beg[0] == LL_INDIR_DELETE_ATTR ||
-          body_beg[0] == LL_INDIR_INSERT_TEXT || body_beg[0] == LL_INDIR_DELETE_TEXT ||
-          body_beg[0] == LL_INDIR_INSERT_DOC  || body_beg[0] == LL_INDIR_DELETE_DOC  ||
-          body_beg[0] == LL_INDIR_INSERT_COMMENT || body_beg[0] == LL_INDIR_DELETE_COMMENT ||
-          body_beg[0] == LL_INDIR_INSERT_PI   || body_beg[0] == LL_INDIR_DELETE_PI ||
-          body_beg[0] == LL_INDIR_INSERT_COLLECTION || body_beg[0] == LL_INDIR_DELETE_COLLECTION ||
-          body_beg[0] == LL_INDIR_INSERT_NS   || body_beg[0] == LL_INDIR_DELETE_NS)
-       //append new indirection blocks
-      {
-          int offs = sizeof(char) + sizeof(transaction_id);
-          int *cl_hint;
-          int *blocks_num;
-
-          cl_hint = (int*)(body_beg + offs);
-          offs += sizeof(int);
-          blocks_num = (int*)(body_beg + offs);
-          offs += sizeof(int);
-
-          for (int i = 0; i< *blocks_num; i++)
-          {
-              _vmm_rcv_add_to_indir_block_set_(*((xptr*)(body_beg + offs)));
-              offs += sizeof(xptr);
-          }
-      }
-
     }
     else
     if (body_beg[0] == LL_COMMIT)//may be transaction with only one commit record in te log
     {
-//      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
-      
-/*      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
-      {
-
-         undo_trn_cell.finish_status = TRN_COMMIT_FINISHED;
-         set_undo_trn_cell(*trid, _undo_list_, undo_trn_cell); 
-
-         if (undo_trn_cell.first_lsn_after_cp != NULL_LSN)//we need to redo at least one record for this transaction after checkpoint
-            _redo_list_.push_front(trn_cell_analysis_redo(*trid, next_lsn_after_cp, lsn, TRN_COMMIT_FINISHED));
-
-      }
-      else*/
-//      {
          res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
          if (res2 && redo_trn_cell.finish_status == TRN_NOT_FINISHED)
          {
@@ -3077,20 +2193,10 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
              redo_trn_cell.trn_end_lsn = lsn;
              set_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell);
          }
-//      }
     }
     else 
     if (body_beg[0] == LL_ROLLBACK)
     {
-//      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
-      
-/*      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
-      {
-         undo_trn_cell.finish_status = TRN_ROLLBACK_FINISHED;
-         set_undo_trn_cell(*trid, _undo_list_, undo_trn_cell); 
-      }
-      else*/
-//      {
          res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
          if (res2 && redo_trn_cell.finish_status == TRN_NOT_FINISHED)
          {
@@ -3098,8 +2204,6 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
              redo_trn_cell.trn_end_lsn = lsn;
              set_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell);
          }
-//      }
-
     }
     else 
     if (body_beg[0] == LL_FREE_BLOCKS || body_beg[0] == LL_DECREASE ||
@@ -3115,14 +2219,6 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
     lsn += get_record_length(rec);
   }
 
-
-  //init undo list (out paprameter)
-/*  trns_undo_analysis_list_iterator it1;
-  for (it1 = _undo_list_.begin(); it1 != _undo_list_.end(); it1++)
-  {
-    if (it1->finish_status != TRN_COMMIT_FINISHED) undo_list.push_back(*it1);
-  }
-*/
   //init redo list (out paprameter)
   trns_redo_analysis_list_iterator it2;
   for (it2 = _redo_list_.begin(); it2 != _redo_list_.end(); it2++)
@@ -3132,8 +2228,6 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
     else throw SYSTEM_EXCEPTION("Unpredictable finish status of transaction");
   }
 }
-
-
 
 int llmgr_core::get_num_of_records_written_by_trn(transaction_id &trid)
 {
@@ -3153,7 +2247,6 @@ void llmgr_core::commit_trn(transaction_id& trid, bool sync)
   RECOVERY_CRASH;
 
   ll_log_flush(trid, false);
-//  flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
   
   RECOVERY_CRASH;
 
@@ -3161,19 +2254,6 @@ void llmgr_core::commit_trn(transaction_id& trid, bool sync)
 
   ll_log_unlock(sync);
 }
-
-/*void llmgr_core::ll_log_freePrevPersSnapshotBlocks()
-{
-  ll_log_lock(sync);
-
-  logical_log_file_head file_head =
-              read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
-
-  freePrevCheckpointBlocks(file_head.last_checkpoint_lsn, file_head.last_lsn, sync);
-
-  ll_log_unlock(sync);
-}
-*/
 
 void llmgr_core::ll_truncate_log(bool sync)
 {
@@ -3185,17 +2265,6 @@ void llmgr_core::ll_truncate_log(bool sync)
 
   int i;
 
-/*  for(i = 0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
-  {
-     if (minLSN == NULL_LSN) 
-        minLSN = mem_head->t_tbl[i].first_lsn;
-     else
-     {
-        if (mem_head->t_tbl[i].first_lsn != NULL_LSN && mem_head->t_tbl[i].first_lsn < minLSN)
-           minLSN = mem_head->t_tbl[i].first_lsn;
-     }
-  }
-*/
   //determine files to be trancated
   int num_files_to_truncate;
   
@@ -3287,8 +2356,6 @@ void llmgr_core::ll_truncate_log(bool sync)
 
 void llmgr_core::activate_checkpoint(bool sync)
 {
-    //here phys_log_mgr is a global variable
-//    _phys_log_mgr_->activate_checkpoint(true);
 	ll_log_lock(sync);
 
   	logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;

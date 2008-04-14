@@ -150,58 +150,6 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 #endif
 }
 
-
-/*
-void hl_logical_log_register_tr(transaction_id _trid)
-{
-#ifdef LOGICAL_LOG
-  tr_llmgr->register_trn(_trid, true);
-  is_register_on_logical_log = true;
-
-#endif
-}
-
-
-void hl_logical_log_register_tr_light(transaction_id _trid)
-{
-#ifdef LOGICAL_LOG
-  tr_llmgr->register_trn(_trid, true);
-  is_register_on_logical_log = true;
-
-#endif
-}
-
-
-void hl_logical_log_unregister_tr(transaction_id _trid)
-{
-#ifdef LOGICAL_LOG
-  if (is_register_on_logical_log == true)
-  {
-     if (_trid < 0 || _trid >= CHARISMA_MAX_TRNS_NUMBER) return;
-     tr_llmgr->unregister_trn(_trid, true);
-  }
-
-  is_register_on_logical_log = false;
-#endif
-}
-
-void hl_logical_log_unregister_tr_light(transaction_id _trid)
-{
-#ifdef LOGICAL_LOG
-  if (is_register_on_logical_log == true)
-  {
-     if (_trid < 0 || _trid >= CHARISMA_MAX_TRNS_NUMBER) return;
-     tr_llmgr->unregister_trn(_trid, true);
-  }
-
-  is_register_on_logical_log = false;
-
-#endif
-
-}
-*/
-
-// moved from hl_phys_log.cpp
 void activate_and_wait_for_end_checkpoint()
 {
 #ifdef CHECKPOINT_ON
@@ -521,22 +469,6 @@ void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const
   else
   	elog(EL_LOG, ("LOG_TRACE: Pi is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
   		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
-#endif
-}
-void hl_logical_log_indirection(int cl_hint, std::vector<xptr>* blocks)
-{
-#ifdef LOGICAL_LOG
-  if (!enable_log) return;
-  number_of_records++;
-  tr_llmgr->ll_log_indirection(trid, cl_hint, blocks, true);
-#endif
-}
-void hl_logical_log_block_creation(xptr block,xptr left_n,xptr right_n, int desc_size)
-{
-#ifdef LOGICAL_LOG
-  if (!enable_log) return;
-  number_of_records++;
- //TO DO 
 #endif
 }
 void hl_logical_log_commit(transaction_id _trid)

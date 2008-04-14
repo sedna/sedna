@@ -69,8 +69,6 @@ extern int background_mode;
 extern int __bufs_num__;
 extern int __max_trs_num__;
 
-extern int write_phys_log;
-
 extern double __upd_crt__;
 
 struct CfgParserContext

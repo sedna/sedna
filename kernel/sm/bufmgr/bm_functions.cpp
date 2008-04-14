@@ -230,13 +230,6 @@ void bm_startup() throw (SednaException)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
     *lru_global_stamp_data = 0;
 #endif
-    if (uCreateShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr), NULL, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4016, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
-
-    indirection_table_free_entry = (xptr*)uAttachShMem(itfe_file_mapping, NULL, sizeof(xptr), __sys_call_error);
-    if (indirection_table_free_entry == NULL) 
-        throw USER_EXCEPTION2(SE4023, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
-
     string ph_file_name = string(db_files_path) + string(db_name) + ".seph";
     if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, 
                   PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0) != 0)
@@ -273,14 +266,6 @@ void bm_shutdown() throw (SednaException)
     if (uReleaseShMem(lru_global_stamp_file_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 #endif
-    if (uDettachShMem(itfe_file_mapping, indirection_table_free_entry, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4024, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
-
-    indirection_table_free_entry = NULL;
-
-    if (uReleaseShMem(itfe_file_mapping, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4020, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
-
     d_printf1("Release shared memory: complete\n");
 
 

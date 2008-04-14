@@ -39,8 +39,6 @@ xptr pstr_create_blk(bool persistent) {
 	if (persistent) 
 	{
 		vmm_alloc_data_block(&result);
-		//PHYS LOG
-		hl_phys_log_create_node_blk(XADDR(result));
 	}
 	else
 		vmm_alloc_tmp_block(&result);
@@ -124,12 +122,6 @@ xptr pstr_allocate(xptr blk, xptr node, const char* s, int s_size) {
 	CHECKP(node);
 #endif
 	VMM_SIGNAL_MODIFICATION(node);
-	//PHYS LOG
-	if (IS_DATA_BLOCK(node)) 
-	{
-		hl_phys_log_change(&((t_dsc*)XADDR(node))->data,sizeof(xptr));
-		hl_phys_log_change(&((t_dsc*)XADDR(node))->size,sizeof(xptr));
-	}
 	((t_dsc*)XADDR(node))->data=result;
 	((t_dsc*)XADDR(node))->size=s_size;
 	
@@ -218,41 +210,23 @@ CHECKP(blk);
 	}
 	char* debug1 = (char*)XADDR(blk) + SSB(blk);
     char *dest = (char*)XADDR(blk) + SSB(blk);
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(dest,s_size);
 	memcpy(dest, s, s_size); /* copy string */
 	//shft s2 = SITH(blk);
 	if (SITH(blk) != PSTR_EMPTY_SLOT) {
 		/* there are free slots in SIT */
 		sh = (shft*)((char*)XADDR(blk) + SITH(blk));
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(SITH_ADDR(blk),sizeof(shft));
 		*(shft*)SITH_ADDR(blk) = *sh;					/* set new head of free SIT slots list */
 	//	shft s1 = SITH(blk);
 	} else {
 		/* no free slots in SIT - allocate new one */
 		sh = (shft*)((char*)XADDR(blk) + SITB(blk));
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(SITB_ADDR(blk),sizeof(shft));
 		(*(shft*)SITB_ADDR(blk))-=sizeof(shft);			/* move SIT bound */
 		occupied_space+=sizeof(shft);
 	}
 	/* now 'sh' points to SIT slot where to register new string */
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-		hl_phys_log_change(sh,sizeof(shft));
 	*sh = *(shft*)SSB_ADDR(blk);
 	result = ADDR2XPTR(sh);
 	/* update block metastructures */
-	if (IS_DATA_BLOCK(blk))
-	{
-		hl_phys_log_change(SSB_ADDR(blk),sizeof(shft));
-		hl_phys_log_change(BFS_ADDR(blk),sizeof(shft));
-		hl_phys_log_change(PSTRNUM_ADDR(blk),sizeof(shft));
-	}
 	*(shft*)SSB_ADDR(blk)+=s_size;				/* move SSB bound */
 	*(shft*)BFS_ADDR(blk)-=occupied_space;		/* decrement amount of block free space in BFS */
 	*(shft*)PSTRNUM_ADDR(blk)+=1;				/* count number of strings in block */
@@ -279,39 +253,21 @@ CHECKP(blk);
 	/* this must hold if internal layout of block is correct */
 	if (h.hole_size < s_size) 
 		throw SYSTEM_EXCEPTION("[pstr_insert_into_maxhole()] maxhole is smaller than the size of string to insert");
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change((char*)XADDR(blk)+h.hole_shft,s_size);
 	memcpy((char*)XADDR(blk)+h.hole_shft, s, s_size); /* copy string into hole */
 	if (SITH(blk)) {
 		/* there are free slots in SIT */
 		sh = (shft*)((char*)XADDR(blk) + SITH(blk));
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(SITH_ADDR(blk),sizeof(shft));
 		*(shft*)SITH_ADDR(blk) = *sh;					/* set new head of free SIT slots list */
 	} else {
 		/* no free slots in SIT - allocate new one */
 		sh = (shft*)((char*)XADDR(blk) + SITB(blk));
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(SITB_ADDR(blk),sizeof(shft));
 		(*(shft*)SITB_ADDR(blk))-=sizeof(shft);			/* move SIT bound */
 		occupied_space+=sizeof(shft);
 	}
 	/* now 'sh' points to SIT slot where to register new string */
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-		hl_phys_log_change(sh,sizeof(shft));
 	*sh = h.hole_shft;
 	result = ADDR2XPTR(sh);
 	/* update block metastructures */
-	//PHYS LOG 
-	if (IS_DATA_BLOCK(blk))
-	{
-		hl_phys_log_change(BFS_ADDR(blk),sizeof(shft));
-		hl_phys_log_change(PSTRNUM_ADDR(blk),sizeof(shft));
-	}
 	*(shft*)BFS_ADDR(blk)-=occupied_space;
 	*(shft*)PSTRNUM_ADDR(blk)+=1;				/* count number of strings in block */
 	/* replace old hole with new */
@@ -355,11 +311,6 @@ CHECKP(node);
 	CHECKP(node);
 #endif
 	VMM_SIGNAL_MODIFICATION(node);
-	if (IS_DATA_BLOCK(node)) 
-	{
-			hl_phys_log_change(&(((t_dsc*)XADDR(node))->data),sizeof(xptr));
-			hl_phys_log_change(&(((t_dsc*)XADDR(node))->size),sizeof(shft));
-	}
 	((t_dsc*)XADDR(node))->data = XNULL;
 	((t_dsc*)XADDR(node))->size = 0;
 }
@@ -422,9 +373,6 @@ bool pstr_do_deallocate(xptr blk, xptr ps, int s_size, bool drop_empty_block)
 	}
 	/* Come here when the string is not adjacent with any hole */
 	if (adjacent_with_ss_tail) {
-		//PHYS LOG 
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change(SSB_ADDR(blk),sizeof(shft));
 		*(shft*)SSB_ADDR(blk) = ps_shft;
 		goto post_operations;
 	}
@@ -461,13 +409,6 @@ post_operations:
 			hh_heapify(blk,1);
 		}
 	}
-	if (IS_DATA_BLOCK(blk))
-	{
-		hl_phys_log_change(XADDR(ps),sizeof(shft));
-		hl_phys_log_change(SITH_ADDR(blk),sizeof(shft));
-		hl_phys_log_change(BFS_ADDR(blk),sizeof(shft));
-		hl_phys_log_change(PSTRNUM_ADDR(blk),sizeof(shft));
-	}
 	*(shft*)XADDR(ps) = SITH(blk);
 	*(shft*)SITH_ADDR(blk) = (char*)XADDR(ps) - (char*)XADDR(blk);
 	/* update counter of free space in block */
@@ -477,9 +418,6 @@ post_operations:
 		pstr_print_blk(blk);*/
 	if (PSTRNUM(blk) <= 0 && drop_empty_block ) {
 		/* drop pstr block once it becomes empty */
-		//PHYS LOG REC
-		if (IS_DATA_BLOCK(blk))
-			hl_phys_log_change_blk(XADDR(blk));
 		RECOVERY_CRASH;
 		vmm_delete_block(blk);
 		return true;
@@ -517,9 +455,6 @@ void pstr_defragment(xptr blk) {
 CHECKP(blk);
 #endif
 /* mark the block as modified */
-	//PHYS LOG
-	if (IS_DATA_BLOCK(blk)) 
-		hl_phys_log_change_blk(XADDR(blk));
 //	pstr_print_blk(blk);
 	/* prepare joint list of SIT and HH items sorted by shfts of string/hole beginings */
 	sort_item* sorted_sit = utl_sort_sit(blk);
@@ -740,9 +675,6 @@ return debug_result; */
 #endif
 		/* update old descriptor */
 		VMM_SIGNAL_MODIFICATION(next_node);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(next_node)) 
-			hl_phys_log_change(&((t_dsc*)XADDR(next_node))->data,sizeof(xptr));
 		((t_dsc*)XADDR(next_node))->data=tmp;
 	} while (next_node != rbd);
 

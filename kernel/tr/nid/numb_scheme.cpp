@@ -136,9 +136,6 @@ void nid_assign_pers_data(xptr node,char* data,int size)
 		CHECKP(node);
 		n_dsc* dsc=(n_dsc*)XADDR(node);
 		VMM_SIGNAL_MODIFICATION(node);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(node)) 
-			hl_phys_log_change(&dsc->nid,sizeof(t_nid));
 		memcpy(dsc->nid.prefix, (char*)&tmp, sizeof(xptr));
 		*(shft*)(dsc->nid.prefix + sizeof(xptr)) = size;
 		dsc->nid.size = 0;
@@ -153,9 +150,6 @@ void	nid_assign(xptr node, t_prefix p) {
 	{
 		
 		VMM_SIGNAL_MODIFICATION(node);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(node)) 
-			hl_phys_log_change(&dsc->nid,sizeof(t_nid));
 		memcpy(dsc->nid.prefix, p.prefix, p.size);
 		/* my changes */
 		/* KOSTYA
@@ -191,9 +185,6 @@ void	nid_assign(xptr node, t_prefix p) {
 --------------------------------------------------------*/
 		CHECKP(node);
 		VMM_SIGNAL_MODIFICATION(node);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(node)) 
-			hl_phys_log_change(&dsc->nid,sizeof(t_nid));
 		memcpy(dsc->nid.prefix, (char*)&tmp, sizeof(xptr));
 		*(shft*)(dsc->nid.prefix + sizeof(xptr)) = p.size;
 		dsc->nid.size = 0;
@@ -723,9 +714,6 @@ void	nid_create_root(xptr result, bool persistent)
 {
 	n_dsc* dsc = (n_dsc*)XADDR(result);
 	VMM_SIGNAL_MODIFICATION(result);
-		//PHYS LOG
-	if (IS_DATA_BLOCK(result)) 
-			hl_phys_log_change(&dsc->nid,sizeof(t_nid));
 	if (persistent)
 	{
 		updateEP_nid();

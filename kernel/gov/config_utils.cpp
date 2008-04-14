@@ -116,9 +116,6 @@ void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)
 
           parse_sm_config_file(&(cfg->db_vars[i]), cfg_text);
 
-//        parse config file
-//        cfg->db_vars[i].phys_log_size = 0;
-//        cfg->db_vars[i].logical_log_file_size = 0;
           ++i;
       }
 
@@ -179,19 +176,9 @@ void endElement_sm_cfg(void *cfg, const char *name)
      ((gov_db_struct*)cfg)->max_trs_num = atoi(erase_ws(elem_content.c_str()).c_str());
   }
 
-  if (strcmp(name, "phys_log_ext_portion") == 0)
-  {
-     ((gov_db_struct*)cfg)->phys_log_ext_portion = atoi(erase_ws(elem_content.c_str()).c_str()) * 0x100000;
-  }
-
-  if (strcmp(name, "init_phys_log_size") == 0)
-  {
-     ((gov_db_struct*)cfg)->phys_log_size = atoi(erase_ws(elem_content.c_str()).c_str()) * 0x100000;
-  }
-
   if (strcmp(name, "logical_log_file_size") == 0)
   {
-     ((gov_db_struct*)cfg)->phys_log_size = atoi(erase_ws(elem_content.c_str()).c_str()) * 0x100000;
+     ((gov_db_struct*)cfg)->logical_log_file_size = atoi(erase_ws(elem_content.c_str()).c_str()) * 0x100000;
   }
 
   if (strcmp(name, "upd_crt") == 0)

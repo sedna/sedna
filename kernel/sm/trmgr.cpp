@@ -13,7 +13,6 @@
 #include "common/u/uprocess.h"
 #include "common/u/uutils.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/plmgr/plmgr.h"
 #include "sm/llmgr/llmgr.h"
 #include "common/u/uprocess.h"
 #include "common/base.h"
@@ -21,7 +20,6 @@
 #include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
 #include "common/tr_debug.h"
-#include "sm/plmgr/plmgr_core.h"
 #include "common/u/uutils.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "common/SSMMsg.h"
@@ -89,9 +87,6 @@ static bool SnapshotAdvanceCriterion()
 // this function tries to advance snapshots; if fails it will wait for signaled event on ro-transaction end
 void AdvanceSnapshots()
 {
-	//while (true)
-	//{
-
 	while (!WuTryAdvanceSnapshotsExn())
 	{
    		if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0)
@@ -99,26 +94,6 @@ void AdvanceSnapshots()
 	}
 	RECOVERY_CRASH;
 	ll_updateMinRcvLSN();
-
-#if 0	
-		try
-		{
-			WuAdvanceSnapshotsExn();
-			ll_updateMinRcvLSN();
-			return;
-		}
-		catch (SednaUserEnvException &e)
-		{
-			std::string err_msg = e.getDescription();
-
-			if (strcmp(err_msg.c_str(), "Unable to advance snapshots."))
-				throw;
-		}
-
-   		if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0)
-   			throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
-	}
-#endif
 }
 
 // new checkpoint and snaphot advancer thread
@@ -251,149 +226,6 @@ U_THREAD_PROC (checkpoint_thread, arg)
  return 0;
 }
 
-/* an old checkpoint thread
-U_THREAD_PROC (checkpoint_thread, arg)
-{
-#ifdef CHECKPOINT_ON
- try{
-
-
-  int times=1;  
-  LONG_LSN cp_lsn;
-
-  while (true)
-  {
-    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
-       throw SYSTEM_EXCEPTION("Can't down semaphore for checkpoint wait");
-
-
-    //syn with all micro ops
-//    if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)
- //      throw SYSTEM_EXCEPTION("Can't down semaphore for beginning checkpoint");
-
-    //!!!init global variable isCheckpoint with interlocked func to true!!!
-
-    d_printf2("checkpoint started num=%d\n", times);
-
-
-
-    int i=0;
-    for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
-    {
-        if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
-         throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
-
-        d_printf2("Sem %d acquired\n", i);
-
-    }
-    d_printf1("All sems acquired\n");
-
-	WuAdvanceSnapshotsExn();
-    WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
-
-//    flush_master_block();
-//    d_printf1("flush master block completed\n");
-
-    //d_printf1("all semaphores for concurrent ops_sem acquired\n");
-    //flush phys log
-//    ll_phys_log_flush();
-
-    //d_printf1("ll_phys_log_flush completed\n");
-
-//	LONG_LSN chain_lsn = ll_getLastChainLSN();
-
-	WuEnumerateVersionsParams params;
-    WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
-
-//    ll_freePrevPersSnapshotBlocks(chain_lsn); // free blocks from previous persistent snapshot
-//    d_printf1("previous persistent snapshot blocks free completed\n");
-    
-    flush_data_buffers();
-    d_printf1("flush data buffers completed\n");
-
-//    __int64 prev_ph_counter = ll_copy_ph_file();
-//    d_printf1("persistent heap has been copied successfully\n");
-
-//    flush_ph();
-//    d_printf1("flush_ph completed\n");
-
-    //write chekpoint record in logical log
-//    cp_lsn = ll_logical_log_checkpoint();
-//    d_printf1("checkpoint record written\n");
-
-//    d_printf2("last checkpoint lsn=%d\n", cp_lsn);
-
-    //flush logical log (now implemented as a part of ll_log_checkpoint)
-//    ll_logical_log_flush();
-    d_printf1("flush logical log completed\n");
-
-    // there was a bug in the next function since last record is not exactly checkpoint one
-    // fixed: all flush logic is now encapsulated in ll_logical_log_flush
-//    ll_logical_log_flush_last_record();
-    d_printf1("checkpoint record has been flushed\n");
-//    ll_log_flush_last_records(); // flush checkpoint records
-
-//    ll_flush_file_head();
-
-//    ll_delete_prev_ph_file(prev_ph_counter);
-//    ll_logical_log_flush_last_record();
-//    d_printf1("checkpoint record has been flushed\n");
-
-    //clear physical log
-//    ll_phys_log_clear(cp_lsn);
-//    d_printf1("ll_phys_log_clear completed\n");
-
-  
-//    backup_ph();
-
-//    ll_phys_log_set_ph_bu_to_ph(true);
-//    d_printf1("ll_phys_log_set_ph_bu_to_ph completed\n");
-
-//    ll_phys_log_set_empty_bulk_load_blks();
-
-    ll_truncate_logical_log();
-
-    WuNotifyCheckpointFinishedExn();
-
-    d_printf2("checkpoint finished times=%d\n", times);
-    for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
-        if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
-         throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
-
-
-//    if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
-//       throw SYSTEM_EXCEPTION("Can't up semaphore for beginning checkpoint");
-
-//    ll_phys_log_set_checkpoint_on_flag(false);
-	ll_set_checkpoint_on_flag(false);
-
-    elog(EL_LOG, ("Checkpoint procedure is finished"));
-
-//    if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
-//       throw SYSTEM_EXCEPTION("Can't up semaphore for beginning checkpoint");
-    
-
-    times++;
-
-///////////////////
-//for DEBUG    
-//exit(1);
-///////////////////
-
-    if (shutdown_checkpoint_thread == true) return 0;
-
-
-  }//end while
- } catch(SednaException &e) {
-   sedna_soft_fault(e, EL_SM);
- } catch(ANY_SE_EXCEPTION) {
-   sedna_soft_fault(EL_SM);
- }
-#endif
-
- return 0;
-}
-*/
 
 void start_chekpoint_thread()
 {

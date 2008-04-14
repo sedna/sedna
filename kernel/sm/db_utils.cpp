@@ -72,16 +72,6 @@ int cleanup_db(const char* db_name)
    if (res == 2) return 2;
    if (res > 0) db_exist = true;
 
-
-   //delete plog file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seplog").c_str(), __sys_call_error))
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seplog").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;   
-   }
-
    //delete ph files
    res = delete_ph_files(db_name);
 
@@ -149,7 +139,7 @@ int cleanup_db(const char* db_name)
 
 bool exist_db(const char* db_name)
 {
-   bool res1, res2, res3, res4, res5, res6, res7;
+   bool res1, res2, res3, res4, res5;
 
    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 
@@ -157,16 +147,12 @@ bool exist_db(const char* db_name)
 
    res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
 
-   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seplog").c_str(), __sys_call_error);
+   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
 
-   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
-
-   res6 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.sebu").c_str(), __sys_call_error);
-
-   res7 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
+   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
 
 
-   if (res1 || res2 || res3 || res4 || res5 || res6 || res7) return true;
+   if (res1 || res2 || res3 || res4 || res5) return true;
    else return false;
 }
 

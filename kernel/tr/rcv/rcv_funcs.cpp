@@ -45,20 +45,17 @@ void rollback_tr_by_logical_log(transaction_id _trid)
   tr_llmgr->rollback_trn(trid, exec_micro_op, true);
   string str = string("rollback_tr_by_logical_log finished\n");
   WRITE_DEBUG_LOG(str.c_str());
-
 #endif
 }
-
 
 void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 {
 #ifdef LOGICAL_LOG
+  switch_to_rollback_mode(MODE_REDO);
  #ifdef SE_ENABLE_FTSEARCH
-//  DebugBreak();
-  tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, false);  
+  tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, last_cp_lsn, false);  
 #else
-//  DebugBreak();
-  tr_llmgr->recover_db_by_logical_log(exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, false);	
+  tr_llmgr->recover_db_by_logical_log(exec_micro_op, last_cp_lsn, false);	
 #endif
   string str = string("recover+db_by_logical_log finished\n");
   WRITE_DEBUG_LOG(str.c_str());
@@ -81,38 +78,14 @@ try{
 
   RECOVERY_CRASH;
 
-  if(op == LL_INSERT_ELEM || op == LL_DELETE_ELEM || op == LL_INDIR_INSERT_ELEM || op == LL_INDIR_DELETE_ELEM)
+  if(op == LL_INSERT_ELEM || op == LL_DELETE_ELEM)
   {
      const char* name, *uri, *prefix;
      xmlscm_type type;
      xptr self, left, right, parent;
      int offs;
-     std::vector<xptr> indir_blocks;
-     int cl_hint;
-
 
      offs = sizeof(char) + sizeof(transaction_id);
-
-     if (op == LL_INDIR_INSERT_ELEM || op == LL_INDIR_DELETE_ELEM)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {        
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-            //indir_blocks.push_back(*((xptr*)(rec + offs)));
-            offs += sizeof(xptr);
-        }
-     }
 
      name = rec + offs;
      offs+= strlen(name) + 1;  
@@ -120,32 +93,20 @@ try{
      offs += strlen(uri) + 1;
      prefix = rec + offs;
      offs += strlen(prefix) + 1;
-     //type = (xmlscm_type*)(rec + offs);
      memcpy(&type, rec + offs, sizeof(xmlscm_type));
      offs += sizeof(xmlscm_type);
-     //self = (xptr*)(rec + offs);
      memcpy(&self, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //left = (xptr*)(rec + offs);
      memcpy(&left, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //right = (xptr*)(rec + offs);
      memcpy(&right, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //parent = (xptr*)(rec + offs);
      memcpy(&parent, rec + offs, sizeof(xptr));
 
-     if( (isUNDO && (op == LL_DELETE_ELEM || op == LL_INDIR_DELETE_ELEM)) || (!isUNDO && (op == LL_INSERT_ELEM || op == LL_INDIR_INSERT_ELEM)))
+     if((isUNDO && op == LL_DELETE_ELEM) || (!isUNDO && op == LL_INSERT_ELEM))
      {
-     //  if (op == LL_INDIR_INSERT_ELEM)
-     //     set_redo_hint(cl_hint, &indir_blocks);
-
-//       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
             indir_map.find(left, left);
             indir_map.find(right, right);
             indir_map.find(parent, parent);
@@ -162,61 +123,28 @@ try{
                       (strlen(prefix) != 0) ? prefix: NULL);
 
        xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
-       //if ( op == LL_INDIR_DELETE_ELEM)
-       //   set_redo_hint(cl_hint, &indir_blocks);
-
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
-
-//       if (!isUNDO) indir_map.erase(self);
      } 
   }
   else
-  if(op == LL_INSERT_ATTR || op == LL_DELETE_ATTR || op == LL_INDIR_INSERT_ATTR || op == LL_INDIR_DELETE_ATTR)
+  if(op == LL_INSERT_ATTR || op == LL_DELETE_ATTR)
   {
      const char* name, *uri, *prefix, *value;
      int value_size;
      xmlscm_type type;
      xptr self, left, right, parent;
      int offs;
-     std::vector<xptr> indir_blocks;
-     int cl_hint;
-
 
      offs = sizeof(char) + sizeof(transaction_id);
-
-     if (op == LL_INDIR_INSERT_ATTR || op == LL_INDIR_DELETE_ATTR)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {        
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-            //indir_blocks.push_back(*((xptr*)(rec + offs)));
-
-            offs += sizeof(xptr);
-        }
-     }
-
 
      name = rec + offs;
      offs += strlen(name) + 1;
@@ -224,38 +152,24 @@ try{
      offs += strlen(uri) + 1;
      prefix = rec + offs;
      offs += strlen(prefix) + 1;
-     //value_size = (int*)(rec + offs);
      memcpy(&value_size, rec + offs, sizeof(int));
      offs += sizeof(int);
      value = rec + offs;
      offs += value_size;
-     //type = (xmlscm_type*)(rec + offs);
      memcpy(&type, rec + offs, sizeof(xmlscm_type));
      offs += sizeof(xmlscm_type);
-     //self = (xptr*)(rec + offs);
      memcpy(&self, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //left = (xptr*)(rec + offs);
      memcpy(&left, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //right = (xptr*)(rec + offs);
      memcpy(&right, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //parent = (xptr*)(rec + offs);
      memcpy(&parent, rec + offs, sizeof(xptr));
 
-     if ( (isUNDO && (op == LL_DELETE_ATTR || op == LL_INDIR_DELETE_ATTR)) || (!isUNDO && (op == LL_INSERT_ATTR || op == LL_INDIR_INSERT_ATTR))) 
+     if ((isUNDO && op == LL_DELETE_ATTR) || (!isUNDO && op == LL_INSERT_ATTR)) 
      {
-
-       //if (op == LL_INDIR_INSERT_ATTR)
-       //   set_redo_hint(cl_hint, &indir_blocks);
-
-//       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
             indir_map.find(left, left);
             indir_map.find(right, right);
             indir_map.find(parent, parent);
@@ -274,89 +188,44 @@ try{
                         (strlen(prefix) != 0) ? prefix: NULL);
 
        xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
-      // if (op == LL_INDIR_DELETE_ATTR)
-       //   set_redo_hint(cl_hint, &indir_blocks);
-
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
-
-//       if (!isUNDO) indir_map.erase(self);
      }  
   }
   else
-  if ( op == LL_INSERT_TEXT || op == LL_DELETE_TEXT || op == LL_INDIR_INSERT_TEXT || op == LL_INDIR_DELETE_TEXT )
+  if (op == LL_INSERT_TEXT || op == LL_DELETE_TEXT)
   {
      const char* value;
      int value_size;
      xptr self, left, right, parent;
      int offs;
-     std::vector<xptr> indir_blocks;
-     int cl_hint;
-
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     if (op == LL_INDIR_INSERT_TEXT || op == LL_INDIR_DELETE_TEXT)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {        
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-
-//          indir_blocks.push_back(*((xptr*)(rec + offs)));
-            offs += sizeof(xptr);
-        }
-     }
-
-
-     //value_size = (int*)(rec + offs);
      memcpy(&value_size, rec + offs, sizeof(int));
      offs += sizeof(int);
      value = rec + offs;
      offs += value_size;
-     //self = (xptr*)(rec + offs);
      memcpy(&self, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //left = (xptr*)(rec + offs);
      memcpy(&left, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //right = (xptr*)(rec + offs);
      memcpy(&right, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //parent = (xptr*)(rec + offs);
      memcpy(&parent, rec + offs, sizeof(xptr));
 
-     if ((isUNDO && (op == LL_DELETE_TEXT || op == LL_INDIR_DELETE_TEXT)) || (!isUNDO && (op == LL_INSERT_TEXT || op == LL_INDIR_INSERT_TEXT)))
+     if ((isUNDO && op == LL_DELETE_TEXT) || (!isUNDO && op == LL_INSERT_TEXT))
      {
-       //if (op == LL_INDIR_INSERT_TEXT)
-       //   set_redo_hint(cl_hint, &indir_blocks);
-
-//       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
             indir_map.find(left, left);
             indir_map.find(right, right);
             indir_map.find(parent, parent);
@@ -371,22 +240,16 @@ try{
                    value_size);
 
        xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
-       //if (op == LL_INDIR_DELETE_TEXT)
-        //  set_redo_hint(cl_hint, &indir_blocks);
-
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
-//       if (!isUNDO) indir_map.erase(self);
      }
         
   }
@@ -401,19 +264,16 @@ try{
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     //value_size = (int*)(rec + offs);
      memcpy(&value_size, rec + offs, sizeof(int));
      offs += sizeof(int);
      value = rec + offs;
      offs += value_size;
-     //self = (xptr*)(rec + offs);
      memcpy(&self, rec + offs, sizeof(xptr));
 
      if (   (isUNDO && (op == LL_DELETE_LEFT_TEXT || op == LL_DELETE_RIGHT_TEXT)) || (!isUNDO && (op == LL_INSERT_LEFT_TEXT || op == LL_INSERT_RIGHT_TEXT)))
      {//insert case
 	   if (!isUNDO)
 	   {
-//		   if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 		   indir_map.find(self, self);
 	   }
 
@@ -426,7 +286,6 @@ try{
      {//delete case
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 	   		indir_map.find(self, self);
 	   }
 
@@ -438,60 +297,28 @@ try{
         
   }
   else
-  if (op == LL_INSERT_DOC || op == LL_DELETE_DOC || op == LL_INDIR_INSERT_DOC || op == LL_INDIR_DELETE_DOC)
+  if (op == LL_INSERT_DOC || op == LL_DELETE_DOC)
   {
     const char* name, *collection;
     xptr self;
     int offs;
-    std::vector<xptr> indir_blocks;
-    int cl_hint;
-
 
     offs = sizeof(char) + sizeof(transaction_id);
-
-
-     if (op == LL_INDIR_INSERT_DOC || op == LL_INDIR_DELETE_DOC)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {     
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-
-            //indir_blocks.push_back(*((xptr*)(rec + offs)));
-            offs += sizeof(xptr);
-        }
-     }
-
 
     name = rec + offs;
     offs += strlen(name) + 1;
     collection = rec + offs;
     offs += strlen(collection) + 1;
-    //self = (xptr*)(rec + offs);
     memcpy(&self, rec + offs, sizeof(xptr));
 
-    if ((isUNDO && (op == LL_DELETE_DOC || op == LL_INDIR_DELETE_DOC)) || (!isUNDO && (op == LL_INSERT_DOC || op == LL_INDIR_INSERT_DOC)))
+    if ((isUNDO && op == LL_DELETE_DOC) || (!isUNDO && op == LL_INSERT_DOC))
     {
-       //if (op == LL_INDIR_INSERT_DOC)
-        //   set_redo_hint(cl_hint, &indir_blocks);
-
        if(strlen(collection) == 0)
 	   {
           if (isUNDO) set_rollback_record(self);
           insert_document(name);
 
 	      xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
 	      if (self_res != self) indir_map.insert(self, self_res);
 	   }
        else
@@ -500,15 +327,11 @@ try{
           insert_document_in_collection(collection, name);    
 
 	      xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
 	      if (self_res != self) indir_map.insert(self, self_res);
        }
     }   
     else
     {
-       //if (op == LL_INDIR_DELETE_DOC)
-        //  set_redo_hint(cl_hint, &indir_blocks);
-
        if(strlen(collection) == 0)
        {
           delete_document(name);
@@ -516,74 +339,35 @@ try{
        else
           delete_document(collection, name);
 
-//       if (!isUNDO) indir_map.erase(self);
        if (!isUNDO) indir_map.remove(self);
     }
   }
   else
-  if (op == LL_INSERT_COMMENT || op == LL_DELETE_COMMENT || op == LL_INDIR_INSERT_COMMENT || op == LL_INDIR_DELETE_COMMENT)
+  if (op == LL_INSERT_COMMENT || op == LL_DELETE_COMMENT)
   {
      const char* value;
      int value_size;
      xptr self, left, right, parent;
      int offs;
-     std::vector<xptr> indir_blocks;
-     int cl_hint;
-
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     if (op == LL_INDIR_INSERT_COMMENT || op == LL_INDIR_DELETE_COMMENT)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {        
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-
-            //indir_blocks.push_back(*((xptr*)(rec + offs)));
-            offs += sizeof(xptr);
-        }
-     }
-
-
-     //value_size = (int*)(rec + offs);
      memcpy(&value_size, rec + offs, sizeof(int));
      offs += sizeof(int);
      value = rec + offs;
      offs += value_size;
-     //self = (xptr*)(rec + offs);
      memcpy(&self, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //left = (xptr*)(rec + offs);
      memcpy(&left, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //right = (xptr*)(rec + offs);
      memcpy(&right, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //parent = (xptr*)(rec + offs);
      memcpy(&parent, rec + offs, sizeof(xptr));
 
-     if((isUNDO && (op == LL_DELETE_COMMENT || op == LL_INDIR_DELETE_COMMENT)) || (!isUNDO && (op == LL_INSERT_COMMENT || op == LL_INDIR_INSERT_COMMENT)))
+     if((isUNDO && op == LL_DELETE_COMMENT) || (!isUNDO && op == LL_INSERT_COMMENT))
      {
-       //if (op == LL_INDIR_INSERT_COMMENT)
-        //   set_redo_hint(cl_hint, &indir_blocks);
-
-//       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
             indir_map.find(left, left);
             indir_map.find(right, right);
             indir_map.find(parent, parent);
@@ -598,92 +382,47 @@ try{
                       value_size);
 
        xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
-      // if (op == LL_INDIR_DELETE_COMMENT)
-       //   set_redo_hint(cl_hint, &indir_blocks);
-
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 	   		indir_map.find_remove(self, self);
 	   }
 
-//       if (!isUNDO) indir_map.erase(self);
+       delete_node(removeIndirection(self));
      }
   }
   else
-  if(op == LL_INSERT_PI || op == LL_DELETE_PI || op == LL_INDIR_INSERT_PI || op == LL_INDIR_DELETE_PI)
+  if(op == LL_INSERT_PI || op == LL_DELETE_PI)
   {
      const char* value;
      int total_size;
      shft target_size;
      xptr self, left, right, parent;
      int offs;
-     std::vector<xptr> indir_blocks;
-     int cl_hint;
-
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     if (op == LL_INDIR_INSERT_PI || op == LL_INDIR_DELETE_PI)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {        
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-
-            //indir_blocks.push_back(*((xptr*)(rec + offs)));
-            offs += sizeof(xptr);
-        }
-     }
-
-
-     //total_size = (int*)(rec + offs);
      memcpy(&total_size, rec + offs, sizeof(int));
      offs += sizeof(int);
-     //target_size = (shft*)(rec + offs);
      memcpy(&target_size, rec + offs, sizeof(shft));
      offs += sizeof(shft);
      value = rec + offs;
      offs += total_size;
-     //self = (xptr*)(rec + offs);
      memcpy(&self, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //left = (xptr*)(rec + offs);
      memcpy(&left, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //right = (xptr*)(rec + offs);
      memcpy(&right, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //parent = (xptr*)(rec + offs);
      memcpy(&parent, rec + offs, sizeof(xptr));
 
-     if ((isUNDO && (op == LL_DELETE_PI || op == LL_INDIR_DELETE_PI)) || (!isUNDO && (op == LL_INSERT_PI || op == LL_INDIR_INSERT_PI)))
+     if ((isUNDO && op == LL_DELETE_PI) || (!isUNDO && op == LL_INSERT_PI))
      {
-       //if (op == LL_INDIR_INSERT_PI)
-       //    set_redo_hint(cl_hint, &indir_blocks);
-
-
-//       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
             indir_map.find(left, left);
             indir_map.find(right, right);
             indir_map.find(parent, parent);
@@ -700,140 +439,62 @@ try{
                 (total_size)-(target_size));
 
        xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
-       //if (op == LL_INDIR_DELETE_PI)
-       //   set_redo_hint(cl_hint, &indir_blocks);
-
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
-
-//       if (!isUNDO) indir_map.erase(self);
      }
-     
   }
   else
-  if(op == LL_INSERT_COLLECTION || op == LL_DELETE_COLLECTION || op == LL_INDIR_INSERT_COLLECTION || op == LL_INDIR_DELETE_COLLECTION)
+  if(op == LL_INSERT_COLLECTION || op == LL_DELETE_COLLECTION)
   {
      const char* name;
-     std::vector<xptr> indir_blocks;
-     int cl_hint;
      int offs;
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     if (op == LL_INDIR_INSERT_COLLECTION || op == LL_INDIR_DELETE_COLLECTION)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {        
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-
-            //indir_blocks.push_back(*((xptr*)(rec + offs)));
-            offs += sizeof(xptr);
-        }
-     }
-
-
      name = rec + offs;
 
-     if ((isUNDO && (op == LL_DELETE_COLLECTION || op == LL_INDIR_DELETE_COLLECTION)) || (!isUNDO && (op == LL_INSERT_COLLECTION || op == LL_INDIR_INSERT_COLLECTION)))
+     if ((isUNDO && op == LL_DELETE_COLLECTION) || (!isUNDO && op == LL_INSERT_COLLECTION))
      {
-       //if (op == LL_INDIR_INSERT_COLLECTION)
-        //   set_redo_hint(cl_hint, &indir_blocks);
-
         insert_collection(name);
      }
      else
      {
-       //if (op == LL_INDIR_DELETE_COLLECTION)
-        //  set_redo_hint(cl_hint, &indir_blocks);
-
         delete_collection(name);
      }
   }
   else
-  if(op == LL_INSERT_NS || op == LL_DELETE_NS || op == LL_INDIR_INSERT_NS || op == LL_INDIR_DELETE_NS)
+  if(op == LL_INSERT_NS || op == LL_DELETE_NS)
   {
      const char *uri, *prefix;
      xptr self, left, right, parent;
      int offs;
-     std::vector<xptr> indir_blocks;
-     int cl_hint;
-
 
      offs = sizeof(char) + sizeof(transaction_id);
-
-     if (op == LL_INDIR_INSERT_NS || op == LL_INDIR_DELETE_NS)
-     {
-        int blocks_num;
-
-        //cl_hint = (int*)(rec + offs);
-        memcpy(&cl_hint, rec + offs, sizeof(int));
-        offs += sizeof(int);
-        //blocks_num = (int*)(rec + offs);
-        memcpy(&blocks_num, rec + offs, sizeof(int));
-        offs += sizeof(int);
-
-        for (int i=0; i< blocks_num; i++)
-        {        
-            xptr tmp_xptr;
-            memcpy(&tmp_xptr, rec + offs, sizeof(xptr));
-            indir_blocks.push_back(tmp_xptr);            
-
-            //indir_blocks.push_back(*((xptr*)(rec + offs)));
-            offs += sizeof(xptr);
-        }
-     }
-
-
 
      uri = rec + offs;
      offs += strlen(uri) + 1;
      prefix = rec + offs;
      offs += strlen(prefix) + 1;
-     //self = (xptr*)(rec + offs);
      memcpy(&self, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //left = (xptr*)(rec + offs);
      memcpy(&left, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //right = (xptr*)(rec + offs);
      memcpy(&right, rec + offs, sizeof(xptr));
      offs += sizeof(xptr);
-     //parent = (xptr*)(rec + offs);
      memcpy(&parent, rec + offs, sizeof(xptr));
 
-     if((isUNDO && (op == LL_DELETE_NS || op == LL_INDIR_DELETE_NS) ) || (!isUNDO && (op == LL_INSERT_NS || op == LL_INDIR_INSERT_NS)))
+     if((isUNDO && op == LL_DELETE_NS) || (!isUNDO && op == LL_INSERT_NS))
      {
-
-       //if (op == LL_INDIR_INSERT_NS)
-        //   set_redo_hint(cl_hint, &indir_blocks);
-
-//       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
             indir_map.find(left, left);
             indir_map.find(right, right);
             indir_map.find(parent, parent);
@@ -848,23 +509,16 @@ try{
                         strlen(prefix) ? prefix : NULL);
 
        xptr self_res = get_last_indir();
-//       if (self_res != self) indir_map[self] = self_res;
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
-      // if (op == LL_INDIR_DELETE_NS)
-      //    set_redo_hint(cl_hint, &indir_blocks);
-
 	   if (!isUNDO)
 	   {
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
 	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
-
-//       if (!isUNDO) indir_map.erase(self);
      }
      
   }
@@ -882,7 +536,6 @@ try{
      offs += strlen(obj_path) + 1;
      key_path = rec + offs;
      offs += strlen(key_path) + 1;
-     //key_type = *((xmlscm_type*)(rec + offs));
      memcpy(&key_type, rec + offs, sizeof(xmlscm_type));
      offs += sizeof(xmlscm_type);
      ind_name = rec + offs;
@@ -1140,36 +793,4 @@ void print_value(const char* value, int value_size)
      d_printf2("%c", value[i]);
 
    d_printf1("#\n");
-}
-
-void rcv_allocate_blocks(const vector<xptr> &arr)
-{
-/*
-    set<xptr> s;
-    set<xptr>::iterator s_it;
-    vector<xptr> d;
-    int i = 0;
-    xptr cur;
-
-
-    for (i = 0; i < arr.size(); i++)
-        s.insert(arr[i]);
-
-    while (!s.empty())
-    {
-        vmm_pseudo_alloc_data_block(&cur);
-        s_it = s.find(cur);
-        if (s_it == s.end())
-            d.push_back(cur);
-        else
-		{
-			//d_printf1("Block allocated: ");
-			s_it->print();
-            s.erase(s_it);
-		}
-    }
-
-    for (i = 0; i < d.size(); i++)
-        vmm_pseudo_delete_block(d[i]);
-*/
 }

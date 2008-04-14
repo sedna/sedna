@@ -436,16 +436,6 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		VMM_SIGNAL_MODIFICATION(blk);
 		node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(blk);
 		node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
-		//PHYS LOG
-		if (IS_DATA_BLOCK(blk)) 
-		{
-			hl_phys_log_change(&block_hdr->free_first,sizeof(shft));
-			hl_phys_log_change(&block_hdr->desc_last,sizeof(shft));
-			hl_phys_log_change(&block_hdr->count,sizeof(shft));
-			hl_phys_log_change(node,block_hdr->dsc_size);
-			if (block_hdr->count>0)
-				hl_phys_log_change(&(GETPOINTERTODESC(block_hdr,block_hdr->desc_last))->desc_next,sizeof(shft));
-		}
 		block_hdr->free_first=*((shft*)node);
 		if (block_hdr->count>0)
 			(GETPOINTERTODESC(block_hdr,block_hdr->desc_last))->desc_next=CALCSHIFT(node,block_hdr);
