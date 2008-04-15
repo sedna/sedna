@@ -11,9 +11,11 @@
 
 PPIntersect::PPIntersect(dynamic_context *_cxt_,
                          PPOpIn _child1_,
-                         PPOpIn _child2_) : PPIterator(_cxt_),
-                                            child1(_child1_),
-                                            child2(_child2_)
+                         PPOpIn _child2_,
+                         bool _doc_order_) : PPIterator(_cxt_),
+                                             child1(_child1_),
+                                             child2(_child2_),
+                                             doc_order(_doc_order_)
 {
 }
 
@@ -101,7 +103,7 @@ void PPIntersect::next  (tuple &t)
 
         /// XNULL by definition is equal to any xptr with addr == NULL;
         /// XNULL by definition is > of any xptr (except itself);
-        switch (xptr_compare(xptr1, xptr2))
+        switch (doc_order ? doc_order_merge_cmp(&xptr1, &xptr2) : xptr_compare(xptr1, xptr2))
         {
             case -1: /// (1) < (2)
             {
@@ -150,7 +152,7 @@ void PPIntersect::next  (tuple &t)
 
 PPIterator* PPIntersect::copy(dynamic_context *_cxt_)
 {
-    PPIntersect *res = se_new PPIntersect(_cxt_, child1, child2);
+    PPIntersect *res = se_new PPIntersect(_cxt_, child1, child2, doc_order);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     res->set_xquery_line(__xquery_line);

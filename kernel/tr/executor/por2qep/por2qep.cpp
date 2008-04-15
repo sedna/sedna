@@ -1055,15 +1055,15 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
             opit = se_new PPElementConstructor(cxt,
                                             name.c_str(),
-                                            make_pp_op(cxt, lst->at(2).internal.list)
-											,lst->at(3).internal.b,lst->at(4).internal.b);
+                                            make_pp_op(cxt, lst->at(2).internal.list),
+                                            lst->at(3).internal.b,lst->at(4).internal.b);
         }
         else
         {
             opit = se_new PPElementConstructor(cxt,
                                             make_pp_op(cxt, lst->at(1).internal.list),
-                                            make_pp_op(cxt, lst->at(2).internal.list)
-											,lst->at(3).internal.b,lst->at(4).internal.b);
+                                            make_pp_op(cxt, lst->at(2).internal.list),
+                                            lst->at(3).internal.b,lst->at(4).internal.b);
         }
     }
     else if (op == "PPAttribute")
@@ -2240,36 +2240,105 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
     }
     else if (op == "PPUnion")
     {
-        if (   lst->size() != 3
+        /// Uncomment it in future!
+        /*if (   lst->size() != 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+            || lst->at(3).type != SCM_BOOL
+           ) throw USER_EXCEPTION2(SE1004, "89");
+
+        opit = se_new PPUnion(cxt,
+                              make_pp_op(cxt, lst->at(1).internal.list),
+                              make_pp_op(cxt, lst->at(2).internal.list),
+                              lst->at(3).internal.b);*/
+        
+        /// Remove it in future!
+        if (   lst->size() < 3 || lst->size() > 4
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "89");
 
+        bool doc_order = false;  /// By default we use SXptr semantics now
+        
+        if(4 == lst->size())
+        {
+            if(lst->at(3).type != SCM_BOOL) throw USER_EXCEPTION2(SE1004, "89.1");
+            else doc_order = lst->at(3).internal.b;
+        }
+
         opit = se_new PPUnion(cxt,
-                           make_pp_op(cxt, lst->at(1).internal.list),
-                           make_pp_op(cxt, lst->at(2).internal.list));
+                              make_pp_op(cxt, lst->at(1).internal.list),
+                              make_pp_op(cxt, lst->at(2).internal.list),
+                              doc_order);
+
     }
     else if (op == "PPIntersect")
     {
-        if (   lst->size() != 3
+        /// Uncomment it in future!
+        /*if (   lst->size() != 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+            || lst->at(3).type != SCM_BOOL
+           ) throw USER_EXCEPTION2(SE1004, "89");
+
+        opit = se_new PPIntersect(cxt,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list),
+                                  lst->at(3).internal.b);*/
+        
+        /// Remove it in future!
+        if (   lst->size() < 3 || lst->size() > 4
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "90");
 
+        bool doc_order = false;  /// By default we use SXptr semantics now
+        
+        if(4 == lst->size())
+        {
+            if(lst->at(3).type != SCM_BOOL) throw USER_EXCEPTION2(SE1004, "90.1");
+            else doc_order = lst->at(3).internal.b;
+        }
+
         opit = se_new PPIntersect(cxt,
-                               make_pp_op(cxt, lst->at(1).internal.list),
-                               make_pp_op(cxt, lst->at(2).internal.list));
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list),
+                                  doc_order);
+
     }
     else if (op == "PPExcept")
     {
-        if (   lst->size() != 3
+        /// Uncomment it in future!
+        /*if (   lst->size() != 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+            || lst->at(3).type != SCM_BOOL
+           ) throw USER_EXCEPTION2(SE1004, "89");
+
+        opit = se_new PPExcept(cxt,
+                               make_pp_op(cxt, lst->at(1).internal.list),
+                               make_pp_op(cxt, lst->at(2).internal.list),
+                               lst->at(3).internal.b);*/
+        
+        /// Remove it in future!
+        if (   lst->size() < 3 || lst->size() > 4
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "91");
 
+        bool doc_order = false;  /// By default we use SXptr semantics now
+        
+        if(4 == lst->size())
+        {
+            if(lst->at(3).type != SCM_BOOL) throw USER_EXCEPTION2(SE1004, "91.1");
+            else doc_order = lst->at(3).internal.b;
+        }
+
         opit = se_new PPExcept(cxt,
-                            make_pp_op(cxt, lst->at(1).internal.list),
-                            make_pp_op(cxt, lst->at(2).internal.list));
+                               make_pp_op(cxt, lst->at(1).internal.list),
+                               make_pp_op(cxt, lst->at(2).internal.list),
+                               doc_order);
+
     }
     else if (op == "PPADFilter")
     {

@@ -16,6 +16,7 @@ protected:
     // given parameters
     PPOpIn child1;
     PPOpIn child2;
+    bool doc_order;
 
     // obtained parameters and local data
     bool tug_first, tug_second;
@@ -36,7 +37,8 @@ public:
 
     PPIntersect(dynamic_context *_cxt_,
                 PPOpIn _child1_,
-                PPOpIn _child2_);
+                PPOpIn _child2_,
+                bool _doc_order_);
     virtual ~PPIntersect();
 
     static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
