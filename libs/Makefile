@@ -299,6 +299,7 @@ endif
 endif
 
 ifeq ("$(build_libedit)","yes")
+ifeq ("$(ENABLE_LIBEDIT)","1")
 
 .PHONY: build_libedit clean_libedit
 BUILD_DEPS+=build_libedit
@@ -322,6 +323,7 @@ clean_libedit:
 	-$(MAKE) -C libedit uninstall
 	-$(MAKE) -C libedit clean
 
+endif
 endif
 
 build: $(BUILD_DEPS)
