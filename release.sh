@@ -53,8 +53,6 @@ if test "x$SEDNA_INSTALL" = "x"; then
   failwith "SEDNA_INSTALL is not set up"
 fi
 
-
-
 lookfor uname
 lookfor cat
 lookfor cp
@@ -63,24 +61,46 @@ lookfor mv
 lookfor tar
 
 
-
 export OS=`uname` || failwith "Cannot mine operating system name"
 export SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
-
 export BUILD_FILE=build-$SEDNA_VERSION
-export BUILD_STATE_FILE=build-state-$SEDNA_VERSION
 
-if test "$OS" "=" "Linux"
-then
-export OS_DEP_BUILD_STATE=L
-export BUILD_SUFFIX=linux
-export DISTR_EXT=sh
-export SRC_EXT=tar.gz
-else
-export OS_DEP_BUILD_STATE=W
-export BUILD_SUFFIX=win
-export DISTR_EXT=tar.gz
-export SRC_EXT=tar.gz
+if test "$OS" "=" "Linux"; then
+
+  export BUILD_SUFFIX=linux
+  export DISTR_EXT=sh
+  export SRC_EXT=tar.gz
+  export SQL_CONNECTION=0
+  MAKE_COMMAND=make
+  OS_TYPE=nix
+
+elif test "$OS" "=" "Darwin"; then
+
+  export BUILD_SUFFIX=mac-ppc
+  export DISTR_EXT=sh
+  export SRC_EXT=tar.gz
+  export SQL_CONNECTION=0
+  MAKE_COMMAND=make
+  OS_TYPE=nix
+
+elif test "$OS" "=" "FreeBSD"; then
+
+  export BUILD_SUFFIX=bsd
+  export DISTR_EXT=sh
+  export SRC_EXT=tar.gz
+  export SQL_CONNECTION=0
+  MAKE_COMMAND=gmake
+  OS_TYPE=nix
+
+else  #Windows (Cygwin)
+
+  export BUILD_SUFFIX=win
+  export DISTR_EXT=tar.gz
+  export SRC_EXT=tar.gz
+  export SQL_CONNECTION=0
+  MAKE_COMMAND=make
+  OS_TYPE=win
+
 fi
 
 EXCLUDE_FROM_SOURCE_DISTR="--exclude exclude_files --exclude copyright.sh --exclude linecount.sh --exclude release.sh --exclude _darcs --exclude coverage.pl"
@@ -88,7 +108,7 @@ for exclude_file in libs/AntlrMSVC60.mak libs/Makefile.antlr libs/Makefile.dlg l
 	EXCLUDE_FROM_SOURCE_DISTR="$EXCLUDE_FROM_SOURCE_DISTR --exclude $exclude_file"
 done
 
-prepare_windows_source() {
+prepare_win_source() {
     echo prepare_windows_source &&
     rm -rf $FILE_BASE/libs/*.tar.gz &&
     rm -rf $FILE_BASE/libs/pcre/*.a &&
@@ -110,7 +130,7 @@ prepare_windows_source() {
     cd "$OLDDIR"
 }
 
-prepare_linux_source() {
+prepare_nix_source() {
     rm -rf $FILE_BASE/libs/pccts	&&
     rm -rf $FILE_BASE/libs/pg		&&
     rm -rf $FILE_BASE/libs/expat	&&
@@ -151,10 +171,10 @@ EEE
 }
 
 prepare_source() {
-    if test "$OS" "=" "Linux"; then
-	prepare_linux_source
+    if test "$OS_TYPE" "=" "nix"; then
+	  prepare_nix_source
     else
-	prepare_windows_source
+	  prepare_win_source
     fi
     mv $FILE_BASE/Makefile.include $FILE_BASE/Makefile.include.orig &&
     SEDSCRIPT=Makefile.include.sed &&
@@ -164,7 +184,7 @@ prepare_source() {
 }
 
 
-#script for downloading build-number-file and build-state-file
+#script for downloading build-number-file
 get_build_file() {
     # get build_file and build_state_file
     echo "open seine.ispras.ru" > ftpscript.txt &&
@@ -172,47 +192,21 @@ get_build_file() {
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
     echo "get $BUILD_FILE" >> ftpscript.txt &&
-    echo "get $BUILD_STATE_FILE" >> ftpscript.txt &&
     echo "close" >> ftpscript.txt &&
     echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
-    if test "$OS" "=" "Linux"; then
+    if test "$OS_TYPE" "=" "nix"; then
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
-    fi || failwith "Cannot get build_file or build_state_file"
+    fi || failwith "Cannot get build_file"
 
     BUILD=`cat $BUILD_FILE` || failwith "Cannot read build_file"
-    STATE=`cat $BUILD_STATE_FILE` || failwith "Cannot read build_state_file"
 
     rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
     rm -f $BUILD_FILE || failwith "Cannot remove build_file"
-    rm -f $BUILD_STATE_FILE || failwith "Cannot remove build_state_file"
 }
 
-#script for uploadind build-number-file and build-state-file
-put_build_file() {
-    echo $BUILD > $BUILD_FILE &&
-    echo $STATE > $BUILD_STATE_FILE &&
-    echo "open seine.ispras.ru" > ftpscript.txt &&
-    echo "anonymous" >> ftpscript.txt &&
-    echo "password" >> ftpscript.txt &&
-    echo "cd build" >> ftpscript.txt &&
-    echo "put $BUILD_FILE" >> ftpscript.txt &&
-    echo "put $BUILD_STATE_FILE" >> ftpscript.txt &&
-    echo "close" >> ftpscript.txt &&
-    echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
-
-    if test "$OS" "=" "Linux"; then
-        ncftp <ftpscript.txt
-    else
-        ftp -s:ftpscript.txt
-    fi || failwith "Cannot upload build_file or build_state_file"
-
-    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-    rm -f $BUILD_FILE || failwith "Cannot remove build_file"
-    rm -f $BUILD_STATE_FILE || failwith "Cannot remove build_state_file"
-}
 
 #script for uploading results of build to seine
 #parameters: binary_file_name source_file_name
@@ -228,7 +222,7 @@ put_results_to_seine() {
 	echo "close" >> ftpscript.txt &&
 	echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
-    if test "$OS" "=" "Linux"; then
+    if test "$OS_TYPE" "=" "nix"; then
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
@@ -247,7 +241,7 @@ get_modis_ftp_uname() {
     echo "close" >> ftpscript.txt &&
     echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
-    if test "$OS" "=" "Linux"; then
+    if test "$OS_TYPE" "=" "nix"; then
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
@@ -269,7 +263,7 @@ get_modis_ftp_passw() {
     echo "close" >> ftpscript.txt &&
     echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
-    if test "$OS" "=" "Linux"; then
+    if test "$OS_TYPE" "=" "nix"; then
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
@@ -285,7 +279,7 @@ get_modis_ftp_passw() {
 #parameters: binary_file_name source_file_name
 #requirements: current directory must be $SEDNA_INSTALL
 put_results_to_modis() {
-    if test "$OS" "=" "Linux"; then 
+    if test "$OS_TYPE" "=" "nix"; then 
         echo "" > ftpscript.txt; 
     else 
         echo "open modis.ispras.ru" > ftpscript.txt && 
@@ -298,7 +292,7 @@ put_results_to_modis() {
     echo "close" >> ftpscript.txt &&
     echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
-    if test "$OS" "=" "Linux"; then 
+    if test "$OS_TYPE" "=" "nix"; then 
 	    ncftp -u $FTP_UNAME -p $FTP_PASSW modis.ispras.ru <ftpscript.txt
     else 
 	    ftp -s:ftpscript.txt
@@ -312,26 +306,15 @@ put_results_to_modis() {
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 get_build_file
 
-if test $STATE "=" LW -o $STATE "=" $OS_DEP_BUILD_STATE; then 
-   BUILD=`expr $BUILD + 1` || failwith "Cannot increment BUILD variable"
-   STATE=$OS_DEP_BUILD_STATE
-else 
-   STATE=LW
-fi
-
-echo $BUILD > build || failwith "Cannot write to build file"
-
 FILE_BASE=sedna-$SEDNA_VERSION.$BUILD
 BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX
 SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 
 
-
 ##### MAKE CLEAN ##############################################################
-make clean || failwith "make clean failed"
+$MAKE_COMMAND clean || failwith "make clean failed"
 ##### MAKE CLEAN ##############################################################
-
 
 
 
@@ -352,34 +335,28 @@ export ACTIVE_CONFIGURATION=Release
 export DOCUMENTATION=1
 export EL_DEBUG=0
 export JAVA_DRIVER=1
-if test "$OS" "=" "Linux"
-then
-export SQL_CONNECTION=0
-else
-export SQL_CONNECTION=1
-fi
 export STATIC_SYS_LIBS=1
-make || failwith "make failed"
+$MAKE_COMMAND || failwith "make failed"
 ##### MAKE ####################################################################
 
 
 
 ##### MAKE INSTALL ############################################################
 rm -fr $SEDNA_INSTALL/sedna
-make grouped_install || failwith "make install failed"
+$MAKE_COMMAND grouped_install || failwith "make install failed"
 ##### MAKE INSTALL ############################################################
 
 
 
 ##### RELEASE #################################################################
-if test "$OS" "=" "Linux"; then 
+if test "$OS_TYPE" "=" "nix"; then 
     cp scripts/linux-install.sh $SEDNA_INSTALL; 
 fi || failwith "Cannot copy scripts/linux-install.sh"
 
 (cd $SEDNA_INSTALL &&
  tar cvfz $BIN_FILE_NAME.tar.gz sedna || failwith "Cannot create archive of binaries"
 
- if test "$OS" "=" "Linux"; then 
+ if test "$OS_TYPE" "=" "nix"; then 
     (SUM=`cksum $BIN_FILE_NAME.tar.gz` &&
      SUM=`set $SUM; echo $1` &&
      sed "s/PLACE_FOR_BINARY_SUM/$SUM/" linux-install.sh >$BIN_FILE_NAME.sh &&
@@ -390,8 +367,6 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
  put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT)
 ##### RELEASE #################################################################
 
-
-put_build_file 
 
 
 ##### FTP #####################################################################
