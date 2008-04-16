@@ -73,6 +73,7 @@ if test "$OS" "=" "Linux"; then
   export SQL_CONNECTION=0
   MAKE_COMMAND=make
   OS_TYPE=nix
+  SED_COMMAND="sed -r"
 
 elif test "$OS" "=" "Darwin"; then
 
@@ -82,6 +83,7 @@ elif test "$OS" "=" "Darwin"; then
   export SQL_CONNECTION=0
   MAKE_COMMAND=make
   OS_TYPE=nix
+  SED_COMMAND="sed -E"
 
 elif test "$OS" "=" "FreeBSD"; then
 
@@ -91,6 +93,7 @@ elif test "$OS" "=" "FreeBSD"; then
   export SQL_CONNECTION=0
   MAKE_COMMAND=gmake
   OS_TYPE=nix
+  SED_COMMAND="sed -E"
 
 else  #Windows (Cygwin)
 
@@ -100,6 +103,7 @@ else  #Windows (Cygwin)
   export SQL_CONNECTION=0
   MAKE_COMMAND=make
   OS_TYPE=win
+  SED_COMMAND="sed -r"
 
 fi
 
@@ -112,16 +116,16 @@ prepare_win_source() {
     echo prepare_windows_source &&
     rm -rf $FILE_BASE/libs/*.tar.gz &&
     rm -rf $FILE_BASE/libs/pcre/*.a &&
-    make -C $FILE_BASE/libs &&
+    $MAKE_COMMAND -C $FILE_BASE/libs &&
     rm -rf $FILE_BASE/libs/bin &&
     rm -rf $FILE_BASE/libs/src &&
     mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
-    sed -e 's/\(build_\w\+\)=yes/\1=no/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
+    $SED_COMMAND -e 's/(build_[A-Za-z0-9 ]+)=yes/\1=no/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
     rm -f $FILE_BASE/libs/Makefile.orig &&
     OLDDIR="`pwd`" &&
     cd $FILE_BASE/doc &&
     echo `pwd` &&
-    make &&
+    $MAKE_COMMAND &&
     rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
     rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
     rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
@@ -140,12 +144,12 @@ prepare_nix_source() {
     rm -rf $FILE_BASE/libs/pcre/*.obj	&&
     rm -rf $FILE_BASE/libs/pcre/*.lib	&&
     mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
-    sed -e 's/\(build_\w\+\)=no/\1=yes/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
+    $SED_COMMAND -e 's/(build_[A-Za-z0-9 ]+)=no/\1=yes/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
     rm -f $FILE_BASE/libs/Makefile.orig &&
     rm -rf $FILE_BASE/libs/bin &&
     OLDDIR="`pwd`" &&
     cd $FILE_BASE/doc &&
-    make &&
+    $MAKE_COMMAND &&
     rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
     rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
     rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
@@ -157,16 +161,16 @@ prepare_nix_source() {
 create_sed_script()
 {
     cat > $SEDSCRIPT <<EEE
-s/^ACTIVE_CONFIGURATION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ACTIVE_CONFIGURATION = Release\1/
-s/^MAKE_DOC[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/MAKE_DOC = 0\1/
-s/^INSTALL_DOC[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/INSTALL_DOC = 1\1/
-s/^EL_DEBUG[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/EL_DEBUG = 0\1/
-s/^JAVA_DRIVER[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/JAVA_DRIVER = 0\1/
-s/^SQL_CONNECTION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/SQL_CONNECTION = 0\1/
-s/^STATIC_SYS_LIBS[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/STATIC_SYS_LIBS = 0\1/
-s/^SE_ENABLE_GCOV[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/SE_ENABLE_GCOV = 0\1/
-s/^ENABLE_DTSEARCH[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_DTSEARCH = 0\1/
-s/^ENABLE_TRIGGERS[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_TRIGGERS = 1\1/
+s/^ACTIVE_CONFIGURATION[ ]*=[A-Za-z0-9 ]+(\r?)$/ACTIVE_CONFIGURATION = Release\1/
+s/^MAKE_DOC[ ]*=[A-Za-z0-9 ]+(\r?)$/MAKE_DOC = 0\1/
+s/^INSTALL_DOC[ ]*=[A-Za-z0-9 ]+(\r?)$/INSTALL_DOC = 1\1/
+s/^EL_DEBUG[ ]*=[A-Za-z0-9 ]+(\r?)$/EL_DEBUG = 0\1/
+s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]+(\r?)$/JAVA_DRIVER = 0\1/
+s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]+(\r?)$/SQL_CONNECTION = 0\1/
+s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]+(\r?)$/STATIC_SYS_LIBS = 0\1/
+s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]+(\r?)$/SE_ENABLE_GCOV = 0\1/
+s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]+(\r?)$/ENABLE_DTSEARCH = 0\1/
+s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]+(\r?)$/ENABLE_TRIGGERS = 1\1/
 EEE
 }
 
@@ -179,7 +183,7 @@ prepare_source() {
     mv $FILE_BASE/Makefile.include $FILE_BASE/Makefile.include.orig &&
     SEDSCRIPT=Makefile.include.sed &&
     create_sed_script &&
-    sed -f $SEDSCRIPT $FILE_BASE/Makefile.include.orig > $FILE_BASE/Makefile.include &&
+    $SED_COMMAND -f $SEDSCRIPT $FILE_BASE/Makefile.include.orig > $FILE_BASE/Makefile.include &&
     rm -f $FILE_BASE/Makefile.include.orig
 }
 
@@ -313,7 +317,7 @@ SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX
 
 
 ##### MAKE CLEAN ##############################################################
-$MAKE_COMMAND clean || failwith "make clean failed"
+#$MAKE_COMMAND clean || failwith "make clean failed"
 ##### MAKE CLEAN ##############################################################
 
 
