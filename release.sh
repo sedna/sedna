@@ -310,6 +310,8 @@ put_results_to_modis() {
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 get_build_file
 
+echo $BUILD > build || failwith "Cannot write to build file"
+
 FILE_BASE=sedna-$SEDNA_VERSION.$BUILD
 BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX
 SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX
@@ -317,7 +319,7 @@ SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX
 
 
 ##### MAKE CLEAN ##############################################################
-#$MAKE_COMMAND clean || failwith "make clean failed"
+$MAKE_COMMAND clean || failwith "make clean failed"
 ##### MAKE CLEAN ##############################################################
 
 
