@@ -148,34 +148,37 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 	ft_index_sem_up();
     hl_logical_log_ft_index(object_path, it,(char *) index_title, doc_name,is_doc,idc->custom_tree,true);
 	
-	if (just_heap) up_concurrent_micro_ops_number(); // because here we don't modify ph
-	
 	// ALGORITHM: indexing data
 	//II. Execute abs path (object_path) on the desriptive schema
-	if (!just_heap)
-	{
-		t_scmnodes sobj = execute_abs_path_expr(schemaroot, object_path);
-		//III. For each schema node found (sn_obj)
-		std::vector<xptr> start_nodes;
-		for (int i = 0; i < sobj.size(); i++)
-		{	
-			xptr blk;
-			sobj[i]->add_ft_index(idc);
-			RECOVERY_CRASH;
-			blk = getUnemptyBlockFore(sobj[i]->bblk);
+	t_scmnodes sobj = execute_abs_path_expr(schemaroot, object_path);
+	//III. For each schema node found (sn_obj)
+	
+	std::vector<xptr> start_nodes;
+	for (int i = 0; i < sobj.size(); i++)
+	{	
+		xptr blk;
+		sobj[i]->add_ft_index(idc); // just_heap modified because this must be recovered (AK)
+		RECOVERY_CRASH;
+		if (!just_heap)
+		{
+    		blk = getUnemptyBlockFore(sobj[i]->bblk);
 			if (blk!=XNULL)
 			{
 				CHECKP(blk);
 				start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk))));
 			}
 		}
+	}
 		
-		up_concurrent_micro_ops_number(); // added because we shoudn't modify ph outside of micro-op
+	up_concurrent_micro_ops_number();
 		
-		// ft_index recovery should take the responsibility here
+	if (!just_heap) // moved here because ph ft_index info must be recovered fully (AK)
+	{
+    	// ft_index recovery should take the responsibility here
 		SednaIndexJob sij(idc);
 		sij.create_index(&start_nodes);
 	}
+	
 	return idc;
 }
 void ft_index_cell::delete_index (const char *index_title, bool just_heap)
