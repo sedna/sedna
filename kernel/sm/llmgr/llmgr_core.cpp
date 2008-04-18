@@ -42,7 +42,7 @@ int llmgr_core::ll_log_init_simple(string _db_files_path_, string _db_name_)
 	  db_files_path = _db_files_path_;
   	  db_name = _db_name_;
 
-	  open_all_log_files();
+	  open_all_log_files(false);
 
 	  if (ll_open_files.size() < 1) return 1;
 	 	
@@ -127,7 +127,7 @@ bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &se
 
 
   //this functio opens existing log files and the order in vector corresponds to the order of files
-  open_all_log_files();
+  open_all_log_files(true); // this function also deletes unnecessary filess, if "true" is specified
 
   if (ll_open_files.size() < 1) throw SYSTEM_EXCEPTION("There is no logical log files");
 
@@ -137,7 +137,8 @@ bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &se
   _is_stopped_correctly = file_head.is_stopped_successfully;
   sedna_db_version = file_head.sedna_db_version;
 
-  //delete unnessary files
+/*  //delete unnessary files (moved to open_all_log_files(true))
+
   int i,j;
   char buf[20];
   std::string log_file_name;
@@ -153,7 +154,7 @@ bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &se
   //shift files to left
   for (j=0; j <i; j++)
        ll_open_files.erase(ll_open_files.begin());
-  
+*/  
   rollback_active = false;
   recovery_active = false;
 
@@ -2265,7 +2266,7 @@ void llmgr_core::ll_truncate_log(bool sync)
 
   int i;
 
-  //determine files to be trancated
+  //determine files to be truncated
   int num_files_to_truncate;
   
   minLSN = (mem_head->min_rcv_lsn == NULL_LSN) ? getFirstCheckpointLSN(mem_head->last_checkpoint_lsn) :

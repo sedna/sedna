@@ -306,7 +306,7 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
 
   int  get_num_of_records_written_by_trn(transaction_id &trid);//used for debug
 
-  void open_all_log_files();//fills ll_open_files structure
+  void open_all_log_files(bool delete_old);//fills ll_open_files structure
   void close_all_log_files();//close file descriptors of all log files
   void extend_logical_log(bool sync);
 

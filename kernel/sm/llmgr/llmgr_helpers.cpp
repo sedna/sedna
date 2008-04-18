@@ -401,26 +401,30 @@ void llmgr_core::extend_logical_log(bool sync)
   ll_open_files.push_back(file_dsc);
 
   if (mem_head->ll_files_num > MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS)
-     activate_checkpoint(false);//activate checkpoint to trancate uneccary log files
+     activate_checkpoint(false);//activate checkpoint to truncate unnecessary log files
   
   ll_log_unlock(sync);
 }
 
-void llmgr_core::open_all_log_files()
+void llmgr_core::open_all_log_files(bool delete_old)
 {
 
   string log_number;  
   int number;
 
-  
   log_file_dsc file_dsc;
   UFile descr;
   logical_log_file_head file_head;
-  map<int, log_file_dsc> tmp_map;
+ 
   typedef pair <int, log_file_dsc> dsc_pair;
-  map<int, log_file_dsc>::iterator it, it2;
+  vector <dsc_pair> files_vec;
+  
+  vector <dsc_pair>::iterator it;
 
+  vector <int> del_nums; // numbers of the corrupted files (zeroed file_head)
+  int val_file_num = -1; // valid log file number
 
+  LONG_LSN tlsn = NULL_LSN;
 #ifdef _WIN32
 
   char buf[4096];
@@ -466,8 +470,25 @@ void llmgr_core::open_all_log_files()
 
      file_head = read_log_file_header(descr);
 
-     tmp_map.insert(dsc_pair(file_head.prev_file_number, file_dsc));
+     // here we must delete all files that has been corrupted (create file without file_head) 
+     // so we check it for zeroed header, which is invalid
+     if (file_head.next_lsn == 0 || file_head.ts == 0 || file_head.sedna_db_version == 0)
+     {
+      	if (uCloseFile(descr, __sys_call_error) == 0)
+        	throw USER_EXCEPTION2(SE4043, "logical log file");
 
+     	del_nums.push_back(number);
+     }
+     else
+     {
+   	    if (file_head.next_lsn > tlsn)
+     	{
+     		tlsn = file_head.next_lsn;
+     		val_file_num = file_head.valid_number;
+     	}
+
+	    files_vec.push_back(dsc_pair(file_head.prev_file_number, file_dsc));
+	 }
 //     ll_open_files.push_back(file_dsc);
 
   } while(_findnext(dsc, &log_file) == 0);
@@ -521,15 +542,44 @@ void llmgr_core::open_all_log_files()
 
      file_head = read_log_file_header(descr);
 
-     tmp_map.insert(dsc_pair(file_head.prev_file_number, file_dsc));
+     // here we must delete all files that has been corrupted (create file without file_head) 
+     // so we check it for zeroed header, which is invalid
+     if (file_head.next_lsn == 0 || file_head.ts == 0 || file_head.sedna_db_version == 0)
+     {
+      	if (uCloseFile(descr, __sys_call_error) == 0)
+        	throw USER_EXCEPTION2(SE4043, "logical log file");
+
+     	del_nums.push_back(number);
+     }
+     else
+     {
+   	    if (file_head.next_lsn > tlsn)
+     	{
+     		tlsn = file_head.next_lsn;
+     		val_file_num = file_head.valid_number;
+     	}
+
+	    files_vec.push_back(dsc_pair(file_head.prev_file_number, file_dsc));
+	 }
   }
 
   if (0 != closedir(dir))
      throw USER_EXCEPTION2(SE4054, db_files_path.c_str());
 #endif  
 
-  //sort tmp map and fill ll_open_files
+  // delete corrupted files
+  char buf3[20];
+  string log_file_name;
 
+  for (int i = 0; i < del_nums.size(); i++)
+  {
+  		log_file_name = db_files_path + db_name + "." + u_itoa(del_nums[i], buf3, 10) + "llog";
+      	if (uDeleteFile(log_file_name.c_str(), __sys_call_error) == 0)
+         	throw USER_EXCEPTION2(SE4041, log_file_name.c_str());
+  }
+
+/*
+  //sort tmp map and fill ll_open_files
   //find first log file
   bool exist_prev;
   for (it = tmp_map.begin(); it != tmp_map.end(); it++)
@@ -546,18 +596,40 @@ void llmgr_core::open_all_log_files()
 
     if (!exist_prev) break;
   }
+*/
+  it = files_vec.begin();
 
-  if (it == tmp_map.end()) //firts element not found
-     throw SYSTEM_EXCEPTION("Incorrect logic in logical log");
+  while (it != files_vec.end() && it->second.name_number != val_file_num) it++;
 
+  if (it == files_vec.end()) //valid element not found
+     throw SYSTEM_EXCEPTION("Incorrect logic in logical log: valid file not found");
 
-  while (it != tmp_map.end())
+  // go forward from valid file
+  while (it != files_vec.end())
   {
     ll_open_files.push_back(it->second);
-    it = tmp_map.find(it->second.name_number); 
+
+    int fnum = it->second.name_number;
+    files_vec.erase(it); 
+    
+    it = files_vec.begin();
+	while (it != files_vec.end() && it->first != fnum) it++;
+  }
+
+  // close and delete old files (this is possible, if old files weren't deleted at truncate due to failure)
+  for (int i = 0; i < files_vec.size(); i++)
+  {
+      if (uCloseFile(files_vec[i].second.dsc, __sys_call_error) == 0)
+        	throw USER_EXCEPTION2(SE4043, "logical log file");
+
+	  if (delete_old)
+	  {
+  	  	log_file_name = db_files_path + db_name + "." + u_itoa(files_vec[i].second.name_number, buf3, 10) + "llog";
+      	if (uDeleteFile(log_file_name.c_str(), __sys_call_error) == 0)
+         	throw USER_EXCEPTION2(SE4041, log_file_name.c_str());
+      }
   }
 }
-
 
 void llmgr_core::close_all_log_files()
 {
