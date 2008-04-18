@@ -96,8 +96,10 @@ void replace(PPOpIn arg)
 		case 0:
 			{
 				node=copy_to_temp((*it3).cells[0].get_node());
-				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
-				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
+				xptr indir=((n_dsc*)XADDR(node))->indir;
+				arg2seq[(*it3).cells[1].get_xs_integer()]=indir;
+
+				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
 				++it3;//++it1;
 			}
 			break;
@@ -113,7 +115,8 @@ void replace(PPOpIn arg)
 		case -2:
 			{
 				node=copy_to_temp((*it3).cells[0].get_node());
-				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
+				xptr indir=((n_dsc*)XADDR(node))->indir;
+				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
 				++it3;
 			}
 			break;
