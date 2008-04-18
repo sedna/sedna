@@ -129,7 +129,8 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 			{
 				xptr nd=*it1;
 				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				xptr indir=((n_dsc*)XADDR(nd))->indir;
+				arg1seq.set(indir,it1);
 				++it1;
 			}	
 			break;
@@ -138,7 +139,8 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 			{
 				xptr nd=*it1;
 				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				xptr indir=((n_dsc*)XADDR(nd))->indir;
+				arg1seq.set(indir,it1);
 				++it1;
 			}
 			break;
@@ -161,7 +163,8 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 	{
 		xptr nd=*it1;
 		CHECKP(nd);
-		arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+		xptr indir=((n_dsc*)XADDR(nd))->indir;
+		arg1seq.set(indir,it1);
 		++it1;
 	}
 
@@ -382,7 +385,8 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 			{
 				xptr nd=*it1;
 				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				xptr indir=((n_dsc*)XADDR(nd))->indir;
+				arg1seq.set(indir,it1);
 				++it1;
 			}	
 			break;
@@ -391,7 +395,8 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 			{
 				xptr nd=*it1;
 				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				xptr indir=((n_dsc*)XADDR(nd))->indir;
+				arg1seq.set(indir,it1);
 				++it1;
 			}
 			break;
@@ -414,7 +419,8 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 	{
 		xptr nd=*it1;
 		CHECKP(nd);
-		arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+		xptr indir=((n_dsc*)XADDR(nd))->indir;
+		arg1seq.set(indir,it1);
 		++it1;
 	}
 
@@ -631,7 +637,8 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 			{
 				xptr nd=*it1;
 				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				xptr indir=((n_dsc*)XADDR(nd))->indir;
+				arg1seq.set(indir,it1);
 				++it1;
 			}	
 			break;
@@ -640,7 +647,8 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 			{
 				xptr nd=*it1;
 				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				xptr indir=((n_dsc*)XADDR(nd))->indir;
+				arg1seq.set(indir,it1);
 				++it1;
 			}
 			break;
@@ -663,7 +671,8 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 	{
 		xptr nd=*it1;
 		CHECKP(nd);
-		arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+		xptr indir=((n_dsc*)XADDR(nd))->indir;
+		arg1seq.set(indir,it1);
 		++it1;
 	}
 
