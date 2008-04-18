@@ -114,6 +114,7 @@ grouped_install:
 	$(INSTALL) -p $(PERM1) bin/se_ddb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_ddb$(EXE_EXT)
 	$(INSTALL) -p $(PERM2) bin/se_term$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_term$(EXE_EXT)
 	$(INSTALL) -p $(PERM2) bin/se_exp$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_exp$(EXE_EXT)
+
 ifeq ($(INSTALL_DOC), 1)
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/doc
 
@@ -122,17 +123,28 @@ ifeq ($(INSTALL_DOC), 1)
 	$(INSTALL) -p $(PERM3) doc/ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf $(SEDNA_INSTALL)/sedna/doc/ClientServerProtocol.pdf
 	$(INSTALL) -p $(PERM3) doc/QuickStart/QuickStart.pdf $(SEDNA_INSTALL)/sedna/doc/QuickStart.pdf
 endif
+
 ifeq ($(JAVA_DRIVER), 1)
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/java
+
 	for arg in $(DOC_DIRLIST) ;do $(INSTALL) $(PERM2) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
-
 	$(INSTALL) -p $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
-
 	for arg in $(DOC_FILELIST) ;do $(INSTALL) -p $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
-
 endif
 
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
-	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/{c,java,scheme,data}
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/c
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/java
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/scheme
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/data
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/commandline
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/scheme/libs/plt
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/scheme/libs/chicken
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/etc
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/include
+	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/share
 
 ifeq ($(PLATFORM), UNIX)
 	$(INSTALL) -p $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a
@@ -146,9 +158,6 @@ else
 	$(INSTALL) -p $(PERM2) examples/api/java/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.bat
 	$(INSTALL) -p $(PERM2) examples/api/java/Client.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Client.bat
 endif
-	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/scheme/{libs/{plt,chicken},sedna-api}
-	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/{etc,include,share}
-	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/examples/{commandline,api/external-functions/c}
 
 	$(INSTALL) -p $(PERM3) driver/c/libsedna.h $(SEDNA_INSTALL)/sedna/driver/c/libsedna.h
 	$(INSTALL) -p $(PERM3) driver/c/sp_defs.h $(SEDNA_INSTALL)/sedna/driver/c/sp_defs.h
@@ -181,6 +190,7 @@ endif
 	$(INSTALL) -p $(PERM3) HISTORY   $(SEDNA_INSTALL)/sedna/HISTORY
 	$(INSTALL) -p $(PERM3) LICENSE   $(SEDNA_INSTALL)/sedna/LICENSE
 	$(INSTALL) -p $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
+
 	$(INSTALL) $(PERM4) -d $(SEDNA_INSTALL)/sedna/cfg
 	$(INSTALL) $(PERM4) -d $(SEDNA_INSTALL)/sedna/data
 
