@@ -56,7 +56,8 @@ void delete_undeep(PPOpIn arg)
 	{
 		node=*it;
 		CHECKP(node);
-		argseq.set(((n_dsc*)XADDR(node))->indir,it);
+		xptr indir=((n_dsc*)XADDR(node))->indir;
+		argseq.set(indir,it);
 		it++;
 	}
 	// Checking authorization

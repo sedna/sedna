@@ -97,7 +97,7 @@ void replace(PPOpIn arg)
 			{
 				node=copy_to_temp((*it3).cells[0].get_node());
 				xptr indir=((n_dsc*)XADDR(node))->indir;
-				arg2seq[(*it3).cells[1].get_xs_integer()]=indir;
+//				arg2seq[(*it3).cells[1].get_xs_integer()]=indir;
 
 				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
 				++it3;//++it1;

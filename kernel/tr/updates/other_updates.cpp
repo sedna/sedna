@@ -59,7 +59,8 @@ void rename(PPOpIn arg,const char* name)
 	{
 		xptr node=*it;
 		CHECKP(node);
-		argseq.set(((n_dsc*)XADDR(node))->indir,it);
+		xptr indir=((n_dsc*)XADDR(node))->indir;
+		argseq.set(indir,it);
 		++it;
 	}
 	it=argseq.end();
