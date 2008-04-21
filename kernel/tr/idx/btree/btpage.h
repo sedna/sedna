@@ -18,7 +18,7 @@ struct btree_blk_hdr
 
     xptr next;
     xptr prev;
-    xptr parent;
+    xptr _deprecated_parent;
     xptr lmp;
 
     bool is_leaf;

@@ -21,7 +21,7 @@ char insert_buf[BT_PAGE_SIZE];
 
 /* splitting function makes the splitting of page pg in the following manner:
    1) The split key is located. All keys < it will be transfered to the left page,
-      all keys >= to the right page (rpg). 
+      all keys >= to the right page (rpg).
 	  Note that pretender_idx identifies location where the caller function wishes to 
 	  insert new structures (that may be key with object or single object). In both
 	  cases the size claimed by the caller function is passed in pretender_size parameter.
@@ -77,7 +77,7 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
 	BT_IS_LEAF(dst) = BT_IS_LEAF(pg);
 	BT_PREV(dst) = pg_xptr;
 	BT_NEXT(dst) = BT_NEXT(pg);
-	BT_PARENT(dst) = BT_PARENT(pg);
+//	BT_PARENT(dst) = BT_PARENT(pg);
 
 	U_ASSERT(!BT_IS_CLUS(pg) || BT_IS_CLUS_TAIL(pg));
 
@@ -309,7 +309,18 @@ xptr bt_nleaf_insert(xptr &root, const bt_key &new_key, xptr new_big_ptr, bt_pat
 	return bt_internal_insert(root, (char *) XADDR(pi.pg), pi.idx, true, new_key, XNULL, 0, path, true, new_big_ptr);
 }
 
-xptr bt_internal_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &new_key, const object &obj, shft obj_idx, bt_path &path, bool with_bt, xptr new_big_ptr)
+xptr bt_internal_insert(
+	xptr &root,            // root page (may be changed after insertion)
+	char* pg,              // the page to insert into 
+	shft key_idx,          // key index in the page to insert into
+	bool create_new_key,   // do we create new key
+	const bt_key &new_key, // the key to insert
+	const object &obj,     // the object to insert (if inserting object)
+	shft obj_idx,          // object index to insert
+	bt_path &path,         // path to the page to insert into
+	bool with_bt,          // 
+	xptr new_big_ptr       // the page pointer to insert (if inserting subtree)
+)
 {
 	bt_key key(new_key);
 	shft total_key_size;
@@ -371,7 +382,7 @@ xptr bt_internal_insert(xptr &root, char* pg, shft key_idx, bool create_new_key,
 				if (BT_KEY_NUM(pg) == 1)
 				{ /* cluster case - nothing is promoted, instantly return */
 				#ifdef PERMIT_CLUSTERS
-					bt_page_clusterize(root, pg, rpg, obj, obj_idx, with_bt);
+					bt_page_clusterize(root, pg, rpg, obj, obj_idx);
 					return rpg;
 				#else
 					throw USER_EXCEPTION2(SE1008, "Not enough space to insert new key/object into page (clusterization prohibited)");
@@ -402,6 +413,8 @@ xptr bt_internal_insert(xptr &root, char* pg, shft key_idx, bool create_new_key,
 				xptr lpg = pg_xptr;
 
 				CHECKP(pg_xptr);
+				pg = (char *) XADDR(pg_xptr);
+				if (BT_IS_LEAF(pg) && BT_IS_CLUS(pg)) { bt_cluster_head(lpg); };
 
 				U_ASSERT(BT_PREV((char*)(XADDR(lpg))) == XNULL);
 				U_ASSERT(root == lpg);
@@ -419,17 +432,19 @@ xptr bt_internal_insert(xptr &root, char* pg, shft key_idx, bool create_new_key,
 			} else {
 				// IIb. If pg was not root, just promote key
 				pg_xptr = path.back().pg;
+				// optimization:
+				// key_idx = path.back().idx;
 				path.pop_back();
 				pg = (char *) XADDR(pg_xptr);
 
 				CHECKP(pg_xptr);
 				U_ASSERT(!BT_IS_LEAF(pg));
-				if (bt_nleaf_find_key(pg, &key, key_idx, with_bt)) {
+				if (bt_nleaf_find_key(pg, &key, key_idx, false)) {
 					throw USER_EXCEPTION2(SE1008, "The key to be inserted to non-leaf page is already there");
 				}
-				
+
 				CHECKP(pg_xptr);
-			    if (key_idx == BT_RIGHTMOST) key_idx = BT_KEY_NUM(pg);
+				if (key_idx == BT_RIGHTMOST) key_idx = BT_KEY_NUM(pg);
 			}
 		}
 	}
@@ -440,7 +455,7 @@ xptr bt_internal_insert(xptr &root, char* pg, shft key_idx, bool create_new_key,
    mark it as cluster, i.e. form the cluster. The new page is initially unformatted. Insert object
    into new page
  */
-void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj, shft obj_idx, bool with_bt)
+void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj, shft obj_idx)
 {
 	xptr        pg_xptr = ADDR2XPTR(pg);
     xptr        next_for_rpg;
