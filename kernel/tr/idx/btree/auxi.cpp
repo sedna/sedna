@@ -17,7 +17,7 @@ void bt_page_markup(char* pg, xmlscm_type t) {
 //	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 	(*BT_NEXT_PTR(pg))=XNULL;
 	(*BT_PREV_PTR(pg))=XNULL;
-	(*BT_PARENT_PTR(pg))=XNULL;
+//	(*BT_PARENT_PTR(pg))=XNULL;
 	(*BT_LMP_PTR(pg))=XNULL;
 	(*BT_IS_LEAF_PTR(pg))=true;
 	(*BT_IS_CLUS_PTR(pg))=false;

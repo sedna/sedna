@@ -265,6 +265,7 @@ void bt_delete(xptr &root, const bt_key &key)
     }
 }
 /* drop empty page*/
+/*
 void           bt_drop_page(const btree_blk_hdr * pg)
 {
 	xptr page=ADDR2XPTR(pg);
@@ -340,3 +341,4 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 			bt_drop_page(par_hdr);	 
 	}
 }
+*/
