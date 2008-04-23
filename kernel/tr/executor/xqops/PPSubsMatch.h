@@ -11,6 +11,7 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/PPUtils.h"
 
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPSubsMatch
 ///////////////////////////////////////////////////////////////////////////////
@@ -22,7 +23,6 @@ typedef __int16 subsmatch_type;
 class PPSubsMatch : public PPIterator
 {
 protected:
-    // template <class a, class b> typedef void (PPSubsMatch::*t_comp_fun)(a& it1,b& it2,int l1,int l2,tuple &t);
 
     // given parameters
     PPOpIn seq1;
@@ -33,6 +33,7 @@ protected:
     int comp_fun;
 	
 	void children(PPOpIn &_seq1_,PPOpIn &_seq2_) { _seq1_ = seq1; _seq2_ = seq2;}
+	void error(const char* msg);
 
 public:
     virtual void open   ();
@@ -40,7 +41,6 @@ public:
     virtual void close  ();
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
-
     virtual PPIterator* copy(dynamic_context *_cxt_);
     static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
