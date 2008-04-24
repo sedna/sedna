@@ -797,7 +797,7 @@ xptr scanDescandants(xptr node,vector<schema_node*> &path,int posit)
 		}
 	}
 }
-xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
+/*xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 {
     CHECKP(ancestor);
 	schema_node* sc_anc=(GETBLOCKBYNODE(ancestor))->snode;
@@ -812,6 +812,61 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 	}
 	path.push_back(sc_anc);
 	return scanDescandants(ancestor,path,path.size()-1);
+}*/
+xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
+{
+    CHECKP(ancestor);
+	schema_node* sc_anc=(GETBLOCKBYNODE(ancestor))->snode;
+	if(sc_anc==scm) return ancestor;
+	vector<schema_node*> path;
+	schema_node* tmp=scm;
+	while (tmp!=sc_anc)
+	{
+		path.push_back(tmp);
+		tmp=tmp->parent;
+		if (tmp==NULL) return XNULL;
+	}
+	
+	vector<schema_node*>::iterator it=path.end()-1;
+	CHECKP(ancestor);
+	xptr child=getChildPointer((n_dsc*)XADDR(ancestor),(*it)->name,(*it)->type,(*it)->xmlns);
+	if (child==XNULL) return XNULL;
+	xptr node=ancestor;
+	while (true)
+	{		
+		
+		if (it==path.begin())
+				return child;
+		--it;
+		CHECKP(child);
+		n_dsc * ch_ptr=(n_dsc*)XADDR(child);
+		while (ch_ptr!=NULL)
+		{
+			xptr grchild=getChildPointer(ch_ptr,(*it)->name,(*it)->type,(*it)->xmlns);
+			if (grchild!=XNULL)
+			{
+				//1.check ancestor-descendant with ancestor
+				if (nid_cmp_effective(grchild,ancestor)==2)
+					child=grchild;
+				else return XNULL;
+				break;
+			}
+			else
+			{
+				if (ch_ptr->desc_next!=0)
+					ch_ptr=getNextDescriptorOfSameSort(ch_ptr);
+				else
+					if (nid_cmp_effective(child,ancestor)!=2)
+						return XNULL;
+					else
+					{
+						CHECKP(child);
+						ch_ptr=getNextDescriptorOfSameSort(ch_ptr);
+					}
+			}
+		}
+		return XNULL;		
+	}
 }
 xptr getNextDescandantofSameSort (xptr ancestor,xptr node)
 {
