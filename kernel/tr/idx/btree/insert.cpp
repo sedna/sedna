@@ -439,7 +439,7 @@ xptr bt_internal_insert(
 
 				CHECKP(pg_xptr);
 				U_ASSERT(!BT_IS_LEAF(pg));
-				if (bt_nleaf_find_key(pg, &key, key_idx, false)) {
+				if (bt_nleaf_find_key(pg, &key, key_idx, true)) {
 					throw USER_EXCEPTION2(SE1008, "The key to be inserted to non-leaf page is already there");
 				}
 
