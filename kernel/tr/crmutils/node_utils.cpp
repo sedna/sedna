@@ -831,7 +831,7 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 	CHECKP(ancestor);
 	xptr child=getChildPointer((n_dsc*)XADDR(ancestor),(*it)->name,(*it)->type,(*it)->xmlns);
 	if (child==XNULL) return XNULL;
-	xptr node=ancestor;
+//	xptr node=ancestor;
 	while (true)
 	{		
 		
@@ -846,7 +846,7 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 			if (grchild!=XNULL)
 			{
 				//1.check ancestor-descendant with ancestor
-				if (nid_cmp_effective(grchild,ancestor)==2)
+				if (ADDR2XPTR(ch_ptr)==child||nid_cmp_effective(grchild,ancestor)==2)
 					child=grchild;
 				else return XNULL;
 				break;
@@ -865,7 +865,8 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 					}
 			}
 		}
-		return XNULL;		
+		if (ch_ptr==NULL)
+			return XNULL;		
 	}
 }
 xptr getNextDescandantofSameSort (xptr ancestor,xptr node)
