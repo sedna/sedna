@@ -68,6 +68,7 @@ export BUILD_FILE=build-$SEDNA_VERSION
 if test "$OS" "=" "Linux"; then
 
   export BUILD_SUFFIX=linux
+  export BUILD_PLATFORM=""
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
@@ -77,7 +78,8 @@ if test "$OS" "=" "Linux"; then
 
 elif test "$OS" "=" "Darwin"; then
 
-  export BUILD_SUFFIX=mac-ppc
+  export BUILD_SUFFIX=darwin
+  export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
@@ -88,6 +90,7 @@ elif test "$OS" "=" "Darwin"; then
 elif test "$OS" "=" "FreeBSD"; then
 
   export BUILD_SUFFIX=bsd
+  export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
@@ -98,6 +101,7 @@ elif test "$OS" "=" "FreeBSD"; then
 else  #Windows (Cygwin)
 
   export BUILD_SUFFIX=win
+  export BUILD_PLATFORM=""
   export DISTR_EXT=tar.gz
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
@@ -313,8 +317,8 @@ get_build_file
 echo $BUILD > build || failwith "Cannot write to build file"
 
 FILE_BASE=sedna-$SEDNA_VERSION.$BUILD
-BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX
-SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX
+BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX-$BUILD_PLATFORM
+SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX-$BUILD_PLATFORM
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 
 
