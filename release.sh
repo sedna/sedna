@@ -89,7 +89,7 @@ elif test "$OS" "=" "Darwin"; then
 
 elif test "$OS" "=" "FreeBSD"; then
 
-  export BUILD_SUFFIX=bsd
+  export BUILD_SUFFIX=freebsd
   export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
@@ -317,8 +317,13 @@ get_build_file
 echo $BUILD > build || failwith "Cannot write to build file"
 
 FILE_BASE=sedna-$SEDNA_VERSION.$BUILD
-BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX-$BUILD_PLATFORM
-SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX-$BUILD_PLATFORM
+if [ $BUILD_PLATFORM ]; then
+  BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX-$BUILD_PLATFORM
+  SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX-$BUILD_PLATFORM
+else
+  BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX
+  SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX
+fi
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 
 
