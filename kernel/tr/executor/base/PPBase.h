@@ -274,6 +274,23 @@ protected:
     }
 };
 
+/// Under Darwin we need this hack to compile Sedna with gcc 4.0.1
+#if defined(DARWIN)
+inline SednaXQueryException __xquery_exception2(const char *file,
+                                                const char *func, 
+                                                int line,
+                                                int code, 
+                                                const char *details)
+{
+    return  (elog(EL_ERROR, ("(%s) %s Details: %s", 
+                             user_error_code_entries[code].code, 
+                             user_error_code_entries[code].descr,
+                             details)), 
+             SednaXQueryException(file, func, line, details, code, tr_globals::__current_physop));
+
+}
+#endif /* DARWIN */
+
 
 
 /*******************************************************************************
