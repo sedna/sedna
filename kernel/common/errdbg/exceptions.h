@@ -462,4 +462,98 @@ class SednaXQueryException;
 void sedna_soft_fault(const SednaException &e, int component);
 void sedna_soft_fault(const char* s, int  component);
 
+
+//////////////////////////////////////////////////////////////////////////////
+/// Under Darwin we need this hack to compile Sedna with gcc 4.0.1
+//////////////////////////////////////////////////////////////////////////////
+
+#if defined(DARWIN)
+
+#ifdef    SYSTEM_EXCEPTION
+#undef    SYSTEM_EXCEPTION
+#define   SYSTEM_EXCEPTION(msg) __system_exception(__FILE__, __SE_FUNCTION__, __LINE__, msg)
+#endif /* SYSTEM_EXCEPTION */
+
+#ifdef    SYSTEM_ENV_EXCEPTION
+#undef    SYSTEM_ENV_EXCEPTION
+#define   SYSTEM_ENV_EXCEPTION(msg) __system_env_exception(__FILE__, __SE_FUNCTION__, __LINE__, msg)
+#endif /* SYSTEM_ENV_EXCEPTION */
+
+#ifdef    USER_EXCEPTION2
+#undef    USER_EXCEPTION2
+#define   USER_EXCEPTION2(internal_code, details) __user_exception2(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, details)
+#endif /* USER_EXCEPTION2 */
+
+#ifdef    XQUERY_EXCEPTION2
+#undef    XQUERY_EXCEPTION2
+#define   XQUERY_EXCEPTION2(internal_code, details) __xquery_exception2(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, details)
+#endif /* XQUERY_EXCEPTION2 */
+
+#ifdef    USER_EXCEPTION_FNERROR
+#undef    USER_EXCEPTION_FNERROR
+#define   USER_EXCEPTION_FNERROR(err_name, err_descr) __user_exception_fnerror(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr)
+#endif /* USER_EXCEPTION_FNERROR */
+
+#ifdef    USER_ENV_EXCEPTION
+#undef    USER_ENV_EXCEPTION
+#define   USER_ENV_EXCEPTION(msg, rollback) __user_env_exception(__FILE__, __SE_FUNCTION__, __LINE__, msg, rollback)
+#endif /* USER_ENV_EXCEPTION */
+
+#ifdef    USER_ENV_EXCEPTION2
+#undef    USER_ENV_EXCEPTION2
+#define   USER_ENV_EXCEPTION2(msg, expl, rollback) __user_env_exception2(__FILE__, __SE_FUNCTION__, __LINE__, msg, expl, rollback)
+#endif /* USER_ENV_EXCEPTION2 */
+
+#ifdef    USER_SOFT_EXCEPTION
+#undef    USER_SOFT_EXCEPTION
+#define   USER_SOFT_EXCEPTION(msg) __user_soft_exception(__FILE__, __SE_FUNCTION__, __LINE__, msg)
+#endif /* USER_SOFT_EXCEPTION */
+
+
+inline SednaSystemException __system_exception(const char *file, const char *func, int line, const char *msg) {
+    return ((U_ASSERT_MACRO(false)), 
+             elog(EL_FATAL, (msg)), 
+             SednaSystemException(file, func, line, msg)); }
+
+inline SednaSystemEnvException __system_env_exception(const char *file, const char *func, int line, const char *msg) {
+    return (elog(EL_FATAL, (msg)), 
+            SednaSystemEnvException(file, func, line, msg)); }
+
+inline SednaUserException __user_exception2(const char *file, const char *func, int line, int code, const char * details) {
+    return (elog(EL_ERROR, ("(%s) %s Details: %s", 
+                            user_error_code_entries[code].code, 
+                            user_error_code_entries[code].descr,
+                            details)), 
+            SednaUserException(file, func, line, details, code)); }
+
+inline SednaUserExceptionFnError __user_exception_fnerror(const char *file, const char *func, int line, const char *err_name, const char* err_descr) {
+    return (elog(EL_ERROR, ("(%s) %s", 
+                            err_name, 
+                            err_descr)), 
+            SednaUserExceptionFnError(file, func, line, err_name, err_descr)); }
+
+inline SednaUserEnvException __user_env_exception(const char *file, const char *func, int line, const char *msg, bool rollback) {
+    return (elog(EL_ERROR, ("(%s) %s Details: %s", 
+                            user_error_code_entries[0].code, 
+                            user_error_code_entries[0].descr,
+                            msg)), 
+            SednaUserEnvException(file, func, line, msg, rollback)); }
+
+inline SednaUserEnvException __user_env_exception2(const char *file, const char *func, int line, const char *msg, const char* expl, bool rollback) {
+    return (elog(EL_ERROR, ("(%s) %s Details: %s (%s)", 
+                            user_error_code_entries[0].code, 
+                            user_error_code_entries[0].descr,
+                            msg,
+                            expl)), 
+            SednaUserEnvException(file, func, line, msg, expl, rollback)); }
+
+inline SednaUserSoftException __user_soft_exception(const char *file, const char *func, int line, const char *msg) {
+    return SednaUserSoftException(file, func, line, msg); }
+
+
+#endif /* DARWIN */
+
+//////////////////////////////////////////////////////////////////////////////
+
+
 #endif
