@@ -348,18 +348,22 @@ public:
     {
         flush(); 
         if (res == se_next_item_exists)
+        {
             _res_msg->instruction = se_ItemEnd; //ItemEnd
+            _res_msg->length = 0;
+        }
         else if (res == se_no_next_item)
         {
             _res_msg->instruction = se_ResultEnd;     //ResultEnd
             _res_msg->length = 0;
         }
-        else // res == se_result_is_cut_off
+        
+/*        else // res == se_result_is_cut_off    this feature is not implemented yet
         {
             _res_msg->instruction = se_ResultEnd;     //ResultEnd
             _res_msg->length = 4;
             int2net_int(1, _res_msg->body);            //the flag means result was cut
-        }
+        }*/
         if(sp_send_msg(_out_socket, _res_msg)!=0)
             throw USER_EXCEPTION(SE3006);
         _res_msg->length = 5+_type_offset;
