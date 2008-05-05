@@ -28,7 +28,7 @@ usage() {
 if test $# -ne 1; then
     usage;
 else
-   if test $1 "!=" "release" -a $1 "!=" "release_ftp" -a test $1 "!=" "local"; then
+   if test $1 "!=" "release" -a $1 "!=" "release_ftp" -a $1 "!=" "local"; then
        usage;
    fi
 fi
