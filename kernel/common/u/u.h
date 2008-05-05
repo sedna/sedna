@@ -65,7 +65,7 @@
 #endif
 
 #if defined(DARWIN)
-#define U_MSG_NOSIGNAL SO_NOSIGPIPE
+#define U_MSG_NOSIGNAL 0 //SO_NOSIGNAL can be used only in setsockopt()
 #else
 #define U_MSG_NOSIGNAL MSG_NOSIGNAL
 #endif

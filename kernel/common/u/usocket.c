@@ -72,12 +72,24 @@ USOCKET usocket(int af, int type, int protocol, sys_call_error_fun fun)
     if (res == INVALID_SOCKET) sys_call_error("socket");
     return res;
 #else
+    int param = 1, res = 0;
     int sockfd = socket(af, type, protocol);
     if (sockfd == U_SOCKET_ERROR)
     {
         sys_call_error("socket");
         return U_INVALID_SOCKET;
     }
+
+#if defined(DARWIN)  /// Under DARWIN this is the only way not to get damn SIGPIPE!
+    res = setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &param, sizeof(int));
+    if(-1 == res)
+    {
+        sys_call_error("setsockopt");
+        close(sockfd);
+        return U_INVALID_SOCKET;
+    } 
+#endif /* DARWIN */
+
     return sockfd;
 #endif
 }
@@ -246,6 +258,7 @@ USOCKET uaccept(USOCKET s, sys_call_error_fun fun)
     }
     return socknew;
 #else
+    int res = 0, param = 1; 
     struct sockaddr_in commonaddr;
     unsigned int commonlen;
     USOCKET socknew;
@@ -257,6 +270,15 @@ USOCKET uaccept(USOCKET s, sys_call_error_fun fun)
         sys_call_error("accept");
         return U_INVALID_SOCKET;
     }
+#if defined(DARWIN)  /// Under DARWIN this is the only way not to get damn SIGPIPE!
+    res = setsockopt(socknew, SOL_SOCKET, SO_NOSIGPIPE, &param, sizeof(int));
+    if(-1 == res)
+    {
+        sys_call_error("setsockopt");
+        close(socknew);
+        return U_INVALID_SOCKET;
+    } 
+#endif /* DARWIN */
     return socknew;
 #endif
 }
