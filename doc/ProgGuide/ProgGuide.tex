@@ -378,7 +378,7 @@ The source code of this example program can be found in
 [win:] INSTALL_DIR\examples\api\java\Client.java
 \end{verbatim}
 \begin{verbatim}
-[linux:] INSTALL_DIR/examples/api/java/Client.java
+[nix:] INSTALL_DIR/examples/api/java/Client.java
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 %Before run the example make sure that the Sedna DBMS is running with the listener started. For more detail see the Sedna Administration Guide.
@@ -417,12 +417,12 @@ You can compile and run the example by following the steps listed below:
 if Sedna DBMS is running on the same computer you do not need to edit this parameter.
 \item To compile the example, run the script
  \begin{verbatim}[win:] Clientbuild.bat\end{verbatim}
- \begin{verbatim}[linux:] Clientbuild.sh\end{verbatim}
+ \begin{verbatim}[nix:] Clientbuild.sh\end{verbatim}
  located in the same folder as \verb!Client.java!.
 
 \item  To run the compiled example, use the script
  \begin{verbatim}[win:] Client.bat\end{verbatim} 
- \begin{verbatim}[linux:] Client.sh\end{verbatim} 
+ \begin{verbatim}[nix:] Client.sh\end{verbatim} 
  located in the same folder as \verb!Client.java!.
  
 \end{enumerate}
@@ -1121,7 +1121,7 @@ The source code of this example program can be found in
 [win:] INSTALL_DIR\examples\api\c\Client.c
 \end{verbatim}
 \begin{verbatim}
-[linux:] INSTALL_DIR/examples/api/c/Client.c
+[nix:] INSTALL_DIR/examples/api/c/Client.c
 \end{verbatim}
 
 \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
@@ -1164,7 +1164,7 @@ if Sedna DBMS is running on the same computer you do not need to edit this param
 [win:] Clientbuild.bat
 \end{verbatim}
 \begin{verbatim}
-[linux:] Clientbuild.sh 
+[nix:] Clientbuild.sh 
 \end{verbatim}
 located in the same folder as \verb!Client.c!.
 
@@ -1173,7 +1173,7 @@ located in the same folder as \verb!Client.c!.
 [win:] Client.exe
 \end{verbatim}
 \begin{verbatim}
-[linux:] Client
+[nix:] Client
 \end{verbatim}
 located in the same folder as \verb!Client.c!.
 \end{enumerate}
@@ -1443,7 +1443,7 @@ the Scheme API driver.
 You can find the example and the Scheme API driver code in:
 \begin{verbatim}
 [win:] INSTALL_DIR\examples\api\scheme
-[linux:] INSTALL_DIR/examples/api/scheme
+[nix:] INSTALL_DIR/examples/api/scheme
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 
@@ -1478,12 +1478,12 @@ this machine when connecting to the database with
 For running the example supplied, you should copy all files from the folder
 \begin{verbatim}
 [win:] INSTALL_DIR\examples\api\scheme
-[linux:] INSTALL_DIR/examples/api/scheme
+[nix:] INSTALL_DIR/examples/api/scheme
 \end{verbatim} 
 into the folder where the Scheme API driver code is located 
 \begin{verbatim}
 [win:] INSTALL_DIR\driver\scheme
-[linux:] INSTALL_DIR/driver/scheme
+[nix:] INSTALL_DIR/driver/scheme
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 
@@ -1949,7 +1949,7 @@ Sedna provides a server programming API to write external
 functions in the C/C++ language. 
 External functions in Sedna are limited to dealing with sequences of atomic values. 
 External functions are compiled and linked in the form of shared
-libraries (i.e. \verb!.dll! files in Windows or \verb!.so! files in Linux) 
+libraries (i.e. \verb!.dll! files in Windows or \verb!.so! files in Linux/FreeBSD/Mac OS) 
 and loaded by the server on demand.
 Although the Sedna XQuery executor evaluates queries in a lazy manner, all external function calls are evaluated in an eager manner.
 
@@ -2144,7 +2144,7 @@ There is a sample external function code available in the folder:
 [win:] INSTALL_DIR\examples\api\external-functions\c\
 \end{verbatim}
 \begin{verbatim}
-[linux:] INSTALL_DIR/examples/api/external-functions/c/
+[nix:] INSTALL_DIR/examples/api/external-functions/c/
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 
