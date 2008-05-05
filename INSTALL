@@ -13,14 +13,18 @@
 export SEDNA_INSTALL=<install-path>
 make
 make install
-
-   Note: The operating system user that is going to run Sedna must have 
-   r-w-x permissions for the following Sedna directories:
+   
+   NOTE! Under FreeBSD you should use GNU make (by default it means "gmake" 
+         command instead of "make"). 
+         See also Post-Installation Setup::FreeBSD below.
+   
+   NOTE! The operating system user that is going to run Sedna must have 
+         r-w-x permissions for the following Sedna directories:
 
 $SEDNA_INSTALL/data
 $SEDNA_INSTALL/cfg
 
-   To grant the necessary permisions to the user on Linux/MacOS
+   To grant the necessary permisions to the user on Linux/Mac OS/FreeBSD
    you can use the following command (suppose, <sedna-user> is the user 
    that is going to run Sedna):
 
@@ -36,11 +40,13 @@ chown <sedna-user> cfg data
                                 Requirements
 
    Sedna is expected to build and run on the following platforms:
-   1. Microsoft Windows 2000, XP, 2003 (and possibly Windows NT)
-   2. Linux with kernel version 2.4.xxx and 2.6.xxx
-   2. Mac OS X (PPC or Intel platform)
+   1. Microsoft Windows 2000 and higher
+   2. Linux with kernel version 2.4 and higher
+   3. Mac OS X (PPC or Intel platform)
+   4. FreeBSD (see also Post-Installation Setup::FreeBSD below)
 
-   Note that Sedna will *not* run on Microsoft Windows 95/98/ME.
+   Note: Sedna will *not* run on Microsoft Windows 95/98/ME.
+   Note: Sedna can be build from sources only under 32-bit platforms.
 
    A modern POSIX-compatible platform should be able to run Sedna potentially, 
    but some effort should be made.
@@ -58,8 +64,6 @@ chown <sedna-user> cfg data
        3.x.x or higher is required. GCC is also required for the Windows platform 
        for making dependencies (so it is recommended to use Cygwin package with 
        GCC in it).
-     * For Mac OS X Sedna can NOT be compiled with gcc 4.0. Use gcc 3.3, 4.1 or 
-       higher instead. 
      * gzip is needed to unpack the distribution in the first place. If
        you are reading this, you probably already got past that hurdle.
      * For building documentation you need LaTex package. For the Windows platform it is 
@@ -80,11 +84,10 @@ chown <sedna-user> cfg data
    free building tools from Microsoft: Microsoft Visual C++ Toolkit 2003 
    together with Microsoft Windows Platform SDK.
 
-
    Also check that you have sufficient disk space. You will need about 100
-   MB for the source tree during compilation and about 10 MB for the
+   MB for the source tree during compilation and about 15 MB for the
    installation directory. The default size database requires 
-   additionally about 250 Mb.
+   additionally about 400 Mb.
      _________________________________________________________________
 
                            Installation Procedure
@@ -182,6 +185,46 @@ Database Files
    $SEDNA_INSTALL/sedna/etc/sednaconf.xml.sample. 
    See Sedna Administration Guide for details on how to configure Sedna.
 
+FreeBSD
+
+   To run Sedna under FreeBSD you need to perform the following additional
+   post-installation steps:
+   
+   1. Unfortunately FreeBSD has a bug in System V semaphores. To run Sedna
+      you have to recompile [1] your kernel with the following patch:
+
+   
+      ------------------------- sysv_sem.c -----------------------------
+      *** 1145,1154 ****
+      --- 1145,1159 ----
+                              error = EIDRM;
+                              goto done2;
+                      }
+            
+                      /*
+      +                * Renew the semaphore's pointer after wakeup
+      +                */
+      +               semptr = &semakptr->u.sem_base[sopptr->sem_num];
+      +
+      +               /*
+                       * The semaphore is still alive.  Readjust the count of
+                       * waiting processes.
+                       */
+                      if (sopptr->sem_op == 0)
+                              semptr->semzcnt--;
+      -------------------------------------------------------------------
+   
+   
+   2. Increase system IPC configuration either using "sysctl" utility [2] 
+      or through /boot/loader.conf. Below possible values are listed:
+
+      kern.ipc.semmnu=256
+      kern.ipc.semmns=512
+      kern.ipc.semmni=256
+      kern.ipc.semmap=256
+   
+   [1]. building BSD custom kernel:  http://www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html;
+   [2]. tuning with sysctl: http://www.freebsd.org/doc/en/books/handbook/configtuning-sysctl.html;
      _________________________________________________________________
 
                               Getting Started

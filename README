@@ -32,6 +32,7 @@
    - Windows 2000/XP
    - Linux x86 kernel version 2.4 or higher
    - Mac OS X (PPC/Intel)
+   - FreeBSD 
 
 
    _______________________________________________________________________
@@ -47,7 +48,7 @@
 
 Windows platform:
 
-   Sedna is distributed as a single .tar.gz archive. 
+   Sedna is distributed as a single ".tar.gz" archive. 
 
    The installation process consists of the following steps:
 
@@ -55,29 +56,28 @@ Windows platform:
    2) Add the bin subdirectory of sedna installation to the environment 
       variable PATH (for example "c:\sedna\bin").
 
-Linux platform:
+Linux/Mac OS/FreeBSD platforms:
 
    Sedna is distributed as a single self-extracting script.
    The installation process consists of running self-extracting script
    and following its instruction.
    Note: To avoid incompatibility problems with different glibc versions
-   we _strongly_ recommend you building Sedna from source code.
+   we recommend you building Sedna from source code.
 
-   Note: The operating system user that is going to run Sedna must have 
-   r-w-x permissions for the following Sedna directories:
+   NOTE! The operating system user that is going to run Sedna must have 
+         r-w-x permissions for the following Sedna directories:
 
 $SEDNA_INSTALL/data
 $SEDNA_INSTALL/cfg
 
-   To grant the necessary permisions to the user on Linux 
+   To grant the necessary permisions to the user on Linux/FreeBSD/Mac OS
    you can use the following command (suppose, <sedna-user> is the user 
    that is going to run Sedna):
 
 chown <sedna-user> cfg data
 
-MacOS platform:
-
-   See file INSTALL supplied with the source code package.
+   NOTE! Under FreeBSD you need also some additional steps to be done.
+         See INSTALL::Post-Installation Setup::FreeBSD for the details.
 
    _______________________________________________________________________
 
