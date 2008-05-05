@@ -4,5 +4,13 @@ ftpscript.txt
 copyright.sh
 linecount.sh
 release.sh
-CVS
 coverage.pl
+doc/CodingGuidelines
+libs/AntlrMSVC60.mak 
+libs/Makefile.antlr 
+libs/Makefile.dlg 
+libs/Makefile.sor 
+libs/Makefile.sor-lib 
+libs/chicken.mak 
+libs/expat_static.mak
+
