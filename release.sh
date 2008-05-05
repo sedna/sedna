@@ -17,6 +17,7 @@ failwith() {
 ##### SCRIPT USAGE ############################################################
 usage() {
     echo "Usage"
+    echo "    $0" " local          - build local release"
     echo "    $0" " release        - build release"
     echo "    $0" " release_ftp    - build release and put it to modis.ispras.ru"
     echo
@@ -27,7 +28,7 @@ usage() {
 if test $# -ne 1; then
     usage;
 else
-   if test $1 "!=" "release" -a $1 "!=" "release_ftp"; then
+   if test $1 "!=" "release" -a $1 "!=" "release_ftp" -a test $1 "!=" "local"; then
        usage;
    fi
 fi
@@ -378,7 +379,10 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
      chmod a+x $BIN_FILE_NAME.sh &&
      rm -f linux-install.sh);
  fi || failwith "Cannot create selfextracted binary package"
- put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT)
+ 
+ if test $1 "!=" "local"; then 
+     put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT
+ fi)
 ##### RELEASE #################################################################
 
 
