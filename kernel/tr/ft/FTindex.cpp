@@ -67,11 +67,11 @@ void ftlog_file::close_and_delete_file(const char *index_name)
 	if (uCloseFile(file, __sys_call_error) == 0)
 		throw USER_EXCEPTION(SE4043);
 
-	char fn[32];
-	sprintf(fn, "trn%d_%s.log", trid, index_name);
+	char fn_part[32];
+	sprintf(fn_part, "trn%d_", trid);
 	std::string log_path1 = std::string(SEDNA_DATA) + std::string("/data/")
 		+ std::string(db_name) + std::string("_files/dtsearch/");
-	std::string log_path = log_path1 + std::string(fn);
+	std::string log_path = log_path1 + std::string(fn_part) + std::string(index_name) + std::string(".log");
 
 	if (uDeleteFile(log_path.c_str(), __sys_call_error) == 0)
 		throw USER_EXCEPTION(SE4041);
@@ -239,12 +239,12 @@ void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 }
 UFile SednaIndexJob::create_log(const char *index_name)
 {
-	char fn[128]; //FIXME(len)
-	sprintf(fn, "trn%d_%s.log", trid, index_name);
+	char fn_part[32];
+	sprintf(fn_part, "trn%d_", trid);
 
 	std::string log_path1 = std::string(SEDNA_DATA) + std::string("/data/")
 		+ std::string(db_name) + std::string("_files/dtsearch/");
-	std::string log_path = log_path1 + std::string(fn);
+	std::string log_path = log_path1 + std::string(fn_part) + std::string(index_name) + std::string(".log");
 
 	USECURITY_ATTRIBUTES *sa;
 	if(uCreateSA(&sa,U_ALL_ACCESS, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
@@ -514,7 +514,6 @@ void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const t
     WIN32_FIND_DATA find_data;
     struct file_struct fs;
     UFile fhanldle;
-    char buf[20];
 
 	std::string log_path = std::string(SEDNA_DATA) + std::string("/data/")
 		+ std::string(db_name) + std::string("_files/dtsearch/trn*.log");
