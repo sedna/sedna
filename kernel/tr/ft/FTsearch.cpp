@@ -431,19 +431,23 @@ void SednaSearchJob::set_file_cond_for_node(tuple_cell& node)
 
 void SednaSearchJob::stop_thread(bool ignore_errors)
 {
+	if (dtth != NULL)
+	{
+		this->CancelImmediate();
+		if (UUnnamedSemaphoreUp(&sem2, __sys_call_error) != 0)
+			throw USER_EXCEPTION(SE4014);
+		
+		if (uThreadJoin(dtth, __sys_call_error) != 0)
+			throw USER_EXCEPTION2(SE4064, "failed to join dtsearch thread"); //FIXME: this error code is (probably) wrong
+		if (uCloseThreadHandle(dtth, __sys_call_error) != 0)
+			throw USER_EXCEPTION(SE4063);
+		dtth = NULL;
+	}
 	//FIXME!!!
 	if (UUnnamedSemaphoreRelease(&sem1, __sys_call_error) != 0 && !ignore_errors)
 		throw USER_EXCEPTION(SE4013);
 	if (UUnnamedSemaphoreRelease(&sem2, __sys_call_error) != 0 && !ignore_errors)
 		;//throw USER_EXCEPTION(SE4013);
-	if (dtth != NULL)
-	{
-		if (uTerminateThread(dtth, __sys_call_error) != 0 && !ignore_errors)
-			throw USER_EXCEPTION(SE4063); //FIXME: wrong error code
-		if (uCloseThreadHandle(dtth, __sys_call_error) != 0 && !ignore_errors)
-			throw USER_EXCEPTION(SE4063);
-		dtth = NULL;
-	}
 	
 }
 void SednaSearchJob::get_next_result(tuple &t)
