@@ -1,4 +1,4 @@
-build-linux-*
+_darcs
 exclude_files
 ftpscript.txt
 copyright.sh
