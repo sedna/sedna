@@ -83,10 +83,20 @@ extern "C"
    returns U_SOCKET_ERROR if failed */
     int ushutdown_close_socket(USOCKET s, sys_call_error_fun fun);
 
+/* returns zero if succeeded
+   returns U_SOCKET_ERROR if failed */
+	int ushutdown_socket(USOCKET s, sys_call_error_fun fun);
+
 /* returns 1 (number of sockets ready to recv) if there is data pending in network connection
    returns 0 if timeout
    returns U_SOCKET_ERROR if failed */
     int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun);
+
+/* returns number of sockets ready to recv if there is data pending in network connection 
+		(s is changed and contains result of FD_ISSET)
+   returns 0 if timeout
+   returns U_SOCKET_ERROR if failed */
+	int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call_error_fun fun);
 
 /* retrieves the last socket error description */
     const char *usocket_error_translator();

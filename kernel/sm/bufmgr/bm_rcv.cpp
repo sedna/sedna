@@ -19,7 +19,7 @@ void bm_rcv_init()
 {
     // open data file
     string data_file_name = string(db_files_path) + string(db_name) + ".sedata";
-    data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
+    data_file_handler = uOpenFile(data_file_name.c_str(), U_SHARE_READ, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 }

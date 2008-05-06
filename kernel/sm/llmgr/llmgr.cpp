@@ -110,6 +110,16 @@ void ll_add_free_blocks_info(xptr phys_xptr, void *block, int size)
 #endif
 }
 
+void ll_log_recordblock(xptr xblk, void *block, int size)
+{
+#ifdef LOGICAL_LOG
+  if (!enable_write_of_phys_recs) return;
+  
+  logical_log_mgr->log_recordblock(xblk, block, size, true);
+//  logical_log_mgr->ll_log_flush(true);
+#endif
+}
+
 void ll_add_decrease_info(__int64 old_size)
 {
 #ifdef LOGICAL_LOG
@@ -193,5 +203,26 @@ void ll_recover_pers_heap()
 {
 #ifdef LOGICAL_LOG
 	logical_log_mgr->restorePh();
+#endif
+}
+
+void ll_hotbackup(hb_state state)
+{
+#ifdef LOGICAL_LOG
+	logical_log_mgr->log_hotbackup(state);
+#endif
+}
+
+__int64 ll_get_last_archived_log_file_number()
+{
+#ifdef LOGICAL_LOG
+	return logical_log_mgr->get_last_archived_log_file_number();
+#endif
+}
+
+__int64  ll_get_prev_archived_log_file_number(__int64 lnumber)
+{
+#ifdef LOGICAL_LOG
+	return logical_log_mgr->get_prev_archived_log_file_number(lnumber);
 #endif
 }

@@ -27,6 +27,55 @@
 
 using namespace std;
 
+__int64 get_last_archived_log_file_number()
+{
+	return hbLastFileNum;
+}
+
+__int64  ll_get_prev_archived_log_file_number(__int64 lnumber)
+{
+  	ll_log_lock(true);
+
+  	logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+	for (int i = 0; i < ll_files_num; i++)
+		if (mem_head->ll_files_arr[i] == lnumber) break;
+
+	if (i == ll_files_num || i == 0) 
+	{
+	  	ll_log_unlock(true);
+		return -1;
+	}
+	
+	__int64 res = mem_head->ll_files_arr[i - 1];
+
+  	ll_log_unlock(true);
+
+	return res;
+}
+
+void llmgr_core::logArchive()
+{
+     ll_log_flush(false);
+     extend_logical_log(false);
+}
+
+void llmgr_core::log_hotbackup(hb_state state)
+{
+  	ll_log_lock(true);
+    
+    hbStatus = state;
+
+    if (hbStatus == HB_ARCHIVELOG)
+    	logArchive();
+
+    if (hbStatus == HB_END)
+	    hbLastFileNum = -1;
+
+    hbStatus = HB_END;
+
+  	ll_log_unlock(true);
+}
 
 logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
 {
@@ -345,13 +394,42 @@ TIMESTAMP llmgr_core::returnTimestampOfPersSnapshot(bool sync)
   return mem_head->ts;
 }
 
+void llmgr_core::hbWriteFileHeader(bool hbFlag)
+{
+  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  logical_log_file_head file_head =
+              read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
+
+  file_head.is_hot_backup = hbFlag;
+
+  //get tail log dsc;
+  //set pointer to the begin of last file 
+  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
+  set_file_pointer(lsn);
+
+  int res;
+  int written;
+
+  RECOVERY_CRASH;
+
+  res = uWriteFile(ll_curr_file_dsc,
+                   &file_head,
+                   sizeof(logical_log_file_head),
+                   &written,
+                   __sys_call_error
+                    );
+
+  if (res == 0 || written != sizeof(logical_log_file_head))
+     throw SYSTEM_EXCEPTION("Can't write file_head to logical log file");
+}  
+
 void llmgr_core::extend_logical_log(bool sync)
 {
   ll_log_lock(sync);
 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
   UFile new_logical_log_dsc; 
-
 
   if (mem_head->ll_free_files_num <= 0)
      throw SYSTEM_EXCEPTION("Too long logical log");
@@ -380,6 +458,13 @@ void llmgr_core::extend_logical_log(bool sync)
                                            false                                              
                                           );
 
+  // modify previous header if archiving log
+  if (hbStatus == HB_ARCHIVELOG)
+  {
+  		hbLastFileNum = mem_head->ll_files_arr[mem_head->ll_files_num - 1];
+  		hbWriteFileHeader(true);
+  }
+  
   //modify shared memory
   mem_head->ll_free_files_num--;
   mem_head->ll_files_arr[mem_head->ll_files_num] = new_file_number;
@@ -402,7 +487,7 @@ void llmgr_core::extend_logical_log(bool sync)
 
   if (mem_head->ll_files_num > MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS)
      activate_checkpoint(false);//activate checkpoint to truncate unnecessary log files
-  
+
   ll_log_unlock(sync);
 }
 
@@ -750,9 +835,9 @@ UFile create_logical_log(const char* log_file_name,
   ll_head.last_checkpoint_lsn = last_checkpoint_lsn;
   ll_head.last_chain_lsn = last_chain_lsn;
   ll_head.ts = ts;
-//  ll_head.ph_cp_counter = ph_cp_counter;
   ll_head.is_stopped_successfully = false;
   ll_head.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
+  ll_head.is_hot_backup = false;
   
   int nbytes_written;
 
@@ -931,7 +1016,8 @@ static const char *glogentrynam(int i)
 		LOCAL_BRANCH(LL_DELETE_COL_FTS_INDEX)
 		LOCAL_BRANCH(LL_FREE_BLOCKS)       
 		LOCAL_BRANCH(LL_PERS_SNAPSHOT_ADD) 
-		LOCAL_BRANCH(LL_DECREASE)          
+		LOCAL_BRANCH(LL_DECREASE)
+		LOCAL_BRANCH(LL_HBBLOCK)          
 		LOCAL_BRANCH(LL_INSERT_DOC_TRG)
 		LOCAL_BRANCH(LL_DELETE_DOC_TRG)
 		LOCAL_BRANCH(LL_INSERT_COL_TRG)
@@ -1414,6 +1500,10 @@ void llmgr_core::print_llog()
 		    	plsn
 		     );	
         }       
+        else if (type == LL_HBBLOCK)
+        {
+
+        }
         else
 			 printf("%016llx Unknown type of record\n");
 

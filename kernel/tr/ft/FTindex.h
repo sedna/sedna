@@ -172,13 +172,14 @@ class SednaIndexJob : public dtSearch::DIndexJob {
 		   static void start_commit();
 		   static void fix_commit();
 		   static void rollback();
-		   static void recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn);
+		   static void recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn, bool is_start);
 
 	  private:
 		  PPOpIn* seq;
 		  const ft_index_cell *ft_idx;
 		  static void rollback_index(ftlog_file *log_file, const char *index_name);
 		  static void recover_db_file(const char *fname, const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn);
+	   	  static void rebuild_all_ftph();
 		  static void rebuild_index(const char *index_name);
 		  
      };

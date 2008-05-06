@@ -507,8 +507,25 @@ void SednaIndexJob::recover_db_file(const char *fname, const trns_undo_analysis_
 
 	delete[] index_name;
 }
-void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn)
+void SednaIndexJob::rebuild_all_ftph()
 {
+	pers_sset<ft_index_cell,unsigned short>::pers_sset_entry* ftc = ft_indexdata->rb_minimum(ft_indexdata->root);
+
+	while (ftc != NULL)
+    {
+		rebuild_index(ftc->obj->index_title);
+   		ftc = ft_indexdata->rb_successor(ftc);
+    }
+}
+
+void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn, bool is_start)
+{
+	if (is_start) // start of recovery process from hot-backup copy - need to rebuild all ft-indexes from ph
+	{
+		rebuild_all_ftph();
+		return;
+	}
+
 #ifdef _WIN32
 
     WIN32_FIND_DATA find_data;

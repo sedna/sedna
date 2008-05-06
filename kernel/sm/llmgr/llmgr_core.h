@@ -78,6 +78,7 @@ enum {LL_INSERT_ELEM,
       LL_FREE_BLOCKS,       // info about free blocks
       LL_PERS_SNAPSHOT_ADD, // additional info about persistent snapshot
       LL_DECREASE,          // decrease_info from physical log
+      LL_HBBLOCK,           // info about block during hot-backup procedure
       LL_INSERT_DOC_TRG,
       LL_DELETE_DOC_TRG,
       LL_INSERT_COL_TRG,
@@ -105,6 +106,7 @@ struct logical_log_file_head
   TIMESTAMP ts; // timestamp of the last persistent snapshot
   bool is_stopped_successfully; // true, if the database was stopped correctly
   int sedna_db_version;
+  bool is_hot_backup;
   //new fields must be appended to the end of the structure
 };
 
@@ -186,6 +188,7 @@ struct logical_log_sh_mem_head
   __int64 base_addr;//this addr is used to calculate phys addr of lsn (it is equal to Record_lsn - base_addr)
   bool checkpoint_flag; // true, if checkpoint is enabled
   bool checkpoint_on;   // true, if checkpoint is currently in progress
+  bool hotbackup_needed;
 };
 
 struct log_file_dsc
@@ -202,7 +205,9 @@ protected:
   UShMem shared_mem_dsc;
   USemaphore sem_dsc;
 
+  hb_state hbStatus;
 //  USemaphore wait_for_checkpoint_sem;//semaphore for initing checkpoint
+  __int64 hbLastFileNum;
   UEvent init_checkpoint_event; // event to initiate checkpoint
   void *shared_mem;
   char* read_buf;//
@@ -233,6 +238,13 @@ public:
 
   // debug function
   void print_llog();
+
+  // hot-backup functions
+  void log_hotbackup(hb_state state);
+  void hbWriteFileHeader(bool hbFlag);  
+  void logArchive();
+  __int64 get_last_archived_log_file_number();
+  __int64  ll_get_prev_archived_log_file_number(__int64 lnumber);
 
   //create and release functions; called in sm
   bool ll_log_create(std::string _db_files_path_, std::string _db_name_, int &sedna_db_version);
@@ -273,7 +285,8 @@ public:
   void ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool sync);
   LONG_LSN ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, TIMESTAMP ts, bool sync);
   void ll_log_decrease(__int64 old_size, bool sync);
-  
+  void log_recordblock(xptr xblk, void *block, int size, bool sync);
+
   void set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn);
   void set_prev_rollback_lsn(transaction_id &trid, bool sync);//this function must be called inside microop
 
@@ -287,7 +300,7 @@ public:
   void commit_trn(transaction_id& trid, bool sync);
   void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
 #ifdef SE_ENABLE_FTSEARCH
-void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
+void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&, bool is_start),
                                void (*exec_micro_op) (const char*, int, bool),
                                const LONG_LSN& last_cp_lsn,
                                bool sync);
@@ -321,10 +334,10 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
   void set_checkpoint_flag(bool flag, bool sync); // set flag to enable/disable checkpoint
 
 protected:
+  logical_log_file_head read_log_file_header(UFile file_dsc);
   LONG_LSN ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync);
   void writeSharedMemoryWithCheck(const void *header, const void* rec_addr);
   void writeSharedMemory(const void*, int len);
-  logical_log_file_head read_log_file_header(UFile file_dsc);
   UFile get_log_file_descriptor(int log_file_number);
 
   void set_file_pointer(LONG_LSN &lsn);

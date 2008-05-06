@@ -381,6 +381,35 @@ int sm_server_handler(void *arg)
 						 msg->cmd = 0;
 						 break;
                      }
+			case 39:
+                     {
+						 /* 
+						  * hot-backup request
+						  * important note: sm doesn't check consistency of requests. it presumes correct sequence of calls.
+						  * for now such checkings are performed in gov process, so we should be ok with this.
+						  */
+
+						 if (msg->data.hb_struct.state == HB_START || msg->data.hb_struct.state == HB_START_CHECKPOINT)
+							msg->data.hb_struct.state =	hbProcessStartRequest(msg->data.hb_struct.state);
+
+						 else if (msg->data.hb_struct.state == HB_ARCHIVELOG)
+						 	msg->data.hb_struct.state =	hbProcessLogArchRequest(&(msg->data.hb_struct.lnumber));
+						 
+						 else if (msg->data.hb_struct.state == HB_GETPERSTS)
+						 	msg->data.hb_struct.state =	hbProcessGetTsRequest(&(msg->data.hb_struct.ts));
+
+						 else if (msg->data.hb_struct.state == HB_GETPREVLOG)
+						 	msg->data.hb_struct.state =	hbProcessGetPrevLogRequest(&(msg->data.hb_struct.lnumber));
+						 
+						 else if (msg->data.hb_struct.state == HB_END)
+						 	msg->data.hb_struct.state =	hbProcessEndRequest();
+						 
+						 else
+						 	msg->data.hb_struct.state = HB_ERR;
+
+						 msg->cmd = 0;
+						 break;
+                     }
 
             default: {
                          //d_printf2("query unknown (%d)\n", msg->cmd);
