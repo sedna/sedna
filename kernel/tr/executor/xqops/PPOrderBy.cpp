@@ -342,7 +342,9 @@ static inline int compare_doubles(double value1, double value2, orb_empty_status
 //////////////////////////////////////////////////////////////
 int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 {
-    orb_user_data* ud = (orb_user_data*)Udata;
+    if(v1 == v2) return 0;
+
+	orb_user_data* ud = (orb_user_data*)Udata;
     int length = (ud->header)->size();
     
     char* temp1 = NULL;
@@ -519,7 +521,8 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
     {
         __int64 position1, position2;
         GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
-        result = position1 > position2 ? 1 : -1;
+        if(position1 == position2) return 0;
+		result = position1 > position2 ? 1 : -1;
     }
     
 	return result;
