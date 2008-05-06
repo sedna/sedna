@@ -1,0 +1,89 @@
+/*
+ * File:  hb_aux.cpp - Auxillary hot-backup procedures (parsing command line)
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "common/version.h"
+#include "common/argtable.h"
+
+static int hb_help = 0;                        // help message and exit
+int hb_checkpoint = 0;                         // checkpoint needed before hot-backup
+char hb_db_name[SE_MAX_DB_NAME_LENGTH + 1];    // name of the db to archive
+char hb_dir_name[U_MAX_PATH + 1];              // name of the distance directory
+int hb_port = 5050;
+const size_t narg = 6;  // number of arguments for argtable (must be consistent with hb_argtable below)
+
+// command line parameters
+arg_rec hb_argtable[] =
+{
+{"-help",            NULL,          arg_lit,  &hb_help,                 "0",   "\t\t\t   display this help and exit"},
+{"--help",           NULL,          arg_lit,  &hb_help,                 "0",   "\t\t   display this help and exit"},
+{"-c",               NULL,          arg_lit,  &hb_checkpoint,           "0",   "\t\t   make checkpoint before backup"}, 
+{"-d",               " <dir_name>", arg_str,  hb_dir_name,              "???", "\t\t   the name of the backup directory"}, 
+{"-port",           " port-number", arg_int,  &hb_port,                 "5050","\t\t   port number to connect to Governor"},
+{NULL,               " <db-name>",  arg_str,  hb_db_name,               "???", "\t\t   the name of the database "}
+};
+
+// print help message
+static void hbPrintUsage()
+{
+	print_version_and_copyright("SEDNA Hot-Backup Process");
+    
+    fprintf(stdout, "Usage: se_hbp [options] dbname\n\noptions:\n");
+    fprintf(stdout, arg_glossary(hb_argtable, narg, "  "));
+    fprintf(stdout, "\n");
+}
+
+// this function parses command line and fetches parameters
+void hbParseCommandLine(int argc, char **argv)
+{
+    char buf[1024];
+
+	// no parameters given - print usage info and exit
+	if (argc == 1)
+	{
+		hbPrintUsage();
+        throw USER_SOFT_EXCEPTION("\n");
+	}
+
+    // parse and fetch command line
+    int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
+    arg_scan_ret_val = arg_scanargv(argc, argv, hb_argtable, narg, NULL, buf, NULL);
+
+    // help requested - print usage info and exit
+    if (hb_help == 1)
+	{
+		print_hb_usage();
+        throw USER_SOFT_EXCEPTION("\n");
+	}
+
+    // error in parsing command line - exit
+    if (arg_scan_ret_val == 0)
+        throw USER_ENV_EXCEPTION(buf, false);
+    
+    // name of the databse is not specified - exit
+    if (strcmp(hb_db_name, "???") == 0)
+        throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
+
+	// in case of absent directory name, use image directory instead
+	if (!strcmp(hb_dir_name, "???"))
+	{
+		uGetImageProcPath(buf, __sys_call_error);
+		if (buf[0] == '\0') 
+			throw USER_EXCEPTION(SE4081);
+
+		strncpy(hb_dir_name, buf, U_MAX_PATH);
+	}
+}
+
+// this function tries to parse sednaconf to find port number
+void hbGetDefaultValues()
+{
+	// obtain global configuration parameters through cfg file, if any
+	gov_header_struct cfg;
+	
+	get_default_sednaconf_values(&cfg);
+	get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+
+	if (cfg.lstnr_port_number != hb_port) hb_port = cfg.lstnr_port_number;
+}
