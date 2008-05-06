@@ -29,6 +29,8 @@ void ll_add_decrease_info(__int64 old_size);
 
 LONG_LSN ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info, TIMESTAMP ts);
 
+void ll_log_recordblock(xptr xblk, void *block, int size);
+
 TIMESTAMP ll_returnTimestampOfPersSnapshot();
 
 void ll_updateMinRcvLSN();
@@ -44,6 +46,12 @@ LONG_LSN ll_recover_db_by_phys_records(); // physical recovery by log; returns l
 void ll_recover_pers_heap();
 
 bool ll_log_get_checkpoint_on_flag();
+
+void ll_hotbackup(hb_state state);
+
+__int64 ll_get_last_archived_log_file_number();
+
+__int64  ll_get_prev_archived_log_file_number(__int64 lnumber);
 
 #endif
 

@@ -394,6 +394,32 @@ int ushutdown_close_socket(USOCKET s, sys_call_error_fun fun)
 #endif
 }
 
+/* returns zero if succeeded
+   returns U_SOCKET_ERROR if failed */
+int ushutdown_socket(USOCKET s, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+    int res = shutdown(s, SD_BOTH);
+    if (res != 0)
+    {
+       sys_call_error("shutdown");
+       return U_SOCKET_ERROR;
+    }
+    return res;
+#else
+    int res = shutdown(s, SHUT_RDWR);
+    if (res != 0)
+    {
+       if(errno != ENOTCONN)
+       {
+           sys_call_error("shutdown");       
+           return U_SOCKET_ERROR;
+       }
+    }
+    return res;
+#endif
+}
+
 /* returns 1 (number of sockets ready to recv) if there is data pending in network connection
    returns 0 if timeout
    returns U_SOCKET_ERROR if failed */
@@ -430,6 +456,70 @@ int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun)
         else
             return res;
     }
+    return res;
+#endif
+}
+
+/* returns number of sockets ready to recv if there is data pending in network connection 
+		(s is changed and contains result of FD_ISSET)
+   returns 0 if timeout
+   returns U_SOCKET_ERROR if failed */
+int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call_error_fun fun)
+{
+	if (s == NULL) sock_num = 0;
+
+#ifdef _WIN32
+    fd_set socks;
+    int res = 0;
+
+    FD_ZERO(&socks);
+    
+    for (int i = 0; i < sock_num; i++)
+    	FD_SET(s[i], &socks);
+
+    res = select(1, &socks, (fd_set *) NULL, (fd_set *) NULL, timeout);
+    if (res == U_SOCKET_ERROR) sys_call_error("select");
+
+    for (int i = 0; i < sock_num; i++)
+    	s[i] = FD_ISSET(s[i], &socks);
+    
+    return res;
+#else
+    fd_set socks;
+    int res = 0;
+    USOCKET maxsd = U_INVALID_SOCKET;
+
+    FD_ZERO(&socks);
+    for (int i = 0; i < sock_num; i++)
+    {
+        if (s[i] > maxsd) maxsd = s[i];
+    	FD_SET(s[i], &socks);
+    }
+
+    while (1)
+    {
+        res = select(maxsd + 1, &socks, (fd_set *) NULL, (fd_set *) NULL, timeout);
+
+        if (res == U_SOCKET_ERROR)
+            if (errno == EINTR)
+			{
+			    FD_ZERO(&socks);
+   	    		for (int i = 0; i < sock_num; i++)
+	    			FD_SET(s[i], &socks);
+                continue;
+            }
+            else
+            {
+                sys_call_error("select");
+                return U_SOCKET_ERROR;
+            }
+        else
+            return res;
+    }
+
+    for (int i = 0; i < sock_num; i++)
+    	s[i] = FD_ISSET(s[i], &socks);
+    
     return res;
 #endif
 }

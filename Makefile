@@ -61,6 +61,10 @@ build:
 	@echo Building export utility
 	@echo ===================================================================
 	$(MAKE) -C export
+	@echo ===================================================================
+	@echo Building hot-backup utility
+	@echo ===================================================================
+	$(MAKE) -C hbp
 ifeq ($(MAKE_DOC), 1)
 	@echo ===================================================================
 	@echo Building Docs
@@ -84,6 +88,7 @@ endif
 	$(MAKE) -C bin clean
 	$(MAKE) -C term clean
 	$(MAKE) -C export clean
+	$(MAKE) -C hbp clean
 	$(MAKE) -C libs clean
 
 

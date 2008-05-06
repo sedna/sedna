@@ -136,14 +136,18 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     body_beg = rec + sizeof(logical_log_head);
     lsn_offs = const_cast<char *>(body_beg);
 
-    if (body_beg[0] == LL_FREE_BLOCKS)
+    if (body_beg[0] == LL_FREE_BLOCKS || body_beg[0] == LL_HBBLOCK)
     {
     	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
     	free_blk_info = (void *)(body_beg + sizeof(char) + sizeof(int) + sizeof(xptr));
     	free_blk_info_xptr = *((xptr *)(body_beg + sizeof(char) + sizeof(int)));
 
-    	memcpy(ctrl_blk, free_blk_info, free_blk_info_size);
-    	bm_rcv_change(free_blk_info_xptr, ctrl_blk, free_blk_info_size);
+    	if (mem_head->hotbackup_needed || body_beg[0] == LL_FREE_BLOCKS)
+    	{
+    		memcpy(ctrl_blk, free_blk_info, free_blk_info_size);
+    		bm_rcv_change(free_blk_info_xptr, ctrl_blk, free_blk_info_size);
+    	}
+
         lsn_offs += sizeof(char) + sizeof(int) + sizeof(xptr) + free_blk_info_size;
     }
     else

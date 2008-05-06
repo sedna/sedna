@@ -21,7 +21,8 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
 {   
    msg_struct msg;
 
-   USOCKET socknew;
+   USOCKET socknew, hbsock = U_INVALID_SOCKET;
+   USOCKET sockarr[2]; // for uselect
 
    sockfd = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
    if (sockfd == U_INVALID_SOCKET) throw SYSTEM_EXCEPTION ("Can't init socket");
@@ -58,119 +59,173 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
    int socket_optval = 1, socket_optsize = sizeof(int);
    for(;;)
    {
-  	   
-       //accept a call from a client
-       socknew = uaccept(sockfd, __sys_call_error);
+       sockarr[0] = sockfd;
+       sockarr[1] = hbsock;
 
-       if (socknew == U_INVALID_SOCKET)
-       {
-          d_printf1("Can't accept client's connection\n");
-          continue;
-       }
+       res = uselect_read_arr(sockarr, (hbsock == U_INVALID_SOCKET) ? 1 : 2, NULL, __sys_call_error);
+	   if (res == U_SOCKET_ERROR) 
+	   		throw USER_EXCEPTION2(SE3007,usocket_error_translator());
        
-       if (usetsockopt(socknew, IPPROTO_TCP, TCP_NODELAY, (char*)&socket_optval, socket_optsize, __sys_call_error) == U_SOCKET_ERROR)
+       if (sockarr[0]) //accept a call from a client
        {
-          d_printf1("Can't accept client's connection: couldn't set socket option\n");
-          ushutdown_close_socket(socknew, __sys_call_error);
-          continue;
-       }
+	       socknew = uaccept(sockfd, __sys_call_error);
+	       if (socknew == U_INVALID_SOCKET)
+	       {
+   	    	  d_printf1("Can't accept client's connection\n");
+    	      continue;
+	       }
+       
+    	   if (usetsockopt(socknew, IPPROTO_TCP, TCP_NODELAY, (char*)&socket_optval, socket_optsize, __sys_call_error) == U_SOCKET_ERROR)
+       	   {
+          		d_printf1("Can't accept client's connection: couldn't set socket option\n");
+          		ushutdown_close_socket(socknew, __sys_call_error);
+          		continue;
+       	   }
 
-       gov_table->erase_all_closed_pids();
-       gov_table->put_all_free_sids_in_ids_table();
-       stop_serv = gov_table->check_stop_gov();
-       if (stop_serv == 0)
-          stop_db = gov_table->check_stop_databases();
+	       gov_table->erase_all_closed_pids();
+    	   gov_table->put_all_free_sids_in_ids_table();
+ 	       stop_serv = gov_table->check_stop_gov();
+    	   if (stop_serv == 0)
+        	  stop_db = gov_table->check_stop_databases();
 
-       //!!!! process msg from client !!!!
-       res = sp_recv_msg(socknew, &msg);
+	       //!!!! process msg from client !!!!
+    	   res = sp_recv_msg(socknew, &msg);
 
-       if (stop_serv == 0)
-          if (res == -1)//socket error 
-          {
-             d_printf2("Connection with client lost: %s\n", usocket_error_translator());
-             continue;
-          }
-          else if (res == -2)
-          {
-             d_printf1("Too large msg recieved\n");
-             continue;
-           }
+      	   if (stop_serv == 0)
+           		if (res == -1)//socket error 
+          		{
+             		d_printf2("Connection with client lost: %s\n", usocket_error_translator());
+             		continue;
+          		}
+          		else if (res == -2)
+          		{
+             		d_printf1("Too large msg recieved\n");
+             		continue;
+           		}
 
-       if (stop_serv == 1 )
-       {
-          if (msg.instruction != STOP)
-          {
-             sp_error_message_handler(socknew, 100, SE4608, "Transaction is rolled back because server is stopping");
-             if (res2 == U_SOCKET_ERROR) d_printf1("Can't send msg to client that server is stopped\n");
-          }
+       	   if (stop_serv == 1 )
+       	   {
+          		if (msg.instruction != STOP)
+          		{
+             		sp_error_message_handler(socknew, 100, SE4608, "Transaction is rolled back because server is stopping");
+             		if (res2 == U_SOCKET_ERROR) d_printf1("Can't send msg to client that server is stopped\n");
+          		}
 
-          //close session
-          ushutdown_close_socket(socknew, __sys_call_error);
-          break;
-       }
+          		//close session
+          		ushutdown_close_socket(socknew, __sys_call_error);
+          		break;
+       	   }
 
-       if (stop_db == 1)
-       {
-          ushutdown_close_socket(socknew, __sys_call_error);
-          continue;
-       }
-
-
-
+       	   if (stop_db == 1)
+       	   {
+          		ushutdown_close_socket(socknew, __sys_call_error);
+          		continue;
+       	   }
 		   
-       switch (msg.instruction)
-       {
-               ////////////////////////////////////
-          case CREATE_NEW_SESSION:
-          {
-              CreateNewSessionProcess(socknew, background_off_from_background_on);
-              break;
-          }
+	       switch (msg.instruction)
+    	   {
+        	       ////////////////////////////////////
+          		case CREATE_NEW_SESSION:
+          		{
+              		CreateNewSessionProcess(socknew, background_off_from_background_on);
+              		break;
+          		}
 
-               ////////////////////////////////////
+               	  ///////////////////////////////////
 
-          case REGISTER_NEW_SESSION:
-          {
+		        case REGISTER_NEW_SESSION:
+          		{
 
-              sess_registering(socknew, msg.body);
-              break;
-          }
+              		sess_registering(socknew, msg.body);
+              		break;
+          		}
  
-               ////////////////////////////////////
+               		////////////////////////////////////
   
-          case REGISTER_DB:
-          {
-              sm_registering(socknew, msg.body);
-              break;
-          }
+          		case REGISTER_DB:
+          		{
+              		sm_registering(socknew, msg.body);
+              		break;
+          		}
 
-               ////////////////////////////////////
+               		////////////////////////////////////
 
-          case RUNTIME_CONFIG:
-          {
-             send_runtime_config(socknew);
-             break;
-          }
+          		case RUNTIME_CONFIG:
+          		{
+             		send_runtime_config(socknew);
+             		break;
+          		}
 
-               ////////////////////////////////////
+               		////////////////////////////////////
 
-          case  IS_RUN_SM:
-          {
-             check_sm_run(socknew, msg.body);
-             break;
-          }
+          		case  IS_RUN_SM:
+          		{
+             		check_sm_run(socknew, msg.body);
+             		break;
+          		}
 
 
-               ////////////////////////////////////
+               		////////////////////////////////////
 
-          default:
-          {
-             d_printf1("unknown message from client\n");
-             ushutdown_close_socket(socknew, __sys_call_error);
-             break;
-          }
-        }
-               
+               	case HOTBACKUP_START:
+               	{
+          			if (hbsock != U_INVALID_SOCKET)
+          			{
+		    	   		uclose_socket(socknew, __sys_call_error);
+		    	   		continue;
+		    	   	}
+          				
+          			hbsock = socknew;
+        			if (uNotInheritDescriptor(UHANDLE(hbsock), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
+          			break;
+          		}
+
+               		////////////////////////////////////
+          		
+          		default:
+          		{
+             		d_printf1("unknown message from client\n");
+             		ushutdown_close_socket(socknew, __sys_call_error);
+             		break;
+          		}
+           }
+       }
+
+       if (sockarr[1]) // accept hb request
+       {
+	       U_ASSERT(hbsock != U_INVALID_SOCKET);
+
+	       // process msg from hbp
+    	   if (sp_recv_msg(hbsock, &msg) != 0 || msg.instruction == HB_ERR)
+    	   {
+    	   		hbProcessErrorHbp();  
+
+	    	   	uclose_socket(hbsock, __sys_call_error);
+       	   		hbsock = U_INVALID_SOCKET;
+
+    	   		continue;
+    	   }	    	   
+       		
+       	   // process message (res != 0 means we must close connection due to error or normal request)
+       	   res = hbProcessMessage(&msg);
+
+           // send answer to hbp
+           if (sp_send_msg(hbsock, msg) != 0)
+    	   {
+    	   		hbProcessErrorHbp();  
+    	   		
+    	   		uclose_socket(hbsock, __sys_call_error);
+    	   		hbsock = U_INVALID_SOCKET;
+    	   		
+    	   		continue;
+    	   }	    	   
+
+    	   if (res)
+           {
+           		ushutdown_close_socket(hbsock, __sys_call_error);
+           		hbsock = U_INVALID_SOCKET;
+           }
+       }        
    }//end of for
 
 

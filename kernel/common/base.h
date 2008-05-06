@@ -259,6 +259,7 @@ enum QueryType {TL_XQuery	= 9,	// XQuery query
  * 36 - bm_unregister_transaction
  * 37 - bm_create_new_version
  * 38 - transaction rollback
+ * 39 - hot-backup procedure (receive: state, return: status, or log file numbers; use hb_struct for this)
  *
  */
 struct sm_blk_stat
@@ -295,6 +296,12 @@ struct sm_msg_struct
         } swap_data;
 
         struct {
+            __int64 lnumber;
+            int state;
+            TIMESTAMP ts;
+        } hb_struct;
+
+        struct {
         	__int64 ts;    // timestamp of snapshot, used to find persistent heap file
         	int type_of_snp; // 1 or 0, to select name for file mapping
         } snp_info;
@@ -306,6 +313,20 @@ struct sm_msg_struct
     } data;
 };
 
+/* Hot-Backup states and answers in messages */
+enum hb_state
+{
+	HB_START,      			// start hot-backup
+	HB_START_CHECKPOINT,	// start hot-backup with preceding checkpoint
+	HB_CONT,                // sm answer: can continue
+	HB_WAIT,       			// answer: wait for checkpoint to finish
+	HB_ARCHIVELOG, 			// archive logical log (switch to the next one)
+	HB_END,        			// end of the hot-backup process
+	HB_ERR,       			// some error from sm
+	HB_NEXTFILE,            // file request from hbp
+	HB_GETPERSTS,           // get persistent timestamp
+	HB_GETPREVLOG           // get previous log file number
+};
 
 /// the following parameters are related to kernel<-->transaction protocol
 #define  ERR_SYMBOL     ((char)254)
@@ -315,7 +336,7 @@ struct sm_msg_struct
 
 // definitions for governor
 
-enum commands {CREATE_NEW_SESSION = 110, STOP = 501, REGISTER_NEW_SESSION = 121, REGISTER_DB = 122, RUNTIME_CONFIG = 600, IS_RUN_SM = 888 };
+enum commands {CREATE_NEW_SESSION = 110, STOP = 501, REGISTER_NEW_SESSION = 121, REGISTER_DB = 122, RUNTIME_CONFIG = 600, HOTBACKUP_START = 666, IS_RUN_SM = 888};
 
 
 #endif
