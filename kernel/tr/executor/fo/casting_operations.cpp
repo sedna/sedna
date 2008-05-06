@@ -725,9 +725,20 @@ tuple_cell cast(const tuple_cell &SV, xmlscm_type TT)
     // "17.3 Casting from derived types to parent types"
     if (is_derived(ST, TT))
     {
-        tuple_cell TV(SV);
-        TV.set_xtype(TT);
-        return TV;
+        // If target type is xs_decimal we can't simply use set_xtype()!
+		if(TT == xs_decimal)
+		{
+			if(ST == xs_decimal) return SV;
+			tuple_cell TV(SV);
+			TV.set_xtype(xs_integer);
+			return cast_primitive(TV, TT);
+		}
+		else
+		{
+		    tuple_cell TV(SV);
+            TV.set_xtype(TT);
+		    return TV;
+		}
     }
 
     xmlscm_type ST_base = primitive_base_type(ST);
