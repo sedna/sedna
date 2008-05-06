@@ -348,6 +348,7 @@ tuple_cell dm_string_value(xptr node)
                               }
         case text			: {
                                   int size = T_DSC(node)->size;
+								  if (size == 0) return EMPTY_STRING_TC;
                                   xptr data = T_DSC(node)->data;
                                   CHECKP(data);
                                   if (size <= PSTRMAXSIZE)
