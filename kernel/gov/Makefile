@@ -12,7 +12,8 @@ all: $(PP)/bin/se_gov$(EXE_EXT) $(PP)/bin/se_stop$(EXE_EXT) $(PP)/bin/se_rc$(EXE
 	@echo ===================================================================
 
 GOV_OBJS  = gov_globals$(OBJ_EXT) gov_table$(OBJ_EXT) listener$(OBJ_EXT) \
-            gov_functions$(OBJ_EXT) gov$(OBJ_EXT) config_utils$(OBJ_EXT)
+            gov_functions$(OBJ_EXT) gov$(OBJ_EXT) config_utils$(OBJ_EXT) \
+            hb_funcs$(OBJ_EXT) hb_files$(OBJ_EXT)
 
 STOP_OBJS = stop_server$(OBJ_EXT)
 RC_OBJS   = rc$(OBJ_EXT)

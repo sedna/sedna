@@ -28,6 +28,8 @@
 
 #include "common/rcv_test.h"
 
+#include "sm/hb_utils.h"
+
 using namespace std;
 
 SSMMsg *ssmmsg;

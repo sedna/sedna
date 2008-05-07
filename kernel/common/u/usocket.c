@@ -466,21 +466,21 @@ int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun)
    returns U_SOCKET_ERROR if failed */
 int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call_error_fun fun)
 {
-	if (s == NULL) sock_num = 0;
-
 #ifdef _WIN32
     fd_set socks;
-    int res = 0;
+    int res = 0, i;
+
+	if (s == NULL) sock_num = 0;
 
     FD_ZERO(&socks);
     
-    for (int i = 0; i < sock_num; i++)
+    for (i = 0; i < sock_num; i++)
     	FD_SET(s[i], &socks);
 
     res = select(1, &socks, (fd_set *) NULL, (fd_set *) NULL, timeout);
     if (res == U_SOCKET_ERROR) sys_call_error("select");
 
-    for (int i = 0; i < sock_num; i++)
+    for (i = 0; i < sock_num; i++)
     	s[i] = FD_ISSET(s[i], &socks);
     
     return res;
@@ -489,8 +489,10 @@ int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call
     int res = 0;
     USOCKET maxsd = U_INVALID_SOCKET;
 
+	if (s == NULL) sock_num = 0;
+
     FD_ZERO(&socks);
-    for (int i = 0; i < sock_num; i++)
+    for (i = 0; i < sock_num; i++)
     {
         if (s[i] > maxsd) maxsd = s[i];
     	FD_SET(s[i], &socks);
@@ -504,7 +506,7 @@ int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call
             if (errno == EINTR)
 			{
 			    FD_ZERO(&socks);
-   	    		for (int i = 0; i < sock_num; i++)
+   	    		for (i = 0; i < sock_num; i++)
 	    			FD_SET(s[i], &socks);
                 continue;
             }
@@ -517,7 +519,7 @@ int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call
             return res;
     }
 
-    for (int i = 0; i < sock_num; i++)
+    for (i = 0; i < sock_num; i++)
     	s[i] = FD_ISSET(s[i], &socks);
     
     return res;

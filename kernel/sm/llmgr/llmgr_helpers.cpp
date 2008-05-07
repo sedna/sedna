@@ -27,27 +27,30 @@
 
 using namespace std;
 
-__int64 get_last_archived_log_file_number()
+__int64 llmgr_core::get_last_archived_log_file_number()
 {
 	return hbLastFileNum;
 }
 
-__int64  ll_get_prev_archived_log_file_number(__int64 lnumber)
+__int64 llmgr_core::get_prev_archived_log_file_number(__int64 lnumber)
 {
+  	int i;
+  	__int64 res;
+
   	ll_log_lock(true);
 
   	logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
 
-	for (int i = 0; i < ll_files_num; i++)
+	for (i = 0; i < mem_head->ll_files_num; i++)
 		if (mem_head->ll_files_arr[i] == lnumber) break;
 
-	if (i == ll_files_num || i == 0) 
+	if (i == mem_head->ll_files_num || i == 0) 
 	{
 	  	ll_log_unlock(true);
 		return -1;
 	}
 	
-	__int64 res = mem_head->ll_files_arr[i - 1];
+	res = mem_head->ll_files_arr[i - 1];
 
   	ll_log_unlock(true);
 

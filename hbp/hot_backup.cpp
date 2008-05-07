@@ -11,6 +11,7 @@
 #include "common/argtable.h"
 #include "common/version.h"
 #include "common/u/usecurity.h"
+#include "common/u/usocket.h"
 #include "common/ipc_ops.h"
 
 #include "hb_aux.h"

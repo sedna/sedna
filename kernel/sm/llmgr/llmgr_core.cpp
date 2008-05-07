@@ -1361,7 +1361,7 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
  prevLSN // lsn of the previous record in physical records chain
 */
 
-void log_recordblock(xptr xblk, void *block, int size, bool sync)
+void llmgr_core::log_recordblock(xptr xblk, void *block, int size, bool sync)
 {
   RECOVERY_CRASH;
 
@@ -1387,7 +1387,7 @@ void log_recordblock(xptr xblk, void *block, int size, bool sync)
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &size, sizeof(int));
-  inc_mem_copy(tmp_rec, offs, &phys_xptr, sizeof(xptr));
+  inc_mem_copy(tmp_rec, offs, &xblk, sizeof(xptr));
   inc_mem_copy(tmp_rec, offs, block, size);
   inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
 
@@ -2046,11 +2046,11 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 
   ll_log_lock(sync);
   
-#ifdef SE_ENABLE_FTSEARCH
-  if (hotbackup_needed) index_op(undo_list, redo_list, last_checkpoint_lsn, true);
-#endif
- 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+#ifdef SE_ENABLE_FTSEARCH
+  if (mem_head->hotbackup_needed) index_op(undo_list, redo_list, last_checkpoint_lsn, true);
+#endif
 
   logical_log_file_head file_head =
                   read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));

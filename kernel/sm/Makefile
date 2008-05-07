@@ -13,7 +13,7 @@ all: $(PP)/bin/se_sm$(EXE_EXT) $(PP)/bin/se_cdb$(EXE_EXT) $(PP)/bin/se_ddb$(EXE_
 
 SM_COMM   = 
 SM_OBJS   = sm$(OBJ_EXT) sm_functions$(OBJ_EXT) sm_globals$(OBJ_EXT) \
-            trmgr$(OBJ_EXT)
+            trmgr$(OBJ_EXT) hb_utils$(OBJ_EXT)
 CDB_OBJS  = cdb$(OBJ_EXT) cdb_globals$(OBJ_EXT)	sm_functions$(OBJ_EXT) \
             sm_globals$(OBJ_EXT) db_utils$(OBJ_EXT) trmgr$(OBJ_EXT) 
 DDB_OBJS  = db_utils$(OBJ_EXT) ddb$(OBJ_EXT)
