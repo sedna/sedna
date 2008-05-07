@@ -6,6 +6,10 @@
 #include "common/version.h"
 #include "common/argtable.h"
 
+#include "common/sedna.h"
+#include "common/u/uprocess.h"
+#include "common/ipc_ops.h"
+
 static int hb_help = 0;                        // help message and exit
 int hb_checkpoint = 0;                         // checkpoint needed before hot-backup
 char hb_db_name[SE_MAX_DB_NAME_LENGTH + 1];    // name of the db to archive
@@ -27,7 +31,7 @@ arg_rec hb_argtable[] =
 // print help message
 static void hbPrintUsage()
 {
-	print_version_and_copyright("SEDNA Hot-Backup Process");
+	print_version_and_copyright("\nSEDNA Hot-Backup Process");
     
     fprintf(stdout, "Usage: se_hbp [options] dbname\n\noptions:\n");
     fprintf(stdout, arg_glossary(hb_argtable, narg, "  "));
@@ -53,7 +57,7 @@ void hbParseCommandLine(int argc, char **argv)
     // help requested - print usage info and exit
     if (hb_help == 1)
 	{
-		print_hb_usage();
+		hbPrintUsage();
         throw USER_SOFT_EXCEPTION("\n");
 	}
 

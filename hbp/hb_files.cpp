@@ -17,6 +17,11 @@
 
 #include "hb_files.h"
 
+#include <string>
+
+#include "common/sedna.h"
+#include "common/u/uhdd.h"
+
 using namespace std;
 
 static char hbDistance[U_MAX_PATH + 1];
@@ -57,6 +62,8 @@ static int hbMakeDirWithTimestamp(const char *dist_dir, const char *db_name)
 
         // register directory
         hbCreatedFiles.push_back(name_isdir_pair(string(hbDistance), true));
+
+        return 0;
 }
 
 // make data directory
@@ -74,6 +81,8 @@ static int hbMakeDataDirectory()
 
     // register directory
     hbCreatedFiles.push_back(name_isdir_pair(string(data_dir_name), true));
+
+    return 0;
 }
 
 // make cfg directory
@@ -91,10 +100,12 @@ static int hbMakeCfgDirectory()
 
     // register directory
     hbCreatedFiles.push_back(name_isdir_pair(string(cfg_dir_name), true));
+
+    return 0;
 }
 
 // prepare distance directory (make hot-backup directory with current timestamp and cfg directory)
-void hbPrepareDistance(const char *hb_dir_name, const char *hb_db_name)
+int hbPrepareDistance(const char *hb_dir_name, const char *hb_db_name)
 {
 	// make main timestamp directory
 	if (hbMakeDirWithTimestamp(hb_dir_name, hb_db_name) == -1) return -1;
@@ -104,6 +115,8 @@ void hbPrepareDistance(const char *hb_dir_name, const char *hb_db_name)
 	if (hbMakeCfgDirectory() == -1) return -1;
 	// copy db name
 	strcpy(hbDBName, hb_db_name);
+
+	return 0;
 }
 
 // copy one of the additional files
@@ -119,7 +132,7 @@ int hbCopyFile(char *file_path)
     strcpy(backup_file_name, hbDistance);
     int len = strlen(file_name);
 
-    if (len >= 3 && strcmp(file_name[len - 3], "xml"))
+    if (len >= 3 && strcmp(&(file_name[len - 3]), "xml"))
    	    strcat(backup_file_name, "/cfg/");
     else
 	    strcat(backup_file_name, "/data/");
@@ -131,6 +144,8 @@ int hbCopyFile(char *file_path)
 
     // register data file
    	hbCreatedFiles.push_back(name_isdir_pair(string(backup_file_name), false));
+
+   	return 0;
 }
 
 // copy data file
@@ -152,6 +167,8 @@ int hbCopyDataFile(char *file_path)
 
     // register data file
    	hbCreatedFiles.push_back(name_isdir_pair(string(backup_file_name), false));
+
+   	return 0;
 }
 
 // makes cleanup of hot-backup files in case of failure

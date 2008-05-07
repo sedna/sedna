@@ -400,7 +400,7 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr)
 		{
 			oldVerTs = header->versionsHeader.creatorTs[0];
 			header->lsn = ll_add_pers_snapshot_block_info(&versionEntry, oldVerTs);
-			ll_log_recordblock(oldVerXptr, (void *)header, PAGE_SIZE);
+			ll_log_recordblock(WuExternaliseXptr(oldVerXptr), (void *)header, PAGE_SIZE);
 			success=1;
 		}
 	}

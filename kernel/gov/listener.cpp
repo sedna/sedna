@@ -12,6 +12,7 @@
 #include "common/u/usem.h"
 #include "common/u/uutils.h"
 
+#include "gov/hb_funcs.h"
 
 using namespace std;
 
@@ -210,7 +211,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
        	   res = hbProcessMessage(&msg);
 
            // send answer to hbp
-           if (sp_send_msg(hbsock, msg) != 0)
+           if (sp_send_msg(hbsock, &msg) != 0)
     	   {
     	   		hbProcessErrorHbp();  
     	   		

@@ -3,12 +3,15 @@
  * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "hb/hb_main.h"
+#include "hb_main.h"
+#include "hb_files.h"
 
 #include "common/base.h"
+#include "common/sp.h"
 #include "common/u/u.h"
 #include "common/u/uprocess.h"
 #include "common/u/usocket.h"
+#include "common/u/uutils.h"
 
 /*
  *  The main plan (all communications with sm are through governor via socket protocol):
@@ -24,7 +27,7 @@
 #define HB_REQ_WAIT_TIME 1000 // milliseconds, wait time before another request
 
 // this function sends message to sm and receives response
-static void hbSendMsgAndRcvResponse(USOCKET hbSock, msg_struct &msg)
+static void hbSendMsgAndRcvResponse(USOCKET hbSock, msg_struct *msg)
 {
     if (sp_send_msg(hbSock, msg) != 0)
     {
@@ -34,7 +37,7 @@ static void hbSendMsgAndRcvResponse(USOCKET hbSock, msg_struct &msg)
 
 	if (sp_recv_msg(hbSock, msg) != 0 || msg->instruction == HB_ERR)
     {
-   		uclose_socket(hbSocket, __sys_call_error);
+   		uclose_socket(hbSock, __sys_call_error);
     	throw USER_EXCEPTION(SE3007);
     }
 }
@@ -42,17 +45,19 @@ static void hbSendMsgAndRcvResponse(USOCKET hbSock, msg_struct &msg)
 // this function retrieves file name from socket message (stored as a string)
 static int hbRetrieveFileName(msg_struct *msg, char *file_name)
 {
-	if (msg.length <= 5 || msg->body[0] != 0)  return -1;
+	if (msg->length <= 5 || msg->body[0] != 0)  return -1;
 
 	int len;
 
-	net_int2int(&len, msg->body[1]);
+	net_int2int(&len, &(msg->body[1]));
 
 	if (len == 0) return -1;
 
-	strncpy(file_name, msg->body[5], len);
+	strncpy(file_name, &(msg->body[5]), len);
 
 	file_name[len] = '\0';
+
+	return 0;
 }
 
 // this function performs main hot-backup actions (see plan above)
@@ -80,7 +85,7 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 
     strcpy(host, "127.0.0.1");
 
-    if (uconnect_tcp(hbSsocket, port, host, NULL) != 0)
+    if (uconnect_tcp(hbSocket, port, host, NULL) != 0)
     	throw USER_EXCEPTION(SE3003);
 
     // sending hot-backup start (only to gov, to start hot-backup socket there)
@@ -96,8 +101,8 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
     msg.instruction = (is_checkp) ? HB_START_CHECKPOINT : HB_START;
     msg.length = 5 + strlen(hb_db_name);
     msg.body[0] = 0;
-	int2net_int(strlen(hb_db_name), msg.body[1]);
-	strncpy(msg.body[5], hb_db_name, strlen(hb_db_name));
+	int2net_int(strlen(hb_db_name), &(msg.body[1]));
+	strncpy(&(msg.body[5]), hb_db_name, strlen(hb_db_name));
     
 	hbSendMsgAndRcvResponse(hbSocket, &msg);
 	

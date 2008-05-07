@@ -244,7 +244,7 @@ public:
   void hbWriteFileHeader(bool hbFlag);  
   void logArchive();
   __int64 get_last_archived_log_file_number();
-  __int64  ll_get_prev_archived_log_file_number(__int64 lnumber);
+  __int64 get_prev_archived_log_file_number(__int64 lnumber);
 
   //create and release functions; called in sm
   bool ll_log_create(std::string _db_files_path_, std::string _db_name_, int &sedna_db_version);

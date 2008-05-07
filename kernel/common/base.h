@@ -16,6 +16,7 @@
 #include "common/u/uprocess.h"
 
 #include "common/rcv_test.h"
+#include "common/wutypes.h"
 
 #define SEDNA_DATA_STRUCTURES_VER 7
 
@@ -221,11 +222,20 @@ enum QueryType {TL_XQuery	= 9,	// XQuery query
                 TL_POR 		= 1	// POR query
                };
 
-
-
-
-
-
+/* Hot-Backup states and answers in messages */
+enum hb_state
+{
+	HB_START,      			// start hot-backup
+	HB_START_CHECKPOINT,	// start hot-backup with preceding checkpoint
+	HB_CONT,                // sm answer: can continue
+	HB_WAIT,       			// answer: wait for checkpoint to finish
+	HB_ARCHIVELOG, 			// archive logical log (switch to the next one)
+	HB_END,        			// end of the hot-backup process
+	HB_ERR,       			// some error from sm
+	HB_NEXTFILE,            // file request from hbp
+	HB_GETPERSTS,           // get persistent timestamp
+	HB_GETPREVLOG           // get previous log file number
+};
 
 /**
  *
@@ -297,7 +307,7 @@ struct sm_msg_struct
 
         struct {
             __int64 lnumber;
-            int state;
+            hb_state state;
             TIMESTAMP ts;
         } hb_struct;
 
@@ -311,21 +321,6 @@ struct sm_msg_struct
         char data[2 + MAX_RESOURCE_NAME_LENGTH]; // first byte->lock mode, second byte->resource type, other bytes->resource name
  
     } data;
-};
-
-/* Hot-Backup states and answers in messages */
-enum hb_state
-{
-	HB_START,      			// start hot-backup
-	HB_START_CHECKPOINT,	// start hot-backup with preceding checkpoint
-	HB_CONT,                // sm answer: can continue
-	HB_WAIT,       			// answer: wait for checkpoint to finish
-	HB_ARCHIVELOG, 			// archive logical log (switch to the next one)
-	HB_END,        			// end of the hot-backup process
-	HB_ERR,       			// some error from sm
-	HB_NEXTFILE,            // file request from hbp
-	HB_GETPERSTS,           // get persistent timestamp
-	HB_GETPREVLOG           // get previous log file number
 };
 
 /// the following parameters are related to kernel<-->transaction protocol
