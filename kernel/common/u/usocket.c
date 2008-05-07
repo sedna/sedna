@@ -486,7 +486,7 @@ int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call
     return res;
 #else
     fd_set socks;
-    int res = 0;
+    int res = 0, i;
     USOCKET maxsd = U_INVALID_SOCKET;
 
 	if (s == NULL) sock_num = 0;
