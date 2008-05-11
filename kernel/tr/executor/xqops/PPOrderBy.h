@@ -57,6 +57,7 @@ public:
     ~temp_buffer ();
 
     void clear ();
+	void advance_buffer      (int len);
     void serialize_to_buffer (const tuple_cell& tc);
     void copy_to_buffer      (xptr addr, int size);
     void copy_to_buffer      (const void* addr, int size);
