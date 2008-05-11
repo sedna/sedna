@@ -551,7 +551,11 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
             xmlscm_type type = ct.xtype;                //thus we don't need to serialize this column and sort by it
             int type_size = ct.size;
 
-            if(t.cells[i].is_eos()) bs.setAt(i);
+            if(t.cells[i].is_eos())
+            { 
+			    bs.setAt(i);
+                buffer->advance_buffer(type_size);
+            }
             else 
             {
                 if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
@@ -612,8 +616,8 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                 }
             }
             offset += type_size;
-            memcpy((char*)p + offset, bs.get_ptr_to_bytes(), bs.get_size_in_bytes());
         }
+		memcpy((char*)p + offset, bs.get_ptr_to_bytes(), bs.get_size_in_bytes());
 
     #endif
 }
@@ -634,7 +638,11 @@ void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, cons
         xmlscm_type type = ct.xtype;
         int type_size = ct.size;
 
-        if(t.cells[i].is_eos()) bs.setAt(i);
+        if(t.cells[i].is_eos()) 
+        {
+            bs.setAt(i);
+            buffer->advance_buffer(type_size);
+        }
         else 
         {
             if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
@@ -689,22 +697,31 @@ void PPOrderBy::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, co
 ///////////////////////////////////////////////////////////////////////////////
 
 temp_buffer::temp_buffer (int _size_): size(_size_),
+                                       buffer(NULL),
                                        pos(0)
 {
-    if(size <= 0) 
-        throw USER_EXCEPTION2(SE1003, "Buffer size must be positive.");            
+    U_ASSERT(size > 0);           
     buffer = se_new char[size]; 
 }
     
 temp_buffer::~temp_buffer ()
 {
-    delete buffer;
-    buffer = NULL;
+    if(buffer != NULL)
+	{
+	    delete buffer;
+        buffer = NULL;
+	}
 }
 
 void temp_buffer::clear ()
 {
     pos = 0;    
+}
+
+void temp_buffer::advance_buffer (int len)
+{
+    U_ASSERT(pos + len < size); 
+	pos += len;    
 }
 
 void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
@@ -760,7 +777,8 @@ void temp_buffer::copy_from_buffer    (int start, int size, xptr addr)
 
 void temp_buffer::copy_from_buffer    (int start, xptr addr)
 {
-    copy_from_buffer(start, pos-start, addr);
+    U_ASSERT(pos >= start);
+	copy_from_buffer(start, pos-start, addr);
 }
 
 void temp_buffer::copy_from_buffer    (xptr addr)
@@ -777,7 +795,8 @@ void temp_buffer::copy_from_buffer      (int start, int size, void* addr)
 
 void temp_buffer::copy_from_buffer      (int start, void* addr)
 {
-    copy_from_buffer(start, pos-start, addr);
+    U_ASSERT(pos >= start);
+	copy_from_buffer(start, pos-start, addr);
 }
 
 void temp_buffer::copy_from_buffer      (void* addr)
