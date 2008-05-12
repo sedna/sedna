@@ -78,7 +78,8 @@ void sorted_sequence::lazy_sort()
 	merge_tree=pers_sset<merge_cell,unsigned short>::init(false);
 	//in_mem_block channel
 	if (bblk_in_chain!=XNULL)			
-	merge_tree->put(merge_cell::init(ptr_blk_arr[0]+sizeof(seq_blk_hdr),compareFN,Udata));
+	    //merge_tree->put(merge_cell::init(ptr_blk_arr[0]+sizeof(seq_blk_hdr),compareFN,Udata));
+	    sorted_seqs_arr.push_back(t_seq_pair(ptr_blk_arr[0],0));
 	//sorted sequences
 	sorted_sequence::t_sorted_seqs_arr::iterator it= sorted_seqs_arr.begin();
 	while (it!=sorted_seqs_arr.end())
@@ -374,6 +375,18 @@ void sorted_sequence::vecswap(int a, int b, int n)
 {
 	for (int i=0; i<n; i++, a++, b++) swap(a, b);
 }
+
+void sorted_sequence::clear_blocks_in_chain(const xptr& begin)
+{
+    xptr blk = begin;
+    while (blk!=XNULL)
+	{
+		empty_blk_arr.push_back(blk);
+		CHECKP(blk);
+		blk=((seq_blk_hdr*)XADDR(blk))->nblk;
+	}
+}
+
 void sorted_sequence::in_mem_order_data()
 {
 	
@@ -385,14 +398,7 @@ void sorted_sequence::in_mem_order_data()
 	for (int i=0;i<sz;i++)	
 		copy_data_to_new_place(get_data(i),new_chain);
 	//2. free old data blocks
-	xptr blk=bblk_in_chain;
-	while (blk!=XNULL)
-	{
-		//unlock
-		empty_blk_arr.push_back(blk);
-		CHECKP(blk);
-		blk=((seq_blk_hdr*)XADDR(blk))->nblk;
-	}
+	clear_blocks_in_chain(bblk_in_chain);
 }
 void sorted_sequence::set_next_block_in_chain(xptr& place, bool marking)
 {
@@ -577,10 +583,11 @@ void sorted_sequence::merge_stack(bool final)
 			res_seq=ptr_blk_arr[0];
 		else
 		{
-			res_seq=sorted_seqs_arr.back().first;
-			sorted_seqs_arr.pop_back();	
-			if (!sorted_seqs_arr.size())			
-				return;			
+			res_seq = sorted_seqs_arr.back().first;
+			if (1 == sorted_seqs_arr.size()) 
+				return;
+			else
+                sorted_seqs_arr.pop_back();
 		}
 		shft cnt=0;
 		while (sorted_seqs_arr.size())
@@ -694,6 +701,10 @@ xptr sorted_sequence::get_data(int pos)
 	 }
 	 while (true)
 	 {
+		 U_ASSERT(res_seq != XNULL);
+		 CHECKP(res_seq);
+		 xptr blk = BLOCKXPTR(((data_ptr*)XADDR(res_seq))->value);
+		 clear_blocks_in_chain(blk);
 		 
 		 while (res_seq!=XNULL)		
 			 set_next_ptr_with_free(res_seq);
