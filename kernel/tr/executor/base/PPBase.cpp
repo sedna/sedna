@@ -32,8 +32,8 @@ namespace tr_globals
 
 //pp_static_context st_ct;
 
-char mem_str_buf[MAX_MEM_STR_SIZE + 1];
-char mem_str_buf2[MAX_MEM_STR_SIZE + 1];
+char mem_str_buf[MAX_ATOMIC_LEX_REPR_SIZE + 1];
+char mem_str_buf2[MAX_ATOMIC_LEX_REPR_SIZE + 1];
 
 char e_string_buf[PAGE_SIZE];
 

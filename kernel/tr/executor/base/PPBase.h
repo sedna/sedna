@@ -160,8 +160,8 @@ namespace tr_globals
 
 /// buffer for strings that fit in main memory (used for various intermediate 
 /// operations with strings instead of allocating dynamic memory by se_new operator)
-extern char mem_str_buf[MAX_MEM_STR_SIZE + 1];
-extern char mem_str_buf2[MAX_MEM_STR_SIZE + 1];
+extern char mem_str_buf[MAX_ATOMIC_LEX_REPR_SIZE + 1];
+extern char mem_str_buf2[MAX_ATOMIC_LEX_REPR_SIZE + 1];
 
 /// buffer for e_strs (used for various intermediate operations with e_strs 
 /// instead of allocating dynamic memory by se_new operator)
