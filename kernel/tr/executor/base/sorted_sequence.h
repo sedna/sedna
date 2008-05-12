@@ -145,6 +145,7 @@ private:
 	void vecswap(int a, int b, int n);
     xptr get_free_block();
 	void in_mem_sort();
+	void clear_blocks_in_chain(const xptr& begin);
 	void in_mem_order_data();
 	void merge_stack(bool final);
 	void unlock_memory();
