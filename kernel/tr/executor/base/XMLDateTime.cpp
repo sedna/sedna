@@ -26,10 +26,6 @@
 #include "tr/executor/base/XMLDateTime.h"
 #include "tr/executor/base/PPBase.h"
 
-#ifndef MAX_MEM_STR_SIZE
-#define MAX_MEM_STR_SIZE 100
-#endif
-
 
 //
 // constants used to process raw data (fBuffer)

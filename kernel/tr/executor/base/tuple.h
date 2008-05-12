@@ -26,9 +26,17 @@ typedef std::vector<int_pair>		arr_of_int_pairs;
 
 typedef counted_ptr<char> str_counted_ptr;
 
-/// FIXME: review this definition
-#define MAX_MEM_STR_SIZE	100
 
+/// Used in fn:concat to determine which type of sting to create as result.
+/// Possibly, additional review is needed how we manage in-memory strings.
+#define MAX_MEM_STR_SIZE	            100      
+
+/// Used in casting and serialazation to create lexical atomic tuple cell
+/// representation (through tr_globals::mem_str_buf).
+/// Size should be the same as maximum lexical representaion of any fixed size 
+/// atomic value. In general, it means the same value as used in the lexical 
+/// analyzer (XQueryDLGLexer::bufsize). 
+#define MAX_ATOMIC_LEX_REPR_SIZE        2000
 
 
 /// Possible types of tuple cell

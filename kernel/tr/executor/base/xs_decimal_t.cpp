@@ -185,7 +185,7 @@ char *xs_decimal_t::get_c_str(char *buf) const
         int E_pos = -1;
         int dot_pos = -1;
         char *start = buf;
-        int max_len = MAX_MEM_STR_SIZE;
+        int max_len = MAX_ATOMIC_LEX_REPR_SIZE;
         if (*buf == '-')
         {
             start++;
