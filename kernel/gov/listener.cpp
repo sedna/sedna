@@ -61,7 +61,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
    for(;;)
    {
        sockarr[0] = sockfd;
-       sockarr[1] = hbsock;
+       sockarr[1] = (hbsock == U_INVALID_SOCKET) ? 0 : hbsock;
 
        res = uselect_read_arr(sockarr, (hbsock == U_INVALID_SOCKET) ? 1 : 2, NULL, __sys_call_error);
 	   if (res == U_SOCKET_ERROR) 

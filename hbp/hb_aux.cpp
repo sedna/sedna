@@ -11,10 +11,11 @@
 #include "common/ipc_ops.h"
 
 static int hb_help = 0;                        // help message and exit
+static int hb_cmd_port;                        // command line port number
 int hb_checkpoint = 0;                         // checkpoint needed before hot-backup
 char hb_db_name[SE_MAX_DB_NAME_LENGTH + 1];    // name of the db to archive
 char hb_dir_name[U_MAX_PATH + 1];              // name of the distance directory
-int hb_port = 5050;
+int hb_port = 5050;                            // port number (priority: def.value->cfg file->command line)
 const size_t narg = 6;  // number of arguments for argtable (must be consistent with hb_argtable below)
 
 // command line parameters
@@ -22,9 +23,9 @@ arg_rec hb_argtable[] =
 {
 {"-help",            NULL,          arg_lit,  &hb_help,                 "0",   "\t\t\t   display this help and exit"},
 {"--help",           NULL,          arg_lit,  &hb_help,                 "0",   "\t\t   display this help and exit"},
-{"-c",               NULL,          arg_lit,  &hb_checkpoint,           "0",   "\t\t   make checkpoint before backup"}, 
+{"-c",               NULL,          arg_lit,  &hb_checkpoint,           "0",   "\t\t\t   make checkpoint before backup"}, 
 {"-d",               " <dir_name>", arg_str,  hb_dir_name,              "???", "\t\t   the name of the backup directory"}, 
-{"-port",           " port-number", arg_int,  &hb_port,                 "5050","\t\t   port number to connect to Governor"},
+{"-port",           " port-number", arg_int,  &hb_cmd_port,             "-1","\t   port number to connect to Governor"},
 {NULL,               " <db-name>",  arg_str,  hb_db_name,               "???", "\t\t   the name of the database "}
 };
 
@@ -78,6 +79,10 @@ void hbParseCommandLine(int argc, char **argv)
 
 		strncpy(hb_dir_name, buf, U_MAX_PATH);
 	}
+
+	// if port is specified in command line then use it instead default or cfg
+	if (hb_cmd_port != -1)
+		hb_port = hb_cmd_port;
 }
 
 // this function tries to parse sednaconf to find port number

@@ -53,7 +53,7 @@ static int hbMakeDirWithTimestamp(const char *dist_dir, const char *db_name)
         strcat(hbDistance, dt_buf);
 
 	    // if directory already exists - error
-	    if (uIsFileExist(hbDistance, __sys_call_error))
+	    if (uIsFileExist(hbDistance, NULL))
            	return -1;
 
         // create backup directory
@@ -132,7 +132,7 @@ int hbCopyFile(char *file_path)
     strcpy(backup_file_name, hbDistance);
     int len = strlen(file_name);
 
-    if (len >= 3 && strcmp(&(file_name[len - 3]), "xml"))
+    if (len >= 3 && !strcmp(&(file_name[len - 3]), "xml"))
    	    strcat(backup_file_name, "/cfg/");
     else
 	    strcat(backup_file_name, "/data/");

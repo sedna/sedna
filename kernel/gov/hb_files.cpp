@@ -117,6 +117,8 @@ int	hbMakeConfGlobalFileName(char *buf, int maxlen)
     	// still not found; it's ok, just won't archive it
     	if (!uIsFileExist(sedna_cfg_file, __sys_call_error))
     		return 0;
+#else
+		return 0;
 #endif
   	}
 

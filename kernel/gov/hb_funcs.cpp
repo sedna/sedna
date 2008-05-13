@@ -61,7 +61,7 @@ static int hbRetrieveAndCheckDbName(char *dbname, int len)
 static int RetrieveAllFileNames()
 {
     char buf[MAX_SE_SOCKET_STR];
-    int lnum;
+    int lnum, len;
 
 	// retrieve all log file names
 	sm_msg_struct msg;
@@ -75,10 +75,10 @@ static int RetrieveAllFileNames()
 
 	while (msg.data.hb_struct.lnumber != -1)
 	{
-		if (hbMakeLogFileName(buf, MAX_SE_SOCKET_STR, hbDbName.c_str(), msg.data.hb_struct.lnumber) == -1)
+		if ((len = hbMakeLogFileName(buf, MAX_SE_SOCKET_STR, hbDbName.c_str(), msg.data.hb_struct.lnumber)) == -1)
 			return -1;
 		
-	    hbFiles.push_back(string(buf, MAX_SE_SOCKET_STR));
+	    hbFiles.push_back(string(buf, len));
 
 		msg.cmd = 39;
 		msg.data.hb_struct.state = HB_GETPREVLOG;
@@ -96,27 +96,27 @@ static int RetrieveAllFileNames()
 
 	if (msg.data.hb_struct.state == HB_ERR) return -1;
 
-	if (hbMakePhFileName(buf, MAX_SE_SOCKET_STR, hbDbName.c_str(), msg.data.hb_struct.ts) == -1)
+	if ((len = hbMakePhFileName(buf, MAX_SE_SOCKET_STR, hbDbName.c_str(), msg.data.hb_struct.ts)) == -1)
 		return -1;
 
-    hbFiles.push_back(string(buf, MAX_SE_SOCKET_STR));
+    hbFiles.push_back(string(buf, len));
 
     // retrieve vmm.dat file
-	if (hbMakeVmmFileName(buf, MAX_SE_SOCKET_STR) == -1)
+	if ((len = hbMakeVmmFileName(buf, MAX_SE_SOCKET_STR)) == -1)
 		return -1;
 
-    hbFiles.push_back(string(buf, MAX_SE_SOCKET_STR));
+    hbFiles.push_back(string(buf, len));
 
     // retrieve db config file
-	if (hbMakeConfFileName(buf, MAX_SE_SOCKET_STR, hbDbName.c_str()) == -1)
+	if ((len = hbMakeConfFileName(buf, MAX_SE_SOCKET_STR, hbDbName.c_str())) == -1)
 		return -1;
 
-    hbFiles.push_back(string(buf, MAX_SE_SOCKET_STR));
+    hbFiles.push_back(string(buf, len));
 
     // retrieve sednaconf file
 	int res = hbMakeConfGlobalFileName(buf, MAX_SE_SOCKET_STR);
 	if (res == -1) return -1;
-    if (res != 0) hbFiles.push_back(string(buf, MAX_SE_SOCKET_STR));
+    if (res != 0) hbFiles.push_back(string(buf, res));
 
     return 0;
 }
@@ -170,7 +170,7 @@ int hbProcessStartRequest(msg_struct *msg)
 
 	hbSendMsgToSm(&smmsg);
 
-	if (smmsg.cmd == HB_CONT) // need to send data file name
+	if (smmsg.data.hb_struct.state == HB_CONT) // need to send data file name
 	{
 		status = HB_ARCHIVELOG;
 		msg->instruction = HB_CONT;
