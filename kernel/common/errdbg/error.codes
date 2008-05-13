@@ -1332,6 +1332,9 @@ sedna-err:SE4500
 sedna-err:SE4501
 
    Can't recover database by logical log
+sedna-err:SE4510
+
+   Hot-backup utility error
 
 ############################################################################
 # Transaction general errors 

@@ -61,6 +61,7 @@ void llmgr_core::logArchive()
 {
      ll_log_flush(false);
      extend_logical_log(false);
+     hbStatus = HB_END;
 }
 
 void llmgr_core::log_hotbackup(hb_state state)
@@ -69,13 +70,11 @@ void llmgr_core::log_hotbackup(hb_state state)
     
     hbStatus = state;
 
-    if (hbStatus == HB_ARCHIVELOG)
-    	logArchive();
-
     if (hbStatus == HB_END)
 	    hbLastFileNum = -1;
 
-    hbStatus = HB_END;
+    if (hbStatus == HB_ARCHIVELOG)
+    	logArchive();
 
   	ll_log_unlock(true);
 }

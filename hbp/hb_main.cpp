@@ -24,7 +24,7 @@
  *  6. Notify sm of ending hot-backup procedure. Checkpoints become enabled at this point.
  */
 
-#define HB_REQ_WAIT_TIME 1000 // milliseconds, wait time before another request
+#define HB_REQ_WAIT_TIME 2 // seconds, wait time before another request
 
 // this function sends message to sm and receives response
 static void hbSendMsgAndRcvResponse(USOCKET hbSock, msg_struct *msg)
@@ -89,6 +89,8 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
     	throw USER_EXCEPTION(SE3003);
 
     // sending hot-backup start (only to gov, to start hot-backup socket there)
+    printf("Connecting to database...");
+
     msg.instruction = HOTBACKUP_START;
     msg.length = 0;
     if (sp_send_msg(hbSocket, &msg) != 0)
@@ -96,6 +98,7 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
    		uclose_socket(hbSocket, __sys_call_error);
     	throw USER_EXCEPTION(SE3006);
     }
+	printf("Done.\n");
     
     // sending hot-backup request
     msg.instruction = (is_checkp) ? HB_START_CHECKPOINT : HB_START;
@@ -108,6 +111,8 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 	
 	U_ASSERT(msg.instruction == HB_CONT || msg.instruction == HB_WAIT);
 
+	if (msg.instruction == HB_WAIT) printf("Waiting for checkpoint to finish...");
+
 	while (msg.instruction != HB_CONT)
     {
     	uSleep(HB_REQ_WAIT_TIME, __sys_call_error);
@@ -116,30 +121,37 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 	    msg.length = 0;
 
 		hbSendMsgAndRcvResponse(hbSocket, &msg);
+
+		if (msg.instruction == HB_CONT)	printf("Done.\n");
     }
 	
 	U_ASSERT(msg.instruction == HB_CONT);
 
+    printf("Creating necessary directories...");
     // prepare distance directory (make hot-backup directory with current timestamp)
     if (hbPrepareDistance(hb_dir_name, hb_db_name) == -1)
     {
    		ushutdown_close_socket(hbSocket, __sys_call_error);
-    	throw USER_EXCEPTION(SE3007);
+    	throw USER_EXCEPTION2(SE4510, "Failed to create some of the backup directories");
     }
+	printf("Done.\n");
     
     // retrieve file data name from message 
     if (hbRetrieveFileName(&msg, file_name) == -1)
     {
    		ushutdown_close_socket(hbSocket, __sys_call_error);
-    	throw USER_EXCEPTION(SE3007);
+    	throw USER_EXCEPTION2(SE4510, "Error in processing incoming mesage");
     }
  
     // we can copy data file now
+    printf("Copying data file...%s...", file_name);
+
     if (hbCopyDataFile(file_name) == -1)
     {
    		ushutdown_close_socket(hbSocket, __sys_call_error);
-    	throw USER_EXCEPTION(SE3007);
+    	throw USER_EXCEPTION2(SE4510, "Error in copying data file");
     }
+	printf("Done.\n");
 
 	// next step: request archive log; receive all files need to backup
     msg.instruction = HB_ARCHIVELOG;
@@ -155,15 +167,18 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 	    if (hbRetrieveFileName(&msg, file_name) == -1)
 	    {
    			ushutdown_close_socket(hbSocket, __sys_call_error);
-    		throw USER_EXCEPTION(SE3007);
+    		throw USER_EXCEPTION2(SE4510, "Error in processing incoming mesage");
 	    }
 
         // copy file
+        printf("Copying additional files...%s...", file_name);
+
         if (hbCopyFile(file_name) == -1)
 	    {
    			ushutdown_close_socket(hbSocket, __sys_call_error);
-    		throw USER_EXCEPTION(SE3007);
+    		throw USER_EXCEPTION2(SE4510, "Error in copying one of the additional database files");
 	    }
+		printf("Done.\n");
     
 	    msg.instruction = HB_NEXTFILE;
     	msg.length = 0;

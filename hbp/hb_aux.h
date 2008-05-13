@@ -7,8 +7,8 @@
 #define _HB_AUX_H
 
 extern int   hb_checkpoint;
-extern char *hb_dir_name;
-extern char *hb_db_name;
+extern char hb_dir_name[];
+extern char hb_db_name[];
 extern int hb_port;
 
 // this function parses command line and fetches parameters

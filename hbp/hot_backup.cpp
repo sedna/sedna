@@ -44,9 +44,7 @@ int main(int argc, char **argv)
         
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
-        fprintf(res_os, "The database '%s' has been successfully backed up\n", hb_db_name);
-
-        fflush(res_os);
+        printf("The database '%s' has been successfully backed up\n", hb_db_name);
     } 
     // in case of any exception we don't want to crash sedna since hot-backup is an external utility
     // so we must try to do proper deinitialization
