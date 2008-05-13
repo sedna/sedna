@@ -1131,11 +1131,11 @@ void PPFnZeroOrOne::next  (tuple &t)
     if(first_time)
     {
         child.op->next(t);
-        first_time = false;
-
+        
         if (!t.is_eos())
         {
-            tuple temp(child.ts);
+            first_time = false;
+			tuple temp(child.ts);
             child.op->next(temp);
             if(!temp.is_eos()) throw XQUERY_EXCEPTION(FORG0003); //error code description: fn:zero-or-one called with a sequence containing more than one item.
         }
