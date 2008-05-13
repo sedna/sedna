@@ -263,7 +263,7 @@ validateExpr!:
 
 typeswitchExpr!:
 	<<ASTBase* var;>>
-	TYPESWITCH LPAR e1:expr RPAR cc:caseClauses DEFAULT {v:varRef AS} RETURN e2:exprSingle
+	TYPESWITCH LPAR e1:expr RPAR cc:caseClauses DEFAULT {v:varRef} RETURN e2:exprSingle
 	<<
 	  if (#v == NULL) var=#(#[AST_VAR], #(#[AST_QNAME], #["%v", AST_LOCAL_NAME], #["", AST_PREFIX]));
 	  else var = #v;
