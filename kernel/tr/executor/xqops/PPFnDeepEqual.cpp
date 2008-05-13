@@ -21,11 +21,12 @@ PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
 {
 }
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
-                   PPOpIn _child1_,
-                   PPOpIn _child2_,PPOpIn _collation_) : PPIterator(_cxt_),
-                                      child1(_child1_),
-                                      child2(_child2_),
-									  collation(_collation_)
+                             PPOpIn _child1_,
+                             PPOpIn _child2_,
+							 PPOpIn _collation_) : PPIterator(_cxt_),
+                                                   child1(_child1_),
+                                                   child2(_child2_),
+									               collation(_collation_)
 {
 }
 bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
@@ -38,17 +39,31 @@ bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
 		return false;
 	switch(scm1->type)
 	{
-	case element: return are_elements_deep_equal(node1,node2);
-	case document: return are_documents_deep_equal(node1,node2);
-	case attribute: return are_attributes_equal(node1,node2,scm1,scm2);
-	case comment:case text: return are_text_nodes_equal(node1,node2);
-	case pr_ins: return are_pi_equal(node1,node2);	 
-	default: return false;
+        case element: return are_elements_deep_equal(node1,node2,scm1,scm2);
+        case document: return are_documents_deep_equal(node1,node2);
+        case attribute: return are_attributes_equal(node1,node2,scm1,scm2);
+        case comment:case text: return are_text_nodes_equal(node1,node2);
+        case pr_ins: return are_pi_equal(node1,node2);	 
+        default: return false;
 	}
 }
-bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2)
+
+static inline bool compare_full_schema_names(schema_node* scm1, schema_node* scm2)
 {
-	//1.Attributes
+    if ( my_strcmp(scm2->name,scm1->name) == 0 && 
+		(((char*)scm1->xmlns) == ((char*)scm2->xmlns) ||
+		(scm1->xmlns != NULL && scm2->xmlns != NULL && my_strcmp(scm2->xmlns->uri, scm1->xmlns->uri)==0)))
+        return true;
+	else 
+		return false;
+}
+
+bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2)
+{
+	//1. Compare names
+	if(!compare_full_schema_names(scm1, scm2)) return false;
+			
+	//2. Compare attributes
 	xptr at1=getFirstByOrderAttributeChild(node1);
 	int at_cnt=0;
 	while (at1!=XNULL)
@@ -72,32 +87,49 @@ bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2)
 	if (at_cnt!=at_cnt2)return false;
 	return are_documents_deep_equal(node1,node2);
 }
+
 bool PPFnDeepEqual::are_documents_deep_equal(xptr& node1,xptr& node2)
 {
-	xptr c1=getFirstByOrderChildNode(node1);
-	xptr c2=getFirstByOrderChildNode(node2);
-	while (c1!=XNULL && c2!=XNULL)
+	xptr c1 = getFirstByOrderChildNode(node1);
+	xptr c2 = getFirstByOrderChildNode(node2);
+	schema_node* scm;
+
+	while (true)
 	{		
-		if (!are_nodes_deep_equal(c1,c2))
-			return false;
+		while (c1 != XNULL) 
+		{ 
+			CHECKP(c1);
+	        scm = GETSCHEMENODEX(c1);
+		    if(scm->type == pr_ins || scm->type == comment) c1 = ((n_dsc*)XADDR(c1))->rdsc;
+			else break; 
+		}
+		
+		while (c2 != XNULL) 
+		{ 
+			CHECKP(c2);
+			scm = GETSCHEMENODEX(c2);
+		    if(scm->type == pr_ins || scm->type == comment) c2 = ((n_dsc*)XADDR(c2))->rdsc;
+			else break; 
+		}
+		
+		if(c1 == XNULL || c2 == XNULL) 	  return c1 == c2;
+		if (!are_nodes_deep_equal(c1,c2)) return false;
+		
 		CHECKP(c1);
-		c1=((n_dsc*)XADDR(c1))->rdsc;
+		c1 = ((n_dsc*)XADDR(c1))->rdsc;
 		CHECKP(c2);
-		c2=((n_dsc*)XADDR(c2))->rdsc;
+		c2 = ((n_dsc*)XADDR(c2))->rdsc; 
 	}
-	if (c1!=XNULL || c2!=XNULL)
-		return false;
-	else
-		return true;
 }
+
 bool PPFnDeepEqual::are_attributes_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2)
 {
-	if ( my_strcmp(scm2->name,scm1->name)==0 &&  (((char*)scm1->xmlns)==((char*)scm2->xmlns) ||
-		(scm1->xmlns!=NULL&& scm2->xmlns!=NULL && my_strcmp(scm2->xmlns->uri,scm1->xmlns->uri)==0)))
-	return are_text_nodes_equal(node1,node2);
+	if (compare_full_schema_names(scm1, scm2))
+	    return are_text_nodes_equal(node1,node2);
 	else
 		return false;
 }
+
 
 bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 {
@@ -109,7 +141,6 @@ bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 		return false;
 }
 
-
 bool PPFnDeepEqual::are_pi_equal(xptr& node1,xptr& node2)
 {
 	char* n1=dm_node_name(node1).get_str_mem();
@@ -119,7 +150,6 @@ bool PPFnDeepEqual::are_pi_equal(xptr& node1,xptr& node2)
 	else
 		return false;	
 }
-
 
 PPFnDeepEqual::~PPFnDeepEqual()
 {
@@ -176,15 +206,15 @@ void PPFnDeepEqual::next  (tuple &t)
         {
             collation.op->next(t);
             if(t.is_eos()) 
-                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument." );
+				throw XQUERY_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:deep-equal." );
 
             tuple_cell col = atomize(collation.get(t));
             if (!is_string_type(col.get_atomic_type())) 
-                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument ");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Wrong type of the third argument value in fn:deep-equal (xs_string/derived/promotable is expected).");
 
             collation.op->next(t);
             if (!t.is_eos()) 
-                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument " );
+				throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arity of the third argument in fn:deep-equal. Argument contains more than one item." );
             
             col = tuple_cell::make_sure_light_atomic(col);
             handler = cxt->st_cxt->get_collation(col.get_str_mem());
@@ -268,10 +298,17 @@ void PPFnDeepEqual::next  (tuple &t)
 
 PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)
 {
-    PPFnDeepEqual *res = se_new PPFnDeepEqual(_cxt_, child1, child2);
-    res->child1.op = child1.op->copy(_cxt_);
+    PPFnDeepEqual *res = collation.op ? 
+		                 se_new PPFnDeepEqual(_cxt_, child1, child2, collation) : 
+	                     se_new PPFnDeepEqual(_cxt_, child1, child2);
+    
+	res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
+    
+	if(collation.op) 
+		res->collation.op = collation.op->copy(_cxt_);
+	
+	res->set_xquery_line(__xquery_line);
     return res;
 }
 
