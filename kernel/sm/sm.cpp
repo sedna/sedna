@@ -846,6 +846,24 @@ void recover_database_by_physical_and_logical_log(int db_id)
        start_chekpoint_thread();
        elog(EL_LOG, ("SM : start_chekpoint_thread done"));
 
+	   // check for tmp file (may be absent in hot-backup copy)
+	   string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
+       if (!uIsFileExist(tmp_file_name.c_str(), __sys_call_error))
+       {
+		    USECURITY_ATTRIBUTES *sa;	
+		    UFile tmp_file_handle;
+
+    	    if (uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) !=0 ) throw USER_EXCEPTION(SE3060);
+    	  	
+    	  	if ((tmp_file_handle = uCreateFile(tmp_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error)) == U_INVALID_FD)
+	        	throw USER_EXCEPTION(SE4301);
+
+		    if (uCloseFile(tmp_file_handle, __sys_call_error) == 0)
+        		throw USER_EXCEPTION(SE4305);
+
+            if (uReleaseSA(sa, __sys_call_error) !=0 ) throw USER_EXCEPTION(SE3063);
+	   }
+
        //start buffer manager
        bm_startup();
        elog(EL_LOG, ("SM : bm_startup done"));
