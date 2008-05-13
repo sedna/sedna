@@ -358,6 +358,7 @@
      (l2p:list-last (cdr lst)))))
 
 (define (l2p:any-lr-node2por node)
+  ;(pp node)
 
   (cond ;((symbol? node) `(1 (PPVariable ,node))) 
         ((list? node)
@@ -519,17 +520,13 @@
                                `(one  ; occurrence indicator
                                  ,lr-fun-arg-type)
                                lr-fun-arg-type))))))
-                       
+
                   `(,(l2p:tuple-size right-PhysOp)
                     (,(if (eq? op-name 'slet@) 'PPSLet 'PPLet)
                      ,(map  cadr (cadr new-fun-def))
                      ,left-PhysOp
                      ,right-PhysOp
-                     ,@por-arg-type-list
-                     )
-                    )
-              )
-             ))
+                     ,@por-arg-type-list)))))
 
              ; *** axis ***
              ((or (eq? op-name 'child)
@@ -1463,7 +1460,7 @@
                                       (lambda (action)
                                         (let loop ((replaces '(NEW OLD WHERE))
                                                    (action action))
-                                          (pp action)
+                                          ;(pp action)
                                           (if
                                            (null? replaces)
                                            action
@@ -2266,7 +2263,11 @@
                     (call-with-values
                      (lambda ()
                        (tree-walk
-                        (cadr expr) for-variables let-variables capture-vars?))
+                        (cadr expr) for-variables let-variables 
+                        ; No need to capture for&let-vars for a
+                        ; nested FLWOR-expression
+                        #f  ; Was: capture-vars?
+                        ))
                      (lambda (sub1 for1 let1)
                        (call-with-values
                         (lambda ()
@@ -2329,6 +2330,7 @@
      x)
   (letrec ((form-slets
             (lambda (var-lst last-body)
+              ;(pp (list var-lst last-body))
               (if
                (null? var-lst)
                last-body
@@ -2352,7 +2354,9 @@
         (lambda ()
           (l2p:replace-unio2tmp-tuple subexpr (map caddr spec-lst)))
         (lambda (subexpr-with-tmp-tuple for-variables let-variables)
+          ;(pp (list subexpr-with-tmp-tuple for-variables let-variables))
           (let ((second-fun (cadr arg-lst)))
+            ;(pp (list let-variables  second-fun))
             ((lambda (x)
                ;(pp (list arg-lst x))
                x)
