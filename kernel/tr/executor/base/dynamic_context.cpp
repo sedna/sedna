@@ -307,29 +307,29 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     strcpy(default_collation_uri, normalized_value);
 }
 
-/// Collations are used primarily in F&O Spec. so we raise 
-/// FOCH0002 in this method. XQTS0076 is equivalent in XQuery Spec. 
-/// Use try-catch to change FOCH0002 to XQST0076 or other.
-CollationHandler* static_context::get_collation(const char *uri)
+
+int static_context::get_collation(const char *uri, /* out */ CollationHandler** handler)
 {
-    if (!uri) return get_default_collation();
-    
-    ///////////////////////////////////////////////////////////////////////
-    /// Check constraints on the given URI.
+    if ( !uri ) 
+    {
+        *handler = get_default_collation();
+        return 0;
+    }
+        
+    /// 1. Check constraints on the given URI.
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(uri, &valid, &nfo);
-    if (!valid) throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is not valid.");
-    ///////////////////////////////////////////////////////////////////////
+    if ( !valid ) return COLLATION_INVALID_URI;  // throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is not valid.");
     
     if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL) 
-        throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri property is not defined.");
+        return COLLATION_RESOLVE_ERR;
+        // throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri property is not defined.");
 
     tuple_cell tc;
     const char *normalized_value = uri;
     
-    ///////////////////////////////////////////////////////////////////////
-    /// Normalize URI if needed.
+    /// 2. Normalize URI if needed.
     if(!nfo.normalized) 
     {
         stmt_str_buf result;
@@ -337,10 +337,9 @@ CollationHandler* static_context::get_collation(const char *uri)
         tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
         normalized_value = tc.get_str_mem();
     }
-    ///////////////////////////////////////////////////////////////////////
     
-    ///////////////////////////////////////////////////////////////////////
-    /// And try to resolve it over base-uri property if it is relative.
+
+    /// 3. And try to resolve it over base-uri property if it is relative.
     if(nfo.type == Uri::UT_RELATIVE)
     {
        try
@@ -353,17 +352,15 @@ CollationHandler* static_context::get_collation(const char *uri)
        }
        catch(SednaUserException &e)
        {
-           if(e.get_code() == FORG0009) throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri contains relative URI.");
+           if(e.get_code() == FORG0009) return COLLATION_RESOLVE_ERR; //throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri contains relative URI.");
            throw;
        }
     }
-    ///////////////////////////////////////////////////////////////////////
     
-    CollationHandler *ch = dynamic_context::collation_manager.get_collation_handler(normalized_value);
-    if (!ch)
-        throw XQUERY_EXCEPTION(FOCH0002);
-
-    return ch;
+    /// 4. Get handler from the resolved and normalized value.
+    *handler = dynamic_context::collation_manager.get_collation_handler(normalized_value);
+    if (!*handler) return COLLATION_MISS; // throw XQUERY_EXCEPTION(FOCH0002);
+    return 0;
 }
 
 

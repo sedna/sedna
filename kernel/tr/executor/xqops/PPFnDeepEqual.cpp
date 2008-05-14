@@ -217,7 +217,9 @@ void PPFnDeepEqual::next  (tuple &t)
 				throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arity of the third argument in fn:deep-equal. Argument contains more than one item." );
             
             col = tuple_cell::make_sure_light_atomic(col);
-            handler = cxt->st_cxt->get_collation(col.get_str_mem());
+
+            int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:deep-equal.").c_str()); 
         }
 
 		if (!eos_reached1) child1.op->reopen();

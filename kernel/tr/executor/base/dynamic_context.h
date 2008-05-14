@@ -10,12 +10,26 @@
 #include "common/sedna.h"
 
 #include <vector>
+#include <string>
 #include <list>
 #include <map>
 
 #include "tr/executor/base/SequenceType.h"
 #include "tr/crmutils/str_matcher.h"
 #include "tr/strings/utf8.h"
+
+
+
+/*******************************************************************************
+ * Define error codes for collations resolving.
+ * Since F&O and XQuery specs use different error codes
+ * we need to transorm these error codes in place 
+ * (say in PPOrderBy) 
+ ******************************************************************************/
+
+#define COLLATION_INVALID_URI        ((int) 0x1)
+#define COLLATION_MISS               ((int) 0x2)
+#define COLLATION_RESOLVE_ERR        ((int) 0x4)
 
 
 /*******************************************************************************
@@ -252,9 +266,22 @@ public:
     void set_base_uri(const char* _base_uri_);
     void set_default_collation_uri(const char* _default_collation_uri_);
 
-    /// resolves uri and returns collation handler
-    /// if uri is NULL, returns default collation
-    CollationHandler* get_collation(const char *uri);
+    static inline std::string get_error_description(int err_code)
+    {
+        switch(err_code)
+        {
+            case COLLATION_INVALID_URI : return std::string("Invalid lexical representation of the give collation URI");
+            case COLLATION_MISS        : return std::string("Collation is not statically known");
+            case COLLATION_RESOLVE_ERR : return std::string("Collation URI could not be properly resolved");
+            default: throw USER_EXCEPTION2(SE1003, "Impossible case in dynamic_context::get_error_description()");
+        }
+    }
+        
+    /// 1. Resolves uri and returns collation handler through "handler".
+    /// 2. If "uri" is NULL, returns default collation handler.
+    /// 3. Returns 0 if success, else return one of the collation error 
+    /// codes defined above.
+    int get_collation(const char *uri, /* out */ CollationHandler** handler);
     CollationHandler* get_default_collation() { return default_collation_handler; }
 };
 

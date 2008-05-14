@@ -97,7 +97,9 @@ void PPFnCompare::next(tuple &t)
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:compare(). Argument contains more than one item");
             
             col = tuple_cell::make_sure_light_atomic(col);
-            handler = cxt->st_cxt->get_collation(col.get_str_mem());
+            int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:compare().").c_str());
+
         }
 
         tuple_cell tc1, tc2;
