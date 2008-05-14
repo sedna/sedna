@@ -371,7 +371,10 @@ void PPFnStartsEndsWith::next(tuple &t)
         if(!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item ");
         
         col = tuple_cell::make_sure_light_atomic(col);
-        handler = cxt->st_cxt->get_collation(col.get_str_mem());
+
+        int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+        if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + ".").c_str());
+
     }
     else
         handler = cxt->st_cxt->get_default_collation();
@@ -841,7 +844,9 @@ void PPFnSubsBeforeAfter::next(tuple &t)
         if (!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item");
             
         col = tuple_cell::make_sure_light_atomic(col);
-        handler = cxt->st_cxt->get_collation(col.get_str_mem());
+
+        int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+        if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + ".").c_str());
     }
 
     src_child.op->next(t);
