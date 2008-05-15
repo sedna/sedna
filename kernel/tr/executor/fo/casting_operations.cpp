@@ -152,7 +152,7 @@ inline tuple_cell cast_xs_QName_to_string_type(const tuple_cell &c, xmlscm_type 
     const char *prefix = xs_QName_get_prefix(c.get_str_mem());
     const char *local  = xs_QName_get_local_name (c.get_str_mem());
     char *res = NULL;
-    if (prefix)
+    if (prefix && strcmp(prefix, "") != 0)
     {
         res = se_new char[strlen(prefix) + strlen(local) + 2];
         strcpy(res, prefix);

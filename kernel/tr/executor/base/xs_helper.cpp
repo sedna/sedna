@@ -108,10 +108,14 @@ __int64 c_str2xs_integer(const char *t)
     char* stop = NULL;
     const char *start = NULL;
     const char *end = NULL;
+    int is_overflow = false;
+    
     _strip_c_str(t, &start, &end);
 
-    res = strto__int64(start, &stop, 10);
+    res = strto__int64(start, &stop, 10, &is_overflow);
+    
     if ((end - start == 0) || (stop != end)) throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:integer type");
+    if (is_overflow) throw XQUERY_EXCEPTION2(FOAR0002, "Cannot convert to xs:integer type");
 
     return res;
 }
