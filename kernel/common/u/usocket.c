@@ -515,6 +515,8 @@ int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call
                 sys_call_error("select");
                 return U_SOCKET_ERROR;
             }
+        else
+        	break;
     }
 
     for (i = 0; i < sock_num; i++)
