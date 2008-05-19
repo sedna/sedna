@@ -101,6 +101,7 @@ int SnEnumerateVersionsForCheckpoint(SnEnumerateVersionsParams *params,
 
 int SnGatherSnapshotStats(SnSnapshotStats *stats);
 
+/* both params are optional */ 
 int SnGetSnapshotTimestamps(TIMESTAMP *curSnapshotTs,
 							TIMESTAMP *persSnapshotTs);
 
@@ -119,6 +120,8 @@ int SnGetTransactionTs(TIMESTAMP *timestamp);
 #define SN_LAST_COMMITED_VERSION_TIMESTAMP		(1 + TIMESTAMP_MAX)
 #define SN_WORKING_VERSION_TIMESTAMP			(2 + TIMESTAMP_MAX)
 
+/* anchorTs is optional, either both tsOutBuf && idOutBuf non-NULL
+or both NULL and *szOut==0 */ 
 int SnExpandDfvHeader(const TIMESTAMP tsInBuf[],
 					  size_t szIn,
 					  TIMESTAMP tsOutBuf[],

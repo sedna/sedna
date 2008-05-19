@@ -385,8 +385,10 @@ int OnBeforeDiscardSnapshot(TIMESTAMP snapshotTs, int *bDenyDiscarding)
 	return 1;
 }
 
+/* mode==1 : version is just created
+   mode==2 : versions is flushing */ 
 static
-int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr)
+int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
 {
 	vmm_sm_blk_hdr *header = NULL;
 	TIMESTAMP oldVerTs = INVALID_TIMESTAMP;
@@ -394,14 +396,24 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr)
 	int success=0, bufferId=-1;
 
 	try
-	{			
-		if (FindBlockInBuffers(oldVerXptr, &bufferId) &&
-			LocateBlockHeader(bufferId, &header))
+	{
+		switch(mode)
 		{
-			oldVerTs = header->versionsHeader.creatorTs[0];
-			header->lsn = ll_add_pers_snapshot_block_info(&versionEntry, oldVerTs);
+		case 1:
+			if (FindBlockInBuffers(oldVerXptr, &bufferId) &&
+			LocateBlockHeader(bufferId, &header))
+			{
+				oldVerTs = header->versionsHeader.creatorTs[0];
+				header->lsn = ll_add_pers_snapshot_block_info(&versionEntry, oldVerTs);			
+			}
+			success = 1;
+			break;
+		case 2:
 			ll_log_recordblock(WuExternaliseXptr(oldVerXptr), (void *)header, PAGE_SIZE);
 			success=1;
+			break;
+		default:
+			WuSetLastErrorMacro(WUERR_BAD_PARAMS);
 		}
 	}
 	WU_CATCH_EXCEPTIONS()
