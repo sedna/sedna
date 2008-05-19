@@ -557,14 +557,17 @@ void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const t
 		+ std::string(db_name) + std::string("_files/dtsearch/");
 	dir = opendir(log_path.c_str());
 	if (dir != NULL)
+	{
 		while (NULL != (dent = readdir(dir)))
 		{
 			int l = strlen(dent->d_name);
 			if (l > 4 && !strcmp((char*)dent->d_name + l - 4, ".log"))
 					recover_db_file(dent->d_name, undo_list, redo_list, checkpoint_lsn);
 		}
-	if (0 != closedir(dir))
+	
+		if (0 != closedir(dir))
 			throw USER_EXCEPTION(SE4043); //FIXME: exception code
+	}
 	
 #endif
 	//1. create list of all files to process
