@@ -1194,7 +1194,7 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,pers_sse
 		{
 			switch (type)
 			{
-			case ft_xml:case ft_xml_ne:case ft_xml_hl: tbuf<<opentag<<"?xml version=\"1.0\" standalone=\"yes\""; break;
+			case ft_xml:case ft_xml_ne:case ft_xml_hl: tbuf<<opentag<<"?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\""; break;
 			case ft_string_value:break;
 			case ft_customized_value: ft_delimited_value:tbuf<<" ";break;
 			}	
