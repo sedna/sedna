@@ -31,6 +31,14 @@ extern "C"
 
 #endif
 
+// defines for fd_set
+#define U_SSET 					fd_set
+#define U_SSET_SIZE				FD_SETSIZE
+
+#define U_SSET_SET 				FD_SET
+#define U_SSET_ISSET 			FD_ISSET
+#define U_SSET_CLR 				FD_CLR
+#define U_SSET_ZERO 			FD_ZERO
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
@@ -96,7 +104,7 @@ extern "C"
 		(s is changed and contains result of FD_ISSET)
    returns 0 if timeout
    returns U_SOCKET_ERROR if failed */
-	int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call_error_fun fun);
+	int uselect_read_arr(U_SSET *s, int maxfd, struct timeval *timeout, sys_call_error_fun fun);
 
 /* retrieves the last socket error description */
     const char *usocket_error_translator();

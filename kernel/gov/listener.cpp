@@ -18,12 +18,43 @@ using namespace std;
 
 static USOCKET sockfd;
 
+static clClient clClients[U_SSET_SIZE];
+static U_SSET allset, rset; 	
+static int maxfd, maxi = -1, nres;
+
+static int clRegisterClient(USOCKET sock, clProcess_fun fun)
+{
+	for (int i = 0; i < U_SSET_SIZE; i++)
+		if (clClients[i].sock == U_INVALID_SOCKET)
+		{
+			clClients[i].sock = sock;
+			clClients[i].clProcess = fun;
+
+			U_SSET_SET(sock, &allset);
+
+			if (maxfd < sock) maxfd = sock;
+			if (maxi < i) maxi = i;
+       			
+			return i;
+		}
+
+	return -1; // too many clients
+}
+
+static void clDiscardClient(int i)
+{
+	U_ASSERT(i >= 0 && i <= maxi);
+
+	U_SSET_CLR(clClients[i].sock, &allset);
+	clClients[i].sock = U_INVALID_SOCKET;
+	clClients[i].clProcess = NULL;	
+}
+
 int client_listener(gov_config_struct* cfg, bool background_off_from_background_on)
 {   
    msg_struct msg;
 
    USOCKET socknew, hbsock = U_INVALID_SOCKET;
-   USOCKET sockarr[2]; // for uselect
 
    sockfd = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
    if (sockfd == U_INVALID_SOCKET) throw SYSTEM_EXCEPTION ("Can't init socket");
@@ -43,7 +74,6 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
      fflush(res_os);
    }
 
-
    ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
    USemaphore started_sem;
    if (0 == USemaphoreOpen(&started_sem, CHARISMA_GOVERNOR_IS_READY, __sys_call_error))
@@ -53,6 +83,15 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
    }
    ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
 
+   U_SSET_ZERO(&allset);
+   U_SSET_SET(sockfd, &allset);
+   maxfd = sockfd;
+
+   for (int i = 0; i < U_SSET_SIZE; i++)
+   {
+   		clClients[i].sock = U_INVALID_SOCKET;
+   		clClients[i].clProcess = NULL;
+   }   			
 
    int stop_serv = 0;
    int stop_db = 0;
@@ -60,14 +99,15 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
    int socket_optval = 1, socket_optsize = sizeof(int);
    for(;;)
    {
-       sockarr[0] = sockfd;
-       sockarr[1] = (hbsock == U_INVALID_SOCKET) ? 0 : hbsock;
+       rset = allset;
 
-       res = uselect_read_arr(sockarr, (hbsock == U_INVALID_SOCKET) ? 1 : 2, NULL, __sys_call_error);
+       res = uselect_read_arr(&rset, maxfd, NULL, __sys_call_error);
 	   if (res == U_SOCKET_ERROR) 
 	   		throw USER_EXCEPTION2(SE3007,usocket_error_translator());
        
-       if (sockarr[0]) //accept a call from a client
+       nres = res;
+
+       if (U_SSET_ISSET(sockfd, &rset)) //accept a call from a client
        {
 	       socknew = uaccept(sockfd, __sys_call_error);
 	       if (socknew == U_INVALID_SOCKET)
@@ -170,14 +210,16 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
 
                	case HOTBACKUP_START:
                	{
-          			if (hbsock != U_INVALID_SOCKET)
-          			{
-		    	   		uclose_socket(socknew, __sys_call_error);
-		    	   		continue;
-		    	   	}
-          				
-          			hbsock = socknew;
-        			if (uNotInheritDescriptor(UHANDLE(hbsock), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
+        			if (clRegisterClient(socknew, hbProcessMessage) == -1)
+			       	{
+          				ushutdown_close_socket(socknew, __sys_call_error);
+          				continue;
+       	   			}
+
+        			if (uNotInheritDescriptor(UHANDLE(socknew), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
+          			
+          			hbNewClient(socknew);
+
           			break;
           		}
 
@@ -190,46 +232,25 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
              		break;
           		}
            }
+
+           if (--nres <= 0) continue;
        }
 
-       if (sockarr[1]) // accept hb request
+       for (int i = 0; i <= maxi; i++)
        {
-	       U_ASSERT(hbsock != U_INVALID_SOCKET);
+       		if (clClients[i].sock == U_INVALID_SOCKET) continue;
 
-	       // process msg from hbp
-    	   if (sp_recv_msg(hbsock, &msg) != 0 || msg.instruction == HB_ERR)
-    	   {
-    	   		hbProcessErrorHbp();  
+       		if (U_SSET_ISSET(clClients[i].sock, &rset))
+       		{
+       			if (clClients[i].clProcess(clClients[i].sock) != 0)
+					clDiscardClient(i);
 
-	    	   	uclose_socket(hbsock, __sys_call_error);
-       	   		hbsock = U_INVALID_SOCKET;
-
-    	   		continue;
-    	   }	    	   
+       			if (--nres <= 0)
+       				break;
+       		}
+       }
        		
-       	   // process message (res != 0 means we must close connection due to error or normal request)
-       	   res = hbProcessMessage(&msg);
-
-           // send answer to hbp
-           if (sp_send_msg(hbsock, &msg) != 0)
-    	   {
-    	   		hbProcessErrorHbp();  
-    	   		
-    	   		uclose_socket(hbsock, __sys_call_error);
-    	   		hbsock = U_INVALID_SOCKET;
-    	   		
-    	   		continue;
-    	   }	    	   
-
-    	   if (res)
-           {
-           		ushutdown_close_socket(hbsock, __sys_call_error);
-           		hbsock = U_INVALID_SOCKET;
-           }
-       }        
    }//end of for
-
-
 
    if (uclose_socket(sockfd, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't close listening socket");
 

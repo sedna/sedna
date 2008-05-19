@@ -116,6 +116,8 @@ logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
 // we use this field to determine if the database was stopped correctly
 void llmgr_core::writeIsStoppedCorrectly(bool is_stopped_correctly)
 {
+  int res;
+
   logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   logical_log_file_head file_head =
@@ -123,17 +125,24 @@ void llmgr_core::writeIsStoppedCorrectly(bool is_stopped_correctly)
 
   file_head.is_stopped_successfully = is_stopped_correctly;
 
-  //get tail log dsc;
-  //set pointer to the begin of last file 
-  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
-  set_file_pointer(lsn);
+  res = uSetFilePointer(
+                    get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
+                    0,
+                    NULL,
+                    U_FILE_BEGIN,
+                    __sys_call_error
+                  );
 
-  int res;
+  if (res == 0)
+  {
+     throw SYSTEM_EXCEPTION("Can't set file pointer for logical log file");
+  }
+
   int written;
 
   RECOVERY_CRASH;
 
-  res = uWriteFile(ll_curr_file_dsc,
+  res = uWriteFile(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
 //                   buf,
                    &file_head,
                    sizeof(logical_log_file_head),
@@ -155,13 +164,25 @@ void llmgr_core::flush_file_head(bool sync)
   logical_log_file_head file_head =
               read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
-  //get tail log dsc;
-  //set pointer to the begin of last file 
-  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
-  set_file_pointer(lsn);
 
   int res;
   int written;
+
+  res = uSetFilePointer(
+                    get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
+                    0,
+                    NULL,
+                    U_FILE_BEGIN,
+                    __sys_call_error
+                  );
+
+  if (res == 0)
+  {
+     throw SYSTEM_EXCEPTION("Can't set file pointer for logical log file");
+  }
+  
+  //get tail log dsc;
+  //set pointer to the begin of last file 
 
   file_head.last_lsn = mem_head->last_lsn;
   file_head.next_lsn = mem_head->next_lsn;
@@ -172,7 +193,7 @@ void llmgr_core::flush_file_head(bool sync)
 
   RECOVERY_CRASH;
 
-  res = uWriteFile(ll_curr_file_dsc,
+  res = uWriteFile(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
 //                   buf,
                    &file_head,
                    sizeof(logical_log_file_head),
@@ -226,12 +247,25 @@ void llmgr_core::flush_file_head_lsn(LONG_LSN llsn, LONG_LSN nlsn, LONG_LSN lcls
 
   //get tail log dsc;
   //set pointer to the begin of last file 
-  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
-  set_file_pointer(lsn);
+//  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
+//  set_file_pointer(lsn);
 
   int res;
   int written;
 //  LONG_LSN next_lsn = commit_lsn + COMMIT_LOG_RECORD_LEN; 
+
+  res = uSetFilePointer(
+                    get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
+                    0,
+                    NULL,
+                    U_FILE_BEGIN,
+                    __sys_call_error
+                  );
+
+  if (res == 0)
+  {
+     throw SYSTEM_EXCEPTION("Can't set file pointer for logical log file");
+  }
 
   file_head.last_lsn = llsn;
   file_head.next_lsn = nlsn;
@@ -242,7 +276,7 @@ void llmgr_core::flush_file_head_lsn(LONG_LSN llsn, LONG_LSN nlsn, LONG_LSN lcls
 
   RECOVERY_CRASH;
 
-  res = uWriteFile(ll_curr_file_dsc,
+  res = uWriteFile(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
 //                   buf,
                    &file_head,
                    sizeof(logical_log_file_head),
@@ -398,6 +432,8 @@ TIMESTAMP llmgr_core::returnTimestampOfPersSnapshot(bool sync)
 
 void llmgr_core::hbWriteFileHeader(bool hbFlag)
 {
+  int res;
+
   logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   logical_log_file_head file_head =
@@ -405,17 +441,24 @@ void llmgr_core::hbWriteFileHeader(bool hbFlag)
 
   file_head.is_hot_backup = hbFlag;
 
-  //get tail log dsc;
-  //set pointer to the begin of last file 
-  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
-  set_file_pointer(lsn);
+  res = uSetFilePointer(
+                    get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
+                    0,
+                    NULL,
+                    U_FILE_BEGIN,
+                    __sys_call_error
+                  );
 
-  int res;
+  if (res == 0)
+  {
+     throw SYSTEM_EXCEPTION("Can't set file pointer for logical log file");
+  }
+
   int written;
 
   RECOVERY_CRASH;
 
-  res = uWriteFile(ll_curr_file_dsc,
+  res = uWriteFile(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
                    &file_head,
                    sizeof(logical_log_file_head),
                    &written,
@@ -1052,17 +1095,22 @@ void llmgr_core::print_llog()
 
 	while (lsn <= end_lsn)
 	{
-		set_file_pointer(lsn);
-		
-		if (uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
-			throw SYSTEM_EXCEPTION("Cannot get file size!");
+	    int rmndr;
 
-		int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+	    do
+    	{
+    		set_file_pointer(lsn);
+	   		if(uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+    	   		throw SYSTEM_EXCEPTION("Can't get file size");
 
-		if (rmndr == file_size)
-			lsn = (lsn / LOG_FILE_PORTION_SIZE + 1) * LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
-		else if (rmndr == 0)
-			lsn += sizeof(logical_log_file_head);
+			rmndr = lsn % LOG_FILE_PORTION_SIZE;
+	
+			if (rmndr == file_size)//here we must reinit lsn
+    	  		lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+	    	else if (rmndr == 0)
+    	  		lsn += sizeof(logical_log_file_head);
+
+	    } while (rmndr == 0 || rmndr == file_size);
 
 		rec = get_record_from_disk(lsn);
 		body_beg = rec + sizeof(logical_log_head);

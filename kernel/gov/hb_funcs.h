@@ -7,13 +7,13 @@
 #define _HB_FUNCS_H
 
 #include "common/sp.h"
+#include "common/u/usocket.h"
+
+// init new hot-backup connection
+int hbNewClient(USOCKET sock);
 
 // processes message from hbp
-// returns: 0 - all ok, continue; not 0 - send notification to hbp and close connection (HB_ERR or HB_END)
-int hbProcessMessage(msg_struct *msg);
-
-// process hbp specific error (connection lost or error in hbp)
-// do: send HB_ERROR to sm to end hot-backup process, shutdown and close corresponding socket
-void hbProcessErrorHbp();  
+// returns: 0 - all ok, continue; not 0 - client detached
+int hbProcessMessage(USOCKET sock);
 
 #endif

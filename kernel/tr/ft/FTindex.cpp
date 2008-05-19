@@ -17,6 +17,8 @@
 #include <dirent.h>
 #endif
 
+static bool isHB = false; // true, if hot-backup recovery is in process
+
 void ftlog_file::write_xptr_sequence(xptr_sequence* seq)
 {
 	int count = seq->size();
@@ -88,7 +90,7 @@ SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_, bool no_log) : ft_idx(_ft_
 
 	this->SuppressMessagePump();
 	//Create file with trid if already exists abort
-	if (no_log)
+	if (no_log || isHB)
 		log_file = NULL;
 	else
 		log_file = get_log_file(ft_idx->index_title);
@@ -522,6 +524,7 @@ void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const t
 {
 	if (is_start) // start of recovery process from hot-backup copy - need to rebuild all ft-indexes from ph
 	{
+		isHB = true;
 		rebuild_all_ftph();
 		return;
 	}

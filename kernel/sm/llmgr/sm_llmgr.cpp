@@ -63,16 +63,22 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
   do
   {
-    set_file_pointer(lsn);
-    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
-       throw SYSTEM_EXCEPTION("Can't get file size");
+    int rmndr;
 
-	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+    do
+    {
+    	set_file_pointer(lsn);
+   		if(uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       		throw SYSTEM_EXCEPTION("Can't get file size");
+
+		rmndr = lsn % LOG_FILE_PORTION_SIZE;
 	
-	if (rmndr == file_size)//here we must reinit lsn
-      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
-    else if (rmndr == 0)
-      lsn += sizeof(logical_log_file_head);
+		if (rmndr == file_size)//here we must reinit lsn
+      		lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+    	else if (rmndr == 0)
+      		lsn += sizeof(logical_log_file_head);
+
+    } while (rmndr == 0 || rmndr == file_size);
 
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
@@ -121,16 +127,22 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
   while (lsn != NULL_LSN)
   {
-    set_file_pointer(lsn);
-    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
-       throw SYSTEM_EXCEPTION("Can't get file size");
+    int rmndr;
 
-	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+    do
+    {
+    	set_file_pointer(lsn);
+   		if(uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       		throw SYSTEM_EXCEPTION("Can't get file size");
+
+		rmndr = lsn % LOG_FILE_PORTION_SIZE;
 	
-	if (rmndr == file_size)//here we must reinit lsn
-      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
-    else if (rmndr == 0)
-      lsn += sizeof(logical_log_file_head);
+		if (rmndr == file_size)//here we must reinit lsn
+      		lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+    	else if (rmndr == 0)
+      		lsn += sizeof(logical_log_file_head);
+
+    } while (rmndr == 0 || rmndr == file_size);
 
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);

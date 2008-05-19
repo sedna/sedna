@@ -1966,7 +1966,7 @@ void llmgr_core::ll_log_flush_lsn(LONG_LSN lsn, bool sync)
 //function is used for onlne rollback
 
 
-void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool), bool sync)
+void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool, bool), bool sync)
 {//before this call all log records are completed
   RECOVERY_CRASH;
 
@@ -2011,8 +2011,8 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 
      exec_micro_op_func(rec_beg + sizeof(logical_log_head),
                         ((logical_log_head*)rec_beg)->body_len,
-
-						true);
+                        true,
+                        mem_head->hotbackup_needed);
      if (log_head->prev_trn_offs == NULL_OFFS)
         break;//all operations rolled back
 
@@ -2031,11 +2031,11 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 //this function is run from the special recovery process
 #ifdef SE_ENABLE_FTSEARCH
 void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&, bool is_start),
-					   					   void (*exec_micro_op) (const char*, int, bool),
+					   					   void (*exec_micro_op) (const char*, int, bool, bool),
                                            const LONG_LSN& last_cp_lsn,
                                            bool sync)
 #else
-void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
+void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool, bool),
                                            const LONG_LSN& last_cp_lsn,
                                            bool sync)
 #endif
@@ -2112,7 +2112,8 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   redo_commit_trns(redo_list, 
                    start_redo_lsn,
                    last_lsn,
-                   exec_micro_op);
+                   exec_micro_op,
+                   mem_head->hotbackup_needed);
   
   RECOVERY_CRASH;
  
@@ -2125,7 +2126,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   ll_log_unlock(sync);
 }
 
-void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*_exec_micro_op_) (const char*, int, bool))
+void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*_exec_micro_op_) (const char*, int, bool, bool), bool isHB)
 {
   if (redo_list.empty()) return;
 
@@ -2145,16 +2146,22 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
 
   do
   {
-    set_file_pointer(lsn);
-    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
-       throw SYSTEM_EXCEPTION("Can't get file size");
+    int rmndr;
 
-	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+    do
+    {
+    	set_file_pointer(lsn);
+   		if(uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       		throw SYSTEM_EXCEPTION("Can't get file size");
+
+		rmndr = lsn % LOG_FILE_PORTION_SIZE;
 	
-	if (rmndr == file_size)//here we must reinit lsn
-      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
-    else if (rmndr == 0)
-      lsn += sizeof(logical_log_file_head);
+		if (rmndr == file_size)//here we must reinit lsn
+      		lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+    	else if (rmndr == 0)
+      		lsn += sizeof(logical_log_file_head);
+
+    } while (rmndr == 0 || rmndr == file_size);
 
     rec = get_record_from_disk(lsn);
     body_len = ((logical_log_head*)rec)->body_len;
@@ -2184,7 +2191,7 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
 
 
 #ifdef RECOVERY_EXEC_MICRO_OP
-         _exec_micro_op_(rec + sizeof(logical_log_head), body_len, false);
+         _exec_micro_op_(rec + sizeof(logical_log_head), body_len, false, isHB);
 #else 
         ;
 #endif
@@ -2215,16 +2222,22 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
   while (lsn <= end_lsn)
   {
     //obtain lsn of next record (it must be not contiguous if next record is located in next log file)
-    set_file_pointer(lsn);
-    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
-       throw SYSTEM_EXCEPTION("Can't get file size");
+    int rmndr;
 
-	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+    do
+    {
+    	set_file_pointer(lsn);
+   		if(uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       		throw SYSTEM_EXCEPTION("Can't get file size");
+
+		rmndr = lsn % LOG_FILE_PORTION_SIZE;
 	
-	if (rmndr == file_size)//here we must reinit lsn
-      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
-    else if (rmndr == 0)
-      lsn += sizeof(logical_log_file_head);
+		if (rmndr == file_size)//here we must reinit lsn
+      		lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+    	else if (rmndr == 0)
+      		lsn += sizeof(logical_log_file_head);
+
+    } while (rmndr == 0 || rmndr == file_size);
  
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
@@ -2372,24 +2385,35 @@ void llmgr_core::ll_truncate_log(bool sync)
   int valid_number = mem_head->ll_files_arr[num_files_to_truncate];
   
   //set file pointer to header
-  LONG_LSN lsn = ((mem_head->next_lsn / LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE);
+//  LONG_LSN lsn = ((mem_head->next_lsn / LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE);
 
-  set_file_pointer(lsn);
+//  set_file_pointer(lsn);
+  int res;
+  int written;
 
-  logical_log_file_head file_head = read_log_file_header(ll_curr_file_dsc);
-  set_file_pointer(lsn);//pos to the begin of file
+  logical_log_file_head file_head = read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
+//  set_file_pointer(lsn);//pos to the begin of file
   file_head.base_addr = new_base_addr;
   file_head.valid_number = valid_number;
   file_head.next_lsn = mem_head->next_lsn;
 
-
-  int res;
-  int written;
-
   RECOVERY_CRASH;
 
+  res = uSetFilePointer(
+                    get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
+                    0,
+                    NULL,
+                    U_FILE_BEGIN,
+                    __sys_call_error
+                  );
+
+  if (res == 0)
+  {
+     throw SYSTEM_EXCEPTION("Can't set file pointer for logical log file");
+  }
+
   //write file header
-  res = uWriteFile(ll_curr_file_dsc,
+  res = uWriteFile(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]),
                    &file_head,
                    sizeof(logical_log_file_head),
                    &written,
