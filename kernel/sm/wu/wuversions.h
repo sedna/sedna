@@ -39,7 +39,7 @@ struct VeSetup
 	int (*locateVersionsHeader) (int bufferId, VersionsHeader **header);
 
 	/* Callbacks */ 
-	int (*onPersVersionRelocating) (LXPTR lxptr, XPTR oldVerXptr);
+	int (*onPersVersionRelocating) (LXPTR lxptr, XPTR oldVerXptr, int mode);
 };
 
 int VeInitialize();

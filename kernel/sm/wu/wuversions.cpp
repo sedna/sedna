@@ -185,10 +185,10 @@ static int ImpRevokeExclusiveAccessToBuffer(int bufferId)
 	return setup.revokeExclusiveAccessToBuffer(bufferId);
 }
 
-static int ImpOnPersVersionRelocating(LXPTR lxptr, XPTR xptr)
+static int ImpOnPersVersionRelocating(LXPTR lxptr, XPTR xptr, int event)
 {
 	assert (setup.onPersVersionRelocating);
-	return setup.onPersVersionRelocating(lxptr, xptr);
+	return setup.onPersVersionRelocating(lxptr, xptr, event);
 }
 
 /* utility functions */ 
@@ -380,9 +380,31 @@ int LookupFlushingDependency(XPTR trigger, XPTR *target)
 	return 1;
 }
 
+static
+int IsPersSnapshotVersion(VersionsHeader *hdr, int *bIsPers)
+{
+	int success = 0;
+	TIMESTAMP persSnapshotTs = INVALID_TIMESTAMP;
+	TIMESTAMP tss[VE_VERSIONS_COUNT + 2];
+	int ids[VE_VERSIONS_COUNT + 2];
+	size_t tssNum = VE_VERSIONS_COUNT + 2;
+	int i = 0;
+
+	assert(hdr && bIsPers);
+	*bIsPers = 0;
+	if (ImpGetSnapshotTimestamps(NULL, &persSnapshotTs) &&
+		ImpExpandDfvHeader(hdr->creatorTs, VE_VERSIONS_COUNT, tss, ids, &tssNum, NULL))
+	{
+		i = 0; while (i<(int)tssNum && tss[i]!=persSnapshotTs) ++i;
+		*bIsPers = (ids[i]==0);
+		success = 1;
+	}
+	return success;
+}
+
 static int OnFlushBuffer(XPTR xptr)
 {
-	int success = 0, bufferId=-1;
+	int success = 0, bufferId=-1, isPers = 0;
 	XPTR target = 0;
 	VersionsHeader *header = NULL;
 
@@ -403,6 +425,21 @@ static int OnFlushBuffer(XPTR xptr)
 	else
 	{
 		success = UpdateFlushingDependency(xptr, 0) && ImpFlushBuffer(bufferId);
+	}
+	if (success)
+	{
+		success = 0;
+		if (ImpFindBlockInBuffers(xptr, &bufferId) &&
+			ImpLocateHeader(bufferId, &header) &&
+			IsPersSnapshotVersion(header, &isPers))
+		{
+			if (isPers)
+			{
+				/* call AK function */ 
+				success = ImpOnPersVersionRelocating(header->xptr[0], xptr, 2);
+			}
+			success = 1;
+		}
 	}
 	return success;
 }
@@ -619,7 +656,7 @@ int OnCreateVersion(LXPTR lxptr,
 	if (isOldVerPers)
 	{
 		success = UpdateFlushingDependency(lxptr, oldVerXptr) && 
-				  ImpOnPersVersionRelocating(lxptr, oldVerXptr);
+				  ImpOnPersVersionRelocating(lxptr, oldVerXptr, 1);
 	}
 	else success = 1;
 
