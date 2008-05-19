@@ -68,7 +68,7 @@ void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 }
 
 
-void exec_micro_op(const char* rec, int len, bool isUNDO)
+void exec_micro_op(const char* rec, int len, bool isUNDO, bool isHB)
 {
 try{
   if (len < 1 )
@@ -626,7 +626,7 @@ try{
                             doc_name,
                             true,
                             ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
-							true);
+							(isHB) ? false: true);
            else throw SYSTEM_EXCEPTION("Can't create index for document");
         } 
         else
@@ -643,7 +643,7 @@ try{
                             doc_name,
                             false,
                             ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
-							true);
+							(isHB) ? false: true);
            else throw SYSTEM_EXCEPTION("Can't create index for collection");
 
         }
@@ -652,7 +652,7 @@ try{
      {//delete index
 //          d_printf2("ind_name=%s\n", ind_name);
          ;
-          ft_index_cell::delete_index (ind_name, true);
+          ft_index_cell::delete_index (ind_name, (isHB) ? false: true);
      }
 //     d_printf1("rollback index operation end\n");
 

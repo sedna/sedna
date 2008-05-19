@@ -461,53 +461,32 @@ int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun)
 }
 
 /* returns number of sockets ready to recv if there is data pending in network connection 
-		(s is changed and contains result of FD_ISSET)
+		(s is changed and contains result)
    returns 0 if timeout
    returns U_SOCKET_ERROR if failed */
-int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call_error_fun fun)
+int uselect_read_arr(U_SSET *s, int maxfd, struct timeval *timeout, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    fd_set socks;
     int res = 0, i;
 
-	if (s == NULL) sock_num = 0;
+	U_ASSERT(s != NULL);
 
-    FD_ZERO(&socks);
-    
-    for (i = 0; i < sock_num; i++)
-    	FD_SET(s[i], &socks);
-
-    res = select(1, &socks, (fd_set *) NULL, (fd_set *) NULL, timeout);
+    res = select(1, s, (fd_set *) NULL, (fd_set *) NULL, timeout);
     if (res == U_SOCKET_ERROR) sys_call_error("select");
 
-    for (i = 0; i < sock_num; i++)
-    	s[i] = FD_ISSET(s[i], &socks);
-    
     return res;
 #else
-    fd_set socks;
-    int res = 0, i;
-    USOCKET maxsd = U_INVALID_SOCKET;
+	int res = 0, i;
 
-	if (s == NULL) sock_num = 0;
-
-    FD_ZERO(&socks);
-    for (i = 0; i < sock_num; i++)
-    {
-        if (s[i] > maxsd) maxsd = s[i];
-    	FD_SET(s[i], &socks);
-    }
+	U_ASSERT(s != NULL);
 
     while (1)
     {
-        res = select(maxsd + 1, &socks, (fd_set *) NULL, (fd_set *) NULL, timeout);
+        res = select(maxfd + 1, s, (fd_set *) NULL, (fd_set *) NULL, timeout);
 
         if (res == U_SOCKET_ERROR)
             if (errno == EINTR)
 			{
-			    FD_ZERO(&socks);
-   	    		for (i = 0; i < sock_num; i++)
-	    			FD_SET(s[i], &socks);
                 continue;
             }
             else
@@ -516,12 +495,9 @@ int uselect_read_arr(USOCKET *s, int sock_num, struct timeval *timeout, sys_call
                 return U_SOCKET_ERROR;
             }
         else
-        	break;
+        	return res;
     }
 
-    for (i = 0; i < sock_num; i++)
-    	s[i] = FD_ISSET(s[i], &socks);
-    
     return res;
 #endif
 }

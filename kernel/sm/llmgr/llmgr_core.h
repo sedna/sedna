@@ -298,14 +298,14 @@ public:
   void ll_truncate_log(bool sync);
 
   void commit_trn(transaction_id& trid, bool sync);
-  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
+  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool, bool), bool sync);  
 #ifdef SE_ENABLE_FTSEARCH
 void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&, bool is_start),
-                               void (*exec_micro_op) (const char*, int, bool),
+                               void (*exec_micro_op) (const char*, int, bool, bool),
                                const LONG_LSN& last_cp_lsn,
                                bool sync);
 #else
-void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
+void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool, bool),
 							   const LONG_LSN& last_cp_lsn, 
 							   bool sync);
 #endif
@@ -344,7 +344,7 @@ protected:
   const char* get_record_from_disk(LONG_LSN& lsn);
   int get_record_length(const void* rec);
   const char* get_record_from_shared_memory(int end_offs, int len);
-  void redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
+  void redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool, bool), bool isHB);
   void get_undo_redo_trns_list(LONG_LSN &start_lsn, 
   							   LONG_LSN &end_lsn /*out*/,
   							   trns_redo_analysis_list& redo_list /*out*/); 

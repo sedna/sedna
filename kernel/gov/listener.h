@@ -9,6 +9,14 @@
 #include "common/u/usocket.h"
 #include "common/config.h"
 
+typedef int (*clProcess_fun)(USOCKET sock);
+
+struct clClient 
+{
+	USOCKET sock;
+	clProcess_fun clProcess;       // process function (called on receive)
+};
+
 int sess_registering(USOCKET s, char* msg_buf);
 int sm_registering(USOCKET s, char* msg_buf);
 int client_listener(gov_config_struct* cfg, bool is_background_mode);
