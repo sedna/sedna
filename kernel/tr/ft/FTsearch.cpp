@@ -211,6 +211,12 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
     dest.filename = fileInfo->filename;
 	dest.typeId = it_XML;
 	CHECKP(node);
+	if (GETTYPE(GETSCHEMENODEX(node)) != document && GETTYPE(GETSCHEMENODEX(node)) != virtual_root)
+	{
+		in_buf.append("<");
+		in_buf.append("?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\"");
+		in_buf.append(">");
+	}
 	print_node_to_buffer(node,in_buf,cm,custom_tree);
 	pos = 0;
 	dest.size = in_buf.get_size();
@@ -272,6 +278,7 @@ int SednaDataSource::getNextDoc(dtsInputStream& dest)
 	}
     xptr node=tc.get_node();
 	crmstringostream st;
+	//FIXME: print xml verision & enc here??
 	print_node_indent(node, st,xml);
 	st<<'\x0';
 	char* f=st.str();
