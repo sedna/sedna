@@ -61,12 +61,14 @@ void str_buf_base::move_to_mem_buf()
 }
 
 //pre: text is not in estr buf
+//post: m_ttype == text_estr
 void str_buf_base::move_to_estr()
 {
 	U_ASSERT(!mem_only());
 	if (m_flags & f_text_in_buf)
 	{
 		m_ptr = m_estr.append_mstr(m_buf);
+		m_ttype = text_estr;
 		m_flags |= f_text_in_estr_buf;
 		return;
 	}
@@ -213,7 +215,6 @@ void str_buf_base::append(const char *str, int add_len)
 			move_to_estr();
 		m_estr.append_mstr(str_copy, add_len);
 		m_len = new_len;
-		m_ttype = text_estr;
 		m_flags = f_text_in_estr_buf; //clear f_text_in_buf
 		free(str_copy); //FIXME: check that no exceptions can be thrown above
 	}
