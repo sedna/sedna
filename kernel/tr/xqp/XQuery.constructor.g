@@ -183,7 +183,7 @@ elementContent!:
 	  val = "";
 	>>
 	| per:predefinedEntityRef   << val += #per->getText();>>
-//	| cdataSection           
+	| cs:cdataSection           << val += #cs->getText();>>
 	| cr:charRef <<val += #cr->getText();>>
 //	| xmlComment
 //	| xmlPI
@@ -277,14 +277,29 @@ dirCommentConstructor!:
 
 //enclosedExpr rule is in the XQuery.common.g file
 
-/*
+
 cdataSection!:
-	OPENCDATA (CHAR_SEQ_CDATA | RBRACK | RBRANGL)* CLOSECDATA
+    << std::string val = ""; >>
+	
+	OPENCDATA   
+	
+	( cs:CHAR_SEQ_CDATA 
+        << if ((cs->getText())[0] == '\"') val += "\\\"";
+	    else if ((cs->getText())[0] == '\\') val += "\\\\";
+	    else val += (cs->getText())[0]; >>
+	| cs1:CHAR_SEQ_CDATA_C 
+	    << if ((cs1->getText())[0] == '\"') val += "\\\"";
+        else if ((cs1->getText())[0] == '\\') val += "\\\\";
+	    else val += (cs1->getText())[0]; >>
+	)*
+
+	CHAR_SEQ_CDATA_C1
+	<<  val.erase(val.size()-2);
+	    #0 = #[val, AST_CHAR_SEQ];  >>
+
 ;
-//cdata does not supported in the data internal representation
 
 
-*/
 
 attributeList!:
 	<<ASTBase *atts=NULL;bool isDef=true;>>
