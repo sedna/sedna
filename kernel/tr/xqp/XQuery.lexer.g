@@ -524,7 +524,7 @@ virtual void errovf(){
 #token OPENCDATA "\<\!\[CDATA\["
 <<
   mode (XML_CDATA_SECTION);
-  Lexical_Analizer_State.push(XML_CDATA_SECTION);
+  Lexical_Analizer_State.push(XML_ELEMENT_CONTENT);
 >>
 
 #token XMLCOMMENTOPEN  "\<\-\-" 
@@ -547,27 +547,74 @@ virtual void errovf(){
 
 #lexclass XML_CDATA_SECTION
 
-#token CLOSECDATA "\]\]\>"
+
+#token CHAR_SEQ_CDATA "\]"
 <<
   if (!Lexical_Analizer_State.empty())
   {
-     mode (Lexical_Analizer_State.top());
-     Lexical_Analizer_State.pop();
+    mode (XML_CDATA_SECTION1);
+    Lexical_Analizer_State.push(XML_CDATA_SECTION);
   }
 >>
-#token RBRACK "\]"
-#token RBRANGL "\>" 
-
-#token CHAR_SEQ_CDATA "(~[\]\>])*"
+#token CHAR_SEQ_CDATA_C "~[]"
 <<
-  int num = strlen(lextext());
-  for (int i=0;i<num; i++)
-      if ((lextext())[i] == '\n') 
+     int num = strlen(lextext());
+     for (int i=0;i<num; i++)
+     if ((lextext())[i] == '\n') 
          newline();
 >>
 
 
-/******************* CLOSE TAG TOKENS *************************/
+#lexclass XML_CDATA_SECTION1
+
+
+#token CHAR_SEQ_CDATA "\]"
+<<
+  if (!Lexical_Analizer_State.empty())
+  {
+    mode (XML_CDATA_SECTION2);
+    Lexical_Analizer_State.push(XML_CDATA_SECTION1);
+  }
+>>
+#token CHAR_SEQ_CDATA_C "~[]"
+<<
+     int num = strlen(lextext());
+     for (int i=0;i<num; i++)
+     if ((lextext())[i] == '\n') 
+         newline();
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();  
+>>
+
+#lexclass XML_CDATA_SECTION2
+
+
+#token CHAR_SEQ_CDATA_C1 ">"
+<<
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();  
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();
+>>
+#token CHAR_SEQ_CDATA "\]"
+
+#token CHAR_SEQ_CDATA_C "~[]"
+<<
+     int num = strlen(lextext());
+     for (int i=0;i<num; i++)
+     if ((lextext())[i] == '\n') 
+         newline();
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();  
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();  
+>>
+
+
+
+/******************** CLOSE TAG TOKENS *************************/
 
 #lexclass XML_END_TAG
 
