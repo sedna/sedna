@@ -30,6 +30,7 @@ static  std::set<std::string> nspt_pref;
 static nspt_map  xm_nsp;
 static bool def_set=false;
 
+static is_atomic=false;
 
 
 
@@ -874,13 +875,20 @@ void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,bool is_first,dynamic_context *cxt)
 {
 	if (tup.is_eos()) return;
-	if (ind && !is_first) crmout<<"\n";
+	if (is_first) is_atomic=false;
+	else
+		if (ind ) crmout<<"\n";
 	for (int i=0;i<tup.cells_number;i++)
 	{
-		if (tup.cells[i].is_node())	
+		if (tup.cells[i].is_node())
+		{
 			(ind)? print_node_indent(tup.cells[i].get_node(),crmout,ptype,cxt):print_node(tup.cells[i].get_node(),crmout,ptype,cxt);
+			is_atomic=false;
+		}
 		else
 		{
+			if (!ind && is_atomic) crmout<<" ";
+			is_atomic=true;
 			if (tup.cells[i].is_light_atomic())
 			{
 				if (is_fixed_size_type(tup.cells[i].get_atomic_type()))
@@ -911,6 +919,7 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 			}
 			dynamic_context::stm.flush(write_func,&crmout);
 		}
+		
 		if (ind && i<(tup.cells_number-1)) crmout<<" ,";
 	}
 }
