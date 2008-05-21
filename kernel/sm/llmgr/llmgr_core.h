@@ -300,12 +300,12 @@ public:
   void commit_trn(transaction_id& trid, bool sync);
   void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool, bool), bool sync);  
 #ifdef SE_ENABLE_FTSEARCH
-void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&, bool is_start),
+bool recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&, bool is_start),
                                void (*exec_micro_op) (const char*, int, bool, bool),
                                const LONG_LSN& last_cp_lsn,
                                bool sync);
 #else
-void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool, bool),
+bool recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool, bool),
 							   const LONG_LSN& last_cp_lsn, 
 							   bool sync);
 #endif

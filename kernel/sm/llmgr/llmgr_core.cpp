@@ -2030,12 +2030,12 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 
 //this function is run from the special recovery process
 #ifdef SE_ENABLE_FTSEARCH
-void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&, bool is_start),
+bool llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&, bool is_start),
 					   					   void (*exec_micro_op) (const char*, int, bool, bool),
                                            const LONG_LSN& last_cp_lsn,
                                            bool sync)
 #else
-void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool, bool),
+bool llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool, bool),
                                            const LONG_LSN& last_cp_lsn,
                                            bool sync)
 #endif
@@ -2047,6 +2047,8 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   ll_log_lock(sync);
   
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  bool res = mem_head->hotbackup_needed;
 
 //#ifdef SE_ENABLE_FTSEARCH
 //  if (mem_head->hotbackup_needed) index_op(undo_list, redo_list, last_checkpoint_lsn, true);
@@ -2066,7 +2068,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
      //then recovery by physical log quite enough
      close_all_log_files();
      ll_log_unlock(sync);
-     return;//all already recovered
+     return res;//all already recovered
   }
 
 #ifdef EL_DEBUG
@@ -2124,6 +2126,8 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   //close all open log files
   close_all_log_files();
   ll_log_unlock(sync);
+
+  return res;
 }
 
 void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*_exec_micro_op_) (const char*, int, bool, bool), bool isHB)
