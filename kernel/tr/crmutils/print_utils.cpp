@@ -30,7 +30,7 @@ static  std::set<std::string> nspt_pref;
 static nspt_map  xm_nsp;
 static bool def_set=false;
 
-static is_atomic=false;
+static bool is_atomic=false;
 
 
 
