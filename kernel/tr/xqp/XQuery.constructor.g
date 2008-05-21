@@ -269,13 +269,20 @@ dirPIConstructor!:
 
 
 dirCommentConstructor!:
-	XMLCOMMENTOPEN {c:XMLCOMMENTCONTENT} XMLCOMMENTCLOSE
-	<<
-	  if ($c != NULL)
-	     #0=#(#[AST_COMMENT_CONSTR], #[$c->getText(), AST_STRING_CONST]);
-	  else 
-	     #0=#(#[AST_COMMENT_CONSTR], #["", AST_STRING_CONST]);
-	>>
+    << std::string val = ""; >>
+	
+	XMLCOMMENTOPEN 
+	
+	( XML_COMMENT_HYPHEN << val+= "-"; >>
+    | cs1:XML_COMMENT_CHAR 
+         <<if ((cs1->getText())[0] == '\"') val += "\\\"";
+           else if ((cs1->getText())[0] == '\\') val += "\\\\";
+	       else val += (cs1->getText())[0]; >>
+	)*
+
+	XMLCOMMENTCLOSE
+	<<  val.erase(val.size()-1);
+        #0 = #(#[AST_COMMENT_CONSTR], #[val, AST_STRING_CONST]); >>
 ;
 
 
