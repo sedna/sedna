@@ -788,13 +788,13 @@ virtual inline void propagate_line() {
 
 #token PI_QUESTION "\?"
 <<
-    mode (PITARGET1);
+    mode (PITARGET_AFTER_QUESTION);
     Lexical_Analizer_State.push(PITARGET);
 >>
 #token PI_CHAR "~[]" << propagate_line(); >>
 
 
-#lexclass PITARGET1
+#lexclass PITARGET_AFTER_QUESTION
 
 #token PI_BRACKET "\>"
 <<
@@ -813,16 +813,36 @@ virtual inline void propagate_line() {
 
 /****************** XML COMMENT TOKENS ************************/
 
+
 #lexclass XML_COMMENT
 
 
-#token XMLCOMMENTCLOSE    "\-\-\>"
+#token XML_COMMENT_HYPHEN "\-"
 <<
-  mode (Lexical_Analizer_State.top());
-  Lexical_Analizer_State.pop();
+    mode (XML_COMMENT_AFTER_HYPHEN);
+    Lexical_Analizer_State.push(XML_COMMENT);
+>>
+#token XML_COMMENT_CHAR "~[]" << propagate_line(); >>
+
+
+#lexclass XML_COMMENT_AFTER_HYPHEN
+
+
+#token XMLCOMMENTCLOSE "\->"
+<<
+     Lexical_Analizer_State.pop();
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();
+>>
+#token XML_COMMENT_CHAR "~[\-]"
+<<
+     propagate_line();
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();  
 >>
 
-#token XMLCOMMENTCONTENT "(~[\-])+"
+
+/*************** PRAGMA EXPRESSION TOKENS *********************/
 
 #lexclass PRAGMA_CONTENT
 
@@ -833,6 +853,8 @@ virtual inline void propagate_line() {
 >>
 
 #token PR_CONTENT "(~[\#])*" <<printf("PR_CONTENT=%s\n", lextext());>>
+
+/******************** XUpdate TOKENS **************************/
 
 #lexclass UPDATE_CLASS
 
