@@ -842,7 +842,7 @@ void parse_schema(FILE* f)
 xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp, bool print_progress)
 {
 	//test_cnt=0;
-	bool is_coll=false;
+	is_coll=false;
 	if (!print_progress) print_p = print_progress;
 	need_cp=vmm_data_blocks_allocated();
 	wpstrip=stripped;
@@ -890,7 +890,7 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp
 
 xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress)
 {
-	bool is_coll=true;
+	is_coll=true;
 	if (!print_progress) print_p = print_progress;
 	need_cp=vmm_data_blocks_allocated();
 	wpstrip=stripped;
