@@ -6,22 +6,12 @@
 <<
 #include <stack>
 #include <stdlib.h>
-#include <iostream>
-
-#include "common/errdbg/exceptions.h"
+#include <stdio.h>
 #include "tr/xqp/types.h"
+#include "common/errdbg/exceptions.h"
 
 using namespace std;
-
 STACK_INT Lexical_Analizer_State;
-
-bool s_after_pi_target = false; 
->>
-
-#lexprefix
-<<
-#include <stdio.h>
-#include "common/errdbg/exceptions.h"
 >>
 
 #lexmember
@@ -38,6 +28,16 @@ virtual void errovf(){
   if (bufovf) throw USER_EXCEPTION2(XPST0003 , (std::string("too long literal, ") + "line: " + int2string(line())).c_str());
 }
 
+>>
+
+#lexmember
+<<
+virtual inline void propagate_line() {
+  int num = strlen(lextext());
+  for (int i=0;i<num; i++)
+      if ((lextext())[i] == '\n') 
+         newline();
+}
 >>
 
 
@@ -96,10 +96,6 @@ virtual void errovf(){
 #token DEFINE  "define"
 #token EMPTYSEQ "empty\-sequence"
 #token EMPTY "empty"
-//#token EMPTY_GREATEST "empty([\ \t\n])*greatest"
-//#token EMPTY_LEAST "empty([\ \t\n])*least"
-//#token EMPTY_TYPE "empty([\ \t\n])*\(([\ \t\n])*\)"
-//#token ITEM_TEST "item([\ \t\n])*[\(]([\ \t\n])*[\)]"
 #token ITEM "item"
 #token TEXT "text"
 #token NILLABLE "nillable"
@@ -346,16 +342,15 @@ virtual void errovf(){
 //#token QNAME "[_a-zA-Z]([a-zA-Z0-9_\-])*"
 //#token FULLQNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*:[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*"
 
-#token NCNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*" <<errovf();>> //it is the subset of specification
+#token NCNAME          "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*" <<errovf();>> //it is the subset of specification
 #token INTEGERLITERAL  "[0-9]+" <<errovf(); replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
 #token DOUBLELITERAL   "((\.[0-9]+) | ([0-9]+{\.[0-9]*})) (e | E) {\+| \-} [0-9]+" <<errovf(); replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
 #token DECIMALLITERAL  "(\.[0-9]+) |  ([0-9]+\.[0-9]*)" <<errovf(); replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
-#token STRINGLITERAL "(\"(&lt;|&gt;|&amp;|&quot;|&apos;|\"\"| &#([0-9])+; | &#x([0-9a-fA-F])+; |~[\"&])*\") | (\'(&lt;|&gt;|&amp;|&quot;|&apos;|\'\'| &#([0-9])+; | &#x([0-9a-fA-F])+; | ~[\'&])*\')"
+#token STRINGLITERAL   "(\"(&lt;|&gt;|&amp;|&quot;|&apos;|\"\"| &#([0-9])+; | &#x([0-9a-fA-F])+; |~[\"&])*\") | (\'(&lt;|&gt;|&amp;|&quot;|&apos;|\'\'| &#([0-9])+; | &#x([0-9a-fA-F])+; | ~[\'&])*\')"
 <<
   errovf();
-  std::string res = erase_doublequot(lextext());
+  std::string res = scheme_prepare_string(lextext());
   replstr(res.c_str());
-//  replstr((std::string("\"") + res + std::string("\"")).c_str());
   replace_entity(lextext(), "&lt;", "<");
   replace_entity(lextext(), "&gt;", ">");
   replace_entity(lextext(), "&quot;", "\\\"");
@@ -363,11 +358,7 @@ virtual void errovf(){
   replace_entity(lextext(), "&amp;", "&");
   res = replace_charref(lextext());
   replstr(res.c_str());
-
-  int num = strlen(lextext());
-  for (int i=0;i<num; i++)
-      if ((lextext())[i] == '\n') 
-         newline();
+  propagate_line();
 >>
 
 #token DEC_CHARREF "&#([0-9])+;" 
@@ -384,14 +375,13 @@ virtual void errovf(){
 >>
 
 
-// tokens for processing instruction constructor
+//----------------- tokens for PI constructor ---------------
 
-#token LPI "\<\?" 
+#token OPENPI "\<\?" 
 <<
-  s_after_pi_target = false; mode(PITARGET);
+  mode(PITARGET);
   Lexical_Analizer_State.push(START);
 >>
-#token RPI "\?\>"
 
 //----------------- tokens in element constructor -----------
 #token STARTTAGOPEN "\<"   
@@ -417,7 +407,6 @@ virtual void errovf(){
 #token STARTTAGCLOSE "\>"
 <<
   mode (XML_ELEMENT_CONTENT);
-//  printf("transition to xml element content\n");
 >>
 #token EMPTYTAGCLOSE "\/\>"
 <<
@@ -434,15 +423,8 @@ virtual void errovf(){
 //#token FULLQNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*:[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*"
 
 
-//#token 	     "[\ \t]*" <<skip();>>
 #token WS "[\ \t\r]+"
-#token NL "([\n])+" 
-<<
-  int num = strlen(lextext());
-  for (int i=0; i<num; i++ )
-      if ((lextext())[i] == '\n')
-         newline();
->>
+#token NL "([\n])+"   << propagate_line(); >>
 #token COLON ":"
 #token EQUAL "\="
 
@@ -454,15 +436,12 @@ virtual void errovf(){
 #token QUOT "\""
 <<
   mode (XML_QUOT_ATTRIBUTE_CONTENT);
-//  printf("to attribute value content\n");
 >>
 #token APOS "\'"
 <<
   mode (XML_APOS_ATTRIBUTE_CONTENT);
 >>
 
-
-//#token LEXERROR "~[]*"  <<printf("\n\nLexical error!!!\n\n");>>
 
 /****************** XML ELEMENT CONTENT TOKENS ****************/
 
@@ -484,9 +463,9 @@ virtual void errovf(){
   Lexical_Analizer_State.push(XML_ELEMENT_CONTENT);
 >>
 
-#token LPI "\<\?" 
+#token OPENPI "\<\?" 
 <<
-  s_after_pi_target = false; mode(PITARGET);
+  mode(PITARGET);
   Lexical_Analizer_State.push(XML_ELEMENT_CONTENT);
 >>
 
@@ -534,13 +513,7 @@ virtual void errovf(){
 >>
 
 
-#token CHAR_ELEM "~[\{\}\<\&]"  
-<<
-  int num = strlen(lextext());
-  for (int i=0;i<num; i++)
-      if ((lextext())[i] == '\n') 
-         newline();
->>
+#token CHAR_ELEM "~[\{\}\<\&]"  << propagate_line(); >>
 
 //#token LEXERROR "~[]*"  <<printf("\n\nLexical error!!!\n\n");>>
 /***************** XML CDATA SECTION TOKENS *******************/
@@ -550,19 +523,10 @@ virtual void errovf(){
 
 #token CHAR_SEQ_CDATA "\]"
 <<
-  if (!Lexical_Analizer_State.empty())
-  {
     mode (XML_CDATA_SECTION1);
     Lexical_Analizer_State.push(XML_CDATA_SECTION);
-  }
 >>
-#token CHAR_SEQ_CDATA_C "~[]"
-<<
-     int num = strlen(lextext());
-     for (int i=0;i<num; i++)
-     if ((lextext())[i] == '\n') 
-         newline();
->>
+#token CHAR_SEQ_CDATA_C "~[]" << propagate_line(); >>
 
 
 #lexclass XML_CDATA_SECTION1
@@ -570,18 +534,12 @@ virtual void errovf(){
 
 #token CHAR_SEQ_CDATA "\]"
 <<
-  if (!Lexical_Analizer_State.empty())
-  {
     mode (XML_CDATA_SECTION2);
     Lexical_Analizer_State.push(XML_CDATA_SECTION1);
-  }
 >>
 #token CHAR_SEQ_CDATA_C "~[]"
 <<
-     int num = strlen(lextext());
-     for (int i=0;i<num; i++)
-     if ((lextext())[i] == '\n') 
-         newline();
+     propagate_line();
      mode (Lexical_Analizer_State.top());
      Lexical_Analizer_State.pop();  
 >>
@@ -591,9 +549,7 @@ virtual void errovf(){
 
 #token CHAR_SEQ_CDATA_C1 ">"
 <<
-     mode (Lexical_Analizer_State.top());
      Lexical_Analizer_State.pop();  
-     mode (Lexical_Analizer_State.top());
      Lexical_Analizer_State.pop();
      mode (Lexical_Analizer_State.top());
      Lexical_Analizer_State.pop();
@@ -602,11 +558,7 @@ virtual void errovf(){
 
 #token CHAR_SEQ_CDATA_C "~[]"
 <<
-     int num = strlen(lextext());
-     for (int i=0;i<num; i++)
-     if ((lextext())[i] == '\n') 
-         newline();
-     mode (Lexical_Analizer_State.top());
+     propagate_line();
      Lexical_Analizer_State.pop();  
      mode (Lexical_Analizer_State.top());
      Lexical_Analizer_State.pop();  
@@ -637,13 +589,7 @@ virtual void errovf(){
 //#token FULLQNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*:[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*"
 #token COLON "\:"
 #token WS "[\ \t\r]+"
-#token NL "([\n])+" 
-<<
-  int num = strlen(lextext());
-  for (int i=0; i< num; i++)
-      if ((lextext())[i] == '\n')
-          newline();
->>
+#token NL "([\n])+" << propagate_line(); >>
 
 //#token LEXERROR "~[]*"  <<printf("\n\nLexical error!!!\n\n");>>
 
@@ -679,16 +625,7 @@ virtual void errovf(){
 >>
 
 
-#token CHAR_ATTR "~[\"\'\{\}\<\&]"
-<<
-  int num = strlen(lextext());
-  for (int i=0;i<num; i++)
-      if ((lextext())[i] == '\n') 
-         newline();
->>
-
-
-
+#token CHAR_ATTR "~[\"\'\{\}\<\&]" << propagate_line(); >>
 
 #token AMPLT "&lt;"
 #token AMPGT "&gt;"
@@ -728,14 +665,7 @@ virtual void errovf(){
 >>
 
 
-#token CHAR_ATTR "~[\"\'\{\}\<\&]"
-<<
-  int num = strlen(lextext());
-  for (int i=0;i<num; i++)
-      if ((lextext())[i] == '\n') 
-         newline();
->>
-
+#token CHAR_ATTR "~[\"\'\{\}\<\&]"  << propagate_line(); >>
 
 #token AMPLT "&lt;"
 #token AMPGT "&gt;"
@@ -744,7 +674,7 @@ virtual void errovf(){
 #token AMPEAPOS "&apos;"
 
 
-/****************** XML COMMENT TOKENS ************************/
+/****************** XQUERY COMMENT TOKENS ************************/
 
 #lexclass COMMENT
 
@@ -800,17 +730,13 @@ virtual void errovf(){
 #token STDIN "STDIN"
 #token STRINGLITERAL "(\"(&lt;|&gt;|&amp;|&quot;|&apos;|\"\"|~[\"&])*\") | (\'(&lt;|&gt;|&amp;|&quot;|&apos;|\'\'|~[\'&])*\')"
 <<
-  erase_doublequot(lextext());
+  scheme_prepare_string(lextext());
   replace_entity(lextext(), "&lt;", "<");
   replace_entity(lextext(), "&gt;", ">");
   replace_entity(lextext(), "&amp;", "&");
   replace_entity(lextext(), "&quot;", "\"");
   replace_entity(lextext(), "&apos;", "\'");
-
-  int num = strlen(lextext());
-  for (int i=0;i<num; i++)
-      if ((lextext())[i] == '\n') 
-         newline();
+  propagate_line();
 
 >>
 
@@ -846,68 +772,49 @@ virtual void errovf(){
 
 #token STRINGLITERAL "(\"(&lt;|&gt;|&amp;|&quot;|&apos;|\"\"|~[\"&])*\") | (\'(&lt;|&gt;|&amp;|&quot;|&apos;|\'\'|~[\'&])*\')"
 <<
-  erase_doublequot(lextext());
+  scheme_prepare_string(lextext());
   replace_entity(lextext(), "&lt;", "<");
   replace_entity(lextext(), "&gt;", ">");
   replace_entity(lextext(), "&amp;", "&");
   replace_entity(lextext(), "&quot;", "\"");
   replace_entity(lextext(), "&apos;", "\'");
-  int num = strlen(lextext());
-  for (int i=0;i<num; i++)
-      if ((lextext())[i] == '\n') 
-         newline();
-
+  propagate_line();
 >>
 */
 
+/****************** XML PI TOKENS ************************/
+
 #lexclass PITARGET
 
-#token WS "[\ \t\r]*" <<if (s_after_pi_target) mode(PIINSTRUCTION);>>
-#token NL "([\n])*"
+#token PI_QUESTION "\?"
 <<
-  int num = strlen(lextext());
-  for (int i=0; i<num; i++ )
-      if ((lextext())[i] == '\n')
-         newline();
-
-  if (s_after_pi_target)
-  {
-     mode(PIINSTRUCTION);
-  }
+    mode (PITARGET1);
+    Lexical_Analizer_State.push(PITARGET);
 >>
+#token PI_CHAR "~[]" << propagate_line(); >>
 
-#token NAME "[_a-zA-Z]([a-zA-Z0-9_\-\.])*" <<s_after_pi_target = true;>>
 
-#token RPI "\?\>" 
+#lexclass PITARGET1
+
+#token PI_BRACKET "\>"
 <<
+  Lexical_Analizer_State.pop();
+  mode (Lexical_Analizer_State.top());
+  Lexical_Analizer_State.pop();
+>>
+#token PI_QUESTION "\?"
+#token PI_CHAR "~[]" 
+<<
+  propagate_line();
   mode (Lexical_Analizer_State.top());
   Lexical_Analizer_State.pop();
 >>
 
-#lexclass  PIINSTRUCTION
 
-
-#token INSTRUCTION "~[\?\>]+" 
-<<
-  string res;
-  res = escape_quot(std::string(lextext()));
-
-  res = std::string("\"") + res + std::string("\"");
-  replstr(res.c_str());
-
-//  mode (Lexical_Analizer_State.top());
-//  Lexical_Analizer_State.pop();
->>
-
-#token RPI "\?\>"
-<<
-  mode (Lexical_Analizer_State.top());
-  Lexical_Analizer_State.pop();
->>
+/****************** XML COMMENT TOKENS ************************/
 
 #lexclass XML_COMMENT
 
-//#token XMLCOMMENTCONTENT "(~[\-] | ([\-](~[\-])))*" <<printf("XML COMMENT!!!!\n\n");>>
 
 #token XMLCOMMENTCLOSE    "\-\-\>"
 <<

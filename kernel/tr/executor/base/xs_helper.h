@@ -13,7 +13,7 @@
 #include "tr/executor/base/xs_decimal_t.h"
 
 #define IS_WHITESPACE(byte) \
-    (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\r')
+    ((byte) == ' ' || (byte) == '\t' || (byte) == '\n' || (byte) == '\r')
 
 /////////////////////////////////////////////////////////////////////////
 /// String to XML Schema datatypes conversion routines.
