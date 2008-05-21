@@ -172,7 +172,7 @@ class SednaIndexJob : public dtSearch::DIndexJob {
 		   static void start_commit();
 		   static void fix_commit();
 		   static void rollback();
-		   static void recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn, bool is_start);
+		   static void recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn, bool is_hb);
 
 	  private:
 		  PPOpIn* seq;
