@@ -85,6 +85,19 @@ private:
         bool operator==(const xhit &x) { return hash == x.hash && ((p == x.p && p != NULL) || (p == x.p && p == NULL && pos == x.pos)); }
         bool operator!=(const xhit &x) { return !operator==(x); }
     
+        const xptr &getKey()
+        {
+        	if (p == NULL)
+        	{
+        		if (pos >= (1 << middle_significan_bits)) 
+        			throw SYSTEM_EXCEPTION("Out of bounds");
+        		else
+        		    return hash->tbl[pos].key;
+        	}
+        	else
+        		return p->key;
+        }
+
         xhit &operator++() { return next(); }
         const T &operator*()
         {

@@ -24,6 +24,7 @@
 #include "common/tr_debug.h"
 #include "tr/executor/base/XPath.h"
 #include "tr/idx/indexes.h"
+#include "tr/updates/updates.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
@@ -37,6 +38,36 @@ static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purpos
 
 int rcv_number_of_records =0;//for debug
 int rcv_number_of_text = 0;
+
+// we need this function since we modify xptrs
+void rcvRecoverFtIndexes()
+{
+	XptrHash <xptr, 16, 16>::iterator it;
+	xptr new_x;
+	schema_node *scm;
+	schema_ft_ind_cell *sft;
+
+	clear_ft_sequences();
+
+	for (it = indir_map.begin(); it != indir_map.end(); ++it)
+	{
+		new_x = removeIndirection(*it);
+
+		CHECKP(new_x);
+		scm = (GETBLOCKBYNODE(new_x))->snode;
+	
+	    sft = scm->ft_index_object;
+
+	    while (sft != NULL)
+	    {
+		    update_insert_sequence(*it, sft->index);
+		    update_delete_sequence(it.getKey(), sft->index);
+		    sft = sft->next;
+		}
+	}
+
+	execute_modifications(true);
+}
 
 void rollback_tr_by_logical_log(transaction_id _trid)
 {
@@ -52,8 +83,9 @@ void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 {
 #ifdef LOGICAL_LOG
   switch_to_rollback_mode(MODE_REDO);
- #ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_FTSEARCH
   tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, last_cp_lsn, false);  
+  rcvRecoverFtIndexes();	
 #else
   tr_llmgr->recover_db_by_logical_log(exec_micro_op, last_cp_lsn, false);	
 #endif
@@ -626,7 +658,7 @@ try{
                             doc_name,
                             true,
                             ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
-							(isHB) ? false: true);
+							true);
            else throw SYSTEM_EXCEPTION("Can't create index for document");
         } 
         else
@@ -643,7 +675,7 @@ try{
                             doc_name,
                             false,
                             ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
-							(isHB) ? false: true);
+							true);
            else throw SYSTEM_EXCEPTION("Can't create index for collection");
 
         }
@@ -652,7 +684,7 @@ try{
      {//delete index
 //          d_printf2("ind_name=%s\n", ind_name);
          ;
-          ft_index_cell::delete_index (ind_name, (isHB) ? false: true);
+          ft_index_cell::delete_index (ind_name, true);
      }
 //     d_printf1("rollback index operation end\n");
 

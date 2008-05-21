@@ -2048,9 +2048,9 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
-#ifdef SE_ENABLE_FTSEARCH
-  if (mem_head->hotbackup_needed) index_op(undo_list, redo_list, last_checkpoint_lsn, true);
-#endif
+//#ifdef SE_ENABLE_FTSEARCH
+//  if (mem_head->hotbackup_needed) index_op(undo_list, redo_list, last_checkpoint_lsn, true);
+//#endif
 
   logical_log_file_head file_head =
                   read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
@@ -2118,7 +2118,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   RECOVERY_CRASH;
  
 #ifdef SE_ENABLE_FTSEARCH
-  index_op(undo_list, redo_list, last_checkpoint_lsn, false);
+  index_op(undo_list, redo_list, last_checkpoint_lsn, (mem_head->hotbackup_needed) ? true : false);
 #endif
 
   //close all open log files
