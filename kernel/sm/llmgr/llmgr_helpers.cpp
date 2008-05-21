@@ -486,6 +486,27 @@ void llmgr_core::extend_logical_log(bool sync)
 
   //get header of previous file
   UFile dsc = get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]);
+  
+  // check if file consists only of header
+  if (hbStatus == HB_ARCHIVELOG)
+  {
+  	__int64 file_size;
+
+  	if (uGetFileSize(dsc, &file_size, __sys_call_error) == 0)
+  		throw SYSTEM_EXCEPTION("Can't get file size");
+
+  	if (file_size == sizeof(logical_log_file_head))
+  	{
+  		// hack: temporarily change ll_files_num to write "is_hot_backup" in the proper file
+  		mem_head->ll_files_num--;
+  		hbLastFileNum = mem_head->ll_files_arr[mem_head->ll_files_num - 1];
+  		hbWriteFileHeader(true);
+  		mem_head->ll_files_num++;
+  		
+  		return;
+  	}
+  }
+
   logical_log_file_head prev_file_head = read_log_file_header(dsc);
 
   new_logical_log_dsc = create_logical_log(new_log_name.c_str(),

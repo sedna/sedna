@@ -83,11 +83,12 @@ void rollback_tr_by_logical_log(transaction_id _trid)
 
 void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 {
+  bool isHB;
 #ifdef LOGICAL_LOG
   switch_to_rollback_mode(MODE_REDO);
 #ifdef SE_ENABLE_FTSEARCH
-  tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, last_cp_lsn, false);  
-  rcvRecoverFtIndexes();	
+  isHB = tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, last_cp_lsn, false);  
+  if (!isHB) rcvRecoverFtIndexes();	
 #else
   tr_llmgr->recover_db_by_logical_log(exec_micro_op, last_cp_lsn, false);	
 #endif
