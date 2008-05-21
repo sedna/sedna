@@ -39,8 +39,9 @@ static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purpos
 int rcv_number_of_records =0;//for debug
 int rcv_number_of_text = 0;
 
+#ifdef SE_ENABLE_FTSEARCH
 // we need this function since we modify xptrs
-void rcvRecoverFtIndexes()
+static void rcvRecoverFtIndexes()
 {
 	XptrHash <xptr, 16, 16>::iterator it;
 	xptr new_x;
@@ -68,6 +69,7 @@ void rcvRecoverFtIndexes()
 
 	execute_modifications(true);
 }
+#endif
 
 void rollback_tr_by_logical_log(transaction_id _trid)
 {
