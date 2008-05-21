@@ -240,27 +240,31 @@ elementContent!:
 	>>
 ;
 
-
 dirPIConstructor!:
-	LPI  p:piTarget
-	<<#0=#(#[AST_PI_CONSTR], #p);>>
+    << 
+        std::string val = ""; 
+        int line = 0;
+    >>
+	
+	OPENPI << line = LT(1)->getLine(); >>
 
-	  { (WS|NL) {i:INSTRUCTION} <<if ($i != NULL) #0->addChild(#[$i->getText(), AST_STRING_CONST]);>> } RPI
-;
+	( PI_QUESTION << val += "?"; >>
+	| cs:PI_CHAR 
+	    << if ((cs->getText())[0] == '\"') val += "\\\"";
+           else if ((cs->getText())[0] == '\\') val += "\\\\";
+	       else val += (cs->getText())[0]; >>
+	)*
 
-piTarget!:
-	n:NAME
-	<<
-	  if (strlen($n->getText()) == 3)
-	  {
-	     if (($n->getText()[0] == 'x' || $n->getText()[0] == 'X') &&
-	         ($n->getText()[0] == 'm' || $n->getText()[0] == 'M') &&
-	         ($n->getText()[0] == 'l' || $n->getText()[0] == 'L'))
-	             throw USER_EXCEPTION2(XPST0003, (std::string("unexpected token: ")+ "\'" + $n->getText() + "\'" + ", line: " + int2string(LT(1)->getLine())).c_str());
-	  }
+	PI_BRACKET
+	<<  val.erase(val.size()-1);
+	    std::string name, content;
+	    parse_processing_instruction(val, name, content, line);
 
-	  #0=#[$n->getText(), AST_LOCAL_NAME]; 
-	>>
+        #0 = #(#[AST_PI_CONSTR], #[name, AST_LOCAL_NAME]);
+
+        if(!content.empty())
+            #0->addChild(#[content, AST_STRING_CONST]); 
+    >>
 ;
 
 
@@ -275,30 +279,22 @@ dirCommentConstructor!:
 ;
 
 
-//enclosedExpr rule is in the XQuery.common.g file
-
-
 cdataSection!:
     << std::string val = ""; >>
 	
 	OPENCDATA   
 	
-	( cs:CHAR_SEQ_CDATA 
-        << if ((cs->getText())[0] == '\"') val += "\\\"";
-	    else if ((cs->getText())[0] == '\\') val += "\\\\";
-	    else val += (cs->getText())[0]; >>
+	( CHAR_SEQ_CDATA << val += "]"; >>
 	| cs1:CHAR_SEQ_CDATA_C 
 	    << if ((cs1->getText())[0] == '\"') val += "\\\"";
-        else if ((cs1->getText())[0] == '\\') val += "\\\\";
-	    else val += (cs1->getText())[0]; >>
+           else if ((cs1->getText())[0] == '\\') val += "\\\\";
+	       else val += (cs1->getText())[0]; >>
 	)*
 
 	CHAR_SEQ_CDATA_C1
 	<<  val.erase(val.size()-2);
 	    #0 = #[val, AST_CHAR_SEQ];  >>
-
 ;
-
 
 
 attributeList!:
