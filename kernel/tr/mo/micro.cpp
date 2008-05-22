@@ -1092,15 +1092,18 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, in
 	}
 	if (result==XNULL) result= thirdElementAndTextInsertProcedure( left_sib, right_sib,  parent, NULL, 0,pr_ins,NULL);
 	//text value
-	char* z=se_new char[tsize+dsize+1];
+	int complete_size = dsize ? tsize+dsize+1 : tsize;
+	char* z=se_new char[complete_size];
 	memcpy(z,target,tsize);
-	z[tsize]=' ';
-	memcpy(z+tsize+1,data,dsize);
-	addTextValue(result,z, tsize+dsize+1);
+	if(dsize) {
+	    z[tsize]=' ';
+	    memcpy(z+tsize+1,data,dsize);
+	}
+	addTextValue(result,z,complete_size);
 	((pi_dsc*)XADDR(result))->target=(shft)tsize;
 	//NODE STATISTICS
 	(GETBLOCKBYNODE(result))->snode->nodecnt++;
-	(GETBLOCKBYNODE(result))->snode->textcnt+=(tsize+dsize+1);
+	(GETBLOCKBYNODE(result))->snode->textcnt+=(complete_size);
     if (IS_DATA_BLOCK(parent))
 	{
 		update_idx_add(result,data,dsize);
@@ -1119,7 +1122,7 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, in
 			CHECKP(right_indir);
 			right_indir=((n_dsc*)XADDR(right_indir))->indir;
 		}
-		hl_logical_log_pi(indir,left_indir,right_indir,par_indir,z,tsize+dsize+1,tsize,true);
+		hl_logical_log_pi(indir,left_indir,right_indir,par_indir,z,complete_size,tsize,true);
 		CHECKP(result);
 		up_concurrent_micro_ops_number();
 		
