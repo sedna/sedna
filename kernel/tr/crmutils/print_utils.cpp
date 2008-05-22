@@ -727,7 +727,7 @@ nsfree:
 				print_indent(crmout,indent) ;
 			}
 			crmout<< "<!--";
-			print_text(node,crmout,ptype,text);
+			print_text(node,crmout,ptype,comment);
 			crmout<< "-->";
 			break;
 		}
