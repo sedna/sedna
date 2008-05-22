@@ -211,6 +211,7 @@ protected:
     
     bool is_length; 		//equal to length_child.op != NULL;
     bool first_time;
+    bool need_reopen;
 
     __int64 current_pos;
     double start_pos;

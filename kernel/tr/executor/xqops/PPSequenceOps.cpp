@@ -773,6 +773,7 @@ void PPFnSubsequence::open  ()
     start_child.op->open();
     if(is_length) length_child.op->open();
     first_time = true;
+    need_reopen = false;
 }
 
 void PPFnSubsequence::reopen()
@@ -781,6 +782,7 @@ void PPFnSubsequence::reopen()
     start_child.op->reopen();
     if(is_length) length_child.op->reopen();
     first_time = true;
+    need_reopen = false;
 }
 
 void PPFnSubsequence::close ()
@@ -832,6 +834,12 @@ void PPFnSubsequence::next(tuple &t)
         current_pos = 0;           
     }
     
+    if(need_reopen) 
+    { 
+        seq_child.op->reopen(); 
+        need_reopen = false;
+    }
+    
     if(!is_length || length >= 1)  //if length is given it should be greater or equal than 1 to have non-empty sequence as result
     {
        bool length_check = true;   //allows to break evaluation before all input is passed 
@@ -843,7 +851,8 @@ void PPFnSubsequence::next(tuple &t)
            if(!t.is_eos() && start_pos <= current_pos && length_check) {RESTORE_CURRENT_PP; return;}
        } while( !t.is_eos() && length_check );
     }
-    
+
+    if(!t.is_eos()) need_reopen = true;
     t.set_eos();
     first_time = true; 
 
