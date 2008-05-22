@@ -839,7 +839,7 @@ void PPFnSubsequence::next(tuple &t)
        do {
            seq_child.op->next(t);
            current_pos++;
-           bool length_check = is_length ? (current_pos < start_pos + length) : true;
+           length_check = is_length ? (current_pos < start_pos + length) : true;
            if(!t.is_eos() && start_pos <= current_pos && length_check) {RESTORE_CURRENT_PP; return;}
        } while( !t.is_eos() && length_check );
     }
