@@ -327,12 +327,13 @@ tuple_cell dm_string_value(xptr node)
                                   int size = PI_DSC(node)->size;
                                   xptr data = PI_DSC(node)->data;
 								  int targ=PI_DSC(node)->target;
-									
-                                  if (size == 0) return EMPTY_STRING_TC;
+								  
+								  int content_size = (size == targ) ? 0 : size-targ-1;
+								  if (0 == content_size) return EMPTY_STRING_TC;
 
 							      CHECKP(data);
                                   return tuple_cell::atomic_pstr(xs_string, 
-                                                                 size-targ-1, 
+                                                                 content_size, 
                                                                  PSTRDEREF(data)+targ+1);
                               }
         case comment		: {
