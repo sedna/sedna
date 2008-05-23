@@ -29,7 +29,6 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
     if (global_memory == NULL)
         throw USER_EXCEPTION(SE4078);
 
-
     memset(global_memory, '\0', PAGE_SIZE);
     *(t_layer*)global_memory = INVALID_LAYER;
 
@@ -74,8 +73,6 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
         PH_ADDRESS_SPACE_START_ADDR_INT = v.PH_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_SIZE = v.LAYER_ADDRESS_SPACE_SIZE;
 
-//d_printf2("load LAYER_ADDRESS_SPACE_SIZE = %d\n", LAYER_ADDRESS_SPACE_SIZE);
-
         LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
         PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
@@ -105,13 +102,16 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
                            NULL,
                            NULL,
                            __sys_call_error) != 0)
-            throw SYSTEM_ENV_EXCEPTION("Can't create process");
+            throw SYSTEM_ENV_EXCEPTION("Cannot create process to determine VMM region");
 
-        int status;
-        uWaitForChildProcess(pid, process_handle, &status, __sys_call_error);
-        if (status) SYSTEM_ENV_EXCEPTION("Can't determine VMM region");
+        int status = 0;
+        int res = 0;
+
+        res = uWaitForChildProcess(pid, process_handle, &status, __sys_call_error);
+        if (0 != res || status) 
+            throw SYSTEM_ENV_EXCEPTION((std::string("Cannot determine VMM region, status: ") + int2string(status) + ", result: " + int2string(res)).c_str());
+
         uCloseProcess(process_handle, __sys_call_error);
-
         uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0", __sys_call_error);
 
         v = *(vmm_region_values*)((char*)global_memory + PAGE_SIZE - sizeof(vmm_region_values));
@@ -121,12 +121,8 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
         PH_ADDRESS_SPACE_START_ADDR_INT = v.PH_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_SIZE = v.LAYER_ADDRESS_SPACE_SIZE;
 
-//fprintf(res_os, "create LAYER_ADDRESS_SPACE_START_ADDR_INT = 0x%x\n", v.LAYER_ADDRESS_SPACE_START_ADDR_INT);
-//fprintf(res_os, "create LAYER_ADDRESS_SPACE_BOUNDARY_INT = 0x%x\n", v.LAYER_ADDRESS_SPACE_BOUNDARY_INT);
-//fprintf(res_os"create PH_ADDRESS_SPACE_START_ADDR_INT = 0x%x\n", v.PH_ADDRESS_SPACE_START_ADDR_INT);
-//fprintf(res_os, "create LAYER_ADDRESS_SPACE_SIZE = 0x%x\n", v.LAYER_ADDRESS_SPACE_SIZE);
-
-        if (LAYER_ADDRESS_SPACE_SIZE < VMM_REGION_MIN_SIZE) throw USER_EXCEPTION(SE1031);
+        if (LAYER_ADDRESS_SPACE_SIZE < VMM_REGION_MIN_SIZE) 
+            throw USER_EXCEPTION2(SE1031, (std::string("Determined layer size: ") + int2string(LAYER_ADDRESS_SPACE_SIZE)).c_str());
 
         LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
@@ -137,7 +133,7 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
             throw USER_EXCEPTION2(SE4040, "vmm.dat");
 
         int bytes_written = 0;
-        int res = uWriteFile(fd, &v, sizeof(vmm_region_values), &bytes_written, __sys_call_error);
+        res = uWriteFile(fd, &v, sizeof(vmm_region_values), &bytes_written, __sys_call_error);
         if (res == 0 || bytes_written != sizeof(vmm_region_values))
             throw USER_EXCEPTION2(SE4045, "vmm.dat");
 
