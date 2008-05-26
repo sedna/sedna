@@ -41,7 +41,7 @@ static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_t
         case xs_double                : 
         case xs_decimal               : 
         case xs_boolean               : return t;
-        default                       : throw XQUERY_EXCEPTION2(XPTY0004, "Least common type doesn't have a gt operator.");
+        default                       : throw XQUERY_EXCEPTION2(XPTY0004, "Non-comparable types found while sorting.");
     }    
 }
 
@@ -179,7 +179,8 @@ void PPOrderBy::next  (tuple &t)
                             ct->xtype = get_least_common_type_with_gt(ct->xtype, t);
                         else
                         {
-                            ct->xtype = t;
+                            /// We need to check if 't' has a gt operator!
+                            ct->xtype = get_least_common_type_with_gt(t, t);
                             ct->initialized = true;
                         }
                     }
