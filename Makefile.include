@@ -244,17 +244,17 @@ CPPFLAGS = -g3 -ggdb -Wall -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC
 LFLAGS   = -g3 -ggdb -fexceptions $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 else
-CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -w -fexceptions -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+CFLAGS   = -DC_NO_PIC_NO_DLL -O2 -w -fexceptions -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64
 CFLAGS_NOOPTIM = $(CFLAGS)
-CPPFLAGS = -O0 -w -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
+CPPFLAGS = -O2 -w -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64
-LFLAGS   = -O0 $(STATIC_FLAG) -fexceptions -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
+LFLAGS   = -O2 $(STATIC_FLAG) -fexceptions -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 endif
 LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl -fexceptions
