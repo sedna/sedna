@@ -918,7 +918,7 @@ sedna-err:SE3067
     User name is not specified.
 sedna-err:SE3068
 
-    This statement is not supported because Sedna' database security feature is off.
+    This statement is not supported because Sedna' database security level is "off". (To support this statement create database with -db-security option "authentication" or "authorization".)
 
 sedna-err:SE3069
 

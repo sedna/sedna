@@ -9,10 +9,23 @@
   ; if e  - empty list then return empty list
    (if (eq? expr '())
          '()
-         (begin
-           (write expr)
          (if (eq? is-auth 0) ; if database was created with db-security authentication/off
-             (list expr)
+              (case (caaddr expr)
+                 ((create-user 
+                   drop-user 
+                   alter-user 
+                   create-role 
+                   drop-role 
+                   grant-role 
+                   grant-priv-on-doc 
+                   grant-priv-on-col 
+                   grant-priv 
+                   revoke-priv 
+                   revoke-priv-from-doc 
+                   revoke-priv-from-col 
+                   revoke-role)
+                  (cl:signal-input-error SE3068))
+               (else (list expr)))
              (cond
                ( (eq? (car expr) 'retrieve-metadata)   
                        (begin
@@ -356,7 +369,7 @@
           (else 
            (list expr)
            ))
-        )))
+        ))
     )
 
 ;(define (sc:parametrize user privilege expr)
