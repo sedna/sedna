@@ -237,8 +237,9 @@ void delete_collection(const char *collection_name)
 			if (node!=XNULL)
 			{
 				CHECKP(node);
-				hl_logical_log_document(((n_dsc*)XADDR(node))->indir,(const char*)key.data(),collection_name,false);
+				xptr ind = ((n_dsc*)XADDR(node))->indir;
 				delete_doc_node(node);
+				hl_logical_log_document(ind, (const char *)key.data(), collection_name, false);
 				RECOVERY_CRASH;
 				up_concurrent_micro_ops_number();
 			}
