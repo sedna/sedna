@@ -76,7 +76,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result,dynami
 			break;
 		node=removeIndirection(GETPARENTPOINTER(node));
 		CHECKP(node);
-		schema_node* scm=GETSCHEMENODEX(node);
+		scm=GETSCHEMENODEX(node);
 	}
 	//1. ns childs
 	
