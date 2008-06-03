@@ -68,12 +68,48 @@ void PPAxisChild::close ()
 
 void PPAxisChild::next_processing_instruction(tuple &t)
 {
-    while (true)
+    while (cur == NULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
+		cur = getChildPointerXptr(child.get(t).get_node(), NULL, pr_ins, NULL);
+		if (cur!=XNULL && nt_data.ncname_local)
+			{
+				CHECKP(cur);
+				pi_dsc* desc=(pi_dsc*)XADDR(cur);
+				int tsize=desc->target;
+				if (tsize==strlen(nt_data.ncname_local))
+				{
+					xptr ind_ptr=desc->data;
+					CHECKP(ind_ptr);
+					shft shift= *((shft*)XADDR(ind_ptr));
+					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {break;}
+				}
+			}
     }
+	 t.copy(tuple_cell::node(cur));
+	 cur = getNextSiblingOfSameSortXptr(cur);
+	 while (cur!=XNULL)
+	 {
+		 if (nt_data.ncname_local)
+			{
+				CHECKP(cur);
+				pi_dsc* desc=(pi_dsc*)XADDR(cur);
+				int tsize=desc->target;
+				if (tsize==strlen(nt_data.ncname_local))
+				{
+					xptr ind_ptr=desc->data;
+					CHECKP(ind_ptr);
+					shft shift= *((shft*)XADDR(ind_ptr));
+					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {return;}
+				}
+			}
+		 else return;
+		 cur = getNextSiblingOfSameSortXptr(cur);
+	}	 
 }
 
 void PPAxisChild::next_comment(tuple &t)
