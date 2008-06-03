@@ -37,7 +37,6 @@ void PPIntersect::open  ()
 
     need_reopen_first = false;
     need_reopen_second = false;
-
 }
 
 void PPIntersect::reopen()
@@ -63,7 +62,7 @@ void PPIntersect::next  (tuple &t)
     SET_CURRENT_PP(this);
     
     if(need_reopen_first)   {child1.op->reopen(); need_reopen_first = false;}
-    if(need_reopen_second)  {child1.op->reopen(); need_reopen_second = false;}
+    if(need_reopen_second)  {child2.op->reopen(); need_reopen_second = false;}
     
     while (true)
     {
