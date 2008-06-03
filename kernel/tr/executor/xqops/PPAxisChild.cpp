@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPAxisChild.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/xs_names.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,8 +75,11 @@ void PPAxisChild::next_processing_instruction(tuple &t)
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		cur = getChildPointerXptr(child.get(t).get_node(), NULL, pr_ins, NULL);
-		if (cur!=XNULL && nt_data.ncname_local)
+		if (nt_data.ncname_local&&!check_constraints_for_xs_NCName(nt_data.ncname_local))
+					throw XQUERY_EXCEPTION(XPST0005);
+		while (cur!=XNULL && nt_data.ncname_local)
 			{
+				
 				CHECKP(cur);
 				pi_dsc* desc=(pi_dsc*)XADDR(cur);
 				int tsize=desc->target;
@@ -86,6 +90,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
 					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {break;}
+					else cur=getNextSiblingOfSameSortXptr(cur);
 				}
 			}
     }
