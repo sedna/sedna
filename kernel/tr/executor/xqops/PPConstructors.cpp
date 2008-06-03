@@ -723,7 +723,14 @@ void PPAttributeConstructor::next  (tuple &t)
 		else
 		{
 			if (cont_leftind!=XNULL)
-				new_attribute= insert_attribute(removeIndirection(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
+			{
+				xptr left_sib=removeIndirection(cont_leftind);
+				CHECKP(left_sib);
+				t_item typ=GETTYPE(GETSCHEMENODE(XADDR(left_sib)));
+				if (typ!=attribute && typ!=xml_namespace)
+					throw XQUERY_EXCEPTION(XQTY0024);
+					new_attribute= insert_attribute(removeIndirection(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
+			}			
 			else
 				new_attribute= insert_attribute(XNULL,XNULL,removeIndirection(cont_parind),name,xs_untypedAtomic,value,size,ns);
 			conscnt++;
