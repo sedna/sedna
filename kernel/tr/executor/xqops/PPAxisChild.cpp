@@ -92,6 +92,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
 					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {break;}
 					else cur=getNextSiblingOfSameSortXptr(cur);
 				}
+				else cur=getNextSiblingOfSameSortXptr(cur);
 			}
     }
 	 t.copy(tuple_cell::node(cur));
