@@ -11,68 +11,75 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result,dynami
 	nms_map mp;
 	CHECKP(node);
 	schema_node* scm=GETSCHEMENODEX(node);
-	//1. ns childs
-	xptr ns=getChildPointerXptr(node,NULL,xml_namespace,NULL);
 	nms_map::iterator it;
-	int reps=0;
-	while (ns!=XNULL)
+	while ( scm->type!=virtual_root)
 	{
-		CHECKP(ns);
-		xml_ns* nsp=((ns_dsc*)XADDR(ns))->ns;
-		const char* pref=(nsp->prefix==NULL)?"":nsp->prefix;
-		if ((it=mp.find(pref))!=mp.end())
+		xptr ns=getChildPointerXptr(node,NULL,xml_namespace,NULL);
+		
+		int reps=0;
+		while (ns!=XNULL)
 		{
-			throw SYSTEM_EXCEPTION("data model violation: two namespaces with the same prefix in one node");
-			
-		}
-		mp[pref]=nsp;
-		ns=getNextSiblingOfSameSortXptr(ns);
-	}
-	//2. self ns
-	if (scm->xmlns!=NULL)
-	{
-		const char* pref=(scm->xmlns->prefix==NULL)?"":scm->xmlns->prefix;
-		if ((it=mp.find(pref))!=mp.end())
-		{
-			if (it->second!=scm->xmlns)
-				throw SYSTEM_EXCEPTION("data model violation: there is a  namespace in the node with the same prefix as in the node name and different uri");
-		}
-		mp[pref]=scm->xmlns;
-	}
-	//3. attributes
-	xptr attr=getFirstByOrderAttributeChild(node);
-	if (attr!=XNULL)
-		CHECKP(attr);
-	//3.1 filling set
-	std::set<xml_ns*> atns;
-	while (attr!=XNULL)
-	{		
-		GETSCHEMENODEX(attr);
-		schema_node* sca=GETSCHEMENODEX(attr);
-		if (sca->xmlns!=NULL)
-			atns.insert(sca->xmlns);
-		attr=getNextByOrderAttribute(attr);
-	}
-	//3.2 copying to map
-	int ctr=0;
-	std::set<xml_ns*>::iterator sit=atns.begin();
-	while(sit!=atns.end())
-	{
-		const char* pref=((*sit)->prefix==NULL)?"":(*sit)->prefix;
-		if ((it=mp.find(pref))!=mp.end())
-		{
-			if (it->second!=*sit)
+			CHECKP(ns);
+			xml_ns* nsp=((ns_dsc*)XADDR(ns))->ns;
+			const char* pref=(nsp->prefix==NULL)?"":nsp->prefix;
+			if ((it=mp.find(pref))==mp.end())
 			{
-				xml_ns* new_ns=generate_pref(ctr++,(*sit)->uri,cxt);
-				mp[new_ns->prefix]=new_ns;
+				mp[pref]=nsp;
+			}			
+			ns=getNextSiblingOfSameSortXptr(ns);
+		}
+		//2. self ns
+		if (scm->xmlns!=NULL)
+		{
+			const char* pref=(scm->xmlns->prefix==NULL)?"":scm->xmlns->prefix;
+			if ((it=mp.find(pref))==mp.end())
+			{
+				mp[pref]=scm->xmlns;
 			}
 		}
-		else
-		{
-			mp[pref]=(*sit);
+		//3. attributes
+		xptr attr=getFirstByOrderAttributeChild(node);
+		if (attr!=XNULL)
+			CHECKP(attr);
+		//3.1 filling set
+		std::set<xml_ns*> atns;
+		while (attr!=XNULL)
+		{		
+			GETSCHEMENODEX(attr);
+			schema_node* sca=GETSCHEMENODEX(attr);
+			if (sca->xmlns!=NULL)
+				atns.insert(sca->xmlns);
+			attr=getNextByOrderAttribute(attr);
 		}
-		++sit;
+		//3.2 copying to map
+		int ctr=0;
+		std::set<xml_ns*>::iterator sit=atns.begin();
+		while(sit!=atns.end())
+		{
+			const char* pref=((*sit)->prefix==NULL)?"":(*sit)->prefix;
+			if ((it=mp.find(pref))!=mp.end())
+			{
+				if (it->second!=*sit)
+				{
+					xml_ns* new_ns=generate_pref(ctr++,(*sit)->uri,cxt);
+					mp[new_ns->prefix]=new_ns;
+				}
+			}
+			else
+			{
+				mp[pref]=(*sit);
+			}
+			++sit;
+		}
+		CHECKP(node);
+		if ((GETPARENTPOINTER(node))==XNULL)
+			break;
+		node=removeIndirection(GETPARENTPOINTER(node));
+		CHECKP(node);
+		schema_node* scm=GETSCHEMENODEX(node);
 	}
+	//1. ns childs
+	
 	it=mp.begin();
 	while (it!=mp.end())
 	{
