@@ -110,7 +110,7 @@ void sorted_sequence::next(tuple& t)
 	if (GET_FREE_SPACE(res)<sz)
 	 {
 		 CHECKP(res);
-		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(res)))->nblk;
+		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(res)))->nblk+sizeof(seq_blk_hdr);
 		 deserialize2FN(t,res,GET_FREE_SPACE(res),v2,Udata);
 	 }
 	 else
@@ -677,7 +677,7 @@ xptr sorted_sequence::get_data(int pos)
 	 if (GET_FREE_SPACE(val)<sz)
 	 {
 		 CHECKP(val);
-		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(val)))->nblk;
+		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(val)))->nblk+sizeof(seq_blk_hdr);
 		 deserialize2FN(t,val,GET_FREE_SPACE(val),v2,Udata);
 	 }
 	 else
@@ -750,7 +750,7 @@ reinit_vars:
 	 if (GET_FREE_SPACE(val)<sz)
 	 {
 		 CHECKP(val);
-		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(val)))->nblk;
+		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(val)))->nblk+sizeof(seq_blk_hdr);
 		deserialize2FN(t,val,GET_FREE_SPACE(val),v2,Udata);
 	 }
 	 else
