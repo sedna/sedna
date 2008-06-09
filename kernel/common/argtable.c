@@ -34,6 +34,10 @@ USA.
 #define NAMESTRING(A) ((A.argname)?(A.argname):(arg_typestr[A.argtype]))
 #define NULLSAFE(S) ((S)?(S):(""))
 
+/* Need a pointer distinct from NULL and any valid string address.
+I admit this particular hack is THE UGLY ONE.
+ZN*/ 
+const char *arg_no_default_value = (const char *)&malloc;
 
 static
 const char whitespace[] = " \f\n\r\v\t";
@@ -115,7 +119,7 @@ int arg_set_defaults(arg_rec *argtable, int n, char* ErrMsg)
   for (i=0; i<n; i++)
      {
      /*-- skip over NULL defaults --*/
-     if (argtable[i].defaultstr==NULL)
+     if (argtable[i].defaultstr==NULL || argtable[i].defaultstr == ARGTABLE_NO_DEFAULT_VALUE)
         continue;
 
      /*-- convert default value to appropriate data type --*/
@@ -314,10 +318,18 @@ char* arg_extract_tag(char* str, const char* tag)
   immediately after the tag.
   If the tag cannot be found in cmdline then NULL is returned.
   **********************************************************************/
-  char* p = strstr(str,tag);
+  char* p;
+restart:
+  p = strstr(str,tag);
   if (p)
     {
     int n = strlen(tag);
+    if (p!=str && !isspace(p[-1]))
+    {
+        str = p+1;
+        goto restart;
+    }
+    if (p[n] == '=') n+=1;
     memset(p,' ',n);
     p+=n;
     }
@@ -426,7 +438,7 @@ int arg_extract_tagged_args(char* cmdline, arg_rec* argtable, int n,
         else
            {
            if (ErrMsg)
-              sprintf(ErrMsg,"missing %s%s argument", argtag,argname);
+               sprintf(ErrMsg,"missing argument: %s%s", argtag,argname);
            if (ErrMark)
               arg_sprint_marker(strlen(cmdline),1,ErrMark);
            return 0;
@@ -437,7 +449,7 @@ int arg_extract_tagged_args(char* cmdline, arg_rec* argtable, int n,
      if (!arg_extract_value(p,&argtable[i]))
         {
         if (ErrMsg)
-           sprintf(ErrMsg,"invalid %s%s argument", argtag,argname);
+            sprintf(ErrMsg,"invalid argument: %s%s", argtag,argname);
         if (ErrMark)
            arg_sprint_marker((int)(p-cmdline),1,ErrMark);
         return 0;
@@ -723,11 +735,16 @@ const char* arg_glossary(const arg_rec* argtable,  /**< pointer to the argument 
   {
   static char str[3000];
   static char NULLprefix[]="";
+  const char *fmt = "%s%s\n";
   int i;
 
   /*-- handle case of NULL prefix string --*/
-  if (prefix==NULL)
-     prefix=NULLprefix;
+  if (prefix==NULL) prefix=NULLprefix;
+  else if (prefix[0]=='\001')
+  {
+      fmt = prefix+1;
+      prefix = NULLprefix;
+  }
 
   /*-- initialise str to "" --*/
   str[0]='\0';
@@ -736,9 +753,13 @@ const char* arg_glossary(const arg_rec* argtable,  /**< pointer to the argument 
     if (argtable[i].argdescrip!=NULL)
       {
       char tempstr[ARGSTRLEN]="";
+      char tagname[ARGSTRLEN]="";
 
-      sprintf(tempstr, "%s%s%s%s\n", prefix, NULLSAFE(argtable[i].tagstr),
-              NAMESTRING(argtable[i]), argtable[i].argdescrip);
+      strcpy(tagname, NULLSAFE(argtable[i].tagstr));
+      strcat(tagname, NAMESTRING(argtable[i]));
+
+      strcat(str, prefix);
+      sprintf(tempstr, fmt, tagname, argtable[i].argdescrip);
       strcat(str,tempstr);
       }
   return (const char*)str;
@@ -815,7 +836,7 @@ int (arg_scanargv)(int argc,          /**< number of entries in 'argv'. */
   if (*p!='\0')
      {
      if (ErrMsg)
-        sprintf(ErrMsg,"unexpected argument");
+         sprintf(ErrMsg,"unexpected argument: %.*s", strcspn(p, " \n\t"),p);
      if (ErrMark)
         {
         int n = strcspn(p,whitespace);
@@ -913,10 +934,11 @@ const char* arg_syntax(const arg_rec* argtable,  /**< pointer to the argument ta
   /*-- concatenate consecutive argument descriptions to str.          --*/
   /*-- ignore those arguments whose tag and name strings are both "". --*/
   for (i=0; i<n; i++)
-    if (strcmp(NULLSAFE(argtable[i].tagstr),"")!=0 ||
-        strcmp(NAMESTRING(argtable[i]),"")!=0)
+    if (strcmp(NULLSAFE(argtable[i].argdescrip),"")!=0)
       {
-      const int has_default = (argtable[i].defaultstr==NULL) ? 0 : 1;
+      const int has_default = 
+          (argtable[i].defaultstr==NULL || 
+          argtable[i].defaultstr==ARGTABLE_NO_DEFAULT_VALUE);
 
       /*-- prefix all but first argument with space separator --*/
       if (addspace)
