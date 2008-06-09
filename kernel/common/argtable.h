@@ -30,6 +30,8 @@ USA.
 #define arg_scanargv(a,b,c,d,e,f,g) arg_scanargv_10(a,b,c,d,e,f,g)
 #endif
 
+#define ARGTABLE_NO_DEFAULT_VALUE   arg_no_default_value
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -159,13 +161,18 @@ typedef struct
   void       *valueptr;
   /**
   * The default string contains an optional default value to be used
-  * should the argument be missing from teh command line. All defaults are
-  * defined as strings (as they would appear on teh command line) and converted
+  * should the argument be missing from the command line. All defaults are
+  * defined as strings (as they would appear on the command line) and converted
   * to the appropriate data type during processing.
   *
   * If a default is specified as NULL then that argument is regarded as
   * mandatory, meaning that a parse error will result if the argument
   * was not given on the command line.
+  *
+  * Alternatively one may specify ARGTABLE_NO_DEFAULT_VALUE. When this
+  * special value is encountered, defaults assignment is suppressed.
+  * If the argument was not given on the command line storage pointed
+  * by valueptr is not changed.
   */
   const char *defaultstr;
   /**
@@ -292,6 +299,13 @@ const char* arg_syntax(const arg_rec* argtable,  /**< pointer to the argument ta
  * the glossary string, or it can be given as NULL in which
  * case it is ignored.
  *
+ * If 'prefix' string starts with '\001', the leading character
+ * is stripped and remaining part is interpreted as format string
+ * in the form "%s%s\n". First %s is substituted with concatenated
+ * tag and name, and second %s is substituted with description.
+ * If you like description lines to be aligned, pass something like
+ * this: "\001    %-30s %s\n".
+ *
  * Any NULL \<tag\> fields in the argument table will appear in the
  * glosssary as empty strings.
  *
@@ -353,6 +367,8 @@ void arg_dump(FILE* fp,                /**< output stream  */
               const arg_rec* argtable, /**< pointer to the argument table */
               int n                    /**< number of array elements in argtable[] */
               );
+
+extern const char *arg_no_default_value;
 
 #ifdef __cplusplus
 }
