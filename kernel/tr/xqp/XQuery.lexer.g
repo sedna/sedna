@@ -631,7 +631,7 @@ virtual inline void propagate_line() {
 #token AMPGT "&gt;"
 #token AMPAMP "&amp;"
 #token AMPEQUOT "&quot;"
-#token AMPAPOS "&apos;"
+#token AMPEAPOS "&apos;"
 
 
 

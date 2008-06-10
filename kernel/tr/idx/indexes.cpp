@@ -716,7 +716,7 @@ void idx_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void *
 	xptr vs=v2;
 	int s1,s2;
 	xptr key;
-	idx_get_size(vf,vs,s1,s2,Udata, key);
+	idx_get_size(vf,vs,s1,s2,Udata,key); /// idx_get_size is used here only to get (s1+s2)! vf and vs are not used further ...
 	buffer->copy_to_buffer(v1, size1);
 	vs=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
 	buffer->copy_to_buffer(vs, size1,s1+s2+sizeof(shft)+sizeof(xptr)-size1);

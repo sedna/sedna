@@ -1144,6 +1144,7 @@ static void make_escape_sm()
 	escape_sm->add_str("<", "&lt;", ~pat_attribute);
 	escape_sm->add_str(">", "&gt;", ~pat_attribute);
 	escape_sm->add_str("\"", "&quot;", pat_attribute);
+	escape_sm->add_str("'", "&apos;", pat_attribute);
 	escape_sm->add_str("\"", "\xEE\xA0\x83", pat_custom1);
 }
 static void tbuf_write_cb(void *param, const char *str, int len)
