@@ -730,9 +730,16 @@ void PPAttributeConstructor::next  (tuple &t)
 			{
 				xptr left_sib=removeIndirection(cont_leftind);
 				CHECKP(left_sib);
-				t_item typ=GETTYPE(GETSCHEMENODE(XADDR(left_sib)));
+				schema_node * ss=GETSCHEMENODE(XADDR(left_sib));
+				t_item typ=GETTYPE(ss);
 				if (typ!=attribute && typ!=xml_namespace)
-					throw XQUERY_EXCEPTION(XQTY0024);
+				{
+					 if (GETTYPE(ss->parent)!=document)
+						 throw XQUERY_EXCEPTION(XQTY0024);
+					 else
+						 throw XQUERY_EXCEPTION(XPTY0004);
+				}
+					
 					new_attribute= insert_attribute(removeIndirection(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
 			}			
 			else
