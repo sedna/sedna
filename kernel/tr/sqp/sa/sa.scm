@@ -345,8 +345,10 @@
      ; 2.9 Constructors
      ((element)
       (sa:analyze-element-constructor expr vars funcs ns-binding default-ns uri modules))
-     ((attribute namespace)
+     ((attribute)
       (sa:attribute-namespace expr vars funcs ns-binding default-ns uri modules))
+     ((namespace)
+      (sa:namespace expr vars funcs ns-binding default-ns uri modules))
      ((pi)
       (sa:pi-constructor expr vars funcs ns-binding default-ns uri modules))
      ((document text comment)
@@ -3273,6 +3275,39 @@
       (car (sa:op-args expr)) ns-binding (cadr default-ns))
      (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes))
     (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes))))
+
+; Namespace constructor
+(define (sa:namespace expr vars funcs ns-binding default-ns uri modules)
+  (and
+   (sa:assert-num-args expr 2)
+   (let ((prefix-pair
+          (sa:analyze-const (car (sa:op-args expr))
+                            '() '() '() ""))
+         (url-pair
+          (sa:analyze-string-const (cadr (sa:op-args expr))
+                                   '() '() '() "")))
+     (and
+      prefix-pair url-pair
+      (let ((prefix (caddr (car prefix-pair)))
+            (url (caddr (car url-pair))))
+        (cond
+          ((equal? prefix "xmlns")
+           (cl:signal-user-error XQST0070 "xmlns"))
+          ((and (equal? prefix "xml")
+                (not (string=? url "http://www.w3.org/XML/1998/namespace")))
+           (cl:signal-user-error
+            XQST0070
+            "Namespace prefix 'xml' bound to a different namespace"))
+          ((and (not (equal? prefix "xml"))
+                (string=? url "http://www.w3.org/XML/1998/namespace"))
+           (cl:signal-user-error
+            XQST0070
+            (string-append
+             "Namespace URI http://www.w3.org/XML/1998/namespace "
+             "bound to a prefix other than 'xml'")))
+          (else
+           (sa:propagate
+            expr vars funcs ns-binding default-ns uri modules sa:type-nodes))))))))
 
 (define (sa:pi-constructor expr vars funcs ns-binding default-ns uri modules)
   (and
