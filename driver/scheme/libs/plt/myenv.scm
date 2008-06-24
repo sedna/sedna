@@ -331,9 +331,18 @@
     (define (feature-req-satisfies? fr) ; does feature-request satisfies?
     (cond
      ((memq fr feature-ids) #t)
-     ((eq? fr 'plt-bytes) ;(ifdef 'bytes? #t #f)
-      (not (and (string->number (version)) (< (string->number (version)) 299)))
-     )
+     ((eq? fr 'plt-bytes)
+      ;(ifdef 'bytes? #t #f)
+      (not
+       (and
+        (string->number (version))
+        (<
+         ((lambda (version-num)
+            (if (< version-num 50)
+                (* 100 version-num)
+                version-num))
+          (string->number (version)))
+         299))))
      ((not (pair? fr)) #f)
      ((eq? 'and (car fr))
       (let loop ((clauses (cdr fr)))
