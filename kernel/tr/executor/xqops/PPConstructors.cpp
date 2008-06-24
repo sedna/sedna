@@ -326,6 +326,10 @@ void PPElementConstructor::next  (tuple &t)
 				ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
 				delete prefix;
 			}
+			else
+			{
+				ns=cxt->st_cxt->get_xmlns_by_prefix("");
+			}
 		}
 		if (!check_constraints_for_xs_NCName(name)||
 			(ns!=NULL && ns->prefix!=NULL &&!check_constraints_for_xs_NCName(ns->prefix)))
