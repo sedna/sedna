@@ -681,6 +681,8 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
 		par_indir=((n_dsc*)XADDR(parent))->indir;
 	}
 	n_dsc* par_desc=(n_dsc*)XADDR(parent);
+	if ((GETBLOCKBYNODE_ADDR(par_desc))->snode->type==document)
+		throw XQUERY_EXCEPTION(XPTY0004);
 	if ((GETBLOCKBYNODE_ADDR(par_desc))->snode->type!=virtual_root && isAttributePointerSet(par_desc,name,(ns==NULL)?NULL:ns->uri)!=XNULL  ) 
 		throw USER_EXCEPTION(XQDY0025);
 	int size=COUNTREFERENCES((GETBLOCKBYNODE(parent)),size_of_node((GETBLOCKBYNODE(parent))));
