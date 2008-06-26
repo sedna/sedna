@@ -420,7 +420,7 @@ void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_c
 	stm.add_str("<","&lt;");
 	stm.add_str("&","&amp;");
 	stm.add_str("\"","&quot;", pat_attribute);
-    stm.add_str("\'","&apos;", pat_attribute);
+    //stm.add_str("\'","&apos;", pat_attribute);
 
     m_ostr = &s;
     // firstly debug ostream is null; it is created if needed

@@ -331,13 +331,14 @@ void printNameSpace(xml_ns* nsd,se_ostream& crmout,t_print ptype)
 	if (ptype==xml )
 	{
 		if (nsd->prefix==NULL)
-			crmout <<" xmlns=\""<<
-			((nsd->uri==NULL)?"http://www.w3.org/XML/1998/namespace":nsd->uri)
-			<<"\"";
+			crmout <<" xmlns=\"";
 		else
-			crmout <<" xmlns:"<< nsd->prefix << "=\""<<
-			((nsd->uri==NULL)?"http://www.w3.org/XML/1998/namespace":nsd->uri)
-			<<"\"";
+			crmout <<" xmlns:"<< nsd->prefix << "=\"";
+	   if (nsd->uri==NULL)
+	   		crmout<<"http://www.w3.org/XML/1998/namespace";
+	   else
+	   		crmout.writeattribute(nsd->uri, strlen(nsd->uri));
+		crmout<<"\"";
 	}
 }
 /* prints descriptive schema  of collection*/
