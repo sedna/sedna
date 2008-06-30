@@ -250,7 +250,7 @@ CFLAGS   = -DC_NO_PIC_NO_DLL -O2 -w -fexceptions -Wno-deprecated $(INCLUDE_DIREC
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64
 CFLAGS_NOOPTIM = $(CFLAGS)
-CPPFLAGS = -O2 -w -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
+CPPFLAGS = -O2 -w -Wno-deprecated -fno-strict-aliasing -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D_FILE_OFFSET_BITS=64
