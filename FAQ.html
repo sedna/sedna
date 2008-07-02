@@ -264,7 +264,7 @@ restart). Note that you need root privileges.</p>
 
 <ol>
 <li>   
-Unfortunately FreeBSD has a bug in System V semaphores. To run Sedna you have to recompile [1] your kernel with the following patch:
+Unfortunately FreeBSD has a bug [3] in System V semaphores. To run Sedna you have to recompile [1] your kernel with the following patch:
 <pre>
 <code>   
       -------------------/usr/src/sys/kern/sysv_sem.c -------------------
@@ -304,6 +304,7 @@ Increase system IPC configuration either using "sysctl" utility [2] or through /
 
    [1] Building BSD custom kernel: <a href="http://www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html">http://www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html</a><br/>
    [2] Tuning with sysctl: <a href="http://www.freebsd.org/doc/en/books/handbook/configtuning-sysctl.html">http://www.freebsd.org/doc/en/books/handbook/configtuning-sysctl.html</a><br/>
+   [3] Problem report: <a href="http://www.freebsd.org/cgi/query-pr.cgi?pr=123731">kern/123731</a><br/>
 
 </body>
 </html>
