@@ -190,7 +190,7 @@ FreeBSD
    To run Sedna under FreeBSD you need to perform the following additional
    post-installation steps:
    
-   1. Unfortunately FreeBSD has a bug in System V semaphores. To run Sedna
+   1. Unfortunately FreeBSD has a bug [3] in System V semaphores. To run Sedna
       you have to recompile [1] your kernel with the following patch:
 
    
@@ -225,6 +225,7 @@ FreeBSD
    
    [1]. building BSD custom kernel:  http://www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html;
    [2]. tuning with sysctl: http://www.freebsd.org/doc/en/books/handbook/configtuning-sysctl.html;
+   [3]. problem report: http://www.freebsd.org/cgi/query-pr.cgi?pr=123731
      _________________________________________________________________
 
                               Getting Started
