@@ -68,6 +68,8 @@ float c_str2xs_float(const char *t)
         res = float_Neg_INF;
     else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
         res = float_Pos_INF;
+    else if ((end - start >= 3) && !isdigit(start[2]))
+         throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
     else
     {
         char* stop = NULL;
@@ -92,11 +94,14 @@ double c_str2xs_double(const char *t)
         res = double_Neg_INF;
     else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
         res = double_Pos_INF;
+    else if ((end - start >= 3) && !isdigit(start[2]))
+         throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
     else
     {
         char* stop = NULL;
         res = strtod(start, &stop);
-        if ((end - start == 0) || (stop != end)) throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
+        if ((end - start == 0) || (stop != end)) 
+            throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
     }
 
     return res;
