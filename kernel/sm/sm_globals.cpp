@@ -5,7 +5,6 @@
 
 #include "common/sedna.h"
 #include <string>
-#include "expat/expat.h"
 #include "common/base.h"
 #include "common/u/usocket.h"
 #include "common/ipc_ops.h"

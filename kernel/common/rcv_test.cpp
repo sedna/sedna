@@ -1,4 +1,4 @@
-#include "../libs/expat/expat.h"
+#include "expat/expat.h"
 #include "common/ipc_ops.h"
 #include "common/rcv_test.h"
 #include "common/errdbg/d_printf.h"

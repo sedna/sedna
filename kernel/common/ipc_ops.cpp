@@ -12,7 +12,7 @@
 #include "common/u/uhdd.h"
 #include "common/errdbg/d_printf.h"
 #include "common/config.h"
-#include "../libs/expat/expat.h"
+#include "expat/expat.h"
 
 #include <string>
 

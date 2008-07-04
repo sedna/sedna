@@ -8,7 +8,7 @@
 
 #include <string>
 #include "common/config.h"
-#include "../expat/expat.h"
+#include "expat/expat.h"
 
 std::string erase_ws(std::string str);
 
