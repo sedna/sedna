@@ -72,7 +72,7 @@ float c_str2xs_float(const char *t)
     {
         char* stop = NULL;
         double d = strtod(start, &stop);
-        if ((end - start == 0) || (stop != end) || u_is_nan(res) || u_is_pos_inf(res) || u_is_neg_inf(res)) 
+        if ((end - start == 0) || (stop != end) || u_is_nan(d) || u_is_pos_inf(d) || u_is_neg_inf(d)) 
             throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
 		res = (float)d;
     }
