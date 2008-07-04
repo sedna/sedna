@@ -148,3 +148,12 @@ __uint64 strto__uint64(const char *nptr, char **endptr, int base)
 #endif
 }
 
+__int64 u_double2int64(double v)
+{
+    __int64 res;
+    if(u_is_nan(v)) return 0;
+    if(u_is_neg_inf(v) || v < _I64_MIN) return _I64_MIN;
+    if(u_is_pos_inf(v) || v > _I64_MAX) return _I64_MAX;
+    res = (__int64)v;
+    return res;
+}

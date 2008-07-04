@@ -44,12 +44,18 @@ extern "C"
     void int2net_int(__int32 i, char *buf);
     void net_int2int(__int32 *i, char *buf);
 
-    /* buf length must not be less than 20 */
+    /// buf length must not be less than 20 
     char *int2c_str(int value, char *buf);
 
     __int64  strto__int64(const char *nptr, char **endptr, int base, int* overflow);
     __uint64 strto__uint64(const char *nptr, char **endptr, int base);
 
+    /// (__int64)INF, (__int64)NaN is undefined behaviour and give different
+    /// results on Win/Linux/Mac OS
+    /// returns 0 if NaN
+    ///         __I64_MAX if +INF, or v > _I64_MAX
+    ///         __I64_MIN if -INF, or v < _I64_MIN
+    __int64 u_double2int64(double v);
 
 #ifdef __cplusplus
 }
