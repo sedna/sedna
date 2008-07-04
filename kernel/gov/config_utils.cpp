@@ -5,7 +5,6 @@
 #include "gov/config_utils.h"
 #include "common/errdbg/d_printf.h"
 #include "gov/gov_globals.h"
-#include "../libs/expat/expat.h"
 #include "common/ipc_ops.h"
 
 
