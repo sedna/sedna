@@ -1251,8 +1251,9 @@ void PPFnSubstring::next(tuple &t)
         if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:substring (xs:double or promotable expected).");
         
-        start_pos = (__int64)floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
-        
+        double temp = floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
+        start_pos = u_is_nan(temp) ? _I64_MAX : u_double2int64(temp);
+
         start_child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:substring.");
 
@@ -1267,7 +1268,8 @@ void PPFnSubstring::next(tuple &t)
             if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:substring (xs:double or promotable expected).");
 
-            length = (__int64)floor(cast(tc, xs_double).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
+            /// u_double2int64(NaN) is 0, it is ok for us
+            length = u_double2int64(floor(cast(tc, xs_double).get_xs_double() + 0.5)); //floor(x+0.5) is equal there to fn:round
         
             length_child.op->next(t);
             if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:substring.");
