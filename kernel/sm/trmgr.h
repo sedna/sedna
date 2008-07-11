@@ -12,6 +12,8 @@
 
 #include "common/u/uevent.h"
 
+#include "common/lfsGlobals.h"
+
 #ifdef _WIN32
 #define CHEKPOINT_THREAD_STACK_SIZE		10024
 #else
@@ -33,7 +35,7 @@ void start_chekpoint_thread();
 void init_checkpoint_sems();
 void shutdown_chekpoint_thread();
 void release_checkpoint_sems();
-void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn);
+void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn);
 void recover_database_by_physical_and_logical_log(int db_id);
 
 void init_transaction_ids_table();

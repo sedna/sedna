@@ -87,7 +87,7 @@ t_item inline get_node_type (xptr node)
 
 #ifdef SE_ENABLE_FTSEARCH
 void clear_ft_sequences();
-void execute_modifications(bool alw = false);
+void execute_modifications();
 void update_insert_sequence(xptr node,ft_index_cell* icell);
 void update_update_sequence(xptr node,ft_index_cell* icell);
 void update_delete_sequence(xptr node,ft_index_cell* icell);

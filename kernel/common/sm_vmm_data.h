@@ -10,6 +10,7 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 #include "common/wustructures.h"
+#include "common/lfsGlobals.h"
 
 struct vmm_sm_blk_hdr
 {
@@ -25,7 +26,7 @@ struct vmm_sm_blk_hdr
 	static void init(vmm_sm_blk_hdr *hdr)
 	{
 		hdr->p = XNULL;
-		hdr->lsn = NULL_LSN;
+		hdr->lsn = LFS_INVALID_LSN;
 		memset(hdr->versionsHeader.xptr, 0, sizeof hdr->versionsHeader.xptr);
 		memset(hdr->versionsHeader.creatorTs, -1, sizeof hdr->versionsHeader.creatorTs);
 		hdr->roffs = 0;

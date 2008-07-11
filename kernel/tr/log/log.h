@@ -11,7 +11,7 @@
 #include "common/xptr.h"
 #include "tr/structures/nodes.h"
 #include "tr/mo/micro.h"
-#include "sm/llmgr/llmgr_core.h"
+#include "tr/log/logiclog.h"
 #include <string>
 #include "tr/executor/base/PPBase.h"
 
@@ -30,14 +30,14 @@ void hl_logical_log_on_session_end();
 void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active);
 
 void up_transaction_block_sems();    // this functions
-void down_transaction_block_sems();  //                serve to block starting of all transactions before checkpoint
+void down_transaction_block_sems();  // serve to block starting of all transactions before checkpoint
 
 void down_concurrent_micro_ops_number();
 void up_concurrent_micro_ops_number();
 void wait_for_checkpoint_finished();
 void activate_and_wait_for_end_checkpoint();
 
-LONG_LSN get_lsn_of_first_record_in_logical_log();
+LSN get_lsn_of_first_record_in_logical_log();
 
 void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const char* uri,const char* prefix,bool inserted);
 void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const  char* value,int data_size,const char* uri,const char* prefix,bool inserted);
@@ -64,6 +64,5 @@ void hl_logical_log_rollback(transaction_id);
 void hl_enable_log();
 void hl_disable_log();
 
-extern llmgr_core* tr_llmgr;
 #endif
 

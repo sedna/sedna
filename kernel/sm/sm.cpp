@@ -9,7 +9,6 @@
 #include "sm/sm_functions.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/llmgr/llmgr.h"
 #include "common/u/usem.h"
 #include "common/u/uevent.h"
 #include "common/SSMMsg.h"
@@ -25,6 +24,8 @@
 #include "common/ipc_ops.h"
 
 #include "sm/wu/wu.h"
+#include "sm/llsm/llMain.h"
+#include "sm/llsm/physrcv.h"
 
 #include "common/rcv_test.h"
 
@@ -655,12 +656,15 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("SM start_chekpoint_thread done"));
 
         //start up logical log
-		if (!ll_logical_log_startup(sedna_db_version)) throw SYSTEM_EXCEPTION("Inconsistent database state");
-        elog(EL_LOG, ("SM ll_logical_log_startup done"));
+		bool is_stopped_correctly;
+		llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly);
+		U_ASSERT(is_stopped_correctly == true);
+//		if (!ll_logical_log_startup(sedna_db_version)) throw SYSTEM_EXCEPTION("Inconsistent database state");
+        elog(EL_LOG, ("SM logical log has been started"));
 
         //enable checkpoints
-        ll_log_set_checkpoint_flag(true);
-        elog(EL_LOG, ("SM ll_logical_log_startup done"));
+        llEnableCheckpoints();
+//        elog(EL_LOG, ("SM ll_logical_log_startup done"));
 
 
 #ifdef LOCK_MGR_ON
@@ -701,8 +705,8 @@ int main(int argc, char **argv)
             if (ssmmsg->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
 
-            WuSetTimestamp(ll_returnTimestampOfPersSnapshot() + 1);
-            WuInitExn(0,0, ll_returnTimestampOfPersSnapshot());
+            WuSetTimestamp(llGetPersTimestamp() + 1);
+            WuInitExn(0,0, llGetPersTimestamp());
             elog(EL_LOG, ("SM : Wu is initialized"));
 
 #ifdef RCV_TEST_CRASH
@@ -768,7 +772,8 @@ int main(int argc, char **argv)
         bm_shutdown();
 
         //shutdown logical log
-        ll_logical_log_shutdown();
+//        ll_logical_log_shutdown();
+		llRelease();
 
         //release checkpoint resources
         release_checkpoint_sems();
@@ -826,7 +831,9 @@ void recover_database_by_physical_and_logical_log(int db_id)
        init_checkpoint_sems();
        elog(EL_LOG, ("SM : init_checkpoint_sems done"));
 
-       bool is_stopped_correctly = ll_logical_log_startup(sedna_db_version/*out parameter*/);
+       bool is_stopped_correctly;// = ll_logical_log_startup(sedna_db_version/*out parameter*/);
+	   llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly);
+
        elog(EL_LOG, ("SM : ll_logical_log_startup done"));
        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
        {
@@ -839,7 +846,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        d_printf1("logical log startup call finished successfully\n");
 
        // recover persistent heap
-       if (!is_stopped_correctly) ll_recover_pers_heap();
+       if (!is_stopped_correctly) llRcvRestorePh();
        elog(EL_LOG, ("SM : ll_recover_pers_heap done"));
 
        //create checkpoint thread
@@ -869,14 +876,14 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : bm_startup done"));
 
        //recover data base by physical log
-       LONG_LSN last_checkpoint_lsn = NULL_LSN;
-       if (!is_stopped_correctly) last_checkpoint_lsn = ll_recover_db_by_phys_records();
+       LSN last_checkpoint_lsn = LFS_INVALID_LSN;
+       if (!is_stopped_correctly) last_checkpoint_lsn = llRecoverPhysicalState();
 
        d_printf1("db recovered by phys logs successfully\n");
        elog(EL_LOG, ("SM : db recovered by phys log successfully"));
 
        //disable checkpoints
-       ll_log_set_checkpoint_flag(false);
+       llDisableCheckpoints();
        elog(EL_LOG, ("SM : ll_log_set_checkpoint_flag done"));
         
 #ifdef LOCK_MGR_ON
@@ -902,9 +909,9 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        d_printf1("OK\n");
 
-       WuSetTimestamp(ll_returnTimestampOfPersSnapshot() + 1);
+       WuSetTimestamp(llGetPersTimestamp() + 1);
 //       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
-       WuInitExn(0,0,ll_returnTimestampOfPersSnapshot()); // turn on versioning mechanism on recovery
+       WuInitExn(0,0,llGetPersTimestamp()); // turn on versioning mechanism on recovery
        elog(EL_LOG, ("SM : Wu is initialized"));
 
        //recover database by logical log
@@ -912,7 +919,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : db recovered by logical log successfully"));
 
        //enable checkpoints
-	   ll_log_set_checkpoint_flag(true);
+	   llEnableCheckpoints();
        elog(EL_LOG, ("SM : checkpoints enabled"));
 
        if (ssmmsg->stop_serve_clients() != 0)
@@ -933,7 +940,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : bm_shutdown done"));
 
        //shutdown logical log
-       ll_logical_log_shutdown();
+//       ll_logical_log_shutdown();
+	   llRelease();
        elog(EL_LOG, ("SM : ll_logical_log_shutdown done"));
 
        //release checkpoint resources

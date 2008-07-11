@@ -270,8 +270,8 @@ ftlog_file *SednaIndexJob::get_log_file(const char *index_name)
 		lf->last_lsn = 0;
 		log_files_map[index_name_str] = lf;
 		lf->start_new_record(FTLOG_HEADER);
-		LONG_LSN tran_first_lsn = get_lsn_of_first_record_in_logical_log();
-		U_ASSERT(tran_first_lsn != NULL_LSN);
+		LSN tran_first_lsn = get_lsn_of_first_record_in_logical_log();
+		U_ASSERT(tran_first_lsn != LFS_INVALID_LSN);
 		lf->write_data(&tran_first_lsn, sizeof(tran_first_lsn));
 		return lf;
 	}
@@ -422,7 +422,7 @@ void SednaIndexJob::rollback()
 		ftlog_file *log_file = it->second;
 		log_file->flush();
 		log_file->seek_start();
-		LONG_LSN tran_first_lsn;
+		LSN tran_first_lsn;
 		if (log_file->read_header(&tran_first_lsn))
 			rollback_index(log_file, it->first.c_str());
 		log_file->close_and_delete_file(it->first.c_str());
@@ -434,7 +434,7 @@ void SednaIndexJob::rollback()
 	}
 	log_files_map.clear();
 }
-void SednaIndexJob::recover_db_file(const char *fname, const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn)
+void SednaIndexJob::recover_db_file(const char *fname, trn_cell_analysis_redo *redo_list)
 {
 	char *index_name = se_new char[strlen(fname)];
 	transaction_id trid;
@@ -456,48 +456,22 @@ void SednaIndexJob::recover_db_file(const char *fname, const trns_undo_analysis_
 	
 	ftlog_file log_file;
 	log_file.file = log_ufile;
-	LONG_LSN trans_first_lsn;
+	LSN trans_first_lsn;
 	int res = log_file.read_header(&trans_first_lsn);
-	bool rollback;
-	if (trans_first_lsn > checkpoint_lsn)
-	{
-		bool f = false;
-		trns_redo_analysis_list::const_iterator redo_it = redo_list.begin();
-		while (redo_it != redo_list.end())
-		{
-			if (redo_it->trid == trid && redo_it->trn_end_lsn > trans_first_lsn)
-			{
-				rollback = false;
-				f = true;
-				break;
-			}
+	bool rollback = false;
+	
+	trn_cell_analysis_redo *it = redo_list;
 
-			redo_it++;
-		}
-		if (!f)
-		{
-			rollback = true; //it's either nowhere or in undo_list
-		}
-	}
-	else
+	while (it != NULL)
 	{
-		bool f = false;
-		trns_undo_analysis_list::const_iterator undo_it = undo_list.begin();
-		while (undo_it != undo_list.end())
-		{
-			if (undo_it->trid == trid)
-			{
-				rollback = true;
-				f = true;
-				break;
-			}
-			undo_it++;
-		}
-		if (!f)
-		{
-			rollback = false;
-		}
+		if (it->trid == trid && it->end_lsn > trans_first_lsn)
+			break;
+		
+		it = it->next;
 	}
+
+	if (it == NULL)
+		rollback = true;
 
 	if (rollback)
 	{
@@ -520,7 +494,7 @@ void SednaIndexJob::rebuild_all_ftph()
     }
 }
 
-void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn, bool is_hb)
+void SednaIndexJob::recover_db(trn_cell_analysis_redo *redo_list, bool is_hb)
 {
 	if (is_hb) // recovery process from hot-backup copy - need to rebuild all ft-indexes from ph
 	{
@@ -545,7 +519,7 @@ void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const t
         int found = 1;
         while (found)
         {
-			recover_db_file(find_data.cFileName, undo_list, redo_list, checkpoint_lsn);
+			recover_db_file(find_data.cFileName, redo_list);
             found = FindNextFile(fhanldle, &find_data);
         }
         if (FindClose(fhanldle) == 0)
@@ -563,7 +537,7 @@ void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const t
 		{
 			int l = strlen(dent->d_name);
 			if (l > 4 && !strcmp((char*)dent->d_name + l - 4, ".log"))
-					recover_db_file(dent->d_name, undo_list, redo_list, checkpoint_lsn);
+					recover_db_file(dent->d_name, redo_list);
 		}
 	
 		if (0 != closedir(dir))

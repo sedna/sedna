@@ -6,7 +6,11 @@
 #include "common/u/usem.h"
 #include "sm/trmgr.h"
 #include "sm/hb_utils.h"
-#include "sm/llmgr/llmgr.h"
+
+#include "sm/llsm/llhb.h"
+#include "sm/llsm/llMain.h"
+
+#include "common/lfsGlobals.h"
 
 static bool hb_in_process = false;
 
@@ -15,8 +19,8 @@ static void ResetHbState()
 {
 	    if (hb_in_process)
 	    { 
-	    	ll_hotbackup(HB_END);             // notify logical log
-			ll_log_set_checkpoint_flag(true); // enable checkpoints
+	    	llHotBackup(HB_END);             // notify logical log
+			llEnableCheckpoints(); 			 // enable checkpoints
 		}
 		
 		hb_in_process = false;
@@ -29,29 +33,27 @@ hb_state hbProcessStartRequest(hb_state state)
 	if (is_recovery_mode)
 		return HB_ERR;
 
-	// disable checkpoints
-	ll_log_set_checkpoint_flag(false);
-
-	// if we are currently making checkpoint ask hbp to wait
-	if (ll_log_get_checkpoint_on_flag())
-	{
-		return HB_WAIT;
-	}
-
 	// if hbp requests checkpoint before hot-backup initiate it
 	if (state == HB_START_CHECKPOINT)
 	{
-	 	ll_set_checkpoint_on_flag(true);
-
-	 	if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
-    		throw SYSTEM_EXCEPTION("Event signaling for checkpoint on hot-backup failed");
+	 	llActivateCheckpoint();
+		llDisableCheckpoints();
 
     	return HB_WAIT;
     }
 
+	// disable checkpoints
+	llDisableCheckpoints();
+
+	// if we are currently making checkpoint ask hbp to wait
+	if (llGetCheckpointActiveFlag())
+	{
+		return HB_WAIT;
+	}
+
     // all ok, checkpoints are disabled, we can continue
     // first, switch logical log to hb mode (special records about blocks to support consistency)
-    ll_hotbackup(HB_START);
+    llHotBackup(HB_START);
 
     hb_in_process = true;
 
@@ -59,13 +61,13 @@ hb_state hbProcessStartRequest(hb_state state)
 }
 
 // processes Archive Logical Log request
-hb_state hbProcessLogArchRequest(__int64 *lnumber)
+hb_state hbProcessLogArchRequest(uint64_t *lnumber)
 {
     // archive log and switch off special records about blocks
-    ll_hotbackup(HB_ARCHIVELOG);
+    llHotBackup(HB_ARCHIVELOG);
 
     // get last logical log archive number
-    *lnumber = ll_get_last_archived_log_file_number();
+    *lnumber = llHbLastArchiveFile();
 
     return HB_CONT;
 }
@@ -82,16 +84,16 @@ hb_state hbProcessEndRequest()
 hb_state hbProcessGetTsRequest(TIMESTAMP *ts)
 {
     // retrieve timestamp of persistent snapshot
-    *ts = ll_returnTimestampOfPersSnapshot();
+    *ts = llGetPersTimestamp();
 
 	return HB_CONT;
 }
 
 // processes request for previous log file
-hb_state hbProcessGetPrevLogRequest(__int64 *lnumber)
+hb_state hbProcessGetPrevLogRequest(uint64_t *lnumber)
 {
     // get prev logical log file number, or -1 
-    *lnumber = ll_get_prev_archived_log_file_number(*lnumber);
+    *lnumber = llHbPrevArchivedLog(*lnumber);
 
     return HB_CONT;
 }

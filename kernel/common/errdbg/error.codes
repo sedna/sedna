@@ -1707,3 +1707,9 @@ sedna-err:SE2041
 
    Result is cut, because its size exceeds max allowed size (set by client).
 
+######################################################################
+#  lfs errors
+######################################################################
+sedna-err:SE4901
+
+   Internal LFS error.

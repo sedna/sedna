@@ -13,7 +13,6 @@
 #include "common/u/uprocess.h"
 #include "common/u/uutils.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/llmgr/llmgr.h"
 #include "common/u/uprocess.h"
 #include "common/base.h"
 #include "sm/trmgr.h"
@@ -25,6 +24,8 @@
 #include "common/SSMMsg.h"
 #include "sm/trmgr.h"
 #include "sm/sm_functions.h"
+#include "sm/llsm/physlog.h"
+#include "sm/llsm/llMain.h"
 
 #include "common/rcv_test.h"
 
@@ -93,7 +94,7 @@ void AdvanceSnapshots()
    			throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
 	}
 	RECOVERY_CRASH;
-	ll_updateMinRcvLSN();
+//	ll_updateMinRcvLSN();
 }
 
 // new checkpoint and snaphot advancer thread
@@ -105,7 +106,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 
   int times=1;  
-  LONG_LSN cp_lsn;
+  LSN cp_lsn;
   while (true)
   {
 //    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
@@ -117,7 +118,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
     shutdown_event_call = shutdown_checkpoint_thread;
 
-    if (shutdown_event_call || ll_log_get_checkpoint_on_flag()) // checkpoint is needed
+    if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
     {
 	    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     	{
@@ -142,7 +143,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 		RECOVERY_CRASH;
 			
 		WuEnumerateVersionsParams params;
-   		WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
+   		WuEnumerateVersionsForCheckpointExn(&params, llLogCheckpoint);
 
 		RECOVERY_CRASH;
 
@@ -153,12 +154,12 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 			RECOVERY_CRASH;
         
-			ll_logical_log_flush();
+			llFlushAll();
     		d_printf1("flush logical log completed\n");
 
 			RECOVERY_CRASH;
 
-			ll_truncate_logical_log();
+			llTruncateLog();
 
     		WuOnCompleteCheckpointExn();
 		}
@@ -168,7 +169,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
         	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
 	         throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
 
-		ll_set_checkpoint_on_flag(false);
+		llOnCheckpointFinish();
 
    		elog(EL_LOG, ("Checkpoint procedure is finished"));
 	}
@@ -317,7 +318,7 @@ void release_checkpoint_sems()
 }
 
 
-void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn)
+void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
 {
 #ifdef RECOVERY_ON
   if (USemaphoreCreate(&wait_for_recovery, 0, 1, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, NULL, __sys_call_error) != 0)
@@ -617,7 +618,7 @@ void PhOnSnapshotDelete(TIMESTAMP ts, bool isDelete)
     else
     	throw USER_EXCEPTION(SE4605);
     
-    if (isDelete && ts != ll_returnTimestampOfPersSnapshot())
+    if (isDelete && ts != llGetPersTimestamp())
 	    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
     	   throw USER_EXCEPTION2(SE4041, ph_file_name.c_str());
 }

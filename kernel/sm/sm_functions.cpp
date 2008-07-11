@@ -7,7 +7,6 @@
 #include <string>
 #include "sm/sm_functions.h"
 #include "sm/sm_globals.h"
-#include "sm/llmgr/llmgr.h"
 #include "sm/bufmgr/bm_core.h"
 #include "common/u/usem.h"
 #include "common/u/umutex.h"

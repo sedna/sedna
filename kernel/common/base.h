@@ -18,7 +18,7 @@
 #include "common/rcv_test.h"
 #include "common/wutypes.h"
 
-#define SEDNA_DATA_STRUCTURES_VER 7
+#define SEDNA_DATA_STRUCTURES_VER 8
 
 // buffer memory offset; this type is used for addressing buffers in buffer
 // memory area by defining offset of buffer from the beginning of the shared
@@ -26,11 +26,11 @@
 typedef int ramoffs;
 #define RAMOFFS_OUT_OFF_BOUNDS                          INT_MAX
 
-typedef __int64 LSN;
+//typedef __int64 LSN;
 //typedef long LSN;
-typedef __int64 LONG_LSN;
+//typedef __int64 LONG_LSN;
 typedef __uint32 CP_counter;
-#define  NULL_LSN (-1)
+//#define  NULL_LSN (-1)
 #define  NULL_FILE (-1)
 
 #define MAX_FILE_SIZE_WITHOUT_CHECKPOINT 50*(1024*1024)
@@ -164,6 +164,8 @@ extern global_name TRIGGER_SEMAPHORE_STR;
 
 extern global_name CHARISMA_SSMMSG_GOV_ID;
 extern global_name CHARISMA_GOVERNOR_IS_READY;
+extern global_name SEDNA_LFS_SEM_NAME;
+extern global_name SEDNA_LFS_SHARED_MEM_NAME;
 extern global_name CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME;
 extern global_name CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME;
 extern global_name CHARISMA_SM_WAIT_FOR_SHUTDOWN;
@@ -306,7 +308,7 @@ struct sm_msg_struct
         } swap_data;
 
         struct {
-            __int64 lnumber;
+            uint64_t lnumber;
             hb_state state;
             TIMESTAMP ts;
         } hb_struct;
