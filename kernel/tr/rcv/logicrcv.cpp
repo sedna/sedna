@@ -39,6 +39,7 @@
 
 static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purposes
 static trn_cell_analysis_redo *rcv_list = NULL;
+static LSN end_rcv_lsn;
 
 // Returns previous lsn for rollback
 static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
@@ -50,7 +51,7 @@ static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
 	LSN lsn = curr_lsn + llGetRecordSize(RecBuf);
 
-    if (lsn > llInfo->last_lsn) // we don't need synchronization here since this is one-thread access
+    if (lsn > end_rcv_lsn) // we don't need synchronization here since this is one-thread access
     	return LFS_INVALID_LSN;
     
     return lsn;
@@ -74,7 +75,7 @@ static bool llRcvPrereqRedo(LSN lsn, void *RecBuf)
 	// this function tries to find transaction which start_lsn <=lsn <=end_lsn
 	redo_trn_cell = llFindTrnCell(rcv_list, *((transaction_id *)(rec + sizeof(char))), lsn);
 
-    return (redo_trn_cell != NULL || redo_trn_cell->finish_status != TRN_COMMIT_FINISHED);
+    return (redo_trn_cell != NULL && redo_trn_cell->finish_status == TRN_COMMIT_FINISHED);
 }
 
 // Recover element
@@ -830,7 +831,6 @@ struct llRecInfo llRcvLogRecsInfo[] =
 	{LL_DELETE_DOC_TRG, llRcvTrigger},
 	{LL_INSERT_COL_TRG, llRcvTrigger},
 	{LL_DELETE_COL_TRG, llRcvTrigger},
-	{LL_DEFAULT, llProcessRcvError},
 };
 static int llRcvLogRecsInfoLen = sizeof(llRcvLogRecsInfo) / sizeof(llRecInfo);
 
@@ -863,6 +863,8 @@ static void llRcvRedoTrns(trn_cell_analysis_redo *rcv_list, LSN start_lsn, LSN e
 
 	if (start_lsn > end_lsn )
 		throw USER_EXCEPTION(SE4152);
+
+	end_rcv_lsn = end_lsn;
 
 	// redo transactions by scaning all its records
 	llScanRecords(llRcvLogRecsInfo, llRcvLogRecsInfoLen, start_lsn, llGetNextRcvRec, llRcvPrereqRedo);

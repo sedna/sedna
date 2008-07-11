@@ -102,7 +102,7 @@ static void llRcvAnalyzeCommitRec(LSN lsn, void *RecBuf)
 
 	redo_trn_cell = find_last_redo_trn_cell(rcv_list, trid);
 
-	if (redo_trn_cell != NULL && redo_trn_cell->finish_status != TRN_NOT_FINISHED)
+	if (redo_trn_cell != NULL && redo_trn_cell->finish_status == TRN_NOT_FINISHED)
     {
 		redo_trn_cell->finish_status = TRN_COMMIT_FINISHED;
 		redo_trn_cell->end_lsn = lsn;
@@ -116,7 +116,7 @@ static void llRcvAnalyzeRollbackRec(LSN lsn, void *RecBuf)
 
 	redo_trn_cell = find_last_redo_trn_cell(rcv_list, trid);
 
-	if (redo_trn_cell != NULL && redo_trn_cell->finish_status != TRN_NOT_FINISHED)
+	if (redo_trn_cell != NULL && redo_trn_cell->finish_status == TRN_NOT_FINISHED)
     {
 		redo_trn_cell->finish_status = TRN_ROLLBACK_FINISHED;
 		redo_trn_cell->end_lsn = lsn;
