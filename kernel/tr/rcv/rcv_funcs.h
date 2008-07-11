@@ -10,10 +10,10 @@
 #include <vector>
 #include "common/base.h"
 #include "common/xptr.h"
+#include "common/lfsGlobals.h"
 
 void rollback_tr_by_logical_log(transaction_id _trid);
-void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn);
-void exec_micro_op(const char* rec, int len, bool isUNDO, bool isHB);
+void recover_db_by_logical_log(const LSN last_cp_lsn);
 void print_value(const char* value, int value_size);
 
 extern int rcv_number_of_records;

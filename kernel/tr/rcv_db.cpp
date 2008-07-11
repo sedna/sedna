@@ -141,7 +141,7 @@ int TRmain (int argc, char** argv)
       on_transaction_begin(sm_server, ppc, true);//true means recovery active
       on_kernel_recovery_statement_begin();
 
-      LONG_LSN last_cp_lsn = _atoi64(argv[2]);
+      LSN last_cp_lsn = _atoi64(argv[2]);
 //      std::cout << "last checkpoint lsn=" << last_cp_lsn << endl;
 
 //      DebugBreak();

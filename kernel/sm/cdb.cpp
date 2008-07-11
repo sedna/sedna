@@ -14,7 +14,7 @@
 #include "sm/cdb_globals.h"
 #include "sm/sm_functions.h"
 #include "common/ph/pers_heap.h"
-#include "sm/llmgr/llmgr_core.h"
+#include "sm/llsm/llMain.h"
 #include "sm/db_utils.h"
 #include "common/errdbg/d_printf.h"
 #include "common/u/uhdd.h"
@@ -26,7 +26,7 @@
 #include "common/pping.h"
 #include "common/ipc_ops.h"
 #include "common/config.h"
-#include "sm/llmgr/llmgr.h"
+#include "sm/wu/wu.h"
 
 using namespace std;
 
@@ -285,7 +285,7 @@ int main(int argc, char **argv)
                                       db_name,
                                       bufs_num,
                                       max_trs_num,
-                                      LOG_FILE_PORTION_SIZE,
+                                      0,
                                       upd_crt);
 
         SetGlobalNamesDB(db_id);
@@ -318,6 +318,7 @@ int main(int argc, char **argv)
 
              d_printf1("create_db call successful\n");
 
+/*
              create_logical_log((string(db_files_path) + string(db_name) + ".0llog").c_str(),
                                 0,
                                 0,
@@ -333,10 +334,13 @@ int main(int argc, char **argv)
                                );
 
              d_printf1("create_logical_log call successful\n");
-
+*/
+             llCreateNew(db_files_path, db_name);
+             
              init_checkpoint_sems();
 
-			 ll_logical_log_startup(sedna_db_version);
+		     bool is_stopped_correctly;
+	   		 llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly);
              d_printf1("logical_log_startup call successful\n");
              
              bm_startup();
@@ -355,7 +359,7 @@ int main(int argc, char **argv)
              bm_shutdown();
              d_printf1("bm_shutdown call successful\n");
 
-	         ll_logical_log_shutdown();
+	         llRelease();
              d_printf1("logical_log_shutdown call successful\n");
 
              release_checkpoint_sems();

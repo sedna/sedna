@@ -4,11 +4,12 @@
  */
 #include "common/sedna.h"
 #include "common/sm_vmm_data.h"
+#include "common/lfsGlobals.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
-#include "sm/llmgr/llmgr.h"
 #include "sm/wu/wu.h"
-
+#include "sm/llsm/llMain.h"
+#include "sm/llsm/physlog.h"
 
 /*******************************************************************************
 ********************************************************************************
@@ -39,14 +40,14 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
     
-    TIMESTAMP pers_ts = ll_returnTimestampOfPersSnapshot();
+    TIMESTAMP pers_ts = llGetPersTimestamp();
 
     if (*hd == NULL)
     {
         put_block_to_buffer(-1, p, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(p, (void *)blk, PAGE_SIZE);
+        if (IS_DATA_BLOCK_LP(blk)) llLogFreeBlocksInfo(p, (void *)blk, PAGE_SIZE);
 
         free_blk_hdr::init(blk);
         *hd = p;
@@ -64,7 +65,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         put_block_to_buffer(-1, p, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(p, (void *)blk, PAGE_SIZE);
+        if (IS_DATA_BLOCK_LP(blk)) llLogFreeBlocksInfo(p, (void *)blk, PAGE_SIZE);
 
         free_blk_hdr::init(blk);
         blk->nblk = *hd;
@@ -75,7 +76,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         if (IS_DATA_BLOCK_LP(blk))
         {
         	if (blk->ts < pers_ts)
-        		ll_add_free_blocks_info(*hd, (void *)blk, PAGE_SIZE);
+        		llLogFreeBlocksInfo(*hd, (void *)blk, PAGE_SIZE);
 			WuGetTimestamp(&(blk->ts));
 		}
 
@@ -96,7 +97,7 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
     
-    TIMESTAMP pers_ts = ll_returnTimestampOfPersSnapshot();
+    TIMESTAMP pers_ts = llGetPersTimestamp();
 
     put_block_to_buffer(-1, *hd, &offs);
     blk = (free_blk_hdr*)OFFS2ADDR(offs);
@@ -107,7 +108,7 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
         if (IS_DATA_BLOCK_LP(blk))
         {
         	if (blk->ts < pers_ts)
-        		ll_add_free_blocks_info(*hd, (void *)blk, PAGE_SIZE);
+        		llLogFreeBlocksInfo(*hd, (void *)blk, PAGE_SIZE);
 			WuGetTimestamp(&(blk->ts));
 		}
 
@@ -122,7 +123,7 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
         if (IS_DATA_BLOCK_LP(blk))
         {
         	if (blk->ts < pers_ts)
-        		ll_add_free_blocks_info(*hd, (void *)blk, PAGE_SIZE);
+        		llLogFreeBlocksInfo(*hd, (void *)blk, PAGE_SIZE);
 			WuGetTimestamp(&(blk->ts));
 		}
 
@@ -237,7 +238,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
         (__int64)PAGE_SIZE > mb->data_file_max_size + (__int64)PAGE_SIZE)
         throw USER_EXCEPTION(SE1011);
     
-	ll_add_decrease_info(mb->data_file_cur_size);
+	llLogDecrease(mb->data_file_cur_size);
     
     int res = 0;
     __int64 dsk_offs = 0;

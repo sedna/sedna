@@ -8,6 +8,8 @@
 #include "common/ipc_ops.h"
 #include "common/sp.h"
 
+#include "common/lfsGlobals.h"
+
 #include <string>
 
 #define MAX_SE_SOCKET_STR (SE_SOCKET_MSG_BUF_SIZE - 5)
@@ -85,7 +87,7 @@ static int RetrieveAllFileNames()
 
 	if (msg.data.hb_struct.state == HB_ERR) return -1;
 
-	while (msg.data.hb_struct.lnumber != -1)
+	while (msg.data.hb_struct.lnumber != LFS_INVALID_FILE)
 	{
 		if ((len = hbMakeLogFileName(buf, MAX_SE_SOCKET_STR, hbDbName->c_str(), msg.data.hb_struct.lnumber)) == -1)
 			return -1;

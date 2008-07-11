@@ -10,7 +10,8 @@
 
 #include "tr/ft/FTsearch.h"
 #include "tr/executor/base/xptr_sequence.h"
-#include "sm/llmgr/llmgr_core.h"
+#include "tr/rcv/logican.h"
+#include "common/u/uhdd.h"
 
 #define FTLOG_HEADER		0x010
 #define FTLOG_CREATE_BEGIN	0x0001
@@ -125,7 +126,7 @@ struct ftlog_file
 	int read_header(LSN *_trans_first_lsn_)
 	{
 		ftlog_record lrec;
-		LONG_LSN trans_first_lsn;
+		LSN trans_first_lsn;
 
 		int res = this->read_data(&lrec, sizeof(ftlog_record));
 		if (res == 0)
@@ -172,13 +173,13 @@ class SednaIndexJob : public dtSearch::DIndexJob {
 		   static void start_commit();
 		   static void fix_commit();
 		   static void rollback();
-		   static void recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn, bool is_hb);
+		   static void recover_db(trn_cell_analysis_redo *redo_list, bool is_hb);
 
 	  private:
 		  PPOpIn* seq;
 		  const ft_index_cell *ft_idx;
 		  static void rollback_index(ftlog_file *log_file, const char *index_name);
-		  static void recover_db_file(const char *fname, const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn);
+		  static void recover_db_file(const char *fname, trn_cell_analysis_redo *redo_list);
 	   	  static void rebuild_all_ftph();
 		  static void rebuild_index(const char *index_name);
 		  

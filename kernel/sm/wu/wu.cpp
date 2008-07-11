@@ -10,7 +10,7 @@
 #include "wudock.h"
 
 #include "common/base.h"
-#include "sm/llmgr/llmgr.h"
+#include "sm/llsm/physlog.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
 #include "common/sm_vmm_data.h"
@@ -404,12 +404,12 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
 			LocateBlockHeader(bufferId, &header))
 			{
 				oldVerTs = header->versionsHeader.creatorTs[0];
-				header->lsn = ll_add_pers_snapshot_block_info(&versionEntry, oldVerTs);			
+				header->lsn = llLogPersSnapshotInfo(&versionEntry, oldVerTs);			
 			}
 			success = 1;
 			break;
 		case 2:
-			ll_log_recordblock(WuExternaliseXptr(oldVerXptr), (void *)header, PAGE_SIZE);
+			llLogRecordBlock(WuExternaliseXptr(oldVerXptr), (void *)header, PAGE_SIZE);
 			success=1;
 			break;
 		default:

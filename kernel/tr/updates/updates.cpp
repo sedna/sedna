@@ -48,10 +48,9 @@ void clear_ft_sequences()
 	}
 	deleted_nodes.clear();
 }
-void execute_modifications(bool alw)
+void execute_modifications()
 {
-	// alw needed for recovery purposes to recreate ft-indexes correctly (AK)
-	if (!alw && is_rolled_back()) return; 
+	if (is_rolled_back()) return; 
 	std::map<ft_index_cell*,xptr_sequence*>::iterator it=inserted_nodes.begin();
 	while (it!=inserted_nodes.end())
 	{

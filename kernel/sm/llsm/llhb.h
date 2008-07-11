@@ -1,0 +1,24 @@
+/*
+ * File:  llhb.h - Logical log hot-backup support routines
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ *
+ * Only the user interface is specified here. For further information refer to physrcv.cpp file.
+ *
+ */
+
+#ifndef _LL_HB_LOG_
+#define _LL_HB_LOG_
+
+// Main log hot-backup routine
+void llHotBackup(hb_state state);
+
+// Returns last archived file number
+uint64_t llHbLastArchiveFile();
+
+// Returns previous archived file number in chain
+uint64_t llHbPrevArchivedLog(uint64_t lnumber);
+
+// true - if hot-backup is in start stage (physical copying of data file)
+bool llHbIsStartStage();
+
+#endif

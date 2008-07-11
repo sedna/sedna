@@ -8,7 +8,7 @@
 #include "common/sm_vmm_data.h"
 #include "common/ph/pers_heap.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/llmgr/llmgr.h"
+#include "sm/llsm/llMain.h"
 #include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
 #include "sm/wu/wu.h"
@@ -375,7 +375,7 @@ void flush_buffer(ramoffs offs)
 		physXptr = (*phys_xptrs)[ind];
 		if (IS_DATA_BLOCK(physXptr)) 
 		{
-			ll_logical_log_flush_lsn(blk->lsn);
+			llFlushLsn(blk->lsn);
 		}
 		WuOnFlushBufferExn(physXptr);
         write_block(physXptr, offs);

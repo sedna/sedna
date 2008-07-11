@@ -83,6 +83,9 @@ static UGlobalNamesRegistryItem globalNamesRegistry[] =
 	{"EVENT_NEW_JOB_4_CHECKPOINT_THREAD", POLICY_INSTANCE_PER_DB()}, /* signals that a checkpoint must be activated or snapshots must be advanced */ 
 	{"EVENT_READONLY_TRN_COMPLETED",	POLICY_INSTANCE_PER_DB()}, /* signals read-only transaction completion */ 
 
+	{"SHMEM_LFS",						POLICY_INSTANCE_PER_DB()}, /* lfs state & buffer in shared memory */ 
+	{"SEMAP_LFS",						POLICY_INSTANCE_PER_DB()}, /* synchronises operation with lfs */ 
+
 	{"SHMEM_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* logical log state & buffer in shared memory */ 
 	{"SEMAP_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* synchronises operation with logical log */ 
 
@@ -186,6 +189,8 @@ global_name METADATA_SEMAPHORE_STR = "";
 global_name INDEX_SEMAPHORE_STR = "";
 global_name FT_INDEX_SEMAPHORE_STR = "";
 global_name TRIGGER_SEMAPHORE_STR = "";
+global_name SEDNA_LFS_SEM_NAME = "";
+global_name SEDNA_LFS_SHARED_MEM_NAME = "";
 global_name CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME = "";
 global_name CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME = "";
 global_name CHARISMA_CHECKPOINT_SEM = "";
@@ -220,6 +225,8 @@ void SetGlobalNamesDB(int databaseId)
 		INDEX_SEMAPHORE_STR__buf__						[128],
 		FT_INDEX_SEMAPHORE_STR__buf__					[128],
 		TRIGGER_SEMAPHORE_STR__buf__					[128],
+		SEDNA_LFS_SEM_NAME__buf__                       [128],
+		SEDNA_LFS_SHARED_MEM_NAME__buf__                [128],
 		CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__		[128],
 		CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME__buf__	[128],
 		SEDNA_TRNS_FINISHED__buf__						[128],
@@ -280,6 +287,12 @@ void SetGlobalNamesDB(int databaseId)
 
 	TRIGGER_SEMAPHORE_STR =
 		UCreateGlobalName("SEMAP_TRIGGERS", databaseId, TRIGGER_SEMAPHORE_STR__buf__, 128);
+
+	SEDNA_LFS_SEM_NAME =
+		UCreateGlobalName("SHMEM_LFS", databaseId, SEDNA_LFS_SEM_NAME__buf__, 128);
+
+	SEDNA_LFS_SHARED_MEM_NAME =
+		UCreateGlobalName("SEMAP_LFS", databaseId, SEDNA_LFS_SHARED_MEM_NAME__buf__, 128);
 
 	CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME =
 		UCreateGlobalName("SHMEM_LOGICAL_LOG", databaseId, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__, 128);
