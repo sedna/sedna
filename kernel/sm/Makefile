@@ -22,7 +22,7 @@ OBJS      = sm$(OBJ_EXT) sm_functions$(OBJ_EXT) sm_globals$(OBJ_EXT) \
             trmgr$(OBJ_EXT) cdb$(OBJ_EXT) cdb_globals$(OBJ_EXT)	\
             db_utils$(OBJ_EXT) trmgr$(OBJ_EXT) ddb$(OBJ_EXT) smsd$(OBJ_EXT)                                               
 
-SUBDIRS   = bufmgr llmgr lm wu
+SUBDIRS   = bufmgr llsm lm wu
 SUBDIROBJS= $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIB_EXT))
 
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
@@ -73,5 +73,3 @@ $(SUBDIRS:%=%-recursive):
 
 clean: generic_clean
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
-
-
