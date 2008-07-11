@@ -24,6 +24,7 @@
 #include "tr/tr_globals.h"
 #include "tr/log/log.h"
 #include "common/errdbg/d_printf.h"
+#include "tr/rcv/logican.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/FTindex.h"
