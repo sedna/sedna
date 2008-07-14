@@ -55,7 +55,7 @@ void llLogFreeBlocksInfo(xptr phys_xptr, void *block, int size)
 
 	ret_lsn = llInsertRecord(tmp_rec, rec_len, -1);
 
-	((vmm_sm_blk_hdr *)block)->lsn = ret_lsn + rec_len; // for WAL purposes
+	((vmm_sm_blk_hdr *)block)->lsn = ret_lsn + llGetRecordSize(NULL, rec_len); // for WAL purposes
 
 	free(tmp_rec);
 }
@@ -66,7 +66,6 @@ void llLogFreeBlocksInfo(xptr phys_xptr, void *block, int size)
  prevLSN // lsn of the previous record in LL_CHECKPOINT-LL_PERS_SNAPSHOT_ADD chain
  timestamp of the lxptr version (used to check if need to move version)
  SnapshotsVersion --- info about physical/logical xptr of block
- TIMESTAMP - timestamp of moved version
 */
 LSN llLogPersSnapshotInfo(WuVersionEntry *blk_info, TIMESTAMP ts)
 {
@@ -86,14 +85,14 @@ LSN llLogPersSnapshotInfo(WuVersionEntry *blk_info, TIMESTAMP ts)
 	//create record body
 	inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
 	inc_mem_copy(tmp_rec, offs, &(llInfo->last_chain_lsn), sizeof(LSN));
-	inc_mem_copy(tmp_rec, offs, blk_info, sizeof(WuVersionEntry));
 	inc_mem_copy(tmp_rec, offs, &ts, sizeof(TIMESTAMP));
+	inc_mem_copy(tmp_rec, offs, blk_info, sizeof(WuVersionEntry));
 
 	ret_lsn = llInsertRecord(tmp_rec, rec_len, -1);
 
 	free(tmp_rec);
 
-	return ret_lsn + rec_len; // for WAL purposes
+	return ret_lsn + llGetRecordSize(NULL, rec_len); // for WAL purposes
 }
 
 /*

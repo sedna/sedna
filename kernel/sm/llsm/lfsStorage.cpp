@@ -180,7 +180,7 @@ static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
 
 	CacheNum = fileNum % LFS_CACHE_SIZE;
 
-	if (lfsDescCache[CacheNum].FileNum == fileNum)
+	if (lfsDescCache[CacheNum].FileNum == fileNum && lfsDescCache[CacheNum].FileDsc != U_INVALID_FD)
 		return lfsDescCache[CacheNum].FileDsc;
 
 	// close previous file
