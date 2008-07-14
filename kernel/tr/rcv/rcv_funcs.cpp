@@ -6,6 +6,7 @@
 #include "tr/rcv/logicrcv.h"
 #include "tr/structures/indirection.h"
 #include "common/errdbg/d_printf.h"
+#include "tr/rcv/rcv_test_tr.h"
 
 void rollback_tr_by_logical_log(transaction_id trid)
 {

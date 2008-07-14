@@ -49,9 +49,9 @@ static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
 
 static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
-	LSN lsn = curr_lsn + llGetRecordSize(RecBuf);
+	LSN lsn = curr_lsn + llGetRecordSize(RecBuf, 0);
 
-    if (lsn > end_rcv_lsn) // we don't need synchronization here since this is one-thread access
+    if (lsn >= end_rcv_lsn) // we don't need synchronization here since this is one-thread access
     	return LFS_INVALID_LSN;
     
     return lsn;
@@ -861,7 +861,7 @@ static void llRcvRedoTrns(trn_cell_analysis_redo *rcv_list, LSN start_lsn, LSN e
 {
 	if (rcv_list == NULL) return;
 
-	if (start_lsn > end_lsn )
+	if (start_lsn >= end_lsn )
 		throw USER_EXCEPTION(SE4152);
 
 	end_rcv_lsn = end_lsn;
@@ -870,12 +870,12 @@ static void llRcvRedoTrns(trn_cell_analysis_redo *rcv_list, LSN start_lsn, LSN e
 	llScanRecords(llRcvLogRecsInfo, llRcvLogRecsInfoLen, start_lsn, llGetNextRcvRec, llRcvPrereqRedo);
 }
 
-//this function is run from the special recovery process
+// this function is run from the special recovery process
 void llLogicalRecover(const LSN start_lsn)
 {
-	LSN last_lsn = llInfo->last_lsn, start_analysis_lsn; 
+	LSN start_analysis_lsn; 
 
-	assert(llInfo->checkpoint_lsn != LFS_INVALID_LSN || last_lsn != LFS_INVALID_LSN);
+	assert(llInfo->checkpoint_lsn != LFS_INVALID_LSN || llInfo->last_lsn != LFS_INVALID_LSN);
 
 	// determine starting lsn to analyze transactions
 	if (llInfo->min_rcv_lsn != LFS_INVALID_LSN) 
@@ -885,11 +885,14 @@ void llLogicalRecover(const LSN start_lsn)
 	else
 		return;
 
+	// flush all physical records, if any
+    llFlushAll();
+
 	// determine transactions that need to be recovered
 	rcv_list = llGetRedoList(start_analysis_lsn);
 
 	//redo committed transactions
-	llRcvRedoTrns(rcv_list, start_analysis_lsn, last_lsn);
+	llRcvRedoTrns(rcv_list, start_analysis_lsn, llInfo->last_lsn);
   
 	RECOVERY_CRASH;
  

@@ -16,9 +16,9 @@ static trn_cell_analysis_redo *rcv_list = NULL;
 
 static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
-	LSN lsn = curr_lsn + llGetRecordSize(RecBuf);
+	LSN lsn = curr_lsn + llGetRecordSize(RecBuf, 0);
 
-    if (lsn > llInfo->last_lsn) // we don't need synchronization here since this is one-thread access
+    if (lsn >= llInfo->last_lsn) // we don't need synchronization here since this is one-thread access
     	return LFS_INVALID_LSN;
     
     return lsn;

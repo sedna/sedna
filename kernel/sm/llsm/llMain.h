@@ -84,7 +84,7 @@ struct llGlobalInfo
 	LSN checkpoint_lsn;                                     // lsn of the last checkpoint record (first of the bunch)
 	LSN min_rcv_lsn;                                        // lsn of the start record of logical recovery
 	LSN last_chain_lsn;                                     // lsn of the last record in physical chain
-	LSN last_lsn;                                           // lsn of the last record in log
+	LSN last_lsn;                                           // boundary lsn of the log
 	TIMESTAMP ts;                                           // timestamp of the last persistent snapshot
 	llTransInfo llTransInfoTable[CHARISMA_MAX_TRNS_NUMBER]; // transaction table
 	bool checkpoint_flag;                                   // true, if checkpoint is enabled
@@ -187,11 +187,6 @@ int llFlushAll();
 //     -1 - error; 0 - all ok
 int llFlushLsn(LSN lsn);
 
-// Flushes file header.
-// Returns: 
-//     -1 - error; 0 - all ok
-int llFlushHeader();
-
 // Truncates unnecessary logical log records.
 // Returns: 
 //     -1 - error; 0 - all ok
@@ -236,9 +231,10 @@ void *llGetRecordFromDisc(LSN *RecLsn);
 // Returns length of the given record. 
 // Parameters:
 // 		Rec - pointer to the record in memory. Rec should be the one returned by llMain.
+//		len - length of the record (ignored, if Rec != NULL)
 // Returns:
 //		length of the record (0 - in case of error)
-int llGetRecordSize(void *Rec);
+int llGetRecordSize(void *Rec, int len);
 
 // Returns previous lsn for given record.
 // Parameters:

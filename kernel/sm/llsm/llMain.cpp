@@ -35,7 +35,7 @@ struct llRecordHead
 
 struct llFileHead
 {
-	LSN last_lsn;                  // last record of the log
+	LSN last_lsn;                  // lsn boundary of the log (this lsn is not valid since it is only boundary)
 	LSN checkpoint_lsn;       	   // lsn of the last checkpoint record
 	LSN last_chain_lsn;            // lsn of the last record in physical records chain
 	TIMESTAMP ts;                  // timestamp of the last persistent snapshot
@@ -116,7 +116,7 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
     else
 		llInfo->last_chain_lsn = ret_lsn;
 
-	llInfo->last_lsn = ret_lsn;
+	llInfo->last_lsn = ret_lsn + RecLen + sizeof(llRecordHead);
 
 	llUnlock();
 
@@ -307,6 +307,32 @@ int llOnTransEnd(transaction_id trid)
 	return 0;
 }
 
+// Flushes file header.
+static int llFlushHeader(LSN last_lsn, LSN last_chain_lsn)
+{
+	llFileHead file_head;
+
+	lfsGetHeader(&file_head, sizeof(llFileHead));
+	
+	file_head.checkpoint_lsn = llInfo->checkpoint_lsn;
+	
+	if (last_chain_lsn != LFS_INVALID_LSN)
+		file_head.last_chain_lsn = last_chain_lsn;
+	else
+		file_head.last_chain_lsn = llInfo->last_chain_lsn;
+	
+	file_head.ts = llInfo->ts;
+
+	if (last_lsn != LFS_INVALID_LSN)
+		file_head.last_lsn = last_lsn;
+	else
+		file_head.last_lsn = llInfo->last_lsn;
+
+	lfsWriteHeader(&file_head, sizeof(llFileHead));
+
+	return 0;
+}
+
 // Flushes records belonging to the specified transaction.
 int llFlushTransRecs(transaction_id trid)
 {
@@ -329,7 +355,7 @@ int llFlushAll()
 
 	lfsFlushAll();  
 
-	llFlushHeader();
+	llFlushHeader(LFS_INVALID_LSN, LFS_INVALID_LSN); // llInfo values are valid for now
 
 	llUnlock();
 
@@ -356,26 +382,9 @@ int llFlushLsn(LSN lsn)
 
 	lfsFlush(lsn);
 
-	llFlushHeader();
+	llFlushHeader(lsn, LFS_INVALID_LSN); // last_lsn is lsn of flush, and last_chain_lsn is valid in llInfo
 
 	llUnlock();
-
-	return 0;
-}
-
-// Flushes file header.
-int llFlushHeader()
-{
-	llFileHead file_head;
-
-	lfsGetHeader(&file_head, sizeof(llFileHead));
-	
-	file_head.checkpoint_lsn = llInfo->checkpoint_lsn;
-	file_head.last_chain_lsn = llInfo->last_chain_lsn;
-	file_head.ts = llInfo->ts;
-	file_head.last_lsn = llInfo->last_lsn;
-
-	lfsWriteHeader(&file_head, sizeof(llFileHead));
 
 	return 0;
 }
@@ -535,11 +544,12 @@ TIMESTAMP llGetPersTimestamp()
 
 
 // Returns length of the given record
-int llGetRecordSize(void *Rec)
+int llGetRecordSize(void *Rec, int len)
 {
   llRecordHead *RecHead;
 
-  if (Rec == NULL) return 0;
+  if (Rec == NULL) 
+  	return sizeof(llRecordHead) + len;
 
   RecHead = (llRecordHead *)((char *)Rec - sizeof(llRecordHead));
 
