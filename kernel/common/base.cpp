@@ -289,10 +289,10 @@ void SetGlobalNamesDB(int databaseId)
 		UCreateGlobalName("SEMAP_TRIGGERS", databaseId, TRIGGER_SEMAPHORE_STR__buf__, 128);
 
 	SEDNA_LFS_SEM_NAME =
-		UCreateGlobalName("SHMEM_LFS", databaseId, SEDNA_LFS_SEM_NAME__buf__, 128);
+		UCreateGlobalName("SEMAP_LFS", databaseId, SEDNA_LFS_SEM_NAME__buf__, 128);
 
 	SEDNA_LFS_SHARED_MEM_NAME =
-		UCreateGlobalName("SEMAP_LFS", databaseId, SEDNA_LFS_SHARED_MEM_NAME__buf__, 128);
+		UCreateGlobalName("SHMEM_LFS", databaseId, SEDNA_LFS_SHARED_MEM_NAME__buf__, 128);
 
 	CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME =
 		UCreateGlobalName("SHMEM_LOGICAL_LOG", databaseId, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__, 128);

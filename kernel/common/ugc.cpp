@@ -29,7 +29,7 @@
                                                     d_printf1("Semaphore cleanup    : "#name"\n");							\
                                                 }
 
-#define SHAREDMEM_CLEANUP(name, size)			if (uOpenShMem(&shm, name, size, __sys_call_error) == 0)					\
+#define SHAREDMEM_CLEANUP(name, size)			if (uOpenShMem(&shm, name, 0, __sys_call_error) == 0)					\
                                                 {																			\
                                                     uReleaseShMem(shm, __sys_call_error);									\
                                                     d_printf1("Shared memory cleanup: "#name"\n");							\
@@ -41,7 +41,7 @@
                                                     d_printf1("Semaphore cleanup    : "#name2"\n");							\
                                                 }
 
-#define SHAREDMEM_CLEANUP2(name, name2, size)	if (uOpenShMem(&shm, name, size, __sys_call_error) == 0)					\
+#define SHAREDMEM_CLEANUP2(name, name2, size)	if (uOpenShMem(&shm, name, 0, __sys_call_error) == 0)					\
                                                 {																			\
                                                     uReleaseShMem(shm, __sys_call_error);									\
                                                     d_printf1("Shared memory cleanup: "#name2"\n");							\
@@ -113,7 +113,8 @@ void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives
     SEMAPHORE_CLEANUP(TRIGGER_SEMAPHORE_STR);
 #endif
     SHAREDMEM_CLEANUP(CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, 8);
-    SHAREDMEM_CLEANUP(CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, 1024 * 1024/*CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE*/);
+    SHAREDMEM_CLEANUP(CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, 0/*CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE*/);
+    SHAREDMEM_CLEANUP(SEDNA_LFS_SHARED_MEM_NAME, 0);
     //SEMAPHORE_CLEANUP(CHARISMA_CHECKPOINT_SEM);
     SEMAPHORE_CLEANUP(SEDNA_TRNS_FINISHED);
     SEMAPHORE_CLEANUP(CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME);
@@ -122,6 +123,7 @@ void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives
     //SEMAPHORE_CLEANUP(SEDNA_CHECKPOINT_FINISHED_SEM);
     SEMAPHORE_CLEANUP(SEDNA_LOCK_MANAGER_SEM);
     SEMAPHORE_CLEANUP(PERS_HEAP_SEMAPHORE_STR);
+    SEMAPHORE_CLEANUP(SEDNA_LFS_SEM_NAME);
 
 	SEMAPHORE_CLEANUP(PERS_HEAP_1_SNP_SEMAPHORE_STR);
 	SEMAPHORE_CLEANUP(PERS_HEAP_0_SNP_SEMAPHORE_STR);    

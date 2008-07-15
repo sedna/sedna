@@ -45,7 +45,7 @@ int hbMakeLogFileName(char *buf, int maxlen, const char *dbname, int lnum)
     strcat(log_file_name, dbname);
     strcat(log_file_name, ".");
     strcat(log_file_name, u_itoa(lnum, ui_buf, 10));
-   	strcat(log_file_name, "llog");
+   	strcat(log_file_name, ".llog");
 
     if (strlen(log_file_name) > maxlen) return -1;
 

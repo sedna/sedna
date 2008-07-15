@@ -310,7 +310,7 @@ void llRcvRestorePh()
   }
 
   if (0 != closedir(dir))
-     throw USER_EXCEPTION2(SE4054, db_files_path.c_str());
+     throw USER_EXCEPTION2(SE4054, db_files_path);
 #endif  
 
   if (uCopyFile(ph_bu_file_name.c_str(), ph_cur_file_name.c_str(), false, __sys_call_error) == 0)
