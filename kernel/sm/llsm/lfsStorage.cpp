@@ -867,7 +867,7 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 
 // get data at RecLSN and write it to the RecBuf;
 // RecSize bytes will be written; RecBuf must be allocated by the caller
-// return: -1 - error; 0 - all ok
+// return: -1 - error; number of bytes read (0 - lfs is out of bound)
 int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 {
 	uint64_t fileNum, fileOffs, fileSize;
@@ -880,7 +880,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 
 	// number of file with record
 	fileNum = *RecLSN / lfsInfo->ChunkSize + 1;
-	
+
 	// file offset
 	fileOffs = *RecLSN % lfsInfo->ChunkSize;
 	if (fileOffs == 0) 
@@ -889,6 +889,25 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 		fileNum--;
 	}
 	
+	// check if lfs can be read
+	if (fileNum == lfsInfo->LastFileNum)
+	{
+		// check if record is still in the write buffer
+		if (*RecLSN >= lfsInfo->NextLSN && *RecLSN + RecSize <= lfsInfo->NextLSN + lfsInfo->BufKeepBytes)
+		{
+			memcpy(RecBuf, (char *)lfsWriteBuffer + lfsInfo->BufStart + (*RecLSN - lfsInfo->NextLSN), RecSize);
+			lfsUnlock();
+			return RecSize;
+		}	
+	}
+
+	// lsn is way out of reach
+	if (fileNum > lfsInfo->LastFileNum)
+	{
+		lfsUnlock();
+		return 0;
+	}
+
     // get file size
     if ((fileSize = _lfsGetFileSize(fileNum)) == UINT64_MAX)
 	{
@@ -904,22 +923,21 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
     	*RecLSN = (fileNum - 1) * lfsInfo->ChunkSize + fileOffs;
     }
 	
+	// check if lfs can be read
+	if (fileNum > lfsInfo->LastFileNum)
+	{
+    	lfsUnlock();
+   		return 0;
+    }
+
 	// check if record is in the read buffer
 	if (*RecLSN >= StartReadLSN && *RecLSN + RecSize <= EndReadLSN)
 	{
 		memcpy(RecBuf, (char *)lfsReadBuf + (*RecLSN - StartReadLSN), RecSize);
 		lfsUnlock();
-		return 0;
+		return RecSize;
 	}
 	
-	// check if record is still in the write buffer
-	if (*RecLSN >= lfsInfo->NextLSN && *RecLSN + RecSize <= lfsInfo->NextLSN + lfsInfo->BufKeepBytes)
-	{
-		memcpy(RecBuf, (char *)lfsWriteBuffer + (*RecLSN - lfsInfo->NextLSN), RecSize);
-		lfsUnlock();
-		return 0;
-	}	
-
 	// if not in buffers, read from file
 	if ((fileDsc = _lfsOpenAndCacheFile(fileNum)) == U_INVALID_FD)
 	{
@@ -962,7 +980,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 
 	lfsUnlock();
 
-	return 0;
+	return RecSize;
 }
 
 // write data from RecBuf; RecSize - size of data in bytes

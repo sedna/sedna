@@ -21,11 +21,8 @@
 #include <assert.h>
 
 #define LL_FILE_PORTION_SIZE (INT64_C(100) * (1024 * 1024)) // size of chunk of logical log
-#define LL_WRITEBUF_SIZE 1024 * 1024
-#define LL_READBUF_SIZE 1024
-#define LL_READBUF_SIZE 1024
-
-#define LOG_FILE_PORTION_SIZE (INT64_C(100) * (1024*1024)) // 100Mb
+#define LL_WRITEBUF_SIZE 1024 * 1024 						// write buffer size (for lfs)
+#define LL_READBUF_SIZE 1024                                // read buffer size (for lfs)
 
 struct llRecordHead
 {
@@ -35,7 +32,6 @@ struct llRecordHead
 
 struct llFileHead
 {
-	LSN last_lsn;                  // lsn boundary of the log (this lsn is not valid since it is only boundary)
 	LSN checkpoint_lsn;       	   // lsn of the last checkpoint record
 	LSN last_chain_lsn;            // lsn of the last record in physical records chain
 	TIMESTAMP ts;                  // timestamp of the last persistent snapshot
@@ -49,7 +45,7 @@ static USemaphore SyncSem;    // synchronization semaphore
 static UEvent CheckpointEvent;// event to start checkpoint thread
 static UShMem SharedMem;      // descriptor for shared global info
 
-static void *ReadBuf;            // buffer for reading records
+static void *ReadBuf;            // buffer for reading records (it is realloced automatically if needed)
 static int  ReadBufSize = 1024;  // size of the ReadBuf buffer
 
 llGlobalInfo *llInfo = NULL; // pointer to the global info memory
@@ -57,12 +53,17 @@ llGlobalInfo *llInfo = NULL; // pointer to the global info memory
 int rollback_active = false; // true, if rollback is active on current transaction
 int recovery_active = false; // true, if this process is a recovery process
 
+// processes error (throws exception for now)
+static void _llProcessError(const char *llErrorMsg)
+{
+	throw USER_EXCEPTION2(SE4902, llErrorMsg);
+}
+
 // Create new logical log.
 int llCreateNew(const char *db_files_path, const char *db_name)
 {
 	llFileHead fileHead;
 
-	fileHead.last_lsn = LFS_INVALID_LSN;
 	fileHead.checkpoint_lsn = LFS_INVALID_LSN;
 	fileHead.last_chain_lsn = LFS_INVALID_LSN;
 	fileHead.ts = 0x10000;
@@ -70,7 +71,7 @@ int llCreateNew(const char *db_files_path, const char *db_name)
 	fileHead.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
 	fileHead.is_archive = false;
 	
-	lfsCreateNew(db_files_path, db_name, "llog", LOG_FILE_PORTION_SIZE, &fileHead, sizeof(llFileHead));
+	lfsCreateNew(db_files_path, db_name, "llog", LL_FILE_PORTION_SIZE, &fileHead, sizeof(llFileHead));
 
 	return 0;
 }
@@ -88,12 +89,14 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 
 	rec_all = malloc(RecLen + sizeof(llRecordHead));
 	if (rec_all == NULL)
-		throw SYSTEM_EXCEPTION("Cannot allocate memory");
+		_llProcessError("internal ll error: cannot allocate memory");
 
+	// lsn of previous record
 	if (trid != -1 && llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN)
 		log_head.prev_lsn = llInfo->llTransInfoTable[trid].last_lsn;
 	else
 		log_head.prev_lsn = LFS_INVALID_LSN;
+
 	log_head.rec_len = RecLen;
 
 	memcpy(rec_all, &log_head, sizeof(llRecordHead));
@@ -103,20 +106,20 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 	
 	free(rec_all);
 
+	// record belongs to some transaction
 	if (trid != -1)
 	{
 		llInfo->llTransInfoTable[trid].last_lsn = ret_lsn;
 
+		// first record for this trid
 		if (llInfo->llTransInfoTable[trid].first_lsn == LFS_INVALID_LSN) 
 			llInfo->llTransInfoTable[trid].first_lsn = ret_lsn;
 
-		llInfo->llTransInfoTable[trid].num_of_log_records += 1;
-		llInfo->llTransInfoTable[trid].last_len = RecLen + sizeof(llRecordHead);
+		llInfo->llTransInfoTable[trid].num_of_log_records += 1;					 // debug info
+		llInfo->llTransInfoTable[trid].last_len = RecLen + sizeof(llRecordHead); // needed for flush
     }
     else
-		llInfo->last_chain_lsn = ret_lsn;
-
-	llInfo->last_lsn = ret_lsn + RecLen + sizeof(llRecordHead);
+		llInfo->last_chain_lsn = ret_lsn;   // last record in physical chain
 
 	llUnlock();
 
@@ -124,6 +127,7 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 }
 
 // Locks logical log (global ll synchronization)
+inline
 void llLock()
 {
 	if (USemaphoreDown(SyncSem, __sys_call_error) != 0)
@@ -131,6 +135,7 @@ void llLock()
 }
 
 // Unlocks logical log (global ll synchronization)
+inline
 void llUnlock()
 {
 	if (USemaphoreUp(SyncSem, __sys_call_error) != 0)
@@ -142,30 +147,32 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 {
 	lfsInit(db_files_path, db_name, "llog", LL_WRITEBUF_SIZE, LL_READBUF_SIZE);
 
+	// sync semaphore
 	if (USemaphoreCreate(&SyncSem, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error))
-		throw USER_EXCEPTION2(SE4010, "SEDNA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		_llProcessError("internal ll error: cannot create semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
+	// event to start checkpoint procedure
 	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
-		throw USER_EXCEPTION2(SE4012, "SNAPSHOT_CHECKPOINT_EVENT");  
+		_llProcessError("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
   
 	llFileHead file_head;
 	lfsGetHeader(&file_head, sizeof(llFileHead));
 
-	*exit_status = file_head.is_stopped_successfully;
-	*sedna_db_version = file_head.sedna_db_version;
+	*exit_status = file_head.is_stopped_successfully; // recovery needed?
+	*sedna_db_version = file_head.sedna_db_version;   // data structures version
 
 	ReadBuf = malloc(LL_READBUF_SIZE);
 	if (ReadBuf == NULL)
-		throw SYSTEM_EXCEPTION("Cannot allocate memory");
+		_llProcessError("internal ll error: cannot allocate memory");
 	ReadBufSize = LL_READBUF_SIZE;
 
     //create shared memory
 	if (uCreateShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, sizeof(llGlobalInfo), NULL, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4016, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot create shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
     //init shared memory pointer
 	if ((llInfo = (llGlobalInfo *)uAttachShMem(SharedMem, NULL, sizeof(llGlobalInfo), __sys_call_error)) == NULL)
-		throw USER_EXCEPTION2(SE4023, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
     //init header of shared memory
 	lfsGetHeader(&file_head, sizeof(llFileHead));
@@ -173,7 +180,6 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 	llInfo->checkpoint_lsn = file_head.checkpoint_lsn;
 	llInfo->min_rcv_lsn = LFS_INVALID_LSN;
 	llInfo->last_chain_lsn = file_head.last_chain_lsn;
-	llInfo->last_lsn = file_head.last_lsn;
    
 	llInfo->ts = file_head.ts;
 
@@ -190,9 +196,9 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 	llInfo->checkpoint_on   = false; // checkpoint is currently inactive
 	llInfo->checkpoint_flag = false; // checkpoints are initially disabled
 
-	file_head.is_stopped_successfully = false;
+	file_head.is_stopped_successfully = false;        
 
-	lfsWriteHeader(&file_head, sizeof(llFileHead));
+	lfsWriteHeader(&file_head, sizeof(llFileHead));  // since this moment any crash will lead to recovery
 
 	return 0;
 }
@@ -203,22 +209,22 @@ int llRelease()
 	llFileHead file_head;
 	lfsGetHeader(&file_head, sizeof(llFileHead));
 
-	file_head.is_stopped_successfully = true;
-	file_head.is_archive = false;
+	file_head.is_stopped_successfully = true;        // successful exit
+	file_head.is_archive = false;                    // hot-backup recovery won't be needed
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));
   
 	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4024, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (uReleaseShMem(SharedMem, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4020, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot release shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (USemaphoreRelease(SyncSem, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		_llProcessError("internal ll error: cannot release semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
 	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
-		throw USER_EXCEPTION2(SE4013, "SNAPSHOT_CHECKPOINT_EVENT");  
+		_llProcessError("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	lfsRelease();
 
@@ -233,20 +239,20 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
 	lfsConnect(db_files_path, db_name, "llog", LL_READBUF_SIZE);
 
 	if (USemaphoreOpen(&SyncSem, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4012, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		_llProcessError("internal ll error: cannot open semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
 	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
-		throw USER_EXCEPTION2(SE4012, "SNAPSHOT_CHECKPOINT_EVENT");  
+		_llProcessError("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	if (uOpenShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, sizeof(llGlobalInfo), __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4021, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot open shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if ((llInfo = (llGlobalInfo *)uAttachShMem(SharedMem, NULL, sizeof(llGlobalInfo), __sys_call_error)) == NULL)
-		throw USER_EXCEPTION2(SE4023, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	ReadBuf = malloc(LL_READBUF_SIZE);
 	if (ReadBuf == NULL)
-		throw SYSTEM_EXCEPTION("Cannot allocate memory");
+		_llProcessError("internal ll error: cannot allocate memory");
 	ReadBufSize = LL_READBUF_SIZE;
 
 	recovery_active = rcv_active;
@@ -258,16 +264,16 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
 int llClose()
 {
 	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4024, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (uCloseShMem(SharedMem, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4022, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		_llProcessError("internal ll error: cannot close shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (USemaphoreClose(SyncSem, __sys_call_error) != 0)
-		throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		_llProcessError("internal ll error: cannot close semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
 	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
-		throw USER_EXCEPTION2(SE4013, "SNAPSHOT_CHECKPOINT_EVENT");  
+		_llProcessError("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	lfsDisconnect();
 
@@ -308,7 +314,7 @@ int llOnTransEnd(transaction_id trid)
 }
 
 // Flushes file header.
-static int llFlushHeader(LSN last_lsn, LSN last_chain_lsn)
+static int _llFlushHeader()
 {
 	llFileHead file_head;
 
@@ -316,17 +322,9 @@ static int llFlushHeader(LSN last_lsn, LSN last_chain_lsn)
 	
 	file_head.checkpoint_lsn = llInfo->checkpoint_lsn;
 	
-	if (last_chain_lsn != LFS_INVALID_LSN)
-		file_head.last_chain_lsn = last_chain_lsn;
-	else
-		file_head.last_chain_lsn = llInfo->last_chain_lsn;
+	file_head.last_chain_lsn = llInfo->last_chain_lsn;
 	
 	file_head.ts = llInfo->ts;
-
-	if (last_lsn != LFS_INVALID_LSN)
-		file_head.last_lsn = last_lsn;
-	else
-		file_head.last_lsn = llInfo->last_lsn;
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));
 
@@ -340,6 +338,7 @@ int llFlushTransRecs(transaction_id trid)
 	
 	assert(trid >= 0 && trid < CHARISMA_MAX_TRNS_NUMBER);
 
+	// no sychronization needed since we access trid-specific records
 	if (llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN)
 		llFlushLsn(llInfo->llTransInfoTable[trid].last_lsn + llInfo->llTransInfoTable[trid].last_len);
 
@@ -355,7 +354,7 @@ int llFlushAll()
 
 	lfsFlushAll();  
 
-	llFlushHeader(LFS_INVALID_LSN, LFS_INVALID_LSN); // llInfo values are valid for now
+	_llFlushHeader(); // last_chain_lsn is valid in llInfo
 
 	llUnlock();
 
@@ -382,7 +381,7 @@ int llFlushLsn(LSN lsn)
 
 	lfsFlush(lsn);
 
-	llFlushHeader(lsn, LFS_INVALID_LSN); // last_lsn is lsn of flush, and last_chain_lsn is valid in llInfo
+	_llFlushHeader(); // last_chain_lsn is valid in llInfo
 
 	llUnlock();
 
@@ -406,8 +405,6 @@ int llTruncateLog()
 }
 
 // Activates checkpoint procedure.
-// Returns: 
-//     -1 - error; 0 - all ok
 int llActivateCheckpoint()
 {
 	llLock();
@@ -422,7 +419,7 @@ int llActivateCheckpoint()
     llInfo->checkpoint_on = true;
 
 	if (UEventSet(&CheckpointEvent,  __sys_call_error) != 0)
-		throw SYSTEM_EXCEPTION("Event signaling for checkpoint thread failed");
+		_llProcessError("internal ll error: cannot set checkpoint event");
 
 	llUnlock();
 
@@ -430,36 +427,30 @@ int llActivateCheckpoint()
 }
 
 // Enables checkpoints.
-// Returns: 
-//     -1 - error; 0 - all ok
 int llEnableCheckpoints()
 {
-  llLock();
+	llLock();
 
-  llInfo->checkpoint_flag = true;
+	llInfo->checkpoint_flag = true;
   
-  llUnlock();
+	llUnlock();
 
-  return 0;
+	return 0;
 }
 
 // Disable checkpoints (every checkpoint request will be ignored).
-// Returns: 
-//     -1 - error; 0 - all ok
 int llDisableCheckpoints()
 {
-  llLock();
+	llLock();
 
-  llInfo->checkpoint_flag = false;
+	llInfo->checkpoint_flag = false;
   
-  llUnlock();
+	llUnlock();
 
-  return 0;
+	return 0;
 }
  
 // Is checkpoint in progress now?
-// Returns: 
-//     true - checkpoint is active; false - checkpoint isn't active
 bool llGetCheckpointActiveFlag()
 {
   bool flag;
@@ -482,7 +473,11 @@ void *llGetRecordFromDisc(LSN *RecLsn)
 
 	if (*RecLsn == LFS_INVALID_LSN) return NULL;
 
-	lfsGetRecord(RecLsn, ReadBuf, sizeof(llRecordHead));
+	if (lfsGetRecord(RecLsn, ReadBuf, sizeof(llRecordHead)) == 0)
+	{
+		*RecLsn = LFS_INVALID_LSN;
+		return NULL;	
+	}
 
 	log_head = (llRecordHead *)ReadBuf;
 	rec_len = log_head->rec_len + sizeof(llRecordHead);
@@ -491,11 +486,14 @@ void *llGetRecordFromDisc(LSN *RecLsn)
 	{
 		free(ReadBuf);
 		if ((ReadBuf = malloc(rec_len)) == NULL)
-			return NULL;
-		ReadBufSize = rec_len;
+			_llProcessError("internal ll error: cannot allocate memory");
 	}
 
-	lfsGetRecord(RecLsn, ReadBuf, rec_len);
+	if (lfsGetRecord(RecLsn, ReadBuf, rec_len) == 0)
+	{
+		*RecLsn = LFS_INVALID_LSN;
+		return NULL;	
+	}
 
 	return (char *)ReadBuf + sizeof(llRecordHead);
 }
@@ -503,15 +501,7 @@ void *llGetRecordFromDisc(LSN *RecLsn)
 // Returns first lsn of given transaction
 LSN llGetFirstTranLsn(transaction_id trid)
 {
-	LSN lsn;
-
-	llLock();
-
-	lsn = llInfo->llTransInfoTable[trid].first_lsn;
-
-	llUnlock();
-
-	return lsn;
+	return llInfo->llTransInfoTable[trid].first_lsn;
 }
 
 // Should be called when checkpoint is finished.
@@ -519,41 +509,40 @@ LSN llGetFirstTranLsn(transaction_id trid)
 //     -1 - error; 0 - all ok
 int llOnCheckpointFinish()
 {
-  llLock();
+	llLock();
 
-  llInfo->checkpoint_on = false;
+	llInfo->checkpoint_on = false;
   
-  llUnlock();
+	llUnlock();
 
-  return 0;
+	return 0;
 }
 
 // Returns timestamp of persistent snapshot
 TIMESTAMP llGetPersTimestamp()
 {
-  TIMESTAMP ts;
+	TIMESTAMP ts;
 
-  llLock();
+	llLock();
 
-  ts = llInfo->ts;
+	ts = llInfo->ts;
   
-  llUnlock();
+	llUnlock();
 
-  return ts;
+	return ts;
 }
-
 
 // Returns length of the given record
 int llGetRecordSize(void *Rec, int len)
 {
-  llRecordHead *RecHead;
+	llRecordHead *RecHead;
 
-  if (Rec == NULL) 
-  	return sizeof(llRecordHead) + len;
+	if (Rec == NULL) 
+		return sizeof(llRecordHead) + len;
 
-  RecHead = (llRecordHead *)((char *)Rec - sizeof(llRecordHead));
+	RecHead = (llRecordHead *)((char *)Rec - sizeof(llRecordHead));
 
-  return sizeof(llRecordHead) + RecHead->rec_len;
+	return sizeof(llRecordHead) + RecHead->rec_len;
 }
 
 // This function scans records starting from given start_lsn.
@@ -567,7 +556,8 @@ int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llN
 	while (lsn != LFS_INVALID_LSN)
 	{
 		// get record from lfs
-		RecBuf = (char *)llGetRecordFromDisc(&lsn);
+		if ((RecBuf = (char *)llGetRecordFromDisc(&lsn)) == NULL)
+			return 1;
 
 		cop = *(RecBuf);
 

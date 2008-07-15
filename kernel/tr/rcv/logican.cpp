@@ -18,9 +18,7 @@ static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
 	LSN lsn = curr_lsn + llGetRecordSize(RecBuf, 0);
 
-    if (lsn >= llInfo->last_lsn) // we don't need synchronization here since this is one-thread access
-    	return LFS_INVALID_LSN;
-    
+    // we don't need to check lsn validity since lfsGetRecord in llScan will do it for us
     return lsn;
 }
 

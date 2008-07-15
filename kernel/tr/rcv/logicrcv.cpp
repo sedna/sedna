@@ -39,7 +39,6 @@
 
 static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purposes
 static trn_cell_analysis_redo *rcv_list = NULL;
-static LSN end_rcv_lsn;
 
 // Returns previous lsn for rollback
 static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
@@ -51,9 +50,7 @@ static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
 	LSN lsn = curr_lsn + llGetRecordSize(RecBuf, 0);
 
-    if (lsn >= end_rcv_lsn) // we don't need synchronization here since this is one-thread access
-    	return LFS_INVALID_LSN;
-    
+    // we don't need to check lsn validity since lfsGetRecord in llScan will do it for us
     return lsn;
 }
 
@@ -848,23 +845,15 @@ void llLogRollbackTrn(transaction_id trid)
 		return;
 	}
 
-	// flush all its records (do we really need to do this?)
-	llFlushTransRecs(trid);
-    
 	// rollback transaction by scaning all its records
 	llScanRecords(llRcvLogRecsInfo, llRcvLogRecsInfoLen, llInfo->llTransInfoTable[trid].last_lsn, llGetPrevRollbackLsn, NULL);
 
 	rollback_active = false;
 }
 
-static void llRcvRedoTrns(trn_cell_analysis_redo *rcv_list, LSN start_lsn, LSN end_lsn)
+static void llRcvRedoTrns(trn_cell_analysis_redo *rcv_list, LSN start_lsn)
 {
 	if (rcv_list == NULL) return;
-
-	if (start_lsn >= end_lsn )
-		throw USER_EXCEPTION(SE4152);
-
-	end_rcv_lsn = end_lsn;
 
 	// redo transactions by scaning all its records
 	llScanRecords(llRcvLogRecsInfo, llRcvLogRecsInfoLen, start_lsn, llGetNextRcvRec, llRcvPrereqRedo);
@@ -875,7 +864,7 @@ void llLogicalRecover(const LSN start_lsn)
 {
 	LSN start_analysis_lsn; 
 
-	assert(llInfo->checkpoint_lsn != LFS_INVALID_LSN || llInfo->last_lsn != LFS_INVALID_LSN);
+	assert(llInfo->checkpoint_lsn != LFS_INVALID_LSN);
 
 	// determine starting lsn to analyze transactions
 	if (llInfo->min_rcv_lsn != LFS_INVALID_LSN) 
@@ -885,14 +874,11 @@ void llLogicalRecover(const LSN start_lsn)
 	else
 		return;
 
-	// flush all physical records, if any
-    llFlushAll();
-
 	// determine transactions that need to be recovered
 	rcv_list = llGetRedoList(start_analysis_lsn);
 
 	//redo committed transactions
-	llRcvRedoTrns(rcv_list, start_analysis_lsn, llInfo->last_lsn);
+	llRcvRedoTrns(rcv_list, start_analysis_lsn);
   
 	RECOVERY_CRASH;
  
