@@ -2,6 +2,7 @@
 #define _LFS_GLOBALS_
 
 #include <stdint.h>
+#include <stddef.h>
 
 typedef uint64_t LSN;
 
