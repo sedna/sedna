@@ -84,7 +84,6 @@ struct llGlobalInfo
 	LSN checkpoint_lsn;                                     // lsn of the last checkpoint record (first of the bunch)
 	LSN min_rcv_lsn;                                        // lsn of the start record of logical recovery
 	LSN last_chain_lsn;                                     // lsn of the last record in physical chain
-	LSN last_lsn;                                           // boundary lsn of the log
 	TIMESTAMP ts;                                           // timestamp of the last persistent snapshot
 	llTransInfo llTransInfoTable[CHARISMA_MAX_TRNS_NUMBER]; // transaction table
 	bool checkpoint_flag;                                   // true, if checkpoint is enabled
@@ -225,7 +224,9 @@ TIMESTAMP llGetPersTimestamp();
 // Parameters:
 // 		RecLsn - pointer to the needed lsn
 // Returns:
-//		NULL - in case of error, pointer to record - all ok
+//		NULL - in case of error (RecLsn won't be set to LFS_INVALID_LSN)
+//		NULL - out of bound, but RecLsn will be set to LFS_INVALID_LSN 
+//		pointer to record - all ok
 void *llGetRecordFromDisc(LSN *RecLsn);
 
 // Returns length of the given record. 
@@ -274,7 +275,7 @@ struct llRecInfo
 //     funPrereq  - this function is called on every specified record before corresponding function.
 //						"true" - corresponding function will be called; "false" - the record is ignored
 // Returns: 
-//     -1 - error; 0 - all ok
+//     -1 - error; 0 - all ok; 1 - lfs: out of bounds (this is not an error if we perform simple forward scan)
 int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llNextLSN funNextLSN, llPrereqRec funPrereq);
 
 // Archives logical log

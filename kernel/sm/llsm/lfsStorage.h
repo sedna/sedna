@@ -61,7 +61,7 @@ int lfsDisconnect();
 //     RecBuf  - allocated buffer to write a record
 //     RecSize - size of a record
 // Return: 
-//     -1 - error; 0 - all ok
+//     -1 - error; number of bytes read (0 - lfs is out of bound)
 int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize);
 
 // Write data from RecBuf; RecSize - size of data in bytes

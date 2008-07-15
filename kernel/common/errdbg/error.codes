@@ -1713,3 +1713,7 @@ sedna-err:SE2041
 sedna-err:SE4901
 
    Internal LFS error.
+
+sedna-err:SE4902
+
+   Internal LL error.
