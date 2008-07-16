@@ -784,6 +784,13 @@ static inline bool is_tag_char(int ch)
 
 inline static bool iswordchar(int ch);
 
+//part of word if inside, but does not make a word by itself
+//must be false for EOF and special symbols (<>)
+inline static bool iswordsep(int ch) 
+{
+	return (ch >= 768) && (ch <= 866);
+}
+
 template <class Iterator>
 void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_end, bool copy)
 {
@@ -900,29 +907,47 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 		else
 		{
 			bool hl_word = false;
-			current_word++;
-			current_word_tok++;
-			if (current_ht_idx < ht_cnt && ht[current_ht_idx] == current_word_tok)
+			int sep = 0;
+			while (iswordsep(cur_ch))
 			{
-				hl_word = true;
-				current_ht_idx++;
-			}
-			if (hl_word)
-			{
-				putch(SednaConvertJob::opentag_code);
-				append_result("hit");
-				putch(SednaConvertJob::closetag_code);
-			}
-			while (iswordchar(cur_ch) && cur_ch != SednaConvertJob::opentag_code && cur_ch != EOF_ch)
-			{
-				putch(cur_ch);
+				if (sep != 0)
+					putch(sep);
+				sep = cur_ch;
 				cur_ch = getch(str_it, str_end);
 			}
-			if (hl_word)
+			if (iswordchar(cur_ch))
 			{
-				putch(SednaConvertJob::opentag_code);
-				append_result("/hit");
-				putch(SednaConvertJob::closetag_code);
+				current_word++;
+				current_word_tok++;
+				if (current_ht_idx < ht_cnt && ht[current_ht_idx] == current_word_tok)
+				{
+					hl_word = true;
+					current_ht_idx++;
+				}
+				if (hl_word)
+				{
+					putch(SednaConvertJob::opentag_code);
+					append_result("hit");
+					putch(SednaConvertJob::closetag_code);
+				}
+				if (sep != 0)
+					putch(sep);
+				while (iswordchar(cur_ch) && cur_ch != SednaConvertJob::opentag_code && cur_ch != EOF_ch)
+				{
+					putch(cur_ch);
+					cur_ch = getch(str_it, str_end);
+				}
+				if (hl_word)
+				{
+					putch(SednaConvertJob::opentag_code);
+					append_result("/hit");
+					putch(SednaConvertJob::closetag_code);
+				}
+			}
+			else
+			{
+				if (sep != 0)
+					putch(sep);
 			}
 		}
 	}
