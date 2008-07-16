@@ -248,5 +248,5 @@ int llLogCheckpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size
 
 	free(tmp_rec);
 
-	return 0;
+	return 1;
 } 

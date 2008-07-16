@@ -604,7 +604,7 @@ int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
 									 WuEnumerateVersionsProc enumProc)
 {
 
-	int success;
+	int success = 0;
 	WuEnumerateAdapter adapter = {params, enumProc};
 	WuEnumerateVersionsParams params2 = {};
 
