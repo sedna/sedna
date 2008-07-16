@@ -16,7 +16,7 @@ def _iswordchar(ch):
 		or (ch >= 91 and ch <= 94)
 		or ch == 96
 		or ch == 124
-		or (ch >= 126 and ch <= 169)
+		or (ch >= 126 and ch <= 169 and ch not in [131,138,140,142,154,156,158,159])
 		or (ch >= 171 and ch <= 177)
 		or ch == 180
 		or (ch >= 182 and ch <= 184)
