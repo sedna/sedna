@@ -45,8 +45,8 @@ static USemaphore SyncSem;    // synchronization semaphore
 static UEvent CheckpointEvent;// event to start checkpoint thread
 static UShMem SharedMem;      // descriptor for shared global info
 
-static void *ReadBuf;            // buffer for reading records (it is realloced automatically if needed)
-static int  ReadBufSize = 1024;  // size of the ReadBuf buffer
+static void *ReadBuf = NULL;     // buffer for reading records (it is realloced automatically if needed)
+static int  ReadBufSize = 0;     // size of the ReadBuf buffer
 
 llGlobalInfo *llInfo = NULL; // pointer to the global info memory
 
@@ -56,7 +56,7 @@ int recovery_active = false; // true, if this process is a recovery process
 // processes error (throws exception for now)
 static void _llProcessError(const char *llErrorMsg)
 {
-	throw USER_EXCEPTION2(SE4902, llErrorMsg);
+	throw SYSTEM_EXCEPTION(llErrorMsg);
 }
 
 // Create new logical log.
@@ -487,6 +487,8 @@ void *llGetRecordFromDisc(LSN *RecLsn)
 		free(ReadBuf);
 		if ((ReadBuf = malloc(rec_len)) == NULL)
 			_llProcessError("internal ll error: cannot allocate memory");
+
+		ReadBufSize = rec_len;
 	}
 
 	if (lfsGetRecord(RecLsn, ReadBuf, rec_len) == 0)
