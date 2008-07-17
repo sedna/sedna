@@ -94,11 +94,13 @@ static int lfsSectorSize = 512; // size of disc sector
 static lfsFileInfo_t lfsDescCache[LFS_CACHE_SIZE];
 
 
+#define LFS_ERROR(err_msg) _lfsProcessError(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg))
 
 // processes error (throws exception for now)
-static void _lfsProcessError(const char *lfsErrorMsg)
+static void _lfsProcessError(const char *file, const char *func, int line, const char *lfsErrorMsg)
 {
-	throw SYSTEM_EXCEPTION(lfsErrorMsg);
+	string err_msg = '(' + string(file) + ':' + string(func) + ':' + int2string(line) + ") - " + string(lfsErrorMsg);
+	throw SYSTEM_EXCEPTION(err_msg.c_str());
 }
 
 // synchro primitives
@@ -135,7 +137,7 @@ static int _lfsCloseAllCachedFiles()
 		{
 		   	if (uCloseFile(lfsDescCache[i].FileDsc, __sys_call_error) == 0)
 		   	{
-	   			_lfsProcessError("lfs error: cannot close file");
+	   			LFS_ERROR("lfs error: cannot close file");
 	   			return -1;
 	   		}
 			lfsDescCache[i].FileDsc = U_INVALID_FD;
@@ -155,7 +157,7 @@ static int _lfsCloseCachedDesc(uint64_t fileNum)
 	{
 	   	if (uCloseFile(lfsDescCache[CacheNum].FileDsc, __sys_call_error) == 0)
 	   	{
-   			_lfsProcessError("lfs error: cannot close file");
+   			LFS_ERROR("lfs error: cannot close file");
    			return -1;
    		}
 
@@ -188,7 +190,7 @@ static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
 	{
 	   	if (uCloseFile(lfsDescCache[CacheNum].FileDsc, __sys_call_error) == 0)
 	   	{
-   			_lfsProcessError("lfs error: cannot close file");
+   			LFS_ERROR("lfs error: cannot close file");
    			return U_INVALID_FD;
    		}
 	}
@@ -198,7 +200,7 @@ static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
     if ((fileDsc = uOpenFile(fName.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, 
     		U_WRITE_THROUGH, __sys_call_error)) == U_INVALID_FD)
     {
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot open file");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot open file");
     	return U_INVALID_FD;
     }
 
@@ -220,7 +222,7 @@ static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 
 	if (uSetFilePointer(fileDsc, 0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
 	{
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot set file pointer");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot set file pointer");
     	return -1;
     }
 	
@@ -228,7 +230,7 @@ static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 
 	if (res == 0 || readbytes != HeaderSize)
 	{
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot read user header");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot read user header");
     	return -1;
     }
 
@@ -241,13 +243,13 @@ static int _lfsGetLfsHeaderFromFile(uint64_t fileNum, lfsHeader_t *lfsHeader)
 	
 	if ((SectorBuf = malloc(lfsSectorSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate memory");
+		LFS_ERROR("lfs error: cannot allocate memory");
 		return -1;
 	}
 
 	if (_lfsGetHeaderFromFile(fileNum, SectorBuf, lfsSectorSize) != 0)
 	{
-		_lfsProcessError("lfs error: cannot read file header");
+		LFS_ERROR("lfs error: cannot read file header");
 		return -1;
 	}
 
@@ -292,7 +294,7 @@ static uint64_t _lfsGetFileSize(uint64_t FileNum)
 
 	if (uGetFileSize(fileDsc, &ressize, __sys_call_error) == 0)
 	{
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot get last file size");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot get last file size");
     	return UINT64_MAX;
     }
 
@@ -316,7 +318,7 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 
 	if (lfs_dir == U_INVALID_DIR) // there is no lfs directory
 	{
-		_lfsProcessError("lfs error: error in chain path definition");
+		LFS_ERROR("lfs error: error in chain path definition");
 		return -1;
 	}
 
@@ -332,7 +334,7 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 
 			if ((CurFileNum = atoui64(fName.c_str())) == UINT64_MAX || CurFileNum == 0)
        		{
-       			_lfsProcessError("lfs error: incorrect file format");
+       			LFS_ERROR("lfs error: incorrect file format");
        			return -1;
        		}
        	
@@ -347,7 +349,7 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 
 	if (_lfsGetLfsHeaderFromFile(*LastNum, &lfsHeader) != 0)
 	{
-		_lfsProcessError("lfs error: cannot read file header");
+		LFS_ERROR("lfs error: cannot read file header");
 		return -1;
 	}
 
@@ -360,7 +362,7 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 
 		if (!uIsFileExist(fName.c_str(), __sys_call_error))
 		{
-			_lfsProcessError("lfs error: file chain path is inconsistent");
+			LFS_ERROR("lfs error: file chain path is inconsistent");
 			return -1;
 		}
 	}
@@ -377,7 +379,7 @@ static int _lfsInitSync(int BufSize)
 	res = USemaphoreCreate(&SyncSem, 1, 1, SEDNA_LFS_SEM_NAME, NULL, __sys_call_error);  
 	if (res != 0)
 	{
-		_lfsProcessError("lfs error: cannot create semaphore");
+		LFS_ERROR("lfs error: cannot create semaphore");
 		return -1;
 	}
 
@@ -386,7 +388,7 @@ static int _lfsInitSync(int BufSize)
 
 	if (res != 0)
 	{
-		_lfsProcessError("lfs error: cannot create shared memory");
+		LFS_ERROR("lfs error: cannot create shared memory");
 		return -1;
 	}
 
@@ -395,7 +397,7 @@ static int _lfsInitSync(int BufSize)
 
 	if (lfsInfo == NULL)
 	{
-		_lfsProcessError("lfs error: cannot attach shared memory");
+		LFS_ERROR("lfs error: cannot attach shared memory");
 		return -1;
 	}
 
@@ -415,7 +417,7 @@ static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 
 	if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) != 0) 
 	{
-		_lfsProcessError("lfs error: cannot create sa");
+		LFS_ERROR("lfs error: cannot create sa");
 		return -1;
 	}
 
@@ -425,13 +427,13 @@ static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 
 	if (fdsc == U_INVALID_FD)
 	{
-		_lfsProcessError("lfs error: cannot create new chain");
+		LFS_ERROR("lfs error: cannot create new chain");
 		return -1;
 	}
  
 	if (uReleaseSA(sa, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot release sa");
+		LFS_ERROR("lfs error: cannot release sa");
 		return -1;
 	}
 
@@ -439,13 +441,13 @@ static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 
 	if (res == 0 || written != HeaderSize)
 	{
-		_lfsProcessError("lfs error: cannot create new chain");
+		LFS_ERROR("lfs error: cannot create new chain");
 		return -1;
 	}
 
    	if (uCloseFile(fdsc, __sys_call_error) == 0)
    	{
-	   	_lfsProcessError("lfs error: cannot close file");
+	   	LFS_ERROR("lfs error: cannot close file");
 	   	return -1;
 	}
 
@@ -463,7 +465,7 @@ static int _lfsExtend()
 
 	if ((HeaderBuf = malloc(lfsSectorSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate memory");
+		LFS_ERROR("lfs error: cannot allocate memory");
 		return -1;
 	}
 
@@ -523,7 +525,7 @@ static int _lfsFlushBufLSN(LSN ulsn)
 	
 	if (uSetFilePointer(fileDsc, fileOffs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
 	{
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot set file pointer");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot set file pointer");
     	return -1;
     }
 
@@ -533,7 +535,7 @@ static int _lfsFlushBufLSN(LSN ulsn)
 		res = uWriteFile(fileDsc, (char *)lfsWriteBuffer + lfsInfo->BufStart, toflush, &written, __sys_call_error);
 		if (res == 0 || written != toflush)
 		{
-	    	_lfsProcessError("lfs error: critical error in lfs chain: cannot write into file");
+	    	LFS_ERROR("lfs error: critical error in lfs chain: cannot write into file");
 	    	return -1;
 	    }
 	
@@ -548,7 +550,7 @@ static int _lfsFlushBufLSN(LSN ulsn)
 		res = uWriteFile(fileDsc, (char *)lfsWriteBuffer + lfsInfo->BufStart, portion, &written, __sys_call_error);
 		if (res == 0 || written != portion)
 		{
-	    	_lfsProcessError("lfs error: critical error in lfs chain: cannot write into file");
+	    	LFS_ERROR("lfs error: critical error in lfs chain: cannot write into file");
 	    	return -1;
 	    }
 
@@ -558,7 +560,7 @@ static int _lfsFlushBufLSN(LSN ulsn)
 		res = uWriteFile(fileDsc, (char *)lfsWriteBuffer, portion, &written, __sys_call_error);
 		if (res == 0 || written != portion)
 		{
-	    	_lfsProcessError("lfs error: critical error in lfs chain: cannot write into file");
+	    	LFS_ERROR("lfs error: critical error in lfs chain: cannot write into file");
 	    	return -1;
 	    }
 
@@ -592,7 +594,7 @@ static int _lfsTruncateChain(uint64_t FirstNum)
         	_lfsCloseCachedDesc(num);
         	if (uDeleteFile(fName.c_str(), __sys_call_error) == 0)
         	{
-        		_lfsProcessError("lfs error: cannot delete file");
+        		LFS_ERROR("lfs error: cannot delete file");
         		return -1;
         	}
         }
@@ -622,7 +624,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	res = _lfsGetFirstLastFileNums(&FirstNum, &LastNum);
 	if (res != 0)
 	{
-		_lfsProcessError("lfs error: file chain does not exist");
+		LFS_ERROR("lfs error: file chain does not exist");
 		return -1;
 	}
 
@@ -630,7 +632,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	res = _lfsTruncateChain(FirstNum);
 	if (res != 0)
 	{
-		_lfsProcessError("lfs error: file chain cannot be truncated");
+		LFS_ERROR("lfs error: file chain cannot be truncated");
 		return -1;
 	}
 
@@ -638,7 +640,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	res = _lfsGetLfsHeaderFromFile(LastNum, &lfsHeader);
 	if (res != 0)
 	{
-		_lfsProcessError("lfs error: cannot read file header");
+		LFS_ERROR("lfs error: cannot read file header");
 		return -1;
 	}
 
@@ -646,7 +648,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	res = _lfsInitSync(WriteBufferSize);
 	if (res != 0)
 	{
-		_lfsProcessError("lfs error: cannot initiate synchronizing primitives");
+		LFS_ERROR("lfs error: cannot initiate synchronizing primitives");
 		return -1;
 	}
 
@@ -666,7 +668,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	// allocate read buffer in heap, since it is local
 	if ((lfsReadBuf = malloc(ReadBufferSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate local read buffer");
+		LFS_ERROR("lfs error: cannot allocate local read buffer");
 		return -1;
 	}
 	ReadBufSize = ReadBufferSize;
@@ -674,7 +676,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	// determine sector size
 	if (uGetDiskSectorSize(&lfsSectorSize, cDataPath, __sys_call_error) == 0)
 	{
-		_lfsProcessError("lfs error: cannot obtain sector size");
+		LFS_ERROR("lfs error: cannot obtain sector size");
 		return -1;
 	}
 
@@ -691,19 +693,19 @@ int lfsRelease()
 
 	if (uDettachShMem(ShDsc, lfsInfo, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot detach shared memory");
+		LFS_ERROR("lfs error: cannot detach shared memory");
 		return -1;
 	}
 
 	if (uReleaseShMem(ShDsc, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot release shared memory");
+		LFS_ERROR("lfs error: cannot release shared memory");
 		return -1;
 	}
 
 	if (USemaphoreRelease(SyncSem, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot release semaphore");
+		LFS_ERROR("lfs error: cannot release semaphore");
 		return -1;
 	}
 
@@ -728,21 +730,21 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 	// open semaphore for synchronization purposes
 	if (USemaphoreOpen(&SyncSem, SEDNA_LFS_SEM_NAME, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot open semaphore");
+		LFS_ERROR("lfs error: cannot open semaphore");
 		return -1;
 	}
 
 	// create shared memory
 	if (uOpenShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, sizeof(lfsInfo_t), __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot open shared memory");
+		LFS_ERROR("lfs error: cannot open shared memory");
 		return -1;
 	}
 	// init lfs shared memory pointer
 	lfsInfo = (lfsInfo_t *)uAttachShMem(ShDsc, NULL, sizeof(lfsInfo_t), __sys_call_error);
 	if (lfsInfo == NULL)
 	{
-		_lfsProcessError("lfs error: cannot attach shared memory");
+		LFS_ERROR("lfs error: cannot attach shared memory");
 		return -1;
 	}
 
@@ -750,20 +752,20 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 
 	if (uDettachShMem(ShDsc, lfsInfo, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot detach shared memory");
+		LFS_ERROR("lfs error: cannot detach shared memory");
 		return -1;
 	}
 
 	if (uCloseShMem(ShDsc, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot close shared memory");
+		LFS_ERROR("lfs error: cannot close shared memory");
 		return -1;
 	}
 
 	// reattach shared memory with a new size
 	if (uOpenShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, sizeof(lfsInfo_t) + BufSize, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot open shared memory");
+		LFS_ERROR("lfs error: cannot open shared memory");
 		return -1;
 	}
 	
@@ -771,7 +773,7 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 	lfsInfo = (lfsInfo_t *)uAttachShMem(ShDsc, NULL, sizeof(lfsInfo_t) + BufSize, __sys_call_error);
 	if (lfsInfo == NULL)
 	{
-		_lfsProcessError("lfs error: cannot attach shared memory");
+		LFS_ERROR("lfs error: cannot attach shared memory");
 		return -1;
 	}
 
@@ -780,14 +782,14 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 
 	if ((lfsReadBuf = malloc(ReadBufferSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate local read buffer");
+		LFS_ERROR("lfs error: cannot allocate local read buffer");
 		return -1;
 	}
 	ReadBufSize = ReadBufferSize;
 
 	if (uGetDiskSectorSize(&lfsSectorSize, cDataPath, __sys_call_error) == 0)
 	{
-		_lfsProcessError("lfs error: cannot obtain sector size");
+		LFS_ERROR("lfs error: cannot obtain sector size");
 		return -1;
 	}
 
@@ -804,19 +806,19 @@ int lfsDisconnect()
 
 	if (USemaphoreClose(SyncSem,  __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot close semaphore");
+		LFS_ERROR("lfs error: cannot close semaphore");
 		return -1;
 	}
 		
 	if (uDettachShMem(ShDsc, lfsInfo, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot detach shared memory");
+		LFS_ERROR("lfs error: cannot detach shared memory");
 		return -1;
 	}
 
 	if (uCloseShMem(ShDsc, __sys_call_error) != 0)
 	{
-		_lfsProcessError("lfs error: cannot close shared memory");
+		LFS_ERROR("lfs error: cannot close shared memory");
 		return -1;
 	}
 
@@ -839,13 +841,13 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 	// determine sector size
 	if (uGetDiskSectorSize(&lfsSectorSize, cDataPath, __sys_call_error) == 0)
 	{
-		_lfsProcessError("lfs error: cannot obtain sector size");
+		LFS_ERROR("lfs error: cannot obtain sector size");
 		return -1;
 	}
 
 	if ((SectorBuf = malloc(lfsSectorSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate memory");
+		LFS_ERROR("lfs error: cannot allocate memory");
 		return -1;
 	}
 
@@ -873,21 +875,28 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 static int _lfsGetDataFromBuffer(void *buf, int len, int wb_off)
 {
 	int portion = 0;
+	int offs = 0;
 
 	assert(buf != NULL);
 	assert(len >= 0 && len <= lfsInfo->BufKeepBytes);
 	assert(wb_off >= 0 && wb_off < lfsInfo->BufKeepBytes);
 
-	if (lfsInfo->BufStart + wb_off + len <= lfsInfo->BufSize) // we have one continuous part here
+	// offset must be wrapped over start
+	if (lfsInfo->BufStart + wb_off >= lfsInfo->BufSize)
+		offs = wb_off - lfsInfo->BufSize + lfsInfo->BufStart;
+	else // offset is continuous
+		offs = lfsInfo->BufStart + wb_off;
+
+	if (offs + len <= lfsInfo->BufSize) // we have one continuous part here
 	{
 		//write len bytes
-		memcpy(buf, (char *)lfsWriteBuffer + lfsInfo->BufStart + wb_off, len);
+		memcpy(buf, (char *)lfsWriteBuffer + offs, len);
 	}
 	else // we have two continuous portions here: from BufStart + wb_off to the end, and from the start to the ...
 	{
-		portion = lfsInfo->BufSize - lfsInfo->BufStart - wb_off;
+		portion = lfsInfo->BufSize - offs;
 
-		memcpy(buf, (char *)lfsWriteBuffer + lfsInfo->BufStart + wb_off, portion);
+		memcpy(buf, (char *)lfsWriteBuffer + offs, portion);
 		memcpy((char *)buf + portion, lfsWriteBuffer, len - portion);
 	}
 
@@ -976,7 +985,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 
 	if (uSetFilePointer(fileDsc, fileOffs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
 	{
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot set file pointer");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot set file pointer");
     	lfsUnlock();
     	return -1;
     }
@@ -986,7 +995,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 		res = uReadFile(fileDsc, RecBuf, RecSize, &readbytes, __sys_call_error);
 		if (res == 0 || readbytes != RecSize)
 		{
-			_lfsProcessError("lfs error: error in reading file");
+			LFS_ERROR("lfs error: error in reading file");
 			lfsUnlock();
 			return -1;
 		}
@@ -996,7 +1005,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 		res = uReadFile(fileDsc, lfsReadBuf, ReadBufSize, &readbytes, __sys_call_error);
 		if (res == 0)
 		{
-			_lfsProcessError("lfs error: error in reading file");
+			LFS_ERROR("lfs error: error in reading file");
 			lfsUnlock();
 			return -1;
 		}
@@ -1116,7 +1125,7 @@ uint64_t lfsArchiveCurrentFile()
 
 	if (uGetFileSize(fileDsc, &ressize, __sys_call_error) == 0)
 	{
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot get last file size");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot get last file size");
 		lfsUnlock();
 		return -1;
 	}
@@ -1144,13 +1153,13 @@ static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *
 
 	if (HeaderSize > lfsSectorSize - sizeof(lfsHeader_t))
 	{
-    	_lfsProcessError("lfs error: critical error in lfs chain: too large user header in lfs");
+    	LFS_ERROR("lfs error: critical error in lfs chain: too large user header in lfs");
     	return -1;
     }
 
 	if ((lfsHeaderBuf = malloc(lfsSectorSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate header buffer");
+		LFS_ERROR("lfs error: cannot allocate header buffer");
 		return -1;
 	}
 
@@ -1168,7 +1177,7 @@ static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *
 	if (uSetFilePointer(fileDsc, 0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
 	{
 		free(lfsHeaderBuf);
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot set file pointer");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot set file pointer");
     	return -1;
     }
 	
@@ -1177,7 +1186,7 @@ static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *
 	if (res == 0 || written != lfsSectorSize)
 	{
 		free(lfsHeaderBuf);
-    	_lfsProcessError("lfs error: critical error in lfs chain: cannot read user header");
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot read user header");
     	return -1;
     }
 
@@ -1216,7 +1225,7 @@ int lfsGetHeader(void *HeaderBuf, size_t HeaderSize)
 
 	if ((SectorBuf = malloc(lfsSectorSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate memory");
+		LFS_ERROR("lfs error: cannot allocate memory");
 		return -1;
 	}
 
@@ -1304,7 +1313,7 @@ int lfsTruncate(LSN UntilLSN)
 
 	if ((HeaderBuf = malloc(lfsSectorSize)) == NULL)
 	{
-		_lfsProcessError("lfs error: cannot allocate memory");
+		LFS_ERROR("lfs error: cannot allocate memory");
 		return -1;
 	}
 

@@ -19,6 +19,7 @@
 #include "sm/llsm/lfsStorage.h"
 
 #include <assert.h>
+#include <string>
 
 #define LL_FILE_PORTION_SIZE (INT64_C(100) * (1024 * 1024)) // size of chunk of logical log
 #define LL_WRITEBUF_SIZE 1024 * 1024 						// write buffer size (for lfs)
@@ -53,10 +54,15 @@ llGlobalInfo *llInfo = NULL; // pointer to the global info memory
 int rollback_active = false; // true, if rollback is active on current transaction
 int recovery_active = false; // true, if this process is a recovery process
 
+#define LL_ERROR(err_msg) _llProcessError(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg))
+
+using namespace std;
+
 // processes error (throws exception for now)
-static void _llProcessError(const char *llErrorMsg)
+static void _llProcessError(const char *file, const char *func, int line, const char *lfsErrorMsg)
 {
-	throw SYSTEM_EXCEPTION(llErrorMsg);
+	string err_msg = '(' + string(file) + ':' + string(func) + ':' + int2string(line) + ") - " + string(lfsErrorMsg);
+	throw SYSTEM_EXCEPTION(err_msg.c_str());
 }
 
 // Create new logical log.
@@ -89,7 +95,7 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 
 	rec_all = malloc(RecLen + sizeof(llRecordHead));
 	if (rec_all == NULL)
-		_llProcessError("internal ll error: cannot allocate memory");
+		LL_ERROR("internal ll error: cannot allocate memory");
 
 	// lsn of previous record
 	if (trid != -1 && llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN)
@@ -149,11 +155,11 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 
 	// sync semaphore
 	if (USemaphoreCreate(&SyncSem, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error))
-		_llProcessError("internal ll error: cannot create semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		LL_ERROR("internal ll error: cannot create semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
 	// event to start checkpoint procedure
 	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
-		_llProcessError("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
+		LL_ERROR("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
   
 	llFileHead file_head;
 	lfsGetHeader(&file_head, sizeof(llFileHead));
@@ -163,16 +169,16 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 
 	ReadBuf = malloc(LL_READBUF_SIZE);
 	if (ReadBuf == NULL)
-		_llProcessError("internal ll error: cannot allocate memory");
+		LL_ERROR("internal ll error: cannot allocate memory");
 	ReadBufSize = LL_READBUF_SIZE;
 
     //create shared memory
 	if (uCreateShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, sizeof(llGlobalInfo), NULL, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot create shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot create shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
     //init shared memory pointer
 	if ((llInfo = (llGlobalInfo *)uAttachShMem(SharedMem, NULL, sizeof(llGlobalInfo), __sys_call_error)) == NULL)
-		_llProcessError("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
     //init header of shared memory
 	lfsGetHeader(&file_head, sizeof(llFileHead));
@@ -215,16 +221,16 @@ int llRelease()
 	lfsWriteHeader(&file_head, sizeof(llFileHead));
   
 	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (uReleaseShMem(SharedMem, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot release shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot release shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (USemaphoreRelease(SyncSem, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot release semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		LL_ERROR("internal ll error: cannot release semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
 	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
-		_llProcessError("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
+		LL_ERROR("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	lfsRelease();
 
@@ -239,20 +245,20 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
 	lfsConnect(db_files_path, db_name, "llog", LL_READBUF_SIZE);
 
 	if (USemaphoreOpen(&SyncSem, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot open semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		LL_ERROR("internal ll error: cannot open semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
 	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
-		_llProcessError("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
+		LL_ERROR("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	if (uOpenShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, sizeof(llGlobalInfo), __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot open shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot open shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if ((llInfo = (llGlobalInfo *)uAttachShMem(SharedMem, NULL, sizeof(llGlobalInfo), __sys_call_error)) == NULL)
-		_llProcessError("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	ReadBuf = malloc(LL_READBUF_SIZE);
 	if (ReadBuf == NULL)
-		_llProcessError("internal ll error: cannot allocate memory");
+		LL_ERROR("internal ll error: cannot allocate memory");
 	ReadBufSize = LL_READBUF_SIZE;
 
 	recovery_active = rcv_active;
@@ -264,16 +270,16 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
 int llClose()
 {
 	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (uCloseShMem(SharedMem, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot close shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
+		LL_ERROR("internal ll error: cannot close shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (USemaphoreClose(SyncSem, __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot close semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+		LL_ERROR("internal ll error: cannot close semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
 	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
-		_llProcessError("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
+		LL_ERROR("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	lfsDisconnect();
 
@@ -419,7 +425,7 @@ int llActivateCheckpoint()
     llInfo->checkpoint_on = true;
 
 	if (UEventSet(&CheckpointEvent,  __sys_call_error) != 0)
-		_llProcessError("internal ll error: cannot set checkpoint event");
+		LL_ERROR("internal ll error: cannot set checkpoint event");
 
 	llUnlock();
 
@@ -486,7 +492,7 @@ void *llGetRecordFromDisc(LSN *RecLsn)
 	{
 		free(ReadBuf);
 		if ((ReadBuf = malloc(rec_len)) == NULL)
-			_llProcessError("internal ll error: cannot allocate memory");
+			LL_ERROR("internal ll error: cannot allocate memory");
 
 		ReadBufSize = rec_len;
 	}
