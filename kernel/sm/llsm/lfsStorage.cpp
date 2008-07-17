@@ -98,7 +98,7 @@ static lfsFileInfo_t lfsDescCache[LFS_CACHE_SIZE];
 // processes error (throws exception for now)
 static void _lfsProcessError(const char *lfsErrorMsg)
 {
-	throw SYSTEM_EXCEPTION2(lfsErrorMsg);
+	throw SYSTEM_EXCEPTION(lfsErrorMsg);
 }
 
 // synchro primitives
