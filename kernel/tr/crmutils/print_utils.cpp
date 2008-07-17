@@ -1249,7 +1249,7 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,pers_sse
 			switch (type)
 			{
 			case ft_xml:case ft_xml_ne:tbuf<<opentag; break;
-			case ft_xml_hl: tbuf<<opentag<<"_"; break;
+			case ft_xml_hl: tbuf<<opentag; break;
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;			
 			}
@@ -1257,7 +1257,8 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,pers_sse
 			char* name=GETNAME(scn);
 			if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
 				if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<scn->xmlns->prefix<<":";
-			if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<name;
+			if (type==ft_xml || type==ft_xml_ne) tbuf<<name;
+			if (type==ft_xml_hl) tbuf<<"a";
 			CHECKP(node);
 			xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
 			if(child==XNULL)
@@ -1300,13 +1301,13 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,pers_sse
 			}
 			if (type==ft_xml || type==ft_xml_ne) tbuf<<opentag<<"/";
 			else
-			if (type==ft_xml_hl) tbuf<<opentag<<"/_";
+			if (type==ft_xml_hl) tbuf<<opentag<<"/";
 			else
 			if (type==ft_delimited_value && !cit) tbuf<<" ";
 			if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
 				if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<scn->xmlns->prefix<<":";
 			if (type==ft_xml || type==ft_xml_ne) tbuf<<name<<closetag;			
-			if (type==ft_xml_hl) tbuf<<name<<closetag<<" ";
+			if (type==ft_xml_hl) tbuf<<"a"<<closetag<<" ";
 			break;
 		}
 	case xml_namespace:
