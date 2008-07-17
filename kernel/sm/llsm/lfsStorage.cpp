@@ -98,7 +98,7 @@ static lfsFileInfo_t lfsDescCache[LFS_CACHE_SIZE];
 // processes error (throws exception for now)
 static void _lfsProcessError(const char *lfsErrorMsg)
 {
-	throw USER_EXCEPTION2(SE4901, lfsErrorMsg);
+	throw SYSTEM_EXCEPTION2(lfsErrorMsg);
 }
 
 // synchro primitives
@@ -865,6 +865,35 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 	return 0;
 }
 
+// gets data from write buffer
+// Parameters:
+// 		buf - where to copy (must be allocated by the caller)
+//      len - how many bytes to copy
+//      wb_off - offset from the beginning of the write buffer
+static int _lfsGetDataFromBuffer(void *buf, int len, int wb_off)
+{
+	int portion = 0;
+
+	assert(buf != NULL);
+	assert(len >= 0 && len <= lfsInfo->BufKeepBytes);
+	assert(wb_off >= 0 && wb_off < lfsInfo->BufKeepBytes);
+
+	if (lfsInfo->BufStart + wb_off + len <= lfsInfo->BufSize) // we have one continuous part here
+	{
+		//write len bytes
+		memcpy(buf, (char *)lfsWriteBuffer + lfsInfo->BufStart + wb_off, len);
+	}
+	else // we have two continuous portions here: from BufStart + wb_off to the end, and from the start to the ...
+	{
+		portion = lfsInfo->BufSize - lfsInfo->BufStart - wb_off;
+
+		memcpy(buf, (char *)lfsWriteBuffer + lfsInfo->BufStart + wb_off, portion);
+		memcpy((char *)buf + portion, lfsWriteBuffer, len - portion);
+	}
+
+	return 0;
+}
+
 // get data at RecLSN and write it to the RecBuf;
 // RecSize bytes will be written; RecBuf must be allocated by the caller
 // return: -1 - error; number of bytes read (0 - lfs is out of bound)
@@ -895,7 +924,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 		// check if record is still in the write buffer
 		if (*RecLSN >= lfsInfo->NextLSN && *RecLSN + RecSize <= lfsInfo->NextLSN + lfsInfo->BufKeepBytes)
 		{
-			memcpy(RecBuf, (char *)lfsWriteBuffer + lfsInfo->BufStart + (*RecLSN - lfsInfo->NextLSN), RecSize);
+			_lfsGetDataFromBuffer(RecBuf, RecSize, (*RecLSN - lfsInfo->NextLSN));
 			lfsUnlock();
 			return RecSize;
 		}	
