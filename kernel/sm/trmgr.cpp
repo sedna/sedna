@@ -141,27 +141,25 @@ U_THREAD_PROC (checkpoint_thread, arg)
    		WuOnBeginCheckpointExn();
 
 		RECOVERY_CRASH;
-			
-		WuEnumerateVersionsParams params;
-   		WuEnumerateVersionsForCheckpointExn(&params, llLogCheckpoint);
-
-		RECOVERY_CRASH;
-
+		
 		ObtainGiantLock(); isGiantLockObtained = true;
 		{	
 			flush_data_buffers();
-    		d_printf1("flush data buffers completed\n");
+    			d_printf1("flush data buffers completed\n");
+
+			WuEnumerateVersionsParams params;
+   			WuEnumerateVersionsForCheckpointExn(&params, llLogCheckpoint);
 
 			RECOVERY_CRASH;
-        
+
 			llFlushAll();
-    		d_printf1("flush logical log completed\n");
+    			d_printf1("flush logical log completed\n");
 
 			RECOVERY_CRASH;
 
 			llTruncateLog();
 
-    		WuOnCompleteCheckpointExn();
+    			WuOnCompleteCheckpointExn();
 		}
 		ReleaseGiantLock(); isGiantLockObtained = false;
 
