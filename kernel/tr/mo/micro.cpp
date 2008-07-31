@@ -1583,15 +1583,17 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 		}
 		CHECKP(nodex);
 		schema_node* scn=(GETBLOCKBYNODE(nodex))->snode;
-		switch (type)
+		if (!restore_mode)
 		{
-		case element:
+			switch (type)
+			{
+			case element:
 			{
 				xml_ns* ns=scn->xmlns;
 				hl_logical_log_element(indir,left_indir,right_indir,par_indir,scn->name,((e_dsc*)node)->type,(ns)?ns->uri:NULL,(ns)?ns->prefix:NULL ,false);
 				break;
 			}
-		case attribute:
+			case attribute:
 			{
 				char *name=scn->name;
 				xml_ns *ns=scn->xmlns;
@@ -1613,7 +1615,7 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 				hl_logical_log_attribute(indir,left_indir,right_indir,par_indir,name,type,ptr,size,(ns)?ns->uri:NULL,(ns)?ns->prefix:NULL ,false);
 				break;
 			}
-		case text: case comment: 
+			case text: case comment: 
 			{
 				xptr ind_ptr=((t_dsc*)node)->data;
 				char* ptr=NULL;
@@ -1687,7 +1689,7 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 			}
 
 		}
-		
+		}
 	}
 	//update of parent  pointer to first child by sort 
 	CHECKP(nodex);
@@ -1736,7 +1738,8 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 	
 	CHECKP(nodex);
 	//nid
-	nid_delete(nodex);
+	if (!restore_mode)
+		nid_delete(nodex);
 	// same sort descriptor updates && block update
 	CHECKP(nodex);
 	VMM_SIGNAL_MODIFICATION(nodex);
