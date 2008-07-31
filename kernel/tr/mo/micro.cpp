@@ -1693,7 +1693,7 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 	}
 	//update of parent  pointer to first child by sort 
 	CHECKP(nodex);
-	if (type!=document)
+	if (type!=document && !restore_mode)
 	{	
 		n_dsc* prev=getPreviousDescriptorOfSameSort(node);
 		if (prev==NULL || prev->pdsc!=par_indir)
