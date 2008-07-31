@@ -320,6 +320,8 @@ int UpdateRestrictionsOnFreeBlock(XPTR xptr)
 	return success;
 }
 
+void AnalyzePopularFailure(const char *fn, XPTR xptr, XPTR lxptr, VersionsHeader *hdr);
+
 static
 int ValidateHeader(VersionsHeader *hdr)
 {
@@ -513,6 +515,7 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 	else if (!ValidateHeader(versionHeader) || versionHeader->xptr[0]!=lxptr)
 	{
 		WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
+        AnalyzePopularFailure(__FUNCTION__, lxptr, lxptr, versionHeader);
 	}
 	/* generic validation passed, now interpret version header */ 
 	else

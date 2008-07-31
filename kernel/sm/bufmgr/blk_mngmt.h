@@ -13,6 +13,7 @@
 int push_to_persistent_free_blocks_stack(xptr *hd, xptr p);
 int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p);
 int count_elems_of_persistent_free_blocks_stack(xptr hd);
+bool is_in_persistent_free_blocks_stack(xptr hd, xptr what);
 
 int push_to_persistent_used_blocks_stack(xptr *hd, xptr p);
 int pop_from_persistent_used_blocks_stack(xptr *hd, xptr *p);
