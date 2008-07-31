@@ -26,6 +26,15 @@ struct free_blk_hdr
 	static void init(void *p);
 };
 
+/* Number of pointers a single block can store. */ 
+#define PERS_STACK_NODE_CAPACITY \
+    (((size_t)PAGE_SIZE-sizeof(free_blk_hdr))/sizeof(xptr))
+
+static xptr *get_xptr_array(free_blk_hdr *h)
+{
+    return (xptr *)(h+1);
+}
+
 void free_blk_hdr::init(void *p)
 {
     free_blk_hdr *hdr = (free_blk_hdr*)p;
@@ -151,6 +160,30 @@ int count_elems_of_persistent_free_blocks_stack(xptr hd)
     }
 
     return num;
+}
+
+bool is_in_persistent_free_blocks_stack(xptr hd, xptr what)
+{
+    bool           found = false;
+    int            i;
+    ramoffs        offs;
+    free_blk_hdr  *node;
+    xptr          *nodeXptrArray;
+    
+    while (hd!=NULL && hd!=what && !found)
+    {
+        put_block_to_buffer(-1, hd, &offs);
+        node = (free_blk_hdr *)OFFS2ADDR(offs);
+        nodeXptrArray = get_xptr_array(node);
+
+        for (i=0; i<node->num && !found; ++i)
+        {
+            found = (nodeXptrArray[PERS_STACK_NODE_CAPACITY-1-i] == what);
+        }
+
+        hd = node->nblk;
+    }
+    return hd == what || found;
 }
 
 int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)

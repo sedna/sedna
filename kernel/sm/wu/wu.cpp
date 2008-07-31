@@ -32,6 +32,40 @@ static size_t numSwapped = 0;
 
 /* utility functions */ 
 
+void AnalyzePopularFailure(const char *fn, XPTR xptr, XPTR lxptr, VersionsHeader *hdr)
+{
+    static const char *hint = NULL;
+    char buf[1024] = "{}", *p = buf;
+    int i;
+
+    /* compose hint message */ 
+    if (is_in_persistent_free_blocks_stack(
+                mb->free_data_blocks, 
+                WuExternaliseXptr(xptr)))
+    {
+        hint = "invalid lxptr (free block)";
+    }
+    else if (lxptr != hdr->xptr[0] && xptr == lxptr)
+    {
+        hint = "invalid lxptr (old version)";
+    }
+    else
+    {
+        hint = "either invalid lxptr (unexpected block type) or data corruption";
+    }
+
+    /* print version header to string */ 
+    for (i=0; i<VE_VERSIONS_COUNT; ++i) 
+    {
+        if (hdr->xptr[i] == 0) break;
+        p += sprintf(p, "{%016" I64FMT "x, %016" I64FMT "x} ", hdr->xptr[i], hdr->creatorTs[i]);
+    }
+
+    elog(EL_ERROR, ("%s - %s", fn, hint));
+    elog(EL_ERROR, ("%s - xptr %016" I64FMT "x, lxptr %016" I64FMT "x", fn, xptr, lxptr));
+    elog(EL_ERROR, ("%s - vheader %s", fn, buf));
+}
+
 static
 int InitSynchrObjects()
 {
