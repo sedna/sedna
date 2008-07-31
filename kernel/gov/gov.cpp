@@ -178,6 +178,7 @@ int main(int argc, char** argv)
 
             command_line += " -background-mode off";
             command_line += " -port-number " + int2string(lstnr_port);
+            command_line += " -ping-port-number " + int2string(ping_port);
 
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
