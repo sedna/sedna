@@ -25,7 +25,6 @@
 #include "common/gmm.h"
 #include "common/pping.h"
 #include "common/ipc_ops.h"
-#include "common/config.h"
 #include "sm/wu/wu.h"
 
 using namespace std;
@@ -364,7 +363,7 @@ int main(int argc, char **argv)
 
              release_checkpoint_sems();
 
-             int load_res = load_metadata_in_database(db_name, db_security);
+             int load_res = load_metadata_in_database(db_name, db_security, cfg);
              if (load_res != 0) 
                  throw USER_EXCEPTION2(SE4211, db_name);
 

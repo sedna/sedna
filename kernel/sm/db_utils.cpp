@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 #include <string>
 #include "common/base.h"
+#include "common/u/uutils.h"
 #include "common/u/uhdd.h"
 #include "sm/db_utils.h"
 #include "common/errdbg/d_printf.h"
@@ -157,7 +158,7 @@ bool exist_db(const char* db_name)
 }
 
 
-int load_metadata_in_database(const char* db_name, const char* db_security_level)
+int load_metadata_in_database(const char* db_name, const char* db_security_level, const gov_header_struct& cfg)
 {
   UPID pid;
   UPHANDLE proc_h;
@@ -199,6 +200,9 @@ int load_metadata_in_database(const char* db_name, const char* db_security_level
       uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", __sys_call_error);
   else // if db-security is not off we need to load db_security data
       uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "2", __sys_call_error); 
+
+  char buf2[1024];
+  uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf2, 10), __sys_call_error);    
 
   strcpy(buf, run_command.c_str());
   if (0 != uCreateProcess(buf,
