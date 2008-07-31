@@ -9,10 +9,7 @@
 // prepare distance directory (make hot-backup directory with current timestamp)
 int hbPrepareDistance(const char *hb_dir_name, const char *hb_db_name);
 
-// copy data file
-int hbCopyDataFile(char *file_path);
-
-// copy all other files (vmm.dat, ph-file, cfg-file, log-files)
+// copy all files (vmm.dat, ph-file, cfg-file, log-files, data-file)
 int hbCopyFile(char *file_path);
 
 // makes cleanup of hot-backup files in case of failure

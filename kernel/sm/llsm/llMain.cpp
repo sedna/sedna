@@ -17,6 +17,7 @@
 #include "common/base.h"
 #include "common/u/uevent.h"
 #include "sm/llsm/lfsStorage.h"
+#include "sm/llsm/physlog.h"
 
 #include <assert.h>
 #include <string>
@@ -39,6 +40,9 @@ struct llFileHead
 	bool is_stopped_successfully;  // true, if the database was stopped correctly
 	int sedna_db_version;          // sedna strucures version. should be moved to data master block, but what the hell :)
 	bool is_archive;               // indicates that this is hot-backup(archive) file
+	uint64_t next_arch_file;       // next file to archive; if 0 - then base isn't in incremental mode
+
+	LSN hb_lsn;         		   // lsn of record containing info about hot-backup
 	//new fields should be appended to the end of the structure
 };
 
@@ -48,6 +52,8 @@ static UShMem SharedMem;      // descriptor for shared global info
 
 static void *ReadBuf = NULL;     // buffer for reading records (it is realloced automatically if needed)
 static int  ReadBufSize = 0;     // size of the ReadBuf buffer
+
+static bool llNeedHbRecord = true;
 
 llGlobalInfo *llInfo = NULL; // pointer to the global info memory
 
@@ -72,11 +78,13 @@ int llCreateNew(const char *db_files_path, const char *db_name)
 
 	fileHead.checkpoint_lsn = LFS_INVALID_LSN;
 	fileHead.last_chain_lsn = LFS_INVALID_LSN;
+	fileHead.hb_lsn = LFS_INVALID_LSN;
 	fileHead.ts = 0x10000;
 	fileHead.is_stopped_successfully = false;
 	fileHead.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
 	fileHead.is_archive = false;
-	
+	fileHead.next_arch_file = 0;
+
 	lfsCreateNew(db_files_path, db_name, "llog", LL_FILE_PORTION_SIZE, &fileHead, sizeof(llFileHead));
 
 	return 0;
@@ -91,14 +99,12 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 	LSN ret_lsn;
 	llRecordHead log_head;
 
-	llLock();
-
 	rec_all = malloc(RecLen + sizeof(llRecordHead));
 	if (rec_all == NULL)
 		LL_ERROR("internal ll error: cannot allocate memory");
 
 	// lsn of previous record
-	if (trid != -1 && llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN)
+	if (trid != -1 && trid != -2 && llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN)
 		log_head.prev_lsn = llInfo->llTransInfoTable[trid].last_lsn;
 	else
 		log_head.prev_lsn = LFS_INVALID_LSN;
@@ -113,7 +119,7 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 	free(rec_all);
 
 	// record belongs to some transaction
-	if (trid != -1)
+	if (trid != -1 && trid != -2)
 	{
 		llInfo->llTransInfoTable[trid].last_lsn = ret_lsn;
 
@@ -124,10 +130,14 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 		llInfo->llTransInfoTable[trid].num_of_log_records += 1;					 // debug info
 		llInfo->llTransInfoTable[trid].last_len = RecLen + sizeof(llRecordHead); // needed for flush
     }
-    else
+    else if (trid != -2)
+    {
+   		llLock();
 		llInfo->last_chain_lsn = ret_lsn;   // last record in physical chain
+		llUnlock();
+	}
 
-	llUnlock();
+	llNeedHbRecord = true; // since we inserted new record log will be archived
 
 	return ret_lsn;
 }
@@ -148,8 +158,68 @@ void llUnlock()
 		throw SYSTEM_EXCEPTION("Can't up semaphore: SEDNA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 }
 
+/*
+ hot-backup log record format (this serves as a store of hb-specific info):
+
+ op (1 byte)
+ pers snapshot ts (TIMESTAMP)
+ hb_checkpoint_lsn (LSN)
+ hb_last_chain_lsn (LSN)
+*/
+static LSN llLogHotBackup()
+{
+	RECOVERY_CRASH;
+
+	char *tmp_rec;  
+	int rec_len;
+	LSN res;
+    
+	rec_len = sizeof(char) + sizeof(TIMESTAMP) + 2 * sizeof(LSN);
+	if ((tmp_rec = (char *)malloc(rec_len)) == NULL)
+		throw SYSTEM_EXCEPTION("Cannot allocate memory");
+
+	char op = LL_HBINFO;
+	int offs = 0;
+
+	//create record body
+	memcpy(tmp_rec, &op, sizeof(char));
+	offs += sizeof(char);
+
+	memcpy(tmp_rec + offs, &(llInfo->ts), sizeof(TIMESTAMP));
+	offs += sizeof(TIMESTAMP);
+	
+	memcpy(tmp_rec + offs, &(llInfo->checkpoint_lsn), sizeof(LSN));
+	offs += sizeof(LSN);
+
+	memcpy(tmp_rec + offs, &(llInfo->last_chain_lsn), sizeof(LSN));
+
+	res = llInsertRecord(tmp_rec, rec_len, -2);
+
+	free(tmp_rec);
+
+	return res;
+}
+
+// retrieves info from hot-backup record
+static void llRetrieveHbRec(void *RecBuf)
+{
+    char *offs;
+
+	offs = (char *)RecBuf + sizeof(char);
+
+	llInfo->ts = *((TIMESTAMP *)offs);
+	offs += sizeof(TIMESTAMP);
+
+	llInfo->checkpoint_lsn = *((LSN *)offs);
+	offs += sizeof(LSN);
+
+	llInfo->last_chain_lsn = *((LSN *)offs);
+
+	RECOVERY_CRASH;
+}
+
 // Inits logical log.
-int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version, bool *exit_status)
+int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version, bool *exit_status, int rcv_active)
 {
 	lfsInit(db_files_path, db_name, "llog", LL_WRITEBUF_SIZE, LL_READBUF_SIZE);
 
@@ -183,13 +253,21 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
     //init header of shared memory
 	lfsGetHeader(&file_head, sizeof(llFileHead));
 
-	llInfo->checkpoint_lsn = file_head.checkpoint_lsn;
 	llInfo->min_rcv_lsn = LFS_INVALID_LSN;
+	llInfo->checkpoint_lsn = file_head.checkpoint_lsn;
 	llInfo->last_chain_lsn = file_head.last_chain_lsn;
    
 	llInfo->ts = file_head.ts;
 
 	llInfo->hotbackup_needed = file_head.is_archive;
+
+	// if we recover hot-backup we need to retrieve hb-record
+	if (llInfo->hotbackup_needed)
+	{
+		llRetrieveHbRec(llGetRecordFromDisc(&(file_head.hb_lsn)));
+	}
+
+	llInfo->next_arch_file = file_head.next_arch_file;
 
 	for (int i = 0; i < CHARISMA_MAX_TRNS_NUMBER; i++)
 	{
@@ -205,6 +283,8 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 	file_head.is_stopped_successfully = false;        
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));  // since this moment any crash will lead to recovery
+
+	recovery_active = rcv_active;
 
 	return 0;
 }
@@ -326,10 +406,20 @@ static int _llFlushHeader()
 
 	lfsGetHeader(&file_head, sizeof(llFileHead));
 	
+	// in case of hot-backup recovery we need to store last_chain_lsn
+	// since physical records are written to log
+	if (recovery_active && llInfo->hotbackup_needed && !llInfo->checkpoint_on)
+	{
+		file_head.hb_lsn = llLogHotBackup();
+		lfsFlushAll();
+	}
+
 	file_head.checkpoint_lsn = llInfo->checkpoint_lsn;
 	
+	file_head.next_arch_file = llInfo->next_arch_file;
+    
 	file_head.last_chain_lsn = llInfo->last_chain_lsn;
-	
+
 	file_head.ts = llInfo->ts;
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));
@@ -405,7 +495,7 @@ int llTruncateLog()
 	if (minLSN == LFS_INVALID_LSN)
 		return 0;
 
-	lfsTruncate(minLSN);
+	lfsTruncate(minLSN, llInfo->next_arch_file);
 
 	return 0;
 }
@@ -593,16 +683,39 @@ int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llN
 uint64_t llLogArchive()
 {
 	uint64_t num;
-	
+	LSN hb_lsn;
+
 	llFileHead file_head;
+
+	if (llInfo->next_arch_file == 0 && llNeedHbRecord) // increment mode off
+	{
+		hb_lsn = llLogHotBackup(); // store hb-specific info
+	}
+
+	llLock();
 
 	lfsGetHeader(&file_head, sizeof(llFileHead));
 	
 	file_head.is_archive = true;
-
-	lfsWriteHeader(&file_head, sizeof(llFileHead));
+	file_head.next_arch_file = 0;
 	
-	num = lfsArchiveCurrentFile();
+	if (llInfo->next_arch_file == 0 && llNeedHbRecord) // increment mode off
+	{
+		file_head.hb_lsn = hb_lsn;
+	}
+
+	num = lfsArchiveCurrentFile(&file_head, sizeof(llFileHead));
+
+	// write header for a new file if needed
+	if (llInfo->next_arch_file == 0 && llNeedHbRecord) // increment mode off
+	{
+		lfsGetHeader(&file_head, sizeof(llFileHead));
+		file_head.hb_lsn = hb_lsn;
+		lfsWriteHeader(&file_head, sizeof(llFileHead));
+	    llNeedHbRecord = false;
+	}		
+
+	llUnlock();
 
 	return num;
 }
@@ -610,11 +723,11 @@ uint64_t llLogArchive()
 // Returns previous lsn for given record
 LSN llGetPrevLsnFromRecord(void *Rec)
 {
-  llRecordHead *RecHead;
+	llRecordHead *RecHead;
 
-  if (Rec == NULL) return LFS_INVALID_LSN;
+	if (Rec == NULL) return LFS_INVALID_LSN;
 
-  RecHead = (llRecordHead *)((char *)Rec - sizeof(llRecordHead));
+	RecHead = (llRecordHead *)((char *)Rec - sizeof(llRecordHead));
 
-  return RecHead->prev_lsn;
+	return RecHead->prev_lsn;
 }

@@ -15,26 +15,28 @@
 static bool hb_in_process = false;
 
 // resets hbp state in case of bad request or at the end
-static void ResetHbState()
+static void ResetHbState(hb_state state)
 {
 	    if (hb_in_process)
 	    { 
-	    	llHotBackup(HB_END);             // notify logical log
-			llEnableCheckpoints(); 			 // enable checkpoints
+	    	llHotBackup(state, HB_NONE_INCR);  // notify logical log
+			llEnableCheckpoints(); 			   // enable checkpoints
 		}
 		
 		hb_in_process = false;
 }
 
 // processes request from hot-backup client
-hb_state hbProcessStartRequest(hb_state state)
+hb_state hbProcessStartRequest(hb_state state, bool is_checkp, hb_state state_incr)
 {
+	int res;
+
 	// cannot do hot-backup during recovery process
 	if (is_recovery_mode)
 		return HB_ERR;
 
 	// if hbp requests checkpoint before hot-backup initiate it
-	if (state == HB_START_CHECKPOINT)
+	if (is_checkp)
 	{
 	 	llActivateCheckpoint();
 		llDisableCheckpoints();
@@ -53,18 +55,18 @@ hb_state hbProcessStartRequest(hb_state state)
 
     // all ok, checkpoints are disabled, we can continue
     // first, switch logical log to hb mode (special records about blocks to support consistency)
-    llHotBackup(HB_START);
+    res = llHotBackup(state, state_incr);
 
     hb_in_process = true;
 
-    return HB_CONT;
+    return (res == -1) ? HB_ERR : HB_CONT;
 }
 
 // processes Archive Logical Log request
 hb_state hbProcessLogArchRequest(uint64_t *lnumber)
 {
     // archive log and switch off special records about blocks
-    llHotBackup(HB_ARCHIVELOG);
+    llHotBackup(HB_ARCHIVELOG, HB_NONE_INCR);
 
     // get last logical log archive number
     *lnumber = llHbLastArchiveFile();
@@ -75,7 +77,15 @@ hb_state hbProcessLogArchRequest(uint64_t *lnumber)
 // processes end request
 hb_state hbProcessEndRequest()
 {
-	ResetHbState();
+	ResetHbState(HB_END);
+
+    return HB_END;
+}
+
+// processes end request
+hb_state hbProcessErrorRequest()
+{
+	ResetHbState(HB_ERR);
 
     return HB_END;
 }

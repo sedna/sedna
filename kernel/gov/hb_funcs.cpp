@@ -29,6 +29,18 @@ struct hbInfo
 
 static map <USOCKET, hbInfo> hbClients;
 
+// makes socket protocol msg with error to send to hbp
+static void hbMakeErrorMsg(msg_struct *msg, const char *err_msg)
+{
+	msg->instruction = HB_ERR;
+	msg->length = 5 + strlen(err_msg);
+
+	msg->body[0] = 0;
+	int2net_int(strlen(err_msg), &(msg->body[1]));
+
+	strncpy(&(msg->body[5]), err_msg, strlen(err_msg));
+}
+
 static void hbSendMsgToSm(sm_msg_struct *msg)
 {
 	SSMMsg *sm_server = NULL;
@@ -72,7 +84,7 @@ static int hbRetrieveAndCheckDbName(USOCKET sock, char *dbname, int len)
 }
 
 // retrieves log file names, ph-file name etc. and stores them in hbFiles array
-static int RetrieveAllFileNames()
+static int RetrieveAllFileNames(bool only_log)
 {
     char buf[MAX_SE_SOCKET_STR];
     int lnum, len;
@@ -85,7 +97,7 @@ static int RetrieveAllFileNames()
 
 	hbSendMsgToSm(&msg);
 
-	if (msg.data.hb_struct.state == HB_ERR) return -1;
+	if (msg.data.hb_struct.state == HB_ERR)	return -1;
 
 	while (msg.data.hb_struct.lnumber != LFS_INVALID_FILE)
 	{
@@ -102,6 +114,8 @@ static int RetrieveAllFileNames()
 		if (msg.data.hb_struct.state == HB_ERR) return -1;
 	}
 
+	if (only_log) return 0;
+		
 	// retrieve ph file name
 	msg.cmd = 39;
 	msg.data.hb_struct.state = HB_GETPERSTS;
@@ -127,11 +141,6 @@ static int RetrieveAllFileNames()
 
     hbFiles->push_back(string(buf, len));
 
-    // retrieve sednaconf file
-	int res = hbMakeConfGlobalFileName(buf, MAX_SE_SOCKET_STR);
-	if (res == -1) return -1;
-    if (res != 0) hbFiles->push_back(string(buf, res));
-
     return 0;
 }
 
@@ -144,7 +153,7 @@ static void hbProcessErrorHbp(USOCKET sock)
 		sm_msg_struct msg;
 
 		msg.cmd = 39;
-		msg.data.hb_struct.state = HB_END;
+		msg.data.hb_struct.state = HB_ERR;
 
 		hbSendMsgToSm(&msg);
 	}
@@ -158,36 +167,49 @@ static void hbProcessErrorHbp(USOCKET sock)
 // can issue wait request or send data file name to hbp
 int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 {
-	hb_state req = (hb_state)msg->instruction;
+	hb_state req = (hb_state)msg->instruction, incr_req;
 	
-	if ((*status == HB_WAIT && req == HB_START_CHECKPOINT) || (*status != HB_WAIT && *status != HB_START))
+	if (*status != HB_WAIT && *status != HB_START)
 	{
-		msg->instruction = HB_ERR;
-		msg->length = 0;
+	    hbMakeErrorMsg(msg, 
+	    	"Hot-backup protocol violation (expecting start request)");
 		
 		return -1;
 	}
 
 	if (*status == HB_START)
 	{
-		if (msg->length <= 5 || msg->body[0] != 0) return -1;
+		if (msg->length < 11 || msg->body[5] != 0) return -1;
 
 		__int32 len;
-		net_int2int(&len, &(msg->body[1]));
+		net_int2int(&len, &(msg->body[6]));
 
-		if (hbRetrieveAndCheckDbName(sock, &(msg->body[5]), len) != 0) return -1;
+		if (hbRetrieveAndCheckDbName(sock, &(msg->body[10]), len) != 0) 
+		{
+		    hbMakeErrorMsg(msg, 
+		    	"Hot-backup start error (duplicate request or db isn't running)");
+			return -1;
+		}
 	}
 
 	sm_msg_struct smmsg;
 	
 	smmsg.cmd = 39;
 	smmsg.data.hb_struct.state = req;
-
+	smmsg.data.hb_struct.is_checkp = (*status == HB_WAIT) ? 0 : msg->body[0];
+	
+	net_int2int((__int32 *)(&incr_req), &(msg->body[1]));
+	smmsg.data.hb_struct.incr_state = incr_req;
+	
 	hbSendMsgToSm(&smmsg);
 
 	if (smmsg.data.hb_struct.state == HB_CONT) // need to send data file name
 	{
-		*status = HB_ARCHIVELOG;
+		if (incr_req == HB_STOP_INCR)
+			*status = HB_END;
+		else
+        	*status = HB_ARCHIVELOG;
+
 		msg->instruction = HB_CONT;
 		
 		msg->body[0] = 0;
@@ -211,7 +233,11 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 		msg->length = 0;
 		
 		if (*status == HB_ERR) 
+		{
+		    hbMakeErrorMsg(msg, 
+		    	"Start request error (base in recovery mode or increment requested without primary copy)");
 			return -1;
+		}
 	}
 
 	return 0;
@@ -220,15 +246,19 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 // processes archive log request
 int hbProcessLogArchRequest(msg_struct *msg)
 {
+	hb_state incr_req; // increment type
+
 	if (*status != HB_ARCHIVELOG)
 	{
-		msg->instruction = HB_ERR;
-		msg->length = 0;
+	    hbMakeErrorMsg(msg, 
+	    	"Hot-backup protocol violation (expecting log archive request)");
 		
 		return -1;
 	}
 
-	int res = RetrieveAllFileNames();
+	net_int2int((__int32 *)(&incr_req), &(msg->body[1]));
+
+	int res = RetrieveAllFileNames(incr_req == HB_ADD_INCR);
 
 	if (res == 0 && hbFiles->size() > 0) // need to send file name
 	{
@@ -241,16 +271,21 @@ int hbProcessLogArchRequest(msg_struct *msg)
 		msg->length = (*hbFiles)[0].length() + 5;
 
 		hbFiles->erase(hbFiles->begin());
-
-		return 0;
 	}
-	else
+	else if (res != 0)
 	{
-		msg->instruction = HB_ERR;
-		msg->length = 0;
-		
+	    hbMakeErrorMsg(msg, 
+	    	"Cannot determine files to copy (possible sm error)");
 		return -1;
 	}
+    else
+    {
+		*status = HB_END;
+		msg->instruction = HB_END;
+		msg->length = 0;
+	}
+
+	return 0;
 }
 
 // processes next copy file request
@@ -258,8 +293,8 @@ static int hbProcessNextFile(msg_struct *msg)
 {
 	if (*status != HB_NEXTFILE)
 	{
-		msg->instruction = HB_ERR;
-		msg->length = 0;
+	    hbMakeErrorMsg(msg, 
+	    	"Hot-backup protocol violation (expecting next file request)");
 		
 		return -1;
 	}
@@ -290,8 +325,8 @@ int hbProcessEndRequest(msg_struct *msg)
 {
 	if (*status != HB_END)
 	{
-		msg->instruction = HB_ERR;
-		msg->length = 0;
+	    hbMakeErrorMsg(msg, 
+	    	"Hot-backup protocol violation (expecting end request)");
 		
 		return -1;
 	}
@@ -312,13 +347,13 @@ int hbProcessEndRequest(msg_struct *msg)
 	}
 	else
 	{
-		msg->instruction = HB_ERR;
-		msg->length = 0;
+	    hbMakeErrorMsg(msg, 
+	    	"Unknown error during end request (sm error)");
 		
 		return -1;
 	}
 
-	return 1;
+	return 0;
 }
 
 // processes message from hbp
@@ -345,7 +380,7 @@ int hbProcessMessage(USOCKET sock)
    	hbDbName = &((*it).second.hbDbName);
    	hbFiles = &((*it).second.hbFiles);
 
-    if (cmd == HB_START || cmd == HB_START_CHECKPOINT)
+    if (cmd == HB_START)
 		res = hbProcessStartRequest(sock, &msg);
 	else if (cmd == HB_ARCHIVELOG)
      	res = hbProcessLogArchRequest(&msg);
@@ -355,8 +390,8 @@ int hbProcessMessage(USOCKET sock)
 		res = hbProcessEndRequest(&msg);
 	else
 	{
-		msg.instruction = HB_ERR;
-		msg.length = 0;
+	    hbMakeErrorMsg(&msg, 
+	    	"Hot-backup protocol violation (unknown request)");
 
 		res = -1;
 	}
@@ -371,9 +406,15 @@ int hbProcessMessage(USOCKET sock)
 	if (sp_send_msg(sock, &msg) != 0)
        	res = -1;	
 
-	if (res != 0) 
+	if (res != 0)
 		hbProcessErrorHbp(sock);
 
+	if (cmd == HB_END && res == 0)
+	{
+		hbClients.erase(sock);
+		return 1;
+	}
+		
 	return res;
 }
 

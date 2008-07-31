@@ -25,10 +25,6 @@ int	hbMakePhFileName(char *buf, int maxlen, const char *dbname, __int64 ts);
 // retrieves vmm.dat file name
 int	hbMakeVmmFileName(char *buf, int maxlen);
 
-// retrieves sednaconf file name
-// return 0 if sednaconf not found
-int	hbMakeConfGlobalFileName(char *buf, int maxlen);
-
 // retrieves db config file name
 int	hbMakeConfFileName(char *buf, int maxlen, const char *dbname);
 

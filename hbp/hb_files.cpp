@@ -16,6 +16,7 @@
  */
 
 #include "hb_files.h"
+#include "hb_aux.h"
 
 #include <string>
 
@@ -41,27 +42,45 @@ static int hbMakeDirWithTimestamp(const char *dist_dir, const char *db_name)
         time(&aclock);                   
         newtime = localtime(&aclock);    
 
-        sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-%02d",
+        sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-%02d/",
                     newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
                     newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 
         // make distance name
         strcpy(hbDistance, dist_dir);
-        strcat(hbDistance, "/backup-");
-        strcat(hbDistance, db_name);
-        strcat(hbDistance, "-");
-        strcat(hbDistance, dt_buf);
+        
+        // create directory if user specified so
+        if (hb_mkdir && !uIsFileExist(hbDistance, NULL))
+        {
+        	if (uMkDir(hbDistance, NULL, __sys_call_error) == 0)
+    	       	return -1;
+	        
+	        // register directory
+    	    hbCreatedFiles.push_back(name_isdir_pair(string(hbDistance), true));
+    	}
 
-	    // if directory already exists - error
-	    if (uIsFileExist(hbDistance, NULL))
+        if (hb_timestamp)
+        {
+	        strcat(hbDistance, "/backup-");
+    	    strcat(hbDistance, db_name);
+        	strcat(hbDistance, "-");
+        	strcat(hbDistance, dt_buf);
+
+	       	if (!uIsFileExist(hbDistance, NULL))
+	       	{
+	       		if (uMkDir(hbDistance, NULL, __sys_call_error) == 0)
+   		       		return -1;
+	        
+	        	// register directory
+    	    	hbCreatedFiles.push_back(name_isdir_pair(string(hbDistance), true));
+    	    }
+        }
+        else
+	        strcat(hbDistance, "/");
+
+	    // if directory doesn't exist - error
+	    if (!uIsFileExist(hbDistance, NULL))
            	return -1;
-
-        // create backup directory
-       	if (uMkDir(hbDistance, NULL, __sys_call_error) == 0)
-           	return -1;
-
-        // register directory
-        hbCreatedFiles.push_back(name_isdir_pair(string(hbDistance), true));
 
         return 0;
 }
@@ -73,14 +92,30 @@ static int hbMakeDataDirectory()
 
     // make data dir name
     strcpy(data_dir_name, hbDistance);
-    strcat(data_dir_name, "/data");
+    strcat(data_dir_name, "/data/");
 
     // create backup directory
-   	if (uMkDir(data_dir_name, NULL, __sys_call_error) == 0)
-       	return -1;
+   	if (!uIsFileExist(data_dir_name, NULL))
+   	{
+	   	if (uMkDir(data_dir_name, NULL, __sys_call_error) == 0)
+    	   	return -1;
 
-    // register directory
-    hbCreatedFiles.push_back(name_isdir_pair(string(data_dir_name), true));
+	    // register directory
+    	hbCreatedFiles.push_back(name_isdir_pair(string(data_dir_name), true));
+    }
+
+    strcat(data_dir_name, hb_db_name);
+    strcat(data_dir_name, "_files/");
+
+    // create backup directory
+   	if (!uIsFileExist(data_dir_name, NULL))
+   	{
+	   	if (uMkDir(data_dir_name, NULL, __sys_call_error) == 0)
+    	   	return -1;
+
+	    // register directory
+    	hbCreatedFiles.push_back(name_isdir_pair(string(data_dir_name), true));
+    }
 
     return 0;
 }
@@ -90,16 +125,23 @@ static int hbMakeCfgDirectory()
 {
     char cfg_dir_name[U_MAX_PATH + 1];
 
+    // don't create cfg directory in add mode
+    if (!strncmp(hb_incr_mode, "add", 512))
+    	return 0;
+    
     // make cfg dir name
     strcpy(cfg_dir_name, hbDistance);
     strcat(cfg_dir_name, "/cfg");
 
     // create backup directory
-   	if (uMkDir(cfg_dir_name, NULL, __sys_call_error) == 0)
-       	return -1;
+   	if (!uIsFileExist(cfg_dir_name, NULL))
+   	{
+	   	if (uMkDir(cfg_dir_name, NULL, __sys_call_error) == 0)
+    	   	return -1;
 
-    // register directory
-    hbCreatedFiles.push_back(name_isdir_pair(string(cfg_dir_name), true));
+	    // register directory
+    	hbCreatedFiles.push_back(name_isdir_pair(string(cfg_dir_name), true));
+    }
 
     return 0;
 }
@@ -134,32 +176,15 @@ int hbCopyFile(char *file_path)
 
     if (len >= 3 && !strcmp(&(file_name[len - 3]), "xml"))
    	    strcat(backup_file_name, "/cfg/");
-    else
+    else if (!strcmp(file_name, "vmm.dat"))
 	    strcat(backup_file_name, "/data/");
-    
-    strcat(backup_file_name, file_name);
+    else
+    {
+	    strcat(backup_file_name, "/data/");
+	    strcat(backup_file_name, hb_db_name);
+    	strcat(backup_file_name, "_files/");
+    }
 
-    if (uCopyFile(file_path, backup_file_name, false, __sys_call_error) == 0)
-        return -1;
-
-    // register data file
-   	hbCreatedFiles.push_back(name_isdir_pair(string(backup_file_name), false));
-
-   	return 0;
-}
-
-// copy data file
-int hbCopyDataFile(char *file_path)
-{
-	char file_name[U_MAX_PATH];
-    char backup_file_name[U_MAX_PATH + 1];
-
-	if (uGetFileNameFromFilePath(file_path, file_name, U_MAX_PATH, __sys_call_error) == NULL)
-		return -1;
-    
-    // make backup file name
-    strcpy(backup_file_name, hbDistance);
-    strcat(backup_file_name, "/data/");
     strcat(backup_file_name, file_name);
 
     if (uCopyFile(file_path, backup_file_name, false, __sys_call_error) == 0)

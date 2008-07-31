@@ -59,6 +59,7 @@ enum llOperations
 	LL_PERS_SNAPSHOT_ADD, // additional info about persistent snapshot
 	LL_DECREASE,          // decrease_info from physical log
 	LL_HBBLOCK,           // info about block during hot-backup procedure
+	LL_HBINFO,            // hb-specific info (used only in hot-backup recovery)
 
 	LL_DEFAULT,           // bogus operation (see description of the llScanRecords)
 };
@@ -89,6 +90,7 @@ struct llGlobalInfo
 	bool checkpoint_flag;                                   // true, if checkpoint is enabled
 	bool checkpoint_on;                                     // true, if checkpoint is currently in progress
 	bool hotbackup_needed;                                  // recover from hotbackup copy needed
+	uint64_t next_arch_file;       							// next file to archive; if 0 - then db isn't in incremental mode
 };
 
 
@@ -112,7 +114,7 @@ int llCreateNew(const char *db_files_path, const char *db_name);
 // Parameters:
 //     RecBuf  - allocated buffer to write a record
 //     RecLen - size of a record
-//     trid - transaction identifier; "-1" means that the record does not belong to any transaction
+//     trid - transaction identifier; "-1" means that the record does not belong to any transaction; "-2" - standalone record;
 // Returns: 
 //     LSN of the written record;
 //     LFS_INVALID_LSN in case of error;
@@ -130,9 +132,10 @@ void llUnlock();
 //     db_name - name of the database;
 //	   sedna_db_version - (out) sedna data structures
 //     exit_status - (out) status of previous exit (true - log was shutdowned successfully; false - abnormal termination).
+//     rcv_active - if recovery is active
 // Returns: 
 //     -1 - error; 0 - all ok
-int llInit(const char *db_files_path, const char * db_name, int *sedna_db_version, bool *exit_status);
+int llInit(const char *db_files_path, const char * db_name, int *sedna_db_version, bool *exit_status, int rcv_active);
 
 // Releases logical log.
 // Returns: 

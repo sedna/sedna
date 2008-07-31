@@ -95,40 +95,6 @@ int	hbMakeVmmFileName(char *buf, int maxlen)
     return strlen(vmm_file_name);
 }
 
-// retrieves sednaconf file name
-int	hbMakeConfGlobalFileName(char *buf, int maxlen)
-{
-	//find sednaconf.xml
-	char sedna_cfg_file[U_MAX_PATH + 1];
-
-	// start from image path
-	uGetImageProcPath(sedna_cfg_file, __sys_call_error);
-	if (sedna_cfg_file[0] == '\0') 
-    	throw USER_EXCEPTION(SE4081);
-
-  	strcat(sedna_cfg_file, "/../etc/sednaconf.xml");
-
-  	// cfg file not found
-  	if (!uIsFileExist(sedna_cfg_file, __sys_call_error))
-  	{
-#ifndef _WIN32 //UNIX, trying to find in /etc
-    	strcpy(sedna_cfg_file, "/etc/sednaconf.xml");
-
-    	// still not found; it's ok, just won't archive it
-    	if (!uIsFileExist(sedna_cfg_file, __sys_call_error))
-    		return 0;
-#else
-		return 0;
-#endif
-  	}
-
-    if (strlen(sedna_cfg_file) > maxlen) return -1;
-
-    strncpy(buf, sedna_cfg_file, maxlen);
-
-    return strlen(sedna_cfg_file);
-}
-
 // retrieves db config file name
 int	hbMakeConfFileName(char *buf, int maxlen, const char *dbname)
 {

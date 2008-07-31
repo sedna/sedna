@@ -392,8 +392,10 @@ int sm_server_handler(void *arg)
 						  * for now such checkings are performed in gov process, so we should be ok with this.
 						  */
 
-						 if (msg->data.hb_struct.state == HB_START || msg->data.hb_struct.state == HB_START_CHECKPOINT)
-							msg->data.hb_struct.state =	hbProcessStartRequest(msg->data.hb_struct.state);
+						 if (msg->data.hb_struct.state == HB_START)
+							msg->data.hb_struct.state =	hbProcessStartRequest(msg->data.hb_struct.state, 
+																			  msg->data.hb_struct.is_checkp,
+																			  msg->data.hb_struct.incr_state);
 
 						 else if (msg->data.hb_struct.state == HB_ARCHIVELOG)
 						 	msg->data.hb_struct.state =	hbProcessLogArchRequest(&(msg->data.hb_struct.lnumber));
@@ -406,7 +408,10 @@ int sm_server_handler(void *arg)
 						 
 						 else if (msg->data.hb_struct.state == HB_END)
 						 	msg->data.hb_struct.state =	hbProcessEndRequest();
-						 
+
+						 else if (msg->data.hb_struct.state == HB_ERR)
+						 	msg->data.hb_struct.state =	hbProcessErrorRequest();
+
 						 else
 						 	msg->data.hb_struct.state = HB_ERR;
 
@@ -657,8 +662,9 @@ int main(int argc, char **argv)
 
         //start up logical log
 		bool is_stopped_correctly;
-		llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly);
-		U_ASSERT(is_stopped_correctly == true);
+		llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly, false);
+		if (is_stopped_correctly != true)
+			throw SYSTEM_EXCEPTION("Inconsistent database state");
 //		if (!ll_logical_log_startup(sedna_db_version)) throw SYSTEM_EXCEPTION("Inconsistent database state");
         elog(EL_LOG, ("SM logical log has been started"));
 
@@ -832,9 +838,9 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : init_checkpoint_sems done"));
 
        bool is_stopped_correctly;// = ll_logical_log_startup(sedna_db_version/*out parameter*/);
-	   llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly);
+	   llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly, true);
 
-       elog(EL_LOG, ("SM : ll_logical_log_startup done"));
+       elog(EL_LOG, ("SM : logical log is started"));
        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
        {
           release_checkpoint_sems();
@@ -843,11 +849,14 @@ void recover_database_by_physical_and_logical_log(int db_id)
              throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
        }
 
-       d_printf1("logical log startup call finished successfully\n");
+       d_printf1("logical log is started successfully\n");
 
        // recover persistent heap
-       if (!is_stopped_correctly) llRcvRestorePh();
-       elog(EL_LOG, ("SM : ll_recover_pers_heap done"));
+       if (!is_stopped_correctly) 
+       {
+       		llRcvRestorePh();
+       		elog(EL_LOG, ("SM : persistent heap is recovered"));
+       }
 
        //create checkpoint thread
        start_chekpoint_thread();
@@ -877,14 +886,17 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        //recover data base by physical log
        LSN last_checkpoint_lsn = LFS_INVALID_LSN;
-       if (!is_stopped_correctly) last_checkpoint_lsn = llRecoverPhysicalState();
+       if (!is_stopped_correctly) 
+       {
+       		last_checkpoint_lsn = llRecoverPhysicalState();
 
-       d_printf1("db recovered by phys logs successfully\n");
-       elog(EL_LOG, ("SM : db recovered by phys log successfully"));
+		    d_printf1("db recovered by phys records successfully\n");
+       		elog(EL_LOG, ("SM : db recovered by phys records successfully"));
+       }
 
        //disable checkpoints
        llDisableCheckpoints();
-       elog(EL_LOG, ("SM : ll_log_set_checkpoint_flag done"));
+       elog(EL_LOG, ("SM : checkpoints are disabled"));
         
 #ifdef LOCK_MGR_ON
        lm_table.init_lock_table();
@@ -915,12 +927,15 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : Wu is initialized"));
 
        //recover database by logical log
-       if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
-       elog(EL_LOG, ("SM : db recovered by logical log successfully"));
+       if (!is_stopped_correctly) 
+       {
+       		execute_recovery_by_logical_log_process(last_checkpoint_lsn);
+		    elog(EL_LOG, ("SM : db recovered by logical log successfully"));
+	   }
 
        //enable checkpoints
 	   llEnableCheckpoints();
-       elog(EL_LOG, ("SM : checkpoints enabled"));
+       elog(EL_LOG, ("SM : checkpoints are enabled"));
 
        if (ssmmsg->stop_serve_clients() != 0)
           throw USER_EXCEPTION(SE3032);
@@ -929,7 +944,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
           throw USER_EXCEPTION(SE3033);
 
        //shutdown checkpoint thread (it also makes checkpoint)
-       shutdown_chekpoint_thread();
+       shutdown_chekpoint_thread(); // checkpont is created here!
        elog(EL_LOG, ("SM : shutdown checkpoint thread done"));
 
        WuReleaseExn();
@@ -940,9 +955,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : bm_shutdown done"));
 
        //shutdown logical log
-//       ll_logical_log_shutdown();
 	   llRelease();
-       elog(EL_LOG, ("SM : ll_logical_log_shutdown done"));
+       elog(EL_LOG, ("SM : logical log is stopped"));
 
        //release checkpoint resources
        release_checkpoint_sems();
