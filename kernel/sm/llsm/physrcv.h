@@ -17,4 +17,9 @@ LSN llRecoverPhysicalState();
 // Recover persistent heap
 void llRcvRestorePh();
 
+// Retrieves info from hot-backup record
+// Parameters:
+// 		RecBuf - pointer to record in memory
+void llRecoverHbRec(void *RecBuf);
+
 #endif

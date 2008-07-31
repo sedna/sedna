@@ -145,7 +145,7 @@ void llLogRecordBlock(xptr xblk, void *block, int size)
 	int rec_len;
 	LSN ret_lsn;
 
-	if (!llHbIsStartStage())
+	if (!llHbIsNeedAddLogging())
 		return;
 
 	rec_len = sizeof(char) + sizeof(LSN) + sizeof(int) + sizeof(xptr) + size;

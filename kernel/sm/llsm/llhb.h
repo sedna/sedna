@@ -10,7 +10,9 @@
 #define _LL_HB_LOG_
 
 // Main log hot-backup routine
-void llHotBackup(hb_state state);
+// Returns:
+// 		-1 - error; 0 - all ok;
+int llHotBackup(hb_state state, hb_state state_incr);
 
 // Returns last archived file number
 uint64_t llHbLastArchiveFile();
@@ -18,7 +20,7 @@ uint64_t llHbLastArchiveFile();
 // Returns previous archived file number in chain
 uint64_t llHbPrevArchivedLog(uint64_t lnumber);
 
-// true - if hot-backup is in start stage (physical copying of data file)
-bool llHbIsStartStage();
+// true - if additional logging is needed (physical copying of data file)
+bool llHbIsNeedAddLogging();
 
 #endif

@@ -9,13 +9,16 @@
 #include "common/base.h"
 
 // processes start request from hot-backup client
-hb_state hbProcessStartRequest(hb_state state);
+hb_state hbProcessStartRequest(hb_state state, bool is_checkp, hb_state state_incr);
 
 // processes Archive Logical Log request
 hb_state hbProcessLogArchRequest(uint64_t *lnumber);
 
 // processes end request
 hb_state hbProcessEndRequest();
+
+// processes error request
+hb_state hbProcessErrorRequest();
 
 // processes get-persistent-timestamp request
 hb_state hbProcessGetTsRequest(TIMESTAMP *ts);

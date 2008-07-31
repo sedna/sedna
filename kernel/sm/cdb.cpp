@@ -340,7 +340,7 @@ int main(int argc, char **argv)
              init_checkpoint_sems();
 
 		     bool is_stopped_correctly;
-	   		 llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly);
+	   		 llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly, false);
              d_printf1("logical_log_startup call successful\n");
              
              bm_startup();

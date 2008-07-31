@@ -167,10 +167,10 @@ void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,
 	llLogElement(trid, &self, &left, &right, &parent, name, uri, prefix, type, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Element is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Element is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Element is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Element is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -182,10 +182,10 @@ void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &righ
 	llLogAttribute(trid, &self, &left, &right, &parent, name, type, value, data_size, uri, prefix, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Attribute is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Attribute is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Attribute is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Attribute is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -197,10 +197,10 @@ void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,con
 	llLogText(trid, &self, &left, &right, &parent, (char*)value, data_size, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Text is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Text is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Text is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Text is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -211,7 +211,7 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,
 	number_of_records++;
 	llLogTextEdit(trid, &self, (char*)value, data_size, begin, inserted);
 #ifdef LOG_TRACE
-	elog(EL_LOG, ("LOG_TRACE:  Text Edit: trid=%d, self=%016llx", trid,	self.layer, (int)self.addr));
+	elog(EL_LOG, ("LOG_TRACE:  Text Edit: trid=%d, self=%08x%08x", trid,	self.layer, (int)self.addr));
 #endif
 }
 
@@ -303,10 +303,10 @@ void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,
 	llLogComment(trid, &self, &left, &right, &parent, value, data_size, inserted); 
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Comment is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Comment is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Comment is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Comment is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -318,10 +318,10 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 	llLogDocument(trid, &self, name, collection, inserted); 
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Document is inserted: trid=%d, self=%016llx, name=%s, coll=%s", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Document is inserted: trid=%d, self=%08x%08x, name=%s, coll=%s", trid, 
 			self.layer, (int)self.addr, name, collection));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Document is deleted: trid=%d, self=%016llx, name=%s, coll=%s", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Document is deleted: trid=%d, self=%08x%08x, name=%s, coll=%s", trid, 
 			self.layer, (int)self.addr, name, collection));
 #endif
 }
@@ -346,10 +346,10 @@ void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &righ
 	llLogNS(trid, &self, &left, &right, &parent, uri, prefix, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Namespace is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Namespace is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Namespace is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Namespace is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -361,10 +361,10 @@ void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const
 	llLogPI(trid, &self, &left, &right, &parent, value, total_size, target_size, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Pi is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Pi is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Pi is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+		elog(EL_LOG, ("LOG_TRACE: Pi is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", trid, 
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }

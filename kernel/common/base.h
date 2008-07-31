@@ -229,6 +229,10 @@ enum hb_state
 {
 	HB_START,      			// start hot-backup
 	HB_START_CHECKPOINT,	// start hot-backup with preceding checkpoint
+	HB_START_INCR,          // make primary increment copy
+	HB_ADD_INCR,            // archive another portion of the db
+	HB_STOP_INCR,           // disable increment mode for the given database
+	HB_NONE_INCR,           // non-increment mode
 	HB_CONT,                // sm answer: can continue
 	HB_WAIT,       			// answer: wait for checkpoint to finish
 	HB_ARCHIVELOG, 			// archive logical log (switch to the next one)
@@ -310,6 +314,8 @@ struct sm_msg_struct
         struct {
             uint64_t lnumber;
             hb_state state;
+            bool is_checkp;
+            hb_state incr_state;
             TIMESTAMP ts;
         } hb_struct;
 

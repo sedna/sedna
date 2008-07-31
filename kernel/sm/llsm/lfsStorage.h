@@ -79,10 +79,13 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize);
 // on disk, and that all files so far will not be written again (example of use would be hot-backup procedure)
 // The returned value can be used to copy archived part of file chain during hot-backup process, see lfsGetPrevFileNumber also.
 //
+// Parameters:
+//	   HeaderBuf - buffer containing header to write in last archived file
+//	   HeaderSize - size of header
 // Return: 
 //     LFS_INVALID_FILE - error; 
 //     archived log file number - success;
-uint64_t lfsArchiveCurrentFile();
+uint64_t lfsArchiveCurrentFile(void *HeaderBuf, size_t HeaderSize);
 
 // Flush portion of written records until specified lsn. 
 // Record at specified lsn will not be writen, only data prior to UntilLSN will be.
@@ -110,15 +113,17 @@ int lfsCloseAllFiles();
 // Should be used for file-chain maintenance to trunncate too long file-chains.
 // Parameters:
 //     UntilLSN - cursor position specifying boundary of truncating.
+//     hint_num - hint: don't truncate beyond this file
 // Returns:
 //     0  - all ok;
 //     -1 - some error;
-int lfsTruncate(LSN UntilLSN);
+int lfsTruncate(LSN UntilLSN, uint64_t hint_num);
 
 // Write user file header from HeaderBuf; HeaderSize bytes will be written.
 // Parameters:
 //     HeaderBuf  - header 
 //     HeaderSize - size of a header
+//     hint_num   - number of file where to write a header (if 0, the in the last)
 // Returns:
 //     0  - all ok;
 //     -1 - some error;

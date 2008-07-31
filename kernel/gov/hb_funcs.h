@@ -13,7 +13,7 @@
 int hbNewClient(USOCKET sock);
 
 // processes message from hbp
-// returns: 0 - all ok, continue; not 0 - client detached
+// returns: 0 - all ok, continue; not 0 - client detached (-1 - error; 1 - usual end)
 int hbProcessMessage(USOCKET sock);
 
 #endif

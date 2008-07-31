@@ -628,6 +628,8 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 		return -1;
 	}
 
+/*  ---truncate temporarily disabled, because we do this at checkpoint anyway
+
 	// truncate unnecessary files from the beginning of chain
 	res = _lfsTruncateChain(FirstNum);
 	if (res != 0)
@@ -635,7 +637,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 		LFS_ERROR("lfs error: file chain cannot be truncated");
 		return -1;
 	}
-
+*/
 	// get file header from the last file
 	res = _lfsGetLfsHeaderFromFile(LastNum, &lfsHeader);
 	if (res != 0)
@@ -1100,50 +1102,6 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
 	return resLSN;	
 }	
 
-// archive current log file (switch to another file)
-// return: LFS_INVALID_FILE - error; archived log file number - success
-uint64_t lfsArchiveCurrentFile()
-{
-	uint64_t res;
-	int64_t ressize;
-	UFile fileDsc;
-
-	lfsLock();
-
-	if (_lfsFlushBufLSN(lfsInfo->NextLSN + lfsInfo->BufKeepBytes) != 0) // flush the entire buffer
-	{
-		lfsUnlock();
-		return -1;
-	}
-	
-	// check if need to extend file
-	if ((fileDsc = _lfsOpenAndCacheFile(lfsInfo->LastFileNum)) == U_INVALID_FD)
-	{
-		lfsUnlock();
-		return -1;
-	}
-
-	if (uGetFileSize(fileDsc, &ressize, __sys_call_error) == 0)
-	{
-    	LFS_ERROR("lfs error: critical error in lfs chain: cannot get last file size");
-		lfsUnlock();
-		return -1;
-	}
-
-	if (ressize > lfsSectorSize) // file contains something except header
-		if (_lfsExtend() != 0)
-		{
-			lfsUnlock();
-			return -1;
-		}
-
-	res = lfsInfo->LastFileNum - 1;
-
-	lfsUnlock();
-
-	return res;
-}
-
 // writes lfs+user header
 static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *HeaderBuf, size_t HeaderSize)
 {
@@ -1193,6 +1151,73 @@ static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *
 	free(lfsHeaderBuf);
 
 	return 0;
+}
+
+// archive current log file (switch to another file)
+// return: LFS_INVALID_FILE - error; archived log file number - success
+uint64_t lfsArchiveCurrentFile(void *HeaderBuf, size_t HeaderSize)
+{
+	uint64_t res;
+	int64_t ressize;
+	UFile fileDsc;
+	lfsHeader_t lfsHeader;
+
+	lfsLock();
+
+	if (_lfsFlushBufLSN(lfsInfo->NextLSN + lfsInfo->BufKeepBytes) != 0) // flush the entire buffer
+	{
+		lfsUnlock();
+		return -1;
+	}
+	
+	// check if need to extend file
+	if ((fileDsc = _lfsOpenAndCacheFile(lfsInfo->LastFileNum)) == U_INVALID_FD)
+	{
+		lfsUnlock();
+		return -1;
+	}
+
+	if (uGetFileSize(fileDsc, &ressize, __sys_call_error) == 0)
+	{
+    	LFS_ERROR("lfs error: critical error in lfs chain: cannot get last file size");
+		lfsUnlock();
+		return -1;
+	}
+
+	if (ressize > lfsSectorSize) // file contains something except header
+	{
+		// extend file
+		if (_lfsExtend() != 0)
+		{
+			lfsUnlock();
+			return -1;
+		}
+
+		if (HeaderBuf != NULL) // we need to update user header there
+		{
+			// get header from "old" file
+			if (_lfsGetLfsHeaderFromFile(lfsInfo->LastFileNum - 1, &lfsHeader) != 0)
+			{
+				LFS_ERROR("lfs error: cannot read file header");
+				lfsUnlock();
+				return -1;
+			}
+
+			// write lfs+provided user header in it
+			if (_lfsWriteSectorHeader(lfsInfo->LastFileNum - 1, lfsHeader, HeaderBuf, HeaderSize) != 0)
+			{
+				LFS_ERROR("lfs error: cannot write file header");
+				lfsUnlock();
+				return -1;
+			}
+		}
+	}
+
+	res = lfsInfo->LastFileNum - 1;
+
+	lfsUnlock();
+
+	return res;
 }
 
 // write user file header + lfs file header; lfsSectorSize bytes are written
@@ -1299,7 +1324,7 @@ int lfsCloseAllFiles()
 }
 
 // Truncates file chain prior to specified lsn
-int lfsTruncate(LSN UntilLSN)
+int lfsTruncate(LSN UntilLSN, uint64_t hint_num)
 {
 	int res = 0;
 	lfsHeader_t *lfsHeader;
@@ -1309,7 +1334,13 @@ int lfsTruncate(LSN UntilLSN)
 
 	lfsLock();
 
+	assert(hint_num == 0 || (lfsInfo->FirstFileNum <= hint_num && lfsInfo->LastFileNum >= hint_num));
+
 	lfsInfo->FirstFileNum = UntilLSN / lfsInfo->ChunkSize + 1;
+
+	// if hint was provided, use it
+	if (hint_num != 0 && lfsInfo->FirstFileNum > hint_num)
+		lfsInfo->FirstFileNum = hint_num;
 
 	if ((HeaderBuf = malloc(lfsSectorSize)) == NULL)
 	{

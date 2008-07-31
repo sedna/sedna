@@ -10,6 +10,9 @@ extern int   hb_checkpoint;
 extern char hb_dir_name[];
 extern char hb_db_name[];
 extern int hb_port;
+extern int hb_timestamp;
+extern int hb_mkdir;
+extern char hb_incr_mode[];
 
 // this function parses command line and fetches parameters
 void hbParseCommandLine(int argc, char **argv); // parses command line
