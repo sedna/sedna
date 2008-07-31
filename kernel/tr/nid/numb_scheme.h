@@ -13,6 +13,7 @@
 
 #define MAXINTERNALPREFIX 11
 extern int nid_block_count;
+extern bool restore_mode;
 
 /* typedef __int64 n_scheme; */
 struct t_nid {

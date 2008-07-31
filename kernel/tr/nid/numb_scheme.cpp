@@ -24,7 +24,7 @@
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #endif
-
+bool restore_mode=false;
 static fnumber	PROPORTION(0,1);		/* proportion used to divide alphabet sequence */
 int nid_block_count=0;
 char   DC = ALPHABET_SIZE-1;
@@ -168,7 +168,9 @@ void	nid_assign(xptr node, t_prefix p) {
 			dsc->nid.size=1;
 			hl_disable_log();
 			//2. delete node
+			restore_mode=true;
 			delete_node(node);
+			restore_mode=false;
 			//3. turn on logging
 			hl_enable_log();
 			up_concurrent_micro_ops_number();
