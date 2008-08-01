@@ -24,10 +24,32 @@ enum WriteFaultFileKind
 	WFF_STACK_OVERFLOW,
 	WFF_SEDNA_SOFT_FAULT
 };
+	
+#ifdef EL_DEBUG
+#include "common/st/stacktrace.h"
+#include "common/u/uhdd.h"
+#endif
 
+//TODO: make this less ugly & remove old print stack trace stuff
+#ifdef _WIN32
+static void WriteFaultFile(WriteFaultFileKind kind, void *ExceptionRecord, void *ContextRecord)
+{
+#ifdef EL_DEBUG
+	intptr_t fd = sedna_soft_fault_log_fh(EL_TRN, "-st");
+    if (fd == (intptr_t)U_INVALID_FD)
+    	return;
+	if (StackTraceInit() == 0)
+		return;
+	StackTraceWriteFd(ContextRecord, fd, 99, 0); //FIXME (_open_osfhandle is weird)
+	
+	StackTraceDeinit();
+#endif
+}
+#else
 static void WriteFaultFile(WriteFaultFileKind kind, ...)
 {
 }
+#endif
 
 typedef struct AbortSourceInfo_tag_
 {

@@ -181,6 +181,9 @@ LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLI
               libexpatmt.lib pccts_release.lib libpcre.lib /NOD:LIBCMT.LIB
 endif
 endif
+ifeq ($(EL_DEBUG),1)
+LFLAGS += Dbghelp.lib
+endif
 LSLIBS   = 
 ifeq ($(SQL_CONNECTION),1)
 CPPFLAGS+= /DSQL_CONNECTION

@@ -786,22 +786,41 @@ int event_logger_set_trid(int trid)
     return 0;
 }
 
-void sedna_soft_fault_log(const char* log_message, int  component)
+static const char *component2str(int component)
+{
+    switch (component)
+    {
+        case EL_CDB:
+            return "CDB";
+        case EL_DDB:
+            return "DDB";
+        case EL_GOV:
+            return "GOV";
+        case EL_RC:
+            return "RC";
+        case EL_SM:
+            return "SM";
+        case EL_SMSD:
+            return "SMSD";
+        case EL_STOP:
+            return "STOP";
+        case EL_TRN:
+            return "TRN";
+        default:
+            return "UNK";
+    }
+}
+
+intptr_t sedna_soft_fault_log_fh(int component, const char *suffix)
 {
     char buf_pid[20];
+    const char* str = component2str(component);
     char buf[SEDNA_DATA_VAR_SIZE + 128];
-    char log_buf[SE_SOFT_FAULT_LOG_CONTENT_LEN + 128];
-    char dt_buf[32];
-    const char* str = NULL;
-    UFile soft_fault_file_handle;    
-    int res, bytes_written = 0;
-
-    if(log_message == NULL) return;
 
     if (!set_sedna_data(buf, NULL)) 
     {
       fprintf(stderr, "Can't set sedna data");
-      return;
+      return U_INVALID_FD;
     }
 
 #ifdef _WIN32
@@ -813,7 +832,7 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     if (uMkDir(buf, NULL, NULL) == 0)
     {
        fprintf(stderr, "Cannot create data directory for soft fault logs\n");
-       return;  
+       return U_INVALID_FD;
     }
 
     strcat(buf, SE_LAST_SOFT_FAULT_DIR);
@@ -821,7 +840,7 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     if (uMkDir(buf, NULL, NULL) == 0)
     {
        fprintf(stderr, "Cannot create directory for soft fault logs\n");
-       return;  
+       return U_INVALID_FD;
     }
 
 #ifdef _WIN32
@@ -830,41 +849,26 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     strcat(buf, "/");
 #endif
 
-    switch (component)
-    {
-        case EL_CDB:
-            str = "CDB";
-            break;
-        case EL_DDB:
-            str = "DDB";
-            break;
-        case EL_GOV:
-            str = "GOV";
-            break;
-        case EL_RC:
-            str = "RC";
-            break;
-        case EL_SM:
-            str = "SM";
-            break;
-        case EL_SMSD:
-            str = "SMSD";
-            break;
-        case EL_STOP:
-            str = "STOP";
-            break;
-        case EL_TRN:
-            str = "TRN";
-            break;
-        default:
-            str = "UNK";
-    }
-    
     strcat(buf, str);
+    if (suffix)
+    	strcat(buf, suffix);
     strcat(buf, u_itoa(uGetCurrentProcessId(__sys_call_error), buf_pid, 10));
     strcat(buf, ".log");
 
-    soft_fault_file_handle = uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
+	return (intptr_t)uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
+}
+
+void sedna_soft_fault_log(const char* log_message, int  component)
+{
+    char log_buf[SE_SOFT_FAULT_LOG_CONTENT_LEN + 128];
+    char dt_buf[32];
+    UFile soft_fault_file_handle;
+    int res, bytes_written = 0;
+    const char* str = component2str(component);
+
+    if(log_message == NULL) return;
+
+    soft_fault_file_handle = (UFile)sedna_soft_fault_log_fh(component, NULL);
     if(soft_fault_file_handle == U_INVALID_FD)
     {
         fprintf(stderr, "Cannot create soft fault log file");

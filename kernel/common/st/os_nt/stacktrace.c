@@ -9,9 +9,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
-#include <io.h>
 #include <stddef.h>
-#include "stacktrace.h"
+#include "../stacktrace.h"
 
 #define GLOBAL_MUTEX_TIMEOUT	1000
 
@@ -243,12 +242,13 @@ int StackTraceWalkInternal2(PCONTEXT pContext, void *paramsPtr)
 //
 typedef struct StackTraceWriteFdWalkProcParams_tag_
 {
-	int fd;
+	HANDLE handle;
 }
 StackTraceWriteFdWalkProcParams;
 //
 static int StackTraceWriteFdWalkProc(int frame, const StackFrameInfo *frameInfo, int *continueWalk, void *userData)
 {
+	DWORD dummy;
 	StackTraceWriteFdWalkProcParams *params = NULL;
 	char buf[0x1000];
 	int charsCnt = 0;
@@ -268,7 +268,8 @@ static int StackTraceWriteFdWalkProc(int frame, const StackFrameInfo *frameInfo,
 		charsCnt = (int)sizeof buf;
 	}
 
-	success = (charsCnt == _write(params->fd, buf, charsCnt));
+
+	success = (WriteFile(params->handle, buf, charsCnt, &dummy, NULL));
 
 	return success;
 }
@@ -289,12 +290,12 @@ int StackTraceWalk(void *context,
 }
 //
 __declspec(noinline)
-int StackTraceWriteFd(void *context, int fd, int limit, int offset)
+int StackTraceWriteFd(void *context, intptr_t handle, int limit, int offset)
 {
 	void *marker = NULL;
 	StackTraceWriteFdWalkProcParams params = { 0 };
 
-	params.fd = fd;
+	params.handle = (HANDLE)handle;
 	if (!context) 
 	{
 		offset += 1; /* have to hide StackTraceWriteFd frame */ 
