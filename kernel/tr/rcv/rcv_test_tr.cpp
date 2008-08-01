@@ -131,8 +131,8 @@ void test_document(char *name, xptr doc_dsc, bool is_throw)
 	catch(SednaException &e) 
 	{
        if (is_throw) throw;
-       elog(EL_ERROR, ("Recovery failed on document: %s, error: %s\n", name, e.getMsg().c_str()));
-       fprintf(logfile, "Recovery failed on document: %s, error: %s\n", name, e.getMsg().c_str());
+       elog(EL_ERROR, ("Recovery failed on document: %s, error: %s\n", name, e.what()));
+       fprintf(logfile, "Recovery failed on document: %s, error: %s\n", name, e.what());
        isRcvOK = false;
     }
 }
@@ -150,8 +150,8 @@ void test_indexes(schema_ind_cell* sc_idx)
 	    	}	
 		catch (SednaException &e)
 		{
-    			elog(EL_ERROR, ("Recovery failed on index: %s, error: %s\n", p->index->index_title, e.getMsg().c_str()));
-       			fprintf(logfile, "Recovery failed on index: %s, error: %s\n", p->index->index_title, e.getMsg().c_str());
+    			elog(EL_ERROR, ("Recovery failed on index: %s, error: %s\n", p->index->index_title, e.what()));
+       			fprintf(logfile, "Recovery failed on index: %s, error: %s\n", p->index->index_title, e.what());
 	    		isRcvOK = false;
     		}
 
@@ -177,8 +177,8 @@ void test_collection(char *name, col_schema_node *coll)
 		}
 		catch(SednaException &e) 
 		{
-       		elog(EL_ERROR, ("Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.getMsg().c_str()));
-       		fprintf(logfile, "Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.getMsg().c_str());
+       		elog(EL_ERROR, ("Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.what()));
+       		fprintf(logfile, "Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.what());
 	       	isRcvOK = false;
     	}
 	} 

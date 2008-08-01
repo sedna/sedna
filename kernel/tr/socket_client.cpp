@@ -327,7 +327,7 @@ void socket_client::close_file_from_client(client_file &cf)
     if(uIsFileExist(cf.name, __sys_call_error))
     {
         if(!uDeleteFile(cf.name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
-        elog(EL_LOG, (string(string("Temporary file has been deleted ")+string(cf.name)).c_str()));
+        elog(EL_LOG, ("Temporary file has been deleted %s", cf.name));
     }
 
 }

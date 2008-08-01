@@ -33,7 +33,6 @@
 #define U_INVALID_DIR			INVALID_HANDLE_VALUE
 
 typedef HANDLE UFile;
-typedef DWORD UFlag;
 typedef DWORD UAccess;
 typedef DWORD UShareMode;
 //typedef WIN32_FIND_DATA UFindDataStruct;
@@ -82,7 +81,6 @@ struct UFindDataStruct
 
 
 typedef int UFile;
-typedef int UFlag;
 typedef int UAccess;
 typedef int UShareMode;
 //typedef struct dirent UFindDataStruct;

@@ -15,17 +15,15 @@
 #endif
 #endif
 
-#ifndef _WIN32
 #include "stdint.h"
-#endif
 
 /*	Init the library. Non-zero indicates success. */ 
 EXTERNC int StackTraceInit();
 
 /*	Deinit library - safe (though redundant) to call even if init failed. */ 
 EXTERNC void StackTraceDeinit();
-//TODO: change comment
-/*	Write stack trace to file identified by descriptor fd. 
+
+/*	Write stack trace to file identified by descriptor fd (handle on WIN). 
 	If context is NULL the calling thread stack trace 
 	is writen (except the StackTraceWriteFd frames). If context
 	non-NULL it must point to platform specific structure capturing

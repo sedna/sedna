@@ -129,13 +129,13 @@ int main(int argc, char **argv)
         
 
     } catch (SednaUserSoftException &e) {
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
         event_logger_release();
         if (ppc) ppc->shutdown();
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         return 0;        
     } catch (SednaUserException &e) { 
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
         event_logger_release();
         if (ppc) ppc->shutdown();
         return 1;

@@ -268,7 +268,6 @@ static int StackTraceWriteFdWalkProc(int frame, const StackFrameInfo *frameInfo,
 		charsCnt = (int)sizeof buf;
 	}
 
-
 	success = (WriteFile(params->handle, buf, charsCnt, &dummy, NULL));
 
 	return success;

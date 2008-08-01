@@ -206,7 +206,7 @@ int main(int argc, char** argv)
         uSocketCleanup(__sys_call_error);
 
   } catch (SednaUserException &e) { 
-      fprintf(stderr, "%s\n", e.getMsg().c_str());
+      fprintf(stderr, "%s\n", e.what());
       if (pping_inited) ppc->shutdown();
       uSocketCleanup(__sys_call_error);
       close_gov_shm(gov_mem_dsc, gov_shm_pointer);

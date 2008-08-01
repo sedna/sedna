@@ -350,8 +350,8 @@ try{
 
 
    } catch (SednaUserException &e) {
-       fprintf(stderr, "%s\n", e.getMsg().c_str());
-       sp_error_message_handler(socknew, 100, e.get_code(), e.getMsg().c_str());
+       fprintf(stderr, "%s\n", e.what());
+       sp_error_message_handler(socknew, 100, e.get_code(), e.what());
    } catch (SednaException &e) {
        sp_error_message_handler(socknew, 100, 0, "System error");
        sedna_soft_fault(e, EL_GOV);

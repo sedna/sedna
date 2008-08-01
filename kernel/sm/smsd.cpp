@@ -148,7 +148,7 @@ end:
 
         
     } catch (SednaUserException &e) { 
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
         event_logger_release();
         if (ppc) ppc->shutdown();
         return 1;

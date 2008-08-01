@@ -10,6 +10,7 @@
 #include "common/sedna.h"
 #include "common/errdbg/event_log.h"
 #include "common/u/uhdd.h"
+#include "common/st/stacktrace.h"
 
 /*
  * se_ExceptionalCondition - Handles the failure of an SE_ASSERT()

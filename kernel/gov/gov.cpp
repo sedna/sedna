@@ -216,7 +216,7 @@ int main(int argc, char** argv)
             return 0;
 
         } catch (SednaUserException &e) {
-            fprintf(stderr, "%s\n", e.getMsg().c_str());
+            fprintf(stderr, "%s\n", e.what());
             return 1;            
         } catch (SednaException &e) {
             sedna_soft_fault(e, EL_GOV);
@@ -290,7 +290,7 @@ int main(int argc, char** argv)
       return 0;
 
     } catch (SednaUserException &e) {
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
         event_logger_release();
         if (!is_pps_close) { if (pps) pps->shutdown();}
         return 1;

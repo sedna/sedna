@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     // in case of any exception we don't want to crash sedna since hot-backup is an external utility
     // so we must try to do proper deinitialization
     catch (SednaException &e) {        
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
 
 	    // make backup directory cleanup
         hbMakeCleanup();

@@ -140,10 +140,10 @@ int main(int argc, char *argv[])
         
     } catch (SednaUserException &e) {
         if (strcmp(output_file, "STDOUT") != 0) fclose(res_os);
-    	fprintf(stderr, "%s\n", e.getMsg().c_str());
+    	fprintf(stderr, "%s\n", e.what());
     } catch (SednaException &e) {
     	fprintf(stderr, "System error\n");
-    	fprintf(stderr, e.getMsg().c_str());
+    	fprintf(stderr, e.what());
     } catch (ANY_SE_EXCEPTION) {
        	fprintf(stderr, "System error\n");
     }

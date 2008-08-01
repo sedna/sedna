@@ -1,6 +1,5 @@
 #define __WUDANG_SOURCES__
 
-#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include "wudock.h"
 

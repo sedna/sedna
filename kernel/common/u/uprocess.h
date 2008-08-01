@@ -18,14 +18,12 @@
 
 typedef HANDLE UPHANDLE;
 typedef DWORD  UPID;
-typedef DWORD  UFlag;
 #else
 #include <signal.h>
 #define U_DETACHED_PROCESS			1
 
 typedef int    UPHANDLE;
 typedef pid_t  UPID;
-typedef int    UFlag;
 #endif
 
 

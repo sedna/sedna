@@ -76,7 +76,7 @@ try{
 }
 catch (SednaUserException &e) 
  {
-   d_printf2("%s", e.getMsg().c_str());
+   d_printf2("%s", e.what());
  }
 
 if( fclose(f) )
