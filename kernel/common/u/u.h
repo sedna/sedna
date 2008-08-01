@@ -159,6 +159,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <float.h>
 #include <limits.h>
 #include <time.h>
@@ -205,24 +206,20 @@
  * Already defined
  */
 #else
-typedef signed char          __int8;
-typedef signed short int     __int16;
-typedef signed int           __int32;
-typedef signed long long int __int64;
+typedef int8_t                __int8;
+typedef int16_t               __int16;
+typedef int32_t               __int32;
+typedef int64_t               __int64;
 #endif
 
 
 /*
  * unsigned integers types definition
  */
-typedef unsigned char          __uint8;
-typedef unsigned short int     __uint16;
-typedef unsigned int           __uint32;
-#ifdef _WIN32
-typedef unsigned __int64       __uint64;
-#else
-typedef unsigned long long int __uint64;
-#endif
+typedef uint8_t                __uint8;
+typedef uint16_t               __uint16;
+typedef uint32_t               __uint32;
+typedef uint64_t               __uint64;
 
 #ifdef _WIN32
 /*
@@ -307,7 +304,11 @@ typedef union _LARGE_INTEGER
 } LARGE_INTEGER;
 #endif /* _WIN32 */
 
-
+#ifdef _WIN32
+typedef DWORD  UFlag;
+#else
+typedef int    UFlag;
+#endif
 
 
 

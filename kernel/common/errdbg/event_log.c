@@ -811,7 +811,7 @@ static const char *component2str(int component)
     }
 }
 
-intptr_t sedna_soft_fault_log_fh(int component, const char *suffix)
+UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 {
     char buf_pid[20];
     const char* str = component2str(component);
@@ -855,7 +855,7 @@ intptr_t sedna_soft_fault_log_fh(int component, const char *suffix)
     strcat(buf, u_itoa(uGetCurrentProcessId(__sys_call_error), buf_pid, 10));
     strcat(buf, ".log");
 
-	return (intptr_t)uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
+    return uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
 }
 
 void sedna_soft_fault_log(const char* log_message, int  component)
@@ -867,8 +867,7 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     const char* str = component2str(component);
 
     if(log_message == NULL) return;
-
-    soft_fault_file_handle = (UFile)sedna_soft_fault_log_fh(component, NULL);
+    soft_fault_file_handle = sedna_soft_fault_log_fh(component, NULL);
     if(soft_fault_file_handle == U_INVALID_FD)
     {
         fprintf(stderr, "Cannot create soft fault log file");

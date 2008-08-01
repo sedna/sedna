@@ -871,7 +871,10 @@ int SEclose(struct SednaConnection *conn)
     {
         int comm_res = commit_handler(conn);
         if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
-             return SEDNA_CLOSE_SESSION_FAILED;        
+        {
+            release(conn);
+            return SEDNA_CLOSE_SESSION_FAILED;        
+        }
     }
 
     /* send 500 - CloseConnection*/

@@ -113,7 +113,7 @@ end:
         return 0;
 
       } catch(SednaUserException &e) {
-          fprintf(stderr, "%s\n", e.getMsg().c_str());
+          fprintf(stderr, "%s\n", e.what());
           close_gov_shm(gov_mem_dsc, gov_shm_pointer);
           return -1;
       } catch(SednaException &e) {

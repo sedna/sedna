@@ -488,7 +488,7 @@ int TRmain(int argc, char *argv[])
                         throw;
                     }
 
-                    fprintf(stderr, "%s\n", e.getMsg().c_str());
+                    fprintf(stderr, "%s\n", e.what());
                     client->error(e.get_code(), e.getMsg());
                 }
                 catch(SednaException & e)
@@ -581,7 +581,7 @@ int TRmain(int argc, char *argv[])
     }
     catch(SednaUserException & e)
     {
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
 
         on_session_end(sm_server);
         elog(EL_LOG, ("Session is closed"));

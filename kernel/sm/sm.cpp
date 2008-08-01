@@ -975,7 +975,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        is_recovery_mode = false;
     }
   } catch (SednaUserException &e) {
-       fprintf(stderr, "%s\n", e.getMsg().c_str());
+       fprintf(stderr, "%s\n", e.what());
        throw USER_EXCEPTION(SE4205);       
   } catch (SednaException &e) {
         throw;

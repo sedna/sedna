@@ -210,7 +210,7 @@ int TRmain (int argc, char** argv)
       event_logger_set_sid(-1);
       if (is_inited_ppc) { ppc->shutdown(); delete ppc;}
       uSocketCleanup(NULL);
-      fprintf(stderr, "%s\n", e.getMsg());
+      fprintf(stderr, "%s\n", e.what());
   } catch(SednaException & e) {
         sedna_soft_fault(e, EL_RCV);
   } catch(ANY_SE_EXCEPTION) {

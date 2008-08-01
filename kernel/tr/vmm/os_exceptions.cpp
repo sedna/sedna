@@ -11,6 +11,10 @@
 #include "common/commutil.h"
 #include "common/sedna.h"
 #include "tr/vmm/os_exceptions.h"
+#ifdef EL_DEBUG
+#include "common/st/stacktrace.h"
+#include "common/u/uhdd.h"
+#endif
 
 EXTERN_C int IsAccessViolationNonFatal(void *addr, void *context)
 {
@@ -25,27 +29,24 @@ enum WriteFaultFileKind
 	WFF_SEDNA_SOFT_FAULT
 };
 	
-#ifdef EL_DEBUG
-#include "common/st/stacktrace.h"
-#include "common/u/uhdd.h"
-#endif
 
 //TODO: make this less ugly & remove old print stack trace stuff
 #ifdef _WIN32
 static void WriteFaultFile(WriteFaultFileKind kind, void *ExceptionRecord, void *ContextRecord)
 {
 #ifdef EL_DEBUG
-	intptr_t fd = sedna_soft_fault_log_fh(EL_TRN, "-st");
-    if (fd == (intptr_t)U_INVALID_FD)
+	UFile fd = sedna_soft_fault_log_fh(EL_TRN, "-st");
+    if (fd == U_INVALID_FD)
     	return;
 	if (StackTraceInit() == 0)
 		return;
-	StackTraceWriteFd(ContextRecord, fd, 99, 0); //FIXME (_open_osfhandle is weird)
+	StackTraceWriteFd(ContextRecord, (intptr_t)fd, 99, 0);
 	
 	StackTraceDeinit();
 #endif
 }
 #else
+
 static void WriteFaultFile(WriteFaultFileKind kind, ...)
 {
 }

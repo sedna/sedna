@@ -380,7 +380,7 @@ int main(int argc, char **argv)
              fflush(res_os);
 
         } catch (SednaUserException &e) {
-             fprintf(stderr, "%s\n", e.getMsg().c_str());
+             fprintf(stderr, "%s\n", e.what());
              event_logger_release();
              if (is_ppc_started) {if (ppc) ppc->shutdown();}
              if (is_bm_started) bm_shutdown();
@@ -400,7 +400,7 @@ int main(int argc, char **argv)
 
 
     } catch (SednaUserException &e) {
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
         erase_database_cell_in_gov_shm(db_id, (gov_config_struct*)gov_shm_pointer);
         return 1;
     } catch (SednaException &e) {
