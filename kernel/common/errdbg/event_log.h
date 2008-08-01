@@ -15,6 +15,7 @@
 #define _EVENT_LOG_H
 
 #include "common/sedna.h"
+#include "stdint.h"
 
 /* Error level codes */
 #define EL_DBG      8    /* debugging messages */
@@ -193,6 +194,10 @@ int event_logger_set_sid(int sid);
  */
 int event_logger_set_trid(int trid);
 
+/*
+ * Creates a file for soft fault log
+ */
+intptr_t sedna_soft_fault_log_fh(int component, const char *suffix);
 /*
  * Creates a separate file with soft fault log (log_message) for the component (component).
  */

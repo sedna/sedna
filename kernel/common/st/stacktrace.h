@@ -15,12 +15,16 @@
 #endif
 #endif
 
+#ifndef _WIN32
+#include "stdint.h"
+#endif
+
 /*	Init the library. Non-zero indicates success. */ 
 EXTERNC int StackTraceInit();
 
 /*	Deinit library - safe (though redundant) to call even if init failed. */ 
 EXTERNC void StackTraceDeinit();
-
+//TODO: change comment
 /*	Write stack trace to file identified by descriptor fd. 
 	If context is NULL the calling thread stack trace 
 	is writen (except the StackTraceWriteFd frames). If context
@@ -28,7 +32,7 @@ EXTERNC void StackTraceDeinit();
 	the thread context (CONTEXT on NT, ucontext_t on UNIX). 
 	Non-zero indicates success. 
 	If the library is not initialised the call will fail (but won't crash). */ 
-EXTERNC int StackTraceWriteFd(void *context, int fd, int limit, int offset);
+EXTERNC int StackTraceWriteFd(void *context, intptr_t fd, int limit, int offset);
 
 typedef struct StackFrameInfo_tag_
 {

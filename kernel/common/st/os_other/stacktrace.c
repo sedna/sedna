@@ -1,12 +1,11 @@
 #ifdef _WIN32
-#include <io.h>
-#define write _write
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
 
 /* Generic implementation assuming we are unable to examine stack traces. */ 
-#include "stacktrace.h"
+#include "../stacktrace.h"
 
 int StackTraceInit()
 {
@@ -24,12 +23,17 @@ int StackTraceWalk(void *context, StackTraceWalkProc walkerProc, void *userData,
 	return 0;
 }
 
-int StackTraceWriteFd(void *context, int fd, int limit, int offset)
+int StackTraceWriteFd(void *context, intptr_t fd, int limit, int offset)
 {
 	static const char errorMsg[] = 
 		"<unable to produce stack trace - feature disabled>\n";
 
+#ifdef _WIN32
+	DWORD dummy;
+	WriteFile((HANDLE)fd, errorMsg, sizeof(errorMsg) - 1, &dummy, NULL);
+#else
 	write(fd, errorMsg, (sizeof errorMsg) - 1);
+#endif
 
 	return 0;
 }

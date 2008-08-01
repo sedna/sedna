@@ -11,7 +11,6 @@
 #include "common/errdbg/event_log.h"
 #include "common/u/uhdd.h"
 
-
 /*
  * se_ExceptionalCondition - Handles the failure of an SE_ASSERT()
  */
@@ -57,10 +56,18 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
     strcat(buf, SE_ASSERT_FAILED_FILE_NAME);
 
 
-    a_fh = uCreateFile(buf, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, NULL, NULL);
+    a_fh = uCreateFile(buf, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
     if (a_fh == U_INVALID_FD)
         fprintf(stderr, "Can't create assert_failed file\n");
-
+    
+#ifdef EL_DEBUG
+	if (StackTraceInit() == 0)
+		return 0;
+	StackTraceWriteFd(NULL, (intptr_t)a_fh, 99, 1);
+	
+	StackTraceDeinit();
+#endif
+    
     uCloseFile(a_fh, NULL);
 
 
