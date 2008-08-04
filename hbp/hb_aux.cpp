@@ -5,6 +5,7 @@
 
 #include "common/version.h"
 #include "common/argtable.h"
+#include <ctype.h>
 
 #include "common/sedna.h"
 #include "common/u/uprocess.h"
