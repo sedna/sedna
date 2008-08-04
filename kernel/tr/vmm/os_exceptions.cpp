@@ -11,7 +11,7 @@
 #include "common/commutil.h"
 #include "common/sedna.h"
 #include "tr/vmm/os_exceptions.h"
-#ifdef EL_DEBUG
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #include "common/st/stacktrace.h"
 #include "common/u/uhdd.h"
 #endif
@@ -34,7 +34,7 @@ enum WriteFaultFileKind
 #ifdef _WIN32
 static void WriteFaultFile(WriteFaultFileKind kind, void *ExceptionRecord, void *ContextRecord)
 {
-#ifdef EL_DEBUG
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 	UFile fd = sedna_soft_fault_log_fh(EL_TRN, "-st");
     if (fd == U_INVALID_FD)
     	return;
