@@ -61,7 +61,7 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
     if (a_fh == U_INVALID_FD)
         fprintf(stderr, "Can't create assert_failed file\n");
     
-#ifdef EL_DEBUG
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 	if (StackTraceInit() == 0)
 		return 0;
 	StackTraceWriteFd(NULL, (intptr_t)a_fh, 99, 1);
