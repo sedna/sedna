@@ -13,6 +13,7 @@
 #include "common/argtable.h"
 #include "common/persistent_db_data.h"
 #include "tr/auth/auc.h"
+#include "common/pping.h"
 
 #define TR_ARG_MAX_LENGTH       511
 
@@ -68,4 +69,8 @@ extern bool is_ft_disabled;
 
 extern int db_id;
 
+namespace tr_globals 
+{
+extern pping_client *ppc;
+}
 #endif

@@ -79,4 +79,7 @@ bool is_ft_disabled;
 
 int db_id;
 
-
+namespace tr_globals 
+{
+pping_client *ppc = NULL;
+}

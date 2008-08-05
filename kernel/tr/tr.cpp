@@ -100,7 +100,7 @@ int TRmain(int argc, char *argv[])
 #endif
 
     program_name_argv_0 = argv[0];
-    pping_client *ppc = NULL;
+    tr_globals::ppc = NULL;
     char buf[1024];
     SSMMsg *sm_server = NULL;
     int determine_vmm_region = 0;
@@ -222,8 +222,8 @@ int TRmain(int argc, char *argv[])
         register_session_on_gov();
 
         SednaUserException e = USER_EXCEPTION(SE4400);
-        ppc = se_new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN, &tr_globals::is_timer_fired);
-        ppc->startup(e);
+        tr_globals::ppc = se_new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN, &tr_globals::is_timer_fired);
+        tr_globals::ppc->startup(e);
 
         // sid is known
         event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -287,7 +287,7 @@ int TRmain(int argc, char *argv[])
             {
                 try
                 {
-                    on_transaction_begin(sm_server, ppc);
+                    on_transaction_begin(sm_server, tr_globals::ppc);
                     client->respond_to_client(se_BeginTransactionOk);
 
                     qep_tree = NULL;    //qep of current stmnt
@@ -417,7 +417,7 @@ int TRmain(int argc, char *argv[])
                         case se_CommitTransaction:     //commit command
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, true /*COMMIT*/, ppc);
+                                on_transaction_end(sm_server, true /*COMMIT*/, tr_globals::ppc);
                                 ret_code = 0;
 
                                 client->respond_to_client(se_CommitTransactionOk);
@@ -428,7 +428,7 @@ int TRmain(int argc, char *argv[])
                         case se_RollbackTransaction:   //rollback command
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/, ppc);
+                                on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
                                 ret_code = 0;
 
                                 client->respond_to_client(se_RollbackTransactionOk);
@@ -443,7 +443,7 @@ int TRmain(int argc, char *argv[])
                         case se_CloseConnection:       //close connection
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/, ppc);
+                                on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
                                 ret_code = 1;
 
                                 client->respond_to_client(se_TransactionRollbackBeforeClose);
@@ -477,7 +477,7 @@ int TRmain(int argc, char *argv[])
                 catch(SednaUserException & e)
                 {
                     on_user_statement_end(qep_tree, st);
-                    on_transaction_end(sm_server, false /*ROLLBACK*/, ppc);
+                    on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
                     ret_code = 1;
 
                     d_printf1("\nTr is rolled back successfully\n");
@@ -566,9 +566,9 @@ int TRmain(int argc, char *argv[])
         PRINT_DEBUG_TIME_RESULTS}
 
         event_logger_release();
-        ppc->shutdown();
-        delete ppc;
-        ppc = NULL;
+        tr_globals::ppc->shutdown();
+        delete tr_globals::ppc;
+        tr_globals::ppc = NULL;
         set_session_finished();
         event_logger_set_sid(-1);
 
@@ -603,7 +603,7 @@ int TRmain(int argc, char *argv[])
             d_printf1("Connection with client has been broken\n");
         }
         event_logger_release();
-        if (ppc) ppc->shutdown();
+        if (tr_globals::ppc) tr_globals::ppc->shutdown();
         set_session_finished();
         if (is_init_gov_shm)
             close_gov_shm(gov_shm_dsc, gov_shm_pointer);
