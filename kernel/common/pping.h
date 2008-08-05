@@ -13,6 +13,12 @@
 #include "common/u/uthread.h"
 #include "common/u/usem.h"
 
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#endif
+
 
 #define PPING_ON
 
@@ -41,6 +47,21 @@ private:
 
     void throw_exception(SednaUserException& e, bool is_soft);
     void startup(SednaUserException& e, bool is_soft);
+
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Exception logging. 
+#ifdef _WIN32
+private:
+	volatile LPEXCEPTION_POINTERS exceptPtrs;
+	volatile DWORD except_thread_id;
+	volatile UFile stacktrace_fh;
+public:
+	void WriteStackTraceFile(LPEXCEPTION_POINTERS exceptPtrs);
+#endif
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#endif
+
 
 public:
     pping_client(int _port_, int _component_, const char* _host_ = NULL);

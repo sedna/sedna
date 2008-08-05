@@ -9,6 +9,17 @@
 #include "common/pping.h"
 #include "common/errdbg/d_printf.h"
 
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+#include "common/st/stacktrace.h"
+#include "common/u/uhdd.h"
+#ifdef _WIN32
+#include <dbghelp.h>
+#include <shellapi.h>
+#include <shlobj.h>
+#endif
+#endif
+
+
 
 #ifdef _WIN32
 #define PPING_STACK_SIZE		102400
@@ -18,6 +29,7 @@
 
 #define PPING_KEEP_ALIVE_MSG	'a'
 #define PPING_DISCONNECT_MSG	'b'
+#define PPING_PROC_EXCEPTION_MSG	'e'
 
 #define PPING_LSTNR_QUEUE_LEN	100
 
@@ -61,6 +73,45 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
 
             (ppc->counter)--;
         }
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+#define SENDVAR(v) if (usend(ppc->sock, (char*)&v, sizeof(v), NULL) != sizeof(v)) continue;
+#ifdef _WIN32
+		if (ppc->exceptPtrs)
+		{
+			//TODO: do something if usend/urecv fails or get wrong msg
+			char cc = PPING_PROC_EXCEPTION_MSG;
+			DWORD proc_id = GetCurrentProcessId();
+
+			if (usend(ppc->sock, &cc, sizeof(cc), NULL) != sizeof(cc))
+				{ ppc->exceptPtrs = NULL; continue; }
+
+			SENDVAR(proc_id)
+			SENDVAR(ppc->component);
+			SENDVAR(ppc->except_thread_id);
+			SENDVAR(ppc->exceptPtrs);
+
+			if (urecv(ppc->sock, &cc, sizeof(cc), NULL) != sizeof(cc))
+				{ ppc->exceptPtrs = NULL; continue; }
+			if (cc != PPING_PROC_EXCEPTION_MSG)
+				{ ppc->exceptPtrs = NULL; continue; }
+
+			if (ppc->stacktrace_fh != U_INVALID_FD)
+			{
+				if (StackTraceInit() != 0)
+				{
+					StackTraceWriteFd(ppc->exceptPtrs->ContextRecord, (intptr_t)ppc->stacktrace_fh, 9999, 0);
+					
+					StackTraceDeinit();
+				}
+				uCloseFile(ppc->stacktrace_fh, NULL);
+			}
+
+			
+			ppc->exceptPtrs = NULL;
+		}
+#endif
+#undef SENDVAR
+#endif
     }
     return 0;
 }
@@ -82,6 +133,13 @@ pping_client::pping_client(int _port_, int _component_, const char* _host_)
     timeout = 0;
     reset_flag = false;
     signaled_flag = NULL;
+
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+#ifdef _WIN32
+	exceptPtrs = NULL;
+	stacktrace_fh = U_INVALID_FD;
+#endif
+#endif
 #endif
 }
 
@@ -102,6 +160,13 @@ pping_client::pping_client(int _port_, int _component_, volatile bool* _signaled
     timeout = 0;
     reset_flag = false;
     signaled_flag = _signaled_flag_;
+
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+#ifdef _WIN32
+	exceptPtrs = NULL;
+	stacktrace_fh = U_INVALID_FD;
+#endif
+#endif
 #endif
 }
 
@@ -190,6 +255,33 @@ void pping_client::stop_timer()
    start_timer(0);
 }
 
+
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Exception logging. 
+#ifdef _WIN32
+void pping_client::WriteStackTraceFile(LPEXCEPTION_POINTERS exceptPtrs)
+{
+	if (exceptPtrs != NULL)
+	{
+		int wait = 60;
+		this->except_thread_id = GetCurrentThreadId();
+		this->stacktrace_fh = sedna_soft_fault_log_fh(this->component, "-st");
+		this->exceptPtrs = exceptPtrs;
+		while (this->exceptPtrs != NULL && wait > 0)
+		{
+			if (UUnnamedSemaphoreUp(&sem, NULL) != 0)
+				return;
+			uSleep(1, NULL);
+			wait--;
+		}
+	}
+}
+#endif
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#endif
+
+
 ////////////////////////////////////////////////////////////////////////////////
 /// pping_server
 ////////////////////////////////////////////////////////////////////////////////
@@ -218,6 +310,47 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
     {
         if (urecv(sock, &c, sizeof(c), NULL) != sizeof(c)) goto sys_failure;
         if (c == PPING_DISCONNECT_MSG) break;
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+		if (c == PPING_PROC_EXCEPTION_MSG)
+		{
+			char cc = PPING_PROC_EXCEPTION_MSG;
+#ifdef _WIN32
+			HANDLE proc_h;
+			DWORD proc_id;
+			DWORD except_thread_id;
+			PEXCEPTION_POINTERS client_exceptPtrs;
+			MINIDUMP_EXCEPTION_INFORMATION ExpParam;
+			int component;
+			UFile fh;
+
+#define GETVAR(v) if (urecv(sock, (char*)&v, sizeof(v), NULL) != sizeof(v)) goto sys_failure;
+			GETVAR(proc_id)
+			GETVAR(component);
+			GETVAR(except_thread_id);
+			GETVAR(client_exceptPtrs);
+#undef GETVAR			
+
+			proc_h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, proc_id);
+			if (proc_h == NULL)
+				d_printf2("Failed to open process handle, GetLastError=%u\n", GetLastError());
+
+			ExpParam.ThreadId = except_thread_id;
+			ExpParam.ExceptionPointers = client_exceptPtrs;
+			ExpParam.ClientPointers = TRUE;
+
+			fh = sedna_soft_fault_log_fh(component, "-dump");
+
+			if (!MiniDumpWriteDump(proc_h, proc_id, fh, MiniDumpWithDataSegs, &ExpParam, NULL, NULL))
+				d_printf2("Failed to save minidump, GetLastError=%u\n", GetLastError());
+
+			uCloseFile(fh, NULL);
+#endif
+			if (usend(sock, &cc, sizeof(cc), NULL) != sizeof(cc))
+				goto sys_failure;
+			
+			continue;
+		}
+#endif
         if (c != PPING_KEEP_ALIVE_MSG) goto sys_failure;
     }
 

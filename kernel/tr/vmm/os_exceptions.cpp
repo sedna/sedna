@@ -11,10 +11,8 @@
 #include "common/commutil.h"
 #include "common/sedna.h"
 #include "tr/vmm/os_exceptions.h"
-#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-#include "common/st/stacktrace.h"
-#include "common/u/uhdd.h"
-#endif
+#include "tr/tr_globals.h"
+
 
 EXTERN_C int IsAccessViolationNonFatal(void *addr, void *context)
 {
@@ -32,17 +30,10 @@ enum WriteFaultFileKind
 
 //TODO: make this less ugly & remove old print stack trace stuff
 #ifdef _WIN32
-static void WriteFaultFile(WriteFaultFileKind kind, void *ExceptionRecord, void *ContextRecord)
+static void WriteFaultFile(WriteFaultFileKind kind, LPEXCEPTION_POINTERS exceptPtrs)
 {
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-	UFile fd = sedna_soft_fault_log_fh(EL_TRN, "-st");
-    if (fd == U_INVALID_FD)
-    	return;
-	if (StackTraceInit() == 0)
-		return;
-	StackTraceWriteFd(ContextRecord, (intptr_t)fd, 99, 0);
-	
-	StackTraceDeinit();
+	tr_globals::ppc->WriteStackTraceFile(exceptPtrs);
 #endif
 }
 #else
@@ -118,18 +109,18 @@ DWORD WinExceptFilter(DWORD exceptCode,
 					in the later case exception filter should return EXCEPTION_CONTINUE_SEARCH
 					to let the remaining exception handlers to be called and the standard
 					'Program is Fucked Up' dialog to pop up */ 
-				WriteFaultFile(WFF_ACCESS_VIOLATION, exceptPtrs->ExceptionRecord, exceptPtrs->ContextRecord);
+				WriteFaultFile(WFF_ACCESS_VIOLATION, exceptPtrs);
 				AbortUnrecoverableException();
 				resolution = EXCEPTION_CONTINUE_SEARCH;
 			}
 			break;
 
 		case EXCEPTION_STACK_OVERFLOW:
-			WriteFaultFile(WFF_STACK_OVERFLOW, exceptPtrs->ExceptionRecord, exceptPtrs->ContextRecord);
+		case EXCEPTION_INT_DIVIDE_BY_ZERO:
+			WriteFaultFile(WFF_STACK_OVERFLOW, exceptPtrs);
 			AbortUnrecoverableException();
 			resolution = EXCEPTION_CONTINUE_SEARCH;
 			break;
-
 		default:
 			resolution = EXCEPTION_CONTINUE_SEARCH;
 			break;
