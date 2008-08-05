@@ -106,7 +106,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	}
 
 	sprintf(strbuf,"%s%s",path,IMP_LOG_FILE_NAME);
-	if ((log=fopen(strbuf,"w"))==NULL) {
+	if ((log=fopen(strbuf,"wb"))==NULL) {
 		ETRACE((log,"ERROR: the specified path \"%s\" is not accesible for writing\n",path));
 		goto imp_error_no_conn;
 	}

@@ -27,7 +27,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 
     sprintf(strbuf,"%s%s",path,EXP_LOG_FILE_NAME);
 
-	if ((log=fopen(strbuf,"w"))==NULL) {
+	if ((log=fopen(strbuf,"wb"))==NULL) {
 		printf("ERROR: path '%s' is not accessible for writing\n",path);
 		goto exp_error_no_conn;
 	}
@@ -106,7 +106,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 		/* end */
 		FTRACE((log,"Exporting document %d of %d [%s]...",(i+1),exp_docs.d_size,doc_name));
 		sprintf(strbuf,"%s%d.xml",path,(i+1));
-		if ((f=fopen(strbuf,"w"))==NULL) {
+		if ((f=fopen(strbuf,"wb"))==NULL) {
 			ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
 			export_status = SE_EXP_FATAL_ERROR;
 			goto exp_error;
@@ -120,7 +120,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	if (security_feature == SEDNA_FEATURE_ENABLED) {
 	FTRACE((log,"Exporting security data..."));
 		sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
-		if ((f=fopen(strbuf,"w"))==NULL) {
+		if ((f=fopen(strbuf,"wb"))==NULL) {
 			ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
 			export_status = SE_EXP_FATAL_ERROR;
 			goto exp_error;
