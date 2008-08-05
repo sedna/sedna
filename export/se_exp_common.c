@@ -242,7 +242,7 @@ int fill_qbuf(struct SednaConnection *conn, qbuf_t* qbuf, const char *query, FIL
 int write_xquery_script(qbuf_t *qbuf,const char * filename) {
   FILE* file;
   int i;
-	if ((file=fopen(filename,"w"))==NULL) {
+	if ((file=fopen(filename,"wb"))==NULL) {
 		  printf("\nERROR: failed to open file %s for writing",filename);
 		  return -1;
 	}
