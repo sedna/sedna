@@ -820,6 +820,7 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 	if(sc_anc==scm) return ancestor;
 	vector<schema_node*> path;
 	schema_node* tmp=scm;
+
 	while (tmp!=sc_anc)
 	{
 		path.push_back(tmp);
@@ -831,15 +832,15 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 	CHECKP(ancestor);
 	xptr child=getChildPointer((n_dsc*)XADDR(ancestor),(*it)->name,(*it)->type,(*it)->xmlns);
 	if (child==XNULL) return XNULL;
-//	xptr node=ancestor;
+
 	while (true)
 	{		
-		
 		if (it==path.begin())
 				return child;
 		--it;
 		CHECKP(child);
 		n_dsc * ch_ptr=(n_dsc*)XADDR(child);
+
 		while (ch_ptr!=NULL)
 		{
 			xptr grchild=getChildPointer(ch_ptr,(*it)->name,(*it)->type,(*it)->xmlns);
@@ -856,13 +857,16 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 				if (ch_ptr->desc_next!=0)
 					ch_ptr=getNextDescriptorOfSameSort(ch_ptr);
 				else
-					if (nid_cmp_effective(child,ancestor)!=2)
+				{
+					xptr tmp = ADDR2XPTR(ch_ptr);
+					if (nid_cmp_effective(tmp,ancestor)!=2)
 						return XNULL;
 					else
 					{
-						CHECKP(child);
+						CHECKP(tmp);
 						ch_ptr=getNextDescriptorOfSameSort(ch_ptr);
 					}
+				}
 			}
 		}
 		if (ch_ptr==NULL)
