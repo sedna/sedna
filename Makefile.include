@@ -183,6 +183,9 @@ endif
 endif
 ifeq ($(EL_DEBUG),1)
 LFLAGS += Dbghelp.lib
+ifeq ($(ENABLE_DTSEARCH),1)
+LFLAGS_DTS += Dbghelp.lib
+endif
 endif
 LSLIBS   = 
 ifeq ($(SQL_CONNECTION),1)
