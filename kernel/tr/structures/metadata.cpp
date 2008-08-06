@@ -407,7 +407,8 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 	mdc->document_name=(char*)scm_malloc(name.size()+1,true);
 	strcpy(mdc->document_name,name.c_str());*/
 	col_schema_node* scm=(col_schema_node*)coll->snode;
-	xptr block=XNULL;
+
+	xptr new_block=XNULL;
 	n_dsc* node=NULL;
 	xptr blk= scm->eblk;
 	if (blk!=XNULL)
@@ -421,17 +422,17 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		}
 		if ((GETBLOCKBYNODE(blk))->free_first==0) 
 		{
-			block=createBlockNextToTheCurrentBlock(((node_blk_hdr*)XADDR(blk)));
-			scm->eblk=block;
+			new_block=createBlockNextToTheCurrentBlock(((node_blk_hdr*)XADDR(blk)));
+			scm->eblk=new_block;
 		}
 	}
 	else
 	{
-		block=createNewBlock(scm,true);
-		scm->eblk=block;
+		new_block=createNewBlock(scm,true);
+		scm->eblk=new_block;
 	}
 	xptr nodex;
-	if (block==XNULL)
+	if (new_block==XNULL)
 	{
 		CHECKP(blk);
 		VMM_SIGNAL_MODIFICATION(blk);
@@ -442,6 +443,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 			(GETPOINTERTODESC(block_hdr,block_hdr->desc_last))->desc_next=CALCSHIFT(node,block_hdr);
 		block_hdr->count++;
 		d_dsc::init(node);
+        clear_references(block_hdr, node);
 		nodex=ADDR2XPTR(node);
 		xptr tmp=add_record_to_indirection_table(nodex);
 		CHECKP(nodex);
@@ -460,18 +462,19 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 	}
 	else
 	{
-		CHECKP(block);
-		node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(block);
+		CHECKP(new_block);
+		node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(new_block);
 		node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
 		block_hdr->free_first=*((shft*)node);
 		block_hdr->desc_first=CALCSHIFT(node,block_hdr);
 		block_hdr->desc_last=block_hdr->desc_first;
 		block_hdr->count++;
 		d_dsc::init(node);
+        clear_references(block_hdr, node);
 		nodex=ADDR2XPTR(node);
 		xptr tmp=add_record_to_indirection_table(nodex);
-		CHECKP(block);
-		VMM_SIGNAL_MODIFICATION(block);
+		CHECKP(new_block);
+		VMM_SIGNAL_MODIFICATION(new_block);
 		node->indir=tmp;
 		//NODE STATISTICS
 		block_hdr->snode->nodecnt++;
@@ -479,7 +482,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		nid_create_root(nodex,true);
 		CHECKP(nodex);
 		addTextValue(nodex,name.c_str(),name.length());
-		CHECKP(block);
+		CHECKP(new_block);
 	}
 	scm->put_doc_in_coll(name.c_str(),nodex);
 	/*mdc->root=nodex;
