@@ -176,15 +176,19 @@ inline  void createNID(xptr left, xptr right, xptr parent,xptr result)
 /* clears references to child nodes*/
 void inline clear_references(node_blk_hdr* block,n_dsc* node)
 {
-	int chcnt=COUNTREFERENCES(block,size_of_node(block));
-	
-	xptr* childx=(xptr*)((char*)node+size_of_node(block));
+//    int chcnt=COUNTREFERENCES(block,size_of_node(block));
+
+//	xptr* childx=(xptr*)((char*)node+size_of_node(block));
+
+    memset((char*)node+size_of_node(block), 0, (block->dsc_size - size_of_node(block)));
+/*
 	for (int i=0;i<chcnt;i++)
 	{
 		RECOVERY_CRASH;
 		*childx=XNULL;
 		childx+=1;
 	}
+*/
 }
 //UNREALIZED
 
