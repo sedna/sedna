@@ -250,8 +250,7 @@ void replace(PPOpIn arg)
 			}
 			else
 			{
-				rightn=node;
-				node=XNULL;
+				
 			}
 
 		}
