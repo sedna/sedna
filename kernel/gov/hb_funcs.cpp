@@ -89,6 +89,12 @@ static int RetrieveAllFileNames(bool only_log)
     char buf[MAX_SE_SOCKET_STR];
     int lnum, len;
 
+    // retrieve db config file
+	if ((len = hbMakeConfFileName(buf, MAX_SE_SOCKET_STR, hbDbName->c_str())) == -1)
+		return -1;
+
+    hbFiles->push_back(string(buf, len));
+
 	// retrieve all log file names
 	sm_msg_struct msg;
 	
@@ -131,12 +137,6 @@ static int RetrieveAllFileNames(bool only_log)
 
     // retrieve vmm.dat file
 	if ((len = hbMakeVmmFileName(buf, MAX_SE_SOCKET_STR)) == -1)
-		return -1;
-
-    hbFiles->push_back(string(buf, len));
-
-    // retrieve db config file
-	if ((len = hbMakeConfFileName(buf, MAX_SE_SOCKET_STR, hbDbName->c_str())) == -1)
 		return -1;
 
     hbFiles->push_back(string(buf, len));
