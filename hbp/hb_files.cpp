@@ -126,8 +126,8 @@ static int hbMakeCfgDirectory()
     char cfg_dir_name[U_MAX_PATH + 1];
 
     // don't create cfg directory in add mode
-    if (!strncmp(hb_incr_mode, "add", 512))
-    	return 0;
+//    if (!strncmp(hb_incr_mode, "add", 512))
+//    	return 0;
     
     // make cfg dir name
     strcpy(cfg_dir_name, hbDistance);
