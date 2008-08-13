@@ -325,7 +325,9 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 			self.layer, (int)self.addr, name, collection));
 #endif
 }
-
+void hl_logical_log_rename_collection(const  char* old_name,const char* new_name)
+{
+}
 void hl_logical_log_collection(const  char* name,bool inserted)
 {
 	if (!enable_log) return;

@@ -63,6 +63,7 @@ void hl_logical_log_rollback(transaction_id);
 
 void hl_enable_log();
 void hl_disable_log();
+void hl_logical_log_rename_collection(const  char* old_name,const char* new_name);
 
 #endif
 
