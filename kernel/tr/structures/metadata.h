@@ -69,7 +69,8 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 schema_node *find_collection(const char *collection_name);
 xptr find_document(const char *collection_name,const char *document_name);
 schema_node *find_document(const char *document_name);
-
+//1- ok //0-old not find //-1 - new find
+int rename_collection(const char *old_collection_name,const char *new_collection_name);
 
 void inline metadata_sem_down()
 {

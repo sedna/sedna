@@ -509,7 +509,41 @@ schema_node *find_collection(const char *collection_name)
 		return NULL;
 	}
 }
+int rename_collection(const char *old_collection_name,const char *new_collection_name)
+{
+	bool valid = true;
+    Uri::check_constraints(new_collection_name, &valid, NULL);
+    if(!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid collection name '") + new_collection_name + "'").c_str());
+	//1. find
+	metadata_sem_down();
+	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdo=search_metadata_cell(old_collection_name,NULL);
+	if 	(mdo==NULL)
+	{
+		metadata_sem_up();
+		return 0;
+	}
+	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdn=search_metadata_cell(new_collection_name,NULL);
+	if 	(mdn!=NULL)
+	{
+		metadata_sem_up();
+		return -1;
+	}
+	//2.fix
+	down_concurrent_micro_ops_number();
+	sn_metadata_cell* mdc=(sn_metadata_cell*)scm_malloc(sizeof(sn_metadata_cell),true);
+	mdc->collection_name=(char*)scm_malloc(strlen(new_collection_name)+1,true);
+	strcpy(mdc->collection_name,new_collection_name);
+	mdc->document_name=NULL;
+	
+	mdc->snode=mdo->obj->snode;
+	metadata->put(mdc);
 
+	free_metadata_cell(mdo);
+	hl_logical_log_rename_collection(old_collection_name,new_collection_name);
+	up_concurrent_micro_ops_number();
+	metadata_sem_up();
+	
+}
 xptr find_document(const char *collection_name,const char *document_name)
 {
 	metadata_sem_down();
