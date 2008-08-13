@@ -1299,11 +1299,23 @@
              ))
              
              ((eq? op-name 'rename)
-              (let* ((operand (begin (set! var-count 0) (l2p:any-lr-node2por (car node))))
-                     (qname (cadr node))
-                     (context (if (eq? var-count 0) 0 (+ var-count 1))))
-              `(PPRename ,context ,operand ,qname)
-             ))
+              (let ((qname (cadr node)))
+                (if
+                 (and (pair? (car node)) (eq? (caar node) '!fn!collection))
+                 (let* ((coll-name
+                         (begin
+                           (set! var-count 0)
+                           (l2p:any-lr-node2por (cadr (car node)))))
+                        (context
+                         (if (eq? var-count 0) 0 (+ var-count 1))))
+                   `(PPRenameCollection ,context ,coll-name ,qname))
+                 (let* ((operand
+                         (begin
+                           (set! var-count 0)
+                           (l2p:any-lr-node2por (car node))))
+                        (context
+                         (if (eq? var-count 0) 0 (+ var-count 1))))
+                   `(PPRename ,context ,operand ,qname)))))
              
              ((eq? op-name 'replace)
               (let* ((operand (l2p:any-lr-node2por (car node)))
