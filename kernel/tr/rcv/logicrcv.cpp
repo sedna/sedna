@@ -309,6 +309,33 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
 }
 
 // Recover document node
+static void llRcvRenameColl(LSN curr_lsn, void *Rec)
+{
+    char *rec = (char *)Rec;
+    const char *old_name, *new_name;
+    int offs;
+	bool isUNDO = rollback_active;
+	char op = rec[0];
+
+    assert(op == LL_RENAME_COLLECTION);
+
+    offs = sizeof(char) + sizeof(transaction_id);
+
+    old_name = rec + offs;
+    offs += strlen(old_name) + 1;
+    new_name = rec + offs;
+
+    if (isUNDO)
+    {
+    	rename_collection(new_name, old_name);
+    }   
+    else
+    {
+    	rename_collection(old_name, new_name);
+    }
+}
+
+// Recover document node
 static void llRcvDoc(LSN curr_lsn, void *Rec)
 {
     char *rec = (char *)Rec;
@@ -828,6 +855,7 @@ struct llRecInfo llRcvLogRecsInfo[] =
 	{LL_DELETE_DOC_TRG, llRcvTrigger},
 	{LL_INSERT_COL_TRG, llRcvTrigger},
 	{LL_DELETE_COL_TRG, llRcvTrigger},
+	{LL_RENAME_COLLECTION, llRcvRenameColl},
 };
 static int llRcvLogRecsInfoLen = sizeof(llRcvLogRecsInfo) / sizeof(llRecInfo);
 

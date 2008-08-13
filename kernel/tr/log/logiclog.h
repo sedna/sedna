@@ -63,6 +63,9 @@ void llLogTrigger(transaction_id trid, int tr_time, int tr_event, const char *tr
 						const char *path_to_parent, const char *trigger_title, const char *doc_name, 
 						bool is_doc, bool inserted);
 
+// Rename collection record
+void llLogRenameCollection(transaction_id trid, const char* old_name, const char* new_name);
+
 // Commit log record
 void llLogCommit(transaction_id trid);
 

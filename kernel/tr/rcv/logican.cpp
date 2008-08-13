@@ -185,6 +185,7 @@ struct llRecInfo llRcvAnalyzeRecs[] =
 	{LL_DELETE_DOC_TRG, llRcvAnalyzeLogicalRec},
 	{LL_INSERT_COL_TRG, llRcvAnalyzeLogicalRec},
 	{LL_DELETE_COL_TRG, llRcvAnalyzeLogicalRec},
+	{LL_RENAME_COLLECTION, llRcvAnalyzeLogicalRec},
 	{LL_COMMIT, llRcvAnalyzeCommitRec},
 	{LL_ROLLBACK, llRcvAnalyzeRollbackRec},
 };
