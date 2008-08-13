@@ -542,6 +542,7 @@ int rename_collection(const char *old_collection_name,const char *new_collection
 	hl_logical_log_rename_collection(old_collection_name,new_collection_name);
 	up_concurrent_micro_ops_number();
 	metadata_sem_up();
+	return 1;
 	
 }
 xptr find_document(const char *collection_name,const char *document_name)
