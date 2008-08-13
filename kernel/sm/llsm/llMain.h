@@ -51,6 +51,7 @@ enum llOperations
 	LL_DELETE_DOC_TRG,
 	LL_INSERT_COL_TRG,
 	LL_DELETE_COL_TRG,
+	LL_RENAME_COLLECTION,
 	LL_COMMIT,
 	LL_ROLLBACK,
 	// Physical records start here

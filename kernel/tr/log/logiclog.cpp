@@ -407,6 +407,48 @@ void llLogComment(transaction_id trid, const xptr *self, const xptr *left, const
 }
 
 /*
+  rename collection log record format:
+  op (1 byte)
+  trid (transaction_id)
+  old_name ('\0' terminated string)
+  new_name ('\0' terminated string)
+*/
+void llLogRenameCollection(transaction_id trid, const char* old_name, const char* new_name)
+{
+	RECOVERY_CRASH;
+
+	if (rollback_active || recovery_active) return;
+
+	char *tmp_rec;  
+	int rec_len;
+
+	rec_len = sizeof(char) +
+    		  sizeof(transaction_id) +
+              strlen(old_name) + 1 +
+              strlen(new_name) + 1;
+  
+	if ((tmp_rec = (char *)malloc(rec_len)) == NULL)
+		throw SYSTEM_EXCEPTION("Cannot allocate memory");
+
+	char op;
+
+	op = LL_RENAME_COLLECTION;
+
+	int offs = 0;
+
+	//create record body
+	inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
+	inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
+	inc_mem_copy(tmp_rec, offs, old_name, strlen(old_name) + 1);
+	inc_mem_copy(tmp_rec, offs, new_name, strlen(new_name) + 1);
+  
+	//insert record
+	llInsertRecord(tmp_rec, rec_len, trid);
+
+	free(tmp_rec);
+}
+
+/*
  collection log record format:
   op (1 byte)
   trid (transaction_id)

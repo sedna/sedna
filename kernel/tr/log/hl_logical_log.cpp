@@ -325,8 +325,18 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 			self.layer, (int)self.addr, name, collection));
 #endif
 }
-void hl_logical_log_rename_collection(const  char* old_name,const char* new_name)
+void hl_logical_log_rename_collection(const char *old_name, const char *new_name)
 {
+	if (!enable_log) return;
+	number_of_records++;
+
+	llLogRenameCollection(trid, old_name, new_name);
+
+#ifdef LOG_TRACE
+	elog(EL_LOG, ("LOG_TRACE: Collection is renamed: trid=%d, old name=%s, new name=%s", trid, 
+		old_name, new_name));
+#endif
+
 }
 void hl_logical_log_collection(const  char* name,bool inserted)
 {
