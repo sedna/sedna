@@ -509,7 +509,7 @@ schema_node *find_collection(const char *collection_name)
 		return NULL;
 	}
 }
-int rename_collection(const char *old_collection_name,const char *new_collection_name)
+void rename_collection(const char *old_collection_name,const char *new_collection_name)
 {
 	bool valid = true;
     Uri::check_constraints(new_collection_name, &valid, NULL);
@@ -520,13 +520,13 @@ int rename_collection(const char *old_collection_name,const char *new_collection
 	if 	(mdo==NULL)
 	{
 		metadata_sem_up();
-		return 0;
+		throw USER_EXCEPTION2(SE2003, old_collection_name);
 	}
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdn=search_metadata_cell(new_collection_name,NULL);
 	if 	(mdn!=NULL)
 	{
 		metadata_sem_up();
-		return -1;
+		throw USER_EXCEPTION2(SE2001, new_collection_name);
 	}
 	//2.fix
 	down_concurrent_micro_ops_number();
@@ -542,9 +542,8 @@ int rename_collection(const char *old_collection_name,const char *new_collection
 	hl_logical_log_rename_collection(old_collection_name,new_collection_name);
 	up_concurrent_micro_ops_number();
 	metadata_sem_up();
-	return 1;
-	
 }
+
 xptr find_document(const char *collection_name,const char *document_name)
 {
 	metadata_sem_down();
