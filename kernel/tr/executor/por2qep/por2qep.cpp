@@ -3510,9 +3510,10 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
         return se_new PPRename(make_pp_op(cxt, qe->at(2).internal.list),
                             cxt,
                             ncname_prefix,
-                            ncname_local);
+                            ncname_local,
+                            PP_RENAME_NODE);
     }
-    /*else if (op == "PPRenameCollection")
+    else if (op == "PPRenameCollection")
     {
         if (   qe->size() != 4
             || qe->at(1).type != SCM_NUMBER
@@ -3521,7 +3522,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
             || qe->at(3).internal.list->size() != 2
             || qe->at(3).internal.list->at(0).type != SCM_STRING
             || qe->at(3).internal.list->at(1).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "308.5");
+            throw USER_EXCEPTION2(SE1004, "308.1");
 
         int var_cxt_size = atoi(qe->at(1).internal.num);
 
@@ -3530,11 +3531,12 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
         char *ncname_prefix = xs_NCName_create(qe->at(3).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
         char *ncname_local  = xs_NCName_create(qe->at(3).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
 
-        return se_new PPRenameCollection(make_pp_op(cxt, qe->at(2).internal.list),
+        return se_new PPRename(make_pp_op(cxt, qe->at(2).internal.list),
                             cxt,
                             ncname_prefix,
-                            ncname_local);
-    }*/
+                            ncname_local,
+                            PP_RENAME_COLLECTION);
+    }
     else if (op == "PPReplace")
     {
         if (   qe->size() != 3
@@ -4321,23 +4323,18 @@ PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode)
 {
     scheme_list *qep_tree_in_scheme_lst = NULL;
 
-    // parse LR (extended representation by C++ part)
-    //d_printf1("\nmake_tree_from_scheme_list...\n");
+    /// Parse LR (extended representation by C++ part)
     qep_tree_in_scheme_lst = make_tree_from_scheme_list(por);
 
-    // constructs QEP tree
-    //d_printf1("scheme_list2qep...\n");
+    /// Constructs QEP tree
     PPQueryEssence *qep = scheme_list2qep(qep_tree_in_scheme_lst, s, print_mode);
-
     delete_scheme_list(qep_tree_in_scheme_lst);
-
     return qep;
 }
 
 PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode)
 {
-    // constructs QEP tree
-    //d_printf1("scheme_list2qep...\n");
+    /// Constructs QEP tree
     PPQueryEssence *qep = scheme_list2qep(por, s, print_mode);
     return qep;
 }
