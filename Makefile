@@ -119,6 +119,7 @@ grouped_install:
 	$(INSTALL) -p $(PERM1) bin/se_ddb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_ddb$(EXE_EXT)
 	$(INSTALL) -p $(PERM2) bin/se_term$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_term$(EXE_EXT)
 	$(INSTALL) -p $(PERM2) bin/se_exp$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_exp$(EXE_EXT)
+	$(INSTALL) -p $(PERM2) bin/se_hb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_hb$(EXE_EXT)
 
 ifeq ($(INSTALL_DOC), 1)
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/doc
