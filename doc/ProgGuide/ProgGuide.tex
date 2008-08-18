@@ -2150,6 +2150,7 @@ where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 
 
 \subsection{Update Language}
+\label{upd-lang}
 The update language is based on the XQuery update proposal by Patrick Lehti \cite{paper:query-update} with the number of improvements.
 
 \begin{note}The result of each update statement, shouldn't break the well-formedness and validness of XML entitites, stored in the database.
@@ -2399,7 +2400,7 @@ CREATE DOCUMENT doc-name-expr IN COLLECTION coll-name-expr
 
 This statement creates a new document named \verb!doc-name-expr! in a collection named \verb!coll-name-expr!. 
 
-For example, \verb!CREATE DOCUMENT! "mail1" \verb!IN COLLECTION! \verb!"mails"! creates a document named "mail1" in the collection named "mails".
+For example, \verb!CREATE DOCUMENT! \verb!"mail1"! \verb!IN COLLECTION! \verb!"mails"! creates a document named "mail1" in the collection named "mails".
 
 \begin{verbatim}DROP DOCUMENT doc-name-expr IN COLLECTION coll-name-expr\end{verbatim}
 
@@ -2411,6 +2412,9 @@ The \verb!DROP DOCUMENT IN COLLECTION! statement drops the document named
 The \verb!DROP COLLECTION! statement drops the collection with the
 \verb!coll-name-expr! name from the database.
 If the collection contains any documents, these documents are dropped as well.
+
+To rename collection use \verb!UPDATE rename! statement as described in Sect. \ref{upd-lang}. 
+For example, \verb!UPDATE rename collection("col1") on col2!. 
 
 \subsubsection{Managing Value Indices}
 \label{sec:managing-value-indices}
