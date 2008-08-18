@@ -22,7 +22,7 @@
 
 
 #define BLOCK_AUTH_CHECK                     -1
-#define DEPLOY_AUTH_CHECK                    1
+#define DEPLOY_AUTH_CHECK                     1
 
 struct dbe_properties { int update_privileges;     // this user's update privileges on this db_entity
 					    bool current_statement;     // is db_entity refered in curent statement
@@ -35,6 +35,8 @@ void getSednaAuthMetadataPath(char* path);
 void auth_for_query(counted_ptr<db_entity> dbe);
 
 void auth_for_load_module(const char* module_name);
+
+void auth_for_rename_collection(const char* old_name, const char* new_name);
 
 void clear_authmap();
 

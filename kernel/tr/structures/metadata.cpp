@@ -526,7 +526,7 @@ void rename_collection(const char *old_collection_name,const char *new_collectio
 	if 	(mdn!=NULL)
 	{
 		metadata_sem_up();
-		throw USER_EXCEPTION2(SE2001, new_collection_name);
+		throw USER_EXCEPTION2(SE2002, new_collection_name);
 	}
 	//2.fix
 	down_concurrent_micro_ops_number();
