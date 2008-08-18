@@ -157,10 +157,14 @@ options:
 \end{verbatim}
 
 \verb!--help! and \verb!-help! options provide the exhaustive information about the \verb!se_gov! command.
-\verb!-version! option allows getting the version of the \emph{Governor}.
-The fourth option \verb!-background-mode! allows Administrator to start \emph{Governor} in the background mode. Finally, last option \verb!-port-number! allows to set up the Sedna connection port number. The default value is 5050.
 
-To get the information about running Sedna components one can use \verb!se_rc! command.
+\verb!-version! option allows getting the version of the \emph{Governor}.
+
+\verb!-background-mode! option allows Administrator to start \emph{Governor} in the background mode. 
+
+\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients. If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see Section \ref{sec:ConfigSedna}). If it still cannot find port number it will use default 5050 value. 
+
+To get the information about which Sedna components are run use \verb!se_rc! command.
 
 The usage of the \verb!se_rc! command is as follows:
 
@@ -625,7 +629,7 @@ this user should have enough rights to create collections, load documents and cr
 
 
 \subsubsection{File system level backup}
-
+\label{sec:file-system-level-backup}
 An alternative strategy to backup a database is to directly copy the directories that Sedna
 uses to store the data of the database. Read Section \ref{sec:dir-structure} to find out where
 Sedna stores databases. You can use whatever method you prefer for doing usual file system backups.
@@ -645,8 +649,143 @@ might not work properly. If you want to restore a database on another machine or
 \end{note}
 
 
-\subsubsection{Migration Between Releases}
+\subsubsection{Hot Backup}
 
+Another alternative is to backup a database while it is still running. Such procedure is called hot backup.
+The purpose is to create a consistent backup copy while users are still performing some requests. This copy can then be
+restored by copying corresponding backup directory to the directory where Sedna stores databases. Such hot backups
+can be done in incremental mode, which allows more efficient archiving of database changes.
+
+In a nutshell, when hot backup is called Sedna makes copies of all database files necessary to restore consistent
+database state in case of failure. The main difference between file system level backup (described in Section \ref{sec:file-system-level-backup}) and
+hot backup is that the target database has not to be stopped. As a tradeoff, restoration from hot backup copy may
+be a slower process, depending on the recency of the copy. Note, that hot backup copy guarantees durability of all 
+transactions that had been committed at the moment of starting hot backup process. 
+
+To make a hot backup you must use provided \verb!se_hb! utility. The usage is as follows:
+\begin{verbatim}
+Usage: se_hb [options] dbname path
+
+options:
+  -help                            display this help and exit
+  --help                           display this help and exit
+  -checkpoint                      make checkpoint before backup
+  -time-dir                        create timestamp-subdir
+  -make-dir                        create directory if it doesn't exist
+  -incr-mode <increment_mode>      type of the increment mode (start, add, stop)
+  -port port-number                port number to connect to Governor
+
+   dbname                          the name of the database
+   path                            the name of the backup directory
+\end{verbatim}
+
+The parameter \verb!dbname! specifies the database to backup.
+
+The parameter \verb!path! specifies the directory to store files of the hot backup.
+
+You can use \verb!-checkpoint! option to make sure that checkpoint is made before hot backup process is started. This
+may make restoration process faster, since checkpoint fixates consistent state of the database and this state will be reflected
+in the hot backup copy. But at the same time backup process may take more time, depending on the user activity at the time
+of the backup.
+
+If you want the destination directory (specified as \verb!path! in command line) to be created, you must specify 
+\verb!-make-dir! option.
+
+Note that \verb!se_hb! may overwrite some of the 
+previous backup files if you specify nonempty destination directory. So, if you make two consequent hot backups of the same
+database in the same directory, the older backup will be lost. \verb!-time-dir! option prevents this by creating 
+subdirectory named with the current date-time within \verb!path! directory. In this case the destination of hot backup copy 
+will be \verb!<path>/backup-<dbname>-<current date>-<current time>/!. It is recommended that you use the \verb!-time-dir! 
+option or provide a directory free of the previous backups.
+
+You can specify port number to connect to governor through \verb!-port! option. If port number is not specified in command line,
+hot backup process tries to find \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter.
+If it still cannot find port number, it will try to use default 5050 value. 
+
+\begin{note}
+You must run \verb!se_hb! utility on the same machine as the target database is running. It will try to connect to 
+the target database through the specified port to the \verb!localhost!.
+\end{note}
+
+Incremental hot backup and corresponding \verb!-incr-mode! option will be explained below.
+
+\subsubsection*{Incremental Hot Backup}
+
+Let us assume that you have made hot backup using command like this \verb!se_hb mydb /backup!. If later you want
+to make another one to be sure updated data will be reflected in the backup copy, you can issue the same command.
+However, if the amount of changes is small, it is desirable to copy only this changes without making copy of the entire 
+database again. This is where incremental mode becomes useful.
+
+First of all, you must create a primary copy, which is essentially the copy of the entire database. You can do it by
+specifying \verb!-incr-mode start! in command line (for example, \verb!se_hb -incr-mode start mydb /backup!). 
+Then, when you 
+need to make subsequent hot backups of the same database, you can specify \verb!-incr-mode add! in command line
+(for example, \verb!se_hb -incr-mode add mydb /backup!). If the amount of changes is small, such backup process will take
+much less time.
+
+Note, however, that when you use \verb!-incr-mode start! option it will switch the original (active) database in incremental mode.
+This means it will start to store more files to allow ''\verb!-incr-mode add!`` backups. In this case original database can grow
+in size more rapidly in case it is updated. To switch off incremental mode you must specify \verb!-incr-mode stop! in command line. This command
+allows the original database to drop unnecessary files, but it also makes ''\verb!-incr-mode add!`` option impossible. Thus, to 
+start another incremental backup process you must repeat the whole process all over again (\verb!-incr-mode start! call and additional
+\verb!-incr-mode add! calls when needed). Note that \verb!se_hb! with \verb!-incr-mode stop! option does not make any 
+additional hot backup copies, it just switches off incremental mode.
+
+\begin{note}
+The database switches off incremental mode when new nonincremental (without \verb!-incr-mode! option)
+hot backup is created. This is similar to the \verb!-incr-mode stop! option, only in this case hot backup copy of the
+entire database is created.
+\end{note}
+
+If you make new primary copy (i.e. with the \verb!-incr-mode! \verb!start! option specified) while database is still in incremental mode, 
+\verb!-incr-mode add! option will archive increments valid only for this last primary copy. It is recommended that you periodically make new primary copy with \verb!-incr-mode start! option. Unless,
+of course, the database is rarely updated.
+
+With incremental hot backup you have two options: you can archive all backups in the same directory or in different directories.
+If you archive all backups in the same directory (as in \verb!/backup! in our example above) you can restore only state
+corresponding to the last incremental backup. On the other hand, storing incremental backups in different directories makes possible
+some kind of point-in-time recovery, i.e. you can restore state corresponding to any of the incremental backups. For the details
+see the next section.
+
+\subsubsection*{Restore from Hot Backup Copy}
+
+\begin{note}
+Since hot backup is made on file system level basis, the same note as in the ''File system level backup`` 
+section applies here too, i.e. recovery of the hot backup copy on different machine or different version of the same operating 
+system cannot be guaranteed.
+\end{note}
+
+\begin{note}
+Recovery of hot backup copy on different release of Sedna cannot be guaranteed. See Section \ref{sec:release-migr} for
+further details.
+\end{note}
+
+To restore the backed up database you must copy saved files to the directory where Sedna stores database files.
+For the information about Sedna directory structure read Section \ref{sec:dir-structure}. For example, let us assume that 
+hot backup have been made in \verb!/backup! directory, and Sedna stores its files in \verb!SEDNA_INSTALL! directory. 
+In this case you can find \verb!cfg! and \verb!data! subdirectories in \verb!/backup! directory. 
+To restore database you must copy this directories in \verb!SEDNA_INSTALL! directory.
+Note, that you should remove \verb!SEDNA_INSTALL/data/<dbname>_files/! (where \verb!<dbname>! is the name
+of the backed up database) directory before you copy backup files, since
+old files may interfere with restoration process. After you copy backup files in the corresponding directories, you can 
+use \verb!se_sm! command to start the database. When you do it for the first time SM runs recovery process to restore
+database state corresponding to the moment hot backup took place. It can take some time depending on the recency of the copy.
+
+For the incremental backed up database the process may be different. If you have made all backups (primary copy and 
+additional ''\verb!-incr-mode add!`` copies) in the same directory the process is the same. However, if you have some of the 
+''\verb!-incr-mode add!`` copies in the different directories you must copy files from all this directories 
+in order corresponding hot backups were taken to fully restore
+database state. This makes possible restoration of older state of the database. For example, let us assume
+that primary copy is stored in \verb!/backup/p! directory and additional \verb!-incr-mode add! copies are stored in 
+\verb!/backup/1! and \verb!/backup/2! directories in the order of creation. Then you can restore 
+database to the state corresponding to any of the hot backups by copying only those directories that you need.
+For example, by copying \verb!/backup/p and !\verb!/backup/1! directories you can restore database state corresponding
+to the moment when \verb!-incr-mode add /backup/1! was made. Of course, you cannot ''skip`` directories. For example,
+copying only \verb!/backup/p! and \verb!/backup/2! would not be possible, since in this case \verb!/backup/1! is also
+needed.
+
+\subsubsection{Migration Between Releases}
+\label{sec:release-migr}
 In this section we discuss how to migrate your data from one release of Sedna to another. 
 As the internal data storage format is subject to change between different releases of Sedna it is a 
 frequently required task to accurately migrate data.  
