@@ -149,7 +149,7 @@ void auth_for_load_module(const char* module_name)
             qep_tree->close();
         if(is_qep_built)
             delete_qep(qep_tree);
-        throw e;}
+        throw;}
 }
 
 void auth_for_rename_collection(const char* old_name, const char* new_name)
@@ -200,7 +200,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
             qep_tree->close();
         if(is_qep_built)
             delete_qep(qep_tree);
-        throw e;}
+        throw;}
 }
 
 void clear_current_statement_authmap()
