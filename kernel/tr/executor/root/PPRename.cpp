@@ -9,6 +9,7 @@
 #include "tr/updates/updates.h"
 #include "tr/locks/locks.h"
 #include "tr/structures/metadata.h"
+#include "tr/auth/auc.h"
 
 PPRename::PPRename(PPOpIn _child_, 
                    dynamic_context *_cxt_,
@@ -62,6 +63,8 @@ void PPRename::execute()
             if (!t.is_eos()) 
                 throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the name argument in update rename collection. Argument contains more than one item.");
 
+            auth_for_rename_collection(old_name.get_str_mem(), ncname_local);
+            
             local_lock_mrg->put_lock_on_collection(old_name.get_str_mem());
             local_lock_mrg->put_lock_on_collection(ncname_local);
 
