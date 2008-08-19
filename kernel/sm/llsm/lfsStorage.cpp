@@ -94,13 +94,27 @@ static int lfsSectorSize = 512; // size of disc sector
 static lfsFileInfo_t lfsDescCache[LFS_CACHE_SIZE];
 
 
-#define LFS_ERROR(err_msg) _lfsProcessError(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg))
+#define LFS_ERROR(err_msg) _lfsProcessError(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg), NULL)
+#define LFS_ERROR2(err_msg, adds) _lfsProcessError(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg), (adds))
 
 // processes error (throws exception for now)
-static void _lfsProcessError(const char *file, const char *func, int line, const char *lfsErrorMsg)
+static void _lfsProcessError(const char *file, const char *func, int line, const char *lfsErrorMsg, const char *adds)
 {
 	string err_msg = '(' + string(file) + ':' + string(func) + ':' + int2string(line) + ") - " + string(lfsErrorMsg);
+						 
+	if (adds != NULL)					 
+ 		err_msg  = err_msg + ": " + string(adds);
+
 	throw SYSTEM_EXCEPTION(err_msg.c_str());
+}
+
+// simple procedure to make string file name from file num
+inline
+static string _lfsGetFileName(uint64_t num)
+{
+	char buf[50];
+
+	return ChainPath + Prefix + "." + string(u_ui64toa(num, buf, 10)) + "." + Ext;
 }
 
 // synchro primitives
@@ -157,7 +171,7 @@ static int _lfsCloseCachedDesc(uint64_t fileNum)
 	{
 	   	if (uCloseFile(lfsDescCache[CacheNum].FileDsc, __sys_call_error) == 0)
 	   	{
-   			LFS_ERROR("lfs error: cannot close file");
+   			LFS_ERROR2("lfs error: cannot close file", _lfsGetFileName(fileNum).c_str());
    			return -1;
    		}
 
@@ -176,7 +190,6 @@ static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
 	int CacheNum;
 	UFile fileDsc;
 	string fName;
-	char buf[50];
 
 	assert(fileNum > 0 && fileNum < UINT64_MAX);
 
@@ -190,17 +203,17 @@ static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
 	{
 	   	if (uCloseFile(lfsDescCache[CacheNum].FileDsc, __sys_call_error) == 0)
 	   	{
-   			LFS_ERROR("lfs error: cannot close file");
+   			LFS_ERROR2("lfs error: cannot close file", _lfsGetFileName(lfsDescCache[CacheNum].FileNum).c_str());
    			return U_INVALID_FD;
    		}
 	}
 
-	fName = ChainPath + Prefix + "." + string(u_ui64toa(fileNum, buf, 10)) + "." + Ext;
+	fName = _lfsGetFileName(fileNum);
 	
     if ((fileDsc = uOpenFile(fName.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, 
     		U_WRITE_THROUGH, __sys_call_error)) == U_INVALID_FD)
     {
-    	LFS_ERROR("lfs error: critical error in lfs chain: cannot open file");
+    	LFS_ERROR2("lfs error: critical error in lfs chain: cannot open file", fName.c_str());
     	return U_INVALID_FD;
     }
 
@@ -222,7 +235,7 @@ static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 
 	if (uSetFilePointer(fileDsc, 0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
 	{
-    	LFS_ERROR("lfs error: critical error in lfs chain: cannot set file pointer");
+    	LFS_ERROR2("lfs error: critical error in lfs chain: cannot set file pointer", _lfsGetFileName(filenum).c_str());
     	return -1;
     }
 	
@@ -230,7 +243,7 @@ static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 
 	if (res == 0 || readbytes != HeaderSize)
 	{
-    	LFS_ERROR("lfs error: critical error in lfs chain: cannot read user header");
+    	LFS_ERROR2("lfs error: critical error in lfs chain: cannot read user header", _lfsGetFileName(filenum).c_str());
     	return -1;
     }
 
@@ -249,7 +262,7 @@ static int _lfsGetLfsHeaderFromFile(uint64_t fileNum, lfsHeader_t *lfsHeader)
 
 	if (_lfsGetHeaderFromFile(fileNum, SectorBuf, lfsSectorSize) != 0)
 	{
-		LFS_ERROR("lfs error: cannot read file header");
+		LFS_ERROR2("lfs error: cannot read file header", _lfsGetFileName(fileNum).c_str());
 		return -1;
 	}
 
@@ -294,7 +307,7 @@ static uint64_t _lfsGetFileSize(uint64_t FileNum)
 
 	if (uGetFileSize(fileDsc, &ressize, __sys_call_error) == 0)
 	{
-    	LFS_ERROR("lfs error: critical error in lfs chain: cannot get last file size");
+    	LFS_ERROR2("lfs error: critical error in lfs chain: cannot get file size", _lfsGetFileName(FileNum).c_str());
     	return UINT64_MAX;
     }
 
@@ -309,7 +322,6 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 	uint64_t CurFileNum, i;
 	int res = -1;
 	string fName;
-	char buf[50];
 	lfsHeader_t lfsHeader;
         
 	*FirstNum = *LastNum = 0;
@@ -318,7 +330,7 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 
 	if (lfs_dir == U_INVALID_DIR) // there is no lfs directory
 	{
-		LFS_ERROR("lfs error: error in chain path definition");
+		LFS_ERROR2("lfs error: error in chain path definition", ChainPath.c_str());
 		return -1;
 	}
 
@@ -334,7 +346,7 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 
 			if ((CurFileNum = atoui64(fName.c_str())) == UINT64_MAX || CurFileNum == 0)
        		{
-       			LFS_ERROR("lfs error: incorrect file format");
+       			LFS_ERROR("lfs internal error: incorrect file format");
        			return -1;
        		}
        	
@@ -349,7 +361,7 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 
 	if (_lfsGetLfsHeaderFromFile(*LastNum, &lfsHeader) != 0)
 	{
-		LFS_ERROR("lfs error: cannot read file header");
+		LFS_ERROR2("lfs error: cannot read file header", _lfsGetFileName(*LastNum).c_str());
 		return -1;
 	}
 
@@ -358,11 +370,12 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 	// check consistency of chain (existence of all files from FirstNum to LastNum)
 	for (i = *FirstNum; i < *LastNum; i++)
 	{
-		fName = ChainPath + Prefix + "." + string(u_ui64toa(i, buf, 10)) + "." + Ext;
+		fName = _lfsGetFileName(i);
 
 		if (!uIsFileExist(fName.c_str(), __sys_call_error))
 		{
-			LFS_ERROR("lfs error: file chain path is inconsistent");
+		   	LFS_ERROR2("lfs error: critical error in lfs chain (in case of hot-backup restoration check"
+    					" if all files have been copied): cannot open file", fName.c_str());
 			return -1;
 		}
 	}
@@ -413,7 +426,6 @@ static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 	USECURITY_ATTRIBUTES *sa;
     UFile fdsc;
     int res, written;
-    char buf[50];
 
 	if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) != 0) 
 	{
@@ -421,7 +433,7 @@ static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 		return -1;
 	}
 
-	fName = ChainPath + Prefix + "." + string(u_ui64toa(filenum, buf, 10)) + "." + Ext;
+	fName = _lfsGetFileName(filenum);
 
 	fdsc = uCreateFile(fName.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_WRITE_THROUGH, sa, __sys_call_error);
 
@@ -581,12 +593,11 @@ static int _lfsTruncateChain(uint64_t FirstNum)
 {
 	uint64_t num = FirstNum;
 	string fName;
-	char buf[50];
 	int res = 1;
     
     while (res && --num >= 1)
 	{
-		fName = ChainPath + Prefix + "." + string(u_ui64toa(num, buf, 10)) + "." + Ext;
+		fName = _lfsGetFileName(num);
 		res = uIsFileExist(fName.c_str(), __sys_call_error);
         
         if (res)
@@ -628,16 +639,6 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 		return -1;
 	}
 
-/*  ---truncate temporarily disabled, because we do this at checkpoint anyway
-
-	// truncate unnecessary files from the beginning of chain
-	res = _lfsTruncateChain(FirstNum);
-	if (res != 0)
-	{
-		LFS_ERROR("lfs error: file chain cannot be truncated");
-		return -1;
-	}
-*/
 	// get file header from the last file
 	res = _lfsGetLfsHeaderFromFile(LastNum, &lfsHeader);
 	if (res != 0)
@@ -1030,7 +1031,6 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
 {
 	uint64_t fileOffs;
 	int FirstRecPart, SecondRecPart;
-	char buf[50];
 	UFile fileDsc;
 	uint64_t BytesLeft, FilesNum;
 	LSN resLSN;
