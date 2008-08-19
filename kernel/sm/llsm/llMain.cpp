@@ -286,6 +286,13 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 
 	recovery_active = rcv_active;
 
+	// print some message about consistency of the database
+	if (!(*exit_status))
+		fprintf(res_os, (llInfo->hotbackup_needed) ? "Hot-backup recovery in progress...\n" : 
+													 "Database recovery in progress...\n");
+	else
+		fprintf(res_os, "Database is in consistent state. Starting...\n");
+
 	return 0;
 }
 

@@ -837,6 +837,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        init_checkpoint_sems();
        elog(EL_LOG, ("SM : init_checkpoint_sems done"));
 
+       fprintf(res_os, "Starting database recovery or hot-backup restoration...\n");
        bool is_stopped_correctly;// = ll_logical_log_startup(sedna_db_version/*out parameter*/);
 	   llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly, true);
 
