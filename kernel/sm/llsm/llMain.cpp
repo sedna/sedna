@@ -65,9 +65,16 @@ int recovery_active = false; // true, if this process is a recovery process
 using namespace std;
 
 // processes error (throws exception for now)
-static void _llProcessError(const char *file, const char *func, int line, const char *lfsErrorMsg)
+static void _llProcessError(const char *file, const char *func, int line, const char *llErrorMsg)
 {
-	string err_msg = '(' + string(file) + ':' + string(func) + ':' + int2string(line) + ") - " + string(lfsErrorMsg);
+	string err_msg;
+
+	err_msg = string(llErrorMsg);
+
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+	err_msg += " - (" + string(file) + ':' + string(func) + ':' + int2string(line) + ')';
+#endif
+
 	throw SYSTEM_EXCEPTION(err_msg.c_str());
 }
 

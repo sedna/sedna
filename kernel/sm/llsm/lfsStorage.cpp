@@ -100,10 +100,14 @@ static lfsFileInfo_t lfsDescCache[LFS_CACHE_SIZE];
 // processes error (throws exception for now)
 static void _lfsProcessError(const char *file, const char *func, int line, const char *lfsErrorMsg, const char *adds)
 {
-	string err_msg = '(' + string(file) + ':' + string(func) + ':' + int2string(line) + ") - " + string(lfsErrorMsg);
+	string err_msg = string(lfsErrorMsg);
 						 
 	if (adds != NULL)					 
- 		err_msg  = err_msg + ": " + string(adds);
+ 		err_msg += ": " + string(adds);
+
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+	err_msg += " - (" + string(file) + ':' + string(func) + ':' + int2string(line) + ')';
+#endif
 
 	throw SYSTEM_EXCEPTION(err_msg.c_str());
 }
