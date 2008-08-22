@@ -3508,34 +3508,25 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
         char *ncname_local  = xs_NCName_create(qe->at(3).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
 
         return se_new PPRename(make_pp_op(cxt, qe->at(2).internal.list),
-                            cxt,
-                            ncname_prefix,
-                            ncname_local,
-                            PP_RENAME_NODE);
+                               cxt,
+                               ncname_prefix,
+                               ncname_local);
     }
     else if (op == "PPRenameCollection")
     {
         if (   qe->size() != 4
             || qe->at(1).type != SCM_NUMBER
             || qe->at(2).type != SCM_LIST
-            || qe->at(3).type != SCM_LIST
-            || qe->at(3).internal.list->size() != 2
-            || qe->at(3).internal.list->at(0).type != SCM_STRING
-            || qe->at(3).internal.list->at(1).type != SCM_STRING)
+            || qe->at(3).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "308.1");
 
         int var_cxt_size = atoi(qe->at(1).internal.num);
 
         dynamic_context *cxt = se_new dynamic_context(st_cxt, var_cxt_size);
 
-        char *ncname_prefix = xs_NCName_create(qe->at(3).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        char *ncname_local  = xs_NCName_create(qe->at(3).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
-
         return se_new PPRename(make_pp_op(cxt, qe->at(2).internal.list),
-                            cxt,
-                            ncname_prefix,
-                            ncname_local,
-                            PP_RENAME_COLLECTION);
+                               make_pp_op(cxt, qe->at(3).internal.list),
+                               cxt);
     }
     else if (op == "PPReplace")
     {

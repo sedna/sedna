@@ -27,9 +27,9 @@ updateExpr!:
 insertExpr!:
 	<<ASTBase *pos=NULL;>>
 	INSERT e1:expr 
-	(  INTO       <<pos=#[AST_INTO];>>
-	 | PRECEDING  <<pos=#[AST_PRECEDING];>>
-	 | FOLLOWING  <<pos=#[AST_FOLLOWING];>>
+	(  INTO_LOWCASE <<pos=#[AST_INTO];>>
+	 | PRECEDING   <<pos=#[AST_PRECEDING];>>
+	 | FOLLOWING   <<pos=#[AST_FOLLOWING];>>
 	)
 	e2:expr
 	<<#0=#(#[AST_INSERT], #e1, #e2, pos);>>
@@ -69,7 +69,7 @@ moveExpr!:
 	<<ASTBase *pos=NULL;>>
 
 	MOVE v:varRef AS st:sequenceType IN_ e:expr 
-	(  INTO      <<pos=#[AST_INTO];>>
+	(  INTO_LOWCASE  <<pos=#[AST_INTO];>>
 	 | PRECEDING <<pos=#[AST_PRECEDING];>>
 	 | FOLLOWING <<pos=#[AST_FOLLOWING];>>
 	)

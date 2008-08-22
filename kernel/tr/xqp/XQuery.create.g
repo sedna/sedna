@@ -54,11 +54,14 @@ createExpr!:
 	      (CDO | CDO_LOWCASE) LBRACE ct_e1:triggerDoStmt SEMICOLON <<lst=#(#[AST_DO_STMNT_LIST], #ct_e1);>> ( ct_e2:triggerDoStmt SEMICOLON <<lst->addChild(#ct_e2);>>)* RBRACE
 	      <<#0->addChild(lst);>>
 	     )
-
 	      
 
 	  )
-	  
+
+	| (RENAME | RENAME_LOWCASE)
+	    ( (CCOLLECTION | CCOLLECTION_LOWCASE) e4_1:exprSingle (INTO | INTO_LOWCASE) e4_2:exprSingle
+	    <<#0=#(#[AST_RENAME_COLLECTION], #e4_1, #e4_2);>> 
+	    )
 
 	| (DROP | DROP_LOWCASE)
 	  (  ( (CCOLLECTION | CCOLLECTION_LOWCASE) e5:exprSingle

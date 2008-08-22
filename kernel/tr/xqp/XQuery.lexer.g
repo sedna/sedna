@@ -143,7 +143,7 @@ virtual inline void propagate_line() {
 #token UPDATE "UPDATE" <<mode(UPDATE_CLASS);>>
 #token UPDATE_LOWCASE "update" <<mode(UPDATE_CLASS);>>
 //#token INSERT "insert"
-#token INTO "into"
+#token INTO_LOWCASE "into"
 //#token DELETE_ "delete"
 //#token DELETE_UNDEEP "delete_undeep"
 //#token REPLACE "replace"
@@ -157,6 +157,8 @@ virtual inline void propagate_line() {
 /*  This keywords are added for manage expressions      */
 #token CREATE "CREATE"
 #token DROP "DROP"
+#token INTO "INTO"
+#token RENAME "RENAME"
 #token GRANT "GRANT"
 #token REVOKE "REVOKE"
 #token LOADFILE "LOADFILE"
@@ -212,6 +214,7 @@ virtual inline void propagate_line() {
 
 #token CREATE_LOWCASE "create"
 #token DROP_LOWCASE "drop"
+#token RENAME_LOWCASE "rename"
 #token GRANT_LOWCASE "grant"
 #token REVOKE_LOWCASE "revoke"
 #token LOADFILE_LOWCASE "loadfile"
