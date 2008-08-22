@@ -2413,8 +2413,8 @@ The \verb!DROP COLLECTION! statement drops the collection with the
 \verb!coll-name-expr! name from the database.
 If the collection contains any documents, these documents are dropped as well.
 
-To rename collection use \verb!UPDATE rename! statement as described in Sect. \ref{upd-lang}. 
-For example, \verb!UPDATE rename collection("col1") on col2!. 
+To rename collection use \verb!RENAME COLLECTION! statement. 
+For example, \verb!RENAME COLLECTION! \verb!"oldname"! \verb!INTO! \verb!"newname!. 
 
 \subsubsection{Managing Value Indices}
 \label{sec:managing-value-indices}
