@@ -4203,7 +4203,7 @@
     ((or (not (pair? expr)) (null? expr))
      (cl:signal-input-error SE5045 expr))
     ((case (sa:op-name expr)  ; operation name
-       ((create-collection drop-collection)
+       ((create-collection drop-collection rename-collection)
         (sa:analyze-manage-collection
          expr vars funcs ns-binding default-ns uri modules))
        ((create-document drop-document)
@@ -4258,7 +4258,10 @@
 (define (sa:analyze-manage-collection
          expr vars funcs ns-binding default-ns uri modules)
   (and
-   (sa:assert-num-args expr 1)
+   (or
+    (let ((lng (length (sa:op-args expr))))
+      (and (>= lng 1) (<= lng 2)))
+    (sa:assert-num-args expr 2))
    (let ((new
           (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy

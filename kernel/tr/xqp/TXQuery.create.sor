@@ -90,6 +90,9 @@ create!:
 	    )
 
 
+	 | #(AST_RENAME_COLLECTION  e4_1:exprSingle[in_c] >[out_c] e4_2:exprSingle[in_c] >[out_c])
+	   <<#create = #(#["rename-collection"], e4_1, e4_2);>>
+
 	 | #(AST_DROP_COLLECTION   e3:exprSingle[in_c] >[out_c])
 	   <<#create=#(#["drop-collection"], e3);>>
 

@@ -22,6 +22,7 @@ enum pp_rename_type {
 class PPRename : public PPUpdate
 {
     PPOpIn child;
+    PPOpIn new_name_child;
     dynamic_context *cxt;
     const char *ncname_prefix;
     const char *ncname_local;
@@ -35,8 +36,12 @@ public:
     PPRename(PPOpIn _child_, 
              dynamic_context *_cxt_,
              const char *_ncname_prefix_,
-             const char *_ncname_local_,
-             pp_rename_type _type_);
+             const char *_ncname_local_);
+
+    PPRename(PPOpIn _child_, 
+             PPOpIn _new_name_child_,
+             dynamic_context *_cxt_);
+
     ~PPRename();
 };
 
