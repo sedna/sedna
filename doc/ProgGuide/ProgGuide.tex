@@ -2413,8 +2413,14 @@ The \verb!DROP COLLECTION! statement drops the collection with the
 \verb!coll-name-expr! name from the database.
 If the collection contains any documents, these documents are dropped as well.
 
-To rename collection use \verb!RENAME COLLECTION! statement. 
-For example, \verb!RENAME COLLECTION! \verb!"oldname"! \verb!INTO! \verb!"newname!. 
+\begin{verbatim}
+RENAME COLLECTION old-name-expr INTO new-name-expr
+\end{verbatim}
+
+The \verb!RENAME COLLECTION! statement renames collection with the name that is result of the \verb!old-name-expr!.
+The new name is assigned which is result of the \verb!new-name-expr!.
+Both result of the \verb!old-name-expr! and result of the \verb!new-name-expr! after atomization applied must be either 
+of type \verb!xs:string! (or derived) or promotable to \verb!xs:string!.
 
 \subsubsection{Managing Value Indices}
 \label{sec:managing-value-indices}
