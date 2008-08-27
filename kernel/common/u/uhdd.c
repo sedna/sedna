@@ -642,7 +642,7 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
 
     return 1;
 #else
-    char tmp_template[64];
+    char tmp_template[U_MAX_PATH+1];
     strcpy(tmp_template, directoryName);
     strcat(tmp_template, "/");
     strcat(tmp_template, "tmpXXXXXX");
