@@ -138,11 +138,12 @@ CPPFLAGS_ST = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
 CFLAGS      = $(CFLAGS_ST) /MTd
 CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS    = $(CPPFLAGS_ST) /MTd
-LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+LFLAGS_NOLIB= /OPT:NOREF /nologo /subsystem:console /incremental:no /debug /profile
+LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NOD:LIBCMT.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
               libchicken-static.lib wsock32.lib Advapi32.lib libexpatmt.lib \
-              pccts_release.lib libpcre.lib /debug /profile
+              pccts_release.lib libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs \
@@ -168,7 +169,8 @@ CFLAGS_NOOPTIM = /nologo /Od /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBU
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
               /D_CRT_SECURE_NO_DEPRECATE
 CPPFLAGS    = $(CPPFLAGS_ST) /MT
-LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+LFLAGS_NOLIB= /OPT:NOREF /nologo /subsystem:console /incremental:no
+LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
               libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib \
@@ -246,7 +248,8 @@ CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS = -g3 -ggdb -Wall -Wno-deprecated -fexceptions -fno-omit-frame-pointer -fno-strict-aliasing $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=1 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D_FILE_OFFSET_BITS=64
-LFLAGS   = -g3 -ggdb -fexceptions $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
+LFLAGS_NOLIB=-g3 -ggdb -fexceptions $(STATIC_FLAG)
+LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 else
 CFLAGS   = -O2 -w -fno-strict-aliasing -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
@@ -257,7 +260,8 @@ CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS = -O2 -w -fno-strict-aliasing -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D_FILE_OFFSET_BITS=64
-LFLAGS   = -O2 $(STATIC_FLAG) -fexceptions -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
+LFLAGS_NOLIB=-O2 $(STATIC_FLAG) -fexceptions
+LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 endif
 LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl -fexceptions
