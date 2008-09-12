@@ -23,16 +23,13 @@ generated: gen_error_codes$(EXE_EXT) error.codes
 	touch generated
 
 gen_error_codes$(EXE_EXT): gen_error_codes$(OBJ_EXT)
-	$(LD) $(LFLAGS_CHICKEN_EXE) $(LDOUT)$@ $^ $(LSLIBS_CHICKEN_EXE)
+	$(LD) $(LFLAGS) $(LDOUT)$@ $^
 
 gen_error_codes$(OBJ_EXT): gen_error_codes.c
-	$(CC) $(CFLAGS_CHICKEN_EXE) $<
-
-gen_error_codes.c: gen_error_codes.scm
-	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
+	$(CC) $(CFLAGS) $<
 
 ################################################################################
 # Clean                                                                        #
 ################################################################################
 clean_generated:
-	-$(REMOVE) error_codes.h error_codes.c gen_error_codes.c gen_error_codes$(EXE_EXT) error_codes_scm.scm error_codes_scm.c ErrorCodes.java
+	-$(REMOVE) error_codes.h error_codes.c gen_error_codes$(EXE_EXT) error_codes_scm.scm error_codes_scm.c ErrorCodes.java
