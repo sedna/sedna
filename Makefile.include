@@ -239,7 +239,7 @@ else
 STATIC_FLAG =
 endif
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
-CFLAGS   = -g3 -ggdb -fexceptions -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+CFLAGS   = -g3 -ggdb -fexceptions -Wall $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG)  -fno-omit-frame-pointer -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED -DDEBUGI=1 -D__STDC_CONSTANT_MACROS -DC_NO_PIC_NO_DLL -D_FILE_OFFSET_BITS=64 \
