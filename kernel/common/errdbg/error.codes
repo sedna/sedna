@@ -13,6 +13,7 @@
 ##    what to do in case of this error (format is under development and now 
 ##    this string is simply ignored). The third line consists of the textual
 ##    description of the error
+## Note! If you want to add a new error put it to the end of the file
 ###############################################################################
 
 
@@ -20,12 +21,10 @@
 ###############################################################################
 ## User Environment error (according to the classification in exceptions.h)
 ## Important: this error must be the first error defined in this file;
-##            if you want to add a new error put it to the end of the file
 ###############################################################################
 sedna-err:SE1000
 
     Environment error. This error is caused by environment (operating system).
-
 
 
 ###############################################################################
@@ -1665,6 +1664,12 @@ sedna-err:SE6000
 sedna-err:SE9000
 
     User defined error
+
+
+######################################################################
+### New errors. Put any new error at the end of this list!
+######################################################################
+
 sedna-err:SE2039
 
    Invalid result of the second insert argument: sequence contains non-persistent or document nodes
@@ -1694,9 +1699,6 @@ sedna-err:SE4620
 
    Transaction timeout has been expired.
 
-######################################################################
-#  Wu errors
-######################################################################
 sedna-err:SE4801
 
    Cannot initialize wu.
@@ -1707,9 +1709,6 @@ sedna-err:SE2041
 
    Result is cut, because its size exceeds max allowed size (set by client).
 
-######################################################################
-#  lfs, ll and hbp errors
-######################################################################
 sedna-err:SE4901
 
    Internal LFS error.
