@@ -23,7 +23,7 @@ generated: gen_error_codes$(EXE_EXT) error.codes
 	touch generated
 
 gen_error_codes$(EXE_EXT): gen_error_codes$(OBJ_EXT)
-	$(LD) $(LFLAGS) $(LDOUT)$@ $^
+	$(LD) $(LFLAGS_NOLIB) $(LDOUT)$@ $^
 
 gen_error_codes$(OBJ_EXT): gen_error_codes.c
 	$(CC) $(CFLAGS) $<

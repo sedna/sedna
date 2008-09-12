@@ -36,6 +36,10 @@ DLL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
 DLL_ST_OBJS = $(OBJS:$(OBJ_EXT)=.dl.st$(OBJ_EXT))
 
 
+error_codes.d: gen_error_codes.c
+	export NO_DEP=1;make -C $(PP)/kernel/common/errdbg generated
+
+
 ifeq ("$(PLATFORM)", "WIN32")
 # WIN32
 OBJ_NAME = /Fo
