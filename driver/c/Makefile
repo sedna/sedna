@@ -11,12 +11,12 @@ include $(PP)/Makefile.include
 ifeq ("$(PLATFORM)", "WIN32")
 all: libsednamt$(LIB_EXT) libsedna$(LIB_EXT)
 	@echo ===================================================================
-	@echo C API done
+	@echo C Driver Done
 	@echo ===================================================================
 else
 all: libsedna$(LIB_EXT) 
 	@echo ===================================================================
-	@echo C API done
+	@echo C Driver Done
 	@echo ===================================================================
 endif
 
@@ -37,7 +37,7 @@ DLL_ST_OBJS = $(OBJS:$(OBJ_EXT)=.dl.st$(OBJ_EXT))
 
 
 error_codes.d: gen_error_codes.c
-	export NO_DEP=1;make -C $(PP)/kernel/common/errdbg generated
+	export NO_DEP=1;$(MAKE) -C $(PP)/kernel/common/errdbg generated
 
 
 ifeq ("$(PLATFORM)", "WIN32")
@@ -48,7 +48,7 @@ CFLAGS_ST += /DSE_NO_EVENT_LOG
 
 # multi-threaded static library
 libsednamt$(LIB_EXT): $(MT_OBJS)
-	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 %.mt$(OBJ_EXT): %.d
 
@@ -57,7 +57,7 @@ libsednamt$(LIB_EXT): $(MT_OBJS)
 
 # single-threaded static library
 libsedna$(LIB_EXT): $(ST_OBJS)
-	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 %.st$(OBJ_EXT): %.d
 

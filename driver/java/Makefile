@@ -24,7 +24,7 @@ endif
 	
 all: $(OUTPUT) sednadriver.jar javadoc
 	@echo ===================================================================
-	@echo DRIVER HAS BEEN DONE
+	@echo Java Driver Done
 	@echo ===================================================================
 
 $(OUTPUT): 
