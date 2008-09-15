@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 #include "common/sedna.h"
+#include "common/commutil.h"
 #include "common/sm_vmm_data.h"
 #include "common/lfsGlobals.h"
 #include "sm/bufmgr/bm_core.h"
@@ -43,7 +44,204 @@ void free_blk_hdr::init(void *p)
 	WuGetTimestamp(&(hdr->ts));
 }
 
-int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
+static
+void FixSpan(
+    __int64 *spanBeginOffsPtr, 
+    __int64 *spanEndOffsPtr)
+{
+    *spanBeginOffsPtr = (*spanBeginOffsPtr + PAGE_SIZE - 1) / PAGE_SIZE * PAGE_SIZE;
+    *spanEndOffsPtr = *spanEndOffsPtr / PAGE_SIZE * PAGE_SIZE;
+}
+
+enum ConsumeType {CONSUME_NORMAL, CONSUME_REVERSE};
+
+/* Iterate over blocks in file span, either in normal direction or in reverse. */ 
+static
+xptr ConsumeNextBlockInSpan(
+    __int64 *spanBeginOffsPtr, 
+    __int64 *spanEndOffsPtr,
+    t_layer layerAdjustment,
+    __int64 offsAdjustment,
+    enum ConsumeType consumeType)
+{
+    __int64 offset;
+    __int64 spanBeginOffs = *spanBeginOffsPtr;
+    __int64 spanEndOffs = *spanEndOffsPtr;
+    xptr result = XNULL;
+
+    /* If have room for another block ... */ 
+    if (spanEndOffs - spanBeginOffs >= PAGE_SIZE)
+    {
+        switch (consumeType)
+        {
+        case CONSUME_NORMAL:
+            offset = spanBeginOffs;
+            spanBeginOffs += PAGE_SIZE;
+            break;
+
+        case CONSUME_REVERSE:
+            offset = spanEndOffs - PAGE_SIZE;
+            spanEndOffs -= PAGE_SIZE;
+        }
+
+        result.layer =
+            layerAdjustment + (offset + offsAdjustment) / LAYER_ADDRESS_SPACE_SIZE;
+
+        result.addr =
+            OFFSET_PTR(
+                LAYER_ADDRESS_SPACE_START_ADDR, 
+                (offset + offsAdjustment) % LAYER_ADDRESS_SPACE_SIZE);
+
+        *spanBeginOffsPtr = spanBeginOffs;
+        *spanEndOffsPtr = spanEndOffs;
+    }
+
+    return result;
+}
+
+/* Add blocks from the file span [spanBeginOffs, spanEndOffs) to
+   free blocks stack. Parameters layerAdjustment and offsAdjustment
+   control offsets conversion to xptrs (in pers free blocks stack 
+   blocks are identified by xptr, not offset). 
+   
+   The basic idea behind add_file_span_to_pfb_stack() is to make
+   file extension faster. One may achieve similar results with multiple
+   calls to push_to_persistent_free_blocks_stack(). Due to the way
+   almost every FS handles file expansion, free blocks order in the
+   stack is *important* (see below). Multiple cals to
+   push_to_persistent_free_blocks_stack() results in suboptimal order.
+   
+   Generaly, FS stores 2 values for each file - allocated size and valid
+   data size -
+         .<-------------allocated size--------------->.
+   File: [DATA DATA DATA DATA DATA ???? ???? ???? ????]
+         .<---valid data size--->. .<--no mans land-->.
+                                        
+   Allocated size is the overall file size. When application extends file
+   the allocated size increases. FS allocates enough clusters to store entire
+   file. The sum of all file clusters equals file's allocate size (rounded).
+   Some of these clusters contain file data. Other ones contain random garbage.
+   When application writes data to file, one or more clusters recieve file
+   data. If application has never touched the particular cluster it stores
+   garbage (chunks of deleted files or something). When file is extended
+   newly appended tail is built from clusters containing garbage.
+
+   Things are a bit different from read()/write() API point of view. Spec says
+   that files are zero initialized - that is when application reads back a part
+   of file that was never written it will see zeroes. Initializing file clusters
+   with zeroes at file expansion time is not an option - it is slow. FS tracks
+   whether particular cluster contains valid data instead and never reads back
+   garbage.
+
+   The real FS is a bit simpler than that. It assumes that file valid data is
+   contigous and starts from file begin. Consider the figure again. FS stores
+   two values - file allocated size and file valid data size. After contigous chunk
+   of valid data there is no mans land (garbage). If one writes in the middle of no mans land,
+   FS is forsed to reduce no man lands due to restriction on valid file data continuity.
+
+         .<-------------allocated size--------------->.
+   File: [DATA DATA DATA DATA DATA 0000 DATA ???? ????]
+         .<--------valid data size-------->. .<--nml->.
+   
+   Writing in the middle of no mans land reduces no mans land. Part of no mans land
+   that is now part of valid file data chunk must be zero-initialized. The optimal
+   order of blocks in free blocks stack must match block order in the file. This
+   guarantees that either no zero-initializing takes place or (due to randomness of
+   buffers flushing) zero-initialized portion is small. 
+   
+   Function creates the following file layout:
+
+   File: [<old data> <free stack> 1 2 3 4 5 ...]
+
+   Here <old data> is file data prior to extension; <free stack> is an extra 
+   set of blocks used to store xptr-s of new free blocks; <numbers> denote free 
+   blocks (numbers match the order free blocks are fetched by 
+   pop_from_persistent_free_blocks_stack()). */ 
+static
+void add_file_span_to_pfb_stack(
+    xptr *hd, 
+    __int64 spanBeginOffs, 
+    __int64 spanEndOffs,
+    t_layer layerAdjustment,
+    __int64 offsAdjustment)
+{
+    xptr p, stackP;
+    __int64 numFreeBlocks = 0;
+    __int64 numFreeBlockSlots = 0;
+    __int64 numStackBlocks = 0;
+    __int64 stackSpanBeginOffs, stackSpanEndOffs;
+
+    /* Make offsets aligned. */ 
+    FixSpan(&spanBeginOffs, &spanEndOffs);
+
+    /* Count total number of free blocks. */ 
+    numFreeBlocks = (spanEndOffs - spanBeginOffs) / PAGE_SIZE;
+
+    if (numFreeBlocks > 0)
+    {
+        /* Count number of free blocks current stack can accomodate 
+           without growing. */ 
+        if (*hd != XNULL)
+        {
+            numFreeBlockSlots = PERS_STACK_NODE_CAPACITY 
+                - count_elems_of_persistent_free_blocks_stack(*hd, true);
+        }
+
+        /* Count number of blocks required to make stack large enough. */ 
+        if (numFreeBlocks > numFreeBlockSlots)
+        {
+            numStackBlocks = 
+                (numFreeBlocks - numFreeBlockSlots + PERS_STACK_NODE_CAPACITY - 1)
+                / PERS_STACK_NODE_CAPACITY;
+        }
+
+        /* Make a span for stack blocks allocation (reducing primary span). */ 
+        stackSpanBeginOffs = spanBeginOffs;
+        stackSpanEndOffs = stackSpanBeginOffs + numStackBlocks * PAGE_SIZE;
+        spanBeginOffs = stackSpanEndOffs;
+
+        while (1)
+        {
+            p = ConsumeNextBlockInSpan(
+                    &spanBeginOffs,
+                    &spanEndOffs,
+                    layerAdjustment,
+                    offsAdjustment,
+                    CONSUME_REVERSE);
+
+            /* All blocks processed? */ 
+            if (p == XNULL) break;
+
+            /* Should grow stack first? */ 
+            if (0 != push_to_persistent_free_blocks_stack(hd, p, false))
+            {
+                stackP = ConsumeNextBlockInSpan(
+                    &stackSpanBeginOffs,
+                    &stackSpanEndOffs,
+                    layerAdjustment,
+                    offsAdjustment,
+                    CONSUME_NORMAL);
+
+                if (stackP == XNULL) throw SYSTEM_EXCEPTION("logic error");
+
+                push_to_persistent_free_blocks_stack(hd, stackP, true);
+                push_to_persistent_free_blocks_stack(hd, p, false);
+            }
+        }
+
+        /* Check that we haven't lost anything. */ 
+        stackP = ConsumeNextBlockInSpan(
+                    &stackSpanBeginOffs,
+                    &stackSpanEndOffs,
+                    layerAdjustment,
+                    offsAdjustment,
+                    CONSUME_NORMAL);
+
+        if (stackP != XNULL) throw SYSTEM_EXCEPTION("logic error"); 
+    }
+}
+
+int push_to_persistent_free_blocks_stack(xptr *hd, xptr p, bool canStoreFreeBlocks)
 {
     //d_printf1("push_to_persistent_free_blocks_stack: begin\n");
     ramoffs offs = 0;
@@ -53,7 +251,9 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
 
     if (*hd == NULL)
     {
-        put_block_to_buffer(-1, p, &offs);
+        if (!canStoreFreeBlocks) return 1;
+
+        put_block_to_buffer(-1, p, &offs, false);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
         if (IS_DATA_BLOCK_LP(blk)) llLogFreeBlocksInfo(p, (void *)blk, PAGE_SIZE);
@@ -71,7 +271,9 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
 
     if (blk->num >= (PAGE_SIZE - (int)sizeof(free_blk_hdr)) / ((int)sizeof(xptr)))
     {
-        put_block_to_buffer(-1, p, &offs);
+        if (!canStoreFreeBlocks) return 1;
+
+        put_block_to_buffer(-1, p, &offs, false);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
         if (IS_DATA_BLOCK_LP(blk)) llLogFreeBlocksInfo(p, (void *)blk, PAGE_SIZE);
@@ -144,19 +346,22 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
     return 0;
 }
 
-int count_elems_of_persistent_free_blocks_stack(xptr hd)
+__int64 count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnly)
 {
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
 
-    int num = 0;
+    __int64  num = 0;
     while (hd != NULL)
     {
         put_block_to_buffer(-1, hd, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        num += blk->num + 1;
+        num += blk->num;
         hd = blk->nblk;
+
+        if (examineHeadOnly) break;
+        num += 1;
     }
 
     return num;
@@ -257,119 +462,158 @@ int pop_from_persistent_used_blocks_stack(xptr *hd, xptr *p)
     return 0;
 }
 
-
-
 /*******************************************************************************
 ********************************************************************************
   FUNCTIONS FOR EXTENDING DATA SPACE
 ********************************************************************************
 *******************************************************************************/
-void extend_data_file(int extend_portion) throw (SednaException)
+
+static 
+xptr
+extend_file_helper(UFile fileHandle,
+                   __int64 fileSizeCurrent,
+                   __int64 fileSizeNew,
+                   xptr freeStackHd,
+                   t_layer layerAdjustment,
+                   __int64 offsAdjustment,
+                   bool initializeData)
 {
-    if (mb->data_file_cur_size + 
-        (__int64)extend_portion * 
-        (__int64)PAGE_SIZE > mb->data_file_max_size + (__int64)PAGE_SIZE)
-        throw USER_EXCEPTION(SE1011);
-    
-	llLogDecrease(mb->data_file_cur_size);
-    
-    int res = 0;
-    __int64 dsk_offs = 0;
+    /* Extend the file. */ 
+    if (!uSetEndOfFile(
+            fileHandle, 
+            fileSizeNew, 
+            U_FILE_BEGIN, 
+            __sys_call_error)) throw USER_EXCEPTION(SE1013);
 
-    dsk_offs = (__int64)extend_portion * (__int64)PAGE_SIZE;
-    if (uSetEndOfFile(data_file_handler, dsk_offs, U_FILE_END, __sys_call_error) == 0)
-        throw USER_EXCEPTION(SE1013);
-
-    __int64 data_file_old_size = mb->data_file_cur_size;
-    mb->data_file_cur_size += (__int64)extend_portion * (__int64)PAGE_SIZE;
-    xptr xptr_cursor = DATA_FILE_OFFS2XPTR(data_file_old_size - (__int64)PAGE_SIZE);
-    
-    if (uSetFilePointer(data_file_handler, data_file_old_size, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
-        throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
-    
-    int i = 0;
-    system_data_aligned_ptr = (char*)(((__uint32)system_data_buf + VMM_SM_BLK_HDR_MAX_SIZE) / VMM_SM_BLK_HDR_MAX_SIZE * VMM_SM_BLK_HDR_MAX_SIZE);
-    vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)system_data_aligned_ptr;
-    vmm_sm_blk_hdr::init(hdr);
-    
-    for (i = 0; i < extend_portion; i++)
+    /* Does it make sense to initialize every block header? 
+       I doubt since when a block is allocated it is never read back from HDD,
+       instead header is initialized when block is put to buffer. */ 
+    if (initializeData)
     {
-        // fill header of the block
-        hdr->p = xptr_cursor;
-        int number_of_bytes_written = 0;
-        
-        res = uWriteFile(data_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written, __sys_call_error);
-        
-        if (res == 0 || number_of_bytes_written != VMM_SM_BLK_HDR_MAX_SIZE)
-            throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
-        
-        // put to the list of free blocks
-        push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), xptr_cursor);
-        
-        xptr_cursor += PAGE_SIZE;
-        
-        dsk_offs = data_file_old_size + (__int64)(i + 1) * (__int64)PAGE_SIZE;
-        if (uSetFilePointer(data_file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
-            throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
+        __int64 spanBeginOffs = fileSizeCurrent;
+        __int64 spanEndOffs = fileSizeNew;
+        __int64 offset;
+        void *buf = NULL;
+        vmm_sm_blk_hdr *hdr = NULL;
+        int bytesOutCnt;
+
+        /* Allocate aligned buffer and initialize header struct. */ 
+        buf = malloc(VMM_SM_BLK_HDR_MAX_SIZE * 2);
+        if (!buf) throw std::bad_alloc();
+        memset(buf, 0, VMM_SM_BLK_HDR_MAX_SIZE);
+
+        hdr = (vmm_sm_blk_hdr *)ALIGN_PTR(buf, VMM_SM_BLK_HDR_MAX_SIZE);
+        vmm_sm_blk_hdr::init(hdr);
+
+        /* Make offsets aligned on block boundary. */ 
+        FixSpan(&spanBeginOffs, &spanEndOffs);
+
+        /* Visit every block. */ 
+        while (1)
+        {
+            offset = spanBeginOffs;
+            hdr->p = ConsumeNextBlockInSpan(
+                    &spanBeginOffs, 
+                    &spanEndOffs,
+                    layerAdjustment,
+                    offsAdjustment,
+                    CONSUME_NORMAL);
+
+            /* All done? */ 
+            if (hdr->p == XNULL) break;
+
+            /* Seek to offset. */ 
+            if (!uSetFilePointer(
+                    fileHandle,
+                    offset,
+                    NULL,
+                    U_FILE_BEGIN,
+                    __sys_call_error))
+            {
+                free(buf);
+                throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
+            }
+
+            /* Write header. */ 
+            if (!uWriteFile(
+                    fileHandle, 
+                    hdr, 
+                    VMM_SM_BLK_HDR_MAX_SIZE, 
+                    &bytesOutCnt,
+                    __sys_call_error) || bytesOutCnt!=VMM_SM_BLK_HDR_MAX_SIZE)
+            {
+                free(buf);
+                throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
+            }
+        }
+
+        /* Dismiss buffer. */ 
+        hdr = NULL;
+        free(buf); buf = NULL; 
     }
 
+    add_file_span_to_pfb_stack(
+        &freeStackHd, 
+        fileSizeCurrent, 
+        fileSizeNew, 
+        layerAdjustment, 
+        offsAdjustment);
+
+    return freeStackHd;
+}
+
+void extend_data_file(int extend_portion) throw (SednaException)
+{
+    __int64 fileSizeCurrent;
+    __int64 fileSizeNew;
+
+    fileSizeCurrent = mb->data_file_cur_size;
+    fileSizeNew = fileSizeCurrent + (__int64)extend_portion * PAGE_SIZE;
+
+    if (fileSizeNew > mb->data_file_max_size)
+        throw USER_EXCEPTION(SE1011);
+    
+	llLogDecrease(fileSizeCurrent);
+    
+    mb->data_file_cur_size = fileSizeNew;
+
+    mb->free_data_blocks = extend_file_helper(
+                                data_file_handler,
+                                fileSizeCurrent,
+                                fileSizeNew,
+                                mb->free_data_blocks,
+                                0,
+                                -PAGE_SIZE,
+                                false);
+        
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }
 
 
 void extend_tmp_file(int extend_portion) throw (SednaException)
 {
-    if (mb->tmp_file_cur_size + 
-        (__int64)extend_portion * 
-        (__int64)PAGE_SIZE > mb->tmp_file_max_size + (__int64)PAGE_SIZE)
-        throw USER_EXCEPTION(SE1012);
+    __int64 fileSizeCurrent;
+    __int64 fileSizeNew;
 
-    int res = 0;
-    __int64 dsk_offs = 0;
+    fileSizeCurrent = mb->tmp_file_cur_size;
+    fileSizeNew = fileSizeCurrent + (__int64)extend_portion * PAGE_SIZE;
 
-    dsk_offs = (__int64)extend_portion * (__int64)PAGE_SIZE;
-    if (uSetEndOfFile(tmp_file_handler, dsk_offs, U_FILE_END, __sys_call_error) == 0)
-        throw USER_EXCEPTION(SE1014);
+    if (fileSizeNew > mb->tmp_file_max_size)
+        throw USER_EXCEPTION(SE1011);
 
-    __int64 tmp_file_old_size = mb->tmp_file_cur_size;
-    mb->tmp_file_cur_size += (__int64)extend_portion * (__int64)PAGE_SIZE;
+    mb->tmp_file_cur_size = fileSizeNew;
 
-    xptr xptr_cursor = TMP_FILE_OFFS2XPTR(tmp_file_old_size);
-
-    if (uSetFilePointer(tmp_file_handler, tmp_file_old_size, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
-        throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
-
-	int i = 0;
-    system_data_aligned_ptr = (char*)(((__uint32)system_data_buf + VMM_SM_BLK_HDR_MAX_SIZE) / VMM_SM_BLK_HDR_MAX_SIZE * VMM_SM_BLK_HDR_MAX_SIZE);
-    vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)system_data_aligned_ptr;
-	vmm_sm_blk_hdr::init(hdr);
-
-    for (i = 0; i < extend_portion; i++)
-    {
-        // fill header of the block
-        hdr->p = xptr_cursor;
-        //d_printf1("xptr_cursor: "); xptr_cursor.print();
-        int number_of_bytes_written = 0;
-
-        res = uWriteFile(tmp_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written, __sys_call_error);
-        if (res == 0 || number_of_bytes_written != VMM_SM_BLK_HDR_MAX_SIZE)
-            throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
-
-
-        // put to the list of free blocks
-        push_to_persistent_free_blocks_stack(&(mb->free_tmp_blocks), xptr_cursor);
-
-        xptr_cursor += PAGE_SIZE;
-
-        dsk_offs = tmp_file_old_size + (__int64)(i + 1) * (__int64)PAGE_SIZE;
-        if (uSetFilePointer(tmp_file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
-            throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
-    }
-
+    mb->free_tmp_blocks = extend_file_helper(
+                                tmp_file_handler,
+                                fileSizeCurrent,
+                                fileSizeNew,
+                                mb->free_tmp_blocks,
+                                TMP_LAYER_STARTS_WITH,
+                                0,
+                                false);
+        
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }
-
-
 
 /*******************************************************************************
 ********************************************************************************

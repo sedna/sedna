@@ -10,15 +10,13 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-int push_to_persistent_free_blocks_stack(xptr *hd, xptr p);
+int push_to_persistent_free_blocks_stack(xptr *hd, xptr p, bool canStoreFreeBlocks = true);
 int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p);
-int count_elems_of_persistent_free_blocks_stack(xptr hd);
+__int64 count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnly = false);
 bool is_in_persistent_free_blocks_stack(xptr hd, xptr what);
 
 int push_to_persistent_used_blocks_stack(xptr *hd, xptr p);
 int pop_from_persistent_used_blocks_stack(xptr *hd, xptr *p);
-
-
 
 void extend_data_file(int extend_portion) throw (SednaException);
 void extend_tmp_file (int extend_portion) throw (SednaException);
