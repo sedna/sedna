@@ -31,13 +31,13 @@ createExpr!:
 	     >>
 	     )
 	   | ((INDEX | INDEX_LOWCASE) n1:exprSingle (CON | ON)
-	      p1:pathExpr CBY p2:pathExpr CAS t:singleType
+	      p1:pathExpr (CBY | BY) p2:pathExpr (CAS | AS) t:singleType
 	      <<
 	         #0=#(#[AST_CREATE_INDEX], #n1, #p1, #p2, #t);
 	      >>
 	     )
 	   | ((FULLTEXT | FULLTEXT_LOWCASE) (INDEX | INDEX_LOWCASE) n2_1:exprSingle 
-	               (CON | ON) p3_1:pathExpr CTYPE s21_1:STRINGLITERAL {e2_1:expr}
+	               (CON | ON) p3_1:pathExpr (TYPE | CTYPE) s21_1:STRINGLITERAL {e2_1:expr}
 	      <<if (#e2_1 != NULL)
 	           #0=#(#[AST_CREATE_FULLTEXT_INDEX], #n2_1, #p3_1, #[$s21_1->getText(), AST_STRING_CONST], #e2_1);
 	        else
