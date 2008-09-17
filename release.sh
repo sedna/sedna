@@ -104,7 +104,7 @@ else  #Windows (Cygwin)
   export BUILD_PLATFORM=""
   export DISTR_EXT=tar.gz
   export SRC_EXT=tar.gz
-  export SQL_CONNECTION=0
+  export SQL_CONNECTION=1
   MAKE_COMMAND=make
   OS_TYPE=win
   SED_COMMAND="sed -r"
