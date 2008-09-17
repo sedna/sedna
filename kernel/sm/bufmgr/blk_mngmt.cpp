@@ -191,8 +191,8 @@ void add_file_span_to_pfb_stack(
         if (numFreeBlocks > numFreeBlockSlots)
         {
             numStackBlocks = 
-                (numFreeBlocks - numFreeBlockSlots + PERS_STACK_NODE_CAPACITY - 1)
-                / PERS_STACK_NODE_CAPACITY;
+                (numFreeBlocks - numFreeBlockSlots + PERS_STACK_NODE_CAPACITY)
+                / (PERS_STACK_NODE_CAPACITY + 1);
         }
 
         /* Make a span for stack blocks allocation (reducing primary span). */ 
@@ -229,15 +229,19 @@ void add_file_span_to_pfb_stack(
             }
         }
 
-        /* Check that we haven't lost anything. */ 
-        stackP = ConsumeNextBlockInSpan(
+        /* Ensure that we haven't lost anything. */ 
+        while (1)
+        {
+            stackP = ConsumeNextBlockInSpan(
                     &stackSpanBeginOffs,
                     &stackSpanEndOffs,
                     layerAdjustment,
                     offsAdjustment,
                     CONSUME_NORMAL);
 
-        if (stackP != XNULL) throw SYSTEM_EXCEPTION("logic error"); 
+            if (stackP == XNULL) break;
+            push_to_persistent_free_blocks_stack(hd, stackP, true);
+        }
     }
 }
 
