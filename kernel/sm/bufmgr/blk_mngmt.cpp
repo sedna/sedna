@@ -404,7 +404,7 @@ int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)
     {
         xptr tmp;
         new_tmp_block(&tmp);
-        put_block_to_buffer(-1, tmp, &offs);
+        put_block_to_buffer(-1, tmp, &offs, false);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
         free_blk_hdr::init(blk);
@@ -420,7 +420,7 @@ int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)
     {
         xptr tmp;
         new_tmp_block(&tmp);
-        put_block_to_buffer(-1, tmp, &offs);
+        put_block_to_buffer(-1, tmp, &offs, false);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
         free_blk_hdr::init(blk);

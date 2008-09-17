@@ -344,6 +344,7 @@ xptr put_block_to_buffer(session_id sid,
 		read_block(p, *offs);
 		vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
 		hdr->trid_wr_access = -1;
+		if(!XADDR(hdr->p)) throw SYSTEM_EXCEPTION("Null xptr in the header of block has been read from disk.");
 	}
 	else
 	{
