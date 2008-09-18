@@ -46,6 +46,10 @@ PPIterator* __current_physop = NULL;
 TLS_VAR_DECL
 volatile bool is_timer_fired = false;
 
+
+//FIXME: make this TLS_VAR_DECL when we start to use threads
+op_str_buf tmp_op_str_buf;
+
 }
 
 

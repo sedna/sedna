@@ -251,23 +251,19 @@ void PPFnSQLConnect::close ()
 		arr[i].op->close();
 }
 
-//FIXME
-static op_str_buf str_val;
 //copied from PPConstructors.cpp
 static char *getStringParameter(PPOpIn content)
 {
-	str_val.clear();
 	tuple value(content.ts);
 	content.op->next(value);
 	sequence at_vals(1);
 	if (value.is_eos()) 
 	{
-	 	str_val.append(EMPTY_STRING_TC);
+	 	tr_globals::tmp_op_str_buf.append(EMPTY_STRING_TC);
 		return NULL;
 	}
 	else
 	{
-		
 		at_vals.add(value);
 		/*tuple_cell res=atomize(value.cells[0]);
 		res=cast_to_xs_string(res);
@@ -281,6 +277,7 @@ static char *getStringParameter(PPOpIn content)
 		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPSQL");
 		at_vals.add(value);		
 	}
+	tr_globals::tmp_op_str_buf.clear();
 	sequence::iterator it=at_vals.begin();
 	do
 	{
@@ -289,15 +286,15 @@ static char *getStringParameter(PPOpIn content)
 		res=tuple_cell::make_sure_light_atomic(res);
 		if (it!=at_vals.begin())
 		{
-			str_val.append(" ");				
+			tr_globals::tmp_op_str_buf.append(" ");				
 		}
-		str_val.append(res);
+		tr_globals::tmp_op_str_buf.append(res);
 		it++;
         
 	}
 	while (it!=at_vals.end());
 	//str_val.push_to_memory();
-	return str_val.c_str();
+	return tr_globals::tmp_op_str_buf.c_str();
 }
 
 void PPFnSQLConnect::next(tuple &t)

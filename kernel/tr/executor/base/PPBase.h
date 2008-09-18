@@ -165,13 +165,17 @@ extern char mem_str_buf2[MAX_ATOMIC_LEX_REPR_SIZE + 1];
 
 /// buffer for e_strs (used for various intermediate operations with e_strs 
 /// instead of allocating dynamic memory by se_new operator)
-extern char e_string_buf[PAGE_SIZE];
+extern TLS_VAR_DECL
+char e_string_buf[PAGE_SIZE];
 
 extern TLS_VAR_DECL 
 PPIterator* __current_physop;
 
 extern TLS_VAR_DECL
 volatile bool is_timer_fired;
+
+//FIXME: make this TLS_VAR_DECL when we start to use threads
+extern op_str_buf tmp_op_str_buf;
 
 }
 
