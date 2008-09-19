@@ -353,7 +353,7 @@ SQLODBCExecutor* SQLODBCExecutor::create(SQLHDBC hdbc)
 
 inline void SQLODBCExecutor::set_param_type(int i, SQLSMALLINT vtype, SQLSMALLINT ptype, SQLUINTEGER colsize)
 {
-	if (param_types[i-1] != vtype)
+	if (param_types[i-1] != vtype || colsize > 128)
 	{
 		SQLRETURN rc;
 		
@@ -548,9 +548,12 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 					set_param_type(id, SQL_C_DOUBLE, SQL_DOUBLE, 0);
 					break;
 				case xs_string:
-					//XXX - we pass 128 as MAX_LEN here...
-					set_param_type(id, SQL_C_CHAR, SQL_CHAR, 128);
+				{
+   					//XXX - (int) not safe here !!!
+					int len = (int)tmp.get_strlen() + 1;
+					set_param_type(id, SQL_C_CHAR, SQL_CHAR, len > 128 ? len : 128);
 					break;
+				}
 				default:
 					throw XQUERY_EXCEPTION2(SE2106, "bad parameter type");
 			}
