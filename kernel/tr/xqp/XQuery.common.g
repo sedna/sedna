@@ -126,7 +126,7 @@ localPart2!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
 	| INSTANCE <<#0=#["instance", AST_LOCAL_NAME, tk->getLine()];>>
 	| TREAT <<#0=#["treat", AST_LOCAL_NAME, tk->getLine()];>>
 	| UPDATE <<#0=#["UPDATE", AST_LOCAL_NAME, tk->getLine()];>>
-	| INTO <<#0=#["into", AST_LOCAL_NAME, tk->getLine()];>>
+	| INTO <<#0=#["INTO", AST_LOCAL_NAME, tk->getLine()];>>
 	| WITH  <<#0=#["with", AST_LOCAL_NAME, tk->getLine()];>>
 	| ON    <<#0=#["on", AST_LOCAL_NAME, tk->getLine()];>>
 	| CON   <<#0=#["ON", AST_LOCAL_NAME, tk->getLine()];>>
@@ -221,6 +221,9 @@ localPart3!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
 	| ENCODING <<#0=#["encoding", AST_LOCAL_NAME, tk->getLine()];>>
 	| CMODULE <<#0=#["MODULE", AST_LOCAL_NAME, tk->getLine()];>>
 	| COR <<#0=#["OR", AST_LOCAL_NAME, tk->getLine()];>>
+	| CWITH <<#0=#["WITH", AST_LOCAL_NAME, tk->getLine()];>>
+	| ROLLBACK <<#0=#["ROLLBACK", AST_LOCAL_NAME, tk->getLine()];>>
+	| COMMIT <<#0=#["COMMIT", AST_LOCAL_NAME, tk->getLine()];>>
 ;	
 
 
@@ -263,6 +266,8 @@ localPart4!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
 	| DESCRIPTIVE_LOWCASE <<#0=#["descriptive", AST_LOCAL_NAME, tk->getLine()];>>
 	| STATISTICS_LOWCASE <<#0=#["statistics", AST_LOCAL_NAME, tk->getLine()];>>
 	| UPDATE_LOWCASE <<#0=#["update", AST_LOCAL_NAME, tk->getLine()];>>
+	| ROLLBACK_LOWCASE <<#0=#["rollback", AST_LOCAL_NAME, tk->getLine()];>>
+	| COMMIT_LOWCASE <<#0=#["commit", AST_LOCAL_NAME, tk->getLine()];>>
 ;
 
 prefixPart1!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
@@ -331,7 +336,7 @@ prefixPart2!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
 	| INSTANCE <<#0=#["instance", AST_PREFIX, tk->getLine()];>>
 	| TREAT <<#0=#["treat", AST_PREFIX, tk->getLine()];>>
 	| UPDATE <<#0=#["UPDATE", AST_PREFIX, tk->getLine()];>>
-	| INTO <<#0=#["into", AST_PREFIX, tk->getLine()];>>
+	| INTO <<#0=#["INTO", AST_PREFIX, tk->getLine()];>>
 	| WITH  <<#0=#["with", AST_PREFIX, tk->getLine()];>>
 	| ON    <<#0=#["on", AST_PREFIX, tk->getLine()];>>
 	| CON   <<#0=#["ON", AST_PREFIX, tk->getLine()];>>
@@ -425,6 +430,10 @@ prefixPart3!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
 	| ENCODING <<#0=#["encoding", AST_PREFIX, tk->getLine()];>>
 	| CMODULE <<#0=#["MODULE", AST_PREFIX, tk->getLine()];>>
 	| COR <<#0=#["OR", AST_PREFIX, tk->getLine()];>>
+	| CWITH <<#0=#["WITH", AST_PREFIX, tk->getLine()];>>
+	| ROLLBACK <<#0=#["ROLLBACK", AST_PREFIX, tk->getLine()];>>
+	| COMMIT <<#0=#["COMMIT", AST_PREFIX, tk->getLine()];>>
+
 ;
 
 prefixPart4!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
@@ -464,6 +473,9 @@ prefixPart4!: <<ANTLRTokenPtr tk = (ANTLRTokenPtr)LT(1);>>
 	| DESCRIPTIVE_LOWCASE <<#0=#["descriptive", AST_PREFIX, tk->getLine()];>>
 	| STATISTICS_LOWCASE <<#0=#["statistics", AST_PREFIX, tk->getLine()];>>
 	| UPDATE_LOWCASE <<#0=#["update", AST_PREFIX, tk->getLine()];>>
+    | ROLLBACK_LOWCASE <<#0=#["rollback", AST_PREFIX, tk->getLine()];>>
+	| COMMIT_LOWCASE <<#0=#["commit", AST_PREFIX, tk->getLine()];>>
+
 ;
 
 ncname!: 
