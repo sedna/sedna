@@ -707,10 +707,10 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 			//return elem;
 
 			if (left != XNULL)
-				left = insert_attribute(left, XNULL, XNULL, (char *)results[i].col_name, xs_string, 
+				left = insert_attribute(left, XNULL, XNULL, (char *)results[i].col_name, xs_untypedAtomic, 
 							(char *)res_buf, res_len, NULL);
 			else
-				left = insert_attribute(XNULL, XNULL, elem, (char *)results[i].col_name, xs_string, 
+				left = insert_attribute(XNULL, XNULL, elem, (char *)results[i].col_name, xs_untypedAtomic, 
 							(char *)res_buf, res_len, NULL);
 		}
 		//if both if's failed assume that res_len == SQL_NULL_DATA
