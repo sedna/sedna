@@ -67,7 +67,7 @@ elementContent!:
 	  ASTBase* cnt = NULL;
 	>>
 	( ce:CHAR_ELEM              
-	  << if (($ce->getText())[0] == '\"') val += "\\\"";
+	  << if (($ce->getText())[0] == '"') val += "\\\"";
 	     else if (($ce->getText())[0] == '\\') val += "\\\\";
 	     else val += $ce->getText();
 	  >>
@@ -250,7 +250,7 @@ dirPIConstructor!:
 
 	( PI_QUESTION << val += "?"; >>
 	| cs:PI_CHAR 
-	    << if ((cs->getText())[0] == '\"') val += "\\\"";
+	    << if ((cs->getText())[0] == '"') val += "\\\"";
            else if ((cs->getText())[0] == '\\') val += "\\\\";
 	       else val += (cs->getText())[0]; >>
 	)*
@@ -275,7 +275,7 @@ dirCommentConstructor!:
 	
 	( XML_COMMENT_HYPHEN << val+= "-"; >>
     | cs1:XML_COMMENT_CHAR 
-         <<if ((cs1->getText())[0] == '\"') val += "\\\"";
+         <<if ((cs1->getText())[0] == '"') val += "\\\"";
            else if ((cs1->getText())[0] == '\\') val += "\\\\";
 	       else val += (cs1->getText())[0]; >>
 	)*
@@ -293,7 +293,7 @@ cdataSection!:
 	
 	( CHAR_SEQ_CDATA << val += "]"; >>
 	| cs1:CHAR_SEQ_CDATA_C 
-	    << if ((cs1->getText())[0] == '\"') val += "\\\"";
+	    << if ((cs1->getText())[0] == '"') val += "\\\"";
            else if ((cs1->getText())[0] == '\\') val += "\\\\";
 	       else val += (cs1->getText())[0]; >>
 	)*
@@ -385,7 +385,7 @@ quotAttrValueContent!:
 	>>
 
 	( ca:CHAR_ATTR
-	  << if (($ca->getText())[0] == '\"') val += "\\\"";
+	  << if (($ca->getText())[0] == '"') val += "\\\"";
 	     else if (($ca->getText())[0] == '\\') val += "\\\\";
 	     else val += $ca->getText();
 	  >>
@@ -448,7 +448,7 @@ aposAttrValueContent!:
 
 	( ca:CHAR_ATTR
 
-	  << if (($ca->getText())[0] == '\"') val += "\\\"";
+	  << if (($ca->getText())[0] == '"') val += "\\\"";
 	     else if (($ca->getText())[0] == '\\') val += "\\\\";
 	     else val += $ca->getText();
 	  >>
