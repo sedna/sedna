@@ -25,7 +25,7 @@ string scheme_prepare_string(const char* lex_text)
     /// II. Further processing
     if (lex.size() >= 3)
     {
-        bool double_quotes = (lex[0] == '\"');
+        bool double_quotes = (lex[0] == '"');
         const char* find_text = double_quotes ? "\"\"" : "''"; 
         const char* repl_text = double_quotes ? "\\\"" : "\\'";
         string text = lex.substr(1, lex.size()-2);
@@ -45,8 +45,8 @@ string scheme_prepare_string(const char* lex_text)
     }
     else
     {
-        lex[0] = '\"';
-        lex[lex.size()-1] = '\"';
+        lex[0] = '"';
+        lex[lex.size()-1] = '"';
     }
   
     return lex;
