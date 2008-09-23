@@ -275,7 +275,8 @@ static char *getStringParameter(PPOpIn content)
 	while (!(value.is_eos()))
 	{
 		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPSQL");
-		at_vals.add(value);		
+		at_vals.add(value);
+		content.op->next(value);
 	}
 	tr_globals::tmp_op_str_buf.clear();
 	sequence::iterator it=at_vals.begin();
