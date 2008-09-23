@@ -54,12 +54,12 @@ typedef __int16 xmlscm_type;
 /* shift in the block */
 typedef unsigned short int shft;
 
-#define PAGE_SIZE								65536
-#define PAGE_BIT_MASK								(__uint32)0xFFFF0000
-#define PAGE_REVERSE_BIT_MASK							(__uint32)0x0000FFFF
-//#define PAGE_SIZE								4096
-//#define PAGE_BIT_MASK								0xFFFFF000
-//#define PAGE_REVERSE_BIT_MASK							0x00000FFF
+#define PAGE_SIZE                               65536
+#define PAGE_BIT_MASK                           (__uint32)0xFFFF0000
+#define PAGE_REVERSE_BIT_MASK                   (__uint32)0x0000FFFF
+//#define PAGE_SIZE                             4096
+//#define PAGE_BIT_MASK                         0xFFFFF000
+//#define PAGE_REVERSE_BIT_MASK                 0x00000FFF
 
 
 extern void  *LAYER_ADDRESS_SPACE_START_ADDR;
@@ -79,21 +79,10 @@ struct vmm_region_values
     __uint32 LAYER_ADDRESS_SPACE_SIZE;
 };
 
-/*#ifdef _WIN32
-#define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x20000000)
-#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0x80000000)
-#elif defined(DARWIN)
-#define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x20000000)
-#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0x68000000)
-#else
-#define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x40000000)
-#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0xB0000000)
-#endif*/
-#define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0x80000000)
+#define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0x79C00000)
 #define PH_SIZE                                         ((__uint32)0x6400000)
 #define VMM_REGION_MIN_SIZE                             ((__uint32)0x4000000)
 #define VMM_REGION_MAX_SIZE                             ((__uint32)0x40000000)
-
 
 
 #ifdef _WIN32
