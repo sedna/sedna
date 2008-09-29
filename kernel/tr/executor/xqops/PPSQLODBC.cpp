@@ -18,7 +18,7 @@
 #endif
 
 
-#define LOCK_MEM
+//#define LOCK_MEM
 
 #ifdef LOCK_MEM
 
@@ -274,7 +274,9 @@ void SQLODBCBase::load()
 	if (loaded)
 		return;
 
+#ifdef LOCK_MEM
 	lock_mem_spots_count = LAYER_ADDRESS_SPACE_SIZE / lock_mem_spot_size /*+1*/;
+#endif
 
 	//FIXME - change SE2111 to smth else
 
