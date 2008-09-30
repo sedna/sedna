@@ -1688,7 +1688,12 @@ URL is of the following form:
 \begin{verbatim}
 odbc:<driver name>:[//<server>[/<database>][;]][<driver options>]
 \end{verbatim}
-``;'' after \verb!<database>! or \verb!<server>! is required if there are some driver options following it
+``;'' after \verb!<database>! or \verb!<server>! is required if there are some driver options following it.
+Driver options must be in the following form: \verb!<option>=<value>{;<option>=<value>}!. List of available options
+depens on the ODBC driver used. One of the common options is ``Port'' which is used to specify the port on which
+the database server is configured to listen.
+
+Example: \verb!odbc:MySQL ODBC 3.51 Driver://localhost/somedb;Port=1234!
 \item \verb!$user! is your user name for the session.
 \item \verb!$password! is your password for the session.
 \item \verb!$options! is an optional sequence of connection options.
