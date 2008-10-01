@@ -908,7 +908,7 @@ void vmm_on_session_end() throw (SednaException)
 #endif
 }
 
-void unmapAllBlocks()
+static void unmapAllBlocks()
 {
 	int p = -1;
 
