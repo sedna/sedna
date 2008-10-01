@@ -5,6 +5,7 @@
 
 #include "common/sedna.h"
 #include <iostream>
+#include "common/u/uutils.h"
 #include "common/sm_vmm_data.h"
 #include "common/ph/pers_heap.h"
 #include "sm/bufmgr/bm_core.h"
@@ -22,6 +23,20 @@ using namespace std;
   VARIABLES
 ********************************************************************************
 *******************************************************************************/
+
+// IO statistics
+struct bm_core_io_stats {
+  __int64 reads;
+  __int64 writes;
+  
+  unsigned int ph_flushes;
+  unsigned int ph_backups;
+
+  void reset() { reads = 0; writes = 0; ph_flushes = 0; ph_backups = 0; }
+};
+
+static bm_core_io_stats buf_io_stats = {};
+
 // Buffer memory starts with this address
 void* buf_mem_addr = NULL;
 
@@ -115,6 +130,7 @@ void read_master_block()
     int res = uReadFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
+    buf_io_stats.reads++;
 }
 
 void flush_master_block()
@@ -126,6 +142,7 @@ void flush_master_block()
     int res = uWriteFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
+    buf_io_stats.writes++;
 }
 
 
@@ -180,6 +197,7 @@ void read_block(const xptr &p, ramoffs offs) throw (SednaException)
 
     blk->roffs = offs;
     blk->is_changed = false;
+    buf_io_stats.reads++;
 }
 
 
@@ -210,6 +228,7 @@ void write_block(const xptr &p, ramoffs offs) throw (SednaException)
     int res = uWriteFile(file_handler, OFFS2ADDR(offs), PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != PAGE_SIZE)
         throw SYSTEM_ENV_EXCEPTION("Cannot write block");
+    buf_io_stats.writes++;
 }
 
 
@@ -439,6 +458,7 @@ void flush_ph()
 {
     if (pers_flush() != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot flush persistent heap");
+    buf_io_stats.ph_flushes++;
 }
 
 void backup_ph()
@@ -448,9 +468,14 @@ void backup_ph()
 
     if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
+    buf_io_stats.ph_backups++;
 }
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+/// Helpers for debug and statistics managment
+////////////////////////////////////////////////////////////////////////////////
 void dump_bufmgr_state()
 {
 	int bufsNum = 0, i = 0;
@@ -489,3 +514,18 @@ void dump_bufmgr_state()
 	fprintf(stderr,"---FINISHED DUMP OF BUFMGR STATE---\n");
 }
 
+void bm_reset_io_statistics()
+{
+    buf_io_stats.reset();
+}
+
+void bm_log_out_io_statistics()
+{
+    char reads_buf[20];
+    char writes_buf[20];
+    
+    u_i64toa(buf_io_stats.reads, reads_buf, 10);
+    u_i64toa(buf_io_stats.writes, writes_buf, 10);
+
+    elog(EL_INFO, ("IO block reads:%s, writes:%s, heap flushes:%u, heap copies:%u", reads_buf, writes_buf, buf_io_stats.ph_flushes, buf_io_stats.ph_backups));
+}

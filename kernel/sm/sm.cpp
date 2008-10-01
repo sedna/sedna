@@ -241,6 +241,8 @@ int sm_server_handler(void *arg)
                          //d_printf1("query 22: bm_unregister_session\n");
                          bm_unregister_session(msg->sid);
                          msg->cmd = 0;
+                         bm_log_out_io_statistics();
+                         bm_reset_io_statistics();
                          break;
                      }
             case 23: {
