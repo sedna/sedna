@@ -23,7 +23,7 @@ typedef struct {
 #else
 
 #include <sys/utsname.h>
-typedef struct ustsname U_UTSNAME;
+typedef struct utsname U_UTSNAME;
 
 #endif /* _WIN32 */
 
