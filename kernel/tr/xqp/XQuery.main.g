@@ -95,7 +95,11 @@ query![ASTBase* vd]:
 	  >>
 	 
 	 (
-	   ce:createExpr <<#0=#ce;>>
+  	   (ROLLBACK | ROLLBACK_LOWCASE) <<#0=#[AST_ROLLBACK];>>
+
+	 | (COMMIT | COMMIT_LOWCASE) <<#0=#[AST_COMMIT];>>
+
+	 | ce:createExpr <<#0=#ce;>>
 	   <<#0=#(#[AST_CREATE], #(#[AST_PROLOG], prol), #ce);>>
 
 	 | e:expr
@@ -109,10 +113,6 @@ query![ASTBase* vd]:
 	 | md:metadataExpr
 
 	   <<#0=#(#[AST_METADATA], #(#[AST_PROLOG], prol), #md);>>
-
-	 | (ROLLBACK | ROLLBACK_LOWCASE) <<#0=#[AST_ROLLBACK];>>
-
-	 | (COMMIT | COMMIT_LOWCASE) <<#0=#[AST_COMMIT];>>
      )
 ;
 
