@@ -7,7 +7,9 @@
 #define _GOV_FUNCTIONS_H_
 
 void clean_resources(gov_config_struct& cfg, bool background_off_from_background_on);
+void log_out_system_information();
 bool is_first_start_of_gov(int ping_port);
 void RenameLastSoftFaultDir(const char* SEDNA_DATA);
-#endif
+
+#endif /*  _GOV_FUNCTIONS_H_ */
 

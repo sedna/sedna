@@ -21,6 +21,7 @@
 #include "common/errdbg/d_printf.h"
 #include "common/u/uhdd.h"
 #include "common/u/uutils.h"
+#include "common/u/usystem.h"
 #include "common/ugc.h"
 #include "common/pping.h"
 
@@ -66,6 +67,15 @@ bool is_first_start_of_gov(int ping_port)
     return true;//cannot connect to pping server
   }
     return true;
+}
+
+void log_out_system_information()
+{
+    U_UTSNAME buf;
+    if(uUname(&buf, __sys_call_error))
+        elog(EL_WARN, ("Can't get system information!"));
+    else
+        elog(EL_INFO, ("OS: %s, release: %s, version: %s, machine: %s", buf.sysname, buf.release, buf.version, buf.machine));
 }
 
 void RenameLastSoftFaultDir(const char* SEDNA_DATA)

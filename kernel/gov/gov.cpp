@@ -236,10 +236,9 @@ int main(int argc, char** argv)
       SEDNA_DATA = gov_table->get_config_struct()->gov_vars.SEDNA_DATA;
 
       elog(EL_INFO, ("SEDNA version is %s.%s", SEDNA_VERSION, SEDNA_BUILD));
-      elog(EL_LOG, ("SEDNA event log is ready"));
-      
-      create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
+      log_out_system_information();
             
+      create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
 
       pps->startup();
       is_pps_close = false;
