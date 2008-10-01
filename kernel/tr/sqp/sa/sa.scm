@@ -2330,7 +2330,7 @@
                (car (sa:op-args expr))
                ns-binding
                ; DL: should be?: (car default-ns)
-               (if node-kind-element? default-ns ""))
+               (if (and node-kind-element? default-ns) default-ns ""))
               ; Do not actually expand it until dynamic evaluation phase
               ;(car (sa:op-args expr))
               ))
