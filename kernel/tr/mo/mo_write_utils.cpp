@@ -1327,14 +1327,6 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 					updateChildPointer ((n_dsc*)XADDR(grandpa),parent,new_pos);
 				}
 			}
-			else
-			{
-				metadata_sem_down();
-				/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(parent);
-				mdc->root=new_pos;*/
-				((col_schema_node*)parent_block->snode)->replace_document_pointer(parent,new_pos);
-				metadata_sem_up();							
-			}
 			CHECKP(parent);
 			VMM_SIGNAL_MODIFICATION(parent);			
 			memmove (ptr,(char*)par_dsc,parent_block->dsc_size);
@@ -1406,16 +1398,6 @@ shft desci=parent_block->free_first_indir;
 					while (tmp->desc_prev!=par_next)
 					{
 						answ=shiftLastNodeToTheNextBlock(parent_block);
-						if(mark)
-						{
-							metadata_sem_down();
-							CHECKP(parent);
-							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
-							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;*/
-							metadata_sem_up();
-							CHECKP(answ);
-						}
 						if (nblk_hdr->free_first==0)
 						{
 							goto l_second;
@@ -1427,16 +1409,6 @@ shft desci=parent_block->free_first_indir;
 					if (shift_size>=((shft)size_of_node(parent_block)+((shft)posit+1)*((shft)sizeof(xptr))))
 					{
 						answ=shiftLastNodeToTheNextBlock(parent_block);
-						if(mark)
-						{
-							metadata_sem_down();
-							CHECKP(parent);
-							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
-							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;*/
-							metadata_sem_up();
-							CHECKP(answ);
-						}
 						VMM_SIGNAL_MODIFICATION(answ);
 						*elementContainsChild((n_dsc*)XADDR(answ),name,type,ns)=child;
 						return;
@@ -1452,15 +1424,6 @@ l_second:
 			shft shift_size=GETDESCRIPTORSIZE(new_block);
 			CHECKP(parent);
 
-			if(mark)
-			{
-				metadata_sem_down();
-				((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
-				/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-				mdc->root=new_pointer;*/
-				CHECKP(parent);
-				metadata_sem_up();
-			}
 			shiftNodeToTheNewBlockExpanded (tmp,new_pointer,shift_size,size,parent_block);
 			VMM_SIGNAL_MODIFICATION(new_pointer);
 			*elementContainsChild((n_dsc*)XADDR(new_pointer),name,type,ns)=child;
@@ -1478,14 +1441,6 @@ l_second:
 					CHECKP(new_block);
 					new_pointer=new_block+  GETBLOCKFIRSTFREESPACE(new_block);
 					CHECKP(parent);
-				}
-				if(mark)
-				{
-					metadata_sem_down();
-					((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
-					/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-					mdc->root=new_pointer;*/
-					metadata_sem_up();
 				}
 				shiftNodeToTheNewBlockExpanded (tmp, new_pointer,shift_size,size,parent_block);
 				counter++; 
@@ -1520,16 +1475,6 @@ l_second:
 					while (tmp->desc_next!=par_next)
 					{
 						answ=shiftFirstNodeToThePreviousBlock(parent_block);
-						if(mark)
-						{
-							metadata_sem_down();
-							CHECKP(parent);
-							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
-							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;*/
-							metadata_sem_up();
-							CHECKP(answ);
-						}
 						if (pblk_hdr->free_first==0)
 						{
 							goto second;
@@ -1541,16 +1486,6 @@ l_second:
 					if (shift_size>=((shft)size_of_node(parent_block)+((shft)posit+1)*((shft)sizeof(xptr))))
 					{
 						answ=shiftFirstNodeToThePreviousBlock(parent_block);
-						if(mark)
-						{
-							metadata_sem_down();
-							CHECKP(parent);
-							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
-							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;*/
-							metadata_sem_up();
-							CHECKP(answ);
-						}
 						VMM_SIGNAL_MODIFICATION(answ);
 						*elementContainsChild((n_dsc*)XADDR(answ),name,type,ns)=child;
 						return;
@@ -1569,14 +1504,6 @@ second:
 			CHECKP(parent);
 			while (tmp->desc_next!=par_next)
 			{        
-				if(mark)
-				{
-					metadata_sem_down();
-					((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
-					/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-					mdc->root=new_pointer;*/
-					metadata_sem_up();
-				}
 				shiftNodeToTheNewBlockExpanded (tmp, new_pointer,shift_size,size,parent_block);
 				counter++;
 				new_pointer+=shift_size;
@@ -1591,14 +1518,6 @@ second:
 				}
 				CHECKP(parent);  
 				tmp=GETNEXTDESCRIPTOR_BL(parent_block,tmp);
-			}
-			if(mark)
-			{
-				metadata_sem_down();
-				((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
-				/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-				mdc->root=new_pointer;*/
-				metadata_sem_up();
 			}
 			shiftNodeToTheNewBlockExpanded (tmp, new_pointer,shift_size,size,parent_block);
 			VMM_SIGNAL_MODIFICATION(new_pointer);

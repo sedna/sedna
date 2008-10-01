@@ -432,6 +432,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		scm->eblk=new_block;
 	}
 	xptr nodex;
+	xptr node_indir;
 	if (new_block==XNULL)
 	{
 		CHECKP(blk);
@@ -452,6 +453,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		//NODE STATISTICS
 		block_hdr->snode->nodecnt++;
 		hl_logical_log_document(node->indir,uri,collection_name,true);
+		node_indir = node->indir;
 		nid_create_root(nodex,true);
 		CHECKP(nodex);
 		VMM_SIGNAL_MODIFICATION(blk);
@@ -479,12 +481,13 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		//NODE STATISTICS
 		block_hdr->snode->nodecnt++;
 		hl_logical_log_document(node->indir,uri,collection_name,true);
+		node_indir = node->indir;
 		nid_create_root(nodex,true);
 		CHECKP(nodex);
 		addTextValue(nodex,name.c_str(),name.length());
 		CHECKP(new_block);
 	}
-	scm->put_doc_in_coll(name.c_str(),nodex);
+	scm->put_doc_in_coll(name.c_str(),node_indir);
 	/*mdc->root=nodex;
 	scm->metadata->put(mdc);*/
 	metadata_sem_up();

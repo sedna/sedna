@@ -206,7 +206,7 @@ xptr col_schema_node::search_metadata_cell(const char *document_name)
 {
 	bt_key key;
 	key.setnew(document_name);
-	return bt_find(metadata->btree_root, key).bt_next_obj();
+	return removeIndirection(bt_find(metadata->btree_root, key).bt_next_obj());
 }
 void col_schema_node::delete_doc_from_coll(const char* doc_name)
 {
@@ -225,6 +225,7 @@ void col_schema_node::free_map()
 	bt_drop(metadata->btree_root);
 	scm_free(metadata,true);
 }
+/*
 void col_schema_node::replace_document_pointer(xptr old_xptr, xptr new_xptr)
 {
 	//1. find doc name
@@ -245,6 +246,7 @@ void col_schema_node::replace_document_pointer(xptr old_xptr, xptr new_xptr)
 	//3. clean
 	
 }
+*/
 /*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* col_schema_node::search_metadata_cell(const char *document_name)
 {
 	return metadata->get(document_name,NULL);	
