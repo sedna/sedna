@@ -198,7 +198,12 @@ void pping_client::startup(SednaUserException& e, bool is_soft)
     sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
     if (sock == U_INVALID_SOCKET) throw USER_ENV_EXCEPTION("Failed to create socket", false);
-    if (uconnect_tcp(sock, port, host, __sys_call_error) == U_SOCKET_ERROR) throw_exception(e, is_soft);
+    if (uconnect_tcp(sock, port, host, __sys_call_error) == U_SOCKET_ERROR) 
+    {
+        if (uclose_socket(sock, NULL) == U_SOCKET_ERROR)
+            throw USER_ENV_EXCEPTION("Failed to close socket", false);
+        throw_exception(e, is_soft);
+    }
 
     if (UUnnamedSemaphoreCreate(&sem, 0, NULL, __sys_call_error) != 0)
         throw USER_ENV_EXCEPTION("Failed to create semaphore", false);
