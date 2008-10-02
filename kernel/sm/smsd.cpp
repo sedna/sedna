@@ -78,8 +78,7 @@ int main(int argc, char **argv)
      
         d_printf1("Shutdowning SM... ");
         gov_header_struct cfg;
-        get_default_sednaconf_values(&cfg);
-        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+        get_sednaconf_values(&cfg);
      
         InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
 		SetGlobalNames();

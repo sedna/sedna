@@ -11,7 +11,6 @@
 #include "common/sp.h"
 #include "common/u/usem.h"
 #include "common/u/uutils.h"
-
 #include "gov/hb_funcs.h"
 
 using namespace std;

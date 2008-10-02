@@ -215,8 +215,7 @@ int main(int argc, char **argv)
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 #endif
-        get_default_sednaconf_values(&cfg);
-        get_gov_config_parameters_from_sednaconf(&cfg); 
+        get_sednaconf_values(&cfg);
 
 		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
 		SetGlobalNames();

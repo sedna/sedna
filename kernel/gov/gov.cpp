@@ -95,25 +95,23 @@ int main(int argc, char** argv)
     program_name_argv_0 = argv[0];
     pping_server *pps = NULL;
     gov_config_struct cfg;
-    
     bool is_pps_close = true;
+
 
     try {
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 #endif
 
-        fullfill_config_parameters(&cfg);
+        fulfill_config_parameters(&cfg);
 
-#ifdef _WIN32
-#else
-        //if ( uMkDir("/var/lib/sedna", NULL, __sys_call_error) == 0)
-        //   throw USER_EXCEPTION2(SE4055, "/var/lib/sedna");
-#endif
+        SEDNA_DATA = cfg.gov_vars.SEDNA_DATA;
+      
+        check_data_folder_existence();
+
+        RenameLastSoftFaultDir();
 
         pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
-
-        RenameLastSoftFaultDir(cfg.gov_vars.SEDNA_DATA);
 
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
         char buf[1024];
@@ -159,8 +157,7 @@ int main(int argc, char** argv)
         if (background_off_from_background_on)
         {
             // we were started by command "gov -background-mode off" from "gov -background-mode on"
-#ifdef _WIN32
-#else
+#ifndef _WIN32
             // perform standard routines to run the process in the background mode
             setsid();
             //chdir(cfg.gov_vars.SEDNA_DATA);
@@ -227,13 +224,11 @@ int main(int argc, char** argv)
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
 
-      if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
-          throw SYSTEM_EXCEPTION("Failed to initialize event log");
-
-
       gov_table = new info_table();
       gov_table->init(&cfg);
-      SEDNA_DATA = gov_table->get_config_struct()->gov_vars.SEDNA_DATA;
+
+      if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
+          throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
       elog(EL_INFO, ("SEDNA version is %s.%s", SEDNA_VERSION, SEDNA_BUILD));
       log_out_system_information();
@@ -243,7 +238,7 @@ int main(int argc, char** argv)
       pps->startup();
       is_pps_close = false;
       
-      d_printf1("ping started\n");
+      d_printf1("Process ping server has been started\n");
       elog(EL_LOG, ("Process ping server is ready"));
 
 #ifdef _WIN32
@@ -262,21 +257,19 @@ int main(int argc, char** argv)
            throw USER_EXCEPTION(SE4403);
 #endif
 
-
       client_listener(gov_table->get_config_struct(), background_off_from_background_on);
 
       gov_table->wait_all_notregistered_sess();
 
       pps->shutdown();
-      delete pps; 
+      delete pps;
+      pps = NULL; 
       is_pps_close = true;
-      pps = NULL;
 
       if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
 
       gov_table->release();
       delete gov_table;
-
 
       release_global_memory_mapping();
 

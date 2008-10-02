@@ -17,7 +17,7 @@ UMMap global_memory_mapping;
 
 void create_global_memory_mapping(int os_primitives_id_min_bound)
 {
-    char buf[1024];
+    char buf[U_MAX_PATH + 20]; /// should be enough to place "%SEDNA_DATA%/data/vmm.dat"
     vmm_region_values v;
 
 
@@ -33,24 +33,12 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
     *(t_layer*)global_memory = INVALID_LAYER;
 
 
-    //!!! overflow may happen
     strcpy(buf, SEDNA_DATA);
-#ifdef _WIN32
-    strcat(buf, "\\data");
-#else
-    strcat(buf, "/data");
-#endif
-    if (!uIsFileExist(buf, __sys_call_error))
-    {
-        if (uMkDir(buf, NULL, __sys_call_error) == 0)
-            throw USER_EXCEPTION2(SE4300, buf);
-    }
 
-    //!!! overflow may happen
 #ifdef _WIN32
-    strcat(buf, "\\vmm.dat");
+    strcat(buf, "\\data\\vmm.dat");
 #else
-    strcat(buf, "/vmm.dat");
+    strcat(buf, "/data/vmm.dat");
 #endif
 
 
@@ -88,7 +76,6 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
         char path_buf[U_MAX_PATH + 10];
         std::string path_str = uGetImageProcPath(path_buf, __sys_call_error) + std::string("/") + SESSION_EXE;
         strcpy(path_buf, path_str.c_str());
-
                
         UPID pid;
         UPHANDLE process_handle;

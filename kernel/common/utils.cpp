@@ -208,17 +208,15 @@ void elim_disturb2(void *base, size_t num, size_t width, compare_fun compare)
 }
 
 
-char whitespaces [] = {' ', '\n', '\t'};
+static char whitespaces[] = {' ', '\n', '\t', '\r'};
 
-string trim(string str)
+std::string trim(const std::string& str)
 {
-    string::size_type start = str.find_first_not_of(whitespaces);
-    string::size_type end = str.find_last_not_of(whitespaces);
+    std::string::size_type start = str.find_first_not_of(whitespaces);
+    std::string::size_type end   = str.find_last_not_of(whitespaces);
     if (start == std::string::npos || end == std::string::npos)
         return "";
     return str.substr(start, end - start + 1);
 }
-
-
 
 

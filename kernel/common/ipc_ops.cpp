@@ -4,67 +4,26 @@
  */
 
 
+#include <string>
+
 #include "common/sedna.h"
 
 #include "common/ipc_ops.h"
 #include "common/base.h"
+#include "common/utils.h"
 #include "common/u/usocket.h"
 #include "common/u/uhdd.h"
 #include "common/errdbg/d_printf.h"
-#include "common/config.h"
 #include "expat/expat.h"
 
-#include <string>
 
-using namespace std;
-
-bool gov_shared_memory_opened = false;
-
-void parse_config_file(gov_header_struct* cfg, string& cfg_text);
-void startElement_gov_cfg(void *cfg, const char *name, const char **atts);
-void endElement_gov_cfg(void *cfg, const char *name);
-void characterData_gov_cfg(void *cfg, const XML_Char *s, int len);
-char* get_sedna_data_path(const char* cfg_text, char* buf);
-string erase_ws(string str);
+static bool gov_shared_memory_opened = false;
+static std::string elem_content;
 
 
-int WriteHead(UPIPE p, int *cmd, int *len)
-{
-   int res = uWritePipeAll(p, cmd, sizeof(int), __sys_call_error);
-   if(res < 0) 
-   {
-     d_printf1("Pipe error\n");
-     return -1;
-   }
-
-   res = uWritePipeAll(p, len, sizeof(int), __sys_call_error);
-   if(res < 0) 
-   {
-      d_printf1("Pipe error\n");
-      return -1;
-   }
-   return 0;
-}
-
-int ReadHead(UPIPE p, int *cmd, int *len)
-{
-   int res = uReadPipeAll(p, cmd, sizeof(int), __sys_call_error);
-   if (res < 0) 
-   {
-      d_printf1("Pipe error\n");
-      return -1;
-   }
-
-   res = uReadPipeAll(p, len, sizeof(int), __sys_call_error);
-   if (res < 0) 
-   {
-      d_printf1("Pipe error\n");
-      return -1;
-   }
-
-   return 0;
-}
-
+/******************************************************************************
+                    Governor shared memory opne/close
+/******************************************************************************/
 
 
 void* open_gov_shm(UShMem *gov_shm_service_dsc)
@@ -89,9 +48,7 @@ void* open_gov_shm(UShMem *gov_shm_service_dsc)
       throw USER_EXCEPTION2(SE4023, "GOVERNOR_SHARED_MEMORY_NAME");
 
    gov_shared_memory_opened = true;
-
    return gov_shared_mem;
-
 }
 
 
@@ -109,182 +66,11 @@ int close_gov_shm(UShMem gov_shm_service_dsc, void* gov_shared_mem)
   return 0;
 }
 
-/*****************************************************************/
-/*****************************************************************/
-/*****************************************************************/
-/*****************************************************************/
 
-void get_default_sednaconf_values(gov_header_struct* cfg)
-{
-  char proc_buf[U_MAX_PATH + 1];
-  uGetImageProcPath(proc_buf, __sys_call_error);
-  if (proc_buf[0] == '\0') 
-      throw USER_EXCEPTION(SE4081);
-
-#ifdef _WIN32
-  strcpy(cfg->SEDNA_DATA, proc_buf);
-  strcat(cfg->SEDNA_DATA, "\\..");
-#else
-  strcpy(cfg->SEDNA_DATA, proc_buf);
-  strcat(cfg->SEDNA_DATA, "/..");
-#endif
-
-  cfg->is_server_stop = 0;
-  cfg->lstnr_port_number = 5050;
-  cfg->ping_port_number = 5151;
-  cfg->os_primitives_id_min_bound = 1500;
-}
-
-void get_gov_config_parameters_from_sednaconf(gov_header_struct* cfg)
-{
-
-  //find and parse sednaconf.xml
-  char sedna_cfg_file[U_MAX_PATH + 1];
-  char proc_buf[U_MAX_PATH + 1];
-  char sedna_data_path[U_MAX_PATH + 1];
-
-  uGetImageProcPath(proc_buf, __sys_call_error);
-  if (proc_buf[0] == '\0') 
-      throw USER_EXCEPTION(SE4081);
-
-
-#ifdef _WIN32
-  strcpy(sedna_cfg_file, proc_buf);
-  strcat(sedna_cfg_file, "\\..\\etc\\sednaconf.xml");
-#else
-  strcpy(sedna_cfg_file, proc_buf);
-  strcat(sedna_cfg_file, "/..");
-  strcat(sedna_cfg_file, "/etc/sednaconf.xml");
-#endif
-
-  FILE* fs;
-  char buf[1024];
-  int i, size;
-
-  d_printf2("sedna_cfg_file=%s\n", sedna_cfg_file);
-
-  fs = fopen(sedna_cfg_file, "r");
-  std::string cfg_text;
-  cfg_text.reserve(10240);//reserve 10Kb
-
-  if (fs != NULL)  
-  {//exist sednaconf.xml in etc directory
-     d_printf1("exist sednaconf.xml in local etc\n");
-
-     while (true)
-     {
-        size = fread(buf, sizeof(char), 1024, fs);
-
-        if (ferror(fs)) throw USER_EXCEPTION2(SE4044, "sednaconf.xml");
-
-        cfg_text.append(buf, size);
-
-        if (feof(fs)) break; 
-     }
-
-     fclose(fs);
-
-     parse_config_file(cfg, cfg_text);
-
-     strcpy(cfg->SEDNA_DATA, get_sedna_data_path(cfg_text.c_str(), sedna_data_path));
-  }
-  else
-  {
-#ifndef _WIN32 //UNIX
-     strcpy(sedna_cfg_file, "/etc/sednaconf.xml");
-     fs = fopen(sedna_cfg_file, "r");
-
-     if (fs != NULL)  
-     {//exist sednaconf.xml in etc directory
-        while(true)
-        {
-           size = fread(buf, sizeof(char), 1024, fs);
-
-           if (ferror(fs)) throw USER_EXCEPTION2(SE4044, "sednaconf.xml");
-
-           cfg_text.append(buf, size);
-
-           if (feof(fs)) break;
-        }
-
-        fclose(fs);
-
-        parse_config_file(cfg, cfg_text);
-        strcpy(cfg->SEDNA_DATA, get_sedna_data_path(cfg_text.c_str(), sedna_data_path));
-     }
-#endif
-  }
-}
-
-
-void parse_config_file(gov_header_struct* cfg, string& cfg_text)
-{
-  XML_Parser parser = XML_ParserCreate (NULL);
-
-  XML_SetElementHandler (parser, startElement_gov_cfg, endElement_gov_cfg);
-
-  XML_SetCharacterDataHandler (parser, characterData_gov_cfg);
-   
-  XML_SetUserData (parser, cfg);
-
-  int parse_res;
-
-  parse_res = XML_Parse (parser, cfg_text.c_str(), cfg_text.length(), 1);
-
-  if(parse_res == XML_STATUS_ERROR)
-    throw USER_EXCEPTION2(SE4201,  "sednaconf.xml");
-
-  XML_ParserFree(parser);
-}
-
-/*****************************************************************************
-                HANDLERS FOR PARSING Governor CONFIG FILE
+/******************************************************************************
+                  Governor communication mechanism
 /******************************************************************************/
 
-std::string elem_content;
-
-void startElement_gov_cfg(void *cfg, const char *name, const char **atts)
-{
-}
-
-void endElement_gov_cfg(void *cfg, const char *name)
-{
-  if (strcmp(name, "sedna_data") == 0)
-  {  
-     strcpy(((gov_header_struct*)cfg)->SEDNA_DATA, erase_ws(elem_content.c_str()).c_str());
-  }
-
-  if (strcmp(name, "listener_port") == 0)
-  {
-     ((gov_header_struct*)cfg)->lstnr_port_number = atoi(erase_ws(elem_content.c_str()).c_str());
-  }
-
-  if (strcmp(name, "ping_port") == 0)
-  {
-     ((gov_header_struct*)cfg)->ping_port_number = atoi(erase_ws(elem_content.c_str()).c_str());
-  }
-
-  if (strcmp(name, "os_primitives_id_min_bound") == 0)
-  {
-     ((gov_header_struct*)cfg)->os_primitives_id_min_bound = atoi(erase_ws(elem_content.c_str()).c_str());
-  }
-
-  elem_content = "";
-}
-
-
-
-void characterData_gov_cfg(void *cfg, const XML_Char *s, int len)
-{
-   elem_content.append(s, len);
-}
-
-
-
-/*****************************************************************/
-/*****************************************************************/
-/*****************************************************************/
-/*****************************************************************/
 
 void send_command_to_gov(int port_number, int cmd)
 {
@@ -315,7 +101,6 @@ void send_command_to_gov(int port_number, int cmd)
   else
   	 d_printf2("SOCKET ERROR: %s\n",usocket_error_translator());
 }
-
 
 
 int get_db_id_by_name(gov_config_struct* cfg, const char* db_name)
@@ -369,171 +154,269 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
 
    return;
 }            
-/***************************************************************************
-                           HELPERS
-****************************************************************************/
 
 
-string erase_ws(std::string str)
+/******************************************************************************
+                   Parser for sednaconf file
+/******************************************************************************/
+
+
+static void startElement_gov_cfg(void *cfg, const char *name, const char **atts)
 {
-   std::string res;
-   bool b;
-   int i;
-
-   //erase whitespaces from the begin of string
-   for (i=0; i< str.size(); i++)
-   {
-     if (!(str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'))
-        break;
-   }
-
-   res = str.substr(i, str.size() - i);  
-
-   //erase whitespaces from the end of string
-   for (i = res.size() - 1; i >= 0; --i)
-   {
-     if (! (res[i] == ' ' || res[i] == '\t' || res[i] == '\r' || res[i] == '\n'))
-        break;
-   }
-
-   res = res.substr(0, i+1);
-
-   return res;
 }
 
-char* SEDNA_DATA;
-
-char* get_sedna_data_path(const char* cfg_text, char* buf)
+static void endElement_gov_cfg(void *cfg, const char *name)
 {
-   const char* beg, *fin;
-
-   beg = strstr(cfg_text, "<sedna_data>");
-   fin = strstr(cfg_text, "</sedna_data>");
-
-   d_printf2("cfg_text=%s\n", cfg_text);
-   if (beg == NULL || fin == NULL)
-      return NULL;
-
-   memcpy(buf, beg + 12, (int)fin-((int)beg + 12));
-   buf[(int)fin-((int)beg + 12)] = '\0';
-
-   std::string tmp(buf);
-   tmp = erase_ws(tmp);
-   
-   if(tmp.length() > U_MAX_PATH) throw USER_EXCEPTION2(SE4300, "sedna_data parameter in sednaconf.xml is too long");
-   
-   strcpy(buf, tmp.c_str());
-
-   return buf;   
-}
-
-
-int set_sedna_data(char* SEDNA_DATA, sys_call_error_fun fun)
-{
-  char proc_buf[U_MAX_PATH + 1];
-  char sedna_cfg_file[U_MAX_PATH + 1];
-  char sedna_data_path[U_MAX_PATH + 1];
-  FILE* fs;
-  char* cfg_text;
-  int cfg_text_free_size;
-  size_t size;
-  char buf[1024];
-  int ind;
-  
-
-
-  uGetImageProcPath(proc_buf, fun);
-  if (proc_buf[0] == '\0') 
-     return 0;
-  
-
-  //copy default values
-#ifdef _WIN32
-  strcpy(SEDNA_DATA, proc_buf);
-  strcat(SEDNA_DATA, "\\..");
-#else
-  strcpy(SEDNA_DATA, proc_buf);
-  strcat(SEDNA_DATA, "/..");
-//  strcpy(SEDNA_DATA, "/var/lib/sedna");
-#endif
-
-#ifdef _WIN32
-  strcpy(sedna_cfg_file, proc_buf);
-  strcat(sedna_cfg_file, "\\..");
-  strcat(sedna_cfg_file, "\\etc\\sednaconf.xml");
-#else
-  strcpy(sedna_cfg_file, proc_buf);
-  strcat(sedna_cfg_file, "/..");
-  strcat(sedna_cfg_file, "/etc/sednaconf.xml");
-#endif
-
-  d_printf2("sedna_cfg_file=%s\n", sedna_cfg_file);
-
-  fs = fopen(sedna_cfg_file, "r");
-  cfg_text = (char*)malloc(1024*sizeof(char));
-  cfg_text[0] = '\0';
-  cfg_text_free_size = 1023;
-  if (fs != NULL)  
-  {//exist sednaconf.xml in etc directory
-     d_printf1("exist sednaconf.xml in local etc\n");
-
-     while (true)
-     {
-        size = fread(buf, sizeof(char), 1024, fs);
-
-        if (ferror(fs)) return 0;
-
-        if (cfg_text_free_size < size)
-           cfg_text = (char*)realloc(cfg_text, 2*1024 + strlen(cfg_text));
-
-        ind = strlen(cfg_text) + size;
-        memcpy(cfg_text + sizeof(char)*strlen(cfg_text), buf, size);
-        cfg_text[ind] = '\0';
-
-        if (feof(fs)) break; 
-     }
-
-     fclose(fs);
-
-     strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text, sedna_data_path));
+  if (strcmp(name, "sedna_data") == 0)
+  {  
+     strcpy(((gov_header_struct*)cfg)->SEDNA_DATA, trim(elem_content).c_str());
   }
-  else
+  if (strcmp(name, "listener_port") == 0)
   {
-#ifndef _WIN32 //UNIX
-     strcpy(sedna_cfg_file, "/etc/sednaconf.xml");
-     fs = fopen(sedna_cfg_file, "r");
+     ((gov_header_struct*)cfg)->lstnr_port_number = atoi(trim(elem_content).c_str());
+  }
+  if (strcmp(name, "ping_port") == 0)
+  {
+     ((gov_header_struct*)cfg)->ping_port_number = atoi(trim(elem_content).c_str());
+  }
+  if (strcmp(name, "os_primitives_id_min_bound") == 0)
+  {
+     ((gov_header_struct*)cfg)->os_primitives_id_min_bound = atoi(trim(elem_content).c_str());
+  }
 
-     if (fs != NULL)  
-     {//exist sednaconf.xml in etc directory
-        while(true)
+  elem_content = "";
+}
+
+static void characterData_gov_cfg(void *cfg, const XML_Char *s, int len)
+{
+   elem_content.append(s, len);
+}
+
+static void parse_config_file(gov_header_struct* cfg, std::string& cfg_text)
+{
+    XML_Parser parser = XML_ParserCreate (NULL);
+    XML_SetElementHandler (parser, startElement_gov_cfg, endElement_gov_cfg);
+    XML_SetCharacterDataHandler (parser, characterData_gov_cfg);
+    XML_SetUserData (parser, cfg);
+  
+    int parse_res = XML_Parse (parser, cfg_text.c_str(), cfg_text.length(), 1);
+
+    if(parse_res == XML_STATUS_ERROR)
+        throw USER_EXCEPTION2(SE4201,  "sednaconf.xml");
+
+    XML_ParserFree(parser);
+}
+
+
+/******************************************************************************
+                    Retrieve system config parameters
+/******************************************************************************/
+
+
+void get_sednaconf_values(gov_header_struct* cfg)
+{
+    char sedna_cfg_file[U_MAX_PATH + 30];
+    char proc_buf[U_MAX_PATH + 1];
+    char sedna_data_path[U_MAX_PATH + 5];
+    FILE* fs;
+    char buf[1024];
+    int size;
+    std::string cfg_text;
+    cfg_text.reserve(10240);
+  
+    uGetImageProcPath(proc_buf, __sys_call_error);
+    if (proc_buf[0] == '\0') 
+        throw USER_EXCEPTION(SE4081);
+  
+    cfg->is_server_stop = 0;
+    cfg->lstnr_port_number = 5050;
+    cfg->ping_port_number = 5151;
+    cfg->os_primitives_id_min_bound = 1500;
+      
+    strcpy(cfg->SEDNA_DATA, proc_buf);
+    strcpy(sedna_cfg_file,  proc_buf);
+
+#ifdef _WIN32
+    strcat(cfg->SEDNA_DATA, "\\..");
+    strcat(sedna_cfg_file, "\\..\\etc\\sednaconf.xml");
+#else
+    strcat(cfg->SEDNA_DATA, "/..");
+    strcat(sedna_cfg_file, "/../etc/sednaconf.xml");
+#endif
+
+    fs = fopen(sedna_cfg_file, "r");
+
+#ifndef _WIN32
+    if(NULL == fs) 
+    {
+        strcpy(sedna_cfg_file, "/etc/sednaconf.xml");
+        fs = fopen(sedna_cfg_file, "r");
+    }
+#endif /* _WIN32 */
+
+    if (fs != NULL)  
+    {
+        d_printf2("sedna_cfg_file=%s\n", sedna_cfg_file);
+
+        while (true)
         {
-           size = fread(buf, sizeof(char), 1024, fs);
-
-           if (ferror(fs)) return 0;
-
-           if (cfg_text_free_size < size)
-              cfg_text = (char*)realloc(cfg_text, 2*1024 + strlen(cfg_text));
-
-           ind = strlen(cfg_text) + size;
-           memcpy(cfg_text + sizeof(char)*strlen(cfg_text), buf, size);
-           cfg_text[ind] = '\0';
-
-           if (feof(fs)) break;
+            size = fread(buf, sizeof(char), 1024, fs);
+            if (ferror(fs)) throw USER_EXCEPTION2(SE4044, sedna_cfg_file);
+            cfg_text.append(buf, size);
+            if (feof(fs)) break; 
         }
 
         fclose(fs);
-        strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text, sedna_data_path));
-     }
-#endif       
-  }
+        parse_config_file(cfg, cfg_text);
+    }
+}
 
-  d_printf2("SEDNA_DATA=%s\n", SEDNA_DATA);
+
+/***************************************************************************
+                  Helper to retrieve sedna data path
+****************************************************************************/
+
+
+/*
+The following methods fulfill given buffer with the sedna_data path.
+They MUST not throw exception and should use fprintf(stderr, " ... ") to
+log out error message.
+The reason why we need this method is sedna soft fault mechanism, which
+can be triggred at the very begining of any sedna process when
+SEDNA_DATA variable is not set.
+*/ 
+
+
+static void get_sedna_data_path(const char* cfg_text, char* buf)
+{
+      const char* beg, *fin;
+      const char* sedna_data_open_tag  = "<sedna_data>";
+      const char* sedna_data_close_tag = "</sedna_data>";
+      unsigned short value_shift = strlen(sedna_data_open_tag);
+      std::string save_buf(buf);  
+     
+      beg = strstr(cfg_text, sedna_data_open_tag);
+      fin = strstr(cfg_text, sedna_data_close_tag);
+   
+      d_printf2("cfg_text=%s\n", cfg_text);
+      if (beg == NULL || fin == NULL) return;
+   
+      memcpy(buf, beg + value_shift, (int)fin-((int)beg + value_shift));
+      buf[(int)fin-((int)beg + value_shift)] = '\0';
+   
+      std::string tmp(buf);
+      tmp = trim(tmp);
+      
+      if(tmp.length() > U_MAX_PATH) 
+      {
+          fprintf(stderr, "Path in the 'sedna_data' parameter is too long in sednaconf.xml. Going to use default value.\n");
+          strcpy(buf, save_buf.c_str());
+      }
+      else
+          strcpy(buf, tmp.c_str());
+}
+
+int set_sedna_data(char* sd_buf, sys_call_error_fun fun)
+{
+    char proc_buf[U_MAX_PATH + 1];
+    char sedna_cfg_file[U_MAX_PATH + 1];
+    FILE* fs;
+    char buf[1024];
+    int size;
+    std::string cfg_text;
+    cfg_text.reserve(10240);
+
+    uGetImageProcPath(proc_buf, fun);
+    if (proc_buf[0] == '\0') 
+    {   fprintf(stderr, "Can't get process path to set sedna data\n");
+        return 0;
+    }
+  
+    strcpy(sd_buf,     proc_buf);  /// Copy default SEDNA_DATA value
+    strcpy(sedna_cfg_file, proc_buf);
+
+#ifdef _WIN32
+    strcat(sd_buf, "\\..");
+    strcat(sedna_cfg_file, "\\..\\etc\\sednaconf.xml");
+#else
+    strcat(sd_buf, "/..");
+    strcat(sedna_cfg_file, "/../etc/sednaconf.xml");
+#endif
+
+    fs = fopen(sedna_cfg_file, "r");
 
 #ifndef _WIN32
-  USECURITY_ATTRIBUTES sa = U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK;
-  if (uMkDir(SEDNA_DATA, &sa, fun) == 0)
-      return 0;
-#endif  
+    if(NULL == fs) 
+    {
+        strcpy(sedna_cfg_file, "/etc/sednaconf.xml");
+        fs = fopen(sedna_cfg_file, "r");
+    }
+#endif /* _WIN32 */
 
-  return 1;
+    if (fs != NULL)  
+    {
+       d_printf2("sedna_cfg_file=%s\n", sedna_cfg_file);
+       while (true)
+       {
+          size = fread(buf, sizeof(char), 1024, fs);
+          if (ferror(fs)) 
+          {
+              fclose(fs);
+              fprintf(stderr, "Can't read sednaconf.xml to set sedna data path. Going to use default value.\n");
+              return 1;
+          }
+          cfg_text.append(buf, size);
+          if (feof(fs)) break; 
+       }
+       fclose(fs);
+  
+       get_sedna_data_path(cfg_text.c_str(), sd_buf);
+    }
+  
+    d_printf2("sedna data path retrieved=%s\n", sd_buf);
+
+    return 1;
 }
+
+
+/***************************************************************************
+                          Legacy && Old Code
+****************************************************************************/
+
+
+/*int WriteHead(UPIPE p, int *cmd, int *len)
+{
+   int res = uWritePipeAll(p, cmd, sizeof(int), __sys_call_error);
+   if(res < 0) 
+   {
+     d_printf1("Pipe error\n");
+     return -1;
+   }
+
+   res = uWritePipeAll(p, len, sizeof(int), __sys_call_error);
+   if(res < 0) 
+   {
+      d_printf1("Pipe error\n");
+      return -1;
+   }
+   return 0;
+}
+
+int ReadHead(UPIPE p, int *cmd, int *len)
+{
+   int res = uReadPipeAll(p, cmd, sizeof(int), __sys_call_error);
+   if (res < 0) 
+   {
+      d_printf1("Pipe error\n");
+      return -1;
+   }
+
+   res = uReadPipeAll(p, len, sizeof(int), __sys_call_error);
+   if (res < 0) 
+   {
+      d_printf1("Pipe error\n");
+      return -1;
+   }
+
+   return 0;
+}*/

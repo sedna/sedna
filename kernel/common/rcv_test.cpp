@@ -1,12 +1,23 @@
+/*
+ * File:  rcv_test.cpp
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include <map>
+#include <string>
+
+#include "common/sedna.h"
+
 #include "expat/expat.h"
-#include "common/ipc_ops.h"
 #include "common/rcv_test.h"
+#include "common/utils.h"
 #include "common/errdbg/d_printf.h"
 #include "common/u/uhdd.h"
 
-#include <map>
 
 static std::map <std::string, double> fname_prob_table;
+static std::string elem_content;
+
 
 void rcv_test_crash_point(const char *func_name)
 {
@@ -35,13 +46,13 @@ void rcv_test_crash_point(const char *func_name)
     }
 }
 
-void startElement_rcv_cfg(void *cnt, const char *name, const char **atts)
+static void startElement_rcv_cfg(void *cnt, const char *name, const char **atts)
 {
 }
 
-void endElement_rcv_cfg(void *cfg, const char *name)
+static void endElement_rcv_cfg(void *cfg, const char *name)
 {
-  double prob = atof(erase_ws(elem_content.c_str()).c_str());
+  double prob = atof(trim(elem_content).c_str());
   
   if (prob < 0.0 || prob > 1.0)
   {
@@ -54,7 +65,7 @@ void endElement_rcv_cfg(void *cfg, const char *name)
   elem_content = "";
 }
 
-void characterData_rcv_cfg(void *cnt, const XML_Char *s, int len)
+static void characterData_rcv_cfg(void *cnt, const XML_Char *s, int len)
 {
    elem_content.append(s, len);
 }

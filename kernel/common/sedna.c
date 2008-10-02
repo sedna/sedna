@@ -22,6 +22,8 @@
 #include <fcntl.h>
 #endif
 
+char* SEDNA_DATA;
+
 void DumpFaultInfo()
 {
 	int processId = -1, bIsTrunc = 0;

@@ -508,12 +508,11 @@ int main(int argc, char **argv)
             if (arg_scan_ret_val == 0)
                 throw USER_ENV_EXCEPTION(buf, false);
             if (strcmp(db_name, "???") == 0)
-               throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
+                throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
         }
 
         gov_header_struct cfg;
-        get_default_sednaconf_values(&cfg);
-        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+        get_sednaconf_values(&cfg);
 
 		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
 		SetGlobalNames();

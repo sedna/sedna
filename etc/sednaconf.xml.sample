@@ -2,8 +2,8 @@
 
 <!-- Sample configuration file for Sedna database -->
 <sednaconf>
-  <!-- Path to database files
-       Note: In Windows use '/' for separating directories (example: c:/sedna) -->
+  <!-- Path to database files (path must exist)
+       Note: in Windows use '/' for separating directories (example: c:/sedna) -->
   <sedna_data>/var/lib/sedna</sedna_data>
   <!-- Left bounf of range for identifiers of system resources -->
   <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>

@@ -1,3 +1,11 @@
+/*
+ * File:  hb_funcs.cpp
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include <string>
+
+#include "common/sedna.h"
 
 #include "gov/hb_funcs.h"
 #include "gov/gov_globals.h"
@@ -8,9 +16,10 @@
 #include "common/ipc_ops.h"
 #include "common/sp.h"
 
+#include "common/u/uutils.h"
+
 #include "common/lfsGlobals.h"
 
-#include <string>
 
 #define MAX_SE_SOCKET_STR (SE_SOCKET_MSG_BUF_SIZE - 5)
 
