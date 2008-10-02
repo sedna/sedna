@@ -3,6 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#ifndef _UTIME_H
+#define _UTIME_H
 
 #include "common/u/utime.h"
 
@@ -56,3 +58,6 @@ utm getLocalTime()
 
     return retval;
 }
+
+#endif /* _UTIME_H */
+

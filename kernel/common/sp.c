@@ -6,7 +6,7 @@
 
 #include "common/sp.h"
 #include "common/errdbg/d_printf.h"
-
+#include "common/u/uutils.h"
 
 /* returns zero - if succeeded;                        
    returns 1 - if Message length exceeds available size

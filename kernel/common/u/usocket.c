@@ -198,7 +198,7 @@ int uconnect_tcp(USOCKET s, int port, const char *hostname, sys_call_error_fun f
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int usetsockopt(USOCKET s, int level, int optname, const void* optval, int optlen, sys_call_error_fun fun)
+int usetsockopt(USOCKET s, int level, int optname, const void* optval, unsigned int optlen, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = setsockopt(s, level, optname, (const char*)optval, optlen);
@@ -213,7 +213,7 @@ int usetsockopt(USOCKET s, int level, int optname, const void* optval, int optle
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int ugetsockopt(USOCKET s, int level, int optname, void* optval, int optlen, sys_call_error_fun fun)
+int ugetsockopt(USOCKET s, int level, int optname, void* optval, unsigned int optlen, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = getsockopt(s, level, optname, (char*)optval, &optlen);

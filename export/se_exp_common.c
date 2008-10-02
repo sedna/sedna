@@ -1,6 +1,6 @@
 #include "se_exp_common.h"
 #include "se_exp.h"
-
+#include <string.h>
 
 // function adds string to rp_buf structure
 int rp_add_data(str_buf_t *rp_buf, const char *data) {
@@ -85,7 +85,7 @@ char* read_query(char *filename) {
 
 
 // function checks whether the sedna error was fatal or not
-int getSednaErrorStatus(char *errorMessage) {
+int getSednaErrorStatus(const char *errorMessage) {
     int i;
 	char status[7];
 	for (i=0;i<6;i++) status[i]=errorMessage[i];

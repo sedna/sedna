@@ -56,7 +56,7 @@ void fulfill_config_parameters(gov_config_struct* cfg)
 
 /******************************************************************************
                    Parser for database config files
-/******************************************************************************/
+******************************************************************************/
 
 
 static void startElement_sm_cfg(void *cnt, const char *name, const char **atts)
@@ -110,7 +110,7 @@ static void parse_sm_config_file(gov_db_struct* db_cfg, std::string cfg_text)
 
 /******************************************************************************
                    Fulfill databases parameters
-/******************************************************************************/
+******************************************************************************/
 
 
 static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)

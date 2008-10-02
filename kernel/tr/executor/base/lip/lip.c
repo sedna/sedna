@@ -27,16 +27,16 @@ granted for free re-distribution for non-commercial uses only.
 #include <sys/resource.h>
 #endif
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include <stddef.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "tr/executor/base/lip/lip.h"
 
+#ifdef HAVE_MALLOC
+#include <malloc.h>
+#endif
 
 #ifndef KAR_DEPTH
 # define KAR_DEPTH      20

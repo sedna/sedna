@@ -13,6 +13,7 @@
 #include "common/utils.h"
 #include "common/u/usocket.h"
 #include "common/u/uhdd.h"
+#include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
 #include "expat/expat.h"
 
@@ -23,7 +24,7 @@ static std::string elem_content;
 
 /******************************************************************************
                     Governor shared memory opne/close
-/******************************************************************************/
+******************************************************************************/
 
 
 void* open_gov_shm(UShMem *gov_shm_service_dsc)
@@ -69,7 +70,7 @@ int close_gov_shm(UShMem gov_shm_service_dsc, void* gov_shared_mem)
 
 /******************************************************************************
                   Governor communication mechanism
-/******************************************************************************/
+******************************************************************************/
 
 
 void send_command_to_gov(int port_number, int cmd)
@@ -158,7 +159,7 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
 
 /******************************************************************************
                    Parser for sednaconf file
-/******************************************************************************/
+******************************************************************************/
 
 
 static void startElement_gov_cfg(void *cfg, const char *name, const char **atts)
@@ -210,14 +211,14 @@ static void parse_config_file(gov_header_struct* cfg, std::string& cfg_text)
 
 /******************************************************************************
                     Retrieve system config parameters
-/******************************************************************************/
+******************************************************************************/
 
 
 void get_sednaconf_values(gov_header_struct* cfg)
 {
     char sedna_cfg_file[U_MAX_PATH + 30];
     char proc_buf[U_MAX_PATH + 1];
-    char sedna_data_path[U_MAX_PATH + 5];
+
     FILE* fs;
     char buf[1024];
     int size;

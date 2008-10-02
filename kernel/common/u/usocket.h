@@ -3,10 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
-#ifndef USOCKET_H
-#define USOCKET_H
-
+#ifndef _USOCKET_H
+#define _USOCKET_H
 
 #include "common/u/u.h"
 
@@ -61,11 +59,11 @@ extern "C"
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-    int usetsockopt(USOCKET s, int level, int optname, const void* optval, int optlen, sys_call_error_fun fun);
+    int usetsockopt(USOCKET s, int level, int optname, const void* optval, unsigned int optlen, sys_call_error_fun fun);
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-    int ugetsockopt(USOCKET s, int level, int optname, void* optval, int optlen, sys_call_error_fun fun);
+    int ugetsockopt(USOCKET s, int level, int optname, void* optval, unsigned int optlen, sys_call_error_fun fun);
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
@@ -116,6 +114,5 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif
