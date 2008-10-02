@@ -164,7 +164,6 @@ int TRmain(int argc, char *argv[])
             throw USER_EXCEPTION(SE3064);
 #endif
 
-
         if (uGetEnvironmentVariable(SEDNA_SERVER_MODE, buf, 1024, __sys_call_error) != 0)
             server_mode = 0;
         else
@@ -177,7 +176,7 @@ int TRmain(int argc, char *argv[])
         {
         if (strcmp(ACTIVE_CONFIGURATION, "Release") == 0 &&
 		    uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
-           throw USER_EXCEPTION(SE4613);
+            throw USER_EXCEPTION(SE4613);
 
             client = se_new command_line_client(argc, argv);
             if (!sedna_server_is_running) throw USER_EXCEPTION(SE4400);
@@ -186,12 +185,7 @@ int TRmain(int argc, char *argv[])
         if (uSocketInit(__sys_call_error) != 0)
             throw USER_EXCEPTION(SE3001);
 
-        //  u_ftime(&ttt1);
         client->init();
-
-//  u_ftime(&ttt2);
-//  cerr << "TEST!!!!!!!!!!!!!: " << to_string(ttt2 - ttt1).c_str() << endl;
-        //get session parameters (from socket or from cmd line)
         client->get_session_parameters();
 
         //init global names
@@ -201,7 +195,7 @@ int TRmain(int argc, char *argv[])
         gov_shm_pointer = open_gov_shm(&gov_shm_dsc);
         is_init_gov_shm = true;
         socket_port = ((gov_config_struct *) gov_shm_pointer)->gov_vars.lstnr_port_number;
-        SEDNA_DATA = ((gov_config_struct *) gov_shm_pointer)->gov_vars.SEDNA_DATA;
+        SEDNA_DATA  = ((gov_config_struct *) gov_shm_pointer)->gov_vars.SEDNA_DATA;
 
 #ifdef SE_MEMORY_TRACK
         strcpy(MT_SEDNA_DATA, SEDNA_DATA);

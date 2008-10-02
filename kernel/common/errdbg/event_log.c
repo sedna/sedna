@@ -819,7 +819,7 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 
     if (!set_sedna_data(buf, NULL)) 
     {
-      fprintf(stderr, "Can't set sedna data");
+      fprintf(stderr, "Can't set sedna data to write sedna fault information\n");
       return U_INVALID_FD;
     }
 

@@ -110,8 +110,7 @@ void hbGetDefaultValues()
 	// obtain global configuration parameters through cfg file, if any
 	gov_header_struct cfg;
 	
-	get_default_sednaconf_values(&cfg);
-	get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+	get_sednaconf_values(&cfg);
 
 	if (cfg.lstnr_port_number != hb_port) hb_port = cfg.lstnr_port_number;
 }

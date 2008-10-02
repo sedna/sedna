@@ -1,3 +1,8 @@
+/*
+ * File:  config.h
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 

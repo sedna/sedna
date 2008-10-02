@@ -78,7 +78,25 @@ void log_out_system_information()
         elog(EL_INFO, ("OS: %s, release: %s, version: %s, machine: %s", buf.sysname, buf.release, buf.version, buf.machine));
 }
 
-void RenameLastSoftFaultDir(const char* SEDNA_DATA)
+void check_data_folder_existence()
+{
+    char buf[U_MAX_PATH + 10]; /// should be enough to place "%SEDNA_DATA%/data"!
+    strcpy(buf, SEDNA_DATA);
+
+#ifdef _WIN32
+    strcat(buf, "\\data");
+#else
+    strcat(buf, "/data");
+#endif
+
+    if (!uIsFileExist(buf, __sys_call_error))
+    {
+        if (uMkDir(buf, NULL, __sys_call_error) == 0)
+            throw USER_EXCEPTION2(SE4300, buf);
+    }
+}
+
+void RenameLastSoftFaultDir()
 {
 
   std::string buf;

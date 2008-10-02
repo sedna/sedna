@@ -69,7 +69,7 @@ typedef int (*compare_fun)(const void* elem1, const void* elem2);
 void elim_disturb(void *base, size_t num, size_t width, compare_fun compare);
 void elim_disturb2(void *base, size_t num, size_t width, compare_fun compare);
 
-std::string trim(std::string str);
+std::string trim(const std::string& str);
 
 /// Intented to be used with primarily with strcmp and memcmp
 ///     res = memcmp(ptr1, ptr2)

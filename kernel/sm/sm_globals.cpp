@@ -10,15 +10,13 @@
 #include "common/ipc_ops.h"
 #include "common/sp.h"
 #include "common/u/uprocess.h"
+#include "common/u/uutils.h"
 #include "sm/sm_functions.h"
 #include "sm/sm_globals.h"
 #include "common/SSMMsg.h"
 #include "common/errdbg/d_printf.h"
 
 using namespace std;
-
-
-
 
 
 /*******************************************************************************
@@ -44,8 +42,6 @@ int sedna_db_version = 0;
 
 //gov_server is used for connecting to the governor for registr/unregister sm
 SSMMsg* gov_server;
-
-
 
 
 void setup_sm_globals(gov_config_struct* cfg)
@@ -89,7 +85,6 @@ void register_sm_on_gov()
     gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
     port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
     close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-
 
 	sm_id = uGetCurrentProcessId(__sys_call_error);
 	
