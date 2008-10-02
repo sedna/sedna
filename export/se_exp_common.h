@@ -1,3 +1,7 @@
+
+#ifndef _SE_EXP_COMMON_H
+#define _SE_EXP_COMMON_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "libsedna.h"
@@ -9,7 +13,6 @@
  // for windows file system
 #define SE_EXP_PATH_SEP '\\'
 #endif
-
 
 
 #define STR_BUF_INIT_SIZE 500
@@ -92,8 +95,10 @@ int execute_multiquery(struct SednaConnection *conn, char *query, FILE* log);
 // function checks in a new transaction that sedna feature is enabled
 int check_sedna_feature(struct SednaConnection *conn, const char *query, FILE* log);
 
+// function checks whether the sedna error was fatal or not
+int getSednaErrorStatus(const char *errorMessage);
 
 
-
+#endif /* _SE_EXP_COMMON_H */
 
 
