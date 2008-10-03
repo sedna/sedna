@@ -232,14 +232,14 @@ void delete_collection(const char *collection_name)
 	{
 		do
 		{
-			xptr node=cursor.bt_next_obj();
+			xptr indir = cursor.bt_next_obj();
+			xptr node  = removeIndirection(indir);
 			key=cursor.get_key();
 			if (node!=XNULL)
 			{
 				CHECKP(node);
-				xptr ind = ((n_dsc*)XADDR(node))->indir;
 				delete_doc_node(node);
-				hl_logical_log_document(ind, (const char *)key.data(), collection_name, false);
+				hl_logical_log_document(indir, (const char *)key.data(), collection_name, false);
 				RECOVERY_CRASH;
 				up_concurrent_micro_ops_number();
 			}

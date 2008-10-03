@@ -172,7 +172,7 @@ void test_collection(char *name, col_schema_node *coll)
 		key = cursor.get_key();
 		try
 		{
-			test_document((char*)key.data(), cursor.bt_next_obj(), true);
+			test_document((char*)key.data(), removeIndirection(cursor.bt_next_obj()), true);
        		fprintf(logfile, "Checked collection: %s, document: %s\n", name, (char*)key.data());
 		}
 		catch(SednaException &e) 
