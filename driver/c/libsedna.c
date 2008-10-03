@@ -67,11 +67,14 @@ static char isBulkLoadOf(struct SednaConnection *conn, const char* doc_name, con
 {
     if ((conn->cbl.bulk_load_started) && (strcmp(conn->cbl.doc_name, doc_name) == 0))
     {
-        if (col_name && 0 == strcmp(conn->cbl.col_name, col_name)) return 1;
-        else return 0;
+        if (col_name)
+        {
+            if(0 == strcmp(conn->cbl.col_name, col_name)) return 1;
+            else return 0;
+        }
+        else 
+            return 1;
     }
-    else 
-        return 1;
 
     return 0;
 }
