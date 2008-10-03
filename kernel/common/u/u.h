@@ -181,17 +181,20 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
-#ifndef __cygwin__
 
+#ifndef __cygwin__
 #include <ucontext.h>
 #endif
+
 #include <setjmp.h>
 #include <fcntl.h>
 #include <math.h>
 #endif /* _WIN32 */
 
-
-
+/// In FreeBSD PAGE_SIZE definition can be injected from the <sys/params.h> 
+#if defined(FreeBSD) && defined(PAGE_SIZE)
+#undef PAGE_SIZE
+#endif
 
 /*=============================================================================
  *                             Types
