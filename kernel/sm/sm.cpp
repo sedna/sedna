@@ -231,6 +231,7 @@ int sm_server_handler(void *arg)
             case 21: {
                          //d_printf1("query 21: bm_register_session\n");
                          persistent_db_data* pdb;
+                         bm_reset_io_statistics();
                          bm_register_session(msg->sid, &pdb, msg->data.reg.num);
                          msg->data.reg.num = bufs_num;
                          msg->data.reg.mptr = pdb;
@@ -242,7 +243,6 @@ int sm_server_handler(void *arg)
                          bm_unregister_session(msg->sid);
                          msg->cmd = 0;
                          bm_log_out_io_statistics();
-                         bm_reset_io_statistics();
                          break;
                      }
             case 23: {
