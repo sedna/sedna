@@ -29,7 +29,7 @@ static std::string elem_content;
 
 void* open_gov_shm(UShMem *gov_shm_service_dsc)
 {
-   void* gov_shared_mem;
+   void* gov_shared_mem = NULL;
 
    if (0 != uOpenShMem(gov_shm_service_dsc,
                        GOVERNOR_SHARED_MEMORY_NAME,
@@ -132,8 +132,6 @@ void erase_database_cell_in_gov_shm(int db_id, gov_config_struct* cfg)
   if (db_id >= MAX_DBS_NUMBER || db_id < 0) return;
 
   memset(&(cfg->db_vars[db_id]), '\0', sizeof(gov_db_struct));
-
-  return;
 }
 
 
@@ -152,8 +150,6 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
    cfg->db_vars[db_id].max_trs_num = max_trs_num;
    cfg->db_vars[db_id].logical_log_file_size = logical_log_file_size;
    cfg->db_vars[db_id].upd_crt = upd_crt;
-
-   return;
 }            
 
 
