@@ -19,8 +19,6 @@ static std::string elem_content;
 
 void fulfill_config_parameters(gov_config_struct* cfg)
 {
-  char proc_buf[U_MAX_PATH + 1];
-  
   /*
     First of all we load the cfg parameter by default values.
     Then we check whether the config file exists and if it exists then we load parameters from it.
@@ -117,7 +115,8 @@ static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)
 {
    UDir cfg_dir;
    UFindDataStruct find_data;   
-   int res, index, size;
+   int res;
+   unsigned int index;
    FILE * fs;
    char buf[1024];
    std::string cfg_text;

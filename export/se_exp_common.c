@@ -185,7 +185,7 @@ int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE
 		 do {
 		   bytes_read = SEgetData(conn, buf, RESULT_PORTION_SIZE);
 		   if(bytes_read == SEDNA_ERROR) {
-                ETRACE((log,"Failed to get result from server\n%s\n", SEgetLastErrorMsg(&conn)));
+                ETRACE((log,"Failed to get result from server\n%s\n", SEgetLastErrorMsg(conn)));
                 return getSednaErrorStatus(SEgetLastErrorMsg(conn));
             } 
     	   buf[bytes_read] = '\0';

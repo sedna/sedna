@@ -149,23 +149,24 @@ class str_buf_base
 {
 private:
 	xptr m_ptr;
-	estr m_estr;
 	bool m_mem_only;
-	str_counted_ptr m_str_ptr;
+	unsigned char m_flags;
+        int m_buf_size;
+        char *m_buf;
 	int m_len;//FIXME (don't use int type)
-	char *m_buf;
-	int m_buf_size;
+
+        estr m_estr;
+	str_counted_ptr m_str_ptr;
 	text_type m_ttype;
 	static const int f_text_in_buf = 1;
 	static const int f_text_in_estr_buf = 2;
-	unsigned char m_flags;
 	//string must be in estr buf, f_text_in_estr_buf flag is NOT cleared 
 	void clear_estr_buf() { m_estr.truncate(m_ptr); m_ptr = XNULL; }
 	void move_to_mem_buf();
 	void move_to_estr();
 protected:
-	str_buf_base() : m_buf_size(0), m_buf(NULL), m_len(0), m_ptr(XNULL), m_flags(0), m_mem_only(false) {}
-	str_buf_base(bool _mem_only_) : m_buf_size(0), m_buf(NULL), m_len(0), m_ptr(XNULL), m_flags(0), m_mem_only(_mem_only_) {}
+	str_buf_base() : m_ptr(XNULL), m_mem_only(false), m_flags(0), m_buf_size(0), m_buf(NULL), m_len(0)  {}
+	str_buf_base(bool _mem_only_) : m_ptr(XNULL), m_mem_only(_mem_only_), m_flags(0), m_buf_size(0), m_buf(NULL), m_len(0) {}
 	//gets tuple_cell, it's data in estr buffer won't be overwrited
 	tuple_cell get_tuple_cell() {
 		if (m_flags & f_text_in_buf)
