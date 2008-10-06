@@ -352,11 +352,13 @@ public:
             _res_msg->instruction = se_ItemEnd; //ItemEnd
             _res_msg->length = 0;
         }
-        else if (res == se_no_next_item)
+        else if ((res == se_no_next_item) || (res == se_result_is_cut_off))
         {
             _res_msg->instruction = se_ResultEnd;     //ResultEnd
             _res_msg->length = 0;
         }
+        else
+            throw SYSTEM_EXCEPTION("Got incorrect qepNextAnswer in end_of_data");
         
 /*        else // res == se_result_is_cut_off    this feature is not implemented yet
         {

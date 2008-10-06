@@ -360,7 +360,7 @@ void socket_client::begin_item()
 	if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 }
 
-void socket_client::end_of_item(qepNextAnswer res) //res variable is ignored
+void socket_client::end_of_item(qepNextAnswer res)
 {
     (*stream).end_of_data(res);   // flushes the buffer and sends ItemEnd message
 }
