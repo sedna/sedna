@@ -29,10 +29,7 @@ struct bm_core_io_stats {
   __int64 reads;
   __int64 writes;
   
-  unsigned int ph_flushes;
-  unsigned int ph_backups;
-
-  void reset() { reads = 0; writes = 0; ph_flushes = 0; ph_backups = 0; }
+  void reset() { reads = 0; writes = 0; }
 };
 
 static bm_core_io_stats buf_io_stats = {};
@@ -458,7 +455,6 @@ void flush_ph()
 {
     if (pers_flush() != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot flush persistent heap");
-    buf_io_stats.ph_flushes++;
 }
 
 void backup_ph()
@@ -468,7 +464,6 @@ void backup_ph()
 
     if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
-    buf_io_stats.ph_backups++;
 }
 
 
@@ -527,5 +522,5 @@ void bm_log_out_io_statistics()
     u_i64toa(buf_io_stats.reads, reads_buf, 10);
     u_i64toa(buf_io_stats.writes, writes_buf, 10);
 
-    elog(EL_INFO, ("IO block reads:%s, writes:%s, heap flushes:%u, heap copies:%u", reads_buf, writes_buf, buf_io_stats.ph_flushes, buf_io_stats.ph_backups));
+    elog(EL_INFO, ("IO block reads:%s, writes:%s", reads_buf, writes_buf));
 }
