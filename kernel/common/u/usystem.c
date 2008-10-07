@@ -26,7 +26,7 @@ int uUname(U_UTSNAME* s, sys_call_error_fun fun)
     sprintf(s->sysname, "Windows");
     sprintf(s->release, "%lu.%lu.%lu", osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
     sprintf(s->version, "SP%u.%u", osvi.wServicePackMajor, osvi.wServicePackMinor);
-
+    
     fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandle("kernel32"),"IsWow64Process");
  
     if (NULL != fnIsWow64Process)
@@ -38,7 +38,7 @@ int uUname(U_UTSNAME* s, sys_call_error_fun fun)
         }
     }
 
-    sprintf(s->machine, bIsWow64 ? "64bit" : "32bit");
+    sprintf(s->machine, bIsWow64 ? "x64" : "x86");
 
     return 0;
 #else

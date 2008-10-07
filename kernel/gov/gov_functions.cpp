@@ -75,7 +75,11 @@ void log_out_system_information()
     if(uUname(&buf, __sys_call_error))
         elog(EL_WARN, ("Can't get system information!"));
     else
-        elog(EL_INFO, ("OS: %s, release: %s, version: %s, machine: %s", buf.sysname, buf.release, buf.version, buf.machine));
+#ifdef _WIN32
+        elog(EL_INFO, ("System: %s %s (%s) %s", buf.sysname, buf.release, buf.version, buf.machine));
+#else
+        elog(EL_INFO, ("System: %s %s %s", buf.sysname, buf.release, buf.machine));
+#endif
 }
 
 void check_data_folder_existence()
