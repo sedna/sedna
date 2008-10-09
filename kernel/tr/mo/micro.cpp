@@ -305,6 +305,7 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
 			//assumption that block not empty
 			tmn->desc_prev=CALCSHIFT(new_node,block);
 			block->desc_first=tmn->desc_prev;
+			if(!block->desc_last) block->desc_last = block->desc_first;
 			break;
 		}
 		case 2:
