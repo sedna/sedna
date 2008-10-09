@@ -12,6 +12,7 @@
 #include "tr/idx/btree/btree.h"
 #include "tr/idx/index_data.h"
 #include "tr/vmm/vmm.h"
+#include "tr/crmutils/node_utils.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
 #endif
