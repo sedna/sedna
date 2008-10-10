@@ -22,7 +22,7 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
 
     global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(global_memory_mapping))
-        throw USER_EXCEPTION2(SE4074);
+        throw USER_EXCEPTION(SE4074);
 
     global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
     if (global_memory == NULL)
