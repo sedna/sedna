@@ -22,8 +22,8 @@
 /*
  * se_ExceptionalCondition - Handles the failure of an SE_ASSERT()
  */
-int se_ExceptionalCondition(char *conditionName, char *errorType,
-                            char *fileName, int lineNumber)
+int se_ExceptionalCondition(const char *conditionName, const char *errorType,
+                            const char *fileName, int lineNumber)
 {
 	char buf[SEDNA_DATA_VAR_SIZE + 128];
     UFile a_fh;

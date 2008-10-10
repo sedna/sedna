@@ -395,8 +395,8 @@ typedef int    UFlag;
 #ifdef __cplusplus
 extern "C"
 #endif
-int se_ExceptionalCondition(char *conditionName, char *errorType,
-                            char *fileName, int lineNumber);
+int se_ExceptionalCondition(const char *conditionName, const char *errorType,
+                            const char *fileName, int lineNumber);
 
 
 
