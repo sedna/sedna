@@ -126,7 +126,7 @@ void _bm_init_buffer_pool()
 
     file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
-        throw USER_EXCEPTION2(SE1015);
+        throw USER_EXCEPTION(SE1015);
 
     buf_mem_addr = uMapViewOfFile(file_mapping, NULL, bufs_num * PAGE_SIZE, 0, __sys_call_error);
     if (buf_mem_addr == NULL)
