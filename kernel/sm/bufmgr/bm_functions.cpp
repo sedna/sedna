@@ -99,7 +99,11 @@ static inline void _bm_guarantee_buffer_pool(void* addr, int size)
         USER_EXCEPTION2(SE1033, "Can't set SIGBUS handler to preallocate buffer pool.");
 
     if(sigsetjmp(jmpbuf, 1) != 0)
-        throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources. Linux: try to remount /dev/shm with a greater size. See also FAQ shipped with the distribution.");
+#ifndef _WIN32
+        throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources. Try to remount /dev/shm with a greater size.");
+#else
+        throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources.");
+#endif
     else
     {
         canjump = 1;
@@ -122,11 +126,11 @@ void _bm_init_buffer_pool()
 
     file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
-        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
+        throw USER_EXCEPTION2(SE1015);
 
     buf_mem_addr = uMapViewOfFile(file_mapping, NULL, bufs_num * PAGE_SIZE, 0, __sys_call_error);
     if (buf_mem_addr == NULL)
-        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
+        throw USER_EXCEPTION2(SE1015, "Cannot map view of file");
 
     if (lock_memory)
     {

@@ -192,7 +192,6 @@ endif
 	$(INSTALL) -p $(PERM3) share/sedna_auth_md.xml $(SEDNA_INSTALL)/sedna/share/sedna_auth_md.xml
 	$(INSTALL) -p $(PERM3) AUTHORS   $(SEDNA_INSTALL)/sedna/AUTHORS
 	$(INSTALL) -p $(PERM3) COPYRIGHT $(SEDNA_INSTALL)/sedna/COPYRIGHT
-	$(INSTALL) -p $(PERM3) FAQ.html  $(SEDNA_INSTALL)/sedna/FAQ.html
 	$(INSTALL) -p $(PERM3) HISTORY   $(SEDNA_INSTALL)/sedna/HISTORY
 	$(INSTALL) -p $(PERM3) LICENSE   $(SEDNA_INSTALL)/sedna/LICENSE
 	$(INSTALL) -p $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
