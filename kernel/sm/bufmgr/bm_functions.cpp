@@ -99,7 +99,7 @@ static inline void _bm_guarantee_buffer_pool(void* addr, int size)
         USER_EXCEPTION2(SE1033, "Can't set SIGBUS handler to preallocate buffer pool.");
 
     if(sigsetjmp(jmpbuf, 1) != 0)
-#ifndef _WIN32
+#if defined(LINUX)
         throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources. Try to remount /dev/shm with a greater size.");
 #else
         throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources.");
