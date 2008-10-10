@@ -20,10 +20,9 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
     char buf[U_MAX_PATH + 20]; /// should be enough to place "%SEDNA_DATA%/data/vmm.dat"
     vmm_region_values v;
 
-
     global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(global_memory_mapping))
-        throw USER_EXCEPTION2(SE4074, "See file FAQ shipped with the distribution");
+        throw USER_EXCEPTION2(SE4074);
 
     global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
     if (global_memory == NULL)

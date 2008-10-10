@@ -848,7 +848,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
           release_checkpoint_sems();
           release_transaction_ids_table();
           if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
-             throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
+             throw USER_EXCEPTION2(SE4212, "Possibly your Sedna installation is newer than database files. You should use export utility (se_exp) to convert database into the latest format. See documentation for details.");
        }
 
        d_printf1("logical log is started successfully\n");
