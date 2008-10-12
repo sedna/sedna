@@ -12,9 +12,7 @@ all: $(PP)/bin/se_term$(EXE_EXT)
 	@echo ===================================================================
 
 ifeq ($(ENABLE_LIBEDIT),1)
-ifneq ($(PLATFORM),WIN32)
 CPPFLAGS += -I../libs/libedit/include -DENABLE_LIBEDIT
-endif
 endif
 
 OBJS = term_funcs$(OBJ_EXT) term_globals$(OBJ_EXT) sprompt$(OBJ_EXT) \

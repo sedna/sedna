@@ -1,6 +1,5 @@
-diff -rN -u old-chicken/chicken.h new-chicken/chicken.h
---- old-chicken/chicken.h	2007-03-28 13:45:05.767849128 +0200
-+++ new-chicken/chicken.h	2007-03-28 13:45:05.852836208 +0200
+--- chicken.h	2007-03-28 13:45:05.767849128 +0200
++++ new_chicken.h	2007-03-28 13:45:05.852836208 +0200
 @@ -1085,6 +1085,7 @@
  
  C_varextern C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
@@ -9,9 +8,9 @@ diff -rN -u old-chicken/chicken.h new-chicken/chicken.h
  
  C_varextern C_TLS int
    C_abort_on_thread_exceptions,
-diff -rN -u old-chicken/runtime.c new-chicken/runtime.c
---- old-chicken/runtime.c	2007-03-28 13:45:05.750851712 +0200
-+++ new-chicken/runtime.c	2007-03-28 13:45:05.832839248 +0200
+
+--- runtime.c	2007-03-28 13:45:05.750851712 +0200
++++ new_runtime.c	2007-03-28 13:45:05.832839248 +0200
 @@ -301,6 +301,7 @@
  
  C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
