@@ -11,9 +11,8 @@
 #include "common/sedna.h"
 #include "common/commutil.h"
 
-EXTERN_C int TRmain(int argc, char **argv);
-
-EXTERN_C int IsAccessViolationNonFatal(void *addr, void *context);
+extern "C" int TRmain(int argc, char **argv);
+extern "C" int IsAccessViolationNonFatal(void *addr, void *context);
 
 #ifdef _WIN32
 

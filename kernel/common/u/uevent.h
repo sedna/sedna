@@ -13,14 +13,6 @@
 #include "common/u/u.h"
 #include "common/u/usecurity.h"
 
-#ifndef EXTERN_C
-#ifdef __cplusplus
-#define EXTERN_C extern "C"
-#else
-#define EXTERN_C
-#endif
-#endif
-
 #define U_AUTORESET_EVENT				99
 #define U_MANUALRESET_EVENT				17
 
@@ -37,11 +29,14 @@ private:
 }
 UEvent;
 
-EXTERN_C
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 int UEventUnlink(global_name gn,
 				 sys_call_error_fun fun);
 
-EXTERN_C
 int UEventCreate(UEvent *uEvent, 
 				 USECURITY_ATTRIBUTES* sa,
 				 int eventType,
@@ -49,29 +44,28 @@ int UEventCreate(UEvent *uEvent,
 				 global_name gn, 
 				 sys_call_error_fun fun);
 
-EXTERN_C
 int UEventOpen(UEvent *uEvent, 
 			   global_name gn, 
 			   sys_call_error_fun fun);
 
-EXTERN_C
 int UEventClose(UEvent *uEvent,
 				sys_call_error_fun fun);
 
-EXTERN_C 
 int UEventCloseAndUnlink(UEvent *uEvent,
 						 sys_call_error_fun fun);
 
-EXTERN_C
 int UEventSet(UEvent *uEvent,
 			  sys_call_error_fun fun);
 
-EXTERN_C
 int UEventReset(UEvent *uEvent,
 				sys_call_error_fun fun);
 
-EXTERN_C
 int UEventWait(UEvent *uEvent,
 			   sys_call_error_fun fun);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

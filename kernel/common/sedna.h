@@ -22,12 +22,12 @@
  * SEDNA_DATA contains path to Sedna data directory
  */
 #define SEDNA_DATA_VAR_SIZE								1024
-extern char* SEDNA_DATA;
+SE_EXTERN_C char* SEDNA_DATA;
 
-EXTERN_C 
+SE_EXTERN_C 
 int set_sedna_data(char*, sys_call_error_fun fun);
 
-EXTERN_C 
+SE_EXTERN_C 
 void DumpFaultInfo();
 
 
