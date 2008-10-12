@@ -140,11 +140,16 @@
 #define TLS_VAR_DECL
 #endif
 
-#ifndef EXTERN_C
+
+// It is better to use some proprietary declaration to not
+// depend on external one which can be changed.
+// EXTERN_C is defined in winnt.h.
+// C_extern is defined in chicken.h
+#ifndef SE_EXTERN_C
 #ifdef __cplusplus
-#define EXTERN_C extern "C"
+#define SE_EXTERN_C extern "C"
 #else
-#define EXTERN_C
+#define SE_EXTERN_C
 #endif
 #endif
 
@@ -397,7 +402,7 @@ typedef int    UFlag;
 #endif   /* defined(SE_ASSERT_CHECK) && defined(EL_DEBUG) && (EL_DEBUG == 1) */
 
 
-EXTERN_C
+SE_EXTERN_C
 int se_ExceptionalCondition(const char *conditionName, const char *errorType,
                             const char *fileName, int lineNumber);
 
@@ -623,7 +628,7 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 #else 
 
 #if defined(DARWIN) 
-EXTERN_C int u_is_nan(double d);
+SE_EXTERN_C int u_is_nan(double d);
 #else
 #define u_is_nan(d)         (isnan(d))
 #endif
@@ -632,8 +637,8 @@ EXTERN_C int u_is_nan(double d);
 #define u_is_neg_inf(d)     (isinf(d) && (d) < 0.0)
 #define u_is_pos_inf(d)     (isinf(d) && (d) > 0.0)
 #elif defined(DARWIN)
-EXTERN_C bool u_is_neg_inf(double d);
-EXTERN_C bool u_is_pos_inf(double d);
+SE_EXTERN_C bool u_is_neg_inf(double d);
+SE_EXTERN_C bool u_is_pos_inf(double d);
 #elif defined(SunOS)
 #include <ieeefp.h>
 #define u_is_neg_inf(d)     (FP_NINF == fpclass(d))

@@ -14,7 +14,7 @@
 #include "tr/tr_globals.h"
 
 
-EXTERN_C int IsAccessViolationNonFatal(void *addr, void *context)
+int IsAccessViolationNonFatal(void *addr, void *context)
 {
 	return 0;
 }

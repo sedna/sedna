@@ -20,7 +20,7 @@
 
 static bool gov_shared_memory_opened = false;
 static std::string elem_content;
-
+char* SEDNA_DATA;
 
 /******************************************************************************
                     Governor shared memory opne/close

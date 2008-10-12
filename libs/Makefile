@@ -53,11 +53,11 @@ ifeq ("$(BIN_CHICKEN)", "1")
 chicken/chicken.h: $(BIN_LIBS)/chicken
 	cp -pR $(BIN_LIBS)/chicken .
 	touch chicken/chicken.h
-	-chmod a+x chicken/chicken
+	-chmod -f a+x chicken/chicken
 
 build_chicken: chicken/chicken.h
 	@echo ===================================================================
-	@echo Chicken (binaries) has been done
+	@echo "Chicken (binaries) has been done"
 	@echo ===================================================================
 
 clean_chicken:
@@ -139,7 +139,7 @@ pg/COPYRIGHT: $(BIN_LIBS)/pg
 	touch pg/COPYRIGHT
 	-chmod a+x pg/antlr pg/dlg pg/sor
 	@echo ===================================================================
-	@echo Antlr (binaries) has been done
+	@echo "Antlr (binaries) has been done"
 	@echo ===================================================================
 
 build_pccts: pg/COPYRIGHT
@@ -226,7 +226,7 @@ expat/expat.h: $(BIN_LIBS)/expat
 	cp -pR $(BIN_LIBS)/expat .
 	touch expat/expat.h
 	@echo ===================================================================
-	@echo Expat (binaries) has been done
+	@echo "Expat (binaries) has been done"
 	@echo ===================================================================
 
 build_expat: expat/expat.h

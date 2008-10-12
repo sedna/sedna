@@ -9,14 +9,6 @@
 #include "common/u/u.h"
 
 
-#ifndef EXTERN_C
-#ifdef __cplusplus
-#define EXTERN_C         extern "C"
-#else
-#define EXTERN_C
-#endif
-#endif
-
 // Define the time structure class in the spirit of extended POSIX tm
 // structure
 typedef struct {
@@ -40,7 +32,7 @@ typedef struct {
 } utm;
 
 
-EXTERN_C
+SE_EXTERN_C
 utm getLocalTime();
 
 
