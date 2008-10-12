@@ -181,7 +181,7 @@ MainLoop(FILE *source)
 			quit_term();
 	        return 1;
         }
-        if (uGetDirectoryFromFilePath(file_abs_path, session_dir, U_MAX_DIR, __sys_call_error) == NULL)
+        if (uGetDirectoryFromFilePath(file_abs_path, session_dir, U_MAX_PATH, __sys_call_error) == NULL)
         {
 	        fprintf(stderr, "failed to get a directory from the file path \n%s\n", SEgetLastErrorMsg(&conn));
             fflush(stderr);

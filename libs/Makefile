@@ -20,34 +20,25 @@ OBJ_EXT = .o
 LIB_EXT = .a
 endif
 
-
 ifdef SUB_PLATFORM
-
-BIN_LIBS=bin/$(PLATFORM)_$(SUB_PLATFORM)
-
+BIN_LIBS=bin/$(SUB_PLATFORM)
 else
-
 BIN_LIBS=bin/$(PLATFORM)
-
 endif
 
 build_chicken=yes
 build_pccts=yes
 build_expat=yes
 build_pcre=yes
-build_libedit=no
-
-ifneq ("$(PLATFORM)","WIN32")
-ifeq ("$(ENABLE_LIBEDIT)","1")
 build_libedit=yes
-endif
-endif
 
 .PHONY: default build clean
 
-
 default: build
 
+#####################################################################
+###                          Chicken
+#####################################################################
 
 ifeq ("$(build_chicken)", "yes")
 
@@ -64,10 +55,15 @@ chicken/chicken.h: $(BIN_LIBS)/chicken
 	touch chicken/chicken.h
 	-chmod a+x chicken/chicken
 
-
 build_chicken: chicken/chicken.h
+	@echo ===================================================================
+	@echo Chicken (binaries) has been done
+	@echo ===================================================================
 
-else
+clean_chicken:
+	-rm -rf chicken
+
+else # Binaries are not available
 
 CHICKEN_VERSION=2.2
 
@@ -76,7 +72,7 @@ chicken/chicken.h: chicken-$(CHICKEN_VERSION).tar.gz
 	touch chicken-$(CHICKEN_VERSION)/chicken.h
 	rm -rf chicken
 	mv chicken-$(CHICKEN_VERSION) chicken
-	patch --directory=chicken <chicken_panic_hook.diff
+	patch -d chicken < chicken_panic_hook.diff
 
 ifeq ("$(PLATFORM)", "WIN32")
 
@@ -88,15 +84,18 @@ build_chicken: chicken/chicken.h
         mv utcp.c.new utcp.c; \
 	MAKEFLAGS=; \
 	nmake /f ../chicken.mak
+	@echo ===================================================================
+	@echo Chicken has been done
+	@echo ===================================================================
 
 clean_chicken:
-	cd chicken; \
-	MAKEFLAGS=; \
-	nmake /f ../chicken.mak clean
+	-cd chicken; MAKEFLAGS=; nmake /f ../chicken.mak clean
+	-rm -rf chicken
 
-else
+else # Unix
 
 chicken/configure: chicken/chicken.h
+	touch chicken/configure
 
 chicken/Makefile: chicken/configure
 	export CFLAGS='-fexceptions'; \
@@ -109,17 +108,21 @@ chicken/Makefile: chicken/configure
 build_chicken: chicken/Makefile
 	$(MAKE) -C chicken
 	cp chicken/.libs/*.a chicken
+	@echo ===================================================================
+	@echo Chicken has been done
+	@echo ===================================================================
 
 clean_chicken:
-	-rm -f chicken/*.a
 	-$(MAKE) -C chicken clean
-
+	-rm -rf chicken
+endif
+endif
 endif
 
-endif
 
-endif
-
+#####################################################################
+###                       Pccts (a.k.a Antlr)
+#####################################################################
 
 ifeq ("$(build_pccts)", "yes")
 
@@ -135,17 +138,24 @@ pg/COPYRIGHT: $(BIN_LIBS)/pg
 	cp -pR $(BIN_LIBS)/pg .
 	touch pg/COPYRIGHT
 	-chmod a+x pg/antlr pg/dlg pg/sor
+	@echo ===================================================================
+	@echo Antlr (binaries) has been done
+	@echo ===================================================================
 
 build_pccts: pg/COPYRIGHT
 
-else
+clean_pccts: 
+	-rm -rf pg
+
+else # Binaries are not available
 
 pccts: pccts133mr.tar.gz
 	gzip -dc pccts133mr.tar.gz | tar xvf -
+	touch pccts
 
 ifeq ("$(PLATFORM)", "WIN32")
 
-build_pccts: pccts
+pg/pccts_release$(LIB_EXT): pccts
 	-mkdir pg
 	-mkdir pg/h
 	$(MAKE) -C pccts/antlr -f ../../Makefile.antlr COPT="-DPCCTS_USE_STDARG"
@@ -158,36 +168,49 @@ build_pccts: pccts
 	$(MAKE) -C pccts/sorcerer/lib -f ../../../Makefile.sor-lib COPT="-DPCCTS_USE_STDARG"
 	$(LB) $(LIBFLAGS) $(LIBOUT)pg/pccts_release$(LIB_EXT) pccts/h/*$(OBJ_EXT) pccts/sorcerer/lib/STreeParser$(OBJ_EXT)
 
+build_pccts: pg/pccts_release$(LIB_EXT)
+	@echo ===================================================================
+	@echo Antlr has been done
+	@echo ===================================================================
+
+
 clean_pccts:
 	$(MAKE) -C pccts/antlr -f ../../Makefile.antlr clean
 	$(MAKE) -C pccts/dlg -f ../../Makefile.dlg clean
 	$(MAKE) -C pccts/sorcerer -f ../../Makefile.sor clean
 	$(MAKE) -C pccts/sorcerer/lib -f ../../../Makefile.sor-lib clean
+	-rm -rf pccts pg
 
-else
+else # Unix
 
-build_pccts: pccts
-	$(MAKE) -C pccts COPT="-DPCCTS_USE_STDARG -O2" CC=$(CC)
+pg/libpccts$(LIB_EXT): pccts
 	-mkdir pg
-	cp pccts/bin/antlr pccts/bin/dlg pccts/bin/sor pg
 	-mkdir pg/h
+	$(MAKE) -C pccts COPT="-DPCCTS_USE_STDARG -O2" CC=$(CC)
+	cp pccts/bin/antlr pccts/bin/dlg pccts/bin/sor pg
 	cp pccts/h/*.h pg/h
 	cp pccts/sorcerer/h/*.h pg/h
 	cd pccts/h; $(CC) -DPCCTS_USE_STDARG -O2 -c *.cpp
 	cd pccts/sorcerer/lib; $(CC) -DPCCTS_USE_STDARG -O2 -I../h -I../../h -c STreeParser.cpp
 	$(LB) $(LIBFLAGS) $(LIBOUT)pg/libpccts$(LIB_EXT) pccts/h/*.o pccts/sorcerer/lib/STreeParser.o
 
-clean_pccts:
-	-rm -f pccts/h/*.o
-	-$(MAKE) -C pccts clean
-	-rm -rf pg
+build_pccts: pg/libpccts$(LIB_EXT)
+	@echo ===================================================================
+	@echo Antlr has been done
+	@echo ===================================================================
 
+
+clean_pccts:
+	-$(MAKE) -C pccts clean
+	-rm -rf pg pccts
 	
 endif
-
+endif
 endif
 
-endif
+#####################################################################
+###                            Expat
+#####################################################################
 
 ifeq ("$(build_expat)", "yes")
 
@@ -202,57 +225,70 @@ ifeq ("$(BIN_EXPAT)", "1")
 expat/expat.h: $(BIN_LIBS)/expat
 	cp -pR $(BIN_LIBS)/expat .
 	touch expat/expat.h
+	@echo ===================================================================
+	@echo Expat (binaries) has been done
+	@echo ===================================================================
 
 build_expat: expat/expat.h
 
-else
+clean_expat:
+	-rm -rf expat
+
+else # Binaries are not available
 
 EXPAT_VERSION=1.95.8
 
-expat/expat.h: expat-$(EXPAT_VERSION).tar.gz
+expat/lib/expat.h: expat-$(EXPAT_VERSION).tar.gz
 	-rm -rf expat
 	gzip -dc expat-$(EXPAT_VERSION).tar.gz | tar xvf -
 	mv expat-$(EXPAT_VERSION) expat
-
+	touch expat/lib/expat.h
 
 ifeq ("$(PLATFORM)", "WIN32")
 
-build_expat: expat/expat.h
+build_expat: expat/lib/expat.h
 	cd expat/lib; \
 	MAKEFLAGS=; \
 	nmake /f ../../expat_static.mak
-	cp expat/lib/libexpatMT.lib expat/libexpatMT.lib
-	cp expat/lib/expat.h expat/lib/expat_external.h expat
+	cp -p expat/lib/libexpatMT.lib expat/libexpatMT.lib
+	cp -p expat/lib/expat.h expat/lib/expat_external.h expat
+	@echo ===================================================================
+	@echo Expat has been done
+	@echo ===================================================================
 
 clean_expat:
 	cd expat/lib; \
 	MAKEFLAGS=; \
 	nmake /f ../../expat_static.mak clean
 
-else
+else # Binaries are not available
 	
-expat/configure: expat/expat.h
+expat/configure: expat/lib/expat.h
+	touch expat/configure
 
 expat/Makefile: expat/configure
-	cd expat && \
+	cd expat; \
 	./configure --enable-shared=no
 
 build_expat: expat/Makefile
 	$(MAKE) -C expat
-	cp expat/.libs/*.a expat
-	cp expat/lib/expat.h expat/lib/expat_external.h expat
+	cp -p expat/.libs/*.a expat
+	cp -p expat/lib/expat.h expat/lib/expat_external.h expat
+	@echo ===================================================================
+	@echo Expat has been done
+	@echo ===================================================================
 
 clean_expat:
-	-rm -f expat/*.a
 	-$(MAKE) -C expat clean
-
+	-rm -rf expat
 	
 endif
-
+endif
 endif
 
-endif
-
+#####################################################################
+###                            PCRE
+#####################################################################
 
 ifeq ("$(build_pcre)", "yes")
 
@@ -260,43 +296,25 @@ ifeq ("$(build_pcre)", "yes")
 BUILD_DEPS += build_pcre
 CLEAN_DEPS += clean_pcre
 
-BIN_PCRE= $(shell if test -d $(BIN_LIBS)/pcre; then echo 1; else echo 0; fi)
-
-ifeq ("$(BIN_PCRE)", "1")
-
-pcre/libpcre$(LIB_EXT): $(BIN_LIBS)/pcre
-	cp -pR $(BIN_LIBS)/pcre .
-	touch pcre/libpcre$(LIB_EXT)
-
-build_pcre: pcre/libpcre$(LIB_EXT)
-
-else
-
 pcre/Makefile: src/pcre
 	cp -pR src/pcre .
 	touch pcre/Makefile
 
-ifeq ("$(PLATFORM)", "WIN32")
-
 build_pcre: pcre/Makefile
 	$(MAKE) -C pcre
+	@echo ===================================================================
+	@echo PCRE has been done
+	@echo ===================================================================
 
 clean_pcre: pcre/Makefile
 	-$(MAKE) -C pcre clean
-
-else
-
-build_pcre: pcre/Makefile
-	$(MAKE) -C pcre
-
-clean_pcre: pcre/Makefile
-	-$(MAKE) -C pcre clean
+	-rm -rf pcre
 
 endif
 
-endif
-
-endif
+#####################################################################
+###                            Libedit
+#####################################################################
 
 ifeq ("$(build_libedit)","yes")
 ifeq ("$(ENABLE_LIBEDIT)","1")
@@ -306,6 +324,9 @@ BUILD_DEPS+=build_libedit
 CLEAN_DEPS+=clean_libedit
 
 build_libedit: libedit/lib/libedit.a
+	@echo ===================================================================
+	@echo Libedit has been done
+	@echo ===================================================================
 
 libedit/lib/libedit.a: libedit/Makefile
 	-$(MAKE) -C libedit
@@ -318,16 +339,24 @@ libedit/configure:
 	tar -zxf libedit-*.tar.gz
 	mv `find libedit-* -type d | head -n 1` libedit
 
-
 clean_libedit:
 	-$(MAKE) -C libedit uninstall
 	-$(MAKE) -C libedit clean
+	-rm -rf libedit
 
 endif
 endif
+
+#####################################################################
+###                         General targets
+#####################################################################
 
 build: $(BUILD_DEPS)
 
+ifeq ("$(CLEANUP_LIBRARIES)","1")
 clean: $(CLEAN_DEPS)
+else
+clean:
+endif
 
 

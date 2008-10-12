@@ -228,7 +228,8 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
     while(start < end)
     {
         value = *start;
-        if(!IS_BYTE_SCHEME_ALLOWED(value)) break;
+        bool temp = IS_BYTE_SCHEME_ALLOWED(value);
+        if(!temp) break;
         ++start;
         if(counter <= MAX_SCHEME_NAME_SIZE) scheme_buf[counter++] = TO_LOWER_CASE(value);
     }
@@ -262,7 +263,8 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
     while(start < end)
     {
         value = *start;
-        if(!IS_BYTE_SCHEME_ALLOWED(value)) break;
+        bool temp = IS_BYTE_SCHEME_ALLOWED(value);
+        if(!temp) break;
         ++start;
     }
 

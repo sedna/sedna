@@ -44,7 +44,11 @@ int uUname(U_UTSNAME* s, sys_call_error_fun fun)
 #else
     int res = 0;
     res = uname(s);
-    if(res != 0)
+#if defined(SunOS)
+    if(-1 == res)
+#else
+    if(0 == res)
+#endif
     {
         sys_call_error("uname");
         return 1;

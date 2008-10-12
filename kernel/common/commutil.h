@@ -7,7 +7,6 @@
 
 /*	The following macroses are defined:
 
-	EXTERN_C			- qualifyer for functions to be used both in C and C++
 	MIN(A, B)			- minimum
 	MAX(A, B)			- maximum
 	IS_POWER_OF_2(NUMBER)		- whether a number is power of 2 and > 0
@@ -26,14 +25,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
-#ifndef EXTERN_C
-#ifdef __cplusplus
-#define EXTERN_C extern "C"
-#else
-#define EXTERN_C
-#endif
-#endif
 
 #ifndef MIN
 #define MIN(A, B) \

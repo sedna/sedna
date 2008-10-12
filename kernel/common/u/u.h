@@ -58,14 +58,15 @@
 #define U_MAP_ANONYMOUS MAP_ANON
 #endif
 
-#if defined(LINUX)
+#if (defined(LINUX) ||  defined(SunOS))
 #define U_MAP_NORESERVE MAP_NORESERVE
-#elif (defined(DARWIN) || defined(FreeBSD) || defined(SunOS))
+#elif (defined(DARWIN) || defined(FreeBSD))
 #define U_MAP_NORESERVE 0
 #endif
 
-#if defined(DARWIN)
-#define U_MSG_NOSIGNAL 0 //SO_NOSIGNAL can be used only in setsockopt()
+#if defined(DARWIN) || defined(SunOS)
+#define U_MSG_NOSIGNAL 0 //SO_NOSIGNAL can be used only in setsockopt() under Mac OS 10.2 and later
+                         //It seems the only way to block SIGPIPE under SunOS (Solaris) to block it?
 #else
 #define U_MSG_NOSIGNAL MSG_NOSIGNAL
 #endif
@@ -129,7 +130,6 @@
 #define __SE_FUNCTION__ __FUNCTION__
 #endif
 
-
 #ifdef _WIN32
 #ifdef _MSC_VER
 #define TLS_VAR_DECL    __declspec(thread)
@@ -140,6 +140,13 @@
 #define TLS_VAR_DECL
 #endif
 
+#ifndef EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C
+#endif
+#endif
 
 #define HAVE_STRINGIZE
 
@@ -314,7 +321,6 @@ typedef int    UFlag;
 #endif
 
 
-
 /*=============================================================================
  *                       IsValid macros for system types
  *                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -391,10 +397,7 @@ typedef int    UFlag;
 #endif   /* defined(SE_ASSERT_CHECK) && defined(EL_DEBUG) && (EL_DEBUG == 1) */
 
 
-
-#ifdef __cplusplus
-extern "C"
-#endif
+EXTERN_C
 int se_ExceptionalCondition(const char *conditionName, const char *errorType,
                             const char *fileName, int lineNumber);
 
@@ -606,6 +609,12 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 
 /*
  * NaN, INF and -INF check functions
+ * Portability notes:
+ * 1. In Darwin isinf/isnan functions are not defined in C++ headers.
+ *    At the moment we define C wrappers for them which can give a 
+ *    little runtime overhead though.
+ * 2. In FreeBSD isinf() returns 1 in both cases INF and -INF 
+ *    so we need to check value itself also.
  */
 #ifdef _WIN32
 #define u_is_nan(d)         (_isnan(d))
@@ -613,31 +622,29 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 #define u_is_pos_inf(d)     (_fpclass(d) == _FPCLASS_PINF)
 #else 
 
-#if defined(DARWIN)
-#ifdef __cplusplus
-extern "C"
-#endif
-int u_is_nan(double d);
+#if defined(DARWIN) 
+EXTERN_C int u_is_nan(double d);
 #else
 #define u_is_nan(d)         (isnan(d))
 #endif
-#if  defined(FreeBSD) // In FreeBSD isinf() returns 1 in both cases INF and -INF
+
+#if  defined(FreeBSD) 
 #define u_is_neg_inf(d)     (isinf(d) && (d) < 0.0)
 #define u_is_pos_inf(d)     (isinf(d) && (d) > 0.0)
 #elif defined(DARWIN)
-#ifdef __cplusplus
-extern "C" {
-#endif
-bool u_is_neg_inf(double d);
-bool u_is_pos_inf(double d);
-#ifdef __cplusplus
-}
-#endif
-#else
+EXTERN_C bool u_is_neg_inf(double d);
+EXTERN_C bool u_is_pos_inf(double d);
+#elif defined(SunOS)
+#include <ieeefp.h>
+#define u_is_neg_inf(d)     (FP_NINF == fpclass(d))
+#define u_is_pos_inf(d)     (FP_PINF == fpclass(d))
+#else /* Linux */
 #define u_is_neg_inf(d)     (isinf(d) == -1)
 #define u_is_pos_inf(d)     (isinf(d) == 1)
 #endif
 #endif
+
+
 
 
 /*=============================================================================

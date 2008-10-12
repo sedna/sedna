@@ -297,7 +297,7 @@ public:
     static_context *st_cxt;
 
     dynamic_context(static_context *_st_cxt_, int _var_cxt_size_) 
-        : st_cxt(_st_cxt_), var_cxt(_var_cxt_size_)
+        : var_cxt(_var_cxt_size_), st_cxt(_st_cxt_)
     {
     }
 

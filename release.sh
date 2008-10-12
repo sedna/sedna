@@ -122,9 +122,9 @@ prepare_win_source() {
     $MAKE_COMMAND -C $FILE_BASE/libs &&
     rm -rf $FILE_BASE/libs/bin &&
     rm -rf $FILE_BASE/libs/src &&
-    mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
-    $SED_COMMAND -e 's/(build_[A-Za-z0-9 ]+)=yes/\1=no/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
-    rm -f $FILE_BASE/libs/Makefile.orig &&
+    rm -rf chicken_panic_hook.diff
+    echo "build:" > $FILE_BASE/libs/Makefile &&
+    echo "clean:" >> $FILE_BASE/libs/Makefile &&
     OLDDIR="`pwd`" &&
     cd $FILE_BASE/doc &&
     echo `pwd` &&
@@ -138,14 +138,11 @@ prepare_win_source() {
 }
 
 prepare_nix_source() {
-    rm -rf $FILE_BASE/libs/pccts	&&
-    rm -rf $FILE_BASE/libs/pg		&&
-    rm -rf $FILE_BASE/libs/expat	&&
-    rm -rf $FILE_BASE/libs/chicken	&&
-    rm -rf $FILE_BASE/libs/pcre/*.a		&&
-    rm -rf $FILE_BASE/libs/pcre/*.o		&&
-    rm -rf $FILE_BASE/libs/pcre/*.obj	&&
-    rm -rf $FILE_BASE/libs/pcre/*.lib	&&
+    rm -rf $FILE_BASE/libs/pccts        &&
+    rm -rf $FILE_BASE/libs/pg           &&
+    rm -rf $FILE_BASE/libs/expat        &&
+    rm -rf $FILE_BASE/libs/chicken      &&
+    rm -rf $FILE_BASE/libs/pcre         &&
     mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
     $SED_COMMAND -e 's/(build_[A-Za-z0-9 ]+)=no/\1=yes/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
     rm -f $FILE_BASE/libs/Makefile.orig &&
@@ -174,6 +171,7 @@ s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]+(\r?)$/STATIC_SYS_LIBS = 0\1/
 s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]+(\r?)$/SE_ENABLE_GCOV = 0\1/
 s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]+(\r?)$/ENABLE_DTSEARCH = 0\1/
 s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]+(\r?)$/ENABLE_TRIGGERS = 1\1/
+s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]+(\r?)$/CLEANUP_LIBRARIES = 1\1/
 EEE
 }
 

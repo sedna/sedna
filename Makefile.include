@@ -69,9 +69,18 @@ ifndef LIBODBC_STATIC
 LIBODBC_STATIC = 0
 endif
 
+# options: use libedit in term - 1
+#          disable libedit     - 0
 ifndef ENABLE_LIBEDIT
-ENABLE_LIBEDIT = 1
+ENABLE_LIBEDIT = 0
 endif
+
+# options: perform libaries cleanup on make clean - 1
+#          else                                   - 0
+ifndef CLEANUP_LIBRARIES
+CLEANUP_LIBRARIES = 0
+endif
+
 
 # SEDNA_BUILD is defined outside when release version is made
 ifndef SEDNA_BUILD
@@ -80,7 +89,6 @@ endif
 
 
 SEDNA_VERSION := $(shell cat $(PP)/ver)
-
 
 
 SEDNA_DIRS = $(PP)/kernel $(PP)/libs $(PP)/libs/chicken \
@@ -267,20 +275,20 @@ endif
 LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl -fexceptions
 
 ifeq ("$(SUB_PLATFORM)","Linux")
+ENABLE_LIBEDIT = 1
 LSLIBS  += -lnsl -lrt -pthread
 endif
 
 ifeq ("$(SUB_PLATFORM)","SunOS")
-LSLIBS  += -lnsl -lrt -lsocket
+LSLIBS += -lnsl -lrt -lsocket
+CFLAGS += -D_POSIX_PTHREAD_SEMANTICS
 endif
 
 ifeq ("$(SUB_PLATFORM)","FreeBSD")
-ENABLE_LIBEDIT = 0
 LSLIBS  = -lthr -lpccts -lexpat -lchicken -lpcre -fexceptions
 endif
 
 ifeq ("$(SUB_PLATFORM)","Darwin")
-ENABLE_LIBEDIT = 0
 LSLIBS  = -lpthread -lpccts -lexpat -lchicken -lpcre -fexceptions
 endif
 
