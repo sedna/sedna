@@ -55,6 +55,11 @@ int main(int argc, char **argv)
     UShMem gov_mem_dsc;
     void* gov_shm_pointer = NULL;
 
+    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+      so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+    sigignore(SIGPIPE);
+#endif
 
     try{
         SednaUserSoftException ex = USER_SOFT_EXCEPTION("There is no any sign of the SEDNA server running in the system");

@@ -78,7 +78,7 @@ static int hbRetrieveFileName(msg_struct *msg, char *file_name)
 // this function performs main hot-backup actions (see plan above)
 //
 // Parameters:
-// 	   hb_dir_name - name of the distance directory
+//     hb_dir_name - name of the distance directory
 //     hb_db_name  - name if the database to archive
 //     port        - port number to connect to gov
 void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_checkp)
