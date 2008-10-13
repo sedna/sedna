@@ -14,7 +14,7 @@
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/executor/base/XPathOnSchema.h"
 
-class PathExpr;
+struct PathExpr;
 enum ft_index_type
 {
 	ft_xml,

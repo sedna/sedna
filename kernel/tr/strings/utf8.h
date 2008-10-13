@@ -22,6 +22,7 @@ public:
     bool ends_with(const tuple_cell *tc, const tuple_cell* suffix);
     int contains(const tuple_cell *src, const tuple_cell  *subs);
 };
+//FIXME: xs_uri.cpp uses pcre directry!, if charsets other than utf8 are to be supported this must be fixed.
 class CharsetHandler_utf8 : public CharsetHandler
 {
 private:

@@ -32,6 +32,8 @@ public:
             dst += c;
         *dst = 0;
     }
+protected:
+	~str_cursor() {};
 
 };
 

@@ -42,7 +42,7 @@ enum NodeTestType
     node_test_var_name                // $x
 };
 
-class PPOpIn;
+struct PPOpIn;
 
 struct NodeTestData
 {
@@ -90,7 +90,7 @@ typedef PathExpr RelPath;
 void *create_PathExpr(const PathExprDistr &distr, bool persistent);
 void delete_PathExpr(PathExpr *expr);
 
-struct dynamic_context;
+class dynamic_context;
 void PathExpr2lr(PathExpr *path, std::ostream& str);
 PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persistent);
 PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, bool persistent);

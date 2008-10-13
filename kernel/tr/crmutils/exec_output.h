@@ -80,11 +80,11 @@ public:
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
     virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }
 	virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
-    virtual void end_of_data(qepNextAnswer res)                                  { o_str << std::endl; }
+    virtual void end_of_data(qepNextAnswer /*res*/)                              { o_str << std::endl; }
     virtual void endline()                                                       { o_str << std::endl; }
     virtual void error(const char* str)                                          { o_str << str << std::endl; }
     virtual se_ostream* get_debug_ostream()               { return se_new se_stdlib_ostream(std::cerr); }
-    virtual void set_debug_info_type(se_debug_info_type type)      {};
+    virtual void set_debug_info_type(se_debug_info_type /*type*/)      {};
 };
 
 class se_nullostream : public se_ostream
@@ -93,30 +93,30 @@ public:
     se_nullostream() {}
     virtual ~se_nullostream() {}
 
-    virtual se_ostream& operator<<(se_nullostream& (*pf)(se_nullostream&)) { return *this; }
-    virtual se_ostream& operator<<(se_ostream& (*pf)(se_ostream&))         { return *this; }
-    virtual se_ostream& operator<<(const char *s)                          { return *this; }
-    virtual se_ostream& operator<<(char c)                                 { return *this; }
-    virtual se_ostream& operator<<(bool n)                                 { return *this; }
-    virtual se_ostream& operator<<(short n)                                { return *this; }
-    virtual se_ostream& operator<<(unsigned short n)                       { return *this; }
-    virtual se_ostream& operator<<(int n)                                  { return *this; }
-    virtual se_ostream& operator<<(unsigned int n)                         { return *this; }
-    virtual se_ostream& operator<<(long n)                                 { return *this; }
-    virtual se_ostream& operator<<(unsigned long n)                        { return *this; }
-    virtual se_ostream& operator<<(float n)                                { return *this; }
-    virtual se_ostream& operator<<(double n)                               { return *this; }
-    virtual se_ostream& operator<<(long double n)                          { return *this; }
-    virtual se_ostream& operator<<(void * n)                               { return *this; }
-    virtual se_ostream& put(char c)                                        { return *this; }
-    virtual se_ostream& write(const char *s, int n)                        { return *this; }
-    virtual se_ostream& write_debug(int debug_type, const char *s, int n)  { return *this; }
+    virtual se_ostream& operator<<(se_nullostream& (* /*pf*/)(se_nullostream&)) { return *this; }
+    virtual se_ostream& operator<<(se_ostream& (* /*pf*/)(se_ostream&))         { return *this; }
+    virtual se_ostream& operator<<(const char * /*s*/)                     { return *this; }
+    virtual se_ostream& operator<<(char /*c*/)                             { return *this; }
+    virtual se_ostream& operator<<(bool /*n*/)                             { return *this; }
+    virtual se_ostream& operator<<(short /*n*/)                            { return *this; }
+    virtual se_ostream& operator<<(unsigned short /*n*/)                   { return *this; }
+    virtual se_ostream& operator<<(int /*n*/)                              { return *this; }
+    virtual se_ostream& operator<<(unsigned int /*n*/)                     { return *this; }
+    virtual se_ostream& operator<<(long /*n*/)                             { return *this; }
+    virtual se_ostream& operator<<(unsigned long /*n*/)                    { return *this; }
+    virtual se_ostream& operator<<(float /*n*/)                            { return *this; }
+    virtual se_ostream& operator<<(double /*n*/)                           { return *this; }
+    virtual se_ostream& operator<<(long double /*n*/)                      { return *this; }
+    virtual se_ostream& operator<<(void * /*n*/)                           { return *this; }
+    virtual se_ostream& put(char /*c*/)                                    { return *this; }
+    virtual se_ostream& write(const char * /*s*/, int /*n*/)               { return *this; }
+    virtual se_ostream& write_debug(int /*debug_type*/, const char * /*s*/, int /*n*/) { return *this; }
 	virtual se_ostream& flush()                                            { return *this; }
-    virtual void end_of_data(qepNextAnswer res)                            { ; }
+    virtual void end_of_data(qepNextAnswer /*res*/)                        { ; }
     virtual void endline()                                                 { ; }
-    virtual void error(const char* str)                                    { ; }
+    virtual void error(const char* /*str*/)                                { ; }
     virtual se_ostream* get_debug_ostream()         { return se_new se_nullostream(); }
-    virtual void set_debug_info_type(se_debug_info_type type)      {};
+    virtual void set_debug_info_type(se_debug_info_type /*type*/)      {};
 };
 
 
@@ -372,7 +372,7 @@ public:
         result_portion_sent = 0;
     }
     virtual se_ostream* get_debug_ostream();
-    virtual void set_debug_info_type(se_debug_info_type type) {};
+    virtual void set_debug_info_type(se_debug_info_type /*type*/) {};
 };
 
 class se_debug_socketostream : public se_socketostream_base
@@ -400,7 +400,7 @@ class se_debug_socketostream : public se_socketostream_base
        	_res_msg->length = 5+_type_offset;   // the body contains type - 4 bytes, string format - 1 byte, string length - 4 bytes and a string
   	}
   	virtual ~se_debug_socketostream() {}
-    virtual void end_of_data(qepNextAnswer res)	
+    virtual void end_of_data(qepNextAnswer /*res*/)	
     {
         flush(); 
         _res_msg->length = 5+_type_offset;
