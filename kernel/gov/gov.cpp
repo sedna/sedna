@@ -97,6 +97,11 @@ int main(int argc, char** argv)
     gov_config_struct cfg;
     bool is_pps_close = true;
 
+    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+      so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+    sigignore(SIGPIPE);
+#endif
 
     try {
 #ifdef SE_MEMORY_MNG

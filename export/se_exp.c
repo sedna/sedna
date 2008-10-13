@@ -16,6 +16,13 @@ void print_usage() {
 
 
 int main(int argc, char* argv[]) {
+  
+  /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+    so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+  sigignore(SIGPIPE);
+#endif
+
   char parse_errmsg[PARSE_ERR_MSG_SIZE];
   char *input_login=NULL,*input_password=NULL;
   int tmp;

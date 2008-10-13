@@ -47,9 +47,13 @@ int main(int argc, char** argv)
     int res;
     program_name_argv_0 = argv[0];
 
-
     pping_client* ppc = NULL;
 
+    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+      so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+    sigignore(SIGPIPE);
+#endif
 
     try {
 

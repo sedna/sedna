@@ -228,6 +228,12 @@ int main(int argc, char **argv)
 		abort();
 	}
 
+	/*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+          so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+	sigignore(SIGPIPE);
+#endif
+
 	/* THE REAL MAIN CALLED */ 
 	exitCode = TRmain(argc, argv);
 

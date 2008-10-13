@@ -66,7 +66,7 @@
 
 #if defined(DARWIN) || defined(SunOS)
 #define U_MSG_NOSIGNAL 0 //SO_NOSIGNAL can be used only in setsockopt() under Mac OS 10.2 and later
-                         //It seems the only way to block SIGPIPE under SunOS (Solaris) to block it?
+                         //The only way to block SIGPIPE under Solaris to block it with sigignore().
 #else
 #define U_MSG_NOSIGNAL MSG_NOSIGNAL
 #endif

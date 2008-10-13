@@ -487,6 +487,12 @@ int main(int argc, char **argv)
 
     SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup() 
 
+    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+      so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+    sigignore(SIGPIPE);
+#endif
+
     try {
 
 #ifdef SE_MEMORY_MNG

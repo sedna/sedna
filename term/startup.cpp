@@ -36,6 +36,12 @@ int main(int argc, char *argv[])
 	int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
 	char errmsg[1000];
 
+    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+      so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+    sigignore(SIGPIPE);
+#endif
+
     for(int i=0; i<argc; i++)
     {
         if(strlen(argv[i])>TERM_ARGSTRLEN)
