@@ -44,7 +44,7 @@ extern session_id sid;
                                 /* VMM_DEBUG_CHECKP */												\
 								vmm_cur_ptr = XADDR(vmm_checkp_xptr);								\
 								if (!TEST_XPTR(vmm_checkp_xptr)) throw win32_access_violation();	\
-							} catch (win32_access_violation& e){									\
+							} catch (win32_access_violation&){										\
 							    vmm_unswap_block(vmm_checkp_xptr);									\
                             }																		\
                             REFRESH_LRU_STAMP(vmm_checkp_xptr)
@@ -56,7 +56,7 @@ extern session_id sid;
                                 VMM_TRACE_CHECKP(p)									\
 								vmm_cur_ptr = XADDR(p);								\
 								if (!TEST_XPTR(p)) throw win32_access_violation();	\
-							} catch (win32_access_violation& e){					\
+							} catch (win32_access_violation&){						\
 							    vmm_unswap_block(p);								\
                             }														\
                             REFRESH_LRU_STAMP(p)

@@ -162,7 +162,7 @@ for b in range(0,len(wc_arr)):
 
 
 f = open("iswordchar.inc", "wt")
-print >>f, "static const char _iswordchar_table[%s] = {" % len(wc_arr)
+print >>f, "static const unsigned char _iswordchar_table[%s] = {" % len(wc_arr)
 for i in range(0, len(wc_arr)):
   if i>0 and i % 16 == 0:
     print >>f

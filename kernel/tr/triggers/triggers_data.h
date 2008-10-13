@@ -13,7 +13,7 @@
 #include "tr/executor/base/PPBase.h"
 
 class PPXptr;    
-class PathExpr;
+struct PathExpr;
 
 extern bool isTriggersOn;
 

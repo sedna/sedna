@@ -12,7 +12,7 @@
 #include "tr/structures/nodes.h"
 #include "tr/executor/base/XPathOnSchema.h"
 
-class PathExpr;
+struct PathExpr;
 
 struct index_cell
 {
