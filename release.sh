@@ -122,7 +122,7 @@ prepare_win_source() {
     $MAKE_COMMAND -C $FILE_BASE/libs &&
     rm -rf $FILE_BASE/libs/bin &&
     rm -rf $FILE_BASE/libs/src &&
-    rm -rf chicken_panic_hook.diff
+    rm -rf $FILE_BASE/libs/chicken_panic_hook.diff &&
     echo "build:" > $FILE_BASE/libs/Makefile &&
     echo "clean:" >> $FILE_BASE/libs/Makefile &&
     OLDDIR="`pwd`" &&
