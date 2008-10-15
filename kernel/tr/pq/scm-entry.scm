@@ -27,8 +27,10 @@ EOF
 (define is-server-mode (foreign-safe-lambda int "is_server_mode"))
 (declare (foreign-declare "extern char* get_user_login();"))
 (define user (foreign-safe-lambda c-string "get_user_login"))
-(declare (foreign-declare "extern int is_auth();"))
-(define is-auth (foreign-safe-lambda int "is_auth"))
+(declare (foreign-declare "extern int is_authorization();"))
+(define is-authorization (foreign-safe-lambda int "is_authorization"))
+(declare (foreign-declare "extern int is_authentication();"))
+(define is-authentication (foreign-safe-lambda int "is_authentication"))
 (declare (foreign-declare "extern int is_first_transaction();"))
 (define is-first-transaction (foreign-safe-lambda int "is_first_transaction"))
 (declare (foreign-declare "extern int is_run_popt();"))
@@ -70,7 +72,7 @@ EOF
                                                   (handle-exceptions ex
                                                                      `(#f ,(cl:get-exception-message ex))
                                                                      `(#t ,@(sc:auth-query-rewriting 
-                                                                             (cadr query) (user) (is-auth))))
+                                                                             (cadr query) (user) (is-authentication) (is-authorization))))
                                               query)))
                                 (if (eq? 1 (is-print-intermed))
                                     (cl:write-to-file tmp "intermed2_auth.scm"))
