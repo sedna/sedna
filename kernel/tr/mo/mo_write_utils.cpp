@@ -969,25 +969,24 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
 			}
 			break;
 		}
-	case 1: case 3:
-		{
-			new_node->desc_next=block_namesake->desc_first;
-			new_node->desc_prev=0;
-			n_dsc* tmn=GETPOINTERTODESC(block_namesake,block_namesake->desc_first);
-			//assumption that block not empty
-			tmn->desc_prev=CALCSHIFT(new_node,block_namesake);
-			block_namesake->desc_first=tmn->desc_prev;
-			break;
-		}
-		case 2:
-		{
-			new_node->desc_next=0;
-			new_node->desc_prev=0;
-			//assumption that block not empty
-			block_namesake->desc_last=CALCSHIFT(new_node,block_namesake);
-			block_namesake->desc_first=block_namesake->desc_last;
-			break;
-		}
+    case 1: case 2: case 3:
+        {
+            shft new_node_shft = CALCSHIFT(new_node, block_namesake);
+            new_node->desc_next = block_namesake->desc_first;
+            new_node->desc_prev = 0;
+
+            if (block->desc_first != 0) {
+                GETPOINTERTODESC(block_namesake, block_namesake->desc_first)->desc_prev = new_node_shft;
+            } else {
+                U_ASSERT(block->desc_last == 0);
+                block_namesake->desc_last = new_node_shft;
+            }
+
+            block_namesake->desc_first = new_node_shft;
+
+            break;
+        }
+
 	}
 	INCREMENTCOUNT(block_namesake);
 	xptr nodex=ADDR2XPTR(new_node);

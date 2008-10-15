@@ -282,8 +282,8 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
 	new_node->pdsc=par_sib;
 	switch(res)
 	{
-	case 0:
-		{
+	case 0:	
+        {
 			new_node->desc_next=((n_dsc*)XADDR(l_sib))->desc_next;
 			new_node->desc_prev= CALCSHIFT(XADDR(l_sib),block);
 			UPDATENEXTDESCRIPTOR(l_sib, CALCSHIFT(new_node,block));
@@ -297,25 +297,22 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
 			}
 			break;
 		}
-	case 1: case 3:
+	case 1: case 2: case 3:
 		{
-			new_node->desc_next=block->desc_first;
-			new_node->desc_prev=0;
-			n_dsc* tmn=GETPOINTERTODESC(block,block->desc_first);
-			//assumption that block not empty
-			tmn->desc_prev=CALCSHIFT(new_node,block);
-			block->desc_first=tmn->desc_prev;
-			if(!block->desc_last) block->desc_last = block->desc_first;
-			break;
-		}
-		case 2:
-		{
-			new_node->desc_next=0;
-			new_node->desc_prev=0;
-			//assumption that block not empty
-			block->desc_last=CALCSHIFT(new_node,block);
-			block->desc_first=block->desc_last;
-			break;
+            shft new_node_shft = CALCSHIFT(new_node, block);
+            new_node->desc_next = block->desc_first;
+            new_node->desc_prev = 0;
+
+            if (block->desc_first != 0) {
+                GETPOINTERTODESC(block,block->desc_first)->desc_prev = new_node_shft;
+            } else {
+                U_ASSERT(block->desc_last == 0);
+                block->desc_last = new_node_shft;
+            }
+
+            block->desc_first = new_node_shft;
+
+    		break;
 		}
 	}
 	INCREMENTCOUNT(block);
