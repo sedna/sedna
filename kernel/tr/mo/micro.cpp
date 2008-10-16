@@ -304,7 +304,7 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
             new_node->desc_prev = 0;
 
             if (block->desc_first != 0) {
-                GETPOINTERTODESC(block,block->desc_first)->desc_prev = new_node_shft;
+                (GETPOINTERTODESC(block, block->desc_first))->desc_prev = new_node_shft;
             } else {
                 U_ASSERT(block->desc_last == 0);
                 block->desc_last = new_node_shft;

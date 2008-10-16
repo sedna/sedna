@@ -975,10 +975,10 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
             new_node->desc_next = block_namesake->desc_first;
             new_node->desc_prev = 0;
 
-            if (block->desc_first != 0) {
-                GETPOINTERTODESC(block_namesake, block_namesake->desc_first)->desc_prev = new_node_shft;
+            if (block_namesake->desc_first != 0) {
+                (GETPOINTERTODESC(block_namesake, block_namesake->desc_first))->desc_prev = new_node_shft;
             } else {
-                U_ASSERT(block->desc_last == 0);
+                U_ASSERT(block_namesake->desc_last == 0);
                 block_namesake->desc_last = new_node_shft;
             }
 
