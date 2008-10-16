@@ -330,7 +330,7 @@
                            )                                                     
                        ))                       
                  ( (eq? (caaddr expr) 'revoke-priv)
-                   (if (eq? is_authorization 0)
+                   (if (eq? is-authorization 0)
                        (cl:signal-input-error SE3068)                         
                        
                        (if (eq? (length (car(cdaddr expr))) 1)
