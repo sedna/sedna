@@ -54,6 +54,7 @@
 #include "tr/executor/xqops/PPBooleanOps.h"
 #include "tr/executor/xqops/PPAccessors.h"
 #include "tr/executor/xqops/PPFnAccessors.h"
+#include "tr/executor/xqops/PPFnGetProperty.h"
 #include "tr/executor/xqops/PPSequenceOps.h"
 #include "tr/executor/xqops/PPNodeOps.h"
 #include "tr/executor/xqops/PPNumericFuncs.h"

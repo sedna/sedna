@@ -273,7 +273,7 @@ void scm_debug(int code, char* message, char* component)
 int is_run_rewriter()				{ return run_rewriter; }
 int is_show_time()					{ return show_time; }
 int is_print_intermed()				{ return print_intermed; }
-char* get_user_login()				{ return login; }
+char* get_user_login()				{ return tr_globals::login; }
 int is_server_mode()				{ return server_mode; }
 int is_authorization()              { return authorization; }
 int is_authentication()             { return authentication; }

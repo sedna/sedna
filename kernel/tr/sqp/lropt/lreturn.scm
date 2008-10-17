@@ -325,7 +325,9 @@
        ; *** 15.2 Functions That Test the Cardinality of Sequences
        !fn!boolean !fn!exactly-one
        ; *** 15.5 Functions and Operators that Generate Sequences
-       !fn!doc-available)
+       !fn!doc-available
+       ; *** Sedna Extensions ***
+       !se!get-property)
       ; The same semantics as for !fn!document
       (lropt:propagate expr called-once? #f  ; [*]
                        #f #f #f

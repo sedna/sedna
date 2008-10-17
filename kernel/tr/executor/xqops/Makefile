@@ -32,6 +32,7 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPExtFunCall$(OBJ_EXT) \
         PPFilterEL$(OBJ_EXT) \
         PPFnAccessors$(OBJ_EXT) \
+        PPFnGetProperty$(OBJ_EXT) \
         PPFnDateTimeFuncs$(OBJ_EXT) \
         PPFnDeepEqual$(OBJ_EXT) \
         PPFnDocAvailable$(OBJ_EXT) \

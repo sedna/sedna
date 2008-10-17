@@ -1720,3 +1720,8 @@ sedna-err:SE4902
 sedna-err:SE4903
 
    Hot-backup error.
+
+sedna-err:SE4621
+
+   Property is unknown.
+

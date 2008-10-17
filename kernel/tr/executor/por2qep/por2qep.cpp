@@ -2526,12 +2526,21 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         opit = se_new PPFnStringLength(cxt,
                                     make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnGetProperty")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "98.1");
+
+        opit = se_new PPFnGetProperty(cxt,
+                                      make_pp_op(cxt, lst->at(1).internal.list));
+    }
     else if (op == "PPFnStringJoin")
     {
         if (   lst->size() != 3
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "98.1");
+           ) throw USER_EXCEPTION2(SE1004, "98.2");
 
         opit = se_new PPFnStringJoin(cxt,
                                   make_pp_op(cxt, lst->at(1).internal.list),
@@ -2541,7 +2550,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
     {
         if (   lst->size() != 2
             || lst->at(1).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "98.2");
+           ) throw USER_EXCEPTION2(SE1004, "98.3");
 
         opit = se_new PPFnNormalizeSpace(cxt,
                                       make_pp_op(cxt, lst->at(1).internal.list));
