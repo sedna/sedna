@@ -988,6 +988,11 @@
      ,(lambda (num-args) '())
      ,sa:type-atomic !se!checkpoint)
     ;----------------------------------------
+    ; Get property
+    (,sa:se-ns "get-property" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !se!get-property)
+    ;----------------------------------------
     ; Legacy
     (,sa:fn-ns "item-at" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))

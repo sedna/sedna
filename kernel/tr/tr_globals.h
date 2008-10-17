@@ -42,7 +42,6 @@ extern char db_name[];
 extern char filename[];
 extern char q_type[];
 extern QueryType query_type;
-extern char login[];
 extern char password[];
 extern char output_file[];
 
@@ -71,6 +70,7 @@ extern int db_id;
 
 namespace tr_globals 
 {
-extern pping_client *ppc;
+    extern pping_client *ppc;
+    extern char login[];
 }
 #endif

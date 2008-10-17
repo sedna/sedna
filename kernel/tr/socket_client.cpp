@@ -407,12 +407,12 @@ void socket_client::get_session_parameters()
     throw USER_EXCEPTION(SE3015);
   }
 
-  memcpy(login, sp_msg.body+buf_position, length);   //!!!??? login - is a global parameter
+  memcpy(tr_globals::login, sp_msg.body+buf_position, length);   
       
-  login[length] = '\0';   
+  tr_globals::login[length] = '\0';   
   buf_position += length;
        
-  d_printf3("In authorization length = %d login = %s\n", length, login);
+  d_printf3("In authorization length = %d login = %s\n", length, tr_globals::login);
       
   net_int2int(&length, sp_msg.body+buf_position+1);
   buf_position += 1 + sizeof(__int32);

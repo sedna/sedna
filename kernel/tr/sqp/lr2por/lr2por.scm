@@ -1071,6 +1071,7 @@
                  (!fn!sql-close .          PPFnSQLClose)
                  (!fn!sql-commit .         PPFnSQLCommit)
                  (!fn!sql-rollback .       PPFnSQLRollback)
+                 (!se!get-property .       PPFnGetProperty)
                  ))
               => (lambda (pair)
                    (let ((line-num (l2p:list-last node)))

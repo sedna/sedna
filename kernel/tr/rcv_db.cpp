@@ -28,11 +28,6 @@ using namespace std;
 //int sid = 0;
 SSMMsg *sm_server = NULL;
 
-//this variables are not used during recovery
-//char login[1];
-//char password[1];
-
-
 
 DECLARE_TIME_VARS
 
