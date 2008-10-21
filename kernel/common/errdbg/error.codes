@@ -917,7 +917,7 @@ sedna-err:SE3067
     User name is not specified.
 sedna-err:SE3068
 
-    This statement is not supported because Sedna' database security level is "off". (To support this statement create database with -db-security option "authentication" or "authorization".)
+    This statement is not supported because Sedna' database security level is "off". (To support this statement create database with -db-security option "authentication".)
 
 sedna-err:SE3069
 
@@ -1724,4 +1724,7 @@ sedna-err:SE4903
 sedna-err:SE4621
 
    Property is unknown.
+sedna-err:SE4622
+
+    This statement is not supported because Sedna' database security level is "authentication". (To support this statement create database with -db-security option "authorization".)
 

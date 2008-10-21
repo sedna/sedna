@@ -16,8 +16,9 @@
              (case (caaddr expr)
                ((create-user 
                  drop-user 
-                 alter-user 
-                 create-role 
+                 alter-user)
+                (cl:signal-input-error SE3068))
+               ((create-role 
                  drop-role 
                  grant-role 
                  grant-priv-on-doc 
@@ -27,9 +28,9 @@
                  revoke-priv-from-doc 
                  revoke-priv-from-col 
                  revoke-role)
-                (cl:signal-input-error SE3068))
+                (cl:signal-input-error SE4622))               
                (else (list expr)))             
-         (cond
+             (cond
            ( (eq? (car expr) 'retrieve-metadata)   
              (if (eq? is-authorization 0)
                  (list expr)
@@ -230,7 +231,7 @@
                                                      ) )
                  ( (eq? (caaddr expr) 'create-role)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)
+                       (cl:signal-input-error SE4622)
                        
                        (list
                         (sc:q28 (caddar(cdaddr expr)))     ;role-name
@@ -240,7 +241,7 @@
                    )
                  ( (eq? (caaddr expr) 'drop-role)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)                                                          
+                       (cl:signal-input-error SE4622)                                                          
                        
                        (list
                         (sc:q8 user (caddar(cdaddr expr))) ;user-id,  role-name
@@ -250,7 +251,7 @@
                    )
                  ( (eq? (caaddr expr) 'grant-role) 
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)                                                           
+                       (cl:signal-input-error SE4622)                                                           
                        
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (cadr(cdaddr expr))) 1)
@@ -267,7 +268,7 @@
                    )      
                  ( (eq? (caaddr expr) 'grant-priv-on-doc) 
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)                                                                  
+                       (cl:signal-input-error SE4622)                                                                  
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (caddr(cdaddr expr))) 1)
                                (list
@@ -290,7 +291,7 @@
                        ))    
                  ( (eq? (caaddr expr) 'grant-priv-on-col)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)                                                                  
+                       (cl:signal-input-error SE4622)                                                                  
                        
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (caddr(cdaddr expr))) 1)
@@ -314,7 +315,7 @@
                        ))                          
                  ( (eq? (caaddr expr) 'grant-priv)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)                                                           
+                       (cl:signal-input-error SE4622)                                                           
                        
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (cadr(cdaddr expr))) 1)
@@ -331,7 +332,7 @@
                        ))                       
                  ( (eq? (caaddr expr) 'revoke-priv)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)                         
+                       (cl:signal-input-error SE4622)                         
                        
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (cadr(cdaddr expr))) 1)
@@ -348,7 +349,7 @@
                        ))      
                  ( (eq? (caaddr expr) 'revoke-priv-from-doc)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)
+                       (cl:signal-input-error SE4622)
                        
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (caddr(cdaddr expr))) 1)
@@ -370,7 +371,7 @@
                        ))  
                  ( (eq? (caaddr expr) 'revoke-priv-from-col)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)
+                       (cl:signal-input-error SE4622)
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (caddr(cdaddr expr))) 1)
                                (list
@@ -391,7 +392,7 @@
                        ))                        
                  ( (eq? (caaddr expr) 'revoke-role)
                    (if (eq? is-authorization 0)
-                       (cl:signal-input-error SE3068)
+                       (cl:signal-input-error SE4622)
                        (if (eq? (length (car(cdaddr expr))) 1)
                            (if (eq? (length (cadr(cdaddr expr))) 1)
                                (list
