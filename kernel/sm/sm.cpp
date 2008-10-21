@@ -717,7 +717,7 @@ int main(int argc, char **argv)
             elog(EL_LOG, ("SM : Wu is initialized"));
 
 #ifdef RCV_TEST_CRASH
-            read_test_cfg();
+            rcvReadTestCfg(); // prepare recovery tester
 #endif
             d_printf1("OK\n");
 
