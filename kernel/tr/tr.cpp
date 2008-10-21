@@ -264,7 +264,7 @@ int TRmain(int argc, char *argv[])
         bool expect_another_transaction = true;
 		
 #ifdef RCV_TEST_CRASH
-		read_test_cfg(); // prepare recovery tester
+            rcvReadTestCfg(); // prepare recovery tester
 #endif
         /////////////////////////////////////////////////////////////////////////////////
         /// CYCLE BY TRANSACTIONS
