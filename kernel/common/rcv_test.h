@@ -16,3 +16,4 @@ void rcvReadTestCfg();
 void rcvTestCrashPoint(const char *func_name);
 
 #endif
+
