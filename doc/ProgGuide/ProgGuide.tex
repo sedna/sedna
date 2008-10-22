@@ -1,6 +1,6 @@
 
 % File:  ProgGuide.tex
-% Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+% Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
 \documentclass[a4paper,12pt]{article}
 \font\mmmm cmtt9
@@ -17,36 +17,28 @@
 \newtheorem{theo}{Theorem}
 \newtheorem{note}{Note}
 
-
 %\usepackage{tex4ht}
 
 %to avoid processing \TocAt by latex
 \newcommand{\TocAt}[6]{}
 
-% Позволяет вставлять картинки в формате eps.
+% Images in eps.
 \usepackage[dvips]{epsfig}
 
-%используется для создания таблиц со слепленными клетками 
+% Allows inserting tables
 \usepackage{multirow}
 
-% Ниже следующие две строчки позволяют именять поля документа.
+
 %\addtolength{\hoffset}{31pt}
 %\addtolength{\textwidth}{104pt}
-
+%\author{Sedna Team}
 \title{Sedna Programmer's Guide}
 \date{}
 
-
-
 \begin{document}
-% Это однострочный комментарий. Многострочных комментариев, к сожаление, в латехе нет.
 
-% Ниже следующий \sloppy ничего по сути не меняет, он только делает латех менее предирчивым к 
-% оформлению документа. \sloppy лучше вставлять всегда.
 \sloppy
 
-% Вставка титульной страницы. Ее содержимое определяется командами \title{},
-%\author{}, \date{}, которые вставляются до \begin{document}
 \maketitle
 
 \TocAt*{section,subsection,subsubsection}
@@ -54,8 +46,8 @@
 
 \tableofcontents
 
-%\part{(Пример части) Название первой части}
-%\chapter{(Пример главы) Знакомство с \LaTeX}
+\pagebreak[4]
+
 \section{Client Application Programming Interfaces}
 The Sedna client application programming interfaces (APIs) provides programmatic access to Sedna from client applications developed in host programming languages. This section describes the client APIs distributed with Sedna.  
 
@@ -1516,7 +1508,7 @@ implementation in running the program.
 
 
 
-%==========================================================================
+%===========================================================================
 %
 %                                  Database Language
 %
@@ -1661,7 +1653,7 @@ easy processed in XQuery. All functions dealing with access to SQL data are loca
 ``\verb!http://modis.ispras.ru/Sedna/SQL!'' which is refered as \verb!sql!
 in the following function declarations and examples.
 
-\subsubsection*{Connections} 
+\subsubsection*{Connections}
 In order to execute SQL queries on a RDBMS, you should first establish a connection
 to it. There are two functions for managing connections:
 
@@ -2581,8 +2573,14 @@ It results in removing the library module with the given target namespace URI fr
 You can obtain information about modules loaded into the database by querying the system document named \verb!$modules! as follows \verb!doc("$modules")!.
 
 
-\subsubsection{Retrieving Metadata}
-You can retrieve various metadata about database objects (such as documents, collections, indexes, etc.) by querying system documents and collections listed below. The documents marked with (*) are not persistent but generated on the fly. You can query these documents as usual but you cannot update them. Also these documents are not listed in \verb!$documents!.
+\subsubsection{Retrieving Metadata, System Parameters and Environment Information}
+You can retrieve various metadata about database objects (such as documents, collections, indexes, etc.) by querying system documents and collections listed below. 
+To retrieve system parameters or environment information (like current user name) you can use \verb!se:get-property! function.
+
+\subsubsection*{System Documents and Collections}
+
+The documents marked with (*) are not persistent but generated on the fly. You can query these documents as usual but you cannot update them. 
+Also these documents are not listed in \verb!$documents!.
 
 \begin{itemize}
 \item (*) document \verb!$documents! - list of all stand-alone documents, collections and in-collection documents except those documents of this enumeration that are marked with (*).
@@ -2627,6 +2625,20 @@ The statistical information in \verb!$document_<name>! and \verb!$collection_<na
 \item \verb!nids_size! - the share of  the indirection records' total size (in percents)
 \item \verb!STRINGS! - the histogram of the xml data by its size
 \item \verb!NID! - the histogram of the labeling numbers its length
+\end{itemize}
+
+\subsubsection*{Using se:get-property function}
+The \verb!se:get-property! function provides a method for applications to determine the current values of a system parameters, configurable limits, environment information.  
+The name argument specifies the system variable to be queried. The function is defined within predefined Sedna namespace (\verb!se! prefix) as follows:
+
+\begin{verbatim}
+se:get-property($name as xs:string) as item()
+\end{verbatim}
+
+The available \verb!names! are as follows:
+
+\begin{itemize}
+\item \verb!$user! - retrieves string which contains current user name
 \end{itemize}
 
 %==================================================================================

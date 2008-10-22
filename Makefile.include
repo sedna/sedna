@@ -364,6 +364,7 @@ CHICKEN_OPTIONS = $(CHICKEN_HEAP_SPEC) -include-path $(CHICKEN_INCLUDE)
 %.pdf: %.tex
 	$(PDFLATEX) $<
 	$(PDFLATEX) $<
+	$(PDFLATEX) $<
 
 
 ifeq ("$(OS)", "CYGWIN_NT")
