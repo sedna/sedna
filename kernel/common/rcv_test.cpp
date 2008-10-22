@@ -76,8 +76,8 @@ static void rcvSerializeInfoToFile(const char *file_name)
 		}
 
 		// store the associated structure
-		if (uWriteFile(tfh, (it->second), sizeof rcvPointInfo, &written, __sys_call_error) == 0 ||
-				written != sizeof rcvPointInfo)
+		if (uWriteFile(tfh, (it->second), sizeof(rcvPointInfo), &written, __sys_call_error) == 0 ||
+				written != sizeof(rcvPointInfo))
 		{
 	   		fprintf(stderr, "Cannot serialize recovery crash info\n");
 			err = 1;
@@ -116,8 +116,8 @@ static int rcvLoadInfoFromFile(const char *file_name)
 	while (1)
 	{
 		// load string length
-		if (uReadFile(tfh, &len, sizeof len, &readb, __sys_call_error) == 0 ||
-				readb != sizeof len)
+		if (uReadFile(tfh, &len, sizeof(len), &readb, __sys_call_error) == 0 ||
+				readb != sizeof(len))
 			break;
 
 		// load current function name
@@ -129,12 +129,12 @@ static int rcvLoadInfoFromFile(const char *file_name)
 		func_buf[len] = '\0';
 
 		// allocate new info structure
-		if ((rcvInfo = (rcvPointInfo *)malloc(sizeof rcvPointInfo)) == NULL)
+		if ((rcvInfo = (rcvPointInfo *)malloc(sizeof(rcvPointInfo))) == NULL)
 			throw SYSTEM_EXCEPTION("Cannot allocate memory!");
 
 		// load the associated structure
-		if (uReadFile(tfh, rcvInfo, sizeof rcvPointInfo, &readb, __sys_call_error) == 0 ||
-				readb != sizeof rcvPointInfo)
+		if (uReadFile(tfh, rcvInfo, sizeof(rcvPointInfo), &readb, __sys_call_error) == 0 ||
+				readb != sizeof(rcvPointInfo))
 			break;
 
 		// append info to the table
@@ -256,7 +256,7 @@ void rcvReadTestCfg()
 				func_name[0] != '#' && (max_try > 0 || max_try == -1))
 		{
 			// allocate new info structure
-			if ((rcvInfo = (rcvPointInfo *)malloc(sizeof rcvPointInfo)) == NULL)
+			if ((rcvInfo = (rcvPointInfo *)malloc(sizeof(rcvPointInfo))) == NULL)
 				throw SYSTEM_EXCEPTION("Cannot allocate memory!");
 
 			rcvInfo->try_numbers = max_try;
