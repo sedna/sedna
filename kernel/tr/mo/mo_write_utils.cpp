@@ -1261,6 +1261,8 @@ xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 
 }
 
+#define GET_EFFECTIVE_PAGE_SIZE(p)	(PAGE_SIZE - sizeof(xptr) * ((PAGE_SIZE - sizeof(node_blk_hdr)) / (((node_blk_hdr*) XADDR(p))->dsc_size + sizeof(xptr))))
+
 /*splits the block into two parts and appends childs by scheme into descriptor of one of the parts*/
 void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, xptr child,xml_ns* ns)
 {
@@ -1431,7 +1433,7 @@ l_second:
 			while ( tmp->desc_next!=0)
 			{        
 				tmp=GETNEXTDESCRIPTOR_BL(parent_block,tmp);
-				if (CALCSHIFT(XADDR(new_pointer),XADDR(new_block))>PAGE_SIZE)
+				if (CALCSHIFT(XADDR(new_pointer),XADDR(new_block))>GET_EFFECTIVE_PAGE_SIZE(new_block))
 				{
 					CHECKP(new_block);
 					VMM_SIGNAL_MODIFICATION(new_block);
@@ -1506,7 +1508,7 @@ second:
 				shiftNodeToTheNewBlockExpanded (tmp, new_pointer,shift_size,size,parent_block);
 				counter++;
 				new_pointer+=shift_size;
-				if (CALCSHIFT(XADDR(new_pointer),XADDR(new_block))>PAGE_SIZE) 
+				if (CALCSHIFT(XADDR(new_pointer),XADDR(new_block))>GET_EFFECTIVE_PAGE_SIZE(new_block)) 
 				{
 					CHECKP(new_block);
 					VMM_SIGNAL_MODIFICATION(new_block);
