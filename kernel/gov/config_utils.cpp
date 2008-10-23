@@ -28,10 +28,17 @@ void fulfill_config_parameters(gov_config_struct* cfg)
   memset(cfg, '\0', sizeof(gov_config_struct));
   get_sednaconf_values(&(cfg->gov_vars));
 
-  if (lstnr_port != cfg->gov_vars.lstnr_port_number)
-      cfg->gov_vars.lstnr_port_number = lstnr_port;
-  if (ping_port != cfg->gov_vars.ping_port_number) 
-      cfg->gov_vars.ping_port_number = ping_port;
+  (-1 == gov_globals::cl_lstnr_port) ? 
+      gov_globals::cl_lstnr_port = cfg->gov_vars.lstnr_port_number : 
+      cfg->gov_vars.lstnr_port_number = gov_globals::cl_lstnr_port;
+
+  (-1 == gov_globals::cl_ping_port) ?
+      gov_globals::cl_ping_port = cfg->gov_vars.ping_port_number:
+      cfg->gov_vars.ping_port_number = gov_globals::cl_ping_port;
+
+  (-1 == gov_globals::cl_el_level) ? 
+      gov_globals::cl_el_level = cfg->gov_vars.el_level:
+      cfg->gov_vars.el_level = gov_globals::cl_el_level;
 
   cfg->gov_vars.gov_pid = uGetCurrentProcessId(__sys_call_error);
 

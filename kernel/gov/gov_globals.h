@@ -19,8 +19,14 @@ extern int gov_help_l;
 extern int gov_help_s;
 extern int gov_version;
 extern const size_t narg;
-extern int lstnr_port;
-extern int ping_port;
+
+namespace gov_globals 
+{
+    extern int cl_el_level; 
+    extern int cl_lstnr_port;
+    extern int cl_ping_port;
+}
+
 
 #endif
 

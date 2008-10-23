@@ -11,4 +11,14 @@
   <listener_port>5050</listener_port>
   <!-- Sedna server ping port number -->
   <ping_port>5151</ping_port>
+  <!-- Event logging level 
+       0 -           event logging is off
+       1 -           log only fatal errors when system goes down
+       2 -           log all errors/warnings (e.g. errors in queries)
+       3 - (default) server operational messages. This is 
+                     quite complete log of what is going on in system.
+       4 -           log everything including internal debug messages
+  -->
+  <event_log_level>3</event_log_level>
+
 </sednaconf>

@@ -195,6 +195,12 @@ int event_logger_set_sid(int sid);
 int event_logger_set_trid(int trid);
 
 /*
+* Converts level provided from the command line/configuration file to
+* the one of the known by event log (EL_LOG, EL_ERRORS, etc).
+*/
+int el_convert_log_level(int level);
+
+/*
  * Creates a file for soft fault log
  */
 UFile sedna_soft_fault_log_fh(int component, const char *suffix);

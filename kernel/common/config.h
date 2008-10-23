@@ -41,6 +41,7 @@ struct gov_header_struct
 
    int lstnr_port_number;
    int ping_port_number;
+   int el_level;
 };
 
 struct gov_config_struct

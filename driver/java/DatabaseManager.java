@@ -11,9 +11,7 @@ package ru.ispras.sedna.driver;
 //~--- JDK imports ------------------------------------------------------------
 
 import java.io.*;
-
 import java.net.*;
-
 import java.util.*;
 
 //~--- classes ----------------------------------------------------------------

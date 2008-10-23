@@ -4,9 +4,7 @@
  */
 
 #include "common/sedna.h"
-
 #include "gov/gov_globals.h"
-
 
 
 info_table *gov_table;
@@ -16,19 +14,28 @@ int background_mode = 0;
 int gov_help_s = 0;
 int gov_help_l = 0;
 int gov_version = 0;
-int lstnr_port = 5050;
-int ping_port = 5151;
 
-const size_t narg = 6;
+const size_t narg = 7;
 
+/// -1 means that parameter is not defined through command line
+/// In ths case it will be set futher in fulfill_config_parameters().
+namespace gov_globals 
+{
+    int cl_el_level   = -1; 
+    int cl_lstnr_port = -1;
+    int cl_ping_port  = -1;
+}
 
 arg_rec gov_argtable[] =
 {
-{"--help",            NULL,        arg_lit,  &gov_help_l,                  "0",   "\t\t   display this help and exit"},
-{"-help",             NULL,        arg_lit,  &gov_help_s,                  "0",   "\t\t           display this help and exit"},
-{"-version",          NULL,        arg_lit,  &gov_version,                 "0",   "\t\t   display product version and exit"},
-{"-background-mode", " on/off",   arg_bool, &background_mode,              "on",  "  start the server in the background mode (default on)"},
-{"-port-number",     " port",    arg_int,  &lstnr_port,                 "5050","\t\t   socket listening port (default 5050)"},
-{"-ping-port-number",  " port",    arg_int,  &ping_port,                 "5151","\t\t   ping listening port (default 5151)"}
+{"--help",            NULL,        arg_lit,  &gov_help_l,                   "0",   "\t\t\t display this help and exit"},
+{"-help",             NULL,        arg_lit,  &gov_help_s,                   "0",   "\t\t\t\t display this help and exit"},
+{"-version",          NULL,        arg_lit,  &gov_version,                  "0",   "\t\t\t display product version and exit"},
+{"-background-mode",  " on/off",   arg_bool, &background_mode,              "on",  "\t start in the background mode (default on)"},
+{"-port-number",      " port",     arg_int,  &gov_globals::cl_lstnr_port,   "-1",  "\t\t socket listening port (default 5050)"},
+{"-ping-port-number", " port",     arg_int,  &gov_globals::cl_ping_port,    "-1",  "\t ping listening port (default 5151)"},
+{"-el-level",         " level",    arg_int,  &gov_globals::cl_el_level,     "-1",  "\t\t event logging level (default 3):\n\t\t\t\t    0 - event logging is off\
+\t\t\t\t\t\t\t    1 - log only fatal errors\n\t\t\t\t    2 - log all errors/warnings\n\t\t\t\t    3 - system operational messages\
+\t\t\t\t\t\t    4 - log everything (+debug messages)"}
 };
 
