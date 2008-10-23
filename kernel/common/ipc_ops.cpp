@@ -180,6 +180,11 @@ static void endElement_gov_cfg(void *cfg, const char *name)
   {
      ((gov_header_struct*)cfg)->os_primitives_id_min_bound = atoi(trim(elem_content).c_str());
   }
+  if (strcmp(name, "event_log_level") == 0)
+  {
+     ((gov_header_struct*)cfg)->el_level = atoi(trim(elem_content).c_str());
+  }
+
 
   elem_content = "";
 }
@@ -229,6 +234,7 @@ void get_sednaconf_values(gov_header_struct* cfg)
     cfg->lstnr_port_number = 5050;
     cfg->ping_port_number = 5151;
     cfg->os_primitives_id_min_bound = 1500;
+    cfg->el_level = 3;
       
     strcpy(cfg->SEDNA_DATA, proc_buf);
     strcpy(sedna_cfg_file,  proc_buf);
@@ -329,7 +335,7 @@ int set_sedna_data(char* sd_buf, sys_call_error_fun fun)
         return 0;
     }
   
-    strcpy(sd_buf,     proc_buf);  /// Copy default SEDNA_DATA value
+    strcpy(sd_buf, proc_buf);  /// Copy default SEDNA_DATA value
     strcpy(sedna_cfg_file, proc_buf);
 
 #ifdef _WIN32

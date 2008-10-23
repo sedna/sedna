@@ -33,7 +33,7 @@
 using namespace std;
 
 
-void print_gov_usage()
+static void print_gov_usage()
 {
     throw USER_SOFT_EXCEPTION((string("Usage: se_gov [options]\n\n") +
                                string("options:\n") + string(arg_glossary(gov_argtable, narg, "  ")) + string("\n")).c_str());
@@ -96,6 +96,8 @@ int main(int argc, char** argv)
     pping_server *pps = NULL;
     gov_config_struct cfg;
     bool is_pps_close = true;
+    int arg_scan_ret_val = 0;
+    char buf[1024];
 
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
       so we must block SIGPIPE with sigignore.*/
@@ -107,19 +109,6 @@ int main(int argc, char** argv)
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 #endif
-
-        fulfill_config_parameters(&cfg);
-
-        SEDNA_DATA = cfg.gov_vars.SEDNA_DATA;
-      
-        check_data_folder_existence();
-
-        RenameLastSoftFaultDir();
-
-        pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
-
-        int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
-        char buf[1024];
 
         arg_scan_ret_val = arg_scanargv(argc, argv, gov_argtable, narg, NULL, buf, NULL);
 
@@ -134,6 +123,16 @@ int main(int argc, char** argv)
            print_version_and_copyright("Sedna Governor");
            throw USER_SOFT_EXCEPTION("");
         }
+         
+        fulfill_config_parameters(&cfg);
+
+        SEDNA_DATA = cfg.gov_vars.SEDNA_DATA;
+      
+        check_data_folder_existence();
+
+        RenameLastSoftFaultDir();
+
+        pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) 
             throw SYSTEM_EXCEPTION("Failed to initialize socket library");
@@ -179,8 +178,9 @@ int main(int argc, char** argv)
             string command_line = argv[0];
 
             command_line += " -background-mode off";
-            command_line += " -port-number " + int2string(lstnr_port);
-            command_line += " -ping-port-number " + int2string(ping_port);
+            command_line += " -port-number " + int2string(cfg.gov_vars.lstnr_port_number);
+            command_line += " -ping-port-number " + int2string(cfg.gov_vars.ping_port_number);
+            command_line += " -el-level " + int2string(cfg.gov_vars.el_level);
 
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
@@ -232,7 +232,7 @@ int main(int argc, char** argv)
       gov_table = new info_table();
       gov_table->init(&cfg);
 
-      if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
+      if (event_logger_start_daemon(el_convert_log_level(cfg.gov_vars.el_level), SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
           throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
       elog(EL_INFO, ("SEDNA version is %s.%s", SEDNA_VERSION, SEDNA_BUILD));

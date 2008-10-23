@@ -689,6 +689,8 @@ int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems
     el_msg->global_elevel = elevel;
     /* set component */
     el_component = EL_GOV;
+    /* until no messages received we imply that all messages have been processed */
+    el_msg->processed = 1;
 
     event_log_initialized = 1;
 
@@ -785,6 +787,19 @@ int event_logger_set_trid(int trid)
 {
     el_trid = trid;
     return 0;
+}
+
+int el_convert_log_level(int level)
+{
+    switch(level)
+    {
+        case 0: return 0;
+        case 1: return EL_FATAL;
+        case 2: return EL_WARN;
+        case 3: return EL_LOG;
+        case 4: return EL_DBG;
+        default: return EL_LOG;
+    }
 }
 
 static const char *component2str(int component)

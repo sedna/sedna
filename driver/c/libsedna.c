@@ -1770,7 +1770,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             value = (int*) attrValue;
             if (*value < 0)
             {
-               setDriverErrorMsg(conn, SE3022, "Timeout value must be > 0");        /* "Invalid argument."*/
+               setDriverErrorMsg(conn, SE3022, "Max result size value must be > 0");        /* "Invalid argument."*/
                return SEDNA_ERROR;
             }
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
