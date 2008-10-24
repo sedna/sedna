@@ -14,6 +14,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{theorem}
+\usepackage{alltt}
 \newtheorem{definition}{Definition}
 {\theorembodyfont{\rmfamily} \newtheorem{proof}{Proof}}
 \newtheorem{theo}{Theorem}
@@ -158,6 +159,12 @@ options:
                            (default on)
   -port-number <int>       socket listening port
                            (default 5050)
+  -el-level level          event logging level (default 3):
+                             0 - event logging is off
+                             1 - log only fatal errors
+                             2 - log all errors/warnings
+                             3 - system operational messages
+                             4 - log everything (+debug messages)
 \end{verbatim}
 
 \verb!--help! and \verb!-help! options provide the exhaustive information about the \verb!se_gov! command.
@@ -166,7 +173,9 @@ options:
 
 \verb!-background-mode! option allows Administrator to start \emph{Governor} in the background mode. 
 
-\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients. If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see Section \ref{sec:ConfigSedna}). If it still cannot find port number it will use default 5050 value. 
+\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients. If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see section \ref{sec:ConfigSedna}, Configuring Sedna). If it still cannot find port number it will use default 5050 value. 
+
+\verb!-el-level! option specifies the event log severity level. For details refer to the section \ref{sec:event-log}, Event Log.
 
 To get the information about which Sedna components are run use \verb!se_rc! command.
 
@@ -213,6 +222,7 @@ The file is an XML document, which satisfies the following DTD:
 <!ELEMENT os_primitives_id_min_bound (#PCDATA)>
 <!ELEMENT listener_port (#PCDATA)>
 <!ELEMENT ping_port (#PCDATA)>
+<!ELEMENT event_log_level (#PCDATA)>
 \end{verbatim}
 
 The \verb!sedna_data! element contains the path to the directory where 
@@ -225,6 +235,8 @@ The \verb!os_primitives_id_min_bound! element defines the minimal value for iden
 The \verb!listener_port! element defines the port number for listening for a connection requests from a client.
 
 The \verb!ping_port! element defines the port number of Sedna ping server that is an internal kernel mechanism. It is used to stop all Sedna processes in case of crash. 
+
+The \verb!event_log_level! defines event log severity level (0-4). For full description see section \ref{sec:event-log}, Event Log.
  
 To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, in order for new configuration to take effect you must restart Governor.
 
@@ -812,7 +824,47 @@ Run \verb!se_exp! utility with \verb!restore! command to restore data into the n
 \end{enumerate}
 
 \subsection{Event Log}
-Sedna keeps track of all important events that happen during its functioning. You can find the log file named \verb!event.log! in the \verb!data! directory where Sedna stores databases. 
+\label{sec:event-log}
+Sedna keeps track of all important events that happen during its functioning. This section describes where log files are located and how to configure Sedna logging capabilities.
+
+\subsubsection{Files}
+Log files are located in the same folder where Sedna stores databases (see section \ref{sec:dir-structure}, Sedna Directory Structure). By default it means that you can find event log files in \verb!SEDNA_INSTALL/data!. 
+Latest log file is named \verb!event.log!. Sedna also stores old event log files which are named \verb!event-{data}.log!.
+
+\subsubsection{Severity Level Configuration}
+Sedna provides a flexible way to set severity level of the logging output. It can be done either through \verb!se_gov! command line parameter: 
+
+\begin{alltt}
+se_gov -el-level \emph{number}
+\end{alltt}
+
+or defined in \verb!sednaconf.xml! (see section \ref{sec:ConfigSedna}, Configuring Sedna):
+
+\begin{alltt}
+<event_log_level>\emph{number}</event_log_level>
+\end{alltt}
+
+The following severity levels are available for this moment:
+\\
+\begin{tabular}{|l|l|}
+\hline
+\hline
+Level                & Description                                                        \\
+\hline
+\hline
+0                    & Event logging off.                                                 \\
+\hline
+1                    & Logs fatal errors that caused all database sessions to abort.      \\
+\hline
+2                    & Logs all errors and warnings.                                      \\
+\hline
+3                    & Logs detailed information (queries, IO statistics, etc).           \\
+\hline
+4                    & Logs successively-more-detailed information for use by developers. \\
+\hline
+\end{tabular}
+
+
 
 \subsection{The Examples of Using Command Line Utilities}
 
