@@ -241,12 +241,20 @@ void* extract_pragma_content(char* text, char* qname, char* pr_content)
 
 char* encoding_processing(const char *query)
 {
-	if ((unsigned char)query[0] == 0xef && (unsigned char)query[1] == 0xbb && (unsigned char)query[2] == 0xbf)
-		query += 3;
-	int query_len = strlen(query);
-	if (utf8_valid(query, query_len) >= 0)
+    int query_len = strlen(query);
+    if (query_len > 2 && 
+        (unsigned char)query[0] == 0xef && 
+        (unsigned char)query[1] == 0xbb && 
+        (unsigned char)query[2] == 0xbf) {
+    	query += 3;
+    	query_len -= 3;
+    }
+
+    if (utf8_valid(query, query_len) >= 0)
         throw USER_EXCEPTION(SE4082);
-    char * x = (char*)malloc(strlen(query) + 1);
+    
+    char* x = (char*)malloc(strlen(query) + 1);
     strcpy(x, query);
     return x;
 }
+

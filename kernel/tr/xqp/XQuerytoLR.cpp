@@ -70,7 +70,7 @@ SORAST* XQuerytoIR(const char* xquery){
 StringVector parse_batch(QueryType type, const char* batch1)
 {
 
-     char * batch = NULL;  
+     char* batch = NULL;  
      u_ftime(&t1_parser);
      bool is_vector_allocated = false;
 
@@ -80,9 +80,7 @@ StringVector parse_batch(QueryType type, const char* batch1)
      SORAST* t, *it;
      StringVector array;
 
-
-    batch = encoding_processing(batch1);
-//  getchar();
+     batch = encoding_processing(batch1);
 
      malloc_ast_vector();
      is_vector_allocated = true;
@@ -94,10 +92,7 @@ StringVector parse_batch(QueryType type, const char* batch1)
         for (it = (SORAST*)(t->down()); it != NULL; it = (SORAST*)(it->right()))
         {
            array.push_back(string(it->getText()));  
-//           printf("query: %s\n", it->getText());
         }
-
-
      }
      else
      {
