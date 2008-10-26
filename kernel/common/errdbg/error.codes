@@ -1724,7 +1724,12 @@ sedna-err:SE4903
 sedna-err:SE4621
 
    Property is unknown.
+
 sedna-err:SE4622
 
     This statement is not supported because Sedna' database security level is "authentication". (To support this statement create database with -db-security option "authorization".)
+
+sedna-err:SE5200
+
+   Internal Runtime Configuration utility error
 

@@ -42,7 +42,7 @@ extern "C"
 #endif
 
     void int2net_int(__int32 i, char *buf);
-    void net_int2int(__int32 *i, char *buf);
+    void net_int2int(__int32 *i, const char *buf);
 
     /// buf length must not be less than 20 
     char *int2c_str(int value, char *buf);

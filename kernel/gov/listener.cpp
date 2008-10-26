@@ -511,34 +511,67 @@ int sm_registering(USOCKET s, char* msg_buf)
 	return 0;
 }
 
-
+/// Sends message to the se_rc utility. Message can be one of three types:
+/// 1. | SE_RC_INVALID  |   (message length 1) - means that RC is invalid at the moment;
+/// 2. | SE_RC_OVERFLOW |   (message length 1) - means that RC is too large to be sent;
+/// 3. | SE_RC_VALID    |  sizeof(int)         | sizeof(int)        | zero ended string | ... |  sizeof(int)        | 
+///    | validness byte |  number of databases | number of sessions | db name           | ... |  number of sessions |
+///    message length > 1, RC contains list of all databases names and count of sessions for each database
 void send_runtime_config(USOCKET s)
 {
-    string rc;
+    rc_vector rc;     /// runtime configuration vector of (database name, sessions count) pairs
+    msg_struct msg;   /// message we are going to sent to the se_rc
+    int len = 1;      /// current offset within the msg.body(), 
+                      /// fist byte is always indicates validness and oveflow
     int res;
-	msg_struct msg;
 
-    rc = gov_table->get_rc();
+    msg.instruction = 0; /// not important here
 
-    msg.instruction = 0;//not important
-    msg.length = rc.size() + 1;
-
-    if (msg.length > SE_SOCKET_MSG_BUF_SIZE)
+    if( 1 == gov_table->get_rc(rc) )
     {
-       d_printf1("Too large runtime configuration\n");
-       ushutdown_close_socket(s, __sys_call_error);
-       return;
+        msg.body[0] = SE_RC_INVALID;     /// gov table is not consistent now
     }
+    else
+    {
+        msg.body[0] = SE_RC_VALID;
 
-    strcpy(msg.body, rc.c_str());
+          /// write number of databases
+        int2net_int(rc.size(), msg.body + len);
+        len += sizeof(int);
 
-    d_printf2("rc=%s\n", msg.body);
+        rc_const_iterator rit = rc.begin();
+        rc_const_iterator rit_end = rc.end();
+
+        for(; rit != rit_end; rit++)
+        {
+            int db_name_len = rit->first.size();
+              
+              /// sizeof(int) + (db_name_len + 1) means number of sessions and zero ended database name
+            if( len + sizeof(int) + (db_name_len + 1) > SE_SOCKET_MSG_BUF_SIZE )
+            {
+                elog(EL_ERROR, ("Can't send runtime configuration since it is too large"));
+                msg.body[0] = SE_RC_OVERFLOW;
+                len = 1;
+                break;
+            }
+              
+              /// write number of sessions connected to this database
+            int2net_int(rit->second, msg.body + len);
+            len += sizeof(int);
+              
+              /// write name of the database and zero at the end
+            memcpy(msg.body + len, rit->first.c_str(), db_name_len);
+            msg.body[len + db_name_len] = '\0';
+            len += db_name_len + 1;
+        }
+        
+        msg.length = len;
+    }
 
     res = sp_send_msg(s, &msg);
 
     if (res == U_SOCKET_ERROR)
-       d_printf1("Can't send reply to rc utility\n");
-
+       elog(EL_ERROR, ("Can't send runtime configuration (connection error)"));
 
     ushutdown_close_socket(s, __sys_call_error);
 }

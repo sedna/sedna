@@ -326,9 +326,22 @@ struct sm_msg_struct
 #define  EOD_SYMBOL     ((char)253)
 #define  EOALL_SYMBOL   ((char)252) 
 
-// definitions for governor
+/// command definitions for governor
 
-enum commands {CREATE_NEW_SESSION = 110, STOP = 501, REGISTER_NEW_SESSION = 121, REGISTER_DB = 122, RUNTIME_CONFIG = 600, HOTBACKUP_START = 666, IS_RUN_SM = 888};
+enum commands 
+{
+    CREATE_NEW_SESSION     = 110, 
+    STOP                   = 501, 
+    REGISTER_NEW_SESSION   = 121, 
+    REGISTER_DB            = 122, 
+    RUNTIME_CONFIG         = 600, 
+    HOTBACKUP_START        = 666, 
+    IS_RUN_SM              = 888
+};
 
+/// the following definitions are related to gov<-->rc protocol
+#define  SE_RC_VALID     ((char)1)
+#define  SE_RC_INVALID   ((char)0)
+#define  SE_RC_OVERFLOW  ((char)2)
 
 #endif

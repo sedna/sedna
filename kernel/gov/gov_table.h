@@ -10,10 +10,11 @@
 #include <map>
 
 #include "common/sedna.h"
-
 #include "common/base.h"
 #include "common/u/ushm.h"
 #include "common/config.h"
+#include "gov/rc.h"
+
 
 class Session
 {
@@ -46,7 +47,9 @@ public:
 
 typedef std::map<session_id, Session>::const_iterator s_table_const_iter;
 typedef std::map<session_id, Session>::iterator s_table_iter;
-typedef std::pair<session_id, Session> s_record;//session record, which consists of Session identifier and class session
+
+/// Session record, which consists of Session identifier and class session
+typedef std::pair<session_id, Session> s_record;
 
 typedef std::string database_id;
 
@@ -56,7 +59,6 @@ typedef std::pair<database_id, Database> db_record;
 
 typedef std::map<UPID, Process>::iterator pids_table_iter;
 typedef std::pair<UPID, Process> pid_record;
-
 
 class info_table
 {
@@ -94,7 +96,7 @@ public:
   void stop_databases();//stops all active databases
   int  check_stop_gov();
   int  check_stop_databases();
-  std::string get_rc();
+  int get_rc(rc_vector& rc);
   void add_pid(UPID, UPHANDLE &h);
   void remove_pid(UPID);
   void wait_remove_pid(UPID, bool);
