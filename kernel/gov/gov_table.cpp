@@ -19,7 +19,6 @@
 
 
 
-using namespace std;
 /*****************************************************************************/
 /********************* Session class implementation **************************/
 /*****************************************************************************/
@@ -173,12 +172,15 @@ void info_table::stop_session(const session_id& s_id)
   return;
 }
 
-int info_table::insert_session(UPID &pid/*in*/, UPHANDLE* h_p, std::string &db_name/*in*/, bool is_child, session_id& s_id/*out*/)//returns session_id and locks pid until end of session
-{
-
+/// Returns session_id and locks pid until end of session
+int 
+info_table::insert_session(/* in */  UPID &pid, 
+                                     UPHANDLE* h_p, 
+                           /* in */  std::string &db_name, 
+                                     bool is_child, 
+                           /* out */ session_id& s_id) {
 
   UPHANDLE proc_handle;
-
   
   if (h_p == NULL)
   {
@@ -203,7 +205,7 @@ int info_table::insert_session(UPID &pid/*in*/, UPHANDLE* h_p, std::string &db_n
 
 
   bool ret_val = true;
-  pair<s_table_iter, bool> it;  
+  std::pair<s_table_iter, bool> it;  
 
   
   Session s = Session(db_name, pid, proc_handle, is_child);
@@ -248,7 +250,7 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
   }
 
   Database db = Database(pid, proc_handle);
-  pair<db_table_iter, bool> it;
+  std::pair<db_table_iter, bool> it;
   it = _database_table_.insert(db_record(db_name, db));
   if (!(it.second))
   {
@@ -301,7 +303,7 @@ void info_table::put_all_free_sids_in_ids_table()
 void info_table::erase_all_closed_pids()
 {
   pids_table_iter it;
-  vector<UPID> tmp;
+  std::vector<UPID> tmp;
   int i;
 
   for(it = _pids_table_.begin(); it != _pids_table_.end(); it++)
@@ -316,10 +318,10 @@ void info_table::erase_all_closed_pids()
 }
 
 
-void info_table::stop_sessions(const string &db_name)
+void info_table::stop_sessions(const std::string &db_name)
 {
   s_table_iter it;
-  vector<session_id> tmp;
+  std::vector<session_id> tmp;
   int i=0;
 
   for(it = _session_table_.begin(); it!=_session_table_.end(); it++)
@@ -337,7 +339,7 @@ void info_table::stop_sessions(const string &db_name)
 void info_table::stop_sessions()
 {
   s_table_iter it;
-  vector<session_id> tmp;
+  std::vector<session_id> tmp;
   int i=0;
 
 
@@ -411,7 +413,7 @@ bool info_table::is_database_run(const database_id& db_id)
 void info_table::stop_databases()
 {
   db_table_iter it;
-  vector<string> tmp;
+  std::vector<std::string> tmp;
   int i=0;
 
 
@@ -445,9 +447,9 @@ int info_table::check_stop_databases()
          ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop == 1)
      {
 	fprintf(stderr,"%s: %d %s\n", __FUNCTION__, i, ((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name);
-        stop_sessions(string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
+        stop_sessions(std::string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
 
-        stop_database(string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
+        stop_database(std::string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
         ret_code = 1;
      }
   }
@@ -455,33 +457,34 @@ int info_table::check_stop_databases()
   return ret_code;
 }
 
-string info_table::get_rc()
+/// Fulfills the given runtime configuration vector
+/// If the function succeeds, the return value is 0. 
+/// Else it returns 1 which means that gov table 
+/// state is not consistent at the moment.
+int info_table::get_rc(/*in*/ rc_vector& rc)
 {
-   string rc;
-   db_table_iter it;
-
-   rc =  "Runtime configuration information for the SEDNA server:\n\n";
-   rc += "==================================\n";
-   rc += "| Components\t | Status\t |\n";
-   rc += "==================================\n"; 
-   rc += "| GOVERNOR\t | running\t |\n";
-
-
-   rc += "==================================\n";
-
-   rc += "\n\n";
-
-   if (!_database_table_.empty())
+   db_table_const_iter dit     = _database_table_.begin();
+   db_table_const_iter dit_end = _database_table_.end();
+   
+   for(; dit != dit_end; dit++)
    {
-     rc += "The following databases (SMs) are started:\n";
-
-     for(it = _database_table_.begin(); it!=_database_table_.end(); it++)
-        rc += string("\t") + it->first + "\n";
+       rc.insert ( rc_pair(dit->first, 0) );
    }
-   else
-     rc += "There is no any database (SM) started";
-     
-   return rc;
+
+   s_table_const_iter cit      = _session_table_.begin();
+   s_table_const_iter cit_end  = _session_table_.end();
+
+   for(; cit != cit_end; cit++)
+   {
+      rc_iterator rit = rc.find( (cit->second).db_name );
+      if(rit != rc.end())
+      {
+          (rit->second)++;
+      }
+      else 
+          return 1;
+   }
+   return 0;
 }
 
 void info_table::add_pid(UPID pid, UPHANDLE &h)
@@ -549,8 +552,6 @@ void info_table::wait_remove_pid(UPID pid, bool is_child_process)
 
   }
 }
-
-
 
 void info_table::wait_all_notregistered_sess()
 {

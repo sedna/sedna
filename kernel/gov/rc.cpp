@@ -1,59 +1,126 @@
 /*
  * File:  rc.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <string>
 
 #include "common/sedna.h"
 
 #include "common/argtable.h"
 #include "common/version.h"
 #include "common/pping.h"
-#include "gov/listener.h"
 #include "common/sp.h"
 #include "common/ipc_ops.h"
 #include "common/base.h"
-#include "common/u/uprocess.h"
 #include "common/config.h"
 
-using namespace std;
+#include "common/u/uprocess.h"
+#include "common/u/uutils.h"
 
-
-const size_t narg = 3;
-int rc_help;
-int rc_version;
-
-arg_rec rc_argtable[] =
-{
-{"--help",            NULL,       arg_lit,   &rc_help,                 "0",    "\t\t   display this help and exit"},
-{"-help",             NULL,       arg_lit,   &rc_help,                 "0",    "\t\t\t   display this help and exit"},
-{"-version",          NULL,       arg_lit,   &rc_version,              "0",    "\t\t   display product version and exit"}
-};
-
-
-void print_rc_usage()
-{
-   throw USER_SOFT_EXCEPTION((string("Usage: se_rc [options]\n\n") +
-                              string("options:\n") + string(arg_glossary(rc_argtable, narg, "  ")) + string("\n")).c_str());
-}
-
+#include "gov/listener.h"
+#include "gov/rc.h"
 
 #define RC_TIMEOUT		30000
 
+
+static const size_t narg = 4;
+static int rc_help;
+static int rc_version;
+static int rc_sm_list;
+
+static arg_rec rc_argtable[] =
+{
+  {"--help",            NULL,       arg_lit,   &rc_help,                 "0",    "\t\t   display this help and exit"},
+  {"-help",             NULL,       arg_lit,   &rc_help,                 "0",    "\t\t\t   display this help and exit"},
+  {"-version",          NULL,       arg_lit,   &rc_version,              "0",    "\t\t   display product version and exit"},
+  {"-sm-list",          NULL,       arg_lit,   &rc_sm_list,              "0",    "\t\t   display running databases list"}
+};
+
+
+static void print_rc_usage()
+{
+    throw USER_SOFT_EXCEPTION((std::string("Usage: se_rc [options]\n\n") +
+                               std::string("options:\n") + 
+                               std::string(arg_glossary(rc_argtable, narg, "  ")) + 
+                               std::string("\n")).c_str());
+}
+
+
+/// Parses message received from the governor. 
+/// For details see comment in the listener.cpp.
+static void parse_and_print_rc(const msg_struct* msg, bool sm_list)
+{
+    /// Anyway at this moment we know that gov is running.
+    if(!sm_list) fprintf(res_os, "Sedna GOVERNOR is running.\n\n");
+    
+    switch(msg->body[0])
+    {
+        case SE_RC_INVALID:
+            fprintf(res_os, "Runtime configuration has not been sent since it's state is inconsistent!\n");    
+            break;
+        case SE_RC_OVERFLOW:
+            fprintf(res_os, "Runtime configuration has not been sent since it is too large!\n");    
+            break;
+        case SE_RC_VALID:
+        {
+            rc_vector rc;
+            int offset = 1;
+            int db_number;
+
+            net_int2int(&db_number, msg->body + offset);
+            offset += sizeof(int);
+
+            for(int i = 0; i < db_number; i++)
+            {
+                int sessions_number;
+                net_int2int(&sessions_number, msg->body + offset);
+                offset += sizeof(int);
+
+                std::string db_name(msg->body + offset);
+                offset += db_name.size() + 1;
+
+                rc.insert( rc_pair(db_name, sessions_number) );
+
+                if(offset > SE_SOCKET_MSG_BUF_SIZE)
+                    throw USER_EXCEPTION2(SE5200, "Offset has been overflowed while parsing runtime configuration");
+            }
+
+            rc_const_iterator rit = rc.begin();
+            rc_const_iterator rit_end = rc.end();
+  
+            if(sm_list)
+            {
+                for(; rit != rit_end; rit++)
+                    fprintf(res_os, "%s\n", (rit->first).c_str());
+            }
+            else if(rit != rit_end)
+            {
+                    fprintf(res_os, "The following databases (SMs) are started:\n\n");
+                    for(; rit != rit_end; rit++)
+                        fprintf(res_os, "\t%s, %d sessions\n", (rit->first).c_str(), rit->second);
+            }
+            break;
+        } 
+        default:
+            throw USER_EXCEPTION2(SE5200, "Impossible case while parsing runtime configuration");
+    }
+}
+
 int main(int argc, char **argv)
 {
-
     char *db_name;
-    program_name_argv_0 = argv[0];
     pping_client *ppc = NULL;
     int port_number;
     USOCKET sock;
     int res;
-
     msg_struct msg;
-
     UShMem gov_mem_dsc;
     void* gov_shm_pointer = NULL;
+    SednaUserSoftException ex = USER_SOFT_EXCEPTION("There is no any sign of the SEDNA server running in the system");
+    char errmsg[1000];
+    gov_header_struct cfg;
+
 
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
       so we must block SIGPIPE with sigignore.*/
@@ -61,29 +128,24 @@ int main(int argc, char **argv)
     sigignore(SIGPIPE);
 #endif
 
+
     try{
-        SednaUserSoftException ex = USER_SOFT_EXCEPTION("There is no any sign of the SEDNA server running in the system");
-
-
-        int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
-        char errmsg[1000];
-        arg_scan_ret_val = arg_scanargv(argc, argv, rc_argtable, narg, NULL, errmsg, NULL);
+        res = arg_scanargv(argc, argv, rc_argtable, narg, NULL, errmsg, NULL);
         
         if (rc_help == 1 ) print_rc_usage();
         if (rc_version == 1) { print_version_and_copyright("Sedna Runtime Configuration Utility"); throw USER_SOFT_EXCEPTION(""); }
 
+        if (res == 0) throw USER_EXCEPTION2(SE4601, errmsg);
 
-        if (arg_scan_ret_val == 0)
-           throw USER_EXCEPTION2(SE4601, errmsg);
-
-        gov_header_struct cfg;
+        /// Parse config file to get id_min_bound value
         get_sednaconf_values(&cfg);
      
-		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
-		SetGlobalNames();
+		/// Initialize global names with given id_min_bound number
+        InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
+        SetGlobalNames();
 
+        /// Connect to the governor shared memory to get port number, ping port and SEDNA_DATA
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-
         SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
 
 
@@ -93,7 +155,7 @@ int main(int argc, char **argv)
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
-        ppc = new  pping_client(cfg.ping_port_number, EL_RC);
+        ppc = new pping_client(cfg.ping_port_number, EL_RC);
         ppc->startup(ex);
 
         event_logger_init(EL_RC, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -119,7 +181,7 @@ int main(int argc, char **argv)
 
             elog(EL_LOG, ("Request for runtime configuration satisfied"));
 
-            fprintf(res_os, "%s\n", msg.body);
+            parse_and_print_rc(&msg, rc_sm_list);
         }
         else
             throw USER_EXCEPTION(SE3003);
@@ -129,7 +191,9 @@ int main(int argc, char **argv)
         ppc->shutdown();
         delete ppc;
         ppc = NULL;
-        if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
+        
+        if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) 
+           throw SYSTEM_EXCEPTION("Failed to clean up socket library");
         
 
     } catch (SednaUserSoftException &e) {
@@ -151,4 +215,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-

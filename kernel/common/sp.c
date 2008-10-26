@@ -14,7 +14,8 @@
 int sp_recv_msg(USOCKET s, struct msg_struct *msg)
 {
     int rc = 0, got = 0;
-    char ptr[8];
+    __int64 buf = 0;
+    char* ptr = (char*)&buf;
 
     while (got < 8)
     {
@@ -47,8 +48,10 @@ int sp_recv_msg(USOCKET s, struct msg_struct *msg)
    returns U_SOCKET_ERROR if error */
 int sp_send_msg(USOCKET s, const struct msg_struct *msg)
 {
-    char ptr[8];
+    __int64 buf = 0;
+    char* ptr = (char*)&buf;
     int rc = 0, sent = 0;
+
     *(sp_int32*)ptr = htonl(msg->instruction);
     *((sp_int32*)(ptr + 4)) = htonl(msg->length);
     while (sent < 8)

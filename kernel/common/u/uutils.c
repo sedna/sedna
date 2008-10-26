@@ -115,7 +115,7 @@ void int2net_int(__int32 i, char *buf)
     memcpy(buf, (void*)&i, sizeof(__int32));
 }
 
-void net_int2int(__int32 * i, char *buf)
+void net_int2int(__int32* i, const char *buf)
 {
     memcpy((void*)i, buf, sizeof(__int32));
     *i = ntohl(*i);
