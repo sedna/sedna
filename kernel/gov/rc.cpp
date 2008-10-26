@@ -98,7 +98,7 @@ static void parse_and_print_rc(const msg_struct* msg, bool sm_list)
             {
                     fprintf(res_os, "The following databases (SMs) are started:\n\n");
                     for(; rit != rit_end; rit++)
-                        fprintf(res_os, "\t%s, %d sessions\n", (rit->first).c_str(), rit->second);
+                        fprintf(res_os, "\t%s, %d session(s)\n", (rit->first).c_str(), rit->second);
             }
             break;
         } 
