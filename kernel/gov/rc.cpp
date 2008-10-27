@@ -109,7 +109,7 @@ static void parse_and_print_rc(const msg_struct* msg, bool sm_list)
 
 int main(int argc, char **argv)
 {
-    char *db_name;
+    program_name_argv_0 = argv[0];  /// This global variable is used in uGetImageProcPath! Don't remove it!
     pping_client *ppc = NULL;
     int port_number;
     USOCKET sock;
