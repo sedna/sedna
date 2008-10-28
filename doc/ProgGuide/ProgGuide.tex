@@ -3,9 +3,7 @@
 % Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
 \documentclass[a4paper,12pt]{article}
-\font\mmmm cmtt9
 \makeatletter
-\def\verbatim@font{\mmmm}
 \makeatother
 %\usepackage[russian]{babel}
   
@@ -30,16 +28,11 @@
 \usepackage{multirow}
 
 
-%\addtolength{\hoffset}{31pt}
-%\addtolength{\textwidth}{104pt}
-%\author{Sedna Team}
 \title{Sedna Programmer's Guide}
 \date{}
 
 \begin{document}
-
 \sloppy
-
 \maketitle
 
 \TocAt*{section,subsection,subsubsection}
@@ -47,7 +40,7 @@
 
 \tableofcontents
 
-\pagebreak[4]
+\newpage
 
 \section{Client Application Programming Interfaces}
 The Sedna client application programming interfaces (APIs) provides programmatic access to Sedna from client applications developed in host programming languages. This section describes the client APIs distributed with Sedna.  
@@ -424,7 +417,7 @@ if Sedna DBMS is running on the same computer you do not need to edit this param
 %
 %                                  C API
 %
-%===========================================================================
+%==========================================================================
 \subsection{C API}
 \label{c-api}
 libsedna is the C application programmer's interface to Sedna XML DBMS. libsedna is a set of library functions that allow client programs to access one or more databases of Sedna XML DBMS and manipulate database data using database language (XQuery and XUpdate) described in Section 2.
