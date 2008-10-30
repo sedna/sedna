@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include <string.h>
 #include "wuincguard.h"
 
 #ifdef _WIN32
