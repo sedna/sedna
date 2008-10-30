@@ -1590,7 +1590,7 @@ index-scan-between ($title as xs:string, $value1 as xdt:anyAtomicType,
                                as node()*
 \end{verbatim}
 
-The \verb!index-scan-between! scans the index with the \verb!$title! name and returns the sequence of nodes which keys belong to the interval (segment, left half-interval, right half-interval) between the first \verb!$value1! and second \verb!$value2! search values. An Sedna error is raised if the search values can not be cast to the atomic type of the index. This function provides the \verb!$range! parameter of the \verb!xs:string! type to set the type of the scan. If the string is not equal to one of the following then the Sedna error SE2035 is raised: “INT” (interval), ”HINTR” (segment), “SEG” (left half-interval), ”HINTL” (right half-interval).
+The \verb!index-scan-between! scans the index with the \verb!$title! name and returns the sequence of nodes which keys belong to the interval (segment, left half-interval, right half-interval) between the first \verb!$value1! and second \verb!$value2! search values. An Sedna error is raised if the search values can not be cast to the atomic type of the index. This function provides the \verb!$range! parameter of the \verb!xs:string! type to set the type of the scan. If the string is not equal to one of the following then the Sedna error SE2035 is raised: “INT” (interval), ”SEG” (segment), “HINTR” (right half-interval), ”HINTL” (left half-interval).
 
 For example, to select the names of people who live in the London city employing the "people" index defined in Section \ref{sec:managing-value-indices}, use the following expression:
 \begin{verbatim}

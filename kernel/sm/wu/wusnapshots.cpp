@@ -1,6 +1,7 @@
 #define __WUDANG_SOURCES__
 
 #include <stdio.h>
+#include <limits.h>
 #include <list>
 #include <algorithm>
 #include "wutypes.h"
