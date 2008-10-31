@@ -590,7 +590,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
                                 -PAGE_SIZE,
                                 false);
 
-    elog(EL_LOG, ("Data file has been extended, size: %x", fileSizeNew));    
+    elog(EL_LOG, ("Temp file has been extended, size: %" PRIx64 "", fileSizeNew));
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }
 
@@ -616,7 +616,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
                                 TMP_LAYER_STARTS_WITH,
                                 0,
                                 false);
-    elog(EL_LOG, ("Temp file has been extended, size: %x", fileSizeNew));
+    elog(EL_LOG, ("Temp file has been extended, size: %" PRIx64 "", fileSizeNew));
 
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }

@@ -143,6 +143,7 @@ prepare_nix_source() {
     rm -rf $FILE_BASE/libs/expat        &&
     rm -rf $FILE_BASE/libs/chicken      &&
     rm -rf $FILE_BASE/libs/pcre         &&
+    rm -rf $FILE_BASE/libs/compat       &&
     mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
     $SED_COMMAND -e 's/(build_[A-Za-z0-9 ]+)=no/\1=yes/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
     rm -f $FILE_BASE/libs/Makefile.orig &&
