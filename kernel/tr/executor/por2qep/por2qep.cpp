@@ -4064,9 +4064,9 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
                 throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
             if (strcmp(qp->at(i).internal.list->at(1).internal.str, "ordered") == 0)
-                st_cxt->preserve_type = false;
+                st_cxt->ordering_mode = xq_ordering_mode_ordered;
             else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "unordered") == 0)
-                st_cxt->preserve_type = true;
+                st_cxt->ordering_mode = xq_ordering_mode_unordered;
             else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
         }
         else if (prolog_decl == "PPEmptyOrderDecl")
