@@ -171,8 +171,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <float.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <time.h>
 #include <sys/types.h>
