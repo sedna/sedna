@@ -297,7 +297,8 @@ tuple_cell dm_string_value(xptr node)
                                   return dm_string_value_call_traverse(node);
                               }
         case element		: {
-                                  if (E_DSC(node)->type == xs_untyped)
+                                  xmlscm_type type = E_DSC(node)->type;
+                                  if (type == xs_untyped || type == xs_anyType)
                                   {
                                       return dm_string_value_call_traverse(node);
                                   }
@@ -380,7 +381,7 @@ tuple_cell dm_typed_value(xptr node)
         case document		: return cast(dm_string_value(node), xs_untypedAtomic);
         case element		: {
                                   xmlscm_type type = E_DSC(node)->type;
-                                  if (type == xs_untyped)
+                                  if (type == xs_untyped || type == xs_anyType)
                                   {
                                       tuple_cell res = dm_string_value(node);
                                       res.set_xtype(xs_untypedAtomic);
