@@ -5,7 +5,7 @@
 PP = .
 include $(PP)/Makefile.include
 
-EFF_UID := $(shell id -u)
+#EFF_UID := $(shell id -u) # This will not work under Solaris. Solution is needed if you want to use EFF_UID! 
 
 
 ifeq ($(PLATFORM), UNIX)
