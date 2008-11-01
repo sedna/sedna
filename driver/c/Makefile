@@ -37,7 +37,7 @@ DLL_ST_OBJS = $(OBJS:$(OBJ_EXT)=.dl.st$(OBJ_EXT))
 
 
 error_codes.d: gen_error_codes.c
-	export NO_DEP=1;$(MAKE) -C $(PP)/kernel/common/errdbg generated
+	NO_DEP=1; export NO_DEP; $(MAKE) -C $(PP)/kernel/common/errdbg generated
 
 
 ifeq ("$(PLATFORM)", "WIN32")
