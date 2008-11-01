@@ -37,7 +37,8 @@ char insert_buf[BT_PAGE_SIZE];
 	  situation is treated as well: one of the pages becomes empty, while all the data
 	  in original page settle in another page.
  */
-xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size, bool insert_key)
+template<typename object>
+xptr bt_page_split_tmpl(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size, bool insert_key)
 {
 	xptr    pg_xptr = ADDR2XPTR(pg);
     xptr    next_for_rpg = BT_NEXT(pg);
@@ -60,7 +61,7 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
     }
     else
     {
-        split_idx = bt_find_split_key(pg, pretender_idx, pretender_size);
+        split_idx = bt_find_split_key_tmpl<object>(pg, pretender_idx, pretender_size);
     }
 
 	U_ASSERT(pretender_idx <= key_num);
@@ -196,7 +197,8 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
    returns the index of split key;
    the flag pretender_goes_left designates, if pretender is accounted in left or in right part;
  */
-shft bt_find_split_key(char* pg, const shft pretender_idx, shft pretender_size)
+template<typename object>
+shft bt_find_split_key_tmpl(char* pg, const shft pretender_idx, shft pretender_size)
 {
     bool    is_leaf_page = BT_IS_LEAF(pg);
     shft    key_num = BT_KEY_NUM(pg);
@@ -301,15 +303,17 @@ void bt_cluster_head (xptr & pg)
 	return;
 }
 
-xptr bt_nleaf_insert(xptr &root, const bt_key &new_key, xptr new_big_ptr, bt_path &path) 
+template<typename object>
+xptr bt_nleaf_insert_tmpl(xptr &root, const bt_key &new_key, xptr new_big_ptr, bt_path &path) 
 {
 	bt_path_item pi = path.back();
 	path.pop_back();
 	CHECKP(pi.pg);
-	return bt_internal_insert(root, (char *) XADDR(pi.pg), pi.idx, true, new_key, XNULL, 0, path, true, new_big_ptr);
+	return bt_internal_insert_tmpl<object>(root, (char *) XADDR(pi.pg), pi.idx, true, new_key, NULL_OBJECT, 0, path, true, new_big_ptr);
 }
 
-xptr bt_internal_insert(
+template<typename object>
+xptr bt_internal_insert_tmpl(
 	xptr &root,            // root page (may be changed after insertion)
 	char* pg,              // the page to insert into 
 	shft key_idx,          // key index in the page to insert into
@@ -344,7 +348,7 @@ xptr bt_internal_insert(
 			{
 				vmm_alloc_data_block(&rpg);
 				CHECKP(pg_xptr);
-				key_pg_xptr = bt_page_split(pg, rpg, key_idx, key_with_load);
+				key_pg_xptr = bt_page_split_tmpl<object>(pg, rpg, key_idx, key_with_load);
 				insert_further = true;
 			} else {
 				key_pg_xptr = pg_xptr;
@@ -361,7 +365,7 @@ xptr bt_internal_insert(
 			{
 				vmm_alloc_data_block(&rpg);
 				CHECKP(pg_xptr);
-				key_pg_xptr = bt_page_split(pg, rpg, key_idx, key_with_load, true);
+				key_pg_xptr = bt_page_split_tmpl<object>(pg, rpg, key_idx, key_with_load, true);
 				insert_further = true;
 			} else {
 				key_pg_xptr = pg_xptr;
@@ -370,7 +374,7 @@ xptr bt_internal_insert(
 
 			U_ASSERT(bt_page_fit((char*)XADDR(key_pg_xptr), key_with_load));
 
-			bt_leaf_do_insert_key((char*)XADDR(key_pg_xptr), key_idx, key, obj);
+			bt_leaf_do_insert_key_tmpl<object>((char*)XADDR(key_pg_xptr), key_idx, key, obj);
 		} else {
 			// Ic.  Insert object into leaf page
 
@@ -382,21 +386,21 @@ xptr bt_internal_insert(
 				if (BT_KEY_NUM(pg) == 1)
 				{ /* cluster case - nothing is promoted, instantly return */
 				#ifdef PERMIT_CLUSTERS
-					bt_page_clusterize(root, pg, rpg, obj, obj_idx);
+					bt_page_clusterize_tmpl<object>(root, pg, rpg, obj, obj_idx);
 					return rpg;
 				#else
 					throw USER_EXCEPTION2(SE1008, "Not enough space to insert new key/object into page (clusterization prohibited)");
 				#endif	
 				}
 				/* not cluster case - page splitting */
-				key_pg_xptr = bt_page_split(pg, rpg, key_idx, sizeof(object), false);
+				key_pg_xptr = bt_page_split_tmpl<object>(pg, rpg, key_idx, sizeof(object), false);
 				insert_further = true;
 			} else {
 				key_pg_xptr = pg_xptr;
 			}
 
 			CHECKP(key_pg_xptr);
-			bt_do_insert_obj((char*)XADDR(key_pg_xptr), key_idx, obj, obj_idx);
+			bt_do_insert_obj_tmpl<object>((char*)XADDR(key_pg_xptr), key_idx, obj, obj_idx);
 		}
 
 		// II. If splitting took place
@@ -455,7 +459,8 @@ xptr bt_internal_insert(
    mark it as cluster, i.e. form the cluster. The new page is initially unformatted. Insert object
    into new page
  */
-void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj, shft obj_idx)
+template<typename object>
+void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object &obj, shft obj_idx)
 {
 	xptr        pg_xptr = ADDR2XPTR(pg);
     xptr        next_for_rpg;
@@ -574,7 +579,8 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
    of leaf page; this function is used when new key is to be created in the page;
    no check for fittness
  */
-void bt_leaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const object &obj)
+template<typename object>
+void bt_leaf_do_insert_key_tmpl(char* pg, shft key_idx, const bt_key& key, const object &obj)
 {
 	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
 	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
@@ -658,7 +664,8 @@ void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xpt
    the key designated with index already exists in key table;
    no check for fittness
  */
-void bt_do_insert_obj(char* pg, shft key_idx, const object &obj, shft obj_idx)
+template<typename object>
+void bt_do_insert_obj_tmpl(char* pg, shft key_idx, const object &obj, shft obj_idx)
 {
 	int		old_heap_shift = BT_HEAP(pg);
 	int		new_heap_shift = old_heap_shift - sizeof(object);
@@ -731,4 +738,10 @@ bool bt_page_fit(char* pg, shft size)
 }
 
 
+
+#define MAKE_IMPLS(t) \
+    template xptr bt_internal_insert_tmpl<t>(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &new_key, const t &obj, shft obj_idx, bt_path &path, bool with_bt, xptr new_big_ptr); \
+	template xptr bt_nleaf_insert_tmpl<t>(xptr &root, const bt_key &new_key, xptr new_big_ptr, bt_path &path);
+
+#include "tr/idx/btree/make_impl.h"
 

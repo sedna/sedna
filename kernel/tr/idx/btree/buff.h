@@ -22,7 +22,8 @@ char*	bt_tune_buffering(bool first_buffer, shft key_size);
 void	bt_buffer_header(char* pg, char* & dst);
 void	bt_buffer_key(char* pg, char* & src, char* & dst);
 void	bt_buffer_bigptr(char* pg, char* & src, char* & dst);
-void	bt_buffer_chnk(char* pg, char* & src, char* & dst);
+template<typename object>
+void	bt_buffer_chnk_tmpl(char* pg, char* & src, char* & dst);
 shft	bt_buffer_heap_shft();
 void	bt_buffer_heap_shft_dec(shft size);
 void	bt_buffer_heap_shft_inc(shft size);

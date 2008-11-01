@@ -122,7 +122,8 @@ bool bt_merge_pages(xptr pl, xptr pr)
 }
 
 
-xptr bt_try_squeeze_cluster(xptr leaf) 
+template<typename object>
+xptr bt_try_squeeze_cluster_tmpl(xptr leaf) 
 {
 	CHECKP(leaf);
 	char * pg = (char *) XADDR(leaf);
@@ -259,12 +260,13 @@ bool bt_try_merge_pages(xptr pr)
 
 
 
-object bt_get_cluster_obj_from_left(char * pg) {
+template<typename object>
+object bt_get_cluster_obj_from_left_tmpl(char * pg) {
 	object a = * (object *) (pg + BT_CHNK_ITEM_SHIFT(pg, 0) + (BT_CHNK_ITEM_SIZE(pg, 0) - 1) * sizeof(object));
 	if (BT_CHNK_ITEM_SIZE(pg, 0) == 1) {
-		bt_leaf_delete_key(pg, 0);
+		bt_leaf_delete_key_tmpl<object>(pg, 0);
 	} else {
-		bt_delete_obj(pg, 0, BT_CHNK_ITEM_SIZE(pg, 0) - 1);
+		bt_delete_obj_tmpl<object>(pg, 0, BT_CHNK_ITEM_SIZE(pg, 0) - 1);
 	}
 	return a;
 }
@@ -297,7 +299,8 @@ struct break_data
 	bt_key key;
 };
 
-bool bt_recoursive_delete(const bt_key& key, bt_path &path_fore, shft obj_idx, break_data &bd)
+template<typename object>
+bool bt_recoursive_delete_tmpl(const bt_key& key, bt_path &path_fore, shft obj_idx, break_data &bd)
 {
 	bt_path_item pi = path_fore.front();
 	xptr ptr = pi.pg; CHECKP(ptr);
@@ -306,20 +309,20 @@ bool bt_recoursive_delete(const bt_key& key, bt_path &path_fore, shft obj_idx, b
 
 	if (BT_IS_LEAF(pg)) {
 		if (BT_CHNK_ITEM_SIZE(pg, key_idx) > 1) {
-			bt_delete_obj(pg, key_idx, obj_idx);
+			bt_delete_obj_tmpl<object>(pg, key_idx, obj_idx);
 		} else {
 			if (BT_IS_CLUS_TAIL(pg) && (key_idx == 0)) {
 				xptr ptr_prev = BT_PREV(pg);
 				CHECKP(ptr_prev);
-				object a = bt_get_cluster_obj_from_left((char *) XADDR(ptr_prev));
+				object a = bt_get_cluster_obj_from_left_tmpl<object>((char *) XADDR(ptr_prev));
 				CHECKP(ptr);
 				* (object *) (pg + BT_CHNK_ITEM_SHIFT(pg, 0)) = a;
 			} else {
-				bt_leaf_delete_key(pg, key_idx);
+				bt_leaf_delete_key_tmpl<object>(pg, key_idx);
 			}
 		}
 		if (BT_IS_CLUS(pg)) {
-			path_fore.front().pg = bt_try_squeeze_cluster(ptr);
+			path_fore.front().pg = bt_try_squeeze_cluster_tmpl<object>(ptr);
 			CHECKP(ptr);
 		}
 		return true; 
@@ -328,7 +331,7 @@ bool bt_recoursive_delete(const bt_key& key, bt_path &path_fore, shft obj_idx, b
 	bool has_key;
 	path_fore.pop_front();
 
-	if (!bt_recoursive_delete(key, path_fore, obj_idx, bd)) {
+	if (!bt_recoursive_delete_tmpl<object>(key, path_fore, obj_idx, bd)) {
 		return false;
 	}
 
@@ -407,12 +410,13 @@ bool bt_recoursive_delete(const bt_key& key, bt_path &path_fore, shft obj_idx, b
 	return merged;
 }
 
-bool bt_internal_delete(xptr &root, const bt_key& key, shft obj_idx, bt_path &path) 
+template<typename object>
+bool bt_internal_delete_tmpl(xptr &root, const bt_key& key, shft obj_idx, bt_path &path) 
 {
 	break_data bd;
 
 	bd.broken = false;
-	bt_recoursive_delete(key, path, obj_idx, bd);
+	bt_recoursive_delete_tmpl<object>(key, path, obj_idx, bd);
 
 	if (bd.broken) {
 		bt_path split_path;
@@ -428,7 +432,7 @@ bool bt_internal_delete(xptr &root, const bt_key& key, shft obj_idx, bt_path &pa
 			bd.level--;
 		}
 
-		bt_nleaf_insert(root, bd.key, bd.pg, split_path);
+		bt_nleaf_insert_tmpl<object>(root, bd.key, bd.pg, split_path);
 	}
 
 	CHECKP(root); 
@@ -465,13 +469,14 @@ bool bt_internal_delete(xptr &root, const bt_key& key, shft obj_idx, bt_path &pa
 	This function provide actual (phisical) deletion of objects. They don't check anything.
 */
 
-void bt_delete_obj(char* pg, shft key_idx, shft obj_idx) 
+template<typename object>
+void bt_delete_obj_tmpl(char* pg, shft key_idx, shft obj_idx) 
 {
 // This function works properly in assumption that CHUNK_ITEM_SIZE >= 2
 
 	if (*((shft*)BT_CHNK_TAB_AT(pg, key_idx) + 1) == 1)
     {
-        bt_leaf_delete_key(pg, key_idx);
+        bt_leaf_delete_key_tmpl<object>(pg, key_idx);
         return;
     }
 
@@ -500,7 +505,8 @@ void bt_delete_obj(char* pg, shft key_idx, shft obj_idx)
 
 }
 
-void bt_leaf_delete_key(char* pg, shft key_idx) 
+template<typename object>
+void bt_leaf_delete_key_tmpl(char* pg, shft key_idx) 
 {
 // This function works properly in assumption that CHUNK_ITEM_SIZE = 1 !!!
 	U_ASSERT(BT_CHNK_ITEM_SIZE(pg, key_idx) == 1);
@@ -616,3 +622,8 @@ bool bt_nleaf_subst_key(char* pg, shft key_idx, bt_key key)
 	return true;
 }
 
+
+#define MAKE_IMPLS(t) \
+	template bool bt_internal_delete_tmpl<t>(xptr &root, const bt_key& key, shft obj_idx, bt_path &path); \
+    template void bt_leaf_delete_key_tmpl<t>(char* pg, shft key_idx);
+#include "tr/idx/btree/make_impl.h"

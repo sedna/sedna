@@ -43,7 +43,8 @@ void bt_page_consistency(char* pg, bt_key* key) {
 	
 /* check page consistency (adult) */
 
-void bt_check_page_consistency(xptr pg, bt_key* k, bool leftmost)
+template<typename object>
+void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 {
 	char * p = (char *) XADDR(pg);
 	bt_key ck;
@@ -80,7 +81,7 @@ void bt_check_page_consistency(xptr pg, bt_key* k, bool leftmost)
 			xptr save = XNULL;
 			for (int j = 0; j < v->c_size; j++) {
 				// order of objects
-				CHECK_ASSERTION(bt_cmp_obj(pt[j], save) > 0);
+				CHECK_ASSERTION(bt_cmp_obj_tmpl<object>(pt[j], save) > 0);
 				save = pt[j];
 				CHECK_ASSERTION(XADDR(pt[j]) != NULL);
 				xptr a = removeIndirection(pt[j]);
@@ -99,11 +100,12 @@ void bt_check_page_consistency(xptr pg, bt_key* k, bool leftmost)
 	}
 }
 
-void bt_check_bsubtree(xptr pg, bt_key* left_key, bool leftmost)
+template<typename object>
+void bt_check_bsubtree_tmpl(xptr pg, bt_key* left_key, bool leftmost)
 {
 	char * p = (char *) XADDR(pg);
 
-	bt_check_page_consistency(pg, left_key, leftmost);
+	bt_check_page_consistency_tmpl<object>(pg, left_key, leftmost);
 
 	CHECKP(pg);
 
@@ -112,7 +114,7 @@ void bt_check_bsubtree(xptr pg, bt_key* left_key, bool leftmost)
 	if (!BT_IS_LEAF(p)) {
 		cpage = BT_LMP(p);
 		if (cpage != XNULL) {
-			bt_check_bsubtree(cpage, &ck, true);
+			bt_check_bsubtree_tmpl<object>(cpage, &ck, true);
 			CHECKP(pg);
 		}
 
@@ -121,15 +123,16 @@ void bt_check_bsubtree(xptr pg, bt_key* left_key, bool leftmost)
 			if (cpage != XNULL) CHECK_ASSERTION(ck < nk);
 			cpage = *((xptr *) BT_BIGPTR_TAB_AT(p, i)); 
 			ck = nk;
-			bt_check_bsubtree(cpage, &ck, false);
+			bt_check_bsubtree_tmpl<object>(cpage, &ck, false);
 			CHECKP(pg);
 		}
 	}
 }
 
-void bt_check_btree(xptr pg) 
+template<typename object>
+void bt_check_btree_tmpl(xptr pg) 
 {
 	bt_key k;
-	bt_check_bsubtree(pg, &k, true);
+	bt_check_bsubtree_tmpl<object>(pg, &k, true);
 }
 

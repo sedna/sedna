@@ -73,7 +73,8 @@ void bt_buffer_bigptr(char* pg, char* & src, char* & dst) {
    dst must point to the slot in chunk table inside buffer where to transfer
    src and dst pointers are automatically shifted to the next slots in their tables
  */
-void bt_buffer_chnk(char* pg, char* & src, char* & dst) {
+template<typename object>
+void bt_buffer_chnk_tmpl(char* pg, char* & src, char* & dst) {
 	char* chnk_ptr = pg + *(shft*)src;
 	shft  chnk_size = *((shft*)src + 1);
 	heap-=chnk_size*sizeof(object);

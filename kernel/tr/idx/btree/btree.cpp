@@ -52,7 +52,8 @@ void bt_drop(const xptr &root)
     } while (cur_xpg != XNULL);
 }
 
-bt_cursor bt_find(const xptr &root, const bt_key &key)
+template<typename object>
+bt_cursor_tmpl<object> bt_find_tmpl(const xptr &root, const bt_key &key)
 {
     bool rc;
     shft key_idx;
@@ -61,13 +62,14 @@ bt_cursor bt_find(const xptr &root, const bt_key &key)
     CHECKP(res_blk);
     rc = bt_find_key(res_blk, (bt_key*)&key, key_idx);
     if (!rc) /* no matching key */
-        return bt_cursor();
+        return bt_cursor_tmpl<object>();
     else
-        return bt_cursor((char*)XADDR(res_blk), key_idx);
+        return bt_cursor_tmpl<object>((char*)XADDR(res_blk), key_idx);
 }
 
 /// !!! potential error here
-bt_cursor bt_find_ge(const xptr &root, const bt_key &key)
+template<typename object>
+bt_cursor_tmpl<object> bt_find_ge_tmpl(const xptr &root, const bt_key &key)
 {
     bool rc;
     shft key_idx;
@@ -85,22 +87,23 @@ bt_cursor bt_find_ge(const xptr &root, const bt_key &key)
         if (BT_IS_CLUS(pg))
         {
             pg = bt_cluster_tail(pg);
-            if (BT_KEY_NUM(pg) > 1) return bt_cursor(pg, 1);
+            if (BT_KEY_NUM(pg) > 1) return bt_cursor_tmpl<object>(pg, 1);
         }
 #endif
         next = BT_NEXT(pg);
         if (next != XNULL)
         {
             CHECKP(next);
-            return bt_cursor((char*)XADDR(next), 0); 
+            return bt_cursor_tmpl<object>((char*)XADDR(next), 0); 
         } 
-        else return bt_cursor();
+        else return bt_cursor_tmpl<object>();
     } 
-    else return bt_cursor((char*)XADDR(res_blk), key_idx);
+    else return bt_cursor_tmpl<object>((char*)XADDR(res_blk), key_idx);
 }
 
 /// !!! potential error here
-bt_cursor bt_find_gt(const xptr &root, const bt_key &key)
+template<typename object>
+bt_cursor_tmpl<object> bt_find_gt_tmpl(const xptr &root, const bt_key &key)
 {
     bool rc;
     shft key_idx;
@@ -118,20 +121,20 @@ bt_cursor bt_find_gt(const xptr &root, const bt_key &key)
         if (BT_IS_CLUS(pg))
         {
             pg = bt_cluster_tail(pg);
-            if (BT_KEY_NUM(pg) > 1) return bt_cursor(pg, 1);
+            if (BT_KEY_NUM(pg) > 1) return bt_cursor_tmpl<object>(pg, 1);
         }
 #endif
         next = BT_NEXT(pg);
         if (next != XNULL)
         {
             CHECKP(next);
-            return bt_cursor((char*)XADDR(next), 0);
+            return bt_cursor_tmpl<object>((char*)XADDR(next), 0);
 		}
-        else return bt_cursor();
+        else return bt_cursor_tmpl<object>();
     }
     else
     {
-        bt_cursor c((char*)XADDR(res_blk), key_idx);
+        bt_cursor_tmpl<object> c((char*)XADDR(res_blk), key_idx);
 		if (!bt_cmp_key(c.get_key(),old_val))
 		{
 			c.bt_next_key();
@@ -144,7 +147,8 @@ bt_cursor bt_find_gt(const xptr &root, const bt_key &key)
     }
 }
 
-bt_cursor bt_lm(const xptr& root) 
+template<typename object>
+bt_cursor_tmpl<object> bt_lm_tmpl(const xptr& root) 
 {
     CHECKP(root);
     char* pg = (char*)XADDR(root);
@@ -155,16 +159,17 @@ bt_cursor bt_lm(const xptr& root)
 
     if (!BT_IS_LEAF(pg)) 
     {	
-        return bt_lm(BT_LMP(pg));
+        return bt_lm_tmpl<object>(BT_LMP(pg));
 	} 
     else 
     {
-        return bt_cursor(pg, 0);
+        return bt_cursor_tmpl<object>(pg, 0);
     }
 }
 
 
-void bt_insert(xptr &root, const bt_key &key, const object &obj,bool with_bt)
+template<typename object>
+void bt_insert_tmpl(xptr &root, const bt_key &key, const object &obj,bool with_bt)
 {
     bool  rc;
     shft  key_idx = 0;
@@ -182,7 +187,7 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj,bool with_bt)
     insert_pg = (char*)XADDR(insert_xpg);
 
 	if (rc) {
-		bt_leaf_find_obj(insert_xpg, obj, key_idx, obj_idx);
+		bt_leaf_find_obj_tmpl<object>(insert_xpg, obj, key_idx, obj_idx);
 	    CHECKP(insert_xpg);
 	    insert_pg = (char*)XADDR(insert_xpg);
 
@@ -193,12 +198,13 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj,bool with_bt)
 			key_idx = BT_KEY_NUM(insert_pg);
 	}
 
-	bt_internal_insert(root, insert_pg, key_idx, !rc, key, obj, obj_idx, split_path, with_bt, XNULL);
+	bt_internal_insert_tmpl<object>(root, insert_pg, key_idx, !rc, key, obj, obj_idx, split_path, with_bt, XNULL);
 
 //	bt_check_btree(root);
 }
 
-void bt_modify(xptr &root, const bt_key &old_key, const bt_key &new_key, const object &obj)
+template<typename object>
+void bt_modify_tmpl(xptr &root, const bt_key &old_key, const bt_key &new_key, const object &obj)
 {
     bt_delete(root, old_key, obj);
     bt_insert(root, new_key, obj);
@@ -208,7 +214,8 @@ void bt_modify(xptr &root, const bt_key &old_key, const bt_key &new_key, const o
    implementation of page merge/drop
  */
 /* delete key/obj pair */
-void bt_delete(xptr &root, const bt_key& key, const object &obj)
+template<typename object>
+void bt_delete_tmpl(xptr &root, const bt_key& key, const object &obj)
 {
     bool    rc;
     shft    key_idx;
@@ -222,7 +229,7 @@ void bt_delete(xptr &root, const bt_key& key, const object &obj)
 
     if (bt_find_key(delete_xpg, (bt_key*)&key, key_idx, &merge_path))
     {
-		if (!bt_leaf_find_obj(delete_xpg, obj, key_idx, obj_idx)) { 
+		if (!bt_leaf_find_obj_tmpl<object>(delete_xpg, obj, key_idx, obj_idx)) { 
 			U_ASSERT(false);
 			throw USER_EXCEPTION2(SE1008, "Cannot delete object which is not in the btree");
 		}
@@ -233,7 +240,7 @@ void bt_delete(xptr &root, const bt_key& key, const object &obj)
 		pi.idx = key_idx;
 		merge_path.push_back(pi);
 
-		bt_internal_delete(root, key, obj_idx, merge_path);
+		bt_internal_delete_tmpl<object>(root, key, obj_idx, merge_path);
     }
 	else 
 	{
@@ -247,7 +254,8 @@ void bt_delete(xptr &root, const bt_key& key, const object &obj)
 
 
 /* delete key and all associated objects */
-void bt_delete(xptr &root, const bt_key &key) 
+template<typename object>
+void bt_delete_tmpl(xptr &root, const bt_key &key) 
 {
     bool    rc;
     shft    key_idx;
@@ -261,7 +269,7 @@ void bt_delete(xptr &root, const bt_key &key)
     { /* page could change */
         CHECKP(delete_xpg);
         delete_pg = (char*)XADDR(delete_xpg);
-        bt_leaf_delete_key(delete_pg, key_idx);
+        bt_leaf_delete_key_tmpl<object>(delete_pg, key_idx);
     }
 }
 /* drop empty page*/
@@ -342,3 +350,14 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 	}
 }
 */
+
+
+#define MAKE_IMPLS(t) \
+	template bt_cursor_tmpl<t> bt_find_tmpl(const xptr &root, const bt_key &key); \
+	template bt_cursor_tmpl<t> bt_find_ge_tmpl(const xptr &root, const bt_key &key); \
+    template bt_cursor_tmpl<t> bt_find_gt_tmpl<t>(const xptr &root, const bt_key &key); \
+	template bt_cursor_tmpl<t> bt_lm_tmpl<t>(const xptr& root); \
+	template void bt_insert_tmpl<t>(xptr &root, const bt_key &key, const t &obj,bool with_bt); \
+	template void bt_delete_tmpl<t>(xptr &root, const bt_key& key, const t &obj); \
+	template void bt_delete_tmpl<t>(xptr &root, const bt_key& key);
+#include "tr/idx/btree/make_impl.h"
