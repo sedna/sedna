@@ -113,7 +113,8 @@ CHECKP(next_pg_xptr);
    adjacent pages in cluster case, while the 'pg' argument dynamically focuses to next searched page.
    In case of cluster the initial 'pg' argument must address head cluster page.
  */
-bool bt_leaf_find_obj(xptr &xpg, object obj, shft key_idx, shft &obj_idx) {
+template<typename object>
+bool bt_leaf_find_obj_tmpl(xptr &xpg, object obj, shft key_idx, shft &obj_idx) {
 CHECKP(xpg);
 	char*	pg = (char*)XADDR(xpg);
 	bool	rc;
@@ -123,7 +124,7 @@ CHECKP(xpg);
 	if (key_idx >= BT_KEY_NUM(pg)) throw USER_EXCEPTION2(SE1008, "Bad key index");
 
 	c = *BT_CHNK_ITEM_AT(pg, key_idx);
-	rc = bt_locate_obj_bisection((object*)(pg + c.c_shft), c.c_size, obj, obj_idx);
+	rc = bt_locate_obj_bisection_tmpl<object>((object*)(pg + c.c_shft), c.c_size, obj, obj_idx);
 
 //#ifdef PERMIT_CLUSTERS
 	while (!rc && BT_IS_CLUS(pg) && !BT_IS_CLUS_TAIL(pg) && (obj_idx == BT_RIGHTMOST)) {
@@ -133,7 +134,7 @@ CHECKP(xpg);
 		CHECKP(xpg);
 		pg = (char*)XADDR(xpg);
 		c = *BT_CHNK_ITEM_AT(pg, 0);
-		rc = bt_locate_obj_bisection((object*)(pg + c.c_shft), c.c_size, obj, obj_idx);
+		rc = bt_locate_obj_bisection_tmpl<object>((object*)(pg + c.c_shft), c.c_size, obj, obj_idx);
 	}
 //#endif
 
@@ -192,3 +193,7 @@ bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx, bt_path *path, bool wit
 		return bt_leaf_find_key(xpg, key, key_idx, with_bt);
 	}
 }
+
+
+#define MAKE_IMPLS(t) template bool bt_leaf_find_obj_tmpl<t>(xptr &xpg, t obj, shft key_idx, shft &obj_idx);
+#include "tr/idx/btree/make_impl.h"

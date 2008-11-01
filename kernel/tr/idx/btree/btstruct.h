@@ -14,9 +14,23 @@
 
 #include <list>
 
-typedef xptr object;
+//typedef xptr object;
+//#define NULL_OBJECT	XNULL
 
-#define NULL_OBJECT	XNULL
+template<typename object> class null_object {};
+
+template<> class null_object<xptr>
+{
+public: static inline xptr get() { return XNULL; }
+};
+template<> class null_object<int>
+{
+public: static inline int get() { return 0; }
+};
+//this is useable only if object type is defined
+#define NULL_OBJECT null_object<object>::get()
+
+
 
 struct bt_path_item {
 	xptr	pg;
@@ -107,7 +121,8 @@ bool operator<=(const bt_key& k1, const bt_key& k2);
    cluster, cursor's key is the 1-st one in the key table, in accordance with page clusters architecture
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-class bt_cursor 
+template<typename object>
+class bt_cursor_tmpl
 {
 private:
     xptr    cur_page;		/* current leaf page (may flow) */
@@ -120,8 +135,8 @@ private:
     bt_key  key;			/* current key */
 
 public:
-    bt_cursor();
-    bt_cursor(char* pg, shft key_idx);
+    bt_cursor_tmpl();
+    bt_cursor_tmpl(char* pg, shft key_idx);
     object  bt_next_obj();/* obtain next object - begining from 0-th */
 	void  bt_set_next_obj(object obj);	
     bool    bt_next_key();	/* focus on next key; note that initially cursor is already focused

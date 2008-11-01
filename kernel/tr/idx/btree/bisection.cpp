@@ -12,7 +12,8 @@
    to the index of nearest bigger element in object table otherwise. In case the searched object is bigger
    than all objects in the object table, obj_idx is set to BT_RIGHTMOST, in case smaller than all objects -
    to BT_LEFTMOST */
-bool bt_locate_obj_bisection(const object* ar, shft ar_size, const object &obj, shft /*out*/ &obj_idx)
+template<typename object>
+bool bt_locate_obj_bisection_tmpl(const object* ar, shft ar_size, const object &obj, shft /*out*/ &obj_idx)
 {
     if (ar_size <= 0)
     {
@@ -28,7 +29,7 @@ bool bt_locate_obj_bisection(const object* ar, shft ar_size, const object &obj, 
 
     while (l_idx != m_idx)
     {
-        rc = bt_cmp_obj(*(ar + m_idx), obj);
+        rc = bt_cmp_obj_tmpl<object>(*(ar + m_idx), obj);
         if (!rc)
         { /* ! obj found */
             obj_idx = m_idx;
@@ -42,7 +43,7 @@ bool bt_locate_obj_bisection(const object* ar, shft ar_size, const object &obj, 
     /* now m_idx == l_idx */
     if (l_idx < r_idx)
     {
-        rc = bt_cmp_obj(*(ar + l_idx), obj);
+        rc = bt_cmp_obj_tmpl<object>(*(ar + l_idx), obj);
 
         if (!rc)
         { /* obj found */
@@ -57,7 +58,7 @@ bool bt_locate_obj_bisection(const object* ar, shft ar_size, const object &obj, 
 		} 
         else
         {
-            rc = bt_cmp_obj(*(ar + r_idx), obj);
+            rc = bt_cmp_obj_tmpl<object>(*(ar + r_idx), obj);
             if (!rc)
             { /* obj found */
                 obj_idx = r_idx;
@@ -78,7 +79,7 @@ bool bt_locate_obj_bisection(const object* ar, shft ar_size, const object &obj, 
     } 
     else 
     { /* ! must be l_idx == r_idx */
-        rc = bt_cmp_obj(*(ar + r_idx), obj);
+        rc = bt_cmp_obj_tmpl<object>(*(ar + r_idx), obj);
         if (!rc)
         { /* obj found */
             obj_idx = r_idx;
@@ -186,3 +187,9 @@ bool bt_locate_key_bisection(char* pg, const char* ar, shft ar_size, shft ar_el_
         }
     }
 }
+
+
+
+#define MAKE_IMPLS(t) template bool bt_locate_obj_bisection_tmpl<t>(const t* ar, shft ar_size, const t &obj, shft /*out*/ &obj_idx);
+
+#include "tr/idx/btree/make_impl.h"

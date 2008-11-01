@@ -46,7 +46,8 @@ int bt_cmp_key(const bt_key& k1, const bt_key& k2)
 }
 
 /* returns 1 if o1>o2; -1 if o1<o2; 0 if o1=o2 */
-int bt_cmp_obj(const object &o1, const object &o2) {
+template<typename object>
+int bt_cmp_obj_tmpl(const object &o1, const object &o2) {
 	if (o2 < o1) return 1;
 	if (o1 < o2) return -1;
 	return 0;
@@ -114,3 +115,7 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
 	}
 }
+
+
+#define MAKE_IMPLS(t) template int bt_cmp_obj_tmpl<t>(const t &o1, const t &o2);
+#include "tr/idx/btree/make_impl.h"

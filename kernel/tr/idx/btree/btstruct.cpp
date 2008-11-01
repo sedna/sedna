@@ -165,7 +165,8 @@ bool operator<=(const bt_key& k1, const bt_key& k2)
 /// bt_cursor implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-bt_cursor::bt_cursor() 
+template<typename object>
+bt_cursor_tmpl<object>::bt_cursor_tmpl() 
 {
     cur_page = XNULL;
     key_idx = 0;
@@ -175,7 +176,8 @@ bt_cursor::bt_cursor()
 }
 
 /* note, page must be uploaded in memory */
-bt_cursor::bt_cursor(char* pg, shft the_key_idx)
+template<typename object>
+bt_cursor_tmpl<object>::bt_cursor_tmpl(char* pg, shft the_key_idx)
 {
     xptr pg_xptr = ADDR2XPTR(pg);
 
@@ -195,7 +197,8 @@ bt_cursor::bt_cursor(char* pg, shft the_key_idx)
 	key.setnew(pg, the_key_idx);
 }
 
-void  bt_cursor::bt_set_next_obj(object obj)
+template<typename object>
+void  bt_cursor_tmpl<object>::bt_set_next_obj(object obj)
 {
 	//object  result;
     char*   pg;
@@ -246,7 +249,8 @@ void  bt_cursor::bt_set_next_obj(object obj)
     obj_count++;
    // return result;
 }
-object bt_cursor::bt_next_obj()
+template<typename object>
+object bt_cursor_tmpl<object>::bt_next_obj()
 {
     object  result;
     char*   pg;
@@ -296,7 +300,8 @@ object bt_cursor::bt_next_obj()
     return result;
 }
 
-bool bt_cursor:: bt_next_key()
+template<typename object>
+bool bt_cursor_tmpl<object>:: bt_next_key()
 {
     if (cur_page == XNULL) /* we went behind the right-most key in our btree */
         return false;
@@ -337,7 +342,19 @@ bool bt_cursor:: bt_next_key()
     return true;
 }
 
-bool bt_cursor::is_null() const
+template<typename object>
+bool bt_cursor_tmpl<object>::is_null() const
 {
     return cur_page == XNULL;
 }
+
+
+
+#define MAKE_IMPLS(t) \
+	template bt_cursor_tmpl<t>::bt_cursor_tmpl(); \
+	template bt_cursor_tmpl<t>::bt_cursor_tmpl(char* pg, shft the_key_idx); \
+	template t bt_cursor_tmpl<t>::bt_next_obj(); \
+	template bool bt_cursor_tmpl<t>::bt_next_key(); \
+    template bool bt_cursor_tmpl<t>::is_null() const; \
+	template void bt_cursor_tmpl<t>::bt_set_next_obj(t obj);
+#include "tr/idx/btree/make_impl.h"
