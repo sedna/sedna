@@ -178,7 +178,7 @@ document_type get_document_type(const char* title, db_entity_type type);
 
 
 schema_node* get_system_doc(document_type type, const char* title);
-void clear_temporary(void);
+void system_tables_on_kernel_statement_end();
 
 //various output of xml document to string_buffer
 
