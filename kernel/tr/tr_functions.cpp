@@ -62,6 +62,7 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
        PathExpr_reset_pers();
 
        vmm_delete_tmp_blocks();
+       system_tables_on_kernel_statement_end();
        indirection_table_on_statement_end();
        
        is_qep_built = false;

@@ -20,6 +20,7 @@
 #include "tr/idx/btree/btree.h"
 #include "tr/triggers/triggers_data.h"
 
+extern xptr TMPNIDBLK; /* current temporary block for nid prefixes, defined in numb_scheme.cpp */
 
 typedef void (*system_fun)(xptr root, const char* title);
 static std::vector<schema_node*>* sys_schema=NULL;
@@ -528,7 +529,7 @@ schema_node* get_system_doc(document_type type, const char* title)
 	}
 	
 	local_lock_mrg->lock(lm_s);
-	doc_schema_node* scm=	doc_schema_node::init(false);
+	doc_schema_node* scm = doc_schema_node::init(false);
 	xptr blk=createNewBlock(scm,false);
 	node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(blk);
 	n_dsc* node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
@@ -551,7 +552,9 @@ schema_node* get_system_doc(document_type type, const char* title)
 	return scm;
 }
 
-void clear_temporary(void)
+/// We should clear dynamic memory which was allocated by temporary schema nodes
+/// and check that TMPNIDBLCK is XNULL.
+void system_tables_on_kernel_statement_end()
 {
 	if (sys_schema!=NULL)
 	{
@@ -561,6 +564,8 @@ void clear_temporary(void)
 			(*it)->delete_scheme_node();
 			it++;
 		}
+		sys_schema->clear();
+        TMPNIDBLK = XNULL;
 	}
 }
 
