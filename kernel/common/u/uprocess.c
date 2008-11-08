@@ -327,6 +327,9 @@ int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 
     return (status == STILL_ACTIVE) ? 1 : 0;
 #else
+    /// For the compatibility of the Linux and some Unixes. 
+    /// Sometimes we have kill(0,0) is Sedna.
+    if (pid == 0) return 0;  
 #ifdef HAVE_PROC
     int dsc;
     char buf[U_MAX_PATH];
@@ -344,8 +347,6 @@ int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun)
     if (close(dsc) == -1) sys_call_error("close");
     return 1; 
 #else
-    /* !!!   check for errno   !!! */
-    if (pid == 0) return 0;  /// For the compatibility of the FreeBSD and Linux. Sometimes we have kill(0,0) is Sedna.
     int res = kill(pid, 0);
     if (res == -1) sys_call_error("kill");
 
