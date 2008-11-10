@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # File:  release.sh
 # Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
@@ -74,7 +74,6 @@ if test "$OS" "=" "Linux"; then
   export SQL_CONNECTION=0
   MAKE_COMMAND=make
   OS_TYPE=nix
-  SED_COMMAND="sed -r"
 
 elif test "$OS" "=" "Darwin"; then
 
@@ -85,7 +84,6 @@ elif test "$OS" "=" "Darwin"; then
   export SQL_CONNECTION=0
   MAKE_COMMAND=make
   OS_TYPE=nix
-  SED_COMMAND="sed -E"
 
 elif test "$OS" "=" "FreeBSD"; then
 
@@ -96,7 +94,16 @@ elif test "$OS" "=" "FreeBSD"; then
   export SQL_CONNECTION=0
   MAKE_COMMAND=gmake
   OS_TYPE=nix
-  SED_COMMAND="sed -E"
+
+elif test "$OS" "=" "SunOS"; then
+
+  export BUILD_SUFFIX=sunos
+  export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
+  export DISTR_EXT=sh
+  export SRC_EXT=tar.gz
+  export SQL_CONNECTION=0
+  MAKE_COMMAND=gmake
+  OS_TYPE=nix
 
 else  #Windows (Cygwin)
 
@@ -107,13 +114,8 @@ else  #Windows (Cygwin)
   export SQL_CONNECTION=1
   MAKE_COMMAND=make
   OS_TYPE=win
-  SED_COMMAND="sed -r"
 
 fi
-
-for exclude_file in `cat exclude_files`; do 
-	EXCLUDE_FROM_SOURCE_DISTR="$EXCLUDE_FROM_SOURCE_DISTR --exclude $exclude_file"
-done
 
 prepare_win_source() {
     echo prepare_windows_source &&
@@ -124,55 +126,33 @@ prepare_win_source() {
     rm -rf $FILE_BASE/libs/src &&
     rm -rf $FILE_BASE/libs/chicken_panic_hook.diff &&
     echo "build:" > $FILE_BASE/libs/Makefile &&
-    echo "clean:" >> $FILE_BASE/libs/Makefile &&
-    OLDDIR="`pwd`" &&
-    cd $FILE_BASE/doc &&
-    echo `pwd` &&
-    $MAKE_COMMAND &&
-    rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
-    rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
-    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
-    rm -f ProgGuide/*.{aux,log,tex,toc} ProgGuide/Makefile &&
-    rm Makefile &&
-    cd "$OLDDIR"
+    echo "clean:" >> $FILE_BASE/libs/Makefile
 }
 
 prepare_nix_source() {
-    rm -rf $FILE_BASE/libs/pccts        &&
-    rm -rf $FILE_BASE/libs/pg           &&
-    rm -rf $FILE_BASE/libs/expat        &&
-    rm -rf $FILE_BASE/libs/chicken      &&
-    rm -rf $FILE_BASE/libs/pcre         &&
-    rm -rf $FILE_BASE/libs/compat       &&
-    mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
-    $SED_COMMAND -e 's/(build_[A-Za-z0-9 ]+)=no/\1=yes/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
-    rm -f $FILE_BASE/libs/Makefile.orig &&
-    rm -rf $FILE_BASE/libs/bin &&
-    OLDDIR="`pwd`" &&
-    cd $FILE_BASE/doc &&
-    $MAKE_COMMAND &&
-    rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
-    rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
-    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
-    rm -f ProgGuide/*.{aux,log,tex,toc} ProgGuide/Makefile &&
-    rm Makefile &&
-    cd "$OLDDIR"
+    rm -rf $FILE_BASE/libs/pccts &&
+    rm -rf $FILE_BASE/libs/pg &&
+    rm -rf $FILE_BASE/libs/expat &&
+    rm -rf $FILE_BASE/libs/chicken &&
+    rm -rf $FILE_BASE/libs/pcre &&
+    rm -rf $FILE_BASE/libs/compat &&
+    rm -rf $FILE_BASE/libs/bin
 }
 
 create_sed_script()
 {
     cat > $SEDSCRIPT <<EEE
-s/^ACTIVE_CONFIGURATION[ ]*=[A-Za-z0-9 ]+(\r?)$/ACTIVE_CONFIGURATION = Release\1/
-s/^MAKE_DOC[ ]*=[A-Za-z0-9 ]+(\r?)$/MAKE_DOC = 0\1/
-s/^INSTALL_DOC[ ]*=[A-Za-z0-9 ]+(\r?)$/INSTALL_DOC = 1\1/
-s/^EL_DEBUG[ ]*=[A-Za-z0-9 ]+(\r?)$/EL_DEBUG = 0\1/
-s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]+(\r?)$/JAVA_DRIVER = 0\1/
-s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]+(\r?)$/SQL_CONNECTION = 0\1/
-s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]+(\r?)$/STATIC_SYS_LIBS = 0\1/
-s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]+(\r?)$/SE_ENABLE_GCOV = 0\1/
-s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]+(\r?)$/ENABLE_DTSEARCH = 0\1/
-s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]+(\r?)$/ENABLE_TRIGGERS = 1\1/
-s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]+(\r?)$/CLEANUP_LIBRARIES = 1\1/
+s/^ACTIVE_CONFIGURATION[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/ACTIVE_CONFIGURATION = Release\1/
+s/^MAKE_DOC[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/MAKE_DOC = 0\1/
+s/^INSTALL_DOC[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/INSTALL_DOC = 1\1/
+s/^EL_DEBUG[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/EL_DEBUG = 0\1/
+s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/JAVA_DRIVER = 0\1/
+s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/SQL_CONNECTION = 0\1/
+s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/STATIC_SYS_LIBS = 0\1/
+s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/SE_ENABLE_GCOV = 0\1/
+s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_DTSEARCH = 0\1/
+s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_TRIGGERS = 1\1/
+s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/CLEANUP_LIBRARIES = 1\1/
 EEE
 }
 
@@ -185,8 +165,22 @@ prepare_source() {
     mv $FILE_BASE/Makefile.include $FILE_BASE/Makefile.include.orig &&
     SEDSCRIPT=Makefile.include.sed &&
     create_sed_script &&
-    $SED_COMMAND -f $SEDSCRIPT $FILE_BASE/Makefile.include.orig > $FILE_BASE/Makefile.include &&
+    sed -f $SEDSCRIPT $FILE_BASE/Makefile.include.orig > $FILE_BASE/Makefile.include &&
     rm -f $FILE_BASE/Makefile.include.orig
+    
+    for exclude_file in `cat exclude_files`; do 
+	    rm -rf $FILE_BASE/$exclude_file
+    done
+
+    OLDDIR="`pwd`" &&
+    cd $FILE_BASE/doc &&
+    $MAKE_COMMAND &&
+    rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
+    rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
+    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
+    rm -f ProgGuide/*.{aux,log,tex,toc} ProgGuide/Makefile &&
+    rm Makefile &&
+    cd "$OLDDIR"
 }
 
 
@@ -325,6 +319,7 @@ fi
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 
 
+
 ##### MAKE CLEAN ##############################################################
 $MAKE_COMMAND clean || failwith "make clean failed"
 ##### MAKE CLEAN ##############################################################
@@ -335,7 +330,7 @@ $MAKE_COMMAND clean || failwith "make clean failed"
 (cd .. &&
  cp -r sedna $FILE_BASE &&
  prepare_source &&
- tar cvfz $SRC_FILE_NAME.$SRC_EXT -h $EXCLUDE_FROM_SOURCE_DISTR $FILE_BASE &&
+ (tar cvf - $FILE_BASE | gzip 1>$SRC_FILE_NAME.$SRC_EXT) &&
  rm -rf $FILE_BASE &&
  mv $SRC_FILE_NAME.$SRC_EXT $SEDNA_INSTALL) || 
                                failwith "Failed to create source distribution"
@@ -348,7 +343,7 @@ export ACTIVE_CONFIGURATION=Release
 export DOCUMENTATION=1
 export EL_DEBUG=0
 export JAVA_DRIVER=1
-export STATIC_SYS_LIBS=1
+export STATIC_SYS_LIBS=1 # Flag is ignored under SunOS, Darwin, Windows
 $MAKE_COMMAND || failwith "make failed"
 ##### MAKE ####################################################################
 
@@ -367,7 +362,7 @@ if test "$OS_TYPE" "=" "nix"; then
 fi || failwith "Cannot copy scripts/linux-install.sh"
 
 (cd $SEDNA_INSTALL &&
- tar cvfz $BIN_FILE_NAME.tar.gz sedna || failwith "Cannot create archive of binaries"
+ (tar cvf - sedna | gzip 1>$BIN_FILE_NAME.tar.gz) || failwith "Cannot create archive of binaries"
 
  if test "$OS_TYPE" "=" "nix"; then 
     (SUM=`cksum $BIN_FILE_NAME.tar.gz` &&
