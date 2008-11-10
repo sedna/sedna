@@ -41,6 +41,7 @@ endif
 
 # options: Static system libraries is on  - 1
 #          Static system libraries is off - 0
+#          Ignored under Darwin, SunOS, Windows
 ifndef STATIC_SYS_LIBS
 STATIC_SYS_LIBS = 0
 endif
@@ -239,12 +240,17 @@ EXE_EXT =
 DL_EXT  = .so
 PLD = ld -Ur
 PLDOUT = -o 
-ifeq ("$(STATIC_SYS_LIBS)","1")
-ifneq ("$(SUB_PLATFORM)","Darwin")
+
+STATIC_FLAG =
+
+ifeq ("$(STATIC_SYS_LIBS)","1") # Should be ignored under SunOS, Darwin!
+STATIC_FLAG =
+ifeq ("$(SUB_PLATFORM)","Linux")
 STATIC_FLAG = -static
 endif
-else
-STATIC_FLAG =
+ifeq ("$(SUB_PLATFORM)","FreeBSD")
+STATIC_FLAG = -static
+endif
 endif
 
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
