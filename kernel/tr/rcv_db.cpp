@@ -1,5 +1,5 @@
 /*
- * File:  tr_rcv.cpp
+ * File:  rcv_db.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
