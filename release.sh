@@ -60,7 +60,6 @@ lookfor rm
 lookfor mv
 lookfor tar
 
-
 export OS=`uname` || failwith "Cannot mine operating system name"
 export SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
 export BUILD_FILE=build-$SEDNA_VERSION
@@ -142,18 +141,24 @@ prepare_nix_source() {
 create_sed_script()
 {
     cat > $SEDSCRIPT <<EEE
-s/^ACTIVE_CONFIGURATION[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/ACTIVE_CONFIGURATION = Release\1/
-s/^MAKE_DOC[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/MAKE_DOC = 0\1/
-s/^INSTALL_DOC[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/INSTALL_DOC = 1\1/
-s/^EL_DEBUG[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/EL_DEBUG = 0\1/
-s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/JAVA_DRIVER = 0\1/
-s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/SQL_CONNECTION = 0\1/
-s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/STATIC_SYS_LIBS = 0\1/
-s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/SE_ENABLE_GCOV = 0\1/
-s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_DTSEARCH = 0\1/
-s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_TRIGGERS = 1\1/
-s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]\+\(\r\?\)$/CLEANUP_LIBRARIES = 1\1/
+s/^ACTIVE_CONFIGURATION[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ACTIVE_CONFIGURATION = Release\1/
+s/^MAKE_DOC[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/MAKE_DOC = 0\1/
+s/^INSTALL_DOC[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/INSTALL_DOC = 1\1/
+s/^EL_DEBUG[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/EL_DEBUG = 0\1/
+s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/JAVA_DRIVER = 0\1/
+s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SQL_CONNECTION = 0\1/
+s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/STATIC_SYS_LIBS = 0\1/
+s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SE_ENABLE_GCOV = 0\1/
+s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_DTSEARCH = 0\1/
+s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_TRIGGERS = 1\1/
+s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/CLEANUP_LIBRARIES = 1\1/
 EEE
+}
+
+exclude_files() {
+    for exclude_file in `cat $FILE_BASE/exclude_files`; do 
+	    rm -rf $FILE_BASE/$exclude_file || return 1
+    done
 }
 
 prepare_source() {
@@ -166,12 +171,8 @@ prepare_source() {
     SEDSCRIPT=Makefile.include.sed &&
     create_sed_script &&
     sed -f $SEDSCRIPT $FILE_BASE/Makefile.include.orig > $FILE_BASE/Makefile.include &&
-    rm -f $FILE_BASE/Makefile.include.orig
-    
-    for exclude_file in `cat exclude_files`; do 
-	    rm -rf $FILE_BASE/$exclude_file
-    done
-
+    rm -f $FILE_BASE/Makefile.include.orig &&
+    exclude_files &&
     OLDDIR="`pwd`" &&
     cd $FILE_BASE/doc &&
     $MAKE_COMMAND &&
