@@ -219,17 +219,12 @@ void do_authentication()
 
 void register_session_on_gov()
 {
-	USOCKET s;
-	int sock_error, res;
-	UPID s_pid;
+	UPID s_pid  = uGetCurrentProcessId(__sys_call_error);
+    USOCKET s   = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
-	s_pid = uGetCurrentProcessId(__sys_call_error);
-	
-    s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
-    if(s == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
+    if(U_SOCKET_ERROR == s) throw USER_EXCEPTION (SE3001);
 
-	res = 1;
-	while(uconnect_tcp(s, socket_port, "127.0.0.1", __sys_call_error)!=0)
+	while(0 != uconnect_tcp(s, socket_port, "127.0.0.1", __sys_call_error))
 	{
 		if(!utry_connect_again())
 		{
@@ -244,10 +239,11 @@ void register_session_on_gov()
 #endif
 	}
 
-    sp_msg.instruction = 121; 
-    sp_msg.length = strlen(db_name)+1+sizeof(__int32)+sizeof(UPID); //dbname as a string and session process id as 4 bytes
-    sp_msg.body[0] = '\0';
-    int2net_int(strlen(db_name), sp_msg.body+1);    
+    sp_msg.instruction  = REGISTER_NEW_SESSION; 
+    sp_msg.length       = strlen(db_name)+1+sizeof(__int32)+sizeof(UPID); //dbname as a string and session process id as 4 bytes
+    sp_msg.body[0]      = '\0';
+
+    int2net_int(strlen(db_name), sp_msg.body + 1);    
     memcpy(sp_msg.body+1+sizeof(__int32), db_name, strlen(db_name));
 
     __int32 tmp = s_pid;
@@ -255,9 +251,10 @@ void register_session_on_gov()
 
     memcpy(sp_msg.body+1+sizeof(__int32)+strlen(db_name),ptr,sizeof(UPID));
 
+    
     if(sp_send_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
-
     if(sp_recv_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
+
     if(sp_msg.instruction == 161)
     {
     	d_printf2("se_trn: Trn with %d registered on gov successfully\n", s_pid);
@@ -289,7 +286,6 @@ void register_session_on_gov()
     }
 
     if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
-
 }
 
 

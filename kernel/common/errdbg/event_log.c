@@ -101,10 +101,10 @@ static void __event_log_set_msg_attrs(int elevel, const char *filename, int line
     else
     {
         memcpy(el_msg->funcname, funcname, SE_EVENT_LOG_FUNCNAME_LEN - 4);
-        el_msg->funcname[SE_EVENT_LOG_FILENAME_LEN - 4] = '.';
-        el_msg->funcname[SE_EVENT_LOG_FILENAME_LEN - 3] = '.';
-        el_msg->funcname[SE_EVENT_LOG_FILENAME_LEN - 2] = '.';
-        el_msg->funcname[SE_EVENT_LOG_FILENAME_LEN - 1] = '\0';
+        el_msg->funcname[SE_EVENT_LOG_FUNCNAME_LEN - 4] = '.';
+        el_msg->funcname[SE_EVENT_LOG_FUNCNAME_LEN - 3] = '.';
+        el_msg->funcname[SE_EVENT_LOG_FUNCNAME_LEN - 2] = '.';
+        el_msg->funcname[SE_EVENT_LOG_FUNCNAME_LEN - 1] = '\0';
     }
 }
 
@@ -413,9 +413,9 @@ static void __event_log_write_long_msg_start()
     res = __event_log_write_hdr(el_msg->elevel, 
                                 el_msg->component, 
                                 el_msg->component_detail,
-                                el_msg->lineno, 
                                 el_msg->sid,
                                 el_msg->trid,
+                                el_msg->lineno, 
                                 el_msg->filename, 
                                 el_msg->funcname);
     if (res == -1) return;
