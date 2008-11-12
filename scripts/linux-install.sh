@@ -9,6 +9,7 @@
 
 DISTNAME="Sedna XML DBMS"
 TARGET=sedna
+DEFAULT_TREE_NAME=sedna
 BINSUM="PLACE_FOR_BINARY_SUM"
 
 failwith() {
@@ -53,6 +54,7 @@ lookfor dirname
 lookfor awk
 lookfor chown
 lookfor chmod
+lookfor mv
 
 BINSTARTLINE=`awk '/^__ARCHIVE_FOLLOWS__/ { print NR + 1; exit 0; }' $0`
 
@@ -63,6 +65,7 @@ export _POSIX2_VERSION
 
 origpwd="`pwd`"
 
+#id -u doesn't work under Solaris!
 #if test ! `id -u` "=" "0"; then
 #  echo -n "NOTICE: $DISTNAME is system software that requires deep integration with your operating system. "
 #  echo -n "To obtain best performance Sedna components use sophisticated memory management techniques and "
@@ -128,12 +131,15 @@ if test -d "$where/$TARGET" || test -f "$where/$TARGET"; then
 fi
 
 echo -n "Unpacking into \"$where/$TARGET\"... "
+"$mkdir" "$where/$TARGET" || failwith "Could not create \"$where/$TARGET\"."
 "$tail" +"$BINSTARTLINE" "$0" | "$gunzip" -c \
-| { cd "$where"
+| { cd "$where/$TARGET"
     "$tar" xf - \
     || failwith "Problems during unpacking of binary archive."
   }
 cd "$where/$TARGET"
+"$mv" "$DEFAULT_TREE_NAME"/* . || failwith "Could not move directory tree."
+"$rm" -rf "$DEFAULT_TREE_NAME"
 test -d "bin" \
 || failwith "Unpack failed (could not find \"$where/$TARGET/bin\")."
 echo "done"
@@ -168,6 +174,15 @@ cat > $TARGET/etc/sednaconf.xml <<EOF
   <listener_port>5050</listener_port>
   <!-- Sedna server ping port number -->
   <ping_port>5151</ping_port>
+  <!-- Event logging level 
+       0 -           event logging is off
+       1 -           log only fatal errors when system goes down
+       2 -           log all errors/warnings (e.g. errors in queries)
+       3 - (default) server operational messages. This is 
+                     quite complete log of what is going on in system.
+       4 -           log everything including internal debug messages
+  -->
+  <event_log_level>3</event_log_level>
 </sednaconf>
 EOF
 rm $TARGET/etc/sednaconf.xml.sample
