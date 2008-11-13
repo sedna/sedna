@@ -371,7 +371,8 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
      sed "s/PLACE_FOR_BINARY_SUM/$SUM/" linux-install.sh >$BIN_FILE_NAME.sh &&
      cat $BIN_FILE_NAME.tar.gz >>$BIN_FILE_NAME.sh &&
      chmod a+x $BIN_FILE_NAME.sh &&
-     rm -f linux-install.sh);
+     rm -f linux-install.sh &&
+     rm -f $BIN_FILE_NAME.tar.gz);
  fi || failwith "Cannot create selfextracted binary package"
  
  if test $1 "!=" "local"; then 
