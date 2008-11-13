@@ -67,9 +67,9 @@ origpwd="`pwd`"
 
 #id -u doesn't work under Solaris!
 #if test ! `id -u` "=" "0"; then
-#  echo -n "NOTICE: $DISTNAME is system software that requires deep integration with your operating system. "
-#  echo -n "To obtain best performance Sedna components use sophisticated memory management techniques and "
-#  echo -n "low-level disk access operations, which require additional privelegies."
+#  printf "NOTICE: $DISTNAME is system software that requires deep integration with your operating system. "
+#  printf "To obtain best performance Sedna components use sophisticated memory management techniques and "
+#  printf "low-level disk access operations, which require additional privelegies."
 #  echo ""
 #  echo ""
 #  failwith "You have to be root to perform installation operation."
@@ -83,7 +83,7 @@ echo "  2 - /opt/$TARGET"
 echo "  3 - \$HOME/$TARGET ($HOME/$TARGET) [default]"
 echo "  4 - ./$TARGET (here)"
 echo "  Or enter a different directory to install in."
-echo -n "> "
+printf "> "
 read where
 case "$where" in
   "1" ) where="/usr/local" ;;
@@ -109,7 +109,7 @@ if test ! -w "$where"; then
   failwith "Cannot write to \"$where\"."
 fi
 
-echo -n "Checking the integrity of the binary archive... "
+printf "Checking the integrity of the binary archive... "
 SUM="`\"$tail\" +\"$BINSTARTLINE\" \"$0\" | \"$cksum\"`" \
   || failwith "Problems running cksum."
 SUM="`set $SUM; echo $1`"
@@ -117,11 +117,11 @@ test "$BINSUM" = "$SUM" || failwith "Bad CRC checksum."
 echo "ok"
 
 if test -d "$where/$TARGET" || test -f "$where/$TARGET"; then
-  echo -n "\"$where/$TARGET\" exists, delete? "
+  printf "\"$where/$TARGET\" exists, delete? "
   read yesno
   case "$yesno" in
     [yY]*)
-      echo -n "Deleting old \"$where/$TARGET\"... "
+      printf "Deleting old \"$where/$TARGET\"... "
       "$rm" -rf "$where/$TARGET" \
       || failwith "Could not delete \"$where/$TARGET\"."
       echo "done"
@@ -130,7 +130,7 @@ if test -d "$where/$TARGET" || test -f "$where/$TARGET"; then
   esac
 fi
 
-echo -n "Unpacking into \"$where/$TARGET\"... "
+printf "Unpacking into \"$where/$TARGET\"... "
 "$mkdir" "$where/$TARGET" || failwith "Could not create \"$where/$TARGET\"."
 "$tail" +"$BINSTARTLINE" "$0" | "$gunzip" -c \
 | { cd "$where/$TARGET"
@@ -144,7 +144,7 @@ test -d "bin" \
 || failwith "Unpack failed (could not find \"$where/$TARGET/bin\")."
 echo "done"
 
-echo -n "Running the Sedna installer... "
+printf "Running the Sedna installer... "
 #"$chown" -R root:root "$where/$TARGET" || failwith "chown"
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_cdb"       || failwith "chmod"
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_ddb"       || failwith "chmod"
@@ -160,7 +160,7 @@ echo "done"
 
 cd "$where"
 
-echo -n "Creating sedna configuration file... "
+printf "Creating sedna configuration file... "
 
 cat > $TARGET/etc/sednaconf.xml <<EOF
 <?xml version="1.0" standalone="yes"?>
@@ -193,7 +193,7 @@ if test -d "bin"; then
   echo "Do you want to install new system links within the bin subdirectory of "
   echo "\"$where\", "
   echo "possibly overriding existing links for the programs se_cdb, se_ddb, se_gov, "
-  echo -n "se_rc, se_sm, se_smsd, se_stop, se_term, se_trn, se_rcv? "
+  printf "se_rc, se_sm, se_smsd, se_stop, se_term, se_trn, se_rcv? "
   read yesno
   case "$yesno" in
     [yY]* ) sysdir="$where" ;;
@@ -206,7 +206,7 @@ else
   echo "example, \"/usr/local\") for the programs se_cdb, se_ddb, se_gov, se_rc, "
   echo "se_sm, se_smsd, se_serv, se_term, se_trn, se_rcv then enter the prefix you "
   echo "want to use."
-  echo -n "(default: skip links) > "
+  printf "(default: skip links) > "
   read sysdir
   if test ! "x$sysdir" = "x"; then
     if test ! -d "$sysdir"; then
@@ -233,7 +233,7 @@ if test ! "x$sysdir" = "x"; then
     for x in "se_cdb" "se_ddb" "se_gov" "se_rc" "se_sm" "se_smsd" \
              "se_stop" "se_term" "se_trn" "se_rcv"; do
       if test -x "$where/$TARGET/bin/$x"; then
-        echo -n "${printsep}$x"
+        printf "${printsep}$x"
         printsep=", "
         link "$where/$TARGET/bin/$x" "$x" "$sysdir/bin"
       fi
