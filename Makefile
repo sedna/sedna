@@ -100,11 +100,12 @@ endif
 .PHONY: build bi clean grouped_install install uninstall
 
 
+ifeq ($(findstring install, $(MAKECMDGOALS)), install)
 ifeq ($(JAVA_DRIVER), 1)
 DOC_DIRLIST := $(shell (find ./driver/java/doc -type d))
 DOC_FILELIST := $(shell (find ./driver/java/doc -type f))
 endif
-
+endif
 
 # Installs everything into $(SEDNA_INSTALL) directory. Use this goal if you want to
 # install "all in one catalog".

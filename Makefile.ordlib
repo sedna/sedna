@@ -62,7 +62,9 @@ endif
 ################################################################################
 # Clean                                                                        #
 ################################################################################
-.PHONY: clean $(CUSTOM_CLEAN)
+.PHONY: clean Makefile $(CUSTOM_CLEAN)
+
+Makefile: ;
 
 clean: generic_clean $(CUSTOM_CLEAN)
 ifdef SUBDIRS

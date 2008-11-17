@@ -60,9 +60,12 @@ endif
 ################################################################################
 # Clean                                                                        #
 ################################################################################
-.PHONY: clean $(CUSTOM_CLEAN)
+.PHONY: clean Makefile $(CUSTOM_CLEAN)
+
+Makefile: ;
 
 clean: generic_clean $(CUSTOM_CLEAN)
+	-rm -f $(FOLDER)$(LIST_EXT)
 ifdef SUBDIRS
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 endif

@@ -41,6 +41,7 @@ error_codes.d: gen_error_codes.c
 
 
 ifeq ("$(PLATFORM)", "WIN32")
+
 # WIN32
 OBJ_NAME = /Fo
 CFLAGS += /DSE_NO_EVENT_LOG
@@ -64,19 +65,10 @@ libsedna$(LIB_EXT): $(ST_OBJS)
 %.st$(OBJ_EXT): %.c
 	$(CC) $(CFLAGS_ST) $(OBJ_NAME)$@ $<
 
-# multi-threaded dynamic library
-# libsednamt$(DL_EXT): $(DLL_MT_OBJS)
-#	link /DLL  $(LIBFLAGS) $(LIBOUT)$@ $^ wsock32.lib Advapi32.lib
-#
-#%.dl.mt$(OBJ_EXT): %.d
-#
-#%.dl.mt$(OBJ_EXT): %.c
-#	$(CC) $(CFLAGS) /MD $(OBJ_NAME)$@ $<
+else # UNIX
 
-else
-# UNIX 
 OBJ_NAME = -o
-CFLAGS += -DSE_NO_EVENT_LOG
+CFLAGS += $(CFLAGS_SL)
 
 libsedna$(LIB_EXT): $(MT_OBJS)
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
