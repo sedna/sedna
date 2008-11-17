@@ -65,14 +65,9 @@ else
 FT_ADD_LIB = 
 endif
 
-ADD_LIBS = $(COMMON_FILES_LIB) $(LOGICAL_LOG_LIB)
 
-ADD_LIBS_2 = $(FT_ADD_LIB)
+DEPENDS_ON_LIBS = $(COMMON_FILES_LIB) $(LOGICAL_LOG_LIB)
 	   
-#ifeq ($(PLATFORM), WIN32)
-#ADD_LIBS_2 += detours.lib detoured.lib ntdll.lib
-#endif
-
 
 ################################################################################
 # tr (Transaction)                                                             #
@@ -85,26 +80,26 @@ endif
 
 
 ifeq ("$(PLATFORM)", "WIN32")
-$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
-	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(ADD_LIBS) $(ADD_LIBS_2) $(LSLIBS)
+$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
+	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(LSLIBS) $(FT_ADD_LIB)
 else
-$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
-	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(ADD_LIBS) $(ADD_LIBS_2) $(LSLIBS)
+$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
+	$(LD) $(LFLAGS) $(LDOUT)$@ $^  $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
 endif
 
 
-
 ifeq ("$(PLATFORM)", "WIN32")
-$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
-	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(ADD_LIBS) $(ADD_LIBS_2)
+$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
+	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(LSLIBS) $(FT_ADD_LIB)
 else					
-$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
-	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(ADD_LIBS) $(ADD_LIBS_2) $(LSLIBS)
+$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
+	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
 endif
 
 
 
 $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
+
 
 .PHONY: $(SUBDIRS:%=%-recursive)
 $(SUBDIRS:%=%-recursive):

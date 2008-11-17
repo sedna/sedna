@@ -135,6 +135,8 @@ EXE_EXT = .exe
 DL_EXT  = .dll
 PLD = link /LIB /NOLOGO
 PLDOUT = /OUT:
+
+
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS_ST   = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
@@ -192,13 +194,16 @@ LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLI
               libexpatmt.lib pccts_release.lib libpcre.lib /NOD:LIBCMT.LIB
 endif
 endif
+
 ifeq ($(EL_DEBUG),1)
 LFLAGS += Dbghelp.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS += Dbghelp.lib
 endif
 endif
+
 LSLIBS   = 
+
 ifeq ($(SQL_CONNECTION),1)
 CPPFLAGS+= /DSQL_CONNECTION
 endif
@@ -282,6 +287,7 @@ LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chick
 endif
 
 LSLIBS   = -lpccts -lexpat -lchicken -lpcre -fexceptions
+CFLAGS_SL = -fPIC -DSE_NO_EVENT_LOG
 
 ifeq ("$(SUB_PLATFORM)","Linux")
 ENABLE_LIBEDIT = 1
@@ -298,6 +304,7 @@ endif
 
 ifeq ("$(SUB_PLATFORM)","FreeBSD")
 LSLIBS  += -lthr
+CFLAGS_SL += -DPIC
 endif
 
 ifeq ("$(SUB_PLATFORM)","Darwin")
@@ -353,6 +360,12 @@ CHICKEN_OPTIONS = $(CHICKEN_HEAP_SPEC) -include-path $(CHICKEN_INCLUDE)
 # Was:
 #CHICKEN_OPTIONS = -heap-size 100M -include-path $(CHICKEN_INCLUDE)
 
+#These targets simplify debugging
+Makefile.%: ;
+.SUFFIXES:
+
+#No target is removed because it is considered intermediate
+.SECONDARY:
 
 %$(OBJ_EXT): %.cpp
 	$(CCX) $(CPPFLAGS) $<
