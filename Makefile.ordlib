@@ -2,6 +2,11 @@
 # Common part for all ordinary libs
 #
 
+#No target is removed because it is considered intermediate
+ifdef GENERATED
+.SECONDARY:
+endif
+
 FOLDER = $(shell basename `pwd`)
 ifndef LIB_NAME
 LIB_NAME = $(FOLDER)

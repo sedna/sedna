@@ -364,9 +364,6 @@ CHICKEN_OPTIONS = $(CHICKEN_HEAP_SPEC) -include-path $(CHICKEN_INCLUDE)
 Makefile.%: ;
 .SUFFIXES:
 
-#No target is removed because it is considered intermediate
-.SECONDARY:
-
 %$(OBJ_EXT): %.cpp
 	$(CCX) $(CPPFLAGS) $<
 
