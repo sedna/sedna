@@ -66,7 +66,7 @@ libsedna$(LIB_EXT): $(ST_OBJS)
 	$(CC) $(CFLAGS_ST) $(OBJ_NAME)$@ $<
 
 else # UNIX
-
+LD=gcc # It must be enough to build C-driver!
 OBJ_NAME = -o
 CFLAGS += $(CFLAGS_SL)
 
