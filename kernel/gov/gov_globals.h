@@ -25,6 +25,7 @@ namespace gov_globals
     extern int cl_el_level; 
     extern int cl_lstnr_port;
     extern int cl_ping_port;
+    extern int cl_ka_timeout;
 }
 
 

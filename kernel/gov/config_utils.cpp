@@ -17,28 +17,25 @@ static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg);
 static std::string elem_content;
 
 
+#define MERGE_GOV_GLOBAL_VARIABLE(command_line_name, config_name)     ((-1 == (command_line_name)) ? \
+                                                                      (command_line_name) = (config_name) : \
+                                                                      (config_name) = (command_line_name))
+
 void fulfill_config_parameters(gov_config_struct* cfg)
 {
-  /*
-    First of all we load the cfg parameter by default values.
-    Then we check whether the config file exists and if it exists then we load parameters from it.
-    Then we analyze the command line parameters and overwrite corresponding parameters in cfg structure.
-  */
-
   memset(cfg, '\0', sizeof(gov_config_struct));
+  
+  ///  Within this the following we load the cfg parameters by default values.
+  ///  Then we check whether the config file exists and if it exists then we overwrite 
+  ///  parameters from it.
   get_sednaconf_values(&(cfg->gov_vars));
 
-  (-1 == gov_globals::cl_lstnr_port) ? 
-      gov_globals::cl_lstnr_port = cfg->gov_vars.lstnr_port_number : 
-      cfg->gov_vars.lstnr_port_number = gov_globals::cl_lstnr_port;
-
-  (-1 == gov_globals::cl_ping_port) ?
-      gov_globals::cl_ping_port = cfg->gov_vars.ping_port_number:
-      cfg->gov_vars.ping_port_number = gov_globals::cl_ping_port;
-
-  (-1 == gov_globals::cl_el_level) ? 
-      gov_globals::cl_el_level = cfg->gov_vars.el_level:
-      cfg->gov_vars.el_level = gov_globals::cl_el_level;
+  ///  Then we merge the command line parameters and corresponding parameters in cfg structure.
+  ///  Command line parameter has priority over corresponding parameter in cfg structure.
+  MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_lstnr_port, cfg->gov_vars.lstnr_port_number);
+  MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_ping_port,  cfg->gov_vars.ping_port_number);
+  MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_el_level,   cfg->gov_vars.el_level);
+  MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_ka_timeout, cfg->gov_vars.ka_timeout);
 
   cfg->gov_vars.gov_pid = uGetCurrentProcessId(__sys_call_error);
 
@@ -55,6 +52,7 @@ void fulfill_config_parameters(gov_config_struct* cfg)
      cfg->sess_vars[i].stop = 0;
   }
 
+  /// Parse "cfg/${db_name}_cfg.xml" files
   fulfill_sm_parameters_from_config_files(cfg);
 }
 

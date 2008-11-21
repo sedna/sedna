@@ -1733,3 +1733,10 @@ sedna-err:SE5200
 
    Internal Runtime Configuration utility error
 
+sedna-err:SE4623
+
+   Cannot set keep alive session timeout
+
+sedna-err:SE4624
+
+   Session was closed since keep alive timeout has been expired

@@ -47,6 +47,7 @@ public:
     virtual void error(int code, const std::string& body) = 0;
     virtual void show_time(std::string qep_time) = 0;
     virtual void write_user_query_to_log() = 0;
+    virtual void set_keep_alive_timeout(int sec) = 0;
 };
 
 

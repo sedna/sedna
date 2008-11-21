@@ -153,14 +153,14 @@ LFLAGS_NOLIB= /OPT:NOREF /nologo /subsystem:console /incremental:no /debug /prof
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NOD:LIBCMT.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
-              libchicken-static.lib wsock32.lib Advapi32.lib libexpatmt.lib \
+              libchicken-static.lib WS2_32.lib Advapi32.lib libexpatmt.lib \
               pccts_release.lib libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib \
               /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg libchicken-static.lib \
-              wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
+              WS2_32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
               /debug /profile /NOD:LIBCMT.LIB
 endif
 else
@@ -184,13 +184,13 @@ LFLAGS_NOLIB= /OPT:NOREF /nologo /subsystem:console /incremental:no
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
-              libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib \
+              libchicken-static.lib LIBCMT.LIB WS2_32.lib Advapi32.lib libexpatmt.lib \
               pccts_release.lib libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
-              /LIBPATH:$(PP)/libs/pg libchicken-static.lib wsock32.lib Advapi32.lib \
+              /LIBPATH:$(PP)/libs/pg libchicken-static.lib WS2_32.lib Advapi32.lib \
               libexpatmt.lib pccts_release.lib libpcre.lib /NOD:LIBCMT.LIB
 endif
 endif

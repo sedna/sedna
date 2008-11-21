@@ -69,6 +69,7 @@ public:
   virtual void show_time(std::string qep_time);
 
   virtual void write_user_query_to_log();
+  virtual void set_keep_alive_timeout(int sec);
 };
 
 

@@ -166,14 +166,19 @@ cat > $TARGET/etc/sednaconf.xml <<EOF
 <?xml version="1.0" standalone="yes"?>
 
 <sednaconf>
+
   <!-- Path to database files -->
   <sedna_data>`pwd`/$TARGET</sedna_data>
+
   <!-- Left bounf of range for identifiers of system resources -->
   <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
+
   <!-- Sedna server listening port number -->
   <listener_port>5050</listener_port>
+
   <!-- Sedna server ping port number -->
   <ping_port>5151</ping_port>
+
   <!-- Event logging level 
        0 -           event logging is off
        1 -           log only fatal errors when system goes down
@@ -183,6 +188,13 @@ cat > $TARGET/etc/sednaconf.xml <<EOF
        4 -           log everything including internal debug messages
   -->
   <event_log_level>3</event_log_level>
+
+  <!-- Session keep alive timeout
+       Number of seconds to wait for the next request
+       from the some client on the same connection
+       0 - (default) no timeout (infinite timeout)
+  -->
+  <keep_alive_timeout>0</keep_alive_timeout>
 </sednaconf>
 EOF
 rm $TARGET/etc/sednaconf.xml.sample

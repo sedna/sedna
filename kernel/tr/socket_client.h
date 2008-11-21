@@ -42,6 +42,7 @@ private:
 	
     struct timeval timeout;
     int os_primitives_id_min_bound;
+    int ka_timeout;  /// Session keep alive timeout
 
 public:
     socket_client();
@@ -80,6 +81,7 @@ public:
     virtual void error();
     virtual void show_time(std::string qep_time);
     virtual void write_user_query_to_log();
+    virtual void set_keep_alive_timeout(int sec);
 };
 
 
