@@ -61,6 +61,7 @@ typedef struct event_log_msg
     char component_detail[SE_MAX_DB_NAME_LENGTH + 1];
     int  sid;
     int  trid;
+    int  pid;
     int  lineno;
     char filename[SE_EVENT_LOG_FILENAME_LEN];
     char funcname[SE_EVENT_LOG_FUNCNAME_LEN];

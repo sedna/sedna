@@ -184,7 +184,10 @@ static void endElement_gov_cfg(void *cfg, const char *name)
   {
      ((gov_header_struct*)cfg)->el_level = atoi(trim(elem_content).c_str());
   }
-
+  if (strcmp(name, "keep_alive_timeout") == 0)
+  {
+     ((gov_header_struct*)cfg)->ka_timeout = atoi(trim(elem_content).c_str());
+  }
 
   elem_content = "";
 }
@@ -235,6 +238,7 @@ void get_sednaconf_values(gov_header_struct* cfg)
     cfg->ping_port_number = 5151;
     cfg->os_primitives_id_min_bound = 1500;
     cfg->el_level = 3;
+    cfg->ka_timeout = 0;
       
     strcpy(cfg->SEDNA_DATA, proc_buf);
     strcpy(sedna_cfg_file,  proc_buf);

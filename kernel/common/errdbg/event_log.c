@@ -67,6 +67,7 @@ static int el_component = EL_UNK;
 static const char *el_component_detail = NULL;
 static int el_sid = -1;
 static int el_trid = -1;
+static int el_pid = -1;
 
 
 
@@ -77,6 +78,7 @@ static void __event_log_set_msg_attrs(int elevel, const char *filename, int line
     el_msg->component = el_component;
     el_msg->sid = el_sid;
     el_msg->trid = el_trid;
+    el_msg->pid = el_pid;
 
     if (el_component_detail && *el_component_detail)
         strcpy(el_msg->component_detail, el_component_detail);
@@ -139,6 +141,7 @@ static int __event_log_write_hdr(int elevel,
                                  const char *component_detail, 
                                  int sid,
                                  int trid,
+                                 int pid,
                                  int lineno, 
                                  const char *filename, 
                                  const char *funcname)
@@ -227,12 +230,12 @@ static int __event_log_write_hdr(int elevel,
         if (component_detail && *component_detail)
         {
             if (component == EL_TRN)
-                res = fprintf(el_ostr, " (%s %s sid=%d trid=%d)", component_c_str, component_detail, sid, trid);
+                res = fprintf(el_ostr, " (%s %s pid=%d sid=%d trid=%d)", component_c_str, component_detail, pid, sid, trid);
             else
-                res = fprintf(el_ostr, " (%s %s)", component_c_str, component_detail);
+                res = fprintf(el_ostr, " (%s %s pid=%d)", component_c_str, component_detail, pid);
         }
         else
-            res = fprintf(el_ostr, " (%s)", component_c_str);
+            res = fprintf(el_ostr, " (%s pid=%d)", component_c_str, pid);
 
         if (res == -1) return res;
         else el_cur_file_size += res;
@@ -389,6 +392,7 @@ static void __event_log_write_short_msg()
                                 el_msg->component_detail,
                                 el_msg->sid,
                                 el_msg->trid,
+                                el_msg->pid,
                                 el_msg->lineno, 
                                 el_msg->filename, 
                                 el_msg->funcname);
@@ -415,6 +419,7 @@ static void __event_log_write_long_msg_start()
                                 el_msg->component_detail,
                                 el_msg->sid,
                                 el_msg->trid,
+                                el_msg->pid,
                                 el_msg->lineno, 
                                 el_msg->filename, 
                                 el_msg->funcname);
@@ -691,6 +696,8 @@ int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems
     el_component = EL_GOV;
     /* until no messages received we imply that all messages have been processed */
     el_msg->processed = 1;
+    /* get pid of the current process */
+    el_pid = (int)uGetCurrentProcessId(__sys_call_error);
 
     event_log_initialized = 1;
 
@@ -748,6 +755,9 @@ int event_logger_init(int component, const char* component_detail, global_name s
     event_log_elevel = el_msg->global_elevel;
     el_component = component;
     el_component_detail = component_detail;
+
+    /* get pid of the current process */
+    el_pid = (int)uGetCurrentProcessId(__sys_call_error);
 
     event_log_initialized = 1;
 

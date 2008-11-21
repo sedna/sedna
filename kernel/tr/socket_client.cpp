@@ -49,7 +49,7 @@ void socket_client::init()
      //d_printf2("getenv variable %d \n",GetLastError());
 
      Sock = atoi(buffer);   // use Sock
-     if (Sock == U_INVALID_SOCKET)  //INVALID_SOCKET
+     if (Sock == U_INVALID_SOCKET)
      {
 #ifdef _WIN32
         d_printf2("accept failed %d\n",GetLastError());
@@ -84,55 +84,64 @@ void socket_client::release()
 
 void socket_client::read_msg(msg_struct *msg)
 {
-	int res;
-	
-	if(is_stop_session())            //session closed forcibly by stop_serv utility
-	{
-		(*msg).instruction = se_CloseConnection; //close session
-		(*msg).length = 0;
-        is_on_stop = true;
-	}
-	else if(read_msg_count == se_BeginAuthenticatingTransaction)           // emulate BeginTransaction
-	{
-		(*msg).instruction = se_BeginTransaction; //BeginTransaction
-		(*msg).length = 0;
-	}
-	else if(read_msg_count == se_Authentication)      // process authentication
-	{
-		(*msg).instruction = se_Authenticate;   // Internal code for authentication
-		(*msg).length = 0; 
-	}
-	else if(read_msg_count == se_CommitAuthenticatingTransaction)      // emulate CommitTransaction
-	{
-		(*msg).instruction = se_CommitTransaction;  //CommitTransaction
-		(*msg).length = 0;  
-	}
-	else if(read_msg_count == se_GetNextMessageFromClient)      // read next message from client
-	{	
-     	while(1)
-		{
-			if(is_stop_session())            // emulate close connection without sending message to client
-			{
-				(*msg).instruction = se_CloseConnection; //close session
-				(*msg).length = 0;
-                is_on_stop = true;
-       			return;
-			}
-                        timeout.tv_sec = 1;
-                        timeout.tv_usec = 0;
+    int res;
+    int timeout_counter = 0;
 
+    if(is_stop_session())            //session closed forcibly by stop_serv utility
+    {
+        (*msg).instruction = se_CloseConnection; //close session
+        (*msg).length = 0;
+        is_on_stop = true;
+    }
+    else if(read_msg_count == se_BeginAuthenticatingTransaction)           // emulate BeginTransaction
+    {
+        (*msg).instruction = se_BeginTransaction; //BeginTransaction
+        (*msg).length = 0;
+    }
+    else if(read_msg_count == se_Authentication)      // process authentication
+    {
+        (*msg).instruction = se_Authenticate;   // Internal code for authentication
+        (*msg).length = 0; 
+    }
+    else if(read_msg_count == se_CommitAuthenticatingTransaction)      // emulate CommitTransaction
+    {
+        (*msg).instruction = se_CommitTransaction;  //CommitTransaction
+        (*msg).length = 0;  
+    }
+    else if(read_msg_count == se_GetNextMessageFromClient)      // read next message from client
+    {	
+        while(1)
+        {
+            if(is_stop_session())            // emulate close connection without sending message to client
+            {
+                (*msg).instruction = se_CloseConnection; //close session
+                (*msg).length = 0;
+                is_on_stop = true;
+                return;
+            }
+           	    
+            timeout.tv_sec  = 1;
+            timeout.tv_usec = 0;
            	res = uselect_read(Sock, &timeout, __sys_call_error);
- 
-			if(res == 1) //ready to recv data
-			{
-				break;
-			}
-			else if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator());}
-		}
-		res = sp_recv_msg(Sock, msg);//d_printf2("msg.instruction %d\n", (*msg).instruction);
-		if(res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
-		if(res == 1) throw USER_EXCEPTION(SE3012);
-	}
+           	
+           	if(0 != this->ka_timeout)
+           	{
+           	    timeout_counter++;
+           	    if(timeout_counter >= this->ka_timeout) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE4624);}
+           	}
+
+        	if(res == 1) //ready to recv data
+            {
+                timeout_counter = 0;
+                break;
+            }
+            else if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator());}
+        }
+		
+        res = sp_recv_msg(Sock, msg);
+        if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
+        if(res == 1) throw USER_EXCEPTION(SE3012);
+    }
 }
 
 char* socket_client::get_query_string(msg_struct *msg)
@@ -629,4 +638,21 @@ void socket_client::show_time(string qep_time)
 
 void socket_client::write_user_query_to_log()
 {
+    /// This function is intendent to be used in command line client.
 }
+
+void socket_client::set_keep_alive_timeout(int sec)
+{
+    this->ka_timeout = sec;
+
+    if(sec > 0)
+    {
+        if (usetsockopt(this->Sock, SOL_SOCKET, SO_RCVTIMEO, &sec, sizeof(sec), __sys_call_error) == U_SOCKET_ERROR ||
+            usetsockopt(this->Sock, SOL_SOCKET, SO_SNDTIMEO, &sec, sizeof(sec), __sys_call_error) == U_SOCKET_ERROR)
+        {
+            throw USER_EXCEPTION2(SE4623, (string("timeout value was: ") + int2string(sec)).c_str());
+        }
+    }
+}
+
+

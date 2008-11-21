@@ -495,3 +495,8 @@ void command_line_client::write_user_query_to_log()
    }
 
 }
+
+void command_line_client::set_keep_alive_timeout(int sec)
+{
+   /// This function is intendent to be used in socket client.
+}

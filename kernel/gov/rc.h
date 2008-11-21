@@ -1,6 +1,6 @@
 /*
- * File:  config_utils.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File:  rc.h
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef __RC_H__

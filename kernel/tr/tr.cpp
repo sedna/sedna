@@ -221,7 +221,9 @@ int TRmain(int argc, char *argv[])
         // sid is known
         event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         event_logger_set_sid(sid);
-        client->write_user_query_to_log();
+
+        client->write_user_query_to_log();                                                           /// it works only for command line client
+        client->set_keep_alive_timeout(((gov_config_struct*)gov_shm_pointer)->gov_vars.ka_timeout);  /// it works only for socket client
 
 #ifdef _WIN32
         BOOL fSuccess;
@@ -492,7 +494,6 @@ int TRmain(int argc, char *argv[])
                 {
                     sedna_soft_fault(EL_TRN);
                 }
-
             }
             else if (client_msg.instruction == se_CloseConnection)      // CloseConnection
             {

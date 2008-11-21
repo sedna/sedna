@@ -264,7 +264,6 @@ try{
     UPID pid;
     UPHANDLE proc_h;
 
-
     //check number of sessions
     if (gov_table->get_total_session_procs_num() > 2*MAX_SESSIONS_NUMBER)
        throw USER_EXCEPTION(SE3046);
