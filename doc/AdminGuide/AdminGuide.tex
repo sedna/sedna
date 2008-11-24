@@ -161,6 +161,8 @@ options:
                              2 - log all errors/warnings
                              3 - system operational messages
                              4 - log everything (+debug messages)
+  -alive-timeout timeout   session keep alive timeout
+                           (default 0 - infinite timeout)
 \end{verbatim}
 
 \verb!--help! and \verb!-help! options provide the exhaustive information about the \verb!se_gov! command.
@@ -169,9 +171,15 @@ options:
 
 \verb!-background-mode! option allows Administrator to start \emph{Governor} in the background mode. 
 
-\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients. If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see section \ref{sec:ConfigSedna}, Configuring Sedna). If it still cannot find port number it will use default 5050 value. 
+\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients. 
+If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see section \ref{sec:ConfigSedna}, Configuring Sedna). 
+If it still cannot find port number it will use default 5050 value. 
 
 \verb!-el-level! option specifies the event log severity level. For details refer to the section \ref{sec:event-log}, Event Log.
+
+\verb!-alive-timeout! option specifies number of seconds to wait for the next request from the some client on the same connection. 
+Session keep alive timeout can be defined also in the \verb!sednaconf.xml! file.
+Value provided via command line overrides value (if any) defined in \verb!sednaconf.xml! file.
 
 To get the information about which Sedna components are run use \verb!se_rc! command.
 
@@ -220,6 +228,7 @@ The file is an XML document, which satisfies the following DTD:
 <!ELEMENT listener_port (#PCDATA)>
 <!ELEMENT ping_port (#PCDATA)>
 <!ELEMENT event_log_level (#PCDATA)>
+<!ELEMENT keep_alive_timeout (#PCDATA)>
 \end{verbatim}
 
 The \verb!sedna_data! element contains the path to the directory where 
@@ -234,6 +243,8 @@ The \verb!listener_port! element defines the port number for listening for a con
 The \verb!ping_port! element defines the port number of Sedna ping server that is an internal kernel mechanism. It is used to stop all Sedna processes in case of crash. 
 
 The \verb!event_log_level! defines event log severity level (0-4). For full description see section \ref{sec:event-log}, Event Log.
+
+The \verb!keep_alive_timeout! defines session keep alive timeout, i.e. number of seconds to wait for the next request from the some client on the same connection.
  
 To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, in order for new configuration to take effect you must restart Governor.
 
