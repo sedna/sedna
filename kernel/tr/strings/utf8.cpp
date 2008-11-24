@@ -492,11 +492,12 @@ template <class Iterator>
 class utf8_tokenize_result : public TokenizerResult
 {
 private:
+	tuple_cell str_tc; //need to keep it so that counted ptr in original tuple_cell won't reach 0 until utf8_tokenize_result is destroyed
 	Iterator start, end, pos;
 	bool ret_empty;
 	PcrePattern re;
 public:
-	utf8_tokenize_result(Iterator _start_, Iterator _end_, tuple_cell *t2, tuple_cell *t3) : start(_start_), end(_end_), pos(_start_), re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3)), ret_empty(false) 
+	utf8_tokenize_result(Iterator _start_, Iterator _end_, tuple_cell *t2, tuple_cell *t3, tuple_cell *_str_tc_) : str_tc(*_str_tc_), start(_start_), end(_end_), pos(_start_), re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3)), ret_empty(false) 
 	{
 		PcreMatcher<const char *>m(re);
 		const char * x = "";
@@ -548,9 +549,9 @@ void utf8_tokenize_result<Iterator>::get_next_result(tuple& t)
 	t.copy(b.get_tuple_cell());
 }
 template <class Iterator>
-static inline void utf8_tokenize(const Iterator &start, const Iterator &end, tuple_cell *t2, tuple_cell *t3, TokenizerResult **res)
+static inline void utf8_tokenize(const Iterator &start, const Iterator &end, tuple_cell *t2, tuple_cell *t3, tuple_cell *str_tc, TokenizerResult **res)
 {
-	*res = se_new utf8_tokenize_result<Iterator>(start, end, t2, t3);
+	*res = se_new utf8_tokenize_result<Iterator>(start, end, t2, t3, str_tc);
 }
 
 TokenizerResult* CharsetHandler_utf8::tokenize ( tuple_cell *t1, tuple_cell *t2, tuple_cell *t3)
@@ -558,7 +559,7 @@ TokenizerResult* CharsetHandler_utf8::tokenize ( tuple_cell *t1, tuple_cell *t2,
 	try
 	{
 	TokenizerResult *res = NULL;
-	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_tokenize, t1, t2, t3, &res);
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(utf8_tokenize, t1, t2, t3, t1, &res);
 	return res;
 	}
 	catch (const PcreCompileException &e)
