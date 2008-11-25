@@ -187,7 +187,7 @@ void delete_deep(PPOpIn arg)
 			if (it+1==argseq.end()) {mark=true; break;}
 			++it;
 		}
-		while (nid_ancestor(node,*it));
+		while ((node == *it) || nid_ancestor(node,*it));
 /*#ifdef SE_ENABLE_TRIGGERS
         tmp_node = copy_to_temp(node);
 		schema_node* scm_node=GETSCHEMENODEX(node);
@@ -201,7 +201,7 @@ void delete_deep(PPOpIn arg)
 #else
         delete_node(node);
 #endif*/
-        delete_node(node);
+        	delete_node(node);
 		if (mark) break;
 	}
 	while (true);
