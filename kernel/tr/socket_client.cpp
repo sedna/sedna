@@ -627,13 +627,13 @@ void socket_client::show_time(string qep_time)
    d_printf2("Show time. Time %s\n",qep_time.c_str());
 
    sp_msg.instruction = se_LastQueryTime;// LastQueryTime message
-   sp_msg.length = 1+4+qep_time.length();
+   sp_msg.length = 1 + sizeof(int) + qep_time.length();
 
    sp_msg.body[0] = 0; //C-string
-   int2net_int(qep_time.length(), sp_msg.body+1);
-   strcpy(sp_msg.body+5, qep_time.c_str());
+   int2net_int(qep_time.length(), sp_msg.body + 1);
+   strcpy(sp_msg.body + 1 + sizeof(int), qep_time.c_str());
    
-   if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);}
+   if(sp_send_msg(Sock, &sp_msg) != 0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);}
 }
 
 void socket_client::write_user_query_to_log()
@@ -643,16 +643,32 @@ void socket_client::write_user_query_to_log()
 
 void socket_client::set_keep_alive_timeout(int sec)
 {
+    /// Set socket's receive and send timeouts.
+    /// The best way to implement this is to use select().  
+    /// On the hand SO_RCVTIMEO and SO_SNDTIMEO options don't work only under 
+    /// Solaris (?) and Linux earlier than 2.3.41 kernel. Considering that the most 
+    /// important place where timeout must be properly implemented is 
+    /// socket_client::read_msg and that is actually done well using select(),
+    /// at present we can accept this solution.
+
     this->ka_timeout = sec;
 
+#if !defined(SunOS)
     if(sec > 0)
     {
-        if (usetsockopt(this->Sock, SOL_SOCKET, SO_RCVTIMEO, &sec, sizeof(sec), __sys_call_error) == U_SOCKET_ERROR ||
-            usetsockopt(this->Sock, SOL_SOCKET, SO_SNDTIMEO, &sec, sizeof(sec), __sys_call_error) == U_SOCKET_ERROR)
+#ifdef _WIN32
+        int timeout = sec * 1000;    /// Under Windows *int* should be provided, which defines timeout in milliseconds.
+#else
+        timeout.tv_sec = sec;        /// Use *struct timeval* under POSIX systems.
+        timeout.tv_usec = 0;
+#endif
+        if (usetsockopt(this->Sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout), __sys_call_error) == U_SOCKET_ERROR ||
+            usetsockopt(this->Sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout), __sys_call_error) == U_SOCKET_ERROR)
         {
             throw USER_EXCEPTION2(SE4623, (string("timeout value was: ") + int2string(sec)).c_str());
         }
     }
+#endif
 }
 
 

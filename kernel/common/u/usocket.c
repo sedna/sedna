@@ -310,7 +310,6 @@ int urecv(USOCKET s, char *buf, int len, sys_call_error_fun fun)
         else
             return res_len;
     }
-    return res_len;
 #endif
 }
 
@@ -345,7 +344,6 @@ int usend(USOCKET s, const char *buf, int len, sys_call_error_fun fun)
         else
             return res_len;
     }
-    return res_len;
 #endif
 }
 
@@ -456,7 +454,6 @@ int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun)
         else
             return res;
     }
-    return res;
 #endif
 }
 
@@ -494,7 +491,6 @@ int uselect_read_arr(U_SSET *s, int maxfd, struct timeval *timeout, sys_call_err
         	return res;
     }
 
-    return res;
 #endif
 }
 
