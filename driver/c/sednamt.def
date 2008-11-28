@@ -1,0 +1,21 @@
+EXPORTS
+    SEconnect
+    SEclose
+    SEbegin
+    SErollback
+    SEcommit
+    SEexecuteLong
+    SEexecute
+    SEgetData
+    SEloadData
+    SEendLoadData
+    SEnext
+    SEgetLastErrorCode
+    SEgetLastErrorMsg
+    SEconnectionStatus
+    SEtransactionStatus
+    SEshowTime
+    SEsetConnectionAttr
+    SEgetConnectionAttr
+    SEresetAllConnectionAttr
+	SEsetDebugHandler
