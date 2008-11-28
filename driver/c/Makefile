@@ -9,7 +9,7 @@ VPATH = . $(PP)/kernel/common/u $(PP)/kernel/common/errdbg $(PP)/kernel/common
 include $(PP)/Makefile.include
 
 ifeq ("$(PLATFORM)", "WIN32")
-all: libsednamt$(LIB_EXT) libsedna$(LIB_EXT)
+all: libsednamt$(LIB_EXT) sednamt$(DL_EXT)
 	@echo ===================================================================
 	@echo C Driver Done
 	@echo ===================================================================
@@ -31,10 +31,7 @@ endif
 endif
 
 MT_OBJS =     $(OBJS:$(OBJ_EXT)=.mt$(OBJ_EXT))
-ST_OBJS =     $(OBJS:$(OBJ_EXT)=.st$(OBJ_EXT))
 DLL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
-DLL_ST_OBJS = $(OBJS:$(OBJ_EXT)=.dl.st$(OBJ_EXT))
-
 
 error_codes.d: gen_error_codes.c
 	NO_DEP=1; export NO_DEP; $(MAKE) -C $(PP)/kernel/common/errdbg generated
@@ -45,9 +42,9 @@ ifeq ("$(PLATFORM)", "WIN32")
 # WIN32
 OBJ_NAME = /Fo
 CFLAGS += /DSE_NO_EVENT_LOG
-CFLAGS_ST += /DSE_NO_EVENT_LOG
+CFLAGS_DL += /DSE_NO_EVENT_LOG
 
-# multi-threaded static library
+# static multi-threaded library
 libsednamt$(LIB_EXT): $(MT_OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
@@ -56,14 +53,17 @@ libsednamt$(LIB_EXT): $(MT_OBJS)
 %.mt$(OBJ_EXT): %.c
 	$(CC) $(CFLAGS) $(OBJ_NAME)$@ $<
 
-# single-threaded static library
-libsedna$(LIB_EXT): $(ST_OBJS)
-	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+# dynamic multi-threaded library
+sednamt$(DL_EXT): $(DLL_MT_OBJS)
+	$(LD) $(LIBFLAGS) /DLL /DEF:sednamt$(DEF_EXT) $(LIBOUT)$@ WS2_32.lib Advapi32.lib $^
+	$(MT) -nologo -manifest $@.manifest -outputresource:$@\;2
+	-$(REMOVE) $@.manifest
 
-%.st$(OBJ_EXT): %.d
+%.dl.mt$(OBJ_EXT): %.d
 
-%.st$(OBJ_EXT): %.c
-	$(CC) $(CFLAGS_ST) $(OBJ_NAME)$@ $<
+%.dl.mt$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS_DL) $(OBJ_NAME)$@ $<
+
 
 else # UNIX
 LD=gcc # It must be enough to build C-driver!
@@ -86,4 +86,5 @@ endif
 .PHONY: clean 
 
 clean: generic_clean
+	-$(REMOVE) *.exp *$(DL_EXT)
 
