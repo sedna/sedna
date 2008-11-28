@@ -125,7 +125,8 @@ ifeq ("$(OS)", "CYGWIN_NT")
 CC = cl /c
 CCX = cl /c
 LD = link
-LB = link /LIB
+LB = lib
+MT = mt
 LIBFLAGS = /NOLOGO
 LDOUT = /out:
 LIBOUT = /OUT:
@@ -133,61 +134,67 @@ OBJ_EXT = .obj
 LIB_EXT = .lib
 EXE_EXT = .exe
 DL_EXT  = .dll
-PLD = link /LIB /NOLOGO
-PLDOUT = /OUT:
+DEF_EXT = .def
 
+# Starting in Visual C++ 2005, LIBCP.LIB and LIBCPD.LIB (via the old /ML and /MLd options) have been removed. 
+# Use LIBCPMT.LIB and LIBCPMTD.LIB instead via the /MT and /MTd options.
+# Moreover, if you link your program from the command line without a compiler option (CFLAGS_ST) that specifies 
+# a C run-time library, the linker will use LIBCMT.LIB. This is different from previous versions of Visual C++ 
+# which used LIBC.LIB, the single-threaded library, instead.
 
+# Win32 Debug configuration
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS_ST   = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
               /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS /D__STDC_FORMAT_MACROS 
-CPPFLAGS_ST = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
+CPPFLAGS_ST = /nologo /ZI /Od /EHsc /GR  $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DXML_STATIC /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS /D__STDC_FORMAT_MACROS
 CFLAGS      = $(CFLAGS_ST) /MTd
+CFLAGS_DL   = $(CFLAGS_ST) /MDd
 CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS    = $(CPPFLAGS_ST) /MTd
-LFLAGS_NOLIB= /OPT:NOREF /nologo /subsystem:console /incremental:no /debug /profile
+LFLAGS_NOLIB= /NOLOGO /SUBSYSTEM:CONSOLE /INCREMENTAL:NO /DEBUG /PROFILE
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NOD:LIBCMT.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
               libchicken-static.lib WS2_32.lib Advapi32.lib libexpatmt.lib \
               pccts_release.lib libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
-LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+LFLAGS_DTS  = /NOLOGO /SUBSYSTEM:CONSOLE /INCREMENTAL:NO /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib \
               /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg libchicken-static.lib \
               WS2_32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
-              /debug /profile /NOD:LIBCMT.LIB
+              /DEBUG /PROFILE /NOD:LIBCMT.LIB
 endif
 else
 # Win32 Release configuration
-CFLAGS_ST   = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
+CFLAGS_ST   = /nologo /O2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
               /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=0 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS /D__STDC_FORMAT_MACROS
-CPPFLAGS_ST = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
+CPPFLAGS_ST = /nologo /O2 /EHsc /GR $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
               /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=0 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS /D__STDC_FORMAT_MACROS
 CFLAGS      = $(CFLAGS_ST) /MT
+CFLAGS_DL   = $(CFLAGS_ST) /MD
 CFLAGS_NOOPTIM = /nologo /Od /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
-              /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
-              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
-              /D_CRT_SECURE_NO_DEPRECATE
+                 /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
+                 /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /D_CRT_SECURE_NO_DEPRECATE
 CPPFLAGS    = $(CPPFLAGS_ST) /MT
-LFLAGS_NOLIB= /OPT:NOREF /nologo /subsystem:console /incremental:no
+LFLAGS_NOLIB= /NOLOGO /SUBSYSTEM:CONSOLE
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
               libchicken-static.lib LIBCMT.LIB WS2_32.lib Advapi32.lib libexpatmt.lib \
               pccts_release.lib libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
-LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+LFLAGS_DTS  = /NOLOGO /SUBSYSTEM:CONSOLE /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
               /LIBPATH:$(PP)/libs/pg libchicken-static.lib WS2_32.lib Advapi32.lib \
@@ -243,8 +250,6 @@ OBJ_EXT = .o
 LIB_EXT = .a
 EXE_EXT =
 DL_EXT  = .so
-PLD = ld -Ur
-PLDOUT = -o 
 
 STATIC_FLAG =
 
