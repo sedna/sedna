@@ -770,18 +770,14 @@ char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len, sys_ca
 #ifdef _WIN32
     char drive[_MAX_DRIVE];
     char dir[_MAX_DIR];
-    char *tmp_path = NULL;
 
-    tmp_path = strdup(path);
-    _splitpath(tmp_path, drive, dir, NULL, NULL);
+    _splitpath(path, drive, dir, NULL, NULL);
     if (strlen(drive) + strlen(dir) + 1 > buf_len)
     {
-        free(tmp_path);
         return NULL;
     }
     strcpy(buf, drive);
     strcat(buf, dir);
-    free(tmp_path);
 
     return buf;
 #else
@@ -805,18 +801,14 @@ char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len, sys_cal
 #ifdef _WIN32
     char fname[_MAX_FNAME];
     char ext[_MAX_EXT];
-    char *tmp_path = NULL;
 
-    tmp_path = strdup(path);
-    _splitpath(tmp_path, NULL, NULL, fname, ext);
+    _splitpath(path, NULL, NULL, fname, ext);
     if (strlen(fname) + strlen(ext) + 1 > buf_len)
     {
-        free(tmp_path);
         return NULL;
     }
     strcpy(buf, fname);
     strcat(buf, ext);
-    free(tmp_path);
 
     return buf;
 #else

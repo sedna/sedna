@@ -55,9 +55,13 @@ libsednamt$(LIB_EXT): $(MT_OBJS)
 
 # dynamic multi-threaded library
 sednamt$(DL_EXT): $(DLL_MT_OBJS)
-	$(LD) $(LIBFLAGS) /DLL /DEF:sednamt$(DEF_EXT) $(LIBOUT)$@ WS2_32.lib Advapi32.lib $^
-	$(MT) -nologo -manifest $@.manifest -outputresource:$@\;2
-	-$(REMOVE) $@.manifest
+	$(LD) $(LFLAGS_NOLIB) /DLL /DEF:sednamt$(DEF_EXT) $(LIBOUT)$@ WS2_32.lib Advapi32.lib $^
+	if (test -e $@.manifest); then \
+	    $(MT) -nologo -manifest $@.manifest -outputresource:$@\;2; \
+	    $(REMOVE) $@.manifest; \
+	else \
+	    echo "There is no manifest file to embed."; \
+	fi
 
 %.dl.mt$(OBJ_EXT): %.d
 

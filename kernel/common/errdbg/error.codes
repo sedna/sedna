@@ -1740,3 +1740,7 @@ sedna-err:SE4623
 sedna-err:SE4624
 
    Session was closed since keep alive timeout has been expired
+
+sedna-err:SE3081
+
+   Can't open file with long query to execute
