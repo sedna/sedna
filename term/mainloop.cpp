@@ -537,7 +537,6 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 {
 	int result=0, error_code=0, have_results=0;
 	char buf[RESULT_MSG_SIZE+1];
-	FILE* long_query;
 
     if((SEtransactionStatus(&conn) == SEDNA_NO_TRANSACTION) && (!conn.autocommit))
     {
@@ -557,19 +556,8 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     // execute XQuery query	or update
     if(is_query_from_file)
     {
-    	if( (long_query = fopen(tmp_file_name, "r")) == NULL)
-        {
-            fprintf(stderr,"failed to open file\n");
-            fflush(stderr);
-            return EXIT_TERM_FAILED;
-        }
-        result = SEexecuteLong(&conn, long_query); 
-    	if(0 != fclose(long_query))
-        {
-            fprintf(stderr,"failed to close file\n");
-            fflush(stderr);
-            return EXIT_TERM_FAILED;
-        }
+        result = SEexecuteLong(&conn, tmp_file_name); 
+
     	if(0 == uDeleteFile(tmp_file_name, NULL))
         {
             fprintf(stderr,"failed to delete file\n");

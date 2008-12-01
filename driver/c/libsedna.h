@@ -154,7 +154,7 @@ extern "C"
     int SEcommit(struct SednaConnection *conn);
 
 /*query_file - file with a query*/
-    int SEexecuteLong(struct SednaConnection *conn, FILE * query_file);
+    int SEexecuteLong(struct SednaConnection *conn, const char* query_file_path);
 
     int SEexecute(struct SednaConnection *conn, const char *query);
 

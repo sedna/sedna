@@ -1001,9 +1001,10 @@ int SEcommit(struct SednaConnection *conn)
     return commit_handler(conn);
 }
 
-int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
+int SEexecuteLong(struct SednaConnection *conn, const char* query_file_path)
 {
     int read = 0;
+    FILE* query_file;
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
@@ -1025,6 +1026,12 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
         int begin_res = begin_handler(conn);
         if (begin_res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED)
             return SEDNA_ERROR;
+    }
+
+    if(NULL == query_file_path || (query_file = fopen(query_file_path, "rb")) == NULL)
+    {
+        setDriverErrorMsg(conn, SE3081, NULL);        /* "Can't open file with long query to execute" */
+        return SEDNA_ERROR;
     }
 
     while ((read < SE_SOCKET_MSG_BUF_SIZE - 6) && (!feof(query_file)))
@@ -1079,6 +1086,8 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
             return SEDNA_ERROR;
         }
     }
+
+    fclose(query_file);
 
     return execute(conn);
 }
@@ -1567,19 +1576,20 @@ const char *SEshowTime(struct SednaConnection *conn)
     {
         setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         strcpy(conn->query_time, "not available");
-        conn->query_time[13] = '\0';
         return conn->query_time;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
     {
         strcpy(conn->query_time, "not available");
-        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
-        return SEDNA_ERROR;
+    {
+        strcpy(conn->query_time, "not available");
+        return conn->query_time;
+    }
 
     conn->msg.instruction = se_ShowTime;        /*ShowTime*/
     conn->msg.length = 0;
@@ -1590,7 +1600,6 @@ const char *SEshowTime(struct SednaConnection *conn)
     {
         connectionFailure(conn, SE3006, "Connection was broken while obtaining execution time from the server", NULL);
         strcpy(conn->query_time, "not available");
-        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 
@@ -1598,7 +1607,6 @@ const char *SEshowTime(struct SednaConnection *conn)
     {
         connectionFailure(conn, SE3006, "Connection was broken while obtaining execution time from the server", NULL);
         strcpy(conn->query_time, "not available");
-        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 
@@ -1611,7 +1619,6 @@ const char *SEshowTime(struct SednaConnection *conn)
     else
     {
         strcpy(conn->query_time, "not available");
-        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 }
