@@ -768,13 +768,13 @@ negative values:
 
 If the statement is really long, and you prefer to pass it to the Sedna directly from a file use \verb!SEexecuteLong! function.
 
-\begin{verbatim}int SEexecuteLong(SednaConnection* conn, FILE* query_file)\end{verbatim}
+\begin{verbatim}int SEexecuteLong(SednaConnection* conn, const char* query_file_path)\end{verbatim}
 
 parameters:
 
 \verb!conn! - a pointer to an instance of the SednaConnection type.
 
-\verb!query_file! - a pointer to the open file with the statement to execute.
+\verb!query_file! - a path to the file with a query to execute.
 
 returns:
 
