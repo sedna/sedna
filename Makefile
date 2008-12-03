@@ -167,6 +167,7 @@ else
 	$(INSTALL) $(PRESERVE) $(PERM3) driver/c/sednamt.dll $(SEDNA_INSTALL)/sedna/driver/c/sednamt.dll
 	$(INSTALL) $(PRESERVE) $(PERM3) driver/c/sednamt.lib $(SEDNA_INSTALL)/sedna/driver/c/sednamt.lib
 	$(INSTALL) $(PRESERVE) $(PERM3) driver/c/libsednamt.lib $(SEDNA_INSTALL)/sedna/driver/c/libsednamt.lib
+	$(INSTALL) $(PRESERVE) $(PERM3) driver/c/libsednamtmd.lib $(SEDNA_INSTALL)/sedna/driver/c/libsednamtmd.lib
 	$(INSTALL) $(PRESERVE) $(PERM2) examples/api/c/build.bat $(SEDNA_INSTALL)/sedna/examples/api/c/build.bat
 	$(INSTALL) $(PRESERVE) $(PERM2) examples/api/java/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.bat
 	$(INSTALL) $(PRESERVE) $(PERM2) examples/api/java/Client.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Client.bat
