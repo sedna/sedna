@@ -15,9 +15,11 @@ int uUname(U_UTSNAME* s, sys_call_error_fun fun)
     OSVERSIONINFOEX osvi;
     LPFN_ISWOW64PROCESS fnIsWow64Process;
  
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     
-    if((res = GetVersionEx (&osvi)) == 0)
+    if((res = GetVersionEx ((OSVERSIONINFO *) &osvi)) == 0)
     {
         sys_call_error("GetVersionEX");
         return 1;
