@@ -9,7 +9,7 @@ VPATH = . $(PP)/kernel/common/u $(PP)/kernel/common/errdbg $(PP)/kernel/common
 include $(PP)/Makefile.include
 
 ifeq ("$(PLATFORM)", "WIN32")
-all: libsednamt$(LIB_EXT) sednamt$(DL_EXT)
+all: libsednamt$(LIB_EXT) libsednamtmd$(LIB_EXT) sednamt$(DL_EXT)
 	@echo ===================================================================
 	@echo C Driver Done
 	@echo ===================================================================
@@ -31,7 +31,7 @@ endif
 endif
 
 MT_OBJS =     $(OBJS:$(OBJ_EXT)=.mt$(OBJ_EXT))
-#DLL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
+DL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
 
 error_codes.d: gen_error_codes.c
 	NO_DEP=1; export NO_DEP; $(MAKE) -C $(PP)/kernel/common/errdbg generated
@@ -42,18 +42,13 @@ ifeq ("$(PLATFORM)", "WIN32")
 # WIN32
 OBJ_NAME = /Fo
 CFLAGS += /DSE_NO_EVENT_LOG
-#CFLAGS_DL += /DSE_NO_EVENT_LOG
+CFLAGS_DL += /DSE_NO_EVENT_LOG
 
-# static multi-threaded library
+# static multi-threaded library linked with /MT[d]
 libsednamt$(LIB_EXT): $(MT_OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
-%.mt$(OBJ_EXT): %.d
-
-%.mt$(OBJ_EXT): %.c
-	$(CC) $(CFLAGS) $(OBJ_NAME)$@ $<
-
-# dynamic multi-threaded library
+# dynamic multi-threaded library linked with /MT[d]
 sednamt$(DL_EXT): $(MT_OBJS)
 	$(LD) $(LFLAGS_NOLIB) /DLL /DEF:sednamt$(DEF_EXT) $(LIBOUT)$@ WS2_32.lib Advapi32.lib $^
 	if (test -e $@.manifest); then \
@@ -63,10 +58,20 @@ sednamt$(DL_EXT): $(MT_OBJS)
 	    echo "There is no manifest file to embed."; \
 	fi
 
-#%.dl.mt$(OBJ_EXT): %.d
+# static multi-threaded library linked with /MD[d]
+libsednamtmd$(LIB_EXT): $(DL_MT_OBJS)
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
-#%.dl.mt$(OBJ_EXT): %.c
-#	$(CC) $(CFLAGS) $(OBJ_NAME)$@ $<
+
+%.mt$(OBJ_EXT): %.d
+
+%.mt$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS) $(OBJ_NAME)$@ $<
+
+%.dl.mt$(OBJ_EXT): %.d
+
+%.dl.mt$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS_DL) $(OBJ_NAME)$@ $<
 
 
 else # UNIX
