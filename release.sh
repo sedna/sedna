@@ -63,6 +63,7 @@ lookfor tar
 export OS=`uname` || failwith "Cannot mine operating system name"
 export SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
 export BUILD_FILE=build-$SEDNA_VERSION
+export MD5_EXT=md5
 
 if test "$OS" "=" "Linux"; then
 
@@ -72,6 +73,7 @@ if test "$OS" "=" "Linux"; then
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
   MAKE_COMMAND=make
+  MD5=md5sum
   OS_TYPE=nix
 
 elif test "$OS" "=" "Darwin"; then
@@ -82,6 +84,7 @@ elif test "$OS" "=" "Darwin"; then
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
   MAKE_COMMAND=make
+  MD5=md5
   OS_TYPE=nix
 
 elif test "$OS" "=" "FreeBSD"; then
@@ -92,6 +95,7 @@ elif test "$OS" "=" "FreeBSD"; then
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
   MAKE_COMMAND=gmake
+  MD5=md5
   OS_TYPE=nix
 
 elif test "$OS" "=" "SunOS"; then
@@ -102,6 +106,7 @@ elif test "$OS" "=" "SunOS"; then
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
   MAKE_COMMAND=gmake
+  MD5=digest -a md5
   OS_TYPE=nix
 
 else  #Windows (Cygwin)
@@ -112,6 +117,7 @@ else  #Windows (Cygwin)
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=1
   MAKE_COMMAND=make
+  MD5=md5sum
   OS_TYPE=win
 
 fi
@@ -220,6 +226,8 @@ put_results_to_seine() {
 	echo "cd build" >> ftpscript.txt &&
 	echo "put $1" >> ftpscript.txt &&
 	echo "put $2" >> ftpscript.txt &&
+	if test $# -ge 3; then echo "put $3" >> ftpscript.txt; fi &&
+	if test $# -eq 4; then echo "put $4" >> ftpscript.txt; fi &&
 	echo "close" >> ftpscript.txt &&
 	echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
@@ -375,8 +383,11 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
      rm -f $BIN_FILE_NAME.tar.gz);
  fi || failwith "Cannot create selfextracted binary package"
  
+ $MD5 $BIN_FILE_NAME.$DISTR_EXT > $BIN_FILE_NAME.$MD5_EXT
+ $MD5 $SRC_FILE_NAME.$SRC_EXT > $SRC_FILE_NAME.$MD5_EXT
+
  if test $1 "!=" "local"; then 
-     put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT
+     put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$MD5_EXT $SRC_FILE_NAME.$MD5_EXT
  fi)
 ##### RELEASE #################################################################
 
