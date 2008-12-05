@@ -10,7 +10,8 @@
    In a terminal type (substitute <install-path> with the path to a directory
    for which you have read/write permissions):
 
-export SEDNA_INSTALL=<install-path>
+SEDNA_INSTALL=<install-path>
+export SEDNA_INSTALL
 make
 make install
    
@@ -24,9 +25,9 @@ make install
 $SEDNA_INSTALL/data
 $SEDNA_INSTALL/cfg
 
-   To grant the necessary permisions to the user on Linux/Mac OS/FreeBSD
-   you can use the following command (suppose, <sedna-user> is the user 
-   that is going to run Sedna):
+   To grant the necessary permisions to the user under Linux, MacOS, FreeBSD 
+   or Solaris you can use the following command (suppose, <sedna-user> is 
+   the user that is going to run Sedna):
 
 chown <sedna-user> cfg data
      _________________________________________________________________
@@ -44,6 +45,7 @@ chown <sedna-user> cfg data
    2. Linux with kernel version 2.4 and higher
    3. Mac OS X (PPC or Intel platform)
    4. FreeBSD (see also Post-Installation Setup::FreeBSD below)
+   5. Solaris (x86)
 
    Note: Sedna will *not* run on Microsoft Windows 95/98/ME.
    Note: Sedna can be build from sources only under 32-bit platforms.
@@ -58,16 +60,12 @@ chown <sedna-user> cfg data
        installation. For the Windows platform you need the Cygwin package.
      * GNU make is required; other make programs will *not* work. 
      * You need a C/C++ compiler. For the Windows platform Microsoft C/C++ 
-       complier of one of the following versions is required: version 
-       12.00.xxxx (Visual C++ 6.0), version 13.00.xxxx (Visual C++ .Net 2002)
-       or version 13.10.xxxx (Visual C++ .Net 2003). For Linux GCC version 
-       3.x.x or higher is required. GCC is also required for the Windows platform 
-       for making dependencies (so it is recommended to use Cygwin package with 
-       GCC in it).
-     * gzip is needed to unpack the distribution in the first place. If
-       you are reading this, you probably already got past that hurdle.
-     * For building documentation you need LaTex package. For the Windows platform it is 
-       recommended to use GhostScript package version 6.5 or higher (paths to 
+       complier version 12.00.xxxx (Visual C++ 6.0) or higher is required. 
+       For Linux GCC version 3.x.x or higher is required. GCC is also required 
+       for the Windows platform for making dependencies (so it is recommended 
+       to use Cygwin package with GCC in it).
+     * For building documentation you need LaTex package. For the Windows platform 
+       it is recommended to use GhostScript package version 6.5 or higher (paths to 
        its bin and lib should be in the environment variable PATH).
      * For building Java API driver your need Sun Microsystems JDK version 
        1.4 or higher.
@@ -81,7 +79,7 @@ chown <sedna-user> cfg data
 
    Note: We neither support nor plan to support MinGW environment for building
    Sedna on Windows. If you do not have Microsoft Visual C++ consider using
-   free building tools from Microsoft: Microsoft Visual C++ Toolkit 2003 
+   free building tools from Microsoft: Microsoft Visual C++ Express
    together with Microsoft Windows Platform SDK.
 
    Also check that you have sufficient disk space. You will need about 100

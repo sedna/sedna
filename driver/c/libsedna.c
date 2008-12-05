@@ -11,6 +11,11 @@
 #include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
 
+#ifdef _MSC_VER
+#pragma comment(lib,"Advapi32.lib")
+#pragma comment(lib,"WS2_32.lib")
+#endif
+
 /**********************************************************************************************************
 
                       internal driver functions
