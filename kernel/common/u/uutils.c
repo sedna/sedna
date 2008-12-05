@@ -127,16 +127,13 @@ char *int2c_str(int value, char *buf)
     return buf;
 }
 
-__int64  strto__int64(const char *nptr, char **endptr, int base, int* overflow)
+__int64  strto__int64(const char *nptr, char **endptr, int base)
 {
 #ifdef _WIN32
-    __int64 res = _strtoi64(nptr, endptr, base);
+    return _strtoi64(nptr, endptr, base);
 #else
-    __int64 res = strtoll(nptr, endptr, base);
+    return strtoll(nptr, endptr, base);
 #endif
-    if ((_I64_MAX == res || _I64_MIN == res) && errno == ERANGE) *overflow = 1;
-    else *overflow = 0;
-    return res;
 }
 
 __uint64 strto__uint64(const char *nptr, char **endptr, int base)

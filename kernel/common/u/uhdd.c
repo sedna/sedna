@@ -340,10 +340,10 @@ int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
     int res;
 #ifdef _WIN32
-    res = _mkdir(name);
-    if (res == -1 && errno != EEXIST)
+    res = CreateDirectory(name, NULL); /// WinAPI equivalent of what was here, namely "_mkdir(name)". The goal was not to use errno. 
+    if (0 == res && GetLastError() != ERROR_ALREADY_EXISTS)
     {
-        sys_call_error("_mkdir");
+        sys_call_error("CreateDirectory");
         return 0;
     }
     return 1;
