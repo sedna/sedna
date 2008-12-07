@@ -309,7 +309,6 @@ build_pcre: pcre/Makefile
 
 clean_pcre: pcre/Makefile
 	-$(MAKE) -C pcre clean
-	-rm -rf pcre
 
 endif
 
