@@ -383,11 +383,11 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
      rm -f $BIN_FILE_NAME.tar.gz);
  fi || failwith "Cannot create selfextracted binary package"
  
- $MD5 $BIN_FILE_NAME.$DISTR_EXT > $BIN_FILE_NAME.$MD5_EXT
- $MD5 $SRC_FILE_NAME.$SRC_EXT > $SRC_FILE_NAME.$MD5_EXT
+ $MD5 $BIN_FILE_NAME.$DISTR_EXT > $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT
+ $MD5 $SRC_FILE_NAME.$SRC_EXT > $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
 
  if test $1 "!=" "local"; then 
-     put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$MD5_EXT $SRC_FILE_NAME.$MD5_EXT
+     put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
  fi)
 ##### RELEASE #################################################################
 
