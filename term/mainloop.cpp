@@ -504,7 +504,7 @@ int process_command(char* buffer)
         else if(strcmp(buffer+6, "TRANSACTION_READ_ONLY") == 0)
         {
             int value = SEDNA_UPDATE_TRANSACTION;
-            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_DEBUG, (void*)&value, sizeof(int));
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_CONCURRENCY_TYPE, (void*)&value, sizeof(int));
             if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
             {
                 fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
