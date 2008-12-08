@@ -293,10 +293,6 @@ options:
 								default 1600 (the size of the buffer is 64Kb)
   -max-trs-num N				the number of concurrent micro transactions
 								over database, default 10
-  -phys-log-init-size Mbs		the physical log file initial size (in Mb),
-								default 100Mb
-  -phys-log-ext-portion Mbs		the physical log file extending portion size 
-								(in Mb), default 10Mb
   -upd-crt N					update criterion parameter 
 								(fraction of database), default 0.25
   -db-security  security level  the level of database security:
@@ -347,12 +343,10 @@ The configuration file is an XML document, which satisfies the following DTD:
 <!ELEMENT name (#PCDATA)>
 <!ELEMENT bufs_num (#PCDATA)>
 <!ELEMENT max_trs_num (#PCDATA)>
-<!ELEMENT init_phys_log_size (#PCDATA)>
-<!ELEMENT phys_log_ext_portion (#PCDATA)>
 <!ELEMENT upd_crt (#PCDATA)>
 \end{verbatim}
 
-The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!init_phys_log_size! and \verb!phys_log_ext_portion! elements define the initial size of physical log and the size of physical log extension portion respectively. The \verb!upd_crt! element defines the fraction of the database updating of which will result in snapshot advancement.
+The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!upd_crt! element defines the fraction of the database updating of which will result in snapshot advancement.
 
 To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file. Note, in order for new configuration to take effect you must restart Storage Manager.
 

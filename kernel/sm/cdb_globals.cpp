@@ -28,9 +28,6 @@ int _tmp_file_extending_portion_ = 100;
 int _data_file_initial_size_ = 10;
 int _tmp_file_initial_size_ = 10;
 int _persistent_heap_size_ = 10;
-int _phys_log_size_ = 100;
-int _phys_log_ext_portion_ = 10;
-int _phys_log_buf_size_ = 1;
 
 int _bufs_num_ =1600;
 int _max_trs_num_ =10;
@@ -39,7 +36,7 @@ double _upd_crt_ = 0.25;
 
 char db_security[32];
 
-const size_t cdb_narg = 17;
+const size_t cdb_narg = 15;
 
 arg_rec cdb_argtable[] =
 {
@@ -55,8 +52,6 @@ arg_rec cdb_argtable[] =
 {"-persistent-heap-size",       " Mbs", arg_int, &_persistent_heap_size_,        "10",  "\tthe persistent heap size (in Mb), \n\t\t\t\tallowed in the range of 10Mb - 99Mb,\n\t\t\t\tdefault 10Mb"},
 {"-bufs-num",                    " N",   arg_int, &_bufs_num_,                   "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
 {"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
-{"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
-{"-phys-log-ext-portion",  " Mbs",  arg_int, &_phys_log_ext_portion_,                 "10", "\tthe physical log file extending portion size \n\t\t\t\t(in Mb), default 10Mb"},
 {"-upd-crt", " N", arg_dbl, &_upd_crt_, "0.25", "\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
 {"-db-security",  "  security level",  arg_str,  &db_security,       "authentication", "  the level of database security:\n\t\t\t\t 1) 'off' - none;\n\t\t\t\t 2) 'authentication' (default);\n\t\t\t\t 3) 'authorization'"},
 
@@ -109,8 +104,6 @@ void setup_cdb_globals(int argc,
    persistent_heap_size = _persistent_heap_size_ * 0x100000;
    bufs_num = _bufs_num_;
    max_trs_num = _max_trs_num_;
-   phys_log_size = _phys_log_size_ * 0x100000;
-   phys_log_ext_portion = _phys_log_ext_portion_ * 0x100000;
    upd_crt = _upd_crt_;
 
    if (strcmp(db_security, "???") == 0)
