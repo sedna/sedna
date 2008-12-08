@@ -32,12 +32,7 @@ extern int bufs_num;
 // max number of transactions allowed by SM
 extern int max_trs_num;
 
-//phys log extending portion
-extern int phys_log_ext_portion;
-
-//phys log size (retrieved from cfg file)
-extern int phys_log_size;
-
+// update criterion parameter to advance snapshots
 extern double upd_crt;
 
 // database name

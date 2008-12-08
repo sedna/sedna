@@ -30,8 +30,6 @@ void * gov_shm_pointer = NULL; // global gov shared memory pointer
 int db_id;
 int bufs_num;
 int max_trs_num;
-int phys_log_ext_portion;
-int phys_log_size;
 double upd_crt;
 
 
