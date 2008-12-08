@@ -45,7 +45,7 @@ sednadriver.jar: ErrorCodes.java \
 	$(JAVAC) $^
 	jar cvf sednadriver.jar -C $(OUTPUT) ru
 
-javadoc: 	 ErrorCodes.java \
+doc/index.html:	 ErrorCodes.java \
                  DriverException.java \
                  Debug.java \
                  ResultType.java \
@@ -59,6 +59,7 @@ javadoc: 	 ErrorCodes.java \
                  DatabaseManager.java
 	$(JAVADOC) $^
 
+javadoc: doc/index.html
 
 Debug.java: Debug.java.m4
 	$(M4) -DEL_DEBUG=$(EL_DEBUG) $^ >$@
