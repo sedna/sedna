@@ -9,7 +9,7 @@ VPATH = . $(PP)/kernel/common/u $(PP)/kernel/common/errdbg $(PP)/kernel/common
 include $(PP)/Makefile.include
 
 ifeq ("$(PLATFORM)", "WIN32")
-all: libsednamt$(LIB_EXT) sednamt$(DL_EXT)
+all: libsednamt$(LIB_EXT) libsednamd$(LIB_EXT) sednamt$(DL_EXT)
 	@echo ===================================================================
 	@echo C Driver Done
 	@echo ===================================================================
@@ -30,7 +30,8 @@ include $(OBJS:$(OBJ_EXT)=.d)
 endif
 endif
 
-MT_OBJS =     $(OBJS:$(OBJ_EXT)=.mt$(OBJ_EXT))
+MT_OBJS =    $(OBJS:$(OBJ_EXT)=.mt$(OBJ_EXT))
+DL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
 
 error_codes.d: gen_error_codes.c
 	NO_DEP=1; export NO_DEP; $(MAKE) -C $(PP)/kernel/common/errdbg generated
@@ -40,16 +41,22 @@ ifeq ("$(PLATFORM)", "WIN32")
 
 # WIN32
 OBJ_NAME = /Fo
-CFLAGS_ST += /DSE_NO_EVENT_LOG /Zl
+CFLAGS += /DSE_NO_EVENT_LOG
+CFLAGS_DL += /DSE_NO_EVENT_LOG
 
-ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
-LFLAGS_NOLIB += /DEFAULTLIB:LIBCMTD.LIB
-else
-LFLAGS_NOLIB += /DEFAULTLIB:LIBCMT.LIB
-endif
+#Should be uncommented when /Zl be enabled
+#ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
+#LFLAGS_NOLIB += /DEFAULTLIB:LIBCMTD.LIB
+#else
+#LFLAGS_NOLIB += /DEFAULTLIB:LIBCMT.LIB
+#endif
 
 # static multi-threaded library linked with /MT[d]
 libsednamt$(LIB_EXT): $(MT_OBJS)
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+
+# static multi-threaded library linked with /MD[d]
+libsednamd$(LIB_EXT): $(DL_MT_OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 # dynamic multi-threaded library linked with /MT[d]
@@ -65,18 +72,12 @@ sednamt$(DL_EXT): $(MT_OBJS)
 %.mt$(OBJ_EXT): %.d
 
 %.mt$(OBJ_EXT): %.c
-	$(CC) $(CFLAGS_ST) $(OBJ_NAME)$@ $<
+	$(CC) $(CFLAGS) $(OBJ_NAME)$@ $<
 
+%.dl.mt$(OBJ_EXT): %.d
 
-# static multi-threaded library linked with /MD[d]
-#DL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
-#CFLAGS_DL += /DSE_NO_EVENT_LOG
-#libsednamtmd$(LIB_EXT): $(DL_MT_OBJS)
-#	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-#%.dl.mt$(OBJ_EXT): %.d
-#%.dl.mt$(OBJ_EXT): %.c
-#	$(CC) $(CFLAGS_DL) $(OBJ_NAME)$@ $<
-
+%.dl.mt$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS_DL) $(OBJ_NAME)$@ $<
 
 else # UNIX
 LD=gcc # It must be enough to build C-driver!
