@@ -106,7 +106,7 @@ elif test "$OS" "=" "SunOS"; then
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
   MAKE_COMMAND=gmake
-  MD5=digest -a md5
+  MD5="digest -a md5"
   OS_TYPE=nix
 
 else  #Windows (Cygwin)
