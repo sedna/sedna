@@ -10,40 +10,35 @@ include $(PP)/Makefile.include
 
 
 ifeq ($(PLATFORM), UNIX)
+
 BUILD_FILE := build-linux-$(SEDNA_VERSION)
 BUILD_SUFFIX := linux
-UFTP_ARGS := ncftp <
 DISTR_EXT := sh
 SRC_EXT := tar.gz
-# for executables that require root privileges
-#PERM1 := -oroot -groot -m4771
-# for ordinary executable files
-#PERM2 := -oroot -groot -m0775
-# for ordinary files
-#PERM3 := -oroot -groot -m0664
-# for directory
-PERM4 := -m0755
-PERM1 := -m0755
-PERM2 := -m0755
-PERM3 := -m0664
+PERM4 := -m 0755
+PERM1 := -m 0755
+PERM2 := -m 0755
+PERM3 := -m 0664
+
+ifeq ("$(SUB_PLATFORM)","SunOS") 
+PRESERVE := # 'install' has not preserve option under Solaris
 else
+PRESERVE := -p
+endif
+
+else # Windows (Cygwin)
+
 BUILD_FILE := build-$(SEDNA_VERSION)
 BUILD_SUFFIX := win
-UFTP_ARGS := ftp -s:
 DISTR_EXT := tar.gz
 SRC_EXT := tar.gz
 PERM1 := 
 PERM2 := 
 PERM3 := 
 PERM4 := 
+
 endif
 
-# 'install' has not preserve option under Solaris
-ifeq ("$(SUB_PLATFORM)","SunOS") 
-PRESERVE := 
-else
-PRESERVE := -p
-endif
 
 build:
 	@echo ===================================================================
