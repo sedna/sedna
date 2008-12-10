@@ -117,8 +117,17 @@ U_THREAD_PROC (checkpoint_thread, arg)
     d_printf2("checkpoint thread procedure started num=%d\n", times);
 
     shutdown_event_call = shutdown_checkpoint_thread;
-
-    if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
+    
+    // we come to this thread at the end of each updater transaction to check if we need to
+    // make checkpoint or advance snapshots
+    
+    // we do checkpoint if:
+    //	1) when transaction says so (currently only at commit via se:checkpoint() user call)
+    //  2) when se_sm is being shutdowned
+    //  3) when we need truncation of log
+    
+    // we advance snapshots only if SnapshotAdvanceCriterion() says so
+    if (shutdown_event_call || llGetCheckpointActiveFlag() || llNeedCheckpoint()) // checkpoint is needed
     {
 	    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     	{

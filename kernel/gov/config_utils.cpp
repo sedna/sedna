@@ -44,6 +44,8 @@ void fulfill_config_parameters(gov_config_struct* cfg)
      cfg->db_vars[i].db_name[0] = '\0';
      cfg->db_vars[i].is_stop = -1;
      cfg->db_vars[i].sm_pid = 0;
+     cfg->db_vars[i].upd_crt = 0.25;
+     cfg->db_vars[i].max_log_files = 3;
   }
 
   for (int i = 0; i<MAX_SESSIONS_NUMBER; i++)
@@ -76,13 +78,13 @@ static void endElement_sm_cfg(void *cfg, const char *name)
   {
      ((gov_db_struct*)cfg)->max_trs_num = atoi(trim(elem_content).c_str());
   }
-  if (strcmp(name, "logical_log_file_size") == 0)
-  {
-     ((gov_db_struct*)cfg)->logical_log_file_size = atoi(trim(elem_content).c_str()) * 0x100000;
-  }
   if (strcmp(name, "upd_crt") == 0)
   {
      ((gov_db_struct*)cfg)->upd_crt = atof(trim(elem_content).c_str());
+  }
+  if (strcmp(name, "max_log_files") == 0)
+  {
+     ((gov_db_struct*)cfg)->max_log_files = atoi(trim(elem_content).c_str());
   }
   elem_content = "";
 }

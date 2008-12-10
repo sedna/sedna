@@ -47,6 +47,11 @@ void endElement_sm_cfg(void *cnt, const char *name)
      upd_crt = atof(_content_.c_str());
   }
 
+  if ( _tag_name_ == "max_log_files" )
+  {
+     max_log_files = atoi(_content_.c_str());
+  }
+  
   ((CfgParserContext*)cnt)->tag_name = "";
   ((CfgParserContext*)cnt)->content = "";
   

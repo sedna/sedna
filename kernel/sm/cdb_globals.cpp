@@ -31,12 +31,14 @@ int _persistent_heap_size_ = 10;
 
 int _bufs_num_ =1600;
 int _max_trs_num_ =10;
-
+int _log_file_size_ = 100;
+		
 double _upd_crt_ = 0.25;
+int _max_log_files_ = 3;
 
 char db_security[32];
 
-const size_t cdb_narg = 15;
+const size_t cdb_narg = 17;
 
 arg_rec cdb_argtable[] =
 {
@@ -53,6 +55,8 @@ arg_rec cdb_argtable[] =
 {"-bufs-num",                    " N",   arg_int, &_bufs_num_,                   "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
 {"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
 {"-upd-crt", " N", arg_dbl, &_upd_crt_, "0.25", "\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
+{"-max-log-files", " N", arg_int, &_max_log_files_, "3", "\t\tmaximum log files until log truncate (default: 3)"},
+{"-log-file-size", " Mbs", arg_int, &_log_file_size_, "100", "\t\tmaximum one log file size (in Mb), (default 100Mb)"},
 {"-db-security",  "  security level",  arg_str,  &db_security,       "authentication", "  the level of database security:\n\t\t\t\t 1) 'off' - none;\n\t\t\t\t 2) 'authentication' (default);\n\t\t\t\t 3) 'authorization'"},
 
 {NULL,                     "\n   db_name", arg_str, &db_name,               "???", "   \t\t\tthe name of the database to be created"}
@@ -67,13 +71,14 @@ void print_cdb_usage()
 
 void setup_cdb_globals(int argc, 
                       char** argv,
-                      __int64 &data_file_max_size,
-                      __int64 &tmp_file_max_size,
+                      int64_t &data_file_max_size,
+                      int64_t &tmp_file_max_size,
                       int &data_file_extending_portion,
                       int &tmp_file_extending_portion,
                       int &data_file_initial_size,
                       int &tmp_file_initial_size,
-                      int &persistent_heap_size
+                      int &persistent_heap_size,
+		      uint64_t &log_file_size
                      )
 {
    int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
@@ -102,9 +107,20 @@ void setup_cdb_globals(int argc,
    data_file_initial_size = _data_file_initial_size_ * 0x10;   
    tmp_file_initial_size = _tmp_file_initial_size_ * 0x10;
    persistent_heap_size = _persistent_heap_size_ * 0x100000;
+   log_file_size = _log_file_size_ * UINT64_C(0x100000);
+  
+   if (_log_file_size_ <= 0)
+	   throw USER_EXCEPTION2(SE4601, "'log_file_size' parameter is incorrect (must be >0)");
+	   
    bufs_num = _bufs_num_;
    max_trs_num = _max_trs_num_;
    upd_crt = _upd_crt_;
+   if (upd_crt < 0 || upd_crt > 1)
+	   throw USER_EXCEPTION2(SE4601, "'upd-crt' parameter is incorrect (must be in [0;1])");
+	   
+   max_log_files = _max_log_files_;
+   if (max_log_files < 1)
+	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
 
    if (strcmp(db_security, "???") == 0)
        strcpy(db_security, "authentication");
@@ -128,7 +144,8 @@ void setup_cdb_globals(int argc,
 void create_cfg_file(char *db_name,
                      int max_trs_num,
                      int bufs_num,
-                     double upd_crt
+                     double upd_crt,
+		     int max_log_files
                     )
 {
    UFile cfg_file_handle;
@@ -165,6 +182,7 @@ void create_cfg_file(char *db_name,
    cfg_file_content += "   <name>" + string(db_name) + string("</name>\n");
    cfg_file_content += "   <bufs_num>" + int2string(bufs_num) + string("</bufs_num>\n");
    cfg_file_content += "   <max_trs_num>" + int2string(max_trs_num) + string("</max_trs_num>\n");
+   cfg_file_content += "   <max_log_files>" + int2string(max_log_files) + string("</max_log_files>\n");
 
    char buf[100];
    sprintf(buf, "%.2f", upd_crt);

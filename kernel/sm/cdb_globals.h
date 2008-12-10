@@ -11,6 +11,8 @@
 #include "common/argtable.h"
 #include "common/base.h"
 
+#include <stdint.h>
+
 #define MAX_ARGS_LENGTH 1000
 
 extern int _cdb_s_help_;
@@ -36,9 +38,9 @@ extern const size_t cdb_narg;
 
 void print_cdb_usage();
 
-void setup_cdb_globals(int, char**, __int64 &, __int64 &, int &, int &, int &, int &, int &);
+void setup_cdb_globals(int, char**, int64_t &, int64_t &, int &, int &, int &, int &, int &, uint64_t &);
 
-void create_cfg_file(char *, int, int, double);
+void create_cfg_file(char *, int, int, double, int);
 
 void create_data_directory();
 

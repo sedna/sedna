@@ -106,9 +106,10 @@ extern int recovery_active; // true, if this process is a recovery process
 // Parameters:
 //     db_files_path - full path where files are stored;
 //     db_name   - name of the database;
+//     log_file_size - maximum size of one log file
 // Returns: 
 //     -1 - error; 0 - all ok
-int llCreateNew(const char *db_files_path, const char *db_name);
+int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_file_size);
 
 // Insert record in logical log. 
 // Data can be stored in memory. To guarantee write on disk, llFlush should be used.
@@ -131,12 +132,14 @@ void llUnlock();
 // Parameters:
 //     db_files_path - full path where files are stored;
 //     db_name - name of the database;
+//     max_log_files_param - maximum number of log files until commit
 //	   sedna_db_version - (out) sedna data structures
 //     exit_status - (out) status of previous exit (true - log was shutdowned successfully; false - abnormal termination).
 //     rcv_active - if recovery is active
 // Returns: 
 //     -1 - error; 0 - all ok
-int llInit(const char *db_files_path, const char * db_name, int *sedna_db_version, bool *exit_status, int rcv_active);
+int llInit(const char *db_files_path, const char * db_name, int max_log_files_param, 
+	   int *sedna_db_version, bool *exit_status, int rcv_active);
 
 // Releases logical log.
 // Returns: 
@@ -286,5 +289,11 @@ int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llN
 // Returns:
 // 		number of the archived file
 uint64_t llLogArchive();
+
+// Check if we need to do checkpoint for maintenance reason.
+// For example, when number of files is high enough we want to make checkpoint to truncate log
+// Returns:
+// 	true - if we need checkpoint; false - otherwise;
+bool llNeedCheckpoint();
 
 #endif

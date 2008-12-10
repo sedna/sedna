@@ -31,6 +31,8 @@ int db_id;
 int bufs_num;
 int max_trs_num;
 double upd_crt;
+int max_log_files;
+
 
 
 char db_name[SE_MAX_DB_NAME_LENGTH + 1];
@@ -57,6 +59,7 @@ void setup_sm_globals(gov_config_struct* cfg)
    bufs_num =  cfg->db_vars[db_id].bufs_num;
    max_trs_num = cfg->db_vars[db_id].max_trs_num;
    upd_crt = cfg->db_vars[db_id].upd_crt;
+   max_log_files = cfg->db_vars[db_id].max_log_files;
 
    if ( __bufs_num__ > 0 )
        bufs_num = __bufs_num__;
@@ -66,6 +69,9 @@ void setup_sm_globals(gov_config_struct* cfg)
 
    if (__upd_crt__ > 0)
    	   upd_crt = __upd_crt__;
+   
+   if (__max_log_files__ > 0)
+	   max_log_files = __max_log_files__;
 }
 
 /*****************************************************************************/
@@ -130,8 +136,9 @@ int __bufs_num__ = 0;
 int __max_trs_num__ = 0;
 
 double __upd_crt__ = 0;
+int __max_log_files__ = 0;
 
-const size_t narg = 8;
+const size_t narg = 9;
 
 arg_rec sm_argtable[] =
 {
@@ -141,7 +148,8 @@ arg_rec sm_argtable[] =
 {"-background-mode", " on/off",  arg_bool, &background_mode,         "on",  "  start the server in the background mode (default on)"},
 {"-bufs-num",        " N",       arg_int,  &__bufs_num__,            "-1",  "\t\t   the number of buffers in main memory, \n\t\t\t   (default value retrieved from config file)" },
 {"-max-trs-num",     " N",       arg_int,  &__max_trs_num__,         "-1",  "\t   the number of concurrent micro transactions over \n\t\t\t   database, (default value retrieved from config file)" },
-{"-upd-crt",         " N",       arg_dbl,  &__upd_crt__,             "-1.0","\t\t   criterion parameter to advance snapshots, \n\t\t\t (default value retrieved from config file)"},
-{NULL,               " db-name", arg_str,   db_name,                 "???", "\t\t   the name of the database "}
+{"-upd-crt",         " N",       arg_dbl,  &__upd_crt__,             "-1.0","\t\t   criterion parameter to advance snapshots, \n\t\t\t   (default value retrieved from config file)"},
+{"-max-log-files", " N", arg_int, &__max_log_files__, "-1", "\t   maximum log files until log truncate (default: 3)"},
+{NULL,               " db-name", arg_str,   db_name,                 "???", "\t\t   the name of the database "},
 };
 

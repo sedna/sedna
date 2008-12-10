@@ -23,8 +23,8 @@ void   fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                                      const char* db_name, 
                                      int bufs_num,
                                      int max_trs_num,
-                                     int logical_log_file_size,
-                                     double upd_crt);
+                                     double upd_crt,
+				     int max_log_files);
 
 void   get_sednaconf_values(gov_header_struct* cfg);
 
