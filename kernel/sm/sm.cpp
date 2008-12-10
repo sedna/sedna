@@ -589,6 +589,7 @@ int main(int argc, char **argv)
             command_line += " -background-mode off ";
             command_line += " -bufs-num " + int2string(__bufs_num__);
             command_line += " -max-trs-num " + int2string(__max_trs_num__) + " ";
+	    command_line += " -max-log-files " + int2string(__max_log_files__) + " ";
 
             char buf_uc[100];
             sprintf(buf_uc, "%.2f", __upd_crt__);
@@ -669,7 +670,7 @@ int main(int argc, char **argv)
 
         //start up logical log
 		bool is_stopped_correctly;
-		llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly, false);
+		llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, false);
 		if (is_stopped_correctly != true)
 			throw SYSTEM_EXCEPTION("Inconsistent database state");
 //		if (!ll_logical_log_startup(sedna_db_version)) throw SYSTEM_EXCEPTION("Inconsistent database state");
@@ -846,7 +847,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        fprintf(res_os, "Starting database recovery or hot-backup restoration...\n");
        bool is_stopped_correctly;// = ll_logical_log_startup(sedna_db_version/*out parameter*/);
-	   llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly, true);
+       llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, true);
 
        elog(EL_LOG, ("SM : logical log is started"));
        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)

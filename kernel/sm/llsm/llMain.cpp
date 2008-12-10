@@ -23,8 +23,9 @@
 #include <string>
 
 #define LL_FILE_PORTION_SIZE (INT64_C(100) * (1024 * 1024)) // size of chunk of logical log
-#define LL_WRITEBUF_SIZE 1024 * 1024 						// write buffer size (for lfs)
+#define LL_WRITEBUF_SIZE 1024 * 1024 			    // write buffer size (for lfs)
 #define LL_READBUF_SIZE 1024                                // read buffer size (for lfs)
+#define LL_MAX_LOG_FILES max_log_files			    // maximum files until truncate
 
 struct llRecordHead
 {
@@ -46,6 +47,7 @@ struct llFileHead
 	//new fields should be appended to the end of the structure
 };
 
+static int max_log_files;     // maximum number of files until commit (external parameter)
 static USemaphore SyncSem;    // synchronization semaphore
 static UEvent CheckpointEvent;// event to start checkpoint thread
 static UShMem SharedMem;      // descriptor for shared global info
@@ -79,7 +81,7 @@ static void _llProcessError(const char *file, const char *func, int line, const 
 }
 
 // Create new logical log.
-int llCreateNew(const char *db_files_path, const char *db_name)
+int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_file_size)
 {
 	llFileHead fileHead;
 
@@ -91,8 +93,14 @@ int llCreateNew(const char *db_files_path, const char *db_name)
 	fileHead.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
 	fileHead.is_archive = false;
 	fileHead.next_arch_file = 0;
+	
+	// tune log_file_size parameter let's take sectorsize + 1Mb as minimum
+	if (log_file_size > 0 && log_file_size < LL_WRITEBUF_SIZE + 512)
+		log_file_size = LL_WRITEBUF_SIZE + 512;
 
-	lfsCreateNew(db_files_path, db_name, "llog", LL_FILE_PORTION_SIZE, &fileHead, sizeof(llFileHead));
+	lfsCreateNew(db_files_path, db_name, "llog", 
+		     (log_file_size == -1) ? LL_FILE_PORTION_SIZE : log_file_size, 
+		      &fileHead, sizeof(llFileHead));
 
 	return 0;
 }
@@ -226,7 +234,8 @@ static void llRetrieveHbRec(void *RecBuf)
 }
 
 // Inits logical log.
-int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version, bool *exit_status, int rcv_active)
+int llInit(const char *db_files_path, const char *db_name, int max_log_files_param, 
+	   int *sedna_db_version, bool *exit_status, int rcv_active)
 {
 	lfsInit(db_files_path, db_name, "llog", LL_WRITEBUF_SIZE, LL_READBUF_SIZE);
 
@@ -291,6 +300,9 @@ int llInit(const char *db_files_path, const char *db_name, int *sedna_db_version
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));  // since this moment any crash will lead to recovery
 
+	max_log_files = max_log_files_param;
+	if (max_log_files < 1)
+		LL_ERROR("internal ll error: max_log_files parameter is invalid ");
 	recovery_active = rcv_active;
 
 	// print some message about consistency of the database
@@ -746,3 +758,10 @@ LSN llGetPrevLsnFromRecord(void *Rec)
 
 	return RecHead->prev_lsn;
 }
+
+// Check if we need to do checkpoint for maintenance reason.
+bool llNeedCheckpoint()
+{
+	// this call is safe because lfsGetNumberOfFiles() is thread-safe
+	return lfsGetNumberOfFiles() > LL_MAX_LOG_FILES;
+}			

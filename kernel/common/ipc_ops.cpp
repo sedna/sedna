@@ -140,16 +140,16 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                                    const char* db_name, 
                                    int bufs_num,
                                    int max_trs_num,
-                                   int logical_log_file_size,
-                                   double upd_crt)
+                                   double upd_crt,
+				   int max_log_files)
 {
    strcpy(cfg->db_vars[db_id].db_name, db_name);
    cfg->db_vars[db_id].is_stop = -1;
    cfg->db_vars[db_id].sm_pid = 0;
    cfg->db_vars[db_id].bufs_num = bufs_num;
    cfg->db_vars[db_id].max_trs_num = max_trs_num;
-   cfg->db_vars[db_id].logical_log_file_size = logical_log_file_size;
    cfg->db_vars[db_id].upd_crt = upd_crt;
+   cfg->db_vars[db_id].max_log_files = max_log_files;
 }            
 
 

@@ -35,6 +35,9 @@ extern int max_trs_num;
 // update criterion parameter to advance snapshots
 extern double upd_crt;
 
+// maximum number of log files until truncate
+extern int max_log_files;
+
 // database name
 extern char db_name[];
 
@@ -62,9 +65,16 @@ extern int sm_version;
 
 extern int background_mode; 
 extern int __bufs_num__;
+
+// maximum number of log files until truncate
 extern int __max_trs_num__;
 
+// update fraction parameter to advance snapshots
 extern double __upd_crt__;
+
+// maximum number of log files until truncate
+extern int __max_log_files__;
+
 
 struct CfgParserContext
 {

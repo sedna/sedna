@@ -865,7 +865,7 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 	lfsHeader->NextLSN = lfsSectorSize;
 	lfsHeader->FirstFileNum = 1;
 	lfsHeader->ChunkSize = cChunkSize;
-
+	
 	if (_lfsCreateAnotherFile(1, SectorBuf, lfsSectorSize) != 0)
 		return -1;
 
@@ -1373,7 +1373,7 @@ int lfsTruncate(LSN UntilLSN, uint64_t hint_num)
 }
 
 // Returns number of lfs files
-uint64_t lfsGetLfsSize()
+uint64_t lfsGetNumberOfFiles()
 {
 	uint64_t res;
 

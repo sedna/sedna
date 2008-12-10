@@ -193,13 +193,15 @@ static inline void cleanup_db_and_check_result(const char* db_name)
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-    __int64 data_file_max_size = 0x80000000;    // = 2Gb
-    __int64 tmp_file_max_size = 0x80000000;		// = 2Gb
+    int64_t data_file_max_size = 0x80000000;    // = 2Gb
+    int64_t tmp_file_max_size = 0x80000000;		// = 2Gb
     int data_file_extending_portion = 1600;		// = 100Mb (in pages)
     int tmp_file_extending_portion = 1600;		// = 100Mb (in pages)
     int data_file_initial_size = 1600;			// = 10Mb (in pages)
     int tmp_file_initial_size = 1600;			// = 10Mb (in pages)
     int persistent_heap_size = 0xA00000;		// = 10Mb
+    uint64_t log_file_size = -1; // llCreate checks this parameter
+    
     pping_client *ppc = NULL;
     SednaUserException ppc_ex = USER_EXCEPTION(SE4400);
 
@@ -241,7 +243,8 @@ int main(int argc, char **argv)
                                  tmp_file_extending_portion,
                                  data_file_initial_size,
                                  tmp_file_initial_size,
-                                 persistent_heap_size);
+                                 persistent_heap_size,
+				 log_file_size);
 
 
         if (_cdb_s_help_ == 1 || _cdb_l_help_ == 1)
@@ -289,8 +292,8 @@ int main(int argc, char **argv)
                                       db_name,
                                       bufs_num,
                                       max_trs_num,
-                                      0,
-                                      upd_crt);
+                                      upd_crt,
+				      max_log_files);
 
         SetGlobalNamesDB(db_id);
 
@@ -308,7 +311,8 @@ int main(int argc, char **argv)
              create_cfg_file(db_name,
                              max_trs_num,
                              bufs_num,
-                             upd_crt
+                             upd_crt,
+			     max_log_files
                             );
 
              create_data_directory();
@@ -339,12 +343,12 @@ int main(int argc, char **argv)
 
              d_printf1("create_logical_log call successful\n");
 */
-             llCreateNew(db_files_path, db_name);
+             llCreateNew(db_files_path, db_name, log_file_size);
              
              init_checkpoint_sems();
 
 		     bool is_stopped_correctly;
-	   		 llInit(db_files_path, db_name, &sedna_db_version, &is_stopped_correctly, false);
+	   		 llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, false);
              d_printf1("logical_log_startup call successful\n");
              
              bm_startup();
