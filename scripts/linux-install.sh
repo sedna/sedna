@@ -157,6 +157,7 @@ printf "Running the Sedna installer... "
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_trn"       || failwith "chmod"
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_rcv"       || failwith "chmod"
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_exp"       || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_hb"       || failwith "chmod"
 echo "done"
 
 cd "$where"
@@ -206,7 +207,7 @@ if test -d "bin"; then
   echo "Do you want to install new system links within the bin subdirectory of "
   echo "\"$where\", "
   echo "possibly overriding existing links for the programs se_cdb, se_ddb, se_gov, "
-  printf "se_rc, se_sm, se_smsd, se_stop, se_term, se_trn, se_rcv, se_exp? "
+  printf "se_rc, se_sm, se_smsd, se_stop, se_term, se_trn, se_rcv, se_exp, se_hb? "
   read yesno
   case "$yesno" in
     [yY]* ) sysdir="$where" ;;
@@ -217,7 +218,7 @@ else
   echo "If you want to install new system links within the bin "
   echo "subdirectory of a common directory prefix (for "
   echo "example, \"/usr/local\") for the programs se_cdb, se_ddb, se_gov, se_rc, "
-  echo "se_sm, se_smsd, se_serv, se_term, se_trn, se_rcv, se_exp then enter the prefix you "
+  echo "se_sm, se_smsd, se_serv, se_term, se_trn, se_rcv, se_exp, se_hb then enter the prefix you "
   echo "want to use."
   printf "(default: skip links) > "
   read sysdir
@@ -244,7 +245,7 @@ if test ! "x$sysdir" = "x"; then
     printsep="  "
     cd "bin"
     for x in "se_cdb" "se_ddb" "se_gov" "se_rc" "se_sm" "se_smsd" \
-             "se_stop" "se_term" "se_trn" "se_rcv" "se_exp"; do
+             "se_stop" "se_term" "se_trn" "se_rcv" "se_exp" "se_hb"; do
       if test -x "$where/$TARGET/bin/$x"; then
         printf "${printsep}$x"
         printsep=", "
