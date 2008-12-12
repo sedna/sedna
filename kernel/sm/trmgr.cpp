@@ -527,8 +527,10 @@ int PhOnInitialSnapshotCreate(TIMESTAMP ts)
 }
 
 // this function inits ph on snapshot init
-int PhOnSnapshotCreate(TIMESTAMP ts)
+int PhOnSnapshotCreate(TIMESTAMP ts, TIMESTAMP *damTs, int damTsSize)
 {
+	int i;
+	
     string ph_file_name = string(db_files_path) + string(db_name) + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
 	string ph_cur_file_name = string(db_files_path) + string(db_name) + ".seph";
 
@@ -537,8 +539,21 @@ int PhOnSnapshotCreate(TIMESTAMP ts)
 	
 	if (ts_0 && ts_1) // the case of "three" snapshots
 	{
-		ts_tmp = (ts_0 < ts_1) ? ts_0 : ts_1;
+		//ts_tmp = (ts_0 < ts_1) ? ts_0 : ts_1;
+		// find damaged snapshot
+		for (i = 0; i < damTsSize; i++)
+			if (damTs[i] == ts_0)
+			{
+				ts_tmp = ts_0;
+				break;
+			}
+			else if (damTs[i] == ts_1)
+			{
+				ts_tmp = ts_1;
+				break;
+			}
 
+		U_ASSERT(ts_tmp == ts_0 || ts_tmp == ts_1);
 		PhOnSnapshotDelete(ts_tmp, false);
 	}
 				

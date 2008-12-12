@@ -98,7 +98,8 @@ static int ImpExpandDfvHeader (const TIMESTAMP tsIn[],
 							   TIMESTAMP tsOut[],
 							   int idOut[],
 							   size_t *szOut,
-							   TIMESTAMP *anchorTs)
+							   TIMESTAMP *anchorTs,
+                               bool isTotalAnchor)
 {
 	size_t szOutLocal = 0;
 	TIMESTAMP tsOutBuf[VE_VERSIONS_COUNT+2] = {};
@@ -111,7 +112,7 @@ static int ImpExpandDfvHeader (const TIMESTAMP tsIn[],
 		tsOut = tsOutBuf;
 		idOut = idOutBuf;
 	}
-	return SnExpandDfvHeader(tsIn, szIn, tsOut, idOut, szOut, anchorTs);
+	return SnExpandDfvHeader(tsIn, szIn, tsOut, idOut, szOut, anchorTs, isTotalAnchor);
 }
 
 static int ImpDamageSnapshots(TIMESTAMP timestampMax)
@@ -395,7 +396,7 @@ int IsPersSnapshotVersion(VersionsHeader *hdr, int *bIsPers)
 	assert(hdr && bIsPers);
 	*bIsPers = 0;
 	if (ImpGetSnapshotTimestamps(NULL, &persSnapshotTs) &&
-		ImpExpandDfvHeader(hdr->creatorTs, VE_VERSIONS_COUNT, tss, ids, &tssNum, NULL))
+		ImpExpandDfvHeader(hdr->creatorTs, VE_VERSIONS_COUNT, tss, ids, &tssNum, NULL, false))
 	{
 		i = 0; while (i<(int)tssNum && tss[i]!=persSnapshotTs) ++i;
 		*bIsPers = (ids[i]==0);
@@ -530,7 +531,7 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 			tsInBuf[0] = restriction.deletorTs;
 			memcpy(tsInBuf+1, versionHeader->creatorTs, sizeof(TIMESTAMP)*VE_VERSIONS_COUNT);
 					
-			if (ImpExpandDfvHeader(tsInBuf, VE_VERSIONS_COUNT+1, tsOutBuf, idOutBuf, pOutSz, anchorTs)) 
+			if (ImpExpandDfvHeader(tsInBuf, VE_VERSIONS_COUNT+1, tsOutBuf, idOutBuf, pOutSz, anchorTs, false)) 
 			{
 				okStatus = 1;
 				for (i=0; i<*pOutSz; ++i) idOutBuf[i]+=-1;
@@ -539,7 +540,7 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 		else
 		{
 			okStatus = ImpExpandDfvHeader(versionHeader->creatorTs, VE_VERSIONS_COUNT, 
-										  tsOutBuf, idOutBuf, pOutSz, anchorTs);
+										  tsOutBuf, idOutBuf, pOutSz, anchorTs, false);
 		}
 
 		if (!okStatus) {}
@@ -679,9 +680,13 @@ int OnFreeBlock(LXPTR lxptr, TIMESTAMP *pAnchorTs)
 	}
 	else
 	{
-		/*	we are going to update pAnchorTs */ 
+        // here we must change pAnchorTs according to the oldest needed version
+        // since this version must be accessible by navigation, and bogus version
+        // must not be purged before that; it is done through isTotalAnchor parameter
+        
+        /*	we are going to update pAnchorTs */ 
 		success = ImpLocateHeader(bufferId, &header) &&
-				  ImpExpandDfvHeader(header->creatorTs, VE_VERSIONS_COUNT, NULL, NULL, NULL, pAnchorTs);
+				  ImpExpandDfvHeader(header->creatorTs, VE_VERSIONS_COUNT, NULL, NULL, NULL, pAnchorTs, true);
 	}
 
 	return success;
@@ -1005,7 +1010,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 			/* prepare restrictions */ 
 			restrictMaster.creatorId = ClGetCurrentClientId(setup.clientStateTicket);
 			restrictMaster.xptr = lxptr;
-			restrictSlave.type = VE_RESTRICTION_DEAD_BLOCK;
+            restrictSlave.type = VE_RESTRICTION_OLD_VERSION;
 			restrictSlave.xptr = newBlock;
 			/* ---------- */ 
 			*pOldHeader = header;
@@ -1185,7 +1190,11 @@ int VeOnFlushBuffer(XPTR xptr)
 
 int VeOnCheckpoint()
 {
+	/* we shouldn't reset dependencies here because this might mess up 
+	the following total buffer flush on checkpoint
+	
 	return ResetFlushingDependencies();
+	*/
 }
 
 void VeDbgDump(int reserved)

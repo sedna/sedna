@@ -863,8 +863,7 @@ int SubmitRequestForGc(SnSnapshotsList *snLst,
 	}
 	else
 	{
-		int level = 0, levelLastNotDamaged = 0;
-		const SnSnapshot *pSnLastNotDamaged = NULL;
+		int level = 0;
 		SnGcNode *pGn = NULL;
 		SnVersionEntry entry = {};
 
@@ -876,21 +875,8 @@ int SubmitRequestForGc(SnSnapshotsList *snLst,
 		/*	find the last snapshot depending on the version (pSn is the first one) */ 
 		else while (pSn->next && (pSn->next->timestamp >= request.anchorTs ))
 		{
-			if (!pSn->isDamaged)
-			{
-				levelLastNotDamaged = level;
-				pSnLastNotDamaged = pSn;
-			}
 			pSn = pSn->next;
 			++level;
-		}
-
-		/*	if we are commiting a bogus version (used to navigate to older versions)
-			we can exclude damaged snapshots since they aren't used for navigation */ 
-		if (request.type == SN_REQUEST_ADD_BOGUS_VERSION && pSn && pSn->isDamaged)
-		{
-			pSn = pSnLastNotDamaged;
-			level = levelLastNotDamaged;
 		}
 
 		/*	if no snapshot depends on the version feel free to discard it */ 
@@ -1690,6 +1676,25 @@ int SnGetTransactionSnapshotTs(TIMESTAMP *timestamp)
 	return success;
 }
 
+int SnGetDamagedTimestamps(TIMESTAMP *damagedSnapshots, int *tsDamCount)
+{
+	SnSnapshot *sniter = GetCurrentSnapshot(&snapshots);
+	int i = 0;
+	
+	while (sniter)
+	{
+		if (sniter->isDamaged)
+		{
+			damagedSnapshots[i] = sniter->timestamp;
+			i++;
+		}
+		sniter = sniter->next;
+	}
+	
+	*tsDamCount = i;
+	return 1;	
+}
+
 int SnGetTransactionTs(TIMESTAMP *timestamp)
 {
 	int success = 0;
@@ -1705,12 +1710,54 @@ int SnGetTransactionTs(TIMESTAMP *timestamp)
 	return success;
 }
 
+static
+int SnFilterOutDamaged(TIMESTAMP tsOut[], int idOut[], size_t *szOut)
+{
+    int i = 0, k;
+    int success = 0;
+    SnSnapshot *sn = NULL;
+    
+    while (1)
+    {
+        if (i >= (int)*szOut)
+        {
+            success = 1;
+            break;
+        }
+        
+        if (tsOut[i] != SN_WORKING_VERSION_TIMESTAMP &&
+            tsOut[i] != SN_LAST_COMMITED_VERSION_TIMESTAMP)
+        {
+            if (!GetSnapshotByTimestamp(&snapshots, &sn, NULL, tsOut[i]))
+                break;
+        
+            if (sn->isDamaged)
+            {
+                int n = (int)*szOut;
+                
+                for (k = i; k < n - 1; k++)
+                {
+                    tsOut[k] = tsOut[k + 1];
+                    idOut[k] = idOut[k + 1];
+                }
+            
+                (*szOut)--;
+            }
+        }
+        
+        i++;
+    }
+            
+    return success;
+}
+
 int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 					  size_t szIn,
 					  TIMESTAMP tsOut[],
 					  int idOut[],
 					  size_t *szOut,
-					  TIMESTAMP *anchorTsParam)
+					  TIMESTAMP *anchorTsParam,
+                      bool isTotalAnchor)
 {
 	int success = 0;
 	SnSnapshot fakeHead = {}, *sniter = &fakeHead;
@@ -1801,13 +1848,26 @@ int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 					anchorTs++;
 				}
 			}			
+            
+            if (isTotalAnchor)
+            {
+                // here we must change anchorTs according to the oldest needed version
+                if (tsOut[n - 1] != SN_LAST_COMMITED_VERSION_TIMESTAMP &&
+                    tsOut[n - 1] != SN_WORKING_VERSION_TIMESTAMP)            
+                    anchorTs = tsOut[n - 1];
+            }
+    
+            // last but not least: we must filter out damaged snapshots
+            SnFilterOutDamaged(tsOut, idOut, szOut);
 		}
 	}
 	else
 	{
 		*szOut = 0;
 	}
+    
 	if (anchorTsParam) *anchorTsParam = anchorTs;
+    
 	return success;
 }
 
@@ -1837,8 +1897,8 @@ int SnDamageSnapshots(TIMESTAMP timestampFrom)
 					break;
 				}
 				sniter->isDamaged = 1;
-				sniter=sniter->next;
 			}
+			sniter=sniter->next;
 		}
 	}
 	return success;
