@@ -235,7 +235,7 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
                 continue;
            else
            {
-               sys_call_error("write");
+               sys_call_error(res == 0 ? "write, res=0" : "write");
                return 0;
            }
        else
