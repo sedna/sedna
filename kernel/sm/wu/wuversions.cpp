@@ -1195,6 +1195,7 @@ int VeOnCheckpoint()
 	
 	return ResetFlushingDependencies();
 	*/
+    return 1;
 }
 
 void VeDbgDump(int reserved)
