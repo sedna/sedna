@@ -28,38 +28,64 @@ void InitGuardMemoryVars(GuardMemoryVars *vars, void *ptr, ptrdiff_t dist, uint3
 
 	assert(vars && (ptr||!dist));	
 
-	if (dist>0) eptr=OffsetPtr(ptr,dist);
+        /* Initialize. */
+        vars->fill = fill;
+        vars->dummy = fill;
+        vars->m0 = vars->m1 = 0;
+        vars->vbegin = vars->vend = vars->begin = vars->end = NULL;
+        vars->frag0 = vars->frag1 = &vars->dummy;
+
+        /* Region is empty? */ 
+        if (dist==0) goto fix_byteorder_and_leave;
+
+        /* We accept negative dist, for some reasons. */
+        if (dist>0) eptr=OffsetPtr(ptr,dist);
 	else ptr=OffsetPtr(eptr,dist);
-	assert(ptr<=eptr); /* wraparound */ 
+	assert(ptr<=eptr); /* test for wraparound near NULL */ 
 
-	vars->begin=(uint32_t*)AlignPtr(OffsetPtr(ptr,+4),4);
-	vars->end=(uint32_t*)AlignPtr(OffsetPtr(eptr,-4),4);
-	vars->vbegin=ptr;
-	vars->vend=eptr;
+        /*                                    eptr, vend|
+         *  ptr, vbegin |-- ---- ---- ---- ---- ---- ---|
+         *       frag0|----|                   frag1|----|
+         *           begin |---- ---- ---- ---- ----|
+         *                                       end|   
+         *
+         * Note: frag0==vbegin if aligned, frag1==vend-4 if aligned,
+         *       0<=CalcPtrDistance(frag0, vbegin)<=3
+         *       1<=CalcPtrDistance(frag1, vend)<=4
+         */
 
-	vars->dummy=vars->fill=BigEndianByteOrder(fill);
-	vars->m0=BigEndianByteOrder(~UINT32_C(0)>>CalcPtrDistance(vars->begin,ptr)*8);
-	vars->m1=BigEndianByteOrder(~UINT32_C(0)<<CalcPtrDistance(eptr,vars->end)*8);
+        vars->vbegin=ptr;
+        vars->vend=eptr;
+        vars->frag0=(uint32_t *)((uintptr_t)ptr & ~(uintptr_t)3);
+        vars->frag1=(uint32_t *)(((uintptr_t)eptr-1) & ~(uintptr_t)3);
+        vars->begin=vars->frag0+1;
+        vars->end=vars->frag1;
 
-	if (dist==0)
-	{
-		vars->m0=vars->m1=0;
-		vars->begin=vars->end=NULL;
-		vars->frag0=vars->frag1=&vars->dummy;
-	}
-	else if(vars->begin>vars->end)
-	{
-		vars->m0&=vars->m1;
-		vars->m1=0;
-		vars->frag0=vars->begin-1;
-		vars->frag1=&vars->dummy;
-		vars->begin=vars->end=NULL;
-	}
-	else
-	{
-		vars->frag0=vars->begin-1;
-		vars->frag1=vars->end;
-	}
+        /* We pretend that byteorder is bigendian (if it is lilendian, we
+         * perform conversion later). If we want 00 FF FF FF byte
+         * pattern, we shift 0xFFFFFFFF ___right___!
+         */
+        vars->m0=UINT32_C(0xffffffff)>>(CalcPtrDistance(vars->frag0, vars->vbegin)*8);
+        vars->m1=UINT32_C(0xffffffff)<<(32-CalcPtrDistance(vars->frag1, vars->vend)*8);
+
+        /* Probably memory region was small, so after exclusion of frag0 and
+         * frag1 it is entirely exhausted. */
+        if (vars->begin>=vars->end) vars->begin = vars->end = NULL;
+
+        /* Probably frag0 and frag1 overlap. */
+        if (vars->frag0 == vars->frag1)
+        {
+            vars->m0 &= vars->m1;
+            vars->frag1 = &vars->dummy;
+            vars->m1 = 0;
+        }
+        
+        /* And now we need byteorder conversion! */
+fix_byteorder_and_leave:
+        vars->fill=BigEndianByteOrder(vars->fill);
+        vars->dummy=BigEndianByteOrder(vars->dummy);
+        vars->m0=BigEndianByteOrder(vars->m0);
+        vars->m1=BigEndianByteOrder(vars->m1);
 }
 
 void DbgInitGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill)

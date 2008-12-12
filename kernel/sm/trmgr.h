@@ -52,7 +52,7 @@ extern UEvent end_of_rotr_event;
 volatile extern bool is_recovery_mode;
 
 int PhOnInitialSnapshotCreate(TIMESTAMP ts);
-int PhOnSnapshotCreate(TIMESTAMP ts);
+int PhOnSnapshotCreate(TIMESTAMP ts, TIMESTAMP *damTs, int damTsSize);
 void PhOnSnapshotDelete(TIMESTAMP ts, bool isDelete = true);
 int GetPhIndex(TIMESTAMP ts);
 #endif

@@ -114,6 +114,8 @@ int SnGetTransactionStatusAndType(int *statusAndType);
 
 int SnGetTransactionSnapshotTs(TIMESTAMP *timestamp);
 
+int SnGetDamagedTimestamps(TIMESTAMP *damagedSnapshots, int *tsDamCount);
+
 int SnGetTransactionTs(TIMESTAMP *timestamp);
 
 /* SnExpandDfvHeader */ 
@@ -127,7 +129,8 @@ int SnExpandDfvHeader(const TIMESTAMP tsInBuf[],
 					  TIMESTAMP tsOutBuf[],
 					  int idOutBuf[],
 					  size_t *szOut,
-					  TIMESTAMP *anchorTs);
+					  TIMESTAMP *anchorTs,
+                      bool isTotalAnchor);
 
 int SnDamageSnapshots(TIMESTAMP timestampFrom);
 

@@ -943,6 +943,9 @@ int WuGatherSnapshotsStats(WuSnapshotStats *stats)
 int WuTryAdvanceSnapshots(int *bSuccess)
 {
 	TIMESTAMP discardedSnapshotTs = INVALID_TIMESTAMP, curSnapshotTs = INVALID_TIMESTAMP;
+	TIMESTAMP damagedSnapshots[VE_VERSIONS_COUNT];
+	int tsDamCount = 0;
+	
 	int success=0;
 
 	assert(bSuccess); *bSuccess=0;
@@ -953,10 +956,11 @@ int WuTryAdvanceSnapshots(int *bSuccess)
 		{
 			success =  (WuGetLastError() == WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
 		}
+		else if (!SnGetDamagedTimestamps(damagedSnapshots, &tsDamCount)) {}
 		else
 		try
 		{
-			PhOnSnapshotCreate(curSnapshotTs);
+			PhOnSnapshotCreate(curSnapshotTs, damagedSnapshots, tsDamCount);
 			*bSuccess=1;
 			success=1;
 		}
