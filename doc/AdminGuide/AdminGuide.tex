@@ -295,6 +295,10 @@ options:
 								over database, default 10
   -upd-crt N					update criterion parameter 
 								(fraction of database), default 0.25
+  -max-log-files N              maximum log files 
+                                until log truncate (default: 3)
+  -log-file-size Mbs            maximum one log file size (in Mb), 
+                                (default 100Mb)
   -db-security  security level  the level of database security:
 								 1) 'off' - none;
 								 2) 'authentication' (default);
@@ -328,6 +332,11 @@ The \verb!-max-trs-num! option is the parameter of the Sedna Storage Manager. In
 
 The \verb!-upd-crt! option is the parameter of the Sedna Storage Manager to control snapshot advancement rate. It allows Administrator to specify the fraction of the database updating of which will result in snapshot advancement. The default value is 0.25.
 
+The \verb!-max-log-files! option allows Administrator to control how many log files will be created until Storage Manager will try
+to truncate logical log by making a checkpoint. For example, if the value is $3$, then after creating fourth file Storage Manager will try to truncate log. This may significantly speed up recovery process, since there would be much shorter log to analyze. Note, however, that checkpoint may be quite a performance-heavy procedure. So you should not set the value too small. This parameter can be changed later on every Storage Manager run.
+
+The \verb!-log-file-size! option allows to control size of each log file. When current log file size becomes greater than the value specified, new log file is created. With the previous parameter it allows Administrator to find compromise between frequent checkpoints and faster recovery. This parameter can be set only on database creation and cannot be changed later.
+
 The \verb!-db-security! option is used to set the level of security in a database being created. Currently there are 3 possible levels: (1) \verb!off! - there is no authentication, neither authorization; (2) \verb!authentication! - only authentication supported (checks user name and password on session open) (3) \verb!authorization! - authentication and authorization supported (support for database users and privileges). By default database is created with \verb!authentication! level. Note, that this parameter is set only once on database creation and cannot be changed later for the database.
 
 The last parameter \verb!db_name! is the name of the database to be created. Administrator can use the arbitrary sequence of latin characters and digits for database name. There  cannot be two databases with the same name.
@@ -343,10 +352,11 @@ The configuration file is an XML document, which satisfies the following DTD:
 <!ELEMENT name (#PCDATA)>
 <!ELEMENT bufs_num (#PCDATA)>
 <!ELEMENT max_trs_num (#PCDATA)>
+<!ELEMENT max_log_files (#PCDATA)>
 <!ELEMENT upd_crt (#PCDATA)>
 \end{verbatim}
 
-The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!upd_crt! element defines the fraction of the database updating of which will result in snapshot advancement.
+The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!-max-log-files! parameter defines the maximum number of log files prior to truncation attempt. The \verb!upd_crt! element defines the fraction of the database updating of which will result in snapshot advancement.
 
 To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file. Note, in order for new configuration to take effect you must restart Storage Manager.
 
@@ -394,7 +404,8 @@ options:
   -max-trs-num N           the number of concurrent micro transactions over
                            database, (default value retrieved from config file)
   -upd-crt N               criterion parameter to advance snapshots,
-                         (default value retrieved from config file)
+                           (default value retrieved from config file)
+  -max-log-files N         maximum log files until log truncate (default: 3)
    db-name                 The name of the database
 \end{verbatim}
 
@@ -408,6 +419,9 @@ The \verb!-bufs-num! option allows to set up the number of buffers in main memor
 The \verb!-max-trs-num! option will allow setting up the number of concurrent micro transactions over database. In current version of Sedna only default value can be used for this parameter.
 
 The \verb!-upd-crt! option allows Administrator to specify the fraction of the database updating of which will result in snapshot advancement.
+
+The \verb!-max-log-files! option allows Administrator to control how many log files will be created until Storage Manager will try
+to truncate logical log by making a checkpoint. For example, if the value is $3$, then after creating fourth file Storage Manager will try to truncate log. This may significantly speed up recovery process, since there would be much shorter log to analyze. Note, however, that checkpoint may be quite a performance-heavy procedure. So you should not set the value too small. This parameter can be changed on every Storage Manager run.
 
 The last parameter \verb!dbname!  defines the name of the database to be started up. 
 

@@ -97,6 +97,24 @@ void AdvanceSnapshots()
 //	ll_updateMinRcvLSN();
 }
 
+/* Important notes on checkpoints during transaction activity.
+ * READ BEFORE ENABLING SUCH CHECKPOINTS!
+ *
+ * Problems:
+ *  1) Checkpoint log records may be inconsistent in case there are more than one. This happens if physical records
+ *      and/or transaction commits are enabled during version enumeration procedure. We must be sure we flush checkpoint
+ *      info in log header only after all corresponding checkpoint records are in journal (enumeration is done).
+ *  2) There can be working versions when we advance snapshots. If last snapshot becomes committed one we must include info
+ *      about such versions in log since working versions must be discarded on recovery. In other words we must replace
+ *      working versions with last committed ones. We do it as our usual routine anyway but info on working versions
+ *      would not be in garbage lists at the moment. Maybe we should analyze function list during enumeration?
+ *  3) If there are working transactions then min_rcv_lsn will be some time in the past. Since on recovery we'd go from that
+ *      time we must be sure we don't redo transactions committed before checkpoint (with min_rcv_lsn < lsn's < checkpoint_lsn).
+ *  4) Consider this: AdvanceSnapshot() -> delete_lc_version X (w/o creating working one) -> commit -> enumeration. X will be
+ *      considered as garbage during recovery since it is a bogus version. This is incorrect. Possibly we must disable commits
+ *      during (Advance; enumeration] interval.
+ */
+ 
 // new checkpoint and snaphot advancer thread
 U_THREAD_PROC (checkpoint_thread, arg)
 {
