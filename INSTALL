@@ -2,7 +2,8 @@
                     Sedna Installation Instructions
 
    This document describes the installation of Sedna from the source
-   code distribution.
+   code distribution. See file README supplied with this package if 
+   you need to install Sedna from binaries.
      _________________________________________________________________
 
                                Short Version
@@ -15,9 +16,10 @@ export SEDNA_INSTALL
 make
 make install
    
-   NOTE! Under FreeBSD you should use GNU make (by default it means "gmake" 
-         command instead of "make"). 
-         See also Post-Installation Setup::FreeBSD below.
+   NOTE! Under FreeBSD and Solaris you should use GNU make 
+         (by default it means "gmake" command instead of "make"). 
+         
+   NOTE! For FreeBSD see also Post-Installation Setup::FreeBSD below.
    
    NOTE! The operating system user that is going to run Sedna must have 
          r-w-x permissions for the following Sedna directories:
@@ -25,9 +27,9 @@ make install
 $SEDNA_INSTALL/data
 $SEDNA_INSTALL/cfg
 
-   To grant the necessary permisions to the user under Linux, MacOS, FreeBSD 
-   or Solaris you can use the following command (suppose, <sedna-user> is 
-   the user that is going to run Sedna):
+         To grant the necessary permisions to the user under Linux, 
+         MacOS, FreeBSD  or Solaris you can use the following command 
+         (suppose, <sedna-user> is the user that is going to run Sedna):
 
 chown <sedna-user> cfg data
      _________________________________________________________________
@@ -41,34 +43,43 @@ chown <sedna-user> cfg data
                                 Requirements
 
    Sedna is expected to build and run on the following platforms:
+
    1. Microsoft Windows 2000 and higher
    2. Linux with kernel version 2.4 and higher
    3. Mac OS X (PPC or Intel platform)
    4. FreeBSD (see also Post-Installation Setup::FreeBSD below)
    5. Solaris (x86)
 
-   Note: Sedna will *not* run on Microsoft Windows 95/98/ME.
-   Note: Sedna can be build from sources only under 32-bit platforms.
+   NOTE! Sedna will *not* run on Microsoft Windows 95/98/ME.
+   
+   NOTE! Sedna can be build from sources only under 32-bit platforms.
 
    A modern POSIX-compatible platform should be able to run Sedna potentially, 
    but some effort should be made.
 
-   The following software packages are required for building Sedna:
+   The following software packages are required for building Sedna 
+   from sources:
 
      * A Unix console and a set of widely known Unix tools such as rm, mkdir,
        m4, etc are required. They are usually present in any Unix 
-       installation. For the Windows platform you need the Cygwin package.
+       installation. 
+       For the Windows platform you need the Cygwin. Choose m4, make and gcc
+       in addition to the default installation. 
+
      * GNU make is required; other make programs will *not* work. 
+       (usually 'gmake' command under Solaris and FreeBSD)
+
      * You need a C/C++ compiler. For the Windows platform Microsoft C/C++ 
-       complier version 12.00.xxxx (Visual C++ 6.0) or higher is required. 
+       complier version 12.00.xxxx (Visual C++ 6.0) or higher is required.
+       You can get it by downloading latest MS Platform SDK.
+        
        For Linux GCC version 3.x.x or higher is required. GCC is also required 
        for the Windows platform for making dependencies (so it is recommended 
        to use Cygwin package with GCC in it).
-     * For building documentation you need LaTex package. For the Windows platform 
-       it is recommended to use GhostScript package version 6.5 or higher (paths to 
-       its bin and lib should be in the environment variable PATH).
+     
      * For building Java API driver your need Sun Microsystems JDK version 
        1.4 or higher.
+
      * The Sedna source code distribution for Windows contains some 
        libraries in the binary form. They are modified PCRE library, Chicken 
        Scheme compiler, Expat XML parser and PCCTS Tools. They are provided 
@@ -90,52 +101,86 @@ chown <sedna-user> cfg data
 
                            Installation Procedure
 
+    0. Environment configuration (Windows only):
+
+       Add vsvars32.bat call to the cygwin.bat. vsvars32.bat is intended
+       to set environment to use Microsoft tools (cl, linr, etc). It can 
+       be found at Visual Studio or Platform SDK installation folder.
+
+       For example the following string can be added to the cygwin.bat
+       (which is located at the Cygwin installation folder):
+
+...
+call "C:\Program Files\Microsoft Visual Studio 8\Common7\Tools\vsvars32.bat"
+...
+bash --login -i
+
+       Rename or remove GNU link. Since GNU link has the same file name
+       as MS link tool, you need to rename or remove it. GNU link binary 
+       can be found at %CYGWIN%/bin/link.exe.
+
+       Run Cygwin. You shoul see something like:
+
+Setting environment for using Microsoft Visual Studio 2005 x86 tools.
+
     1. Configuration
        The first step of the installation procedure is to set environment
        variables for building Sedna.
 
-export ACTIVE_CONFIGURATION=Release
+ACTIVE_CONFIGURATION=Release
+export ACTIVE_CONFIGURATION
 
        Turns on the release mode. Otherwise (ACTIVE_CONFIGURATION=Debug) 
        executables will contain debug information.
 
-export ENABLE_TRIGGERS=1
+ENABLE_TRIGGERS=1
+export ENABLE_TRIGGERS
 
        Turns on support for triggers. Set ENABLE_TRIGGERS to 0 if you would 
        like to turn support for triggers off.
 
-export EL_DEBUG=0
+EL_DEBUG=0
+export EL_DEBUG
 
        Throw out all debug printings. Set EL_DEBUG to 1 if you would like
        to get all printings.
 
-export JAVA_DRIVER=1
+JAVA_DRIVER=1
+export JAVA_DRIVER
+
        
        Compiles Java driver. Set JAVA_DRIVER to 0 if you do not want java 
        driver to be compiled.
 
-export SQL_CONNECTION=1
+SQL_CONNECTION=1
+export SQL_CONNECTION
 
        Adds support to SQL Connections. Set SQL_CONNECTION to 0 if you do 
        not want SQL Connection to be compiled.
 
-export STATIC_SYS_LIBS=0
+STATIC_SYS_LIBS=0
+export STATIC_SYS_LIBS
 
        Links Sedna executables with shared system libraries. Set 
        STATIC_SYS_LIBS to 1 if you want to link Sedna executables with
        static system libraries.
 
-export SEDNA_INSTALL=<install-path>
+SEDNA_INSTALL=<install-path>
+export SEDNA_INSTALL
 
        Identifies the directory where to install Sedna in case of
        "make install" (see below).
 
     2. Build
        To start the build, type
+
 make
-       (Remember to use GNU make) The build may take anywhere from 10
-       minutes to half an hour depending on your hardware. The last three
-       lines displayed should be
+
+       Remember to use GNU make, 'gmake' command under FreeBSD/Solaris. 
+       The build may take anywhere from 10 minutes to half an hour 
+       depending on your hardware. The last three lines displayed 
+       should be:
+
 ===================================================================
 Make done
 ===================================================================
@@ -143,6 +188,7 @@ Make done
     3. Installing the Files
 
 make install
+
        This will install files into the directory identified by 
        $SEDNA_INSTALL that was specified in step 1. Make sure that you have 
        appropriate permissions to write into that area. 
@@ -179,8 +225,11 @@ Environment Variables
 Database Files
 
    Database files will be placed by default into $SEDNA_INSTALL/sedna.
-   You may want to set up the place where database files are stored by modifying
-   $SEDNA_INSTALL/sedna/etc/sednaconf.xml.sample. 
+   You may want to set up the place where database files are stored by 
+   modifying:
+   
+$SEDNA_INSTALL/sedna/etc/sednaconf.xml.sample. 
+
    See Sedna Administration Guide for details on how to configure Sedna.
 
 FreeBSD
@@ -188,42 +237,49 @@ FreeBSD
    To run Sedna under FreeBSD you need to perform the following additional
    post-installation steps:
    
-   1. Unfortunately FreeBSD has a bug [3] in System V semaphores. To run Sedna
-      you have to recompile [1] your kernel with the following patch:
-
-   
-      ------------------------- sysv_sem.c -----------------------------
-      *** 1145,1154 ****
-      --- 1145,1159 ----
-                              error = EIDRM;
-                              goto done2;
-                      }
-            
-                      /*
-      +                * Renew the semaphore's pointer after wakeup
-      +                */
-      +               semptr = &semakptr->u.sem_base[sopptr->sem_num];
-      +
-      +               /*
-                       * The semaphore is still alive.  Readjust the count of
-                       * waiting processes.
-                       */
-                      if (sopptr->sem_op == 0)
-                              semptr->semzcnt--;
-      -------------------------------------------------------------------
-   
+   1. Unfortunately FreeBSD (7.0, 6.3 and earlier) has a bug [3] in System V 
+      semaphores. To run Sedna you have to rebuild [1] your kernel with 
+      the patch you can get at [3].
    
    2. Increase system IPC configuration either using "sysctl" utility [2] 
       or through /boot/loader.conf. Below possible values are listed:
 
-      kern.ipc.semmnu=256
-      kern.ipc.semmns=512
-      kern.ipc.semmni=256
-      kern.ipc.semmap=256
+kern.ipc.semmnu=256
+kern.ipc.semmns=512
+kern.ipc.semmni=256
+kern.ipc.semmap=258
    
-   [1]. building BSD custom kernel:  http://www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html;
-   [2]. tuning with sysctl: http://www.freebsd.org/doc/en/books/handbook/configtuning-sysctl.html;
-   [3]. problem report: http://www.freebsd.org/cgi/query-pr.cgi?pr=123731
+   [1]. building BSD custom kernel:  
+        www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html
+   [2]. tuning with sysctl:
+        www.freebsd.org/doc/en/books/handbook/configtuning-sysctl.html
+   [3]. problem report: www.freebsd.org/cgi/query-pr.cgi?pr=123731
+
+Linux
+
+   By default Linux kernel doesn't allow to get as much semaphores as Sedna 
+   actually needs to run 50 sessions (default maximum) simultaneously.
+   
+   Extend some of the default kernel parameter settings. It is quite simple. 
+   For example, here are instructions on how to modify the kernel.sem and 
+   how to keep them set after a reboot:
+
+    * Log on as a user with root authority
+    * Open up /etc/sysctl.conf in a text editor and add entries: 
+
+kernel.sem="250 64000 32 256". 
+      
+      Last number (SEMMSL) means system wide maximum of semaphore sets, 
+      first (SEMMNI) defines maximum number of semaphores per set, second 
+      defines total number of semaphores and usually must be equal 
+      SEMMSL*SEMMNI. 
+
+      NOTE! se_gov + se_sm processes take apprx. 20 semaphore sets and 
+      each se_trn (session) process takes 3 semaphores at least.
+
+    * Enter the sysctl -p command to load in sysctl settings from 
+      /etc/sysctl.conf.
+    * Enter the ipcs -l to view the updated kernel parameters in sysctl.
      _________________________________________________________________
 
                               Getting Started
