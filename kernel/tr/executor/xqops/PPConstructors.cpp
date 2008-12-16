@@ -405,7 +405,8 @@ void PPElementConstructor::next  (tuple &t)
 					while (it!=at_vals.end());
 					at_vals.clear();
 					if(tr_globals::tmp_op_str_buf.get_size()>0)
-					left=insert_text(left,XNULL,removeIndirection(indir),tr_globals::tmp_op_str_buf.get_ptr_to_text(),tr_globals::tmp_op_str_buf.get_size(),tr_globals::tmp_op_str_buf.get_type());
+					left=insert_text(removeIndirection(left),XNULL,removeIndirection(indir),tr_globals::tmp_op_str_buf.get_ptr_to_text(),tr_globals::tmp_op_str_buf.get_size(),tr_globals::tmp_op_str_buf.get_type());
+                    left=((n_dsc *) XADDR(left))->indir;
 					mark_attr=false;
 				}
 				xptr node=tc.get_node();
@@ -449,26 +450,26 @@ void PPElementConstructor::next  (tuple &t)
 				}
 				if (conscnt>cnt)
 				{
-					left=node;
+					left=((n_dsc *) XADDR(node))->indir;
 					cnt=conscnt;
-					CHECKP(left);
-					cont_leftind=((n_dsc*)XADDR(left))->indir;
+					cont_leftind=left;
 				}
 				else
 				{
 					if (typ==document)
 					{
-						xptr res = copy_content(removeIndirection(indir),node,left,cxt->st_cxt->preserve_type);
+						xptr res = copy_content(removeIndirection(indir),node,removeIndirection(left),cxt->st_cxt->preserve_type);
 						if (res!=XNULL)					
 						{
-							left=res;
-							cont_leftind=((n_dsc*)XADDR(left))->indir;
+							left=((n_dsc *) XADDR(res))->indir;
+							cont_leftind=left;
 						}						
 					}
 					else
 					{
-						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,cxt->st_cxt->preserve_type);
-						cont_leftind=((n_dsc*)XADDR(left))->indir;
+						left=deep_pers_copy(removeIndirection(left),XNULL,removeIndirection(indir),node,cxt->st_cxt->preserve_type);
+                        left=((n_dsc *) XADDR(left))->indir;
+						cont_leftind=left;
 					}
 						
 				}
