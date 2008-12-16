@@ -420,13 +420,20 @@ if Sedna DBMS is running on the same computer you do not need to edit this param
 %==========================================================================
 \subsection{C API}
 \label{c-api}
-libsedna is the C application programmer's interface to Sedna XML DBMS. libsedna is a set of library functions that allow client programs to access one or more databases of Sedna XML DBMS and manipulate database data using database language (XQuery and XUpdate) described in Section 2.
+libsedna is the C application programmer's interface to Sedna XML DBMS. libsedna is a set of library functions that allow client programs to access one or more databases of Sedna XML DBMS 
+and manipulate database data using database language (XQuery and XUpdate) described in Section 2.
 
-libsedna library is supplied with two header files: \verb!"libsedna.h"!, \verb!"sp_defs.h"!. Client programs that use libsedna must include the header file libsedna.h, must link with the libsedna library and provide the compiler with the path to the directory where \verb!"libsedna.h"!, \verb!sp_defs.h! files are stored.   
+libsedna library is supplied with two header files: \verb!"libsedna.h"!, \verb!"sp_defs.h"!. 
+Client programs that use libsedna must include the header file libsedna.h, must link with the libsedna library and provide the compiler with the path to the 
+directory where \verb!"libsedna.h"!, \verb!sp_defs.h! files are stored.   
 
-Sedna XML DBMS is supplied with libsednamt library also. libsednamt library is libsedna library compiled in multithreaded mode. Applications that need to be compiled in multithreaded mode must link with libsednamt library.
+For convenience three versions of libsedna are provided under Windows operating system:
 
-Below in the example we consider libsedna (single-threaded library).
+\begin{enumerate}
+\item\verb!libsednamt.lib! - static multi-threaded version built with /MT option. Use it if you compile your project with /MT[d] option.
+\item\verb!libsednamd.lib! - static multi-threaded version built with /MD option. Use it if you compile your project with /MD[d] option.
+\item\verb!sednamt.dll! - dynamic version. \verb!sednamt.lib! is import library.
+\end{enumerate}
 
 
 \subsubsection{Connecting to a Database}
