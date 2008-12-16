@@ -514,7 +514,8 @@ void PPElementConstructor::next  (tuple &t)
 					while (it!=at_vals.end());
 					at_vals.clear();
 					if(tr_globals::tmp_op_str_buf.get_size()>0)
-					left=insert_text(left,XNULL,removeIndirection(indir),tr_globals::tmp_op_str_buf.get_ptr_to_text(),tr_globals::tmp_op_str_buf.get_size(),tr_globals::tmp_op_str_buf.get_type());
+					left=insert_text(removeIndirection(left),XNULL,removeIndirection(indir),tr_globals::tmp_op_str_buf.get_ptr_to_text(),tr_globals::tmp_op_str_buf.get_size(),tr_globals::tmp_op_str_buf.get_type());
+                    left=((n_dsc *) XADDR(left))->indir;
 		}
 		//Result
 		/*if (last_elem==local_last)
