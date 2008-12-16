@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
-        ppc = new pping_client(cfg.ping_port_number, EL_STOP);
+        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_STOP);
         ppc->startup(e);
 
         event_logger_init(EL_STOP, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);

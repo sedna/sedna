@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 
         SetGlobalNamesDB(db_id);
 
-        ppc = new pping_client(cfg.ping_port_number, EL_SMSD);
+        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_SMSD);
         ppc->startup(e);
         is_ppc_inited = true;
 

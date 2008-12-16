@@ -143,7 +143,7 @@ int main(int argc, char** argv)
         //case when sedna work and we must check whether database is running
         if (gov_shm_pointer)
         {//id needed database is running then throw exception
-            ppc = new pping_client(cfg.ping_port_number , EL_DDB);
+            ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_DDB);
             ppc->startup(e);
             pping_inited = true;
 

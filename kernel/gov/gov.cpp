@@ -165,7 +165,7 @@ int main(int argc, char** argv)
             // perform standard routines to run the process in the background mode
             setsid();
             //chdir(cfg.gov_vars.SEDNA_DATA);
-            //umask(0);
+            umask(0);
 #endif
         }
 

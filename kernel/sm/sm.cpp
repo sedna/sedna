@@ -533,8 +533,6 @@ int main(int argc, char **argv)
 
 		SetGlobalNamesDB(db_id);
 
-        //set_global_names(cfg.os_primitives_id_min_bound, db_id);
-
 		/* event_logger_init must be after set_global_names */
         event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("SM event log is ready"));
@@ -549,7 +547,7 @@ int main(int argc, char **argv)
 
 		InitGiantLock(); atexit(DestroyGiantLock);
         
-        ppc = new pping_client(cfg.ping_port_number, EL_SM);
+        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_SM);
         ppc->startup(ppc_ex);
         is_ppc_closed = false;
 
@@ -569,7 +567,7 @@ int main(int argc, char **argv)
             // perform standard routines to run the process in the background mode
             setsid();
             //chdir(SEDNA_DATA);
-            //umask(0);
+            umask(0);
             elog(EL_LOG, ("SM standard routines to run the process in the background mode (setsid) done"));
 #endif
         }
@@ -589,7 +587,7 @@ int main(int argc, char **argv)
             command_line += " -background-mode off ";
             command_line += " -bufs-num " + int2string(__bufs_num__);
             command_line += " -max-trs-num " + int2string(__max_trs_num__) + " ";
-	    command_line += " -max-log-files " + int2string(__max_log_files__) + " ";
+            command_line += " -max-log-files " + int2string(__max_log_files__) + " ";
 
             char buf_uc[100];
             sprintf(buf_uc, "%.2f", __upd_crt__);
