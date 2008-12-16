@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
-        ppc = new pping_client(cfg.ping_port_number, EL_RC);
+        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_RC);
         ppc->startup(ex);
 
         event_logger_init(EL_RC, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);

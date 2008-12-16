@@ -302,7 +302,7 @@ int main(int argc, char **argv)
 
         try {
              if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
-             ppc = new pping_client(cfg.ping_port_number, EL_SM);               
+             ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_CDB);               
              ppc->startup(ppc_ex);
              is_ppc_started = true;
 

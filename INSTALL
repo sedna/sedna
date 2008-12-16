@@ -71,7 +71,6 @@ chown <sedna-user> cfg data
 
      * You need a C/C++ compiler. For the Windows platform Microsoft C/C++ 
        complier version 12.00.xxxx (Visual C++ 6.0) or higher is required.
-       You can get it by downloading latest MS Platform SDK.
         
        For Linux GCC version 3.x.x or higher is required. GCC is also required 
        for the Windows platform for making dependencies (so it is recommended 
@@ -105,7 +104,7 @@ chown <sedna-user> cfg data
 
        Add vsvars32.bat call to the cygwin.bat. vsvars32.bat is intended
        to set environment to use Microsoft tools (cl, linr, etc). It can 
-       be found at Visual Studio or Platform SDK installation folder.
+       be found at Visual Studio installation folder.
 
        For example the following string can be added to the cygwin.bat
        (which is located at the Cygwin installation folder):
