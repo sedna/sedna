@@ -409,6 +409,9 @@ bool is_stop_session()
   return  (((gov_config_struct*)gov_shm_pointer)->sess_vars[sid].stop == 1) ? true : false;
 }
 
+// switches transactions (from the next one) to ro-mode
+// true -- ro-mode
+// false -- update mode
 void SwitchSessionToRO(bool flag)
 {
 	if (flag || (is_ro_mode && !flag))
@@ -418,3 +421,11 @@ void SwitchSessionToRO(bool flag)
 		
 	is_ro_mode = flag;
 }
+
+// switches log modes 
+// if SEDNA_LOG_LESS -- every bulkload will be logged with one record; drawback -- checkpoint at commit
+// if SEDNA_LOG_FULL -- bulkload will be logged fully. checkpoint might be made though on truncate
+void SwitchLogMode(int log_less_mode)
+{
+    is_log_less_mode = (log_less_mode == SEDNA_LOG_LESS);
+}    

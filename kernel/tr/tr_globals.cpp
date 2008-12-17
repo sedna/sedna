@@ -75,6 +75,7 @@ bool is_need_checkpoint_on_transaction_commit = false;
 bool is_ro_mode = false;
 bool need_ph_reinit;
 bool is_ft_disabled;
+bool is_log_less_mode = false;
 
 int db_id;
 

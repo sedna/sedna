@@ -1709,6 +1709,13 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
                return SEDNA_ERROR;
             }
+            // do force commit of existing transaction
+            if (conn->isInTransaction == SEDNA_TRANSACTION_ACTIVE)
+            {
+                int comm_res = commit_handler(conn);
+                if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                    return SEDNA_ERROR;
+            }
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
             conn->msg.length = 9;
 			int2net_int(*value, conn->msg.body); //option type
@@ -1778,7 +1785,52 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             }
             conn->query_timeout = *value;
 
-         case SEDNA_ATTR_MAX_RESULT_SIZE:
+        case SEDNA_ATTR_LOG_AMMOUNT:
+            value = (int*) attrValue;
+            if ((*value != SEDNA_LOG_LESS) && (*value != SEDNA_LOG_FULL))
+            {
+                setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
+                return SEDNA_ERROR;
+            }
+            // do force commit of existing transaction
+            if (conn->isInTransaction == SEDNA_TRANSACTION_ACTIVE)
+            {
+                int comm_res = commit_handler(conn);
+                if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                    return SEDNA_ERROR;
+            }
+            conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
+            conn->msg.length = 13;
+            int2net_int(SEDNA_LOG_AMMOUNT, conn->msg.body); //option type
+            conn->msg.body[4] = 0;
+            int2net_int(4, conn->msg.body + 5); //length of value - here sizeof int = 4
+            int2net_int(*value, conn->msg.body + 9); //value of attribute - here int
+            if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3006, "Connection was broken while setting session option on the server", NULL);
+                return SEDNA_ERROR;
+            }
+            if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3007, "Connection was broken while setting session option on the server", NULL);
+                return SEDNA_ERROR;
+            }
+            if (conn->msg.instruction == se_SetSessionOptionsOk)
+                return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+            else if (conn->msg.instruction == se_ErrorResponse)
+            {
+                setServerErrorMsg(conn, conn->msg);
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
+            else
+            {
+                connectionFailure(conn, SE3008, "Unknown message got while setting session option on the server", NULL);            /* "Unknown message from server" */
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
+
+        case SEDNA_ATTR_MAX_RESULT_SIZE:
             value = (int*) attrValue;
             if (*value < 0)
             {

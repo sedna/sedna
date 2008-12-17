@@ -67,7 +67,7 @@ void hl_logical_log_on_transaction_begin(bool rcv_active, bool tr_ro_mode)
 	}
 
 	llOnTransBegin(trid);
-	is_need_checkpoint_on_transaction_commit = false;
+	is_need_checkpoint_on_transaction_commit = is_log_less_mode;
 	is_ll_on_transaction_initialized = true; 
 #ifdef LOG_TRACE
 	elog(EL_LOG, ("LOG_TRACE: Transaction is started: trid=%d", trid));
