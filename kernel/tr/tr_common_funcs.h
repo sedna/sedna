@@ -31,5 +31,6 @@ transaction_id get_transaction_id(SSMMsg* sm_server);
 void release_transaction_id(SSMMsg* sm_server);
 
 void SwitchSessionToRO(bool flag);
+void SwitchLogMode(int log_less_mode);
 
 #endif

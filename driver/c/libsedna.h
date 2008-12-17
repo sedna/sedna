@@ -85,7 +85,8 @@ extern "C"
                  SEDNA_ATTR_DEBUG, 
                  SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD, 
                  SEDNA_ATTR_CONCURRENCY_TYPE, 
-                 SEDNA_ATTR_QUERY_EXEC_TIMEOUT, 
+                 SEDNA_ATTR_QUERY_EXEC_TIMEOUT,
+                 SEDNA_ATTR_LOG_AMMOUNT,
                  SEDNA_ATTR_MAX_RESULT_SIZE};
     
     typedef void (*debug_handler_t)(enum se_debug_info_type, const char *msg_body);

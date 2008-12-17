@@ -114,6 +114,14 @@ int set_commans_help()
     term_output1("TRANSACTION_READ_ONLY - when set, transactions are run as READ-ONLY.\n");
     term_output1("                        When unset, transactions are run as UPDATE-transactions.\n");
     term_output1("                        By default transactions are run as UPDATE-transactions.\n");
+    term_output1("                        (this will commit any current transaction!)\n");
+    term_output1("-----------------------------------------------------------------------\n");
+    term_output1("LOG_LESS_MODE -         when set, every bulkload will be less logged.\n");
+    term_output1("                        When unset, every bulkload will be fully logged.\n");
+    term_output1("                        By default transactions are run in full log mode.\n");
+    term_output1("                        CAVEATS:\n");
+    term_output1("                          1) this will commit any current transaction!\n");
+    term_output1("                          2) every commit might be much longer!\n");
     term_output1("-----------------------------------------------------------------------\n");
     term_output1("QUERY_TIMEOUT=<time in secs> - when set, every query execution\n");
     term_output1("                               will be dropped on server\n");
@@ -426,10 +434,13 @@ int process_command(char* buffer)
                 fflush(stderr);
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
+            /*
             if (SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
                 term_output1("The current and next transactions will be run as READ-ONLY.\n");
             else
                 term_output1("The next transactions will be run as READ-ONLY.\n");
+            */
+            term_output1("The next transactions will be run as READ-ONLY.\n");
             
             return EXIT_SUCCESS;
         }
@@ -451,6 +462,20 @@ int process_command(char* buffer)
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             term_output2("Timeout for query execution is set to %d.\n", (const void*)value);
+            return EXIT_SUCCESS;
+        }
+        else if (strncmp(buffer+4, "LOG_LESS_MODE", 13) == 0)
+        {
+            int value = SEDNA_LOG_LESS;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
+            term_output1("The following transactions will be run in bulkload logless mode.\n");
+            
             return EXIT_SUCCESS;
         }
         else
@@ -511,10 +536,27 @@ int process_command(char* buffer)
                 fflush(stderr);
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
+            /*
             if (SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
                 term_output1("The current and following transactions will be run as UPDATE-transactions.\n");
             else
                 term_output1("The following transactions will be run as UPDATE-transactions.\n");
+            */
+            term_output1("The following transactions will be run as UPDATE-transactions.\n");
+            return EXIT_SUCCESS;
+        }
+        else if (strncmp(buffer+4, "LOG_LESS_MODE", 13) == 0)
+        {
+            int value = SEDNA_LOG_FULL;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
+            term_output1("The following transactions will be run in full log mode.\n");
+            
             return EXIT_SUCCESS;
         }
         else

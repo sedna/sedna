@@ -481,6 +481,7 @@ void socket_client::set_session_options(msg_struct *msg)
     int pos = 0;
     int option_len;
     int option;
+    int log_param = 0;
     
     if (p_ver.major_version < 3) throw USER_EXCEPTION(SE3009);
     
@@ -512,6 +513,10 @@ void socket_client::set_session_options(msg_struct *msg)
             case SEDNA_MAX_RESULT_SIZE:
                 net_int2int(&max_result_size_to_pass, msg->body+pos);
                 stream->set_max_result_size_to_pass(max_result_size_to_pass);
+                break;
+            case SEDNA_LOG_AMMOUNT:
+                net_int2int(&log_param, msg->body+pos);
+                SwitchLogMode(log_param);
                 break;
 			default: 
                 throw USER_EXCEPTION2(SE4619,int2string(option).c_str());
