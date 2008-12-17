@@ -98,10 +98,15 @@ int sm_server_handler(void *arg)
   						 	if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0)
                          		throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
 						 }
-						 else // updater has just ended; check for need to advance snapshots
+						 else // updater has just ended; check for need to advance snapshots or truncate the log
 						 {
-  						 	if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
-                         		throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
+  						 	 // if we need maintenance checkpoint (truncate) do it
+                             if (llNeedCheckpoint())
+                                 llActivateCheckpoint();
+                             // else, activate thread for possible snapshot advancement
+                             else
+                                if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+                         		     throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
                          }
                          	
                          break;

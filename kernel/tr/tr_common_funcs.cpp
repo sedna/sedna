@@ -232,11 +232,38 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
    d_printf1("OK\n");
 }
 
+// we need all this to be able to call 38 operation from logical log and from here
+// sorry i couldn't find a more appropriate solution to this
+static bool wu_reported = false; // are we already reported? needed for checkpoint-on-commit
+static SSMMsg* sm_server_wu = NULL; // server to report to wu
+void reportToWu(bool rcv_active, bool is_commit)
+{
+    sm_msg_struct msg;
+    
+    if (wu_reported)
+        return;
+    
+    if (!rcv_active || (rcv_active && is_commit))
+    {
+        msg.cmd = 38; // transaction commit/rollback
+        msg.trid = trid; 
+        msg.sid = sid;
+        msg.data.data[0] = 0;
+
+        if (sm_server_wu->send_msg(&msg) != 0)
+            throw USER_EXCEPTION(SE1034);
+    }
+    
+    wu_reported = true;
+}    
+
 // is_commit defines mode: 
 //  true - transaction commit
 //  false - transaction rollback
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, bool rcv_active)
 {
+   sm_server_wu = sm_server;
+    
    ppc->stop_timer();
 
    clear_authmap();
@@ -273,6 +300,10 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
    d_printf1("OK\n");
 
    d_printf1("\nNotifying sm of commit...");
+   reportToWu(rcv_active, is_commit);
+   wu_reported = false;
+   
+/*   
    if (!rcv_active || (rcv_active && is_commit))
    {
        msg.cmd = 38; // transaction commit/rollback
@@ -283,7 +314,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
        if (sm_server->send_msg(&msg) != 0)
            throw USER_EXCEPTION(SE1034);
    }
-
+*/
    // ph shutdown between transactions
    d_printf1("Releasing PH between transactions on the same session...");
    if (is_ph_inited && need_ph_reinit)
