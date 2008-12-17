@@ -185,7 +185,7 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 		memmove(
 			tmp_pg + BT_HEAP(tmp_pg) - heap_insertion_size,
 			tmp_pg + BT_HEAP(tmp_pg),
-			heap_modification_point - BT_HEAP(tmp_pg));
+			(shft) (heap_modification_point - BT_HEAP(tmp_pg)));
 
 		BT_HEAP(tmp_pg) -= heap_insertion_size;
 
@@ -484,7 +484,7 @@ void bt_delete_obj_tmpl(char* pg, shft key_idx, shft obj_idx)
 	shft	obj_shift = BT_CHNK_ITEM_SHIFT(pg, key_idx) + obj_idx * sizeof(object);
 
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
-	memmove(pg + old_heap_shift + sizeof(object), pg + old_heap_shift, obj_shift - old_heap_shift);
+	memmove(pg + old_heap_shift + sizeof(object), pg + old_heap_shift, (shft) (obj_shift - old_heap_shift));
 
 	// update all heap "pointers"
 
@@ -527,14 +527,14 @@ void bt_leaf_delete_key_tmpl(char* pg, shft key_idx)
 
 	shft	len = (chnk_pos - key_pos) - key_size;
 	memmove(key_pos, key_pos + key_size, len);
-	memmove(key_pos + len, chnk_pos + chnk_size, (last - chnk_pos) - chnk_size);
-	memmove(pg + heap_shift + sizeof(object), pg + heap_shift, obj_shift - heap_shift);
+	memmove(key_pos + len, chnk_pos + chnk_size, (shft) ((last - chnk_pos) - chnk_size));
+	memmove(pg + heap_shift + sizeof(object), pg + heap_shift, (shft) (obj_shift - heap_shift));
 	heap_shift += sizeof(object);
 
 	BT_KEY_NUM(pg) -= 1;
 
 	if (var_key_size) {
-		memmove(pg + heap_shift + actkey_size, pg + heap_shift, actkey_shift - heap_shift);
+		memmove(pg + heap_shift + actkey_size, pg + heap_shift, (shft) (actkey_shift - heap_shift));
 		heap_shift += actkey_size;
 
 		for (int i = 0; i < BT_KEY_NUM(pg); i++) {						// update key "pointers"
@@ -574,12 +574,12 @@ void bt_nleaf_delete_key(char* pg, shft key_idx)
 
 	shft	len = (ptr_pos - key_pos) - key_size;
 	memmove(key_pos, key_pos + key_size, len);
-	memmove(key_pos + len, ptr_pos + ptr_size, (last - ptr_pos) - ptr_size);
+	memmove(key_pos + len, ptr_pos + ptr_size, (shft) ((last - ptr_pos) - ptr_size));
 
 	BT_KEY_NUM(pg) -= 1;
 
 	if (var_key_size) {
-		memmove(pg + heap_shift + actkey_size, pg + heap_shift, actkey_shift - heap_shift);
+		memmove(pg + heap_shift + actkey_size, pg + heap_shift, (shft) (actkey_shift - heap_shift));
 		heap_shift += actkey_size;
 
 		for (int i = 0; i < BT_KEY_NUM(pg); i++) {						// update key "pointers"
@@ -603,7 +603,7 @@ bool bt_nleaf_subst_key(char* pg, shft key_idx, bt_key key)
 		shft actkey_shift = BT_KEY_ITEM_AT(pg, key_idx)->k_shft;
 		int actkey_size_diff = BT_KEY_ITEM_AT(pg, key_idx)->k_size - key.get_size();
 
-		memmove(pg + heap_shift + actkey_size_diff, pg + heap_shift, actkey_shift - heap_shift);
+		memmove(pg + heap_shift + actkey_size_diff, pg + heap_shift, (shft) (actkey_shift - heap_shift));
 		memcpy(pg + actkey_shift + actkey_size_diff, key.data(), key.get_size());
 
 		heap_shift += actkey_size_diff;

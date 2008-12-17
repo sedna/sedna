@@ -598,8 +598,8 @@ void bt_leaf_do_insert_key_tmpl(char* pg, shft key_idx, const bt_key& key, const
 
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 
-	memmove(chnk_pos + chnk_size + key_size, chnk_pos, (last - chnk_pos));
-	memmove(key_pos + key_size,              key_pos,  (chnk_pos - key_pos));
+	memmove(chnk_pos + chnk_size + key_size, chnk_pos, (shft) (last - chnk_pos));
+	memmove(key_pos + key_size,              key_pos,  (shft) (chnk_pos - key_pos));
 
 	BT_KEY_NUM(pg) += 1;
 
@@ -642,8 +642,8 @@ void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xpt
 */
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 
-	memmove(ptr_pos + ptr_size + key_size, ptr_pos, (last - ptr_pos));
-	memmove(key_pos + key_size,            key_pos, (ptr_pos - key_pos));
+	memmove(ptr_pos + ptr_size + key_size, ptr_pos, (shft) (last - ptr_pos));
+	memmove(key_pos + key_size,            key_pos, (shft) (ptr_pos - key_pos));
 
 	BT_KEY_NUM(pg) += 1;
 
@@ -679,7 +679,7 @@ void bt_do_insert_obj_tmpl(char* pg, shft key_idx, const object &obj, shft obj_i
 */
 
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
-	memmove(pg + new_heap_shift, pg + old_heap_shift, obj_shift - old_heap_shift);
+	memmove(pg + new_heap_shift, pg + old_heap_shift, (shft) (obj_shift - old_heap_shift));
 
 	* (object *) (pg + insertion_obj_shift) = obj;
 
