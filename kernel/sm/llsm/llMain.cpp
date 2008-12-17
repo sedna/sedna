@@ -52,6 +52,8 @@ static USemaphore SyncSem;    // synchronization semaphore
 static UEvent CheckpointEvent;// event to start checkpoint thread
 static UShMem SharedMem;      // descriptor for shared global info
 
+static USemaphore WaitCheckpoint; // semaphore to wait on checkpoint
+
 static void *ReadBuf = NULL;     // buffer for reading records (it is realloced automatically if needed)
 static int  ReadBufSize = 0;     // size of the ReadBuf buffer
 
@@ -240,10 +242,14 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 	lfsInit(db_files_path, db_name, "llog", LL_WRITEBUF_SIZE, LL_READBUF_SIZE);
 
 	// sync semaphore
-	if (USemaphoreCreate(&SyncSem, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error))
+	if (USemaphoreCreate(&SyncSem, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot create semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
-
-	// event to start checkpoint procedure
+    
+    // to wait for checkpoint to finish
+    if (USemaphoreCreate(&WaitCheckpoint, 0, 1, SEDNA_CHECKPOINT_FINISHED_SEM, NULL, __sys_call_error) != 0)
+        LL_ERROR("internal ll error: cannot create semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
+	
+    // event to start checkpoint procedure
 	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
 		LL_ERROR("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
   
@@ -338,8 +344,12 @@ int llRelease()
 
 	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
 		LL_ERROR("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
-
-	lfsRelease();
+    
+    // to wait for checkpoint to finish
+    if (USemaphoreRelease(WaitCheckpoint, __sys_call_error) != 0)
+        LL_ERROR("internal ll error: cannot release semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
+	
+    lfsRelease();
 
 	free(ReadBuf);
 
@@ -354,7 +364,11 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
 	if (USemaphoreOpen(&SyncSem, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot open semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
+    // to wait for checkpoint to finish
+    if (USemaphoreOpen(&WaitCheckpoint, SEDNA_CHECKPOINT_FINISHED_SEM, __sys_call_error) != 0)
+        LL_ERROR("internal ll error: cannot open semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
+	
+    if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
 		LL_ERROR("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	if (uOpenShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, sizeof(llGlobalInfo), __sys_call_error) != 0)
@@ -385,7 +399,11 @@ int llClose()
 	if (USemaphoreClose(SyncSem, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot close semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
+    // to wait for checkpoint to finish
+    if (USemaphoreClose(WaitCheckpoint, __sys_call_error) != 0)
+        LL_ERROR("internal ll error: cannot close semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
+    
+    if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
 		LL_ERROR("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	lfsDisconnect();
@@ -530,20 +548,29 @@ int llTruncateLog()
 // Activates checkpoint procedure.
 int llActivateCheckpoint()
 {
+    int res;
+    
 	llLock();
 
-	// we are already making checkpoint or checkpoint is disabled    
+	// we are already making checkpoint or checkpoint is disabled
     if (llInfo->checkpoint_on || !llInfo->checkpoint_flag)
     {
     	llUnlock();
-    	return 0;
+    	return -2;
     }
         
     llInfo->checkpoint_on = true;
 
-	if (UEventSet(&CheckpointEvent,  __sys_call_error) != 0)
+    if (UEventSet(&CheckpointEvent,  __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot set checkpoint event");
-
+    
+    // semaphore may be already down if last checkpoint was initiated by transaction
+    // if checkpoint was initiated by llNeedCheckpoint logic then it'd be upped
+    res = USemaphoreDownTimeout(WaitCheckpoint, 1, __sys_call_error);
+        
+    if (res != 0 && res != 2) // normal down (0) or timeout (2)
+         LL_ERROR("internal ll error: cannot down wait for checkpoint semaphore");
+    
 	llUnlock();
 
 	return 0;
@@ -636,11 +663,27 @@ int llOnCheckpointFinish()
 {
 	llLock();
 
-	llInfo->checkpoint_on = false;
+    if (llInfo->checkpoint_on)
+    {
+        llInfo->checkpoint_on = false;
   
-	llUnlock();
+        if (USemaphoreUp(WaitCheckpoint, __sys_call_error) != 0)
+            LL_ERROR("internal ll error: cannot up checkpoint-wait semaphore");
+    }
+        
+    llUnlock();
 
 	return 0;
+}
+
+// Should be called when someone waits for checkpoint to finish
+// llActivate should be called first!
+int llOnCheckpointWait()
+{
+    if (USemaphoreDown(WaitCheckpoint, __sys_call_error) != 0)
+        LL_ERROR("internal ll error: cannot down checkpoint-wait semaphore");
+    
+    return 0;
 }
 
 // Returns timestamp of persistent snapshot

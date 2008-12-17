@@ -357,7 +357,7 @@ int AllocateDataBlockAndCopyData (XPTR *xptr, int *bufferId, int srcBufferId)
 	else
 	{
 		/* we protect a source buffer from beeng victimized by get_free_buffer */ 
-		buffer_on_stake = srcBufferId;
+        buffer_on_stake = RamoffsFromBufferId(srcBufferId);
 		if (AllocateDataBlock(xptr, bufferId) && LocateBlockHeader(*bufferId, &destHeader))
 		{
 			memcpy(destHeader, srcHeader, PAGE_SIZE);

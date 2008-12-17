@@ -33,8 +33,8 @@ using namespace std;
 
 /* global variables for checkpoint */
 //USemaphore wait_for_checkpoint;
-USemaphore checkpoint_finished;
-USemaphore checkpoint_sem; 
+//USemaphore checkpoint_finished;
+//USemaphore checkpoint_sem; 
 USemaphore concurrent_trns_sem;
 
 USemaphore wait_for_recovery;
@@ -145,7 +145,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     //  3) when we need truncation of log
     
     // we advance snapshots only if SnapshotAdvanceCriterion() says so
-    if (shutdown_event_call || llGetCheckpointActiveFlag() || llNeedCheckpoint()) // checkpoint is needed
+    if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
     {
 	    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     	{

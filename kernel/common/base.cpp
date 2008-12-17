@@ -85,6 +85,8 @@ static UGlobalNamesRegistryItem globalNamesRegistry[] =
 
 	{"SHMEM_LFS",						POLICY_INSTANCE_PER_DB()}, /* lfs state & buffer in shared memory */ 
 	{"SEMAP_LFS",						POLICY_INSTANCE_PER_DB()}, /* synchronises operation with lfs */ 
+    
+    {"SEMAP_CHECKPOINT_FINISHED",       POLICY_INSTANCE_PER_DB()}, /* to wait for checkpoint to finish */ 
 
 	{"SHMEM_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* logical log state & buffer in shared memory */ 
 	{"SEMAP_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* synchronises operation with logical log */ 
@@ -220,7 +222,7 @@ void SetGlobalNamesDB(int databaseId)
 		PERS_HEAP_1_SNP_SEMAPHORE_STR__buf__			[128],
 		PERS_HEAP_0_SNP_SEMAPHORE_STR__buf__			[128],
 		SNAPSHOT_CHECKPOINT_EVENT__buf__				[128],
-		TRY_ADVANCE_SNAPSHOT_EVENT__buf__				[128],
+        SEDNA_CHECKPOINT_FINISHED_SEM__buf__			[128],
 		METADATA_SEMAPHORE_STR__buf__					[128],
 		INDEX_SEMAPHORE_STR__buf__						[128],
 		FT_INDEX_SEMAPHORE_STR__buf__					[128],
@@ -230,7 +232,8 @@ void SetGlobalNamesDB(int databaseId)
 		CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__		[128],
 		CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME__buf__	[128],
 		SEDNA_TRNS_FINISHED__buf__						[128],
-		CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG__buf__		[128],
+        TRY_ADVANCE_SNAPSHOT_EVENT__buf__               [128],
+        CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG__buf__		[128],
 		CHARISMA_SYNC_TRN_IDS_TABLE__buf__				[128],
 		CHARISMA_SM_WAIT_FOR_SHUTDOWN__buf__			[128],
 		CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME__buf__	[128],
@@ -275,6 +278,9 @@ void SetGlobalNamesDB(int databaseId)
 
 	TRY_ADVANCE_SNAPSHOT_EVENT =
 		UCreateGlobalName("EVENT_READONLY_TRN_COMPLETED", databaseId, TRY_ADVANCE_SNAPSHOT_EVENT__buf__, 128);
+    
+    SEDNA_CHECKPOINT_FINISHED_SEM = 
+        UCreateGlobalName("SEMAP_CHECKPOINT_FINISHED", databaseId, SEDNA_CHECKPOINT_FINISHED_SEM__buf__, 128);
 
 	METADATA_SEMAPHORE_STR =
 		UCreateGlobalName("SEMAP_METADATA", databaseId, METADATA_SEMAPHORE_STR__buf__, 128);

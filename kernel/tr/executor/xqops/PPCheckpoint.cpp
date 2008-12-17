@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPCheckpoint.h"
 #include "tr/log/log.h"
+#include "tr/tr_globals.h"
 
 PPCheckpoint::PPCheckpoint(dynamic_context *_cxt_) : PPIterator(_cxt_)
 {
@@ -36,7 +37,9 @@ void PPCheckpoint::next (tuple &t)
     SET_CURRENT_PP(this);
 
     t.set_eos();
-    activate_and_wait_for_end_checkpoint();
+    //activate_and_wait_for_end_checkpoint();
+    // change of semantics -- se:checkpoint() makes checkpoint on transaction commit now
+    is_need_checkpoint_on_transaction_commit = true;
     // call checkpoint here
 
     RESTORE_CURRENT_PP;

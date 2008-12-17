@@ -28,6 +28,10 @@ using namespace std;
 static bool is_ll_on_session_initialized = false;
 static bool is_ll_on_transaction_initialized = false;
 
+// concurrent semaphore already was released by commit function
+// because of checkpoint
+static bool sem_released = false;
+
 USemaphore checkpoint_sem;
 USemaphore concurrent_trns_sem; 
 
@@ -121,11 +125,24 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 	is_ll_on_transaction_initialized = false;
 }
 
-void activate_and_wait_for_end_checkpoint()
+// do not call this now during transaction processing!!!
+void activate_and_wait_for_end_checkpoint(bool force)
 {
-	llActivateCheckpoint();  
-	uSleep(1, __sys_call_error);
-	wait_for_checkpoint_finished();
+	int res;
+    
+    while ((res = llActivateCheckpoint()) == -2 && force)
+        uSleep(1, __sys_call_error);
+    
+    if (res == -2 && !force)
+        return;
+    else if (res != 0)
+        throw SYSTEM_EXCEPTION("logic error in waiting on checkpoint!");
+    
+    U_ASSERT(res == 0);
+    
+    // wait for checkpoint to finish
+    // checkpoint thread should awake this transaction
+    llOnCheckpointWait();
 }
 
 void down_concurrent_micro_ops_number()
@@ -140,6 +157,12 @@ void up_concurrent_micro_ops_number()
 
 void up_transaction_block_sems()
 {
+    if (sem_released)
+    {
+        sem_released = false;
+        return;
+    }
+    
 	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) != 0)
 		throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 }
@@ -149,11 +172,6 @@ void down_transaction_block_sems()
 	if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) != 0)
 		throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
 }
-
-void wait_for_checkpoint_finished()
-{
-// nothing to do here
-} 
 
 LSN get_lsn_of_first_record_in_logical_log()
 {
@@ -381,13 +399,27 @@ void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const
 #endif
 }
 
+// to report to wu
+void reportToWu(bool rcv_active, bool is_commit);
+
 void hl_logical_log_commit(transaction_id _trid)
 {
 	number_of_records++;
-	if (is_need_checkpoint_on_transaction_commit) // TODO: check for correctness (AK)
-		activate_and_wait_for_end_checkpoint();
 
-	llLogCommit(_trid);
+    if (is_need_checkpoint_on_transaction_commit)
+    {
+        up_transaction_block_sems();
+        sem_released = true;
+        reportToWu(false, true);
+        // dirty hack here!
+        // we don't want this transaction to be redone ever
+        // so we pretend it've been rolled back
+        llLogRollback(_trid);
+        activate_and_wait_for_end_checkpoint(true);
+    }
+    else
+        llLogCommit(_trid);
+
 #ifdef LOG_TRACE
 	elog(EL_LOG, ("LOG_TRACE: Transaction is committed: trid=%d", trid));
 #endif
@@ -413,6 +445,9 @@ void hl_disable_log()
 
 void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted)
 {
+    if (!enable_log) return;
+    number_of_records++;
+    
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
     std::ostringstream key_str(std::ios::out | std::ios::binary);
 
@@ -424,7 +459,10 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
 #ifdef SE_ENABLE_FTSEARCH
 void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char * index_title, const char* doc_name,bool is_doc,pers_sset<ft_custom_cell,unsigned short> * custom_tree,bool inserted)
 {
-	std::ostringstream obj_str(std::ios::out | std::ios::binary);
+    if (!enable_log) return;
+    number_of_records++;
+    
+    std::ostringstream obj_str(std::ios::out | std::ios::binary);
 	PathExpr2lr(object_path, obj_str);
 
 	int custom_tree_count = 0;

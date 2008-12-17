@@ -35,7 +35,10 @@ void down_transaction_block_sems();  // serve to block starting of all transacti
 void down_concurrent_micro_ops_number();
 void up_concurrent_micro_ops_number();
 void wait_for_checkpoint_finished();
-void activate_and_wait_for_end_checkpoint();
+
+// force == false, if we want to ignore this checkpoint if any another checkpoint is already being processed
+// force == true, if we want to make checkpoint in any case
+void activate_and_wait_for_end_checkpoint(bool force);
 
 LSN get_lsn_of_first_record_in_logical_log();
 

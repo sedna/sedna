@@ -200,7 +200,7 @@ int llTruncateLog();
 
 // Activates checkpoint procedure.
 // Returns: 
-//     -1 - error; 0 - all ok
+//     -1 - error; -2 - already doing checkpoint; 0 - all ok
 int llActivateCheckpoint();
 
 // Enables checkpoints.
@@ -222,6 +222,12 @@ bool llGetCheckpointActiveFlag();
 // Returns: 
 //     -1 - error; 0 - all ok
 int llOnCheckpointFinish();
+
+// Should be called when someone waits for checkpoint to finish
+// llActivate should be called first!
+// Returns:
+//      -1 -error; 0 - ok
+int llOnCheckpointWait();
 
 // Returns timestamp of persistent snapshot
 TIMESTAMP llGetPersTimestamp();
