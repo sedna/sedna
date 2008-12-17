@@ -545,7 +545,7 @@ int process_command(char* buffer)
             term_output1("The following transactions will be run as UPDATE-transactions.\n");
             return EXIT_SUCCESS;
         }
-        else if (strncmp(buffer+4, "LOG_LESS_MODE", 13) == 0)
+        else if (strncmp(buffer+6, "LOG_LESS_MODE", 13) == 0)
         {
             int value = SEDNA_LOG_FULL;
             res = SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));
