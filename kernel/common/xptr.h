@@ -65,9 +65,11 @@ struct xptr
     t_layer	layer;
     void *	addr;
 
-    xptr() { layer = 0; addr = NULL; }
-    xptr(t_layer layer, void *addr) { this->layer = layer; this->addr = addr; }
-    xptr(const xptr& x) { layer = x.layer; addr = x.addr; }
+    xptr() : layer(0), addr(NULL) {}
+    xptr(t_layer _layer, void *_addr) : layer(_layer), addr(_addr) {}
+
+// Uncomment next line as soon as somebody is able to explain what is it needed for
+//   xptr(const xptr& x) { layer = x.layer; addr = x.addr; }
 
     xptr &operator +=(int n)
 	{ 
