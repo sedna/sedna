@@ -78,11 +78,11 @@ origpwd="`pwd`"
 echo "This program will extract and install $DISTNAME."
 echo ""
 echo "Where do you want to install the \"$TARGET\" directory tree?"
-echo "  1 - /usr/local/$TARGET"
-echo "  2 - /opt/$TARGET"
-echo "  3 - \$HOME/$TARGET ($HOME/$TARGET) [default]"
-echo "  4 - ./$TARGET (here)"
-echo "  Or enter a different directory to install in."
+echo "  1 - /usr/local"
+echo "  2 - /opt"
+echo "  3 - \$HOME ($HOME) [default]"
+echo "  4 - . (here)"
+echo "  Or enter a different directory (prefix) to install in."
 printf "> "
 read where
 case "$where" in
@@ -91,12 +91,8 @@ case "$where" in
   "" | "3" ) where="$HOME" ;;
   "4" | "." ) where="`pwd`" ;;
   "/"* )
-    TARGET="`\"$basename\" \"$where\"`"
-    where="`\"$dirname\" \"$where\"`"
     ;;
   * )
-    TARGET="`\"$basename\" \"$where\"`"
-    where="`\"$dirname\" \"$where\"`"
     if test -d "$where"; then cd "$where"; where=`pwd`; cd "$origpwd"
     else failwith "The directory \"$where\" does not exist."; fi
     ;;
@@ -157,7 +153,7 @@ printf "Running the Sedna installer... "
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_trn"       || failwith "chmod"
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_rcv"       || failwith "chmod"
 "$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_exp"       || failwith "chmod"
-"$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_hb"       || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=rx "$where/$TARGET/bin/se_hb"        || failwith "chmod"
 echo "done"
 
 cd "$where"
