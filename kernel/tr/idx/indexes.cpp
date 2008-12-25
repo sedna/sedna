@@ -615,8 +615,8 @@ void idx_serialize (tuple& t,xptr v1, const void * Udata)
 #else
     *((shft*)p)=sz;
     *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_node();
-    shft offset=sizeof(shft)+sizeof(xptr);
 #endif
+    shft offset=sizeof(shft)+sizeof(xptr);
 
     tuple_cell& tc=t.cells[0];
 

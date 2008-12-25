@@ -24,7 +24,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-#define ORB_STRING_PREFIX_SIZE  30                   
+
+
+#define ORB_STRING_PREFIX_SIZE  29                                      //Prefix size is selected to make serialized 
+                                                                        //representation of the tuple with xs:string 
+                                                                        //to be 8-byte aligned. It can improve performance.
 
 
 #define ORB_SERIALIZED_STRING_SIZE (sizeof(bool) + ORB_STRING_PREFIX_SIZE + sizeof(char))
@@ -41,9 +45,9 @@
 #define ORB_SERIALIZED_SIZE(t)  (xmlscm_type_size(t) == 0 ? ORB_SERIALIZED_STRING_SIZE : xmlscm_type_size(t));
 
 ///////////////////////////////////////////////////////////////////////////////
-/// NOTE!
+/// Note! Don't use this buffer!
 /// This buffer is internal class to use only within OrderBy operation!
-/// It doesn't have many important security checks for memory borders and others!
+/// It doesn't have many important security checks: memory bounds, etc...!
 ///////////////////////////////////////////////////////////////////////////////
 class temp_buffer
 {
@@ -139,7 +143,7 @@ private:
     
     bool first_time;
     bool need_reinit;
-    bool need_to_sort;                              //If we have of eos values then we don't need to sort by them
+    bool need_to_sort;                              //If we have only eos values then we don't need to sort by them
     sorted_sequence *ss;
     __int64 pos;
     
