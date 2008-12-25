@@ -94,7 +94,7 @@ SEDNA_VERSION := $(shell cat $(PP)/ver)
 
 SEDNA_DIRS = $(PP)/kernel $(PP)/libs $(PP)/libs/chicken \
              $(PP)/driver/c $(PP)/export $(PP)/term $(PP)/libs/dtsearch/include \
-             $(PP)/libs/pg/h
+             $(PP)/libs/pg/h $(PP)/libs/libedit/include/editline
 
 
 ifndef INCLUDE_DIRS

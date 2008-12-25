@@ -16,7 +16,7 @@ CPPFLAGS += -I../libs/libedit/include -DENABLE_LIBEDIT
 endif
 
 OBJS = term_funcs$(OBJ_EXT) term_globals$(OBJ_EXT) sprompt$(OBJ_EXT) \
-       startup$(OBJ_EXT) mainloop$(OBJ_EXT) term_ile$(OBJ_EXT)
+       startup$(OBJ_EXT) mainloop$(OBJ_EXT) term_ile$(OBJ_EXT) complet$(OBJ_EXT)
 
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
 
