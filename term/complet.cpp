@@ -7,6 +7,7 @@
  *
  */
 
+#ifdef ENABLE_LIBEDIT
 
 #include <string.h>
 #include <ctype.h>
@@ -386,3 +387,5 @@ char **term_complet(const char *text, int start, int end)
 
     return matches;
 }
+
+#endif /* #ifdef ENABLE_LIBEDIT */
