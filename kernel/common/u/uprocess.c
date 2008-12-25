@@ -367,10 +367,30 @@ int uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun)
     }
     else return 0;
 #else
+    int res;
+    
     *h = 0;
-    if(pid == 0) return -1;          /// FreeBSD has process with PID=0, Linux doesn't.
-    if(kill(pid,0) < 0) return -1;   /// Can't open process. It doesn't exist.
-    return 0;
+
+    // FreeBSD has process with PID=0, Linux doesn't.
+    // We suppose that there is no such process.
+    if(pid == 0) return -1;
+    
+    res = kill(pid, 0);
+
+    if(-1 == res)
+    {
+        // Process exists but we don't have permissions 
+        // to send a signal.
+        if(EPERM == errno) return 0;
+        
+        // The pid doesn't exist.
+        return -1;
+    }
+    else
+    {
+        // Process exists.
+        return 0;
+    }
 #endif
 }
 
