@@ -13,12 +13,12 @@
 int check_dbempty(struct SednaConnection *conn, FILE* log) {
   char *str_res=NULL;
   int res, status;
-	
+
 	if ((status = execute_retrieve_query(&str_res, conn, check_db_empty_query,log))!=SE_EXP_SUCCEED) {
 		ETRACE((log,"\nERROR: Can't check emptyness of the database\n"));
 		return getSednaErrorStatus(SEgetLastErrorMsg(conn));
 	}
-    if (!strcmp(str_res,"0")) 
+    if (!strcmp(str_res,"0"))
 		res=0;
 	else
 	if (!strcmp(str_res,"1"))
@@ -27,7 +27,7 @@ int check_dbempty(struct SednaConnection *conn, FILE* log) {
 		ETRACE((log,"\nUnexpected result while checking the database\n"));
 		res=SE_EXP_DEV_ERROR;
 	}
-    
+
 	free(str_res);
 	return res;
 }
@@ -54,12 +54,12 @@ int restore_security(struct SednaConnection *conn, FILE* log) {
   char strbuf[PATH_SIZE];
 
    sprintf(strbuf,"declare boundary-space preserve; LOAD \"%s.xml\" \"%s\"",DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
-   
+
    if (execute_query(conn, strbuf, NULL, log) != SE_EXP_SUCCEED) {
 	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"));
 	   return -1;
-   } 
-  
+   }
+
    sprintf(strbuf,"UPDATE replace $p in doc('%s')/db_security_data with doc('%s')/db_security_data",DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
 	   ETRACE((log,"\nERROR: failed to update document with initial security data\n"));
@@ -70,7 +70,7 @@ int restore_security(struct SednaConnection *conn, FILE* log) {
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
 	   ETRACE((log,"\nERROR: failed to drop temporary document with security data\n"));
 	   return -1;
-   } 
+   }
    return 0;
 }
 
@@ -89,7 +89,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
   char *cr_ftindexes_query = NULL;
   char *upd_sec_query = NULL;
   qbuf_t blq = {NULL,0,0};
-  FILE *log = NULL;  
+  FILE *log = NULL;
   int i,error_status=1,res;
   int value;
 
@@ -110,7 +110,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 		ETRACE((log,"ERROR: the specified path \"%s\" is not accesible for writing\n",path));
 		goto imp_error_no_conn;
 	}
-	
+
 	FTRACE((log,"Connecting to Sedna..."));
     if(SEconnect(&conn, url, db_name, login, password)!= SEDNA_SESSION_OPEN) {
 		ETRACE((log,"ERROR: can't connect to Sedna XML DB\n%s\n", SEgetLastErrorMsg(&conn)));
@@ -120,8 +120,11 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 	value = SEDNA_AUTOCOMMIT_OFF;
     SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
-	SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,strlen(path)); 
 
+    SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,strlen(path));
+
+    value = SEDNA_LOG_LESS;
+    SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));
 
     FTRACE((log,"Determining features to export..."));
 	ft_search_feature = check_sedna_feature(&conn, check_ft_enabled_query, log);
@@ -135,11 +138,11 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	    goto imp_error;
 	}
 	FTRACE((log,"done\n"));
-	
+
 	if (sec_import==1) {
 		// restoring data
-		int db_empty=check_dbempty(&conn,log); 
-		if (db_empty==-1) 
+		int db_empty=check_dbempty(&conn,log);
+		if (db_empty==-1)
 			goto imp_error;
 		else
 			if (db_empty==0) {
@@ -150,23 +153,23 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 	FTRACE((log,"Reading scripts from files..."));
 	sprintf(strbuf,"%s%s",path,CR_COL_QUERY_FILE);
-	if ((cr_col_query = read_query(strbuf))==NULL) 
-		goto imp_error;   
+	if ((cr_col_query = read_query(strbuf))==NULL)
+		goto imp_error;
 
 	sprintf(strbuf,"%s%s",path,CR_INDEXES_QUERY_FILE);
-	if ((cr_indexes_query = read_query(strbuf))==NULL) 
-		goto imp_error; 
+	if ((cr_indexes_query = read_query(strbuf))==NULL)
+		goto imp_error;
 
 	if (check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
 		sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
-		if ((cr_ftindexes_query = read_query(strbuf))==NULL) 
-			goto imp_error; 
+		if ((cr_ftindexes_query = read_query(strbuf))==NULL)
+			goto imp_error;
 	}
 
 	sprintf(strbuf,"%s%s",path,LOAD_DOCS_QUERY_FILE);
 	if ((bl_docs_query = read_query(strbuf))==NULL)
 		goto imp_error;
-	
+
 	/* if we merge security information
 	sprintf(strbuf,"%s%s",path,CR_SEC_QUERY_FILE);
 	if ((upd_sec_query = read_query(strbuf))==NULL)
@@ -174,13 +177,13 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	*/
     FTRACE((log,"done\n"));
 
-	
+
 
 	FTRACE((log,"Creating collections..."));
 	if (strlen(cr_col_query)==0)
 		FTRACE((log,"(no collections in the database)..."));
 	else
-        if (execute_multiquery(&conn,cr_col_query, log)!=0) 
+        if (execute_multiquery(&conn,cr_col_query, log)!=0)
 			goto imp_error;
 	FTRACE((log,"done\n"));
 
@@ -193,7 +196,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 		//uGetCurrentWorkingDirectory(path_buf,PATH_BUF_SIZE-1,NULL);
 		//uChangeWorkingDirectory(path, NULL);
 		FTRACE((log,"\n"));
-        if (split_query(bl_docs_query,&blq)!=0) 
+        if (split_query(bl_docs_query,&blq)!=0)
 			goto imp_error;
         for (i=0;i<blq.d_size;i++) {
 			/* workaround to display document_name */
@@ -211,24 +214,24 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 		//uChangeWorkingDirectory(path_buf,NULL);
 	}
 	FTRACE((log,"done\n"));
-	
+
 	FTRACE((log,"Creating indexes..."));
 	if (strlen(cr_indexes_query)==0)
 		FTRACE((log,"(no indexes in the database)..."));
 	else
-		if (execute_multiquery(&conn,cr_indexes_query,log)!=0) 
+		if (execute_multiquery(&conn,cr_indexes_query,log)!=0)
 			goto imp_error;
 	FTRACE((log,"done\n"));
 
 	if (check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
 		if (ft_search_feature != SEDNA_FEATURE_ENABLED) {
 			ETRACE((log,"WARNING: full-text search feature in target Sedna database is disabled.\n"));
-		} else {		
+		} else {
 			FTRACE((log,"Creating full-text search indexes..."));
 			if (strlen(cr_ftindexes_query)==0)
-				FTRACE((log,"(no full-test search indexes in the database)...")); 
+				FTRACE((log,"(no full-test search indexes in the database)..."));
 			else
-				if (execute_multiquery(&conn,cr_ftindexes_query,log)!=0) 
+				if (execute_multiquery(&conn,cr_ftindexes_query,log)!=0)
 					goto imp_error;
 			FTRACE((log,"done\n"));
 		}
@@ -244,7 +247,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 			} else {
 				// restoring security
 				FTRACE((log,"Restoring security information..."));
-				if (restore_security(&conn,log)!=0) 
+				if (restore_security(&conn,log)!=0)
 					goto imp_error;
 				FTRACE((log,"done\n"));
 			}
@@ -254,9 +257,9 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
         // may be some merge will be required in the future
 		//   FTRACE((log,"Updating security information..."));
 	    //   if (strlen(upd_sec_query)==0 || 1)
-		//      FTRACE((log,"(no additional security information available)")) 
+		//      FTRACE((log,"(no additional security information available)"))
 	    //   else
-        //      if (execute_multiquery(&conn,upd_sec_query, log)!=0) 
+        //      if (execute_multiquery(&conn,upd_sec_query, log)!=0)
 		//	        goto imp_error;
 	    //  FTRACE((log,"done\n"));
 	}
@@ -275,7 +278,7 @@ imp_error:
 	FTRACE((log,"Closing connection..."));
 	SEclose(&conn);
 	FTRACE((log,"done\n"));
-	
+
 //disposing dynamic memory
 imp_error_no_conn:
 	if (cr_col_query != NULL) free(cr_col_query);
