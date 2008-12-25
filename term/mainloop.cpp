@@ -4,6 +4,7 @@
  */
 
 #include <cctype>
+#include <assert.h>
 #include "common/sedna.h"
 
 #include "common/base.h"
@@ -23,47 +24,47 @@ int quit_term()
 		fprintf(stderr, "total time: %s\n",SEshowTime(&conn));
         fflush(stderr);
 	}
-	
+
 	term_output1("Closing session...");
-	
+
     //closing session
     int res = SEclose(&conn);
-    if(res != SEDNA_SESSION_CLOSED) 
+    if(res != SEDNA_SESSION_CLOSED)
     {
  	   term_output2("Session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
 	   return 1;
     }
 	term_output1("Ok\n");
-    
+
     return 0;
 }
 
 #ifdef _WIN32
-BOOL TermCtrlHandler(DWORD fdwCtrlType) 
-{ 
-    switch (fdwCtrlType) 
-    { 
-        case CTRL_C_EVENT		: // Handle the CTRL+C signal. 
-        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit. 
-        case CTRL_BREAK_EVENT	: 
-        case CTRL_LOGOFF_EVENT	: 
-        case CTRL_SHUTDOWN_EVENT: 
+BOOL TermCtrlHandler(DWORD fdwCtrlType)
+{
+    switch (fdwCtrlType)
+    {
+        case CTRL_C_EVENT		: // Handle the CTRL+C signal.
+        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit.
+        case CTRL_BREAK_EVENT	:
+        case CTRL_LOGOFF_EVENT	:
+        case CTRL_SHUTDOWN_EVENT:
         {
-            return TRUE; 
+            return TRUE;
         }
-        default					: return FALSE; 
-    } 
-} 
+        default					: return FALSE;
+    }
+}
 #else
 #include <signal.h>
 
 void TermCtrlHandler(int signo)
 {
-	if (   signo == SIGINT 
+	if (   signo == SIGINT
         || signo == SIGQUIT
-        || signo == SIGTERM) 
+        || signo == SIGTERM)
 	{
-        //beep(); 
+        //beep();
 	}
 }
 #endif
@@ -100,7 +101,7 @@ int set_commans_help()
     term_output1("There are following se_term internal varibales:\n");
     term_output1("-----------------------------------------------------------------------\n");
     term_output1("AUTOCOMMIT -        when set, autocommit mode is on. \n");
-    term_output1("                    When unset manual-commit mode is on. \n"); 
+    term_output1("                    When unset manual-commit mode is on. \n");
     term_output1("                    AUTOCOMMIT mode is set by default.\n");
     term_output1("-----------------------------------------------------------------------\n");
     term_output1("ON_ERROR_STOP -     when set, se_term returns with the code 3 when\n");
@@ -129,7 +130,7 @@ int set_commans_help()
     term_output1("                               By default there is no any timeout set\n");
     term_output1("                               (query is executed as long as needed).\n");
     term_output1("-----------------------------------------------------------------------\n");
-    
+
    	return 0;
 }
 
@@ -144,16 +145,16 @@ MainLoop(FILE *source)
 	int res=0, error_code=0;
 	int successResult = EXIT_SUCCESS;
 
-	if(source == NULL) 
+	if(source == NULL)
 	{
 		fprintf(stderr, "Failed to get input file\n");
         fflush(stderr);
 		return 1;
 	}
-	
+
 #ifdef _WIN32
-     BOOL fSuccess; 
-     fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TermCtrlHandler, TRUE);                           // add to list 
+     BOOL fSuccess;
+     fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TermCtrlHandler, TRUE);                           // add to list
      if (!fSuccess) throw USER_EXCEPTION(SE4207);
 #else
      // For Control-C or Delete
@@ -165,12 +166,12 @@ MainLoop(FILE *source)
 #endif
 
 	//open session
-   
-    if (strpbrk(host, ":") == NULL) 
+
+    if (strpbrk(host, ":") == NULL)
 	{
 		sprintf(host+strlen(host),":%d",socket_port);
 	}
-		
+
     res = SEconnect(&conn, host, db_name, login, password);
     if(res != SEDNA_SESSION_OPEN)
     {
@@ -178,7 +179,7 @@ MainLoop(FILE *source)
        fflush(stderr);
 	   return 1;
     }
-	/* if we read query from file, set session directory to the one file is located in */ 
+	/* if we read query from file, set session directory to the one file is located in */
     if (strcmp(filename,"???") != 0)
     {
         char file_abs_path[U_MAX_PATH+1];
@@ -215,10 +216,10 @@ MainLoop(FILE *source)
 		quit_term();
         return 1;
     }
-    
+
 	term_output1("Welcome to term, the SEDNA Interactive Terminal. ");
 	term_output1("Type \\? for help.\n");
-	
+
 	//slash_commands_help();
 
 	sprintf(prompt,"%.13s> ",db_name);
@@ -247,10 +248,10 @@ MainLoop(FILE *source)
             }
 			successResult = EXIT_SUCCESS;                 // cycle continues
             break;
-            
+
 		case EXIT_GOT_QUERY:
         case EXIT_GOT_LONG_QUERY:
-			res = process_query(&buffer[0], false, "");
+			res = process_query(&buffer[0], false, (char *)"");
             if((res == EXIT_STATEMENT_OR_COMMAND_FAILED) && (on_error_stop))
             {
                 quit_term();
@@ -268,7 +269,7 @@ MainLoop(FILE *source)
             }
 			successResult = EXIT_SUCCESS;                 // cycle continues
             break;
-            
+
 		case EXIT_EOF:
 			if(source != stdin)
 			{
@@ -276,7 +277,7 @@ MainLoop(FILE *source)
 				{
 					term_output1("Committing transaction...");
         		    res = SEcommit(&conn);
-	            	if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+	            	if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
 		    		{
 		    			fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
                         error_code = SEgetLastErrorCode(&conn);
@@ -292,21 +293,71 @@ MainLoop(FILE *source)
 			}
 			goto OUT_OF_CYCLE;
             break;
-            
-         default: 
+
+         default:
             break;
         }// end of switch
 	} //end of while
-	
+
 OUT_OF_CYCLE:	return EXIT_SUCCESS;
+}
+
+struct comm_alias
+{
+    const char *alias;
+    const char *real;
+};
+
+comm_alias aliases[] =
+{
+    {"ro", "set TRANSACTION_READ_ONLY"},
+    {"upd", "unset TRANSACTION_READ_ONLY"},
+    {"ac", "set AUTOCOMMIT"},
+    {"nac", "unset AUTOCOMMIT"},
+    {"ll", "set LOG_LESS_MODE"},
+    {"fl", "unset LOG_LESS_MODE"},
+    {NULL, NULL}
+};
+
+// very primitive alias finder
+static
+const char *find_alias(char *cmd)
+{
+    int i;
+
+    if (!strlen(cmd)) return NULL;
+
+    // first, trim trailing spaces
+    for (i = strlen(cmd) - 1; i >= 0 && isspace(cmd[i]); i--)
+        ;
+
+    cmd[i + 1] = '\0';
+
+    // then, look for alias
+    for (i = 0; aliases[i].alias != NULL; i++)
+    {
+        if (strcmp(aliases[i].alias, cmd) == 0)
+        {
+            return aliases[i].real;
+        }
+    }
+
+    // haven't found alias
+    return NULL;
 }
 
 // returns: EXIT_SUCCESS; EXIT_USER; EXIT_STATEMENT_OR_COMMAND_FAILED; EXIT_CONNECTION_BROKEN
 int process_command(char* buffer)
 {
     int res, error_code;
+    const char *alias = NULL;
 
-   	if(strcmp(buffer,"?") == 0)
+    // resolve aliases; buffer may be changed!
+    alias = find_alias(buffer);
+    if (alias)
+        buffer = (char *)alias;
+
+    if(strcmp(buffer,"?") == 0)
 	{
         slash_commands_help();
 	    return EXIT_SUCCESS;
@@ -314,7 +365,7 @@ int process_command(char* buffer)
    	if(strcmp(buffer,"showtime") == 0)
 	{
 		term_output2("Time: %s\n", SEshowTime(&conn));
-	    return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
 	}
 	if(strcmp(buffer,"commit") == 0)
 	{
@@ -329,7 +380,7 @@ int process_command(char* buffer)
             if(SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
             {
                 res = SEcommit(&conn);
-                if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+                if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
                 {
                     fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
                     fflush(stderr);
@@ -356,7 +407,7 @@ int process_command(char* buffer)
             if(SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
             {
                res = SErollback(&conn);
-               if(res != SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED) 
+               if(res != SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED)
                {
                    fprintf(stderr, "Rollback transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
                    fflush(stderr);
@@ -377,7 +428,7 @@ int process_command(char* buffer)
 			term_output1("Committing transaction...");
 
     	    res = SEcommit(&conn);
-		    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+		    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
 	    	{
 	    		fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
                 fflush(stderr);
@@ -441,7 +492,7 @@ int process_command(char* buffer)
                 term_output1("The next transactions will be run as READ-ONLY.\n");
             */
             term_output1("The next transactions will be run as READ-ONLY.\n");
-            
+
             return EXIT_SUCCESS;
         }
         else if(strncmp(buffer+4, "QUERY_TIMEOUT", 13) == 0)
@@ -451,7 +502,7 @@ int process_command(char* buffer)
             {
                 fprintf(stderr, "Invalid use of se_term command. See help (\\set?)\n");
                 fflush(stderr);
-                return EXIT_STATEMENT_OR_COMMAND_FAILED;            
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             int value = (*(p+1) == ' ') ? atoi(p+2) : atoi(p+1);
             res = SEsetConnectionAttr(&conn, SEDNA_ATTR_QUERY_EXEC_TIMEOUT, (void*)&value, sizeof(int));
@@ -475,7 +526,7 @@ int process_command(char* buffer)
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             term_output1("The following transactions will be run in bulkload logless mode.\n");
-            
+
             return EXIT_SUCCESS;
         }
         else
@@ -556,7 +607,7 @@ int process_command(char* buffer)
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             term_output1("The following transactions will be run in full log mode.\n");
-            
+
             return EXIT_SUCCESS;
         }
         else
@@ -566,11 +617,11 @@ int process_command(char* buffer)
 		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
     }
-	else 
+	else
 	{
 		fprintf(stderr, "Unknown command. Print \\? - for help on internal slash commands\n");
         fflush(stderr);
-		
+
 		return EXIT_STATEMENT_OR_COMMAND_FAILED;
 	}
 }
@@ -584,7 +635,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     {
 		//begin transaction
 		result = SEbegin(&conn);
-		if(result != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
+		if(result != SEDNA_BEGIN_TRANSACTION_SUCCEEDED)
 		{
 			fprintf(stderr, "failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
             fflush(stderr);
@@ -594,11 +645,11 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             else return EXIT_STATEMENT_OR_COMMAND_FAILED;
 		}
 	}
-    
+
     // execute XQuery query	or update
     if(is_query_from_file)
     {
-        result = SEexecuteLong(&conn, tmp_file_name); 
+        result = SEexecuteLong(&conn, tmp_file_name);
 
     	if(0 == uDeleteFile(tmp_file_name, NULL))
         {
@@ -609,10 +660,10 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else
     {
-    	result = SEexecute(&conn, buffer); 
+    	result = SEexecute(&conn, buffer);
     }
-    
-    if(result == SEDNA_QUERY_FAILED) 
+
+    if(result == SEDNA_QUERY_FAILED)
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
         fflush(stderr);
@@ -622,7 +673,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
         if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
-    else if(result == SEDNA_UPDATE_FAILED) 
+    else if(result == SEDNA_UPDATE_FAILED)
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
         fflush(stderr);
@@ -632,7 +683,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
         if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
-    else if(result == SEDNA_BULK_LOAD_FAILED) 
+    else if(result == SEDNA_BULK_LOAD_FAILED)
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
         fflush(stderr);
@@ -642,7 +693,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
         if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
-    else if(result == SEDNA_ERROR) 
+    else if(result == SEDNA_ERROR)
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
     	fflush(stderr);
@@ -652,7 +703,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
         if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
-    else if(result == SEDNA_QUERY_SUCCEEDED) 
+    else if(result == SEDNA_QUERY_SUCCEEDED)
     {
     	//iterate over the result sequece and retrieve the result data
     	const char * i;
@@ -670,7 +721,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             fflush(stderr);
             return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
-        
+
     	while((res_next != SEDNA_RESULT_END)&&(res_next != SEDNA_ERROR))
     	{
 			have_results=1;
@@ -716,21 +767,21 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 	if (1 || have_results) term_output1("\n\n");
 
     }
-    else if(result == SEDNA_UPDATE_SUCCEEDED) 
+    else if(result == SEDNA_UPDATE_SUCCEEDED)
     {
  //       term_debug_info_output(); // output debug info if there was any
-        
+
     	fprintf(res_os, "UPDATE is executed successfully\n");
         fflush(res_os);
     }
-    else if(result == SEDNA_BULK_LOAD_SUCCEEDED) 
+    else if(result == SEDNA_BULK_LOAD_SUCCEEDED)
     {
 //        term_debug_info_output(); // output debug info if there was any
-        
+
     	fprintf(res_os, "Bulk load succeeded\n");
         fflush(res_os);
     }
-    else 
+    else
     {
     	fprintf(stderr, "Unknown message from server\n");
         fflush(stderr);
@@ -748,7 +799,7 @@ static size_t append_line_to_buffer(FILE* source, std::vector<char> & buffer, si
 		str=fgets(&buffer[sz],buffer.size()-sz,source);
 		if (0==str) break;
 		sz+=strlen(str);
-		if(buffer[sz-1]=='\n') break;				
+		if(buffer[sz-1]=='\n') break;
 	}
 	buffer[sz]='\0';
 	return sz;
@@ -764,22 +815,22 @@ size_t translate_amps_sequence(const char * str, size_t start, bool & is_termina
 	if(test[2]=='&') return start-1;
 	if(test[1]=='&' && test[2]=='\n') return start-2;
 	if(test[0]=='&' && test[1]=='\r' && test[2]=='\n') return start-3;
-	is_terminator=false;	
+	is_terminator=false;
 	return start;
 }
 
 int get_input_item(FILE* source, std::vector<char> & buffer)
 {
-	const char * str=0, * estr = 0;
+	char *str=0, *estr = 0, *fstr = 0;
 	int pos=0, error=0, ret=0;
 	bool is_terminator=false;
 	size_t sz;
 
-	if (interactive_mode) 
+	if (interactive_mode)
 	{
 		while(1)
 		{
-			str=ile_gets(&sz);
+			fstr = str = ile_gets(&sz);
 			if(!str) return EXIT_EOF;
 			error=sscanf(str,"%*1s%n",&pos);
 			if (error>=0 && error!=EOF) break;
@@ -787,22 +838,23 @@ int get_input_item(FILE* source, std::vector<char> & buffer)
 		estr=str+sz;
 		str+=pos-1;
 		sz=0;
-		if (*str=='\\') 
+		if (*str=='\\')
 		{
 			do str++; while(str!=estr&&isspace(*str));
 			ret=EXIT_GOT_COMMAND;
 		}
-		else 
+		else
 		{
 			ret=EXIT_GOT_QUERY;
 		}
 		sz=estr-str;
 		buffer.resize(sz+1);
 		memcpy(&buffer[0],str,sz);
+        free(fstr); // we need to free readline-returned string
 		str=estr=0;
-		if (ret==EXIT_GOT_QUERY) sz=translate_amps_sequence(&buffer[0],sz,is_terminator);		
+		if (ret==EXIT_GOT_QUERY) sz=translate_amps_sequence(&buffer[0],sz,is_terminator);
 	}
-	else 
+	else
 	{
 		while(1)
 		{
@@ -824,7 +876,7 @@ int get_input_item(FILE* source, std::vector<char> & buffer)
 		else ret=EXIT_GOT_QUERY;
 		while(str!=estr&&isspace(*str))++str;
 		sz=estr-str;
-		memmove(&buffer[0],str,sz); /* data overlaps! */ 
+		memmove(&buffer[0],str,sz); /* data overlaps! */
 		str=estr=0;
 		if (ret==EXIT_GOT_QUERY) while(1)
 		{

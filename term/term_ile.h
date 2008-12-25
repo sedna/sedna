@@ -18,7 +18,8 @@
 
 int ile_init();
 void ile_deinit();
-const char * ile_gets(size_t * sz);
+char *ile_gets(size_t * sz);
+const char *get_query_from_term_buffer();
 
 #endif
 

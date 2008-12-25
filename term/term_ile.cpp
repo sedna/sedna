@@ -7,127 +7,228 @@
 
 #ifndef ENABLE_LIBEDIT
 #include <cctype>
-int ile_init() { return 0; }
-void ile_deinit() { ; }
-const char * ile_gets(size_t * sz) { return 0; }
 
-#else
-
-#include <cstdio>
-#include <cctype>
-#include <cstring>
-#include <histedit.h>
-#include <cassert>
-#include "term_globals.h"
-
-extern "C" unsigned ed_newline(EditLine *, int);
-static char * se_prompt(EditLine *);
-static unsigned se_smart_newline(EditLine *, int);
-
-static EditLine *el=0;
-static History *hist=0;
+int ile_init()
+{
+    return 0;
+}
 
 void ile_deinit()
 {
-	if (hist) history_end(hist);
-  	if (el) el_end(el);
-	hist=0;
-	el=0;
+}
+
+char *ile_gets(size_t * sz)
+{
+    return NULL;
+}
+
+const char *get_query_from_term_buffer()
+{
+    return NULL;
+}
+
+#else /* ifndef ENABLE_LIBEDIT */
+
+#include <cstdio>
+#include <assert.h>
+#include <cctype>
+#include <cstring>
+#include <cassert>
+#include <pwd.h>
+#include "term_globals.h"
+#include "complet.h"
+#include <readline.h>
+#include "common/u/u.h"
+#include "common/u/uprocess.h"
+
+static int se_analyze_line(char *, int lineno); // check if we need another line
+static int multiline = 0; // number of lines in a query
+
+static char *history_file = NULL;
+
+// get rid of '\n' in history
+// needed since multiline queries get messed up
+static void
+make_safe_history()
+{
+    HIST_ENTRY *hist_ent;
+    char       *hist_line_char;
+
+    history_set_pos(0);
+    for (hist_ent = current_history(); hist_ent; hist_ent = next_history())
+        for (hist_line_char = (char *)hist_ent->line; *hist_line_char; hist_line_char++)
+            if (*hist_line_char == '\n') *hist_line_char = 0x01;
+}
+
+// reverse make_safe_history
+static void
+restore_history()
+{
+    HIST_ENTRY *hist_ent;
+    char       *hist_line_char;
+
+    for (hist_ent = current_history(); hist_ent; hist_ent = next_history())
+        for (hist_line_char = (char *)hist_ent->line; *hist_line_char; hist_line_char++)
+            if (*hist_line_char == 0x01) *hist_line_char = '\n';
+}
+
+
+void ile_deinit()
+{
+    // save history to file (~/.sehistory)
+    if (history_file)
+    {
+        make_safe_history();
+        write_history(history_file);
+        free(history_file);
+    }
+}
+
+// returns user home directory
+static
+char *get_home_dir()
+{
+#ifndef _WIN32
+    struct passwd *pw = NULL;
+    char *res = NULL;
+
+    res = (char *)malloc(U_MAX_PATH);
+    assert(res);
+
+    // first try to search in environment
+    if (!uGetEnvironmentVariable("HOME", res, U_MAX_PATH, __sys_call_error))
+        return res;
+
+    // else try passwd file
+    pw = getpwuid(getuid());
+
+    if (pw && pw->pw_dir && strlen(pw->pw_dir) <= U_MAX_PATH)
+    {
+         strcpy(res, pw->pw_dir);
+         return res;
+    }
+
+    free(res);
+    return NULL;
+#else /* #ifndef _WIN32 */
+    return NULL;
+#endif /* #ifndef _WIN32 */
 }
 
 int ile_init()
 {
-	HistEvent ev;
-	if (el || hist) return 0;
+    char *home = NULL;
+    rl_readline_name = (char *)"se_term";
+    rl_attempted_completion_function = term_complet;
+    rl_basic_word_break_characters = (char *)"\t\n ";
 
-	el = el_init("se_term", stdin, stdout, stderr);
-	if (!el) return 0;
+    if (rl_initialize())
+        return 0;
 
-	hist = history_init();
-	if (!hist) 
-	{
-		el_end(el);
-		el=0;
-		return 0;
-	}
-	history(hist, &ev, H_SETSIZE, 800);
+    using_history();
+    // load history from file (~/.sehistory)
+    home = get_home_dir();
+    if (home)
+    {
+        history_file = (char *)malloc(U_MAX_PATH);
+        assert(history_file);
 
-	el_set(el,EL_PROMPT,&se_prompt);
-	el_set(el,EL_EDITOR,"emacs");	
-	el_set(el,EL_HIST,history,hist);
-	el_set(el,EL_SIGNAL,1);
+        snprintf(history_file, U_MAX_PATH, "%s/%s", home, ".sehistory");
 
-	el_set(el,EL_ADDFN,"se-smart-newline","",se_smart_newline);
-	el_set(el,EL_BIND,"\n","se-smart-newline",NULL);
-	el_set(el,EL_BIND,"\t","ed-insert",NULL);
-	el_set(el,EL_BIND,"\033[A","ed-prev-line",NULL);
-	el_set(el,EL_BIND,"\033[B","ed-next-line",NULL);
-	el_set(el,EL_BIND,"\033\033[A","ed-prev-history",NULL);
-	el_set(el,EL_BIND,"\033\033[B","ed-next-history",NULL);
+        free(home);
+        read_history(history_file);
+        restore_history();
+    }
 
 	return 1;
 }
 
-const char * ile_gets(size_t * sz)
+char *query_buffer = NULL; // we make it global because we must return it to completion function
+
+const char *get_query_from_term_buffer()
 {
-	const char * line;
-	int count;
-	HistEvent ev;
+    return query_buffer;
+}
+
+char *ile_gets(size_t * sz)
+{
+	char *line = NULL;
+
+	int count = 0, max_len = 2048;
 	char dummy[4]={0,0,0,0};
-	if (!el||!hist) return 0;
 
-	line = el_gets(el, &count);
+    query_buffer = NULL;
 
-	if (count > 0 && 1==sscanf(line,"%1s",dummy)) /* true if the line consists any non-WS character */ 
-	{	
-      		history(hist, &ev, H_ENTER, line);
+    if (!(query_buffer = (char *)malloc(max_len)))
+        return NULL;
+
+    query_buffer[0] = '\0';
+    multiline = 0;
+
+    do
+    {
+        free(line); // its ok on NULL according to standard
+        line = readline(multiline ? micro_prompt : prompt);
+        if (line)
+        {
+            count += strlen(line);
+            if (count + 1 > max_len)
+            {
+                max_len += count + 1;
+                if (!(query_buffer = (char *)realloc(query_buffer, max_len)))
+                    return NULL;
+            }
+            strcat(query_buffer, line);
+            strcat(query_buffer, "\n");
+            count++; // for '\n'
+        }
+        else
+        {
+            // caught EOF
+            free(query_buffer);
+            query_buffer = NULL;
+            return NULL;
+        }
+
+    } while (line && !se_analyze_line(line, multiline++));
+
+    free(line);
+
+    if (count > 0 && 1==sscanf(query_buffer,"%1s",dummy)) /* true if the line consists any non-WS character */
+	{
+        // strip lasn '\n' character
+        query_buffer[--count] = '\0';
+        add_history(query_buffer);
 	}
-	if (sz) *sz=count;
-	return line;
+	if (sz) *sz = count;
+    return query_buffer;
 }
 
-char * se_prompt(EditLine * e)
+int se_analyze_line(char *buffer, int lineno)
 {
-	const LineInfo * l;
-	l=el_line(e);
-	assert(l);
-	/* we have different prompts for single line input and multiple line input */ 
-	return (memchr(l->buffer,'\n',l->lastchar - l->buffer)) ? micro_prompt : prompt;
+    const char *lastchar = buffer + strlen(buffer), *i;
+    int res;
+
+    assert(buffer);
+
+    /* should we accept input? */
+    // find first non-space character
+    for (i = buffer; i < lastchar && isspace(*i); ++i);
+
+    if (!lineno && (i == lastchar || *i == '\\'))
+    {
+        // user hits Enter and entire input contains nothing but whitespace
+        // or it is a special command -- accept it
+        res = 1;
+    }
+    else if (*(lastchar - 1) == '&')
+        //  input is & terminated -- accept it
+        res = 1;
+    else
+        // some usual line -- continue to append
+        res = 0;
+
+    return res;
 }
 
-unsigned se_smart_newline(EditLine * e, int ch)
-{
-	char buf[256];
-	const char * b=NULL, * i=NULL;
-	const LineInfo * l;
-	l=el_line(e);
-	assert(l);
-	
-	/* should we accept input? */ 
-	for (i=l->buffer;i<l->lastchar&&isspace(*i);++i);
-	if (i==l->lastchar || *i=='\\')
-	{
-		/*	user hits Enter and entire input contains nothing but whitespace 
-			or it is a special command */ 
-		return ed_newline(e,ch);
-	}	
-	if(l->cursor==l->lastchar&&l->cursor!=l->buffer&&l->cursor[-1]=='&')
-	{
-		/*	input is & terminated and cursor stands at the input end */ 
-		return ed_newline(e,ch);
-	}
-
-	/* insert another \n character and perform auto indent */ 
-	for(i=l->cursor;i!=l->buffer&&i[-1]!='\n';--i);
-	for(b=i;b!=l->cursor&&isspace(*b);++b);
-	el_insertstr(e,"\n");
-	if(b!=i && b-i+1<(int)(sizeof buf))
-	{
-		memcpy(buf,i,b-i);
-		buf[b-i]='\0';
-		el_insertstr(e,buf);
-	}
-	return CC_REDISPLAY;
-}
-
-#endif
+#endif /* ifndef ENABLE_LIBEDIT */
