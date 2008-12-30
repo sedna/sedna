@@ -88,9 +88,10 @@ int slash_commands_help()
 	if (interactive_mode)
 	{
 		term_output1("\nInteractive line editing enabled.\n");
-		term_output1("Alt-Up and Alt-Down to browse the history.\n");
-		term_output1("Ctrl-Enter submits input instantly.\n");
-	}
+		term_output1("Up and Down to browse the history.\n");
+        term_output1("Left and Right to move through history-summoned query.\n");
+        term_output1("TAB to try auto-completion.\n");
+    }
 
 	return 0;
 }
@@ -98,38 +99,45 @@ int slash_commands_help()
 int set_commans_help()
 {
 	term_output1("set and unset meta-commands are used for managing se_term internal variables. \n");
+    term_output1("There are aliases for some commands. For example, \\ac is equal to \\set AUTOCOMMIT. \n");
     term_output1("There are following se_term internal varibales:\n");
-    term_output1("-----------------------------------------------------------------------\n");
-    term_output1("AUTOCOMMIT -        when set, autocommit mode is on. \n");
-    term_output1("                    When unset manual-commit mode is on. \n");
-    term_output1("                    AUTOCOMMIT mode is set by default.\n");
-    term_output1("-----------------------------------------------------------------------\n");
-    term_output1("ON_ERROR_STOP -     when set, se_term returns with the code 3 when\n");
-    term_output1("                    statement or meta-command fails. \n");
-    term_output1("                    When unset se_term processing continues,\n");
-    term_output1("                    unless it is the connection failure. \n");
-    term_output1("-----------------------------------------------------------------------\n");
-    term_output1("DEBUG -             when set, session debug mode is on.\n");
-    term_output1("                    When unset, session debug mode is off.\n");
-    term_output1("-----------------------------------------------------------------------\n");
-    term_output1("TRANSACTION_READ_ONLY - when set, transactions are run as READ-ONLY.\n");
-    term_output1("                        When unset, transactions are run as UPDATE-transactions.\n");
-    term_output1("                        By default transactions are run as UPDATE-transactions.\n");
-    term_output1("                        (this will commit any current transaction!)\n");
-    term_output1("-----------------------------------------------------------------------\n");
-    term_output1("LOG_LESS_MODE -         when set, every bulkload will be less logged.\n");
-    term_output1("                        When unset, every bulkload will be fully logged.\n");
-    term_output1("                        By default transactions are run in full log mode.\n");
-    term_output1("                        CAVEATS:\n");
-    term_output1("                          1) this will commit any current transaction!\n");
-    term_output1("                          2) every commit might be much longer!\n");
-    term_output1("-----------------------------------------------------------------------\n");
-    term_output1("QUERY_TIMEOUT=<time in secs> - when set, every query execution\n");
-    term_output1("                               will be dropped on server\n");
-    term_output1("                               if it lasts longer than timeout set.\n");
-    term_output1("                               By default there is no any timeout set\n");
-    term_output1("                               (query is executed as long as needed).\n");
-    term_output1("-----------------------------------------------------------------------\n");
+    term_output1("--------------------------------------------------------------------------------------------------\n");
+    term_output1("AUTOCOMMIT (\\ac - set, \\nac - unset)\n");
+    term_output1("                                      when set, autocommit mode is on. \n");
+    term_output1("                                      When unset manual-commit mode is on. \n");
+    term_output1("                                      AUTOCOMMIT mode is set by default.\n");
+    term_output1("--------------------------------------------------------------------------------------------------\n");
+    term_output1("ON_ERROR_STOP\n");
+    term_output1("                                      when set, se_term returns with the code 3 when\n");
+    term_output1("                                      statement or meta-command fails. \n");
+    term_output1("                                      When unset se_term processing continues,\n");
+    term_output1("                                      unless it is the connection failure. \n");
+    term_output1("--------------------------------------------------------------------------------------------------\n");
+    term_output1("DEBUG\n");
+    term_output1("                                      when set, session debug mode is on.\n");
+    term_output1("                                      When unset, session debug mode is off.\n");
+    term_output1("--------------------------------------------------------------------------------------------------\n");
+    term_output1("TRANSACTION_READ_ONLY (\\ro - set, \\upd - unset)\n");
+    term_output1("                                      when set, transactions are run as READ-ONLY.\n");
+    term_output1("                                      When unset, transactions are run as UPDATE-transactions.\n");
+    term_output1("                                      By default transactions are run as UPDATE-transactions.\n");
+    term_output1("                                      (this will commit any current transaction!)\n");
+    term_output1("--------------------------------------------------------------------------------------------------\n");
+    term_output1("LOG_LESS_MODE (\\ll - set, \\fl - unset) \n");
+    term_output1("                                      when set, every bulkload will be less logged.\n");
+    term_output1("                                      When unset, every bulkload will be fully logged.\n");
+    term_output1("                                      By default transactions are run in full log mode.\n");
+    term_output1("                                      CAVEATS:\n");
+    term_output1("                                          1) this will commit any current transaction!\n");
+    term_output1("                                          2) every commit might be much longer!\n");
+    term_output1("--------------------------------------------------------------------------------------------------\n");
+    term_output1("QUERY_TIMEOUT=<time in secs>\n");
+    term_output1("                                      when set, every query execution\n");
+    term_output1("                                      will be dropped on server\n");
+    term_output1("                                      if it lasts longer than timeout set.\n");
+    term_output1("                                      By default there is no any timeout set\n");
+    term_output1("                                      (query is executed as long as needed).\n");
+    term_output1("--------------------------------------------------------------------------------------------------\n");
 
    	return 0;
 }
@@ -316,6 +324,7 @@ comm_alias aliases[] =
     {"nac", "unset AUTOCOMMIT"},
     {"ll", "set LOG_LESS_MODE"},
     {"fl", "unset LOG_LESS_MODE"},
+    {"q", "quit"},
     {NULL, NULL}
 };
 
