@@ -52,7 +52,7 @@ const char *chain_table[][13][11] =
     {{"\\set", "\\unset", NULL}, {"AUTOCOMMIT", "ON_ERROR_STOP", "DEBUG", "TRANSACTION_READ_ONLY", "QUERY_TIMEOUT=", "LOG_LESS_MODE", NULL}, {NULL}},
     {{"\\set?", "\\unset?", "\\?", "\\commit", "\\rollback", "\\showtime", "\\quit", "\\commit", "\\rollback",
         "\\showtime", NULL}, {NULL}},
-    {{"\\ac", "\\nac", "\\ro", "\\upd", "\\ll", "\\fl", NULL}, {NULL}}
+    {{"\\ac", "\\nac", "\\ro", "\\upd", "\\ll", "\\fl", "\\q", NULL}, {NULL}}
 };
 
 // libedit strange behaviour: it's got completion_matches instead of rl_completion_matches

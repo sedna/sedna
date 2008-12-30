@@ -6,7 +6,7 @@
 \makeatletter
 \makeatother
 %\usepackage[russian]{babel}
-  
+
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{theorem}
@@ -49,10 +49,10 @@ This guide describes administration of the Sedna XML Database Management System 
 
 \emph{Session} keeps the client's settings and allows client to run a sequence of transactions. The transactions within a session are strictly serial, that is one transaction ends before next one starts, there is only one active transaction per session. Transaction provides functionality required for execution of the client's queries. The query execution consists of several steps: (1) parsing of the query and translation of the query into its logical representation, (2) processing of the logical representation by optimizer that produces the optimal query execution plan, (3) execution of the optimal query plan and passing results to the client. Transaction is rolled back if error is occurred during its execution.
 
-\emph{Storage manager} manages a database and provides memory management functionality to the executor. There is an instance of storage manager for each database run. 
+\emph{Storage manager} manages a database and provides memory management functionality to the executor. There is an instance of storage manager for each database run.
 
 All the components described above are implemented as operating system processes.
- 
+
 
 One can run sessions via Sedna client applications (See Sedna Programmer's Guide how to use Sedna APIs) or via Sedna interactive terminal (see \ref{terminal}). In both cases, first of all the Governor and storage managers (one for each databases required) components should be run.
 
@@ -64,9 +64,9 @@ These utilities are described in detail in the following section.
 
 \subsection{Sedna Directory Structure}
 \label{sec:dir-structure}
-The Sedna directory hierarchy is fundamental to obtaining an overall understanding of the system. 
+The Sedna directory hierarchy is fundamental to obtaining an overall understanding of the system.
 
-%This section describes 
+%This section describes
 %how the Sedna directory structure is set up and what it contains for different kinds of Sedna packages.
 
 %\subsubsection{Sedna Installed from Precompiled Binaries}
@@ -75,26 +75,26 @@ The Sedna directory hierarchy is fundamental to obtaining an overall understandi
 Below \verb!SEDNA_INSTALL! refers to the directory where Sedna is installed. The directory structures are identical on all supported platforms.
 
 \begin{verbatim}
-SEDNA_INSTALL/bin          command line utilities for managing 
+SEDNA_INSTALL/bin          command line utilities for managing
                            Sedna and databases, running queries, etc.
-SEDNA_INSTALL/cfg          database configuration files named 
-                           <db_name>_cfg.xml, where <db_name> is 
+SEDNA_INSTALL/cfg          database configuration files named
+                           <db_name>_cfg.xml, where <db_name> is
                            the name of the corresponding database
-SEDNA_INSTALL/data         database data stored in subdirectories 
-                           named <db_name>_files, where <db_name> 
-                           is the name of the corresponding database 									
-SEDNA_INSTALL/lib          database-independent libraries of external 
+SEDNA_INSTALL/data         database data stored in subdirectories
+                           named <db_name>_files, where <db_name>
+                           is the name of the corresponding database
+SEDNA_INSTALL/lib          database-independent libraries of external
                            functions
-SEDNA_INSTALL/data/<db_name>_files/lib        
+SEDNA_INSTALL/data/<db_name>_files/lib
                            database-specific libraries of external
-                           functions                  
+                           functions
 SEDNA_INSTALL/doc          Sedna documentation
 SEDNA_INSTALL/driver       API drivers for various programming languages
 SEDNA_INSTALL/include      include files
 SEDNA_INSTALL/etc          Sedna configure sample file sednaconf.xml.sample
-SEDNA_INSTALL/examples     example databases and applications for 
+SEDNA_INSTALL/examples     example databases and applications for
                            the Sedna APIs
-SEDNA_INSTALL/share        Sedna database metadata files (currently only 
+SEDNA_INSTALL/share        Sedna database metadata files (currently only
                            database users and privileges metadata)
 \end{verbatim}
 
@@ -102,38 +102,38 @@ For the installation instructions see INSTALL file shipped with the Sedna distri
 %\subsubsection{Sedna Installed from RPM or DEB Packages}
 %\label{sec:rpm-deb-pack}
 %If you install Sedna from RPM or DEB packages on Linux, the directory structure is as follows.
-%Below \verb!PREFIX! refers to the directory where Sedna is installed. 
+%Below \verb!PREFIX! refers to the directory where Sedna is installed.
 %\verb!SHARE_PREFIX! is defined as /usr/share if \verb!PREFIX! is \verb!/! and \verb!SHARE_PREFIX! is defined as \verb!PREFIX/share! otherwise.
 
 %\begin{verbatim}
-%PREFIX/bin/se_*                     command line utilities for managing 
+%PREFIX/bin/se_*                     command line utilities for managing
 %                                    Sedna and databases, running queries
 %PREFIX/etc/sednaconf.xml            Sedna configuration file
-%/etc/sednaconf.xml                  Sedna configuration file if it is not 
+%/etc/sednaconf.xml                  Sedna configuration file if it is not
 %                                    found in PREFIX/etc (optional)
 %PREFIX/include/libsedna.h           C API header file
 %PREFIX/include/sedna_ef.h           Sedna C external function API header file
 %PREFIX/lib/libsedna.a               C API driver for Sedna
 %SHARE_PREFIX/doc/sedna-x.x.x        Sedna documentation
 %SHARE_PREFIX/java/sednadriver.jar   Java API Driver for Sedna
-%/var/lib/sedna/cfg                  database configuration files named 
+%/var/lib/sedna/cfg                  database configuration files named
 %                                    <db_name>_cfg.xml, where <db_name> is
 %                                    the name of the corresponding database
 %/var/lib/sedna/data                 databases stored in subdirectories named
-%                                    <db_name>_files, where <db_name> is the 
+%                                    <db_name>_files, where <db_name> is the
 %                                    name of the corresponding database
-%/var/lib/sedna/lib                  database-independent libraries of external 
+%/var/lib/sedna/lib                  database-independent libraries of external
 %                                    functions
 %/var/lib/sedna/data/<db_name>_files/lib
 %                                    database-specific libraries of external
 %                                    functions
 %SHARE_PREFIX/sedna-x.x.x/examples   command line and Sedna API examples
-%SHARE_PREFIX/sedna-x.x.x/driver     additonal API drivers 
+%SHARE_PREFIX/sedna-x.x.x/driver     additonal API drivers
 %\end{verbatim}
 
 %\subsubsection{Sedna Installed from Source Code}
 %If you install Sedna from source code using \verb!make install!, the directory structure is the same as described in Section \ref{sec:binary-pack}.
-%If you install Sedna from source code using \verb!make dispersal_install!, the directory structure is the same as described in Section \ref{sec:rpm-deb-pack}. Note that the latter is available only on %Linux. 
+%If you install Sedna from source code using \verb!make dispersal_install!, the directory structure is the same as described in Section \ref{sec:rpm-deb-pack}. Note that the latter is available only on %Linux.
 
 \subsection{Managing Sedna}
 \subsubsection{Running Sedna}
@@ -151,7 +151,7 @@ options:
   --help                   display this help and exit
   -help                    display this help and exit
   -version                 display product version and exit
-  -background-mode on/off  start the server in the background mode 
+  -background-mode on/off  start the server in the background mode
                            (default on)
   -port-number <int>       socket listening port
                            (default 5050)
@@ -169,15 +169,15 @@ options:
 
 \verb!-version! option allows getting the version of the \emph{Governor}.
 
-\verb!-background-mode! option allows Administrator to start \emph{Governor} in the background mode. 
+\verb!-background-mode! option allows Administrator to start \emph{Governor} in the background mode.
 
-\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients. 
-If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see section \ref{sec:ConfigSedna}, Configuring Sedna). 
-If it still cannot find port number it will use default 5050 value. 
+\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients.
+If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see section \ref{sec:ConfigSedna}, Configuring Sedna).
+If it still cannot find port number it will use default 5050 value.
 
 \verb!-el-level! option specifies the event log severity level. For details refer to the section \ref{sec:event-log}, Event Log.
 
-\verb!-alive-timeout! option specifies number of seconds to wait for the next request from the some client on the same connection. 
+\verb!-alive-timeout! option specifies number of seconds to wait for the next request from the some client on the same connection.
 Session keep alive timeout can be defined also in the \verb!sednaconf.xml! file.
 Value provided via command line overrides value (if any) defined in \verb!sednaconf.xml! file.
 
@@ -231,8 +231,8 @@ The file is an XML document, which satisfies the following DTD:
 <!ELEMENT keep_alive_timeout (#PCDATA)>
 \end{verbatim}
 
-The \verb!sedna_data! element contains the path to the directory where 
-database configuration files (in the \verb!cfg! subdirectory) and 
+The \verb!sedna_data! element contains the path to the directory where
+database configuration files (in the \verb!cfg! subdirectory) and
 databases (in the \verb!data! subdirectory) are stored. The path by default is
 \verb![win:] SEDNA_INSTALL/sedna! \verb![nix:] SEDNA_INSTALL/sedna!.
 
@@ -240,12 +240,12 @@ The \verb!os_primitives_id_min_bound! element defines the minimal value for iden
 
 The \verb!listener_port! element defines the port number for listening for a connection requests from a client.
 
-The \verb!ping_port! element defines the port number of Sedna ping server that is an internal kernel mechanism. It is used to stop all Sedna processes in case of crash. 
+The \verb!ping_port! element defines the port number of Sedna ping server that is an internal kernel mechanism. It is used to stop all Sedna processes in case of crash.
 
 The \verb!event_log_level! defines event log severity level (0-4). For full description see section \ref{sec:event-log}, Event Log.
 
 The \verb!keep_alive_timeout! defines session keep alive timeout, i.e. number of seconds to wait for the next request from the some client on the same connection.
- 
+
 To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, in order for new configuration to take effect you must restart Governor.
 
 \subsection{Managing Databases}
@@ -256,7 +256,7 @@ To create a database, use the \verb!se_cdb! command.
 Each database consists of the following files, which are located as described in Section \ref{sec:dir-structure}.
 
 \begin{itemize}
-\item The \verb!<db_name>.sedata! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions. 
+\item The \verb!<db_name>.sedata! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions.
 \item The \verb!<db_name>.setmp! file is used for storing temporary XML data. It appears in the database during query execution and contains intermediate results.
 \item The \verb!<db_name>.*.seph! files are used for storing XML metadata (for example, the descriptive scheme of XML documents).
 \item The \verb!<db_name>.*llog! files are used for storing database logical log.
@@ -278,7 +278,7 @@ options:
 								by default
   -tmp-file-max-size Mbs		the max size of tmp file (in Mb), infinite size
 								by default
-  -data-file-ext-portion Mbs	the data file extending portion size (in Mb), 
+  -data-file-ext-portion Mbs	the data file extending portion size (in Mb),
 								default 100Mb
   -tmp-file-ext-portion Mbs		the tmp file extending portion size (in Mb),
 								default 100Mb
@@ -286,24 +286,24 @@ options:
 								default 100Mb
   -tmp-file-init-size Mbs		the tmp file initial size (in Mb),
 								default 100Mb
-  -persistent-heap-size Mbs		the persistent heap size (in Mb), 
+  -persistent-heap-size Mbs		the persistent heap size (in Mb),
 								allowed in the range of 10Mb - 99Mb,
 								default 10Mb
   -bufs-num N					the number of buffers in main memory,
 								default 1600 (the size of the buffer is 64Kb)
   -max-trs-num N				the number of concurrent micro transactions
 								over database, default 10
-  -upd-crt N					update criterion parameter 
+  -upd-crt N					update criterion parameter
 								(fraction of database), default 0.25
-  -max-log-files N              maximum log files 
+  -max-log-files N              maximum log files
                                 until log truncate (default: 3)
-  -log-file-size Mbs            maximum one log file size (in Mb), 
+  -log-file-size Mbs            maximum one log file size (in Mb),
                                 (default 100Mb)
   -db-security  security level  the level of database security:
 								 1) 'off' - none;
 								 2) 'authentication' (default);
 								 3) 'authorization'
-  
+
    db_name   					the name of the database to be created
 \end{verbatim}
 
@@ -343,9 +343,9 @@ The last parameter \verb!db_name! is the name of the database to be created. Adm
 
 \subsubsection{Configuring a Database}
 \label{ConfigDB}
-For each database there is a set of run-time configuration parameters, which store in the database configuration file. The name of the database configuration file is \verb!<db_name>_cfg.xml! where \verb!<db_name>! is the name of the database. The location of configuration file is \verb![win:] SEDNA_INSTALL\cfg! \verb![nix:] SEDNA_INSTALL/cfg! or as specified in the Sedna configuration file (see Section \ref{sec:ConfigSedna}). 
+For each database there is a set of run-time configuration parameters, which store in the database configuration file. The name of the database configuration file is \verb!<db_name>_cfg.xml! where \verb!<db_name>! is the name of the database. The location of configuration file is \verb![win:] SEDNA_INSTALL\cfg! \verb![nix:] SEDNA_INSTALL/cfg! or as specified in the Sedna configuration file (see Section \ref{sec:ConfigSedna}).
 
-The configuration file is an XML document, which satisfies the following DTD: 
+The configuration file is an XML document, which satisfies the following DTD:
 
 \begin{verbatim}
 <!ELEMENT db (name, bufs_num, max_trs_num, init_phys_log_size, phys_log_ext_portion, upd_crt)>
@@ -356,7 +356,7 @@ The configuration file is an XML document, which satisfies the following DTD:
 <!ELEMENT upd_crt (#PCDATA)>
 \end{verbatim}
 
-The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!-max-log-files! parameter defines the maximum number of log files prior to truncation attempt. The \verb!upd_crt! element defines the fraction of the database updating of which will result in snapshot advancement.
+The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!max_log_files! element defines the maximum number of log files prior to truncation attempt. The \verb!upd_crt! element defines the fraction of the database updating of which will result in snapshot advancement.
 
 To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file. Note, in order for new configuration to take effect you must restart Storage Manager.
 
@@ -382,7 +382,7 @@ The third option allows getting the version of the \verb!se_ddb! command.
 
 The last parameter \verb!db_name! is the name of the database to be dropped.
 
-Note that Administrator must stop database firstly (see \ref{StopDB}) and then run \verb!se_ddb! utility. 
+Note that Administrator must stop database firstly (see \ref{StopDB}) and then run \verb!se_ddb! utility.
 
 \subsubsection{Running a Database}
 \label{RunDB}
@@ -423,7 +423,7 @@ The \verb!-upd-crt! option allows Administrator to specify the fraction of the d
 The \verb!-max-log-files! option allows Administrator to control how many log files will be created until Storage Manager will try
 to truncate logical log by making a checkpoint. For example, if the value is $3$, then after creating fourth file Storage Manager will try to truncate log. This may significantly speed up recovery process, since there would be much shorter log to analyze. Note, however, that checkpoint may be quite a performance-heavy procedure. So you should not set the value too small. This parameter can be changed on every Storage Manager run.
 
-The last parameter \verb!dbname!  defines the name of the database to be started up. 
+The last parameter \verb!dbname!  defines the name of the database to be started up.
 
 
 Note: before running any database be sure that Sedna Server is strarted up (see section \ref{StartSedna}).
@@ -451,7 +451,8 @@ Note that \verb!se_smsd! command causes a roll back of all active transactions e
 
 \subsection{Sedna Terminal}
 \label{terminal}
-\verb!se_term! is an interactive terminal to Sedna. It is a C application that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna. It enables you to open a session to one of the Sedna database, type in queries interactively, issue them to the database and see the query results. Alternatively, input can be from a file, or a single query can be passed for execution as a command line parameter. In addition, it provides a number of meta-commands. 
+\verb!se_term! is an interactive terminal to Sedna. It is a C application that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna. It enables you to open a session to one of the Sedna database, type in queries interactively, issue them to the database and see the query results. Alternatively, input can be from a file, or a single query can be passed for execution as a command line parameter.
+In addition, it provides a number of meta-commands.
 
 The usage of the \verb!se_term! is as follows:
 
@@ -462,18 +463,18 @@ options:
   -help			      display this help and exit
   --help		      display this help and exit
   -version		      display product version and exit
-  -file filename	  file with an XQuery query			  
+  -file filename	  file with an XQuery query
   -output filename	  output file (default stdout)
-  -query "query"	  XQuery query to execute		
+  -query "query"	  XQuery query to execute
   -echo on/off		  display se_term output  (default: on for interactive mode,
                                                         off for batch mode)
   -show-time on/off	  show time of the latest query execution (default off)
   -debug  on/off      execute statements in debug mode (default off)
   -host host		  hostname of the machine with Sedna running (default localhost)
-		
+
   -port-number port	  socket listening port  (default 5050)
-  -name name		  user name 
-  -pswd password	  user password 
+  -name name		  user name
+  -pswd password	  user password
    db-name		      database name
 \end{verbatim}
 
@@ -483,7 +484,7 @@ options:
 
 \verb!-file! option specifies the name of the file that contains any number of queries and meta-commands. \verb!se_term! uses this file as the source of queries and meta-commands instead of reading them interactively. \verb!se_term! executes the queries and meta-commands from file consequently and exit.
 
-\verb!-output! option specifies a filename of a file to redirect all \verb!se_term! output to. 
+\verb!-output! option specifies a filename of a file to redirect all \verb!se_term! output to.
 
 \verb!-query! option specifies the query to execute.
 
@@ -506,7 +507,10 @@ When \verb!se_term! is used in the interactive mode it takes in query/update sta
 found) occurs, 2 if the connection to the Sedna server went bad and the session is not interactive, and 3 if
 a statement or a command failed and the variable \verb!ON_ERROR_STOP! was set (\verb!se_term! internal variables are described below in this section).
 
-Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_term! itself. A meta-command begins with a backslash and that differs it from the query/update statements. Thus, the format of \verb!se_term! meta-command is the backslash, followed immediately by a command, with no ampersand at the end. \verb!se_term! takes in the following meta-commands:
+Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_term! itself.
+A meta-command begins with a backslash and that differs it from the query/update statements.
+Thus, the format of \verb!se_term! meta-command is the backslash, followed immediately by a command, with no ampersand at the end.
+\verb!se_term! takes in the following meta-commands:
 
 \begin{verbatim}
  \? - for help on internal slash commands
@@ -515,19 +519,22 @@ Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_te
  \showtime - to show the time of the latest query execution
  \set - to set the terminal internal variable
  \unset - to unset the terminal internal variable
- \quit - to close session and quit the Sedna Terminal
+ \quit, \q - to close session and quit the Sedna Terminal
 \end{verbatim}
 
-\verb!set! and \verb!unset! meta-commands are used for managing \verb!se_term! internal variables. There are following \verb!se_term! internal varibales:
+\verb!set! and \verb!unset! meta-commands are used for managing \verb!se_term! internal variables.
+Notice, that there are aliases for some commands. So you can write \verb!\ac! instead of \verb!\set AUTOCOMMIT!.
+There are following \verb!se_term! internal varibales:
 
-\verb!AUTOCOMMIT! - when set, autocommit mode is on. When unset manual-commit mode is on. \verb!AUTOCOMMIT! is set by default.
+\verb!AUTOCOMMIT (\ac for set, \nac for unset)! - when set, autocommit mode is on. When unset manual-commit mode is on. \verb!AUTOCOMMIT! is set by default.
 
 \verb!ON_ERROR_STOP! - when set, \verb!se_term! returns with the code 3 when statement or meta-command fails. When unset \verb!se_term! processing continues, unless it is the connection failure.
 
 \verb!DEBUG! - when set, session debug mode is on. When unset, session debug mode is off. See "Debug Facilities" section of the Sedna Programmer's Guide for details.
 
-\verb!TRANSACTION_READ_ONLY! - when set, transactions are run as READ-ONLY. When unset, transactions are run as UPDATE-transactions. By default transactions are run as UPDATE-transactions.
+\verb!TRANSACTION_READ_ONLY (\ro for set, \upd for unset)! - when set, transactions are run as READ-ONLY. When unset, transactions are run as UPDATE-transactions. By default transactions are run as UPDATE-transactions.
 
+\verb!LOG_LESS_MODE (\ll for set, \fl for unset)! -  when set, every bulkload will be less logged. When unset, every bulkload will be fully logged. By default transactions are run in full log mode.
 \verb!QUERY_TIMEOUT=<time in seconds>! - when set, every query execution will be dropped on server if it lasts longer than timeout set. By default there is no any timeout set (query is executed as long as needed).
 
 \verb!set?! - provides help on \verb!se_term! internal variables.
@@ -535,19 +542,19 @@ Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_te
 \subsection{Backup and Restore}
 
 As any database system that contains valuable data, Sedna databases should be backed up regularly.
-In this section we present different aproaches to back up Sedna data and the process of 
+In this section we present different aproaches to back up Sedna data and the process of
 migration between different Sedna releases.
 
 
 \subsubsection{Export/Import Utility}
 
-The purpose of \verb!se_exp! utility is to provide functionality of exporting/importing data. The 
-idea behind the \verb!se_exp! method is to generate a set of XML files and XQuery 
-scripts to restore the database in the same state as it was at the time of the exporting. 
+The purpose of \verb!se_exp! utility is to provide functionality of exporting/importing data. The
+idea behind the \verb!se_exp! method is to generate a set of XML files and XQuery
+scripts to restore the database in the same state as it was at the time of the exporting.
 
 Note that \verb!se_exp! is a regular Sedna client application. This means that you can export data from
-any remote host that has access to Sedna. The requirement is that \verb!se_exp! should operate with 
-special permissions. In particular, it must have read access to all documents in the database including 
+any remote host that has access to Sedna. The requirement is that \verb!se_exp! should operate with
+special permissions. In particular, it must have read access to all documents in the database including
 system metadata. This means that you should run it as a user which has DBA role.
 
 The usage of \verb!se_exp! utility is:
@@ -577,34 +584,34 @@ There are three commands to manipulate data with \verb!se_exp!. They are \verb!e
 
 
 \subsubsection*{Export}
-The purpose of \verb!export! command is to export data from specified database. The basic usage 
+The purpose of \verb!export! command is to export data from specified database. The basic usage
 of this command is:
 
 \begin{verbatim}
 se_exp export dbname path
 \end{verbatim}
 
-The parameter \verb!dbname! specifies the database in Sedna to export data from. 
+The parameter \verb!dbname! specifies the database in Sedna to export data from.
 
-The \verb!path! parameter specifies the directory to store files with exported data. 
+The \verb!path! parameter specifies the directory to store files with exported data.
 
 \begin{note}
-Note that if the directory to which \verb!path! refers contains files that have the same names as the files created by \verb!se_exp! they will be replaced. 
+Note that if the directory to which \verb!path! refers contains files that have the same names as the files created by \verb!se_exp! they will be replaced.
 \end{note}
 
-While export process \verb!se_exp! generates a set of XML files and a set of XQuery scripts to 
+While export process \verb!se_exp! generates a set of XML files and a set of XQuery scripts to
 recreate the state of database. For each XML document in the database including XML documents in
 collections \verb!se_exp! generates an XML file. Some XML files with system metadata are also
-generated. Note that the security metadata is exported in insecure way (the file contains 
+generated. Note that the security metadata is exported in insecure way (the file contains
 unencrypted user names and passwords).
 
-Exported data created by \verb!se_exp! is transaction consistent, that is, updates to the database 
-while \verb!se_exp! is running will not be in the exported data. 
+Exported data created by \verb!se_exp! is transaction consistent, that is, updates to the database
+while \verb!se_exp! is running will not be in the exported data.
 
-To specify which database server \verb!se_exp! should contact, use the command line options 
-\verb!-host host!. The default host is the local host. As Sedna client application, \verb!se_exp! 
-requires user name and password to connect to the database. You can either specify them with 
-\verb!-name! and \verb!-pswd! options or type user name and password in the dialog while 
+To specify which database server \verb!se_exp! should contact, use the command line options
+\verb!-host host!. The default host is the local host. As Sedna client application, \verb!se_exp!
+requires user name and password to connect to the database. You can either specify them with
+\verb!-name! and \verb!-pswd! options or type user name and password in the dialog while
 running \verb!se_exp!.
 
 
@@ -618,14 +625,14 @@ up of your data in XML format. The basic usage of this command is:
 
 \begin{verbatim}
 se_exp restore dbname path
-\end{verbatim}  
+\end{verbatim}
 
 The parameter \verb!dbname! specifies the database in Sedna to restore data into. The \verb!path!
-parameter specifies the directory with data to restore. 
+parameter specifies the directory with data to restore.
 
-The database \verb!dbname! will not be created by this command. It is required that the target database 
+The database \verb!dbname! will not be created by this command. It is required that the target database
 already exist and run before starting the restore process. You must create it yourself with the help
-of \verb!se_cdb! command and start it with \verb!se_sm! command. It is also required that the target 
+of \verb!se_cdb! command and start it with \verb!se_sm! command. It is also required that the target
 database is empty, i.e. it doesn't contain any data or any users or roles except the default one.
 
 
@@ -638,21 +645,21 @@ which may be not empty. The basic usage of this command is:
 
 \begin{verbatim}
 se_exp import dbname path
-\end{verbatim}  
+\end{verbatim}
 
 The parameter \verb!dbname! specifies the database in Sedna to import data to. The \verb!path!
-parameter specifies the directory with data to import. 
+parameter specifies the directory with data to import.
 
-The database \verb!dbname! will not be created by this command. It is required that the target database 
-already exist and run before starting the import process. 
+The database \verb!dbname! will not be created by this command. It is required that the target database
+already exist and run before starting the import process.
 
 You can import data into database which contains some data and has some security politics. The only
 restriction is that there should not be any conflicts in the names of XML documents, collections or
-indices. 
+indices.
 
-The main difference between \verb!restore! and \verb!import! command is that \verb!import! command 
-doesn't import any security information. All data is imported by the user who run the \verb!se_exp! 
-utility, i.e. by the user with the name and password specified with \verb!se_exp! parameters. Of cause 
+The main difference between \verb!restore! and \verb!import! command is that \verb!import! command
+doesn't import any security information. All data is imported by the user who run the \verb!se_exp!
+utility, i.e. by the user with the name and password specified with \verb!se_exp! parameters. Of cause
 this user should have enough rights to create collections, load documents and create indices.
 
 
@@ -671,11 +678,11 @@ databases.
 There is a requirement is that the target database must be stopped in order to get a usable backup.
 Half-way measures such as disallowing all connections will not work.
 
-Note that a file system backup will not necessarily be smaller than an back up via export. On 
+Note that a file system backup will not necessarily be smaller than an back up via export. On
 the contrary, it will most likely be larger.
 
 \begin{note}
-The database directory copied to different machine or different version of the same operating system 
+The database directory copied to different machine or different version of the same operating system
 might not work properly. If you want to restore a database on another machine or OS installation use
 \verb!se_exp! utility instead.
 \end{note}
@@ -691,8 +698,8 @@ can be done in incremental mode, which allows more efficient archiving of databa
 In a nutshell, when hot backup is called Sedna makes copies of all database files necessary to restore consistent
 database state in case of failure. The main difference between file system level backup (described in Section \ref{sec:file-system-level-backup}) and
 hot backup is that the target database has not to be stopped. As a tradeoff, restoration from hot backup copy may
-be a slower process, depending on the recency of the copy. Note, that hot backup copy guarantees durability of all 
-transactions that had been committed at the moment of starting hot backup process. 
+be a slower process, depending on the recency of the copy. Note, that hot backup copy guarantees durability of all
+transactions that had been committed at the moment of starting hot backup process.
 
 To make a hot backup you must use provided \verb!se_hb! utility. The usage is as follows:
 \begin{verbatim}
@@ -720,22 +727,22 @@ may make restoration process faster, since checkpoint fixates consistent state o
 in the hot backup copy. But at the same time backup process may take more time, depending on the user activity at the time
 of the backup.
 
-If you want the destination directory (specified as \verb!path! in command line) to be created, you must specify 
+If you want the destination directory (specified as \verb!path! in command line) to be created, you must specify
 \verb!-make-dir! option.
 
-Note that \verb!se_hb! may overwrite some of the 
+Note that \verb!se_hb! may overwrite some of the
 previous backup files if you specify nonempty destination directory. So, if you make two consequent hot backups of the same
-database in the same directory, the older backup will be lost. \verb!-time-dir! option prevents this by creating 
-subdirectory named with the current date-time within \verb!path! directory. In this case the destination of hot backup copy 
-will be \verb!<path>/backup-<dbname>-<current date>-<current time>/!. It is recommended that you use the \verb!-time-dir! 
+database in the same directory, the older backup will be lost. \verb!-time-dir! option prevents this by creating
+subdirectory named with the current date-time within \verb!path! directory. In this case the destination of hot backup copy
+will be \verb!<path>/backup-<dbname>-<current date>-<current time>/!. It is recommended that you use the \verb!-time-dir!
 option or provide a directory free of the previous backups.
 
 You can specify port number to connect to governor through \verb!-port! option. If port number is not specified in command line,
 hot backup process tries to find \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter.
-If it still cannot find port number, it will try to use default 5050 value. 
+If it still cannot find port number, it will try to use default 5050 value.
 
 \begin{note}
-You must run \verb!se_hb! utility on the same machine as the target database is running. It will try to connect to 
+You must run \verb!se_hb! utility on the same machine as the target database is running. It will try to connect to
 the target database through the specified port to the \verb!localhost!.
 \end{note}
 
@@ -745,12 +752,12 @@ Incremental hot backup and corresponding \verb!-incr-mode! option will be explai
 
 Let us assume that you have made hot backup using command like this \verb!se_hb mydb /backup!. If later you want
 to make another one to be sure updated data will be reflected in the backup copy, you can issue the same command.
-However, if the amount of changes is small, it is desirable to copy only this changes without making copy of the entire 
+However, if the amount of changes is small, it is desirable to copy only this changes without making copy of the entire
 database again. This is where incremental mode becomes useful.
 
 First of all, you must create a primary copy, which is essentially the copy of the entire database. You can do it by
-specifying \verb!-incr-mode start! in command line (for example, \verb!se_hb -incr-mode start mydb /backup!). 
-Then, when you 
+specifying \verb!-incr-mode start! in command line (for example, \verb!se_hb -incr-mode start mydb /backup!).
+Then, when you
 need to make subsequent hot backups of the same database, you can specify \verb!-incr-mode add! in command line
 (for example, \verb!se_hb -incr-mode add mydb /backup!). If the amount of changes is small, such backup process will take
 much less time.
@@ -758,9 +765,9 @@ much less time.
 Note, however, that when you use \verb!-incr-mode start! option it will switch the original (active) database in incremental mode.
 This means it will start to store more files to allow ''\verb!-incr-mode add!`` backups. In this case original database can grow
 in size more rapidly in case it is updated. To switch off incremental mode you must specify \verb!-incr-mode stop! in command line. This command
-allows the original database to drop unnecessary files, but it also makes ''\verb!-incr-mode add!`` option impossible. Thus, to 
+allows the original database to drop unnecessary files, but it also makes ''\verb!-incr-mode add!`` option impossible. Thus, to
 start another incremental backup process you must repeat the whole process all over again (\verb!-incr-mode start! call and additional
-\verb!-incr-mode add! calls when needed). Note that \verb!se_hb! with \verb!-incr-mode stop! option does not make any 
+\verb!-incr-mode add! calls when needed). Note that \verb!se_hb! with \verb!-incr-mode stop! option does not make any
 additional hot backup copies, it just switches off incremental mode.
 
 \begin{note}
@@ -769,7 +776,7 @@ hot backup is created. This is similar to the \verb!-incr-mode stop! option, onl
 entire database is created.
 \end{note}
 
-If you make new primary copy (i.e. with the \verb!-incr-mode! \verb!start! option specified) while database is still in incremental mode, 
+If you make new primary copy (i.e. with the \verb!-incr-mode! \verb!start! option specified) while database is still in incremental mode,
 \verb!-incr-mode add! option will archive increments valid only for this last primary copy. It is recommended that you periodically make new primary copy with \verb!-incr-mode start! option. Unless,
 of course, the database is rarely updated.
 
@@ -782,8 +789,8 @@ see the next section.
 \subsubsection*{Restore from Hot Backup Copy}
 
 \begin{note}
-Since hot backup is made on file system level basis, the same note as in the ''File system level backup`` 
-section applies here too, i.e. recovery of the hot backup copy on different machine or different version of the same operating 
+Since hot backup is made on file system level basis, the same note as in the ''File system level backup``
+section applies here too, i.e. recovery of the hot backup copy on different machine or different version of the same operating
 system cannot be guaranteed.
 \end{note}
 
@@ -793,23 +800,23 @@ further details.
 \end{note}
 
 To restore the backed up database you must copy saved files to the directory where Sedna stores database files.
-For the information about Sedna directory structure read Section \ref{sec:dir-structure}. For example, let us assume that 
-hot backup have been made in \verb!/backup! directory, and Sedna stores its files in \verb!SEDNA_INSTALL! directory. 
-In this case you can find \verb!cfg! and \verb!data! subdirectories in \verb!/backup! directory. 
+For the information about Sedna directory structure read Section \ref{sec:dir-structure}. For example, let us assume that
+hot backup have been made in \verb!/backup! directory, and Sedna stores its files in \verb!SEDNA_INSTALL! directory.
+In this case you can find \verb!cfg! and \verb!data! subdirectories in \verb!/backup! directory.
 To restore database you must copy this directories in \verb!SEDNA_INSTALL! directory.
 Note, that you should remove \verb!SEDNA_INSTALL/data/<dbname>_files/! (where \verb!<dbname>! is the name
 of the backed up database) directory before you copy backup files, since
-old files may interfere with restoration process. After you copy backup files in the corresponding directories, you can 
+old files may interfere with restoration process. After you copy backup files in the corresponding directories, you can
 use \verb!se_sm! command to start the database. When you do it for the first time SM runs recovery process to restore
 database state corresponding to the moment hot backup took place. It can take some time depending on the recency of the copy.
 
-For the incremental backed up database the process may be different. If you have made all backups (primary copy and 
-additional ''\verb!-incr-mode add!`` copies) in the same directory the process is the same. However, if you have some of the 
-''\verb!-incr-mode add!`` copies in the different directories you must copy files from all this directories 
+For the incremental backed up database the process may be different. If you have made all backups (primary copy and
+additional ''\verb!-incr-mode add!`` copies) in the same directory the process is the same. However, if you have some of the
+''\verb!-incr-mode add!`` copies in the different directories you must copy files from all this directories
 in order corresponding hot backups were taken to fully restore
 database state. This makes possible restoration of older state of the database. For example, let us assume
-that primary copy is stored in \verb!/backup/p! directory and additional \verb!-incr-mode add! copies are stored in 
-\verb!/backup/1! and \verb!/backup/2! directories in the order of creation. Then you can restore 
+that primary copy is stored in \verb!/backup/p! directory and additional \verb!-incr-mode add! copies are stored in
+\verb!/backup/1! and \verb!/backup/2! directories in the order of creation. Then you can restore
 database to the state corresponding to any of the hot backups by copying only those directories that you need.
 For example, by copying \verb!/backup/p and !\verb!/backup/1! directories you can restore database state corresponding
 to the moment when \verb!-incr-mode add /backup/1! was made. Of course, you cannot ''skip`` directories. For example,
@@ -818,22 +825,22 @@ needed.
 
 \subsubsection{Migration Between Releases}
 \label{sec:release-migr}
-In this section we discuss how to migrate your data from one release of Sedna to another. 
-As the internal data storage format is subject to change between different releases of Sedna it is a 
-frequently required task to accurately migrate data.  
+In this section we discuss how to migrate your data from one release of Sedna to another.
+As the internal data storage format is subject to change between different releases of Sedna it is a
+frequently required task to accurately migrate data.
 
-It is recommended that you use \verb!se_exp! utility to pass through this problem. The process 
+It is recommended that you use \verb!se_exp! utility to pass through this problem. The process
 consists of four steps.
 
 \begin{enumerate}
 \item
-Run \verb!se_exp! utility with \verb!export! command to export your data to some 
+Run \verb!se_exp! utility with \verb!export! command to export your data to some
 directory on the filesystem.
 \item
-Shut down the old version of Sedna database server and remove it from your system. 
+Shut down the old version of Sedna database server and remove it from your system.
 \item
-Install and run a new version of Sedna, create the database with \verb!se_cdb! and start it with 
-\verb!se_sm!. Make sure that no transaction has been run with the new database before restoring 
+Install and run a new version of Sedna, create the database with \verb!se_cdb! and start it with
+\verb!se_sm!. Make sure that no transaction has been run with the new database before restoring
 the data.
 \item
 Run \verb!se_exp! utility with \verb!restore! command to restore data into the new database
@@ -844,11 +851,11 @@ Run \verb!se_exp! utility with \verb!restore! command to restore data into the n
 Sedna keeps track of all important events that happen during its functioning. This section describes where log files are located and how to configure Sedna logging capabilities.
 
 \subsubsection{Files}
-Log files are located in the same folder where Sedna stores databases (see section \ref{sec:dir-structure}, Sedna Directory Structure). By default it means that you can find event log files in \verb!SEDNA_INSTALL/data!. 
+Log files are located in the same folder where Sedna stores databases (see section \ref{sec:dir-structure}, Sedna Directory Structure). By default it means that you can find event log files in \verb!SEDNA_INSTALL/data!.
 Latest log file is named \verb!event.log!. Sedna also stores old event log files which are named \verb!event-{data}.log!.
 
 \subsubsection{Severity Level Configuration}
-Sedna provides a flexible way to set severity level of the logging output. It can be done either through \verb!se_gov! command line parameter: 
+Sedna provides a flexible way to set severity level of the logging output. It can be done either through \verb!se_gov! command line parameter:
 
 \begin{alltt}
 se_gov -el-level \emph{number}
@@ -917,7 +924,7 @@ LOAD "<path>" "<name>"
 
 The \verb!<path>! is the path to the XML document to be loaded to the xmark database. The \verb!<name>! is the name of this document in the xmark database.
 
-\item Run the command: 
+\item Run the command:
 
 \begin{verbatim}
 se_term -file load.xquery xmark
@@ -954,7 +961,7 @@ se_stop
 %========================================================================================
 \section{Sedna Database Users and Privileges}
 
-When created with \verb!-db-security authorization! option , a database contains a set of database users. Those users are separate from the users managed by the operating system on which Sedna runs. Users own database object (for examples, documents) and can assign privileges on those objects to other users to control who has access to which object. 
+When created with \verb!-db-security authorization! option , a database contains a set of database users. Those users are separate from the users managed by the operating system on which Sedna runs. Users own database object (for examples, documents) and can assign privileges on those objects to other users to control who has access to which object.
 
 This chapter describes how to create and manage users and introduces the privilege system.
 
@@ -992,7 +999,7 @@ A user
 \begin{itemize}
 \item can act according to the privileges that he has;
 \item can grant and revoke any privileges on the database object that he owns to any user;
-\item can remove database objects that he owns and drop users that he has created. 
+\item can remove database objects that he owns and drop users that he has created.
 \end{itemize}
 
 Every user has its name and password.
@@ -1026,7 +1033,7 @@ In order to bootstrap the database, a freshly created database always contains o
 
 When a database object is created, it is assigned an owner. The owner is the user that executed the creation statement. By default, only an owner and DBA user can do anything with the database object. In order to allow other users to use it, \emph{privileges} must be granted.
 
-There are several possible privileges: 
+There are several possible privileges:
 \begin{itemize}
 \item CREATE-USER
 \item CREATE-DOCUMENT
@@ -1102,13 +1109,13 @@ To grant a privilege on a database object you must be an owner of this object or
 
 %\begin{verbatim}
 %GRANT "privilege" [, "privilege"] | ALL
-%ON [DOCUMENT|COLLECTION] "database-object-name" 
+%ON [DOCUMENT|COLLECTION] "database-object-name"
 %TO "user-name|role-name" [, "user-name|role-name"] | PUBLIC
 %\end{verbatim}
 
 \begin{verbatim}
 GRANT "privilege" | ALL
-ON [DOCUMENT|COLLECTION] "database-object-name" 
+ON [DOCUMENT|COLLECTION] "database-object-name"
 TO "user-name|role-name" | PUBLIC
 \end{verbatim}
 
@@ -1120,25 +1127,25 @@ To grant a privilege on a database you must be DBA user. To grant one or more pr
 
 %\begin{verbatim}
 %GRANT "privilege" [, "privilege"] | ALL
-%ON DATABASE 
+%ON DATABASE
 %TO "user-name|role-name" [, "user-name|role-name"] | PUBLIC
 %\end{verbatim}
 
 \begin{verbatim}
 GRANT "privilege" | ALL
-ON DATABASE 
+ON DATABASE
 TO "user-name|role-name" | PUBLIC
 \end{verbatim}
 
 To grant a role you must be allowed to grant every privilege of the role: to be owner of every database object of privileges of the role, or to be DBA user. To grant a role to one or more users or roles use:
 
 %\begin{verbatim}
-%GRANT "role-name" 
+%GRANT "role-name"
 %TO "user-name|role_name" [, "user-name|role-name"] | PUBLIC
 %\end{verbatim}
 
 \begin{verbatim}
-GRANT "role-name" 
+GRANT "role-name"
 TO "user-name|role_name" | PUBLIC
 \end{verbatim}
 
@@ -1152,13 +1159,13 @@ To revoke one or more privileges on a database object from one or more users or 
 
 %\begin{verbatim}
 %REVOKE "privilege" [, "privilege"] | ALL
-%ON [DOCUMENT|COLLECTION] "database-object-name" 
+%ON [DOCUMENT|COLLECTION] "database-object-name"
 %FROM "user-name|role-name" [, "user-name|role-name"] | PUBLIC
 %\end{verbatim}
 
 \begin{verbatim}
 REVOKE "privilege" | ALL
-ON [DOCUMENT|COLLECTION] "database-object-name" 
+ON [DOCUMENT|COLLECTION] "database-object-name"
 FROM "user-name|role-name" | PUBLIC
 \end{verbatim}
 
@@ -1168,25 +1175,25 @@ To revoke one or more privileges on a database from one or more users or roles u
 
 %\begin{verbatim}
 %REVOKE "privilege" [, "privilege"] | ALL
-%ON DATABASE 
+%ON DATABASE
 %FROM "user-name|role-name" [, "user-name|role-name"] | PUBLIC
 %\end{verbatim}
 
 \begin{verbatim}
 REVOKE "privilege" | ALL
-ON DATABASE 
+ON DATABASE
 FROM "user-name|role-name" | PUBLIC
 \end{verbatim}
 
 To revoke a role from one or more users or roles use:
 
 %\begin{verbatim}
-%REVOKE "role-name" 
+%REVOKE "role-name"
 %FROM "user-name|role-name" [, "user-name|role-name"] | PUBLIC
 %\end{verbatim}
 
 \begin{verbatim}
-REVOKE "role-name" 
+REVOKE "role-name"
 FROM "user-name|role-name" | PUBLIC
 \end{verbatim}
 
@@ -1201,7 +1208,7 @@ When a client application connects to the database server, it specifies which Se
 
 \emph{Authentication} is the process by which the database server establishes the identity of the client and determines whether the client application (or the user who runs the client application) is permitted to connect with the user name that was requested.
 
-When created with \verb!-db-security authorization! of \verb!-db-security authentication! option, database will check the user password on session open. 
+When created with \verb!-db-security authorization! of \verb!-db-security authentication! option, database will check the user password on session open.
 
 Currently, Sedna uses password authentication: client application that connects to the database must specify user name and user password (in \verb!se_term! utility use \verb!-pswd! and \verb!-name! options; for client application that works through Sedna API see "Sedna Programmer's Guide"). Authentication process consists in checking the password correctness.
 
