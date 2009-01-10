@@ -531,18 +531,18 @@ int main(int argc, char **argv)
 
         db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
 
-        if (db_id == -1)//there is no such database
+        if (db_id == -1)
+           /* There is no such database */
            throw USER_EXCEPTION2(SE4200, db_name);
 
         SEDNA_DATA = ((gov_header_struct *) gov_shm_pointer)->SEDNA_DATA;
 
-		SetGlobalNamesDB(db_id);
+        SetGlobalNamesDB(db_id);
 
 		/* event_logger_init must be after set_global_names */
         event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
-        elog(EL_LOG, ("SM event log is ready"));
-        
-        elog(EL_LOG, ("SM set global names done"));
+
+        elog(EL_LOG, ("Event log is ready"));
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
@@ -550,40 +550,38 @@ int main(int argc, char **argv)
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
-		InitGiantLock(); atexit(DestroyGiantLock);
+        InitGiantLock(); atexit(DestroyGiantLock);
         
         ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_SM);
         ppc->startup(ppc_ex);
         is_ppc_closed = false;
 
-        elog(EL_LOG, ("SM ping started"));
+        elog(EL_LOG, ("Ping client has been started"));
 
         open_global_memory_mapping(SE4400);
         get_vmm_region_values();
         close_global_memory_mapping();
 
-        elog(EL_LOG, ("SM vmm region values determined"));
+        elog(EL_LOG, ("VMM region values determined"));
 
         if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) == 0)
         {
-            // we were started by command "se_sm -background-mode off" from "se_sm -background-mode on"
+            /* We were started by command "se_sm -background-mode off" 
+             * from "se_sm -background-mode on". Perform standard routines 
+             * to run the process in the background mode.
+             */
 #ifdef _WIN32
 #else
-            // perform standard routines to run the process in the background mode
             setsid();
-            //chdir(SEDNA_DATA);
             umask(0);
-            elog(EL_LOG, ("SM standard routines to run the process in the background mode (setsid) done"));
 #endif
         }
 
         setup_sm_globals((gov_config_struct *)gov_shm_pointer);//setup default values from config file
 
-
         recover_database_by_physical_and_logical_log(db_id);
 
-
-        /////////////// BACKGROUND MODE ////////////////////////////////////////
+        ////////////////////////////// BACKGROUND MODE ////////////////////////////////////////
         char *command_line_str = NULL;
         if (background_mode == 1)
         {
@@ -614,21 +612,21 @@ int main(int argc, char **argv)
             if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
                 throw USER_EXCEPTION(SE4205);
 
-            int res;
-            res = USemaphoreDownTimeout(started_sem, SM_BACKGROUND_MODE_TIMEOUT, __sys_call_error);
+            int res = USemaphoreDownTimeout(started_sem, SM_BACKGROUND_MODE_TIMEOUT, __sys_call_error);
 
             USemaphoreRelease(started_sem, __sys_call_error);
             delete [] command_line_str;
-          
 
             if (res != 0)
                 throw USER_EXCEPTION(SE4205);
+
 
             ppc->shutdown();
             delete ppc;
             ppc = NULL;
             is_ppc_closed = true;
-            if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
+            if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) 
+                throw USER_EXCEPTION(SE3000);
            
             fprintf(res_os, "SM has been started in the background mode\n");
             fflush(res_os);
@@ -644,59 +642,51 @@ int main(int argc, char **argv)
             sedna_soft_fault(EL_SM);
         }
     	}
-        /////////////// BACKGROUND MODE ////////////////////////////////////////
+        /////////////////////////////// BACKGROUND MODE ////////////////////////////////////////
 
-//        event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
-//        elog(EL_LOG, ("SM event log is ready"));
 
         if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE4206);
-/*
-        if ( __bufs_num__ > 0 )
-           bufs_num = __bufs_num__;
-
-        if ( __max_trs_num__ > 0)
-           max_trs_num = __max_trs_num__;
-*/         
 
         //init transacion ids table
         init_transaction_ids_table();
-        elog(EL_LOG, ("SM init_transaction_ids_table done"));
+        elog(EL_LOG, ("init_transaction_ids_table done"));
 
         //init checkpoint resources
         init_checkpoint_sems();
-        elog(EL_LOG, ("SM init_checkpoint_sems done"));
+        elog(EL_LOG, ("init_checkpoint_sems done"));
 
         //create checkpoint thread
         start_chekpoint_thread();
-        elog(EL_LOG, ("SM start_chekpoint_thread done"));
+        elog(EL_LOG, ("start_chekpoint_thread done"));
 
         //start up logical log
 		bool is_stopped_correctly;
 		llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, false);
 		if (is_stopped_correctly != true)
 			throw SYSTEM_EXCEPTION("Inconsistent database state");
-//		if (!ll_logical_log_startup(sedna_db_version)) throw SYSTEM_EXCEPTION("Inconsistent database state");
-        elog(EL_LOG, ("SM logical log has been started"));
+        elog(EL_LOG, ("Logical log has been started"));
 
         //enable checkpoints
         llEnableCheckpoints();
-//        elog(EL_LOG, ("SM ll_logical_log_startup done"));
-
+        
+        //cleanup temporary files
+        if(uCleanupUniqueFileStructs(db_files_path, __sys_call_error) == 1)
+            elog(EL_LOG,  ("Temporary files have been deleted"));
+        else
+            elog(EL_WARN, ("Temporary files haven't been (or partially) deleted"));
 
 #ifdef LOCK_MGR_ON
         lm_table.init_lock_table();
-        elog(EL_LOG, ("SM init_lock_table done"));
+        elog(EL_LOG, ("init_lock_table done"));
 #endif
-
         //start buffer manager
         bm_startup();
-        elog(EL_LOG, ("SM buffer manager started"));
-
+        elog(EL_LOG, ("Buffer manager has been started"));
 
 #ifdef _WIN32
         BOOL fSuccess; 
-        fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) SMCtrlHandler, TRUE);                           // add to list 
+        fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) SMCtrlHandler, TRUE);
         if (!fSuccess) throw USER_EXCEPTION(SE4207);
 #else
 		// For Control-C or Delete
@@ -706,11 +696,11 @@ int main(int argc, char **argv)
 		//For reboot or halt
         if ((int)signal(SIGTERM, SMCtrlHandler) == -1) throw USER_EXCEPTION(SE4207);
 #endif
+
         try {
             // Starting SSMMsg server
             d_printf1("Starting SSMMsg...");
 
-			//((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound
             ssmmsg = new SSMMsg(SSMMsg::Server, 
                                 sizeof (sm_msg_struct), 
                                 CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
@@ -724,22 +714,19 @@ int main(int argc, char **argv)
 
             WuSetTimestamp(llGetPersTimestamp() + 1);
             WuInitExn(0,0, llGetPersTimestamp());
-            elog(EL_LOG, ("SM : Wu is initialized"));
+            elog(EL_LOG, ("Wu is initialized"));
 
 #ifdef RCV_TEST_CRASH
             rcvReadTestCfg(); // prepare recovery tester
 #endif
-            d_printf1("OK\n");
-
-                            sm_blk_stat stat;
-                            bm_block_statistics(&stat);
-                            d_printf1("Block statistics:\n");
-                            d_printf2("free_data_blocks_num = %d\n", stat.free_data_blocks_num);
-                            d_printf2("free_tmp_blocks_num  = %d\n", stat.free_tmp_blocks_num);
-                            d_printf2("used_data_blocks_num = %d\n", stat.used_data_blocks_num);
-                            d_printf2("used_tmp_blocks_num  = %d\n", stat.used_tmp_blocks_num);
-
-
+              d_printf1("OK\n");
+              sm_blk_stat stat;
+              bm_block_statistics(&stat);
+              d_printf1("Block statistics:\n");
+              d_printf2("free_data_blocks_num = %d\n", stat.free_data_blocks_num);
+              d_printf2("free_tmp_blocks_num  = %d\n", stat.free_tmp_blocks_num);
+              d_printf2("used_data_blocks_num = %d\n", stat.used_data_blocks_num);
+              d_printf2("used_tmp_blocks_num  = %d\n", stat.used_tmp_blocks_num);
 
 
             ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
@@ -753,14 +740,13 @@ int main(int argc, char **argv)
             register_sm_on_gov();
 
       
-            elog(EL_LOG, ("SM is ready"));
+            elog(EL_LOG, ("SM has been started"));
             fprintf(res_os, "\nSM has been started\n");
             fflush(res_os);
 
 			USemaphoreDown(wait_for_shutdown, __sys_call_error);
 
             //to this point all sessions are closed by governor
-
             if (ssmmsg->stop_serve_clients() != 0)
                 throw USER_EXCEPTION(SE3032);
 
@@ -776,6 +762,7 @@ int main(int argc, char **argv)
         }
 
         delete ssmmsg;
+        ssmmsg = NULL;
 
 //		WuAdvanceSnapshotsExn();
 
@@ -783,13 +770,12 @@ int main(int argc, char **argv)
         shutdown_chekpoint_thread();
 
         WuReleaseExn();
-        elog(EL_LOG, ("SM : Wu is released"));
+        elog(EL_LOG, ("Wu is released"));
 
         // shutdown bm
         bm_shutdown();
 
         //shutdown logical log
-//        ll_logical_log_shutdown();
 		llRelease();
 
         //release checkpoint resources
@@ -838,21 +824,21 @@ void recover_database_by_physical_and_logical_log(int db_id)
        is_recovery_mode = true;
 
        event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
-       elog(EL_LOG, ("SM event log in recovery procedure is ready"));
+       elog(EL_LOG, ("Event log in recovery procedure is ready"));
 
        //init transacion ids table
        init_transaction_ids_table();
-       elog(EL_LOG, ("SM : init_transaction_ids_table done"));
+       elog(EL_LOG, ("init_transaction_ids_table done"));
 
        //init checkpoint resources
        init_checkpoint_sems();
-       elog(EL_LOG, ("SM : init_checkpoint_sems done"));
+       elog(EL_LOG, ("init_checkpoint_sems done"));
 
        fprintf(res_os, "Starting database recovery or hot-backup restoration...\n");
        bool is_stopped_correctly;// = ll_logical_log_startup(sedna_db_version/*out parameter*/);
        llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, true);
 
-       elog(EL_LOG, ("SM : logical log is started"));
+       elog(EL_LOG, ("Logical log is started"));
        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
        {
           release_checkpoint_sems();
@@ -861,18 +847,18 @@ void recover_database_by_physical_and_logical_log(int db_id)
              throw USER_EXCEPTION2(SE4212, "Possibly your Sedna installation is newer than database files. You should use export utility (se_exp) to convert database into the latest format. See documentation for details.");
        }
 
-       d_printf1("logical log is started successfully\n");
+       d_printf1("Logical log has been started successfully\n");
 
        // recover persistent heap
        if (!is_stopped_correctly) 
        {
        		llRcvRestorePh();
-       		elog(EL_LOG, ("SM : persistent heap is recovered"));
+       		elog(EL_LOG, ("Persistent heap has been recovered"));
        }
 
        //create checkpoint thread
        start_chekpoint_thread();
-       elog(EL_LOG, ("SM : start_chekpoint_thread done"));
+       elog(EL_LOG, ("start_chekpoint_thread done"));
 
 	   // check for tmp file (may be absent in hot-backup copy)
 	   string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
@@ -894,25 +880,23 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        //start buffer manager
        bm_startup();
-       elog(EL_LOG, ("SM : bm_startup done"));
+       elog(EL_LOG, ("Buffer manager is started"));
 
        //recover data base by physical log
        LSN last_checkpoint_lsn = LFS_INVALID_LSN;
        if (!is_stopped_correctly) 
        {
        		last_checkpoint_lsn = llRecoverPhysicalState();
-
-		    d_printf1("db recovered by phys records successfully\n");
-       		elog(EL_LOG, ("SM : db recovered by phys records successfully"));
+       		elog(EL_LOG, ("Database has been recovered by physical log successfully"));
        }
 
        //disable checkpoints
        llDisableCheckpoints();
-       elog(EL_LOG, ("SM : checkpoints are disabled"));
+       elog(EL_LOG, ("Checkpoints are disabled"));
         
 #ifdef LOCK_MGR_ON
        lm_table.init_lock_table();
-       elog(EL_LOG, ("SM : lm_table.init_lock_table done"));
+       elog(EL_LOG, ("lm_table.init_lock_table done"));
 #endif
 
 
@@ -936,18 +920,18 @@ void recover_database_by_physical_and_logical_log(int db_id)
        WuSetTimestamp(llGetPersTimestamp() + 1);
 //       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
        WuInitExn(0,0,llGetPersTimestamp()); // turn on versioning mechanism on recovery
-       elog(EL_LOG, ("SM : Wu is initialized"));
+       elog(EL_LOG, ("Wu is initialized"));
 
        //recover database by logical log
        if (!is_stopped_correctly) 
        {
        		execute_recovery_by_logical_log_process(last_checkpoint_lsn);
-		    elog(EL_LOG, ("SM : db recovered by logical log successfully"));
+		    elog(EL_LOG, ("Database has been recovered by logical log successfully"));
 	   }
 
        //enable checkpoints
 	   llEnableCheckpoints();
-       elog(EL_LOG, ("SM : checkpoints are enabled"));
+       elog(EL_LOG, ("Checkpoints are enabled"));
 
        if (ssmmsg->stop_serve_clients() != 0)
           throw USER_EXCEPTION(SE3032);
@@ -957,31 +941,31 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        //shutdown checkpoint thread (it also makes checkpoint)
        shutdown_chekpoint_thread(); // checkpont is created here!
-       elog(EL_LOG, ("SM : shutdown checkpoint thread done"));
+       elog(EL_LOG, ("Shutdown checkpoint thread done"));
 
        WuReleaseExn();
-       elog(EL_LOG, ("SM : Wu is released"));
+       elog(EL_LOG, ("Wu is released"));
 
 	   // shutdown bm
        bm_shutdown();
-       elog(EL_LOG, ("SM : bm_shutdown done"));
+       elog(EL_LOG, ("Buffer manager is stopped"));
 
        //shutdown logical log
 	   llRelease();
-       elog(EL_LOG, ("SM : logical log is stopped"));
+       elog(EL_LOG, ("Logical log is stopped"));
 
        //release checkpoint resources
        release_checkpoint_sems();
-       elog(EL_LOG, ("SM : release_checkpoint_sems done"));
+       elog(EL_LOG, ("release_checkpoint_sems done"));
 
        release_transaction_ids_table();
-       elog(EL_LOG, ("SM : release_transaction_ids_table done"));
+       elog(EL_LOG, ("release_transaction_ids_table done"));
 
 #ifdef LOCK_MGR_ON
        lm_table.release_lock_table();
-       elog(EL_LOG, ("SM : lm_table.release_lock_table done"));
+       elog(EL_LOG, ("lm_table.release_lock_table done"));
 #endif
-       elog(EL_LOG, ("SM recovery procedure is finished successfully"));
+       elog(EL_LOG, ("Recovery procedure has been finished successfully"));
        event_logger_release();
     
        is_recovery_mode = false;

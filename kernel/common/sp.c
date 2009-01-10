@@ -1,6 +1,6 @@
 /*
- * File:  ipc_ops.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File:  sp.c
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
@@ -90,5 +90,4 @@ int sp_error_message_handler(USOCKET s, int error_ins, int error_code, const cha
     memcpy(server_msg.body + 9, error_info, err_length);
 
     return sp_send_msg(s, &server_msg);
-
 }

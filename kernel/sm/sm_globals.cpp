@@ -34,7 +34,6 @@ double upd_crt;
 int max_log_files;
 
 
-
 char db_name[SE_MAX_DB_NAME_LENGTH + 1];
 char db_files_path[U_MAX_PATH + 1];
 int sedna_db_version = 0;
@@ -46,8 +45,6 @@ SSMMsg* gov_server;
 
 void setup_sm_globals(gov_config_struct* cfg)
 {   
-   char buf[1024];
-
    if (strlen(cfg->gov_vars.SEDNA_DATA) + strlen(db_name) + 14 > U_MAX_PATH)
       throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
 
@@ -120,7 +117,6 @@ void register_sm_on_gov()
     	throw USER_EXCEPTION(SE3045);                            //failed to register
 
     if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
-
 }
 
 

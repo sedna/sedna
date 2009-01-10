@@ -17,7 +17,7 @@ int hb_checkpoint = 0;                         // checkpoint needed before hot-b
 int hb_timestamp = 0;                          // we must add timestamp to directory name
 int hb_mkdir = 0;                              // create directory if it doesn't exist
 char hb_db_name[SE_MAX_DB_NAME_LENGTH + 1];    // name of the db to archive
-char hb_dir_name[U_MAX_PATH + 1];              // name of the distance directory
+char hb_dir_name[U_MAX_PATH];                  // name of the distance directory
 char hb_incr_mode[512];                        // increment mode (none, start, add, disable)
 int hb_port = 5050;                            // port number (priority: def.value->cfg file->command line)
 const size_t narg = 9;  // number of arguments for argtable (must be consistent with hb_argtable below)

@@ -224,7 +224,9 @@ se_ostream* socket_client::get_se_ostream()
 }
 
 
-void socket_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)
+void 
+socket_client::get_file_from_client(std::vector<string>* filenames, 
+                                    std::vector<client_file>* cf_vec)
 {
     string tmp_file_path_str;
     
@@ -233,7 +235,6 @@ void socket_client::get_file_from_client(std::vector<string>* filenames, std::ve
     
     if ((filenames->size() > 1) && (p_ver.major_version < 2))
         throw USER_EXCEPTION2(SE2999, "Loading module from multiple files is not supported by current Sedna Client-server protocol.");
-    
 
     try
     {
@@ -245,54 +246,60 @@ void socket_client::get_file_from_client(std::vector<string>* filenames, std::ve
             
             if (strcmp(client_filename, "/STDIN/") == 0)
             {
-                sp_msg.instruction = 431;// BulkLoadFromStream 431 message
+                sp_msg.instruction = 431;// BulkLoadFromStream
                 sp_msg.length = 0;
-                if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+                if(sp_send_msg(Sock, &sp_msg) != 0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
             }
             else
             {
                 int filename_len = strlen(client_filename);
-                sp_msg.instruction = 430;// BulkLoadFileName 430 message
+                sp_msg.instruction = 430;// BulkLoadFileName
                 sp_msg.length = filename_len + 5;
                 
                 int2net_int(filename_len, sp_msg.body+1);
                 sp_msg.body[0] = 0;
                 memcpy(sp_msg.body+5, client_filename, filename_len);
-                if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+                if(sp_send_msg(Sock, &sp_msg) != 0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
             }
             
-            // create tmpfile for bulkload
+            /* Create tmpfile for bulkload */
             tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files");
             res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
-            if(res == 0) throw USER_EXCEPTION(SE4052);
-            
-//            elog(EL_LOG, (string(string("Temporary file has been created ")+string(fs.name)).c_str()));
+            if(res == 0)
+                throw USER_EXCEPTION(SE4052);
             
             res = sp_recv_msg(Sock, &sp_msg);
-            if(res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
+            if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator());}
             if(res == 1) throw USER_EXCEPTION(SE3012);
             
-            try{
-                while(sp_msg.instruction != se_BulkLoadEnd)    // while not BulkLoadEnd message
+            try {
+                while(sp_msg.instruction != se_BulkLoadEnd)           // while not BulkLoadEnd message
                 {
-                    if (sp_msg.instruction == se_BulkLoadError)     // BulkLoadError
+                    if (sp_msg.instruction == se_BulkLoadError)       // BulkLoadError
                     {
                         throw USER_EXCEPTION(SE3013);
                     }
                     else if (sp_msg.instruction == se_BulkLoadPortion)// BulkLoadPortion message
                     {
                         got = uWriteFile(fs.f, sp_msg.body+5, sp_msg.length-5, &written, __sys_call_error);
-                        if ((got == 0)||(written!=sp_msg.length-5)) throw USER_EXCEPTION(SE4045); 
+                        if ((got == 0)||(written!=sp_msg.length-5)) 
+                            throw USER_EXCEPTION(SE4045); 
                     }
-                    else throw USER_EXCEPTION(SE3009);
+                    else 
+                    {
+                       throw USER_EXCEPTION(SE3009);
+                    }
                     
                     res = sp_recv_msg(Sock, &sp_msg);
-                    if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-                    if (res == 1) throw USER_EXCEPTION(SE3012);
-                 } //end of while
+                    if (res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+                    
+                    if (res == 1) 
+                        throw USER_EXCEPTION(SE3012);
+                 }
             } catch (SednaUserException & e) {
-                got = uCloseFile(fs.f, __sys_call_error);
-                if(uDeleteFile(fs.name, __sys_call_error) == 0) d_printf1("tmp file delete error");
+                uCloseFile(fs.f, __sys_call_error);
+                if(uDeleteFile(fs.name, __sys_call_error) == 0) 
+                    d_printf1("tmp file delete error");
                 throw;
             }
 
@@ -301,7 +308,7 @@ void socket_client::get_file_from_client(std::vector<string>* filenames, std::ve
              cf.f = fopen(string(fs.name).c_str(), "r");
              strcpy(cf.name, fs.name);
              if (uGetFileSizeByName(cf.name, &(cf.file_size), __sys_call_error) == 0)
-               throw USER_EXCEPTION2(SE4050, cf.name);
+                 throw USER_EXCEPTION2(SE4050, cf.name);
 
              i++;
 
@@ -318,11 +325,9 @@ void socket_client::get_file_from_client(std::vector<string>* filenames, std::ve
              }
              cf_vec->at(i).f = NULL;
              if(uDeleteFile(cf_vec->at(i).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
- //            elog(EL_LOG, (string(string("Temporary file has been deleted ")+string(cf_vec->at(i).name)).c_str()));
          }
          throw;
      }
-
 }
 
 void socket_client::close_file_from_client(client_file &cf)
@@ -336,7 +341,7 @@ void socket_client::close_file_from_client(client_file &cf)
     if(uIsFileExist(cf.name, __sys_call_error))
     {
         if(!uDeleteFile(cf.name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
-        elog(EL_LOG, ("Temporary file has been deleted %s", cf.name));
+        elog(EL_DBG, ("Temporary file has been deleted %s", cf.name));
     }
 
 }
@@ -610,21 +615,25 @@ void socket_client::process_unknown_instruction(int instruction, bool in_transac
 void socket_client::error(int code, const string& body)
 {
     if(Sock != U_INVALID_SOCKET)
+    {
         if(sp_error_message_handler(Sock, se_ErrorResponse, code, body.c_str())!=0) 
         {
             Sock = U_INVALID_SOCKET;
             throw USER_EXCEPTION2(SE3006,usocket_error_translator());
         }
+    }
 }
 
 void socket_client::error()
 {
     if(Sock != U_INVALID_SOCKET)
+    {
         if(sp_error_message_handler(Sock, se_ErrorResponse, 0, "Unknown error")!=0) 
         {
             Sock = U_INVALID_SOCKET;
             throw USER_EXCEPTION2(SE3006,usocket_error_translator());
         }
+    }
 }
 
 void socket_client::show_time(string qep_time)
