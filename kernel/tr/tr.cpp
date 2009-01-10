@@ -41,8 +41,6 @@ extern "C" long _ftol2(double dblSource)
 
 using namespace std;
 
-// should be removed later !!!
-char db_files_path[U_MAX_PATH + 1];
 
 DECLARE_TIME_VARS
 // variables for time measurement
@@ -477,7 +475,10 @@ int TRmain(int argc, char *argv[])
 
                     d_printf1("\nTr is rolled back successfully\n");
 
-                    if (e.get_code() == SE3053 || e.get_code() == SE3006 || e.get_code() == SE3007 || e.get_code() == SE3009 || e.get_code() == SE3012)   //session must be closed
+                    /* Client session must be closed if we 
+                     * have one of the following errors
+                     */
+                    if (e.get_code() == SE3053 || e.get_code() == SE3006 || e.get_code() == SE3007 || e.get_code() == SE3009 || e.get_code() == SE3012)
                     {
                         ret_code = 1;
                         throw;

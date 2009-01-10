@@ -421,14 +421,18 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 
 
 /*
- * Constants for maximum path length, file name length, etc.
+ * These constants define the maximum length in bytes for the path and 
+ * for the individual fields within the path.
+ * U_MAX_PATH  - Maximum length of full path
+ * U_MAX_DIR   - Maximum length of directory component
+ * U_MAX_FNAME - Maximum length of filename component
  */
 #ifdef _WIN32
 #define U_MAX_PATH          _MAX_PATH
 #define U_MAX_FNAME         _MAX_FNAME
 #define U_MAX_DIR           _MAX_DIR
 #else
-#define U_MAX_PATH          PATH_MAX
+#define U_MAX_PATH          PATH_MAX 
 #define U_MAX_FNAME         NAME_MAX
 #define U_MAX_DIR           NAME_MAX
 #endif /* _WIN32 */
@@ -652,39 +656,52 @@ SE_EXTERN_C bool u_is_pos_inf(double d);
 
 
 /*=============================================================================
- *                           Functions
- *                           ~~~~~~~~~
+ *                       u-Calls Errors Handling
+ *                       ~~~~~~~~~~~~~~~~~~~~~~~
+ * sys_call_error - must be used inside u-function when it perfroms system 
+ *                  call to write (e.g. using perror()) why it has been failed
+ * u_call_error   - must be used inside u-function when it is going to return
+ *                  failed status. It allows additional error diagnostic to
+ *                  be logged.
  *===========================================================================*/
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//#define sys_call_error(sys_call)  __sys_call_error(__FILE__, __LINE__, __SE_FUNCTION__, sys_call)
-
 #define SYS_CALL_ERROR(FN, SYSCALL_STR) \
-	(((FN)?(FN):__sys_call_error_nop) \
-	(__FILE__,__LINE__,__SE_FUNCTION__, (SYSCALL_STR), NULL))
+    (((FN)?(FN):__sys_call_error_nop) \
+    (__FILE__,__LINE__,__SE_FUNCTION__, (SYSCALL_STR), NULL))
 
 #define SYS_CALL_ERROR2(FN, SYSCALL_STR, PARAMS_STR) \
-	(((FN)?(FN):__sys_call_error_nop) \
-	(__FILE__,__LINE__,__SE_FUNCTION__, (SYSCALL_STR), (PARAMS_STR)))
+    (((FN)?(FN):__sys_call_error_nop) \
+    (__FILE__,__LINE__,__SE_FUNCTION__, (SYSCALL_STR), (PARAMS_STR)))
 
-#define sys_call_error(sys_call)  (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, NULL) : (void)0)
-#define sys_call_error2(sys_call, arg)  (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, arg) : (void)0)
+#define sys_call_error(sys_call)          (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, NULL) : (void)0)
+#define sys_call_error2(sys_call, arg)    (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, arg) : (void)0)
+
+#define u_call_error(message)             (fun ? __u_call_error(__FILE__, __LINE__, __SE_FUNCTION__, message) : (void)0)
 
 typedef void (*sys_call_error_fun)(const char *filename, int lineno, const char *funcname, const char *sys_call, const void*);
 
+char*  ustrerror(int errnum);
+int    ustrerror_r(int errnum, char *buf, size_t n);
+void   uperror(const char *s);
+void   __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
+void   __sys_call_error_nop(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
+void   __u_call_error(const char *filename, int lineno, const char *funcname, const char *message);
 
-void uSleep(unsigned int secs, sys_call_error_fun fun);
-char* ustrerror(int errnum);
-int ustrerror_r(int errnum, char *buf, size_t n);
-void uperror(const char *s);
-void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
-void __sys_call_error_nop(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
 
-int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun);
-int uMakeLowLevelDescriptorNonInheritable(FILE* f, sys_call_error_fun fun);
+/*=============================================================================
+ *                           Common Functions
+ *                           ~~~~~~~~~~~~~~~~
+ *===========================================================================*/
+
+
+void   uSleep(unsigned int secs, sys_call_error_fun fun);
+int    uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun);
+int    uMakeLowLevelDescriptorNonInheritable(FILE* f, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

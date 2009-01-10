@@ -124,7 +124,7 @@ int uSetCurProcessWorkingSetSize(usize_t MinWorkingSetSize, usize_t MaxWorkingSe
 /* return value 0 indicates success */
 int uCreateProcess(
            char *command_line,		/* command line string */
-           bool inherit_handles,	/* handle inheritance option */
+           bool inherit_handles,	/* handle inheritance option (not implem*/
            const char *cur_dir,		/* current directory name */
            UFlag flags,
            UPHANDLE *process_handle,
@@ -189,17 +189,18 @@ int uCreateProcess(
 
         if (flags == U_DETACHED_PROCESS)
         {
-#warning U_DETACHED_PROCESS flag in uCreateProcess function is not implemented yet
             /* close stdout and stderr to avoid output to console */
-            int null_dev;
-            null_dev = open("/dev/null", O_RDWR);
+            int null_dev = open("/dev/null", O_RDWR);
             if (null_dev == -1) { sys_call_error("open"); exit(1); }
+
             if (close(STDOUT_FILENO) == -1) { sys_call_error("close"); exit(1); }
             if (close(STDERR_FILENO) == -1){ sys_call_error("close"); exit(1); }
             if (close(STDIN_FILENO) == -1) { sys_call_error("close");  exit(1); }
+           
             if (dup2(null_dev, STDOUT_FILENO) == -1) { sys_call_error("dup2"); exit(1); }
             if (dup2(null_dev, STDERR_FILENO) == -1) { sys_call_error("dup2"); exit(1); }
             if (dup2(null_dev, STDIN_FILENO) == -1) { sys_call_error("dup2"); exit(1); }
+            
             if (close(null_dev) == -1) { sys_call_error("close"); exit(1); }
         }
 
@@ -211,12 +212,6 @@ int uCreateProcess(
                 sys_call_error("chdir");
                 exit(1);
             }
-        }
-
-        if (!inherit_handles)
-        {
-#warning Only 'true' is supported as a value of inherit_handles parameter in uCreateProcess function
-            /* change current directory to cur_dir */
         }
 
         char *args[MAX_NUMBER_OF_ARGS];

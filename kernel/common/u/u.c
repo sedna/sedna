@@ -177,6 +177,28 @@ void __sys_call_error_nop(const char *filename, int lineno, const char *funcname
 {
 }
 
+
+/* Simply writes message to the event log 
+ * Intended to be used inside u-functions to
+ * write additional error condition information.
+ */
+void
+ __u_call_error(const char *filename, 
+               int lineno, 
+               const char *funcname, 
+               const char *message)
+{
+#if !(defined(SE_NO_EVENT_LOG))
+    event_log_short_msg(EL_ERROR, 
+                        filename, 
+                        lineno, 
+                        funcname, 
+                        message);
+#endif /* !SE_NO_EVENT_LOG */
+
+}
+
+
 int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32

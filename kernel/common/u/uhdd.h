@@ -35,16 +35,16 @@
 typedef HANDLE UFile;
 typedef DWORD UAccess;
 typedef DWORD UShareMode;
-//typedef WIN32_FIND_DATA UFindDataStruct;
 typedef HANDLE UDir;
 
-struct UFindDataStruct
-{
-   char fname[MAX_PATH];
-};
-
+/* Defines maximum length of the temporary file name.
+ * Should be used to check total path length where appropriate.
+ * WIN32 template "tmp.XXXXXXXX.XXX" 
+ */
+#define SE_MAX_TMP_FILE_NAME    (16)
 
 #else
+
 #include <dirent.h>
 #include <sys/types.h>
 
@@ -79,25 +79,26 @@ struct UFindDataStruct
 
 #define U_INVALID_DIR			NULL
 
+/* Defines maximum length of the temporary file name.
+ * Should be used to check total path length where appropriate.
+ * *NIX  template "tmpXXXXXX"
+ */
+#define SE_MAX_TMP_FILE_NAME    (9)
 
 typedef int UFile;
 typedef int UAccess;
 typedef int UShareMode;
-//typedef struct dirent UFindDataStruct;
 typedef DIR* UDir;
-
-struct UFindDataStruct
-{
-   char fname[256];
-};
-
 
 #endif
 
-struct file_struct
-{
+struct UFindDataStruct {
+   char fname[U_MAX_PATH];
+};
+
+struct file_struct {
     UFile f;
-    char name[1024];
+    char name[U_MAX_PATH];
 };
 
 #ifdef __cplusplus
@@ -164,19 +165,17 @@ extern "C"
 /* If the function fails, the return value is zero.*/
     int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun fun);
 
-
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
     int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fun);
 
-/* If the function succeeds, it returns 0.*/
-/* If the function fails, it returns nonzero.*/
+/* If the function succeeds, it returns nonzero.*/
+/* If the function fails, it returns 1.*/
     int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int sid, sys_call_error_fun fun);
 
-/* If the function succeeds, it returns 0.*/
-/* If the function fails, it returns nonzero.*/
-/* FILE* f - open unique file in the directory directoryName*/
-    int uGetUniqueFileName(const char *directoryName, char *file_name, sys_call_error_fun fun);
+/* If the function succeeds, it returns nonzero. 
+ * Else it returns 0. */
+    int uCleanupUniqueFileStructs(const char *dir, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is pointer to the absolute path*/
 /* If the function fails, the return value is NULL*/
