@@ -40,8 +40,6 @@ WINBASEAPI BOOL WINAPI GetFileSizeEx(HANDLE hFile, PLARGE_INTEGER lpFileSize);
 
 WINBASEAPI BOOL WINAPI SetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove, PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod);
 
-
-
 #endif
 #endif
 
@@ -778,9 +776,8 @@ uCleanupUniqueFileStructs(const char *dir,             /* in  */
     
     while ((dent = readdir(dd)) != NULL)
     {
-        /* Check that file is a regular temporary ... */
-        if (dent->d_type == DT_REG &&
-            strlen(dent->d_name) > 3 && 
+        /* Check that file is a temporary ... */
+        if (strlen(dent->d_name) > 3 && 
             strlen(dent->d_name) <= SE_MAX_TMP_FILE_NAME &&
             't' == dent->d_name[0] && 
             'm' == dent->d_name[1] &&
