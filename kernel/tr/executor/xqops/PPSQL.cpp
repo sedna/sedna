@@ -252,26 +252,15 @@ void PPFnSQLConnect::close ()
 }
 
 //copied from PPConstructors.cpp
-static char *getStringParameter(PPOpIn content)
+static char *getStringParameter(PPOpIn content, const char *err_pref)
 {
 	tuple value(content.ts);
 	content.op->next(value);
 	sequence at_vals(1);
 	if (value.is_eos()) 
 	{
-	 	tr_globals::tmp_op_str_buf.append(EMPTY_STRING_TC);
-		return NULL;
+		throw USER_EXCEPTION2(XPTY0004, (std::string(err_pref) + std::string(". Argument contains zero items.")).c_str());
 	}
-	else
-	{
-		at_vals.add(value);
-		/*tuple_cell res=atomize(value.cells[0]);
-		res=cast_to_xs_string(res);
-		sbuf->append(res);*/
-		content.op->next(value);
-
-	}
-//	int charsize=1;
 	while (!(value.is_eos()))
 	{
 		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPSQL");
@@ -287,11 +276,10 @@ static char *getStringParameter(PPOpIn content)
 		res=tuple_cell::make_sure_light_atomic(res);
 		if (it!=at_vals.begin())
 		{
-			tr_globals::tmp_op_str_buf.append(" ");				
+			tr_globals::tmp_op_str_buf.append(" ");
 		}
 		tr_globals::tmp_op_str_buf.append(res);
 		it++;
-        
 	}
 	while (it!=at_vals.end());
 	//str_val.push_to_memory();
@@ -314,8 +302,7 @@ void PPFnSQLConnect::next(tuple &t)
 		char	*pass			= NULL;
 		int		pass_len		= 0;
 
-		tmp = getStringParameter(arr[0]);
-		//connect_str		= tmp.get_str_mem();
+		tmp = getStringParameter(arr[0], "Bad 1st argument of sql:connect");
 		connect_str_len	= strlen(tmp);
 		connect_str = se_new char[connect_str_len+1];
 		strncpy(connect_str, tmp, connect_str_len);
@@ -324,8 +311,7 @@ void PPFnSQLConnect::next(tuple &t)
 
 		if (arr.size() >= 2)
 		{
-			tmp = getStringParameter(arr[1]);
-			//uid		= tmp.get_str_mem();
+			tmp = getStringParameter(arr[1], "Bad 2nd argument of sql:connect");
 			uid_len = strlen(tmp);
 			uid = se_new char[uid_len+1];
 			strncpy(uid, tmp, uid_len);
@@ -333,7 +319,7 @@ void PPFnSQLConnect::next(tuple &t)
 			
 			if (arr.size() >= 3)
 			{
-				tmp = getStringParameter(arr[2]);
+				tmp = getStringParameter(arr[2], "Bad 3rd argument of sql:connect");
 				pass		= tmp;
 				pass_len	= strlen(tmp);
 			}
@@ -485,7 +471,7 @@ void PPFnSQLExecute::next(tuple &t)
 				}
 
 				{
-					const char *query	= getStringParameter(arr[1]);
+					const char *query	= getStringParameter(arr[1], "Bad 2nd argument of sql:execute");
 					int	query_len = strlen(query);
 
 					//TODO - options
@@ -619,7 +605,7 @@ void PPFnSQLPrepare::next(tuple &t)
 
 		char *query	= NULL;
 		int	query_len = 0;
-		query		= getStringParameter(statement);
+		query		= getStringParameter(statement, "Bad $statement argument of sql:prepare");
 		query_len	= strlen(query);
 
 		SQLHandle *stmt;
