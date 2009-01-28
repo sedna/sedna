@@ -18,10 +18,7 @@
 #include "sm/db_utils.h"
 
 
-
 using namespace std;
-
-void* gov_shm_pointer = NULL;
 
 
 const size_t narg = 4;
@@ -30,8 +27,6 @@ int ddb_help2 = 0;
 int ddb_version;
 char db_name[1000];
 
-/// Should be removed
-char db_files_path[U_MAX_PATH + 1];
 int bufs_num = 0;
 int max_trs_num = 0;
 
@@ -44,80 +39,53 @@ arg_rec ddb_argtable[] =
 };
 
 
-void print_ddb_usage()
+static void print_ddb_usage()
 {
    throw USER_SOFT_EXCEPTION((string("Usage: se_ddb [options] dbname \n\n") +
                               string("options:\n") + string(arg_glossary(ddb_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
-
-bool start_ppc(pping_client& ppc, SednaUserException& e)
+static void ddb_open_gov_shm()
 {
-  try
-  {
-    ppc.startup(e);
-    return true;
-
-  } catch (ANY_SE_EXCEPTION) {
-    return false;//cannot connect to pping server
-  }
-
-}
-
-void* ddb_open_gov_shm(UShMem *gov_shm_service_dsc)
-{
-   try{
-  
-      return open_gov_shm(gov_shm_service_dsc);
-   } catch(SednaUserException &e) {
-      return NULL;
-   }
-   
+    try{
+        open_gov_shm();
+    } catch(SednaUserException &e) { }
 }
 
 
 int main(int argc, char** argv)
 {
-  program_name_argv_0 = argv[0];
-            
-  pping_client *ppc = NULL;
+    USOCKET sock;
+    program_name_argv_0 = argv[0];
+    pping_client *ppc = NULL;
+    int db_id;
+    msg_struct msg;
+    char errmsg[1000];
+    SednaUserException e = USER_EXCEPTION(SE4400);
 
-  bool sedna_work = false;
-  UShMem gov_mem_dsc;
-
-  int db_id;
-  void* gov_shm_pointer = NULL;  
-  bool pping_inited = false;          
-
-    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
-      so we must block SIGPIPE with sigignore.*/
+    /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+     * so we must block SIGPIPE with sigignore.
+     */
 #if defined(SunOS)
     sigignore(SIGPIPE);
 #endif
 
-  try {
 
-
-        msg_struct msg;
-        int port_number;
-
-        SednaUserException e = USER_EXCEPTION(SE4400);
+    try {
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
    
-        int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
-        char errmsg[1000];
+        int arg_scan_ret_val = 0; /* 1 - parsed successful, 0 - there was errors */
         arg_scan_ret_val = arg_scanargv(argc, argv, ddb_argtable, narg, NULL, errmsg, NULL);
         if (ddb_help1 == 1 || ddb_help2 == 1 ) print_ddb_usage();
         if (ddb_version == 1) { print_version_and_copyright("Sedna Drop Data Base Utility"); throw USER_SOFT_EXCEPTION(""); }
         if (arg_scan_ret_val == 0)
-           throw USER_EXCEPTION2(SE4601, errmsg);
-
+            throw USER_EXCEPTION2(SE4601, errmsg);
 
         if (string(db_name) == "???")
-           throw USER_EXCEPTION2(SE4601, "The name of the database must be specified (type option '-help')");
+            throw USER_EXCEPTION2(SE4601, "The name of the database must be specified (type option '-help')");
 
         gov_header_struct cfg;
         get_sednaconf_values(&cfg);
@@ -125,102 +93,98 @@ int main(int argc, char** argv)
 		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
 
-        gov_shm_pointer = ddb_open_gov_shm(&gov_mem_dsc);
-
-        if (gov_shm_pointer ==NULL)//gov is not started
+        /* Wrapper around open_gov_shm  which absorbs exceptions */ 
+        ddb_open_gov_shm();  
+         
+        if (sedna_gov_shm_ptr == NULL)
+           /* Gov is not started */
            SEDNA_DATA = cfg.SEDNA_DATA;
         else
-           SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
+           SEDNA_DATA = GOV_HEADER_GLOBAL_PTR->SEDNA_DATA;
 
         if (!exist_db(db_name))
-           throw USER_EXCEPTION2(SE4308 , (string("There is no database: ") + db_name).c_str());
+            throw USER_EXCEPTION2(SE4308 , (string("There is no database: ") + db_name).c_str());
    
-
         if (uSocketInit(__sys_call_error) != 0)
-           throw USER_EXCEPTION(SE3001);
+            throw USER_EXCEPTION(SE3001);
 
-
-        //case when sedna work and we must check whether database is running
-        if (gov_shm_pointer)
-        {//id needed database is running then throw exception
-            ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_DDB);
+        /* Case when sedna works and we must 
+         * check whether database is running
+         */
+        if (sedna_gov_shm_ptr)
+        {
+            int port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+            ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_DDB);
             ppc->startup(e);
-            pping_inited = true;
 
-            db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+            db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
 
-            port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
-
-            if (db_id == -1)//there is no such database
+            /* There is no such database? */
+            if (db_id == -1)
                throw USER_EXCEPTION2(SE4308 , (string("There is no database: ") + db_name).c_str());
 
             SetGlobalNamesDB(db_id);
 
             d_printf2("port number=%d\n", port_number);
 
-            msg_struct msg;
-            USOCKET sock;
-
             sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
             if (uconnect_tcp(sock, port_number, "127.0.0.1", __sys_call_error) == 0)
-            {//connected successfully
+            {
                 msg.instruction = IS_RUN_SM;
                 if (strlen (db_name) > SE_MAX_DB_NAME_LENGTH)
-                   throw USER_EXCEPTION(SE3015);
+                    throw USER_EXCEPTION(SE3015);
                 strcpy(msg.body, db_name);
                 msg.length = strlen(db_name)+1;
                 sp_send_msg(sock, &msg);
                 sp_recv_msg(sock, &msg);
                 ushutdown_close_socket(sock, __sys_call_error);
    
-                if ((msg.body)[0] == 'y')//database run
+                /* Database run? */
+                if ((msg.body)[0] == 'y')
                    throw USER_EXCEPTION2(SE4308, "Database must be stopped firstly");
-
             }
 
             cdb_ugc(db_id, cfg.os_primitives_id_min_bound);
+            
             ppc->shutdown();
             delete ppc;
-            pping_inited = false;
+            ppc = NULL;
   
-            //!!!Here gov already closed listening socket (=>all databases already stopped) or database stopped 
+            /* Gov already closed listening socket (=> 
+             * all databases already stopped) or database stopped.
+             */ 
         }
 
-	d_printf2("db_name=%s\n", db_name);
-	d_printf2("SEDNA_DATA=%s\n", SEDNA_DATA);
+        d_printf2("db_name=%s\n", db_name);
+        d_printf2("SEDNA_DATA=%s\n", SEDNA_DATA);
 
-        int res_clenup_db;
-        res_clenup_db = cleanup_db(db_name);
-
-
+        int res_clenup_db = cleanup_db(db_name);
 
         fflush(stdout);
 
         if (res_clenup_db == 1)
         {
-           if (gov_shm_pointer)  memset(&(((gov_config_struct*)gov_shm_pointer)->db_vars[db_id]), '\0', sizeof(gov_db_struct));
+           if (sedna_gov_shm_ptr)  
+               memset(&(GOV_CONFIG_GLOBAL_PTR->db_vars[db_id]), '\0', sizeof(gov_db_struct));
  
            fprintf(res_os, "The database '%s' has been dropped\n", db_name);
         }
         else
-           throw USER_EXCEPTION2(SE4308, "Database files sharing violation");
-
-	close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+            throw USER_EXCEPTION2(SE4308, "Database files sharing violation");
 
         uSocketCleanup(__sys_call_error);
+        close_gov_shm();
 
-  } catch (SednaUserException &e) { 
-      fprintf(stderr, "%s\n", e.what());
-      if (pping_inited) ppc->shutdown();
-      uSocketCleanup(__sys_call_error);
-      close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-      return 1;
-  } catch (SednaException &e) {
-      sedna_soft_fault(e, EL_DDB);
-  } catch (ANY_SE_EXCEPTION){
-      sedna_soft_fault(EL_DDB);
-  }
-
-
+    } catch (SednaUserException &e) { 
+        fprintf(stderr, "%s\n", e.what());
+        if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
+        uSocketCleanup(__sys_call_error);
+        close_gov_shm();
+        return 1;
+    } catch (SednaException &e) {
+        sedna_soft_fault(e, EL_DDB);
+    } catch (ANY_SE_EXCEPTION){
+        sedna_soft_fault(EL_DDB);
+    }
 }

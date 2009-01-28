@@ -40,7 +40,7 @@ private:
     /// Timeout counter and flags. 
     /// Timer is implemented above pping since there is no portable way to implement good timer on POSIX systems.
     int counter;
-    int timeout;
+    volatile int timeout;
     volatile bool  reset_flag;
     volatile bool* signaled_flag;
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////

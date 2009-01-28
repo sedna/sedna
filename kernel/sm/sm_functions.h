@@ -26,6 +26,8 @@ void shutdown_chekpoint_thread();
 void execute_recovery_by_logical_log_process();
 
 void send_stop_sm_msg();
+bool is_database_running(int database_id);
+
 
 void InitGiantLock();
 void DestroyGiantLock();

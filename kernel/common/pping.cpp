@@ -12,6 +12,7 @@
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #include "common/st/stacktrace.h"
 #include "common/u/uhdd.h"
+#include "common/ipc_ops.h"
 #ifdef _WIN32
 #include <dbghelp.h>
 #include <shellapi.h>
@@ -57,6 +58,15 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
                 sedna_soft_fault("SEDNA GOVERNOR is down", ppc->component);
             }
         }
+
+        /* se_stop -hard has been called? */
+        if(ppc->signaled_flag    != NULL  && 
+           GOV_HEADER_GLOBAL_PTR != NULL  && 
+           GOV_HEADER_GLOBAL_PTR -> is_server_stop == SE_STOP_HARD)
+        {
+            *(ppc->signaled_flag) = true;
+        }
+        
         UUnnamedSemaphoreDownTimeout(&(ppc->sem), 1000, NULL);
 
         if(ppc->timeout)

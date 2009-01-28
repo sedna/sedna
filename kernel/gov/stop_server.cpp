@@ -14,33 +14,31 @@
 #include "common/u/uprocess.h"
 #include "common/config.h"
 
-using namespace std;
+static const size_t narg = 4;
+static int ss_help;
+static int ss_version;
+static int ss_hard;
 
-
-const size_t narg = 3;
-int ss_help;
-int ss_version;
-
-arg_rec ss_argtable[] =
+static arg_rec ss_argtable[] =
 {
-{"--help",            NULL,       arg_lit,   &ss_help,                 "0",    "\t\t   display this help and exit"},
-{"-help",             NULL,       arg_lit,   &ss_help,                 "0",    "\t\t\t   display this help and exit"},
-{"-version",          NULL,       arg_lit,   &ss_version,              "0",    "\t\t   display product version and exit"}
+  {"--help",            NULL,       arg_lit,   &ss_help,                 "0",    "\t\t   display this help and exit"},
+  {"-help",             NULL,       arg_lit,   &ss_help,                 "0",    "\t\t\t   display this help and exit"},
+  {"-version",          NULL,       arg_lit,   &ss_version,              "0",    "\t\t   display product version and exit"},
+  {"-hard",             NULL,       arg_lit,   &ss_hard,                 "0",    "\t\t\t   attempt to roll back transactions immediately"}
 };
 
 
-void print_ss_usage()
+static void print_ss_usage()
 {
-   throw USER_SOFT_EXCEPTION((string("Usage: se_stop [options]\n\n") +
-                              string("options:\n") + string(arg_glossary(ss_argtable, narg, "  ")) + string("\n")).c_str());
+   throw USER_SOFT_EXCEPTION((std::string("Usage: se_stop [options]\n\n") +
+                              std::string("options:\n") + 
+                              std::string(arg_glossary(ss_argtable, narg, "  ")) + 
+                              std::string("\n")).c_str());
 }
-
 
 int main(int argc, char** argv)
 {
     USOCKET sock;
-    UShMem gov_mem_dsc;
-    void* gov_shm_pointer = NULL;
     UPID gov_pid;
     int port_number;
     UPHANDLE proc_handle;
@@ -49,8 +47,9 @@ int main(int argc, char** argv)
 
     pping_client* ppc = NULL;
 
-    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
-      so we must block SIGPIPE with sigignore.*/
+    /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+     * so we must block SIGPIPE with sigignore.
+     */
 #if defined(SunOS)
     sigignore(SIGPIPE);
 #endif
@@ -75,16 +74,14 @@ int main(int argc, char** argv)
 		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
 
-        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+        open_gov_shm();
 
-        SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
-   
-
+        SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
-        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_STOP);
+        ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_STOP);
         ppc->startup(e);
 
         event_logger_init(EL_STOP, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -92,12 +89,22 @@ int main(int argc, char** argv)
         event_logger_release();
 
         ppc->shutdown();
-        delete ppc;
+        delete ppc; 
+        ppc = NULL;
 
-        ((gov_config_struct*)gov_shm_pointer)->gov_vars.is_server_stop = 1;
-        gov_pid = ((gov_config_struct*)gov_shm_pointer)->gov_vars.gov_pid;
-        port_number = ((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number;
+        /* Set flag in gov shared memory that we want to stop Sedna. 
+         * SE_STOP_SOFT (default) means that se_gov will wait for
+         *              transactions are completed.
+         * SE_STOP_HARD - se_gov attempts to immediately rollback all
+         *                running transactions.
+         */
 
+        GOV_HEADER_GLOBAL_PTR -> is_server_stop = (ss_hard ? 
+                                                   SE_STOP_HARD : 
+                                                   SE_STOP_SOFT);
+
+        gov_pid     = GOV_HEADER_GLOBAL_PTR -> gov_pid;
+        port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
         
         res = uOpenProcess(gov_pid, &proc_handle, __sys_call_error);
         if (res  != 0) goto end;
@@ -108,16 +115,15 @@ int main(int argc, char** argv)
         uCloseProcess(proc_handle, __sys_call_error);
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3000);
 
-
 end:
-        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+        close_gov_shm();
         fprintf(res_os, "SEDNA server has been shut down successfully\n");
         fflush(res_os);
         return 0;
 
       } catch(SednaUserException &e) {
           fprintf(stderr, "%s\n", e.what());
-          close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+          close_gov_shm();
           return -1;
       } catch(SednaException &e) {
           sedna_soft_fault(e, EL_STOP);

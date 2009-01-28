@@ -486,10 +486,7 @@ int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
     pping_client *ppc = NULL;
-    bool is_ppc_closed = true;
     char buf[1024];
-    UShMem gov_mem_dsc;
-
     SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup() 
 
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
@@ -527,15 +524,20 @@ int main(int argc, char **argv)
 
 		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
 		SetGlobalNames();
-        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+        
+        open_gov_shm();
 
-        db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+        db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
 
+        /* There is no such database? */
         if (db_id == -1)
-           /* There is no such database */
-           throw USER_EXCEPTION2(SE4200, db_name);
-
-        SEDNA_DATA = ((gov_header_struct *) gov_shm_pointer)->SEDNA_DATA;
+            throw USER_EXCEPTION2(SE4200, db_name);
+        
+        /* Check if databae is already running */
+        if(is_database_running(db_id))
+            throw USER_EXCEPTION2(SE4204, db_name);
+        
+        SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
 
         SetGlobalNamesDB(db_id);
 
@@ -552,9 +554,8 @@ int main(int argc, char **argv)
 
         InitGiantLock(); atexit(DestroyGiantLock);
         
-        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_SM);
+        ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_SM);
         ppc->startup(ppc_ex);
-        is_ppc_closed = false;
 
         elog(EL_LOG, ("Ping client has been started"));
 
@@ -577,7 +578,8 @@ int main(int argc, char **argv)
 #endif
         }
 
-        setup_sm_globals((gov_config_struct *)gov_shm_pointer);//setup default values from config file
+        /* Setup default values from config file */
+        setup_sm_globals(GOV_CONFIG_GLOBAL_PTR); 
 
         recover_database_by_physical_and_logical_log(db_id);
 
@@ -624,9 +626,11 @@ int main(int argc, char **argv)
             ppc->shutdown();
             delete ppc;
             ppc = NULL;
-            is_ppc_closed = true;
+
             if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) 
                 throw USER_EXCEPTION(SE3000);
+
+            close_gov_shm();
            
             fprintf(res_os, "SM has been started in the background mode\n");
             fflush(res_os);
@@ -634,7 +638,7 @@ int main(int argc, char **argv)
 
         } catch (SednaUserException &e) {
             fprintf(stderr, "%s\n", e.getMsg().c_str());
-            if (!is_ppc_closed) { if (ppc) ppc->shutdown();}
+            if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
             return 1;
         } catch (SednaException &e) {
             sedna_soft_fault(e, EL_SM);
@@ -737,9 +741,9 @@ int main(int argc, char **argv)
                 USemaphoreClose(started_sem, __sys_call_error);
             }
             ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
+
             register_sm_on_gov();
 
-      
             elog(EL_LOG, ("SM has been started"));
             fprintf(res_os, "\nSM has been started\n");
             fflush(res_os);
@@ -791,18 +795,17 @@ int main(int argc, char **argv)
    
         ppc->shutdown();
         delete ppc;
-        is_ppc_closed = true;
         ppc = NULL;
 
-        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+        close_gov_shm();
 
         return 0;
  
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
-        if (!is_ppc_closed) { if (ppc) ppc->shutdown();}
-        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+        if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
+        close_gov_shm();
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_SM);
@@ -903,7 +906,6 @@ void recover_database_by_physical_and_logical_log(int db_id)
        // Starting SSMMsg server
        d_printf1("Starting SSMMsg...");
 
-	   //((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound
        ssmmsg = new SSMMsg(SSMMsg::Server, 
                            sizeof (sm_msg_struct), 
                            CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),

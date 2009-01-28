@@ -143,7 +143,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
              		continue;
            		}
 
-       	   if (stop_serv == 1 )
+       	   if (stop_serv == 1)
        	   {
           		if (msg.instruction != STOP)
           		{

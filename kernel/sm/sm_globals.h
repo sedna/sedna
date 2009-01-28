@@ -23,8 +23,6 @@
   GLOBAL VARIABLES
 ********************************************************************************
 *******************************************************************************/
-extern void * gov_shm_pointer; // global gov shared memory pointer
-
 extern SSMMsg *ssmmsg;
 // number of memory buffers
 extern int bufs_num;
@@ -50,8 +48,6 @@ extern char db_files_path[];
 extern int sedna_db_version;
 
 void setup_sm_globals(gov_config_struct* cfg);
-
-void unregister_sm_on_gov();
 
 void register_sm_on_gov();
 

@@ -204,6 +204,9 @@ extern op_str_buf tmp_op_str_buf;
 /// Must be called after delete qep_tree in trn!
 #define RESET_CURRENT_PP         tr_globals::__current_physop = NULL;
 
+/// Check in executor if timer is fired
+#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
+
 /*******************************************************************************
  * SednaXQueryException
  ******************************************************************************/

@@ -50,15 +50,11 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
         case CTRL_LOGOFF_EVENT	: 
         case CTRL_SHUTDOWN_EVENT:
         { 
-             Beep(1000, 1000);
-
-             UShMem gov_mem_dsc;
-             void* gov_shm_pointer = NULL;
-
-             gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-             ((gov_config_struct*)gov_shm_pointer)->gov_vars.is_server_stop = 1;
-             send_command_to_gov(((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number, STOP);
-             close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+             // Beep(1000, 1000);
+             open_gov_shm();
+             GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
+             send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
+             close_gov_shm();
 
              return TRUE; 
         }
@@ -66,27 +62,22 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
     } 
 } 
 
-#else
-
+#else /* !_WIN32 */
 void GOVCtrlHandler(int signo)
 {
 
-  if (   signo == SIGINT 
-      || signo == SIGQUIT
-      || signo == SIGTERM) 
-   {
-       //beep();
-       UShMem gov_mem_dsc;
-       void* gov_shm_pointer = NULL;
-
-       gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-       ((gov_header_struct*)gov_shm_pointer)->is_server_stop = 1;
-       send_command_to_gov(((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number, STOP);
-       close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-   }
-
+    if (   signo == SIGINT 
+        || signo == SIGQUIT
+        || signo == SIGTERM) 
+     {
+         // beep();
+         open_gov_shm();
+         GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
+         send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
+         close_gov_shm();
+     }
 }
-#endif
+#endif /* _WIN32 */
 
 
 int main(int argc, char** argv)
@@ -99,8 +90,9 @@ int main(int argc, char** argv)
     int arg_scan_ret_val = 0;
     char buf[1024];
 
-    /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
-      so we must block SIGPIPE with sigignore.*/
+    /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+     * so we must block SIGPIPE with sigignore.
+     */
 #if defined(SunOS)
     sigignore(SIGPIPE);
 #endif
@@ -231,7 +223,7 @@ int main(int argc, char** argv)
 
 
       gov_table = new info_table();
-      gov_table->init(&cfg);
+      gov_table->init(&cfg);  
 
       if (event_logger_start_daemon(el_convert_log_level(cfg.gov_vars.el_level), SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
           throw SYSTEM_EXCEPTION("Failed to initialize event log");

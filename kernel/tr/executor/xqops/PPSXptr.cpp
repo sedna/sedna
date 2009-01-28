@@ -131,6 +131,7 @@ static inline void restore_serialized_xptr(const xptr &serialized, xptr &result)
 
 int PPSXptr::compare_less (xptr v1, xptr v2, const void *Udata)
 {
+    CHECK_TIMER_FLAG;
     xptr res1, res2;
     restore_serialized_xptr(v1, res1);
     restore_serialized_xptr(v2, res2);
@@ -144,6 +145,7 @@ int PPSXptr::get_size (tuple& t, const void * Udata)
 
 void PPSXptr::serialize (tuple& t, xptr v1, const void *Udata)
 {
+    CHECK_TIMER_FLAG;
     xptr node = t.cells[0].get_node();
     CHECKP(v1);
     VMM_SIGNAL_MODIFICATION(v1);
@@ -168,6 +170,7 @@ void PPSXptr::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const 
 
 void PPSXptr::deserialize (tuple& t, xptr& v1, const void *Udata)
 {
+    CHECK_TIMER_FLAG;
     CHECKP(v1);
 
 #ifdef ALIGNMENT_REQUIRED

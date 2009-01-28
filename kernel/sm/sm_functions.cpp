@@ -66,26 +66,23 @@ void characterData_sm_cfg(void *cnt, const XML_Char *s, int len)
 }
 
 
-void send_stop_sm_msg()
+void 
+send_stop_sm_msg()
 {
-    UShMem gov_mem_dsc;
-    void* gov_shm_pointer = NULL;
-    UPID sm_pid;
-    int i=0;
-    int port_number;
-    int command = STOP;
-    int database_id;
-    
-    gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-    port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
+    int port_number = GOV_HEADER_GLOBAL_PTR->lstnr_port_number;
+    int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
 
-    database_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
-
-    ((gov_config_struct*)gov_shm_pointer)->db_vars[database_id].is_stop = 1;
-    send_command_to_gov(((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number, command);
-    
-    close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+    GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].is_stop = 1;
+    send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
 }
+
+bool 
+is_database_running(int database_id)
+{
+    return GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].is_stop != -1;
+}
+
+
 
 static uMutexType giantLockMutex;
 static bool isGiantLockInitialized = false;

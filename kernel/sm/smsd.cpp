@@ -44,17 +44,13 @@ void print_smsd_usage()
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-    UShMem gov_mem_dsc;
-    void* gov_shm_pointer = NULL;
     UPID sm_pid;
-    int i=0;
     int port_number;
     bool exist_db = false;
     int command = STOP;
     int db_id;
     pping_client *ppc = NULL;
-    bool is_ppc_inited = false;
-
+    char errmsg[1000];
  
     try {
 
@@ -65,13 +61,11 @@ int main(int argc, char **argv)
 #endif
 
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
-        char errmsg[1000];
         arg_scan_ret_val = arg_scanargv(argc, argv, smsd_argtable, narg, NULL, errmsg, NULL);
         if (smsd_help == 1 ) print_smsd_usage();
         if (smsd_version == 1) { print_version_and_copyright("Sedna Shutdown Data Base Utility"); throw USER_SOFT_EXCEPTION(""); }
         if (arg_scan_ret_val == 0)
            throw USER_EXCEPTION2(SE4601, errmsg);
-
 
         if (string(db_name) == "???")
            throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
@@ -83,58 +77,52 @@ int main(int argc, char **argv)
         InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
 		SetGlobalNames();
 
-        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+        open_gov_shm();
 
-        SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
-   
-        db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
-
-        port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
+        SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
+        db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
+        port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
-
-        if (db_id == -1)//there is no such database
-        {
-           goto end;
-        }
+        /* There is no such database? */
+        if (db_id == -1) goto end;
 
         SetGlobalNamesDB(db_id);
 
-        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_SMSD);
+        ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_SMSD);
         ppc->startup(e);
-        is_ppc_inited = true;
 
         event_logger_init(EL_SMSD, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for SM shutdown issued"));
 
-        port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
+        port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
 
-        int res;
         UPHANDLE proc_handle;
 
-        sm_pid = ((gov_config_struct*)gov_shm_pointer)->db_vars[db_id].sm_pid;
+        sm_pid = GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].sm_pid;
 
-        res = uOpenProcess(sm_pid, &proc_handle, __sys_call_error);
-        if (res !=0) goto end;//sm already stopped
+        /* Sm is already closed? */
+        if( uOpenProcess(sm_pid, &proc_handle, __sys_call_error) != 0 ) 
+            goto end;
 
-        ((gov_config_struct*)gov_shm_pointer)->db_vars[db_id].is_stop = 1;
+        GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].is_stop = 1;
 
         send_command_to_gov(port_number, command);
         uWaitForProcess(sm_pid, proc_handle, __sys_call_error);
         uCloseProcess(proc_handle, __sys_call_error);
 
-
         elog(EL_LOG, ("Request for SM shutdown satisfied"));
         event_logger_release();
 
-end:
-        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-        if (is_ppc_inited)
+end:    if(ppc) 
         {
-           ppc->shutdown();
-           delete ppc;
+            ppc->shutdown();
+            delete ppc;
+            ppc = NULL;
         }
+
+        close_gov_shm();
 
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
@@ -144,12 +132,12 @@ end:
            fprintf(res_os, "There is no database with name '%s'\n", db_name);
 
         fflush(res_os);
-
         
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.what());
         event_logger_release();
-        if (ppc) ppc->shutdown();
+        if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
+        close_gov_shm();
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_SMSD);

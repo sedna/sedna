@@ -26,18 +26,15 @@ using namespace std;
 *******************************************************************************/
 
 
-void * gov_shm_pointer = NULL; // global gov shared memory pointer
 int db_id;
 int bufs_num;
 int max_trs_num;
 double upd_crt;
 int max_log_files;
 
-
 char db_name[SE_MAX_DB_NAME_LENGTH + 1];
 char db_files_path[U_MAX_PATH + 1];
 int sedna_db_version = 0;
-
 
 //gov_server is used for connecting to the governor for registr/unregister sm
 SSMMsg* gov_server;
@@ -74,49 +71,52 @@ void setup_sm_globals(gov_config_struct* cfg)
 /*****************************************************************************/
 /************* FUNCTIONS FOR REGISTERING/UNREGISTERING SM ON GOVERNOR ********/
 /*****************************************************************************/
-void register_sm_on_gov()
+void 
+register_sm_on_gov()
 {
-	USOCKET s;
-	int sm_id;
-	msg_struct msg;
-    int port_number;
-    UShMem gov_mem_dsc;
-    void* gov_shm_pointer = NULL;
+    USOCKET s;
+    int32_t sm_id;
+    msg_struct msg;
+    int32_t port_number;
 
-    gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-    port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
-    close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+    port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
 
 	sm_id = uGetCurrentProcessId(__sys_call_error);
 	
     s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
-    if(s == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
+    if(s == U_SOCKET_ERROR) 
+        throw USER_EXCEPTION (SE3001);
+
     if(uconnect_tcp(s, port_number, "127.0.0.1", __sys_call_error)!=0)
     {
     	ushutdown_close_socket(s, __sys_call_error);
-    	throw USER_EXCEPTION (SE3003);
+        throw USER_EXCEPTION (SE3003);
     }
                 
+    /*  Database as a string and session process id 
+     *  and string length as sizeof(int) bytes.
+     */
+    msg.length = strlen(db_name)+ 1 + 2 * sizeof(int32_t);
     msg.instruction = 122; 
-    msg.length = strlen(db_name)+5+4; //dbname as a string and session process id as 4 bytes
     msg.body[0] = 0;
     int2net_int(strlen(db_name), msg.body+1);    
     memmove(msg.body+5, db_name, strlen(db_name));
     
-    __int32 tmp = htonl(sm_id);
-    char *ptr = (char*) &(tmp);	
+    int32_t tmp = htonl(sm_id);
 
-    memmove(msg.body+5+strlen(db_name),ptr,4);
+    memmove(msg.body + 1 + sizeof(int32_t) + strlen(db_name), 
+            (void*) &tmp, 
+            sizeof(int32_t));
 
-    if(sp_send_msg(s,&msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
-
-    if(sp_recv_msg(s,&msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
-//    if(msg.instruction == 181)
-//    	d_printf2("se_sm: SM with %d registered on gov successfully\n", sm_id);
+    if(sp_send_msg(s,&msg) != 0) 
+        throw USER_EXCEPTION2(SE3006,usocket_error_translator());    /// Socket error
+    if(sp_recv_msg(s,&msg) != 0) 
+        throw USER_EXCEPTION2(SE3006,usocket_error_translator());    /// Socket error
     if(msg.instruction == 182)
-    	throw USER_EXCEPTION(SE3045);                            //failed to register
+    	throw USER_EXCEPTION(SE3045);                                /// Failed to register
 
-    if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
+    if(ushutdown_close_socket(s, __sys_call_error) !=0) 
+        throw USER_EXCEPTION (SE3011);
 }
 
 

@@ -18,53 +18,52 @@
 #include "expat/expat.h"
 
 
-static bool gov_shared_memory_opened = false;
 static std::string elem_content;
 char* SEDNA_DATA;
+void* sedna_gov_shm_ptr = NULL;
+static UShMem gov_shm_service_dsc;
 
 /******************************************************************************
-                    Governor shared memory opne/close
+                    Governor shared memory open/close
 ******************************************************************************/
 
 
-void* open_gov_shm(UShMem *gov_shm_service_dsc)
+void 
+open_gov_shm()
 {
-   void* gov_shared_mem = NULL;
-
-   if (0 != uOpenShMem(gov_shm_service_dsc,
-                       GOVERNOR_SHARED_MEMORY_NAME,
-                       sizeof(gov_config_struct),
-                       __sys_call_error
-                      ))
-      throw USER_EXCEPTION(SE4400);
-
-
-   gov_shared_mem = uAttachShMem(*gov_shm_service_dsc,
-                                 NULL,
-                                 sizeof(gov_config_struct),
-                                 __sys_call_error
-                                );
-
-   if (gov_shared_mem == NULL)
-      throw USER_EXCEPTION2(SE4023, "GOVERNOR_SHARED_MEMORY_NAME");
-
-   gov_shared_memory_opened = true;
-   return gov_shared_mem;
+    if ( NULL == sedna_gov_shm_ptr )
+    {
+        if (0 != uOpenShMem(&gov_shm_service_dsc,
+                            GOVERNOR_SHARED_MEMORY_NAME,
+                            sizeof(gov_config_struct),
+                            __sys_call_error))
+            throw USER_EXCEPTION2(SE4400, "Can't open governor shared memory");   /// SEDNA server is not running
+    
+    
+        sedna_gov_shm_ptr = uAttachShMem(gov_shm_service_dsc,
+                                   NULL,
+                                   sizeof(gov_config_struct),
+                                   __sys_call_error);
+    
+        if (NULL == sedna_gov_shm_ptr)
+            throw USER_EXCEPTION2(SE4023, "Governor shared memory");   /// Can't attach to shared memory
+    }
 }
 
 
-int close_gov_shm(UShMem gov_shm_service_dsc, void* gov_shared_mem)
+int 
+close_gov_shm()
 {
-  if (gov_shared_memory_opened)
-  {
-     if ( 0 != uDettachShMem(gov_shm_service_dsc, gov_shared_mem, __sys_call_error))
-       return -1;
+    if ( NULL != sedna_gov_shm_ptr )
+    {
+       if ( 0 != uDettachShMem(gov_shm_service_dsc, sedna_gov_shm_ptr, __sys_call_error))
+         return -1;
 
-     if ( 0 != uCloseShMem(gov_shm_service_dsc, __sys_call_error))
-       return -1;
-  }
+       if ( 0 != uCloseShMem(gov_shm_service_dsc, __sys_call_error))
+         return -1;
+    }
 
-  return 0;
+    return 0;
 }
 
 
@@ -145,7 +144,7 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
 {
    strcpy(cfg->db_vars[db_id].db_name, db_name);
    cfg->db_vars[db_id].is_stop = -1;
-   cfg->db_vars[db_id].sm_pid = 0;
+   cfg->db_vars[db_id].sm_pid = -1;
    cfg->db_vars[db_id].bufs_num = bufs_num;
    cfg->db_vars[db_id].max_trs_num = max_trs_num;
    cfg->db_vars[db_id].upd_crt = upd_crt;
@@ -233,7 +232,7 @@ void get_sednaconf_values(gov_header_struct* cfg)
     if (proc_buf[0] == '\0') 
         throw USER_EXCEPTION(SE4081);
   
-    cfg->is_server_stop = 0;
+    cfg->is_server_stop = SE_STOP_NO;
     cfg->lstnr_port_number = 5050;
     cfg->ping_port_number = 5151;
     cfg->os_primitives_id_min_bound = 1500;

@@ -22,14 +22,31 @@
 %to avoid processing \TocAt by latex
 \newcommand{\TocAt}[6]{}
 
-
-\usepackage[dvips]{epsfig}
-
 \usepackage{multirow}
 
 \title{Sedna Client/Server Protocol}
 \date{}
 %\author{Maria Rekouts}
+
+\usepackage{ifthen}    % package for conditionals in TeX
+% Switch for PdfLaTeX or LaTeX
+\ifx\pdfoutput\undefined %%%% LaTeX %%%
+  \usepackage[dvips]{epsfig}
+\else %%% PdfLaTeX %%%
+  \usepackage[pdftex]{graphicx}      %%% graphics for pdftex
+  \usepackage[colorlinks=true, linkcolor=blue, 
+              citecolor=blue, urlcolor=blue,
+              pdftex,                %%% hyper-references for pdflatex
+              bookmarks=true,        %%% generate bookmarks ...
+              bookmarksnumbered=true,%%% ... with numbers
+  ]{hyperref}
+  \pdfadjustspacing=1    %%% force LaTeX-like character spacing
+\fi %%% End of condition %%%
+
+\hypersetup{
+pdfauthor   = {Sedna Team},
+pdftitle    = {Sedna Client/Server Protocol}
+}
 
 \begin{document}
 \maketitle

@@ -10,7 +10,6 @@
 #include "tr/client_core.h"
 #include "common/SSMMsg.h"
 
-void *gov_shm_pointer = NULL;
 // variables for parsing command line 
 int tr_s_help = 0;
 int tr_l_help = 0;
@@ -63,10 +62,6 @@ arg_rec tr_argtable[] =
 client_core* client = NULL;
 transaction_id trid = -1;
 session_id sid = -1;
-bool is_init_gov_shm = false;
-
-UShMem gov_shm_dsc;
-void* gov_shared_mem;
 
 persistent_db_data* entry_point;
 msg_struct sp_msg;
