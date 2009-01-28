@@ -31,7 +31,6 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
     memset(global_memory, '\0', PAGE_SIZE);
     *(t_layer*)global_memory = INVALID_LAYER;
 
-
     strcpy(buf, SEDNA_DATA);
 
 #ifdef _WIN32

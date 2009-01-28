@@ -402,11 +402,11 @@ void release_transaction_id(SSMMsg* sm_server)
 
 bool is_stop_session()
 {
-  if (!is_init_gov_shm) return true;
+  if (NULL == sedna_gov_shm_ptr) return true;
 
   if (sid < 0 || sid >= MAX_SESSIONS_NUMBER) return true;
 
-  return  (((gov_config_struct*)gov_shm_pointer)->sess_vars[sid].stop == 1) ? true : false;
+  return  (GOV_CONFIG_GLOBAL_PTR -> sess_vars[sid].stop == 1) ? true : false;
 }
 
 // switches transactions (from the next one) to ro-mode

@@ -270,6 +270,8 @@ static char bufB[100000];*/
 
 int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 {
+	CHECK_TIMER_FLAG;
+	
 	int s1=get_size_ser(v1);
 	int s2=get_size_ser(v2);
 	/*copy_data_ser_to_buffer(get_ptr_ser(v1,s1),s1);
@@ -360,6 +362,8 @@ int PPDDO::get_size (tuple& t, const void * Udata)
 }
 void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 {
+	CHECK_TIMER_FLAG;
+	
 	xptr node=t.cells[0].get_node();
 	CHECKP(node);
 	shft sz=((n_dsc*)XADDR(node))->nid.size;
@@ -419,6 +423,8 @@ void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void 
 }
 void PPDDO::deserialize (tuple& t,xptr& v1, const void * Udata)
 {
+	CHECK_TIMER_FLAG;
+	
 	if (GET_FREE_SPACE(v1)<sizeof(xptr))
 	{
 		copy_to_buffer(v1,GET_FREE_SPACE(v1));

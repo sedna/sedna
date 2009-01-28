@@ -1218,7 +1218,7 @@ sedna-err:SE4203
    Can't send message via SSMMsg
 sedna-err:SE4204
 
-   Can't register SM on Governor
+   Database with the same name is already running
 sedna-err:SE4205
 
    Failed to run SM in the background mode (use '-background-mode off' for detailed diagnostics)
@@ -1697,7 +1697,7 @@ sedna-err:SE2040
    Too many xhilds by schema.
 sedna-err:SE4620
 
-   Transaction timeout has been expired.
+   Transaction has been rollbacked due to timeout or hard stop request.
 
 sedna-err:SE4801
 

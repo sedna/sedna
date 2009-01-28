@@ -320,14 +320,14 @@ struct sm_msg_struct
     } data;
 };
 
-/// the following parameters are related to kernel<-->transaction protocol
+
+/* The following parameters are related to kernel<-->transaction protocol */
 #define  ERR_SYMBOL     ((char)254)
 #define  DELIM_SYMBOL   ((char)250)
 #define  EOD_SYMBOL     ((char)253)
 #define  EOALL_SYMBOL   ((char)252) 
 
-/// command definitions for governor
-
+/* Command definitions for governor */
 enum commands 
 {
     CREATE_NEW_SESSION     = 110, 
@@ -339,7 +339,15 @@ enum commands
     IS_RUN_SM              = 888
 };
 
-/// the following definitions are related to gov<-->rc protocol
+/* Defines variouse kinds of se_stop command */
+enum stoptype 
+{
+    SE_STOP_NO   = 0, /// sedna operates
+    SE_STOP_SOFT = 1, /// wait for transactions are completed
+    SE_STOP_HARD = 2  /// attempts to immediately rollback all running transactions.
+};
+
+/* The following definitions are related to gov<-->rc protocol */
 #define  SE_RC_VALID     ((char)1)
 #define  SE_RC_INVALID   ((char)0)
 #define  SE_RC_OVERFLOW  ((char)2)

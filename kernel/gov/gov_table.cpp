@@ -232,7 +232,6 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
      return -4;
 
 
-
   for (i=0; i< MAX_DBS_NUMBER; i++)
   {
      if (strcmp(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name, db_name.c_str()) == 0)
@@ -276,7 +275,7 @@ void info_table::erase_database(const database_id& db_id)
   {
      if (strcmp(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name, db_id.c_str()) == 0)
      {
-        ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = 0;
+        ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = -1;
         ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = -1;
         break;
      }   
@@ -428,7 +427,7 @@ void info_table::stop_databases()
 
 int info_table::check_stop_gov()
 {
-  if (((gov_config_struct*)gov_shared_mem)->gov_vars.is_server_stop == 1)
+  if (((gov_config_struct*)gov_shared_mem)->gov_vars.is_server_stop != SE_STOP_NO)
   {
      stop_sessions();
      stop_databases();

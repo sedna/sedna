@@ -170,6 +170,8 @@ index_cell* create_index (PathExpr *object_path,
 					// конструировать ключь надо в стеке (то есть без new), тогда деструктор 
 					// будет вызываться автоматически
 
+					CHECK_TIMER_FLAG;
+                    
                     try {
 
 						//VIII. Evaluate key: (cast typed-value(node_key) as key_type)->bt_key
@@ -550,6 +552,8 @@ static inline xptr idx_get_ptr_to_complete_serialized_data(xptr v, /* out */ cha
 
 int idx_compare_less(xptr v1, xptr v2, const void * Udata)
 {
+	CHECK_TIMER_FLAG;
+	
 	idx_user_data* ud = (idx_user_data*)Udata;
     xmlscm_type type = ud->t;
 	
@@ -600,6 +604,8 @@ int idx_get_size (tuple& t, const void * Udata)
 
 void idx_serialize (tuple& t,xptr v1, const void * Udata)
 {
+    CHECK_TIMER_FLAG;
+
     xmlscm_type type=((idx_user_data*)Udata)->t;
     shft sz=(shft)xmlscm_type_size(type);
     if (!sz)
@@ -685,6 +691,8 @@ void idx_serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * U
 
 void idx_deserialize (tuple &t, xptr& v1, const void * Udata)
 {
+    CHECK_TIMER_FLAG;
+    
     idx_user_data* ud = (idx_user_data*)Udata;   
     idx_buffer* buffer = ud -> buf;		
     CHECKP(v1);		

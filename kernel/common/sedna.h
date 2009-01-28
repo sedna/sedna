@@ -19,10 +19,16 @@
 
 
 /*
- * SEDNA_DATA contains path to Sedna data directory
+ * SEDNA_DATA contains path to the Sedna's data directory
  */
 #define SEDNA_DATA_VAR_SIZE								1024
 SE_EXTERN_C char* SEDNA_DATA;
+
+/*
+ * Pointer to the governor's shared memory
+ */
+SE_EXTERN_C void* sedna_gov_shm_ptr;
+
 
 SE_EXTERN_C 
 int set_sedna_data(char*, sys_call_error_fun fun);

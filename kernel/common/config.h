@@ -10,9 +10,6 @@
 #include "common/base.h"
 #include "common/config.h"
 
-void*  open_gov_shm  (UShMem *gov_shm_service_dsc);
-int    close_gov_shm (UShMem gov_shm_service_dsc, void* gov_shared_mem);
-
 struct gov_sess_struct
 {
     int idfree; //0->not used 1->session in progress 2->session finished
@@ -33,8 +30,8 @@ struct gov_db_struct
 
 struct gov_header_struct
 {
-    int is_server_stop;      /// 0->indicates that sedna operates; 
-                             /// 1->indicates that sedna wants to stop
+    volatile int is_server_stop;      /// possible values are defined by 'enum stoptype'
+                                      /// 1->indicates that sedna wants to stop
     UPID gov_pid;
     char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
     int os_primitives_id_min_bound;
@@ -52,12 +49,9 @@ struct gov_config_struct
     gov_sess_struct sess_vars[MAX_SESSIONS_NUMBER];
 };
 
-/*
-#define GOV_SHM_BEGIN ((char*)gov_shared_mem)
-#define GOV_SHM_SIZE (sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct) + MAX_SESSIONS_NUMBER*sizeof(gov_sess_struct))
-#define GOV_SHM_HEADER_BEGIN_PTR (GOV_SHM_BEGIN)
-#define GOV_SHM_DBS_BEGIN_PTR  (GOV_SHM_BEGIN + sizeof(gov_header_struct))
-#define GOV_SHM_SESS_BEGIN_PTR (GOV_SHM_BEGIN + sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct))
-*/
+
+#define GOV_HEADER_STRUCT_PTR(ptr)    (& (((gov_config_struct*)ptr)->gov_vars) )
+#define GOV_CONFIG_STRUCT_PTR(ptr)    ( (gov_config_struct*)ptr ) 
+
 
 #endif /* _CONFIG_H_ */

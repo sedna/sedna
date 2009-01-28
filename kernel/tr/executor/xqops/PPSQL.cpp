@@ -443,13 +443,13 @@ void PPFnSQLExecute::next(tuple &t)
 		arr[0].op->next(tmp);
 
 		if (tmp.is_eos())
-			throw XQUERY_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION2(XPTY0004, "Empty $connection argument of sql:execute");
 
 		handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 		arr[0].op->next(tmp);
 		if (!tmp.is_eos())
-			throw XQUERY_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION2(XPTY0004, "Singleton sequence is expected in $connection argument of sql:execute");
 
 		if (handle == NULL)
 			throw XQUERY_EXCEPTION(SE2101);
@@ -589,13 +589,13 @@ void PPFnSQLPrepare::next(tuple &t)
 		connection.op->next(tmp);
 
 		if (tmp.is_eos())
-			throw XQUERY_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION2(XPTY0004, "Empty $connection argument of sql:prepare");
 
 		handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 		connection.op->next(tmp);
 		if (!tmp.is_eos())
-			throw XQUERY_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION2(XPTY0004, "Singleton sequence is expected in $connection argument of sql:prepare");
 
 		if (handle == NULL)
 			throw XQUERY_EXCEPTION(SE2101);
@@ -680,14 +680,14 @@ void PPFnSQLClose::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw XQUERY_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION2(XPTY0004, "Empty $connection argument of sql:close");
 
 	handle_id = tmp.cells[0].get_xs_integer();
 	handle = sql_handle_manager->get_handle(handle_id);
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw XQUERY_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION2(XPTY0004, "Singleton sequence is expected in $connection argument of sql:close");
 
 	if (handle == NULL)
 		throw XQUERY_EXCEPTION(SE2101);
@@ -753,13 +753,13 @@ void PPFnSQLCommit::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw XQUERY_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION2(XPTY0004, "Empty $connection argument of sql:commit");
 
 	handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw XQUERY_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION2(XPTY0004, "Singleton sequence is expected in $connection argument of sql:commit");
 
 	if (handle == NULL)
 		throw XQUERY_EXCEPTION(SE2101);
@@ -823,13 +823,13 @@ void PPFnSQLRollback::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw XQUERY_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION2(XPTY0004, "Empty $connection argument of sql:rollback");
 
 	handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw XQUERY_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION2(XPTY0004, "Singleton sequence is expected in $connection argument of sql:rollback");
 
 	if (handle == NULL)
 		throw XQUERY_EXCEPTION(SE2101);

@@ -103,6 +103,8 @@ int TRmain(int argc, char *argv[])
     int determine_vmm_region = 0;
     bool sedna_server_is_running = false;
     int os_primitives_id_min_bound;
+    SednaUserException e = USER_EXCEPTION(SE4400);
+
     try
     {
         if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buf, 1024, NULL) != 0)
@@ -189,10 +191,10 @@ int TRmain(int argc, char *argv[])
         InitGlobalNames(client->get_os_primitives_id_min_bound(), INT_MAX);
 		SetGlobalNames();
 
-        gov_shm_pointer = open_gov_shm(&gov_shm_dsc);
-        is_init_gov_shm = true;
-        socket_port = ((gov_config_struct *) gov_shm_pointer)->gov_vars.lstnr_port_number;
-        SEDNA_DATA  = ((gov_config_struct *) gov_shm_pointer)->gov_vars.SEDNA_DATA;
+        open_gov_shm();
+
+        socket_port = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+        SEDNA_DATA  = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
 
 #ifdef SE_MEMORY_TRACK
         strcpy(MT_SEDNA_DATA, SEDNA_DATA);
@@ -202,7 +204,7 @@ int TRmain(int argc, char *argv[])
             throw USER_EXCEPTION2(SE4609, db_name);
 
 
-        db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+        db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
 
         if (db_id == -1)//there is no such database
            throw USER_EXCEPTION2(SE4200, db_name);
@@ -212,16 +214,15 @@ int TRmain(int argc, char *argv[])
         //register session on governer
         register_session_on_gov();
 
-        SednaUserException e = USER_EXCEPTION(SE4400);
-        tr_globals::ppc = se_new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN, &tr_globals::is_timer_fired);
+        tr_globals::ppc = se_new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_TRN, &tr_globals::is_timer_fired);
         tr_globals::ppc->startup(e);
 
         // sid is known
         event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         event_logger_set_sid(sid);
 
-        client->write_user_query_to_log();                                                           /// it works only for command line client
-        client->set_keep_alive_timeout(((gov_config_struct*)gov_shm_pointer)->gov_vars.ka_timeout);  /// it works only for socket client
+        client->write_user_query_to_log();                                    /// it works only for command line client
+        client->set_keep_alive_timeout(GOV_HEADER_GLOBAL_PTR -> ka_timeout);  /// it works only for socket client
 
 #ifdef _WIN32
         BOOL fSuccess;
@@ -567,7 +568,7 @@ int TRmain(int argc, char *argv[])
         set_session_finished();
         event_logger_set_sid(-1);
 
-        close_gov_shm(gov_shm_dsc, gov_shm_pointer);
+        close_gov_shm();
 
         uSocketCleanup(__sys_call_error);
 
@@ -598,10 +599,14 @@ int TRmain(int argc, char *argv[])
             d_printf1("Connection with client has been broken\n");
         }
         event_logger_release();
-        if (tr_globals::ppc) tr_globals::ppc->shutdown();
+        if (tr_globals::ppc) 
+        { 
+            tr_globals::ppc->shutdown();
+            delete tr_globals::ppc;
+            tr_globals::ppc = NULL;
+        }
         set_session_finished();
-        if (is_init_gov_shm)
-            close_gov_shm(gov_shm_dsc, gov_shm_pointer);
+        close_gov_shm();
         uSocketCleanup(__sys_call_error);
         ret_code = 1;
     }

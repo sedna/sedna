@@ -20,9 +20,7 @@
 
 %to avoid processing \TocAt by latex
 \newcommand{\TocAt}[6]{}
-
-% Images in eps.
-\usepackage[dvips]{epsfig}
+\newcommand{\comments}[1]{}
 
 % Allows inserting tables
 \usepackage{multirow}
@@ -30,6 +28,28 @@
 
 \title{Sedna Programmer's Guide}
 \date{}
+
+\comments{
+\usepackage{ifthen}    % package for conditionals in TeX
+% Switch for PdfLaTeX or LaTeX
+\ifx\pdfoutput\undefined %%%% LaTeX %%%
+  \usepackage[dvips]{epsfig}
+\else %%% PdfLaTeX %%%
+  \usepackage[pdftex]{graphicx}      %%% graphics for pdftex
+  \usepackage[colorlinks=true, linkcolor=blue, 
+              citecolor=blue, urlcolor=blue,
+              pdftex,                %%% hyper-references for pdflatex
+              bookmarks=true,        %%% generate bookmarks ...
+              bookmarksnumbered=true,%%% ... with numbers
+  ]{hyperref}
+  \pdfadjustspacing=1    %%% force LaTeX-like character spacing
+\fi %%% End of condition %%%
+
+\hypersetup{
+pdfauthor   = {Sedna Team},
+pdftitle    = {Sedna Programmer's Guide}
+}
+}
 
 \begin{document}
 \sloppy

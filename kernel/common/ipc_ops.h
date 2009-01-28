@@ -11,22 +11,40 @@
 #include "common/u/ushm.h"
 #include "common/config.h"
 
-void*  open_gov_shm(UShMem *gov_shm_service_dsc);
-int    close_gov_shm(UShMem gov_shm_service_dsc, void* gov_shared_mem);
+void   
+open_gov_shm  ();
 
-void   send_command_to_gov(int port_number, int cmd);
-int    get_db_id_by_name(gov_config_struct* cfg, const char* db_name);
-int    get_next_free_db_id(gov_config_struct* cfg);
-void   erase_database_cell_in_gov_shm(int db_id, gov_config_struct* cfg);
-void   fill_database_cell_in_gov_shm(gov_config_struct* cfg,
-                                     int db_id,
-                                     const char* db_name, 
-                                     int bufs_num,
-                                     int max_trs_num,
-                                     double upd_crt,
-				     int max_log_files);
+int    
+close_gov_shm ();
 
-void   get_sednaconf_values(gov_header_struct* cfg);
+void   
+send_command_to_gov(int port_number, int cmd);
+
+int    
+get_db_id_by_name(gov_config_struct* cfg, const char* db_name);
+
+int    
+get_next_free_db_id(gov_config_struct* cfg);
+
+void   
+erase_database_cell_in_gov_shm(int db_id, gov_config_struct* cfg);
+
+void   
+fill_database_cell_in_gov_shm(gov_config_struct* cfg,
+                              int db_id,
+                              const char* db_name, 
+                              int bufs_num,
+                              int max_trs_num,
+                              double upd_crt,
+                              int max_log_files);
+
+void   
+get_sednaconf_values(gov_header_struct* cfg);
+
+
+/* Typed pointers to the sedna_gov_shm_ptr */
+#define GOV_HEADER_GLOBAL_PTR    ( GOV_HEADER_STRUCT_PTR(sedna_gov_shm_ptr) )
+#define GOV_CONFIG_GLOBAL_PTR    ( GOV_CONFIG_STRUCT_PTR(sedna_gov_shm_ptr) )
 
 #endif /* _IPC_OPS_H_ */
 

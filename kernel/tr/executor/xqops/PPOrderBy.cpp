@@ -343,6 +343,8 @@ static inline int compare_doubles(double value1, double value2, orb_empty_status
 //////////////////////////////////////////////////////////////
 int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 {
+    CHECK_TIMER_FLAG
+
     if(v1 == v2) return 0;
 
 	orb_user_data* ud = (orb_user_data*)Udata;
@@ -536,6 +538,8 @@ int PPOrderBy::get_size (tuple& t, const void * Udata)
 
 void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 {
+    CHECK_TIMER_FLAG
+    
     orb_user_data* ud = (orb_user_data*)Udata;
     __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());

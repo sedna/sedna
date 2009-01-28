@@ -129,14 +129,11 @@ void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
 void set_session_finished()
 {
   d_printf2("sid=%d\n", sid);
-  if (!is_init_gov_shm) return;
+  if (NULL == sedna_gov_shm_ptr) return;
 
   if (sid < 0 || sid >= MAX_SESSIONS_NUMBER) return;
 
-  try{
-
-      ((gov_config_struct*)gov_shm_pointer)->sess_vars[sid].idfree = 2;
-  } catch(ANY_SE_EXCEPTION){}
+  GOV_CONFIG_GLOBAL_PTR -> sess_vars[sid].idfree = 2;
 }
 
 

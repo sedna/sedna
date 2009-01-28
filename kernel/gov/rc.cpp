@@ -47,8 +47,9 @@ static void print_rc_usage()
 }
 
 
-/// Parses message received from the governor. 
-/// For details see comment in the listener.cpp.
+/* Parses message received from the governor. 
+ * For details see comment in the listener.cpp.
+ */
 static void parse_and_print_rc(const msg_struct* msg, bool sm_list)
 {
     /// Anyway at this moment we know that gov is running.
@@ -115,8 +116,6 @@ int main(int argc, char **argv)
     USOCKET sock;
     int res;
     msg_struct msg;
-    UShMem gov_mem_dsc;
-    void* gov_shm_pointer = NULL;
     SednaUserSoftException ex = USER_SOFT_EXCEPTION("There is no any sign of the SEDNA server running in the system");
     char errmsg[1000];
     gov_header_struct cfg;
@@ -137,16 +136,18 @@ int main(int argc, char **argv)
 
         if (res == 0) throw USER_EXCEPTION2(SE4601, errmsg);
 
-        /// Parse config file to get id_min_bound value
+        /* Parse config file to get id_min_bound value */
         get_sednaconf_values(&cfg);
      
-		/// Initialize global names with given id_min_bound number
+		/* Initialize global names with given id_min_bound number */
         InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
 
-        /// Connect to the governor shared memory to get port number, ping port and SEDNA_DATA
-        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-        SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
+        /* Connect to the governor shared memory to 
+         * get port number, ping port and SEDNA_DATA 
+         */
+        open_gov_shm();
+        SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
 
 
 #ifdef REQUIRE_ROOT
@@ -155,15 +156,14 @@ int main(int argc, char **argv)
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
-        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_RC);
+        ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_RC);
         ppc->startup(ex);
 
         event_logger_init(EL_RC, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for runtime configuration issued"));
 
-        port_number = ((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number;
-        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-
+        port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+        close_gov_shm();
 
         sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
         if (uconnect_tcp(sock, port_number, "127.0.0.1", __sys_call_error) == 0)
@@ -194,18 +194,18 @@ int main(int argc, char **argv)
         
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) 
            throw SYSTEM_EXCEPTION("Failed to clean up socket library");
-        
 
     } catch (SednaUserSoftException &e) {
         fprintf(stderr, "%s\n", e.what());
         event_logger_release();
-        if (ppc) ppc->shutdown();
-        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-        return 0;        
+        if (ppc)  { ppc->shutdown(); delete ppc; ppc = NULL; }
+        close_gov_shm();
+        return 0;
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.what());
         event_logger_release();
-        if (ppc) ppc->shutdown();
+        if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
+        close_gov_shm();
         return 1;
     } catch (SednaException &e) { 
         sedna_soft_fault(e, EL_RC);

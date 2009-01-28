@@ -17,7 +17,6 @@
 
 #define TR_ARG_MAX_LENGTH       511
 
-extern void *gov_shm_pointer;
 
 extern int tr_s_help;
 extern int tr_l_help;
@@ -51,11 +50,6 @@ extern arg_rec tr_argtable[];
 extern client_core* client;
 extern transaction_id trid;
 extern session_id sid;
-
-extern bool is_init_gov_shm;
-
-extern UShMem gov_shm_dsc;
-extern void* gov_shared_mem;
 
 extern persistent_db_data* entry_point;
 
