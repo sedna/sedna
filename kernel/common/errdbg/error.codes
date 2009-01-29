@@ -1373,7 +1373,7 @@ sedna-err:SE4610
    There is no transaction to commit.
 sedna-err:SE4611
 
-   There is no transaction to rollback.
+   There is no transaction to roll back.
 sedna-err:SE4612
 
    Commit current transaction before beginning a new one.
@@ -1697,7 +1697,7 @@ sedna-err:SE2040
    Too many xhilds by schema.
 sedna-err:SE4620
 
-   Transaction has been rollbacked due to timeout or hard stop request.
+   Transaction has been rolled back due to timeout or hard stop request.
 
 sedna-err:SE4801
 
