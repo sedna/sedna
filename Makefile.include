@@ -73,7 +73,7 @@ endif
 # options: use libedit in term - 1
 #          disable libedit     - 0
 ifndef ENABLE_LIBEDIT
-ENABLE_LIBEDIT = 0
+ENABLE_LIBEDIT = 1
 endif
 
 # options: perform libaries cleanup on make clean - 1
@@ -135,6 +135,8 @@ LIB_EXT = .lib
 EXE_EXT = .exe
 DL_EXT  = .dll
 DEF_EXT = .def
+
+ENABLE_LIBEDIT = 0
 
 # Starting in Visual C++ 2005, LIBCP.LIB and LIBCPD.LIB (via the old /ML and /MLd options) have been removed. 
 # Use LIBCPMT.LIB and LIBCPMTD.LIB instead via the /MT and /MTd options.
@@ -295,7 +297,6 @@ LSLIBS   = -lpccts -lexpat -lchicken -lpcre -fexceptions
 CFLAGS_SL = -fPIC -DSE_NO_EVENT_LOG
 
 ifeq ("$(SUB_PLATFORM)","Linux")
-ENABLE_LIBEDIT = 1
 CPPFLAGS += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS   += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 LSLIBS   += -lnsl -lrt -pthread -ldl
@@ -308,6 +309,7 @@ CFLAGS   += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_POSIX_PTHREAD_SEMANTIC
 endif
 
 ifeq ("$(SUB_PLATFORM)","FreeBSD")
+ENABLE_LIBEDIT = 0
 LSLIBS  += -lthr
 CFLAGS_SL += -DPIC
 endif
