@@ -8,11 +8,11 @@
 
 #include "common/pping.h"
 #include "common/errdbg/d_printf.h"
+#include "common/ipc_ops.h"
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #include "common/st/stacktrace.h"
 #include "common/u/uhdd.h"
-#include "common/ipc_ops.h"
 #ifdef _WIN32
 #include <dbghelp.h>
 #include <shellapi.h>
