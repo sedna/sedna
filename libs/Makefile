@@ -336,7 +336,7 @@ libedit/Makefile: libedit/configure
 	cd libedit ; ./configure --enable-static --prefix=`pwd`
 
 libedit/configure:
-	tar -zxf libedit-*.tar.gz
+	gzip -dc libedit-*.tar.gz | tar xvf -
 	mv `find libedit-* -type d | head -n 1` libedit
 
 clean_libedit:
