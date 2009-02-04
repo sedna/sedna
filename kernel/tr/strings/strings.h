@@ -138,6 +138,8 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 		pstr_long_iterator __end1(__data, __len); \
 		func params; \
 		break; }\
+	default: \
+		throw USER_EXCEPTION2(SE1003, "Non string type in string iterator call template");\
 	}
 
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(func, tcell_ptr, p1)             STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1))
@@ -192,7 +194,11 @@ protected:
 			}
 			else
 			{
-				tuple_cell tc = tuple_cell::atomic_estr(xs_string, get_size(), *(xptr*)get_ptr_to_text());
+				tuple_cell tc;
+				if (m_flags & f_text_in_estr_buf)
+					tc = tuple_cell::atomic_estr(xs_string, get_size(), *(xptr*)get_ptr_to_text());
+				else
+					tc = tuple_cell::atomic_pstr(xs_string, get_size(), *(xptr*)get_ptr_to_text());
 				m_ptr = XNULL;
 				m_flags = 0;
 				clear();
