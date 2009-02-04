@@ -383,7 +383,9 @@ void print_attribute_prefix(se_ostream& crmout,schema_node* scm, int indent)
 }
 void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_print ptype, dynamic_context *cxt)
 {
-	switch(GETTYPE(GETSCHEMENODEX(node)))
+    CHECK_TIMER_FLAG;
+
+    switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
 	case document: case virtual_root:
 		{
