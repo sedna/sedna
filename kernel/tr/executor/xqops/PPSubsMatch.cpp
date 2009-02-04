@@ -26,29 +26,9 @@ PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,
     }
 }
 
-static inline void* create_iterator(tuple_cell& t, int&l)
+template <class a, class b> void PPSubsMatch::contains(a& it1, a&it1end, b& it2, b& it2end, tuple &t)
 {
-	if (t.is_eos()) 
-	{
-		l=0;
-		return NULL;
-	}
-	else
-		if (t.is_light_atomic())
-		{
-			l=t.get_strlen_mem();
-			return t.get_str_mem();
-		}
-		else
-		{
-			l=t.get_strlen_vmm();
-			return se_new estr_iterator(l, t.get_str_vmm());
-		}
-}
-
-template <class a, class b> void PPSubsMatch::contains(a& it1, b& it2,int l1,int l2,tuple &t)
-{
-	int res = PPSubsMatch::contains<a,b>(it1,it2,l1,l2) ;
+	int res = PPSubsMatch::contains<a,b>(it1,it2,it1end-it1,it2end-it2);
 	if (res<0)
 	{
 		t.copy(tuple_cell::atomic(false));
@@ -61,6 +41,10 @@ template <class a, class b> void PPSubsMatch::contains(a& it1, b& it2,int l1,int
 	}
 }
 
+template <class b> void PPSubsMatch::contains(b &it2, b &it2end, const tuple_cell *tcptr1, tuple &t)
+{
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(PPSubsMatch::contains, tcptr1, it2, it2end, t);
+}
 
 PPSubsMatch::~PPSubsMatch()
 {
@@ -124,7 +108,12 @@ void PPSubsMatch::next  (tuple &t)
 				if (!is_string_type(t1c.get_atomic_type())) 
 				    error("Invalid type of the first argument (xs_string/derived/promotable is expected)");
 		}
-		
+		else
+		{
+			t1c = EMPTY_STRING_TC;
+		}
+
+
 		tuple_cell t2c= t2.cells[0];
 		if (t2.is_eos()) t2c.set_eos();
 		if (!t2c.is_eos())
@@ -136,38 +125,18 @@ void PPSubsMatch::next  (tuple &t)
 				if (!is_string_type(t2c.get_atomic_type()))
 					error("Invalid type of the second argument (xs_string/derived/promotable is expected)");
 		}
-
-		bool mark=false;
-
-		int len1, len2;
-		void* it1 = create_iterator(t1c, len1);
-		void* it2 = create_iterator(t2c, len2);
-
-		/// Apply function
-		switch (this->comp_fun)
+		else
 		{
-		case 0:
-			if (t1c.is_heavy_atomic())
-			{
-				if (t2c.is_heavy_atomic())
-					contains<estr_iterator,estr_iterator>(*((estr_iterator*)it1),*((estr_iterator*)it2),len1,len2,t);
-				else
-					contains<estr_iterator,unsigned char*>(*((estr_iterator*)it1),(unsigned char*&)it2,len1,len2,t);
-			}
-			else
-			{
-				if (t2c.is_heavy_atomic())
-					this->contains<unsigned char*,estr_iterator>((unsigned char*&)it1,*((estr_iterator*)it2),len1,len2,t);
-				else
-					this->contains<unsigned char*,unsigned char*>((unsigned char*&)it1,(unsigned char*&)it2,len1,len2,t);
-			}
-
-			break;
+			t2c = EMPTY_STRING_TC;
 		}
 
-		if (len1>0 && t1c.is_heavy_atomic()) delete it1;
-		if (len2>0 && t2c.is_heavy_atomic()) delete it2;
-		
+		switch (this->comp_fun)
+		{
+            case 0:
+			    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(PPSubsMatch::contains, &t2c, &t1c, t);
+			    break;
+		}
+
 		if (!t1c.is_eos())
 		{
 			seq1.op->next(t1);
