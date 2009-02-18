@@ -7,6 +7,8 @@
 # Unfortunately, it depends on the environment of MODIS group and
 # will not work in other places without modification
 
+BUILD_MACHINE=seine.ispras.ru
+
 
 failwith() {
   echo "Error: $*" 1>&2
@@ -18,7 +20,6 @@ usage() {
     echo "Usage"
     echo "    $0" " local          - build local release"
     echo "    $0" " release        - build release"
-    echo "    $0" " release_ftp    - build release and put it to modis.ispras.ru"
     echo
     failwith "Wrong arguments"
 }
@@ -27,7 +28,7 @@ usage() {
 if test $# -ne 1; then
     usage;
 else
-   if test $1 "!=" "release" -a $1 "!=" "release_ftp" -a $1 "!=" "local"; then
+   if test $1 "!=" "release" -a $1 "!=" "local"; then
        usage;
    fi
 fi
@@ -194,7 +195,7 @@ prepare_source() {
 #script for downloading build-number-file
 get_build_file() {
     # get build_file and build_state_file
-    echo "open seine.ispras.ru" > ftpscript.txt &&
+    echo "open $BUILD_MACHINE" > ftpscript.txt &&
     echo "anonymous" >> ftpscript.txt &&
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
@@ -215,11 +216,11 @@ get_build_file() {
 }
 
 
-#script for uploading results of build to seine
+#script for uploading results of build to the BUILD_MACHINE
 #parameters: binary_file_name source_file_name
 #requirements: current directory must be $SEDNA_INSTALL
-put_results_to_seine() {
-	echo "open seine.ispras.ru" > ftpscript.txt &&
+put_results_to_build_machine() {
+	echo "open $BUILD_MACHINE" > ftpscript.txt &&
 	echo "anonymous" >> ftpscript.txt &&
 	echo "password" >> ftpscript.txt &&
 	echo "binary" >> ftpscript.txt &&
@@ -235,81 +236,10 @@ put_results_to_seine() {
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
-    fi || failwith "Cannot upload build results to seine"
+    fi || failwith "Cannot upload build results to the build machine"
 
     rm -f ftpscript.txt || failwith "Cannot remove build_file"
 }
-
-#script for downloading user name to modis.ispras.ru
-get_modis_ftp_uname() {
-    echo "open seine.ispras.ru" > ftpscript.txt &&
-    echo "anonymous" >> ftpscript.txt &&
-    echo "password" >> ftpscript.txt &&
-    echo "cd build" >> ftpscript.txt &&
-    echo "get modisftpusername.txt" >> ftpscript.txt &&
-    echo "close" >> ftpscript.txt &&
-    echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
-
-    if test "$OS_TYPE" "=" "nix"; then
-        ncftp <ftpscript.txt
-    else
-        ftp -s:ftpscript.txt
-    fi || failwith "Cannot get modisftpusername.txt"
-
-    FTP_UNAME=`cat modisftpusername.txt` || failwith "Cannot read modisftpusername.txt"
-
-    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-    rm -f modisftpusername.txt || failwith "Cannot remove modisftpusername.txt"
-}
-
-#script for downloading password to modis.ispras.ru
-get_modis_ftp_passw() {
-    echo "open seine.ispras.ru" > ftpscript.txt &&
-    echo "anonymous" >> ftpscript.txt &&
-    echo "password" >> ftpscript.txt &&
-    echo "cd build" >> ftpscript.txt &&
-    echo "get modisftppassword.txt" >> ftpscript.txt &&
-    echo "close" >> ftpscript.txt &&
-    echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
-
-    if test "$OS_TYPE" "=" "nix"; then
-        ncftp <ftpscript.txt
-    else
-        ftp -s:ftpscript.txt
-    fi || failwith "Cannot get modisftppassword.txt"
-
-    FTP_PASSW=`cat modisftppassword.txt` || failwith "Cannot read modisftppassword.txt"
-
-    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-    rm -f modisftppassword.txt || failwith "Cannot remove modisftppassword.txt"
-}
-
-#script for uploading results of build to modis.ispras.ru
-#parameters: binary_file_name source_file_name
-#requirements: current directory must be $SEDNA_INSTALL
-put_results_to_modis() {
-    if test "$OS_TYPE" "=" "nix"; then 
-        echo "" > ftpscript.txt; 
-    else 
-        echo "open modis.ispras.ru" > ftpscript.txt && 
-        echo "$FTP_UNAME" >> ftpscript.txt && 
-        echo "$FTP_PASSW" >> ftpscript.txt;
-    fi &&
-    echo "binary" >> ftpscript.txt &&
-    echo "put $1" >> ftpscript.txt &&
-    echo "put $2" >> ftpscript.txt &&
-    echo "close" >> ftpscript.txt &&
-    echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
-
-    if test "$OS_TYPE" "=" "nix"; then 
-	    ncftp -u $FTP_UNAME -p $FTP_PASSW modis.ispras.ru <ftpscript.txt
-    else 
-	    ftp -s:ftpscript.txt
-    fi || failwith "Cannot upload build results to modis.ispras.ru"
-
-    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-}
-
 
 
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
@@ -387,21 +317,9 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
  $MD5 $SRC_FILE_NAME.$SRC_EXT > $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
 
  if test $1 "!=" "local"; then 
-     put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
+     put_results_to_build_machine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
  fi)
 ##### RELEASE #################################################################
-
-
-
-##### FTP #####################################################################
-if test $1 "!=" "release_ftp"; then
-    exit 0;
-fi
-get_modis_ftp_uname
-get_modis_ftp_passw
-(cd $SEDNA_INSTALL &&
- put_results_to_modis $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT)
-##### FTP #####################################################################
 
 
 
