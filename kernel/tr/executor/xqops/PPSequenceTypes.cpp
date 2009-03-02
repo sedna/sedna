@@ -623,7 +623,7 @@ void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPTypeswitch::reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->var_cxt.producers[dsc].svc->at(id) = 0;
+    cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
 }
 
 void PPTypeswitch::close(var_dsc dsc, var_c_id id)

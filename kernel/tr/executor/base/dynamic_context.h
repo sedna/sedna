@@ -47,7 +47,7 @@ class static_context;
 /// Declaration of variable descriptor and auxilary structures
 typedef int var_dsc;	// var descriptor
 typedef int var_c_id;	// var consumption id
-// every element of the array is the info about consumption of specific cosumer
+// every element of the array is the info about consumption of specific consumer
 typedef std::vector<bool> simple_var_consumption;
 
 typedef std::vector<int>  complex_var_consumption;
