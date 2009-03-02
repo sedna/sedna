@@ -28,7 +28,7 @@
 %\author{Sedna Team}
 \date{}
 
-\comments{
+%\comments{
 \usepackage{ifthen}    % package for conditionals in TeX
 % Switch for PdfLaTeX or LaTeX
 \ifx\pdfoutput\undefined %%%% LaTeX %%%
@@ -48,7 +48,7 @@
 pdfauthor   = {Sedna Team},
 pdftitle    = {Sedna Administration Guide}
 }
-}
+%}
 
 \begin{document}
 \sloppy
@@ -234,7 +234,7 @@ options:
 The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_stop! command. Option \verb!-version! allows getting the version of the \verb!se_stop!.
 
 Note, \verb!se_stop! may cause a rollback of some active transactions in the system. However, Sedna waits for the last statement in each transaction is completed.
-Option \verb!-hard! causes Sedna to attempt to roll back transactions as soon as possible.
+Option \verb!-hard! causes Sedna to attempt to roll back transactions as soon as possible (except bulk load and update transactions).
 
 \subsubsection{Configuring Sedna}
 \label{sec:ConfigSedna}
