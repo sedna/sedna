@@ -488,20 +488,42 @@ int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun
 }
 
 
-int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fun)
+/* Retrieves information about the specified disk's sector size.
+ * sector_size - pointer to a variable that receives 
+ *               the number of bytes per sector.
+ * path - The directory of the disk for which information is to be returned. 
+ *        On Windows it must include drive specification (for example, C:\).
+ */
+int 
+uGetDiskSectorSize(int *sector_size, /* out */ 
+                   const char *path, /* in  */ 
+                   sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    BOOL res;
-    char buf[4];
-    memset(buf, '\0', 4);
-    memcpy(buf, path, 2);
-    buf[2] = '\\';
 
-    res = GetDiskFreeSpace(buf, NULL, (LPDWORD) sector_size, NULL, NULL);
-    if (res == 0)
-        sys_call_error("GetDiskFreeSpace");
+    char dbuf[4]; /* <letter><colon><slash><nul> */
+    BOOL res = 1;
+
+    /* To find the sector size, we call GetDiskFreeSpace, which expects a 
+     * drive name like "d:\\".
+     */
+    if (path != NULL && path[0] != '\0' && path[1] == ':') {
+        sprintf(dbuf, "%c:\\", path[0]);
+        
+        res = GetDiskFreeSpace(dbuf, NULL, (LPDWORD) sector_size, NULL, NULL);
+
+        if (res == 0)
+            sys_call_error("GetDiskFreeSpace");
+        
+    } else {
+        res = 0;
+        u_call_error("Can't get disk sector size. NULL, UNC or relative path was given.");
+    } 
+
     return res;
-#else
+		
+#else /* !_WIN32 */
+
 #ifdef PREDEFINED_DISK_SECTOR_SIZE
     *sector_size = PREDEFINED_DISK_SECTOR_SIZE;
     return 1;
@@ -587,8 +609,9 @@ int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fu
     }
 
     return 1;
-#endif
-#endif
+
+#endif /* PREDEFINED_DISK_SECTOR_SIZE */
+#endif /* _WIN32 */
 }
 
 /*

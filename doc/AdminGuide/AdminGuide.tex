@@ -1,4 +1,3 @@
-
 % File:  AdminGuide.tex
 % Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
@@ -238,8 +237,12 @@ Option \verb!-hard! causes Sedna to attempt to roll back transactions as soon as
 
 \subsubsection{Configuring Sedna}
 \label{sec:ConfigSedna}
-Sedna configuration parameters are stored in the file \verb!sednaconf.xml! located in
-\verb![win:] SEDNA_INSTALL\etc!, \verb![nix:] SEDNA_INSTALL/etc!. The file is optional. If there is no such file, the default values are used.
+Sedna configuration parameters are stored in the file \verb!sednaconf.xml! located in:
+\begin{verbatim}
+	[win:] SEDNA_INSTALL\etc
+	[nix:] SEDNA_INSTALL/etc
+\end{verbatim}
+The file is optional. If there is no such file, the default values are used.
 The file is an XML document, which satisfies the following DTD:
 
 \begin{verbatim}
@@ -255,8 +258,7 @@ The file is an XML document, which satisfies the following DTD:
 
 The \verb!sedna_data! element contains the path to the directory where
 database configuration files (in the \verb!cfg! subdirectory) and
-databases (in the \verb!data! subdirectory) are stored. The path by default is
-\verb![win:] SEDNA_INSTALL/sedna! \verb![nix:] SEDNA_INSTALL/sedna!.
+databases (in the \verb!data! subdirectory) are stored. Path must be absolute and exist. The path by default is \verb!SEDNA_INSTALL!.
 
 The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should configure this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires a range of identifiers which length is equal to 150.
 
@@ -268,7 +270,7 @@ The \verb!event_log_level! defines event log severity level (0-4). For full desc
 
 The \verb!keep_alive_timeout! defines session keep alive timeout, i.e. number of seconds to wait for the next request from the some client on the same connection.
 
-To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, in order for new configuration to take effect you must restart Governor.
+To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, in order for new configuration to take effect you must restart Sedna server (\verb!se_gov!).
 
 \subsection{Managing Databases}
 \subsubsection{Creating a Database}
@@ -365,7 +367,11 @@ The last parameter \verb!db_name! is the name of the database to be created. Adm
 
 \subsubsection{Configuring a Database}
 \label{ConfigDB}
-For each database there is a set of run-time configuration parameters, which store in the database configuration file. The name of the database configuration file is \verb!<db_name>_cfg.xml! where \verb!<db_name>! is the name of the database. The location of configuration file is \verb![win:] SEDNA_INSTALL\cfg! \verb![nix:] SEDNA_INSTALL/cfg! or as specified in the Sedna configuration file (see Section \ref{sec:ConfigSedna}).
+For each database there is a set of run-time configuration parameters, which store in the database configuration file. The name of the database configuration file is \verb!<db_name>_cfg.xml! where \verb!<db_name>! is the name of the database. The location of configuration file is:
+\begin{verbatim}
+	[win:] SEDNA_INSTALL\cfg
+	[nix:] SEDNA_INSTALL/cfg
+\end{verbatim}
 
 The configuration file is an XML document, which satisfies the following DTD:
 
