@@ -484,124 +484,12 @@ PPLMGeneralComparison::PPLMGeneralComparison(dynamic_context *_cxt_,
 PPIterator* PPLMGeneralComparison::copy(dynamic_context *_cxt_)
 {
 	PPLMGeneralComparison *res ;
-	res = se_new PPLMGeneralComparison(_cxt_, seq1,seq2,more);
+	res = se_new PPLMGeneralComparison(_cxt_, seq1, seq2, more, strict);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     res->set_xquery_line(__xquery_line);
     return res;
 }
-
- /*void PPLMGeneralComparison::next   (tuple &t)
-^ ^ ^ ^ ^ ^ ^
-{
-	if (first_time)
-    {
-        first_time = false;
-		PPOpIn* _seq1_,*_seq2_;
-		if (more)
-		{
-			_seq2_=&seq1;
-			_seq1_=&seq2;			
-		}
-		else
-		{
-			_seq1_=&seq1;
-			_seq2_=&seq2;			
-		}
-		// SET_SIGNS_INIT_SECTION
-		min_ut_num=false;
-		min_ut_dat=false;
-		min_num=false;
-		min_dat=false;
-		min_str=false;
-		max_ut_num=false;
-		max_ut_dat=false;
-		max_num=false;
-		max_dat=false;
-		max_str=false;
-		min_dat_cast=false;
-		min_num_cast=false;
-		max_dat_cast=false;
-		max_num_cast=false;
-				
-		//Main cycle
-		if (!eos_reached1) _seq1_->op->reopen();
-		if (!eos_reached2) _seq2_->op->reopen();
-		eos_reached2 = false;
-		eos_reached1 = false;
-		tuple cont(_seq1_->ts);
-		//first values from both sequences
-        _seq1_->op->next(cont);
-		if (cont.is_eos())
-		{
-			eos_reached1 = true;
-			t.copy(tuple_cell::atomic(false));
-			return;
-		}
-		tuple_cell resf=getAtomizedCell(cont);
-		xmlscm_type in_type=fill_minimums(resf);
-		_seq2_->op->next(cont);
-		if (cont.is_eos())
-		{
-			eos_reached2 = true;
-			t.copy(tuple_cell::atomic(false));
-			return;
-		}
-		tuple_cell ress=getAtomizedCell(cont);
-		fill_maximums(ress);
-		
-		while (true)
-		{
-			if ((strict &&compare_minmax(in_type,true)) ||(!strict &&compare_minmax_le(in_type,true)))
-			{
-				t.copy(tuple_cell::atomic(true));
-				return;
-			}
-			_seq1_->op->next(cont);
-			if (cont.is_eos()) 
-			{
-				eos_reached1 = true;			
-				break;
-			}
-			resf=getAtomizedCell(cont);
-			in_type=fill_minimums(resf);
-		}
-		while (true)
-		{
-			_seq2_->op->next(cont);
-			if (cont.is_eos()) 
-			{
-				eos_reached2 = true;
-				break;
-			}
-			resf=getAtomizedCell(cont);
-			in_type=fill_maximums(resf);
-			if ((strict &&compare_minmax(in_type,false)) ||(!strict &&compare_minmax_le(in_type,false)))
-			{
-				t.copy(tuple_cell::atomic(true));
-				return;
-			}
-		}
-		if (
-			(min_dat_cast && max_dat)||
-			(min_num_cast && max_num)||
-			(max_dat_cast && min_dat)||
-			(max_num_cast && min_num)||
-			(min_num && max_dat)||
-			(min_dat && max_num)
-			)
-		throw XQUERY_EXCEPTION(XP0021);
-		t.copy(tuple_cell::atomic(false));
-		return;
-		//t.copy(tuple_cell::node(removeIndirection(indir)));
-    }
-    else 
-    {
-        first_time = true;
-        t.set_eos();
-    }
-v v v v v v v
-}*/
 
 void PPNEQGeneralComparison::next   (tuple &t)
 {
