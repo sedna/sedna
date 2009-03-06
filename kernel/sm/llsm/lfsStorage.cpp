@@ -5,12 +5,12 @@
  * This is an implementation of lfs storage; The main unit is a chan of files such as:
  * <prefix>.5.<ext>, <prefix>.6.<ext>, <prefix>.7.<ext>, and so on. Numbers are always continuous, and can range from 1 to
  * a UINT64MAX - 1. However, actual chain may start from any number (5, for example), because chain is truncated from
- * time to time (by user request). 
- * 
- * From the user point of view a chain is a linear space. He addresses records by specifying LSN number (uint64_t), and he 
- * receives such numbers when he puts records into storage. 
+ * time to time (by user request).
  *
- * This storage can be shared among some processes. So, processes can write to it concurrently. Synchronization is implemented 
+ * From the user point of view a chain is a linear space. He addresses records by specifying LSN number (uint64_t), and he
+ * receives such numbers when he puts records into storage.
+ *
+ * This storage can be shared among some processes. So, processes can write to it concurrently. Synchronization is implemented
  * within lfs subsystem. So, there is no need to provide synchronization on the user level.
  *
  * Buffering is implemented within lfs subsystem. There are two kinds of buffers: for write and read operations. Write-buffer
@@ -96,13 +96,14 @@ static lfsFileInfo_t lfsDescCache[LFS_CACHE_SIZE];
 
 #define LFS_ERROR(err_msg) _lfsProcessError(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg), NULL)
 #define LFS_ERROR2(err_msg, adds) _lfsProcessError(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg), (adds))
+#define LFS_WARN(err_msg) _lfsProcessWarning(__FILE__, __SE_FUNCTION__,  __LINE__, (err_msg), NULL)
 
 // processes error (throws exception for now)
 static void _lfsProcessError(const char *file, const char *func, int line, const char *lfsErrorMsg, const char *adds)
 {
 	string err_msg = string(lfsErrorMsg);
-						 
-	if (adds != NULL)					 
+
+	if (adds != NULL)
  		err_msg += ": " + string(adds);
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
@@ -110,6 +111,21 @@ static void _lfsProcessError(const char *file, const char *func, int line, const
 #endif
 
 	throw SYSTEM_EXCEPTION(err_msg.c_str());
+}
+
+// processes warnings (logs with EL_WARN for now)
+static void _lfsProcessWarning(const char *file, const char *func, int line, const char *lfsErrorMsg, const char *adds)
+{
+    string err_msg = string(lfsErrorMsg);
+
+    if (adds != NULL)
+        err_msg += ": " + string(adds);
+
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+    err_msg += " - (" + string(file) + ':' + string(func) + ':' + int2string(line) + ')';
+#endif
+
+    elog(EL_WARN, ("%s", err_msg.c_str()));
 }
 
 // simple procedure to make string file name from file num
@@ -185,8 +201,8 @@ static int _lfsCloseCachedDesc(uint64_t fileNum)
 	return 0;
 }
 
-// opens file and returns descriptor; 
-// if it finds descriptor in cache it returns stored descriptor; 
+// opens file and returns descriptor;
+// if it finds descriptor in cache it returns stored descriptor;
 // if not, then opens files and stores its descriptor
 // synchronizaion must be provided by the caller!
 static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
@@ -213,8 +229,8 @@ static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
 	}
 
 	fName = _lfsGetFileName(fileNum);
-	
-    if ((fileDsc = uOpenFile(fName.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, 
+
+    if ((fileDsc = uOpenFile(fName.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE,
     		U_WRITE_THROUGH, __sys_call_error)) == U_INVALID_FD)
     {
     	LFS_ERROR2("lfs error: critical error in lfs chain: cannot open file", fName.c_str());
@@ -242,7 +258,7 @@ static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
     	LFS_ERROR2("lfs error: critical error in lfs chain: cannot set file pointer", _lfsGetFileName(filenum).c_str());
     	return -1;
     }
-	
+
 	res = uReadFile(fileDsc, HeaderBuf, HeaderSize, &readbytes, __sys_call_error);
 
 	if (res == 0 || readbytes != HeaderSize)
@@ -257,7 +273,7 @@ static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 static int _lfsGetLfsHeaderFromFile(uint64_t fileNum, lfsHeader_t *lfsHeader)
 {
     void *SectorBuf;
-	
+
 	if ((SectorBuf = malloc(lfsSectorSize)) == NULL)
 	{
 		LFS_ERROR("lfs error: cannot allocate memory");
@@ -290,14 +306,14 @@ static uint64_t atoui64(const char *str)
 #else
 	res = strtoull(str, &endptr, 10);
 #endif
-	
+
 	if (*endptr != '\0')
 		return UINT64_MAX;
-		
+
 	return res;
 }
 
-// get file size of the FileNum log file 
+// get file size of the FileNum log file
 // synchronization must be provided by the caller!
 static uint64_t _lfsGetFileSize(uint64_t FileNum)
 {
@@ -322,12 +338,12 @@ static uint64_t _lfsGetFileSize(uint64_t FileNum)
 static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
 {
 	UDir lfs_dir;
-	UFindDataStruct find_data;   
+	UFindDataStruct find_data;
 	uint64_t CurFileNum, i;
 	int res = -1;
 	string fName;
 	lfsHeader_t lfsHeader;
-        
+
 	*FirstNum = *LastNum = 0;
 
 	lfs_dir = uFindFirstFile(ChainPath.c_str(), &find_data, __sys_call_error);
@@ -353,12 +369,12 @@ static int _lfsGetFirstLastFileNums(uint64_t *FirstNum, uint64_t *LastNum)
        			LFS_ERROR("lfs internal error: incorrect file format");
        			return -1;
        		}
-       	
+
 			if (CurFileNum > *LastNum) *LastNum = CurFileNum;
 		}
 
 		if ((res = uFindNextFile(lfs_dir, &find_data, __sys_call_error)) == -1)
-        	break;		
+        	break;
     }
 
 	if (res != 0 || *LastNum == 0) return -1;
@@ -393,7 +409,7 @@ static int _lfsInitSync(int BufSize)
 	int res;
 
 	// create semaphore for synchronization purposes
-	res = USemaphoreCreate(&SyncSem, 1, 1, SEDNA_LFS_SEM_NAME, NULL, __sys_call_error);  
+	res = USemaphoreCreate(&SyncSem, 1, 1, SEDNA_LFS_SEM_NAME, NULL, __sys_call_error);
 	if (res != 0)
 	{
 		LFS_ERROR("lfs error: cannot create semaphore");
@@ -431,7 +447,7 @@ static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
     UFile fdsc;
     int res, written;
 
-	if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) != 0) 
+	if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot create sa");
 		return -1;
@@ -446,7 +462,7 @@ static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSi
 		LFS_ERROR("lfs error: cannot create new chain");
 		return -1;
 	}
- 
+
 	if (uReleaseSA(sa, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot release sa");
@@ -530,15 +546,15 @@ static int _lfsFlushBufLSN(LSN ulsn)
 		toflush = lfsInfo->BufKeepBytes;
 	else
 		toflush = ulsn - lfsInfo->NextLSN;
-	
+
 	// open file for writing
 	fileDsc = _lfsOpenAndCacheFile(lfsInfo->LastFileNum);
 
 	// file offset
 	fileOffs = lfsInfo->NextLSN % lfsInfo->ChunkSize;
-	
+
 	assert(fileOffs >= lfsSectorSize && fileOffs < lfsInfo->ChunkSize);
-	
+
 	if (uSetFilePointer(fileDsc, fileOffs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
 	{
     	LFS_ERROR("lfs error: critical error in lfs chain: cannot set file pointer");
@@ -554,7 +570,7 @@ static int _lfsFlushBufLSN(LSN ulsn)
 	    	LFS_ERROR("lfs error: critical error in lfs chain: cannot write into file");
 	    	return -1;
 	    }
-	
+
 		lfsInfo->BufStart += toflush;
 		if (lfsInfo->BufStart == lfsInfo->BufSize) lfsInfo->BufStart = 0;
 	}
@@ -598,12 +614,12 @@ static int _lfsTruncateChain(uint64_t FirstNum)
 	uint64_t num = FirstNum;
 	string fName;
 	int res = 1;
-    
+
     while (res && --num >= 1)
 	{
 		fName = _lfsGetFileName(num);
 		res = uIsFileExist(fName.c_str(), __sys_call_error);
-        
+
         if (res)
         {
         	_lfsCloseCachedDesc(num);
@@ -613,7 +629,7 @@ static int _lfsTruncateChain(uint64_t FirstNum)
         		return -1;
         	}
         }
-    } 
+    }
 
     return 0;
 }
@@ -634,7 +650,7 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	// init local cache for file descriptors
 	if (_lfsInitFileCache() != 0)
 		return -1;
-	
+
 	// take first and last file numbers for chain
 	res = _lfsGetFirstLastFileNums(&FirstNum, &LastNum);
 	if (res != 0)
@@ -683,8 +699,8 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
 	// determine sector size
 	if (uGetDiskSectorSize(&lfsSectorSize, cDataPath, __sys_call_error) == 0)
 	{
-		LFS_ERROR("lfs error: cannot obtain sector size");
-		return -1;
+        LFS_WARN("lfs warning: cannot obtain sector size: assuming 512 bytes");
+		return 0;
 	}
 
 	return 0;
@@ -775,7 +791,7 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 		LFS_ERROR("lfs error: cannot open shared memory");
 		return -1;
 	}
-	
+
 	// init lfs shared memory pointer
 	lfsInfo = (lfsInfo_t *)uAttachShMem(ShDsc, NULL, sizeof(lfsInfo_t) + BufSize, __sys_call_error);
 	if (lfsInfo == NULL)
@@ -796,8 +812,8 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 
 	if (uGetDiskSectorSize(&lfsSectorSize, cDataPath, __sys_call_error) == 0)
 	{
-		LFS_ERROR("lfs error: cannot obtain sector size");
-		return -1;
+        LFS_WARN("lfs warning: cannot obtain sector size: assuming 512 bytes");
+		return 0;
 	}
 
 	return 0;
@@ -816,7 +832,7 @@ int lfsDisconnect()
 		LFS_ERROR("lfs error: cannot close semaphore");
 		return -1;
 	}
-		
+
 	if (uDettachShMem(ShDsc, lfsInfo, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot detach shared memory");
@@ -848,8 +864,8 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 	// determine sector size
 	if (uGetDiskSectorSize(&lfsSectorSize, cDataPath, __sys_call_error) == 0)
 	{
-		LFS_ERROR("lfs error: cannot obtain sector size");
-		return -1;
+        LFS_WARN("lfs warning: cannot obtain sector size: assuming 512 bytes");
+		return 0;
 	}
 
 	if ((SectorBuf = malloc(lfsSectorSize)) == NULL)
@@ -865,7 +881,7 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 	lfsHeader->NextLSN = lfsSectorSize;
 	lfsHeader->FirstFileNum = 1;
 	lfsHeader->ChunkSize = cChunkSize;
-	
+
 	if (_lfsCreateAnotherFile(1, SectorBuf, lfsSectorSize) != 0)
 		return -1;
 
@@ -921,19 +937,19 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 
 	assert(lfsInfo != NULL);
 
-	lfsLock(); 
+	lfsLock();
 
 	// number of file with record
 	fileNum = *RecLSN / lfsInfo->ChunkSize + 1;
 
 	// file offset
 	fileOffs = *RecLSN % lfsInfo->ChunkSize;
-	if (fileOffs == 0) 
+	if (fileOffs == 0)
 	{
 		fileOffs = lfsInfo->ChunkSize;
 		fileNum--;
 	}
-	
+
 	// check if lfs can be read
 	if (fileNum == lfsInfo->LastFileNum)
 	{
@@ -943,7 +959,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 			_lfsGetDataFromBuffer(RecBuf, RecSize, (*RecLSN - lfsInfo->NextLSN));
 			lfsUnlock();
 			return RecSize;
-		}	
+		}
 	}
 
 	// lsn is way out of reach
@@ -967,7 +983,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
     	fileOffs = lfsSectorSize + fileOffs - fileSize;
     	*RecLSN = (fileNum - 1) * lfsInfo->ChunkSize + fileOffs;
     }
-	
+
 	// check if lfs can be read
 	if (fileNum > lfsInfo->LastFileNum)
 	{
@@ -982,7 +998,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 		lfsUnlock();
 		return RecSize;
 	}
-	
+
 	// if not in buffers, read from file
 	if ((fileDsc = _lfsOpenAndCacheFile(fileNum)) == U_INVALID_FD)
 	{
@@ -996,7 +1012,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
     	lfsUnlock();
     	return -1;
     }
-	
+
 	if (RecSize > ReadBufSize)
 	{
 		res = uReadFile(fileDsc, RecBuf, RecSize, &readbytes, __sys_call_error);
@@ -1019,7 +1035,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 
 		StartReadLSN = *RecLSN;
 		EndReadLSN = *RecLSN + readbytes;
-	
+
 		memcpy(RecBuf, lfsReadBuf, RecSize);
 	}
 
@@ -1040,7 +1056,7 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
 	LSN resLSN;
 
 	lfsLock();
-	
+
 	assert(lfsInfo != NULL && lfsInfo->BufSize >= RecSize);
 
 	// would be lsn in case of flush of the current buffer
@@ -1067,7 +1083,7 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
 			return -1;
 		}
 	}
-    
+
     // check if buffer is full
     if (lfsInfo->BufSize - lfsInfo->BufKeepBytes < RecSize)
 	{
@@ -1103,8 +1119,8 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
 
 	lfsUnlock();
 
-	return resLSN;	
-}	
+	return resLSN;
+}
 
 // writes lfs+user header
 static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *HeaderBuf, size_t HeaderSize)
@@ -1129,7 +1145,7 @@ static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *
 	memset(lfsHeaderBuf, 0, lfsSectorSize);
 	memcpy(lfsHeaderBuf, &lfsHeader, sizeof(lfsHeader_t));
 	memcpy((char *)lfsHeaderBuf + sizeof(lfsHeader_t), HeaderBuf, HeaderSize);
-	
+
 	if ((fileDsc = _lfsOpenAndCacheFile(fileNum)) == U_INVALID_FD)
 	{
 		free(lfsHeaderBuf);
@@ -1142,7 +1158,7 @@ static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *
     	LFS_ERROR("lfs error: critical error in lfs chain: cannot set file pointer");
     	return -1;
     }
-	
+
 	res = uWriteFile(fileDsc, lfsHeaderBuf, lfsSectorSize, &written, __sys_call_error);
 
 	if (res == 0 || written != lfsSectorSize)
@@ -1173,7 +1189,7 @@ uint64_t lfsArchiveCurrentFile(void *HeaderBuf, size_t HeaderSize)
 		lfsUnlock();
 		return -1;
 	}
-	
+
 	// check if need to extend file
 	if ((fileDsc = _lfsOpenAndCacheFile(lfsInfo->LastFileNum)) == U_INVALID_FD)
 	{
@@ -1261,7 +1277,7 @@ int lfsGetHeader(void *HeaderBuf, size_t HeaderSize)
 	_lfsGetHeaderFromFile(lfsInfo->LastFileNum, SectorBuf, lfsSectorSize);
 
 	memcpy(HeaderBuf, (char *)SectorBuf + sizeof(lfsHeader_t), HeaderSize);
-	
+
 	lfsUnlock();
 
 	free(SectorBuf);
@@ -1284,10 +1300,10 @@ uint64_t lfsGetPrevFileNumber(int FileNum)
 
 	lfsUnlock();
 
-	return res;		
+	return res;
 }
 
-// Flush portion of written records until specified lsn. 
+// Flush portion of written records until specified lsn.
 // Record at specified lsn will not be writen, only data prior to UntilLSN will be.
 int lfsFlush(LSN UntilLSN)
 {
@@ -1313,7 +1329,7 @@ int lfsFlushAll()
 
 	// flush the entire buffer, since NextLSN + buffer_length is greater than any existing lsn
 	res = _lfsFlushBufLSN(lfsInfo->NextLSN + lfsInfo->BufKeepBytes);
-	
+
 	lfsUnlock();
 
 	return res;
@@ -1360,7 +1376,7 @@ int lfsTruncate(LSN UntilLSN, uint64_t hint_num)
 	lfsHeader->FirstFileNum = lfsInfo->FirstFileNum;
 	lfsHeader->ChunkSize = lfsInfo->ChunkSize;
 
-	_lfsWriteSectorHeader(lfsInfo->LastFileNum, *lfsHeader, (char *)HeaderBuf + sizeof(lfsHeader_t), 
+	_lfsWriteSectorHeader(lfsInfo->LastFileNum, *lfsHeader, (char *)HeaderBuf + sizeof(lfsHeader_t),
 		lfsSectorSize - sizeof(lfsHeader_t));
 
 	res = _lfsTruncateChain(lfsInfo->FirstFileNum);
