@@ -26,6 +26,7 @@ struct gov_db_struct
     int max_trs_num;
     double upd_crt;
     int max_log_files;
+    int tmp_file_initial_size;
 };
 
 struct gov_header_struct
@@ -35,7 +36,7 @@ struct gov_header_struct
     UPID gov_pid;
     char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
     int os_primitives_id_min_bound;
-    
+
     int lstnr_port_number;   /// Governor listening port
     int ping_port_number;    /// Process ping port
     int el_level;            /// Event log severity level
@@ -51,7 +52,7 @@ struct gov_config_struct
 
 
 #define GOV_HEADER_STRUCT_PTR(ptr)    (& (((gov_config_struct*)ptr)->gov_vars) )
-#define GOV_CONFIG_STRUCT_PTR(ptr)    ( (gov_config_struct*)ptr ) 
+#define GOV_CONFIG_STRUCT_PTR(ptr)    ( (gov_config_struct*)ptr )
 
 
 #endif /* _CONFIG_H_ */

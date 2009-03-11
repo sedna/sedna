@@ -38,9 +38,23 @@ extern const size_t cdb_narg;
 
 void print_cdb_usage();
 
-void setup_cdb_globals(int, char**, int64_t &, int64_t &, int &, int &, int &, int &, int &, uint64_t &);
+void setup_cdb_globals(int argc,
+                      char** argv,
+                      int64_t &data_file_max_size,
+                      int64_t &tmp_file_max_size,
+                      int &data_file_extending_portion,
+                      int &tmp_file_extending_portion,
+                      int &data_file_initial_size,
+                      int &tmp_file_initial_size,
+                      int &persistent_heap_size,
+                      uint64_t &log_file_size);
 
-void create_cfg_file(char *, int, int, double, int);
+void create_cfg_file(char *db_name,
+                     int max_trs_num,
+                     int bufs_num,
+                     double upd_crt,
+                     int max_log_files,
+                     int tmp_file_initial_size);
 
 void create_data_directory();
 

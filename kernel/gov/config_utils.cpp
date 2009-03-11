@@ -24,9 +24,9 @@ static std::string elem_content;
 void fulfill_config_parameters(gov_config_struct* cfg)
 {
   memset(cfg, '\0', sizeof(gov_config_struct));
-  
+
   ///  Within this the following we load the cfg parameters by default values.
-  ///  Then we check whether the config file exists and if it exists then we overwrite 
+  ///  Then we check whether the config file exists and if it exists then we overwrite
   ///  parameters from it.
   get_sednaconf_values(&(cfg->gov_vars));
 
@@ -46,6 +46,7 @@ void fulfill_config_parameters(gov_config_struct* cfg)
      cfg->db_vars[i].sm_pid = -1;
      cfg->db_vars[i].upd_crt = 0.25;
      cfg->db_vars[i].max_log_files = 3;
+     cfg->db_vars[i].tmp_file_initial_size = 1600;
   }
 
   for (int i = 0; i<MAX_SESSIONS_NUMBER; i++)
@@ -71,7 +72,7 @@ static void startElement_sm_cfg(void *cnt, const char *name, const char **atts)
 static void endElement_sm_cfg(void *cfg, const char *name)
 {
   if (strcmp(name, "bufs_num") == 0)
-  {  
+  {
      ((gov_db_struct*)cfg)->bufs_num = atoi(trim(elem_content).c_str());
   }
   if (strcmp(name, "max_trs_num") == 0)
@@ -86,6 +87,11 @@ static void endElement_sm_cfg(void *cfg, const char *name)
   {
      ((gov_db_struct*)cfg)->max_log_files = atoi(trim(elem_content).c_str());
   }
+  if (strcmp(name, "tmp_file_initial_size") == 0)
+  {
+     ((gov_db_struct*)cfg)->tmp_file_initial_size = atoi(trim(elem_content).c_str()) * 0x100000 / PAGE_SIZE; /* MBs -> blocks */
+  }
+
   elem_content = "";
 }
 
@@ -121,7 +127,7 @@ static void parse_sm_config_file(gov_db_struct* db_cfg, std::string cfg_text)
 static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)
 {
    UDir cfg_dir;
-   UFindDataStruct find_data;   
+   UFindDataStruct find_data;
    int res;
    unsigned int index;
    FILE * fs;
@@ -134,11 +140,11 @@ static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)
 #else
    std::string cfg_dir_name = std::string(cfg->gov_vars.SEDNA_DATA) + "/cfg";
 #endif
-   
+
    cfg_dir =  uFindFirstFile(cfg_dir_name.c_str(), &find_data, __sys_call_error);
    if (cfg_dir == U_INVALID_DIR) return; /// There is no cfg direcory
 
-      
+
    for(int i=0 ; 1 ;)
    {
       if (i>= MAX_DBS_NUMBER)
@@ -150,7 +156,7 @@ static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)
 
           fs = fopen((cfg_dir_name + std::string("/") + cfg->db_vars[i].db_name + std::string("_cfg.xml")).c_str(), "r");
 
-          if (fs == NULL) 
+          if (fs == NULL)
              throw USER_EXCEPTION2(SE4042, (cfg_dir_name + std::string("/") + cfg->db_vars[i].db_name + std::string("_cfg.xml")).c_str());
 
           cfg_text = "";
@@ -172,7 +178,7 @@ static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)
           ++i;
       }
 
-      res = uFindNextFile(cfg_dir, &find_data, __sys_call_error);      
+      res = uFindNextFile(cfg_dir, &find_data, __sys_call_error);
 
       if (res == 0) break; /// There is no more files in cfg dir
 

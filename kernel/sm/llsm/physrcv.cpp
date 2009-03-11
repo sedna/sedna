@@ -93,25 +93,25 @@ static void llRcvPersSnpAdd(LSN lsn, void *RecBuf)
     char *offs;
 	TIMESTAMP ts;
 	WuVersionEntry *blocks_info;
-	
+
 	offs = (char *)RecBuf + sizeof(char) + sizeof(LSN); // skip operation code and next-chain-lsn
-	
+
 	ts = *((TIMESTAMP *)offs);
 	offs += sizeof(TIMESTAMP);
-	
+
 	blocks_info = (WuVersionEntry *)offs;
-    	
+
 	bm_rcv_read_block(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk); // read "last" block
-       
+
 	// we must recover block only if it was moved to "blocks_info->xptr" place
 	if (ts != ((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.creatorTs[0])
 	{
 		bm_rcv_read_block(WuExternaliseXptr(blocks_info->xptr), ctrl_blk);
 
-		U_ASSERT( 
+		U_ASSERT(
 			((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.creatorTs[0] == ts &&
 			((vmm_sm_blk_hdr *)ctrl_blk)->p == WuExternaliseXptr(blocks_info->lxptr) &&
-			((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.xptr[0] == blocks_info->lxptr 
+			((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.xptr[0] == blocks_info->lxptr
 		);
 
 		bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
@@ -137,7 +137,7 @@ static void llRcvBlock(LSN lsn, void *RecBuf)
 	xptr blk_info_xptr;
 
 	if (!llInfo->hotbackup_needed) return;
-	
+
 	offs = (char *)RecBuf + sizeof(char) + sizeof(LSN);
 
 	blk_info_size = *((int *)offs);
@@ -162,7 +162,7 @@ static LSN llRcvGetNextPhysLsn(LSN curr_lsn, void *RecBuf)
 
 // Main structure for physical recovery
 static
-struct llRecInfo llRcvPhysRecsInfo[] = 
+struct llRecInfo llRcvPhysRecsInfo[] =
 {
 	{LL_CHECKPOINT,         llRcvCheckpoint},
 	{LL_FREE_BLOCKS,        llRcvFreeBlock},
@@ -180,9 +180,9 @@ LSN llRecoverPhysicalState()
 	size_t count;
 	void *ctrl_blk_buf;
 
-	lsn = llInfo->checkpoint_lsn;	
+	lsn = llInfo->checkpoint_lsn;
 
-	if (lsn == LFS_INVALID_LSN) 
+	if (lsn == LFS_INVALID_LSN)
 	{
 		// we are in big trouble here :)
 		return LFS_INVALID_LSN;
@@ -193,7 +193,7 @@ LSN llRecoverPhysicalState()
 
 	if (rec[0] != LL_CHECKPOINT)
 		throw USER_EXCEPTION(SE4153);
- 
+
 	offs = rec + sizeof(char) + sizeof(LSN) + sizeof(int);
 	count = *((size_t *)offs);
 	offs += sizeof(size_t) + sizeof(WuVersionEntry) * count;
@@ -206,12 +206,12 @@ LSN llRecoverPhysicalState()
 	llInfo->min_rcv_lsn = *((LSN *)offs);
 
 	lsn = llInfo->last_chain_lsn;
-  
+
 	if ((ctrl_blk_buf = malloc(2 * PAGE_SIZE)) == NULL)
 		throw SYSTEM_EXCEPTION("Cannot allocate memory");
 	// sector alligned buffer
 	ctrl_blk = (void *)((uint32_t)((char *)ctrl_blk_buf + sector_size - 1) & ~(sector_size - 1));
-	
+
 	if (uGetDiskSectorSize(&sector_size, db_files_path, __sys_call_error) == 0)
 		throw USER_EXCEPTION(SE4051);
 
@@ -221,8 +221,8 @@ LSN llRecoverPhysicalState()
 	free(ctrl_blk_buf);
 	ctrl_blk = NULL;
 
-	// recover temporary file
-	bm_rcv_tmp_file();
+	// recover temporary file (moved to sm since we restore .setmp even on usual start)
+	//bm_rcv_tmp_file();
 
 	// return lsn for logical recovery
 	return (llInfo->min_rcv_lsn == LFS_INVALID_LSN) ? llInfo->checkpoint_lsn : llInfo->min_rcv_lsn;
@@ -241,10 +241,10 @@ void llRcvRestorePh()
 
   string ph_cur_file_name = string(db_files_path) + string(db_name) + ".seph";
 
-  // delete all other ph files	
+  // delete all other ph files
   string ph_name;
   int64_t number;
- 
+
   UFile descr;
 
 #ifdef _WIN32
@@ -255,7 +255,7 @@ void llRcvRestorePh()
   cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
 
   if (uChangeWorkingDirectory(db_files_path, __sys_call_error) != 0 )
-     throw USER_EXCEPTION(SE4604); 
+     throw USER_EXCEPTION(SE4604);
 
   struct _finddata_t ph_file;
   long dsc;
@@ -265,7 +265,7 @@ void llRcvRestorePh()
   if ( (dsc = _findfirst("*.seph", &ph_file)) == -1L)
      throw USER_EXCEPTION2(SE4044, "persistent heap file");
 
-  do 
+  do
   {
      if (strcmp(ph_file.name, ph_bu_file_name_wo_path.c_str()))
      	if (uDeleteFile(ph_file.name, __sys_call_error) == 0)
@@ -275,11 +275,11 @@ void llRcvRestorePh()
 
   } while(_findnext(dsc, &ph_file) == 0);
 
-    
+
   _findclose(dsc);
 
   if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-     throw USER_EXCEPTION(SE4604); 
+     throw USER_EXCEPTION(SE4604);
 #else
   DIR *dir;
   struct dirent* dent;
@@ -287,7 +287,7 @@ void llRcvRestorePh()
   dir = opendir(db_files_path);
 
   if (dir == NULL)
-     throw USER_EXCEPTION(SE4604); 
+     throw USER_EXCEPTION(SE4604);
 
   string ext;
   string is_seph;
@@ -303,13 +303,13 @@ void llRcvRestorePh()
      if (strcmp(dent->d_name, ph_bu_file_name_wo_path.c_str()))
      	if (uDeleteFile((string(db_files_path) + dent->d_name).c_str(), __sys_call_error) == 0)
         	throw USER_EXCEPTION(SE4041);
-	 
+
 	 RECOVERY_CRASH;
   }
 
   if (0 != closedir(dir))
      throw USER_EXCEPTION2(SE4054, db_files_path);
-#endif  
+#endif
 
   if (uCopyFile(ph_bu_file_name.c_str(), ph_cur_file_name.c_str(), false, __sys_call_error) == 0)
       throw USER_EXCEPTION(SE4306);
