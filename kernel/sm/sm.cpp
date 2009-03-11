@@ -9,6 +9,7 @@
 #include "sm/sm_functions.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/bufmgr/bm_core.h"
+#include "sm/bufmgr/bm_rcv.h"
 #include "common/u/usem.h"
 #include "common/u/uevent.h"
 #include "common/SSMMsg.h"
@@ -43,33 +44,33 @@ USemaphore wait_for_shutdown;
 
 
 #ifdef _WIN32
-BOOL SMCtrlHandler(DWORD fdwCtrlType) 
-{ 
-    switch (fdwCtrlType) 
-    { 
-        case CTRL_C_EVENT		: // Handle the CTRL+C signal. 
-        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit. 
-        case CTRL_BREAK_EVENT	: 
-        case CTRL_LOGOFF_EVENT	: 
-        case CTRL_SHUTDOWN_EVENT: 
-                                  Beep(1000, 1000); 
+BOOL SMCtrlHandler(DWORD fdwCtrlType)
+{
+    switch (fdwCtrlType)
+    {
+        case CTRL_C_EVENT		: // Handle the CTRL+C signal.
+        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit.
+        case CTRL_BREAK_EVENT	:
+        case CTRL_LOGOFF_EVENT	:
+        case CTRL_SHUTDOWN_EVENT:
+                                  Beep(1000, 1000);
 
                                   send_stop_sm_msg();
 
-                                  return TRUE; 
-        default					: return FALSE; 
-    } 
-} 
+                                  return TRUE;
+        default					: return FALSE;
+    }
+}
 #else
 #include <signal.h>
 
 void SMCtrlHandler(int signo)
 {
-	if (   signo == SIGINT 
+	if (   signo == SIGINT
         || signo == SIGQUIT
-        || signo == SIGTERM) 
+        || signo == SIGTERM)
 	{
-        //beep(); 
+        //beep();
         send_stop_sm_msg();
 	}
 }
@@ -77,7 +78,7 @@ void SMCtrlHandler(int signo)
 
 int sm_server_handler(void *arg)
 {
-    //d_printf1("query received\n");   
+    //d_printf1("query received\n");
 
     sm_msg_struct *msg = (sm_msg_struct*)arg;
 	bool isGiantLockObtained = false;
@@ -85,16 +86,16 @@ int sm_server_handler(void *arg)
     try {
 		ObtainGiantLock(); isGiantLockObtained = true;
         switch (msg->cmd)
-        {   
+        {
             case 1:  {//get identifier for transaction
                          msg->trid = get_transaction_id();
                          break;
                      }
             case 2:  {//give identifier for transaction
                          give_transaction_id(msg->trid);
-                         
+
                          if (msg->data.data[0]) // query has just finished; snapshot advancement might be possible
-  						 {	
+  						 {
   						 	if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0)
                          		throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
 						 }
@@ -108,7 +109,7 @@ int sm_server_handler(void *arg)
                                 if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
                          		     throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
                          }
-                         	
+
                          break;
                      }
 #ifdef LOCK_MGR_ON
@@ -125,19 +126,19 @@ int sm_server_handler(void *arg)
                          //d_printf1("trans table before lock operation\n");
                          //tr_table.print();
                          //d_printf1("\n");
-                         
+
 
                          if (msg->data.data[0] == 's') mode = lm_s;
                          else if (msg->data.data[0] == 'x') mode = lm_x;
                          else if (msg->data.data[0] == 'r') mode = lm_is;
                          else mode = lm_ix;
-                       
+
                          if (msg->data.data[1] == 'd') kind = LM_DOCUMENT;
                          else if (msg->data.data[1] == 'c') kind = LM_COLLECTION;
                          else if (msg->data.data[1] == 'i') kind = LM_INDEX;
                          else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
                          else kind = LM_DATABASE;
-  
+
                          lock_reply r = lm_table.lock(msg->trid, msg->sid, resource_id(string((msg->data.data)+2), kind), mode, LOCK_LONG, 0/*timeout is not important by now*/);
 
                          if (r == LOCK_OK) msg->data.data[0] = '1';
@@ -149,7 +150,7 @@ int sm_server_handler(void *arg)
                              if (tr_head == NULL) throw SYSTEM_EXCEPTION("Incorrect logic in SM's lock manager");
                              tr_head->tran->status = ROLLING_BACK_AFTER_DEADLOCK;
                          }
-                          
+
 //                         d_printf1("lock table after lock operation\n");
 //                         lm_table.print();
 //                         d_printf1("\n");
@@ -166,7 +167,7 @@ int sm_server_handler(void *arg)
 //                         d_printf1("case4 (release all locks)\n");
 //                         d_printf1("lock table before release locks operation\n");
 //                         lm_table.print();
-//                         d_printf1("\n");      
+//                         d_printf1("\n");
 
                          //d_printf1("trans table before release lock operation\n");
                          //tr_table.print();
@@ -184,12 +185,12 @@ int sm_server_handler(void *arg)
 
 
                          break;
-                     }  
+                     }
             case 5:  {
 //                         d_printf2("case 5(release lock on doc=%s)\n", (msg->data.data)+2);
 //                         d_printf1("lock table before release locks operation\n");
 //                         lm_table.print();
-//                         d_printf1("\n");      
+//                         d_printf1("\n");
 
                          //d_printf1("trans table before release lock operation\n");
                          //tr_table.print();
@@ -203,7 +204,7 @@ int sm_server_handler(void *arg)
                          else if (msg->data.data[1] == 'i') kind = LM_INDEX;
                          else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
                          else kind = LM_DATABASE;
-  
+
                          lock_reply r = lm_table.unlock(msg->trid, resource_id(string((msg->data.data)+2), kind));
 
 
@@ -218,7 +219,7 @@ int sm_server_handler(void *arg)
 
                          break;
 
-                     }        
+                     }
 #endif
 
             case 10: {
@@ -252,18 +253,18 @@ int sm_server_handler(void *arg)
                      }
             case 23: {
                          //d_printf1("query 23: bm_allocate_data_block\n");
-                         WuAllocateDataBlockExn(msg->sid, 
-                                                (xptr*)(&(msg->data.swap_data.ptr)), 
-                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
+                         WuAllocateDataBlockExn(msg->sid,
+                                                (xptr*)(&(msg->data.swap_data.ptr)),
+                                                (ramoffs*)(&(msg->data.swap_data.offs)),
                                                 (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
                          break;
                      }
             case 24: {
                          //d_printf1("query 24: bm_allocate_tmp_block\n");
-                         WuAllocateTempBlockExn(msg->sid, 
-                                               (xptr*)(&(msg->data.swap_data.ptr)), 
-                                               (ramoffs*)(&(msg->data.swap_data.offs)), 
+                         WuAllocateTempBlockExn(msg->sid,
+                                               (xptr*)(&(msg->data.swap_data.ptr)),
+                                               (ramoffs*)(&(msg->data.swap_data.offs)),
                                                (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
                          break;
@@ -277,9 +278,9 @@ int sm_server_handler(void *arg)
                      }
             case 26: {
                          //d_printf1("query 26: bm_get_block\n");
-                         WuGetBlockExn(msg->sid, 
-                                      *(xptr*)(&(msg->data.swap_data.ptr)), 
-                                      (ramoffs*)(&(msg->data.swap_data.offs)), 
+                         WuGetBlockExn(msg->sid,
+                                      *(xptr*)(&(msg->data.swap_data.ptr)),
+                                      (ramoffs*)(&(msg->data.swap_data.offs)),
                                       (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
                          break;
@@ -355,7 +356,7 @@ int sm_server_handler(void *arg)
 						 WuOnUnregisterTransactionExn(msg->sid);
                          bm_unregister_transaction(msg->sid, msg->trid);
 
-						 /* TODO: check if we can advance snapshots and probably advance */ 
+						 /* TODO: check if we can advance snapshots and probably advance */
 /*
 						 {
 							static int cntr=0;
@@ -368,17 +369,17 @@ int sm_server_handler(void *arg)
                      }
 			case 37:
                      {
-						 /* create version for the block */ 
-                         WuCreateBlockVersionExn(msg->sid, 
-                                      *(xptr*)(&(msg->data.swap_data.ptr)), 
-                                      (ramoffs*)(&(msg->data.swap_data.offs)), 
+						 /* create version for the block */
+                         WuCreateBlockVersionExn(msg->sid,
+                                      *(xptr*)(&(msg->data.swap_data.ptr)),
+                                      (ramoffs*)(&(msg->data.swap_data.offs)),
                                       (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
                          break;
                      }
 			case 38:
                      {
-						 /* rollback or commit notification */ 
+						 /* rollback or commit notification */
 						 bool isRollback = msg->data.data[0];
 						 if (isRollback)
 						 {
@@ -393,26 +394,26 @@ int sm_server_handler(void *arg)
                      }
 			case 39:
                      {
-						 /* 
+						 /*
 						  * hot-backup request
 						  * important note: sm doesn't check consistency of requests. it presumes correct sequence of calls.
 						  * for now such checkings are performed in gov process, so we should be ok with this.
 						  */
 
 						 if (msg->data.hb_struct.state == HB_START)
-							msg->data.hb_struct.state =	hbProcessStartRequest(msg->data.hb_struct.state, 
+							msg->data.hb_struct.state =	hbProcessStartRequest(msg->data.hb_struct.state,
 																			  msg->data.hb_struct.is_checkp,
 																			  msg->data.hb_struct.incr_state);
 
 						 else if (msg->data.hb_struct.state == HB_ARCHIVELOG)
 						 	msg->data.hb_struct.state =	hbProcessLogArchRequest(&(msg->data.hb_struct.lnumber));
-						 
+
 						 else if (msg->data.hb_struct.state == HB_GETPERSTS)
 						 	msg->data.hb_struct.state =	hbProcessGetTsRequest(&(msg->data.hb_struct.ts));
 
 						 else if (msg->data.hb_struct.state == HB_GETPREVLOG)
 						 	msg->data.hb_struct.state =	hbProcessGetPrevLogRequest(&(msg->data.hb_struct.lnumber));
-						 
+
 						 else if (msg->data.hb_struct.state == HB_END)
 						 	msg->data.hb_struct.state =	hbProcessEndRequest();
 
@@ -487,7 +488,7 @@ int main(int argc, char **argv)
     program_name_argv_0 = argv[0];
     pping_client *ppc = NULL;
     char buf[1024];
-    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup() 
+    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup()
 
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
       so we must block SIGPIPE with sigignore.*/
@@ -524,7 +525,7 @@ int main(int argc, char **argv)
 
 		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
 		SetGlobalNames();
-        
+
         open_gov_shm();
 
         db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
@@ -532,11 +533,11 @@ int main(int argc, char **argv)
         /* There is no such database? */
         if (db_id == -1)
             throw USER_EXCEPTION2(SE4200, db_name);
-        
+
         /* Check if databae is already running */
         if(is_database_running(db_id))
             throw USER_EXCEPTION2(SE4204, db_name);
-        
+
         SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
 
         SetGlobalNamesDB(db_id);
@@ -553,7 +554,7 @@ int main(int argc, char **argv)
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
         InitGiantLock(); atexit(DestroyGiantLock);
-        
+
         ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_SM);
         ppc->startup(ppc_ex);
 
@@ -567,8 +568,8 @@ int main(int argc, char **argv)
 
         if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) == 0)
         {
-            /* We were started by command "se_sm -background-mode off" 
-             * from "se_sm -background-mode on". Perform standard routines 
+            /* We were started by command "se_sm -background-mode off"
+             * from "se_sm -background-mode on". Perform standard routines
              * to run the process in the background mode.
              */
 #ifdef _WIN32
@@ -579,7 +580,7 @@ int main(int argc, char **argv)
         }
 
         /* Setup default values from config file */
-        setup_sm_globals(GOV_CONFIG_GLOBAL_PTR); 
+        setup_sm_globals(GOV_CONFIG_GLOBAL_PTR);
 
         recover_database_by_physical_and_logical_log(db_id);
 
@@ -593,6 +594,7 @@ int main(int argc, char **argv)
             command_line += " -bufs-num " + int2string(__bufs_num__);
             command_line += " -max-trs-num " + int2string(__max_trs_num__) + " ";
             command_line += " -max-log-files " + int2string(__max_log_files__) + " ";
+            command_line += " -tmp-file-init-size " + int2string(__tmp_file_initial_size__) + " ";
 
             char buf_uc[100];
             sprintf(buf_uc, "%.2f", __upd_crt__);
@@ -610,7 +612,7 @@ int main(int argc, char **argv)
             USemaphore started_sem;
             if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY, NULL, __sys_call_error))
                 throw USER_EXCEPTION(SE4205);
-           
+
             if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
                 throw USER_EXCEPTION(SE4205);
 
@@ -627,11 +629,11 @@ int main(int argc, char **argv)
             delete ppc;
             ppc = NULL;
 
-            if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) 
+            if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR)
                 throw USER_EXCEPTION(SE3000);
 
             close_gov_shm();
-           
+
             fprintf(res_os, "SM has been started in the background mode\n");
             fflush(res_os);
             return 0;
@@ -673,7 +675,7 @@ int main(int argc, char **argv)
 
         //enable checkpoints
         llEnableCheckpoints();
-        
+
         //cleanup temporary files
         if(uCleanupUniqueFileStructs(db_files_path, __sys_call_error) == 1)
             elog(EL_LOG,  ("Temporary files have been deleted"));
@@ -689,7 +691,7 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("Buffer manager has been started"));
 
 #ifdef _WIN32
-        BOOL fSuccess; 
+        BOOL fSuccess;
         fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) SMCtrlHandler, TRUE);
         if (!fSuccess) throw USER_EXCEPTION(SE4207);
 #else
@@ -705,8 +707,8 @@ int main(int argc, char **argv)
             // Starting SSMMsg server
             d_printf1("Starting SSMMsg...");
 
-            ssmmsg = new SSMMsg(SSMMsg::Server, 
-                                sizeof (sm_msg_struct), 
+            ssmmsg = new SSMMsg(SSMMsg::Server,
+                                sizeof (sm_msg_struct),
                                 CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
                                 SM_NUMBER_OF_SERVER_THREADS,
                                 U_INFINITE);
@@ -792,7 +794,7 @@ int main(int argc, char **argv)
 #endif
 
         event_logger_release();
-   
+
         ppc->shutdown();
         delete ppc;
         ppc = NULL;
@@ -800,7 +802,7 @@ int main(int argc, char **argv)
         close_gov_shm();
 
         return 0;
- 
+
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
@@ -821,6 +823,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
 {
   try{
     char buf[1024];
+    bool is_stopped_correctly;
+
     if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) != 0)
     {//I am in running sm process
 
@@ -837,11 +841,11 @@ void recover_database_by_physical_and_logical_log(int db_id)
        init_checkpoint_sems();
        elog(EL_LOG, ("init_checkpoint_sems done"));
 
+       elog(EL_LOG, ("Starting database recovery or hot-backup restoration..."));
        fprintf(res_os, "Starting database recovery or hot-backup restoration...\n");
-       bool is_stopped_correctly;// = ll_logical_log_startup(sedna_db_version/*out parameter*/);
        llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, true);
+       elog(EL_LOG, ("logical log is started"));
 
-       elog(EL_LOG, ("Logical log is started"));
        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
        {
           release_checkpoint_sems();
@@ -850,13 +854,13 @@ void recover_database_by_physical_and_logical_log(int db_id)
              throw USER_EXCEPTION2(SE4212, "Possibly your Sedna installation is newer than database files. You should use export utility (se_exp) to convert database into the latest format. See documentation for details.");
        }
 
-       d_printf1("Logical log has been started successfully\n");
+       d_printf1("logical log has been started successfully\n");
 
        // recover persistent heap
-       if (!is_stopped_correctly) 
+       if (!is_stopped_correctly)
        {
-       		llRcvRestorePh();
-       		elog(EL_LOG, ("Persistent heap has been recovered"));
+           llRcvRestorePh();
+           elog(EL_LOG, ("Persistent heap has been recovered"));
        }
 
        //create checkpoint thread
@@ -867,11 +871,11 @@ void recover_database_by_physical_and_logical_log(int db_id)
 	   string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
        if (!uIsFileExist(tmp_file_name.c_str(), __sys_call_error))
        {
-		    USECURITY_ATTRIBUTES *sa;	
+		    USECURITY_ATTRIBUTES *sa;
 		    UFile tmp_file_handle;
 
     	    if (uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) !=0 ) throw USER_EXCEPTION(SE3060);
-    	  	
+
     	  	if ((tmp_file_handle = uCreateFile(tmp_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error)) == U_INVALID_FD)
 	        	throw USER_EXCEPTION(SE4301);
 
@@ -887,16 +891,20 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        //recover data base by physical log
        LSN last_checkpoint_lsn = LFS_INVALID_LSN;
-       if (!is_stopped_correctly) 
+       if (!is_stopped_correctly)
        {
        		last_checkpoint_lsn = llRecoverPhysicalState();
        		elog(EL_LOG, ("Database has been recovered by physical log successfully"));
        }
 
+       // recover tmp file
+       // we recreate it on usual start also since we want to reset its initial size
+       bm_rcv_tmp_file();
+
        //disable checkpoints
        llDisableCheckpoints();
        elog(EL_LOG, ("Checkpoints are disabled"));
-        
+
 #ifdef LOCK_MGR_ON
        lm_table.init_lock_table();
        elog(EL_LOG, ("lm_table.init_lock_table done"));
@@ -906,8 +914,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
        // Starting SSMMsg server
        d_printf1("Starting SSMMsg...");
 
-       ssmmsg = new SSMMsg(SSMMsg::Server, 
-                           sizeof (sm_msg_struct), 
+       ssmmsg = new SSMMsg(SSMMsg::Server,
+                           sizeof (sm_msg_struct),
                            CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
                            SM_NUMBER_OF_SERVER_THREADS,
                            U_INFINITE);
@@ -920,12 +928,11 @@ void recover_database_by_physical_and_logical_log(int db_id)
        d_printf1("OK\n");
 
        WuSetTimestamp(llGetPersTimestamp() + 1);
-//       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
        WuInitExn(0,0,llGetPersTimestamp()); // turn on versioning mechanism on recovery
        elog(EL_LOG, ("Wu is initialized"));
 
        //recover database by logical log
-       if (!is_stopped_correctly) 
+       if (!is_stopped_correctly)
        {
        		execute_recovery_by_logical_log_process(last_checkpoint_lsn);
 		    elog(EL_LOG, ("Database has been recovered by logical log successfully"));
@@ -969,12 +976,12 @@ void recover_database_by_physical_and_logical_log(int db_id)
 #endif
        elog(EL_LOG, ("Recovery procedure has been finished successfully"));
        event_logger_release();
-    
+
        is_recovery_mode = false;
     }
   } catch (SednaUserException &e) {
        fprintf(stderr, "%s\n", e.what());
-       throw USER_EXCEPTION(SE4205);       
+       throw USER_EXCEPTION(SE4205);
   } catch (SednaException &e) {
         throw;
   } catch (ANY_SE_EXCEPTION) {

@@ -11,34 +11,35 @@
 #include "common/u/ushm.h"
 #include "common/config.h"
 
-void   
+void
 open_gov_shm  ();
 
-int    
+int
 close_gov_shm ();
 
-void   
+void
 send_command_to_gov(int port_number, int cmd);
 
-int    
+int
 get_db_id_by_name(gov_config_struct* cfg, const char* db_name);
 
-int    
+int
 get_next_free_db_id(gov_config_struct* cfg);
 
-void   
+void
 erase_database_cell_in_gov_shm(int db_id, gov_config_struct* cfg);
 
-void   
+void
 fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                               int db_id,
-                              const char* db_name, 
+                              const char* db_name,
                               int bufs_num,
                               int max_trs_num,
                               double upd_crt,
-                              int max_log_files);
+                              int max_log_files,
+                              int tmp_file_initial_size);
 
-void   
+void
 get_sednaconf_values(gov_header_struct* cfg);
 
 

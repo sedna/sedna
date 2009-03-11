@@ -30,7 +30,7 @@
 using namespace std;
 
 
-void create_db(__int64 data_file_max_size, 
+void create_db(__int64 data_file_max_size,
                __int64 tmp_file_max_size,
                int data_file_extending_portion,		// in PAGE_SIZE
                int tmp_file_extending_portion,		// in PAGE_SIZE
@@ -38,9 +38,9 @@ void create_db(__int64 data_file_max_size,
               )
 {
     // create files
-    USECURITY_ATTRIBUTES *sa;	
+    USECURITY_ATTRIBUTES *sa;
     if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
-    
+
     string data_file_name = string(db_files_path) + string(db_name) + ".sedata";
     data_file_handler = uCreateFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
@@ -55,7 +55,7 @@ void create_db(__int64 data_file_max_size,
     UFile ph_file_handler = uCreateFile(ph_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (ph_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
-   
+
     // close created files
     if (uCloseFile(data_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
@@ -75,26 +75,26 @@ void create_db(__int64 data_file_max_size,
     open_global_memory_mapping(SE4400);
     get_vmm_region_values();
     close_global_memory_mapping();
-   
+
     //this call is to debug transactions
     CREATE_DEBUG_LOG(db_name);
 
     // create and initialize pers heap
-    if (0 != pers_create(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, 
+    if (0 != pers_create(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME,
                          PH_ADDRESS_SPACE_START_ADDR, pers_heap_size, sa))
         throw USER_EXCEPTION(SE4302);
 
-    if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, 
+    if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME,
                   PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR) != 0)
         throw USER_EXCEPTION(SE4302);
 
     string ph_new_file_name = string(db_files_path) + string(db_name) + ".65536.seph";
-    
+
 	if (uCopyFile(ph_file_name.c_str(), ph_new_file_name.c_str(), false, __sys_call_error) == 0)
-      throw USER_EXCEPTION(SE4306);    
-    
+      throw USER_EXCEPTION(SE4306);
+
     persistent_db_data* pdb = (persistent_db_data*)pers_malloc(sizeof(persistent_db_data));
-    
+
     if (pdb == NULL)
         throw USER_EXCEPTION(SE4303);
 
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     int tmp_file_initial_size = 1600;			// = 10Mb (in pages)
     int persistent_heap_size = 0xA00000;		// = 10Mb
     uint64_t log_file_size = -1;                // llCreate checks this parameter
-    
+
     pping_client *ppc = NULL;
     SednaUserException ppc_ex = USER_EXCEPTION(SE4400);
 
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
         {
            print_cdb_usage();
            return 0;
-        } 
+        }
         if( _cdb_version_ == 1)
         {
            print_version_and_copyright("Sedna Create Data Base Utility");
@@ -264,7 +264,8 @@ int main(int argc, char **argv)
                                       bufs_num,
                                       max_trs_num,
                                       upd_crt,
-                                      max_log_files);
+                                      max_log_files,
+                                      tmp_file_initial_size);
 
         SetGlobalNamesDB(db_id);
 
@@ -273,18 +274,19 @@ int main(int argc, char **argv)
 
         try {
              if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
-             ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_CDB);               
+             ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_CDB);
              ppc->startup(ppc_ex);
 
              create_cfg_file(db_name,
                              max_trs_num,
                              bufs_num,
                              upd_crt,
-                             max_log_files);
+                             max_log_files,
+                             tmp_file_initial_size * PAGE_SIZE / 0x100000 /* in MBs */);
 
              create_data_directory();
 
-             create_db(data_file_max_size, 
+             create_db(data_file_max_size,
                        tmp_file_max_size,
                        data_file_extending_portion,
                        tmp_file_extending_portion,
@@ -293,13 +295,13 @@ int main(int argc, char **argv)
              d_printf1("create_db call successful\n");
 
              llCreateNew(db_files_path, db_name, log_file_size);
-             
+
              init_checkpoint_sems();
 
 		     bool is_stopped_correctly;
 	   		 llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, false);
              d_printf1("logical_log_startup call successful\n");
-             
+
              bm_startup();
              is_bm_started = true;
              d_printf1("bm_startup call successful\n");
@@ -330,11 +332,11 @@ int main(int argc, char **argv)
              ppc->shutdown();
              delete ppc;
              ppc = NULL;
-                          
+
              close_gov_shm();
 
              if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
-             
+
              fprintf(res_os, "The database '%s' has been created successfully\n", db_name);
              fflush(res_os);
 
@@ -344,17 +346,17 @@ int main(int argc, char **argv)
              if (ppc) { ppc->shutdown(); ppc = NULL; delete ppc; }
              if (is_bm_started) bm_shutdown();
              cleanup_db_and_check_result(db_name);
-             uSocketCleanup(__sys_call_error);  
+             uSocketCleanup(__sys_call_error);
              erase_database_cell_in_gov_shm(db_id, GOV_CONFIG_GLOBAL_PTR);
              close_gov_shm();
              return 1;
         } catch (SednaException &e) {
              if (is_bm_started) bm_shutdown();
-             cleanup_db_and_check_result(db_name);            
+             cleanup_db_and_check_result(db_name);
              sedna_soft_fault(e, EL_CDB);
         } catch (ANY_SE_EXCEPTION) {
              if (is_bm_started) bm_shutdown();
-             cleanup_db_and_check_result(db_name);            
+             cleanup_db_and_check_result(db_name);
              sedna_soft_fault(EL_CDB);
         }
 

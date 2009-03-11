@@ -47,6 +47,9 @@ extern char db_files_path[];
 
 extern int sedna_db_version;
 
+// initial size of .setmp file
+extern int tmp_file_initial_size;
+
 void setup_sm_globals(gov_config_struct* cfg);
 
 void register_sm_on_gov();
@@ -59,7 +62,7 @@ int sm_server_handler(void *arg);
 extern int sm_help;
 extern int sm_version;
 
-extern int background_mode; 
+extern int background_mode;
 extern int __bufs_num__;
 
 // maximum number of log files until truncate
@@ -71,6 +74,8 @@ extern double __upd_crt__;
 // maximum number of log files until truncate
 extern int __max_log_files__;
 
+// initial size of .setmp file
+extern int __tmp_file_initial_size__;
 
 struct CfgParserContext
 {

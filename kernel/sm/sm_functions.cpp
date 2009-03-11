@@ -21,7 +21,7 @@ using namespace std;
 
 void startElement_sm_cfg(void *cnt, const char *name, const char **atts)
 {
- 
+
   (((CfgParserContext*)cnt)->tag_name).assign(name);
   (((CfgParserContext*)cnt)->content).assign("");
 }
@@ -33,7 +33,7 @@ void endElement_sm_cfg(void *cnt, const char *name)
   string _content_ = ((CfgParserContext*)cnt)->content;
 
   if ( _tag_name_ == "bufs_num")
-  {  
+  {
      bufs_num = atoi(_content_.c_str());
   }
 
@@ -51,10 +51,15 @@ void endElement_sm_cfg(void *cnt, const char *name)
   {
      max_log_files = atoi(_content_.c_str());
   }
-  
+
+  if ( _tag_name_ == "tmp_file_initial_size" )
+  {
+     tmp_file_initial_size = atoi(_content_.c_str()) * 0x100000 / PAGE_SIZE; /* MBs -> blocks */;
+  }
+
   ((CfgParserContext*)cnt)->tag_name = "";
   ((CfgParserContext*)cnt)->content = "";
-  
+
 }
 
 
@@ -62,11 +67,11 @@ void endElement_sm_cfg(void *cnt, const char *name)
 void characterData_sm_cfg(void *cnt, const XML_Char *s, int len)
 {
 
-  (((CfgParserContext*)cnt)->content).append(s, len);     
+  (((CfgParserContext*)cnt)->content).append(s, len);
 }
 
 
-void 
+void
 send_stop_sm_msg()
 {
     int port_number = GOV_HEADER_GLOBAL_PTR->lstnr_port_number;
@@ -76,7 +81,7 @@ send_stop_sm_msg()
     send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
 }
 
-bool 
+bool
 is_database_running(int database_id)
 {
     return GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].is_stop != -1;

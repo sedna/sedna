@@ -36,10 +36,10 @@ void bm_rcv_change(const xptr& xaddr, const void *p, int size, __int64 file_size
 {
     __int64 _dsk_offs;
 
-    if (IS_DATA_BLOCK(xaddr)) 
+    if (IS_DATA_BLOCK(xaddr))
     {
         _dsk_offs = ABS_DATA_OFFSET(xaddr) + (__int64)PAGE_SIZE;
-        
+
         if (file_size != 0)
             if (!((__int64)PAGE_SIZE <= _dsk_offs && _dsk_offs <= file_size - (__int64)PAGE_SIZE))
                 throw SYSTEM_EXCEPTION("Offset is out of range");
@@ -95,31 +95,14 @@ void bm_rcv_master_block(const void* p)
 void bm_rcv_tmp_file()
 {
     // truncate tmp file up to zero size
-    // open tmp file
-//    string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
-//    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
-//    if (tmp_file_handler == U_INVALID_FD)
-//        throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
-
-    if (uSetEndOfFile(tmp_file_handler, (__int64)0, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetEndOfFile(tmp_file_handler, (uint64_t)0, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot truncate tmp file", false);
 
-//    if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
-//        throw USER_EXCEPTION2(SE4043, tmp_file_name.c_str());
-
-    // reform tmp file
-//    bm_startup();
-//    d_printf1("sm_startup call successful\n");
-
-    __int64 tmp_file_cur_size = mb->tmp_file_cur_size / (__int64)PAGE_SIZE;
-    mb->tmp_file_cur_size = (__int64)0;
+    mb->tmp_file_cur_size = (uint64_t)0;
 	mb->free_tmp_blocks = XNULL;
 
-    extend_tmp_file (tmp_file_cur_size);
+    extend_tmp_file(tmp_file_initial_size);
     d_printf1("extend_tmp_file call successful\n");
-
-//    bm_shutdown();
-//    d_printf1("sm_shutdown call successful\n");
 }
 
 void bm_rcv_ph(bool ph_bu_to_ph)

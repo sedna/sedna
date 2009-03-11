@@ -3,7 +3,7 @@
  * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  *
  * General service for logical log. Synchronization primitives are provided here, which should be used to ensure thread-safe
- * behaviour. Remeber, that lfsStorage is already thread-safe. 
+ * behaviour. Remeber, that lfsStorage is already thread-safe.
  *
  * Thread_safe: llActivateCheckpoint(), llEnableCheckpoints(), llDisableCheckpoints()
  *				llGetCheckpointActiveFlag(), llOnCheckpointFinish().
@@ -75,9 +75,7 @@ static void _llProcessError(const char *file, const char *func, int line, const 
 
 	err_msg = string(llErrorMsg);
 
-#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 	err_msg += " - (" + string(file) + ':' + string(func) + ':' + int2string(line) + ')';
-#endif
 
 	throw SYSTEM_EXCEPTION(err_msg.c_str());
 }
@@ -95,19 +93,19 @@ int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_fil
 	fileHead.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
 	fileHead.is_archive = false;
 	fileHead.next_arch_file = 0;
-	
+
 	// tune log_file_size parameter let's take sectorsize + 1Mb as minimum
 	if (log_file_size > 0 && log_file_size < LL_WRITEBUF_SIZE + 512)
 		log_file_size = LL_WRITEBUF_SIZE + 512;
 
-	lfsCreateNew(db_files_path, db_name, "llog", 
-		     (log_file_size == -1) ? LL_FILE_PORTION_SIZE : log_file_size, 
+	lfsCreateNew(db_files_path, db_name, "llog",
+		     (log_file_size == -1) ? LL_FILE_PORTION_SIZE : log_file_size,
 		      &fileHead, sizeof(llFileHead));
 
 	return 0;
 }
 
-// Insert record in logical log. 
+// Insert record in logical log.
 LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 {
 	RECOVERY_CRASH;
@@ -130,9 +128,9 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 
 	memcpy(rec_all, &log_head, sizeof(llRecordHead));
 	memcpy((char *)rec_all + sizeof(llRecordHead), RecBuf, RecLen);
-  
+
 	ret_lsn = lfsAppendRecord(rec_all, RecLen + sizeof(llRecordHead));
-	
+
 	free(rec_all);
 
 	// record belongs to some transaction
@@ -141,7 +139,7 @@ LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
 		llInfo->llTransInfoTable[trid].last_lsn = ret_lsn;
 
 		// first record for this trid
-		if (llInfo->llTransInfoTable[trid].first_lsn == LFS_INVALID_LSN) 
+		if (llInfo->llTransInfoTable[trid].first_lsn == LFS_INVALID_LSN)
 			llInfo->llTransInfoTable[trid].first_lsn = ret_lsn;
 
 		llInfo->llTransInfoTable[trid].num_of_log_records += 1;					 // debug info
@@ -187,10 +185,10 @@ static LSN llLogHotBackup()
 {
 	RECOVERY_CRASH;
 
-	char *tmp_rec;  
+	char *tmp_rec;
 	int rec_len;
 	LSN res;
-    
+
 	rec_len = sizeof(char) + sizeof(TIMESTAMP) + 2 * sizeof(LSN);
 	if ((tmp_rec = (char *)malloc(rec_len)) == NULL)
 		throw SYSTEM_EXCEPTION("Cannot allocate memory");
@@ -204,7 +202,7 @@ static LSN llLogHotBackup()
 
 	memcpy(tmp_rec + offs, &(llInfo->ts), sizeof(TIMESTAMP));
 	offs += sizeof(TIMESTAMP);
-	
+
 	memcpy(tmp_rec + offs, &(llInfo->checkpoint_lsn), sizeof(LSN));
 	offs += sizeof(LSN);
 
@@ -236,7 +234,7 @@ static void llRetrieveHbRec(void *RecBuf)
 }
 
 // Inits logical log.
-int llInit(const char *db_files_path, const char *db_name, int max_log_files_param, 
+int llInit(const char *db_files_path, const char *db_name, int max_log_files_param,
 	   int *sedna_db_version, bool *exit_status, int rcv_active)
 {
 	lfsInit(db_files_path, db_name, "llog", LL_WRITEBUF_SIZE, LL_READBUF_SIZE);
@@ -244,15 +242,15 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 	// sync semaphore
 	if (USemaphoreCreate(&SyncSem, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot create semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
-    
+
     // to wait for checkpoint to finish
     if (USemaphoreCreate(&WaitCheckpoint, 0, 1, SEDNA_CHECKPOINT_FINISHED_SEM, NULL, __sys_call_error) != 0)
         LL_ERROR("internal ll error: cannot create semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
-	
+
     // event to start checkpoint procedure
-	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
+	if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
-  
+
 	llFileHead file_head;
 	lfsGetHeader(&file_head, sizeof(llFileHead));
 
@@ -278,7 +276,7 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 	llInfo->min_rcv_lsn = LFS_INVALID_LSN;
 	llInfo->checkpoint_lsn = file_head.checkpoint_lsn;
 	llInfo->last_chain_lsn = file_head.last_chain_lsn;
-   
+
 	llInfo->ts = file_head.ts;
 
 	llInfo->hotbackup_needed = file_head.is_archive;
@@ -293,8 +291,8 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 
 	for (int i = 0; i < CHARISMA_MAX_TRNS_NUMBER; i++)
 	{
-		llInfo->llTransInfoTable[i].last_lsn = LFS_INVALID_LSN; 
-		llInfo->llTransInfoTable[i].first_lsn = LFS_INVALID_LSN; 
+		llInfo->llTransInfoTable[i].last_lsn = LFS_INVALID_LSN;
+		llInfo->llTransInfoTable[i].first_lsn = LFS_INVALID_LSN;
 		llInfo->llTransInfoTable[i].num_of_log_records = 0;
 		llInfo->llTransInfoTable[i].last_len = 0;
 	}
@@ -302,7 +300,7 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 	llInfo->checkpoint_on   = false; // checkpoint is currently inactive
 	llInfo->checkpoint_flag = false; // checkpoints are initially disabled
 
-	file_head.is_stopped_successfully = false;        
+	file_head.is_stopped_successfully = false;
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));  // since this moment any crash will lead to recovery
 
@@ -314,11 +312,13 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 	// print some message about consistency of the database
 	if (rcv_active)
 		if (!(*exit_status))
-			fprintf(res_os, (llInfo->hotbackup_needed) ? "Hot-backup recovery in progress...\n" : 
+			fprintf(res_os, (llInfo->hotbackup_needed) ? "Hot-backup recovery in progress...\n" :
 														 "Database recovery in progress...\n");
 		else
+        {
+            elog(EL_LOG, ("Database is in consistent state. Starting..."));
 			fprintf(res_os, "Database is in consistent state. Starting...\n");
-
+        }
 	return 0;
 }
 
@@ -332,7 +332,7 @@ int llRelease()
 	file_head.is_archive = false;                    // hot-backup recovery won't be needed
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));
-  
+
 	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
@@ -342,13 +342,13 @@ int llRelease()
 	if (USemaphoreRelease(SyncSem, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot release semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
+	if (UEventClose(&CheckpointEvent, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
-    
+
     // to wait for checkpoint to finish
     if (USemaphoreRelease(WaitCheckpoint, __sys_call_error) != 0)
         LL_ERROR("internal ll error: cannot release semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
-	
+
     lfsRelease();
 
 	free(ReadBuf);
@@ -367,8 +367,8 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
     // to wait for checkpoint to finish
     if (USemaphoreOpen(&WaitCheckpoint, SEDNA_CHECKPOINT_FINISHED_SEM, __sys_call_error) != 0)
         LL_ERROR("internal ll error: cannot open semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
-	
-    if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
+
+    if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	if (uOpenShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, sizeof(llGlobalInfo), __sys_call_error) != 0)
@@ -402,8 +402,8 @@ int llClose()
     // to wait for checkpoint to finish
     if (USemaphoreClose(WaitCheckpoint, __sys_call_error) != 0)
         LL_ERROR("internal ll error: cannot close semaphore: SEDNA_CHECKPOINT_FINISHED_SEM");
-    
-    if (UEventClose(&CheckpointEvent, __sys_call_error) != 0) 
+
+    if (UEventClose(&CheckpointEvent, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot close event: SNAPSHOT_CHECKPOINT_EVENT");
 
 	lfsDisconnect();
@@ -450,7 +450,7 @@ static int _llFlushHeader()
 	llFileHead file_head;
 
 	lfsGetHeader(&file_head, sizeof(llFileHead));
-	
+
 	// in case of hot-backup recovery we need to store last_chain_lsn
 	// since physical records are written to log
 	if (recovery_active && llInfo->hotbackup_needed && !llInfo->checkpoint_on)
@@ -460,9 +460,9 @@ static int _llFlushHeader()
 	}
 
 	file_head.checkpoint_lsn = llInfo->checkpoint_lsn;
-	
+
 	file_head.next_arch_file = llInfo->next_arch_file;
-    
+
 	file_head.last_chain_lsn = llInfo->last_chain_lsn;
 
 	file_head.ts = llInfo->ts;
@@ -476,7 +476,7 @@ static int _llFlushHeader()
 int llFlushTransRecs(transaction_id trid)
 {
 	RECOVERY_CRASH;
-	
+
 	assert(trid >= 0 && trid < CHARISMA_MAX_TRNS_NUMBER);
 
 	// no sychronization needed since we access trid-specific records
@@ -493,7 +493,7 @@ int llFlushAll()
 
 	llFileHead file_head;
 
-	lfsFlushAll();  
+	lfsFlushAll();
 
 	_llFlushHeader(); // last_chain_lsn is valid in llInfo
 
@@ -549,7 +549,7 @@ int llTruncateLog()
 int llActivateCheckpoint()
 {
     int res;
-    
+
 	llLock();
 
 	// we are already making checkpoint or checkpoint is disabled
@@ -558,19 +558,19 @@ int llActivateCheckpoint()
     	llUnlock();
     	return -2;
     }
-        
+
     llInfo->checkpoint_on = true;
 
     if (UEventSet(&CheckpointEvent,  __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot set checkpoint event");
-    
+
     // semaphore may be already down if last checkpoint was initiated by transaction
     // if checkpoint was initiated by llNeedCheckpoint logic then it'd be upped
     res = USemaphoreDownTimeout(WaitCheckpoint, 1, __sys_call_error);
-        
+
     if (res != 0 && res != 2) // normal down (0) or timeout (2)
          LL_ERROR("internal ll error: cannot down wait for checkpoint semaphore");
-    
+
 	llUnlock();
 
 	return 0;
@@ -582,7 +582,7 @@ int llEnableCheckpoints()
 	llLock();
 
 	llInfo->checkpoint_flag = true;
-  
+
 	llUnlock();
 
 	return 0;
@@ -594,12 +594,12 @@ int llDisableCheckpoints()
 	llLock();
 
 	llInfo->checkpoint_flag = false;
-  
+
 	llUnlock();
 
 	return 0;
 }
- 
+
 // Is checkpoint in progress now?
 bool llGetCheckpointActiveFlag()
 {
@@ -608,7 +608,7 @@ bool llGetCheckpointActiveFlag()
   llLock();
 
   flag = llInfo->checkpoint_on;
-  
+
   llUnlock();
 
   return flag;
@@ -626,7 +626,7 @@ void *llGetRecordFromDisc(LSN *RecLsn)
 	if (lfsGetRecord(RecLsn, ReadBuf, sizeof(llRecordHead)) == 0)
 	{
 		*RecLsn = LFS_INVALID_LSN;
-		return NULL;	
+		return NULL;
 	}
 
 	log_head = (llRecordHead *)ReadBuf;
@@ -644,7 +644,7 @@ void *llGetRecordFromDisc(LSN *RecLsn)
 	if (lfsGetRecord(RecLsn, ReadBuf, rec_len) == 0)
 	{
 		*RecLsn = LFS_INVALID_LSN;
-		return NULL;	
+		return NULL;
 	}
 
 	return (char *)ReadBuf + sizeof(llRecordHead);
@@ -657,7 +657,7 @@ LSN llGetFirstTranLsn(transaction_id trid)
 }
 
 // Should be called when checkpoint is finished.
-// Returns: 
+// Returns:
 //     -1 - error; 0 - all ok
 int llOnCheckpointFinish()
 {
@@ -666,11 +666,11 @@ int llOnCheckpointFinish()
     if (llInfo->checkpoint_on)
     {
         llInfo->checkpoint_on = false;
-  
+
         if (USemaphoreUp(WaitCheckpoint, __sys_call_error) != 0)
             LL_ERROR("internal ll error: cannot up checkpoint-wait semaphore");
     }
-        
+
     llUnlock();
 
 	return 0;
@@ -682,7 +682,7 @@ int llOnCheckpointWait()
 {
     if (USemaphoreDown(WaitCheckpoint, __sys_call_error) != 0)
         LL_ERROR("internal ll error: cannot down checkpoint-wait semaphore");
-    
+
     return 0;
 }
 
@@ -694,7 +694,7 @@ TIMESTAMP llGetPersTimestamp()
 	llLock();
 
 	ts = llInfo->ts;
-  
+
 	llUnlock();
 
 	return ts;
@@ -705,7 +705,7 @@ int llGetRecordSize(void *Rec, int len)
 {
 	llRecordHead *RecHead;
 
-	if (Rec == NULL) 
+	if (Rec == NULL)
 		return sizeof(llRecordHead) + len;
 
 	RecHead = (llRecordHead *)((char *)Rec - sizeof(llRecordHead));
@@ -765,10 +765,10 @@ uint64_t llLogArchive()
 	llLock();
 
 	lfsGetHeader(&file_head, sizeof(llFileHead));
-	
+
 	file_head.is_archive = true;
 	file_head.next_arch_file = 0;
-	
+
 	if (llInfo->next_arch_file == 0 && llNeedHbRecord) // increment mode off
 	{
 		file_head.hb_lsn = hb_lsn;
@@ -783,7 +783,7 @@ uint64_t llLogArchive()
 		file_head.hb_lsn = hb_lsn;
 		lfsWriteHeader(&file_head, sizeof(llFileHead));
 	    llNeedHbRecord = false;
-	}		
+	}
 
 	llUnlock();
 
@@ -807,4 +807,4 @@ bool llNeedCheckpoint()
 {
 	// this call is safe because lfsGetNumberOfFiles() is thread-safe
 	return lfsGetNumberOfFiles() > LL_MAX_LOG_FILES;
-}			
+}
