@@ -482,13 +482,6 @@ extend_file_helper(UFile fileHandle,
                    __int64 offsAdjustment,
                    bool initializeData)
 {
-    /* Extend the file. */ 
-    if (!uSetEndOfFile(
-            fileHandle, 
-            fileSizeNew, 
-            U_FILE_BEGIN, 
-            __sys_call_error)) throw USER_EXCEPTION(SE1013);
-
     /* Does it make sense to initialize every block header? 
        I doubt since when a block is allocated it is never read back from HDD,
        instead header is initialized when block is put to buffer. */ 
@@ -579,8 +572,15 @@ void extend_data_file(int extend_portion) throw (SednaException)
     
 	llLogDecrease(fileSizeCurrent);
     
+        /* Extend the file. */ 
+    if (!uSetEndOfFile(
+            data_file_handler, 
+            fileSizeNew, 
+            U_FILE_BEGIN, 
+            __sys_call_error)) throw USER_EXCEPTION(SE1013);
+    
     mb->data_file_cur_size = fileSizeNew;
-
+   
     mb->free_data_blocks = extend_file_helper(
                                 data_file_handler,
                                 fileSizeCurrent,
@@ -606,6 +606,13 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
     if (fileSizeNew > mb->tmp_file_max_size)
         throw USER_EXCEPTION(SE1011);
 
+    /* Extend the file. */ 
+    if (!uSetEndOfFile(
+            tmp_file_handler, 
+            fileSizeNew, 
+            U_FILE_BEGIN, 
+            __sys_call_error)) throw USER_EXCEPTION(SE1014);
+    
     mb->tmp_file_cur_size = fileSizeNew;
 
     mb->free_tmp_blocks = extend_file_helper(
