@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _FT_INDEX_H
-#define _FT_INDEX_H
+#ifndef _FTINDEX_H
+#define _FTINDEX_H
 
 #include "common/sedna.h"
 

@@ -21,6 +21,7 @@ class PPCreateFtIndex : public PPUpdate
     // given parameters
     PathExpr *object_path;
 	ft_index_type index_type;
+	ft_index_impl index_impl;
 	PPOpIn cust_rules;
     counted_ptr<db_entity> db_ent;
     PPOpIn index_name;

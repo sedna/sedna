@@ -125,7 +125,11 @@ void PPFtHighlight::next(tuple &t)
 			if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 				throw XQUERY_EXCEPTION(SE1071);
 	
-			sj->set_index(tc);
+			ftc_index_t ftc_idx;
+			ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(tc).c_str(), &ftc_idx); //FIXME: op_str_buf may be destroyed too soon
+			if (ft_idx==NULL)
+				throw USER_EXCEPTION(SE1061);
+			sj->set_index(ft_idx);
 			index.op->next(t);
 			if (!t.is_eos())
 				throw XQUERY_EXCEPTION(SE1071);

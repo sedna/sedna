@@ -28,10 +28,12 @@
 #include "tr/executor/xqops/PPIf.h"
 #include "tr/executor/xqops/PPAbsPath.h"
 #include "tr/executor/xqops/PPIndexScan.h"
-#ifdef SE_ENABLE_FTSEARCH
-#include "tr/executor/xqops/PPFtIndexScan.h"
+#ifdef SE_ENABLE_DTSEARCH
 #include "tr/executor/xqops/PPFtScan.h"
 #include "tr/executor/xqops/PPFtHighlight.h"
+#endif
+#ifdef SE_ENABLE_FTSEARCH
+#include "tr/executor/xqops/PPFtIndexScan.h"
 #include "tr/executor/root/PPCreateFtIndex.h"
 #include "tr/executor/root/PPDropFtIndex.h"
 #endif

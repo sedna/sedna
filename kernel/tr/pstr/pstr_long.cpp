@@ -400,12 +400,9 @@ static inline void intl_move_last_blb_to_buf()
 
 	intl_delete_blk(blb);
 }
-
-void pstr_long_delete_str(const xptr desc)
+void pstr_long_delete_str2(const xptr str_ptr)
 {
-	CHECKP(desc);
-	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
-	((struct t_dsc *)XADDR(desc))->data = XNULL;
+	intl_last_blk = str_ptr;
 	CHECKP(intl_last_blk);
 	struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
 	memcpy(&intl_ftr, ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
@@ -444,6 +441,14 @@ void pstr_long_delete_str(const xptr desc)
 	}
 
 	return;
+}
+void pstr_long_delete_str(const xptr desc)
+{
+	CHECKP(desc);
+	xptr ntl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
+	((struct t_dsc *)XADDR(desc))->data = XNULL;
+	pstr_long_delete_str(ntl_last_blk);
+
 }
 
 inline char * intl_last_blk_last_ble_addr(const int mapsize, const int blsize)

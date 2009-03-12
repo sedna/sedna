@@ -9,6 +9,9 @@
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/tr_common_funcs.h"
+#ifdef SE_ENABLE_FTSEARCH
+#include "tr/ft/ft_cache.h"
+#endif
 #include <string>
 
 using namespace std;
@@ -263,6 +266,11 @@ void reportToWu(bool rcv_active, bool is_commit)
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, bool rcv_active)
 {
    sm_server_wu = sm_server;
+#ifdef SE_ENABLE_FTSEARCH
+   d_printf1("Flushing full-text cache...");
+   ftc_flush(); //FIXME: remove this when cache is shared
+   d_printf1("OK\n");
+#endif
     
    ppc->stop_timer();
 

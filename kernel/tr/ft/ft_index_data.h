@@ -11,8 +11,11 @@
 
 #include "common/u/usem.h"
 #include "tr/structures/nodes.h"
+#include "tr/strings/strings.h"
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/executor/base/XPathOnSchema.h"
+#include "tr/ft/ft_cache.h"
+//#include "tr/ft/ft_index.h"
 
 struct PathExpr;
 enum ft_index_type
@@ -23,6 +26,11 @@ enum ft_index_type
 	ft_string_value,
 	ft_delimited_value,
 	ft_customized_value
+};
+enum ft_index_impl
+{
+	ft_ind_dtsearch,
+	ft_ind_native
 };
 struct ft_custom_cell
 {
@@ -53,6 +61,19 @@ struct ft_custom_cell
 		return (my_strcmp(this->local,(char*)p1)==0 && (int)this->ns==(int)p2);
 	}
 };
+struct doc_parser
+{
+	string_consumer_fn fn;
+	void* p;
+	doc_parser(string_consumer_fn _fn,void* _p): fn(_fn),p(_p){};
+};
+
+struct ft_idx_data
+{
+	xptr btree_root;
+	
+};
+typedef struct ft_idx_data ft_idx_data_t;
 struct ft_index_cell
 {
     index_id id;
@@ -63,6 +84,8 @@ struct ft_index_cell
 	char* doc_name;
 	bool is_doc;
 	ft_index_type ftype;
+	ft_index_impl impl;
+	ft_idx_data_t ft_data; //FIXME: this is not needed for dtsearch indexes
 	bool fits_to_index(schema_node* snode);
 	pers_sset<ft_custom_cell,unsigned short> * custom_tree;
 	inline bool less( ft_index_cell *p1) 
@@ -81,15 +104,27 @@ struct ft_index_cell
 	{
 		return my_strcmp(this->index_title,(char*)p1)==0;
 	}
-	static ft_index_cell* create_index (PathExpr *object_path,ft_index_type it, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc,std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* templ, bool just_heap=false);
+	static ft_index_cell* create_index (PathExpr *object_path,ft_index_type it, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc,std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* templ, bool just_heap=false,ft_index_impl impl = ft_ind_dtsearch);
 	static void delete_index (const char *index_title, bool just_heap=false);
 	static void delete_custom_tree (pers_sset<ft_custom_cell,unsigned short> * custom_tree);
-	static ft_index_cell* find_index(const char* title);
+	static ft_index_cell* find_index(const char* title, ftc_index_t *ftc_idx, bool have_ftind_sem = false);
 	void update_index(xptr_sequence* upserted);
 	void insert_to_index(xptr_sequence* upserted);
 	void delete_from_index(xptr_sequence* deleted);
 	void change_index(xptr_sequence* inserted,xptr_sequence* updated,xptr_sequence* deleted);
 
+	//NEW IMPLEMENTATION
+	xptr serial_root;
+	xptr pstr_sequence;
+	void init_serial_tree();
+	void destroy_serial_tree();
+	doc_serial_header serial_put (xptr& node, op_str_buf& tbuf);
+	doc_serial_header serial_get (xptr& node);
+	void serial_remove (xptr& node);
+	void remove_from_pstr(doc_serial_header& head );
+	doc_serial_header serial_update (xptr& node, op_str_buf& tbuf);
+
+	xptr put_buf_to_pstr(op_str_buf& tbuf);
 };
 
 extern pers_sset<ft_index_cell,unsigned short> *ft_indexdata;

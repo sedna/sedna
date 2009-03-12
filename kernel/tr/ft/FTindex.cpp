@@ -303,7 +303,9 @@ void SednaIndexJob::fix_commit()
 void SednaIndexJob::rebuild_index(const char *index_name)
 {
 	clear_index(index_name);
-	ft_index_cell* ft_idx = ft_index_cell::find_index(index_name);
+	ftc_index_t ftc_idx;
+	ft_index_cell* ft_idx = ft_index_cell::find_index(index_name, &ftc_idx);
+	//TODO:check NULL
 
 	//FIXME: move this to ft_index_data.cpp?
 	t_scmnodes sobj = execute_abs_path_expr(ft_idx->schemaroot, ft_idx->object);
@@ -379,7 +381,10 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 	log_file->start_new_record(FTLOG_ROLLBACK_START);
 	log_file->flush();
 
-	ft_index_cell* ft_idx = ft_index_cell::find_index(index_name);
+	ftc_index_t ftc_idx;
+	ft_index_cell* ft_idx = ft_index_cell::find_index(index_name, &ftc_idx);
+	//TODO:check NULL
+	
 	SednaIndexJob sij(ft_idx, true);
 	xptr_sequence *seq;
 
