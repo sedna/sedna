@@ -17,7 +17,7 @@ void rollback_tr_by_logical_log(transaction_id trid)
 void recover_db_by_logical_log(const LSN last_cp_lsn)
 {
 	switch_to_rollback_mode(MODE_REDO);
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 	llLogicalRecover(last_cp_lsn);  
 	switch_to_rollback_mode(MODE_NORMAL);
 	rcvRecoverFtIndexes(); // need to perform remapping of ft

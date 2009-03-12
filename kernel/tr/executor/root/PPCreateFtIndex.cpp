@@ -39,6 +39,13 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
                											cust_rules(_cust_rules_),
                                                         cxt(_cxt_)
 {
+	if (_index_type_[0] == '!')
+	{
+		this->index_impl = ft_ind_native;
+		_index_type_ = _index_type_ + 1;
+	}
+	else
+		this->index_impl = ft_ind_dtsearch;
 	index_type = str2index_type(_index_type_);
 }
 PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
@@ -51,6 +58,13 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
                                                         index_name(_index_name_),
                                                         cxt(_cxt_)
 {
+	if (_index_type_[0] == '!')
+	{
+		this->index_impl = ft_ind_native;
+		_index_type_ = _index_type_ + 1;
+	}
+	else
+		this->index_impl = ft_ind_dtsearch;
 	index_type = str2index_type(_index_type_);
 }
 
@@ -174,7 +188,9 @@ void PPCreateFtIndex::execute()
 				tc.get_str_mem(),
 				db_ent->name,
 				(db_ent->type == dbe_document),
-				cust_rules_vec);
+				cust_rules_vec,
+				false,
+				index_impl);
 	if (cust_rules_vec)
 		delete_cust_rules_vector(cust_rules_vec);
 }

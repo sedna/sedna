@@ -527,11 +527,8 @@ void SednaSearchJob::get_next_result(tuple &t)
 		
 	}
 }
-void SednaSearchJob::set_index(tuple_cell& name)
+void SednaSearchJob::set_index(ft_index_cell* ft_idx)
 {
-	ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(name).c_str());
-	if (ft_idx==NULL)
-		throw USER_EXCEPTION(SE1061);
 #ifdef _WIN32
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
 		+ std::string(db_name) + std::string("_files\\dtsearch\\");
@@ -541,7 +538,7 @@ void SednaSearchJob::set_index(tuple_cell& name)
 #endif
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	this->AddIndexToSearch(index_path.c_str());
-	//FIXME: choose where it's better to do this - nere or in constructor
+	//FIXME: choose where it's better to do this - here or in constructor
 	//if (hilight)
 	//	hl=se_new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
 	
@@ -1170,11 +1167,8 @@ void SednaSearchJob2::get_next_result(tuple &t)
 	}
 }
 
-void SednaSearchJob2::set_index(tuple_cell& name)
+void SednaSearchJob2::set_index(ft_index_cell* ft_idx)
 {
-	ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(name).c_str());
-	if (ft_idx==NULL)
-		throw USER_EXCEPTION(SE1061);
 #ifdef _WIN32
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
 		+ std::string(db_name) + std::string("_files\\dtsearch\\");

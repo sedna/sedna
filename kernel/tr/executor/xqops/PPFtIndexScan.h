@@ -10,7 +10,10 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "tr/ft/ft_index_data.h"
+#include "tr/ft/ft_cache.h"
+#ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
+#endif
 
 class PPFtIndexScan : public PPIterator
 {
@@ -20,7 +23,11 @@ protected:
 
     // obtained parameters and local data
 	bool first_time;
+	//FIXME: use union?
+#ifdef SE_ENABLE_DTSEARCH
 	SednaSearchJob *sj;
+#endif
+	ftc_scan_result *ftc_res;
 
 public:
     virtual void open   ();
@@ -49,7 +56,11 @@ protected:
 
     // obtained parameters and local data
 	bool first_time;
+	//FIXME: use union?
+#ifdef SE_ENABLE_DTSEARCH
 	SednaSearchJob2 *sj;
+#endif
+	ftc_scan_result *ftc_res;
 
 public:
     virtual void open   ();

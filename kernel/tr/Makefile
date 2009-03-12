@@ -24,7 +24,7 @@ OBJS     = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
 SUBDIRS  = auth crmutils executor idx locks log mo nid pq pstr rcv sqp \
            strings structures updates vmm xqp
 
-ifeq ($(ENABLE_DTSEARCH), 1)
+ifeq ($(ENABLE_FTSEARCH), 1)
 SUBDIRS += ft
 endif
 

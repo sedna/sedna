@@ -26,8 +26,10 @@
 #include "common/errdbg/d_printf.h"
 #include "tr/rcv/logican.h"
 
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTindex.h"
+#endif
+#ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
 #endif
 
@@ -639,7 +641,7 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
 // Recover full-text index
 static void llRcvFtIndex(LSN curr_lsn, void *Rec)
 {
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH //TODO: add stuff for FTSEARCH
 	 char *rec = (char *)Rec;
      const char *obj_path, *ind_name, *doc_name, *custom_tree_buf;
      int itconst;
@@ -910,7 +912,7 @@ void llLogicalRecover(const LSN start_lsn)
   
 	RECOVERY_CRASH;
  
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH //TODO: make sure FTSEARCH is ok like this
 	SednaIndexJob::recover_db(rcv_list, (llInfo->hotbackup_needed) ? true : false);
 #endif
 

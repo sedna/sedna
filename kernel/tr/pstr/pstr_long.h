@@ -61,6 +61,7 @@ struct pstr_long_block_list_map_entry
 
 xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
 void pstr_long_delete_str(const xptr desc);
+void pstr_long_delete_str2(const xptr str_ptr);
 void pstr_long_append_tail(const xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
 void pstr_long_append_tail(const xptr dst_desc, const xptr src_desc);
 void pstr_long_truncate(xptr desc, pstr_long_off_t size);

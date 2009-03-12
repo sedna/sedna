@@ -74,9 +74,11 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPVariable$(OBJ_EXT) \
         PPXptr$(OBJ_EXT)
 
+ifeq ($(ENABLE_FTSEARCH),1)
+OBJS += PPFtIndexScan$(OBJ_EXT)
+endif
 ifeq ($(ENABLE_DTSEARCH),1)
-OBJS += PPFtIndexScan$(OBJ_EXT) \
-        PPFtScan$(OBJ_EXT) \
+OBJS += PPFtScan$(OBJ_EXT) \
         PPFtHighlight$(OBJ_EXT)
 endif
 

@@ -53,10 +53,17 @@ SE_ENABLE_GCOV = 0
 endif
 
 # options: Enable dtsearch  - 1
-#          Disable dfsearch - 0
+#          Disable dtsearch - 0
 ifndef ENABLE_DTSEARCH
 ENABLE_DTSEARCH = 0
 endif
+
+# options: Enable ftsearch  - 1
+#          Disable ftsearch - 0
+ifndef ENABLE_FTSEARCH
+ENABLE_FTSEARCH = 1
+endif
+
 
 # options: triggers is on  - 1
 #          triggers is off - 0
@@ -217,6 +224,9 @@ ifeq ($(SQL_CONNECTION),1)
 CPPFLAGS+= /DSQL_CONNECTION
 endif
 ifeq ($(ENABLE_DTSEARCH),1)
+CPPFLAGS+= /DSE_ENABLE_DTSEARCH
+endif
+ifeq ($(ENABLE_FTSEARCH),1)
 CPPFLAGS+= /DSE_ENABLE_FTSEARCH
 endif
 ifeq ($(ENABLE_TRIGGERS),1)
@@ -334,15 +344,18 @@ LSLIBS  += -fprofile-arcs -ftest-coverage
 endif
 
 ifeq ($(ENABLE_DTSEARCH),1)
-CPPFLAGS+= -DSE_ENABLE_FTSEARCH -D__UNIX__ -DUnicodeText
+CPPFLAGS+= -DSE_ENABLE_DTSEARCH -D__UNIX__ -DUnicodeText
 LFLAGS += -L$(PP)/libs/dtsearch/lib -ldtsearch -lz
 endif
+ifeq ($(ENABLE_FTSEARCH),1)
+CPPFLAGS+= -DSE_ENABLE_FTSEARCH
+endif
 ifeq ($(ENABLE_TRIGGERS),1)
-CPPFLAGS+= -DSE_ENABLE_TRIGGERS -D__UNIX__ -DUnicodeText
+CPPFLAGS+= -DSE_ENABLE_TRIGGERS
 CFLAGS+= -DSE_ENABLE_TRIGGERS
 endif
 ifeq ($(RCV_TEST),1)
-CPPFLAGS+= -DRCV_TEST_CRASH -D__UNIX__ -DUnicodeText
+CPPFLAGS+= -DRCV_TEST_CRASH
 CFLAGS+= -DRCV_TEST_CRASH
 endif
 

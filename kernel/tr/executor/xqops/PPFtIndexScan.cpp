@@ -6,7 +6,9 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPFtIndexScan.h"
+#ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
+#endif
 
 PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
                 PPOpIn _idx_name_,
@@ -14,7 +16,10 @@ PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
 						PPIterator(_cxt_),
 						idx_name(_idx_name_),
 						query(_query_),
-						sj(NULL)
+#ifdef SE_ENABLE_DTSEARCH
+						sj(NULL),
+#endif
+						ftc_res(NULL)
 {
 }
 
@@ -30,10 +35,17 @@ PPFtIndexScan::~PPFtIndexScan()
         delete query.op;
         query.op = NULL;
     }
+#ifdef SE_ENABLE_DTSEARCH
 	if (sj)
 	{
 		delete sj;
 		sj = NULL;
+	}
+#endif
+	if (ftc_res)
+	{
+		delete ftc_res;
+		ftc_res = NULL;
 	}
 }
 
@@ -50,10 +62,17 @@ void PPFtIndexScan::reopen()
 	idx_name.op->reopen();
     query.op->reopen();
 
+#ifdef SE_ENABLE_DTSEARCH
 	if (sj)
 	{
 		delete sj;
 		sj = NULL;
+	}
+#endif
+	if (ftc_res)
+	{
+		delete ftc_res;
+		ftc_res = NULL;
 	}
 
     first_time = true;
@@ -63,10 +82,17 @@ void PPFtIndexScan::close()
 {
 	idx_name.op->close();
     query.op->close();
+#ifdef SE_ENABLE_DTSEARCH
 	if (sj != NULL)
 	{
 		delete sj;
 		sj = NULL;
+	}
+#endif
+	if (ftc_res != NULL)
+	{
+		delete ftc_res;
+		ftc_res = NULL;
 	}
 	
 }
@@ -79,39 +105,83 @@ void PPFtIndexScan::next(tuple &t)
 	{
 		tuple_cell tc;
 
-		query.op->next(t);
+		idx_name.op->next(t);
 		if (t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw XQUERY_EXCEPTION(SE1071);
-		sj=se_new SednaSearchJob();
-		sj->set_request(tc);
-		query.op->next(t);
+
+		ftc_index_t ftc_idx;
+		ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(tc).c_str(), &ftc_idx); //FIXME: op_str_buf may be destroyed too soon
+		if (ft_idx==NULL)
+			throw USER_EXCEPTION(SE1061);
+		idx_name.op->next(t);
 		if (!t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
 
-		idx_name.op->next(t);
+		query.op->next(t);
 		if (t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw XQUERY_EXCEPTION(SE1071);
-		sj->set_index(tc);
-		idx_name.op->next(t);
+
+		switch (ft_idx->impl)
+		{
+#ifdef SE_ENABLE_DTSEARCH
+		case ft_ind_dtsearch:
+			sj=se_new SednaSearchJob();
+			sj->set_index(ft_idx);
+			sj->set_request(tc);
+			break;
+#endif
+		case ft_ind_native:
+			ftc_res = se_new ftc_scan_result(ftc_idx);
+			ftc_res->scan_word(op_str_buf(tc).c_str()); //FIXME: op_str_buf may be destroyed too soon, pass char* to SednaSearchJob too
+			break;
+		default:
+			throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation");
+		}
+
+		query.op->next(t);
 		if (!t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
 
 		first_time = false;
 	}
 
-	sj->get_next_result(t);
+	//FIXME
+#ifdef SE_ENABLE_DTSEARCH
+	if (sj != NULL)
+	{
+		sj->get_next_result(t);
+		if (t.is_eos())
+		{
+			delete sj;
+			sj = NULL;
+			first_time = true;
+		}
+	}
+	else
+	{
+		ftc_res->get_next_result(t);
+		if (t.is_eos())
+		{
+			delete ftc_res;
+			ftc_res = NULL;
+			first_time = true;
+		}
+	}
+#else
+	ftc_res->get_next_result(t);
 	if (t.is_eos())
 	{
-		delete sj;
-		sj = NULL;
+		delete ftc_res;
+		ftc_res = NULL;
 		first_time = true;
 	}
+#endif
 
 	RESTORE_CURRENT_PP;
 }
@@ -142,7 +212,10 @@ PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
 						PPIterator(_cxt_),
 						idx_name(_idx_name_),
 						query(_query_),
-						sj(NULL)
+#ifdef SE_ENABLE_DTSEARCH
+						sj(NULL),
+#endif
+						ftc_res(NULL)
 {
 	max_results.op = NULL;
 	field_weights.op = NULL;
@@ -155,7 +228,10 @@ PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
 						idx_name(_idx_name_),
 						query(_query_),
 						max_results(_max_results_),
-						sj(NULL)
+#ifdef SE_ENABLE_DTSEARCH
+						sj(NULL),
+#endif
+						ftc_res(NULL)
 {
 	field_weights.op = NULL;
 }
@@ -169,7 +245,10 @@ PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
 						query(_query_),
 						max_results(_max_results_),
 						field_weights(_field_weights_),
-						sj(NULL)
+#ifdef SE_ENABLE_DTSEARCH
+						sj(NULL),
+#endif
+						ftc_res(NULL)
 {
 }
 
@@ -195,10 +274,17 @@ PPFtIndexScan2::~PPFtIndexScan2()
         delete field_weights.op;
         field_weights.op = NULL;
 	}
+#ifdef SE_ENABLE_DTSEARCH
 	if (sj)
 	{
 		delete sj;
 		sj = NULL;
+	}
+#endif
+	if (ftc_res)
+	{
+		delete ftc_res;
+		ftc_res = NULL;
 	}
 }
 
@@ -223,10 +309,17 @@ void PPFtIndexScan2::reopen()
 	if (field_weights.op)
 		field_weights.op->reopen();
 
+#ifdef SE_ENABLE_DTSEARCH
 	if (sj)
 	{
 		delete sj;
 		sj = NULL;
+	}
+#endif
+	if (ftc_res)
+	{
+		delete ftc_res;
+		ftc_res = NULL;
 	}
 
     first_time = true;
@@ -240,10 +333,17 @@ void PPFtIndexScan2::close()
 		max_results.op->close();
 	if (field_weights.op)
 		field_weights.op->close();
+#ifdef SE_ENABLE_DTSEARCH
 	if (sj != NULL)
 	{
 		delete sj;
 		sj = NULL;
+	}
+#endif
+	if (ftc_res != NULL)
+	{
+		delete ftc_res;
+		ftc_res = NULL;
 	}
 }
 
@@ -255,68 +355,103 @@ void PPFtIndexScan2::next(tuple &t)
 	{
 		tuple_cell tc;
 
-		query.op->next(t);
-		if (t.is_eos())
-			throw XQUERY_EXCEPTION(SE1071);
-		tc = t.cells[0];
-		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw XQUERY_EXCEPTION(SE1071);
-		sj=se_new SednaSearchJob2();
-		sj->set_request(tc);
-		query.op->next(t);
-		if (!t.is_eos())
-			throw XQUERY_EXCEPTION(SE1071);
-
 		idx_name.op->next(t);
 		if (t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw XQUERY_EXCEPTION(SE1071);
-		sj->set_index(tc);
+
+		ftc_index_t ftc_idx;
+		ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(tc).c_str(), &ftc_idx); //FIXME: op_str_buf may be destroyed too soon
+		if (ft_idx==NULL)
+			throw USER_EXCEPTION(SE1061);
 		idx_name.op->next(t);
 		if (!t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
 
-		if (max_results.op)
+		query.op->next(t);
+		if (t.is_eos())
+			throw XQUERY_EXCEPTION(SE1071);
+		tc = t.cells[0];
+		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
+			throw XQUERY_EXCEPTION(SE1071);
+
+		query.op->next(t);
+		if (!t.is_eos())
+			throw XQUERY_EXCEPTION(SE1071);
+
+		switch (ft_idx->impl)
 		{
-			max_results.op->next(t);
-			if (!t.is_eos()) //ignore, if it's empty seq.
+#ifdef SE_ENABLE_DTSEARCH
+		case ft_ind_dtsearch:
+			sj=se_new SednaSearchJob2();
+			sj->set_index(ft_idx);
+			sj->set_request(tc);
+
+			//TODO!!: do not ignore these for other implementations!!
+			if (max_results.op)
 			{
-				tc = t.cells[0];
-				if (!tc.is_atomic() || tc.get_atomic_type() != xs_integer)
-					throw XQUERY_EXCEPTION2(SE1071, "max_results in ftwindex-scan must be an xs:integer");
-				sj->set_max_results(tc.get_xs_integer());
 				max_results.op->next(t);
-				if (!t.is_eos())
-					throw XQUERY_EXCEPTION2(SE1071, "max_results in ftwindex-scan must be an xs:integer");
+				if (!t.is_eos()) //ignore, if it's empty seq.
+				{
+					tc = t.cells[0];
+					if (!tc.is_atomic() || tc.get_atomic_type() != xs_integer)
+						throw XQUERY_EXCEPTION2(SE1071, "max_results in ftwindex-scan must be an xs:integer");
+					sj->set_max_results(tc.get_xs_integer());
+					max_results.op->next(t);
+					if (!t.is_eos())
+						throw XQUERY_EXCEPTION2(SE1071, "max_results in ftwindex-scan must be an xs:integer");
+				}
 			}
-		}
-		if (field_weights.op)
-		{
-			field_weights.op->next(t);
-			if (t.is_eos())
-				throw XQUERY_EXCEPTION(SE1071);
-			tc = t.cells[0];
-			if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-				throw XQUERY_EXCEPTION(SE1071);
-			sj->set_field_weights(tc);
-			field_weights.op->next(t);
-			if (!t.is_eos())
-				throw XQUERY_EXCEPTION(SE1071);
+			if (field_weights.op)
+			{
+				field_weights.op->next(t);
+				if (t.is_eos())
+					throw XQUERY_EXCEPTION(SE1071);
+				tc = t.cells[0];
+				if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
+					throw XQUERY_EXCEPTION(SE1071);
+				sj->set_field_weights(tc);
+				field_weights.op->next(t);
+				if (!t.is_eos())
+					throw XQUERY_EXCEPTION(SE1071);
+			}
+
+
+			break;
+#endif
+		case ft_ind_native:
+			//TODO!
+			throw USER_EXCEPTION2(SE1002, "ftwindex-scan not implemented");
+			break;
+		default:
+			throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation");
 		}
 
 		first_time = false;
 	}
 
-	sj->get_next_result(t);
-	if (t.is_eos())
+#ifdef SE_ENABLE_DTSEARCH
+	if (sj != NULL)
 	{
-		delete sj;
-		sj = NULL;
-		first_time = true;
+		sj->get_next_result(t);
+		if (t.is_eos())
+		{
+			delete sj;
+			sj = NULL;
+			first_time = true;
+		}
 	}
-
+	else
+	{
+		//TODO!
+		throw USER_EXCEPTION2(SE1002, "ftwindex-scan not implemented");
+	}
+#else
+	//TODO!
+	throw USER_EXCEPTION2(SE1002, "ftwindex-scan not implemented");
+#endif
 	RESTORE_CURRENT_PP;
 }
 

@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _FT_SEARCH_H
-#define _FT_SEARCH_H
+#ifndef _FTSEARCH_H
+#define _FTSEARCH_H
 
 #include "common/sedna.h"
 
@@ -196,7 +196,7 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		   void set_request(tuple_cell& request);
 		   void set_file_cond_for_node(tuple_cell& node);
 		   void get_next_result(tuple &t);
-		   void set_index(tuple_cell& name);
+		   void set_index(ft_index_cell* ft_idx);
 		   void reopen();
 		   virtual ~SednaSearchJob();
 #ifdef WIN32
@@ -229,7 +229,7 @@ class SednaSearchJob2 {
 		   void set_request(tuple_cell& request);
 		   void set_field_weights(tuple_cell& fw);
 		   void get_next_result(tuple &t);
-		   void set_index(tuple_cell& name);
+		   void set_index(ft_index_cell* ft_idx);
 		   void set_max_results(long max_results);
 		   void reopen();
 		   virtual ~SednaSearchJob2();

@@ -4969,7 +4969,7 @@
       (sa:analyze-string-const index-type vars funcs ns-binding default-ns)
       (or
        (member (cadr (sa:op-args index-type))  ; const value
-               '("xml" "string-value" "delimited-value" "customized-value"))
+               '("xml" "string-value" "delimited-value" "customized-value" "!xml" "!string-value" "!delimited-value" "!customized-value"))
        (cl:signal-user-error
         SE5080 (cadr (sa:op-args index-type))))))
    (let ((new

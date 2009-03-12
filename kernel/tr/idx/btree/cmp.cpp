@@ -7,6 +7,7 @@
 #include "tr/idx/btree/btstruct.h"
 #include "common/counted_ptr.h"
 #include "tr/executor/base/XMLDateTime.h"
+#include "tr/tr_globals.h"
 
 
 /* returns 1 if k1>k2; -1 if k1<k2; 0 if k1=k2 */

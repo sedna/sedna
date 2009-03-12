@@ -15,7 +15,7 @@ OBJS = PPBulkLoad$(OBJ_EXT) PPCreateIndex$(OBJ_EXT) \
        PPRename$(OBJ_EXT) PPReplace$(OBJ_EXT) PPRetrieveDS$(OBJ_EXT) \
        PPRetrieveMetadata$(OBJ_EXT)
 
-ifeq ($(ENABLE_DTSEARCH),1)
+ifeq ($(ENABLE_FTSEARCH),1)
 OBJS  +=   PPDropFtIndex$(OBJ_EXT) PPCreateFtIndex$(OBJ_EXT)
 endif
 

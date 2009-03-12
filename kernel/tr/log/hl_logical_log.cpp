@@ -16,7 +16,7 @@
 #include "sm/trmgr.h"
 #include "tr/pstr/pstr_long.h"
 #include "tr/rcv/rcv_funcs.h"
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTindex.h"
 #endif
 
@@ -96,11 +96,11 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 		{
 			if (is_commit)
 			{
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 				SednaIndexJob::start_commit();
 #endif
 				hl_logical_log_commit(trid);
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 				SednaIndexJob::fix_commit();
 #endif
        		}
@@ -110,7 +110,7 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 				elog(EL_LOG, ("LOG_TRACE: Transaction starts rolling back: trid=%d", trid));
 #endif
 				rollback_tr_by_logical_log(trid);
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 				SednaIndexJob::rollback();
 #endif
 				hl_logical_log_rollback(trid); 

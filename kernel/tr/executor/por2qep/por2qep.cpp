@@ -3107,34 +3107,6 @@ fn_dt_funcs_correct_type:
 
 
 #ifdef SE_ENABLE_FTSEARCH
-	else if (op == "PPFtScan")
-    {
-        if (is_ft_disabled)
-       		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
-
-        if (   lst->size() < 4 ||
-			   lst->size() > 5
-           ) throw USER_EXCEPTION(SE1004);
-
-        int i = 0;
-        for (i = 1; i < lst->size(); i++)
-        {
-            if (lst->at(i).type != SCM_LIST)
-                throw USER_EXCEPTION(SE1004);
-        }
-
-		if (lst->size() == 4)
-			opit = se_new PPFtScan(cxt,
-				make_pp_op(cxt, lst->at(1).internal.list), 
-				make_pp_op(cxt, lst->at(2).internal.list), 
-				make_pp_op(cxt, lst->at(3).internal.list));
-		else
-			opit = se_new PPFtScan(cxt,
-				make_pp_op(cxt, lst->at(1).internal.list), 
-				make_pp_op(cxt, lst->at(2).internal.list), 
-				make_pp_op(cxt, lst->at(3).internal.list),
-				make_pp_op(cxt, lst->at(4).internal.list));
-    }
 	else if (op == "PPFtIndexScan")
     {
         if (is_ft_disabled)
@@ -3170,6 +3142,42 @@ fn_dt_funcs_correct_type:
 			opit = se_new PPFtIndexScan2(cxt,
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list),
+				make_pp_op(cxt, lst->at(3).internal.list),
+				make_pp_op(cxt, lst->at(4).internal.list));
+    }
+#else
+ else if (   op == "PPFtIndexScan"
+		  || op == "PPFtIndexScan2")
+    {
+		throw USER_EXCEPTION2(SE1002, "full-text search support disabled");
+    }
+#endif
+#ifdef SE_ENABLE_DTSEARCH
+	else if (op == "PPFtScan")
+    {
+        if (is_ft_disabled)
+       		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
+
+        if (   lst->size() < 4 ||
+			   lst->size() > 5
+           ) throw USER_EXCEPTION(SE1004);
+
+        int i = 0;
+        for (i = 1; i < lst->size(); i++)
+        {
+            if (lst->at(i).type != SCM_LIST)
+                throw USER_EXCEPTION(SE1004);
+        }
+
+		if (lst->size() == 4)
+			opit = se_new PPFtScan(cxt,
+				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list), 
+				make_pp_op(cxt, lst->at(3).internal.list));
+		else
+			opit = se_new PPFtScan(cxt,
+				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list), 
 				make_pp_op(cxt, lst->at(3).internal.list),
 				make_pp_op(cxt, lst->at(4).internal.list));
     }
@@ -3232,13 +3240,12 @@ fn_dt_funcs_correct_type:
 
 #else
  else if (   op == "PPFtScan"
-	      || op == "PPFtIndexScan"
 		  || op == "PPFtHighlight"
 		  || op == "PPFtHighlight2")
     {
 		throw USER_EXCEPTION2(SE1002, "full-text search support disabled");
     }
-#endif //SE_ENABLE_FTSEARCH
+#endif //SE_ENABLE_DTSEARCH
 
 
 /*
@@ -3862,7 +3869,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
 #ifdef SE_ENABLE_FTSEARCH
     else if (op == "PPCreateFtIndex")
     {
-        if (is_ft_disabled)
+        if (is_ft_disabled) //TODO: fix this
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   qe->size() < 6
@@ -3901,7 +3908,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
     }
     else if (op == "PPDropFtIndex")
     {
-        if (is_ft_disabled)
+        if (is_ft_disabled) //TODO: fix this
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   qe->size() != 3
