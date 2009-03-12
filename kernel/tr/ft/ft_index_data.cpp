@@ -445,7 +445,7 @@ void ft_index_cell::serial_remove (xptr& node)
 {
 	//1. find header in b-tree
 	bt_key key;
-	key.setnew(*((_int64*)&node));
+	key.setnew(*((int64_t*)&node));
 	
 	bt_cursor_tmpl<doc_serial_header> cursor=bt_find_tmpl<doc_serial_header>(this->serial_root, key);
 	if (cursor.is_null())
@@ -461,7 +461,7 @@ doc_serial_header ft_index_cell::serial_get (xptr& node)
 {
 	//1. find header in b-tree
 	bt_key key;
-	key.setnew(*((_int64*)&node));
+	key.setnew(*((int64_t*)&node));
 	
 	bt_cursor_tmpl<doc_serial_header> cursor=
 		bt_find_tmpl<doc_serial_header>(this->serial_root, key);

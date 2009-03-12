@@ -1,4 +1,6 @@
 #include "common/sedna.h"
+#include <sstream>
+#include <string>
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 #include "common/base.h"
@@ -12,7 +14,6 @@
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
 #endif
-#include <string>
 
 using namespace std;
 

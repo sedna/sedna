@@ -276,7 +276,6 @@ static shft get_sz(const xptr& v1, const void * Udata)
 #endif
 int ftc_ss_compare_less(xptr v1, xptr v2, const void * Udata)
 {
-	tr_globals::cmp1++;
 	idx_buffer* buffer = ((idx_buffer*)Udata);
 	shft sz1 = get_sz(v1,Udata);
 	shft sz2 = get_sz(v2,Udata);

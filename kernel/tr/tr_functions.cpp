@@ -4,6 +4,7 @@
  */
 
 #include "common/sedna.h"
+#include <sstream>
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 #ifdef SE_ENABLE_TRIGGERS
