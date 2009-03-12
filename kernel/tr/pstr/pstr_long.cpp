@@ -445,10 +445,9 @@ void pstr_long_delete_str2(const xptr str_ptr)
 void pstr_long_delete_str(const xptr desc)
 {
 	CHECKP(desc);
-	xptr ntl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
-	((struct t_dsc *)XADDR(desc))->data = XNULL;
-	pstr_long_delete_str(ntl_last_blk);
-
+	xptr intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
+	((struct t_dsc *)XADDR(desc))->data = XNULL; //TODO: VMM_SIGNAL_MODIFICATION or remove this?!!!
+	pstr_long_delete_str2(intl_last_blk);
 }
 
 inline char * intl_last_blk_last_ble_addr(const int mapsize, const int blsize)
