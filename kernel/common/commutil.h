@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sstream>
 
 #ifndef MIN
 #define MIN(A, B) \

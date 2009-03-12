@@ -188,8 +188,8 @@ template<typename T, typename AllocatorT> T *string_map<T,AllocatorT>::find (con
 }
 template<class T, class AllocatorT> typename string_map<T,AllocatorT>::pers_sset_entry* string_map<T,AllocatorT>::put (const char *str, T obj)
 {
-	AllocatorT::ptr_t res_ptr;
-	AllocatorT::ptr_t str_ptr;
+	typename AllocatorT::ptr_t res_ptr;
+	typename AllocatorT::ptr_t str_ptr;
 	pers_sset_entry *res;
 	int str_len = strlen(str);
 
@@ -374,7 +374,7 @@ template<class T, class AllocatorT> typename string_map<T,AllocatorT>::pers_sset
 }
 template<class T, class AllocatorT> typename AllocatorT::ptr_t string_map<T,AllocatorT>::init(AllocatorT *allocator)
 {
-	AllocatorT::ptr_t ptr = allocator->alloc(sizeof(string_map));
+	typename AllocatorT::ptr_t ptr = allocator->alloc(sizeof(string_map));
 	if (ptr == allocator->null_ptr())
 		return ptr;
 	string_map *strmap = (string_map *)allocator->deref(ptr);
@@ -395,7 +395,7 @@ template<class T, class AllocatorT> typename string_map<T,AllocatorT>::pers_sset
 				break;
 			}
 			else
-				x=x->left(mem_pool);
+				x=x->left(allocator);
 	}
 	return NULL;
 }
@@ -530,5 +530,6 @@ template<class T, class X> void pers_sset<T,X>::rb_fixup(pers_sset_entry* entry,
 	}
 	if (x!=NULL) x->black=true;
 }*/
+
 #endif
 

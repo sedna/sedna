@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 #include <string>
 #include <vector>
+#include <sstream>
 #include "tr/log/log.h"
 #include "tr/structures/indirection.h"
 #include "tr/log/logiclog.h"
@@ -20,7 +21,6 @@
 #include "tr/ft/FTindex.h"
 #endif
 
-#include <sstream>
 
 
 using namespace std;
