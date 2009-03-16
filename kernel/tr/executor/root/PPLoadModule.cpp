@@ -1,7 +1,10 @@
 /*
- * File:  PPBulkLoad.cpp
+ * File:  PPLoadModule.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
+
+#include <functional>
+#include <algorithm>
 
 #include "common/sedna.h"
 
@@ -16,8 +19,6 @@
 #include "tr/structures/metadata.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/auth/auc.h"
-#include <functional>
-#include <algorithm>
 
 extern client_core *client;
 
