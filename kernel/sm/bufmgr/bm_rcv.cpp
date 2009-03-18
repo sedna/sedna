@@ -8,9 +8,9 @@
 #include <iostream>
 #include "sm/bufmgr/bm_rcv.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/sm_globals.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/bufmgr/blk_mngmt.h"
+#include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
 
 using namespace std;
@@ -18,7 +18,7 @@ using namespace std;
 void bm_rcv_init()
 {
     // open data file
-    string data_file_name = string(db_files_path) + string(db_name) + ".sedata";
+    string data_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".sedata";
     data_file_handler = uOpenFile(data_file_name.c_str(), U_SHARE_READ, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
@@ -101,14 +101,14 @@ void bm_rcv_tmp_file()
     mb->tmp_file_cur_size = (uint64_t)0;
 	mb->free_tmp_blocks = XNULL;
 
-    extend_tmp_file(tmp_file_initial_size);
+    extend_tmp_file((int)MBS2PAGES(sm_globals::tmp_file_initial_size));
     d_printf1("extend_tmp_file call successful\n");
 }
 
 void bm_rcv_ph(bool ph_bu_to_ph)
 {
-    string ph_file_name    = string(db_files_path) + string(db_name) + ".seph";
-    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.sebu";
+    string ph_file_name    = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".seph";
+    string ph_bu_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".ph.sebu";
 
     if (ph_bu_to_ph)
     {

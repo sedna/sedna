@@ -23,4 +23,5 @@ int delete_dtsearch_files(const char* db_name);
 
 int delete_ph_files(const char* db_name);
 
-#endif
+#endif /* _DB_UTILS_H */
+

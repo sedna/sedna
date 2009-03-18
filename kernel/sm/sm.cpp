@@ -16,7 +16,6 @@
 #include "common/errdbg/d_printf.h"
 #include "sm/trmgr.h"
 #include "common/pping.h"
-#include "common/version.h"
 #include "common/lm_base.h"
 #include "sm/lm/lm_globals.h"
 #include "common/gmm.h"
@@ -33,23 +32,21 @@
 #include "sm/hb_utils.h"
 
 using namespace std;
+using namespace sm_globals;
 
-SSMMsg *ssmmsg;
+static SSMMsg *ssmmsg;
+static USemaphore wait_for_shutdown;
 
-USemaphore wait_for_shutdown;
-
-
+#define SM_BACKGROUND_MODE				"SEDNA_SM_BACKGROUND_MODE"
 #define SM_BACKGROUND_MODE_TIMEOUT		60000
-
-
 
 #ifdef _WIN32
 BOOL SMCtrlHandler(DWORD fdwCtrlType)
 {
     switch (fdwCtrlType)
     {
-        case CTRL_C_EVENT		: // Handle the CTRL+C signal.
-        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit.
+        case CTRL_C_EVENT		: /* Handle the CTRL+C signal. */
+        case CTRL_CLOSE_EVENT	: /* CTRL+CLOSE: confirm that the user wants to exit. */
         case CTRL_BREAK_EVENT	:
         case CTRL_LOGOFF_EVENT	:
         case CTRL_SHUTDOWN_EVENT:
@@ -61,25 +58,21 @@ BOOL SMCtrlHandler(DWORD fdwCtrlType)
         default					: return FALSE;
     }
 }
-#else
+#else  /* !_WIN32 */
 #include <signal.h>
-
 void SMCtrlHandler(int signo)
 {
 	if (   signo == SIGINT
         || signo == SIGQUIT
-        || signo == SIGTERM)
-	{
-        //beep();
+        || signo == SIGTERM) {
         send_stop_sm_msg();
 	}
 }
-#endif
+#endif /* _WIN32 */
+
 
 int sm_server_handler(void *arg)
 {
-    //d_printf1("query received\n");
-
     sm_msg_struct *msg = (sm_msg_struct*)arg;
 	bool isGiantLockObtained = false;
 
@@ -476,19 +469,13 @@ int sm_server_handler(void *arg)
 }
 
 
-void print_sm_usage()
-{
-  throw USER_SOFT_EXCEPTION((string("Usage: se_sm [options] dbname\n\n") +
-                             string("options:\n") + string(arg_glossary(sm_argtable, narg, "  ")) + string("\n")).c_str());
-}
-
-
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
     pping_client *ppc = NULL;
     char buf[1024];
-    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup()
+    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); /* used below in ppc->startup() */
+    int sedna_db_version = 0;
 
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
       so we must block SIGPIPE with sigignore.*/
@@ -502,23 +489,7 @@ int main(int argc, char **argv)
         SafeMemoryContextInit();
 #endif
 
-        if (argc == 1)
-        {
-            print_sm_usage();
-        }
-        else
-        {
-            int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
-            arg_scan_ret_val = arg_scanargv(argc, argv, sm_argtable, narg, NULL, buf, NULL);
-
-            if (sm_help == 1 ) print_sm_usage();
-            if (sm_version == 1) { print_version_and_copyright("Sedna Storage Manager"); throw USER_SOFT_EXCEPTION(""); }
-
-            if (arg_scan_ret_val == 0)
-                throw USER_ENV_EXCEPTION(buf, false);
-            if (strcmp(db_name, "???") == 0)
-                throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
-        }
+        parse_sm_command_line(argc, argv);
 
         gov_header_struct cfg;
         get_sednaconf_values(&cfg);
@@ -528,7 +499,7 @@ int main(int argc, char **argv)
 
         open_gov_shm();
 
-        db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
+        int db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
 
         /* There is no such database? */
         if (db_id == -1)
@@ -580,34 +551,20 @@ int main(int argc, char **argv)
         }
 
         /* Setup default values from config file */
-        setup_sm_globals(GOV_CONFIG_GLOBAL_PTR);
+        setup_sm_globals(GOV_CONFIG_GLOBAL_PTR, db_id);
 
         recover_database_by_physical_and_logical_log(db_id);
 
         ////////////////////////////// BACKGROUND MODE ////////////////////////////////////////
-        char *command_line_str = NULL;
-        if (background_mode == 1)
-        {
+        if (background_mode == 1) {
         try {
-            string command_line = argv[0];
-            command_line += " -background-mode off ";
-            command_line += " -bufs-num " + int2string(__bufs_num__);
-            command_line += " -max-trs-num " + int2string(__max_trs_num__) + " ";
-            command_line += " -max-log-files " + int2string(__max_log_files__) + " ";
-            command_line += " -tmp-file-init-size " + int2string(__tmp_file_initial_size__) + " ";
-
-            char buf_uc[100];
-            sprintf(buf_uc, "%.2f", __upd_crt__);
-
-            command_line += string(" -upd-crt ") + buf_uc + " ";
-            command_line += db_name;
-
+            char *command_line_str = NULL;
+            string command_line = construct_sm_command_line(argv);
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
 
             if (uSetEnvironmentVariable(SM_BACKGROUND_MODE, "1", __sys_call_error) != 0)
                 throw USER_EXCEPTION2(SE4072, "SM_BACKGROUND_MODE");
-
 
             USemaphore started_sem;
             if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY, NULL, __sys_call_error))
@@ -623,7 +580,6 @@ int main(int argc, char **argv)
 
             if (res != 0)
                 throw USER_EXCEPTION(SE4205);
-
 
             ppc->shutdown();
             delete ppc;
@@ -667,10 +623,10 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("start_chekpoint_thread done"));
 
         //start up logical log
-		bool is_stopped_correctly;
-		llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, false);
-		if (is_stopped_correctly != true)
-			throw SYSTEM_EXCEPTION("Inconsistent database state");
+        bool is_stopped_correctly;
+        llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, false);
+        if (is_stopped_correctly != true)
+            throw SYSTEM_EXCEPTION("Inconsistent database state");
         elog(EL_LOG, ("Logical log has been started"));
 
         //enable checkpoints
@@ -824,6 +780,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
   try{
     char buf[1024];
     bool is_stopped_correctly;
+    int sedna_db_version = 0;
 
     if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) != 0)
     {//I am in running sm process

@@ -19,6 +19,13 @@ using namespace std;
 // HANDLERS FOR PARSING CONFIG FILES
 /******************************************************************************/
 
+struct CfgParserContext
+{
+   std::string tag_name;
+   std::string content;
+};
+
+
 void startElement_sm_cfg(void *cnt, const char *name, const char **atts)
 {
 
@@ -32,29 +39,24 @@ void endElement_sm_cfg(void *cnt, const char *name)
   string _tag_name_ = ((CfgParserContext*)cnt)->tag_name;
   string _content_ = ((CfgParserContext*)cnt)->content;
 
-  if ( _tag_name_ == "bufs_num")
-  {
-     bufs_num = atoi(_content_.c_str());
+  if ( _tag_name_ == "bufs_num")  {
+     sm_globals::bufs_num = atoi(_content_.c_str());
   }
 
-  if ( _tag_name_ == "max_trs_num" )
-  {
-     max_trs_num = atoi(_content_.c_str());
+  if ( _tag_name_ == "max_trs_num" )  {
+     sm_globals::max_trs_num = atoi(_content_.c_str());
   }
 
-  if ( _tag_name_ == "upd_crt" )
-  {
-     upd_crt = atof(_content_.c_str());
+  if ( _tag_name_ == "upd_crt" )  {
+     sm_globals::upd_crt = atof(_content_.c_str());
   }
 
-  if ( _tag_name_ == "max_log_files" )
-  {
-     max_log_files = atoi(_content_.c_str());
+  if ( _tag_name_ == "max_log_files" )  {
+     sm_globals::max_log_files = atoi(_content_.c_str());
   }
 
-  if ( _tag_name_ == "tmp_file_initial_size" )
-  {
-     tmp_file_initial_size = atoi(_content_.c_str()) * 0x100000 / PAGE_SIZE; /* MBs -> blocks */;
+  if ( _tag_name_ == "tmp_file_initial_size" ) {
+     sm_globals::tmp_file_initial_size = atoi(_content_.c_str());
   }
 
   ((CfgParserContext*)cnt)->tag_name = "";
@@ -75,7 +77,7 @@ void
 send_stop_sm_msg()
 {
     int port_number = GOV_HEADER_GLOBAL_PTR->lstnr_port_number;
-    int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
+    int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, sm_globals::db_name);
 
     GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].is_stop = 1;
     send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);

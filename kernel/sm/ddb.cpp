@@ -17,18 +17,13 @@
 #include "common/ugc.h"
 #include "sm/db_utils.h"
 
-
 using namespace std;
-
 
 const size_t narg = 4;
 int ddb_help1 = 0;
 int ddb_help2 = 0;
 int ddb_version;
 char db_name[1000];
-
-int bufs_num = 0;
-int max_trs_num = 0;
 
 arg_rec ddb_argtable[] =
 {

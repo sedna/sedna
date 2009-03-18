@@ -13,6 +13,10 @@
 #include "common/sedna.h"
 
 
+#define MBS2PAGES(s)   ((int64_t) (s) * (int64_t)0x100000 / (int64_t) PAGE_SIZE)
+#define PAGES2MBS(s)   ((int64_t) (s) * (int64_t)PAGE_SIZE / (int64_t) 0x100000)
+
+
 std::string int2string(int value);
 
 /* datatypes and functions for working with time (time in sec + time in millisec)*/
@@ -31,9 +35,7 @@ typedef _timeb u_timeb;
 void u_ftime(u_timeb *t);
 
 u_timeb operator -(u_timeb t1, u_timeb t2);
-
 u_timeb operator +(u_timeb t1, u_timeb t2);
-
 
 
 std::string to_string(u_timeb t);

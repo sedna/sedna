@@ -18,8 +18,8 @@
 #endif
 
 
-
 using namespace std;
+
 
 //returns 0 if database not exist
 //returns 1 if at least one file (or dir) was deleted
@@ -37,7 +37,6 @@ int cleanup_db(const char* db_name)
       if (res == 0)//failure
          return 2;
    }
-   
 
    //delete data file
    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error)) 
@@ -47,7 +46,6 @@ int cleanup_db(const char* db_name)
       if (res == 0)
          return 2;
    }
-
 
    //delete tmp file
    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error))
@@ -66,7 +64,6 @@ int cleanup_db(const char* db_name)
    if (res > 0) db_exist = true;
 #endif
 
-
    //delete llog file
    res = delete_logical_log(db_name);
 
@@ -78,28 +75,6 @@ int cleanup_db(const char* db_name)
 
    if (res == 2) return 2;
    if (res > 0) db_exist = true;
-
-/*   //delete ph.bu file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error))
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
-      
-      if (res == 0)
-         return 2;
-   }
-
-
-   //delete ph file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.sebu").c_str(), __sys_call_error))
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.sebu").c_str(), __sys_call_error);
-
-      if (res == 0)
-         return 2;
-   }
-*/
 
    //delete rcv testing files
    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_ok").c_str(), __sys_call_error)) 

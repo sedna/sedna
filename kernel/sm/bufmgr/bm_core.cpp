@@ -459,8 +459,8 @@ void flush_ph()
 
 void backup_ph()
 {
-    string ph_file_name    = string(db_files_path) + string(db_name) + ".seph";
-    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.sebu";
+    string ph_file_name    = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".seph";
+    string ph_bu_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".ph.sebu";
 
     if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
@@ -481,7 +481,7 @@ void dump_bufmgr_state()
 	char auxInfo[2048]="";
 	char flags[16]="";
 
-	bufsNum = bufs_num;
+	bufsNum = sm_globals::bufs_num;
 
 	fprintf(stderr,"---STARTING DUMP OF BUFMGR STATE---\n");
 	for (i=0; i<bufsNum; ++i)
