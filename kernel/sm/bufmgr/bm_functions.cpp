@@ -31,7 +31,7 @@ static bool is_recovery_mode = false;
 
 void _bm_set_working_set_size()
 {
-    int working_set_size = bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
+    int working_set_size = sm_globals::bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
     int res = 0;
 
     res = uGetCurProcessWorkingSetSize(
@@ -124,21 +124,21 @@ void _bm_init_buffer_pool()
 #endif
         _bm_set_working_set_size();
 
-    file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
+    file_mapping = uCreateFileMapping(U_INVALID_FD, sm_globals::bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
         throw USER_EXCEPTION(SE1015);
 
-    buf_mem_addr = uMapViewOfFile(file_mapping, NULL, bufs_num * PAGE_SIZE, 0, __sys_call_error);
+    buf_mem_addr = uMapViewOfFile(file_mapping, NULL, sm_globals::bufs_num * PAGE_SIZE, 0, __sys_call_error);
     if (buf_mem_addr == NULL)
         throw USER_EXCEPTION2(SE1015, "Cannot map view of file");
 
     if (lock_memory)
     {
-        if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+        if (uMemLock(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         {
 #ifndef _WIN32            
             elog(EL_WARN, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
-            _bm_guarantee_buffer_pool(buf_mem_addr, bufs_num * PAGE_SIZE);
+            _bm_guarantee_buffer_pool(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE);
 #else
             elog(EL_WARN, ("Can't lock memory. There are no admin rights."));
 #endif
@@ -146,7 +146,7 @@ void _bm_init_buffer_pool()
         }
     }
 
-    for (int i = 0; i < bufs_num; i++) free_mem.push(i * PAGE_SIZE);
+    for (int i = 0; i < sm_globals::bufs_num; i++) free_mem.push(i * PAGE_SIZE);
 }
 
 void _bm_release_buffer_pool()
@@ -158,11 +158,11 @@ void _bm_release_buffer_pool()
 
     if (lock_memory)
     {
-        if (uMemUnlock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+        if (uMemUnlock(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE, __sys_call_error) == -1)
             throw USER_ENV_EXCEPTION("Cannot release system structures", false);
     }
 
-    if (uUnmapViewOfFile(file_mapping, buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+    if (uUnmapViewOfFile(file_mapping, buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
     buf_mem_addr = NULL;
@@ -180,12 +180,12 @@ void _bm_release_buffer_pool()
 void bm_startup() throw (SednaException)
 {
     // open data and tmp files
-    string data_file_name = string(db_files_path) + string(db_name) + ".sedata";
+    string data_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".sedata";
     data_file_handler = uOpenFile(data_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
-    string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
+    string tmp_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".setmp";
     tmp_file_handler = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
@@ -234,13 +234,13 @@ void bm_startup() throw (SednaException)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
     *lru_global_stamp_data = 0;
 #endif
-    string ph_file_name = string(db_files_path) + string(db_name) + ".seph";
+    string ph_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".seph";
     if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, 
                   PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0) != 0)
         throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
 
     // init physical xptrs table
-    phys_xptrs = se_new t_xptr_info(bufs_num);
+    phys_xptrs = se_new t_xptr_info(sm_globals::bufs_num);
     
     mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     read_master_block();
@@ -531,7 +531,7 @@ void bm_enter_exclusive_mode(session_id sid,
 
     xmode_sid = sid;
 
-    *number_of_potentially_allocated_blocks = bufs_num - max_trs_num;
+    *number_of_potentially_allocated_blocks = sm_globals::bufs_num - sm_globals::max_trs_num;
 }
 
 void bm_exit_exclusive_mode(session_id sid) throw (SednaException)
@@ -557,7 +557,7 @@ void bm_memlock_block(session_id sid, xptr p) throw (SednaException)
         res = blocked_mem.find(offs);
         if (res == 0) return; // block already blocked
 
-        if (blocked_mem.size() >= bufs_num - max_trs_num)
+        if (blocked_mem.size() >= sm_globals::bufs_num - sm_globals::max_trs_num)
             throw USER_EXCEPTION(SE1020);
     }
     else throw USER_EXCEPTION(SE1021);

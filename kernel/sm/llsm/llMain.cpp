@@ -22,10 +22,10 @@
 #include <assert.h>
 #include <string>
 
-#define LL_FILE_PORTION_SIZE (INT64_C(100) * (1024 * 1024)) // size of chunk of logical log
-#define LL_WRITEBUF_SIZE 1024 * 1024 			    // write buffer size (for lfs)
-#define LL_READBUF_SIZE 1024                                // read buffer size (for lfs)
-#define LL_MAX_LOG_FILES max_log_files			    // maximum files until truncate
+#define LL_FILE_PORTION_SIZE (INT64_C(100) * (1024 * 1024))   // size of chunk of logical log
+#define LL_WRITEBUF_SIZE 1024 * 1024                          // write buffer size (for lfs)
+#define LL_READBUF_SIZE 1024                                  // read buffer size (for lfs)
+#define LL_MAX_LOG_FILES max_log_files                        // maximum files until truncate
 
 struct llRecordHead
 {

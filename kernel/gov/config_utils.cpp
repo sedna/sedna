@@ -89,7 +89,7 @@ static void endElement_sm_cfg(void *cfg, const char *name)
   }
   if (strcmp(name, "tmp_file_initial_size") == 0)
   {
-     ((gov_db_struct*)cfg)->tmp_file_initial_size = atoi(trim(elem_content).c_str()) * 0x100000 / PAGE_SIZE; /* MBs -> blocks */
+     ((gov_db_struct*)cfg)->tmp_file_initial_size = (int)MBS2PAGES(atoi(trim(elem_content).c_str()));
   }
 
   elem_content = "";

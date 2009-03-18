@@ -1,100 +1,65 @@
 /*
  * File:  sm_globals.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
 #ifndef _SM_GLOBALS_H
 #define _SM_GLOBALS_H
 
-#include "common/sedna.h"
 #include <string>
-#include "common/argtable.h"
+
+#include "common/sedna.h"
+
 #include "common/u/usem.h"
 #include "common/u/uthread.h"
 #include "common/SSMMsg.h"
 #include "common/config.h"
 
 
-#define SM_BACKGROUND_MODE				"SEDNA_SM_BACKGROUND_MODE"
+/*******************************************************************************
+********************************************************************************
+  GLOBAL VARIABLES 
+********************************************************************************
+*******************************************************************************/
+
+/* Some of these variables SM specific, some of them are shared with CDB */
+namespace sm_globals {
+    extern int    bufs_num;                                /* Number of pages to allocate for buffer memory */
+    extern int    max_trs_num;                             /* Maximum transactions number */
+    extern double upd_crt;                                 /* Advance snapshot criterion */
+    extern int    max_log_files;                           /* Maximum log files */
+    extern int    tmp_file_initial_size;                   /* Temp file initial size */
+    extern char   db_name[SE_MAX_DB_NAME_LENGTH + 1];      /* Must be set with database name */
+    extern char   db_files_path[U_MAX_PATH + 1];           /* Must be set with path to the database files (dbname_files folder) */
+    extern int    background_mode;
+}
 
 /*******************************************************************************
 ********************************************************************************
-  GLOBAL VARIABLES
+  SM Specific Functions
 ********************************************************************************
 *******************************************************************************/
-extern SSMMsg *ssmmsg;
-// number of memory buffers
-extern int bufs_num;
 
-// max number of transactions allowed by SM
-extern int max_trs_num;
+/* Must be called after parse_sm_command_line */
+void         setup_sm_globals          (gov_config_struct* cfg, int db_id);
+/* Parses command line SM's arguments */
+void         parse_sm_command_line     (int argc, char** argv);
+/* Must be called after parse_sm_command_line */
+std::string  construct_sm_command_line (char** argv);
 
-// update criterion parameter to advance snapshots
-extern double upd_crt;
+void         register_sm_on_gov();
 
-// maximum number of log files until truncate
-extern int max_log_files;
-
-// database name
-extern char db_name[];
-
-// database id
-extern int db_id;
-
-// path to db files
-extern char db_files_path[];
-
-extern int sedna_db_version;
-
-// initial size of .setmp file
-extern int tmp_file_initial_size;
-
-void setup_sm_globals(gov_config_struct* cfg);
-
-void register_sm_on_gov();
-
-int sm_server_handler(void *arg);
-
-
-
-//variables for parsing command line
-extern int sm_help;
-extern int sm_version;
-
-extern int background_mode;
-extern int __bufs_num__;
-
-// maximum number of log files until truncate
-extern int __max_trs_num__;
-
-// update fraction parameter to advance snapshots
-extern double __upd_crt__;
-
-// maximum number of log files until truncate
-extern int __max_log_files__;
-
-// initial size of .setmp file
-extern int __tmp_file_initial_size__;
-
-struct CfgParserContext
-{
-   std::string tag_name;
-   std::string content;
-};
-
-extern const size_t narg;
-
-extern arg_rec sm_argtable[];
-
-/* global variables for checkpoint */
+/*******************************************************************************
+********************************************************************************
+  GLOBAL VARIABLES FOR CHECKPOINT
+********************************************************************************
+*******************************************************************************/
 
 extern USemaphore wait_for_checkpoint;
 extern USemaphore checkpoint_sem;
 extern USemaphore concurrent_trns_sem;
 extern USemaphore wait_for_recovery;
 
-extern UTHANDLE  checkpoint_thread_dsc;
+#endif /* _SM_GLOBALS_H */
 
-extern volatile bool shutdown_checkpoint_thread;
-#endif

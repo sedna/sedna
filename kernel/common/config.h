@@ -26,7 +26,7 @@ struct gov_db_struct
     int max_trs_num;
     double upd_crt;
     int max_log_files;
-    int tmp_file_initial_size;
+    int tmp_file_initial_size;  /* size in PAGES */
 };
 
 struct gov_header_struct

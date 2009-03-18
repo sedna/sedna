@@ -4,11 +4,11 @@
  */
 
 #include "common/sedna.h"
+
 #include <string>
 
 #include "common/base.h"
 #include "sm/cdb_globals.h"
-#include "sm/sm_globals.h"
 #include "common/utils.h"
 #include "common/u/uprocess.h"
 #include "common/u/uhdd.h"
@@ -16,110 +16,91 @@
 
 
 using namespace std;
+using namespace cdb_globals;
 
-int _cdb_s_help_ = 0;
-int _cdb_l_help_ = 0;
-int _cdb_version_ = 0;
 
-int _data_file_max_size_ = 2048;
-int _tmp_file_max_size_ = 2048;
-int _data_file_extending_portion_ = 100;
-int _tmp_file_extending_portion_ = 100;
-int _data_file_initial_size_ = 10;
-int _tmp_file_initial_size_ = 10;
-int _persistent_heap_size_ = 10;
-
-int _bufs_num_ =1600;
-int _max_trs_num_ =10;
-int _log_file_size_ = 100;
-
-double _upd_crt_ = 0.25;
-int _max_log_files_ = 3;
-
-char db_security[32];
-
-const size_t cdb_narg = 17;
-
-arg_rec cdb_argtable[] =
-{
-{"--help",                       NULL,  arg_lit, &_cdb_l_help_,                 "0",   "\t\t\tdisplay this help and exit"},
-{"-help",                        NULL,  arg_lit, &_cdb_s_help_,                 "0",   "\t\t\t\tdisplay this help and exit"},
-{"-version",                     NULL,  arg_lit, &_cdb_version_,                  "0",   "\t\t\tdisplay product version and exit"},
-{"-data-file-max-size",          " Mbs", arg_int, &_data_file_max_size_,         "2147483647", "\tthe max size of data file (in Mb), infinite size\n\t\t\t\tby default"},
-{"-tmp-file-max-size",           " Mbs", arg_int, &_tmp_file_max_size_,          "2147483647","\tthe max size of tmp file (in Mb), infinite size\n\t\t\t\tby default"},
-{"-data-file-ext-portion", " Mbs", arg_int, &_data_file_extending_portion_,"100", "\tthe data file extending portion size (in Mb), \n\t\t\t\tdefault 100Mb"},
-{"-tmp-file-ext-portion",  " Mbs", arg_int, &_tmp_file_extending_portion_, "100", "\tthe tmp file extending portion size (in Mb),\n\t\t\t\tdefault 100Mb"},
-{"-data-file-init-size",      " Mbs", arg_int, &_data_file_initial_size_,     "100",  "\tthe data file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
-{"-tmp-file-init-size",       " Mbs", arg_int, &_tmp_file_initial_size_,       "100",  "\tthe tmp file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
-{"-persistent-heap-size",       " Mbs", arg_int, &_persistent_heap_size_,        "10",  "\tthe persistent heap size (in Mb), \n\t\t\t\tallowed in the range of 10Mb - 99Mb,\n\t\t\t\tdefault 10Mb"},
-{"-bufs-num",                    " N",   arg_int, &_bufs_num_,                   "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
-{"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
-{"-upd-crt", " N", arg_dbl, &_upd_crt_, "0.25", "\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
-{"-max-log-files", " N", arg_int, &_max_log_files_, "3", "\t\tmaximum log files until log truncate (default: 3)"},
-{"-log-file-size", " Mbs", arg_int, &_log_file_size_, "100", "\t\tmaximum one log file size (in Mb), (default 100Mb)"},
-{"-db-security",  "  security level",  arg_str,  &db_security,       "authentication", "  the level of database security:\n\t\t\t\t 1) 'off' - none;\n\t\t\t\t 2) 'authentication' (default);\n\t\t\t\t 3) 'authorization'"},
-
-{NULL,                     "\n   db_name", arg_str, &db_name,               "???", "   \t\t\tthe name of the database to be created"}
-};
-
-void print_cdb_usage()
-{
-   throw USER_SOFT_EXCEPTION((string("Usage: se_cdb [options] dbname\n\n") +
-                              string("options:\n") + string(arg_glossary(cdb_argtable, cdb_narg, "  ")) + string("\n")).c_str());
-
+namespace cdb_globals {
+    int data_file_max_size          = 0;     /* 0 means that size is not limited */
+    int tmp_file_max_size           = 0;     /* 0 means that size is not limited */
+    int data_file_extending_portion;         /* size in Mb */
+    int tmp_file_extending_portion;          /* size in Mb */
+    int data_file_initial_size;              /* size in Mb */
+    int persistent_heap_size;                /* size in Mb */
+    int log_file_size;                       /* size in Mb */
+    char db_security[32];                    /* either 'authorization', 'authentication' or 'off' */
 }
 
-void setup_cdb_globals(int argc,
-                      char** argv,
-                      int64_t &data_file_max_size,
-                      int64_t &tmp_file_max_size,
-                      int &data_file_extending_portion,
-                      int &tmp_file_extending_portion,
-                      int &data_file_initial_size,
-                      int &tmp_file_initial_size,
-                      int &persistent_heap_size,
-		      uint64_t &log_file_size
-                     )
+static int cdb_s_help = 0;
+static int cdb_l_help = 0;
+static int cdb_version = 0;
+
+static const size_t cdb_narg = 17;
+
+static arg_rec cdb_argtable[] =
 {
-   int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
+  {"--help",                   NULL,   arg_lit, &cdb_l_help,                       "0",   "\t\t\tdisplay this help and exit"},
+  {"-help",                    NULL,   arg_lit, &cdb_s_help,                       "0",   "\t\t\t\tdisplay this help and exit"},
+  {"-version",                 NULL,   arg_lit, &cdb_version,                      "0",   "\t\t\tdisplay product version and exit"},
+  {"-data-file-max-size",      " Mbs", arg_int, &data_file_max_size,               "0",   "\tthe max size of data file (in Mb),\n\t\t\t\tdefault 0 (unlimited size)"},
+  {"-tmp-file-max-size",       " Mbs", arg_int, &tmp_file_max_size,                "0",   "\tthe max size of tmp file (in Mb),\n\t\t\t\tdefault 0 (unlimited size)"},
+  {"-data-file-ext-portion",   " Mbs", arg_int, &data_file_extending_portion,      "100", "\tthe data file extending portion size (in Mb), \n\t\t\t\tdefault 100Mb"},
+  {"-tmp-file-ext-portion",    " Mbs", arg_int, &tmp_file_extending_portion,       "100", "\tthe tmp file extending portion size (in Mb),\n\t\t\t\tdefault 100Mb"},
+  {"-data-file-init-size",     " Mbs", arg_int, &data_file_initial_size,           "100", "\tthe data file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
+  {"-tmp-file-init-size",      " Mbs", arg_int, &sm_globals::tmp_file_initial_size,"100", "\tthe tmp file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
+  {"-persistent-heap-size",    " Mbs", arg_int, &persistent_heap_size,             "10",  "\tthe persistent heap size (in Mb), \n\t\t\t\tallowed in the range of 10Mb - 99Mb,\n\t\t\t\tdefault 10Mb"},
+  {"-bufs-num",                " N",   arg_int, &sm_globals::bufs_num,             "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
+  {"-max-trs-num",             " N",   arg_int, &sm_globals::max_trs_num,          "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
+  {"-upd-crt",                 " N",   arg_dbl, &sm_globals::upd_crt,              "0.25","\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
+  {"-max-log-files",           " N",   arg_int, &sm_globals::max_log_files,        "3",   "\t\tmaximum log files until log truncate\n\t\t\t\tdefault: 3"},
+  {"-log-file-size",           " Mbs", arg_int, &log_file_size,                    "100", "\t\tmaximum one log file size (in Mb)\n\t\t\t\tdefault 100Mb"},
+  {"-db-security",             "  security level",  arg_str,  &db_security,         "authentication", "  level of database security:\n\t\t\t\t 1) 'off' - none;\n\t\t\t\t 2) 'authentication' (default);\n\t\t\t\t 3) 'authorization'"},
+  {NULL,                       "\n   db_name", arg_str, &sm_globals::db_name,      "???", "   \t\t\tname of the database to be created"}
+};
+
+
+static void print_cdb_usage() 
+{
+    throw USER_SOFT_EXCEPTION((string("Usage: se_cdb [options] dbname\n\n") +
+                               string("options:\n") + string(arg_glossary(cdb_argtable, cdb_narg, "  ")) + string("\n")).c_str());
+}
+
+
+void 
+parse_cdb_command_line(int argc, char** argv)
+{
    char errmsg[1000];
-   arg_scan_ret_val = arg_scanargv(argc, argv, cdb_argtable, cdb_narg, NULL, errmsg, NULL);
 
-   if (_cdb_s_help_ == 1 || _cdb_l_help_ == 1)
-      print_cdb_usage();
+   if (argc == 1) 
+       print_cdb_usage();
+   
+   int res = arg_scanargv(argc, argv, cdb_argtable, cdb_narg, NULL, errmsg, NULL);
 
-   if (_cdb_version_ == 1)
-   {
-      print_version_and_copyright("Sedna Create Data Base Utility");
-      throw USER_SOFT_EXCEPTION("");
+   if (cdb_s_help == 1 || cdb_l_help == 1)
+       print_cdb_usage();
+
+   if (cdb_version == 1) {
+       print_version_and_copyright("Sedna Create Data Base Utility");
+       throw USER_SOFT_EXCEPTION("");
    }
+   if (0 == res)
+       throw USER_EXCEPTION2(SE4601, errmsg);
+}
 
-   if (arg_scan_ret_val == 0)
-      throw USER_EXCEPTION2(SE4601, errmsg);
 
-   if (_persistent_heap_size_ < 10 || _persistent_heap_size_ > 99)
-      throw USER_EXCEPTION2(SE4601, "Invalid persistent heap size - it must be in the range of 10 and 99");
 
-   data_file_max_size = (__int64)_data_file_max_size_ * 0x100000;
-   tmp_file_max_size = (__int64)_tmp_file_max_size_ * 0x100000;
-   data_file_extending_portion = _data_file_extending_portion_ * 0x10;
-   tmp_file_extending_portion = _tmp_file_extending_portion_ * 0x10;
-   data_file_initial_size = _data_file_initial_size_ * 0x10;
-   tmp_file_initial_size = _tmp_file_initial_size_ * 0x10;
-   persistent_heap_size = _persistent_heap_size_ * 0x100000;
-   log_file_size = _log_file_size_ * UINT64_C(0x100000);
+void 
+setup_cdb_globals(gov_config_struct* cfg)
+{
+   if (persistent_heap_size < 10 || persistent_heap_size > 99)
+       throw USER_EXCEPTION2(SE4601, "Invalid persistent heap size - it must be in the range of 10 and 99");
 
-   if (_log_file_size_ <= 0)
+   if (log_file_size <= 0)
 	   throw USER_EXCEPTION2(SE4601, "'log_file_size' parameter is incorrect (must be >0)");
 
-   bufs_num = _bufs_num_;
-   max_trs_num = _max_trs_num_;
-   upd_crt = _upd_crt_;
-   if (upd_crt < 0 || upd_crt > 1)
+   if (sm_globals::upd_crt < 0 || sm_globals::upd_crt > 1)
 	   throw USER_EXCEPTION2(SE4601, "'upd-crt' parameter is incorrect (must be in [0;1])");
 
-   max_log_files = _max_log_files_;
-   if (max_log_files < 1)
+   if (sm_globals::max_log_files < 1)
 	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
 
    if (strcmp(db_security, "???") == 0)
@@ -128,31 +109,29 @@ void setup_cdb_globals(int argc,
    if ((strcmp(db_security, "off") != 0) && (strcmp(db_security, "authentication") != 0) && (strcmp(db_security, "authorization") != 0))
        throw USER_EXCEPTION2(SE4601, "'db-security' parameter is incorrect");
 
-   if (strcmp(db_name, "???") == 0)
+   if (strcmp(sm_globals::db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
 
-   if (strlen(SEDNA_DATA) + strlen(db_name) + 14 > U_MAX_PATH)
-      throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
-
-   strcpy(db_files_path, SEDNA_DATA);
-   strcat(db_files_path, "/data/");
-   strcat(db_files_path, db_name);
-   strcat(db_files_path, "_files/");
+   if (strlen(cfg->gov_vars.SEDNA_DATA) + strlen(sm_globals::db_name) + 14 > U_MAX_PATH)
+       throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
+   
+   strcpy(sm_globals::db_files_path, cfg->gov_vars.SEDNA_DATA);
+   strcat(sm_globals::db_files_path, "/data/");
+   strcat(sm_globals::db_files_path, sm_globals::db_name);
+   strcat(sm_globals::db_files_path, "_files/");
 }
 
 
-void create_cfg_file(char *db_name,
-                     int max_trs_num,
-                     int bufs_num,
-                     double upd_crt,
-		             int max_log_files,
-                     int tmp_file_initial_size)
+void create_cfg_file() 
 {
+   char buf[100];
+   int nbytes_written;
+   string cfg_file_content;
    UFile cfg_file_handle;
    USECURITY_ATTRIBUTES *def_sa, *dir_sa;
 
    string cfg_files_path = string(SEDNA_DATA)+"/cfg";
-   string cfg_file_name  = cfg_files_path + "/" + string(db_name) + "_cfg.xml";
+   string cfg_file_name  = cfg_files_path + "/" + string(sm_globals::db_name) + "_cfg.xml";
 
    if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
    if (uMkDir(cfg_files_path.c_str(), dir_sa, __sys_call_error) == 0)
@@ -170,45 +149,30 @@ void create_cfg_file(char *db_name,
    uReleaseSA(def_sa, __sys_call_error);
    uReleaseSA(dir_sa, __sys_call_error);
 
-//   if ( (cfg_file=fopen(cfg_file_name.c_str(), "w")) == NULL)
-//      throw CharismaException(string("???: Can't create file ") + cfg_file_name);
-
-   string cfg_file_content;
-
-   //cfg_file_content  = "<!-- Configuration file for sm -->\n";
    cfg_file_content =  "<?xml version=\"1.0\" standalone=\"yes\"?>\n";
-   //cfg_file_content += "<dbs>\n";
    cfg_file_content += "<db>\n";
-   cfg_file_content += "   <name>" + string(db_name) + string("</name>\n");
-   cfg_file_content += "   <bufs_num>" + int2string(bufs_num) + string("</bufs_num>\n");
-   cfg_file_content += "   <max_trs_num>" + int2string(max_trs_num) + string("</max_trs_num>\n");
-   cfg_file_content += "   <max_log_files>" + int2string(max_log_files) + string("</max_log_files>\n");
-   cfg_file_content += "   <tmp_file_initial_size>" + int2string(tmp_file_initial_size) + string("</tmp_file_initial_size>\n");
+   cfg_file_content += "   <name>" + string(sm_globals::db_name) + string("</name>\n");
+   cfg_file_content += "   <bufs_num>" + int2string(sm_globals::bufs_num) + string("</bufs_num>\n");
+   cfg_file_content += "   <max_trs_num>" + int2string(sm_globals::max_trs_num) + string("</max_trs_num>\n");
+   cfg_file_content += "   <max_log_files>" + int2string(sm_globals::max_log_files) + string("</max_log_files>\n");
+   cfg_file_content += "   <tmp_file_initial_size>" + int2string(sm_globals::tmp_file_initial_size) + string("</tmp_file_initial_size>\n");
 
-   char buf[100];
-   sprintf(buf, "%.2f", upd_crt);
+   sprintf(buf, "%.2f", sm_globals::upd_crt);
 
    cfg_file_content += "   <upd_crt>" + string(buf) + string("</upd_crt>\n");
-
    cfg_file_content += "</db>\n";
-   //cfg_file_content += "</dbs>";
 
-   int res;
-   int nbytes_written;
+   int res = uWriteFile(cfg_file_handle,
+                        cfg_file_content.c_str(),
+                        cfg_file_content.size(),
+                        &nbytes_written, 
+                        __sys_call_error);
 
-   res = uWriteFile(cfg_file_handle,
-                    cfg_file_content.c_str(),
-                    cfg_file_content.size(),
-                    &nbytes_written, __sys_call_error
-                    );
-
-  if ( res == 0 || nbytes_written != cfg_file_content.size())
-      throw USER_EXCEPTION2(SE4045,  cfg_file_name.c_str());
+   if ( res == 0 || nbytes_written != cfg_file_content.size())
+      throw USER_EXCEPTION2(SE4045, cfg_file_name.c_str());
 
    if (uCloseFile(cfg_file_handle, __sys_call_error) == 0)
       throw USER_EXCEPTION2(SE4043, "configuration file");
-   return;
-
 }
 
 void create_data_directory()
@@ -221,7 +185,7 @@ void create_data_directory()
    if (uMkDir(data_files_path.c_str(), dir_sa, __sys_call_error) == 0)
       throw USER_EXCEPTION2(SE4300, data_files_path.c_str());
 
-   data_files_path += ( string(db_name) + "_files" );
+   data_files_path += string(sm_globals::db_name) + "_files";
 
    if (uMkDir(data_files_path.c_str(), dir_sa, __sys_call_error) == 0)
       throw USER_EXCEPTION2(SE4300, data_files_path.c_str());

@@ -136,8 +136,8 @@ struct bm_masterblock
     __int64 data_file_cur_size;
     __int64 tmp_file_cur_size;
 
-    __int64 data_file_max_size;
-    __int64 tmp_file_max_size;
+    __int64 data_file_max_size;  /* size in PAGES, 0 means unlimited size */
+    __int64 tmp_file_max_size;   /* size in PAGES, 0 means unlimited size */
 
     // in PAGE_SIZE
     int data_file_extending_portion;

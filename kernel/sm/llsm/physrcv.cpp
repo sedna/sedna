@@ -212,7 +212,7 @@ LSN llRecoverPhysicalState()
 	// sector alligned buffer
 	ctrl_blk = (void *)((uint32_t)((char *)ctrl_blk_buf + sector_size - 1) & ~(sector_size - 1));
 
-	if (uGetDiskSectorSize(&sector_size, db_files_path, __sys_call_error) == 0)
+	if (uGetDiskSectorSize(&sector_size, sm_globals::db_files_path, __sys_call_error) == 0)
 		throw USER_EXCEPTION(SE4051);
 
 	// recover physical state by scaning all physical records
@@ -234,12 +234,15 @@ void llRcvRestorePh()
 
   char buf3[20];
 
-  string ph_bu_file_name = string(db_files_path) + string(db_name) + "." +
-  							string(u_ui64toa(ph_counter, buf3, 10)) + ".seph";
-  string ph_bu_file_name_wo_path = string(db_name) + "." + string(u_ui64toa(ph_counter, buf3, 10)) + ".seph";
+  string ph_bu_file_name = string(sm_globals::db_files_path) + 
+                           string(sm_globals::db_name) + "." +
+                           string(u_ui64toa(ph_counter, buf3, 10)) + ".seph";
 
+  string ph_bu_file_name_wo_path = string(sm_globals::db_name) + "." + 
+                                   string(u_ui64toa(ph_counter, buf3, 10)) + ".seph";
 
-  string ph_cur_file_name = string(db_files_path) + string(db_name) + ".seph";
+  string ph_cur_file_name = string(sm_globals::db_files_path) + 
+                            string(sm_globals::db_name) + ".seph";
 
   // delete all other ph files
   string ph_name;
@@ -254,7 +257,7 @@ void llRcvRestorePh()
   char *cur_dir;
   cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
 
-  if (uChangeWorkingDirectory(db_files_path, __sys_call_error) != 0 )
+  if (uChangeWorkingDirectory(sm_globals::db_files_path, __sys_call_error) != 0 )
      throw USER_EXCEPTION(SE4604);
 
   struct _finddata_t ph_file;
@@ -284,7 +287,7 @@ void llRcvRestorePh()
   DIR *dir;
   struct dirent* dent;
 
-  dir = opendir(db_files_path);
+  dir = opendir(sm_globals::db_files_path);
 
   if (dir == NULL)
      throw USER_EXCEPTION(SE4604);
@@ -301,14 +304,14 @@ void llRcvRestorePh()
      if (p == NULL || 0!=strcmp(p,".seph") ) continue;
 
      if (strcmp(dent->d_name, ph_bu_file_name_wo_path.c_str()))
-     	if (uDeleteFile((string(db_files_path) + dent->d_name).c_str(), __sys_call_error) == 0)
+     	if (uDeleteFile((string(sm_globals::db_files_path) + dent->d_name).c_str(), __sys_call_error) == 0)
         	throw USER_EXCEPTION(SE4041);
 
 	 RECOVERY_CRASH;
   }
 
   if (0 != closedir(dir))
-     throw USER_EXCEPTION2(SE4054, db_files_path);
+     throw USER_EXCEPTION2(SE4054, sm_globals::db_files_path);
 #endif
 
   if (uCopyFile(ph_bu_file_name.c_str(), ph_cur_file_name.c_str(), false, __sys_call_error) == 0)

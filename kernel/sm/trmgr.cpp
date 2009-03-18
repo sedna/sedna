@@ -44,7 +44,7 @@ USemaphore wait_for_recovery;
 
 UTHANDLE  checkpoint_thread_dsc;
 
-volatile bool shutdown_checkpoint_thread = false;
+static volatile bool shutdown_checkpoint_thread = false;
 volatile bool shutdown_event_call = false;
 volatile bool is_recovery_mode = false;
 
@@ -63,7 +63,7 @@ vector<transaction_id> _ids_table_;
 
 // some very rough criterion for snapshot advancement
 //#define UPDATED_PART_THRESHOLD 0.25
-#define UPDATED_PART_THRESHOLD upd_crt
+#define UPDATED_PART_THRESHOLD sm_globals::upd_crt
 #define CREATED_PART_THRESHOLD 0.25
 
 static bool SnapshotAdvanceCriterion()
@@ -238,7 +238,6 @@ U_THREAD_PROC (checkpoint_thread, arg)
 //exit(1);
 ///////////////////
 
-//   	if (shutdown_checkpoint_thread == true) return 0;
    	if (shutdown_event_call == true) return 0;
 
 
@@ -361,7 +360,7 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
   UPHANDLE h;
 
   string command_line = uGetImageProcPath(buf, __sys_call_error) +
-                        string("/se_rcv ") + string(db_name) + string(" ") +
+                        string("/se_rcv ") + string(sm_globals::db_name) + string(" ") +
 
                         u_i64toa(last_checkpoint_lsn, buf2, 10);
   strcpy(buf, command_line.c_str());
@@ -503,7 +502,9 @@ static USemaphore	ph_semaphore_0, ph_semaphore_1;
 // this function inits ph on snapshot init
 int PhOnInitialSnapshotCreate(TIMESTAMP ts)
 {
-    string ph_file_name = string(db_files_path) + string(db_name) + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
+    string ph_file_name = string(sm_globals::db_files_path) + 
+                          string(sm_globals::db_name) + "." + 
+                          string(u_ui64toa(ts, buf, 10)) + ".seph";
 
 	if (!ts_0)
 	{
@@ -550,8 +551,13 @@ int PhOnSnapshotCreate(TIMESTAMP ts, TIMESTAMP *damTs, int damTsSize)
 {
 	int i;
 	
-    string ph_file_name = string(db_files_path) + string(db_name) + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
-	string ph_cur_file_name = string(db_files_path) + string(db_name) + ".seph";
+    string ph_file_name = string(sm_globals::db_files_path) + 
+                          string(sm_globals::db_name) + "." + 
+                          string(u_ui64toa(ts, buf, 10)) + ".seph";
+
+	string ph_cur_file_name = string(sm_globals::db_files_path) + 
+	                          string(sm_globals::db_name) + 
+	                          ".seph";
 
 	if (uCopyFile(ph_cur_file_name.c_str(), ph_file_name.c_str(), false, __sys_call_error) == 0)
       throw USER_EXCEPTION(SE4306);
@@ -620,7 +626,9 @@ int PhOnSnapshotCreate(TIMESTAMP ts, TIMESTAMP *damTs, int damTsSize)
 // this function releases ph on snapshot deletion
 void PhOnSnapshotDelete(TIMESTAMP ts, bool isDelete)
 {
-    string ph_file_name = string(db_files_path) + string(db_name) + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
+    string ph_file_name = string(sm_globals::db_files_path) + 
+                          string(sm_globals::db_name) + "." + 
+                          string(u_ui64toa(ts, buf, 10)) + ".seph";
 
     if (ts == ts_0)
     {
