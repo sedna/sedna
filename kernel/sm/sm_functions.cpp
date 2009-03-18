@@ -80,7 +80,7 @@ send_stop_sm_msg()
     int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, sm_globals::db_name);
 
     GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].is_stop = 1;
-    send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
+    send_command_to_gov(port_number, STOP);
 }
 
 bool

@@ -127,7 +127,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 
   int times=1;  
-  LSN cp_lsn;
+
   while (true)
   {
 //    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )

@@ -430,8 +430,6 @@ void flush_data_buffers()
     t_buffer_table::iterator it;
     vmm_sm_blk_hdr *blk = NULL;
 
-    int ind; // index of offset in buffer
-
     d_printf1("Flush data buffers: starting...\n");
 
     for (it = buffer_table.begin(); it != buffer_table.end(); ++it)

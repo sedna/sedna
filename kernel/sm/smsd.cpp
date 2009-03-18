@@ -46,7 +46,6 @@ int main(int argc, char **argv)
     program_name_argv_0 = argv[0];
     UPID sm_pid;
     int port_number;
-    bool exist_db = false;
     int command = STOP;
     int db_id;
     pping_client *ppc = NULL;
