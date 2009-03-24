@@ -13,12 +13,12 @@ class MallocAllocator
 {
 private:
 	static const int maxp = 10000;
-	static const int maxsz = 100*1024*1024;
+	static const unsigned int maxsz = 100*1024*1024;
 	static const int onesz = 50*1024*1024; //TODO
 	int pind;
 	void *ptrs[maxp];
-	int cursize;
-	int left;
+	unsigned int cursize;
+	unsigned int left;
 public:
 	typedef char* ptr_t;
 
