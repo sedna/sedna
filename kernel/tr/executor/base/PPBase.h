@@ -84,7 +84,7 @@ public:
 	
 	virtual void  set_xquery_line(int _xquery_line_){__xquery_line = _xquery_line_;}
 	virtual int   get_xquery_line() const           { return __xquery_line; }
-	virtual char* get_error_msg()   const           { return NULL; }
+	virtual const char* get_error_msg()   const     { return NULL; }
 
 	virtual bool is_const(){return false;}
     virtual ~PPIterator() {}
@@ -215,7 +215,7 @@ class SednaXQueryException : public SednaUserException
 {
 protected:
     int   xquery_line;
-    char* physop_msg;
+    const char* physop_msg;
 
 public:
     SednaXQueryException(const char* _file_, 

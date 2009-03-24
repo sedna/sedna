@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
     	fprintf(stderr, "%s\n", e.what());
     } catch (SednaException &e) {
     	fprintf(stderr, "System error\n");
-    	fprintf(stderr, e.what());
+    	fprintf(stderr, "%s\n", e.what());
     } catch (ANY_SE_EXCEPTION) {
        	fprintf(stderr, "System error\n");
     }

@@ -27,8 +27,8 @@ Methods of reading strings:
   respectivly and have a common ancesor class str_cursor which defines a basic
   set of operations any string cursor should support.
                             str_cursor
-                           /          \
-                          /            \
+                           //        \\
+                          //          \\
                  pstr_long_cursor    estr_cursor
     Cursors are byte-oriented. Data in string parts depends on encoding and
   a character may be split into several separate string parts for multibyte

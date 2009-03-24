@@ -25,15 +25,15 @@ const size_t narg = 9;  // number of arguments for argtable (must be consistent 
 // command line parameters
 arg_rec hb_argtable[] =
 {
-{"-help",            NULL,          arg_lit,  &hb_help,                 "0",   "\t\t\t\t   display this help and exit"},
-{"--help",           NULL,          arg_lit,  &hb_help,                 "0",   "\t\t\t   display this help and exit"},
-{"-checkpoint",               NULL,          arg_lit,  &hb_checkpoint,           "0",   "\t\t\t   make checkpoint before backup"}, 
-{"-time-dir",               NULL,          arg_lit,  &hb_timestamp,            "0",   "\t\t\t   create timestamp-subdir"}, 
-{"-make-dir",               NULL,          arg_lit,  &hb_mkdir,                "0",   "\t\t\t   create directory if it doesn't exist"}, 
-{"-incr-mode",         " <increment_mode>", arg_str,  hb_incr_mode,            "none", "\t   type of the increment mode (start, add, stop)"},
-{"-port",           " port-number", arg_int,  &hb_cmd_port,             "-1","\t\t   port number to connect to Governor\n"},
-{NULL,                " dbname", arg_str,  hb_db_name,               "???", "\t\t\t   the name of the database "},
-{NULL,               " path", arg_str,  hb_dir_name,              "???", "\t\t\t\t   the name of the backup directory"}, 
+{"-help",            NULL,          arg_lit,         &hb_help,                 "0",   "\t\t\t\t   display this help and exit"},
+{"--help",           NULL,          arg_lit,         &hb_help,                 "0",   "\t\t\t   display this help and exit"},
+{"-checkpoint",      NULL,          arg_lit,         &hb_checkpoint,           "0",   "\t\t\t   make checkpoint before backup"}, 
+{"-time-dir",        NULL,          arg_lit,         &hb_timestamp,            "0",   "\t\t\t   create timestamp-subdir"}, 
+{"-make-dir",        NULL,          arg_lit,         &hb_mkdir,                "0",   "\t\t\t   create directory if it doesn't exist"}, 
+{"-incr-mode",       " <increment_mode>", arg_str,   hb_incr_mode,             "none", "\t   type of the increment mode (start, add, stop)"},
+{"-port",            " port-number",      arg_int,   &hb_cmd_port,             "-1","\t\t   port number to connect to Governor\n"},
+{NULL,               " dbname",           arg_str,   hb_db_name,               "???", "\t\t\t   the name of the database "},
+{NULL,               " path",             arg_str,   hb_dir_name,              "???", "\t\t\t\t   the name of the backup directory"}, 
 };
 
 // print help message
@@ -42,8 +42,7 @@ static void hbPrintUsage()
 	print_version_and_copyright("\nSEDNA Hot-Backup Process");
     
     fprintf(stdout, "Usage: se_hb [options] dbname path\n\noptions:\n");
-    fprintf(stdout, arg_glossary(hb_argtable, narg, "  "));
-    fprintf(stdout, "\n");
+    fprintf(stdout, "%s\n", arg_glossary(hb_argtable, narg, "  "));
 }
 
 // this function parses command line and fetches parameters

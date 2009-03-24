@@ -32,7 +32,7 @@
 	((A)<(B)?(A):(B))
 #endif
 
-#ifdef MAX
+#ifndef MAX
 #define MAX(A, B) \
 	((A)>(B)?(A):(B))
 #endif

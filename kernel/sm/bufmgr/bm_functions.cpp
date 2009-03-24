@@ -83,7 +83,6 @@ void _bm_sigbus_handler(int signo)
 static inline void _bm_guarantee_buffer_pool(void* addr, int size)
 {
     int page_size = getpagesize();
-    int res = 0;
 
     int total_pages = size / page_size;
     if (size % page_size != 0) total_pages++;

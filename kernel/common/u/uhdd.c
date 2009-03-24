@@ -810,7 +810,7 @@ uCleanupUniqueFileStructs(const char *dir,             /* in  */
             sprintf(name, "%s/%s", dir, dent->d_name);
             if (remove(name) == -1) {
                 sys_call_error("remove");
-                closedir(dir);
+                closedir(dd);
                 return 0;
             }
         }

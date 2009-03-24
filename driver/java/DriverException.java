@@ -50,7 +50,7 @@ public class DriverException extends Exception {
     }
 
 /**
- * When session debug mode is on (see Sedna Programmer’s Guide for details on Sedna's debug facilities) 
+ * When session debug mode is on (see Sedna Programmer's Guide for details on Sedna's debug facilities) 
  * <code>DriverException</code> provides debug information when query fails. 
  * For example:
  *

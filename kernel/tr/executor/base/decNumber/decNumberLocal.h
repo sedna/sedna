@@ -192,8 +192,13 @@
     }
 
   // MAX and MIN -- general max & min (not in ANSI)
-  #define MAX(x,y) ((x)<(y)?(y):(x))
-  #define MIN(x,y) ((x)>(y)?(y):(x))
+  #ifndef MAX
+    #define MAX(x,y) ((x)<(y)?(y):(x))
+  #endif
+
+  #ifndef MIN
+    #define MIN(x,y) ((x)>(y)?(y):(x))
+  #endif
 
 #else
   #error decNumberLocal included more than once

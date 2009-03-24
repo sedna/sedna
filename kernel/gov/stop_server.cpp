@@ -38,7 +38,6 @@ static void print_ss_usage()
 
 int main(int argc, char** argv)
 {
-    USOCKET sock;
     UPID gov_pid;
     int port_number;
     UPHANDLE proc_handle;

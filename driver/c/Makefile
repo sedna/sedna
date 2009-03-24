@@ -44,13 +44,6 @@ OBJ_NAME = /Fo
 CFLAGS += /DSE_NO_EVENT_LOG
 CFLAGS_DL += /DSE_NO_EVENT_LOG
 
-#Should be uncommented when /Zl be enabled
-#ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
-#LFLAGS_NOLIB += /DEFAULTLIB:LIBCMTD.LIB
-#else
-#LFLAGS_NOLIB += /DEFAULTLIB:LIBCMT.LIB
-#endif
-
 # static multi-threaded library linked with /MT[d]
 libsednamt$(LIB_EXT): $(MT_OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
