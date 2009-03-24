@@ -91,15 +91,15 @@ void PPDDO::next  (tuple &t)
             }
         }
 
-        u_timeb t_sort1, t_sort2;
-   /*     d_printf1("Before sorting: \n");
-        u_ftime(&t_sort1);*/
-        //s->sort();
-        //s->sort();
-		s->lazy_sort();
+       /* u_timeb t_sort1, t_sort2;
+        d_printf1("Before sorting: \n");
+        u_ftime(&t_sort1);
+        s->sort();
+        s->sort();*/
+        s->lazy_sort();
         /*u_ftime(&t_sort2);
         d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
-		pos=1;
+        pos=1;
         ret_val=XNULL;
     }
 
@@ -109,7 +109,7 @@ while (true)
 	if (t.is_eos())
 	{
 		pos = 0;
-        s->clear();
+		s->clear();
 		{RESTORE_CURRENT_PP; return;}
 	}
 	else
@@ -121,26 +121,6 @@ while (true)
 		}
 	}
 }
-/*while (true)
-{
-    if (pos < s->size()) 
-	{
-		s->get(t,pos++);
-		if (t.cells[0].get_node()!=ret_val)
-		{
-			ret_val=t.cells[0].get_node();
-			{RESTORE_CURRENT_PP; return;}
-		}
-	}
-    else 
-    {
-        t.set_eos();
-        pos = 0;
-        s->clear();
-		{RESTORE_CURRENT_PP; return;}
-    }
-}
-*/
 #else
     child.op->next(t);
 #endif

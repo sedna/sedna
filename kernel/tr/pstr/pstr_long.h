@@ -92,10 +92,10 @@ void pstr_long_str_info(xptr desc);
 
 class pstr_long_cursor : public str_cursor
 {
-	//TODO!!!!! blk should point to last_blk or last_blk->pred when pointer is at eof \\
-	//			if cursor < 0, then blk should NEVER point to last_blk				   \\   in get_blk/copy_blk
-	//			i.e. blk always points to block that contains some string data		   //  
-	//				& if position is not eos, current char is in blk				  //
+	//TODO!! blk should point to last_blk or last_blk->pred when pointer is at eof
+	// if cursor < 0, then blk should NEVER point to last_blk in get_blk/copy_blk
+	// i.e. blk always points to block that contains some string data & if position 
+	// is not eos, current char is in blk
 	friend void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t size0);
 	friend void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
 protected:
@@ -127,7 +127,7 @@ public:
 	//FIXME
 	xptr blk;
 	xptr last_blk;
-	int ofs;
+	unsigned int ofs;
 	int cursor;
 
     // block oriented copy. buf must have size not less than a page size
