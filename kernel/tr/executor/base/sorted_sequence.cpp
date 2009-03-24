@@ -323,8 +323,8 @@ void sorted_sequence::sort1(int off, int len)
 
 	// Swap partition elements back to middle
 	int s, n = off + len;
-	s = min(a-off, b-a  );  vecswap( off, b-s, s);
-	s = min(d-c,   n-d-1);  vecswap( b,   n-s, s);
+	s = MIN(a-off, b-a  );  vecswap( off, b-s, s);
+	s = MIN(d-c,   n-d-1);  vecswap( b,   n-s, s);
 
 	// Recursively sort non-partition-elements
 	if ((s = b-a) > 1)

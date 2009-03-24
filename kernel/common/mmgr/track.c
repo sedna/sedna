@@ -188,11 +188,11 @@ void DumpUnfreed(int component)
         d_printf4("%-50s:\t\tLINE %d,\t\tADDRESS %d\t%d unfreed (FLAG: %s)\n", itr->file, itr->line, itr->address, itr->size, itr->flag);
 #else
         fprintf(du_ostr, "\t<block>\n");
-        fprintf(du_ostr, "\t\t<file>%s</file>\n",       itr->file);
-        fprintf(du_ostr, "\t\t<line>%d</line>\n",       itr->line);
-        fprintf(du_ostr, "\t\t<address>%d</address>\n", itr->address);
-        fprintf(du_ostr, "\t\t<size>%d</size>\n",       itr->size);
-        fprintf(du_ostr, "\t\t<flag>%s</flag>\n",       itr->flag);
+        fprintf(du_ostr, "\t\t<file>%s</file>\n",         itr->file);
+        fprintf(du_ostr, "\t\t<line>%d</line>\n",         itr->line);
+        fprintf(du_ostr, "\t\t<address>0x%x</address>\n", itr->address);
+        fprintf(du_ostr, "\t\t<size>%d</size>\n",         itr->size);
+        fprintf(du_ostr, "\t\t<flag>%s</flag>\n",         itr->flag);
         fprintf(du_ostr, "\t</block>\n");
 #endif
 

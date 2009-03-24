@@ -84,7 +84,7 @@ public interface SednaConnection {
     public SednaStatement createStatement() throws DriverException;
 
 /**
- * Sedna supports fn:trace function for debugging purpose (see Sedna Programmers Guide for details).
+ * Sedna supports fn:trace function for debugging purpose (see Sedna Programmer's Guide for details).
  * By default trace output is included into XQuery query result. 
  * You can turn trace output on/off using this method 
  *
@@ -94,7 +94,7 @@ public interface SednaConnection {
 
 /**
  * Setting connection into debug mode allows getting debug information when XQuery query 
- * fails due to some reason (see Sedna Programmers Guide for details for details). 
+ * fails due to some reason (see Sedna Programmer's Guide for details for details). 
  * When the query fails debug information is accessible through 
  * <code>getDebugInfo</code> method of the <code>DriverException</code> object.
  * To set the connection into debug mode use this method.

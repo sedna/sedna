@@ -7,16 +7,14 @@
 #define _SORTED_SEQUENCE_H
 
 #include "common/sedna.h"
+#include "common/commutil.h"
 #include "tr/structures/pers_map.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/seq_common.h"
 
 #define MAX_BLOCKS_IN_CHAIN 500 //should be changed after meeting with Andrey
-#define GET_FREE_SPACE(p) (shft)((__uint32)PAGE_SIZE - (__uint32)((p).addr) & PAGE_REVERSE_BIT_MASK)
-#ifndef min
-#define min(x,y) ((x) < (y) ? (x) : (y))
-#endif
+#define GET_FREE_SPACE(p) (shft)((__uint32)PAGE_SIZE - ((__uint32)((p).addr) & PAGE_REVERSE_BIT_MASK))
 
 typedef int (*compare_fn)(xptr v1,xptr v2, const void *);
 typedef int (*get_size_fn)(tuple& t, const void *);

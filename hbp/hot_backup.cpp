@@ -22,9 +22,6 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    char buf[1024];
-    int res;
-
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
       so we must block SIGPIPE with sigignore.*/
 #if defined(SunOS)

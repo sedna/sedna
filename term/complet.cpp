@@ -262,7 +262,7 @@ char *fromchain_comp_generator(const char *text, int state)
         state_to_rlfnc = 1;
         if (file_res)
         {
-            if (q_file_res = (char *)malloc(strlen(file_res) + 3))
+            if ((q_file_res = (char *)malloc(strlen(file_res) + 3)))
             {
                 sprintf(q_file_res, "\"%s\"", file_res);
                 returned_smth = 1;
