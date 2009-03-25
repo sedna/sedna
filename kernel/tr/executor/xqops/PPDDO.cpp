@@ -256,7 +256,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 	int s2=get_size_ser(v2);
 	/*copy_data_ser_to_buffer(get_ptr_ser(v1,s1),s1);
 	copy_data_ser_to_buffer(get_ptr_ser(v2,s2),s1,s2);
-	int res=memcmp(temp_buffer,temp_buffer+s1,min(s1,s2));
+	int res=memcmp(temp_buffer,temp_buffer+s1,MIN(s1,s2));
 	if (res) return res;
 	else
 	{
@@ -269,7 +269,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
     memcpy(bufA, temp_buffer, s1);
     copy_data_ser_to_buffer(get_ptr_ser(v2,s2),s2);
 	memcpy(bufB, temp_buffer, s2);
-	int res = sign(memcmp(bufA, bufB, min(s1, s2)));
+	int res = sign(memcmp(bufA, bufB, MIN(s1, s2)));
     if( 0 == res )
 	{
 	     if(s1 > s2) return 1; if(s2 > s1) return -1;
@@ -280,9 +280,9 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 	{
 		copy_data_ser_to_buffer(get_ptr_ser(v1,s1),s1);
 		xptr data=get_ptr_ser(v2,s2);
-		int s2_p1=min(GET_FREE_SPACE(data),s2);
+		int s2_p1=MIN(GET_FREE_SPACE(data),s2);
 		CHECKP(data);
-		int res=memcmp(temp_buffer,XADDR(data),min(s1,s2_p1));
+		int res=memcmp(temp_buffer,XADDR(data),MIN(s1,s2_p1));
 		if (res) return sign(res);
 		else
 		{
@@ -294,7 +294,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 				{
 					data=((seq_blk_hdr*)XADDR(BLOCKXPTR(v2)))->nblk+sizeof(seq_blk_hdr);
 					CHECKP(data);
-					res=memcmp(temp_buffer+s2_p1,XADDR(data),min(s1,s2)-s2_p1);
+					res=memcmp(temp_buffer+s2_p1,XADDR(data),MIN(s1,s2)-s2_p1);
 					if (res) return sign(res);
 					else
 						return (s1-s2);
@@ -307,9 +307,9 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 	{
 		copy_data_ser_to_buffer(get_ptr_ser(v2,s2),s2);
 		xptr data=get_ptr_ser(v1,s1);
-		int s1_p1=min(GET_FREE_SPACE(data),s1);
+		int s1_p1=MIN(GET_FREE_SPACE(data),s1);
 		CHECKP(data);
-		int res=memcmp(temp_buffer,XADDR(data),min(s2,s1_p1));
+		int res=memcmp(temp_buffer,XADDR(data),MIN(s2,s1_p1));
 		if (res) return -sign(res);
 		else
 		{
@@ -322,7 +322,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 				{
 					data=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
 					CHECKP(data);
-					res=memcmp(temp_buffer+s1_p1,XADDR(data),min(s1,s2)-s1_p1);
+					res=memcmp(temp_buffer+s1_p1,XADDR(data),MIN(s1,s2)-s1_p1);
 					if (res) return -sign(res);
 					else
 						return (s1-s2);
