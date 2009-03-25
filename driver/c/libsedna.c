@@ -483,11 +483,11 @@ static int execute(struct SednaConnection *conn)
             goto BulkLoadErr;
         }
 
-        file_handle = uOpenFile(cfile_abspath, 0, U_READ, 0, NULL);
+        file_handle = uOpenFile(cfile_abspath, U_SHARE_READ, U_READ, 0, NULL);
         if (file_handle == U_INVALID_FD)
         {
             uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, __sys_call_error);
-            file_handle = uOpenFile(cfile_abspath, 0, U_READ, 0, NULL);
+            file_handle = uOpenFile(cfile_abspath, U_SHARE_READ, U_READ, 0, NULL);
             if(file_handle == U_INVALID_FD)
             {
                 /* send 400 - BulkLoadError*/
