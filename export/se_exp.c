@@ -104,8 +104,8 @@ int main(int argc, char* argv[]) {
 			printf("EXPORT SUCCEDED\n");
 		} else {
 			printf("EXPORT FAILED WITH UNKNOWN ERROR: %d\n", export_status);
+			exit(-1);
 		}
-
 	} else
 	if (!strcmp(command,"restore")) {
 		printf("\nRESTORING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
 		// import means to restore all data except security information
 		if (import(path,host,db_name,login,password,0)!=0) {
 			printf("\nIMPORT FAILED\n");
-			//exit(-1);
+			exit(-1);
 		} else {
 			printf("IMPORT SUCCEDED\n");
 		}
