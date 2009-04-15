@@ -189,8 +189,8 @@ class SednaStatementImpl implements SednaStatement {
                 int bytes_sent = 0;
 
                 while (bytes_sent < query_bytes.length) {
+                    
                     msg.instruction = NetOps.se_ExecuteLong;
-                    msg.length      = NetOps.SEDNA_SOCKET_MSG_BUF_SIZE;    // body containes: result format (sxml=1 or xml=0) - 1 byte)
 
                     // string format - 1 byte;
                     // string length - 4 bytes
@@ -198,23 +198,17 @@ class SednaStatementImpl implements SednaStatement {
                     // writing queryText
                     setQueryResultType(msg, resultType);
                     msg.body[1] = 0;    // string format
-                    NetOps.writeInt(NetOps.SEDNA_SOCKET_MSG_BUF_SIZE - 6,
+
+                    int bytes_to_send = Math.min(query_bytes.length - bytes_sent, NetOps.SEDNA_SOCKET_MSG_BUF_SIZE - 6);
+                    
+                    System.arraycopy((Object) query_bytes, bytes_sent,
+                                     (Object) msg.body, 6,
+                                     bytes_to_send);
+                    NetOps.writeInt(bytes_to_send,
                                     msg.body, 2);
-
-                    if ((query_bytes.length - bytes_sent)
-                            > (NetOps.SEDNA_SOCKET_MSG_BUF_SIZE - 6)) {
-                        System.arraycopy((Object) query_bytes, bytes_sent,
-                                         (Object) msg.body, 6,
-                                         NetOps.SEDNA_SOCKET_MSG_BUF_SIZE - 6);
-                        bytes_sent += NetOps.SEDNA_SOCKET_MSG_BUF_SIZE - 6;
-                    } else {
-                        System.arraycopy((Object) query_bytes, bytes_sent,
-                                         (Object) msg.body, 6,
-                                         (query_bytes.length - bytes_sent));
-                        msg.length = (query_bytes.length - bytes_sent) + 6;    // body containes: result format (sxml=1 or xml=0) - 1 byte)
-                        bytes_sent += (query_bytes.length - bytes_sent);
-                    }
-
+                    msg.length = bytes_to_send + 6;
+                    bytes_sent += bytes_to_send;
+                    
                     NetOps.writeMsg(msg, outputStream);
                 }
 
