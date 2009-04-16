@@ -11,6 +11,7 @@
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/log/log.h"
+#include "tr/locks/locks.h"
 #include "tr/structures/schema.h"
 #include "tr/executor/por2qep/por2qep.h"
 #include "tr/executor/base/dm_accessors.h"
@@ -127,7 +128,17 @@ void inline free_triggerdata_cell(pers_sset<trigger_cell,unsigned short>::pers_s
     }
     scm_free(trc,true);
 }
-trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, enum trigger_event tr_event, PathExpr *trigger_path,  enum trigger_granularity tr_gran, scheme_list* action, inserting_node innode, PathExpr *path_to_parent, doc_schema_node* schemaroot, const char * trigger_title, const char* doc_name, bool is_doc)
+trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, 
+											enum trigger_event tr_event, 
+											PathExpr *trigger_path,  
+											enum trigger_granularity tr_gran, 
+											scheme_list* action, 
+											inserting_node innode, 
+											PathExpr *path_to_parent, 
+											doc_schema_node* schemaroot, 
+											const char * trigger_title, 
+											const char* doc_name, 
+											bool is_doc)
 {
 	// I. Create and fill new trigger cell
 	trigger_sem_down();
@@ -164,7 +175,7 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, enum trig
 	// FIXME cxt_size for trigger statements must be extracted in scheme part
 	//            trac->cxt_size = atoi(action->at(i+1).internal.num); 
         	}
-        	else  //this is update
+        	else  //this is an update
         	{
             	trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
             	strcpy(trac->statement,action->at(i).internal.str);
@@ -254,20 +265,25 @@ trigger_cell* trigger_cell::find_trigger(const char* title)
 }
 xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old, xptr parameter_where)
 {
-   xptr res_xptr;
+   xptr res_xptr = XNULL;
    se_nullostream nulls;
    PPQueryEssence* qep_tree = NULL;
    qep_subtree* qep_subtree = NULL;
    bool is_qep_opened = false, is_subqep_opened = false, is_qep_built = false, is_subqep_built = false;
    std::vector<built_trigger_action> built_trigger_actions_vec;
    typedef std::pair< std::string, std::vector<built_trigger_action> > trigger_actions_pair;
+   lock_mode cur_lock = local_lock_mrg->get_cur_lock_mode(); // push current lock level to restore it after updates/query execution
    
    current_nesting_level++;
-   if(current_nesting_level > TRIGGER_MAX_CASCADING_LEVEL) throw USER_EXCEPTION2(SE3206,trigger_title);
+   if(current_nesting_level > TRIGGER_MAX_CASCADING_LEVEL) 
+        throw USER_EXCEPTION2(SE3206,trigger_title);
    
     built_trigger_actions_map::iterator mapIter;
    	mapIter = built_trigger_actions.find(std::string(trigger_title));
-	if ( mapIter == built_trigger_actions.end() )            // trigger action has not been built yet -> build it and store into the map
+
+    /* Trigger action has not been built yet -> build it and store into the map */
+
+	if ( mapIter == built_trigger_actions.end() )            
 	{
         std::pair<built_trigger_actions_map::iterator, bool> mapPair;
         trigger_action_cell* trac = trigger_action;
@@ -310,9 +326,10 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
         mapIter = mapPair.first;
     }
 
-     //executing built actions
-     int i = 0;
+     /* Executing built actions */
+
      int action_returns_value = ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
+     int i = 0;
      for(i = 0; i < mapIter->second.size()-action_returns_value; i++)
      {
          if(mapIter->second.at(i).action_qep_tree)
@@ -326,6 +343,12 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
      }
 	 if (action_returns_value)
      {
+        /* Since we truncate PPQueryRoot in create_trigger we must set lm_s
+           explicitly there. If not we will receive nested updates exception
+           even if execute read only query there.
+         */
+        local_lock_mrg->lock(lm_s);
+
         qep_subtree = mapIter->second.at(i).action_qep_subtree;
         qep_parameters = &(mapIter->second.at(i).parameters);
         set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
@@ -336,15 +359,16 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
 		else
 			res_xptr = t.cells[0].get_node();
 
-		// retrieve all items to make the qep_subtree usable next time
+		/* Retrieve all items to make the qep_subtree usable next time. */
 		while(!t.is_eos()) 
 			qep_subtree->tree.op->next(t);
      }
-	 else res_xptr = XNULL;
 
    current_nesting_level--;
+   local_lock_mrg->lock(cur_lock);
 
-   if(res_xptr!=XNULL) CHECKP(res_xptr);
+   if(XNULL != res_xptr) CHECKP(res_xptr);   
+
    return res_xptr;
 }
 
