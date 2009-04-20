@@ -2,6 +2,7 @@
 
 # options: Release configuration - Release
 #          Debug   configuration - Debug
+#                  See also EL_DEBUG constant
 ifndef ACTIVE_CONFIGURATION
 ACTIVE_CONFIGURATION = Debug
 endif
@@ -15,8 +16,8 @@ ifndef INSTALL_DOC
 INSTALL_DOC = 1
 endif
 
-# options: debug is on  - 1
-#          debug is off - 0
+# options: debug logging is on  - 1
+#          debug logging is off - 0
 ifndef EL_DEBUG
 EL_DEBUG = 1
 endif
@@ -63,7 +64,6 @@ endif
 ifndef ENABLE_FTSEARCH
 ENABLE_FTSEARCH = 1
 endif
-
 
 # options: triggers is on  - 1
 #          triggers is off - 0
@@ -160,7 +160,8 @@ CFLAGS_ST   = /nologo /Zi /Od $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(
 CPPFLAGS_ST = /nologo /Zi /Od /EHsc /GR  $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
-              /DC_EMBEDDED /DXML_STATIC /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS /D__STDC_FORMAT_MACROS
+              /DC_EMBEDDED /DXML_STATIC /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS \
+              /D__STDC_FORMAT_MACROS
 CFLAGS      = $(CFLAGS_ST) /MTd
 CFLAGS_DL   = $(CFLAGS_ST) /MDd
 CFLAGS_NOOPTIM = $(CFLAGS)
@@ -371,14 +372,10 @@ SORCERER = $(PP)/libs/pg/sor -CPP -transform
 CHICKEN_HOME = $(PP)/libs/chicken
 CHICKEN = $(CHICKEN_HOME)/chicken
 CHICKEN_INCLUDE = $(CHICKEN_HOME)
-#LD_LIBRARY_PATH+=$(CHICKEN_HOME)
 endif
 
 CHICKEN_HEAP_SPEC = -heap-initial-size 1M
-#CHICKEN_HEAP_SPEC = -heap-size 5M
 CHICKEN_OPTIONS = $(CHICKEN_HEAP_SPEC) -include-path $(CHICKEN_INCLUDE)
-# Was:
-#CHICKEN_OPTIONS = -heap-size 100M -include-path $(CHICKEN_INCLUDE)
 
 #These targets simplify debugging
 Makefile.%: ;
@@ -394,8 +391,6 @@ Makefile.%: ;
 	$(CHICKEN) $< -output-file $*.c $(CHICKEN_OPTIONS)
 	$(CC) $(CFLAGS_NOOPTIM) $*.c
 	
-#%.c: %.scm
-#	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
 
 %.pdf: %.tex
 	$(PDFLATEX) $<
