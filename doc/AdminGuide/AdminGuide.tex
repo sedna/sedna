@@ -510,7 +510,17 @@ options:
 
 \verb!-version! option allows getting the version of the \verb!se_term!.
 
-\verb!-file! option specifies the name of the file that contains any number of queries and meta-commands. \verb!se_term! uses this file as the source of queries and meta-commands instead of reading them interactively. \verb!se_term! executes the queries and meta-commands from file consequently and exit.
+\verb!-file! option specifies the name of the file that contains any number of queries and meta-commands. \verb!se_term! uses this file as the source of queries and meta-commands instead of reading 
+them interactively. \verb!se_term! executes the queries and meta-commands from file consequently and exit. XQuery and XUpdate statements must be delimited with ampersand symbol at the end. 
+\\ For example, the following script turns off autocommit mode, then executes a number of XQuery statements and finally commits transaction explicitly:
+
+\begin{verbatim}
+\nac
+CREATE DOCUMENT "test"&
+UPDATE INSERT <test>{"test"}</test> INTO fn:doc("test")&
+fn:doc("test")&
+\commit
+\end{verbatim}
 
 \verb!-output! option specifies a filename of a file to redirect all \verb!se_term! output to.
 
