@@ -24,4 +24,5 @@ clean:
 	-$(REMOVE) *.toc
 	-$(REMOVE) *.ps
 	-$(REMOVE) *.pdf
+	-$(REMOVE) *.out
 	$(MAKE) -C ClientServerProtocol clean
