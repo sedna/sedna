@@ -99,7 +99,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
     sprintf(strbuf,"%s%s",path,EXP_LOG_FILE_NAME);
 
 	if ((log=fopen(strbuf,"r"))==NULL) {
-		printf("ERROR: the specified path \"%s\" does't contain Sedna DB export files\n",path);
+		printf("ERROR: permission denied or specified path \"%s\" does not contain Sedna DB export files\n", path);
 		goto imp_error_no_conn;
 	} else {
 		fclose(log);
@@ -107,7 +107,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 	sprintf(strbuf,"%s%s",path,IMP_LOG_FILE_NAME);
 	if ((log=fopen(strbuf,"wb"))==NULL) {
-		ETRACE((log,"ERROR: the specified path \"%s\" is not accesible for writing\n",path));
+		printf("ERROR: the specified path \"%s\" is not accesible for writing\n", path);
 		goto imp_error_no_conn;
 	}
 
