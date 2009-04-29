@@ -256,110 +256,115 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
    return 0;
 }
 
-void CreateNewSessionProcess(USOCKET socknew, bool background_off_from_background_on)
-{
+void 
+CreateNewSessionProcess(USOCKET socknew, 
+                        bool background_off_from_background_on) {
 
-try{
     UFlag window_mode;
     UPID pid;
     UPHANDLE proc_h;
-
-    //check number of sessions
-    if (gov_table->get_total_session_procs_num() > 2*MAX_SESSIONS_NUMBER)
-       throw USER_EXCEPTION(SE3046);
-
-#ifdef _WIN32
-    USOCKET DuplicateSock = U_INVALID_SOCKET;
-    //DuplicateHandle is used only for WinSockets 
-    //(as create process doesn't inherit socket handles correctly)
-    // Duplicate the socket socknew to create an inheritable copy.
-    if (!DuplicateHandle(GetCurrentProcess(),
-                         (HANDLE)socknew,
-                         GetCurrentProcess(),
-                         (HANDLE*)&DuplicateSock,
-                         0,
-                         TRUE, // Inheritable
-                         DUPLICATE_SAME_ACCESS))
-    {
-       d_printf2("dup error %d\n", GetLastError());
-       throw SYSTEM_EXCEPTION("Can't duplicate socket handle");
-    }
-
-    // Sets SOCKET HANDLE to an evironment variable
-    uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)DuplicateSock).c_str(), __sys_call_error);
-#else           // no need to duplicate SOCKET HANDLE in Unix
-    uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)socknew).c_str(), __sys_call_error);
-#endif
-
-    uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1", __sys_call_error);
-
-    char buf2[1024];
-    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound, buf2, 10), __sys_call_error);    
-
-    // create security attributes for the new process
     USECURITY_ATTRIBUTES *sa;	
-    if(0 != uCreateSA(&sa, 
-                      U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 
-                      0,                  // new process will not inherit handle returned by CreateProcess
-                      __sys_call_error)) 
-    throw USER_EXCEPTION(SE3060);
-
-    // Spawn the child process.
-    // Socket HANDLE are passed throught an environment variable
-                 	 
     char buf[U_MAX_PATH + 10];
-    string con_path_str = uGetImageProcPath(buf, __sys_call_error) + string("/") + SESSION_EXE;
-    strcpy(buf, con_path_str.c_str());
+    char buf2[1024];
+
+#ifdef _WIN32
+    /* DuplicateHandle is used only for WinSockets 
+     * (as create process doesn't inherit socket handles correctly)
+     * Duplicate the socket socknew to create an inheritable copy.
+     */
+    USOCKET DuplicateSock = U_INVALID_SOCKET;
+#endif 
+
+
+try {
+        /* Check number of sessions */
+        if (gov_table->get_total_session_procs_num() > 2*MAX_SESSIONS_NUMBER)
+            throw USER_EXCEPTION(SE3046);
+    
+#ifdef _WIN32
+        if (!DuplicateHandle(GetCurrentProcess(),
+                             (HANDLE)socknew,
+                             GetCurrentProcess(),
+                             (HANDLE*)&DuplicateSock,
+                             0,
+                             TRUE, /* Inheritable */
+                             DUPLICATE_SAME_ACCESS)) {
+            d_printf2("dup error %d\n", GetLastError());
+            throw SYSTEM_EXCEPTION("Can't duplicate socket handle");
+        }
+    
+        uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)DuplicateSock).c_str(), __sys_call_error);
+#else 
+
+        uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)socknew).c_str(), __sys_call_error);
+
+#endif /* _WIN32 */
+
+        uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1", __sys_call_error);
+        uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, 
+                                u_itoa(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound, buf2, 10), 
+                                __sys_call_error);    
+
+        /* Create security attributes for the new process */
+        if(0 != uCreateSA(&sa, 
+                          U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 
+                          0,  /* new process will not inherit handle returned by CreateProcess */
+                          __sys_call_error)) 
+            throw USER_EXCEPTION(SE3060);
+
+        /* Spawn the child process.
+         * Socket HANDLE are passed throught an environment variable
+         */
+        string con_path_str = uGetImageProcPath(buf, __sys_call_error) + string("/") + SESSION_EXE;
+        strcpy(buf, con_path_str.c_str());
  
-    if (background_off_from_background_on)
-       window_mode = U_DETACHED_PROCESS; //process has no window for output
-    else
-       window_mode = 0;           //process is created without flags
+        if (background_off_from_background_on)
+            window_mode = U_DETACHED_PROCESS;  //process has no window for output
+        else
+            window_mode = 0;                   //process is created without flags
                 
-    if (0 != uCreateProcess(buf,
-                            true, // inherit handles
-                            NULL,
-                            window_mode,
-                            &proc_h,
-                            NULL,
-                            &pid,
-                            NULL,
-                            sa, 
-                            __sys_call_error
-                           ))
-    {
-#ifdef _WIN32                  
-       d_printf2("create process failed %d\n", GetLastError());
-#else           
-       d_printf1("create process failed\n");
-#endif
-       throw USER_EXCEPTION2(SE4413, "Try to reconnect later");
+        if (0 != uCreateProcess(buf,
+                                true, // inherit handles
+                                NULL,
+                                window_mode,
+                                &proc_h,
+                                NULL,
+                                &pid,
+                                NULL,
+                                sa, 
+                                __sys_call_error)) {
+            #ifdef _WIN32                  
+                 d_printf2("create process failed %d\n", GetLastError());
+            #else           
+                 d_printf1("create process failed\n");
+            #endif
+            throw USER_EXCEPTION2(SE4413, "Try to reconnect later");
+        }
+
+        gov_table->add_pid(pid, proc_h);
+
+        /* Release security attributes */
+        if(uReleaseSA(sa, __sys_call_error) !=0 ) 
+            throw USER_EXCEPTION(SE3063);
+
+    } catch (SednaUserException &e) {
+        fprintf(stderr, "%s\n", e.what());
+        sp_error_message_handler(socknew, 100, e.get_code(), e.what());
+    } catch (SednaException &e) {
+        sp_error_message_handler(socknew, 100, 0, "System error");
+        sedna_soft_fault(e, EL_GOV);
+    } catch (ANY_SE_EXCEPTION) {
+        sp_error_message_handler(socknew, 100, 0, "System error");
+        sedna_soft_fault(EL_GOV);
     }
 
-   // release security attributes
-   if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
-
-   uclose_socket(socknew, __sys_call_error);
+    /* Close socket descriptor */
+    uclose_socket(socknew, __sys_call_error);
 #ifdef _WIN32
-   uclose_socket(DuplicateSock, __sys_call_error);
+    if (U_INVALID_SOCKET != DuplicateSock) 
+        uclose_socket(DuplicateSock, __sys_call_error);
 #endif
 
-   gov_table->add_pid(pid, proc_h);
-
-
-   } catch (SednaUserException &e) {
-       fprintf(stderr, "%s\n", e.what());
-       sp_error_message_handler(socknew, 100, e.get_code(), e.what());
-   } catch (SednaException &e) {
-       sp_error_message_handler(socknew, 100, 0, "System error");
-       sedna_soft_fault(e, EL_GOV);
-   } catch (ANY_SE_EXCEPTION) {
-       sp_error_message_handler(socknew, 100, 0, "System error");
-       sedna_soft_fault(EL_GOV);
-   }
-
-
-   return;
 }
 
 
@@ -382,7 +387,6 @@ int sess_registering(USOCKET s, char* msg_buf)
   	char ptr[4];
   	memcpy(ptr, msg_buf+5+strlen(db_name), 4);
             	
-//    sess_pid = ntohl(*(__int32*)ptr);
     sess_pid = *(__int32*)ptr;
 
   	d_printf2("Listener: register trn with pid: %d\n",sess_pid);
@@ -398,8 +402,6 @@ int sess_registering(USOCKET s, char* msg_buf)
     {//session run from command line
        res = gov_table->insert_session(sess_pid, NULL, db_name_str, false, s_id);                                
     }
-
-    //d_printf2("Governor returned sid=%d\n", s_id);
 
     if ( res == 0 )
     {

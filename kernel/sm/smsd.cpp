@@ -48,6 +48,7 @@ int main(int argc, char **argv)
     int port_number;
     int command = STOP;
     int db_id;
+    int res;
     pping_client *ppc = NULL;
     char errmsg[1000];
  
@@ -102,8 +103,9 @@ int main(int argc, char **argv)
         sm_pid = GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].sm_pid;
 
         /* Sm is already closed? */
-        if( uOpenProcess(sm_pid, &proc_handle, __sys_call_error) != 0 ) 
-            goto end;
+        res = uOpenProcess(sm_pid, &proc_handle, __sys_call_error);
+        if (res != 0) 
+            throw USER_ENV_EXCEPTION("An error occurred while trying to open Sedna server process", false);
 
         GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].is_stop = 1;
 

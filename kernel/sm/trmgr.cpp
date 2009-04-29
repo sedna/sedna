@@ -392,19 +392,14 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
         throw USER_EXCEPTION2(SE4015, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
      else // timeout expired
      {
-       uNonBlockingWaitForChildProcess(pid); /// We need this call since uIsProcessExist returns 1 on zombies!
+       /* We need this call since uIsProcessExist returns 1 on zombies! */
+       uNonBlockingWaitForChildProcess(pid);
        res2 = uIsProcessExist(pid, h, __sys_call_error);
-       if (res2 != 1) throw USER_EXCEPTION(SE4501);
+       if (res2 != 0) throw USER_EXCEPTION(SE4501);
      }
   }
 #endif
 }
-
-
-/*****************************************************************************
-      Thread which handles Read and Write operations to logical log file
-******************************************************************************/
-
 
 
 

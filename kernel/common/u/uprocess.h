@@ -60,9 +60,13 @@ int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code, sys_call_error_fun fu
 void uExitProcess(int exit_code, sys_call_error_fun fun);
 
 UPID uGetCurrentProcessId(sys_call_error_fun fun);
-/* return value: 1 - exists, 0 - does not exist, -1 - error */
-int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun);
 
+/*  uIsProcessExist, uOpenProcess
+ *  Return values: 0 - upon successfull completition, 
+ *                -1 - process doesn't exist, 
+ *                -2 - some error occurred
+ */
+int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun);
 int uOpenProcess(UPID pid, UPHANDLE /*out*/ *h, sys_call_error_fun fun);
 
 int uCloseProcess(UPHANDLE h, sys_call_error_fun fun);
@@ -74,13 +78,14 @@ int uNonBlockingWaitForChildProcess(UPID pid);
 
 
 extern char *program_name_argv_0;
-/* The result if written to buf. The size of the buf should be
- * not less than U_MAX_PATH + 1. The function return buf. */
+
+/*  The result if written to buf. The size of the buf should be
+ *  not less than U_MAX_PATH + 1. The function return buf. 
+ */
 char* uGetImageProcPath(char *buf, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }
-#endif
+#endif 
 
-
-#endif
+#endif /* _UPROCESS_H */
