@@ -303,13 +303,16 @@ void info_table::erase_all_closed_pids()
 {
   pids_table_iter it;
   std::vector<UPID> tmp;
-  int i;
+  int i, res;
 
   for(it = _pids_table_.begin(); it != _pids_table_.end(); it++)
   {
-    uNonBlockingWaitForChildProcess(it->first);
-    if (uIsProcessExist(it->first, it->second.p, __sys_call_error) != 1)
-       tmp.push_back(it->first);
+      uNonBlockingWaitForChildProcess(it->first);
+      res = uIsProcessExist(it->first, it->second.p, __sys_call_error);
+      if (-1 == res) 
+          tmp.push_back(it->first);
+      else if (-2 == res)
+          throw SYSTEM_EXCEPTION("Governor failed while erasing closed pids");
   }
 
   for (i = 0; i< tmp.size(); i++)
@@ -322,7 +325,7 @@ void info_table::stop_sessions(const std::string &db_name)
   s_table_iter it;
   std::vector<session_id> tmp;
   int i=0;
-
+  
   for(it = _session_table_.begin(); it!=_session_table_.end(); it++)
   {
      if ( it->second.db_name == db_name )
@@ -331,7 +334,8 @@ void info_table::stop_sessions(const std::string &db_name)
 
   for (i = 0; i< tmp.size(); i++)  
       stop_session(tmp[i]);
-
+   
+  elog(EL_DBG, ("" PRIu32 " session(s) on '%s' database stopped", tmp.size(), db_name.c_str()));
 }
 
 
@@ -341,14 +345,13 @@ void info_table::stop_sessions()
   std::vector<session_id> tmp;
   int i=0;
 
-
   for (it = _session_table_.begin(); it!=_session_table_.end(); it++)
       tmp.push_back(it->first);
 
   for (i=0; i< tmp.size(); i++)
       stop_session(tmp[i]);
 
-  d_printf1("All sessions over Sedna has been closed succesfully\n");
+  elog(EL_DBG, ("" PRIu32 " session(s) have been stopped", tmp.size()));
 }
 
 
@@ -498,7 +501,7 @@ void info_table::remove_pid(UPID pid)
 
 bool info_table::find_pid(UPID pid, UPHANDLE& p)
 {
-     pids_table_iter it;
+   pids_table_iter it;
    if ( (it = _pids_table_.find(pid)) == _pids_table_.end())
       return false;
    else 
@@ -519,10 +522,6 @@ void info_table::wait_remove_pid(UPID pid, bool is_child_process)
     if (! (this->find_pid(pid, proc_handle)))
         throw SYSTEM_EXCEPTION("Error, pid not found in gov table");
 
-//    uTerminateProcess(pid, proc_handle, 1);    
-////////tmp
-//uOpenProcess(pid, proc_handle);
-/////////tmp
     res = uWaitForChildProcess(pid, proc_handle, NULL, __sys_call_error);
     if (res != 0)
     {
@@ -535,19 +534,15 @@ void info_table::wait_remove_pid(UPID pid, bool is_child_process)
   }
   else
   {
-
-    if (uOpenProcess(pid, &proc_handle, __sys_call_error) == 0)
+    res = uOpenProcess(pid, &proc_handle, __sys_call_error);
+    if(res == 0)
     {
-//       uTerminateProcess(pid, proc_handle, 1);
-
-       res = uWaitForProcess(pid, proc_handle, __sys_call_error);
-       if (res != 0)
-          throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
-
-       uCloseProcess(proc_handle, __sys_call_error);
+        if (uWaitForProcess(pid, proc_handle, __sys_call_error) != 0)
+            throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
+        uCloseProcess(proc_handle, __sys_call_error);
     }
-    else 
-       d_printf1("Can't open process\n");
+    else
+        elog(EL_WARN, ("Can't open session process to wait"));
 
   }
 }
@@ -557,13 +552,13 @@ void info_table::wait_all_notregistered_sess()
   pids_table_iter it;
   int status;
 
+  elog(EL_DBG, ("" PRIu32 " unregistered session(s) will be terminated"));
   for(it = _pids_table_.begin(); it!=_pids_table_.end(); it++)
   {
      uTerminateProcess(it->first, it->second.p, 1, __sys_call_error);
      uWaitForChildProcess(it->first, it->second.p, NULL, __sys_call_error);
      uCloseProcess(it->second.p, __sys_call_error);
   }
-
   _pids_table_.clear();
 }
 

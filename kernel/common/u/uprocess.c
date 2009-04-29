@@ -308,86 +308,114 @@ UPID uGetCurrentProcessId(sys_call_error_fun fun)
 #endif
 }
 
-int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun)
-{
+/* Check if process exists.
+ * Return values:
+ *  0 - process alive
+ * -1 - process doesn't exist
+ * -2 - some error occurred
+ * 
+ * At present uOpenProcess is implemented via this function on
+ * any Nix like OS. 
+ *
+ * If pid == 0 fuction always returns -1 for compatibility 
+ * between POSIX-like operating systems. For example, FreeBSD 
+ * has process with PID=0, Linux doesn't.  
+ */
+int 
+uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun) {
 #ifdef _WIN32
     BOOL res = FALSE;
     DWORD status = 0;
+
+    if (pid == 0) return -1;
+
     res = GetExitCodeProcess(h, &status);
-    if (res == 0)
-    {
+    if (res == 0) {
         sys_call_error("GetExitCodeProcess");
-        return -1;
+        return -2;
     }
 
-    return (status == STILL_ACTIVE) ? 1 : 0;
+    return (status == STILL_ACTIVE) ? 0 : -1;
 #else
-    /// For the compatibility of the Linux and some Unixes. 
-    /// Sometimes we have kill(0,0) is Sedna.
-    if (pid == 0) return 0;  
-#ifdef HAVE_PROC
-    int dsc;
+    int res;
+
+#ifdef HAVE_PROC /* Linux, SunOS */
+
     char buf[U_MAX_PATH];
+    struct stat stf;
+
+    if (pid == 0) return -1;
 
     strcpy(buf, "/proc/");
     int2c_str(pid, buf + strlen("/proc/"));
 
-    dsc = open(buf, O_RDONLY);     
-    if (dsc == -1)
-    {
-       sys_call_error("open");
-       return 0;
+    /* Attempt to get the file attributes */
+    res = stat(buf, &stf);
+
+    /* On SunOS we have to handle EINTR appropriately */
+    while (-1 == res) {
+        /* There is no such file */
+        if ( ENOENT == errno ) 
+            return -1; 
+    #if defined(SunOS)        
+        else if( EINTR == errno )
+            res = stat(buf, &stf);
+    #endif
+        else {
+            sys_call_error("stat");
+            return -2;
+        }
     }
 
-    if (close(dsc) == -1) sys_call_error("close");
-    return 1; 
-#else
-    int res = kill(pid, 0);
-    if (res == -1) sys_call_error("kill");
+    return 0;
 
-    if (res == 0) return 1;
-    else return 0;
-#endif
-#endif
-}
+#else /* !HAVE_PROC: Darwin, FreeBSD */
 
-int uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun)
-{
-#ifdef _WIN32
-    *h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid); 
-    if (*h == NULL) 
-    {
-      sys_call_error("OpenProcess"); 
-      return -1;
-    }
-    else return 0;
-#else
-    int res;
-    
-    *h = 0;
-
-    // FreeBSD has process with PID=0, Linux doesn't.
-    // We suppose that there is no such process.
-    if(pid == 0) return -1;
+    if (pid == 0) return -1;
     
     res = kill(pid, 0);
-
-    if(-1 == res)
-    {
-        // Process exists but we don't have permissions 
-        // to send a signal.
+    
+    if(-1 == res) {
+        /* Process exists but we don't have permissions 
+         * to send a signal.
+         */
         if(EPERM == errno) return 0;
         
-        // The pid doesn't exist.
+        /* The pid doesn't exist. */
         return -1;
     }
-    else
-    {
-        // Process exists.
+    else {
+        /* Process exists. */
         return 0;
     }
+
+#endif /* HAVE_PROC */
+#endif /* _WIN32 */
+}
+
+/* Win: Opens an existing local process object. 
+ * Nix: Simply checks out if process exists.
+ * Return values:
+ *  0 - process successfully opened
+ * -1 - some error occured or process doesn't exist
+ */
+int 
+uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun) {
+#ifdef _WIN32
+    *h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid); 
+    if (*h == NULL) {
+        sys_call_error("OpenProcess"); 
+        return -1;
+    }
+    else 
+        return 0;
+#else
+    int res = uIsProcessExist(pid, 0, fun);
+    *h = 0;
+    return (0 == res) ? 0 : -1;
 #endif
 }
+
 
 int uCloseProcess(UPHANDLE h, sys_call_error_fun fun)
 {
@@ -467,9 +495,11 @@ int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun)
     for (;;)
     {
        status = uIsProcessExist(pid, h, __sys_call_error);
-       if (status == -1) return -1;
-
-       if (status) uSleep(1, __sys_call_error);
+       /* Error happened in uIsProcessExist */
+       if (-2 == status) return -1;
+       /* Process still alive */
+       if ( 0 == status) uSleep(1, __sys_call_error);
+       /* status == -1, there is no such process */
        else break;
     }
 

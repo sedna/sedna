@@ -106,8 +106,9 @@ int main(int argc, char** argv)
         port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
         
         res = uOpenProcess(gov_pid, &proc_handle, __sys_call_error);
-        if (res  != 0) goto end;
-
+        if (res != 0) 
+            throw USER_ENV_EXCEPTION("An error occurred while trying to open Sedna server process", false);
+        
         send_command_to_gov(port_number, STOP);
 
         uWaitForProcess(gov_pid, proc_handle, __sys_call_error);

@@ -68,7 +68,7 @@ UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registryParam,
 						 int rangeBegin,
 						 int rangeEnd)
 {
-	int rangeSizeMin = 0, rangeBeginCur = 0;
+	int rangeSizeMin = 0;
 	UGlobalNamesRegistryItem *i = NULL;
 	char errorBuf[128];
 
@@ -76,7 +76,7 @@ UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registryParam,
 	/* first let's estimate the required range size */ 
 	for (i = registryParam; i->basename; ++i) 
 	{
-		if (!ValidateBaseName(i->basename) || i->nObjectsMax<1 || i->prefix==NULL && i->nObjectsMax>1)
+		if (!ValidateBaseName(i->basename) || i->nObjectsMax<1 || (i->prefix==NULL && i->nObjectsMax > 1))
 		{
 			snprintf(errorBuf, sizeof errorBuf, 
 				"UInitGlobalNamesRegistry: bad item '%s'", i->basename);
@@ -179,7 +179,6 @@ const char *StrNameFromGlobalName(const char *globalName,
 								  size_t bufSize)
 {
 	char bufjr[16];
-	const char * atptr = NULL;
 	size_t partSz = 0, stored = 0;
 	GlobalNameComponents components = {NULL};
 
@@ -312,7 +311,7 @@ UGlobalNameFromCompoundName(const char *compoundName,
 		}
 		epos = strchr(pos,',');
 		if (!epos) epos=pos+strlen(pos);
-		if (bufSize < (epos-pos)+1)
+		if (bufSize < (unsigned int) (epos-pos+1))
 		{
 			ThrowSystemException("UGlobalNameFromCompoundName: buffer too small");
 		}
