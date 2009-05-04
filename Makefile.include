@@ -101,7 +101,7 @@ SEDNA_VERSION := $(shell cat $(PP)/ver)
 
 SEDNA_DIRS = $(PP)/kernel $(PP)/libs $(PP)/libs/chicken \
              $(PP)/driver/c $(PP)/export $(PP)/term $(PP)/libs/dtsearch/include \
-             $(PP)/libs/pg/h $(PP)/libs/libedit/include/editline
+             $(PP)/libs/libedit/include/editline
 
 
 ifndef INCLUDE_DIRS
@@ -169,15 +169,15 @@ CPPFLAGS    = $(CPPFLAGS_ST) /MTd
 LFLAGS_NOLIB= /NOLOGO /INCREMENTAL:NO /DEBUG /PROFILE
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NOD:LIBCMT.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
-              /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
+              /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
               libchicken-static.lib WS2_32.lib Advapi32.lib libexpatmt.lib \
-              pccts_release.lib libpcre.lib
+              libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /NOLOGO /SUBSYSTEM:CONSOLE /INCREMENTAL:NO /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib \
-              /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg libchicken-static.lib \
-              WS2_32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
+              /LIBPATH:$(PP)/libs/pcre libchicken-static.lib \
+              WS2_32.lib Advapi32.lib libexpatmt.lib libpcre.lib	\
               /DEBUG /PROFILE /NOD:LIBCMT.LIB
 endif
 else
@@ -200,15 +200,15 @@ CPPFLAGS    = $(CPPFLAGS_ST) /MT
 LFLAGS_NOLIB= /NOLOGO
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
-              /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
+              /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
               libchicken-static.lib LIBCMT.LIB WS2_32.lib Advapi32.lib libexpatmt.lib \
-              pccts_release.lib libpcre.lib
+              libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /NOLOGO /SUBSYSTEM:CONSOLE /NODEFAULTLIB:LIBC.LIB \
               /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
-              /LIBPATH:$(PP)/libs/pg libchicken-static.lib WS2_32.lib Advapi32.lib \
-              libexpatmt.lib pccts_release.lib libpcre.lib /NOD:LIBCMT.LIB
+              libchicken-static.lib WS2_32.lib Advapi32.lib \
+              libexpatmt.lib libpcre.lib /NOD:LIBCMT.LIB
 endif
 endif
 
@@ -284,7 +284,7 @@ CPPFLAGS = -g3 -ggdb -Wall -Wno-deprecated -fexceptions -fno-omit-frame-pointer 
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=1 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS
 LFLAGS_NOLIB=-g3 -ggdb -fexceptions $(STATIC_FLAG)
-LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
 
 else # Release
 
@@ -297,11 +297,11 @@ CPPFLAGS = -O2 -w -fno-strict-aliasing -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS
 LFLAGS_NOLIB=-O2 $(STATIC_FLAG) -fexceptions
-LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
 
 endif
 
-LSLIBS   = -lpccts -lexpat -lchicken -lpcre -fexceptions
+LSLIBS   = -lexpat -lchicken -lpcre -fexceptions
 CFLAGS_SL = -fPIC -DSE_NO_EVENT_LOG
 
 ifeq ("$(SUB_PLATFORM)","Linux")
