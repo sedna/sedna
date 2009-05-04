@@ -196,13 +196,13 @@ const unsigned char namePages[] = {
 
 
 const unsigned char utf8_naming1[16] = {0x00, 0x00, 0x00, 0x00,
-                                        0x00, 0x06, 0xFF, 0xE0, 
-                                        0x7F, 0xFF, 0xFF, 0xE1, 
+                                        0x00, 0x06, 0xFF, 0xE0,
+                                        0x7F, 0xFF, 0xFF, 0xE1,
                                         0x7F, 0xFF, 0xFF, 0xE0};
 
 const unsigned char utf8_nmstrt1[16] = {0x00, 0x00, 0x00, 0x00,
-                                        0x00, 0x00, 0x00, 0x20, 
-                                        0x7F, 0xFF, 0xFF, 0xE1, 
+                                        0x00, 0x00, 0x00, 0x20,
+                                        0x7F, 0xFF, 0xFF, 0xE1,
                                         0x7F, 0xFF, 0xFF, 0xE0};
 
 
@@ -227,7 +227,7 @@ inline int utf8_get_symbol_length(unsigned char start)
 
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
-/// Check constraints for the xs:NMTOKEN, xs:Name, xs:NCNAME, xs:ID, 
+/// Check constraints for the xs:NMTOKEN, xs:Name, xs:NCNAME, xs:ID,
 /// xs:IDREF, xs:ENTITY types.
 /// NOTE! 'start' must iterate through correct UTF-8 string!
 /////////////////////////////////////////////////////////////////////////////
@@ -249,70 +249,70 @@ static inline void check_constraints_for_name_type(Iterator &start, const Iterat
     {
         value[0] = *start;
         len = utf8_get_symbol_length(value[0]);
-        
+
         switch(len)
         {
-            case 1: 
+            case 1:
             {
                 bool temp = UTF8_GET_NMSTRT1(value[0]);
-                if(!temp || (!colon_allowed && value[0] == ':')) 
+                if(!temp || (!colon_allowed && value[0] == ':'))
                 {
                     if(IS_WHITESPACE(value[0])) whitespace_reached = true;
                     else return;
                 }
                 break;
             }
-            case 2: 
+            case 2:
             {
                 ++start; value[1] = *start;
-                if(UTF8_GET_NAMING2(nmstrtPages, value) == 0) return; 
+                if(UTF8_GET_NAMING2(nmstrtPages, value) == 0) return;
                 break;
             }
-            case 3: 
+            case 3:
             {
                 ++start; value[1] = *start;
                 ++start; value[2] = *start;
-                if(UTF8_GET_NAMING3(nmstrtPages, value) == 0) return; 
+                if(UTF8_GET_NAMING3(nmstrtPages, value) == 0) return;
                 break;
             }
             case 4: return;      // can't contain 4-byte (or more) UTF-8 symbols.
         }
         ++start;
     }
-    
+
     while(start < end && !whitespace_reached)
     {
        value[0] = *start;
        len = utf8_get_symbol_length(value[0]);
-       
+
        switch(len)
        {
-           case 1: 
+           case 1:
            {
                 bool temp = UTF8_GET_NAMING1(value[0]);
-                if(!temp || (!colon_allowed && value[0] == ':')) 
+                if(!temp || (!colon_allowed && value[0] == ':'))
                 {
                     if(IS_WHITESPACE(value[0])) whitespace_reached = true;
                     else return;
                 }
                 break;
            }
-           case 2: 
+           case 2:
            {
                ++start; value[1] = *start;
-               if(UTF8_GET_NAMING2(namePages, value) == 0) return; 
+               if(UTF8_GET_NAMING2(namePages, value) == 0) return;
                break;
            }
-           case 3: 
+           case 3:
            {
                ++start; value[1] = *start;
                ++start; value[2] = *start;
-               if(UTF8_GET_NAMING3(namePages, value) == 0) return; 
+               if(UTF8_GET_NAMING3(namePages, value) == 0) return;
                break;
            }
            case 4: return;      // can't contain 4-byte (or more) UTF-8 symbols.
        }
-       ++start;            
+       ++start;
     }
 
     if(whitespace_reached) while(start < end && IS_WHITESPACE(*start)) { start++; }
@@ -366,6 +366,13 @@ bool check_constraints_for_xs_Name(const char* s)
 {
     bool res = false;
     check_constraints_for_name_type<const char*> (s, s + strlen(s), &res, true, true);
+    return res;
+}
+
+bool check_constraints_for_xs_Name(const char* s, int n)
+{
+    bool res = false;
+    check_constraints_for_name_type<const char*> (s, s + n, &res, true, true);
     return res;
 }
 

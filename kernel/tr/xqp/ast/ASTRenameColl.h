@@ -1,0 +1,21 @@
+#ifndef _AST_RENAME_COLL_H_
+#define _AST_RENAME_COLL_H_
+
+#include "ASTNode.h"
+#include "AST.h"
+
+class ASTRenameColl : public ASTNode
+{
+public:
+    ASTNode *name_old, *name_new;
+
+public:
+    ASTRenameColl(ASTLocation &loc, ASTNode *old_, ASTNode *new_) : ASTNode(loc), name_old(old_), name_new(new_) {}
+
+    ~ASTRenameColl();
+
+    void accept(ASTVisitor &v);
+    ASTNode *dup();
+};
+
+#endif
