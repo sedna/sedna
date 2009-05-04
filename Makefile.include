@@ -384,9 +384,6 @@ Makefile.%: ;
 %$(OBJ_EXT) %.c: %.scm
 	$(CHICKEN) $< -output-file $*.c $(CHICKEN_OPTIONS)
 	$(CC) $(CFLAGS_NOOPTIM) $*.c
-	
-#%.c: %.scm
-#	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
 
 %.pdf: %.tex
 	$(PDFLATEX) $<
