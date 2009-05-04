@@ -136,8 +136,6 @@ prepare_win_source() {
 }
 
 prepare_nix_source() {
-    rm -rf $FILE_BASE/libs/pccts &&
-    rm -rf $FILE_BASE/libs/pg &&
     rm -rf $FILE_BASE/libs/expat &&
     rm -rf $FILE_BASE/libs/chicken &&
     rm -rf $FILE_BASE/libs/pcre &&
