@@ -145,10 +145,10 @@ DEF_EXT = .def
 
 ENABLE_LIBEDIT = 0
 
-# Starting in Visual C++ 2005, LIBCP.LIB and LIBCPD.LIB (via the old /ML and /MLd options) have been removed. 
+# Starting in Visual C++ 2005, LIBCP.LIB and LIBCPD.LIB (via the old /ML and /MLd options) have been removed.
 # Use LIBCPMT.LIB and LIBCPMTD.LIB instead via the /MT and /MTd options.
-# Moreover, if you link your program from the command line without a compiler option (CFLAGS_ST) that specifies 
-# a C run-time library, the linker will use LIBCMT.LIB. This is different from previous versions of Visual C++ 
+# Moreover, if you link your program from the command line without a compiler option (CFLAGS_ST) that specifies
+# a C run-time library, the linker will use LIBCMT.LIB. This is different from previous versions of Visual C++
 # which used LIBC.LIB, the single-threaded library, instead.
 
 # Win32 Debug configuration
@@ -156,7 +156,7 @@ ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS_ST   = /nologo /Zi /Od $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
-              /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS /D__STDC_FORMAT_MACROS 
+              /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1 /D__STDC_CONSTANT_MACROS /D__STDC_LIMIT_MACROS /D__STDC_FORMAT_MACROS
 CPPFLAGS_ST = /nologo /Zi /Od /EHsc /GR  $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
@@ -219,7 +219,7 @@ LFLAGS_DTS += Dbghelp.lib
 endif
 endif
 
-LSLIBS   = 
+LSLIBS   =
 
 ifeq ($(SQL_CONNECTION),1)
 CPPFLAGS+= /DSQL_CONNECTION
@@ -242,11 +242,8 @@ endif
 CFLAGS_CHICKEN_EXE = /nologo /Zi /Od $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE				\
                      /DEL_DEBUG=$(EL_DEBUG) /DC_NO_PIC_NO_DLL
 LFLAGS_CHICKEN_EXE = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB 					\
-                     /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) LIBCMT.LIB libchicken-static.lib				
+                     /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) LIBCMT.LIB libchicken-static.lib
 LSLIBS_CHICKEN_EXE =
-ANTLR = $(PP)/libs/pg/Antlr.exe -CC -gt -k 2 -w2
-DLG = $(PP)/libs/pg/Dlg.exe -CC
-SORCERER = $(PP)/libs/pg/Sorcerer.exe -CPP -transform
 CHICKEN_HOME = $(PP)/libs/chicken
 CHICKEN = $(CHICKEN_HOME)/chicken-static.exe
 CHICKEN_INCLUDE = $(CHICKEN_HOME)
@@ -257,8 +254,8 @@ CCX = g++ -c
 LD = g++
 LB = ar
 LIBFLAGS = rcs
-LDOUT = -o 
-LIBOUT = 
+LDOUT = -o
+LIBOUT =
 OBJ_EXT = .o
 LIB_EXT = .a
 EXE_EXT =
@@ -295,7 +292,7 @@ CFLAGS   = -O2 -w -fno-strict-aliasing -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DC_NO_PIC_NO_DLL -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED -DDEBUGI=0 -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS
-CFLAGS_NOOPTIM = $(CFLAGS)                                                                                                      
+CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS = -O2 -w -fno-strict-aliasing -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS
@@ -366,9 +363,6 @@ CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-po
                      -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -fexceptions
 LFLAGS_CHICKEN_EXE = -L$(PP)/libs/chicken -fexceptions
 LSLIBS_CHICKEN_EXE = -lchicken -fexceptions
-ANTLR = $(PP)/libs/pg/antlr -CC -gt -k 4 -w2 -nopurify
-DLG = $(PP)/libs/pg/dlg -CC
-SORCERER = $(PP)/libs/pg/sor -CPP -transform
 CHICKEN_HOME = $(PP)/libs/chicken
 CHICKEN = $(CHICKEN_HOME)/chicken
 CHICKEN_INCLUDE = $(CHICKEN_HOME)
@@ -391,6 +385,8 @@ Makefile.%: ;
 	$(CHICKEN) $< -output-file $*.c $(CHICKEN_OPTIONS)
 	$(CC) $(CFLAGS_NOOPTIM) $*.c
 	
+#%.c: %.scm
+#	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
 
 %.pdf: %.tex
 	$(PDFLATEX) $<
@@ -433,7 +429,7 @@ endif
 
 ifeq ($(MAKECMDGOALS),clean)
 
-generic_clean: 
+generic_clean:
 	-$(REMOVE) *$(OBJ_EXT) *$(LIB_EXT) *.bb *.bbg *.da *.map *.pdb vc*.idb *.SUP *.d *.d.* generated
 
 endif

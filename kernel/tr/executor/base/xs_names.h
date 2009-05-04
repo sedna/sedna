@@ -11,11 +11,11 @@
 
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
-/// There are six types which are more or less based on Name 
+/// There are six types which are more or less based on Name
 /// production defined in XML specification:
 /// xs:NMTOKEN - match the Nmtoken production.
 /// xs:Name    - match the Name production.
-/// xs:NCName, xs:ID, xs:IDREF, xs:ENTITY - 
+/// xs:NCName, xs:ID, xs:IDREF, xs:ENTITY -
 ///              match the NCName production.
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
@@ -42,6 +42,7 @@ bool check_constraints_for_xs_NCName  (const tuple_cell *tc);
 ////////////////////////////////////////////////////////////////
 bool        check_constraints_for_xs_NMTOKEN (const char* s);
 bool        check_constraints_for_xs_Name    (const char* s);
+bool        check_constraints_for_xs_Name    (const char* s, int n);
 bool        check_constraints_for_xs_NCName  (const char* s, int n);
 inline bool check_constraints_for_xs_NCName  (const char* s)
 {

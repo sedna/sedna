@@ -1,9 +1,0 @@
-/* */
-ifExpr! [in_context in_c] >[out_context out_c]:
-
-	#(AST_IF cond:expr[in_c] >[out_c]
-	         e1:expr[in_c] >[out_c]
-	         e2:expr[in_c] >[out_c])
-
-	<<#ifExpr=#(#["if@"], cond, e1, e2);>>
-;

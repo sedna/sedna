@@ -1,169 +1,105 @@
 /*
  * File:  XQuerytoLR.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
-
-#include "tr/xqp/XQuerytokens.h"
-#include "tr/xqp/XQueryDLGLexer.h"
-#include "tr/xqp/ANTLRToken.h"
-#include "tr/xqp/XQueryParser.h"
-#include "tr/xqp/XQueryTreeParser.h"
-#include "ATokPtr.h"
-#include "ASTBase.h"
-#include "tr/xqp/AST.h"
 #include "tr/xqp/XQuerytoLR.h"
-#include "common/base.h"
-#include "common/errdbg/d_printf.h"
-#include "tr/tr_utils.h"
-#include <iostream>
-#include <string>
-#include <vector>
+#include "tr/xqp/XQueryDriver.h"
+#include "tr/xqp/visitor/LRVisitor.h"
+#include "tr/xqp/ast/AST.h"
 
-using namespace std;
+#include "tr/tr_utils.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/strings/utf8.h"
 
 EXTERN_DECLARE_TIME_VARS
 
-XQueryDLGLexer* my_lexer;
-bool is_preserve_boundary_space;
+static char* encoding_processing(const char *query)
+{
+    int query_len = strlen(query);
+    if (query_len > 2 &&
+        (unsigned char)query[0] == 0xef &&
+        (unsigned char)query[1] == 0xbb &&
+        (unsigned char)query[2] == 0xbf) {
+        query += 3;
+        query_len -= 3;
+    }
 
-SORAST* XQuerytoIR(const char* xquery){
+    if (utf8_valid(query, query_len) >= 0)
+        throw USER_EXCEPTION(SE4082);
 
-  ASTBase *root = NULL, *_root=NULL;
-
-  SORASTBase *result = NULL;
-
-  string LispRepresent ="";
-
-  int sig;
-
-  is_preserve_boundary_space = false;
-
-  DLGStringInput in(xquery);
-  
-  XQueryDLGLexer scan(&in);
-
-  ANTLRTokenBuffer pipe(&scan);
-
-  ANTLRTokenPtr aToken = se_new ANTLRToken;
-
-  scan.setToken(mytoken(aToken));
-
-  XQueryParser parser(&pipe);
-
-  XQueryTreeParser  tparser;
-
-  parser.init();
-
-  my_lexer = &scan;
-  parser.script(&root, &sig, &scan);
-  // parser.query(&root, &sig);
-  _root=root;
-
-  tparser.script((SORASTBase **)&_root, &result);
-
-  return (SORAST*)result;
+    char* x = (char*)malloc(strlen(query) + 1);
+    strcpy(x, query);
+    return x;
 }
 
-
-StringVector parse_batch(QueryType type, const char* batch1)
+StringVector parse_batch(QueryType type, const char *batch1)
 {
 
-     char* batch = NULL;  
-     u_ftime(&t1_parser);
-     bool is_vector_allocated = false;
+    char* batch = NULL;
+    StringVector array;
+    sedna::XQueryDriver drv;
+    LRVisitor lrv;
+    ASTNodesVector::iterator it;
+    ASTScript *scr;
+    std::string err_msg;
 
- try{
-     GET_TIME(&t1_parser);
+    GET_TIME(&t1_parser);
 
-     SORAST* t, *it;
-     StringVector array;
+    try
+    {
+        // check for BOM and valid UTF-8; batch is a copy
+        batch = encoding_processing(batch1);
 
-     batch = encoding_processing(batch1);
-
-     malloc_ast_vector();
-     is_vector_allocated = true;
-
-     if (type == TL_XQuery)
-     {
-        t = XQuerytoIR(batch);
-
-        for (it = (SORAST*)(t->down()); it != NULL; it = (SORAST*)(it->right()))
+        if (type == TL_XQuery)
         {
-           array.push_back(string(it->getText()));  
+            // parse query and create ast-tree
+            drv.parse(batch);
+
+            // get result; if error throw an exception
+            if (drv.getErrorCode() != -1)
+            {
+                err_msg = drv.getErrorMsg();
+                if (err_msg != "")
+                    throw USER_EXCEPTION2(drv.getErrorCode(), err_msg.c_str());
+                else
+                    throw USER_EXCEPTION(drv.getErrorCode());
+            }
+
+            scr = drv.getTree();
+
+            for (it = scr->modules->begin(); it != scr->modules->end(); it++)
+            {
+                // create lr for module ast
+                (*it)->accept(lrv);
+
+                // save result
+                array.push_back(lrv.getResult());
+
+                // reuse visitor by resetting its state
+                lrv.resetVisitor();
+            }
         }
-     }
-     else
-     {
-        array.push_back(string(batch));
-     }
+        else // not TL_XQuery
+        {
+            array.push_back(std::string(batch));
+        }
 
-     free_ast_vector();
-     GET_TIME(&t2_parser);
+        GET_TIME(&t2_parser);
 
-     ADD_TIME(t_total_parser, t1_parser, t2_parser);
+        ADD_TIME(t_total_parser, t1_parser, t2_parser);
 
-     free(batch);
-              
-     return array;
- } catch(SednaUserException &e) {
-     if(is_vector_allocated) 
-         free_ast_vector();
+        free(batch);
 
-     GET_TIME(&t2_parser);
-     ADD_TIME(t_total_parser, t1_parser, t2_parser);
-
-     if (batch != NULL)
-         free(batch);
-
-     throw;
- }
-}
-
-/*
-StmntsArray operator+ (StmntsArray v1, StmntsArray v2)
-{
-  StmntsArray res;
-
-  res.reserve(v1.size() + v2.size());
-
-  StmntsArray::const_iterator it;
-  for (it = v1.begin(); it != v1.end(); it++) res.push_back(*it);
-  for (it = v2.begin(); it != v2.end(); it++) res.push_back(*it);
-  
-  return res;  
-}
-*/
-/*
-
-StmntsArray* transform_stmnt2pr (string text_stmnt,
-                                  QueryType type,
-                                  StmntsArray* (*transformer) (string, QueryType))
-{
-  SORAST *pr;
-  StmntsArray *stmnt;
-
-  switch (type)
-  {
-    case TL_XQuery:
-    {
-        pr =  XQuerytoIR(text_stmnt.c_str());    
- 
-        stmnt = se_new StmntsArray();
-        stmnt = transformer(((SORAST*)(pr->down()))->getText(), type); 
-        
-        break;
+        return array;
     }
-    case TL_POR:
+    catch (SednaUserException &e)
     {
-        stmnt = se_new StmntsArray();
-        stmnt = transformer(text_stmnt, type);
-        break;
+        GET_TIME(&t2_parser);
+        ADD_TIME(t_total_parser, t1_parser, t2_parser);
+
+        free(batch);
+
+        throw;
     }
-    default : throw PrepareQueryException("#????: Unexpected type of the query");
-  }
-    
-  return stmnt;
 }
-*/
