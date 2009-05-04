@@ -3,7 +3,6 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #include "common/u/usem.h"
 #include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
@@ -788,10 +787,17 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec, 
 #else
 {
     int res = 0;
-
+    struct timeval tv;
     struct timespec timeout;
-    timeout.tv_sec = time(NULL) + millisec / 1000;
-    timeout.tv_nsec = 0;
+    
+    if(gettimeofday(&tv, NULL) == -1)
+    {
+        sys_call_error("gettimeofday");
+        return 1;
+    }
+
+    timeout.tv_sec = tv.tv_sec  + millisec / 1000;
+    timeout.tv_nsec = tv.tv_usec * 1000;
 
     res = pthread_mutex_lock(&(sem->mutex));
     if (res != 0)
