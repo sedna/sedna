@@ -60,6 +60,8 @@ lookfor cp
 lookfor rm
 lookfor mv
 lookfor tar
+lookfor flex
+lookfor bison
 
 export OS=`uname` || failwith "Cannot mine operating system name"
 export SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
@@ -179,6 +181,7 @@ prepare_source() {
     rm -f $FILE_BASE/Makefile.include.orig &&
     exclude_files &&
     OLDDIR="`pwd`" &&
+
     cd $FILE_BASE/doc &&
     $MAKE_COMMAND &&
     rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
@@ -186,6 +189,11 @@ prepare_source() {
     rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
     rm -f ProgGuide/*.{aux,log,tex,toc} ProgGuide/Makefile &&
     rm Makefile &&
+    cd "$OLDDIR" &&
+
+    cd $FILE_BASE/kernel/tr/xqp &&
+    flex -Cf XQLexer.l &&
+    bison XQParser.y &&
     cd "$OLDDIR"
 }
 
