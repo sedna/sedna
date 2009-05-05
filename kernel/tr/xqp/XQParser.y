@@ -3734,7 +3734,7 @@ static ASTNode *makeFLWORTree(sedna::XQueryParser::location_type& loc, ASTNodesV
 {
     ASTNode *whereTree = NULL, *emptySeq = NULL, *res = NULL;
     ASTNodesVector *vars_copy = NULL;
-    ASTNodesVector::const_reverse_iterator rit;
+    ASTNodesVector::reverse_iterator rit;
 
     /* first make where tree; we're given only expression at input */
     if (where)
@@ -3800,7 +3800,7 @@ static ASTNode *makeFLWORTree(sedna::XQueryParser::location_type& loc, ASTNodesV
 */
 static ASTNode *makeQuantExpr(sedna::XQueryParser::location_type& loc, ASTQuantExpr::QuantMod qt, ASTNodesVector *var_expr, ASTNode *sat_expr)
 {
-    ASTNodesVector::const_reverse_iterator rit;
+    ASTNodesVector::reverse_iterator rit;
     ASTTypeVar *var;
     ASTNode *expr, *res;
 
