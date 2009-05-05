@@ -18,7 +18,7 @@ using namespace std;
 static USOCKET sockfd;
 
 static clClient clClients[U_SSET_SIZE];
-static U_SSET allset, rset; 	
+static U_SSET allset, rset;
 static int maxfd, maxi = -1, nres;
 
 static int clRegisterClient(USOCKET sock, clProcess_fun fun)

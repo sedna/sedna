@@ -8,6 +8,7 @@
 #define _PPING_H
 
 #include "common/sedna.h"
+#include "common/base.h"
 
 #include "common/u/usocket.h"
 #include "common/u/uthread.h"
@@ -79,7 +80,8 @@ public:
 };
 
 
-#define PPING_SERVER_THREAD_TABLE_SIZE		100
+#define PPING_SERVER_THREAD_TABLE_SIZE		(2 * (MAX_SESSIONS_NUMBER + MAX_DBS_NUMBER))
+
 
 class pping_server
 {
@@ -97,7 +99,7 @@ private:
     int component;
     bool initialized;
     UTHANDLE server_lstn_thread_handle;
-    bool close_lstn_thread;
+    volatile bool close_lstn_thread;
     thread_table_t thread_table[PPING_SERVER_THREAD_TABLE_SIZE];
 
 public:
@@ -108,7 +110,9 @@ public:
     void shutdown();
 
     friend U_THREAD_PROC(pping_server_cli_thread_proc, arg);
-    friend U_THREAD_PROC(pping_server_lstn_thread_proc, arg);
+    friend U_THREAD_PROC(pping_server_lstn_thread_proc_mt, arg);
+    friend U_THREAD_PROC(pping_server_lstn_thread_proc_st, arg);
+    friend int client_exception_handler(USOCKET sock, const pping_server *pps);
 };
 
 
