@@ -884,7 +884,7 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
     return uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
 }
 
-void sedna_soft_fault_log(const char* log_message, int  component)
+void sedna_soft_fault_log(const char* log_message, int component)
 {
     char log_buf[SE_SOFT_FAULT_LOG_CONTENT_LEN + 128];
     char dt_buf[32];

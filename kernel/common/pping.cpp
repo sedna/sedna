@@ -3,7 +3,6 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #include "common/sedna.h"
 
 #include "common/pping.h"
@@ -17,23 +16,31 @@
 #include <dbghelp.h>
 #include <shellapi.h>
 #include <shlobj.h>
-#endif
+#else
+#include <string.h>
+#endif /* _WIN32 */
 #endif
 
 
 
 #ifdef _WIN32
-#define PPING_STACK_SIZE		102400
+#define PPING_STACK_SIZE             102400
 #else
-#define PPING_STACK_SIZE		102400
+#define PPING_STACK_SIZE             102400
 #endif
 
-#define PPING_KEEP_ALIVE_MSG	'a'
-#define PPING_DISCONNECT_MSG	'b'
-#define PPING_PROC_EXCEPTION_MSG	'e'
+#define PPING_KEEP_ALIVE_MSG	     'a'
+#define PPING_DISCONNECT_MSG	     'b'
+#define PPING_PROC_EXCEPTION_MSG     'e'
 
-#define PPING_LSTNR_QUEUE_LEN	100
+#define PPING_LSTNR_QUEUE_LEN        100
 
+
+#define SYS_FAILURE_SERVER( message )     { sedna_soft_fault(message, pps->component); \
+                                            return 0; }
+
+#define SYS_FAILURE_CLIENT( message )     { sedna_soft_fault(message, ppc->component); \
+                                            return 0; }
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,19 +53,18 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
         d_printf1("Failed to block signals for pping_client_thread_proc");
 
     pping_client *ppc = (pping_client*)arg;
-
     char c = PPING_KEEP_ALIVE_MSG;
-    while (true)
-    {
+    
+     while (true)
+     {
         if (ppc->stop_keep_alive) return 0;
-        if (usend(ppc->sock, &c, sizeof(c), NULL) != sizeof(c))
-        {
-            if (!ppc->stop_keep_alive)
-            {
-                sedna_soft_fault("SEDNA GOVERNOR is down", ppc->component);
-            }
-        }
+        
+        int res = usend(ppc->sock, &c, sizeof(c), NULL);
 
+        if (res != sizeof(c) && !ppc->stop_keep_alive) {
+            sedna_soft_fault("SEDNA GOVERNOR is down", ppc->component);
+        }
+        
         /* se_stop -hard has been called? */
         if(ppc->signaled_flag    != NULL  && 
            GOV_HEADER_GLOBAL_PTR != NULL  && 
@@ -308,6 +314,51 @@ struct pping_serv_arg
     int id; // thread_table id
 };
 
+inline int
+client_exception_handler(USOCKET sock, 
+                         const pping_server *pps)
+{
+#ifdef _WIN32
+    char cc = PPING_PROC_EXCEPTION_MSG;
+    HANDLE proc_h;
+    DWORD proc_id;
+    DWORD except_thread_id;
+    PEXCEPTION_POINTERS client_exceptPtrs;
+    MINIDUMP_EXCEPTION_INFORMATION ExpParam;
+    int component;
+    UFile fh;
+
+#define GETVAR(v) if (urecv(sock, (char*)&v, sizeof(v), NULL) != sizeof(v)) \
+                      SYS_FAILURE_SERVER("Failure in pping server (cannot receive exception parameter from the client).");
+    GETVAR(proc_id)
+    GETVAR(component);
+    GETVAR(except_thread_id);
+    GETVAR(client_exceptPtrs);
+#undef GETVAR			
+    
+    proc_h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, proc_id);
+    if (proc_h == NULL)
+        d_printf2("Failed to open process handle, GetLastError=%u\n", GetLastError());
+
+    ExpParam.ThreadId = except_thread_id;
+    ExpParam.ExceptionPointers = client_exceptPtrs;
+    ExpParam.ClientPointers = TRUE;
+
+    fh = sedna_soft_fault_log_fh(component, "-dump");
+    
+    if (!MiniDumpWriteDump(proc_h, proc_id, fh, MiniDumpWithDataSegs, &ExpParam, NULL, NULL))
+        d_printf2("Failed to save minidump, GetLastError=%u\n", GetLastError());
+
+    uCloseFile(fh, NULL);
+    
+    if (usend(sock, &cc, sizeof(cc), NULL) != sizeof(cc))
+	    SYS_FAILURE_SERVER("Failure in pping server (cannot send exception ack to the client)."); 
+
+#endif /* _WIN32 */
+
+	return 1;
+}
+
 
 U_THREAD_PROC(pping_server_cli_thread_proc, arg)
 {
@@ -328,41 +379,7 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 		if (c == PPING_PROC_EXCEPTION_MSG)
 		{
-			char cc = PPING_PROC_EXCEPTION_MSG;
-#ifdef _WIN32
-			HANDLE proc_h;
-			DWORD proc_id;
-			DWORD except_thread_id;
-			PEXCEPTION_POINTERS client_exceptPtrs;
-			MINIDUMP_EXCEPTION_INFORMATION ExpParam;
-			int component;
-			UFile fh;
-
-#define GETVAR(v) if (urecv(sock, (char*)&v, sizeof(v), NULL) != sizeof(v)) goto sys_failure;
-			GETVAR(proc_id)
-			GETVAR(component);
-			GETVAR(except_thread_id);
-			GETVAR(client_exceptPtrs);
-#undef GETVAR			
-
-			proc_h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, proc_id);
-			if (proc_h == NULL)
-				d_printf2("Failed to open process handle, GetLastError=%u\n", GetLastError());
-
-			ExpParam.ThreadId = except_thread_id;
-			ExpParam.ExceptionPointers = client_exceptPtrs;
-			ExpParam.ClientPointers = TRUE;
-
-			fh = sedna_soft_fault_log_fh(component, "-dump");
-
-			if (!MiniDumpWriteDump(proc_h, proc_id, fh, MiniDumpWithDataSegs, &ExpParam, NULL, NULL))
-				d_printf2("Failed to save minidump, GetLastError=%u\n", GetLastError());
-
-			uCloseFile(fh, NULL);
-#endif
-			if (usend(sock, &cc, sizeof(cc), NULL) != sizeof(cc))
-				goto sys_failure;
-			
+			if (client_exception_handler(sock, pps) != 1) return 0;
 			continue;
 		}
 #endif
@@ -381,7 +398,11 @@ sys_failure:
     return 0;
 }
 
-U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
+/* Multi threaded pping server version.
+ * It's obsolete now. Use pping_server_lstn_thread_proc_st 
+ * instead.
+ */
+U_THREAD_PROC(pping_server_lstn_thread_proc_mt, arg)
 {
     if (uThreadBlockAllSignals(NULL) != 0)
         d_printf1("Failed to block signals for SSMMsg_server_proc");
@@ -465,6 +486,116 @@ sys_failure:
     return 0;
 }
 
+
+/* Single threaded version of pping server.
+ * Uses select() to create connections and serve
+ * previously created as well.
+ *
+ * TODO: read all buffer at once
+ * TODO: better failures diagnostric
+ * TODO: place accept+uNotInherit into a critical section to prevent 
+ *       descriptors inheritance on fork
+ *
+ */
+U_THREAD_PROC(pping_server_lstn_thread_proc_st, arg)
+{
+    if (uThreadBlockAllSignals(NULL) != 0)
+        d_printf1("Failed to block signals for pping server thread.");
+
+    U_SSET allset, rset;
+    pping_server *pps = (pping_server*)arg;
+    int i, maxfd, client_sock, res;
+    char c = PPING_DISCONNECT_MSG;
+    bool maxfd_valid = true;
+
+    U_SSET_ZERO(&allset);
+    U_SSET_SET(pps->sock, &allset);
+    maxfd = pps->sock + 1;
+
+    while (true)
+    {
+        rset = allset;
+        res  = uselect_read_arr(&rset, maxfd, NULL, NULL);
+        if (res == U_SOCKET_ERROR) {
+            SYS_FAILURE_SERVER("Failure in pping server (select() call failed).");
+        }
+
+        /* Iterate through ready to read client descriptors */
+        for (i = 0; i < maxfd; i++)
+        {
+            if(U_SSET_ISSET(i, &rset) && i != pps->sock)
+            {
+                res = urecv(i, &c, sizeof(c), NULL);
+                if( res != sizeof(c) ) {
+                    SYS_FAILURE_SERVER("Failure in pping server (recv() call failed, one of the clients may be down).");
+                }
+                if (c == PPING_DISCONNECT_MSG) 
+                {
+                    U_SSET_CLR(i, &allset);
+                    if(uclose_socket(i, NULL) == U_SOCKET_ERROR)
+                        SYS_FAILURE_SERVER("Failure in pping server (cannot close a socket descriptor on disconnect).");
+                    if ( maxfd-1 == i )
+                        maxfd_valid = false;
+                }
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
+                else if (c == PPING_PROC_EXCEPTION_MSG) {
+                    if (client_exception_handler(i, pps) != 1) return 0;
+                }
+#endif
+                else if (c != PPING_KEEP_ALIVE_MSG)
+                    SYS_FAILURE_SERVER("Failure in pping server (unexpected message from client).");
+            }
+        }
+
+        /* Renew maximum descriptor number */
+        if( !maxfd_valid )
+        {
+            for (i = maxfd-1; i >= 0; i--)
+            {
+                if(U_SSET_ISSET(i, &allset))
+                {
+                    maxfd = i + 1;
+                    maxfd_valid = true;
+                    break;
+                }
+            }
+        }
+        
+        /* Create a new connection */
+        if (U_SSET_ISSET(pps->sock, &rset))
+        {
+            client_sock = uaccept(pps->sock, NULL);
+            
+            if(client_sock == U_INVALID_SOCKET) 
+                SYS_FAILURE_SERVER("Failure in pping server (accept() call failed).");
+    
+            U_SSET_SET(client_sock, &allset);
+            if (client_sock > maxfd-1) {            
+                maxfd = client_sock + 1;
+            }
+
+            /* Check if governor wants to shutdown us */
+            if (pps->close_lstn_thread) 
+            {
+                for (i = 0; i < maxfd; i++)
+                {
+                    if(U_SSET_ISSET(i, &allset) && 
+                       i != pps->sock && 
+                       uclose_socket(i, NULL) == U_SOCKET_ERROR)
+                           SYS_FAILURE_SERVER("Failure in pping server (cannot close a socket descriptor).");
+                }
+                break;
+            }
+
+            /* Make the client descriptor unheritable */
+            if (uNotInheritDescriptor(UHANDLE(client_sock), NULL) != 0) 
+                SYS_FAILURE_SERVER("Failure in pping server (cannot make a socket descriptor unheritable).");
+        }
+    }
+    return 0;
+}
+
+
 pping_server::pping_server(int _port_, int _component_)
 {
 #ifdef PPING_ON
@@ -500,7 +631,7 @@ void pping_server::startup()
 
     if (ulisten(sock, PPING_LSTNR_QUEUE_LEN, __sys_call_error) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION("Failed to listen socket", false);
 
-    uResVal res = uCreateThread(pping_server_lstn_thread_proc, this, &server_lstn_thread_handle, PPING_STACK_SIZE, NULL, __sys_call_error);
+    uResVal res = uCreateThread(pping_server_lstn_thread_proc_st, this, &server_lstn_thread_handle, PPING_STACK_SIZE, NULL, __sys_call_error);
     if (res != 0) throw USER_ENV_EXCEPTION("Failed to create pping server thread", false);
     initialized = true;
 #endif
@@ -536,8 +667,6 @@ void pping_server::shutdown()
 
     if (uCloseThreadHandle(server_lstn_thread_handle, NULL) != 0)
         throw USER_EXCEPTION2(SE4063, "pping server_lstn_thread");
-
-
 #endif
 }
 
