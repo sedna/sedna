@@ -239,9 +239,9 @@ CPPFLAGS+= /DRCV_TEST_CRASH
 CFLAGS+= /DRCV_TEST_CRASH
 endif
 
-CFLAGS_CHICKEN_EXE = /nologo /Zi /Od $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE				\
+CFLAGS_CHICKEN_EXE = /nologo /Zi /Od $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE \
                      /DEL_DEBUG=$(EL_DEBUG) /DC_NO_PIC_NO_DLL
-LFLAGS_CHICKEN_EXE = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB 					\
+LFLAGS_CHICKEN_EXE = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
                      /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) LIBCMT.LIB libchicken-static.lib
 LSLIBS_CHICKEN_EXE =
 CHICKEN_HOME = $(PP)/libs/chicken
@@ -254,7 +254,7 @@ CCX = g++ -c
 LD = g++
 LB = ar
 LIBFLAGS = rcs
-LDOUT = -o
+LDOUT = -o # Space symbol is required there!
 LIBOUT =
 OBJ_EXT = .o
 LIB_EXT = .a
