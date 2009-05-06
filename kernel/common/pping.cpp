@@ -644,7 +644,6 @@ void pping_server::shutdown()
 
     close_lstn_thread = true;
 
-    // send closing message: begin
     USOCKET s = usocket(AF_INET, SOCK_STREAM, 0, NULL);
     if (s == U_INVALID_SOCKET) 
         throw USER_ENV_EXCEPTION("Failed to create socket", false);
@@ -655,15 +654,14 @@ void pping_server::shutdown()
     char c = PPING_KEEP_ALIVE_MSG;
     usend(s, &c, sizeof(c), NULL);
 
+    if (uThreadJoin(server_lstn_thread_handle, NULL) != 0)
+        throw USER_ENV_EXCEPTION("Error waiting for pping server_lstn thread to shutdown", false);
+
     if (uclose_socket(s, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to close socket", false);
-    // send closin message: end
 
     if (uclose_socket(sock, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to close socket", false);
-
-    if (uThreadJoin(server_lstn_thread_handle, NULL) != 0)
-        throw USER_ENV_EXCEPTION("Error waiting for pping server_lstn thread to shutdown", false);
 
     if (uCloseThreadHandle(server_lstn_thread_handle, NULL) != 0)
         throw USER_EXCEPTION2(SE4063, "pping server_lstn_thread");
