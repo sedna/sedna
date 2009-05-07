@@ -192,8 +192,8 @@ prepare_source() {
     cd "$OLDDIR" &&
 
     cd $FILE_BASE/kernel/tr/xqp &&
-    flex -Cf XQLexer.l &&
-    bison XQParser.y &&
+    chmod +x release.sh &&
+    ./release.sh &&
     cd "$OLDDIR"
 }
 

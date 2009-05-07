@@ -1,5 +1,5 @@
 #
-# Makefile for XQuery parser
+# Makefile for XQuery parser (development version)
 #
 
 PP = ../../..
