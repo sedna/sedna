@@ -1,0 +1,19 @@
+#
+# Makefile for XQuery parser (release version)
+#
+# This version of Makefile is intended to be used with
+# source distribution of Sedna. It expects to find 
+# generated parser and lexer. If you want to rebuild them
+# replace Makefile with Makefile.development.
+#
+
+PP = ../../..
+
+include $(PP)/Makefile.include
+
+OBJS = XQueryDriver$(OBJ_EXT) XQueryParser$(OBJ_EXT) XQueryLexer$(OBJ_EXT) XQuerytoLR$(OBJ_EXT)
+
+SUBDIRS = ast visitor
+
+include $(PP)/Makefile.ordlib
+

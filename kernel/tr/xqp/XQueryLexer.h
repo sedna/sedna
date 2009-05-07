@@ -15,7 +15,7 @@
 
 #undef yyFlexLexer
 #define yyFlexLexer sednaFlexLexer
-#include <FlexLexer.h>
+#include "FlexLexer.h"
 
 #endif /* #ifndef __FLEX_LEXER_H */
 
