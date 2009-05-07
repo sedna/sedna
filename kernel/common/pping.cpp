@@ -318,6 +318,7 @@ inline int
 client_exception_handler(USOCKET sock, 
                          const pping_server *pps)
 {
+#if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #ifdef _WIN32
     char cc = PPING_PROC_EXCEPTION_MSG;
     HANDLE proc_h;
@@ -355,6 +356,7 @@ client_exception_handler(USOCKET sock,
 	    SYS_FAILURE_SERVER("Failure in pping server (cannot send exception ack to the client)."); 
 
 #endif /* _WIN32 */
+#endif /* EL_DEBUG */
 
 	return 1;
 }
