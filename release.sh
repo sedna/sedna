@@ -141,7 +141,6 @@ prepare_nix_source() {
     rm -rf $FILE_BASE/libs/expat &&
     rm -rf $FILE_BASE/libs/chicken &&
     rm -rf $FILE_BASE/libs/pcre &&
-    rm -rf $FILE_BASE/libs/compat &&
     rm -rf $FILE_BASE/libs/bin
 }
 
