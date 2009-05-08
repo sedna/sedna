@@ -251,7 +251,7 @@ put_results_to_build_machine() {
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 get_build_file
 
-echo $BUILD > build || failwith "Cannot write to build file"
+echo -n $BUILD > build || failwith "Cannot write to build file"
 
 FILE_BASE=sedna-$SEDNA_VERSION.$BUILD
 if [ $BUILD_PLATFORM ]; then
