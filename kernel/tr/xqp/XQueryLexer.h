@@ -1,3 +1,8 @@
+/*
+ * File:  XQueryLexer.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _XQUERY_LEXER_H_
 #define _XQUERY_LEXER_H_
 

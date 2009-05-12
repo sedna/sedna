@@ -1,3 +1,8 @@
+/*
+ * File:  ASTCreateFtIndex.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_CREATE_FT_INDEX_H_
 #define _AST_CREATE_FT_INDEX_H_
 

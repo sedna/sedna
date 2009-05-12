@@ -1,3 +1,8 @@
+/*
+ * File:  ASTElementTest.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_ELEM_TEST_H_
 #define _AST_ELEM_TEST_H_
 

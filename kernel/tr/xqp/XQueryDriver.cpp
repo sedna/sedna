@@ -1,3 +1,8 @@
+/*
+ * File:  XQueryDriver.cpp
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "XQueryDriver.h"
 
 #include <stdlib.h>

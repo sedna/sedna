@@ -1,3 +1,8 @@
+/*
+ * File:  ASTVisitor.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "tr/xqp/ast/AST.h"
 
 class ASTVisitor
