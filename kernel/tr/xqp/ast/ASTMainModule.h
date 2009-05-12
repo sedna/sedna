@@ -1,3 +1,8 @@
+/*
+ * File:  ASTMainModule.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_MAIN_MODULE_H_
 #define _AST_MAIN_MODULE_H_
 

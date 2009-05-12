@@ -1,3 +1,8 @@
+/*
+ * File:  ASTTypeSingle.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_TYPE_SINGLE_H_
 #define _AST_TYPE_SINGLE_H_
 

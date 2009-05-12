@@ -1,3 +1,8 @@
+/*
+ * File:  LRVisitor.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "ASTVisitor.h"
 #include <string>
 

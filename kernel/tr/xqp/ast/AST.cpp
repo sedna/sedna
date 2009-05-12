@@ -1,3 +1,8 @@
+/*
+ * File:  AST.cpp
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "AST.h"
 
 // Parses QName to prefix and local parts and stores them in pref and loc strings

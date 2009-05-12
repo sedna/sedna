@@ -1,3 +1,8 @@
+/*
+ * File:  ASTLoadFile.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_LOAD_FILE_H_
 #define _AST_LOAD_FILE_H_
 

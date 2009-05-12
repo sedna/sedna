@@ -1,3 +1,8 @@
+/*
+ * File:  ASTInstOf.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_INST_OF_H_
 #define _AST_INST_OF_H_
 

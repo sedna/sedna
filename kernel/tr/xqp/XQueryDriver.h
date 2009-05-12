@@ -1,3 +1,8 @@
+/*
+ * File:  XQueryDriver.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef XQUERY_DRIVER_H
 #define XQUERY_DRIVER_H
 

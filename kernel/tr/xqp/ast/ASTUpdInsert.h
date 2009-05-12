@@ -1,3 +1,8 @@
+/*
+ * File:  ASTUpdInsert.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_UPDATE_INSERT_H_
 #define _AST_UPDATE_INSERT_H_
 

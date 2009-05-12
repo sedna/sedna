@@ -1,3 +1,8 @@
+/*
+ * File:  ASTOrderBy.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_ORDER_BY_H_
 #define _AST_ORDER_BY_H_
 

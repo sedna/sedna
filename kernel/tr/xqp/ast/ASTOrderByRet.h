@@ -1,3 +1,8 @@
+/*
+ * File:  ASTOrderByRet.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AST_ORDER_BY_RET_H_
 #define _AST_ORDER_BY_RET_H_
 
