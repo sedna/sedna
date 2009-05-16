@@ -125,6 +125,10 @@ else  #Windows (Cygwin)
 
 fi
 
+if test "$STATIC_LIBS"x = "true"x; then
+  BUILD_SUFFIX=$BUILD_SUFFIX-static
+fi
+
 prepare_win_source() {
     echo prepare_windows_source &&
     rm -rf $FILE_BASE/libs/*.tar.gz &&
@@ -162,9 +166,9 @@ EEE
 }
 
 exclude_files() {
-    for exclude_file in `cat $FILE_BASE/exclude_files`; do 
-	    rm -rf $FILE_BASE/$exclude_file || return 1
-    done
+  for exclude_file in `cat $FILE_BASE/exclude_files`; do 
+    rm -rf $FILE_BASE/$exclude_file || return 1
+  done
 }
 
 prepare_source() {
@@ -287,7 +291,9 @@ export ACTIVE_CONFIGURATION=Release
 export DOCUMENTATION=1
 export EL_DEBUG=0
 export JAVA_DRIVER=1
-export STATIC_SYS_LIBS=1 # Flag is ignored under SunOS, Darwin, Windows
+if test "$STATIC_LIBS"x = "true"x; then
+  export STATIC_SYS_LIBS=1
+fi
 $MAKE_COMMAND || failwith "make failed"
 ##### MAKE ####################################################################
 
