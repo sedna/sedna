@@ -775,6 +775,11 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
     return token::_ERROR_;
 }
 
+<M_START_TAG,M_ELEM_CONT,M_END_TAG><<EOF>> {
+    driver.error(*yylloc, XPST0003, "unclosed XML element");
+    return token::END;
+}
+
     /* "catch all" rule for the initial state */
 
 . {
