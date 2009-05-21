@@ -26,7 +26,7 @@ class TransCB;
 class lock_head
 {
 public:
-  resource_id r_id; //the id of the locking resource 
+  resource_id r_id; //the id of the locking resource
   lock_request* queue; // the queue of requests for this lock
   lock_mode granted_mode; // the mode of the granted group
   bool waiting;// flag indicates nonempty wait group
@@ -34,7 +34,7 @@ public:
   lock_head(resource_id, lock_mode);
   ~lock_head();
   void print();
-  
+
 };
 
 
@@ -53,7 +53,7 @@ public:
   lock_request* tran_prev;// previous lock request in transaction list
   lock_request* tran_next;// next lock request in transaction list
 
-  lock_request(transaction_id, session_id, lock_head*, lock_mode, lock_class);  
+  lock_request(transaction_id, session_id, lock_head*, lock_mode, lock_class);
   ~lock_request();
   void print();
 };
@@ -71,6 +71,10 @@ private:
    // the auxilary functions
    lock_head* find_lock(resource_id&, bool sync = true);
 
+   // visited flags; we use it to look for nodes already visited during graph traversal
+   transaction_id nodesVisited[CHARISMA_MAX_TRNS_NUMBER];
+   unsigned int nVisited;
+
 public:
    void init_lock_table();
    void release_lock_table();
@@ -87,7 +91,7 @@ public:
    lock_reply release_tr_locks(transaction_id, bool sync = true);
    void print(bool sync = true);
 
-   bool deadlock(bool sync);
+   bool deadlock(transaction_id trid, bool sync);
    void visit(TransCB* me);
 
    inline void down_sem(bool sync)

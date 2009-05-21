@@ -83,7 +83,7 @@ lock_request::lock_request(transaction_id tr_id,
      {
         last = r;
      }
-     
+
      tran_prev = last;
      tran_next = NULL;
      last->tran_next= this;
@@ -115,7 +115,7 @@ lock_request::~lock_request()
         tran->locks = tran_next;
         tran->locks->tran_prev = NULL;
      }
-     
+
   }
   else
   {
@@ -179,7 +179,7 @@ void lock_head::print()
 void lock_table::init_lock_table()
 {
 #ifdef LOCK_MGR_ON
-   if(USemaphoreCreate(&xsem, 1, 1, SEDNA_LOCK_MANAGER_SEM, NULL, __sys_call_error) != 0) 
+   if(USemaphoreCreate(&xsem, 1, 1, SEDNA_LOCK_MANAGER_SEM, NULL, __sys_call_error) != 0)
       throw USER_EXCEPTION2(SE4010, "SEDNA_LOCK_MANAGER_SEM");
 #endif
 }
@@ -237,7 +237,7 @@ lock_reply lock_table::lock(transaction_id tr_id,
   lock_reply ret_code;
   lock_head* lock;
   lock_request *request, *last, *convert_request;
-  transaction_id me = tr_id; 
+  transaction_id me = tr_id;
 
   down_sem(sync);
 
@@ -259,7 +259,7 @@ lock_reply lock_table::lock(transaction_id tr_id,
     goto end;
   }
 
-  
+
   //lock not free case
   for (request = lock->queue; request != NULL; request = request->queue)
   {
@@ -277,7 +277,7 @@ lock_reply lock_table::lock(transaction_id tr_id,
       last->queue = request;
 
       if (!(lock->waiting) && lock_compat(mode, lock->granted_mode))
-      {//new request compatible and no other waiters  
+      {//new request compatible and no other waiters
 
          lock->granted_mode = lock_max(mode, lock->granted_mode);
 
@@ -289,7 +289,7 @@ lock_reply lock_table::lock(transaction_id tr_id,
          lock->waiting = true;
          request->status = LOCK_WAITING;
          request->tran->wait = request;
-         
+
          ret_code = LOCK_NOT_LOCKED;
          goto end;
       }
@@ -312,12 +312,12 @@ lock_reply lock_table::lock(transaction_id tr_id,
             convert_request->convert_mode = convert_mode;
             convert_request->status = LOCK_CONVERTING;
             convert_request->tran->wait = convert_request;
- 
+
             lock->waiting = true;//thus, no locks could be added to the granted group
 
             ret_code = LOCK_NOT_LOCKED;
             goto end;
-         }    
+         }
       }
 
       //convert_lock is compatible with each granted lock of other transactions
@@ -409,7 +409,7 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
   lock->granted_mode = NULL_LOCK;
 
   bool convert_request_waiting = false;
-  
+
   //traverse lock queue: compute granted mode, wake compatible waiters
 
   for (request = lock->queue; request != NULL; request = request->queue)
@@ -437,9 +437,9 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
               if (request->status == LOCK_WAITING )
                  break;
               else
-                 throw USER_EXCEPTION2(SE4701, "Unknown status of request");                  
+                 throw USER_EXCEPTION2(SE4701, "Unknown status of request");
            }
-       }   
+       }
     }
 
 
@@ -451,12 +451,12 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
     {
        if (request->status == LOCK_WAITING ) // if request waiting
        {
-          if (lock_compat(request->mode, lock->granted_mode))//if compat with granted            
+          if (lock_compat(request->mode, lock->granted_mode))//if compat with granted
           {
              request->status = LOCK_GRANTED;
              request->tran->wait = NULL;
              lock->granted_mode = lock_max(request->mode, lock->granted_mode);
-             
+
              d_printf2("wake up transaction with id=%d\n", request->tran->tr_id);
              if (request->tran->status != ROLLING_BACK_AFTER_DEADLOCK)
                 if (0 != USemaphoreUp(request->process_xsem, __sys_call_error))
@@ -476,7 +476,7 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
              bool convert_compatible = true;
              for (_req = lock->queue; _req != NULL; _req = _req->queue)
              {
-                if (_req->status == LOCK_GRANTED && 
+                if (_req->status == LOCK_GRANTED &&
                     _req->tran->tr_id != request->tran->tr_id &&
                     !lock_compat(request->convert_mode, _req->mode))
                 {
@@ -484,7 +484,7 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
                    break;
                 }
              }//end nested for
-             
+
              if (convert_compatible == true)
              {
                 request->status = LOCK_GRANTED;
@@ -503,7 +503,7 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
                 convert_request_waiting = true;
                 lock->waiting = true;
              }
-             
+
           }
           else
              throw USER_EXCEPTION2(SE4701, "Unknown status of request");
@@ -541,7 +541,7 @@ lock_reply lock_table::release_tr_locks(transaction_id tr_id, bool sync)
 	 up_sem(sync);
      return LOCK_OK;
   }
- 
+
 
   resource_id r_id;
   request = tr_head->tran->locks;
@@ -585,7 +585,7 @@ void lock_table::print(bool sync)
     d_printf1(": ");
     it->second->print();
     d_printf1("\n");
-  }  
+  }
 
   up_sem(sync);
 
@@ -596,7 +596,7 @@ void lock_table::print(bool sync)
 }
 
 
-bool lock_table::deadlock(bool sync)
+bool lock_table::deadlock(transaction_id trid, bool sync)
 {
 
 #ifdef LOCK_MGR_ON
@@ -607,12 +607,22 @@ bool lock_table::deadlock(bool sync)
 
   //clean cycle fields in  trn's descriptors
   for (it = tr_table._tr_table_.begin(); it != tr_table._tr_table_.end(); it++)
-      it->second->tran->cycle = NULL;
+      if (it->second->tran->tr_id == trid) break;
 
-  try{
-      for (it = tr_table._tr_table_.begin(); it != tr_table._tr_table_.end(); it++)
-          visit(it->second->tran);
-  } catch (SednaUserException) {
+  if (it == tr_table._tr_table_.end())
+      throw SYSTEM_EXCEPTION("Lock table is in incosistent state!");
+
+  // nobody visited yet
+  nVisited = 0;
+
+  // we look for cycles "starting" only from the current node
+  // other cycles we'll be found via corresponding deadlock checks
+  try
+  {
+     visit(it->second->tran);
+  }
+  catch (SednaUserException)
+  {
      up_sem(sync);
      return true;//deadlock is detected
   }
@@ -633,6 +643,20 @@ void lock_table::visit(TransCB* me)
 
   if (me->wait == NULL) return;
 
+  // have we met this node?
+  for (unsigned int i = 0; i < nVisited; i++)
+  {
+      if (nodesVisited[i] == me->tr_id)
+      {
+          if (i == 0)
+              throw USER_EXCEPTION(SE4705); // deadlock
+          else
+              return; // another cycle, but not through us; or a "false" cycle
+      }
+  }
+
+  nodesVisited[nVisited++] = me->tr_id;
+
   them = ((me->wait)->head)->queue;
 
   if (me->wait->status == LOCK_WAITING)
@@ -640,18 +664,12 @@ void lock_table::visit(TransCB* me)
      //look at everyone  in the queue ahead of me
 	  while (them->tran->tr_id != me->tr_id)
 	  {
-		  if(!lock_compat(them->mode, me->wait->mode) ||
-			  them->status != LOCK_GRANTED)
+		  if (!lock_compat(them->mode, me->wait->mode) ||
+			  (them->status == LOCK_CONVERTING && !lock_compat(them->convert_mode, me->wait->mode)))
 		  {
-			  him = them->tran;
-              me->cycle = him;
-
-              if (him->cycle != NULL)//declare deadlock
-                  throw USER_EXCEPTION(SE4705);
-              else visit(him);
-
-              me->cycle = NULL;//when he returns, remove me from cycle
+			  visit(them->tran);
 		  }
+
 		  them = them->queue;
 		  if (them == NULL) break;
 	  }
@@ -662,7 +680,7 @@ void lock_table::visit(TransCB* me)
 	  //look at everyone in the queue which hold any lock (i.e. granted and converting requests)
 	  while (them->status != LOCK_WAITING)
 	  {
-		  if (them->tran->tr_id == me->tr_id) 
+		  if (them->tran->tr_id == me->tr_id)
 		  {
 			  ahead_me = false;
 			  them = them->queue;
@@ -671,20 +689,12 @@ void lock_table::visit(TransCB* me)
 		  }
 		  else
 		  {
-			  if (   (ahead_me && 
-				     (!lock_compat(them->mode, me->wait->convert_mode)|| them->status != LOCK_GRANTED)) 
+			  if (   (ahead_me &&
+				     (!lock_compat(them->mode, me->wait->convert_mode) || (them->status == LOCK_CONVERTING && !lock_compat(them->convert_mode, me->wait->convert_mode))))
 				  || (!ahead_me &&
-				     (!lock_compat(them->mode, me->wait->convert_mode)&& (them->status == LOCK_GRANTED || them->status == LOCK_CONVERTING))))
+				     (!lock_compat(them->mode, me->wait->convert_mode))))
 			  {
-				  him = them->tran;
-			  
-                  me->cycle = him;
-
-                  if (him->cycle != NULL)//declare deadlock
-                     throw USER_EXCEPTION(SE4705);
-                  else visit(him);
-
-                  me->cycle = NULL;//when he returns, remove me from cycle
+                  visit(them->tran);
 			  }
 
 			  them= them->queue;
@@ -743,7 +753,7 @@ bool lock_compat(lock_mode m1, lock_mode m2)
   //third matrix line
   if (m1 == lm_s && m2 == lm_is)
      return true;
-  
+
   if (m1 == lm_s && m2 == lm_ix)
      return false;
 
@@ -756,7 +766,7 @@ bool lock_compat(lock_mode m1, lock_mode m2)
   if (m1 == lm_s && m2 == lm_six)
      return false;
 
-  //fourth matrix line 
+  //fourth matrix line
   if (m1 == lm_x && m2 ==lm_is)
      return false;
 
@@ -770,7 +780,7 @@ bool lock_compat(lock_mode m1, lock_mode m2)
      return false;
 
   if (m1 == lm_x && m2 == lm_six)
-     return false; 
+     return false;
 
   //fifth line
   if (m1 == lm_six && m2 ==lm_is)
@@ -786,7 +796,7 @@ bool lock_compat(lock_mode m1, lock_mode m2)
      return false;
 
   if (m1 == lm_six && m2 == lm_six)
-     return false; 
+     return false;
   else
      throw SYSTEM_EXCEPTION("Unknown lock modes given");
 
@@ -797,7 +807,7 @@ bool lock_compat(lock_mode m1, lock_mode m2)
   if (m1 == NULL_LOCK || m2 == NULL_LOCK)
      return true;
   else
-    return false; 
+    return false;
 */
 #else
   return true;
@@ -807,7 +817,7 @@ bool lock_compat(lock_mode m1, lock_mode m2)
 lock_mode lock_max(lock_mode m1, lock_mode m2)
 {
 #ifdef LOCK_MGR_ON
-  
+
   if (m1 == NULL_LOCK)
      return m2;
 
@@ -831,13 +841,13 @@ lock_mode lock_max(lock_mode m1, lock_mode m2)
 
   if (m1 == lm_ix && m2 == lm_is)
      return lm_ix;
-  
+
   if (m1 == lm_ix && m2 == lm_ix)
      return lm_ix;
 
   if (m1 == lm_s && m2 == lm_is)
      return lm_s;
-  
+
   if (m1 == lm_is && m2== lm_s)
      return lm_s;
 
@@ -845,12 +855,12 @@ lock_mode lock_max(lock_mode m1, lock_mode m2)
      return lm_six;
 
   if (m1 == lm_ix && m2 == lm_s)
-     return lm_six;  
+     return lm_six;
 
   if (m1 == lm_s && m2 == lm_s)
      return lm_s;
 
-  else 
+  else
      throw SYSTEM_EXCEPTION("Unknown lock modes given");
 /*
   if (m1 == lm_x || m2 == lm_x)
