@@ -135,7 +135,7 @@ int sm_server_handler(void *arg)
                          lock_reply r = lm_table.lock(msg->trid, msg->sid, resource_id(string((msg->data.data)+2), kind), mode, LOCK_LONG, 0/*timeout is not important by now*/);
 
                          if (r == LOCK_OK) msg->data.data[0] = '1';
-                         else if (r == LOCK_NOT_LOCKED && !lm_table.deadlock(true)) msg->data.data[0] = '0';
+                         else if (r == LOCK_NOT_LOCKED && !lm_table.deadlock(msg->trid, true)) msg->data.data[0] = '0';
                          else
                          {
                              msg->data.data[0] = '2';
