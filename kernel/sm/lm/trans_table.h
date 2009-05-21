@@ -18,7 +18,7 @@ class tr_lock_head
 {
 public:
   TransCB *tran;
-  
+
   tr_lock_head();
   tr_lock_head(TransCB*);
   ~tr_lock_head();
@@ -30,7 +30,7 @@ typedef std::map<transaction_id, tr_lock_head*>::iterator Trans_It;
 
 class trans_table
 {
-  friend bool lock_table::deadlock(bool sync);
+  friend bool lock_table::deadlock(transaction_id trid, bool sync);
 private:
   std::map<transaction_id, tr_lock_head*> _tr_table_;
 public:
