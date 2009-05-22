@@ -279,7 +279,7 @@ int DismissRestrictionList(VeRestriction *head, int isCleaningUp)
 		while (head)
 		{
 			VeRestriction *inspected = head;
-			int isRemoving = isCleaningUp || inspected->creatorId>0;
+			int isRemoving = isCleaningUp || inspected->creatorId>=0;
 
 			head = head->next;		
 			inspected->next = NULL;
