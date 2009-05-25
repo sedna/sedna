@@ -190,8 +190,8 @@ void get_indexes (xptr node,const char* title)
 	addTextValue(node,"$INDEXES.XML",12);
 	xptr parent=insert_element(XNULL,XNULL,node,"indexes",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
+    local_lock_mrg->put_lock_on_db();
 	index_sem_down();
-	local_lock_mrg->put_lock_on_db();
 	pers_sset<index_cell,unsigned short>::pers_sset_entry* mdc=indexdata->rb_minimum(indexdata->root);
 	char buf[200];
 	while (mdc!=NULL)
@@ -232,8 +232,8 @@ void get_triggers (xptr node,const char* title)
 	addTextValue(node,"$TRIGGERS.XML",13);
 	xptr parent=insert_element(XNULL,XNULL,node,"triggers",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
-	trigger_sem_down();
 	local_lock_mrg->put_lock_on_db();
+	trigger_sem_down();
 	pers_sset<trigger_cell,unsigned short>::pers_sset_entry* mdc=triggerdata->rb_minimum(triggerdata->root);
 	while (mdc!=NULL)
 	{
@@ -293,8 +293,8 @@ void get_ftindexes (xptr node,const char* title)
 	addTextValue(node,"$FTINDEXES.XML",14);
 	xptr parent=insert_element(XNULL,XNULL,node,"ftindexes",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
-	index_sem_down();
 	local_lock_mrg->put_lock_on_db();
+	index_sem_down();
 	pers_sset<ft_index_cell,unsigned short>::pers_sset_entry* mdc=ft_indexdata->rb_minimum(ft_indexdata->root);
 	char buf[200];
 	while (mdc!=NULL)
