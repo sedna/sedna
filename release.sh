@@ -71,7 +71,7 @@ export MD5_EXT=md5
 if test "$OS" "=" "Linux"; then
 
   export BUILD_SUFFIX=linux
-  export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
+  export BUILD_PLATFORM=`uname -m` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=0
