@@ -20,6 +20,8 @@ public:
     ASTNameTest(ASTLocation &loc, std::string *name) : ASTNode(loc)
     {
         ASTParseQName(name, &pref, &local);
+
+        delete name;
     }
 
     ASTNameTest(ASTLocation &loc, std::string *pref_, std::string *local_) : ASTNode(loc), pref(pref_), local(local_) {}

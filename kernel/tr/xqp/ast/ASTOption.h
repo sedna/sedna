@@ -20,6 +20,8 @@ public:
     ASTOption(ASTLocation &loc, std::string *qname, std::string *option) : ASTNode(loc), opt(option)
     {
         ASTParseQName(qname, &pref, &local);
+
+        delete qname;
     }
 
     ~ASTOption();

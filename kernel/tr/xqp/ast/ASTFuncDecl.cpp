@@ -14,6 +14,8 @@ ASTFuncDecl::ASTFuncDecl(ASTLocation &loc, std::string *func_name, ASTNodesVecto
           body(func_body)
 {
     ASTParseQName(func_name, &pref, &local);
+
+    delete func_name;
 }
 
 ASTFuncDecl::ASTFuncDecl(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params,

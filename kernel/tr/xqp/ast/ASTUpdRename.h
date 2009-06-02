@@ -19,6 +19,8 @@ public:
     ASTUpdRename(ASTLocation &loc, ASTNode *what_, std::string *name) : ASTNode(loc), what(what_)
     {
         ASTParseQName(name, &pref, &local);
+
+        delete name;
     }
 
     ASTUpdRename(ASTLocation &loc, ASTNode *what_, std::string *pref_, std::string *loc_) : ASTNode(loc), what(what_), pref(pref_), local(loc_) {}

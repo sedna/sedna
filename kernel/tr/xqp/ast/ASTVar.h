@@ -20,6 +20,8 @@ public:
     ASTVar(ASTLocation &loc, std::string *var_name) : ASTNode(loc)
     {
         ASTParseQName(var_name, &pref, &local);
+
+        delete var_name;
     }
 
     ASTVar(ASTLocation &loc, std::string *var_pref, std::string *var_local) : ASTNode(loc), pref(var_pref), local(var_local) {}

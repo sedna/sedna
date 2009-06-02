@@ -9,6 +9,8 @@
 ASTPragma::ASTPragma(ASTLocation &loc, std::string *pragma_name, std::string *pragma_cont) : ASTNode(loc), cont(pragma_cont)
 {
     ASTParseQName(pragma_name, &pref, &local);
+
+    delete pragma_name;
 }
 
 ASTPragma::ASTPragma(ASTLocation &loc, std::string *pr_pref, std::string *pr_local, std::string *pragma_cont)
