@@ -2322,7 +2322,7 @@ dirElemConstructor:
             // content became none (e.g. boundary spaces were stripped)
             if ($6->size() == 0)
             {
-                delete $6;
+                destroyASTNodesVector($6);
                 $6 = NULL;
             }
 
@@ -3933,8 +3933,8 @@ static void ProcessDirectContent(ASTNodesVector *cont, bool isPreserveBS)
             // delete empty content, e.g. empty CDATA
             if (*cc->cont == "")
             {
+                delete cc;
                 cont->erase(cont->begin() + pos);
-                pos++;
                 continue;
             }
 
@@ -3949,18 +3949,21 @@ static void ProcessDirectContent(ASTNodesVector *cont, bool isPreserveBS)
 
                 cc->appendContent(ncc);
 
-                // if we encounter CharRef or CDATA, boundary space check is not needed
+                // if we encounter CharRef or CDATA, boundary space check is not needed, since CharRef and CDATA never define boundary-spaces
                 if (ncc->getOrigin() == ASTCharCont::CDATA || ncc->getOrigin() == ASTCharCont::CREF)
                     stripBS = false;
             }
 
             // delete merged content following pos-node
+            for (unsigned int ipos = pos + 1; ipos < cpos; ipos++)
+                delete (*cont)[ipos];
+
             cont->erase(cont->begin() + pos + 1, cont->begin() + cpos);
 
             // then, if we strip boundary spaces, delete current content
             if (stripBS && cc->isSpaceChars())
             {
-                delete (*cont)[pos];
+                delete cc;
                 cont->erase(cont->begin() + pos);
             }
         }
