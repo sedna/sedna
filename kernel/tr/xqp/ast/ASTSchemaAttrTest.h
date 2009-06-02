@@ -18,6 +18,8 @@ public:
     ASTSchemaAttrTest(ASTLocation &loc, std::string *name_ = NULL) : ASTNode(loc)
     {
         ASTParseQName(name_, &npref, &nloc);
+
+        delete name_;
     }
     ASTSchemaAttrTest(ASTLocation &loc, std::string *npref_, std::string *nloc_) :
             ASTNode(loc),

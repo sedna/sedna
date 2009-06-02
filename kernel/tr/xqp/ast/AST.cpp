@@ -15,7 +15,7 @@
 //
 // Returns:
 //      pref and loc
-void ASTParseQName(std::string *qname, std::string **pref, std::string **loc)
+void ASTParseQName(const std::string *qname, std::string **pref, std::string **loc)
 {
     unsigned int pos;
 

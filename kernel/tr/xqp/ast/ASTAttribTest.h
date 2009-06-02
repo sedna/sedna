@@ -20,6 +20,9 @@ public:
     {
         ASTParseQName(name_, &npref, &nloc);
         ASTParseQName(type_, &tpref, &tloc);
+
+        delete name_;
+        delete type_;
     }
     ASTAttribTest(ASTLocation &loc, std::string *npref_, std::string *nloc_, std::string *tpref_, std::string *tloc_) :
             ASTNode(loc),

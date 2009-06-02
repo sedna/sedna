@@ -21,6 +21,8 @@ public:
     ASTAttr(ASTLocation &loc, std::string *name, ASTNodesVector *cont_ = NULL) : ASTNode(loc), cont(cont_)
     {
         ASTParseQName(name, &pref, &local);
+
+        delete name;
     }
 
     ASTAttr(ASTLocation &loc, std::string *elem_pref, std::string *elem_local, ASTNodesVector *cont_ = NULL) :

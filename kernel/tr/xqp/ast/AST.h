@@ -29,7 +29,7 @@ typedef std::vector<std::string *> ASTStringVector;
 //
 // Returns:
 //      pref and loc
-void ASTParseQName(std::string *qname, std::string **pref, std::string **loc);
+void ASTParseQName(const std::string *qname, std::string **pref, std::string **loc);
 
 /* helper to destroy vector of nodes and corresponding elements */
 void destroyASTNodesVector(ASTNodesVector *nodes);

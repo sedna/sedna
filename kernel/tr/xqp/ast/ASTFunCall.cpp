@@ -9,6 +9,8 @@
 ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNodesVector *func_params) : ASTNode(loc), params(func_params)
 {
     ASTParseQName(func_name, &pref, &local);
+
+    delete func_name;
 }
 
 ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params)

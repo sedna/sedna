@@ -24,6 +24,8 @@ public:
     ASTAttrConst(ASTLocation &loc, std::string *name_, ASTNode *expr_ = NULL) : ASTNode(loc), name(NULL), expr(expr_)
     {
         ASTParseQName(name_, &pref, &local);
+
+        delete name_;
     }
     ASTAttrConst(ASTLocation &loc, std::string *pref_, std::string *local_, ASTNode *expr_ = NULL) : ASTNode(loc), name(NULL), pref(pref_), local(local_), expr(expr_) {}
 
