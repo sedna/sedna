@@ -2376,7 +2376,7 @@ dirAttribute:
                 {
                     errorc(this->driver, @6, XQST0022);
                     delete $2;
-                    delete $6;
+                    destroyASTNodesVector($6);
                     YYABORT;
 
                     $$ = NULL;
@@ -2393,7 +2393,7 @@ dirAttribute:
                 {
                     errorc(this->driver, @6, XQST0022);
                     delete $2;
-                    delete $6;
+                    destroyASTNodesVector($6);
                     YYABORT;
 
                     $$ = NULL;
