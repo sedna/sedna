@@ -3955,9 +3955,6 @@ static void ProcessDirectContent(ASTNodesVector *cont, bool isPreserveBS)
             }
 
             // delete merged content following pos-node
-            for (unsigned int ipos = pos + 1; ipos < cpos; ipos++)
-                delete (*cont)[ipos];
-
             cont->erase(cont->begin() + pos + 1, cont->begin() + cpos);
 
             // then, if we strip boundary spaces, delete current content
