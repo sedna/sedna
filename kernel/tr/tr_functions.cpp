@@ -17,6 +17,8 @@
 #include "tr/executor/base/XPath.h"
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"
+#include "tr/updates/updates.h"
+#include "tr/executor/xqops/PPConstructors.h"
 
 using namespace std;
 
@@ -53,19 +55,21 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
        delete_qep(qep_tree);
        qep_tree = NULL;
 
+//  TODO: We should carefully clear virtual root here. To review it later.
+       clear_virtual_root();
+
        //tr_globals::st_ct.clear_context();
 
-	   tr_globals::estr_global.clear();
-	   stmt_str_buf::reset();
-	   tr_globals::tmp_op_str_buf.reset();
+       tr_globals::estr_global.clear();
+       stmt_str_buf::reset();
+       tr_globals::tmp_op_str_buf.reset();
 
-       PathExpr_local_free();
-       PathExpr_reset_pers();
+       if (pe_local_aspace->free_all) pe_local_aspace->free_all();
 
        vmm_delete_tmp_blocks();
        system_tables_on_kernel_statement_end();
        indirection_table_on_statement_end();
-       
+
        is_qep_built = false;
     }
 }
@@ -290,7 +294,7 @@ void register_session_on_gov()
 //returns true if all database files exists
 bool check_database_existence(const char* db_name)
 {
-   bool res1 = false, res2 = false, res3 = false, res4 = false;
+   bool res1 = false, res2 = false, res3 = false;
 
    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 
@@ -298,9 +302,6 @@ bool check_database_existence(const char* db_name)
 
    res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
 
-   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
-
-
-   if (res1 && res2 && res3  && res4) return true;
+   if (res1 && res2 && res3) return true;
    else return false;
 }	

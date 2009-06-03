@@ -23,16 +23,14 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key);
 //void bt_key2tuple_cell(const bt_key& /*in*/ key, tuple_cell& /*out*/ tc);
 
 /* the creation of index with the following paths in data and with the following key_type connected to the xml document or xml collection identified by the descriptive schema root node*/
-index_cell* create_index (PathExpr *object_path, 
+index_cell_xptr create_index (PathExpr *object_path, 
                           PathExpr *key_path, 
                           xmlscm_type key_type, 
-                          doc_schema_node* schemaroot,
+                          doc_schema_node_cptr schemaroot,
                           const char * index_title, 
                           const char* doc_name,
                           bool is_doc);
-index_cell* create_inner_index ( 
-                          xmlscm_type key_type 
-                          );
+
 void delete_index (const char *index_title);
 
 /* sets the binding between the input schema_node and indexes */
@@ -44,8 +42,7 @@ void delete_index (const char *index_title);
 /* deletes the following node modified to key  together with some objects from all the indexes needed */
 //void delete_node_from_indexes (xptr node);
 
-xptr find_btree(index_id id);
-counted_ptr<db_entity> find_entity(const char* title);
+counted_ptr<db_entity> find_db_entity_for_index(const char* title);
 xptr find_btree(const char* title);
 
 xmlscm_type get_index_xmlscm_type(const char* title);
@@ -58,13 +55,12 @@ xmlscm_type get_index_xmlscm_type(const char* title);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class idx_buffer
-{    
+{
 private:
     char* internal_buffer;
     int   buffer_lgth;
 
 public:
-    
     idx_buffer (): internal_buffer(NULL) , buffer_lgth(0) {};
     ~idx_buffer () 
     {
@@ -79,7 +75,7 @@ public:
        CHECKP(addr);
        copy_to_buffer(XADDR(addr),size);
     }
-    
+
     inline void copy_to_buffer(xptr addr, shft shift,shft size)
     {
         CHECKP(addr);
@@ -101,8 +97,8 @@ public:
 struct idx_user_data
 {
 private:
-    char* temps[2];               
-    int   sizes[2];        
+    char* temps[2];
+    int   sizes[2];
 
 public:
     

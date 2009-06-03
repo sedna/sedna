@@ -7,7 +7,6 @@
 #include "common/sedna.h"
 #include <string>
 #include "common/sm_vmm_data.h"
-#include "common/ph/pers_heap.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
@@ -200,6 +199,13 @@ void bm_startup() throw (SednaException)
     if (USemaphoreCreate(&xmode, 1, 1, VMM_SM_EXCLUSIVE_MODE_SEM_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "VMM_SM_EXCLUSIVE_MODE_SEM_STR");
 
+    if (USemaphoreCreate(&cat_nametable_sem, 1, 1, CATALOG_NAMETABLE_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4010, "CATALOG_NAMETABLE_SEMAPHORE_STR");
+
+    if (USemaphoreCreate(&cat_master_sem, 1, 1, CATALOG_MASTER_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4010, "CATALOG_MASTER_SEMAPHORE_STR");
+
+/*
     if (USemaphoreCreate(&indirection_table_sem, 1, 1, INDIRECTION_TABLE_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "INDIRECTION_TABLE_SEMAPHORE_STR");
 
@@ -216,7 +222,7 @@ void bm_startup() throw (SednaException)
     if (USemaphoreCreate(&trigger_sem, 1, 1, TRIGGER_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "TRIGGER_SEMAPHORE_STR");
 #endif
-
+*/
     // Create shared memory
     if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
@@ -233,10 +239,6 @@ void bm_startup() throw (SednaException)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
     *lru_global_stamp_data = 0;
 #endif
-    string ph_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".seph";
-    if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, 
-                  PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0) != 0)
-        throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
 
     // init physical xptrs table
     phys_xptrs = se_new t_xptr_info(sm_globals::bufs_num);
@@ -247,9 +249,6 @@ void bm_startup() throw (SednaException)
 
 void bm_shutdown() throw (SednaException)
 {
-    if (pers_close() != 0)
-        throw USER_ENV_EXCEPTION("Cannot close persistent heap", false);
-
     flush_buffers();
 
     flush_master_block();
@@ -279,9 +278,13 @@ void bm_shutdown() throw (SednaException)
     if (USemaphoreRelease(xmode, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "VMM_SM_EXCLUSIVE_MODE_SEM_STR");
 
-    if (USemaphoreRelease(indirection_table_sem, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "INDIRECTION_TABLE_SEMAPHORE_STR");
+    if (USemaphoreRelease(cat_nametable_sem, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4011, "CATALOG_NAMETABLE_SEMAPHORE_STR");
 
+    if (USemaphoreRelease(cat_master_sem, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4011, "CATALOG_MASTER_SEMAPHORE_STR");
+
+/*
     if (USemaphoreRelease(metadata_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "METADATA_SEMAPHORE_STR");
 
@@ -295,8 +298,8 @@ void bm_shutdown() throw (SednaException)
     if (USemaphoreRelease(trigger_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "TRIGGER_SEMAPHORE_STR");
 #endif
+*/
     d_printf1("Release semaphores: complete\n");
-
 
     _bm_release_buffer_pool();
     d_printf1("Release shared memory: complete\n");
@@ -327,7 +330,7 @@ void bm_shutdown() throw (SednaException)
     se_delete(phys_xptrs);
 }
 
-void bm_register_session(session_id sid, persistent_db_data** pdb, int is_rcv_mode) throw (SednaException)
+void bm_register_session(session_id sid, int is_rcv_mode) throw (SednaException)
 {
     tr_info_map::iterator it = trs.find(sid);
     if (it != trs.end()) throw USER_EXCEPTION(SE1018);
@@ -349,10 +352,7 @@ void bm_register_session(session_id sid, persistent_db_data** pdb, int is_rcv_mo
     ti->freed_data_blocks = XNULL;
     ti->allocated_tmp_blocks = XNULL;
 
-
     trs.insert(tr_info_map::value_type(sid, ti));
-
-    *pdb = mb->pdb;
 
     if (is_rcv_mode) is_recovery_mode = true;
 }

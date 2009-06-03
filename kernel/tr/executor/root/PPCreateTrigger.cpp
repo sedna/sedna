@@ -9,6 +9,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/locks/locks.h"
+#include "tr/triggers/triggers.h"
 
 using namespace std;
 
@@ -119,7 +120,7 @@ void PPCreateTrigger::open()
 void PPCreateTrigger::close()
 {
     trigger_name.op->close();
-    root = NULL;
+    root = XNULL;
     dynamic_context::global_variables_close();
 }
 
@@ -142,14 +143,14 @@ void PPCreateTrigger::execute()
 
     local_lock_mrg->put_lock_on_trigger(tc.get_str_mem());
 
-	trigger_cell* trc = trigger_cell::create_trigger (time,
+	trigger_cell_cptr trc = create_trigger (time,
 				event,
         		trigger_path,
         		gran,
         		action,
         		innode,
         		path_to_parent,
-        		(doc_schema_node*)root,
+        		(doc_schema_node_xptr) root,
 				tc.get_str_mem(),
 				db_ent->name,
 				(db_ent->type == dbe_document));

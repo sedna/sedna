@@ -294,15 +294,15 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 		else
 		{
 			CHECKP(base);
-			schema_node* scm=(GETSCHEMENODEX(base))->root;
+			schema_node_xptr scm=(GETSCHEMENODEX(base))->root;
 			if (desc_sch.find(scm)==desc_sch.end())
 			{
-				std::vector<schema_node*> vscm;
+				std::vector<schema_node_xptr> vscm;
 				desc_sch[scm]=vscm;
 				getSchemeDescendants(scm,uri,name, type, cfun,desc_sch[scm]);
 			}	
-			std::vector<schema_node*>* cv=&desc_sch[scm];
-			std::vector<schema_node*>::iterator it=cv->begin();
+			std::vector<schema_node_xptr>* cv=&desc_sch[scm];
+			std::vector<schema_node_xptr>::iterator it=cv->begin();
 			if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
 			while (it!=cv->end())
 			{

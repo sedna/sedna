@@ -13,7 +13,6 @@
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/cdb_globals.h"
 #include "sm/sm_functions.h"
-#include "common/ph/pers_heap.h"
 #include "sm/llsm/llMain.h"
 #include "sm/db_utils.h"
 #include "common/errdbg/d_printf.h"
@@ -26,6 +25,7 @@
 #include "common/pping.h"
 #include "common/ipc_ops.h"
 #include "sm/wu/wu.h"
+#include "common/commutil.h"
 
 using namespace std;
 using namespace cdb_globals;
@@ -49,11 +49,6 @@ void create_db()
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-    string ph_file_name = db_common_path + ".seph";
-    UFile ph_file_handler = uCreateFile(ph_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
-    if (ph_file_handler == U_INVALID_FD)
-        throw USER_EXCEPTION(SE4301);
-
     // close created files
     if (uCloseFile(data_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
@@ -61,51 +56,20 @@ void create_db()
     if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
 
-    if (uCloseFile(ph_file_handler, __sys_call_error) == 0)
-        throw USER_EXCEPTION(SE4301);
-
     event_logger_init(EL_CDB, sm_globals::db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
     elog(EL_LOG, ("Request for database creation"));
-
-    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
-        throw USER_EXCEPTION(SE4041);
 
     open_global_memory_mapping(SE4400);
     get_vmm_region_values();
     close_global_memory_mapping();
-
+    
     /* This call is to debug transactions */
     CREATE_DEBUG_LOG(sm_globals::db_name);
 
-    /* Create ant initialize persustent heap */
-    if (0 != pers_create(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME,
-                         PH_ADDRESS_SPACE_START_ADDR, persistent_heap_size * 0x100000, sa))
-        throw USER_EXCEPTION(SE4302);
-
-    if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME,
-                  PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR) != 0)
-        throw USER_EXCEPTION(SE4302);
-
-    string ph_new_file_name = db_common_path + ".65536.seph";
-
-	if (uCopyFile(ph_file_name.c_str(), ph_new_file_name.c_str(), false, __sys_call_error) == 0)
-      throw USER_EXCEPTION(SE4306);
-
-    persistent_db_data* pdb = (persistent_db_data*)pers_malloc(sizeof(persistent_db_data));
-
-    if (pdb == NULL)
-        throw USER_EXCEPTION(SE4303);
-
-    pdb->init();
-    pdb->set_authentication_flag((strcmp(db_security,"authorization") == 0) ? true : (strcmp(db_security,"authentication") == 0) ? true : false );
-    pdb->set_authorization_flag((strcmp(db_security,"authorization") == 0) ? true : false);
-
-    if (pers_close() != 0)
-        throw USER_EXCEPTION(SE4304);
-
     /* Allcoate master block */
+
     mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
-    
+
     /* Set master block initial values */
     mb->free_data_blocks = XNULL;
     mb->free_tmp_blocks  = XNULL;
@@ -115,8 +79,16 @@ void create_db()
     mb->tmp_file_max_size  = MBS2PAGES(tmp_file_max_size);
     mb->data_file_extending_portion = MBS2PAGES(data_file_extending_portion);
     mb->tmp_file_extending_portion  = MBS2PAGES(tmp_file_extending_portion);
-    mb->indirection_table_free_entry = XNULL;
-    mb->pdb = pdb;
+
+    mb->transaction_flags = 0;
+    if (strcmp(db_security, "authorization") == 0) {
+        SET_FLAG(mb->transaction_flags, TR_AUTHORIZATION_FLAG);
+        SET_FLAG(mb->transaction_flags, TR_AUTHENTICATION_FLAG);
+    } else if (strcmp(db_security,"authentication") == 0) {
+        SET_FLAG(mb->transaction_flags, TR_AUTHENTICATION_FLAG);
+    }
+
+    mb->catalog_masterdata_block = XNULL;
 
     // open files
     data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
@@ -127,13 +99,12 @@ void create_db()
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-
     // write first page to data file, which serves as master block
     char tmp[PAGE_SIZE];
 
     int number_of_bytes_written = 0;
     int res = uWriteFile(data_file_handler, tmp, PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
-     if (res == 0 || number_of_bytes_written != PAGE_SIZE)
+    if (res == 0 || number_of_bytes_written != PAGE_SIZE)
         throw USER_EXCEPTION2(SE4045, "data file");
 
     // flush master block to disk

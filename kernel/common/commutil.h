@@ -37,6 +37,10 @@
 	((A)>(B)?(A):(B))
 #endif
 
+#define SET_FLAG(f, b) (f) = ((f) & ~(0x1UL << (b))) | (0x1UL << (b))
+#define CLEAR_FLAG(f, b) (f) = ((f) & ~(0x1UL << (b)))
+#define GET_FLAG(f, b) (((f) >> (b)) & 1)
+
 #define IS_POWER_OF_2(NUMBER) \
 	((NUMBER)&((NUMBER)-1)==0 && (NUMBER)>0)
 

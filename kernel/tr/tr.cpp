@@ -83,6 +83,7 @@ void TrnCtrlHandler(int signo)
 int TRmain(int argc, char *argv[])
 {
     int ret_code = 0;
+
 	//DebugBreak();
 /*
 	if (AllocConsole())
@@ -181,6 +182,12 @@ int TRmain(int argc, char *argv[])
             if (!sedna_server_is_running) throw USER_EXCEPTION(SE4400);
         }
 
+        if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0) {
+            first_transaction = 0;
+        } else {
+            first_transaction = 1;
+        }
+
         if (uSocketInit(__sys_call_error) != 0)
             throw USER_EXCEPTION(SE3001);
 
@@ -202,7 +209,6 @@ int TRmain(int argc, char *argv[])
 
         if (!check_database_existence(db_name)) //check database consistency (all files exists)
             throw USER_EXCEPTION2(SE4609, db_name);
-
 
         db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
 
@@ -243,22 +249,9 @@ int TRmain(int argc, char *argv[])
 
         msg_struct client_msg;
 
-//u_ftime(&t_test3);
         // transaction initialization
-//u_ftime(&t_test1);
         on_session_begin(sm_server);
-//u_ftime(&t_test2);
-//d_printf2("TEST1: %s\n", to_string(t_test2 - t_test1).c_str());
         elog(EL_LOG, ("Session is ready"));
-
-        if (entry_point->is_first_transaction())
-        {
-            entry_point->clear_first_transaction_flag();
-            first_transaction = 1;
-        }
-        authentication = entry_point->is_authentication_on();
-        authorization = entry_point->is_authorization_on();
-
 
         PPQueryEssence *qep_tree = NULL;        //qep of current stmnt
         StmntsArray *st = NULL;

@@ -59,6 +59,8 @@
 /* type for layer */
 typedef int t_layer;
 
+union uint64_lh_t { struct uint64_lh { uint32_t l; uint32_t h; } lh; uint64_t v; };
+
 /* Struct for Extended Virtual Address Space Pointer */
 struct xptr
 {
@@ -67,7 +69,19 @@ struct xptr
 
     xptr() : layer(0), addr(NULL) {}
     xptr(t_layer _layer, void *_addr) : layer(_layer), addr(_addr) {}
+    explicit xptr(const uint64_t x) { (* (uint64_t *) this) = x; }
 
+    inline uint64_t to_logical_int() const {
+        union uint64_lh_t v = * (uint64_lh_t *) this;
+#ifndef BIG_ENDIAN_ORDER
+        uint32_t x = v.lh.l;
+        v.lh.l = v.lh.h;
+        v.lh.h = x;
+#endif
+        return v.v;
+    };
+
+    inline uint64_t to_uint64() const { return * (uint64_t *) this; };
 // Uncomment next line as soon as somebody is able to explain what is it needed for
 //   xptr(const xptr& x) { layer = x.layer; addr = x.addr; }
 

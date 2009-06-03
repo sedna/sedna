@@ -1694,7 +1694,7 @@ sedna-err:SE3211
     No trigger with this name.
 sedna-err:SE2040
 
-   Too many xhilds by schema.
+   Too many childs by schema.
 sedna-err:SE4620
 
    Transaction has been rolled back due to timeout or hard stop request.

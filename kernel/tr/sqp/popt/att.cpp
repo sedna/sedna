@@ -30,7 +30,7 @@ xp_op *make_xp_op(scheme_list *lst)
            ) throw USER_EXCEPTION2(SE1004, "502");
 
         op->type = xp_op_path;
-        op->path_expr = lr2PathExpr(NULL, lst->at(1).internal.list, false);
+        op->path_expr = lr2PathExpr(NULL, lst->at(1).internal.list, pe_local_aspace);
         op->op1 = make_xp_op(lst->at(2).internal.list);
     }
     else if (op_name == "pred")

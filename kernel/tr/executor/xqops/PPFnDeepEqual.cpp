@@ -32,9 +32,9 @@ PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
 bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
 {
 	CHECKP(node1);
-	schema_node* scm1=GETSCHEMENODEX(node1);
+	schema_node_cptr scm1=GETSCHEMENODEX(node1);
 	CHECKP(node2);
-	schema_node* scm2=GETSCHEMENODEX(node2);
+	schema_node_cptr scm2=GETSCHEMENODEX(node2);
 	if (scm1->type!=scm2->type)
 		return false;
 	switch(scm1->type)
@@ -48,17 +48,17 @@ bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
 	}
 }
 
-static inline bool compare_full_schema_names(schema_node* scm1, schema_node* scm2)
+static inline bool compare_full_schema_names(schema_node_cptr scm1, schema_node_cptr scm2)
 {
     if ( my_strcmp(scm2->name,scm1->name) == 0 && 
-		(((char*)scm1->xmlns) == ((char*)scm2->xmlns) ||
-		(scm1->xmlns != NULL && scm2->xmlns != NULL && my_strcmp(scm2->xmlns->uri, scm1->xmlns->uri)==0)))
+		((scm1->get_xmlns()) == (scm2->get_xmlns()) ||
+		(scm1->get_xmlns() != XNULL && scm2->get_xmlns() != XNULL && my_strcmp(scm2->get_xmlns()->uri, scm1->get_xmlns()->uri)==0)))
         return true;
 	else 
 		return false;
 }
 
-bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2)
+bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node_cptr scm1,schema_node_cptr scm2)
 {
 	//1. Compare names
 	if(!compare_full_schema_names(scm1, scm2)) return false;
@@ -68,9 +68,9 @@ bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node*
 	int at_cnt=0;
 	while (at1!=XNULL)
 	{
-		schema_node * ats=GETSCHEMENODEX(at1);
+		schema_node_cptr ats=GETSCHEMENODEX(at1);
 		CHECKP(node2);
-		xptr nd=isAttributePointerSet((n_dsc*)XADDR(node2),ats->name,(ats->xmlns==NULL)?NULL:ats->xmlns->uri);
+		xptr nd=isAttributePointerSet((n_dsc*)XADDR(node2),ats->name,(ats->get_xmlns()==NULL)?NULL:ats->get_xmlns()->uri);
 		if (nd==XNULL)return false;
 		CHECKP(nd);
 		if (!are_attributes_equal(at1,nd,ats,GETSCHEMENODEX(nd))) return false;
@@ -92,7 +92,7 @@ bool PPFnDeepEqual::are_documents_deep_equal(xptr& node1,xptr& node2)
 {
 	xptr c1 = getFirstByOrderChildNode(node1);
 	xptr c2 = getFirstByOrderChildNode(node2);
-	schema_node* scm;
+	schema_node_cptr scm = XNULL;
 
 	while (true)
 	{		
@@ -122,7 +122,7 @@ bool PPFnDeepEqual::are_documents_deep_equal(xptr& node1,xptr& node2)
 	}
 }
 
-bool PPFnDeepEqual::are_attributes_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2)
+bool PPFnDeepEqual::are_attributes_equal(xptr& node1,xptr& node2,schema_node_cptr scm1,schema_node_cptr scm2)
 {
 	if (compare_full_schema_names(scm1, scm2))
 	    return are_text_nodes_equal(node1,node2);

@@ -229,11 +229,11 @@ int sm_server_handler(void *arg)
                      }
             case 21: {
                          //d_printf1("query 21: bm_register_session\n");
-                         persistent_db_data* pdb;
                          bm_reset_io_statistics();
-                         bm_register_session(msg->sid, &pdb, msg->data.reg.num);
+                         bm_register_session(msg->sid, msg->data.reg.num);
                          msg->data.reg.num = bufs_num;
-                         msg->data.reg.mptr = pdb;
+                         msg->data.reg.mptr = * (__int64 *) (&mb->catalog_masterdata_block);
+                         msg->data.reg.transaction_flags = mb->transaction_flags;
                          msg->cmd = 0;
                          break;
                      }
@@ -333,7 +333,7 @@ int sm_server_handler(void *arg)
                          bm_register_transaction(msg->sid, msg->trid);
 						 try
 						 {
-							 WuOnRegisterTransactionExn(msg->sid, isUsingSnapshot, (TIMESTAMP*) &msg->data.snp_info.ts, &msg->data.snp_info.type_of_snp);
+							 WuOnRegisterTransactionExn(msg->sid, isUsingSnapshot, (TIMESTAMP*) &msg->data.snp_ts);
 						 }
 						 catch(ANY_SE_EXCEPTION)
 						 {
@@ -346,8 +346,16 @@ int sm_server_handler(void *arg)
                      }
             case 36: {
                          //d_printf1("query 36: bm_unregister_transaction\n");
+
+                         msg->cmd = 0;
+
 						 WuOnUnregisterTransactionExn(msg->sid);
                          bm_unregister_transaction(msg->sid, msg->trid);
+
+                         if (mb->catalog_masterdata_block != * (xptr *) (&msg->data.ptr)) {
+                             mb->catalog_masterdata_block = * (xptr *) (&msg->data.ptr);
+                             flush_master_block();
+                         }
 
 						 /* TODO: check if we can advance snapshots and probably advance */
 /*
@@ -419,7 +427,6 @@ int sm_server_handler(void *arg)
 						 msg->cmd = 0;
 						 break;
                      }
-
             default: {
                          //d_printf2("query unknown (%d)\n", msg->cmd);
                          msg->cmd = 1;
@@ -813,12 +820,6 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        d_printf1("logical log has been started successfully\n");
 
-       // recover persistent heap
-       if (!is_stopped_correctly)
-       {
-           llRcvRestorePh();
-           elog(EL_LOG, ("Persistent heap has been recovered"));
-       }
 
        //create checkpoint thread
        start_chekpoint_thread();

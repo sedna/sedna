@@ -576,7 +576,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
 
 
 
-        std::vector<xml_ns*> xmlns;
+        std::vector<xmlns_ptr> xmlns;
         get_in_scope_namespaces(node, xmlns, cxt);
 
         int i = 0;
@@ -681,7 +681,7 @@ void PPFnInScopePrefixes::next  (tuple &t)
 
     if (pos < xmlns.size())
     {
-        xml_ns* ns = xmlns[pos++];
+        xmlns_ptr ns = xmlns[pos++];
         if (ns->prefix)
             t.copy(tuple_cell::atomic_deep(xs_NCName, ns->prefix));
         else

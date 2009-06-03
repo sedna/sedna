@@ -50,10 +50,10 @@ void PPDropIndex::execute()
 
     index_name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
 
-    schema_node *root = get_schema_node(find_entity(tc.get_str_mem()), "Unknown entity passed to PPDropIndex");
+    schema_node_cptr root = get_schema_node(find_db_entity_for_index(tc.get_str_mem()), "Unknown entity passed to PPDropIndex");
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
     delete_index(tc.get_str_mem());
 }

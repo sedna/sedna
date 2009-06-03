@@ -18,7 +18,7 @@
 #include "common/rcv_test.h"
 #include "common/wutypes.h"
 
-#define SEDNA_DATA_STRUCTURES_VER 8
+#define SEDNA_DATA_STRUCTURES_VER 9
 
 // buffer memory offset; this type is used for addressing buffers in buffer
 // memory area by defining offset of buffer from the beginning of the shared
@@ -55,6 +55,7 @@ typedef __int16 xmlscm_type;
 typedef unsigned short int shft;
 
 #define PAGE_SIZE                               65536
+#define PAGE_BIT_SIZE                           16
 #define PAGE_BIT_MASK                           (__uint32)0xFFFF0000
 #define PAGE_REVERSE_BIT_MASK                   (__uint32)0x0000FFFF
 //#define PAGE_SIZE                             4096
@@ -64,10 +65,8 @@ typedef unsigned short int shft;
 
 extern void  *LAYER_ADDRESS_SPACE_START_ADDR;
 extern void  *LAYER_ADDRESS_SPACE_BOUNDARY;
-extern void  *PH_ADDRESS_SPACE_START_ADDR;
 extern __uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT;
 extern __uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-extern __uint32 PH_ADDRESS_SPACE_START_ADDR_INT;
 
 extern __uint32 LAYER_ADDRESS_SPACE_SIZE;
 
@@ -75,15 +74,15 @@ struct vmm_region_values
 {
     __uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT;
     __uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-    __uint32 PH_ADDRESS_SPACE_START_ADDR_INT;
     __uint32 LAYER_ADDRESS_SPACE_SIZE;
 };
 
 #define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0x79C00000)
-#define PH_SIZE                                         ((__uint32)0x6400000)
 #define VMM_REGION_MIN_SIZE                             ((__uint32)0x4000000)
 #define VMM_REGION_MAX_SIZE                             ((__uint32)0x40000000)
 
+#define TR_AUTHENTICATION_FLAG 1
+#define TR_AUTHORIZATION_FLAG  2
 
 #ifdef _WIN32
 #define SESSION_EXE "se_trn.exe"
@@ -93,7 +92,6 @@ struct vmm_region_values
 
 
 #define MODULES_COLLECTION_NAME "$modules"
-#define IS_PH_PTR(p)									(PH_ADDRESS_SPACE_START_ADDR <= (p) && (p) < LAYER_ADDRESS_SPACE_START_ADDR)
 
 /*	
 	Global Names section */ 
@@ -126,29 +124,26 @@ void SetGlobalNamesDB(int databaseId);
 #define CHARISMA_SSMMSG_SM_ID(DB,BUF,BUFSZ) \
 	CreateNameOfSmTalk((DB),(BUF),(BUFSZ))
 
-extern global_name CHARISMA_PH_SHARED_MEMORY_NAME;
-extern global_name CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME;
-extern global_name CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME;
 extern global_name CHARISMA_BUFFER_SHARED_MEMORY_NAME;
 extern global_name SEDNA_GLOBAL_MEMORY_MAPPING;
 extern global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME;
 extern global_name VMM_SM_SEMAPHORE_STR;
-extern global_name INDIRECTION_TABLE_SEMAPHORE_STR;
 extern global_name VMM_SM_EXCLUSIVE_MODE_SEM_STR;
-extern global_name PERS_HEAP_SEMAPHORE_STR;
-extern global_name PERS_HEAP_1_SNP_SEMAPHORE_STR;
-extern global_name PERS_HEAP_0_SNP_SEMAPHORE_STR;
 extern global_name SNAPSHOT_CHECKPOINT_EVENT;
 extern global_name TRY_ADVANCE_SNAPSHOT_EVENT;
-extern global_name METADATA_SEMAPHORE_STR;
-extern global_name INDEX_SEMAPHORE_STR;
+
+extern global_name CATALOG_NAMETABLE_SEMAPHORE_STR;
+extern global_name CATALOG_MASTER_SEMAPHORE_STR;
+
+//extern global_name METADATA_SEMAPHORE_STR;
+//extern global_name INDEX_SEMAPHORE_STR;
 
 #ifdef SE_ENABLE_FTSEARCH
-extern global_name FT_INDEX_SEMAPHORE_STR;
+//extern global_name FT_INDEX_SEMAPHORE_STR;
 #endif
 
 #ifdef SE_ENABLE_TRIGGERS
-extern global_name TRIGGER_SEMAPHORE_STR;
+//extern global_name TRIGGER_SEMAPHORE_STR;
 #endif
 
 extern global_name CHARISMA_SSMMSG_GOV_ID;
@@ -265,7 +260,6 @@ enum hb_state
  * 37 - bm_create_new_version
  * 38 - transaction rollback
  * 39 - hot-backup procedure (receive: state, return: status, or log file numbers; use hb_struct for this)
- *
  */
 struct sm_blk_stat
 {
@@ -289,7 +283,8 @@ struct sm_msg_struct
     union {
         struct {
             int num; // number of potentially allocated blocks in call to bm_enter_exclusive_mode
-            void *mptr; // pointer for persistent_db_data
+            __int64 mptr; // pointer for persistent_db_data
+            int transaction_flags;
         } reg;
 
         __int64 ptr; // xptr for deletion, locking and unlocking
@@ -308,10 +303,7 @@ struct sm_msg_struct
             TIMESTAMP ts;
         } hb_struct;
 
-        struct {
-        	__int64 ts;    // timestamp of snapshot, used to find persistent heap file
-        	int type_of_snp; // 1 or 0, to select name for file mapping
-        } snp_info;
+        __int64 snp_ts;   // timestamp of snapshot, not used currently, but may be helpful later
 
         sm_blk_stat stat; // sm block statistics
 

@@ -179,7 +179,7 @@ class PPFnInScopePrefixes : public PPIterator
 {
 protected:
     PPOpIn child;
-    std::vector<xml_ns*> xmlns;
+    std::vector<xmlns_ptr> xmlns;
     int pos;
 
     void children(PPOpIn &_child_) { _child_ = child; }

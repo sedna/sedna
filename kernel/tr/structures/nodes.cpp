@@ -20,7 +20,7 @@ void node_blk_hdr::init(void *p, shft dsc_size)
     
     hdr->pblk= XNULL;
     hdr->nblk= XNULL;
-	hdr->snode=NULL;
+	hdr->snode=XNULL;
 	hdr->dsc_size=dsc_size;
     hdr->desc_first = 0;
 	hdr->desc_last = 0;
@@ -126,7 +126,7 @@ void ns_dsc::init(void *p)
     d->rdsc= XNULL;
 	d->desc_next=0;
 	d->desc_prev=0;
-    d->ns= NULL;
+    d->ns= XNULL;
 	d->indir=XNULL;
 }
 

@@ -75,27 +75,27 @@ void xs_anyURI_print_to_lr(const char *uri, std::ostream& str)
 ///
 /// XML Schema Part 2 QName (qualified name from Namespaces in XML standard) Functions
 ///
-static void _xs_QName_encode(void *source, void *dest)
-{                                                                                     
-    for (int i = 0; i < sizeof(void*); i++)                                           
-    {                                                                                 
-        if (((unsigned char*)&source)[i] == 0xFF)                                     
-        {                                                                             
-            ((unsigned char*)dest)[i] = 0xF0;                                         
-            ((unsigned char*)dest)[i + sizeof(void*)] = 0x0F;                         
-        }                                                                             
-        else                                                                          
-        {                                                                             
-            ((unsigned char*)dest)[i] = 0xFF;                                         
-            ((unsigned char*)dest)[i + sizeof(void*)] = ~((unsigned char*)&source)[i];
-        }                                                                             
-    }                                                                                 
-}                                                                                     
-                                                                                      
-static void *_xs_QName_decode(const void *source)                                                
-{                                                                                     
-    return (void*)(*(int*)source ^ *((int*)source + 1));                             
-}                                                                                     
+static void _xs_QName_encode(xmlns_ptr source, void *dest)
+{
+    for (int i = 0; i < sizeof(xmlns_ptr); i++)
+    {
+        if (((unsigned char*)&source)[i] == 0xFF)
+        {
+            ((unsigned char*)dest)[i] = 0xF0;
+            ((unsigned char*)dest)[i + sizeof(xmlns_ptr)] = 0x0F;
+        }
+        else
+        {
+            ((unsigned char*)dest)[i] = 0xFF;
+            ((unsigned char*)dest)[i + sizeof(xmlns_ptr)] = ~((unsigned char*)&source)[i];
+        }
+    }
+}
+
+static xmlns_ptr _xs_QName_decode(const void *source)
+{
+    return (xmlns_ptr) ((uint32_t) (*(uint32_t *)source ^ *((uint32_t *)source + 1)));
+}
 
 static int _xs_QName_separator_position(const char *prefix_and_local)
 {
@@ -108,15 +108,15 @@ static int _xs_QName_separator_position(const char *prefix_and_local)
     return 0;
 }
 
-char *xs_QName_create(xml_ns* xmlns,
+char *xs_QName_create(xmlns_ptr xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t))
 {
     U_ASSERT(local_part);
 
     int lp_size = strlen(local_part);
-    char *qname = (char*)alloc_func(lp_size + 2 * sizeof(void*) + 1);
-    strcpy(qname + 2 * sizeof(void*), local_part);
+    char *qname = (char*)alloc_func(lp_size + 2 * sizeof(xmlns_ptr) + 1);
+    strcpy(qname + 2 * sizeof(xmlns_ptr), local_part);
 
     _xs_QName_encode(xmlns, qname);
 
@@ -129,13 +129,13 @@ char *xs_QName_create(const char *uri,
                       void* (*alloc_func)(size_t),
                       dynamic_context *cxt)
 {
-	xml_ns* ns = NULL;
-	if (uri && *uri && prefix && *prefix)
+    xmlns_ptr ns = NULL_XMLNS;
+    if (uri && *uri && prefix && *prefix)
     {
         if (!check_constraints_for_xs_NCName(prefix))
             throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
 
-		ns = cxt->st_cxt->get_ns_pair(prefix, uri);
+        ns = cxt->st_cxt->get_ns_pair(prefix, uri);
     }
 
     if (!check_constraints_for_xs_NCName(local))
@@ -151,7 +151,7 @@ char *xs_QName_create(const char* uri,
 {
     U_ASSERT(prefix_and_local);
 
-    xml_ns* xmlns = NULL;
+    xmlns_ptr xmlns = NULL_XMLNS;
     const char *local = NULL;
     int pos = 0;
     if (!uri) uri = "";
@@ -170,9 +170,9 @@ char *xs_QName_create(const char* uri,
 
     if (*uri) // uri is present
     {
-		if (pos)
-			if (!check_constraints_for_xs_NCName(prefix_and_local, pos))
-				throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
+        if (pos)
+            if (!check_constraints_for_xs_NCName(prefix_and_local, pos))
+                throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
         xmlns = cxt->st_cxt->get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
     }
@@ -216,7 +216,7 @@ char *xs_QName_create(const char* prefix_and_local,
     if (!check_constraints_for_xs_NCName(src_local))
         throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
 
-    std::vector<xml_ns*> xmlns;
+    std::vector<xmlns_ptr> xmlns;
     get_in_scope_namespaces(elem_node, xmlns, cxt);
     const char *tgt_prefix = NULL;
 
@@ -230,7 +230,7 @@ char *xs_QName_create(const char* prefix_and_local,
     }
 
     if (src_local == prefix_and_local)
-        return xs_QName_create((xml_ns*)NULL, src_local, alloc_func);
+        return xs_QName_create(NULL_XMLNS, src_local, alloc_func);
 
     throw XQUERY_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
 }
@@ -239,7 +239,6 @@ char *xs_QName_create(const char* prefix_and_local,
 
 void xs_QName_release(char *qname, void (*free_func)(void*))
 {
-
     // FIXME!!! (comment by AF)
     // We should somehow release xml_ns structure here. Releasing depends on several
     // things. If somebody is using this structure we could not release it, we should
@@ -247,7 +246,7 @@ void xs_QName_release(char *qname, void (*free_func)(void*))
     // but he couldn't clarify what are the problems...
     // To my concern, finally, we should get somethins like this here:
     // 
-    //     xml_ns *xmlns = (xml_ns*)_xs_QName_decode(qname);
+    //     xmlns_ptr xmlns = _xs_QName_decode(qname);
     //     xml_ns::delete_namespace_node(xmlns);
     //
     // But now we are just freeing memory
@@ -256,24 +255,24 @@ void xs_QName_release(char *qname, void (*free_func)(void*))
 
 const char *xs_QName_get_prefix(const char* qname)
 {
-    xml_ns *xmlns = (xml_ns*)_xs_QName_decode(qname);
-    return xmlns ? xmlns->prefix : NULL; 
+    xmlns_ptr xmlns = _xs_QName_decode(qname);
+    return (xmlns != NULL_XMLNS) ? xmlns->prefix : NULL; 
 }
 
 const char *xs_QName_get_uri(const char* qname)
 { 
-    xml_ns *xmlns = (xml_ns*)_xs_QName_decode(qname);
-    return xmlns ? xmlns->uri : NULL; 
+    xmlns_ptr xmlns = _xs_QName_decode(qname);
+    return (xmlns != NULL_XMLNS) ? xmlns->uri : NULL; 
 }
 
 const char *xs_QName_get_local_name(const char* qname)
 { 
-    return qname + 2 * sizeof(void*); 
+    return qname + 2 * sizeof(xmlns_ptr); 
 }
 
-xml_ns *xs_QName_get_xmlns(const char* qname)
+xmlns_ptr xs_QName_get_xmlns(const char* qname)
 {
-    return (xml_ns*)_xs_QName_decode(qname);
+    return _xs_QName_decode(qname);
 }
 
 void xs_QName_print(const char* qname, std::ostream& str)
@@ -297,8 +296,8 @@ void xs_QName_print_to_lr(const char* qname, std::ostream& str)
 
 bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
 {
-	xml_ns* node_ns = GETSCHEMENODE(XADDR(node))->xmlns;
-	char* node_uri = node_ns ? node_ns->uri : NULL;
+    xmlns_ptr node_ns = GETSCHEMENODE(XADDR(node))->get_xmlns();
+    char* node_uri = (node_ns != XNULL) ? node_ns->uri : NULL;
     const char *node_local = GETSCHEMENODE(XADDR(node))->name;
 
     return _xs_QName_not_equal(node_uri, node_local, uri, local);

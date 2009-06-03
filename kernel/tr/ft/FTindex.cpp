@@ -10,6 +10,7 @@
 #include "dtsearch/include/dtsearch.h"
 #include "common/u/uhdd.h"
 #include "tr/log/log.h"
+#include "tr/cat/catenum.h"
 //using namespace dtSearch;
 
 #ifndef _WIN32
@@ -79,7 +80,7 @@ void ftlog_file::close_and_delete_file(const char *index_name)
 		throw USER_EXCEPTION(SE4041);
 }
 
-SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_, bool no_log) : ft_idx(_ft_idx_)
+SednaIndexJob::SednaIndexJob(ft_index_cell_object* _ft_idx_, bool no_log) : ft_idx(_ft_idx_)
 {
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
 		+ std::string(db_name) + std::string("_files/dtsearch/");
@@ -304,7 +305,7 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 {
 	clear_index(index_name);
 	ftc_index_t ftc_idx;
-	ft_index_cell* ft_idx = ft_index_cell::find_index(index_name, &ftc_idx);
+	ft_index_cell_cptr ft_idx = find_ft_index(index_name, &ftc_idx);
 	//TODO:check NULL
 
 	//FIXME: move this to ft_index_data.cpp?
@@ -319,7 +320,7 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 		}
 	}
 	
-	SednaIndexJob sij(ft_idx, true);
+	SednaIndexJob sij(&*ft_idx, true);
 	sij.create_index(&start_nodes);
 }
 
@@ -382,10 +383,10 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 	log_file->flush();
 
 	ftc_index_t ftc_idx;
-	ft_index_cell* ft_idx = ft_index_cell::find_index(index_name, &ftc_idx);
+	ft_index_cell_cptr ft_idx = find_ft_index(index_name, &ftc_idx);
 	//TODO:check NULL
 	
-	SednaIndexJob sij(ft_idx, true);
+	SednaIndexJob sij(&*ft_idx, true);
 	xptr_sequence *seq;
 
 	while (last_lsn != ftlog_file::invalid_lsn)
@@ -490,12 +491,11 @@ void SednaIndexJob::recover_db_file(const char *fname, trn_cell_analysis_redo *r
 }
 void SednaIndexJob::rebuild_all_ftph()
 {
-	pers_sset<ft_index_cell,unsigned short>::pers_sset_entry* ftc = ft_indexdata->rb_minimum(ft_indexdata->root);
+    catalog_iterator it(catobj_ft_indicies, false);
 
-	while (ftc != NULL)
+	while (it.next())
     {
-		rebuild_index(ftc->obj->index_title);
-   		ftc = ft_indexdata->rb_successor(ftc);
+		rebuild_index(it.name());
     }
 }
 

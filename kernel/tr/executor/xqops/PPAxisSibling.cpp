@@ -288,7 +288,7 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
 		
         cur = child.get(t).get_node();
 		CHECKP(cur);
-		schema_node* scm=(GETSCHEMENODEX(cur))->parent;
+		schema_node_xptr scm=(GETSCHEMENODEX(cur))->parent;
 		if (scm->type==virtual_root)
 		{
 			cur=XNULL;
@@ -296,12 +296,12 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
 		}
 		if (desc_sch.find(scm)==desc_sch.end())
 		{
-			std::vector<schema_node*> vscm;
+			std::vector<schema_node_xptr> vscm;
 			desc_sch[scm]=vscm;
 			getSchemeChilds(scm,uri,name, type, cfun,desc_sch[scm]);
 		}	
-		std::vector<schema_node*>* cv=&desc_sch[scm];
-		std::vector<schema_node*>::iterator it=cv->begin();
+		std::vector<schema_node_xptr>* cv=&desc_sch[scm];
+		std::vector<schema_node_xptr>::iterator it=cv->begin();
 		if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
 		while (it!=cv->end())
 		{

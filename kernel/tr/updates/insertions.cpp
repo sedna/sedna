@@ -17,7 +17,6 @@
 * arg1- is operation that returns a sequence of the updated nodes
 * arg2- is operation that returns a sequence of the inserted nodes
 */
-bool temp_used = false;
 
 void insert_before(PPOpIn arg2, PPOpIn arg1)
 {
@@ -113,7 +112,6 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		case 0:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				temp_used = true;
 				//arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
 				xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
@@ -150,7 +148,6 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		case -2:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				temp_used = true;
 				xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
 				++it3;
@@ -264,7 +261,6 @@ cycle1:
 //		checkSwiizleTab(ins_swiz);
 		delete ins_swiz;
 	}
-	if (temp_used) clear_temp();
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
@@ -369,7 +365,6 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		case 0:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				temp_used = true;
 				//arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
 				xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
@@ -406,7 +401,6 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		case -2:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				temp_used = true;
 				xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
 				++it3;
@@ -504,7 +498,6 @@ cycle1:
 //		checkSwiizleTab(ins_swiz);
 		delete ins_swiz;
 	}
-	if (temp_used) clear_temp();
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
@@ -621,7 +614,6 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		case 0:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				temp_used=true;
 				//arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
 				xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
@@ -658,7 +650,6 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		case -2:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				temp_used=true;
 				xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
 				++it3;
@@ -732,7 +723,6 @@ while (it1!=arg1seq.end());
 //		checkSwiizleTab(ins_swiz);	
 		delete ins_swiz;
 	}
-	if (temp_used) clear_temp();
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif

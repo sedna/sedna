@@ -14,8 +14,8 @@
 #include "common/counted_ptr.h"
 #include "tr/structures/nodes.h"
 #include "tr/executor/base/xs_decimal_t.h"
-#include "tr/pstr/pstr.h"
 #include "tr/executor/base/XMLDateTime.h"
+#include "tr/pstr/pstr.h"
 
 class sequence_tmp;
 

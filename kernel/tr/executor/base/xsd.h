@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include "common/xptr.h"
+#include "tr/structures/schema.h"
 
 class dynamic_context;
 
@@ -91,7 +92,6 @@ void  xs_anyURI_print_to_lr(const char *uri, std::ostream& str);
 
 
 
-struct xml_ns;
 
 ///
 /// XML Schema Part 2 QName (qualified name from Namespaces in XML standard) Functions
@@ -103,7 +103,7 @@ struct xml_ns;
 /// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
 /// paramters to xs_QName_create.
 // when xmlns is known use this function
-char *xs_QName_create(xml_ns* xmlns,
+char *xs_QName_create(xmlns_ptr xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t));
 // backs up xs:QName() function
@@ -128,7 +128,7 @@ void  xs_QName_release(char *qname, void (*free_func)(void*));
 const char *xs_QName_get_prefix(const char* qname);
 const char *xs_QName_get_uri(const char* qname);
 const char *xs_QName_get_local_name(const char* qname);
-xml_ns     *xs_QName_get_xmlns(const char* qname);
+xmlns_ptr xs_QName_get_xmlns(const char* qname);
 void  xs_QName_print(const char* qname, std::ostream& str);
 void  xs_QName_print_to_lr(const char* qname, std::ostream& str);
 

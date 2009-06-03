@@ -21,8 +21,8 @@ OBJS     = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
            tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
            tr_globals$(OBJ_EXT) rcv_db$(OBJ_EXT)
 
-SUBDIRS  = auth crmutils executor idx locks log mo nid pq pstr rcv sqp \
-           strings structures updates vmm xqp
+SUBDIRS  = auth cat crmutils executor idx locks log mo nid pq pstr rcv sqp \
+           strings structures updates vmm xqp bstrie
 
 ifeq ($(ENABLE_FTSEARCH), 1)
 SUBDIRS += ft

@@ -270,15 +270,15 @@ void scm_debug(int code, char* message, char* component)
 //extern int is_auth();
 
 // boolean values: 0 (negative) or 1 (affirmative)
-int is_run_rewriter()				{ return run_rewriter; }
-int is_show_time()					{ return show_time; }
-int is_print_intermed()				{ return print_intermed; }
-char* get_user_login()				{ return tr_globals::login; }
-int is_server_mode()				{ return server_mode; }
+int is_run_rewriter()               { return run_rewriter; }
+int is_show_time()                  { return show_time; }
+int is_print_intermed()             { return print_intermed; }
+char* get_user_login()              { return tr_globals::login; }
+int is_server_mode()                { return server_mode; }
 int is_authorization()              { return authorization; }
 int is_authentication()             { return authentication; }
 int is_first_transaction()          { return first_transaction; }
-int is_run_popt()					{ return run_popt; }
+int is_run_popt()                   { return run_popt; }
 
 //extern "C"
 char* get_scm_input_string()
@@ -295,7 +295,7 @@ char* get_scm_input_string()
     return const_cast<char*>(res);
 }
 
-void  set_scm_output_string(char* s)/*{ scm_output_string = s; }*/		// c-string (will be copied)
+void  set_scm_output_string(char* s)/*{ scm_output_string = s; }*/      // c-string (will be copied)
 {
     int size = strlen(s);
     scm_output_string = (char*)malloc(sizeof(char) * (size + 1));
@@ -312,40 +312,40 @@ void  set_scm_output_string(char* s)/*{ scm_output_string = s; }*/		// c-string 
 
 #include <sstream>
 
-void convert_schema_node_to_scheme_list(schema_node *node, std::ostream& sstr)
+void convert_schema_node_to_scheme_list(schema_node_cptr node, std::ostream& sstr)
 {
     sstr << "(";
     switch (node->type)
     {
-        case element		: sstr << "elem";
+        case element        : sstr << "elem";
                               break;
-        case text			: sstr << "text";
+        case text           : sstr << "text";
                               break;
-        case attribute		: sstr << "attr";
+        case attribute      : sstr << "attr";
                               break;
-        case document		: sstr << "doc";
+        case document       : sstr << "doc";
                               break;
-        case xml_namespace	: sstr << "ns";
+        case xml_namespace  : sstr << "ns";
                               break;
-        case comment		: sstr << "comm";
+        case comment        : sstr << "comm";
                               break;
-        case pr_ins			: sstr << "pr-ins";
+        case pr_ins         : sstr << "pr-ins";
                               break;
-        default				: throw USER_EXCEPTION2(SE1051, "Unexpected node type in convert_schema_node_to_scheme_list");
+        default             : throw USER_EXCEPTION2(SE1051, "Unexpected node type in convert_schema_node_to_scheme_list");
     }
 
     if (node->name)
     {
         sstr << " (\"";
-        if (node->xmlns && node->xmlns->uri) sstr << node->xmlns->uri;
+        if ((node->get_xmlns() != XNULL) && node->get_xmlns()->uri) sstr << node->get_xmlns()->uri;
         sstr << "\" \"" << node->name << "\")";
     }
     sstr << " (" << int2string(node->nodecnt) << " " << int2string(node->blockcnt) << " " << int2string(node->extnids) << ")";
 
-    for (sc_ref *ref = node->first_child; ref != NULL; ref = ref->next)
+    for (sc_ref_item *ref = node->children.first; ref != NULL; ref = ref->next)
     {
-        if (ref == node->first_child) sstr << " ";
-        convert_schema_node_to_scheme_list(ref->snode, sstr);
+        if (ref == node->children.first) sstr << " ";
+        convert_schema_node_to_scheme_list(ref->object.snode, sstr);
     }
     sstr << ")";
 }
@@ -354,12 +354,12 @@ char* descriptive_schema_to_scheme_list(const char* name, int is_collection)
 {
     //d_printf3("descriptive_schema_to_scheme_list parameters: %s %d\n", name, is_collection);
 
-    schema_node *root;
+    schema_node_cptr root = XNULL;
 
     if (is_collection) root = find_collection(name);
     else root = find_document(name);
 
-    if (!root) 
+    if (!root.found()) 
     {
         if (is_collection)
             throw USER_EXCEPTION2(SE2003, (std::string("Collection '") + name + "'").c_str());

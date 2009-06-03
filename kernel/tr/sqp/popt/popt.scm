@@ -176,7 +176,7 @@
          (,test))
         (cond 
           ((eq? test 'pi-test)
-           '(processing_instruction ()))
+           '(processing-instruction ()))
           ((eq? test 'comment-test)
            '(comment ()))
           ((eq? test 'text-test)

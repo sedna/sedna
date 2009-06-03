@@ -1630,7 +1630,7 @@
   (cond ((eq? test-type 'text-test) 'text)
         ((eq? test-type 'node-test) 'node)
         ((eq? test-type 'comment-test) 'comment)
-        ((eq? test-type 'pi-test) 'processing_instruction)
+        ((eq? test-type 'pi-test) 'processing-instruction)
         (else (cl:signal-input-error SE4008 (string-append "unknown test-type given: "
                                        (symbol->string test-type))))
         )

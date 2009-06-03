@@ -89,7 +89,7 @@ void PPCreateFtIndex::open()
 void PPCreateFtIndex::close()
 {
     index_name.op->close();
-    root = NULL;
+    root = XNULL;
 	if (cust_rules.op)
 		cust_rules.op->close();
     dynamic_context::global_variables_close();
@@ -99,10 +99,10 @@ void PPCreateFtIndex::close()
 //FIXME: import it in some other way (this function is in PPConstructors.cpp)
 //void separateLocalAndPrefix(NCName*& prefix,const char*& qname);
 void separateLocalAndPrefix(char*& prefix,const char*& qname);
-std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
+ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
 {
 	tuple t(1);
-	std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > * res = se_new std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >();
+	ft_index_template_t * res = se_new ft_index_template_t();
 	while (1)
 	{
 		tuple_cell tc;
@@ -118,7 +118,7 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 
 		char* prefix=NULL;
 		separateLocalAndPrefix(prefix,qname);
-		xml_ns* ns=NULL;
+		xmlns_ptr ns=NULL_XMLNS;
 		if (prefix!=NULL)
 		{
 			ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
@@ -126,7 +126,7 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 		}
 		char* name = se_new char[strlen(qname)+1];
 		strcpy(name, qname);
-		std::pair<xml_ns*,char*> tag(ns, name);
+		std::pair<xmlns_ptr, char*> tag(ns, name);
 	
 		cust_rules->op->next(t);
 		if (t.is_eos())
@@ -141,14 +141,14 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 
 		ft_index_type itype = str2index_type(index_type);
 
-		res->push_back(std::pair<std::pair<xml_ns*,char*>,ft_index_type>(tag, itype));
+		res->push_back(ft_index_pair_t(tag, itype));
 	}
 	return res;
 }
 
-void delete_cust_rules_vector(std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* &v)
+void delete_cust_rules_vector(ft_index_template_t* &v)
 {
-	std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >::iterator it;
+	ft_index_template_t::iterator it;
 	for (it = v->begin(); it < v->end(); it++)
 	{
 		delete it->first.second;
@@ -171,20 +171,19 @@ void PPCreateFtIndex::execute()
 
     index_name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
 
     //local_lock_mrg->put_lock_on_index(tc.get_str_mem());
 
-
-	std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *cust_rules_vec = NULL;
+	ft_index_template_t * cust_rules_vec = NULL;
 
 	if (cust_rules.op)
 		cust_rules_vec = make_cust_rules_vector(&cust_rules, cxt);
 
-	ft_index_cell* ftic = ft_index_cell::create_index (object_path,
+	ft_index_cell_xptr ftic = create_ft_index (object_path,
 				index_type,
-				(doc_schema_node*)root,
+				(doc_schema_node_xptr)root,
 				tc.get_str_mem(),
 				db_ent->name,
 				(db_ent->type == dbe_document),

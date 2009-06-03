@@ -17,9 +17,8 @@
 #include "tr/nid/nid.h"
 #include "tr/log/log.h"
 #include "tr/nid/nidalloc.h"
-#include "common/persistent_db_data.h"
-#include "common/ph/pers_heap.h"
 #include "common/errdbg/d_printf.h"
+#include "tr/cat/catvars.h"
 
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))
@@ -28,7 +27,7 @@ bool restore_mode=false;
 static fnumber	PROPORTION(0,1);		/* proportion used to divide alphabet sequence */
 int nid_block_count=0;
 char   DC = ALPHABET_SIZE-1;
-doc_schema_node* nid_holder=NULL ;			/* current persistent block holder*/
+doc_schema_node_xptr nid_holder;			/*current persistent block holder*/
 xptr			TMPNIDBLK;		/* current temporary block for nid prefixes */
 t_nid			NIDNULL;
 std::pair<int /*size*/,int /*increment*/>* sizehnt=NULL;
@@ -102,14 +101,15 @@ xptr nid_get_blk(shft p_size, bool persistent) {
 		result = pstr_create_blk();
 	
 	--------------------------------------------------------*/
+
 	char	ss[10];
 	if (persistent) {
 		if (nid_holder->ext_nids_block == XNULL) {
-			nid_holder->ext_nids_block = pstr_create_blk(true);
+			nid_holder.modify()->ext_nids_block = pstr_create_blk(true);
 			nid_block_count++;
 		}
 		if (!pstr_fit_into_blk(nid_holder->ext_nids_block, p_size)) {
-				nid_holder->ext_nids_block = pstr_create_blk(true);
+				nid_holder.modify()->ext_nids_block = pstr_create_blk(true);
 				nid_block_count++;
 		}
 		return nid_holder->ext_nids_block;
@@ -176,8 +176,10 @@ void	nid_assign(xptr node, t_prefix p) {
 			up_concurrent_micro_ops_number();
 			throw USER_EXCEPTION(SE2023);
 		}
-		if (IS_DATA_BLOCK(node)) 
+		if (IS_DATA_BLOCK(node)) {
 			nid_holder=(GETBLOCKBYNODE(node))->snode->root;
+            U_ASSERT(nid_holder != XNULL);
+        }
 		blk = nid_get_blk(p.size, IS_DATA_BLOCK(node));
 		tmp = pstr_do_allocate(blk, (char*) p.prefix, p.size);
 /*--------------------------------------------------------
@@ -191,9 +193,9 @@ void	nid_assign(xptr node, t_prefix p) {
 		*(shft*)(dsc->nid.prefix + sizeof(xptr)) = p.size;
 		dsc->nid.size = 0;
 		//statistics
-		(GETBLOCKBYNODE(node))->snode->extnids+=p.size;
+		(GETBLOCKBYNODE(node))->snode.modify()->extnids+=p.size;
 		if (IS_DATA_BLOCK(node)) 
-			nid_holder->total_ext_nids+=p.size;
+			nid_holder.modify()->total_ext_nids+=p.size;
 
 	}	
 }
@@ -661,78 +663,72 @@ void	nid_create_child(xptr parent, xptr result)
 //	entry_point->nbm_size++;
 //	return ret;
 //}
-void updateEP_nid(void)
+
+
+
+void updateEP_nid(int * last_nid_size, char * last_nid)
 {
-	if (entry_point->last_nid_size==0)
-	{
-		entry_point->last_nid_size=1;
-		entry_point->last_nid=(unsigned char*)pers_malloc(1);
-		if(entry_point->last_nid == NULL) 
-		    throw SYSTEM_EXCEPTION(PH_CANNOT_ALLOCATE_MSG);
-		entry_point->last_nid[0]=1;
-		return;
-	}
-	else
-		if (entry_point->last_nid[entry_point->last_nid_size-1]!=MAX_LETTER)
-		{
-			entry_point->last_nid[entry_point->last_nid_size-1]++;
-			return;
-		}
-		else
-		{
-			//1. searching pos to increment
-			int pos=entry_point->last_nid_size-3;
-			while (pos>=0)
-			{
-				if (entry_point->last_nid[pos]<MAX_LETTER)
-				{
-					//2. case w/o expansion
-					entry_point->last_nid[pos]++;
-					pos+=2;
-					while (pos<entry_point->last_nid_size)
-					{
-						entry_point->last_nid[pos]=1;
-						pos+=2;
-					}
-					return;
-				}
-				pos-=2;
-			}
-			
-			//3 expanding
-			pers_free(entry_point->last_nid);
-			entry_point->last_nid_size+=2;
-			entry_point->last_nid=(unsigned char*)pers_malloc(entry_point->last_nid_size);
-			if(entry_point->last_nid == NULL) 
-			    throw SYSTEM_EXCEPTION(PH_CANNOT_ALLOCATE_MSG);
-            int i = 0;
-			for (i=0;i<entry_point->last_nid_size;i+=2)	entry_point->last_nid[i]=1;
-			for (i=1;i<entry_point->last_nid_size;i+=2)	entry_point->last_nid[i]=ALPHABET_SIZE;
-			return;
-		}
+    if (*last_nid_size==255) {
+//        throw MAX_ROOT_NID
+        return;
+    }
+
+    if (*last_nid_size==0)
+    {
+        *last_nid_size=1;
+        last_nid[0]=1;
+        return;
+    } else if (last_nid[*last_nid_size-1]!=MAX_LETTER) {
+        last_nid[*last_nid_size-1]++;
+        return;
+    } else {
+        // 1. searching pos to increment
+        int pos=*last_nid_size-3;
+        while (pos>=0) {
+            if (last_nid[pos] < MAX_LETTER) {
+                //2. case w/o expansion
+                last_nid[pos]++;
+                pos+=2;
+                while (pos < *last_nid_size) {
+                    last_nid[pos] = 1;
+                    pos+=2;
+                }
+                return;
+            }
+            pos-=2;
+        }
+
+        //3 expanding
+        *last_nid_size+=2;
+        int i = 0;
+        for (i=0;i<*last_nid_size;i+=2) last_nid[i]=1;
+        for (i=1;i<*last_nid_size;i+=2) last_nid[i]=ALPHABET_SIZE;
+        return;
+    }
 }
+
 /* generate nid for the root nodes */
-void	nid_create_root(xptr result, bool persistent) 
+void nid_create_root(xptr result, bool persistent) 
 {
-	n_dsc* dsc = (n_dsc*)XADDR(result);
-	VMM_SIGNAL_MODIFICATION(result);
-	if (persistent)
-	{
-		updateEP_nid();
-		if (entry_point->last_nid_size<=MAXINTERNALPREFIX)
-		{
-			dsc->nid.size=entry_point->last_nid_size;
-			memcpy(dsc->nid.prefix,entry_point->last_nid,dsc->nid.size);
-		}
-		else
-			nid_assign_pers_data(result,(char*)entry_point->last_nid,entry_point->last_nid_size);
-	}		
-	else
-	{
-		
-		dsc->nid.prefix[0]=0;
-		dsc->nid.size=1;
-	}
+    n_dsc* dsc = (n_dsc*)XADDR(result);
+    VMM_SIGNAL_MODIFICATION(result);
+
+    if (persistent)
+    {
+        updateEP_nid(&last_nid_size, last_nid);
+        if (last_nid_size <= MAXINTERNALPREFIX)
+        {
+            dsc->nid.size = last_nid_size;
+            memcpy(dsc->nid.prefix, last_nid, dsc->nid.size);
+        }
+        else
+            nid_assign_pers_data(result, (char*)last_nid, last_nid_size);
+    }
+    else
+    {
+        dsc->nid.prefix[0]=0;
+        dsc->nid.size=1;
+    }
 }
 
 /* 
@@ -760,16 +756,17 @@ void	nid_delete(xptr node) {
 	{
 		//statistics
 		shft nids=(*(shft*)(the_nid.prefix+sizeof(xptr)));
-		schema_node* scm=(GETBLOCKBYNODE(node))->snode;
+		schema_node_cptr scm=(GETBLOCKBYNODE(node))->snode;
+        scm.modify();
 		scm->extnids-=nids;
 		if (IS_DATA_BLOCK(node)) 
-			scm->root->total_ext_nids-=nids;
+			scm->root.modify()->total_ext_nids-=nids;
 		xptr	blk = BLOCKXPTR((*(xptr*)the_nid.prefix));
 		if (
 			pstr_do_deallocate(blk, *(xptr*)(the_nid.prefix), *(shft*)(the_nid.prefix+sizeof(xptr)), true)
 			&& scm->root->ext_nids_block==blk
 			)
-			scm->root->ext_nids_block=XNULL;
+			scm->root.modify()->ext_nids_block=XNULL;
 		/*--------------------------------------------------------
 		>>> this is debug case when prefix is allocated just in memory
 		delete[] (char*)XADDR(*(xptr*)the_nid.prefix);

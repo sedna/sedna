@@ -7,9 +7,8 @@
 #define _XPTRCHANELLEDMERGE_H
 
 #include "common/sedna.h"
-
 #include "tr/nid/numb_scheme.h"
-#include "tr/structures/pers_map.h"
+#include "tr/structures/rbtree.h"
 
 struct node_cell
 {
@@ -40,8 +39,8 @@ class xptrChanneledMerge
 private:
 	next_node_fn nodeFN;
 	bool forward;
-	pers_sset<node_cell,unsigned short>* merge_tree;
-	pers_sset<node_cell,unsigned short>::pers_sset_entry* top;
+	sedna_rbtree<node_cell>* merge_tree;
+	sedna_rbtree<node_cell>::sedna_rbtree_entry* top;
 	node_cell* tmp_cell;
 public:	
     xptr getNextNode();  

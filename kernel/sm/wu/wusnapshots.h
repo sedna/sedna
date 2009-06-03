@@ -7,6 +7,7 @@
 
 #include "wusnapshotscs.h"
 #include "wuincguard.h"
+#include <limits.h>
 
 struct SnResourceDemand
 {

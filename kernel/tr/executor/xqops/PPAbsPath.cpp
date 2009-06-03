@@ -59,7 +59,7 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
                                                         path_expr(_path_expr_),
                                                         db_ent(_db_ent_),
                                                         name(NULL, 0),
-                                                        root(NULL)
+                                                        root(XNULL)
 {
 }
 
@@ -70,7 +70,7 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
                                       path_expr(_path_expr_),
                                       db_ent(_db_ent_),
                                       name(_name_),
-                                      root(NULL)
+                                      root(XNULL)
 {
 }
 
@@ -78,7 +78,7 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
                      PathExpr *_path_expr_, 
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_,
-                     schema_node *_root_) : PPIterator(_cxt_),
+                     schema_node_xptr _root_) : PPIterator(_cxt_),
                                             path_expr(_path_expr_),
                                             db_ent(_db_ent_),
                                             name(_name_),
@@ -106,7 +106,7 @@ void PPAbsPath::open ()
     if (name.op)
     {
         name.op->open();
-        root = NULL;
+        root = XNULL;
     }
 //    d_printf1("PPAbsPath::open () end\n");
 }
@@ -121,7 +121,7 @@ void PPAbsPath::reopen()
     if (name.op)
     {
         name.op->reopen();
-        root = NULL;
+        root = XNULL;
     }
 }
 
@@ -131,7 +131,7 @@ void PPAbsPath::close ()
     delete [] merged_seq_arr;
     merged_seq_arr = NULL;
     scmnodes_num = -1;
-    root = NULL;
+    root = XNULL;
 
     if (name.op) name.op->close();
 }
@@ -147,7 +147,7 @@ void PPAbsPath::next(tuple &t)
 //    d_printf1("++++++++++++\n");
     
 
-    if (!root) 
+    if (root == XNULL) 
         if (determine_root()) 
         {
             t.set_eos();
@@ -178,7 +178,7 @@ void PPAbsPath::next(tuple &t)
         delete [] merged_seq_arr;
         merged_seq_arr = NULL;
         scmnodes_num = -1;
-		root = NULL;	// there is no need for reopen, because it was called automatically
+		root = XNULL;	// there is no need for reopen, because it was called automatically
 						// when we obtained root (eos was reached) 
 
         t.set_eos();
@@ -215,7 +215,7 @@ bool PPAbsPath::determine_root()
 	document_type dt = get_document_type(db_ent);
 
 	if (dt == DT_NON_SYSTEM)
-		root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath");
+        root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath");
 	else
 	   	root = get_system_doc(dt, db_ent->name);
 
@@ -241,7 +241,7 @@ PPIterator* PPAbsPath::copy(dynamic_context *_cxt_)
 }
 
 void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
-                                  schema_node *root, PathExpr *path_expr)
+                                  schema_node_cptr root, PathExpr *path_expr)
 {
     t_scmnodes nodes;
     nodes = execute_abs_path_expr(root, path_expr);

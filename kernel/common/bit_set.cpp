@@ -87,7 +87,7 @@ bit_set::~bit_set ()
 {
     if(!external_memory)
     {
-        delete bits;
+        delete[] bits;
         bits = NULL;
     }
 }
@@ -146,7 +146,7 @@ void* bit_set::get_ptr_to_bytes () const
 
 void bit_set::set_ptr_to_bytes (void* _bits_, int _size_)
 {
-    if(!external_memory) delete bits;
+    if(!external_memory) delete[] bits;
     bits = (unsigned char*)_bits_;
     size = _size_;
     external_memory = true;

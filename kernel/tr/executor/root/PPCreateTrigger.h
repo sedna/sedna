@@ -33,7 +33,7 @@ class PPCreateTrigger : public PPUpdate
     dynamic_context *cxt;
 
     // obtained parameters and local data
-    schema_node *root;
+    schema_node_xptr root;
 public:
     void open();
     void close();
@@ -46,7 +46,7 @@ public:
                     char* _granularity_,
                     scheme_list* _action_,
                     PPOpIn _trigger_name_,
-    				dynamic_context *_cxt_);
+                    dynamic_context *_cxt_);
     PPCreateTrigger(char* _time_,
                     char* _event_,
                     counted_ptr<db_entity> _db_ent_,
@@ -54,10 +54,10 @@ public:
                     char* _granularity_,
                     scheme_list* _action_,
                     char* _inserting_name_,
-        			int _inserting_type,
+                    int _inserting_type,
                     PathExpr *_path_to_parent_,
                     PPOpIn _trigger_name_,
-    				dynamic_context *_cxt_);
+                    dynamic_context *_cxt_);
     ~PPCreateTrigger();
 };
 

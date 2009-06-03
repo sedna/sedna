@@ -10,7 +10,7 @@ OBJS = argtable$(OBJ_EXT) base$(OBJ_EXT) bit_set$(OBJ_EXT) gmm$(OBJ_EXT) ipc_ops
        pping$(OBJ_EXT) rcv_test$(OBJ_EXT) sp$(OBJ_EXT) SSMMsg$(OBJ_EXT) \
        tr_debug$(OBJ_EXT) ugc$(OBJ_EXT) utils$(OBJ_EXT) version$(OBJ_EXT) \
        xptr$(OBJ_EXT) sedna$(OBJ_EXT)
-SUBDIRS = errdbg mmgr ph u
+SUBDIRS = errdbg mmgr u
 
 ifeq ($(EL_DEBUG),1)
 SUBDIRS += st

@@ -68,36 +68,10 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
 //    }
 //}
 
-pers_sset<index_cell,unsigned short>::pers_sset_entry* search_indexdata_cell(const char *index_title)
-{
-	return indexdata->get(index_title,NULL);	
-}
-
-void inline free_indexdata_cell(pers_sset<index_cell,unsigned short>::pers_sset_entry* entry)
-{
-	index_cell* idc=entry->obj;
-	indexdata->rb_delete(entry);
-	if (idc->index_title!=NULL)
-		scm_free(idc->index_title,true);
-	delete_PathExpr(idc->key);
-	delete_PathExpr(idc->object);
-	scm_free(idc->doc_name,true);
-	scm_free(idc,true);
-}
-
-index_cell* create_inner_index (xmlscm_type key_type)
-{
-	index_cell* idc=(index_cell*)scm_malloc(sizeof(index_cell),true);
-	idc->keytype = key_type;
-	idc->err_cntr = 0;
-	idc->btree_root = bt_create(key_type);
-	return idc;
-}
-
-index_cell* create_index (PathExpr *object_path, 
+index_cell_xptr create_index (PathExpr *object_path, 
                           PathExpr *key_path, 
                           xmlscm_type keytype, 
-                          doc_schema_node* schemaroot,
+                          doc_schema_node_cptr schemaroot,
                           const char * index_title, 
                           const char* doc_name,
                           bool is_doc)
@@ -107,34 +81,22 @@ index_cell* create_index (PathExpr *object_path,
 	__int64 counter2 = 0;
 	
 	// I. Create and fill new index cell
-	index_sem_down();
-	if (search_indexdata_cell(index_title)!=NULL)
-	{
-		index_sem_up();	
+	if (catalog_find_name(catobj_indicies, index_title) != NULL) {
 		throw USER_EXCEPTION(SE2033);
 	}
+
 	down_concurrent_micro_ops_number();
-	index_cell* idc=(index_cell*)scm_malloc(sizeof(index_cell),true);
-    idc->id = *idx_counter;
-    (*idx_counter)++;
-	idc->keytype = keytype;
-	idc->schemaroot = schemaroot;
-	schemaroot->create_index(idc);
-	idc->err_cntr = 0;
-	idc->btree_root = bt_create(keytype);
-	idc->object = object_path;
-	idc->key = key_path;
-	idc->index_title=(char*)scm_malloc(strlen(index_title)+1,true);
-	strcpy(idc->index_title,index_title);
-	idc->doc_name=(char*)scm_malloc(strlen(doc_name)+1,true);
-	strcpy(idc->doc_name,doc_name);
-	idc->is_doc=is_doc;
-	/*idc->next = *indexdata;
-	if ((*indexdata) != NULL) (*indexdata)->pred = idc;
-	*indexdata = idc;*/
-	indexdata->put(idc);
-	index_sem_up();
-	
+
+	index_cell_cptr idc(
+      index_cell_object::create(
+        index_title, schemaroot.ptr(), keytype,  
+        bt_create(keytype), 
+        object_path, key_path, 
+        doc_name, is_doc
+      ), true);
+
+    schemaroot.modify()->full_index_list.add(idc.ptr());
+
 	idx_user_data ud;
 	ud.t=keytype;
 	ud.buf=se_new idx_buffer();
@@ -144,7 +106,7 @@ index_cell* create_index (PathExpr *object_path,
 	// ALGORITHM: indexing data
 
 	//II. Execute abs path (object_path) on the desriptive schema
-    t_scmnodes sobj = execute_abs_path_expr(schemaroot, object_path);
+    t_scmnodes sobj = execute_abs_path_expr((schema_node_xptr) schemaroot.ptr(), object_path);
 	//III. For each schema node found (sn_obj)
 	for (int i = 0; i < sobj.size(); i++)
 	{
@@ -155,7 +117,7 @@ index_cell* create_index (PathExpr *object_path,
 		{
 			xptr blk;
 			//VI. Add pair <&ind,&sn_obj> into schema node (the special list is used)
-			skey[j]->add_index(idc,sobj[i]);
+			skey[j].modify()->index_list.add(index_ref(idc.ptr(), sobj[i]));
 
 			RECOVERY_CRASH;
 
@@ -166,9 +128,9 @@ index_cell* create_index (PathExpr *object_path,
 				//VII. For every descriptor node_key that corresponds to sn_key.
 				while (node_key != XNULL)
 				{
-					// €­¤à¥©, âãâ ¬­¥ ª ¦¥âáï ­ ¤® light-atomic ¤¥« âì. ˆ­ ç¥ ¯®á«¥ Chekp §­ ç¥­¨¥ áê¥¤¥â.
-					// ª®­áâàã¨à®¢ âì ª«îçì ­ ¤® ¢ áâ¥ª¥ (â® ¥áâì ¡¥§ new), â®£¤  ¤¥áâàãªâ®à 
-					// ¡ã¤¥â ¢ë§ë¢ âìáï  ¢â®¬ â¨ç¥áª¨
+					// ï¿½ï¿½ï¿½à¥©, ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ light-atomic ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½á«¥ Chekp ï¿½ï¿½ï¿½ç¥­ï¿½ï¿½ ï¿½ê¥¤ï¿½ï¿½.
+					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à®¢ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½â¥ªï¿½ (ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ new), â®£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+					// ï¿½ã¤¥ï¿½ ï¿½ï¿½ï¿½ë¢ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½â®¬ï¿½ï¿½ï¿½ï¿½ï¿½áª¨
 
 					CHECK_TIMER_FLAG;
                     
@@ -236,94 +198,71 @@ index_cell* create_index (PathExpr *object_path,
 		}
     }
 
-	hl_logical_log_index(object_path, key_path, keytype,index_title, doc_name,is_doc,true);
+	hl_logical_log_index(object_path, key_path, keytype, index_title, doc_name, is_doc, true);
 	up_concurrent_micro_ops_number();
-	return idc;
+	return idc.ptr();
 }
 
-counted_ptr<db_entity> find_entity(const char* title)
+counted_ptr<db_entity> find_db_entity_for_index(const char* title)
 {
-	xptr res;
-    index_sem_down();
-	pers_sset<index_cell,unsigned short>::pers_sset_entry* idc=search_indexdata_cell(title);
-    if (idc!=NULL)
-	{
-		db_entity *res = se_new db_entity;
-        res->name = se_new char[strlen(idc->obj->doc_name) + 1];
-        strcpy(res->name, idc->obj->doc_name);
-		res->type = (idc->obj->is_doc) ? dbe_document : dbe_collection;
-		index_sem_up();
-		return counted_ptr<db_entity>(res);
-	}
-	else 
-	{
-		index_sem_up();	
-        throw USER_EXCEPTION2(SE1061, (std::string("Index '") + title + "'").c_str());
-	}
+    SafeMetadataSemaphore lock;
+    char t;
 
+    lock.Aquire();
+
+    if (!catalog_name_exists(catobj_indicies, title)) {
+        throw USER_EXCEPTION2(SE1061, (std::string("Index '") + title + "'").c_str());
+    }
+
+    counted_ptr<db_entity> result(se_new db_entity);
+    result->name = catalog_htable_get(catobj_indicies, title);
+    size_t len = strlen(result->name);
+
+    lock.Release();
+
+    t = result->name[len + 1];
+    if (t == 'D') {
+        result->type = dbe_document;
+    } else {
+        result->type = dbe_collection;
+    }
+
+    return result;
 }
 
 void delete_index (const char *index_title)
 {
-	index_sem_down();
-	pers_sset<index_cell,unsigned short>::pers_sset_entry* idc=search_indexdata_cell(index_title);
-	if (idc!=NULL)
+    index_cell_cptr idc(index_title, true);
+	if (idc.found())
 	{
-		down_concurrent_micro_ops_number();
-		xptr b_root=(idc->obj)->btree_root;
-		bt_drop(b_root);
-		hl_logical_log_index((idc->obj)->object,(idc->obj)->key,(idc->obj)->keytype, (idc->obj)->index_title,(idc->obj)->doc_name,(idc->obj)->is_doc,false);
-		index_cell* ic=idc->obj;
-		doc_schema_node* sm=(idc->obj)->schemaroot;
-		free_indexdata_cell(idc);
-		(*idx_counter)--;
-		sm->delete_index(ic);
-		index_sem_up();
-		up_concurrent_micro_ops_number();
+		hl_logical_log_index(idc->object, idc->key, idc->keytype, idc->index_title, idc->doc_name, idc->is_doc, false);
+		idc->schemaroot->delete_index(idc.ptr());
+        idc->drop();
 	}
-	else
-		index_sem_up();
-}
-
-xptr find_btree(index_id id)
-{
-     return XNULL;
 }
 
 xptr find_btree(const char* title)
 {
-    xptr res;
-
-    index_sem_down();
-	pers_sset<index_cell,unsigned short>::pers_sset_entry* idc=search_indexdata_cell(title);
-    if (idc!=NULL)
+	index_cell_cptr idc(title);
+    if (idc.found())
 	{
-		res = idc->obj->btree_root;
-		index_sem_up();
-		return res;		
+		return idc->btree_root;
 	}
 	else 
 	{
-		index_sem_up();	
 		return XNULL;
 	}
 }
 
 xmlscm_type get_index_xmlscm_type(const char* title)
 {
-    xmlscm_type res;
-
-    index_sem_down();
-	pers_sset<index_cell,unsigned short>::pers_sset_entry* idc=search_indexdata_cell(title);
-    if (idc!=NULL)
+	index_cell_cptr idc(title);
+    if (idc.found())
 	{
-		res = idc->obj->keytype;
-		index_sem_up();
-		return res;		
+		return idc->keytype;		
 	}
 	else 
 	{
-		index_sem_up();	
 		return -1;
 	}
 }
@@ -385,7 +324,7 @@ void idx_buffer::copy_to_buffer(const void* addr, shft shift, shft size)
             memcpy(buf, internal_buffer, shift);
             delete [] internal_buffer;
             internal_buffer = buf;
-        }		
+        }
         else
             internal_buffer = se_new char[size+shift];
         buffer_lgth = size + shift;

@@ -206,8 +206,8 @@ void bt_insert_tmpl(xptr &root, const bt_key &key, const object &obj,bool with_b
 template<typename object>
 void bt_modify_tmpl(xptr &root, const bt_key &old_key, const bt_key &new_key, const object &obj)
 {
-    bt_delete(root, old_key, obj);
-    bt_insert(root, new_key, obj);
+    bt_delete_tmpl<object>(root, old_key, obj);
+    bt_insert_tmpl<object>(root, new_key, obj);
 }
 
 /* light delete functions - delete only data from pages, not droping the pages, i.e no

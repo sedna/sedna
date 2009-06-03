@@ -17,6 +17,7 @@ PPCreateIndex::PPCreateIndex(PathExpr *_object_path_,
                              counted_ptr<db_entity> _db_ent_,
                              PPOpIn _index_name_,
                              dynamic_context *_cxt_) :
+                                                    root(XNULL),
                                                     object_path(_object_path_),
                                                     key_path(_key_path_),
                                                     key_type(_key_type_),
@@ -24,7 +25,6 @@ PPCreateIndex::PPCreateIndex(PathExpr *_object_path_,
                                                     index_name(_index_name_),
                                                     cxt(_cxt_)
 {
-    root = NULL;
 }
 
 PPCreateIndex::~PPCreateIndex()
@@ -48,7 +48,7 @@ void PPCreateIndex::close()
 {
     index_name.op->close();
     dynamic_context::global_variables_close();
-    root = NULL;
+    root = XNULL;
 }
 
 void PPCreateIndex::execute()
@@ -69,13 +69,13 @@ void PPCreateIndex::execute()
 
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
 
-    index_cell* idc = create_index(object_path, 
-                                   key_path, 
-                                   key_type, 
-                                   (doc_schema_node*)root, 
-                                   tc.get_str_mem(),
-                                   db_ent->name,
-                                   (db_ent->type == dbe_document));
+    create_index(object_path, 
+                 key_path, 
+                 key_type, 
+                 root, 
+                 tc.get_str_mem(),
+                 db_ent->name,
+                 (db_ent->type == dbe_document));
 
 }
 

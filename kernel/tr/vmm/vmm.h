@@ -12,7 +12,6 @@
 #include "common/xptr.h"
 #include "tr/vmm/os_exceptions.h"
 #include "common/SSMMsg.h"
-#include "common/persistent_db_data.h"
 #include "common/u/uthread.h"
 
 #include  "common/wutypes.h"
@@ -113,9 +112,9 @@ extern session_id sid;
 void vmm_preliminary_call() throw (SednaException);
 void vmm_determine_region(bool log = false) throw (SednaException);
 
-persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException);
+void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException);
 void vmm_on_session_end() throw (SednaException);
-void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts, int &type_of_snp) throw (SednaException);
+void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) throw (SednaException);
 void vmm_on_transaction_end() throw (SednaException);
 
 // VMM alloc/delete functions

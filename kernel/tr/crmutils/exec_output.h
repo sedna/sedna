@@ -16,6 +16,7 @@
 #include "common/sp.h"
 #include "common/u/uutils.h"
 #include "common/base.h"
+#include "common/xptr.h"
 
 void write_func(void *param, const char *str, int len);
 enum executor_ostream_t {eot_std, eot_sock, eot_str, eot_null};
@@ -41,6 +42,7 @@ public:
     virtual se_ostream& operator<<(double n)                       = 0;
     virtual se_ostream& operator<<(long double n)                  = 0;
     virtual se_ostream& operator<<(void * n)                       = 0;
+    virtual se_ostream& operator<<(xptr n)                         = 0;
     virtual se_ostream& put(char c)                                = 0;
     virtual se_ostream& write(const char *s, int n)                = 0;
     virtual se_ostream& writextext(char *s, int n);
@@ -77,6 +79,7 @@ public:
     virtual se_ostream& operator<<(double n)                                     { o_str << n; return *this; }
     virtual se_ostream& operator<<(long double n)                                { o_str << n; return *this; }
     virtual se_ostream& operator<<(void * n)                                     { o_str << n; return *this; }
+    virtual se_ostream& operator<<(xptr n)                                       { o_str << n.layer << "@" << n.addr; return *this; }
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
     virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }
 	virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
@@ -108,6 +111,7 @@ public:
     virtual se_ostream& operator<<(double /*n*/)                           { return *this; }
     virtual se_ostream& operator<<(long double /*n*/)                      { return *this; }
     virtual se_ostream& operator<<(void * /*n*/)                           { return *this; }
+    virtual se_ostream& operator<<(xptr)                                   { return *this; }
     virtual se_ostream& put(char /*c*/)                                    { return *this; }
     virtual se_ostream& write(const char * /*s*/, int /*n*/)               { return *this; }
     virtual se_ostream& write_debug(int /*debug_type*/, const char * /*s*/, int /*n*/) { return *this; }
@@ -228,6 +232,12 @@ class se_socketostream_base : public se_ostream
     												  sprintf(_res_msg->body+_res_msg->length,"%08X" ,*((int *)n)); 
                                                       _res_msg->length += 4;
                                                       return *this; }
+
+    virtual se_ostream& operator<<(xptr   n)        { flush();
+                                                      sprintf(_res_msg->body+_res_msg->length, "%08X@%08X" , *((int *)n.layer), *((int *)n.addr)); 
+                                                      _res_msg->length += 4;
+                                                      return *this; }
+
                                                       
     virtual se_ostream& put(char c)		        	{ flush();
                                                       _res_msg->body[_res_msg->length]=c;

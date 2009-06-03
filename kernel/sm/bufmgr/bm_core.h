@@ -15,8 +15,6 @@
 #include "common/u/uhdd.h"
 #include "common/u/ushm.h"
 #include "common/u/ummap.h"
-#include "common/persistent_db_data.h"
-
 
 /*******************************************************************************
 ********************************************************************************
@@ -112,6 +110,10 @@ extern session_id xmode_sid;
 extern USemaphore xmode;
 
 // Syncronization semaphores
+extern USemaphore cat_nametable_sem;
+extern USemaphore cat_master_sem;
+
+/*
 extern USemaphore indirection_table_sem;
 extern USemaphore metadata_sem;
 extern USemaphore index_sem;
@@ -121,7 +123,7 @@ extern USemaphore ft_index_sem;
 #ifdef SE_ENABLE_TRIGGERS
 extern USemaphore trigger_sem;
 #endif
-
+*/
 // File handlers
 extern UFile data_file_handler;
 extern UFile tmp_file_handler;
@@ -143,9 +145,9 @@ struct bm_masterblock
     int data_file_extending_portion;
     int tmp_file_extending_portion;
 
-    xptr indirection_table_free_entry;
+    int transaction_flags;
 
-    persistent_db_data* pdb; // persistent db data
+    xptr catalog_masterdata_block;
 };
 
 // Master block

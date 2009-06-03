@@ -27,7 +27,7 @@
 
 
 /// CPU Factor
-#define CPU_FACTOR				0.01
+#define CPU_FACTOR              0.01
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,13 +42,13 @@ namespace sel
 
 //tsel s1_to_sm()
 
-//inline tsel parent_transition(schema_node *source)
+//inline tsel parent_transition(schema_node_cptr source)
 //{
 //    double k = (double)(source->parent->nodecnt) / (double)(source->nodecnt);
 //    return S_MIN((double)1, k);
 //}
 
-tsel pred(xp_op_type type, const schema_node *scm, const tuple_cell& tc)
+tsel pred(xp_op_type type, schema_node_cptr scm, const tuple_cell& tc)
 {
     double s1;
     switch (type)
@@ -78,8 +78,8 @@ tsel pred(xp_op_type type, const schema_node *scm, const tuple_cell& tc)
 }
 
 void simple_path_pred_const(xp_op_type type, 
-                            const schema_node *top, 
-                            const schema_node *bottom, 
+                            schema_node_cptr top, 
+                            schema_node_cptr bottom, 
                             const tuple_cell& tc,
                             tsel /*out*/*sel_top,
                             tsel /*out*/*sel_bottom)
@@ -95,7 +95,7 @@ void path_pred_const(const t_scmnodes &nodes, xp_pred /*in/out*/ *pred)
 {
     if (nodes.size() == 1) 
     {
-        pred->scm_bottom = (schema_node*)(nodes[0]);
+        pred->scm_bottom = nodes[0];
         simple_path_pred_const(pred->type, 
                                pred->scm_middle, 
                                pred->scm_bottom, 
@@ -187,7 +187,7 @@ tcost blocks(double m/*number of blocks*/,
     return blocks_cardenas(m, n, k);
 }
 
-tcost pred_scan_bottom_level(const schema_node *scm, double k)
+tcost pred_scan_bottom_level(schema_node_cptr scm, double k)
 {
     double n = (double)(scm->nodecnt);
 
@@ -202,7 +202,7 @@ tcost pred_scan_bottom_level(const schema_node *scm, double k)
 }
 
 tcost pred_scan(xp_op_type type, 
-                const schema_node *scm, 
+                schema_node_cptr scm, 
                 double k)
 {
     if (scm->type == text || scm->type == attribute)
@@ -211,10 +211,10 @@ tcost pred_scan(xp_op_type type,
     }
     else if (scm->type == element)
     {
-        if (scm->first_child == scm->last_child && 
-            (scm->first_child->snode->type == text || scm->first_child->snode->type == attribute))
+        if (scm->children.count() == 1 && 
+            (scm->children.first->object.snode->type == text || scm->children.first->object.snode->type == attribute))
         {
-            tcost txt_cost = pred_scan_bottom_level(scm->first_child->snode, k);
+            tcost txt_cost = pred_scan_bottom_level(scm->children.first->object.snode, k);
             tcost elem_cost = blocks((double)(scm->blockcnt),
                                      (double)(scm->nodecnt),
                                      k) + 
@@ -227,9 +227,9 @@ tcost pred_scan(xp_op_type type,
 }
 
 tcost top_down_simple_path_pred_const(xp_op_type type, 
-                                      const schema_node *top, 
+                                      schema_node_cptr top, 
                                       tsel upper_s,
-                                      const schema_node *bottom, 
+                                      schema_node_cptr bottom, 
                                       const tuple_cell& tc)
 {
     double s1_star = upper_s;
@@ -245,11 +245,11 @@ tcost top_down_simple_path_pred_const(xp_op_type type,
     double Ak = Am, Ak_1 = power(Ak, nk / nk_1), Ak_2 = 0.0;
     double Ak_1_star = power(Am_star, nk / nk_1);
 
-    const schema_node *cur = bottom;
+    schema_node_cptr cur = bottom;
     tcost up_cost = 0.0, R_bottom = 0.0, step_cost = 0.0;
     bool is_bottom = true;
 
-    while (cur != top)
+    while (cur.ptr() != top.ptr())
     {
         nk_2 = double(cur->parent->nodecnt);
         Ak_2 = power(Ak_1, nk_1 / nk_2);
@@ -282,7 +282,7 @@ tcost top_down_simple_path_pred_const(xp_op_type type,
 }
 
 tcost top_down_path_pred_const(xp_op_type type, 
-                               const schema_node *top, 
+                               schema_node_cptr top, 
                                tsel upper_s,
                                const t_scmnodes_const &tested,
                                const tuple_cell& tc)
@@ -292,7 +292,7 @@ tcost top_down_path_pred_const(xp_op_type type,
     else POPT_FAILED_TO_OPTIMIZE;/// !!! not implemented
 }
 
-tcost top_down_boolean_factor(const schema_node *top, tsel upper_s, const xp_op *op)
+tcost top_down_boolean_factor(schema_node_cptr top, tsel upper_s, const xp_op *op)
 {
     switch (op->type)
     {
@@ -328,7 +328,7 @@ tcost ad_filter_extnids(double extnids)
 }
 
 tcost ad_filter_simple_path_pred_const(xp_op_type type, 
-                                      const schema_node *bottom, 
+                                      schema_node_cptr bottom, 
                                       const tuple_cell& tc)
 {
     tcost bottom_cost = pred_scan(type, bottom, (double)(bottom->nodecnt));
@@ -338,7 +338,7 @@ tcost ad_filter_simple_path_pred_const(xp_op_type type,
 }
 
 tcost ad_filter_path_pred_const(xp_op_type type, 
-                               const schema_node *top, 
+                               schema_node_cptr top, 
                                const t_scmnodes_const &tested,
                                const tuple_cell& tc)
 {
@@ -347,7 +347,7 @@ tcost ad_filter_path_pred_const(xp_op_type type,
     else POPT_FAILED_TO_OPTIMIZE;/// !!! not implemented
 }
 
-tcost ad_filter_boolean_factor(const schema_node *top, const xp_op *op)
+tcost ad_filter_boolean_factor(schema_node_cptr top, const xp_op *op)
 {
     switch (op->type)
     {
@@ -372,7 +372,7 @@ tcost ad_filter_boolean_factor(const schema_node *top, const xp_op *op)
     }
 }
 
-tcost ad_filter_boolean_factors(const schema_node *top, const xp_pred *preds, int j, int pl, int pr)
+tcost ad_filter_boolean_factors(schema_node_cptr top, const xp_pred *preds, int j, int pl, int pr)
 {
     if (j == pl) return 0.0;
 
@@ -387,8 +387,8 @@ tcost ad_filter_boolean_factors(const schema_node *top, const xp_pred *preds, in
 }
 
 tcost bottom_up_simple_path_pred_const(xp_op_type type, 
-                                       const schema_node *top, 
-                                       const schema_node *bottom, 
+                                       schema_node_cptr top, 
+                                       schema_node_cptr bottom, 
                                        const tuple_cell& tc)
 {
     double sm = sel::pred(type, bottom, tc);
@@ -403,11 +403,11 @@ tcost bottom_up_simple_path_pred_const(xp_op_type type,
     double nk = nm, nk_1 = (double)(bottom->parent->nodecnt), nk_2 = 0.0;
     double Ak = am, Ak_1 = 0.0;
 
-    const schema_node *cur = bottom;
+    schema_node_cptr cur = bottom;
     tcost up_cost = 0.0, R_bottom = 0.0, step_cost = 0.0;
     bool is_bottom = true;
 
-    while (cur != top)
+    while (cur.ptr() != top.ptr())
     {
         nk_2 = double(cur->parent->nodecnt);
         Ak_1 = power(Ak, nk / nk_1);
@@ -442,7 +442,7 @@ tcost bottom_up_simple_path_pred_const(xp_op_type type,
 }
 
 tcost bottom_up_path_pred_const(xp_op_type type, 
-                                const schema_node *top, 
+                                schema_node_cptr top, 
                                 const t_scmnodes_const &tested,
                                 const tuple_cell& tc)
 {
@@ -451,7 +451,7 @@ tcost bottom_up_path_pred_const(xp_op_type type,
     else POPT_FAILED_TO_OPTIMIZE;/// !!! not implemented
 }
 
-tcost bottom_up_boolean_factor(const schema_node *top, const xp_op *op)
+tcost bottom_up_boolean_factor(schema_node_cptr top, const xp_op *op)
 {
     switch (op->type)
     {
@@ -476,7 +476,7 @@ tcost bottom_up_boolean_factor(const schema_node *top, const xp_op *op)
     }
 }
 
-tcost bottom_up_boolean_factors(const schema_node *top, const xp_pred *preds, int j, int pl, int pr)
+tcost bottom_up_boolean_factors(schema_node_cptr top, const xp_pred *preds, int j, int pl, int pr)
 {
     if (j == pl) return 0.0;
 
@@ -497,10 +497,10 @@ tcost bottom_up_boolean_factors(const schema_node *top, const xp_pred *preds, in
 
 struct uncovered_xp
 {
-    schema_node *scm;
+    schema_node_xptr scm;
     xp_op *op;
     counted_ptr<uncovered_xp> lower;
-    schema_node *root;
+    schema_node_xptr root;
 };
 
 typedef std::list< counted_ptr<uncovered_xp> > uncovered_xp_list;
@@ -588,14 +588,14 @@ uncovered_xp_list popt_uncover_query_trees(counted_ptr<db_entity> db_ent, xp_op 
     }
     else
     {
-        schema_node *root = get_schema_node(db_ent, "Unknown entity passed to popt_uncover_query_trees");
+        schema_node_cptr root = get_schema_node(db_ent, "Unknown entity passed to popt_uncover_query_trees");
         t_scmnodes nodes = execute_abs_path_expr(root, op->op1->path_expr); /// !!! optimize
         for (int i = 0; i < nodes.size(); i++)
         {
             counted_ptr<uncovered_xp> tmp(se_new uncovered_xp);
             tmp->scm = nodes[i];
             tmp->op = op;
-            tmp->root = root;
+            tmp->root = root.ptr();
             res.push_back(tmp);
         }
     }
@@ -670,7 +670,7 @@ tcost popt_optimize_level(xp_tree *tree, int level, tsel initial_sel, int pl, in
     int j = 0, k = 0;
 
     tcost cost = DBL_MAX;
-    schema_node *scm = tree->levels[level].preds[0].scm_middle; // all preds have the same scm
+    schema_node_cptr scm = tree->levels[level].preds[0].scm_middle; // all preds have the same scm
     xp_pred *preds = tree->levels[level].preds.get();
 
     tsel cur_sel = initial_sel;

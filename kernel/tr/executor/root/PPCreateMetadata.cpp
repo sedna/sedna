@@ -182,6 +182,6 @@ void PPCreateDocumentInCollection::execute()
     tc_collection = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
-    insert_document_in_collection(tc_collection.get_str_mem(), tc_document.get_str_mem());
+    insert_document_into_collection(tc_collection.get_str_mem(), tc_document.get_str_mem());
 }
 

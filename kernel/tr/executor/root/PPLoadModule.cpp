@@ -163,13 +163,13 @@ void PPLoadModule::execute()
         if (is_load_replace)
         {
             try{
-               delete_document(MODULES_COLLECTION_NAME, module_name1.c_str());
+               delete_document_from_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
             } catch(SednaUserException& e) {}
         }
 
         try
         {
-            doc_root = insert_document_in_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
+            doc_root = insert_document_into_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
         }
         catch(SednaUserException& e)
         {
@@ -187,7 +187,7 @@ void PPLoadModule::execute()
             }
         }
 
-        elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL, NULL);
+        elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL_XMLNS);
 
         //d_printf2("inserting module: %s\n", module_pc_text.c_str());
         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());

@@ -16,9 +16,7 @@
 #include "common/base.h"
 #include "common/sm_vmm_data.h"
 #include "tr/nid/numb_scheme.h"
-
-struct schema_node;
-struct xml_ns;
+#include "tr/cat/catptr.h"
 
 struct node_blk_hdr 
 {
@@ -26,7 +24,7 @@ struct node_blk_hdr
     xptr pblk;				/* previoius block */
     xptr nblk;				/* next block */
 
-    schema_node*	snode;	/* pointer to the scm node; 0 for text blocks */
+    schema_node_xptr snode;	/* pointer to the scm node; 0 for text blocks */
     shft dsc_size;			/* size of the descriptor in bytes */
     shft	desc_first;		/* shift to the first descriptor in block */
     shft	desc_last;		/* shift to the last descriptor in block */
@@ -206,7 +204,7 @@ struct t_dsc : public n_dsc {
 
 /* Descriptor of namespace node */
 struct ns_dsc : public n_dsc {
-	xml_ns* ns;
+	xmlns_ptr_pers ns;
 	static void init(void *p);
 };
 /* Descriptor of attribute node */
@@ -323,7 +321,7 @@ extern int* indirection_fs;
 #define UPDATEPOINTERTOFIRSTFREESPACEINBLOCK(p,s) ((node_blk_hdr*)(p))->free_first=((shft)s);
 #define UPDATEPOINTERTOLASTDESCRIPTOR(p,s) ((node_blk_hdr*)(p))->desc_last=((shft)s);
 
-
+#define GET_NODE_CHILD(n, i) (*(xptr*)((char*) n + size_of_node(GETBLOCKBYNODE_ADDR(n)) + i * sizeof(xptr)))
 
 
 #define N_DSC(p)		((n_dsc*)(XADDR(p)))

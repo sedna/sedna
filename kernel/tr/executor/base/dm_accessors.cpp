@@ -71,40 +71,40 @@ tuple_cell dm_node_name(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: return tuple_cell::eos();
-		case element		: 
-        case attribute		: {
-                                  xml_ns *xmlns = GETSCHEMENODE(XADDR(node))->xmlns;
+        case document       : return tuple_cell::eos();
+        case element        : 
+        case attribute      : {
+                                  xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
                                   const char *n = GETSCHEMENODE(XADDR(node))->name;
                                   char *qname = xs_QName_create(xmlns, n, malloc);
-								  return tuple_cell::atomic(xs_QName, qname);
-							  }
-        case xml_namespace	: {
+                                  return tuple_cell::atomic(xs_QName, qname);
+                              }
+        case xml_namespace  : {
                                   ns_dsc *ns = NS_DSC(node);
                                   if (ns->ns->prefix) 
                                   {
-                                      char *qname = xs_QName_create((xml_ns*)NULL, ns->ns->prefix, malloc);
+                                      char *qname = xs_QName_create(NULL_XMLNS, ns->ns->prefix, malloc);
                                       return tuple_cell::atomic(xs_QName, qname);
                                   }
                                   else 
                                       return tuple_cell::eos();
                               }
-        case pr_ins			: {
+        case pr_ins         : {
                                   pi_dsc *pi = PI_DSC(node);
                                   shft target = pi->target;
                                   xptr data = pi->data;
-							      CHECKP(data);
-							      data = PSTRDEREF(data);
+                                  CHECKP(data);
+                                  data = PSTRDEREF(data);
                                   char *t = se_new char[target + 1];
-							      t[target] = '\0';
+                                  t[target] = '\0';
                                   estr_copy_to_buffer(t, data, target);
-                                  char *qname = xs_QName_create((xml_ns*)NULL, t, malloc);
+                                  char *qname = xs_QName_create(NULL_XMLNS, t, malloc);
                                   delete [] t;
                                   return tuple_cell::atomic(xs_QName, qname);
                               }
-        case comment		: return tuple_cell::eos();
-        case text			: return tuple_cell::eos();
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
+        case comment        : return tuple_cell::eos();
+        case text           : return tuple_cell::eos();
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
     }
 }
 
@@ -114,13 +114,13 @@ tuple_cell se_node_local_name(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: return tuple_cell::eos();
-		case element		: 
-        case attribute		: {
+        case document       : return tuple_cell::eos();
+        case element        : 
+        case attribute      : {
                                   const char *local_name = GETSCHEMENODE(XADDR(node))->name;
-								  return tuple_cell::atomic_deep(xs_NCName, local_name);
-							  }
-        case xml_namespace	: {
+                                  return tuple_cell::atomic_deep(xs_NCName, local_name);
+                              }
+        case xml_namespace  : {
                                   ns_dsc *ns = NS_DSC(node);
                                   if (ns->ns->prefix) 
                                   {
@@ -129,20 +129,20 @@ tuple_cell se_node_local_name(xptr node)
                                   else 
                                       return tuple_cell::eos();
                               }
-        case pr_ins			: {
+        case pr_ins         : {
                                   pi_dsc *pi = PI_DSC(node);
                                   shft target = pi->target;
                                   xptr data = pi->data;
-							      CHECKP(data);
-							      data = PSTRDEREF(data);
+                                  CHECKP(data);
+                                  data = PSTRDEREF(data);
                                   char *t = se_new char[target + 1];
-							      t[target] = '\0';
+                                  t[target] = '\0';
                                   estr_copy_to_buffer(t, data, target);
                                   return tuple_cell::atomic(xs_NCName, t);
                               }
-        case comment		: return tuple_cell::eos();
-        case text			: return tuple_cell::eos();
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to se_node_local_name");
+        case comment        : return tuple_cell::eos();
+        case text           : return tuple_cell::eos();
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to se_node_local_name");
     }
 }
 
@@ -152,24 +152,23 @@ tuple_cell se_node_namespace_uri(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: return tuple_cell::eos();
-		case element		: 
-        case attribute		: {
-                                  xml_ns *xmlns = GETSCHEMENODE(XADDR(node))->xmlns;
-                                  if (xmlns)
-                                  {
+        case document       : return tuple_cell::eos();
+        case element        : 
+        case attribute      : {
+                                  xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
+                                  if (xmlns != XNULL) {
                                       if(xmlns->uri) 
                                           return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
                                       else if(xmlns->prefix && strcmp("xml", xmlns->prefix) == 0)
                                           return tuple_cell::atomic_deep(xs_anyURI, "http://www.w3.org/XML/1998/namespace");
                                   }
                                   return tuple_cell::eos();
-							  }
-        case xml_namespace	: 
-        case pr_ins			: 
-        case comment		: 
-        case text			: return tuple_cell::eos();
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
+                              }
+        case xml_namespace  : 
+        case pr_ins         : 
+        case comment        : 
+        case text           : return tuple_cell::eos();
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
     }
 }
 
@@ -251,8 +250,8 @@ void dm_string_value_traverse(xptr node)
                             int size = T_DSC(node)->size;
                             xptr data = T_DSC(node)->data;
                             CHECKP(data);
-							if (size <= PSTRMAXSIZE)
-								data = PSTRDEREF(data);
+                            if (size <= PSTRMAXSIZE)
+                                data = PSTRDEREF(data);
 
                             switch (dsvr.type)
                             {
@@ -293,10 +292,10 @@ tuple_cell dm_string_value(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: {
+        case document       : {
                                   return dm_string_value_call_traverse(node);
                               }
-        case element		: {
+        case element        : {
                                   xmlscm_type type = E_DSC(node)->type;
                                   if (type == xs_untyped || type == xs_anyType)
                                   {
@@ -309,7 +308,7 @@ tuple_cell dm_string_value(xptr node)
                                       else return dm_string_value(p);
                                   }
                               }
-        case attribute		: {
+        case attribute      : {
                                   int size = A_DSC(node)->size;
                                   xptr data = A_DSC(node)->data;
 
@@ -320,24 +319,24 @@ tuple_cell dm_string_value(xptr node)
                                                                  size, 
                                                                  PSTRDEREF(data));
                               }
-        case xml_namespace	: {
+        case xml_namespace  : {
                                   ns_dsc *ns = NS_DSC(node);
                                   return tuple_cell::atomic_deep(xs_string, ns->ns->uri);
                               }
-        case pr_ins			: {
+        case pr_ins         : {
                                   int size = PI_DSC(node)->size;
                                   xptr data = PI_DSC(node)->data;
-								  int targ=PI_DSC(node)->target;
-								  
-								  int content_size = (size == targ) ? 0 : size-targ-1;
-								  if (0 == content_size) return EMPTY_STRING_TC;
+                                  int targ=PI_DSC(node)->target;
+                                  
+                                  int content_size = (size == targ) ? 0 : size-targ-1;
+                                  if (0 == content_size) return EMPTY_STRING_TC;
 
-							      CHECKP(data);
+                                  CHECKP(data);
                                   return tuple_cell::atomic_pstr(xs_string, 
                                                                  content_size, 
                                                                  PSTRDEREF(data)+targ+1);
                               }
-        case comment		: {
+        case comment        : {
                                   int size = T_DSC(node)->size;
                                   xptr data = T_DSC(node)->data;
 
@@ -348,9 +347,9 @@ tuple_cell dm_string_value(xptr node)
                                                                  size, 
                                                                  PSTRDEREF(data));
                               }
-        case text			: {
+        case text           : {
                                   int size = T_DSC(node)->size;
-								  if (size == 0) return EMPTY_STRING_TC;
+                                  if (size == 0) return EMPTY_STRING_TC;
                                   xptr data = T_DSC(node)->data;
                                   CHECKP(data);
                                   if (size <= PSTRMAXSIZE)
@@ -360,7 +359,7 @@ tuple_cell dm_string_value(xptr node)
                                                                  size, 
                                                                  data);
                               }
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:string-value");
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:string-value");
     }
 }
 
@@ -378,8 +377,8 @@ tuple_cell dm_typed_value(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: return cast(dm_string_value(node), xs_untypedAtomic);
-        case element		: {
+        case document       : return cast(dm_string_value(node), xs_untypedAtomic);
+        case element        : {
                                   xmlscm_type type = E_DSC(node)->type;
                                   if (type == xs_untyped || type == xs_anyType)
                                   {
@@ -390,19 +389,19 @@ tuple_cell dm_typed_value(xptr node)
                                   else 
                                       return cast(dm_string_value(node), type);
                               }
-        case attribute		: {
+        case attribute      : {
                                   xmlscm_type type = A_DSC(node)->type;
                                   return cast(dm_string_value(node), type);
                               }
-        case xml_namespace	: return dm_string_value(node);
-        case pr_ins			: return dm_string_value(node);
-        case comment		: return dm_string_value(node);
-        case text			: {
+        case xml_namespace  : return dm_string_value(node);
+        case pr_ins         : return dm_string_value(node);
+        case comment        : return dm_string_value(node);
+        case text           : {
                                   tuple_cell res = dm_string_value(node);
                                   res.set_xtype(xs_untypedAtomic);
                                   return res;
                               }
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:typed-value");
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:typed-value");
     }
 }
 
@@ -411,62 +410,62 @@ const char* xmlscm_type2c_str(xmlscm_type type)
     switch (type)
     {
         // Abstract base types
-        case xs_anyType				: return "xs:anyType";
-        case xs_anySimpleType		: return "xs:anySimpleType";
-        case xs_anyAtomicType		: return "xs:anyAtomicType";
+        case xs_anyType             : return "xs:anyType";
+        case xs_anySimpleType       : return "xs:anySimpleType";
+        case xs_anyAtomicType       : return "xs:anyAtomicType";
 
         // Built-in simple, non-atomic types
-        case xs_IDREFS				: return "xs:IDREFS";
-        case xs_NMTOKENS			: return "xs:NMTOKENS";
-        case xs_ENTITIES			: return "xs:ENTITIES";
+        case xs_IDREFS              : return "xs:IDREFS";
+        case xs_NMTOKENS            : return "xs:NMTOKENS";
+        case xs_ENTITIES            : return "xs:ENTITIES";
 
         // Built-in complex types
-        case xs_untyped				: return "xs:untyped";
+        case xs_untyped             : return "xs:untyped";
 
         // Built-in atomic types (Primitive types)
-        case xs_untypedAtomic		: return "xs:untypedAtomic";
-        case xs_dateTime			: return "xs:dateTime";
-        case xs_date				: return "xs:date";
-        case xs_time				: return "xs:time";
-        case xs_duration			: return "xs:duration";
-        case xs_yearMonthDuration	: return "xs:yearMonthDuration";
-        case xs_dayTimeDuration		: return "xs:dayTimeDuration";
-        case xs_float				: return "xs:float";
-        case xs_double				: return "xs:double";
-        case xs_string				: return "xs:string";
-        case xs_decimal				: return "xs:decimal";
-        case xs_integer				: return "xs:integer";
-        case xs_gYearMonth			: return "xs:gYearMonth";
-        case xs_gYear				: return "xs:gYear";
-        case xs_gMonthDay			: return "xs:gMonthDay";
-        case xs_gDay				: return "xs:gDay";
-        case xs_gMonth				: return "xs:gMonth";
-        case xs_boolean				: return "xs:boolean";
-        case xs_base64Binary		: return "xs:base64Binary";
-        case xs_hexBinary			: return "xs:hexBinary";
-        case xs_anyURI				: return "xs:anyURI";
-        case xs_QName				: return "xs:QName";
-        case xs_NOTATION			: return "xs:NOTATION";
+        case xs_untypedAtomic       : return "xs:untypedAtomic";
+        case xs_dateTime            : return "xs:dateTime";
+        case xs_date                : return "xs:date";
+        case xs_time                : return "xs:time";
+        case xs_duration            : return "xs:duration";
+        case xs_yearMonthDuration   : return "xs:yearMonthDuration";
+        case xs_dayTimeDuration     : return "xs:dayTimeDuration";
+        case xs_float               : return "xs:float";
+        case xs_double              : return "xs:double";
+        case xs_string              : return "xs:string";
+        case xs_decimal             : return "xs:decimal";
+        case xs_integer             : return "xs:integer";
+        case xs_gYearMonth          : return "xs:gYearMonth";
+        case xs_gYear               : return "xs:gYear";
+        case xs_gMonthDay           : return "xs:gMonthDay";
+        case xs_gDay                : return "xs:gDay";
+        case xs_gMonth              : return "xs:gMonth";
+        case xs_boolean             : return "xs:boolean";
+        case xs_base64Binary        : return "xs:base64Binary";
+        case xs_hexBinary           : return "xs:hexBinary";
+        case xs_anyURI              : return "xs:anyURI";
+        case xs_QName               : return "xs:QName";
+        case xs_NOTATION            : return "xs:NOTATION";
 
         // Special Sedna type
-        case se_separator		    : return "se:separator";
+        case se_separator           : return "se:separator";
 
         // Types derived from xs:string
-        case xs_normalizedString	: return "xs:normalizedString";
-        case xs_token				: return "xs:token";
-        case xs_language			: return "xs:language";
-        case xs_NMTOKEN				: return "xs:NMTOKEN";
-        case xs_Name				: return "xs:Name";
-        case xs_NCName				: return "xs:NCName";
-        case xs_ID					: return "xs:ID";
-        case xs_IDREF				: return "xs:IDREF";
-        case xs_ENTITY				: return "xs:ENTITY";
+        case xs_normalizedString    : return "xs:normalizedString";
+        case xs_token               : return "xs:token";
+        case xs_language            : return "xs:language";
+        case xs_NMTOKEN             : return "xs:NMTOKEN";
+        case xs_Name                : return "xs:Name";
+        case xs_NCName              : return "xs:NCName";
+        case xs_ID                  : return "xs:ID";
+        case xs_IDREF               : return "xs:IDREF";
+        case xs_ENTITY              : return "xs:ENTITY";
 
         // Types derived from xs:integer
         case xs_nonPositiveInteger  : return "xs:nonPositiveInteger";
         case xs_negativeInteger     : return "xs:negativeInteger";
         case xs_long                : return "xs:long";
-        case xs_int 				: return "xs:int";
+        case xs_int                 : return "xs:int";
         case xs_short               : return "xs:short";
         case xs_byte                : return "xs:byte";
         case xs_nonNegativeInteger  : return "xs:nonNegativeInteger";
@@ -476,7 +475,7 @@ const char* xmlscm_type2c_str(xmlscm_type type)
         case xs_unsignedByte        : return "xs:unsignedByte";
         case xs_positiveInteger     : return "xs:positiveInteger";
 
-        default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type"); 
+        default                     : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type"); 
     }
 }
 /*
@@ -486,14 +485,14 @@ tuple_cell dm_type_name(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: return tuple_cell::eos();
-        case element		: return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(E_DSC(node)->type));
-        case attribute		: return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(A_DSC(node)->type));
-        case xml_namespace	: return tuple_cell::eos();
-        case pr_ins			: return tuple_cell::eos();
-        case comment		: return tuple_cell::eos();
-        case text			: return tuple_cell::atomic_xs_QName_deep("xs", "untypedAtomic");
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:type-name");
+        case document       : return tuple_cell::eos();
+        case element        : return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(E_DSC(node)->type));
+        case attribute      : return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(A_DSC(node)->type));
+        case xml_namespace  : return tuple_cell::eos();
+        case pr_ins         : return tuple_cell::eos();
+        case comment        : return tuple_cell::eos();
+        case text           : return tuple_cell::atomic_xs_QName_deep("xs", "untypedAtomic");
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:type-name");
     }
 }
 */
@@ -503,14 +502,14 @@ tuple_cell dm_nilled(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: return tuple_cell::eos();
-        case element		: return tuple_cell::atomic(false);
-        case attribute		: return tuple_cell::eos();
-        case xml_namespace	: return tuple_cell::eos();
-        case pr_ins			: return tuple_cell::eos();
-        case comment		: return tuple_cell::eos();
-        case text			: return tuple_cell::eos();
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:nilled");
+        case document       : return tuple_cell::eos();
+        case element        : return tuple_cell::atomic(false);
+        case attribute      : return tuple_cell::eos();
+        case xml_namespace  : return tuple_cell::eos();
+        case pr_ins         : return tuple_cell::eos();
+        case comment        : return tuple_cell::eos();
+        case text           : return tuple_cell::eos();
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:nilled");
     }
 }
 
@@ -520,25 +519,25 @@ tuple_cell dm_document_uri(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: {
+        case document       : {
                                   d_dsc *d = D_DSC(node);
-							      int size = d->size;
-							      xptr data = d->data;
-								  if (size == 0) return tuple_cell::eos();
-							      CHECKP(data);
-							      data = PSTRDEREF(data);
+                                  int size = d->size;
+                                  xptr data = d->data;
+                                  if (size == 0) return tuple_cell::eos();
+                                  CHECKP(data);
+                                  data = PSTRDEREF(data);
                                   char *t = se_new char[size + 1];
-							      t[size] = '\0';
+                                  t[size] = '\0';
                                   estr_copy_to_buffer(t, data, size);
                                   return tuple_cell::atomic(xs_anyURI, t);
                               }
-        case element		: return tuple_cell::eos();
-        case attribute		: return tuple_cell::eos();
-        case xml_namespace	: return tuple_cell::eos();
-        case pr_ins			: return tuple_cell::eos();
-        case comment		: return tuple_cell::eos();
-        case text			: return tuple_cell::eos();
-        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:nilled");
+        case element        : return tuple_cell::eos();
+        case attribute      : return tuple_cell::eos();
+        case xml_namespace  : return tuple_cell::eos();
+        case pr_ins         : return tuple_cell::eos();
+        case comment        : return tuple_cell::eos();
+        case text           : return tuple_cell::eos();
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:nilled");
     }
 }
 
@@ -548,11 +547,11 @@ dm_node_kind_type dm_node_kind(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case element	: return nk_element;
-        case text		: return nk_text;
-        case attribute	: return nk_attribute;
-        case document	: return nk_document;
-        default			: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-kind");
+        case element    : return nk_element;
+        case text       : return nk_text;
+        case attribute  : return nk_attribute;
+        case document   : return nk_document;
+        default         : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-kind");
     }
 }
 

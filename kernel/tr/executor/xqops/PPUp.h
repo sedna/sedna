@@ -15,7 +15,7 @@ class PPUp : public PPIterator
 protected:
     // given parameters
     PPOpIn child;
-    schema_node *scm_node;
+    schema_node_xptr scm_node;
 
     // obtained parameters and local data
     xptr previous;
@@ -33,7 +33,7 @@ public:
 
     PPUp(dynamic_context *_cxt_,
          PPOpIn _child_,
-         schema_node *_scm_node_);
+         schema_node_xptr _scm_node_);
     virtual ~PPUp();
 
     static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);

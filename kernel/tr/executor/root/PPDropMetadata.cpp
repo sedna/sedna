@@ -181,6 +181,6 @@ void PPDropDocumentInCollection::execute()
     tc_collection = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
-    delete_document(tc_collection.get_str_mem(), tc_document.get_str_mem());
+    delete_document_from_collection(tc_collection.get_str_mem(), tc_document.get_str_mem());
 }
 

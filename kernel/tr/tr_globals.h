@@ -11,7 +11,6 @@
 #include "common/base.h"
 #include "tr/client_core.h"
 #include "common/argtable.h"
-#include "common/persistent_db_data.h"
 #include "tr/auth/auc.h"
 #include "common/pping.h"
 
@@ -51,7 +50,6 @@ extern client_core* client;
 extern transaction_id trid;
 extern session_id sid;
 
-extern persistent_db_data* entry_point;
 
 extern msg_struct sp_msg;
 extern bool is_need_checkpoint_on_transaction_commit;

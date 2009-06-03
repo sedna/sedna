@@ -9,14 +9,13 @@
 
 #include "common/sedna.h"
 #include "common/xptr.h"
-#include "common/persistent_db_data.h"
 
 
 void bm_startup() throw (SednaException);
 
 void bm_shutdown() throw (SednaException);
 
-void bm_register_session(session_id sid, persistent_db_data** pdb, int is_rcv_mode) throw (SednaException);
+void bm_register_session(session_id sid, int is_rcv_mode) throw (SednaException);
 
 void bm_unregister_session(session_id sid) throw (SednaException);
 

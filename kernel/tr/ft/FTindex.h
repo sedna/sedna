@@ -156,7 +156,7 @@ class SednaIndexJob : public dtSearch::DIndexJob {
      public:
            
            //SednaIndexJob(PPOpIn* _seq_);
-		   SednaIndexJob(ft_index_cell* _ft_idx_, bool no_log = false);
+		   SednaIndexJob(ft_index_cell_object * _ft_idx_, bool no_log = false);
 		   void set_index_name(tuple_cell& request);
 		   void create_index(std::vector<xptr> *first_nodes);
 		   static int clear_index(const char *index_name);
@@ -177,7 +177,7 @@ class SednaIndexJob : public dtSearch::DIndexJob {
 
 	  private:
 		  PPOpIn* seq;
-		  const ft_index_cell *ft_idx;
+		  const ft_index_cell_object *ft_idx;
 		  static void rollback_index(ftlog_file *log_file, const char *index_name);
 		  static void recover_db_file(const char *fname, trn_cell_analysis_redo *redo_list);
 	   	  static void rebuild_all_ftph();

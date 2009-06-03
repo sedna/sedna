@@ -202,7 +202,7 @@ public:
 		//no error checks here, TODO - add some assertions
 		//we don't care if we go before the start of string too far
 		--m_pos;
-		if (--ofs < PSTR_LONG_BLK_HDR_SIZE)
+		if (((int)(--ofs)) < PSTR_LONG_BLK_HDR_SIZE)
 		{
 			CHECKP(blk);
 			if (PSTR_LONG_BLK_HDR(blk)->prev_blk != XNULL)

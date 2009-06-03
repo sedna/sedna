@@ -56,12 +56,10 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
 
         LAYER_ADDRESS_SPACE_START_ADDR_INT = v.LAYER_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_BOUNDARY_INT = v.LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-        PH_ADDRESS_SPACE_START_ADDR_INT = v.PH_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_SIZE = v.LAYER_ADDRESS_SPACE_SIZE;
 
         LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-        PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
 
         *(vmm_region_values*)((char*)global_memory + PAGE_SIZE - sizeof(vmm_region_values)) = v;
     }
@@ -103,7 +101,6 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
 
         LAYER_ADDRESS_SPACE_START_ADDR_INT = v.LAYER_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_BOUNDARY_INT = v.LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-        PH_ADDRESS_SPACE_START_ADDR_INT = v.PH_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_SIZE = v.LAYER_ADDRESS_SPACE_SIZE;
 
         if (LAYER_ADDRESS_SPACE_SIZE < VMM_REGION_MIN_SIZE) 
@@ -111,7 +108,6 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
 
         LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
         LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-        PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
 
         UFile fd = uCreateFile(buf, 0, U_WRITE, 0, NULL, __sys_call_error);
         if (fd == U_INVALID_FD)
@@ -128,7 +124,6 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
 
     elog(EL_INFO,  ("Layer address space start addr = 0x%x", LAYER_ADDRESS_SPACE_START_ADDR));
     elog(EL_INFO,  ("Layer address space boundary   = 0x%x", LAYER_ADDRESS_SPACE_BOUNDARY));
-    elog(EL_INFO,  ("Persistent heap start addr     = 0x%x", PH_ADDRESS_SPACE_START_ADDR));
 }
 
 void release_global_memory_mapping()
@@ -169,12 +164,10 @@ void get_vmm_region_values()
 
     LAYER_ADDRESS_SPACE_START_ADDR_INT = v->LAYER_ADDRESS_SPACE_START_ADDR_INT;
     LAYER_ADDRESS_SPACE_BOUNDARY_INT = v->LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-    PH_ADDRESS_SPACE_START_ADDR_INT = v->PH_ADDRESS_SPACE_START_ADDR_INT;
     LAYER_ADDRESS_SPACE_SIZE = v->LAYER_ADDRESS_SPACE_SIZE;
 
     LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
     LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-    PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
 
     if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE4079);
@@ -191,10 +184,8 @@ void set_vmm_region_values()
 
     v->LAYER_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT;
     v->LAYER_ADDRESS_SPACE_BOUNDARY_INT = LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-    v->PH_ADDRESS_SPACE_START_ADDR_INT = PH_ADDRESS_SPACE_START_ADDR_INT;
     v->LAYER_ADDRESS_SPACE_SIZE = LAYER_ADDRESS_SPACE_SIZE;
 
     if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE4079);
 }
-

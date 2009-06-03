@@ -10,7 +10,7 @@
 
 PPUp::PPUp(dynamic_context *_cxt_,
            PPOpIn _child_,
-           schema_node *_scm_node_) : PPIterator(_cxt_),
+           schema_node_xptr _scm_node_) : PPIterator(_cxt_),
                                       child(_child_),
                                       scm_node(_scm_node_)
 {

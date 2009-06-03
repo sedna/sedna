@@ -24,9 +24,9 @@ private:
 	void children(PPOpIn& _child1_, PPOpIn& _child2_) { _child1_ = child1; _child2_ = child2; }
     
 	bool are_nodes_deep_equal(xptr& node1,xptr& node2);
-    bool are_elements_deep_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2);
+    bool are_elements_deep_equal(xptr& node1,xptr& node2,schema_node_cptr scm1,schema_node_cptr scm2);
     bool are_documents_deep_equal(xptr& node1,xptr& node2);
-    bool are_attributes_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2);
+    bool are_attributes_equal(xptr& node1,xptr& node2,schema_node_cptr scm1,schema_node_cptr scm2);
     bool are_text_nodes_equal(xptr& node1,xptr& node2);
     bool are_pi_equal(xptr& node1,xptr& node2);
 

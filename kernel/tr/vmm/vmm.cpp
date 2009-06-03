@@ -22,12 +22,12 @@
 #include "common/sm_vmm_data.h"
 #include "tr/vmm/vmm.h"
 #include "tr/tr_globals.h"
-#include "tr/structures/pers_map.h"
 #include "tr/structures/schema.h"
 #include "common/gmm.h"
 #include "common/errdbg/d_printf.h"
 #include "common/XptrHash.h"
 #include "common/bit_set.h"
+#include "tr/cat/catvars.h"
 
 using namespace std;
 
@@ -521,7 +521,7 @@ void vmm_preliminary_call() throw (SednaException)
 
     global_memory_mapping = get_global_memory_mapping();
     _vmm_preinit_region();
-
+/*
 #ifdef _WIN32
         void *start;
         start = VirtualAlloc(
@@ -536,6 +536,7 @@ void vmm_preliminary_call() throw (SednaException)
             throw USER_EXCEPTION(SE1031);
         }
 #endif
+*/
 }
 
 
@@ -580,7 +581,7 @@ void vmm_determine_region(bool log) throw (SednaException)
     void *res_addr = NULL;
 
     for (cur  = VMM_REGION_SEARCH_MAX_SIZE; 
-         cur >= PH_SIZE + VMM_REGION_MIN_SIZE; 
+         cur >= VMM_REGION_MIN_SIZE; 
          cur -= (__uint32)PAGE_SIZE)
     {
         if (log) fprintf(f_se_trn_log, "Probing size %u... ", cur); 
@@ -639,30 +640,28 @@ void vmm_determine_region(bool log) throw (SednaException)
         {
             d_printf3("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, (__uint32)res_addr);
     
-            if(segment_size > PH_SIZE + VMM_REGION_MAX_SIZE)
+            if(segment_size > VMM_REGION_MAX_SIZE)
             {
                 LAYER_ADDRESS_SPACE_SIZE = VMM_REGION_MAX_SIZE;
 
                 int pages_in_founded_segment = segment_size / (__uint32)PAGE_SIZE;
-                int pages_in_needed_region   = (VMM_REGION_MAX_SIZE + PH_SIZE) / (__uint32)PAGE_SIZE;
+                int pages_in_needed_region   = (VMM_REGION_MAX_SIZE) / (__uint32)PAGE_SIZE;
                 int pages_left_shift         = (pages_in_founded_segment - pages_in_needed_region) / 2;
 
                 LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + 
                                                    (pages_left_shift * (__uint32)PAGE_SIZE)+
-                                                   (LAYER_ADDRESS_SPACE_SIZE + PH_SIZE);
+                                                   (LAYER_ADDRESS_SPACE_SIZE);
             }
             else /* PH_SIZE + VMM_REGION_MAX_SIZE >= segment_size >= PH_SIZE + VMM_REGION_MIN_SIZE */
             {
-                LAYER_ADDRESS_SPACE_SIZE = segment_size - PH_SIZE;
+                LAYER_ADDRESS_SPACE_SIZE = segment_size;
                 LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + segment_size; 
             }
             
             LAYER_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_BOUNDARY_INT - LAYER_ADDRESS_SPACE_SIZE;
-            PH_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT - PH_SIZE;
             
             LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
             LAYER_ADDRESS_SPACE_BOUNDARY   = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-            PH_ADDRESS_SPACE_START_ADDR    = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
 
             open_global_memory_mapping(SE4400);
             set_vmm_region_values();
@@ -678,11 +677,9 @@ void vmm_determine_region(bool log) throw (SednaException)
 ********************************************************************************
 *******************************************************************************/
 
-persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException)
+void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException)
 {
     vmm_cur_ptr = NULL;
-
-    persistent_db_data *db_data_ptr = NULL;
 
     if (USemaphoreOpen(&vmm_sm_sem, VMM_SM_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "VMM_SM_SEMAPHORE_STR");
@@ -725,32 +722,10 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-        db_data_ptr = (persistent_db_data *)(msg.data.reg.mptr);
+        catalog_masterblock = * (xptr *) (&msg.data.reg.mptr);
+        authentication = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHENTICATION_FLAG);
+        authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
         int bufs_num = msg.data.reg.num;
-
-        /// persistent_db_data initialization /////////////////////////////////
-        if (!(db_data_ptr->nslist))
-        {
-		    db_data_ptr->index = pers_sset<index_cell, unsigned short>::init();
-            db_data_ptr->idx_counter = 1;
-			#ifdef SE_ENABLE_FTSEARCH
-			db_data_ptr->ft_index = pers_sset<ft_index_cell, unsigned short>::init();
-            db_data_ptr->ft_idx_counter = 1;
-         #endif
-   			#ifdef SE_ENABLE_TRIGGERS
-			db_data_ptr->trigger = pers_sset<trigger_cell, unsigned short>::init();
-         #endif
-		    db_data_ptr->last_nid = NULL;
-		    db_data_ptr->last_nid_size = 0;
-		    //support namespaces list
-		    db_data_ptr->nslist=pers_sset<xml_ns, unsigned short>::init();
-		    db_data_ptr->metadata=pers_sset<sn_metadata_cell, unsigned short>::init();
-		    xml_ns* ns = xml_ns::init(NULL,"xml",true);
-		    db_data_ptr->nslist->put(ns);
-            db_data_ptr->is_first_trn = true;
-        }
-        /// persistent_db_data initialization /////////////////////////////////
-
 
        _vmm_init_region();
 
@@ -785,7 +760,6 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
 #endif
         is_exclusive_mode = false;
 
-
         main_thread = uGetCurrentThread(__sys_call_error);
         uResVal res = uCreateThread(_vmm_thread, NULL, &vmm_thread_handle, VMM_THREAD_STACK_SIZE, NULL, __sys_call_error);
         if (res != 0) throw USER_EXCEPTION2(SE4060, "VMM thread");
@@ -802,11 +776,9 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
     vmm_session_initialized = true;
-
-    return db_data_ptr;
 }
 
-void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts, int &type_of_snp) throw (SednaException)
+void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) throw (SednaException)
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -825,8 +797,7 @@ void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts, int &type_of_snp) th
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-        ts = msg.data.snp_info.ts;
-        type_of_snp = msg.data.snp_info.type_of_snp;
+        ts = msg.data.snp_ts;
 
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -931,6 +902,7 @@ void vmm_on_transaction_end() throw (SednaException)
         msg.cmd = 36; // bm_unregister_transaction
         msg.trid = trid;
         msg.sid = sid;
+        msg.data.ptr = * (__int64 *) &catalog_masterblock;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
@@ -1056,6 +1028,9 @@ void vmm_delete_block(xptr p) throw (SednaException)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+
+        // If current block is deleted, the pointer may break something. T.I.
+        if (vmm_cur_xptr == p) { vmm_cur_xptr = XNULL; }
 
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1198,7 +1173,6 @@ void vmm_memunlock_block(xptr p) throw (SednaException)
         msg.cmd = 30; // bm_memunlock_block
         msg.trid = trid;
         msg.sid = sid;
-        msg.data.ptr = *(__int64*)(&p);
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);

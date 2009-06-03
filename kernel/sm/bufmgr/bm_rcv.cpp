@@ -92,6 +92,7 @@ void bm_rcv_master_block(const void* p)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 }
 
+
 void bm_rcv_tmp_file()
 {
     // truncate tmp file up to zero size
@@ -99,50 +100,11 @@ void bm_rcv_tmp_file()
         throw USER_ENV_EXCEPTION("Cannot truncate tmp file", false);
 
     mb->tmp_file_cur_size = (uint64_t)0;
-	mb->free_tmp_blocks = XNULL;
+        mb->free_tmp_blocks = XNULL;
 
     extend_tmp_file((int)MBS2PAGES(sm_globals::tmp_file_initial_size));
     d_printf1("extend_tmp_file call successful\n");
 }
-
-void bm_rcv_ph(bool ph_bu_to_ph)
-{
-    string ph_file_name    = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".seph";
-    string ph_bu_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".ph.sebu";
-
-    if (ph_bu_to_ph)
-    {
-        if (uCopyFile(ph_bu_file_name.c_str(), ph_file_name.c_str(), false, __sys_call_error) == 0)
-            throw USER_EXCEPTION2(SE4049, (ph_bu_file_name + " to " + ph_file_name).c_str());
-    }
-    else
-    {
-        if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
-            throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
-    }
-}
-
-
-/******************************************************************************
-  Persistent Heap recovery plan (obsolete now due to versioning recovery):
-
-
-        ph_bu_to_ph = true        ph_bu_to_ph = false    ph_bu_to_ph = true
- <----------------------------->|<------------------->|<------------------->
-                                |                     |
-                CHECKPOINT      |               ORDINARY WORK
- ...=====|======================|=====================|====================> time
-
-          1. call flush_buffers() 1. call backup_ph()
-          2. call flush_ph()      2. set ph_bu_to_ph
-          3. clear phys log and      to true
-             set ph_bu_to_ph to
-             false
-
- In case of failure bm_rcv_ph() function should be called with the ph_bu_to_ph
- parameter read from disk.
-
-******************************************************************************/
 
 
 /*

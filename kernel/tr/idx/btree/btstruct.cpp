@@ -194,6 +194,18 @@ bt_cursor_tmpl<object>::bt_cursor_tmpl(char* pg, shft the_key_idx)
     key_idx = the_key_idx;
     obj_count = 0;
     obj_idx = 0;
+
+    while (key_idx >= BT_KEY_NUM(pg)) {
+        cur_page = BT_NEXT(pg);
+
+        if (cur_page == XNULL) { return; }
+
+        CHECKP(cur_page);
+        pg = (char*)XADDR(cur_page);
+
+        key_idx = 0;
+    }
+
 	key.setnew(pg, the_key_idx);
 }
 
