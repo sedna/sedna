@@ -804,7 +804,7 @@ schemaImport:
     |   IMPORT SCHEMA schemaPrefix uriLiteral AT uriLiteralList
         {
             delete $4;
-            delete $6;
+            destroyASTStringVector($6);
             errorc(this->driver, @$, XQST0009);
             YYABORT;
 
@@ -813,7 +813,7 @@ schemaImport:
     |   IMPORT SCHEMA uriLiteral AT uriLiteralList
         {
             delete $3;
-            delete $5;
+            destroyASTStringVector($5);
             errorc(this->driver, @$, XQST0009);
             YYABORT;
 
