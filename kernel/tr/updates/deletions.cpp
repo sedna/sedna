@@ -190,7 +190,7 @@ void delete_deep(PPOpIn arg)
 		while ((node == *it) || nid_ancestor(node,*it));
 /*#ifdef SE_ENABLE_TRIGGERS
         tmp_node = copy_to_temp(node);
-		schema_node* scm_node=GETSCHEMENODEX(node);
+		schema_node_xptr scm_node=GETSCHEMENODEX(node);
         parent=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
         
         if (apply_per_node_triggers(XNULL, node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)

@@ -52,7 +52,7 @@ void PPDropModule::execute()
     local_lock_mrg->put_lock_on_collection(MODULES_COLLECTION_NAME);
     try
     {
-        delete_document(MODULES_COLLECTION_NAME, tc.get_str_mem());
+        delete_document_from_collection(MODULES_COLLECTION_NAME, tc.get_str_mem());
     }
     catch(SednaUserException& e)
     {

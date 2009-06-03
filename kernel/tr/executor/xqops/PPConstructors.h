@@ -23,25 +23,23 @@ protected:
     bool first_time;
     bool eos_reached;
 	static bool firstCons;
-	static schema_node* root_schema;
+	static schema_node_cptr root_schema;
 	static xptr virt_root;
 	static xptr last_elem;
 	static xptr cont_parind;
 	static xptr cont_leftind;
 	static int conscnt;
-	bool schema_carrier;
 	bool deep_copy;
 public:
 	static bool checkInitial();
 	virtual void open   ();
 	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-    PPConstructor(dynamic_context *_cxt_,bool _deep_copy) : PPIterator(_cxt_),deep_copy(_deep_copy) 
-	{
-	 schema_carrier=false;
-	}
+    PPConstructor(dynamic_context *_cxt_,bool _deep_copy) : PPIterator(_cxt_),deep_copy(_deep_copy) {};
 friend xptr copy_to_temp(xptr node);
-friend void clear_temp();
+friend void clear_virtual_root();
 };
+
+void clear_virtual_root();
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPElementConstructor
@@ -51,14 +49,11 @@ class PPElementConstructor : public PPConstructor
 protected:
     // obtained parameters and local data
     PPOpIn qname;
-	PPOpIn content;
-	char* el_name;
-	bool ns_inside;
-	
-    
+    PPOpIn content;
+    char* el_name;
+    bool ns_inside;
 
     void children(PPOpIn &_qname_,PPOpIn &_content_) { _qname_ = qname;_content_=content ;}
-
 public:
     virtual void open   ();
     virtual void reopen ();
@@ -71,7 +66,7 @@ public:
 
     PPElementConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, PPOpIn _content_,bool _deep_copy, bool _ns_inside);
-	PPElementConstructor(dynamic_context *_cxt_, 
+    PPElementConstructor(dynamic_context *_cxt_,
            const char* name, PPOpIn _content_,bool _deep_copy, bool _ns_inside);
     virtual ~PPElementConstructor();
 };

@@ -43,7 +43,7 @@ void WuDeleteBlockExn(int sid, xptr p);
 
 void WuGetBlockExn(int sid, xptr p, ramoffs *offs, xptr *swapped);
 
-void WuOnRegisterTransactionExn(int sid, int isUsingSnapshot,  TIMESTAMP *snapshotTs, int *persHeapIndex);
+void WuOnRegisterTransactionExn(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs);
 
 void WuOnCommitTransactionExn(int sid);
 

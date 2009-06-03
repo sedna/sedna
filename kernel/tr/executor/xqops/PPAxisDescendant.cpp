@@ -198,10 +198,10 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 		if (tmp!=XNULL)
 		{
 			CHECKP(tmp);
-			schema_node* scm=(GETBLOCKBYNODE(tmp))->snode;
+			schema_node_xptr scm=(GETBLOCKBYNODE(tmp))->snode;
 			if (desc_sch.find(scm)==desc_sch.end())
 			{
-				vector<schema_node*> vscm;
+				vector<schema_node_xptr> vscm;
 				desc_sch[scm]=vscm;
 				if (self)
 					getSchemeDescendantsOrSelf(scm,uri,name, type,cfun, desc_sch[scm]);
@@ -211,7 +211,7 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 			}
 			else
 				curvect=&desc_sch[scm];
-			std::vector<schema_node*>::iterator it=curvect->begin();
+			std::vector<schema_node_xptr>::iterator it=curvect->begin();
 			if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge(getNextDescriptorOfSameSortXptr,true);
 			while (it!=curvect->end())
 			{

@@ -63,7 +63,6 @@ client_core* client = NULL;
 transaction_id trid = -1;
 session_id sid = -1;
 
-persistent_db_data* entry_point;
 msg_struct sp_msg;
 
 bool is_need_checkpoint_on_transaction_commit = false;

@@ -75,7 +75,7 @@ inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &e
  ******************************************************************************/
 
 
-schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details);
+xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details);
 
 
 

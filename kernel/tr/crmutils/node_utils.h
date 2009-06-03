@@ -19,7 +19,7 @@
 
 class dynamic_context;
 
-typedef bool (*comp_schema)(const schema_node* scm,const char* uri,const char* name, t_item type);
+typedef bool (*comp_schema)(schema_node_cptr scm,const char* uri,const char* name, t_item type);
 
 
 xptr giveAnyChild(n_dsc* source,shft size);
@@ -63,8 +63,8 @@ inline xptr getFirstByOrderNoneAttributeChild(xptr source) { return getFirstByOr
 /*returns the next none attribute sibling by document order*/
 inline xptr getNextByOrderNoneAttribute(xptr source) 
 { 
-	CHECKP(source);
-	return GETRIGHTPOINTER(source); 
+    CHECKP(source);
+    return GETRIGHTPOINTER(source); 
 }
 
 
@@ -89,55 +89,54 @@ xptr getNextDONode(xptr node);
 xptr getPreviousDONode(xptr node);
 
 /*returns the next non-descendant node in document that fits input schema_node */
-xptr getNextNDNode(xptr node,schema_node* scn);
+xptr getNextNDNode(xptr node,schema_node_cptr scn);
 /*returns the next sibling node in document that fits input schema_node */
-xptr getNextSiblingNode(xptr node,schema_node* scn);
+xptr getNextSiblingNode(xptr node,schema_node_cptr scn);
 /*returns the previous sibling node in document that fits input schema_node */
-xptr getPreviousSiblingNode(xptr node,schema_node* scn);
+xptr getPreviousSiblingNode(xptr node,schema_node_cptr scn);
 /*returns the previous node in document that fits input schema_node*/
-//xptr getPreviousDONode(xptr node,schema_node* scn);
-/*returns the previous non-ancestor node in document that fits input schema_node*/
-xptr getPreviousNANode(xptr node,schema_node* scn);
+//xptr getPreviousDONode(xptr node,schema_node_cptr scn);
+/*returns the previous non-ancestor node in document that fits input schema_node */
+xptr getPreviousNANode(xptr node,schema_node_cptr scn);
 
 /* returns the xptr to the nearest left neighboring descriptor of the element*/
-xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr parent, const char* name,t_item node_type,xml_ns* ns);
-xptr findNodeWithSameNameToInsertAfter_CP(xptr left_sib, xptr right_sib, xptr parent, const char* name,t_item node_type,xml_ns* ns);
+xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr parent, const char* name,t_item node_type,xmlns_ptr ns);
+xptr findNodeWithSameNameToInsertAfter_CP(xptr left_sib, xptr right_sib, xptr parent, const char* name,t_item node_type,xmlns_ptr ns);
 
 /* returns the xptr to the nearest left neighboring descriptor of the attribute*/
-xptr findAttributeWithSameNameToInsertAfter(xptr parent,const char* name,xml_ns* ns);
-xptr findAttributeWithSameNameToInsertAfter_CP(xptr parent,const char* name,xml_ns* ns);
+xptr findAttributeWithSameNameToInsertAfter(xptr parent,const char* name,xmlns_ptr ns);
+xptr findAttributeWithSameNameToInsertAfter_CP(xptr parent,const char* name,xmlns_ptr ns);
 
 /* returns the xptr to the nearest right neighboring descriptor of the element*/
-xptr findNodeWithSameNameToInsertBefore_CP(xptr left_sib, xptr right_sib, xptr parent,const  char* name,t_item node_type,xml_ns* ns);
-xptr findNodeWithSameNameToInsertBefore(xptr left_sib, xptr right_sib, xptr parent,const  char* name,t_item node_type,xml_ns* ns);
+xptr findNodeWithSameNameToInsertBefore_CP(xptr left_sib, xptr right_sib, xptr parent,const  char* name,t_item node_type,xmlns_ptr ns);
+xptr findNodeWithSameNameToInsertBefore(xptr left_sib, xptr right_sib, xptr parent,const  char* name,t_item node_type,xmlns_ptr ns);
 
 /* returns the xptr to the nearest right neighboring descriptor of the attribute*/
-xptr findAttributeWithSameNameToInsertBefore_CP(xptr parent,const char* name,xml_ns* ns);
-xptr findAttributeWithSameNameToInsertBefore(xptr parent,const char* name,xml_ns* ns);
+xptr findAttributeWithSameNameToInsertBefore_CP(xptr parent,const char* name,xmlns_ptr ns);
+xptr findAttributeWithSameNameToInsertBefore(xptr parent,const char* name,xmlns_ptr ns);
 
 /* returns shift position either element descriptor contains pointer to the child of that type 0 otherwise*/
-xptr* elementContainsChild(n_dsc* parent,const char* name,t_item type,xml_ns* ns);
+xptr* elementContainsChild(n_dsc* parent,const char* name,t_item type,xmlns_ptr ns);
  
 /* returns the xptr to the first child of the node identified by name and type*/
-xptr getChildPointer(n_dsc* node,const char* name,t_item type,xml_ns* ns);
+xptr getChildPointer(n_dsc* node,const char* name,t_item type,xmlns_ptr ns);
 
-inline xptr getChildPointerXptr(xptr node,const char* name,t_item type,xml_ns* ns)
+inline xptr getChildPointerXptr(xptr node,const char* name,t_item type,xmlns_ptr ns)
 {
  CHECKP(node);
  return getChildPointer((n_dsc*)XADDR(node),name,type,ns);
 }
 /*returns true iff there is already attribute set with the same local name and uri*/
 xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri);
-void getChildPointerList(xptr node,const char* name,t_item type,char* uri,std::vector<xptr> &childs);
 
 /* utils for persistent string library */
-xptr	getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node);
+xptr    getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node);
 
-xptr	getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node);
+xptr    getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node);
 
 /* return the vector of schema node descandants of the current schema node*/
-void getSchemeDescendantsOrSelf(schema_node* scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node*> &result);
-void getSchemeDescendants(schema_node* scm,const char* uri,const char* name, t_item type, comp_schema cfun,std::vector<schema_node*> &result);
+void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result);
+void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun,std::vector<schema_node_xptr> &result);
 
 /* return base uri if exists*/
 xptr getBaseUri(xptr node);
@@ -153,40 +152,40 @@ xptr getUnemptyBlockBack(xptr p);
 /* return the vector of schema node descandants of the current schema node*/
 
 int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item type, comp_schema cfun,xptr& first, xptr*& res);
-void getSchemeChilds(schema_node* scm,const char* uri,const char* name, t_item type, comp_schema cfun,std::vector<schema_node*> &result);
-inline void getSchemeChildsOrSelf(schema_node* scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node*> &result)
+void getSchemeChilds(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun,std::vector<schema_node_xptr> &result);
+inline void getSchemeChildsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
 {
-	if (cfun(scm,uri,name,type))	
-		result.push_back(scm);
-	getSchemeChilds(scm,uri,name,type,cfun,result);
+    if (cfun(scm,uri,name,type))    
+        result.push_back(scm.ptr());
+    getSchemeChilds(scm,uri,name,type,cfun,result);
 }
 
 xptr getFirstAttributeDescendantAndFillPath(std::vector<xptr> &descstack);
-/* returns the first descandant or self of the current node that corresponds to the stated schema_node*/
-xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm);
+/* returns the first descandant or self of the current node that corresponds to the stated schema_node */
+xptr getFirstDescandantByScheme(xptr ancestor,schema_node_cptr scm);
 
 
 xptr getNextDescandantofSameSort (xptr ancestor,xptr node);
 /*comparison function for schema nodes*/
- bool comp_type(const schema_node* scm,const char* uri,const char* name, t_item type);
- bool comp_qname_type(const schema_node* scm,const char* uri,const char* name, t_item type);
- bool comp_local_type(const schema_node* scm,const char* uri,const char* name, t_item type);
- bool comp_uri_type(const schema_node* scm,const char* uri,const char* name, t_item type);
+ bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+ bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+ bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+ bool comp_uri_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
 /* returns the inderection pointer to the ancestor of the descriptor that corresponds
 to the selected ancestor by scheme */
-xptr getAncestorIndirectionByScheme (n_dsc* node, const schema_node * scm_node, const schema_node* scm_anc);
+xptr getAncestorIndirectionByScheme (n_dsc* node, const schema_node_cptr scm_node, const schema_node_cptr scm_anc);
 
-inline xptr getNodeAncestorIndirectionByScheme (xptr node, schema_node* scm_anc)
+inline xptr getNodeAncestorIndirectionByScheme (xptr node, schema_node_cptr scm_anc)
 {
-	CHECKP(node);
-	schema_node* sn=(GETBLOCKBYNODE(node))->snode;
-	return getAncestorIndirectionByScheme((n_dsc*)XADDR(node),sn,scm_anc);
+    CHECKP(node);
+    schema_node_cptr sn=(GETBLOCKBYNODE(node))->snode;
+    return getAncestorIndirectionByScheme((n_dsc*)XADDR(node),sn,scm_anc);
 }
 
-inline xptr getAncestorIndirectionByScheme_XPTR (xptr node, schema_node * scm_node, schema_node* scm_anc)
+inline xptr getAncestorIndirectionByScheme_XPTR (xptr node, schema_node_cptr scm_node, schema_node_cptr scm_anc)
 {
-	CHECKP(node);
-	return getAncestorIndirectionByScheme ((n_dsc*)XADDR(node), scm_node, scm_anc);
+    CHECKP(node);
+    return getAncestorIndirectionByScheme ((n_dsc*)XADDR(node), scm_node, scm_anc);
 
 }
 /* returns the size of the descriptor structure in the curent node*/
@@ -194,18 +193,18 @@ shft  size_of_node(node_blk_hdr* block);
 
 inline xptr removeIndirection(xptr indir)
 {
-	if (indir!=XNULL)
-	{
-		CHECKP(indir);
-		return *((xptr*)XADDR(indir));
-	}
-	return XNULL;
+    if (indir!=XNULL)
+    {
+        CHECKP(indir);
+        return *((xptr*)XADDR(indir));
+    }
+    return XNULL;
 }
-inline xptr getNodeAncestorByScheme (xptr node, schema_node* scm_anc)
+inline xptr getNodeAncestorByScheme (xptr node, schema_node_cptr scm_anc)
 {
-	xptr tmp=getNodeAncestorIndirectionByScheme (node, scm_anc);
-	if (tmp!=XNULL) tmp=removeIndirection(tmp);
-	return tmp;
+    xptr tmp=getNodeAncestorIndirectionByScheme (node, scm_anc);
+    if (tmp!=XNULL) tmp=removeIndirection(tmp);
+    return tmp;
 }
 
 typedef bool (*node_type_restriction)(t_item);
@@ -213,11 +212,11 @@ typedef bool (*node_type_restriction)(t_item);
 bool is_text(t_item t);
 inline bool is_comment(t_item t)
 {
-	return t==comment;
+    return t==comment;
 }
 inline bool is_pi(t_item t)
 {
-	return t==pr_ins;
+    return t==pr_ins;
 }
 bool is_node(t_item t);
 bool dm_children_accessor_filter(t_item t);
@@ -228,48 +227,48 @@ bool is_pnk_attribute(t_item t);
 */
 bool inline is_element (xptr node)
 {
-	CHECKP(node);
-	return (GETSCHEMENODEX(node)->type==element);
+    CHECKP(node);
+    return (GETSCHEMENODEX(node)->type==element);
 }
 bool inline is_node_attribute (xptr node)
 {
-	CHECKP(node);
+    CHECKP(node);
  return (GETSCHEMENODEX(node)->type==attribute);
 }
 
 bool inline is_node_child (xptr node)
 {
-	CHECKP(node);
-	return (GETSCHEMENODEX(node)->type!=attribute &&GETSCHEMENODEX(node)->type!=xml_namespace);
+    CHECKP(node);
+    return (GETSCHEMENODEX(node)->type!=attribute &&GETSCHEMENODEX(node)->type!=xml_namespace);
 }
 
 bool inline is_node_in_collection (xptr node)
 {
 
-	CHECKP(node);
-	return ((schema_node*)(GETSCHEMENODEX(node))->root)->nodecnt > 1;
+    CHECKP(node);
+    return (GETSCHEMENODEX(node)->root->nodecnt > 1);
 }
 //checks whether the right sibling of the node is  attribute
 bool inline is_next_node_attribute (xptr node)
 {
-	CHECKP(node);
-	node=GETRIGHTPOINTER(node);
-	if (node!=XNULL)
-	{
-		CHECKP(node);
-		return is_node_attribute (node);
-	}
-	return false;
+    CHECKP(node);
+    node=GETRIGHTPOINTER(node);
+    if (node!=XNULL)
+    {
+        CHECKP(node);
+        return is_node_attribute (node);
+    }
+    return false;
 }
 
 //checks if the node is the descendant of one of the nodes in the vector
-bool is_scmnode_has_ancestor_or_self(schema_node * scm_node, std::set<schema_node*>* scm_nodes_set );
+bool is_scmnode_has_ancestor_or_self(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set );
 
 #define get_in_scope_namespaces(n, r, cxt)  get_in_scope_namespaces_local(n, r, cxt)
 //Namespaces
-void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result,dynamic_context *cxt);
-void get_in_scope_namespaces_broad(xptr node,std::vector<xml_ns*> &result,dynamic_context *cxt);
-void get_namespaces_for_inherit(xptr node,std::vector<xml_ns*> &result);
-xml_ns* generate_pref(int ctr,const char* uri,dynamic_context *cxt);
+void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dynamic_context *cxt);
+void get_in_scope_namespaces_broad(xptr node,std::vector<xmlns_ptr> &result,dynamic_context *cxt);
+void get_namespaces_for_inherit(xptr node,std::vector<xmlns_ptr> &result);
+xmlns_ptr generate_pref(int ctr,const char* uri,dynamic_context *cxt);
 #endif
 

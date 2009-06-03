@@ -403,13 +403,8 @@ static
 int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 {
 	int success=0;
-	try
-	{
-		WuDbgDump(-1,0);
-		PhOnSnapshotDelete(snapshotTs);
-		success=1;
-	}
-	WU_CATCH_EXCEPTIONS()
+	WuDbgDump(-1,0);
+	success=1;
 	return success;
 }
 
@@ -553,12 +548,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 		}
 		else 
 		{
-			try
-			{
-				PhOnInitialSnapshotCreate(persSnapshotTs);
-				success = 1;
-			}
-			WU_CATCH_EXCEPTIONS()
+			success = 1;
 		}
 	}
 
@@ -813,11 +803,11 @@ int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
 	return success;
 }
 
-int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *persHeapIndex)
+int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs)
 {
 	int success=0;
 
-	assert(snapshotTs && persHeapIndex);
+	assert(snapshotTs);
 	
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
@@ -833,19 +823,9 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 				else if (!VeOnRegisterClient()) {}
 				else if (!ClMarkClientReady(sid)) {}
 				else
-				try
-				{
-					if (isUsingSnapshot)
-					{
-						*persHeapIndex=GetPhIndex(*snapshotTs);
-					}
-					else
-					{
-						*persHeapIndex=-1;
-					}
-					success=1;
-				}
-				WU_CATCH_EXCEPTIONS()
+                { 
+                    success=1; 
+                }
 				ClSetCurrentClientId(-1);
 			}
 			if (!success) ClUnregisterClient(sid);			
@@ -958,13 +938,10 @@ int WuTryAdvanceSnapshots(int *bSuccess)
 		}
 		else if (!SnGetDamagedTimestamps(damagedSnapshots, &tsDamCount)) {}
 		else
-		try
 		{
-			PhOnSnapshotCreate(curSnapshotTs, damagedSnapshots, tsDamCount);
 			*bSuccess=1;
 			success=1;
 		}
-		WU_CATCH_EXCEPTIONS()
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
 
@@ -1053,9 +1030,9 @@ void WuGetBlockExn(int sid, xptr p, ramoffs *offs, xptr *swapped)
 	if (!WuGetBlock(sid, p, offs, swapped)) WuThrowException();
 }
 
-void WuOnRegisterTransactionExn(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *persHeapIndex)
+void WuOnRegisterTransactionExn(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs)
 {
-	if (!WuOnRegisterTransaction(sid, isUsingSnapshot, snapshotTs, persHeapIndex)) WuThrowException();
+	if (!WuOnRegisterTransaction(sid, isUsingSnapshot, snapshotTs)) WuThrowException();
 }
 
 void WuOnCommitTransactionExn(int sid)

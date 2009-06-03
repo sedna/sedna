@@ -109,7 +109,7 @@ void GenericDataSource::makeInterface(dtsDataSource& dest)
     dest.getNextDoc = GenericDataSource::getNextDocCB;
 }
 
-SednaTextInputStream::SednaTextInputStream(dtsFileInfo* info,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_) :
+SednaTextInputStream::SednaTextInputStream(dtsFileInfo* info,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_) :
     cm(_cm_),
     custom_tree(_custom_tree_),
     idTextInputStream(TextInputStreamID),
@@ -239,7 +239,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
     dest.created.copy(fileInfo->created);
 }
 
-SednaDataSource::SednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_):
+SednaDataSource::SednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_):
 cm(_cm_),custom_tree(_custom_tree_)
 {
 	tis = se_new SednaTextInputStream(&fileInfo, cm ,custom_tree);
@@ -309,7 +309,7 @@ int SednaDataSource::rewind()
     //if (pos) seq->op->reopen();
 	return SUCCESS;    
 }
-CreationSednaDataSource::CreationSednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,std::vector<xptr>* _first_nodes_):SednaDataSource(_cm_,_custom_tree_),first_nodes(_first_nodes_),tmp(XNULL)
+CreationSednaDataSource::CreationSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,std::vector<xptr>* _first_nodes_):SednaDataSource(_cm_,_custom_tree_),first_nodes(_first_nodes_),tmp(XNULL)
 {
 	it=first_nodes->begin();
 }
@@ -335,7 +335,7 @@ int CreationSednaDataSource::rewind()
 	tmp=XNULL;
 	return SUCCESS;
 }
-UpdateSednaDataSource::UpdateSednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,xptr_sequence * _seq_):SednaDataSource(_cm_,_custom_tree_),seq(_seq_)
+UpdateSednaDataSource::UpdateSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,xptr_sequence * _seq_):SednaDataSource(_cm_,_custom_tree_),seq(_seq_)
 {
 	it=seq->begin();
 }
@@ -354,7 +354,7 @@ int UpdateSednaDataSource::rewind()
 	it=seq->begin();
 	return SUCCESS;
 }
-OperationSednaDataSource::OperationSednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,PPOpIn* _op_):SednaDataSource(_cm_,_custom_tree_),op(_op_),t(1)
+OperationSednaDataSource::OperationSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,PPOpIn* _op_):SednaDataSource(_cm_,_custom_tree_),op(_op_),t(1)
 {
 }
 xptr OperationSednaDataSource::get_next_doc()
@@ -394,7 +394,7 @@ void SednaSearchJob::OnFound(long totalFiles,
 	UUnnamedSemaphoreDown(&sem2, __sys_call_error);
 	this->thread_up_semaphore_on_exception = true;
 }
-SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_),
+SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_),
 																																							thread_exception(NULL), thread_up_semaphore_on_exception(true)
 {
 	AttachDataSource(se_new OperationSednaDataSource(_cm_,_custom_tree_,_seq_),true);
@@ -527,7 +527,7 @@ void SednaSearchJob::get_next_result(tuple &t)
 		
 	}
 }
-void SednaSearchJob::set_index(ft_index_cell* ft_idx)
+void SednaSearchJob::set_index(ft_index_cell_object* ft_idx)
 {
 #ifdef _WIN32
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
@@ -685,7 +685,7 @@ void SednaStringHighlighter<Iterator>::run()
 	flush_buf();
 }
 
-SednaConvertJob::SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_) :
+SednaConvertJob::SednaConvertJob(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_, bool _hl_fragment_) :
 						cm(_cm_), custom_tree(_custom_tree_), hl_fragment(_hl_fragment_)
 	{
 }
@@ -1167,7 +1167,7 @@ void SednaSearchJob2::get_next_result(tuple &t)
 	}
 }
 
-void SednaSearchJob2::set_index(ft_index_cell* ft_idx)
+void SednaSearchJob2::set_index(ft_index_cell_object* ft_idx)
 {
 #ifdef _WIN32
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")

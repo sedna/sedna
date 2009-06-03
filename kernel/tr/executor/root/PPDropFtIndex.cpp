@@ -47,9 +47,9 @@ void PPDropFtIndex::execute()
 
     index_name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
 
-	ft_index_cell::delete_index(tc.get_str_mem());
+	delete_ft_index(tc.get_str_mem());
 }
 

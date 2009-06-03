@@ -12,7 +12,6 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/structures/schema.h"
 #include <string.h>
-#include "common/persistent_db_data.h"
 #include "tr/vmm/vmm.h"
 
 //#define FASTDELETE
@@ -25,62 +24,20 @@ enum text_type {
 	text_doc,
 	text_estr
 };
-xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,xml_ns* ns);
-inline xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,const char* uri, const char* prefix)
-{
-	if (uri!=NULL || prefix!=NULL)
-	{
-		xml_ns* ns=(xml_ns*)entry_point->nslist->find(uri,prefix);
-		if (ns==NULL) 
-		{
-			ns=xml_ns::init(uri,prefix,true);
-			entry_point->nslist->put(ns);
-		}
-		return insert_element(left_sib,right_sib,parent,name,type,ns);
-	}
-	else
-		return insert_element(left_sib,right_sib,parent,name,type,NULL);
 
-	
-}
-
-xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,const  char* value, int data_size,xml_ns* ns);
-inline xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,const  char* value, int data_size,const char* uri, const char* prefix)
-{
-	if (uri!=NULL || prefix!=NULL)
-	{
-		xml_ns* ns=(xml_ns*)entry_point->nslist->find(uri,prefix);
-		if (ns==NULL) 
-		{
-			ns=xml_ns::init(uri,prefix,true);
-			entry_point->nslist->put(ns);
-		}
-		return insert_attribute(left_sib, right_sib, parent,name, type,value, data_size,ns);
-	}
-	return insert_attribute(left_sib, right_sib, parent,name, type,value, data_size,NULL);
-}
-
+xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,xmlns_ptr ns);
+xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,const  char* value, int data_size,xmlns_ptr ns);
 xptr insert_text(xptr left_sib, xptr right_sib, xptr parent,const void* value, unsigned int size,text_type ttype=text_mem);
 xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent,const char* value, int size);
 xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent,const char* value, int size);
 xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, int tsize,const char* data, int dsize);
-xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xml_ns* ns);
-inline xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,const char* uri, const char* prefix)
-{
-	xml_ns* ns=(xml_ns*)entry_point->nslist->find(uri,prefix);
-	if (ns==NULL) 
-	{
-		ns=xml_ns::init(uri,prefix,true);
-		entry_point->nslist->put(ns);
-	}
-	return insert_namespace(left_sib,right_sib,parent,ns);
-}
+xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xmlns_ptr ns);
+
 void delete_node(xptr node);
 void delete_replaced_node(xptr delete_node, xptr insert_node);
+
 void delete_doc_node(xptr node);
-
-
-
+xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name);
 
 /* Update utils*/
 void makeNewBlockConsistentAfterFilling(xptr block, xptr node,shft shift_size);
@@ -111,13 +68,13 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
 xptr addNewNodeOfSameSortBefore(xptr namesake, xptr left_sib,xptr right_sib, xptr parent, xptr par_indir, xmlscm_type type,t_item node_typ);
 
 /* creates first block with the descriptor fo the given schema node*/
-xptr createNewBlock(schema_node* scm,bool persistent);
+xptr createNewBlock(schema_node_cptr scm);
 
 /* inserts the first node descriptor of the current type*/
 xptr addNewNodeFirstInRow(xptr newblock, xptr left_sib, xptr right_sib, xptr parent,
 							 xptr par_indir ,  xmlscm_type type, t_item node_typ);
 /*splits the block into two parts and appends childs by scheme into descriptor of one of the parts*/
-void addChildsBySchemeSplittingBlock(xptr parent,const  char* name,t_item type, xptr child,xml_ns* ns);
+void addChildsBySchemeSplittingBlock(xptr parent,const  char* name,t_item type, xptr child,xmlns_ptr ns);
 /* index support */
 void update_idx_add (xptr node);
 void update_idx_add_txt (xptr node);
@@ -126,7 +83,7 @@ void update_idx_add_txt (xptr node,const char* value, int size);
 void update_idx_delete (xptr node);
 void update_idx_delete_text (xptr node);
 void update_idx_delete_text (xptr node,const char* value, int size);
-void update_idx_delete_text (schema_node* scm,xptr node,const char* value, int size);
+void update_idx_delete_text (schema_node_cptr scm,xptr node,const char* value, int size);
 
 
 

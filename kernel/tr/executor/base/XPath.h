@@ -15,9 +15,10 @@
 
 #include "tr/executor/base/xsd.h"
 #include "tr/executor/por2qep/scheme_tree.h"
+#include "tr/structures/schema.h"
 
-enum Axis     
-{ 
+enum Axis
+{
     axis_child,
     axis_descendant,
     axis_attribute,
@@ -27,8 +28,8 @@ enum Axis
     axis_parent
 };
 
-enum NodeTestType  
-{ 
+enum NodeTestType
+{
     node_test_processing_instruction, // processing-instruction()
     node_test_comment,                // comment()
     node_test_text,                   // text()
@@ -51,7 +52,7 @@ struct NodeTestData
     char* ncname_local;
     PPOpIn *ppnode;
 };
-                     
+
 struct NodeTest
 {
     Axis axis;
@@ -86,44 +87,30 @@ struct PathExpr
 
 typedef PathExpr RelPath;
 
+struct PathExprMemoryManager {
+    void * (*alloc)(size_t);
+    void (*free)(void*);
+    void (*free_all)();
+    void * (*realloc)(void*, size_t);
+};
 
-void *create_PathExpr(const PathExprDistr &distr, bool persistent);
-void delete_PathExpr(PathExpr *expr);
+extern PathExprMemoryManager * pe_local_aspace;
+extern PathExprMemoryManager * pe_catalog_aspace;
+
+void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm);
+//void delete_PathExpr(PathExpr *expr);
 
 class dynamic_context;
 void PathExpr2lr(PathExpr *path, std::ostream& str);
-PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persistent);
-PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, bool persistent);
+PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, PathExprMemoryManager * mm);
+PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, PathExprMemoryManager * mm);
 
-struct schema_node;
-PathExpr *build_PathExpr(schema_node *from, schema_node *to);
+PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to);
 
-
-void *PathExpr_mem_alloc(size_t size);
-void *PathExpr_pers_alloc(size_t size);
-inline void *PathExpr_malloc(size_t size, bool persistent)
-{
-    return (persistent ? PathExpr_pers_alloc(size) : PathExpr_mem_alloc(size));
-}
-typedef void* (*malloc_func)(size_t);
-inline malloc_func PathExpr_malloc_func(bool persistent)
-{
-    return (persistent ? PathExpr_pers_alloc : PathExpr_mem_alloc);
-}
-
-// free dynamic memory allocated for local PathExprs
-void PathExpr_local_free();
-// free allocated persistent heap memory (call it on transaction rollback)
-void PathExpr_pers_free();
-// reset structures that stores allocated persistent heap memory (call it on transaction commit)
-void PathExpr_reset_pers();
-
-
-void set_node_test_type_and_data(scheme_list *lst, 
+void set_node_test_type_and_data(scheme_list *lst,
                                  NodeTestType &nt_type, //out parameter
                                  NodeTestData &nt_data, //out parameter
-                                 bool persistent);
-
+                                 PathExprMemoryManager * mm);
 
 #endif
 

@@ -22,7 +22,7 @@ protected:
     // obtained parameters and local data
 	bool first_time;
 	SednaSearchJob *sj;
-	pers_sset<ft_custom_cell,unsigned short>* ptr;
+	ft_custom_tree_t* ptr;
 
 public:
     virtual void open   ();

@@ -34,7 +34,7 @@ static int cdb_s_help = 0;
 static int cdb_l_help = 0;
 static int cdb_version = 0;
 
-static const size_t cdb_narg = 17;
+static const size_t cdb_narg = 16;
 
 static arg_rec cdb_argtable[] =
 {
@@ -47,7 +47,6 @@ static arg_rec cdb_argtable[] =
   {"-tmp-file-ext-portion",    " Mbs", arg_int, &tmp_file_extending_portion,       "100", "\tthe tmp file extending portion size (in Mb),\n\t\t\t\tdefault 100Mb"},
   {"-data-file-init-size",     " Mbs", arg_int, &data_file_initial_size,           "100", "\tthe data file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
   {"-tmp-file-init-size",      " Mbs", arg_int, &sm_globals::tmp_file_initial_size,"100", "\tthe tmp file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
-  {"-persistent-heap-size",    " Mbs", arg_int, &persistent_heap_size,             "10",  "\tthe persistent heap size (in Mb), \n\t\t\t\tallowed in the range of 10Mb - 99Mb,\n\t\t\t\tdefault 10Mb"},
   {"-bufs-num",                " N",   arg_int, &sm_globals::bufs_num,             "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
   {"-max-trs-num",             " N",   arg_int, &sm_globals::max_trs_num,          "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
   {"-upd-crt",                 " N",   arg_dbl, &sm_globals::upd_crt,              "0.25","\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
@@ -87,12 +86,9 @@ parse_cdb_command_line(int argc, char** argv)
 }
 
 
-
 void 
 setup_cdb_globals(gov_config_struct* cfg)
 {
-   if (persistent_heap_size < 10 || persistent_heap_size > 99)
-       throw USER_EXCEPTION2(SE4601, "Invalid persistent heap size - it must be in the range of 10 and 99");
 
    if (log_file_size <= 0)
 	   throw USER_EXCEPTION2(SE4601, "'log_file_size' parameter is incorrect (must be >0)");

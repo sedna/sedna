@@ -33,9 +33,9 @@ struct xp_pred
 {
     int id;
 
-    schema_node *scm_bottom; // bottom schema node
-    schema_node *scm_middle; // middle schema node (predicate is applied to this node)
-    schema_node *scm_upper;  // one level up schema node
+    schema_node_xptr scm_bottom; // bottom schema node
+    schema_node_xptr scm_middle; // middle schema node (predicate is applied to this node)
+    schema_node_xptr scm_upper;  // one level up schema node
 
     tsel sel_bottom;         // selectivity of bottom schema node (according to predicate)
     tsel sel_middle;         // selectivity of middle schema node (according to predicate)

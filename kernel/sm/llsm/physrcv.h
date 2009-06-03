@@ -14,9 +14,6 @@
 // 		lsn of the oldest record needed for logical record;
 LSN llRecoverPhysicalState();
 
-// Recover persistent heap
-void llRcvRestorePh();
-
 // Retrieves info from hot-backup record
 // Parameters:
 // 		RecBuf - pointer to record in memory

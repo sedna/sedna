@@ -420,8 +420,10 @@ void ftc_ss_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const voi
     t.cells[1] = tuple_cell::node(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft))));
 	t.cells[2] = tuple_cell::atomic((int64_t)*((int32_t*)(buffer->get_buffer_pointer()+sizeof(shft)+sizeof(xptr))));//XXX: tuple_cells suck
 }
+
 #include "tr/idx/indexes.h"
-void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_index_type cm, pers_sset<ft_custom_cell,unsigned short>* custom_tree, ftc_index_t ftc_idx)
+
+void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_index_type cm, ft_custom_tree_t* custom_tree, ftc_index_t ftc_idx)
 {
 	op_str_buf in_buf;
 

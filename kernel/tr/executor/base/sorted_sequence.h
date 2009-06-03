@@ -8,10 +8,10 @@
 
 #include "common/sedna.h"
 #include "common/commutil.h"
-#include "tr/structures/pers_map.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/seq_common.h"
+#include "tr/structures/rbtree.h"
 
 #define MAX_BLOCKS_IN_CHAIN 500 //should be changed after meeting with Andrey
 #define GET_FREE_SPACE(p) (shft)((__uint32)PAGE_SIZE - ((__uint32)((p).addr) & PAGE_REVERSE_BIT_MASK))
@@ -40,7 +40,7 @@ struct merge_cell
 	xptr in_node;
 	static inline merge_cell* init(xptr node,compare_fn fn,const void * Udata )
 	{
-		merge_cell* nc=(merge_cell*)scm_malloc(sizeof(merge_cell),false);
+		merge_cell* nc=(merge_cell*) malloc(sizeof(merge_cell));
 		nc->node=node;
 		nc->Udata=Udata;
 		nc->compareFN=fn;
@@ -49,7 +49,7 @@ struct merge_cell
 	}
 	static inline void destroy(merge_cell* mc)
 	{
-		scm_free(mc,false);
+		free(mc);
 	}
 	inline bool less( merge_cell *p1) 
 	{
@@ -131,8 +131,8 @@ private:
 	xptr val_place;
 	xptr bblk_in_chain;
 	int blk_cnt;
-	pers_sset<merge_cell,unsigned short>* merge_tree;
-	pers_sset<merge_cell,unsigned short>::pers_sset_entry* top;
+	sedna_rbtree<merge_cell>* merge_tree;
+	sedna_rbtree<merge_cell>::sedna_rbtree_entry* top;
    
 
   //  void init_blks();

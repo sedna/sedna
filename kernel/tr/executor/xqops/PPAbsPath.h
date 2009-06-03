@@ -21,7 +21,7 @@ protected:
     counted_ptr<db_entity> db_ent;
     PPOpIn name;
     // obtained parameters and local data
-    schema_node *root;
+    schema_node_xptr root;
     xptr* merged_seq_arr;	// used for sorting
     int scmnodes_num;
 
@@ -30,7 +30,7 @@ protected:
 
     bool determine_root();
     void create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
-                           schema_node *root, PathExpr *path_expr);
+                           schema_node_cptr root, PathExpr *path_expr);
 
 public:
     virtual void open   ();
@@ -52,7 +52,7 @@ public:
               PathExpr *_path_expr_, 
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_,
-              schema_node *_root_);
+              schema_node_xptr _root_);
     virtual ~PPAbsPath();
 
     static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);

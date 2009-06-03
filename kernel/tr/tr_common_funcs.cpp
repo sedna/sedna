@@ -11,6 +11,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/tr_common_funcs.h"
+#include "tr/cat/catalog.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
 #endif
@@ -33,7 +34,6 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    char buf[1024];
    sm_msg_struct msg;
 
-//   DebugBreak();
    sm_server = se_new SSMMsg(SSMMsg::Client, 
                           sizeof (sm_msg_struct), 
                           CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
@@ -46,15 +46,12 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    is_sm_server_inited = true;
    d_printf1("OK\n");
 
-   d_printf1("Initializing PH...");
-   string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
-   if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
-      throw USER_EXCEPTION(SE4605);
-   is_ph_inited = true;
+   d_printf1("Initializing VMM...");
+   vmm_on_session_begin(sm_server, rcv_active);
    d_printf1("OK\n");
 
-   d_printf1("Initializing VMM...");
-   entry_point = vmm_on_session_begin(sm_server, rcv_active);
+   d_printf1("Initializing catalog...");
+   catalog_on_session_begin();
    d_printf1("OK\n");
 
    d_printf1("Initializing indirection table...");
@@ -62,19 +59,19 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("OK\n");
 
    d_printf1("Initializing metadata...");
-   metadata_on_session_begin(entry_point->metadata);
+   metadata_on_session_begin();
    d_printf1("OK\n");
  
    d_printf1("Initializing indexes...");
-   index_on_session_begin(entry_point->index, &(entry_point->idx_counter));
+   index_on_session_begin();
    #ifdef SE_ENABLE_FTSEARCH
-   ft_index_on_session_begin(entry_point->ft_index, &(entry_point->ft_idx_counter));
+   ft_index_on_session_begin();
    #endif
    d_printf1("OK\n");
 
    #ifdef SE_ENABLE_TRIGGERS
    d_printf1("Initializing triggers...");
-   triggers_on_session_begin(entry_point->trigger);
+   triggers_on_session_begin();
    d_printf1("OK\n");
    #endif
 
@@ -120,20 +117,13 @@ void on_session_end(SSMMsg* &sm_server)
    indirection_table_on_session_end();
    d_printf1("OK\n");
 
+   d_printf1("Releasing catalog...");
+   catalog_on_session_end();
+   d_printf1("OK\n");
+
    d_printf1("Releasing VMM...");
    vmm_on_session_end();
    d_printf1("OK\n");
-
-   d_printf1("Releasing PH... ");
-   if (is_ph_inited)
-   {
-      if (pers_release() != 0)
-         throw USER_EXCEPTION(SE4606);
-
-      is_ph_inited = false;
-   }
-   d_printf1("OK\n");
-
 
    d_printf1("Deleting SSMMsg...");
    if (is_sm_server_inited)
@@ -148,20 +138,7 @@ void on_session_end(SSMMsg* &sm_server)
 
 void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active)
 {
-   // ph shutdown between transactions
-   d_printf1("Releasing PH between transactions on the same session...");
-   if (is_ph_inited && need_ph_reinit)
-   {
-      if (pers_release() != 0)
-         throw USER_EXCEPTION(SE4606);
-
-      is_ph_inited = false;
-   }
-   d_printf1("OK\n");
-   // ph shutdown between transactions
-
    TIMESTAMP ts;
-   int type_of_snp;
 
    need_sem = !is_ro_mode;
 
@@ -175,42 +152,13 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
    event_logger_set_trid(trid);
 
    d_printf1("Initializing VMM...");
-   vmm_on_transaction_begin(is_ro_mode, ts, type_of_snp);
+   vmm_on_transaction_begin(is_ro_mode, ts);
    d_printf1("OK\n");
 
-   // start of ph reinitialization
-   if (!is_ph_inited && need_ph_reinit)
-   {
-   	   if (is_ro_mode)
-   	   {
-   	   		char buf[20];
+   d_printf1("Initializing catalog...");
+   catalog_on_transaction_begin();
+   d_printf1("OK\n");
 
-   			string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + 
-   				db_name + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
-
-   			d_printf1("Initializing PH between transactions on the same session...");
-   			if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
-   				(type_of_snp == 1) ? PERS_HEAP_1_SNP_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
-      				throw USER_EXCEPTION(SE4605);
-
-   			is_ph_inited = true;
-   			d_printf1("OK\n");
-   	   }
-   	   else
-   	   {
-   			d_printf1("Initializing PH between transactions on the same session...");
-   			string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
-   			if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
-      			throw USER_EXCEPTION(SE4605);
-   			is_ph_inited = true;
-
-   			need_ph_reinit = false;
-
-   			d_printf1("OK\n");
-   	   }
-   }	      
-   // end of ph reinitialization
-   
    d_printf1("Initializing indirection table...");
    indirection_table_on_transaction_begin();
    d_printf1("OK\n");
@@ -254,8 +202,10 @@ void reportToWu(bool rcv_active, bool is_commit)
         msg.sid = sid;
         msg.data.data[0] = 0;
 
+        catalog_before_commit(is_commit);
         if (sm_server_wu->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
+        catalog_after_commit(is_commit);
     }
     
     wu_reported = true;
@@ -278,7 +228,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
    clear_authmap();
 
    sm_msg_struct msg;
-        
+
 /*   if (!rcv_active || (rcv_active && is_commit))
    {
        msg.cmd = 38; // transaction commit/rollback
@@ -290,22 +240,31 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
            throw USER_EXCEPTION(SE1034);
    }
 */
+
 #ifdef SE_ENABLE_TRIGGERS
    d_printf1("Triggers on transaction end...");
    triggers_on_transaction_end(is_commit);
    d_printf1("OK\n");
 #endif
 
-   d_printf1("\nReleasing logical log...");
-   hl_logical_log_on_transaction_end(is_commit, rcv_active);
-   d_printf1("OK\n");
+   try { 
+     d_printf1("\nReleasing logical log...");
+     hl_logical_log_on_transaction_end(is_commit, rcv_active);
+     d_printf1("OK\n");
+   } catch (SednaUserException &e) {
+     throw SYSTEM_EXCEPTION("Double error: user exception on rollback!");
+   }
 
 /*   d_printf1("Syncing indirection table...");
    sync_indirection_table();
    d_printf1("OK\n");*/
 
    d_printf1("Releasing indirection table...");
-   indirection_table_on_transaction_end();
+   if (!wu_reported) { indirection_table_on_transaction_end(); }
+   d_printf1("OK\n");
+
+   d_printf1("Releasing catalog...");
+   if (!wu_reported) { catalog_on_transaction_end(is_commit); }
    d_printf1("OK\n");
 
    d_printf1("\nNotifying sm of commit...");
@@ -320,22 +279,12 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
        msg.sid = sid;
        msg.data.data[0] = 0;
 
+       catalog_before_commit(is_commit);
        if (sm_server->send_msg(&msg) != 0)
-           throw USER_EXCEPTION(SE1034);
-   }
+           throw SYSTEM_EXCEPTION("Unable to commit or rollback transaction");
+       catalog_after_commit(is_commit);
 */
-   // ph shutdown between transactions
-   d_printf1("Releasing PH between transactions on the same session...");
-   if (is_ph_inited && need_ph_reinit)
-   {
-      if (pers_release() != 0)
-         throw USER_EXCEPTION(SE4606);
 
-      is_ph_inited = false;
-   }
-   d_printf1("OK\n");
-   // ph shutdown between transactions
-   
    d_printf1("Releasing VMM...");
    vmm_on_transaction_end();
    d_printf1("OK\n");
@@ -366,8 +315,7 @@ void on_kernel_recovery_statement_end()
 
     tr_globals::estr_global.clear();
 
-    PathExpr_local_free();
-    PathExpr_reset_pers();
+    if (pe_local_aspace->free_all) pe_local_aspace->free_all();
 
     vmm_delete_tmp_blocks();
     indirection_table_on_statement_end();
@@ -380,7 +328,6 @@ transaction_id get_transaction_id(SSMMsg* sm_server)
    msg.cmd = 1;
    if (sm_server->send_msg(&msg) !=0 )
       throw USER_EXCEPTION(SE3034);
-
 
    if (msg.trid == -1)
       throw USER_EXCEPTION(SE4607);

@@ -128,7 +128,7 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 // do not call this now during transaction processing!!!
 void activate_and_wait_for_end_checkpoint(bool force)
 {
-	int res;
+    int res;
     
     while ((res = llActivateCheckpoint()) == -2 && force)
         uSleep(1, __sys_call_error);
@@ -410,6 +410,9 @@ void hl_logical_log_commit(transaction_id _trid)
     {
         up_transaction_block_sems();
         sem_released = true;
+        catalog_on_transaction_end(true);
+        indirection_table_on_transaction_end();
+        catalog_on_transaction_end(true);
         reportToWu(false, true);
         // dirty hack here!
         // we don't want this transaction to be redone ever
@@ -457,7 +460,7 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
     llLogIndex(trid, obj_str.str().c_str(), key_str.str().c_str(), key_type, index_title, doc_name, is_doc, inserted);
 }
 #ifdef SE_ENABLE_FTSEARCH
-void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char * index_title, const char* doc_name,bool is_doc,pers_sset<ft_custom_cell,unsigned short> * custom_tree,bool inserted)
+void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name,bool is_doc,ft_custom_tree_t * custom_tree,bool inserted)
 {
     if (!enable_log) return;
     number_of_records++;
@@ -471,7 +474,7 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char 
 
 	if (custom_tree != NULL)
 	{
-		pers_sset<ft_custom_cell,unsigned short>::pers_sset_entry *tmp;
+		ft_custom_tree_t::sedna_rbtree_entry *tmp;
 		tmp = custom_tree->rb_minimum(custom_tree->root);
 
 		while (tmp != NULL)
@@ -495,15 +498,15 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char 
 		memcpy(custom_tree_buf + custom_tree_size, str, len + 1);\
 		custom_tree_size += len + 1;\
 	}
-			if (tmp->obj->ns == NULL)
+			if (tmp->obj->get_xmlns() == NULL)
 			{
 				PUT_STR(NULL);
 				PUT_STR(NULL);
 			}
 			else
 			{
-				PUT_STR(tmp->obj->ns->uri);
-				PUT_STR(tmp->obj->ns->prefix);
+				PUT_STR(tmp->obj->get_xmlns()->uri);
+				PUT_STR(tmp->obj->get_xmlns()->prefix);
 			}
 			PUT_STR(tmp->obj->local);
 #undef PUT_STR
@@ -514,7 +517,7 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char 
 
     llLogFtIndex(trid, obj_str.str().c_str(), itconst, index_title, doc_name, is_doc, custom_tree_buf, custom_tree_size, inserted);
 }
-std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* ft_rebuild_cust_tree(const char *custom_tree_buf, int custom_tree_size)
+ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, int custom_tree_size)
 {
 	return NULL;
 }

@@ -188,7 +188,6 @@ int SSMMsg::init()
             return 1;
         }
 
-
         sysinf_addr = shar_mem;
         buf_addr = (void*)((char*)shar_mem + SSMMSG_PAGE_SIZE);
 

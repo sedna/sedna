@@ -28,6 +28,7 @@ PPDropTrigger::~PPDropTrigger()
 void PPDropTrigger::open()
 {
     trigger_name.op->open();
+    local_lock_mrg->lock(lm_x);
 }
 
 void PPDropTrigger::close()
@@ -48,14 +49,14 @@ void PPDropTrigger::execute()
 
     trigger_name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
-    tc = tuple_cell::make_sure_light_atomic(tc);
 
-    if(trigger_cell::find_trigger(tc.get_str_mem()) == NULL) 
-    	throw USER_EXCEPTION2(SE3211, (std::string("Trigger '") + tc.get_str_mem() + "'").c_str());
+    tc = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_trigger(tc.get_str_mem());
 
-	trigger_cell::delete_trigger(tc.get_str_mem());
+    if(find_trigger(tc.get_str_mem()) == XNULL)
+        throw USER_EXCEPTION2(SE3211, (std::string("Trigger '") + tc.get_str_mem() + "'").c_str());
+
+    delete_trigger(tc.get_str_mem());
 }
 

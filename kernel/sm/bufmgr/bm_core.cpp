@@ -7,7 +7,6 @@
 #include <iostream>
 #include "common/u/uutils.h"
 #include "common/sm_vmm_data.h"
-#include "common/ph/pers_heap.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/llsm/llMain.h"
 #include "sm/sm_globals.h"
@@ -83,6 +82,9 @@ session_id xmode_sid = -1;
 USemaphore xmode;
 
 // Syncronization semaphores
+USemaphore cat_nametable_sem;
+USemaphore cat_master_sem;
+/*
 USemaphore indirection_table_sem;
 USemaphore metadata_sem;
 USemaphore index_sem;
@@ -92,7 +94,7 @@ USemaphore ft_index_sem;
 #ifdef SE_ENABLE_TRIGGERS
 USemaphore trigger_sem;
 #endif
-
+*/
 // File handlers
 UFile data_file_handler;
 UFile tmp_file_handler;
@@ -444,26 +446,6 @@ void flush_data_buffers()
 
     d_printf1("Flush data buffers: complete\n");
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-/// PH functions
-////////////////////////////////////////////////////////////////////////////////
-void flush_ph()
-{
-    if (pers_flush() != 0)
-        throw SYSTEM_ENV_EXCEPTION("Cannot flush persistent heap");
-}
-
-void backup_ph()
-{
-    string ph_file_name    = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".seph";
-    string ph_bu_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".ph.sebu";
-
-    if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
-        throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
-}
-
 
 
 ////////////////////////////////////////////////////////////////////////////////

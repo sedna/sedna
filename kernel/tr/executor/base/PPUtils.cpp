@@ -232,11 +232,11 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 
 
 
-schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
+xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
 {
-    schema_node *root = NULL;
+    schema_node_xptr root = XNULL;
 
-    bool valid;
+    bool valid, found;
     Uri::check_constraints(db_ent->name, &valid, NULL);
     
     if(!valid) 
@@ -246,24 +246,14 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
         else 
             throw XQUERY_EXCEPTION2(FODC0002, (std::string("Invalid collection URI '") + db_ent->name + "'").c_str());    
     }
-    
-    switch (db_ent->type)
-    {
-        case dbe_document	: root = find_document  (db_ent->name); break;
-        case dbe_collection	: root = find_collection(db_ent->name); break;
-        default				: throw USER_EXCEPTION2(SE1003, err_details);
-    }    
 
-    if (!root) 
+    if (!document_or_collection_exists(db_ent->name))
     {
         if (db_ent->type == dbe_document)
             throw XQUERY_EXCEPTION2(FODC0002, (std::string("Document '") + db_ent->name + "'").c_str());
         else 
             throw XQUERY_EXCEPTION2(FODC0004, (std::string("Collection '") + db_ent->name + "'").c_str());
     }
-#ifdef SE_ENABLE_TRIGGERS
-	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), root, db_ent->name);
-#endif
 
     switch (db_ent->type)
     {
@@ -279,9 +269,13 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
         case dbe_document	: root = find_document  (db_ent->name); break;
         case dbe_collection	: root = find_collection(db_ent->name); break;
         default				: throw USER_EXCEPTION2(SE1003, err_details);
-    }    
+    }
 
-    if (!root) 
+#ifdef SE_ENABLE_TRIGGERS
+    nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), root, db_ent->name);
+#endif
+
+    if (root == XNULL)
     {
         if (db_ent->type == dbe_document)
             throw XQUERY_EXCEPTION2(FODC0002, (std::string("Document '") + db_ent->name + "'").c_str());

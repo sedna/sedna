@@ -123,8 +123,6 @@ bool exist_db(const char* db_name)
 
    res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
 
-   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
-
    res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
 
 

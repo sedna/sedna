@@ -15,7 +15,7 @@ class PPScan : public PPIterator
 protected:
     // given parameters
     counted_ptr<db_entity> db_ent;
-    schema_node *scm_node;
+    schema_node_xptr scm_node;
 
     xptr res;
 
@@ -29,7 +29,7 @@ public:
     virtual PPIterator* copy(dynamic_context *_cxt_);
 
     PPScan(dynamic_context *_cxt_, 
-           schema_node *_scm_node_,
+           schema_node_xptr _scm_node_,
            counted_ptr<db_entity> _db_ent_);
     virtual ~PPScan();
 

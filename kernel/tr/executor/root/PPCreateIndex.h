@@ -23,7 +23,7 @@ class PPCreateIndex : public PPUpdate
     dynamic_context *cxt;
 
     // obtained parameters and local data
-    schema_node *root;
+    schema_node_xptr root;
 
 public:
     void open();

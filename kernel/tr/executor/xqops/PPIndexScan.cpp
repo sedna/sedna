@@ -125,7 +125,7 @@ void PPIndexScan::initialize()
 	char * index_name_string = index_name_tuple.get_str_mem();
 	
     // Put lock on documents under index scan and check security for document
-    get_schema_node(find_entity(index_name_string), "Unknown entity passed to PPIndexScan");
+    get_schema_node(find_db_entity_for_index(index_name_string), "Unknown entity passed to PPIndexScan");
     // we don't need to check auth privilege for using index, because
     // read access to index is allowed to everyone
 

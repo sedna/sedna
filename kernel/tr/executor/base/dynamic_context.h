@@ -17,6 +17,7 @@
 #include "tr/executor/base/SequenceType.h"
 #include "tr/crmutils/str_matcher.h"
 #include "tr/strings/utf8.h"
+#include "tr/structures/schema.h"
 
 
 
@@ -45,8 +46,8 @@ class static_context;
  * Different auxiliary types
  ******************************************************************************/
 /// Declaration of variable descriptor and auxilary structures
-typedef int var_dsc;	// var descriptor
-typedef int var_c_id;	// var consumption id
+typedef int var_dsc;    // var descriptor
+typedef int var_c_id;   // var consumption id
 // every element of the array is the info about consumption of specific consumer
 typedef std::vector<bool> simple_var_consumption;
 
@@ -61,8 +62,8 @@ typedef int function_id;
 
 /// namespaces
 typedef std::pair<std::string,std::string> str_pair;
-typedef std::map< str_pair, xml_ns*> ns_map;
-typedef std::map<std::string,std::vector<xml_ns*> > inscmap;
+typedef std::map< str_pair, xmlns_ptr> ns_map;
+typedef std::map<std::string,std::vector<xmlns_ptr> > inscmap;
 
 enum se_session_option {se_debug_mode};
 
@@ -85,18 +86,18 @@ enum xq_empty_order {xq_empty_order_greatest, xq_empty_order_least};
 // type of a producer
 enum producer_type { pt_not_defined,
                      pt_tuple,
-                     pt_seq,			// producer is strict operation, so sequence is already built
-                     pt_lazy_simple,	// producer is lazy simle
-                     pt_lazy_complex,	// producer is lazy complex
+                     pt_seq,            // producer is strict operation, so sequence is already built
+                     pt_lazy_simple,    // producer is lazy simle
+                     pt_lazy_complex,   // producer is lazy complex
                    };
 
 // producer structure
 struct producer
 {
-    producer_type type;				// type of the producer (i.g. lazy or strict)
+    producer_type type;             // type of the producer (i.g. lazy or strict)
 
-    sequence *s;					// pointer to completely built sequence with data
-    PPVarIterator *op;				// pointer to operation with next(i) method
+    sequence *s;                    // pointer to completely built sequence with data
+    PPVarIterator *op;              // pointer to operation with next(i) method
     simple_var_consumption *svc;
     complex_var_consumption *cvc;
     int tuple_pos;
@@ -109,10 +110,10 @@ struct producer
 // variable context
 struct variable_context
 {
-    int size;				// size of context (number of producers in array)
-    producer *producers;	// array of producers
+    int size;               // size of context (number of producers in array)
+    producer *producers;    // array of producers
 
-	variable_context(int _size_) : size(_size_) { size > 0 ? producers = se_new producer[size] : producers = NULL; }
+    variable_context(int _size_) : size(_size_) { size > 0 ? producers = se_new producer[size] : producers = NULL; }
     ~variable_context() { delete [] producers; }
 };
 
@@ -122,7 +123,7 @@ struct variable_context
  ******************************************************************************/
 struct global_producer
 {
-    PPVarIterator *op;				// pointer to operation with next(i) method
+    PPVarIterator *op;              // pointer to operation with next(i) method
     dynamic_context *cxt;           // for each global producer we have dynamic_context created in por2qep::PPVarDecl
     complex_var_consumption cvc;
     free_entries_list fel;
@@ -135,8 +136,8 @@ struct global_producer
 
 struct global_variable_context
 {
-    int size;					// size of context (number of producers in array)
-    global_producer *producers;	// array of producers
+    int size;                   // size of context (number of producers in array)
+    global_producer *producers; // array of producers
 
     global_variable_context() : size(0), producers(NULL) {}
     ~global_variable_context() { clear(); }
@@ -235,7 +236,7 @@ public:
     CollationHandler *default_collation_handler;
 
 
-    std::vector<xml_ns*> def_ns;
+    std::vector<xmlns_ptr> def_ns;
     std::vector<xptr> temp_docs;
     inscmap insc_ns;
     ns_map ns_lib;
@@ -247,21 +248,21 @@ public:
     void _release_resources();
     void clear_context();
 
-    xml_ns*        get_ns_pair(const char*  prefix, const char* uri);
-    inline xml_ns* get_ns_pair(std::string& prefix, std::string& uri)
+    xmlns_ptr        get_ns_pair(const char*  prefix, const char* uri);
+    inline xmlns_ptr get_ns_pair(std::string& prefix, std::string& uri)
     {
-    	return get_ns_pair((prefix.size()>0)?prefix.c_str():NULL,uri.c_str());
+        return get_ns_pair((prefix.size()>0)?prefix.c_str():NULL,uri.c_str());
     }
-    xml_ns*        add_to_context(const char* prefix, const char* uri);
+    xmlns_ptr    add_to_context(const char* prefix, const char* uri);
     void           remove_from_context(const char* prefix);
-    inline void    remove_from_context(xml_ns* ns)
+    inline void    remove_from_context(xmlns_ptr ns)
     { 
         remove_from_context(ns->prefix);
     }
 
 
     char * get_uri_by_prefix(const char* _prefix, t_item type) const;
-    xml_ns* get_xmlns_by_prefix(const char* _prefix, int count = -1);
+    xmlns_ptr get_xmlns_by_prefix(const char* _prefix, int count = -1);
 
     void set_base_uri(const char* _base_uri_);
     void set_default_collation_uri(const char* _default_collation_uri_);
@@ -315,7 +316,7 @@ public:
     // FIXME: hack
     static static_context *unmanaged_st_cxt;
 
-	static CollationManager collation_manager;
+    static CollationManager collation_manager;
     /// Output method (set up in API, so it is one for all modules)
     static se_output_method output_method;
 
@@ -373,7 +374,7 @@ public:
 
     static void add_char_mapping(const char* str, const char* rep_str, int pc = -1)
     {
-	    stm.add_str(str, rep_str, pc);
+        stm.add_str(str, rep_str, pc);
     }
 
     static void set_datetime();

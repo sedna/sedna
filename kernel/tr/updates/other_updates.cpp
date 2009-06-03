@@ -100,11 +100,11 @@ void rename(PPOpIn arg,const char* name)
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
 					memcpy(z,data,size);
-					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,z,size,NULL);
+					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,z,size,NULL_XMLNS);
 					delete z;
 				}
 				else
-					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,NULL,0,NULL);
+					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,NULL,0,NULL_XMLNS);
 				//2. delete
 				CHECKP(indir);
 				delete_node(*((xptr*)XADDR(indir)));
@@ -113,7 +113,7 @@ void rename(PPOpIn arg,const char* name)
 		case element:
 			{
 				//1.INSERT
-				res=insert_element(left, XNULL, parent,name,((e_dsc*)desc)->type,NULL);
+				res=insert_element(left, XNULL, parent,name,((e_dsc*)desc)->type,NULL_XMLNS);
 				CHECKP(indir);
 				copy_content(res,*((xptr*)XADDR(indir)),XNULL);
 				//2.DELETE
@@ -123,7 +123,7 @@ void rename(PPOpIn arg,const char* name)
 			}
 		}
 #ifdef SE_ENABLE_TRIGGERS
-        apply_per_node_triggers(res, XNULL, parent, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+        apply_per_node_triggers(res, XNULL, parent, XNULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 		if (it==argseq.begin()) break;
 	}

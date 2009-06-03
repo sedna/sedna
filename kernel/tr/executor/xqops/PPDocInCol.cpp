@@ -82,13 +82,13 @@ void PPDocInCol::next(tuple &t)
         db_ent->name = se_new char[tc_col.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc_col.get_str_mem());
 		db_ent->type = dbe_collection;
-        schema_node *root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol");
+        schema_node_cptr root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol");
 
         bool valid;
         Uri::check_constraints(&tc_doc, &valid, NULL);
         if(!valid) throw XQUERY_EXCEPTION2(FODC0005, "Invalid uri in the first argument of fn:doc.");
-        
-        xptr res = find_document((const char*)tc_col.get_str_mem(), (const char*)tc_doc.get_str_mem());
+
+        xptr res = find_document_in_collection((const char*)tc_col.get_str_mem(), (const char*)tc_doc.get_str_mem());
         if (res == NULL)
         {
             throw XQUERY_EXCEPTION2(SE1006, (std::string("Document '") + 

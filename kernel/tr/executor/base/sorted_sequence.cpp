@@ -22,7 +22,7 @@ sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_
 }
 sorted_sequence::~sorted_sequence()
 {
-	delete temp_buffer;
+	delete[] temp_buffer;
 	clear();
 	t_xptr_blk_arr::iterator it=empty_blk_arr.begin();
 	while (it!=empty_blk_arr.end())
@@ -33,14 +33,14 @@ sorted_sequence::~sorted_sequence()
     empty_blk_arr.clear();
 	if (merge_tree!=NULL)
 	{
-		pers_sset<merge_cell,unsigned short>::pers_sset_entry* tmp=merge_tree->rb_minimum(merge_tree->root);
+		sedna_rbtree<merge_cell>::sedna_rbtree_entry* tmp=merge_tree->rb_minimum(merge_tree->root);
 		while (tmp!=NULL)
 		{
 			//scm_free(tmp->obj,false);
 			merge_cell::destroy(tmp->obj);
 			tmp=merge_tree->rb_successor(tmp);
 		}
-		pers_sset<merge_cell,unsigned short>::sset_free(merge_tree);
+		sedna_rbtree<merge_cell>::sset_free(merge_tree);
 		merge_tree=NULL;
 		top=NULL;
 	}
@@ -75,7 +75,7 @@ void sorted_sequence::lazy_sort()
 	}
 	//merge_stack(true);
 	//1.init merge_tree
-	merge_tree=pers_sset<merge_cell,unsigned short>::init(false);
+	merge_tree=sedna_rbtree<merge_cell>::init();
 	//in_mem_block channel
 	if (bblk_in_chain!=XNULL)			
 	    //merge_tree->put(merge_cell::init(ptr_blk_arr[0]+sizeof(seq_blk_hdr),compareFN,Udata));
@@ -123,7 +123,7 @@ void sorted_sequence::next(tuple& t)
 	{
 		xptr tmp_in;
 		get_val(tmp,tmp_in);
-		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);
+		sedna_rbtree<merge_cell>::sedna_rbtree_entry* nxt=merge_tree->rb_successor(top);
 		if (nxt)
 		{
 			
@@ -150,7 +150,7 @@ void sorted_sequence::next(tuple& t)
 	}
 	else
 	{			
-		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);
+		sedna_rbtree<merge_cell>::sedna_rbtree_entry* nxt=merge_tree->rb_successor(top);
 		merge_cell* tmp_obj=top->obj;
 		merge_tree->rb_delete(top);
 		merge_cell::destroy(tmp_obj);
@@ -487,6 +487,7 @@ void sorted_sequence::copy_ptr_to_new_place(xptr ptr,xptr& place, bool marking)
 		}
 
 }
+
 xptr sorted_sequence::merge_sequences(xptr s1,xptr s2, bool final)
 {
 	if (final)
@@ -726,14 +727,14 @@ reinit_vars:
 	 finalized=false;
 	 if (merge_tree!=NULL)
 	 {
-		 pers_sset<merge_cell,unsigned short>::pers_sset_entry* tmp=merge_tree->rb_minimum(merge_tree->root);
+		 sedna_rbtree<merge_cell>::sedna_rbtree_entry* tmp=merge_tree->rb_minimum(merge_tree->root);
 		 while (tmp!=NULL)
 		 {
 			// scm_free(tmp->obj,false);
 			 merge_cell::destroy(tmp->obj);
 			 tmp=merge_tree->rb_successor(tmp);
 		 }
-		 pers_sset<merge_cell,unsigned short>::sset_free(merge_tree);
+		 sedna_rbtree<merge_cell>::sset_free(merge_tree);
 		 merge_tree=NULL;
 		 top=NULL;
 	 }

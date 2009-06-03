@@ -17,7 +17,10 @@
 #include "tr/ft/ft_cache.h"
 //#include "tr/ft/ft_index.h"
 
+#include "tr/cat/catmem.h"
+
 struct PathExpr;
+
 enum ft_index_type
 {
 	ft_xml,
@@ -27,40 +30,62 @@ enum ft_index_type
 	ft_delimited_value,
 	ft_customized_value
 };
+
 enum ft_index_impl
 {
 	ft_ind_dtsearch,
 	ft_ind_native
 };
+
 struct ft_custom_cell
 {
-	xml_ns* ns;
+	xmlns_ptr_pers ns_pers;
+	xmlns_ptr ns_local;
+
 	char* local;
 	ft_index_type cm;
-	static ft_custom_cell* init(xml_ns* _ns, const char* _local,ft_index_type _cm,bool persistent=true );
-	inline bool less( ft_custom_cell *p1) 
-	{
-		int val= my_strcmp(this->local,p1->local);
-		if (val<0) return true;
-		if (val>0) return false;
-		return ((int)ns<(int)p1->ns);
-	}
-	inline bool equals( ft_custom_cell *p1) 
-	{
-		return (my_strcmp(this->local,p1->local)==0 &&(int)this->ns==(int)p1->ns );
-	}
-	inline bool less(const void* p1,const void* p2) 
-	{
-		int val= my_strcmp(local,(char*)p1);
-		if (val<0) return true;
-		if (val>0) return false;
-		return ((int)ns<(int)p2);		
-	}
-	inline bool equals(const void* p1,const void* p2) 
-	{
-		return (my_strcmp(this->local,(char*)p1)==0 && (int)this->ns==(int)p2);
-	}
+
+    inline xmlns_ptr get_xmlns() {
+        if ((ns_local != NULL_XMLNS) || (ns_pers == XNULL)) return ns_local;
+        else return ns_local = xmlns_touch(ns_pers);
+    }
+
+	inline ft_custom_cell() : ns_local(NULL_XMLNS) {};
+
+	inline ft_custom_cell(xmlns_ptr_pers _ns, xmlns_ptr _ns_local, const char* _local,ft_index_type _cm) :
+        	ns_pers(_ns), ns_local(_ns_local), local(cat_strcpy(this, _local)), cm(_cm) {};
+
+    inline bool less( ft_custom_cell *p1)
+    {
+        int val= my_strcmp(this->local,p1->local);
+        if (val<0) return true;
+        if (val>0) return false;
+        return ((ptrdiff_t) get_xmlns() < (ptrdiff_t) p1->get_xmlns());
+    }
+
+    inline bool equals( ft_custom_cell *p1)
+    {
+        return (my_strcmp(this->local,p1->local)==0 && ((ptrdiff_t) get_xmlns() == (ptrdiff_t) p1->get_xmlns()));
+    }
+
+    inline bool less(const void* p1, const void* p2)
+    {
+        int val= my_strcmp(local,(char*)p1);
+        if (val<0) return true;
+        if (val>0) return false;
+        return ((ptrdiff_t) get_xmlns() < (ptrdiff_t) p2);
+    }
+
+    inline bool equals(const void* p1, const void* p2)
+    {
+        return (my_strcmp(this->local,(char*)p1)==0 && (ptrdiff_t) get_xmlns() == (ptrdiff_t) p2);
+    }
 };
+
+typedef sedna_rbtree<ft_custom_cell> ft_custom_tree_t;
+typedef std::pair< std::pair<xmlns_ptr,char*>,ft_index_type> ft_index_pair_t;
+typedef std::vector< ft_index_pair_t > ft_index_template_t;
+
 struct doc_parser
 {
 	string_consumer_fn fn;
@@ -71,51 +96,95 @@ struct doc_parser
 struct ft_idx_data
 {
 	xptr btree_root;
-	
 };
+
 typedef struct ft_idx_data ft_idx_data_t;
-struct ft_index_cell
+
+void delete_ft_custom_tree(ft_custom_tree_t * custom_tree);
+
+struct ft_index_cell_object : public catalog_object
 {
-    index_id id;
-    doc_schema_node* schemaroot;
-	char * index_title;
-	PathExpr *object; 
-	index_cell *next, *pred;
-	char* doc_name;
-	bool is_doc;
-	ft_index_type ftype;
-	ft_index_impl impl;
-	ft_idx_data_t ft_data; //FIXME: this is not needed for dtsearch indexes
-	bool fits_to_index(schema_node* snode);
-	pers_sset<ft_custom_cell,unsigned short> * custom_tree;
-	inline bool less( ft_index_cell *p1) 
-	{
-		return my_strcmp(this->index_title,p1->index_title)<0;
-	}
-	inline bool equals( ft_index_cell *p1) 
-	{
-		return my_strcmp(this->index_title,p1->index_title)==0;
-	}
-	inline bool less(const void* p1,const void* p2) 
-	{
-		return my_strcmp(this->index_title,(char*)p1)<0;
-	}
-	inline bool equals(const void* p1,const void* p2) 
-	{
-		return my_strcmp(this->index_title,(char*)p1)==0;
-	}
-	static ft_index_cell* create_index (PathExpr *object_path,ft_index_type it, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc,std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* templ, bool just_heap=false,ft_index_impl impl = ft_ind_dtsearch);
-	static void delete_index (const char *index_title, bool just_heap=false);
-	static void delete_custom_tree (pers_sset<ft_custom_cell,unsigned short> * custom_tree);
-	static ft_index_cell* find_index(const char* title, ftc_index_t *ftc_idx, bool have_ftind_sem = false);
+/* Common catalog object interface */
+
+    static const int magic = 0x025;
+    int get_magic() { return magic; };
+    void serialize_data(se_simplestream &stream);
+    void deserialize_data(se_simplestream &stream);
+    void drop();
+
+/* Fields */
+
+    doc_schema_node_xptr schemaroot;
+    char * index_title;
+    PathExpr *object; 
+    char* doc_name;
+    bool is_doc;
+    ft_index_type ftype;
+    ft_index_impl impl;
+    ft_idx_data_t ft_data;
+
+    xptr serial_root;
+    xptr pstr_sequence;
+
+    ft_custom_tree_t * custom_tree;
+
+/* Methods */
+
+    bool fits_to_index(schema_node_cptr snode);
+
+    inline ft_index_cell_object() {};
+
+    inline ft_index_cell_object(
+        PathExpr *_object_path, ft_index_type _it, 
+        const doc_schema_node_xptr _schemaroot,
+        const char * _index_title, const char* _doc_name, bool _is_doc,
+	ft_index_impl _impl = ft_ind_dtsearch
+      ) :
+        schemaroot(_schemaroot),
+        index_title(NULL),
+        object(_object_path),
+        doc_name(NULL),
+        is_doc(_is_doc),
+        ftype(_it),
+        impl(_impl),
+        serial_root(XNULL),
+        pstr_sequence(XNULL),
+        custom_tree(NULL)
+    {
+        ft_data.btree_root = XNULL;
+        index_title = cat_strcpy(this, _index_title);
+        doc_name = cat_strcpy(this, _doc_name);
+    };
+
+    ~ft_index_cell_object() { 
+        cat_free(index_title);
+        cat_free(doc_name);
+//        cat_free(object);
+
+        if (this->custom_tree!=NULL)  delete_ft_custom_tree(this->custom_tree);
+    };
+    
+    static catalog_object_header * create(
+        PathExpr *_object_path, ft_index_type _it, 
+        const doc_schema_node_xptr _schemaroot,
+        const char * _index_title, const char* _doc_name, bool _is_doc,
+        ft_index_impl _impl = ft_ind_dtsearch
+      )
+    {
+        ft_index_cell_object * obj = 
+          new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(ft_index_cell_object)))
+          ft_index_cell_object(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, _impl);
+
+        catalog_object_header * header = catalog_create_object(obj);
+        catalog_set_name(catobj_ft_indicies, _index_title, header);
+        return header;
+    };
+
 	void update_index(xptr_sequence* upserted);
 	void insert_to_index(xptr_sequence* upserted);
 	void delete_from_index(xptr_sequence* deleted);
 	void change_index(xptr_sequence* inserted,xptr_sequence* updated,xptr_sequence* deleted);
 
-	//NEW IMPLEMENTATION
-	xptr serial_root;
-	xptr pstr_sequence;
 	void init_serial_tree();
 	void destroy_serial_tree();
 	doc_serial_header serial_put (xptr& node, op_str_buf& tbuf);
@@ -127,15 +196,36 @@ struct ft_index_cell
 	xptr put_buf_to_pstr(op_str_buf& tbuf);
 };
 
-extern pers_sset<ft_index_cell,unsigned short> *ft_indexdata;
-extern index_id   *ft_idx_counter;
-extern USemaphore ft_index_sem;
+ft_index_cell_xptr create_ft_index(
+        PathExpr *_object_path, ft_index_type _it, 
+        doc_schema_node_xptr _schemaroot,
+        const char * _index_title, const char* _doc_name, bool _is_doc,
+        ft_index_template_t* _templ, bool just_heap, ft_index_impl _impl
+    );
+
+void delete_ft_index (const char *index_title, bool just_heap=false);
+
+ft_index_cell_xptr find_ft_index(const char* title, ftc_index_t *ftc_idx);
 
 //inits metadata library
-void ft_index_on_session_begin(pers_sset<ft_index_cell,unsigned short> * _indexdata_, index_id *_idx_counter_);
+
+void ft_index_on_session_begin();
 void ft_index_on_session_end();
 
+/* Counted pointer for fulltext index cell.
+ *  */
 
+struct ft_index_cell_cptr : public catalog_cptr_template<ft_index_cell_object> {
+    explicit inline ft_index_cell_cptr (catalog_object_header * aobj, bool writable = false) :
+        catalog_cptr_template<ft_index_cell_object>(aobj, writable) {} ;
+    explicit inline ft_index_cell_cptr (const char * index_title, bool write_mode = false) :
+        catalog_cptr_template<ft_index_cell_object>(catalog_find_name(catobj_ft_indicies, index_title), write_mode) {};
+    inline ft_index_cell_cptr (const xptr p, bool writable = false) : 
+        catalog_cptr_template<ft_index_cell_object>(p, writable) {};
+};
+
+
+/*
 void inline ft_index_sem_down()
 {
 #ifndef NOSEM
@@ -148,5 +238,6 @@ void inline ft_index_sem_up()
 	USemaphoreUp(ft_index_sem, __sys_call_error);
 #endif
 }
+*/
 
 #endif

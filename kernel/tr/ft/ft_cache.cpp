@@ -204,7 +204,7 @@ void flush_index(ftc_index_data *id)
 	d_printf1("ftc_flush end\n");
 	if (!id->ss)
 	{
-		ft_index_cell *idc = ft_index_cell::find_index(id->name, NULL, true);
+		ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
 		idc->ft_data.btree_root = id->btree_root;
 	}
 
@@ -213,9 +213,7 @@ void flush_index(ftc_index_data *id)
 
 void index_oom_flush(ftc_index_data *id)
 {
-	ft_index_sem_down();
 	flush_index(id);
-	ft_index_sem_up();
 	id->reset();
 }
 
@@ -223,7 +221,6 @@ void ftc_flush()
 {
 	if (ftc_indexes == FTC_NULL)
 		return;
-	ft_index_sem_down();
 	FTC_MAP *m = FTC_MAP::get_map(ftc_indexes, m_alloc);
 	FTC_MAP::pers_sset_entry *e = m->rb_minimum(FTC_MAP::get_entry(m->root, m_alloc));
 	while (e != NULL)
@@ -231,7 +228,6 @@ void ftc_flush()
 		flush_index(ftc_index_data::get(e->obj));
 		e = m->rb_successor(e);
 	}
-	ft_index_sem_up();
 }
 
 void ftc_add_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int word_ind, bool no_flush)

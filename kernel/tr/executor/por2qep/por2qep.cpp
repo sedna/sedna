@@ -138,14 +138,14 @@ void set_axis_parameters(scheme_list *lst,
                          PPOpIn &child, 
                          NodeTestType &nt_type, 
                          NodeTestData &nt_data,
-                         bool persistent)
+                         PathExprMemoryManager * mm)
 {
     if (lst->at(3).type != SCM_LIST)
        throw USER_EXCEPTION2(SE1004, "108");
 
     child = make_pp_op(cxt, lst->at(3).internal.list);
 
-    set_node_test_type_and_data(lst, nt_type, nt_data, persistent);
+    set_node_test_type_and_data(lst, nt_type, nt_data, mm);
 }
 
 void make_elem_attr_data(scheme_list *lst, sequence_type &st)
@@ -186,11 +186,11 @@ void make_elem_attr_data(scheme_list *lst, sequence_type &st)
             throw USER_EXCEPTION2(SE1004, "123");
 
         if (*(name->at(0).internal.str))
-            st.type.info.ea.node_name_uri = xs_NCName_create(name->at(0).internal.str, PathExpr_malloc_func(false));
+            st.type.info.ea.node_name_uri = xs_NCName_create(name->at(0).internal.str, pe_local_aspace->alloc);
         else 
             st.type.info.ea.node_name_uri = NULL;
 
-        st.type.info.ea.node_name_local = xs_NCName_create(name->at(1).internal.str, PathExpr_malloc_func(false));
+        st.type.info.ea.node_name_local = xs_NCName_create(name->at(1).internal.str, pe_local_aspace->alloc);
     }
 
     if (st.type.info.ea.tne == st_tne_optional || st.type.info.ea.tne == st_tne_present)
@@ -272,7 +272,7 @@ sequence_type make_sequence_type(scheme_list *lst)
             if (it_lst->size() == 2)
             {
                 if (it_lst->at(1).type != SCM_STRING) throw USER_EXCEPTION2(SE1004, "141.5");
-                st.type.info.ncname = xs_NCName_create(it_lst->at(1).internal.str, PathExpr_malloc_func(false));
+                st.type.info.ncname = xs_NCName_create(it_lst->at(1).internal.str, pe_local_aspace->alloc);
             }
             else st.type.info.ncname = NULL;
         }
@@ -838,7 +838,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisChild(cxt,
                                child,
@@ -854,7 +854,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisAttribute(cxt,
                                    child,
@@ -870,7 +870,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisParent(cxt,
                                 child,
@@ -886,7 +886,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisSelf(cxt,
                               child,
@@ -902,7 +902,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisDescendant(cxt,
                                     child,
@@ -918,7 +918,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisAncestor(cxt,
                                     child,
@@ -934,7 +934,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisDescendantOrSelf(cxt,
                                           child,
@@ -950,7 +950,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisAncestorOrSelf(cxt,
                                           child,
@@ -966,7 +966,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisFP(cxt,
                                           child,
@@ -982,7 +982,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisSibling(cxt,
                                           child,
@@ -998,7 +998,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisSibling(cxt,
                                           child,
@@ -1014,7 +1014,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisFP(cxt,
                                           child,
@@ -1030,7 +1030,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         NodeTestType nt_type;
         NodeTestData nt_data;
 
-        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
         opit = se_new PPAxisDescendantAttr(cxt,
                                         child,
@@ -1194,7 +1194,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "36");
 
-        PathExpr *path_expr = lr2PathExpr(cxt, lst->at(2).internal.list, false);
+        PathExpr *path_expr = lr2PathExpr(cxt, lst->at(2).internal.list, pe_local_aspace);
 
         scheme_list *ent_lst = lst->at(1).internal.list;
         db_entity *db_ent = make_db_entity(ent_lst, false);
@@ -2365,6 +2365,8 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
     }
     else if (op == "PPScan")
     {
+        throw USER_EXCEPTION2(SE1004, "Depricated phisical plan operation");
+/*
         if (   lst->size() != 3
             || lst->at(1).type != SCM_NUMBER
             || lst->at(2).type != SCM_LIST
@@ -2378,9 +2380,12 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         opit = se_new PPScan(cxt,
                           scm_node,
                           counted_ptr<db_entity>(db_ent));
+*/
     }
     else if (op == "PPUp")
     {
+        throw USER_EXCEPTION2(SE1004, "Depricated phisical plan operation");
+/*
         if (   lst->size() != 3
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_NUMBER
@@ -2391,6 +2396,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         opit = se_new PPUp(cxt,
                         make_pp_op(cxt, lst->at(1).internal.list),
                         scm_node);
+*/
     }
     else if (op == "PPFnCompare")
     {
@@ -3520,8 +3526,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
 
         dynamic_context *cxt = se_new dynamic_context(st_cxt, var_cxt_size);
 
-        char *ncname_prefix = xs_NCName_create(qe->at(3).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        char *ncname_local  = xs_NCName_create(qe->at(3).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
+        char *ncname_prefix = xs_NCName_create(qe->at(3).internal.list->at(0).internal.str, pe_local_aspace->alloc);
+        char *ncname_local  = xs_NCName_create(qe->at(3).internal.list->at(1).internal.str, pe_local_aspace->alloc);
 
         return se_new PPRename(make_pp_op(cxt, qe->at(2).internal.list),
                                cxt,
@@ -3836,10 +3842,10 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
         db_entity *db_ent = make_db_entity(lst->at(1).internal.list);
 
         /// object path
-        PathExpr *object_path = lr2PathExpr(NULL, lst->at(2).internal.list, true);
+        PathExpr *object_path = lr2PathExpr(NULL, lst->at(2).internal.list, pe_catalog_aspace);
 
         /// key path
-        PathExpr *key_path = lr2PathExpr(NULL, lst->at(3).internal.list, true);
+        PathExpr *key_path = lr2PathExpr(NULL, lst->at(3).internal.list, pe_catalog_aspace);
 
         xmlscm_type key_type = lr_atomic_type2xmlscm_type(lst->at(4).internal.symb);
 
@@ -3887,7 +3893,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
 
 		scheme_list *lst = qe;
 		db_entity *db_ent = make_db_entity(lst->at(2).internal.list);
-		PathExpr *object_path = lr2PathExpr(NULL, lst->at(3).internal.list, true);
+		PathExpr *object_path = lr2PathExpr(NULL, lst->at(3).internal.list, pe_catalog_aspace);
 
 		int var_cxt_size = atoi(qe->at(1).internal.num);
         dynamic_context *cxt = se_new dynamic_context(st_cxt, var_cxt_size);
@@ -3953,7 +3959,7 @@ d_printf2("\n%d",qe->size());
 
 		scheme_list *lst = qe;
 		db_entity *db_ent = make_db_entity(lst->at(4).internal.list);
-		PathExpr *trigger_path = lr2PathExpr(NULL, lst->at(5).internal.list, true);
+		PathExpr *trigger_path = lr2PathExpr(NULL, lst->at(5).internal.list, pe_catalog_aspace);
 
 		int var_cxt_size = atoi(qe->at(1).internal.num);
         dynamic_context *cxt = se_new dynamic_context(st_cxt, var_cxt_size);
@@ -3968,7 +3974,7 @@ d_printf2("\n%d",qe->size());
                 || qe->at(10).type != SCM_NUMBER   // type of the inserting node (element/attr)
                 || qe->at(11).type != SCM_LIST)    // rewritten path to the target node
                 throw USER_EXCEPTION2(SE1004, "328");
-   			path_to_parent = lr2PathExpr(NULL, lst->at(11).internal.list, true);
+   			path_to_parent = lr2PathExpr(NULL, lst->at(11).internal.list, pe_catalog_aspace);
             
             return se_new PPCreateTrigger(qe->at(2).internal.symb, 			// time 
 					               qe->at(3).internal.symb,			// event

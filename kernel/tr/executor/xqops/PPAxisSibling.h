@@ -30,7 +30,7 @@ protected:
     xptr cur;
 	bool is_col;
     t_next_fun next_fun;   
-	std::map<schema_node*,std::vector<schema_node*> > desc_sch;	
+	std::map<schema_node_xptr,std::vector<schema_node_xptr> > desc_sch;	
 	xptrChanneledMerge* merge_tree;
 
     void children(PPOpIn &_child_) { _child_ = child; }

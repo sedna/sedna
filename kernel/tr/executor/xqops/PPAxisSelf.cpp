@@ -157,7 +157,7 @@ void PPAxisSelf::next   (tuple &t)
 				if (node!=XNULL)
 				{
 					CHECKP(node);
-					schema_node* scm=(GETBLOCKBYNODE(node))->snode;
+					schema_node_cptr scm=(GETBLOCKBYNODE(node))->snode;
 					t_item type=scm->type;
 					if (type!=element) continue;
 					comp_schema fun;

@@ -81,7 +81,7 @@ void PPFtHighlight::reopen()
 	}
 	if (ptr)
 	{
-		ft_index_cell::delete_custom_tree(ptr);
+		delete_ft_custom_tree(ptr);
 		ptr = NULL;
 	}
 
@@ -101,7 +101,7 @@ void PPFtHighlight::close()
 	}
 	if (ptr)
 	{
-		ft_index_cell::delete_custom_tree(ptr);
+		delete_ft_custom_tree(ptr);
 		ptr = NULL;
 	}
 	
@@ -126,10 +126,10 @@ void PPFtHighlight::next(tuple &t)
 				throw XQUERY_EXCEPTION(SE1071);
 	
 			ftc_index_t ftc_idx;
-			ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(tc).c_str(), &ftc_idx); //FIXME: op_str_buf may be destroyed too soon
-			if (ft_idx==NULL)
+			ft_index_cell_cptr ft_idx = find_ft_index(op_str_buf(tc).c_str(), &ftc_idx); //FIXME: op_str_buf may be destroyed too soon
+			if (!ft_idx.found())
 				throw USER_EXCEPTION(SE1061);
-			sj->set_index(ft_idx);
+			sj->set_index(&*ft_idx);
 			index.op->next(t);
 			if (!t.is_eos())
 				throw XQUERY_EXCEPTION(SE1071);

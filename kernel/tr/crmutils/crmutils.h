@@ -83,10 +83,10 @@ void print_node_with_prefixes(xptr node, se_ostream& crmout, int indent);
 void print_desc_block_hdr(node_blk_hdr* block, se_ostream& crmout);
 
 /* prints information in element descriptor */
-void print_element(e_dsc* node,int shift,shft size,schema_node* scm, se_ostream& crmout);
+void print_element(e_dsc* node,int shift,shft size,schema_node_cptr scm, se_ostream& crmout);
 
 /* prints information in document descriptor */
-void print_document(d_dsc* node,int shift,shft size,schema_node* scm, se_ostream& crmout);
+void print_document(d_dsc* node,int shift,shft size,schema_node_cptr scm, se_ostream& crmout);
 
 /* prints information in text descriptor */
 void print_text(t_dsc* node,int shift,  se_ostream& crmout, t_item xq_type);
@@ -98,7 +98,7 @@ void print_attribute(a_dsc* node,int shift,  se_ostream& crmout);
 void print_descriptor(n_dsc* node,int shift, se_ostream& crmout);
 
 /* prints information in  schema node */
-void print_schema(schema_node* node, se_ostream& crmout);
+void print_schema(schema_node_cptr node, se_ostream& crmout);
 /* prints descriptive schema  of stand-alone document*/
 void print_descriptive_schema(const char * docname, se_ostream& crmout);
 
@@ -135,18 +135,18 @@ void print_text(xptr text, se_ostream& crmout,t_print ptype,t_item xq_type);
 void print_text_block(xptr block, se_ostream& crmout);
 
 //DEBUGUTILS
-void getDebugInfo(schema_node* snode, debug_info* d_in);
-void getSimpleDebugInfo(schema_node* snode, debug_info* d_in);
+void getDebugInfo(schema_node_cptr snode, debug_info* d_in);
+void getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in);
 void checkTextNodeCorrectness(xptr node);
 void checkChildReferenceValidity(xptr node);
 #ifdef VMM_GATHER_STATISTICS
-void printDebugInfo(schema_node* snode, se_ostream& crmout);
+void printDebugInfo(schema_node_cptr snode, se_ostream& crmout);
 #endif
-void printSimpleDebugInfo(schema_node* snode, se_ostream& crmout);
-void getDebugInfo(schema_node* snode, xptr& node);
-void printMFO (schema_node* node,std::map<schema_node*, std::pair<int,int> >  &mfo,int par_pref,int indent);
+void printSimpleDebugInfo(schema_node_cptr snode, se_ostream& crmout);
+void getDebugInfo(schema_node_cptr snode, xptr& node);
+void printMFO (schema_node_cptr node,std::map<schema_node_xptr, std::pair<int,int> >  &mfo,int par_pref,int indent);
 
-void isSchemaPCAllRight(schema_node* snode);
+void isSchemaPCAllRight(schema_node_cptr snode);
 void testSaDoc(const char* docname);
 
 /*
@@ -177,13 +177,13 @@ document_type get_document_type(const char* title, db_entity_type type);
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-schema_node* get_system_doc(document_type type, const char* title);
+schema_node_xptr get_system_doc(document_type type, const char* title);
 void system_tables_on_kernel_statement_end();
 
 //various output of xml document to string_buffer
 
 #ifdef SE_ENABLE_FTSEARCH
-void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,pers_sset<ft_custom_cell,unsigned short> * custom_tree=NULL, const char *opentag="<", const char *closetag=">");
+void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type, ft_custom_tree_t * custom_tree=NULL, const char *opentag="<", const char *closetag=">");
 #endif
 #endif
 

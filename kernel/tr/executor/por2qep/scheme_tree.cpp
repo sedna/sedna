@@ -227,10 +227,10 @@ void delete_scheme_list(scheme_list *node)
         switch (i->type)
         {
             case SCM_BOOL:                                         break;
-            case SCM_SYMBOL: delete i->internal.symb;              break;
+            case SCM_SYMBOL: delete[] i->internal.symb;            break;
             case SCM_CHAR:                                         break;
-            case SCM_NUMBER: delete i->internal.num;               break;
-            case SCM_STRING: delete i->internal.str;               break;
+            case SCM_NUMBER: delete[] i->internal.num;             break;
+            case SCM_STRING: delete[] i->internal.str;             break;
             case SCM_LIST:   delete_scheme_list(i->internal.list); break;
         }
     }

@@ -14,78 +14,80 @@
 #include "common/xptr.h"
 #include "tr/structures/schema.h"
 #include "common/u/usem.h"
-#include "tr/structures/pers_map.h"
+#include "tr/cat/catalog.h"
+#include "tr/cat/catmem.h"
 
-#define METADATA_NAME_SIZE			256
-//#define NOSEM 
+struct metadata_cell_object : public catalog_object {
 
-struct metadata_cell
-{
-    char* document_name;
+/* Common catalog object interface */
+    
+    static const int magic = 0x020;
+    int get_magic() { return magic; };
+    void serialize_data(se_simplestream &stream);
+    void deserialize_data(se_simplestream &stream);
+    void drop();
+
+    inline metadata_cell_object() {};
+
+    inline metadata_cell_object(bool _is_doc, const char * _name) :
+        is_doc(_is_doc),
+        name(cat_strcpy(this, _name))
+      {};
+
+    ~metadata_cell_object() { 
+        cat_free(name);
+    };
+    
+    static catalog_object_header * create(bool _is_doc, const char * _name)
+    {
+        metadata_cell_object * obj = 
+          new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(metadata_cell_object)))
+          metadata_cell_object(_is_doc, _name);
+
+        catalog_object_header * header = catalog_create_object(obj);
+
+        catalog_set_name(catobj_metadata, _name, header);
+        return header;
+    };
+
+/* Fields */
+
+    char* name; /* persistent string */
+    schema_node_xptr snode; /* persistent */
+    bool is_doc; /* persistent */
 };
 
-struct sn_metadata_cell: public metadata_cell
-{	
-	char* collection_name;
-	schema_node *snode;
-	inline bool less( sn_metadata_cell *p1) 
-	{
-		return my_strcmp(this->collection_name,p1->collection_name)<0 ||
-			(my_strcmp(this->collection_name,p1->collection_name)==0 && my_strcmp(this->document_name,p1->document_name)<0);
-	}
-	inline bool equals( sn_metadata_cell *p1) 
-	{
-		return my_strcmp(this->collection_name,p1->collection_name)==0 &&
-			my_strcmp(this->document_name,p1->document_name)==0;
-	}
-	inline bool less(const void* p1,const void* p2) 
-	{
-		return my_strcmp(this->collection_name,(char*)p1)<0 ||
-			(my_strcmp(this->collection_name,(char*)p1)==0 && my_strcmp(this->document_name,(char*)p2)<0);
-	}
-	inline bool equals(const void* p1,const void* p2) 
-	{
-		return my_strcmp(this->collection_name,(char*)p1)==0 
-			&& my_strcmp(this->document_name,(char*)p2)==0;
-	}
+struct metadata_cell_cptr : public catalog_cptr_template<metadata_cell_object> {
+    explicit inline metadata_cell_cptr (catalog_object_header * aobj, bool writable = false) :
+        catalog_cptr_template<metadata_cell_object>(aobj, writable) {} ;
+    explicit inline metadata_cell_cptr (const char * title, bool write_mode = false) :
+        catalog_cptr_template<metadata_cell_object>(catalog_find_name(catobj_metadata, title), write_mode) {};
+    inline metadata_cell_cptr (const xptr p, bool writable = false) : 
+        catalog_cptr_template<metadata_cell_object>(p, writable) {};
 };
 
+typedef metadata_cell_cptr metadata_cptr;
 
-extern pers_sset<sn_metadata_cell,unsigned short> *metadata;
-extern USemaphore metadata_sem;
-
-//inits metadata library
-void metadata_on_session_begin(pers_sset<sn_metadata_cell,unsigned short> *mdc);
+void metadata_on_session_begin();
 void metadata_on_session_end();
 
-
-void delete_document( const char *document_name);
-void delete_document(const char *collection_name,const char *document_name);
+void delete_document(const char *document_name);
 void delete_collection(const char *collection_name);
-xptr insert_document(const char *uri,bool persistent=true);
-schema_node *insert_collection(const char *collection_name);
-xptr insert_document_in_collection(const char *collection_name, const char *uri);
+void delete_document_from_collection(const char *collection_name, const char *document_name);
 
-schema_node *find_collection(const char *collection_name);
-xptr find_document(const char *collection_name,const char *document_name);
-schema_node *find_document(const char *document_name);
+xptr insert_document(const char *uri, bool persistent = true);
+col_schema_node_xptr insert_collection(const char *collection_name);
+xptr insert_document_into_collection(const char *collection_name, const char *uri);
 
-void rename_collection(const char *old_collection_name,const char *new_collection_name);
-
-void inline metadata_sem_down()
-{
-#ifndef NOSEM
-	USemaphoreDown(metadata_sem, __sys_call_error);
-#endif
-}
-void inline metadata_sem_up()
-{
-#ifndef NOSEM
-	USemaphoreUp(metadata_sem, __sys_call_error);
-#endif
+inline bool document_or_collection_exists(const char *name) {
+  return catalog_name_exists(catobj_metadata, name);
 }
 
-//UNREALIZED
-std::string get_name_from_uri(const char* uri);
+doc_schema_node_xptr find_document(const char *document_name);
+col_schema_node_xptr find_collection(const char *collection_name);
+xptr find_document_in_collection(const char *collection_name, const char *document_name);
+
+void rename_collection(const char *old_collection_name, const char *new_collection_name);
+
 #endif
 

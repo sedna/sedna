@@ -4,6 +4,8 @@
  */
 
 #include <string.h>
+#include <sstream>
+
 #include "tr/triggers/triggers_data.h"
 #include "tr/triggers/triggers_utils.h"
 #include "common/errdbg/exceptions.h"
@@ -11,19 +13,15 @@
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/log/log.h"
-#include "tr/locks/locks.h"
 #include "tr/structures/schema.h"
 #include "tr/executor/por2qep/por2qep.h"
 #include "tr/executor/base/dm_accessors.h"
-
+#include "tr/cat/catstore.h"
 
 //using namespace std;
 
 //Global
 qep_parameters_vec* qep_parameters = NULL;
-
-pers_sset<trigger_cell,unsigned short> *triggerdata;
-USemaphore trigger_sem;//SEMAPHORE!!!
 
 trigger_action_cell *rcv_tac = NULL; // for recovery purposes
 bool isTriggersOn = true;
@@ -31,13 +29,13 @@ bool isTriggersOn = true;
 static bool triggers_initialized = false;
 
 //inits metadata library
-void triggers_on_session_begin(pers_sset<trigger_cell,unsigned short> * _triggerdata_)
+void triggers_on_session_begin()
 {
-    triggerdata = _triggerdata_;
 	//SEMAPHORE INIT SECTION
+/*
 	if (USemaphoreOpen(&trigger_sem, TRIGGER_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "TRIGGER_SEMAPHORE_STR");
-
+*/
     triggers_initialized = true;
 }
 
@@ -45,8 +43,10 @@ void triggers_on_session_end()
 {
     if (!triggers_initialized) return;
 	//SEMAPHORE RELEASE SECTION
+/*
     if (USemaphoreClose(trigger_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4013, "TRIGGER_SEMAPHORE_STR");
+*/
     triggers_initialized = false;
 }
 
@@ -72,303 +72,138 @@ void triggers_on_statement_end()
     current_nesting_level = 0;
 }
 
-pers_sset<trigger_cell,unsigned short>::pers_sset_entry* search_triggerdata_cell(const char *trigger_title)
+bool trigger_cell_object::fits_to_trigger(schema_node_cptr snode)
 {
-	return triggerdata->get(trigger_title,NULL);	
-}
-
-bool trigger_cell::fits_to_trigger(schema_node* snode)
-{
-	t_scmnodes objs=execute_abs_path_expr(snode->root,trigger_path);
-	t_scmnodes::iterator it=objs.begin();
-	while (it!=objs.end())
-	{
-		if (*it==snode)		
-			return true;		
-		it++;
-	}
-	return false;
-}
-bool trigger_cell::fits_to_trigger_path_to_parent(schema_node* parent)
-{
-	t_scmnodes objs=execute_abs_path_expr(parent->root,path_to_parent);
-	t_scmnodes::iterator it=objs.begin();
-	while (it!=objs.end())
-	{
-		if (*it==parent)		
-			return true;		
-		it++;
-	}
-	return false;
-}
-void inline free_triggerdata_cell(pers_sset<trigger_cell,unsigned short>::pers_sset_entry* entry)
-{
-	trigger_cell* trc=entry->obj;
-	triggerdata->rb_delete(entry);
-	if (trc->trigger_title!=NULL)
-		scm_free(trc->trigger_title,true);
-    if (trc->trigger_path!=NULL)
-        delete_PathExpr(trc->trigger_path);
-    if (trc->doc_name!=NULL)
-        scm_free(trc->doc_name,true);
-    trigger_action_cell *trac=trc->trigger_action;
-    trigger_action_cell *trac2=NULL;
-    while(trac!=NULL)
+    t_scmnodes objs=execute_abs_path_expr(snode->root,trigger_path);
+    t_scmnodes::iterator it=objs.begin();
+    while (it!=objs.end())
     {
-        scm_free(trac->statement,true);
-        trac2=trac->next;
-        scm_free(trac, true);
-        trac=trac2;
-		RECOVERY_CRASH;
+        if (*it==snode.ptr())
+            return true;
+        it++;
     }
-	if (trc->path_to_parent!=NULL)
-    {
-		delete_PathExpr(trc->path_to_parent);
-        scm_free(trc->innode.name,true);
-    }
-    scm_free(trc,true);
+    return false;
 }
-trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, 
-											enum trigger_event tr_event, 
-											PathExpr *trigger_path,  
-											enum trigger_granularity tr_gran, 
-											scheme_list* action, 
-											inserting_node innode, 
-											PathExpr *path_to_parent, 
-											doc_schema_node* schemaroot, 
-											const char * trigger_title, 
-											const char* doc_name, 
-											bool is_doc)
+
+bool trigger_cell_object::fits_to_trigger_path_to_parent(schema_node_cptr parent)
 {
-	// I. Create and fill new trigger cell
-	trigger_sem_down();
-	if (search_triggerdata_cell(trigger_title)!=NULL)
-	{
-		trigger_sem_up();	
-		throw USER_EXCEPTION(SE3200);
-	}
-	down_concurrent_micro_ops_number();
-	trigger_cell* trc=(trigger_cell*)scm_malloc(sizeof(trigger_cell),true);
-	trc->schemaroot = schemaroot;
-	schemaroot->create_trigger(trc);
-	trc->trigger_path = trigger_path;
-	trc->trigger_event = tr_event;
-    trc->trigger_time = tr_time;
-    trc->trigger_granularity = tr_gran;
-    
-    if (rcv_tac != NULL) // recovery mode
+    t_scmnodes objs=execute_abs_path_expr(parent->root,path_to_parent);
+    t_scmnodes::iterator it=objs.begin();
+    while (it!=objs.end())
     {
-    	trc->trigger_action = rcv_tac; // trigger_action_cell sequence has already been recovered from logical log
-    	rcv_tac = NULL;
+        if (*it==parent.ptr())
+            return true;
+        it++;
     }
-    else
+    return false;
+}
+
+
+void trigger_cell_object::serialize_data(se_simplestream &stream)
+{
+    U_ASSERT(schemaroot != XNULL);
+    cs_set_hint(schemaroot);
+
+    stream.write_string(trigger_title);
+    stream.write(&schemaroot, sizeof(doc_schema_node_xptr));
+    stream.write_string(doc_name);
+    stream.write(&is_doc, sizeof(bool));
+    stream.write(&trigger_event, sizeof(enum trigger_event));
+    stream.write(&trigger_time, sizeof(enum trigger_time));
+    stream.write(&trigger_granularity, sizeof(enum trigger_granularity));
+
+    for (trigger_action_cell *i = trigger_action; i != NULL; i = i->next)
     {
-    	trc->trigger_action = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
-    	trigger_action_cell* trac = trc->trigger_action;
-    	for(int i = 0; i < action->size(); i++)
-    	{
-			if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
-        	{
-            	trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
-            	strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
-            	trac->cxt_size = atoi(action->at(i).internal.str+35);
-	// FIXME cxt_size for trigger statements must be extracted in scheme part
-	//            trac->cxt_size = atoi(action->at(i+1).internal.num); 
-        	}
-        	else  //this is an update
-        	{
-            	trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
-            	strcpy(trac->statement,action->at(i).internal.str);
-        	}
-        	if(i==action->size()-1)
-            	trac->next = NULL;
-        	else
-            	trac->next = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
-        	trac = trac->next;
-			RECOVERY_CRASH;
-    	}
-    }
-    // if the trigger is on before insert and statement level
-    if((trc->trigger_event == TRIGGER_INSERT_EVENT) &&
-       (trc->trigger_time == TRIGGER_BEFORE) &&
-       (trc->trigger_granularity == TRIGGER_FOR_EACH_NODE)&&
-       (path_to_parent))
-    {
-        trc->path_to_parent = path_to_parent;
-        trc->innode.name = (char*)scm_malloc(strlen(innode.name)+1,true);
-        strcpy(trc->innode.name,innode.name);
-        trc->innode.type = innode.type;
-    }
-	else
-	{
-		trc->path_to_parent = NULL;
-		trc->innode.name = NULL;
-	}
-	trc->trigger_title=(char*)scm_malloc(strlen(trigger_title)+1,true);
-	strcpy(trc->trigger_title,trigger_title);
-	trc->doc_name=(char*)scm_malloc(strlen(doc_name)+1,true);
-	strcpy(trc->doc_name,doc_name);
-	trc->is_doc=is_doc;
-
-	triggerdata->put(trc);
-	trigger_sem_up();
-    hl_logical_log_trigger(tr_time, tr_event, trigger_path, tr_gran, trc->trigger_action, trc->innode, path_to_parent, trigger_title, doc_name, is_doc, true);
-
-	// ALGORITHM: setting up trigger over discriptive scheme
-	//II. Execute abs path (object_path) on the desriptive schema
-	t_scmnodes sobj = execute_abs_path_expr(schemaroot, trigger_path);
-	//III. For each schema node found (sn_obj)
-	std::vector<xptr> start_nodes;
-	for (int i = 0; i < sobj.size(); i++)
-	{	
-		sobj[i]->add_trigger(trc);
-		RECOVERY_CRASH;
-	}
-		
-   	up_concurrent_micro_ops_number();
-
-	return trc;
-}
-void trigger_cell::delete_trigger (const char *trigger_title)
-{
-	trigger_sem_down();
-	pers_sset<trigger_cell,unsigned short>::pers_sset_entry* trc=search_triggerdata_cell(trigger_title);
-	if (trc!=NULL)
-	{
-		down_concurrent_micro_ops_number();
-//		hl_logical_log_ft_index((idc->obj)->object,(idc->obj)->ftype,(idc->obj)->index_title,(idc->obj)->doc_name,(idc->obj)->is_doc,(idc->obj)->custom_tree,false);
-        hl_logical_log_trigger((trc->obj)->trigger_time, (trc->obj)->trigger_event, (trc->obj)->trigger_path, (trc->obj)->trigger_granularity, (trc->obj)->trigger_action, (trc->obj)->innode, (trc->obj)->path_to_parent, (trc->obj)->trigger_title, (trc->obj)->doc_name, (trc->obj)->is_doc, false);
-		trigger_cell* tc=trc->obj;
-		doc_schema_node* sm=(trc->obj)->schemaroot;
-		free_triggerdata_cell(trc);
-   		sm->delete_trigger(tc);
-		trigger_sem_up();
-		up_concurrent_micro_ops_number();
-	}
-	else
-		trigger_sem_up();
-}
-trigger_cell* trigger_cell::find_trigger(const char* title)
-{
-    trigger_sem_down();
-	pers_sset<trigger_cell,unsigned short>::pers_sset_entry* trc=search_triggerdata_cell(title);
-	if (trc==NULL)
-	{
-		trigger_sem_up();	
-		return NULL;
-	}
-	else
-	{
-		trigger_sem_up();	
-		return trc->obj;
-	}
-}
-xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old, xptr parameter_where)
-{
-   xptr res_xptr = XNULL;
-   se_nullostream nulls;
-   PPQueryEssence* qep_tree = NULL;
-   qep_subtree* qep_subtree = NULL;
-   bool is_qep_opened = false, is_subqep_opened = false, is_qep_built = false, is_subqep_built = false;
-   std::vector<built_trigger_action> built_trigger_actions_vec;
-   typedef std::pair< std::string, std::vector<built_trigger_action> > trigger_actions_pair;
-   lock_mode cur_lock = local_lock_mrg->get_cur_lock_mode(); // push current lock level to restore it after updates/query execution
-   
-   current_nesting_level++;
-   if(current_nesting_level > TRIGGER_MAX_CASCADING_LEVEL) 
-        throw USER_EXCEPTION2(SE3206,trigger_title);
-   
-    built_trigger_actions_map::iterator mapIter;
-   	mapIter = built_trigger_actions.find(std::string(trigger_title));
-
-    /* Trigger action has not been built yet -> build it and store into the map */
-
-	if ( mapIter == built_trigger_actions.end() )            
-	{
-        std::pair<built_trigger_actions_map::iterator, bool> mapPair;
-        trigger_action_cell* trac = trigger_action;
-        try
-        {
-			built_trigger_action bta;
-            is_qep_built = is_subqep_built = false;
-	        qep_parameters = &(bta.parameters);
-            while(trac!=NULL)
-        	{
-				if(strstr(trac->statement, "query") != NULL)
-				{
-					bta.action_qep_subtree = NULL;
-					qep_tree = bta.action_qep_tree = build_qep(trac->statement, nulls, xml);
-					is_qep_built = true;
-					qep_tree->open();
-					is_qep_opened = true;
-					built_trigger_actions_vec.push_back(bta);
-				}
-				else
-				{
-       				bta.action_qep_tree = NULL;
-           			qep_subtree = bta.action_qep_subtree = build_qep(trac->statement, trac->cxt_size);
-					is_subqep_built = true;
-					qep_subtree->tree.op->open();
-					is_subqep_opened = true;
-					built_trigger_actions_vec.push_back(bta);
-				}
-				trac = trac->next;
-	        }
-        }
-        catch(SednaUserException &e) {
-        if (is_qep_built)
-	        delete_qep(qep_tree);
-        if (is_subqep_built)
-            delete_qep(qep_subtree);
-        throw e;}
-        
-        mapPair = built_trigger_actions.insert(trigger_actions_pair(std::string(trigger_title), built_trigger_actions_vec));
-        mapIter = mapPair.first;
+        stream.write_string(i->statement);
+        stream.write(&i->cxt_size, sizeof(int));
     }
 
-     /* Executing built actions */
+    void * n = NULL;
+    stream.write(&n, sizeof(void *));
 
-     int action_returns_value = ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
-     int i = 0;
-     for(i = 0; i < mapIter->second.size()-action_returns_value; i++)
-     {
-         if(mapIter->second.at(i).action_qep_tree)
-         {
-             qep_tree = mapIter->second.at(i).action_qep_tree;
-             qep_parameters = &(mapIter->second.at(i).parameters);
-			 set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-       	     if(qep_tree->is_update())
-	             qep_tree->execute();
-         }
-     }
-	 if (action_returns_value)
-     {
-        /* Since we truncate PPQueryRoot in create_trigger we must set lm_s
-           explicitly there. If not we will receive nested updates exception
-           even if execute read only query there.
-         */
-        local_lock_mrg->lock(lm_s);
+    if (trigger_path) {
+        std::ostringstream trigger_path_str(std::ios::out | std::ios::binary);
+        PathExpr2lr(trigger_path, trigger_path_str);
+        stream.write_string(trigger_path_str.str().c_str());
+    } else {
+        stream.write_string(NULL);
+    }
 
-        qep_subtree = mapIter->second.at(i).action_qep_subtree;
-        qep_parameters = &(mapIter->second.at(i).parameters);
-        set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-		tuple t = tuple(1);
-		qep_subtree->tree.op->next(t);
-		if (!t.cells[0].is_node())
-			res_xptr = XNULL;
-		else
-			res_xptr = t.cells[0].get_node();
+    if (path_to_parent) {
+        std::ostringstream path_to_parent_str(std::ios::out | std::ios::binary);
+        PathExpr2lr(path_to_parent, path_to_parent_str);
+        stream.write_string(path_to_parent_str.str().c_str());
+    } else {
+        stream.write_string(NULL);
+    }
 
-		/* Retrieve all items to make the qep_subtree usable next time. */
-		while(!t.is_eos()) 
-			qep_subtree->tree.op->next(t);
-     }
+    stream.write_string(innode.name);
+    stream.write(&innode.type, sizeof(t_item));
 
-   current_nesting_level--;
-   local_lock_mrg->lock(cur_lock);
+//    stream.write(&err_cntr, sizeof(int));
+}
 
-   if(XNULL != res_xptr) CHECKP(res_xptr);   
+void trigger_cell_object::deserialize_data(se_simplestream &stream)
+{
+    trigger_title = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    stream.read_string(SSTREAM_SAVED_LENGTH, trigger_title);
+    stream.read(&schemaroot, sizeof(doc_schema_node_xptr));
+    doc_name = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    stream.read_string(SSTREAM_SAVED_LENGTH, doc_name);
+    stream.read(&is_doc, sizeof(bool));
+    stream.read(&trigger_event, sizeof(enum trigger_event));
+    stream.read(&trigger_time, sizeof(enum trigger_time));
+    stream.read(&trigger_granularity, sizeof(enum trigger_granularity));
 
-   return res_xptr;
+    trigger_action_cell *i = NULL, *j;
+    trigger_action = NULL;
+
+    while (* (void **) stream.get_content() != NULL) {
+        j = i;
+        i = (trigger_action_cell *) malloc(sizeof(trigger_action_cell));
+        i->next = NULL;
+        i->statement = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+        stream.read_string(SSTREAM_SAVED_LENGTH, i->statement);
+        stream.read(&i->cxt_size, sizeof(int));
+        if (trigger_action == NULL) { trigger_action = i; }
+        if (j != NULL) { j->next = i; }
+    }
+
+    stream.read(&i, sizeof(void *));
+
+    char * trigger_path_str;
+    char * path_to_parent_str;
+
+    trigger_path_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    stream.read_string(SSTREAM_SAVED_LENGTH, trigger_path_str);
+
+    path_to_parent_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    stream.read_string(SSTREAM_SAVED_LENGTH, path_to_parent_str);
+
+    if (trigger_path_str != NULL) {
+        trigger_path = lr2PathExpr(NULL, trigger_path_str, pe_catalog_aspace);
+    } else {
+        trigger_path = NULL;
+    }
+
+    if (path_to_parent_str != NULL) {
+        path_to_parent = lr2PathExpr(NULL, path_to_parent_str, pe_catalog_aspace);
+    } else {
+        path_to_parent = NULL;
+    }
+
+    innode.name = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    stream.read_string(SSTREAM_SAVED_LENGTH, innode.name);
+    stream.read(&innode.type, sizeof(t_item));
+
+//    stream.read(&err_cntr, sizeof(int));
+}
+
+void trigger_cell_object::drop()
+{
+    schemaroot.modify()->delete_trigger(p_object);
+    catalog_delete_name(catobj_triggers, this->trigger_title);
+    cs_free(p_object);
+    catalog_delete_object(this);
 }
 

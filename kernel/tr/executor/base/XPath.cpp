@@ -9,84 +9,68 @@
 
 #include "common/base.h"
 #include "tr/executor/base/XPath.h"
-#include "common/ph/pers_heap.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/structures/schema.h"
 #include "tr/executor/base/PPBase.h"
-
-
 
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// PathExpr memory management
 ////////////////////////////////////////////////////////////////////////////////
-typedef std::list<void*> mem_addr_list;
 
-static mem_addr_list local_addrs;
-static mem_addr_list pers_addrs;
+FastPointerArray pe_local_heap_warden;
+FastPointerArray pe_catalog_heap_warden;
 
-
-void *PathExpr_mem_alloc(size_t size)
+void * pe_malloc(size_t size)
 {
-    void *p = malloc(size);
-    local_addrs.push_back(p);
-    return p;
-}
+    return pe_local_heap_warden.add(malloc(size));
+};
 
-void *PathExpr_pers_alloc(size_t size)
+void pe_free(void *) { };
+
+void pe_free_all()
 {
-    void *p = pers_malloc(size);
-    if(p == NULL) throw SYSTEM_EXCEPTION(PH_CANNOT_ALLOCATE_MSG);
-    pers_addrs.push_back(p);
-    return p;
-}
+    pe_local_heap_warden.freeAll();
+    pe_local_heap_warden.clear();
+};
 
-void PathExpr_local_free()
+void * cat_pe_malloc(size_t size)
 {
-    void *p = NULL;
-    for (mem_addr_list::iterator it = local_addrs.begin(); it != local_addrs.end(); it++) 
-    {
-        p = *it;
-        free(p);
-    }
-    local_addrs.clear();
-}
+    return pe_catalog_heap_warden.add(malloc(size));
+};
 
-void PathExpr_pers_free()
+void cat_pe_free(void *) { };
+
+void cat_pe_free_all()
 {
-    void *p = NULL;
-    for (mem_addr_list::iterator it = pers_addrs.begin(); it != pers_addrs.end(); it++) 
-    {
-        p = *it;
-        pers_free(*it);
-    }
-    pers_addrs.clear();
-}
+    pe_catalog_heap_warden.freeAll();
+    pe_catalog_heap_warden.clear();
+};
 
-void PathExpr_reset_pers()
-{
-    pers_addrs.clear();
-}
+PathExprMemoryManager pe_local_memory_manager = { pe_malloc, pe_free, pe_free_all, NULL };
+PathExprMemoryManager pe_catalog_memory_manager = { cat_pe_malloc, cat_pe_free, cat_pe_free_all, NULL };
 
+PathExprMemoryManager * pe_local_aspace = &pe_local_memory_manager;
+PathExprMemoryManager * pe_catalog_aspace = &pe_catalog_memory_manager;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PathExpr program logic
 ///////////////////////////////////////////////////////////////////////////////
-void *create_PathExpr(const PathExprDistr &distr, bool persistent)
+void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm)
 {
-    PathExpr *path = (PathExpr*)PathExpr_malloc(sizeof(PathExpr), persistent);
+    PathExpr *path = (PathExpr*)mm->alloc(sizeof(PathExpr));
     path->s = distr.size();
     if (path->s == 0) path->nto = NULL;
     else 
     {
-        path->nto = (NodeTestOr*)PathExpr_malloc(sizeof(NodeTestOr) * path->s, persistent);
+        path->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * path->s);
 
         for (int i = 0; i < path->s; i++)
         {
             NodeTestOr &nto = path->nto[i];
             nto.s = distr[i];
-            nto.nt = (NodeTest*)PathExpr_malloc(sizeof(NodeTest) * nto.s, persistent);
+            nto.nt = (NodeTest*)mm->alloc(sizeof(NodeTest) * nto.s);
         }
     }
 
@@ -95,53 +79,46 @@ void *create_PathExpr(const PathExprDistr &distr, bool persistent)
 
 void delete_PathExpr(PathExpr *path)
 {
-    if (IS_PH_PTR((void*)path))
+    for (int i = 0; i < path->s; i++)
     {
-        for (int i = 0; i < path->s; i++)
+        NodeTestOr &nto = path->nto[i];
+        for (int j = 0; j < nto.s; j++)
         {
-            NodeTestOr &nto = path->nto[i];
-            for (int j = 0; j < nto.s; j++)
-            {
-                NodeTest &nt = nto.nt[j];
+            NodeTest &nt = nto.nt[j];
 
-                switch (nt.type)
-                {
-                    case node_test_wildcard_ncname_star:
-                        {
-                            xs_NCName_release(nt.data.ncname_prefix, pers_free);
-                            nt.data.ncname_prefix = NULL;
-                            xs_anyURI_release(nt.data.uri, pers_free);
-                            nt.data.uri = NULL;
-                            break;
-                        }
-                    case node_test_wildcard_star_ncname:
-                        {
-                            xs_NCName_release(nt.data.ncname_local, pers_free);
-                            nt.data.ncname_local = NULL;
-                            break;
-                        }
-                    case node_test_qname:
-                        {
-                            xs_NCName_release(nt.data.ncname_prefix, pers_free);
-                            nt.data.ncname_prefix = NULL;
-                            xs_anyURI_release(nt.data.uri, pers_free);
-                            nt.data.uri = NULL;
-                            xs_NCName_release(nt.data.ncname_local, pers_free);
-                            nt.data.ncname_local = NULL;
-                            break;
-                        }
-                    default: ;
-                }
+            switch (nt.type)
+            {
+                case node_test_wildcard_ncname_star:
+                    {
+                        xs_NCName_release(nt.data.ncname_prefix, pe_free);
+                        nt.data.ncname_prefix = NULL;
+                        xs_anyURI_release(nt.data.uri, pe_free);
+                        nt.data.uri = NULL;
+                        break;
+                    }
+                case node_test_wildcard_star_ncname:
+                    {
+                        xs_NCName_release(nt.data.ncname_local, pe_free);
+                        nt.data.ncname_local = NULL;
+                        break;
+                    }
+                case node_test_qname:
+                    {
+                        xs_NCName_release(nt.data.ncname_prefix, pe_free);
+                        nt.data.ncname_prefix = NULL;
+                        xs_anyURI_release(nt.data.uri, pe_free);
+                        nt.data.uri = NULL;
+                        xs_NCName_release(nt.data.ncname_local, pe_free);
+                        nt.data.ncname_local = NULL;
+                        break;
+                    }
+                default: ;
             }
-            pers_free(nto.nt);
         }
-        pers_free(path->nto);
-        pers_free(path);
+        pe_free(nto.nt);
     }
-    else
-    {
-        throw USER_EXCEPTION2(SE1003, "delete_PathExpr is not implemented for dynamic memory");
-    }
+    pe_free(path->nto);
+    pe_free(path);
 }
 
 
@@ -302,13 +279,13 @@ void PathExpr2lr(PathExpr *path, std::ostream& str)
 void set_node_test_type_and_data(scheme_list *lst, 
                                  NodeTestType &nt_type, //out parameter
                                  NodeTestData &nt_data, //out parameter
-                                 bool persistent)
+                                 PathExprMemoryManager * mm)
 {
     if (lst->at(1).type != SCM_SYMBOL)
         throw USER_EXCEPTION2(SE1004, "Path expression");
 
     string type = string(lst->at(1).internal.symb);
-    if (type == "processing_instruction") nt_type = node_test_processing_instruction;
+    if (type == "processing-instruction") nt_type = node_test_processing_instruction;
     else if (type == "comment") nt_type = node_test_comment;
     else if (type == "text") nt_type = node_test_text;
     else if (type == "node") nt_type = node_test_node;
@@ -331,7 +308,7 @@ void set_node_test_type_and_data(scheme_list *lst,
             throw USER_EXCEPTION2(SE1004, "Path expression");
 
         if (strcmp(lst->at(2).internal.str, "http://www.w3.org/XML/1998/namespace") !=0)
-            nt_data.uri = xs_anyURI_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+            nt_data.uri = xs_anyURI_create(lst->at(2).internal.str, mm->alloc);
         return;
     }
 
@@ -340,7 +317,7 @@ void set_node_test_type_and_data(scheme_list *lst,
         if (lst->at(2).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "Path expression");
 
-        nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, mm->alloc);
         return;
     }
 
@@ -355,11 +332,11 @@ void set_node_test_type_and_data(scheme_list *lst,
 
         if (*(lst->at(2).internal.list->at(0).internal.str))
             if (strcmp(lst->at(2).internal.list->at(0).internal.str, "http://www.w3.org/XML/1998/namespace") != 0)
-                nt_data.uri = xs_anyURI_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(persistent));
+                nt_data.uri = xs_anyURI_create(lst->at(2).internal.list->at(0).internal.str, mm->alloc);
 
-        nt_data.ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(persistent));
+        nt_data.ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, mm->alloc);
         if (*(lst->at(2).internal.list->at(2).internal.str))
-            nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(2).internal.str, PathExpr_malloc_func(persistent));
+            nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(2).internal.str, mm->alloc);
     }
 
     if (nt_type == node_test_processing_instruction)
@@ -371,7 +348,7 @@ void set_node_test_type_and_data(scheme_list *lst,
         }
         else if (lst->at(2).type == SCM_STRING)
         {
-            nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+            nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, mm->alloc);
         }
         else throw USER_EXCEPTION2(SE1004, "110");
 
@@ -392,7 +369,7 @@ void set_node_test_type_and_data(scheme_list *lst,
 
 void set_node_test_parameters(scheme_list *lst, 
                               NodeTest &nt, //out parameter
-                              bool persistent)
+                              PathExprMemoryManager * mm)
 {
     if (   lst->size() != 3
         || lst->at(0).type != SCM_SYMBOL)
@@ -406,12 +383,12 @@ void set_node_test_parameters(scheme_list *lst,
     else if (axis == "PPAxisDescendant") nt.axis = axis_descendant;
     else if (axis == "PPAxisDescendantOrSelf") nt.axis = axis_descendant_or_self;
     else if (axis == "PPAxisDescendantAttr") nt.axis = axis_descendant_attr;
-    else throw USER_EXCEPTION2(SE1004, "Path expression");    
+    else throw USER_EXCEPTION2(SE1004, "Path expression");
 
-    set_node_test_type_and_data(lst, nt.type, nt.data, persistent);
+    set_node_test_type_and_data(lst, nt.type, nt.data, mm);
 }
 
-PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persistent)
+PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, PathExprMemoryManager * mm)
 {
     int i = 0, j = 0;
     PathExprDistr distr(path_lst->size(), 0);
@@ -427,7 +404,7 @@ PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persiste
         distr[i] = node_test_or_lst->size();
     }
 
-    PathExpr *path_expr = (PathExpr*)create_PathExpr(distr, persistent);
+    PathExpr *path_expr = (PathExpr*)create_PathExpr(distr, mm);
 
     for (i = 0; i < path_lst->size(); i++)
     {
@@ -439,43 +416,45 @@ PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persiste
             if (node_test_or_lst->at(j).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "Path expression");
 
-            set_node_test_parameters(node_test_or_lst->at(j).internal.list, path_expr->nto[i].nt[j], persistent);
+            set_node_test_parameters(node_test_or_lst->at(j).internal.list, path_expr->nto[i].nt[j], mm);
         }
     }
 
     return path_expr;
 }
 
-PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, bool persistent)
+PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, PathExprMemoryManager * mm)
 {
     scheme_list *lst = make_tree_from_scheme_list(str);
-    PathExpr *path = lr2PathExpr(cxt, lst, persistent);
+    PathExpr *path = lr2PathExpr(cxt, lst, mm);
     delete_scheme_list(lst); // !!! free memory in case of exception too
 
     return path;
 }
 
-PathExpr *build_PathExpr(schema_node *from, schema_node *to)
+PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
 {
-    std::vector<schema_node*> scm_nodes;
-    schema_node *cur = to;
-    while (cur != from)
+    const static PathExprMemoryManager * mm = pe_local_aspace;
+
+    std::vector<schema_node_xptr> scm_nodes;
+    schema_node_cptr cur = to;
+    while (cur.ptr() != from.ptr())
     {
-        scm_nodes.push_back(cur);
+        scm_nodes.push_back(cur.ptr());
         cur = cur->parent;
     }
 
-    PathExpr *path_expr = (PathExpr*)PathExpr_malloc(sizeof(PathExpr), false);
-    path_expr->nto = (NodeTestOr*)PathExpr_malloc(sizeof(NodeTestOr) * scm_nodes.size(), false);
+    PathExpr *path_expr = (PathExpr*)mm->alloc(sizeof(PathExpr));
+    path_expr->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * scm_nodes.size());
     path_expr->s = scm_nodes.size();
 
     int i = 0;
-    schema_node *parent = from;
+    schema_node_cptr parent = from;
     for (i = 0; i < scm_nodes.size(); ++i)
     {
         cur = scm_nodes[scm_nodes.size() - i - 1];
 
-        path_expr->nto[i].nt = (NodeTest*)PathExpr_malloc(sizeof(NodeTest), false);
+        path_expr->nto[i].nt = (NodeTest*)mm->alloc(sizeof(NodeTest));
         path_expr->nto[i].s = 1;
 
         if (cur->type == attribute)
@@ -488,8 +467,8 @@ PathExpr *build_PathExpr(schema_node *from, schema_node *to)
             case element      : {
                                     path_expr->nto[i].nt->type = node_test_qname;
                                     // FIXME:
-                                    path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, PathExpr_malloc_func(false));
-                                    path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->xmlns->uri, PathExpr_malloc_func(false));
+                                    path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, mm->alloc);
+                                    path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->get_xmlns()->uri, mm->alloc);
                                     break;
                                 }
             case text         : {
@@ -499,8 +478,8 @@ PathExpr *build_PathExpr(schema_node *from, schema_node *to)
             case attribute    : {
                                     path_expr->nto[i].nt->type = node_test_qname;
                                     // FIXME:
-                                    path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, PathExpr_malloc_func(false));
-                                    path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->xmlns->uri, PathExpr_malloc_func(false));
+                                    path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, mm->alloc);
+                                    path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->get_xmlns()->uri, mm->alloc);
                                     break;
                                 }
             case document     : throw USER_EXCEPTION2(SE1003, "build_PathExpr: document as a child node");

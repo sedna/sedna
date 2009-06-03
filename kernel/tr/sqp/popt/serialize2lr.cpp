@@ -39,7 +39,7 @@ void determine_transition_levels(counted_ptr<xp_tree_strategy> strategy,
     }
 }
 
-schema_node *level2scm_middle(int level, const xp_tree &tree)
+schema_node_xptr level2scm_middle(int level, const xp_tree &tree)
 {
     return tree.levels[level].preds[0].scm_middle;
 }
@@ -269,7 +269,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
         else
         {
             s << "(scan (const (type !xs!integer) ";
-            s << (__uint32)(group[0].pred->scm_middle);
+            s << group[0].pred->scm_middle.to_uint64();
             s << ") ";
             serialize2lr_db_entity(s, db_ent);
             s << ")";
@@ -349,7 +349,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
         s << "(return ";
         // scan
         s << " (scan (const (type !xs!integer) ";
-        s << (__uint32)(group[j].pred->scm_bottom);
+        s << group[j].pred->scm_bottom.to_uint64();
         s << ") ";
         serialize2lr_db_entity(s, db_ent);
         s << ")";
@@ -367,7 +367,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
         s << " (sequence))))";
         // end of return (predicate)
         s << " (const (type !xs!integer) ";
-        s << (__uint32)(group[0].pred->scm_middle);
+        s << group[0].pred->scm_middle.to_uint64();
         s << ")";
         s << ")";
         // end of up
@@ -385,7 +385,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
         s << "(return ";
         // scan
         s << " (scan (const (type !xs!integer) ";
-        s << (__uint32)(group[j].pred->scm_bottom);
+        s << group[j].pred->scm_bottom.to_uint64();
         s << ") ";
         serialize2lr_db_entity(s, db_ent);
         s << ")";
@@ -486,7 +486,7 @@ void serialize2lr_xp_pred_trans(std::ostream &s,
                     if (strategy->up.get() == NULL || strategy->up->ts != xpts_group)
                         throw USER_EXCEPTION2(SE1051, "Error in physical plan");
 
-                    s << (__uint32)(level2scm_middle(to_level, tree));
+                    s << level2scm_middle(to_level, tree).to_uint64();
                     s << ") ";
                     serialize2lr_db_entity(s, db_ent);
                     s << ") ";
@@ -523,7 +523,7 @@ void serialize2lr_xp_pred_trans(std::ostream &s,
                 throw USER_EXCEPTION2(SE1051, "Error in physical plan");
             
             s << " (const (type !xs!integer) ";
-            s << (__uint32)(strategy->up->group[0].pred->scm_middle);
+            s << strategy->up->group[0].pred->scm_middle.to_uint64();
             s << ")";
             // end of up
             s << ")";
@@ -546,7 +546,7 @@ void serialize2lr_xp_pred_trans(std::ostream &s,
                 if (strategy->up.get() == NULL || strategy->up->ts != xpts_group)
                     throw USER_EXCEPTION2(SE1051, "Error in physical plan");
 
-                s << (__uint32)(strategy->up->group[0].pred->scm_middle);
+                s << strategy->up->group[0].pred->scm_middle.to_uint64();
                 s << ") ";
                 serialize2lr_db_entity(s, db_ent);
                 s << ") ";

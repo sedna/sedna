@@ -14,17 +14,15 @@
 #include "tr/strings/e_string_iterator.h"
 #include "tr/ft/ft_index_data.h"
 
-
 #include <ios>
 #include <sstream>
 #include <fstream> //needed for dtsearch (in linux), since it defines min & max macros
+
 #define USE_DTSEARCH_NAMESPACE
 #include "dtsearch/include/dtsfc.h"
 #include "tr/crmutils/crmutils.h"
 
-
-
-//TODO: remove this and do not include dtsearch files here 
+//TODO: remove this and do not include dtsearch files here
 // (dstring.h defines true/false then boolean_operations do not compile)
 #ifdef false
 #undef false
@@ -36,7 +34,7 @@
 
 class SednaTextInputStream {
     public:
-        SednaTextInputStream(dtsFileInfo* _info_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_);
+        SednaTextInputStream(dtsFileInfo* _info_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_);
         ~SednaTextInputStream();
         void seek_mem(long where);
         int read_mem(void *dest, long bytes);
@@ -56,12 +54,12 @@ class SednaTextInputStream {
         dtsFileInfo* fileInfo;
 		op_str_buf in_buf;
 		ft_index_type cm;
-		pers_sset<ft_custom_cell,unsigned short>* custom_tree;
+		ft_custom_tree_t* custom_tree;
     };
 
 class SednaDataSource : public dtSearch::DDataSourceBase {
     public:
-        SednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_);
+        SednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_);
 		~SednaDataSource(){delete tis;}
         virtual int getNextDoc(dtsInputStream& s);
 		virtual xptr get_next_doc()=0;
@@ -71,7 +69,7 @@ class SednaDataSource : public dtSearch::DDataSourceBase {
 //		dtsDataSource * getInterface();
     protected:
 		ft_index_type cm;
-		pers_sset<ft_custom_cell,unsigned short>* custom_tree;
+		ft_custom_tree_t* custom_tree;
 		SednaTextInputStream *tis;
 		dtsFileInfo fileInfo;
 
@@ -79,7 +77,7 @@ class SednaDataSource : public dtSearch::DDataSourceBase {
 class OperationSednaDataSource : public  SednaDataSource
 {
 public:
-	OperationSednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,PPOpIn* _op_);
+	OperationSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,PPOpIn* _op_);
 private:
 	virtual xptr get_next_doc();
 	virtual int rewind();
@@ -89,7 +87,7 @@ private:
 class CreationSednaDataSource : public  SednaDataSource
 {
 public:
-	CreationSednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,std::vector<xptr>* _first_nodes_);
+	CreationSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,std::vector<xptr>* _first_nodes_);
 private:
 	virtual xptr get_next_doc();
 	virtual int rewind();
@@ -100,7 +98,7 @@ private:
 class UpdateSednaDataSource : public  SednaDataSource
 {
 public:
-	UpdateSednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,xptr_sequence * _seq_);
+	UpdateSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,xptr_sequence * _seq_);
 private:
 	virtual xptr get_next_doc();
 	virtual int rewind();
@@ -168,7 +166,7 @@ class SednaConvertJob
 {
 public:
 	estr_buf result;
-	SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_);
+	SednaConvertJob(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_, bool _hl_fragment_);
 	void convert_node(xptr& node,long* ht,long ht_cnt);
 	virtual void OnOutput(const char * txt, int length);
 	static const int opentag_code = 0xE801;
@@ -181,7 +179,7 @@ private:
 	dtsFileInfo fileInfo;
 
 	ft_index_type cm;
-	pers_sset<ft_custom_cell,unsigned short>* custom_tree;
+	ft_custom_tree_t* custom_tree;
 	bool hl_fragment;
 };
 class SednaSearchJob : public dtSearch::DSearchJob {
@@ -191,12 +189,12 @@ class SednaSearchJob : public dtSearch::DSearchJob {
            virtual void OnFound(long totalFiles,
                  long totalHits, const char *name, long hitsInFile, dtsSearchResultsItem& item);
 		   virtual void OnSearchingIndex(const char * indexPath);
-		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);		   
+		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);		   
 		   SednaSearchJob(bool _hilight_=false, bool _hl_fragment_=false);
 		   void set_request(tuple_cell& request);
 		   void set_file_cond_for_node(tuple_cell& node);
 		   void get_next_result(tuple &t);
-		   void set_index(ft_index_cell* ft_idx);
+		   void set_index(ft_index_cell_object * ft_idx);
 		   void reopen();
 		   virtual ~SednaSearchJob();
 #ifdef WIN32
@@ -224,12 +222,12 @@ class SednaSearchJob2 {
      public:
 		 //TODO: scan w/o index
 		 //TODO: add highlight?
-		   //SednaSearchJob2(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);
+		   //SednaSearchJob2(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);
 		   SednaSearchJob2();
 		   void set_request(tuple_cell& request);
 		   void set_field_weights(tuple_cell& fw);
 		   void get_next_result(tuple &t);
-		   void set_index(ft_index_cell* ft_idx);
+		   void set_index(ft_index_cell_object* ft_idx);
 		   void set_max_results(long max_results);
 		   void reopen();
 		   virtual ~SednaSearchJob2();

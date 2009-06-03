@@ -13,8 +13,8 @@
 #include "tr/ft/ft_index_data.h"
 
 ft_index_type str2index_type(const char *str);
-std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);
-void delete_cust_rules_vector(std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* &v);
+ft_index_template_t * make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);
+void delete_cust_rules_vector(ft_index_template_t* &v);
 
 class PPCreateFtIndex : public PPUpdate
 {
@@ -28,7 +28,7 @@ class PPCreateFtIndex : public PPUpdate
     dynamic_context *cxt;
 
     // obtained parameters and local data
-    schema_node *root;
+    schema_node_xptr root;
 public:
     void open();
     void close();

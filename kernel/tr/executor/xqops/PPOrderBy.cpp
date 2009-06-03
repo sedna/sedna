@@ -447,7 +447,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                         CHECKP(v2);
                         get_deserialized_value(&flag2, (char*)addr2+offset, xs_boolean);
                         result = sign(strcmp((char*)addr2+offset+sizeof(bool), prefix)*order);
-                        delete prefix;
+                        delete[] prefix;
                     }
                     if (result == 0 && (!flag1 || !flag2))
                     {
@@ -713,7 +713,7 @@ temp_buffer::~temp_buffer ()
 {
     if(buffer != NULL)
 	{
-	    delete buffer;
+	    delete[] buffer;
         buffer = NULL;
 	}
 }

@@ -34,9 +34,9 @@ protected:
     xptr cur;
     t_next_fun next_fun;
 	std::vector<xptr> descstack;
-	std::map<schema_node*,std::vector<schema_node*> > desc_sch;
+	std::map<schema_node_xptr,std::vector<schema_node_xptr> > desc_sch;
 	xptrChanneledMerge* merge_tree;
-	std::vector<schema_node*> * curvect;
+	std::vector<schema_node_xptr> * curvect;
 	//int curpos;
 	xptr ancestor;
 	void init_function();

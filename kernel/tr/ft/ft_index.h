@@ -13,7 +13,7 @@
 #include "tr/ft/ft_cache.h"
 
 
-void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_index_type cm, pers_sset<ft_custom_cell,unsigned short>* custom_tree, ftc_index_t ftc_idx);
+void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_index_type cm, ft_custom_tree_t* custom_tree, ftc_index_t ftc_idx);
 void ft_idx_delete(ft_idx_data_t *ft_data);
 
 

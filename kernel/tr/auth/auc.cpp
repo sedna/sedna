@@ -297,8 +297,8 @@ void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
 			}
 			
 			CHECKP(node);			
-			schema_node* sn = ((node_blk_hdr*)GETBLOCKBYNODE(node)) -> snode -> root;
-			schema_node* dbe_root = NULL;
+			schema_node_xptr sn = ((node_blk_hdr*)GETBLOCKBYNODE(node)) -> snode -> root;
+			schema_node_xptr dbe_root = XNULL;
 			
 			mIter = amap.begin();
 			while( mIter != amap.end() )

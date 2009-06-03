@@ -12,6 +12,7 @@
 #include "common/sm_vmm_data.h"
 #include "tr/strings/strings_base.h"
 #include "tr/vmm/vmm.h"
+#include "tr/pstr/pstr.h"
 #include "tr/executor/base/tuple.h"
 
 #define BLK_BEGIN_INT(p)			((int)(p) & PAGE_BIT_MASK)

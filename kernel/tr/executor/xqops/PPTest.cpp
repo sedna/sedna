@@ -249,7 +249,7 @@ void PPTest::checkTreeConsistency(xptr node)
 	CHECKP(node);
 	n_dsc* node_d=(n_dsc*)XADDR(node);
 	t_nid nd=node_d->nid;
-	schema_node* scn=(GETBLOCKBYNODE(node))->snode;
+	schema_node_cptr scn=(GETBLOCKBYNODE(node))->snode;
 	node_blk_hdr* n_blk=GETBLOCKBYNODE(node);
 #ifdef DESC_CONSIST
 	if (node_d->desc_prev!=0)
@@ -283,7 +283,7 @@ void PPTest::checkTreeConsistency(xptr node)
 		if (prev_dsc==NULL|| prev_dsc->pdsc!=par_indir)
 		{
 			CHECKP(parent);
-			xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->xmlns);
+			xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->get_xmlns());
 			if (ptr==NULL || *ptr!=node)
 				throw XQUERY_EXCEPTION(SE2026); 
 		}

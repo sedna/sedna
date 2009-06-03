@@ -12,6 +12,7 @@
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
+#include "tr/triggers/triggers.h"
 #endif
 
 #include "common/base.h"
@@ -69,7 +70,6 @@ static bool llRcvPrereqRedo(LSN lsn, void *RecBuf)
 {
 	char *rec = (char *)RecBuf;
 	trn_cell_analysis_redo *redo_trn_cell;
-	bool res;
 
 	// this function tries to find transaction which start_lsn <=lsn <=end_lsn
 	redo_trn_cell = llFindTrnCell(rcv_list, *((transaction_id *)(rec + sizeof(char))), lsn);
@@ -117,13 +117,17 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	  else
 	       set_rollback_record(self);
 	   	 
+
+      // Actually assuming that 0-length string and NULL pointer are the same (prefix, uri)
+      // is terribly wrong, so TODO: FIX it
       insert_element(removeIndirection(left),
                      removeIndirection(right),
                      removeIndirection(parent),
                      name,
                      type,
-                     (strlen(uri) != 0) ? uri: NULL,
-                     (strlen(prefix) != 0) ? prefix: NULL);
+                     xmlns_touch(
+                        (strlen(prefix) != 0) ? prefix : NULL, 
+                        (strlen(uri) != 0) ? uri : NULL));
 
       xptr self_res = get_last_indir();
       if (self_res != self) indir_map.insert(self, self_res);
@@ -191,8 +195,9 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
                         type,
                         value,
                         value_size,
-                        (strlen(uri) != 0) ? uri : NULL,
-                        (strlen(prefix) != 0) ? prefix : NULL);
+                        xmlns_touch(
+                           (strlen(prefix) != 0) ? prefix : NULL, 
+                           (strlen(uri) != 0) ? uri : NULL));
 
        xptr self_res = get_last_indir();
        if (self_res != self) indir_map.insert(self, self_res);
@@ -365,7 +370,7 @@ static void llRcvDoc(LSN curr_lsn, void *Rec)
        else
        {
 		  if (isUNDO) set_rollback_record(self);
-          insert_document_in_collection(collection, name);    
+          insert_document_into_collection(collection, name);    
        }
 
 	   xptr self_res = get_last_indir();
@@ -378,7 +383,7 @@ static void llRcvDoc(LSN curr_lsn, void *Rec)
           delete_document(name);
        }
        else
-          delete_document(collection, name);
+          delete_document_from_collection(collection, name);
 
        if (!isUNDO) indir_map.remove(self);
     }
@@ -563,8 +568,9 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
        insert_namespace(removeIndirection(left),
                         removeIndirection(right),
                         removeIndirection(parent),
-                        strlen(uri) ? uri : NULL,
-                        strlen(prefix) ? prefix : NULL);
+                        xmlns_touch(
+                          (strlen(prefix) != 0) ? prefix : NULL, 
+                          (strlen(uri) != 0) ? uri : NULL));
 
        xptr self_res = get_last_indir();
        if (self_res != self) indir_map.insert(self, self_res);
@@ -606,12 +612,12 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
      {
         if (op == LL_DELETE_DOC_INDEX || op == LL_INSERT_DOC_INDEX)
         {
-           schema_node *doc_node = find_document(doc_name);
+           doc_schema_node_cptr doc_node = find_document(doc_name);
            if (doc_node->type == document || doc_node->type == virtual_root)
-              create_index (lr2PathExpr(NULL, obj_path, true),
-                            lr2PathExpr(NULL, key_path, true),
+              create_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
+                            lr2PathExpr(NULL, key_path, pe_catalog_aspace),
                             key_type,
-                            (doc_schema_node *)doc_node,
+                            doc_node,
                             ind_name,
                             doc_name,
                             true);
@@ -619,12 +625,12 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
         } 
         else
         {
-           schema_node *col_node = find_collection(doc_name);
+           col_schema_node_cptr col_node = find_collection(doc_name);
            if (col_node->type == document || col_node->type == virtual_root)
-               create_index (lr2PathExpr(NULL, obj_path, true),
-                             lr2PathExpr(NULL, key_path, true),
+               create_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
+                             lr2PathExpr(NULL, key_path, pe_catalog_aspace),
                              key_type,
-                             (doc_schema_node*)col_node,
+                             col_node.ptr(),
                              ind_name,
                              doc_name,
                              false);
@@ -668,38 +674,38 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
      {//create index
         if (op == LL_DELETE_DOC_FTS_INDEX || op == LL_INSERT_DOC_FTS_INDEX)
         {
-           schema_node *doc_node = find_document(doc_name);
+           doc_schema_node_cptr doc_node = find_document(doc_name);
 
            if (doc_node->type == document || doc_node->type == virtual_root)
-              ft_index_cell::create_index (lr2PathExpr(NULL, obj_path, true),
+              create_ft_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
                             (ft_index_type)itconst,
-                            (doc_schema_node*)doc_node,
+                            (doc_schema_node_xptr)doc_node.ptr(),
                             ind_name,
                             doc_name,
                             true,
                             ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
-							true);
+							true, ft_ind_dtsearch);
            else throw SYSTEM_EXCEPTION("Can't create index for document");
         } 
         else
         {
-           schema_node *col_node = find_collection(doc_name);
+           col_schema_node_cptr col_node = find_collection(doc_name);
            if (col_node->type == document || col_node->type == virtual_root)
-              ft_index_cell::create_index (lr2PathExpr(NULL, obj_path, true),
+              create_ft_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
                             (ft_index_type)itconst,
-                            (doc_schema_node*)col_node,
+                            (doc_schema_node_xptr)col_node.ptr(),
                             ind_name,
                             doc_name,
                             false,
                             ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
-							true);
+							true, ft_ind_dtsearch);
            else throw SYSTEM_EXCEPTION("Can't create index for collection");
 
         }
      }
      else
      {//delete index
-          ft_index_cell::delete_index(ind_name, true);
+          delete_ft_index(ind_name, true);
      }
 #endif
 }
@@ -761,12 +767,12 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
     // restore trigger_action_cell sequence
     int i = 0;
-    trigger_action_cell *trac = (trigger_action_cell *)scm_malloc(sizeof(trigger_action_cell), true);
+    trigger_action_cell *trac = (trigger_action_cell *)malloc(sizeof(trigger_action_cell));
     rcv_tac = trac;
     
     while (i < tr_action_size)
     {
-        trac->statement = (char *)scm_malloc(strlen(tr_action_buf + i) + 1, true);
+        trac->statement = (char *)malloc(strlen(tr_action_buf + i) + 1);
         strcpy(trac->statement, tr_action_buf + i);
         i += strlen(tr_action_buf + i) + 1;
 
@@ -774,7 +780,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
         i += sizeof(int);
 
         if (i < tr_action_size) 
-        	trac->next = (trigger_action_cell *)scm_malloc(sizeof(trigger_action_cell), true);
+        	trac->next = (trigger_action_cell *)malloc(sizeof(trigger_action_cell));
         else
         	trac->next = NULL;
 
@@ -787,37 +793,37 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
     {//create trigger
         if (op == LL_DELETE_DOC_TRG || op == LL_INSERT_DOC_TRG)
         {// is_doc - true
-           schema_node *doc_node = find_document(doc_name);
+           schema_node_xptr doc_node = find_document(doc_name);
 
            if (doc_node->type == document || doc_node->type == virtual_root)
-               trigger_cell::create_trigger(tr_time, tr_event, 
-               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, true) : NULL,
+               create_trigger(tr_time, tr_event, 
+               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, pe_catalog_aspace) : NULL,
                								tr_gran,
                                             NULL,
                                             innode,
-                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, true) : NULL,
-                                            (doc_schema_node *)doc_node,
+                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, pe_catalog_aspace) : NULL,
+                                            (doc_schema_node_xptr )doc_node,
                                             trigger_title, doc_name, true);
            else throw SYSTEM_EXCEPTION("Can't create trigger for document");
    		}
         else
         {      
-           schema_node *coll_node = find_collection(doc_name);
+           schema_node_xptr coll_node = find_collection(doc_name);
 
            if (coll_node->type == document || coll_node->type == virtual_root)
-               trigger_cell::create_trigger(tr_time, tr_event, 
-               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, true) : NULL,
+               create_trigger(tr_time, tr_event, 
+               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, pe_catalog_aspace) : NULL,
                								tr_gran,
                                             NULL,
                                             innode,
-                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, true) : NULL,
-                                            (doc_schema_node *)coll_node,
+                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, pe_catalog_aspace) : NULL,
+                                            (doc_schema_node_xptr) coll_node,
                                             trigger_title, doc_name, false);
            else throw SYSTEM_EXCEPTION("Can't create trigger for collection");
         }      
     }
     else // delete trigger
-    	trigger_cell::delete_trigger(trigger_title);
+    	delete_trigger(trigger_title);
 #endif  
 }
 
@@ -923,32 +929,30 @@ void llLogicalRecover(const LSN start_lsn)
 // this function performs remapping on ft-indexes (needed since we use redo-remapping)
 void rcvRecoverFtIndexes()
 {
-	XptrHash <xptr, 16, 16>::iterator it;
-	xptr new_x;
-	schema_node *scm;
-	schema_ft_ind_cell *sft;
+    XptrHash <xptr, 16, 16>::iterator it;
+    xptr new_x;
+    schema_node_cptr scm = XNULL;
+    cat_list<ft_index_cell_xptr>::item *sft;
 
-	if (llInfo->hotbackup_needed) return; // since we rebuild ft-indexes on hot-backup anyway
+    if (llInfo->hotbackup_needed) return; // since we rebuild ft-indexes on hot-backup anyway
 
-	clear_ft_sequences();
+    clear_ft_sequences();
 
-	for (it = indir_map.begin(); it != indir_map.end(); ++it)
-	{
-		new_x = removeIndirection(*it);
+    for (it = indir_map.begin(); it != indir_map.end(); ++it)
+    {
+        new_x = removeIndirection(*it);
+        CHECKP(new_x);
+        scm = (GETBLOCKBYNODE(new_x))->snode;
+        sft = scm->ft_index_list.first;
 
-		CHECKP(new_x);
-		scm = (GETBLOCKBYNODE(new_x))->snode;
-	
-	    sft = scm->ft_index_object;
+        while (sft != NULL)
+        {
+            update_insert_sequence(*it, ft_index_cell_cptr(sft->object));
+            update_delete_sequence(it.getKey(), ft_index_cell_cptr(sft->object));
+            sft = sft->next;
+        }
+    }
 
-	    while (sft != NULL)
-	    {
-		    update_insert_sequence(*it, sft->index);
-		    update_delete_sequence(it.getKey(), sft->index);
-		    sft = sft->next;
-		}
-	}
-
-	execute_modifications();
+    execute_modifications();
 }
 #endif

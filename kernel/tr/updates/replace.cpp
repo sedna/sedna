@@ -21,7 +21,7 @@ void replace(PPOpIn arg)
 //	xptr addr(0,(void*)0x4acc0000);
 //	check_blk_consistency(addr);
 	xptr node, parent, tmp_node, old_node, node_child, repl_node_child, del_node;
-	schema_node* scm_node;
+	schema_node_xptr scm_node;
 
 	tuple t(arg.ts);
 	descript_sequence arg3seq(2);
@@ -355,7 +355,6 @@ next_replacement:;
 //		checkSwiizleTab(ins_swiz);
 		delete ins_swiz;
 	}
-	clear_temp();
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
