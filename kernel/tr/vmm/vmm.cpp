@@ -1030,7 +1030,7 @@ void vmm_delete_block(xptr p) throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         // If current block is deleted, the pointer may break something. T.I.
-        if (vmm_cur_xptr == p) { vmm_cur_xptr = XNULL; }
+        if (BLOCKXPTR(vmm_cur_xptr) == BLOCKXPTR(p)) { vmm_cur_xptr = XNULL; }
 
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
