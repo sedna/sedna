@@ -9,14 +9,14 @@ struct cat_list {
 
     struct item {
         T   object;
-        struct cat_list<T>::item *next;
-        struct cat_list<T>::item *prev;
+        typename cat_list<T>::item *next;
+        typename cat_list<T>::item *prev;
     } * first;
 
     inline cat_list() : first(NULL) {};
 
     void clear() {
-        struct cat_list<T>::item * j, * i = this->first;
+        typename cat_list<T>::item * j, * i = this->first;
 
         while (i != NULL) {
             j = i;
@@ -33,7 +33,7 @@ struct cat_list {
     inline bool empty() { return first == NULL; };
 
     void add(T obj) {
-        struct cat_list<T>::item * i = (struct cat_list<T>::item *) cat_malloc(this, sizeof(struct cat_list<T>::item));
+        typename cat_list<T>::item * i = (typename cat_list<T>::item *) cat_malloc(this, sizeof(struct cat_list<T>::item));
         i->object = obj;
         i->prev = NULL;
         i->next = this->first;
@@ -50,7 +50,7 @@ struct cat_list {
     }
 
     void remove(T obj) {
-        struct cat_list<T>::item *j, * i = this->first;
+        typename cat_list<T>::item *j, * i = this->first;
 
         while (i != NULL) {
             j = i;
@@ -67,24 +67,24 @@ struct cat_list {
 
     int get_count() {
         int c = 0;
-        for (struct cat_list<T>::item *i = this->first; i != NULL; i = i->next) c++;
+        for (typename cat_list<T>::item *i = this->first; i != NULL; i = i->next) c++;
         return c;
     }
 
     void serialize(se_simplestream &stream) {
         int c = get_count();
         stream.write(&c, sizeof(int));
-        for (struct cat_list<T>::item *i = this->first; i != NULL; i = i->next) 
+        for (typename cat_list<T>::item *i = this->first; i != NULL; i = i->next) 
             stream.write(&(i->object), sizeof(T));
     }
 
     void deserialize(se_simplestream &stream) {
         int c;
-        struct cat_list<T>::item *i, *p = NULL;
+        typename cat_list<T>::item *i, *p = NULL;
         stream.read(&c, sizeof(int));
 
         for (; c > 0; c--) {
-            i = (struct cat_list<T>::item *) cat_malloc(this, sizeof(struct cat_list<T>::item));
+            i = (typename cat_list<T>::item *) cat_malloc(this, sizeof(struct cat_list<T>::item));
             stream.read(&(i->object), sizeof(T));
             i->next = NULL;
             if (this->first == NULL) {
