@@ -368,12 +368,6 @@ PPFnSQLExecute::~PPFnSQLExecute()
         arr[i].op = NULL;
     }
 
-    if (schema_carrier)
-    {
-        nid_delete(virt_root);
-        root_schema->drop();
-        firstCons=true; // XXX - !!! false !!! There was false before... (Andrey)
-    }
     if (handle_manager_carrier)
     {
         firstBaseCons = true;
@@ -404,7 +398,7 @@ void PPFnSQLExecute::get_executor()
 void PPFnSQLExecute::open ()
 {
     handle_manager_carrier = checkBaseInitial();
-    schema_carrier = checkInitial();
+    checkInitial();
 
     for (unsigned int i = 0; i < arr.size(); i++)
     {
