@@ -12,6 +12,7 @@
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/tr_common_funcs.h"
 #include "tr/cat/catalog.h"
+#include "tr/crmutils/crmutils.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
 #endif
@@ -241,6 +242,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
    }
 */
 
+
 #ifdef SE_ENABLE_TRIGGERS
    d_printf1("Triggers on transaction end...");
    triggers_on_transaction_end(is_commit);
@@ -298,6 +300,8 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
    d_printf1("OK\n");
 
    event_logger_set_trid(-1);
+
+   sc_parent = XNULL;
 
    if (need_sem)
        up_transaction_block_sems();
