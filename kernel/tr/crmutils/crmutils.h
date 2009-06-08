@@ -129,6 +129,9 @@ char* convert_type(t_item type);
 /* prints information in block */
 void print_desc_block(xptr block, se_ostream& crmout);
 void basicTest();
+
+export schema_node_xptr sc_parent;
+
 xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp, bool print_progress);
 xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress);
 void print_text(xptr text, se_ostream& crmout,t_print ptype,t_item xq_type);
