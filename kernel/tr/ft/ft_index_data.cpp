@@ -121,7 +121,6 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     doc_name = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, doc_name);
     stream.read(&is_doc, sizeof(bool));
-    cat_free(doc_name);
 
     stream.read(&schemaroot, sizeof(schema_node_xptr));
     stream.read(&serial_root, sizeof(xptr));
