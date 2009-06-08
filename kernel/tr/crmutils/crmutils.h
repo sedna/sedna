@@ -16,6 +16,7 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/strings/strings.h"
+#include "tr/cat/catptr.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
@@ -130,7 +131,7 @@ char* convert_type(t_item type);
 void print_desc_block(xptr block, se_ostream& crmout);
 void basicTest();
 
-export schema_node_xptr sc_parent;
+extern schema_node_cptr sc_parent;
 
 xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp, bool print_progress);
 xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress);
