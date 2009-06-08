@@ -289,8 +289,6 @@ void delete_ft_index (const char *index_title, bool just_heap)
             }
         }
 
-        U_ASSERT(false);
-
         idc->drop();
         up_concurrent_micro_ops_number();
     }
