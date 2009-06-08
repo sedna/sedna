@@ -132,10 +132,10 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     while (marker != 0) {
         custom_tree = new (cat_malloc(this, sizeof(ft_custom_tree_t))) ft_custom_tree_t;
 
-        stream.read(&ct_ns, sizeof(uint8_t));
+        stream.read(&ct_cm, sizeof(ft_index_type));
         ct_local = (char *) cat_malloc(this, stream.read_string_len());
         stream.read_string(SSTREAM_SAVED_LENGTH, ct_local);
-        stream.read(&ct_cm, sizeof(ft_index_type));
+        stream.read(&ct_ns, sizeof(xmlns_ptr_pers));
 
         custom_tree->put(new (cat_malloc(this, sizeof(ft_custom_cell)))
               ft_custom_cell(ct_ns, NULL_XMLNS, ct_local, ct_cm));
