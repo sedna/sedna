@@ -301,8 +301,6 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
 
    event_logger_set_trid(-1);
 
-   sc_parent = XNULL;
-
    if (need_sem)
        up_transaction_block_sems();
 }
