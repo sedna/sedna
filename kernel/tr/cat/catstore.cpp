@@ -73,9 +73,7 @@ void cs_popp()
     }
 }
 
-
-
-
+static void cs_read(const xptr &p, char * data, size_t data_size);
 
 xptr cs_new_block()
 {
@@ -356,7 +354,7 @@ void cs_write(xptr &p, const char * data, cs_size_t data_size)
     return;
 }
 
-void cs_read(const xptr &p, char * data, size_t data_size)
+static void cs_read(const xptr &p, char * data, size_t data_size)
 {
     cs_chain_header ch;
     cs_chain_part_header ph = {XNULL};

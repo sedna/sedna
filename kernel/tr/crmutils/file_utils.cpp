@@ -26,7 +26,7 @@ char Buff[BUFFSIZE];
 int mark;
 xptr parent;
 xptr left;
-schema_node_cptr sc_parent = XNULL;
+schema_node_xptr sc_parent = XNULL;
 bool wpstrip;
 //bool last_op_text;
 bool text_inserted;
@@ -486,7 +486,7 @@ static void sc_start(void *data, const char *el, const char **attr)
     curr_fo.back()++;
     clear_text();
     curr_fo.push_back(0);
-    sc_parent=child;
+    sc_parent=child.ptr();
     if (is_ns)
     {
         if (sc_parent->get_first_child(NULL_XMLNS,NULL,xml_namespace) == XNULL)
@@ -519,9 +519,9 @@ static void sc_start(void *data, const char *el, const char **attr)
 }
 static void sc_end(void *data, const char *el)
 {
-    std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent.ptr());
+    std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent);
     if (it==max_fo.end())
-        max_fo[sc_parent.ptr()]=stat_pair(curr_fo.back(),0);
+        max_fo[sc_parent]=stat_pair(curr_fo.back(),0);
     else
         if (it->second.first<curr_fo.back()) it->second.first=curr_fo.back();
     curr_fo.pop_back();
@@ -807,9 +807,9 @@ void parse_schema(FILE* f)
         it_map++;
     }*/
     
-    std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent.ptr());
+    std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent);
     if (it==max_fo.end())
-        max_fo[sc_parent.ptr()]=stat_pair(curr_fo.back(),0);
+        max_fo[sc_parent]=stat_pair(curr_fo.back(),0);
     else
         if (it->second.first<curr_fo.back()) it->second.first=curr_fo.back();
     curr_fo.pop_back(); 
@@ -821,7 +821,7 @@ void parse_schema(FILE* f)
         it->second.second=s_min(DEF_LETTER,((int)pow((double)MAX_LETTER,it->second.first))/(2+cnt));
         it++;
     }
-    curp.push_back(&max_fo[sc_parent.ptr()]);
+    curp.push_back(&max_fo[sc_parent]);
     sizehnt=curp.back();
     //printMFO (sc_parent,max_fo,0,0);
     XML_ParserFree(p);
@@ -896,7 +896,7 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, b
     sc_parent=(GETBLOCKBYNODE(docnode))->snode;
 #ifdef SE_ENABLE_FTSEARCH
     clear_ft_sequences();
-    update_insert_sequence(docnode,sc_parent); 
+    update_insert_sequence(docnode, schema_node_cptr(sc_parent));
 #endif
     try{
     parse_schema(f);
