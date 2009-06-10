@@ -152,6 +152,7 @@ void vmm_trace_delete_block(const xptr& p)
 //static t_blocks_write_table write_table;
 bit_set *mapped_pages = NULL; // constructor zeroes it
 
+
 /*******************************************************************************
 ********************************************************************************
   VMM MAP/REMAP/UNMAP FUNCTIONS
