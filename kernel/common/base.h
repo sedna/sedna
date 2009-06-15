@@ -223,7 +223,6 @@ enum hb_state
 	HB_END,        			// end of the hot-backup process
 	HB_ERR,       			// some error from sm
 	HB_NEXTFILE,            // file request from hbp
-	HB_GETPERSTS,           // get persistent timestamp
 	HB_GETPREVLOG           // get previous log file number
 };
 

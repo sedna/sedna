@@ -54,30 +54,6 @@ int hbMakeLogFileName(char *buf, int maxlen, const char *dbname, int lnum)
     return strlen(log_file_name);
 }
 
-// retrieves ph file name
-int	hbMakePhFileName(char *buf, int maxlen, const char *dbname, __int64 ts)
-{
-    char ph_file_name[U_MAX_PATH + 1];
-
-    char ui_buf[20]; // for u_ui64toa
-
-    // make ph file name
-    strcpy(ph_file_name, SEDNA_DATA);
-    strcat(ph_file_name, "/data/");
-    strcat(ph_file_name, dbname);
-    strcat(ph_file_name, "_files/");
-    strcat(ph_file_name, dbname);
-    strcat(ph_file_name, ".");
-    strcat(ph_file_name, u_i64toa(ts, ui_buf, 10));
-   	strcat(ph_file_name, ".seph");
-
-    if (strlen(ph_file_name) > maxlen) return -1;
-
-    strncpy(buf, ph_file_name, maxlen);
-
-    return strlen(ph_file_name);
-}
-
 // retrieves vmm.dat file name
 int	hbMakeVmmFileName(char *buf, int maxlen)
 {

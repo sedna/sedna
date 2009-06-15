@@ -55,15 +55,15 @@ static void hbSendMsgToSm(sm_msg_struct *msg)
 	SSMMsg *sm_server = NULL;
 	char buf[1024];
 
-	sm_server = new SSMMsg(SSMMsg::Client, 
-                           sizeof(sm_msg_struct), 
-                           CHARISMA_SSMMSG_SM_ID(get_db_id_by_name(gov_table->get_config_struct(), hbDbName->c_str()), buf, 1024), 
+	sm_server = new SSMMsg(SSMMsg::Client,
+                           sizeof(sm_msg_struct),
+                           CHARISMA_SSMMSG_SM_ID(get_db_id_by_name(gov_table->get_config_struct(), hbDbName->c_str()), buf, 1024),
                            SM_NUMBER_OF_SERVER_THREADS);
 
-	if (sm_server->init() != 0) 
+	if (sm_server->init() != 0)
 	    throw SYSTEM_EXCEPTION("Failed to initialize SSMMsg service (message service)");
 
-	if (sm_server->send_msg(msg) != 0) 
+	if (sm_server->send_msg(msg) != 0)
 	    throw SYSTEM_EXCEPTION("Can't send message via SSMMsg");
 
 	if (sm_server->shutdown() != 0)
@@ -75,24 +75,24 @@ static void hbSendMsgToSm(sm_msg_struct *msg)
 // retrieves db name, check its existence and if sm is running
 static int hbRetrieveAndCheckDbName(USOCKET sock, char *dbname, int len)
 {
-	string db_str = string(dbname, len);	
-	
+	string db_str = string(dbname, len);
+
 	map <USOCKET, hbInfo>::iterator it;
 
 	for (it = hbClients.begin(); it != hbClients.end(); it++)
 		if (it->second.hbDbName == db_str)
 			return -1;
-	
+
 	if (!(gov_table->is_database_run(db_str.c_str()))) return -1;
 
 	it = hbClients.find(sock);
-	
+
    	it->second.hbDbName = db_str;
 
 	return 0;
 }
 
-// retrieves log file names, ph-file name etc. and stores them in hbFiles array
+// retrieves log file names, config file name etc. and stores them in hbFiles array
 static int RetrieveAllFileNames(bool only_log)
 {
     char buf[MAX_SE_SOCKET_STR];
@@ -106,7 +106,7 @@ static int RetrieveAllFileNames(bool only_log)
 
 	// retrieve all log file names
 	sm_msg_struct msg;
-	
+
 	msg.cmd = 39;
 	msg.data.hb_struct.state = HB_ARCHIVELOG;
 
@@ -118,7 +118,7 @@ static int RetrieveAllFileNames(bool only_log)
 	{
 		if ((len = hbMakeLogFileName(buf, MAX_SE_SOCKET_STR, hbDbName->c_str(), msg.data.hb_struct.lnumber)) == -1)
 			return -1;
-		
+
 	    hbFiles->push_back(string(buf, len));
 
 		msg.cmd = 39;
@@ -130,19 +130,6 @@ static int RetrieveAllFileNames(bool only_log)
 	}
 
 	if (only_log) return 0;
-		
-	// retrieve ph file name
-	msg.cmd = 39;
-	msg.data.hb_struct.state = HB_GETPERSTS;
-        
-	hbSendMsgToSm(&msg);
-
-	if (msg.data.hb_struct.state == HB_ERR) return -1;
-
-	if ((len = hbMakePhFileName(buf, MAX_SE_SOCKET_STR, hbDbName->c_str(), msg.data.hb_struct.ts)) == -1)
-		return -1;
-
-    hbFiles->push_back(string(buf, len));
 
     // retrieve vmm.dat file
 	if ((len = hbMakeVmmFileName(buf, MAX_SE_SOCKET_STR)) == -1)
@@ -177,12 +164,12 @@ static void hbProcessErrorHbp(USOCKET sock)
 int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 {
 	hb_state req = (hb_state)msg->instruction, incr_req;
-	
+
 	if (*status != HB_WAIT && *status != HB_START)
 	{
-	    hbMakeErrorMsg(msg, 
+	    hbMakeErrorMsg(msg,
 	    	"Hot-backup protocol violation (expecting start request)");
-		
+
 		return -1;
 	}
 
@@ -193,23 +180,23 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 		__int32 len;
 		net_int2int(&len, &(msg->body[6]));
 
-		if (hbRetrieveAndCheckDbName(sock, &(msg->body[10]), len) != 0) 
+		if (hbRetrieveAndCheckDbName(sock, &(msg->body[10]), len) != 0)
 		{
-		    hbMakeErrorMsg(msg, 
+		    hbMakeErrorMsg(msg,
 		    	"Hot-backup start error (duplicate request or db isn't running)");
 			return -1;
 		}
 	}
 
 	sm_msg_struct smmsg;
-	
+
 	smmsg.cmd = 39;
 	smmsg.data.hb_struct.state = req;
 	smmsg.data.hb_struct.is_checkp = (*status == HB_WAIT) ? 0 : msg->body[0];
-	
+
 	net_int2int((__int32 *)(&incr_req), &(msg->body[1]));
 	smmsg.data.hb_struct.incr_state = incr_req;
-	
+
 	hbSendMsgToSm(&smmsg);
 
 	if (smmsg.data.hb_struct.state == HB_CONT) // need to send data file name
@@ -220,16 +207,16 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
         	*status = HB_ARCHIVELOG;
 
 		msg->instruction = HB_CONT;
-		
+
 		msg->body[0] = 0;
-		
+
 		int len = hbMakeDataFileName(&(msg->body[5]), MAX_SE_SOCKET_STR, hbDbName->c_str());
 
 		if (len == -1) // path doesn't fit into message buffer and that's strange :)
 		{
 			msg->instruction = HB_ERR;
 			msg->length = 0;
-		
+
 			return -1;
 		}
 
@@ -240,10 +227,10 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 	{
 		msg->instruction = *status = smmsg.data.hb_struct.state;
 		msg->length = 0;
-		
-		if (*status == HB_ERR) 
+
+		if (*status == HB_ERR)
 		{
-		    hbMakeErrorMsg(msg, 
+		    hbMakeErrorMsg(msg,
 		    	"Start request error (base in recovery mode or increment requested without primary copy)");
 			return -1;
 		}
@@ -259,9 +246,9 @@ int hbProcessLogArchRequest(msg_struct *msg)
 
 	if (*status != HB_ARCHIVELOG)
 	{
-	    hbMakeErrorMsg(msg, 
+	    hbMakeErrorMsg(msg,
 	    	"Hot-backup protocol violation (expecting log archive request)");
-		
+
 		return -1;
 	}
 
@@ -283,7 +270,7 @@ int hbProcessLogArchRequest(msg_struct *msg)
 	}
 	else if (res != 0)
 	{
-	    hbMakeErrorMsg(msg, 
+	    hbMakeErrorMsg(msg,
 	    	"Cannot determine files to copy (possible sm error)");
 		return -1;
 	}
@@ -302,9 +289,9 @@ static int hbProcessNextFile(msg_struct *msg)
 {
 	if (*status != HB_NEXTFILE)
 	{
-	    hbMakeErrorMsg(msg, 
+	    hbMakeErrorMsg(msg,
 	    	"Hot-backup protocol violation (expecting next file request)");
-		
+
 		return -1;
 	}
 
@@ -334,12 +321,12 @@ int hbProcessEndRequest(msg_struct *msg)
 {
 	if (*status != HB_END)
 	{
-	    hbMakeErrorMsg(msg, 
+	    hbMakeErrorMsg(msg,
 	    	"Hot-backup protocol violation (expecting end request)");
-		
+
 		return -1;
 	}
-	
+
 	*status = HB_START;
 
 	sm_msg_struct smsg;
@@ -356,9 +343,9 @@ int hbProcessEndRequest(msg_struct *msg)
 	}
 	else
 	{
-	    hbMakeErrorMsg(msg, 
+	    hbMakeErrorMsg(msg,
 	    	"Unknown error during end request (sm error)");
-		
+
 		return -1;
 	}
 
@@ -376,8 +363,8 @@ int hbProcessMessage(USOCKET sock)
     {
    		hbProcessErrorHbp(sock);
     	return -1;
-    }	    	   
-	
+    }
+
 	hb_state cmd = (hb_state)msg.instruction;
 	int res;
 
@@ -399,7 +386,7 @@ int hbProcessMessage(USOCKET sock)
 		res = hbProcessEndRequest(&msg);
 	else
 	{
-	    hbMakeErrorMsg(&msg, 
+	    hbMakeErrorMsg(&msg,
 	    	"Hot-backup protocol violation (unknown request)");
 
 		res = -1;
@@ -413,7 +400,7 @@ int hbProcessMessage(USOCKET sock)
 	}
 
 	if (sp_send_msg(sock, &msg) != 0)
-       	res = -1;	
+       	res = -1;
 
 	if (res != 0)
 		hbProcessErrorHbp(sock);
@@ -423,7 +410,7 @@ int hbProcessMessage(USOCKET sock)
 		hbClients.erase(sock);
 		return 1;
 	}
-		
+
 	return res;
 }
 

@@ -18,11 +18,11 @@ static bool hb_in_process = false;
 static void ResetHbState(hb_state state)
 {
 	    if (hb_in_process)
-	    { 
+	    {
 	    	llHotBackup(state, HB_NONE_INCR);  // notify logical log
 			llEnableCheckpoints(); 			   // enable checkpoints
 		}
-		
+
 		hb_in_process = false;
 }
 
@@ -90,19 +90,10 @@ hb_state hbProcessErrorRequest()
     return HB_END;
 }
 
-// processes get-persistent-timestamp request
-hb_state hbProcessGetTsRequest(TIMESTAMP *ts)
-{
-    // retrieve timestamp of persistent snapshot
-    *ts = llGetPersTimestamp();
-
-	return HB_CONT;
-}
-
 // processes request for previous log file
 hb_state hbProcessGetPrevLogRequest(uint64_t *lnumber)
 {
-    // get prev logical log file number, or -1 
+    // get prev logical log file number, or -1
     *lnumber = llHbPrevArchivedLog(*lnumber);
 
     return HB_CONT;
