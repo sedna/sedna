@@ -9,7 +9,6 @@
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/cfg/<db-name>_cfg.xml
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/cfg/sednaconf.xml
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/data/<db-name>.sedata
- * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/data/<db-name>.<pers-timestamp>.seph
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/data/<db-name>.<number>llog
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/data/vmm.dat
  *
@@ -39,8 +38,8 @@ static int hbMakeDirWithTimestamp(const char *dist_dir, const char *db_name)
         time_t aclock;
 
         // obtain timestamp for backup directory
-        time(&aclock);                   
-        newtime = localtime(&aclock);    
+        time(&aclock);
+        newtime = localtime(&aclock);
 
         sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-%02d/",
                     newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
@@ -48,13 +47,13 @@ static int hbMakeDirWithTimestamp(const char *dist_dir, const char *db_name)
 
         // make distance name
         strcpy(hbDistance, dist_dir);
-        
+
         // create directory if user specified so
         if (hb_mkdir && !uIsFileExist(hbDistance, NULL))
         {
         	if (uMkDir(hbDistance, NULL, __sys_call_error) == 0)
     	       	return -1;
-	        
+
 	        // register directory
     	    hbCreatedFiles.push_back(name_isdir_pair(string(hbDistance), true));
     	}
@@ -70,7 +69,7 @@ static int hbMakeDirWithTimestamp(const char *dist_dir, const char *db_name)
 	       	{
 	       		if (uMkDir(hbDistance, NULL, __sys_call_error) == 0)
    		       		return -1;
-	        
+
 	        	// register directory
     	    	hbCreatedFiles.push_back(name_isdir_pair(string(hbDistance), true));
     	    }
@@ -128,7 +127,7 @@ static int hbMakeCfgDirectory()
     // don't create cfg directory in add mode
 //    if (!strncmp(hb_incr_mode, "add", 512))
 //    	return 0;
-    
+
     // make cfg dir name
     strcpy(cfg_dir_name, hbDistance);
     strcat(cfg_dir_name, "/cfg");
@@ -169,7 +168,7 @@ int hbCopyFile(char *file_path)
 
 	if (uGetFileNameFromFilePath(file_path, file_name, U_MAX_PATH + 1, __sys_call_error) == NULL)
 		return -1;
-    
+
     // make backup file name
     strcpy(backup_file_name, hbDistance);
     int len = strlen(file_name);

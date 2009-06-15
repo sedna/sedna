@@ -20,9 +20,6 @@ hb_state hbProcessEndRequest();
 // processes error request
 hb_state hbProcessErrorRequest();
 
-// processes get-persistent-timestamp request
-hb_state hbProcessGetTsRequest(TIMESTAMP *ts);
-
 // processes request for previous log file
 hb_state hbProcessGetPrevLogRequest(uint64_t *lnumber);
 

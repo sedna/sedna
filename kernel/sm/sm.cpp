@@ -409,9 +409,6 @@ int sm_server_handler(void *arg)
 						 else if (msg->data.hb_struct.state == HB_ARCHIVELOG)
 						 	msg->data.hb_struct.state =	hbProcessLogArchRequest(&(msg->data.hb_struct.lnumber));
 
-						 else if (msg->data.hb_struct.state == HB_GETPERSTS)
-						 	msg->data.hb_struct.state =	hbProcessGetTsRequest(&(msg->data.hb_struct.ts));
-
 						 else if (msg->data.hb_struct.state == HB_GETPREVLOG)
 						 	msg->data.hb_struct.state =	hbProcessGetPrevLogRequest(&(msg->data.hb_struct.lnumber));
 
