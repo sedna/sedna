@@ -60,7 +60,7 @@ std::vector<stat_pair*> curp;
 void remove_hints(schema_node_cptr nd)
 {
     //nd->cl_hint=0;
-    nd->lastnode_ind=XNULL;
+    nd.modify()->lastnode_ind=XNULL;
     
     cat_list<sc_ref>::item * sc;
     for (sc = nd->children.first; sc != NULL; sc = sc->next) {
@@ -841,38 +841,39 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp
     left=XNULL;
     mark=1;
     sc_parent=(GETBLOCKBYNODE(docnode))->snode;
-    try{
-    parse_schema(f);
-    fseek(f,0,SEEK_SET);
-        //isSchemaPCAllRight(sc_parent);
-        //print_descriptive_schema(uri,  crm_out);
-    docnode=((n_dsc*)XADDR(docnode))->indir;
-    parse_load(f, s);
-        
-        //printDebugInfo(sc_parent, crm_out);
-        //print_descriptive_schema(uri,  crm_out);
-    if(print_p)
-        s <<"100%" << endl;
-    //printDebugInfo(sc_parent, crm_out);
-    nodescnt=0;
-    curcnt=0;
-    curproc=0;
-    CHECKP(docnode);
-    remove_hints(sc_parent);
-    sc_parent = XNULL;
-    //test
-    //CHECKP(xptr(0,(void*)0x3d800000));
-    if (vmm_data_blocks_allocated()-need_cp>100)
-        need_cp=1;
-    else
-        need_cp=0;
+
+    try
+    {
+        parse_schema(f);
+        fseek (f, 0, SEEK_SET);
+        docnode = ((n_dsc*) XADDR(docnode))->indir;
+        parse_load(f, s);
+    
+        if (print_p)
+            s <<"100%" << endl;
+
+        nodescnt=0;
+        curcnt=0;
+        curproc=0;
+        CHECKP(docnode);
+
+        remove_hints(sc_parent);
+        sc_parent = XNULL;
+
+        if (vmm_data_blocks_allocated()-need_cp > 100)
+            need_cp=1;
+        else
+            need_cp=0;
     }
     catch (SednaUserException &e)
     {
+        remove_hints(sc_parent);
         sc_parent = XNULL;
+
         delete_document(uri);
         throw;
     }
+
     if (!print_progress) print_p=true;
 
     //return ((n_dsc*)XADDR(docnode))->indir;
@@ -886,8 +887,7 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, b
     need_cp=vmm_data_blocks_allocated();
     wpstrip=stripped;
     nid_set_proportion(fnumber());
-    //schema_node_cptr col_s=find_collection(collection);
-    //if (col_s==NULL) col_s=insert_collection(collection);
+
     xptr docnode=insert_document_into_collection(collection,uri);
     parent=docnode;
     left=XNULL;
@@ -898,32 +898,38 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, b
     clear_ft_sequences();
     update_insert_sequence(docnode, schema_node_cptr(sc_parent));
 #endif
-    try{
-    parse_schema(f);
-    fseek(f,0,SEEK_SET);
-        //  printDebugInfo(sc_parent, crm_out);
-        //isSchemaPCAllRight(sc_parent);
-    docnode=((n_dsc*)XADDR(docnode))->indir;
-    parse_load(f, s);
-    if (print_p)
-      s <<"100%" << endl;
-    //printDebugInfo(sc_parent, crm_out);
-    nodescnt=0;
-    curcnt=0;
-    curproc=0;
-    CHECKP(docnode);
-    if (vmm_data_blocks_allocated()-need_cp>1000)
-        need_cp=1;
-    else
-        need_cp=0;
+    try
+    {
+        parse_schema(f);
+        fseek(f, 0, SEEK_SET);
+        docnode = ((n_dsc*) XADDR(docnode))->indir;
+        parse_load (f, s);
+    
+        if (print_p)
+            s <<"100%" << endl;
+    
+        nodescnt=0;
+        curcnt=0;
+        curproc=0;
+        CHECKP(docnode);
+    
+        remove_hints(sc_parent);
+        sc_parent = XNULL;
+    
+        if (vmm_data_blocks_allocated()-need_cp > 1000)
+            need_cp=1;
+        else
+            need_cp=0;
     }
     catch (SednaUserException &e)
     {
         remove_hints(sc_parent);
         sc_parent = XNULL;
-        delete_document_from_collection(collection,uri);
+    
+        delete_document_from_collection(collection, uri);
         throw;
     }
+
     if (!print_progress) print_p=true;
 
 #ifdef SE_ENABLE_FTSEARCH

@@ -301,7 +301,7 @@ void schema_node_object::serialize_data(se_simplestream &stream)
     stream.write(&extnids, sizeof(unsigned int));
     stream.write(&indir_blk_cnt, sizeof(unsigned int));
     stream.write(&textcnt, sizeof(__int64));
-    stream.write(&lastnode_ind, sizeof(xptr));
+//    stream.write(&lastnode_ind, sizeof(xptr));
 
     index_list.serialize(stream);
 #ifdef SE_ENABLE_FTSEARCH
@@ -331,7 +331,7 @@ void schema_node_object::deserialize_data(se_simplestream &stream)
     stream.read(&extnids, sizeof(unsigned int));
     stream.read(&indir_blk_cnt, sizeof(unsigned int));
     stream.read(&textcnt, sizeof(__int64));
-    stream.read(&lastnode_ind, sizeof(xptr));
+//    stream.read(&lastnode_ind, sizeof(xptr));
 
     index_list.deserialize(stream);
 #ifdef SE_ENABLE_FTSEARCH
