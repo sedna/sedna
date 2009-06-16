@@ -258,8 +258,11 @@ doc_schema_node_xptr find_document(const char *document_name) {
 xptr find_document_in_collection(const char *collection_name, const char *document_name)
 {
     metadata_cptr mdc(collection_name, false);
+    schema_node_object * snd; 
     if (!mdc.found()) { return XNULL; }
-    xptr res = ((col_schema_node_xptr)mdc->snode)->find_document(document_name);
+    snd = &(*(schema_node_cptr(mdc->snode)));
+    if ((dynamic_cast<col_schema_node_object *> (snd)) == NULL) { return XNULL; }
+    xptr res = (dynamic_cast<col_schema_node_object *> (snd))->find_document(document_name);
     return res;
 }
 
@@ -267,7 +270,7 @@ void rename_collection(const char *old_collection_name, const char *new_collecti
 {
     bool valid = true;
     int n;
-    
+
     Uri::check_constraints(new_collection_name, &valid, NULL);
     if (!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid collection name '") + new_collection_name + "'").c_str());
 
@@ -275,19 +278,19 @@ void rename_collection(const char *old_collection_name, const char *new_collecti
     if (!collection.found()) 
         throw USER_EXCEPTION2(SE2003, old_collection_name);
 
-    metadata_cptr new_collection(new_collection_name, false);
-    if (new_collection.found()) 
+    if (catalog_name_exists(catobj_metadata, new_collection_name))
         throw USER_EXCEPTION2(SE2002, new_collection_name);
 
     down_concurrent_micro_ops_number();
 
+    collection.modify();
     catalog_delete_name(catobj_metadata, collection->name);
     n = strlen(new_collection_name) + 1;
-    cat_realloc(collection->name, n);
+    collection->name = (char *) cat_realloc(collection->name, n);
     strncpy(collection->name, new_collection_name, n);
     catalog_set_name(catobj_metadata, collection->name, collection.obj);
 
-    hl_logical_log_rename_collection(old_collection_name,new_collection_name);
+    hl_logical_log_rename_collection(old_collection_name, new_collection_name);
     up_concurrent_micro_ops_number();
 }
 
