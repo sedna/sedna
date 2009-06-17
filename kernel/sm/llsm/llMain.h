@@ -262,6 +262,13 @@ LSN llGetPrevLsnFromRecord(void *RecBuf);
 // 		trid - trasnaction identifier
 LSN llGetFirstTranLsn(transaction_id trid);
 
+// Returns higher LSN boundary (lsn >= this don't exist)
+// Parameters:
+//      None
+// Returns:
+//      high boundary LSN
+LSN llGetHighLSNBoundary();
+
 // Function to walk on logical records
 typedef void (*llOperFunc)(LSN lsn, void *RecBuf); 		 // function to perform some action on record
 typedef LSN (*llNextLSN)(LSN curr_lsn, void *RecBuf);    // callback function to get next lsn for scan

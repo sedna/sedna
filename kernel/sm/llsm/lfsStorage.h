@@ -154,4 +154,11 @@ uint64_t lfsGetPrevFileNumber(int FileNum);
 //     number of files
 uint64_t lfsGetNumberOfFiles();
 
+// Returns higher LSN boundary (lsn >= this don't exist)
+// Parameters:
+//      None
+// Returns:
+//      high boundary LSN
+LSN lfsGetHighLSNBoundary();
+
 #endif

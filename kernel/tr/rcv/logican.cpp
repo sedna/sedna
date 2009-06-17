@@ -14,9 +14,14 @@
 
 static trn_cell_analysis_redo *rcv_list = NULL;
 
+static LSN highLSNBoundary = 0; // higher boundary for analysis
+
 static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
 	LSN lsn = curr_lsn + llGetRecordSize(RecBuf, 0);
+
+    // we shouldn't walk beyond high boundary
+    if (lsn >= highLSNBoundary) return LFS_INVALID_LSN;
 
     // we don't need to check lsn validity since lfsGetRecord in llScan will do it for us
     return lsn;
@@ -197,6 +202,8 @@ trn_cell_analysis_redo *llGetRedoList(LSN start_lsn)
 {
 	rcv_list = NULL;
     trn_cell_analysis_redo *it, *pit;
+
+    highLSNBoundary = llGetHighLSNBoundary();
 
     llScanRecords(llRcvAnalyzeRecs, llRcvAnalyzeRecsLen, start_lsn, llGetNextRcvRec, NULL);
 
