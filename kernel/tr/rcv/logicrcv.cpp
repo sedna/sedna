@@ -42,6 +42,7 @@
 
 static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purposes
 static trn_cell_analysis_redo *rcv_list = NULL;
+static LSN highRcvLSN = 0; // this is an upper boundary for redo recovery process
 
 // Returns previous lsn for rollback
 static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
@@ -52,6 +53,9 @@ static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
 static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
 	LSN lsn = curr_lsn + llGetRecordSize(RecBuf, 0);
+
+    // if we walk out upper bound then we should stop redo right away
+    if (lsn > highRcvLSN) return LFS_INVALID_LSN;
 
     // we don't need to check lsn validity since lfsGetRecord in llScan will do it for us
     return lsn;
@@ -912,6 +916,9 @@ void llLogicalRecover(const LSN start_lsn)
 
 	// determine transactions that need to be recovered
 	rcv_list = llGetRedoList(start_analysis_lsn);
+
+    // get high watermark for redo process
+    highRcvLSN = llGetHighRcvLSN(rcv_list);
 
 	//redo committed transactions
 	llRcvRedoTrns(rcv_list, start_analysis_lsn);

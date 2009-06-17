@@ -54,4 +54,11 @@ void llDestroyRedoList(trn_cell_analysis_redo *rcv_list);
 //		cell or NULL if nothing is found
 trn_cell_analysis_redo *llFindTrnCell(trn_cell_analysis_redo *redo_list, transaction_id trid, LSN lsn);
 
+// Returns high lsn watermark for redo process
+// Parameters:
+//      redo_lst - root of the redo list (must contain only committed transactions!)
+// Returns:
+//      high watermark lsn
+LSN llGetHighRcvLSN(trn_cell_analysis_redo *redo_lst);
+
 #endif
