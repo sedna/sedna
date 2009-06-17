@@ -225,3 +225,21 @@ trn_cell_analysis_redo *llGetRedoList(LSN start_lsn)
 
 	return rcv_list;
 }
+
+// Returns high lsn watermark for redo process
+LSN llGetHighRcvLSN(trn_cell_analysis_redo *redo_lst)
+{
+    trn_cell_analysis_redo *it = redo_lst;
+    LSN endLSN = 0;
+
+    while (it != NULL)
+    {
+        U_ASSERT(it->finish_status == TRN_COMMIT_FINISHED);
+
+        if (it->end_lsn > endLSN) endLSN = it->end_lsn;
+
+        it = it->next;
+    }
+
+    return  endLSN;
+}
