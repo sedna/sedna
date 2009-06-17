@@ -713,6 +713,12 @@ int llGetRecordSize(void *Rec, int len)
 	return sizeof(llRecordHead) + RecHead->rec_len;
 }
 
+// Returns higher LSN boundary (lsn >= this don't exist)
+LSN llGetHighLSNBoundary()
+{
+    return lfsGetHighLSNBoundary();
+}
+
 // This function scans records starting from given start_lsn.
 int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llNextLSN funNextLSN, llPrereqRec funPrereq)
 {

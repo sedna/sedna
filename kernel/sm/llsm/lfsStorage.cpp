@@ -1403,3 +1403,19 @@ uint64_t lfsGetNumberOfFiles()
 
 	return res;
 }
+
+// Returns higher LSN boundary (lsn >= this don't exist)
+LSN lfsGetHighLSNBoundary()
+{
+    LSN res;
+
+    assert(lfsInfo != NULL);
+
+    lfsLock();
+
+    res = lfsInfo->NextLSN + lfsInfo->BufKeepBytes;
+
+    lfsUnlock();
+
+    return res;
+}
