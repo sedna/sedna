@@ -11,7 +11,7 @@ extern int ccache_size;
 /* Last root NID */
 
 extern int last_nid_size;
-extern char * last_nid;
+extern unsigned char * last_nid;
 
 /* Pointer to catalog masterdata block */
 
