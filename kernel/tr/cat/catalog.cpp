@@ -97,7 +97,7 @@ struct catalog_master_record {
     catalog_name_trees masterdata;
 
     int last_nid_size;
-    char last_nid[MAX_ROOT_NID_SIZE];
+    uchar last_nid[MAX_ROOT_NID_SIZE];
 };
 
 struct local_catalog_header : public catalog_header {
@@ -338,7 +338,7 @@ void catalog_on_transaction_begin()
             &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
             sizeof(int));
 
-        last_nid = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, MAX_ROOT_NID_SIZE);
+        last_nid = (unsigned char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, MAX_ROOT_NID_SIZE);
 
         memcpy(
             last_nid,
