@@ -430,7 +430,7 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
 		{
 		case 1:
 			if (FindBlockInBuffers(oldVerXptr, &bufferId) &&
-			LocateBlockHeader(bufferId, &header))
+                LocateBlockHeader(bufferId, &header))
 			{
 				oldVerTs = header->versionsHeader.creatorTs[0];
 				header->lsn = llLogPersSnapshotInfo(&versionEntry, oldVerTs);			
@@ -438,8 +438,16 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
 			success = 1;
 			break;
 		case 2:
-			llLogRecordBlock(WuExternaliseXptr(oldVerXptr), (void *)header, PAGE_SIZE);
-			success=1;
+            if (FindBlockInBuffers(oldVerXptr, &bufferId) &&
+                LocateBlockHeader(bufferId, &header))
+            {
+                llLogRecordBlock(WuExternaliseXptr(oldVerXptr), (void *)header, PAGE_SIZE);
+                success=1;
+            }
+            else
+            {
+                WuSetLastErrorMacro(WUERR_BLOCK_NOT_IN_BUFFERS);
+            }
 			break;
 		default:
 			WuSetLastErrorMacro(WUERR_BAD_PARAMS);
