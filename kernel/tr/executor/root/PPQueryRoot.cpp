@@ -23,17 +23,14 @@ PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
 
 PPQueryRoot::~PPQueryRoot()
 {
-//    d_printf1("PPQueryRoot::~PPQueryRoot() begin\n");
     delete child.op;
     child.op = NULL;
     delete cxt;
     cxt = NULL;
-//    d_printf1("PPQueryRoot::~PPQueryRoot() end\n");
 }
 
 void PPQueryRoot::open()
 {
-//    d_printf1("PPQueryRoot::open() begin\n");
     local_lock_mrg->lock(lm_s);
 	first=true;
     dynamic_context::global_variables_open();
@@ -46,7 +43,6 @@ void PPQueryRoot::open()
 		dynamic_context::add_char_mapping("\"","\\\"",-1);		
 		dynamic_context::add_char_mapping("\\","\\\\",-1);
 	}
-//    d_printf1("PPQueryRoot::open() end\n");
 }
 
 void PPQueryRoot::close()

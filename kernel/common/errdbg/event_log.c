@@ -732,6 +732,13 @@ int event_logger_shutdown_daemon()
     
         if (uReleaseShMem(el_shmem, __sys_call_error) != 0)
             return 5;
+
+        /* Release file descriptor */
+        if (el_ostr) {
+            fclose(el_ostr); 
+            el_ostr = NULL;
+        }
+
     }
 
     return 0;

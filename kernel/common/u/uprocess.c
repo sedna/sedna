@@ -34,10 +34,14 @@ int uSetEnvironmentVariable(const char* name, const char* value, sys_call_error_
     }
     return 0;
 #else
-    int name_len = strlen(name);
+    int name_len  = strlen(name);
     int value_len = strlen(value);
-    char *str = (char*)malloc(name_len + value_len + 2); /* This string will become the part */
-                                                    /* of the environment, so we must not delete it */
+
+    /* This string will become the part 
+     * of the environment, so we must not delete it 
+     */
+    char *str = (char*)malloc(name_len + value_len + 2); 
+
     memcpy(str, name, name_len);
     str[name_len] = '=';
     memcpy(str + name_len + 1, value, value_len);
