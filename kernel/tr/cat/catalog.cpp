@@ -455,12 +455,19 @@ catalog_object_header * catalog_create_object(catalog_object * object, bool pers
 catalog_object_header * catalog_acquire_object(const xptr &ptr)
 {
     U_ASSERT(local_catalog != NULL);
+
+    /* for XNULL xptr return NULL unconditionally */
     if (ptr == XNULL) return NULL;
+
+    /* for temporary schema nodes, return pointer immidiately:
+       temporary xptr = TEMPORARY_LAYER (special) + CATALOG HEADER POINTER */
     if (IS_CATALOG_TMP_PTR(ptr)) return (catalog_object_header *) (XADDR(ptr));
 
+    /* look up for a catalog header, corresponding to the xpointer in hash table */
     catalog_object_header * obj =
       (catalog_object_header *) local_catalog->xptrhash.get(ptr);
 
+    /* if not found in hash table, try to deserialize pointer */
     if (obj == NULL) {
         obj = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(ptr);
         local_catalog->xptrhash.set(ptr, obj);
@@ -470,6 +477,8 @@ catalog_object_header * catalog_acquire_object(const xptr &ptr)
         local_catalog->object_list.add(obj->object);
     }
 
+    /* though, header could be found, it can point to a deleted structure
+       in this case, we still should return NULL */
     if (GET_FLAG(obj->flags, CAT_OBJECT_DELETED_FLAG)) {
         return NULL;
     }
@@ -537,9 +546,13 @@ inline catalog_name_record * catalog_cachetree_add_name(
 
 inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
 {
+    SafeMetadataSemaphore lock;
+    bt_key k;
+    xptr obj;
+
     if (tree == XNULL) { return XNULL; }
 
-    SafeMetadataSemaphore lock;
+    lock.Aquire();
 
     CHECKP(catalog_masterblock);
     memcpy(
@@ -547,12 +560,8 @@ inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
         &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
         sizeof(catalog_name_trees));
 
-    bt_key k;
-    xptr obj;
-
     k.setnew(name);
 
-    lock.Aquire();
     bt_cursor c = bt_find(tree, k);
     obj = c.bt_next_obj();
     lock.Release();
