@@ -89,8 +89,19 @@ xptr cs_new_block()
     return r;
 }
 
+inline void cs_unoccupy(const xptr b, cell_t cell, cell_t cell_count)
+{
+    // TODO : this function extremally needs optimization! It's very ram-coded.
 
+    struct bit_array * sba = (struct bit_array *) ((cat_blk_hdr *) XADDR(b))->free_space;
 
+    sba_unoccupy(sba, cell, cell_count);
+
+    if (sba->a[0] != 0x1UL) { return; }
+    for (int i = 1; i < SBA_SIZE; i++) { if (sba->a[i] != 0) { return; } }
+
+    vmm_delete_block(b);
+}
 
 inline cell_t cs_find_and_occupy(xptr &b, cell_t &cell_count) 
 {
@@ -418,34 +429,29 @@ void cs_read_part(const xptr p, char * data, off_t data_offset, size_t data_size
 
 void cs_free(xptr p)
 {
-/*
-    cs_chain_header ch;
-    cs_chain_part_header ph = {XNULL};
-    char * di = data;
-    cs_size_t data_left = data_size;
-    cs_size_t to_read;
-
     U_ASSERT(p != XNULL);
+
+    cs_chain_header ch;
+    cs_chain_part_header ph;
+    cs_size_t data_left;
+    cell_t cell, cell_count;
+
     cs_read_sequence_header(p, &ch, &ph);
-    U_ASSERT(ch.full_size >= data_size); // throw
+    data_left = ch.full_size;
 
     while (data_left > 0) {
-        U_ASSERT(ph.addr != XNULL);
-
-        CHECKP(ph.addr);
-        to_read = MIN(ph.size, data_left);
-        memcpy(di, ph.eff_addr, to_read);
-        di += to_read;
-        data_left -= to_read;
+        cell = (ph.addr - BLOCKXPTR(ph.addr)) / CS_CELL_SIZE;
+        cell_count = ((ph.size - 1) / CS_CELL_SIZE) + 1;
+        data_left -= MIN(ph.size, data_left);
 
         if (data_left > 0) {
             U_ASSERT(ph.next != XNULL);
             cs_read_subsequence_descriptor(ph.next, &ph);
-        } else break;
-    };
+        };
 
-    return;
-*/
+        CHECKP(ph.addr);
+        cs_unoccupy(BLOCKXPTR(ph.addr), cell, cell_count);
+    };
 }
 
 /*
