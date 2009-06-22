@@ -498,7 +498,7 @@ void catalog_release_object(catalog_object_header * object)
     CLEAR_FLAG(object->flags, CAT_OBJECT_INVALID_FLAG);
 }
 
-void catalog_delete_object_internal(catalog_object_header * object)
+static void catalog_delete_object_internal(catalog_object_header * object)
 {
     U_ASSERT(object->object != NULL);
 //    object->object->~catalog_object();
@@ -783,15 +783,11 @@ void catalog_validate_objects()
 {
     catalog_object_header * i = local_catalog->invalid_list;
     while (i != NULL) {
-        if (GET_FLAG(i->flags, CAT_OBJECT_INVALID_FLAG)) {
+        if (GET_FLAG(i->flags, CAT_OBJECT_DELETED_FLAG)) {
+        } else if (GET_FLAG(i->flags, CAT_OBJECT_INVALID_FLAG)) {
             i->validate();
-        } else if (GET_FLAG(i->flags, CAT_OBJECT_DELETED_FLAG)) {
-//            i->object->~catalog_object();
-//            cat_free(i->object);
         }
-//        j = i;
         i = i->next_invalid;
-//        j->next_invalid = NULL;
     }
 
     local_catalog->invalid_list = NULL;
