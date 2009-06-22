@@ -17,6 +17,7 @@ struct clClient
 	clProcess_fun clProcess;       // process function (called on receive)
 };
 
+void set_session_common_environment();
 int sess_registering(USOCKET s, char* msg_buf);
 int sm_registering(USOCKET s, char* msg_buf);
 int client_listener(gov_config_struct* cfg, bool is_background_mode);

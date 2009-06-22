@@ -20,15 +20,28 @@
 
 
 
-int uSetEnvironmentVariable(const char* name, const char* value, sys_call_error_fun fun)
+/* Change or add an environment variable.
+ * name   (in)  - name of the varilable to add or change
+ * value  (in)  - value of variable to set
+ * buffer (out) - if not NULL then *nix putenv() semantics is 
+ *                used, so that address of the variable's value
+ *                is saved in this argument.
+ *                It's your task to clean up this memory with 
+ *                free() call. On Windows NULL is returned.
+ * Returns:
+ * 0 - in case of success,
+ * 1 - in case of error.
+ */
+int uSetEnvironmentVariable(const char* name, const char* value, char** buffer, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    BOOL res = SetEnvironmentVariable(
-                  name,			/* environment variable name */
-                  value			/* new value for variable */
-               );
-    if (res == 0)
-    {
+    BOOL res;
+    if(buffer) *buffer = NULL;
+    res = SetEnvironmentVariable(
+                  name,         /* environment variable name */
+                  value);       /* new value for variable */
+
+    if (res == 0) {
        sys_call_error("SetEnvironmentVariable");
        return 1;
     }
@@ -38,20 +51,22 @@ int uSetEnvironmentVariable(const char* name, const char* value, sys_call_error_
     int value_len = strlen(value);
 
     /* This string will become the part 
-     * of the environment, so we must not delete it 
+     * of the environment, so we must not delete it there.
      */
-    char *str = (char*)malloc(name_len + value_len + 2); 
+    char *str = (char*)malloc(name_len + value_len + 2);
+    if(buffer) *buffer = str;
 
     memcpy(str, name, name_len);
     str[name_len] = '=';
     memcpy(str + name_len + 1, value, value_len);
     str[name_len + value_len + 1] = '\0';
     int res = putenv(str);
-    if (res != 0)
-    {
+
+    if (res != 0) {
        sys_call_error("putenv");
        return 1;
     }
+    
     return 0;
 #endif
 }

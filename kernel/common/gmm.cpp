@@ -66,8 +66,8 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
     else
     {
         char buf2[128];
-        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1", __sys_call_error);
-        uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(os_primitives_id_min_bound, buf2, 10), __sys_call_error);
+        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1", NULL, __sys_call_error);
+        uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(os_primitives_id_min_bound, buf2, 10), NULL, __sys_call_error);
 
         char path_buf[U_MAX_PATH + 10];
         std::string path_str = uGetImageProcPath(path_buf, __sys_call_error) + std::string("/") + SESSION_EXE;
@@ -95,7 +95,7 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
             throw SYSTEM_ENV_EXCEPTION((std::string("Cannot determine VMM region, status: ") + int2string(status) + ", result: " + int2string(res)).c_str());
 
         uCloseProcess(process_handle, __sys_call_error);
-        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0", __sys_call_error);
+        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0", NULL, __sys_call_error);
 
         v = *(vmm_region_values*)((char*)global_memory + PAGE_SIZE - sizeof(vmm_region_values));
 

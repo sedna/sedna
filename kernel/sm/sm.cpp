@@ -567,7 +567,7 @@ int main(int argc, char **argv)
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
 
-            if (uSetEnvironmentVariable(SM_BACKGROUND_MODE, "1", __sys_call_error) != 0)
+            if (uSetEnvironmentVariable(SM_BACKGROUND_MODE, "1", NULL, __sys_call_error) != 0)
                 throw USER_EXCEPTION2(SE4072, "SM_BACKGROUND_MODE");
 
             USemaphore started_sem;
