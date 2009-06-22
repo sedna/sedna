@@ -365,7 +365,10 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
                         u_i64toa(last_checkpoint_lsn, buf2, 10);
   strcpy(buf, command_line.c_str());
 
-  uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(GOV_HEADER_GLOBAL_PTR -> os_primitives_id_min_bound, buf3, 10), __sys_call_error);
+  uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, 
+                          u_itoa(GOV_HEADER_GLOBAL_PTR -> os_primitives_id_min_bound, buf3, 10), 
+                          NULL, 
+                          __sys_call_error);
   
 #ifndef TEST_RECOVERY_ON
   res = uCreateProcess(

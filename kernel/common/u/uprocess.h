@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 /* return value 0 indicates success */
-int uSetEnvironmentVariable(const char* name, const char* value, sys_call_error_fun fun);
+int uSetEnvironmentVariable(const char* name, const char* value, char** buffer, sys_call_error_fun fun);
 int uGetEnvironmentVariable(const char* name, char* buf, int size, sys_call_error_fun fun);
 
 /* return value 0 indicates success */

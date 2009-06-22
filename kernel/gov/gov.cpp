@@ -178,8 +178,8 @@ int main(int argc, char** argv)
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
 
-            if (uSetEnvironmentVariable(GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON, "1", __sys_call_error) != 0)
-                throw USER_EXCEPTION2(SE4073, "GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON");
+            if (uSetEnvironmentVariable(GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON, "1", NULL, __sys_call_error) != 0)
+                throw USER_EXCEPTION2(SE4072, "GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON");
 
             USemaphore started_sem;
 
@@ -255,6 +255,8 @@ int main(int argc, char** argv)
            throw USER_EXCEPTION(SE4403);
 #endif
 
+      set_session_common_environment();
+      
       client_listener(gov_table->get_config_struct(), background_off_from_background_on);
 
       gov_table->wait_all_notregistered_sess();

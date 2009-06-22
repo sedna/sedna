@@ -49,6 +49,7 @@ static void clDiscardClient(int i)
 	clClients[i].clProcess = NULL;	
 }
 
+
 int client_listener(gov_config_struct* cfg, bool background_off_from_background_on)
 {   
    msg_struct msg;
@@ -257,6 +258,26 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
 }
 
 void 
+set_session_common_environment() {
+    char buf[1024];
+    if (uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1", NULL, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4072, "SEDNA_SERVER_MODE");
+    if (uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, 
+                            u_itoa(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound, buf, 10),
+                            NULL, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4072, "SEDNA_OS_PRIMITIVES_ID_MIN_BOUND");
+}
+
+static inline void 
+set_CONNECTION_SOCKET_HANDLE(const char* value) {
+    static char* oldenv = NULL;
+    char* temp = oldenv;
+    if(uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, value, &oldenv, __sys_call_error) != 0)
+        throw SYSTEM_EXCEPTION("Can't set environment variable (CONNECTION_SOCKET_HANDLE)");
+    if(temp) free(temp);
+}
+
+void 
 CreateNewSessionProcess(USOCKET socknew, 
                         bool background_off_from_background_on) {
 
@@ -265,7 +286,6 @@ CreateNewSessionProcess(USOCKET socknew,
     UPHANDLE proc_h;
     USECURITY_ATTRIBUTES *sa;	
     char buf[U_MAX_PATH + 10];
-    char buf2[1024];
 
 #ifdef _WIN32
     /* DuplicateHandle is used only for WinSockets 
@@ -276,7 +296,7 @@ CreateNewSessionProcess(USOCKET socknew,
 #endif 
 
 
-try {
+    try {
         /* Check number of sessions */
         if (gov_table->get_total_session_procs_num() > 2*MAX_SESSIONS_NUMBER)
             throw USER_EXCEPTION(SE3046);
@@ -293,17 +313,12 @@ try {
             throw SYSTEM_EXCEPTION("Can't duplicate socket handle");
         }
     
-        uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)DuplicateSock).c_str(), __sys_call_error);
+        set_CONNECTION_SOCKET_HANDLE(int2string((int)DuplicateSock).c_str());
 #else 
 
-        uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)socknew).c_str(), __sys_call_error);
+        set_CONNECTION_SOCKET_HANDLE(int2string((int)socknew).c_str());
 
 #endif /* _WIN32 */
-
-        uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1", __sys_call_error);
-        uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, 
-                                u_itoa(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound, buf2, 10), 
-                                __sys_call_error);    
 
         /* Create security attributes for the new process */
         if(0 != uCreateSA(&sa, 
@@ -366,7 +381,6 @@ try {
 #endif
 
 }
-
 
 int sess_registering(USOCKET s, char* msg_buf)
 {

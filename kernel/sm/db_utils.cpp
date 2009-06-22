@@ -170,12 +170,12 @@ int load_metadata_in_database(const char* db_name, const char* db_security_level
                 string(" ") + db_name;
 
   if(strcmp(db_security_level, "off") == 0)
-      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", __sys_call_error);
+      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", NULL, __sys_call_error);
   else // if db-security is not off we need to load db_security data
-      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "2", __sys_call_error); 
+      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "2", NULL,  __sys_call_error); 
 
   char buf2[1024];
-  uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf2, 10), __sys_call_error);    
+  uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf2, 10), NULL,  __sys_call_error);    
 
   strcpy(buf, run_command.c_str());
   if (0 != uCreateProcess(buf,
