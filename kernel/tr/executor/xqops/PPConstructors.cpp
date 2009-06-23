@@ -37,12 +37,11 @@ void clear_virtual_root()
 }
 
 //UTILS
-void separateLocalAndPrefix(char*& prefix,const char*& qname)
+void separateLocalAndPrefix(char*& prefix, const char*& qname)
 {
     for (int i=0; i<strlen(qname);i++)
         if (qname[i]==':')
         {
-            //prefix=se_new NCName(qname, i);//string(qname,i);
             prefix = se_new char[i + 1];
             memcpy(prefix, qname, i);
             prefix[i] = '\0';
@@ -306,21 +305,20 @@ void PPElementConstructor::next  (tuple &t)
         }
         //namespace search
         
-        char* prefix=NULL;
-        xmlns_ptr ns=NULL_XMLNS;
+        char* prefix = NULL;
+        xmlns_ptr ns = NULL_XMLNS;
         if (!res.is_eos()&&res.get_atomic_type()==xs_QName)
         {
-            //prefix=(char*)xs_QName_get_prefix(name);
             ns=xs_QName_get_xmlns(name);
             name=xs_QName_get_local_name(name);
         }
         else
         {
             separateLocalAndPrefix(prefix,name);
-            if (prefix!=NULL)
+            if (prefix != NULL)
             {
-                ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
-                delete prefix;
+                str_counted_ptr c_ptr(prefix);
+                ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
             }
             else
             {
@@ -685,18 +683,17 @@ void PPAttributeConstructor::next  (tuple &t)
         else
         {
             separateLocalAndPrefix(prefix,name);
-            if ((
-                        (prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
-                     || (prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0) )
+            if ((   (prefix==NULL || my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
+                 || (prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0) )
             {
-                if (prefix != NULL) { delete prefix; prefix = NULL; }  /// We should clear memory here ... (IS)
+                if (prefix != NULL) { delete[] prefix; prefix = NULL; }  /// We must clear memory here ... (IS)
                 throw XQUERY_EXCEPTION(XQDY0044);
             }
             if (prefix!=NULL)
             {
+                str_counted_ptr c_ptr(prefix);
                 if(my_strcmp(prefix,"")!=0) 
                     ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);               /// Note: default namespace is not applied to the attributes (IS)
-                delete prefix;          
             }
         }
         if (!check_constraints_for_xs_NCName(name)||
@@ -1135,7 +1132,7 @@ void PPPIConstructor::next  (tuple &t)
             separateLocalAndPrefix(prefix,name);
             if (prefix!=NULL)
             {
-                delete prefix;
+                delete[] prefix;
                 throw XQUERY_EXCEPTION(XQDY0041);
             }
         }

@@ -62,7 +62,7 @@ void PPRetrieveDS::execute()
     counted_ptr<db_entity> db_ent(se_new db_entity);
 
     if (type == dbe_document)
-    { /// dbe_document
+    { 
     	db_ent->name = se_new char[tc.get_strlen_mem() + 1];
     	strcpy(db_ent->name, tc.get_str_mem());
     	db_ent->type = dbe_document;
@@ -71,7 +71,7 @@ void PPRetrieveDS::execute()
         print_descriptive_schema(tc.get_str_mem(), dynamic_context::ostr());
     }
     else
-    { /// dbe_collection
+    { 
     	db_ent->name = se_new char[tc.get_strlen_mem() + 1];
     	strcpy(db_ent->name, tc.get_str_mem());
     	db_ent->type = dbe_collection;

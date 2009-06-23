@@ -2366,37 +2366,10 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
     else if (op == "PPScan")
     {
         throw USER_EXCEPTION2(SE1004, "Depricated phisical plan operation");
-/*
-        if (   lst->size() != 3
-            || lst->at(1).type != SCM_NUMBER
-            || lst->at(2).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "94");
-
-        schema_node *scm_node = (schema_node*)(atoi(lst->at(1).internal.num));
-
-        scheme_list *ent_lst = lst->at(2).internal.list;
-        db_entity *db_ent = make_db_entity(ent_lst, false);
-
-        opit = se_new PPScan(cxt,
-                          scm_node,
-                          counted_ptr<db_entity>(db_ent));
-*/
     }
     else if (op == "PPUp")
     {
         throw USER_EXCEPTION2(SE1004, "Depricated phisical plan operation");
-/*
-        if (   lst->size() != 3
-            || lst->at(1).type != SCM_LIST
-            || lst->at(2).type != SCM_NUMBER
-           ) throw USER_EXCEPTION2(SE1004, "95");
-
-        schema_node *scm_node = (schema_node*)(atoi(lst->at(2).internal.num));
-
-        opit = se_new PPUp(cxt,
-                        make_pp_op(cxt, lst->at(1).internal.list),
-                        scm_node);
-*/
     }
     else if (op == "PPFnCompare")
     {
@@ -3253,119 +3226,6 @@ fn_dt_funcs_correct_type:
     }
 #endif //SE_ENABLE_DTSEARCH
 
-
-/*
-    else if (op == "PPAJoin")
-    {   // (PPAJoin outer inner outer_names inner_names order pred)
-        if (lst->size() != 7) throw USER_EXCEPTION2(SE1004, "20");
-
-        int i = 0;
-
-        for (i = 1; i < lst->size(); i++)
-        {
-            if (lst->at(i).type != SCM_LIST)
-                throw USER_EXCEPTION2(SE1004, "21");
-        }
-
-        arr_of_QNames outer_names;
-        scheme_list *_outer_names_ = lst->at(3).internal.list;
-        for (i = 0; i != _outer_names_->size(); i++)
-        {
-            if (_outer_names_->at(i).type != SCM_SYMBOL)
-                throw USER_EXCEPTION2(SE1004, "22");
-
-            QName name;
-            name.Prefix = "";
-            name.LocalPart = string(_outer_names_->at(i).internal.symb);
-            outer_names.push_back(name);
-        }
-
-        arr_of_QNames inner_names;
-        scheme_list *_inner_names_ = lst->at(4).internal.list;
-        for (i = 0; i != _inner_names_->size(); i++)
-        {
-            if (_inner_names_->at(i).type != SCM_SYMBOL)
-                throw USER_EXCEPTION2(SE1004, "23");
-
-            QName name;
-            name.Prefix = "";
-            name.LocalPart = string(_inner_names_->at(i).internal.symb);
-            outer_names.push_back(name);
-        }
-
-        arr_of_int_pairs order;
-        scheme_list *_order_ = lst->at(5).internal.list;
-        for (i = 0; i != _order_->size(); i++)
-        {
-            if (   _order_->at(i).type != SCM_LIST
-                || _order_->at(i).internal.list->size() != 2
-                || _order_->at(i).internal.list->at(0).type != SCM_NUMBER
-                || _order_->at(i).internal.list->at(1).type != SCM_NUMBER) 
-                throw USER_EXCEPTION2(SE1004, "24");
-
-            order.push_back(int_pair(atoi(_order_->at(i).internal.list->at(0).internal.num), 
-                                     atoi(_order_->at(i).internal.list->at(1).internal.num)));
-        }
-
-        opit = se_new PPAJoin(qp, 
-                           PPOpOut(),
-                           make_pp_op(qp, sqv, lst->at(1).internal.list),
-                           make_pp_op(qp, sqv, lst->at(2).internal.list),
-                           outer_names,
-                           inner_names,
-                           order,
-                           make_pp_op(qp, sqv, lst->at(6).internal.list));
-    }
-    else if (op == "PPASemiJoin")
-    {
-        if (lst->size() != 6) throw USER_EXCEPTION2(SE1004, "25");
-
-        int i = 0;
-
-        for (i = 1; i < lst->size(); i++)
-        {
-            if (lst->at(i).type != SCM_LIST)
-                throw USER_EXCEPTION2(SE1004, "26");
-        }
-
-        arr_of_QNames outer_names;
-        scheme_list *_outer_names_ = lst->at(3).internal.list;
-        for (i = 0; i != _outer_names_->size(); i++)
-        {
-            if (_outer_names_->at(i).type != SCM_SYMBOL)
-                throw USER_EXCEPTION2(SE1004, "27");
-
-            QName name;
-            name.Prefix = "";
-            name.LocalPart = string(_outer_names_->at(i).internal.symb);
-            outer_names.push_back(name);
-        }
-
-        arr_of_QNames inner_names;
-        scheme_list *_inner_names_ = lst->at(4).internal.list;
-        for (i = 0; i != _inner_names_->size(); i++)
-        {
-            if (_inner_names_->at(i).type != SCM_SYMBOL)
-                throw USER_EXCEPTION2(SE1004, "28");
-
-            QName name;
-            name.Prefix = "";
-            name.LocalPart = string(_inner_names_->at(i).internal.symb);
-            outer_names.push_back(name);
-        }
-
-        opit = se_new PPASemiJoin(qp, 
-                               PPOpOut(),
-                               make_pp_op(qp, sqv, lst->at(1).internal.list),
-                               make_pp_op(qp, sqv, lst->at(2).internal.list),
-                               outer_names,
-                               inner_names,
-                               make_pp_op(qp, sqv, lst->at(5).internal.list));
-    }
-*/
-
-
-
     else throw USER_EXCEPTION2(SE1004, ("Wrong plan representation, unknown operation " + op).c_str());
 
     opit->set_xquery_line(line);
@@ -3635,27 +3495,6 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
             qe->at(1).internal.b
             );
     }
-    //{
-    //    if ( qe->size() != 6
-    //        || qe->at(1).type != SCM_NUMBER
-    //        || qe->at(2).type != SCM_LIST
-    //        || qe->at(3).type != SCM_NUMBER
-    //        || qe->at(4).type != SCM_LIST
-	   // || qe->at(5).type != SCM_BOOL)
-    //        throw USER_EXCEPTION2(SE1004, "310.5");
-
-    //    int var_cxt_size1 = atoi(qe->at(1).internal.num);
-    //    dynamic_context *cxt1 = se_new dynamic_context(st_cxt, var_cxt_size1);
-
-    //    int var_cxt_size2 = atoi(qe->at(3).internal.num);
-    //    dynamic_context *cxt2 = se_new dynamic_context(st_cxt, var_cxt_size2);
-
-    //    return se_new PPLoadModule(make_pp_op(cxt1, qe->at(2).internal.list),
-				//				make_pp_op(cxt2, qe->at(4).internal.list),
-				//				qe->at(5).internal.b,
-				//				s  // is passed to this function
-				//				);
-    //}
     else if (op == "PPCreateDocument")
     {
         if (   qe->size() != 3
@@ -3936,16 +3775,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
 #ifdef SE_ENABLE_TRIGGERS
     else if (op == "PPCreateTrigger")
     {
-/*d_printf2("\n%d",qe->at(0).type);
 
-d_printf2("\n%d",qe->at(3).type);
-d_printf2("\n%d",qe->at(4).type);
-d_printf2("\n%d",qe->at(5).type);
-d_printf2("\n%d",qe->at(6).type);
-d_printf2("\n%d",qe->at(7).type);
-d_printf2("\n%d",qe->at(8).type);
-d_printf2("\n%d",qe->size());
-*/
         if (  !(( qe->size() == 9 )||( qe->size() == 12 ))
             || qe->at(1).type != SCM_NUMBER    
             || qe->at(2).type != SCM_SYMBOL    // time
@@ -4381,7 +4211,6 @@ qep_subtree *build_qep(scheme_list* por, int var_cxt_size)
 void delete_qep(PPQueryEssence *qep)
 {
     delete qep;
-
     dynamic_context::static_clear();
 }
 
