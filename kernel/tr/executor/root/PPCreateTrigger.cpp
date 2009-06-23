@@ -67,8 +67,8 @@ PPCreateTrigger::PPCreateTrigger(char* _time_,
                                  PPOpIn _trigger_name_,
     						 	 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
                                                             db_ent(_db_ent_),
+                                                            action(_action_),
                                                             trigger_name(_trigger_name_),
-    														action(_action_),
     														cxt(_cxt_)
 {
 	time   = symb2trigger_time(_time_);
@@ -89,9 +89,9 @@ PPCreateTrigger::PPCreateTrigger(char* _time_,
                                  PPOpIn _trigger_name_,
     							 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
                                                             db_ent(_db_ent_),
+                                                            action(_action_),
+                                                            path_to_parent(_path_to_parent_),
                                                             trigger_name(_trigger_name_),
-    														path_to_parent(_path_to_parent_),
-       														action(_action_),
     														cxt(_cxt_)
 {
 	time   = symb2trigger_time(_time_);

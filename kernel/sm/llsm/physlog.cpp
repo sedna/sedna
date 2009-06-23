@@ -107,7 +107,6 @@ void llLogDecrease(uint64_t old_size)
 
 	char *tmp_rec;  
 	int rec_len;
-	LSN ret_lsn;
 
 	rec_len = sizeof(char) + sizeof(LSN) + sizeof(uint64_t);
 	if ((tmp_rec = (char *)malloc(rec_len)) == NULL)
@@ -143,7 +142,6 @@ void llLogRecordBlock(xptr xblk, void *block, int size)
 
 	char *tmp_rec;  
 	int rec_len;
-	LSN ret_lsn;
 
 	if (!llHbIsNeedAddLogging())
 		return;

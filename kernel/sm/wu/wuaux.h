@@ -22,7 +22,7 @@ static
 inline
 int Is2Power(int val)
 {
-	return (val&val-1)==0;
+	return (val&(val-1))==0;
 }
 
 static
@@ -52,7 +52,7 @@ inline
 void *AlignPtr(void *ptr, int alignment)
 {
 	assert(alignment>0 && Is2Power(alignment));
-	return (void*)((uintptr_t)ptr+alignment-1&~(uintptr_t)(alignment-1));
+	return (void*)(((uintptr_t)ptr+alignment-1)&~(uintptr_t)(alignment-1));
 }
 
 void DbgInitGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill);
@@ -99,9 +99,13 @@ int FindLowestBitSet(uint32_t val)
 
 	assert(val);
 
+#ifdef _MSC_VER
 #pragma warning( disable : 4146 )
+#endif
 	bitId=tab[(val&-val)*UINT32_C(0x077CB531)>>27];
+#ifdef _MSC_VER
 #pragma warning( default : 4146 )
+#endif
 
 	return bitId;
 }
@@ -112,9 +116,13 @@ int ResetLowestBitSet(uint32_t *val)
 {
 	int bitId=FindLowestBitSet(*val);
 
+#ifdef _MSC_VER
 #pragma warning( disable : 4146 )
+#endif
 	*val^=*val&-*val;
+#ifdef _MSC_VER
 #pragma warning( default : 4146 )
+#endif
 
 	return bitId;
 }

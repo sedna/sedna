@@ -25,8 +25,8 @@ PPVarDecl::PPVarDecl(dynamic_context *_cxt_,
                                                   v_dsc(_v_dsc_),
                                                   child(_child_),
                                                   source(_child_.ts),
-                                                  st(_st_),
-                                                  need_to_check_type(true)
+                                                  need_to_check_type(true),
+                                                  st(_st_)
 {
 }
 

@@ -190,7 +190,6 @@ void test_collection(char *name, col_schema_node_cptr coll)
 void test_db_after_rcv()
 {
     std::string rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files/rcv_test_result.log");
-    UFile r_fh;
     metadata_cell_cptr mdc = XNULL;
 
     logfile = fopen(rcv_fname.c_str(), "at");

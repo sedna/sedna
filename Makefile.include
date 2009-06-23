@@ -375,8 +375,14 @@ CHICKEN_OPTIONS = $(CHICKEN_HEAP_SPEC) -include-path $(CHICKEN_INCLUDE)
 Makefile.%: ;
 .SUFFIXES:
 
+ifeq ("$(GENFULLPATH)", "1")
+%$(OBJ_EXT): %.cpp
+	$(CCX) $(CPPFLAGS) `pwd`/$<
+else
 %$(OBJ_EXT): %.cpp
 	$(CCX) $(CPPFLAGS) $<
+endif
+
 
 %$(OBJ_EXT): %.c
 	$(CC) $(CFLAGS) $<

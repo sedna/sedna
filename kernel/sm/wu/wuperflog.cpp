@@ -8,6 +8,11 @@
 #define PL_BUF_SZ		1024
 #define PL_MAX_DEPTH	128
 
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif /* GNUC */
+
 static const size_t stringTableSize = 23;
 static const char *stringTable[stringTableSize] = 
 {

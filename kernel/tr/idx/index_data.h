@@ -80,15 +80,19 @@ public:
         xmlscm_type _keytype, xptr _btree_root, PathExpr * _object,
         PathExpr * _key, const char * _doc_name, bool _is_doc
       ) :
-        index_title(cat_strcpy(this, _index_title)),
+        index_title(NULL),
         keytype(_keytype),
         btree_root(_btree_root),
         object(_object),
         key(_key),
         schemaroot(_schemaroot),
-        doc_name(cat_strcpy(this, _doc_name)),
+        doc_name(NULL),
         is_doc(_is_doc),
-        err_cntr(0)  {};
+        err_cntr(0)
+    {
+      index_title = cat_strcpy(this, _index_title);
+      doc_name = cat_strcpy(this, _doc_name);
+    };
 
     ~index_cell_object() { 
         cat_free(index_title);

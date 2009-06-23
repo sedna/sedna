@@ -14,6 +14,9 @@
 
 class PPCreateIndex : public PPUpdate
 {
+    // obtained parameters and local data
+    schema_node_xptr root;
+
     // given parameters
     PathExpr *object_path;
     PathExpr *key_path;
@@ -21,9 +24,6 @@ class PPCreateIndex : public PPUpdate
     counted_ptr<db_entity> db_ent;
     PPOpIn index_name;
     dynamic_context *cxt;
-
-    // obtained parameters and local data
-    schema_node_xptr root;
 
 public:
     void open();

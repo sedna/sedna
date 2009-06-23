@@ -11,8 +11,8 @@ PPXptr::PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_) : PPIt
 }
 
 PPXptr::PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_, const xptr &_p_) : PPIterator(_cxt_), 
-                                                                                      var_type(_var_type_),
-                                                                                      p(_p_)
+                                                                                     p(_p_),
+                                                                                     var_type(_var_type_)
 {
 }
 

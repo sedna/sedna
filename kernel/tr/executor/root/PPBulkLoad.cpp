@@ -20,12 +20,13 @@ PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
                        PPOpIn _document_,
                        dynamic_context *_cxt2_,
                        PPOpIn _collection_,
-                       dynamic_context *_cxt3_) : filename(_filename_),
-                                                  document(_document_),
-                                                  collection(_collection_),
+                       dynamic_context *_cxt3_) :
                                                   cxt1(_cxt1_),
                                                   cxt2(_cxt2_),
-                                                  cxt3(_cxt3_)
+                                                  cxt3(_cxt3_),
+                                                  filename(_filename_),
+                                                  document(_document_),
+                                                  collection(_collection_)
 {
 }
 

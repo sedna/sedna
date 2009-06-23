@@ -93,7 +93,7 @@ struct sc_ref {
         }
     };
 
-    inline sc_ref() : xmlns_local(NULL), name(NULL) {
+    inline sc_ref() : name(NULL), xmlns_local(NULL) {
     };
 
     inline sc_ref(sc_ref const &source) : xmlns_local(NULL) {

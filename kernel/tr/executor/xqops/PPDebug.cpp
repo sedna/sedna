@@ -23,8 +23,8 @@ PPDebug::PPDebug(dynamic_context *_cxt_,
                  const str_counted_ptr &_child_name_,
                  const str_counted_ptr &_child_info_) : PPIterator(_cxt_),
                                                         child(_child_),
-                                                        child_name(_child_name_),
                                                         dostr(dynamic_context::dostr()),
+                                                        child_name(_child_name_),
                                                         child_info(_child_info_)
 {
 }

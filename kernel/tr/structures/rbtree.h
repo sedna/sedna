@@ -53,13 +53,13 @@ struct sedna_rbtree
 	} *root;
 
 	sedna_rbtree_entry* mem_pool;
+    int mem_pool_size;
 	int mem_pool_cnt;
-	int mem_pool_size;
 	int mem_free_place;
 
 	static sedna_rbtree* init();
 
-    inline sedna_rbtree() : mem_pool_size(20), mem_pool_cnt(0), mem_free_place(0), root(NULL) {
+    inline sedna_rbtree() : root(NULL), mem_pool_size(20), mem_pool_cnt(0), mem_free_place(0) {
         this->mem_pool=(sedna_rbtree_entry*)malloc(sizeof(sedna_rbtree_entry)*mem_pool_size);
     };
 

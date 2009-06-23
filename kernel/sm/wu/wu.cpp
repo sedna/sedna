@@ -297,7 +297,6 @@ int AllocateDataBlock (XPTR *pXptr, int *pBufferId)
 	XPTR bigXptr=0, bigSwapped=0;
 	xptr lilXptr, lilSwapped;
 	ramoffs ofs = 0;
-	vmm_sm_blk_hdr *header = NULL;
 
 	assert(pXptr && pBufferId); *pXptr=0; *pBufferId=-1;
 	try
@@ -323,7 +322,6 @@ int AllocateTempBlock (XPTR *pXptr, int *pBufferId)
 	XPTR bigXptr=0, bigSwapped=0;
 	xptr lilXptr, lilSwapped;
 	ramoffs ofs = 0;
-	vmm_sm_blk_hdr *header = NULL;
 
 	assert(pXptr && pBufferId); *pXptr=0; *pBufferId=-1;
 	try
@@ -748,7 +746,7 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 int WuDeleteBlock(int sid, xptr p)
 {
 	LXPTR lxptr=0;
-	int success=0, bufferId=0;
+	int success=0;
 
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
@@ -930,7 +928,7 @@ int WuGatherSnapshotsStats(WuSnapshotStats *stats)
 
 int WuTryAdvanceSnapshots(int *bSuccess)
 {
-	TIMESTAMP discardedSnapshotTs = INVALID_TIMESTAMP, curSnapshotTs = INVALID_TIMESTAMP;
+	TIMESTAMP curSnapshotTs = INVALID_TIMESTAMP;
 	TIMESTAMP damagedSnapshots[VE_VERSIONS_COUNT];
 	int tsDamCount = 0;
 	

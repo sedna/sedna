@@ -1051,8 +1051,11 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
 {
 	uint64_t fileOffs;
 	int FirstRecPart, SecondRecPart;
+/*
 	UFile fileDsc;
-	uint64_t BytesLeft, FilesNum;
+    uint64_t FilesNum;
+*/
+	uint64_t BytesLeft;
 	LSN resLSN;
 
 	lfsLock();

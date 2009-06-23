@@ -13,8 +13,8 @@
 PPScan::PPScan(dynamic_context *_cxt_, 
                schema_node_xptr _scm_node_,
                counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_),
-                                                  scm_node(_scm_node_),
-                                                  db_ent(_db_ent_)
+                                                  db_ent(_db_ent_),
+                                                  scm_node(_scm_node_)
 {
 }
 

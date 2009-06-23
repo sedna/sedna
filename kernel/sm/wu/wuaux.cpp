@@ -98,6 +98,10 @@ void DbgInitGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill)
 	*gmv.frag1=*gmv.frag1 & ~gmv.m1 | gmv.fill & gmv.m1;
 }
 
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wformat"
+#endif /* GNUC */
+
 static 
 void ReportGuardMemOverrun(void *begin, void *end, uint32_t *loc, uint32_t content, uint32_t expect, 
 						   const char *errmsg,
@@ -112,6 +116,10 @@ void ReportGuardMemOverrun(void *begin, void *end, uint32_t *loc, uint32_t conte
 	fprintf(stderr,"   %04x %08X %08X\n", 
 		CalcPtrDistance(begin,loc), BigEndianByteOrder(content), BigEndianByteOrder(expect));
 }
+
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic warning "-Wformat"
+#endif /* GNUC */
 
 int DbgCheckGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill, int isReporting, const char *errmsg)
 {

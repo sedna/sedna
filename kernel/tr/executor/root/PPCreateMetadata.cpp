@@ -116,10 +116,11 @@ void PPCreateCollection::execute()
 PPCreateDocumentInCollection::PPCreateDocumentInCollection(PPOpIn _document_,
                                                            dynamic_context *_cxt1_,
                                                            PPOpIn _collection_,
-                                                           dynamic_context *_cxt2_) : document(_document_),
+                                                           dynamic_context *_cxt2_) : 
                                                                                       cxt1(_cxt1_),
-                                                                                      collection(_collection_),
-                                                                                      cxt2(_cxt2_)
+                                                                                      cxt2(_cxt2_),
+                                                                                      document(_document_),
+                                                                                      collection(_collection_)
 {
 }
 

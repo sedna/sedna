@@ -14,8 +14,8 @@ PPInsertBefore::PPInsertBefore(PPOpIn _child1_,
                                PPOpIn _child2_,
                                dynamic_context *_cxt2_) : PPUpdate(),
                                                           child1(_child1_),
-                                                          cxt1(_cxt1_),
                                                           child2(_child2_),
+                                                          cxt1(_cxt1_),
                                                           cxt2(_cxt2_)
 {
 }

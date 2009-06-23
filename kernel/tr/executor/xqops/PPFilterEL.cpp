@@ -16,8 +16,8 @@ using namespace std;
 
 PPFilterEL::PPFilterEL(dynamic_context *_cxt_,
              PPOpIn _child_) : PPIterator(_cxt_),
-                               child(_child_),
-                               s(NULL)
+                               s(NULL),
+                               child(_child_)
 {
 
 }

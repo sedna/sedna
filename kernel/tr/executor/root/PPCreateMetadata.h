@@ -43,8 +43,8 @@ public:
 class PPCreateDocumentInCollection : public PPUpdate
 {
     // given parameters
-    PPOpIn document, collection;
     dynamic_context *cxt1, *cxt2;
+    PPOpIn document, collection;
 
 public:
     void open();

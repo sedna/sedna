@@ -57,7 +57,11 @@ static int sba_find     (struct bit_array *B, int * n)
     return -1;
 }
 
-static int sba_print (struct bit_array *B)
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif /* GNUC */
+
+static void sba_print (struct bit_array *B)
 {
     for (int i = 0; i < SBA_SIZE*32; i++) {
         if ((i % 32 == 0) && (i != 0)) printf("\n");

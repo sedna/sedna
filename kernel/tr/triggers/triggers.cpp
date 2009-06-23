@@ -261,7 +261,7 @@ xptr apply_before_replace_triggers(xptr new_node, xptr old_node, schema_node_cpt
    	if (internal_auth_switch == BLOCK_AUTH_CHECK) return old_node;
     
 	CHECKP(old_node);
-    cat_list<trigger_cell_xptr>::item* scm_trc = scm_node->trigger_list.first;
+//    cat_list<trigger_cell_xptr>::item* scm_trc = scm_node->trigger_list.first;
     xptr parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
     
    	t_triggers_set treated_triggers;
@@ -295,7 +295,7 @@ void apply_after_replace_triggers(xptr new_node, xptr old_node, xptr where_var, 
     if((node_type!=element)&&(node_type!=attribute))
         return;
 
-    cat_list<trigger_cell_xptr>::item* scm_trc = scm_node->trigger_list.first;
+//    cat_list<trigger_cell_xptr>::item* scm_trc = scm_node->trigger_list.first;
     
    	t_triggers_set treated_triggers;
     trigger_cell_cptr trc = XNULL;

@@ -769,7 +769,7 @@ tcost popt_optimize_level(xp_tree *tree, int level, tsel initial_sel, int pl, in
 void popt_optimize_tree(xp_tree *tree)
 {
 /// !!! Rewrite this function to take into account additional plans
-    int i = 0, j = 0;
+    int i = 0;
 
     for (i = 0; i < tree->n; i++)
         qsort(tree->levels[i].preds.get(), tree->levels[i].n, sizeof(xp_pred), xp_pred_compare);

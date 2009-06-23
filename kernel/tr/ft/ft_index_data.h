@@ -53,7 +53,7 @@ struct ft_custom_cell
 	inline ft_custom_cell() : ns_local(NULL_XMLNS) {};
 
 	inline ft_custom_cell(xmlns_ptr_pers _ns, xmlns_ptr _ns_local, const char* _local,ft_index_type _cm) :
-        	ns_pers(_ns), ns_local(_ns_local), local(cat_strcpy(this, _local)), cm(_cm) {};
+        	ns_pers(_ns), ns_local(_ns_local), local(NULL), cm(_cm) { local = cat_strcpy(this, _local); };
 
     inline bool less( ft_custom_cell *p1)
     {

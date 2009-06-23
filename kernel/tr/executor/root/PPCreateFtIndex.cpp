@@ -34,9 +34,9 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
                                  PPOpIn _cust_rules_,
                                  dynamic_context *_cxt_) :
                                                         object_path(_object_path_),
+                                                        cust_rules(_cust_rules_),
                                                         db_ent(_db_ent_),
                                                         index_name(_index_name_),
-               											cust_rules(_cust_rules_),
                                                         cxt(_cxt_)
 {
 	if (_index_type_[0] == '!')

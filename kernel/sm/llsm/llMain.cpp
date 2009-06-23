@@ -310,7 +310,7 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 	recovery_active = rcv_active;
 
 	// print some message about consistency of the database
-	if (rcv_active)
+	if (rcv_active) {
 		if (!(*exit_status))
 			fprintf(res_os, (llInfo->hotbackup_needed) ? "Hot-backup recovery in progress...\n" :
 														 "Database recovery in progress...\n");
@@ -319,6 +319,7 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
             elog(EL_LOG, ("Database is in consistent state. Starting..."));
 			fprintf(res_os, "Database is in consistent state. Starting...\n");
         }
+    }
 	return 0;
 }
 
@@ -491,7 +492,7 @@ int llFlushAll()
 {
 	llLock();
 
-	llFileHead file_head;
+/*	llFileHead file_head; */
 
 	lfsFlushAll();
 

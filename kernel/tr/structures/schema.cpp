@@ -260,7 +260,7 @@ schema_node_object::schema_node_object(
     xmlns_pers(XNULL),
     xmlns_local(_xmlns),
     persistent(_persistent),
-    name(cat_strcpy(this, _name)),
+    name(NULL),
     root(_root), 
     parent(XNULL), 
     type(_type),
@@ -268,11 +268,9 @@ schema_node_object::schema_node_object(
     nodecnt(0), blockcnt(0), extnids(0), indir_blk_cnt(0), textcnt(0), 
     lastnode_ind(XNULL)
 {
-//    if ((this->get_xmlns() != XNULL) && (this->persistent)) xml_ns_inc_ref(this->get_xmlns());
-
+    name = cat_strcpy(this, _name);
     U_ASSERT((root != NULL) || (_xmlns == NULL));
-
-    if (root != NULL) { xmlns_pers = root->xmlns_register(_xmlns); } 
+    if (root != NULL) { xmlns_pers = root->xmlns_register(_xmlns); }
 };
 
 schema_node_object::~schema_node_object() {

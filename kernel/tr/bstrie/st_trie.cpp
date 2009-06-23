@@ -212,6 +212,7 @@ struct trie_data * trie_delete_object(struct trie_data * data, struct tree_state
 
     fix_all_pointers(data->p, split_point, delta, state->dsc.p);
 
+    return data;
 //    }
 }
 

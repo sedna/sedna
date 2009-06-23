@@ -951,8 +951,8 @@ PPSLet::PPSLet(dynamic_context *_cxt_,
              PPOpIn _data_child_) : PPVarIterator(_cxt_),
                                     var_dscs(_var_dscs_),
                                     source_child(_source_child_),
-                                    data_child(_data_child_),
-                                    source(_source_child_.ts)
+                                    source(_source_child_.ts),
+                                    data_child(_data_child_)
 {
 }
 
