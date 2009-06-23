@@ -29,11 +29,11 @@ PPReturn::PPReturn(dynamic_context *_cxt_,
                    const sequence_type& _st_) : PPVarIterator(_cxt_),
                                                 var_dscs(_var_dscs_),
                                                 source_child(_source_child_),
-                                                data_child(_data_child_),
                                                 source(_source_child_.ts),
+                                                data_child(_data_child_),
+                                                need_to_check_type(true),
                                                 pos_dsc(_pos_dsc_),
-                                                st(_st_),
-                                                need_to_check_type(true)
+                                                st(_st_)
 {
 }
 
@@ -44,10 +44,10 @@ PPReturn::PPReturn(dynamic_context *_cxt_,
                    var_dsc _pos_dsc_) : PPVarIterator(_cxt_),
                                         var_dscs(_var_dscs_),
                                         source_child(_source_child_),
-                                        data_child(_data_child_),
                                         source(_source_child_.ts),
-                                        pos_dsc(_pos_dsc_),
-                                        need_to_check_type(false)
+                                        data_child(_data_child_),
+                                        need_to_check_type(false),
+                                        pos_dsc(_pos_dsc_)
 {
 }
 

@@ -49,11 +49,11 @@ PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
                        PPOpIn _seq1_, 
                        PPOpIn _seq2_,
                        patmatch_type _pmt_): PPIterator(_cxt_), 
+                                             tknzr(NULL),
                                              seq1(_seq1_), 
                                              seq2(_seq2_),
-                                             pmt(_pmt_),
                                              ch_cnt(2),
-                                             tknzr(NULL)
+                                             pmt(_pmt_)
 {
 	cf_choice();
 }
@@ -63,13 +63,13 @@ PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
                        PPOpIn _seq1_, 
                        PPOpIn _seq2_,
                        PPOpIn _seq3_,
-                       patmatch_type _pmt_): PPIterator(_cxt_), 
+                       patmatch_type _pmt_): PPIterator(_cxt_),
+                                             tknzr(NULL),
                                              seq1(_seq1_), 
                                              seq2(_seq2_), 
                                              seq3(_seq3_),
-                                             pmt(_pmt_),
                                              ch_cnt(3),
-                                             tknzr(NULL)
+                                             pmt(_pmt_)
 {
 	cf_choice();
 }
@@ -79,14 +79,14 @@ PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
                        PPOpIn _seq2_,
                        PPOpIn _seq3_,
                        PPOpIn _seq4_,
-                       patmatch_type _pmt_): PPIterator(_cxt_), 
+                       patmatch_type _pmt_): PPIterator(_cxt_),
+                                             tknzr(NULL),
                                              seq1(_seq1_), 
                                              seq2(_seq2_), 
                                              seq3(_seq3_), 
                                              seq4(_seq4_),
-                                             pmt(_pmt_),
                                              ch_cnt(4),
-                                             tknzr(NULL)
+                                             pmt(_pmt_)
 {
 	cf_choice();
 }

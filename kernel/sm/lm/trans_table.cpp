@@ -56,7 +56,6 @@ void tr_lock_head::print()
 tr_lock_head* trans_table::find_tr_lock_head(transaction_id tr_id)
 {
 #ifdef LOCK_MGR_ON
-   int res;
    tr_lock_head* ret;
 
 
@@ -77,7 +76,6 @@ tr_lock_head* trans_table::find_tr_lock_head(transaction_id tr_id)
 int trans_table::insert_tr_lock_head(tr_pair p)
 {
 #ifdef LOCK_MGR_ON
-   int res;
    int ret;
 
    pair<Trans_It, bool > pr;
@@ -99,7 +97,6 @@ int trans_table::insert_tr_lock_head(tr_pair p)
 int trans_table::remove_tr(transaction_id tr_id)
 {
 #ifdef LOCK_MGR_ON
-   int res;
    int ret;
 
    ret =_tr_table_.erase(tr_id);

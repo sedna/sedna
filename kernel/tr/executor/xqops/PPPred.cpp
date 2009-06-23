@@ -559,8 +559,8 @@ PPPred1::PPPred1(dynamic_context *_cxt_,
                                       var_dscs(_var_dscs_),
                                       source_child(_source_child_),
                                       conjuncts(_conjuncts_),
-                                      conditions(_conditions_),
                                       data_child(_data_child_),
+                                      conditions(_conditions_),
                                       data(_data_child_.ts),
                                       once(_once_),
                                       pos_dsc(_pos_dsc_)
@@ -948,13 +948,13 @@ PPPred2::PPPred2(dynamic_context *_cxt_,
                                       var_dscs(_var_dscs_),
                                       source_child(_source_child_),
                                       conjuncts(_conjuncts_),
-                                      conditions(_conditions_),
                                       data_child(_data_child_),
+                                      conditions(_conditions_),
                                       data(_data_child_.ts),
-                                      once(_once_),
                                       pos_dsc(_pos_dsc_),
                                       lst_dsc(_lst_dsc_),
-                                      s(NULL)
+                                      s(NULL),
+                                      once(_once_)
 {
     if(conjuncts.size() != conditions.size()) 
         throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred2");

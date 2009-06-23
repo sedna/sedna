@@ -722,37 +722,37 @@ extern "C" {
 *   or the C-code, and I get acceptable performance.
 \******************************************************************************/
 
-    static void zaddmulp(long *a, long b, long d, long *t);
+//    static void zaddmulp(long *a, long b, long d, long *t);
         /******************************************************************\
         * a = (a + t + b * d) % RADIX; and simultaneously
         * t = (a + t + b * d) / RADIX;
         \******************************************************************/
 
-    static void zaddmulpsq(long *a, long b, long *t);
+//    static void zaddmulpsq(long *a, long b, long *t);
         /******************************************************************\
         * a = (a + b * b) % RADIX; and simultaneously
         * t = (a + b * b) / RADIX;
         \******************************************************************/
 
-    static void zaddmulone(verylong a, verylong b);
+//    static void zaddmulone(verylong a, verylong b);
         /******************************************************************\
         * a += b;
         * a and b not at overlapping addresses
         \******************************************************************/
 
-    static void zaddmul(long d, verylong a, verylong b);
+//    static void zaddmul(long d, verylong a, verylong b);
         /******************************************************************\
         * a += d * b;
         * a and b not at overlapping addresses (except if d=1)
         \******************************************************************/
 
-    static void zaddmulsq(long d, verylong a, verylong b);
+//    static void zaddmulsq(long d, verylong a, verylong b);
         /******************************************************************\
         * a += b[0] * b[1:d];
         * a and b not at overlapping addresses (except if d=1)
         \******************************************************************/
 
-    static void zmmulp(verylong a);
+//    static void zmmulp(verylong a);
         /******************************************************************\
         * a[s:] += (a[s] * zminv) * zn;
         * to make a[s] == 0, where s and zminv are clear from

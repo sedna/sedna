@@ -76,7 +76,6 @@ void xptrChanneledMerge::clear_merge  ()
     sedna_rbtree<node_cell>::sedna_rbtree_entry* tmp=merge_tree->rb_minimum(merge_tree->root);
     while (tmp!=NULL)
     {       
-        node_cell* mdc=tmp->obj;
         free(tmp->obj);
         tmp->obj=NULL;
         tmp=merge_tree->rb_successor(tmp);

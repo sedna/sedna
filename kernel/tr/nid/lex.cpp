@@ -320,10 +320,6 @@ t_prefix lex_middle(t_prefix the_small, t_prefix the_big) {
 	makes two prefixes of equal size stuffing the tail of shotest with minimal symbol (1)
 */
 void lex_allign(t_prefix &the_small, t_prefix &the_big) {
-	unsigned char	*s = the_small.prefix;
-	unsigned char	*b = the_big.prefix;
-	char*	str_to_free = NULL;
-
 	/* here we use the fact that prefixes live in our memory, which is big enough */
 	if (the_small.size < the_big.size) {
 		for (int i=the_small.size; i<the_big.size; i++)

@@ -39,7 +39,7 @@ public:
     
     PPDebug(dynamic_context *_cxt_,
             const PPOpIn &_children_,
-            const str_counted_ptr &_child_name_,            
+            const str_counted_ptr &_child_name_,
             const str_counted_ptr &_child_info_);
 
     virtual ~PPDebug();

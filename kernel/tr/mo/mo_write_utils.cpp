@@ -1390,7 +1390,6 @@ shft desci=parent_block->free_first_indir;
             xptr nblk=parent_block->nblk;
             if (nblk!=XNULL)
             {
-                int csz=parent_block->dsc_size;
                 CHECKP(nblk);
                 node_blk_hdr * nblk_hdr=GETBLOCKBYNODE(nblk);
                 if (nblk_hdr->dsc_size>=size && nblk_hdr->free_first!=0)
@@ -1467,7 +1466,6 @@ l_second:
             if (pblk!=XNULL)
             {
                 //n_dsc* par_pr=GETNEXTDESCRIPTOR_BL(parent_block,((n_dsc*)XADDR(parent)));
-                int csz=parent_block->dsc_size;
                 CHECKP(pblk);
                 node_blk_hdr * pblk_hdr=GETBLOCKBYNODE(pblk);
                 if (pblk_hdr->dsc_size>=size && pblk_hdr->free_first!=0)

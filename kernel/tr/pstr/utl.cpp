@@ -110,7 +110,6 @@ sort_item* utl_merge(sort_item* one, sort_item* two) {
 	sort_item*	t1=one;
 	sort_item*	t2=two;
 	sort_item*	result=NULL;
-	sort_item*	to_delete;
 	sort_item*	tmp;
 	while(t1 && t2) {
 		if (utl_cmp(t1,t2)<0) {

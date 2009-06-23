@@ -32,8 +32,8 @@ PPIf::PPIf(dynamic_context *_cxt_,
                                        if_child(_if_child_),
                                        then_child(_then_child_),
                                        else_child(_else_child_),
-                                       if_data(_if_child_.ts),
-                                       data_child(_data_child_)
+                                       data_child(_data_child_),
+                                       if_data(_if_child_.ts)
 {
     eos_reached = true;
     if (then_child.ts != else_child.ts) throw USER_EXCEPTION2(SE1003, "Children of PPif operation have different tuple sizes");

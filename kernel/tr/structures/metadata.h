@@ -18,6 +18,11 @@
 #include "tr/cat/catmem.h"
 
 struct metadata_cell_object : public catalog_object {
+/* Fields */
+
+    char* name; /* persistent string */
+    schema_node_xptr snode; /* persistent */
+    bool is_doc; /* persistent */
 
 /* Common catalog object interface */
     
@@ -30,9 +35,9 @@ struct metadata_cell_object : public catalog_object {
     inline metadata_cell_object() {};
 
     inline metadata_cell_object(bool _is_doc, const char * _name) :
-        is_doc(_is_doc),
-        name(cat_strcpy(this, _name))
-      {};
+        name(NULL),
+        is_doc(_is_doc)
+      { name = cat_strcpy(this, _name); };
 
     ~metadata_cell_object() { 
         cat_free(name);
@@ -50,11 +55,6 @@ struct metadata_cell_object : public catalog_object {
         return header;
     };
 
-/* Fields */
-
-    char* name; /* persistent string */
-    schema_node_xptr snode; /* persistent */
-    bool is_doc; /* persistent */
 };
 
 struct metadata_cell_cptr : public catalog_cptr_template<metadata_cell_object> {

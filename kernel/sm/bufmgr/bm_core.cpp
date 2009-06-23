@@ -451,6 +451,11 @@ void flush_data_buffers()
 ////////////////////////////////////////////////////////////////////////////////
 /// Helpers for debug and statistics managment
 ////////////////////////////////////////////////////////////////////////////////
+
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wformat"
+#endif /* GNUC */
+
 void dump_bufmgr_state()
 {
 	int bufsNum = 0, i = 0;
@@ -488,6 +493,10 @@ void dump_bufmgr_state()
 	}
 	fprintf(stderr,"---FINISHED DUMP OF BUFMGR STATE---\n");
 }
+
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic warning "-Wformat"
+#endif /* GNUC */
 
 void bm_reset_io_statistics()
 {

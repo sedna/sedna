@@ -14,10 +14,10 @@
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_,
                          t_print _print_mode_) : PPQueryEssence(),
-                                                 cxt(_cxt_),
                                                  child(_child_),
-                                                 print_mode(_print_mode_),
-                                                 data(_child_.ts)
+                                                 data(_child_.ts),
+                                                 cxt(_cxt_),
+                                                 print_mode(_print_mode_)
 {
 }
 

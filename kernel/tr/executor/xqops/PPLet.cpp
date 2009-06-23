@@ -16,8 +16,8 @@ PPLet::PPLet(dynamic_context *_cxt_,
              PPOpIn _data_child_) : PPVarIterator(_cxt_),
                                     var_dscs(_var_dscs_),
                                     source_child(_source_child_),
-                                    data_child(_data_child_),
                                     source(_source_child_.ts),
+                                    data_child(_data_child_),
                                     need_to_check_type(false)
 {
 }
@@ -29,10 +29,10 @@ PPLet::PPLet(dynamic_context *_cxt_,
              const sequence_type& _st_) : PPVarIterator(_cxt_),
                                           var_dscs(_var_dscs_),
                                           source_child(_source_child_),
-                                          data_child(_data_child_),
                                           source(_source_child_.ts),
-                                          st(_st_),
-                                          need_to_check_type(true)
+                                          data_child(_data_child_),
+                                          need_to_check_type(true),
+                                          st(_st_)
 {
 }
 

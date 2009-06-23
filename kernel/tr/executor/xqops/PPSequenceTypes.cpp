@@ -437,9 +437,9 @@ PPTypeswitch::PPTypeswitch(dynamic_context *_cxt_,
                            PPOpIn _default_child_): PPVarIterator(_cxt_),
                                                     var_dscs(_var_dscs_),
                                                     source_child(_source_child_),
-                                                    types(_types_),
-                                                    cases(_cases_),
                                                     default_child(_default_child_),
+                                                    cases(_cases_),
+                                                    types(_types_),
                                                     s(NULL)
 {
     if(cases.size() != types.size()) 

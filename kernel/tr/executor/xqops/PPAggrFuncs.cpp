@@ -23,8 +23,8 @@ static const char* PPFnMaxMin_fun_name[] = {"fn:max()", "fn:min()"};
 PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                        int _i_,
                        PPOpIn _child_) : PPIterator(_cxt_), 
-                                         i(_i_),
-                                         child(_child_)
+                                         child(_child_),
+                                         i(_i_)
 {
 }
 
@@ -32,9 +32,9 @@ PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                        int _i_,
                        PPOpIn _child_,
                        PPOpIn _collation_) : PPIterator(_cxt_), 
-                                             i(_i_),
                                              child(_child_),
-                                             collation(_collation_)
+                                             collation(_collation_),
+                                             i(_i_)
 {
 }
 
@@ -194,8 +194,8 @@ bool PPFnMaxMin::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                  int _i_,
                  PPOpIn _child_) : PPIterator(_cxt_), 
-                                   i(_i_),
-                                   child(_child_)
+                                  child(_child_),
+                                  i(_i_)
 {
 }
 
@@ -203,9 +203,9 @@ PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                  int _i_,
                  PPOpIn _child_,
                  PPOpIn _zero_) : PPIterator(_cxt_), 
-                                  i(_i_),
                                   child(_child_),
-                                  zero(_zero_)
+                                  zero(_zero_),
+                                  i(_i_)
 {
 }
 
