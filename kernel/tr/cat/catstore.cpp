@@ -1,6 +1,7 @@
 
 #include "tr/cat/catstore.h"
 #include "tr/vmm/vmm.h"
+#include "tr/cat/catalog.h"
 
 #define SBA_SIZE ((int) CS_CELL_BITMAP_SIZE)
 #include "tr/cat/smallbitarray.h"
@@ -374,6 +375,7 @@ static void cs_read(const xptr &p, char * data, size_t data_size)
     cs_size_t to_read;
 
     U_ASSERT(p != XNULL);
+    U_ASSERT(!IS_CATALOG_TMP_PTR(p));
     cs_read_sequence_header(p, &ch, &ph);
     U_ASSERT(ch.full_size >= data_size); // throw
 
@@ -430,6 +432,7 @@ void cs_read_part(const xptr p, char * data, off_t data_offset, size_t data_size
 void cs_free(xptr p)
 {
     U_ASSERT(p != XNULL);
+    if (IS_CATALOG_TMP_PTR(p)) { return ; }
 
     cs_chain_header ch;
     cs_chain_part_header ph;
