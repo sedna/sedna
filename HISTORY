@@ -3,6 +3,50 @@
 
      _________________________________________________________________
 
+                             Release 3.2
+
+     Release date: 2009-06-30
+     _________________________________________________________________
+
+New:
+
+- Sedna Terminal has been significantly improved:
+
+    * Tab-completion for commands and queries (Linux, Mac OS, Solaris).
+    * Aliases for frequently used commands (e.g. \q instead of \quit). 
+      For details type \set? in terminal.
+    * There is history now in Linux, Mac OS, Solaris, which is saved in 
+      terminal user's home directory.
+
+- SEDNA_LOG_AMMOUNT option for driver and corresponding \LOG_LESS_MODE 
+  for terminal. These options allow severely reduced logical log size 
+  during bulk-loads at the expense of longer commits.
+- Added new option to stop Sedna. Use "se_stop -hard" command to rollback 
+  all running transactions immediately.
+- Full Support for Solaris (x86) operating system.
+- Keep Alive Timeout option. It specifies number of seconds session waits 
+  for the next request from the same client on the same connection.
+- Two new options to tune logical log file size (-log-file-size) and 
+  count (-max-log-files). This allows more control on recovery and logical
+  log size.
+- C API library is now provided in multiple versions under Windows: 
+  static /MT, static /MD and dynamic.
+- Event Log severity level option. In OLTP-like applications it can be 
+  turned off to get better performance.
+- se:get-property() function added. Provides a facility to retrieve in 
+  run-time current values of system parameters.
+- persistent heap options removed from CDB utility
+- Bug fixes, internal improvements like new flex/bison based parser, etc. 
+
+Important note: 
+
+Databases created with previous versions of Sedna will not work properly
+with Sedna 3.2. Please, use Sedna import/export utility to migrate your 
+data to Sedna 3.2 (see Sedna Administration Guide, section 2.5).
+
+     
+     _________________________________________________________________
+
                              Release 3.1
 
      Release date: 2008-08-28
@@ -11,12 +55,12 @@
 New:
 
 - Incremental hot backup
-
 - Rename collection 
-
 - Bug fixes
 
-Important note: Databases created with previous versions of Sedna will not work 
+Important note: 
+
+Databases created with previous versions of Sedna will not work 
 properly with Sedna 3.1. Please, use Sedna import/export utility to migrate your 
 data to Sedna 3.1 (see Sedna Administration Guide, section 2.5).
 
@@ -37,12 +81,12 @@ New:
       Sedna is now replaced with a new version-based recovery. 
 
 - Support for Mac OS 10.4 and higher (PPC/Intel)
-
 - Query execution timeout. Allows to set the limit on transaction execution time.
-
 - Bug fixes
 
-Important note: Databases created with previous versions of Sedna will not work 
+Important note: 
+
+Databases created with previous versions of Sedna will not work 
 properly with Sedna 3.0. Please, use Sedna import/export utility to migrate your 
 data to Sedna 3.0 (see Sedna Administration Guide, section 2.5).
 
@@ -99,18 +143,18 @@ convert Sedna's 2.0 (or earlier) databases into Sedna 2.1 format.
 
 New:
 - XQuery support now conforms to the XQuery specification. Sedna passes 
-"XML Query Test Suite (XQTS)" by W3C and has official "almost passed" status. 
-The detailed report can be found at 
-http://www.w3.org/XML/Query/test-suite/XQTSReport.html
+  "XML Query Test Suite (XQTS)" by W3C and has official "almost passed" status. 
+  The detailed report can be found at 
+  http://www.w3.org/XML/Query/test-suite/XQTSReport.html
 - Optional XQuery features:
-	* Support for user-defined XQuery modules. Modules are stored at server side as 
-	precompiled functions 
-	* Full Axis (i.e. support for all XPath axes)
+    * Support for user-defined XQuery modules. Modules are stored at server side
+      as precompiled functions 
+    * Full Axis (i.e. support for all XPath axes)
 - XQuery debug facilities:
-	* support for standard fn:trace function
-	* facility to obtain stack trace in case of dynamic error
+    * support for standard fn:trace function
+    * facility to obtain stack trace in case of dynamic error
 - Server configuration options are extended (e.g. you can configure several 
-instances of Sedna server to be running on a computer)
+  instances of Sedna server to be running on a computer)
 
 New third-party contributions:
 - Sedna Admin GUI by GREaT team
@@ -130,14 +174,16 @@ http://sourceforge.net/projects/sednapy
 
 New:
 - Bug fixes 
-- XQuery extended with support for: date, time, duration functions; all XPath axes; 
-expressions on SequenceTypes (Instance Of, Typeswitch, Castable, Treat), Order By
+- XQuery extended with support for: date, time, duration functions; all 
+  XPath axes; expressions on SequenceTypes (Instance Of, Typeswitch, 
+  Castable, Treat), Order By
 - The XQuery functions position(), last() are optimized
 - Recovery
 - Event Log
 - Backup and Restore Utilities
-- Integration with dtSearch (http://www.dtsearch.com), a commercial text retrieval engine
-(not included in the distributive, please contact us to get information on how to use Sedna with dtSearch)
+- Integration with dtSearch (http://www.dtsearch.com), a commercial text 
+  retrieval engine (not included in the distributive, please contact us 
+  to get information on how to use Sedna with dtSearch)
 
 
      _________________________________________________________________
