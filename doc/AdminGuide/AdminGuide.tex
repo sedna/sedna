@@ -282,7 +282,6 @@ Each database consists of the following files, which are located as described in
 \begin{itemize}
 \item The \verb!<db_name>.sedata! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions.
 \item The \verb!<db_name>.setmp! file is used for storing temporary XML data. It appears in the database during query execution and contains intermediate results.
-\item The \verb!<db_name>.*.seph! files are used for storing XML metadata (for example, the descriptive scheme of XML documents).
 \item The \verb!<db_name>.*llog! files are used for storing database logical log.
 %\item The \verb!buf! directory contains some intermidiate data. It is created when the database is run and removed when the database is stopped.
 \end{itemize}
@@ -310,9 +309,6 @@ options:
 								default 100Mb
   -tmp-file-init-size Mbs		the tmp file initial size (in Mb),
 								default 100Mb
-  -persistent-heap-size Mbs		the persistent heap size (in Mb),
-								allowed in the range of 10Mb - 99Mb,
-								default 10Mb
   -bufs-num N					the number of buffers in main memory,
 								default 1600 (the size of the buffer is 64Kb)
   -max-trs-num N				the number of concurrent micro transactions
@@ -347,8 +343,6 @@ The \verb!-tmp-file-ext-portion! option allows Administrator to set up the size 
 The \verb!-data-file-init-size! option allows Administrator to set up the initial size (in Mb) of the persistent data file. It is obvious that the initial size can't be greater than the maximum size of the persistent data file. The default value is 100 Mb.
 
 The \verb!-tmp-file-init-size! option allows Administrator to set up the initial size (in Mb) of the temporary data file. It is obvious that the initial size can't be greater than the maximum size of the temporary data file. The default value is 100 Mb.
-
-The \verb!-persistent-heap-size! option allows Administrator to set up the size (in Mb) of the metadata file (for example the descriptive schema stores in this file) This file cannot be resized. The default value is 10 Mb.
 
 The \verb!-bufs-num! option allows Administrator to set up the number of buffers in main memory. This number is connected with the size of the main memory, but the performance of the database depends of this number very much. The default value is 1600 buffers, which is equal to 100Mb and we do not recommend to use less number of buffers. The size of one buffer is 64Kb and can't be customized by Administrator.
 
