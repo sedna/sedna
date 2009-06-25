@@ -1,4 +1,10 @@
     /*
+    * File:  XQLexer.l
+    * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+    */
+
+
+    /*
         Please, in case of lexer changes, try to support 'no backing up' policy. In this case lexer can be much faster and smaller.
 
         To check if lexer must back up, generate it with: -b option. 'lex.backup' file will tell if you've got backing up lexer.
