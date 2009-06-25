@@ -3,6 +3,7 @@
 #define CATMEM_H
 
 #include "common/sedna.h"
+#include "common/errdbg/d_printf.h"
 
 #define CATALOG_PERSISTENT_CONTEXT  ((void *) NULL)
 #define CATALOG_TEMPORARY_CONTEXT   ((void *) NULL)
@@ -156,9 +157,10 @@ public :
             newChunk->next = chunks;
             chunks = newChunk;
             lastPtr = 0;
-        } else {
-            chunks->data[lastPtr++] = ptr;
-        }
+        };
+
+        chunks->data[lastPtr++] = ptr;
+
         return ptr;
     };
 

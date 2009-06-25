@@ -24,7 +24,7 @@ FastPointerArray pe_catalog_heap_warden;
 
 void * pe_malloc(size_t size)
 {
-    return pe_local_heap_warden.add(malloc(size));
+    return pe_local_heap_warden.add(cat_malloc(NULL, size));
 };
 
 void pe_free(void *) { };
@@ -37,7 +37,7 @@ void pe_free_all()
 
 void * cat_pe_malloc(size_t size)
 {
-    return pe_catalog_heap_warden.add(malloc(size));
+    return pe_catalog_heap_warden.add(cat_malloc(NULL, size));
 };
 
 void cat_pe_free(void *) { };
