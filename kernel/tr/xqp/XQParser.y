@@ -1,3 +1,8 @@
+    /*
+    * File:  XQParser.y
+    * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+    */
+
 %skeleton "lalr1.cc"
 %require "2.3"
 %defines
