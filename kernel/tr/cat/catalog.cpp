@@ -429,18 +429,15 @@ catalog_object_header * catalog_create_object(catalog_object * object, bool pers
         object->serialize();
         cs_popp();
         obj = new (cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(object->p_object);
-
-        local_catalog->header_list.add(obj);
-        local_catalog->object_list.add(object);
     } else {
         obj = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(XNULL);
         object->p_object.addr = obj;
         object->p_object.layer = TEMPORARY_CATALOG_LAYER;
         obj->p = object->p_object;
-
-        local_catalog->header_list.add(obj);
-        local_catalog->object_list.add(object);
     }
+
+    local_catalog->header_list.add(obj);
+    local_catalog->object_list.add(object);
 
     obj->object = object;
     obj->invalidate();
