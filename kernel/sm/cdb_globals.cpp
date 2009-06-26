@@ -25,7 +25,6 @@ namespace cdb_globals {
     int data_file_extending_portion;         /* size in Mb */
     int tmp_file_extending_portion;          /* size in Mb */
     int data_file_initial_size;              /* size in Mb */
-    int persistent_heap_size;                /* size in Mb */
     int log_file_size;                       /* size in Mb */
     char db_security[32];                    /* either 'authorization', 'authentication' or 'off' */
 }

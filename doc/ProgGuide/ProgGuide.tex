@@ -1255,8 +1255,8 @@ To disconnect from the database, you can use the following function:
 
 Closes the connection represented by the \texttt{connection} object.
 If server fails to close the connection, the function closes the connection
-forcibly from the client side and raises the exception, as discussed
-in subsubsection~\ref{scheme-errors}.
+forcibly from the client side and raises the exception, as discussed 
+in subsubsection \ref{scheme-errors}.
 
 
 \subsubsection{Transactions}
@@ -1276,7 +1276,7 @@ To begin a new transaction, the following function is provided:
 It accepts the \texttt{connection} object (earlier created by
 \texttt{sedna:connect-to-database} function) and starts a new transaction.
 If the transaction could not be created, the exception is raised, as discussed
-in subsubsection~\ref{scheme-errors}.
+in subsubsection \ref{scheme-errors}.
 
 To end your running transaction, you are provided with the following function:
 
@@ -1391,7 +1391,7 @@ is loaded into the database as a standalone document.
 By allowing you to specify the input port you would like to use, this function
 provides a higher-level shortcut for \texttt{sedna:execute-query} when bulk
 load from stream is concerned.
-For more details on bulk load, see Sect.~\ref{bulk-load}.
+For more details on bulk load, see section \ref{bulk-load}.
 
 \subsubsection{Higher-level function for a transaction}
 
@@ -1632,7 +1632,7 @@ index-scan-between ($title as xs:string, $value1 as xdt:anyAtomicType,
 
 The \verb!index-scan-between! scans the index with the \verb!$title! name and returns the sequence of nodes which keys belong to the interval (segment, left half-interval, right half-interval) between the first \verb!$value1! and second \verb!$value2! search values. An Sedna error is raised if the search values can not be cast to the atomic type of the index. This function provides the \verb!$range! parameter of the \verb!xs:string! type to set the type of the scan. If the string is not equal to one of the following then the Sedna error SE2035 is raised: �INT� (interval), �SEG� (segment), �HINTR� (right half-interval), �HINTL� (left half-interval).
 
-For example, to select the names of people who live in the London city employing the "people" index defined in Section \ref{sec:managing-value-indices}, use the following expression:
+For example, to select the names of people who live in the London city employing the "people" index defined in section \ref{sec:managing-value-indices}, use the following expression:
 \begin{verbatim}
 index-scan("people", "London", "EQ")/name
 \end{verbatim}
@@ -1645,7 +1645,7 @@ index-scan("people", "London", "EQ")/name
 
 \subsubsection{Full-text Search Functions}
 \label{sec:ft-fun}
-Please read Section \ref{sec:managing-ft-indices} before reading this section.
+Please read section \ref{sec:managing-ft-indices} before reading this section.
 
 In the current version of Sedna, query executor does not use full-text indecies automatically. Use the following functions
 to enforce executor to employ indices.
@@ -1656,7 +1656,7 @@ ftindex-scan($title as xs:string, $query as xs:string) as node()*
 
 The \verb!ftindex-scan! function scans the full-text index with the \verb!$title! name and returns the sequence of items which satisfy the \verb!$query!. As full-text index is based on dtSearch \cite{link:dtsearch-engine}, use the dtSearch request language \cite{doc:dtsearch} to specify the query.
 
-For example, you can employ the "articles" index defined in Section \ref{sec:managing-ft-indices} to select the titles of articles that contain word "apple" but not "pear":
+For example, you can employ the "articles" index defined in section \ref{sec:managing-ft-indices} to select the titles of articles that contain word "apple" but not "pear":
 \begin{verbatim}
 ftindex-scan("articles", "apple and not pear")/title
 \end{verbatim}
@@ -1666,7 +1666,7 @@ ftscan($seq as node()*, $query as xs:string, $type as xs:string,
 $customization_rules as xs:string) as node()*
 \end{verbatim}
 
-The \verb!ftscan! function returns those items of the input sequence \verb!$seq! which satisfy the query \verb!$query!. The function does not use indices and can be applied to any sequence of nodes, even those that are not indexed. The query \verb!$query! is evaluated over the text representation constructed according to the \verb!$type! and \verb!$customization_rules! paramters. The values of the parameters are the same as those used when a full-text index is created (see Section \ref{sec:managing-ft-indices} for details).
+The \verb!ftscan! function returns those items of the input sequence \verb!$seq! which satisfy the query \verb!$query!. The function does not use indices and can be applied to any sequence of nodes, even those that are not indexed. The query \verb!$query! is evaluated over the text representation constructed according to the \verb!$type! and \verb!$customization_rules! paramters. The values of the parameters are the same as those used when a full-text index is created (see section \ref{sec:managing-ft-indices} for details).
 
 For example, you can select the titles of articles that contain word "apple" but not "pear" \emph{without} using indices and using special customization rules as follows:
 \begin{verbatim}
@@ -2372,6 +2372,10 @@ name that is the result of \verb!doc-name-expr!.
 
 For example, \verb!CREATE! \verb!DOCUMENT! \verb!"report"! creates a document named "report" and \verb!DROP! \verb!DOCUMENT! \verb!"report"! drops it.
 
+\hbox{}
+
+There is a system document \verb!$documents! which lists all available documents and collections. For details on retrieving metadata see \ref{managing-metadata} section.
+
 
 \subsubsection{Managing Collections}
 
@@ -2401,7 +2405,7 @@ name that is the result of \verb!coll-name-expr!.
 For example, \verb!CREATE COLLECTION! \verb!"mails"! creates a collection named "mails".
 
 XML documents can be loaded into the collection, as previously described in
-Sect.\ref{bulk-load}.
+section \ref{bulk-load}.
 
 To access a single document from collection in an XQuery or XML update query,
 the \verb!document! function accepts a collection name as its second optional
@@ -2453,6 +2457,10 @@ The new name is assigned which is result of the \verb!new-name-expr!.
 Both result of the \verb!old-name-expr! and result of the \verb!new-name-expr! after atomization applied must be either
 of type \verb!xs:string! (or derived) or promotable to \verb!xs:string!.
 
+\hbox{}
+
+There is a system document \verb!$collections! which lists all available collections. For details on retrieving metadata see \ref{managing-metadata} section.
+
 \subsubsection{Managing Value Indices}
 \label{sec:managing-value-indices}
 Sedna supports value indices based on B-tree to index XML element content and attribute values. Below is the description of statements to manage indices.
@@ -2488,10 +2496,8 @@ DROP INDEX title-expr
 The DROP INDEX statement removes the index named \verb!title-expr! from the database.
 
 \begin{note}In the current version of Sedna, query executor does not use indices automatically. You can enforce the executor to employ indices by
-using the XQuery index-scan functions specified in Section \ref{sec:value-index-scan-fun}.
+using the XQuery index-scan functions specified in section \ref{sec:value-index-scan-fun}.
 \end{note}
-
-
 
 
 \subsubsection{Managing Full-Text Indices}
@@ -2543,7 +2549,7 @@ DROP FULL-TEXT INDEX title-expr
 The DROP INDEX statement removes the index named \verb!title-expr! from the database.
 
 \begin{note}In the current version of Sedna, query executor does not use full-text indices automatically. You can enforce the executor to employ indices by
-using the XQuery full-text search functions specified in Section \ref{sec:ft-fun}.
+using the XQuery full-text search functions specified in section \ref{sec:ft-fun}.
 \end{note}
 
 \subsubsection{Managing Modules}
@@ -2608,12 +2614,13 @@ You can obtain information about modules loaded into the database by querying th
 
 
 \subsubsection{Retrieving Metadata, System Parameters and Environment Information}
-You can retrieve various metadata about database objects (such as documents, collections, indexes, etc.) by querying system documents and collections listed below.
+\label{managing-metadata}
+You can retrieve various metadata about database objects (such as documents, collections, indexes, etc.) by querying system documents and collections listed below. 
 To retrieve system parameters or environment information (like current user name) you can use \verb!se:get-property! function.
 
 \subsubsection*{System Documents and Collections}
 
-The documents marked with (*) are not persistent but generated on the fly. You can query these documents as usual but you cannot update them.
+Names of the system documents and collections start with \verb!$! symbol. The documents marked with (*) are not persistent but generated on the fly. You can query these documents as usual but you cannot update them.
 Also these documents are not listed in \verb!$documents!.
 
 \begin{itemize}
@@ -2910,11 +2917,11 @@ result:
 ## </samerica>
 \end{verbatim}
 
-If you want to use trace facility in your application working through Sedna API you should set your own debug handler as it is shown in \ref{exec-capi}.
+If you want to use trace facility in your application working through Sedna API you should set your own debug handler as it is shown in \ref{exec-capi} section.
 
 \subsubsection{Session Debug Mode}
 \label{session-debug-mode}
-In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can turn on session debug mode. You can turn on session debug mode in Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's Administration Guide) or in your application using corresponding Sedna API functions (see \ref{session-option-capi}).
+In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can turn on session debug mode. You can turn on session debug mode in Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's Administration Guide) or in your application using corresponding Sedna API functions (see \ref{session-option-capi} section).
 
 Each query in Sedna is represented and executed internally as a tree of the physical operations. Debug mode is mechanism that allows to get stack of physical operations (operations names list) after dynamic error was raised. It serves two objectives:
 
