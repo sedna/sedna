@@ -37,6 +37,11 @@ inline uint16_t hash(const char * a) {
     return i % CCACHE_NAME_BUCKETS;
 };
 
+#define catalog_zero_counter(C) C = 0
+#define catalog_increment_counter(C) C++
+
+uint64_t deserialized_objects;
+
 /*
  * Record for hash table
  */
@@ -317,6 +322,8 @@ void catalog_after_commit(bool is_commit)
 
 void catalog_on_transaction_begin()
 {
+    catalog_zero_counter(deserialized_objects);
+
     SafeMetadataSemaphore cat_masterlock;
     cat_masterlock.Aquire();
 
@@ -352,6 +359,8 @@ void catalog_on_transaction_begin()
 void catalog_on_transaction_end(bool is_commit)
 {
     // TODO: EXIT IF READONLY!
+
+    elog(EL_LOG, ("Catalog objects deserialized : %d", deserialized_objects));
 
 /*
     if (!is_commit) {
@@ -469,6 +478,7 @@ catalog_object_header * catalog_acquire_object(const xptr &ptr)
         obj = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(ptr);
         local_catalog->xptrhash.set(ptr, obj);
         obj->object = catalog_deserialize_object(ptr, CATALOG_PERSISTENT_CONTEXT);
+        catalog_increment_counter(deserialized_objects);
 
         local_catalog->header_list.add(obj);
         local_catalog->object_list.add(obj->object);
