@@ -22,7 +22,6 @@ namespace cdb_globals {
     extern int    data_file_extending_portion;
     extern int    tmp_file_extending_portion;
     extern int    data_file_initial_size;
-    extern int    persistent_heap_size;
     extern int    log_file_size;
     extern char   db_security[32];
 }
