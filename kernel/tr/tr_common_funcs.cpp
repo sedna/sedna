@@ -217,92 +217,69 @@ void reportToWu(bool rcv_active, bool is_commit)
 //  false - transaction rollback
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, bool rcv_active)
 {
-   sm_server_wu = sm_server;
+    sm_server_wu = sm_server;
 #ifdef SE_ENABLE_FTSEARCH
-   d_printf1("Flushing full-text cache...");
-   ftc_flush(); //FIXME: remove this when cache is shared
-   d_printf1("OK\n");
+    d_printf1("Flushing full-text cache...");
+    ftc_flush(); //FIXME: remove this when cache is shared
+    d_printf1("OK\n");
 #endif
-    
-   ppc->stop_timer();
 
-   clear_authmap();
-
-   sm_msg_struct msg;
-
-/*   if (!rcv_active || (rcv_active && is_commit))
-   {
-       msg.cmd = 38; // transaction commit/rollback
-       msg.trid = trid; 
-       msg.sid = sid;
-       msg.data.data[0] = !is_commit;
-
-       if (sm_server->send_msg(&msg) != 0)
-           throw USER_EXCEPTION(SE1034);
-   }
-*/
-
+    ppc->stop_timer();
+    clear_authmap();
+    sm_msg_struct msg;
 
 #ifdef SE_ENABLE_TRIGGERS
-   d_printf1("Triggers on transaction end...");
-   triggers_on_transaction_end(is_commit);
-   d_printf1("OK\n");
+    d_printf1("Triggers on transaction end...");
+    triggers_on_transaction_end(is_commit);
+    d_printf1("OK\n");
 #endif
 
-   try { 
-     d_printf1("\nReleasing logical log...");
-     hl_logical_log_on_transaction_end(is_commit, rcv_active);
-     d_printf1("OK\n");
-   } catch (SednaUserException &e) {
-     throw SYSTEM_EXCEPTION("Double error: user exception on rollback!");
-   }
+    try { 
+        d_printf1("\nReleasing logical log...");
+        hl_logical_log_on_transaction_end(is_commit, rcv_active);
+        d_printf1("OK\n");
+    } catch (SednaUserException &e) {
+        throw SYSTEM_EXCEPTION("Double error: user exception on rollback!");
+    }
 
 /*   d_printf1("Syncing indirection table...");
    sync_indirection_table();
    d_printf1("OK\n");*/
 
-   d_printf1("Releasing indirection table...");
-   if (!wu_reported) { indirection_table_on_transaction_end(); }
-   d_printf1("OK\n");
+    d_printf1("Releasing indirection table...");
+    if (!wu_reported) { indirection_table_on_transaction_end(); }
+    d_printf1("OK\n");
 
-   d_printf1("Releasing catalog...");
-   if (!wu_reported) { catalog_on_transaction_end(is_commit); }
-   d_printf1("OK\n");
+    d_printf1("Releasing catalog...");
+    if (!wu_reported) { catalog_on_transaction_end(is_commit); }
+    d_printf1("OK\n");
 
-   d_printf1("\nNotifying sm of commit...");
-   reportToWu(rcv_active, is_commit);
-   wu_reported = false;
+    d_printf1("\nNotifying sm of commit...");
+    reportToWu(rcv_active, is_commit);
+    wu_reported = false;
    
-/*   
-   if (!rcv_active || (rcv_active && is_commit))
-   {
-       msg.cmd = 38; // transaction commit/rollback
-       msg.trid = trid; 
-       msg.sid = sid;
-       msg.data.data[0] = 0;
+    d_printf1("Releasing VMM...");
+    vmm_on_transaction_end();
+    d_printf1("OK\n");
 
-       catalog_before_commit(is_commit);
-       if (sm_server->send_msg(&msg) != 0)
-           throw SYSTEM_EXCEPTION("Unable to commit or rollback transaction");
-       catalog_after_commit(is_commit);
-*/
+    d_printf1("Releasing locks...");
+    release_locks();
+    d_printf1("OK\n");
 
-   d_printf1("Releasing VMM...");
-   vmm_on_transaction_end();
-   d_printf1("OK\n");
+    d_printf1("Releasing transaction_id...");
+    release_transaction_id(sm_server);
+    d_printf1("OK\n");
 
-   d_printf1("Releasing locks...");
-   release_locks();
-   d_printf1("OK\n");
+    event_logger_set_trid(-1);
 
-   d_printf1("Releasing transaction_id...");
-   release_transaction_id(sm_server);
-   d_printf1("OK\n");
+    if (is_commit) {
+        elog(EL_LOG, ("Transaction has been COMMITED"));
+    } else {
+        elog(EL_LOG, ("Transaction has been ROLLED BACK"));
+    }
 
-   event_logger_set_trid(-1);
-
-   if (need_sem)
-       up_transaction_block_sems();
+    if (need_sem)
+        up_transaction_block_sems();
 }
 
 void on_kernel_recovery_statement_begin()
