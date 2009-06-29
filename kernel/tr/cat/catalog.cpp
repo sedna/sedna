@@ -360,7 +360,7 @@ void catalog_on_transaction_end(bool is_commit)
 {
     // TODO: EXIT IF READONLY!
 
-    elog(EL_LOG, ("Catalog objects deserialized : %d", deserialized_objects));
+    elog(EL_DBG, ("Catalog objects deserialized : %d", deserialized_objects));
 
 /*
     if (!is_commit) {
