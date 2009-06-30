@@ -128,10 +128,6 @@ index_cell_xptr create_index (PathExpr *object_path,
 				//VII. For every descriptor node_key that corresponds to sn_key.
 				while (node_key != XNULL)
 				{
-					// ���३, ��� ��� ������� ���� light-atomic ������. ����� ��᫥ Chekp ���祭�� �ꥤ��.
-					// ��������஢��� ����� ���� � �⥪� (�� ���� ��� new), ⮣�� ���������� 
-					// �㤥� ���뢠���� ��⮬�����᪨
-
 					CHECK_TIMER_FLAG;
                     
                     try {
