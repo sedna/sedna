@@ -22,6 +22,8 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+    program_name_argv_0 = argv[0];
+
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
       so we must block SIGPIPE with sigignore.*/
 #if defined(SunOS)
