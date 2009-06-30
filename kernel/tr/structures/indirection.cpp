@@ -290,11 +290,17 @@ void add_predeleted_block(xptr block)
         xptr lb = nbh->pblk;
         xptr rb = nbh->nblk;
 
-        if (nbh->snode->bblk_indir == nbh->sm_vmm.p)
+        if (nbh->snode->bblk_indir == block)
             nbh->snode.modify()->bblk_indir = ri;
 
-        if (nbh->snode->bblk == nbh->sm_vmm.p)
+        if (nbh->snode->bblk == block)
             nbh->snode.modify()->bblk = rb;
+
+        col_schema_node_object* snode_as_collection = dynamic_cast<col_schema_node_object*>(&*col_schema_node_cptr(nbh->snode));
+
+        if ((snode_as_collection != NULL) && (snode_as_collection->eblk == block)) {
+            snode_as_collection->eblk = rb;
+        }
 
         VMM_SIGNAL_MODIFICATION(block);
         nbh->pblk_indir = XNULL;
