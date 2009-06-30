@@ -296,7 +296,7 @@ void add_predeleted_block(xptr block)
         if (nbh->snode->bblk == block)
             nbh->snode.modify()->bblk = rb;
 
-        col_schema_node_object* snode_as_collection = dynamic_cast<col_schema_node_object*>(&*col_schema_node_cptr(nbh->snode));
+        col_schema_node_object* snode_as_collection = dynamic_cast<col_schema_node_object*>(&*schema_node_cptr(nbh->snode));
 
         if ((snode_as_collection != NULL) && (snode_as_collection->eblk == block)) {
             snode_as_collection->eblk = rb;
