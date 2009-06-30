@@ -35,7 +35,7 @@ New:
   turned off to get better performance.
 - se:get-property() function added. Provides a facility to retrieve in 
   run-time current values of system parameters.
-- persistent heap options removed from CDB utility
+- CDB persistent heap options removed
 - Bug fixes, internal improvements like new flex/bison based parser, etc. 
 
 Important note: 
