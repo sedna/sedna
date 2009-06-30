@@ -95,8 +95,8 @@ void delete_collection(const char *collection_name)
         xptr node  = removeIndirection(indir);
         if (node != XNULL) {
             CHECKP(node);
-            hl_logical_log_document(((n_dsc*)XADDR(node))->indir, (const char*) cursor.get_key().data(), collection_name, false);
             delete_doc_node(node);
+            hl_logical_log_document(((n_dsc*)XADDR(node))->indir, (const char*) cursor.get_key().data(), collection_name, false);
             up_concurrent_micro_ops_number();
         }
     } while (cursor.bt_next_key());
