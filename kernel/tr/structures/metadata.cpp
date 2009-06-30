@@ -247,12 +247,14 @@ xptr insert_document_into_collection(const char *collection_name, const char *ur
 
 col_schema_node_xptr find_collection(const char *collection_name) {
     metadata_cptr mdc(collection_name, false);
-    return mdc.found() ? mdc->snode : XNULL;
+    if (mdc.found()) return mdc->snode;
+    else return XNULL;
 }
 
 doc_schema_node_xptr find_document(const char *document_name) {
     metadata_cptr mdc(document_name, false);
-    return mdc.found() ? mdc->snode : XNULL;
+    if (mdc.found()) return mdc->snode;
+    else return XNULL;
 }
 
 xptr find_document_in_collection(const char *collection_name, const char *document_name)
