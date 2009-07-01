@@ -230,7 +230,7 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 		return lpg;
  	} else {
 		return leaf;
-		// Здесь должна быть балансировка... 
+        /// TODO: May be balancing is needed here ...
 	}
 }
 
@@ -323,7 +323,7 @@ bool bt_recoursive_delete_tmpl(const bt_key& key, bt_path &path_fore, shft obj_i
 		}
 		if (BT_IS_CLUS(pg)) {
 			path_fore.front().pg = bt_try_squeeze_cluster_tmpl<object>(ptr);
-			CHECKP(ptr);
+			CHECKP(path_fore.front().pg);
 		}
 		return true; 
 	}
