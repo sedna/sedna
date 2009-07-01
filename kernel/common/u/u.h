@@ -90,7 +90,7 @@
 #endif
 #endif
 
-#if (defined(_PPC_))
+#if (defined(__ppc__) || defined(__POWERPC__))
 #define BIG_ENDIAN_ORDER
 #endif
 
