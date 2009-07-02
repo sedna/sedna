@@ -20,17 +20,30 @@ usage() {
     echo "Usage"
     echo "    $0" " local          - build local release"
     echo "    $0" " release        - build release"
+    echo "    $0" " local-dts      - build local dtSearch release"
     echo
     failwith "Wrong arguments"
 }
 
-
+BUILD_DTSEARCH=0
 if test $# -ne 1; then
     usage;
 else
-   if test $1 "!=" "release" -a $1 "!=" "local"; then
-       usage;
-   fi
+    case $1
+    in
+        local)
+            BUILD_TYPE=local
+            ;;
+        release)
+            BUILD_TYPE=release
+            ;;
+        local-dts)
+            BUILD_TYPE=local
+            BUILD_DTSEARCH=1
+            ;;
+        *)
+            usage;;
+    esac
 fi
 ##### SCRIPT USAGE ############################################################
 
@@ -159,7 +172,7 @@ s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/JAVA_DRIVER = 0\1/
 s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SQL_CONNECTION = 0\1/
 s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/STATIC_SYS_LIBS = 0\1/
 s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SE_ENABLE_GCOV = 0\1/
-s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_DTSEARCH = 0\1/
+s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_DTSEARCH = BUILD_DTSEARCH$\1/
 s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_TRIGGERS = 1\1/
 s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/CLEANUP_LIBRARIES = 1\1/
 EEE
@@ -327,7 +340,7 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
  $MD5 $BIN_FILE_NAME.$DISTR_EXT > $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT
  $MD5 $SRC_FILE_NAME.$SRC_EXT > $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
 
- if test $1 "!=" "local"; then 
+ if test "$BUILD_TYPE" "!=" "local"; then 
      put_results_to_build_machine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
  fi)
 ##### RELEASE #################################################################
