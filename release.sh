@@ -172,7 +172,7 @@ s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/JAVA_DRIVER = 0\1/
 s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SQL_CONNECTION = 0\1/
 s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/STATIC_SYS_LIBS = 0\1/
 s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SE_ENABLE_GCOV = 0\1/
-s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_DTSEARCH = BUILD_DTSEARCH$\1/
+s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_DTSEARCH = $BUILD_DTSEARCH\1/
 s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_TRIGGERS = 1\1/
 s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/CLEANUP_LIBRARIES = 1\1/
 EEE
@@ -307,6 +307,7 @@ export JAVA_DRIVER=1
 if test "$STATIC_LIBS"x = "true"x; then
   export STATIC_SYS_LIBS=1
 fi
+export ENABLE_DTSEARCH=$BUILD_DTSEARCH
 $MAKE_COMMAND || failwith "make failed"
 ##### MAKE ####################################################################
 
