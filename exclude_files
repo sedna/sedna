@@ -8,3 +8,4 @@ coverage.pl
 doc/CodingGuidelines
 libs/chicken.mak
 libs/expat_static.mak
+libs/dtsearch
