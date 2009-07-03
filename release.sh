@@ -26,6 +26,7 @@ usage() {
 }
 
 BUILD_DTSEARCH=0
+VERSION_SUFFIX=
 if test $# -ne 1; then
     usage;
 else
@@ -40,6 +41,7 @@ else
         local-dts)
             BUILD_TYPE=local
             BUILD_DTSEARCH=1
+            VERSION_SUFFIX=dt
             ;;
         *)
             usage;;
@@ -269,7 +271,7 @@ get_build_file
 
 echo -n $BUILD > build || failwith "Cannot write to build file"
 
-FILE_BASE=sedna-$SEDNA_VERSION.$BUILD
+FILE_BASE=sedna-$SEDNA_VERSION.$BUILD$VERSION_SUFFIX
 if [ $BUILD_PLATFORM ]; then
   BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX-$BUILD_PLATFORM
   SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX-$BUILD_PLATFORM
