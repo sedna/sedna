@@ -281,7 +281,7 @@ void PPElementConstructor::next  (tuple &t)
         cont_parind=XNULL;
         cont_leftind=XNULL;
         int oldcnt=conscnt;
-        //crm_out<<"\n befory body cnt in "<<name<<" = "<<conscnt;
+        //crm_dbg<<"\n befory body cnt in "<<name<<" = "<<conscnt;
         //Preliminaries for static context
         vector<xmlns_ptr> ns_list;
         vector<tuple> start_seq;
@@ -370,7 +370,6 @@ void PPElementConstructor::next  (tuple &t)
         }
         while (!cont_ptr->is_eos())
         {
-            //print_tuple(cont,crm_out);
             tuple_cell tc=cont_ptr->cells[0];
             if (tc.is_atomic())
             {
@@ -531,7 +530,7 @@ void PPElementConstructor::next  (tuple &t)
         cont_leftind=XNULL;
         if (deep_copy)
             conscnt=oldcnt;
-        //crm_out<<"\n after body cnt in "<<name<<" = "<<conscnt;
+        //crm_dbg<<"\n after body cnt in "<<name<<" = "<<conscnt;
     }
     else 
     {
@@ -1405,7 +1404,6 @@ void PPDocumentConstructor::next  (tuple &t)
         content.op->next(t);
         while (!t.is_eos())
         {
-            //print_tuple(cont,crm_out);
             tuple_cell tc=t.cells[0];
             if (tc.is_atomic())
             {

@@ -139,13 +139,6 @@ void PPAbsPath::close ()
 void PPAbsPath::next(tuple &t)
 {
     SET_CURRENT_PP(this);
-//    d_printf1("++++++++++++\n");
-//    path_expr->print();
-//    d_printf1("\n");
-//    path_expr->print_to_lr();
-//    d_printf1("\n");
-//    d_printf1("++++++++++++\n");
-    
 
     if (root == XNULL) 
         if (determine_root()) 
@@ -153,24 +146,12 @@ void PPAbsPath::next(tuple &t)
             t.set_eos();
             {RESTORE_CURRENT_PP; return;}
         }
-       
-/*
-    d_printf1("PPAbsPath::next 1\n");
-    crm_out<<root->bblk.addr;
-	CHECKP(root->bblk);
-    crm_out<<"\nFIRST="<<((node_blk_hdr*)XADDR(root->bblk))->desc_first <<"\n";
-    crm_out<<"\nnode="<<GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(root->bblk)).addr;
-	d_printf1("PPAbsPath::next 2\n");
-    print_node(GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(root->bblk)), crm_out);
-    d_printf1("PPAbsPath::next 3\n");
-*/
-
+      
     if (scmnodes_num < 0)
         create_merged_seq(scmnodes_num, merged_seq_arr, root, path_expr);
     else
         elim_disturb(merged_seq_arr, scmnodes_num, sizeof(xptr), doc_order_merge_cmp);
 
-    //d_printf2("scmnodes_num = %d\n", scmnodes_num);
 
     xptr res = (scmnodes_num == 0) ? XNULL : merged_seq_arr[0];
     if (res == NULL)

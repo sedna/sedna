@@ -191,7 +191,6 @@ xptr  getFirstByOrderNNSChildNode(xptr source)
 /*returns the first child by document order of any type*/
 xptr giveFirstByOrderChild(xptr source,shft size)
 {
-    //crm_out<<"\n SOURCE= "<<XADDR(source) << " SIZE= " <<size;
     xptr* childx=(xptr*)((char*)XADDR(source)+size_of_node(GETBLOCKBYNODE(source)));
     for (int i=0;i<size;i++)
     {

@@ -53,15 +53,15 @@ void node_blk_hdr::init(void *p, shft dsc_size)
     *((shft *)((char*)p+ descp))=0;
 	*((shft *)((char*)p+ desci))=0;
 	//*((shft *)((char*)p+ (i - dsc_size)))=0;
-	/*crm_out<<"\nFREE SPACE TEST";
+	/*crm_dbg<<"\nFREE SPACE TEST";
 	i=hdr->free_first;
 	while (i!=0)
 	{
-	 crm_out<<"\n this space= " <<i;
+	 crm_dbg<<"\n this space= " <<i;
 	 i=*((shft *)((char*)p+i));
-	 crm_out<<"next space= " <<i;
+	 crm_dbg<<"next space= " <<i;
 	}
-	crm_out<<"\nEND OFTEST";*/
+	crm_dbg<<"\nEND OFTEST";*/
 }
 
 void e_dsc::init(void *p)
