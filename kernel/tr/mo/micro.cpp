@@ -56,7 +56,7 @@
 xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr parent,const char* name, xmlscm_type type,t_item node_type,xmlns_ptr ns)
 {
     #ifdef _MYDEBUG
-        crm_out<<" thirdElementAndTextInsertProcedure";
+        crm_dbg<<" thirdElementAndTextInsertProcedure";
     #endif
     xptr tmp , tmp_ad;
     CHECKP(parent);
@@ -66,7 +66,7 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
     if (scm.found() && scm->nodecnt!=0 )
     {
         #ifdef _MYDEBUG
-            crm_out<<" thirdElementAndTextInsertProcedure->4";
+            crm_dbg<<" thirdElementAndTextInsertProcedure->4";
         #endif
         xptr namesake=XNULL;
         if (scm->lastnode_ind!=XNULL)
@@ -81,7 +81,7 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
         else 
         {
             #ifdef _MYDEBUG
-                crm_out<<" thirdElementAndTextInsertProcedure->5";
+                crm_dbg<<" thirdElementAndTextInsertProcedure->5";
             #endif
             namesake= findNodeWithSameNameToInsertBefore(left_sib,right_sib,parent,name,node_type,ns);
             if (namesake!=XNULL)  
@@ -93,7 +93,7 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
     else
     {
         #ifdef _MYDEBUG
-            crm_out<<" thirdElementAndTextInsertProcedure->6";
+            crm_dbg<<" thirdElementAndTextInsertProcedure->6";
         #endif
         if (!scm.found()) 
             scm=par_sc.modify()->add_child(ns,name,node_type);
@@ -107,14 +107,14 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
     if ((pos=elementContainsChild(((n_dsc*)XADDR(parent)),name,node_type,ns))!=NULL)
     {
         #ifdef _MYDEBUG
-            crm_out<<" thirdElementAndTextInsertProcedure->7";
+            crm_dbg<<" thirdElementAndTextInsertProcedure->7";
         #endif
         CHECKP(tmp);
         n_dsc* node_d=getPreviousDescriptorOfSameSort (((n_dsc*)XADDR(tmp)));
         if (node_d==NULL || node_d->pdsc!=par_indir)
         {
             #ifdef _MYDEBUG
-                crm_out<<" thirdElementAndTextInsertProcedure->8";
+                crm_dbg<<" thirdElementAndTextInsertProcedure->8";
             #endif
             CHECKP(parent);
             VMM_SIGNAL_MODIFICATION(parent);
@@ -125,7 +125,7 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
         addChildsBySchemeSplittingBlock(parent, name,node_type, tmp,ns);
     CHECKP(tmp);
     #ifdef _MYDEBUG
-            crm_out<<" end of thirdElementAndTextInsertProcedure";
+            crm_dbg<<" end of thirdElementAndTextInsertProcedure";
     #endif
     return tmp;
 }
@@ -134,7 +134,7 @@ xptr secondElementInsertProcedure(xptr right_sib,  xptr parent,t_item ntype, xml
 {
     #ifdef _MYDEBUG
 
-        crm_out<<" secondElementInsertProcedure";
+        crm_dbg<<" secondElementInsertProcedure";
     #endif
     int res= splitBlockIfFullAfterLeftInsert(right_sib);
     RECOVERY_CRASH;
@@ -218,7 +218,7 @@ xptr secondElementInsertProcedure(xptr right_sib,  xptr parent,t_item ntype, xml
     if (neigh==NULL || neigh->pdsc!=parindir)
     {
         #ifdef _MYDEBUG
-            crm_out<<" secondElementInsertProcedure->1";
+            crm_dbg<<" secondElementInsertProcedure->1";
         #endif
         CHECKP(n_blk);
         xptr nodex=ADDR2XPTR(new_node);
@@ -228,7 +228,7 @@ xptr secondElementInsertProcedure(xptr right_sib,  xptr parent,t_item ntype, xml
     }
     CHECKP(n_blk);
     #ifdef _MYDEBUG
-        crm_out<<" end of secondElementInsertProcedure";
+        crm_dbg<<" end of secondElementInsertProcedure";
     #endif
     return insertBetween ( left_sib, right_sib, new_node);
 }
@@ -237,7 +237,7 @@ xptr secondElementInsertProcedure(xptr right_sib,  xptr parent,t_item ntype, xml
 xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_type type)
 {
     #ifdef _MYDEBUG
-    crm_out<<" firstElementInsertProcedure";
+    crm_dbg<<" firstElementInsertProcedure";
     #endif
     xptr l_sib=left_sib;
     int res= splitBlockIfFullAfterRightInsert(l_sib);
@@ -322,7 +322,7 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
     new_node->indir=tmp;
     createNID( l_sib, right_sib, parent,ADDR2XPTR(new_node)); 
     #ifdef _MYDEBUG
-        crm_out<<"end of firstElementInsertProcedure";
+        crm_dbg<<"end of firstElementInsertProcedure";
     #endif
     CHECKP(n_blk);
     return insertBetween ( l_sib, right_sib, new_node);
@@ -330,7 +330,7 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
 xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,text_type ttype)
 {
     #ifdef _MYDEBUG
-        crm_out<<" textInsertProcedure";
+        crm_dbg<<" textInsertProcedure";
     #endif
     xptr tmp ;
     CHECKP(parent);
@@ -342,7 +342,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     if (right_sib==XNULL)
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->1";
+            crm_dbg<<" textInsertProcedure->1";
         #endif
         left_sib=getLastNonDmChildrenChild((n_dsc*)XADDR(parent),chcnt);
         if (left_sib!=XNULL)
@@ -354,7 +354,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     else
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->3";
+            crm_dbg<<" textInsertProcedure->3";
         #endif  
         CHECKP(right_sib);
         left_sib=GETLEFTPOINTER(right_sib);
@@ -365,7 +365,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     if (par_indir==XNULL)
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->4";
+            crm_dbg<<" textInsertProcedure->4";
         #endif
         par_indir=((n_dsc*)XADDR(parent))->indir;
     }
@@ -373,13 +373,13 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     if (left_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->5";
+            crm_dbg<<" textInsertProcedure->5";
         #endif
         CHECKP(left_sib);
         if (GETTYPE(GETSCHEMENODEX(left_sib))==text)
         {
             #ifdef _MYDEBUG
-                crm_out<<" textInsertProcedure->6";
+                crm_dbg<<" textInsertProcedure->6";
             #endif
             //fillLogOfTextNodeChanged(left_sib);
             if ( pscm->type==virtual_root) 
@@ -399,13 +399,13 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     if (right_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->7";
+            crm_dbg<<" textInsertProcedure->7";
         #endif
         CHECKP(right_sib);
         if (GETTYPE(GETSCHEMENODEX(right_sib))==text)
         {
             #ifdef _MYDEBUG
-                crm_out<<" textInsertProcedure->8";
+                crm_dbg<<" textInsertProcedure->8";
             #endif
             //fillLogOfTextNodeChanged(right_sib);
             if ( pscm->type==virtual_root) 
@@ -427,7 +427,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     if (block->snode->first_child_has_data(NULL_XMLNS,NULL,text))
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->9";
+            crm_dbg<<" textInsertProcedure->9";
         #endif
         xptr namesake=XNULL;
         schema_node_cptr  tms=block->snode->get_first_child(NULL_XMLNS,NULL,text);
@@ -443,7 +443,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
         else 
         {
             #ifdef _MYDEBUG
-                crm_out<<" textInsertProcedure->10";
+                crm_dbg<<" textInsertProcedure->10";
             #endif
             namesake= findNodeWithSameNameToInsertBefore(right_sib, parent,parent,NULL,text,NULL_XMLNS);
             if (namesake!=XNULL)  tmp=addNewNodeOfSameSortBefore(namesake,left_sib,right_sib, parent,   par_indir, 0,text);
@@ -452,7 +452,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     else 
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->11";
+            crm_dbg<<" textInsertProcedure->11";
         #endif
         schema_node_cptr scm = XNULL;
         CHECKP(parent);
@@ -469,14 +469,14 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     if ((pos=elementContainsChild(((n_dsc*)XADDR(parent)),NULL,text,NULL_XMLNS))!=NULL)
     {
         #ifdef _MYDEBUG
-            crm_out<<" textInsertProcedure->12";
+            crm_dbg<<" textInsertProcedure->12";
         #endif
         CHECKP(tmp);
         n_dsc* node_d=getPreviousDescriptorOfSameSort (((n_dsc*)XADDR(tmp)));
         if (node_d==NULL || node_d->pdsc!=par_indir)
         {
             #ifdef _MYDEBUG
-                crm_out<<" textInsertProcedure->13";
+                crm_dbg<<" textInsertProcedure->13";
             #endif
             CHECKP(parent);
             VMM_SIGNAL_MODIFICATION(parent);
@@ -490,14 +490,14 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
     (GETBLOCKBYNODE(tmp))->snode.modify()->nodecnt++;
     if (size>0) addTextValue(tmp,value, size,ttype);
     #ifdef _MYDEBUG
-        crm_out<<" end of textInsertProcedure";
+        crm_dbg<<" end of textInsertProcedure";
     #endif
     return tmp;
 }
 xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,xmlns_ptr ns)
 {
     #ifdef _MYDEBUG
-        crm_out<<" insert_element";
+        crm_dbg<<" insert_element";
     #endif
     node_blk_hdr *left=NULL;
     node_blk_hdr *right=NULL;
@@ -507,7 +507,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name,
     if (left_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_element->1";
+            crm_dbg<<" insert_element->1";
         #endif
         CHECKP(left_sib); 
         left= GETBLOCKBYNODE(left_sib);
@@ -521,7 +521,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name,
     if (right_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_element->2";
+            crm_dbg<<" insert_element->2";
         #endif
         CHECKP(right_sib);
         right = GETBLOCKBYNODE(right_sib);
@@ -577,7 +577,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name,
     if (right!=NULL && result==XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_element->3";
+            crm_dbg<<" insert_element->3";
         #endif
         CHECKP(right_sib);
         if (my_strcmp(GETNAME(right->snode),name)==0 && GETTYPE(right->snode)==element && right->snode->get_xmlns()==ns) 
@@ -621,7 +621,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name,
 xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,const  char* value,int data_size,xmlns_ptr ns)
 {
     #ifdef _MYDEBUG
-        crm_out<<" insert_attribute";
+        crm_dbg<<" insert_attribute";
     #endif
     node_blk_hdr *left=NULL;
     node_blk_hdr *right=NULL;
@@ -629,7 +629,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
     if (right_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_attribute->1";
+            crm_dbg<<" insert_attribute->1";
         #endif
         CHECKP(right_sib);
         right = GETBLOCKBYNODE(right_sib);
@@ -640,7 +640,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
     if (left_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_attribute->2";
+            crm_dbg<<" insert_attribute->2";
         #endif
         CHECKP(left_sib); 
         left= GETBLOCKBYNODE(left_sib);
@@ -657,14 +657,14 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
     if (parent==XNULL)
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_attribute->3";
+            crm_dbg<<" insert_attribute->3";
         #endif
         if (left_sib!=XNULL) 
             par_indir=GETPARENTPOINTER(left_sib);
         else if (right_sib!=XNULL) 
         {
             #ifdef _MYDEBUG
-                crm_out<<" insert_attribute->4";
+                crm_dbg<<" insert_attribute->4";
             #endif
             CHECKP(right_sib);
             par_indir=GETPARENTPOINTER(right_sib);
@@ -687,14 +687,14 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
     if (((left_sib==XNULL)&&(right_sib==XNULL))&&giveAnyChild(par_desc,size)!=XNULL)
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_attribute->5";
+            crm_dbg<<" insert_attribute->5";
         #endif
         left_sib=giveAnyAttributeChild(par_desc,size);
         if (left_sib==NULL) left_sib=getLastNamespaceChild(par_desc,size);
         if (left_sib!=XNULL)
         {
             #ifdef _MYDEBUG
-                crm_out<<" insert_attribute->6";
+                crm_dbg<<" insert_attribute->6";
             #endif
             CHECKP(left_sib); 
             //left= GETBLOCKBYNODE(left_sib);
@@ -703,7 +703,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
         else
         {
             #ifdef _MYDEBUG
-                crm_out<<" insert_attribute->7";
+                crm_dbg<<" insert_attribute->7";
             #endif
             right_sib=giveFirstByOrderChild(parent,size);
             left_sib=XNULL;
@@ -717,7 +717,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
     if (scm_node->first_child_has_data(ns,name,attribute) )
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_attribute->8";
+            crm_dbg<<" insert_attribute->8";
         #endif
         xptr namesake= findAttributeWithSameNameToInsertAfter(parent,name,ns);
         if (namesake!=XNULL)
@@ -728,7 +728,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
         else 
         {
             #ifdef _MYDEBUG
-                crm_out<<" insert_attribute->9";
+                crm_dbg<<" insert_attribute->9";
             #endif
             CHECKP(parent);
             namesake= findAttributeWithSameNameToInsertBefore(parent,name,ns);
@@ -742,7 +742,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
     else
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_attribute->10";
+            crm_dbg<<" insert_attribute->10";
         #endif
         schema_node_cptr scm = XNULL;
         if (scm_node->find_first_child(ns,name,attribute)<0)  
@@ -1239,7 +1239,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 {
     //d_printf1("bit");fflush(stdout);
     #ifdef _MYDEBUG
-        crm_out<<" insert_text";
+        crm_dbg<<" insert_text";
     #endif
     node_blk_hdr *left=NULL;
     node_blk_hdr *right=NULL;
@@ -1253,7 +1253,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
     if (left_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_text->2";
+            crm_dbg<<" insert_text->2";
         #endif
         CHECKP(left_sib); 
         left= GETBLOCKBYNODE(left_sib);
@@ -1267,7 +1267,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
     if (right_sib!=XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_text->1";
+            crm_dbg<<" insert_text->1";
         #endif
         CHECKP(right_sib);
         right = GETBLOCKBYNODE(right_sib);
@@ -1299,7 +1299,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
         if (GETTYPE(left->snode)==text)
         {
         #ifdef _MYDEBUG
-            crm_out<<" insert_text->3";
+            crm_dbg<<" insert_text->3";
         #endif
             //d_printf1("1");fflush(stdout);
             //fillLogOfTextNodeChanged(left_sib);
@@ -1320,13 +1320,13 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
     if (right_sib!=XNULL && result==XNULL) 
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_text->4";
+            crm_dbg<<" insert_text->4";
         #endif
         CHECKP(right_sib);
         if (GETTYPE(right->snode)==text)
         {
             #ifdef _MYDEBUG
-                crm_out<<" insert_text->5";
+                crm_dbg<<" insert_text->5";
             #endif
             //d_printf1("2");fflush(stdout);
             //fillLogOfTextNodeChanged(right_sib);
@@ -1346,7 +1346,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
     if ((left!=NULL || right!=NULL)&& result==XNULL)
     {
         #ifdef _MYDEBUG
-            crm_out<<" insert_text->6";
+            crm_dbg<<" insert_text->6";
         #endif
         //d_printf1("3");fflush(stdout);
         xptr tmp=thirdElementAndTextInsertProcedure( left_sib, right_sib,  parent, NULL, 0,text,NULL_XMLNS);
@@ -1357,7 +1357,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
         result=tmp;
     }
     #ifdef _MYDEBUG
-        crm_out<<"end of insert_text";
+        crm_dbg<<"end of insert_text";
     #endif
     //d_printf1("4");fflush(stdout);
     if (result==XNULL)
@@ -1798,7 +1798,7 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
 {
     #ifdef _MYDEBUG
-        crm_out<<"delete_node";
+        crm_dbg<<"delete_node";
     #endif
     n_dsc* node_d=(n_dsc*)XADDR(node);
     xptr par_indir= GETPARENTPOINTER(node); 
@@ -1807,13 +1807,13 @@ void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
     if (type!=document)
     {
         #ifdef _MYDEBUG
-            crm_out<<"delete_node->1";
+            crm_dbg<<"delete_node->1";
         #endif
         n_dsc* prev=getPreviousDescriptorOfSameSort(node_d);
         if (prev==NULL || prev->pdsc!=par_indir)
         {
             #ifdef _MYDEBUG
-                crm_out<<"delete_node->2";
+                crm_dbg<<"delete_node->2";
             #endif
             CHECKP(node);
             n_dsc* next=getNextDescriptorOfSameSort(node_d);
@@ -1830,7 +1830,7 @@ void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
     if (left_sib!=XNULL)  
     {
         #ifdef _MYDEBUG
-            crm_out<<"delete_node->3";
+            crm_dbg<<"delete_node->3";
         #endif
         CHECKP(left_sib)  ;
         VMM_SIGNAL_MODIFICATION(left_sib);
@@ -1842,7 +1842,7 @@ void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
     if (right_sib!=XNULL)  
     {
         #ifdef _MYDEBUG
-            crm_out<<"delete_node->4";
+            crm_dbg<<"delete_node->4";
         #endif
         CHECKP(right_sib)  ;
         VMM_SIGNAL_MODIFICATION(right_sib);
@@ -1857,7 +1857,7 @@ void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
     if (node_d->desc_prev==0 && node_d->desc_next==0)
     {
         #ifdef _MYDEBUG
-            crm_out<<"delete_node->5";
+            crm_dbg<<"delete_node->5";
         #endif
         delete____Block(block);
         return;

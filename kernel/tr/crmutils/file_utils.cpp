@@ -43,7 +43,7 @@ int curproc=0;
 bool cdata_mode=false;
 bool is_coll=false;
 
-//std::vector<schema_node_cptr> * curvect;
+typedef std::pair<int,int> stat_pair;
 typedef std::pair<std::string,std::string> str_pair;
 
 typedef  std::map<str_pair, xmlns_ptr> ns_map;
@@ -279,7 +279,7 @@ void clear_text()
 static void start(void *s, const char *el, const char **attr)
 {
     //d_printf1("bs");fflush(stdout);
-//  crm_out<<"\n In Start PARSING ELEMENT"<<el <<endl;
+//  crm_dbg<<"\n In Start PARSING ELEMENT"<<el <<endl;
 //  test_cnt++;
     const char* uri;
     const char* local;
@@ -373,10 +373,10 @@ static void start(void *s, const char *el, const char **attr)
 }
 static void end(void *s, const char *el)
 {
-  /*crm_out<<"\n In End PARSING ELEMENT"<<el <<endl;
+  /*crm_dbg<<"\n In End PARSING ELEMENT"<<el <<endl;
   if ( my_strcmp( ((node_blk_hdr*)((int)parent.addr & 0xFFFF0000))->snode->name,el)!=0)
   {
-   crm_out<<"here";
+   crm_dbg<<"here";
   }*/
   clear_text();
   left=parent;
@@ -386,7 +386,7 @@ static void end(void *s, const char *el)
   parent=*((xptr*)XADDR(par_ind));
   /*
   CHECKP(parent);
-  crm_out<<"\n In End PARENT ELEMENT"<<((node_blk_hdr*)((int)parent.addr & 0xFFFF0000))->snode->name <<endl;
+  crm_dbg<<"\n In End PARENT ELEMENT"<<((node_blk_hdr*)((int)parent.addr & 0xFFFF0000))->snode->name <<endl;
   */
   mark=0;
   curp.pop_back();
@@ -446,7 +446,7 @@ void data(void *userData, const char *s, int len)
 #ifdef _MYDEBUG1
     if ((*((xptr*)XADDR(par_ind))).layer>0)
         {
-            crm_out<<"Error";
+            crm_dbg<<"Error";
         }
 #endif
     parent=*((xptr*)XADDR(par_ind));
@@ -455,7 +455,7 @@ void data(void *userData, const char *s, int len)
         CHECKP(parent);
         if (GETTYPE((GETBLOCKBYNODE(parent))->snode)!=element)
      {
-        crm_out<<"Error";
+        crm_dbg<<"Error";
      }
     }*/
     //mark=0;
@@ -798,12 +798,12 @@ void parse_schema(FILE* f)
     while (it_map!=xm_nsp.end())
     {
         xmlns_ptr xns=it_map->second;
-        crm_out<<"\n Namespace uri=";
+        crm_dbg<<"\n Namespace uri=";
         if (xns->uri!=NULL)
-            crm_out<<xns->uri;
-        crm_out<<" prefix=";
+            crm_dbg<<xns->uri;
+        crm_dbg<<" prefix=";
         if (xns->prefix!=NULL)
-            crm_out<<xns->prefix;
+            crm_dbg<<xns->prefix;
         it_map++;
     }*/
     
@@ -939,41 +939,3 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, b
     return docnode; 
 }
 
-
-void basicTest()
-{
-/*  
-    FILE* fl= fopen("c:\\test.xml","r");
-    xptr docnode=loadfile(fl,"Testdoc");
-    crm_out<<"OK DONE"<<endl;
-    xptr docnode=insert_document("Testdoc");
-    CHECKP(docnode);
-    schema_node_cptr snode= (GETBLOCKBYNODE(docnode))->snode;*/
-//  printDebugInfo(snode, crm_out);
-    /*  print_schema(snode, crm_out);
-    xptr root=insert_element(XNULL, XNULL, docnode,"A", ANYTYPE);
-    print_schema(snode, crm_out);
-    xptr bnode=insert_element(XNULL, XNULL, root,"B", ANYTYPE);
-    //print_schema(snode, crm_out);
-    xptr cnode=insert_element(bnode, XNULL, root,"B", ANYTYPE);*/
-    //print_node_indent(docnode,crm_out);
-    //CHECKP(docnode);
-    //print_node_with_prefixes(docnode, crm_out,0);
-    crm_out<<"OK DONE"<<endl;
-    //print_schema(snode, crm_out);
-    /*
-    xptr child=giveFirstByOrderChild(docnode,1);
-    crm_out<<"DELETING NODE:"<<endl;
-    nid_print(child,crm_out);
-    child=giveFirstByOrderChild(child,1);
-    crm_out<<"DELETING NODE:"<<endl;
-    nid_print(child,crm_out);
-    child=GETRIGHTPOINTER(child);
-    crm_out<<"DELETING NODE:"<<endl;
-    nid_print(child,crm_out);
-    delete_node(child);
-    crm_out<<"THE END"<<endl;
-    CHECKP(docnode);
-    print_node_with_prefixes(docnode, crm_out,0);*/
-    //print_node(docnode,crm_out);
-}

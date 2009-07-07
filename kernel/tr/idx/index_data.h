@@ -21,7 +21,7 @@ extern USemaphore index_sem;
 void index_on_session_begin();
 void index_on_session_end();
 
-class index_cell_object : public catalog_object {
+struct index_cell_object : public catalog_object {
 public:
 /* Common catalog object interface */
     

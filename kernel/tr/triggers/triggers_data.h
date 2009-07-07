@@ -58,7 +58,7 @@ extern trigger_action_cell *rcv_tac; // for recovery purposes
 
 typedef std::vector<PPXptr*> qep_parameters_vec;
 
-class trigger_cell_object : public catalog_object {
+struct trigger_cell_object : public catalog_object {
 public:
 
 /* Common catalog object interface */
