@@ -6,8 +6,16 @@
 #ifndef _AST_NODE_H_
 #define _AST_NODE_H_
 
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wparentheses"
+#endif /* GNUC */
+
 //#include "tr/xqp/XQueryParser.hpp"
 #include "tr/xqp/location.hh"
+
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic warning "-Wparentheses"
+#endif /* GNUC */
 
 class ASTVisitor;
 typedef sedna::location ASTLocation;
