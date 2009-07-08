@@ -44,7 +44,7 @@ void catalog_issue_warning(const char * warning) {
 #define catalog_zero_counter(C) (C) = 0
 #define DESERIALIZATION_WARNING_LIMIT 170000
 #define catalog_increment_counter(C) if (((C)++) == DESERIALIZATION_WARNING_LIMIT)  \
-    { catalog_issue_warning("Too many catalog objects created. Consider using collections from similar documents or smaller transactions."); }
+    { catalog_issue_warning("Too many catalog objects created. Consider using collections for similar documents or smaller transactions."); }
 
 uint64_t deserialized_objects;
 
