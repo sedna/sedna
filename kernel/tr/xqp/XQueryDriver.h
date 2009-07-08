@@ -12,7 +12,7 @@
 #include "ast/ASTScript.h"
 
 #include "XQueryLexer.h"
-#include "XQueryParser.hpp"
+#include "XQueryParser.h"
 
 namespace sedna
 {

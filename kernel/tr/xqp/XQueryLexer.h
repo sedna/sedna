@@ -14,7 +14,7 @@
     sedna::XQueryParser::semantic_type* yylval,           \
     sedna::XQueryParser::location_type* yylloc)
 
-#include "tr/xqp/XQueryParser.hpp"
+#include "tr/xqp/XQueryParser.h"
 
 #ifndef __FLEX_LEXER_H
 
