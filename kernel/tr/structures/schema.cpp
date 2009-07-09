@@ -660,7 +660,7 @@ xmlns_ptr_pers doc_schema_node_object::xmlns_register(xmlns_ptr xmlns)
     xmlns_ptr_pers i = this->xmlns_list;
 
     while ((i != XNULL) && 
-        ~((mystrcmp(xmlns->uri, i->uri) == 0) && (mystrcmp(xmlns->prefix, i->prefix) == 0))) {
+        !((mystrcmp(xmlns->uri, i->uri) == 0) && (mystrcmp(xmlns->prefix, i->prefix) == 0))) {
         i = i->next_xmlns;
     }
 
