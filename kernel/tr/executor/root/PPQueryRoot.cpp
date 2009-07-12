@@ -59,8 +59,8 @@ bool PPQueryRoot::next()
 
     switch (cxt->st_cxt->output_indent)
     {
-        case se_output_indent_yes: print_tuple_indent (data, dynamic_context::ostr(), print_mode, first, cxt); break;
-        case se_output_indent_no : print_tuple        (data, dynamic_context::ostr(), print_mode, first, cxt); break;
+        case se_output_indent_yes: print_tuple(data, dynamic_context::ostr(), cxt, print_mode, first, true);  break;
+        case se_output_indent_no : print_tuple(data, dynamic_context::ostr(), cxt, print_mode, first, false); break;
         default                  : throw USER_EXCEPTION2(SE1003, "Unexpected se_output_indent");
     }
 	

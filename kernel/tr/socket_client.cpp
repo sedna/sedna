@@ -3,17 +3,19 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
 #include <string>
 #include <list>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
 
+#include "common/sedna.h"
 #include "common/base.h"
 #include "common/u/uhdd.h"
+#include "common/u/uutils.h"
 #include "common/utils.h"
 #include "common/errdbg/d_printf.h"
+
 #include "tr/socket_client.h"
 #include "tr/tr_functions.h"
 #include "tr/auth/auc.h"
@@ -46,7 +48,6 @@ void socket_client::init()
      char buffer[ENV_BUF_SIZE + 1];
      memset(buffer, 0, ENV_BUF_SIZE + 1);
      uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE, __sys_call_error);
-     //d_printf2("getenv variable %d \n",GetLastError());
 
      Sock = atoi(buffer);   // use Sock
      if (Sock == U_INVALID_SOCKET)
@@ -63,7 +64,6 @@ void socket_client::init()
           throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
 
       os_primitives_id_min_bound = atoi(buffer);
-      
 }
 
 void socket_client::release()
@@ -399,12 +399,16 @@ void socket_client::get_session_parameters()
      error(SE3009, string("Unknown Instruction from client. Authentication failed."));
      throw USER_EXCEPTION(SE3009);
   }
+
+  /* Get version of the protocol */
   int buf_position = 0;
   p_ver.major_version = sp_msg.body[buf_position];
   p_ver.minor_version = sp_msg.body[buf_position+1];
       
-  if (!(((p_ver.major_version==1)||(p_ver.major_version==2)||(p_ver.major_version==3))&&(p_ver.minor_version==0))) //version checking (version 1.0 and 2.0 are supported)
-  {
+  /* Check version of the protocol */
+  if ( p_ver.major_version < 1 || 
+       p_ver.major_version > 4 || 
+       p_ver.minor_version !=0 ) {
       error(SE3014, string("major version: ")+int2string(p_ver.major_version)+string(" minor version: ")+int2string(p_ver.minor_version)); 
       throw USER_EXCEPTION(SE3014);
   }

@@ -3,15 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _AUC
-#define _AUC
+#ifndef __AUC_H
+#define __AUC_H
 
-#include "common/sedna.h"
 #include <map>
 #include <set>
 #include <iostream>
 
-#include "tr/executor/base/PPBase.h"
+#include "common/sedna.h"
+
+#include "tr/structures/system_tables.h"
 #include "tr/executor/base/xptr_sequence.h"
 
 
@@ -49,4 +50,5 @@ bool is_auth_check_needed(int update_privilege);
 // update_privilege - set of update privileges;
 // direct - direct/indirect pointers in seq
 void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct);
-#endif
+
+#endif /* __AUC_H */

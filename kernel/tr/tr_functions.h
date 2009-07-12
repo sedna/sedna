@@ -9,10 +9,9 @@
 #include "common/sedna.h"
 #include <string>
 #include "common/u/upipe.h"
-#include "tr/crmutils/exec_output.h"
 #include "common/SSMMsg.h"
 #include "common/base.h"
-#include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/crmbase.h"
 #include "tr/executor/base/PPBase.h"
 #include "common/errdbg/d_printf.h"
 #include "common/ipc_ops.h"

@@ -8,6 +8,12 @@
 
 #include "common/sedna.h"
 
+enum text_type {
+	text_mem,
+	text_doc,
+	text_estr
+};
+
 typedef void (*string_consumer_fn)(const char *str, int len, void *p);
 extern void writextext_cb(const char *str, int len, void *p);
 

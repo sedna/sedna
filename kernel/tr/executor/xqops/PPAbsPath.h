@@ -10,7 +10,7 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPathOnSchema.h"
-
+#include "tr/structures/system_tables.h"
 
 
 class PPAbsPath : public PPIterator

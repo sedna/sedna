@@ -7,12 +7,14 @@
 #ifndef _LOG_H
 #define _LOG_H
 
+#include <string>
+
 #include "common/sedna.h"
 #include "common/xptr.h"
+
 #include "tr/structures/nodes.h"
 #include "tr/mo/micro.h"
 #include "tr/log/logiclog.h"
-#include <string>
 #include "tr/executor/base/PPBase.h"
 
 #ifdef SE_ENABLE_FTSEARCH

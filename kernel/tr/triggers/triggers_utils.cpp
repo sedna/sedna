@@ -3,6 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "common/sedna.h"
+
 #include "tr/triggers/triggers_utils.h"
 #include "tr/updates/updates.h"
 

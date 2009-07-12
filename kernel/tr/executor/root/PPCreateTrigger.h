@@ -11,6 +11,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/triggers/triggers_data.h"
+#include "tr/structures/system_tables.h"
 
 trigger_event symb2trigger_event(const char* str);
 trigger_time symb2trigger_time(const char* str);

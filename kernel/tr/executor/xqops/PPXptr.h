@@ -8,7 +8,15 @@
 
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
-#include "tr/triggers/triggers_data.h"
+
+
+enum trigger_parameter_type
+{
+    TRIGGER_PARAMETER_NEW,
+    TRIGGER_PARAMETER_OLD,
+    TRIGGER_PARAMETER_WHERE
+};
+
 
 class PPXptr : public PPIterator
 {

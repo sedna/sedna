@@ -100,14 +100,10 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 #include "tr/strings/strings_base.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/strings/e_string.h"
-#include "tr/mo/micro.h"
 
 #include "tr/pstr/pstr_long.h"
 #include "tr/strings/e_string_iterator.h"
 #include "tr/strings/char_iterator.h"
-///FIXME!!!!!!!!!!!!!!!!
-// move text_type here, text_doc => text_pstr
-
 
 //FIXME - length is pstr_long should not be int
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, tcell_ptr, params) \
@@ -387,4 +383,4 @@ inline void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
     feed_tuple_cell(writextext_cb, &crmout, tc);
 }
 
-#endif //_STRINGS_H
+#endif /*_STRINGS_H */

@@ -11,6 +11,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/ft/ft_index_data.h"
+#include "tr/structures/system_tables.h"
 
 ft_index_type str2index_type(const char *str);
 ft_index_template_t * make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);

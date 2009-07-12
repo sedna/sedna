@@ -9,7 +9,8 @@
 
 #include "common/sedna.h"
 #include "tr/executor/base/XPath.h"
-#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/structures/system_tables.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 
 /// Prints lots of debugging information if defined

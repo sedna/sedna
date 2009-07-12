@@ -3,7 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <strstream>
+
 #include "common/sedna.h"
+
 #include "tr/sqp/popt/att_xpath.h"
 #include "tr/sqp/popt/serialize2lr.h"
 #include "common/errdbg/d_printf.h"

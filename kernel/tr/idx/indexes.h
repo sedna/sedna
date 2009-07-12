@@ -13,7 +13,8 @@
 #include "tr/executor/base/XPath.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/idx/btree/btree.h"
-#include "tr/executor/base/PPBase.h"
+#include "tr/structures/system_tables.h"
+#include "tr/vmm/vmm.h"
 
 
 /* creates bt_key (fills key argument) from tuple_cell */

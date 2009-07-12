@@ -47,7 +47,6 @@ DECLARE_TIME_VARS
 u_timeb t_total1, t_total2, t_qep1, t_qep2, t_total, t_qep;
 
 
-//u_timeb t_test1, t_test2, t_test3, t_test4;
 string total_time = "0.000 secs", qep_time = "0.000 secs";
 
 #ifdef _WIN32
@@ -77,8 +76,6 @@ void TrnCtrlHandler(int signo)
 }
 #endif
 
-
-//u_timeb ttt1, ttt2;
 
 int TRmain(int argc, char *argv[])
 {

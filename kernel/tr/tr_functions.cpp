@@ -2,18 +2,21 @@
  * File:  tr_functions.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
+#include <sstream>
 
 #include "common/sedna.h"
-#include <sstream>
+#include "common/base.h"
+#include "common/u/uutils.h"
+
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
 #endif
-#include "common/base.h"
 #include "tr/tr_functions.h"
 #include "tr/pq/pq.h"
 #include "tr/log/log.h"
+#include "tr/crmutils/exec_output.h"
 #include "tr/executor/base/XPath.h"
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"

@@ -8,9 +8,12 @@
 #define __TRIGGERS_H
 
 #include <set>
+
+#include "common/sedna.h"
+#include "common/xptr.h"
+
 #include "tr/triggers/triggers_data.h"
 #include "tr/triggers/triggers_utils.h"
-#include "common/xptr.h"
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/structures/schema.h"
 

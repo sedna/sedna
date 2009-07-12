@@ -8,22 +8,17 @@
 
 #include "common/sedna.h"
 #include "common/xptr.h"
+
 #include "tr/structures/nodes.h"
+#include "tr/strings/strings_base.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/structures/schema.h"
-#include <string.h>
 #include "tr/vmm/vmm.h"
 
 //#define FASTDELETE
 
 //#define _MYDEBUG
 //#define _MYDEBUG1
-/* type of schema node (item) */
-enum text_type {
-	text_mem,
-	text_doc,
-	text_estr
-};
 
 xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,xmlns_ptr ns);
 xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,const  char* value, int data_size,xmlns_ptr ns);

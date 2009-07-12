@@ -10,8 +10,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "tr/crmutils/exec_output.h"
-#include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/crmbase.h"
 
 
 class PPQueryRoot : public PPQueryEssence
