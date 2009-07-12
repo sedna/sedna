@@ -3,17 +3,20 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <stack>
+
 #include "common/sedna.h"
+
 #include "tr/strings/strings.h"
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPBase.h"
 
 #define PCRE_STATIC
 #define SUPPORT_UTF8
 #define SUPPORT_UCP
 
 #include "pcre/pcre.h"
-#include <stack>
 
 typedef std::stack<int> stack_of_int;
 

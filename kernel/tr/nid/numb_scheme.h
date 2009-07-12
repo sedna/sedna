@@ -8,8 +8,8 @@
 
 #include "common/sedna.h"
 #include "common/xptr.h"
-#include "tr/crmutils/exec_output.h"
 #include "tr/nid/nid.h"
+#include "tr/crmutils/crmbase.h"
 
 #define MAXINTERNALPREFIX 11
 extern int nid_block_count;

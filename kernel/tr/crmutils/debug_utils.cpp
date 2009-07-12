@@ -3,10 +3,13 @@
 * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 */
 
-#include "common/sedna.h"
-
 #include <math.h>
+
+#include "common/sedna.h"
+#include "common/u/uutils.h"
+
 #include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/crminternals.h"
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstrblk.h"
@@ -17,7 +20,6 @@
 
 /* predefined debug & error output stream */
 se_stdlib_ostream crm_dbg(std::cerr);
-
 
 /* prints information in  descriptor */
 void print_descriptor(n_dsc* node,int shift, se_ostream& crmout)
@@ -213,13 +215,13 @@ void print_schema(schema_node_cptr node, se_ostream& crmout)
     crmout << "\n Schema node. Address= " << node.ptr().layer << "@" << node.ptr().addr;
     if (node->name!=NULL)
         crmout << "\nname=" <<node->name;
-    crmout << "\ntype=" <<convert_type(node->type);
+    crmout << "\ntype=" <<type2string(node->type);
     crmout<< "\nChildren: ";
 
     sc_ref_item * sc;
     for (sc = node->children.first; sc != NULL; sc = sc->next) 
     {
-        crmout << "\n name= " <<sc->object.name <<" type=" << convert_type(sc->object.type)
+        crmout << "\n name= " <<sc->object.name <<" type=" << type2string(sc->object.type)
             << "address= "<<sc->object.snode.layer << "@" << sc->object.snode.addr;
     }
     crmout<< "\nData: ";
@@ -327,7 +329,7 @@ void printMFO (schema_node_cptr node, std::map<schema_node_xptr, std::pair<int,i
         else
             crm_dbg << " uri=\"http://www.w3.org/XML/1998/namespace\"";
     }
-    crm_dbg << " type=\"" <<convert_type(node->type)<<"\"";
+    crm_dbg << " type=\"" <<type2string(node->type)<<"\"";
     //crm_dbg << " fan-out=\"" <<((node->children.first)?mfo[node]:0 )<<"\"";
     crm_dbg << " pref_length=\"" <<size <<"\"";
     crm_dbg << " incr=\"" <<increment <<"\"";

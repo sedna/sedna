@@ -10,7 +10,7 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPOperations.h"
 #include "tr/executor/por2qep/scheme_tree.h"
-#include "tr/crmutils/exec_output.h"
+#include "tr/crmutils/crmbase.h"
 
 struct qep_subtree
 {

@@ -62,6 +62,24 @@ enum t_item {
 	cdata
 };
 
+/* Converts node type to a string */
+inline const char*
+type2string(t_item type) {
+
+    switch(type)
+    {
+    case element:                      return "element";
+    case text:                         return "text";
+    case attribute:                    return "attribute";
+    case xml_namespace:                return "namespace";
+    case document: case virtual_root:  return "document";
+    case comment:                      return "comment";
+    case pr_ins:                       return "processing-instruction";
+    case cdata:                        return "cdata";
+    }
+    return "unknown";
+}
+
 /* node descriptor (abstract structure) */
 struct n_dsc {
     

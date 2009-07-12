@@ -7,10 +7,10 @@
 #ifndef __TRIGGER_UTILS_H
 #define __TRIGGER_UTILS_H
 
+#include "common/sedna.h"
+
 #include "tr/triggers/triggers_data.h"
 #include "common/lm_base.h"
-#include "tr/executor/base/PPBase.h"
-#include "tr/executor/xqops/PPXptr.h"
 #include "tr/executor/por2qep/por2qep.h"
 
 struct built_trigger_action{

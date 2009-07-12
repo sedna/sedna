@@ -298,27 +298,5 @@ inline SednaXQueryException __xquery_exception2(const char *file,
 #endif /* DARWIN */
 
 
-
-/*******************************************************************************
- * Corresponding structures and functions
- ******************************************************************************/
-
-
-/// type of the entity that is stored in database
-enum db_entity_type { dbe_document,		// document
-                      dbe_collection,	// collection
-                      dbe_module        // module
-                    };
-
-/// database entity
-struct db_entity
-{
-    db_entity_type type;		// type of the db entity
-    char *name;					// name of the db entity
-
-    ~db_entity() { delete [] name; name = NULL; }
-};
-
-
 #endif
 

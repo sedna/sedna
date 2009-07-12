@@ -1,3 +1,9 @@
+/*
+ * File:  str_matcher.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
 #ifndef _STR_MATCHER_H
 #define _STR_MATCHER_H
 
@@ -57,4 +63,4 @@ public:
 	~StrMatcher();
 };
 
-#endif
+#endif /* _STR_MATCHER_H */

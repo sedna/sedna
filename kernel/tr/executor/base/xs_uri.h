@@ -7,7 +7,7 @@
 #define _XS_URI_H
 
 #include "common/sedna.h"
-#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/tuple.h"
 
 struct Uri
 {

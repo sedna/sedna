@@ -7,14 +7,14 @@
 #define _TRIGGERS_DATA_H
 
 #include <vector>
+
+#include "common/sedna.h"
 #include "common/u/usem.h"
 #include "common/xptr.h"
-#include "tr/executor/base/XPathOnSchema.h"
-#include "tr/executor/base/PPBase.h"
-#include "tr/cat/simplestream.h"
 
-class PPXptr;
-struct PathExpr;
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/executor/xqops/PPXptr.h"
+#include "tr/cat/simplestream.h"
 
 extern bool isTriggersOn;
 
@@ -33,12 +33,6 @@ enum trigger_granularity
 {
     TRIGGER_FOR_EACH_NODE,
     TRIGGER_FOR_EACH_STATEMENT
-};
-enum trigger_parameter_type
-{
-    TRIGGER_PARAMETER_NEW,
-    TRIGGER_PARAMETER_OLD,
-    TRIGGER_PARAMETER_WHERE
 };
 
 struct inserting_node

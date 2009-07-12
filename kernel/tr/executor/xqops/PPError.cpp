@@ -201,7 +201,7 @@ void PPFnTrace::next(tuple &t)
     {
         dostr.set_debug_info_type(se_QueryTrace);
         dostr << "\nSEDNA TRACE " << tc.get_str_mem() << "\n";
-        print_tuple_indent(t, dostr, xml, is_first, cxt);
+        print_tuple(t, dostr, cxt, xml, is_first, true);
         dostr.flush();
     }
 

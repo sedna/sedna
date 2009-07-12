@@ -8,9 +8,10 @@
 #define _XS_HELPER_H
 
 #include "common/sedna.h"
-#include "tr/executor/base/PPBase.h"
-#include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/crmbase.h"
 #include "tr/executor/base/xs_decimal_t.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/strings/strings.h"
 
 #define IS_WHITESPACE(byte) \
     ((byte) == ' ' || (byte) == '\t' || (byte) == '\n' || (byte) == '\r')

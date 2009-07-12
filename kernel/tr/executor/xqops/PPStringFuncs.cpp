@@ -3,6 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <math.h>
+
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPStringFuncs.h"
@@ -12,8 +14,8 @@
 #include "tr/strings/strings.h"
 #include "tr/strings/utf8.h"
 #include "tr/executor/base/xs_helper.h"
+#include "common/u/uutils.h"
 #include "tr/executor/base/dm_accessors.h"
-#include <math.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/crminternals.h"
 #include "tr/structures/metadata.h"
 #include "tr/structures/schema.h"
 #include "tr/idx/index_data.h"
@@ -87,6 +88,45 @@ print_attribute_prefix(se_ostream& crmout,schema_node_cptr scm, int indent) {
 ///////////////////////////////////////////////////////////////////////////////
 /// Printing fuctions
 ///////////////////////////////////////////////////////////////////////////////
+
+void print_text(xptr txt, se_ostream& crmout, t_print ptype, t_item xq_type)
+{
+    int size =((t_dsc*)XADDR(txt))->size;
+    if (size<=PSTRMAXSIZE)
+    {
+        xptr ind_ptr=((t_dsc*)XADDR(txt))->data;
+        if (ind_ptr==XNULL)return;
+        CHECKP(ind_ptr);
+        shft shift= *((shft*)XADDR(ind_ptr));
+        char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+        if (ptype==xml)
+        {
+            if (xq_type!=text && xq_type!=attribute)
+                crmout.write(data,size);
+            else if (xq_type == attribute)
+                crmout.writeattribute(data, size);
+            else
+                crmout.writextext(data,size);
+        }
+        else
+        {
+            crmout<<"\"";
+            if (xq_type!=text && xq_type!=attribute)
+                crmout.write(data,size);
+            else crmout.writextext(data,size);
+            crmout<<"\"";
+        }
+    }
+    else
+    {
+        if (ptype!=xml)
+            crmout<<"\"";
+        pstr_long_writextext(txt,crmout);
+        if (ptype!=xml)
+            crmout<<"\"";
+    }
+    dynamic_context::stm.flush(write_func,&crmout);
+}
 
 static void 
 print_node_internal(xptr node, 
@@ -466,51 +506,14 @@ static void print_node_indent(xptr node, se_ostream& crmout, t_print ptype, dyna
     print_node_internal(node,crmout,true,0,ptype,cxt);
 }
 
+void 
+print_tuple_internal  (const tuple &tup,     /* tuple to print */
+                       se_ostream& crmout,   /* output strem to print into */
+                       dynamic_context *cxt, /* context to get namespaces */
+                       t_print ptype,        /* xml, sxml, etc ... */
+                       bool is_first,        /* is item first in result */
+                       bool ind) {           /* server indents result items*/
 
-void print_text(xptr txt, se_ostream& crmout, t_print ptype, t_item xq_type)
-{
-    int size =((t_dsc*)XADDR(txt))->size;
-    if (size<=PSTRMAXSIZE)
-    {
-        xptr ind_ptr=((t_dsc*)XADDR(txt))->data;
-        if (ind_ptr==XNULL)return;
-        CHECKP(ind_ptr);
-        shft shift= *((shft*)XADDR(ind_ptr));
-        char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-        if (ptype==xml)
-        {
-            if (xq_type!=text && xq_type!=attribute)
-                crmout.write(data,size);
-            else if (xq_type == attribute)
-                crmout.writeattribute(data, size);
-            else
-                crmout.writextext(data,size);
-        }
-        else
-        {
-            crmout<<"\"";
-            if (xq_type!=text && xq_type!=attribute)
-                crmout.write(data,size);
-            else crmout.writextext(data,size);
-            crmout<<"\"";
-        }
-    }
-    else
-    {
-        if (ptype!=xml)
-            crmout<<"\"";
-        pstr_long_writextext(txt,crmout);
-        if (ptype!=xml)
-            crmout<<"\"";
-    }
-    dynamic_context::stm.flush(write_func,&crmout);
-}
-
-static void 
-print_tuple_internal(const tuple &tup, se_ostream& crmout,
-                     bool ind, t_print ptype,
-                     bool is_first, dynamic_context *cxt) 
-{
     if (tup.is_eos()) return;
     if (is_first) is_atomic=false;
     else
@@ -560,15 +563,16 @@ print_tuple_internal(const tuple &tup, se_ostream& crmout,
     }
 }
 
-void print_tuple(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first,dynamic_context *cxt)  
-{
-    print_tuple_internal(tup,crmout,false,ptype,is_first,cxt);
+void 
+print_tuple           (const tuple &tup,     /* tuple to print */
+                       se_ostream& crmout,   /* output strem to print into */
+                       dynamic_context *cxt, /* context to get namespaces */
+                       t_print ptype,        /* xml, sxml, etc ... */
+                       bool is_first,        /* is item first in result */
+                       bool ind) {           /* server indents result items*/
+    print_tuple_internal(tup, crmout, cxt, ptype, is_first, ind);
 }
 
-void print_tuple_indent(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first,dynamic_context *cxt) 
-{ 
-    print_tuple_internal(tup,crmout,true,ptype,is_first,cxt);
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -879,7 +883,7 @@ void print_descriptive(schema_node_cptr node, se_ostream& crmout, int indent)
         else
             crmout << " uri=\"http://www.w3.org/XML/1998/namespace\"";
     }
-    crmout << " type=\"" <<convert_type(node->type)<<"\"";
+    crmout << " type=\"" <<type2string(node->type)<<"\"";
     crmout << " nodes_count=\"" <<node->nodecnt<<"\"";
     crmout << " block_count=\"" <<node->blockcnt<<"\"";
     crmout << " ext_nid_size=\"" <<node->extnids<<"\"";
@@ -948,7 +952,7 @@ void sxml_print_descriptive(schema_node_cptr node, se_ostream& crmout, int inden
         else
             crmout << " (uri \"http://www.w3.org/XML/1998/namespace\")";
     }
-    crmout << " (type \"" <<convert_type(node->type)<<"\")";
+    crmout << " (type \"" <<type2string(node->type)<<"\")";
 
     crmout << ")";   // closing just the attr-list
     sc_ref_item *sc= node->children.first;

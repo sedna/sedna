@@ -1,6 +1,6 @@
 /*
  * File:  sp_defs.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef _SP_DEFS_H
@@ -44,8 +44,83 @@ enum se_debug_info_type
     se_QueryDebug
 };
 
+enum se_item_class
+{
+    se_atomic    = 1,
+    se_document  = 2,
+    se_element   = 3,
+    se_attribute = 4,
+    se_namespace = 5,
+    se_pi        = 6,
+    se_comment   = 7,
+    se_text      = 8
+};
+
+enum se_item_type
+{
+    /* Abstract base types */
+    se_anyType            = 0,
+    se_anySimpleType      = 1,
+    se_anyAtomicType      = 2,
+    /* Built-in simple, non-atomic types */
+    se_IDREFS             = 3,
+    se_NMTOKENS           = 4,
+    se_ENTITIES           = 5,
+    /* Built-in complex types */
+    se_untyped            = 6,
+    /* Built-in atomic types (Primitive types) */
+    se_dateTime           = 10,
+    se_date               = 11,
+    se_time               = 12,
+    se_duration           = 13,
+    se_yearMonthDuration  = 14,
+    se_dayTimeDuration    = 15,
+    se_gYearMonth         = 16,
+    se_gYear              = 17,
+    se_gMonthDay          = 18,
+    se_gDay               = 19,
+    se_gMonth             = 20,
+    se_float              = 21,
+    se_double             = 22,
+    se_decimal            = 23,
+    se_integer            = 24,
+    se_boolean            = 25,
+    se_untypedAtomic      = 26,
+    se_string             = 27,
+    se_base64Binary       = 28,
+    se_hexBinary          = 29,
+    se_anyURI             = 30,
+    se_QName              = 31,
+    se_NOTATION           = 32,
+    /* Types derived from xs:string */
+    se_normalizedString   = 41,
+    se_token              = 42,
+    se_language           = 43,
+    se_NMTOKEN            = 44,
+    se_Name               = 45,
+    se_NCName             = 46,
+    se_ID                 = 47,
+    se_IDREF              = 48,
+    se_ENTITY             = 49,
+    /* Types derived from xs:integer */
+    se_nonPositiveInteger = 50,
+    se_negativeInteger    = 51,
+    se_long               = 52,
+    se_int                = 53,
+    se_short              = 54,
+    se_byte               = 55,
+    se_nonNegativeInteger = 56,
+    se_unsignedLong       = 57,
+    se_unsignedInt        = 58,
+    se_unsignedShort      = 59,
+    se_unsignedByte       = 60,
+    se_positiveInteger    = 61
+};
+
+
 enum se_sp_instructions
-{ se_ErrorResponse = 100,
+{   
+    se_ErrorResponse = 100,
     se_StartUp = 110,
     se_SessionParameters = 120,
     se_AuthenticationParameters = 130,
@@ -71,6 +146,7 @@ enum se_sp_instructions
     se_QueryFailed = 330,
     se_UpdateSucceeded = 340,
     se_UpdateFailed = 350,
+    se_ItemStart = 355,
     se_ItemPart = 360,
     se_ItemEnd = 370,
     se_ResultEnd = 375,
@@ -106,4 +182,5 @@ struct protocol_version{
 	char minor_version;
 };
 
-#endif
+
+#endif /* _SP_DEFS_H */

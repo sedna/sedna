@@ -9,6 +9,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/structures/system_tables.h"
 
 class PPRetrieveMetadata : public PPQueryEssence
 {

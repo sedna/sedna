@@ -6,6 +6,8 @@
 #include <string.h>
 #include <sstream>
 
+#include "common/sedna.h"
+
 #include "tr/triggers/triggers_data.h"
 #include "tr/triggers/triggers_utils.h"
 #include "common/errdbg/exceptions.h"

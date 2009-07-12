@@ -6,15 +6,13 @@
 #ifndef _SOCKET_CLIENT_H
 #define _SOCKET_CLIENT_H
 
-#include "common/sedna.h"
 #include <list>
 #include <string>
-#include "tr/crmutils/exec_output.h"
+
+#include "common/sedna.h"
+
 #include "tr/client_core.h"
-#include "common/sp.h"
-#include "common/base.h"
-#include "common/u/usocket.h"
-#include "tr/tr_globals.h"
+#include "tr/crmutils/exec_output.h"
 #include "tr/tr_utils.h"
 
 enum client_states {NO_TRANSACTION, IN_TRANSACTION};
@@ -24,6 +22,7 @@ enum read_msg_states {se_BeginAuthenticatingTransaction = 3,
                       se_GetNextMessageFromClient = 0 };
 
 EXTERN_DECLARE_TIME_VARS
+
 class socket_client : public client_core
 {
 private:
@@ -67,15 +66,7 @@ public:
     virtual bool is_print_progress() { return false; }
 
     virtual int get_os_primitives_id_min_bound() { return os_primitives_id_min_bound; }
-/*    
-    virtual void update_result(bool res);
-    virtual void bulk_load_result(bool res, const std::string& body);
-    virtual void begin_tr_result(bool res, const std::string& body);
-    virtual void commit_tr_result(bool res, const std::string& body);
-    virtual void rollback_tr_result(bool res, const std::string& body);
-    virtual void rollback_tr_before_close(bool res, const std::string& body);
-    virtual void close_session_result(bool res, const std::string& body);
-*/
+
     virtual void authentication_result(bool res, const std::string& body);
     virtual void error(int code, const std::string& body);
     virtual void error();

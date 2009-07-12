@@ -12,7 +12,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/dm_accessors.h"
-
+#include "tr/structures/system_tables.h"
 
 
 inline xptr first_child(xptr node)

@@ -12,9 +12,8 @@
 #include "common/xptr.h"
 
 #include "tr/crmutils/exec_output.h"
+#include "tr/crmutils/crmbase.h"
 #include "tr/structures/nodes.h"
-#include "tr/executor/base/tuple.h"
-#include "tr/executor/base/PPBase.h"
 #include "tr/strings/strings.h"
 #include "tr/cat/catptr.h"
 
@@ -22,14 +21,10 @@
 #include "tr/ft/ft_index_data.h"
 #endif
 
+class dynamic_context;
+
 /* predefined debug&error output stream */
 extern se_stdlib_ostream crm_dbg;
-
-/* type of print */
-enum t_print {
-	xml,
-	sxml
-};
 
 /* some statistics counters */
 struct debug_info
@@ -65,65 +60,17 @@ struct debug_info
                    freestrspace(0) {}
 };
 
-/* returns type of node */
-inline const char*
-convert_type(t_item type) {
-
-    switch(type)
-    {
-    case element:                      return "element";
-    case text:                         return "text";
-    case attribute:                    return "attribute";
-    case xml_namespace:                return "namespace";
-    case document: case virtual_root:  return "document";
-    case comment:                      return "comment";
-    case pr_ins:                       return "processing-instruction";
-    case cdata:                        return "cdata";
-    }
-    return "unknown";
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 /// Print utils 
 ////////////////////////////////////////////////////////////////////////////////
 
-void print_tuple        (const tuple &tup, se_ostream& crmout, t_print ptype, bool is_first, dynamic_context *cxt);
-void print_tuple_indent (const tuple &tup, se_ostream& crmout, t_print ptype, bool is_first, dynamic_context *cxt);
-
-void print_text(xptr text, se_ostream& crmout, t_print ptype, t_item xq_type);
-
-
-////////////////////////////////////////////////////////////////////////////////
-/// System tables utils 
-////////////////////////////////////////////////////////////////////////////////
-
-enum document_type {
-    DT_NON_SYSTEM,
-    DT_DOCUMENTS,
-    DT_INDEXES,
-    DT_FTINDEXES,
-    DT_TRIGGERS,
-    DT_SCHEMA,
-    DT_COLLECTIONS,
-    DT_ERRORS,
-    DT_VERSION,
-    DT_MODULES,
-    DT_DOCUMENT_,
-    DT_COLLECTION_,
-    DT_SCHEMA_
-};
-
-
-/* The following methods return DT_NON_SYSTEM if 
- * given name is not one of the reserved.
- */
-document_type get_document_type(counted_ptr<db_entity> db_ent);
-document_type get_document_type(const char* title, db_entity_type type);
-
-
-schema_node_xptr get_system_doc(document_type type, const char* title);
-void system_tables_on_kernel_statement_end();
+void 
+print_tuple           (const tuple &tup,     /* tuple to print */
+                       se_ostream& crmout,   /* output strem to print into */
+                       dynamic_context *cxt, /* context to get namespaces */
+                       t_print ptype,        /* xml, sxml, etc ... */
+                       bool is_first,        /* is item first in result */
+                       bool ind);            /* server indents result items*/
 
 
 #ifdef SE_ENABLE_FTSEARCH

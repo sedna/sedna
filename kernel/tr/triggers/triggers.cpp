@@ -3,6 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "common/sedna.h"
+
 #include "tr/triggers/triggers.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/tr_globals.h"
@@ -11,6 +13,7 @@
 #include "tr/cat/catptr.h"
 #include "tr/log/log.h"
 #include "tr/locks/locks.h"
+#include "tr/crmutils/exec_output.h"
 
 static t_triggers_set after_statement_triggers;
 

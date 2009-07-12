@@ -3,13 +3,15 @@
  * Copyright (C) 2007 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
-
 #include <sstream>
 
-#include "tr/crmutils/crmutils.h"
+#include "common/sedna.h"
+#include "common/u/uutils.h"
+
+#include "tr/structures/system_tables.h"
 #include "tr/structures/schema.h"
 #include "tr/structures/metadata.h"
+#include "tr/crmutils/crmutils.h"
 #include "tr/mo/micro.h"
 #include "tr/locks/locks.h"
 #include "tr/vmm/vmm.h"
@@ -37,7 +39,7 @@ inline void print_type_name(xmlscm_type keytype, char* buf)
 
 xptr fill_schema(schema_node_cptr scm, xptr& node,xptr& neighb)
 {
-    xptr parent=insert_element(neighb,XNULL,node,convert_type(scm->type),xs_untyped,NULL_XMLNS);
+    xptr parent=insert_element(neighb,XNULL,node,type2string(scm->type),xs_untyped,NULL_XMLNS);
     xptr indir=((n_dsc*)XADDR(parent))->indir;
     xptr left =insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,scm->name,(scm->name==NULL)?0:strlen(scm->name),NULL_XMLNS);
     if (scm->get_xmlns()!=NULL)

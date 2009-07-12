@@ -7,7 +7,7 @@
 #define _PPERROR_H
 
 #include "common/sedna.h"
-#include "tr/crmutils/exec_output.h"
+#include "tr/crmutils/crmbase.h"
 #include "tr/executor/base/PPBase.h"
 
 ///////////////////////////////////////////////////////////////////////////////
