@@ -10,7 +10,6 @@
 
 #include "tr/executor/root/PPLoadModule.h"
 #include "tr/crmutils/crmutils.h"
-#include "tr/client_core.h"
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
@@ -20,7 +19,6 @@
 #include "common/errdbg/d_printf.h"
 #include "tr/auth/auc.h"
 
-extern client_core *client;
 
 PPLoadModule::PPLoadModule(
     arr_of_PPOpIn   _filenames_,
@@ -114,7 +112,7 @@ struct Client_file_closer:
 {
     void operator()(client_file &cf)
     {
-        client->close_file_from_client(cf);
+        tr_globals::client->close_file_from_client(cf);
     }
 };
 
@@ -137,18 +135,17 @@ void PPLoadModule::execute()
         Tc_filename_obtainer()
         );
 
-    //client_file cf;
     std::vector<client_file> cf_vec(fnames_size);
 
     try {
         std::string module_name1, module_name2, module_pc_text;
 
-        client->get_file_from_client(&tc_filenames, &cf_vec);
+        tr_globals::client->get_file_from_client(&tc_filenames, &cf_vec);
         for (int i = 0; i < fnames_size; ++i)
         {
             //precompile input module
             module_pc_text += prepare_module(cf_vec[i].f/*cf.f*/, module_name1/*out*/);
-            client->close_file_from_client(cf_vec[i]);
+            tr_globals::client->close_file_from_client(cf_vec[i]);
 
             if (i && (module_name1 != module_name2))
                 throw USER_EXCEPTION2(SE1072, (module_name1 + " and " + module_name2).c_str());
@@ -189,17 +186,14 @@ void PPLoadModule::execute()
 
         elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL_XMLNS);
 
-        //d_printf2("inserting module: %s\n", module_pc_text.c_str());
         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
         
         auth_for_load_module(module_name1.c_str());
     } catch (ANY_SE_EXCEPTION) {
         close_all_client_files(cf_vec);
-        /*client->close_file_from_client(cf);*/
         throw;
     }
 
     close_all_client_files(cf_vec);
-    /*client->close_file_from_client(cf);*/
 }
 

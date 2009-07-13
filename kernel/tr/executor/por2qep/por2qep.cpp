@@ -3088,7 +3088,7 @@ fn_dt_funcs_correct_type:
 #ifdef SE_ENABLE_FTSEARCH
 	else if (op == "PPFtIndexScan")
     {
-        if (is_ft_disabled)
+        if (tr_globals::is_ft_disabled)
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   lst->size() != 3
@@ -3134,7 +3134,7 @@ fn_dt_funcs_correct_type:
 #ifdef SE_ENABLE_DTSEARCH
 	else if (op == "PPFtScan")
     {
-        if (is_ft_disabled)
+        if (tr_globals::is_ft_disabled)
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   lst->size() < 4 ||
@@ -3162,7 +3162,7 @@ fn_dt_funcs_correct_type:
     }
 	else if (op == "PPFtHighlight")
     {
-        if (is_ft_disabled)
+        if (tr_globals::is_ft_disabled)
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   lst->size() < 3 || lst->size() > 4
@@ -3190,7 +3190,7 @@ fn_dt_funcs_correct_type:
     }
 	else if (op == "PPFtHighlight2")
     {
-        if (is_ft_disabled)
+        if (tr_globals::is_ft_disabled)
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   lst->size() < 3 || lst->size() > 4
@@ -3714,7 +3714,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
 #ifdef SE_ENABLE_FTSEARCH
     else if (op == "PPCreateFtIndex")
     {
-        if (is_ft_disabled) //TODO: fix this
+        if (tr_globals::is_ft_disabled) //TODO: fix this
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   qe->size() < 6
@@ -3753,7 +3753,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
     }
     else if (op == "PPDropFtIndex")
     {
-        if (is_ft_disabled) //TODO: fix this
+        if (tr_globals::is_ft_disabled) //TODO: fix this
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
         if (   qe->size() != 3

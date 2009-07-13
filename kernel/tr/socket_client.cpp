@@ -1,7 +1,7 @@
 /*
- * File:  socket_client.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  socket_client.cpp
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
 
 #include <string>
 #include <list>
@@ -16,70 +16,72 @@
 #include "common/utils.h"
 #include "common/errdbg/d_printf.h"
 
+#include "tr/executor/base/PPBase.h"
 #include "tr/socket_client.h"
-#include "tr/tr_functions.h"
+#include "tr/tr_globals.h"
+#include "tr/tr_common_funcs.h"
 #include "tr/auth/auc.h"
 #include "tr/tr_utils.h"
 
-
+static msg_struct sp_msg;
 using namespace std;
 
 socket_client::socket_client()
 {
-     p_ver.major_version = 1;
-     p_ver.minor_version = 0;	
- 
-     read_msg_count = se_BeginAuthenticatingTransaction;
-     has_next_item = true;
-     is_on_stop = false;
+    p_ver.major_version = 1;
+    p_ver.minor_version = 0;	
 
-     timeout.tv_sec = 1;
-     timeout.tv_usec = 0;
+    read_msg_count = se_BeginAuthenticatingTransaction;
+    has_next_item = true;
+    is_on_stop = false;
 
-	 Sock = U_INVALID_SOCKET;
-     stream = NULL;
-     max_result_size_to_pass = 0; //can be sent as a session option; 0 - pass whole result
-     long_query_stream = NULL;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    Sock = U_INVALID_SOCKET;
+    stream = NULL;
+    max_result_size_to_pass = 0; //can be sent as a session option; 0 - pass whole result
+    long_query_stream = NULL;
 }
 
 void socket_client::init()
 {
- 	  //  Takes Socket handle from Environment Variable 
-     char buffer[ENV_BUF_SIZE + 1];
-     memset(buffer, 0, ENV_BUF_SIZE + 1);
-     uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE, __sys_call_error);
+    //  Takes Socket handle from Environment Variable 
+    char buffer[ENV_BUF_SIZE + 1];
+    memset(buffer, 0, ENV_BUF_SIZE + 1);
+    uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE, __sys_call_error);
 
-     Sock = atoi(buffer);   // use Sock
-     if (Sock == U_INVALID_SOCKET)
-     {
+    Sock = atoi(buffer);   // use Sock
+    if (Sock == U_INVALID_SOCKET)
+    {
 #ifdef _WIN32
         d_printf2("accept failed %d\n",GetLastError());
 #else
         d_printf1("accept failed \n");
 #endif
         throw USER_EXCEPTION(SE3001); 
-      }
+    }
 
-      if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buffer, ENV_BUF_SIZE, __sys_call_error) != 0)
-          throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
+    if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buffer, ENV_BUF_SIZE, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
 
-      os_primitives_id_min_bound = atoi(buffer);
+    os_primitives_id_min_bound = atoi(buffer);
 }
 
 void socket_client::release()
 {
-     if(Sock != U_INVALID_SOCKET)
-         if(ushutdown_close_socket(Sock, __sys_call_error)!=0) Sock = U_INVALID_SOCKET;
-   	 if(stream != NULL)
-   	 {
-   	 	 delete stream;
-   	 	 stream = NULL;
-   	 }
-   	 if(long_query_stream != NULL)
-   	 {
-   	 	 se_free( long_query_stream );
-   	 	 long_query_stream = NULL;
-   	 }
+    if(Sock != U_INVALID_SOCKET)
+        if(ushutdown_close_socket(Sock, __sys_call_error)!=0) Sock = U_INVALID_SOCKET;
+    if(stream != NULL)
+    {
+        delete stream;
+        stream = NULL;
+    }
+    if(long_query_stream != NULL)
+    {
+        se_free( long_query_stream );
+        long_query_stream = NULL;
+    }
 }
 
 void socket_client::read_msg(msg_struct *msg)
@@ -119,25 +121,25 @@ void socket_client::read_msg(msg_struct *msg)
                 is_on_stop = true;
                 return;
             }
-           	    
+
             timeout.tv_sec  = 1;
             timeout.tv_usec = 0;
-           	res = uselect_read(Sock, &timeout, __sys_call_error);
-           	
-           	if(0 != this->ka_timeout)
+            res = uselect_read(Sock, &timeout, __sys_call_error);
+
+            if(0 != this->ka_timeout)
            	{
-           	    timeout_counter++;
-           	    if(timeout_counter >= this->ka_timeout) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE4624);}
+                timeout_counter++;
+                if(timeout_counter >= this->ka_timeout) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE4624);}
            	}
 
-        	if(res == 1) //ready to recv data
+            if(res == 1) //ready to recv data
             {
                 timeout_counter = 0;
                 break;
             }
             else if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator());}
         }
-		
+
         res = sp_recv_msg(Sock, msg);
         if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
         if(res == 1) throw USER_EXCEPTION(SE3012);
@@ -146,23 +148,23 @@ void socket_client::read_msg(msg_struct *msg)
 
 char* socket_client::get_query_string(msg_struct *msg)
 {
-	__int32 query_portion_length;
-	int res, query_size = 0;
+    __int32 query_portion_length;
+    int res, query_size = 0;
     bool query_too_large = false;
-	int malloced_size = SE_SOCKET_MSG_BUF_SIZE*5;
+    int malloced_size = SE_SOCKET_MSG_BUF_SIZE*5;
 
     if(long_query_stream != NULL)
    	{
-   	    se_free( long_query_stream );
-   	    long_query_stream = NULL;
+        se_free( long_query_stream );
+        long_query_stream = NULL;
    	}
-	
-	try{
+
+    try{
         if((*msg).instruction == se_ExecuteLong) // get long query
         {
             if ((long_query_stream = (char*)se_alloc(malloced_size+1)) == NULL) throw USER_EXCEPTION(SE4080);
-            
-            while((*msg).instruction != se_LongQueryEnd) // while not the end of long query 
+
+            while((*msg).instruction != se_LongQueryEnd) // while not the end of long query
             {
                 if (!query_too_large)
                 {
@@ -175,7 +177,7 @@ char* socket_client::get_query_string(msg_struct *msg)
                     }
                     memcpy(long_query_stream+query_size, (*msg).body+6, query_portion_length);
                     query_size += query_portion_length;
-                    
+
                     if(query_size > SE_MAX_QUERY_SIZE) query_too_large = true;
                 }
                 res = sp_recv_msg(Sock, msg);
@@ -183,7 +185,7 @@ char* socket_client::get_query_string(msg_struct *msg)
                 if (res == 1) throw USER_EXCEPTION(SE3012);
             }
             if (query_too_large) throw USER_EXCEPTION(SE6000); // statement is too large
-                
+
             long_query_stream[query_size] = '\0';
             return long_query_stream;
         }
@@ -208,19 +210,19 @@ char* socket_client::get_query_string(msg_struct *msg)
 
 t_print socket_client::get_result_type(msg_struct *msg)
 {
-	return ((*msg).body[0] == 0) ? xml : sxml;
+    return ((*msg).body[0] == 0) ? xml : sxml;
 }
 
 
 QueryType socket_client::get_query_type()
 {
-  return TL_XQuery;//nor write impl
+    return TL_XQuery;
 }
 
 
 se_ostream* socket_client::get_se_ostream()
 {
-	return stream;
+    return stream;
 }
 
 
@@ -229,21 +231,21 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                                     std::vector<client_file>* cf_vec)
 {
     string tmp_file_path_str;
-    
+
     int i = 0, got, written = 0, cmd_bl, len_int, res;
     __int64 res_pos;
-    
+
     if ((filenames->size() > 1) && (p_ver.major_version < 2))
         throw USER_EXCEPTION2(SE2999, "Loading module from multiple files is not supported by current Sedna Client-server protocol.");
 
     try
     {
-		while(i<filenames->size())
+        while(i<filenames->size())
         {
             file_struct fs;
             client_file &cf = cf_vec->at(i);
             const char* client_filename = filenames->at(i).c_str();
-            
+
             if (strcmp(client_filename, "/STDIN/") == 0)
             {
                 sp_msg.instruction = 431;// BulkLoadFromStream
@@ -255,23 +257,23 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                 int filename_len = strlen(client_filename);
                 sp_msg.instruction = 430;// BulkLoadFileName
                 sp_msg.length = filename_len + 5;
-                
+
                 int2net_int(filename_len, sp_msg.body+1);
                 sp_msg.body[0] = 0;
                 memcpy(sp_msg.body+5, client_filename, filename_len);
                 if(sp_send_msg(Sock, &sp_msg) != 0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
             }
-            
+
             /* Create tmpfile for bulkload */
-            tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files");
-            res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
+            tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(tr_globals::db_name) + string("_files");
+            res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, tr_globals::sid, __sys_call_error);
             if(res == 0)
                 throw USER_EXCEPTION(SE4052);
-            
+
             res = sp_recv_msg(Sock, &sp_msg);
             if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator());}
             if(res == 1) throw USER_EXCEPTION(SE3012);
-            
+
             try {
                 while(sp_msg.instruction != se_BulkLoadEnd)           // while not BulkLoadEnd message
                 {
@@ -287,15 +289,15 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                     }
                     else 
                     {
-                       throw USER_EXCEPTION(SE3009);
+                        throw USER_EXCEPTION(SE3009);
                     }
-                    
+
                     res = sp_recv_msg(Sock, &sp_msg);
                     if (res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-                    
+
                     if (res == 1) 
                         throw USER_EXCEPTION(SE3012);
-                 }
+                }
             } catch (SednaUserException & e) {
                 uCloseFile(fs.f, __sys_call_error);
                 if(uDeleteFile(fs.name, __sys_call_error) == 0) 
@@ -303,31 +305,31 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                 throw;
             }
 
-             uCloseFile(fs.f, __sys_call_error);
+            uCloseFile(fs.f, __sys_call_error);
 
-             cf.f = fopen(string(fs.name).c_str(), "r");
-             strcpy(cf.name, fs.name);
-             if (uGetFileSizeByName(cf.name, &(cf.file_size), __sys_call_error) == 0)
-                 throw USER_EXCEPTION2(SE4050, cf.name);
+            cf.f = fopen(string(fs.name).c_str(), "r");
+            strcpy(cf.name, fs.name);
+            if (uGetFileSizeByName(cf.name, &(cf.file_size), __sys_call_error) == 0)
+                throw USER_EXCEPTION2(SE4050, cf.name);
 
-             i++;
+            i++;
 
         }//while
-        
-     } catch (ANY_SE_EXCEPTION) {
-         // close and delete all files from cf_vec
-         for (int j=0; j<i; j++)
-         {
-             if (cf_vec->at(i).f && (fclose(cf_vec->at(i).f) != 0))
-             {
-                 cf_vec->at(i).f = NULL;
-                 throw USER_EXCEPTION(SE3020);
-             }
-             cf_vec->at(i).f = NULL;
-             if(uDeleteFile(cf_vec->at(i).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
-         }
-         throw;
-     }
+
+    } catch (ANY_SE_EXCEPTION) {
+        // close and delete all files from cf_vec
+        for (int j=0; j<i; j++)
+        {
+            if (cf_vec->at(i).f && (fclose(cf_vec->at(i).f) != 0))
+            {
+                cf_vec->at(i).f = NULL;
+                throw USER_EXCEPTION(SE3020);
+            }
+            cf_vec->at(i).f = NULL;
+            if(uDeleteFile(cf_vec->at(i).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
+        }
+        throw;
+    }
 }
 
 void socket_client::close_file_from_client(client_file &cf)
@@ -350,28 +352,28 @@ void socket_client::respond_to_client(int instruction)
 {
     // if session is closed by server stopping - do not send message to client
     if (is_on_stop) return;
-    
+
     sp_msg.instruction = instruction;
     sp_msg.length = 0;
-    
+
     switch (instruction)
     {
-        case se_BeginTransactionOk:
-            if (read_msg_count == se_BeginAuthenticatingTransaction) {read_msg_count = se_Authentication; return;}
-        case se_CommitTransactionOk:
-            if (read_msg_count == se_CommitAuthenticatingTransaction) {read_msg_count = se_GetNextMessageFromClient; return;}
+    case se_BeginTransactionOk:
+        if (read_msg_count == se_BeginAuthenticatingTransaction) {read_msg_count = se_Authentication; return;}
+    case se_CommitTransactionOk:
+        if (read_msg_count == se_CommitAuthenticatingTransaction) {read_msg_count = se_GetNextMessageFromClient; return;}
     }
-	if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+    if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 }
 
 void socket_client::begin_item()
 {
-//	msg_struct msg;
-	
-	sp_msg.instruction = se_QuerySucceeded;
-	sp_msg.length = 0;
-	
-	if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+    //	msg_struct msg;
+
+    sp_msg.instruction = se_QuerySucceeded;
+    sp_msg.length = 0;
+
+    if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 }
 
 void socket_client::end_of_item(qepNextAnswer res)
@@ -381,108 +383,108 @@ void socket_client::end_of_item(qepNextAnswer res)
 
 void socket_client::get_session_parameters()
 {
-  sp_msg.instruction = se_SendSessionParameters;// SendSessionParameters message
-  sp_msg.length = 0;
-  if (sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
-  
-  timeout.tv_sec = 50;
-  timeout.tv_usec = 0;
-  int select_res = uselect_read(Sock, &timeout, __sys_call_error);
-  if (select_res == 0) throw USER_EXCEPTION(SE3047);
-  if (select_res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-  int res = sp_recv_msg(Sock, &sp_msg);
-  if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-  if (res == 1) throw USER_EXCEPTION(SE3012);
-  
-  if (sp_msg.instruction != se_SessionParameters) //SessionParameters
-  {
-     error(SE3009, string("Unknown Instruction from client. Authentication failed."));
-     throw USER_EXCEPTION(SE3009);
-  }
+    sp_msg.instruction = se_SendSessionParameters;// SendSessionParameters message
+    sp_msg.length = 0;
+    if (sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 
-  /* Get version of the protocol */
-  int buf_position = 0;
-  p_ver.major_version = sp_msg.body[buf_position];
-  p_ver.minor_version = sp_msg.body[buf_position+1];
-      
-  /* Check version of the protocol */
-  if ( p_ver.major_version < 1 || 
-       p_ver.major_version > 4 || 
-       p_ver.minor_version !=0 ) {
-      error(SE3014, string("major version: ")+int2string(p_ver.major_version)+string(" minor version: ")+int2string(p_ver.minor_version)); 
-      throw USER_EXCEPTION(SE3014);
-  }
-     
-  buf_position += 3;
-  __int32 length;
-  net_int2int(&length, sp_msg.body+buf_position);
+    timeout.tv_sec = 50;
+    timeout.tv_usec = 0;
+    int select_res = uselect_read(Sock, &timeout, __sys_call_error);
+    if (select_res == 0) throw USER_EXCEPTION(SE3047);
+    if (select_res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+    int res = sp_recv_msg(Sock, &sp_msg);
+    if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+    if (res == 1) throw USER_EXCEPTION(SE3012);
 
-  buf_position += sizeof(__int32);
-      
-  if(length > SE_MAX_LOGIN_LENGTH)
-  {
-    error(SE3015, string("Error: Too long login")); 
-    throw USER_EXCEPTION(SE3015);
-  }
+    if (sp_msg.instruction != se_SessionParameters) //SessionParameters
+    {
+        error(SE3009, string("Unknown Instruction from client. Authentication failed."));
+        throw USER_EXCEPTION(SE3009);
+    }
 
-  memcpy(tr_globals::login, sp_msg.body+buf_position, length);   
-      
-  tr_globals::login[length] = '\0';   
-  buf_position += length;
-       
-  d_printf3("In authorization length = %d login = %s\n", length, tr_globals::login);
-      
-  net_int2int(&length, sp_msg.body+buf_position+1);
-  buf_position += 1 + sizeof(__int32);
-	
-  d_printf2("length =%d\n", length);
-  if(length > SE_MAX_DB_NAME_LENGTH)
-  {
-     error(SE3015, string("Error: Too long db_name")); 
-     throw USER_EXCEPTION(SE3015);
-  }
+    /* Get version of the protocol */
+    int buf_position = 0;
+    p_ver.major_version = sp_msg.body[buf_position];
+    p_ver.minor_version = sp_msg.body[buf_position+1];
 
-  memcpy(db_name, sp_msg.body+buf_position, length);	  
-  db_name[length] = '\0';
-      
-  d_printf2("In authorization db_name = %s\n", db_name);
-      
-  sp_msg.instruction = se_SendAuthParameters;// SendAuthenticationParameters message
-  sp_msg.length = 0;
-  if (sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
-  
-  timeout.tv_sec = 50;
-  timeout.tv_usec = 0;
-  select_res = uselect_read(Sock, &timeout, __sys_call_error);
-  if (select_res == 0) throw USER_EXCEPTION(SE3047);
-  if (select_res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-  res = sp_recv_msg(Sock, &sp_msg);
-  if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-  if (res == 1) throw USER_EXCEPTION(SE3012);
+    /* Check version of the protocol */
+    if ( p_ver.major_version < 1 || 
+        p_ver.major_version > 4 || 
+        p_ver.minor_version !=0 ) {
+            error(SE3014, string("major version: ")+int2string(p_ver.major_version)+string(" minor version: ")+int2string(p_ver.minor_version)); 
+            throw USER_EXCEPTION(SE3014);
+    }
 
-  if (sp_msg.instruction != se_AuthenticationParameters) //AuthenticationParameters
-  {
-    error(SE3009, string("Error: Unknown Instruction from client. Authentication failed.")); 
-    throw USER_EXCEPTION(SE3009);
-  }
+    buf_position += 3;
+    __int32 length;
+    net_int2int(&length, sp_msg.body+buf_position);
 
-  buf_position = 1;
-  net_int2int(&length, sp_msg.body+buf_position);
-  buf_position += sizeof(__int32);
+    buf_position += sizeof(__int32);
 
-  if(length > SE_MAX_PASSWORD_LENGTH)
-  {
-     error(SE3015, string("Error: Too long password")); 
-     throw USER_EXCEPTION(SE3015);
-  }
-  memcpy(password, sp_msg.body+buf_position, length); 	   
-  password[length] = '\0';
-      
-  d_printf2("In authorization password = %s\n", password);
+    if(length > SE_MAX_LOGIN_LENGTH)
+    {
+        error(SE3015, string("Error: Too long login")); 
+        throw USER_EXCEPTION(SE3015);
+    }
 
-  query_type = TL_XQuery;
-  
-  stream = se_new se_socketostream(Sock, p_ver);
+    memcpy(tr_globals::login, sp_msg.body+buf_position, length);   
+
+    tr_globals::login[length] = '\0';   
+    buf_position += length;
+
+    d_printf3("In authorization length = %d login = %s\n", length, tr_globals::login);
+
+    net_int2int(&length, sp_msg.body+buf_position+1);
+    buf_position += 1 + sizeof(__int32);
+
+    d_printf2("length =%d\n", length);
+    if(length > SE_MAX_DB_NAME_LENGTH)
+    {
+        error(SE3015, string("Error: Too long db_name")); 
+        throw USER_EXCEPTION(SE3015);
+    }
+
+    memcpy(tr_globals::db_name, sp_msg.body+buf_position, length);	  
+    tr_globals::db_name[length] = '\0';
+
+    d_printf2("In authorization db_name = %s\n", tr_globals::db_name);
+
+    sp_msg.instruction = se_SendAuthParameters;// SendAuthenticationParameters message
+    sp_msg.length = 0;
+    if (sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+
+    timeout.tv_sec = 50;
+    timeout.tv_usec = 0;
+    select_res = uselect_read(Sock, &timeout, __sys_call_error);
+    if (select_res == 0) throw USER_EXCEPTION(SE3047);
+    if (select_res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+    res = sp_recv_msg(Sock, &sp_msg);
+    if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+    if (res == 1) throw USER_EXCEPTION(SE3012);
+
+    if (sp_msg.instruction != se_AuthenticationParameters) //AuthenticationParameters
+    {
+        error(SE3009, string("Error: Unknown Instruction from client. Authentication failed.")); 
+        throw USER_EXCEPTION(SE3009);
+    }
+
+    buf_position = 1;
+    net_int2int(&length, sp_msg.body+buf_position);
+    buf_position += sizeof(__int32);
+
+    if(length > SE_MAX_PASSWORD_LENGTH)
+    {
+        error(SE3015, string("Error: Too long password")); 
+        throw USER_EXCEPTION(SE3015);
+    }
+    memcpy(tr_globals::password, sp_msg.body+buf_position, length); 	   
+    tr_globals::password[length] = '\0';
+
+    d_printf2("In authorization password = %s\n", tr_globals::password);
+
+    tr_globals::query_type = TL_XQuery;
+
+    stream = se_new se_socketostream(Sock, p_ver);
 }
 
 void socket_client::set_session_options(msg_struct *msg)
@@ -491,9 +493,9 @@ void socket_client::set_session_options(msg_struct *msg)
     int option_len;
     int option;
     int log_param = 0;
-    
+
     if (p_ver.major_version < 3) throw USER_EXCEPTION(SE3009);
-    
+
     while (pos < msg->length)
     {
         net_int2int(&option, msg->body+pos);
@@ -502,37 +504,37 @@ void socket_client::set_session_options(msg_struct *msg)
         pos += 4;
         switch (option)
         {
-            case SEDNA_DEBUG_ON:
-                dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
-                break;
-            case SEDNA_DEBUG_OFF:
-                dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
-                break;
-            case SEDNA_READONLY_TRANSACTION:
-                // set Sasha's parameter here
-                SwitchSessionToRO(true);
-                break;
-            case SEDNA_UPDATE_TRANSACTION:
-                // set Sasha's parameter here
-                SwitchSessionToRO(false);
-                break;
-            case SEDNA_QUERY_EXEC_TIMEOUT:
-                net_int2int(&query_timeout, msg->body+pos);
-                break;
-            case SEDNA_MAX_RESULT_SIZE:
-                net_int2int(&max_result_size_to_pass, msg->body+pos);
-                stream->set_max_result_size_to_pass(max_result_size_to_pass);
-                break;
-            case SEDNA_LOG_AMMOUNT:
-                net_int2int(&log_param, msg->body+pos);
-                SwitchLogMode(log_param);
-                break;
-			default: 
-                throw USER_EXCEPTION2(SE4619,int2string(option).c_str());
+        case SEDNA_DEBUG_ON:
+            dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
+            break;
+        case SEDNA_DEBUG_OFF:
+            dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
+            break;
+        case SEDNA_READONLY_TRANSACTION:
+            // set Sasha's parameter here
+            SwitchSessionToRO(true);
+            break;
+        case SEDNA_UPDATE_TRANSACTION:
+            // set Sasha's parameter here
+            SwitchSessionToRO(false);
+            break;
+        case SEDNA_QUERY_EXEC_TIMEOUT:
+            net_int2int(&tr_globals::query_timeout, msg->body+pos);
+            break;
+        case SEDNA_MAX_RESULT_SIZE:
+            net_int2int(&max_result_size_to_pass, msg->body+pos);
+            stream->set_max_result_size_to_pass(max_result_size_to_pass);
+            break;
+        case SEDNA_LOG_AMMOUNT:
+            net_int2int(&log_param, msg->body+pos);
+            SwitchLogMode(log_param);
+            break;
+        default: 
+            throw USER_EXCEPTION2(SE4619,int2string(option).c_str());
         }
         pos += option_len;
     }
-d_printf1("\nSetting session option\n");
+    d_printf1("\nSetting session option\n");
     sp_msg.instruction = se_SetSessionOptionsOk; // Session options have been set ok
     sp_msg.length = 0; 
     if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
@@ -550,17 +552,17 @@ void socket_client::reset_session_options()
 
 void socket_client::authentication_result(bool res, const string& body)
 {
-   if(res)
-   {
-   	   sp_msg.instruction = se_AuthenticationOK;// AuthenticationOk message
-   	   sp_msg.length = 0; 
-   	   if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
-	   read_msg_count = se_CommitAuthenticatingTransaction;		
-   }
-   else
-   {
-	   if(sp_error_message_handler(Sock, se_AuthenticationFailed, SE3006, body.c_str())!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);} 
-   }
+    if(res)
+    {
+        sp_msg.instruction = se_AuthenticationOK;// AuthenticationOk message
+        sp_msg.length = 0; 
+        if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+        read_msg_count = se_CommitAuthenticatingTransaction;		
+    }
+    else
+    {
+        if(sp_error_message_handler(Sock, se_AuthenticationFailed, SE3006, body.c_str())!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);} 
+    }
 }
 
 void socket_client::process_unknown_instruction(int instruction, bool in_transaction)
@@ -569,49 +571,49 @@ void socket_client::process_unknown_instruction(int instruction, bool in_transac
     {
         switch (instruction)
         {
-            case se_BeginTransaction:
+        case se_BeginTransaction:
             {
                 error(SE4612, USER_EXCEPTION(SE4612).getMsg());
                 break;
             }
-            default: throw USER_EXCEPTION(SE3009);
+        default: throw USER_EXCEPTION(SE3009);
         }//end switch
     }
     else
     {
         switch (instruction)
         {
-            case se_CommitTransaction:
+        case se_CommitTransaction:
             {
                 error(SE4610, USER_EXCEPTION(SE4610).getMsg());
                 break;
             }
-            case se_RollbackTransaction:
+        case se_RollbackTransaction:
             {
                 error(SE4611, USER_EXCEPTION(SE4611).getMsg());
                 break;
             }
-            case se_GetNextItem:
+        case se_GetNextItem:
             {
                 error(SE4614, USER_EXCEPTION(SE4614).getMsg());
                 break;
             }
-            case se_ExecuteLong:
+        case se_ExecuteLong:
             {
                 error(SE4615, USER_EXCEPTION(SE4615).getMsg());
                 break;
             }
-            case se_Execute:
+        case se_Execute:
             {
                 error(SE4615, USER_EXCEPTION(SE4615).getMsg());
                 break;
             }
-            case se_ExecuteSchemeProgram:
+        case se_ExecuteSchemeProgram:
             {
                 error(SE4615, USER_EXCEPTION(SE4615).getMsg());
                 break;
             }
-            default: throw USER_EXCEPTION(SE3009);
+        default: throw USER_EXCEPTION(SE3009);
         }
     }
 }
@@ -642,16 +644,16 @@ void socket_client::error()
 
 void socket_client::show_time(string qep_time)
 {
-   d_printf2("Show time. Time %s\n",qep_time.c_str());
+    d_printf2("Show time. Time %s\n",qep_time.c_str());
 
-   sp_msg.instruction = se_LastQueryTime;// LastQueryTime message
-   sp_msg.length = 1 + sizeof(int) + qep_time.length();
+    sp_msg.instruction = se_LastQueryTime;// LastQueryTime message
+    sp_msg.length = 1 + sizeof(int) + qep_time.length();
 
-   sp_msg.body[0] = 0; //C-string
-   int2net_int(qep_time.length(), sp_msg.body + 1);
-   strcpy(sp_msg.body + 1 + sizeof(int), qep_time.c_str());
-   
-   if(sp_send_msg(Sock, &sp_msg) != 0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);}
+    sp_msg.body[0] = 0; //C-string
+    int2net_int(qep_time.length(), sp_msg.body + 1);
+    strcpy(sp_msg.body + 1 + sizeof(int), qep_time.c_str());
+
+    if(sp_send_msg(Sock, &sp_msg) != 0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);}
 }
 
 void socket_client::write_user_query_to_log()
@@ -661,13 +663,14 @@ void socket_client::write_user_query_to_log()
 
 void socket_client::set_keep_alive_timeout(int sec)
 {
-    /// Set socket's receive and send timeouts.
-    /// The best way to implement this is to use select().  
-    /// On the hand SO_RCVTIMEO and SO_SNDTIMEO options don't work only under 
-    /// Solaris (?) and Linux earlier than 2.3.41 kernel. Considering that the most 
-    /// important place where timeout must be properly implemented is 
-    /// socket_client::read_msg and that is actually done well using select(),
-    /// at present we can accept this solution.
+    /* Set socket's receive and send timeouts.
+     * The best way to implement this is to use select().  
+     * On the hand SO_RCVTIMEO and SO_SNDTIMEO options don't work only under 
+     * Solaris (?) and Linux earlier than 2.3.41 kernel. Considering that the most 
+     * important place where timeout must be properly implemented is 
+     * socket_client::read_msg and that is actually done well using select(),
+     * at present we can accept this solution. 
+     */
 
     this->ka_timeout = sec;
 

@@ -1,80 +1,134 @@
 /*
- * File:  tr_globals.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  tr_globals.cpp
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
+
+#include <string>
 
 #include "common/sedna.h"
-#include "tr/tr_globals.h"
-#include "tr/tr_functions.h"
-#include "common/base.h"
-#include "tr/client_core.h"
+
 #include "common/SSMMsg.h"
+#include "common/argtable.h"
+#include "common/version.h"
 
-// variables for parsing command line 
-int tr_s_help = 0;
-int tr_l_help = 0;
-int tr_version = 0;
+#include "tr/tr_globals.h"
+#include "tr/auth/auc.h"
 
-int run_rewriter = 1;			// run rewriter
-int run_popt = 0; // whether turn on or turn off physical optimizer
-int show_time = 0;
-int print_intermed = 0;
-int server_mode = 0;
-int debug_mode = 0;
-int socket_port = 0;
-int write_phys_log = 1;
-int user_id = 0;
-int internal_auth_switch = DEPLOY_AUTH_CHECK;
-int first_transaction = 0;
-int authentication;
-int authorization;
-int query_timeout = 0;
+#define TR_ARG_MAX_LENGTH       511
 
-char db_name[SE_MAX_DB_NAME_LENGTH+1];
-char filename[TR_ARG_MAX_LENGTH+1];
-char q_type[TR_ARG_MAX_LENGTH+1];
-QueryType query_type = TL_XQuery;
-char password[SE_MAX_PASSWORD_LENGTH+1];
-char output_file[TR_ARG_MAX_LENGTH+1];
-
-const size_t narg = 14;
-
-arg_rec tr_argtable[] =
-{
-{"-help",            NULL,       arg_lit,   &tr_s_help,                 "0",       "\t\t\t  display this help and exit"},
-{"--help",           NULL,       arg_lit,   &tr_l_help,                 "0",       "\t\t  display this help and exit"},
-{"-version",         NULL,       arg_lit,   &tr_version,                "0",       "\t\t  display product version and exit"},
-{"-output",         " file",     arg_str,   output_file,                "STDOUT",  "\t\t  outputfile (default STDOUT)"},
-{"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
-/* {"-rewriter",       " on/off",   arg_bool,  &run_rewriter,              "on",      "\t  run rewriter (default on)"}, */
-{"-popt",  			" on/off",	 arg_bool,  &run_popt, 					"off",	   "\t\t  run physical optimizer (default off)"},
-{"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},
-/* {"-server-mode",    " on/off",   arg_bool,  &server_mode,               "off",     "\t  work in server mode (output result to pipe)\n\t\t\t  (default off)"}, */
-{"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, POR, Scheme, LR\n\t\t\t  (default XQuery)"},
-{"-debug",          " on/off",   arg_bool,  &debug_mode,                "off",     "\t\t  execute statements in debug mode (default off)\t"},
-{"-timeout",        " value",    arg_int,   &query_timeout,                   "0",       "\t\t  set timeout for execution of a query in seconds (no timeout by default)\t"},
-{"-name",           " name",     arg_str,   tr_globals::login,          "SYSTEM",  "\t\t  user name (default SYSTEM)"},
-{"-pswd",           " password", arg_str,   password,                   "MANAGER", "\t  user password (default MANAGER)"},
-{NULL,              " db-name",  arg_str,   db_name,                    "???",     "\t\t  database name"},
-{NULL,              " filename", arg_str,   filename,                   "???",     "\t\t  file with an XQuery query\n\t\t\t  "}
-};
-
-client_core* client = NULL;
-transaction_id trid = -1;
-session_id sid = -1;
-
-msg_struct sp_msg;
-
-bool is_need_checkpoint_on_transaction_commit = false;
-bool is_ro_mode = false;
-bool need_ph_reinit;
-bool is_ft_disabled;
-bool is_log_less_mode = false;
-
-int db_id;
+using namespace tr_globals;
 
 namespace tr_globals 
 {
-    pping_client *ppc = NULL;
-    char login[SE_MAX_LOGIN_LENGTH+1];
+    int run_rewriter      = 1;
+    int run_popt          = 0;
+    int show_time         = 0;
+    int print_intermed    = 0;
+    int server_mode       = 0;
+    int debug_mode        = 0;
+    int socket_port       = 0;
+    int first_transaction = 0;
+    int authentication    = 1;
+    int authorization     = 1;
+    int query_timeout     = 0;
+
+    char db_name     [SE_MAX_DB_NAME_LENGTH+1];
+    char filename    [TR_ARG_MAX_LENGTH+1];
+    char password    [SE_MAX_PASSWORD_LENGTH+1];
+    char login       [SE_MAX_LOGIN_LENGTH+1];
+    char output_file [TR_ARG_MAX_LENGTH+1];
+
+    QueryType query_type = TL_XQuery;
+
+    transaction_id trid  = -1;
+    session_id     sid   = -1;
+
+    bool is_need_checkpoint_on_transaction_commit = false;
+    bool is_ro_mode       = false;
+    bool is_ft_disabled   = false;
+    bool is_log_less_mode = false;
+
+    client_core*  client  = NULL;
+    pping_client* ppc     = NULL;
+
+    int internal_auth_switch = DEPLOY_AUTH_CHECK;
 }
+
+static const size_t narg = 14;
+
+static int tr_s_help  = 0;
+static int tr_l_help  = 0;
+static int tr_version = 0;
+
+static char q_type[TR_ARG_MAX_LENGTH+1];
+
+
+static arg_rec tr_argtable[] =
+{
+    {"-help",            NULL,       arg_lit,   &tr_s_help,                 "0",       "\t\t\t  display this help and exit"},
+    {"--help",           NULL,       arg_lit,   &tr_l_help,                 "0",       "\t\t  display this help and exit"},
+    {"-version",         NULL,       arg_lit,   &tr_version,                "0",       "\t\t  display product version and exit"},
+    {"-output",         " file",     arg_str,   output_file,                "STDOUT",  "\t\t  outputfile (default STDOUT)"},
+    {"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
+    {"-popt",           " on/off",   arg_bool,  &run_popt,                  "off",     "\t\t  run physical optimizer (default off)"},
+    {"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},
+    {"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, POR, Scheme, LR\n\t\t\t  (default XQuery)"},
+    {"-debug",          " on/off",   arg_bool,  &debug_mode,                "off",     "\t\t  execute statements in debug mode (default off)\t"},
+    {"-timeout",        " value",    arg_int,   &query_timeout,             "0",       "\t\t  set timeout for execution of a query in seconds (no timeout by default)\t"},
+    {"-name",           " name",     arg_str,   tr_globals::login,          "SYSTEM",  "\t\t  user name (default SYSTEM)"},
+    {"-pswd",           " password", arg_str,   password,                   "MANAGER", "\t  user password (default MANAGER)"},
+    {NULL,              " db-name",  arg_str,   db_name,                    "???",     "\t\t  database name"},
+    {NULL,              " filename", arg_str,   filename,                   "???",     "\t\t  file with an XQuery query\n\t\t\t  "}
+};
+
+static bool 
+is_command_line_args_length_overflow(int argc, char ** argv)
+{
+    for (int i = 1; i < argc; i++)
+    {
+        if (strlen(argv[i]) > s_min(SE_MAX_DB_NAME_LENGTH, 
+            s_min(SE_MAX_PASSWORD_LENGTH, 
+            s_min(TR_ARG_MAX_LENGTH, SE_MAX_LOGIN_LENGTH)))) return true;
+    }
+    return false;
+}
+
+static void 
+print_tr_usage()
+{
+    throw USER_SOFT_EXCEPTION((std::string("Usage: se_trn [options] dbname filename\n\n") +
+        std::string("options:\n") + std::string(arg_glossary(tr_argtable, narg, "  ")) + std::string("\n")).c_str());
+}
+
+
+void 
+parse_trn_command_line(int argc, char** argv)
+{
+    char errmsg[1000];
+
+    if (is_command_line_args_length_overflow(argc, argv))
+        throw USER_EXCEPTION(SE4600);
+
+    if (argc == 1)
+        print_tr_usage();
+
+    int res = arg_scanargv(argc, argv, tr_argtable, narg, NULL, errmsg, NULL);
+
+    if (tr_s_help == 1 || tr_l_help == 1) 
+        print_tr_usage();
+
+    if (tr_version == 1) { 
+        print_version_and_copyright("Sedna Transaction"); 
+        throw USER_SOFT_EXCEPTION(""); 
+    }
+
+    if (0 == res)
+        throw USER_EXCEPTION2(SE4601, errmsg);
+
+    /* Convert query type */
+    if (strcmp(q_type, "XQuery") == 0)   query_type = TL_XQuery;
+    else if (strcmp(q_type, "POR") == 0) query_type = TL_POR;
+    else if (strcmp(q_type, "LR") == 0)  query_type = TL_ForSemAnal;
+    else throw USER_EXCEPTION(SE4002);
+}
+

@@ -531,10 +531,10 @@ void SednaSearchJob::set_index(ft_index_cell_object* ft_idx)
 {
 #ifdef _WIN32
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
-		+ std::string(db_name) + std::string("_files\\dtsearch\\");
+		+ std::string(tr_globals::db_name) + std::string("_files\\dtsearch\\");
 #else
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 #endif
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	this->AddIndexToSearch(index_path.c_str());
@@ -572,7 +572,7 @@ void *SednaSearchJob::ThreadFunc( void* lpParam )
 			//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
 			opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
 			std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
-			                        + std::string(db_name) + std::string("_files/dtsearch/stemming.dat");
+			                        + std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
 
 			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
 					
@@ -1127,7 +1127,7 @@ void SednaSearchJob2::get_next_result(tuple &t)
 			//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
 			opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
 			std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
-									+ std::string(db_name) + std::string("_files/dtsearch/stemming.dat");
+									+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
 
 			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
 					
@@ -1171,10 +1171,10 @@ void SednaSearchJob2::set_index(ft_index_cell_object* ft_idx)
 {
 #ifdef _WIN32
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
-		+ std::string(db_name) + std::string("_files\\dtsearch\\");
+		+ std::string(tr_globals::db_name) + std::string("_files\\dtsearch\\");
 #else
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 #endif
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 

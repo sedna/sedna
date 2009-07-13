@@ -262,23 +262,17 @@ void scm_debug(int code, char* message, char* component)
 }
 
 
-//extern int is_run_rewriter();
-//extern int is_show_time();
-//extern int is_print_intermed();
-//extern int get_user_id();
-//extern int is_server_mode();
-//extern int is_auth();
 
 // boolean values: 0 (negative) or 1 (affirmative)
-int is_run_rewriter()               { return run_rewriter; }
-int is_show_time()                  { return show_time; }
-int is_print_intermed()             { return print_intermed; }
+int is_run_rewriter()               { return tr_globals::run_rewriter; }
+int is_run_popt()                   { return tr_globals::run_popt; }
+int is_show_time()                  { return tr_globals::show_time; }
+int is_print_intermed()             { return tr_globals::print_intermed; }
 char* get_user_login()              { return tr_globals::login; }
-int is_server_mode()                { return server_mode; }
-int is_authorization()              { return authorization; }
-int is_authentication()             { return authentication; }
-int is_first_transaction()          { return first_transaction; }
-int is_run_popt()                   { return run_popt; }
+int is_server_mode()                { return tr_globals::server_mode; }
+int is_authorization()              { return tr_globals::authorization; }
+int is_authentication()             { return tr_globals::authentication; }
+int is_first_transaction()          { return tr_globals::first_transaction; }
 
 //extern "C"
 char* get_scm_input_string()

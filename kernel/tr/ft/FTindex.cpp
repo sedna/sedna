@@ -71,9 +71,9 @@ void ftlog_file::close_and_delete_file(const char *index_name)
 		throw USER_EXCEPTION(SE4043);
 
 	char fn_part[32];
-	sprintf(fn_part, "trn%d_", trid);
+	sprintf(fn_part, "trn%d_", tr_globals::trid);
 	std::string log_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	std::string log_path = log_path1 + std::string(fn_part) + std::string(index_name) + std::string(".log");
 
 	if (uDeleteFile(log_path.c_str(), __sys_call_error) == 0)
@@ -83,7 +83,7 @@ void ftlog_file::close_and_delete_file(const char *index_name)
 SednaIndexJob::SednaIndexJob(ft_index_cell_object* _ft_idx_, bool no_log) : ft_idx(_ft_idx_)
 {
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	uMkDir(index_path1.c_str(),NULL, __sys_call_error);
 	uMkDir(index_path.c_str(),NULL, __sys_call_error);
@@ -106,11 +106,11 @@ SednaIndexJob::SednaIndexJob(ft_index_cell_object* _ft_idx_, bool no_log) : ft_i
 		opts.fieldFlags = dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
 	//FIXME: mb check that length fits into dtsearch options?
 	std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
-	                + std::string(db_name) + std::string("_files/dtsearch/stemming.dat");
+	                + std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
 					
 	strcpy(opts.stemmingRulesFile, stemming_file.c_str());
 	std::string noisewords_file = std::string(SEDNA_DATA) + std::string("/data/")
-	                + std::string(db_name) + std::string("_files/dtsearch/noisewords.dat");
+	                + std::string(tr_globals::db_name) + std::string("_files/dtsearch/noisewords.dat");
 					
 	strcpy(opts.noiseWordFile, noisewords_file.c_str());
 	dtssSetOptions(opts, result);
@@ -143,7 +143,7 @@ void SednaIndexJob::OnError(long a, const char * b, const char * c, const char *
 int SednaIndexJob::clear_index(const char *index_name)
 {
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	std::string index_path = index_path1 + std::string(index_name);
 
 	short result;
@@ -205,7 +205,7 @@ void SednaIndexJob::insert_into_index(xptr_sequence* upserted)
 void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 {
 	std::string list_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	std::string list_path = list_path1 + std::string(ft_idx->index_title) + 
 		std::string("/remove_list");
 
@@ -243,10 +243,10 @@ void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 UFile SednaIndexJob::create_log(const char *index_name)
 {
 	char fn_part[32];
-	sprintf(fn_part, "trn%d_", trid);
+	sprintf(fn_part, "trn%d_", tr_globals::trid);
 
 	std::string log_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	std::string log_path = log_path1 + std::string(fn_part) + std::string(index_name) + std::string(".log");
 
 	USECURITY_ATTRIBUTES *sa;
@@ -452,7 +452,7 @@ void SednaIndexJob::recover_db_file(const char *fname, trn_cell_analysis_redo *r
 	index_name[l-4] = 0;
 
 	std::string log_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	std::string log_path = log_path1 + std::string(fname);
 
 	UFile log_ufile = uOpenFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH, __sys_call_error);
@@ -516,7 +516,7 @@ void SednaIndexJob::recover_db(trn_cell_analysis_redo *redo_list, bool is_hb)
     UFile fhanldle;
 
 	std::string log_path = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/trn*.log");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/trn*.log");
 
 	fhanldle = FindFirstFile(log_path.c_str(), &find_data);
     if (fhanldle != U_INVALID_FD)
@@ -534,7 +534,7 @@ void SednaIndexJob::recover_db(trn_cell_analysis_redo *redo_list, bool is_hb)
 	DIR *dir;
 	struct dirent *dent;
 	std::string log_path = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(db_name) + std::string("_files/dtsearch/");
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	dir = opendir(log_path.c_str());
 	if (dir != NULL)
 	{

@@ -20,7 +20,7 @@ const char *get_module(const char *module_uri)
     strcpy(me->name, module_uri);
     me->type = dbe_module;
 
-// authorization check
+    /* authorization check */
     auth_for_query(counted_ptr<db_entity>(me));
 
     std::string module_query_in_por = "(1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\" \"\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";

@@ -62,7 +62,6 @@ static void print_cdb_usage()
                                string("options:\n") + string(arg_glossary(cdb_argtable, cdb_narg, "  ")) + string("\n")).c_str());
 }
 
-
 void 
 parse_cdb_command_line(int argc, char** argv)
 {
