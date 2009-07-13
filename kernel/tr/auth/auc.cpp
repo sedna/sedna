@@ -52,13 +52,13 @@ void getSednaAuthMetadataPath(char* path)
 }
 void auth_for_query(counted_ptr<db_entity> dbe)
 {
-	if (!authorization) return; //if authorization if off
+	if (!tr_globals::authorization) return; //if authorization if off
     
     bool is_qep_opened = false, is_qep_built = false;
 	typedef pair <counted_ptr<db_entity>, struct dbe_properties> authPair;
 	auth_map::iterator mapIter;
 	qep_subtree *aqtree = NULL;
-	if ( internal_auth_switch == BLOCK_AUTH_CHECK ) return;
+	if ( tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK ) return;
 	
 	mapIter = amap.find(dbe);
 	if ( mapIter != amap.end() )            // there is the dbe in authmap -> no need to query metadata
@@ -78,7 +78,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
             
             string authorization_query_in_por = "(1 (PPLet (0) (1 (PPAbsPath (document \"" + security_metadata_document + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\")))))) (1 (PPLet (1) (1 (PPReturn (2) (1 (PPAxisChild qname (\"\" \"users\" \"\") (1 (PPVariable 0)))) (1 (PPPred1 (3) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 2)))) () (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 3)))) (1 (PPConst \""+string(tr_globals::login)+"\" !xs!string)))) 0)) -1)) (1 (PPLet (4) (1 (PPReturn (5) (1 (PPAxisChild qname (\"\" \"roles\" \"\") (1 (PPVariable 0)))) (1 (PPPred1 (6) (1 (PPAxisChild qname (\"\" \"role\" \"\") (1 (PPVariable 5)))) () (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"role_name\" \"\") (1 (PPVariable 6)))) (1 (PPAxisAttribute qname (\"\" \"role_name\" \"\") (1 (PPAxisChild qname (\"\" \"role\" \"\") (1 (PPVariable 1)))))))) 0)) -1)) (1 (PPLet (7) (1 (PPSXptr (1 (PPReturn (8) (1 (PPAxisChild qname (\"\" \"privileges\" \"\") (1 (PPSequence (1 (PPVariable 1)) (1 (PPVariable 4)))))) (1 (PPPred1 (9) (1 (PPAxisChild qname (\"\" \"privilege\" \"\") (1 (PPVariable 8)))) () (1 (PPCalculate (BinaryOpAnd (LeafEffectBoolOp 0) (LeafEffectBoolOp 1))"+" (1 (PPGeneralCompEQ (1 (PPAxisAttribute qname (\"\" \"type_obj\" \"\") (1 (PPAxisChild qname (\"\" \"database_obj\" \"\") (1 (PPVariable 9)))))) (1 (PPConst \""+type_obj+"\" !xs!string)))) (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"database_obj\" \"\") (1 (PPVariable 9)))) (1 (PPConst \""+ string(dbe -> name) + "\" !xs!string)))))) 0)) -1)))) (1 (PPLet (10) (1 (PPPred1 (11) (1 (PPVariable 7)) () (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"pr_name\" \"\") (1 (PPVariable 11)))) (1 (PPSequence (1 (PPConst \"QUERY\" !xs!string)) (1 (PPConst \"OWNER\" !xs!string)) (1 (PPConst \"ALL\" !xs!string)))))) 0)) (1 (PPLet (12) (1 (PPPred1 (13) (1 (PPVariable 7)) () (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"pr_name\" \"\") (1 (PPVariable 13)))) (1 (PPSequence (1 (PPConst \"ALL\" !xs!string)) (1 (PPConst \"OWNER\" !xs!string)))))) 0)) (1 (PPLet (14) (1 (PPSXptr (1 (PPReturn (15) (1 (PPAxisChild qname (\"\" \"privileges\" \"\") (1 (PPSequence (1 (PPVariable 1)) (1 (PPVariable 4)))))) (1 (PPPred1 (16) (1 (PPAxisChild qname (\"\" \"privilege\" \"\") (1 (PPVariable 15)))) () (1 (PPCalculate (BinaryOpAnd (BinaryOpOr (LeafEffectBoolOp 0) (LeafEffectBoolOp 1)) (LeafEffectBoolOp 2)) (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"pr_name\" \"\") (1 (PPVariable 16)))) (1 (PPConst \"ALL\" !xs!string)))) (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"pr_name\" \"\") (1 (PPVariable 16)))) (1 (PPConst \"QUERY\" !xs!string)))) ((1 9) (PPFnEmpty (1 (PPAxisChild qname (\"\" \"database_obj\" \"\") (1 (PPVariable 16)))))))) 0)) -1)))) (1 (PPLet (17) (1 (PPPred1 (18) (1 (PPVariable 7)) () "+"(1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"pr_name\" \"\") (1 (PPVariable 18)))) (1 (PPSequence (1 (PPConst \"INSERT\" !xs!string)) (1 (PPConst \"REPLACE\" !xs!string)) (1 (PPConst \"DELETE\" !xs!string)) (1 (PPConst \"RENAME\" !xs!string)))))) 0)) (1 (PPIf ((1 12) (PPFnNot ((1 12) (PPFnEmpty (1 (PPVariable 14)))))) (1 (PPConst \"15\" !xs!integer)) (1 (PPIf (1 (PPCalculate (BinaryOpOr (LeafEffectBoolOp 0) (LeafEffectBoolOp 1)) (1 (PPGeneralCompEQ (1 (PPAxisAttribute qname (\"\" \"role_name\" \"\") (1 (PPAxisChild qname (\"\" \"role\" \"\") (1 (PPVariable 1)))))) (1 (PPConst \"DBA\" !xs!string)))) ((1 15) (PPFnNot ((1 15) (PPFnEmpty (1 (PPVariable 10)))))))) (1 (PPIf (1 (PPCalculate (BinaryOpOr (LeafEffectBoolOp 0) (LeafEffectBoolOp 1)) ((1 17) (PPFnNot ((1 17) (PPFnEmpty (1 (PPVariable 12)))))) (1 (PPGeneralCompEQ (1 (PPAxisAttribute qname (\"\" \"role_name\" \"\") (1 (PPAxisChild qname (\"\" \"role\" \"\") (1 (PPVariable 1)))))) (1 (PPConst \"DBA\" !xs!string)))))) (1 (PPConst \"15\" !xs!integer)) ((1 20) (PPFnSum (1 (PPReturn (19) (1 (PPAxisChild qname (\"\" \"pr_name\" \"\") (1 (PPVariable 17)))) (1 (PPIf (1 (PPGeneralCompEQ (1 (PPVariable 19)) (1 (PPConst \"INSERT\" !xs!string)))) (1 (PPConst \"1\" !xs!integer)) (1 (PPIf (1 (PPGeneralCompEQ (1 (PPVariable 19)) (1 (PPConst \"REPLACE\" !xs!string))))"+" (1 (PPConst \"8\" !xs!integer)) (1 (PPIf (1 (PPGeneralCompEQ (1 (PPVariable 19)) (1 (PPConst \"DELETE\" !xs!string)))) (1 (PPConst \"2\" !xs!integer)) (1 (PPIf (1 (PPGeneralCompEQ (1 (PPVariable 19)) (1 (PPConst \"RENAME\" !xs!string)))) (1 (PPConst \"4\" !xs!integer)) (1 (PPConst \"0\" !xs!integer)))))))))) -1)))))) ((1 27) (PPFnError ((1 27) (PPFnQName (1 (PPConst \"http://www.modis.ispras.ru/sedna\" !xs!string)) (1 (PPConst \"SE3065\" !xs!string)))) (1 (PPConst \"User does not have QUERY privilege on the database object\" !xs!string))))))))))))))))))))))))";            
             //dynamic_context::__static_cxt()->add_to_context(NULL, "http://www.w3.org/XML/1998/namespace");
-			internal_auth_switch = BLOCK_AUTH_CHECK;
+			tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
             			
 			aqtree = build_qep(authorization_query_in_por.c_str(), 20);
             is_qep_built = true; 
@@ -97,7 +97,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 			delete_qep(aqtree);
             is_qep_built = false;
 			
-			internal_auth_switch = DEPLOY_AUTH_CHECK;
+			tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
 // 		    release_resource(SECURITY_METADATA_DOCUMENT, LM_DOCUMENT);
 
 
@@ -123,7 +123,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 
 void auth_for_load_module(const char* module_name)
 {
-	if (!authorization) return; //if authorization if off
+	if (!tr_globals::authorization) return; //if authorization if off
 	
     PPQueryEssence* qep_tree = NULL;
     se_nullostream null_os;
@@ -132,7 +132,7 @@ void auth_for_load_module(const char* module_name)
     string update_for_load_module_in_por = "(query (query-prolog) (PPInsertTo 5 (1 (PPIf (1 (PPReturn (0) (1 (PPAxisChild qname (\"\" \"privileges\" \"\") (1 (PPReturn (1) (1 (PPAbsPath (document \"" + string(SECURITY_METADATA_DOCUMENT) + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\")))))) (1 (PPPred1 (2) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 1)))) () (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 2)))) (1 (PPConst \"" + string(tr_globals::login) + "\" !xs!string)))) 0)) -1)))) (1 (PPPred1 (3) (1 (PPAxisChild qname (\"\" \"privilege\" \"\") (1 (PPVariable 0)))) () (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"database_obj\" \"\") (1 (PPVariable 3)))) (1 (PPConst \""+ string(module_name) + "\" !xs!string)))) 0)) -1)) (1 (PPNil)) (1 (PPElement (\"\" \"privilege\") (1 (PPSequence (1 (PPElement (\"\" \"pr_name\") (1 (PPConst \"OWNER\" !xs!string)) #f #f)) (1 (PPElement (\"\" \"database_obj\") (1 (PPSequence (1 (PPAttribute (\"\" \"type_obj\") (1 (PPConst \"module\" !xs!string)) #f)) (1 (PPConst \"" + string(module_name) + "\" !xs!string)))) #f #f)) (1 (PPElement (\"\" \"grantor\") (1 (PPConst \"" + string(tr_globals::login) + "\" !xs!string)) #f #f)))) #t #f)))) 3 (1 (PPAxisChild qname (\"\" \"privileges\" \"\") (1 (PPReturn (0) (1 (PPAbsPath (document \"" + string(SECURITY_METADATA_DOCUMENT) + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\")))))) (1 (PPPred1 (1) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 0)))) () (1 (PPGeneralCompEQ (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 1)))) (1 (PPConst \"" + string(tr_globals::login) + "\" !xs!string)))) 0)) -1))))))";
     try
     {
-        internal_auth_switch = BLOCK_AUTH_CHECK;			
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;			
         qep_tree = build_qep(update_for_load_module_in_por.c_str(), null_os, xml); 
         is_qep_built = true;
         qep_tree->open();
@@ -142,7 +142,7 @@ void auth_for_load_module(const char* module_name)
         is_qep_opened = false;
         delete_qep(qep_tree);
         is_qep_built = false;
-        internal_auth_switch = DEPLOY_AUTH_CHECK;
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
     }
     catch(SednaUserException &e) {
         if(is_qep_opened)
@@ -154,7 +154,7 @@ void auth_for_load_module(const char* module_name)
 
 void auth_for_rename_collection(const char* old_name, const char* new_name)
 {
-	if (!authorization) return; //if authorization if off
+	if (!tr_globals::authorization) return; //if authorization if off
 	
     PPQueryEssence* qep_tree = NULL;
 	qep_subtree *aqtree = NULL;
@@ -166,7 +166,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
     string update_for_rename_collection_in_por = "(query (query-prolog) (PPReplace 4 (1 (PPReturn (0) (1 (PPReturn (1) (1 (PPAbsPath (document \""+ string(SECURITY_METADATA_DOCUMENT) + "\") (((PPAxisDescendant qname (\"\" \"privilege\" \"\")))))) (1 (PPPred1 (2) (1 (PPAxisChild qname (\"\" \"database_obj\" \"\") (1 (PPVariable 1)))) () (1 (PPCalculate (BinaryOpAnd (LeafEffectBoolOp 0) (LeafEffectBoolOp 1)) (1 (PPGeneralCompEQ (1 (PPAxisAttribute qname (\"\" \"type_obj\" \"\") (1 (PPVariable 2)))) (1 (PPConst \"collection\" !xs!string)))) (1 (PPGeneralCompEQ (1 (PPAxisChild text () (1 (PPVariable 2)))) (1 (PPConst \"" + string(old_name) + "\" !xs!string)))))) 0)) -1)) (1 (PPSequence (1 (PPVariable 0)) (1 (PPElement (\"\" \"database_obj\") (1 (PPSequence (1 (PPAttribute (\"\" \"type_obj\") (1 (PPConst \"collection\" !xs!string)) #f)) (1 (PPConst \""+ string(new_name) +"\" !xs!string)))) #t #f)) (1 (PPConst 1 !se!separator)))) -1 (zero_or_more (item))))))";
     try
     {
-        internal_auth_switch = BLOCK_AUTH_CHECK;
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         // query if user has a privilege to rename this collection (privilege DROP is needed)
         aqtree = build_qep(query_for_rename_collection_in_por.c_str(), 15); 
         is_qepsubtree_built = true;
@@ -189,7 +189,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
         is_qep_opened = false;
         delete_qep(qep_tree);
         is_qep_built = false;        
-        internal_auth_switch = DEPLOY_AUTH_CHECK;
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
     }
     catch(SednaUserException &e) {
 		if(is_qepsubtree_opened)
@@ -205,7 +205,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
 
 void clear_current_statement_authmap()
 {
-	if (!authorization) return; //if authorization if off
+	if (!tr_globals::authorization) return; //if authorization if off
 
 	auth_map::iterator Iter;
     Iter = amap.begin();
@@ -219,7 +219,7 @@ void clear_current_statement_authmap()
 //erases all the elements of a auth_map
 void clear_authmap()
 {
-	if (!authorization) return; //if authorization if off
+	if (!tr_globals::authorization) return; //if authorization if off
 	amap.clear();
 }
 
@@ -234,7 +234,7 @@ void security_metadata_upd_controll()
 
 bool is_auth_check_needed(int update_privilege)
 {
-    if (!authorization) return false;
+    if (!tr_globals::authorization) return false;
     
 	if(amap.empty()) return false;
     
@@ -277,7 +277,7 @@ bool is_auth_check_needed(int update_privilege)
 
 void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
 {
-    if (!authorization) return;
+    if (!tr_globals::authorization) return;
 
 	auth_map::iterator mIter;
 	xptr_sequence::iterator it=(*seq).begin();

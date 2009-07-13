@@ -366,7 +366,7 @@ void ExtFunctionManager::load_func_list()
 	//if something fails, we don't want to try again next time
 	loaded_func_list = true;
 
-	load_func_list_one_dir(std::string(SEDNA_DATA) + "/data/" + db_name + "_files/lib/");
+	load_func_list_one_dir(std::string(SEDNA_DATA) + "/data/" + tr_globals::db_name + "_files/lib/");
 	load_func_list_one_dir(std::string(SEDNA_DATA) + "/lib/");
 }
 

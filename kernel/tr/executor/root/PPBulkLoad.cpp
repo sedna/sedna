@@ -7,13 +7,10 @@
 
 #include "tr/executor/root/PPBulkLoad.h"
 #include "tr/crmutils/crmutils.h"
-#include "tr/client_core.h"
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
 
-
-extern client_core *client;
 
 PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
                        dynamic_context *_cxt1_,
@@ -103,15 +100,15 @@ void PPBulkLoad::execute()
     xptr doc_root;
     std::vector<std::string> filenames(1, tc_filename.get_str_mem());
     std::vector<client_file> cf_vec(1);
-    client->get_file_from_client(&filenames, &cf_vec);
+    tr_globals::client->get_file_from_client(&filenames, &cf_vec);
     bool write_to_logical_log;
 
-    if (!is_need_checkpoint_on_transaction_commit)
+    if (!tr_globals::is_need_checkpoint_on_transaction_commit)
     {
        if (cf_vec[0].file_size >= MAX_FILE_SIZE_WITHOUT_CHECKPOINT)
        {
           write_to_logical_log = false;
-          is_need_checkpoint_on_transaction_commit = true;
+          tr_globals::is_need_checkpoint_on_transaction_commit = true;
        }
        else
           write_to_logical_log = true;
@@ -124,7 +121,7 @@ void PPBulkLoad::execute()
     // TODO: we can fix it later by releasing transaction concurrent semaphore a bit earlier
     //write_to_logical_log = true;
     // llNeedCheckpoint() takes responsibility for truncating logical log now
-    //is_need_checkpoint_on_transaction_commit = false;
+    //tr_globals::is_need_checkpoint_on_transaction_commit = false;
 
     bool boundary_space_strip = (cxt1->st_cxt->boundary_space == xq_boundary_space_strip);
 
@@ -133,7 +130,14 @@ void PPBulkLoad::execute()
         { 
             local_lock_mrg->put_lock_on_document(tc_document.get_str_mem());
             if (!write_to_logical_log) hl_disable_log();
-            doc_root = loadfile(cf_vec[0].f, dynamic_context::ostr(), tc_document.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
+
+            doc_root = loadfile(cf_vec[0].f, 
+                                dynamic_context::ostr(), 
+                                tc_document.get_str_mem(), 
+                                boundary_space_strip, 
+                                need_cp, 
+                                tr_globals::client->is_print_progress());
+
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
         }
@@ -153,17 +157,24 @@ void PPBulkLoad::execute()
 
             local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
             if (!write_to_logical_log) hl_disable_log();
-            doc_root = loadfile(cf_vec[0].f, dynamic_context::ostr(), tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
+
+            doc_root = loadfile(cf_vec[0].f, 
+                                dynamic_context::ostr(), 
+                                tc_document.get_str_mem(), 
+                                tc_collection.get_str_mem(), 
+                                boundary_space_strip, 
+                                need_cp, 
+                                tr_globals::client->is_print_progress());
+
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
         }
     } catch (ANY_SE_EXCEPTION) {
-        client->close_file_from_client(cf_vec[0]);
-        
+        tr_globals::client->close_file_from_client(cf_vec[0]);
         throw;
     }
 
-    client->close_file_from_client(cf_vec[0]);
+    tr_globals::client->close_file_from_client(cf_vec[0]);
 }
 
 

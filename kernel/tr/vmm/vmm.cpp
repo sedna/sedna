@@ -491,8 +491,8 @@ void _vmm_process_sm_error(int cmd)
 void _vmm_alloc_block(xptr *p, bool is_data) 
 {
     msg.cmd = is_data ? 23 : 24; // bm_alloc_data_block / bm_alloc_tmp_block
-    msg.trid = trid;
-    msg.sid = sid;
+    msg.trid = tr_globals::trid;
+    msg.sid = tr_globals::sid;
 
     if (ssmmsg->send_msg(&msg) != 0)
         throw USER_EXCEPTION(SE1034);
@@ -699,11 +699,6 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
 #endif
 
     vmm_cur_xptr = XNULL;
-
-//#ifndef _WIN32
-//    uSpinInit(vmm_spin_lock);
-//#endif
-
     vmm_is_recovery_mode = is_rcv_mode;
 
 
@@ -715,7 +710,7 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
 
         msg.cmd = 21; // bm_register_session
         msg.trid = 0; // trid is not defined in this point
-        msg.sid = sid;
+        msg.sid = tr_globals::sid;
         msg.data.reg.num = vmm_is_recovery_mode ? 1 : 0;
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -724,8 +719,8 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         catalog_masterblock = * (xptr *) (&msg.data.reg.mptr);
-        authentication = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHENTICATION_FLAG);
-        authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
+        tr_globals::authentication = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHENTICATION_FLAG);
+        tr_globals::authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
         int bufs_num = msg.data.reg.num;
 
        _vmm_init_region();
@@ -738,11 +733,11 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
 
         char buf[100];
         if (USemaphoreOpen(&sm_to_vmm_callback_sem1, 
-                           SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, buf, 100), __sys_call_error) != 0)
+                           SM_TO_VMM_CALLBACK_SEM1_BASE_STR(tr_globals::sid, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
         if (USemaphoreOpen(&sm_to_vmm_callback_sem2, 
-                           SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, buf, 100), __sys_call_error) != 0)
+                           SM_TO_VMM_CALLBACK_SEM2_BASE_STR(tr_globals::sid, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
         if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), __sys_call_error) != 0)
@@ -789,8 +784,8 @@ void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) throw (SednaExceptio
         shutdown_vmm_thread = false;
 
         msg.cmd = 35; // bm_register_transaction
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
         msg.data.data[0] = is_query;
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -816,8 +811,8 @@ void vmm_on_session_end() throw (SednaException)
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
 		msg.cmd = 22; // bm_unregister_session
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
 
         shutdown_vmm_thread = true;
 
@@ -901,8 +896,8 @@ void vmm_on_transaction_end() throw (SednaException)
     try {
 
         msg.cmd = 36; // bm_unregister_transaction
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
         msg.data.ptr = * (__int64 *) &catalog_masterblock;
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -1021,8 +1016,8 @@ void vmm_delete_block(xptr p) throw (SednaException)
 
         // Anyway we have to notify SM about deletion of the block
         msg.cmd = 25; // bm_delete_block
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
         msg.data.ptr = *(__int64*)(&p);
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -1061,8 +1056,8 @@ void vmm_delete_tmp_blocks() throw (SednaException)
 
         // Anyway we have to notify SM about deletion of the block
         msg.cmd = 34; // bm_delete_tmp_blocks
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
@@ -1083,8 +1078,8 @@ void vmm_enter_exclusive_mode(int *number_of_potentially_allocated_blocks) throw
 
     try {
         msg.cmd = 27; // bm_enter_exclusive_mode
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
         msg.data.reg.num = 0;
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -1110,8 +1105,8 @@ void vmm_exit_exclusive_mode() throw (SednaException)
 
     try {
         msg.cmd = 28; // bm_exit_exclusive_mode
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
@@ -1142,8 +1137,8 @@ void vmm_memlock_block(xptr p) throw (SednaException)
             throw USER_EXCEPTION(SE1021);
 
         msg.cmd = 29; // bm_memlock_block
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
         msg.data.ptr = *(__int64*)(&p);
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -1172,8 +1167,8 @@ void vmm_memunlock_block(xptr p) throw (SednaException)
             throw USER_EXCEPTION(SE1022);
 
         msg.cmd = 30; // bm_memunlock_block
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
@@ -1194,8 +1189,8 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaExcepti
 
     try {
         msg.cmd = 31; // bm_block_statistics
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
@@ -1224,8 +1219,8 @@ void _vmm_pseudo_alloc_data_block(xptr *p) throw (SednaException)
 
     try {
         msg.cmd = 32; // bm_pseudo_allocate_data_block
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
@@ -1249,8 +1244,8 @@ void _vmm_pseudo_delete_block(xptr p) throw (SednaException)
         p = block_xptr(p);
 
         msg.cmd = 33; // bm_pseudo_delete_data_block
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
         msg.data.ptr = *(__int64*)(&p);
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -1291,8 +1286,8 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         VMM_TRACE_UNSWAP(p)
 
 		msg.cmd = 26; // bm_get_block
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid  = tr_globals::sid;
         msg.data.swap_data.ptr = *(__int64*)(&p);
 
         if (ssmmsg->send_msg(&msg) != 0)
@@ -1311,7 +1306,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 
         _vmm_remap(XADDR(p), offs, false);
 
-        if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == sid)
+        if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == tr_globals::sid)
         {
 #ifdef VMM_DEBUG_VERSIONS
 	        _vmm_remap(XADDR(p), offs, true);
@@ -1347,8 +1342,8 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
         VMM_TRACE_UNSWAP(p)
 
         msg.cmd = 37; // bm_create_new_version
-        msg.trid = trid;
-        msg.sid = sid;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
         msg.data.swap_data.ptr = *(__int64*)(&p);
 
         if (ssmmsg->send_msg(&msg) != 0)

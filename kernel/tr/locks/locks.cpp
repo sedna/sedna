@@ -95,7 +95,7 @@ void LocalLockMgr::Init_LocalLockMgr(SSMMsg* _sm_server_)
 #ifdef LOCK_MGR_ON
   char buf[1024];
 
-  if ( 0 != USemaphoreCreate(&sem, 0, 1, SEDNA_TRANSACTION_LOCK(sid, buf, 1024), NULL, __sys_call_error))
+  if ( 0 != USemaphoreCreate(&sem, 0, 1, SEDNA_TRANSACTION_LOCK(tr_globals::sid, buf, 1024), NULL, __sys_call_error))
      throw USER_EXCEPTION2(SE4010, "SEDNA_TRANSACTION_LOCK");
 
   sm_server = _sm_server_;
@@ -120,7 +120,7 @@ void LocalLockMgr::put_lock_on_document(const char *name)
   if(strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1) )
      throw USER_EXCEPTION(SE4702);
 
-  obtain_lock(db_name, LM_DATABASE, true);
+  obtain_lock(tr_globals::db_name, LM_DATABASE, true);
   obtain_lock(name, LM_DOCUMENT);
 #endif
 }
@@ -131,7 +131,7 @@ void LocalLockMgr::put_lock_on_collection(const char *name)
   if(strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1) )
      throw USER_EXCEPTION(SE4702);
 
-  obtain_lock(db_name, LM_DATABASE, true);
+  obtain_lock(tr_globals::db_name, LM_DATABASE, true);
   obtain_lock(name, LM_COLLECTION);
 #endif
 }
@@ -142,7 +142,7 @@ void LocalLockMgr::put_lock_on_index(const char *name)
   if(strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1) )
      throw USER_EXCEPTION(SE4702);
 
-  obtain_lock(db_name, LM_DATABASE, true);
+  obtain_lock(tr_globals::db_name, LM_DATABASE, true);
   obtain_lock(name, LM_INDEX);
 #endif
 }
@@ -153,7 +153,7 @@ void LocalLockMgr::put_lock_on_trigger(const char *name)
   if(strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1) )
      throw USER_EXCEPTION(SE4702);
 
-  obtain_lock(db_name, LM_DATABASE, true);
+  obtain_lock(tr_globals::db_name, LM_DATABASE, true);
   obtain_lock(name, LM_TRIGGER);
 #endif
 }
@@ -162,10 +162,10 @@ void LocalLockMgr::put_lock_on_trigger(const char *name)
 void LocalLockMgr::put_lock_on_db()
 {
 #ifdef LOCK_MGR_ON
-  if(strlen(db_name) > (MAX_RESOURCE_NAME_LENGTH - 1))
+  if(strlen(tr_globals::db_name) > (MAX_RESOURCE_NAME_LENGTH - 1))
      throw USER_EXCEPTION(SE4702);
 
-  obtain_lock(db_name, LM_DATABASE);
+  obtain_lock(tr_globals::db_name, LM_DATABASE);
 #endif
 }
 
@@ -181,8 +181,8 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intent
   sm_msg_struct msg;
 
   msg.cmd = 3;
-  msg.trid = trid;
-  msg.sid = sid;
+  msg.trid = tr_globals::trid;
+  msg.sid = tr_globals::sid;
   int res;
 
   if (intention_mode == false)
@@ -264,7 +264,7 @@ void LocalLockMgr::release()
 
   sm_msg_struct msg;
   msg.cmd = 4;
-  msg.trid = trid;
+  msg.trid = tr_globals::trid;
 
   d_printf1("\nRelease locks call\n");
 
@@ -285,7 +285,7 @@ void LocalLockMgr::release_resource(const char* name, resource_kind kind)
 
   sm_msg_struct msg;
   msg.cmd = 5;
-  msg.trid = trid;
+  msg.trid = tr_globals::trid;
 
   msg.data.data[1] = (kind == LM_DOCUMENT) ? 'd' : ((kind == LM_COLLECTION)? 'c': ((kind == LM_INDEX)? 'i': ((kind == LM_TRIGGER)? 't': 'b')));
  

@@ -189,7 +189,7 @@ void test_collection(char *name, col_schema_node_cptr coll)
 
 void test_db_after_rcv()
 {
-    std::string rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files/rcv_test_result.log");
+    std::string rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(tr_globals::db_name) + std::string("_files/rcv_test_result.log");
     metadata_cell_cptr mdc = XNULL;
 
     logfile = fopen(rcv_fname.c_str(), "at");
@@ -216,7 +216,7 @@ void test_db_after_rcv()
     fclose(logfile);
 
 #ifdef RCV_TEST_CRASH
-    rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files");
+    rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(tr_globals::db_name) + std::string("_files");
 
     if (isRcvOK)
         rcv_fname += std::string("/rcv_ok");

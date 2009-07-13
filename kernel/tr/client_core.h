@@ -1,31 +1,31 @@
 /*
- * File:  client_core.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  client_core.h
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
 
 #ifndef _CLIENT_CORE_H
 #define _CLIENT_CORE_H
 
 #include <string>
+#include <vector>
 
 #include "common/sedna.h"
-#include "common/ipc_ops.h"
 #include "common/u/uhdd.h"
 #include "common/base.h"
 
 #include "tr/crmutils/crmbase.h"
 
 struct client_file{
-	FILE* f;
-	char name[1024];
+    FILE* f;
+    char name[1024];
     __int64 file_size;//size of file in bytes
 };
 
 class client_core
 {
 public:
-	//virtual ~client_core() {}
-	
+    //virtual ~client_core() {}
+
     virtual void init() = 0;
     virtual void release() = 0;
     virtual void read_msg(msg_struct *msg) = 0;
@@ -51,6 +51,4 @@ public:
     virtual void set_keep_alive_timeout(int sec) = 0;
 };
 
-
-#endif
-
+#endif /* _CLIENT_CORE_H */

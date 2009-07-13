@@ -62,37 +62,7 @@ se_ostream& se_ostream::writeattribute(char *s, int n)
 se_ostream& 
 se_socketostream_base::operator<<(const char *s)	
 { 
-    int len = strlen(s);
-
-    if((_res_msg->length + len) > (SE_SOCKET_MSG_BUF_SIZE-5-_type_offset))
-    {
-        flush();	
-        int celoe = len/(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
-        int ost;
-        if(celoe==0) ost = len; else ost = len%(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
-
-        for (int i=0;i<celoe;i++)
-        {
-            _res_msg->length = SE_SOCKET_MSG_BUF_SIZE;
-            // the body contains string format - 1 byte, string length - 4 bytes and a string
-            // construct the buf for body.	   
-            int2net_int(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset, _res_msg->body+1+_type_offset);
-            memcpy(_res_msg->body+5+_type_offset, s+(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset)*i, SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
-
-            flush();
-        } //end for
-
-        _res_msg->length = ost+5+_type_offset;
-        int2net_int(ost, _res_msg->body+1+_type_offset);
-        memcpy(_res_msg->body+5+_type_offset, s+(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset)*celoe, ost);
-    }
-    else
-    {
-        memcpy(_res_msg->body+_res_msg->length, s, strlen(s));
-        _res_msg->length += strlen(s);
-        int2net_int(_res_msg->length-5-_type_offset, _res_msg->body+1+_type_offset);
-    }
-    return *this; 
+    return write(s, strlen(s));
 }
 
 se_ostream&
@@ -132,8 +102,10 @@ se_socketostream_base::write(const char *s, int n)
 se_ostream&
 se_socketostream_base::flush()				
 {
-    // if result portion sent is already of maximum size - do not send anymore
-    if(max_result_size)
+    /* If result portion sent is already of maximum size - do not send anymore. 
+     */
+    if(max_result_size) 
+    {
         if(result_portion_sent >= max_result_size-_res_msg->length+5+_type_offset)
         {
             _res_msg->length = max_result_size-result_portion_sent+5+_type_offset;
@@ -143,18 +115,19 @@ se_socketostream_base::flush()
                 throw USER_EXCEPTION(SE2041);
             }
         }
+    }
 
-        if(_res_msg->length > 5+_type_offset)
-        {
-            _res_msg->instruction = _instruction; 
-            int2net_int(_res_msg->length-5-_type_offset, _res_msg->body+1+_type_offset);
+    if(_res_msg->length > 5+_type_offset)
+    {
+        _res_msg->instruction = _instruction; 
+        int2net_int(_res_msg->length-5-_type_offset, _res_msg->body+1+_type_offset);
 
-            if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
-            result_portion_sent += _res_msg->length;
+        if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
+        result_portion_sent += _res_msg->length;
 
-            _res_msg->length = 5+_type_offset;
-        }
-        return *this; 
+        _res_msg->length = 5+_type_offset;
+    }
+    return *this; 
 }
 
 void

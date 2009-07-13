@@ -10,15 +10,16 @@
 #include "common/sedna.h"
 
 #include "common/xptr.h"
-#include "tr/vmm/os_exceptions.h"
+#include "common/wutypes.h"
 #include "common/SSMMsg.h"
 #include "common/u/uthread.h"
 
-#include  "common/wutypes.h"
-
+#include "tr/vmm/os_exceptions.h"
 #include "tr/rcv/rcv_test_tr.h"
 
-extern session_id sid;
+namespace tr_globals {
+    extern session_id sid;
+}
 
 //#define VMM_GATHER_STATISTICS
 //#define VMM_TRACE
@@ -103,7 +104,7 @@ extern session_id sid;
 
 #define VMM_SIGNAL_MODIFICATION(p)	{VMM_INC_NUMBER_OF_MODIFICATIONS(p)				\
                                     VMM_TRACE_SIGNAL_MODIFICATION(p)				\
-                                    if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != sid) \
+                                    if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != tr_globals::sid) \
                                     	vmm_unswap_block_write(p);                  \
                                     ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true; \
                                     RECOVERY_CRASH;}

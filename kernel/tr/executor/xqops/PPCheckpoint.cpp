@@ -39,7 +39,7 @@ void PPCheckpoint::next (tuple &t)
     t.set_eos();
     //activate_and_wait_for_end_checkpoint();
     // change of semantics -- se:checkpoint() makes checkpoint on transaction commit now
-    is_need_checkpoint_on_transaction_commit = true;
+    tr_globals::is_need_checkpoint_on_transaction_commit = true;
     // call checkpoint here
 
     RESTORE_CURRENT_PP;
