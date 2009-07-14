@@ -217,7 +217,6 @@ void bt_modify_tmpl(xptr &root, const bt_key &old_key, const bt_key &new_key, co
 template<typename object>
 void bt_delete_tmpl(xptr &root, const bt_key& key, const object &obj)
 {
-    bool    rc;
     shft    key_idx;
     shft    obj_idx;
     xptr    delete_xpg = root; /* xptr passed to search functions, that can change, pointing to page where data resides */

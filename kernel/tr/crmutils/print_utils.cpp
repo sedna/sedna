@@ -603,11 +603,12 @@ void print_name_space(xmlns_ptr nsd,op_str_buf& tbuf,ft_index_type type)
         {
             tbuf<<" "<< nsd->uri;
             break;
-        }           
+        }
+    default: 
+        throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print namespace");
     }   
-
-
 }
+
 static StrMatcher *escape_sm = NULL;
 static void make_escape_sm()
 {
@@ -721,10 +722,12 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             }
             switch (type)
             {
-            case ft_xml:case ft_xml_ne:tbuf<<opentag; break;
-            case ft_xml_hl: tbuf<<opentag; break;
-            case ft_string_value:break;
-            case ft_delimited_value:tbuf<<" ";break;            
+                case ft_xml: case ft_xml_ne:tbuf<<opentag; break;
+                case ft_xml_hl: tbuf<<opentag; break;
+                case ft_string_value:break;
+                case ft_delimited_value:tbuf<<" ";break;            
+                default: 
+                    throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print element node");
             }
             //std::vector<std::string> *att_ns=NULL;
             char* name=GETNAME(scn);
@@ -808,6 +811,8 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
                 }
             case ft_string_value:print_text(node,tbuf,attribute);break;
             case ft_delimited_value:tbuf<<" ";break;
+            default: 
+                throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print attribute node");
             }               
             return;
         }
@@ -823,6 +828,8 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             case ft_xml:case ft_xml_ne:case ft_xml_hl: tbuf<< opentag<<"!--"; break;
             case ft_string_value:break;
             case ft_delimited_value:tbuf<<" ";break;
+            default: 
+                throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print comment node");
             }
             CHECKP(node);
             print_text(node,tbuf,text,type!=ft_xml_ne);
@@ -836,6 +843,8 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             case ft_xml:case ft_xml_ne:case ft_xml_hl: tbuf<< opentag<<"![CDATA["; break;
             case ft_string_value:break;
             case ft_delimited_value:tbuf<<" ";break;
+            default: 
+                throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print cdata node");
             }
             CHECKP(node);
             print_text(node,tbuf,cdata,type!=ft_xml_ne);
@@ -849,6 +858,8 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             case ft_xml:case ft_xml_ne:case ft_xml_hl: tbuf<< opentag<<"?"; break;
             case ft_string_value:break;
             case ft_delimited_value:tbuf<<" ";break;
+            default: 
+                throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print processing instruction node");
             }
             CHECKP(node);
             print_text(node,tbuf,pr_ins);

@@ -13,7 +13,7 @@ class PPSequence : public PPIterator
 {
 protected:
     arr_of_PPOpIn ch_arr;
-    int it;
+    unsigned int it;
 
     void children(arr_of_PPOpIn &_ch_arr_)
     {

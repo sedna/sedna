@@ -265,8 +265,6 @@ void PPElementConstructor::next  (tuple &t)
         
         //Name parameter
         const char* name=el_name;
-        char *z;
-        bool need_deall=false;
         tuple_cell res;
         if (name==NULL)
         {
@@ -354,7 +352,6 @@ void PPElementConstructor::next  (tuple &t)
         sequence at_vals(1);
         xptr left=XNULL;
         bool mark_attr=true;
-        bool mark_vec=true;
         vector<tuple>::iterator it_st;
         tuple* cont_ptr=NULL;
         if (ns_inside)
@@ -653,8 +650,6 @@ void PPAttributeConstructor::next  (tuple &t)
         
         //Name parameter
         const char* name=at_name;
-        char *z;
-        bool need_deall=false;
         tuple_cell res1;
         if (name==NULL)
         {
@@ -1110,8 +1105,6 @@ void PPPIConstructor::next  (tuple &t)
         
         //Name parameter
         const char* name=at_name;
-        char *z;
-        bool need_deall=false;
         tuple_cell res1;
         if (name==NULL)
         {
@@ -1386,7 +1379,6 @@ void PPDocumentConstructor::next  (tuple &t)
         first_time = false;
         
         //Name parameter
-        bool need_deall=false;
         tuple_cell res;
         //document insertion insertion
         //context save

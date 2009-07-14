@@ -96,7 +96,7 @@ bool PPSequence::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     vector<bool>  ch_s(ch_arr.size());
 
     bool is_everything_strict = true;
-    int i = 0;
+    unsigned int i = 0;
     for (i = 0; i < ch_arr.size(); i++)
     {
         ch_s[i] = (ch_arr[i].op->res_fun())(ch_arr[i].op, cxt, ch_r[i]);
@@ -130,7 +130,7 @@ bool PPSequence::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     for (i = 0; i < ch_arr.size(); i++)
     {
         sequence *ch_seq = (sequence*)(ch_r[i]);
-        for (int j = 0; j < ch_seq->size(); j++)
+        for (unsigned int j = 0; j < ch_seq->size(); j++)
         {
             ch_seq->get(t, j);
             res_seq->add(t);
