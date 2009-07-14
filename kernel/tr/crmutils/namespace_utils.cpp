@@ -16,7 +16,6 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
     {
         xptr ns=getChildPointerXptr(node,NULL,xml_namespace,NULL_XMLNS);
         
-        int reps=0;
         while (ns!=XNULL)
         {
             CHECKP(ns);
@@ -45,8 +44,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
         std::set<xmlns_ptr> atns;
         while (attr!=XNULL)
         {       
-            GETSCHEMENODEX(attr);
-            schema_node_cptr sca=GETSCHEMENODEX(attr);
+            schema_node_cptr sca = GETSCHEMENODEX(attr);
             if (sca->get_xmlns()!=NULL)
                 atns.insert(sca->get_xmlns());
             attr=getNextByOrderAttribute(attr);

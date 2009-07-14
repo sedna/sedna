@@ -41,19 +41,6 @@ void PPConst::next(tuple &t)
 {
     SET_CURRENT_PP(this);
 
-/***********************************
-#define ALLOC_SIZE	1024
-#define ALLOC_ATTEMPTS	(1024 * 12)
-    int i = 0;
-    void *p = NULL;
-    for (i = 0; i < ALLOC_ATTEMPTS; ++i)
-    {
-        p = pers_malloc(ALLOC_SIZE);
-        if (!p) 
-            throw USER_EXCEPTION2(FODC0005, "Not enough memory");
-    }
-
-/***********************************/
     if (first_time)
     {
         first_time = false;

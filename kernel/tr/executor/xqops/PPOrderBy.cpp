@@ -66,7 +66,7 @@ PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
                                         sort_cells(NULL),
                                         ss(NULL)
 {
-    if(modifiers.size() != child.ts - data_size) 
+    if((signed)modifiers.size() != child.ts - data_size) 
         throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number.");
     
     sort_size = child.ts - data_size;
@@ -971,7 +971,7 @@ void PPSLet::open ()
     need_reopen = false;
     first_time = true;
     s = NULL;
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_complex;
@@ -1082,10 +1082,10 @@ void PPSLet::close(var_dsc dsc, var_c_id id)
 
 inline void PPSLet::reinit_consumer_table()
 {
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
-        for (int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
+        for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }
 

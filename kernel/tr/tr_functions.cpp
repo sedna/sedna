@@ -102,7 +102,7 @@ void on_user_statement_begin(QueryType queryType,
 
     internal_auth_switch = BLOCK_AUTH_CHECK; //turn off security checkings
 
-    for (int i = 0; i < st->stmnts.size() - 1; i++)
+    for (unsigned int i = 0; i < st->stmnts.size() - 1; i++)
     {
         on_kernel_statement_begin(st->stmnts[i].stmnt, &auth_s, xml, qep_tree);
         execute(qep_tree);

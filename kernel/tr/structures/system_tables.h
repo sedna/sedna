@@ -56,4 +56,4 @@ void system_tables_on_kernel_statement_end();
 
 
 
-#endif _SYSTEM_TABLES_H
+#endif /* _SYSTEM_TABLES_H */

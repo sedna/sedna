@@ -72,7 +72,7 @@ protected:
     int tuples_in_memory;
     int max_block_amount;
     bool copy_vmm_strings;
-    void *sort_mem;
+    char *sort_mem;
 
     void init_blks();
     void qsort(const order_spec_list& osl, int off, int len);

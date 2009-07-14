@@ -233,7 +233,6 @@ lock_reply lock_table::lock(transaction_id tr_id,
                             bool sync)
 {
 #ifdef LOCK_MGR_ON
-  int res;
   lock_reply ret_code;
   lock_head* lock;
   lock_request *request, *last, *convert_request;
@@ -351,12 +350,10 @@ end:
 lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
 {
 #ifdef LOCK_MGR_ON
-  lock_head *lock, *prev = NULL;
-  lock_request *request, *convert_request;
+  lock_head *lock = NULL;
+  lock_request *request;
   lock_request *prev_req = NULL;
   transaction_id me = tr_id;
-  lock_reply status;
-  int res;
 
   down_sem(sync);
 
@@ -528,8 +525,6 @@ lock_reply lock_table::release_tr_locks(transaction_id tr_id, bool sync)
 {
 
 #ifdef LOCK_MGR_ON
-  TransCB *tran;
-  int res;
   lock_request *request;
 
   down_sem(sync);
@@ -638,7 +633,6 @@ bool lock_table::deadlock(transaction_id trid, bool sync)
 void lock_table::visit(TransCB* me)
 {
 #ifdef LOCK_MGR_ON
-  TransCB* him;
   lock_request* them;
 
   if (me->wait == NULL) return;

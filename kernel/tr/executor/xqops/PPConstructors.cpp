@@ -39,7 +39,7 @@ void clear_virtual_root()
 //UTILS
 void separateLocalAndPrefix(char*& prefix, const char*& qname)
 {
-    for (int i=0; i<strlen(qname);i++)
+    for (unsigned int i=0; i<strlen(qname);i++)
         if (qname[i]==':')
         {
             prefix = se_new char[i + 1];

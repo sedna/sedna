@@ -507,7 +507,6 @@ int llFlushAll()
 int llFlushLsn(LSN lsn)
 {
 	RECOVERY_CRASH;
-	llFileHead file_head;
 
 	if (lsn == LFS_INVALID_LSN) return 0;
 

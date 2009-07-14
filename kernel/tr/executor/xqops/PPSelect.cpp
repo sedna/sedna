@@ -57,7 +57,7 @@ void PPSelect::open ()
     eos_reached = true;
     standard = true;
 
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
@@ -153,10 +153,10 @@ void PPSelect::close(var_dsc dsc, var_c_id id)
 
 inline void PPSelect::reinit_consumer_table()
 {
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
-        for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
+        for (unsigned int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }
 

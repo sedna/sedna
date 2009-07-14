@@ -96,7 +96,7 @@ static int hbRetrieveAndCheckDbName(USOCKET sock, char *dbname, int len)
 static int RetrieveAllFileNames(bool only_log)
 {
     char buf[MAX_SE_SOCKET_STR];
-    int lnum, len;
+    int len;
 
     // retrieve db config file
 	if ((len = hbMakeConfFileName(buf, MAX_SE_SOCKET_STR, hbDbName->c_str())) == -1)

@@ -115,7 +115,6 @@ int main(int argc, char** argv)
         uCloseProcess(proc_handle, __sys_call_error);
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3000);
 
-end:
         close_gov_shm();
         fprintf(res_os, "SEDNA server has been shut down successfully\n");
         fflush(res_os);
