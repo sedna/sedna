@@ -22,7 +22,6 @@ bool bt_locate_obj_bisection_tmpl(const object* ar, shft ar_size, const object &
 	}
 
     int     rc;
-    shft    ar_el_size = sizeof(object);
     shft    l_idx = 0;
     shft    r_idx = ar_size - 1;
     shft    m_idx = l_idx + (r_idx - l_idx) / 2;

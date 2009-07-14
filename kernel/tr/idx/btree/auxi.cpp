@@ -13,7 +13,6 @@
 #include "tr/crmutils/node_utils.h"
 
 void bt_page_markup(char* pg, xmlscm_type t) {
-	char dummy[10];
 //	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 	(*BT_NEXT_PTR(pg))=XNULL;
 	(*BT_PREV_PTR(pg))=XNULL;

@@ -15,7 +15,7 @@ class PPTuple : public PPIterator
 protected:
     arr_of_PPOpIn ch_arr;
     bool first_time;
-    int i;
+    unsigned int i;
     tuple lt; // local tuple
 
     void children(arr_of_PPOpIn &_ch_arr_)
