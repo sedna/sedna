@@ -231,10 +231,10 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                                     std::vector<client_file>* cf_vec)
 {
     string tmp_file_path_str;
+    unsigned int i = 0;
+    int got, written = 0, res;
 
-    int i = 0, got, written = 0, cmd_bl, len_int, res;
-    __int64 res_pos;
-
+    
     if ((filenames->size() > 1) && (p_ver.major_version < 2))
         throw USER_EXCEPTION2(SE2999, "Loading module from multiple files is not supported by current Sedna Client-server protocol.");
 
@@ -318,15 +318,15 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
 
     } catch (ANY_SE_EXCEPTION) {
         // close and delete all files from cf_vec
-        for (int j=0; j<i; j++)
+        for (unsigned int j=0; j<i; j++)
         {
-            if (cf_vec->at(i).f && (fclose(cf_vec->at(i).f) != 0))
+            if (cf_vec->at(j).f && (fclose(cf_vec->at(j).f) != 0))
             {
-                cf_vec->at(i).f = NULL;
+                cf_vec->at(j).f = NULL;
                 throw USER_EXCEPTION(SE3020);
             }
-            cf_vec->at(i).f = NULL;
-            if(uDeleteFile(cf_vec->at(i).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
+            cf_vec->at(j).f = NULL;
+            if(uDeleteFile(cf_vec->at(j).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
         }
         throw;
     }

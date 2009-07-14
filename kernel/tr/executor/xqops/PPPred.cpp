@@ -246,7 +246,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
         if(double_values.size() == 0) state = RS_EMPTY;
         else
         {
-            int i;
+            unsigned int i;
             switch(occ)
             {
                 case OCC_GENERAL_EQUAL:
@@ -447,7 +447,7 @@ bool PPPredRange::is_empty()
         {
             if(upper_bound == 0) return false;
             int power = upper_bound - lower_bound + 1;
-            if(power > except_points.size()) return false;
+            if(power > (signed)except_points.size()) return false;
             else return true;
         }
         case RS_POINTS: return points.size() > 0 ? false : true;
@@ -576,7 +576,7 @@ PPPred1::~PPPred1()
     delete source_child.op;
     source_child.op = NULL;
     
-    for( int i = 0; i < conjuncts.size(); i++)
+    for(unsigned int i = 0; i < conjuncts.size(); i++)
     {
         delete (conjuncts[i].op);
         conjuncts[i].op = NULL;
@@ -598,7 +598,7 @@ void PPPred1::open ()
     eos_reached = true;
     need_reopen = false;
 
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
@@ -616,7 +616,7 @@ void PPPred1::open ()
         p.tuple_pos = 0;
     }
 
-    for(int i = 0; i < conjuncts.size(); i++)
+    for(unsigned int i = 0; i < conjuncts.size(); i++)
         (conjuncts[i].op) -> open();
     
     data_child.op->open();
@@ -635,7 +635,7 @@ void PPPred1::close ()
 {
     source_child.op->close();
     
-    for( int i = 0; i < conjuncts.size(); i++)
+    for(unsigned int i = 0; i < conjuncts.size(); i++)
         (conjuncts[i].op) -> close();
      
     data_child.op->close();
@@ -662,7 +662,7 @@ void PPPred1::next(tuple &t)
                 if( tc.get_xs_boolean() )
                 {
                     range.reinit();
-                    for(int i = 0; i < conjuncts.size(); i++)
+                    for(unsigned int i = 0; i < conjuncts.size(); i++)
                         range.add_new_constraint(conditions[i], conjuncts[i]);  
                     if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}}
                     else if(range.is_any()) result_ready = true; 
@@ -687,7 +687,7 @@ void PPPred1::next(tuple &t)
         else 
         {
             range.reinit();
-            for(int i = 0; i < conjuncts.size(); i++)
+            for(unsigned int i = 0; i < conjuncts.size(); i++)
                 range.add_new_constraint(conditions[i], conjuncts[i]);  
             if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}} 
         }
@@ -769,7 +769,7 @@ PPIterator* PPPred1::copy(dynamic_context *_cxt_)
                                once,
                                pos_dsc);
     
-    for (int i = 0; i < conjuncts.size(); i++)
+    for (unsigned int i = 0; i < conjuncts.size(); i++)
         res->conjuncts[i].op = conjuncts[i].op->copy(_cxt_);
 
     
@@ -817,8 +817,8 @@ void PPPred1::close(var_dsc dsc, var_c_id id)
 
 inline void PPPred1::reinit_consumer_table()
 {
-    int j;
-    for (int i = 0; i < var_dscs.size(); i++)
+    unsigned int j;
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
@@ -983,7 +983,7 @@ PPPred2::~PPPred2()
     delete source_child.op;
     source_child.op = NULL;
 
-    for( int i = 0; i < conjuncts.size(); i++)
+    for(unsigned int i = 0; i < conjuncts.size(); i++)
     {
         delete (conjuncts[i].op);
         conjuncts[i].op = NULL;
@@ -1006,7 +1006,7 @@ void PPPred2::open ()
     pos = 0;
 
 
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
@@ -1030,7 +1030,7 @@ void PPPred2::open ()
         p.tuple_pos = 0;
     }
 
-    for(int i = 0; i < conjuncts.size(); i++)
+    for(unsigned int i = 0; i < conjuncts.size(); i++)
         (conjuncts[i].op) -> open();
    
     data_child.op->open();
@@ -1052,7 +1052,7 @@ void PPPred2::close ()
 {
     source_child.op->close();
 
-    for( int i = 0; i < conjuncts.size(); i++)
+    for(unsigned int i = 0; i < conjuncts.size(); i++)
         (conjuncts[i].op) -> close();
 
     data_child.op->close();
@@ -1091,7 +1091,7 @@ void PPPred2::next(tuple &t)
                 if( tc.get_xs_boolean() )
                 {
                     range.reinit();
-                    for(int i = 0; i < conjuncts.size(); i++)
+                    for(unsigned int i = 0; i < conjuncts.size(); i++)
                         range.add_new_constraint(conditions[i], conjuncts[i]);  
                     if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
                     else if(range.is_any()) result_ready = true; 
@@ -1116,7 +1116,7 @@ void PPPred2::next(tuple &t)
         else
         {
             range.reinit();
-            for(int i = 0; i < conjuncts.size(); i++)
+            for(unsigned int i = 0; i < conjuncts.size(); i++)
                 range.add_new_constraint(conditions[i], conjuncts[i]);  
             if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} } 
         }
@@ -1191,7 +1191,7 @@ PPIterator* PPPred2::copy(dynamic_context *_cxt_)
                                lst_dsc,
                                pos_dsc);
     
-    for (int i = 0; i < conjuncts.size(); i++)
+    for (unsigned int i = 0; i < conjuncts.size(); i++)
         res->conjuncts[i].op = conjuncts[i].op->copy(_cxt_);
     
     res->source_child.op = source_child.op->copy(_cxt_);     
@@ -1239,8 +1239,8 @@ void PPPred2::close(var_dsc dsc, var_c_id id)
 
 inline void PPPred2::reinit_consumer_table()
 {
-    int j;
-    for (int i = 0; i < var_dscs.size(); i++)
+    unsigned int j;
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;

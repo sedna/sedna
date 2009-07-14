@@ -440,9 +440,8 @@ t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const 
         if (n1.size() == 0) return n1;
         const NodeTestOr &nto = pe.nto[p];
 
-        int i, j;
-        for (i = 0; i != n1.size(); i++)
-            for (j = 0; j != nto.s; j++)
+        for (unsigned int i = 0; i != n1.size(); i++)
+            for (int j = 0; j != nto.s; j++)
             {
                 t_scmnodes_const tmp = execute_node_test(n1.at(i), nto.nt[j]);
                 n2 = vector_concat(n2, tmp);
@@ -964,9 +963,8 @@ t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const 
         if (n1.size() == 0) return n1;
         const NodeTestOr &nto = pe.nto[p];
 
-        int i, j;
-        for (i = 0; i != n1.size(); i++)
-            for (j = 0; j != nto.s; j++)
+        for (unsigned int i = 0; i != n1.size(); i++)
+            for (int j = 0; j != nto.s; j++)
             {
                 t_scmnodes_const tmp;
                 tmp = execute_node_test(n1.at(i), nto.nt[j], extended_nodes, extender_nodes);

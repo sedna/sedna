@@ -24,7 +24,7 @@ PPCalculate::PPCalculate(dynamic_context *_cxt_,
 
 PPCalculate::~PPCalculate()
 {
-    for (int i = 0; i < ch_arr->size(); i++)
+    for (unsigned int i = 0; i < ch_arr->size(); i++)
     {
         delete ch_arr->at(i).op;
         ch_arr->at(i).op = NULL;
@@ -36,7 +36,7 @@ PPCalculate::~PPCalculate()
 
 void PPCalculate::open ()
 {
-    for (int i = 0; i < ch_arr->size(); i++) ch_arr->at(i).op->open();
+    for (unsigned int i = 0; i < ch_arr->size(); i++) ch_arr->at(i).op->open();
 
     first_time = true;
 }
@@ -50,7 +50,8 @@ void PPCalculate::reopen ()
 
 void PPCalculate::close ()
 {
-    for (int i = 0; i < ch_arr->size(); i++) ch_arr->at(i).op->close();
+    for (unsigned int i = 0; i < ch_arr->size(); i++) 
+        ch_arr->at(i).op->close();
 }
 
 void PPCalculate::next(tuple &t)
@@ -79,7 +80,7 @@ void PPCalculate::next(tuple &t)
 
 PPIterator* PPCalculate::copy(dynamic_context *_cxt_)
 {
-	int i = 0;
+	unsigned int i = 0;
     arr_of_PPOpIn *new_ch_arr = se_new arr_of_PPOpIn(ch_arr->size());
 	for (i = 0; i < ch_arr->size(); i++)
         new_ch_arr->at(i).ts = ch_arr->at(i).ts;
@@ -109,7 +110,7 @@ bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     vector<bool>  ch_s(ch_arr->size());
 
     bool is_everything_strict = true;
-    int i = 0;
+    unsigned int i = 0;
     for (i = 0; i < ch_arr->size(); i++)
     {
         ch_s[i] = (ch_arr->at(i).op->res_fun())(ch_arr->at(i).op, cxt, ch_r[i]);

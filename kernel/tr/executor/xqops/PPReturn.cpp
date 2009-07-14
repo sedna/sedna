@@ -10,17 +10,6 @@
 #include "tr/executor/xqops/PPSResLStub.h"
 
 
-/*PPReturn::PPReturn(dynamic_context *_cxt_,
-                   arr_of_var_dsc _var_dscs_, 
-                   PPOpIn _source_child_, 
-                   PPOpIn _data_child_) : PPVarIterator(_cxt_),
-                                          var_dscs(_var_dscs_),
-                                          source_child(_source_child_),
-                                          data_child(_data_child_),
-                                          source(_source_child_.ts)
-{
-}*/
-
 PPReturn::PPReturn(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
@@ -51,21 +40,6 @@ PPReturn::PPReturn(dynamic_context *_cxt_,
 {
 }
 
-/*PPReturn::PPReturn(dynamic_context *_cxt_,
-                   arr_of_var_dsc _var_dscs_, 
-                   PPOpIn _source_child_, 
-                   PPOpIn _data_child_,
-                   tuple _source_) : PPVarIterator(_cxt_),
-                                     var_dscs(_var_dscs_),
-                                     source_child(_source_child_),
-                                     data_child(_data_child_),
-                                     source(_source_),
-                                     first_time(false),
-                                     need_to_check_type(false),
-                                     pos_dsc(-1)
-{
-}*/
-
 PPReturn::~PPReturn()
 {
     delete source_child.op;
@@ -81,7 +55,7 @@ void PPReturn::open ()
     source_child.op->open();
     first_time = true;
 
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
@@ -209,16 +183,16 @@ void PPReturn::close(var_dsc dsc, var_c_id id)
 
 inline void PPReturn::reinit_consumer_table()
 {
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
-        for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
+        for (unsigned int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 
     if (pos_dsc >= 0)
     {
         producer &p = cxt->var_cxt.producers[pos_dsc];
-        for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
+        for (unsigned int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }
 

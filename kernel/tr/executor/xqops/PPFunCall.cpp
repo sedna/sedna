@@ -411,7 +411,7 @@ inline void PPFunCall::reinit_consumer_table()
     for (int i = 0; i < args_num; i++)
     {
         complex_var_consumption *cvc = new_cxt->var_cxt.producers[i].cvc;
-        for (int j = 0; j < cvc->size(); j++) cvc->at(j) = 0;
+        for (unsigned int j = 0; j < cvc->size(); j++) cvc->at(j) = 0;
     }
 }
 

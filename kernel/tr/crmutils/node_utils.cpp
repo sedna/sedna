@@ -1375,7 +1375,7 @@ shft size_of_node(node_blk_hdr* block)
     case element:return (shft)sizeof(e_dsc);
     case document: case virtual_root: return (shft)sizeof(d_dsc);
     case attribute:return (shft)sizeof(a_dsc);
-    case text: case comment:return (shft)sizeof(t_dsc);
+    case text: case comment: case cdata: return (shft)sizeof(t_dsc);
     case xml_namespace:return (shft)sizeof(ns_dsc);
     case pr_ins:return (shft)sizeof(pi_dsc);
     }

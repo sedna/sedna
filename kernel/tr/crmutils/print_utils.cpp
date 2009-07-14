@@ -680,7 +680,7 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             {
             case ft_xml:case ft_xml_ne:case ft_xml_hl: tbuf<<opentag<<"?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\""; break;
             case ft_string_value:break;
-            case ft_customized_value: ft_delimited_value:tbuf<<" ";break;
+            case ft_customized_value: case ft_delimited_value: tbuf<<" ";break;
             }   
             CHECKP(node);
             xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(d_dsc)));

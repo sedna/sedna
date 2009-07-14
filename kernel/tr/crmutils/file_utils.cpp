@@ -82,7 +82,7 @@ void separateName( const char* triplet,const char*& uri, const char*& local,cons
     const char* sec=NULL;
     const char* third=NULL;
     int sepcnt=0;
-    for (int i=0; i<strlen(triplet);i++)
+    for (unsigned int i=0; i < strlen(triplet); i++)
         if (triplet[i]==SEPARATOR)
         {
             if (sepcnt==0)

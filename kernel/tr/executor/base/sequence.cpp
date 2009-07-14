@@ -224,7 +224,7 @@ void sequence::clear()
 
 	txt.clear(true);
 
-    for (int i = 0; i < mem_tuples.size(); i++)
+    for (unsigned int i = 0; i < mem_tuples.size(); i++)
     {
         delete [] (mem_tuples[i]);
         mem_tuples[i] = NULL;

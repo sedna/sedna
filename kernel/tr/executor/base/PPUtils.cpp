@@ -236,7 +236,7 @@ xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
 {
     schema_node_xptr root = XNULL;
 
-    bool valid, found;
+    bool valid;
     Uri::check_constraints(db_ent->name, &valid, NULL);
     
     if(!valid) 

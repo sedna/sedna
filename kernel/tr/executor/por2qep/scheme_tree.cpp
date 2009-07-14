@@ -61,7 +61,7 @@ token Tokenizer::get_token()
     else if (c == ' ') return get_token();
 	else if (c == '\n') return get_token();
 	else if (c == '\r') return get_token();
-    else if ('0' <= c && c <= '9' || c == '-' || c == '+') return get_number(c);
+    else if (('0' <= c && c <= '9') || c == '-' || c == '+') return get_number(c);
     else if (c == '\'') return get_char();
     else if (isalpha(c) || c == '<' || c == '>' || c == '=' || c == '_' || c == '$' || c == '%' || c == '!') return get_symbol(c);
     else throw USER_EXCEPTION2(SE1005, "Tokenizer bad string error (1)");

@@ -54,7 +54,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
 {   
    msg_struct msg;
 
-   USOCKET socknew, hbsock = U_INVALID_SOCKET;
+   USOCKET socknew = U_INVALID_SOCKET;
 
    sockfd = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
    if (sockfd == U_INVALID_SOCKET) throw SYSTEM_EXCEPTION ("Can't init socket");
@@ -133,6 +133,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
     	   res = sp_recv_msg(socknew, &msg);
 
       	   if (stop_serv == 0)
+           {
            		if (res == -1)//socket error 
           		{
              		d_printf2("Connection with client lost: %s\n", usocket_error_translator());
@@ -143,7 +144,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
              		d_printf1("Too large msg recieved\n");
              		continue;
            		}
-
+           }
        	   if (stop_serv == 1)
        	   {
           		if (msg.instruction != STOP)

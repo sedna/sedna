@@ -122,7 +122,6 @@ void print_descriptor(n_dsc* node,int shift, se_ostream& crmout);
 /* prints information in  schema node */
 void print_schema(schema_node_cptr node, se_ostream& crmout);
 
-void print_node_with_prefixes(xptr node, se_ostream& crmout, int indent);
 void getDebugInfo(schema_node_cptr snode, debug_info* d_in);
 void getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in);
 void checkTextNodeCorrectness(xptr node);

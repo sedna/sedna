@@ -192,7 +192,7 @@ class PPSTuple : public PPIterator
 {
 protected:
     arr_of_PPOpIn ch_arr;
-    int i;
+    unsigned int i;
     tuple lt; // local tuple
 
     void children(arr_of_PPOpIn &_ch_arr_) { _ch_arr_ = ch_arr; }

@@ -68,7 +68,7 @@ void PPLet::open ()
     need_reopen = false;
     first_time = true;
 
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_complex;
@@ -198,10 +198,10 @@ void PPLet::close(var_dsc dsc, var_c_id id)
 
 inline void PPLet::reinit_consumer_table()
 {
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
-        for (int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
+        for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }
 

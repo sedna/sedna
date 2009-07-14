@@ -76,13 +76,12 @@ void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
 {
     string log_files_path = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files/");
     char buf[1024];
-    sm_msg_struct msg;
 
     sm_server = se_new SSMMsg(SSMMsg::Client, 
-        sizeof (sm_msg_struct), 
-        CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
-        SM_NUMBER_OF_SERVER_THREADS, 
-        U_INFINITE);
+                              sizeof (sm_msg_struct), 
+                              CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
+                              SM_NUMBER_OF_SERVER_THREADS, 
+                              U_INFINITE);
 
     d_printf1("Connecting to SM...");
     if (sm_server->init() != 0)
@@ -269,7 +268,6 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
 
     ppc->stop_timer();
     clear_authmap();
-    sm_msg_struct msg;
 
 #ifdef SE_ENABLE_TRIGGERS
     d_printf1("Triggers on transaction end...");

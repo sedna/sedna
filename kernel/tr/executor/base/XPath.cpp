@@ -390,7 +390,7 @@ void set_node_test_parameters(scheme_list *lst,
 
 PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, PathExprMemoryManager * mm)
 {
-    int i = 0, j = 0;
+    unsigned int i = 0, j = 0;
     PathExprDistr distr(path_lst->size(), 0);
 
     for (i = 0; i < path_lst->size(); i++)
@@ -448,7 +448,7 @@ PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
     path_expr->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * scm_nodes.size());
     path_expr->s = scm_nodes.size();
 
-    int i = 0;
+    unsigned int i = 0;
     schema_node_cptr parent = from;
     for (i = 0; i < scm_nodes.size(); ++i)
     {

@@ -219,85 +219,14 @@ inline int _sprint__int64(char* buffer, __int64 x)
         return _sprint__uint64(buffer, (__uint64)x, false);
 }
 
-
-static char *_get_xs_double_lexical_representation(char *s, double d, const char* spec)
-{
-    if (u_is_neg_inf(d))
-        strcpy(s, "-INF");
-    else if (u_is_pos_inf(d))
-        strcpy(s, "INF");
-    else if (u_is_nan(d))
-        strcpy(s, "NaN");
-    else if (d == 0.0) 
-    {
-        if (double_sign(d)) 
-            strcpy(s, "-0");
-        else
-            strcpy(s, "0");
-    } 
-    else if (d == DBL_MAX)
-        strcpy(s, "1.7976931348623157E308");
-    else if (d == -DBL_MAX)
-        strcpy(s, "-1.7976931348623157E308");
-    else if (d == DBL_MIN)
-        strcpy(s, "4.9E-324");
-    else if (d == -DBL_MIN)
-        strcpy(s, "-4.9E-324");
-    else 
-    {
-        double d_abs = d < 0 ? -d : d;
-        if ((d_abs >= 1000000 || d_abs < 0.000001))
-        { // exponential
-            sprintf(s, spec, d);
-            int len = strlen(s);
-            int i = 0;
-            int E_pos = 0;
-            int shift = 0;
-    
-            while (E_pos < len && s[E_pos] != 'E') ++E_pos;
-            if (E_pos == len) // Hm, it seems to be impossible case. Quit and left it as printf done...
-                return s;
-    
-            for (i = E_pos - 1; i > 0; i--)
-                if (s[i] == '0' && s[i - 1] != '.') s[i] = 'X';
-                else break;
-    
-            for (i = E_pos + 1; i < len; i++)
-                if (s[i] == '+' || s[i] == '0') s[i] = 'X';
-                else if (s[i] == '-') ;
-                else break;
-            if (i == len && (E_pos + 1) < len) s[E_pos + 1] = '0';
-    
-            for (i = 0; i < len; i++)
-                if (s[i] == 'X') shift++;
-                else s[i - shift] = s[i];
-            s[len - shift] = '\0';
-            
-        }
-        else
-        { // decimal
-            sprintf(s, "%#.12f", d);
-            // remove trailing zeros
-            int len = strlen(s);
-            int i = len - 1;
-            while (i >= 0 && s[i] == '0') s[i--] = '\0';
-            if (i >= 0 && s[i] == '.') s[i] = '\0';
-        }
-    }
-
-    return s;
-}
-
 char *get_xs_double_lexical_representation(char *s, double d)
 {
     return get_xs_double_lexical_representation_Saxon(s, d);
-    //return _get_xs_double_lexical_representation(s, d, "%#.14E");
 }
 
 char *get_xs_float_lexical_representation(char *s, float f)
 {
     return get_xs_float_lexical_representation_Saxon(s, f);
-    //return _get_xs_double_lexical_representation(s, (double)f, "%#.7E");
 }
 
 char *get_xs_integer_lexical_representation(char *s, __int64 v)

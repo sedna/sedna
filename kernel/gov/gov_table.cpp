@@ -159,12 +159,6 @@ void info_table::wait_erase_session(const session_id& s_id)
 
 void info_table::stop_session(const session_id& s_id)
 {
-
-  UPID pid;  
-  UPHANDLE proc_handle;
-  int res;
-  bool is_child_process = true;
-  
   ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].stop = 1;
 
   this->wait_erase_session(s_id);
@@ -203,10 +197,7 @@ info_table::insert_session(/* in */  UPID &pid,
      return -2;
   }
 
-
-  bool ret_val = true;
   std::pair<s_table_iter, bool> it;  
-
   
   Session s = Session(db_name, pid, proc_handle, is_child);
   it = _session_table_.insert(s_record(s_id, s));
@@ -324,7 +315,6 @@ void info_table::stop_sessions(const std::string &db_name)
 {
   s_table_iter it;
   std::vector<session_id> tmp;
-  int i=0;
   
   for(it = _session_table_.begin(); it!=_session_table_.end(); it++)
   {
@@ -332,7 +322,7 @@ void info_table::stop_sessions(const std::string &db_name)
         tmp.push_back(it->first);
   }
 
-  for (i = 0; i< tmp.size(); i++)  
+  for (unsigned int i = 0; i < tmp.size(); i++)  
       stop_session(tmp[i]);
    
   elog(EL_DBG, ("" PRIu32 " session(s) on '%s' database stopped", tmp.size(), db_name.c_str()));
@@ -343,12 +333,11 @@ void info_table::stop_sessions()
 {
   s_table_iter it;
   std::vector<session_id> tmp;
-  int i=0;
 
   for (it = _session_table_.begin(); it!=_session_table_.end(); it++)
       tmp.push_back(it->first);
 
-  for (i=0; i< tmp.size(); i++)
+  for (unsigned int i = 0; i < tmp.size(); i++)
       stop_session(tmp[i]);
 
   elog(EL_DBG, ("" PRIu32 " session(s) have been stopped", tmp.size()));
@@ -441,9 +430,8 @@ int info_table::check_stop_gov()
 
 int info_table::check_stop_databases()
 {
-  int i=0;
   int ret_code =0;
-  for (i=0; i< MAX_DBS_NUMBER; i++) 
+  for (unsigned int i=0; i< MAX_DBS_NUMBER; i++) 
   {
      if ((((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name)[0] != '\0' &&
          ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop == 1)
@@ -550,7 +538,6 @@ void info_table::wait_remove_pid(UPID pid, bool is_child_process)
 void info_table::wait_all_notregistered_sess()
 {
   pids_table_iter it;
-  int status;
 
   elog(EL_DBG, ("" PRIu32 " unregistered session(s) will be terminated"));
   for(it = _pids_table_.begin(); it!=_pids_table_.end(); it++)

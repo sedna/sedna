@@ -243,67 +243,6 @@ static void inline print_indent(se_ostream& crmout, int indent) {
     for (int i=0;i<indent;i++) crmout << " ";
 }
 
-void print_node_with_prefixes(xptr node, se_ostream& crmout, int indent)
-{
-    switch(GETTYPE(GETSCHEMENODEX(node)))
-    {
-    case document: case virtual_root:
-        {
-            crmout << "DOCUMENT NODE PREFIX=" ;
-            nid_print(node,crmout) ;
-            crmout<< ">";
-            CHECKP(node);
-            xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(d_dsc)));
-            while (child!=XNULL)
-            {
-                CHECKP(child);
-                print_node_with_prefixes(child,crmout,1);
-                child=((n_dsc*)XADDR(child))->rdsc;
-            }
-            break;
-        }
-    case element:
-        {
-            crmout<< "\n";
-            print_indent(crmout,indent) ;
-            char* name=GETNAME(GETSCHEMENODEX(node));
-            crmout <<"<" <<name << " PREFIX=";
-            nid_print(node,crmout);
-            crmout<< ">";
-            xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
-
-            while (child!=XNULL)
-            {
-                CHECKP(child);
-                print_node_with_prefixes(child,crmout,indent+1);
-                child=((n_dsc*)XADDR(child))->rdsc;
-            }
-            crmout<< "\n";
-            print_indent(crmout,indent) ;
-            crmout <<"</" << name <<">";
-            break;
-        }
-    case attribute:
-        {
-            crmout<< "\n";
-            print_indent(crmout,indent) ;
-            crmout <<"<ATTRIBUTE "<< GETNAME(GETSCHEMENODEX(node)) << " PREFIX=";
-            nid_print(node,crmout);
-            crmout << "/>";
-            break;
-        }
-    case text:
-        {
-            crmout<< "\n";
-            print_indent(crmout,indent) ;
-            crmout <<"<TEXT NODE" << " PREFIX=";
-            nid_print(node,crmout);
-            crmout << "/>";
-            break;
-        }
-    }
-}
-
 void printMFO (schema_node_cptr node, std::map<schema_node_xptr, std::pair<int,int> > &mfo,int par_pref,int indent)
 {
     int size=1;

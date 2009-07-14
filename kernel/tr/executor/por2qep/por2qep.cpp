@@ -521,7 +521,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
-        for (int i = 0; i != _vars_->size(); i++)
+        for (unsigned int i = 0; i != _vars_->size(); i++)
         {
             if (_vars_->at(i).type != SCM_NUMBER)
                 throw USER_EXCEPTION2(SE1004, "03");
@@ -564,7 +564,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
-        for (int i = 0; i != _vars_->size(); i++)
+        for (unsigned int i = 0; i != _vars_->size(); i++)
         {
             if (_vars_->at(i).type != SCM_NUMBER)
                 throw USER_EXCEPTION2(SE1004, "05");
@@ -589,7 +589,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
-        for (int i = 0; i != _vars_->size(); i++)
+        for (unsigned int i = 0; i != _vars_->size(); i++)
         {
             if (_vars_->at(i).type != SCM_NUMBER)
                 throw USER_EXCEPTION2(SE1004, "07");
@@ -628,7 +628,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
-        for (int i = 0; i != _vars_->size(); i++)
+        for (unsigned  int i = 0; i != _vars_->size(); i++)
         {
             if (_vars_->at(i).type != SCM_NUMBER)
                 throw USER_EXCEPTION2(SE1004, "06.3");
@@ -674,7 +674,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (   lst->size() == 1
            ) throw USER_EXCEPTION2(SE1004, "11");
 
-        int i = 0;
+        unsigned int i = 0;
 
         for (i = 1; i < lst->size(); i++)
         {
@@ -809,7 +809,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "22");
 
-        int i = 0;
+        unsigned int i = 0;
 
         for (i = 2; i < lst->size(); i++)
         {
@@ -1497,7 +1497,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(5).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.1");
 
-        int i = 0;
+        unsigned int i = 0;
        
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
@@ -1774,7 +1774,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_NUMBER
            ) throw USER_EXCEPTION2(SE1004, "70");
 
-        int i = 0;
+        unsigned int i = 0;
 
         for (i = 2; i < lst->size(); i++)
             if (lst->at(i).type != SCM_LIST)
@@ -1798,7 +1798,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
 		char *name = lst->at(1).internal.str;
 
-        int i = 0;
+        unsigned int i = 0;
         for (i = 2; i < lst->size(); i++)
             if (lst->at(i).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "PPExtFunCall-2");
@@ -1908,7 +1908,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (   lst->size() == 1
            ) throw USER_EXCEPTION2(SE1004, "74");
 
-        int i = 0;
+        unsigned int i = 0;
 
         for (i = 1; i < lst->size()-1; i++)
         {
@@ -2088,7 +2088,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (   lst->size() == 1
            ) throw USER_EXCEPTION2(SE1004, "82");
 
-        int i = 0;
+        unsigned int i = 0;
 
         for (i = 1; i < lst->size(); i++)
         {
@@ -2131,7 +2131,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
            		) throw USER_EXCEPTION2(SE1004, "85");
         }
 
-        int i = 0;
+        unsigned int i = 0;
 
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
@@ -2409,7 +2409,8 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (   lst->size() < 3
            ) throw USER_EXCEPTION2(SE1004, "96");
 
-        int i = 0;
+        unsigned int i = 0;
+
         for (i = 1; i < lst->size(); i++)
         {
             if (lst->at(i).type != SCM_LIST)
@@ -2797,7 +2798,7 @@ fn_dt_funcs_correct_type:
 		scheme_list *modifiers_list = lst->at(3).internal.list;
 		arr_of_orb_modifier _modifiers_;
 
-		for (int i = 0; i < modifiers_list->size(); i++)
+		for (unsigned int i = 0; i < modifiers_list->size(); i++)
         {
             if (modifiers_list->at(i).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "105");
@@ -3244,7 +3245,7 @@ void make_pp_fun(scheme_list *lst, static_context *cxt, function_declaration &fd
        )   throw USER_EXCEPTION2(SE1004, "201");
 
     scheme_list *args_list = lst->at(2).internal.list;
-    int i = 0;
+    unsigned int i = 0;
     for (i = 0; i < args_list->size(); i++)
         if (args_list->at(i).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "202");
@@ -3468,7 +3469,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
         {
            throw USER_EXCEPTION2(SE1004, "310.5");
         }
-        int i;
+        unsigned int i;
         for (i = 2; i < qe->size(); i += 2)
         {
             if(qe->at(i).type != SCM_NUMBER)
@@ -3492,8 +3493,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
         }
         return se_new PPLoadModule(
             arr,
-            qe->at(1).internal.b
-            );
+            qe->at(1).internal.b);
     }
     else if (op == "PPCreateDocument")
     {
@@ -3853,7 +3853,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
 
 void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, int &var_decl_counter)
 {
-    int i = 0;
+    unsigned int i = 0;
     for (i = 1; i < qp->size(); i++) 
     {
         string prolog_decl(qp->at(i).internal.list->at(0).internal.symb);
@@ -4018,7 +4018,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
 
             // FIXME: Check lexical representation for QName
 
-            int k = 0, q = 0;
+            unsigned int k = 0, q = 0;
             for (k = 1; k < qp->at(i).internal.list->size(); k++)
             {
                 if (qp->at(i).internal.list->at(k).type != SCM_LIST)
@@ -4088,7 +4088,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
 
 PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_mode)
 {
-    int i = 0, j = 0;
+    unsigned int i = 0, j = 0;
 
     if (   lst->size() < 3
         || lst->at(0).type != SCM_SYMBOL 

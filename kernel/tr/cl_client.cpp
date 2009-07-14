@@ -230,7 +230,7 @@ se_ostream* command_line_client::get_se_ostream()
 
 void command_line_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)
 {
-    int i;
+    unsigned int i;
 
     try {
         for(i=0; i<filenames->size(); i++)
@@ -296,14 +296,14 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
 
     } catch (ANY_SE_EXCEPTION) {
         // close all files from cf_vec
-        for (int j=0; j<i; j++)
+        for (unsigned int j=0; j<i; j++)
         {
-            if (cf_vec->at(i).f && (fclose(cf_vec->at(i).f) != 0))
+            if (cf_vec->at(j).f && (fclose(cf_vec->at(j).f) != 0))
             {
-                cf_vec->at(i).f = NULL;
+                cf_vec->at(j).f = NULL;
                 throw USER_EXCEPTION(SE3020);
             }  
-            cf_vec->at(i).f = NULL;  
+            cf_vec->at(j).f = NULL;  
         }
         throw;
     } //try       

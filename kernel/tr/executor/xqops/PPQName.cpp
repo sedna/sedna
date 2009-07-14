@@ -543,7 +543,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
     if (first_time)
     {
         tuple_cell prefix_tc;
-        char *prefix = "";
+        const char *prefix = "";
         child_prefix.op->next(t);
         if (!t.is_eos())
         {
@@ -579,8 +579,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
         std::vector<xmlns_ptr> xmlns;
         get_in_scope_namespaces(node, xmlns, cxt);
 
-        int i = 0;
-        for (i = 0; i < xmlns.size(); ++i)
+        for (unsigned int i = 0; i < xmlns.size(); ++i)
         {
             const char *pr = (xmlns[i]->prefix ? xmlns[i]->prefix : "");
             if (strcmp(pr, prefix) == 0)
@@ -679,7 +678,7 @@ void PPFnInScopePrefixes::next  (tuple &t)
         pos = 0;
     }
 
-    if (pos < xmlns.size())
+    if (pos < (signed)xmlns.size())
     {
         xmlns_ptr ns = xmlns[pos++];
         if (ns->prefix)

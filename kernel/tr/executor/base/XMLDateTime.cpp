@@ -1907,8 +1907,6 @@ void XMLDateTime::normalizeDateTime()
  */
 void XMLDateTime::normalizeDateTimeWeak()
 {
-
-    int negate = (getValue(utc) == UTC_POS)? -1: 1;
     int temp;
     int carry;
     
@@ -1949,7 +1947,6 @@ void XMLDateTime::normalizeDateTimeWeak()
     return;
 }
 
-/**
 /**
  * If timezone present - normalize dateTime  [E Adding durations to dateTimes]
  *
