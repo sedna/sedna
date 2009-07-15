@@ -167,6 +167,11 @@
  *                         System File Includes Section
  *                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *===========================================================================*/
+#if (defined(_WIN32) && defined(__cplusplus))
+/* To avod problems with dependencies generation on Cygwin environment */
+#include <sstream>
+#endif 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

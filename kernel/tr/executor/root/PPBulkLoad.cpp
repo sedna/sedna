@@ -132,7 +132,7 @@ void PPBulkLoad::execute()
             if (!write_to_logical_log) hl_disable_log();
 
             doc_root = loadfile(cf_vec[0].f, 
-                                dynamic_context::ostr(), 
+                                *tr_globals::client->get_se_ostream(),
                                 tc_document.get_str_mem(), 
                                 boundary_space_strip, 
                                 need_cp, 
@@ -159,7 +159,7 @@ void PPBulkLoad::execute()
             if (!write_to_logical_log) hl_disable_log();
 
             doc_root = loadfile(cf_vec[0].f, 
-                                dynamic_context::ostr(), 
+                                *tr_globals::client->get_se_ostream(),
                                 tc_document.get_str_mem(), 
                                 tc_collection.get_str_mem(), 
                                 boundary_space_strip, 

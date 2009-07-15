@@ -58,9 +58,6 @@ static_context::static_context()
     tmp=xmlns_touch("fn", "http://www.w3.org/2005/xpath-functions");
     insc_ns["fn"].push_back(tmp);
     ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-    //tmp=xml_ns::init("http://www.w3.org/2005/04/xpath-datatypes","xdt",false);
-    //insc_ns["xdt"].push_back(tmp);
-    //ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
     tmp=xmlns_touch("local", "http://www.w3.org/2005/xquery-local-functions");
     insc_ns["local"].push_back(tmp);
     ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
@@ -404,10 +401,7 @@ bool dynamic_context::datetime_initialized = false;
 
 StrMatcher dynamic_context::stm;
 
-se_ostream* dynamic_context::m_ostr = NULL;
-se_ostream* dynamic_context::m_dostr = NULL;
-
-void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_cxts_num_, se_ostream& s)
+void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_cxts_num_)
 {
     funct_cxt.set(_funcs_num_);
     glb_var_cxt.set(_var_decls_num_);
@@ -422,11 +416,6 @@ void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_c
     stm.add_str("<","&lt;");
     stm.add_str("&","&amp;");
     stm.add_str("\"","&quot;", pat_attribute);
-    //stm.add_str("\'","&apos;", pat_attribute);
-
-    m_ostr = &s;
-    // firstly debug ostream is null; it is created if needed
-    m_dostr = NULL;
 }
 
 void dynamic_context::static_clear()
@@ -446,12 +435,6 @@ void dynamic_context::static_clear()
     st_cxts_pos = 0;
     delete [] st_cxts;
     st_cxts = NULL;
-
-    if (m_dostr)
-    {
-        delete m_dostr;
-        m_dostr = NULL;
-    }
 }
 
 
@@ -468,13 +451,6 @@ void dynamic_context::set_datetime()
     }
 }
 
-se_ostream& dynamic_context::dostr() 
-{ 
-    if (!m_dostr)
-        m_dostr = m_ostr->get_debug_ostream();
-
-    return *m_dostr;
-}
 
 int dynamic_context::stack_trace_debug;
 

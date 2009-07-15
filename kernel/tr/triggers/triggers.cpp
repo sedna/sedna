@@ -747,10 +747,15 @@ trigger_cell_xptr find_trigger(const char* title)
 xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parameter_old, xptr parameter_where)
 {
     xptr res_xptr = XNULL;
-    se_nullostream nulls;
     PPQueryEssence* qep_tree = NULL;
     qep_subtree* qep_subtree = NULL;
-    bool is_qep_opened = false, is_subqep_opened = false, is_qep_built = false, is_subqep_built = false;
+
+    bool is_qep_opened    = false; 
+    bool is_subqep_opened = false; 
+    bool is_qep_built     = false; 
+    bool is_subqep_built  = false;
+    bool output_enabled   = tr_globals::client->disable_output();
+
     std::vector<built_trigger_action> built_trigger_actions_vec;
     typedef std::pair< std::string, std::vector<built_trigger_action> > trigger_actions_pair;
     lock_mode cur_lock = local_lock_mrg->get_cur_lock_mode(); // push current lock level to restore it after updates/query execution
@@ -774,7 +779,7 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
                 if(strstr(trac->statement, "query") != NULL)
                 {
                     bta.action_qep_subtree = NULL;
-                    qep_tree = bta.action_qep_tree = build_qep(trac->statement, nulls, xml);
+                    qep_tree = bta.action_qep_tree = build_qep(trac->statement);
                     is_qep_built = true;
                     qep_tree->open();
                     is_qep_opened = true;
@@ -792,12 +797,16 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
                 trac = trac->next;
             }
         }
-        catch(SednaUserException &e) {
-        if (is_qep_built)
-            delete_qep(qep_tree);
-        if (is_subqep_built)
-            delete_qep(qep_subtree);
-        throw e;}
+        catch(SednaUserException &e) 
+        {
+            if (is_qep_built)
+                delete_qep(qep_tree);
+            if (is_subqep_built)
+                delete_qep(qep_subtree);
+            if(output_enabled) 
+                tr_globals::client->enable_output();
+            throw e;
+        }
         
         mapPair = built_trigger_actions.insert(trigger_actions_pair(std::string(trigger_title), built_trigger_actions_vec));
         mapIter = mapPair.first;
@@ -820,8 +829,8 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
     if (action_returns_value)
     {
       /* Since we truncate PPQueryRoot in create_trigger we must set lm_s
-          explicitly there. If not we will receive nested updates exception
-          even if execute read only query there.
+         explicitly there. If not we will receive nested updates exception
+         even if execute read only query there.
         */
       local_lock_mrg->lock(lm_s);
 
@@ -840,6 +849,8 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
           qep_subtree->tree.op->next(t);
     }
     else res_xptr = XNULL;
+    
+    if(output_enabled) tr_globals::client->enable_output();
 
     current_nesting_level--;
     local_lock_mrg->lock(cur_lock);

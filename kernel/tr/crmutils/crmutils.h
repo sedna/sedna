@@ -86,9 +86,13 @@ void print_node_to_buffer(xptr node,
 /// Load utils 
 ////////////////////////////////////////////////////////////////////////////////
 
-xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp, bool print_progress);
-xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress);
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri, 
+              bool stripped, int& need_cp, 
+              bool print_progress);
 
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri, 
+              const char * collection, bool stripped, int& need_cp, 
+              bool print_progress);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Debug utils 

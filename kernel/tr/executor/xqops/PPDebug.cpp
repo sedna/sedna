@@ -3,17 +3,20 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
 #include <string>
-#include "tr/executor/xqops/PPDebug.h"
+
+#include "common/sedna.h"
 #include "common/u/uutils.h"
+
+#include "tr/executor/xqops/PPDebug.h"
+#include "tr/tr_globals.h"
 
 
 PPDebug::PPDebug(dynamic_context *_cxt_,
                  const PPOpIn &_child_,
                  const str_counted_ptr &_child_name_) : PPIterator(_cxt_),
                                                         child(_child_),
-                                                        dostr(dynamic_context::dostr()),
+                                                        dostr(tr_globals::client->get_debug_ostream()),
                                                         child_name(_child_name_)
 {
 }
@@ -23,7 +26,7 @@ PPDebug::PPDebug(dynamic_context *_cxt_,
                  const str_counted_ptr &_child_name_,
                  const str_counted_ptr &_child_info_) : PPIterator(_cxt_),
                                                         child(_child_),
-                                                        dostr(dynamic_context::dostr()),
+                                                        dostr(tr_globals::client->get_debug_ostream()),
                                                         child_name(_child_name_),
                                                         child_info(_child_info_)
 {
@@ -79,9 +82,9 @@ void PPDebug::next(tuple &t)
         
         message += "\n";
         
-        dostr.set_debug_info_type(se_QueryDebug);
-        dostr << message.c_str();
-        dostr.flush();
+        dostr->set_debug_info_type(se_QueryDebug);
+        (*dostr) << message.c_str();
+        dostr->flush();
 
         throw;
     }

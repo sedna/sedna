@@ -676,7 +676,7 @@ void dt_pi (void *userData, const char *target, const char *data)
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     parent=removeIndirection(par_ind);
 }
-void parse_load(FILE* f, se_ostream &s)
+void parse_load(FILE* f, se_ostream &ostr)
 {
     XML_Parser p = XML_ParserCreateNS(NULL,SEPARATOR);
     if (! p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser\n",true);
@@ -689,8 +689,8 @@ void parse_load(FILE* f, se_ostream &s)
     XML_SetProcessingInstructionHandler(p, dt_pi);
     XML_SetCharacterDataHandler(p, data);
     //XML_SetCdataSectionHandler(p,dt_cdata_start,dt_cdata_end);
+    XML_SetUserData (p, &ostr);
 
-    XML_SetUserData (p, &s);
     cdata_mode=false;
     len = fread(Buff, 1, BUFFSIZE, f);
     if (ferror(f)) 
@@ -828,7 +828,7 @@ void parse_schema(FILE* f)
 
 }
 
-xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp, bool print_progress)
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped,int& need_cp, bool print_progress)
 {
     //test_cnt=0;
     is_coll=false;
@@ -847,10 +847,10 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp
         parse_schema(f);
         fseek (f, 0, SEEK_SET);
         docnode = ((n_dsc*) XADDR(docnode))->indir;
-        parse_load(f, s);
+        parse_load(f, ostr);
     
         if (print_p)
-            s <<"100%" << endl;
+            ostr <<"100%" << endl;
 
         nodescnt=0;
         curcnt=0;
@@ -880,7 +880,7 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp
     return docnode;
 }
 
-xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress)
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress)
 {
     is_coll=true;
     if (!print_progress) print_p = print_progress;
@@ -903,10 +903,10 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, b
         parse_schema(f);
         fseek(f, 0, SEEK_SET);
         docnode = ((n_dsc*) XADDR(docnode))->indir;
-        parse_load (f, s);
+        parse_load (f, ostr);
     
         if (print_p)
-            s <<"100%" << endl;
+            ostr <<"100%" << endl;
     
         nodescnt=0;
         curcnt=0;

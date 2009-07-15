@@ -3261,7 +3261,7 @@ void make_pp_fun(scheme_list *lst, static_context *cxt, function_declaration &fd
     fd.op = make_pp_op(&dc, lst->at(4).internal.list).op;
 }
 
-PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print print_mode)
+PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt)
 {
     if (   qe->size() < 1 
         || qe->at(0).type != SCM_SYMBOL)
@@ -3281,8 +3281,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
         dynamic_context *cxt = se_new dynamic_context(st_cxt, var_cxt_size);
 
         return se_new PPQueryRoot(cxt,
-                               make_pp_op(cxt, qe->at(2).internal.list),
-                               print_mode);
+                                  make_pp_op(cxt, qe->at(2).internal.list));
     }
     else if (op == "PPInsertTo")
     {
@@ -4086,7 +4085,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
     }
 }
 
-PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_mode)
+PPQueryEssence *scheme_list2qep(scheme_list *lst)
 {
     unsigned int i = 0, j = 0;
 
@@ -4145,7 +4144,7 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
     }
 
     // set static structures of dynamic_context
-    dynamic_context::static_set(funcs_num, var_decls_num, lst->size() - 2, s);
+    dynamic_context::static_set(funcs_num, var_decls_num, lst->size() - 2);
 
     // process all modules and query prolog
     int function_counter = 0;
@@ -4159,10 +4158,10 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
         make_pp_qp(lst->at(i).internal.list, st_cxt, function_counter, var_decl_counter);
     }
 
-    return make_pp_qe(qe, st_cxt, print_mode);
+    return make_pp_qe(qe, st_cxt);
 }
 
-PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode)
+PPQueryEssence *build_qep(const char* por)
 {
     scheme_list *qep_tree_in_scheme_lst = NULL;
 
@@ -4170,15 +4169,15 @@ PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode)
     qep_tree_in_scheme_lst = make_tree_from_scheme_list(por);
 
     /// Constructs QEP tree
-    PPQueryEssence *qep = scheme_list2qep(qep_tree_in_scheme_lst, s, print_mode);
+    PPQueryEssence *qep = scheme_list2qep(qep_tree_in_scheme_lst);
     delete_scheme_list(qep_tree_in_scheme_lst);
     return qep;
 }
 
-PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode)
+PPQueryEssence *build_qep(scheme_list *por)
 {
     /// Constructs QEP tree
-    PPQueryEssence *qep = scheme_list2qep(por, s, print_mode);
+    PPQueryEssence *qep = scheme_list2qep(por);
     return qep;
 }
 

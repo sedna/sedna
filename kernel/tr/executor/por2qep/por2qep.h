@@ -10,7 +10,6 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPOperations.h"
 #include "tr/executor/por2qep/scheme_tree.h"
-#include "tr/crmutils/crmbase.h"
 
 struct qep_subtree
 {
@@ -18,9 +17,8 @@ struct qep_subtree
     PPOpIn tree;
 };
 
-
-PPQueryEssence *build_qep(const char*  por, se_ostream& s, t_print print_mode = xml);
-PPQueryEssence *build_qep(scheme_list* por, se_ostream& s, t_print print_mode = xml);
+PPQueryEssence *build_qep(const char*  por);
+PPQueryEssence *build_qep(scheme_list* por);
 qep_subtree    *build_qep(const char*  por, int cxt_size);
 
 void delete_qep(PPQueryEssence *qep);

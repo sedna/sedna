@@ -1,10 +1,17 @@
-#include "tr/crmutils/node_utils.h"
-#include "tr/executor/base/PPBase.h"
-//using namespace tr_globals;
+/*
+ * File:  node_utils.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include <map>
 #include <vector>
 #include <set>
-//using namespace std;
+
+#include "common/sedna.h"
+
+#include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/PPBase.h"
+
 typedef std::map<std::string,xmlns_ptr> nms_map;
 void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dynamic_context *cxt)
 {   
@@ -86,12 +93,15 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
     }
     result.push_back(xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace"));
 }
+
 void get_in_scope_namespaces_broad(xptr node,std::vector<xmlns_ptr> &result)
 {
 }
+
 void get_namespaces_for_inherit(xptr node,std::vector<xmlns_ptr> &result)
 {
 }
+
 xmlns_ptr generate_pref(int ctr,const char* uri,dynamic_context *cxt)
 {
     char x[12] = "XXX";

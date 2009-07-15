@@ -14,8 +14,6 @@
 #include "tr/xqp/XQuerytoLR.h"
 
 void on_user_statement_begin(QueryType queryType,
-                             t_print output_type,
-                             se_ostream* s,
                              const char* query_str,
                              PPQueryEssence* &qep_tree, 
                              StmntsArray* &st);

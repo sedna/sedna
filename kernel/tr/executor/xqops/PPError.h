@@ -55,10 +55,9 @@ class PPFnTrace : public PPIterator
 protected:
     // obtained parameters and local data
     PPOpIn value_child, label_child;
-    se_ostream &dostr;
     tuple_cell tc;
     bool first_time;
-    se_ostream *debug_ostream;
+    se_ostream *dostr;
 
     void children(PPOpIn &_value_child_, PPOpIn &_label_child_) 
     { 
