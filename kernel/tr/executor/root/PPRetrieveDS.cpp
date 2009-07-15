@@ -9,6 +9,7 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
+#include "tr/tr_globals.h"
 
 
 PPRetrieveDS::PPRetrieveDS(PPOpIn _name_,
@@ -68,7 +69,7 @@ void PPRetrieveDS::execute()
     	db_ent->type = dbe_document;
         auth_for_query(db_ent);
         local_lock_mrg->put_lock_on_document(tc.get_str_mem());
-        print_descriptive_schema(tc.get_str_mem(), dynamic_context::ostr());
+        print_descriptive_schema(tc.get_str_mem(), *tr_globals::client->get_se_ostream());
     }
     else
     { 
@@ -77,7 +78,7 @@ void PPRetrieveDS::execute()
     	db_ent->type = dbe_collection;
         auth_for_query(db_ent);
         local_lock_mrg->put_lock_on_collection(tc.get_str_mem());
-        print_descriptive_schema_col(tc.get_str_mem(), dynamic_context::ostr());
+        print_descriptive_schema_col(tc.get_str_mem(), *tr_globals::client->get_se_ostream());
     }
 }
 

@@ -366,9 +366,9 @@ se_debug_socketostream::se_debug_socketostream(se_socketostream& sostream)
     _res_msg->body[_type_offset] = 0;    
 
     /* Body contains type          - 4 bytes, 
-    *               string format - 1 byte, 
-    *               string length - 4 bytes 
-    * and a string itself 
+    *                string format - 1 byte, 
+    *                string length - 4 bytes 
+    *  and a string itself 
     */
     _res_msg->length = 5 + _type_offset;
 }

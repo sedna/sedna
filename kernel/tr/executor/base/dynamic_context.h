@@ -7,12 +7,12 @@
 #ifndef _DYNAMIC_CONTEXT_H
 #define _DYNAMIC_CONTEXT_H
 
-#include "common/sedna.h"
-
 #include <vector>
 #include <string>
 #include <list>
 #include <map>
+
+#include "common/sedna.h"
 
 #include "tr/executor/base/SequenceType.h"
 #include "tr/crmutils/str_matcher.h"
@@ -330,13 +330,7 @@ public:
     /// string matcher (symbol substitution in result output)
     static StrMatcher stm;
 
-    /// output stream for obtained result
-    static se_ostream* m_ostr;
-    /// debug output stream (for fn:trace, our debug features, etc.)
-    static se_ostream* m_dostr;
-
-
-    static void static_set(int _funcs_num_, int _var_decls_num_, int _st_cxts_num_, se_ostream& s);
+    static void static_set(int _funcs_num_, int _var_decls_num_, int _st_cxts_num_);
     static void static_clear();
 
 
@@ -378,9 +372,6 @@ public:
     }
 
     static void set_datetime();
-
-    static se_ostream& ostr() { return *m_ostr; }
-    static se_ostream& dostr();
 
     /// Session parameters (they are temporally placed in the dynamic context)
     /// print call stack in case of error

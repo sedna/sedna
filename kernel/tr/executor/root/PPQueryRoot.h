@@ -12,32 +12,32 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/crmutils/crmbase.h"
 
-
 class PPQueryRoot : public PPQueryEssence
 {
 private:
     PPOpIn child;
     tuple data;
     dynamic_context *cxt;
+    bool first;
     t_print print_mode;
-	bool first;
-
+    se_ostream* output_stream;
 
 public:
     PPQueryRoot(dynamic_context *_cxt_,
-                PPOpIn _child_,
-                t_print _print_mode_);
+                PPOpIn _child_);
     virtual ~PPQueryRoot();
 	
     void open();
     void close();
     void execute();
-	// returns true if successfuly got next item, false - if result is over
+
+    /* Returns true if successfuly got next item, 
+     * false - if result is over.
+     */
     bool next(); 
     bool supports_next() { return true; }
     bool is_update() { return false; }
 };
 
 
-#endif
-
+#endif /* _PPQUERYROOT_H */

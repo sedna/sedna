@@ -3,11 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "common/sedna.h"
+
 #include "tr/crmutils/node_utils.h"
 #include "tr/locks/locks.h"
 #include "tr/pstr/pstr.h"
 #include "tr/structures/schema.h"
 #include "tr/crmutils/crmutils.h"
+
 using namespace std;
 
 /*returns the next attribute sibling by document order*/

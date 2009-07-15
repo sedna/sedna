@@ -21,6 +21,7 @@
 #include "tr/tr_common_funcs.h"
 #include "tr/vmm/vmm.h"
 
+
 #ifndef _WIN32
 #define _atoi64 atoll
 #endif

@@ -19,6 +19,7 @@
 #include "tr/tr_globals.h"
 #include "tr/tr_common_funcs.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/crmutils/exec_output.h"
 
 #define BATCH_DELIMITER "\\"
 
@@ -27,7 +28,11 @@ using namespace std;
 command_line_client::command_line_client(int argc, char** argv)
 {
     char buf[1024];
-    s = NULL;
+    cur_s = NULL;
+    dbg_s = NULL;
+    nul_s = NULL;
+    out_s = NULL;
+    recreate_debug_stream = true;
 
     /* Load metadata transaction */
     if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
@@ -156,16 +161,12 @@ void command_line_client::init()
         cmd.type = se_Execute;
         cmd.length = stmnts_array[i].size();
         cl_cmds.push_front(cmd);
-
     }
 
     statement_index = 0;
-    //put tr begin
     cmd.type = se_BeginTransaction;
     cmd.length = 0;
     cl_cmds.push_front(cmd);
-
-    //put authenticate transaction on top of stack
 
     cmd.type = se_CommitTransaction;//commit tr
     cmd.length = 0;
@@ -179,19 +180,27 @@ void command_line_client::init()
     cmd.length = 0;
     cl_cmds.push_front(cmd);
 
-    s = se_new se_stdlib_ostream(std::cout);
-    //  u_ftime(&ttt2);
-    //  cerr << "init!!!!!!!!!!!!: " << to_string(ttt2 - ttt1).c_str() << endl;
+    out_s = se_new se_stdlib_ostream(std::cout);
+    nul_s = se_new se_nullostream();
+    cur_s = out_s;
 }
 
 
 void command_line_client::release()
 {
-    if (s != NULL) 
-    {
-        delete s;
-        s = NULL;
+    if (out_s != NULL) {
+        delete out_s;
+        out_s = NULL;
     }
+    if (dbg_s != NULL) {
+        delete dbg_s;
+        dbg_s = NULL;
+    }
+    if (nul_s != NULL) {
+        delete nul_s;
+        nul_s = NULL; 
+    }
+    cur_s = NULL;
 }
 
 void command_line_client::read_msg(msg_struct *msg)
@@ -211,21 +220,13 @@ char* command_line_client::get_query_string(msg_struct *msg)
     return (char*)stmnts_array[statement_index++].c_str();
 }
 
-t_print command_line_client::get_result_type(msg_struct *msg)
-{
-    return xml;
-}
-
 
 QueryType command_line_client::get_query_type()
 {
-    if (tr_globals::query_type == TL_POR) return TL_POR;
-    else return TL_ForSemAnal;
-}
-
-se_ostream* command_line_client::get_se_ostream()
-{
-    return s;
+    if (tr_globals::query_type == TL_POR) 
+        return TL_POR;
+    else 
+        return TL_ForSemAnal;
 }
 
 void command_line_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)
@@ -352,10 +353,6 @@ void command_line_client::respond_to_client(int instruction)
     }
 }
 
-void command_line_client::begin_item()
-{
-}
-
 void command_line_client::end_of_item(qepNextAnswer exist_next)
 {
     if (exist_next == se_next_item_exists)
@@ -375,22 +372,6 @@ void command_line_client::authentication_result(bool res, const string& body)
         d_printf2("\nAuthentication failed: %s\n", body.c_str()); 
 }
 
-
-
-
-void command_line_client::get_session_parameters()
-{
-}
-
-void command_line_client::set_session_options(msg_struct *msg)
-{
-    // call static some object method to set session options
-}
-
-void command_line_client::reset_session_options()
-{
-    //obj.reset_options();
-}
 
 void command_line_client::process_unknown_instruction(int instruction, bool in_transaction)
 {
@@ -449,7 +430,6 @@ void command_line_client::show_time(string qep_time)
     d_printf2("Execution time of the latest query %s\n",qep_time.c_str());
 }
 
-
 void command_line_client::write_user_query_to_log()
 {
     char buf[1000000];
@@ -477,7 +457,32 @@ void command_line_client::write_user_query_to_log()
 
 }
 
-void command_line_client::set_keep_alive_timeout(int sec)
+se_ostream* 
+command_line_client::get_debug_ostream() { 
+
+    if (NULL == dbg_s || recreate_debug_stream) 
+    {
+        if(dbg_s != NULL) 
+        {
+            delete dbg_s;
+            dbg_s = NULL;
+            recreate_debug_stream = false;
+        }
+        dbg_s = cur_s->get_debug_ostream();
+    }
+    return dbg_s;
+}
+
+bool
+command_line_client::disable_output() {
+    bool res = is_output_enabled();
+    cur_s = nul_s;
+    return res;
+}
+
+void 
+command_line_client::user_statement_begin()
 {
-    /// This function is intendent to be used in socket client.
+    enable_output();
+    recreate_debug_stream = true;
 }

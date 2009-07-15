@@ -7,6 +7,7 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPError.h"
 #include "tr/crmutils/crmutils.h"
+#include "tr/tr_globals.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error
@@ -138,7 +139,7 @@ PPFnTrace::PPFnTrace(dynamic_context *_cxt_,
                      PPOpIn _label_child_) : PPIterator(_cxt_),
                                              value_child(_value_child_),
                                              label_child(_label_child_),
-                                             dostr(dynamic_context::dostr()),
+                                             dostr(tr_globals::client->get_debug_ostream()),
                                              first_time(true)
 {
 }
@@ -199,10 +200,10 @@ void PPFnTrace::next(tuple &t)
         first_time = true;
     else 
     {
-        dostr.set_debug_info_type(se_QueryTrace);
-        dostr << "\nSEDNA TRACE " << tc.get_str_mem() << "\n";
-        print_tuple(t, dostr, cxt, xml, is_first, true);
-        dostr.flush();
+        dostr->set_debug_info_type(se_QueryTrace);
+        (*dostr) << "\nSEDNA TRACE " << tc.get_str_mem() << "\n";
+        print_tuple(t, *dostr, cxt, xml, is_first, true);
+        dostr->flush();
     }
 
     RESTORE_CURRENT_PP;

@@ -5,7 +5,6 @@
 
 #ifndef __NODE_UTILS_H
 #define __NODE_UTILS_H
-/*Search utils*/
 
 #include <vector>
 #include <set>
@@ -270,5 +269,6 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
 void get_in_scope_namespaces_broad(xptr node,std::vector<xmlns_ptr> &result,dynamic_context *cxt);
 void get_namespaces_for_inherit(xptr node,std::vector<xmlns_ptr> &result);
 xmlns_ptr generate_pref(int ctr,const char* uri,dynamic_context *cxt);
-#endif
+
+#endif /* __NODE_UTILS_H */
 

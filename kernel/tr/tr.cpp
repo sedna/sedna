@@ -323,9 +323,11 @@ int TRmain(int argc, char *argv[])
                                     // close previous statement
                                     on_user_statement_end(qep_tree, st);
 
+                                    /* Adjust client for the new statement */
+                                    client->set_result_type(&client_msg);
+                                    client->user_statement_begin();
+                                    
                                     on_user_statement_begin(client->get_query_type(), 
-                                                            client->get_result_type(&client_msg), 
-                                                            client->get_se_ostream(), 
                                                             client->get_query_string(&client_msg), 
                                                             qep_tree, st);
 
@@ -341,7 +343,7 @@ int TRmain(int argc, char *argv[])
                                     }
                                     else if (!(qep_tree->supports_next()))
                                     {
-                                        client->begin_item();
+                                        client->respond_to_client(se_QuerySucceeded);
                                         GET_TIME(&t1_exec);
                                         item_status = execute(qep_tree);
                                         GET_TIME(&t2_exec);
@@ -352,14 +354,13 @@ int TRmain(int argc, char *argv[])
                                     }
                                     else
                                     {
-                                        client->begin_item();
+                                        client->respond_to_client(se_QuerySucceeded);
                                         GET_TIME(&t1_exec);
                                         item_status = next(qep_tree);
                                         GET_TIME(&t2_exec);
 
                                         client->end_of_item(item_status);
-                                        if (item_status != se_next_item_exists)
-                                        {
+                                        if (item_status != se_next_item_exists) {
                                             on_user_statement_end(qep_tree, st);
                                         }
                                     }

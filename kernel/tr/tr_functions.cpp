@@ -8,6 +8,7 @@
 #include "common/base.h"
 #include "common/u/uutils.h"
 #include "common/ipc_ops.h"
+#include "common/sp.h"
 
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
@@ -15,7 +16,6 @@
 #include "tr/tr_functions.h"
 #include "tr/pq/pq.h"
 #include "tr/log/log.h"
-#include "tr/crmutils/exec_output.h"
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/updates/updates.h"
@@ -35,24 +35,19 @@ static bool is_qep_opened = false;
 static bool is_stmt_built = false;
 static msg_struct sp_msg;
 
-void on_kernel_statement_begin(scheme_list *por,
-                               se_ostream* s, 
-                               t_print output_type,
-                               PPQueryEssence* &qep_tree)
+static void 
+on_kernel_statement_begin(scheme_list *por,
+                          PPQueryEssence* &qep_tree)
 {
-    // !!! Additional code review is needed
-    // if qep_tree->open() below throws exception, than we will delete 'global' qep_tree 
-    // in catch block instead of 'local' qep_tree declared in this function. The possible 
-    // solution is to avoid using 'local' qep_tree and pass 'global' qep_tree here by reference
-    // (example: create trigger for inexisting document)
     indirection_table_on_statement_begin();
     xs_decimal_t::init();
-    qep_tree = build_qep(por, *s, output_type);
+    qep_tree = build_qep(por);
     is_qep_built = true;
     qep_tree->open();
     is_qep_opened = true;
 }
 
+static 
 void on_kernel_statement_end(PPQueryEssence *&qep_tree)
 {
     RESET_CURRENT_PP;
@@ -71,8 +66,6 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
         //  TODO: We should carefully clear virtual root here. To review it later.
         clear_virtual_root();
 
-        //tr_globals::st_ct.clear_context();
-
         tr_globals::estr_global.clear();
         stmt_str_buf::reset();
         tr_globals::tmp_op_str_buf.reset();
@@ -89,8 +82,6 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
 
 
 void on_user_statement_begin(QueryType queryType,
-                             t_print output_type,
-                             se_ostream* s,
                              const char* query_str,
                              PPQueryEssence* &qep_tree, 
                              StmntsArray* &st)
@@ -98,16 +89,17 @@ void on_user_statement_begin(QueryType queryType,
     elog_long(EL_LOG, "User query:\n", query_str);
     st = prepare_stmnt(queryType, query_str); //parse and build phys representation
     is_stmt_built = true;
-    se_nullostream auth_s;
 
     internal_auth_switch = BLOCK_AUTH_CHECK; //turn off security checkings
 
+    bool output_enabled = client->disable_output();
     for (unsigned int i = 0; i < st->stmnts.size() - 1; i++)
     {
-        on_kernel_statement_begin(st->stmnts[i].stmnt, &auth_s, xml, qep_tree);
+        on_kernel_statement_begin(st->stmnts[i].stmnt, qep_tree);
         execute(qep_tree);
         on_kernel_statement_end(qep_tree);
     }
+    if(output_enabled) client->enable_output();
 
     if (st->stmnts.size() >= 3) clear_authmap(); // security metadata was updated - clear auth map
 
@@ -117,7 +109,7 @@ void on_user_statement_begin(QueryType queryType,
     triggers_on_statement_begin();
 #endif
 
-    on_kernel_statement_begin(st->stmnts.back().stmnt, s, output_type, qep_tree);
+    on_kernel_statement_begin(st->stmnts.back().stmnt, qep_tree);
 }
 
 void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
@@ -141,9 +133,6 @@ void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
     clear_current_statement_authmap();
 }
 
-
-
-
 void set_session_finished()
 {
     d_printf2("sid=%d\n", sid);
@@ -153,8 +142,6 @@ void set_session_finished()
 
     GOV_CONFIG_GLOBAL_PTR -> sess_vars[sid].idfree = 2;
 }
-
-
 
 qepNextAnswer execute(PPQueryEssence* qep_tree)
 {
@@ -195,23 +182,26 @@ void do_authentication()
     if(!authentication || first_transaction) return;
 
     string security_metadata_document = string(SECURITY_METADATA_DOCUMENT);	
-    string auth_query_in_por = "(query (query-prolog) (PPQueryRoot 2 (1 (PPIf (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_psw\" \"\") (1 (PPReturn (0) (1 (PPAbsPath (document \"" + security_metadata_document + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\")))))) (1 (PPPred1 (1) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 0)))) () (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 1)))) (1 (PPConst \"" + string(tr_globals::login) +  "\" !xs!string)))) 0)) -1)))) (1 (PPConst \"" + string(tr_globals::password) + "\" !xs!string)))) (1 (PPNil)) ((1 4) (PPFnError ((1 4) (PPFnQName (1 (PPConst \"http://www.modis.ispras.ru/sedna\" !xs!string)) (1 (PPConst \"SE3053\" !xs!string)))) (1 (PPConst \"Authentication failed.\" !xs!string))))))))";
+    string auth_query_in_por = "(query (query-prolog) (PPQueryRoot 2 (1 (PPIf (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_psw\" \"\") (1 (PPReturn (0) (1 (PPAbsPath (document \"" + security_metadata_document + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\")))))) (1 (PPPred1 (1) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 0)))) () (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 1)))) (1 (PPConst \"" + string(login) +  "\" !xs!string)))) 0)) -1)))) (1 (PPConst \"" + string(password) + "\" !xs!string)))) (1 (PPNil)) ((1 4) (PPFnError ((1 4) (PPFnQName (1 (PPConst \"http://www.modis.ispras.ru/sedna\" !xs!string)) (1 (PPConst \"SE3053\" !xs!string)))) (1 (PPConst \"Authentication failed.\" !xs!string))))))))";
     scheme_list *auth_query_in_scheme_lst = NULL;
     PPQueryEssence *qep_tree = NULL;
-    se_nullostream s;
 
     auth_query_in_scheme_lst = make_tree_from_scheme_list(auth_query_in_por.c_str());
+    bool output_enabled = false;
 
     try {
         internal_auth_switch = BLOCK_AUTH_CHECK;
-        on_kernel_statement_begin(auth_query_in_scheme_lst, &s, xml, qep_tree);
+        output_enabled = client->disable_output();
+        on_kernel_statement_begin(auth_query_in_scheme_lst, qep_tree);
         execute(qep_tree);
         on_kernel_statement_end(qep_tree);
+        if(output_enabled) client->enable_output();
         internal_auth_switch = DEPLOY_AUTH_CHECK;
     }
     catch (SednaUserException &e) {
 
         on_kernel_statement_end(qep_tree);
+        if(output_enabled) client->enable_output();
         delete_scheme_list(auth_query_in_scheme_lst);
         throw USER_EXCEPTION(SE3053);
     }
