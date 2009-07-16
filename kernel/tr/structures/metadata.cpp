@@ -247,13 +247,13 @@ xptr insert_document_into_collection(const char *collection_name, const char *ur
 
 col_schema_node_xptr find_collection(const char *collection_name) {
     metadata_cptr mdc(collection_name, false);
-    if (mdc.found()) return mdc->snode;
+    if (mdc.found() && (mdc->get_magic() == col_schema_node_object::magic)) return mdc->snode;
     else return XNULL;
 }
 
 doc_schema_node_xptr find_document(const char *document_name) {
     metadata_cptr mdc(document_name, false);
-    if (mdc.found()) return mdc->snode;
+    if (mdc.found() && (mdc->get_magic() == doc_schema_node_object::magic)) return mdc->snode;
     else return XNULL;
 }
 
