@@ -65,6 +65,28 @@ typedef sedna::XQueryParser::token token;
     yylval->isUpper = 0; \
 }
 
+    /* needed to restore location on yyless; we just rescan buffer in this case */
+#define AMEND_LOC_YYLESS \
+{\
+    int last_endl = -1;\
+    \
+    yylloc->end = yylloc->begin;\
+    for (int i = 0; i < yyleng; i++) \
+        if (yytext[i] == '\n')  \
+        { \
+            yylloc->lines(1);\
+            last_endl = i;\
+        }\
+    \
+    yylloc->columns(yyleng - last_endl - 1);\
+}
+
+    /* needed to restore location on yymore; we just reset location since yymore means continue for buffer */
+#define AMEND_LOC_YYMORE \
+{\
+    yylloc->end = yylloc->begin;\
+}
+
 #define IS_WS(c) (c == '\n' || c == '\r' || c== '\t' || c == ' ')
 
 static std::string cdata_cont; // we accumulate CDATA content here
@@ -264,61 +286,73 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
     /* Axis rules for 'axis':: Note that 'axis'<Space>:: is parsed normally. This is to avoid conflict with ({NCName}|"*")":"[:=] rule */
 "child::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::CHILD;
 }
 
 "descendant::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::DESCENDANT;
 }
 
 "attribute::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::ATTRIBUTE;
 }
 
 "self::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::SELF;
 }
 
 "descendant-or-self::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::DESCENDANT_OR_SELF;
 }
 
 "following-sibling::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::FOLLOWING_SIBLING;
 }
 
 "following::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::FOLLOWING;
 }
 
 "parent::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::PARENT;
 }
 
 "ancestor::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::ANCESTOR;
 }
 
 "preceding-sibling::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::PRECEDING_SIBLING;
 }
 
 "preceding::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::PRECEDING;
 }
 
 "ancestor-or-self::" {
     yyless(yyleng - 2);
+    AMEND_LOC_YYLESS;
     return token::ANCESTOR_OR_SELF;
 }
 
@@ -428,13 +462,14 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 
     int i;
 
-    for (i = 0; i <= yyleng; i++)
+    for (i = 0; i < yyleng; i++)
         if (IS_WS(yytext[i]) || yytext[i] == '{') break;
 
     if ((yylval->qname = xqMakeQName(yylloc, yytext, i)) == NULL)
         return token::_ERROR_;
 
     yyless(yyleng - 1); // return '{'
+    AMEND_LOC_YYLESS;
 
     return token::COMP_CONST_QNAME;
 }
@@ -444,6 +479,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 <M_COMP_CONST>{NCName}":"|{QName}{WS}|{QName}|. {
     BEGIN INITIAL;
     yyless(0);
+    AMEND_LOC_YYLESS;
 }
 
 {IntegerLiteral} {
@@ -612,7 +648,10 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 
     /* This state corresponds to XML comment content */
 
-<M_XML_COMMENT>{Char} { yymore(); }
+<M_XML_COMMENT>{Char} {
+    yymore();
+    AMEND_LOC_YYMORE;
+}
 <M_XML_COMMENT>"-->" {
     if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-3)) == NULL)
         return token::_ERROR_;
@@ -626,9 +665,16 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 <M_PIS>{Name} { BEGIN M_PI_WS; yylval->qname = xqMakePITarget(yylloc, yytext, yyleng); return token::PI_TARGET; }
 
 <M_PI_WS>{WS} { BEGIN M_PI_CONTENT; }
-<M_PI_WS>"?>" { BEGIN M_PI_CONTENT; yyless(0); }
+<M_PI_WS>"?>" {
+    BEGIN M_PI_CONTENT;
+    yyless(0);
+    AMEND_LOC_YYLESS;
+}
 
-<M_PI_CONTENT>{Char} { yymore(); }
+<M_PI_CONTENT>{Char} {
+    yymore();
+    AMEND_LOC_YYMORE;
+}
 <M_PI_CONTENT>"?>" {
     if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-2)) == NULL)
         return token::_ERROR_;
@@ -649,9 +695,16 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 <M_PRAGMA>{WS} { /* do nothing */ }
 
 <M_PRAGMA_WS>{WS} { BEGIN M_PRAGMA_CONTENT; }
-<M_PRAGMA_WS>"#)" { BEGIN M_PRAGMA_CONTENT; yyless(0); }
+<M_PRAGMA_WS>"#)" {
+    BEGIN M_PRAGMA_CONTENT;
+    yyless(0);
+    AMEND_LOC_YYLESS;
+}
 
-<M_PRAGMA_CONTENT>{Char} { yymore(); }
+<M_PRAGMA_CONTENT>{Char} {
+    yymore();
+    AMEND_LOC_YYMORE;
+}
 <M_PRAGMA_CONTENT>"#)" {
     if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-2)) == NULL)
         return token::_ERROR_;
@@ -662,10 +715,14 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 
     /* This state corresponds to CDATA content */
 
-<M_CDATA>{Char} { yymore(); }
+<M_CDATA>{Char} {
+    yymore();
+    AMEND_LOC_YYMORE;
+}
 <M_CDATA>"]]" {
     cdata_cont += std::string(yytext, yyleng-1);
     yyless(yyleng-1); /* return one ']' since we want to take by one; consider 'a]]]>' as an example */
+    AMEND_LOC_YYLESS;
 }
 
 <M_CDATA>"]]>" {
@@ -678,7 +735,10 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 }
 
 <M_XQUERY_COMM>"(:" { yy_push_state(M_XQUERY_COMM); }
-<M_XQUERY_COMM>{Char} { yymore(); }
+<M_XQUERY_COMM>{Char} {
+    yymore();
+    AMEND_LOC_YYMORE;
+}
 <M_XQUERY_COMM>":)" {
     yy_pop_state();
 
@@ -763,6 +823,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
         return token::_ERROR_;
 
     yyless(yyleng-2); // return :: or :=
+    AMEND_LOC_YYLESS;
     return token::QNAME;
 }
 
@@ -1032,7 +1093,7 @@ std::string *XQueryLexer::xqMakeQName(XQueryParser::location_type *loc, const ch
 {
     int col_pos = 0; // colon position
 
-    while (col_pos <= len && text[col_pos] != ':') col_pos++;
+    while (col_pos < len && text[col_pos] != ':') col_pos++;
 
     if (col_pos >= len) col_pos = -1;
 
@@ -1176,21 +1237,7 @@ XQueryParser::token_type XQueryLexer::nextToken(XQueryParser::semantic_type* yyl
         res = yylex(yylval, yylloc);
     }
 
-/*
-    // lookahead fix for element(attribute, processing-instruction) qname ('element' or is valid)
-    // so, we look for '{' after 'element qname'; if it is '{' then we return COMP_CONST_QNAME and parser will reduce it to computed constructor eventually
-    // else we return just QNAME
-    if ((prev_tok == token::ELEMENT || prev_tok == token::ATTRIBUTE || prev_tok == token::PROCESSING_INSTRUCTION) && res == token::QNAME)
-    {
-        have_la = true;
-        la_tok = yylex(&la_lval, &la_lloc);
-
-        if (la_tok == token::LBRACE)
-            res = token::COMP_CONST_QNAME;
-        else
-            yyless(0);
-    }*/
-    // Another fix for 'xquery version ...'; we want to return token::XQUERY only when it may be a part of versionDecl
+    // Fix for 'xquery version ...'; we want to return token::XQUERY only when it may be a part of versionDecl
     if (res == token::XQUERY)
     {
         have_la = true;
