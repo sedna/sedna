@@ -313,9 +313,12 @@ static int resultQueryHandler(struct SednaConnection *conn)
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_QUERY_FAILED;
     }
-    else if (conn->msg.instruction == se_ItemPart)      /* ItemPart */
+    else if (conn->msg.instruction == se_ItemPart || conn->msg.instruction == se_ItemStart)      /* ItemPart */
     {
-        memcpy(conn->local_data_buf, conn->msg.body + 5, conn->msg.length - 5);
+        int _type_offset = 0;
+        if(conn->msg.instruction == se_ItemStart) 
+            _type_offset = 2;
+        memcpy(conn->local_data_buf, conn->msg.body + 5 + _type_offset, conn->msg.length - 5 - _type_offset);
         conn->local_data_length = conn->msg.length - 5;
         conn->local_data_offset = 0;
         conn->socket_keeps_data = 1;    /* set the flag - Socket keeps item data */
@@ -1238,7 +1241,10 @@ int SEnext(struct SednaConnection *conn)
 int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 {
     int buf_position = 0;
-
+    int _type_offset = 0;
+    int content_length = 0;
+    char* content_offset = NULL;
+    
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
         setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
@@ -1254,9 +1260,9 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 
     if ((bytes_to_read < 0) || (buf == NULL))
     {
-        setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
-        conn->result_end = 1;   /* tell result is finished*/
-        conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
+        setDriverErrorMsg(conn, SE3022, NULL);   /* Invalid argument */
+        conn->result_end = 1;                    /* Tell result is finished */
+        conn->socket_keeps_data = 0;             /* Tell there is no data in socket */
         return SEDNA_ERROR;
     }
     while (bytes_to_read > 0)
@@ -1295,21 +1301,29 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
                 conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
                 return SEDNA_ERROR;
             }
-            if (conn->msg.instruction == se_ItemPart)   /*ItemPortion*/
+            if (conn->msg.instruction == se_ItemPart || conn->msg.instruction == se_ItemStart)      /* ItemPart */
             {
-                if ((conn->msg.length - 5) > bytes_to_read)
+                _type_offset = 0;
+                if(conn->msg.instruction == se_ItemStart) 
+                    _type_offset = 2;
+
+                content_length = conn->msg.length - 5 - _type_offset;
+                content_offset = conn->msg.body + 5 + _type_offset;
+                
+                if (content_length > bytes_to_read)
                 {
-                    memcpy(buf + buf_position, conn->msg.body + 5, bytes_to_read);
+                    memcpy(buf + buf_position, content_offset, bytes_to_read);
                     buf_position += bytes_to_read;
-                    memcpy(conn->local_data_buf, conn->msg.body + 5 + bytes_to_read, conn->msg.length - 5 - bytes_to_read);
-                    conn->local_data_length = conn->msg.length - 5 - bytes_to_read;
+                    memcpy(conn->local_data_buf, content_offset + bytes_to_read, 
+                                                 content_length - bytes_to_read);
+                    conn->local_data_length = content_length - bytes_to_read;
                     return buf_position;
                 }
                 else
                 {
-                    memcpy(buf + buf_position, conn->msg.body + 5, conn->msg.length - 5);
-                    buf_position += (conn->msg.length - 5);
-                    bytes_to_read -= (conn->msg.length - 5);
+                    memcpy(buf + buf_position, content_offset, content_length);
+                    buf_position  += content_length;
+                    bytes_to_read -= content_length;
                 }
             }
             else if (conn->msg.instruction == se_ItemEnd)       /*ItemEnd*/

@@ -6,8 +6,10 @@
 #ifndef _RCV_FUNCS
 #define _RCV_FUNCS
 
-#include "common/sedna.h"
 #include <vector>
+
+#include "common/sedna.h"
+
 #include "common/base.h"
 #include "common/xptr.h"
 #include "common/lfsGlobals.h"

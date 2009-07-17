@@ -18,7 +18,6 @@
 #define XML_DATETIME_H
 
 #include "common/sedna.h"
-#include "common/base.h"
 #include "tr/structures/nodes.h"
 #include "common/u/utime.h"
 #include "xs_decimal_t.h"

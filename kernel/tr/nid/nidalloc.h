@@ -10,18 +10,18 @@
 #include "common/base.h"
 
 struct	nid_slot {
-	unsigned char			buf[PAGE_SIZE];
-	struct nid_slot*	next;
-	bool			used;
-	nid_slot() {
-		next=NULL;
-		used=false;
+    unsigned char       buf[PAGE_SIZE];
+    struct nid_slot*    next;
+    bool                used;
+    nid_slot() {
+        next=NULL;
+        used=false;
 	}
 };
 
 typedef struct nid_slot nid_slot;
 
-void*	nid_alloc();
-void	nid_free(void* buf);
+void*   nid_alloc();
+void    nid_free(void* buf);
 
 #endif

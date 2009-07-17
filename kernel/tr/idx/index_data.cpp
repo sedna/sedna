@@ -104,25 +104,6 @@ void index_cell_object::drop()
 
 
 
-/*xptr find_btree(index_id id)
-{
-    xptr res;
-
-    index_sem_down();
-
-    index_cell *cur = *indexdata;
-    while (cur != NULL)
-    {
-        if (cur->id == id) break;
-        cur = cur->next;
-    }
-
-    res = cur->btree_root;
-
-    index_sem_up();
-
-    return res;
-}*/
 t_scmnodes index_cell_object::fits_to_index_as_key(schema_node_cptr snode) const
 {
     t_scmnodes res;

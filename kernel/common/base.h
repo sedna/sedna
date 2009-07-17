@@ -13,8 +13,6 @@
 #include "common/sedna.h"
 
 #include "common/utils.h"
-#include "common/u/uprocess.h"
-
 #include "common/rcv_test.h"
 #include "common/wutypes.h"
 
@@ -46,11 +44,6 @@ typedef int transaction_id;
 #define MAX_RESOURCE_NAME_LENGTH 100
 
 
-typedef int index_id;
-
-typedef __int16 xmlscm_type;
-
-
 /* shift in the block */
 typedef unsigned short int shft;
 
@@ -58,9 +51,6 @@ typedef unsigned short int shft;
 #define PAGE_BIT_SIZE                           16
 #define PAGE_BIT_MASK                           (__uint32)0xFFFF0000
 #define PAGE_REVERSE_BIT_MASK                   (__uint32)0x0000FFFF
-//#define PAGE_SIZE                             4096
-//#define PAGE_BIT_MASK                         0xFFFFF000
-//#define PAGE_REVERSE_BIT_MASK                 0x00000FFF
 
 
 extern void  *LAYER_ADDRESS_SPACE_START_ADDR;
@@ -196,17 +186,6 @@ void set_global_names(int os_primitives_id_min_bound, int db_id);
 #define UPPER_SESSIONS_NUM_BOUND			100
 
 extern FILE* res_os;
-
-/**
- * Type of query that executed by query processor
- */
-enum QueryType {TL_XQuery	= 9,	// XQuery query
-                TL_ForSemAnal   = 8,    // representation for semantic analiz
-                TL_ForAuth      = 7,    // representation for authentication processing
-                TL_ForMarkLRet	= 4,	// representation for mark LReturns
-                TL_ForConvToPOR	= 2,	// representation for converting to POR
-                TL_POR 		= 1	// POR query
-               };
 
 /* Hot-Backup states and answers in messages */
 enum hb_state

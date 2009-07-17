@@ -12,6 +12,7 @@
 #include "common/base.h"
 #include "common/xptr.h"
 #include "common/lfsGlobals.h"
+#include "tr/tr_base.h"
 
 // Record element
 void llLogElement(transaction_id trid, const xptr *self, const xptr *left, const xptr *right, 

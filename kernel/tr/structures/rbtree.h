@@ -7,7 +7,6 @@
 #define PERSMAP_H
 
 #include "common/sedna.h"
-#include "common/base.h"
 
 template<class T> 
 struct sedna_rbtree
