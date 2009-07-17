@@ -7,9 +7,11 @@
 #ifndef __PQ_H
 #define __PQ_H
 
-#include "common/sedna.h"
 #include <string>
-#include "common/base.h"
+
+#include "common/sedna.h"
+
+#include "tr/tr_base.h"
 #include "tr/xqp/XQuerytoLR.h"
 
 int process_query_in_scheme (char *str, int step_id);

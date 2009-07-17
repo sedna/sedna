@@ -20,7 +20,7 @@ enum t_print {
 	sxml
 };
 
-/* query answer type */
+/* query result type */
 enum qepNextAnswer 
 {
     se_no_next_item, 
@@ -29,7 +29,6 @@ enum qepNextAnswer
 };
 
 /* base class for Sedna output streams */
-
 class se_ostream
 {
 public:
@@ -57,7 +56,6 @@ public:
     virtual se_ostream& writextext(char *s, int n);
 	virtual se_ostream& writeattribute(char *s, int n);
     virtual se_ostream& flush()                                    = 0;
-    virtual void end_of_data(qepNextAnswer res)                    = 0;
     virtual void endline()                                         = 0;
     virtual void error(const char*)                                = 0;
     virtual se_ostream* get_debug_ostream() = 0;

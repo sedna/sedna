@@ -3,7 +3,6 @@
 * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 */
 
-#include <iostream>
 #include <string>
 
 #include "common/sedna.h"
@@ -17,14 +16,12 @@
 
 #include "tr/tr_globals.h"
 #include "tr/tr_functions.h"
-#include "tr/pq/pq.h"
-#include "tr/crmutils/exec_output.h"
-#include "tr/executor/por2qep/por2qep.h"
+#include "tr/tr_common_funcs.h"
+#include "tr/tr_utils.h"
 #include "tr/cl_client.h"
 #include "tr/socket_client.h"
-#include "tr/tr_utils.h"
+#include "tr/pq/pq.h"
 #include "tr/auth/auc.h"
-#include "tr/tr_common_funcs.h"
 #include "tr/rcv/rcv_test_tr.h"
 
 // only for MSDEV 6.0
@@ -348,7 +345,7 @@ int TRmain(int argc, char *argv[])
                                         item_status = execute(qep_tree);
                                         GET_TIME(&t2_exec);
 
-                                        client->end_of_item(item_status);
+                                        client->end_item(item_status);
 
                                         on_user_statement_end(qep_tree, st);
                                     }
@@ -359,7 +356,7 @@ int TRmain(int argc, char *argv[])
                                         item_status = next(qep_tree);
                                         GET_TIME(&t2_exec);
 
-                                        client->end_of_item(item_status);
+                                        client->end_item(item_status);
                                         if (item_status != se_next_item_exists) {
                                             on_user_statement_end(qep_tree, st);
                                         }
@@ -386,7 +383,7 @@ int TRmain(int argc, char *argv[])
 
                                             GET_TIME(&t2_exec);
                                         }
-                                        client->end_of_item(item_status);
+                                        client->end_item(item_status);
                                         u_ftime(&t_qep2);
 
                                         t_qep = (t_qep2 - (t_qep1 - t_qep));

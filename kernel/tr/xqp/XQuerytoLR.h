@@ -3,12 +3,15 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef XQuerytoLR_h
-#define XQuerytoLR_h
+#ifndef _XQUERYTOLR_H
+#define _XQUERYTOLR_H
 
 #include <string>
 #include <vector>
-#include "common/base.h"
+
+#include "common/sedna.h"
+
+#include "tr/tr_base.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 
 struct script_struct
@@ -40,4 +43,4 @@ public:
 
 StringVector parse_batch(QueryType type, const char *batch);
 
-#endif
+#endif /* _XQUERYTOLR_H */

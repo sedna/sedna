@@ -9,6 +9,7 @@
 #include "common/u/ushm.h"
 #include "common/base.h"
 #include "common/config.h"
+#include "common/u/uprocess.h"
 
 struct gov_sess_struct
 {

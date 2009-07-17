@@ -13,6 +13,7 @@
 #include "common/base.h"
 #include "common/u/uhdd.h"
 #include "common/u/uutils.h"
+#include "common/u/uprocess.h"
 #include "common/utils.h"
 #include "common/errdbg/d_printf.h"
 
@@ -379,9 +380,11 @@ void socket_client::respond_to_client(int instruction)
 }
 
 void 
-socket_client::end_of_item(qepNextAnswer res) {
+socket_client::end_item(qepNextAnswer res) {
     /* Flush buffer and send ItemEnd message */
-    (*stream).end_of_data(res);   
+    if(is_output_enabled()) {
+        out_s->end_item(res);
+    }
 }
 
 void socket_client::get_session_parameters()

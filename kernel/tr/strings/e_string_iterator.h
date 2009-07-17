@@ -13,7 +13,6 @@
 
 #include "tr/vmm/vmm.h"
 #include "common/xptr.h"		
-#include "common/base.h"
 #include "tr/strings/e_string.h"
 
 class estr_iterator : public std::iterator<std::bidirectional_iterator_tag,char> 

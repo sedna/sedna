@@ -3,10 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
 #include <string>
 #include <vector>
 #include <sstream>
+
+#include "common/sedna.h"
+
 #include "tr/log/log.h"
 #include "tr/structures/indirection.h"
 #include "tr/log/logiclog.h"

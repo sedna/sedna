@@ -49,7 +49,6 @@ public:
     virtual void get_file_from_client(std::vector<std::string>* filenames, std::vector<client_file>* cf_vec);
     virtual void close_file_from_client(client_file &inout_fs);
     virtual void respond_to_client(int instruction);
-    virtual void end_of_item(qepNextAnswer exist_next);
     virtual bool is_print_progress() { return true; }
     virtual int  get_os_primitives_id_min_bound() { return os_primitives_id_min_bound; }
     virtual void authentication_result(bool res, const std::string& body);
@@ -71,7 +70,10 @@ public:
     virtual bool disable_output();
     virtual void enable_output()             { cur_s = out_s; }
     virtual bool is_output_enabled()         { return (cur_s != NULL && cur_s == out_s); }
-
+    
+     /* Handlers for start/finish of item printing. */
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) {}
+    virtual void end_item   (qepNextAnswer exist_next);
 };
 
 #endif /* _CL_CLIENT_H */

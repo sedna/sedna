@@ -8,6 +8,36 @@
 #include "tr/crmutils/exec_output.h"
 #include "tr/executor/base/PPBase.h"
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// Some usefull helpers
+///////////////////////////////////////////////////////////////////////////////
+
+static inline se_item_type
+xmlscm_type2se_item_type(xmlscm_type t) {
+    return (se_item_type)t;
+}
+
+static inline se_item_class
+node_type2se_item_class(t_item t, bool is_atomic) {
+    if(is_atomic)
+        return se_atomic;
+    else 
+    {
+        switch(t)
+        {
+            case element:                      return se_element;
+            case text: case cdata:             return se_text;
+            case attribute:                    return se_attribute;
+            case xml_namespace:                return se_namespace;
+            case document: case virtual_root:  return se_document;
+            case comment:                      return se_comment;
+            case pr_ins:                       return se_pi;
+        }
+    }
+}
+
+    
 void write_func(void *param, const char *str, int len)
 {
     ((se_ostream*)param)->write(str,len);
@@ -74,7 +104,7 @@ se_socketostream_base::write(const char *s, int n)
         int celoe = n/(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
         int ost;
         if(celoe==0) ost = n; else ost = n%(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
-        for (int i=0;i<celoe;i++)
+        for (int i = 0; i < celoe; i++)
         {
             _res_msg->length = SE_SOCKET_MSG_BUF_SIZE;
             // the body contains string format - 1 byte, string length - 4 bytes and a string
@@ -141,12 +171,12 @@ void
 se_socketostream_base::error(const char* str)
 {
     flush();
+
     _res_msg->instruction = se_ErrorResponse; //ErrorResponse
-    memcpy(_res_msg->body+5+_type_offset, str, strlen(str));
-    int2net_int(strlen(str), _res_msg->body+1+_type_offset);      
-    _res_msg->length = strlen(str)+5+_type_offset;
+    memcpy(_res_msg->body+5, str, strlen(str));
+    int2net_int(strlen(str), _res_msg->body+1);
+    _res_msg->length = strlen(str)+5;
     if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
-    result_portion_sent += _res_msg->length;
 
     _res_msg->length = 5;
     result_portion_sent = 0;
@@ -295,17 +325,20 @@ se_socketostream::se_socketostream(USOCKET out_socket, protocol_version p_ver)
     _res_msg = &res_msg;
     _instruction = se_ItemPart;
     _type_offset = 0;
-    _res_msg->body[0] = 0;         // in this version string format is always 0
-    _res_msg->length = 5;          // the body contains string format - 1 byte, string length - 4 bytes and a string
+    _res_msg->body[0] = 0;                  // in this version string format is always 0
+    _res_msg->length = 5 + _type_offset;    // the body contains string format - 1 byte, 
+                                            //                   string length - 4 bytes 
+                                            //                   and a string
 
     max_result_size = 0;
     result_portion_sent = 0;
 }
 
 void
-se_socketostream::end_of_data(qepNextAnswer res)	
+se_socketostream::end_item(qepNextAnswer res)	
 {
     flush(); 
+
     if (res == se_next_item_exists)
     {
         _res_msg->instruction = se_ItemEnd;      //ItemEnd
@@ -317,7 +350,7 @@ se_socketostream::end_of_data(qepNextAnswer res)
         _res_msg->length = 0;
     }
     else
-        throw SYSTEM_EXCEPTION("Got incorrect qepNextAnswer in end_of_data");
+        throw SYSTEM_EXCEPTION("Got incorrect qepNextAnswer in end_item");
 
     /* This feature is not implemented yet */
     //else // res == se_result_is_cut_off
@@ -331,6 +364,29 @@ se_socketostream::end_of_data(qepNextAnswer res)
         throw USER_EXCEPTION(SE3006);
     _res_msg->length = 5+_type_offset;
     result_portion_sent = 0;
+    
+    if (_p_ver.major_version >= 4) {
+        _instruction = se_ItemPart;
+        _type_offset = 0;
+        _res_msg->length  = 5 + _type_offset;
+    }
+}
+
+void
+se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt)
+{
+    if (_p_ver.major_version >= 4) {
+        /* Since protocol version 4 we send type of the item in the 
+         * first message. Then in end_item we change _instruction back to
+         * the se_ItemPart. */
+        flush();
+        
+        _instruction      = se_ItemStart;
+        _type_offset      = 2;
+        _res_msg->body[0] = (unsigned char)node_type2se_item_class(nt, is_atomic);
+        _res_msg->body[1] = (unsigned char)xmlscm_type2se_item_type(st);
+        _res_msg->length  = 5 + _type_offset;
+    }
 }
 
 se_ostream* 

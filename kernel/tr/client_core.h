@@ -11,9 +11,9 @@
 
 #include "common/sedna.h"
 #include "common/u/uhdd.h"
-#include "common/base.h"
 
 #include "tr/crmutils/crmbase.h"
+#include "tr/tr_base.h"
 
 struct client_file{
     FILE* f;
@@ -37,9 +37,8 @@ public:
     virtual void get_file_from_client(std::vector<std::string>* filenames, std::vector<client_file>* cf_vec) = 0;
     virtual void close_file_from_client(client_file &inout_cf) = 0;
     virtual void respond_to_client(int instruction) = 0;
-    virtual void end_of_item(qepNextAnswer exist_next) = 0;
     virtual bool is_print_progress() = 0;
-    virtual int get_os_primitives_id_min_bound() = 0;
+    virtual int  get_os_primitives_id_min_bound() = 0;
     virtual void authentication_result(bool res, const std::string& body) = 0;
     virtual void process_unknown_instruction(int instruction, bool in_transaction) = 0;
     virtual void error(int code, const std::string& body) = 0;
@@ -78,6 +77,13 @@ public:
      * output or force recreation of the debug stream).
      */
     virtual void user_statement_begin() = 0;
+    
+    /* Handlers for start/finish of item printing.
+     * st - XMLSchema type of the node or atomic value
+     * nt - node type (i.e. element, attribute, etc ...)
+     */
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) = 0;
+    virtual void end_item   (qepNextAnswer exist_next) = 0;
 };
 
 #endif /* _CLIENT_CORE_H */

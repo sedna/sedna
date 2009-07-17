@@ -11,6 +11,7 @@
 #include "common/base.h"
 #include "common/xptr.h"
 #include "common/u/uutils.h"
+#include "common/u/uprocess.h"
 
 static void *global_memory;
 UMMap global_memory_mapping;

@@ -8,7 +8,7 @@
 
 #include "common/sedna.h"
 
-#include "common/base.h"
+#include "tr/tr_base.h"
 #include "tr/crmutils/crmbase.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/xqp/XQuerytoLR.h"

@@ -72,7 +72,6 @@ public:
     virtual void set_session_options(msg_struct *msg);
     virtual void reset_session_options();
     virtual void respond_to_client(int instruction);
-    virtual void end_of_item(qepNextAnswer res);
     virtual bool is_print_progress() { return false; }
     virtual int get_os_primitives_id_min_bound() { return os_primitives_id_min_bound; }
     virtual void authentication_result(bool res, const std::string& body);
@@ -92,8 +91,10 @@ public:
     virtual void set_result_type(msg_struct *msg);
     virtual t_print get_result_type();
     
+    /* Handlers for start/finish of item printing. */
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) {}
+    virtual void end_item   (qepNextAnswer exist_next);
 };
 
 
 #endif /* _SOCKET_CLIENT_H */
-

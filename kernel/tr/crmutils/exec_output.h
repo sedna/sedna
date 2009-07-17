@@ -14,8 +14,7 @@
 
 #include "common/u/usocket.h"
 #include "common/sp.h"
-#include "common/base.h"
-
+#include "tr/tr_base.h"
 #include "tr/crmutils/crmbase.h"
 
 void write_func(void *param, const char *str, int len);
@@ -51,7 +50,6 @@ public:
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
     virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }
     virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
-    virtual void end_of_data(qepNextAnswer /*res*/)                              { o_str << std::endl; }
     virtual void endline()                                                       { o_str << std::endl; }
     virtual void error(const char* str)                                          { o_str << str << std::endl; }
     virtual se_ostream* get_debug_ostream()                                      { return se_new se_stdlib_ostream(std::cerr); }
@@ -87,7 +85,6 @@ public:
                                     const char * /*s*/, 
                                     int /*n*/)                                  { return *this; }
     virtual se_ostream& flush()                                                 { return *this; }
-    virtual void end_of_data(qepNextAnswer /*res*/)                             { ; }
     virtual void endline()                                                      { ; }
     virtual void error(const char* /*str*/)                                     { ; }
     virtual se_ostream* get_debug_ostream()                                     { return se_new se_nullostream(); }
@@ -131,7 +128,6 @@ public:
     virtual void endline();
     virtual void error(const char* str);
 
-    virtual void end_of_data(qepNextAnswer res) = 0;
     virtual se_ostream* get_debug_ostream() = 0;
     virtual void set_debug_info_type(se_debug_info_type type) = 0;
 };
@@ -142,7 +138,7 @@ class se_socketostream: public se_socketostream_base
 
 protected:
     msg_struct res_msg;
-
+    
 public:
     se_socketostream(USOCKET out_socket, protocol_version p_ver);
 
@@ -151,8 +147,9 @@ public:
     void set_max_result_size_to_pass(int _max_result_size_) {
         max_result_size = _max_result_size_;
     }
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt);
+    virtual void end_item   (qepNextAnswer res);
 
-    virtual void end_of_data(qepNextAnswer res);
     virtual se_ostream* get_debug_ostream();
     virtual void set_debug_info_type(se_debug_info_type /*type*/) {};
 };
@@ -166,14 +163,7 @@ protected:
 
     se_debug_socketostream(se_socketostream& sostream);
     virtual ~se_debug_socketostream() {}
-
-    virtual void end_of_data(qepNextAnswer /*res*/)	 {
-        flush(); 
-        _res_msg->length = 5+_type_offset;
-    }
-    virtual se_ostream* get_debug_ostream() { 
-        return NULL;
-    }
+    virtual se_ostream* get_debug_ostream() { return NULL; }
     virtual void set_debug_info_type(se_debug_info_type type);
 };
 

@@ -11,6 +11,7 @@
 #include "common/base.h"
 #include "common/pping.h"
 #include "tr/client_core.h"
+#include "tr/tr_base.h"
 
 #define ENV_BUF_SIZE 1000
 
