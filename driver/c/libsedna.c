@@ -269,6 +269,7 @@ static int cleanSocket(struct SednaConnection *conn)
 /* takes the data from server when execute a query and decide if the query failed or succeeded*/
 static int resultQueryHandler(struct SednaConnection *conn)
 {
+    int _type_offset = 0;
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
         connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
@@ -315,11 +316,10 @@ static int resultQueryHandler(struct SednaConnection *conn)
     }
     else if (conn->msg.instruction == se_ItemPart || conn->msg.instruction == se_ItemStart)      /* ItemPart */
     {
-        int _type_offset = 0;
         if(conn->msg.instruction == se_ItemStart) 
             _type_offset = 2;
         memcpy(conn->local_data_buf, conn->msg.body + 5 + _type_offset, conn->msg.length - 5 - _type_offset);
-        conn->local_data_length = conn->msg.length - 5;
+        conn->local_data_length = conn->msg.length - 5 - _type_offset;
         conn->local_data_offset = 0;
         conn->socket_keeps_data = 1;    /* set the flag - Socket keeps item data */
         conn->result_end = 0;           /* set the flag - there no items */
