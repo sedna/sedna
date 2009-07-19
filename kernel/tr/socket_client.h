@@ -92,8 +92,14 @@ public:
     virtual t_print get_result_type();
     
     /* Handlers for start/finish of item printing. */
-    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) {}
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt);
     virtual void end_item   (qepNextAnswer exist_next);
+    
+    /* If client supports serialization. 
+     * Since protocol version >4 it's client's task
+     * to make indentation, space delimiting, etc ...
+     */
+    virtual bool supports_serialization() { return p_ver.major_version >= 4; }
 };
 
 

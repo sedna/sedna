@@ -84,6 +84,14 @@ public:
      */
     virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) = 0;
     virtual void end_item   (qepNextAnswer exist_next) = 0;
+
+    /* If client supports serialization by itself or not. 
+     * For command line client this value is always false 
+     * which means that we do indentation at trn's side. 
+     * For socket client this value depends on the protocol 
+     * version.
+     */
+     virtual bool supports_serialization() = 0;
 };
 
 #endif /* _CLIENT_CORE_H */

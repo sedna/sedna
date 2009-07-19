@@ -387,6 +387,14 @@ socket_client::end_item(qepNextAnswer res) {
     }
 }
 
+void 
+socket_client::begin_item(bool is_atomic, xmlscm_type st, t_item nt) {
+    /* Flush buffer and send ItemEnd message */
+    if(is_output_enabled()) {
+        out_s->begin_item(is_atomic, st, nt);
+    }
+}
+
 void socket_client::get_session_parameters()
 {
     sp_msg.instruction = se_SendSessionParameters;

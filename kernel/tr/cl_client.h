@@ -74,6 +74,9 @@ public:
      /* Handlers for start/finish of item printing. */
     virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) {}
     virtual void end_item   (qepNextAnswer exist_next);
+
+    /* If client supports serialization. */
+    virtual bool supports_serialization()    { return false; }
 };
 
 #endif /* _CL_CLIENT_H */
