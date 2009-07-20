@@ -97,7 +97,8 @@ xptr add_record_to_indirection_table(xptr p)
                 node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
                 rbi->pblk_indir=l_bl;
             }
-            
+
+            CHECKP(rba);
             VMM_SIGNAL_MODIFICATION(rba);
             nbi->pblk_indir = XNULL;
             nbi->nblk_indir = XNULL;
