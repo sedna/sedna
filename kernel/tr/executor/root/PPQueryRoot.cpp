@@ -71,7 +71,7 @@ bool PPQueryRoot::next()
     xmlscm_type st = 0;    /* by default there is no type (anyType) */
     bool is_node;
     
-    if(is_node = tc.is_node())
+    if((is_node = tc.is_node()))
     {
         xptr node = tc.get_node();
         CHECKP(node);

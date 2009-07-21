@@ -1,3 +1,8 @@
+/*
+ * File: catptr.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _CATXPTR
 #define _CATXPTR
 

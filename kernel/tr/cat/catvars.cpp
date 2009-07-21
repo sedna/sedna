@@ -1,3 +1,8 @@
+/*
+ * File: catvars.cpp
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "tr/cat/catvars.h"
 
 #include "common/sedna.h"

@@ -1,6 +1,6 @@
 /*
- * File:  fast_xptr_hash.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File: CatalogXptrHash.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
