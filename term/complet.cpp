@@ -17,7 +17,7 @@
 #include "term_ile.h"
 
 // table of chains, which contains all possible alternatives to match
-#define MAX_CHAINS 28
+#define MAX_CHAINS 32
 const char *chain_table[][13][11] =
 {
     {{"UPDATE", NULL}, {"insert", NULL}, {"@any", NULL}, {"into", "preceding", "following", NULL}, {NULL}},
@@ -49,14 +49,15 @@ const char *chain_table[][13][11] =
     {{"REVOKE", NULL}, {"@any", NULL}, {"ON", NULL}, {"DOCUMENT", "COLLECTION", NULL}, {"@any", NULL}, {"FROM", NULL}, {NULL}},
     {{"REVOKE", NULL}, {"@any", NULL}, {"ON", NULL}, {"DATABASE", NULL}, {"FROM", NULL}, {NULL}},
     {{"REVOKE", NULL}, {"@any", NULL}, {"FROM", NULL}, {NULL}},
+    {{"RETRIEVE", NULL}, {"METADATA", NULL}, {"FOR", NULL}, {"DOCUMENTS", NULL}, {"IN", NULL}, {"COLLECTION", NULL}, {NULL}},
+    {{"RETRIEVE", NULL}, {"METADATA", NULL}, {"FOR", NULL}, {"DOCUMENTS", "COLLECTIONS", NULL}, {"WITH", NULL}, {"STATISTICS", NULL}, {NULL}},
+    {{"RETRIEVE", NULL}, {"DESCRIPTIVE", NULL}, {"SCHEMA", NULL}, {"FOR", NULL}, {"DOCUMENT", NULL}, {"@any", NULL}, {"IN", NULL}, {"COLLECTION", NULL}, {NULL}},
+    {{"RETRIEVE", NULL}, {"DESCRIPTIVE", NULL}, {"SCHEMA", NULL}, {"FOR", NULL}, {"COLLECTION", NULL}, {NULL}},
     {{"\\set", "\\unset", NULL}, {"AUTOCOMMIT", "ON_ERROR_STOP", "DEBUG", "TRANSACTION_READ_ONLY", "QUERY_TIMEOUT=", "LOG_LESS_MODE", NULL}, {NULL}},
     {{"\\set?", "\\unset?", "\\?", "\\commit", "\\rollback", "\\showtime", "\\quit", "\\commit", "\\rollback",
         "\\showtime", NULL}, {NULL}},
     {{"\\ac", "\\nac", "\\ro", "\\upd", "\\ll", "\\fl", "\\q", NULL}, {NULL}}
 };
-
-// libedit strange behaviour: it's got completion_matches instead of rl_completion_matches
-#define rl_completion_matches completion_matches
 
 // we use this global param to tell generator how to complete matches
 // Values are:
@@ -328,6 +329,7 @@ int determine_chains(const char *word, int *chains, int count)
     }
 
     free(upword);
+    free(loword);
 
     return found;
 }
