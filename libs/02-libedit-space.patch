@@ -1,0 +1,23 @@
+diff -Naur --exclude=readline.c libedit/src/filecomplete.c libedit2/src/filecomplete.c
+--- libedit/src/filecomplete.c	2009-06-10 23:56:27.000000000 +0400
++++ libedit2/src/filecomplete.c	2009-07-21 21:27:59.000000000 +0400
+@@ -475,9 +475,6 @@
+ 			el_insertstr(el, matches[0]);
+ 		}
+ 
+-		if (what_to_do == '?')
+-			goto display_matches;
+-
+ 		if (matches[2] == NULL && strcmp(matches[0], matches[1]) == 0) {
+ 			/*
+ 			 * We found exact match. Add a space after
+@@ -485,8 +482,7 @@
+ 			 * object is a directory.
+ 			 */
+ 			el_insertstr(el, (*app_func)(matches[0])); 
+-		} else if (what_to_do == '!') {
+-    display_matches:
++		} else if (what_to_do == '?') {
+ 			/*
+ 			 * More than one match and requested to list possible
+ 			 * matches.

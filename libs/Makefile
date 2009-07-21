@@ -248,6 +248,8 @@ libedit/Makefile: libedit/configure
 libedit/configure:
 	gzip -dc libedit-*.tar.gz | tar xvf -
 	mv `find libedit-* -type d | head -n 1` libedit
+	patch -Np1 -d libedit < 01-libedit-dups.patch
+	patch -Np1 -d libedit < 02-libedit-space.patch
 
 clean_libedit:
 	-$(MAKE) -C libedit uninstall
