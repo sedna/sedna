@@ -1,3 +1,8 @@
+/*
+ * File: catmem.cpp
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "tr/cat/catmem.h"
 
 int allocated_objects;

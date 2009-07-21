@@ -1,3 +1,8 @@
+/*
+ * File: catstructures.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _CATSTRUCTURES_H
 #define _CATSTRUCTURES_H
 

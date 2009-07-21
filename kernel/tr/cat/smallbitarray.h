@@ -1,3 +1,8 @@
+/*
+ * File: smallbitarray.h
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _SBA_H
 #define _SBA_H
 

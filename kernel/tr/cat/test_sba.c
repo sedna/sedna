@@ -1,3 +1,8 @@
+/*
+* File: test_sba.c
+* Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

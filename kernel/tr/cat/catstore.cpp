@@ -1,3 +1,7 @@
+/*
+ * File: catstore.cpp
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #include "tr/cat/catstore.h"
 #include "tr/vmm/vmm.h"
