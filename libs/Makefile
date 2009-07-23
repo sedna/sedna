@@ -71,7 +71,7 @@ chicken/chicken.h: chicken-$(CHICKEN_VERSION).tar.gz
 	touch chicken-$(CHICKEN_VERSION)/chicken.h
 	rm -rf chicken
 	mv chicken-$(CHICKEN_VERSION) chicken
-	patch -d chicken < chicken_panic_hook.diff
+	$(PATCHER) -d chicken < chicken_panic_hook.diff
 
 ifeq ("$(PLATFORM)", "WIN32")
 
@@ -248,8 +248,8 @@ libedit/Makefile: libedit/configure
 libedit/configure:
 	gzip -dc libedit-*.tar.gz | tar xvf -
 	mv `find libedit-* -type d | head -n 1` libedit
-	patch -Np1 -d libedit < 01-libedit-dups.patch
-	patch -Np1 -d libedit < 02-libedit-space.patch
+	$(PATCHER) -Np1 -d libedit < 01-libedit-dups.patch
+	$(PATCHER) -Np1 -d libedit < 02-libedit-space.patch
 
 clean_libedit:
 	-$(MAKE) -C libedit uninstall
