@@ -143,6 +143,8 @@ EXE_EXT = .exe
 DL_EXT  = .dll
 DEF_EXT = .def
 
+PATCHER = patch
+
 ENABLE_LIBEDIT = 0
 
 # Starting in Visual C++ 2005, LIBCP.LIB and LIBCPD.LIB (via the old /ML and /MLd options) have been removed.
@@ -260,6 +262,12 @@ OBJ_EXT = .o
 LIB_EXT = .a
 EXE_EXT =
 DL_EXT  = .so
+
+PATCHER = patch
+
+ifeq ("$(SUB_PLATFORM)", "SunOS")
+PATCHER = gpatch
+endif
 
 STATIC_FLAG =
 
