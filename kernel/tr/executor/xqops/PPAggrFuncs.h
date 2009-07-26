@@ -32,12 +32,12 @@ public:
 class PPFnCountEssence : public AggFnEssence
 {
 private:
-    int n;
+    __int64 n;
 public:
     PPFnCountEssence() : n(0) {}
     ~PPFnCountEssence() {}
     void add_item(const tuple_cell &tc) { n++; }
-    tuple_cell get_result() { return tuple_cell::atomic((__int64)n); }
+    tuple_cell get_result() { return tuple_cell::atomic(n); }
     void reopen() { n = 0; }
     static tuple_cell result(sequence *s) { return tuple_cell::atomic((__int64)(s->size())); }
 };
@@ -76,7 +76,7 @@ public:
 class PPFnAvgEssence : public AggFnEssence
 {
 private:
-    int n;
+    __int64 n;
     tuple_cell sum;
 public:
     PPFnAvgEssence() : n(0) {}
@@ -87,14 +87,14 @@ public:
         else sum = op_numeric_add(sum, atomize(tc)); 
         n++;
     }
-    tuple_cell get_result() { return n == 0 ? tuple_cell::eos() : op_numeric_divide(sum, (__int64)n); }
+    tuple_cell get_result() { return n == 0 ? tuple_cell::eos() : op_numeric_divide(sum, n); }
     void reopen() { n = 0; }
     static tuple_cell result(sequence *s)
     {
         if (s->size() == 0) return tuple_cell::eos();
         tuple t(1);
         tuple_cell sum = atomize(s->get_00());
-        for (int i = 1; i < s->size(); i++)
+        for (unsigned int i = 1; i < s->size(); i++)
         {
             s->get(t, i);
             sum = op_numeric_add(sum, atomize(t.cells[0])); 
@@ -129,7 +129,7 @@ public:
         if (s->size() == 0) return tuple_cell::eos();
         tuple t(1);
         tuple_cell res = atomize(s->get_00());
-        for (int i = 1; i < s->size(); i++)
+        for (unsigned int i = 1; i < s->size(); i++)
         {
             s->get(t, i);
             tuple_cell tca = atomize(t.cells[0]);
@@ -166,7 +166,7 @@ public:
         if (s->size() == 0) return tuple_cell::eos();
         tuple t(1);
         tuple_cell res = atomize(s->get_00());
-        for (int i = 1; i < s->size(); i++)
+        for (unsigned int i = 1; i < s->size(); i++)
         {
             s->get(t, i);
             tuple_cell tca = atomize(t.cells[0]);
