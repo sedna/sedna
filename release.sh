@@ -202,10 +202,10 @@ prepare_source() {
 
     cd $FILE_BASE/doc &&
     $MAKE_COMMAND &&
-    rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
-    rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
-    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
-    rm -f ProgGuide/*.{aux,log,tex,toc} ProgGuide/Makefile &&
+    rm -f AdminGuide/*.{aux,log,tex,toc,out} AdminGuide/Makefile &&
+    rm -f QuickStart/*.{aux,log,tex,toc,out} QuickStart/Makefile &&
+    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc,out} ProgGuide/ClientServerProtocol/Makefile &&
+    rm -f ProgGuide/*.{aux,log,tex,toc,out} ProgGuide/Makefile &&
     rm Makefile &&
     cd "$OLDDIR" &&
 
@@ -302,6 +302,7 @@ $MAKE_COMMAND clean || failwith "make clean failed"
 
 
 ##### MAKE ####################################################################
+rm -rf libs/bin/*
 export ACTIVE_CONFIGURATION=Release
 export DOCUMENTATION=1
 export EL_DEBUG=0
