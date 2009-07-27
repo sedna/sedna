@@ -420,7 +420,8 @@ xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
         if (
              sc->object.type==attribute && 
              my_strcmp(name,sc->object.name)==0 &&  
-             (sc->object.get_xmlns()==XNULL || my_strcmp(uri,sc->object.get_xmlns()->uri)==0) &&
+             (    (sc->object.get_xmlns()==XNULL && NULL == uri) 
+               || (sc->object.get_xmlns()!=XNULL && my_strcmp(uri,sc->object.get_xmlns()->uri)==0)) &&
              (block->dsc_size >= size_of_node(block)+(cnt+1) * sizeof(xptr)) &&
              ((child = GET_NODE_CHILD(node, cnt)) != XNULL)
          )
@@ -1366,9 +1367,6 @@ xptr getUnemptyBlockBack(xptr p)
     
     return p;
 }
-
-
-
 
 shft size_of_node(node_blk_hdr* block)
 {

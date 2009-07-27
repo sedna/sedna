@@ -3161,18 +3161,16 @@
              )))
          ((and (pair? (car src))
                (eq? (sa:op-name (car src)) 'attribute))
-          (let* ((name (car (sa:op-args (car src))))
-                 (url+local (let ((name-triple (cadr (sa:op-args name))))
-                              (car name-triple) (cadr name-triple))))
+          (let* ((name (car (sa:op-args (car src)))))
             (if
              (sa:qname-const? name)
              ; Constant attribute name
-             (let ((name
-                    (sa:resolve-qname name ns-binding (cadr default-ns))))
+             (let ((url+local
+                    (sa:qname->string (sa:resolve-qname name ns-binding ""))))
                (if
                 (member url+local attr-names)
                 ; Duplicate attribute declared
-                (cl:signal-user-error XQST0040 (sa:qname->string name))
+                (cl:signal-user-error XQST0040 url+local)
                 (loop (cdr src)
                       namespaces
                       (cons (car src) others)
@@ -3277,7 +3275,7 @@
     (sa:qname-const? (car (sa:op-args expr)))  ; name is constant
     (and
      (sa:resolve-qname
-      (car (sa:op-args expr)) ns-binding (cadr default-ns))
+      (car (sa:op-args expr)) ns-binding "")
      (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes))
     (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes))))
 
