@@ -94,7 +94,7 @@ public:
         if (s->size() == 0) return tuple_cell::eos();
         tuple t(1);
         tuple_cell sum = atomize(s->get_00());
-        for (unsigned int i = 1; i < s->size(); i++)
+        for (int i = 1; i < s->size(); i++)
         {
             s->get(t, i);
             sum = op_numeric_add(sum, atomize(t.cells[0])); 
@@ -129,7 +129,7 @@ public:
         if (s->size() == 0) return tuple_cell::eos();
         tuple t(1);
         tuple_cell res = atomize(s->get_00());
-        for (unsigned int i = 1; i < s->size(); i++)
+        for (int i = 1; i < s->size(); i++)
         {
             s->get(t, i);
             tuple_cell tca = atomize(t.cells[0]);
@@ -166,7 +166,7 @@ public:
         if (s->size() == 0) return tuple_cell::eos();
         tuple t(1);
         tuple_cell res = atomize(s->get_00());
-        for (unsigned int i = 1; i < s->size(); i++)
+        for (int i = 1; i < s->size(); i++)
         {
             s->get(t, i);
             tuple_cell tca = atomize(t.cells[0]);

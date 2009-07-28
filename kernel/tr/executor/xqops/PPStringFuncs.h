@@ -16,7 +16,7 @@
 class PPFnConcat : public PPIterator
 {
 private:
-    int i;
+    unsigned int i;
     arr_of_PPOpIn ch_arr;
     std::vector<tuple_cell> tcv;
     bool first_time;

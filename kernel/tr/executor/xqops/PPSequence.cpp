@@ -130,7 +130,7 @@ bool PPSequence::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     for (i = 0; i < ch_arr.size(); i++)
     {
         sequence *ch_seq = (sequence*)(ch_r[i]);
-        for (unsigned int j = 0; j < ch_seq->size(); j++)
+        for (int j = 0; j < ch_seq->size(); j++)
         {
             ch_seq->get(t, j);
             res_seq->add(t);
