@@ -248,7 +248,6 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 			
 			child=node_child;
 			// inner cycle on second sequence
-cycle2:	
 			it2++;
 		}
 		while (it2!=arg2seq.end());
@@ -485,7 +484,6 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 			
 			child=node_child;
 			// inner cycle on second sequence
-cycle2:	
 			it2++;
 		}
 		while (it2!=arg2seq.end());
@@ -710,7 +708,6 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 				prev_child=deep_temp_copy(prev_child, XNULL, removeIndirection(node_par), node_child,ins_swiz);
 
 			// inner cycle on second sequence
-	cycle2:		
 			it2++;
 		}
 		while (it2!=arg2seq.end());

@@ -139,8 +139,8 @@ PPFnTrace::PPFnTrace(dynamic_context *_cxt_,
                      PPOpIn _label_child_) : PPIterator(_cxt_),
                                              value_child(_value_child_),
                                              label_child(_label_child_),
-                                             dostr(tr_globals::client->get_debug_ostream()),
-                                             first_time(true)
+                                             first_time(true),
+                                             dostr(tr_globals::client->get_debug_ostream())
 {
 }
 

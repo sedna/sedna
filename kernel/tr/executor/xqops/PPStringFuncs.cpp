@@ -125,7 +125,6 @@ PPIterator* PPFnConcat::copy(dynamic_context *_cxt_)
 {
     PPFnConcat *res = se_new PPFnConcat(_cxt_, ch_arr);
 
-    int i;
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
     res->set_xquery_line(__xquery_line);
@@ -220,7 +219,7 @@ void PPFnStringJoin::next(tuple &t)
     }
 
     stmt_str_buf result;
-    for(int i = 0; i < tcv.size(); i++)
+    for(unsigned int i = 0; i < tcv.size(); i++)
     {
         if(is_sep && i) result.append(sep);
         result.append(tcv[i]);
@@ -578,7 +577,7 @@ void PPFnCodePoints2String::next  (tuple &t)
         
         stmt_str_buf result;
         
-        for(int i = 0; i < codepoints.size(); i++) 
+        for(unsigned int i = 0; i < codepoints.size(); i++)
             result.append(utf8_encode_char(codepoints[i]));
         
         t.copy(result.get_tuple_cell());

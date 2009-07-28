@@ -58,6 +58,7 @@ void PPCast::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos()) 
+        {
             if (can_be_empty_seq)
             {
                 first_time = true;
@@ -65,6 +66,7 @@ void PPCast::next  (tuple &t)
                 {RESTORE_CURRENT_PP; return;}
             }
             else throw XQUERY_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
+        }
 
         tuple_cell tc = atomize(child.get(t));
 
@@ -111,12 +113,14 @@ bool PPCast::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 
     sequence *child_seq = (sequence*)child_r;
     if (child_seq->size() == 0)
+    {
         if (((PPCast*)cur)->can_be_empty_seq)
         {
             r = child_seq;
             return true;
         }
         else throw USER_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
+    }
 
     if (child_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "cast expression (the result of atomization is a sequence of more than one atomic value)");
 
@@ -452,7 +456,7 @@ PPTypeswitch::~PPTypeswitch()
     delete source_child.op;
     source_child.op = NULL;
     
-    for( int i = 0; i < cases.size(); i++)
+    for(unsigned int i = 0; i < cases.size(); i++)
     {
         delete (cases[i].op);
         cases[i].op = NULL;
@@ -473,7 +477,7 @@ void PPTypeswitch::open ()
     need_reopen = false;
     effective_case = NULL;
     
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_complex;
@@ -482,7 +486,7 @@ void PPTypeswitch::open ()
         p.tuple_pos = i;
     }
     
-    for(int i = 0; i < cases.size(); i++)
+    for(unsigned int i = 0; i < cases.size(); i++)
         (cases[i].op) -> open();
     
     default_child.op->open();
@@ -509,7 +513,7 @@ void PPTypeswitch::close ()
 {
     source_child.op->close();   
 
-    for( int i = 0; i < cases.size(); i++)
+    for(unsigned int i = 0; i < cases.size(); i++)
         (cases[i].op) -> close();
      
     default_child.op->close();
@@ -534,7 +538,7 @@ void PPTypeswitch::next(tuple &t)
         eos_reached = false;
 
         effective_case = &default_child;
-        for(int i = 0; i < cases.size(); i++)
+        for(unsigned int i = 0; i < cases.size(); i++)
         {
             if(type_matches(source_child, s, t, eos_reached, types[i]))
             {
@@ -564,7 +568,7 @@ PPIterator* PPTypeswitch::copy(dynamic_context *_cxt_)
                                          cases, 
                                          default_child);
     
-    for (int i = 0; i < cases.size(); i++)
+    for (unsigned int i = 0; i < cases.size(); i++)
         res->cases[i].op = cases[i].op->copy(_cxt_);
     
     res->source_child.op = source_child.op->copy(_cxt_);
@@ -632,10 +636,10 @@ void PPTypeswitch::close(var_dsc dsc, var_c_id id)
 
 inline void PPTypeswitch::reinit_consumer_table()
 {
-    for (int i = 0; i < var_dscs.size(); i++)
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
-        for (int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
+        for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }
 
