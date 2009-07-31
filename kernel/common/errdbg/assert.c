@@ -101,7 +101,7 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 	/*
 	 * Sleep for 10 days. It should be enough to find out the problem.
 	 */
-	uSleep(8640 * 10, __sys_call_error); 
+	uSleep(86400 * 10, __sys_call_error); 
 #endif
 
     sedna_soft_fault(EL_UNK);

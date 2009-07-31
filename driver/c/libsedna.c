@@ -317,7 +317,13 @@ static int resultQueryHandler(struct SednaConnection *conn)
     else if (conn->msg.instruction == se_ItemPart || conn->msg.instruction == se_ItemStart)      /* ItemPart */
     {
         if(conn->msg.instruction == se_ItemStart) 
-            _type_offset = 2;
+        {
+            if (conn->msg.body[3])
+                /* If URI (zero ended C-string) presents (protocol 4 and higher) then just skip */
+                _type_offset = 3 + strlen(conn->msg.body + 3) + 1;
+            else
+                _type_offset = 3;
+        }
         memcpy(conn->local_data_buf, conn->msg.body + 5 + _type_offset, conn->msg.length - 5 - _type_offset);
         conn->local_data_length = conn->msg.length - 5 - _type_offset;
         conn->local_data_offset = 0;
@@ -1241,7 +1247,6 @@ int SEnext(struct SednaConnection *conn)
 int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 {
     int buf_position = 0;
-    int _type_offset = 0;
     int content_length = 0;
     char* content_offset = NULL;
     
@@ -1301,14 +1306,10 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
                 conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
                 return SEDNA_ERROR;
             }
-            if (conn->msg.instruction == se_ItemPart || conn->msg.instruction == se_ItemStart)      /* ItemPart */
+            if (conn->msg.instruction == se_ItemPart)      /* ItemPart */
             {
-                _type_offset = 0;
-                if(conn->msg.instruction == se_ItemStart) 
-                    _type_offset = 2;
-
-                content_length = conn->msg.length - 5 - _type_offset;
-                content_offset = conn->msg.body + 5 + _type_offset;
+                content_length = conn->msg.length - 5;
+                content_offset = conn->msg.body + 5;
                 
                 if (content_length > bytes_to_read)
                 {

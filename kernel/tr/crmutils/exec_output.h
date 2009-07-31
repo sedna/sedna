@@ -102,11 +102,13 @@ protected:
     int _type_offset;
     int max_result_size;
     int result_portion_sent;
-
+    
 public:
 
     virtual se_ostream& operator<<(se_socketostream_base& (*pf)(se_socketostream_base&))	{ (*pf)(*this); return *this; }
     virtual se_ostream& operator<<(se_ostream& (*pf)(se_ostream&))                          { (*pf)(*this); return *this; }
+
+    /* string MUST be valid UTF-8 sequence */
     virtual se_ostream& operator<<(const char *s);
     virtual se_ostream& operator<<(char c);
 
@@ -123,7 +125,10 @@ public:
     virtual se_ostream& operator<<(void * n);
     virtual se_ostream& operator<<(xptr n);
     virtual se_ostream& put(char c);
+    
+    /* string MUST be valid UTF-8 sequence */
     virtual se_ostream& write(const char *s, int n);
+
     virtual se_ostream& flush();
     virtual void endline();
     virtual void error(const char* str);
@@ -147,11 +152,12 @@ public:
     void set_max_result_size_to_pass(int _max_result_size_) {
         max_result_size = _max_result_size_;
     }
-    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt);
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt, const char* url);
     virtual void end_item   (qepNextAnswer res);
 
     virtual se_ostream* get_debug_ostream();
     virtual void set_debug_info_type(se_debug_info_type /*type*/) {};
+    virtual se_ostream& flush();
 };
 
 class se_debug_socketostream: public se_socketostream_base

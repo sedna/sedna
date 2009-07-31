@@ -7,6 +7,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPQueryRoot.h"
+#include "tr/executor/base/dm_accessors.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
@@ -70,25 +71,45 @@ bool PPQueryRoot::next()
     t_item nt = element;   /* nt will be ignored if tuple cell contains atomic value */
     xmlscm_type st = 0;    /* by default there is no type (anyType) */
     bool is_node;
+    str_counted_ptr uri;   /* for document and attribute nodes */
     
     if((is_node = tc.is_node()))
     {
+        /* Determine node type */
         xptr node = tc.get_node();
         CHECKP(node);
         nt = GETTYPE(GETSCHEMENODEX(node));
+        
         if(nt == element) {
             st = ((e_dsc*)XADDR(node))->type;
         }
         else if (nt == attribute)  {
             st = ((a_dsc*)XADDR(node))->type;
+            
+            /* Retrieve attribute namespace to return it to the client */
+            tuple_cell tc = se_node_namespace_uri(node);
+            if ( !tc.is_eos() ) {
+               tc = tuple_cell::make_sure_light_atomic(tc);
+               uri = tc.get_str_ptr();
+            }
+        }
+        else if(nt == document) {
+            /* Retrieve document URI to return it to the client */
+            tuple_cell tc = dm_document_uri(node);
+            if ( !tc.is_eos() ) {
+               tc = tuple_cell::make_sure_light_atomic(tc);
+               uri = tc.get_str_ptr();
+            }
         }
     }
     else {
+        /* Determine atomic type */
         st = tc.get_atomic_type();
     }
     
-    tr_globals::client->begin_item(!is_node, st, nt);
+    tr_globals::client->begin_item(!is_node, st, nt, uri.get());
 
+    /* Clients which based on protocol 4 should support serialization */
     if(tr_globals::client->supports_serialization()) 
     {
         /* If client supports serialization we don't have to
