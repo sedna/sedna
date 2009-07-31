@@ -388,10 +388,10 @@ socket_client::end_item(qepNextAnswer res) {
 }
 
 void 
-socket_client::begin_item(bool is_atomic, xmlscm_type st, t_item nt) {
+socket_client::begin_item(bool is_atomic, xmlscm_type st, t_item nt, const char* uri) {
     /* Flush buffer and send ItemEnd message */
     if(is_output_enabled()) {
-        out_s->begin_item(is_atomic, st, nt);
+        out_s->begin_item(is_atomic, st, nt, uri);
     }
 }
 

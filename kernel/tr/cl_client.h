@@ -72,7 +72,7 @@ public:
     virtual bool is_output_enabled()         { return (cur_s != NULL && cur_s == out_s); }
     
      /* Handlers for start/finish of item printing. */
-    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) {}
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt, const char* uri) {}
     virtual void end_item   (qepNextAnswer exist_next);
 
     /* If client supports serialization. */

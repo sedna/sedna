@@ -79,10 +79,12 @@ public:
     virtual void user_statement_begin() = 0;
     
     /* Handlers for start/finish of item printing.
-     * st - XMLSchema type of the node or atomic value
-     * nt - node type (i.e. element, attribute, etc ...)
+     * st  - XMLSchema type of the node or atomic value
+     * nt  - node type (i.e. element, attribute, etc ...)
+     * uri - either namespace URI for attribute nodes, or
+     *       document URI for document nodes
      */
-    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt) = 0;
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt, const char* uri) = 0;
     virtual void end_item   (qepNextAnswer exist_next) = 0;
 
     /* If client supports serialization by itself or not. 

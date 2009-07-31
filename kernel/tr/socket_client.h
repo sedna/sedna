@@ -92,7 +92,7 @@ public:
     virtual t_print get_result_type();
     
     /* Handlers for start/finish of item printing. */
-    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt);
+    virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt, const char* uri);
     virtual void end_item   (qepNextAnswer exist_next);
     
     /* If client supports serialization. 
