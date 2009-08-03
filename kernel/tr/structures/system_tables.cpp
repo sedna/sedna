@@ -306,6 +306,8 @@ void get_ftindexes (xptr node,const char* title)
     char buf[200];
     while (it.next())
     {
+        ic = it.get_object();
+
         if (left==XNULL)
         {
             left=insert_element(XNULL,XNULL,parent,"ftindex",xs_untyped,NULL_XMLNS);
