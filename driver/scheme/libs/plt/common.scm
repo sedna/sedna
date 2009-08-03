@@ -8,8 +8,13 @@
 (require 
   (lib "defmacro.ss")
   (lib "string.ss")
-  (rename (lib "pretty.ss") pp pretty-print))
-  
+  (lib "pretty.ss"))
+ 
+(define (pp arg1 . arg2)
+  (if (null? arg2)
+    (pretty-print arg1)
+    (pretty-print arg1 (car arg2))))
+
 (define (command-line)
   (cons "plt" (vector->list (current-command-line-arguments)
 	;	argv
