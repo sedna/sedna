@@ -84,6 +84,11 @@ void get_schema(xptr node,const char* title)
     {
         mdc = it.get_object();
 
+        if (!mdc.found()) {
+          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
+          continue;
+        } 
+
         if (title==NULL || my_strcmp(title, mdc->name)==0)
         {
             if (left==XNULL)
@@ -125,7 +130,6 @@ void get_collection_full (xptr node,const char* title)
     insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL_XMLNS);
     schema_node_xptr scn=find_collection(title);    
     if (scn != XNULL) getDebugInfo(scn, parent);
-
 }
 
 
@@ -172,6 +176,7 @@ void get_version(xptr node,const char* title)
     
     
 }
+
 void get_errors(xptr node,const char* title)
 {
     addTextValue(node,"$ERRORS.XML",12);
@@ -195,6 +200,7 @@ void get_errors(xptr node,const char* title)
 
     }
 }
+
 void get_indexes (xptr node,const char* title)
 {
     addTextValue(node,"$INDEXES.XML",12);
@@ -210,6 +216,12 @@ void get_indexes (xptr node,const char* title)
     while (it.next())
     {
         ic = it.get_object();
+
+        if (!ic.found()) {
+          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
+          continue;
+        } 
+
         if (left==XNULL)
         {
             left=insert_element(XNULL,XNULL,parent,"index",xs_untyped,NULL_XMLNS);
@@ -248,6 +260,12 @@ void get_triggers (xptr node,const char* title)
     while (it.next())
     {
         tc = it.get_object();
+
+        if (!tc.found()) {
+          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
+          continue;
+        } 
+
         if (left==XNULL) {
             left=insert_element(XNULL,XNULL,parent,"trigger",xs_untyped,NULL_XMLNS);
         } else 
@@ -303,10 +321,15 @@ void get_ftindexes (xptr node,const char* title)
     ft_index_cell_cptr ic = XNULL;
     catalog_iterator it(catobj_ft_indicies);
 
-    char buf[200];
+    char buf[64];
     while (it.next())
     {
         ic = it.get_object();
+
+        if (!ic.found()) {
+          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
+          continue;
+        } 
 
         if (left==XNULL)
         {
@@ -380,6 +403,12 @@ void get_documents (xptr node,const char* title)
     while (it.next())
     {
         mdc = it.get_object();
+
+        if (!mdc.found()) {
+          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
+          continue;
+        } 
+
         if (left==XNULL)
         {
             left=insert_element(XNULL,XNULL,parent,(mdc->is_doc)?"document":"collection",xs_untyped,NULL_XMLNS);
@@ -431,6 +460,11 @@ void get_catalog(xptr node,const char* title)
     while (it.next())
     {
         mdc = it.get_object();
+
+        if (!mdc.found()) {
+          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
+          continue;
+        } 
 
         if (left==XNULL)
         {
