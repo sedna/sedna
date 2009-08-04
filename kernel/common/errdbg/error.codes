@@ -760,7 +760,7 @@ sedna-err:SE3006
     Failed to send a message.
 sedna-err:SE3007
 
-    Failed to recieve a message.
+    Failed to receive a message.
 sedna-err:SE3008
 
     Unknown message from server.
