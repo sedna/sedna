@@ -141,7 +141,6 @@ document_type get_document_type(const char* title, db_entity_type type)
     {
         if(!my_strcmp(title, "$documents"))       return DT_DOCUMENTS;
         if(!my_strcmp(title, "$collections"))     return DT_COLLECTIONS;
-        if(!my_strcmp(title, "$modules"))         return DT_MODULES;
         if(!my_strcmp(title, "$schema"))          return DT_SCHEMA;
         if(!my_strcmp(title, "$indexes"))         return DT_INDEXES;
         if(!my_strcmp(title, "$version"))         return DT_VERSION;
@@ -504,26 +503,6 @@ void get_collections(xptr node,const char* title)
     }
 }
 
-void get_modules(xptr node,const char* title)
-{
-    addTextValue(node,"$MODULES.XML",12);
-    xptr parent=insert_element(XNULL,XNULL,node,"modules",xs_untyped,NULL_XMLNS);    
-
-    col_schema_node_cptr coll=find_collection("$modules");
-    xptr d_left=XNULL;
-    bt_key key;
-    bt_cursor cursor=bt_lm(coll->metadata);
-    if(!cursor.is_null())
-    {
-        do {
-            key=cursor.get_key();
-            d_left=insert_element(d_left,XNULL,parent,"module",xs_untyped,NULL_XMLNS);
-            insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
-                key.get_size(),NULL_XMLNS);
-        } while(cursor.bt_next_key());
-    }
-}
-
 schema_node_xptr get_system_doc(document_type type, const char* title)
 {
     system_fun func   = NULL;
@@ -543,7 +522,6 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
         case DT_COLLECTIONS   : func = get_collections; break;
         case DT_ERRORS        : func = get_errors; break;
         case DT_VERSION       : func = get_version; break;
-        case DT_MODULES       : func = get_modules; break;
         case DT_DOCUMENT_     : func = get_document_full; param = title + 10; break;
         case DT_COLLECTION_   : func = get_collection_full; param = title + 12; break;
         case DT_SCHEMA_       : func = get_schema; param = title + 8; break;
