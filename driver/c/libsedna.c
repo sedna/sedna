@@ -270,6 +270,7 @@ static int cleanSocket(struct SednaConnection *conn)
 static int resultQueryHandler(struct SednaConnection *conn)
 {
     int _type_offset = 0;
+    int url_length   = 0;
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
         connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
@@ -318,11 +319,21 @@ static int resultQueryHandler(struct SednaConnection *conn)
     {
         if(conn->msg.instruction == se_ItemStart) 
         {
-            if (conn->msg.body[3])
-                /* If URI (zero ended C-string) presents (protocol 4 and higher) then just skip */
-                _type_offset = 3 + strlen(conn->msg.body + 3) + 1;
-            else
+            if (conn->msg.body[2])
+            {
+                /* If URI is presented (protocol 4 and higher) then just skip it 
+                 * 3 stands for se_ItemStart header,
+                 * 1 stands for string type (0 in current implementation 
+                 * 4 stands for url string length
+                 */
+                net_int2int(&url_length, conn->msg.body + 3 + 1); 
+                _type_offset = 3 + 1 + 4 + url_length;
+            
+            }
+            else 
+            {
                 _type_offset = 3;
+            }
         }
         memcpy(conn->local_data_buf, conn->msg.body + 5 + _type_offset, conn->msg.length - 5 - _type_offset);
         conn->local_data_length = conn->msg.length - 5 - _type_offset;

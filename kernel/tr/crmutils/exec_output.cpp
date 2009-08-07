@@ -415,26 +415,38 @@ se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt, const c
 
     if (_p_ver.major_version >= 4) {
         /* Since protocol version 4 we send type of the item in the 
-         * first message. Then in end_item we change _instruction back to
-         * the se_ItemPart. */
+         * first message. Then in se_socketostream::flush() we change 
+         * _instruction back to the se_ItemPart. 
+         */
         _instruction      = se_ItemStart;
         _type_offset      = 3; 
-        _res_msg->body[0] = (unsigned char)node_type2se_item_class(nt, is_atomic);
-        _res_msg->body[1] = (unsigned char)xmlscm_type2se_item_type(st);
+        _res_msg->body[0] = (unsigned char) node_type2se_item_class(nt, is_atomic);
+        _res_msg->body[1] = (unsigned char) xmlscm_type2se_item_type(st);
         
         if(url != NULL)
         {
+            /* set url flag */
             _res_msg->body[2] = (unsigned char) 1;
+            /* set string type, always 0 at this version */
+            _res_msg->body[3] = (unsigned char) 0;
+            
             int url_len = strlen(url);
-    
-            if ( url_len + 1 > SE_SOCKET_MSG_BUF_SIZE - 5 - _type_offset - 5)
+            
+            if ( url_len > SE_SOCKET_MSG_BUF_SIZE - 30)
                 throw USER_EXCEPTION2(SE3012, "too long node URI");
 
-            strcpy(_res_msg->body + _type_offset, url);
-            _type_offset += url_len + 1;
+            /* set string length */
+            int2net_int(url_len, _res_msg->body + 4);
+
+            /* set URL itself */
+            strcpy(_res_msg->body + _type_offset + 5, url);
+            _type_offset += 5 + url_len;
         }
-        else
+        else 
+        {
+            /* unset url flag */
             _res_msg->body[2] = (unsigned char) 0;
+        }
         
     }
     else
@@ -450,8 +462,7 @@ se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt, const c
 se_ostream&
 se_socketostream::flush() 
 {
-    if(_res_msg->length > 5 + _type_offset) 
-    {
+    if(_res_msg->length > 5 + _type_offset) {
          se_socketostream_base::flush();
         _instruction = se_ItemPart;
         _type_offset = 0;
