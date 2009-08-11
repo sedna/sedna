@@ -4,71 +4,67 @@
 
 PP = ../..
 
+OUTPUT = out
+SRC_PATH = src/ru/ispras/sedna/driver
+DOC_PATH = dist/javadoc
+JAR_PATH = dist/lib
+ERR_PATH = $(PP)/kernel/common/errdbg
 
-OUTPUT = output
-OUTPUT_PATH= output
-PACKAGE_PATH= ru/ispras/sedna/driver
-JAVAC = javac -classpath $(CLASSPATH) -d output
-PACKAGE =ru.ispras.sedna.driver
-JAVADOC = javadoc -d ./doc 
+VPATH = $(SRC_PATH)
 
-VPATH = $(PP)/kernel/common/errdbg
+JAVAC   = javac -d $(OUTPUT)
+JAVADOC = javadoc -d $(DOC_PATH)
 
 include $(PP)/Makefile.include
 
-ifeq ($(PLATFORM),WIN32)
-CLASSPATH= ".;output"
-else
-CLASSPATH= ".:output"
-endif
-	
-all: $(OUTPUT) sednadriver.jar javadoc
+
+all: $(OUTPUT) $(JAR_PATH)/sednadriver.jar $(DOC_PATH)/index.html
 	@echo ===================================================================
 	@echo Java Driver Done
 	@echo ===================================================================
 
 $(OUTPUT): 
 	-$(MKDIR) $(OUTPUT)
+	-$(MKDIR) $(JAR_PATH)
 
-sednadriver.jar: ErrorCodes.java \
-                 DriverException.java \
-                 Debug.java \
-                 ResultType.java \
-                 NetOps.java \
-                 SednaSerializedResult.java \
-                 SednaSerializedResultImpl.java \
-                 SednaStatement.java \
-                 SednaStatementImpl.java \
-                 SednaConnection.java \
-                 SednaConnectionImpl.java \
-                 DatabaseManager.java
+$(ERR_PATH)/ErrorCodes.java: $(ERR_PATH)/gen_error_codes.c $(ERR_PATH)/error.codes
+	NO_DEP=1; export NO_DEP; $(MAKE) -C $(ERR_PATH) generated
+
+$(JAR_PATH)/sednadriver.jar: $(ERR_PATH)/ErrorCodes.java \
+                             DriverException.java \
+                             $(SRC_PATH)/Debug.java \
+                             ResultType.java \
+                             NetOps.java \
+                             SednaSerializedResult.java \
+                             SednaSerializedResultImpl.java \
+                             SednaStatement.java \
+                             SednaStatementImpl.java \
+                             SednaConnection.java \
+                             SednaConnectionImpl.java \
+                             DatabaseManager.java
 	$(JAVAC) $^
-	jar cvf sednadriver.jar -C $(OUTPUT) ru
+	jar cvf $(JAR_PATH)/sednadriver.jar -C $(OUTPUT) ru
 
-doc/index.html:	 ErrorCodes.java \
-                 DriverException.java \
-                 Debug.java \
-                 ResultType.java \
-                 NetOps.java \
-                 SednaSerializedResult.java \
-                 SednaSerializedResultImpl.java \
-                 SednaStatement.java \
-                 SednaStatementImpl.java \
-                 SednaConnection.java \
-                 SednaConnectionImpl.java \
-                 DatabaseManager.java
+$(DOC_PATH)/index.html: $(ERR_PATH)/ErrorCodes.java \
+                        DriverException.java \
+                        $(SRC_PATH)/Debug.java \
+                        ResultType.java \
+                        NetOps.java \
+                        SednaSerializedResult.java \
+                        SednaSerializedResultImpl.java \
+                        SednaStatement.java \
+                        SednaStatementImpl.java \
+                        SednaConnection.java \
+                        SednaConnectionImpl.java \
+                        DatabaseManager.java
 	$(JAVADOC) $^
 
-javadoc: doc/index.html
-
-Debug.java: Debug.java.m4
+$(SRC_PATH)/Debug.java: $(SRC_PATH)/Debug.java.m4
 	$(M4) -DEL_DEBUG=$(EL_DEBUG) $^ >$@
 
 clean:
-	-$(REMOVE) Debug.java
-	-$(REMOVE) $(OUTPUT_PATH)/*.class
+	-$(REMOVE) $(SRC_PATH)/Debug.java
+	-$(REMOVE) $(OUTPUT)/*.class
 	-$(REMOVE_DIR) $(OUTPUT)
-	-$(REMOVE) $(OUTPUT_PATH)/*.jar
-	-$(REMOVE) *.jar
-	-$(REMOVE) -fr ./doc
-
+	-$(REMOVE) -rf $(DOC_PATH)
+	-$(REMOVE) -rf $(JAR_PATH)
