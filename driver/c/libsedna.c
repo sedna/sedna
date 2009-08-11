@@ -266,7 +266,9 @@ static int cleanSocket(struct SednaConnection *conn)
     return 1;
 }
 
-/* takes the data from server when execute a query and decide if the query failed or succeeded*/
+/* Takes the data from server when execute a query 
+ * and decide if the query failed or succeeded
+ */
 static int resultQueryHandler(struct SednaConnection *conn)
 {
     int _type_offset = 0;
@@ -339,7 +341,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
         conn->local_data_length = conn->msg.length - 5 - _type_offset;
         conn->local_data_offset = 0;
         conn->socket_keeps_data = 1;    /* set the flag - Socket keeps item data */
-        conn->result_end = 0;           /* set the flag - there no items */
+        conn->result_end = 0;           /* set the flag - there are items */
         conn->in_query = 1;
 
         return SEDNA_QUERY_SUCCEEDED;

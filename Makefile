@@ -97,8 +97,8 @@ endif
 
 ifeq ($(findstring install, $(MAKECMDGOALS)), install)
 ifeq ($(JAVA_DRIVER), 1)
-DOC_DIRLIST := $(shell (find ./driver/java/doc -type d))
-DOC_FILELIST := $(shell (find ./driver/java/doc -type f))
+DOC_DIRLIST := $(shell (find ./driver/java/dist -type d))
+DOC_FILELIST := $(shell (find ./driver/java/dist -type f))
 endif
 endif
 
@@ -135,7 +135,6 @@ ifeq ($(JAVA_DRIVER), 1)
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/java
 
 	for arg in $(DOC_DIRLIST) ;do $(INSTALL) $(PERM2) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
-	$(INSTALL) $(PRESERVE) $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
 	for arg in $(DOC_FILELIST) ;do $(INSTALL) $(PRESERVE) $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
 endif
 
