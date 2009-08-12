@@ -30,13 +30,12 @@ import java.nio.charset.*;
 class NetOps {
     static Object    currentStatement                  = null;
     
-    // This driver support version 3.0 of the Sedna Client/Server protocol
+    // This driver supports version 3.0 of the Sedna Client/Server protocol
     final static int           majorProtocolVer        = 3;
     final static int           minorProtocolVer        = 0;
     
     final static int           se_QueryTrace           = 0;
     final static int           se_QueryDebug           = 1;
-    
     
     final static int SEDNA_SOCKET_MSG_BUF_SIZE         = 10240;
     
@@ -215,15 +214,14 @@ class NetOps {
         }
     }
 
-	/*
-	 *  Reads query debug information. If there were any return true, otherwise returns false
+	/**
+	 *  Reads query debug information. If there were any return true, otherwise returns false.
 	 */ 
 	static boolean readDebugInfo(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException 
 	{
 		
 		ByteBuffer  byteBuf;
-		CharBuffer  charBuf =
-            CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
+		CharBuffer  charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
         CharsetDecoder csd  = Charset.forName("utf8").newDecoder();
         
         boolean gotDebug;
@@ -231,13 +229,12 @@ class NetOps {
         int debug_type = net_int2int(msg.body);
                        
         gotDebug = ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug)) ?  true : false;
-        // read debug information if any 
+
+        // read debug information if any
         while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug))
         {
            byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
            csd.decode(byteBuf, charBuf, false);
-
-           // strBuf.append(charBuf.flip());
            item.ensureCapacity(charBuf.length());
 
            try {
@@ -254,15 +251,14 @@ class NetOps {
         return gotDebug;
 	}
 
-	/*
-	 *  Reads query trace. If there were any return true, otherwise returns false
+	/**
+	 *  Reads query trace. If there were any return true, otherwise returns false.
 	 */ 
 	static boolean readTrace(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException 
 	{
 		
 		ByteBuffer  byteBuf;
-		CharBuffer  charBuf =
-            CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
+		CharBuffer  charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
         CharsetDecoder csd  = Charset.forName("utf8").newDecoder();
         
         boolean gotTrace;
@@ -276,8 +272,6 @@ class NetOps {
         {
            byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
            csd.decode(byteBuf, charBuf, false);
-
-           // strBuf.append(charBuf.flip());
            item.ensureCapacity(charBuf.length());
 
            try {
@@ -296,10 +290,11 @@ class NetOps {
 	}
 		
     /** 
-     *  Reads a whole item from the socket
+     *  Reads a whole item from the socket.
      */
-    static String_item readStringItem(BufferedInputStream is, boolean doTraceOutput) throws DriverException 
-    {
+    static String_item readStringItem(BufferedInputStream is, boolean doTraceOutput)
+            throws DriverException {
+
         NetOps.Message     msg   = new NetOps.Message();
         NetOps.String_item sitem = new NetOps.String_item();
         boolean gotTrace, gotDebug;
@@ -307,25 +302,25 @@ class NetOps {
         StringBuffer debugInfo = new StringBuffer();
 
         ByteBuffer     byteBuf;
-        CharBuffer     charBuf =
-            CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
+        CharBuffer     charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
         CharsetDecoder csd = Charset.forName("utf8").newDecoder();
 
         NetOps.readMsg(msg, is);
 
         gotDebug = NetOps.readDebugInfo(msg, is, debugInfo);
         
-        if (doTraceOutput) gotTrace = NetOps.readTrace(msg, is, sitem.item);
-        else gotTrace = false;
+        if (doTraceOutput)
+            gotTrace = NetOps.readTrace(msg, is, sitem.item);
+        else
+            gotTrace = false;
         
-        if (msg.instruction == NetOps.se_ItemEnd)     
-        {
-            if (!gotTrace) sitem.item = null; 
+        if (msg.instruction == NetOps.se_ItemEnd) {
+            /* If we got se_ItemEnd before se_ItemPart/se_ItemStart
+             * it means that query returned empty xs:string. */
            	sitem.hasNextItem = true;
             return sitem;
         }
-        if (msg.instruction == NetOps.se_ResultEnd)
-        {
+        if (msg.instruction == NetOps.se_ResultEnd) {
             if (!gotTrace) sitem.item = null; 
            	sitem.hasNextItem = false;
             return sitem;
@@ -343,7 +338,6 @@ class NetOps {
                 byteBuf = ByteBuffer.wrap(msg.body, 5, msg.length - 5);
                 csd.decode(byteBuf, charBuf, false);
 
-                // strBuf.append(charBuf.flip());
                 sitem.item.ensureCapacity(charBuf.length());
 
                 try {
