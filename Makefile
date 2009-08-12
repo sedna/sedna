@@ -97,8 +97,12 @@ endif
 
 ifeq ($(findstring install, $(MAKECMDGOALS)), install)
 ifeq ($(JAVA_DRIVER), 1)
-DOC_DIRLIST := $(shell (find ./driver/java/dist -type d))
-DOC_FILELIST := $(shell (find ./driver/java/dist -type f))
+JAVA_DIRLIST  := $(shell (find ./driver/java/javadoc -type d))
+JAVA_DIRLIST  += $(shell (find ./driver/java/src -type d))
+JAVA_DIRLIST  += $(shell (find ./driver/java/lib -type d))
+JAVA_FILELIST := $(shell (find ./driver/java/javadoc -type f))
+JAVA_FILELIST += $(shell (find ./driver/java/src -type f -name *.java))
+JAVA_FILELIST += $(shell (find ./driver/java/lib -type f))
 endif
 endif
 
@@ -134,8 +138,8 @@ endif
 ifeq ($(JAVA_DRIVER), 1)
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/java
 
-	for arg in $(DOC_DIRLIST) ;do $(INSTALL) $(PERM2) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
-	for arg in $(DOC_FILELIST) ;do $(INSTALL) $(PRESERVE) $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
+	for arg in $(JAVA_DIRLIST) ;do $(INSTALL) $(PERM2) -d "$(SEDNA_INSTALL)/sedna/$$arg"; done
+	for arg in $(JAVA_FILELIST) ;do $(INSTALL) $(PRESERVE) $(PERM3) $$arg "$(SEDNA_INSTALL)/sedna/$$arg"; done
 endif
 
 	$(INSTALL) -d $(PERM2) $(SEDNA_INSTALL)/sedna/driver/c
