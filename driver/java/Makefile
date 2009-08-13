@@ -4,6 +4,8 @@
 
 PP = ../..
 
+include $(PP)/Makefile.include
+
 OUTPUT = out
 SRC_PATH = src/ru/ispras/sedna/driver
 DOC_PATH = javadoc
@@ -17,8 +19,9 @@ JAVADOC = javadoc -d $(DOC_PATH)
 
 GENERATED = $(SRC_PATH)/ErrorCodes.java $(SRC_PATH)/Debug.java
 
-include $(PP)/Makefile.include
-
+ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
+JAVAC += -g
+endif
 
 all: $(OUTPUT) $(JAR_PATH)/sednadriver.jar $(DOC_PATH)/index.html
 	@echo ===================================================================
@@ -51,6 +54,7 @@ $(JAR_PATH)/sednadriver.jar: $(GENERATED) \
 	jar cvf $(JAR_PATH)/sednadriver.jar -C $(OUTPUT) ru
 
 $(DOC_PATH)/index.html: $(GENERATED) \
+                        DriverException.java \
                         ResultType.java \
                         NetOps.java \
                         SednaSerializedResult.java \
