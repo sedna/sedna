@@ -1,7 +1,7 @@
 /*
- * File:  vmm.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  vmm.cpp
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
 
 
 // !!! NOTE: 1. fix bug with reserving space for persistent heap (in Linux)
@@ -36,7 +36,7 @@ using namespace std;
 
 /*******************************************************************************
 ********************************************************************************
-  TYPES AND VARIABLES
+TYPES AND VARIABLES
 ********************************************************************************
 *******************************************************************************/
 
@@ -155,7 +155,7 @@ bit_set *mapped_pages = NULL; // constructor zeroes it
 
 /*******************************************************************************
 ********************************************************************************
-  VMM MAP/REMAP/UNMAP FUNCTIONS
+VMM MAP/REMAP/UNMAP FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
 #ifdef VMM_ACCURATE
@@ -183,25 +183,25 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
     }
     else
     {
-		// we need to update mapped_blocks here
-	    mapped_pages->setAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
+        // we need to update mapped_blocks here
+        mapped_pages->setAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
 
         m = file_mapping.map;
     }
-    
+
 #ifdef _WIN32
     addr = MapViewOfFileEx(
-              m,						// handle to file-mapping object
-              (!isWrite) ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,		// access mode
-              0,						// high-order DWORD of offset
-              offs,						// low-order DWORD of offset
-              PAGE_SIZE,				// number of bytes to map
-              addr						// starting address
-           );
+        m,						// handle to file-mapping object
+        (!isWrite) ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,		// access mode
+        0,						// high-order DWORD of offset
+        offs,						// low-order DWORD of offset
+        PAGE_SIZE,				// number of bytes to map
+        addr						// starting address
+        );
 #else
     addr = mmap(addr, PAGE_SIZE, 
-    	(!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE,
-    	MAP_SHARED | MAP_FIXED, m, offs);
+        (!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE,
+        MAP_SHARED | MAP_FIXED, m, offs);
 #endif
 #ifdef _WIN32
     if (addr == NULL)
@@ -216,16 +216,16 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 #endif
         return -1;
     }
-    
+
     return 0;
 }
 
 inline int __vmm_unmap(void *addr)
 {
-//    xptr p = ((vmm_sm_blk_hdr *)addr)->p;
-//    write_table.remove(p);
+    //    xptr p = ((vmm_sm_blk_hdr *)addr)->p;
+    //    write_table.remove(p);
 
-	//we need to update unmap_blocks here
+    //we need to update unmap_blocks here
     mapped_pages->clearAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
 
 #ifdef _WIN32
@@ -243,26 +243,26 @@ void _vmm_preinit_region()
 #ifdef VMM_ACCURATE
     __uint32 cur;
     for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
-         cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-         cur += (__uint32)PAGE_SIZE)
+        cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+        cur += (__uint32)PAGE_SIZE)
     {
         if (__vmm_map((void*)cur, default_ram, false /* mapping with read-only access */) == -1)
             throw USER_EXCEPTION(SE1031);
     }
 #else
 #   ifdef _WIN32
-        void *start = NULL;
-        start = VirtualAlloc(
-                       LAYER_ADDRESS_SPACE_START_ADDR,			// region to reserve or commit
-                       LAYER_ADDRESS_SPACE_SIZE,				// size of region
-                       MEM_RESERVE,								// type of allocation
-                       PAGE_READWRITE							// type of access protection
-                );
-        if (start == NULL) 
-        {
-            d_printf2("VirtualAlloc failed with error %d\n", GetLastError());
-            throw USER_EXCEPTION(SE1031);
-        }
+    void *start = NULL;
+    start = VirtualAlloc(
+        LAYER_ADDRESS_SPACE_START_ADDR,			// region to reserve or commit
+        LAYER_ADDRESS_SPACE_SIZE,				// size of region
+        MEM_RESERVE,								// type of allocation
+        PAGE_READWRITE							// type of access protection
+        );
+    if (start == NULL) 
+    {
+        d_printf2("VirtualAlloc failed with error %d\n", GetLastError());
+        throw USER_EXCEPTION(SE1031);
+    }
 #   endif
 #endif
 }
@@ -272,16 +272,16 @@ void _vmm_init_region()
 #ifdef VMM_ACCURATE
 #else
 #   ifdef _WIN32
-        void *start = LAYER_ADDRESS_SPACE_START_ADDR;
-        if (VirtualFree(
-                   start,					// address of region
-                   0,						// size of region
-                   MEM_RELEASE				// operation type
-            ) == 0) 
-        {
-            d_printf2("VirtualFree failed with error %d\n", GetLastError());
-            throw USER_EXCEPTION(SE1031);
-        }
+    void *start = LAYER_ADDRESS_SPACE_START_ADDR;
+    if (VirtualFree(
+        start,					// address of region
+        0,						// size of region
+        MEM_RELEASE				// operation type
+        ) == 0) 
+    {
+        d_printf2("VirtualFree failed with error %d\n", GetLastError());
+        throw USER_EXCEPTION(SE1031);
+    }
 #   endif
 #endif
 }
@@ -336,42 +336,24 @@ inline void _vmm_unmap_decent(void *addr)
 
 /*******************************************************************************
 ********************************************************************************
-  VMM HANDLER THREAD
+VMM HANDLER THREAD
 ********************************************************************************
 *******************************************************************************/
 
 #ifndef _WIN32
 void _vmm_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
-//    d_printf1("_vmm_signal_handler\n");
-/*
-#ifndef VMM_UNIX_LIGHT_CHECKP
-    if (ALIGN_ADDR(vmm_cur_ptr) == XADDR(*(xptr*)p_sm_callback_data))
-        *(bool*)p_sm_callback_data = false;
+    if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*)p_sm_callback_data))
+    {
+        _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
+        *(bool*)p_sm_callback_data = true;
+    }
     else
-#endif
-        {
-            _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
-            //munmap(XADDR(*(xptr*)p_sm_callback_data), PAGE_SIZE);
-            *(bool*)p_sm_callback_data = true;
-        }
-*/
-
-#ifndef VMM_UNIX_LIGHT_CHECKP
-        if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*)p_sm_callback_data))
-#endif
-        {
-            _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
-            *(bool*)p_sm_callback_data = true;
-        }
-#ifndef VMM_UNIX_LIGHT_CHECKP
-        else
-        {
-            *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1)) // use_layer 
-                                          && 
-                                          !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
-        }
-#endif
+    {
+        *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1))
+            && 
+            !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
+    }
 
     USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
 }
@@ -391,11 +373,11 @@ U_THREAD_PROC(_vmm_thread, arg)
         USemaphoreDown(sm_to_vmm_callback_sem1, __sys_call_error);
         //printf("vmm_thread");fflush(stdout);
 
-		/* quick and dirty workaround - request unmapping of 0xffffffff to stop VMM callback thread */ 
+        /* quick and dirty workaround - request unmapping of 0xffffffff to stop VMM callback thread */ 
         if (XADDR(*(xptr*)p_sm_callback_data) == (void*)-1) 
         {
-			*(bool*)p_sm_callback_data = true;
-			USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
+            *(bool*)p_sm_callback_data = true;
+            USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
             return 0;
         }
 
@@ -406,21 +388,21 @@ U_THREAD_PROC(_vmm_thread, arg)
         continue;
 #endif
 
-//#ifdef _WIN32
+        //#ifdef _WIN32
         uSuspendThread(main_thread, __sys_call_error);
-//#else
-//        uSpinLock(vmm_spin_lock);
-//#endif
+        //#else
+        //        uSpinLock(vmm_spin_lock);
+        //#endif
 
-/*
+        /*
         if (ALIGN_ADDR(vmm_cur_ptr) == XADDR(*(xptr*)p_sm_callback_data))
-            *(bool*)p_sm_callback_data = false;
+        *(bool*)p_sm_callback_data = false;
         else
         {
-            _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
-            *(bool*)p_sm_callback_data = true;
+        _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
+        *(bool*)p_sm_callback_data = true;
         }
-*/
+        */
         if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*)p_sm_callback_data))
         {
             _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
@@ -429,15 +411,15 @@ U_THREAD_PROC(_vmm_thread, arg)
         else
         {
             *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1)) // use_layer 
-                                          && 
-                                          !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
+                && 
+                !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
         }
 
-//#ifdef _WIN32
+        //#ifdef _WIN32
         uResumeThread(main_thread, __sys_call_error);
-//#else
-//        uSpinUnlock(vmm_spin_lock);
-//#endif
+        //#else
+        //        uSpinUnlock(vmm_spin_lock);
+        //#endif
 
         USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
     }
@@ -446,7 +428,7 @@ U_THREAD_PROC(_vmm_thread, arg)
 
 /*******************************************************************************
 ********************************************************************************
-  INTERNAL FUNCTIONS
+INTERNAL FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
 bool _vmm_is_address_busy(void * p)
@@ -474,16 +456,16 @@ void _vmm_process_sm_error(int cmd)
     {
         switch (cmd)
         {
-            case 21: throw USER_EXCEPTION(SE1011);
-            case 22: throw USER_EXCEPTION(SE1012);
-            case 23: throw USER_EXCEPTION(SE1013);
-            case 24: throw USER_EXCEPTION(SE1014);
-            case 25: throw USER_EXCEPTION(SE1018);
-            case 26: throw USER_EXCEPTION(SE1019);
-            case 27: throw USER_EXCEPTION(SE1020);
-            case 28: throw USER_EXCEPTION(SE1021);
-            case  1: throw USER_EXCEPTION(SE1023);
-            default: throw SYSTEM_EXCEPTION("Unknown SM error");
+        case 21: throw USER_EXCEPTION(SE1011);
+        case 22: throw USER_EXCEPTION(SE1012);
+        case 23: throw USER_EXCEPTION(SE1013);
+        case 24: throw USER_EXCEPTION(SE1014);
+        case 25: throw USER_EXCEPTION(SE1018);
+        case 26: throw USER_EXCEPTION(SE1019);
+        case 27: throw USER_EXCEPTION(SE1020);
+        case 28: throw USER_EXCEPTION(SE1021);
+        case  1: throw USER_EXCEPTION(SE1023);
+        default: throw SYSTEM_EXCEPTION("Unknown SM error");
         }
     }
 }
@@ -498,7 +480,7 @@ void _vmm_alloc_block(xptr *p, bool is_data)
         throw USER_EXCEPTION(SE1034);
 
 
-	if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+    if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     *p = *(xptr*)(&(msg.data.swap_data.ptr));
     xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
@@ -511,7 +493,7 @@ void _vmm_alloc_block(xptr *p, bool is_data)
 
 /*******************************************************************************
 ********************************************************************************
-  VMM REGION RESERVING FUNCTIONS
+VMM REGION RESERVING FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
 
@@ -522,46 +504,46 @@ void vmm_preliminary_call() throw (SednaException)
 
     global_memory_mapping = get_global_memory_mapping();
     _vmm_preinit_region();
-/*
-#ifdef _WIN32
-        void *start;
-        start = VirtualAlloc(
-                       PH_ADDRESS_SPACE_START_ADDR,												// region to reserve or commit
-                       LAYER_ADDRESS_SPACE_START_ADDR_INT - PH_ADDRESS_SPACE_START_ADDR_INT,	// size of region
-                       MEM_RESERVE,																// type of allocation
-                       PAGE_READWRITE															// type of access protection
-                );
-        if (start == NULL) 
-        {
-            d_printf2("VirtualAlloc failed with error %d\n", GetLastError());
-            throw USER_EXCEPTION(SE1031);
-        }
-#endif
-*/
+    /*
+    #ifdef _WIN32
+    void *start;
+    start = VirtualAlloc(
+    PH_ADDRESS_SPACE_START_ADDR,												// region to reserve or commit
+    LAYER_ADDRESS_SPACE_START_ADDR_INT - PH_ADDRESS_SPACE_START_ADDR_INT,	// size of region
+    MEM_RESERVE,																// type of allocation
+    PAGE_READWRITE															// type of access protection
+    );
+    if (start == NULL) 
+    {
+    d_printf2("VirtualAlloc failed with error %d\n", GetLastError());
+    throw USER_EXCEPTION(SE1031);
+    }
+    #endif
+    */
 }
 
 
 /* Some "technical" comments:
 
-   1. Mapping with readonly and both read/write permissions in some systems behave differently.
-      Since vmm_determine_region intended only to find free continuous region it is better to use
-      readonly access protection.
-   2. Similarly, in Linux/UNIX it is better to use MAP_PRIVATE.
-   3. MAP_NORESERVE in Linux can be used since we will never commit simultaneously more than 
-      database buffers size (100MiB is default).
-   4. mmap() of /dev/zero can be used in systems under which MAP_ANON(YMOUS) 
-      flag is not supported. 
-   
-      Example:
-    
-      int fd_dev_zero;    // Don't forget to properly close fd_dev_zero!
-      if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1) 
-      {
-          perror("Can't open /dev/zero");
-          if(log) fprintf(f_se_trn_log, "Can't open /dev/zero.\nError: %d\n", errno);
-          else vmm_determine_region(true);
-          return;       
-      }
+1. Mapping with readonly and both read/write permissions in some systems behave differently.
+Since vmm_determine_region intended only to find free continuous region it is better to use
+readonly access protection.
+2. Similarly, in Linux/UNIX it is better to use MAP_PRIVATE.
+3. MAP_NORESERVE in Linux can be used since we will never commit simultaneously more than 
+database buffers size (100MiB is default).
+4. mmap() of /dev/zero can be used in systems under which MAP_ANON(YMOUS) 
+flag is not supported. 
+
+Example:
+
+int fd_dev_zero;    // Don't forget to properly close fd_dev_zero!
+if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1) 
+{
+perror("Can't open /dev/zero");
+if(log) fprintf(f_se_trn_log, "Can't open /dev/zero.\nError: %d\n", errno);
+else vmm_determine_region(true);
+return;       
+}
 */
 
 void vmm_determine_region(bool log) throw (SednaException)
@@ -578,29 +560,29 @@ void vmm_determine_region(bool log) throw (SednaException)
 
     __uint32 cur = 0;              
     __uint32 segment_size = 0;
-    
+
     void *res_addr = NULL;
 
     for (cur  = VMM_REGION_SEARCH_MAX_SIZE; 
-         cur >= VMM_REGION_MIN_SIZE; 
-         cur -= (__uint32)PAGE_SIZE)
+        cur >= VMM_REGION_MIN_SIZE; 
+        cur -= (__uint32)PAGE_SIZE)
     {
         if (log) fprintf(f_se_trn_log, "Probing size %u... ", cur); 
 
 #ifdef _WIN32
-        
+
         res_addr = VirtualAlloc(
-                   NULL,                      // system determines where to allocate the region
-                   cur + (__uint32)PAGE_SIZE, // additional PAGE is used to perform aligning afterwards
-                   MEM_RESERVE,               // type of allocation
-                   PAGE_READONLY);            // READONLY here is enough
+            NULL,                      // system determines where to allocate the region
+            cur + (__uint32)PAGE_SIZE, // additional PAGE is used to perform aligning afterwards
+            MEM_RESERVE,               // type of allocation
+            PAGE_READONLY);            // READONLY here is enough
 
         if (res_addr)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
             segment_size = cur;
             VirtualFree(res_addr, 0, MEM_RELEASE);
-	    res_addr = (void*)(((__uint32)res_addr + (__uint32)PAGE_SIZE) & PAGE_BIT_MASK);
+            res_addr = (void*)(((__uint32)res_addr + (__uint32)PAGE_SIZE) & PAGE_BIT_MASK);
             break;
         }
         else if(log) 
@@ -622,7 +604,7 @@ void vmm_determine_region(bool log) throw (SednaException)
 
 #endif /* _WIN32 */
     }
-    
+
     if(log)
     {
         if (0 == segment_size) fprintf(f_se_trn_log, "Nothing has been found\n");
@@ -640,7 +622,7 @@ void vmm_determine_region(bool log) throw (SednaException)
         else
         {
             d_printf3("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, (__uint32)res_addr);
-    
+
             if(segment_size > VMM_REGION_MAX_SIZE)
             {
                 LAYER_ADDRESS_SPACE_SIZE = VMM_REGION_MAX_SIZE;
@@ -650,17 +632,17 @@ void vmm_determine_region(bool log) throw (SednaException)
                 int pages_left_shift         = (pages_in_founded_segment - pages_in_needed_region) / 2;
 
                 LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + 
-                                                   (pages_left_shift * (__uint32)PAGE_SIZE)+
-                                                   (LAYER_ADDRESS_SPACE_SIZE);
+                    (pages_left_shift * (__uint32)PAGE_SIZE)+
+                    (LAYER_ADDRESS_SPACE_SIZE);
             }
             else /* PH_SIZE + VMM_REGION_MAX_SIZE >= segment_size >= PH_SIZE + VMM_REGION_MIN_SIZE */
             {
                 LAYER_ADDRESS_SPACE_SIZE = segment_size;
                 LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + segment_size; 
             }
-            
+
             LAYER_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_BOUNDARY_INT - LAYER_ADDRESS_SPACE_SIZE;
-            
+
             LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
             LAYER_ADDRESS_SPACE_BOUNDARY   = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
 
@@ -674,7 +656,7 @@ void vmm_determine_region(bool log) throw (SednaException)
 
 /*******************************************************************************
 ********************************************************************************
-  ACTIVATE/DEACTIVATE FUNCTIONS
+ACTIVATE/DEACTIVATE FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
 
@@ -690,7 +672,7 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
 
 #ifndef _WIN32
     struct sigaction sigsegv_act;
-                                                                                                                             
+
     memset(&sigsegv_act, '\0', sizeof(struct sigaction));
     sigsegv_act.sa_sigaction = _vmm_signal_handler;
     sigsegv_act.sa_flags = SA_SIGINFO;
@@ -723,7 +705,7 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
         tr_globals::authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
         int bufs_num = msg.data.reg.num;
 
-       _vmm_init_region();
+        _vmm_init_region();
 
         // Open buffer memory
         file_mapping = uOpenFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error);
@@ -733,11 +715,11 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
 
         char buf[100];
         if (USemaphoreOpen(&sm_to_vmm_callback_sem1, 
-                           SM_TO_VMM_CALLBACK_SEM1_BASE_STR(tr_globals::sid, buf, 100), __sys_call_error) != 0)
+            SM_TO_VMM_CALLBACK_SEM1_BASE_STR(tr_globals::sid, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
         if (USemaphoreOpen(&sm_to_vmm_callback_sem2, 
-                           SM_TO_VMM_CALLBACK_SEM2_BASE_STR(tr_globals::sid, buf, 100), __sys_call_error) != 0)
+            SM_TO_VMM_CALLBACK_SEM2_BASE_STR(tr_globals::sid, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
         if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), __sys_call_error) != 0)
@@ -810,16 +792,16 @@ void vmm_on_session_end() throw (SednaException)
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
-		msg.cmd = 22; // bm_unregister_session
+        msg.cmd = 22; // bm_unregister_session
         msg.trid = tr_globals::trid;
         msg.sid = tr_globals::sid;
 
         shutdown_vmm_thread = true;
 
-		/*	USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
-			SM will do it instead, see comments in bm_unregister_session function. */ 
+        /*	USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
+        SM will do it instead, see comments in bm_unregister_session function. */ 
 
-		if (ssmmsg->send_msg(&msg) != 0)
+        if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
@@ -856,9 +838,9 @@ void vmm_on_session_end() throw (SednaException)
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
-//#ifndef _WIN32
-//    uSpinDestroy(vmm_spin_lock);
-//#endif
+    //#ifndef _WIN32
+    //    uSpinDestroy(vmm_spin_lock);
+    //#endif
 
     USemaphoreClose(vmm_sm_sem, __sys_call_error);
     USemaphoreClose(xmode, __sys_call_error);
@@ -877,12 +859,12 @@ void vmm_on_session_end() throw (SednaException)
 
 static void unmapAllBlocks()
 {
-	int p = -1;
+    int p = -1;
 
-	while ((p = mapped_pages->getNextSetBitIdx(p + 1)) != -1)
-		_vmm_unmap_decent((char *)LAYER_ADDRESS_SPACE_START_ADDR + PAGE_SIZE * p);
+    while ((p = mapped_pages->getNextSetBitIdx(p + 1)) != -1)
+        _vmm_unmap_decent((char *)LAYER_ADDRESS_SPACE_START_ADDR + PAGE_SIZE * p);
 
-	mapped_pages->clear();
+    mapped_pages->clear();
 }
 
 void vmm_on_transaction_end() throw (SednaException)
@@ -910,34 +892,34 @@ void vmm_on_transaction_end() throw (SednaException)
         // there was a bug here: reusing read-mapped versions between transactions leads to problems because of old versions
         // temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
 
-/*		std::vector<void *> intermedStorg;
-		std::vector<void *>::iterator i;
-		t_blocks_write_table::iterator it=write_table.begin(), itend=write_table.end();
+        /*		std::vector<void *> intermedStorg;
+        std::vector<void *>::iterator i;
+        t_blocks_write_table::iterator it=write_table.begin(), itend=write_table.end();
 
-		intermedStorg.reserve(write_table.size());
-		for (0; it!=itend; ++it)
-		{
-			intermedStorg.push_back(*it);
-		}
-		for (i=intermedStorg.begin(); i!=intermedStorg.end(); ++i)
-		{
-			_vmm_unmap_decent(*i);
-		}
+        intermedStorg.reserve(write_table.size());
+        for (0; it!=itend; ++it)
+        {
+        intermedStorg.push_back(*it);
+        }
+        for (i=intermedStorg.begin(); i!=intermedStorg.end(); ++i)
+        {
+        _vmm_unmap_decent(*i);
+        }
 
-		write_table.clear();
-*/
-	    // fix of the aforementioned bug
-/*	    __uint32 cur;
-    	for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
-        	 cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-         	 cur += (__uint32)PAGE_SIZE)
-    	{
-        	if ((*(t_layer *)cur) != INVALID_LAYER)
-        		_vmm_unmap_decent((void *)cur);
-    	}  
-*/    	
-    	// more efficient fix of the aforementioned bug
-    	unmapAllBlocks();
+        write_table.clear();
+        */
+        // fix of the aforementioned bug
+        /*	    __uint32 cur;
+        for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
+        cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+        cur += (__uint32)PAGE_SIZE)
+        {
+        if ((*(t_layer *)cur) != INVALID_LAYER)
+        _vmm_unmap_decent((void *)cur);
+        }  
+        */    	
+        // more efficient fix of the aforementioned bug
+        unmapAllBlocks();
 
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -951,7 +933,7 @@ void vmm_on_transaction_end() throw (SednaException)
 
 /*******************************************************************************
 ********************************************************************************
-  INTERFACE FUNCTIONS
+INTERFACE FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
 
@@ -972,9 +954,9 @@ void _vmm_alloc_data_block(xptr *p) throw (SednaException)
 
 void vmm_alloc_data_block(xptr *p) throw (SednaException)
 {
-        _vmm_alloc_data_block(p);
+    _vmm_alloc_data_block(p);
 
-        VMM_INC_DATA_BLOCK_COUNT
+    VMM_INC_DATA_BLOCK_COUNT
         VMM_TRACE_ALLOC_DATA_BLOCK
         //printf("vmm_alloc_data_block (%d, 0x%x)\n", p->layer, p->addr);
 }
@@ -993,7 +975,7 @@ void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
     CHECKP(*p);
 
     VMM_INC_TMP_BLOCK_COUNT
-    VMM_TRACE_ALLOC_TMP_BLOCK
+        VMM_TRACE_ALLOC_TMP_BLOCK
 }
 
 void vmm_delete_block(xptr p) throw (SednaException)
@@ -1004,8 +986,8 @@ void vmm_delete_block(xptr p) throw (SednaException)
 
         VMM_TRACE_DELETE_BLOCK(p)
 
-        // now we should recognize is the p.addr busy...
-        bool is_busy = _vmm_is_address_busy(XADDR(p));
+            // now we should recognize is the p.addr busy...
+            bool is_busy = _vmm_is_address_busy(XADDR(p));
 
         // ... and if it busy we should free it
         if (is_busy && TEST_XPTR(p))
@@ -1041,16 +1023,16 @@ void vmm_delete_tmp_blocks() throw (SednaException)
     try {
 
         // TODO: This may be ineffective. Think about other ways (AF)
-/*
+        /*
         __uint32 cur;
         for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
-             cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-             cur += (__uint32)PAGE_SIZE)
+        cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+        cur += (__uint32)PAGE_SIZE)
         {
-            //if (IS_TMP_BLOCK(*(xptr*)cur)) 
-            _vmm_unmap_severe((void*)cur);
+        //if (IS_TMP_BLOCK(*(xptr*)cur)) 
+        _vmm_unmap_severe((void*)cur);
         }
-*/
+        */
         vmm_cur_ptr = NULL;
         vmm_cur_xptr = XNULL;
 
@@ -1130,7 +1112,7 @@ void vmm_memlock_block(xptr p) throw (SednaException)
 
     try {
         p = block_xptr(p);
-        
+
         bool is_busy = _vmm_is_address_busy(XADDR(p));
 
         if (!(is_busy && TEST_XPTR(p))) 
@@ -1160,7 +1142,7 @@ void vmm_memunlock_block(xptr p) throw (SednaException)
 
     try {
         p = block_xptr(p);
-        
+
         bool is_busy = _vmm_is_address_busy(XADDR(p));
 
         if (!(is_busy && TEST_XPTR(p)))
@@ -1209,68 +1191,68 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaExcepti
 
 /*******************************************************************************
 ********************************************************************************
-  RECOVERY FUNCTIONS
+RECOVERY FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
 /*
 void _vmm_pseudo_alloc_data_block(xptr *p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
+USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
-    try {
-        msg.cmd = 32; // bm_pseudo_allocate_data_block
-        msg.trid = tr_globals::trid;
-        msg.sid = tr_globals::sid;
+try {
+msg.cmd = 32; // bm_pseudo_allocate_data_block
+msg.trid = tr_globals::trid;
+msg.sid = tr_globals::sid;
 
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
+if (ssmmsg->send_msg(&msg) != 0)
+throw USER_EXCEPTION(SE1034);
 
-        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-        *p = *(xptr*)(&(msg.data.ptr));
+*p = *(xptr*)(&(msg.data.ptr));
 
-    } catch (ANY_SE_EXCEPTION) {
-        USemaphoreUp(vmm_sm_sem, __sys_call_error);
-        throw;
-    }
+} catch (ANY_SE_EXCEPTION) {
+USemaphoreUp(vmm_sm_sem, __sys_call_error);
+throw;
+}
 
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void _vmm_pseudo_delete_block(xptr p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
-    try {
-        p = block_xptr(p);
+USemaphoreDown(vmm_sm_sem, __sys_call_error);
+try {
+p = block_xptr(p);
 
-        msg.cmd = 33; // bm_pseudo_delete_data_block
-        msg.trid = tr_globals::trid;
-        msg.sid = tr_globals::sid;
-        msg.data.ptr = *(__int64*)(&p);
+msg.cmd = 33; // bm_pseudo_delete_data_block
+msg.trid = tr_globals::trid;
+msg.sid = tr_globals::sid;
+msg.data.ptr = *(__int64*)(&p);
 
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
+if (ssmmsg->send_msg(&msg) != 0)
+throw USER_EXCEPTION(SE1034);
 
-        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-    } catch (ANY_SE_EXCEPTION) {
-        USemaphoreUp(vmm_sm_sem, __sys_call_error);
-        throw;
-    }
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+} catch (ANY_SE_EXCEPTION) {
+USemaphoreUp(vmm_sm_sem, __sys_call_error);
+throw;
+}
+USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 */
 
 /*******************************************************************************
 ********************************************************************************
-  INTERNAL FUNCTIONS
+INTERNAL FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
 void vmm_unswap_block(xptr p) throw (SednaException)
 {
     if (!(LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)XADDR(p) && 
-          (int)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
+        (int)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
         throw USER_EXCEPTION(SE1036);
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
@@ -1285,7 +1267,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 #endif
         VMM_TRACE_UNSWAP(p)
 
-		msg.cmd = 26; // bm_get_block
+            msg.cmd = 26; // bm_get_block
         msg.trid = tr_globals::trid;
         msg.sid  = tr_globals::sid;
         msg.data.swap_data.ptr = *(__int64*)(&p);
@@ -1300,8 +1282,8 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 
         if (swapped != NULL)
         {
-        	 _vmm_unmap_decent(XADDR(swapped));
-//        	 write_table.remove(swapped);
+            _vmm_unmap_decent(XADDR(swapped));
+            //        	 write_table.remove(swapped);
         }
 
         _vmm_remap(XADDR(p), offs, false);
@@ -1309,11 +1291,11 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == tr_globals::sid)
         {
 #ifdef VMM_DEBUG_VERSIONS
-	        _vmm_remap(XADDR(p), offs, true);
+            _vmm_remap(XADDR(p), offs, true);
 #else
-//	        write_table.insert(p, XADDR(p));
+            //	        write_table.insert(p, XADDR(p));
 #endif
-	    }
+        }
 
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1326,7 +1308,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 void vmm_unswap_block_write(xptr p) throw (SednaException)
 {
     if (!(LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)XADDR(p) && 
-          (int)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
+        (int)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
         throw USER_EXCEPTION(SE1036);
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
@@ -1341,7 +1323,7 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
 #endif
         VMM_TRACE_UNSWAP(p)
 
-        msg.cmd = 37; // bm_create_new_version
+            msg.cmd = 37; // bm_create_new_version
         msg.trid = tr_globals::trid;
         msg.sid = tr_globals::sid;
         msg.data.swap_data.ptr = *(__int64*)(&p);
@@ -1356,13 +1338,13 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
 
         if (swapped != NULL)
         {
-        	 _vmm_unmap_decent(XADDR(swapped));
-//         	 write_table.remove(swapped);
+            _vmm_unmap_decent(XADDR(swapped));
+            //         	 write_table.remove(swapped);
         }
 
         _vmm_remap(XADDR(p), offs, true);
-        
-//        write_table.insert(p, XADDR(p));
+
+        //        write_table.insert(p, XADDR(p));
 
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1436,6 +1418,3 @@ int vmm_number_of_sm_callbacks()
 
 
 #endif
-
-
-

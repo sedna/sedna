@@ -1,7 +1,7 @@
 /*
- * File:  vmm.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  vmm.h
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
 
 
 #ifndef _VMM_H
@@ -23,93 +23,50 @@ namespace tr_globals {
 
 //#define VMM_GATHER_STATISTICS
 //#define VMM_TRACE
-//#define VMM_UNIX_LIGHT_CHECKP
 //#define VMM_DEBUG_CHECKP
-
 //#define VMM_DEBUG_VERSIONS
 
+
+#ifdef VMM_DEBUG_CHECKP
+
+#define CHECKP(p)    {                                                                           \
+                         VMM_INC_NUMBER_OF_CHECKP_CALLS                                          \
+                         vmm_checkp_xptr = p;                                                    \
+                         VMM_TRACE_CHECKP(vmm_checkp_xptr)                                       \
+                         check_if_null_xptr(vmm_checkp_xptr);                                    \
+                         if (vmm_cur_ptr) _vmm_unmap_severe(ALIGN_ADDR(vmm_cur_ptr));            \
+                         vmm_cur_ptr = XADDR(vmm_checkp_xptr);                                   \
+                         vmm_cur_xptr = vmm_checkp_xptr;                                         \
+                         if (!TEST_XPTR(vmm_checkp_xptr)) vmm_unswap_block(vmm_checkp_xptr);     \
+                         REFRESH_LRU_STAMP(vmm_checkp_xptr)                                      \
+                     }
+
+#else /* ! VMM_DEBUG_CHECKP */
+
+#define CHECKP(p)    {                                                                           \
+                         VMM_INC_NUMBER_OF_CHECKP_CALLS                                          \
+                         VMM_TRACE_CHECKP(p)                                                     \
+                         vmm_cur_ptr = XADDR(p);                                                 \
+                         vmm_cur_xptr = p;                                                       \
+                         if (!TEST_XPTR(p)) vmm_unswap_block(p);                                 \
+                         REFRESH_LRU_STAMP(p)                                                    \
+                     }
+
+                         
+#endif /* VMM_DEBUG_CHECKP */                         
+
+
+
+#define VMM_SIGNAL_MODIFICATION(p)    {                                                          \
+                                          VMM_INC_NUMBER_OF_MODIFICATIONS(p)                     \
+                                          VMM_TRACE_SIGNAL_MODIFICATION(p)                       \
+                                          if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != tr_globals::sid) \
+                                          vmm_unswap_block_write(p);                             \
+                                          ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;                     \
+                                          RECOVERY_CRASH;                                        \
+                                      }
+
 // External interface to VMM
-
-#ifdef _WIN32
-
-#ifdef VMM_DEBUG_CHECKP
-
-#define CHECKP(p)			try {																	\
-                                VMM_INC_NUMBER_OF_CHECKP_CALLS										\
-                                vmm_checkp_xptr = p;												\
-                                VMM_TRACE_CHECKP(vmm_checkp_xptr)									\
-                                /* VMM_DEBUG_CHECKP */												\
-                                check_if_null_xptr(vmm_checkp_xptr);								\
-                                if (vmm_cur_ptr) _vmm_unmap_severe(ALIGN_ADDR(vmm_cur_ptr));		\
-                                /* VMM_DEBUG_CHECKP */												\
-								vmm_cur_ptr = XADDR(vmm_checkp_xptr);								\
-								if (!TEST_XPTR(vmm_checkp_xptr)) throw win32_access_violation();	\
-							} catch (win32_access_violation&){										\
-							    vmm_unswap_block(vmm_checkp_xptr);									\
-                            }																		\
-                            REFRESH_LRU_STAMP(vmm_checkp_xptr)
-
-#else 
-
-#define CHECKP(p)			try {													\
-                                VMM_INC_NUMBER_OF_CHECKP_CALLS						\
-                                VMM_TRACE_CHECKP(p)									\
-								vmm_cur_ptr = XADDR(p);								\
-								if (!TEST_XPTR(p)) throw win32_access_violation();	\
-							} catch (win32_access_violation&){						\
-							    vmm_unswap_block(p);								\
-                            }														\
-                            REFRESH_LRU_STAMP(p)
-
-#endif /* VMM_DEBUG_CHECKP */
-
-#else /* UNIX */
-
-#ifdef VMM_UNIX_LIGHT_CHECKP
-#define CHECKP(p)
-#else
-
-#ifdef VMM_DEBUG_CHECKP
-
-#define CHECKP(p)			{																		\
-                                VMM_INC_NUMBER_OF_CHECKP_CALLS										\
-                                vmm_checkp_xptr = p;												\
-                                VMM_TRACE_CHECKP(vmm_checkp_xptr)									\
-                                /* VMM_DEBUG_CHECKP */												\
-                                check_if_null_xptr(vmm_checkp_xptr);								\
-                                if (vmm_cur_ptr) _vmm_unmap_severe(ALIGN_ADDR(vmm_cur_ptr));		\
-                                /* VMM_DEBUG_CHECKP */												\
-								vmm_cur_ptr = XADDR(vmm_checkp_xptr);								\
-                                vmm_cur_xptr = vmm_checkp_xptr;										\
-								if (!TEST_XPTR(vmm_checkp_xptr)) vmm_unswap_block(vmm_checkp_xptr);	\
-                                REFRESH_LRU_STAMP(vmm_checkp_xptr)									\
-							}
-
-#else
-
-#define CHECKP(p)			{														\
-                                VMM_INC_NUMBER_OF_CHECKP_CALLS						\
-                                VMM_TRACE_CHECKP(p)									\
-								vmm_cur_ptr = XADDR(p);								\
-                                vmm_cur_xptr = p;									\
-								if (!TEST_XPTR(p)) vmm_unswap_block(p);				\
-                                REFRESH_LRU_STAMP(p)								\
-							}
-
-#endif /* VMM_DEBUG_CHECKP */
-
-#endif /*VMM_UNIX_LIGHT_CHECKP*/
-#endif /*_WIN32*/
-
-
-#define VMM_SIGNAL_MODIFICATION(p)	{VMM_INC_NUMBER_OF_MODIFICATIONS(p)				\
-                                    VMM_TRACE_SIGNAL_MODIFICATION(p)				\
-                                    if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != tr_globals::sid) \
-                                    	vmm_unswap_block_write(p);                  \
-                                    ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true; \
-                                    RECOVERY_CRASH;}
-
-
 void vmm_preliminary_call() throw (SednaException);
 void vmm_determine_region(bool log = false) throw (SednaException);
 
@@ -141,7 +98,6 @@ void _vmm_unmap_severe(void *addr);
 #endif /*VMM_DEBUG_CHECKP*/
 
 
-
 #ifndef _WIN32
 #ifdef HAVE_SPINLOCKS
 extern uspinlock *vmm_spin_lock;
@@ -153,7 +109,7 @@ extern volatile void * vmm_cur_ptr;
 extern xptr vmm_cur_xptr;
 
 extern int vmm_data_block_count;
-#define VMM_INC_DATA_BLOCK_COUNT				++vmm_data_block_count;
+#define VMM_INC_DATA_BLOCK_COUNT                ++vmm_data_block_count;
 int vmm_data_blocks_allocated();
 
 
@@ -169,10 +125,10 @@ extern int _vmm_tmp_block_count;
 extern int _vmm_number_of_checkp_calls;
 extern int _vmm_number_of_sm_callbacks;
 
-#define VMM_INC_NUMBER_OF_CHECKP_CALLS			++_vmm_number_of_checkp_calls;
-#define VMM_INC_NUMBER_OF_SM_CALLBACKS			++_vmm_number_of_sm_callbacks;
-#define VMM_INC_NUMBER_OF_MODIFICATIONS(p)		_vmm_inc_number_of_modifications(p);
-#define VMM_INC_TMP_BLOCK_COUNT					++_vmm_tmp_block_count;
+#define VMM_INC_NUMBER_OF_CHECKP_CALLS          ++_vmm_number_of_checkp_calls;
+#define VMM_INC_NUMBER_OF_SM_CALLBACKS          ++_vmm_number_of_sm_callbacks;
+#define VMM_INC_NUMBER_OF_MODIFICATIONS(p)      _vmm_inc_number_of_modifications(p);
+#define VMM_INC_TMP_BLOCK_COUNT                 ++_vmm_tmp_block_count;
 
 void _vmm_inc_number_of_modifications(xptr p);
 
@@ -197,7 +153,7 @@ int vmm_number_of_sm_callbacks();
 
 #ifdef VMM_TRACE
 
-#define TRACE_FILE			"vmm_trace.txt"
+#define TRACE_FILE                             "vmm_trace.txt"
 
 void vmm_trace_CHECKP(const xptr& p);
 void vmm_trace_signal_modification(const xptr& p);
@@ -207,12 +163,12 @@ void vmm_trace_unswap(const xptr& p);
 void vmm_trace_delete_block(const xptr& p);
 
 
-#define VMM_TRACE_CHECKP(p)						vmm_trace_CHECKP(p);
-#define VMM_TRACE_SIGNAL_MODIFICATION(p)		vmm_trace_signal_modification(p);
-#define VMM_TRACE_ALLOC_DATA_BLOCK				vmm_trace_alloc_data_block();
-#define VMM_TRACE_ALLOC_TMP_BLOCK				vmm_trace_alloc_tmp_block();
-#define VMM_TRACE_UNSWAP(p)						vmm_trace_unswap(p);
-#define VMM_TRACE_DELETE_BLOCK(p)				vmm_trace_delete_block(p);
+#define VMM_TRACE_CHECKP(p)                    vmm_trace_CHECKP(p);
+#define VMM_TRACE_SIGNAL_MODIFICATION(p)       vmm_trace_signal_modification(p);
+#define VMM_TRACE_ALLOC_DATA_BLOCK             vmm_trace_alloc_data_block();
+#define VMM_TRACE_ALLOC_TMP_BLOCK              vmm_trace_alloc_tmp_block();
+#define VMM_TRACE_UNSWAP(p)                    vmm_trace_unswap(p);
+#define VMM_TRACE_DELETE_BLOCK(p)              vmm_trace_delete_block(p);
 
 #else
 
@@ -228,7 +184,7 @@ void vmm_trace_delete_block(const xptr& p);
 
 
 #ifdef LRU
-#define REFRESH_LRU_STAMP(p)					((vmm_sm_blk_hdr*)((pint)((p).addr) & PAGE_BIT_MASK))->lru = ++(*lru_global_stamp_data);
+#define REFRESH_LRU_STAMP(p)                   ((vmm_sm_blk_hdr*)((pint)((p).addr) & PAGE_BIT_MASK))->lru = ++(*lru_global_stamp_data);
 
 extern LRU_stamp *lru_global_stamp_data;
 #else
@@ -242,10 +198,10 @@ extern xptr vmm_checkp_xptr;
 
 inline void check_if_null_xptr(const xptr& p)
 {
-	if (p == XNULL)
-	{
-		throw USER_EXCEPTION2(SE1003, "Wrong CHECKP argument");
-	}
+    if (p == XNULL)
+    {
+        throw USER_EXCEPTION2(SE1003, "Wrong CHECKP argument");
+    }
 }
 
-#endif
+#endif /* _VMM_H */
