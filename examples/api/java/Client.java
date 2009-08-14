@@ -1,134 +1,116 @@
-
-/*
- * File:  Client.java
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
-
-
 /**
+ * File: Client.java
+ * Copyright (C) 2009 The Institute for System Programming of the 
+ * Russian Academy of Sciences (ISP RAS)
  *
- * This is an example of a client application that uses the Java API
+ * This is an example of a client application that uses the Java API 
  * to work with Sedna.
+ *
  * This application connects to the Sedna DBMS, opens a session. 
- * The session consists of one transaction. Application loads data from file 'region.xml' and executes
- * three statements: two XQuery queries and one update statement. When statements
- * are executed, application commits the transaction and closes the session.
+ * The session consists of one transaction. Application loads data from the 
+ * file 'region.xml' and executes three statements: two XQuery queries and 
+ * one update statement. When statements are executed, application commits 
+ * the transaction and closes the session.
  */
 
 import ru.ispras.sedna.driver.*;
 
-//~--- JDK imports ------------------------------------------------------------
-
-import java.io.*;
-
-import java.net.*;
-
-import java.util.*;
-
-//~--- classes ----------------------------------------------------------------
-
 class Client {
-    public Client() {}
 
-    //~--- methods ------------------------------------------------------------
+    /* Some database connection arguments. */
+    final static String  url      = "localhost";
+    final static String  dbname   = "testdb";
+    final static String  user     = "SYSTEM";
+    final static String  password = "MANAGER";
 
     public static void main(String args[]) {
-        System.out.println("Client started\n");
 
-        // set up arguments for the call to the getConnection method.
-        String          url      = "localhost";
-        String          dbname   = "testdb";
-        String          user     = "SYSTEM";
-        String          password = "MANAGER";
-        String          item;
-        int             count;
         SednaConnection con = null;
+        System.out.println("Client has been started ...");
 
-        // get a connection
         try {
+            /* Get a connection */
             con = DatabaseManager.getConnection(url, dbname, user, password);
 
-            // begin transaction
+            /* Begin a new transaction */
             con.begin();
 
-            // creates statements
-            SednaStatement st1 = con.createStatement();
-            SednaStatement st2 = con.createStatement();
+            /* Create statement */
+            SednaStatement st = con.createStatement();
 
-            // execute a statement. the statement is a bluk load.
-            System.out.println("Loading data");
+            /* Load XML into the database */
+            System.out.println("Loading data ...");
+            boolean call_res = st.execute("LOAD 'C:/region.xml' 'region'");
 
-            boolean call_res = st1.execute("LOAD \"../data/region.xml\" \"region\"");
-
-            if (!call_res)    // if call_res is false the statement was an update
-            {
-                System.out.println("Bulk load succeeded");
-                System.out.println("=====================================\n");
+            /* If call_res is false the statement was an update */
+            if (!call_res) {
+                System.out.println("Document 'region.xml' has been loaded successfully");
+                System.out.println("==================================================\n");
             }
 
-            // execute query.
+            /* Execute query */
             System.out.println("Executing query");
-            call_res = st1.execute("document(\"region\")/*/*");
+            call_res = st.execute("document('region')/*/*");
 
-            if (call_res)    // if call_res is true the statement was not an update
+            /* If call_res is true the statement was not an update
+             * and we can use SednaSerializedResult object. */
+            if (call_res) printQueryResults(st);
 
-            // and we can use SednaSerializedResult object
-            {
-                System.out.println("Result:");
-
-                SednaSerializedResult pr1 = st1.getSerializedResult();
-
-                item  = null;
-                item  = pr1.next();
-                count = 1;
-
-                while (item != null) {
-                    System.out.println(count + " item: " + item);
-                    item = pr1.next();
-                    System.out.println(
-                        "=====================================\n");
-                    count++;
-                }
-            }
-
-            // execute update.
+            /* Execute update. */
             System.out.println("Executing update");
-            call_res =
-                st2.execute("UPDATE delete document(\"region\")//africa");
-            System.out.println("=====================================\n");
+            call_res = st.execute("UPDATE delete document('region')//africa");
 
-            // execute query.
-            System.out.println("Executing query");
-            call_res = st2.execute("document(\"region\")/*/*");
-
-            if (call_res)    // if call_res is true the statement was not an update
-
-            // and we can use PlaneResult object
-            {
-                System.out.println("Result:");
-
-                SednaSerializedResult pr3 = st2.getSerializedResult();
-
-                item  = null;
-                item  = pr3.next();
-                count = 1;
-
-                while (item != null) {
-                    System.out.println(count + " item: " + item);
-                    item = pr3.next();
-                    System.out.println(
-                        "=====================================");
-                    count++;
-                }
+            /* If call_res is false the statement was an update */
+            if (!call_res) {
+                System.out.println("Update succeeded");
+                System.out.println("==================================================\n");
             }
 
-            // commit the transaction
-            con.commit();
+            /* Execute query */
+            System.out.println("Executing query");
+            call_res = st.execute("document('region')/*/*");
 
-            // break the connection
-            con.close();
-        } catch (DriverException e) {
-            System.out.println(e.toString());
+            if (call_res) printQueryResults(st);
+
+            /* Remove document */
+            System.out.println("Removing document ...");
+            call_res = st.execute("DROP DOCUMENT 'region'");
+
+            if (!call_res) {
+                System.out.println("Document 'region' has been dropped successfully");
+                System.out.println("==================================================\n");
+            }
+            /* Commit current transaction */
+            con.commit();
+        }
+        catch(DriverException e) {
+            e.printStackTrace();
+        }
+        finally {
+            /* Properly close connection */
+            try {
+                if(con != null) con.close();
+            }
+            catch(DriverException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Pretty printing for query results
+     */
+    private static void printQueryResults(SednaStatement st)
+            throws DriverException {
+
+        int count = 1;
+        String item;
+        System.out.println("Result:");
+        SednaSerializedResult pr = st.getSerializedResult();
+        while ((item = pr.next()) != null) {
+            System.out.println(count + " item: " + item);
+            System.out.println("==================================================");
+            count++;
         }
     }
 }

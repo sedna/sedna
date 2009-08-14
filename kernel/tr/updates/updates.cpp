@@ -353,13 +353,13 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
                     (GETSCHEMENODEX(node))->get_xmlns());
             }
             else
-                res =insert_attribute(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((a_dsc*)XADDR(node))->type:xs_untypedAtomic,NULL,0,(GETSCHEMENODEX(node))->get_xmlns());
+                res = insert_attribute(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((a_dsc*)XADDR(node))->type:xs_untypedAtomic,NULL,0,(GETSCHEMENODEX(node))->get_xmlns());
 
         }
         break;
     case xml_namespace:
         {
-            res =insert_namespace(left, right, parent,xmlns_touch(((ns_dsc*)XADDR(node))->ns));
+            res = insert_namespace(left, right, parent, xmlns_touch(((ns_dsc*)XADDR(node))->ns));
         }
         break;
     default: 

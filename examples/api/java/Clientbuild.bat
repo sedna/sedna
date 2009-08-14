@@ -1,1 +1,2 @@
-javac -classpath .;..\..\..\driver\java\sednadriver.jar Client.java
+javac -classpath .;..\..\..\driver\java\lib\sednadriver.jar Client.java
+

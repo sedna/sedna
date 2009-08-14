@@ -4,15 +4,9 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
-
 package ru.ispras.sedna.driver;
 
-//~--- JDK imports ------------------------------------------------------------
-
 import java.io.*;
-
-//~--- classes ----------------------------------------------------------------
 
 class SednaSerializedResultImpl implements SednaSerializedResult {
     BufferedInputStream bufInputStream;
@@ -21,9 +15,7 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
     StringBuffer        stringItem;
     boolean             doTraceOutput;
 
-    //~--- constructors -------------------------------------------------------
-
-    SednaSerializedResultImpl(StringBuffer stringItem, 
+    SednaSerializedResultImpl(StringBuffer stringItem,
                               boolean hasNextItem, 
                               BufferedInputStream is,
                               OutputStream os,
@@ -34,8 +26,6 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
         this.hasNextItem    = hasNextItem;
         this.doTraceOutput  = doTraceOutput;
     }
-
-    //~--- methods ------------------------------------------------------------
 
     // returns string item if success
     // null if the end of the sequence
@@ -55,7 +45,7 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
         		msg.length      = 0;
         		NetOps.writeMsg(msg, outputStream);
         		
-        		NetOps.String_item sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
+        		NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
         		
         		this.stringItem  = sitem.item;
         		this.hasNextItem = sitem.hasNextItem;
@@ -90,7 +80,7 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
         		msg.length      = 0;
         		NetOps.writeMsg(msg, outputStream);
         		
-        		NetOps.String_item sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
+        		NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
         		
         		this.stringItem  = sitem.item;
         		this.hasNextItem = sitem.hasNextItem;

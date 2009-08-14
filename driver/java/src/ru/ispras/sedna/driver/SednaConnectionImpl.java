@@ -4,36 +4,22 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
-
 package ru.ispras.sedna.driver;
 
-//~--- JDK imports ------------------------------------------------------------
-
 import java.io.*;
-
 import java.net.Socket;
 
-import java.util.*;
-
-//~--- classes ----------------------------------------------------------------
 
 class SednaConnectionImpl implements SednaConnection {
     private boolean       isClose       = false;
-    private boolean       isDebugMode   = false;
     private boolean       doTraceOutput = true;
-    
-   
     private Integer       id;
-
     private Socket        socket;
     SednaSerializedResult currentResult = null;    // all statements that were created in this connection
     BufferedInputStream   bufInputStream;
     OutputStream          outputStream;
         
-    //~--- methods ------------------------------------------------------------
-
-    public void begin() throws DriverException {
+     public void begin() throws DriverException {
         if (this.isClose) {
             throw new DriverException(ErrorCodes.SE3028, "");
         }
@@ -178,8 +164,6 @@ class SednaConnectionImpl implements SednaConnection {
     	
     }
     
-    //~--- get methods --------------------------------------------------------
-
     // gets session id (for driver-internal use)  
     Integer getId() {
         return this.id;
@@ -194,9 +178,7 @@ class SednaConnectionImpl implements SednaConnection {
         return this.isClose;
     }
 
-    //~--- set methods --------------------------------------------------------
-
-    // sets DataInputStream of the connections socket (for driver-internal use)  
+    // sets DataInputStream of the connections socket (for driver-internal use)
     void setBIS(BufferedInputStream bufInputStream) {
         this.bufInputStream = bufInputStream;
     }

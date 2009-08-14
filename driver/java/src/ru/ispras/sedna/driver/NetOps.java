@@ -1,27 +1,14 @@
-
 /*
  * File:  NetOps.java
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 package ru.ispras.sedna.driver;
 
-//~--- JDK imports ------------------------------------------------------------
-
 import java.io.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import java.lang.*;
-
-import java.net.Socket;
-
 import java.nio.*;
 import java.nio.charset.*;
-
-//~--- classes ----------------------------------------------------------------
 
 /**
  * Static functions to organize message exchange between
@@ -29,20 +16,20 @@ import java.nio.charset.*;
  */
 class NetOps {
     static Object    currentStatement                  = null;
-    
-    // This driver supports version 3.0 of the Sedna Client/Server protocol
+
+    /* This driver supports version 3.0 of the Sedna Client/Server protocol */
     final static int           majorProtocolVer        = 3;
     final static int           minorProtocolVer        = 0;
-    
+
     final static int           se_QueryTrace           = 0;
     final static int           se_QueryDebug           = 1;
-    
+
     final static int SEDNA_SOCKET_MSG_BUF_SIZE         = 10240;
-    
-    // Size of bulk load portion
+
+    /* Size of bulk load portion */
     final static int SEDNA_BULK_LOAD_PORTION           = 5120;
-    
-    // Protocol instructions
+
+    /* Protocol instructions */
     final static int se_ErrorResponse                  = 100;
     final static int se_StartUp                        = 110;
     final static int se_SessionParameters              = 120;
@@ -90,69 +77,169 @@ class NetOps {
     final static int se_SetSessionOptionsOk            = 540;
     final static int se_ResetSessionOptions            = 550;
     final static int se_ResetSessionOptionsOk          = 560;
-    
+
     final static int se_Session_Debug_Off              = 0;
     final static int se_Session_Debug_On               = 1;
-    
-
-    //~--- methods ------------------------------------------------------------
 
     /**
-     * Loads data from stream to Server via sockets
-     * false - if bulk Load (it is update) succeeded
-     * true - if failed
+     * Bulk loads data to the server from the given input stream.
+     * Sends se_BulkLoadEnd on the end in case of success.
+     *
+     * @param in                input stream to load from.
+     * @param bufInputStream    stream from the server.
+     * @param outputStream      stream to the server.
+     * @throws DriverException  given stream is broken or
+     *                          something is wrong with protocol state.
      */
-   static boolean bulkLoad(InputStream in,
-                            BufferedInputStream bufInputStream,
-                            OutputStream outputStream)
+    private static void loadStream(InputStream in,
+                                   BufferedInputStream bufInputStream,
+                                   OutputStream outputStream)
             throws DriverException {
-        NetOps.Message msg        = new NetOps.Message();
-        int            bytes_read = 0;
+
+        NetOps.Message msg = new NetOps.Message();
+        int bytes_read = 0;
 
         try {
+
             while (bytes_read != -1) {
                 bytes_read = in.read(msg.body, 5, SEDNA_BULK_LOAD_PORTION);
 
                 if (bytes_read != -1) {
-                    msg.instruction = 410;    // BulkLoadPortion
+                    msg.instruction = se_BulkLoadPortion;
                     msg.length      = bytes_read + 5;
                     msg.body[0]     = 0;
                     NetOps.writeInt(bytes_read, msg.body, 1);
                     NetOps.writeMsg(msg, outputStream);
                 }
             }
-        } catch (IOException ioe) {
-            msg.instruction = 400;            // BulkLoadError
-            msg.length      = 0;
-            NetOps.writeMsg(msg, outputStream);
-            NetOps.readMsg(msg, bufInputStream);
 
-            throw new DriverException(ErrorCodes.SE3007, ioe.toString());            
         } catch (DriverException de) {
-            msg.instruction = 400;            // BulkLoadError
+            msg.instruction = se_BulkLoadError;
             msg.length      = 0;
             NetOps.writeMsg(msg, outputStream);
             NetOps.readMsg(msg, bufInputStream);
-
             throw de;
+        } catch (IOException ioe) {
+            msg.instruction = se_BulkLoadError;
+            msg.length      = 0;
+            NetOps.writeMsg(msg, outputStream);
+            NetOps.readMsg(msg, bufInputStream);
+            throw new DriverException(ErrorCodes.SE3007, ioe.toString());
         }
 
-        msg.instruction = 420;    // BulkLoadEnd
+        msg.instruction = se_BulkLoadEnd;
         msg.length      = 0;
         NetOps.writeMsg(msg, outputStream);
+    }
 
-        // result of bulk loading
+    /**
+     * Bulk loads data to the server from the given input stream.
+     * Handles status response from the server.
+     *
+     * @param in                input stream to load from.
+     * @param bufInputStream    stream from the server.
+     * @param outputStream      stream to the server.
+     * @return                  false on a success.
+     * @throws DriverException  given stream is broken, bulk load failed or
+     *                          something is wrong with protocol state.
+     */
+    static boolean bulkLoad(InputStream in,
+                            BufferedInputStream bufInputStream,
+                            OutputStream outputStream)
+            throws DriverException {
+
+        NetOps.Message msg = new NetOps.Message();
+
+        loadStream(in, bufInputStream, outputStream);
+
         NetOps.readMsg(msg, bufInputStream);
-                   	
-        if ((msg.instruction == 440) || (msg.instruction == 340)) {
+
+        if ( msg.instruction == se_BulkLoadSucceeded ||
+                msg.instruction == se_UpdateSucceeded ) {
             return false;
-        } else if ((msg.instruction == 450) || (msg.instruction == 350)
-                   || (msg.instruction == 100)) {
-             throw new DriverException(getErrorInfo(msg.body, msg.length),getErrorCode(msg.body));
+        } else if (msg.instruction == se_BulkLoadFailed ||
+                msg.instruction == se_UpdateFailed   ||
+                msg.instruction == se_ErrorResponse ) {
+            throw new DriverException(getErrorInfo(msg.body, msg.length),getErrorCode(msg.body));
         } else {
             throw new DriverException(ErrorCodes.SE3008, "");
         }
     }
+
+    /**
+     * Bulk loads one or more files to the server (either module or XML
+     * document). After the first file has been loaded server may send
+     * se_BulkLoadFileName messages with additional files to be loaded.
+     *
+     * @param fileName          path to the file to be loaded.
+     * @param bufInputStream    stream from the server.
+     * @param outputStream      stream to the server.
+     * @return                  false on a success.
+     * @throws DriverException  either file was not found, bulk load failed or
+     *                          something wrong with client server protocol.
+     */
+    static boolean bulkLoad(String fileName,
+                            BufferedInputStream bufInputStream,
+                            OutputStream outputStream)
+            throws DriverException {
+
+        NetOps.Message msg = new NetOps.Message();
+        FileInputStream fis = null;
+        String previousFileName = null;
+        
+        try {
+
+            while (true) {
+                if (fis != null) {
+                    fis.close();
+                    fis = null;
+                }        
+                fis = new FileInputStream(fileName);
+                loadStream(fis, bufInputStream, outputStream);
+                NetOps.readMsg(msg, bufInputStream);
+
+                if (msg.instruction == se_BulkLoadFileName) {
+                    previousFileName = fileName;
+                    fileName = new String(msg.body, 5, msg.length - 5);
+                    continue;
+                }
+                else if ( msg.instruction == se_BulkLoadSucceeded ||
+                        msg.instruction == se_UpdateSucceeded ) {
+                    return false;
+                } else if (msg.instruction == se_BulkLoadFailed ||
+                        msg.instruction == se_UpdateFailed   ||
+                        msg.instruction == se_ErrorResponse ) {
+                    throw new DriverException(getErrorInfo(msg.body, msg.length),
+                            getErrorCode(msg.body));
+                } else {
+                    /* Unknown message from the server */
+                    throw new DriverException(ErrorCodes.SE3008,
+                            Integer.toString(msg.instruction));
+                }
+            }
+        }
+        catch (IOException ex){
+            msg.instruction = NetOps.se_BulkLoadError;
+            NetOps.writeMsg(msg, outputStream);
+            NetOps.readMsg(msg, bufInputStream);
+            if (ex instanceof FileNotFoundException)
+                /* Can't open file to load*/
+                throw new DriverException(ErrorCodes.SE4042, fileName);
+            else
+                /* Can't close file which has been loaded */
+                throw new DriverException(ErrorCodes.SE4043, previousFileName);
+        }
+        finally {
+            try {
+                if (fis != null) {
+                    fis.close();
+                }
+            } catch (IOException e) {
+                /* Give up on closing */
+            }
+        }
+    }
+
 
     static void driverErrOut(String str) {
         if (Debug.DEBUG) {
@@ -172,22 +259,21 @@ class NetOps {
         byte int_array[] = new byte[4];
 
         try {
-	        call_res = bufInputStream.read(int_array, 0, 4);
-    	    if (call_res != 4) throw new DriverException(ErrorCodes.SE3007, "");
-        
-        	integer = (((int_array[0] & 0xff) << 24)
-                       | ((int_array[1] & 0xff) << 16)
-                       | ((int_array[2] & 0xff) << 8) | (int_array[3] & 0xff));
+            call_res = bufInputStream.read(int_array, 0, 4);
+            if (call_res != 4) throw new DriverException(ErrorCodes.SE3007, "");
+
+            integer = (((int_array[0] & 0xff) << 24)
+                    | ((int_array[1] & 0xff) << 16)
+                    | ((int_array[2] & 0xff) << 8) | (int_array[3] & 0xff));
         }catch (IOException ioe) {
             throw new DriverException(ErrorCodes.SE3007, ioe.toString());
         }
-             
+
         return integer;
     }
 
     static void readMsg(Message msg, BufferedInputStream bufInputStream)
             throws DriverException {
-        int call_res;
 
         try {
             msg.instruction = NetOps.readInt(bufInputStream);
@@ -202,7 +288,7 @@ class NetOps {
 
                 while (pos < msg.length) {
                     count = bufInputStream.read(msg.body, pos,
-                                                msg.length - pos);
+                            msg.length - pos);
 
                     if (count != -1) {
                         pos += count;
@@ -214,89 +300,88 @@ class NetOps {
         }
     }
 
-	/**
-	 *  Reads query debug information. If there were any return true, otherwise returns false.
-	 */ 
-	static boolean readDebugInfo(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException 
-	{
-		
-		ByteBuffer  byteBuf;
-		CharBuffer  charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
+    /**
+     *  Reads query debug information. If there were any return true, otherwise returns false.
+     */
+    static boolean readDebugInfo(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException
+    {
+
+        ByteBuffer  byteBuf;
+        CharBuffer  charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
         CharsetDecoder csd  = Charset.forName("utf8").newDecoder();
-        
+
         boolean gotDebug;
-        
+
         int debug_type = net_int2int(msg.body);
-                       
+
         gotDebug = ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug)) ?  true : false;
 
         // read debug information if any
         while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug))
         {
-           byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
-           csd.decode(byteBuf, charBuf, false);
-           item.ensureCapacity(charBuf.length());
+            byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
+            csd.decode(byteBuf, charBuf, false);
+            item.ensureCapacity(charBuf.length());
 
-           try {
+            try {
                 item.append(charBuf.flip());
-           } catch (OutOfMemoryError e) {}
-           
-           charBuf.clear();
-           
+            } catch (OutOfMemoryError e) {}
 
-           NetOps.readMsg(msg, is);
-           debug_type = net_int2int(msg.body);
+            charBuf.clear();
+
+
+            NetOps.readMsg(msg, is);
+            debug_type = net_int2int(msg.body);
         }
-        
-        return gotDebug;
-	}
 
-	/**
-	 *  Reads query trace. If there were any return true, otherwise returns false.
-	 */ 
-	static boolean readTrace(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException 
-	{
-		
-		ByteBuffer  byteBuf;
-		CharBuffer  charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
+        return gotDebug;
+    }
+
+    /**
+     *  Reads query trace. If there were any return true, otherwise returns false.
+     */
+    static boolean readTrace(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException
+    {
+
+        ByteBuffer  byteBuf;
+        CharBuffer  charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
         CharsetDecoder csd  = Charset.forName("utf8").newDecoder();
-        
+
         boolean gotTrace;
-        
+
         int debug_type = net_int2int(msg.body);
-                       
+
         gotTrace = (msg.instruction == NetOps.se_DebugInfo) && (debug_type == NetOps.se_QueryTrace) ?  true : false;
-           
+
         // read debug information if any 
         while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == NetOps.se_QueryTrace))
         {
-           byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
-           csd.decode(byteBuf, charBuf, false);
-           item.ensureCapacity(charBuf.length());
+            byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
+            csd.decode(byteBuf, charBuf, false);
+            item.ensureCapacity(charBuf.length());
 
-           try {
+            try {
                 item.append(charBuf.flip());
-           } catch (OutOfMemoryError e) {}
-           
-           charBuf.clear();
-           
+            } catch (OutOfMemoryError e) {}
 
-           NetOps.readMsg(msg, is);
-           debug_type = net_int2int(msg.body);
+            charBuf.clear();
+
+            NetOps.readMsg(msg, is);
+            debug_type = net_int2int(msg.body);
         }
-        
+
         if (gotTrace) item.append("\n");
         return gotTrace;
-	}
-		
-    /** 
+    }
+
+    /**
      *  Reads a whole item from the socket.
      */
-    static String_item readStringItem(BufferedInputStream is, boolean doTraceOutput)
+    static StringItem readStringItem(BufferedInputStream is, boolean doTraceOutput)
             throws DriverException {
 
         NetOps.Message     msg   = new NetOps.Message();
-        NetOps.String_item sitem = new NetOps.String_item();
+        NetOps.StringItem sitem  = new NetOps.StringItem();
         boolean gotTrace, gotDebug;
         sitem.item = new StringBuffer();
         StringBuffer debugInfo = new StringBuffer();
@@ -308,32 +393,32 @@ class NetOps {
         NetOps.readMsg(msg, is);
 
         gotDebug = NetOps.readDebugInfo(msg, is, debugInfo);
-        
+
         if (doTraceOutput)
             gotTrace = NetOps.readTrace(msg, is, sitem.item);
         else
             gotTrace = false;
-        
+
         if (msg.instruction == NetOps.se_ItemEnd) {
             /* If we got se_ItemEnd before se_ItemPart/se_ItemStart
              * it means that query returned empty xs:string. */
-           	sitem.hasNextItem = true;
+            sitem.hasNextItem = true;
             return sitem;
         }
         if (msg.instruction == NetOps.se_ResultEnd) {
-            if (!gotTrace) sitem.item = null; 
-           	sitem.hasNextItem = false;
+            if (!gotTrace) sitem.item = null;
+            sitem.hasNextItem = false;
             return sitem;
         }
 
         while ((msg.instruction != NetOps.se_ItemEnd) && (msg.instruction != NetOps.se_ResultEnd)) {
-            
-            if (msg.instruction == NetOps.se_ErrorResponse) {   
+
+            if (msg.instruction == NetOps.se_ErrorResponse) {
                 DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
                 if (gotDebug) ex.setDebugInfo(debugInfo);
                 throw ex;
             }
-            if (msg.instruction == NetOps.se_ItemPart)    
+            if (msg.instruction == NetOps.se_ItemPart)
             {
                 byteBuf = ByteBuffer.wrap(msg.body, 5, msg.length - 5);
                 csd.decode(byteBuf, charBuf, false);
@@ -346,9 +431,9 @@ class NetOps {
 
                 charBuf.clear();
             }
-  		    
+
             NetOps.readMsg(msg, is);
-   		    if (doTraceOutput) NetOps.readTrace(msg, is, sitem.item);
+            if (doTraceOutput) NetOps.readTrace(msg, is, sitem.item);
         }
 
         if (msg.instruction == NetOps.se_ResultEnd) {
@@ -361,7 +446,6 @@ class NetOps {
         return sitem;
     }
 
-    
     static void writeInt(int i, BufferedOutputStream bufOutputStream)
             throws IOException {
         bufOutputStream.write(0xff & (i >> 24));
@@ -384,7 +468,7 @@ class NetOps {
         }
 
         BufferedOutputStream bufOutputStream =
-            new BufferedOutputStream(outputStream);
+                new BufferedOutputStream(outputStream);
 
         try {
             NetOps.writeInt(msg.instruction, bufOutputStream);
@@ -400,14 +484,12 @@ class NetOps {
         }
     }
 
-    //~--- get methods --------------------------------------------------------
-
     /**
      *  Gets error message body and
      *  Makes a string that is error info (usually for DriverException)
      */
     static String getErrorInfo(byte[] body, int length) {
-         return new String(body, 9, length - 9);
+        return new String(body, 9, length - 9);
     }
 
     /**
@@ -416,32 +498,34 @@ class NetOps {
     static int getErrorCode(byte[] body) {
         return net_int2int(body);
     }
-    
+
     static int net_int2int(byte[] body) {
         int integer = (((body[0] & 0xff) << 24)
-                     | ((body[1] & 0xff) << 16)
-                     | ((body[2] & 0xff) << 8) 
-                     | (body[3] & 0xff));    	
+                | ((body[1] & 0xff) << 16)
+                | ((body[2] & 0xff) << 8)
+                | (body[3] & 0xff));
         return integer;
-}    	
+    }
 
-    //~--- inner classes ------------------------------------------------------
-
+    /**
+     * Class encapsulates one message which is passed between
+     * the server and a client.
+     */
     static class Message {
         byte body[];
         int  instruction;
         int  length;
 
-        //~--- constructors ---------------------------------------------------
-
+        /**
+         * Initializes a new empty client-server message instance. 
+         */
         Message() {
             this.body = new byte[SEDNA_SOCKET_MSG_BUF_SIZE];
         }
     }
 
-
-    static class String_item {
+    static class StringItem {
         boolean      hasNextItem;
         StringBuffer item;
     }
-}    // end of NetOps class
+}
