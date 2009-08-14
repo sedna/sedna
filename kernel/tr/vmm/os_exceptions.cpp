@@ -403,11 +403,7 @@ void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
     { 
         // VMM page fault
         if (vmm_is_busy_called) longjmp(vmm_is_busy_env, 0);
-#ifdef VMM_UNIX_LIGHT_CHECKP
-        else vmm_unswap_block(xptr(0, info->si_addr));
-#else
         else vmm_unswap_block(vmm_cur_xptr);
-#endif
     }
     else
     {
