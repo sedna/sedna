@@ -2705,6 +2705,13 @@ DO
 }
 \end{verbatim}
 
+The \verb!DROP! \verb!TRIGGER! statement drops the trigger with the
+name which is the result of the \verb!trigger-name-expression!.
+
+\begin{verbatim}
+DROP TRIGGER trigger-name-expression
+\end{verbatim}
+
 Triggers can be defined to execute either \emph{before} or \emph{after} any \verb!INSERT!, \verb!DELETE! or \verb!REPLACE! operation, either once per modified node (\emph{node-level} triggers), or once per XQuery statement (\emph{statement-level} triggers). If a trigger event occurs, the trigger's action is called at the appropriate time to handle the event.
 
 \begin{itemize}
