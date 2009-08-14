@@ -397,7 +397,7 @@ bulkload (struct SednaConnection *conn,
           int* errorcode) 
 {
     /* Get full path and open file. */ 
-    UFile file_handle;
+    UFile file_handle = U_INVALID_FD;
     char cur_dir_abspath[SE_MAX_DIR_LENGTH+1];
     char cfile_abspath[SE_MAX_DIR_LENGTH+1];
     int already_read = 1, res = 1;
@@ -413,29 +413,28 @@ bulkload (struct SednaConnection *conn,
         setDriverErrorMsg(conn, SE4604, conn->session_directory);
         goto BulkLoadErr;
     }
-    if (uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, __sys_call_error) == NULL) {
-        setDriverErrorMsg(conn, SE4603, filename);
-        goto BulkLoadErr;
+    if (uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, NULL) != NULL) {
+    
+        file_handle = uOpenFile(cfile_abspath, U_SHARE_READ, U_READ, 0, NULL);
     }
-    if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0) {
+
+    /* restore working directory anyway */
+    if (uChangeWorkingDirectory(cur_dir_abspath, NULL) != 0) {
         setDriverErrorMsg(conn, SE4604, cur_dir_abspath);
         goto BulkLoadErr;
     }
 
-    file_handle = uOpenFile(cfile_abspath, U_SHARE_READ, U_READ, 0, NULL);
+    /* ... then try current directory  ... */
+    if (file_handle == U_INVALID_FD && 
+        uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, NULL) != NULL)  {
 
-    if (file_handle == U_INVALID_FD)
-    {
-        /* ... then try current directory  ... */
-        uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, __sys_call_error);
         file_handle = uOpenFile(cfile_abspath, U_SHARE_READ, U_READ, 0, NULL);
-        
-        /* ... else giving up */
-        if(file_handle == U_INVALID_FD)
-        {
-            setDriverErrorMsg(conn, SE3017, filename);
-            goto BulkLoadErr;
-        }
+    }
+
+    /* ... raise error if we still haven't found the file. */
+    if(file_handle == U_INVALID_FD) {
+        setDriverErrorMsg(conn, SE3017, filename);
+        goto BulkLoadErr;
     }
 
     /* Read data from file */ 
