@@ -83,13 +83,13 @@ public class DriverException extends Exception {
      *                     then is provided to the client
      */
     protected static String buildDescription(int error_code, String details) {
-        StringBuilder message = new StringBuilder(200);
+        StringBuffer message = new StringBuffer(200);
         message.append("SEDNA Message: ERROR ")
                 .append(ErrorCodes.user_error_code_entry[error_code][0])
                 .append("\n")
                 .append(ErrorCodes.user_error_code_entry[error_code][1]);
 
-        if (details != null && !details.isEmpty())
+        if (details != null && details.length() != 0)
             message.append(" (" + details + ")");
         return message.toString();
     }
