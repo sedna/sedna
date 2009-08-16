@@ -14,9 +14,9 @@ int doc_order_merge_cmp(const void *e1, const void *e2)
     xptr *el1 = (xptr*)e1;
     xptr *el2 = (xptr*)e2;
 
-    if (*el1 == NULL && *el2 == NULL) return 0;
-    if (*el1 == NULL) return 1;
-    if (*el2 == NULL) return -1;
+    if (*el1 == XNULL && *el2 == XNULL) return 0;
+    if (*el1 == XNULL) return 1;
+    if (*el2 == XNULL) return -1;
 
     return nid_cmp(*el1, *el2);
 }
@@ -51,7 +51,7 @@ xptr RelChildAxisMerge::next(const xptr &p)
 		xptr p;
         elim_disturb(merged_seq_arr, size, sizeof(xptr), doc_order_merge_cmp);
 		p = merged_seq_arr[0];
-		if (p != NULL)
+		if (p != XNULL)
 			merged_seq_arr[0] = getNextSiblingOfSameSortXptr(p);
         return p;
     }

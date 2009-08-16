@@ -52,7 +52,9 @@ static inline bool compare_full_schema_names(schema_node_cptr scm1, schema_node_
 {
     if ( my_strcmp(scm2->name,scm1->name) == 0 && 
 		((scm1->get_xmlns()) == (scm2->get_xmlns()) ||
-		(scm1->get_xmlns() != XNULL && scm2->get_xmlns() != XNULL && my_strcmp(scm2->get_xmlns()->uri, scm1->get_xmlns()->uri)==0)))
+		(scm1->get_xmlns() != NULL && 
+         scm2->get_xmlns() != NULL && 
+         my_strcmp(scm2->get_xmlns()->uri, scm1->get_xmlns()->uri)==0)))
         return true;
 	else 
 		return false;

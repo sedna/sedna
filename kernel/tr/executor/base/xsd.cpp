@@ -297,7 +297,7 @@ void xs_QName_print_to_lr(const char* qname, std::ostream& str)
 bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
 {
     xmlns_ptr node_ns = GETSCHEMENODE(XADDR(node))->get_xmlns();
-    char* node_uri = (node_ns != XNULL) ? node_ns->uri : NULL;
+    char* node_uri = (node_ns != NULL) ? node_ns->uri : NULL;
     const char *node_local = GETSCHEMENODE(XADDR(node))->name;
 
     return _xs_QName_not_equal(node_uri, node_local, uri, local);

@@ -300,7 +300,7 @@ void PPTest::checkTreeConsistency(xptr node)
 			throw XQUERY_EXCEPTION(SE2028);
 	}
 	//4. descriptor's order
-	if (prev_x!=NULL && scn->type!=document)
+	if (prev_x!=XNULL && scn->type!=document)
 	{
 		bool lt=nid_cmp(prev_x,node)<0;
 		CHECKP(prev_x);

@@ -198,7 +198,7 @@ void PPAxisAncestor::next_qname(tuple &t)
 
 void PPAxisAncestor::next_wildcard_star(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -235,7 +235,7 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
 
 void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -273,7 +273,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 
 void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}

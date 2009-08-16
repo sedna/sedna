@@ -86,7 +86,7 @@ void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 				xptr a = removeIndirection(pt[j]);
 				CHECK_ASSERTION(a != XNULL);
 				CHECKP(a);
-				CHECK_ASSERTION((GETBLOCKBYNODE(a))->snode != NULL);
+				CHECK_ASSERTION((GETBLOCKBYNODE(a))->snode != XNULL);
 				CHECKP(pg);
 			}
 		}

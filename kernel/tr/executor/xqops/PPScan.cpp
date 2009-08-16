@@ -45,11 +45,11 @@ void PPScan::next(tuple &t)
 {
     SET_CURRENT_PP(this);
     
-    if (res == NULL)
+    if (res == XNULL)
     {
         res = getUnemptyBlockFore(scm_node->bblk);
 
-        if (res == NULL)
+        if (res == XNULL)
         {
             t.set_eos();
             {RESTORE_CURRENT_PP; return;}
@@ -58,7 +58,7 @@ void PPScan::next(tuple &t)
         CHECKP(res);
         res = GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(res));
 
-        if (res == NULL)
+        if (res == XNULL)
             t.set_eos();
         else
             t.copy(tuple_cell::node(res));
@@ -67,7 +67,7 @@ void PPScan::next(tuple &t)
     }
 
     res = getNextDescriptorOfSameSortXptr(res);
-    if (res == NULL)
+    if (res == XNULL)
         t.set_eos();
     else
         t.copy(tuple_cell::node(res));

@@ -127,7 +127,7 @@ bool has_statement_triggers(trigger_event event, trigger_time time)
                                         event, 
                                         time, 
                                         TRIGGER_FOR_EACH_STATEMENT, 
-                                        NULL) != NULL)
+                                        NULL) != XNULL)
             return true;
         upd_root_iter++;
     }

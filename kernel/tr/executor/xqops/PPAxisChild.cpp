@@ -69,7 +69,7 @@ void PPAxisChild::close ()
 
 void PPAxisChild::next_processing_instruction(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -120,7 +120,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
 
 void PPAxisChild::next_comment(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -136,7 +136,7 @@ void PPAxisChild::next_comment(tuple &t)
 
 void PPAxisChild::next_text(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -152,7 +152,7 @@ void PPAxisChild::next_text(tuple &t)
 
 void PPAxisChild::next_node(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -173,7 +173,7 @@ void PPAxisChild::next_string(tuple &t)
 
 void PPAxisChild::next_qname(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -193,7 +193,7 @@ void PPAxisChild::next_qname(tuple &t)
 
 void PPAxisChild::next_wildcard_star(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -209,7 +209,7 @@ void PPAxisChild::next_wildcard_star(tuple &t)
 
 void PPAxisChild::next_wildcard_ncname_star(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -229,7 +229,7 @@ void PPAxisChild::next_wildcard_ncname_star(tuple &t)
 
 void PPAxisChild::next_wildcard_star_ncname(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -283,7 +283,7 @@ sequence *PPAxisChild::next_text_s(sequence *data_seq, PPAxisChild* cur_op)
 
         cur = getChildPointerXptr(tc.get_node(), NULL, text,NULL);
 
-        while (cur != NULL)
+        while (cur != XNULL)
         {
             t.cells[0] = tuple_cell::node(cur);
             res_seq->add(t);
@@ -309,7 +309,7 @@ sequence *PPAxisChild::next_node_s(sequence *data_seq, PPAxisChild* cur_op)
 
         cur = getFirstByOrderNoneAttributeChild(tc.get_node());
 
-        while (cur != NULL)
+        while (cur != XNULL)
         {
             t.cells[0] = tuple_cell::node(cur);
             res_seq->add(t);
@@ -368,7 +368,7 @@ sequence *PPAxisChild::next_wildcard_star_s(sequence *data_seq, PPAxisChild* cur
 
         cur = getFirstByOrderElementChild(tc.get_node());
 
-        while (cur != NULL)
+        while (cur != XNULL)
         {
             t.cells[0] = tuple_cell::node(cur);
             res_seq->add(t);

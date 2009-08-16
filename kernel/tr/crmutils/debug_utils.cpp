@@ -247,7 +247,7 @@ void printMFO (schema_node_cptr node, std::map<schema_node_xptr, std::pair<int,i
 {
     int size=1;
     int increment=0;
-    if (node->parent!=NULL)
+    if (node->parent!=XNULL)
     {
         size=par_pref+mfo[node->parent].first;
         increment=mfo[node->parent].second;
@@ -286,7 +286,7 @@ void getNIDNEWDistribution(std::map<schema_node_xptr,int> &xsfo,
                            schema_node_cptr node, int par_pref)
 {
     int size=1;
-    if (node->parent!=NULL)
+    if (node->parent!=XNULL)
         size=par_pref+
         (int)ceil(s_max (log10(1.*xsfo[node->parent])/log10((double)ALPHABET_SIZE),1.));
     std::map<int,int>::iterator it= nidsz.find(size);
@@ -1109,7 +1109,7 @@ void checkBlockSequenceConsistency(schema_node_cptr snode, se_ostream& crmout)
     {
         CHECKP(block);
         node_blk_hdr* blk=GETBLOCKBYNODE(block);
-        if (blk->pblk==NULL && block!=snode->bblk)
+        if (blk->pblk==XNULL && block!=snode->bblk)
             error_msg("First block inconsistency",crmout);
         xptr tmp=blk->nblk;
         if (tmp!=XNULL)
@@ -1164,7 +1164,7 @@ void checkTreeConsistency(xptr node,se_ostream& crmout)
             error_msg("nid comparison error",crmout);
     }
     //4. descriptor's order
-    if (prev_x!=NULL)
+    if (prev_x!=XNULL)
     {
         CHECKP(prev_x);
         if (getNextDescriptorOfSameSort(prev_dsc)!=node_d)

@@ -173,7 +173,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 
 
                 p = getFirstByOrderElementChild(p);
-                if (p == NULL || getNextByOrderElement(p) != NULL) return false;
+                if (p == XNULL || getNextByOrderElement(p) != XNULL) return false;
 
                 CHECKP(p);
                 return _check_st_elem_data(p, it);
@@ -315,7 +315,7 @@ static inline string elem_name_and_type2string(const xptr& p)
     string res;
     
     xmlns_ptr node_ns  = GETSCHEMENODE(XADDR(p))->get_xmlns();
-    char* node_uri   = (node_ns != XNULL) ? node_ns->uri : NULL;
+    char* node_uri   = (node_ns != NULL) ? node_ns->uri : NULL;
     char *node_local = GETSCHEMENODE(XADDR(p))->name;
     if (node_uri != NULL) {res += node_uri; res += ":";}
     if (node_local != NULL) res += node_local;
@@ -330,7 +330,7 @@ static inline string attr_name_and_type2string(const xptr& p)
     string res;
     
     xmlns_ptr node_ns  = GETSCHEMENODE(XADDR(p))->get_xmlns();
-    char* node_uri   = (node_ns != XNULL) ? node_ns->uri : NULL;
+    char* node_uri   = (node_ns != NULL) ? node_ns->uri : NULL;
     char *node_local = GETSCHEMENODE(XADDR(p))->name;
     if (node_uri != NULL) {res += node_uri; res += ":";}
     if (node_local != NULL) res += node_local;
@@ -354,7 +354,7 @@ string node_type2string(const xptr& node)
             res = "document-node(";
             
             xptr p = getFirstByOrderElementChild(node);
-            if (p != NULL && getNextByOrderElement(p) == NULL) 
+            if (p != XNULL && getNextByOrderElement(p) == XNULL) 
                 res += " element(" + elem_name_and_type2string(p) + ") ";
 
             res += ")";

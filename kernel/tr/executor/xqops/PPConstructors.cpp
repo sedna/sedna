@@ -310,7 +310,7 @@ void PPElementConstructor::next  (tuple &t)
             }
         }
         if (!check_constraints_for_xs_NCName(name)||
-            (ns!=XNULL && ns->prefix!=NULL &&!check_constraints_for_xs_NCName(ns->prefix)))
+            (ns!=NULL && ns->prefix!=NULL &&!check_constraints_for_xs_NCName(ns->prefix)))
             throw XQUERY_EXCEPTION(XQDY0074);
         //Element insertion
         xptr new_element;

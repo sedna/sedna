@@ -435,14 +435,14 @@ bool _vmm_is_address_busy(void * p)
 {
     bool is_busy = true;
 
-#   ifdef _WIN32
-    if (((vmm_sm_blk_hdr*)p)->p == NULL) is_busy = false;
-#   else
+#ifdef _WIN32
+    if (((vmm_sm_blk_hdr*)p)->p == XNULL) is_busy = false;
+#else
     vmm_is_busy_called = true;
     if (setjmp(vmm_is_busy_env) != 0) is_busy = false;
     else
     {
-        if (((vmm_sm_blk_hdr*)p)->p == NULL) is_busy = false;
+        if (((vmm_sm_blk_hdr*)p)->p == XNULL) is_busy = false;
     }
     vmm_is_busy_called = false;
 #   endif
@@ -486,7 +486,7 @@ void _vmm_alloc_block(xptr *p, bool is_data)
     xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
     ramoffs offs = *(ramoffs*)(&(msg.data.swap_data.offs));
 
-    if (swapped != NULL) _vmm_unmap_decent(XADDR(swapped));
+    if (swapped != XNULL) _vmm_unmap_decent(XADDR(swapped));
     _vmm_remap(XADDR(*p), offs);
 }
 
@@ -1280,7 +1280,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         ramoffs offs = msg.data.swap_data.offs;
         xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
 
-        if (swapped != NULL)
+        if (swapped != XNULL)
         {
             _vmm_unmap_decent(XADDR(swapped));
             //        	 write_table.remove(swapped);
@@ -1336,7 +1336,7 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
         ramoffs offs = msg.data.swap_data.offs;
         xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
 
-        if (swapped != NULL)
+        if (swapped != XNULL)
         {
             _vmm_unmap_decent(XADDR(swapped));
             //         	 write_table.remove(swapped);

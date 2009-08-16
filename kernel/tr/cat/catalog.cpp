@@ -751,7 +751,7 @@ char * catalog_htable_get(
     object = catalog_htable_find_name(fullname);
     free(fullname);
 
-    if (object == NULL) {
+    if (object == XNULL) {
         return NULL;
     }
 

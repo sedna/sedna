@@ -925,7 +925,7 @@ void print_descriptive_schema(const char * docname, se_ostream& crmout)
     //metadata_sem_down();
     schema_node_xptr sn=find_document(docname);
     //metadata_sem_up();
-    if (sn!=NULL)print_descriptive(sn,crmout,0);
+    if (sn!=XNULL)print_descriptive(sn,crmout,0);
     crmout << "\n</TREE_DESCRIPTIVE_SCHEMA>";
 
 }
@@ -942,7 +942,7 @@ void print_descriptive_schema_col(const char * colname, se_ostream& crmout)
     //metadata_sem_down();
     schema_node_xptr sn=find_collection(colname);
     //metadata_sem_up();
-    if (sn!=NULL)print_descriptive(sn,crmout,0);
+    if (sn!=XNULL)print_descriptive(sn,crmout,0);
     crmout << "\n</XML_DESCRIPTIVE_SCHEMA>";
 }
 
@@ -986,7 +986,7 @@ void sxml_print_descriptive_schema(const char * docname, se_ostream& crmout)
     //metadata_sem_down();
     schema_node_xptr sn=find_document(docname);
     //metadata_sem_up();
-    if (sn!=NULL) sxml_print_descriptive(sn,crmout,0);
+    if (sn!=XNULL) sxml_print_descriptive(sn,crmout,0);
     crmout << "))";  // end tag for </TREE_DESCRIPTIVE_SCHEMA> and *TOP*
 
 }
@@ -1002,7 +1002,7 @@ void sxml_print_descriptive_schema_col(const char * colname, se_ostream& crmout)
     //metadata_sem_down();
     schema_node_xptr sn=find_collection(colname);
     //metadata_sem_up();
-    if (sn!=NULL) sxml_print_descriptive(sn,crmout,0);
+    if (sn!=XNULL) sxml_print_descriptive(sn,crmout,0);
     crmout << "))";    // end-tag for </XML_DESCRIPTIVE_SCHEMA> and *TOP*
 }
 

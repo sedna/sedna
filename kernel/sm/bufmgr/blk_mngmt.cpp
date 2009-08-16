@@ -253,7 +253,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p, bool canStoreFreeBloc
     
     TIMESTAMP pers_ts = llGetPersTimestamp();
 
-    if (*hd == NULL)
+    if (*hd == XNULL)
     {
         if (!canStoreFreeBlocks) return 1;
 
@@ -307,7 +307,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p, bool canStoreFreeBloc
 
 int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
 {
-    if (*hd == NULL) return 1;
+    if (*hd == XNULL) return 1;
 
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
@@ -356,7 +356,7 @@ __int64 count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnl
     free_blk_hdr *blk = NULL;
 
     __int64  num = 0;
-    while (hd != NULL)
+    while (hd != XNULL)
     {
         put_block_to_buffer(-1, hd, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
@@ -379,7 +379,7 @@ bool is_in_persistent_free_blocks_stack(xptr hd, xptr what)
     free_blk_hdr  *node;
     xptr          *nodeXptrArray;
     
-    while (hd!=NULL && hd!=what && !found)
+    while (hd != XNULL && hd!=what && !found)
     {
         put_block_to_buffer(-1, hd, &offs);
         node = (free_blk_hdr *)OFFS2ADDR(offs);
@@ -400,7 +400,7 @@ int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
 
-    if (*hd == NULL)
+    if (*hd == XNULL)
     {
         xptr tmp;
         new_tmp_block(&tmp);
@@ -439,7 +439,7 @@ int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)
 
 int pop_from_persistent_used_blocks_stack(xptr *hd, xptr *p)
 {
-    if (*hd == NULL) return 1;
+    if (*hd == XNULL) return 1;
 
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;

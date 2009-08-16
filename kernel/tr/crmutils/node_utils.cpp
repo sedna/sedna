@@ -45,7 +45,7 @@ xptr getFirstByOrderAttributeChild(xptr source)
             xptr node=*childx;
             CHECKP(node);
             xptr left=GETLEFTPOINTER(node);
-            while (left!=NULL)
+            while (left!=XNULL)
             {
                 CHECKP(left);
                 if (GETSCHEMENODE(XADDR(left))->type!=attribute)
@@ -275,7 +275,7 @@ xptr getLastNonDmChildrenChild(n_dsc* source,shft size)
             xptr node= *childx;
             CHECKP(node);
             xptr right=GETRIGHTPOINTER(node);
-            while (right!=NULL)
+            while (right!=XNULL)
             {
                 CHECKP(right);
                 t_item typ= (GETBLOCKBYNODE(right))->snode->type;
@@ -314,7 +314,7 @@ xptr getLastNamespaceChild(n_dsc* source,shft size)
         {
             xptr node=*childx;
             xptr tmp;
-            while ((tmp=getNextSiblingOfSameSortXptr(node))!=NULL)
+            while ((tmp=getNextSiblingOfSameSortXptr(node))!=XNULL)
             node=tmp;
             return node;
         }
@@ -420,8 +420,8 @@ xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
         if (
              sc->object.type==attribute && 
              my_strcmp(name,sc->object.name)==0 &&  
-             (    (sc->object.get_xmlns()==XNULL && NULL == uri) 
-               || (sc->object.get_xmlns()!=XNULL && my_strcmp(uri,sc->object.get_xmlns()->uri)==0)) &&
+             (    (sc->object.get_xmlns()==NULL && NULL == uri) 
+               || (sc->object.get_xmlns()!=NULL && my_strcmp(uri,sc->object.get_xmlns()->uri)==0)) &&
              (block->dsc_size >= size_of_node(block)+(cnt+1) * sizeof(xptr)) &&
              ((child = GET_NODE_CHILD(node, cnt)) != XNULL)
          )
@@ -905,7 +905,7 @@ xptr getAncestorIndirectionByScheme (n_dsc* node, const schema_node_cptr scm_nod
         tmp_x=removeIndirection(tmp_node->pdsc);
         CHECKP(tmp_x);
         tmp_node=(n_dsc*)XADDR(tmp_x);
-        if (/*tmp==tmp->parent*/ tmp->parent==NULL) return XNULL;
+        if (/*tmp==tmp->parent*/ tmp->parent==XNULL) return XNULL;
         tmp=tmp->parent;
     }
     return tmp_node->pdsc;
@@ -1317,7 +1317,7 @@ xptr getRoot(xptr node)
     while (true)
     {
         p = GETPARENTPOINTER(cur);
-        if (p == NULL) return cur;
+        if (p == XNULL) return cur;
         p = removeIndirection(p);
         CHECKP(p);
         if (GETSCHEMENODE(XADDR(p))->type == virtual_root)
