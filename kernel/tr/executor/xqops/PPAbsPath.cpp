@@ -154,7 +154,7 @@ void PPAbsPath::next(tuple &t)
 
 
     xptr res = (scmnodes_num == 0) ? XNULL : merged_seq_arr[0];
-    if (res == NULL)
+    if (res == XNULL)
     {   // reopen
         delete [] merged_seq_arr;
         merged_seq_arr = NULL;
@@ -233,7 +233,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
     for (int i = 0; i < scmnodes_num; i++) 
     {
         xptr first_blk = getUnemptyBlockFore(nodes[i]->bblk);
-        if (first_blk == NULL) merged_seq_arr[i] = XNULL;
+        if (first_blk == XNULL) merged_seq_arr[i] = XNULL;
         else
         {
             CHECKP(first_blk);

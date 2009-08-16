@@ -114,7 +114,7 @@ void PPAxisFP::next_text(tuple &t)
 
 void PPAxisFP::next_node(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) 		

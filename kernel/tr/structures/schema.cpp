@@ -269,8 +269,8 @@ schema_node_object::schema_node_object(
     lastnode_ind(XNULL)
 {
     name = cat_strcpy(this, _name);
-    U_ASSERT((root != NULL) || (_xmlns == NULL));
-    if (root != NULL) { xmlns_pers = root->xmlns_register(_xmlns); }
+    U_ASSERT((root != XNULL) || (_xmlns == NULL));
+    if (root != XNULL) { xmlns_pers = root->xmlns_register(_xmlns); }
 };
 
 schema_node_object::~schema_node_object() {

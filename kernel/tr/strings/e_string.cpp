@@ -121,7 +121,7 @@ static inline void estr_get_next_blk(xptr &estr_blk, int &m_blks)
 
 xptr estr::xptr_for_data()
 {
-	if (last_blk == NULL) init();
+	if (last_blk == XNULL) init();
 
     CHECKP(last_blk);
 

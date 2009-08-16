@@ -111,7 +111,7 @@ void PPExcept::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
 
-                if (xptr1 == NULL) 
+                if (xptr1 == XNULL) 
                 {
                     t.set_eos();
                     RESTORE_CURRENT_PP; return;

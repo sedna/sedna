@@ -100,7 +100,7 @@ void PPAxisParent::next_text(tuple &t)
 
 void PPAxisParent::next_node(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -128,7 +128,7 @@ void PPAxisParent::next_string(tuple &t)
 
 void PPAxisParent::next_qname(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -152,7 +152,7 @@ void PPAxisParent::next_qname(tuple &t)
 
 void PPAxisParent::next_wildcard_star(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -175,7 +175,7 @@ void PPAxisParent::next_wildcard_star(tuple &t)
 
 void PPAxisParent::next_wildcard_ncname_star(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -200,7 +200,7 @@ void PPAxisParent::next_wildcard_ncname_star(tuple &t)
 
 void PPAxisParent::next_wildcard_star_ncname(tuple &t)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
@@ -266,7 +266,7 @@ sequence *PPAxisParent::next_node_s(sequence *data_seq, PPAxisParent* cur_op)
         CHECKP(cur);
         cur = GETPARENTPOINTER(cur);
 
-        if (cur != NULL)
+        if (cur != XNULL)
         {
             t.cells[0] = tuple_cell::node(cur);
             res_seq->add(t);
@@ -298,7 +298,7 @@ sequence *PPAxisParent::next_qname_s(sequence *data_seq, PPAxisParent* cur_op)
         cur = GETPARENTPOINTER(cur);
         CHECKP(cur);
 
-        if (cur != NULL &&
+        if (cur != XNULL &&
             GETSCHEMENODEX(cur)->type == element && 
             strcmp(GETSCHEMENODEX(cur)->name, cur_op->nt_data.ncname_local) == 0)
         {
@@ -327,7 +327,7 @@ sequence *PPAxisParent::next_wildcard_star_s(sequence *data_seq, PPAxisParent* c
         cur = GETPARENTPOINTER(cur);
         CHECKP(cur);
 
-        if (cur != NULL &&
+        if (cur != XNULL &&
             GETSCHEMENODEX(cur)->type == element)
         {
             t.cells[0] = tuple_cell::node(cur);

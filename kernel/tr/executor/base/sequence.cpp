@@ -70,7 +70,7 @@ int sequence::add(const tuple &t)
         return 0;
     }
 
-    if (eblk == NULL) init_blks();
+    if (eblk == XNULL) init_blks();
     CHECKP(eblk);
 
     if (max_block_amount > 0)
@@ -214,7 +214,7 @@ void sequence::clear()
     xptr p;
 
     p = bblk;
-    while (p != NULL)
+    while (p != XNULL)
     {
         CHECKP(p);
         xptr tmp = p;

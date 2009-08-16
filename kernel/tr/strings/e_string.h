@@ -72,7 +72,7 @@ public:
         if (del_blks)
         {
             xptr p = first_blk;
-            while (p != NULL)
+            while (p != XNULL)
             {
                 CHECKP(p);
                 xptr tmp = p;

@@ -89,7 +89,7 @@ void PPDocInCol::next(tuple &t)
         if(!valid) throw XQUERY_EXCEPTION2(FODC0005, "Invalid uri in the first argument of fn:doc.");
 
         xptr res = find_document_in_collection((const char*)tc_col.get_str_mem(), (const char*)tc_doc.get_str_mem());
-        if (res == NULL)
+        if (res == XNULL)
         {
             throw XQUERY_EXCEPTION2(SE1006, (std::string("Document '") + 
                                            tc_doc.get_str_mem() + 

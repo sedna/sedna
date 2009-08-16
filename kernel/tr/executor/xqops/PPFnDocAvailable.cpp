@@ -71,7 +71,7 @@ void PPFnDocAvailable::next(tuple &t)
 
         /// suppose any system document is available ///
         if(get_document_type(name, dbe_document) == DT_NON_SYSTEM)
-            res = (find_document(name) != NULL);
+            res = (find_document(name) != XNULL);
 
         t.copy(tuple_cell::atomic(res));
     }

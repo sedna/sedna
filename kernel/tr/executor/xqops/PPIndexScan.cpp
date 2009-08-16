@@ -131,7 +131,7 @@ void PPIndexScan::initialize()
 
     // Find B-Tree root
     btree = find_btree(index_name_string);
-    if (btree == NULL) throw XQUERY_EXCEPTION2(SE1061, index_name_string);
+    if (btree == XNULL) throw XQUERY_EXCEPTION2(SE1061, index_name_string);
 
     idx_type = get_index_xmlscm_type(index_name_string);
     if (idx_type == -1) throw XQUERY_EXCEPTION2(SE1061, index_name_string);
@@ -154,7 +154,7 @@ void PPIndexScan::next_eq(tuple &t)
 
     res = cursor.bt_next_obj();
 
-    if (res == NULL) SET_EOS_AND_EXIT
+    if (res == XNULL) SET_EOS_AND_EXIT
 
     DEREF_AND_SET
 }
@@ -180,7 +180,7 @@ void PPIndexScan::next_lt_le(tuple &t)
     while (true)
     {
         res = cursor.bt_next_obj();
-        if (res != NULL) break;
+        if (res != XNULL) break;
 
         if (cursor.bt_next_key())
             if (isc == isc_lt ? cursor.get_key() <  key
@@ -210,7 +210,7 @@ void PPIndexScan::next_gt_ge(tuple &t)
     while (true)
     {
         res = cursor.bt_next_obj();
-        if (res != NULL) break;
+        if (res != XNULL) break;
 
         if (!cursor.bt_next_key()) SET_EOS_AND_EXIT
     }
@@ -243,7 +243,7 @@ void PPIndexScan::next_between(tuple &t)
     while (true)
     {
         res = cursor.bt_next_obj();
-        if (res != NULL) break;
+        if (res != XNULL) break;
 
         if (cursor.bt_next_key())
             if ((isc == isc_gt_lt || isc == isc_ge_lt) ? cursor.get_key() <  key2

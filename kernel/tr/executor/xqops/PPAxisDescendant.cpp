@@ -188,7 +188,7 @@ void PPAxisDescendant::next_qname(tuple &t)
 }
 void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun)
 {
-    while (cur == NULL)
+    while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) {RESTORE_CURRENT_PP; return;}

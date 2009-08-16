@@ -296,7 +296,7 @@ void ftc_scan_result::get_next_result(tuple &t)
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
 	if (ome == NULL)
 	{
-		if (ce.node == NULL)
+		if (ce.node == XNULL)
 		{
 			t.set_eos();
 			return;
@@ -310,7 +310,7 @@ void ftc_scan_result::get_next_result(tuple &t)
 	{
 		ftc_doc_data *doc_data = id->get_doc(ome->obj.doc);
 
-		if (ce.node == NULL)
+		if (ce.node == XNULL)
 		{
 			t.copy(tuple_cell::node(removeIndirection(doc_data->acc)));
 			ome = om->rb_successor(ome);

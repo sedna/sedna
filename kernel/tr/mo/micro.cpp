@@ -594,22 +594,22 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name,
         xptr right_indir=res_nd->rdsc;
         xptr par_indir=res_nd->pdsc;
         xptr indir=res_nd->indir;
-        if (left_indir!=NULL)
+        if (left_indir!=XNULL)
         {
             CHECKP(left_indir);
             left_indir=((n_dsc*)XADDR(left_indir))->indir;
         }
-        if (right_indir!=NULL)
+        if (right_indir!=XNULL)
         {
             CHECKP(right_indir);
             right_indir=((n_dsc*)XADDR(right_indir))->indir;
         }
-//      d_printf2("EL Node name=%s \n",name);
-//      d_printf1("\nEL Node xptr=");
-//      result.print();
-//      d_printf1("\n EL Node indir=");
-//      indir.print();
-        hl_logical_log_element(indir,left_indir,right_indir,par_indir,name,type,(ns != XNULL)?ns->uri:NULL,(ns != XNULL)?ns->prefix:NULL, true);
+
+        hl_logical_log_element(indir,left_indir,right_indir,
+                               par_indir,name,type,
+                               (ns != NULL)?ns->uri:NULL,
+                               (ns != NULL)?ns->prefix:NULL, 
+                               true);
         CHECKP(result);
         up_concurrent_micro_ops_number();
     }
@@ -690,8 +690,11 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
             crm_dbg<<" insert_attribute->5";
         #endif
         left_sib=giveAnyAttributeChild(par_desc,size);
-        if (left_sib==NULL) left_sib=getLastNamespaceChild(par_desc,size);
-        if (left_sib!=XNULL)
+
+        if (left_sib == XNULL) 
+            left_sib=getLastNamespaceChild(par_desc,size);
+        
+        if (left_sib != XNULL)
         {
             #ifdef _MYDEBUG
                 crm_dbg<<" insert_attribute->6";
@@ -774,17 +777,21 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
         xptr right_indir=res_nd->rdsc;
         xptr par_indir=res_nd->pdsc;
         xptr indir=res_nd->indir;
-        if (left_indir!=NULL)
+        if (left_indir != XNULL)
         {
             CHECKP(left_indir);
             left_indir=((n_dsc*)XADDR(left_indir))->indir;
         }
-        if (right_indir!=NULL)
+        if (right_indir != XNULL)
         {
             CHECKP(right_indir);
             right_indir=((n_dsc*)XADDR(right_indir))->indir;
         }
-        hl_logical_log_attribute(indir,left_indir,right_indir,par_indir,name,type,value,data_size,(ns != XNULL)?ns->uri:NULL,(ns != XNULL)?ns->prefix:NULL ,true);
+        hl_logical_log_attribute(indir,left_indir,right_indir,
+                                 par_indir,name,type,value,data_size,
+                                 (ns != NULL)?ns->uri:NULL,
+                                 (ns != NULL)?ns->prefix:NULL,
+                                 true);
         CHECKP(tmp);
         up_concurrent_micro_ops_number();       
     }
@@ -886,12 +893,12 @@ xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent,const char* value
         xptr right_indir=res_nd->rdsc;
         xptr par_indir=res_nd->pdsc;
         xptr indir=res_nd->indir;
-        if (left_indir!=NULL)
+        if (left_indir != XNULL)
         {
             CHECKP(left_indir);
             left_indir=((n_dsc*)XADDR(left_indir))->indir;
         }
-        if (right_indir!=NULL)
+        if (right_indir != XNULL)
         {
             CHECKP(right_indir);
             right_indir=((n_dsc*)XADDR(right_indir))->indir;
@@ -995,12 +1002,12 @@ xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent,const char* value, 
         xptr right_indir=res_nd->rdsc;
         xptr par_indir=res_nd->pdsc;
         xptr indir=res_nd->indir;
-        if (left_indir!=NULL)
+        if (left_indir != XNULL)
         {
             CHECKP(left_indir);
             left_indir=((n_dsc*)XADDR(left_indir))->indir;
         }
-        if (right_indir!=NULL)
+        if (right_indir != XNULL)
         {
             CHECKP(right_indir);
             right_indir=((n_dsc*)XADDR(right_indir))->indir;
@@ -1112,12 +1119,12 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, in
         xptr right_indir=res_nd->rdsc;
         xptr par_indir=res_nd->pdsc;
         xptr indir=res_nd->indir;
-        if (left_indir!=NULL)
+        if (left_indir != XNULL)
         {
             CHECKP(left_indir);
             left_indir=((n_dsc*)XADDR(left_indir))->indir;
         }
-        if (right_indir!=NULL)
+        if (right_indir != XNULL)
         {
             CHECKP(right_indir);
             right_indir=((n_dsc*)XADDR(right_indir))->indir;
@@ -1216,17 +1223,20 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xmlns_ptr ns)
         xptr par_indir=res_nd->pdsc;
         xptr indir=res_nd->indir;
         xmlns_ptr nsl=xmlns_touch(((ns_dsc*)res_nd)->ns);
-        if (left_indir!=NULL)
+        if (left_indir != XNULL)
         {
             CHECKP(left_indir);
             left_indir=((n_dsc*)XADDR(left_indir))->indir;
         }
-        if (right_indir!=NULL)
+        if (right_indir != XNULL)
         {
             CHECKP(right_indir);
             right_indir=((n_dsc*)XADDR(right_indir))->indir;
         }
-        hl_logical_log_namespace(indir,left_indir,right_indir,par_indir,(nsl != XNULL)?nsl->uri:NULL,(nsl != XNULL)?nsl->prefix:NULL ,true);
+        hl_logical_log_namespace(indir,left_indir,right_indir,par_indir,
+                                 (nsl != NULL)?nsl->uri:NULL,
+                                 (nsl != NULL)?nsl->prefix:NULL,
+                                 true);
         CHECKP(result);
         up_concurrent_micro_ops_number();
         
@@ -1379,12 +1389,12 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
             //xptr indir=res_nd->indir;
             int sz=((t_dsc*)res_nd)->size;
             xptr ind_ptr=((t_dsc*)res_nd)->data;
-            if (left_indir!=NULL)
+            if (left_indir != XNULL)
             {
                 CHECKP(left_indir);
                 left_indir=((n_dsc*)XADDR(left_indir))->indir;
             }
-            if (right_indir!=NULL)
+            if (right_indir != XNULL)
             {
                 CHECKP(right_indir);
                 right_indir=((n_dsc*)XADDR(right_indir))->indir;
@@ -1568,12 +1578,12 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
         xptr right_indir=node->rdsc;
         xptr indir=node->indir;
         par_indir=node->pdsc;
-        if (left_indir!=NULL)
+        if (left_indir != XNULL)
         {
             CHECKP(left_indir);
             left_indir=((n_dsc*)XADDR(left_indir))->indir;
         }
-        if (right_indir!=NULL)
+        if (right_indir != XNULL)
         {
             CHECKP(right_indir);
             right_indir=((n_dsc*)XADDR(right_indir))->indir;
@@ -1587,7 +1597,12 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
             case element:
             {
                 xmlns_ptr ns=scn->get_xmlns();
-                hl_logical_log_element(indir,left_indir,right_indir,par_indir,scn->name,((e_dsc*)node)->type,(ns != XNULL)?ns->uri:NULL,(ns != XNULL)?ns->prefix:NULL ,false);
+                hl_logical_log_element(indir,left_indir,right_indir,par_indir,
+                                       scn->name,
+                                       ((e_dsc*)node)->type,
+                                       (ns != NULL)?ns->uri:NULL,
+                                       (ns != NULL)?ns->prefix:NULL,
+                                       false);
                 break;
             }
             case attribute:
@@ -1609,7 +1624,12 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
                 }
                 else
                     update_idx_delete_text(scn,nodex,ptr,size);
-                hl_logical_log_attribute(indir,left_indir,right_indir,par_indir,name,type,ptr,size,(ns != XNULL)?ns->uri:NULL,(ns != XNULL)?ns->prefix:NULL ,false);
+
+                hl_logical_log_attribute(indir,left_indir,right_indir,par_indir,
+                                         name,type,ptr,size,
+                                         (ns != NULL) ? ns->uri : NULL,
+                                         (ns != NULL) ? ns->prefix : NULL,
+                                         false);
                 break;
             }
             case text: case comment: 
@@ -1681,7 +1701,10 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
         case xml_namespace:
             {
                 xmlns_ptr ns=xmlns_touch(((ns_dsc*)node)->ns);
-                hl_logical_log_namespace(indir,left_indir,right_indir,par_indir,(ns!=XNULL)?ns->uri:NULL,(ns!=XNULL)?ns->prefix:NULL ,false);
+                hl_logical_log_namespace(indir,left_indir,right_indir,par_indir,
+                                         (ns!=NULL)?ns->uri:NULL,
+                                         (ns!=NULL)?ns->prefix:NULL,
+                                         false);
                 break;
             }
 

@@ -59,7 +59,7 @@ void PPUp::next  (tuple &t)
         while (GETSCHEMENODEX(p) != scm_node)
         {
 		    p = get_parent_node(p);
-            if (p == NULL) throw USER_EXCEPTION2(SE1003, "NULL xptr in PPUp::next");
+            if (p == XNULL) throw USER_EXCEPTION2(SE1003, "NULL xptr in PPUp::next");
             CHECKP(p);
         }
 

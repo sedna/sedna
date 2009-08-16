@@ -115,7 +115,7 @@ void update_delete_sequence(xptr node,ft_index_cell_cptr icell)
 void update_insert_sequence(xptr node,schema_node_cptr icell)
 {
     cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list.first;
-    if (obj == XNULL) return;
+    if (obj == NULL) return;
     CHECKP(node);
     xptr ind=((n_dsc*)XADDR(node))->indir;
     while (obj!=NULL)
@@ -463,7 +463,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
     case element:
         {
             xmlns_ptr ns=(GETSCHEMENODEX(node))->get_xmlns();
-            if (ns != XNULL) swizzleNamespace(ns,updmap);
+            if (ns != NULL) swizzleNamespace(ns,updmap);
             res =insert_element(left, right, parent,GETNAME(GETSCHEMENODEX(node)), ((e_dsc*)XADDR(node))->type,ns);
             CHECKP(node);
             xptr left_ngh=XNULL;
@@ -562,7 +562,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
     case attribute:
         {
             xmlns_ptr ns=(GETSCHEMENODEX(node))->get_xmlns();
-            if (ns != XNULL) swizzleNamespace(ns,updmap);
+            if (ns != NULL) swizzleNamespace(ns,updmap);
             int size=((t_dsc*)XADDR(node))->size;
             if (size>0)
             {
@@ -584,7 +584,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
     case xml_namespace:
         {
             xmlns_ptr ns=xmlns_touch(((ns_dsc*)XADDR(node))->ns);
-            if (ns != XNULL) swizzleNamespace(ns, updmap);
+            if (ns != NULL) swizzleNamespace(ns, updmap);
             res =insert_namespace(left, right, parent,ns);
         }
         break;

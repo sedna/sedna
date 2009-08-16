@@ -27,7 +27,7 @@ void xptr_sequence::clear()
     xptr p;
 
     p = bblk;
-    while (p != NULL)
+    while (p != XNULL)
     {
         CHECKP(p);
         xptr tmp = p;
@@ -63,7 +63,7 @@ void xptr_sequence::add(const xptr &p)
         return;
     }
 
-    if (eblk == NULL) init_blks();
+    if (eblk == XNULL) init_blks();
     CHECKP(eblk);
 
     if (SEQ_BLK_FREE_SPACE(XADDR(eblk)) < sizeof(xptr))

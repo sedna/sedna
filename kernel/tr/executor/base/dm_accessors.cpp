@@ -23,7 +23,7 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
     if (node_type == attribute || node_type == pr_ins || node_type == comment || node_type == text)
     {
         xptr parent = GETPARENTPOINTER(node);
-        if (parent == NULL) 
+        if (parent == XNULL) 
             return tuple_cell::eos();
 
         CHECKP(parent);
@@ -36,7 +36,7 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
 
     xptr xml_base_node = getBaseUri(node);
 
-    if (xml_base_node != NULL)
+    if (xml_base_node != XNULL)
     {
         tuple_cell tc = dm_string_value(xml_base_node);
         Uri::Information nfo;
@@ -156,7 +156,7 @@ tuple_cell se_node_namespace_uri(xptr node)
         case element        : 
         case attribute      : {
                                   xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
-                                  if (xmlns != XNULL) {
+                                  if (xmlns != NULL) {
                                       if(xmlns->uri) 
                                           return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
                                       else if(xmlns->prefix && strcmp("xml", xmlns->prefix) == 0)
@@ -178,7 +178,7 @@ xptr get_parent_node(xptr node)
 
     xptr p = GETPARENTPOINTER(node);
 
-    if (p == NULL) return p;
+    if (p == XNULL) return p;
     else
     {
         CHECKP(p);
@@ -189,7 +189,7 @@ xptr get_parent_node(xptr node)
 tuple_cell dm_parent(xptr node)
 {
     xptr p = get_parent_node(node);
-    return (p == NULL) ? tuple_cell::eos() : tuple_cell::node(p);
+    return (p == XNULL) ? tuple_cell::eos() : tuple_cell::node(p);
 }
 
 /*******************************************************************************
@@ -236,7 +236,7 @@ void dm_string_value_traverse(xptr node)
         case element:   {
                             xptr p = first_child(node);
 
-                            while (p != NULL)
+                            while (p != XNULL)
                             {
                                 dm_string_value_traverse(p);
 
@@ -304,7 +304,7 @@ tuple_cell dm_string_value(xptr node)
                                   else 
                                   {
                                       xptr p = first_child(node);
-                                      if (p == NULL) return EMPTY_STRING_TC;
+                                      if (p == XNULL) return EMPTY_STRING_TC;
                                       else return dm_string_value(p);
                                   }
                               }

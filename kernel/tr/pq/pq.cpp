@@ -331,7 +331,7 @@ void convert_schema_node_to_scheme_list(schema_node_cptr node, std::ostream& sst
     if (node->name)
     {
         sstr << " (\"";
-        if ((node->get_xmlns() != XNULL) && node->get_xmlns()->uri) sstr << node->get_xmlns()->uri;
+        if ((node->get_xmlns() != NULL) && node->get_xmlns()->uri) sstr << node->get_xmlns()->uri;
         sstr << "\" \"" << node->name << "\")";
     }
     sstr << " (" << int2string(node->nodecnt) << " " << int2string(node->blockcnt) << " " << int2string(node->extnids) << ")";
