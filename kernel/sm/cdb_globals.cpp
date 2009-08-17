@@ -56,10 +56,12 @@ static arg_rec cdb_argtable[] =
 };
 
 
-static void print_cdb_usage() 
+static void 
+print_cdb_usage(int ret_code) 
 {
-    throw USER_SOFT_EXCEPTION((string("Usage: se_cdb [options] dbname\n\n") +
-                               string("options:\n") + string(arg_glossary(cdb_argtable, cdb_narg, "  ")) + string("\n")).c_str());
+    fprintf(stdout, "Usage: se_cdb [options] dbname\n\n");
+    fprintf(stdout, "options:\n%s\n", arg_glossary(cdb_argtable, cdb_narg, "  ")); 
+    exit(ret_code);
 }
 
 void 
@@ -68,16 +70,16 @@ parse_cdb_command_line(int argc, char** argv)
    char errmsg[1000];
 
    if (argc == 1) 
-       print_cdb_usage();
+       print_cdb_usage(1);
    
    int res = arg_scanargv(argc, argv, cdb_argtable, cdb_narg, NULL, errmsg, NULL);
 
    if (cdb_s_help == 1 || cdb_l_help == 1)
-       print_cdb_usage();
+       print_cdb_usage(0);
 
    if (cdb_version == 1) {
        print_version_and_copyright("Sedna Create Data Base Utility");
-       throw USER_SOFT_EXCEPTION("");
+       exit(0);
    }
    if (0 == res)
        throw USER_EXCEPTION2(SE4601, errmsg);

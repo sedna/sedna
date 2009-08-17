@@ -68,29 +68,34 @@ static arg_rec sm_argtable[] =
 };
 
 static void 
-print_sm_usage() {
-    throw USER_SOFT_EXCEPTION((string("Usage: se_sm [options] dbname\n\n") +
-                               string("options:\n") + string(arg_glossary(sm_argtable, narg, "  ")) + string("\n")).c_str());
+print_sm_usage(int ret_code) {
+
+    fprintf(stdout, "Usage: se_sm [options] dbname\n\n");
+    fprintf(stdout, "options:\n%s\n", arg_glossary(sm_argtable, narg, "  ")); 
+    exit(ret_code);
 }
 
 void 
 parse_sm_command_line(int argc, char** argv) 
 {
-    char buf[1024];
-    if (argc == 1) {
-        print_sm_usage();
-    }
-    else  {
-        int res = arg_scanargv(argc, argv, sm_argtable, narg, NULL, buf, NULL);
-    
-        if (sm_help == 1)      print_sm_usage();
-        if (sm_version == 1) { print_version_and_copyright("Sedna Storage Manager"); throw USER_SOFT_EXCEPTION(""); }
+   char buf[1024];
 
-        if (res == 0)
-            throw USER_ENV_EXCEPTION(buf, false);
-        if (strcmp(db_name, "???") == 0)
-            throw USER_ENV_EXCEPTION("Unexpected command line parameters: database name expected", false);
-    }
+   if (argc == 1) print_sm_usage(1);
+   
+   int res = arg_scanargv(argc, argv, sm_argtable, narg, NULL, buf, NULL);
+    
+   if (sm_help == 1) print_sm_usage(0);
+
+   if (sm_version == 1) 
+   { 
+       print_version_and_copyright("Sedna Storage Manager");  
+       exit(0);
+   }
+
+   if (res == 0)
+       throw USER_ENV_EXCEPTION(buf, false);
+   if (strcmp(db_name, "???") == 0)
+       throw USER_ENV_EXCEPTION("Unexpected command line parameters: database name expected", false);
 }
 
 string 

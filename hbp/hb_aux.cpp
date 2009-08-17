@@ -41,7 +41,7 @@ arg_rec hb_argtable[] =
 // print help message
 static void hbPrintUsage()
 {
-	print_version_and_copyright("\nSEDNA Hot-Backup Process");
+	print_version_and_copyright("\nSedna Hot-Backup Process");
     
     fprintf(stdout, "Usage: se_hb [options] dbname path\n\noptions:\n");
     fprintf(stdout, "%s\n", arg_glossary(hb_argtable, narg, "  "));
@@ -69,7 +69,7 @@ void hbParseCommandLine(int argc, char **argv)
 
     if (hb_vers == 1)
     {
-        print_version_and_copyright("SEDNA Hot-Backup Process");
+        print_version_and_copyright("Sedna Hot-Backup Process");
         exit(0);
     }
 

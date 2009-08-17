@@ -21,11 +21,11 @@
 
 using namespace std;
 
-void print_term_usage()
+static void print_term_usage(int ret_code)
 {
     printf("Usage: se_term [options] dbname\n\n");
     printf("options:\n%s\n", arg_glossary(term_argtable, narg, "  "));
-    exit(0);
+    exit(ret_code);
 }
 
 /*
@@ -53,19 +53,22 @@ int main(int argc, char *argv[])
     
 	arg_scan_ret_val = arg_scanargv(argc, argv, term_argtable, narg, NULL, errmsg, NULL);
 	
-	int			ret_code;
+	int ret_code;
 	
 	try{
 		if (arg_scan_ret_val == 0)
 			throw USER_ENV_EXCEPTION(errmsg, false);
 
-        if (argc == 1) { print_term_usage(); return 0; }
+        if (argc == 1) 
+            print_term_usage(1);
 
-        //d_printf2("params:help=%d, mode=%d", lstnr_help, background_mode);
+        if ((term_s_help == 1) || (term_l_help == 1)) 
+            print_term_usage(0);
 
-        if ((term_s_help == 1)||(term_l_help == 1)){print_term_usage(); return 0; }
-
-        if (term_version == 1) {print_version_and_copyright("Sedna Terminal"); throw USER_SOFT_EXCEPTION("");}
+        if (term_version == 1) {
+            print_version_and_copyright("Sedna Terminal"); 
+            return 0; 
+        }
 
         if (socket_port == 0) socket_port = 5050;
         if (strcmp(host, "???") == 0 ) strcpy(host, "localhost"); 

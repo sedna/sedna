@@ -30,10 +30,8 @@ static arg_rec ss_argtable[] =
 
 static void print_ss_usage()
 {
-   throw USER_SOFT_EXCEPTION((std::string("Usage: se_stop [options]\n\n") +
-                              std::string("options:\n") + 
-                              std::string(arg_glossary(ss_argtable, narg, "  ")) + 
-                              std::string("\n")).c_str());
+    fprintf(stdout, "Usage: se_stop [options]\n\n");
+    fprintf(stdout, "options:\n%s\n", arg_glossary(ss_argtable, narg, "  ")); 
 }
 
 int main(int argc, char** argv)
@@ -61,8 +59,15 @@ int main(int argc, char** argv)
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
         char errmsg[1000];
         arg_scan_ret_val = arg_scanargv(argc, argv, ss_argtable, narg, NULL, errmsg, NULL);
-        if (ss_help == 1 ) print_ss_usage();
-        if (ss_version == 1) { print_version_and_copyright("Sedna Stop Server Utility"); throw USER_SOFT_EXCEPTION("");}
+
+        if (ss_help == 1 ) {
+            print_ss_usage();
+            return 0;
+        }
+        if (ss_version == 1) { 
+            print_version_and_copyright("Sedna Stop Server Utility"); 
+            return 0;
+        }
 
         if (arg_scan_ret_val == 0)
            throw USER_EXCEPTION2(SE4601, errmsg);

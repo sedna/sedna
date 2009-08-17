@@ -40,10 +40,8 @@ static arg_rec rc_argtable[] =
 
 static void print_rc_usage()
 {
-    throw USER_SOFT_EXCEPTION((std::string("Usage: se_rc [options]\n\n") +
-                               std::string("options:\n") + 
-                               std::string(arg_glossary(rc_argtable, narg, "  ")) + 
-                               std::string("\n")).c_str());
+    fprintf(stdout, "Usage: se_rc [options]\n\n");
+    fprintf(stdout, "options:\n%s\n", arg_glossary(rc_argtable, narg, "  ")); 
 }
 
 
@@ -131,8 +129,15 @@ int main(int argc, char **argv)
     try{
         res = arg_scanargv(argc, argv, rc_argtable, narg, NULL, errmsg, NULL);
         
-        if (rc_help == 1 ) print_rc_usage();
-        if (rc_version == 1) { print_version_and_copyright("Sedna Runtime Configuration Utility"); throw USER_SOFT_EXCEPTION(""); }
+        if (rc_help == 1 ) { 
+            print_rc_usage();
+            return 0;
+        }    
+        
+        if (rc_version == 1) { 
+            print_version_and_copyright("Sedna Runtime Configuration Utility"); 
+            return 0; 
+        }
 
         if (res == 0) throw USER_EXCEPTION2(SE4601, errmsg);
 

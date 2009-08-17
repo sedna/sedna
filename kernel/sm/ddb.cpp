@@ -19,13 +19,13 @@
 
 using namespace std;
 
-const size_t narg = 4;
-int ddb_help1 = 0;
-int ddb_help2 = 0;
-int ddb_version;
-char db_name[1000];
+static const size_t narg = 4;
+static int ddb_help1 = 0;
+static int ddb_help2 = 0;
+static int ddb_version;
+static char db_name[1000];
 
-arg_rec ddb_argtable[] =
+static arg_rec ddb_argtable[] =
 {
 {"--help",            NULL,       arg_lit,   &ddb_help1,                 "0",    "\t\t   display this help and exit"},
 {"-help",             NULL,       arg_lit,   &ddb_help2,                 "0",    "\t\t\t   display this help and exit"},
@@ -36,8 +36,8 @@ arg_rec ddb_argtable[] =
 
 static void print_ddb_usage()
 {
-   throw USER_SOFT_EXCEPTION((string("Usage: se_ddb [options] dbname \n\n") +
-                              string("options:\n") + string(arg_glossary(ddb_argtable, narg, "  ")) + string("\n")).c_str());
+   fprintf(stdout, "Usage: se_ddb [options] db_name\n\n");
+   fprintf(stdout, "options:\n%s\n", arg_glossary(ddb_argtable, narg, "  ")); 
 }
 
 static void ddb_open_gov_shm()
@@ -74,8 +74,17 @@ int main(int argc, char** argv)
    
         int arg_scan_ret_val = 0; /* 1 - parsed successful, 0 - there was errors */
         arg_scan_ret_val = arg_scanargv(argc, argv, ddb_argtable, narg, NULL, errmsg, NULL);
-        if (ddb_help1 == 1 || ddb_help2 == 1 ) print_ddb_usage();
-        if (ddb_version == 1) { print_version_and_copyright("Sedna Drop Data Base Utility"); throw USER_SOFT_EXCEPTION(""); }
+
+        if ( ddb_help1 == 1 || ddb_help2 == 1 ) {
+            print_ddb_usage();
+            return 0;
+        }
+
+        if (ddb_version == 1) { 
+            print_version_and_copyright("Sedna Drop Data Base Utility"); 
+            return 0; 
+        }
+
         if (arg_scan_ret_val == 0)
             throw USER_EXCEPTION2(SE4601, errmsg);
 

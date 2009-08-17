@@ -18,24 +18,24 @@
 using namespace std;
 
 
-const size_t narg = 4;
-int smsd_help;
-int smsd_version;
-char db_name[1000];
+static const size_t narg = 4;
+static int smsd_help     = 0;
+static int smsd_version  = 0;
+static char db_name[1000];
 
-arg_rec smsd_argtable[] =
+static arg_rec smsd_argtable[] =
 {
-{"--help",            NULL,       arg_lit,   &smsd_help,                 "0",    "\t\t   display this help and exit"},
-{"-help",             NULL,       arg_lit,   &smsd_help,                 "0",    "\t\t\t   display this help and exit"},
-{"-version",          NULL,       arg_lit,   &smsd_version,              "0",    "\t\t   display product version and exit"},
-{NULL,               " db-name",  arg_str,   db_name,                    "???",  "\t\t   The name of the database "}
+  {"--help",            NULL,       arg_lit,   &smsd_help,                 "0",    "\t\t   display this help and exit"},
+  {"-help",             NULL,       arg_lit,   &smsd_help,                 "0",    "\t\t\t   display this help and exit"},
+  {"-version",          NULL,       arg_lit,   &smsd_version,              "0",    "\t\t   display product version and exit"},
+  {NULL,               " db-name",  arg_str,   db_name,                    "???",  "\t\t   The name of the database "}
 };
 
 
-void print_smsd_usage()
+static void print_smsd_usage()
 {
-   throw USER_SOFT_EXCEPTION((string("Usage: se_smsd [options] dbname \n\n") +
-                              string("options:\n") + string(arg_glossary(smsd_argtable, narg, "  ")) + string("\n")).c_str());
+    fprintf(stdout, "Usage: se_smsd [options]\n\n");
+    fprintf(stdout, "options:\n%s\n", arg_glossary(smsd_argtable, narg, "  ")); 
 }
 
 
@@ -59,12 +59,19 @@ int main(int argc, char **argv)
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
-
-        int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
-        arg_scan_ret_val = arg_scanargv(argc, argv, smsd_argtable, narg, NULL, errmsg, NULL);
-        if (smsd_help == 1 ) print_smsd_usage();
-        if (smsd_version == 1) { print_version_and_copyright("Sedna Shutdown Data Base Utility"); throw USER_SOFT_EXCEPTION(""); }
-        if (arg_scan_ret_val == 0)
+        res = arg_scanargv(argc, argv, smsd_argtable, narg, NULL, errmsg, NULL);
+        
+        if (smsd_help == 1 ) {
+            print_smsd_usage();
+            return 0;
+        }
+        
+        if (smsd_version == 1) { 
+            print_version_and_copyright("Sedna Shutdown Data Base Utility"); 
+            return 0; 
+        }
+        
+        if (res == 0)
            throw USER_EXCEPTION2(SE4601, errmsg);
 
         if (string(db_name) == "???")

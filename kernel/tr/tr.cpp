@@ -151,8 +151,6 @@ int TRmain(int argc, char *argv[])
             XQParserContext = AllocSetContextCreate(UserStatementContext, "XQParserContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
 #endif
 
-
-
 #ifdef REQUIRE_ROOT
             if (!uIsAdmin(__sys_call_error))
                 throw USER_EXCEPTION(SE3064);
