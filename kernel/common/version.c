@@ -12,5 +12,5 @@ void print_version_and_copyright(const char *prog_name)
     const char* build = SEDNA_BUILD;
     fprintf(stdout, "%s Version %s.%s\n", prog_name, ver, build);
     fprintf(stdout, "Copyright (C) 2004-2009 ISP RAS and others. All rights reserved.\n"); 
-    fprintf(stdout, "See file COPYRIGHT provided with the distribution.\n\n");   
+    fprintf(stdout, "See file COPYRIGHT provided with the distribution.\n");   
 }

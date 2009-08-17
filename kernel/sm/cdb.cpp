@@ -125,8 +125,10 @@ static inline void
 cleanup_db_and_check_result()
 {
     if(cleanup_db(sm_globals::db_name) == 2) {
-        fprintf(stderr, "%s\n", "Can't perform cleanup. Please stop Sedna and drop created database files manually.");
-        fprintf(stderr, "%s\n", "'/cfg/$_cfg.xml' and '/data/$_files' directory ('$' is the database name).");
+        fprintf(stderr, "Cannot complete cleanup. Please stop Sedna and remove the following:\n");
+        fprintf(stderr, "file   -  /cfg/%s_cfg.xml\n");
+        fprintf(stderr, "folder -  /data/%s_files\n");
+        fprintf(stderr, "Sorry for inconvenience.\n");
     }
 }
 

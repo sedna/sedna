@@ -35,8 +35,8 @@ using namespace std;
 
 static void print_gov_usage()
 {
-    throw USER_SOFT_EXCEPTION((string("Usage: se_gov [options]\n\n") +
-                               string("options:\n") + string(arg_glossary(gov_argtable, narg, "  ")) + string("\n")).c_str());
+    fprintf(stdout, "Usage: se_gov [options]\n\n");
+    fprintf(stdout, "options:\n%s\n", arg_glossary(gov_argtable, narg, "  ")); 
 }
 
 #ifdef _WIN32
@@ -108,12 +108,15 @@ int main(int argc, char** argv)
             throw USER_EXCEPTION2(SE4601, buf);
 
         if (gov_help_l == 1 || gov_help_s == 1)
+        {
             print_gov_usage();
+            return 0;
+        }
 
         if (gov_version == 1)
         {
            print_version_and_copyright("Sedna Governor");
-           throw USER_SOFT_EXCEPTION("");
+           return 0;
         }
          
         fulfill_config_parameters(&cfg);
