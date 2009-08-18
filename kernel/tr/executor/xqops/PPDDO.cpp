@@ -42,6 +42,7 @@ void PPDDO::open  ()
     child.op->open();
     pos = 0;
 	ret_val=XNULL;
+    atomic_mode = false;
 #else
     child.op->open();
 #endif
@@ -54,6 +55,7 @@ void PPDDO::reopen()
     pos = 0;
     s->clear();
 	ret_val=XNULL;
+    atomic_mode = false;
 #else
     child.op->reopen();
 #endif
@@ -76,6 +78,21 @@ void PPDDO::next  (tuple &t)
     SET_CURRENT_PP(this);
 
 #ifdef TURN_ON_DDO
+
+    if(atomic_mode) {
+        child.op->next(t);
+        if(!t.is_eos()) {
+            tuple_cell tc = child.get(t); 
+            if (tc.is_node())
+                throw XQUERY_EXCEPTION2(XPTY0019, "Atomic or node sequence is expected");
+        }
+        else {
+            atomic_mode = false;
+        }
+        RESTORE_CURRENT_PP; 
+        return;
+    }
+
     if (!pos)
     {
         // accumulate nodes and sort them
@@ -86,41 +103,42 @@ void PPDDO::next  (tuple &t)
             else
             {
                 tuple_cell tc = child.get(t);
-                if (!tc.is_node()) throw USER_EXCEPTION2(SE1003, "Argument of PPDDO is not a node");
-                s->add(t);
+                if (tc.is_node()) {
+                    s->add(t);
+                }
+                else {
+                    if(s->size() != 0)
+                        throw XQUERY_EXCEPTION2(XPTY0019, "Atomic or node sequence is expected");
+                    atomic_mode = true;
+                    RESTORE_CURRENT_PP; 
+                    return;
+                }
             }
         }
-
-       /* u_timeb t_sort1, t_sort2;
-        d_printf1("Before sorting: \n");
-        u_ftime(&t_sort1);
-        s->sort();
-        s->sort();*/
+    
         s->lazy_sort();
-        /*u_ftime(&t_sort2);
-        d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
         pos=1;
         ret_val=XNULL;
     }
 
-while (true)
-{
-	s->next(t);
-	if (t.is_eos())
-	{
-		pos = 0;
-		s->clear();
-		{RESTORE_CURRENT_PP; return;}
-	}
-	else
-	{
-		if (t.cells[0].get_node()!=ret_val)
-		{
-			ret_val=t.cells[0].get_node();
-			{RESTORE_CURRENT_PP; return;}
-		}
-	}
-}
+    while (true)
+    {
+        s->next(t);
+        if (t.is_eos())
+        {
+            pos = 0;
+            s->clear();
+            {RESTORE_CURRENT_PP; return;}
+        }
+        else
+        {
+            if (t.cells[0].get_node()!=ret_val)
+            {
+                ret_val=t.cells[0].get_node();
+                {RESTORE_CURRENT_PP; return;}
+            }
+        }
+    }
 #else
     child.op->next(t);
 #endif

@@ -8,7 +8,13 @@
 
 sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_, serialize_fn _serializeFN_,
 								 serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_,
-								 deserialize_2_blks_fn _deserialize2FN_,const void * _Udata_): compareFN(_compareFN_),getSizeFN(_getSizeFN_),serializeFN(_serializeFN_),serialize2FN(_serialize2FN_),deserializeFN(_deserializeFN_),deserialize2FN(_deserialize2FN_),Udata(_Udata_)
+								 deserialize_2_blks_fn _deserialize2FN_,const void * _Udata_): compareFN(_compareFN_),
+                                                                                               getSizeFN(_getSizeFN_),
+                                                                                               serializeFN(_serializeFN_),
+                                                                                               serialize2FN(_serialize2FN_),
+                                                                                               deserializeFN(_deserializeFN_),
+                                                                                               deserialize2FN(_deserialize2FN_),
+                                                                                               Udata(_Udata_)
 {
 	finalized=false;
 	ptr_place=XNULL;
@@ -19,7 +25,9 @@ sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_
 	buf_length=sizeof(xptr);
 	merge_tree=NULL;
 	top=NULL;
+    seq_size=0;
 }
+
 sorted_sequence::~sorted_sequence()
 {
 	delete[] temp_buffer;
@@ -229,6 +237,7 @@ void sorted_sequence::add(tuple& p)
 		val_place+=size;
 	}
 
+    seq_size++;
 	//3. checking if the memory is full
 	if (blk_cnt<MAX_BLOCKS_IN_CHAIN)
 		return;

@@ -19,6 +19,7 @@ private:
     sorted_sequence *s;
     PPOpIn child;
     xptr ret_val;
+    bool atomic_mode;
 
     void children(PPOpIn& _child_) { _child_ = child; }
 

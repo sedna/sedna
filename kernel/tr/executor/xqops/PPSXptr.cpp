@@ -29,6 +29,7 @@ void PPSXptr::open  ()
     s = se_new sorted_sequence(compare_less, get_size, serialize, serialize_2_blks, deserialize, deserialize_2_blks, NULL);
     child.op->open();
     pos = 0;
+    atomic_mode = false;
     ret_val = XNULL;
 }
 
@@ -36,6 +37,7 @@ void PPSXptr::reopen()
 {
     child.op->reopen();
     pos = 0;
+    atomic_mode = false;
     s->clear();
     ret_val = XNULL;
 }
@@ -53,6 +55,20 @@ void PPSXptr::next  (tuple &t)
 {
     SET_CURRENT_PP(this);
 
+    if(atomic_mode) {
+        child.op->next(t);
+        if(!t.is_eos()) {
+            tuple_cell tc = child.get(t); 
+            if (tc.is_node())
+                throw XQUERY_EXCEPTION2(XPTY0018, "Atomic or node sequence is expected");
+        }
+        else {
+            atomic_mode = false;
+        }
+        RESTORE_CURRENT_PP; 
+        return;
+    }
+    
     if (!pos)
     {
         // accumulate nodes and sort them
@@ -63,8 +79,17 @@ void PPSXptr::next  (tuple &t)
             else
             {
                 tuple_cell tc = child.get(t);
-                if (!tc.is_node()) throw USER_EXCEPTION2(SE1003, "Argument of PPSXptr is not a node");
-                s->add(t);
+                if (tc.is_node()) {
+                    s->add(t);
+                }
+                else {
+                    if(s->size() != 0)
+                        throw XQUERY_EXCEPTION2(XPTY0018, "Atomic or node sequence is expected");
+                    atomic_mode = true;
+                    RESTORE_CURRENT_PP; 
+                    return;
+                }
+
             }
         }
 

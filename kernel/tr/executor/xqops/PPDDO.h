@@ -46,6 +46,7 @@ protected:
     int pos;
     sorted_sequence *s;
 	xptr ret_val;
+    bool atomic_mode;
 #endif
 
     // given parameters
