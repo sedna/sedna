@@ -1,17 +1,18 @@
 /* chicken.h - General headerfile for compiler generated executables
 ;
-; Copyright (c) 2000-2005, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
+; Copyright (c) 2008-2009, The Chicken Team
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -22,55 +23,161 @@
 ; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
-;
-; Send bugs, suggestions and ideas to: 
-;
-; felix@call-with-current-continuation.org
-;
-; Felix L. Winkelmann
-; Unter den Gleichen 1
-; 37130 Gleichen
-; Germany
 */
 
-
 /* Configuration: */
+
+/*
+ * The Watcom (__WATCOMC__), Metroworks (__MWERKS__), and Delorie (__DJGPP__)
+ * compilers are not currently supported but existing references remain,
+ * just in case.
+ */
 
 #ifndef ___CHICKEN
 #define ___CHICKEN
 
-#if (defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)) && !defined(_MSC_VER) 
-# include <chicken-config.h>
+#define C_MAJOR_VERSION       4
 
 /*
- * Darwin provides gcvt/ecvt/fcvt for compatibility with legacy code.
- * (They don't even have a header definition!)
- * Use snprintf instead.
+ * N.B. This file MUST not rely upon "chicken-config.h"
  */
-# ifdef C_MACOSX
-#   ifdef HAVE_GCVT
-#     undef HAVE_GCVT
-#   endif
+#if defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)
+# include "chicken-config.h"
+#endif
+
+
+/* Kind of platform */
+
+#ifndef C_SIXTY_FOUR
+# if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__) || defined(__powerpc64__)
+#   define C_SIXTY_FOUR
+# elif defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
+#   define C_SIXTY_FOUR
 # endif
 #endif
 
-#ifndef __GNUC__
+#if defined(__APPLE__) && defined(__MACH__)
+# define C_MACOSX
+#endif
+
+#if defined(C_MACOSX) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+# define C_XXXBSD
+#endif
+
+#if /*defined(__GNUC__) &&*/ (defined(__linux__) || defined(C_XXXBSD))
+# define C_GNU_ENV
+#endif
+
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__WATCOMC__) || defined(__MWERKS__) || defined(__DJGPP__)
+# define C_NONUNIX
+#endif
+
+
+/* Headers */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <string.h>
+#include <setjmp.h>
+#include <limits.h>
+#include <time.h>
+
+#if !defined(C_NONUNIX) || defined(__MINGW32__) || defined(__WATCOMC__)
+# include <unistd.h>
+# include <inttypes.h>
+# include <sys/types.h>
+#endif
+
+/* Byteorder in machine word */
+
+#if defined(__MINGW32__)
+# include <sys/param.h>
+#elif defined(__CYGWIN__)
+# include <endian.h>
+#elif defined(__linux__)
+# include <endian.h>
+#elif defined(C_XXXBSD)
+# include <machine/endian.h>
+#elif defined(__hpux__)
+# include <arpa/nameser.h>
+#elif defined(_AIX)
+# include <sys/machine.h>
+#elif defined(__sun__)
+# include <sys/isa_defs.h>
+#elif defined(__svr4__)
+# include <sys/byteorder.h>
+#endif
+
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__WATCOMC__)
+# include <malloc.h>
+#endif
+
+#ifdef _MSC_VER
+# include <io.h>
+#endif
+
+/* Much better with stack allocation API */
+
+#if defined(_MSC_VER)
+# if HAVE_ALLOCA_H
+#  define alloca            _alloca
+# endif
+#elif !defined(__GNUC__) && !defined(__WATCOMC__)
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
-# else
-#  ifdef _AIX
-# pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#   endif
-#  endif
+# elif defined(_AIX)
+#   pragma alloca
+# elif !defined(alloca) /* predefined by HP cc +Olibcalls */
+    char *alloca ();
 # endif
 #elif (defined(__sun__) && defined(__svr4__)) || defined(__sgi__)
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
 # endif
 #endif
+
+
+/* Chicken Core C API */
+
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
+# define C_BIG_ENDIAN
+#elif defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
+# define C_BIG_ENDIAN
+#elif defined(__BIG_ENDIAN__)
+# define C_BIG_ENDIAN
+#elif defined(__sparc__) || defined(__POWERPC__) || defined(__MC68K__) || defined(__mips__)
+# define C_BIG_ENDIAN
+#endif
+
+#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && __BYTE_ORDER == __LITTLE_ENDIAN
+# define C_LITTLE_ENDIAN
+#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && BYTE_ORDER == LITTLE_ENDIAN
+# define C_LITTLE_ENDIAN
+#elif defined(__LITTLE_ENDIAN__)
+# define C_LITTLE_ENDIAN
+#elif defined (__alpha__) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
+# define C_LITTLE_ENDIAN
+#endif
+
+/* Make sure some common C identifiers are availble w/ Windows */
+
+#ifdef _MSC_VER
+# define strncasecmp       strnicmp
+# define isatty            _isatty
+typedef __int8             int8_t;
+typedef unsigned __int8    uint8_t;
+typedef __int16            int16_t;
+typedef unsigned  __int16  uint16_t;
+typedef __int32            int32_t;
+typedef unsigned __int32   uint32_t;
+typedef __int64            int64_t;
+typedef unsigned __int64   uint64_t;
+# pragma warning(disable: 4101)
+#endif
+
+/* Could be used by C++ source */
 
 #ifdef __cplusplus
 # define C_extern                  extern "C"
@@ -81,13 +188,17 @@ char *alloca ();
 # define C_BEGIN_C_DECLS
 # define C_END_C_DECLS
 #endif
- 
+
+
+/* Function declaration modes */
+
+/* Visibility */
 #define C_varextern                C_extern
 #define C_fctimport
 #define C_fctexport
 #define C_externimport             C_extern
 #define C_externexport             C_extern
-#if !(defined(C_NO_PIC_NO_DLL) && !defined(PIC))
+#if defined(PIC)
 # if defined(__CYGWIN__) || defined(__MINGW32__)
 #  ifndef C_BUILDING_LIBCHICKEN
 #   undef  C_varextern
@@ -98,29 +209,96 @@ char *alloca ();
 #  define C_fctimport              __declspec(dllexport)
 #  undef  C_externimport
 #  undef  C_externexport
-#  define C_externimport           C_extern __declspec(dllimport)
 #  define C_externexport           C_extern __declspec(dllexport)
 #  undef  C_varextern
 #  undef  C_fctexport
 #  ifdef C_BUILDING_LIBCHICKEN
 #   define C_varextern             C_extern __declspec(dllexport)
 #   define C_fctexport             __declspec(dllexport)
+#   define C_externimport          C_extern __declspec(dllexport)
 #  else
 #   define C_varextern             C_extern __declspec(dllimport)
 #   define C_fctexport             __declspec(dllimport)
+#   define C_externimport          C_extern __declspec(dllimport)
+#  endif
+# elif defined(__WATCOMC__)
+#  undef  C_fctimport
+#  define C_fctimport              __declspec(dllexport)
+#  undef  C_externimport
+#  undef  C_externexport
+#  define C_externexport           C_extern __declspec(dllexport)
+#  undef  C_varextern
+#  undef  C_fctexport
+#  ifdef C_BUILDING_LIBCHICKEN
+#   define C_varextern             C_extern __declspec(dllexport)
+#   define C_fctexport             __declspec(dllexport)
+#   define C_externimport          C_extern __declspec(dllexport)
+#  else
+#   define C_varextern             C_extern __declspec(dllimport)
+#   define C_fctexport             __declspec(dllimport)
+#   define C_externimport          C_extern __declspec(dllimport)
 #  endif
 # endif
 #endif
 
+/* Language specifics: */
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+# ifndef __cplusplus
+#  define C_cblock                ({
+#  define C_cblockend             })
+#  define C_noret                 __attribute__ ((noreturn))
+#  define C_noret_decl(name)
+#  define C_aligned               __attribute__ ((aligned))
+# endif
+# ifdef __i386__
+#  define C_regparm               __attribute__ ((regparm(3)))
+# endif
+#elif defined(_MSC_VER)
+# define C_fcall                  __fastcall
+#elif defined(__WATCOMC__)
+# define C_ccall                  __cdecl
+#endif
+
+#ifndef C_cblock
+# define C_cblock                 do{
+# define C_cblockend              }while(0)
+# define C_noret
+# define C_noret_decl(name)
+#endif
+
+#ifndef C_regparm
+# define C_regparm
+#endif
+
+#ifndef C_fcall
+# define C_fcall
+#endif
+
+#ifndef C_ccall
+# define C_ccall
+#endif
+
+#ifndef C_aligned
+# define C_aligned
+#endif
+
+#define C_c_regparm
+
+/* Thread Local Stoarage */
 #ifdef C_ENABLE_TLS
 # if defined(__GNUC__)
 #  define C_TLS                    __thread
 # elif defined(_MSC_VER)
 #  define C_TLS                    __declspec(thread)
 # endif
-#else
+#endif
+
+#ifndef C_TLS
 # define C_TLS
 #endif
+
+
+/* Stack growth direction; used to compute stack addresses */
 
 #ifndef C_STACK_GROWS_DOWNWARD
 # define C_STACK_GROWS_DOWNWARD    -1
@@ -136,83 +314,17 @@ char *alloca ();
 # endif
 #endif
 
-#if defined(C_WINDOWS_DLL) || defined(C_WINDOWS_GUI)
+/* Have a GUI? */
+
+#if defined(C_WINDOWS_GUI)
 # define C_MICROSOFT_WINDOWS
 #else
 # define C_GENERIC_CONSOLE
 #endif
 
+/* Needed for pre-emptive threading */
+
 #define C_TIMER_INTERRUPTS
-#define C_128_PARAMETERS
-
-#ifdef C_DEFAULT_TARGET_STACK_SIZE
-# define C_resize_stack(n)           C_do_resize_stack(C_DEFAULT_TARGET_STACK_SIZE)
-#else
-# define C_resize_stack(n)           C_do_resize_stack(n)
-#endif
-
-#if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__)
-# define C_SIXTY_FOUR
-#endif
-
-#if defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
-# define C_SIXTY_FOUR
-#endif
-
-#if defined(__APPLE__) && defined(__MACH__)
-# define C_MACOSX
-#endif
-
-#if defined(_MSC_VER) || defined(__MWERKS__) || defined(__DJGPP__) || defined(__MINGW32__)
-# define C_NONUNIX
-#endif
-
-#ifdef C_MICROSOFT_WINDOWS
-# include <windows.h>
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <string.h>
-#include <setjmp.h>
-#include <limits.h>
-#include <time.h>
-
-#ifdef C_SIXTY_FOUR
-# ifdef HAVE_STDINT_H
-#  include <stdint.h>
-# else
-#  include <sys/types.h>
-# endif
-#endif
-
-#ifndef C_NONUNIX
-# include <unistd.h>
-#endif
-
-#if defined(__MWERKS__) && !defined(__INTEL__)
-/* This is a rather crude way of assuming this is MacOS 9 or lower! */
-# define C_MACOS
-# include <alloca.h>
-int strncasecmp(const char *one, const char *two, size_t n);
-#endif
-
-#ifdef __WATCOMC__
-# include <malloc.h>
-#endif
-
-#ifdef _MSC_VER
-# include <malloc.h>
-# define alloca            _alloca
-# define strncasecmp       strnicmp
-# define isatty            _isatty
-#endif
-
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__)
-# define C_GNU_ENV
-#endif
 
 /* For the easy FFI: */
 
@@ -224,7 +336,6 @@ int strncasecmp(const char *one, const char *two, size_t n);
 #define ___scheme_pointer   void *
 #define ___byte_vector      unsigned char *
 #define ___symbol           char *
-#define ___callback
 #define ___safe
 #define ___declare(x, y)
 #define ___specialize
@@ -236,6 +347,10 @@ int strncasecmp(const char *one, const char *two, size_t n);
 #define ___mutable
 #define ___length(var)
 #define ___pointer
+#define ___u32              C_u32
+#define ___s32              C_s32
+#define ___u64              C_u64
+#define ___s64              C_s64
 
 
 /* Constants: */
@@ -261,12 +376,16 @@ int strncasecmp(const char *one, const char *two, size_t n);
 #define C_FIXNUM_BIT              0x00000001
 #define C_FIXNUM_SHIFT            1
 
+/* Character range is that of a UTF-8 codepoint, not representable range */
 #define C_CHAR_BIT_MASK           0x1fffff
+#define C_CHAR_SHIFT              8
 
 #ifdef C_SIXTY_FOUR
 # define C_MOST_POSITIVE_FIXNUM   0x3fffffffffffffffL
+# define C_WORD_SIZE              64
 #else
 # define C_MOST_POSITIVE_FIXNUM   0x3fffffff
+# define C_WORD_SIZE              32
 #endif
 
 #define C_MOST_NEGATIVE_FIXNUM    (-C_MOST_POSITIVE_FIXNUM - 1)
@@ -287,15 +406,16 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # define C_PAIR_TYPE              (0x0300000000000000L)
 # define C_CLOSURE_TYPE           (0x0400000000000000L | C_SPECIALBLOCK_BIT)
 # define C_FLONUM_TYPE            (0x0500000000000000L | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
-# define C_UNUSED_TYPE            (0x0600000000000000L)
+/*       unused                   (0x0600000000000000L ...) */
 # define C_PORT_TYPE              (0x0700000000000000L | C_SPECIALBLOCK_BIT)
 # define C_STRUCTURE_TYPE         (0x0800000000000000L)
 # define C_POINTER_TYPE           (0x0900000000000000L | C_SPECIALBLOCK_BIT)
-# define C_BUCKET_TYPE            (0x0f00000000000000L)
 # define C_LOCATIVE_TYPE          (0x0a00000000000000L | C_SPECIALBLOCK_BIT)
 # define C_TAGGED_POINTER_TYPE    (0x0b00000000000000L | C_SPECIALBLOCK_BIT)
-# define C_SWIG_POINTER_TYPE      (0x0c00000000000000L | C_BYTEBLOCK_BIT)
+# define C_SWIG_POINTER_TYPE      (0x0c00000000000000L | C_SPECIALBLOCK_BIT)
 # define C_LAMBDA_INFO_TYPE       (0x0d00000000000000L | C_BYTEBLOCK_BIT)
+/*       unused                   (0x0e00000000000000L ...) */
+# define C_BUCKET_TYPE            (0x0f00000000000000L)
 #else
 # define C_INT_SIGN_BIT           0x80000000
 # define C_INT_TOP_BIT            0x40000000
@@ -311,18 +431,53 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # define C_STRING_TYPE            (0x02000000 | C_BYTEBLOCK_BIT)
 # define C_PAIR_TYPE              (0x03000000)
 # define C_CLOSURE_TYPE           (0x04000000 | C_SPECIALBLOCK_BIT)
-# define C_FLONUM_TYPE            (0x05000000 | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
-# define C_UNUSED_TYPE            (0x06000000)
+# ifdef C_DOUBLE_IS_32_BITS
+#  define C_FLONUM_TYPE           (0x05000000 | C_BYTEBLOCK_BIT)
+# else
+#  define C_FLONUM_TYPE           (0x05000000 | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
+# endif
+/*       unused                   (0x06000000 ...) */
 # define C_PORT_TYPE              (0x07000000 | C_SPECIALBLOCK_BIT)
 # define C_STRUCTURE_TYPE         (0x08000000)
 # define C_POINTER_TYPE           (0x09000000 | C_SPECIALBLOCK_BIT)
-# define C_BUCKET_TYPE            (0x0f000000)
 # define C_LOCATIVE_TYPE          (0x0a000000 | C_SPECIALBLOCK_BIT)
 # define C_TAGGED_POINTER_TYPE    (0x0b000000 | C_SPECIALBLOCK_BIT)
-# define C_SWIG_POINTER_TYPE      (0x0c000000 | C_BYTEBLOCK_BIT)
+# define C_SWIG_POINTER_TYPE      (0x0c000000 | C_SPECIALBLOCK_BIT)
 # define C_LAMBDA_INFO_TYPE       (0x0d000000 | C_BYTEBLOCK_BIT)
+/*       unused                   (0x0e000000 ...) */
+# define C_BUCKET_TYPE            (0x0f000000)
 #endif
+#define C_VECTOR_TYPE             0x00000000
+#define C_BYTEVECTOR_TYPE         (C_VECTOR_TYPE | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
 
+#define C_SIZEOF_LIST(n)          ((n) * 3 + 1)
+#define C_SIZEOF_PAIR             3
+#define C_SIZEOF_STRING(n)        (C_bytestowords(n) + 2)
+#define C_SIZEOF_SYMBOL           4
+#define C_SIZEOF_INTERNED_SYMBOL(n) (C_SIZEOF_SYMBOL + C_SIZEOF_BUCKET + C_SIZEOF_STRING(n))
+#ifdef C_DOUBLE_IS_32_BITS
+# define C_SIZEOF_FLONUM          2
+#else
+# define C_SIZEOF_FLONUM          4
+#endif
+#define C_SIZEOF_POINTER          2
+#define C_SIZEOF_TAGGED_POINTER   3
+#define C_SIZEOF_SWIG_POINTER     3
+#define C_SIZEOF_VECTOR(n)        ((n) + 1)
+#define C_SIZEOF_BUCKET           3
+#define C_SIZEOF_LOCATIVE         5
+#define C_SIZEOF_PORT             16
+
+/* Fixed size types have pre-computed header tags */
+#define C_PAIR_TAG                (C_PAIR_TYPE | (C_SIZEOF_PAIR - 1))
+#define C_POINTER_TAG             (C_POINTER_TYPE | (C_SIZEOF_POINTER - 1))
+#define C_LOCATIVE_TAG            (C_LOCATIVE_TYPE | (C_SIZEOF_LOCATIVE - 1))
+#define C_TAGGED_POINTER_TAG      (C_TAGGED_POINTER_TYPE | (C_SIZEOF_TAGGED_POINTER - 1))
+#define C_SWIG_POINTER_TAG        (C_SWIG_POINTER_TYPE | (C_wordstobytes(C_SIZEOF_SWIG_POINTER - 1)))
+#define C_SYMBOL_TAG              (C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1))
+#define C_FLONUM_TAG              (C_FLONUM_TYPE | sizeof(double))
+
+/* Locative subtypes */
 #define C_SLOT_LOCATIVE           0
 #define C_CHAR_LOCATIVE           1
 #define C_U8_LOCATIVE             2
@@ -334,46 +489,20 @@ int strncasecmp(const char *one, const char *two, size_t n);
 #define C_F32_LOCATIVE            8
 #define C_F64_LOCATIVE            9
 
-#define C_VECTOR_TYPE             0x00000000
-#define C_BYTEVECTOR_TYPE         (C_VECTOR_TYPE | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
-
-#define C_SIZEOF_LIST(n)          ((n) * 3 + 1)
-#define C_SIZEOF_PAIR             3
-#define C_SIZEOF_STRING(n)        (C_bytestowords(n) + 2)
-#define C_SIZEOF_SYMBOL           3
-#define C_SIZEOF_INTERNED_SYMBOL(n) (C_SIZEOF_SYMBOL + C_SIZEOF_BUCKET + C_SIZEOF_STRING(n))
-#define C_SIZEOF_FLONUM           4
-#define C_SIZEOF_POINTER          2
-#define C_SIZEOF_TAGGED_POINTER   3
-#define C_SIZEOF_SWIG_POINTER     3
-#define C_SIZEOF_VECTOR(n)        ((n) + 1)
-#define C_SIZEOF_BUCKET           3
-#define C_SIZEOF_LOCATIVE         5
-#define C_SIZEOF_PORT             16
-
-#define C_PAIR_TAG                (C_PAIR_TYPE | (C_SIZEOF_PAIR - 1))
-#define C_POINTER_TAG             (C_POINTER_TYPE | (C_SIZEOF_POINTER - 1))
-#define C_LOCATIVE_TAG            (C_LOCATIVE_TYPE | (C_SIZEOF_LOCATIVE - 1))
-#define C_TAGGED_POINTER_TAG      (C_TAGGED_POINTER_TYPE | (C_SIZEOF_TAGGED_POINTER - 1))
-#define C_SWIG_POINTER_TAG        (C_SWIG_POINTER_TYPE | (C_wordstobytes(C_SIZEOF_SWIG_POINTER - 1)))
-#define C_SYMBOL_TAG              (C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1))
-
-#ifdef C_SIXTY_FOUR
-# define C_FLONUM_TAG             (C_FLONUM_TYPE | C_wordstobytes(1))
-#else
-# define C_FLONUM_TAG             (C_FLONUM_TYPE | C_wordstobytes(2))
-#endif
-
 #ifdef C_SIXTY_FOUR
 # define C_word                   long
 # define C_u32                    uint32_t
 # define C_s32                    int32_t
-# define C_u64                    unsigned long
-# define C_s64                    long
 #else
 # define C_word                   int
 # define C_u32                    unsigned int
 # define C_s32                    int
+#endif
+
+#if defined(_MSC_VER) || defined (__MINGW32__)
+# define C_s64                    __int64
+#else
+# define C_s64                    int64_t
 #endif
 
 #define C_char                    char
@@ -395,6 +524,7 @@ int strncasecmp(const char *one, const char *two, size_t n);
 #define C_OUT_OF_RANGE_ERROR                          8
 #define C_NOT_A_CLOSURE_ERROR                         9
 #define C_CONTINUATION_CANT_RECEIVE_VALUES_ERROR      10
+#define C_BAD_ARGUMENT_TYPE_CYCLIC_LIST_ERROR         11
 #define C_TOO_DEEP_RECURSION_ERROR                    12
 #define C_CANT_REPRESENT_INEXACT_ERROR                13
 #define C_NOT_A_PROPER_LIST_ERROR                     14
@@ -419,46 +549,106 @@ int strncasecmp(const char *one, const char *two, size_t n);
 #define C_RUNTIME_UNSAFE_DLOAD_SAFE_ERROR             33
 #define C_RUNTIME_SAFE_DLOAD_UNSAFE_ERROR             34
 #define C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR           35
+#define C_BAD_ARGUMENT_TYPE_NO_CLOSURE_ERROR          36
 
 
-#define CHICKEN_gc_root_ref(root)      (((C_GC_ROOT *)(root))->value)
-#define CHICKEN_gc_root_set(root, x)   C_mutate(&((C_GC_ROOT *)(root))->value, (x))
+/* Platform information */
+#if defined(C_BIG_ENDIAN)
+# define C_MACHINE_BYTE_ORDER "big-endian"
+#elif defined(C_LITTLE_ENDIAN)
+# define C_MACHINE_BYTE_ORDER "little-endian"
+#endif
 
-#define CHICKEN_global_ref(root)       C_u_i_car(((C_GC_ROOT *)(root))->value)
-#define CHICKEN_global_set(root, x)    C_mutate(&C_u_i_car(((C_GC_ROOT *)(root))->value), (x))
+#if defined(__alpha__)
+# define C_MACHINE_TYPE "alpha"
+#elif defined(__mips__)
+# define C_MACHINE_TYPE "mips"
+#elif defined(__hppa__)
+# define C_MACHINE_TYPE "hppa"
+#elif defined(__sparc_v9__) || defined(__sparcv9)
+# define C_MACHINE_TYPE "ultrasparc"
+#elif defined(__sparc__)
+# define C_MACHINE_TYPE "sparc"
+#elif defined(__powerpc64__)
+# define C_MACHINE_TYPE "ppc64"
+#elif defined(__ppc__) || defined(__powerpc__)
+# define C_MACHINE_TYPE "ppc"
+#elif defined(_M_IX86) || defined(__i386__)
+# define C_MACHINE_TYPE "x86"
+#elif defined(__ia64__)
+# define C_MACHINE_TYPE "ia64"
+#elif defined(__x86_64__)
+# define C_MACHINE_TYPE "x86-64"
+#elif defined(__arm__)
+# define C_MACHINE_TYPE "arm"
+#else
+# define C_MACHINE_TYPE "unknown"
+#endif
 
-#define CHICKEN_default_toplevel       C_default_stub_toplevel
+#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(_WIN32) || defined(__WINNT__)
+# define C_SOFTWARE_TYPE "windows"
+#elif defined(__unix__) || defined(C_XXXBSD)
+# define C_SOFTWARE_TYPE "unix"
+#elif defined(ECOS)
+# define C_SOFTWARE_TYPE "ecos"
+#else
+# define C_SOFTWARE_TYPE "unknown"
+#endif
 
-
-/* Language specifics: */
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-# ifndef __cplusplus
-#  define C_cblock                ({
-#  define C_cblockend             })
-#  define C_noret                 __attribute__ ((noreturn))
-# endif
-# ifdef __i386__
-#  define C_regparm               __attribute__ ((regparm(3)))
-# endif
+#if defined(__CYGWIN__)
+# define C_BUILD_PLATFORM "cygwin"
 #elif defined(_MSC_VER)
-# define C_fcall                  __fastcall
+# define C_BUILD_PLATFORM "msvc"
+#elif defined(__SUNPRO_C)
+# define C_BUILD_PLATFORM "sun"
+#elif defined(__MINGW32__)
+# define C_BUILD_PLATFORM "mingw32"
+#elif defined(__GNUC__)
+# define C_BUILD_PLATFORM "gnu"
+#elif defined(__MWERKS__)
+# define C_BUILD_PLATFORM "metrowerks"
+#elif defined(__INTEL_COMPILER)
+# define C_BUILD_PLATFORM "intel"
+#elif defined(__WATCOMC__)
+# define C_BUILD_PLATFORM "watcom"
+#else
+# define C_BUILD_PLATFORM "unknown"
 #endif
 
-#ifndef C_cblock
-# define C_cblock                 do{
-# define C_cblockend              }while(0)
-# define C_noret
+#if defined(_MSC_VER)
+# if defined(_DLL)
+#   define C_RUNTIME_VERSION "dynamic"
+# else
+#   define C_RUNTIME_VERSION "static"
+# endif
+#else
+# define C_RUNTIME_VERSION "unknown"
 #endif
 
-#ifndef C_regparm
-# define C_regparm
+#if defined(__linux__)
+# define C_SOFTWARE_VERSION "linux"
+#elif defined(__FreeBSD__)
+# define C_SOFTWARE_VERSION "freebsd"
+#elif defined(__NetBSD__)
+# define C_SOFTWARE_VERSION "netbsd"
+#elif defined(__OpenBSD__)
+# define C_SOFTWARE_VERSION "openbsd"
+#elif defined(C_MACOSX)
+# define C_SOFTWARE_VERSION "macosx"
+#elif defined(__hpux__)
+# define C_SOFTWARE_VERSION "hpux"
+#elif defined(__DragonFly__)
+# define C_SOFTWARE_VERSION "dragonfly"
+#elif defined(__sun__)
+# if defined(__svr4__)
+#   define C_SOFTWARE_VERSION "solaris"
+# else
+#   define C_SOFTWARE_VERSION "sunos"
+# endif
+#else
+# define C_SOFTWARE_VERSION "unknown"
 #endif
 
-#ifndef C_fcall
-#define C_fcall
-#endif
-
-#define C_c_regparm
 
 /* Types: */
 
@@ -480,151 +670,102 @@ typedef struct C_gc_root_struct
 {
   C_word value;
   struct C_gc_root_struct *next, *prev;
+  int finalizable;
 } C_GC_ROOT;
+
+typedef struct C_ptable_entry_struct
+{
+  C_char *id;
+  void *ptr;
+} C_PTABLE_ENTRY;
 
 #ifdef __x86_64__
 # define C_AMD64_ABI_WEIRDNESS      , ...
 #else
-# define C_AMD64_ABI_WEIRDNESS      
+# define C_AMD64_ABI_WEIRDNESS
 #endif
 
-typedef void (*C_proc2)(C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc3)(C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc4)(C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc5)(C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc6)(C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc7)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc8)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc9)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc10)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc11)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc12)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc13)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc14)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc15)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc16)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc17)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc18)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc19)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc20)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc21)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc22)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc23)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc24)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc25)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc26)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc27)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc28)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc29)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc30)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc31)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc32)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc33)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc34)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc35)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc36)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc37)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc38)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc39)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc40)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc41)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc42)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc43)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc44)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc45)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc46)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc47)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc48)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc49)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc50)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc51)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc52)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc53)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc54)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc55)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc56)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc57)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc58)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc59)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc60)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc61)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc62)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc63)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc64)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc65)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc66)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
+/* C_WORD_p<P>_<B>: List of ((2 ** P) * B) 'C_word' parameters */
+#define C_WORD_p0_0
+#define C_WORD_p1_0
+#define C_WORD_p2_0
+#define C_WORD_p3_0
+#define C_WORD_p4_0
+#define C_WORD_p5_0
+#define C_WORD_p6_0
+#define C_WORD_p7_0
+#define C_WORD_p0_1     C_word,
+#define C_WORD_p1_1     C_word, C_word,
+#define C_WORD_p2_1     C_WORD_p1_1 C_WORD_p1_1
+#define C_WORD_p3_1     C_WORD_p2_1 C_WORD_p2_1
+#define C_WORD_p4_1     C_WORD_p3_1 C_WORD_p3_1
+#define C_WORD_p5_1     C_WORD_p4_1 C_WORD_p4_1
+#define C_WORD_p6_1     C_WORD_p5_1 C_WORD_p5_1
+#define C_WORD_p7_1     C_WORD_p6_1 C_WORD_p6_1
 
-#ifdef C_128_PARAMETERS
-typedef void (*C_proc67)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc68)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc69)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc70)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc71)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc72)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc73)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc74)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc75)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc76)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc77)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc78)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc79)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc80)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc81)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc82)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc83)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc84)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc85)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc86)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc87)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc88)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc89)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc90)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc91)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc92)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc93)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc94)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc95)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc96)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc97)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc98)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc99)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc100)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc101)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc102)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc103)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc104)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc105)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc106)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc107)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc108)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc109)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc110)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc111)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc112)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc113)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc114)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc115)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc116)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc117)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc118)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc119)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc120)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc121)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc122)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc123)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc124)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc125)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc126)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc127)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_word C_AMD64_ABI_WEIRDNESS) C_noret;
-#endif
+/* DECL_C_PROC_p0 (n0,  p7,p6,p5,p4,p3,p2,p1,p0):
+ *  declare function C_proc<n0>, which have <n0> 'C_word' parameters
+ *  (not counting last 'C_word C_AMD64_ABI_WEIRDNESS' one).
+ *  We must have:   n0 = SUM (i = 7 to 0, p<i> * (1 << i)).
+ * DECL_C_PROC_p<N+1> (...):
+ *  declare 2 as much functions as DECL_C_PROC_p<N>...
+ */
+#define DECL_C_PROC_p0( n0,  p7,p6,p5,p4,p3,p2,p1,p0) \
+    typedef void (C_ccall *C_proc##n0) (C_WORD_p7_##p7 C_WORD_p6_##p6 \
+                                        C_WORD_p5_##p5 C_WORD_p4_##p4 \
+                                        C_WORD_p3_##p3 C_WORD_p2_##p2 \
+                                        C_WORD_p1_##p1 C_WORD_p0_##p0 \
+                                        C_word C_AMD64_ABI_WEIRDNESS) C_noret;
+#define DECL_C_PROC_p1( n0,n1,  p7,p6,p5,p4,p3,p2,p1) \
+        DECL_C_PROC_p0 (n0,  p7,p6,p5,p4,p3,p2,p1,0) \
+        DECL_C_PROC_p0 (n1,  p7,p6,p5,p4,p3,p2,p1,1)
+#define DECL_C_PROC_p2( n0,n1,n2,n3,  p7,p6,p5,p4,p3,p2) \
+        DECL_C_PROC_p1 (n0,n1,  p7,p6,p5,p4,p3,p2,0) \
+        DECL_C_PROC_p1 (n2,n3,  p7,p6,p5,p4,p3,p2,1)
+#define DECL_C_PROC_p3( n0,n1,n2,n3,n4,n5,n6,n7,  p7,p6,p5,p4,p3) \
+        DECL_C_PROC_p2 (n0,n1,n2,n3,  p7,p6,p5,p4,p3,0) \
+        DECL_C_PROC_p2 (n4,n5,n6,n7,  p7,p6,p5,p4,p3,1)
+
+DECL_C_PROC_p1 (2,3,  0,0,0,0,0,0,1)
+DECL_C_PROC_p2 (4,5,6,7,  0,0,0,0,0,1)
+DECL_C_PROC_p3 (8,9,10,11,12,13,14,15,    0,0,0,0,1)
+DECL_C_PROC_p3 (16,17,18,19,20,21,22,23,  0,0,0,1,0)
+DECL_C_PROC_p3 (24,25,26,27,28,29,30,31,  0,0,0,1,1)
+DECL_C_PROC_p3 (32,33,34,35,36,37,38,39,  0,0,1,0,0)
+DECL_C_PROC_p3 (40,41,42,43,44,45,46,47,  0,0,1,0,1)
+DECL_C_PROC_p3 (48,49,50,51,52,53,54,55,  0,0,1,1,0)
+DECL_C_PROC_p3 (56,57,58,59,60,61,62,63,  0,0,1,1,1)
+DECL_C_PROC_p1 (64,65,  0,1,0,0,0,0,0)
+DECL_C_PROC_p0 (66,  0,1,0,0,0,0,1,0)
+DECL_C_PROC_p0 (67,  0,1,0,0,0,0,1,1)
+DECL_C_PROC_p2 (68,69,70,71,  0,1,0,0,0,1)
+DECL_C_PROC_p3 (72,73,74,75,76,77,78,79,  0,1,0,0,1)
+DECL_C_PROC_p3 (80,81,82,83,84,85,86,87,  0,1,0,1,0)
+DECL_C_PROC_p3 (88,89,90,91,92,93,94,95,  0,1,0,1,1)
+DECL_C_PROC_p3 (96,97,98,99,100,101,102,103,  0,1,1,0,0)
+DECL_C_PROC_p3 (104,105,106,107,108,109,110,111,  0,1,1,0,1)
+DECL_C_PROC_p3 (112,113,114,115,116,117,118,119,  0,1,1,1,0)
+DECL_C_PROC_p3 (120,121,122,123,124,125,126,127,  0,1,1,1,1)
+DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 
 /* Macros: */
 
+#define CHICKEN_gc_root_ref(root)      (((C_GC_ROOT *)(root))->value)
+#define CHICKEN_gc_root_set(root, x)   C_mutate(&((C_GC_ROOT *)(root))->value, (x))
+
+#define CHICKEN_global_ref(root)       C_u_i_car(((C_GC_ROOT *)(root))->value)
+#define CHICKEN_global_set(root, x)    C_mutate(&C_u_i_car(((C_GC_ROOT *)(root))->value), (x))
+
+#define CHICKEN_default_toplevel       ((void *)C_default_stub_toplevel)
+
+#define C_align4(n)                (((n) + 3) & ~3)
+#define C_align8(n)                (((n) + 7) & ~7)
+#define C_align16(n)               (((n) + 15) & ~15)
+
 /* This is word-size dependent: */
 #ifdef C_SIXTY_FOUR
-# define C_align(n)                (((n) + 7) & ~7)
+# define C_align(n)                C_align8(n)
 # define C_wordstobytes(n)         ((n) << 3)
 # define C_bytestowords(n)         (((n) + 7) >> 3)
 # define C_wordsperdouble(n)       (n)
@@ -632,7 +773,7 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 # define C_WORD_MAX                LONG_MAX
 # define C_UWORD_MAX               ULONG_MAX
 #else
-# define C_align(n)                (((n) + 3) & ~3)
+# define C_align(n)                C_align4(n)
 # define C_wordstobytes(n)         ((n) << 2)
 # define C_bytestowords(n)         (((n) + 3) >> 2)
 # define C_wordsperdouble(n)       ((n) << 1)
@@ -687,6 +828,11 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 # define C_fputs                    fputs
 # define C_fputc                    fputc
 # define C_putchar                  putchar
+# if (defined getc_unlocked || _POSIX_C_SOURCE >= 199506L)
+#  define C_getc                    getc_unlocked
+# else
+#  define C_getc                    getc
+# endif
 # define C_fgetc                    fgetc
 # define C_fgets                    fgets
 # define C_ungetc                   ungetc
@@ -714,6 +860,9 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 # include "chicken-libc-stubs.h"
 #endif
 
+#define C_return(x)                return(x)
+#define C_resize_stack(n)          C_do_resize_stack(n)
+#define C_memcpy_slots(t, f, n)    C_memcpy((t), (f), (n) * sizeof(C_word))
 #define C_block_header(x)          (((C_SCHEME_BLOCK *)(x))->header)
 #define C_header_bits(x)           (C_block_header(x) & C_HEADER_BITS_MASK)
 #define C_header_size(x)           (C_block_header(x) & C_HEADER_SIZE_MASK)
@@ -721,7 +870,7 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_symbol_value(x)          (C_block_item(x, 0))
 #define C_block_item(x, i)         (((C_SCHEME_BLOCK *)(x))->data[ i ])
 #define C_set_block_item(x, i, y)  (C_block_item(x, i) = (y))
-#define C_save(x)		           (*(--C_temporary_stack) = (C_word)(x))
+#define C_save(x)	           (*(--C_temporary_stack) = (C_word)(x))
 #define C_adjust_stack(n)          (C_temporary_stack -= (n))
 #define C_rescue(x, i)             (C_temporary_stack[ i ] = (x))
 #define C_save_rest(s, c, n)  	   for(va_start(v, s); c-- > (n); C_save(va_arg(v, C_word)))
@@ -736,17 +885,17 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_demand_2(n)              (((C_word *)C_fromspace_top + (n)) < (C_word *)C_fromspace_limit)
 #define C_fix(n)                   (((C_word)(n) << C_FIXNUM_SHIFT) | C_FIXNUM_BIT)
 #define C_unfix(x)                 ((x) >> C_FIXNUM_SHIFT)
-#define C_make_character(c)        ((((c) & C_CHAR_BIT_MASK) << 8) | C_CHARACTER_BITS)
-#define C_character_code(x)        (((x) >> 8) & C_CHAR_BIT_MASK)
+#define C_make_character(c)        ((((c) & C_CHAR_BIT_MASK) << C_CHAR_SHIFT) | C_CHARACTER_BITS)
+#define C_character_code(x)        (((x) >> C_CHAR_SHIFT) & C_CHAR_BIT_MASK)
 #define C_flonum_magnitude(x)      (*((double *)(((C_SCHEME_BLOCK *)(x))->data)))
 #define C_c_string(x)              ((C_char *)(((C_SCHEME_BLOCK *)(x))->data))
 #define C_c_pointer(x)             ((void *)(x))
-#define C_c_pointer_nn(x)          ((void *)C_u_i_car(x))
+#define C_c_pointer_nn(x)          ((void *)C_block_item(x, 0))
 #define C_truep(x)                 ((x) != C_SCHEME_FALSE)
 #define C_immediatep(x)            ((x) & C_IMMEDIATE_MARK_BITS)
 #define C_mk_bool(x)               ((x) ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 #define C_mk_nbool(x)              ((x) ? C_SCHEME_FALSE : C_SCHEME_TRUE)
-#define C_port_file(p)             ((C_FILEPTR)C_u_i_car(p))
+#define C_port_file(p)             ((C_FILEPTR)C_block_item(p, 0))
 #define C_data_pointer(x)          ((void *)((C_SCHEME_BLOCK *)(x))->data)
 #define C_invert_flag(f)           (!(f))
 #define C_fitsinfixnump(n)         (((n) & C_INT_SIGN_BIT) == (((n) & C_INT_TOP_BIT) << 1))
@@ -791,7 +940,9 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 
 #define C_zero_length_p(x)        C_mk_bool(C_header_size(x) == 0)
 #define C_boundp(x)               C_mk_bool(((C_SCHEME_BLOCK *)(x))->data[ 0 ] != C_SCHEME_UNBOUND)
+#define C_unboundvaluep(x)        C_mk_bool((x) == C_SCHEME_UNBOUND)
 #define C_blockp(x)               C_mk_bool(!C_immediatep(x))
+#define C_forwardedp(x)           C_mk_bool((C_block_header(x) & C_GC_FORWARDING_BIT) != 0)
 #define C_immp(x)                 C_mk_bool(C_immediatep(x))
 #define C_flonump(x)              C_mk_bool(C_block_header(x) == C_FLONUM_TAG)
 #define C_stringp(x)              C_mk_bool(C_header_bits(x) == C_STRING_TYPE)
@@ -816,6 +967,7 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_anypointerp(x)          C_mk_bool(C_block_header(x) == C_POINTER_TAG || C_block_header(x) == C_TAGGED_POINTER_TAG || C_block_header(x) == C_SWIG_POINTER_TAG)
 #define C_specialp(x)             C_mk_bool(C_header_bits(x) & C_SPECIALBLOCK_BIT)
 #define C_byteblockp(x)           C_mk_bool(C_header_bits(x) & C_BYTEBLOCK_BIT)
+#define C_anyp(x)                 C_SCHEME_TRUE
 #define C_eqp(x, y)               C_mk_bool((x) == (y))
 #define C_vemptyp(x)              C_mk_bool(C_header_size(x) == 0)
 #define C_notvemptyp(x)           C_mk_bool(C_header_size(x) > 0)
@@ -879,12 +1031,12 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
                                                                 (C_char *)C_data_pointer(s2) + C_unfix(start2), \
                                                                 C_unfix(len) ) == 0)
 #define C_subvector_copy(v1, v2, start1, end1, start2) \
-                                        (C_memcpy((C_char *)C_data_pointer(v2) + C_unfix(start2), \
+                                        (C_memcpy_slots((C_char *)C_data_pointer(v2) + C_unfix(start2), \
                                                   (C_char *)C_data_pointer(v1) + C_unfix(start1), \
-                                                  sizeof(C_word) * (C_unfix(end1) - C_unfix(start1)) ), C_SCHEME_UNDEFINED)
+						  C_unfix(end1) - C_unfix(start1) ), C_SCHEME_UNDEFINED)
 #define C_words(n)                      C_fix(C_bytestowords(C_unfix(n)))
 #define C_bytes(n)                      C_fix(C_wordstobytes(C_unfix(n)))
-#define C_random_fixnum(n)              C_fix(rand() % C_unfix(n))
+#define C_random_fixnum(n)              C_fix((int)(((double)rand())/(RAND_MAX + 1.0) * C_unfix(n)))
 #define C_randomize(n)                  (srand(C_unfix(n)), C_SCHEME_UNDEFINED)
 #define C_block_size(x)                 C_fix(C_header_size(x))
 #define C_pointer_address(x)            ((C_byte *)C_u_i_car(x))
@@ -897,6 +1049,7 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_null_pointerp(x)              C_mk_bool((void *)C_u_i_car(x) == NULL)
 #define C_update_pointer(p, ptr)        (C_set_block_item(ptr, 0, C_num_to_unsigned_int(p)), C_SCHEME_UNDEFINED)
 #define C_copy_pointer(from, to)        (C_set_block_item(to, 0, C_u_i_car(from)), C_SCHEME_UNDEFINED)
+#define C_pointer_to_object(ptr)        ((C_word*)C_block_item(ptr, 0))
 
 #define C_direct_return(dk, x)          (C_kontinue(dk, x), C_SCHEME_UNDEFINED)
 
@@ -920,12 +1073,12 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_dupstr(s)                     C_strdup(C_data_pointer(s))
 #define C_poke_pointer(b, i, x)         (C_set_block_item(b, C_unfix(i), (C_word)C_data_pointer(x)), C_SCHEME_UNDEFINED)
 #define C_poke_pointer_or_null(b, i, x) (C_set_block_item(b, C_unfix(i), (C_word)C_data_pointer_or_null(x)), C_SCHEME_UNDEFINED)
+#define C_qfree(ptr)                    (C_free(C_c_pointer_nn(ptr)), C_SCHEME_UNDEFINED)
 
-#if defined(__MWERKS__) && !defined(__INTEL__)
-# define C_tty_portp(p)                 C_SCHEME_FALSE
-#else
-# define C_tty_portp(p)                 C_mk_bool(isatty(fileno(C_port_file(p))))
-#endif
+#define C_tty_portp(p)                 C_mk_bool(isatty(fileno(C_port_file(p))))
+
+#define C_emit_eval_trace_info(x, y, z) C_emit_trace_info2("<eval>", x, y, z)
+#define C_emit_syntax_trace_info(x, y, z) C_emit_trace_info2("<syntax>", x, y, z)
 
 /* These expect C_VECTOR_TYPE to be 0: */
 #define C_vector_to_structure(v)        (((C_SCHEME_BLOCK *)(v))->header |= C_STRUCTURE_TYPE, C_SCHEME_UNDEFINED)
@@ -954,6 +1107,7 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_a_i_data_mpointer(ptr, n, x)  C_mpointer(ptr, C_data_pointer(x))
 #define C_a_int_to_num(ptr, n, i)       C_int_to_num(ptr, i)
 #define C_a_unsigned_int_to_num(ptr, n, i)  C_unsigned_int_to_num(ptr, i)
+#define C_a_double_to_num(ptr, n)       C_double_to_number(C_flonum(ptr, n))
 #define C_a_i_vector                    C_vector
 #define C_list                          C_a_i_list
 #define C_i_setslot(x, i, y)            (C_mutate(&C_block_item(x, C_unfix(i)), y), C_SCHEME_UNDEFINED)
@@ -968,14 +1122,14 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_i_nullp(x)                    C_mk_bool((x) == C_SCHEME_END_OF_LIST)
 #define C_i_structurep(x, s)            C_mk_bool(!C_immediatep(x) && C_header_bits(x) == C_STRUCTURE_TYPE && C_block_item(x, 0) == (s))
 
-#define C_u_i_char_alphabeticp(x)       C_mk_bool(C_isalpha(C_character_code(x)))
-#define C_u_i_char_numericp(x)          C_mk_bool(C_isdigit(C_character_code(x)))
-#define C_u_i_char_whitespacep(x)       C_mk_bool(C_isspace(C_character_code(x)))
-#define C_u_i_char_upper_casep(x)       C_mk_bool(C_isupper(C_character_code(x)))
-#define C_u_i_char_lower_casep(x)       C_mk_bool(C_islower(C_character_code(x)))
+#define C_u_i_char_alphabeticp(x)       C_mk_bool(C_character_code(x) < 0x100 && C_isalpha(C_character_code(x)))
+#define C_u_i_char_numericp(x)          C_mk_bool(C_character_code(x) < 0x100 && C_isdigit(C_character_code(x)))
+#define C_u_i_char_whitespacep(x)       C_mk_bool(C_character_code(x) < 0x100 && C_isspace(C_character_code(x)))
+#define C_u_i_char_upper_casep(x)       C_mk_bool(C_character_code(x) < 0x100 && C_isupper(C_character_code(x)))
+#define C_u_i_char_lower_casep(x)       C_mk_bool(C_character_code(x) < 0x100 && C_islower(C_character_code(x)))
 
-#define C_u_i_char_upcase(x)            C_make_character(C_toupper(C_character_code(x)))
-#define C_u_i_char_downcase(x)          C_make_character(C_tolower(C_character_code(x)))
+#define C_u_i_char_upcase(x)            (C_character_code(x) < 0x100 ? C_make_character(C_toupper(C_character_code(x))) : (x))
+#define C_u_i_char_downcase(x)          (C_character_code(x) < 0x100 ? C_make_character(C_tolower(C_character_code(x))) : (x))
 
 #define C_i_list_ref(lst, i)            C_i_car(C_i_list_tail(lst, i))
 #define C_u_i_list_ref(lst, i)          C_u_i_car(C_i_list_tail(lst, i))
@@ -1022,7 +1176,9 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 # define C_i_not_pair_p                 C_i_not_pair_p_2
 #endif
 
+#define C_i_check_closure(x)            C_i_check_closure_2(x, C_SCHEME_FALSE)
 #define C_i_check_exact(x)              C_i_check_exact_2(x, C_SCHEME_FALSE)
+#define C_i_check_inexact(x)            C_i_check_inexact_2(x, C_SCHEME_FALSE)
 #define C_i_check_number(x)             C_i_check_number_2(x, C_SCHEME_FALSE)
 #define C_i_check_string(x)             C_i_check_string_2(x, C_SCHEME_FALSE)
 #define C_i_check_bytevector(x)         C_i_check_bytevector_2(x, C_SCHEME_FALSE)
@@ -1042,14 +1198,37 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 #define C_u_i_s8vector_ref(x, i)        C_fix(((char *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ])
 #define C_u_i_u16vector_ref(x, i)       C_fix(((unsigned short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ])
 #define C_u_i_s16vector_ref(x, i)       C_fix(((short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ])
+#define C_u_i_u32vector_ref(x, i)       C_fix(((C_u32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ])
+#define C_u_i_s32vector_ref(x, i)       C_fix(((C_u32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ])
+#define C_a_i_u32vector_ref(ptr, c, x, i)  C_unsigned_int_to_num(ptr, ((C_u32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ])
+#define C_a_i_s32vector_ref(ptr, c, x, i)  C_int_to_num(ptr, ((C_s32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ])
 
 #define C_u_i_u8vector_set(x, i, v)     ((((unsigned char *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
 #define C_u_i_s8vector_set(x, i, v)     ((((char *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_u16vector_set(x, i, v)     ((((unsigned short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_s16vector_set(x, i, v)     ((((short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_u32vector_set(x, i, v)     ((((C_u32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_unsigned_int(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_s32vector_set(x, i, v)     ((((C_s32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_int(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_u16vector_set(x, i, v)    ((((unsigned short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_s16vector_set(x, i, v)    ((((short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_u32vector_set(x, i, v)    ((((C_u32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_unsigned_int(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_s32vector_set(x, i, v)    ((((C_s32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_int(v)), C_SCHEME_UNDEFINED)
 
+#define C_u_i_bit_setp(x, i)            C_mk_bool((C_unfix(x) & (1 << C_unfix(i))) != 0)
+
+#ifdef C_BIG_ENDIAN
+# ifdef C_SIXTY_FOUR
+#  define C_lihdr(x, y, z)              ((C_LAMBDA_INFO_TYPE >> 56) & 0xff), \
+                                        0, 0, 0, 0, (x), (y), (z)
+# else
+#  define C_lihdr(x, y, z)              ((C_LAMBDA_INFO_TYPE >> 24) & 0xff), \
+                                        (x), (y), (z)
+# endif
+#else
+# ifdef C_SIXTY_FOUR
+#  define C_lihdr(x, y, z)              (z), (y), (x), 0, 0, 0, 0, \
+                                        ((C_LAMBDA_INFO_TYPE >> 56) & 0xff)
+# else
+#  define C_lihdr(x, y, z)              (z), (y), (x), \
+                                        ((C_LAMBDA_INFO_TYPE >> 24) & 0xff)
+# endif
+#endif
 
 #define C_end_of_main
 
@@ -1057,8 +1236,9 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 # ifndef C_WINDOWS_GUI
 #  define C_main_entry_point            int main(int argc, char *argv[]) { return CHICKEN_main(argc, argv, (void*)C_toplevel); } C_end_of_main
 # else
-#  define C_main_entry_point            int WINAPI WinMain(HINSTANCE me, HINSTANCE you, LPSTR cmdline, int show) \
-                                          { return CHICKEN_main(0, NULL, C_toplevel); } C_end_of_main
+#  define C_main_entry_point            \
+  int WINAPI WinMain(HINSTANCE me, HINSTANCE you, LPSTR cmdline, int show) \
+  { return CHICKEN_main(0, NULL, (void *)C_toplevel); } C_end_of_main
 # endif
 #else
 # define C_main_entry_point
@@ -1068,7 +1248,7 @@ typedef void (*C_proc128)(C_word,C_word,C_word,C_word,C_word,C_word,C_word,C_wor
 /* Variables: */
 
 C_varextern C_TLS time_t C_startup_time_seconds;
-C_varextern C_TLS C_word 
+C_varextern C_TLS C_word
   *C_temporary_stack,
   *C_temporary_stack_bottom,
   *C_stack_limit;
@@ -1084,7 +1264,8 @@ C_varextern C_TLS void *C_restart_address;
 C_varextern C_TLS int C_entry_point_status;
 
 C_varextern C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
-C_varextern C_TLS void (*C_post_gc_hook)(int mode);
+C_varextern C_TLS void (*C_pre_gc_hook)(int mode);
+C_varextern C_TLS void (*C_post_gc_hook)(int mode, long ms);
 C_varextern C_TLS void (*C_panic_hook)(C_char *msg);
 
 C_varextern C_TLS int
@@ -1094,16 +1275,18 @@ C_varextern C_TLS int
   C_enable_gcweak,
   C_heap_size_is_fixed,
   C_max_pending_finalizers,
+  C_trace_buffer_size,
   C_main_argc;
-C_varextern C_TLS C_uword 
+C_varextern C_TLS C_uword
   C_heap_growth,
   C_heap_shrinkage;
-C_varextern C_TLS char 
+C_varextern C_TLS char
   **C_main_argv,
   *C_dlerror;
 C_varextern C_TLS C_uword C_maximal_heap_size;
 C_varextern C_TLS int (*C_gc_mutation_hook)(C_word *slot, C_word val);
 C_varextern C_TLS void (*C_gc_trace_hook)(C_word *var, int mode);
+C_varextern C_TLS C_word (*C_get_unbound_variable_value_hook)(C_word sym);
 
 
 /* Prototypes: */
@@ -1113,18 +1296,23 @@ C_BEGIN_C_DECLS
 C_fctexport int CHICKEN_main(int argc, char *argv[], void *toplevel);
 C_fctexport int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel);
 C_fctexport C_word CHICKEN_run(void *toplevel);
-C_fctexport C_word CHICKEN_continure(C_word k);
+C_fctexport C_word CHICKEN_continue(C_word k);
 C_fctexport void *CHICKEN_new_gc_root();
+C_fctexport void *CHICKEN_new_finalizable_gc_root();
+C_fctexport void *CHICKEN_new_gc_root_2(int finalizable);
 C_fctexport void CHICKEN_delete_gc_root(void *root);
 C_fctexport void *CHICKEN_global_lookup(char *name);
 C_fctexport int CHICKEN_is_running();
+C_fctexport void CHICKEN_interrupt();
 
 C_fctexport void C_check_nursery_minimum(C_word size);
 C_fctexport int C_fcall C_save_callback_continuation(C_word **ptr, C_word k);
 C_fctexport C_word C_fcall C_restore_callback_continuation(void);
+C_fctexport C_word C_fcall C_restore_callback_continuation2(int level);
 C_fctexport C_word C_fcall C_callback(C_word closure, int argc);
 C_fctexport C_word C_fcall C_callback_wrapper(void *proc, int argc);
-C_fctexport void C_fcall C_callback_adjust_stack_limits(C_word *base);
+C_fctexport void C_fcall C_callback_adjust_stack_limits(C_word *base); /* DEPRECATED */
+C_fctexport void C_fcall C_callback_adjust_stack(C_word *base, int size);
 C_fctexport void CHICKEN_parse_command_line(int argc, char *argv[], C_word *heap, C_word *stack, C_word *symbols);
 C_fctexport void C_fcall C_toplevel_entry(C_char *name) C_regparm;
 C_fctexport C_word C_fcall C_enable_interrupts(void) C_regparm;
@@ -1132,6 +1320,7 @@ C_fctexport C_word C_fcall C_disable_interrupts(void) C_regparm;
 C_fctexport void C_fcall C_paranoid_check_for_interrupt(void) C_regparm;
 C_fctexport double C_fcall C_c_double(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_num_to_int(C_word x) C_regparm;
+C_fctexport C_s64 C_fcall C_num_to_int64(C_word x) C_regparm;
 C_fctexport C_uword C_fcall C_num_to_unsigned_int(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_int_to_num(C_word **ptr, C_word n) C_regparm;
 C_fctexport C_word C_fcall C_unsigned_int_to_num(C_word **ptr, C_uword n) C_regparm;
@@ -1146,14 +1335,19 @@ C_fctexport char *C_fcall C_string_or_null(C_word x) C_regparm;
 C_fctexport void *C_fcall C_data_pointer_or_null(C_word x) C_regparm;
 C_fctexport void *C_fcall C_srfi_4_vector_or_null(C_word x) C_regparm;
 C_fctexport void *C_fcall C_c_pointer_or_null(C_word x) C_regparm;
+C_fctexport void *C_fcall C_scheme_or_c_pointer(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_flonum_in_fixnum_range_p(C_word n) C_regparm;
 C_fctexport void C_zap_strings(C_word str);
 C_fctexport void C_set_or_change_heap_size(C_word heap, int reintern);
 C_fctexport void C_do_resize_stack(C_word stack);
+C_fctexport C_word C_resize_pending_finalizers(C_word size);
 C_fctexport void C_initialize_lf(C_word *lf, int count);
 C_fctexport void *C_register_lf(C_word *lf, int count);
+C_fctexport void *C_register_lf2(C_word *lf, int count, C_PTABLE_ENTRY *ptable);
 C_fctexport void C_unregister_lf(void *handle);
 C_fctexport C_char *C_dump_trace(int start);
+C_fctexport void C_fcall C_clear_trace_buffer(void) C_regparm;
+C_fctexport C_word C_fetch_trace(C_word start, C_word buffer);
 C_fctexport C_word C_fcall C_string(C_word **ptr, int len, C_char *str) C_regparm;
 C_fctexport C_word C_fcall C_static_string(C_word **ptr, int len, C_char *str) C_regparm;
 C_fctexport C_word C_fcall C_static_lambda_info(C_word **ptr, int len, C_char *str) C_regparm;
@@ -1203,10 +1397,15 @@ C_fctexport void C_fcall C_rereclaim2(C_uword size, int double_plus) C_regparm;
 C_fctexport C_word C_fcall C_retrieve(C_word sym) C_regparm;
 C_fctexport C_word C_fcall C_retrieve2(C_word val, char *name) C_regparm;
 C_fctexport void *C_fcall C_retrieve_proc(C_word closure) C_regparm;
+C_fctexport void *C_fcall C_retrieve_symbol_proc(C_word sym) C_regparm;
+C_fctexport void *C_fcall C_retrieve2_symbol_proc(C_word val, char *name) C_regparm;
 C_fctexport C_word C_fcall C_permanentp(C_word x) C_regparm;
 C_fctexport int C_in_stackp(C_word x) C_regparm;
 C_fctexport int C_fcall C_in_heapp(C_word x) C_regparm;
+C_fctexport int C_fcall C_in_fromspacep(C_word x) C_regparm;
 C_fctexport void C_fcall C_trace(C_char *name) C_regparm;
+C_fctexport C_word C_fcall C_emit_trace_info(C_word x, C_word y, C_word t) C_regparm;
+C_fctexport C_word C_fcall C_emit_trace_info2(char *raw, C_word x, C_word y, C_word t) C_regparm;
 C_fctexport C_word C_fcall C_hash_string(C_word str) C_regparm;
 C_fctexport C_word C_fcall C_hash_string_ci(C_word str) C_regparm;
 C_fctexport C_word C_halt(C_word msg);
@@ -1216,6 +1415,8 @@ C_fctexport C_word C_fcall C_set_gc_report(C_word flag) C_regparm;
 C_fctexport C_word C_fcall C_start_timer(void) C_regparm;
 C_fctexport C_word C_exit_runtime(C_word code);
 C_fctexport C_word C_fcall C_display_flonum(C_word port, C_word n) C_regparm;
+C_fctexport C_word C_fcall C_set_print_precision(C_word n) C_regparm;
+C_fctexport C_word C_fcall C_get_print_precision(void) C_regparm;
 C_fctexport C_word C_fcall C_read_char(C_word port) C_regparm;
 C_fctexport C_word C_fcall C_peek_char(C_word port) C_regparm;
 C_fctexport C_word C_fcall C_execute_shell_command(C_word string) C_regparm;
@@ -1236,71 +1437,76 @@ C_fctexport void C_delete_symbol_table(C_SYMBOL_TABLE *st) C_regparm;
 C_fctexport void C_set_symbol_table(C_SYMBOL_TABLE *st) C_regparm;
 C_fctexport C_SYMBOL_TABLE *C_find_symbol_table(char *name) C_regparm;
 C_fctexport C_word C_find_symbol(C_word str, C_SYMBOL_TABLE *stable) C_regparm;
+C_fctexport C_word C_fcall C_lookup_symbol(C_word sym) C_regparm;
 C_fctexport C_word C_enumerate_symbols(C_SYMBOL_TABLE *stable, C_word pos) C_regparm;
 C_fctexport void C_do_register_finalizer(C_word x, C_word proc);
 C_fctexport int C_do_unregister_finalizer(C_word x);
+C_fctexport C_word C_dbg_hook(C_word x);
 
-C_fctimport void C_toplevel(C_word c, C_word self, C_word k) C_noret;
-C_fctexport void C_stop_timer(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_apply(C_word c, C_word closure, C_word k, C_word fn, ...) C_noret;
-C_fctexport void C_do_apply(C_word n, C_word closure, C_word k) C_noret;
-C_fctexport void C_call_cc(C_word c, C_word closure, C_word k, C_word cont) C_noret;
-C_fctexport void C_continuation_graft(C_word c, C_word closure, C_word k, C_word kk, C_word proc) C_noret;
-C_fctexport void C_values(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_apply_values(C_word c, C_word closure, C_word k, C_word lst) C_noret;
-C_fctexport void C_call_with_values(C_word c, C_word closure, C_word k, C_word thunk, C_word kont) C_noret;
-C_fctexport void C_u_call_with_values(C_word c, C_word closure, C_word k, C_word thunk, C_word kont) C_noret;
-C_fctexport void C_times(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_plus(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_minus(C_word c, C_word closure, C_word k, C_word n1, ...) C_noret;
-C_fctexport void C_divide(C_word c, C_word closure, C_word k, C_word n1, ...) C_noret;
-C_fctexport void C_nequalp(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_greaterp(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_lessp(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_greater_or_equal_p(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_less_or_equal_p(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_expt(C_word c, C_word closure, C_word k, C_word n1, C_word n2) C_noret;
-C_fctexport void C_gc(C_word c, C_word closure, C_word k, ...) C_noret;
-C_fctexport void C_open_file_port(C_word c, C_word closure, C_word k, C_word port, C_word channel, C_word mode) C_noret;
-C_fctexport void C_allocate_vector(C_word c, C_word closure, C_word k, C_word size, C_word type, C_word init, C_word align8) C_noret;
-C_fctexport void C_string_to_symbol(C_word c, C_word closure, C_word k, C_word string) C_noret;
-C_fctexport void C_build_symbol(C_word c, C_word closure, C_word k, C_word string) C_noret;
-C_fctexport void C_cons_flonum(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_flonum_fraction(C_word c, C_word closure, C_word k, C_word n) C_noret;
-C_fctexport void C_exact_to_inexact(C_word c, C_word closure, C_word k, C_word n) C_noret;
-C_fctexport void C_flonum_floor(C_word c, C_word closure, C_word k, C_word n) C_noret;
-C_fctexport void C_flonum_ceiling(C_word c, C_word closure, C_word k, C_word n) C_noret;
-C_fctexport void C_flonum_truncate(C_word c, C_word closure, C_word k, C_word n) C_noret;
-C_fctexport void C_flonum_round(C_word c, C_word closure, C_word k, C_word n) C_noret;
-C_fctexport void C_quotient(C_word c, C_word closure, C_word k, C_word n1, C_word n2) C_noret;
-C_fctexport void C_string_to_number(C_word c, C_word closure, C_word k, C_word str, ...) C_noret;
-C_fctexport void C_number_to_string(C_word c, C_word closure, C_word k, C_word num, ...) C_noret;
-C_fctexport void C_get_argv(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_make_structure(C_word c, C_word closure, C_word k, C_word type, ...) C_noret;
-C_fctexport void C_make_symbol(C_word c, C_word closure, C_word k, C_word name) C_noret;
-C_fctexport void C_make_pointer(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_make_tagged_pointer(C_word c, C_word closure, C_word k, C_word tag) C_noret;
-C_fctexport void C_ensure_heap_reserve(C_word c, C_word closure, C_word k, C_word n) C_noret;
-C_fctexport void C_return_to_host(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_file_info(C_word c, C_word closure, C_word k, C_word port) C_noret;
-C_fctexport void C_get_environment_variable(C_word c, C_word closure, C_word k, C_word name) C_noret;
-C_fctexport void C_get_symbol_table_info(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_get_memory_info(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_context_switch(C_word c, C_word closure, C_word k, C_word state) C_noret;
-C_fctexport void C_peek_signed_integer(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
-C_fctexport void C_peek_unsigned_integer(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
-C_fctexport void C_decode_seconds(C_word c, C_word closure, C_word k, C_word secs, C_word mode) C_noret;
-C_fctexport void C_software_type(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_machine_type(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_software_version(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_build_platform(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_c_runtime(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_register_finalizer(C_word c, C_word closure, C_word k, C_word x, C_word proc) C_noret;
-C_fctexport void C_set_dlopen_flags(C_word c, C_word closure, C_word k, C_word now, C_word global) C_noret;
-C_fctexport void C_dload(C_word c, C_word closure, C_word k, C_word name, C_word entry) C_noret;
-C_fctexport void C_become(C_word c, C_word closure, C_word k, C_word table) C_noret;
-C_fctexport void C_cpu_time(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport void C_locative_ref(C_word c, C_word closure, C_word k, C_word loc) C_noret;
+C_fctimport void C_ccall C_toplevel(C_word c, C_word self, C_word k) C_noret;
+C_fctexport void C_ccall C_stop_timer(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...) C_noret;
+C_fctexport void C_ccall C_do_apply(C_word n, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_call_cc(C_word c, C_word closure, C_word k, C_word cont) C_noret;
+C_fctexport void C_ccall C_continuation_graft(C_word c, C_word closure, C_word k, C_word kk, C_word proc) C_noret;
+C_fctexport void C_ccall C_values(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_apply_values(C_word c, C_word closure, C_word k, C_word lst) C_noret;
+C_fctexport void C_ccall C_call_with_values(C_word c, C_word closure, C_word k, C_word thunk, C_word kont) C_noret;
+C_fctexport void C_ccall C_u_call_with_values(C_word c, C_word closure, C_word k, C_word thunk, C_word kont) C_noret;
+C_fctexport void C_ccall C_times(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_plus(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_minus(C_word c, C_word closure, C_word k, C_word n1, ...) C_noret;
+C_fctexport void C_ccall C_divide(C_word c, C_word closure, C_word k, C_word n1, ...) C_noret;
+C_fctexport void C_ccall C_nequalp(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_greaterp(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_lessp(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_greater_or_equal_p(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_less_or_equal_p(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_expt(C_word c, C_word closure, C_word k, C_word n1, C_word n2) C_noret;
+C_fctexport void C_ccall C_gc(C_word c, C_word closure, C_word k, ...) C_noret;
+C_fctexport void C_ccall C_open_file_port(C_word c, C_word closure, C_word k, C_word port, C_word channel, C_word mode) C_noret;
+C_fctexport void C_ccall C_allocate_vector(C_word c, C_word closure, C_word k, C_word size, C_word type, C_word init, C_word align8) C_noret;
+C_fctexport void C_ccall C_string_to_symbol(C_word c, C_word closure, C_word k, C_word string) C_noret;
+C_fctexport void C_ccall C_build_symbol(C_word c, C_word closure, C_word k, C_word string) C_noret;
+C_fctexport void C_ccall C_cons_flonum(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_flonum_fraction(C_word c, C_word closure, C_word k, C_word n) C_noret;
+C_fctexport void C_ccall C_exact_to_inexact(C_word c, C_word closure, C_word k, C_word n) C_noret;
+C_fctexport void C_ccall C_flonum_floor(C_word c, C_word closure, C_word k, C_word n) C_noret;
+C_fctexport void C_ccall C_flonum_ceiling(C_word c, C_word closure, C_word k, C_word n) C_noret;
+C_fctexport void C_ccall C_flonum_truncate(C_word c, C_word closure, C_word k, C_word n) C_noret;
+C_fctexport void C_ccall C_flonum_round(C_word c, C_word closure, C_word k, C_word n) C_noret;
+C_fctexport void C_ccall C_quotient(C_word c, C_word closure, C_word k, C_word n1, C_word n2) C_noret;
+C_fctexport void C_ccall C_string_to_number(C_word c, C_word closure, C_word k, C_word str, ...) C_noret;
+C_fctexport void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, ...) C_noret;
+C_fctexport void C_ccall C_get_argv(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_make_structure(C_word c, C_word closure, C_word k, C_word type, ...) C_noret;
+C_fctexport void C_ccall C_make_symbol(C_word c, C_word closure, C_word k, C_word name) C_noret;
+C_fctexport void C_ccall C_make_pointer(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_make_tagged_pointer(C_word c, C_word closure, C_word k, C_word tag) C_noret;
+C_fctexport void C_ccall C_ensure_heap_reserve(C_word c, C_word closure, C_word k, C_word n) C_noret;
+C_fctexport void C_ccall C_return_to_host(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_file_info(C_word c, C_word closure, C_word k, C_word port) C_noret;
+C_fctexport void C_ccall C_get_environment_variable(C_word c, C_word closure, C_word k, C_word name) C_noret;
+C_fctexport void C_ccall C_get_symbol_table_info(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_get_memory_info(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_context_switch(C_word c, C_word closure, C_word k, C_word state) C_noret;
+C_fctexport void C_ccall C_peek_signed_integer(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
+C_fctexport void C_ccall C_peek_unsigned_integer(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
+C_fctexport void C_ccall C_decode_seconds(C_word c, C_word closure, C_word k, C_word secs, C_word mode) C_noret;
+C_fctexport void C_ccall C_software_type(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_machine_type(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_machine_byte_order(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_software_version(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_build_platform(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_c_runtime(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_register_finalizer(C_word c, C_word closure, C_word k, C_word x, C_word proc) C_noret;
+C_fctexport void C_ccall C_set_dlopen_flags(C_word c, C_word closure, C_word k, C_word now, C_word global) C_noret;
+C_fctexport void C_ccall C_dload(C_word c, C_word closure, C_word k, C_word name, C_word entry, C_word reloadable) C_noret;
+C_fctexport void C_ccall C_become(C_word c, C_word closure, C_word k, C_word table) C_noret;
+C_fctexport void C_ccall C_cpu_time(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_locative_ref(C_word c, C_word closure, C_word k, C_word loc) C_noret;
+C_fctexport void C_ccall C_call_with_cthulhu(C_word c, C_word self, C_word k, C_word proc) C_noret;
+C_fctexport void C_ccall C_copy_closure(C_word c, C_word closure, C_word k, C_word proc) C_noret;
 
 #if !defined(__GNUC__) && !defined(__INTEL_COMPILER)
 C_fctexport C_word *C_a_i(C_word **a, int n);
@@ -1316,13 +1522,14 @@ C_fctexport C_word C_fcall C_a_i_bytevector(C_word **a, int c, C_word x) C_regpa
 C_fctexport C_word C_fcall C_i_eqvp(C_word x, C_word y) C_regparm;
 C_fctexport C_word C_fcall C_i_symbolp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_pairp(C_word x) C_regparm;
-C_fctexport C_word C_fcall C_i_atomp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_vectorp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_closurep(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_portp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_stringp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_numberp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_integerp(C_word x) C_regparm;
+C_fctexport C_word C_fcall C_i_flonump(C_word x) C_regparm;
+C_fctexport C_word C_fcall C_i_finitep(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_locativep(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_fixnum_min(C_word x, C_word y) C_regparm;
 C_fctexport C_word C_fcall C_i_fixnum_max(C_word x, C_word y) C_regparm;
@@ -1374,8 +1581,11 @@ C_fctexport C_word C_fcall C_u_i_memq(C_word x, C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_memv(C_word x, C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_member(C_word x, C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_length(C_word lst) C_regparm;
+C_fctexport C_word C_fcall C_u_i_length(C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_inexact_to_exact(C_word n) C_regparm;
+C_fctexport C_word C_fcall C_i_check_closure_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_exact_2(C_word x, C_word loc) C_regparm;
+C_fctexport C_word C_fcall C_i_check_inexact_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_number_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_string_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_bytevector_2(C_word x, C_word loc) C_regparm;
@@ -1399,7 +1609,7 @@ C_fctexport C_word C_fcall C_i_null_list_p(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_string_null_p(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_string_to_pbytevector(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_null_pointerp(C_word x) C_regparm;
-C_fctexport C_word C_fcall C_i_fixnum_arithmetic_shift(C_word n, C_word c) C_regparm; 
+C_fctexport C_word C_fcall C_i_fixnum_arithmetic_shift(C_word n, C_word c) C_regparm;
 C_fctexport C_word C_fcall C_i_locative_set(C_word loc, C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_locative_to_object(C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_a_i_make_locative(C_word **a, int c, C_word type, C_word object, C_word index, C_word weak) C_regparm;
@@ -1411,6 +1621,7 @@ C_fctexport C_word C_fcall C_a_i_flonum_negate(C_word **a, int c, C_word n1) C_r
 C_fctexport C_word C_fcall C_a_i_bitwise_and(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_bitwise_ior(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_bitwise_not(C_word **a, int c, C_word n1) C_regparm;
+C_fctexport C_word C_fcall C_i_bit_setp(C_word n, C_word i) C_regparm;
 C_fctexport C_word C_fcall C_a_i_bitwise_xor(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_arithmetic_shift(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_exp(C_word **a, int c, C_word n) C_regparm;
@@ -1423,6 +1634,11 @@ C_fctexport C_word C_fcall C_a_i_acos(C_word **a, int c, C_word n) C_regparm;
 C_fctexport C_word C_fcall C_a_i_atan(C_word **a, int c, C_word n) C_regparm;
 C_fctexport C_word C_fcall C_a_i_atan2(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_sqrt(C_word **a, int c, C_word n) C_regparm;
+C_fctexport C_word C_fcall C_i_o_fixnum_plus(C_word x, C_word y) C_regparm;
+C_fctexport C_word C_fcall C_i_o_fixnum_difference(C_word x, C_word y) C_regparm;
+C_fctexport C_word C_fcall C_i_o_fixnum_and(C_word x, C_word y) C_regparm;
+C_fctexport C_word C_fcall C_i_o_fixnum_ior(C_word x, C_word y) C_regparm;
+C_fctexport C_word C_fcall C_i_o_fixnum_xor(C_word x, C_word y) C_regparm;
 
 C_fctexport C_word C_fcall C_i_foreign_char_argumentp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_foreign_fixnum_argumentp(C_word x) C_regparm;
@@ -1433,16 +1649,23 @@ C_fctexport C_word C_fcall C_i_foreign_string_argumentp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_foreign_symbol_argumentp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_foreign_tagged_pointer_argumentp(C_word x, C_word t) C_regparm;
 C_fctexport C_word C_fcall C_i_foreign_pointer_argumentp(C_word x) C_regparm;
+C_fctexport C_word C_fcall C_i_foreign_scheme_or_c_pointer_argumentp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_foreign_integer_argumentp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_foreign_unsigned_integer_argumentp(C_word x) C_regparm;
 
+C_fctexport C_char *C_lookup_procedure_id(void *ptr);
+C_fctexport void *C_lookup_procedure_ptr(C_char *id);
+C_fctexport C_word C_dunload(C_word name);
+
 #ifdef C_SIXTY_FOUR
-C_fctexport void C_peek_signed_integer_32(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
-C_fctexport void C_peek_unsigned_integer_32(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
+C_fctexport void C_ccall C_peek_signed_integer_32(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
+C_fctexport void C_ccall C_peek_unsigned_integer_32(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;
 #else
 # define C_peek_signed_integer_32    C_peek_signed_integer
 # define C_peek_unsigned_integer_32  C_peek_unsigned_integer
 #endif
+
+C_fctexport C_word C_fcall C_decode_literal(C_word **ptr, C_char *str) C_regparm;
 
 /* defined in eval.scm: */
 C_fctexport  void  CHICKEN_get_error_message(char *buf,int bufsize);

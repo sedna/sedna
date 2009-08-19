@@ -247,7 +247,7 @@ LFLAGS_CHICKEN_EXE = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODE
                      /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) LIBCMT.LIB libchicken-static.lib
 LSLIBS_CHICKEN_EXE =
 CHICKEN_HOME = $(PP)/libs/chicken
-CHICKEN = $(CHICKEN_HOME)/chicken-static.exe
+CHICKEN = $(CHICKEN_HOME)/chicken.exe
 CHICKEN_INCLUDE = $(CHICKEN_HOME)
 else
 # UNIX
