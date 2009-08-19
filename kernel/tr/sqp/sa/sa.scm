@@ -10,7 +10,7 @@
 (declare (unit sa) (uses common-lib scm-error-codes))
 
 (declare (foreign-declare "const char* c_get_module(const char*);"))
-(define get-module (foreign-callback-lambda c-string* "c_get_module" c-string))
+(define get-module (foreign-safe-lambda c-string* "c_get_module" c-string))
 
 ;==========================================================================
 ; Trivial datatypes, accessors and predicates

@@ -42,7 +42,7 @@
 ; Function incapsulates original C-function
 (declare (foreign-declare "extern char* __c__descriptive_schema_to_scheme_list(const char* name, int is_collection);"))
 (define __c__-descriptive-schema->scheme-list 
-  (foreign-callback-lambda c-string* "__c__descriptive_schema_to_scheme_list" c-string int))
+  (foreign-safe-lambda c-string* "__c__descriptive_schema_to_scheme_list" c-string int))
 
 ;-------------------------------------------------------------------------------
 ; List of already queried descriptive schemas

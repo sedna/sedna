@@ -6,7 +6,7 @@
 
 (declare (foreign-declare "int is_stack_trace_debug();"))
 (define is-xquery-debug-mode?
-  (foreign-callback-lambda int "is_stack_trace_debug"))
+  (foreign-safe-lambda int "is_stack_trace_debug"))
 
 ;; Optimization criteria for constructors
 ; For every constructor, adds either 1 or 0 as the additional argument.

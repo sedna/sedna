@@ -7,7 +7,7 @@
 (declare (unit popt) (uses common-lib dschema xquery-lr))
 
 (declare (foreign-declare "char* c_popt(const char*);"))
-(define popt:c-popt (foreign-callback-lambda c-string* "c_popt" c-string))
+(define popt:c-popt (foreign-safe-lambda c-string* "c_popt" c-string))
 
 (define debug-mode #f)
 
@@ -607,7 +607,7 @@
 
 
 ;(declare (foreign-declare "char* c_opt_print(const char*);"))
-;(define c-opt-print (foreign-callback-lambda c-string "c_opt_print" c-string))
+;(define c-opt-print (foreign-safe-lambda c-string "c_opt_print" c-string))
 ;(define (popt:optimize-query query)
 ;  (newline)
 ;  (display (c-opt-print "hello"))
