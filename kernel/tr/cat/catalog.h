@@ -61,6 +61,13 @@ bool                    catalog_delete_name(enum catalog_named_objects obj_type,
 xptr                    catalog_get_names(enum catalog_named_objects obj_type);
 bool                    catalog_name_exists(enum catalog_named_objects obj_type, const char * name);
 
+void * __catalog_name_enum_init(enum catalog_named_objects obj_type);
+void * __catalog_name_enum_next(void * jr, enum catalog_named_objects obj_type);
+char * __catalog_name_enum_get_name(void * jr);
+xptr   __catalog_name_enum_get_object(void * jr);
+
+//bool __enum_helper_catalog_object_not_dead(enum catalog_named_objects obj_type, const char * name);
+
 char *  catalog_htable_get(enum catalog_named_objects obj_type, const char * key);
 bool    catalog_htable_set(enum catalog_named_objects obj_type, const char * key, char par_type, const char * par_name);
 
@@ -129,8 +136,8 @@ struct catalog_object {
 };
 
 // # define IS_CAT_OBJ_NEW()
-#define CAT_OBJECT_INVALID_FLAG 1
-#define CAT_OBJECT_DELETED_FLAG 2
+#define CAT_OBJECT_INVALID_FLAG 0x01
+#define CAT_OBJECT_DELETED_FLAG 0x02
 
 struct catalog_object_header {
     xptr p;

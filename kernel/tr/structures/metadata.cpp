@@ -68,7 +68,8 @@ void metadata_cell_object::drop()
 void delete_document(const char *document_name)
 {
     metadata_cptr document(document_name, true);
-    if (!document.found()) throw USER_EXCEPTION2(SE2006, document_name); 
+    if (!document.found() || (document->snode->get_magic() != doc_schema_node_object::magic))
+      { throw USER_EXCEPTION2(SE2006, document_name); }
 
     xptr blk = document->snode->bblk;
     U_ASSERT(blk != XNULL); // Document MUST have exactly one document node, so blk is not null

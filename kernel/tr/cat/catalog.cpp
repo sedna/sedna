@@ -58,6 +58,7 @@ struct catalog_name_record {
     enum catalog_named_objects obj_type;
     catalog_object_header * obj;
     catalog_name_record * next;
+    bool name_deleted;
 
     ~catalog_name_record() { cat_free(name); }
 };
@@ -236,6 +237,34 @@ void initialize_masterblock()
     memset(
         &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
         0, sizeof(int));
+}
+
+catalog_journal_record * __catalog_ff(catalog_journal_record * p, enum catalog_named_objects obj_type)
+{
+    while ((p != NULL) && (p->type != catalog_journal_record::add_name)
+          && (p->nor.object_type != obj_type) && p->nor.name_to_save->name_deleted) { p = p->next; }
+
+    return p;
+}
+
+void * __catalog_name_enum_init(enum catalog_named_objects obj_type)
+{
+    return __catalog_ff(local_catalog->catalog_journal, obj_type);
+}
+
+void * __catalog_name_enum_next(void * jr, enum catalog_named_objects obj_type)
+{
+    return __catalog_ff(((catalog_journal_record *) jr)->next, obj_type);
+}
+
+char * __catalog_name_enum_get_name(void * jr)
+{
+    return ((catalog_journal_record *) jr)->nor.name_to_save->name;
+}
+
+xptr   __catalog_name_enum_get_object(void * jr)
+{
+    return ((catalog_journal_record *) jr)->nor.name_to_save->obj->p;
 }
 
 void catalog_before_commit(bool is_commit)
@@ -526,7 +555,7 @@ void catalog_delete_object(catalog_object * object)
     catalog_delete_object_internal(catalog_acquire_object(object->p_object));
 }
 
-inline catalog_object_header * catalog_cachetree_find_name(
+inline catalog_name_record * catalog_cachetree_find_name(
         enum catalog_named_objects obj_type,
         const char * name)
 {
@@ -535,7 +564,7 @@ inline catalog_object_header * catalog_cachetree_find_name(
     r = local_catalog->names[hash(name)];
     while ((r != NULL) && ((r->name == NULL) || (strcmp(r->name, name) != 0) || (r->obj_type != obj_type))) { r = r->next; }
 
-    return (r == NULL) ? NULL : r->obj;
+    return r;
 }
 
 
@@ -551,6 +580,7 @@ inline catalog_name_record * catalog_cachetree_add_name(
     n->obj = obj;
     n->obj_type = obj_type;
     n->next = *r;
+    n->name_deleted = false;
     *r = n;
     local_catalog->namerecord_list.add(n);
 
@@ -609,8 +639,11 @@ bool catalog_name_exists(
         const char * name)
 {
     catalog_object_header * o;
+    catalog_name_record * n;
 
-    if ((o = catalog_cachetree_find_name(obj_type, name)) != NULL) {
+    if ((n = catalog_cachetree_find_name(obj_type, name)) != NULL) {
+        if (n->name_deleted) { return false; }
+        o = n->obj;
         return (!GET_FLAG(o->flags, CAT_OBJECT_DELETED_FLAG));
     }
 
@@ -627,8 +660,14 @@ catalog_object_header * catalog_find_name(
         const char * name)
 {
     catalog_object_header * result = NULL;
+    catalog_name_record * n = NULL;
 
-    result = catalog_cachetree_find_name(obj_type, name);
+    n = catalog_cachetree_find_name(obj_type, name);
+
+    if (n != NULL) {
+        if (n->name_deleted) { return NULL; }
+        result = n->obj;
+    }
 
     if (result == NULL) {
         xptr obj = catalog_nametree_find_name(CATALOG_NAME_TREE(obj_type), name);
@@ -657,10 +696,11 @@ bool catalog_delete_name(
     if (obj == NULL) { throw SYSTEM_EXCEPTION("Catalog name being deleted doesn't exists"); }
 
     /* We really ADD the same name to cache (although it DOES already exist there)
-       We don't care here who is going to set DELETED flag.
+       We don't care here who is going to set DELETED or RENAMED flag.
      */
 
     n = catalog_cachetree_add_name(obj_type, name, obj);
+    n->name_deleted = true;
 
     cr = new (cat_malloc(local_catalog, sizeof(catalog_journal_record))) catalog_journal_record;
     cr->type = catalog_journal_record::del_name;
@@ -714,13 +754,13 @@ char * catalog_htable_get(
     char * result = NULL;
     xptr object;
     char * fullname;
-    catalog_object_header * cache_result;
+    catalog_name_record * cache_result;
     catalog_journal_record *r;
 
     cache_result = catalog_cachetree_find_name(obj_type, key);
 
     if (cache_result != NULL) {
-        if (GET_FLAG(cache_result->flags, CAT_OBJECT_DELETED_FLAG)) {
+        if (cache_result->name_deleted || (GET_FLAG(cache_result->obj->flags, CAT_OBJECT_DELETED_FLAG))) {
             return NULL;
         }
 
