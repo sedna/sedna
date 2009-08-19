@@ -191,6 +191,8 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		   virtual void OnSearchingIndex(const char * indexPath);
 		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);		   
 		   SednaSearchJob(bool _hilight_=false, bool _hl_fragment_=false);
+		   void set_dtsSearchAnyWords(bool v);
+		   void set_dtsSearchAllWords(bool v);
 		   void set_request(tuple_cell& request);
 		   void set_file_cond_for_node(tuple_cell& node);
 		   void get_next_result(tuple &t);

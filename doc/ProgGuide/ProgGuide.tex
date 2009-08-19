@@ -1651,10 +1651,12 @@ In the current version of Sedna, query executor does not use full-text indecies 
 to enforce executor to employ indices.
 
 \begin{verbatim}
-ftindex-scan($title as xs:string, $query as xs:string) as node()*
+ftindex-scan($title as xs:string, $query as xs:string,
+             $options as xs:string) as node()*
 \end{verbatim}
 
 The \verb!ftindex-scan! function scans the full-text index with the \verb!$title! name and returns the sequence of items which satisfy the \verb!$query!. As full-text index is based on dtSearch \cite{link:dtsearch-engine}, use the dtSearch request language \cite{doc:dtsearch} to specify the query.
+DtSearch options dtsSearchAnyWords or dtsSearchAllWords may be specified in \verb!$options!.
 
 For example, you can employ the "articles" index defined in section \ref{sec:managing-ft-indices} to select the titles of articles that contain word "apple" but not "pear":
 \begin{verbatim}

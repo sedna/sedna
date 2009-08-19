@@ -959,7 +959,7 @@
     ,sa:type-nodes !fn!index-scan-between)
     ;----------------------------------------
     ; Full text search functions
-    (,sa:fn-ns "ftindex-scan" 2 2
+    (,sa:fn-ns "ftindex-scan" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!ftindex-scan)
     (,sa:fn-ns "ftwindex-scan" 2 4

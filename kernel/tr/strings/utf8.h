@@ -44,6 +44,36 @@ public:
 	virtual TokenizerResult* tokenize ( tuple_cell *t1, tuple_cell *t2, tuple_cell *t3);
 	virtual bool matches (const tuple_cell *t1, const char *regex);
 	virtual bool matches (const char *t1, const char *regex);
+
+	//put utf8 char to buf
+	//buf_p is position in buffer where to write, and is updated according to number of the bytes written
+	//return true if ok or false if not enough space in buffer
+	//if ch >= (1 << 21), returns true and doesnt write anything to buffer
+	//FIXME: what should it return and do if (ch < 0)?
+	//FIXME: move to cpp
+	static inline bool utf8_putch(int ch, char *buf, int *buf_p, const int buf_size)
+	{
+		if (ch < (1 << 7)) {
+			if (*buf_p+1 > buf_size) return false;
+			buf[(*buf_p)++] = ch;
+		} else if (ch < (1 << 11)) {
+			if (*buf_p+2 > buf_size) return false;
+			buf[(*buf_p)++] = ((ch >> 6) | 0xc0);
+			buf[(*buf_p)++] = ((ch & 0x3f) | 0x80);
+		} else if (ch < (1 << 16)) {
+			if (*buf_p+3 > buf_size) return false;
+			buf[(*buf_p)++] = ((ch >> 12) | 0xe0);
+			buf[(*buf_p)++] = (((ch >> 6) & 0x3f) | 0x80);
+			buf[(*buf_p)++] = ((ch & 0x3f) | 0x80);
+		} else if (ch < (1 << 21)) {
+			if (*buf_p+4 > buf_size) return false;
+			buf[(*buf_p)++] = ((ch >> 18) | 0xf0);
+			buf[(*buf_p)++] = (((ch >> 12) & 0x3f) | 0x80);
+			buf[(*buf_p)++] = (((ch >> 6) & 0x3f) | 0x80);
+			buf[(*buf_p)++] = ((ch & 0x3f) | 0x80);
+		}
+		return true;
+	}
 };
 
 

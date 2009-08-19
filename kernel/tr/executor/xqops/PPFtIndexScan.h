@@ -15,11 +15,13 @@
 #include "tr/ft/FTsearch.h"
 #endif
 
+//TODO: remove PPFtIndexScan2
+
 class PPFtIndexScan : public PPIterator
 {
 protected:
     // given parameters
-    PPOpIn idx_name, query;
+    PPOpIn idx_name, query, options;
 
     // obtained parameters and local data
 	bool first_time;
@@ -41,6 +43,10 @@ public:
     PPFtIndexScan(dynamic_context *_cxt_,
                 PPOpIn _idx_name_,
                 PPOpIn _query_);
+    PPFtIndexScan(dynamic_context *_cxt_,
+                PPOpIn _idx_name_,
+                PPOpIn _query_,
+				PPOpIn _options_);
 
     virtual ~PPFtIndexScan();
 

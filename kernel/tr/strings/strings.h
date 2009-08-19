@@ -312,7 +312,8 @@ public:
 class unicode_cp_iterator
 {
 public:
-	//returns -1 if reached end of string
+	static const int EOS = -1;
+	//returns EOS if reached end of string
 	virtual int get_next_char() = 0;
 };
 
@@ -338,6 +339,7 @@ public:
 	virtual tuple_cell toupper(const tuple_cell *tc) = 0;
 	virtual tuple_cell tolower(const tuple_cell *tc) = 0;
     virtual tuple_cell substring(const tuple_cell *tc, __int64 start_pos, __int64 length) = 0;
+	//returns pointer to unicode_cp_iterator, it must then be released using delete operator.
 	virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc) = 0;
 
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;

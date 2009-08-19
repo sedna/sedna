@@ -367,7 +367,7 @@ int utf8_unicode_cp_iterator<Iterator>::get_next_char()
 		return res;
 	}
 	else
-		return -1;
+		return EOS;
 }
 template <class Iterator>
 static inline void utf8_get_unicode_cp_iterator(const Iterator &start, const Iterator &end, unicode_cp_iterator **res)

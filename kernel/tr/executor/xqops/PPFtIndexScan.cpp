@@ -21,7 +21,23 @@ PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
 #endif
 						ftc_res(NULL)
 {
+	options.op = NULL;
 }
+PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
+            PPOpIn _idx_name_,
+            PPOpIn _query_,
+			PPOpIn _options_) :
+						PPIterator(_cxt_),
+						idx_name(_idx_name_),
+						query(_query_),
+						options(_options_),
+#ifdef SE_ENABLE_DTSEARCH
+						sj(NULL),
+#endif
+						ftc_res(NULL)
+{
+}
+
 
 PPFtIndexScan::~PPFtIndexScan()
 {
@@ -35,6 +51,11 @@ PPFtIndexScan::~PPFtIndexScan()
         delete query.op;
         query.op = NULL;
     }
+	if (options.op)
+	{
+		delete options.op;
+		options.op = NULL;
+	}
 #ifdef SE_ENABLE_DTSEARCH
 	if (sj)
 	{
@@ -53,6 +74,8 @@ void PPFtIndexScan::open()
 {
 	idx_name.op->open();
     query.op->open();
+	if (options.op)
+		options.op->open();
 
     first_time = true;
 }
@@ -61,6 +84,8 @@ void PPFtIndexScan::reopen()
 {
 	idx_name.op->reopen();
     query.op->reopen();
+	if (options.op)
+		options.op->reopen();
 
 #ifdef SE_ENABLE_DTSEARCH
 	if (sj)
@@ -82,6 +107,8 @@ void PPFtIndexScan::close()
 {
 	idx_name.op->close();
     query.op->close();
+	if (options.op)
+		options.op->close();
 #ifdef SE_ENABLE_DTSEARCH
 	if (sj != NULL)
 	{
@@ -97,12 +124,127 @@ void PPFtIndexScan::close()
 	
 }
 
+//TODO: move OptionsParser to strings to strings
+//parses options in the form "Name[=Value]{,Name[=Value]}" Name - consinsts of letters, Value - anything except ','; all whitespace is stripped (i.e. "A a=1 1" equiv to "Aa=11")
+//FIXME: currenty "Name=" is equivalent to "Name"
+class OptionsParser
+{
+protected:
+	static const int opt_name_buf_size = 32;
+	char opt_name_buf[opt_name_buf_size];
+	static const int opt_value_buf_size = 32;
+	char opt_value_buf[opt_value_buf_size];
+	unicode_cp_iterator *ucpi;
+	int next_char;
+
+	void reset()
+	{
+		if (ucpi != NULL)
+		{
+			delete ucpi;
+			ucpi = NULL;
+		}
+		opt_name_buf[0] = 0;
+		opt_value_buf[0] = 0;
+		next_char = unicode_cp_iterator::EOS;
+	}
+
+	void get_next_nonws_char()
+	{
+		U_ASSERT(ucpi != NULL);
+		do
+		{
+			next_char = ucpi->get_next_char();
+		} while (next_char != unicode_cp_iterator::EOS && iswspace(next_char));
+		if (next_char == unicode_cp_iterator::EOS)
+		{
+			delete ucpi;
+			ucpi = NULL;
+		}
+	}
+
+public:
+	OptionsParser() : ucpi(NULL)
+	{
+	}
+
+	void set_tc(const tuple_cell *tc)
+	{
+		reset();
+		ucpi = charset_handler->get_unicode_cp_iterator(tc);
+	}
+
+	~OptionsParser()
+	{
+		reset();
+	}
+
+	bool next_opt()
+	{
+		while (ucpi != NULL && (next_char == unicode_cp_iterator::EOS || next_char == ','))
+			get_next_nonws_char();
+		if (next_char == unicode_cp_iterator::EOS)
+		{
+			U_ASSERT(ucpi == NULL);
+			opt_name_buf[0] = 0;
+			opt_value_buf[0] = 0;
+			return false;
+		}
+		int name_pos = 0;
+		int value_pos = 0;
+
+		while (next_char != unicode_cp_iterator::EOS && next_char != ',' && next_char != '=')
+		{
+			CharsetHandler_utf8::utf8_putch(next_char, opt_name_buf, &name_pos, opt_name_buf_size-1);
+			get_next_nonws_char();
+		}
+		if (next_char == '=')
+		{
+			while (next_char != unicode_cp_iterator::EOS && next_char != ',')
+			{
+				CharsetHandler_utf8::utf8_putch(next_char, opt_value_buf, &value_pos, opt_value_buf_size-1);
+				get_next_nonws_char();
+			}
+		}
+		U_ASSERT(name_pos < opt_name_buf_size);
+		U_ASSERT(value_pos < opt_value_buf_size);
+		opt_name_buf[name_pos] = 0;
+		opt_value_buf[value_pos] = 0;
+	}
+	const char *opt_name()
+	{
+		return opt_name_buf;
+	}
+	const char *opt_value()
+	{
+		return opt_value_buf;
+	}
+	//empty or omiited value results in true
+	bool opt_value_as_bool()
+	{
+		//FIXME: throw exception for invalid args?
+		//FIXME: 00 is true
+		if (!opt_value_buf[0])
+			return true;
+		if ( (opt_value_buf[0] == '0' && !opt_value_buf[1])
+			|| (toupper(opt_value_buf[0]) == 'N' && toupper(opt_value_buf[1]) == 'O' && !opt_value_buf[2])
+			|| (toupper(opt_value_buf[0]) == 'O' && toupper(opt_value_buf[1]) == 'F' && toupper(opt_value_buf[2]) == 'F' && !opt_value_buf[3])
+			)
+			return false;
+		return true;
+	}
+};
+
 void PPFtIndexScan::next(tuple &t)
 {
 	SET_CURRENT_PP(this);
 
 	if (first_time)
 	{
+#ifdef SE_ENABLE_DTSEARCH
+		bool opt_dtsSearchAnyWords = false;
+		bool opt_dtsSearchAllWords = false;
+#endif
 		tuple_cell tc;
 
 		idx_name.op->next(t);
@@ -120,6 +262,34 @@ void PPFtIndexScan::next(tuple &t)
 		if (!t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
 
+		if (options.op)
+		{
+			options.op->next(t);
+			if (t.is_eos())
+				throw XQUERY_EXCEPTION(SE1071);
+			tc = t.cells[0];
+			if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
+				throw XQUERY_EXCEPTION(SE1071);
+
+			OptionsParser opts;
+			opts.set_tc(&tc);
+			while (opts.next_opt())
+			{
+#ifdef SE_ENABLE_DTSEARCH
+				if (!strcmp(opts.opt_name(), "dtsSearchAnyWords"))
+					opt_dtsSearchAnyWords = opts.opt_value_as_bool();
+				else if (!strcmp(opts.opt_name(), "dtsSearchAllWords"))
+					opt_dtsSearchAllWords = opts.opt_value_as_bool();
+				else
+#endif
+				throw USER_EXCEPTION2(SE3022, (std::string("Invalid ftindex-scan option: '") + opts.opt_name() + "'").c_str());
+			}
+
+			options.op->next(t);
+			if (!t.is_eos())
+				throw XQUERY_EXCEPTION(SE1071);
+		}
+
 		query.op->next(t);
 		if (t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
@@ -132,6 +302,8 @@ void PPFtIndexScan::next(tuple &t)
 #ifdef SE_ENABLE_DTSEARCH
 		case ft_ind_dtsearch:
 			sj=se_new SednaSearchJob();
+			sj->set_dtsSearchAnyWords(opt_dtsSearchAnyWords);
+			sj->set_dtsSearchAllWords(opt_dtsSearchAllWords);
 			sj->set_index(&(*ft_idx));
 			sj->set_request(tc);
 			break;
@@ -188,9 +360,15 @@ void PPFtIndexScan::next(tuple &t)
 
 PPIterator*  PPFtIndexScan::copy(dynamic_context *_cxt_)
 {
-	PPFtIndexScan *res = se_new PPFtIndexScan(_cxt_, idx_name, query);
+	PPFtIndexScan *res;
+	if (options.op)
+		res = se_new PPFtIndexScan(_cxt_, idx_name, query, options);
+	else
+		res = se_new PPFtIndexScan(_cxt_, idx_name, query);
     res->idx_name.op = idx_name.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
+	if (options.op)
+		res->options.op = options.op->copy(_cxt_);
     res->set_xquery_line(__xquery_line);
 	return res;
 }
