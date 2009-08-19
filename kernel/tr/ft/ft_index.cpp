@@ -12,6 +12,7 @@
 #include "tr/ft/ft_cache.h"
 #include "tr/executor/base/sorted_sequence.h"
 #include "tr/tr_globals.h"
+#include "tr/strings/utf8.h"
 
 
 //TODO: remove this 
@@ -107,34 +108,6 @@ static inline int utf8_getch(const char **buf, int *len)
 	return r;
 }
 
-//put utf8 char to buf
-//return true if ok or false if not enough space in buffer
-//if ch >= (1 << 21), returns true and doesnt write anything to buffer
-static inline bool utf8_putch(int ch, char *buf, int *buf_p, const int buf_size)
-{
-	if (ch < (1 << 7)) {
-		if (*buf_p+1 > buf_size) return false;
-		buf[(*buf_p)++] = ch;
-    } else if (ch < (1 << 11)) {
-		if (*buf_p+2 > buf_size) return false;
-		buf[(*buf_p)++] = ((ch >> 6) | 0xc0);
-		buf[(*buf_p)++] = ((ch & 0x3f) | 0x80);
-    } else if (ch < (1 << 16)) {
-		if (*buf_p+3 > buf_size) return false;
-		buf[(*buf_p)++] = ((ch >> 12) | 0xe0);
-		buf[(*buf_p)++] = (((ch >> 6) & 0x3f) | 0x80);
-		buf[(*buf_p)++] = ((ch & 0x3f) | 0x80);
-    } else if (ch < (1 << 21)) {
-		if (*buf_p+4 > buf_size) return false;
-		buf[(*buf_p)++] = ((ch >> 18) | 0xf0);
-		buf[(*buf_p)++] = (((ch >> 12) & 0x3f) | 0x80);
-		buf[(*buf_p)++] = (((ch >> 6) & 0x3f) | 0x80);
-		buf[(*buf_p)++] = ((ch & 0x3f) | 0x80);
-    }
-	return true;
-}
-
-
 static void p_start(void *state, const char *el, const char **attr)
 {
 	//TODO
@@ -158,7 +131,7 @@ static void p_data(void *state, const char *s, int len)
 		if (c_cl == ucp_L || c_type == ucp_N)
 		{
 			if (!parse_data->overfl)
-				parse_data->overfl = !utf8_putch(ch, parse_data->word_buf, &parse_data->word_len, MAX_WORD_LENGTH);
+				parse_data->overfl = !CharsetHandler_utf8::utf8_putch(ch, parse_data->word_buf, &parse_data->word_len, MAX_WORD_LENGTH);
 		}
 		else
 		{

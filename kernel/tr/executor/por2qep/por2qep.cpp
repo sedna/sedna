@@ -3092,14 +3092,21 @@ fn_dt_funcs_correct_type:
         if (tr_globals::is_ft_disabled)
        		throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
-        if (   lst->size() != 3
+        if (   lst->size() < 3
+			|| lst->size() > 4
 			|| lst->at(1).type != SCM_LIST
 			|| lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION(SE1004);
 
-		opit = se_new PPFtIndexScan(cxt,
-			make_pp_op(cxt, lst->at(1).internal.list), 
-			make_pp_op(cxt, lst->at(2).internal.list));
+		if (lst->size() == 3)
+			opit = se_new PPFtIndexScan(cxt,
+				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list));
+		else
+			opit = se_new PPFtIndexScan(cxt,
+				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list),
+				make_pp_op(cxt, lst->at(3).internal.list));
     }
 	else if (op == "PPFtIndexScan2")
     {

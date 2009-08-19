@@ -420,6 +420,15 @@ SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hil
 		hl=se_new SednaConvertJob(ft_xml_ne,NULL, hl_fragment);
 	}
 }
+void SednaSearchJob::set_dtsSearchAnyWords(bool v)
+{
+	this->SetSearchFlag(dtsSearchAnyWords, v ? 1 : 0);
+}
+void SednaSearchJob::set_dtsSearchAllWords(bool v)
+{
+	this->SetSearchFlag(dtsSearchAllWords, v ? 1 : 0);
+}
+
 void SednaSearchJob::set_request(tuple_cell& request)
 {
 	this->Request.setU8(op_str_buf(request).c_str());
