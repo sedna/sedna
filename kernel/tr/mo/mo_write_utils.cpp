@@ -917,17 +917,21 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
     int res= splitBlockIfFullAfterRightInsert(namesake);
     xptr n_blk;
     n_dsc* oldnode= (n_dsc*) XADDR(namesake);
+
+    CHECKP(namesake);
     switch (res)
     {
-    case 0: n_blk=BLOCKXPTR(namesake);break;
-    case 1: case 2:case 3: n_blk=((node_blk_hdr*)XADDR(BLOCKXPTR(namesake)))->nblk;CHECKP(n_blk);
-    }
-    node_blk_hdr* block_namesake=(node_blk_hdr*)XADDR(n_blk);
-    
-    n_dsc* new_node= GETBLOCKFIRSTFREESPACEABSOLUTE  (block_namesake);
-    VMM_SIGNAL_MODIFICATION(namesake);
+    case 0:
+        n_blk=BLOCKXPTR(namesake);
+        break;
 
+    case 1: case 2: case 3:
+        n_blk=((node_blk_hdr*)XADDR(BLOCKXPTR(namesake)))->nblk;
+        CHECKP(n_blk);
+    }
     VMM_SIGNAL_MODIFICATION(n_blk);
+    node_blk_hdr* block_namesake=(node_blk_hdr*)XADDR(n_blk);
+    n_dsc* new_node= GETBLOCKFIRSTFREESPACEABSOLUTE  (block_namesake);
     block_namesake->free_first=GETPOINTERTONEXTFREESPACE(new_node);
 
     switch (node_typ)
@@ -991,8 +995,8 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
     INCREMENTCOUNT(block_namesake);
     xptr nodex=ADDR2XPTR(new_node);
     tmp=add_record_to_indirection_table(nodex);
-    CHECKP(n_blk);
-    VMM_SIGNAL_MODIFICATION(namesake);
+    CHECKP(nodex);
+    VMM_SIGNAL_MODIFICATION(nodex);
     new_node->indir=tmp;
     insertBetween ( left_sib, right_sib, new_node);
     //CHECKP(namesake);
@@ -1074,8 +1078,8 @@ xptr addNewNodeOfSameSortBefore(xptr namesake, xptr left_sib,xptr right_sib, xpt
     INCREMENTCOUNT(block_namesake);
     xptr nodex=ADDR2XPTR(new_node);
     tmp=add_record_to_indirection_table(nodex);
-    CHECKP(n_blk);
-    VMM_SIGNAL_MODIFICATION(namesake);
+    CHECKP(nodex);
+    VMM_SIGNAL_MODIFICATION(nodex);
     new_node->indir=tmp;
     insertBetween ( left_sib, right_sib, new_node);
     createNID( left_sib, right_sib, parent,nodex); 
