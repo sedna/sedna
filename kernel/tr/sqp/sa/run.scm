@@ -1,7 +1,7 @@
 (require (lib "defmacro.ss"))
 (require (rename (lib "pretty.ss") pp pretty-print))
 (define-macro (declare . x) #t)
-(define-macro (foreign-callback-lambda . x)
+(define-macro (foreign-safe-lambda . x)
   (lambda (uri)
     (let ((string-port (open-output-string)))
       (begin

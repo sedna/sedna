@@ -35,7 +35,7 @@
      (display ": ")
      (for-each display (list ,@msg))
      #f))
-(define-macro (foreign-callback-lambda . x)
+(define-macro (foreign-safe-lambda . x)
   (lambda () 0))
 
 (load "lr2por-lib.scm")
