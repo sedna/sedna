@@ -282,17 +282,18 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 				cur=getFirstByOrderElementChild(cur);
 		}
     }
+    CHECKP(cur);
 	descstack.push_back(cur);
     t.copy(tuple_cell::node(cur));
-    CHECKP(cur);
     xptr tmp = getFirstByOrderElementChild(cur);
-	if (tmp!=XNULL) 
+	if (tmp!=XNULL)
 	{
 		cur=tmp;
 		{RESTORE_CURRENT_PP; return;}
 	}
 	while (!self || descstack.size()>1)
 	{
+        CHECKP(cur);
 		tmp = GETRIGHTPOINTER(cur);
 		if (tmp!=XNULL) 
 		{

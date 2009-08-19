@@ -138,9 +138,13 @@ void del_record_from_indirection_table(xptr p)
     xptr node=*((xptr*)XADDR(p));
     node_blk_hdr* nbi=GETBLOCKBYNODE(p);
     node_blk_hdr* nbh=GETBLOCKBYNODE(node);
-    nbi->indir_count--; 
-    if (nbi->count+nbi->indir_count==0)
-            add_predeleted_block(ADDR2XPTR(nbi));
+    nbi->indir_count--;
+
+    if (nbi->count+nbi->indir_count==0) {
+        add_predeleted_block(ADDR2XPTR(nbi));
+        CHECKP(p);
+    }
+
     *(shft*)(XADDR(p)) = nbi->free_first_indir;
     nbi->free_first_indir=CALCSHIFT(XADDR(p),nbi);
 
@@ -190,6 +194,7 @@ void del_record_from_indirection_table(xptr p)
                 rbi->pblk_indir=l_bl;
             }
     
+            CHECKP(node);
             VMM_SIGNAL_MODIFICATION(node);
             nbh->pblk_indir = XNULL;
             nbh->nblk_indir = XNULL;

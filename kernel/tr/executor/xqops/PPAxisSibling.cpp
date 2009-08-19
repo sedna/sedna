@@ -206,6 +206,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
 			}
 		}		
     }
+    CHECKP(cur);
     t.copy(tuple_cell::node(cur));
 	if (following)
 	{
@@ -236,8 +237,10 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
 					cur=XNULL;
 					break;
 				}
-				else
+				else {
+                    CHECKP(cur);
 					cur=((n_dsc*)XADDR(cur))->ldsc;
+                }
 			}
 		}
 	}		

@@ -200,8 +200,8 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
         );
 #else
     addr = mmap(addr, PAGE_SIZE, 
-        (!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE,
-        MAP_SHARED | MAP_FIXED, m, offs);
+    	(!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE,
+    	MAP_SHARED | MAP_FIXED, m, offs);
 #endif
 #ifdef _WIN32
     if (addr == NULL)
@@ -1314,7 +1314,6 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
-
         p = block_xptr(p);
 
 #ifdef VMM_GATHER_STATISTICS
