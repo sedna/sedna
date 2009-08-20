@@ -5775,3 +5775,4 @@
              (list (sa:op-name query)  ; == 'lib-module
                    (car decl-pair)
                    (cons 'prolog new-prolog))))))))))
+

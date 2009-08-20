@@ -2871,10 +2871,17 @@
       (and (pair? x) (eq? (xlr:op-name x) 'declare-function)))
     prolog)))
 
+(define (mlr:rewrite-md md)
+  (let* ((pd (car (xlr:op-args md)))
+         (pref (cadr (xlr:op-args pd)))
+         (nsp (cadr (xlr:op-args md))))
+         (list 'declare-namespace pref nsp)))
+
+  
 (define (mlr:rewrite-module query)
   (if
    (not (and (pair? query)
-             (eq? (xlr:op-name query) 'lib-module)))
+             (eq? (xlr:op-name query) 'module)))
    query  ; nothing to do, although it's strange
    (call-with-values
     (lambda ()
@@ -2884,10 +2891,9 @@
     (lambda (prolog var-types processed-funcs)
       (let ((processed-funcs (lropt:process-all-functions-in-prolog
                               prolog var-types processed-funcs)))
-        (list (xlr:op-name query)  ; == 'lib-module
-              (car (xlr:op-args query))  ; ModuleDecl
-              (cons
-               'prolog
-               (lropt:rewrite-prolog prolog
+        (cons (xlr:op-name query)  ; == 'lib-module
+              ;(car (xlr:op-args query))  ; ModuleDecl
+               (cons (mlr:rewrite-md (car (xlr:op-args query)))
+                                  (lropt:rewrite-prolog prolog
                                      #t  ; mode-ordered?
                                      processed-funcs var-types))))))))

@@ -76,7 +76,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		cur = getChildPointerXptr(child.get(t).get_node(), NULL, pr_ins, NULL_XMLNS);
 		if (nt_data.ncname_local&&!check_constraints_for_xs_NCName(nt_data.ncname_local))
-					throw XQUERY_EXCEPTION(XPST0005);
+					throw XQUERY_EXCEPTION(XPTY0004);
 		while (cur!=XNULL && nt_data.ncname_local)
 			{
 				

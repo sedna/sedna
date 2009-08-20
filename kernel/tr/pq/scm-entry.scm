@@ -49,22 +49,9 @@ EOF
   (let* ((lr-query        (get-scm-input-string))
          (query           (let ((tmp `(#t ,(cl:string->scheme-list lr-query))))
                             (if (eq? 1 (is-print-intermed)) 
-                                (cl:write-to-file tmp "intermed0_initial.scm"))
+                                (cl:write-to-file tmp "intermed1_analyzed.scm"))
                             tmp))
-         
-         (query           (if (>= step-id 8)
-                              (if (not (car query))
-                                  query
-                                  (let* ((tmp (if (eq? (car query) #t)
-                                                  (handle-exceptions ex
-                                                                     `(#f ,(cl:get-exception-message ex))
-                                                                     `(#t ,(sa:analyze-query (cadr query))))
-                                                  query)))
-                                    (if (eq? 1 (is-print-intermed)) 
-                                        (cl:write-to-file tmp "intermed1_analyzed.scm"))
-                                    tmp))
-                              query))
-         
+
          (query           (if (>= step-id 7)
                               (if (eq? (is-first-transaction) 1)
                                   query
@@ -160,16 +147,6 @@ EOF
 (define (process-module-in-scheme . step-id-dummy)
   (let* ((lr-query (get-scm-input-string))
          (query    `(#t ,(cl:string->scheme-list lr-query)))         
-         (query    (if
-                    (car query)
-                    ;(begin
-                    ; (write (cadr query))
-                    (handle-exceptions
-                     ex
-                     `(#f ,(cl:get-exception-message ex))
-                     `(#t ,(sa:analyze-module (cadr query))))
-                    ;)
-                    query))
          (query     (if
                      (car query)
                      (handle-exceptions

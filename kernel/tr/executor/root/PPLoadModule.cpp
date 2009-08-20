@@ -138,20 +138,11 @@ void PPLoadModule::execute()
     std::vector<client_file> cf_vec(fnames_size);
 
     try {
-        std::string module_name1, module_name2, module_pc_text;
+        std::string module_pc_text, module_name;
 
         tr_globals::client->get_file_from_client(&tc_filenames, &cf_vec);
-        for (int i = 0; i < fnames_size; ++i)
-        {
-            //precompile input module
-            module_pc_text += prepare_module(cf_vec[i].f/*cf.f*/, module_name1/*out*/);
-            tr_globals::client->close_file_from_client(cf_vec[i]);
-
-            if (i && (module_name1 != module_name2))
-                throw USER_EXCEPTION2(SE1072, (module_name1 + " and " + module_name2).c_str());
-
-            module_name2 = module_name1;
-        }
+        module_pc_text = prepare_modules(cf_vec, &module_name);
+        close_all_client_files(cf_vec);
 
         local_lock_mrg->lock(lm_x);
         local_lock_mrg->put_lock_on_collection(MODULES_COLLECTION_NAME);
@@ -160,23 +151,23 @@ void PPLoadModule::execute()
         if (is_load_replace)
         {
             try{
-               delete_document_from_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
+               delete_document_from_collection(MODULES_COLLECTION_NAME, module_name.c_str());
             } catch(SednaUserException& e) {}
         }
 
         try
         {
-            doc_root = insert_document_into_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
+            doc_root = insert_document_into_collection(MODULES_COLLECTION_NAME, module_name.c_str());
         }
         catch(SednaUserException& e)
         {
             if(e.get_code() == SE2004)
             {
-                throw USER_EXCEPTION2(SE1073, module_name1.c_str());
+                throw USER_EXCEPTION2(SE1073, module_name.c_str());
             }
             if(e.get_code() == SE2008)
             {
-                throw USER_EXCEPTION2(SE2008, (std::string("Invalid module URI '") + module_name1 + "'").c_str());
+                throw USER_EXCEPTION2(SE2008, (std::string("Invalid module URI '") + module_name + "'").c_str());
             }
             else
             {
@@ -188,7 +179,7 @@ void PPLoadModule::execute()
 
         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
         
-        auth_for_load_module(module_name1.c_str());
+        auth_for_load_module(module_name.c_str());
     } catch (ANY_SE_EXCEPTION) {
         close_all_client_files(cf_vec);
         throw;
