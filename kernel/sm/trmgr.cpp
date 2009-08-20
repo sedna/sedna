@@ -360,9 +360,9 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
   UPHANDLE h;
 
   string command_line = uGetImageProcPath(buf, __sys_call_error) +
-                        string("/se_rcv ") + string(sm_globals::db_name) + string(" ") +
-
-                        u_i64toa(last_checkpoint_lsn, buf2, 10);
+                        string("/se_rcv ") + string(sm_globals::db_name) + 
+                        string(" ") + u_i64toa(last_checkpoint_lsn, buf2, 10);
+                        
   strcpy(buf, command_line.c_str());
 
   uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, 

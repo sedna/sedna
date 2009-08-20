@@ -84,6 +84,8 @@ void hbParseCommandLine(int argc, char **argv)
     if (strcmp(hb_db_name, "???") == 0)
         throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
 
+    check_db_name_validness(hb_db_name);
+
 	// in case of absent directory name, use image directory instead
 	if (!strcmp(hb_dir_name, "???"))
 	{

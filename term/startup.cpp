@@ -76,6 +76,8 @@ int main(int argc, char *argv[])
         if (strcmp(db_name, "???") == 0 )
             throw USER_EXCEPTION(SE4601);
 
+        check_db_name_validness(db_name);
+
         if (strcmp(echo_str, "???") != 0)
         {
             if ((strcmp(echo_str, "on") != 0) && (strcmp(echo_str, "off") != 0)) throw USER_EXCEPTION(SE4601);

@@ -27,14 +27,10 @@ int main(int argc, char* argv[]) {
   char *input_login=NULL,*input_password=NULL;
   int tmp;
   
-    /*if (argc < 4) {
-		print_usage();
-		exit(-1);
-	} */
 	if (arg_scanargv(argc, argv, exp_argtable, narg, NULL, parse_errmsg, NULL)==0) {
-		printf("ERROR: %s\n\n", parse_errmsg);
+		fprintf(stderr, "ERROR: %s\n\n", parse_errmsg);
 		print_usage();
-		exit(-1);
+		exit(1);
 	}
 	if (exp_s_help == 1 || exp_l_help == 1) { 
 		print_usage(); 
@@ -46,32 +42,25 @@ int main(int argc, char* argv[]) {
 	}
 	if (strcmp(command,"-") == 0) {
 		print_usage();
-		exit(-1);		
+		exit(1);		
 	}
 	if (strcmp(command,"export") && strcmp(command,"import") && strcmp(command,"restore") != 0) {
-		printf("ERROR: unexpected command: %s\n",command);
+		fprintf(stderr, "ERROR: unexpected command: %s\n",command);
 		print_usage();
-		exit(-1);
+		exit(1);
 	}
 	if (exp_verbose == 1) { 
 		printf("Operating in verbose mode.\n"); 
 	}
 	if (exp_log == 0) { 
 		printf("Logging is off.\n"); 
-	}
-
-	/* don't ask for user name and password: the default values are used instead
-	if (strcmp(login,"-") == 0) {           
-       	input_login = simple_prompt("Login: ", SPROMT_LOGIN_SIZE, 1);
-		strcpy(login,input_login);
-       	if (input_login!=NULL) free(input_login);
-    }                                       
-	if (strcmp(password,"-") == 0) {
-       	input_password = simple_prompt("Password: ", SPROMT_LOGIN_SIZE, 0);
-		strcpy(password,input_password);
-       	if (input_password!=NULL) free(input_password);
     }
-    */
+    
+    if (strcmp(db_name, "-") == 0) {
+        fprintf(stderr, "ERROR: database name expected");
+        print_usage();
+        exit(1);
+    }
 
 	// Add the slash to the specified path 
 	tmp=strlen(path);

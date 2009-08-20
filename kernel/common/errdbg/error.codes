@@ -428,7 +428,7 @@ sedna-err:SE1002
     Feature is not implemented.
 sedna-err:SE1003
 
-    Sedna XQuery processor error.
+    Sedna internal error.
 sedna-err:SE1004
 
     Wrong physical plan representation.
@@ -661,7 +661,7 @@ sedna-err:SE2033
     Index with the same name already exists.
 sedna-err:SE2034
 
-    Invalid mode in index_scan function
+    Invalid index type (xs:string, xs:integer, xs:float, xs:double, xs:date, xs:time, xs:dateTime, xs_yearMonthDuration, xs_dateTimeDuration are supported).
 sedna-err:SE2035
 
     Invalid mode in index_scan_between function
@@ -1270,7 +1270,7 @@ sedna-err:SE4306
     Can not back up PH
 sedna-err:SE4307
 
-    Failed to create a database
+    Invalid database name.
 sedna-err:SE4308
 
     Failed to drop a database
