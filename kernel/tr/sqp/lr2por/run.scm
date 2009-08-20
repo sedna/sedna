@@ -1,4 +1,3 @@
-
 ; File:  run.scm
 ; Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
@@ -692,4 +691,3 @@
               (const (type !xs!QName) ("" "t" ""))
               (type *)
               (const (type !xs!string) "non-nil")))))
-          (const (type !xs!string) "3"))))))))))
