@@ -6,13 +6,27 @@
 #include "LRVisitor.h"
 #include "common/errdbg/exceptions.h"
 
-//#define LR_STR(s) (std::string("(const (type !xs!string) \"") + *s + "\") ")
-#define LR_STR(s) (std::string("(const (type !xs!string) ") + *s + ") ")
-#define LR_QNAME(p, l) (std::string("(const (type !xs!QName) (\"") + *p + "\" \"" + *l + "\" )) ")
-//#define LR_NCNAME(n) (std::string("(const (type !xs!NCName) \"") + *n + "\")")
-#define LR_NCNAME(n) (std::string("(const (type !xs!NCName) ") + *n + ")")
-#define LR_SINGLE(p) (std::string("\"") + *p + "\"")
-#define LR_PAIR(p1, p2) (std::string("(\"") + *p1 + "\" \"" + *p2 + "\" ) ")
+#define LR_STR(s)\
+    do\
+    {\
+        sc = "";\
+        for (unsigned int ii = 0; ii < (s).size(); ii++)\
+            if ((s)[ii] == '\\')\
+                sc += "\\\\";\
+            else if ((s)[ii] == '\"')\
+                sc += "\\\"";\
+            else\
+                sc.push_back((s)[ii]);\
+        lr_str.append(std::string("(const (type !xs!string) ") + "\"" + sc + "\") ");\
+    }\
+    while (0)
+
+#define LR_QNAME(p, l) (lr_str.append(std::string("(const (type !xs!QName) (\"") + *(p) + "\" \"" + *(l) + "\" )) "))
+#define LR_QNAME_URI(p, l, u) (lr_str.append(std::string("(const (type !xs!QName) (\"") + *(u) + "\" \"" + *(l) + "\" \"" + *(p) + "\" )) "))
+#define LR_NCNAME(n) (lr_str.append(std::string("(const (type !xs!NCName) ") + *(n) + ")"))
+#define LR_NCNAME_QUOT(n) (lr_str.append(std::string("(const (type !xs!NCName) \"") + *(n) + "\")"))
+#define LR_SINGLE(p) (lr_str.append(std::string("\"") + *(p) + "\""))
+#define LR_PAIR(p1, p2) (lr_str.append(std::string("(\"") + *(p1) + "\" \"" + *(p2) + "\" ) "))
 
 static const char *axis_str[] = {
     "child ",
@@ -27,7 +41,6 @@ static const char *axis_str[] = {
     "preceding-sibling ",
     "preceding ",
     "ancestor-or-self ",
-    "context-item "
 };
 
 static const char *bops_str[] = {
@@ -65,15 +78,15 @@ static const char *bops_str[] = {
 
 static const char *trg_str[] =
 {
-    "\"BEFORE\" ",
-    "\"AFTER\" ",
+    "BEFORE",
+    "AFTER",
 
-    "\"INSERT\" ",
-    "\"DELETE\" ",
-    "\"REPLACE\" ",
+    "INSERT",
+    "DELETE",
+    "REPLACE",
 
-    "\"NODE\" ",
-    "\"STATEMENT\" "
+    "NODE",
+    "STATEMENT"
 };
 
 static const char *query_str[] =
@@ -102,33 +115,19 @@ static const char *occur_str[] =
     "zero-or-more ",
     "one-or-more "
 };
-void LRVisitor::visit(const ASTAlterUser &n)
+
+void LRVisitor::visit(ASTAlterUser &n)
 {
     lr_str.append("(alter-user ");
-    lr_str.append(LR_STR(n.user));
-    lr_str.append(LR_STR(n.psw));
+    LR_STR(*n.user);
+    LR_STR(*n.psw);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTAtomicTest &n)
-{
-    std::string *pref, *loc;
-
-    if (n.name->substr(0, 4) == "!xs!") // standard type
-        lr_str.append(*n.name);
-    else
-    {
-        ASTParseQName(n.name, &pref, &loc);
-        lr_str.append(LR_PAIR(pref, loc));
-        delete pref;
-        delete loc;
-    }
-}
-
-void LRVisitor::visit(const ASTAttr &n)
+void LRVisitor::visit(ASTAttr &n)
 {
     lr_str.append("(attribute  ");
-    lr_str.append(LR_QNAME(n.pref, n.local));
+    LR_QNAME(n.pref, n.local);
 
     if (n.cont == NULL || n.cont->size() > 1)
         lr_str.append("(sequence ");
@@ -141,12 +140,12 @@ void LRVisitor::visit(const ASTAttr &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTAttrConst &n)
+void LRVisitor::visit(ASTAttrConst &n)
 {
     lr_str.append("(attribute  ");
 
     if (n.name == NULL)
-        lr_str.append(LR_QNAME(n.pref, n.local));
+        LR_QNAME(n.pref, n.local);
     else
         n.name->accept(*this);
 
@@ -158,67 +157,55 @@ void LRVisitor::visit(const ASTAttrConst &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTAttribTest &n)
+void LRVisitor::visit(ASTAttribTest &n)
 {
     lr_str.append("(attr-test  ");
 
-    if (n.npref == NULL)
+    if (n.name == NULL)
         lr_str.append("(ename (const (type !xs!QName) unspecified) ");
-    else if (*(n.nloc) == "*")
-        lr_str.append("(ename (const (type !xs!QName) *) ");
     else
-    {
-        lr_str.append("(ename ");
-        lr_str.append(LR_QNAME(n.npref, n.nloc));
-    }
+        n.name->accept(*this);
 
-    if (n.tpref == NULL)
+    if (n.type == NULL)
         lr_str.append("(type unspecified)");
     else
-        lr_str.append("(type " + LR_PAIR(n.tpref, n.tloc) + ")");
+    {
+        lr_str.append("(type ");
+        n.type->accept(*this);
+        lr_str.append(")");
+    }
+
+    lr_str.append("(const (type !xs!string) \"non-nil\")");
 
     lr_str.append(")) ");
 }
 
-void LRVisitor::visit(const ASTAxis &n)
+void LRVisitor::visit(ASTAxis &n)
 {
     lr_str.append("(");
     lr_str.append(axis_str[n.axis]);
     n.expr->accept(*this);
 
     lr_str.append("(type ");
-    if (dynamic_cast<ASTNameTest *>(n.test))
-    {
-        if (n.axis == ASTAxisStep::ATTRIBUTE)
-            lr_str.append("(attr-test ");
-        else
-            lr_str.append("(elem-test ");
-
-        n.test->accept(*this);
-        lr_str.append(")");
-    }
-    else
-    {
-        n.test->accept(*this);
-    }
+    n.test->accept(*this);
     lr_str.append(")");
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTAxisStep &n)
+void LRVisitor::visit(ASTAxisStep &n)
 {
     throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
 }
 
-void LRVisitor::visit(const ASTBaseURI &n)
+void LRVisitor::visit(ASTBaseURI &n)
 {
     lr_str.append("(declare-base-uri  ");
-    lr_str.append(LR_STR(n.uri));
+    LR_STR(*n.uri);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTBop &n)
+void LRVisitor::visit(ASTBop &n)
 {
     lr_str.append("(");
     lr_str.append(bops_str[n.op]);
@@ -229,7 +216,7 @@ void LRVisitor::visit(const ASTBop &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTBoundSpaceDecl &n)
+void LRVisitor::visit(ASTBoundSpaceDecl &n)
 {
     lr_str.append("(boundary-space-decl ");
 
@@ -241,7 +228,7 @@ void LRVisitor::visit(const ASTBoundSpaceDecl &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCase &n)
+void LRVisitor::visit(ASTCase &n)
 {
     if (n.type == NULL)
         lr_str.append("(default ");
@@ -260,7 +247,7 @@ void LRVisitor::visit(const ASTCase &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCast &n)
+void LRVisitor::visit(ASTCast &n)
 {
     lr_str.append("(cast ");
 
@@ -273,7 +260,7 @@ void LRVisitor::visit(const ASTCast &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCastable &n)
+void LRVisitor::visit(ASTCastable &n)
 {
     lr_str.append("(castable ");
 
@@ -286,26 +273,24 @@ void LRVisitor::visit(const ASTCastable &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCharCont &n)
+void LRVisitor::visit(ASTCharCont &n)
 {
-    lr_str.append("(const (type !xs!string) ");
-    lr_str.append(LR_SINGLE(n.cont));
-    lr_str.append(") ");
+    LR_STR(*n.cont);
 }
 
-void LRVisitor::visit(const ASTCommTest &n)
+void LRVisitor::visit(ASTCommTest &n)
 {
     lr_str.append("(comment-test)");
 }
 
-void LRVisitor::visit(const ASTCommentConst &n)
+void LRVisitor::visit(ASTCommentConst &n)
 {
     lr_str.append("(comment ");
     n.expr->accept(*this);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTConstDecl &n)
+void LRVisitor::visit(ASTConstDecl &n)
 {
     lr_str.append("(declare-construction ");
 
@@ -317,14 +302,14 @@ void LRVisitor::visit(const ASTConstDecl &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCreateColl &n)
+void LRVisitor::visit(ASTCreateColl &n)
 {
     lr_str.append("(create-collection ");
     n.coll->accept(*this);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCreateDoc &n)
+void LRVisitor::visit(ASTCreateDoc &n)
 {
     lr_str.append("(create-document ");
     n.doc->accept(*this);
@@ -335,12 +320,12 @@ void LRVisitor::visit(const ASTCreateDoc &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCreateFtIndex &n)
+void LRVisitor::visit(ASTCreateFtIndex &n)
 {
     lr_str.append("(create-fulltext-index ");
     n.name->accept(*this);
     n.path->accept(*this);
-    lr_str.append(LR_STR(n.type));
+    LR_STR(*n.type);
 
     if (n.cust_expr)
         n.cust_expr->accept(*this);
@@ -348,7 +333,7 @@ void LRVisitor::visit(const ASTCreateFtIndex &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCreateIndex &n)
+void LRVisitor::visit(ASTCreateIndex &n)
 {
     lr_str.append("(create-index ");
 
@@ -360,59 +345,68 @@ void LRVisitor::visit(const ASTCreateIndex &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCreateRole &n)
+void LRVisitor::visit(ASTCreateRole &n)
 {
     lr_str.append("(create-role ");
-    lr_str.append(LR_STR(n.role));
+    LR_STR(*n.role);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTCreateTrg &n)
+void LRVisitor::visit(ASTCreateTrg &n)
 {
     std::string *s = new std::string();
 
     lr_str.append("(create-trigger ");
 
-    lr_str.append(LR_STR(n.name));
+    LR_STR(*n.name);
 
     *s = trg_str[n.t_mod];
-    lr_str.append(LR_STR(s));
+    LR_STR(*s);
 
     *s = trg_str[n.a_mod];
-    lr_str.append(LR_STR(s));
+    LR_STR(*s);
 
     n.path->accept(*this);
 
     *s = trg_str[n.g_mod];
-    lr_str.append(LR_STR(s));
+    LR_STR(*s);
 
     lr_str.append("( ");
     VisitNodesVector(n.do_exprs, *this);
     lr_str.append(") ");
 
-//    n.do_expr->accept(*this);
+    if (n.leaf_name)
+        lr_str.append(std::string("\"") + *n.leaf_name + "\"");
+
+    lr_str.append(" ");
+
+    if (n.leaf_type >= 0)
+        lr_str.append(int2string(n.leaf_type));
+
+    if (n.trimmed_path)
+        n.trimmed_path->accept(*this);
 
     lr_str.append(") ");
 
     delete s;
 }
 
-void LRVisitor::visit(const ASTCreateUser &n)
+void LRVisitor::visit(ASTCreateUser &n)
 {
     lr_str.append("(create-user ");
-    lr_str.append(LR_STR(n.user));
-    lr_str.append(LR_STR(n.psw));
+    LR_STR(*n.user);
+    LR_STR(*n.psw);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDDO &n)
+void LRVisitor::visit(ASTDDO &n)
 {
     lr_str.append("(ddo ");
     n.expr->accept(*this);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDeclareCopyNsp &n)
+void LRVisitor::visit(ASTDeclareCopyNsp &n)
 {
     lr_str.append("(declare-copy-namespaces ");
 
@@ -429,36 +423,36 @@ void LRVisitor::visit(const ASTDeclareCopyNsp &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDefCollation &n)
+void LRVisitor::visit(ASTDefCollation &n)
 {
     lr_str.append("(declare-default-collation ");
-    lr_str.append(LR_STR(n.uri));
+    LR_STR(*n.uri);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDefNamespaceDecl &n)
+void LRVisitor::visit(ASTDefNamespaceDecl &n)
 {
     if (n.type == ASTDefNamespaceDecl::ELEMENT)
         lr_str.append("(declare-default-element-namespace ");
     else
         lr_str.append("(declare-default-function-namespace ");
 
-    lr_str.append(LR_STR(n.uri));
+    LR_STR(*n.uri);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDocConst &n)
+void LRVisitor::visit(ASTDocConst &n)
 {
     lr_str.append("(document ");
     n.expr->accept(*this);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDocTest &n)
+void LRVisitor::visit(ASTDocTest &n)
 {
     if (!n.elem_test)
     {
-        lr_str.append("doc-test ");
+        lr_str.append("(doc-test) ");
     }
     else
     {
@@ -471,14 +465,14 @@ void LRVisitor::visit(const ASTDocTest &n)
     }
 }
 
-void LRVisitor::visit(const ASTDropColl &n)
+void LRVisitor::visit(ASTDropColl &n)
 {
     lr_str.append("(drop-collection ");
     n.coll->accept(*this);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDropDoc &n)
+void LRVisitor::visit(ASTDropDoc &n)
 {
     lr_str.append("(drop-document ");
     n.doc->accept(*this);
@@ -489,78 +483,79 @@ void LRVisitor::visit(const ASTDropDoc &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDropFtIndex &n)
+void LRVisitor::visit(ASTDropFtIndex &n)
 {
     lr_str.append("(drop-fulltext-index ");
     n.index->accept(*this);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDropIndex &n)
+void LRVisitor::visit(ASTDropIndex &n)
 {
     lr_str.append("(drop-index ");
     n.index->accept(*this);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDropMod &n)
+void LRVisitor::visit(ASTDropMod &n)
 {
     lr_str.append("(drop-module ");
-    lr_str.append(LR_STR(n.module));
+    LR_STR(*n.module);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDropRole &n)
+void LRVisitor::visit(ASTDropRole &n)
 {
     lr_str.append("(drop-role ");
-    lr_str.append(LR_STR(n.role));
+    LR_STR(*n.role);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDropTrg &n)
+void LRVisitor::visit(ASTDropTrg &n)
 {
     lr_str.append("(drop-trigger ");
-    lr_str.append(LR_STR(n.trg));
+    LR_STR(*n.trg);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTDropUser &n)
+void LRVisitor::visit(ASTDropUser &n)
 {
     lr_str.append("(drop-user ");
-    lr_str.append(LR_STR(n.user));
+    LR_STR(*n.user);
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTElem &n)
+void LRVisitor::visit(ASTElem &n)
 {
+    unsigned int count = 0;
+
     lr_str.append("(element ");
-    lr_str.append(LR_QNAME(n.pref, n.local));
+    LR_QNAME(n.pref, n.local);
+
+    if (n.attrs) count += n.attrs->size();
+    if (n.cont) count += n.cont->size();
+
+    if (count > 1 || count == 0)
+        lr_str.append("(sequence ");
 
     if (n.attrs)
-    {
-        lr_str.append("(sequence ");
         VisitNodesVector(n.attrs, *this);
+
+    if (n.cont)
         VisitNodesVector(n.cont, *this);
+
+    if (count > 1 || count == 0)
         lr_str.append(")");
-    }
-    else if (!n.cont || n.cont->size() > 1)
-    {
-        lr_str.append("(sequence ");
-        VisitNodesVector(n.cont, *this);
-        lr_str.append(")");
-    }
-    else // cont && cont->size()==1
-        VisitNodesVector(n.cont, *this);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTElemConst &n)
+void LRVisitor::visit(ASTElemConst &n)
 {
     lr_str.append("(element ");
 
     if (n.name == NULL)
-        lr_str.append(LR_QNAME(n.pref, n.local));
+        LR_QNAME(n.pref, n.local);
     else
         n.name->accept(*this);
 
@@ -572,24 +567,23 @@ void LRVisitor::visit(const ASTElemConst &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTElementTest &n)
+void LRVisitor::visit(ASTElementTest &n)
 {
     lr_str.append("(elem-test ");
 
-    if (n.npref == NULL)
+    if (n.name == NULL)
         lr_str.append("(ename (const (type !xs!QName) unspecified) ");
-    else if (*n.nloc == "*")
-        lr_str.append("(ename (const (type !xs!QName) *) ");
     else
-    {
-        lr_str.append("(ename ");
-        lr_str.append(LR_QNAME(n.npref, n.nloc));
-    }
+        n.name->accept(*this);
 
-    if (n.tpref == NULL)
+    if (n.type == NULL)
         lr_str.append("(type unspecified) ");
     else
-        lr_str.append("(type " + LR_PAIR(n.tpref, n.tloc) + ") ");
+    {
+        lr_str.append("(type ");
+        n.type->accept(*this);
+        lr_str.append(")");
+    }
 
     if (n.mod == ASTElementTest::NON_NIL)
         lr_str.append("(const (type !xs!string) \"non-nil\"))");
@@ -599,34 +593,34 @@ void LRVisitor::visit(const ASTElementTest &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTEmptyTest &n)
+void LRVisitor::visit(ASTEmptyTest &n)
 {
     lr_str.append("(empty-test)");
 }
 
-void LRVisitor::visit(const ASTError &n)
+void LRVisitor::visit(ASTError &n)
 {
     throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
 }
 
-void LRVisitor::visit(const ASTExtExpr &n)
+void LRVisitor::visit(ASTExtExpr &n)
 {
-    lr_str.append("(extension-expr (pragmas ");
-    VisitNodesVector(n.pragmas, *this);
-    lr_str.append(") ");
+//     lr_str.append("(extension-expr (pragmas ");
+//     VisitNodesVector(n.pragmas, *this);
+//     lr_str.append(") ");
 
     if (n.expr)
         n.expr->accept(*this);
 
-    lr_str.append(") ");
+//     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTFilterStep &n)
+void LRVisitor::visit(ASTFilterStep &n)
 {
     throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
 }
 
-void LRVisitor::visit(const ASTFor &n)
+void LRVisitor::visit(ASTFor &n)
 {
     lr_str.append("(return ");
     n.expr->accept(*this);
@@ -634,18 +628,33 @@ void LRVisitor::visit(const ASTFor &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTFunCall &n)
+void LRVisitor::visit(ASTFunCall &n)
 {
-    lr_str.append("(fun-call ");
-    lr_str.append(LR_QNAME(n.pref, n.local));
+    if (n.int_name && *n.int_name != "")
+    {
+        lr_str.append("(");
+        lr_str.append(*n.int_name);
+    }
+    else if (n.uri)
+    {
+        lr_str.append("(fun-call ");
+        LR_QNAME_URI(n.pref, n.local, n.uri);
+    }
+    else
+    {
+        lr_str.append("(fun-call ");
+        LR_QNAME(n.pref, n.local);
+    }
 
     VisitNodesVector(n.params, *this);
 
+    lr_str.append(" ");
     lr_str.append(int2string(n.getFirstLine()));
+
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTFunDef &n)
+void LRVisitor::visit(ASTFunDef &n)
 {
     lr_str.append("(fun-def (");
     VisitNodesVector(n.vars, *this);
@@ -655,14 +664,17 @@ void LRVisitor::visit(const ASTFunDef &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTFuncDecl &n)
+void LRVisitor::visit(ASTFuncDecl &n)
 {
     if (n.body == NULL)
         lr_str.append("(declare-external-function ");
     else
         lr_str.append("(declare-function ");
 
-    lr_str.append(LR_QNAME(n.pref, n.local));
+    if (!n.func_uri)
+        LR_QNAME(n.pref, n.local);
+    else
+        LR_QNAME_URI(n.pref, n.local, n.func_uri);
 
     lr_str.append("(");
     VisitNodesVector(n.params, *this);
@@ -682,7 +694,7 @@ void LRVisitor::visit(const ASTFuncDecl &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTGrantPriv &n)
+void LRVisitor::visit(ASTGrantPriv &n)
 {
     if (n.mod == ASTGrantPriv::DOCUMENT)
         lr_str.append("(grant-priv-on-doc ");
@@ -692,35 +704,35 @@ void LRVisitor::visit(const ASTGrantPriv &n)
         lr_str.append("(grant-priv ");
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.priv));
+    LR_STR(*n.priv);
     lr_str.append(") ");
 
     if (n.obj)
-        lr_str.append(LR_STR(n.obj));
+        LR_STR(*n.obj);
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.user));
+    LR_STR(*n.user);
     lr_str.append(")");
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTGrantRole &n)
+void LRVisitor::visit(ASTGrantRole &n)
 {
     lr_str.append("(grant-role ");
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.role));
+    LR_STR(*n.role);
     lr_str.append(") ");
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.role_to));
+    LR_STR(*n.role_to);
     lr_str.append(")");
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTIf &n)
+void LRVisitor::visit(ASTIf &n)
 {
     lr_str.append("(if@ ");
 
@@ -731,7 +743,7 @@ void LRVisitor::visit(const ASTIf &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTInstOf &n)
+void LRVisitor::visit(ASTInstOf &n)
 {
     lr_str.append("(instance-of ");
 
@@ -744,12 +756,12 @@ void LRVisitor::visit(const ASTInstOf &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTItemTest &n)
+void LRVisitor::visit(ASTItemTest &n)
 {
     lr_str.append("(item-test) ");
 }
 
-void LRVisitor::visit(const ASTLet &n)
+void LRVisitor::visit(ASTLet &n)
 {
     lr_str.append("(let@ ");
 
@@ -759,9 +771,11 @@ void LRVisitor::visit(const ASTLet &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTLibModule &n)
+void LRVisitor::visit(ASTLibModule &n)
 {
-    lr_str.append("(lib-module ");
+    is_libmodule = true;
+
+    lr_str.append("(module ");
 
     n.moduleDecl->accept(*this);
     n.prolog->accept(*this);
@@ -769,52 +783,53 @@ void LRVisitor::visit(const ASTLibModule &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTLit &n)
+void LRVisitor::visit(ASTLit &n)
 {
-    lr_str.append("(const (type ");
+    if (n.type != ASTLit::STRING)
+        lr_str.append("(const (type ");
 
     if (n.type == ASTLit::INTEGER)
     {
         lr_str.append("!xs!integer) ");
-        lr_str.append(LR_SINGLE(n.lit));
+        LR_SINGLE(n.lit);
     }
     else if (n.type == ASTLit::DECIMAL)
     {
         lr_str.append("!xs!decimal) ");
-        lr_str.append(LR_SINGLE(n.lit));
+        LR_SINGLE(n.lit);
     }
     else if (n.type == ASTLit::DOUBLE)
     {
         lr_str.append("!xs!double) ");
-        lr_str.append(LR_SINGLE(n.lit));
+        LR_SINGLE(n.lit);
     }
     else
     {
-        lr_str.append("!xs!string) ");
-        lr_str.append(*n.lit);
+        LR_STR(*n.lit); // special treatment for string because of scheme part
     }
 
-    lr_str.append(") ");
+    if (n.type != ASTLit::STRING)
+        lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTLoadFile &n)
+void LRVisitor::visit(ASTLoadFile &n)
 {
     std::string *file = n.getFileName();
 
     lr_str.append("(load ");
 
-    lr_str.append(LR_STR(file));
-    lr_str.append(LR_STR(n.doc));
+    LR_STR(*file);
+    LR_STR(*n.doc);
 
     if (n.coll)
-        lr_str.append(LR_STR(n.coll));
+        LR_STR(*n.coll);
 
     lr_str.append(") ");
 
     delete file;
 }
 
-void LRVisitor::visit(const ASTLoadModule &n)
+void LRVisitor::visit(ASTLoadModule &n)
 {
     ASTStringVector::const_iterator it;
 
@@ -823,26 +838,28 @@ void LRVisitor::visit(const ASTLoadModule &n)
     else
         lr_str.append("(load-or-replace-module ");
 
-    lr_str.append("(const (type !xs!string) \"dummy-for-compatibility\")");
+//    lr_str.append("(const (type !xs!string) \"dummy-for-compatibility\")");
 
     for (it = n.modules->begin(); it != n.modules->end(); it++)
-        lr_str.append(LR_STR(*it));
+        LR_STR(**it);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTMainModule &n)
+void LRVisitor::visit(ASTMainModule &n)
 {
-    lr_str.append("( ");
-    lr_str.append(query_str[n.query->type]);
+    lr_str = "(";
+    lr_str.append(query_str[dynamic_cast<ASTQuery *>(n.query)->type]);
+    lr_str.append(drv->getLRForModules(mod));
 
+    purge_imports = true;
     n.prolog->accept(*this);
     n.query->accept(*this);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTMetaCols &n)
+void LRVisitor::visit(ASTMetaCols &n)
 {
     lr_str.append("(retrieve-metadata-collections ");
 
@@ -854,7 +871,7 @@ void LRVisitor::visit(const ASTMetaCols &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTMetaDocs &n)
+void LRVisitor::visit(ASTMetaDocs &n)
 {
     lr_str.append("(retrieve-metadata-documents ");
 
@@ -869,7 +886,7 @@ void LRVisitor::visit(const ASTMetaDocs &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTMetaSchemaCol &n)
+void LRVisitor::visit(ASTMetaSchemaCol &n)
 {
     lr_str.append("(retrieve-descr-scheme-collection ");
 
@@ -878,7 +895,7 @@ void LRVisitor::visit(const ASTMetaSchemaCol &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTMetaSchemaDoc &n)
+void LRVisitor::visit(ASTMetaSchemaDoc &n)
 {
     lr_str.append("(retrieve-descr-scheme ");
 
@@ -890,37 +907,57 @@ void LRVisitor::visit(const ASTMetaSchemaDoc &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTModImport &n)
+void LRVisitor::visit(ASTModImport &n)
 {
+    if (purge_imports)
+    {
+        return;
+    }
+
+    if (is_libmodule && n.name)
+    {
+        lr_str.append("(declare-namespace ");
+
+        lr_str.append(*n.name);
+        LR_STR(*n.uri);
+
+        lr_str.append(") ");
+        return;
+    }
+    else if (is_libmodule) // in libary modules ignore "just-uri" declarations
+    {
+        return;
+    }
+
     ASTStringVector::const_iterator it;
 
     lr_str.append("(import-module ");
 
     if (n.name)
-        lr_str.append(LR_NCNAME(n.name));
+        LR_NCNAME(n.name);
 
-    lr_str.append(LR_STR(n.uri));
+    LR_STR(*n.uri);
 
     if (n.hints)
         for (it = n.hints->begin(); it != n.hints->end(); it++)
-            lr_str.append(LR_STR(*it));
+            LR_STR(**it);
 
     lr_str.append(") ");
 }
 
 
-void LRVisitor::visit(const ASTModuleDecl &n)
+void LRVisitor::visit(ASTModuleDecl &n)
 {
     lr_str.append("(module-decl ");
 
-    lr_str.append(LR_NCNAME(n.name));
-    lr_str.append(LR_STR(n.uri));
+    LR_NCNAME(n.name);
+    LR_STR(*n.uri);
 
     lr_str.append(") ");
 }
 
 
-void LRVisitor::visit(const ASTNameTest &n)
+void LRVisitor::visit(ASTNameTest &n)
 {
     lr_str.append("(ename ");
 
@@ -934,68 +971,81 @@ void LRVisitor::visit(const ASTNameTest &n)
     {
         lr_str.append("(");
 
-        if (*n.pref == "*")
+        if (n.uri && *n.uri == "*")
             lr_str.append("* ");
-        else
-            lr_str.append(LR_SINGLE(n.pref));
+        else if (n.uri)
+            LR_SINGLE(n.uri);
 
         if (*n.local == "*")
             lr_str.append("*");
         else
-            lr_str.append(LR_SINGLE(n.local));
+            LR_SINGLE(n.local);
+
+        if (*n.pref == "*")
+            lr_str.append("* ");
+        else
+            LR_SINGLE(n.pref);
 
         lr_str.append(")");
     }
 
     lr_str.append(") ");
-
-    lr_str.append("(type *) ");
-
-    lr_str.append("(const (type !xs!string) \"non-nil\"))");
 }
 
-void LRVisitor::visit(const ASTNamespaceDecl &n)
+void LRVisitor::visit(ASTNamespaceDecl &n)
 {
     lr_str.append("(declare-namespace ");
 
     lr_str.append(*n.name);
-    lr_str.append(LR_STR(n.uri));
+    LR_STR(*n.uri);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTNodeTest &n)
+void LRVisitor::visit(ASTNodeTest &n)
 {
     lr_str.append("(node-test) ");
 }
 
-void LRVisitor::visit(const ASTNsp &n)
+void LRVisitor::visit(ASTNsp &n)
 {
     lr_str.append("(namespace ");
-    lr_str.append(LR_NCNAME(n.name));
+    LR_NCNAME_QUOT(n.name);
 
-    if (n.cont == NULL || n.cont->size() > 1)
-        lr_str.append("(sequence ");
-
-    VisitNodesVector(n.cont, *this);
-
-    if (n.cont == NULL || n.cont->size() > 1)
-        lr_str.append(")");
+    if (n.cont)
+        LR_STR(*n.cont);
+    else
+        lr_str.append("(const (type !xs!string) \"\")");
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOption &n)
+void LRVisitor::visit(ASTOption &n)
 {
     lr_str.append("(declare-option ");
 
-    lr_str.append(LR_QNAME(n.pref, n.local));
-    lr_str.append(LR_STR(n.opt));
+    if (!n.uri)
+        LR_QNAME(n.pref, n.local);
+    else
+        LR_QNAME_URI(n.pref, n.local, n.uri);
+
+    if (!n.options)
+        LR_STR(*n.opt);
+    else // options already parsed
+    {
+        for (unsigned int i = 0; i < n.options->size(); i++)
+        {
+            lr_str.append("(");
+            LR_STR((*n.options)[i].first);
+            LR_STR((*n.options)[i].second);
+            lr_str.append(")");
+        }
+    }
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOrdExpr &n)
+void LRVisitor::visit(ASTOrdExpr &n)
 {
     if (n.type == ASTOrdExpr::ORDERED)
         lr_str.append("(ordered ");
@@ -1007,7 +1057,7 @@ void LRVisitor::visit(const ASTOrdExpr &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOrder &n)
+void LRVisitor::visit(ASTOrder &n)
 {
     lr_str.append("(declare-order ");
 
@@ -1019,7 +1069,7 @@ void LRVisitor::visit(const ASTOrder &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOrderBy &n)
+void LRVisitor::visit(ASTOrderBy &n)
 {
     lr_str.append("(orderspecs ");
 
@@ -1033,7 +1083,7 @@ void LRVisitor::visit(const ASTOrderBy &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOrderByRet &n)
+void LRVisitor::visit(ASTOrderByRet &n)
 {
     lr_str.append("(order-by ");
 
@@ -1043,7 +1093,7 @@ void LRVisitor::visit(const ASTOrderByRet &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOrderEmpty &n)
+void LRVisitor::visit(ASTOrderEmpty &n)
 {
     lr_str.append("(declare-default-order ");
 
@@ -1055,15 +1105,19 @@ void LRVisitor::visit(const ASTOrderEmpty &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOrderMod &n)
+void LRVisitor::visit(ASTOrderMod &n)
 {
     lr_str.append("(ordermodifier ");
 
     if (n.ad_mod)
         n.ad_mod->accept(*this);
+    else
+        lr_str.append("(const (type !xs!string) \"asc\")");
 
     if (n.em_mod)
         n.em_mod->accept(*this);
+    else
+        lr_str.append("(const (type !xs!string) \"default\")");
 
     if (n.col_mod)
         n.col_mod->accept(*this);
@@ -1071,7 +1125,7 @@ void LRVisitor::visit(const ASTOrderMod &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTOrderModInt &n)
+void LRVisitor::visit(ASTOrderModInt &n)
 {
     if (n.mod != ASTOrderModInt::COLLATION)
     {
@@ -1082,12 +1136,12 @@ void LRVisitor::visit(const ASTOrderModInt &n)
     else
     {
         lr_str.append("(collation ");
-        lr_str.append(LR_STR(n.uri));
+        LR_STR(*n.uri);
         lr_str.append(")");
     }
 }
 
-void LRVisitor::visit(const ASTOrderSpec &n)
+void LRVisitor::visit(ASTOrderSpec &n)
 {
     lr_str.append("(orderspec ");
 
@@ -1101,14 +1155,14 @@ void LRVisitor::visit(const ASTOrderSpec &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTPIConst &n)
+void LRVisitor::visit(ASTPIConst &n)
 {
     lr_str.append("(pi ");
 
     if (n.name)
         n.name->accept(*this);
     else
-        lr_str.append(LR_NCNAME(n.ncname));
+        LR_NCNAME(n.ncname);
 
     if (n.expr)
         n.expr->accept(*this);
@@ -1118,35 +1172,33 @@ void LRVisitor::visit(const ASTPIConst &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTPi &n)
+void LRVisitor::visit(ASTPi &n)
 {
     lr_str.append("(pi ");
 
-    lr_str.append(LR_NCNAME(n.name));
+    LR_NCNAME(n.name);
 
     if (*n.cont != "")
     {
-        lr_str.append("(const (type !xs!string) ");
-        lr_str.append(LR_SINGLE(n.cont));
-        lr_str.append(")");
+        LR_STR(*n.cont);
     }
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTPiTest &n)
+void LRVisitor::visit(ASTPiTest &n)
 {
     lr_str.append("(pi-test ");
 
     if (n.type == ASTPiTest::NCNAME)
-        lr_str.append(LR_NCNAME(n.test));
+        LR_NCNAME_QUOT(n.test);
     else if (n.type == ASTPiTest::STRING)
-        lr_str.append(LR_STR(n.test));
+        LR_STR(*n.test);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTPosVar &n)
+void LRVisitor::visit(ASTPosVar &n)
 {
     lr_str.append("(se:positional-var ");
 
@@ -1155,20 +1207,18 @@ void LRVisitor::visit(const ASTPosVar &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTPragma &n)
+void LRVisitor::visit(ASTPragma &n)
 {
     lr_str.append("(pragma ");
 
-    lr_str.append(LR_QNAME(n.pref, n.local));
+    LR_QNAME(n.pref, n.local);
 
-    lr_str.append("(const (type !xs!string) ");
-    lr_str.append(LR_SINGLE(n.cont));
-    lr_str.append(")");
+    LR_STR(*n.cont);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTPred &n)
+void LRVisitor::visit(ASTPred &n)
 {
     lr_str.append("(predicate ");
 
@@ -1178,7 +1228,7 @@ void LRVisitor::visit(const ASTPred &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTProlog &n)
+void LRVisitor::visit(ASTProlog &n)
 {
     lr_str.append("(prolog  ");
 
@@ -1187,7 +1237,12 @@ void LRVisitor::visit(const ASTProlog &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTQuantExpr &n)
+void LRVisitor::visit(ASTQName &n)
+{
+    LR_QNAME_URI(n.pref, n.local, n.uri);
+}
+
+void LRVisitor::visit(ASTQuantExpr &n)
 {
     if (n.type == ASTQuantExpr::SOME)
         lr_str.append("(some ");
@@ -1200,7 +1255,7 @@ void LRVisitor::visit(const ASTQuantExpr &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTQuery &n)
+void LRVisitor::visit(ASTQuery &n)
 {
     // query type is exploited in visit ASTMainModule (except usual query)
     if (n.type == ASTQuery::QUERY)
@@ -1211,7 +1266,7 @@ void LRVisitor::visit(const ASTQuery &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTRenameColl &n)
+void LRVisitor::visit(ASTRenameColl &n)
 {
     lr_str.append("(rename-collection ");
 
@@ -1221,7 +1276,7 @@ void LRVisitor::visit(const ASTRenameColl &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTRet &n)
+void LRVisitor::visit(ASTRet &n)
 {
     lr_str.append("(return ");
 
@@ -1231,7 +1286,7 @@ void LRVisitor::visit(const ASTRet &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTRevokePriv &n)
+void LRVisitor::visit(ASTRevokePriv &n)
 {
     if (n.mod == ASTRevokePriv::DOCUMENT)
         lr_str.append("(revoke-priv-from-doc ");
@@ -1241,71 +1296,58 @@ void LRVisitor::visit(const ASTRevokePriv &n)
         lr_str.append("(revoke-priv ");
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.priv));
+    LR_STR(*n.priv);
     lr_str.append(") ");
 
     if (n.obj)
-        lr_str.append(LR_STR(n.obj));
+        LR_STR(*n.obj);
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.user));
+    LR_STR(*n.user);
     lr_str.append(")");
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTRevokeRole &n)
+void LRVisitor::visit(ASTRevokeRole &n)
 {
     lr_str.append("(revoke-role ");
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.role));
+    LR_STR(*n.role);
     lr_str.append(") ");
 
     lr_str.append("(");
-    lr_str.append(LR_STR(n.role_from));
+    LR_STR(*n.role_from);
     lr_str.append(")");
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTSchemaAttrTest &n)
+void LRVisitor::visit(ASTSchemaAttrTest &n)
 {
-    throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
+    lr_str.append("(schema-attr-test ");
+    n.name->accept(*this);
+    lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTSchemaElemTest &n)
+void LRVisitor::visit(ASTSchemaElemTest &n)
 {
-    throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
+    lr_str.append("(schema-elem-test ");
+    n.name->accept(*this);
+    lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTScript &n)
+void LRVisitor::visit(ASTSeq &n)
 {
-    // we shouldn't visit this since we want to obtain different strings for different modules
-    // to visit script use getScriptLRs() instead
-    lr_str.append("(script ");
+    lr_str.append("(sequence ");
 
-    VisitNodesVector(n.modules, *this);
+    VisitNodesVector(n.exprs, *this);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTSeq &n)
-{
-    if (n.exprs->size() > 1 || n.exprs->size() == 0)
-    {
-        lr_str.append("(sequence ");
-    }
-
-    VisitNodesVector(n.exprs, *this);
-
-    if (n.exprs->size() > 1 || n.exprs->size() == 0)
-    {
-        lr_str.append(") ");
-    }
-}
-
-void LRVisitor::visit(const ASTSpaceSeq &n)
+void LRVisitor::visit(ASTSpaceSeq &n)
 {
     lr_str.append("(space-sequence ");
 
@@ -1314,7 +1356,7 @@ void LRVisitor::visit(const ASTSpaceSeq &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTTextConst &n)
+void LRVisitor::visit(ASTTextConst &n)
 {
     lr_str.append("(text ");
 
@@ -1323,12 +1365,12 @@ void LRVisitor::visit(const ASTTextConst &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTTextTest &n)
+void LRVisitor::visit(ASTTextTest &n)
 {
     lr_str.append("(text-test)");
 }
 
-void LRVisitor::visit(const ASTTreat &n)
+void LRVisitor::visit(ASTTreat &n)
 {
     lr_str.append("(treat ");
 
@@ -1341,9 +1383,20 @@ void LRVisitor::visit(const ASTTreat &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTTypeSeq &n)
+void LRVisitor::visit(ASTType &n)
 {
-    if (dynamic_cast<ASTEmptyTest *>(n.type_test))
+    std::string *pref, *loc;
+
+    ASTParseQName(n.name, &pref, &loc);
+    //LR_PAIR(pref, loc);
+    lr_str.append(std::string("!xs!") + *loc);
+    delete pref;
+    delete loc;
+}
+
+void LRVisitor::visit(ASTTypeSeq &n)
+{
+    if (n.mod == ASTTypeSeq::NONE)
     {
         n.type_test->accept(*this);
     }
@@ -1351,19 +1404,15 @@ void LRVisitor::visit(const ASTTypeSeq &n)
     {
         lr_str.append("(");
 
-        if (!dynamic_cast<ASTEmptyTest *>(n.type_test))
-            lr_str.append(occur_str[n.mod]);
+        lr_str.append(occur_str[n.mod]);
 
-        if (n.type_name)
-            lr_str.append(*n.type_name);
-        else
-            n.type_test->accept(*this);
+        n.type_test->accept(*this);
 
         lr_str.append(") ");
     }
 }
 
-void LRVisitor::visit(const ASTTypeSingle &n)
+void LRVisitor::visit(ASTTypeSingle &n)
 {
     lr_str.append("(");
     lr_str.append(occur_str[n.mod]);
@@ -1373,7 +1422,7 @@ void LRVisitor::visit(const ASTTypeSingle &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTTypeSwitch &n)
+void LRVisitor::visit(ASTTypeSwitch &n)
 {
     lr_str.append("(ts ");
 
@@ -1387,21 +1436,18 @@ void LRVisitor::visit(const ASTTypeSwitch &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTTypeVar &n)
+void LRVisitor::visit(ASTTypeVar &n)
 {
     lr_str.append("(");
 
-    if (n.type_name)
-        lr_str.append(*n.type_name);
-    else
-        n.type_seq->accept(*this);
+    n.type->accept(*this);
 
     n.var->accept(*this);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTUnio &n)
+void LRVisitor::visit(ASTUnio &n)
 {
     lr_str.append("(unio ");
 
@@ -1410,7 +1456,7 @@ void LRVisitor::visit(const ASTUnio &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTUop &n)
+void LRVisitor::visit(ASTUop &n)
 {
     if (n.op == ASTUop::MINUS)
         lr_str.append("(unary-@ ");
@@ -1422,7 +1468,7 @@ void LRVisitor::visit(const ASTUop &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTUpdDel &n)
+void LRVisitor::visit(ASTUpdDel &n)
 {
     if (n.type == ASTUpdDel::DEEP)
         lr_str.append("(delete ");
@@ -1434,7 +1480,7 @@ void LRVisitor::visit(const ASTUpdDel &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTUpdInsert &n)
+void LRVisitor::visit(ASTUpdInsert &n)
 {
     if (n.type == ASTUpdInsert::INTO)
         lr_str.append("(insert-into ");
@@ -1449,7 +1495,7 @@ void LRVisitor::visit(const ASTUpdInsert &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTUpdMove &n)
+void LRVisitor::visit(ASTUpdMove &n)
 {
     if (n.type == ASTUpdMove::INTO)
         lr_str.append("(move-into ");
@@ -1464,18 +1510,18 @@ void LRVisitor::visit(const ASTUpdMove &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTUpdRename &n)
+void LRVisitor::visit(ASTUpdRename &n)
 {
     lr_str.append("(rename ");
 
     n.what->accept(*this);
 
-    lr_str.append(LR_PAIR(n.pref, n.local));
+    LR_PAIR(n.pref, n.local);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTUpdReplace &n)
+void LRVisitor::visit(ASTUpdReplace &n)
 {
     lr_str.append("(replace ");
 
@@ -1485,14 +1531,19 @@ void LRVisitor::visit(const ASTUpdReplace &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTVar &n)
+void LRVisitor::visit(ASTVar &n)
 {
     lr_str.append("(var ");
-    lr_str.append(LR_PAIR(n.pref, n.local));
+
+    if (!n.uri)
+        LR_PAIR(n.pref, n.local);
+    else
+        LR_PAIR(n.uri, n.local);
+
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTVarDecl &n)
+void LRVisitor::visit(ASTVarDecl &n)
 {
     if (n.expr == NULL)
         lr_str.append("(declare-external-var ");
@@ -1506,30 +1557,31 @@ void LRVisitor::visit(const ASTVarDecl &n)
 
     if (n.type)
         n.type->accept(*this);
+    else
+        lr_str.append(" (zero-or-more (item-test))");
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTVersionDecl &n)
+void LRVisitor::visit(ASTVersionDecl &n)
 {
+    return; // we don't want this in lropt
+
     lr_str.append("(version-declaration ");
 
-    lr_str.append(LR_STR(n.xq_version));
+    LR_STR(*n.xq_version);
 
     if (n.encoding)
-        lr_str.append(LR_STR(n.encoding));
+        LR_STR(*n.encoding);
 
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(const ASTXMLComm &n)
+void LRVisitor::visit(ASTXMLComm &n)
 {
     lr_str.append("(comment ");
 
-    lr_str.append("(const (type !xs!string) ");
-    lr_str.append(LR_SINGLE(n.cont));
-    lr_str.append(")");
+    LR_STR(*n.cont);
 
     lr_str.append(") ");
 }
-

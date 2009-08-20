@@ -12,30 +12,19 @@
 class ASTAttribTest : public ASTNode
 {
 public:
-    std::string *npref, *nloc;
-    std::string *tpref, *tloc;
+    ASTNode *name; // ASTNameTest;  may be NULL; attribute()
+    ASTNode *type; // may be NULL; attribute(abubu)
 
 public:
-    ASTAttribTest(ASTLocation &loc, std::string *name_ = NULL, std::string *type_ = NULL) : ASTNode(loc)
-    {
-        ASTParseQName(name_, &npref, &nloc);
-        ASTParseQName(type_, &tpref, &tloc);
-
-        delete name_;
-        delete type_;
-    }
-    ASTAttribTest(ASTLocation &loc, std::string *npref_, std::string *nloc_, std::string *tpref_, std::string *tloc_) :
-            ASTNode(loc),
-            npref(npref_),
-            nloc(nloc_),
-            tpref(tpref_),
-            tloc(tloc_)
-    {}
+    ASTAttribTest(ASTLocation &loc, ASTNode *name_ = NULL, ASTNode *type_ = NULL) : ASTNode(loc), name(name_), type(type_) {}
 
     ~ASTAttribTest();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

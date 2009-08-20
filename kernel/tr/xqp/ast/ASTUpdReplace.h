@@ -9,21 +9,22 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTFunDef;
-
 class ASTUpdReplace : public ASTNode
 {
 public:
     ASTNode *what;
-    ASTFunDef *new_expr;
+    ASTNode *new_expr; // ASTFunDef
 
 public:
-    ASTUpdReplace(ASTLocation &loc, ASTNode *what_, ASTFunDef *new_expr_) : ASTNode(loc), what(what_), new_expr(new_expr_) {}
+    ASTUpdReplace(ASTLocation &loc, ASTNode *what_, ASTNode *new_expr_) : ASTNode(loc), what(what_), new_expr(new_expr_) {}
 
     ~ASTUpdReplace();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

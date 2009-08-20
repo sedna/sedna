@@ -10,7 +10,6 @@
 #pragma GCC diagnostic ignored "-Wparentheses"
 #endif /* GNUC */
 
-//#include "tr/xqp/XQueryParser.hpp"
 #include "tr/xqp/location.hh"
 
 #if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
@@ -43,6 +42,9 @@ public:
 
     // deep copy of the corresponding subtree
     virtual ASTNode *dup() = 0;
+
+    // modifies one of the children based on pointer-eq
+    virtual void modifyChild(const ASTNode *oldc, ASTNode *newc) = 0;
 };
 
 #endif

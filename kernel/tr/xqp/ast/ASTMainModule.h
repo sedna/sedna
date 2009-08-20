@@ -9,17 +9,17 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTProlog;
-class ASTQuery;
+#include "ASTProlog.h"
+#include "ASTQuery.h"
 
 class ASTMainModule : public ASTNode
 {
 public:
-    ASTProlog *prolog; // query prolog; not NULL
-    ASTQuery *query; // query itself (including Sedna update expressions); not NULL
+    ASTNode *prolog; // query prolog; not NULL
+    ASTNode *query; // query itself (including Sedna update expressions); not NULL
 
 public:
-    ASTMainModule(ASTLocation &loc, ASTProlog *prol, ASTQuery *quer) : ASTNode(loc), prolog(prol), query(quer) {}
+    ASTMainModule(ASTLocation &loc, ASTNode *prol, ASTNode *quer) : ASTNode(loc), prolog(prol), query(quer) {}
 
     void setVersionDecl(ASTNode *vd);
 
@@ -27,6 +27,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

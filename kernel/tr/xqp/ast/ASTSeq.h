@@ -17,7 +17,10 @@ public:
     ASTNodesVector *exprs;
 
 public:
-    ASTSeq(ASTLocation &loc, ASTNodesVector *exprs_) : ASTNode(loc), exprs(exprs_) {}
+    ASTSeq(ASTLocation &loc, ASTNodesVector *exprs_) : ASTNode(loc), exprs(exprs_)
+    {
+        U_ASSERT(exprs_ != NULL);
+    }
 
     ASTSeq(ASTLocation &loc) : ASTNode(loc)
     {
@@ -33,6 +36,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

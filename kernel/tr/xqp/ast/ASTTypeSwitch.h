@@ -11,22 +11,25 @@
 
 #include <vector>
 
-class ASTCase;
+#include "ASTCase.h"
 
 class ASTTypeSwitch : public ASTNode
 {
 public:
     ASTNode *expr; // operand expression
     ASTNodesVector *cases;
-    ASTCase *def_case;
+    ASTNode *def_case; // ASTCase
 
 public:
-    ASTTypeSwitch(ASTLocation &loc, ASTNode *op_expr, ASTNodesVector *cs, ASTCase *dc) : ASTNode(loc), expr(op_expr), cases(cs), def_case(dc) {}
+    ASTTypeSwitch(ASTLocation &loc, ASTNode *op_expr, ASTNodesVector *cs, ASTNode *dc) : ASTNode(loc), expr(op_expr), cases(cs), def_case(dc) {}
 
     ~ASTTypeSwitch();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

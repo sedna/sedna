@@ -9,22 +9,25 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTTypeSeq;
-class ASTFunDef;
+#include "ASTTypeSeq.h"
+#include "ASTFunDef.h"
 
 class ASTCase : public ASTNode
 {
 public:
-    ASTTypeSeq *type; // NULL if this is a default case
-    ASTFunDef *fd;
+    ASTNode *type; // NULL if this is a default case; ASTTypeSeq
+    ASTNode *fd; // ASTFunDef
 
 public:
-    ASTCase(ASTLocation &loc, ASTTypeSeq *seqtype, ASTFunDef *expr) : ASTNode(loc), type(seqtype), fd(expr) {}
+    ASTCase(ASTLocation &loc, ASTNode *seqtype, ASTNode *expr) : ASTNode(loc), type(seqtype), fd(expr) {}
 
     ~ASTCase();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

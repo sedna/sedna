@@ -30,6 +30,11 @@ public:
     std::string *name;
     TrgMod t_mod, a_mod, g_mod;
 
+    // added by sema
+    std::string *leaf_name; // leaf test in path   |
+    int leaf_type; // 0 - element, 1 - otherwise   | all of this only for before-insert-node triggers
+    ASTNode *trimmed_path; // path without leaf    |
+
 public:
     ASTCreateTrg(ASTLocation &loc, std::string *name_, TrgMod ba, TrgMod idr, ASTNode *path_, TrgMod ns, ASTNodesVector *expr) :
         ASTNode(loc),
@@ -39,12 +44,19 @@ public:
         t_mod(ba),
         a_mod(idr),
         g_mod(ns)
-    {}
+    {
+        leaf_name = NULL;
+        leaf_type = -1;
+        trimmed_path = NULL;
+    }
 
     ~ASTCreateTrg();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

@@ -9,18 +9,18 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTOrderModInt;
+#include "ASTOrderModInt.h"
 
 class ASTOrderMod : public ASTNode
 {
 public:
-    ASTOrderModInt *ad_mod;
-    ASTOrderModInt *em_mod;
-    ASTOrderModInt *col_mod;
+    ASTNode *ad_mod; // may be NULL; ASTOrderModInt
+    ASTNode *em_mod; // may be NULL; ASTOrderModInt
+    ASTNode *col_mod; // may be NULL; ASTOrderModInt
 
 
 public:
-    ASTOrderMod(ASTLocation &loc, ASTOrderModInt *ad = NULL, ASTOrderModInt *em = NULL, ASTOrderModInt *cm = NULL)
+    ASTOrderMod(ASTLocation &loc, ASTNode *ad = NULL, ASTNode *em = NULL, ASTNode *cm = NULL)
         : ASTNode(loc),
           ad_mod(ad),
           em_mod(em),
@@ -31,6 +31,9 @@ public:
     void accept(ASTVisitor &v);
 
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

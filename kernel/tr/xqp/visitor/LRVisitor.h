@@ -3,15 +3,26 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#ifndef _LR_VISITOR_H_
+#define _LR_VISITOR_H_
+
 #include "ASTVisitor.h"
 #include <string>
+#include "tr/xqp/XQueryDriver.h"
 
 class LRVisitor : public ASTVisitor
 {
 private:
-    std::string lr_str;
+    std::string lr_str, sc, mods;
+    bool purge_imports; // make imports into imported modules declarations in LR
+    bool is_libmodule; // true, if we are dealing with library modules
 
 public:
+    LRVisitor(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)
+    {
+        resetVisitor();
+    }
+
     ~LRVisitor() {}
 
     std::string getResult() const
@@ -22,122 +33,131 @@ public:
     void resetVisitor()
     {
         lr_str = "";
+        mods = "";
+        sc = "";
+
+        is_libmodule = false;
+        purge_imports = false;
+
+        vis_path.clear();
     }
 
     // visiting functions
-    void visit(const ASTAlterUser &n);
-    void visit(const ASTAtomicTest &n);
-    void visit(const ASTAttr &n);
-    void visit(const ASTAttrConst &n);
-    void visit(const ASTAttribTest &n);
-    void visit(const ASTAxis &n);
-    void visit(const ASTAxisStep &n);
-    void visit(const ASTBaseURI &n);
-    void visit(const ASTBop &n);
-    void visit(const ASTBoundSpaceDecl &n);
-    void visit(const ASTCase &n);
-    void visit(const ASTCast &n);
-    void visit(const ASTCastable &n);
-    void visit(const ASTCharCont &n);
-    void visit(const ASTCommTest &n);
-    void visit(const ASTCommentConst &n);
-    void visit(const ASTConstDecl &n);
-    void visit(const ASTCreateColl &n);
-    void visit(const ASTCreateDoc &n);
-    void visit(const ASTCreateFtIndex &n);
-    void visit(const ASTCreateIndex &n);
-    void visit(const ASTCreateRole &n);
-    void visit(const ASTCreateTrg &n);
-    void visit(const ASTCreateUser &n);
-    void visit(const ASTDDO &n);
-    void visit(const ASTDeclareCopyNsp &n);
-    void visit(const ASTDefCollation &n);
-    void visit(const ASTDefNamespaceDecl &n);
-    void visit(const ASTDocConst &n);
-    void visit(const ASTDocTest &n);
-    void visit(const ASTDropColl &n);
-    void visit(const ASTDropDoc &n);
-    void visit(const ASTDropFtIndex &n);
-    void visit(const ASTDropIndex &n);
-    void visit(const ASTDropMod &n);
-    void visit(const ASTDropRole &n);
-    void visit(const ASTDropTrg &n);
-    void visit(const ASTDropUser &n);
-    void visit(const ASTElem &n);
-    void visit(const ASTElemConst &n);
-    void visit(const ASTElementTest &n);
-    void visit(const ASTEmptyTest &n);
-    void visit(const ASTError &n);
-    void visit(const ASTExtExpr &n);
-    void visit(const ASTFilterStep &n);
-    void visit(const ASTFor &n);
-    void visit(const ASTFunCall &n);
-    void visit(const ASTFunDef &n);
-    void visit(const ASTFuncDecl &n);
-    void visit(const ASTGrantPriv &n);
-    void visit(const ASTGrantRole &n);
-    void visit(const ASTIf &n);
-    void visit(const ASTInstOf &n);
-    void visit(const ASTItemTest &n);
-    void visit(const ASTLet &n);
-    void visit(const ASTLibModule &n);
-    void visit(const ASTLit &n);
-    void visit(const ASTLoadFile &n);
-    void visit(const ASTLoadModule &n);
-    void visit(const ASTMainModule &n);
-    void visit(const ASTMetaCols &n);
-    void visit(const ASTMetaDocs &n);
-    void visit(const ASTMetaSchemaCol &n);
-    void visit(const ASTMetaSchemaDoc &n);
-    void visit(const ASTModImport &n);
-    void visit(const ASTModuleDecl &n);
-    void visit(const ASTNameTest &n);
-    void visit(const ASTNamespaceDecl &n);
-    void visit(const ASTNodeTest &n);
-    void visit(const ASTNsp &n);
-    void visit(const ASTOption &n);
-    void visit(const ASTOrdExpr &n);
-    void visit(const ASTOrder &n);
-    void visit(const ASTOrderBy &n);
-    void visit(const ASTOrderByRet &n);
-    void visit(const ASTOrderEmpty &n);
-    void visit(const ASTOrderMod &n);
-    void visit(const ASTOrderModInt &n);
-    void visit(const ASTOrderSpec &n);
-    void visit(const ASTPIConst &n);
-    void visit(const ASTPi &n);
-    void visit(const ASTPiTest &n);
-    void visit(const ASTPosVar &n);
-    void visit(const ASTPragma &n);
-    void visit(const ASTPred &n);
-    void visit(const ASTProlog &n);
-    void visit(const ASTQuantExpr &n);
-    void visit(const ASTQuery &n);
-    void visit(const ASTRenameColl &n);
-    void visit(const ASTRet &n);
-    void visit(const ASTRevokePriv &n);
-    void visit(const ASTRevokeRole &n);
-    void visit(const ASTSchemaAttrTest &n);
-    void visit(const ASTSchemaElemTest &n);
-    void visit(const ASTScript &n);
-    void visit(const ASTSeq &n);
-    void visit(const ASTSpaceSeq &n);
-    void visit(const ASTTextConst &n);
-    void visit(const ASTTextTest &n);
-    void visit(const ASTTreat &n);
-    void visit(const ASTTypeSeq &n);
-    void visit(const ASTTypeSingle &n);
-    void visit(const ASTTypeSwitch &n);
-    void visit(const ASTTypeVar &n);
-    void visit(const ASTUnio &n);
-    void visit(const ASTUop &n);
-    void visit(const ASTUpdDel &n);
-    void visit(const ASTUpdInsert &n);
-    void visit(const ASTUpdMove &n);
-    void visit(const ASTUpdRename &n);
-    void visit(const ASTUpdReplace &n);
-    void visit(const ASTVar &n);
-    void visit(const ASTVarDecl &n);
-    void visit(const ASTVersionDecl &n);
-    void visit(const ASTXMLComm &n);
+    void visit(ASTAlterUser &n);
+    void visit(ASTAttr &n);
+    void visit(ASTAttrConst &n);
+    void visit(ASTAttribTest &n);
+    void visit(ASTAxis &n);
+    void visit(ASTAxisStep &n);
+    void visit(ASTBaseURI &n);
+    void visit(ASTBop &n);
+    void visit(ASTBoundSpaceDecl &n);
+    void visit(ASTCase &n);
+    void visit(ASTCast &n);
+    void visit(ASTCastable &n);
+    void visit(ASTCharCont &n);
+    void visit(ASTCommTest &n);
+    void visit(ASTCommentConst &n);
+    void visit(ASTConstDecl &n);
+    void visit(ASTCreateColl &n);
+    void visit(ASTCreateDoc &n);
+    void visit(ASTCreateFtIndex &n);
+    void visit(ASTCreateIndex &n);
+    void visit(ASTCreateRole &n);
+    void visit(ASTCreateTrg &n);
+    void visit(ASTCreateUser &n);
+    void visit(ASTDDO &n);
+    void visit(ASTDeclareCopyNsp &n);
+    void visit(ASTDefCollation &n);
+    void visit(ASTDefNamespaceDecl &n);
+    void visit(ASTDocConst &n);
+    void visit(ASTDocTest &n);
+    void visit(ASTDropColl &n);
+    void visit(ASTDropDoc &n);
+    void visit(ASTDropFtIndex &n);
+    void visit(ASTDropIndex &n);
+    void visit(ASTDropMod &n);
+    void visit(ASTDropRole &n);
+    void visit(ASTDropTrg &n);
+    void visit(ASTDropUser &n);
+    void visit(ASTElem &n);
+    void visit(ASTElemConst &n);
+    void visit(ASTElementTest &n);
+    void visit(ASTEmptyTest &n);
+    void visit(ASTError &n);
+    void visit(ASTExtExpr &n);
+    void visit(ASTFilterStep &n);
+    void visit(ASTFor &n);
+    void visit(ASTFunCall &n);
+    void visit(ASTFunDef &n);
+    void visit(ASTFuncDecl &n);
+    void visit(ASTGrantPriv &n);
+    void visit(ASTGrantRole &n);
+    void visit(ASTIf &n);
+    void visit(ASTInstOf &n);
+    void visit(ASTItemTest &n);
+    void visit(ASTLet &n);
+    void visit(ASTLibModule &n);
+    void visit(ASTLit &n);
+    void visit(ASTLoadFile &n);
+    void visit(ASTLoadModule &n);
+    void visit(ASTMainModule &n);
+    void visit(ASTMetaCols &n);
+    void visit(ASTMetaDocs &n);
+    void visit(ASTMetaSchemaCol &n);
+    void visit(ASTMetaSchemaDoc &n);
+    void visit(ASTModImport &n);
+    void visit(ASTModuleDecl &n);
+    void visit(ASTNameTest &n);
+    void visit(ASTNamespaceDecl &n);
+    void visit(ASTNodeTest &n);
+    void visit(ASTNsp &n);
+    void visit(ASTOption &n);
+    void visit(ASTOrdExpr &n);
+    void visit(ASTOrder &n);
+    void visit(ASTOrderBy &n);
+    void visit(ASTOrderByRet &n);
+    void visit(ASTOrderEmpty &n);
+    void visit(ASTOrderMod &n);
+    void visit(ASTOrderModInt &n);
+    void visit(ASTOrderSpec &n);
+    void visit(ASTPIConst &n);
+    void visit(ASTPi &n);
+    void visit(ASTPiTest &n);
+    void visit(ASTPosVar &n);
+    void visit(ASTPragma &n);
+    void visit(ASTPred &n);
+    void visit(ASTProlog &n);
+    void visit(ASTQName &n);
+    void visit(ASTQuantExpr &n);
+    void visit(ASTQuery &n);
+    void visit(ASTRenameColl &n);
+    void visit(ASTRet &n);
+    void visit(ASTRevokePriv &n);
+    void visit(ASTRevokeRole &n);
+    void visit(ASTSchemaAttrTest &n);
+    void visit(ASTSchemaElemTest &n);
+    void visit(ASTSeq &n);
+    void visit(ASTSpaceSeq &n);
+    void visit(ASTTextConst &n);
+    void visit(ASTTextTest &n);
+    void visit(ASTTreat &n);
+    void visit(ASTType &n);
+    void visit(ASTTypeSeq &n);
+    void visit(ASTTypeSingle &n);
+    void visit(ASTTypeSwitch &n);
+    void visit(ASTTypeVar &n);
+    void visit(ASTUnio &n);
+    void visit(ASTUop &n);
+    void visit(ASTUpdDel &n);
+    void visit(ASTUpdInsert &n);
+    void visit(ASTUpdMove &n);
+    void visit(ASTUpdRename &n);
+    void visit(ASTUpdReplace &n);
+    void visit(ASTVar &n);
+    void visit(ASTVarDecl &n);
+    void visit(ASTVersionDecl &n);
+    void visit(ASTXMLComm &n);
 };
+
+#endif

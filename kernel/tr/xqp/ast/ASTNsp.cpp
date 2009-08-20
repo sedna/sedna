@@ -3,21 +3,50 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "tr/xqp/serial/deser.h"
+
 #include "tr/xqp/visitor/ASTVisitor.h"
 #include "ASTNsp.h"
 
 ASTNsp::~ASTNsp()
 {
     delete name;
-    destroyASTNodesVector(cont);
+    delete cont;
 }
 
 void ASTNsp::accept(ASTVisitor &v)
 {
+    v.addToPath(this);
     v.visit(*this);
+    v.removeFromPath(this);
 }
 
 ASTNode *ASTNsp::dup()
 {
-    return new ASTNsp(loc, new std::string(*name), duplicateASTNodes(cont));
+    return new ASTNsp(loc, new std::string(*name), (cont) ? new std::string(*cont) : NULL);
+}
+
+ASTNode *ASTNsp::createNode(scheme_list &sl)
+{
+    std::string *name = NULL;
+    ASTLocation loc;
+    std::string *cont = NULL;
+
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
+
+    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+
+    name = new std::string(sl[2].internal.str);
+
+    if (sl.size() > 3)
+    {
+        U_ASSERT(sl[3].type == SCM_STRING);
+        cont = new std::string(sl[3].internal.str);
+    }
+
+    return new ASTNsp(loc, name, cont);
+}
+
+void ASTNsp::modifyChild(const ASTNode *oldc, ASTNode *newc)
+{
 }

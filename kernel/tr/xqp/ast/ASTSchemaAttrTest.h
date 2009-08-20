@@ -12,25 +12,20 @@
 class ASTSchemaAttrTest : public ASTNode
 {
 public:
-    std::string *npref, *nloc;
+    ASTNode *name; // ASTNameTest
 
 public:
-    ASTSchemaAttrTest(ASTLocation &loc, std::string *name_ = NULL) : ASTNode(loc)
+    ASTSchemaAttrTest(ASTLocation &loc, ASTNode *name_) : ASTNode(loc), name(name_)
     {
-        ASTParseQName(name_, &npref, &nloc);
-
-        delete name_;
     }
-    ASTSchemaAttrTest(ASTLocation &loc, std::string *npref_, std::string *nloc_) :
-            ASTNode(loc),
-            npref(npref_),
-            nloc(nloc_)
-    {}
 
     ~ASTSchemaAttrTest();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

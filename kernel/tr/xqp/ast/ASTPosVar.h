@@ -9,21 +9,24 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTVar;
+#include "ASTVar.h"
 
 class ASTPosVar : public ASTNode
 {
 public:
-    ASTVar *var;
+    ASTNode *var;
 
 public:
-    ASTPosVar(ASTLocation &loc, ASTVar *pos_var) : ASTNode(loc), var(pos_var) {}
+    ASTPosVar(ASTLocation &loc, ASTNode *pos_var) : ASTNode(loc), var(pos_var) {}
 
     ~ASTPosVar();
 
     void accept(ASTVisitor &v);
 
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

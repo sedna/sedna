@@ -16,20 +16,31 @@ class ASTVar : public ASTNode
 public:
     std::string *pref, *local; // pragma name
 
+    std::string *uri; // resolved prefix; added by semantic analyzer
+
 public:
     ASTVar(ASTLocation &loc, std::string *var_name) : ASTNode(loc)
     {
         ASTParseQName(var_name, &pref, &local);
 
         delete var_name;
+
+        uri = NULL;
     }
 
-    ASTVar(ASTLocation &loc, std::string *var_pref, std::string *var_local) : ASTNode(loc), pref(var_pref), local(var_local) {}
+    ASTVar(ASTLocation &loc, std::string *var_pref, std::string *var_local) :
+            ASTNode(loc), pref(var_pref), local(var_local)
+    {
+        uri = NULL;
+    }
 
     ~ASTVar();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

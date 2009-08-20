@@ -41,6 +41,7 @@ public:
   };
 };
 
-StringVector parse_batch(QueryType type, const char *batch);
+StringVector parse_batch(QueryType type, const char *batch, std::string *module_name);
+StringVector parse_batch(QueryType type, StringVector batch, std::string *module_name);
 
 #endif /* _XQUERYTOLR_H */

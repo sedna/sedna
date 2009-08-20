@@ -5,8 +5,6 @@
 
 #include "tr/xqp/XQuerytoLR.h"
 #include "tr/xqp/XQueryDriver.h"
-#include "tr/xqp/visitor/LRVisitor.h"
-#include "tr/xqp/ast/AST.h"
 
 #include "tr/tr_utils.h"
 #include "common/errdbg/d_printf.h"
@@ -14,9 +12,10 @@
 
 EXTERN_DECLARE_TIME_VARS
 
-static char* encoding_processing(const char *query)
+static std::string encoding_processing(const char *query)
 {
-    int query_len = strlen(query);
+    unsigned int query_len = strlen(query);
+
     if (query_len > 2 &&
         (unsigned char)query[0] == 0xef &&
         (unsigned char)query[1] == 0xbb &&
@@ -28,68 +27,47 @@ static char* encoding_processing(const char *query)
     if (utf8_valid(query, query_len) >= 0)
         throw USER_EXCEPTION(SE4082);
 
-    char* x = (char*)malloc(strlen(query) + 1);
-    strcpy(x, query);
-    return x;
+    return std::string(query, query_len);
 }
 
-StringVector parse_batch(QueryType type, const char *batch1)
-{
 
-    char* batch = NULL;
-    StringVector array;
+StringVector parse_batch(QueryType type, StringVector batch, std::string *module_name)
+{
+    StringVector array, batch_utf;
     sedna::XQueryDriver drv;
-    LRVisitor lrv;
-    ASTNodesVector::iterator it;
-    ASTScript *scr;
-    std::string err_msg;
 
     GET_TIME(&t1_parser);
 
     try
     {
         // check for BOM and valid UTF-8; batch is a copy
-        batch = encoding_processing(batch1);
+        for (unsigned int i = 0; i < batch.size(); i++)
+            batch_utf.push_back(encoding_processing(batch[i].c_str()));
 
         if (type == TL_XQuery)
         {
-            // parse query and create ast-tree
-            drv.parse(batch);
+            // parse query and create ast-tree; any errors will be thrown as exceptions
+            for (unsigned int i = 0; i < batch_utf.size(); i++)
+                drv.parse(batch_utf[i].c_str());
 
-            // get result; if error throw an exception
-            if (drv.getErrorCode() != -1)
-            {
-                err_msg = drv.getErrorMsg();
-                if (err_msg != "")
-                    throw USER_EXCEPTION2(drv.getErrorCode(), err_msg.c_str());
-                else
-                    throw USER_EXCEPTION(drv.getErrorCode());
-            }
+            // do semantic analysis; any errors will be thrown as exceptions
+            drv.doSemanticAnalysis();
 
-            scr = drv.getTree();
+            *module_name = drv.getParsedModuleName();
 
-            for (it = scr->modules->begin(); it != scr->modules->end(); it++)
-            {
-                // create lr for module ast
-                (*it)->accept(lrv);
-
-                // save result
-                array.push_back(lrv.getResult());
-
-                // reuse visitor by resetting its state
-                lrv.resetVisitor();
-            }
+            if (*module_name == "")
+                array = drv.getLRRepresentation();
+            else
+                array = drv.getIRRepresentation();
         }
         else // not TL_XQuery
         {
-            array.push_back(std::string(batch));
+            array = batch_utf;
         }
 
         GET_TIME(&t2_parser);
 
         ADD_TIME(t_total_parser, t1_parser, t2_parser);
-
-        free(batch);
 
         return array;
     }
@@ -98,8 +76,16 @@ StringVector parse_batch(QueryType type, const char *batch1)
         GET_TIME(&t2_parser);
         ADD_TIME(t_total_parser, t1_parser, t2_parser);
 
-        free(batch);
-
         throw;
     }
 }
+
+StringVector parse_batch(QueryType type, const char *batch1, std::string *module_name)
+{
+    StringVector sv;
+
+    sv.push_back(batch1);
+
+    return parse_batch(type, sv, module_name);
+}
+

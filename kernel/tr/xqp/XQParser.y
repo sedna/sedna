@@ -241,7 +241,7 @@ namespace sedna
 %token PRAGMA_BEG "(#"
 %token CDATA_BEG "<[CDATA["
 
-%token S "'WS'"
+%token S "space character"
 %token APOS "'"
 %token QUOT "\""
 %token LT_OR_ST "<"
@@ -404,7 +404,7 @@ namespace sedna
 %type <qname> elementDeclaration
 %type <qname> attributeName
 %type <qname> elementName
-%type <qname> typeName
+%type <node> typeName
 %type <littext> uriLiteral
 %type <qname> ncName
 %type <qname> qName
@@ -431,7 +431,7 @@ namespace sedna
 %destructor { delete $$; } IntegerLiteral DecimalLiteral DoubleLiteral StringLiteral PREF_WCARD WCARD_LOC QNAME COMP_CONST_QNAME PREF CREF CHAR_CONT XML_CONT_WITH_END PI_TARGET PI_CONT_WITH_END PRAGMA_CONT_WITH_END CDATA_CONT_WITH_END
 
 // AST destructor
-%destructor { delete $$; } module mainModule libraryModule versionDecl moduleDecl prolog setter import namespaceDecl boundarySpaceDecl defaultNamespaceDecl optionDecl orderingModeDecl emptyOrderDecl copyNamespacesDecl defaultCollationDecl baseURIDecl schemaImport moduleImport varDecl constructionDecl functionDecl param enclosedExpr queryBody expr exprSingle flworExpr forClauseInt letClauseInt whereClause positionalVar orderByClause orderSpec orderADmod orderEGLmod orderCOLmod quantifiedExpr typeswitchExpr caseClause ifExpr orExpr andExpr comparisonExpr rangeExpr additiveExpr multiplicativeExpr unionExpr intersectExceptExpr instanceofExpr treatExpr castableExpr castExpr unaryExpr valueExpr generalComp valueComp nodeComp validateExpr extensionExpr pragma pathExpr stepExpr axisStep forwardStep forwardAxis abbrevForwardStep reverseStep reverseAxis abbrevReverseStep nodeTest nameTest wildcard filterExpr predicate primaryExpr literal numericLiteral varRef varName parenthesizedExpr contextItemExpr orderedExpr unorderedExpr functionCall constructor directConstructor dirElemConstructor dirAttribute dirElemContent commonContent dirCommentConstructor dirPIConstructor cdataSection computedConstructor compDocConstructor compElemConstructor contentExpr compAttrConstructor compTextConstructor compCommentConstructor compPIConstructor singleType typeDeclaration sequenceType itemType atomicType kindTest documentTest elementTest schemaElementTest schemaAttributeTest piTest attributeTest commentTest textTest anyKindTest attribNameOrWildcard attributeDeclaration elementNameOrWildcard elementDeclaration attributeName elementName typeName uriLiteral ncName qName funcName createExpr userName privName triggerDoStmt metadataExpr updateExpr insertExpr deleteExpr deleteUndeepExpr replaceExpr renameExpr moveExpr
+%destructor { delete $$; } module mainModule libraryModule versionDecl moduleDecl prolog setter import namespaceDecl boundarySpaceDecl defaultNamespaceDecl optionDecl orderingModeDecl emptyOrderDecl copyNamespacesDecl defaultCollationDecl baseURIDecl schemaImport moduleImport varDecl constructionDecl functionDecl param enclosedExpr queryBody expr exprSingle flworExpr forClauseInt letClauseInt whereClause positionalVar orderByClause orderSpec orderADmod orderEGLmod orderCOLmod quantifiedExpr typeswitchExpr caseClause ifExpr orExpr andExpr comparisonExpr rangeExpr additiveExpr multiplicativeExpr unionExpr intersectExceptExpr instanceofExpr treatExpr castableExpr castExpr unaryExpr valueExpr generalComp valueComp nodeComp validateExpr extensionExpr pragma pathExpr stepExpr axisStep forwardStep forwardAxis abbrevForwardStep reverseStep reverseAxis abbrevReverseStep nodeTest nameTest wildcard filterExpr predicate primaryExpr literal numericLiteral varRef varName parenthesizedExpr orderedExpr unorderedExpr functionCall constructor directConstructor dirElemConstructor dirAttribute dirElemContent commonContent dirCommentConstructor dirPIConstructor cdataSection computedConstructor compDocConstructor compElemConstructor contentExpr compAttrConstructor compTextConstructor compCommentConstructor compPIConstructor singleType typeDeclaration sequenceType itemType atomicType kindTest documentTest elementTest schemaElementTest schemaAttributeTest piTest attributeTest commentTest textTest anyKindTest attribNameOrWildcard attributeDeclaration elementNameOrWildcard elementDeclaration attributeName elementName typeName uriLiteral ncName qName funcName createExpr userName privName triggerDoStmt metadataExpr updateExpr insertExpr deleteExpr deleteUndeepExpr replaceExpr renameExpr moveExpr
 
 // Some internal static declarations
 %{
@@ -444,9 +444,7 @@ namespace sedna
     static bool isPreserveBoundSpace; // boundary space policy for direct constructors
     static bool isSecondPrologPart;   // true, if declaration from second prolog part have been met
 
-    static bool CheckPITarget(sedna::XQueryDriver &d, XQueryParser::location_type& loc, std::string *pit, bool is_comp);
     static void ProcessDirectContent(ASTNodesVector *cont, bool isPreserveBS);
-    static void ModifyStandardType(std::string *type);
 
     static void errorc(sedna::XQueryDriver &d, const sedna::XQueryParser::location_type& l, int code);
 
@@ -483,7 +481,7 @@ namespace sedna
 %initial-action
 {
     // Initialize the initial location.
-    @$.begin.filename = @$.end.filename = NULL;//&driver.file;
+    @$.begin.filename = @$.end.filename = NULL;
 
     // start from first column
     @$.begin.column = @$.end.column = 1;
@@ -502,14 +500,11 @@ namespace sedna
 script:
         module
         {
-            ASTScript *sc = new ASTScript(@$);
-            sc->addModule($1);
-
-            driver.setTree(sc);
+            driver.addModule($1);
         }
     |   script ST_SEP module
         {
-            driver.getTree()->addModule($3);
+            driver.addModule($3);
         }
     ;
 
@@ -905,35 +900,35 @@ constructionDecl:
 
     /* [26]        FunctionDecl       ::=      "declare" "function" QName "(" ParamList? ")" ("as" SequenceType)? (EnclosedExpr | "external") */
 functionDecl:
-        DECLARE FUNCTION qName LPAREN paramList RPAREN AS sequenceType enclosedExpr
+        DECLARE FUNCTION funcName LPAREN paramList RPAREN AS sequenceType enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, $5, static_cast<ASTTypeSeq *>($8), $9);
         }
-    |   DECLARE FUNCTION qName LPAREN paramList RPAREN AS sequenceType EXTERNAL
+    |   DECLARE FUNCTION funcName LPAREN paramList RPAREN AS sequenceType EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, $5, static_cast<ASTTypeSeq *>($8));
         }
-    |   DECLARE FUNCTION qName LPAREN RPAREN AS sequenceType enclosedExpr
+    |   DECLARE FUNCTION funcName LPAREN RPAREN AS sequenceType enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, static_cast<ASTTypeSeq *>($7), $8);
         }
-    |   DECLARE FUNCTION qName LPAREN RPAREN AS sequenceType EXTERNAL
+    |   DECLARE FUNCTION funcName LPAREN RPAREN AS sequenceType EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, static_cast<ASTTypeSeq *>($7));
         }
-    |   DECLARE FUNCTION qName LPAREN paramList RPAREN enclosedExpr
+    |   DECLARE FUNCTION funcName LPAREN paramList RPAREN enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, $5, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE), $7);
         }
-    |   DECLARE FUNCTION qName LPAREN paramList RPAREN EXTERNAL
+    |   DECLARE FUNCTION funcName LPAREN paramList RPAREN EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, $5, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE));
         }
-    |   DECLARE FUNCTION qName LPAREN RPAREN enclosedExpr
+    |   DECLARE FUNCTION funcName LPAREN RPAREN enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE), $6);
         }
-    |   DECLARE FUNCTION qName LPAREN RPAREN EXTERNAL
+    |   DECLARE FUNCTION funcName LPAREN RPAREN EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE));
         }
@@ -1002,16 +997,22 @@ queryBody:
 expr:
         exprSingle
         {
-            ASTSeq *sq = new ASTSeq(@$);
-            sq->addExpr($1);
-
-            $$ = sq;
+            $$ = $1;
         }
     |   expr COMMA exprSingle
         {
-            static_cast<ASTSeq *>($1)->addExpr($3);
+            ASTSeq *seq;
 
-            $$ = $1;
+            if ((seq = dynamic_cast<ASTSeq *>($1)))
+                seq->addExpr($3);
+            else
+            {
+                seq = new ASTSeq(@1);
+                seq->addExpr($1);
+                seq->addExpr($3);
+            }
+
+            $$ = seq;
         }
     |   expr COMMA error { $$ = $1; }
     ;
@@ -1119,12 +1120,12 @@ forClauseInt:
         }
     |   varRef positionalVar _IN exprSingle
         {
-            ASTTypeVar *tv = new ASTTypeVar(@1, new std::string("xs:anyType"), static_cast<ASTVar *>($1));
+            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1));
             $$ = new ASTFor(@$, tv, static_cast<ASTPosVar *>($2), $4);
         }
     |   varRef _IN exprSingle
         {
-            ASTTypeVar *tv = new ASTTypeVar(@1, new std::string("xs:anyType"), static_cast<ASTVar *>($1));
+            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1));
             $$ = new ASTFor(@$, tv, NULL, $3);
         }
     |   DOLLAR error _IN error { $$ = new ASTError(@$); }
@@ -1165,7 +1166,7 @@ letClauseInt:
         }
     |   varRef ASSIGN exprSingle
         {
-            ASTTypeVar *tv = new ASTTypeVar(@1, new std::string("xs:anyType"), static_cast<ASTVar *>($1));
+            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1));
             $$ = new ASTLet(@$, tv, $3);
         }
     |   DOLLAR error ASSIGN error { $$ = new ASTError(@$); }
@@ -1312,7 +1313,7 @@ quantifiedExprVarList:
     |   varRef _IN exprSingle
         {
             $$ = new ASTNodesVector();
-            $$->push_back(new ASTTypeVar(@$, new std::string("xs:anyType"), static_cast<ASTVar *>($1)));
+            $$->push_back(new ASTTypeVar(@$, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1)));
             $$->push_back($3);
         }
     |   quantifiedExprVarList COMMA varRef typeDeclaration _IN exprSingle
@@ -1323,7 +1324,7 @@ quantifiedExprVarList:
         }
     |   quantifiedExprVarList COMMA varRef _IN exprSingle
         {
-            $1->push_back(new ASTTypeVar(@$, new std::string("xs:anyType"), static_cast<ASTVar *>($3)));
+            $1->push_back(new ASTTypeVar(@$, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($3)));
             $1->push_back($5);
             $$ = $1;
         }
@@ -1337,12 +1338,14 @@ typeswitchExpr:
         TYPESWITCH LPAREN expr RPAREN caseClauseList DEFAULT varRef RETURN exprSingle
         {
                 $$ = new ASTTypeSwitch(@$, $3, $5, new ASTCase(@6, NULL,
-                                new ASTFunDef(@6, new ASTTypeVar(@7, new std::string("!xs!anytype"), static_cast<ASTVar *>($7)), $9)));
+                                new ASTFunDef(@6, new ASTTypeVar(@7, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                                static_cast<ASTVar *>($7)), $9)));
         }
     |   TYPESWITCH LPAREN expr RPAREN caseClauseList DEFAULT RETURN exprSingle
         {
                 $$ = new ASTTypeSwitch(@$, $3, $5, new ASTCase(@6, NULL,
-                        new ASTFunDef(@6, new ASTTypeVar(@7, new std::string("!xs!anytype"), new ASTVar(@6, new std::string(""), new std::string("%v"))), $8)));
+                        new ASTFunDef(@6, new ASTTypeVar(@7, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                        new ASTVar(@6, new std::string(""), new std::string("%v"))), $8))); // %v instead of $%v to escape context binding
         }
 
     |   TYPESWITCH LPAREN error RETURN error { $$ = new ASTError(@$); }
@@ -1373,13 +1376,15 @@ caseClauseList:
 caseClause:
         CASE varRef AS sequenceType RETURN exprSingle
         {
-            ASTFunDef *fd = new ASTFunDef(@6, new ASTTypeVar(@2, new std::string("!xs!anytype"), static_cast<ASTVar *>($2)), $6);
+            ASTFunDef *fd = new ASTFunDef(@6, new ASTTypeVar(@2, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                                    static_cast<ASTVar *>($2)), $6);
 
             $$ = new ASTCase(@$, static_cast<ASTTypeSeq *>($4), fd);
         }
     |   CASE sequenceType RETURN exprSingle
         {
-            ASTFunDef *fd = new ASTFunDef(@4, new ASTTypeVar(@1, new std::string("!xs!anytype"), new ASTVar(@1, new std::string(""), new std::string("%v"))), $4);
+            ASTFunDef *fd = new ASTFunDef(@4, new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                                                    new ASTVar(@1, new std::string(""), new std::string("%v"))), $4); // %v instead of $%v to escape context binding
 
             $$ = new ASTCase(@$, static_cast<ASTTypeSeq *>($2), fd);
         }
@@ -1533,12 +1538,12 @@ unionExpr:
         }
     |   unionExpr UNION intersectExceptExpr
         {
-            $$ = new ASTBop(@$, ASTBop::UNION, $1, $3);
+            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::UNION, $1, $3));
         }
     |   unionExpr BAR intersectExceptExpr
         {
-            $$ = new ASTBop(@$, ASTBop::UNION, $1, $3);
-        }
+            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::UNION, $1, $3));
+}
     |   unionExpr UNION error { $$ = $1; }
     |   unionExpr BAR error { $$ = $1; }
     ;
@@ -1551,11 +1556,11 @@ intersectExceptExpr:
         }
     |   intersectExceptExpr INTERSECT instanceofExpr
         {
-            $$ = new ASTBop(@$, ASTBop::INTERSECT, $1, $3);
+            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::INTERSECT, $1, $3));
         }
     |   intersectExceptExpr EXCEPT instanceofExpr
         {
-            $$ = new ASTBop(@$, ASTBop::EXCEPT, $1, $3);
+            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::EXCEPT, $1, $3));
         }
     |   intersectExceptExpr INTERSECT error { $$ = $1; }
     |   intersectExceptExpr EXCEPT error { $$ = $1; }
@@ -1945,7 +1950,10 @@ abbrevForwardStep:
         }
     |   nodeTest
         {
-            $$ = new ASTAxisStep(@$, ASTAxisStep::CHILD, $1);
+            if (dynamic_cast<ASTAttribTest *>($1))
+                $$ = new ASTAxisStep(@$, ASTAxisStep::ATTRIBUTE, $1);
+            else
+                $$ = new ASTAxisStep(@$, ASTAxisStep::CHILD, $1);
         }
     ;
 
@@ -2035,30 +2043,17 @@ wildcard:
     ;
 
     /* [81]        FilterExpr     ::=      PrimaryExpr PredicateList */
-    /* NOTE: ContextItemExpr is an exception here since we must treat it as AxisStep for IR purposes */
 filterExpr:
         primaryExpr
         {
-            if (dynamic_cast<ASTAxisStep *>($1))
-                $$ = $1;
-            else
-                $$ = new ASTFilterStep(@$, $1);
+            $$ = new ASTFilterStep(@$, $1);
         }
     |   primaryExpr predicateList
         {
-            if (ASTAxisStep *ci = dynamic_cast<ASTAxisStep *>($1))
-            {
-                ci->setPredicates($2);
+            ASTFilterStep *fs = new ASTFilterStep(@$, $1);
+            fs->setPredicates($2);
 
-                $$ = ci;
-            }
-            else
-            {
-                ASTFilterStep *fs = new ASTFilterStep(@$, $1);
-                fs->setPredicates($2);
-
-                $$ = fs;
-            }
+            $$ = fs;
         }
     ;
 
@@ -2156,7 +2151,7 @@ parenthesizedExpr:
 contextItemExpr:
         DOT
         {
-            $$ = new ASTAxisStep(@$, ASTAxisStep::CONTEXT_ITEM, new ASTNodeTest(@$));
+            $$ = NULL; // eventually ASTFilterStep will be created
         }
     ;
 
@@ -2371,6 +2366,7 @@ dirAttributeList:
 dirAttribute:
         S qName optS EQ_SIGN optS dirAttributeValue
         {
+            ASTNsp *nsp;
             // merge char content
             ProcessDirectContent($6, true);
 
@@ -2388,12 +2384,18 @@ dirAttribute:
                 }
 
                 $2->erase(0, 6); // erase "xmlns:"
-                $2->insert(0, "\"");
-                $2->append("\"");
-                $$ = new ASTNsp(@$, $2, $6);
+                nsp = new ASTNsp(@$, $2, ($6) ? new std::string(*static_cast<ASTCharCont *>($6->back())->cont) : NULL);
+
+                if ($6 && $6->size() > 0)
+                    delete $6->back();
+                delete $6;
+
+                $$ = nsp;
             }
             else if (*($2) == "xmlns")
             {
+                ASTNsp *nsp;
+
                 if ($6 && ($6->size() != 1 || !dynamic_cast<ASTCharCont *>($6->back())))
                 {
                     errorc(this->driver, @6, XQST0022);
@@ -2404,8 +2406,14 @@ dirAttribute:
                     $$ = NULL;
                 }
 
-                *($2) = "\"\"";
-                $$ = new ASTNsp(@$, $2, $6);
+                *($2) = "";
+                nsp = new ASTNsp(@$, $2, ($6) ? new std::string(*static_cast<ASTCharCont *>($6->back())->cont) : NULL);
+
+                if ($6 && $6->size() > 0)
+                    delete $6->back();
+                delete $6;
+
+                $$ = nsp;
             }
             else
             {
@@ -2455,13 +2463,13 @@ attributeValue:
         {
             $$ = new ASTNodesVector();
 
-            $$->push_back(new ASTCharCont(@$, "\\\""));
+            $$->push_back(new ASTCharCont(@$, "\""));
         }
     |   ESCAPE_APOS
         {
             $$ = new ASTNodesVector();
 
-            $$->push_back(new ASTCharCont(@$, "\\'"));
+            $$->push_back(new ASTCharCont(@$, "\'"));
         }
     |   CHAR_CONT
         {
@@ -2477,13 +2485,13 @@ attributeValue:
         }
     |   attributeValue ESCAPE_QUOT
         {
-            $1->push_back(new ASTCharCont(@2, "\\\""));
+            $1->push_back(new ASTCharCont(@2, "\""));
 
             $$ = $1;
         }
     |   attributeValue ESCAPE_APOS
         {
-            $1->push_back(new ASTCharCont(@2, "\\'"));
+            $1->push_back(new ASTCharCont(@2, "\'"));
 
             $$ = $1;
         }
@@ -2547,18 +2555,10 @@ dirElemContent:
 commonContent:
         PREF
         {
-            if (*($1) == "\"")
-                *($1) = "\\\"";
-
             $$ = new ASTCharCont(@$, $1);
         }
     |   CREF
         {
-            if (*($1) == "\\")
-                *($1) = "\\\\";
-            else if (*($1) == "\"")
-                *($1) = "\\\"";
-
             $$ = new ASTCharCont(@$, $1, ASTCharCont::CREF);
         }
     |   DOUB_LBRACE
@@ -2589,8 +2589,9 @@ dirCommentConstructor:
 dirPIConstructor:
         PI_START PI_TARGET PI_CONT_WITH_END
         {
-            if (!CheckPITarget(this->driver, @$, $2, false))
+            if ($2->find(":") != std::string::npos)
             {
+                error(@2, std::string("NCName is expected, but QName is given: '") + *($2) + "'");
                 delete $2;
                 delete $3;
 
@@ -2713,29 +2714,29 @@ compPIConstructor:
         PROCESSING_INSTRUCTION COMP_CONST_QNAME LBRACE RBRACE
         {
             // check for NCNameness and reserved name (xml, Xml, etc.)
-            if (!CheckPITarget(this->driver, @$, $2, true))
+            if ($2->find(":") != std::string::npos)
             {
+                error(@2, std::string("NCName is expected, but QName is given: '") + *($2) + "'");
                 delete $2;
 
-                YYABORT;
-                $$ = NULL;
+                $$ = new ASTError(@$);
             }
-
-            $$ = new ASTPIConst(@$, $2);
+            else
+                $$ = new ASTPIConst(@$, $2);
         }
     |   PROCESSING_INSTRUCTION COMP_CONST_QNAME LBRACE expr RBRACE
         {
             // check for NCNameness and reserved name (xml, Xml, etc.)
-            if (!CheckPITarget(this->driver, @$, $2, true))
+            if ($2->find(":") != std::string::npos)
             {
+                error(@2, std::string("NCName is expected, but QName is given: '") + *($2) + "'");
                 delete $2;
                 delete $4;
 
-                YYABORT;
-                $$ = NULL;
+                $$ = new ASTError(@$);
             }
-
-            $$ = new ASTPIConst(@$, $2, new ASTSpaceSeq(@4, $4));
+            else
+                $$ = new ASTPIConst(@$, $2, new ASTSpaceSeq(@4, $4));
         }
     |   PROCESSING_INSTRUCTION LBRACE expr RBRACE LBRACE RBRACE
         {
@@ -2756,11 +2757,11 @@ compPIConstructor:
 singleType:
         atomicType
         {
-            $$ = new ASTTypeSingle(@$, new ASTAtomicTest(@1, $1), ASTTypeSingle::ONE);
+            $$ = new ASTTypeSingle(@$, new ASTType(@1, $1, ASTType::ATOMIC), ASTTypeSingle::ONE);
         }
     |   atomicType QUEST
         {
-            $$ = new ASTTypeSingle(@$, new ASTAtomicTest(@1, $1), ASTTypeSingle::OPT);
+            $$ = new ASTTypeSingle(@$, new ASTType(@1, $1, ASTType::ATOMIC), ASTTypeSingle::OPT);
         }
     ;
 
@@ -2778,7 +2779,7 @@ typeDeclaration:
 sequenceType:
         EMPTY_SEQUENCE LPAREN RPAREN
         {
-            $$ = new ASTTypeSeq(@$, new ASTEmptyTest(@$));
+            $$ = new ASTTypeSeq(@$, new ASTEmptyTest(@$), ASTTypeSeq::NONE);
         }
     |   itemType
         {
@@ -2810,7 +2811,7 @@ itemType:
         }
     |   atomicType
         {
-            $$ = new ASTAtomicTest(@$, $1);
+            $$ = new ASTType(@$, $1, ASTType::ATOMIC);
         }
     ;
 
@@ -2818,7 +2819,6 @@ itemType:
 atomicType:
         qName
         {
-            ModifyStandardType($1);
             $$ = $1;
         }
     ;
@@ -2911,11 +2911,11 @@ attributeTest:
         }
     |   ATTRIBUTE LPAREN attribNameOrWildcard RPAREN
         {
-            $$ = new ASTAttribTest(@$, $3);
+            $$ = new ASTAttribTest(@$, new ASTNameTest(@3, $3));
         }
     |   ATTRIBUTE LPAREN attribNameOrWildcard COMMA typeName RPAREN
         {
-            $$ = new ASTAttribTest(@$, $3, $5);
+            $$ = new ASTAttribTest(@$, new ASTNameTest(@3, $3), $5);
         }
     |   ATTRIBUTE LPAREN error RPAREN { $$ = new ASTError(@$); }
     ;
@@ -2928,7 +2928,7 @@ attribNameOrWildcard:
         }
     |   STAR
         {
-            $$ = new std::string("*");
+            $$ = new std::string("*:*");
         }
     ;
 
@@ -2936,16 +2936,10 @@ attribNameOrWildcard:
 schemaAttributeTest:
         SCHEMA_ATTRIBUTE LPAREN attributeDeclaration RPAREN
         {
-            error(@$, "schema-attribute is not supported");
-            delete $3;
-            YYABORT;
-
-            //$$ = new ASTSchemaAttrTest(@$, $3);
-            $$ = NULL;
+            $$ = new ASTSchemaAttrTest(@$, new ASTNameTest(@3, $3));
         }
     |   SCHEMA_ATTRIBUTE LPAREN error RPAREN
         {
-            error(@$, "schema-attribute is not supported");
             $$ = new ASTError(@$);
         }
     ;
@@ -2963,15 +2957,15 @@ elementTest:
         }
     |   ELEMENT LPAREN elementNameOrWildcard RPAREN
         {
-            $$ = new ASTElementTest(@$, $3);
+            $$ = new ASTElementTest(@$, new ASTNameTest(@3, $3));
         }
     |   ELEMENT LPAREN elementNameOrWildcard COMMA typeName RPAREN
         {
-            $$ = new ASTElementTest(@$, $3, $5);
+            $$ = new ASTElementTest(@$, new ASTNameTest(@3, $3), $5);
         }
     |   ELEMENT LPAREN elementNameOrWildcard COMMA typeName QUEST RPAREN
         {
-            $$ = new ASTElementTest(@$, $3, $5, ASTElementTest::ANY_NIL);
+            $$ = new ASTElementTest(@$, new ASTNameTest(@3, $3), $5, ASTElementTest::ANY_NIL);
         }
     |   ELEMENT LPAREN error RPAREN { $$ = new ASTError(@$); }
     ;
@@ -2984,7 +2978,7 @@ elementNameOrWildcard:
         }
     |   STAR
         {
-            $$ = new std::string("*");
+            $$ = new std::string("*:*");
         }
     ;
 
@@ -2992,16 +2986,10 @@ elementNameOrWildcard:
 schemaElementTest:
         SCHEMA_ELEMENT LPAREN elementDeclaration RPAREN
         {
-            error(@$, "schema-element is not supported");
-            delete $3;
-            YYABORT;
-
-            //$$ = new ASTSchemaElemTest(@$, $3);
-            $$ = NULL;
+            $$ = new ASTSchemaElemTest(@$, new ASTNameTest(@3, $3));
         }
     |   SCHEMA_ELEMENT LPAREN error RPAREN
         {
-            error(@$, "schema-element is not supported");
             $$ = new ASTError(@$);
         }
     ;
@@ -3024,6 +3012,9 @@ elementName:
     // [139]       TypeName       ::=      QName
 typeName:
         qName
+        {
+            $$ = new ASTType(@$, $1, ASTType::ANY);
+        }
     ;
 
     // [140]       URILiteral     ::=      StringLiteral
@@ -3345,7 +3336,7 @@ createExpr:
         }
     |   LOAD STDIN StringLiteral
         {
-            $$ = new ASTLoadFile(@$, new std::string("\"/STDIN/\""), $3);
+            $$ = new ASTLoadFile(@$, new std::string("/STDIN/"), $3);
         }
     |   LOAD StringLiteral StringLiteral StringLiteral
         {
@@ -3353,7 +3344,7 @@ createExpr:
         }
     |   LOAD STDIN StringLiteral StringLiteral
         {
-            $$ = new ASTLoadFile(@$, new std::string("\"/STDIN/\""), $3, $4);
+            $$ = new ASTLoadFile(@$, new std::string("/STDIN/"), $3, $4);
         }
     |   LOAD _MODULE_ moduleList
         {
@@ -3433,7 +3424,7 @@ nsTrigMod:
 privName:
         ALL
         {
-            $$ = new std::string("\"ALL\"");
+            $$ = new std::string("ALL");
         }
     |   StringLiteral
         {
@@ -3444,7 +3435,7 @@ privName:
 userName:
         PUBLIC
         {
-            $$ = new std::string("\"PUBLIC\"");
+            $$ = new std::string("PUBLIC");
         }
     |   StringLiteral
         {
@@ -3815,18 +3806,7 @@ static ASTNode *makeQuantExpr(sedna::XQueryParser::location_type& loc, ASTQuantE
         var = static_cast<ASTTypeVar *>(*(rit + 1));
         expr = *rit;
 
-        if (qt == ASTQuantExpr::SOME)
-        {
-            res = new ASTQuantExpr(loc, expr, new ASTFunDef(loc, var, res), ASTQuantExpr::SOME);
-        }
-        else if (qt == ASTQuantExpr::EVERY)
-        {
-            res = new ASTQuantExpr(loc, expr, new ASTFunDef(loc, var, res), ASTQuantExpr::EVERY);
-        }
-        else /* shouldn't happen since we control parsing */
-        {
-            return NULL;
-        }
+        res = new ASTQuantExpr(loc, expr, new ASTFunDef(loc, var, res), qt);
     }
 
     delete var_expr;
@@ -3843,7 +3823,8 @@ static ASTNode *makePredicateTree(sedna::XQueryParser::location_type& loc, ASTNo
     res = init_expr;
 
     for (it = preds->begin(); it != preds->end(); it++)
-        res = new ASTPred(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc, new std::string("!xs!anyType"), new ASTVar(loc, new std::string(""), new std::string("$%v"))), (*it)->dup()));
+        res = new ASTPred(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc, new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                                                new ASTVar(loc, new std::string(""), new std::string("$%v"))), (*it)->dup()));
 
     return res;
 }
@@ -3858,17 +3839,10 @@ static ASTNode *makePathExpr(sedna::XQueryParser::location_type& loc, ASTNodesVe
     ASTFilterStep *fs;
     ASTNodesVector::const_iterator it;
 
-    // we want to optmize one case: one filter step w/o predicates, since it's very common. For example, '1' is one filter step
-    if (steps->size() == 1 && (fs = dynamic_cast<ASTFilterStep *>((*steps)[0])) && fs->getPreds() == NULL)
-    {
-        res = fs->getExpr();
-        fs->expr = NULL; // to prevent freeing of expression
-        destroyASTNodesVector(steps);
+    // start from context
+    res = new ASTVar(loc, new std::string(""), new std::string("$%v"));
 
-        return res;
-    }
-
-    // else, we make somewhat more copmplex path representation
+    // we make somewhat copmplex path representation
     for (it = steps->begin(); it != steps->end(); it++)
     {
         pred = NULL;
@@ -3876,18 +3850,15 @@ static ASTNode *makePathExpr(sedna::XQueryParser::location_type& loc, ASTNodesVe
         // step is an axis step
         if ((as = dynamic_cast<ASTAxisStep *>(*it)))
         {
-            if (res == NULL)
-                res = new ASTVar(loc, new std::string(""), new std::string("$%v"));
-
             // step with predicates
             if (as->getPreds())
             {
                 pred = makePredicateTree(loc, as->getPreds(), new ASTAxis(loc, as->getAxis(),
                             new ASTVar(loc, new std::string(""), new std::string("$%v")), as->getTest()->dup()));
 
-                res = new ASTDDO(loc, new ASTRet(loc, res,
-                        new ASTFunDef(loc, new ASTTypeVar(loc, new std::string("!xs!anyType"),
-                        new ASTVar(loc, new std::string(""), new std::string("$%v"))), pred)));
+                res = new ASTRet(loc, res,
+                        new ASTFunDef(loc, new ASTTypeVar(loc, new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                        new ASTVar(loc, new std::string(""), new std::string("$%v"))), pred));
             }
             else
             {
@@ -3896,20 +3867,48 @@ static ASTNode *makePathExpr(sedna::XQueryParser::location_type& loc, ASTNodesVe
         }
         else if ((fs = dynamic_cast<ASTFilterStep *>(*it)))
         {
-            if (fs->getPreds())
-                pred = makePredicateTree(loc, fs->getPreds(), fs->getExpr()->dup());
-            else
-                pred = fs->getExpr()->dup();
+            ASTNode *prim_expr = fs->getExpr();
 
-            if (res == NULL)
+            // context expression
+            if (!prim_expr)
             {
+                if (fs->getPreds())
+                {
+                    pred = new ASTRet(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc,
+                                    new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                                    new ASTVar(loc, new std::string(""), new std::string("$%v"))),
+                                    makePredicateTree(loc, fs->getPreds(), new ASTVar(loc, new std::string(""), new std::string("$%v")))));
+                }
+                else
+                {
+                    pred = res;
+                }
+
                 res = pred;
             }
-            else
+            else // usual filter expression
             {
-                res = new ASTRet(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc, new std::string("!xs!anyType"),
-                        new ASTVar(loc, new std::string(""), new std::string("$%v"))), pred));
+                prim_expr = prim_expr->dup();
+
+                if (fs->getPreds())
+                    pred = makePredicateTree(loc, fs->getPreds(), prim_expr);
+                else
+                    pred = prim_expr;
+
+                if (it == steps->begin())
+                {
+                    res = pred;
+                }
+                else
+                {
+                    res = new ASTRet(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc,
+                            new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
+                            new ASTVar(loc, new std::string(""), new std::string("$%v"))), pred));
+                }
             }
+
+            if (it != steps->begin())
+                res = new ASTDDO(loc, res);
         }
         else
             return NULL; /* shouldn't happen since we control parsing */
@@ -3972,78 +3971,4 @@ static void ProcessDirectContent(ASTNodesVector *cont, bool isPreserveBS)
 
         pos++;
     }
-}
-
-// checks pi target name for validity
-static bool CheckPITarget(sedna::XQueryDriver &d, XQueryParser::location_type& loc, std::string *pit, bool is_comp)
-{
-    std::string errorm;
-
-    // we could've received QName in computed constructor
-    if (pit->find(":") != std::string::npos)
-    {
-        errorm = std::string("NCName is expected, but QName is given: '") + *pit + "'";
-        d.error(loc, XPST0003, errorm.c_str());
-        return false;
-    }
-
-    // check for 'xml'
-    if (pit->size() == 3 && toupper((*pit)[0]) == 'X' && toupper((*pit)[1]) == 'M' && toupper((*pit)[2]) == 'L')
-    {
-        // we must emit different error in case of computed and direct PI constructor
-        if (!is_comp)
-        {
-            errorm = std::string("Invalid processing instruction name: '") + *pit + "'";
-            d.error(loc, XPST0003, errorm.c_str());
-        }
-        else
-        {
-            errorc(d, loc, XQDY0064);
-        }
-
-        return false;
-    }
-
-    return true;
-}
-
-// replaces some types with internal ones (i.e. xs:integer -> !xs!integer)
-static void ModifyStandardType(std::string *type)
-{
-    std::string *pref, *loc;
-
-    ASTParseQName(type, &pref, &loc);
-
-    if (*pref == "xs" &&
-           (
-            *loc == "anySimpleType" ||
-            *loc == "gYearMonth" ||
-            *loc == "gYear" ||
-            *loc == "gMonthDay" ||
-            *loc == "gDay" ||
-            *loc == "gMonth" ||
-            *loc == "dateTime" ||
-            *loc == "time" ||
-            *loc == "date" ||
-            *loc == "duration" ||
-            *loc == "boolean" ||
-            *loc == "base64Binary" ||
-            *loc == "hexBinary" ||
-            *loc == "float" ||
-            *loc == "double" ||
-            *loc == "anyURI" ||
-            *loc == "QName" ||
-            *loc == "NOTATION" ||
-            *loc == "string" ||
-            *loc == "decimal" ||
-            *loc == "integer" ||
-            *loc == "untypedAtomic"
-           )
-       )
-    {
-        type->replace(0, 3, "!xs!"); // xs: -> !xs!
-    }
-
-    delete pref;
-    delete loc;
 }

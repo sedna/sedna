@@ -18,33 +18,21 @@ public:
         NON_NIL
     };
 
-    std::string *npref, *nloc;
-    std::string *tpref, *tloc;
+    ASTNode *name;
+    ASTNode *type;
 
     Mod mod;
 
 public:
-    ASTElementTest(ASTLocation &loc, std::string *name_ = NULL, std::string *type_ = NULL, Mod mod_ = NON_NIL) : ASTNode(loc), mod(mod_)
-    {
-        ASTParseQName(name_, &npref, &nloc);
-        ASTParseQName(type_, &tpref, &tloc);
-
-        delete name_;
-        delete type_;
-    }
-    ASTElementTest(ASTLocation &loc, std::string *npref_, std::string *nloc_, std::string *tpref_, std::string *tloc_, Mod mod_ = NON_NIL) :
-            ASTNode(loc),
-            npref(npref_),
-            nloc(nloc_),
-            tpref(tpref_),
-            tloc(tloc_),
-            mod(mod_)
-    {}
+    ASTElementTest(ASTLocation &loc, ASTNode *name_ = NULL, ASTNode *type_ = NULL, Mod mod_ = NON_NIL) : ASTNode(loc), name(name_), type(type_), mod(mod_) {}
 
     ~ASTElementTest();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

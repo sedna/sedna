@@ -17,8 +17,10 @@ public:
     std::string *pref, *local; // attribute name
     ASTNodesVector *cont; // attribute content; may be NULL
 
+    std::string *uri; // added by sema; just cached uri, don't need to serialize
+
 public:
-    ASTAttr(ASTLocation &loc, std::string *name, ASTNodesVector *cont_ = NULL) : ASTNode(loc), cont(cont_)
+    ASTAttr(ASTLocation &loc, std::string *name, ASTNodesVector *cont_ = NULL) : ASTNode(loc), cont(cont_), uri(NULL)
     {
         ASTParseQName(name, &pref, &local);
 
@@ -29,13 +31,17 @@ public:
             ASTNode(loc),
             pref(elem_pref),
             local(elem_local),
-            cont(cont_)
+            cont(cont_),
+            uri(NULL)
     {}
 
     ~ASTAttr();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

@@ -22,17 +22,20 @@ public:
         OPT,
     };
 
-    ASTAtomicTest *type;
+    ASTNode *type;
 
     OccurMod mod; // '?' or nothing (ONE)
 
 public:
-    ASTTypeSingle(ASTLocation &loc, ASTAtomicTest *type_, ASTTypeSingle::OccurMod omod = ONE) : ASTNode(loc), type(type_), mod(omod) {}
+    ASTTypeSingle(ASTLocation &loc, ASTNode *type_, ASTTypeSingle::OccurMod omod = ONE) : ASTNode(loc), type(type_), mod(omod) {}
 
     ~ASTTypeSingle();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

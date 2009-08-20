@@ -35,6 +35,9 @@ public:
     void accept(ASTVisitor &v);
 
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

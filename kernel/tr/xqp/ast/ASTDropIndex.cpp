@@ -3,6 +3,8 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "tr/xqp/serial/deser.h"
+
 #include "tr/xqp/visitor/ASTVisitor.h"
 #include "ASTDropIndex.h"
 
@@ -13,10 +15,34 @@ ASTDropIndex::~ASTDropIndex()
 
 void ASTDropIndex::accept(ASTVisitor &v)
 {
+    v.addToPath(this);
     v.visit(*this);
+    v.removeFromPath(this);
 }
 
 ASTNode *ASTDropIndex::dup()
 {
     return new ASTDropIndex(loc, index->dup());
+}
+
+ASTNode *ASTDropIndex::createNode(scheme_list &sl)
+{
+    ASTLocation loc;
+    ASTNode *ind = NULL;
+
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
+
+    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    ind = dsGetASTFromSchemeList(*sl[2].internal.list);
+
+    return new ASTDropIndex(loc, ind);
+}
+
+void ASTDropIndex::modifyChild(const ASTNode *oldc, ASTNode *newc)
+{
+    if (index == oldc)
+    {
+        index = newc;
+        return;
+    }
 }
