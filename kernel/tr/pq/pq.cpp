@@ -37,7 +37,8 @@ StmntsArray *prepare_stmnt(QueryType type, const char *stmnt)
         type != TL_POR)
         throw USER_EXCEPTION(SE4002);
 //    d_printf2("Parser %s\n --------------------------- \n", stmnt);
-    StringVector v = parse_batch(type, stmnt);
+    std::string dummy;
+    StringVector v = parse_batch(type, stmnt, &dummy);
 
     if (v.size() >1) 
        throw USER_EXCEPTION(SE4003);
@@ -88,13 +89,12 @@ void Part_scheme_input::allocate_input(const std::string &in_prototype)
 //----------------------------------------------- 
 
 static char *scm_output_string = NULL;
-
+static bool Chicken_initialized = false;
 
 StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
 {
     GET_TIME(&t1_scm);
 
-    static bool Chicken_initialized = false;
     int status = 0;
 
         // prepare query for sending to scheme part
@@ -177,42 +177,70 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
 }
 
 
-
-std::string prepare_module(FILE* f, std::string& out_module_name)
+std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string *module_name)
 {
-   //read from file
-   char buf[1000];
-   string  plain_batch_text;
-   int status = 0;
+    //read from file
+    char buf[1000];
+    string  plain_batch_text, module;
+    StringVector batch, arr;
 
+    for (unsigned int i = 0; i < cf_vec.size(); i++)
+    {
+        plain_batch_text = "";
 
-   while(!feof(f))
-   {
-     
-      size_t len= fread(buf, sizeof(char), sizeof(buf), f);
+        while(!feof(cf_vec[i].f))
+        {
+            size_t len= fread(buf, sizeof(char), sizeof(buf), cf_vec[i].f);
 
-      plain_batch_text.append(buf, len);
-   }
+            plain_batch_text.append(buf, len);
+        }
 
-   StringVector v = parse_batch(TL_XQuery, plain_batch_text.c_str());
+        batch.push_back(plain_batch_text);
+    }
 
-   Part_scheme_input::allocate_input(v.at(0));
+    arr = parse_batch(TL_XQuery, batch, module_name);
 
-   char query_string[128];
-   memset(query_string, '\0', 128);
-   strcat(query_string, "(process-module-in-scheme ");
-   strcat(query_string, int2string((int)TL_XQuery).c_str());
-   strcat(query_string, ")");
+    module = "(";
+    for (unsigned int i = 0; i < arr.size(); i++)
+        module.append(arr[i]);
+    module.append(")");
 
-   C_word scheme_eval_res;
-   status = CHICKEN_eval_string(query_string, &scheme_eval_res);
-   if (status != 1)
-   {
-       char buf[1024];
-       CHICKEN_get_error_message (buf, 1024);
-       //d_printf2("Error evaluating Scheme part = %s\n", buf);
-       throw USER_EXCEPTION2(SE4004, buf);
-   }
+    return module;
+}
+
+std::string prepare_module(std::string init_module)
+{
+    int status = 0;
+
+    Part_scheme_input::allocate_input(init_module);
+
+    if (!Chicken_initialized)
+    {
+        status = CHICKEN_initialize(0, 0, 0, (void*)C_toplevel);
+        //d_printf2("CHICKEN_initialize = %d\n", status);
+        // Overriding usual_panic: 
+        C_panic_hook = chicken_panic_throw_exception;
+        status = CHICKEN_run(NULL);
+        //d_printf2("CHICKEN_run = %d\n", status);
+        Chicken_initialized = true;
+    }
+
+    char query_string[128];
+    memset(query_string, '\0', 128);
+    strcat(query_string, "(process-module-in-scheme ");
+    strcat(query_string, int2string((int)TL_ForAuth).c_str());
+    strcat(query_string, ")");
+
+    C_word scheme_eval_res;
+    status = CHICKEN_eval_string(query_string, &scheme_eval_res);
+
+    if (status != 1)
+    {
+        char buf[1024];
+        CHICKEN_get_error_message (buf, 1024);
+        //d_printf2("Error evaluating Scheme part = %s\n", buf);
+        throw USER_EXCEPTION2(SE4004, buf);
+    }
 
     string pc_module(scm_output_string);
     free(scm_output_string);
@@ -220,21 +248,22 @@ std::string prepare_module(FILE* f, std::string& out_module_name)
 
     scheme_list *qep_trees_in_scheme_lst = NULL;
     qep_trees_in_scheme_lst = make_tree_from_scheme_list(pc_module.c_str());
-    
-    if (   qep_trees_in_scheme_lst->size() < 3
-        || qep_trees_in_scheme_lst->at(0).type != SCM_BOOL) 
-       throw USER_EXCEPTION(SE4005);
+
+    if (qep_trees_in_scheme_lst->size() < 3 || qep_trees_in_scheme_lst->at(0).type != SCM_BOOL)
+        throw USER_EXCEPTION(SE4005);
 
 
     if (!qep_trees_in_scheme_lst->at(0).internal.b)
     {
-       string  error = (qep_trees_in_scheme_lst->at(1).internal.list)->at(2).internal.str;
-       // d_printf2("error str=%s\n", error.c_str());
-       throw USER_EXCEPTION2(atoi((qep_trees_in_scheme_lst->at(1).internal.list)->at(1).internal.num), error.c_str());
+        string error = (qep_trees_in_scheme_lst->at(1).internal.list)->at(2).internal.str;
+        // d_printf2("error str=%s\n", error.c_str());
+        throw USER_EXCEPTION2(atoi((qep_trees_in_scheme_lst->at(1).internal.list)->at(1).internal.num), error.c_str());
     }
 
-    out_module_name = qep_trees_in_scheme_lst->at(2).internal.str;
-    return qep_trees_in_scheme_lst->at(1).internal.str;
+    std::string res = qep_trees_in_scheme_lst->at(1).internal.str;
+    delete_scheme_list(qep_trees_in_scheme_lst);
+
+    return res;
 }
 
 

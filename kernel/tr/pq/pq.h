@@ -13,12 +13,15 @@
 
 #include "tr/tr_base.h"
 #include "tr/xqp/XQuerytoLR.h"
+#include "tr/client_core.h"
 
 int process_query_in_scheme (char *str, int step_id);
-std::string prepare_module(FILE* f, std::string& out_module_name);
+std::string prepare_module(std::string init_module);
+std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string *module_name);
 
 StmntsArray *prepare_stmnt(QueryType type, const char *stmnt);
 
+char *get_module(const char *module_uri);
 
 #endif
 

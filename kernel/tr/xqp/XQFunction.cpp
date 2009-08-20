@@ -46,7 +46,7 @@ namespace sedna
         {"", "floor",  1,  1, "!fn!floor", NULL},
         {"", "fthighlight",  2,  3, "!fn!fthighlight", NULL},
         {"", "fthighlight-blocks",  2,  3, "!fn!fthighlight-blocks", NULL},
-        {"", "ftindex-scan",  2,  2, "!fn!ftindex-scan", NULL},
+        {"", "ftindex-scan",  2,  3, "!fn!ftindex-scan", NULL},
         {"", "ftscan",  3,  4, "!fn!ftscan", NULL},
         {"", "ftwindex-scan",  2,  4, "!fn!ftwindex-scan", NULL},
         {"", "hours-from-dateTime",  1,  1, "!fn!hours-from-dateTime", NULL},

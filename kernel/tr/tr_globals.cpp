@@ -72,7 +72,7 @@ static arg_rec tr_argtable[] =
     {"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
     {"-popt",           " on/off",   arg_bool,  &run_popt,                  "off",     "\t\t  run physical optimizer (default off)"},
     {"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},
-    {"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, POR, Scheme, LR\n\t\t\t  (default XQuery)"},
+    {"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, POR, LR\n\t\t\t  (default XQuery)"},
     {"-debug",          " on/off",   arg_bool,  &debug_mode,                "off",     "\t\t  execute statements in debug mode (default off)\t"},
     {"-timeout",        " value",    arg_int,   &query_timeout,             "0",       "\t\t  set timeout for execution of a query in seconds (no timeout by default)\t"},
     {"-name",           " name",     arg_str,   tr_globals::login,          "SYSTEM",  "\t\t  user name (default SYSTEM)"},

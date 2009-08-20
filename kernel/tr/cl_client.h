@@ -33,6 +33,8 @@ private:
     int os_primitives_id_min_bound;
     bool recreate_debug_stream;
 
+    bool statements_ready;
+
     void clear_stack_for_stop_signal();
 
 public:

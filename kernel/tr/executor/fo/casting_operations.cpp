@@ -87,7 +87,10 @@ inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
 
 inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 {
-    throw XQUERY_EXCEPTION2(SE1003, "Casting to xs:QName should be performed at compile time");
+    // we evaluate 'string literal'->xs:QName constructor at static analysis
+    // all other string->xs:QName should be considered XQuery error (AK)
+    //throw XQUERY_EXCEPTION2(SE1003, "Casting to xs:QName should be performed at compile time");
+    throw XQUERY_EXCEPTION2(XPTY0004, "cannot cast xs:string to xs:QName dynamically");
 /*
     // !!! FIXME: check lexical representation
     tuple_cell tmp = tuple_cell::make_sure_light_atomic(c);
