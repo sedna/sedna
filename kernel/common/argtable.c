@@ -293,8 +293,10 @@ int arg_scanf(const char* str, arg_rec* argrec)
       char strval[ARGSTRLEN];
 
       /*-- scan for quoted string fist, if no good then try unquoted --*/
-      if (sscanf(str," \"%[^\"]\"%n",strval,&length) != 1)
-         if (sscanf(str,"%s%n",strval,&length) != 1)
+      if (sscanf(str," \"%[^\"]\"%n",strval,&length) != 1 && 
+          sscanf(str," '%[^']'%n",strval,&length) != 1)
+         if (sscanf(str,"%s%n",strval,&length) != 1 || 
+             (length != 0 && strval[0] == '-'))
             return -1;
 
       /*-- write the string into *argrec --*/

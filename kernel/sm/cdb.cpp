@@ -156,8 +156,8 @@ int main(int argc, char **argv)
         parse_cdb_command_line(argc, argv);
         
         get_sednaconf_values(&cfg);
-		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
-		SetGlobalNames();
+        InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
+        SetGlobalNames();
         open_gov_shm();
         SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
 
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
             string reason = "A database with the name '";
             reason +=  string(sm_globals::db_name);
             reason += "' already exists";
-            throw USER_EXCEPTION2(SE4307, reason.c_str());
+            throw USER_EXCEPTION2(SE4211, reason.c_str());
         }
 
         fprintf(res_os, "Creating a data base (it can take a few minutes)...\n");

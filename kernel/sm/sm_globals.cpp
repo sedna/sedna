@@ -96,6 +96,8 @@ parse_sm_command_line(int argc, char** argv)
        throw USER_ENV_EXCEPTION(buf, false);
    if (strcmp(db_name, "???") == 0)
        throw USER_ENV_EXCEPTION("Unexpected command line parameters: database name expected", false);
+
+   check_db_name_validness(sm_globals::db_name);
 }
 
 string 
@@ -111,8 +113,8 @@ construct_sm_command_line(char** argv)
     char buf_uc[100];
     sprintf(buf_uc, "%.2f", __upd_crt__);
 
-    command_line += string(" -upd-crt ") + buf_uc + " ";
-    command_line += db_name;
+    command_line += string(" -upd-crt ") + buf_uc + " '";
+    command_line += db_name + string("'");
     return command_line;
 }
 

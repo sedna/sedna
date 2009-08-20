@@ -3,9 +3,9 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
-
 #include <string>
+
+#include "common/sedna.h"
 
 #include "common/base.h"
 #include "sm/cdb_globals.h"
@@ -107,6 +107,8 @@ setup_cdb_globals(gov_config_struct* cfg)
 
    if (strcmp(sm_globals::db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
+   
+   check_db_name_validness(sm_globals::db_name);
 
    if (strlen(cfg->gov_vars.SEDNA_DATA) + strlen(sm_globals::db_name) + 14 > U_MAX_PATH)
        throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
@@ -117,6 +119,19 @@ setup_cdb_globals(gov_config_struct* cfg)
    strcat(sm_globals::db_files_path, "_files/");
 }
 
+
+static inline string& 
+replaceAll(string& context, const char* src, const char* dst) {
+    size_t lookHere = 0;
+    size_t foundHere;
+    const string from(src);
+    const string to(dst);
+    while((foundHere = context.find(from, lookHere)) != string::npos) {
+        context.replace(foundHere, from.size(), to);
+        lookHere = foundHere + to.size();
+    }
+    return context;
+}
 
 void create_cfg_file() 
 {
@@ -145,9 +160,11 @@ void create_cfg_file()
    uReleaseSA(def_sa, __sys_call_error);
    uReleaseSA(dir_sa, __sys_call_error);
 
+   string db_name_str = replaceAll(string(sm_globals::db_name), "&", "&amp;");
+   
    cfg_file_content =  "<?xml version=\"1.0\" standalone=\"yes\"?>\n";
    cfg_file_content += "<db>\n";
-   cfg_file_content += "   <name>" + string(sm_globals::db_name) + string("</name>\n");
+   cfg_file_content += "   <name>" + db_name_str + string("</name>\n");
    cfg_file_content += "   <bufs_num>" + int2string(sm_globals::bufs_num) + string("</bufs_num>\n");
    cfg_file_content += "   <max_trs_num>" + int2string(sm_globals::max_trs_num) + string("</max_trs_num>\n");
    cfg_file_content += "   <max_log_files>" + int2string(sm_globals::max_log_files) + string("</max_log_files>\n");

@@ -91,6 +91,8 @@ int main(int argc, char** argv)
         if (string(db_name) == "???")
             throw USER_EXCEPTION2(SE4601, "The name of the database must be specified (type option '-help')");
 
+        check_db_name_validness(db_name);
+
         gov_header_struct cfg;
         get_sednaconf_values(&cfg);
      

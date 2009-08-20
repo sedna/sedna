@@ -325,7 +325,7 @@ void info_table::stop_sessions(const std::string &db_name)
   for (unsigned int i = 0; i < tmp.size(); i++)  
       stop_session(tmp[i]);
    
-  elog(EL_DBG, ("" PRIu32 " session(s) on '%s' database stopped", tmp.size(), db_name.c_str()));
+  elog(EL_DBG, ("%"PRIu32" session(s) on '%s' database stopped", tmp.size(), db_name.c_str()));
 }
 
 
@@ -340,7 +340,7 @@ void info_table::stop_sessions()
   for (unsigned int i = 0; i < tmp.size(); i++)
       stop_session(tmp[i]);
 
-  elog(EL_DBG, ("" PRIu32 " session(s) have been stopped", tmp.size()));
+  elog(EL_DBG, ("%"PRIu32" session(s) have been stopped", tmp.size()));
 }
 
 
@@ -539,7 +539,7 @@ void info_table::wait_all_notregistered_sess()
 {
   pids_table_iter it;
 
-  elog(EL_DBG, ("" PRIu32 " unregistered session(s) will be terminated"));
+  elog(EL_DBG, ("%"PRIu32" unregistered session(s) will be terminated"));
   for(it = _pids_table_.begin(); it!=_pids_table_.end(); it++)
   {
      uTerminateProcess(it->first, it->second.p, 1, __sys_call_error);

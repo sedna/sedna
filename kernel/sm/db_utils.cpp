@@ -136,13 +136,14 @@ int load_metadata_in_database(const char* db_name, const char* db_security_level
   UPID pid;
   UPHANDLE proc_h;
 
-  //!!! Run SM !!!
+  /* Run SM */
   string run_command;
   int ret_status;
   int res;
   char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
 
-  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/se_sm ") + db_name; 
+  run_command = uGetImageProcPath(buf, __sys_call_error) + 
+                string("/se_sm '") + db_name + string("'"); 
   strcpy(buf, run_command.c_str());
   if (0 != uCreateProcess(buf,
                           true, // inherit handles
@@ -166,8 +167,8 @@ int load_metadata_in_database(const char* db_name, const char* db_security_level
      throw SYSTEM_EXCEPTION("Can't startup SM to load metadata");
   }
 
-  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/") + SESSION_EXE +
-                string(" ") + db_name;
+  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/") +
+                SESSION_EXE + string(" ") + db_name;
 
   if(strcmp(db_security_level, "off") == 0)
       uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", NULL, __sys_call_error);
@@ -202,9 +203,9 @@ int load_metadata_in_database(const char* db_name, const char* db_security_level
   if (ret_status != 0)
      ret_code = 1;//database creation failure (may be because of concurrent transactions)
 
-
-  //!!! Stop SM !!!
-  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/se_smsd ") + db_name; 
+  /* Stop SM */
+  run_command = uGetImageProcPath(buf, __sys_call_error) + 
+                string("/se_smsd '") + db_name + string("'"); 
   strcpy(buf, run_command.c_str());
 
   if (0 != uCreateProcess(buf,

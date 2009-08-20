@@ -41,7 +41,8 @@ typedef int session_id;
  */
 typedef int transaction_id;
 
-#define MAX_RESOURCE_NAME_LENGTH 100
+#define MAX_RESOURCE_NAME_LENGTH                100
+#define MAX_DATABASE_NAME_LENGTH                100
 
 
 /* shift in the block */
@@ -125,9 +126,6 @@ extern global_name TRY_ADVANCE_SNAPSHOT_EVENT;
 extern global_name CATALOG_NAMETABLE_SEMAPHORE_STR;
 extern global_name CATALOG_MASTER_SEMAPHORE_STR;
 
-//extern global_name METADATA_SEMAPHORE_STR;
-//extern global_name INDEX_SEMAPHORE_STR;
-
 #ifdef SE_ENABLE_FTSEARCH
 //extern global_name FT_INDEX_SEMAPHORE_STR;
 #endif
@@ -157,33 +155,31 @@ extern global_name SE_EVENT_LOG_SEMAPHORES_NAME;
 extern global_name CHARISMA_SM_SMSD_ID;
 extern global_name CHARISMA_SM_IS_READY;
 
-#define TRIGGER_MAX_CASCADING_LEVEL						10
+#define TRIGGER_MAX_CASCADING_LEVEL                     10
 
-#define SM_NUMBER_OF_SERVER_THREADS						1
+#define SM_NUMBER_OF_SERVER_THREADS                     1
 
-#define GOV_NUMBER_OF_SERVER_THREADS 		            1
+#define GOV_NUMBER_OF_SERVER_THREADS                    1
 
-#define SEDNA_DETERMINE_VMM_REGION						"SEDNA_DETERMINE_VMM_REGION"
-//#define CHARISMA_DB_NAME                                "CHARISMA_DB_NAME"
+#define SEDNA_DETERMINE_VMM_REGION                      "SEDNA_DETERMINE_VMM_REGION"
 #define CONNECTION_SOCKET_HANDLE                        "CONNECTION_SOCKET_HANDLE"
 #define SEDNA_SERVER_MODE                               "SEDNA_SERVER_MODE"
 
-#define SEDNA_LOAD_METADATA_TRANSACTION					"SEDNA_LOAD_METADATA_TRANSACTION"
+#define SEDNA_LOAD_METADATA_TRANSACTION                 "SEDNA_LOAD_METADATA_TRANSACTION"
 
-#define SEDNA_OS_PRIMITIVES_ID_MIN_BOUND		"SEDNA_OS_PRIMITIVES_ID_MIN_BOUND"
+#define SEDNA_OS_PRIMITIVES_ID_MIN_BOUND                "SEDNA_OS_PRIMITIVES_ID_MIN_BOUND"
 
-#define SECURITY_METADATA_DOCUMENT						"$db_security_data"
-#define INITIAL_SECURITY_METADATA_FILE_NAME				"sedna_auth_md.xml"
+#define SECURITY_METADATA_DOCUMENT                      "$db_security_data"
+#define INITIAL_SECURITY_METADATA_FILE_NAME             "sedna_auth_md.xml"
 
 #define CHARISMA_MAX_TRNS_NUMBER                        50
 #define MAX_SESSIONS_NUMBER								50
-#define MAX_DBS_NUMBER									10
-#define STRMAXSIZE   4000000000lu
+#define MAX_DBS_NUMBER                                  10
+#define STRMAXSIZE                                      4000000000lu
 
+#define UPPER_SESSIONS_NUM_BOUND                        100
 
-void set_global_names(int os_primitives_id_min_bound);
-void set_global_names(int os_primitives_id_min_bound, int db_id);
-#define UPPER_SESSIONS_NUM_BOUND			100
+void check_db_name_validness(const char* name);
 
 extern FILE* res_os;
 
