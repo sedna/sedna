@@ -14,7 +14,7 @@
 class ASTModImport : public ASTNode
 {
 public:
-    std::string *name, *uri;
+    std::string *name, *uri; // name may be NULL
     ASTStringVector *hints;
 
 public:
@@ -25,6 +25,9 @@ public:
     void accept(ASTVisitor &v);
 
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

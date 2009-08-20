@@ -9,23 +9,23 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTVar;
-class ASTTypeSeq;
-
 class ASTVarDecl : public ASTNode
 {
 public:
-    ASTVar *var;
-    ASTTypeSeq *type;
+    ASTNode *var; // ASTVar
+    ASTNode *type; // NULL if no type is specified; ASTTypeSeq
     ASTNode *expr; // NULL means that variable is external
 
 public:
-    ASTVarDecl(ASTLocation &loc, ASTVar *vard, ASTTypeSeq *var_type = NULL, ASTNode *var_expr = NULL) : ASTNode(loc), var(vard), type(var_type), expr(var_expr) {}
+    ASTVarDecl(ASTLocation &loc, ASTNode *vard, ASTNode *var_type = NULL, ASTNode *var_expr = NULL) : ASTNode(loc), var(vard), type(var_type), expr(var_expr) {}
 
     ~ASTVarDecl();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

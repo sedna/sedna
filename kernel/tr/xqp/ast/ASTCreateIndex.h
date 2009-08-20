@@ -11,16 +11,16 @@
 
 #include <string>
 
-class ASTTypeSingle;
+#include "ASTTypeSingle.h"
 
 class ASTCreateIndex : public ASTNode
 {
 public:
     ASTNode *name, *on_path, *by_path;
-    ASTTypeSingle *type;
+    ASTNode *type; // ASTTypeSingle
 
 public:
-    ASTCreateIndex(ASTLocation &loc, ASTNode *name_, ASTNode *on_path_, ASTNode *by_path_, ASTTypeSingle *type_) :
+    ASTCreateIndex(ASTLocation &loc, ASTNode *name_, ASTNode *on_path_, ASTNode *by_path_, ASTNode *type_) :
         ASTNode(loc),
         name(name_),
         on_path(on_path_),
@@ -32,6 +32,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

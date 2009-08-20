@@ -4,6 +4,7 @@
  */
 
 #include "AST.h"
+#include <map>
 
 // Parses QName to prefix and local parts and stores them in pref and loc strings
 // NOTE: function doesn't check corectness, if qname is 'pref:loc' then it is straightforward, else it is pref="", loc="qname"

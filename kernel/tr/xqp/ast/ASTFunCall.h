@@ -17,8 +17,17 @@ public:
     std::string *pref, *local; // function name
     ASTNodesVector *params; // parameters (ASTTypeVar); NULL for ()
 
+    std::string *uri; // added by sema
+    std::string *int_name; // internal name (for standard functions)
+
 public:
     ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNodesVector *func_params = NULL);
+
+    ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param);
+
+    ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2);
+
+    ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2, ASTNode *func_param3);
 
     ASTFunCall(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params = NULL);
 
@@ -26,6 +35,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

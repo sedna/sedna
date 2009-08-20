@@ -9,21 +9,21 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTTypeVar;
-class ASTPosVar;
-class ASTFunDef;
+#include "ASTTypeVar.h"
+#include "ASTPosVar.h"
+#include "ASTFunDef.h"
 
 class ASTFor : public ASTNode
 {
 public:
-    ASTTypeVar *tv; // main for variable
-    ASTPosVar *pv; // positional variable; can be NULL
+    ASTNode *tv; // main for variable; ASTTypeVar
+    ASTNode *pv; // positional variable; may be NULL; ASTPosVar
     ASTNode *expr; // for expression
 
-    ASTFunDef *fd;  // FunDef expression for the final for-clause representation
+    ASTNode *fd;  // FunDef expression for the final for-clause representation; ASTFunDef
 
 public:
-    ASTFor(ASTLocation &loc, ASTTypeVar *var, ASTPosVar *pos_var, ASTNode *for_expr) : ASTNode(loc), tv(var), pv(pos_var), expr(for_expr), fd(NULL) {}
+    ASTFor(ASTLocation &loc, ASTNode *var, ASTNode *pos_var, ASTNode *for_expr) : ASTNode(loc), tv(var), pv(pos_var), expr(for_expr), fd(NULL) {}
 
     ~ASTFor();
 
@@ -31,21 +31,24 @@ public:
 
     ASTTypeVar *getVar()
     {
-        return tv;
+        return static_cast<ASTTypeVar *>(tv);
     }
 
     ASTPosVar *getPosVar()
     {
-        return pv;
+        return static_cast<ASTPosVar *>(pv);
     }
 
     // returns list containing COPY of variables (usual and pos)
     ASTNodesVector *getVarList();
 
     // we set funDef when we cough up the final For-clause representation
-    void setFunDef(ASTFunDef *funDef);
+    void setFunDef(ASTNode *funDef);
 
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

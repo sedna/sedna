@@ -1049,19 +1049,6 @@ std::string *XQueryLexer::xqMakeStrLiteral(XQueryParser::location_type *loc, con
     // Then, we must get rid of double-quotes and double-apos depending on str type
     find_replace_str(&res, (isQuoted) ? "\"\"" : "''", (isQuoted) ? "\"" : "'", 0, res.size() - 1);
 
-    // then escape back-slashes
-    find_replace_str(&res, "\\", "\\\\", 0, res.size() - 1);
-
-    // then escape quotes
-    find_replace_str(&res, "\"", "\\\"", 0, res.size() - 1);
-
-    // do we need to escape apos as well for Scheme part?
-
-    // quotate string regarding of type
-    res.insert(0, "\"");
-    res.append("\"");
-//    res[0] = res[res.size() - 1] = '"';
-
     // finally, check if string contains only valid Chars
     char_iterator_utf8 cont_it(const_cast<char *>(res.c_str()), res.size(), 0);
 
@@ -1156,12 +1143,6 @@ std::string *XQueryLexer::xqMakeContent(XQueryParser::location_type *loc, const 
 
         cont_it++;
     }
-
-    // escape back-slashes
-    find_replace_str(&res, "\\", "\\\\", 0, res.size() - 1);
-
-    // then escape quotes
-    find_replace_str(&res, "\"", "\\\"", 0, res.size() - 1);
 
     return new std::string(res);
 }

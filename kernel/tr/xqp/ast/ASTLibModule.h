@@ -9,17 +9,22 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTModuleDecl;
-class ASTProlog;
+#include "ASTModuleDecl.h"
+#include "ASTProlog.h"
 
 class ASTLibModule : public ASTNode
 {
 public:
-    ASTModuleDecl *moduleDecl; // module declaration
-    ASTProlog *prolog; // query prolog; not NULL
+    ASTNode *moduleDecl; // module declaration; ASTModuleDecl
+    ASTNode *prolog; // query prolog; not NULL; ASTProlog
+
+    bool is_internal; // true, if this module was deserialized from internals
 
 public:
-    ASTLibModule(ASTLocation &loc, ASTModuleDecl *md, ASTProlog *prol) : ASTNode(loc), moduleDecl(md), prolog(prol) {}
+    ASTLibModule(ASTLocation &loc, ASTNode *md, ASTNode *prol) : ASTNode(loc), moduleDecl(md), prolog(prol)
+    {
+        is_internal = false;
+    }
 
     void setVersionDecl(ASTNode *vd);
 
@@ -27,6 +32,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

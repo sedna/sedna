@@ -1,69 +1,106 @@
+#! /usr/bin/python
+
 import os
 
-fh = open('LRVisitor.h', 'wb')
-fc = open('LRVisitor.cpp', 'wb')
+astfiles = os.listdir('./ast/')
+astfiles.sort()
 
-print >>fh, 'class LRVisitor : public ASTVisitor\n{\n'
-print >>fc, '#include "LRVisitor.h"\n'
-
-files = os.listdir('./ast/')
-files.sort()
-
-for file in files:
-    if not file.endswith('.h'):
+for filea in astfiles:
+    if not filea.endswith('.h'):
         continue
 
-    name = file[0:-2]
+    class_name = filea[0:-2]
 
-    if name == 'AST':
+    if class_name == 'AST' or class_name == 'ASTNode':
         continue
 
-    fn = open(os.path.join('ast/', file), 'rb')
+    fh = open(os.path.join('ast/', filea), 'r')
+
+    lines_h = []
+    lines_cpp = []
 
     var_mode = False
+    class_vars = []
 
-    print >>fh, '    void visit(', name, '&n);'
-    print >>fc, 'void LRVisitor::visit(', name, '&n)\n{'
-    print >>fc, '    lr_str.append("(', name[3:], ' ");'
+    for l in fh:
+        lines_h.append(l)
 
-    for l in fn.readlines():
-        if l.startswith('private:'):
-            var_mode = True
-            continue
-        elif l.startswith('public:'):
-            break
-        elif not var_mode or l.strip() == '':
+        if l.startswith('//'):
             continue
 
-        l = l[:-1] # strip \n
-
-        type_name = l.split()[0]
-        vars = l.split()[1:]
-
-        if type_name == '//' or not type_name.startswith('AST'):
+        l = l.strip()
+        if l.startswith('public:'):
+            var_mode = not var_mode
             continue
 
-        for var in vars:
-            if not var.startswith('*'):
+        if var_mode:
+            if len(l.split()) == 0:
                 continue
 
-            var = var.strip()
-            var = var[1:]
+            type_name = l.split()[0]
 
-            if var.endswith(',') or var.endswith(';'):
-                var = var[:-1]
+            if type_name != 'ASTNode' and type_name != 'ASTNodesVector':
+                continue
 
+            vars_o = l.split()[1:]
+            vars_n = []
 
-            if type_name == 'ASTNodesVector':
-                print >>fc, '    VisitNodesVector(', var, ', *this);'
+            for var in vars_o:
+                var = var.strip()
+
+                if var == '//':
+                    break
+
+                if var.startswith('*'):
+                    var = var[1:]
+
+                if var.endswith(',') or var.endswith(';'):
+                    var = var[:-1]
+
+                vars_n.append(var)
+
+            class_vars.append((vars_n, type_name))
+        else:
+            if (l == 'ASTNode *dup();'):
+                lines_h.append('    void modifyChild(const ASTNode *oldc, ASTNode *newc);\n')
+
+    fh.close()
+
+    fh = open(os.path.join('ast/', filea), 'w')
+    for l in lines_h:
+        print >>fh, l,
+
+    fh.close()
+
+    fc = open(os.path.join('ast/', class_name + '.cpp'), 'a')
+
+    print >>fc, '\nvoid ' + class_name + '::modifyChild(const ASTNode *oldc, ASTNode *newc)'
+    print >>fc, '{'
+
+    for varp in class_vars:
+        vari = varp[0]
+        vart = varp[1]
+
+        for i in vari:
+            if vart == 'ASTNode':
+                print >>fc, '    if (' + i + ' == oldc)'
+                print >>fc, '    {'
+                print >>fc, '        ' + i + ' = newc;'
+                print >>fc, '        return;'
+                print >>fc, '    }'
             else:
-                print >>fc, '    n.', var, '->accept(*this);'
+                print >>fc, '    if (' + i + ')'
+                print >>fc, '    {'
+                print >>fc, '        for (unsigned int i = 0; i < ' + i + '->size(); i++)'
+                print >>fc, '        {'
+                print >>fc, '            if ((*' + i + ')[i] == oldc)'
+                print >>fc, '            {'
+                print >>fc, '                (*' + i + ')[i] = newc;'
+                print >>fc, '                return;'
+                print >>fc, '            }'
+                print >>fc, '        }'
+                print >>fc, '    }'
 
-    print >>fc, '    lr_str.append(")");\n}\n'
+    print >>fc, '}'
 
-    fn.close()
-
-print >>fh, '};'
-
-fh.close()
-fc.close()
+    fc.close()

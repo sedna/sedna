@@ -11,27 +11,33 @@
 
 #include <string>
 
-class ASTTypeSeq;
+#include "ASTTypeSeq.h"
 
 class ASTFuncDecl : public ASTNode
 {
 public:
     std::string *pref, *local; // function name
     ASTNodesVector *params; // parameters (ASTTypeVar); NULL for ()
-    ASTTypeSeq *ret; // return type
+    ASTNode *ret; // return type; ASTTypeSeq
     ASTNode *body; // function body; NULL means external
+
+    // added by semantic analysis
+    std::string *func_uri;
 
 public:
     ASTFuncDecl(ASTLocation &loc, std::string *func_name, ASTNodesVector *func_params = NULL,
-                ASTTypeSeq *ret_type = NULL, ASTNode *func_body = NULL);
+                ASTNode *ret_type = NULL, ASTNode *func_body = NULL);
 
     ASTFuncDecl(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params = NULL,
-            ASTTypeSeq *ret_type = NULL, ASTNode *func_body = NULL);
+            ASTNode *ret_type = NULL, ASTNode *func_body = NULL);
 
     ~ASTFuncDecl();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

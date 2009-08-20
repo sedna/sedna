@@ -9,20 +9,26 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTTypeSingle;
+#include "ASTTypeSingle.h"
 
 class ASTCast : public ASTNode
 {
 public:
     ASTNode *expr;
-    ASTTypeSingle *type;
+    ASTNode *type; // ASTTypeSingle
 
 public:
-    ASTCast(ASTLocation &loc, ASTNode *cast_expr, ASTTypeSingle *cast_type) : ASTNode(loc), expr(cast_expr), type(cast_type) {}
+    ASTCast(ASTLocation &loc, ASTNode *cast_expr, ASTNode *cast_type) : ASTNode(loc), expr(cast_expr), type(cast_type)
+    {
+    }
+
     ~ASTCast();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

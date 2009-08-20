@@ -9,8 +9,6 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTFunDef;
-
 class ASTUpdMove : public ASTNode
 {
 public:
@@ -22,16 +20,19 @@ public:
     };
 
     ASTNode *what;
-    ASTFunDef *where;
+    ASTNode *where; // ASTFunDef
     UpdType type;
 
 public:
-    ASTUpdMove(ASTLocation &loc, ASTNode *what_, ASTFunDef *where_, UpdType type_) : ASTNode(loc), what(what_), where(where_), type(type_) {}
+    ASTUpdMove(ASTLocation &loc, ASTNode *what_, ASTNode *where_, UpdType type_) : ASTNode(loc), what(what_), where(where_), type(type_) {}
 
     ~ASTUpdMove();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

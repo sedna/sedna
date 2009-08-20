@@ -9,22 +9,25 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTOrderMod;
+#include "ASTOrderMod.h"
 
 class ASTOrderSpec : public ASTNode
 {
 public:
     ASTNode *expr;
-    ASTOrderMod *mod;
+    ASTNode *mod; // may be NULL; ASTOrderMod
 
 public:
-    ASTOrderSpec(ASTLocation &loc, ASTNode *ord_expr, ASTOrderMod *ord_mod = NULL) : ASTNode(loc), expr(ord_expr), mod(ord_mod) {}
+    ASTOrderSpec(ASTLocation &loc, ASTNode *ord_expr, ASTNode *ord_mod = NULL) : ASTNode(loc), expr(ord_expr), mod(ord_mod) {}
 
     ~ASTOrderSpec();
 
     void accept(ASTVisitor &v);
 
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

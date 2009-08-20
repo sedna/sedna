@@ -3,6 +3,8 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "tr/xqp/serial/deser.h"
+
 #include "tr/xqp/visitor/ASTVisitor.h"
 #include "ASTProlog.h"
 
@@ -18,10 +20,40 @@ void ASTProlog::addPrologDecl(ASTNode *decl)
 
 void ASTProlog::accept(ASTVisitor &v)
 {
+    v.addToPath(this);
     v.visit(*this);
+    v.removeFromPath(this);
 }
 
 ASTNode *ASTProlog::dup()
 {
     return new ASTProlog(loc, duplicateASTNodes(decls));
+}
+
+ASTNode *ASTProlog::createNode(scheme_list &sl)
+{
+    ASTLocation loc;
+    ASTNodesVector *decls = NULL;
+
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
+
+    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    decls = dsGetASTNodesFromSList(*sl[2].internal.list);
+
+    return new ASTProlog(loc, decls);
+}
+
+void ASTProlog::modifyChild(const ASTNode *oldc, ASTNode *newc)
+{
+    if (decls)
+    {
+        for (unsigned int i = 0; i < decls->size(); i++)
+        {
+            if ((*decls)[i] == oldc)
+            {
+                (*decls)[i] = newc;
+                return;
+            }
+        }
+    }
 }

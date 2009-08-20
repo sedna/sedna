@@ -7,6 +7,9 @@
 #define _AST_AXIS_STEP_H_
 
 #include "ASTNode.h"
+#include "ASTNameTest.h"
+#include "ASTAttribTest.h"
+#include "ASTElementTest.h"
 #include "AST.h"
 
 class ASTAxisStep : public ASTNode
@@ -26,7 +29,6 @@ public:
         PRECEDING_SIBLING,
         PRECEDING,
         ANCESTOR_OR_SELF,
-        CONTEXT_ITEM
     };
 
     AxisType axis;
@@ -37,15 +39,39 @@ public:
     ASTAxisStep(ASTLocation &loc, AxisType axis_, ASTNode *test_ = NULL, ASTNodesVector *preds_ = NULL) :
         ASTNode(loc),
         axis(axis_),
-        test(test_),
-        preds(preds_) {}
+        preds(preds_)
+
+    {
+        if (test_ && dynamic_cast<ASTNameTest *>(test_))
+        {
+            if (axis_ == ATTRIBUTE)
+                test = new ASTAttribTest(test_->loc, test_);
+            else
+                test = new ASTElementTest(test_->loc, test_);
+        }
+        else
+        {
+            test = test_;
+        }
+    }
 
     ~ASTAxisStep();
 
     void setNodeTest(ASTNode *test_)
     {
         delete test;
-        test = test_;
+
+        if (test_ && dynamic_cast<ASTNameTest *>(test_))
+        {
+            if (axis == ATTRIBUTE)
+                test = new ASTAttribTest(test_->loc, test_);
+            else
+                test = new ASTElementTest(test_->loc, test_);
+        }
+        else
+        {
+            test = test_;
+        }
     }
 
     void setPredicates(ASTNodesVector *preds_)
@@ -71,6 +97,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

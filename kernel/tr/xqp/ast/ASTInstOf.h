@@ -9,20 +9,23 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTTypeSeq;
+#include "ASTTypeSeq.h"
 
 class ASTInstOf : public ASTNode
 {
 public:
     ASTNode *expr;
-    ASTTypeSeq *type;
+    ASTNode *type; // ASTTypeSeq
 
 public:
-    ASTInstOf(ASTLocation &loc, ASTNode *inst_expr, ASTTypeSeq *inst_type) : ASTNode(loc), expr(inst_expr), type(inst_type) {}
+    ASTInstOf(ASTLocation &loc, ASTNode *inst_expr, ASTNode *inst_type) : ASTNode(loc), expr(inst_expr), type(inst_type) {}
     ~ASTInstOf();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

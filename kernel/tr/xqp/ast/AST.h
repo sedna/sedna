@@ -8,10 +8,11 @@
 
 #include <string>
 #include <vector>
+#include "tr/executor/por2qep/scheme_tree.h"
+#include "tr/xqp/ast/ASTNode.h"
 
 class ASTVisitor;
 class ASTNode;
-//#include "tr/xqp/ast/ASTNode.h"
 
 /* vector to store sequence of AST nodes */
 typedef std::vector<ASTNode *> ASTNodesVector;
@@ -44,7 +45,6 @@ ASTNodesVector *duplicateASTNodes(ASTNodesVector *nodes);
 ASTStringVector *duplicateASTStringVector(ASTStringVector *strs);
 
 #include "tr/xqp/ast/ASTAlterUser.h"
-#include "tr/xqp/ast/ASTAtomicTest.h"
 #include "tr/xqp/ast/ASTAttr.h"
 #include "tr/xqp/ast/ASTAttrConst.h"
 #include "tr/xqp/ast/ASTAttribTest.h"
@@ -129,6 +129,7 @@ ASTStringVector *duplicateASTStringVector(ASTStringVector *strs);
 #include "tr/xqp/ast/ASTPragma.h"
 #include "tr/xqp/ast/ASTPred.h"
 #include "tr/xqp/ast/ASTProlog.h"
+#include "tr/xqp/ast/ASTQName.h"
 #include "tr/xqp/ast/ASTQuantExpr.h"
 #include "tr/xqp/ast/ASTQuery.h"
 #include "tr/xqp/ast/ASTRenameColl.h"
@@ -138,11 +139,11 @@ ASTStringVector *duplicateASTStringVector(ASTStringVector *strs);
 #include "tr/xqp/ast/ASTSchemaAttrTest.h"
 #include "tr/xqp/ast/ASTSchemaElemTest.h"
 #include "tr/xqp/ast/ASTSeq.h"
-#include "tr/xqp/ast/ASTScript.h"
 #include "tr/xqp/ast/ASTSpaceSeq.h"
 #include "tr/xqp/ast/ASTTextConst.h"
 #include "tr/xqp/ast/ASTTextTest.h"
 #include "tr/xqp/ast/ASTTreat.h"
+#include "tr/xqp/ast/ASTType.h"
 #include "tr/xqp/ast/ASTTypeSeq.h"
 #include "tr/xqp/ast/ASTTypeSingle.h"
 #include "tr/xqp/ast/ASTTypeSwitch.h"
@@ -158,5 +159,128 @@ ASTStringVector *duplicateASTStringVector(ASTStringVector *strs);
 #include "tr/xqp/ast/ASTVarDecl.h"
 #include "tr/xqp/ast/ASTVersionDecl.h"
 #include "tr/xqp/ast/ASTXMLComm.h"
+
+// All available ast node types
+enum ASTNodeType
+{
+    AST_ALTERUSER = 1,
+    AST_ATTRCONST,
+    AST_ATTR,
+    AST_ATTRIBTEST,
+    AST_AXIS,
+    AST_AXISSTEP,
+    AST_BASEURI,
+    AST_BOP,
+    AST_BOUNDSPACEDECL,
+    AST_CASE,
+    AST_CASTABLE,
+    AST_CAST,
+    AST_CHARCONT,
+    AST_COMMENTCONST,
+    AST_COMMTEST,
+    AST_CONSTDECL,
+    AST_CREATECOLL,
+    AST_CREATEDOC,
+    AST_CREATEFTINDEX,
+    AST_CREATEINDEX,
+    AST_CREATEROLE,
+    AST_CREATETRG,
+    AST_CREATEUSER,
+    AST_DDO,
+    AST_DECLARECOPYNSP,
+    AST_DEFCOLLATION,
+    AST_DEFNAMESPACEDECL,
+    AST_DOCCONST,
+    AST_DOCTEST,
+    AST_DROPCOLL,
+    AST_DROPDOC,
+    AST_DROPFTINDEX,
+    AST_DROPINDEX,
+    AST_DROPMOD,
+    AST_DROPROLE,
+    AST_DROPTRG,
+    AST_DROPUSER,
+    AST_ELEMCONST,
+    AST_ELEMENTTEST,
+    AST_ELEM,
+    AST_EMPTYTEST,
+    AST_ERROR,
+    AST_EXTEXPR,
+    AST_FILTERSTEP,
+    AST_FOR,
+    AST_FUNCALL,
+    AST_FUNCDECL,
+    AST_FUNDEF,
+    AST_GRANTPRIV,
+    AST_GRANTROLE,
+    AST_IF,
+    AST_INSTOF,
+    AST_ITEMTEST,
+    AST_LET,
+    AST_LIBMODULE,
+    AST_LIT,
+    AST_LOADFILE,
+    AST_LOADMODULE,
+    AST_MAINMODULE,
+    AST_METACOLS,
+    AST_METADOCS,
+    AST_METASCHEMACOL,
+    AST_METASCHEMADOC,
+    AST_MODIMPORT,
+    AST_MODULEDECL,
+    AST_NAMESPACEDECL,
+    AST_NAMETEST,
+    AST_NODE,
+    AST_NODETEST,
+    AST_NSP,
+    AST_OPTION,
+    AST_ORDERBY,
+    AST_ORDERBYRET,
+    AST_ORDEREMPTY,
+    AST_ORDER,
+    AST_ORDERMOD,
+    AST_ORDERMODINT,
+    AST_ORDERSPEC,
+    AST_ORDEXPR,
+    AST_PICONST,
+    AST_PI,
+    AST_PITEST,
+    AST_POSVAR,
+    AST_PRAGMA,
+    AST_PRED,
+    AST_PROLOG,
+    AST_QNAME,
+    AST_QUANTEXPR,
+    AST_QUERY,
+    AST_RENAMECOLL,
+    AST_RET,
+    AST_REVOKEPRIV,
+    AST_REVOKEROLE,
+    AST_SCHEMAATTRTEST,
+    AST_SCHEMAELEMTEST,
+    AST_SEQ,
+    AST_SPACESEQ,
+    AST_TEXTCONST,
+    AST_TEXTTEST,
+    AST_TREAT,
+    AST_TYPE,
+    AST_TYPESEQ,
+    AST_TYPESINGLE,
+    AST_TYPESWITCH,
+    AST_TYPEVAR,
+    AST_UNIO,
+    AST_UOP,
+    AST_UPDDEL,
+    AST_UPDINSERT,
+    AST_UPDMOVE,
+    AST_UPDRENAME,
+    AST_UPDREPLACE,
+    AST_VARDECL,
+    AST_VAR,
+    AST_VERSIONDECL,
+    AST_XMLCOMM,
+
+    AST_DUMMY
+};
 
 #endif

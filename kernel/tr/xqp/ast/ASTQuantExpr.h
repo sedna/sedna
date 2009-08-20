@@ -9,7 +9,7 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-class ASTFunDef;
+#include "ASTFunDef.h"
 
 class ASTQuantExpr : public ASTNode
 {
@@ -21,16 +21,19 @@ public:
     };
 
     ASTNode *expr;
-    ASTFunDef *fd;
+    ASTNode *fd; // ASTFunDef
     QuantMod type;
 
 public:
-    ASTQuantExpr(ASTLocation &loc, ASTNode *var_expr, ASTFunDef *sat_expr, QuantMod mod) : ASTNode(loc), expr(var_expr), fd(sat_expr), type(mod) {}
+    ASTQuantExpr(ASTLocation &loc, ASTNode *var_expr, ASTNode *sat_expr, QuantMod mod) : ASTNode(loc), expr(var_expr), fd(sat_expr), type(mod) {}
 
     ~ASTQuantExpr();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

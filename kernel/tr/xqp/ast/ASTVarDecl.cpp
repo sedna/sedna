@@ -3,6 +3,8 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "tr/xqp/serial/deser.h"
+
 #include "tr/xqp/visitor/ASTVisitor.h"
 #include "ASTVarDecl.h"
 
@@ -15,10 +17,46 @@ ASTVarDecl::~ASTVarDecl()
 
 void ASTVarDecl::accept(ASTVisitor &v)
 {
+    v.addToPath(this);
     v.visit(*this);
+    v.removeFromPath(this);
 }
 
 ASTNode *ASTVarDecl::dup()
 {
-    return new ASTVarDecl(loc, static_cast<ASTVar *>(var->dup()), (type == NULL) ? NULL: static_cast<ASTTypeSeq *>(type->dup()), (expr == NULL) ? NULL: expr->dup());
+    return new ASTVarDecl(loc, var->dup(), (type == NULL) ? NULL: type->dup(), (expr == NULL) ? NULL: expr->dup());
+}
+
+ASTNode *ASTVarDecl::createNode(scheme_list &sl)
+{
+    ASTLocation loc;
+    ASTNode *var = NULL, *type = NULL, *expr = NULL;
+
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
+
+    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    var = dsGetASTFromSchemeList(*sl[2].internal.list);
+    type = dsGetASTFromSchemeList(*sl[3].internal.list);
+    expr = dsGetASTFromSchemeList(*sl[4].internal.list);
+
+    return new ASTVarDecl(loc, var, type, expr);
+}
+
+void ASTVarDecl::modifyChild(const ASTNode *oldc, ASTNode *newc)
+{
+    if (var == oldc)
+    {
+        var = newc;
+        return;
+    }
+    if (type == oldc)
+    {
+        type = newc;
+        return;
+    }
+    if (expr == oldc)
+    {
+        expr = newc;
+        return;
+    }
 }

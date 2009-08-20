@@ -14,14 +14,26 @@ class ASTOption : public ASTNode
 public:
     std::string *pref, *local, *opt;
 
+    // added at semantic analysis
+    std::string *uri;
+
+    typedef std::pair<std::string, std::string> option;
+    std::vector<option> *options; // declare option se:output "indent=yes"; -> options["indent"] = "yes"
+
 public:
-    ASTOption(ASTLocation &loc, std::string *pref_p, std::string *loc_p, std::string *option) : ASTNode(loc), pref(pref_p), local(loc_p), opt(option) {}
+    ASTOption(ASTLocation &loc, std::string *pref_p, std::string *loc_p, std::string *option) : ASTNode(loc), pref(pref_p), local(loc_p), opt(option)
+    {
+        uri = NULL;
+        options = NULL;
+    }
 
     ASTOption(ASTLocation &loc, std::string *qname, std::string *option) : ASTNode(loc), opt(option)
     {
         ASTParseQName(qname, &pref, &local);
-
         delete qname;
+
+        uri = NULL;
+        options = NULL;
     }
 
     ~ASTOption();
@@ -29,6 +41,9 @@ public:
     void accept(ASTVisitor &v);
 
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

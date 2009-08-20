@@ -21,7 +21,7 @@ public:
         DB
     };
 
-    std::string *priv, *obj, *user;
+    std::string *priv, *obj, *user; // obj will be NULL for DB-mod
     ObjMod mod;
 
 public:
@@ -37,6 +37,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

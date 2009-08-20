@@ -11,26 +11,23 @@
 
 #include <string>
 
-class ASTTypeSeq;
-class ASTVar;
-
 class ASTTypeVar : public ASTNode
 {
 public:
-    // types are mutually exclusive, either we've got a string such as "xs:anytype" or a full-fledged TypeSeq node
-    std::string *type_name;
-    ASTTypeSeq *type_seq;
+    ASTNode *type; // ASTTypeSeq for usual variables, ASTType for internal variables (e.g. xs:anyType for fun-def variables)
 
-    ASTVar *var;
+    ASTNode *var; // ASTVar
 
 public:
-    ASTTypeVar(ASTLocation &loc, std::string *type, ASTVar *vard) : ASTNode(loc), type_name(type), type_seq(NULL), var(vard) {}
-    ASTTypeVar(ASTLocation &loc, ASTTypeSeq *type, ASTVar *vard) : ASTNode(loc), type_name(NULL), type_seq(type), var(vard) {}
+    ASTTypeVar(ASTLocation &loc, ASTNode *typep, ASTNode *vard) : ASTNode(loc), type(typep), var(vard) {}
 
     ~ASTTypeVar();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

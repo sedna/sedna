@@ -13,8 +13,8 @@ class ASTFilterStep : public ASTNode
 {
 
 public:
-    ASTNode *expr;
-    ASTNodesVector *preds;
+    ASTNode *expr; // may be NULL in case of context expression
+    ASTNodesVector *preds; // may be NULL
 
 public:
     ASTFilterStep(ASTLocation &loc, ASTNode *expr_, ASTNodesVector *preds_ = NULL) : ASTNode(loc), expr(expr_), preds(preds_) {}
@@ -39,6 +39,9 @@ public:
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

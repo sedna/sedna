@@ -15,15 +15,18 @@ class ASTNsp : public ASTNode
 {
 public:
     std::string *name; // namespace name (NCName)
-    ASTNodesVector *cont; // namespace content; may be NULL
+    std::string *cont; // namespace content; may be NULL; cannot be sequence-like since specs disallow this
 
 public:
-    ASTNsp(ASTLocation &loc, std::string *name_, ASTNodesVector *cont_ = NULL) : ASTNode(loc), name(name_), cont(cont_) {}
+    ASTNsp(ASTLocation &loc, std::string *name_, std::string *cont_ = NULL) : ASTNode(loc), name(name_), cont(cont_) {}
 
     ~ASTNsp();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif

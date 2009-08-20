@@ -16,20 +16,29 @@ class ASTNameTest : public ASTNode
 public:
     std::string *pref, *local;
 
+    std::string *uri; // added by sema
+
 public:
     ASTNameTest(ASTLocation &loc, std::string *name) : ASTNode(loc)
     {
         ASTParseQName(name, &pref, &local);
+        uri = NULL;
 
         delete name;
     }
 
-    ASTNameTest(ASTLocation &loc, std::string *pref_, std::string *local_) : ASTNode(loc), pref(pref_), local(local_) {}
+    ASTNameTest(ASTLocation &loc, std::string *pref_, std::string *local_) : ASTNode(loc), pref(pref_), local(local_)
+    {
+        uri = NULL;
+    }
 
     ~ASTNameTest();
 
     void accept(ASTVisitor &v);
     ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
 };
 
 #endif
