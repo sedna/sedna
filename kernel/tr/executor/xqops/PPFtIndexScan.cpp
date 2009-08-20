@@ -200,6 +200,7 @@ public:
 		}
 		if (next_char == '=')
 		{
+			get_next_nonws_char();
 			while (next_char != unicode_cp_iterator::EOS && next_char != ',')
 			{
 				CharsetHandler_utf8::utf8_putch(next_char, opt_value_buf, &value_pos, opt_value_buf_size-1);
