@@ -315,18 +315,20 @@ namespace sedna
         n.name->accept(*this);
         n.path->accept(*this);
 
+        // check path for well-formdness
+        if (getDocCollFromAbsXPath(n.path) == NULL)
+            return;
+
         if (*n.type == "xml" || *n.type == "string-value" || *n.type == "delimited-value" ||
             *n.type == "!xml" || *n.type == "!string-value" || *n.type == "!delimited-value")
         {
             if (n.cust_expr)
+            {
                 drv->error(n.loc, SE5081, std::string("customized-value expression is not expected for ") + *n.type + " type");
+            }
 
             return;
         }
-
-        // check path for well-formdness
-        if (getDocCollFromAbsXPath(n.path) == NULL)
-            return;
 
         if (*n.type == "customized-value" || *n.type == "!customized-value")
         {
