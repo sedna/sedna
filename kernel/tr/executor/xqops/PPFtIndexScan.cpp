@@ -211,6 +211,7 @@ public:
 		U_ASSERT(value_pos < opt_value_buf_size);
 		opt_name_buf[name_pos] = 0;
 		opt_value_buf[value_pos] = 0;
+        return true;
 	}
 	const char *opt_name()
 	{
