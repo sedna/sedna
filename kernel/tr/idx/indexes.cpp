@@ -22,14 +22,9 @@
 
 using namespace std;
 
-
 void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
 {
     tuple_cell ltc = tuple_cell::make_sure_light_atomic(tc);
-    // !!! ZAGLUSHKA
-    // Note that the function call above should sometimes rase an exception
-    // We must handle it and throw QEPTypeException that will be cought later
-    // and the error counter will be incremented
 
     switch (ltc.get_atomic_type())
     {
@@ -43,30 +38,26 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
         case xs_yearMonthDuration:
         case xs_dayTimeDuration  : key.setnew_duration(ltc.get_xs_duration(), ltc.get_atomic_type()); break;
 
-        default					 : throw USER_EXCEPTION2(SE1003, "Unsupported type of index");
+        default					 : throw USER_EXCEPTION2(SE1003, "Unexpected index type");
     }
 }
 
-//void bt_key2tuple_cell(const bt_key& /*in*/ key, tuple_cell& /*out*/ tc)
-//{
-//    switch (key.type)
-//    {
-//        case xs_float			: tc = tuple_cell::atomic(*(float*)(key.head));
-//                                  break;
-//        case xs_double			: tc = tuple_cell::atomic(*(double*)(key.head));
-//                                  break;
-//        case xs_string			: {
-//                                      char *tmp = se_new char[key.size + 1];
-//                                      memcpy(tmp, key.head, key.size);
-//                                      tmp[key.size] = '\0';
-//                                      tc = tuple_cell::atomic(xs_string, tmp);
-//                                      break;
-//                                  }
-//        case xs_integer 		: tc = tuple_cell::atomic(*(int*)(key.head));
-//                                  break;
-//        default					: throw USER_EXCEPTION2(SE1003, "Unsupported type of index");
-//    }
-//}
+/* Throws invalid index type exceptio if we try to create index
+ * with unsupported type */
+static void inline 
+check_index_key_type(xmlscm_type type) {
+    if (type != xs_integer &&
+        type != xs_float &&
+        type != xs_double &&
+        type != xs_string &&
+        type != xs_date &&
+        type != xs_dateTime &&
+        type != xs_time &&
+        type != xs_yearMonthDuration &&
+        type != xs_dayTimeDuration)
+        throw USER_EXCEPTION2(SE2034, xmlscm_type2c_str(type));
+}
+
 
 index_cell_xptr create_index (PathExpr *object_path, 
                           PathExpr *key_path, 
@@ -76,10 +67,12 @@ index_cell_xptr create_index (PathExpr *object_path,
                           const char* doc_name,
                           bool is_doc)
 {
-	// 0. These counters are useful in debug 
-	__int64 counter1 = 0;
+    __int64 counter1 = 0;
 	__int64 counter2 = 0;
-	
+
+	// 0. Check index type
+    check_index_key_type(keytype);
+
 	// I. Create and fill new index cell
 	if (catalog_find_name(catobj_indicies, index_title) != NULL) {
 		throw USER_EXCEPTION(SE2033);
@@ -100,7 +93,12 @@ index_cell_xptr create_index (PathExpr *object_path,
 	idx_user_data ud;
 	ud.t=keytype;
 	ud.buf=se_new idx_buffer();
-	sorted_sequence * ss = se_new sorted_sequence(idx_compare_less,idx_get_size,idx_serialize,idx_serialize_2_blks,idx_deserialize,idx_deserialize_2_blks,&ud);
+	sorted_sequence * ss = se_new sorted_sequence(idx_compare_less,
+                                                  idx_get_size,
+                                                  idx_serialize,
+                                                  idx_serialize_2_blks,
+                                                  idx_deserialize,
+                                                  idx_deserialize_2_blks,&ud);
 	tuple tup(2);
 	
 	// ALGORITHM: indexing data
