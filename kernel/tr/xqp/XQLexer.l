@@ -57,6 +57,7 @@ typedef sedna::XQueryParser::token token;
         if (yytext[i] == '\n')  \
         { \
             yylloc->lines(1);\
+            yylloc->end.column = 1;\
             last_endl = i;\
         }\
     \
@@ -75,6 +76,7 @@ typedef sedna::XQueryParser::token token;
         if (yytext[i] == '\n')  \
         { \
             yylloc->lines(1);\
+            yylloc->end.column = 1;\
             last_endl = i;\
         }\
     \
