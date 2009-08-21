@@ -357,7 +357,11 @@ The \verb!-log-file-size! option allows to control size of each log file. When c
 
 The \verb!-db-security! option is used to set the level of security in a database being created. Currently there are 3 possible levels: (1) \verb!off! - there is no authentication, neither authorization; (2) \verb!authentication! - only authentication supported (checks user name and password on session open) (3) \verb!authorization! - authentication and authorization supported (support for database users and privileges). By default database is created with \verb!authentication! level. Note, that this parameter is set only once on database creation and cannot be changed later for the database.
 
-The last parameter \verb!db_name! is the name of the database to be created. Administrator can use the arbitrary sequence of latin characters and digits for database name. There  cannot be two databases with the same name.
+The last parameter \verb!db_name! is the name of the database to be created.
+Database name may contain latin letters, numbers. Also the following special
+symbols are allowed \verb!#%&()[]{},.-_=@^`~! (double quote (quote on Windows) 
+database name parameter to create a database with the name which contains 
+special symbols). There cannot be two databases with the same name.
 
 \subsubsection{Configuring a Database}
 \label{ConfigDB}
