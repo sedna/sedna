@@ -1523,25 +1523,6 @@ Gambit), uncomment the corresponding line at the beginning of the example code
 in \texttt{"client.scm"} and follow the instructions of the chosen Scheme
 implementation in running the program.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 %===========================================================================
 %
 %                                  Database Language
@@ -1597,32 +1578,28 @@ As mentioned above, you may omit the Sedna namespace declaration:
 declare option output "indent=yes";
 \end{verbatim}
 
-%\subsection{Standard XQuery Functions and Extensions}
-%\label{functions}
-%\subsubsection{Standard XQuery Functions}
-%\label{xquery-functions}
-%The following standard XQuery functions specified in \cite{paper:query-fo} are supported:
-%\begin{itemize}
-%\item avg, concat, count, contains, data, distinct-values, document-uri, sum, max, min, node-kind, node-name, true, false, not, empty, exists, string, string-value, string-length, translate, typed-value
-%\item matches, replace (regular expression support based on the PCRE library \cite{lib:pcre-lib};
-%\item functions on durations, dates and times
-%see \cite{paper:query-fo}  for function signatures and \cite{lib:pcre-lib} for regular expression syntax)
-%\end{itemize}
-
 %==========================================================================
 %                                      Value Index-scan functions
 %==========================================================================
 \subsubsection{Value Index-scan Functions}
 \label{sec:value-index-scan-fun}
-In the current version of Sedna, query executor does not use indices automatically. Use the following functions
-to enforce executor to employ indices.
+In the current version of Sedna, query executor does not use indices
+automatically. Use the following functions to enforce executor to employ
+indices.
 
 \begin{verbatim}
 index-scan ($title as xs:string, $value as xdt:anyAtomicType,
            $mode as xs:string ) as node()*
 \end{verbatim}
 
-The \verb!index-scan! function scans the index with the \verb!$title! name and returns the sequence of nodes which keys are equal (less than, greater than, greater or equal, less or equal) to the search value \verb!$value!. An Sedna error is raised if the search value can not be cast to the atomic type of the index. The \verb!$mode! parameter of the \verb!xs:string! type is used to set the type of the scan. If the value of the parameter is not equal to one of the following then the Sedna error SE2034 is raised: �EQ� (equal), �LT� (less than), �GT� (greater than), �GE� (greater or equal), �LE� (less or equal).
+The \verb!index-scan! function scans the index with the \verb!$title!
+name and returns the sequence of nodes which keys are equal (less than,
+greater than, greater or equal, less or equal) to the search value
+\verb!$value!. An Sedna error is raised if the search value can not be cast to
+the atomic type of the index. The \verb!$mode! parameter of the
+\verb!xs:string! type is used to set the type of the scan. The value of the
+parameter must be equal to one of the following: 'EQ' (equal), 'LT'(less than),
+'GT' (greater than), 'GE' (greater or equal), 'LE' (less or equal).
 
 \begin{verbatim}
 index-scan-between ($title as xs:string, $value1 as xdt:anyAtomicType,
@@ -1630,13 +1607,23 @@ index-scan-between ($title as xs:string, $value1 as xdt:anyAtomicType,
                                as node()*
 \end{verbatim}
 
-The \verb!index-scan-between! scans the index with the \verb!$title! name and returns the sequence of nodes which keys belong to the interval (segment, left half-interval, right half-interval) between the first \verb!$value1! and second \verb!$value2! search values. An Sedna error is raised if the search values can not be cast to the atomic type of the index. This function provides the \verb!$range! parameter of the \verb!xs:string! type to set the type of the scan. If the string is not equal to one of the following then the Sedna error SE2035 is raised: �INT� (interval), �SEG� (segment), �HINTR� (right half-interval), �HINTL� (left half-interval).
+The \verb!index-scan-between! scans the index with the \verb!$title! name and
+returns the sequence of nodes which keys belong to the interval (segment, left
+half-interval, right half-interval) between the first \verb!$value1! and second
+\verb!$value2! search values. An Sedna error is raised if the search values can
+not be cast to the atomic type of the index. This function provides the
+\verb!$range! parameter of the \verb!xs:string! type to set the type of the
+scan. The value of the string must be equal to one of the following: 
+'INT' (interval), 'SEG' (segment), 'HINTR' (right half-interval), 
+'HINTL' (left half-interval).
 
-For example, to select the names of people who live in the London city employing the "people" index defined in section \ref{sec:managing-value-indices}, use the following expression:
+For example, to select the names of people who live in the London city employing
+the "people" index defined in section \ref{sec:managing-value-indices}, 
+use the following expression:
+
 \begin{verbatim}
 index-scan("people", "London", "EQ")/name
 \end{verbatim}
-
 
 
 %==========================================================================
@@ -2465,7 +2452,8 @@ There is a system document \verb!$collections! which lists all available collect
 
 \subsubsection{Managing Value Indices}
 \label{sec:managing-value-indices}
-Sedna supports value indices based on B-tree to index XML element content and attribute values. Below is the description of statements to manage indices.
+Sedna supports value indices based on B-tree to index XML element content 
+and attribute values. Below is the description of statements to manage indices.
 
 \begin{verbatim}
 CREATE INDEX title-expr
@@ -2473,17 +2461,34 @@ ON Path1 BY Path2
 AS type
 \end{verbatim}
 
-The \verb!CREATE INDEX! creates an index on nodes (specified by \verb!Path1!) by keys (specified by \verb!Path2!).
+The \verb!CREATE INDEX! creates an index on nodes (specified by \verb!Path1!)
+by keys (specified by \verb!Path2!).
 
-\verb!Path1! is an XPath expression without any filter expressions that identifies the nodes of a document or a collection that are to be indexed. \verb!Path2! is an XPath expression without any filter expressions that specifies the relative path to the nodes  whose string-values are used as keys to identify the nodes returned by the \verb!Path1! expression. The \verb!Path2! expression should not start with �/� or �//�. The full path from the root of documents (that may be in a collection) to the key nodes is \verb!Path1/Path2!.
+\verb!Path1! is an XPath expression without any filter expressions that
+identifies the nodes of a document or a collection that are to be indexed.
+\verb!Path2! is an XPath expression without any filter expressions that
+specifies the relative path to the nodes whose string-values are used as keys
+to identify the nodes returned by the \verb!Path1! expression. The \verb!Path2!
+expression should not start with '/' or '//'. The full path from the root of
+documents (that may be in a collection) to the key nodes is \verb!Path1/Path2!.
 
-For instance, let \verb!Path1! be \verb!doc("a")/b/c! and \verb!Path2! be \verb!d!. Let \verb!X! be  the node returned by the \verb!Path1! expression, and \verb!Y! be one of the nodes returned by the \verb!doc("a")/b/c/d! expression. If \verb!Y! is the descendant of \verb!X!, then the value of \verb!Y! is used as the key for searching the node \verb!X!.
+For instance, let \verb!Path1! be \verb!doc("a")/b/c! and \verb!Path2! be
+\verb!d!. Let \verb!X! be the node returned by the \verb!Path1! expression, and
+\verb!Y! be one of the nodes returned by the \verb!doc("a")/b/c/d! expression.
+If \verb!Y! is the descendant of \verb!X!, then the value of \verb!Y! is used as
+the key for searching the node \verb!X!.
 
-\verb!title-expr! is the title of the index created. It should be unique for each index in the database.
+\verb!title-expr! is the title of the index created.
+It should be unique for each index in the database.
 
 \verb!type! is an atomic type which the value of the keys should be cast to.
+The following types are supported: \verb!xs:string!, \verb!xs:integer!,
+\verb!xs:float!, \verb!xs:double!, \verb!xs:date!, \verb!xs:time!,
+\verb!xs:dateTime!, \verb!xs_yearMonthDuration!, \verb!xs_dateTimeDuration!.
 
-In the following example, people are indexed by the names of their cities. To generate the index keys, city names are cast to the \verb!xs:string! type.
+In the following example, people are indexed by the names of their cities. 
+To generate the index keys, city names are cast to the \verb!xs:string! type.
+
 \begin{verbatim}
 CREATE INDEX "people"
 ON doc("auction")/site//person BY address/city
@@ -2495,10 +2500,13 @@ To remove an index, use the following statement:
 DROP INDEX title-expr
 \end{verbatim}
 
-The DROP INDEX statement removes the index named \verb!title-expr! from the database.
+The DROP INDEX statement removes the index named \verb!title-expr! from
+the database.
 
-\begin{note}In the current version of Sedna, query executor does not use indices automatically. You can enforce the executor to employ indices by
-using the XQuery index-scan functions specified in section \ref{sec:value-index-scan-fun}.
+\begin{note}In the current version of Sedna, query executor does not use
+indices automatically. You can enforce the executor to employ indices by
+using the XQuery index-scan functions specified in section
+\ref{sec:value-index-scan-fun}.
 \end{note}
 
 
