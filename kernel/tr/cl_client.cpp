@@ -67,68 +67,9 @@ void command_line_client::init()
 
     os_primitives_id_min_bound = cfg.os_primitives_id_min_bound;
 
-    string plain_batch_text;
-
-    char env_buf[8];
-    if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, env_buf, 8, __sys_call_error) != 0)
-    {
-        //init output res
-        if (string(tr_globals::output_file) == "STDOUT") 
-            res_os = stdout;
-        else if ((res_os = fopen(tr_globals::output_file, "w")) == NULL) 
-            throw USER_EXCEPTION2(SE4040, tr_globals::output_file);
-
-        //read batch text in string
-        FILE *f;
-        if ((f = fopen(tr_globals::filename, "r")) == NULL)
-            throw USER_EXCEPTION2(SE4042, tr_globals::filename);
-
-        while(!feof(f)){
-            static const size_t rdChunkSz = 0x10000; /* 64 KB */ 
-            size_t rdSz = 0, curSz = 0;
-
-            curSz = plain_batch_text.size();
-            plain_batch_text.resize(curSz + rdChunkSz);
-            rdSz = fread(&plain_batch_text[curSz], 1, rdChunkSz, f); /* fread NEVER return -1 on error */ 
-            plain_batch_text.resize(curSz + rdSz);
-        }
-    }
-    else 
-    {
-        plain_batch_text = string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
-        if(strcmp(env_buf, "2") == 0) // database is created with db-security option != off => we need to load db_security_data
-        {
-            string path_to_security_file; 
-            char path_buf[U_MAX_PATH + 32];
-            path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
-
-#ifdef _WIN32
-            for (int i=0; i<path_to_security_file.size(); i++)
-                if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
-            /*
-            MG: now metadata is stored locally in sedna/share/sedna_auth_md.xml
-            #else
-            if(!uIsFileExist(path_to_security_file.c_str(), __sys_call_error))
-            path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");*/
-#endif
-
-
-
-            plain_batch_text += string("\n\\\n") +
-                string("LOAD ") +
-                string("\"") + path_to_security_file + string("\" ") +
-                string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"");
-        }
-    }
-    stmnts_array = parse_batch(tr_globals::query_type, plain_batch_text.c_str());
-
-
-    //add 'coomit' command if there is not end of transaction (coommit or rollback) command
-    if (stmnts_array.back().substr(0, 8).find("rollback") == string::npos &&
-        stmnts_array.back().substr(0, 6).find("commit") == string::npos)
-        stmnts_array.push_back("commit");
-
-    cl_command cmd;
+    out_s = se_new se_stdlib_ostream(std::cout);
+    nul_s = se_new se_nullostream();
+    cur_s = out_s;
 
     //!!!init stack!!!
     cl_command cmd;
@@ -148,10 +89,6 @@ void command_line_client::init()
     cmd.type = se_BeginTransaction;//begin tr
     cmd.length = 0;
     cl_cmds.push_front(cmd);
-
-    out_s = se_new se_stdlib_ostream(std::cout);
-    nul_s = se_new se_nullostream();
-    cur_s = out_s;
 }
 
 

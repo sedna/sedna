@@ -120,8 +120,8 @@ setup_cdb_globals(gov_config_struct* cfg)
 }
 
 
-static inline string& 
-replaceAll(string& context, const char* src, const char* dst) {
+static inline string 
+replaceAll(string context, const char* src, const char* dst) {
     size_t lookHere = 0;
     size_t foundHere;
     const string from(src);
