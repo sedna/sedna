@@ -1,7 +1,7 @@
-diff -Naur chicken/Makefile.linux chicken.new/Makefile.linux
---- chicken/Makefile.linux	2009-08-01 02:06:10.000000000 +0400
-+++ chicken.new/Makefile.linux	2009-08-13 20:46:36.000000000 +0400
-@@ -33,15 +33,15 @@
+diff -Naur chicken/Makefile.bsd chicken.new/Makefile.bsd
+--- chicken/Makefile.bsd	2009-08-01 02:12:00.000000000 +0400
++++ chicken.new/Makefile.bsd	2009-08-21 19:11:32.000000000 +0400
+@@ -33,7 +33,7 @@
  
  # options
  
@@ -10,13 +10,39 @@ diff -Naur chicken/Makefile.linux chicken.new/Makefile.linux
  ifdef DEBUGBUILD
  C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
  else
- C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
- endif
- LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
--LINKER_LINK_SHARED_DLOADABLE_OPTIONS = -L. -shared -Wl,-R$(RUNTIME_LINKER_PATH)
--LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(RUNTIME_LINKER_PATH)
-+LINKER_LINK_SHARED_DLOADABLE_OPTIONS = -L. -shared
-+LINKER_LINK_SHARED_PROGRAM_OPTIONS =
- LIBRARIES = -lm -ldl
- NEEDS_RELINKING = yes
+diff -Naur chicken/Makefile.linux chicken.new/Makefile.linux
+--- chicken/Makefile.linux	2009-08-01 02:06:10.000000000 +0400
++++ chicken.new/Makefile.linux	2009-08-21 19:10:54.000000000 +0400
+@@ -33,7 +33,7 @@
  
+ # options
+ 
+-C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
++C_COMPILER_OPTIONS = -fexceptions -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
+ ifdef DEBUGBUILD
+ C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
+ else
+diff -Naur chicken/Makefile.macosx chicken.new/Makefile.macosx
+--- chicken/Makefile.macosx	2009-08-01 02:16:34.000000000 +0400
++++ chicken.new/Makefile.macosx	2009-08-21 19:12:44.000000000 +0400
+@@ -37,7 +37,7 @@
+ 
+ # options
+ 
+-C_COMPILER_OPTIONS = -no-cpp-precomp -fno-strict-aliasing -fno-common -DHAVE_CHICKEN_CONFIG_H
++C_COMPILER_OPTIONS = -no-cpp-precomp -fexceptions -fno-strict-aliasing -fno-common -DHAVE_CHICKEN_CONFIG_H
+ ifdef DEBUGBUILD
+ C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
+ else
+diff -Naur chicken/Makefile.solaris chicken.new/Makefile.solaris
+--- chicken/Makefile.solaris	2009-08-01 02:06:10.000000000 +0400
++++ chicken.new/Makefile.solaris	2009-08-21 19:11:14.000000000 +0400
+@@ -33,7 +33,7 @@
+ 
+ # options
+ 
+-C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
++C_COMPILER_OPTIONS = -fexceptions -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
+ ifdef DEBUGBUILD
+ C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
+ else

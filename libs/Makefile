@@ -89,6 +89,22 @@ clean_chicken:
 
 else # Unix
 
+CHICKEN_PLATFORM=linux
+
+ifdef SUB_PLATFORM
+ifeq ("$(SUB_PLATFORM)", "SunOS")
+CHICKEN_PLATFORM=solaris
+else
+ifeq ("$(SUB_PLATFORM)", "FreeBSD")
+CHICKEN_PLATFORM=bsd
+else
+ifeq ("$(SUB_PLATFORM)", "Darwin")
+CHICKEN_PLATFORM=macosx
+endif
+endif
+endif
+endif
+
 build_chicken: chicken/chicken
 	@echo ===================================================================
 	@echo Chicken has been done
@@ -96,10 +112,10 @@ build_chicken: chicken/chicken
 
 chicken/chicken: chicken/chicken.h
 	$(PATCHER) -Np1 -d chicken < chicken-make-linux.patch
-	$(MAKE) -C chicken PLATFORM=linux STATICBUILD=1
+	$(MAKE) -C chicken PLATFORM=$(CHICKEN_PLATFORM) STATICBUILD=1
 
 clean_chicken:
-	-$(MAKE) -C chicken PLATFORM=linux STATICBUILD=1 clean
+	-$(MAKE) -C chicken PLATFORM=$(CHICKEN_PLATFORM) STATICBUILD=1 clean
 	-rm -rf chicken
 endif
 endif
