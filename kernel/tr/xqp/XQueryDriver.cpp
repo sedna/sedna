@@ -401,7 +401,10 @@ namespace sedna
         mod_str = get_module(uri);
 
         if (!strcmp(mod_str, "#f"))
+        {
+            free(mod_str);
             return 1;
+        }
 
         mods = dsGetASTNodesFromString(mod_str);
 

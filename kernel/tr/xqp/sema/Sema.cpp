@@ -57,11 +57,14 @@ namespace sedna
     {
         const char *uri;
 
-        // first, try to resolve prefix
-        uri = resolveQName(n.loc, n.pref->c_str(), "");
+        if (!n.uri)
+        {
+            // first, try to resolve prefix
+            uri = resolveQName(n.loc, n.pref->c_str(), "");
 
-        if (uri)
-            n.uri = new std::string(uri);
+            if (uri)
+                n.uri = new std::string(uri);
+        }
 
         if (n.cont)
             VisitNodesVector(n.cont, *this);
@@ -198,10 +201,10 @@ namespace sedna
                 delete l_pref;
                 delete l_loc;
             }
-
-            delete t_pref;
-            delete t_loc;
         }
+
+        delete t_pref;
+        delete t_loc;
     }
 
     void Sema::visit(ASTCastable &n)
@@ -260,9 +263,10 @@ namespace sedna
 
             delete l_pref;
             delete l_loc;
-            delete t_pref;
-            delete t_loc;
         }
+
+        delete t_pref;
+        delete t_loc;
     }
 
     void Sema::visit(ASTCharCont &n)
@@ -736,37 +740,42 @@ namespace sedna
         // first of all, we should check arguments
         VisitNodesVector(n.params, *this);
 
-        // then find the function
-        xqf = findFunction(name, arity, mod, drv);
-
-        if (xqf == NULL) // not found, try to resolve later
+        if (!n.int_name)
         {
-            // ignore external module's function imports on load module phase
-            if (mod->module_uri && !is_imported && *n.uri != *mod->module_uri && mod->imported.find(*n.uri) != mod->imported.end())
-                return;
+            // then find the function
+            xqf = findFunction(name, arity, mod, drv);
 
-            if (mod->unres_funcs.find(name) == mod->unres_funcs.end())
+            if (xqf == NULL) // not found, try to resolve later
             {
-                XQFunction fun;
+                // ignore external module's function imports on load module phase
+                if (mod->module_uri && !is_imported && *n.uri != *mod->module_uri && mod->imported.find(*n.uri) != mod->imported.end())
+                    return;
 
-                fun.uri = *n.uri;
-                fun.local = *n.local;
-                fun.min_arg = fun.max_arg = arity;
-                fun.int_name = "";
-                fun.decl = NULL;
-                fun.loc = &n.loc;
-                fun.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
+                if (mod->unres_funcs.find(name) == mod->unres_funcs.end())
+                {
+                    XQFunction fun;
 
-                mod->unres_funcs[name + "/" + int2string(arity)] = fun;
+                    fun.uri = *n.uri;
+                    fun.local = *n.local;
+                    fun.min_arg = fun.max_arg = arity;
+                    fun.int_name = "";
+                    fun.decl = NULL;
+                    fun.loc = &n.loc;
+                    fun.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
+
+                    mod->unres_funcs[name + "/" + int2string(arity)] = fun;
+                }
+
+                n.int_name = new std::string("");
+
+                return;
             }
 
-            return;
+            n.int_name = new std::string(xqf->int_name);
+
+            if (*n.int_name != "") // standard function
+                rewriteStdFunCall(n, *n.int_name);
         }
-
-        n.int_name = new std::string(xqf->int_name);
-
-        if (*n.int_name != "") // standard function
-            rewriteStdFunCall(n, *n.int_name);
     }
 
     void Sema::visit(ASTFunDef &n)
@@ -1127,10 +1136,13 @@ namespace sedna
             return;
         }
 
-        uri = resolveQName(n.loc, n.pref->c_str(), (att_test) ? "" : NULL);
+        if (!n.uri)
+        {
+            uri = resolveQName(n.loc, n.pref->c_str(), (att_test) ? "" : NULL);
 
-        if (uri)
-            n.uri = new std::string(uri);
+            if (uri)
+                n.uri = new std::string(uri);
+        }
     }
 
     void Sema::visit(ASTNamespaceDecl &n)

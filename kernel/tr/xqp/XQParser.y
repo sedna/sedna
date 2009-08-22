@@ -3897,6 +3897,7 @@ static ASTNode *makePathExpr(sedna::XQueryParser::location_type& loc, ASTNodesVe
 
                 if (it == steps->begin())
                 {
+                    delete res;
                     res = pred;
                 }
                 else
