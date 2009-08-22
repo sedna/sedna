@@ -800,7 +800,7 @@ namespace sedna
                     if (bound_vars[j].first == bound_vars[i].first)
                     {
                         delete (*n.vars)[i - bound_vars.size() + params - offs];
-                        n.vars->erase(n.vars->begin() + i - bound_vars.size() + params - offs);
+                        n.vars->erase(n.vars->begin() + (i - bound_vars.size() + params - offs));
                         offs++;
                         break;
                     }
@@ -809,7 +809,7 @@ namespace sedna
 
         n.fun->accept(*this);
 
-        bound_vars.erase(bound_vars.begin() + bound_vars.size() - params, bound_vars.end());
+        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
     void Sema::visit(ASTFuncDecl &n)
@@ -927,7 +927,7 @@ namespace sedna
 
         // we should clear bounded variables
         if (n.params)
-            bound_vars.erase(bound_vars.begin() + bound_vars.size() - params_count, bound_vars.end());
+            bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params_count), bound_vars.end());
     }
 
     void Sema::visit(ASTGrantPriv &n)
@@ -1656,14 +1656,14 @@ namespace sedna
                     if (bound_vars[j].first == bound_vars[i].first)
                 {
                     delete (*n.vars)[i - bound_vars.size() + params - offs];
-                    n.vars->erase(n.vars->begin() + i - bound_vars.size() + params - offs);
+                    n.vars->erase(n.vars->begin() + (i - bound_vars.size() + params - offs));
                     offs++;
                     break;
                 }
             }
         }
 
-        bound_vars.erase(bound_vars.begin() + bound_vars.size() - params, bound_vars.end());
+        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
     void Sema::visit(ASTUop &n)
