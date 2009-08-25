@@ -225,7 +225,7 @@ t_prefix	nid_get_prefix(xptr node) {
 	return result;
 }
 
-t_prefix	nid_get_prefix(t_nid the_nid) {
+t_prefix nid_get_prefix(t_nid the_nid) {
 	t_prefix	result;
 	result.prefix =(unsigned char*)nid_alloc();
 	result.size = (the_nid.size==0)?*(shft*)(the_nid.prefix+sizeof(xptr)):the_nid.size;
@@ -259,29 +259,26 @@ t_prefix	nid_child_limit(t_nid id, t_prefix p) {
 }
 */
 /* effective comparison */
-int		nid_cmp_effective(xptr node1, xptr node2) {
-	
+int	nid_cmp_effective(xptr node1, xptr node2) {
 
     if (node1 == node2) return 0;
-	//t_nid		nid1 = nid_get_nid(node1);
-	t_prefix	p1= nid_get_prefix(node1);
-	unsigned char* ptr1=p1.prefix;
-	shft size1=p1.size;
+
+	t_prefix p1 = nid_get_prefix(node1);
+	unsigned char* ptr1 = p1.prefix;
+	shft size1 = p1.size;
 	CHECKP(node2);
 	t_nid* nd = &((n_dsc*)XADDR(node2))->nid;
-	shft size2=nd->size;
+	shft size2 = nd->size;
 	unsigned char* ptr2=nd->prefix;
-	if (size2==0) 
+	if (size2 == 0)
 	{	
-		xptr	ps	= *(xptr*)ptr2;
+		xptr ps	= *(xptr*)ptr2;
 		size2=*(shft*)(nd->prefix+sizeof(xptr));
 		CHECKP(ps);
 		ptr2=(unsigned char*)XADDR(BLOCKXPTR(ps)) + *(shft*)XADDR(ps);
-		
 	} 
-	int		result=0;
-	int i=0;
-	result=sign(memcmp(ptr1,ptr2,min(size1,size2))); /// There is no guarantee that memcmp returns 1, -1, 0!
+
+	int result = sign(memcmp(ptr1,ptr2,min(size1,size2))); /// There is no guarantee that memcmp returns 1, -1, 0!
 	if (!result)
 	{
 		if (size1>size2) result=2;
@@ -292,7 +289,7 @@ int		nid_cmp_effective(xptr node1, xptr node2) {
 }
 
 /* doc-order comparison */
-int		nid_cmp(xptr node1, xptr node2) {
+int nid_cmp(xptr node1, xptr node2) {
 	t_nid		nid1;
 	t_nid		nid2;
 	t_prefix	p1;
@@ -318,7 +315,7 @@ int		nid_cmp(xptr node1, xptr node2) {
 }
 
 /* ancestor comparison (true if node1 is ancestor of node2) */
-bool	nid_ancestor(xptr node1, xptr node2) {
+bool nid_ancestor(xptr node1, xptr node2) {
 	/* COMPLETELY CHANGED */
 	t_nid		nid1;
 	t_nid		nid2;
