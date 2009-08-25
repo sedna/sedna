@@ -150,6 +150,8 @@ bt_cursor_tmpl<object> bt_find_gt_tmpl(const xptr &root, const bt_key &key)
 template<typename object>
 bt_cursor_tmpl<object> bt_lm_tmpl(const xptr& root) 
 {
+    if (root == XNULL) return bt_cursor_tmpl<object>();
+
     CHECKP(root);
     char* pg = (char*)XADDR(root);
 
