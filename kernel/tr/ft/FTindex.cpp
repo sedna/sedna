@@ -495,7 +495,7 @@ void SednaIndexJob::rebuild_all_ftph()
 
 	while (it.next())
     {
-		rebuild_index(it.name());
+		rebuild_index(it.get_name());
     }
 }
 
