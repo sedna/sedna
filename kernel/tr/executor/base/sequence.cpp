@@ -126,19 +126,6 @@ int sequence::add(const tuple &t)
             (copy_vmm_strings && t.cells[i].is_atomic() && !is_fixed_size_type(t.cells[i].get_atomic_type())))
 
         {
-/*
-            if (txt_eblk == NULL) init_txt_blks();
-            int new_blks_num = 0;
-            xptr txt_ptr = t.cells[i].is_light_atomic() ? copy_text(t.cells[i].get_str_mem(), &txt_eblk, &new_blks_num) :
-                                                          copy_text(t.cells[i].get_str_vmm(), t.cells[i].get_strlen_vmm(), &txt_eblk, &new_blks_num);
-
-            (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
-            txt_blks_num += new_blks_num;
-            CHECKP(eblk);
-*/
-
-
-
             xptr txt_ptr = txt.append(t.cells[i]);
             CHECKP(eblk);
             (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
