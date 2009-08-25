@@ -489,6 +489,11 @@ void get_collections(xptr node,const char* title)
     {
         mdc = it.get_object();
 
+        if (!mdc.found()) {
+          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
+          continue;
+        }
+
         if (!mdc->is_doc)
         {
             if (left==XNULL)

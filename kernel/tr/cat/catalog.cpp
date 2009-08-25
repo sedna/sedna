@@ -21,22 +21,9 @@
 #include "tr/idx/btree/btstruct.h"
 #include "tr/cat/simplestream.h"
 
+#include "tr/cat/catjournal.h"
 #include "tr/executor/base/XPath.h"
-
-#include "tr/cat/CatalogXptrHash.h"
-
 #include "tr/bstrie/block_string_tree.h"
-
-#define CATALOG_NAME_TREE(i) (local_catalog->masterdata.trees[i])
-#define MAX_ROOT_NID_SIZE 1024
-
-inline uint16_t hash(const xptr &p) { return ((uint32_t) p.addr >> 7) % CCACHE_XPTR_BUCKETS ; };
-
-inline uint16_t hash(const char * a) {
-    uint8_t i = 0;
-    while (*a != '\0') { i += (* (uint8_t *) a); a++;  }
-    return i % CCACHE_NAME_BUCKETS;
-};
 
 void catalog_issue_warning(const char * warning) {
     elog(EL_WARN, (warning));
@@ -49,112 +36,7 @@ void catalog_issue_warning(const char * warning) {
 
 uint64_t deserialized_objects;
 
-/*
- * Record for hash table
- */
-
-struct catalog_name_record {
-    char * name;
-    enum catalog_named_objects obj_type;
-    catalog_object_header * obj;
-    catalog_name_record * next;
-    bool name_deleted;
-
-    ~catalog_name_record() { cat_free(name); }
-};
-
-struct catalog_header {
-    catalog_name_record * names[CCACHE_NAME_BUCKETS];
-    FastCatalogXptrHash xptrhash;
-
-    catalog_header() {
-        memset(names, 0, CCACHE_NAME_BUCKETS * sizeof(catalog_name_record *));
-    }
-};
-
-struct catalog_journal_record {
-    enum {
-        add_name,
-        del_name,
-        add_htable_record
-    } type;
-
-    union {
-        struct {
-            enum catalog_named_objects object_type;
-            catalog_name_record * name_to_save;
-        } nor;
-
-        struct {
-            enum catalog_named_objects object_type;
-            char * name;
-            char * data;
-        } htr;
-    };
-
-    catalog_journal_record * next;
-};
-
-struct catalog_name_trees {
-    xptr trees[catobj_count];
-    xptr htable;
-};
-
 inline char * catalog_ht_fullname_string(enum catalog_named_objects obj_type, const char * key);
-
-/*  Structure of catalog master block header.
- */
-
-struct catalog_master_record {
-    vmm_sm_blk_hdr sm_vmm;  /* sm/vmm parameters */
-    catalog_name_trees masterdata;
-
-    int last_nid_size;
-    uchar last_nid[MAX_ROOT_NID_SIZE];
-};
-
-struct local_catalog_header : public catalog_header {
-    bool initialized;
-    bool masterdata_loaded;
-    bool masterdata_updated;
-
-    FastPointerArray header_list;
-    FastPointerArray object_list;
-    FastPointerArray namerecord_list;
-
-    catalog_name_trees masterdata;
-
-    catalog_object_header  * invalid_list;
-    catalog_object_header  * invalid_list_tail;
-
-    catalog_journal_record * catalog_journal;
-    catalog_journal_record * catalog_journal_tail;
-
-    inline void add_journal_record(catalog_journal_record * cr) {
-        if (this->catalog_journal == NULL) {
-            this->catalog_journal = cr;
-        }
-
-        if (this->catalog_journal_tail != NULL) {
-            this->catalog_journal_tail->next = cr;
-        }
-
-        this->catalog_journal_tail = cr;
-
-        cr->next = NULL;
-    }
-
-    local_catalog_header() :
-        masterdata_updated(false),
-        invalid_list(NULL), invalid_list_tail(NULL),
-        catalog_journal(NULL), catalog_journal_tail(NULL) { }
-
-    ~local_catalog_header() {
-        header_list.destroyAll<catalog_object_header>();
-        object_list.destroyAll<catalog_object>();
-        namerecord_list.destroyAll<catalog_name_record>();
-    };
-};
 
 //struct local_catalog_header * local_catalog;
 struct local_catalog_header * local_catalog;
@@ -555,38 +437,14 @@ void catalog_delete_object(catalog_object * object)
     catalog_delete_object_internal(catalog_acquire_object(object->p_object));
 }
 
-inline catalog_name_record * catalog_cachetree_find_name(
-        enum catalog_named_objects obj_type,
-        const char * name)
+void catalog_update_metadata()
 {
-    catalog_name_record * r;
-
-    r = local_catalog->names[hash(name)];
-    while ((r != NULL) && ((r->name == NULL) || (strcmp(r->name, name) != 0) || (r->obj_type != obj_type))) { r = r->next; }
-
-    return r;
+    CHECKP(catalog_masterblock);
+    memcpy(
+        &(local_catalog->masterdata),
+        &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
+        sizeof(catalog_name_trees));
 }
-
-
-inline catalog_name_record * catalog_cachetree_add_name(
-        enum catalog_named_objects obj_type,
-        const char * name,
-        catalog_object_header * obj)
-{
-    catalog_name_record ** r = &(local_catalog->names[hash(name)]);
-    catalog_name_record * n = new(cat_malloc(local_catalog->names, sizeof(catalog_name_record))) catalog_name_record;
-
-    n->name = cat_strcpy(n, name);
-    n->obj = obj;
-    n->obj_type = obj_type;
-    n->next = *r;
-    n->name_deleted = false;
-    *r = n;
-    local_catalog->namerecord_list.add(n);
-
-    return n;
-}
-
 
 inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
 {
@@ -598,16 +456,13 @@ inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
 
     lock.Aquire();
 
-    CHECKP(catalog_masterblock);
-    memcpy(
-        &(local_catalog->masterdata),
-        &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
-        sizeof(catalog_name_trees));
+    catalog_update_metadata();
 
     k.setnew(name);
 
     bt_cursor c = bt_find(tree, k);
     obj = c.bt_next_obj();
+
     lock.Release();
 
     return obj;
@@ -630,6 +485,22 @@ bool catalog_set_name(
     cr->nor.name_to_save = n;
 
     local_catalog->add_journal_record(cr);
+
+    return true;
+}
+
+bool __catalog_cache_valid_name(
+        enum catalog_named_objects obj_type,
+        const char * name)
+{
+    catalog_object_header * o;
+    catalog_name_record * n;
+
+    if ((n = catalog_cachetree_find_name(obj_type, name)) != NULL) {
+        if (n->name_deleted) { return false; }
+        o = n->obj;
+        return (!GET_FLAG(o->flags, CAT_OBJECT_DELETED_FLAG));
+    }
 
     return true;
 }

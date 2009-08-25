@@ -6,61 +6,97 @@
 #ifndef CATENUM_H
 #define CATENUM_H
 
+#include "tr/idx/btree/btree.h"
 #include "tr/idx/btree/btstruct.h"
+#include "tr/structures/rbtree.h"
 #include "tr/cat/catalog.h"
+#include "tr/cat/catmem.h"
 
 /************************************
  * Catalog iterator
  */
 
-struct catalog_iterator {
+struct catalog_custom_iterator {
+public :
+    virtual bool next() = 0;
+    virtual xptr get_object() const = 0;
+    virtual const char * get_name() const = 0;
+
+    virtual ~catalog_custom_iterator() {};
+};
+
+struct catalog_simple_iterator : public catalog_custom_iterator {
 private:
-    enum catalog_named_objects ot;
-    void * jr;
     bt_cursor c;
     xptr _object;
-    bool locking;
+    bool locked;
 
 public:
-    catalog_iterator(enum catalog_named_objects obj_type, bool _locking = true) :
-      ot(obj_type), jr(NULL), c(bt_lm(catalog_get_names(obj_type))), _object(XNULL), locking(false) {
+    catalog_simple_iterator(enum catalog_named_objects obj_type, bool _locking = true) :
+      c(bt_lm(catalog_get_names(obj_type))), _object(XNULL), locked(false) {
         if (_locking) catalog_lock_metadata();
-        locking = _locking;
+        locked = _locking;
     };
 
-    ~catalog_iterator() {
-        if (locking) catalog_unlock_metadata();
+    ~catalog_simple_iterator() {
+        if (locked) catalog_unlock_metadata();
     };
 
-    inline const xptr get_object() {
-        if (jr == NULL) {
-            return _object;
-        } else {
-            return __catalog_name_enum_get_object(jr);
+    xptr get_object() const {
+        return _object;
+    };
+
+    const char * get_name() const {
+        return (char *) c.get_key().data();
+    };
+
+    bool next() {
+        if (!c.is_null()) {
+            if (_object != XNULL && !c.bt_next_key()) { return false; }
+            _object = c.bt_next_obj();
         }
-    };
-
-    inline const char * name() {
-        if (jr == NULL) {
-            return (char *) c.get_key().data();
-        } else {
-            return __catalog_name_enum_get_name(jr);
-        }
-    };
-
-    inline bool next() {
-        if (jr == NULL) {
-            if (!c.is_null() && (_object == XNULL || c.bt_next_key())) {
-                _object = c.bt_next_obj();
-                return true;
-            }
-
-            jr = __catalog_name_enum_init(ot);
-        } else {
-            jr = __catalog_name_enum_next(jr, ot);
-        }
-        return jr != NULL;
+        return (!c.is_null());
     };
 };
+
+struct catalog_complex_iterator : public catalog_custom_iterator {
+private:
+    bool locking;
+    void * tmp_tree;
+    void * it;
+
+public:
+    ~catalog_complex_iterator() {
+        release_tree();
+    };
+
+    xptr get_object() const;
+    const char * get_name() const;
+    bool next();
+
+    void build_tree(enum catalog_named_objects ot);
+    void release_tree();
+
+    catalog_complex_iterator(enum catalog_named_objects obj_type, bool _locking = true) :
+       locking(_locking), tmp_tree(NULL), it(NULL) {
+        build_tree(obj_type);
+    };
+
+};
+
+struct catalog_iterator {
+private :
+    struct catalog_custom_iterator *it;
+public :
+    catalog_iterator(enum catalog_named_objects obj_type, bool _locking = true) : it(NULL) {
+        it = new catalog_complex_iterator(obj_type, _locking);
+    };
+    ~catalog_iterator() { delete it; };
+
+    inline xptr get_object() const { return it->get_object(); };
+    inline const char * get_name() const { return it->get_name(); };
+    inline bool next() { return it->next(); };
+};
+
 
 #endif // CATENUM_H

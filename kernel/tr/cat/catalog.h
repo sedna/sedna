@@ -55,18 +55,18 @@ void                    catalog_release_object(catalog_object_header * object);
 void                    catalog_delete_object(catalog_object * object);
 catalog_object *        catalog_deserialize_object(xptr p, void * context);
 
+/*
+  Catalog has extremely complicated name handling.
+  
+*/
+
 bool                    catalog_set_name(enum catalog_named_objects obj_type, const char * name, catalog_object_header * obj);
 catalog_object_header * catalog_find_name(enum catalog_named_objects obj_type, const char * name);
 bool                    catalog_delete_name(enum catalog_named_objects obj_type, const char * name);
 xptr                    catalog_get_names(enum catalog_named_objects obj_type);
 bool                    catalog_name_exists(enum catalog_named_objects obj_type, const char * name);
 
-void * __catalog_name_enum_init(enum catalog_named_objects obj_type);
-void * __catalog_name_enum_next(void * jr, enum catalog_named_objects obj_type);
-char * __catalog_name_enum_get_name(void * jr);
-xptr   __catalog_name_enum_get_object(void * jr);
-
-//bool __enum_helper_catalog_object_not_dead(enum catalog_named_objects obj_type, const char * name);
+bool __catalog_cache_valid_name(enum catalog_named_objects obj_type, const char * name);
 
 char *  catalog_htable_get(enum catalog_named_objects obj_type, const char * key);
 bool    catalog_htable_set(enum catalog_named_objects obj_type, const char * key, char par_type, const char * par_name);
