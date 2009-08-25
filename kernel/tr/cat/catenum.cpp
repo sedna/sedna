@@ -43,10 +43,9 @@ void catalog_complex_iterator::build_tree(enum catalog_named_objects ot)
 
     bt_cursor c = bt_lm(catalog_get_names(ot));
 
-    if (!c.is_null()) { c.bt_next_key(); }
     while (!c.is_null()) {
         (*a)[string((char *) c.get_key().data())] = c.bt_next_obj();
-        c.bt_next_key();
+        if (!c.bt_next_key()) break;
     }
     lock.Release();
 
