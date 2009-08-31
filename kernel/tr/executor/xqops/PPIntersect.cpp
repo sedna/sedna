@@ -10,9 +10,10 @@
 
 
 PPIntersect::PPIntersect(dynamic_context *_cxt_,
+                         operation_info _info_,
                          PPOpIn _child1_,
                          PPOpIn _child2_,
-                         bool _doc_order_) : PPIterator(_cxt_),
+                         bool _doc_order_) : PPIterator(_cxt_, _info_),
                                              child1(_child1_),
                                              child2(_child2_),
                                              doc_order(_doc_order_)
@@ -27,7 +28,7 @@ PPIntersect::~PPIntersect()
     child2.op = NULL;
 }
 
-void PPIntersect::open  ()
+void PPIntersect::do_open ()
 {
     child1.op->open();
     child2.op->open();
@@ -39,7 +40,7 @@ void PPIntersect::open  ()
     need_reopen_second = false;
 }
 
-void PPIntersect::reopen()
+void PPIntersect::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
@@ -51,16 +52,14 @@ void PPIntersect::reopen()
     need_reopen_second = false;
 }
 
-void PPIntersect::close ()
+void PPIntersect::do_close()
 {
     child1.op->close();
     child2.op->close();
 }
 
-void PPIntersect::next  (tuple &t)
+void PPIntersect::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if(need_reopen_first)   {child1.op->reopen(); need_reopen_first = false;}
     if(need_reopen_second)  {child2.op->reopen(); need_reopen_second = false;}
     
@@ -100,8 +99,7 @@ void PPIntersect::next  (tuple &t)
             tug_second = false;
         }
 
-        /// XNULL by definition is equal to any xptr with addr == NULL;
-        /// XNULL by definition is > of any xptr (except itself);
+        /* XNULL by definition is > of any xptr (except itself); */
         switch (doc_order ? doc_order_merge_cmp(&xptr1, &xptr2) : xptr_compare(xptr1, xptr2))
         {
             case -1: /// (1) < (2)
@@ -112,7 +110,7 @@ void PPIntersect::next  (tuple &t)
                     t.set_eos();
                     tug_first = true;
                     tug_second = true;
-                    {RESTORE_CURRENT_PP; return;}
+                    return;
                 }
                 tug_first = true;
                 break;
@@ -127,7 +125,7 @@ void PPIntersect::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
 
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             case  1: /// (1) > (2)
             {
@@ -137,7 +135,7 @@ void PPIntersect::next  (tuple &t)
                     t.set_eos();
                     tug_first = true;
                     tug_second = true;
-                    {RESTORE_CURRENT_PP; return;}
+                    return;
                 }
                 tug_second = true;
                 break;
@@ -145,21 +143,12 @@ void PPIntersect::next  (tuple &t)
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPIntersect::next");
         }
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPIntersect::copy(dynamic_context *_cxt_)
+PPIterator* PPIntersect::do_copy(dynamic_context *_cxt_)
 {
-    PPIntersect *res = se_new PPIntersect(_cxt_, child1, child2, doc_order);
+    PPIntersect *res = se_new PPIntersect(_cxt_, info, child1, child2, doc_order);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPIntersect::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPIntersect::result");
-}
-

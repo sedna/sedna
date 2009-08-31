@@ -24,23 +24,22 @@ class PPAxisDescendant : public PPIterator
 protected:
     typedef void (PPAxisDescendant::*t_next_fun)(tuple &t);
 
-    // given parameters
+    /* given parameters */
     PPOpIn child;
     NodeTestType nt_type;
     NodeTestData nt_data;
 	bool self;
 	
-    // obtained parameters and local data
+    /* obtained parameters and local data */
     xptr cur;
     t_next_fun next_fun;
 	std::vector<xptr> descstack;
 	std::map<schema_node_xptr,std::vector<schema_node_xptr> > desc_sch;
 	xptrChanneledMerge* merge_tree;
 	std::vector<schema_node_xptr> * curvect;
-	//int curpos;
+
 	xptr ancestor;
 	void init_function();
-    void children(PPOpIn &_child_) { _child_ = child; }
 
     virtual void next_processing_instruction	(tuple &t);
     virtual void next_comment					(tuple &t);
@@ -53,54 +52,52 @@ protected:
     virtual void next_wildcard_star_ncname		(tuple &t);
     virtual void next_function_call				(tuple &t);
     
-/*
-    static sequence *next_processing_instruction_s	(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_comment_s					(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_text_s					(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_node_s					(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_string_s					(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_qname_s					(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_wildcard_star_s			(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_wildcard_ncname_star_s	(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_wildcard_star_ncname_s	(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_function_call_s			(sequence *data_seq, PPAxisChild* cur_op);
-    static sequence *next_var_name_s				(sequence *data_seq, PPAxisChild* cur_op);
-
-*/
 	PPAxisDescendant(dynamic_context *_cxt_,
-                PPOpIn _child_,
-                NodeTestType _nt_type_,
-                NodeTestData _nt_data_,bool _self_);
+                     operation_info _info_,
+                     PPOpIn _child_,
+                     NodeTestType _nt_type_,
+                     NodeTestData _nt_data_,bool _self_);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t) 
-	{ 
-		SET_CURRENT_PP(this);
-		(this->*next_fun)(t); 
-		RESTORE_CURRENT_PP;
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) {
+        (this->*next_fun)(t); 
 	}
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:
     PPAxisDescendant(dynamic_context *_cxt_,
-                PPOpIn _child_,
-                NodeTestType _nt_type_,
-                NodeTestData _nt_data_);
+                     operation_info _info_,
+                     PPOpIn _child_,
+                     NodeTestType _nt_type_,
+                     NodeTestData _nt_data_);
     virtual ~PPAxisDescendant();
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPAxisDescendantOrSelf
+///////////////////////////////////////////////////////////////////////////////
+
+
 class PPAxisDescendantOrSelf : public PPAxisDescendant
 {
-	public:
+public:
 	PPAxisDescendantOrSelf(dynamic_context *_cxt_,
-                PPOpIn _child_,
-                NodeTestType _nt_type_,
-                NodeTestData _nt_data_);
+                           operation_info _info_,
+                           PPOpIn _child_,
+                           NodeTestType _nt_type_,
+                           NodeTestData _nt_data_);
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPAxisDescendantAttr
+///////////////////////////////////////////////////////////////////////////////
+
 class PPAxisDescendantAttr: public PPAxisDescendant
 {
 protected:	
@@ -110,10 +107,12 @@ protected:
 	void next_wildcard_star				(tuple &t);
 	void next_wildcard_ncname_star		(tuple &t);
     void next_wildcard_star_ncname		(tuple &t);
+
 public:
 	PPAxisDescendantAttr(dynamic_context *_cxt_,
-                PPOpIn _child_,
-                NodeTestType _nt_type_,
-                NodeTestData _nt_data_);
+                         operation_info _info_,
+                         PPOpIn _child_,
+                         NodeTestType _nt_type_,
+                         NodeTestData _nt_data_);
 };
 #endif

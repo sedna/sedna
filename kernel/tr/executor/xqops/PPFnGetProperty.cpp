@@ -11,10 +11,9 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/tr_globals.h"
 
-
-
 PPFnGetProperty::PPFnGetProperty(dynamic_context *_cxt_,
-                                 PPOpIn _child_) : PPIterator(_cxt_),
+                                 operation_info _info_,
+                                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                    child(_child_)
 {
 }
@@ -25,28 +24,26 @@ PPFnGetProperty::~PPFnGetProperty()
     child.op = NULL;
 }
 
-void PPFnGetProperty::open ()
+void PPFnGetProperty::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
 
-void PPFnGetProperty::reopen ()
+void PPFnGetProperty::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnGetProperty::close ()
+void PPFnGetProperty::do_close()
 {
     child.op->close();
 }
 
-void PPFnGetProperty::next(tuple &t)
+void PPFnGetProperty::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -69,27 +66,17 @@ void PPFnGetProperty::next(tuple &t)
             t.copy(tuple_cell::atomic_deep(xs_string, tr_globals::login));
         else
             throw XQUERY_EXCEPTION2(SE4621, property.get_str_mem());
-
     }
     else 
     {
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnGetProperty::copy(dynamic_context *_cxt_)
+PPIterator* PPFnGetProperty::do_copy(dynamic_context *_cxt_)
 {
-    PPFnGetProperty *res = se_new PPFnGetProperty(_cxt_, child);
+    PPFnGetProperty *res = se_new PPFnGetProperty(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPFnGetProperty::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnGetProperty::result");
-}
-

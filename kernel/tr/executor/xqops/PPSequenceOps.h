@@ -20,19 +20,17 @@ protected:
     bool first_time;
     bool eos_reached;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnEmpty(dynamic_context *_cxt_,
+              operation_info _info_,
               PPOpIn _child_);
     virtual ~PPFnEmpty();
 };
@@ -48,19 +46,17 @@ protected:
     bool first_time;
     bool eos_reached;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnExists(dynamic_context *_cxt_,
+               operation_info _info_,
                PPOpIn _child_);
     virtual ~PPFnExists();
 };
@@ -76,23 +72,17 @@ protected:
     PPOpIn pos_child;
     bool first_time;
 
-    void children(PPOpIn &_seq_child_, PPOpIn &_pos_child_) 
-    { 
-        _seq_child_ = seq_child; 
-        _pos_child_ = pos_child;
-    }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
-    PPFnItemAt(dynamic_context *_cxt_, 
+    PPFnItemAt(dynamic_context *_cxt_,
+               operation_info _info_,
                PPOpIn _seq_child_,
                PPOpIn _pos_child_);
     virtual ~PPFnItemAt();
@@ -110,21 +100,21 @@ protected:
     CollationHandler* handler;
     bool has_NaN;
 
-    void children(PPOpIn &_child_, PPOpIn &_collation_child_) { _child_ = child; _collation_child_ = collation_child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnDistinctValues(dynamic_context *_cxt_,
+                       operation_info _info_,
                        PPOpIn _child_);
+
     PPFnDistinctValues(dynamic_context *_cxt_,
+                       operation_info _info_,
                        PPOpIn _child_,
                        PPOpIn _collation_child_);
     virtual ~PPFnDistinctValues();
@@ -146,24 +136,22 @@ protected:
 
     CollationHandler* handler;
     
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    void children(PPOpIn &_seq_child_, PPOpIn &_srch_child_, PPOpIn &_collation_child_) 
-        { _seq_child_ = seq_child; _srch_child_ = srch_child; _collation_child_ = collation_child; }
-
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnIndexOf(dynamic_context *_cxt_,
+                operation_info _info_,
                 PPOpIn _seq_child_,
                 PPOpIn _srch_child_);
+
     PPFnIndexOf(dynamic_context *_cxt_,
+                operation_info _info_,
                 PPOpIn _seq_child_,
                 PPOpIn _srch_child_,
                 PPOpIn _collation_child_);
@@ -183,17 +171,17 @@ private:
     int pos;
     bool first_time;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnReverse(dynamic_context *_cxt_,
+                operation_info _info_,
                 PPOpIn _child_);
     virtual ~PPFnReverse();
 };
@@ -217,21 +205,22 @@ protected:
     double start_pos;
     double length;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnSubsequence(dynamic_context *_cxt_, 
+                    operation_info _info_,
                     PPOpIn _seq_child_,
                     PPOpIn _start_child_);
 
     PPFnSubsequence(dynamic_context *_cxt_, 
+                    operation_info _info_,
                     PPOpIn _seq_child_,
                     PPOpIn _start_child_,
                     PPOpIn _length_child_);
@@ -254,17 +243,17 @@ protected:
     __int64 current_pos;
     __int64 remove_pos;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
-    PPFnRemove(dynamic_context *_cxt_, 
+    PPFnRemove(dynamic_context *_cxt_,
+               operation_info _info_,
                PPOpIn _seq_child_,
                PPOpIn _pos_child_);
 
@@ -290,17 +279,17 @@ protected:
     __int64 current_pos;
     __int64 insert_pos;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnInsertBefore(dynamic_context *_cxt_, 
+                     operation_info _info_,
                      PPOpIn _seq_child_,
                      PPOpIn _pos_child_,
                      PPOpIn _ins_child_);
@@ -318,17 +307,17 @@ protected:
     PPOpIn child;
     bool first_time;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnZeroOrOne(dynamic_context *_cxt_,
+                  operation_info _info_,
                   PPOpIn _child_);
     virtual ~PPFnZeroOrOne();
 };
@@ -343,17 +332,17 @@ protected:
     PPOpIn child;
     bool first_time;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnOneOrMore(dynamic_context *_cxt_,
+                  operation_info _info_,
                   PPOpIn _child_);
     virtual ~PPFnOneOrMore();
 };
@@ -368,21 +357,20 @@ protected:
     PPOpIn child;
     bool first_time;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnExactlyOne(dynamic_context *_cxt_,
-                  PPOpIn _child_);
+                   operation_info _info_,
+                   PPOpIn _child_);
     virtual ~PPFnExactlyOne();
 };
-
 
 
 #endif

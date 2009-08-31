@@ -16,52 +16,73 @@ inline tuple_cell getAtomizedCell(tuple& tup)
 	if (!(tup.cells_number==1 )) throw XQUERY_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
 	return atomize(tup.cells[0]);
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPGeneralComparison
 ///////////////////////////////////////////////////////////////////////////////
 class PPGeneralComparison : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn seq1;
 	PPOpIn seq2;
     bool first_time;
     bool eos_reached1;
 	bool eos_reached2;
     CollationHandler *handler;
-    void children(PPOpIn &_seq1_,PPOpIn &_seq2_) { _seq1_ = seq1; _seq2_ = seq2;}
+
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	virtual void generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2);
-    PPGeneralComparison(dynamic_context *_cxt_, 
-            PPOpIn _seq1_, PPOpIn _seq2_);
-    virtual ~PPGeneralComparison();
-	////////////////////////////////////////////////////////////////////////////
-    /// FACTORIES FOR General Comparisons
-    ////////////////////////////////////////////////////////////////////////////
-    static PPGeneralComparison* PPGTGeneralComparison(dynamic_context *_cxt_, 
-            PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPLTGeneralComparison(dynamic_context *_cxt_, 
-		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPGEGeneralComparison(dynamic_context *_cxt_, 
-		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPLEGeneralComparison(dynamic_context *_cxt_, 
-		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPNEGeneralComparison(dynamic_context *_cxt_, 
-		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPEQGeneralComparison(dynamic_context *_cxt_, 
-		PPOpIn _seq1_, PPOpIn _seq2_); 
 
+    PPGeneralComparison(dynamic_context *_cxt_,
+                        operation_info _info_,
+                        PPOpIn _seq1_,
+                        PPOpIn _seq2_);
+
+    virtual ~PPGeneralComparison();
+	
+    /* Factories for General Comparisons */
+    static PPGeneralComparison* PPGTGeneralComparison(dynamic_context *_cxt_,
+                                                      operation_info _info_, 
+                                                      PPOpIn _seq1_,
+                                                      PPOpIn _seq2_); 
+
+	static PPGeneralComparison* PPLTGeneralComparison(dynamic_context *_cxt_,
+                                                      operation_info _info_, 
+                                                      PPOpIn _seq1_,
+                                                      PPOpIn _seq2_); 
+
+	static PPGeneralComparison* PPGEGeneralComparison(dynamic_context *_cxt_, 
+                                                      operation_info _info_, 
+                                                      PPOpIn _seq1_,
+                                                      PPOpIn _seq2_); 
+
+	static PPGeneralComparison* PPLEGeneralComparison(dynamic_context *_cxt_, 
+                                                      operation_info _info_, 
+                                                      PPOpIn _seq1_,
+                                                      PPOpIn _seq2_); 
+
+	static PPGeneralComparison* PPNEGeneralComparison(dynamic_context *_cxt_, 
+                                                      operation_info _info_, 
+                                                      PPOpIn _seq1_,
+                                                      PPOpIn _seq2_); 
+
+	static PPGeneralComparison* PPEQGeneralComparison(dynamic_context *_cxt_, 
+                                                      operation_info _info_, 
+                                                      PPOpIn _seq1_,
+                                                      PPOpIn _seq2_); 
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPLMGeneralComparison
+///////////////////////////////////////////////////////////////////////////////
 class PPLMGeneralComparison : public PPGeneralComparison
 {
 protected:
@@ -101,30 +122,53 @@ protected:
 	bool compare_minmax(xmlscm_type type_info,bool min_changed);
 	bool compare_minmax_le(xmlscm_type type_info,bool min_changed);
 public:
-		PPLMGeneralComparison(dynamic_context *_cxt_, 
-            PPOpIn _seq1_, PPOpIn _seq2_, bool _more_);
-		PPLMGeneralComparison(dynamic_context *_cxt_, 
-            PPOpIn _seq1_, PPOpIn _seq2_, bool _more_,bool strict);
-		virtual PPIterator* copy(dynamic_context *_cxt_);
-		virtual void next   (tuple &t);
+	PPLMGeneralComparison(dynamic_context *_cxt_, 
+                          operation_info _info_, 
+                          PPOpIn _seq1_,
+                          PPOpIn _seq2_,
+                          bool _more_);
+
+	PPLMGeneralComparison(dynamic_context *_cxt_,
+                          operation_info _info_,
+                          PPOpIn _seq1_,
+                          PPOpIn _seq2_,
+                          bool _more_,
+                          bool strict);
+
+private:
+    virtual void do_next (tuple &t);
+	virtual PPIterator* do_copy(dynamic_context *_cxt_);
 };
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPNEQGeneralComparison
+///////////////////////////////////////////////////////////////////////////////
 class PPNEQGeneralComparison : public PPGeneralComparison
 {
 public:
-	virtual void next   (tuple &t);
 	PPNEQGeneralComparison(dynamic_context *_cxt_, 
-            PPOpIn _seq1_, PPOpIn _seq2_);
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+                           operation_info _info_, 
+                           PPOpIn _seq1_,
+                           PPOpIn _seq2_); 
 
+private:
+    virtual void do_next (tuple &t);
+	virtual PPIterator* do_copy(dynamic_context *_cxt_);
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPEQLGeneralComparison
+///////////////////////////////////////////////////////////////////////////////
 class PPEQLGeneralComparison : public PPGeneralComparison
 {
 public:
-	virtual void next   (tuple &t);
-	PPEQLGeneralComparison(dynamic_context *_cxt_, 
-            PPOpIn _seq1_, PPOpIn _seq2_);
-	virtual PPIterator* copy(dynamic_context *_cxt_);
+	PPEQLGeneralComparison(dynamic_context *_cxt_,
+                           operation_info _info_,     
+                           PPOpIn _seq1_,
+                           PPOpIn _seq2_);
+private:
+    virtual void do_next (tuple &t);
+	virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 };
 

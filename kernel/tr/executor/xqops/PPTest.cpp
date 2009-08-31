@@ -3,14 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <ios>
+#include <sstream>
+
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/strings/strings.h"
-#include <ios>
-#include <sstream>
 #include "tr/pstr/pstr.h"
+
 using namespace std;
 //#include <atlstr.h>
 //#define USE_DTSEARCH_NAMESPACE
@@ -22,52 +24,44 @@ using namespace std;
 bool fit;
 //#include <dtsfclib.h>
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// PPTest
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 PPTest::PPTest(dynamic_context *_cxt_,
-						 PPOpIn _seq_):
-			PPIterator(_cxt_), seq(_seq_) 
+               operation_info _info_,
+               PPOpIn _seq_) : PPIterator(_cxt_, _info_),
+                               seq(_seq_) 
 {
 	this->test_fun=&PPTest::checkTreeConsistency;
-	//sj=se_new SednaSearchJob(&seq);
-	
 }
+
 PPTest::~PPTest()
 {
 	delete seq.op;
 	seq.op = NULL;
 	
 }
-void PPTest::open  ()
+
+void PPTest::do_open ()
 {
     seq.op->open();
-//	fit=true;
-	
- }
-void PPTest::reopen()
+}
+
+void PPTest::do_reopen()
 {
     seq.op->reopen();
-//	fit=true;
-	
 }
-void PPTest::close ()
+
+void PPTest::do_close()
 {
     seq.op->close();
 }
-void PPTest::next  (tuple &t)
+void PPTest::do_next (tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	tuple t1(seq.ts);
 	seq.op->next(t1);
 	//Preliminary node analysis
 	if (t1.is_eos()) 
 	{
 		t.set_eos();
-		{RESTORE_CURRENT_PP; return;}
+		return;
 	}
 	tuple_cell& tc= t1.cells[0];
 	if (!tc.is_node())
@@ -175,19 +169,13 @@ void PPTest::next  (tuple &t)
 	//int res= checkFT(seq);
 	//t.copy(tuple_cell::atomic(res));	
 	*/
+}
 
-	RESTORE_CURRENT_PP;
-}
-bool PPTest::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-  return true;
-}
-PPIterator* PPTest::copy(dynamic_context *_cxt_)
+PPIterator* PPTest::do_copy(dynamic_context *_cxt_)
 {
 	PPTest *res ;
-	res = se_new PPTest(_cxt_, seq);
+	res = se_new PPTest(_cxt_, info, seq);
 	res->seq.op = seq.op->copy(_cxt_);
-	res->set_xquery_line(__xquery_line);
 	return res;
 }
 xptr get_root (xptr node)

@@ -18,22 +18,17 @@ protected:
     unsigned int i;
     tuple lt; // local tuple
 
-    void children(arr_of_PPOpIn &_ch_arr_)
-    {
-        _ch_arr_ = ch_arr;
-    }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPTuple(dynamic_context *_cxt_,
+            operation_info _info_,
             const arr_of_PPOpIn &_children_);
     virtual ~PPTuple();
 };

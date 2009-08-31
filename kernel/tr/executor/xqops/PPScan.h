@@ -14,27 +14,25 @@
 class PPScan : public PPIterator
 {
 protected:
-    // given parameters
     counted_ptr<db_entity> db_ent;
     schema_node_xptr scm_node;
 
     xptr res;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
     PPScan(dynamic_context *_cxt_, 
+           operation_info _info_,
            schema_node_xptr _scm_node_,
            counted_ptr<db_entity> _db_ent_);
     virtual ~PPScan();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

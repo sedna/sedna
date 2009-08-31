@@ -12,10 +12,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error
 ///////////////////////////////////////////////////////////////////////////////
-PPFnError::PPFnError(dynamic_context *_cxt_, 
+PPFnError::PPFnError(dynamic_context *_cxt_,
+                     operation_info _info_, 
                      PPOpIn &_child_err_,
                      PPOpIn &_child_descr_,
-                     PPOpIn &_child_obj_) : PPIterator(_cxt_),
+                     PPOpIn &_child_obj_) : PPIterator(_cxt_, _info_),
                                             child_err(_child_err_),
                                             child_descr(_child_descr_),
                                             child_obj(_child_obj_)
@@ -41,31 +42,30 @@ PPFnError::~PPFnError()
     }
 }
 
-void PPFnError::open  ()
+void PPFnError::do_open ()
 {
     if (child_err.op) child_err.op->open();
     if (child_descr.op) child_descr.op->open();
     if (child_obj.op) child_obj.op->open();
 }
 
-void PPFnError::reopen()
+void PPFnError::do_reopen()
 {
     if (child_err.op) child_err.op->reopen();
     if (child_descr.op) child_descr.op->reopen();
     if (child_obj.op) child_obj.op->reopen();
 }
 
-void PPFnError::close ()
+void PPFnError::do_close()
 {
     if (child_err.op) child_err.op->close();
     if (child_descr.op) child_descr.op->close();
     if (child_obj.op) child_obj.op->close();
 }
 
-void PPFnError::next  (tuple &t)
+void PPFnError::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     tuple_cell err_name_tc; // eos by default
     tuple_cell err_descr_tc; // eos by default
 
@@ -111,23 +111,15 @@ void PPFnError::next  (tuple &t)
     const char *err_descr = err_descr_tc.is_eos() ? NULL : err_descr_tc.get_str_mem();
 
     throw USER_EXCEPTION_FNERROR(err_name, err_descr);
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnError::copy(dynamic_context *_cxt_)
+PPIterator* PPFnError::do_copy(dynamic_context *_cxt_)
 {
-    PPFnError *res = se_new PPFnError(_cxt_, child_err, child_descr, child_obj);
+    PPFnError *res = se_new PPFnError(_cxt_, info, child_err, child_descr, child_obj);
     if (child_err.op)   res->child_err.op   = child_err.op->copy(_cxt_);
     if (child_descr.op) res->child_descr.op = child_descr.op->copy(_cxt_);
     if (child_obj.op)   res->child_obj.op   = child_obj.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnError::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnError::result");
 }
 
 
@@ -135,8 +127,9 @@ bool PPFnError::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 /// fn:trace
 ///////////////////////////////////////////////////////////////////////////////
 PPFnTrace::PPFnTrace(dynamic_context *_cxt_,
+                     operation_info _info_,
                      PPOpIn _value_child_,
-                     PPOpIn _label_child_) : PPIterator(_cxt_),
+                     PPOpIn _label_child_) : PPIterator(_cxt_, _info_),
                                              value_child(_value_child_),
                                              label_child(_label_child_),
                                              first_time(true),
@@ -152,30 +145,28 @@ PPFnTrace::~PPFnTrace()
     label_child.op = NULL;
 }
 
-void PPFnTrace::open  ()
+void PPFnTrace::do_open ()
 {
     value_child.op->open();
     label_child.op->open();
     first_time = true;
 }
 
-void PPFnTrace::reopen()
+void PPFnTrace::do_reopen()
 {
     value_child.op->reopen();
     label_child.op->reopen();
     first_time = true;
 }
 
-void PPFnTrace::close ()
+void PPFnTrace::do_close()
 {
     value_child.op->close();
     label_child.op->close();
 }
 
-void PPFnTrace::next(tuple &t)
+void PPFnTrace::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     bool is_first = false;
     if (first_time)
     {
@@ -205,20 +196,12 @@ void PPFnTrace::next(tuple &t)
         print_tuple(t, *dostr, cxt, xml, is_first, true);
         dostr->flush();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)
+PPIterator* PPFnTrace::do_copy(dynamic_context *_cxt_)
 {
-    PPFnTrace *res = se_new PPFnTrace(_cxt_, value_child, label_child);
+    PPFnTrace *res = se_new PPFnTrace(_cxt_, info, value_child, label_child);
     res->value_child.op = value_child.op->copy(_cxt_);
     res->label_child.op = label_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnTrace::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnTrace::result");
 }

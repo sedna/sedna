@@ -15,18 +15,13 @@
 #include "tr/executor/fo/op_map.h"
 
 
-
 class CalcOp
 {
-protected:
-    int __xquery_line;
 public:
     virtual tuple_cell next(dynamic_context *cxt) = 0;
-    //virtual tuple_cell result(/**/std::vector<void*>& v/**/) = 0;
     virtual CalcOp* copy(arr_of_PPOpIn *children) = 0;
     virtual void reopen() = 0;
-    virtual void set_xquery_line(int _xquery_line_) {__xquery_line = _xquery_line_; }
-    CalcOp() : __xquery_line(0) {}
+    CalcOp() {}
     virtual ~CalcOp() {}
 };
 
@@ -41,7 +36,6 @@ public:
     UnaryOp(CalcOp *_child_, un_op_tuple_cell _uf_) : child(_child_), uf(_uf_) {}
     ~UnaryOp() { delete child; }
     tuple_cell next(dynamic_context *cxt) { return uf(child->next(cxt)); }
-    //tuple_cell result(/**/std::vector<void*>& v/**/) { return uf(child->result(/**/v/**/)); }
     void reopen() { child->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) { return se_new UnaryOp(child->copy(children), uf); }
 };
@@ -67,14 +61,7 @@ public:
         tuple_cell r2 = child2->next(cxt);
         return bf(r1, r2); 
     }
-/*
-    tuple_cell result(std::vector<void*>& v) 
-    { 
-        tuple_cell r1 = child1->result(v);
-        tuple_cell r2 = child2->result(v);
-        return bf(r1, r2);
-    }
-*/
+
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
@@ -106,14 +93,7 @@ public:
         tuple_cell r2 = child2->next(cxt);
         return bf(r1, r2, cxt->st_cxt->get_default_collation()); 
     }
-/*
-    tuple_cell result(std::vector<void*>& v) 
-    { 
-        tuple_cell r1 = child1->result(v);
-        tuple_cell r2 = child2->result(v);
-        return bf(r1, r2, cxt->st_cxt->get_default_collation());
-    }
-*/
+
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
@@ -147,22 +127,7 @@ public:
         r2 = effective_boolean_value(r2);
         return r2; 
     }
-/*
-    tuple_cell result(std::vector<void*>& v) 
-    { 
-        tuple_cell r1 = child1->result(v);
-        if (r1.is_eos()) return fn_false();
 
-        r1 = effective_boolean_value(r1);
-        if (!r1.get_xs_boolean()) return fn_false();
-
-        tuple_cell r2 = child2->result(v);
-        if (r2.is_eos()) return fn_false();
-
-        r2 = effective_boolean_value(r2);
-        return r2; 
-    }
-*/
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
@@ -196,23 +161,7 @@ public:
         r2 = effective_boolean_value(r2);
         return r2; 
     }
-/*
-    tuple_cell result(/std::vector<void*>& v) 
-    { 
-        tuple_cell r1 = child1->result(v);
-        if (!r1.is_eos())
-        {
-            r1 = effective_boolean_value(r1);
-            if (r1.get_xs_boolean()) return fn_true();
-        }
 
-        tuple_cell r2 = child2->result(v);
-        if (r2.is_eos()) return fn_false();
-
-        r2 = effective_boolean_value(r2);
-        return r2; 
-    }
-*/
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
@@ -248,16 +197,7 @@ public:
         if (t.is_eos()) return atomize(tc);
         else throw USER_EXCEPTION(XPTY0004);
     }
-/*
-    tuple_cell result(std::vector<void*>& v)
-    {
-        sequence *s = (sequence*)(v[i]);
-        if (s->size() == 0) return tuple_cell::eos();
-        if (s->size() != 1) throw USER_EXCEPTION(XPTY0004);
-        s->get(t, 0);
-        return atomize(t.cells[0]);
-    }
-*/
+
     void reopen() { children->at(i).op->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *_children_) 
     { 
@@ -286,12 +226,7 @@ public:
         if (!eos_reached) children->at(i).op->reopen();
         return effective_boolean_value(children->at(i), t, eos_reached);
     }
-/*
-    tuple_cell result(std::vector<void*>& v) 
-    {
-        return effective_boolean_value((sequence*)(v[i]));
-    }
-*/
+
     void reopen() { children->at(i).op->reopen(); eos_reached = true; }
     CalcOp* copy(arr_of_PPOpIn *_children_) 
     { 
@@ -308,22 +243,17 @@ private:
     CalcOp *tree;
     bool first_time;
 
-    void children(arr_of_PPOpIn *_ch_arr_)
-    {
-        *_ch_arr_ = *ch_arr;
-    }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+public:    
     PPCalculate(dynamic_context *_cxt_,
+                operation_info _info_,
                 arr_of_PPOpIn *_ch_arr_,
                 CalcOp *_tree_);
     virtual ~PPCalculate();

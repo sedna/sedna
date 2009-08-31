@@ -11,19 +11,17 @@
 
 class PPCheckpoint : public PPIterator
 {
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPCheckpoint(dynamic_context *_cxt_);
+public:    
+    PPCheckpoint(dynamic_context *_cxt_, operation_info _info_);
     virtual ~PPCheckpoint();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 #endif

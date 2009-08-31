@@ -3,22 +3,22 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <vector>
-
 #include "common/sedna.h"
-
-#include "tr/executor/xqops/PPSLStub.h"
 #include "tr/executor/xqops/PPSpaceSequence.h"
 
-using namespace std;
 tuple_cell PPSpaceSequence::space_tup = tuple_cell::atomic_deep(xs_string, " ");
+
 PPSpaceSequence::PPSpaceSequence(dynamic_context *_cxt_,
-                       const arr_of_PPOpIn &_ch_arr_, bool _isAtomized_) : PPSequence(_cxt_,_ch_arr_),isAtomized(_isAtomized_)
+                                 operation_info _info_,
+                                 const arr_of_PPOpIn &_ch_arr_, 
+                                 bool _isAtomized_) : PPSequence(_cxt_, _info_, _ch_arr_),
+                                                      isAtomized(_isAtomized_)
 {
 	space=false;
 	int_tup=tuple(1);
 	int_tup.set_eos();
 }
+
 PPSpaceSequence::~PPSpaceSequence()
 {
     for (it = 0; it < ch_arr.size(); it++) 
@@ -27,27 +27,24 @@ PPSpaceSequence::~PPSpaceSequence()
         ch_arr[it].op = NULL;
     }
 }
-PPIterator* PPSpaceSequence::copy(dynamic_context *_cxt_)
+
+PPIterator* PPSpaceSequence::do_copy(dynamic_context *_cxt_)
 {
-	PPSpaceSequence *res = se_new PPSpaceSequence(_cxt_, ch_arr,isAtomized);
+	PPSpaceSequence *res = se_new PPSpaceSequence(_cxt_, info, ch_arr,isAtomized);
 
     for (it = 0; it < ch_arr.size(); it++)
         res->ch_arr[it].op = ch_arr[it].op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
-
     return res;
 }
-void PPSpaceSequence::next(tuple &t)
+
+void PPSpaceSequence::do_next(tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	if (!int_tup.is_eos())
 	{
 		t.copy(int_tup);
 		space=int_tup.cells[0].is_atomic()||isAtomized;
 		int_tup.set_eos();
-		
-		{RESTORE_CURRENT_PP; return;}
+		return;
 	}
 	while (it < ch_arr.size())
     {
@@ -68,13 +65,11 @@ void PPSpaceSequence::next(tuple &t)
 				int_tup.set_eos();
 				
 			}
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
     }
 
     t.set_eos();
     it = 0;
 	space=false;
-
-	RESTORE_CURRENT_PP;
 }

@@ -20,10 +20,8 @@
 class PPFtIndexScan : public PPIterator
 {
 protected:
-    // given parameters
     PPOpIn idx_name, query, options;
 
-    // obtained parameters and local data
 	bool first_time;
 	//FIXME: use union?
 #ifdef SE_ENABLE_DTSEARCH
@@ -31,36 +29,35 @@ protected:
 #endif
 	ftc_scan_result *ftc_res;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+public:    
+    PPFtIndexScan(dynamic_context *_cxt_,
+                  operation_info _info_,
+                  PPOpIn _idx_name_,
+                  PPOpIn _query_);
 
     PPFtIndexScan(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-                PPOpIn _query_);
-    PPFtIndexScan(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-                PPOpIn _query_,
-				PPOpIn _options_);
+                  operation_info _info_,
+                  PPOpIn _idx_name_,
+                  PPOpIn _query_,
+                  PPOpIn _options_);
 
     virtual ~PPFtIndexScan();
-
-	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 class PPFtIndexScan2 : public PPIterator
 {
 protected:
-    // given parameters
     PPOpIn idx_name, query;
     PPOpIn max_results, field_weights;
 
-    // obtained parameters and local data
 	bool first_time;
 	//FIXME: use union?
 #ifdef SE_ENABLE_DTSEARCH
@@ -68,31 +65,34 @@ protected:
 #endif
 	ftc_scan_result *ftc_res;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+public:    
+    PPFtIndexScan2(dynamic_context *_cxt_,
+                   operation_info _info_,
+                   PPOpIn _idx_name_,
+                   PPOpIn _query_);
+    
+    PPFtIndexScan2(dynamic_context *_cxt_,
+                   operation_info _info_,
+                   PPOpIn _idx_name_,
+                   PPOpIn _query_,
+				   PPOpIn _max_results_);
 
     PPFtIndexScan2(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-                PPOpIn _query_);
-    PPFtIndexScan2(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-                PPOpIn _query_,
-				PPOpIn _max_results_);
-    PPFtIndexScan2(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-                PPOpIn _query_,
-				PPOpIn _max_results_,
-				PPOpIn _field_weights_);
+                   operation_info _info_,
+                   PPOpIn _idx_name_,
+                   PPOpIn _query_,
+				   PPOpIn _max_results_,
+				   PPOpIn _field_weights_);
 
     virtual ~PPFtIndexScan2();
-
-	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

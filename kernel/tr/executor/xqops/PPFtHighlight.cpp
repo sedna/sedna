@@ -9,28 +9,30 @@
 #include "tr/ft/FTsearch.h"
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
-                PPOpIn _seq_,
-				PPOpIn _query_,
-				bool _hl_fragment_) :
-						PPIterator(_cxt_),
-						seq(_seq_),
-						query(_query_),
-						hl_fragment(_hl_fragment_),
-						sj(NULL), ptr(NULL)
+                             operation_info _info_,
+                             PPOpIn _seq_,
+                             PPOpIn _query_,
+                             bool _hl_fragment_) : PPIterator(_cxt_, _info_),
+                                                   seq(_seq_),
+                                                   query(_query_),
+                                                   hl_fragment(_hl_fragment_),
+                                                   sj(NULL), 
+                                                   ptr(NULL)
 {
 }
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
-                PPOpIn _seq_,
-				PPOpIn _query_,
-				PPOpIn _index_,
-				bool _hl_fragment_) :
-						PPIterator(_cxt_),
-						seq(_seq_),
-						query(_query_),
-						index(_index_),
-						hl_fragment(_hl_fragment_),
-						sj(NULL), ptr(NULL)
+                             operation_info _info_,
+                             PPOpIn _seq_,
+                             PPOpIn _query_,
+                             PPOpIn _index_,
+                             bool _hl_fragment_) : PPIterator(_cxt_, _info_),
+                                                   seq(_seq_),
+                                                   query(_query_),
+                                                   index(_index_),
+                                                   hl_fragment(_hl_fragment_),
+                                                   sj(NULL), 
+                                                   ptr(NULL)
 {
 }
 PPFtHighlight::~PPFtHighlight()
@@ -57,7 +59,7 @@ PPFtHighlight::~PPFtHighlight()
 	}
 }
 
-void PPFtHighlight::open()
+void PPFtHighlight::do_open()
 {
 	seq.op->open();
     query.op->open();
@@ -67,7 +69,7 @@ void PPFtHighlight::open()
     first_time = true;
 }
 
-void PPFtHighlight::reopen()
+void PPFtHighlight::do_reopen()
 {
 	seq.op->reopen();
     query.op->reopen();
@@ -88,7 +90,7 @@ void PPFtHighlight::reopen()
     first_time = true;
 }
 
-void PPFtHighlight::close()
+void PPFtHighlight::do_close()
 {
 	seq.op->close();
     query.op->close();
@@ -107,10 +109,8 @@ void PPFtHighlight::close()
 	
 }
 
-void PPFtHighlight::next(tuple &t)
+void PPFtHighlight::do_next(tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	if (first_time)
 	{
 		tuple_cell tc;
@@ -187,31 +187,23 @@ void PPFtHighlight::next(tuple &t)
 		sj = NULL;
 		first_time = true;
 	}
-
-	RESTORE_CURRENT_PP;
 }
 
-PPIterator*  PPFtHighlight::copy(dynamic_context *_cxt_)
+PPIterator*  PPFtHighlight::do_copy(dynamic_context *_cxt_)
 {
 	PPFtHighlight *res;
 	if (index.op)
 	{
-		res = se_new PPFtHighlight(_cxt_, seq, query, index, hl_fragment);
+		res = se_new PPFtHighlight(_cxt_, info, seq, query, index, hl_fragment);
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
 		res->index.op = index.op->copy(_cxt_);
 	}
 	else
 	{
-		res = se_new PPFtHighlight(_cxt_, seq, query, hl_fragment);
+		res = se_new PPFtHighlight(_cxt_, info, seq, query, hl_fragment);
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
 	}
-	res->set_xquery_line(__xquery_line);
 	return res;
-}
-
-bool PPFtHighlight::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFtScan::result");
 }

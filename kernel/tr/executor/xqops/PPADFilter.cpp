@@ -10,8 +10,9 @@
 
 
 PPADFilter::PPADFilter(dynamic_context *_cxt_,
+                       operation_info _info_,
                        PPOpIn _child1_,
-                       PPOpIn _child2_) : PPIterator(_cxt_),
+                       PPOpIn _child2_) : PPIterator(_cxt_, _info_),
                                           child1(_child1_),
                                           child2(_child2_)
 {
@@ -25,7 +26,7 @@ PPADFilter::~PPADFilter()
     child2.op = NULL;
 }
 
-void PPADFilter::open  ()
+void PPADFilter::do_open ()
 {
     child1.op->open();
     child2.op->open();
@@ -34,7 +35,7 @@ void PPADFilter::open  ()
     tug_second = true;
 }
 
-void PPADFilter::reopen()
+void PPADFilter::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
@@ -43,16 +44,15 @@ void PPADFilter::reopen()
     tug_second = true;
 }
 
-void PPADFilter::close ()
+void PPADFilter::do_close()
 {
     child1.op->close();
     child2.op->close();
 }
 
-void PPADFilter::next  (tuple &t)
+void PPADFilter::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     while (true)
     {
         if (tug_first)
@@ -62,10 +62,8 @@ void PPADFilter::next  (tuple &t)
             {
                 tug_first = true;
                 tug_second = true;
-
                 child2.op->reopen();
-
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             else
             {
@@ -83,10 +81,8 @@ void PPADFilter::next  (tuple &t)
             {
                 tug_first = true;
                 tug_second = true;
-
                 child1.op->reopen();
-
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             else
             {
@@ -104,7 +100,6 @@ void PPADFilter::next  (tuple &t)
             {
                 tug_first = true;
                 t.copy(tuple_cell::node(xptr1));
-                RESTORE_CURRENT_PP; 
                 return;
             }
             case -1: /// (1) < (2)
@@ -117,7 +112,6 @@ void PPADFilter::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
                 t.copy(tuple_cell::node(xptr1));
-                RESTORE_CURRENT_PP;
                 return;
             }
             case  1: /// (1) > (2)
@@ -133,21 +127,12 @@ void PPADFilter::next  (tuple &t)
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPADFilter::next");
         }
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPADFilter::copy(dynamic_context *_cxt_)
+PPIterator* PPADFilter::do_copy(dynamic_context *_cxt_)
 {
-    PPADFilter *res = se_new PPADFilter(_cxt_, child1, child2);
+    PPADFilter *res = se_new PPADFilter(_cxt_, info, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPADFilter::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPADFilter::result");
-}
-

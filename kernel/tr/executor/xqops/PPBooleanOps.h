@@ -19,17 +19,16 @@ protected:
     // obtained parameters and local data
     bool first_time;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPFnTrue(dynamic_context *_cxt_);
+public:    
+    PPFnTrue(dynamic_context *_cxt_, operation_info _info_);
     virtual ~PPFnTrue();
 };
 
@@ -40,20 +39,18 @@ public:
 class PPFnFalse : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     bool first_time;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPFnFalse(dynamic_context *_cxt_);
+public:    
+    PPFnFalse(dynamic_context *_cxt_, operation_info _info_);
     virtual ~PPFnFalse();
 };
 
@@ -64,24 +61,21 @@ public:
 class PPFnNot : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn child;
     bool first_time;
     bool eos_reached;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
-    PPFnNot(dynamic_context *_cxt_, 
+public:    
+    PPFnNot(dynamic_context *_cxt_,
+            operation_info _info_,
             PPOpIn _child_);
     virtual ~PPFnNot();
 };
@@ -92,23 +86,22 @@ public:
 class PPFnBoolean : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     bool first_time;
     bool eos_reached;
 
     PPOpIn child;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPFnBoolean(dynamic_context *_cxt_,
+                operation_info _info_,
 				PPOpIn _child_);
     virtual ~PPFnBoolean();
 };

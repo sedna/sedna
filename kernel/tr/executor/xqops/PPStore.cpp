@@ -11,7 +11,8 @@ using namespace std;
 PPStore::t_stored_seqs PPStore::stored_seqs;
 
 PPStore::PPStore(dynamic_context *_cxt_,
-                 PPOpIn _child_) : PPIterator(_cxt_),
+                 operation_info _info_,
+                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                    child(_child_),
 								   s(NULL)
 {
@@ -23,7 +24,7 @@ PPStore::~PPStore()
     child.op = NULL;
 }
 
-void PPStore::open ()
+void PPStore::do_open ()
 {
     child.op->open();
 
@@ -34,12 +35,12 @@ void PPStore::open ()
     sequence_loaded = false;
 }
 
-void PPStore::reopen ()
+void PPStore::do_reopen()
 {
     pos = 0;
 }
 
-void PPStore::close ()
+void PPStore::do_close()
 {
     child.op->close();
 
@@ -47,10 +48,8 @@ void PPStore::close ()
     s = NULL;
 }
 
-void PPStore::next (tuple &t)
+void PPStore::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (pos < eos_pos) s->get(t, pos++);
     else
     {
@@ -76,51 +75,11 @@ void PPStore::next (tuple &t)
             }
         }
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPStore::copy(dynamic_context *_cxt_)
+PPIterator* PPStore::do_copy(dynamic_context *_cxt_)
 {
-    PPStore *res = se_new PPStore(_cxt_, child);
+    PPStore *res = se_new PPStore(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPStore::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-/*
-    PPOpIn child;
-    ((PPStore*)cur)->children(child);
-
-    void *s_r;
-    bool s_s = (child.op->res_fun())(child.op, cxt, s_r);
-
-    if (!s_s) // if expression is not strict
-    { // create PPStore and transmit state
-        child.op = (PPIterator*)s_r;
-        r = se_new PPStore(cxt, child);
-        return false;
-    }
-
-    t_stored_seqs::iterator it = stored_seqs.find((int)cur);
-
-    if (it == stored_seqs.end())
-    {
-        it = stored_seqs.insert(pair<int,sequence_tmp*>((int)cur, (sequence_tmp*)s_r)).first;
-    }
-
-    sequence *data = it->second;
-    sequence *res_seq = se_new sequence(child.ts);
-    tuple t(child.ts);
-    for (int i = 0; i < data->size(); i++)
-    {
-        data->get(t, i);
-        res_seq->add(t);
-    }
-
-    r = res_seq;
-*/
-    return true;
 }

@@ -13,8 +13,9 @@
 
 
 PPDebug::PPDebug(dynamic_context *_cxt_,
+                 operation_info _info_,
                  const PPOpIn &_child_,
-                 const str_counted_ptr &_child_name_) : PPIterator(_cxt_),
+                 const str_counted_ptr &_child_name_) : PPIterator(_cxt_, _info_),
                                                         child(_child_),
                                                         dostr(tr_globals::client->get_debug_ostream()),
                                                         child_name(_child_name_)
@@ -22,9 +23,10 @@ PPDebug::PPDebug(dynamic_context *_cxt_,
 }
 
 PPDebug::PPDebug(dynamic_context *_cxt_,
+                 operation_info _info_,
                  const PPOpIn &_child_,
                  const str_counted_ptr &_child_name_,
-                 const str_counted_ptr &_child_info_) : PPIterator(_cxt_),
+                 const str_counted_ptr &_child_info_) : PPIterator(_cxt_, _info_),
                                                         child(_child_),
                                                         dostr(tr_globals::client->get_debug_ostream()),
                                                         child_name(_child_name_),
@@ -39,27 +41,25 @@ PPDebug::~PPDebug()
     child.op = NULL;
 }
 
-void PPDebug::open ()
+void PPDebug::do_open ()
 {
     child.op->open();
     cc = 0;
 }
 
-void PPDebug::reopen ()
+void PPDebug::do_reopen()
 {
     child.op->reopen();
     cc = 0;
 }
 
-void PPDebug::close ()
+void PPDebug::do_close()
 {
     child.op->close();
 }
 
-void PPDebug::next(tuple &t)
+void PPDebug::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     try
     {
         cc++;
@@ -88,23 +88,13 @@ void PPDebug::next(tuple &t)
 
         throw;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-/// FIXME!!! Is there any specific behaviour in copy (IS)?
-PPIterator* PPDebug::copy(dynamic_context *_cxt_)
+PPIterator* PPDebug::do_copy(dynamic_context *_cxt_)
 {
     PPDebug *res = child_info.get() != NULL ? 
-                   se_new PPDebug(_cxt_, child, child_name, child_info) : 
-                   se_new PPDebug(_cxt_, child, child_name);
+                   se_new PPDebug(_cxt_, info, child, child_name, child_info) : 
+                   se_new PPDebug(_cxt_, info, child, child_name);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPDebug::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPDebug::result");
-}
-

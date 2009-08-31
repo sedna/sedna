@@ -34,12 +34,10 @@ class PPIndexScan : public PPIterator
 protected:
     typedef void (PPIndexScan::*t_next_fun)(tuple &t);
 
-    // given parameters
 	tuple_cell tc, tc2;
     PPOpIn index_name, child, child2;
     index_scan_condition isc;
 
-    // obtained parameters and local data
     xptr btree;
     xmlscm_type idx_type;
     bt_cursor cursor;
@@ -53,25 +51,28 @@ protected:
     void next_gt_ge  (tuple &t);
     void next_between(tuple &t);
 
+    /* This is the common initialization function for all next interators */
+    void initialize   ();
+
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) {
+        (this->*next_fun)(t);
+    }
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-
-	virtual void initialize   (); // This is the common initialization function for all next interators 
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t) { SET_CURRENT_PP(this); (this->*next_fun)(t); RESTORE_CURRENT_PP; }
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
     PPIndexScan(dynamic_context *_cxt_,
+                operation_info _info_,
                 PPOpIn _index_name_,
                 PPOpIn _child_,
                 PPOpIn _child2_,
                 index_scan_condition _isc_);
-    virtual ~PPIndexScan();
 
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual ~PPIndexScan();
 };
 
 

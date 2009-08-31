@@ -13,13 +13,13 @@
 #include "tr/strings/strings.h"
 #include "tr/structures/indirection.h"
 #include "tr/mo/micro.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPConstructor
 ///////////////////////////////////////////////////////////////////////////////
 class PPConstructor : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     bool first_time;
     bool eos_reached;
 	static bool firstCons;
@@ -30,13 +30,18 @@ protected:
 	static xptr cont_leftind;
 	static int conscnt;
 	bool deep_copy;
+
+private:
+    virtual void do_open ();
+    
 public:
 	static bool checkInitial();
-	virtual void open   ();
-	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-    PPConstructor(dynamic_context *_cxt_,bool _deep_copy) : PPIterator(_cxt_),deep_copy(_deep_copy) {};
-friend xptr copy_to_temp(xptr node);
-friend void clear_virtual_root();
+    PPConstructor(dynamic_context *_cxt_,
+                  operation_info _info_,
+                  bool _deep_copy) : PPIterator(_cxt_, _info_),
+                                     deep_copy(_deep_copy) {};
+    friend xptr copy_to_temp(xptr node);
+    friend void clear_virtual_root();
 };
 
 void clear_virtual_root();
@@ -47,27 +52,35 @@ void clear_virtual_root();
 class PPElementConstructor : public PPConstructor
 {
 protected:
-    // obtained parameters and local data
     PPOpIn qname;
     PPOpIn content;
     char* el_name;
     bool ns_inside;
 
-    void children(PPOpIn &_qname_,PPOpIn &_content_) { _qname_ = qname;_content_=content ;}
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPElementConstructor(dynamic_context *_cxt_, 
-            PPOpIn _qname_, PPOpIn _content_,bool _deep_copy, bool _ns_inside);
+public:    
+
     PPElementConstructor(dynamic_context *_cxt_,
-           const char* name, PPOpIn _content_,bool _deep_copy, bool _ns_inside);
+                         operation_info _info_,    
+                         PPOpIn _qname_, 
+                         PPOpIn _content_,
+                         bool _deep_copy,
+                         bool _ns_inside);
+
+    PPElementConstructor(dynamic_context *_cxt_,
+                         operation_info _info_,
+                         const char* name,
+                         PPOpIn _content_,
+                         bool _deep_copy,
+                         bool _ns_inside);
+
     virtual ~PPElementConstructor();
 };
 
@@ -77,65 +90,77 @@ public:
 class PPAttributeConstructor : public PPConstructor
 {
 protected:
-    // obtained parameters and local data
     PPOpIn qname;
 	PPOpIn content;
 	char* at_name;
 	char* at_value;
-	
-    
 
-    void children(PPOpIn &_qname_,PPOpIn &_content_) { _qname_ = qname;_content_=content ;}
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPAttributeConstructor(dynamic_context *_cxt_, 
-            PPOpIn _qname_, PPOpIn _content_,bool _deep_copy);
+public:    
+    PPAttributeConstructor(dynamic_context *_cxt_,
+                           operation_info _info_,
+                           PPOpIn _qname_,
+                           PPOpIn _content_,
+                           bool _deep_copy);
+
 	PPAttributeConstructor(dynamic_context *_cxt_, 
-           const char* name, PPOpIn _content_,bool _deep_copy);
-	PPAttributeConstructor(dynamic_context *_cxt_, 
-            PPOpIn _qname_, const char* value,bool _deep_copy);
-	PPAttributeConstructor(dynamic_context *_cxt_, 
-           const char* name, const char* value,bool _deep_copy);
+                           operation_info _info_,
+                           const char* name,
+                           PPOpIn _content_,
+                           bool _deep_copy);
+
+	PPAttributeConstructor(dynamic_context *_cxt_,
+                           operation_info _info_,
+                           PPOpIn _qname_,
+                           const char* value,
+                           bool _deep_copy);
+
+	PPAttributeConstructor(dynamic_context *_cxt_,
+                           operation_info _info_,
+                           const char* name,
+                           const char* value,
+                           bool _deep_copy);
+
     virtual ~PPAttributeConstructor();
 };
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPNamespaceConstructor
 ///////////////////////////////////////////////////////////////////////////////
 class PPNamespaceConstructor : public PPConstructor
 {
 protected:
-    // obtained parameters and local data
     PPOpIn content;
 	char* at_name;
 	char* at_value;
 	
-    
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    void children(PPOpIn &_content_) {_content_=content ;}
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+public:    
+    PPNamespaceConstructor(dynamic_context *_cxt_,
+                           operation_info _info_,
+                           const char* name,
+                           PPOpIn _content_);
+                           
+	PPNamespaceConstructor(dynamic_context *_cxt_,
+                           operation_info _info_,
+                           const char* name,
+                           const char* value);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
-    PPNamespaceConstructor(dynamic_context *_cxt_, 
-           const char* name, PPOpIn _content_);
-	PPNamespaceConstructor(dynamic_context *_cxt_, 
-           const char* name, const char* value);
     virtual ~PPNamespaceConstructor();
 };
 
@@ -145,28 +170,29 @@ public:
 class PPCommentConstructor : public PPConstructor
 {
 protected:
-    // obtained parameters and local data
     PPOpIn content;
 	char* at_value;
 	StrMatcher strm;
-    
 
-    void children(PPOpIn &_content_) {if (at_value==NULL)_content_=content ;}
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+public:    
+    PPCommentConstructor(dynamic_context *_cxt_,
+                         operation_info _info_,
+                         PPOpIn _content_,
+                         bool _deep_copy);
 
-    PPCommentConstructor(dynamic_context *_cxt_, 
-            PPOpIn _content_,bool _deep_copy);
-	PPCommentConstructor(dynamic_context *_cxt_, 
-            const char* value,bool _deep_copy);
+	PPCommentConstructor(dynamic_context *_cxt_,
+                         operation_info _info_,
+                         const char* value,
+                         bool _deep_copy);
+
     virtual ~PPCommentConstructor();
 };
 
@@ -176,28 +202,28 @@ public:
 class PPTextConstructor : public PPConstructor
 {
 protected:
-    // obtained parameters and local data
     PPOpIn content;
 	char* at_value;
-	
-    
 
-    void children(PPOpIn &_content_) {if (at_value==NULL)_content_=content ;}
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+public:    
+    PPTextConstructor(dynamic_context *_cxt_,
+                      operation_info _info_,
+                      PPOpIn _content_,
+                      bool _deep_copy);
 
-    PPTextConstructor(dynamic_context *_cxt_, 
-            PPOpIn _content_,bool _deep_copy);
-	PPTextConstructor(dynamic_context *_cxt_, 
-            const char* value,bool _deep_copy);
+	PPTextConstructor(dynamic_context *_cxt_,
+                      operation_info _info_,
+                      const char* value,
+                      bool _deep_copy);
+
     virtual ~PPTextConstructor();
 };
 
@@ -207,22 +233,21 @@ public:
 class PPDocumentConstructor : public PPConstructor
 {
 protected:
-    // obtained parameters and local data
     PPOpIn content;
-	void children(PPOpIn &_content_) {_content_=content ;}
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPDocumentConstructor(dynamic_context *_cxt_, 
-            PPOpIn _content_);
+public:    
+    PPDocumentConstructor(dynamic_context *_cxt_,
+                          operation_info _info_,
+                          PPOpIn _content_);
+
     virtual ~PPDocumentConstructor();
 };
 
@@ -233,34 +258,45 @@ public:
 class PPPIConstructor : public PPConstructor
 {
 protected:
-    // obtained parameters and local data
     PPOpIn qname;
 	PPOpIn content;
 	char* at_name;
 	char* at_value;
 	StrMatcher strm;
     
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    void children(PPOpIn &_qname_,PPOpIn &_content_) { _qname_ = qname;_content_=content ;}
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+public:    
+    PPPIConstructor(dynamic_context *_cxt_,
+                    operation_info _info_,
+                    PPOpIn _qname_,
+                    PPOpIn _content_,
+                    bool _deep_copy);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+	PPPIConstructor(dynamic_context *_cxt_,
+                    operation_info _info_,
+                    const char* name,
+                    PPOpIn _content_,
+                    bool _deep_copy);
 
-    PPPIConstructor(dynamic_context *_cxt_, 
-            PPOpIn _qname_, PPOpIn _content_,bool _deep_copy);
-	PPPIConstructor(dynamic_context *_cxt_, 
-           const char* name, PPOpIn _content_,bool _deep_copy);
-	PPPIConstructor(dynamic_context *_cxt_, 
-            PPOpIn _qname_, const char* value,bool _deep_copy);
-	PPPIConstructor(dynamic_context *_cxt_, 
-           const char* name, const char* value,bool _deep_copy);
+	PPPIConstructor(dynamic_context *_cxt_,
+                    operation_info _info_,
+                    PPOpIn _qname_,
+                    const char* value,
+                    bool _deep_copy);
+
+	PPPIConstructor(dynamic_context *_cxt_,
+                    operation_info _info_,
+                    const char* name,
+                    const char* value,
+                    bool _deep_copy);
+
     virtual ~PPPIConstructor();
 };
 

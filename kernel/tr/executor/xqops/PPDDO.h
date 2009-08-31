@@ -14,7 +14,7 @@
 
 #define TURN_ON_DDO
 
-class PPDDO : public PPIterator
+class PPDDO: public PPIterator
 {
 private:
 	static char* temp_buffer;
@@ -38,9 +38,6 @@ private:
 	static void copy_to_buffer(const void* addr, shft shift,shft size);
 	static void copy_from_buffer(xptr addr, shft shift,shft size);
 protected:
-    // Inhereted through PPIterator
-    // query_prolog_type *qp;
-    // PPOpOut out;
 
 #ifdef TURN_ON_DDO
     int pos;
@@ -49,26 +46,22 @@ protected:
     bool atomic_mode;
 #endif
 
-    // given parameters
     PPOpIn child;
 
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
+public:    
     PPDDO(dynamic_context *_cxt_,
+          operation_info _info_,
           PPOpIn _child_);
     virtual ~PPDDO();
 
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	static int compare_less (xptr v1,xptr v2, const void * Udata);
 	static int get_size (tuple& t, const void * Udata);
 	static void serialize (tuple& t,xptr v1, const void * Udata);
@@ -76,6 +69,5 @@ public:
 	static void deserialize (tuple &t, xptr& v1, const void * Udata);
 	static void deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
 };
-
 
 #endif

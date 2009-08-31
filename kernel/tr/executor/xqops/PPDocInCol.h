@@ -12,32 +12,27 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPathOnSchema.h"
 
-
-
 class PPDocInCol : public PPIterator
 {
 protected:
-    // given parameters
-    PPOpIn col_name_op, doc_name_op;
-    // obtained parameters and local data
+    PPOpIn col_name_op;
+    PPOpIn doc_name_op;
     bool first_time;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPDocInCol(dynamic_context *_cxt_, 
+               operation_info _info_,
                PPOpIn _col_name_op_,
                PPOpIn _doc_name_op_);
     virtual ~PPDocInCol();
-
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 #endif

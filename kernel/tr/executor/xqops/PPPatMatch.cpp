@@ -46,9 +46,10 @@ static inline const char* get_argument_name(int arg)
 
 
 PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
+                       operation_info _info_,
                        PPOpIn _seq1_, 
                        PPOpIn _seq2_,
-                       patmatch_type _pmt_): PPIterator(_cxt_), 
+                       patmatch_type _pmt_): PPIterator(_cxt_, _info_), 
                                              tknzr(NULL),
                                              seq1(_seq1_), 
                                              seq2(_seq2_),
@@ -60,10 +61,11 @@ PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
 
 
 PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
+                       operation_info _info_,
                        PPOpIn _seq1_, 
                        PPOpIn _seq2_,
                        PPOpIn _seq3_,
-                       patmatch_type _pmt_): PPIterator(_cxt_),
+                       patmatch_type _pmt_): PPIterator(_cxt_, _info_),
                                              tknzr(NULL),
                                              seq1(_seq1_), 
                                              seq2(_seq2_), 
@@ -75,11 +77,12 @@ PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
 }
 
 PPPatMatch::PPPatMatch(dynamic_context *_cxt_,
+                       operation_info _info_,
                        PPOpIn _seq1_,                      
                        PPOpIn _seq2_,
                        PPOpIn _seq3_,
                        PPOpIn _seq4_,
-                       patmatch_type _pmt_): PPIterator(_cxt_),
+                       patmatch_type _pmt_): PPIterator(_cxt_, _info_),
                                              tknzr(NULL),
                                              seq1(_seq1_), 
                                              seq2(_seq2_), 
@@ -111,7 +114,7 @@ PPPatMatch::~PPPatMatch()
 	}
 }
 
-void PPPatMatch::open  ()
+void PPPatMatch::do_open ()
 {
     seq1.op->open();
 	seq2.op->open();
@@ -133,7 +136,7 @@ void PPPatMatch::open  ()
     first_time = true;
 }
 
-void PPPatMatch::reopen  ()
+void PPPatMatch::do_reopen ()
 {
     seq1.op->reopen();
 	seq2.op->reopen();
@@ -155,7 +158,7 @@ void PPPatMatch::reopen  ()
     first_time = true;
 }
 
-void PPPatMatch::close  ()
+void PPPatMatch::do_close ()
 {
     seq1.op->close();
 	seq2.op->close();
@@ -176,36 +179,30 @@ void PPPatMatch::close  ()
 	}
 }
 
-bool PPPatMatch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPPatMatch::result");
-}
-
-PPIterator* PPPatMatch::copy(dynamic_context *_cxt_)
+PPIterator* PPPatMatch::do_copy(dynamic_context *_cxt_)
 {
 	PPPatMatch *res ;
 	switch (ch_cnt)
 	{
 	case 2:
-		res = se_new PPPatMatch(_cxt_, seq1,seq2,pmt);
+		res = se_new PPPatMatch(_cxt_,info,seq1,seq2,pmt);
 		res->seq1.op = seq1.op->copy(_cxt_);
 		res->seq2.op = seq2.op->copy(_cxt_);
 		break;
 	case 3:
-		res = se_new PPPatMatch(_cxt_, seq1,seq2,seq3,pmt);
+		res = se_new PPPatMatch(_cxt_,info,seq1,seq2,seq3,pmt);
 		res->seq1.op = seq1.op->copy(_cxt_);
 		res->seq2.op = seq2.op->copy(_cxt_);
 		res->seq3.op = seq3.op->copy(_cxt_);
 		break;
 	case 4:
-		res = se_new PPPatMatch(_cxt_, seq1,seq2,seq3,seq4,pmt);
+		res = se_new PPPatMatch(_cxt_,info,seq1,seq2,seq3,seq4,pmt);
 		res->seq1.op = seq1.op->copy(_cxt_);
 		res->seq2.op = seq2.op->copy(_cxt_);
 		res->seq3.op = seq3.op->copy(_cxt_);
 		res->seq4.op = seq4.op->copy(_cxt_);
 		break;
 	}
-	res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -226,10 +223,8 @@ static inline tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_em
     return res;
 }
 
-void PPPatMatch::next  (tuple &t)
+void PPPatMatch::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -278,8 +273,6 @@ void PPPatMatch::next  (tuple &t)
 			t.set_eos();
 		}
     }
-
-    RESTORE_CURRENT_PP;
 }
 
 void PPPatMatch::tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)

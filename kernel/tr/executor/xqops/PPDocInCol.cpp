@@ -11,9 +11,10 @@
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/PPUtils.h"
 
-PPDocInCol::PPDocInCol(dynamic_context *_cxt_, 
+PPDocInCol::PPDocInCol(dynamic_context *_cxt_,
+                       operation_info _info_, 
                        PPOpIn _col_name_op_,
-                       PPOpIn _doc_name_op_) : PPIterator(_cxt_),
+                       PPOpIn _doc_name_op_) : PPIterator(_cxt_, _info_),
                                                col_name_op(_col_name_op_),
                                                doc_name_op(_doc_name_op_)
 {
@@ -27,7 +28,7 @@ PPDocInCol::~PPDocInCol()
     doc_name_op.op = NULL;
 }
 
-void PPDocInCol::open ()
+void PPDocInCol::do_open ()
 {
     col_name_op.op->open();
     doc_name_op.op->open();
@@ -36,7 +37,7 @@ void PPDocInCol::open ()
 }
 
 
-void PPDocInCol::reopen()
+void PPDocInCol::do_reopen()
 {
     col_name_op.op->reopen();
     doc_name_op.op->reopen();
@@ -45,20 +46,18 @@ void PPDocInCol::reopen()
 }
 
 
-void PPDocInCol::close ()
+void PPDocInCol::do_close()
 {
     col_name_op.op->close();
     doc_name_op.op->close();
 }
 
-void PPDocInCol::next(tuple &t)
+void PPDocInCol::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         col_name_op.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
         
         tuple_cell tc_col= atomize(col_name_op.get(t));
         if(!is_string_type(tc_col.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:doc (xs_string/derived/promotable is expected).");
@@ -67,7 +66,7 @@ void PPDocInCol::next(tuple &t)
         tc_col = tuple_cell::make_sure_light_atomic(tc_col);
 
         doc_name_op.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         tuple_cell tc_doc= atomize(doc_name_op.get(t));
         if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:doc (xs_string/derived/promotable is expected).");
@@ -104,23 +103,12 @@ void PPDocInCol::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPDocInCol::copy(dynamic_context *_cxt_)
+PPIterator* PPDocInCol::do_copy(dynamic_context *_cxt_)
 {
-    PPDocInCol *res = se_new PPDocInCol(_cxt_, col_name_op, doc_name_op);
+    PPDocInCol *res = se_new PPDocInCol(_cxt_, info, col_name_op, doc_name_op);
     res->col_name_op.op = col_name_op.op->copy(_cxt_);
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPDocInCol::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    return true;
-}
-
-
-

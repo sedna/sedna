@@ -24,24 +24,24 @@ enum uri_function_type {
      ESCAPE_HTML_URI        //fn:escape-html-uri()
 };
 
-private:
+protected:
     PPOpIn child;
     uri_function_type type;
     bool first_time;
 
     const char* error();
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnUriEncoding(dynamic_context *_cxt_,
+                    operation_info _info_, 
                     PPOpIn _child_,
                     uri_function_type _type_);
     virtual ~PPFnUriEncoding();
@@ -53,7 +53,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnResolveUri : public PPIterator
 {
-private:
+protected:
     PPOpIn relative;
     PPOpIn base;
 
@@ -61,19 +61,20 @@ private:
     bool is_base_static;
     bool need_reopen;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnResolveUri(dynamic_context *_cxt_,
+                   operation_info _info_,
                    PPOpIn _relative_);
     PPFnResolveUri(dynamic_context *_cxt_,
+                   operation_info _info_,
                    PPOpIn _relative_,
                    PPOpIn _base_);
     virtual ~PPFnResolveUri();

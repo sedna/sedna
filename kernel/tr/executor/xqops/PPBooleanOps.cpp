@@ -16,7 +16,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnTrue::PPFnTrue(dynamic_context *_cxt_) : PPIterator(_cxt_)
+PPFnTrue::PPFnTrue(dynamic_context *_cxt_,
+                   operation_info _info_) : PPIterator(_cxt_, _info_)
 {
 }
 
@@ -24,24 +25,22 @@ PPFnTrue::~PPFnTrue()
 {
 }
 
-void PPFnTrue::open  ()
+void PPFnTrue::do_open ()
 {
     first_time = true;
 }
 
-void PPFnTrue::reopen()
+void PPFnTrue::do_reopen()
 {
     first_time = true;
 }
 
-void PPFnTrue::close ()
+void PPFnTrue::do_close()
 {
 }
 
-void PPFnTrue::next  (tuple &t)
+void PPFnTrue::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time) 
     {
         first_time = false;
@@ -52,21 +51,12 @@ void PPFnTrue::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnTrue::copy(dynamic_context *_cxt_)
+PPIterator* PPFnTrue::do_copy(dynamic_context *_cxt_)
 {
-    PPFnTrue* res = se_new PPFnTrue(_cxt_);
-    res->set_xquery_line(__xquery_line);
+    PPFnTrue* res = se_new PPFnTrue(_cxt_, info);
     return res;
-}
-
-bool PPFnTrue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    r = se_new sequence(fn_true());
-    return true;
 }
 
 
@@ -76,7 +66,8 @@ bool PPFnTrue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnFalse::PPFnFalse(dynamic_context *_cxt_) : PPIterator(_cxt_)
+PPFnFalse::PPFnFalse(dynamic_context *_cxt_,
+                     operation_info _info_) : PPIterator(_cxt_, _info_)
 {
 }
 
@@ -84,24 +75,22 @@ PPFnFalse::~PPFnFalse()
 {
 }
 
-void PPFnFalse::open  ()
+void PPFnFalse::do_open ()
 {
     first_time = true;
 }
 
-void PPFnFalse::reopen()
+void PPFnFalse::do_reopen()
 {
     first_time = true;
 }
 
-void PPFnFalse::close ()
+void PPFnFalse::do_close()
 {
 }
 
-void PPFnFalse::next  (tuple &t)
+void PPFnFalse::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time) 
     {
         first_time = false;
@@ -114,18 +103,12 @@ void PPFnFalse::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnFalse::copy(dynamic_context *_cxt_)
+PPIterator* PPFnFalse::do_copy(dynamic_context *_cxt_)
 {
-    PPFnFalse* res = se_new PPFnFalse(_cxt_);
-    res->set_xquery_line(__xquery_line);
+    PPFnFalse* res = se_new PPFnFalse(_cxt_, info);
     return res;
 }
 
-bool PPFnFalse::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    r = se_new sequence(fn_false());
-    return true;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -134,7 +117,8 @@ bool PPFnFalse::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnNot::PPFnNot(dynamic_context *_cxt_,
-                 PPOpIn _child_) : PPIterator(_cxt_),
+                 operation_info _info_,
+                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                    child(_child_)
 {
 }
@@ -145,7 +129,7 @@ PPFnNot::~PPFnNot()
     child.op = NULL;
 }
 
-void PPFnNot::open  ()
+void PPFnNot::do_open ()
 {
     child.op->open();
 
@@ -153,7 +137,7 @@ void PPFnNot::open  ()
     eos_reached = true;
 }
 
-void PPFnNot::reopen()
+void PPFnNot::do_reopen()
 {
     child.op->reopen();
 
@@ -161,15 +145,14 @@ void PPFnNot::reopen()
     eos_reached = true;
 }
 
-void PPFnNot::close ()
+void PPFnNot::do_close()
 {
     child.op->close();
 }
 
-void PPFnNot::next  (tuple &t)
+void PPFnNot::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if (first_time)
     {
         first_time = false;
@@ -185,32 +168,11 @@ void PPFnNot::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnNot::copy(dynamic_context *_cxt_)
+PPIterator* PPFnNot::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNot *res = se_new PPFnNot(_cxt_, child);
+    PPFnNot *res = se_new PPFnNot(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnNot::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    PPOpIn child;
-    ((PPFnNot*)cur)->children(child);
-
-    void *not_r;
-    bool not_s = (child.op->res_fun())(child.op, cxt, not_r);
-
-    if (!not_s) // if expression is not strict
-    { // create PPFnNot and transmit state
-        child.op = (PPIterator*)not_r;
-        r = se_new PPFnNot(cxt, child);
-        return false;
-    }
-
-    r = se_new sequence(my_boolean_not_e(effective_boolean_value((sequence*)not_r)));
-    delete ((sequence*)not_r);
-    return true;
 }
 
 
@@ -220,10 +182,9 @@ bool PPFnNot::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
-
 PPFnBoolean::PPFnBoolean(dynamic_context *_cxt_,
-                         PPOpIn _child_) : PPIterator(_cxt_),
+                         operation_info _info_,
+                         PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                            child(_child_)
 {
 }
@@ -234,7 +195,7 @@ PPFnBoolean::~PPFnBoolean()
     child.op = NULL;
 }
 
-void PPFnBoolean::open  ()
+void PPFnBoolean::do_open ()
 {
     child.op->open();
 
@@ -242,7 +203,7 @@ void PPFnBoolean::open  ()
     eos_reached = true;
 }
 
-void PPFnBoolean::reopen()
+void PPFnBoolean::do_reopen()
 {
     child.op->reopen();
 
@@ -250,15 +211,13 @@ void PPFnBoolean::reopen()
     eos_reached = true;
 }
 
-void PPFnBoolean::close ()
+void PPFnBoolean::do_close()
 {
     child.op->close();
 }
 
-void PPFnBoolean::next  (tuple &t)
+void PPFnBoolean::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -272,15 +231,9 @@ void PPFnBoolean::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnBoolean::copy(dynamic_context *_cxt_)
+PPIterator* PPFnBoolean::do_copy(dynamic_context *_cxt_)
 {
-    PPFnBoolean *res = se_new PPFnBoolean(_cxt_, child);
+    PPFnBoolean *res = se_new PPFnBoolean(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnBoolean::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnBoolean::result");
 }

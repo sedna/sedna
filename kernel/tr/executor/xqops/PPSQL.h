@@ -105,7 +105,8 @@ protected:
 	bool handle_manager_carrier;
 
 public:
-	PPFnSQLBase(dynamic_context *_cxt_);
+	PPFnSQLBase(dynamic_context *_cxt_,
+                operation_info _info_);
 };
 
 
@@ -125,7 +126,9 @@ public:
 
     virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPFnSQLConnect(dynamic_context *_cxt_, const arr_of_PPOpIn &arr);
+    PPFnSQLConnect(dynamic_context *_cxt_,
+                   operation_info _info_,
+                   const arr_of_PPOpIn &arr);
     virtual ~PPFnSQLConnect();
 };
 
@@ -141,16 +144,19 @@ protected:
 	void release_executor();
 	void get_executor();
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return NULL; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    PPFnSQLExecute(dynamic_context *_cxt_, const arr_of_PPOpIn &arr, bool _exec_update_);
+    PPFnSQLExecute(dynamic_context *_cxt_,
+                   operation_info _info_,
+                   const arr_of_PPOpIn &arr,
+                   bool _exec_update_);
     virtual ~PPFnSQLExecute();
 };
 
@@ -161,18 +167,26 @@ private:
 	PPOpIn	connection;
 	PPOpIn	statement;
 	PPOpIn	options;
+
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return NULL; };
-    virtual void next   (tuple &t);
+	PPFnSQLPrepare(dynamic_context *_cxt_,
+                   operation_info _info_,
+                   PPOpIn _connection_,
+                   PPOpIn _statement_,
+                   PPOpIn _options_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-	PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_,
-		PPOpIn _options_);
-	PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_);
+	PPFnSQLPrepare(dynamic_context *_cxt_,
+                   operation_info _info_,
+                   PPOpIn _connection_,
+                   PPOpIn _statement_);
     virtual ~PPFnSQLPrepare();
 };
 
@@ -180,15 +194,20 @@ class PPFnSQLClose : public PPFnSQLBase
 {
 private:
 	PPOpIn	connection;
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return NULL; };
-    virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-	PPFnSQLClose(dynamic_context *_cxt_, PPOpIn _connection_);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
+public:
+	PPFnSQLClose(dynamic_context *_cxt_,
+                 operation_info _info_,
+                 PPOpIn _connection_);
+
     virtual ~PPFnSQLClose();
 };
 
@@ -196,15 +215,19 @@ class PPFnSQLCommit : public PPFnSQLBase
 {
 private:
 	PPOpIn	connection;
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return NULL; };
-    virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-	PPFnSQLCommit(dynamic_context *_cxt_, PPOpIn _connection_);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
+public:
+	PPFnSQLCommit(dynamic_context *_cxt_,
+                  operation_info _info_,
+                  PPOpIn _connection_);
     virtual ~PPFnSQLCommit();
 };
 
@@ -212,15 +235,19 @@ class PPFnSQLRollback : public PPFnSQLBase
 {
 private:
 	PPOpIn	connection;
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return NULL; };
-    virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-	PPFnSQLRollback(dynamic_context *_cxt_, PPOpIn _connection_);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
+public:
+	PPFnSQLRollback(dynamic_context *_cxt_,
+                    operation_info _info_,
+                    PPOpIn _connection_);
     virtual ~PPFnSQLRollback();
 };
 

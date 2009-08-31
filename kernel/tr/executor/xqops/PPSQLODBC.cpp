@@ -777,7 +777,7 @@ SQLHandle* SQLODBCConnection::prepare_stmt(char *query, int query_len, PPOpIn *o
 	return stmt;
 }
 
-void SQLODBCConnection::close()
+void SQLODBCConnection::do_close()
 {
 	SQLRETURN rc;
 	//XXX - this suxx if some prepared_stmts deleted
@@ -844,7 +844,7 @@ SQLHandle* SQLODBCPreparedStmt::prepare_stmt(char *query, int query_len, PPOpIn 
 	return connection->prepare_stmt(query, query_len, options);
 }
 
-void SQLODBCPreparedStmt::close()
+void SQLODBCPreparedStmt::do_close()
 {
 	if (executor)
 	{

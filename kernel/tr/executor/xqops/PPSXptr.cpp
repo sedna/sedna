@@ -10,7 +10,8 @@ using namespace std;
 
 
 PPSXptr::PPSXptr(dynamic_context *_cxt_,
-                 PPOpIn _child_) : PPIterator(_cxt_),
+                 operation_info _info_,
+                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                    pos(0),
                                    s(NULL),
                                    child(_child_)
@@ -24,7 +25,7 @@ PPSXptr::~PPSXptr()
     child.op = NULL;
 }
 
-void PPSXptr::open  ()
+void PPSXptr::do_open ()
 {
     s = se_new sorted_sequence(compare_less, get_size, serialize, serialize_2_blks, deserialize, deserialize_2_blks, NULL);
     child.op->open();
@@ -33,7 +34,7 @@ void PPSXptr::open  ()
     ret_val = XNULL;
 }
 
-void PPSXptr::reopen()
+void PPSXptr::do_reopen()
 {
     child.op->reopen();
     pos = 0;
@@ -42,7 +43,7 @@ void PPSXptr::reopen()
     ret_val = XNULL;
 }
 
-void PPSXptr::close ()
+void PPSXptr::do_close()
 {
     child.op->close();
     pos = 0;
@@ -51,10 +52,8 @@ void PPSXptr::close ()
     s = NULL;
 }
 
-void PPSXptr::next  (tuple &t)
+void PPSXptr::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if(atomic_mode) {
         child.op->next(t);
         if(!t.is_eos()) {
@@ -65,7 +64,6 @@ void PPSXptr::next  (tuple &t)
         else {
             atomic_mode = false;
         }
-        RESTORE_CURRENT_PP; 
         return;
     }
     
@@ -86,10 +84,8 @@ void PPSXptr::next  (tuple &t)
                     if(s->size() != 0)
                         throw XQUERY_EXCEPTION2(XPTY0018, "Atomic or node sequence is expected");
                     atomic_mode = true;
-                    RESTORE_CURRENT_PP; 
                     return;
                 }
-
             }
         }
 
@@ -105,32 +101,24 @@ void PPSXptr::next  (tuple &t)
         {
            pos = 0;
            s->clear();
-           {RESTORE_CURRENT_PP; return;}
+           break;
         }
         else
         {
            if (t.cells[0].get_node() != ret_val)
            {
                ret_val = t.cells[0].get_node();
-               {RESTORE_CURRENT_PP; return;}
+               break;
            }
 		}
     }
-    
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPSXptr::copy(dynamic_context *_cxt_)
+PPIterator* PPSXptr::do_copy(dynamic_context *_cxt_)
 {
-    PPSXptr *res = se_new PPSXptr(_cxt_, child);
+    PPSXptr *res = se_new PPSXptr(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPSXptr::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPSXptr::result");
 }
 
 static inline void restore_serialized_xptr(const xptr &serialized, xptr &result)

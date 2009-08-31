@@ -12,7 +12,8 @@
 
 
 PPConst::PPConst(dynamic_context *_cxt_,
-                 const tuple_cell &_c_) : PPIterator(_cxt_)
+                 operation_info _info_,
+                 const tuple_cell &_c_) : PPIterator(_cxt_, _info_)
 {
     c = _c_;
 }
@@ -22,25 +23,23 @@ PPConst::~PPConst()
     // nothing to do
 }
 
-void PPConst::open ()
+void PPConst::do_open ()
 {
     first_time = true;
 }
 
-void PPConst::reopen ()
+void PPConst::do_reopen()
 {
     first_time = true;
 }
 
-void PPConst::close ()
+void PPConst::do_close()
 {
     // nothing to do
 }
 
-void PPConst::next(tuple &t)
+void PPConst::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -51,19 +50,10 @@ void PPConst::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPConst::copy(dynamic_context *_cxt_)
+PPIterator* PPConst::do_copy(dynamic_context *_cxt_)
 {
-    PPConst *res = se_new PPConst(_cxt_, c);
-    res->set_xquery_line(__xquery_line);
+    PPConst *res = se_new PPConst(_cxt_, info, c);
     return res;
-}
-
-bool PPConst::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    r = se_new sequence(((PPConst*)cur)->c);
-    return true;
 }

@@ -12,39 +12,29 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPath.h"
 
-///////////////////////////////////////////////////////////////////////////////
-/// PPAxisSelf
-///////////////////////////////////////////////////////////////////////////////
 class PPAxisSelf : public PPIterator
 {
 protected:
     
-    // given parameters
+    /* given parameters */
     PPOpIn child;
     NodeTestType nt_type;
     NodeTestData nt_data;
 
-    // obtained parameters and local data
-    
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t) ; 
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+public:    
     PPAxisSelf(dynamic_context *_cxt_,
-                PPOpIn _child_,
-                NodeTestType _nt_type_,
-                NodeTestData _nt_data_);
+               operation_info _info_,
+               PPOpIn _child_,
+               NodeTestType _nt_type_,
+               NodeTestData _nt_data_);
     virtual ~PPAxisSelf();
 };
 

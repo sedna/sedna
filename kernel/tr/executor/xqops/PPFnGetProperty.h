@@ -15,20 +15,19 @@ private:
     PPOpIn child;
     bool first_time;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; }
-	virtual bool is_const() { return true; }
-    virtual void next   (tuple &t);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPFnGetProperty(dynamic_context *_cxt_, PPOpIn _child_);
+public:    
+    PPFnGetProperty(dynamic_context *_cxt_,
+                    operation_info _info_,
+                    PPOpIn _child_);
     virtual ~PPFnGetProperty();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 #endif

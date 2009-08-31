@@ -17,8 +17,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 PPNumericFuncs::PPNumericFuncs(dynamic_context *_cxt_,
+                               operation_info _info_,
                                PPOpIn _child_,
-                               PPNumericFuncs::value_func _func_) : PPIterator(_cxt_),
+                               PPNumericFuncs::value_func _func_) : PPIterator(_cxt_, _info_),
                                                                     child(_child_),
                                                                     func(_func_)
 {
@@ -30,19 +31,19 @@ PPNumericFuncs::~PPNumericFuncs()
     child.op = NULL;
 }
 
-void PPNumericFuncs::open  ()
+void PPNumericFuncs::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPNumericFuncs::reopen()
+void PPNumericFuncs::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPNumericFuncs::close ()
+void PPNumericFuncs::do_close()
 {
     child.op->close();
 }
@@ -146,16 +147,16 @@ const char* PPNumericFuncs::error()
     else throw USER_EXCEPTION2(SE1003, "Impossible case in PPNumericFuncs::error");
 }
 
-void PPNumericFuncs::next  (tuple &t)
+void PPNumericFuncs::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
+    
     
     if (first_time)
     {
         child.op->next(t);
 
         if (t.is_eos())
-            {RESTORE_CURRENT_PP; return;}
+            return;
 
         first_time = false;
 
@@ -171,23 +172,14 @@ void PPNumericFuncs::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPNumericFuncs::copy(dynamic_context *_cxt_)
+PPIterator* PPNumericFuncs::do_copy(dynamic_context *_cxt_)
 {
-    PPNumericFuncs *res = se_new PPNumericFuncs(_cxt_, child, func);
+    PPNumericFuncs *res = se_new PPNumericFuncs(_cxt_, info, child, func);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPNumericFuncs::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPNumericFuncs::result");
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -196,16 +188,18 @@ bool PPNumericFuncs::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
+                                         operation_info _info_,
                                          PPOpIn _child_arg_,
-                                         __int64 _precision_) : PPIterator(_cxt_),
+                                         __int64 _precision_) : PPIterator(_cxt_, _info_),
                                                                 child_arg(_child_arg_),
                                                                 precision(_precision_)
 {
 }
 
 PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
+                                         operation_info _info_,
                                          PPOpIn _child_arg_,
-                                         PPOpIn _child_p_) : PPIterator(_cxt_),
+                                         PPOpIn _child_p_) : PPIterator(_cxt_, _info_),
                                                              child_arg(_child_arg_),
                                                              child_p(_child_p_),
                                                              precision(0)
@@ -223,21 +217,21 @@ PPFnRoundHalfToEven::~PPFnRoundHalfToEven()
     }
 }
 
-void PPFnRoundHalfToEven::open()
+void PPFnRoundHalfToEven::do_open()
 {
     child_arg.op->open();
     if (child_p.op) child_p.op->open();
     first_time = true;
 }
 
-void PPFnRoundHalfToEven::reopen()
+void PPFnRoundHalfToEven::do_reopen()
 {
     child_arg.op->reopen();
     if (child_p.op) child_p.op->reopen();
     first_time = true;
 }
 
-void PPFnRoundHalfToEven::close()
+void PPFnRoundHalfToEven::do_close()
 {
     child_arg.op->close();
     if (child_p.op) child_p.op->close();
@@ -259,16 +253,14 @@ tuple_cell PPFnRoundHalfToEven::round_half_to_even(const tuple_cell& tc, __int64
     }
 }
 
-void PPFnRoundHalfToEven::next(tuple &t)
+void PPFnRoundHalfToEven::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         child_arg.op->next(t);
 
         if (t.is_eos())
-            {RESTORE_CURRENT_PP; return;}
+            return;
 
         tuple_cell tc_arg = child_arg.get(t);
         if (!(tc_arg.is_atomic()) || !(is_numeric_type(tc_arg.get_atomic_type()))) 
@@ -302,30 +294,22 @@ void PPFnRoundHalfToEven::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnRoundHalfToEven::copy(dynamic_context *_cxt_)
+PPIterator* PPFnRoundHalfToEven::do_copy(dynamic_context *_cxt_)
 {
     PPFnRoundHalfToEven *res = NULL;
     if (child_p.op)
     {
-        res = se_new PPFnRoundHalfToEven(_cxt_, child_arg, child_p);
+        res = se_new PPFnRoundHalfToEven(_cxt_, info, child_arg, child_p);
         res->child_p.op = child_p.op->copy(_cxt_);
     }
     else
     {
-        res = se_new PPFnRoundHalfToEven(_cxt_, child_arg, precision);
+        res = se_new PPFnRoundHalfToEven(_cxt_, info, child_arg, precision);
     }
 
     res->child_arg.op = child_arg.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
 
     return res;
-}
-
-bool PPFnRoundHalfToEven::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnRoundHalfToEven::result");
 }

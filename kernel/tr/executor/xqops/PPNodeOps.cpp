@@ -7,7 +7,6 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPNodeOps.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/executor/xqops/PPSLStub.h"
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
@@ -19,7 +18,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnName::PPFnName(dynamic_context *_cxt_,
-                   PPOpIn _child_) : PPIterator(_cxt_),
+                   operation_info _info_,
+                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                      child(_child_)
 {
 }
@@ -30,27 +30,25 @@ PPFnName::~PPFnName()
     child.op = NULL;
 }
 
-void PPFnName::open  ()
+void PPFnName::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnName::reopen()
+void PPFnName::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnName::close ()
+void PPFnName::do_close()
 {
     child.op->close();
 }
 
-void PPFnName::next  (tuple &t)
+void PPFnName::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -60,7 +58,7 @@ void PPFnName::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
@@ -84,47 +82,13 @@ void PPFnName::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnName::copy(dynamic_context *_cxt_)
+PPIterator* PPFnName::do_copy(dynamic_context *_cxt_)
 {
-    PPFnName *res = se_new PPFnName(_cxt_, child);
+    PPFnName *res = se_new PPFnName(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    PPOpIn child;
-    ((PPFnName*)cur)->children(child);
-
-    void *nn_r;
-    bool nn_s = (child.op->res_fun())(child.op, cxt, nn_r);
-
-    if (!nn_s) // if expression is not strict
-    { // create PPFnName and transmit state
-        child.op = (PPIterator*)nn_r;
-        r = se_new PPFnName(cxt, child);
-        return false;
-    }
-
-    sequence *d_seq = (sequence*)nn_r;
-    if (d_seq->size() == 0)
-    {
-        r = se_new sequence(EMPTY_STRING_TC);
-        return true;
-    }
-
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
-    tuple_cell tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
-
-    tc.set_xtype(xs_string); // !!! dangerous
-    r = se_new sequence(dm_node_name(tc.get_node()));
-    return true;
 }
 
 
@@ -135,7 +99,8 @@ bool PPFnName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnLocalName::PPFnLocalName(dynamic_context *_cxt_,
-                             PPOpIn _child_) : PPIterator(_cxt_),
+                             operation_info _info_,
+                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                child(_child_)
 {
 }
@@ -146,24 +111,24 @@ PPFnLocalName::~PPFnLocalName()
     child.op = NULL;
 }
 
-void PPFnLocalName::open  ()
+void PPFnLocalName::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnLocalName::reopen()
+void PPFnLocalName::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnLocalName::close ()
+void PPFnLocalName::do_close()
 {
     child.op->close();
 }
 
-void PPFnLocalName::next  (tuple &t)
+void PPFnLocalName::do_next (tuple &t)
 {
     if (first_time)
     {
@@ -174,7 +139,7 @@ void PPFnLocalName::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:local-name is not a node");
@@ -201,17 +166,11 @@ void PPFnLocalName::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnLocalName::copy(dynamic_context *_cxt_)
+PPIterator* PPFnLocalName::do_copy(dynamic_context *_cxt_)
 {
-    PPFnLocalName *res = se_new PPFnLocalName(_cxt_, child);
+    PPFnLocalName *res = se_new PPFnLocalName(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnLocalName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnLocalName::result");
 }
 
 
@@ -222,7 +181,8 @@ bool PPFnLocalName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnNamespaceUri::PPFnNamespaceUri(dynamic_context *_cxt_,
-                                   PPOpIn _child_) : PPIterator(_cxt_),
+                                   operation_info _info_,
+                                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                      child(_child_)
 {
 }
@@ -233,24 +193,24 @@ PPFnNamespaceUri::~PPFnNamespaceUri()
     child.op = NULL;
 }
 
-void PPFnNamespaceUri::open  ()
+void PPFnNamespaceUri::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnNamespaceUri::reopen()
+void PPFnNamespaceUri::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnNamespaceUri::close ()
+void PPFnNamespaceUri::do_close()
 {
     child.op->close();
 }
 
-void PPFnNamespaceUri::next  (tuple &t)
+void PPFnNamespaceUri::do_next (tuple &t)
 {
     if (first_time)
     {
@@ -261,7 +221,7 @@ void PPFnNamespaceUri::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:namespace-uri is not a node");
@@ -287,19 +247,12 @@ void PPFnNamespaceUri::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnNamespaceUri::copy(dynamic_context *_cxt_)
+PPIterator* PPFnNamespaceUri::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNamespaceUri *res = se_new PPFnNamespaceUri(_cxt_, child);
+    PPFnNamespaceUri *res = se_new PPFnNamespaceUri(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPFnNamespaceUri::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnNamespaceUri::result");
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -309,7 +262,8 @@ bool PPFnNamespaceUri::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnNumber::PPFnNumber(dynamic_context *_cxt_,
-                       PPOpIn _child_) : PPIterator(_cxt_),
+                       operation_info _info_,
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                          child(_child_)
 {
 }
@@ -320,27 +274,25 @@ PPFnNumber::~PPFnNumber()
     child.op = NULL;
 }
 
-void PPFnNumber::open  ()
+void PPFnNumber::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnNumber::reopen()
+void PPFnNumber::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnNumber::close ()
+void PPFnNumber::do_close()
 {
     child.op->close();
 }
 
-void PPFnNumber::next(tuple &t)
+void PPFnNumber::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -350,7 +302,7 @@ void PPFnNumber::next(tuple &t)
         if (t.is_eos())
         {
             t.copy(tuple_cell::atomic(double_NaN));
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
 
         tuple_cell tc = atomize(child.get(t));
@@ -379,22 +331,15 @@ void PPFnNumber::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnNumber::copy(dynamic_context *_cxt_)
+PPIterator* PPFnNumber::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNumber *res = se_new PPFnNumber(_cxt_, child);
+    PPFnNumber *res = se_new PPFnNumber(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPFnNumber::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnNumber::result");
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -403,7 +348,8 @@ bool PPFnNumber::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnRoot::PPFnRoot(dynamic_context *_cxt_,
-                   PPOpIn _child_) : PPIterator(_cxt_),
+                   operation_info _info_,
+                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                      child(_child_)
 {
 }
@@ -414,33 +360,30 @@ PPFnRoot::~PPFnRoot()
     child.op = NULL;
 }
 
-void PPFnRoot::open  ()
+void PPFnRoot::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnRoot::reopen()
+void PPFnRoot::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnRoot::close ()
+void PPFnRoot::do_close()
 {
     child.op->close();
 }
 
-void PPFnRoot::next  (tuple &t)
+void PPFnRoot::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         child.op->next(t);
 
-        if (t.is_eos())
-            {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:root is not a node");
 
@@ -457,19 +400,11 @@ void PPFnRoot::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnRoot::copy(dynamic_context *_cxt_)
+PPIterator* PPFnRoot::do_copy(dynamic_context *_cxt_)
 {
-    PPFnRoot *res = se_new PPFnRoot(_cxt_, child);
+    PPFnRoot *res = se_new PPFnRoot(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnRoot::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnRoot::result");
 }

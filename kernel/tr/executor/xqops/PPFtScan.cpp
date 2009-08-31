@@ -10,28 +10,30 @@
 #include "tr/executor/root/PPCreateFtIndex.h"
 
 PPFtScan::PPFtScan(dynamic_context *_cxt_,
-                PPOpIn _seq_,
-                PPOpIn _query_,
-                PPOpIn _index_type_,
-                PPOpIn _cust_rules_) :
-                        PPIterator(_cxt_),
-                        seq(_seq_),
-                        query(_query_),
-                        index_type(_index_type_),
-                        cust_rules(_cust_rules_),
-                        sj(NULL), ptr(NULL)
+                   operation_info _info_,
+                   PPOpIn _seq_,
+                   PPOpIn _query_,
+                   PPOpIn _index_type_,
+                   PPOpIn _cust_rules_) : PPIterator(_cxt_, _info_),
+                                          seq(_seq_),
+                                          query(_query_),
+                                          index_type(_index_type_),
+                                          cust_rules(_cust_rules_),
+                                          sj(NULL),
+                                          ptr(NULL)
 {
 }
 
 PPFtScan::PPFtScan(dynamic_context *_cxt_,
-                PPOpIn _seq_,
-                PPOpIn _query_,
-                PPOpIn _index_type_) :
-                        PPIterator(_cxt_),
-                        seq(_seq_),
-                        query(_query_),
-                        index_type(_index_type_),
-                        sj(NULL), ptr(NULL)
+                   operation_info _info_,
+                   PPOpIn _seq_,
+                   PPOpIn _query_,
+                   PPOpIn _index_type_) : PPIterator(_cxt_, _info_),
+                                          seq(_seq_),
+                                          query(_query_),
+                                          index_type(_index_type_),
+                                          sj(NULL),
+                                          ptr(NULL)
 {
     cust_rules.op = NULL;
 }
@@ -65,7 +67,7 @@ PPFtScan::~PPFtScan()
     }
 }
 
-void PPFtScan::open()
+void PPFtScan::do_open()
 {
     seq.op->open();
     query.op->open();
@@ -76,7 +78,7 @@ void PPFtScan::open()
     first_time = true;
 }
 
-void PPFtScan::reopen()
+void PPFtScan::do_reopen()
 {
     seq.op->reopen();
     query.op->reopen();
@@ -98,7 +100,7 @@ void PPFtScan::reopen()
     first_time = true;
 }
 
-void PPFtScan::close()
+void PPFtScan::do_close()
 {
     seq.op->close();
     query.op->close();
@@ -118,11 +120,9 @@ void PPFtScan::close()
     
 }
 
-void PPFtScan::next(tuple &t)
+void PPFtScan::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
-    if (first_time)
+        if (first_time)
     {
         tuple_cell tc;
 
@@ -172,27 +172,19 @@ void PPFtScan::next(tuple &t)
         sj = NULL;
         first_time = true;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator*  PPFtScan::copy(dynamic_context *_cxt_)
+PPIterator*  PPFtScan::do_copy(dynamic_context *_cxt_)
 {
     PPFtScan *res;
     if (cust_rules.op)
-        res = se_new PPFtScan(_cxt_, seq, query, index_type, cust_rules);
+        res = se_new PPFtScan(_cxt_, info, seq, query, index_type, cust_rules);
     else
-        res = se_new PPFtScan(_cxt_, seq, query, index_type);
+        res = se_new PPFtScan(_cxt_, info, seq, query, index_type);
     res->seq.op = seq.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
     res->index_type.op = index_type.op->copy(_cxt_);
     if (cust_rules.op)
         res->cust_rules.op = cust_rules.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFtScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFtScan::result");
 }

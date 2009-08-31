@@ -6,16 +6,14 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPReturn.h"
-#include "tr/executor/xqops/PPSLStub.h"
-#include "tr/executor/xqops/PPSResLStub.h"
-
 
 PPReturn::PPReturn(dynamic_context *_cxt_,
+                   operation_info _info_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
                    var_dsc _pos_dsc_,
-                   const sequence_type& _st_) : PPVarIterator(_cxt_),
+                   const sequence_type& _st_) : PPVarIterator(_cxt_, _info_),
                                                 var_dscs(_var_dscs_),
                                                 source_child(_source_child_),
                                                 source(_source_child_.ts),
@@ -27,10 +25,11 @@ PPReturn::PPReturn(dynamic_context *_cxt_,
 }
 
 PPReturn::PPReturn(dynamic_context *_cxt_,
+                   operation_info _info_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
-                   var_dsc _pos_dsc_) : PPVarIterator(_cxt_),
+                   var_dsc _pos_dsc_) : PPVarIterator(_cxt_, _info_),
                                         var_dscs(_var_dscs_),
                                         source_child(_source_child_),
                                         source(_source_child_.ts),
@@ -49,7 +48,7 @@ PPReturn::~PPReturn()
 }
 
 
-void PPReturn::open ()
+void PPReturn::do_open ()
 {
     pos = 0;
     source_child.op->open();
@@ -76,7 +75,7 @@ void PPReturn::open ()
 	data_child.op->open();
 }
 
-void PPReturn::reopen ()
+void PPReturn::do_reopen()
 {
     pos = 0;
     source_child.op->reopen();
@@ -86,16 +85,14 @@ void PPReturn::reopen ()
     reinit_consumer_table();
 }
 
-void PPReturn::close ()
+void PPReturn::do_close()
 {
     source_child.op->close();
     data_child.op->close();
 }
 
-void PPReturn::next(tuple &t)
+void PPReturn::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         t.set_eos();
@@ -115,7 +112,7 @@ void PPReturn::next(tuple &t)
             first_time = true;			// reopens automatically
             pos = 0;                    // reopens automatically
             reinit_consumer_table();	// reopens automatically
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
 
         if (need_to_check_type)
@@ -129,32 +126,27 @@ void PPReturn::next(tuple &t)
         // there should be 'data_child.op->reopen()' call but data child reopens automatically
         data_child.op->next(t);
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPReturn::copy(dynamic_context *_cxt_)
+PPIterator* PPReturn::do_copy(dynamic_context *_cxt_)
 {
-    PPReturn *res = need_to_check_type ? se_new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc, st) 
-                                       : se_new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc); 
+    PPReturn *res = need_to_check_type ? se_new PPReturn(_cxt_, info, var_dscs, source_child, data_child, pos_dsc, st) 
+                                       : se_new PPReturn(_cxt_, info, var_dscs, source_child, data_child, pos_dsc); 
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-var_c_id PPReturn::register_consumer(var_dsc dsc)
+var_c_id PPReturn::do_register_consumer(var_dsc dsc)
 {
     simple_var_consumption &svc = *(cxt->var_cxt.producers[dsc].svc);
     svc.push_back(true);
     return svc.size() - 1;
 }
 
-void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
+void PPReturn::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP_VAR(this);
-    
     producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
@@ -168,16 +160,14 @@ void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
         p.svc->at(id) = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPReturn::reopen(var_dsc dsc, var_c_id id)
+void PPReturn::do_reopen(var_dsc dsc, var_c_id id)
 {
     cxt->var_cxt.producers[dsc].svc->at(id) = true;
 }
 
-void PPReturn::close(var_dsc dsc, var_c_id id)
+void PPReturn::do_close(var_dsc dsc, var_c_id id)
 {
 }
 
@@ -194,97 +184,4 @@ inline void PPReturn::reinit_consumer_table()
         producer &p = cxt->var_cxt.producers[pos_dsc];
         for (unsigned int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
-}
-
-bool PPReturn::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPReturn::result");
-
-/*    PPOpIn data_child, source_child;
-    ((PPReturn*)cur)->children(source_child, data_child);
-
-    void *source_r;
-    bool source_s = (source_child.op->res_fun())(source_child.op, cxt, source_r);
-
-    if (!source_s) // if source is not strict
-    { // create PPReturn and transmit state
-        source_child.op = (PPIterator*)source_r;
-        data_child.op = data_child.op->copy(cxt);
-        PPReturn *res_op = se_new PPReturn(cxt, ((PPReturn*)cur)->var_dscs, source_child, data_child);
-
-        r = res_op;
-        return false;
-    }
-
-    sequence *source_seq = (sequence*)source_r;
-    arr_of_var_dsc &var_dscs = ((PPReturn*)cur)->var_dscs;
-
-    // prepare context
-    for (int i = 0; i < var_dscs.size(); i++)
-    {
-        producer &p = cxt->producers[var_dscs[i]];
-        p.type = pt_tuple;
-        p.tuple_pos = i;
-        p.t = se_new tuple(1);
-    }
-
-    sequence *res_seq = se_new sequence(1);
-    tuple source_t(var_dscs.size());
-    tuple data_t(1);
-    sequence::iterator source_it; 
-    for (source_it = source_seq->begin(); source_it != source_seq->end(); ++source_it)
-    {
-        source_seq->get(source_t, source_it);
-        // fill context
-        for (int i = 0; i < var_dscs.size(); i++)
-        {
-            producer &p = cxt->producers[var_dscs[i]];
-            p.t->copy(source_t.cells[p.tuple_pos]);
-        }
-
-        void *data_r;
-        bool data_s = (data_child.op->res_fun())(data_child.op, cxt, data_r);
-
-        if (!data_s) // if data is not strict
-        { // create PPReturn and transmit state
-            // create se_new lazy source child
-            PPIterator *new_source_child = source_child.op->copy(cxt);
-
-            // create se_new source sequence - the rest of the source sequence
-            sequence::iterator ssit = source_it;
-            sequence *new_source_seq = se_new sequence(var_dscs.size());
-
-            for (++ssit; ssit != source_seq->end(); ++ssit)
-            {
-                source_seq->get(source_t, ssit);
-                new_source_seq->add(source_t);
-            }
-            delete source_seq;
-
-            // create stub for source
-            PPSLStub *lower_stub = se_new PPSLStub(cxt, new_source_child, new_source_seq);
-
-
-            source_child.op = lower_stub;
-            data_child.op = (PPIterator*)data_r;
-            PPReturn *ret_op = se_new PPReturn(cxt, ((PPReturn*)cur)->var_dscs, source_child, data_child, source_t);
-
-            // create stub for PPReturn
-            PPSResLStub *upper_stub = se_new PPSResLStub(cxt, ret_op, res_seq);
-
-            r = upper_stub;
-            return false;
-        }
-
-       sequence *data_seq = (sequence*)data_r;
-       sequence::iterator data_it; 
-       for (data_it = data_seq->begin(); data_it != data_seq->end(); data_it++)
-       {
-           data_seq->get(data_t, data_it);
-           res_seq->add(data_t);
-       }
-       delete data_seq;
-    }
-
-    return strict_op_result(cur, res_seq, cxt, r);*/
 }

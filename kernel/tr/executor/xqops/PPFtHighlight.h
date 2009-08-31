@@ -14,37 +14,36 @@
 class PPFtHighlight : public PPIterator
 {
 protected:
-    // given parameters
     PPOpIn query, seq, index;
 
-    // obtained parameters and local data
 	bool first_time;
 	SednaSearchJob *sj;
 	ft_custom_tree_t* ptr;
 	bool hl_fragment;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+public:    
+    PPFtHighlight(dynamic_context *_cxt_,
+                  operation_info _info_,
+                  PPOpIn _seq_,
+                  PPOpIn _query_,
+                  bool _hl_fragment_);
 
     PPFtHighlight(dynamic_context *_cxt_,
-                PPOpIn _seq_,
-                PPOpIn _query_,
-				bool _hl_fragment_);
-    PPFtHighlight(dynamic_context *_cxt_,
-                PPOpIn _seq_,
-                PPOpIn _query_,
-				PPOpIn _index_,
-				bool _hl_fragment_);
+                  operation_info _info_,
+                  PPOpIn _seq_,
+                  PPOpIn _query_,
+                  PPOpIn _index_,
+                  bool _hl_fragment_);
 
     virtual ~PPFtHighlight();
-
-	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

@@ -178,22 +178,33 @@ bool PPConstructor::checkInitial()
         return false;
 }
 
-void PPConstructor::open  ()
+void PPConstructor::do_open ()
 {
     checkInitial();
 }
 
 
-PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_, 
-                                           PPOpIn _qname_, PPOpIn _content_,bool _deep_copy, bool _ns_inside): PPConstructor(_cxt_, _deep_copy),
-                                           qname(_qname_), content(_content_),ns_inside(_ns_inside)
+PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
+                                           operation_info _info_,
+                                           PPOpIn _qname_,
+                                           PPOpIn _content_,
+                                           bool _deep_copy,
+                                           bool _ns_inside) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                                              qname(_qname_),
+                                                              content(_content_),
+                                                              ns_inside(_ns_inside)
 {
     el_name=NULL;
-
 }
-PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_, 
-                                           const char* name, PPOpIn _content_,bool _deep_copy, bool _ns_inside): PPConstructor(_cxt_, _deep_copy),
-                                           content(_content_),ns_inside(_ns_inside)
+
+PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
+                                           operation_info _info_,
+                                           const char* name,
+                                           PPOpIn _content_,
+                                           bool _deep_copy,
+                                           bool _ns_inside): PPConstructor(_cxt_, _info_, _deep_copy),
+                                                             content(_content_),
+                                                             ns_inside(_ns_inside)
 {
     el_name=se_new char[strlen(name)+1];
     strcpy(el_name,name);
@@ -217,7 +228,7 @@ PPElementConstructor::~PPElementConstructor()
     content.op = NULL;
 }
 
-void PPElementConstructor::open  ()
+void PPElementConstructor::do_open ()
 {
     checkInitial();
     if (el_name==NULL) qname.op->open();
@@ -226,7 +237,7 @@ void PPElementConstructor::open  ()
     eos_reached = true;
 }
 
-void PPElementConstructor::reopen()
+void PPElementConstructor::do_reopen()
 {
     if (el_name==NULL)  qname.op->reopen();
     content.op->reopen();
@@ -235,16 +246,14 @@ void PPElementConstructor::reopen()
     eos_reached = true;
 }
 
-void PPElementConstructor::close ()
+void PPElementConstructor::do_close()
 {
     if (el_name==NULL) qname.op->close();
     content.op->close();
 }
 
-void PPElementConstructor::next  (tuple &t)
+void PPElementConstructor::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -520,30 +529,22 @@ void PPElementConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPElementConstructor::copy(dynamic_context *_cxt_)
+PPIterator* PPElementConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPElementConstructor *res ;
     if (el_name!=NULL)
-        res = se_new PPElementConstructor(_cxt_, el_name,content,deep_copy,ns_inside);
+        res = se_new PPElementConstructor(_cxt_, info, el_name,content,deep_copy,ns_inside);
     else
     {
-        res = se_new PPElementConstructor(_cxt_, qname,content,deep_copy,ns_inside);
+        res = se_new PPElementConstructor(_cxt_, info, qname,content,deep_copy,ns_inside);
         res->qname.op = qname.op->copy(_cxt_);
     }
     res->content.op = content.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPElementConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    /*INSERT OPERATION HERE*/
-    return true;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -551,39 +552,55 @@ bool PPElementConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
-                                               PPOpIn _qname_, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                               qname(_qname_), content(_content_)
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+                                               PPOpIn _qname_,
+                                               PPOpIn _content_,
+                                               bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
+                                                                 qname(_qname_),
+                                                                 content(_content_)
 {
     at_name=NULL;
     at_value=NULL;
-    //val=se_new ustring_buffer;
 }
-PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
-                                               const char* name, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                               content(_content_)
+
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+                                               const char* name,
+                                               PPOpIn _content_,
+                                               bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
+                                                                 content(_content_)
 {
     at_name=se_new char[strlen(name)+1];
     strcpy(at_name,name);
     at_value=NULL;
 
 }
-PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
-                                               PPOpIn _qname_, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                               qname(_qname_)
+
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+                                               PPOpIn _qname_,
+                                               const char* value,
+                                               bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
+                                                                 qname(_qname_)
 {
     at_name=NULL;
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
 }
-PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
-                                               const char* name, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
+
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+                                               const char* name,
+                                               const char* value,
+                                               bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
 {
     at_name=se_new char[strlen(name)+1];
     strcpy(at_name,name);
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
 }
+
 PPAttributeConstructor::~PPAttributeConstructor()
 {
 
@@ -603,7 +620,7 @@ PPAttributeConstructor::~PPAttributeConstructor()
     }
 }
 
-void PPAttributeConstructor::open  ()
+void PPAttributeConstructor::do_open ()
 {
     checkInitial();
     if (at_name==NULL)  qname.op->open();
@@ -612,7 +629,7 @@ void PPAttributeConstructor::open  ()
     eos_reached = true;
 }
 
-void PPAttributeConstructor::reopen()
+void PPAttributeConstructor::do_reopen()
 {
     if (at_name==NULL)  qname.op->reopen();
     if (at_value==NULL) content.op->reopen();
@@ -620,16 +637,14 @@ void PPAttributeConstructor::reopen()
     eos_reached = true;
 }
 
-void PPAttributeConstructor::close ()
+void PPAttributeConstructor::do_close()
 {
     if (at_name==NULL)  qname.op->close();
     if (at_value==NULL) content.op->close();
 }
 
-void PPAttributeConstructor::next  (tuple &t)
+void PPAttributeConstructor::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -729,33 +744,24 @@ void PPAttributeConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPAttributeConstructor::copy(dynamic_context *_cxt_)
+PPIterator* PPAttributeConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPAttributeConstructor *res ;
     if (at_name!=NULL)
     {
-        if (at_value!=NULL) res = se_new PPAttributeConstructor(_cxt_, at_name,at_value, deep_copy);
-        else res = se_new PPAttributeConstructor(_cxt_, at_name,content, deep_copy);
+        if (at_value!=NULL) res = se_new PPAttributeConstructor(_cxt_, info, at_name,at_value, deep_copy);
+        else res = se_new PPAttributeConstructor(_cxt_, info, at_name,content, deep_copy);
     }
     else
     {
-        if (at_value!=NULL) res = se_new PPAttributeConstructor(_cxt_, qname,at_value, deep_copy);
-        else res = se_new PPAttributeConstructor(_cxt_, qname,content, deep_copy);
+        if (at_value!=NULL) res = se_new PPAttributeConstructor(_cxt_, info, qname,at_value, deep_copy);
+        else res = se_new PPAttributeConstructor(_cxt_, info, qname,content, deep_copy);
     }
     if (at_name==NULL)res->qname.op = qname.op->copy(_cxt_);
     if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPAttributeConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    /*INSERT OPERATION HERE*/
-    return true;
 }
 
 
@@ -766,9 +772,11 @@ bool PPAttributeConstructor::result(PPIterator* cur, dynamic_context *cxt, void*
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_, 
-                                               const char* name, PPOpIn _content_): PPConstructor(_cxt_, true),
-                                               content(_content_)
+PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+                                               const char* name,
+                                               PPOpIn _content_): PPConstructor(_cxt_, _info_, true),
+                                                                  content(_content_)
 {
     if (name!=NULL&&strlen(name)!=0)
     {
@@ -781,8 +789,10 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
 
 }
 
-PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_, 
-                                               const char* name, const char* value): PPConstructor(_cxt_,true)
+PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+                                               const char* name,
+                                               const char* value): PPConstructor(_cxt_, _info_, true)
 {
     if (name!=NULL&&strlen(name)!=0)
     {
@@ -794,6 +804,7 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
 }
+
 PPNamespaceConstructor::~PPNamespaceConstructor()
 {
     if (at_name!=NULL)
@@ -807,7 +818,7 @@ PPNamespaceConstructor::~PPNamespaceConstructor()
     }
 }
 
-void PPNamespaceConstructor::open  ()
+void PPNamespaceConstructor::do_open ()
 {
     checkInitial();
     if (at_value==NULL) content.op->open();
@@ -815,22 +826,20 @@ void PPNamespaceConstructor::open  ()
     eos_reached = true;
 }
 
-void PPNamespaceConstructor::reopen()
+void PPNamespaceConstructor::do_reopen()
 {
     if (at_value==NULL) content.op->reopen();
     first_time = true;
     eos_reached = true;
 }
 
-void PPNamespaceConstructor::close ()
+void PPNamespaceConstructor::do_close()
 {
     if (at_value==NULL) content.op->close();
 }
 
-void PPNamespaceConstructor::next  (tuple &t)
+void PPNamespaceConstructor::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -856,25 +865,17 @@ void PPNamespaceConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPNamespaceConstructor::copy(dynamic_context *_cxt_)
+PPIterator* PPNamespaceConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPNamespaceConstructor *res ;
-    if (at_value!=NULL) res = se_new PPNamespaceConstructor(_cxt_, at_name,at_value);
-    else res = se_new PPNamespaceConstructor(_cxt_, at_name,content);
+    if (at_value!=NULL) res = se_new PPNamespaceConstructor(_cxt_, info, at_name,at_value);
+    else res = se_new PPNamespaceConstructor(_cxt_, info, at_name,content);
     if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPNamespaceConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    /*INSERT OPERATION HERE*/
-    return true;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -883,17 +884,21 @@ bool PPNamespaceConstructor::result(PPIterator* cur, dynamic_context *cxt, void*
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_, 
-                                           PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                           content(_content_)
+PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_,
+                                           operation_info _info_, 
+                                           PPOpIn _content_,
+                                           bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
+                                                             content(_content_)
 {
     at_value=NULL;
     strm.add_str("--","-");
 
 }
 
-PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_, 
-                                           const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
+PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_,
+                                           operation_info _info_, 
+                                           const char* value,
+                                           bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
 {
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
@@ -911,7 +916,7 @@ PPCommentConstructor::~PPCommentConstructor()
     }
 }
 
-void PPCommentConstructor::open  ()
+void PPCommentConstructor::do_open ()
 {
     checkInitial();
     if (at_value==NULL) content.op->open();
@@ -919,22 +924,20 @@ void PPCommentConstructor::open  ()
     eos_reached = true;
 }
 
-void PPCommentConstructor::reopen()
+void PPCommentConstructor::do_reopen()
 {
     if (at_value==NULL) content.op->reopen();
     first_time = true;
     eos_reached = true;
 }
 
-void PPCommentConstructor::close ()
+void PPCommentConstructor::do_close()
 {
     if (at_value==NULL) content.op->close();
 }
 
-void PPCommentConstructor::next  (tuple &t)
+void PPCommentConstructor::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -974,27 +977,18 @@ void PPCommentConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPCommentConstructor::copy(dynamic_context *_cxt_)
+PPIterator* PPCommentConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPCommentConstructor *res ;
-    if (at_value!=NULL) res = se_new PPCommentConstructor(_cxt_, at_value, deep_copy);
+    if (at_value!=NULL) res = se_new PPCommentConstructor(_cxt_, info, at_value, deep_copy);
     else 
     {
-        res = se_new PPCommentConstructor(_cxt_, content, deep_copy);
+        res = se_new PPCommentConstructor(_cxt_, info, content, deep_copy);
         res->content.op = content.op->copy(_cxt_);
     }
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPCommentConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    /*INSERT OPERATION HERE*/
-    return true;
 }
 
 
@@ -1004,18 +998,25 @@ bool PPCommentConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
-                                 PPOpIn _qname_, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                 qname(_qname_), content(_content_)
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
+                                 operation_info _info_, 
+                                 PPOpIn _qname_,
+                                 PPOpIn _content_,
+                                 bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                                    qname(_qname_),
+                                                    content(_content_)
 {
     at_name=NULL;
     at_value=NULL;
     strm.add_str("?>","--");
 
 }
-PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
-                                 const char* name, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                 content(_content_)
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
+                                 operation_info _info_, 
+                                 const char* name,
+                                 PPOpIn _content_,
+                                 bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                                    content(_content_)
 {
     at_name=se_new char[strlen(name)+1];
     strcpy(at_name,name);
@@ -1023,17 +1024,23 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
     strm.add_str("?>","--");
 
 }
-PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
-                                 PPOpIn _qname_, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                 qname(_qname_)
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
+                                 operation_info _info_,
+                                 PPOpIn _qname_,
+                                 const char* value,
+                                 bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                                    qname(_qname_)
 {
     at_name=NULL;
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
     strm.add_str("?>","--");
 }
-PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
-                                 const char* name, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
+                                 operation_info _info_,
+                                 const char* name,
+                                 const char* value,
+                                 bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
 {
     at_name=se_new char[strlen(name)+1];
     strcpy(at_name,name);
@@ -1061,7 +1068,7 @@ PPPIConstructor::~PPPIConstructor()
     }
 }
 
-void PPPIConstructor::open  ()
+void PPPIConstructor::do_open ()
 {
     checkInitial();
     if (at_name==NULL)  qname.op->open();
@@ -1070,7 +1077,7 @@ void PPPIConstructor::open  ()
     eos_reached = true;
 }
 
-void PPPIConstructor::reopen()
+void PPPIConstructor::do_reopen()
 {
     if (at_name==NULL)  qname.op->reopen();
     if (at_value==NULL) content.op->reopen();
@@ -1078,16 +1085,14 @@ void PPPIConstructor::reopen()
     eos_reached = true;
 }
 
-void PPPIConstructor::close ()
+void PPPIConstructor::do_close()
 {
     if (at_name==NULL)  qname.op->close();
     if (at_value==NULL) content.op->close();
 }
 
-void PPPIConstructor::next  (tuple &t)
+void PPPIConstructor::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -1166,33 +1171,24 @@ void PPPIConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPPIConstructor::copy(dynamic_context *_cxt_)
+PPIterator* PPPIConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPPIConstructor *res ;
     if (at_name!=NULL)
     {
-        if (at_value!=NULL) res = se_new PPPIConstructor(_cxt_, at_name,at_value, deep_copy);
-        else res = se_new PPPIConstructor(_cxt_, at_name,content, deep_copy);
+        if (at_value!=NULL) res = se_new PPPIConstructor(_cxt_, info, at_name,at_value, deep_copy);
+        else res = se_new PPPIConstructor(_cxt_, info, at_name,content, deep_copy);
     }
     else
     {
-        if (at_value!=NULL) res = se_new PPPIConstructor(_cxt_, qname,at_value, deep_copy);
-        else res = se_new PPPIConstructor(_cxt_, qname,content, deep_copy);
+        if (at_value!=NULL) res = se_new PPPIConstructor(_cxt_, info, qname,at_value, deep_copy);
+        else res = se_new PPPIConstructor(_cxt_, info, qname, content, deep_copy);
     }
     if (at_name==NULL)res->qname.op = qname.op->copy(_cxt_);
     if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPPIConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    /*INSERT OPERATION HERE*/
-    return true;
 }
 
 
@@ -1203,16 +1199,20 @@ bool PPPIConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_, 
-                                     PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
-                                     content(_content_)
+PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
+                                     operation_info _info_, 
+                                     PPOpIn _content_,
+                                     bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                                        content(_content_)
 {
     at_value=NULL;
 
 }
 
-PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_, 
-                                     const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
+PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
+                                     operation_info _info_, 
+                                     const char* value,
+                                     bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy)
 {
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
@@ -1229,7 +1229,7 @@ PPTextConstructor::~PPTextConstructor()
     }
 }
 
-void PPTextConstructor::open  ()
+void PPTextConstructor::do_open ()
 {
     checkInitial();
     if (at_value==NULL) content.op->open();
@@ -1237,22 +1237,20 @@ void PPTextConstructor::open  ()
     eos_reached = true;
 }
 
-void PPTextConstructor::reopen()
+void PPTextConstructor::do_reopen()
 {
     if (at_value==NULL) content.op->reopen();
     first_time = true;
     eos_reached = true;
 }
 
-void PPTextConstructor::close ()
+void PPTextConstructor::do_close()
 {
     if (at_value==NULL) content.op->close();
 }
 
-void PPTextConstructor::next  (tuple &t)
+void PPTextConstructor::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -1264,7 +1262,7 @@ void PPTextConstructor::next  (tuple &t)
             if (getStringParameter(content))
             {
                 t.set_eos();
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             value=(char*)tr_globals::tmp_op_str_buf.c_str();
 
@@ -1293,29 +1291,19 @@ void PPTextConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPTextConstructor::copy(dynamic_context *_cxt_)
+PPIterator* PPTextConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPTextConstructor *res ;
-    if (at_value!=NULL) res = se_new PPTextConstructor(_cxt_, at_value, deep_copy);
+    if (at_value!=NULL) res = se_new PPTextConstructor(_cxt_, info, at_value, deep_copy);
     else 
     {
-        res = se_new PPTextConstructor(_cxt_, content, deep_copy);
+        res = se_new PPTextConstructor(_cxt_, info, content, deep_copy);
         res->content.op = content.op->copy(_cxt_);
     }
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPTextConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    /*INSERT OPERATION HERE*/
-    return true;
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1325,9 +1313,10 @@ bool PPTextConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPDocumentConstructor::PPDocumentConstructor(dynamic_context *_cxt_, 
-                                             PPOpIn _content_): PPConstructor(_cxt_,false),
-                                             content(_content_)
+PPDocumentConstructor::PPDocumentConstructor(dynamic_context *_cxt_,
+                                             operation_info _info_, 
+                                             PPOpIn _content_): PPConstructor(_cxt_, _info_, false),
+                                                                content(_content_)
 {
 
 
@@ -1340,29 +1329,27 @@ PPDocumentConstructor::~PPDocumentConstructor()
     content.op = NULL;
 }
 
-void PPDocumentConstructor::open  ()
+void PPDocumentConstructor::do_open ()
 {
     content.op->open();
     first_time = true;
     eos_reached = true;
 }
 
-void PPDocumentConstructor::reopen()
+void PPDocumentConstructor::do_reopen()
 {
     content.op->reopen();
     first_time = true;
     eos_reached = true;
 }
 
-void PPDocumentConstructor::close ()
+void PPDocumentConstructor::do_close()
 {
     content.op->close();
 }
 
-void PPDocumentConstructor::next  (tuple &t)
+void PPDocumentConstructor::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         first_time = false;
@@ -1491,21 +1478,12 @@ void PPDocumentConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPDocumentConstructor::copy(dynamic_context *_cxt_)
+PPIterator* PPDocumentConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPDocumentConstructor *res ;
-    res = se_new PPDocumentConstructor(_cxt_, content);
+    res = se_new PPDocumentConstructor(_cxt_, info, content);
     res->content.op = content.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPDocumentConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    /*INSERT OPERATION HERE*/
-    return true;
 }

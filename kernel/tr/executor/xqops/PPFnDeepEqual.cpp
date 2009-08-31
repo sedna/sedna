@@ -14,16 +14,18 @@
 #include "tr/executor/base/PPUtils.h"
 
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
-                   PPOpIn _child1_,
-                   PPOpIn _child2_) : PPIterator(_cxt_),
-                                      child1(_child1_),
-                                      child2(_child2_)
+                             operation_info _info_,
+                             PPOpIn _child1_,
+                             PPOpIn _child2_) : PPIterator(_cxt_, _info_),
+                                                child1(_child1_),
+                                                child2(_child2_)
 {
 }
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
+                             operation_info _info_,
                              PPOpIn _child1_,
                              PPOpIn _child2_,
-							 PPOpIn _collation_) : PPIterator(_cxt_),
+							 PPOpIn _collation_) : PPIterator(_cxt_, _info_),
                                                    child1(_child1_),
                                                    child2(_child2_),
 									               collation(_collation_)
@@ -166,7 +168,7 @@ PPFnDeepEqual::~PPFnDeepEqual()
     }
 }
 
-void PPFnDeepEqual::open  ()
+void PPFnDeepEqual::do_open ()
 {
     child1.op->open();
     child2.op->open();
@@ -177,7 +179,7 @@ void PPFnDeepEqual::open  ()
 	handler = NULL;
 }
 
-void PPFnDeepEqual::reopen()
+void PPFnDeepEqual::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
@@ -188,7 +190,7 @@ void PPFnDeepEqual::reopen()
 	handler = NULL;
 }
 
-void PPFnDeepEqual::close ()
+void PPFnDeepEqual::do_close()
 {
     child1.op->close();
     child2.op->close();
@@ -197,10 +199,8 @@ void PPFnDeepEqual::close ()
 	handler = NULL;
 }
 
-void PPFnDeepEqual::next  (tuple &t)
+void PPFnDeepEqual::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (!handler)
     {
         handler = charset_handler->get_unicode_codepoint_collation();
@@ -243,7 +243,7 @@ void PPFnDeepEqual::next  (tuple &t)
 				if (!are_nodes_deep_equal(node1,node2))
 				{
 					t.copy(tuple_cell::atomic(false));
-					{RESTORE_CURRENT_PP; return;}
+					return;
 				}
 			}
 			else if (!tc1.is_node() && !tc2.is_node() )
@@ -257,20 +257,20 @@ void PPFnDeepEqual::next  (tuple &t)
 						if (!op_eq(cont1.cells[0],cont2.cells[0],handler).get_xs_boolean())
 						{
 							t.copy(tuple_cell::atomic(false));
-							{RESTORE_CURRENT_PP; return;}
+							return;
 						}
 					}
 					catch (SednaUserException &e)
 					{
 						t.copy(tuple_cell::atomic(false));
-						{RESTORE_CURRENT_PP; return;}
+						return;
 					}
 				}
 			}
 			else
 			{
 				t.copy(tuple_cell::atomic(false));
-				{RESTORE_CURRENT_PP; return;}
+				return;
 			}
 
 			child1.op->next(cont1);
@@ -281,14 +281,14 @@ void PPFnDeepEqual::next  (tuple &t)
 			eos_reached1 = true;
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(true));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		else
 		{
 			eos_reached1 = cont1.is_eos();
 			eos_reached2 = cont2.is_eos();
 			t.copy(tuple_cell::atomic(false));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
     }
     else 
@@ -296,15 +296,13 @@ void PPFnDeepEqual::next  (tuple &t)
         handler=NULL;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)
+PPIterator* PPFnDeepEqual::do_copy(dynamic_context *_cxt_)
 {
     PPFnDeepEqual *res = collation.op ? 
-		                 se_new PPFnDeepEqual(_cxt_, child1, child2, collation) : 
-	                     se_new PPFnDeepEqual(_cxt_, child1, child2);
+		                 se_new PPFnDeepEqual(_cxt_, info, child1, child2, collation) : 
+	                     se_new PPFnDeepEqual(_cxt_, info, child1, child2);
     
 	res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
@@ -312,11 +310,5 @@ PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)
 	if(collation.op) 
 		res->collation.op = collation.op->copy(_cxt_);
 	
-	res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnDeepEqual::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnDeepEqual::result");
 }

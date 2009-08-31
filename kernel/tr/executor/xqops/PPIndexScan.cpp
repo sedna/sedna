@@ -13,10 +13,11 @@
 #include "tr/executor/fo/casting_operations.h"
 
 PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
+                         operation_info _info_,
                          PPOpIn _index_name_,
                          PPOpIn _child_,
                          PPOpIn _child2_,
-                         index_scan_condition _isc_) : PPIterator(_cxt_),
+                         index_scan_condition _isc_) : PPIterator(_cxt_, _info_),
                                                        index_name(_index_name_),
                                                        child(_child_),
                                                        child2(_child2_),
@@ -38,7 +39,7 @@ PPIndexScan::~PPIndexScan()
     }
 }
 
-void PPIndexScan::open ()
+void PPIndexScan::do_open ()
 {
     switch (isc)
     {
@@ -62,7 +63,7 @@ void PPIndexScan::open ()
 }
 
 
-void PPIndexScan::reopen()
+void PPIndexScan::do_reopen()
 {
     if (index_name.op) index_name.op->reopen();
     if (child.op) child.op->reopen();
@@ -72,7 +73,7 @@ void PPIndexScan::reopen()
 }
 
 
-void PPIndexScan::close ()
+void PPIndexScan::do_close()
 {
     if (index_name.op) index_name.op->close();
     if (child.op) child.op->close();
@@ -106,12 +107,6 @@ void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_typ
         if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence.");
     }
 
-/*
-    if (tc.get_atomic_type() == xs_untypedAtomic)
-	    tc = cast(tc, idx_type);
-    else
-        type_promotion(tc, idx_type);
-*/
 	tc = cast(tc, idx_type);
 }
 
@@ -255,26 +250,17 @@ void PPIndexScan::next_between(tuple &t)
     DEREF_AND_SET
 }
 
-PPIterator* PPIndexScan::copy(dynamic_context *_cxt_)
+PPIterator* PPIndexScan::do_copy(dynamic_context *_cxt_)
 {
     PPIndexScan *res = NULL;
 
     if (child.op && child2.op)
     {
-        res = se_new PPIndexScan(_cxt_, index_name, child, child2, isc);
+        res = se_new PPIndexScan(_cxt_, info, index_name, child, child2, isc);
 		res->index_name.op = index_name.op->copy(_cxt_);
         res->child.op = child.op->copy(_cxt_);
         res->child2.op = child2.op->copy(_cxt_);
     }
 
-	res->set_xquery_line(__xquery_line);
-
     return res;
 }
-
-bool PPIndexScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPIndexScan::result");
-}
-
-

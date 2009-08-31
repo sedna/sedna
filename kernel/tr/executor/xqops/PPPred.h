@@ -76,8 +76,6 @@ private:
     
     void print_state();
 
-    int __xquery_line;
-
 public:
     
     int add_new_constraint(operation_compare_condition occ, const PPOpIn &conjunct);
@@ -92,7 +90,6 @@ public:
     
     int reinit_with_position(double position);
     void reinit();
-    void set_xquery_line(int _xquery_line_) { __xquery_line = _xquery_line_;}
 };
 
 
@@ -131,27 +128,24 @@ private:
     int lower_bound;
     var_dsc pos_dsc;
 
-    void children(PPOpIn& _source_child_,
-                  PPOpIn& _data_child_)
-    {
-        _source_child_ = source_child;
-        _data_child_ = data_child;
-    }
-    
     inline void reinit_consumer_table();
     
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
+    virtual var_c_id do_register_consumer(var_dsc dsc);
+    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_reopen(var_dsc dsc, var_c_id id);
+    virtual void do_close (var_dsc dsc, var_c_id id);
+
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPPred1(dynamic_context *_cxt_,
+            operation_info _info_,
             arr_of_var_dsc _var_dscs_, 
             PPOpIn _source_child_, 
             arr_of_PPOpIn _conjuncts_,
@@ -161,11 +155,6 @@ public:
             var_dsc _pos_dsc_ = -1);
     
     virtual ~PPPred1();
-
-    virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next(tuple &t, var_dsc dsc, var_c_id id);
-    virtual void reopen(var_dsc dsc, var_c_id id);
-    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 
@@ -208,33 +197,22 @@ private:
 
     inline void reinit_consumer_table();
 
-    void children(PPOpIn& _source_child_,
-                  PPOpIn& _data_child_)
-    {
-        _source_child_ = source_child;
-        _data_child_ = data_child;
-    }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-/*
-    PPPred2(dynamic_context *_cxt_,
-             arr_of_var_dsc _var_dscs_, 
-             PPOpIn _source_child_, 
-             PPOpIn _data_child_,
-             tuple _source_);
-*/
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
+    virtual var_c_id do_register_consumer(var_dsc dsc);
+    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_reopen(var_dsc dsc, var_c_id id);
+    virtual void do_close (var_dsc dsc, var_c_id id);
+
+public:
     PPPred2(dynamic_context *_cxt_,
+            operation_info _info_,
             arr_of_var_dsc _var_dscs_, 
             PPOpIn _source_child_, 
             arr_of_PPOpIn _conjuncts_,
@@ -245,14 +223,6 @@ public:
             var_dsc _pos_dsc_ = -1);
 
     virtual ~PPPred2();
-
-    virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next  (tuple &t, var_dsc dsc, var_c_id id);
-    virtual void reopen(var_dsc dsc, var_c_id id);
-    virtual void close (var_dsc dsc, var_c_id id);
 };
-
-
-
 
 #endif

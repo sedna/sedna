@@ -24,14 +24,73 @@
 class PPIterator;
 
 
+/*******************************************************************************
+ * Global variables
+ ******************************************************************************/
+
+namespace tr_globals 
+{
+    /* 
+     * Buffer for strings that fit in main memory (used for various intermediate 
+     * operations with strings instead of allocating dynamic memory by new operator)
+     */
+    extern char mem_str_buf[MAX_ATOMIC_LEX_REPR_SIZE + 1];
+    extern char mem_str_buf2[MAX_ATOMIC_LEX_REPR_SIZE + 1];
+
+    /* 
+     * Buffer for e_strs (used for various intermediate operations with e_strs
+     * instead of allocating dynamic memory by se_new operator)
+     */
+    extern char e_string_buf[PAGE_SIZE];
+
+    extern TLS_VAR_DECL 
+    PPIterator* __current_physop;
+
+    extern TLS_VAR_DECL
+    volatile bool is_timer_fired;
+
+    /* FIXME: make this TLS_VAR_DECL when we start to use threads */
+    extern op_str_buf tmp_op_str_buf;
+}
 
 /*******************************************************************************
- * Class incapsulates 'in' argument for PPIterator operation
+ * Some macro to throw smart XQUERY_EXCEPTION
+ ******************************************************************************/
+
+/* 
+ * These macroses must be called on operation enter and exit correspondingly!
+ * xxx       - in next(tuple)
+ * xxx_VAR   - in next(tuple, var)
+ */
+
+#define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
+                                 tr_globals::__current_physop = (pp);
+
+#define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = tr_globals::__current_physop; \
+                                 tr_globals::__current_physop = (pp);
+
+#define RESTORE_CURRENT_PP       tr_globals::__current_physop = __current_physop_backup; \
+                                 __current_physop_backup = NULL;
+
+#define RESTORE_CURRENT_PP_VAR   tr_globals::__current_physop = __current_physop_backup_var; \
+                                 __current_physop_backup_var = NULL;
+
+/* Must be called after delete qep_tree in trn! */
+#define RESET_CURRENT_PP         tr_globals::__current_physop = NULL;
+
+/* Check in executor if timer is fired */
+#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
+
+
+/*******************************************************************************
+ * Struct encapsulates 'in' argument for PPIterator operation
  ******************************************************************************/
 struct PPOpIn
 {
-    PPIterator *op;	// operation
-    int ts;	// size of input tuple
+    /* Physical operation */
+    PPIterator *op;
+    /* Size of input tuple */
+    int ts;
 
     PPOpIn(PPIterator *_op_, int _ts_) : op(_op_), ts(_ts_) {}
     PPOpIn() : op(NULL), ts(0) {}
@@ -39,25 +98,25 @@ struct PPOpIn
     tuple_cell &get(tuple &t) const { return t.cells[0]; }
 };
 
-/// Type for 'result' function
-/// return true, if strict
-/// r can be sequence* or PPIterator depending on return value
-typedef bool (*strict_fun)(PPIterator* cur, dynamic_context *cxt, void*& r);
-
-/// function forms result of the strict operation (e.g. switches operation from
-/// strict to lazy if size of the result sequence is too large)
-bool strict_op_result(PPIterator* cur, sequence *res_seq, dynamic_context *cxt, void*& r);
-
-
-/// Array of PPOpIn
+/* Array of PPOpIn */
 typedef std::vector<PPOpIn>			arr_of_PPOpIn;
 
-/// Array of tuple pointers
+/* Array of tuple pointers */
 typedef std::vector<tuple*>			arr_of_tuple_pointer;
 
-/// Array of var descriptors
+/* Array of var descriptors */
 typedef std::vector<var_dsc>		arr_of_var_dsc;
 
+
+/*******************************************************************************
+ * Struct encapsulates physical operation properties
+ ******************************************************************************/
+
+struct operation_info
+{
+    /* Line in the source query this operation corresponds to */
+    int query_line;
+};
 
 
 /*******************************************************************************
@@ -66,28 +125,77 @@ typedef std::vector<var_dsc>		arr_of_var_dsc;
 class PPIterator
 {
 protected:
-    dynamic_context *cxt;
-    
-    int __xquery_line;
-    PPIterator* __current_physop_backup;          /// Backups __current_physop pointer when called from the parent operation by next(tuple& t)
+    dynamic_context*  cxt;
+    operation_info    info;
+
+    /* 
+     * Backs up  __current_physop pointer when operation is called from 
+     * the parent operation by next(tuple& t)
+     */
+    PPIterator* __current_physop_backup;
+
+private:
+    virtual void        do_open    ()         = 0;
+    virtual void        do_reopen  ()         = 0;
+    virtual void        do_close   ()         = 0;
+    virtual void        do_next    (tuple &t) = 0;
+    virtual PPIterator* do_copy(dynamic_context *_cxt_) = 0;
+
+    virtual const operation_info& do_get_operation_info() const {
+        return info;
+    }
 
 public:
-    virtual void open          ()         = 0;
-    virtual void reopen        ()         = 0;
-    virtual void close         ()         = 0;
-    virtual strict_fun res_fun ()         = 0;
-    virtual void next          (tuple &t) = 0;
+    /* 
+     * Initialize operation at the very begining of the query execution.
+     * Usually opan() implementation may contain quite heavy operations 
+     * like memory allocations.
+     */
+    inline void        open    ()                   { do_open();   }
+    
+    /* 
+     * Equivalent of the consecutive calls close()-open() but in most cases
+     * reopen() is lighter. Usually it may just clean memory which was 
+     * allocated in open(). We need this method to reset operation's state
+     * during the query execution. 
+     */
+    inline void        reopen  ()                   { do_reopen(); }
 
-    virtual PPIterator* copy(dynamic_context *_cxt_) = 0;
+    /* 
+     * Free resources operation used before delete this operation.
+     * Usually close() deletes memory allocated in open(). 
+     */
+    inline void        close   ()                   { do_close();  }
+    
+    /* Saves next portion of the result of this operation in t */
+    inline void        next    (tuple &t) 
+    { 
+        CHECK_TIMER_FLAG;
+        SET_CURRENT_PP(this);
+        do_next(t);  
+        RESTORE_CURRENT_PP;
+    }
+    
+    /* 
+     * Returns a copy of the operation. This is how XQuery user defined
+     * functions work in Sedna. Every time someone calls declared function
+     * a copy of function's subtree created by means of recursive copy() 
+     * calls.
+     */
+    inline PPIterator* copy(dynamic_context *_cxt_) { 
+        return do_copy(_cxt_); 
+    }
 
-    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_), __xquery_line(0), __current_physop_backup(NULL) {}
-	
-	virtual void  set_xquery_line(int _xquery_line_){__xquery_line = _xquery_line_;}
-	virtual int   get_xquery_line() const           { return __xquery_line; }
-	virtual const char* get_error_msg()   const     { return NULL; }
+    inline const operation_info& get_operation_info() const {
+        return do_get_operation_info();
+    }
 
-	virtual bool is_const(){return false;}
-    virtual ~PPIterator() {}
+    PPIterator(dynamic_context *_cxt_, 
+               operation_info _info_) : cxt(_cxt_),
+                                        info(_info_),
+                                        __current_physop_backup(NULL) {}
+
+    virtual ~PPIterator()  {}
 };
 
 
@@ -97,22 +205,45 @@ public:
 class PPVarIterator : public PPIterator
 {
 protected:
-    PPIterator* __current_physop_backup_var;      /// Backups __current_physop pointer when called from descendant variable 
-                                                  /// consumer operation by next(tuple &t, var_dsc dsc, var_c_id id);
-public:
-    /// register consumer of the variable dsc
-    virtual var_c_id register_consumer(var_dsc dsc) = 0;
+    /* 
+     * Backs up __current_physop pointer when operation is called from the descendant 
+     * variable consumer operation by next(tuple &t, var_dsc dsc, var_c_id id)
+     */
+    PPIterator* __current_physop_backup_var;
 
-     /// get next value of the variable by id
-    virtual void next(tuple &t, var_dsc dsc, var_c_id id) = 0;
+private:
+    /* Register consumer of the variable dsc */
+    virtual var_c_id do_register_consumer(var_dsc dsc) = 0;
+    virtual void do_next(tuple &t, var_dsc dsc, var_c_id id) = 0;
+    virtual void do_reopen(var_dsc dsc, var_c_id id) = 0;
+    virtual void do_close(var_dsc dsc, var_c_id id) = 0;
 
-    /// set id to the beginning of the sequence
-    virtual void reopen(var_dsc dsc, var_c_id id) = 0;
+    
+public:     
+    /* Register consumer of the variable dsc */
+    inline var_c_id register_consumer(var_dsc dsc) { 
+        return do_register_consumer(dsc); 
+    } 
+    /* Get next value of the variable by id */    
+    inline void next(tuple &t, var_dsc dsc, var_c_id id) 
+    { 
+        CHECK_TIMER_FLAG;
+        SET_CURRENT_PP_VAR(this);
+        do_next(t, dsc, id);
+        RESTORE_CURRENT_PP_VAR;
+    }
+    /* Set id to the beginning of the sequence */
+    inline void reopen(var_dsc dsc, var_c_id id) {
+        do_reopen(dsc, id);
+    }
+    /* Close and release resources */        
+    inline void close(var_dsc dsc, var_c_id id) {
+        do_close(dsc, id);
+    }
 
-    /// close and release resources
-    virtual void close(var_dsc dsc, var_c_id id) = 0;
-
-    PPVarIterator(dynamic_context *_cxt_) : PPIterator(_cxt_),  __current_physop_backup_var(NULL) {}
+    PPVarIterator(dynamic_context *_cxt_, 
+                  operation_info _info_) : PPIterator(_cxt_, _info_),  
+                                           __current_physop_backup_var(NULL) {}
     virtual ~PPVarIterator() {}
 	
 };
@@ -150,72 +281,13 @@ public:
 
 
 /*******************************************************************************
- * Global variables
- ******************************************************************************/
-
-namespace tr_globals 
-{
-
-//extern pp_static_context st_ct;
-
-/// buffer for strings that fit in main memory (used for various intermediate 
-/// operations with strings instead of allocating dynamic memory by se_new operator)
-extern char mem_str_buf[MAX_ATOMIC_LEX_REPR_SIZE + 1];
-extern char mem_str_buf2[MAX_ATOMIC_LEX_REPR_SIZE + 1];
-
-/// buffer for e_strs (used for various intermediate operations with e_strs 
-/// instead of allocating dynamic memory by se_new operator)
-extern char e_string_buf[PAGE_SIZE];
-
-extern TLS_VAR_DECL 
-PPIterator* __current_physop;
-
-extern TLS_VAR_DECL
-volatile bool is_timer_fired;
-
-//FIXME: make this TLS_VAR_DECL when we start to use threads
-extern op_str_buf tmp_op_str_buf;
-
-}
-
-
-/*******************************************************************************
- * Thread variable to throw smart XQUERY_EXCEPTION
- ******************************************************************************/
-
-/// These macroses must be called on operation enter and exit correspondingly!
-/// *       - in next(tuple)
-/// *_VAR   - in next(tuple, var)
-
-#define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
-                                 tr_globals::__current_physop = (pp); \
-                                 if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
-
-#define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = tr_globals::__current_physop; \
-                                 tr_globals::__current_physop = (pp); \
-                                 if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
-
-#define RESTORE_CURRENT_PP       tr_globals::__current_physop = __current_physop_backup; \
-                                 __current_physop_backup = NULL;
-
-#define RESTORE_CURRENT_PP_VAR   tr_globals::__current_physop = __current_physop_backup_var; \
-                                 __current_physop_backup_var = NULL;
-
-/// Must be called after delete qep_tree in trn!
-#define RESET_CURRENT_PP         tr_globals::__current_physop = NULL;
-
-/// Check in executor if timer is fired
-#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
-
-/*******************************************************************************
  * SednaXQueryException
  ******************************************************************************/
 
 class SednaXQueryException : public SednaUserException
 {
 protected:
-    int   xquery_line;
-    const char* physop_msg;
+    int xquery_line;
 
 public:
     SednaXQueryException(const char* _file_, 
@@ -227,12 +299,10 @@ public:
                                                                             _line_,
                                                                             "",
                                                                             _internal_code_),
-                                                                            xquery_line(0),
-                                                                            physop_msg(NULL) {
+                                                                            xquery_line(0) {
         if(_current_physop_)
         {
-            xquery_line = _current_physop_->get_xquery_line();
-            physop_msg  = _current_physop_->get_error_msg();
+            xquery_line = _current_physop_->get_operation_info().query_line;
         }
         RESET_CURRENT_PP;
     }
@@ -247,12 +317,10 @@ public:
                                                                             _line_,
                                                                             _err_msg_,
                                                                             _internal_code_), 
-                                                                            xquery_line(0),
-                                                                            physop_msg(NULL) {
+                                                                            xquery_line(0) {
         if(_current_physop_)
         {
-            xquery_line = _current_physop_->get_xquery_line();
-            physop_msg  = _current_physop_->get_error_msg();
+            xquery_line = _current_physop_->get_operation_info().query_line;
         }
         RESET_CURRENT_PP;
     }
@@ -268,7 +336,6 @@ protected:
         if (err_msg.length() != 0)
         {
             res += "Details: ";
-            if(physop_msg != NULL) {res += physop_msg; res += " ";}
             res += err_msg + "\n";
         }
         if (xquery_line != 0)
@@ -280,7 +347,7 @@ protected:
     }
 };
 
-/// Under Darwin we need this hack to compile Sedna with gcc 4.0.1
+/* On Darwin we need this hack to compile Sedna with gcc 4.0.1 */
 #if defined(DARWIN)
 inline SednaXQueryException __xquery_exception2(const char *file,
                                                 const char *func, 
@@ -292,11 +359,11 @@ inline SednaXQueryException __xquery_exception2(const char *file,
                              user_error_code_entries[code].code, 
                              user_error_code_entries[code].descr,
                              details)), 
-             SednaXQueryException(file, func, line, details, code, tr_globals::__current_physop));
+             SednaXQueryException(file, func, line, details, code, 
+                                  tr_globals::__current_physop));
 
 }
 #endif /* DARWIN */
 
-
-#endif
+#endif /* _PPBASE_H */
 

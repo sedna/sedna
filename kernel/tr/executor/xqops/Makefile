@@ -57,9 +57,7 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPSequence$(OBJ_EXT) \
         PPSequenceOps$(OBJ_EXT) \
         PPSequenceTypes$(OBJ_EXT) \
-        PPSLStub$(OBJ_EXT) \
         PPSpaceSequence$(OBJ_EXT) \
-        PPSResLStub$(OBJ_EXT) \
         PPStore$(OBJ_EXT) \
         PPStringFuncs$(OBJ_EXT) \
         PPStringsCompare$(OBJ_EXT) \

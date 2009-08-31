@@ -11,8 +11,9 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/crmutils/crmutils.h"
 
-PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_, 
-                                   PPOpIn _doc_name_op_) : PPIterator(_cxt_),
+PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_,
+                                   operation_info _info_, 
+                                   PPOpIn _doc_name_op_) : PPIterator(_cxt_, _info_),
                                                            doc_name_op(_doc_name_op_)
 {
 }
@@ -23,33 +24,31 @@ PPFnDocAvailable::~PPFnDocAvailable()
     doc_name_op.op = NULL;
 }
 
-void PPFnDocAvailable::open ()
+void PPFnDocAvailable::do_open ()
 {
     doc_name_op.op->open();
     first_time = true;
 }
 
 
-void PPFnDocAvailable::reopen()
+void PPFnDocAvailable::do_reopen()
 {
     doc_name_op.op->reopen();
     first_time = true;
 }
 
 
-void PPFnDocAvailable::close ()
+void PPFnDocAvailable::do_close()
 {
     doc_name_op.op->close();
 }
 
-void PPFnDocAvailable::next(tuple &t)
+void PPFnDocAvailable::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (first_time)
     {
         doc_name_op.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}    //if $uri is the empty sequence, the result is an empty sequence.
+        if (t.is_eos()) return;    //if $uri is the empty sequence, the result is an empty sequence.
 
         tuple_cell tc_doc= atomize(doc_name_op.get(t));
         if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc-available (xs_string/derived/promotable is expected).");
@@ -80,22 +79,11 @@ void PPFnDocAvailable::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnDocAvailable::copy(dynamic_context *_cxt_)
+PPIterator* PPFnDocAvailable::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDocAvailable *res = se_new PPFnDocAvailable(_cxt_, doc_name_op);
+    PPFnDocAvailable *res = se_new PPFnDocAvailable(_cxt_, info, doc_name_op);
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPFnDocAvailable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnDocAvailable::result");
-}
-
-
-

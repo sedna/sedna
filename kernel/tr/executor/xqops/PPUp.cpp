@@ -9,10 +9,11 @@
 
 
 PPUp::PPUp(dynamic_context *_cxt_,
+           operation_info _info_,
            PPOpIn _child_,
-           schema_node_xptr _scm_node_) : PPIterator(_cxt_),
-                                      child(_child_),
-                                      scm_node(_scm_node_)
+           schema_node_xptr _scm_node_) : PPIterator(_cxt_,_info_),
+                                          child(_child_),
+                                          scm_node(_scm_node_)
 {
 }
 
@@ -22,34 +23,32 @@ PPUp::~PPUp()
     child.op = NULL;
 }
 
-void PPUp::open  ()
+void PPUp::do_open ()
 {
     previous = XNULL;
     child.op->open();
 }
 
-void PPUp::reopen()
+void PPUp::do_reopen()
 {
     previous = XNULL;
     child.op->reopen();
 }
 
-void PPUp::close ()
+void PPUp::do_close()
 {
     child.op->close();
 }
 
-void PPUp::next  (tuple &t)
+void PPUp::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     while (true)
     {
         child.op->next(t);
         if (t.is_eos()) 
         {
             previous = XNULL;
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of PPUp is not a node");
 
@@ -67,23 +66,14 @@ void PPUp::next  (tuple &t)
         {
             previous = p;
             t.copy(tuple_cell::node(p));
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPUp::copy(dynamic_context *_cxt_)
+PPIterator* PPUp::do_copy(dynamic_context *_cxt_)
 {
-    PPUp *res = se_new PPUp(_cxt_, child, scm_node);
+    PPUp *res = se_new PPUp(_cxt_, info, child, scm_node);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPUp::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPUp::result");
-}
-

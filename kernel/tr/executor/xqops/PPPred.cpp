@@ -11,8 +11,6 @@
 
 #include "tr/executor/xqops/PPPred.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/xqops/PPSLStub.h"
-#include "tr/executor/xqops/PPSResLStub.h"
 #include "tr/executor/fo/casting_operations.h"
 
 using namespace std;
@@ -520,42 +518,20 @@ void PPPredRange::print_state()
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPPred1
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPPred1::PPPred1(dynamic_context *_cxt_,
+                 operation_info _info_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_, 
                  arr_of_PPOpIn _conjuncts_,
                  arr_of_comp_cond _conditions_,
                  PPOpIn _data_child_,
                  bool _once_,
-                 var_dsc _pos_dsc_ ): PPVarIterator(_cxt_),
+                 var_dsc _pos_dsc_ ): PPVarIterator(_cxt_, _info_),
                                       var_dscs(_var_dscs_),
                                       source_child(_source_child_),
                                       conjuncts(_conjuncts_),
@@ -568,7 +544,6 @@ PPPred1::PPPred1(dynamic_context *_cxt_,
 {
     if(conjuncts.size() != conditions.size()) 
         throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred1");
-    range.set_xquery_line(__xquery_line);
 }
 
 PPPred1::~PPPred1()
@@ -587,7 +562,7 @@ PPPred1::~PPPred1()
 }
 
 
-void PPPred1::open ()
+void PPPred1::do_open ()
 {
     source_child.op->open();
 
@@ -623,7 +598,7 @@ void PPPred1::open ()
     
 }
 
-void PPPred1::reopen ()                                             
+void PPPred1::do_reopen()                                             
 {
     pos = 0;
     first_time = true;
@@ -631,7 +606,7 @@ void PPPred1::reopen ()
     source_child.op->reopen();
 }
 
-void PPPred1::close ()
+void PPPred1::do_close()
 {
     source_child.op->close();
     
@@ -641,10 +616,8 @@ void PPPred1::close ()
     data_child.op->close();
 }
                                                                           
-void PPPred1::next(tuple &t)
+void PPPred1::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if(need_reopen)
     {
         need_reopen = false;
@@ -664,10 +637,10 @@ void PPPred1::next(tuple &t)
                     range.reinit();
                     for(unsigned int i = 0; i < conjuncts.size(); i++)
                         range.add_new_constraint(conditions[i], conjuncts[i]);  
-                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}}
+                    if(range.is_empty()) { t.set_eos(); return;}
                     else if(range.is_any()) result_ready = true; 
                 }
-                else { t.set_eos(); {RESTORE_CURRENT_PP; return;}} 
+                else { t.set_eos(); return;} 
             }
             else
             {
@@ -677,10 +650,10 @@ void PPPred1::next(tuple &t)
                 if(is_numeric)
                 {
                     range.reinit_with_position(value);
-                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}}
+                    if(range.is_empty()) { t.set_eos(); return;}
                 }                                       
                 else if( tc.get_xs_boolean() ) result_ready = true;
-                else { t.set_eos(); {RESTORE_CURRENT_PP; return;}}
+                else { t.set_eos(); return;}
             }
             need_reopen = true;     
         }
@@ -689,7 +662,7 @@ void PPPred1::next(tuple &t)
             range.reinit();
             for(unsigned int i = 0; i < conjuncts.size(); i++)
                 range.add_new_constraint(conditions[i], conjuncts[i]);  
-            if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}} 
+            if(range.is_empty()) { t.set_eos(); return;} 
         }
         
         first_time = false;
@@ -710,7 +683,7 @@ void PPPred1::next(tuple &t)
         source_child.op->next(t);
         ++pos;
         cur_tuple = &t;
-        if(!t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if(!t.is_eos()) return;
     }   
     else    
     {
@@ -743,9 +716,9 @@ void PPPred1::next(tuple &t)
                 tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
                                                           effective_boolean_value(data_child, data, eos_reached);
                 need_reopen = true;
-                if(tc.get_xs_boolean()) {RESTORE_CURRENT_PP; return;}
+                if(tc.get_xs_boolean()) return;
             }
-            else {RESTORE_CURRENT_PP; return;}
+            else return;
         }
     }
     
@@ -753,14 +726,13 @@ void PPPred1::next(tuple &t)
     result_ready = false;
     first_time = true; 
     t.set_eos();
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPPred1::copy(dynamic_context *_cxt_)                      
+PPIterator* PPPred1::do_copy(dynamic_context *_cxt_)                      
 {
     
-    PPPred1 *res = se_new PPPred1(_cxt_, 
+    PPPred1 *res = se_new PPPred1(_cxt_,
+                               info,
                                var_dscs, 
                                source_child, 
                                conjuncts, 
@@ -775,20 +747,17 @@ PPIterator* PPPred1::copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-var_c_id PPPred1::register_consumer(var_dsc dsc)
+var_c_id PPPred1::do_register_consumer(var_dsc dsc)
 {
     cxt->var_cxt.producers[dsc].svc->push_back(true);
     return cxt->var_cxt.producers[dsc].svc->size() - 1;
 }
 
-void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)                     
+void PPPred1::do_next(tuple &t, var_dsc dsc, var_c_id id)                     
 {
-    SET_CURRENT_PP_VAR(this);
-
     producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
@@ -802,16 +771,14 @@ void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)
         p.svc->at(id) = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPPred1::reopen(var_dsc dsc, var_c_id id)
+void PPPred1::do_reopen(var_dsc dsc, var_c_id id)
 {
     cxt->var_cxt.producers[dsc].svc->at(id) = true;
 }
 
-void PPPred1::close(var_dsc dsc, var_c_id id)
+void PPPred1::do_close(var_dsc dsc, var_c_id id)
 {
 }
 
@@ -831,105 +798,6 @@ inline void PPPred1::reinit_consumer_table()
     }
 }
 
-bool PPPred1::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-/*
-    PPOpIn data_child, source_child;
-    ((PPPred1*)cur)->children(source_child, data_child);
-
-    void *source_r;
-    bool source_s = (source_child.op->res_fun())(source_child.op, cxt, source_r);
-
-    if (!source_s) // if source is not strict
-    { // create PPPred1 and transmit state
-        source_child.op = (PPIterator*)source_r;
-        data_child.op = data_child.op->copy(cxt);
-        PPPred1 *res_op = se_new PPPred1(cxt, ((PPPred1*)cur)->var_dscs, source_child, data_child);
-
-        r = res_op;
-        return false;
-    }
-
-    sequence *source_seq = (sequence*)source_r;
-    arr_of_var_dsc &var_dscs = ((PPPred1*)cur)->var_dscs;
-
-    // prepare context
-    for (int i = 0; i < var_dscs.size(); i++)
-    {
-        producer &p = cxt->producers[var_dscs[i]];
-        p.type = pt_tuple;
-        p.tuple_pos = i;
-        p.t = se_new tuple(1);
-    }
-
-    sequence *res_seq = se_new sequence(source_child.ts);
-    tuple source_t(var_dscs.size());
-    tuple data_t(1);
-    sequence::iterator source_it; 
-    for (source_it = source_seq->begin(); source_it != source_seq->end(); ++source_it)
-    {
-        source_seq->get(source_t, source_it);
-        // fill context
-        for (int i = 0; i < var_dscs.size(); i++)
-        {
-            producer &p = cxt->producers[var_dscs[i]];
-            p.t->copy(source_t.cells[p.tuple_pos]);
-        }
-
-        void *data_r;
-        bool data_s = (data_child.op->res_fun())(data_child.op, cxt, data_r);
-
-        if (!data_s) // if data is not strict
-        { // create PPPred1 and transmit state
-            // create se_new lazy source child
-            PPIterator *new_source_child = source_child.op->copy(cxt);
-
-            // create se_new source sequence - the rest of the source sequence
-            sequence::iterator ssit = source_it;
-            sequence *new_source_seq = se_new sequence(var_dscs.size());
-
-            for (++ssit; ssit != source_seq->end(); ++ssit)
-            {
-                source_seq->get(source_t, ssit);
-                new_source_seq->add(source_t);
-            }
-            delete source_seq;
-
-            // create stub for source
-            PPSLStub *lower_stub = se_new PPSLStub(cxt, new_source_child, new_source_seq);
-
-
-            source_child.op = lower_stub;
-            data_child.op = (PPIterator*)data_r;
-            PPPred1 *ret_op = se_new PPPred1(cxt, ((PPPred1*)cur)->var_dscs, source_child, data_child, source_t);
-
-            // create stub for PPPred1
-            PPSResLStub *upper_stub = se_new PPSResLStub(cxt, ret_op, res_seq);
-
-            r = upper_stub;
-            return false;
-        }
-
-        if (effective_boolean_value((sequence*)data_r).get_xs_boolean())
-            res_seq->add(source_t);
-        delete (sequence*)data_r;
-    }
-
-    r = res_seq;
-*/
-    return true;
-}
-
-
-
-
-
-
-
-
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPPred2
@@ -937,6 +805,7 @@ bool PPPred1::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPPred2::PPPred2(dynamic_context *_cxt_,
+                 operation_info _info_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_,
                  arr_of_PPOpIn _conjuncts_, 
@@ -944,7 +813,7 @@ PPPred2::PPPred2(dynamic_context *_cxt_,
                  PPOpIn _data_child_,
                  bool _once_,
                  var_dsc _lst_dsc_,
-                 var_dsc _pos_dsc_) : PPVarIterator(_cxt_),
+                 var_dsc _pos_dsc_) : PPVarIterator(_cxt_, _info_),
                                       var_dscs(_var_dscs_),
                                       source_child(_source_child_),
                                       conjuncts(_conjuncts_),
@@ -958,26 +827,8 @@ PPPred2::PPPred2(dynamic_context *_cxt_,
 {
     if(conjuncts.size() != conditions.size()) 
         throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred2");
-    range.set_xquery_line(__xquery_line);
 }
 
-/*
-PPPred2::PPPred2(dynamic_context *_cxt_,
-                   arr_of_var_dsc _var_dscs_, 
-                   PPOpIn _source_child_, 
-                   PPOpIn _data_child_,
-                   tuple _source_) : PPVarIterator(_cxt_),
-                                     var_dscs(_var_dscs_),
-                                     source_child(_source_child_),
-                                     data_child(_data_child_),
-                                     data(_data_child_.ts),
-                                     source(_source_)
-{
-    first_time = false;
-    eos_reached = true;
-    standard = false;
-}
-*/
 PPPred2::~PPPred2()
 {
     delete source_child.op;
@@ -993,7 +844,7 @@ PPPred2::~PPPred2()
     data_child.op = NULL;
 }
 
-void PPPred2::open ()
+void PPPred2::do_open ()
 {
     source_child.op->open();
 
@@ -1036,7 +887,7 @@ void PPPred2::open ()
     data_child.op->open();
 }
 
-void PPPred2::reopen ()
+void PPPred2::do_reopen()
 {
     reinit_consumer_table();    //In PPPred2 conjucts can use lst_dsc to get last().
                                 //Every conjunct is reopend in the PPPredRange::add_new_constraint(), but
@@ -1048,7 +899,7 @@ void PPPred2::reopen ()
     pos = 0;
 }
 
-void PPPred2::close ()
+void PPPred2::do_close()
 {
     source_child.op->close();
 
@@ -1061,10 +912,8 @@ void PPPred2::close ()
     s = NULL;
 }
 
-void PPPred2::next(tuple &t)
+void PPPred2::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if(need_reopen)
     {
         need_reopen = false;
@@ -1081,7 +930,7 @@ void PPPred2::next(tuple &t)
             if (t.is_eos()) break;
             else s->add(t);
         }
-        if(s->size() == 0) {RESTORE_CURRENT_PP; return;}
+        if(s->size() == 0) return;
 
         if(once)
         {
@@ -1093,10 +942,10 @@ void PPPred2::next(tuple &t)
                     range.reinit();
                     for(unsigned int i = 0; i < conjuncts.size(); i++)
                         range.add_new_constraint(conditions[i], conjuncts[i]);  
-                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
+                    if(range.is_empty()) { t.set_eos(); return; }
                     else if(range.is_any()) result_ready = true; 
                 }
-                else { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
+                else { t.set_eos(); return; }
             }
             else
             {
@@ -1106,10 +955,10 @@ void PPPred2::next(tuple &t)
                 if(is_numeric)
                 {
                     range.reinit_with_position(value);
-                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
+                    if(range.is_empty()) { t.set_eos(); return; }
                 }
                 else if( tc.get_xs_boolean() ) result_ready = true;
-                else { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
+                else { t.set_eos(); return; }
             }
             need_reopen = true;
         }
@@ -1118,7 +967,7 @@ void PPPred2::next(tuple &t)
             range.reinit();
             for(unsigned int i = 0; i < conjuncts.size(); i++)
                 range.add_new_constraint(conditions[i], conjuncts[i]);  
-            if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} } 
+            if(range.is_empty()) { t.set_eos(); return; } 
         }
         
         first_time = false;
@@ -1139,7 +988,7 @@ void PPPred2::next(tuple &t)
         if(pos < s->size()) 
         {
             s->get(t, pos++);
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
     }   
     else
@@ -1165,9 +1014,9 @@ void PPPred2::next(tuple &t)
                 tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
                                                           effective_boolean_value(data_child, data, eos_reached);
                 need_reopen = true;
-                if(tc.get_xs_boolean()) {RESTORE_CURRENT_PP; return;}
+                if(tc.get_xs_boolean()) return;
             }
-            else {RESTORE_CURRENT_PP; return;}
+            else return;
         }
     }
     
@@ -1175,13 +1024,12 @@ void PPPred2::next(tuple &t)
     first_time = true;
     t.set_eos();
     pos = 0;
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPPred2::copy(dynamic_context *_cxt_)
+PPIterator* PPPred2::do_copy(dynamic_context *_cxt_)
 {
     PPPred2 *res = se_new PPPred2(_cxt_, 
+                               info,
                                var_dscs, 
                                source_child, 
                                conjuncts, 
@@ -1196,20 +1044,17 @@ PPIterator* PPPred2::copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-var_c_id PPPred2::register_consumer(var_dsc dsc)
+var_c_id PPPred2::do_register_consumer(var_dsc dsc)
 {
     cxt->var_cxt.producers[dsc].svc->push_back(true);
     return cxt->var_cxt.producers[dsc].svc->size() - 1;
 }
 
-void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
+void PPPred2::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP_VAR(this);
-    
     producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
@@ -1224,16 +1069,14 @@ void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
         p.svc->at(id) = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPPred2::reopen(var_dsc dsc, var_c_id id)
+void PPPred2::do_reopen(var_dsc dsc, var_c_id id)
 {
     cxt->var_cxt.producers[dsc].svc->at(id) = true;
 }
 
-void PPPred2::close(var_dsc dsc, var_c_id id)
+void PPPred2::do_close(var_dsc dsc, var_c_id id)
 {
 }
 
@@ -1255,93 +1098,3 @@ inline void PPPred2::reinit_consumer_table()
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }
-
-bool PPPred2::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-/*
-    PPOpIn data_child, source_child;
-    ((PPPred2*)cur)->children(source_child, data_child);
-
-    void *source_r;
-    bool source_s = (source_child.op->res_fun())(source_child.op, cxt, source_r);
-
-    if (!source_s) // if source is not strict
-    { // create PPPred2 and transmit state
-        source_child.op = (PPIterator*)source_r;
-        data_child.op = data_child.op->copy(cxt);
-        PPPred2 *res_op = se_new PPPred2(cxt, ((PPPred2*)cur)->var_dscs, source_child, data_child);
-
-        r = res_op;
-        return false;
-    }
-
-    sequence *source_seq = (sequence*)source_r;
-    arr_of_var_dsc &var_dscs = ((PPPred2*)cur)->var_dscs;
-
-    // prepare context
-    for (int i = 0; i < var_dscs.size(); i++)
-    {
-        producer &p = cxt->producers[var_dscs[i]];
-        p.type = pt_tuple;
-        p.tuple_pos = i;
-        p.t = se_new tuple(1);
-    }
-
-    sequence *res_seq = se_new sequence(source_child.ts);
-    tuple source_t(var_dscs.size());
-    tuple data_t(1);
-    sequence::iterator source_it; 
-    for (source_it = source_seq->begin(); source_it != source_seq->end(); ++source_it)
-    {
-        source_seq->get(source_t, source_it);
-        // fill context
-        for (int i = 0; i < var_dscs.size(); i++)
-        {
-            producer &p = cxt->producers[var_dscs[i]];
-            p.t->copy(source_t.cells[p.tuple_pos]);
-        }
-
-        void *data_r;
-        bool data_s = (data_child.op->res_fun())(data_child.op, cxt, data_r);
-
-        if (!data_s) // if data is not strict
-        { // create PPPred2 and transmit state
-            // create se_new lazy source child
-            PPIterator *new_source_child = source_child.op->copy(cxt);
-
-            // create se_new source sequence - the rest of the source sequence
-            sequence::iterator ssit = source_it;
-            sequence *new_source_seq = se_new sequence(var_dscs.size());
-
-            for (++ssit; ssit != source_seq->end(); ++ssit)
-            {
-                source_seq->get(source_t, ssit);
-                new_source_seq->add(source_t);
-            }
-            delete source_seq;
-
-            // create stub for source
-            PPSLStub *lower_stub = se_new PPSLStub(cxt, new_source_child, new_source_seq);
-
-
-            source_child.op = lower_stub;
-            data_child.op = (PPIterator*)data_r;
-            PPPred2 *ret_op = se_new PPPred2(cxt, ((PPPred2*)cur)->var_dscs, source_child, data_child, source_t);
-
-            // create stub for PPPred2
-            PPSResLStub *upper_stub = se_new PPSResLStub(cxt, ret_op, res_seq);
-
-            r = upper_stub;
-            return false;
-        }
-
-        if (effective_boolean_value((sequence*)data_r).get_xs_boolean())
-            res_seq->add(source_t);
-        delete (sequence*)data_r;
-    }
-
-    r = res_seq;
-*/
-    return true;
-}
-

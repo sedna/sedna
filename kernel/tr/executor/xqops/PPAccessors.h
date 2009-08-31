@@ -10,32 +10,26 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDmStringValue
 ///////////////////////////////////////////////////////////////////////////////
 class PPDmStringValue : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn child;
     bool first_time;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+public:    
     PPDmStringValue(dynamic_context *_cxt_,
+                    operation_info _info_,
                     PPOpIn _child_);
     virtual ~PPDmStringValue();
 };
@@ -46,23 +40,20 @@ public:
 class PPDmTypedValue : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn child;
     bool first_time;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+public:    
     PPDmTypedValue(dynamic_context *_cxt_,
+                   operation_info _info_,
                    PPOpIn _child_);
     virtual ~PPDmTypedValue();
 };

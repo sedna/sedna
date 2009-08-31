@@ -15,9 +15,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPFnCompare::PPFnCompare(dynamic_context *_cxt_,
+                         operation_info _info_,
                          PPOpIn _str1_child_,
                          PPOpIn _str2_child_,
-                         bool _is_codepoint_equal_) : PPIterator(_cxt_),
+                         bool _is_codepoint_equal_) : PPIterator(_cxt_, _info_),
                                                       str1_child(_str1_child_),
                                                       str2_child(_str2_child_),
                                                       is_codepoint_equal(_is_codepoint_equal_)
@@ -25,9 +26,10 @@ PPFnCompare::PPFnCompare(dynamic_context *_cxt_,
 }
 
 PPFnCompare::PPFnCompare(dynamic_context *_cxt_,
+                         operation_info _info_,
                          PPOpIn _str1_child_,
                          PPOpIn _str2_child_,
-                         PPOpIn _collation_child_) : PPIterator(_cxt_),
+                         PPOpIn _collation_child_) : PPIterator(_cxt_, _info_),
                                                      str1_child(_str1_child_),
                                                      str2_child(_str2_child_),
                                                      collation_child(_collation_child_),
@@ -49,7 +51,7 @@ PPFnCompare::~PPFnCompare()
     }
 }
 
-void PPFnCompare::open  ()
+void PPFnCompare::do_open ()
 {
     str1_child.op->open();
     str2_child.op->open();
@@ -57,7 +59,7 @@ void PPFnCompare::open  ()
     first_time = true;
 }
 
-void PPFnCompare::reopen()
+void PPFnCompare::do_reopen()
 {
     str1_child.op->reopen();
     str2_child.op->reopen();
@@ -65,17 +67,15 @@ void PPFnCompare::reopen()
     first_time = true;
 }
 
-void PPFnCompare::close ()
+void PPFnCompare::do_close()
 {
     str1_child.op->close();
     str2_child.op->close();
     if(collation_child.op) collation_child.op->close();
 }
 
-void PPFnCompare::next(tuple &t)
+void PPFnCompare::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         CollationHandler* handler = is_codepoint_equal ? 
@@ -106,7 +106,7 @@ void PPFnCompare::next(tuple &t)
 
         str1_child.op->next(t);
         if (t.is_eos()) 
-            {RESTORE_CURRENT_PP; return;}
+            return;
 
         tc1 = atomize(str1_child.get(t));              
         if (!is_string_type(tc1.get_atomic_type())) 
@@ -119,7 +119,7 @@ void PPFnCompare::next(tuple &t)
         
         str2_child.op->next(t);
         if (t.is_eos()) 
-            {RESTORE_CURRENT_PP; return;}
+            return;
 
         tc2 = atomize(str2_child.get(t));              
         if (!is_string_type(tc2.get_atomic_type())) 
@@ -140,29 +140,21 @@ void PPFnCompare::next(tuple &t)
         t.set_eos();
         first_time = true;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnCompare::copy(dynamic_context *_cxt_)
+PPIterator* PPFnCompare::do_copy(dynamic_context *_cxt_)
 {
     PPFnCompare *res = NULL;
     if (collation_child.op)
     {
-        res = se_new PPFnCompare(_cxt_, str1_child, str2_child, is_codepoint_equal);
+        res = se_new PPFnCompare(_cxt_, info, str1_child, str2_child, is_codepoint_equal);
     }
     else
     {
-        res = se_new PPFnCompare(_cxt_, str1_child, str2_child, collation_child);
+        res = se_new PPFnCompare(_cxt_, info, str1_child, str2_child, collation_child);
     }                                
     res->str1_child.op = str1_child.op->copy(_cxt_);
     res->str2_child.op = str2_child.op->copy(_cxt_);
     if(collation_child.op) res->collation_child.op = collation_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnCompare::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnCompare::result");
 }

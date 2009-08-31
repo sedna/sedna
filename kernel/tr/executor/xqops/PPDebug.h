@@ -16,28 +16,29 @@ protected:
     
     se_ostream *dostr;
     
-    /// information about child operation
+    /* Information about child operation */
     str_counted_ptr child_name;  
     str_counted_ptr child_info;  
 
-    /// calls counter
+    /* Calls counter */
     int cc;  
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPDebug(dynamic_context *_cxt_,
+            operation_info _info_,
             const PPOpIn &_children_,
             const str_counted_ptr &_child_name_);
     
     PPDebug(dynamic_context *_cxt_,
+            operation_info _info_,
             const PPOpIn &_children_,
             const str_counted_ptr &_child_name_,
             const str_counted_ptr &_child_info_);

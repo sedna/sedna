@@ -28,28 +28,43 @@ void PPAxisAncestor::init_function()
         default									: throw USER_EXCEPTION2(SE1003, "Unexpected node test");
     }
 }
-PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-						 NodeTestData _nt_data_):PPIterator(_cxt_),
-                                                   child(_child_),
-                                                   nt_type(_nt_type_),
-                                                   nt_data(_nt_data_)
+PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_,
+                               operation_info _info_, 
+                               PPOpIn _child_,
+                               NodeTestType _nt_type_,
+                               NodeTestData _nt_data_) : PPIterator(_cxt_, _info_),
+                                                         child(_child_),
+                                                         nt_type(_nt_type_),
+                                                         nt_data(_nt_data_)
 {
 	self=false; 
 	init_function();
 }
-PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-                         NodeTestData _nt_data_,bool _self_) : PPIterator(_cxt_),
-                                                   child(_child_),
-                                                   nt_type(_nt_type_),
-                                                   nt_data(_nt_data_),
-												   self(_self_)
+PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_,
+                               operation_info _info_, 
+                               PPOpIn _child_,
+                               NodeTestType _nt_type_,
+                               NodeTestData _nt_data_,
+                               bool _self_) : PPIterator(_cxt_, _info_),
+                                              child(_child_),
+                                              nt_type(_nt_type_),
+                                              nt_data(_nt_data_),
+                                              self(_self_)
 {
     init_function();
 }
+
+PPAxisAncestorOrSelf::PPAxisAncestorOrSelf(dynamic_context *_cxt_,
+                                           operation_info _info_, 
+                                           PPOpIn _child_,
+                                           NodeTestType _nt_type_,
+                                           NodeTestData _nt_data_) : 
+    PPAxisAncestor(_cxt_, _info_, _child_, _nt_type_, _nt_data_,true)
+{
+ 
+}
+
+
 
 PPAxisAncestor::~PPAxisAncestor()
 {
@@ -57,44 +72,30 @@ PPAxisAncestor::~PPAxisAncestor()
     child.op = NULL;
 }
 
-void PPAxisAncestor::open  ()
+void PPAxisAncestor::do_open ()
 {
     child.op->open();
 
     cur = XNULL;
 }
 
-void PPAxisAncestor::reopen()
+void PPAxisAncestor::do_reopen()
 {
     child.op->reopen();
 
     cur = XNULL;
 }
 
-void PPAxisAncestor::close ()
+void PPAxisAncestor::do_close()
 {
     child.op->close();
 }
-PPIterator* PPAxisAncestor::copy(dynamic_context *_cxt_)
+PPIterator* PPAxisAncestor::do_copy(dynamic_context *_cxt_)
 {
-    PPAxisAncestor *res = self ? se_new PPAxisAncestor(_cxt_, child, nt_type, nt_data, true) :
-                                 se_new PPAxisAncestor(_cxt_, child, nt_type, nt_data);
+    PPAxisAncestor *res = self ? se_new PPAxisAncestor(_cxt_, info, child, nt_type, nt_data, true) :
+                                 se_new PPAxisAncestor(_cxt_, info, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPAxisAncestor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	return true;
-}
-
-PPAxisAncestorOrSelf::PPAxisAncestorOrSelf(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-						 NodeTestData _nt_data_):PPAxisAncestor(_cxt_, _child_, _nt_type_, _nt_data_,true)
-{
- 
 }
 
 void PPAxisAncestor::next_processing_instruction(tuple &t)
@@ -102,7 +103,7 @@ void PPAxisAncestor::next_processing_instruction(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
@@ -112,7 +113,7 @@ void PPAxisAncestor::next_comment(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
@@ -122,7 +123,7 @@ void PPAxisAncestor::next_text(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
@@ -132,7 +133,7 @@ void PPAxisAncestor::next_node(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -164,7 +165,7 @@ void PPAxisAncestor::next_qname(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -189,11 +190,9 @@ void PPAxisAncestor::next_qname(tuple &t)
 		if (comp_qname_type(GETSCHEMENODEX(cur),
                               nt_data.uri,
                               nt_data.ncname_local, 
-                              element))
-							  {RESTORE_CURRENT_PP; return;}
+                              element)) return;
 		cur = get_parent_node(cur);
 	}
-    
 }
 
 void PPAxisAncestor::next_wildcard_star(tuple &t)
@@ -201,7 +200,7 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -227,8 +226,7 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
 		if ( comp_type(GETSCHEMENODEX(cur), 
                         NULL,
                         NULL, 
-                        element))
-							  {RESTORE_CURRENT_PP; return;}
+                        element)) return;
 		cur = get_parent_node(cur);
 	}
 }
@@ -238,7 +236,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -251,8 +249,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 			if (comp_type(GETSCHEMENODEX(cur), 
                         nt_data.uri,
                         NULL, 
-                        element))
-							  break;
+                        element)) break;
 			cur = get_parent_node(cur);
 		}     
     }
@@ -265,8 +262,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 		if (comp_type(GETSCHEMENODEX(cur), 
                         nt_data.uri,
                         NULL, 
-                        element))
-							  {RESTORE_CURRENT_PP; return;}
+                        element)) return;
 		cur = get_parent_node(cur);
 	}
 }
@@ -276,7 +272,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -288,8 +284,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
 			if (comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
                               nt_data.ncname_local, 
-                              element))
-							  break;
+                              element)) break;
 			cur = get_parent_node(cur);
 		}             
     }
@@ -302,8 +297,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
 		if (comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
                               nt_data.ncname_local, 
-                              element))
-							  {RESTORE_CURRENT_PP; return;}
+                              element)) return;
 		cur = get_parent_node(cur);
 	}
 }

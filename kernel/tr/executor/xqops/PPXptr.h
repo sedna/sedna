@@ -20,26 +20,30 @@ enum trigger_parameter_type
 
 class PPXptr : public PPIterator
 {
-private:
+protected:
     xptr p;
     bool first_time;
     trigger_parameter_type var_type;
 
-    PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_, const xptr &_p_);
+    PPXptr(dynamic_context *_cxt_, 
+           operation_info _info_,
+           trigger_parameter_type _var_type_,
+           const xptr &_p_);
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    PPXptr(dynamic_context *_cxt_,
+           operation_info _info_,
+           trigger_parameter_type _var_type_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_);
     virtual ~PPXptr();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
     void set_xptr(const xptr& _p_) { p = _p_; }
     trigger_parameter_type get_type() const { return var_type; }

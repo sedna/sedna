@@ -202,12 +202,19 @@ bool PPFnSQLBase::checkBaseInitial()
         return false;
 }
 
-PPFnSQLBase::PPFnSQLBase(dynamic_context *_cxt_) : PPConstructor(_cxt_,false)
+PPFnSQLBase::PPFnSQLBase(dynamic_context *_cxt_,
+                         operation_info _info_) : PPConstructor(_cxt_,_info_,false)
 {
     handle_manager_carrier = false;
 }
 
-PPFnSQLConnect::PPFnSQLConnect(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_) : PPFnSQLBase(_cxt_), arr(_arr_)
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSQLConnect
+///////////////////////////////////////////////////////////////////////////////
+PPFnSQLConnect::PPFnSQLConnect(dynamic_context *_cxt_,
+                               operation_info _info_,
+                               const arr_of_PPOpIn &_arr_) : PPFnSQLBase(_cxt_, _info_),
+                                                             arr(_arr_)
 {
 }
 
@@ -228,7 +235,7 @@ PPFnSQLConnect::~PPFnSQLConnect()
 }
 
 
-void PPFnSQLConnect::open ()
+void PPFnSQLConnect::do_open ()
 {
     handle_manager_carrier = checkBaseInitial();
     for (unsigned int i = 0; i < arr.size(); i++)
@@ -237,7 +244,7 @@ void PPFnSQLConnect::open ()
     first_time = true;
 }
 
-void PPFnSQLConnect::reopen ()
+void PPFnSQLConnect::do_reopen()
 {
     for (unsigned int i = 0; i < arr.size(); i++)
         arr[i].op->reopen();
@@ -245,7 +252,7 @@ void PPFnSQLConnect::reopen ()
     first_time = true;
 }
 
-void PPFnSQLConnect::close ()
+void PPFnSQLConnect::do_close()
 {
     for (unsigned int i = 0; i < arr.size(); i++)
         arr[i].op->close();
@@ -286,10 +293,8 @@ static char *getStringParameter(PPOpIn content, const char *err_pref)
     return tr_globals::tmp_op_str_buf.c_str();
 }
 
-void PPFnSQLConnect::next(tuple &t)
+void PPFnSQLConnect::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -340,23 +345,29 @@ void PPFnSQLConnect::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnSQLConnect::copy(dynamic_context *_cxt_)
+PPIterator* PPFnSQLConnect::do_copy(dynamic_context *_cxt_)
 {
-    PPFnSQLConnect *res = se_new PPFnSQLConnect(_cxt_, arr);
+    PPFnSQLConnect *res = se_new PPFnSQLConnect(_cxt_, info, arr);
 
     for (int it = 0; it < arr.size(); it++)
         res->arr[it].op = arr[it].op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
 
     return res;
 }
 
-PPFnSQLExecute::PPFnSQLExecute(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_, bool _exec_update_) : PPFnSQLBase(_cxt_), 
-                                    arr(_arr_), handle(NULL), executor(NULL), exec_update(_exec_update_)
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSQLExecute
+///////////////////////////////////////////////////////////////////////////////
+PPFnSQLExecute::PPFnSQLExecute(dynamic_context *_cxt_,
+                               operation_info _info_,
+                               const arr_of_PPOpIn &_arr_,
+                               bool _exec_update_) : PPFnSQLBase(_cxt_, _info_), 
+                                                     arr(_arr_),
+                                                     handle(NULL),
+                                                     executor(NULL),
+                                                     exec_update(_exec_update_)
 {
 }
 
@@ -395,7 +406,7 @@ void PPFnSQLExecute::get_executor()
 }
 
 
-void PPFnSQLExecute::open ()
+void PPFnSQLExecute::do_open ()
 {
     handle_manager_carrier = checkBaseInitial();
     checkInitial();
@@ -409,7 +420,7 @@ void PPFnSQLExecute::open ()
     first_time = true;
 }
 
-void PPFnSQLExecute::reopen ()
+void PPFnSQLExecute::do_reopen()
 {
     for (unsigned int i = 0; i < arr.size(); i++)
         arr[i].op->reopen();
@@ -418,16 +429,14 @@ void PPFnSQLExecute::reopen ()
     first_time = true;
 }
 
-void PPFnSQLExecute::close ()
+void PPFnSQLExecute::do_close()
 {
     for (unsigned int i = 0; i < arr.size(); i++)
         arr[i].op->close();
 }
 
-void PPFnSQLExecute::next(tuple &t)
+void PPFnSQLExecute::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -461,7 +470,7 @@ void PPFnSQLExecute::next(tuple &t)
                 {
                     t.set_eos();
                     first_time = true;
-                    {RESTORE_CURRENT_PP; return;}
+                    return;
                 }
 
                 {
@@ -483,7 +492,7 @@ void PPFnSQLExecute::next(tuple &t)
         if (exec_update)
         {
             t.copy(tuple_cell::atomic((__int64)executor->update_row_count()));
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
     }
 
@@ -499,13 +508,11 @@ void PPFnSQLExecute::next(tuple &t)
             first_time = true;
         }
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnSQLExecute::copy(dynamic_context *_cxt_)
+PPIterator* PPFnSQLExecute::do_copy(dynamic_context *_cxt_)
 {
-    PPFnSQLExecute *res = se_new PPFnSQLExecute(_cxt_, arr, exec_update);
+    PPFnSQLExecute *res = se_new PPFnSQLExecute(_cxt_, info, arr, exec_update);
 
     for (int it = 0; it < arr.size(); it++)
         res->arr[it].op = arr[it].op->copy(_cxt_);
@@ -514,17 +521,27 @@ PPIterator* PPFnSQLExecute::copy(dynamic_context *_cxt_)
 }
 
 
-//////////////////////////////////////////////////////////////////////////
-// PPFnSQLPrepare
-
-PPFnSQLPrepare::PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_,
-                               PPOpIn _options_) : PPFnSQLBase(_cxt_), has_options(true),
-                               connection(_connection_), statement(_statement_), options(_options_)
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSQLPrepare
+///////////////////////////////////////////////////////////////////////////////
+PPFnSQLPrepare::PPFnSQLPrepare(dynamic_context *_cxt_,
+                               operation_info _info_,
+                               PPOpIn _connection_,
+                               PPOpIn _statement_,
+                               PPOpIn _options_) : PPFnSQLBase(_cxt_, _info_),
+                                                   has_options(true),
+                                                   connection(_connection_),
+                                                   statement(_statement_),
+                                                   options(_options_)
 {
 }
-PPFnSQLPrepare::PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_)
-                                : PPFnSQLBase(_cxt_), has_options(false), connection(_connection_),
-                               statement(_statement_)
+PPFnSQLPrepare::PPFnSQLPrepare(dynamic_context *_cxt_,
+                               operation_info _info_,
+                               PPOpIn _connection_,
+                               PPOpIn _statement_) : PPFnSQLBase(_cxt_, _info_),
+                                                     has_options(false),
+                                                     connection(_connection_),
+                                                     statement(_statement_)
 {
 }
 
@@ -540,7 +557,7 @@ PPFnSQLPrepare::~PPFnSQLPrepare()
         sql_handle_manager = NULL;
     }
 }
-void PPFnSQLPrepare::open ()
+void PPFnSQLPrepare::do_open ()
 {
     handle_manager_carrier = checkBaseInitial();
     connection.op->open();
@@ -550,7 +567,7 @@ void PPFnSQLPrepare::open ()
 
     first_time = true;
 }
-void PPFnSQLPrepare::reopen ()
+void PPFnSQLPrepare::do_reopen()
 {
     connection.op->reopen();
     statement.op->reopen();
@@ -561,17 +578,15 @@ void PPFnSQLPrepare::reopen ()
 }
 
 
-void PPFnSQLPrepare::close()
+void PPFnSQLPrepare::do_close()
 {
     connection.op->close();
     statement.op->close();
     if (has_options)
         options.op->close();
 }
-void PPFnSQLPrepare::next(tuple &t)
+void PPFnSQLPrepare::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         SQLHandle *handle;
@@ -615,16 +630,14 @@ void PPFnSQLPrepare::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
-PPIterator * PPFnSQLPrepare::copy(dynamic_context *_cxt_)
+PPIterator * PPFnSQLPrepare::do_copy(dynamic_context *_cxt_)
 {
     PPFnSQLPrepare *res;
     if (has_options)
-        res = se_new PPFnSQLPrepare(_cxt_, connection, statement, options);
+        res = se_new PPFnSQLPrepare(_cxt_, info, connection, statement, options);
     else
-        res = se_new PPFnSQLPrepare(_cxt_, connection, statement);
+        res = se_new PPFnSQLPrepare(_cxt_, info, connection, statement);
 
     res->connection.op = connection.op->copy(_cxt_);
     res->statement.op = statement.op->copy(_cxt_);
@@ -634,11 +647,17 @@ PPIterator * PPFnSQLPrepare::copy(dynamic_context *_cxt_)
     return res;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// PPFnSQLClose
-PPFnSQLClose::PPFnSQLClose(dynamic_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSQLClose
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnSQLClose::PPFnSQLClose(dynamic_context *_cxt_,
+                           operation_info _info_,
+                           PPOpIn _connection_) : PPFnSQLBase(_cxt_, _info_),
+                                                  connection(_connection_)
 {
 }
+
 PPFnSQLClose::~PPFnSQLClose()
 {
     if (handle_manager_carrier)
@@ -649,23 +668,21 @@ PPFnSQLClose::~PPFnSQLClose()
         sql_handle_manager = NULL;
     }
 }
-void PPFnSQLClose::open ()
+void PPFnSQLClose::do_open ()
 {
     handle_manager_carrier = checkBaseInitial();
     connection.op->open();
 }
-void PPFnSQLClose::reopen ()
+void PPFnSQLClose::do_reopen()
 {
     connection.op->reopen();
 }
-void PPFnSQLClose::close()
+void PPFnSQLClose::do_close()
 {
     connection.op->close();
 }
-void PPFnSQLClose::next(tuple &t)
+void PPFnSQLClose::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     int handle_id;
     SQLHandle *handle;
     tuple tmp(1);
@@ -694,25 +711,29 @@ void PPFnSQLClose::next(tuple &t)
     //or delaying connecton object destruction
 
     t.set_eos();
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator * PPFnSQLClose::copy(dynamic_context *_cxt_)
+PPIterator * PPFnSQLClose::do_copy(dynamic_context *_cxt_)
 {
     PPFnSQLClose *res;
-    res = se_new PPFnSQLClose(_cxt_, connection);
+    res = se_new PPFnSQLClose(_cxt_, info, connection);
 
     res->connection.op = connection.op->copy(_cxt_);
 
     return res;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// PPFnSQLCommit
-PPFnSQLCommit::PPFnSQLCommit(dynamic_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
+
+////////////////////////////////////////////////////////////////////////////////
+/// PPFnSQLCommit
+////////////////////////////////////////////////////////////////////////////////
+PPFnSQLCommit::PPFnSQLCommit(dynamic_context *_cxt_,
+                             operation_info _info_,
+                             PPOpIn _connection_) : PPFnSQLBase(_cxt_, _info_),
+                                                    connection(_connection_)
 {
 }
+
 PPFnSQLCommit::~PPFnSQLCommit()
 {
     if (handle_manager_carrier)
@@ -723,23 +744,21 @@ PPFnSQLCommit::~PPFnSQLCommit()
         sql_handle_manager = NULL;
     }
 }
-void PPFnSQLCommit::open ()
+void PPFnSQLCommit::do_open ()
 {
     handle_manager_carrier = checkBaseInitial();
     connection.op->open();
 }
-void PPFnSQLCommit::reopen ()
+void PPFnSQLCommit::do_reopen()
 {
     connection.op->reopen();
 }
-void PPFnSQLCommit::close()
+void PPFnSQLCommit::do_close()
 {
     connection.op->close();
 }
-void PPFnSQLCommit::next(tuple &t)
+void PPFnSQLCommit::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     SQLHandle *handle;
     tuple tmp(1);
     tuple_cell tmp_cell;
@@ -764,25 +783,29 @@ void PPFnSQLCommit::next(tuple &t)
     handle->commit();
 
     t.set_eos();
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator * PPFnSQLCommit::copy(dynamic_context *_cxt_)
+PPIterator * PPFnSQLCommit::do_copy(dynamic_context *_cxt_)
 {
     PPFnSQLCommit *res;
-    res = se_new PPFnSQLCommit(_cxt_, connection);
+    res = se_new PPFnSQLCommit(_cxt_, info, connection);
 
     res->connection.op = connection.op->copy(_cxt_);
 
     return res;
 }
 
-//////////////////////////////////////////////////////////////////////////
-// PPFnSQLRollback
-PPFnSQLRollback::PPFnSQLRollback(dynamic_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
+
+////////////////////////////////////////////////////////////////////////////////
+/// PPFnSQLRollback
+////////////////////////////////////////////////////////////////////////////////
+PPFnSQLRollback::PPFnSQLRollback(dynamic_context *_cxt_,
+                                 operation_info _info_,
+                                 PPOpIn _connection_) : PPFnSQLBase(_cxt_, _info_),
+                                                        connection(_connection_)
 {
 }
+
 PPFnSQLRollback::~PPFnSQLRollback()
 {
     if (handle_manager_carrier)
@@ -793,23 +816,21 @@ PPFnSQLRollback::~PPFnSQLRollback()
         sql_handle_manager = NULL;
     }
 }
-void PPFnSQLRollback::open ()
+void PPFnSQLRollback::do_open ()
 {
     handle_manager_carrier = checkBaseInitial();
     connection.op->open();
 }
-void PPFnSQLRollback::reopen ()
+void PPFnSQLRollback::do_reopen()
 {
     connection.op->reopen();
 }
-void PPFnSQLRollback::close()
+void PPFnSQLRollback::do_close()
 {
     connection.op->close();
 }
-void PPFnSQLRollback::next(tuple &t)
+void PPFnSQLRollback::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     SQLHandle *handle;
     tuple tmp(1);
     tuple_cell tmp_cell;
@@ -834,17 +855,14 @@ void PPFnSQLRollback::next(tuple &t)
     handle->rollback();
 
     t.set_eos();
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator * PPFnSQLRollback::copy(dynamic_context *_cxt_)
+PPIterator * PPFnSQLRollback::do_copy(dynamic_context *_cxt_)
 {
     PPFnSQLRollback *res;
-    res = se_new PPFnSQLRollback(_cxt_, connection);
+    res = se_new PPFnSQLRollback(_cxt_, info, connection);
 
     res->connection.op = connection.op->copy(_cxt_);
 
     return res;
 }
-

@@ -503,7 +503,9 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         ts = atoi(lst->at(0).internal.num);
         line = 0;
     }
-
+    
+    operation_info info = {line};
+    
     string op = string(lst->at(1).internal.list->at(0).internal.symb);
     lst = lst->at(1).internal.list;
 
@@ -537,7 +539,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             if(lst->at(5).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "02.1");
    
-            opit = se_new PPReturn(cxt,
+            opit = se_new PPReturn(cxt, info, 
                                 vars, 
                                 make_pp_op(cxt, lst->at(2).internal.list),
                                 make_pp_op(cxt, lst->at(3).internal.list),
@@ -547,7 +549,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         }
         else
         {
-            opit = se_new PPReturn(cxt,
+            opit = se_new PPReturn(cxt, info, 
                                 vars, 
                                 make_pp_op(cxt, lst->at(2).internal.list),
                                 make_pp_op(cxt, lst->at(3).internal.list),
@@ -573,7 +575,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             vars.push_back(var);
         }
 
-        opit = se_new PPSelect(cxt,
+        opit = se_new PPSelect(cxt, info, 
                             vars,
                             make_pp_op(cxt, lst->at(2).internal.list),
                             make_pp_op(cxt, lst->at(3).internal.list));
@@ -603,7 +605,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             if(lst->at(4).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "06.1");
 
-            opit = se_new PPLet(cxt,
+            opit = se_new PPLet(cxt, info, 
                              vars,
                              make_pp_op(cxt, lst->at(2).internal.list),
                              make_pp_op(cxt, lst->at(3).internal.list),
@@ -612,7 +614,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         }
         else
         {
-            opit = se_new PPLet(cxt,
+            opit = se_new PPLet(cxt, info, 
                              vars,
                              make_pp_op(cxt, lst->at(2).internal.list),
                              make_pp_op(cxt, lst->at(3).internal.list));
@@ -637,7 +639,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             vars.push_back(var);
         }
         
-        opit = se_new PPSLet(cxt,
+        opit = se_new PPSLet(cxt, info, 
                           vars,
                           make_pp_op(cxt, lst->at(2).internal.list),
                           make_pp_op(cxt, lst->at(3).internal.list));
@@ -649,7 +651,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         tuple_cell tc = make_const(lst->at(2), lst->at(1));
 
-        opit = se_new PPConst(cxt, tc);
+        opit = se_new PPConst(cxt, info,  tc);
     }
     else if (op == "PPVariable")
     {
@@ -658,7 +660,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
            ) throw USER_EXCEPTION2(SE1004, "10");
 
         int var = atoi(lst->at(1).internal.num);
-        opit = se_new PPVariable(cxt, var);
+        opit = se_new PPVariable(cxt, info, var);
     }
     else if (op == "PPGlobalVariable")
     {
@@ -667,7 +669,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
            ) throw USER_EXCEPTION2(SE1004, "10.5");
 
         int var = atoi(lst->at(1).internal.num);
-        opit = se_new PPGlobalVariable(cxt, var);
+        opit = se_new PPGlobalVariable(cxt, info, var);
     }
     else if (op == "PPSequence")
     {
@@ -688,7 +690,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
         }
 
-        opit = se_new PPSequence(cxt, arr);
+        opit = se_new PPSequence(cxt, info,  arr);
     }
 
     else if (op == "PPDmNodeKind")
@@ -697,7 +699,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "13");
 
-        opit = se_new PPDmNodeKind(cxt, 
+        opit = se_new PPDmNodeKind(cxt, info,  
                                 make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnNodeName")
@@ -706,7 +708,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "14");
 
-        opit = se_new PPFnNodeName(cxt, 
+        opit = se_new PPFnNodeName(cxt, info,  
                                 make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnBaseURI")
@@ -715,7 +717,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "15");
 
-        opit = se_new PPFnBaseURI(cxt, 
+        opit = se_new PPFnBaseURI(cxt, info,  
                                make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnNilled")
@@ -724,11 +726,9 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "16");
 
-        opit = se_new PPFnNilled(cxt, 
+        opit = se_new PPFnNilled(cxt, info,  
                               make_pp_op(cxt, lst->at(1).internal.list));
     }
-
-
 
 
 
@@ -739,7 +739,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "15");
 
-        opit = se_new PPDmStringValue(cxt, 
+        opit = se_new PPDmStringValue(cxt, info,  
                                    make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPDmTypedValue")
@@ -748,11 +748,10 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "16");
 
-        opit = se_new PPDmTypedValue(cxt, 
+        opit = se_new PPDmTypedValue(cxt, info,  
                                   make_pp_op(cxt, lst->at(1).internal.list));
     }
 /* !!! DELETE THIS LATER    !!!*/
-
 
 
 
@@ -762,7 +761,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "17");
 
-        opit = se_new PPFnEmpty(cxt, 
+        opit = se_new PPFnEmpty(cxt, info,  
                              make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnExists")
@@ -771,7 +770,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "18");
 
-        opit = se_new PPFnExists(cxt, 
+        opit = se_new PPFnExists(cxt, info,  
                               make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPIf")
@@ -782,7 +781,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(3).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "19");
 
-        opit = se_new PPIf(cxt,
+        opit = se_new PPIf(cxt, info, 
                         make_pp_op(cxt, lst->at(1).internal.list),
                         make_pp_op(cxt, lst->at(2).internal.list),
                         make_pp_op(cxt, lst->at(3).internal.list));
@@ -792,7 +791,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (   lst->size() != 1
            ) throw USER_EXCEPTION2(SE1004, "20");
 
-        opit = se_new PPNil(cxt);
+        opit = se_new PPNil(cxt, info);
     }
     else if (op == "PPStore")
     {
@@ -800,7 +799,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "21");
 
-        opit = se_new PPStore(cxt, 
+        opit = se_new PPStore(cxt, info,  
                            make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPCalculate")
@@ -825,7 +824,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         CalcOp * tree = make_calc_op(arr, lst->at(1).internal.list);
 
-        opit = se_new PPCalculate(cxt,
+        opit = se_new PPCalculate(cxt, info, 
                                arr,
                                tree);
     }
@@ -840,7 +839,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisChild(cxt,
+        opit = se_new PPAxisChild(cxt, info, 
                                child,
                                nt_type,
                                nt_data);
@@ -856,7 +855,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisAttribute(cxt,
+        opit = se_new PPAxisAttribute(cxt, info, 
                                    child,
                                    nt_type,
                                    nt_data);
@@ -872,7 +871,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisParent(cxt,
+        opit = se_new PPAxisParent(cxt, info, 
                                 child,
                                 nt_type,
                                 nt_data);
@@ -888,7 +887,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisSelf(cxt,
+        opit = se_new PPAxisSelf(cxt, info, 
                               child,
                               nt_type,
                               nt_data);
@@ -904,7 +903,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisDescendant(cxt,
+        opit = se_new PPAxisDescendant(cxt, info, 
                                     child,
                                     nt_type,
                                     nt_data);
@@ -920,7 +919,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisAncestor(cxt,
+        opit = se_new PPAxisAncestor(cxt, info, 
                                     child,
                                     nt_type,
                                     nt_data);
@@ -936,7 +935,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisDescendantOrSelf(cxt,
+        opit = se_new PPAxisDescendantOrSelf(cxt, info, 
                                           child,
                                           nt_type,
                                           nt_data);
@@ -952,7 +951,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisAncestorOrSelf(cxt,
+        opit = se_new PPAxisAncestorOrSelf(cxt, info, 
                                           child,
                                           nt_type,
                                           nt_data);
@@ -968,7 +967,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisFP(cxt,
+        opit = se_new PPAxisFP(cxt, info, 
                                           child,
                                           nt_type,
                                           nt_data,true);
@@ -984,7 +983,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisSibling(cxt,
+        opit = se_new PPAxisSibling(cxt, info, 
                                           child,
                                           nt_type,
                                           nt_data,true);
@@ -1000,7 +999,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisSibling(cxt,
+        opit = se_new PPAxisSibling(cxt, info, 
                                           child,
                                           nt_type,
                                           nt_data,false);
@@ -1016,7 +1015,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisFP(cxt,
+        opit = se_new PPAxisFP(cxt, info, 
                                           child,
                                           nt_type,
                                           nt_data,false);
@@ -1032,7 +1031,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         set_axis_parameters(lst, cxt, child, nt_type, nt_data, pe_local_aspace);
         
-        opit = se_new PPAxisDescendantAttr(cxt,
+        opit = se_new PPAxisDescendantAttr(cxt, info, 
                                         child,
                                         nt_type,
                                         nt_data);
@@ -1054,14 +1053,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         {
             string name = string(name_lst->at(0).internal.str) + ":" + string(name_lst->at(1).internal.str);
 
-            opit = se_new PPElementConstructor(cxt,
+            opit = se_new PPElementConstructor(cxt, info, 
                                             name.c_str(),
                                             make_pp_op(cxt, lst->at(2).internal.list),
                                             lst->at(3).internal.b,lst->at(4).internal.b);
         }
         else
         {
-            opit = se_new PPElementConstructor(cxt,
+            opit = se_new PPElementConstructor(cxt, info, 
                                             make_pp_op(cxt, lst->at(1).internal.list),
                                             make_pp_op(cxt, lst->at(2).internal.list),
                                             lst->at(3).internal.b,lst->at(4).internal.b);
@@ -1083,13 +1082,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         {
             string name = string(name_lst->at(0).internal.str) + ":" + string(name_lst->at(1).internal.str);
 
-            opit = se_new PPAttributeConstructor(cxt,
+            opit = se_new PPAttributeConstructor(cxt, info, 
                                               name.c_str(),
                                               make_pp_op(cxt, lst->at(2).internal.list),lst->at(3).internal.b);
         }
         else
         {
-            opit = se_new PPAttributeConstructor(cxt,
+            opit = se_new PPAttributeConstructor(cxt, info, 
                                               make_pp_op(cxt, lst->at(1).internal.list),
                                               make_pp_op(cxt, lst->at(2).internal.list),lst->at(3).internal.b);
         }
@@ -1111,14 +1110,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             string target = string(pi_target_lst->at(0).internal.str) + ":"
                             + string(pi_target_lst->at(1).internal.str);
 
-            opit = se_new PPPIConstructor( cxt,
+            opit = se_new PPPIConstructor(cxt, info,
                                         target.c_str(),
                                         make_pp_op(cxt, lst->at(2).internal.list),
                                         lst->at(3).internal.b);
         }
         else
         {
-            opit = se_new PPPIConstructor( cxt,
+            opit = se_new PPPIConstructor(cxt, info,
                                         make_pp_op(cxt, lst->at(1).internal.list),
                                         make_pp_op(cxt, lst->at(2).internal.list),
                                         lst->at(3).internal.b);
@@ -1131,7 +1130,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_BOOL
            ) throw USER_EXCEPTION2(SE1004, "32.2");
 
-        opit = se_new PPCommentConstructor(cxt,
+        opit = se_new PPCommentConstructor(cxt, info,
                                         make_pp_op(cxt, lst->at(1).internal.list),
                                         lst->at(2).internal.b);
     }
@@ -1142,7 +1141,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_BOOL
            ) throw USER_EXCEPTION2(SE1004, "32.7");
 
-        opit = se_new PPTextConstructor(cxt,
+        opit = se_new PPTextConstructor(cxt, info,
                                         make_pp_op(cxt, lst->at(1).internal.list),
                                         lst->at(2).internal.b);
     }
@@ -1152,7 +1151,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST            
            ) throw USER_EXCEPTION2(SE1004, "32.7");
 
-        opit = se_new PPDocumentConstructor(cxt,
+        opit = se_new PPDocumentConstructor(cxt, info,
                                         make_pp_op(cxt, lst->at(1).internal.list) );
     }
     else if (op == "PPFnNot")
@@ -1161,7 +1160,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "33");
 
-        opit = se_new PPFnNot(cxt, 
+        opit = se_new PPFnNot(cxt, info,  
                            make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnBoolean")
@@ -1170,7 +1169,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "33.1");
 
-        opit = se_new PPFnBoolean(cxt, 
+        opit = se_new PPFnBoolean(cxt, info,  
                                make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnTrue")
@@ -1178,14 +1177,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (   lst->size() != 1
            ) throw USER_EXCEPTION2(SE1004, "34");
 
-        opit = se_new PPFnTrue(cxt);
+        opit = se_new PPFnTrue(cxt, info);
     }
     else if (op == "PPFnFalse")
     {
         if (   lst->size() != 1
            ) throw USER_EXCEPTION2(SE1004, "35");
 
-        opit = se_new PPFnFalse(cxt);
+        opit = se_new PPFnFalse(cxt, info);
     }
     else if (op == "PPAbsPath")
     {
@@ -1201,13 +1200,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         if (ent_lst->at(1).type == SCM_STRING)
         {
-            opit = se_new PPAbsPath(cxt, 
+            opit = se_new PPAbsPath(cxt, info,  
                                  path_expr, 
                                  counted_ptr<db_entity>(db_ent));
         }
         else if (ent_lst->at(1).type == SCM_LIST)
         {
-            opit = se_new PPAbsPath(cxt, 
+            opit = se_new PPAbsPath(cxt, info,  
                                  path_expr, 
                                  counted_ptr<db_entity>(db_ent),
                                  make_pp_op(cxt, ent_lst->at(1).internal.list));
@@ -1220,7 +1219,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "42");
 
-        opit = se_new PPFnCount(cxt,
+        opit = se_new PPFnCount(cxt, info, 
                              make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnSum")
@@ -1233,13 +1232,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (lst->size() == 3)
         {
         	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "43.1");
-            opit = se_new PPFnSumAvg(cxt,
+            opit = se_new PPFnSumAvg(cxt, info, 
                                   0,
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list));
         }
         else
-            opit = se_new PPFnSumAvg(cxt,
+            opit = se_new PPFnSumAvg(cxt, info, 
                                   0,
                                   make_pp_op(cxt, lst->at(1).internal.list));
     }
@@ -1253,13 +1252,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (lst->size() == 3)
         {
         	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "44.1");
-            opit = se_new PPFnSumAvg(cxt,
+            opit = se_new PPFnSumAvg(cxt, info, 
                                   1,
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list));
         }
         else
-            opit = se_new PPFnSumAvg(cxt,
+            opit = se_new PPFnSumAvg(cxt, info, 
                                   1,
                                   make_pp_op(cxt, lst->at(1).internal.list));
     }
@@ -1273,13 +1272,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (lst->size() == 3)
         {
         	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "45.1");
-            opit = se_new PPFnMaxMin(cxt,
+            opit = se_new PPFnMaxMin(cxt, info, 
                                   0,
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list));
         }
         else
-            opit = se_new PPFnMaxMin(cxt,
+            opit = se_new PPFnMaxMin(cxt, info, 
                                   0,
                                   make_pp_op(cxt, lst->at(1).internal.list));
     }
@@ -1293,13 +1292,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (lst->size() == 3)
         {
         	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "46.1");
-            opit = se_new PPFnMaxMin(cxt,
+            opit = se_new PPFnMaxMin(cxt, info, 
                                   1,
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list));
         }
         else
-            opit = se_new PPFnMaxMin(cxt,
+            opit = se_new PPFnMaxMin(cxt, info, 
                                   1,
                                   make_pp_op(cxt, lst->at(1).internal.list));
     }
@@ -1309,7 +1308,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "46.1");
 
-        opit = se_new PPFnUriEncoding(cxt, 
+        opit = se_new PPFnUriEncoding(cxt, info,  
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    PPFnUriEncoding::ENCODE_FOR_URI);
     }
@@ -1319,7 +1318,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "46.2");
 
-        opit = se_new PPFnUriEncoding(cxt, 
+        opit = se_new PPFnUriEncoding(cxt, info,  
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    PPFnUriEncoding::IRI_TO_URI);
     }
@@ -1329,7 +1328,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "46.3");
 
-        opit = se_new PPFnUriEncoding(cxt, 
+        opit = se_new PPFnUriEncoding(cxt, info,  
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    PPFnUriEncoding::ESCAPE_HTML_URI);
     }
@@ -1344,12 +1343,12 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         {
             if(lst->at(2).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "46.5");
-            opit = se_new PPFnResolveUri(cxt, 
+            opit = se_new PPFnResolveUri(cxt, info,  
                                       make_pp_op(cxt, lst->at(1).internal.list),
                                       make_pp_op(cxt, lst->at(2).internal.list));
         }
         else
-            opit = se_new PPFnResolveUri(cxt, 
+            opit = se_new PPFnResolveUri(cxt, info,  
                                       make_pp_op(cxt, lst->at(1).internal.list));
         
     }
@@ -1360,7 +1359,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "47");
 
-        opit = se_new PPFnItemAt(cxt,
+        opit = se_new PPFnItemAt(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1370,7 +1369,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.-11");
 
-        opit = se_new PPFnOneOrMore(cxt,
+        opit = se_new PPFnOneOrMore(cxt, info,
                                  make_pp_op(cxt, lst->at(1).internal.list));
                                  
     }
@@ -1380,7 +1379,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.-10");
 
-        opit = se_new PPFnExactlyOne(cxt,
+        opit = se_new PPFnExactlyOne(cxt, info, 
                                   make_pp_op(cxt, lst->at(1).internal.list));
                                  
     }
@@ -1390,7 +1389,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.-9");
 
-        opit = se_new PPFnZeroOrOne(cxt,
+        opit = se_new PPFnZeroOrOne(cxt, info, 
                                  make_pp_op(cxt, lst->at(1).internal.list));
                                  
     }
@@ -1402,7 +1401,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(3).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.-8");
 
-        opit = se_new PPFnInsertBefore(cxt,
+        opit = se_new PPFnInsertBefore(cxt, info, 
                                     make_pp_op(cxt, lst->at(1).internal.list),
                                     make_pp_op(cxt, lst->at(2).internal.list),
                                     make_pp_op(cxt, lst->at(3).internal.list));
@@ -1414,7 +1413,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.-7");
 
-        opit = se_new PPFnRemove(cxt,
+        opit = se_new PPFnRemove(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1428,12 +1427,12 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (lst->size() == 3)
         {
         	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "48.-5");
-            opit = se_new PPFnDistinctValues(cxt,
+            opit = se_new PPFnDistinctValues(cxt, info, 
                                           make_pp_op(cxt, lst->at(1).internal.list),
                                           make_pp_op(cxt, lst->at(2).internal.list));
         }
         else
-            opit = se_new PPFnDistinctValues(cxt,
+            opit = se_new PPFnDistinctValues(cxt, info, 
                                           make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnIndexOf")
@@ -1447,13 +1446,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (lst->size() == 4)
         {
         	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "48.-3");
-            opit = se_new PPFnIndexOf(cxt, 
+            opit = se_new PPFnIndexOf(cxt, info,  
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    make_pp_op(cxt, lst->at(2).internal.list),
                                    make_pp_op(cxt, lst->at(3).internal.list));
         }
         else
-            opit = se_new PPFnIndexOf(cxt,
+            opit = se_new PPFnIndexOf(cxt, info, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1463,7 +1462,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.-2");
 
-        opit = se_new PPFnReverse(cxt,
+        opit = se_new PPFnReverse(cxt, info, 
                                make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnSubsequence")
@@ -1477,13 +1476,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if(lst->size() == 4)
         {
         	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "48.0");
-            opit = se_new PPFnSubsequence(cxt,
+            opit = se_new PPFnSubsequence(cxt, info, 
                                        make_pp_op(cxt, lst->at(1).internal.list),
                                        make_pp_op(cxt, lst->at(2).internal.list),
                                        make_pp_op(cxt, lst->at(3).internal.list));
         }
         else
-            opit = se_new PPFnSubsequence(cxt,
+            opit = se_new PPFnSubsequence(cxt, info, 
                                        make_pp_op(cxt, lst->at(1).internal.list),
                                        make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1530,7 +1529,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             _cases_.push_back(make_pp_op(cxt, cases_list->at(i).internal.list));
         }
 
-        opit = se_new PPTypeswitch(cxt,
+        opit = se_new PPTypeswitch(cxt, info, 
         						vars,
         						make_pp_op(cxt, lst->at(2).internal.list),
         						_types_,
@@ -1547,7 +1546,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         xmlscm_type target_type = lr_atomic_type2xmlscm_type(lst->at(2).internal.symb);
 
-        opit = se_new PPCast(cxt,
+        opit = se_new PPCast(cxt, info, 
                           make_pp_op(cxt, lst->at(1).internal.list),
                           target_type,
                           lst->at(3).internal.b);
@@ -1562,7 +1561,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         xmlscm_type target_type = lr_atomic_type2xmlscm_type(lst->at(2).internal.symb);
 
-        opit = se_new PPCastable(cxt,
+        opit = se_new PPCastable(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list),
                               target_type,
                               lst->at(3).internal.b);
@@ -1574,7 +1573,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "69");
 
-        opit = se_new PPInstanceOf(cxt,
+        opit = se_new PPInstanceOf(cxt, info, 
                                 make_pp_op(cxt, lst->at(1).internal.list),
                                 make_sequence_type(lst->at(2).internal.list));
     }
@@ -1585,7 +1584,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "69.1");
 
-        opit = se_new PPTreat(cxt,
+        opit = se_new PPTreat(cxt, info, 
                            make_pp_op(cxt, lst->at(1).internal.list),
                            make_sequence_type(lst->at(2).internal.list));
     }
@@ -1596,7 +1595,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "51");
 
-        opit = PPGeneralComparison::PPGTGeneralComparison(cxt,
+        opit = PPGeneralComparison::PPGTGeneralComparison(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1607,7 +1606,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "52");
 
-        opit = PPGeneralComparison::PPLTGeneralComparison(cxt,
+        opit = PPGeneralComparison::PPLTGeneralComparison(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1618,7 +1617,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "53");
 
-        opit = PPGeneralComparison::PPGEGeneralComparison(cxt,
+        opit = PPGeneralComparison::PPGEGeneralComparison(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1629,7 +1628,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "54");
 
-        opit = PPGeneralComparison::PPLEGeneralComparison(cxt,
+        opit = PPGeneralComparison::PPLEGeneralComparison(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1640,7 +1639,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "55");
 
-        opit = PPGeneralComparison::PPNEGeneralComparison(cxt,
+        opit = PPGeneralComparison::PPNEGeneralComparison(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1651,7 +1650,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "56");
 
-        opit = PPGeneralComparison::PPEQGeneralComparison(cxt,
+        opit = PPGeneralComparison::PPEQGeneralComparison(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1661,7 +1660,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "57");
 
-        opit = se_new PPDDO(cxt,
+        opit = se_new PPDDO(cxt, info, 
                          make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPSXptr")
@@ -1670,7 +1669,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "57.1");
 
-        opit = se_new PPSXptr(cxt,
+        opit = se_new PPSXptr(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list));
     }
 	else if (op == "PPFEL")
@@ -1679,7 +1678,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "157");
 
-        opit = se_new PPFilterEL(cxt,
+        opit = se_new PPFilterEL(cxt, info, 
                          make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnContains")
@@ -1689,10 +1688,10 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "60");
        //TEMPORALLY CHANGED
-        opit = PPSubsMatch::PPFnContains(cxt,
+        opit = PPSubsMatch::PPFnContains(cxt, info, 
                                          make_pp_op(cxt, lst->at(1).internal.list),
                                          make_pp_op(cxt, lst->at(2).internal.list));
-		//opit = PPPatMatch::PPFnMatch(cxt,
+		//opit = PPPatMatch::PPFnMatch(cxt, info, 
 		//	make_pp_op(cxt, lst->at(1).internal.list),
 		//	make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1718,7 +1717,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         else if (isc_string == "isc_ge_le")	isc = isc_ge_le;
         else throw USER_EXCEPTION2(SE1004, "62");
 
-		opit = se_new PPIndexScan(cxt,
+		opit = se_new PPIndexScan(cxt, info, 
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list),
                                   make_pp_op(cxt, lst->at(3).internal.list),
@@ -1731,7 +1730,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "66");
 
-        opit = PPNodeComparison::PPEQNodeComparison(cxt,
+        opit = PPNodeComparison::PPEQNodeComparison(cxt, info, 
                                                     make_pp_op(cxt, lst->at(1).internal.list),
                                                     make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1742,7 +1741,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "67");
 
-        opit = PPNodeComparison::PPLTNodeComparison(cxt,
+        opit = PPNodeComparison::PPLTNodeComparison(cxt, info, 
                                                     make_pp_op(cxt, lst->at(1).internal.list),
                                                     make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1753,7 +1752,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "158");
 
-        opit = PPNodeComparison::PPANNodeComparison(cxt,
+        opit = PPNodeComparison::PPANNodeComparison(cxt, info, 
                                                     make_pp_op(cxt, lst->at(1).internal.list),
                                                     make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1764,7 +1763,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "68");
 
-        opit = PPNodeComparison::PPGTNodeComparison(cxt,
+        opit = PPNodeComparison::PPGTNodeComparison(cxt, info, 
                                                     make_pp_op(cxt, lst->at(1).internal.list),
                                                     make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1786,7 +1785,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         for (i = 2; i < lst->size(); i++)
             ch_arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
 
-        opit = se_new PPFunCall(cxt,
+        opit = se_new PPFunCall(cxt, info, 
                              ch_arr,
                              fn_id);
     }
@@ -1807,7 +1806,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         for (i = 2; i < lst->size(); i++)
             ch_arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
 
-		opit = ext_function_manager.make_pp_ext_func(name, cxt, ch_arr);
+		opit = ext_function_manager.make_pp_ext_func(name, cxt, info, ch_arr);
     }
 	else if (op == "PPNamespace")
     {
@@ -1816,7 +1815,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "72");
 
-        opit = se_new PPNamespaceConstructor(cxt,
+        opit = se_new PPNamespaceConstructor(cxt, info, 
                                           lst->at(1).internal.str,
                                           make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1826,7 +1825,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "73");
 
-        opit = se_new PPFnName(cxt, 
+        opit = se_new PPFnName(cxt, info,  
                             make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnLocalName")
@@ -1835,7 +1834,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "73");
 
-        opit = se_new PPFnLocalName(cxt, 
+        opit = se_new PPFnLocalName(cxt, info,  
                                  make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnNamespaceUri")
@@ -1844,7 +1843,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "73");
 
-        opit = se_new PPFnNamespaceUri(cxt, 
+        opit = se_new PPFnNamespaceUri(cxt, info,  
                                     make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnNumber")
@@ -1853,7 +1852,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "73");
 
-        opit = se_new PPFnNumber(cxt, 
+        opit = se_new PPFnNumber(cxt, info,  
                               make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnRoot")
@@ -1862,7 +1861,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "73");
 
-        opit = se_new PPFnRoot(cxt, 
+        opit = se_new PPFnRoot(cxt, info,  
                             make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnAbs" || op == "PPFnCeiling" || op == "PPFnFloor" || op == "PPFnRound")
@@ -1878,7 +1877,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         else if (op == "PPFnRound") func = &PPNumericFuncs::fn_round;
         else throw USER_EXCEPTION2(SE1004, "73");
 
-        opit = se_new PPNumericFuncs(cxt, 
+        opit = se_new PPNumericFuncs(cxt, info,  
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   func);
     }
@@ -1888,7 +1887,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             && lst->at(1).type == SCM_LIST
            ) 
         {
-            opit = se_new PPFnRoundHalfToEven(cxt, 
+            opit = se_new PPFnRoundHalfToEven(cxt, info,  
                                            make_pp_op(cxt, lst->at(1).internal.list),
                                            0);
         }
@@ -1897,7 +1896,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
                  && lst->at(2).type == SCM_LIST
                 ) 
         {
-            opit = se_new PPFnRoundHalfToEven(cxt, 
+            opit = se_new PPFnRoundHalfToEven(cxt, info,  
                                            make_pp_op(cxt, lst->at(1).internal.list),
                                            make_pp_op(cxt, lst->at(2).internal.list));
         }
@@ -1923,7 +1922,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
         }
 		//bool tmp=false;
-        opit = se_new PPSpaceSequence(cxt, arr,lst->at(lst->size()-1).internal.b);
+        opit = se_new PPSpaceSequence(cxt, info,  arr,lst->at(lst->size()-1).internal.b);
     }
 
 
@@ -1931,10 +1930,8 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
     /////////////////////////////////////////////////////////////////
     if (opit) 
     {
-        opit->set_xquery_line(line);
         return PPOpIn(opit, ts);
     }
-    /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
 
@@ -1967,7 +1964,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             child_err = make_pp_op(cxt, lst->at(1).internal.list);
         }
 
-        opit = se_new PPFnError(cxt, 
+        opit = se_new PPFnError(cxt, info,  
                              child_err, child_descr, child_obj);
     }
 	else if (op == "PPFnTrace")
@@ -1977,7 +1974,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "76");
 
-		opit = se_new PPFnTrace(cxt,
+		opit = se_new PPFnTrace(cxt, info,
                              make_pp_op(cxt, lst->at(1).internal.list),
                              make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -1987,7 +1984,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "77");
 
-        opit = se_new PPTest(cxt, 
+        opit = se_new PPTest(cxt, info,  
                           make_pp_op(cxt, lst->at(1).internal.list));
     }
 	else if (op=="PPFnTokenize")
@@ -2003,14 +2000,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         if (lst->size() == 3)
         {
-            opit = se_new PPPatMatch(cxt,
+            opit = se_new PPPatMatch(cxt, info, 
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list),
 		                          pm);
         }
         else if (lst->size() == 4)
         {
-            opit = se_new PPPatMatch(cxt,
+            opit = se_new PPPatMatch(cxt, info, 
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list),
                                   make_pp_op(cxt, lst->at(3).internal.list),
@@ -2039,14 +2036,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         if (lst->size() == 4)
         {
-            opit = se_new PPPatMatch(cxt,
+            opit = se_new PPPatMatch(cxt, info, 
                                   make_pp_op(cxt, lst->at(2).internal.list),
                                   make_pp_op(cxt, lst->at(3).internal.list),
 		                          pm);
         }
         else if (lst->size() == 5)
         {
-            opit = se_new PPPatMatch(cxt,
+            opit = se_new PPPatMatch(cxt, info, 
                                   make_pp_op(cxt, lst->at(2).internal.list),
                                   make_pp_op(cxt, lst->at(3).internal.list),
                                   make_pp_op(cxt, lst->at(4).internal.list),
@@ -2054,7 +2051,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         }
         else if (lst->size() == 6)
         {
-            opit = se_new PPPatMatch(cxt,
+            opit = se_new PPPatMatch(cxt, info, 
                                   make_pp_op(cxt, lst->at(2).internal.list),
                                   make_pp_op(cxt, lst->at(3).internal.list),
                                   make_pp_op(cxt, lst->at(4).internal.list),
@@ -2070,7 +2067,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "81");
 
-        opit = se_new PPDocInCol(cxt, 
+        opit = se_new PPDocInCol(cxt, info,  
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2080,7 +2077,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "81.1");
 
-        opit = se_new PPFnDocAvailable(cxt, 
+        opit = se_new PPFnDocAvailable(cxt, info,  
                                     make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPTuple" || op == "PPSTuple")   /// PPSTuple is used only with PPOrderBy
@@ -2102,8 +2099,8 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
         }
 
-        if(op == "PPTuple") opit = se_new PPTuple(cxt, arr);
-        else opit = se_new PPSTuple(cxt, arr);
+        if(op == "PPTuple") opit = se_new PPTuple(cxt, info,  arr);
+        else opit = se_new PPSTuple(cxt, info,  arr);
     }
     else if (op == "PPPred1" || op == "PPPred2")	/// PPPred1 and PPPred2 have much in common, hence they are joined in one "if"
     {
@@ -2190,7 +2187,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         	        throw USER_EXCEPTION2(SE1004, "87");
             	var_dsc pos = atoi(lst->at(6).internal.num);
 	
-    	        opit = se_new PPPred1(cxt,
+    	        opit = se_new PPPred1(cxt, info, 
         	                       vars,
             	                   make_pp_op(cxt, lst->at(2).internal.list),
                 	               _conjuncts_,
@@ -2200,7 +2197,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 	                               pos);
     	    }
 	        else
-    	        opit = se_new PPPred1(cxt,
+    	        opit = se_new PPPred1(cxt, info, 
         	                       vars,
             	                   make_pp_op(cxt, lst->at(2).internal.list),
                 	               _conjuncts_,
@@ -2218,7 +2215,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
                 	throw USER_EXCEPTION2(SE1004, "88");
 	            var_dsc pos = atoi(lst->at(7).internal.num);
 		
-        		opit = se_new PPPred2(cxt,
+        		opit = se_new PPPred2(cxt, info, 
             		               vars,
                			           make_pp_op(cxt, lst->at(2).internal.list),
                	    		       _conjuncts_,
@@ -2229,7 +2226,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         	                       pos);
 	        }
     	    else
-        		opit = se_new PPPred2(cxt,
+        		opit = se_new PPPred2(cxt, info, 
             	               vars,
                 	           make_pp_op(cxt, lst->at(2).internal.list),
                     	       _conjuncts_,
@@ -2248,7 +2245,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(3).type != SCM_BOOL
            ) throw USER_EXCEPTION2(SE1004, "89");
 
-        opit = se_new PPUnion(cxt,
+        opit = se_new PPUnion(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list),
                               lst->at(3).internal.b);*/
@@ -2267,7 +2264,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             else doc_order = lst->at(3).internal.b;
         }
 
-        opit = se_new PPUnion(cxt,
+        opit = se_new PPUnion(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list),
                               doc_order);
@@ -2282,7 +2279,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(3).type != SCM_BOOL
            ) throw USER_EXCEPTION2(SE1004, "89");
 
-        opit = se_new PPIntersect(cxt,
+        opit = se_new PPIntersect(cxt, info, 
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list),
                                   lst->at(3).internal.b);*/
@@ -2301,7 +2298,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             else doc_order = lst->at(3).internal.b;
         }
 
-        opit = se_new PPIntersect(cxt,
+        opit = se_new PPIntersect(cxt, info, 
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list),
                                   doc_order);
@@ -2316,7 +2313,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(3).type != SCM_BOOL
            ) throw USER_EXCEPTION2(SE1004, "89");
 
-        opit = se_new PPExcept(cxt,
+        opit = se_new PPExcept(cxt, info, 
                                make_pp_op(cxt, lst->at(1).internal.list),
                                make_pp_op(cxt, lst->at(2).internal.list),
                                lst->at(3).internal.b);*/
@@ -2335,7 +2332,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             else doc_order = lst->at(3).internal.b;
         }
 
-        opit = se_new PPExcept(cxt,
+        opit = se_new PPExcept(cxt, info, 
                                make_pp_op(cxt, lst->at(1).internal.list),
                                make_pp_op(cxt, lst->at(2).internal.list),
                                doc_order);
@@ -2348,7 +2345,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "92");
 
-        opit = se_new PPADFilter(cxt,
+        opit = se_new PPADFilter(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2359,7 +2356,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "93");
 
-        opit = se_new PPDAFilter(cxt,
+        opit = se_new PPDAFilter(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2382,13 +2379,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if(lst->size() == 4)
         {
         	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "95.2");
-            opit = se_new PPFnCompare(cxt,
+            opit = se_new PPFnCompare(cxt, info, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    make_pp_op(cxt, lst->at(2).internal.list),
                                    make_pp_op(cxt, lst->at(3).internal.list));
         }
         else
-            opit = se_new PPFnCompare(cxt,
+            opit = se_new PPFnCompare(cxt, info, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2399,7 +2396,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "95.3");
 
-        opit = se_new PPFnCompare(cxt,
+        opit = se_new PPFnCompare(cxt, info, 
                                make_pp_op(cxt, lst->at(1).internal.list),
                                make_pp_op(cxt, lst->at(2).internal.list),
                                true);
@@ -2421,7 +2418,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         for (i = 1; i < lst->size(); i++)
             arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
 
-        opit = se_new PPFnConcat(cxt, 
+        opit = se_new PPFnConcat(cxt, info,  
                               arr);
     }
     else if (op == "PPFnSubstring")
@@ -2435,13 +2432,13 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if(lst->size() == 4)
         {
         	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "97.2");
-            opit = se_new PPFnSubstring(cxt,
+            opit = se_new PPFnSubstring(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list),
                                      make_pp_op(cxt, lst->at(3).internal.list));
         }
         else
-            opit = se_new PPFnSubstring(cxt,
+            opit = se_new PPFnSubstring(cxt, info, 
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2459,14 +2456,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if(lst->size() == 4)
         {
         	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "97.3");
-            opit = se_new PPFnStartsEndsWith(cxt,
+            opit = se_new PPFnStartsEndsWith(cxt, info, 
                                           make_pp_op(cxt, lst->at(1).internal.list),
                                           make_pp_op(cxt, lst->at(2).internal.list),
                                           make_pp_op(cxt, lst->at(3).internal.list),
                                           type);
         }
         else
-            opit = se_new PPFnStartsEndsWith(cxt,
+            opit = se_new PPFnStartsEndsWith(cxt, info, 
                                           make_pp_op(cxt, lst->at(1).internal.list),
                                           make_pp_op(cxt, lst->at(2).internal.list),
                                           type);
@@ -2485,14 +2482,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if(lst->size() == 4)
         {
         	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "97.4");
-            opit = se_new PPFnSubsBeforeAfter(cxt,
+            opit = se_new PPFnSubsBeforeAfter(cxt, info, 
                                            make_pp_op(cxt, lst->at(1).internal.list),
                                            make_pp_op(cxt, lst->at(2).internal.list),
                                            make_pp_op(cxt, lst->at(3).internal.list),
                                            type);
         }
         else
-            opit = se_new PPFnSubsBeforeAfter(cxt,
+            opit = se_new PPFnSubsBeforeAfter(cxt, info, 
                                            make_pp_op(cxt, lst->at(1).internal.list),
                                            make_pp_op(cxt, lst->at(2).internal.list),
                                            type);
@@ -2503,7 +2500,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "98");
 
-        opit = se_new PPFnStringLength(cxt,
+        opit = se_new PPFnStringLength(cxt, info, 
                                     make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnGetProperty")
@@ -2512,7 +2509,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "98.1");
 
-        opit = se_new PPFnGetProperty(cxt,
+        opit = se_new PPFnGetProperty(cxt, info, 
                                       make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnStringJoin")
@@ -2522,7 +2519,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "98.2");
 
-        opit = se_new PPFnStringJoin(cxt,
+        opit = se_new PPFnStringJoin(cxt, info, 
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2532,7 +2529,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "98.3");
 
-        opit = se_new PPFnNormalizeSpace(cxt,
+        opit = se_new PPFnNormalizeSpace(cxt, info, 
                                       make_pp_op(cxt, lst->at(1).internal.list));
     }
 	else if (op == "PPFnStringToCodepoints")
@@ -2541,7 +2538,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "159");
 
-        opit = se_new PPFnString2CodePoints(cxt,
+        opit = se_new PPFnString2CodePoints(cxt, info, 
                                     make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnCodepointsToString")
@@ -2550,7 +2547,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "159.1");
 
-        opit = se_new PPFnCodePoints2String(cxt,
+        opit = se_new PPFnCodePoints2String(cxt, info, 
                                          make_pp_op(cxt, lst->at(1).internal.list));
     }
 	else if (op == "PPFnTranslate")
@@ -2559,7 +2556,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 			|| lst->at(1).type != SCM_LIST
 			) throw USER_EXCEPTION2(SE1004, "98.5");
 
-		opit = se_new PPFnTranslate(cxt,
+		opit = se_new PPFnTranslate(cxt, info, 
 			make_pp_op(cxt, lst->at(1).internal.list),
 			make_pp_op(cxt, lst->at(2).internal.list),
 			make_pp_op(cxt, lst->at(3).internal.list));
@@ -2570,7 +2567,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 			|| lst->at(1).type != SCM_LIST
 			) throw USER_EXCEPTION2(SE1004, "98.6");
 
-		opit = se_new PPFnChangeCase(cxt,
+		opit = se_new PPFnChangeCase(cxt, info, 
 			make_pp_op(cxt, lst->at(1).internal.list), true);
 	}
 	else if (op == "PPFnLowerCase")
@@ -2579,7 +2576,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 			|| lst->at(1).type != SCM_LIST
 			) throw USER_EXCEPTION2(SE1004, "98.7");
 
-		opit = se_new PPFnChangeCase(cxt,
+		opit = se_new PPFnChangeCase(cxt, info, 
 			make_pp_op(cxt, lst->at(1).internal.list), false);
 	}
     else if (op == "PPFnString")
@@ -2588,7 +2585,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "99");
 
-        opit = se_new PPFnString(cxt,
+        opit = se_new PPFnString(cxt, info, 
                               make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnData")
@@ -2597,7 +2594,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "100");
 
-        opit = se_new PPFnData(cxt,
+        opit = se_new PPFnData(cxt, info, 
                             make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnDocumentURI")
@@ -2606,20 +2603,20 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "101");
 
-        opit = se_new PPFnDocumentURI(cxt, 
+        opit = se_new PPFnDocumentURI(cxt, info,  
                                    make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnStaticBaseUri")
     {
         if (  lst->size() != 1  ) throw USER_EXCEPTION2(SE1004, "101.1");
 
-        opit = se_new PPFnStaticBaseUri(cxt);
+        opit = se_new PPFnStaticBaseUri(cxt, info);
     }
     else if (op == "PPFnDefaultCollation")
     {
         if (  lst->size() != 1  ) throw USER_EXCEPTION2(SE1004, "101.2");
 
-        opit = se_new PPFnDefaultCollation(cxt);
+        opit = se_new PPFnDefaultCollation(cxt, info);
     }
     else if (op == "PPRange")
     {
@@ -2628,7 +2625,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "102");
 
-        opit = se_new PPRange(cxt, 
+        opit = se_new PPRange(cxt, info,  
                            make_pp_op(cxt, lst->at(1).internal.list),
                            make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2644,7 +2641,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         else if (strcmp(lst->at(1).internal.symb, "WHERE") == 0) var_type = TRIGGER_PARAMETER_WHERE;
         else throw USER_EXCEPTION2(SE1004, "104");
 
-        PPXptr *pp_xptr = se_new PPXptr(cxt, 
+        PPXptr *pp_xptr = se_new PPXptr(cxt, info,  
                                      var_type);
 #ifdef SE_ENABLE_TRIGGERS
         if (qep_parameters) qep_parameters->push_back(pp_xptr);
@@ -2656,7 +2653,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (   lst->size() != 1
            ) throw USER_EXCEPTION2(SE1004, "103");
 
-        opit = se_new PPCheckpoint(cxt);
+        opit = se_new PPCheckpoint(cxt, info);
     }
 
     // Date-time functions with no arguments
@@ -2677,7 +2674,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         else if (op == "PPFnImplicitTimezone") type = PPFnDateTimeFuncNoParam::implicitTimezone;
         else throw USER_EXCEPTION2(SE1004, "103");
 
-        opit = se_new PPFnDateTimeFuncNoParam(cxt, type);
+        opit = se_new PPFnDateTimeFuncNoParam(cxt, info,  type);
     }
 
     // Date-time functions with at most one argument
@@ -2739,7 +2736,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
 fn_dt_funcs_correct_type:
 
-        opit = se_new PPFnDateTimeFunc(cxt,
+        opit = se_new PPFnDateTimeFunc(cxt, info, 
                            make_pp_op(cxt, lst->at(1).internal.list), ftype, xtype);
     }
 
@@ -2771,7 +2768,7 @@ fn_dt_funcs_correct_type:
         	else if (op == "PPFnDateTime") ftype = PPFnDateTimeFunc2Params::dateTime;
 		else throw USER_EXCEPTION2(SE1004, "Invalid date time function");
 
-                opit = se_new PPFnDateTimeFunc2Params(cxt,
+                opit = se_new PPFnDateTimeFunc2Params(cxt, info, 
                            make_pp_op(cxt, lst->at(1).internal.list),
                            make_pp_op(cxt, lst->at(2).internal.list), ftype);
 	}
@@ -2782,7 +2779,7 @@ fn_dt_funcs_correct_type:
         	else if (op == "PPFnAdjustTimeToTimezone") { ftype = PPFnDateTimeFunc::adjustTimeToTimezone; xtype = xs_time; }
 		else throw USER_EXCEPTION2(SE1004, "Invalid date time function");
 	
-                opit = se_new PPFnDateTimeFunc(cxt,
+                opit = se_new PPFnDateTimeFunc(cxt, info, 
                            make_pp_op(cxt, lst->at(1).internal.list), ftype, xtype); 
 	}
     }
@@ -2807,7 +2804,7 @@ fn_dt_funcs_correct_type:
             _modifiers_.push_back(om);
 		}	        
 
-		opit = se_new PPOrderBy(cxt,							
+		opit = se_new PPOrderBy(cxt, info, 							
 							 lst->at(1).internal.b,    	
 							 make_pp_op(cxt, lst->at(2).internal.list), 
 		                     _modifiers_,
@@ -2821,11 +2818,11 @@ fn_dt_funcs_correct_type:
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "107");
 		if (lst->size()==3)
-		opit = se_new PPFnDeepEqual(cxt,
+		opit = se_new PPFnDeepEqual(cxt, info, 
                                  make_pp_op(cxt, lst->at(1).internal.list),
                                  make_pp_op(cxt, lst->at(2).internal.list));
 		else
-			opit = se_new PPFnDeepEqual(cxt,
+			opit = se_new PPFnDeepEqual(cxt, info, 
                                  make_pp_op(cxt, lst->at(1).internal.list),
                                  make_pp_op(cxt, lst->at(2).internal.list),
 								 make_pp_op(cxt, lst->at(3).internal.list));
@@ -2837,7 +2834,7 @@ fn_dt_funcs_correct_type:
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "107.5");
 
-		opit = se_new PPFnResolveQName(cxt,
+		opit = se_new PPFnResolveQName(cxt, info, 
                                     make_pp_op(cxt, lst->at(1).internal.list),
                                     make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2848,7 +2845,7 @@ fn_dt_funcs_correct_type:
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "108");
 
-		opit = se_new PPFnQName(cxt,
+		opit = se_new PPFnQName(cxt, info, 
                              make_pp_op(cxt, lst->at(1).internal.list),
                              make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2869,7 +2866,7 @@ fn_dt_funcs_correct_type:
                                       malloc,
                                       cxt);
 
-        opit = se_new PPConst(cxt, tuple_cell::atomic(xs_QName, qname));
+        opit = se_new PPConst(cxt, info,  tuple_cell::atomic(xs_QName, qname));
     }
 	else if (op == "PPFnPrefixFromQName")
     {
@@ -2877,7 +2874,7 @@ fn_dt_funcs_correct_type:
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "109");
 
-		opit = se_new PPFnPrefixFromQName(cxt,
+		opit = se_new PPFnPrefixFromQName(cxt, info, 
                                        make_pp_op(cxt, lst->at(1).internal.list));
     }
 	else if (op == "PPFnLocalNameFromQName")
@@ -2886,7 +2883,7 @@ fn_dt_funcs_correct_type:
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "110");
 
-		opit = se_new PPFnLocalNameFromQName(cxt,
+		opit = se_new PPFnLocalNameFromQName(cxt, info, 
                                           make_pp_op(cxt, lst->at(1).internal.list));
     }
 	else if (op == "PPFnNamespaceUriFromQName")
@@ -2895,7 +2892,7 @@ fn_dt_funcs_correct_type:
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "111");
 
-		opit = se_new PPFnNamespaceUriFromQName(cxt,
+		opit = se_new PPFnNamespaceUriFromQName(cxt, info, 
                                              make_pp_op(cxt, lst->at(1).internal.list));
     }
 	else if (op == "PPFnNamespaceUriForPrefix")
@@ -2905,7 +2902,7 @@ fn_dt_funcs_correct_type:
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "112");
 
-		opit = se_new PPFnNamespaceUriForPrefix(cxt,
+		opit = se_new PPFnNamespaceUriForPrefix(cxt, info, 
                                              make_pp_op(cxt, lst->at(1).internal.list),
                                              make_pp_op(cxt, lst->at(2).internal.list));
     }
@@ -2915,7 +2912,7 @@ fn_dt_funcs_correct_type:
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "113");
 
-		opit = se_new PPFnInScopePrefixes(cxt,
+		opit = se_new PPFnInScopePrefixes(cxt, info, 
                                        make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPDebug")
@@ -2937,14 +2934,14 @@ fn_dt_funcs_correct_type:
             strcpy(op_info, lst->at(2).internal.str);
             str_counted_ptr child_info(op_info);
   		    
-  		    opit = se_new PPDebug(cxt,
+  		    opit = se_new PPDebug(cxt, info, 
                                make_pp_op(cxt, lst->at(3).internal.list),
                                child_name,
                                child_info);
 
         }
         else
-		    opit = se_new PPDebug(cxt,
+		    opit = se_new PPDebug(cxt, info, 
                                make_pp_op(cxt, lst->at(2).internal.list),
                                child_name);
     }
@@ -2971,7 +2968,7 @@ fn_dt_funcs_correct_type:
         }
 
 
-		opit = se_new PPFnSQLConnect(cxt, arr);
+		opit = se_new PPFnSQLConnect(cxt, info,  arr);
     }
 
     else if (op == "PPFnSQLPrepare")
@@ -2988,11 +2985,11 @@ fn_dt_funcs_correct_type:
         }
 
 		if (lst->size() == 3)
-			opit = se_new PPFnSQLPrepare(cxt,
+			opit = se_new PPFnSQLPrepare(cxt, info, 
 							make_pp_op(cxt, lst->at(1).internal.list),
 							make_pp_op(cxt, lst->at(2).internal.list));
 		else
-			opit = se_new PPFnSQLPrepare(cxt,
+			opit = se_new PPFnSQLPrepare(cxt, info, 
 							make_pp_op(cxt, lst->at(1).internal.list),
 							make_pp_op(cxt, lst->at(2).internal.list),
 							make_pp_op(cxt, lst->at(3).internal.list));
@@ -3018,7 +3015,7 @@ fn_dt_funcs_correct_type:
         }
 
 
-		opit = se_new PPFnSQLExecute(cxt, arr, false);
+		opit = se_new PPFnSQLExecute(cxt, info,  arr, false);
     }
     else if (op == "PPFnSQLExecUpdate")
     {
@@ -3040,7 +3037,7 @@ fn_dt_funcs_correct_type:
         }
 
 
-		opit = se_new PPFnSQLExecute(cxt, arr, true);
+		opit = se_new PPFnSQLExecute(cxt, info,  arr, true);
     }
 
     else if (op == "PPFnSQLClose")
@@ -3050,7 +3047,7 @@ fn_dt_funcs_correct_type:
 
            ) throw USER_EXCEPTION(SE1004);
 
-		opit = se_new PPFnSQLClose(cxt, make_pp_op(cxt, lst->at(1).internal.list));
+		opit = se_new PPFnSQLClose(cxt, info,  make_pp_op(cxt, lst->at(1).internal.list));
     }
 
     else if (op == "PPFnSQLCommit")
@@ -3060,7 +3057,7 @@ fn_dt_funcs_correct_type:
 
            ) throw USER_EXCEPTION(SE1004);
 
-		opit = se_new PPFnSQLCommit(cxt, make_pp_op(cxt, lst->at(1).internal.list));
+		opit = se_new PPFnSQLCommit(cxt, info,  make_pp_op(cxt, lst->at(1).internal.list));
     }
 
     else if (op == "PPFnSQLRollback")
@@ -3070,7 +3067,7 @@ fn_dt_funcs_correct_type:
 
            ) throw USER_EXCEPTION(SE1004);
 
-		opit = se_new PPFnSQLRollback(cxt, make_pp_op(cxt, lst->at(1).internal.list));
+		opit = se_new PPFnSQLRollback(cxt, info,  make_pp_op(cxt, lst->at(1).internal.list));
     }
 #else
  else if (op == "PPFnSQLConnect"
@@ -3099,11 +3096,11 @@ fn_dt_funcs_correct_type:
            ) throw USER_EXCEPTION(SE1004);
 
 		if (lst->size() == 3)
-			opit = se_new PPFtIndexScan(cxt,
+			opit = se_new PPFtIndexScan(cxt, info, 
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list));
 		else
-			opit = se_new PPFtIndexScan(cxt,
+			opit = se_new PPFtIndexScan(cxt, info, 
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list),
 				make_pp_op(cxt, lst->at(3).internal.list));
@@ -3117,16 +3114,16 @@ fn_dt_funcs_correct_type:
 
 		
 		if (lst->size() == 3)
-			opit = se_new PPFtIndexScan2(cxt,
+			opit = se_new PPFtIndexScan2(cxt, info, 
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list));
 		else if (lst->size() == 4)
-			opit = se_new PPFtIndexScan2(cxt,
+			opit = se_new PPFtIndexScan2(cxt, info, 
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list),
 				make_pp_op(cxt, lst->at(3).internal.list));
 		else
-			opit = se_new PPFtIndexScan2(cxt,
+			opit = se_new PPFtIndexScan2(cxt, info, 
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list),
 				make_pp_op(cxt, lst->at(3).internal.list),
@@ -3157,12 +3154,12 @@ fn_dt_funcs_correct_type:
         }
 
 		if (lst->size() == 4)
-			opit = se_new PPFtScan(cxt,
+			opit = se_new PPFtScan(cxt, info, 
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list), 
 				make_pp_op(cxt, lst->at(3).internal.list));
 		else
-			opit = se_new PPFtScan(cxt,
+			opit = se_new PPFtScan(cxt, info, 
 				make_pp_op(cxt, lst->at(1).internal.list), 
 				make_pp_op(cxt, lst->at(2).internal.list), 
 				make_pp_op(cxt, lst->at(3).internal.list),
@@ -3180,7 +3177,7 @@ fn_dt_funcs_correct_type:
 
 	    if (lst->size() == 3)
 		{
-		    opit = se_new PPFtHighlight(cxt,
+		    opit = se_new PPFtHighlight(cxt, info, 
 		    	make_pp_op(cxt, lst->at(1).internal.list), 
 		    	make_pp_op(cxt, lst->at(2).internal.list),
 		    	false);
@@ -3189,7 +3186,7 @@ fn_dt_funcs_correct_type:
 		{
             if (lst->at(3).type != SCM_LIST)
                 throw USER_EXCEPTION(SE1004);
-		    opit = se_new PPFtHighlight(cxt,
+		    opit = se_new PPFtHighlight(cxt, info, 
 		    	make_pp_op(cxt, lst->at(1).internal.list), 
 		    	make_pp_op(cxt, lst->at(2).internal.list),
 		    	make_pp_op(cxt, lst->at(3).internal.list),
@@ -3208,7 +3205,7 @@ fn_dt_funcs_correct_type:
 
         if (lst->size() == 3)
 		{
-    		opit = se_new PPFtHighlight(cxt,
+    		opit = se_new PPFtHighlight(cxt, info, 
     			make_pp_op(cxt, lst->at(1).internal.list), 
     			make_pp_op(cxt, lst->at(2).internal.list),
     			true);
@@ -3217,7 +3214,7 @@ fn_dt_funcs_correct_type:
 		{
 			if (lst->at(3).type != SCM_LIST)
 				throw USER_EXCEPTION(SE1004);
-    		opit = se_new PPFtHighlight(cxt,
+    		opit = se_new PPFtHighlight(cxt, info, 
     			make_pp_op(cxt, lst->at(1).internal.list), 
     			make_pp_op(cxt, lst->at(2).internal.list),
     			make_pp_op(cxt, lst->at(3).internal.list),
@@ -3236,7 +3233,6 @@ fn_dt_funcs_correct_type:
 
     else throw USER_EXCEPTION2(SE1004, ("Wrong plan representation, unknown operation " + op).c_str());
 
-    opit->set_xquery_line(line);
     return PPOpIn(opit, ts);
 }
 
@@ -3859,6 +3855,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt)
 
 void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, int &var_decl_counter)
 {
+    operation_info info = {0};
+    
     unsigned int i = 0;
     for (i = 1; i < qp->size(); i++) 
     {
@@ -3995,7 +3993,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
                 if (qp->at(i).internal.list->at(4).type != SCM_LIST)
                     throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
-                opit = se_new PPVarDecl(cxt,
+                opit = se_new PPVarDecl(cxt, info,
                                      v_dsc,
                                      make_pp_op(cxt, qp->at(i).internal.list->at(3).internal.list),
                                      make_sequence_type(qp->at(i).internal.list->at(4).internal.list));
@@ -4003,7 +4001,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
             }
             else
             {
-                opit = se_new PPVarDecl(cxt,
+                opit = se_new PPVarDecl(cxt, info,
                                      v_dsc,
                                      make_pp_op(cxt, qp->at(i).internal.list->at(3).internal.list));
             }
