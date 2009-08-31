@@ -2968,7 +2968,7 @@ fn_dt_funcs_correct_type:
         }
 
 
-		opit = se_new PPFnSQLConnect(cxt, info,  arr);
+		opit = se_new PPFnSQLConnect(cxt, info, arr);
     }
 
     else if (op == "PPFnSQLPrepare")

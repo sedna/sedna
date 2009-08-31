@@ -117,15 +117,15 @@ protected:
 	arr_of_PPOpIn	arr;
 	bool			first_time;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return NULL; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPFnSQLConnect(dynamic_context *_cxt_,
                    operation_info _info_,
                    const arr_of_PPOpIn &arr);
