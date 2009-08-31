@@ -23,20 +23,17 @@ private:
     typedef std::map<int, sequence_tmp*> t_stored_seqs;
     static t_stored_seqs stored_seqs;
 
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    void children(PPOpIn &_child_) { _child_ = child; }
-
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPStore(dynamic_context *_cxt_,
+            operation_info _info_,
             PPOpIn _child_);
     virtual ~PPStore();
 };

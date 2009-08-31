@@ -9,8 +9,6 @@
 #include "tr/executor/base/dm_accessors.h"
 
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDmStringValue
@@ -18,7 +16,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 PPDmStringValue::PPDmStringValue(dynamic_context *_cxt_,
-                                 PPOpIn _child_) : PPIterator(_cxt_),
+                                 operation_info _info_,
+                                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                    child(_child_)
 {
 }
@@ -29,27 +28,25 @@ PPDmStringValue::~PPDmStringValue()
     child.op = NULL;
 }
 
-void PPDmStringValue::open  ()
+void PPDmStringValue::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPDmStringValue::reopen()
+void PPDmStringValue::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPDmStringValue::close ()
+void PPDmStringValue::do_close()
 {
     child.op->close();
 }
 
-void PPDmStringValue::next  (tuple &t)
+void PPDmStringValue::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -71,40 +68,13 @@ void PPDmStringValue::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPDmStringValue::copy(dynamic_context *_cxt_)
+PPIterator* PPDmStringValue::do_copy(dynamic_context *_cxt_)
 {
-    PPDmStringValue *res = se_new PPDmStringValue(_cxt_, child);
+    PPDmStringValue *res = se_new PPDmStringValue(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPDmStringValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    PPOpIn child;
-    ((PPDmStringValue*)cur)->children(child);
-
-    void *sv_r;
-    bool sv_s = (child.op->res_fun())(child.op, cxt, sv_r);
-
-    if (!sv_s) // if expression is not strict
-    { // create PPDmStringValue and transmit state
-        child.op = (PPIterator*)sv_r;
-        r = se_new PPDmStringValue(cxt, child);
-        return false;
-    }
-
-    sequence *d_seq = (sequence*)sv_r;
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
-    const tuple_cell &tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
-
-    r = se_new sequence(dm_string_value(tc.get_node()));
-    return true;
 }
 
 
@@ -115,7 +85,8 @@ bool PPDmStringValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPDmTypedValue::PPDmTypedValue(dynamic_context *_cxt_,
-                               PPOpIn _child_) : PPIterator(_cxt_),
+                               operation_info _info_,
+                               PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                  child(_child_)
 {
 }
@@ -126,27 +97,25 @@ PPDmTypedValue::~PPDmTypedValue()
     child.op = NULL;
 }
 
-void PPDmTypedValue::open  ()
+void PPDmTypedValue::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPDmTypedValue::reopen()
+void PPDmTypedValue::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPDmTypedValue::close ()
+void PPDmTypedValue::do_close()
 {
     child.op->close();
 }
 
-void PPDmTypedValue::next  (tuple &t)
+void PPDmTypedValue::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -168,39 +137,11 @@ void PPDmTypedValue::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPDmTypedValue::copy(dynamic_context *_cxt_)
+PPIterator* PPDmTypedValue::do_copy(dynamic_context *_cxt_)
 {
-    PPDmTypedValue *res = se_new PPDmTypedValue(_cxt_, child);
+    PPDmTypedValue *res = se_new PPDmTypedValue(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPDmTypedValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    PPOpIn child;
-    ((PPDmTypedValue*)cur)->children(child);
-
-    void *tv_r;
-    bool tv_s = (child.op->res_fun())(child.op, cxt, tv_r);
-
-    if (!tv_s) // if expression is not strict
-    { // create PPDmTypedValue and transmit state
-        child.op = (PPIterator*)tv_r;
-        r = se_new PPDmTypedValue(cxt, child);
-        return false;
-    }
-
-    sequence *d_seq = (sequence*)tv_r;
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
-    const tuple_cell &tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
-
-    r = se_new sequence(dm_typed_value(tc.get_node()));
-    return true;
-}
-

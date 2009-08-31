@@ -9,8 +9,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPVariable
 ///////////////////////////////////////////////////////////////////////////////
-PPVariable::PPVariable(dynamic_context *_cxt_, 
-                       var_dsc _dsc_) : PPIterator(_cxt_), 
+PPVariable::PPVariable(dynamic_context *_cxt_,
+                       operation_info _info_, 
+                       var_dsc _dsc_) : PPIterator(_cxt_, _info_), 
                                         dsc(_dsc_)
 {
 }
@@ -20,63 +21,40 @@ PPVariable::~PPVariable()
     // nothing to do
 }
 
-void PPVariable::open ()
+void PPVariable::do_open ()
 {
     U_ASSERT(cxt);
-
     id = cxt->var_cxt.producers[dsc].op->register_consumer(dsc);
 }
 
-void PPVariable::reopen ()
+void PPVariable::do_reopen()
 {
     cxt->var_cxt.producers[dsc].op->reopen(dsc, id);
 }
 
-void PPVariable::close ()
+void PPVariable::do_close()
 {
     // nothing to do
 }
 
-void PPVariable::next (tuple &t)
+void PPVariable::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     cxt->var_cxt.producers[dsc].op->next(t, dsc, id);
-
-    RESTORE_CURRENT_PP;
-//    if (t.is_eos()) cxt->producers[dsc].op->reopen(dsc, id);
 }
 
-PPIterator* PPVariable::copy(dynamic_context *_cxt_)
+PPIterator* PPVariable::do_copy(dynamic_context *_cxt_)
 {
-    PPVariable *res = se_new PPVariable(_cxt_, dsc);
-    res->set_xquery_line(__xquery_line);
+    PPVariable *res = se_new PPVariable(_cxt_, info, dsc);
     return res;
 }
 
-bool PPVariable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-/*
-    producer &p = cxt->producers[((PPVariable*)cur)->dsc];
-
-    sequence *res_seq = se_new sequence(1);
-    switch (p.type)
-    {
-    case pt_tuple	: res_seq->add(*(p.t)); break;
-    case pt_seq		: res_seq->copy(p.s); break;
-    default			: throw USER_EXCEPTION2(SE1003, "Unexpected type of the producer in PPVariable");
-    };
-
-    return strict_op_result(cur, res_seq, cxt, r);
-*/
-	throw USER_EXCEPTION2(SE1002, "PPVariable::result");
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPGlobalVariable
 ///////////////////////////////////////////////////////////////////////////////
-PPGlobalVariable::PPGlobalVariable(dynamic_context *_cxt_, 
-                                   var_dsc _dsc_) : PPIterator(_cxt_), 
+PPGlobalVariable::PPGlobalVariable(dynamic_context *_cxt_,
+                                   operation_info _info_, 
+                                   var_dsc _dsc_) : PPIterator(_cxt_, _info_), 
                                                     dsc(_dsc_)
 {
 }
@@ -86,38 +64,29 @@ PPGlobalVariable::~PPGlobalVariable()
     // nothing to do
 }
 
-void PPGlobalVariable::open ()
+void PPGlobalVariable::do_open ()
 {
     U_ASSERT(cxt);
-
     id = dynamic_context::glb_var_cxt.producers[dsc].op->register_consumer(dsc);
 }
 
-void PPGlobalVariable::reopen ()
+void PPGlobalVariable::do_reopen()
 {
     dynamic_context::glb_var_cxt.producers[dsc].op->reopen(dsc, id);
 }
 
-void PPGlobalVariable::close ()
+void PPGlobalVariable::do_close()
 {
     dynamic_context::glb_var_cxt.producers[dsc].op->close(dsc, id);
 }
 
-void PPGlobalVariable::next (tuple &t)
+void PPGlobalVariable::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     dynamic_context::glb_var_cxt.producers[dsc].op->next(t, dsc, id);
 }
 
-PPIterator* PPGlobalVariable::copy(dynamic_context *_cxt_)
+PPIterator* PPGlobalVariable::do_copy(dynamic_context *_cxt_)
 {
-    PPGlobalVariable *res = se_new PPGlobalVariable(_cxt_, dsc);
-    res->set_xquery_line(__xquery_line);
+    PPGlobalVariable *res = se_new PPGlobalVariable(_cxt_, info, dsc);
     return res;
-}
-
-bool PPGlobalVariable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPGlobalVariable::result");
 }

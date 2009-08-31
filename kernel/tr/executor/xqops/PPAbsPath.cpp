@@ -54,8 +54,9 @@ AnyKindTest    ::=    <"node" "("> ")"
 
 
 PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
+                     operation_info _info_, 
                      PathExpr *_path_expr_, 
-                     counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_),
+                     counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_, _info_),
                                                         path_expr(_path_expr_),
                                                         db_ent(_db_ent_),
                                                         name(NULL, 0),
@@ -63,10 +64,11 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 {
 }
 
-PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
+                     operation_info _info_, 
                      PathExpr *_path_expr_, 
                      counted_ptr<db_entity> _db_ent_,
-                     PPOpIn _name_) : PPIterator(_cxt_),
+                     PPOpIn _name_) : PPIterator(_cxt_, _info_),
                                       path_expr(_path_expr_),
                                       db_ent(_db_ent_),
                                       name(_name_),
@@ -75,31 +77,29 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 }
 
 PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
+                     operation_info _info_, 
                      PathExpr *_path_expr_, 
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_,
-                     schema_node_xptr _root_) : PPIterator(_cxt_),
-                                            path_expr(_path_expr_),
-                                            db_ent(_db_ent_),
-                                            name(_name_),
-                                            root(_root_)
+                     schema_node_xptr _root_) : PPIterator(_cxt_, _info_),
+                                                path_expr(_path_expr_),
+                                                db_ent(_db_ent_),
+                                                name(_name_),
+                                                root(_root_)
 {
 }
 
 PPAbsPath::~PPAbsPath()
 {
-//    d_printf1("PPAbsPath::~PPAbsPath() begin\n");
     if (name.op)
     {
         delete name.op;
         name.op = NULL;
     }
-//    d_printf1("PPAbsPath::~PPAbsPath() end\n");
 }
 
-void PPAbsPath::open ()
+void PPAbsPath::do_open ()
 {
-//    d_printf1("PPAbsPath::open () begin\n");
     merged_seq_arr = NULL;
     scmnodes_num = -1;
 
@@ -108,11 +108,9 @@ void PPAbsPath::open ()
         name.op->open();
         root = XNULL;
     }
-//    d_printf1("PPAbsPath::open () end\n");
 }
 
-
-void PPAbsPath::reopen()
+void PPAbsPath::do_reopen()
 {
     delete [] merged_seq_arr;
     merged_seq_arr = NULL;
@@ -126,7 +124,7 @@ void PPAbsPath::reopen()
 }
 
 
-void PPAbsPath::close ()
+void PPAbsPath::do_close()
 {
     delete [] merged_seq_arr;
     merged_seq_arr = NULL;
@@ -136,16 +134,14 @@ void PPAbsPath::close ()
     if (name.op) name.op->close();
 }
 
-void PPAbsPath::next(tuple &t)
+void PPAbsPath::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (root == XNULL) 
-        if (determine_root()) 
-        {
-            t.set_eos();
-            {RESTORE_CURRENT_PP; return;}
-        }
+    if (determine_root()) 
+    {
+        t.set_eos();
+        return;
+    }
       
     if (scmnodes_num < 0)
         create_merged_seq(scmnodes_num, merged_seq_arr, root, path_expr);
@@ -169,8 +165,6 @@ void PPAbsPath::next(tuple &t)
         t.copy(tuple_cell::node(res));
         merged_seq_arr[0] = getNextDescriptorOfSameSortXptr(res);
     }
-
-    RESTORE_CURRENT_PP;
 }
 
 bool PPAbsPath::determine_root()
@@ -180,12 +174,18 @@ bool PPAbsPath::determine_root()
     {
         tuple t(1);
         name.op->next(t);
-        if (t.is_eos()) return true;                                 ///If $uri is the empty sequence, the result is an empty sequence
+
+        /* If $uri is the empty sequence, the result is an empty sequence */
+        if (t.is_eos()) return true;
 
         tc= atomize(name.get(t));
-        if(!is_string_type(tc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc (xs_string/derived/promotable is expected).");
+
+        if(!is_string_type(tc.get_atomic_type()))
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc (xs_string/derived/promotable is expected).");
+
         name.op->next(t);
-        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc. Argument contains more than one item.");
+        if (!t.is_eos())
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc. Argument contains more than one item.");
 
         tc = tuple_cell::make_sure_light_atomic(tc);
         if (db_ent->name) delete [] db_ent->name;
@@ -203,26 +203,27 @@ bool PPAbsPath::determine_root()
 	return false;
 }
 
-PPIterator* PPAbsPath::copy(dynamic_context *_cxt_)
+PPIterator* PPAbsPath::do_copy(dynamic_context *_cxt_)
 {
     PPAbsPath *res = NULL;
 
     if (name.op)
     {
-        res = se_new PPAbsPath(_cxt_, path_expr, db_ent, name);
+        res = se_new PPAbsPath(_cxt_, info, path_expr, db_ent, name);
         res->name.op = name.op->copy(_cxt_);
     }
     else
     {
-        res = se_new PPAbsPath(_cxt_, path_expr, db_ent, name, root);
+        res = se_new PPAbsPath(_cxt_, info, path_expr, db_ent, name, root);
     }
-    res->set_xquery_line(__xquery_line);
 
     return res;
 }
 
-void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
-                                  schema_node_cptr root, PathExpr *path_expr)
+void PPAbsPath::create_merged_seq(int &scmnodes_num,
+                                  xptr*& merged_seq_arr,
+                                  schema_node_cptr root,
+                                  PathExpr *path_expr)
 {
     t_scmnodes nodes;
     nodes = execute_abs_path_expr(root, path_expr);
@@ -243,49 +244,3 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
 
     qsort(merged_seq_arr, scmnodes_num, sizeof(xptr), doc_order_merge_cmp);
 }
-
-bool PPAbsPath::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-/*
-    sequence *res_seq = NULL;
-    int scmnodes_num = -1;
-    xptr *merged_seq_arr = NULL;
-    schema_node *root = NULL;
-
-    PPAbsPath *_cur_ = (PPAbsPath *)cur;
-
-    switch (_cur_->db_ent->type)
-    {
-        case dbe_document	: root = find_document  (_cur_->db_ent->name); break;
-        case dbe_collection	: root = find_collection(_cur_->db_ent->name); break;
-        default				: throw USER_EXCEPTION2(SE1003, "Unknown entity passed to PPAbsPath");
-    }    
-
-    create_merged_seq(scmnodes_num, 
-                      merged_seq_arr, 
-                      root, 
-                      _cur_->path_expr.get());
-
-    res_seq = se_new sequence(1);
-    xptr res;
-    tuple t(1);
-
-    if (scmnodes_num != 0)
-    {
-        while ((res = merged_seq_arr[0]) != NULL)
-        {
-            t.copy(tuple_cell::node(res));
-            res_seq->add(t);
-            merged_seq_arr[0] = getNextDescriptorOfSameSortXptr(res);
-        }
-
-    }
-    delete [] merged_seq_arr;
-
-    return strict_op_result(cur, res_seq, cxt, r);
-*/
-    return true;
-}
-
-
-

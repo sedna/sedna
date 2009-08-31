@@ -13,35 +13,31 @@
 class PPIntersect : public PPIterator
 {
 protected:
-    // given parameters
     PPOpIn child1;
     PPOpIn child2;
     bool doc_order;
 
-    // obtained parameters and local data
     bool tug_first, tug_second;
     bool need_reopen_first, need_reopen_second;
 
     xptr xptr1, xptr2;
 
-    void children(PPOpIn& _child1_, PPOpIn& _child2_) { _child1_ = child1; _child2_ = child2; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
 
     PPIntersect(dynamic_context *_cxt_,
+                operation_info _info_,
                 PPOpIn _child1_,
                 PPOpIn _child2_,
                 bool _doc_order_);
     virtual ~PPIntersect();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

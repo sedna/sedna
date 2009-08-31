@@ -24,8 +24,6 @@ protected:
     bool first_time;
     value_func func;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
-
     const char* error();
 
 public:
@@ -34,16 +32,17 @@ public:
     tuple_cell fn_floor             (const tuple_cell& tc);
     tuple_cell fn_round             (const tuple_cell& tc);
 
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPNumericFuncs(dynamic_context *_cxt_,
+                   operation_info _info_,
                    PPOpIn _child_,
                    PPNumericFuncs::value_func _func_);
     virtual ~PPNumericFuncs();
@@ -60,26 +59,27 @@ protected:
     __int64 precision;
     bool first_time;
 
-    void children(PPOpIn &_child_arg_, PPOpIn &_child_p_) { _child_arg_ = child_arg; _child_p_ = child_p; }
-
     tuple_cell round_half_to_even(const tuple_cell& tc, __int64 precision);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPFnRoundHalfToEven(dynamic_context *_cxt_,
+                        operation_info _info_,
                         PPOpIn _child_arg_,
                         __int64 _precision_);
+
     PPFnRoundHalfToEven(dynamic_context *_cxt_,
+                        operation_info _info_,
                         PPOpIn _child_arg_,
                         PPOpIn _child_p_);
+    
     virtual ~PPFnRoundHalfToEven();
 };
 

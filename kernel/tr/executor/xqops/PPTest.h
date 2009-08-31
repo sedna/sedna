@@ -20,29 +20,25 @@ class PPTest : public PPIterator
 {
 protected:
     typedef void (PPTest::*t_test_fun)(xptr node);
-
-    // given parameters
     PPOpIn seq;
 	
-	
-    // obtained parameters and local data
     t_test_fun test_fun;
 	void checkTreeConsistency(xptr node);
 	/*bool checkFT(xptr node);
 	int checkFT(PPOpIn _seq_);*/
-	void children(PPOpIn &_seq_) { _seq_ = seq; }
+
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t) ;
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPTest(dynamic_context *_cxt_,
-		PPOpIn _seq_);
+           operation_info _info_,
+           PPOpIn _seq_);
     virtual ~PPTest();
 };
 

@@ -7,14 +7,12 @@
 
 #include "tr/executor/xqops/PPSelect.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/xqops/PPSLStub.h"
-#include "tr/executor/xqops/PPSResLStub.h"
-
 
 PPSelect::PPSelect(dynamic_context *_cxt_,
+                   operation_info _info_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
-                   PPOpIn _data_child_) : PPVarIterator(_cxt_),
+                   PPOpIn _data_child_) : PPVarIterator(_cxt_, _info_),
                                           var_dscs(_var_dscs_),
                                           source_child(_source_child_),
                                           data_child(_data_child_),
@@ -24,10 +22,11 @@ PPSelect::PPSelect(dynamic_context *_cxt_,
 }
 
 PPSelect::PPSelect(dynamic_context *_cxt_,
+                   operation_info _info_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
-                   tuple _source_) : PPVarIterator(_cxt_),
+                   tuple _source_) : PPVarIterator(_cxt_, _info_),
                                      var_dscs(_var_dscs_),
                                      source_child(_source_child_),
                                      data_child(_data_child_),
@@ -48,7 +47,7 @@ PPSelect::~PPSelect()
 }
 
 
-void PPSelect::open ()
+void PPSelect::do_open ()
 {
     source_child.op->open();
 
@@ -69,28 +68,26 @@ void PPSelect::open ()
     data_child.op->open();
 }
 
-void PPSelect::reopen ()
+void PPSelect::do_reopen()
 {
     source_child.op->reopen();
 }
 
-void PPSelect::close ()
+void PPSelect::do_close()
 {
     source_child.op->close();
     data_child.op->close();
 }
 
-void PPSelect::next(tuple &t)
+void PPSelect::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     while (true)
     {
         if (standard) source_child.op->next(t);
         else { t = source; standard = true; }
         cur_tuple = &t;
 
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (first_time) first_time = false;
         else
@@ -101,31 +98,26 @@ void PPSelect::next(tuple &t)
 
         tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
 
-        if (tc.get_xs_boolean()) {RESTORE_CURRENT_PP; return;}
+        if (tc.get_xs_boolean()) return;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPSelect::copy(dynamic_context *_cxt_)
+PPIterator* PPSelect::do_copy(dynamic_context *_cxt_)
 {
-    PPSelect *res = se_new PPSelect(_cxt_, var_dscs, source_child, data_child);
+    PPSelect *res = se_new PPSelect(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-var_c_id PPSelect::register_consumer(var_dsc dsc)
+var_c_id PPSelect::do_register_consumer(var_dsc dsc)
 {
     cxt->var_cxt.producers[dsc].svc->push_back(true);
     return cxt->var_cxt.producers[dsc].svc->size() - 1;
 }
 
-void PPSelect::next(tuple &t, var_dsc dsc, var_c_id id)
+void PPSelect::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP_VAR(this);
-    
     producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
@@ -138,16 +130,14 @@ void PPSelect::next(tuple &t, var_dsc dsc, var_c_id id)
         p.svc->at(id) = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPSelect::reopen(var_dsc dsc, var_c_id id)
+void PPSelect::do_reopen(var_dsc dsc, var_c_id id)
 {
     cxt->var_cxt.producers[dsc].svc->at(id) = true;
 }
 
-void PPSelect::close(var_dsc dsc, var_c_id id)
+void PPSelect::do_close(var_dsc dsc, var_c_id id)
 {
 }
 
@@ -158,94 +148,4 @@ inline void PPSelect::reinit_consumer_table()
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (unsigned int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
-}
-
-bool PPSelect::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-/*
-    PPOpIn data_child, source_child;
-    ((PPSelect*)cur)->children(source_child, data_child);
-
-    void *source_r;
-    bool source_s = (source_child.op->res_fun())(source_child.op, cxt, source_r);
-
-    if (!source_s) // if source is not strict
-    { // create PPSelect and transmit state
-        source_child.op = (PPIterator*)source_r;
-        data_child.op = data_child.op->copy(cxt);
-        PPSelect *res_op = se_new PPSelect(cxt, ((PPSelect*)cur)->var_dscs, source_child, data_child);
-
-        r = res_op;
-        return false;
-    }
-
-    sequence *source_seq = (sequence*)source_r;
-    arr_of_var_dsc &var_dscs = ((PPSelect*)cur)->var_dscs;
-
-    // prepare context
-    for (int i = 0; i < var_dscs.size(); i++)
-    {
-        producer &p = cxt->producers[var_dscs[i]];
-        p.type = pt_tuple;
-        p.tuple_pos = i;
-        p.t = se_new tuple(1);
-    }
-
-    sequence *res_seq = se_new sequence(source_child.ts);
-    tuple source_t(var_dscs.size());
-    tuple data_t(1);
-    sequence::iterator source_it; 
-    for (source_it = source_seq->begin(); source_it != source_seq->end(); ++source_it)
-    {
-        source_seq->get(source_t, source_it);
-        // fill context
-        for (int i = 0; i < var_dscs.size(); i++)
-        {
-            producer &p = cxt->producers[var_dscs[i]];
-            p.t->copy(source_t.cells[p.tuple_pos]);
-        }
-
-        void *data_r;
-        bool data_s = (data_child.op->res_fun())(data_child.op, cxt, data_r);
-
-        if (!data_s) // if data is not strict
-        { // create PPSelect and transmit state
-            // create se_new lazy source child
-            PPIterator *new_source_child = source_child.op->copy(cxt);
-
-            // create se_new source sequence - the rest of the source sequence
-            sequence::iterator ssit = source_it;
-            sequence *new_source_seq = se_new sequence(var_dscs.size());
-
-            for (++ssit; ssit != source_seq->end(); ++ssit)
-            {
-                source_seq->get(source_t, ssit);
-                new_source_seq->add(source_t);
-            }
-            delete source_seq;
-
-            // create stub for source
-            PPSLStub *lower_stub = se_new PPSLStub(cxt, new_source_child, new_source_seq);
-
-
-            source_child.op = lower_stub;
-            data_child.op = (PPIterator*)data_r;
-            PPSelect *ret_op = se_new PPSelect(cxt, ((PPSelect*)cur)->var_dscs, source_child, data_child, source_t);
-
-            // create stub for PPSelect
-            PPSResLStub *upper_stub = se_new PPSResLStub(cxt, ret_op, res_seq);
-
-            r = upper_stub;
-            return false;
-        }
-
-        if (effective_boolean_value((sequence*)data_r).get_xs_boolean())
-            res_seq->add(source_t);
-        delete (sequence*)data_r;
-    }
-
-    r = res_seq;
-    return true;
-*/
-    return true;
 }

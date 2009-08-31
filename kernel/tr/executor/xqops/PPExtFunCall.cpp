@@ -6,8 +6,21 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPExtFunCall.h"
 
+PPExtFunCall::PPExtFunCall(dynamic_context *_cxt_,
+                           operation_info _info_,
+                           const arr_of_PPOpIn &_arr_,
+                           ExtFunction *_func_)	: PPIterator(_cxt_, _info_),
+                                                  arr(_arr_),
+                                                  func(_func_)
+{
+}
 
-void PPExtFunCall::open   ()
+PPExtFunCall::~PPExtFunCall()
+{
+	delete func;
+}
+
+void PPExtFunCall::do_open ()
 {
 	for (unsigned int i = 0; i < arr.size(); i++)
 		arr[i].op->open();
@@ -15,7 +28,7 @@ void PPExtFunCall::open   ()
 	first_time = true;
 }
 
-void PPExtFunCall::reopen ()
+void PPExtFunCall::do_reopen()
 {
 	func->result_clear();
 
@@ -25,7 +38,7 @@ void PPExtFunCall::reopen ()
 	first_time = true;
 }
 
-void PPExtFunCall::close  ()
+void PPExtFunCall::do_close ()
 {
 	for (unsigned int i = 0; i < arr.size(); i++)
 		arr[i].op->close();
@@ -33,10 +46,8 @@ void PPExtFunCall::close  ()
 	func->result_clear();
 }
 
-void PPExtFunCall::next(tuple &t)
+void PPExtFunCall::do_next(tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	if (first_time)
 	{
 		func->invoke(arr);
@@ -46,28 +57,13 @@ void PPExtFunCall::next(tuple &t)
 	func->result_next(t);
 	if (t.is_eos())
 		first_time = true;
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPExtFunCall::copy(dynamic_context *_cxt_)
+PPIterator* PPExtFunCall::do_copy(dynamic_context *_cxt_)
 {
-	PPExtFunCall *res = se_new PPExtFunCall(_cxt_, arr, func->copy());
+	PPExtFunCall *res = se_new PPExtFunCall(_cxt_, info, arr, func->copy());
 
 	for (unsigned int it = 0; it < arr.size(); it++)
 		res->arr[it].op = arr[it].op->copy(_cxt_);
-	res->set_xquery_line(__xquery_line);
 	return res;
 }
-
-PPExtFunCall::PPExtFunCall(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_, ExtFunction *_func_)
-		: PPIterator(_cxt_), arr(_arr_), func(_func_)
-{
-}
-
-PPExtFunCall::~PPExtFunCall()
-{
-	delete func;
-}
-
-

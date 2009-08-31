@@ -39,7 +39,6 @@ public:
     void add_item(const tuple_cell &tc) { n++; }
     tuple_cell get_result() { return tuple_cell::atomic(n); }
     void reopen() { n = 0; }
-    static tuple_cell result(sequence *s) { return tuple_cell::atomic((__int64)(s->size())); }
 };
 
 ////////////////////////////// PPFnSumEssence //////////////////////////////////
@@ -58,18 +57,6 @@ public:
     }
     tuple_cell get_result() { return empty ? tuple_cell::atomic((double)0) : sum; }
     void reopen() { empty = true; }
-    static tuple_cell result(sequence *s)
-    {
-        if (s->size() == 0) return tuple_cell::atomic((double)0);
-        tuple t(1);
-        tuple_cell sum = atomize(s->get_00());
-        for (int i = 1; i < s->size(); i++)
-        {
-            s->get(t, i);
-            sum = op_numeric_add(sum, atomize(t.cells[0])); 
-        }
-        return sum;
-    }
 };
 
 ////////////////////////////// PPFnAvgEssence //////////////////////////////////
@@ -89,18 +76,6 @@ public:
     }
     tuple_cell get_result() { return n == 0 ? tuple_cell::eos() : op_numeric_divide(sum, n); }
     void reopen() { n = 0; }
-    static tuple_cell result(sequence *s)
-    {
-        if (s->size() == 0) return tuple_cell::eos();
-        tuple t(1);
-        tuple_cell sum = atomize(s->get_00());
-        for (int i = 1; i < s->size(); i++)
-        {
-            s->get(t, i);
-            sum = op_numeric_add(sum, atomize(t.cells[0])); 
-        }
-        return op_numeric_divide(sum, (__int64)(s->size()));
-    }
 };
 
 ////////////////////////////// PPFnMaxEssence //////////////////////////////////
@@ -124,20 +99,6 @@ public:
     }
     tuple_cell get_result() { return empty ? tuple_cell::eos() : res; }
     void reopen() { empty = true; }
-    static tuple_cell result(sequence *s)
-    {
-        if (s->size() == 0) return tuple_cell::eos();
-        tuple t(1);
-        tuple_cell res = atomize(s->get_00());
-        for (int i = 1; i < s->size(); i++)
-        {
-            s->get(t, i);
-            tuple_cell tca = atomize(t.cells[0]);
-            tuple_cell cond = op_numeric_greater_than(tca, res);
-            if (cond.get_xs_boolean()) res = tca;
-        }
-        return res;
-    }
 };
 
 ////////////////////////////// PPFnMinEssence //////////////////////////////////
@@ -161,22 +122,7 @@ public:
     }
     tuple_cell get_result() { return empty ? tuple_cell::eos() : res; }
     void reopen() { empty = true; }
-    static tuple_cell result(sequence *s)
-    {
-        if (s->size() == 0) return tuple_cell::eos();
-        tuple t(1);
-        tuple_cell res = atomize(s->get_00());
-        for (int i = 1; i < s->size(); i++)
-        {
-            s->get(t, i);
-            tuple_cell tca = atomize(t.cells[0]);
-            tuple_cell cond = op_numeric_less_than(tca, res);
-            if (cond.get_xs_boolean()) res = tca;
-        }
-        return res;
-    }
 };
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -191,26 +137,25 @@ private:
     Essence ess;
     bool first_time;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
-    PPAggrFuncContainer(dynamic_context *_cxt_, 
+public:    
+    PPAggrFuncContainer(dynamic_context *_cxt_,
+                        operation_info _info_,
                         PPOpIn _child_);
     virtual ~PPAggrFuncContainer();
 };
 
 template<class Essence>
-PPAggrFuncContainer<Essence>::PPAggrFuncContainer(dynamic_context *_cxt_, 
-                                                  PPOpIn _child_) : PPIterator(_cxt_), 
+PPAggrFuncContainer<Essence>::PPAggrFuncContainer(dynamic_context *_cxt_,
+                                                  operation_info _info_,
+                                                  PPOpIn _child_) : PPIterator(_cxt_, _info_), 
                                                                     child(_child_)
 {
 }
@@ -223,14 +168,14 @@ PPAggrFuncContainer<Essence>::~PPAggrFuncContainer()
 }
 
 template<class Essence>
-void PPAggrFuncContainer<Essence>::open()
+void PPAggrFuncContainer<Essence>::do_open()
 {
     child.op->open();
     first_time = true;
 }
 
 template<class Essence>
-void PPAggrFuncContainer<Essence>::reopen()
+void PPAggrFuncContainer<Essence>::do_reopen()
 {
     child.op->reopen();
     ess.reopen();
@@ -238,16 +183,14 @@ void PPAggrFuncContainer<Essence>::reopen()
 }
 
 template<class Essence>
-void PPAggrFuncContainer<Essence>::close ()
+void PPAggrFuncContainer<Essence>::do_close ()
 {
     child.op->close();
 }
 
 template<class Essence>
-void PPAggrFuncContainer<Essence>::next(tuple &t)
+void PPAggrFuncContainer<Essence>::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -269,49 +212,20 @@ void PPAggrFuncContainer<Essence>::next(tuple &t)
         ess.reopen();
         first_time = true;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
 template<class Essence>
-PPIterator* PPAggrFuncContainer<Essence>::copy(dynamic_context *_cxt_)
+PPIterator* PPAggrFuncContainer<Essence>::do_copy(dynamic_context *_cxt_)
 {
-    PPAggrFuncContainer<Essence> *res = se_new PPAggrFuncContainer<Essence>(_cxt_, child);
+    PPAggrFuncContainer<Essence> *res = se_new PPAggrFuncContainer<Essence>(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-template<class Essence>
-bool PPAggrFuncContainer<Essence>::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    PPOpIn child;
-    ((PPAggrFuncContainer<Essence>*)cur)->children(child);
-
-    void *af_r;
-    bool af_s = (child.op->res_fun())(child.op, cxt, af_r);
-
-    if (!af_s) // if expression is not strict
-    {
-        child.op = (PPIterator*)af_r;
-        r = se_new PPAggrFuncContainer<Essence>(cxt, child);
-        return false;
-    }
-
-    r = se_new sequence(Essence::result((sequence*)af_r));
-    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////// AGGREGATE FUNCTIONS //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 typedef PPAggrFuncContainer<PPFnCountEssence> PPFnCount;
-//typedef PPAggrFuncContainer<PPFnSumEssence> PPFnSum;
-//typedef PPAggrFuncContainer<PPFnAvgEssence> PPFnAvg;
-//typedef PPAggrFuncContainer<PPFnMaxEssence> PPFnMax;
-//typedef PPAggrFuncContainer<PPFnMinEssence> PPFnMin;
-
-
 
 
 
@@ -326,20 +240,21 @@ private:
     CollationHandler* handler;
     int i; // 0 means fn:max, 1 means fn:min
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator *copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPFnMaxMin(dynamic_context *_cxt_,
+               operation_info _info_,
                int _i_,
                PPOpIn _child_);
     PPFnMaxMin(dynamic_context *_cxt_,
+               operation_info _info_,
                int _i_,
                PPOpIn _child_,
                PPOpIn _collation_);
@@ -358,20 +273,21 @@ private:
     bool first_time;
     int i; // 0 means fn:sum, 1 means fn:avg
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator *copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPFnSumAvg(dynamic_context *_cxt_,
+               operation_info _info_,
                int _i_,
                PPOpIn _child_);
     PPFnSumAvg(dynamic_context *_cxt_,
+               operation_info _info_,
                int _i_,
                PPOpIn _child_,
                PPOpIn _zero_);

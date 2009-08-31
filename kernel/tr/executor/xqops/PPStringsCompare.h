@@ -22,22 +22,23 @@ protected:
     bool is_codepoint_equal;
     bool first_time;
     
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnCompare(dynamic_context *_cxt_, 
+                operation_info _info_,
                 PPOpIn _str1_child_,
                 PPOpIn _str2_child_,
                 bool _is_codepoint_equal_ = false);
 
     PPFnCompare(dynamic_context *_cxt_, 
+                operation_info _info_,
                 PPOpIn _str1_child_,
                 PPOpIn _str2_child_,
                 PPOpIn _collation_child_);

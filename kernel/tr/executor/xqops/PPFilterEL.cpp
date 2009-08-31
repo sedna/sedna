@@ -13,11 +13,11 @@
 
 using namespace std;
 
-
 PPFilterEL::PPFilterEL(dynamic_context *_cxt_,
-             PPOpIn _child_) : PPIterator(_cxt_),
-                               s(NULL),
-                               child(_child_)
+                       operation_info _info_,
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                         s(NULL),
+                                         child(_child_)
 {
 
 }
@@ -29,16 +29,22 @@ PPFilterEL::~PPFilterEL()
     child.op = NULL;
 }
 
-void PPFilterEL::open  ()
+void PPFilterEL::do_open ()
 {
 
     child.op->open();
     pos = 0;
-	s = se_new sorted_sequence(PPDDO::compare_less,PPDDO::get_size,PPDDO::serialize,PPDDO::serialize_2_blks,PPDDO::deserialize,PPDDO::deserialize_2_blks,NULL);
+	s = se_new sorted_sequence(PPDDO::compare_less,
+                               PPDDO::get_size,
+                               PPDDO::serialize,
+                               PPDDO::serialize_2_blks,
+                               PPDDO::deserialize,
+                               PPDDO::deserialize_2_blks,
+                               NULL);
 	
 }
 
-void PPFilterEL::reopen()
+void PPFilterEL::do_reopen()
 {
 
     child.op->reopen();
@@ -47,7 +53,7 @@ void PPFilterEL::reopen()
 
 }
 
-void PPFilterEL::close ()
+void PPFilterEL::do_close()
 {
 
     child.op->close();
@@ -56,10 +62,9 @@ void PPFilterEL::close ()
     s = NULL;
 }
 
-void PPFilterEL::next  (tuple &t)
+void PPFilterEL::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if (!pos)
     {
         // accumulate nodes and sort them
@@ -74,14 +79,7 @@ void PPFilterEL::next  (tuple &t)
                 s->add(t);
             }
         }
-
-       /* u_timeb t_sort1, t_sort2;
-        d_printf1("Before sorting: \n");
-        u_ftime(&t_sort1);
-        //s->sort();*/
         s->sort();
-        /*u_ftime(&t_sort2);
-        d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
     }
 	if (pos < s->size())
 	{
@@ -89,7 +87,6 @@ void PPFilterEL::next  (tuple &t)
 		if (pos+1==s->size()) 
 		{
 			pos++;
-			RESTORE_CURRENT_PP; return;
 		}
 		else
 		{
@@ -99,7 +96,7 @@ void PPFilterEL::next  (tuple &t)
 				if (pos+1==s->size())
 				{
 					pos++;
-					RESTORE_CURRENT_PP; return;
+					return;
 				}
 				s->get(t,pos+1);
 				if ((p==(t.cells[0]).get_node()||nid_cmp_effective(p,(t.cells[0]).get_node())==-2))
@@ -108,7 +105,7 @@ void PPFilterEL::next  (tuple &t)
 				{
 					(t.cells[0]).set_node(p);
 					pos++;
-					RESTORE_CURRENT_PP; return;
+					return;
 				}
 			}
 		}
@@ -119,21 +116,12 @@ void PPFilterEL::next  (tuple &t)
 		t.set_eos();
 		pos = 0;
 		s->clear();
-		RESTORE_CURRENT_PP; return;
 	}
-
-	RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFilterEL::copy(dynamic_context *_cxt_)
+PPIterator* PPFilterEL::do_copy(dynamic_context *_cxt_)
 {
-    PPFilterEL *res = se_new PPFilterEL(_cxt_, child);
+    PPFilterEL *res = se_new PPFilterEL(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFilterEL::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-return true;
 }

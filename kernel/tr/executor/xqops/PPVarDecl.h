@@ -13,7 +13,7 @@
 
 class PPVarDecl : public PPVarIterator
 {
-private:
+protected:
     int v_dsc;
 
     PPOpIn child;
@@ -26,33 +26,32 @@ private:
     bool first_time;
     sequence_tmp *s;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
+    virtual var_c_id do_register_consumer(var_dsc dsc);
+    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_reopen(var_dsc dsc, var_c_id id);
+    virtual void do_close (var_dsc dsc, var_c_id id);
+
+public:
     PPVarDecl(dynamic_context *_cxt_,
+              operation_info _info_,
               int _v_dsc_, 
               PPOpIn _child_, 
               const sequence_type& _st_);
 
     PPVarDecl(dynamic_context *_cxt_,
+              operation_info _info_,
               int _v_dsc_, 
               PPOpIn _child_);
 
     virtual ~PPVarDecl();
-
-    virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next  (tuple &t, var_dsc dsc, var_c_id id);
-    virtual void reopen(var_dsc dsc, var_c_id id);
-    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 #endif

@@ -9,8 +9,9 @@
 
 
 PPVarDecl::PPVarDecl(dynamic_context *_cxt_,
+                     operation_info _info_,
                      int _v_dsc_, 
-                     PPOpIn _child_) : PPVarIterator(_cxt_),
+                     PPOpIn _child_) : PPVarIterator(_cxt_, _info_),
                                        v_dsc(_v_dsc_),
                                        child(_child_),
                                        source(_child_.ts),
@@ -19,9 +20,10 @@ PPVarDecl::PPVarDecl(dynamic_context *_cxt_,
 }
 
 PPVarDecl::PPVarDecl(dynamic_context *_cxt_,
+                     operation_info _info_,
                      int _v_dsc_, 
                      PPOpIn _child_, 
-                     const sequence_type& _st_) : PPVarIterator(_cxt_),
+                     const sequence_type& _st_) : PPVarIterator(_cxt_, _info_),
                                                   v_dsc(_v_dsc_),
                                                   child(_child_),
                                                   source(_child_.ts),
@@ -37,7 +39,7 @@ PPVarDecl::~PPVarDecl()
 }
 
 
-void PPVarDecl::open ()
+void PPVarDecl::do_open ()
 {
     s = se_new sequence_tmp(child.ts);
     child.op->open();
@@ -46,29 +48,29 @@ void PPVarDecl::open ()
     cxt->glb_var_cxt.producers[v_dsc].op = this;
 }
 
-void PPVarDecl::reopen ()
+void PPVarDecl::do_reopen()
 {
-	throw USER_EXCEPTION2(SE1003, "PPVarDecl::reopen");
+	throw USER_EXCEPTION2(SE1003, "PPVarDecl::do_reopen");
 }
 
-void PPVarDecl::close ()
+void PPVarDecl::do_close()
 {
     child.op->close();
     delete s;
     s = NULL;
 }
 
-void PPVarDecl::next(tuple &t)
+void PPVarDecl::do_next(tuple &t)
 {
-	throw USER_EXCEPTION2(SE1003, "PPVarDecl::next");
+	throw USER_EXCEPTION2(SE1003, "PPVarDecl::do_next");
 }
 
-PPIterator* PPVarDecl::copy(dynamic_context *_cxt_)
+PPIterator* PPVarDecl::do_copy(dynamic_context *_cxt_)
 {
-	throw USER_EXCEPTION2(SE1003, "PPVarDecl::copy");
+	throw USER_EXCEPTION2(SE1003, "PPVarDecl::do_copy");
 }
 
-var_c_id PPVarDecl::register_consumer(var_dsc dsc)
+var_c_id PPVarDecl::do_register_consumer(var_dsc dsc)
 {
     global_producer &p = cxt->glb_var_cxt.producers[dsc];
     if (p.fel.size() != 0)
@@ -85,10 +87,8 @@ var_c_id PPVarDecl::register_consumer(var_dsc dsc)
     }
 }
 
-void PPVarDecl::next(tuple &t, var_dsc dsc, var_c_id id)
+void PPVarDecl::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP_VAR(this);
-    
     global_producer &p = cxt->glb_var_cxt.producers[dsc];
     complex_var_consumption &cvc = p.cvc;
 
@@ -127,21 +127,14 @@ void PPVarDecl::next(tuple &t, var_dsc dsc, var_c_id id)
             }
         }
     }
-
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPVarDecl::reopen(var_dsc dsc, var_c_id id)
+void PPVarDecl::do_reopen(var_dsc dsc, var_c_id id)
 {
     cxt->glb_var_cxt.producers[dsc].cvc[id] = 0;
 }
 
-void PPVarDecl::close(var_dsc dsc, var_c_id id)
+void PPVarDecl::do_close(var_dsc dsc, var_c_id id)
 {
     cxt->glb_var_cxt.producers[dsc].fel.push_back(id);
-}
-
-bool PPVarDecl::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPVarDecl::result");
 }

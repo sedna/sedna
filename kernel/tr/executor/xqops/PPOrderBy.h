@@ -157,25 +157,23 @@ private:
     static void deserialize         (tuple &t, xptr& v1, const void * Udata);
     static void deserialize_2_blks  (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
         
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
+public:    
     PPOrderBy(dynamic_context *_cxt_,
+              operation_info _info_,
               bool _stable_,
               PPOpIn _child_,
               arr_of_orb_modifier _modifiers_,
               int _data_size_);
-    virtual ~PPOrderBy();
 
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual ~PPOrderBy();
 };
 
 
@@ -195,20 +193,19 @@ protected:
     unsigned int i;
     tuple lt; // local tuple
 
-    void children(arr_of_PPOpIn &_ch_arr_) { _ch_arr_ = ch_arr; }
     arr_of_seq_ptr seq_ptrs;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+public:    
     PPSTuple(dynamic_context *_cxt_,
+             operation_info _info_,
              const arr_of_PPOpIn &_children_);
     virtual ~PPSTuple();
 };
@@ -231,30 +228,27 @@ private:
 
     inline void reinit_consumer_table();
 
-    void children(PPOpIn& _source_child_, PPOpIn& _data_child_) {_source_child_ = source_child; 
-                                                                 _data_child_ = data_child;   }
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
+    virtual var_c_id do_register_consumer(var_dsc dsc);
+    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_reopen(var_dsc dsc, var_c_id id);
+    virtual void do_close (var_dsc dsc, var_c_id id);
+
+public:
     PPSLet(dynamic_context *_cxt_,
-          arr_of_var_dsc _var_dscs_, 
-          PPOpIn _source_child_, 
-          PPOpIn _data_child_);
+           operation_info _info_,
+           arr_of_var_dsc _var_dscs_, 
+           PPOpIn _source_child_, 
+           PPOpIn _data_child_);
 
     virtual ~PPSLet();
-
-    virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next  (tuple &t, var_dsc dsc, var_c_id id);
-    virtual void reopen(var_dsc dsc, var_c_id id);
-    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 

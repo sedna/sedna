@@ -11,9 +11,10 @@
 
 
 PPExcept::PPExcept(dynamic_context *_cxt_,
+                   operation_info _info_,
                    PPOpIn _child1_,
                    PPOpIn _child2_,
-                   bool _doc_order_) : PPIterator(_cxt_),
+                   bool _doc_order_) : PPIterator(_cxt_, _info_),
                                        child1(_child1_),
                                        child2(_child2_),
                                        doc_order(_doc_order_)
@@ -28,7 +29,7 @@ PPExcept::~PPExcept()
     child2.op = NULL;
 }
 
-void PPExcept::open  ()
+void PPExcept::do_open ()
 {
     child1.op->open();
     child2.op->open();
@@ -39,7 +40,7 @@ void PPExcept::open  ()
     need_reopen_second = false;
 }
 
-void PPExcept::reopen()
+void PPExcept::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
@@ -50,16 +51,14 @@ void PPExcept::reopen()
     need_reopen_second = false;
 }
 
-void PPExcept::close ()
+void PPExcept::do_close()
 {
     child1.op->close();
     child2.op->close();
 }
 
-void PPExcept::next  (tuple &t)
+void PPExcept::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if(need_reopen_second)  {child2.op->reopen(); need_reopen_second = false;}
     
     while (true)
@@ -104,7 +103,7 @@ void PPExcept::next  (tuple &t)
             {
                 tug_first = true;
                 t.copy(tuple_cell::node(xptr1));
-                RESTORE_CURRENT_PP; return;
+                return;
             }
             case  0: /// (1) == (2)
             {
@@ -114,7 +113,7 @@ void PPExcept::next  (tuple &t)
                 if (xptr1 == XNULL) 
                 {
                     t.set_eos();
-                    RESTORE_CURRENT_PP; return;
+                    return;
                 }
 
                 break;
@@ -127,7 +126,7 @@ void PPExcept::next  (tuple &t)
                     t.set_eos();
                     tug_first = true;
                     tug_second = true;
-                    {RESTORE_CURRENT_PP; return;}
+                    return;
                 }
                 tug_second = true;
                 break;
@@ -135,21 +134,12 @@ void PPExcept::next  (tuple &t)
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPExcept::next");
         }
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPExcept::copy(dynamic_context *_cxt_)
+PPIterator* PPExcept::do_copy(dynamic_context *_cxt_)
 {
-    PPExcept *res = se_new PPExcept(_cxt_, child1, child2, doc_order);
+    PPExcept *res = se_new PPExcept(_cxt_, info, child1, child2, doc_order);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPExcept::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPExcept::result");
-}
-

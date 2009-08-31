@@ -12,9 +12,10 @@
 
 
 PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,
+                         operation_info _info_,
 						 PPOpIn _seq1_, 
 						 PPOpIn _seq2_,
-						 subsmatch_type _smt_):	PPIterator(_cxt_), 
+						 subsmatch_type _smt_):	PPIterator(_cxt_, _info_), 
 						                        seq1(_seq1_), 
 						                        seq2(_seq2_),
 						                        smt(_smt_)
@@ -54,21 +55,21 @@ PPSubsMatch::~PPSubsMatch()
 	seq2.op = NULL;
 }
 
-void PPSubsMatch::open  ()
+void PPSubsMatch::do_open ()
 {
     seq1.op->open();
 	seq2.op->open();
     first_time = true;
  }
 
-void PPSubsMatch::reopen()
+void PPSubsMatch::do_reopen()
 {
     seq1.op->reopen();
 	seq2.op->reopen();
     first_time = true;
 }
 
-void PPSubsMatch::close ()
+void PPSubsMatch::do_close()
 {
     seq1.op->close();
 	seq2.op->close();
@@ -84,10 +85,8 @@ void PPSubsMatch::error(const char* msg)
 }
 
 
-void PPSubsMatch::next  (tuple &t)
+void PPSubsMatch::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
 
@@ -156,21 +155,13 @@ void PPSubsMatch::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-bool PPSubsMatch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    return true;
-}
-
-PPIterator* PPSubsMatch::copy(dynamic_context *_cxt_)
+PPIterator* PPSubsMatch::do_copy(dynamic_context *_cxt_)
 {
 	PPSubsMatch *res ;
-	res = se_new PPSubsMatch(_cxt_, seq1,seq2,smt);
+	res = se_new PPSubsMatch(_cxt_, info, seq1, seq2, smt);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
-	res->set_xquery_line(__xquery_line);
     return res;
 }

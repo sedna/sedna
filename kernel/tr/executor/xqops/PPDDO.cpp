@@ -17,7 +17,8 @@ int PPDDO::buf_lgth=0;//MAXINTERNALPREFIX;
 
 
 PPDDO::PPDDO(dynamic_context *_cxt_,
-             PPOpIn _child_) : PPIterator(_cxt_),
+             operation_info _info_,
+             PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                child(_child_)
 {
 #ifdef TURN_ON_DDO
@@ -35,7 +36,7 @@ PPDDO::~PPDDO()
     child.op = NULL;
 }
 
-void PPDDO::open  ()
+void PPDDO::do_open ()
 {
 #ifdef TURN_ON_DDO
     s = se_new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,NULL);
@@ -48,7 +49,7 @@ void PPDDO::open  ()
 #endif
 }
 
-void PPDDO::reopen()
+void PPDDO::do_reopen()
 {
 #ifdef TURN_ON_DDO
     child.op->reopen();
@@ -61,7 +62,7 @@ void PPDDO::reopen()
 #endif
 }
 
-void PPDDO::close ()
+void PPDDO::do_close()
 {
 #ifdef TURN_ON_DDO
     child.op->close();
@@ -73,12 +74,9 @@ void PPDDO::close ()
 #endif
 }
 
-void PPDDO::next  (tuple &t)
+void PPDDO::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-
 #ifdef TURN_ON_DDO
-
     if(atomic_mode) {
         child.op->next(t);
         if(!t.is_eos()) {
@@ -89,7 +87,6 @@ void PPDDO::next  (tuple &t)
         else {
             atomic_mode = false;
         }
-        RESTORE_CURRENT_PP; 
         return;
     }
 
@@ -110,7 +107,6 @@ void PPDDO::next  (tuple &t)
                     if(s->size() != 0)
                         throw XQUERY_EXCEPTION2(XPTY0019, "Atomic or node sequence is expected");
                     atomic_mode = true;
-                    RESTORE_CURRENT_PP; 
                     return;
                 }
             }
@@ -128,55 +124,29 @@ void PPDDO::next  (tuple &t)
         {
             pos = 0;
             s->clear();
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
         else
         {
             if (t.cells[0].get_node()!=ret_val)
             {
                 ret_val=t.cells[0].get_node();
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
         }
     }
 #else
     child.op->next(t);
 #endif
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPDDO::copy(dynamic_context *_cxt_)
+PPIterator* PPDDO::do_copy(dynamic_context *_cxt_)
 {
-    PPDDO *res = se_new PPDDO(_cxt_, child);
+    PPDDO *res = se_new PPDDO(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPDDO::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-#ifdef TURN_ON_DDO
-    return true;
-#else
-    PPOpIn child;
-    ((PPDDO*)cur)->children(child);
-
-    void *child_r;
-    bool child_s = (child.op->res_fun())(child.op, cxt, child_r);
-
-    if (!child_s) // if expression is not strict
-    { // create PPDDO and transmit state
-        child.op = (PPIterator*)child_r;
-        PPDDO *res_op = se_new PPDDO(cxt, child);
-
-        r = res_op;
-        return false;
-    }
-
-    return strict_op_result(cur, (sequence*)child_r, cxt, r);
-#endif
-}
 int PPDDO::get_size_ser(xptr& v1)
 {
 	CHECKP(v1);

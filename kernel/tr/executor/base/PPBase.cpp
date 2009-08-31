@@ -6,51 +6,24 @@
 
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
-#include "tr/executor/xqops/PPSLStub.h"
 #include "tr/executor/xqops/PPFunCall.h"
-
-bool strict_op_result(PPIterator* cur, sequence *res_seq, dynamic_context *cxt, void*& r)
-{
-    if (res_seq->size() > STRICT_FUNS_BOUND)
-    {
-        PPIterator *new_tree = cur->copy(cxt);
-        PPSLStub *new_node = se_new PPSLStub(cxt, new_tree, res_seq);
-        new_node->open();
-        r = new_node;
-        return false;
-    }
-    else
-    {
-        r = res_seq;
-        return true;
-    }
-}
 
 
 namespace tr_globals
 {
+    char mem_str_buf[MAX_ATOMIC_LEX_REPR_SIZE + 1];
+    char mem_str_buf2[MAX_ATOMIC_LEX_REPR_SIZE + 1];
 
-//pp_static_context st_ct;
+    char e_string_buf[PAGE_SIZE];
 
-char mem_str_buf[MAX_ATOMIC_LEX_REPR_SIZE + 1];
-char mem_str_buf2[MAX_ATOMIC_LEX_REPR_SIZE + 1];
+    /* Used to throw XQUERY_EXCEPTION which contains line information. */
+    TLS_VAR_DECL
+    PPIterator* __current_physop = NULL;
 
-char e_string_buf[PAGE_SIZE];
+    /* Used to interrupt execution due to timeout. */
+    TLS_VAR_DECL
+    volatile bool is_timer_fired = false;
 
-/// Used to throw XQUERY_EXCEPTION which contains line information.
- 
-TLS_VAR_DECL
-PPIterator* __current_physop = NULL;
-
-/// Used to interrupt execution due to timeout.
-TLS_VAR_DECL
-volatile bool is_timer_fired = false;
-
-
-//FIXME: make this TLS_VAR_DECL when we start to use threads
-op_str_buf tmp_op_str_buf;
-
+    /* FIXME: make this TLS_VAR_DECL when we start to use threads */
+    op_str_buf tmp_op_str_buf;
 }
-
-
-

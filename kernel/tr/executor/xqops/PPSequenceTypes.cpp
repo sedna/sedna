@@ -16,9 +16,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 PPCast::PPCast(dynamic_context *_cxt_,
+               operation_info _info_,
                PPOpIn _child_,
                xmlscm_type _target_type_,
-               bool _can_be_empty_seq_) : PPIterator(_cxt_),
+               bool _can_be_empty_seq_) : PPIterator(_cxt_, _info_),
                                           child(_child_),
                                           target_type(_target_type_),
                                           can_be_empty_seq(_can_be_empty_seq_)
@@ -31,27 +32,25 @@ PPCast::~PPCast()
     child.op = NULL;
 }
 
-void PPCast::open  ()
+void PPCast::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPCast::reopen()
+void PPCast::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPCast::close ()
+void PPCast::do_close()
 {
     child.op->close();
 }
 
-void PPCast::next  (tuple &t)
+void PPCast::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -63,7 +62,7 @@ void PPCast::next  (tuple &t)
             {
                 first_time = true;
                 t.set_eos();
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             else throw XQUERY_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
         }
@@ -80,67 +79,14 @@ void PPCast::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPCast::copy(dynamic_context *_cxt_)
+PPIterator* PPCast::do_copy(dynamic_context *_cxt_)
 {
-    PPCast *res = se_new PPCast(_cxt_, child, target_type, can_be_empty_seq);
+    PPCast *res = se_new PPCast(_cxt_, info, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPCast::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    PPOpIn child;
-    ((PPCast*)cur)->children(child);
-
-    void *child_r;
-    bool child_s = (child.op->res_fun())(child.op, cxt, child_r);
-
-    if (!child_s) // if expression is not strict
-    { // create PPCast and transmit state
-        child.op = (PPIterator*)child_r;
-        PPCast *res_op = se_new PPCast(cxt, child, 
-                                    ((PPCast*)cur)->target_type, 
-                                    ((PPCast*)cur)->can_be_empty_seq);
-
-        r = res_op;
-        return false;
-    }
-
-    sequence *child_seq = (sequence*)child_r;
-    if (child_seq->size() == 0)
-    {
-        if (((PPCast*)cur)->can_be_empty_seq)
-        {
-            r = child_seq;
-            return true;
-        }
-        else throw USER_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
-    }
-
-    if (child_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "cast expression (the result of atomization is a sequence of more than one atomic value)");
-
-    tuple t(1);
-    child_seq->get(t, child_seq->begin());
-    t.cells[0] = cast(atomize(t.cells[0]), ((PPCast*)cur)->target_type);
-    child_seq->clear();
-    child_seq->add(t);
-
-    r = child_seq;
-    return true;
-}
-
-
-
-
-
-
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -151,12 +97,13 @@ bool PPCast::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 
 
 PPCastable::PPCastable(dynamic_context *_cxt_,
-               PPOpIn _child_,
-               xmlscm_type _target_type_,
-               bool _can_be_empty_seq_) : PPIterator(_cxt_),
-                                          child(_child_),
-                                          target_type(_target_type_),
-                                          can_be_empty_seq(_can_be_empty_seq_)
+                       operation_info _info_,
+                       PPOpIn _child_,
+                       xmlscm_type _target_type_,
+                       bool _can_be_empty_seq_) : PPIterator(_cxt_, _info_),
+                                                  child(_child_),
+                                                  target_type(_target_type_),
+                                                  can_be_empty_seq(_can_be_empty_seq_)
 {
 }
 
@@ -166,27 +113,25 @@ PPCastable::~PPCastable()
     child.op = NULL;
 }
 
-void PPCastable::open  ()
+void PPCastable::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPCastable::reopen()
+void PPCastable::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPCastable::close ()
+void PPCastable::do_close()
 {
     child.op->close();
 }
 
-void PPCastable::next  (tuple &t)
+void PPCastable::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     bool res;
     if (first_time)
     {
@@ -213,30 +158,14 @@ void PPCastable::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPCastable::copy(dynamic_context *_cxt_)
+PPIterator* PPCastable::do_copy(dynamic_context *_cxt_)
 {
-    PPCastable *res = se_new PPCastable(_cxt_, child, target_type, can_be_empty_seq);
+    PPCastable *res = se_new PPCastable(_cxt_, info, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPCastable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPCastable::result");
-}
-
-
-
-
-
-
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -246,8 +175,9 @@ bool PPCastable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPInstanceOf::PPInstanceOf(dynamic_context *_cxt_,
+                           operation_info _info_,
                            PPOpIn _child_,
-                           const sequence_type& _st_) : PPIterator(_cxt_),
+                           const sequence_type& _st_) : PPIterator(_cxt_, _info_),
                                                         child(_child_),
                                                         st(_st_)
 {
@@ -259,31 +189,30 @@ PPInstanceOf::~PPInstanceOf()
     child.op = NULL;
 }
 
-void PPInstanceOf::open  ()
+void PPInstanceOf::do_open ()
 {
     child.op->open();
     first_time = true;
     eos_reached = true;
 }
 
-void PPInstanceOf::reopen()
+void PPInstanceOf::do_reopen()
 {
     child.op->reopen();
     first_time = true;
     eos_reached = true;
 }
 
-void PPInstanceOf::close ()
+void PPInstanceOf::do_close()
 {
     child.op->close();
 }
 
 bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st);
 
-void PPInstanceOf::next  (tuple &t)
+void PPInstanceOf::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if (first_time)
     {
         first_time = false;
@@ -299,29 +228,14 @@ void PPInstanceOf::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPInstanceOf::copy(dynamic_context *_cxt_)
+PPIterator* PPInstanceOf::do_copy(dynamic_context *_cxt_)
 {
-    PPInstanceOf *res = se_new PPInstanceOf(_cxt_, child, st);
+    PPInstanceOf *res = se_new PPInstanceOf(_cxt_, info, child, st);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPInstanceOf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPInstanceOf::result");
-}
-
-
-
-
-
-
-
 
 
 
@@ -332,8 +246,9 @@ bool PPInstanceOf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPTreat::PPTreat(dynamic_context *_cxt_,
+                 operation_info _info_,
                  PPOpIn _child_,
-                 const sequence_type& _st_) : PPIterator(_cxt_),
+                 const sequence_type& _st_) : PPIterator(_cxt_, _info_),
                                               child(_child_),
                                               st(_st_),
                                               s(NULL)
@@ -346,7 +261,7 @@ PPTreat::~PPTreat()
     child.op = NULL;
 }
 
-void PPTreat::open  ()
+void PPTreat::do_open ()
 {
     child.op->open();
     first_time = true;
@@ -356,7 +271,7 @@ void PPTreat::open  ()
     pos = 0;
 }                                     
 
-void PPTreat::reopen()
+void PPTreat::do_reopen()
 {
     child.op->reopen();
     first_time = true;
@@ -365,7 +280,7 @@ void PPTreat::reopen()
     s->clear();
 }
 
-void PPTreat::close ()
+void PPTreat::do_close()
 {
     child.op->close();
 
@@ -373,10 +288,8 @@ void PPTreat::close ()
     s = NULL;
 }
 
-void PPTreat::next(tuple &t)
+void PPTreat::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -388,43 +301,27 @@ void PPTreat::next(tuple &t)
     if(pos < s->size())
     {
         s->get(t, pos++);
-        {RESTORE_CURRENT_PP; return;}
+        return;
     }
     else if(!eos_reached)
     {
         child.op->next(t);
         if(t.is_eos()) eos_reached = true;
-        else {RESTORE_CURRENT_PP; return;}
+        else return;
     }
 
     t.set_eos();
     first_time = true;
     s->clear();
     pos=0;
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPTreat::copy(dynamic_context *_cxt_)
+PPIterator* PPTreat::do_copy(dynamic_context *_cxt_)
 {
-    PPTreat *res = se_new PPTreat(_cxt_, child, st);
+    PPTreat *res = se_new PPTreat(_cxt_, info, child, st);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPTreat::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPTreat::result");
-}
-
-
-
-
-
-
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -434,11 +331,12 @@ bool PPTreat::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPTypeswitch::PPTypeswitch(dynamic_context *_cxt_,
+                           operation_info _info_,
                            arr_of_var_dsc _var_dscs_, 
                            PPOpIn _source_child_, 
                            const arr_of_sequence_type& _types_,
                            arr_of_PPOpIn _cases_,
-                           PPOpIn _default_child_): PPVarIterator(_cxt_),
+                           PPOpIn _default_child_): PPVarIterator(_cxt_, _info_),
                                                     var_dscs(_var_dscs_),
                                                     source_child(_source_child_),
                                                     default_child(_default_child_),
@@ -467,7 +365,7 @@ PPTypeswitch::~PPTypeswitch()
 }
 
 
-void PPTypeswitch::open ()
+void PPTypeswitch::do_open ()
 {
     s = se_new sequence_tmp(source_child.ts);
 
@@ -492,7 +390,7 @@ void PPTypeswitch::open ()
     default_child.op->open();
 }
 
-void PPTypeswitch::reopen()
+void PPTypeswitch::do_reopen()
 {
     if(!eos_reached) source_child.op->reopen();
     if(effective_case != NULL) 
@@ -509,7 +407,7 @@ void PPTypeswitch::reopen()
     reinit_consumer_table();
 }
 
-void PPTypeswitch::close ()
+void PPTypeswitch::do_close()
 {
     source_child.op->close();   
 
@@ -520,10 +418,8 @@ void PPTypeswitch::close ()
     delete s;
 }
 
-void PPTypeswitch::next(tuple &t)
+void PPTypeswitch::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         if(need_reopen)
@@ -555,13 +451,12 @@ void PPTypeswitch::next(tuple &t)
         first_time = true;
         need_reopen = true;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPTypeswitch::copy(dynamic_context *_cxt_)
+PPIterator* PPTypeswitch::do_copy(dynamic_context *_cxt_)
 {
-    PPTypeswitch *res = se_new PPTypeswitch(_cxt_, 
+    PPTypeswitch *res = se_new PPTypeswitch(_cxt_,
+                                         info, 
                                          var_dscs, 
                                          source_child, 
                                          types, 
@@ -573,21 +468,18 @@ PPIterator* PPTypeswitch::copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->default_child.op = default_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-var_c_id PPTypeswitch::register_consumer(var_dsc dsc)
+var_c_id PPTypeswitch::do_register_consumer(var_dsc dsc)
 {
     complex_var_consumption &cvc = *(cxt->var_cxt.producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
-void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)                    
+void PPTypeswitch::do_next(tuple &t, var_dsc dsc, var_c_id id)                    
 {
-    SET_CURRENT_PP_VAR(this);
-    
     producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
 
@@ -621,16 +513,14 @@ void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)
             }
         }
     }
-
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPTypeswitch::reopen(var_dsc dsc, var_c_id id)
+void PPTypeswitch::do_reopen(var_dsc dsc, var_c_id id)
 {
     cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
 }
 
-void PPTypeswitch::close(var_dsc dsc, var_c_id id)
+void PPTypeswitch::do_close(var_dsc dsc, var_c_id id)
 {
 }
 
@@ -641,9 +531,4 @@ inline void PPTypeswitch::reinit_consumer_table()
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
-}
-
-bool PPTypeswitch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPTypeswitch::result");
 }

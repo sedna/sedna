@@ -20,19 +20,17 @@ protected:
     PPOpIn child_elem;
     bool first_time;
 
-    void children(PPOpIn &_child_qname_, PPOpIn &_child_elem_) { _child_qname_ = child_qname; _child_elem_ = child_elem; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnResolveQName(dynamic_context *_cxt_,
+                     operation_info _info_,
                      PPOpIn _child_qname_,
                      PPOpIn _child_elem_);
     virtual ~PPFnResolveQName();
@@ -48,19 +46,17 @@ protected:
     PPOpIn child_qname;
     bool first_time;
 
-    void children(PPOpIn &_child_uri_, PPOpIn &_child_qname_) { _child_uri_ = child_uri; _child_qname_ = child_qname; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnQName(dynamic_context *_cxt_,
+              operation_info _info_,
               PPOpIn _child_uri_,
               PPOpIn _child_qname_);
     virtual ~PPFnQName();
@@ -75,19 +71,17 @@ protected:
     PPOpIn child;
     bool first_time;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnPrefixFromQName(dynamic_context *_cxt_,
+                        operation_info _info_,
                         PPOpIn _child_);
     virtual ~PPFnPrefixFromQName();
 };
@@ -101,19 +95,17 @@ protected:
     PPOpIn child;
     bool first_time;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnLocalNameFromQName(dynamic_context *_cxt_,
+                           operation_info _info_,
                            PPOpIn _child_);
     virtual ~PPFnLocalNameFromQName();
 };
@@ -127,19 +119,17 @@ protected:
     PPOpIn child;
     bool first_time;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnNamespaceUriFromQName(dynamic_context *_cxt_,
+                              operation_info _info_,
                               PPOpIn _child_);
     virtual ~PPFnNamespaceUriFromQName();
 };
@@ -154,19 +144,17 @@ protected:
     PPOpIn child_element;
     bool first_time;
 
-    void children(PPOpIn &_child_prefix_, PPOpIn &_child_element_) { _child_prefix_ = child_prefix; _child_element_ = child_element; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnNamespaceUriForPrefix(dynamic_context *_cxt_,
+                              operation_info _info_,
                               PPOpIn _child_prefix_,
                               PPOpIn _child_element_);
     virtual ~PPFnNamespaceUriForPrefix();
@@ -182,19 +170,17 @@ protected:
     std::vector<xmlns_ptr> xmlns;
     int pos;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
     PPFnInScopePrefixes(dynamic_context *_cxt_,
+                        operation_info _info_,
                         PPOpIn _child_);
     virtual ~PPFnInScopePrefixes();
 };

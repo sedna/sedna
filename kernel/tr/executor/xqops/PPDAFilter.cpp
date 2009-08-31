@@ -10,10 +10,11 @@
 
 
 PPDAFilter::PPDAFilter(dynamic_context *_cxt_,
-                 PPOpIn _child1_,
-                 PPOpIn _child2_) : PPIterator(_cxt_),
-                                    child1(_child1_),
-                                    child2(_child2_)
+                       operation_info _info_,
+                       PPOpIn _child1_,
+                       PPOpIn _child2_) : PPIterator(_cxt_, _info_),
+                                          child1(_child1_),
+                                          child2(_child2_)
 {
 }
 
@@ -25,7 +26,7 @@ PPDAFilter::~PPDAFilter()
     child2.op = NULL;
 }
 
-void PPDAFilter::open  ()
+void PPDAFilter::do_open ()
 {
     child1.op->open();
     child2.op->open();
@@ -34,7 +35,7 @@ void PPDAFilter::open  ()
     tug_second = true;
 }
 
-void PPDAFilter::reopen()
+void PPDAFilter::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
@@ -43,16 +44,15 @@ void PPDAFilter::reopen()
     tug_second = true;
 }
 
-void PPDAFilter::close ()
+void PPDAFilter::do_close()
 {
     child1.op->close();
     child2.op->close();
 }
 
-void PPDAFilter::next  (tuple &t)
+void PPDAFilter::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     while (true)
     {
         if (tug_first)
@@ -65,7 +65,7 @@ void PPDAFilter::next  (tuple &t)
 
                 child2.op->reopen();
 
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             else
             {
@@ -86,7 +86,7 @@ void PPDAFilter::next  (tuple &t)
 
                 child1.op->reopen();
 
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             else
             {
@@ -104,7 +104,7 @@ void PPDAFilter::next  (tuple &t)
             {
                 tug_second = true;
                 t.copy(tuple_cell::node(xptr2));
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             case -1: /// (1) < (2)
             {
@@ -116,7 +116,7 @@ void PPDAFilter::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
                 t.copy(tuple_cell::node(xptr2));
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             case  1: /// (1) > (2)
             {
@@ -131,21 +131,12 @@ void PPDAFilter::next  (tuple &t)
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPDAFilter::next");
         }
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPDAFilter::copy(dynamic_context *_cxt_)
+PPIterator* PPDAFilter::do_copy(dynamic_context *_cxt_)
 {
-    PPDAFilter *res = se_new PPDAFilter(_cxt_, child1, child2);
+    PPDAFilter *res = se_new PPDAFilter(_cxt_, info, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPDAFilter::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPDAFilter::result");
-}
-

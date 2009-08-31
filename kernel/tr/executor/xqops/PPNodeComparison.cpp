@@ -6,61 +6,75 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPNodeComparison.h"
 
-PPNodeComparison* PPNodeComparison::PPGTNodeComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
+PPNodeComparison* PPNodeComparison::PPGTNodeComparison(dynamic_context *_cxt_,
+                                                       operation_info _info_, 
+                                                       PPOpIn _seq1_,
+                                                       PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,1);
+	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,1);
 }
-PPNodeComparison* PPNodeComparison::PPLTNodeComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
+PPNodeComparison* PPNodeComparison::PPLTNodeComparison(dynamic_context *_cxt_,
+                                                       operation_info _info_, 
+                                                       PPOpIn _seq1_,
+                                                       PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,-1);
+	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,-1);
 }
-PPNodeComparison* PPNodeComparison::PPEQNodeComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
+PPNodeComparison* PPNodeComparison::PPEQNodeComparison(dynamic_context *_cxt_,
+                                                       operation_info _info_, 
+                                                       PPOpIn _seq1_,
+                                                       PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,0);
+	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,0);
 }
-PPNodeComparison* PPNodeComparison::PPANNodeComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
+PPNodeComparison* PPNodeComparison::PPANNodeComparison(dynamic_context *_cxt_,
+                                                       operation_info _info_, 
+                                                       PPOpIn _seq1_,
+                                                       PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,2);
+	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,2);
 }
-PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,PPOpIn _seq1_, PPOpIn _seq2_,int _type_): PPIterator(_cxt_),
-                                    seq1(_seq1_),seq2(_seq2_),type(_type_)
+
+PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,
+                                   operation_info _info_,
+                                   PPOpIn _seq1_,
+                                   PPOpIn _seq2_,
+                                   int _type_): PPIterator(_cxt_, _info_),
+                                                seq1(_seq1_),
+                                                seq2(_seq2_),
+                                                type(_type_)
 {
 }
-PPIterator* PPNodeComparison::copy(dynamic_context *_cxt_)
+
+PPIterator* PPNodeComparison::do_copy(dynamic_context *_cxt_)
 {
 	PPNodeComparison *res ;
-	res = se_new PPNodeComparison(_cxt_, seq1,seq2,type);
+	res = se_new PPNodeComparison(_cxt_, info, seq1, seq2, type);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-void PPNodeComparison::close ()
+
+void PPNodeComparison::do_close()
 {
     seq1.op->close();
 	seq2.op->close();
 }
-void PPNodeComparison::open  ()
+
+void PPNodeComparison::do_open ()
 {
     seq1.op->open();
 	seq2.op->open();
     first_time = true;   
 }
 
-void PPNodeComparison::reopen()
+void PPNodeComparison::do_reopen()
 {
     seq1.op->reopen();
 	seq2.op->reopen();
     first_time = true;
 }
-bool PPNodeComparison::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
- return true;
-}
+
 PPNodeComparison::~PPNodeComparison()
 {
 	delete seq1.op;
@@ -68,10 +82,10 @@ PPNodeComparison::~PPNodeComparison()
 	delete seq2.op;
 	seq2.op = NULL;
 }
-void PPNodeComparison::next  (tuple &t)
+
+void PPNodeComparison::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if (first_time)
     {
         first_time = false;
@@ -144,6 +158,4 @@ void PPNodeComparison::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }

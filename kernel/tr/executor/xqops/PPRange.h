@@ -14,24 +14,25 @@ class PPRange : public PPIterator
 protected:
     PPOpIn start_op;
 	PPOpIn end_op;
-    __int64 start, end;
-	__int64 cur;
+    __int64 start, end, cur;
 	bool is_emp;
+    bool first_time;
 
 private:
 	__int64 getIntFromOp(PPOpIn & op);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
+public:
     PPRange(dynamic_context *_cxt_,
-               const PPOpIn &_start_,const PPOpIn &_end_);
+            operation_info _info_,
+            const PPOpIn &_start_,
+            const PPOpIn &_end_);
     virtual ~PPRange();
 };
 

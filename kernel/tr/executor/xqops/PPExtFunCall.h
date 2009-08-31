@@ -12,27 +12,29 @@
 #include "common/sedna_ef.h"
 #include "tr/executor/por2qep/ext.h"
 
-
-class PPExtFunCall : public PPIterator
+class PPExtFunCall: public PPIterator
 {
 private:
 	arr_of_PPOpIn	arr;
 	bool			first_time;
 	ExtFunction		*func;
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return NULL; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPExtFunCall(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_, ExtFunction *_func_);
+public:    
+    PPExtFunCall(dynamic_context *_cxt_, 
+                 operation_info _info_,
+                 const arr_of_PPOpIn &_arr_, 
+                 ExtFunction *_func_);
 
     virtual ~PPExtFunCall();
 };
 
 
-#endif //_PPEXTFUNCALL_H
+#endif /*_PPEXTFUNCALL_H */

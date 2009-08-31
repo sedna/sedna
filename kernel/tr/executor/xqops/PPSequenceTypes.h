@@ -20,36 +20,27 @@
 class PPCast : public PPIterator
 {
 protected:
-    // Inhereted through PPIterator
-    // query_prolog_type *qp;
-    // PPOpOut out;
-
-    // given parameters
     PPOpIn child;
 
-    // obtained parameters and local data
     bool first_time;
     xmlscm_type target_type;
     bool can_be_empty_seq;
 
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
     PPCast(dynamic_context *_cxt_,
+           operation_info _info_,
            PPOpIn _child_,
            xmlscm_type _target_type_,
            bool _can_be_empty_seq_);
     virtual ~PPCast();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -68,24 +59,21 @@ protected:
     xmlscm_type target_type;
     bool can_be_empty_seq;
 
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
     PPCastable(dynamic_context *_cxt_,
+               operation_info _info_,
                PPOpIn _child_,
                xmlscm_type _target_type_,
                bool _can_be_empty_seq_);
     virtual ~PPCastable();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -97,35 +85,26 @@ public:
 class PPInstanceOf : public PPIterator
 {
 protected:
-    // Inhereted through PPIterator
-    // query_prolog_type *qp;
-    // PPOpOut out;
-
-    // given parameters
     PPOpIn child;
     sequence_type st;
 
-    // obtained parameters and local data
     bool first_time;
     bool eos_reached;
 
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
     PPInstanceOf(dynamic_context *_cxt_,
+                 operation_info _info_,
                  PPOpIn _child_,
                  const sequence_type& _st_);
     virtual ~PPInstanceOf();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -146,23 +125,20 @@ protected:
     bool first_time;
     bool eos_reached;
 
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
     PPTreat(dynamic_context *_cxt_,
+            operation_info _info_,
             PPOpIn _child_,
             const sequence_type& _st_);
     virtual ~PPTreat();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -197,18 +173,22 @@ protected:
 
     inline void reinit_consumer_table();
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
+    virtual var_c_id do_register_consumer(var_dsc dsc);
+    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_reopen(var_dsc dsc, var_c_id id);
+    virtual void do_close (var_dsc dsc, var_c_id id);
+
+public:
     PPTypeswitch(dynamic_context *_cxt_,
+                 operation_info _info_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_, 
                  const arr_of_sequence_type& _types_,
@@ -216,11 +196,6 @@ public:
                  PPOpIn _default_child_);
     
     virtual ~PPTypeswitch();
-
-    virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next  (tuple &t, var_dsc dsc, var_c_id id);
-    virtual void reopen(var_dsc dsc, var_c_id id);
-    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 #endif

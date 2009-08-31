@@ -24,7 +24,6 @@
 #include "tr/executor/root/PPReplace.h"
 #include "tr/executor/root/PPRetrieveDS.h"
 #include "tr/executor/root/PPRetrieveMetadata.h"
-#include "tr/executor/xqops/PPSLStub.h"
 #include "tr/executor/xqops/PPIf.h"
 #include "tr/executor/xqops/PPAbsPath.h"
 #include "tr/executor/xqops/PPIndexScan.h"

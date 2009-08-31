@@ -16,15 +16,13 @@
 class PPAbsPath : public PPIterator
 {
 protected:
-    // given parameters
     PathExpr *path_expr;
     counted_ptr<db_entity> db_ent;
     PPOpIn name;
-    // obtained parameters and local data
-    schema_node_xptr root;
-    xptr* merged_seq_arr;	// used for sorting
-    int scmnodes_num;
 
+    schema_node_xptr root;
+    xptr* merged_seq_arr;
+    int scmnodes_num;
 
     friend int compare_merged_seq_elem(const void *e1, const void *e2);
 
@@ -32,30 +30,33 @@ protected:
     void create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
                            schema_node_cptr root, PathExpr *path_expr);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPAbsPath(dynamic_context *_cxt_, 
+public:    
+    PPAbsPath(dynamic_context *_cxt_,
+              operation_info _info_, 
               PathExpr *_path_expr_, 
               counted_ptr<db_entity> _db_ent_);
+
     PPAbsPath(dynamic_context *_cxt_, 
+              operation_info _info_, 
               PathExpr *_path_expr_, 
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_);
+    
     PPAbsPath(dynamic_context *_cxt_, 
+              operation_info _info_,
               PathExpr *_path_expr_, 
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_,
               schema_node_xptr _root_);
     virtual ~PPAbsPath();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

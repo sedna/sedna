@@ -10,33 +10,29 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/sorted_sequence.h"
 
-
 class PPSXptr : public PPIterator
 {
-private:
-
+protected:
     int pos;
     sorted_sequence *s;
     PPOpIn child;
     xptr ret_val;
     bool atomic_mode;
 
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+    
 public:
-
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
-    PPSXptr(dynamic_context *_cxt_, PPOpIn _child_);
+    PPSXptr(dynamic_context *_cxt_, 
+            operation_info _info_,
+            PPOpIn _child_);
     virtual ~PPSXptr();
 
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	static int  compare_less (xptr v1,xptr v2, const void * Udata);
 	static int  get_size (tuple& t, const void * Udata);
 	static void serialize (tuple& t,xptr v1, const void * Udata);

@@ -11,30 +11,30 @@
 #endif
 
 PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-				PPOpIn _query_) :
-						PPIterator(_cxt_),
-						idx_name(_idx_name_),
-						query(_query_),
+                             operation_info _info_,
+                             PPOpIn _idx_name_,
+                             PPOpIn _query_) : PPIterator(_cxt_, _info_),
+                                               idx_name(_idx_name_),
+                                               query(_query_),
 #ifdef SE_ENABLE_DTSEARCH
-						sj(NULL),
+                                               sj(NULL),
 #endif
-						ftc_res(NULL)
+                                               ftc_res(NULL)
 {
 	options.op = NULL;
 }
 PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
-            PPOpIn _idx_name_,
-            PPOpIn _query_,
-			PPOpIn _options_) :
-						PPIterator(_cxt_),
-						idx_name(_idx_name_),
-						query(_query_),
-						options(_options_),
+                             operation_info _info_,
+                             PPOpIn _idx_name_,
+                             PPOpIn _query_,
+                             PPOpIn _options_) : PPIterator(_cxt_, _info_),
+                                                 idx_name(_idx_name_),
+                                                 query(_query_),
+                                                 options(_options_),
 #ifdef SE_ENABLE_DTSEARCH
-						sj(NULL),
+                                                 sj(NULL),
 #endif
-						ftc_res(NULL)
+                                                 ftc_res(NULL)
 {
 }
 
@@ -70,7 +70,7 @@ PPFtIndexScan::~PPFtIndexScan()
 	}
 }
 
-void PPFtIndexScan::open()
+void PPFtIndexScan::do_open()
 {
 	idx_name.op->open();
     query.op->open();
@@ -80,7 +80,7 @@ void PPFtIndexScan::open()
     first_time = true;
 }
 
-void PPFtIndexScan::reopen()
+void PPFtIndexScan::do_reopen()
 {
 	idx_name.op->reopen();
     query.op->reopen();
@@ -103,7 +103,7 @@ void PPFtIndexScan::reopen()
     first_time = true;
 }
 
-void PPFtIndexScan::close()
+void PPFtIndexScan::do_close()
 {
 	idx_name.op->close();
     query.op->close();
@@ -237,11 +237,9 @@ public:
 	}
 };
 
-void PPFtIndexScan::next(tuple &t)
+void PPFtIndexScan::do_next(tuple &t)
 {
-	SET_CURRENT_PP(this);
-
-	if (first_time)
+    if (first_time)
 	{
 #ifdef SE_ENABLE_DTSEARCH
 		bool opt_dtsSearchAnyWords = false;
@@ -356,30 +354,21 @@ void PPFtIndexScan::next(tuple &t)
 		first_time = true;
 	}
 #endif
-
-	RESTORE_CURRENT_PP;
 }
 
-PPIterator*  PPFtIndexScan::copy(dynamic_context *_cxt_)
+PPIterator*  PPFtIndexScan::do_copy(dynamic_context *_cxt_)
 {
 	PPFtIndexScan *res;
 	if (options.op)
-		res = se_new PPFtIndexScan(_cxt_, idx_name, query, options);
+		res = se_new PPFtIndexScan(_cxt_, info, idx_name, query, options);
 	else
-		res = se_new PPFtIndexScan(_cxt_, idx_name, query);
+		res = se_new PPFtIndexScan(_cxt_, info, idx_name, query);
     res->idx_name.op = idx_name.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
 	if (options.op)
 		res->options.op = options.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
 	return res;
 }
-
-bool PPFtIndexScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFtIndexScan::result");
-}
-
 
 
 //////////////////////////////////////////////
@@ -387,48 +376,50 @@ bool PPFtIndexScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 //////////////////////////////////////////////
 
 PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-				PPOpIn _query_) :
-						PPIterator(_cxt_),
-						idx_name(_idx_name_),
-						query(_query_),
+                               operation_info _info_,
+                               PPOpIn _idx_name_,
+                               PPOpIn _query_) : PPIterator(_cxt_, _info_),
+                                                 idx_name(_idx_name_),
+                                                 query(_query_),
 #ifdef SE_ENABLE_DTSEARCH
-						sj(NULL),
+                                                 sj(NULL),
 #endif
-						ftc_res(NULL)
+                                                 ftc_res(NULL)
 {
 	max_results.op = NULL;
 	field_weights.op = NULL;
 }
+
 PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-				PPOpIn _query_,
-				PPOpIn _max_results_) :
-						PPIterator(_cxt_),
-						idx_name(_idx_name_),
-						query(_query_),
-						max_results(_max_results_),
+                               operation_info _info_,
+                               PPOpIn _idx_name_,
+                               PPOpIn _query_,
+                               PPOpIn _max_results_) : PPIterator(_cxt_, _info_),
+                                                       idx_name(_idx_name_),
+                                                       query(_query_),
+                                                       max_results(_max_results_),
 #ifdef SE_ENABLE_DTSEARCH
-						sj(NULL),
+                                                       sj(NULL),
 #endif
-						ftc_res(NULL)
+                                                       ftc_res(NULL)
 {
 	field_weights.op = NULL;
 }
+
 PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
-                PPOpIn _idx_name_,
-				PPOpIn _query_,
-				PPOpIn _max_results_,
-				PPOpIn _field_weights_) :
-						PPIterator(_cxt_),
-						idx_name(_idx_name_),
-						query(_query_),
-						max_results(_max_results_),
-						field_weights(_field_weights_),
+                               operation_info _info_,
+                               PPOpIn _idx_name_,
+                               PPOpIn _query_,
+                               PPOpIn _max_results_,
+                               PPOpIn _field_weights_) : PPIterator(_cxt_, _info_),
+                                                         idx_name(_idx_name_),
+                                                         query(_query_),
+                                                         max_results(_max_results_),
+                                                         field_weights(_field_weights_),
 #ifdef SE_ENABLE_DTSEARCH
-						sj(NULL),
+                                                         sj(NULL),
 #endif
-						ftc_res(NULL)
+                                                         ftc_res(NULL)
 {
 }
 
@@ -468,7 +459,7 @@ PPFtIndexScan2::~PPFtIndexScan2()
 	}
 }
 
-void PPFtIndexScan2::open()
+void PPFtIndexScan2::do_open()
 {
 	idx_name.op->open();
     query.op->open();
@@ -480,7 +471,7 @@ void PPFtIndexScan2::open()
     first_time = true;
 }
 
-void PPFtIndexScan2::reopen()
+void PPFtIndexScan2::do_reopen()
 {
 	idx_name.op->reopen();
     query.op->reopen();
@@ -505,7 +496,7 @@ void PPFtIndexScan2::reopen()
     first_time = true;
 }
 
-void PPFtIndexScan2::close()
+void PPFtIndexScan2::do_close()
 {
 	idx_name.op->close();
     query.op->close();
@@ -527,10 +518,8 @@ void PPFtIndexScan2::close()
 	}
 }
 
-void PPFtIndexScan2::next(tuple &t)
+void PPFtIndexScan2::do_next(tuple &t)
 {
-	SET_CURRENT_PP(this);
-
 	if (first_time)
 	{
 		tuple_cell tc;
@@ -632,13 +621,13 @@ void PPFtIndexScan2::next(tuple &t)
 	//TODO!
 	throw USER_EXCEPTION2(SE1002, "ftwindex-scan not implemented");
 #endif
-	RESTORE_CURRENT_PP;
 }
 
 
-PPIterator*  PPFtIndexScan2::copy(dynamic_context *_cxt_)
+PPIterator*  PPFtIndexScan2::do_copy(dynamic_context *_cxt_)
 {
-	PPFtIndexScan2 *res = se_new PPFtIndexScan2(_cxt_, idx_name, query, max_results, field_weights); //FIXME: mb using different constructors is better?
+	//FIXME: mb using different constructors is better?
+    PPFtIndexScan2 *res = se_new PPFtIndexScan2(_cxt_, info, idx_name, query, max_results, field_weights);
     res->idx_name.op = idx_name.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
 	if (max_results.op)
@@ -646,11 +635,5 @@ PPIterator*  PPFtIndexScan2::copy(dynamic_context *_cxt_)
 	if (field_weights.op)
 		res->field_weights.op = field_weights.op->copy(_cxt_);
 	
-    res->set_xquery_line(__xquery_line);
 	return res;
-}
-
-bool PPFtIndexScan2::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFtIndexScan2::result");
 }

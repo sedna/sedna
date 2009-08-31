@@ -12,7 +12,7 @@
 
 class PPFnDeepEqual : public PPIterator
 {
-private:
+protected:
     PPOpIn child1;
     PPOpIn child2;
 	PPOpIn collation;
@@ -21,8 +21,6 @@ private:
 	bool eos_reached2;
 	CollationHandler* handler;
 
-	void children(PPOpIn& _child1_, PPOpIn& _child2_) { _child1_ = child1; _child2_ = child2; }
-    
 	bool are_nodes_deep_equal(xptr& node1,xptr& node2);
     bool are_elements_deep_equal(xptr& node1,xptr& node2,schema_node_cptr scm1,schema_node_cptr scm2);
     bool are_documents_deep_equal(xptr& node1,xptr& node2);
@@ -30,20 +28,27 @@ private:
     bool are_text_nodes_equal(xptr& node1,xptr& node2);
     bool are_pi_equal(xptr& node1,xptr& node2);
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPFnDeepEqual(dynamic_context *_cxt_, PPOpIn _child1_, PPOpIn _child2_);
-	PPFnDeepEqual(dynamic_context *_cxt_, PPOpIn _child1_, PPOpIn _child2_, PPOpIn _collation_);
+public:    
+    PPFnDeepEqual(dynamic_context *_cxt_, 
+                  operation_info _info_,
+                  PPOpIn _child1_,
+                  PPOpIn _child2_);
+
+	PPFnDeepEqual(dynamic_context *_cxt_,
+                  operation_info _info_,
+                  PPOpIn _child1_,
+                  PPOpIn _child2_,
+                  PPOpIn _collation_);
+
     virtual ~PPFnDeepEqual();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

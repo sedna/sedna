@@ -10,9 +10,10 @@
 
 
 
-PPScan::PPScan(dynamic_context *_cxt_, 
+PPScan::PPScan(dynamic_context *_cxt_,
+               operation_info _info_,
                schema_node_xptr _scm_node_,
-               counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_),
+               counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_, _info_),
                                                   db_ent(_db_ent_),
                                                   scm_node(_scm_node_)
 {
@@ -22,7 +23,7 @@ PPScan::~PPScan()
 {
 }
 
-void PPScan::open ()
+void PPScan::do_open ()
 {
     // Put lock on documents and check security
     schema_node_cptr root = get_schema_node(db_ent, "Unknown entity passed to PPScan");
@@ -31,20 +32,18 @@ void PPScan::open ()
 }
 
 
-void PPScan::reopen()
+void PPScan::do_reopen()
 {
     res = XNULL;
 }
 
 
-void PPScan::close ()
+void PPScan::do_close()
 {
 }
 
-void PPScan::next(tuple &t)
+void PPScan::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (res == XNULL)
     {
         res = getUnemptyBlockFore(scm_node->bblk);
@@ -52,7 +51,7 @@ void PPScan::next(tuple &t)
         if (res == XNULL)
         {
             t.set_eos();
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
 
         CHECKP(res);
@@ -62,8 +61,7 @@ void PPScan::next(tuple &t)
             t.set_eos();
         else
             t.copy(tuple_cell::node(res));
-
-        {RESTORE_CURRENT_PP; return;}
+        return;
     }
 
     res = getNextDescriptorOfSameSortXptr(res);
@@ -71,19 +69,10 @@ void PPScan::next(tuple &t)
         t.set_eos();
     else
         t.copy(tuple_cell::node(res));
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPScan::copy(dynamic_context *_cxt_)
+PPIterator* PPScan::do_copy(dynamic_context *_cxt_)
 {
-    PPScan *res = se_new PPScan(_cxt_, scm_node, db_ent);
-    res->set_xquery_line(__xquery_line);
+    PPScan *res = se_new PPScan(_cxt_, info, scm_node, db_ent);
     return res;
 }
-
-bool PPScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPScan::result");
-}
-

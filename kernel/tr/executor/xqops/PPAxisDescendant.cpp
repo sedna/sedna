@@ -10,9 +10,10 @@
 #include "tr/executor/base/PPUtils.h"
 
 using namespace std;
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-/// PPAxisDescendant
+/// PPAxisDescendant && PPAxisDescendantOrSelf
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 void PPAxisDescendant::init_function()
@@ -32,28 +33,43 @@ void PPAxisDescendant::init_function()
     }
 	merge_tree=NULL;
 }
-PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-						 NodeTestData _nt_data_):PPIterator(_cxt_),
-                                                   child(_child_),
-                                                   nt_type(_nt_type_),
-                                                   nt_data(_nt_data_)
+
+PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_,
+                                   operation_info _info_, 
+                                   PPOpIn _child_,
+                                   NodeTestType _nt_type_,
+                                   NodeTestData _nt_data_): PPIterator(_cxt_, _info_),
+                                                            child(_child_),
+                                                            nt_type(_nt_type_),
+                                                            nt_data(_nt_data_)
 {
 	self=false; 
 	init_function();
 }
-PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-                         NodeTestData _nt_data_,bool _self_) : PPIterator(_cxt_),
-                                                   child(_child_),
-                                                   nt_type(_nt_type_),
-                                                   nt_data(_nt_data_),
-												   self(_self_)
+
+PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_,
+                                   operation_info _info_,
+                                   PPOpIn _child_,
+                                   NodeTestType _nt_type_,
+                                   NodeTestData _nt_data_,
+                                   bool _self_) : PPIterator(_cxt_, _info_),
+                                                  child(_child_),
+                                                  nt_type(_nt_type_),
+                                                  nt_data(_nt_data_),
+												  self(_self_)
 {
     init_function();
 }
+
+PPAxisDescendantOrSelf::PPAxisDescendantOrSelf(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+                                               PPOpIn _child_,
+                                               NodeTestType _nt_type_,
+                                               NodeTestData _nt_data_):
+    PPAxisDescendant(_cxt_,_info_,_child_,_nt_type_,_nt_data_,true)
+{
+}
+
 
 PPAxisDescendant::~PPAxisDescendant()
 {
@@ -65,14 +81,13 @@ PPAxisDescendant::~PPAxisDescendant()
 	}
 }
 
-void PPAxisDescendant::open  ()
+void PPAxisDescendant::do_open ()
 {
     child.op->open();
-
     cur = XNULL;
 }
 
-void PPAxisDescendant::reopen()
+void PPAxisDescendant::do_reopen()
 {
     child.op->reopen();
 
@@ -83,28 +98,24 @@ void PPAxisDescendant::reopen()
 	}
 }
 
-void PPAxisDescendant::close ()
+void PPAxisDescendant::do_close()
 {
     child.op->close();
 }
-PPIterator* PPAxisDescendant::copy(dynamic_context *_cxt_)
-{
-    PPAxisDescendant *res = self ? se_new PPAxisDescendant(_cxt_, child, nt_type, nt_data, true) :
-                                   se_new PPAxisDescendant(_cxt_, child, nt_type, nt_data);
-    res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
-    return res;
-}
 
-bool PPAxisDescendant::result(PPIterator* cur, dynamic_context *cxt, void*& r)
+PPIterator* PPAxisDescendant::do_copy(dynamic_context *_cxt_)
 {
-	return true;
+    PPAxisDescendant *res = self ? se_new PPAxisDescendant(_cxt_, info, child, nt_type, nt_data, true) :
+                                   se_new PPAxisDescendant(_cxt_, info, child, nt_type, nt_data);
+    res->child.op = child.op->copy(_cxt_);
+    return res;
 }
 
 void PPAxisDescendant::next_comment(tuple &t)
 {
    next_qname_and_text(t,NULL,NULL,comment,comp_type);
 }
+
 void PPAxisDescendant::next_function_call(tuple &t)
 {
 	throw USER_EXCEPTION2(SE1002, "in AxisDescandant:function_call");
@@ -115,7 +126,7 @@ void PPAxisDescendant::next_node(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
 		if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
@@ -133,7 +144,7 @@ void PPAxisDescendant::next_node(tuple &t)
 	if (tmp!=XNULL) 
 	{
 		cur=tmp;
-		{RESTORE_CURRENT_PP; return;}
+		return;
 	}
 	while (!self || descstack.size()>1)
 	{
@@ -142,7 +153,7 @@ void PPAxisDescendant::next_node(tuple &t)
 		{
 			cur=tmp;
 			descstack.pop_back();
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		descstack.pop_back();
 		if (descstack.size()>0)
@@ -156,6 +167,7 @@ void PPAxisDescendant::next_node(tuple &t)
 	while (descstack.size()>0) descstack.pop_back();
 	cur=XNULL;
 }
+
 void PPAxisDescendant::next_processing_instruction(tuple &t)
 {
 	if (!nt_data.ncname_local)
@@ -164,7 +176,7 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
 		while (true)
 		{
 			next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
-			if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+			if (t.is_eos()) return;
 			xptr tmp=child.get(t).get_node();
 			if (tmp!=XNULL)
 			{
@@ -177,21 +189,23 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
 					CHECKP(ind_ptr);
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {RESTORE_CURRENT_PP; return;}
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
 				}
 			}
 		}   
 }
+
 void PPAxisDescendant::next_qname(tuple &t)
 {
 	next_qname_and_text(t,nt_data.uri,nt_data.ncname_local,element,comp_qname_type);
 }
+
 void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun)
 {
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
         xptr tmp=child.get(t).get_node();
@@ -215,7 +229,6 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 			if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge(getNextDescriptorOfSameSortXptr,true);
 			while (it!=curvect->end())
 			{
-				//xptr tmp=(following)?getNextNDNode(base,*it):getPreviousNANode(base,*it);
 				cur=getFirstDescandantByScheme(tmp,*it);				
 				if (cur!=XNULL) merge_tree->addChannel(cur);
 				it++;
@@ -223,24 +236,7 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 			
 			cur=merge_tree->getNextNode();			
 			ancestor=tmp;
-			/*for (i=0;i<curvect->size();i++)
-			{
-				cur=getFirstDescandantByScheme(tmp,(*curvect)[i]);
-				if (cur!=XNULL)
-				{
-					curpos=i;
-					
-					break;
-				}
-			}*/
-
-
-		}
-		/*if (cur==XNULL)
-		{
-			t.set_eos();
-			{RESTORE_CURRENT_PP; return;}
-		}*/
+        }
 	}
     t.copy(tuple_cell::node(cur));
 	cur=merge_tree->getNextNode();
@@ -249,9 +245,8 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 		cur=XNULL;
 		merge_tree->clear_merge();
 	}
-	
-    
 }
+
 void PPAxisDescendant::next_text(tuple &t)
 {
    next_qname_and_text(t,NULL,NULL,text,comp_type);
@@ -270,7 +265,7 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 	while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
@@ -289,7 +284,7 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 	if (tmp!=XNULL)
 	{
 		cur=tmp;
-		{RESTORE_CURRENT_PP; return;}
+		return;
 	}
 	while (!self || descstack.size()>1)
 	{
@@ -304,7 +299,7 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 			{
 				cur=tmp;
 				descstack.pop_back();
-				{RESTORE_CURRENT_PP; return;}
+				return;
 			}
 		}
 		descstack.pop_back();
@@ -319,38 +314,34 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 	while (descstack.size()>0) descstack.pop_back();
 	cur=XNULL;
 }
-PPAxisDescendantOrSelf::PPAxisDescendantOrSelf(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-						 NodeTestData _nt_data_):PPAxisDescendant(_cxt_, _child_, _nt_type_, _nt_data_,true)
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPAxisDescendantAttr
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPAxisDescendantAttr::PPAxisDescendantAttr(dynamic_context *_cxt_,
+                                           operation_info _info_,
+                                           PPOpIn _child_,
+                                           NodeTestType _nt_type_,
+						                   NodeTestData _nt_data_) : 
+    PPAxisDescendant(_cxt_,_info_,_child_,_nt_type_,_nt_data_)
 {
- 
 }
-PPAxisDescendantAttr::PPAxisDescendantAttr(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-						 NodeTestData _nt_data_):PPAxisDescendant(_cxt_, _child_, _nt_type_, _nt_data_)
-{
- 
-}
+
 void PPAxisDescendantAttr::next_text(tuple &t)
 {
    while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 	next_wildcard_star(t);
 }
 void PPAxisDescendantAttr::next_node(tuple &t)
 {
-	/*while (true)
-    {
-        child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
-        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
-    }*/
 	next_wildcard_star(t);
 }
 void PPAxisDescendantAttr::next_qname(tuple &t)
@@ -372,7 +363,7 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
 	while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
@@ -395,7 +386,7 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
 	if (cur!=XNULL)
 	{
 		CHECKP(cur);
-		if ((GETBLOCKBYNODE(cur))->snode->type==attribute) {RESTORE_CURRENT_PP; return;}
+		if ((GETBLOCKBYNODE(cur))->snode->type==attribute) return;
 	}
 	cur=getFirstAttributeDescendantAndFillPath(descstack);
     while(cur==XNULL)
@@ -403,7 +394,7 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
 		xptr node=descstack[descstack.size()-1];
 		descstack.pop_back();
 		node=getNextByOrderElement(node);
-		if (/*node==XNULL && */descstack.size()==0) {RESTORE_CURRENT_PP; return;}
+		if (/*node==XNULL && */descstack.size()==0) return;
 		if (node!=XNULL)
 		{
 			cur=getFirstByOrderAttributeChild(node);

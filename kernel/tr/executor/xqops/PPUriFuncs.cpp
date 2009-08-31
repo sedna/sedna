@@ -102,8 +102,9 @@ static inline void escape_html_uri(Iterator &start, const Iterator &end, stmt_st
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnUriEncoding::PPFnUriEncoding(dynamic_context *_cxt_,
+                                 operation_info _info_,
                                  PPOpIn _child_,
-                                 uri_function_type _type_) : PPIterator(_cxt_),
+                                 uri_function_type _type_) : PPIterator(_cxt_,_info_),
                                                              child(_child_),
                                                              type(_type_)
 {
@@ -115,27 +116,25 @@ PPFnUriEncoding::~PPFnUriEncoding()
     child.op = NULL;
 }
 
-void PPFnUriEncoding::open  ()
+void PPFnUriEncoding::do_open ()
 {
     first_time = true;
     child.op->open();
 }
 
-void PPFnUriEncoding::reopen()
+void PPFnUriEncoding::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnUriEncoding::close ()
+void PPFnUriEncoding::do_close()
 {
     child.op->close();
 }
 
-void PPFnUriEncoding::next  (tuple &t)
+void PPFnUriEncoding::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if(first_time)
     {
         child.op->next(t);
@@ -175,8 +174,6 @@ void PPFnUriEncoding::next  (tuple &t)
         t.set_eos();
         first_time = true;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
 const char* PPFnUriEncoding::error()
@@ -194,17 +191,11 @@ const char* PPFnUriEncoding::error()
     }
 }
 
-PPIterator* PPFnUriEncoding::copy(dynamic_context *_cxt_)
+PPIterator* PPFnUriEncoding::do_copy(dynamic_context *_cxt_)
 {
-    PPFnUriEncoding *res = se_new PPFnUriEncoding(_cxt_, child, type);
+    PPFnUriEncoding *res = se_new PPFnUriEncoding(_cxt_, info, child, type);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnUriEncoding::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnUriEncoding::result");
 }
 
 
@@ -214,15 +205,17 @@ bool PPFnUriEncoding::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPFnResolveUri::PPFnResolveUri(dynamic_context *_cxt_,
-                               PPOpIn _relative_) : PPIterator(_cxt_),
+                               operation_info _info_,
+                               PPOpIn _relative_) : PPIterator(_cxt_, _info_),
                                                     relative(_relative_),
                                                     is_base_static(true)
 {
 }
 
 PPFnResolveUri::PPFnResolveUri(dynamic_context *_cxt_,
+                               operation_info _info_,
                                PPOpIn _relative_,
-                               PPOpIn _base_) : PPIterator(_cxt_),
+                               PPOpIn _base_) : PPIterator(_cxt_, _info_),
                                                 relative(_relative_),
                                                 base(_base_),
                                                 is_base_static(false)
@@ -242,7 +235,7 @@ PPFnResolveUri::~PPFnResolveUri()
     }
 }
 
-void PPFnResolveUri::open  ()
+void PPFnResolveUri::do_open ()
 {
     first_time = true;
     need_reopen = false;
@@ -251,7 +244,7 @@ void PPFnResolveUri::open  ()
     if(!is_base_static) base.op->open();
 }
 
-void PPFnResolveUri::reopen()
+void PPFnResolveUri::do_reopen()
 {
     relative.op->reopen();
     if(!is_base_static) base.op->reopen();    
@@ -259,16 +252,14 @@ void PPFnResolveUri::reopen()
     need_reopen = false;
 }
 
-void PPFnResolveUri::close ()
+void PPFnResolveUri::do_close()
 {
     relative.op->close();
     if(!is_base_static) base.op->reopen();    
 }
 
-void PPFnResolveUri::next  (tuple &t)
+void PPFnResolveUri::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if(first_time)
     {
         relative.op->next(t);
@@ -276,7 +267,7 @@ void PPFnResolveUri::next  (tuple &t)
         if(t.is_eos()) 
         {
             if(is_base_static) need_reopen = true;
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
         
         tuple_cell base_tc;
@@ -338,18 +329,11 @@ void PPFnResolveUri::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnResolveUri::copy(dynamic_context *_cxt_)
+PPIterator* PPFnResolveUri::do_copy(dynamic_context *_cxt_)
 {
-    PPFnResolveUri *res = is_base_static ? se_new PPFnResolveUri(_cxt_, relative) 
-                                         : se_new PPFnResolveUri(_cxt_, relative, base);
+    PPFnResolveUri *res = is_base_static ? se_new PPFnResolveUri(_cxt_, info, relative) 
+                                         : se_new PPFnResolveUri(_cxt_, info, relative, base);
     res->relative.op = relative.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     if(!is_base_static) res->base.op = base.op->copy(_cxt_);
     return res;
 }
-
-bool PPFnResolveUri::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnResolveUri::result");
-}
-

@@ -15,52 +15,70 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////
-/// FACTORIES FOR General Comparisons
-////////////////////////////////////////////////////////////////////////////
+/* Factories for General Comparisons */
+PPGeneralComparison* PPGeneralComparison::PPGTGeneralComparison(dynamic_context *_cxt_,
+                                                                operation_info _info_, 
+																PPOpIn _seq1_,
+                                                                PPOpIn _seq2_)
+{ 
+	return se_new PPLMGeneralComparison(_cxt_,_info_,_seq1_,_seq2_,true);
+}
+PPGeneralComparison* PPGeneralComparison::PPLTGeneralComparison(dynamic_context *_cxt_,
+                                                                operation_info _info_, 
+																PPOpIn _seq1_,
+                                                                PPOpIn _seq2_)
+{ 
+	return se_new PPLMGeneralComparison(_cxt_,_info_,_seq1_,_seq2_,false);
+}
+PPGeneralComparison* PPGeneralComparison::PPGEGeneralComparison(dynamic_context *_cxt_,
+                                                                operation_info _info_, 
+																PPOpIn _seq1_,
+                                                                PPOpIn _seq2_)
+{ 
+	return se_new PPLMGeneralComparison(_cxt_,_info_,_seq1_,_seq2_,true,false);
+}
+PPGeneralComparison* PPGeneralComparison::PPLEGeneralComparison(dynamic_context *_cxt_,
+                                                                operation_info _info_, 
+																PPOpIn _seq1_,
+                                                                PPOpIn _seq2_)
+{ 
+	return se_new PPLMGeneralComparison(_cxt_,_info_,_seq1_,_seq2_,false,false);
+}
+PPGeneralComparison* PPGeneralComparison::PPEQGeneralComparison(dynamic_context *_cxt_,
+                                                                operation_info _info_, 
+																PPOpIn _seq1_,
+                                                                PPOpIn _seq2_)
+{ 
+	return se_new PPEQLGeneralComparison(_cxt_,_info_,_seq1_,_seq2_);
+}
+PPGeneralComparison* PPGeneralComparison::PPNEGeneralComparison(dynamic_context *_cxt_,
+                                                                operation_info _info_, 
+																PPOpIn _seq1_,
+                                                                PPOpIn _seq2_)
+{ 
+	return se_new PPNEQGeneralComparison(_cxt_,_info_,_seq1_,_seq2_);
+}
 
-PPGeneralComparison* PPGeneralComparison::PPGTGeneralComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
-{ 
-	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,true);
-}
-PPGeneralComparison* PPGeneralComparison::PPLTGeneralComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
-{ 
-	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,false);
-}
-PPGeneralComparison* PPGeneralComparison::PPGEGeneralComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
-{ 
-	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,true,false);
-}
-PPGeneralComparison* PPGeneralComparison::PPLEGeneralComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
-{ 
-	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,false,false);
-}
-PPGeneralComparison* PPGeneralComparison::PPEQGeneralComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
-{ 
-	return se_new PPEQLGeneralComparison(_cxt_,_seq1_,_seq2_);
-}
-PPGeneralComparison* PPGeneralComparison::PPNEGeneralComparison(dynamic_context *_cxt_, 
-																PPOpIn _seq1_, PPOpIn _seq2_)
-{ 
-	return se_new PPNEQGeneralComparison(_cxt_,_seq1_,_seq2_);
-}
-PPGeneralComparison::PPGeneralComparison(dynamic_context *_cxt_,PPOpIn _seq1_, PPOpIn _seq2_): PPIterator(_cxt_),
-                                    seq1(_seq1_),seq2(_seq2_)
+PPGeneralComparison::PPGeneralComparison(dynamic_context *_cxt_,
+                                         operation_info _info_,
+                                         PPOpIn _seq1_,
+                                         PPOpIn _seq2_): PPIterator(_cxt_, _info_),
+                                                         seq1(_seq1_),
+                                                         seq2(_seq2_)
 {
 }
 
-PPNEQGeneralComparison::PPNEQGeneralComparison(dynamic_context *_cxt_, 
-											 PPOpIn _seq1_, PPOpIn _seq2_): PPGeneralComparison(_cxt_,_seq1_,_seq2_)
+PPNEQGeneralComparison::PPNEQGeneralComparison(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+											   PPOpIn _seq1_,
+                                               PPOpIn _seq2_): PPGeneralComparison(_cxt_,_info_,_seq1_,_seq2_)
 {
 
 }
-PPEQLGeneralComparison::PPEQLGeneralComparison(dynamic_context *_cxt_, 
-											 PPOpIn _seq1_, PPOpIn _seq2_): PPGeneralComparison(_cxt_,_seq1_,_seq2_)
+PPEQLGeneralComparison::PPEQLGeneralComparison(dynamic_context *_cxt_,
+                                               operation_info _info_, 
+											   PPOpIn _seq1_,
+                                               PPOpIn _seq2_): PPGeneralComparison(_cxt_,_info_,_seq1_,_seq2_)
 {
 
 }
@@ -104,7 +122,7 @@ PPGeneralComparison::~PPGeneralComparison()
 	seq2.op = NULL;
 }
 	
-void PPGeneralComparison::open  ()
+void PPGeneralComparison::do_open ()
 {
     seq1.op->open();
 	seq2.op->open();
@@ -114,7 +132,7 @@ void PPGeneralComparison::open  ()
     handler = cxt->st_cxt->get_default_collation();
 }
 
-void PPGeneralComparison::reopen()
+void PPGeneralComparison::do_reopen()
 {
     seq1.op->reopen();
 	seq2.op->reopen();
@@ -123,45 +141,32 @@ void PPGeneralComparison::reopen()
 	eos_reached2 = true;
 }
 
-void PPGeneralComparison::close ()
+void PPGeneralComparison::do_close()
 {
     seq1.op->close();
 	seq2.op->close();
 }
 
-void PPGeneralComparison::next  (tuple &t)
+void PPGeneralComparison::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
-		
-		
-		//Result
-		//t.copy(tuple_cell::node(removeIndirection(indir)));
     }
     else 
     {
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPGeneralComparison::copy(dynamic_context *_cxt_)
+PPIterator* PPGeneralComparison::do_copy(dynamic_context *_cxt_)
 {
 	PPGeneralComparison *res ;
-	res = se_new PPGeneralComparison(_cxt_, seq1,seq2);
+	res = se_new PPGeneralComparison(_cxt_, info, seq1, seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-bool PPGeneralComparison::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
- return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -470,31 +475,36 @@ bool PPLMGeneralComparison::compare_minmax_le(xmlscm_type type_info, bool min_ch
 	return false;
 }
 
-PPLMGeneralComparison::PPLMGeneralComparison(dynamic_context *_cxt_, 
-					 PPOpIn _seq1_, PPOpIn _seq2_, bool _more_): PPGeneralComparison(_cxt_,_seq1_,_seq2_),
-					 more(_more_)
+PPLMGeneralComparison::PPLMGeneralComparison(dynamic_context *_cxt_,
+                                             operation_info _info_,
+                                             PPOpIn _seq1_,
+                                             PPOpIn _seq2_,
+                                             bool _more_): PPGeneralComparison(_cxt_,_info_,_seq1_,_seq2_),
+                                                           more(_more_)
 {
 	strict=true;
 }
-PPLMGeneralComparison::PPLMGeneralComparison(dynamic_context *_cxt_, 
-					 PPOpIn _seq1_, PPOpIn _seq2_, bool _more_,bool _strict_): PPGeneralComparison(_cxt_,_seq1_,_seq2_),
-					 more(_more_),strict(_strict_)
+PPLMGeneralComparison::PPLMGeneralComparison(dynamic_context *_cxt_,
+                                             operation_info _info_, 
+					                         PPOpIn _seq1_,
+                                             PPOpIn _seq2_,
+                                             bool _more_,
+                                             bool _strict_): PPGeneralComparison(_cxt_,_info_,_seq1_,_seq2_),
+                                                             more(_more_),
+                                                             strict(_strict_)
 {
 }
-PPIterator* PPLMGeneralComparison::copy(dynamic_context *_cxt_)
+PPIterator* PPLMGeneralComparison::do_copy(dynamic_context *_cxt_)
 {
 	PPLMGeneralComparison *res ;
-	res = se_new PPLMGeneralComparison(_cxt_, seq1, seq2, more, strict);
+	res = se_new PPLMGeneralComparison(_cxt_, info, seq1, seq2, more, strict);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-void PPNEQGeneralComparison::next   (tuple &t)
+void PPNEQGeneralComparison::do_next (tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	if (first_time)
     {
         first_time = false;
@@ -516,14 +526,14 @@ void PPNEQGeneralComparison::next   (tuple &t)
 		{
 			eos_reached1 = true;
 			t.copy(tuple_cell::atomic(false));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		seq[1]->op->next(*cont[1]);
 		if ((*cont[1]).is_eos())
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		tuple_cell res[2];
 		res[0]=getAtomizedCell(*cont[0]);
@@ -542,7 +552,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 		if (op_ne(res[0],res[1],handler).get_xs_boolean())
 		{
 			t.copy(tuple_cell::atomic(true));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		int pr=0;
 		while(true)
@@ -559,7 +569,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 					if (seq_end[1-pr])
 					{
 						t.copy(tuple_cell::atomic(false));
-						{RESTORE_CURRENT_PP; return;}
+						return;
 					}
 				}
 				else
@@ -583,14 +593,14 @@ void PPNEQGeneralComparison::next   (tuple &t)
 							)
 						{
 							t.copy(tuple_cell::atomic(true));
-							{RESTORE_CURRENT_PP; return;}
+							return;
 						}
 						if (uv_exist[1-pr])
 						{
 							if (op_ne(cast(seq_str_val[pr], xs_string),cast(seq_str_val[1-pr], xs_string),handler).get_xs_boolean())
 							{
 								t.copy(tuple_cell::atomic(true));
-								{RESTORE_CURRENT_PP; return;}
+							    return;
 							}
 						}
 					}
@@ -598,7 +608,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 					if (op_ne(res[0],res[1],handler).get_xs_boolean())
 					{
 						t.copy(tuple_cell::atomic(true));
-						{RESTORE_CURRENT_PP; return;}
+						return;
 					}
 				}
 			}
@@ -609,13 +619,10 @@ void PPNEQGeneralComparison::next   (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
-void PPEQLGeneralComparison::next   (tuple &t)
+
+void PPEQLGeneralComparison::do_next (tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	if (first_time)
     {
 		first_time = false;
@@ -634,7 +641,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		tuple_cell res1=getAtomizedCell(cont2);
 		while (!cont1.is_eos())
@@ -645,7 +652,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 			if (op_eq(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
-				{RESTORE_CURRENT_PP; return;}
+				return;
 			}
 			seq.add(at_tup);
 			seq1.op->next(cont1);
@@ -654,7 +661,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		if (seq.size()<1)
 		{
 			t.copy(tuple_cell::atomic(false));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		seq2.op->next(cont2);
 		while (!cont2.is_eos())
@@ -668,7 +675,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 				if (op_eq(res1,res2,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
-					{RESTORE_CURRENT_PP; return;}
+					return;
 				}
 				it++;
 			}
@@ -677,21 +684,17 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		}
 		eos_reached2 = true;
 		t.copy(tuple_cell::atomic(false));
-		{RESTORE_CURRENT_PP; return;}
-
+		return;
 	}
 	else 
     {
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
-void PPLMGeneralComparison::next   (tuple &t)
+
+void PPLMGeneralComparison::do_next (tuple &t)
 {
- 	SET_CURRENT_PP(this);
- 	
  	if (first_time)
     {
 		first_time = false;
@@ -725,7 +728,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		tuple_cell res1=getAtomizedCell(cont2);
 		while (!cont1.is_eos())
@@ -736,7 +739,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 			if (comp_op(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
-				{RESTORE_CURRENT_PP; return;}
+				return;
 			}
 			seq.add(at_tup);
 			seq1.op->next(cont1);
@@ -745,7 +748,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		if (seq.size()<1)
 		{
 			t.copy(tuple_cell::atomic(false));
-			{RESTORE_CURRENT_PP; return;}
+			return;
 		}
 		seq2.op->next(cont2);
 		while (!cont2.is_eos())
@@ -759,7 +762,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 				if (comp_op(res2,res1,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
-					{RESTORE_CURRENT_PP; return;}
+					return;
 				}
 				it++;
 			}
@@ -768,7 +771,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		}
 		eos_reached2 = true;
 		t.copy(tuple_cell::atomic(false));
-		{RESTORE_CURRENT_PP; return;}
+		return;
 
 	}
 	else 
@@ -776,27 +779,22 @@ void PPLMGeneralComparison::next   (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPEQLGeneralComparison::copy(dynamic_context *_cxt_)
+PPIterator* PPEQLGeneralComparison::do_copy(dynamic_context *_cxt_)
 {
 	PPEQLGeneralComparison *res ;
-	res = se_new PPEQLGeneralComparison(_cxt_, seq1,seq2);
+	res = se_new PPEQLGeneralComparison(_cxt_, info, seq1,seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-PPIterator* PPNEQGeneralComparison::copy(dynamic_context *_cxt_)
+PPIterator* PPNEQGeneralComparison::do_copy(dynamic_context *_cxt_)
 {
 	PPNEQGeneralComparison *res ;
-	res = se_new PPNEQGeneralComparison(_cxt_, seq1,seq2);
+	res = se_new PPNEQGeneralComparison(_cxt_, info, seq1,seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-

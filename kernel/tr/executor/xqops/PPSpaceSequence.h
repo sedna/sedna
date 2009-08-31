@@ -11,19 +11,22 @@
 
 class PPSpaceSequence : public PPSequence
 {
-private:
+protected:
 	static tuple_cell space_tup;
 	tuple int_tup;
 	bool space;
 	bool isAtomized;
 
-public:
-	virtual PPIterator* copy(dynamic_context *_cxt_);
-	virtual void next   (tuple &t);
+private:
+	virtual PPIterator* do_copy(dynamic_context *_cxt_);
+	virtual void do_next   (tuple &t);
+
+public:    
     PPSpaceSequence(dynamic_context *_cxt_,
-               const arr_of_PPOpIn &_children_, bool _IsAtomized_);
+                    operation_info _info_,
+                    const arr_of_PPOpIn &_children_, 
+                    bool _IsAtomized_);
     virtual ~PPSpaceSequence();
 };
-
 
 #endif

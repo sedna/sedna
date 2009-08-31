@@ -12,10 +12,11 @@
 #include "tr/executor/base/PPUtils.h"
 
 typedef __int16 patmatch_type;
-// Abstract base types
+
 #define pm_match 0
 #define pm_replace 1
 #define pm_tokenize 2
+
 class PPPatMatch : public PPIterator
 {
 private:
@@ -23,7 +24,6 @@ private:
 protected:
     typedef void (PPPatMatch::*t_comp_fun)(tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 
-    // given parameters
     PPOpIn seq1;
 	PPOpIn seq2;
 	PPOpIn seq3;
@@ -31,43 +31,51 @@ protected:
 	int ch_cnt;
 	patmatch_type pmt;
     bool first_time;
-    // obtained parameters and local data
+
     t_comp_fun comp_fun;
 	void cf_choice(void);
 	void matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 	void tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 	void replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
-	void children(PPOpIn &_seq1_,PPOpIn &_seq2_,PPOpIn &_seq3_,PPOpIn &_seq4_) 
-	{
-	   _seq1_ = seq1; 
-	   _seq2_ = seq2;
-	   _seq3_ = seq3; 
-	   _seq4_ = seq4;
 
-   }
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual void next   (tuple &t) ;
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-	virtual strict_fun res_fun () { return result; };
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+public:    
     PPPatMatch(dynamic_context *_cxt_,
-		PPOpIn _seq1_, PPOpIn _seq2_ , patmatch_type _pmt_);
+               operation_info _info_,
+               PPOpIn _seq1_,
+               PPOpIn _seq2_,
+               patmatch_type _pmt_);
+               
 	PPPatMatch(dynamic_context *_cxt_,
-		PPOpIn _seq1_, PPOpIn _seq2_ , PPOpIn _seq3_ ,patmatch_type _pmt_);
+               operation_info _info_,
+               PPOpIn _seq1_,
+               PPOpIn _seq2_,
+               PPOpIn _seq3_,
+               patmatch_type _pmt_);
+
 	PPPatMatch(dynamic_context *_cxt_,
-		PPOpIn _seq1_, PPOpIn _seq2_ , PPOpIn _seq3_ , PPOpIn _seq4_ , patmatch_type _pmt_);
+               operation_info _info_,
+               PPOpIn _seq1_,
+               PPOpIn _seq2_,
+               PPOpIn _seq3_,
+               PPOpIn _seq4_,
+               patmatch_type _pmt_);
+
     virtual ~PPPatMatch();
-	////////////////////////////////////////////////////////////////////////////
-    /// FACTORIES FOR Pattern Matching
-    ////////////////////////////////////////////////////////////////////////////
+	
+    /* Factories for Pattern Matching */
 	static PPPatMatch* PPFnMatch(dynamic_context *_cxt_, 
-            PPOpIn _seq1_, PPOpIn _seq2_)
-	{
-		return se_new PPPatMatch(_cxt_,_seq1_,_seq2_,pm_match);
+                                 operation_info _info_,
+                                 PPOpIn _seq1_,
+                                 PPOpIn _seq2_)	{
+		return se_new PPPatMatch(_cxt_, _info_, _seq1_,_seq2_,pm_match);
 	}
 };
 

@@ -17,12 +17,15 @@
 #include "common/u/uutils.h"
 #include "tr/executor/base/dm_accessors.h"
 
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnConcat
 ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 PPFnConcat::PPFnConcat(dynamic_context *_cxt_,
-                       arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_), 
+                       operation_info _info_,
+                       arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_, _info_), 
                                                  ch_arr(_ch_arr_)
 {
     tcv.resize(ch_arr.size());
@@ -37,7 +40,7 @@ PPFnConcat::~PPFnConcat()
     }
 }
 
-void PPFnConcat::open ()
+void PPFnConcat::do_open ()
 {
     for (i = 0; i < ch_arr.size(); i++) 
         ch_arr[i].op->open();
@@ -45,7 +48,7 @@ void PPFnConcat::open ()
     first_time = true;
 }
 
-void PPFnConcat::reopen ()
+void PPFnConcat::do_reopen()
 {
     for (i = 0; i < ch_arr.size(); i++) 
         ch_arr[i].op->reopen();
@@ -53,21 +56,20 @@ void PPFnConcat::reopen ()
     first_time = true;
 }
 
-void PPFnConcat::close ()
+void PPFnConcat::do_close()
 {
     for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->close();
 }
 
-void PPFnConcat::next(tuple &t)
+void PPFnConcat::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if (!first_time)
     {
         first_time = true;
         t.set_eos();
-        {RESTORE_CURRENT_PP; return;}
+        return;
     }
 
     first_time = false;
@@ -117,24 +119,17 @@ void PPFnConcat::next(tuple &t)
     }
 
     t.copy(res);
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnConcat::copy(dynamic_context *_cxt_)
+PPIterator* PPFnConcat::do_copy(dynamic_context *_cxt_)
 {
-    PPFnConcat *res = se_new PPFnConcat(_cxt_, ch_arr);
+    PPFnConcat *res = se_new PPFnConcat(_cxt_, info, ch_arr);
 
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPFnConcat::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnConcat::result");
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -142,8 +137,9 @@ bool PPFnConcat::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPFnStringJoin::PPFnStringJoin(dynamic_context *_cxt_,
+                               operation_info _info_,
                                PPOpIn _members_,
-                               PPOpIn _separator_) : PPIterator(_cxt_), 
+                               PPOpIn _separator_) : PPIterator(_cxt_, _info_), 
                                                      members(_members_),
                                                      separator(_separator_)
 {
@@ -157,7 +153,7 @@ PPFnStringJoin::~PPFnStringJoin()
     separator.op = NULL;
 }
 
-void PPFnStringJoin::open ()
+void PPFnStringJoin::do_open ()
 {
     members.op -> open();
     separator.op -> open();
@@ -165,7 +161,7 @@ void PPFnStringJoin::open ()
     need_clear = false;
 }
 
-void PPFnStringJoin::reopen ()
+void PPFnStringJoin::do_reopen()
 {
     members.op -> reopen();
     separator.op -> reopen();
@@ -173,22 +169,21 @@ void PPFnStringJoin::reopen ()
     need_clear = true;
 }         
 
-void PPFnStringJoin::close ()
+void PPFnStringJoin::do_close()
 {
     members.op -> close();
     separator.op -> close();
 }
 
-void PPFnStringJoin::next(tuple &t)
+void PPFnStringJoin::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if (!first_time)
     {
         first_time = true;
         need_clear = true;
         t.set_eos();
-        {RESTORE_CURRENT_PP; return;}
+        return;
     }
 
     first_time = false;
@@ -225,22 +220,14 @@ void PPFnStringJoin::next(tuple &t)
         result.append(tcv[i]);
     }
     t.copy(result.get_tuple_cell());
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnStringJoin::copy(dynamic_context *_cxt_)
+PPIterator* PPFnStringJoin::do_copy(dynamic_context *_cxt_)
 {
-    PPFnStringJoin *res = se_new PPFnStringJoin(_cxt_, members, separator);
+    PPFnStringJoin *res = se_new PPFnStringJoin(_cxt_, info, members, separator);
     res->members.op   = members.op->copy(_cxt_);
     res->separator.op = separator.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnStringJoin::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnStringJoin::result");
 }
 
 
@@ -250,9 +237,10 @@ bool PPFnStringJoin::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
+                                       operation_info _info_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
-                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_), 
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_), 
                                                                                   source(_source_),
                                                                                   prefix(_prefix_),
                                                                                   type(_type_),
@@ -261,10 +249,11 @@ PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
 }
 
 PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
+                                       operation_info _info_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
                                        PPOpIn _collation_,
-                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_), 
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_), 
                                                                                   source(_source_),
                                                                                   prefix(_prefix_),
                                                                                   collation(_collation_),
@@ -287,7 +276,7 @@ PPFnStartsEndsWith::~PPFnStartsEndsWith()
     }
 }
 
-void PPFnStartsEndsWith::open ()
+void PPFnStartsEndsWith::do_open ()
 {
     source.op -> open();
     prefix.op -> open();
@@ -296,7 +285,7 @@ void PPFnStartsEndsWith::open ()
     first_time = true;
 }
 
-void PPFnStartsEndsWith::reopen ()
+void PPFnStartsEndsWith::do_reopen()
 {
     source.op -> reopen();
     prefix.op -> reopen();
@@ -305,7 +294,7 @@ void PPFnStartsEndsWith::reopen ()
     first_time = true;
 }
 
-void PPFnStartsEndsWith::close ()
+void PPFnStartsEndsWith::do_close()
 {
     if(is_collation)
         collation.op -> close();
@@ -313,15 +302,13 @@ void PPFnStartsEndsWith::close ()
     prefix.op -> close();
 }
 
-void PPFnStartsEndsWith::next(tuple &t)
+void PPFnStartsEndsWith::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (!first_time)
     {
         first_time = true;
         t.set_eos();
-        {RESTORE_CURRENT_PP; return;}
+        return;
     }
     first_time = false;
 
@@ -356,8 +343,8 @@ void PPFnStartsEndsWith::next(tuple &t)
         prf_len = prf.get_strlen();
     }
 
-    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); {RESTORE_CURRENT_PP; return;} } 
-    else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); {RESTORE_CURRENT_PP; return;} }
+    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); return; } 
+    else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); return; }
     
     if(is_collation)
     {
@@ -385,9 +372,7 @@ void PPFnStartsEndsWith::next(tuple &t)
     else if(type == PPFnStartsEndsWith::FN_ENDS_WITH)
         t.copy(tuple_cell::atomic(handler->ends_with(&src, &prf)));
     else 
-        throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::next().");
-
-    RESTORE_CURRENT_PP;
+        throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::do_next().");
 }
 
 void PPFnStartsEndsWith::error(const char* msg)
@@ -400,30 +385,26 @@ void PPFnStartsEndsWith::error(const char* msg)
         throw XQUERY_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::error().");
 }
 
-PPIterator* PPFnStartsEndsWith::copy(dynamic_context *_cxt_)
+PPIterator* PPFnStartsEndsWith::do_copy(dynamic_context *_cxt_)
 {
     PPFnStartsEndsWith *res = is_collation ?
-                              se_new PPFnStartsEndsWith(_cxt_, source, prefix, collation, type) :
-                              se_new PPFnStartsEndsWith(_cxt_, source, prefix, type);
+                              se_new PPFnStartsEndsWith(_cxt_, info, source, prefix, collation, type) :
+                              se_new PPFnStartsEndsWith(_cxt_, info, source, prefix, type);
     res->source.op = source.op->copy(_cxt_);
     res->prefix.op = prefix.op->copy(_cxt_);
     if(is_collation) res->collation.op = collation.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPFnStartsEndsWith::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnStartsEndsWith::result");
-}
-
-
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnString2CodePoints
 ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 PPFnString2CodePoints::PPFnString2CodePoints(dynamic_context *_cxt_,
-                                             PPOpIn _child_) : PPIterator(_cxt_),
+                                             operation_info _info_,
+                                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                                child(_child_), 
                                                                ucp_it(NULL)
 {
@@ -441,27 +422,25 @@ PPFnString2CodePoints::~PPFnString2CodePoints()
 	}
 }
 
-void PPFnString2CodePoints::open  ()
+void PPFnString2CodePoints::do_open ()
 {
     child.op->open();
     first_time = true;	
 }
 
-void PPFnString2CodePoints::reopen()
+void PPFnString2CodePoints::do_reopen()
 {
     child.op->reopen();
     first_time = true;	
 }
 
-void PPFnString2CodePoints::close ()
+void PPFnString2CodePoints::do_close()
 {
     child.op->close();
 }
 
-void PPFnString2CodePoints::next  (tuple &t)
+void PPFnString2CodePoints::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         child.op->next(t);
@@ -477,7 +456,7 @@ void PPFnString2CodePoints::next  (tuple &t)
 
 		    ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
         }
-		else {RESTORE_CURRENT_PP; return;}
+		else return;
     }
 	int code = ucp_it->get_next_char();
 	if (code != -1)
@@ -492,28 +471,23 @@ void PPFnString2CodePoints::next  (tuple &t)
 		ucp_it = NULL;
 		in_str.set_eos();
 	}    
-
-	RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnString2CodePoints::copy(dynamic_context *_cxt_)
+PPIterator* PPFnString2CodePoints::do_copy(dynamic_context *_cxt_)
 {
-    PPFnString2CodePoints *res = se_new PPFnString2CodePoints(_cxt_, child);
+    PPFnString2CodePoints *res = se_new PPFnString2CodePoints(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPFnString2CodePoints::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnString2CodePoints::result");
-}
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnCodePoints2String
 ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 PPFnCodePoints2String::PPFnCodePoints2String(dynamic_context *_cxt_,
-                                             PPOpIn _child_) : PPIterator(_cxt_),
+                                             operation_info _info_,
+                                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                                child(_child_)
 {
 }
@@ -524,29 +498,27 @@ PPFnCodePoints2String::~PPFnCodePoints2String()
     child.op = NULL;
 }
 
-void PPFnCodePoints2String::open  ()
+void PPFnCodePoints2String::do_open ()
 {
     child.op->open();
     first_time = true;	
     need_clear = false;
 }
 
-void PPFnCodePoints2String::reopen()
+void PPFnCodePoints2String::do_reopen()
 {
     child.op->reopen();
     first_time = true;
     need_clear = true;	
 }
 
-void PPFnCodePoints2String::close ()
+void PPFnCodePoints2String::do_close()
 {
     child.op->close();
 }
 
-void PPFnCodePoints2String::next  (tuple &t)
+void PPFnCodePoints2String::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time  = false;
@@ -588,30 +560,29 @@ void PPFnCodePoints2String::next  (tuple &t)
         need_clear = true;
         t.set_eos();
     }    
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnCodePoints2String::copy(dynamic_context *_cxt_)
+PPIterator* PPFnCodePoints2String::do_copy(dynamic_context *_cxt_)
 {
-    PPFnCodePoints2String *res = se_new PPFnCodePoints2String(_cxt_, child);
+    PPFnCodePoints2String *res = se_new PPFnCodePoints2String(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPFnCodePoints2String::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnCodePoints2String::result");
-}
 
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnTranslate
 ///////////////////////////////////////////////////////////////////////////////
-PPFnTranslate::PPFnTranslate(dynamic_context *_cxt_, 
-							 PPOpIn _str_, PPOpIn _map_str_, PPOpIn _trans_str_) : PPIterator(_cxt_),
-								   str(_str_), map_str(_map_str_), trans_str(_trans_str_)
+///////////////////////////////////////////////////////////////////////////////
+PPFnTranslate::PPFnTranslate(dynamic_context *_cxt_,
+                             operation_info _info_, 
+							 PPOpIn _str_,
+                             PPOpIn _map_str_,
+                             PPOpIn _trans_str_) : PPIterator(_cxt_, _info_),
+								                   str(_str_),
+                                                   map_str(_map_str_),
+                                                   trans_str(_trans_str_)
 {
 }
 
@@ -627,7 +598,7 @@ PPFnTranslate::~PPFnTranslate()
 	trans_str.op = NULL;
 }
 
-void PPFnTranslate::open  ()
+void PPFnTranslate::do_open ()
 {
 	str.op->open();
 	map_str.op->open();
@@ -635,7 +606,7 @@ void PPFnTranslate::open  ()
 	first_time = true;
 }
 
-void PPFnTranslate::reopen()
+void PPFnTranslate::do_reopen()
 {
 	str.op->reopen();
 	map_str.op->reopen();
@@ -643,17 +614,15 @@ void PPFnTranslate::reopen()
 	first_time = true;
 }
 
-void PPFnTranslate::close ()
+void PPFnTranslate::do_close()
 {
 	str.op->close();
 	map_str.op->close();
 	trans_str.op->close();
 }
 
-void PPFnTranslate::next  (tuple &t)
+void PPFnTranslate::do_next (tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	if (first_time)
 	{
 		first_time = false;
@@ -708,50 +677,44 @@ void PPFnTranslate::next  (tuple &t)
 		first_time = true;
 		t.set_eos();
 	}
-
-	RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnTranslate::copy(dynamic_context *_cxt_)
+PPIterator* PPFnTranslate::do_copy(dynamic_context *_cxt_)
 {
-	PPFnTranslate *res = se_new PPFnTranslate(_cxt_, str, map_str, trans_str);
+	PPFnTranslate *res = se_new PPFnTranslate(_cxt_, info, str, map_str, trans_str);
 	res->str.op = str.op->copy(_cxt_);
 	res->map_str.op = map_str.op->copy(_cxt_);
 	res->trans_str.op = trans_str.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
 	return res;
 }
 
-bool PPFnTranslate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnTranslate::result");
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnSubsBeforeAfter
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
 PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(dynamic_context *_cxt_,
+                                         operation_info _info_,
                                          PPOpIn _src_child_,
                                          PPOpIn _srch_child_,
-                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_),
-                                                                src_child(_src_child_),
-                                                                srch_child(_srch_child_),
-                                                                type(_type_)
+                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_, _info_),
+                                                                                     src_child(_src_child_),
+                                                                                     srch_child(_srch_child_),
+                                                                                     type(_type_)
 {
 }
 
 PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(dynamic_context *_cxt_,
+                                         operation_info _info_,
                                          PPOpIn _src_child_,
                                          PPOpIn _srch_child_,
                                          PPOpIn _collation_child_,
-                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_),
-                                                                src_child(_src_child_),
-                                                                srch_child(_srch_child_),
-                                                                collation_child(_collation_child_),
-                                                                type(_type_)
+                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_, _info_),
+                                                                                     src_child(_src_child_),
+                                                                                     srch_child(_srch_child_),
+                                                                                     collation_child(_collation_child_),
+                                                                                     type(_type_)
 {
 }
 
@@ -768,7 +731,7 @@ PPFnSubsBeforeAfter::~PPFnSubsBeforeAfter()
     }
 }
 
-void PPFnSubsBeforeAfter::open  ()
+void PPFnSubsBeforeAfter::do_open ()
 {
     src_child.op->open();
     srch_child.op->open();
@@ -777,7 +740,7 @@ void PPFnSubsBeforeAfter::open  ()
     handler = NULL;
 }
 
-void PPFnSubsBeforeAfter::reopen()
+void PPFnSubsBeforeAfter::do_reopen()
 {
     src_child.op->reopen();
     srch_child.op->reopen();
@@ -786,7 +749,7 @@ void PPFnSubsBeforeAfter::reopen()
     handler = NULL;
 }
 
-void PPFnSubsBeforeAfter::close ()
+void PPFnSubsBeforeAfter::do_close()
 {
     src_child.op->close();
     srch_child.op->close();
@@ -819,15 +782,13 @@ static inline tuple_cell byte_based_substring(const tuple_cell *tc, __int64 star
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 
-void PPFnSubsBeforeAfter::next(tuple &t)
+void PPFnSubsBeforeAfter::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (handler) // the same as '!first_time'
     {
         handler = NULL;
         t.set_eos();
-        {RESTORE_CURRENT_PP; return;}
+        return;
     }    
         
     handler = charset_handler->get_unicode_codepoint_collation();
@@ -900,8 +861,6 @@ void PPFnSubsBeforeAfter::next(tuple &t)
         else
             t.copy(EMPTY_STRING_TC);
     }
-
-    RESTORE_CURRENT_PP;
 }
 
 void PPFnSubsBeforeAfter::error(const char* msg)
@@ -915,29 +874,29 @@ void PPFnSubsBeforeAfter::error(const char* msg)
 }
 
 
-PPIterator* PPFnSubsBeforeAfter::copy(dynamic_context *_cxt_)
+PPIterator* PPFnSubsBeforeAfter::do_copy(dynamic_context *_cxt_)
 {
-    PPFnSubsBeforeAfter *res = se_new PPFnSubsBeforeAfter(_cxt_, src_child, srch_child, collation_child, type);
+    PPFnSubsBeforeAfter *res = se_new PPFnSubsBeforeAfter(_cxt_, info, src_child, srch_child, collation_child, type);
     res->src_child.op = src_child.op->copy(_cxt_);
     res->srch_child.op = srch_child.op->copy(_cxt_);
 
     if (collation_child.op)
         res->collation_child.op = collation_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPFnSubsBeforeAfter::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnSubsBeforeAfter::result");
-}
-
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnChangeCase
 ///////////////////////////////////////////////////////////////////////////////
-PPFnChangeCase::PPFnChangeCase(dynamic_context *_cxt_,  PPOpIn _str_, bool _to_upper_) : 
-                                      PPIterator(_cxt_), str(_str_), to_upper(_to_upper_)
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnChangeCase::PPFnChangeCase(dynamic_context *_cxt_,
+                               operation_info _info_,
+                               PPOpIn _str_,
+                               bool _to_upper_) : PPIterator(_cxt_, _info_),
+                                                  str(_str_),
+                                                  to_upper(_to_upper_)
 {
 }
 
@@ -947,27 +906,25 @@ PPFnChangeCase::~PPFnChangeCase()
 	str.op = NULL;
 }
 
-void PPFnChangeCase::open  ()
+void PPFnChangeCase::do_open ()
 {
 	str.op->open();
 	first_time = true;
 }
 
-void PPFnChangeCase::reopen()
+void PPFnChangeCase::do_reopen()
 {
 	str.op->reopen();
 	first_time = true;
 }
 
-void PPFnChangeCase::close ()
+void PPFnChangeCase::do_close()
 {
 	str.op->close();
 }
 
-void PPFnChangeCase::next  (tuple &t)
+void PPFnChangeCase::do_next (tuple &t)
 {
-	SET_CURRENT_PP(this);
-	
 	if (first_time)
 	{
 		first_time = false;
@@ -994,29 +951,23 @@ void PPFnChangeCase::next  (tuple &t)
 		first_time = true;
 		t.set_eos();
 	}
-
-	RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnChangeCase::copy(dynamic_context *_cxt_)
+PPIterator* PPFnChangeCase::do_copy(dynamic_context *_cxt_)
 {
-	PPFnChangeCase *res = se_new PPFnChangeCase(_cxt_, str, to_upper);
+	PPFnChangeCase *res = se_new PPFnChangeCase(_cxt_, info, str, to_upper);
 	res->str.op = str.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
 	return res;
 }
 
-bool PPFnChangeCase::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnChangeCase::result");
-}
-
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnStringLength
 ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 PPFnStringLength::PPFnStringLength(dynamic_context *_cxt_,
-                                   PPOpIn _child_) : PPIterator(_cxt_),
+                                   operation_info _info_,
+                                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                      child(_child_)
 {
 }
@@ -1027,27 +978,25 @@ PPFnStringLength::~PPFnStringLength()
     child.op = NULL;
 }
 
-void PPFnStringLength::open  ()
+void PPFnStringLength::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnStringLength::reopen()
+void PPFnStringLength::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnStringLength::close ()
+void PPFnStringLength::do_close()
 {
     child.op->close();
 }
 
-void PPFnStringLength::next  (tuple &t)
+void PPFnStringLength::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -1071,28 +1020,23 @@ void PPFnStringLength::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnStringLength::copy(dynamic_context *_cxt_)
+PPIterator* PPFnStringLength::do_copy(dynamic_context *_cxt_)
 {
-    PPFnStringLength *res = se_new PPFnStringLength(_cxt_, child);
+    PPFnStringLength *res = se_new PPFnStringLength(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPFnStringLength::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnStringLength::result");
-}
-
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnNormalizeSpace
 ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 PPFnNormalizeSpace::PPFnNormalizeSpace(dynamic_context *_cxt_,
-                                       PPOpIn _child_) : PPIterator(_cxt_),
+                                       operation_info _info_,
+                                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
                                                          child(_child_)
 {
 }
@@ -1103,27 +1047,25 @@ PPFnNormalizeSpace::~PPFnNormalizeSpace()
     child.op = NULL;
 }
 
-void PPFnNormalizeSpace::open  ()
+void PPFnNormalizeSpace::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnNormalizeSpace::reopen()
+void PPFnNormalizeSpace::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnNormalizeSpace::close ()
+void PPFnNormalizeSpace::do_close()
 {
     child.op->close();
 }
 
-void PPFnNormalizeSpace::next  (tuple &t)
+void PPFnNormalizeSpace::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -1150,23 +1092,14 @@ void PPFnNormalizeSpace::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnNormalizeSpace::copy(dynamic_context *_cxt_)
+PPIterator* PPFnNormalizeSpace::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNormalizeSpace *res = se_new PPFnNormalizeSpace(_cxt_, child);
+    PPFnNormalizeSpace *res = se_new PPFnNormalizeSpace(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPFnNormalizeSpace::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnNormalizeSpace::result");
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1174,8 +1107,9 @@ bool PPFnNormalizeSpace::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPFnSubstring::PPFnSubstring(dynamic_context *_cxt_,
+                             operation_info _info_,
                              PPOpIn _str_child_,
-                             PPOpIn _start_child_) : PPIterator(_cxt_),
+                             PPOpIn _start_child_) : PPIterator(_cxt_, _info_),
                                                      str_child(_str_child_),
                                                      start_child(_start_child_),
                                                      is_length(false)
@@ -1183,9 +1117,10 @@ PPFnSubstring::PPFnSubstring(dynamic_context *_cxt_,
 }
 
 PPFnSubstring::PPFnSubstring(dynamic_context *_cxt_,
+                             operation_info _info_,
                              PPOpIn _str_child_,
                              PPOpIn _start_child_,
-                             PPOpIn _length_child_) : PPIterator(_cxt_),
+                             PPOpIn _length_child_) : PPIterator(_cxt_, _info_),
                                                       str_child(_str_child_),
                                                       start_child(_start_child_),
                                                       length_child(_length_child_),
@@ -1207,7 +1142,7 @@ PPFnSubstring::~PPFnSubstring()
     }
 }
 
-void PPFnSubstring::open  ()
+void PPFnSubstring::do_open ()
 {
     str_child.op->open();
     start_child.op->open();
@@ -1215,7 +1150,7 @@ void PPFnSubstring::open  ()
     first_time = true;
 }
 
-void PPFnSubstring::reopen()
+void PPFnSubstring::do_reopen()
 {
     str_child.op->reopen();
     start_child.op->reopen();
@@ -1223,7 +1158,7 @@ void PPFnSubstring::reopen()
     first_time = true;
 }
 
-void PPFnSubstring::close ()
+void PPFnSubstring::do_close()
 {
     str_child.op->close();
     start_child.op->close();
@@ -1231,10 +1166,8 @@ void PPFnSubstring::close ()
 
 }
 
-void PPFnSubstring::next(tuple &t)
+void PPFnSubstring::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     __int64 start_pos = 0;
     __int64 length = 0;
     if (first_time)
@@ -1280,7 +1213,7 @@ void PPFnSubstring::next(tuple &t)
         if (t.is_eos())
         {
              t.copy(EMPTY_STRING_TC);
-             {RESTORE_CURRENT_PP; return;}
+             return;
         }
         tc = atomize(str_child.get(t));
         if (!is_string_type(tc.get_atomic_type()))
@@ -1308,23 +1241,15 @@ void PPFnSubstring::next(tuple &t)
         t.set_eos();
         first_time = true;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnSubstring::copy(dynamic_context *_cxt_)
+PPIterator* PPFnSubstring::do_copy(dynamic_context *_cxt_)
 {
-    PPFnSubstring *res = is_length ? se_new PPFnSubstring(_cxt_, str_child, start_child, length_child) :
-                                     se_new PPFnSubstring(_cxt_, str_child, start_child);
+    PPFnSubstring *res = is_length ? se_new PPFnSubstring(_cxt_, info, str_child, start_child, length_child) :
+                                     se_new PPFnSubstring(_cxt_, info, str_child, start_child);
                                 
     res->str_child.op = str_child.op->copy(_cxt_);
     res->start_child.op = start_child.op->copy(_cxt_);
     if(is_length) res->length_child.op = length_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnSubstring::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-	throw USER_EXCEPTION2(SE1002, "PPFnSubstring::result");
 }

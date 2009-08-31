@@ -16,31 +16,21 @@
 class PPFnError : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn child_err;
     PPOpIn child_descr;
     PPOpIn child_obj;
 
-    void children(PPOpIn &_child_err_,
-                  PPOpIn &_child_descr_,
-                  PPOpIn &_child_obj_) 
-    { 
-        _child_err_   = child_err; 
-        _child_descr_ = child_descr;
-        _child_obj_   = child_obj; 
-    }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+public:    
     PPFnError(dynamic_context *_cxt_, 
+              operation_info _info_,
               PPOpIn &_child_err_,
               PPOpIn &_child_descr_,
               PPOpIn &_child_obj_);
@@ -53,33 +43,25 @@ public:
 class PPFnTrace : public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn value_child, label_child;
     tuple_cell tc;
     bool first_time;
     se_ostream *dostr;
 
-    void children(PPOpIn &_value_child_, PPOpIn &_label_child_) 
-    { 
-        _value_child_ = value_child; 
-        _label_child_ = label_child; 
-    }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-
+public:    
     PPFnTrace(dynamic_context *_cxt_, 
+              operation_info _info_,
               PPOpIn _value_child_,
               PPOpIn _label_child_);
     virtual ~PPFnTrace();
 };
-
 
 #endif

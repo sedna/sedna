@@ -7,11 +7,11 @@
 #include "tr/executor/xqops/PPUnion.h"
 #include "tr/executor/base/merge.h"
 
-
 PPUnion::PPUnion(dynamic_context *_cxt_,
+                 operation_info _info_,
                  PPOpIn _child1_,
                  PPOpIn _child2_,
-                 bool _doc_order_) : PPIterator(_cxt_),
+                 bool _doc_order_) : PPIterator(_cxt_, _info_),
                                      child1(_child1_),
                                      child2(_child2_),
                                      doc_order(_doc_order_)
@@ -26,7 +26,7 @@ PPUnion::~PPUnion()
     child2.op = NULL;
 }
 
-void PPUnion::open  ()
+void PPUnion::do_open ()
 {
     child1.op->open();
     child2.op->open();
@@ -35,7 +35,7 @@ void PPUnion::open  ()
     tug_second = true;
 }
 
-void PPUnion::reopen()
+void PPUnion::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
@@ -44,16 +44,14 @@ void PPUnion::reopen()
     tug_second = true;
 }
 
-void PPUnion::close ()
+void PPUnion::do_close()
 {
     child1.op->close();
     child2.op->close();
 }
 
-void PPUnion::next  (tuple &t)
+void PPUnion::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (tug_first)
     {
         child1.op->next(t);
@@ -88,15 +86,14 @@ void PPUnion::next  (tuple &t)
         tug_second = false;
     }
 
-    /// XNULL by definition is equal to any xptr with addr == NULL;
-    /// XNULL by definition is > of any xptr (except itself);
+    /* XNULL by definition is > of any xptr (except itself); */
     switch (doc_order ? doc_order_merge_cmp(&xptr1, &xptr2) : xptr_compare(xptr1, xptr2))
     {
         case -1: /// 1 < 2
         {
             tug_first = true;
             t.copy(tuple_cell::node(xptr1));
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
         case  0: /// 1 == 2
         {
@@ -108,31 +105,22 @@ void PPUnion::next  (tuple &t)
             tug_first = true;
             tug_second = true;
 
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
         case  1: /// 1 > 2
         {
             tug_second = true;
             t.copy(tuple_cell::node(xptr2));
-            {RESTORE_CURRENT_PP; return;}
+            return;
         }
         default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPUnion::next");
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPUnion::copy(dynamic_context *_cxt_)
+PPIterator* PPUnion::do_copy(dynamic_context *_cxt_)
 {
-    PPUnion *res = se_new PPUnion(_cxt_, child1, child2, doc_order);
+    PPUnion *res = se_new PPUnion(_cxt_, info, child1, child2, doc_order);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPUnion::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPUnion::result");
-}
-

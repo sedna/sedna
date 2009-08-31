@@ -12,7 +12,6 @@
 #include "tr/executor/xqops/PPFunCall.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
-#include "tr/executor/xqops/PPSLStub.h"
 
 
 using namespace std;
@@ -72,9 +71,9 @@ string fun_conv_rules::error()
     string res;    
 
     if(arg_num != 0)
-        res = "Argument [" + int2string(arg_num) + "] does not match the required type. Expected type is [" +  st->to_str() +  "]";
+        res = "Error in function call. Argument [" + int2string(arg_num) + "] does not match the required type. Expected type is [" +  st->to_str() +  "]";
     else
-        res = "Return value does not match the required type. Expected type is [" +  st->to_str() +  "]";
+        res = "Error in function call. Return value does not match the required type. Expected type is [" +  st->to_str() +  "]";
 
     return res;
 }
@@ -140,8 +139,9 @@ void fun_arg::next(tuple /*out*/ &t, var_c_id /*out*/ &id)
 /// PPFunCall
 ////////////////////////////////////////////////////////////////////////////////
 PPFunCall::PPFunCall(dynamic_context *_cxt_,
+                     operation_info _info_,
                      const arr_of_PPOpIn &_ch_arr_,
-                     function_id _fn_id_) : PPVarIterator(_cxt_),
+                     function_id _fn_id_) : PPVarIterator(_cxt_, _info_),
                                             ch_arr(_ch_arr_),
                                             fn_id(_fn_id_),
                                             body(NULL),
@@ -172,7 +172,7 @@ PPFunCall::~PPFunCall()
 }
 
 
-void PPFunCall::open ()
+void PPFunCall::do_open ()
 {
     for (int i = 0; i < args_num; i++) 
         ch_arr[i].op->open();
@@ -181,7 +181,7 @@ void PPFunCall::open ()
     is_body_opened = false;
 }
 
-void PPFunCall::reopen ()
+void PPFunCall::do_reopen()
 {
     if (body) 
     {
@@ -202,7 +202,7 @@ void PPFunCall::reopen ()
 #endif
 }
 
-void PPFunCall::close ()
+void PPFunCall::do_close()
 {
     int i = 0;
     for (i = 0; i < args_num; i++) ch_arr[i].op->close();
@@ -247,11 +247,9 @@ void PPFunCall::close ()
 #endif
 }
 
-void PPFunCall::next(tuple &t)
+void PPFunCall::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
-#ifdef STRICT_FUNS
+    #ifdef STRICT_FUNS
     if (spos != -1)
     {
         if (spos < s->size()) s->get(t, spos++);
@@ -262,7 +260,7 @@ void PPFunCall::next(tuple &t)
             delete s;
             s = NULL;
         }
-        {RESTORE_CURRENT_PP; return;}
+        return;
     }
 #endif
 
@@ -279,8 +277,7 @@ void PPFunCall::next(tuple &t)
             for (i = 0; i < args_num; i++)
                 args[i] = se_new fun_arg(&(dynamic_context::funct_cxt.fun_decls[fn_id].args[i]),
                                          ch_arr[i].op, 
-                                         i+1,
-                                         __xquery_line);
+                                         i+1);
 #ifdef STRICT_FUNS
         }
         else args[i]->reopen();
@@ -327,7 +324,7 @@ void PPFunCall::next(tuple &t)
                 }
                 else { s->get(t, 0); spos = 1; }
 
-                {RESTORE_CURRENT_PP; return;}
+                return;
             }
             else
             {
@@ -353,7 +350,7 @@ void PPFunCall::next(tuple &t)
         }
 #endif
 
-        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, 0, __xquery_line);  /// arg_num == 0 means function return value
+        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, 0);  /// arg_num == 0 means function return value
     }
 
 
@@ -367,42 +364,36 @@ void PPFunCall::next(tuple &t)
     body_fcr->next(t);
 
     if (t.is_eos()) need_reopen = true;
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFunCall::copy(dynamic_context *_cxt_)
+PPIterator* PPFunCall::do_copy(dynamic_context *_cxt_)
 {
-    PPFunCall *res = se_new PPFunCall(_cxt_, ch_arr, fn_id);
+    PPFunCall *res = se_new PPFunCall(_cxt_, info, ch_arr, fn_id);
 
-    res->set_xquery_line(__xquery_line);
-    
     for (int i = 0; i < args_num; i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
 
     return res;
 }
 
-var_c_id PPFunCall::register_consumer(var_dsc dsc)
+var_c_id PPFunCall::do_register_consumer(var_dsc dsc)
 {
     complex_var_consumption &cvc = *(new_cxt->var_cxt.producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
-void PPFunCall::next(tuple &t, var_dsc dsc, var_c_id id)
+void PPFunCall::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP_VAR(this);
     args[dsc]->next(t, new_cxt->var_cxt.producers[dsc].cvc->at(id));
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPFunCall::reopen(var_dsc dsc, var_c_id id)
+void PPFunCall::do_reopen(var_dsc dsc, var_c_id id)
 {
     new_cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
 }
 
-void PPFunCall::close(var_dsc dsc, var_c_id id)
+void PPFunCall::do_close(var_dsc dsc, var_c_id id)
 {
 }
 
@@ -413,73 +404,4 @@ inline void PPFunCall::reinit_consumer_table()
         complex_var_consumption *cvc = new_cxt->var_cxt.producers[i].cvc;
         for (unsigned int j = 0; j < cvc->size(); j++) cvc->at(j) = 0;
     }
-}
-
-bool PPFunCall::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-/*
-    function_declaration &fd = tr_globals::qp.fun_decls[((PPFunCall*)cur)->fn_id];
-
-    arr_of_PPOpIn ch_arr;
-    ((PPFunCall*)cur)->children(ch_arr);
-
-    vector<void*> ch_r(fd.num);
-    vector<bool>  ch_s(fd.num);
-
-    bool is_everything_strict = true;
-    int i = 0;
-    for (i = 0; i < fd.num; i++)
-    {
-        ch_s[i] = (ch_arr[i].op->res_fun())(ch_arr[i].op, cxt, ch_r[i]);
-        is_everything_strict = is_everything_strict && ch_s[i];
-    }
-
-    if (!is_everything_strict)
-    {
-        for (i = 0; i < fd.num; i++)
-        {
-            if (ch_s[i])
-            { // result is strict
-                ch_arr[i].op = se_new PPSLStub(cxt, 
-                                            ch_arr[i].op->copy(cxt), 
-                                            (sequence*)(ch_r[i]));
-            }
-            else
-            { // result is NON strict
-                ch_arr[i].op = (PPIterator*)(ch_r[i]);
-            }
-        }
-
-        r = se_new PPFunCall(cxt, ch_arr, ((PPFunCall*)cur)->fn_id);
-        return false;
-    }
-
-
-    variable_context *new_cxt = se_new variable_context(fd.cxt_size);
-
-    for (i = 0; i < fd.num; i++)
-    {
-        new_cxt->producers[i].type = pt_seq;
-        new_cxt->producers[i].s = (sequence*)(ch_r[i]);
-    }
-
-    void *fun_r;
-    bool fun_s = (fd.op->res_fun())(fd.op, new_cxt, fun_r);
-
-    if (!fun_s)
-    {
-        for (i = 0; i < fd.num; i++)
-        {
-            ch_arr[i].op = se_new PPSLStub(cxt, ch_arr[i].op->copy(cxt), (sequence*)(ch_r[i]));
-        }
-
-        // !!! надо еще как-то передавать контекст и рюхать как он должен сохраняться
-
-        r = se_new PPFunCall(cxt, ch_arr, ((PPFunCall*)cur)->fn_id);
-        return false;
-    }
-
-    return strict_op_result(cur, (sequence*)fun_r, cxt, r);
-*/
-    return true;
 }

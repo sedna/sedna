@@ -21,17 +21,19 @@ static bin_op_tuple_cell_tuple_cell_collation PPFnMaxMin_fun_arr[] = {op_gt, op_
 static const char* PPFnMaxMin_fun_name[] = {"fn:max()", "fn:min()"};
 
 PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
+                       operation_info _info_,
                        int _i_,
-                       PPOpIn _child_) : PPIterator(_cxt_), 
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_), 
                                          child(_child_),
                                          i(_i_)
 {
 }
 
 PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
+                       operation_info _info_,
                        int _i_,
                        PPOpIn _child_,
-                       PPOpIn _collation_) : PPIterator(_cxt_), 
+                       PPOpIn _collation_) : PPIterator(_cxt_, _info_), 
                                              child(_child_),
                                              collation(_collation_),
                                              i(_i_)
@@ -49,7 +51,7 @@ PPFnMaxMin::~PPFnMaxMin()
     }
 }
 
-void PPFnMaxMin::open ()
+void PPFnMaxMin::do_open ()
 {
     child.op->open();
     if (collation.op)
@@ -58,7 +60,7 @@ void PPFnMaxMin::open ()
     handler = NULL;
 }
 
-void PPFnMaxMin::reopen ()
+void PPFnMaxMin::do_reopen()
 {
     child.op->reopen();
     if (collation.op)
@@ -67,7 +69,7 @@ void PPFnMaxMin::reopen ()
     handler = NULL;
 }         
 
-void PPFnMaxMin::close ()
+void PPFnMaxMin::do_close()
 {
     child.op->close();
     if (collation.op)
@@ -76,10 +78,8 @@ void PPFnMaxMin::close ()
     handler = NULL;
 }
 
-void PPFnMaxMin::next(tuple &t)
+void PPFnMaxMin::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (!handler) // the same as 'first_time'
     {
         handler = charset_handler->get_unicode_codepoint_collation();
@@ -165,23 +165,15 @@ void PPFnMaxMin::next(tuple &t)
         t.set_eos();
         handler = NULL;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnMaxMin::copy(dynamic_context *_cxt_)
+PPIterator* PPFnMaxMin::do_copy(dynamic_context *_cxt_)
 {
-    PPFnMaxMin *res = se_new PPFnMaxMin(_cxt_, i, child, collation);
+    PPFnMaxMin *res = se_new PPFnMaxMin(_cxt_, info, i, child, collation);
     res->child.op = child.op->copy(_cxt_);
     if (collation.op)
         res->collation.op = collation.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnMaxMin::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnMaxMin::result");
 }
 
 
@@ -192,20 +184,22 @@ bool PPFnMaxMin::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
-                 int _i_,
-                 PPOpIn _child_) : PPIterator(_cxt_), 
-                                  child(_child_),
-                                  i(_i_)
+                       operation_info _info_,
+                       int _i_,
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_), 
+                                         child(_child_),
+                                         i(_i_)
 {
 }
 
 PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
-                 int _i_,
-                 PPOpIn _child_,
-                 PPOpIn _zero_) : PPIterator(_cxt_), 
-                                  child(_child_),
-                                  zero(_zero_),
-                                  i(_i_)
+                       operation_info _info_,
+                       int _i_,
+                       PPOpIn _child_,
+                       PPOpIn _zero_) : PPIterator(_cxt_, _info_), 
+                                        child(_child_),
+                                        zero(_zero_),
+                                        i(_i_)
 {
 }
 
@@ -220,7 +214,7 @@ PPFnSumAvg::~PPFnSumAvg()
     }
 }
 
-void PPFnSumAvg::open ()
+void PPFnSumAvg::do_open ()
 {
     child.op->open();
     if (zero.op)
@@ -229,7 +223,7 @@ void PPFnSumAvg::open ()
     first_time = true;
 }
 
-void PPFnSumAvg::reopen ()
+void PPFnSumAvg::do_reopen()
 {
     child.op->reopen();
     if (zero.op)
@@ -238,7 +232,7 @@ void PPFnSumAvg::reopen ()
     first_time = true;
 }         
 
-void PPFnSumAvg::close ()
+void PPFnSumAvg::do_close()
 {
     child.op->close();
     if (zero.op)
@@ -247,9 +241,9 @@ void PPFnSumAvg::close ()
     first_time = true;
 }
 
-void PPFnSumAvg::next(tuple &t)
+void PPFnSumAvg::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
+    
 
     if (first_time) // the same as 'first_time'
     {
@@ -323,21 +317,13 @@ void PPFnSumAvg::next(tuple &t)
         t.set_eos();
         first_time = true;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnSumAvg::copy(dynamic_context *_cxt_)
+PPIterator* PPFnSumAvg::do_copy(dynamic_context *_cxt_)
 {
-    PPFnSumAvg *res = se_new PPFnSumAvg(_cxt_, i, child, zero);
+    PPFnSumAvg *res = se_new PPFnSumAvg(_cxt_, info, i, child, zero);
     res->child.op = child.op->copy(_cxt_);
     if (zero.op)
         res->zero.op = zero.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnSumAvg::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnSumAvg::result");
 }

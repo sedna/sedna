@@ -14,7 +14,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFuncNoParam
 ///////////////////////////////////////////////////////////////////////////////
-PPFnDateTimeFuncNoParam::PPFnDateTimeFuncNoParam(dynamic_context *_cxt_,int _dateTimeFunc_) : PPIterator(_cxt_), dateTimeFunc(_dateTimeFunc_)
+PPFnDateTimeFuncNoParam::PPFnDateTimeFuncNoParam(dynamic_context *_cxt_,
+                                                 operation_info _info_,
+                                                 int _dateTimeFunc_) : PPIterator(_cxt_, _info_),
+                                                                       dateTimeFunc(_dateTimeFunc_)
 {
 }
 
@@ -22,24 +25,22 @@ PPFnDateTimeFuncNoParam::~PPFnDateTimeFuncNoParam()
 {
 }
 
-void PPFnDateTimeFuncNoParam::open  ()
+void PPFnDateTimeFuncNoParam::do_open ()
 {
     first_time = true;
 }
 
-void PPFnDateTimeFuncNoParam::reopen()
+void PPFnDateTimeFuncNoParam::do_reopen()
 {
     first_time = true;
 }
 
-void PPFnDateTimeFuncNoParam::close ()
+void PPFnDateTimeFuncNoParam::do_close()
 {
 }
 
-void PPFnDateTimeFuncNoParam::next  (tuple &t)
+void PPFnDateTimeFuncNoParam::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
 	first_time = false;
@@ -60,29 +61,22 @@ void PPFnDateTimeFuncNoParam::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnDateTimeFuncNoParam::copy(dynamic_context *_cxt_)
+PPIterator* PPFnDateTimeFuncNoParam::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFuncNoParam *res = se_new PPFnDateTimeFuncNoParam(_cxt_,dateTimeFunc);
-    res->set_xquery_line(__xquery_line);
+    PPFnDateTimeFuncNoParam *res = se_new PPFnDateTimeFuncNoParam(_cxt_, info, dateTimeFunc);
     return res;
-}
-
-bool PPFnDateTimeFuncNoParam::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnDateTimeFuncNoParam::result");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc
 ///////////////////////////////////////////////////////////////////////////////
 PPFnDateTimeFunc::PPFnDateTimeFunc(dynamic_context *_cxt_,
+                                   operation_info _info_,
                                    PPOpIn _child_, 
                                    int _dateTimeFunc_,
-                                   xmlscm_type _expected_type_) : PPIterator(_cxt_),
+                                   xmlscm_type _expected_type_) : PPIterator(_cxt_, _info_),
                                                                   child(_child_), 
                                                                   dateTimeFunc(_dateTimeFunc_),
                                                                   expected_type(_expected_type_)
@@ -95,27 +89,25 @@ PPFnDateTimeFunc::~PPFnDateTimeFunc()
     child.op = NULL;
 }
 
-void PPFnDateTimeFunc::open  ()
+void PPFnDateTimeFunc::do_open ()
 {
     child.op->open();
     first_time = true;
 }
 
-void PPFnDateTimeFunc::reopen()
+void PPFnDateTimeFunc::do_reopen()
 {
     child.op->reopen();
     first_time = true;
 }
 
-void PPFnDateTimeFunc::close ()
+void PPFnDateTimeFunc::do_close()
 {
     child.op->close();
 }
 
-void PPFnDateTimeFunc::next  (tuple &t)
+void PPFnDateTimeFunc::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
     if (first_time)
     {
         first_time = false;
@@ -284,30 +276,26 @@ void PPFnDateTimeFunc::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnDateTimeFunc::copy(dynamic_context *_cxt_)
+PPIterator* PPFnDateTimeFunc::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFunc *res = se_new PPFnDateTimeFunc(_cxt_, child,dateTimeFunc, expected_type);
+    PPFnDateTimeFunc *res = se_new PPFnDateTimeFunc(_cxt_, info, child, dateTimeFunc, expected_type);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnDateTimeFunc::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnDateTimeFunc::result");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc2Params
 ///////////////////////////////////////////////////////////////////////////////
 PPFnDateTimeFunc2Params::PPFnDateTimeFunc2Params(dynamic_context *_cxt_,
-                                   PPOpIn _child1_, PPOpIn _child2_, int _dateTimeFunc_) : PPIterator(_cxt_),
-                                                     child1(_child1_), child2(_child2_),
-							dateTimeFunc(_dateTimeFunc_)
+                                                 operation_info _info_,
+                                                 PPOpIn _child1_,
+                                                 PPOpIn _child2_,
+                                                 int _dateTimeFunc_) : PPIterator(_cxt_, _info_),
+                                                                       child1(_child1_),
+                                                                       child2(_child2_),
+                                                                       dateTimeFunc(_dateTimeFunc_)
 {
 }
 
@@ -319,30 +307,29 @@ PPFnDateTimeFunc2Params::~PPFnDateTimeFunc2Params()
     child2.op = NULL;
 }
 
-void PPFnDateTimeFunc2Params::open  ()
+void PPFnDateTimeFunc2Params::do_open ()
 {
     child1.op->open();
     child2.op->open();
     first_time = true;
 }
 
-void PPFnDateTimeFunc2Params::reopen()
+void PPFnDateTimeFunc2Params::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
     first_time = true;
 }
 
-void PPFnDateTimeFunc2Params::close ()
+void PPFnDateTimeFunc2Params::do_close()
 {
     child1.op->close();
     child2.op->close();
 }
 
-void PPFnDateTimeFunc2Params::next  (tuple &t)
+void PPFnDateTimeFunc2Params::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if (first_time)
     {
         first_time = false;
@@ -420,20 +407,12 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPFnDateTimeFunc2Params::copy(dynamic_context *_cxt_)
+PPIterator* PPFnDateTimeFunc2Params::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFunc2Params *res = se_new PPFnDateTimeFunc2Params(_cxt_, child1, child2,dateTimeFunc);
+    PPFnDateTimeFunc2Params *res = se_new PPFnDateTimeFunc2Params(_cxt_, info, child1, child2, dateTimeFunc);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPFnDateTimeFunc2Params::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnDateTimeFunc::result");
 }

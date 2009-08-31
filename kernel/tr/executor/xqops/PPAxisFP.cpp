@@ -15,13 +15,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPAxisFP::PPAxisFP(dynamic_context *_cxt_, 
-                         PPOpIn _child_,
-                         NodeTestType _nt_type_,
-                         NodeTestData _nt_data_, bool _following_) : PPIterator(_cxt_),
-                                                   child(_child_),
-                                                   nt_type(_nt_type_),
-                                                   nt_data(_nt_data_),following(_following_)
+PPAxisFP::PPAxisFP(dynamic_context *_cxt_,
+                   operation_info _info_, 
+                   PPOpIn _child_,
+                   NodeTestType _nt_type_,
+                   NodeTestData _nt_data_,
+                   bool _following_) : PPIterator(_cxt_, _info_),
+                                       child(_child_),
+                                       nt_type(_nt_type_),
+                                       nt_data(_nt_data_),
+                                       following(_following_)
 {
     switch (nt_type)
     {
@@ -51,7 +54,7 @@ PPAxisFP::~PPAxisFP()
 	}
 }
 
-void PPAxisFP::open  ()
+void PPAxisFP::do_open ()
 {
     child.op->open();
 
@@ -59,7 +62,7 @@ void PPAxisFP::open  ()
 	base=XNULL;
 }
 
-void PPAxisFP::reopen()
+void PPAxisFP::do_reopen()
 {
     child.op->reopen();
 	if (merge_tree)
@@ -70,7 +73,7 @@ void PPAxisFP::reopen()
 	base=XNULL;
 }
 
-void PPAxisFP::close ()
+void PPAxisFP::do_close()
 {
     child.op->close();
 }
@@ -84,7 +87,7 @@ void PPAxisFP::next_processing_instruction(tuple &t)
 		while (true)
 		{
 			next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
-			if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+			if (t.is_eos()) return;
 			xptr tmp=child.get(t).get_node();
 			if (tmp!=XNULL)
 			{
@@ -97,7 +100,7 @@ void PPAxisFP::next_processing_instruction(tuple &t)
 					CHECKP(ind_ptr);
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {RESTORE_CURRENT_PP; return;}
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
 				}
 			}
 		}   
@@ -117,8 +120,7 @@ void PPAxisFP::next_node(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) 		
-			{RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		if (following)
 			cur = getNextNDNode(child.get(t).get_node());
@@ -167,7 +169,7 @@ void PPAxisFP::next_wildcard_star(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
@@ -243,24 +245,19 @@ void PPAxisFP::next_var_name(tuple &t)
 
 
 
-PPIterator* PPAxisFP::copy(dynamic_context *_cxt_)
+PPIterator* PPAxisFP::do_copy(dynamic_context *_cxt_)
 {
-    PPAxisFP *res = se_new PPAxisFP(_cxt_, child, nt_type, nt_data,following);
+    PPAxisFP *res = se_new PPAxisFP(_cxt_, info, child, nt_type, nt_data,following);
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-bool PPAxisFP::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    return true;
-}
 void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun)
 {
      while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
+        if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		

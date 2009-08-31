@@ -8,20 +8,16 @@
 
 #include "tr/executor/base/PPBase.h"
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFuncNoParam
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnDateTimeFuncNoParam: public PPIterator
 {
 protected:
-    // obtained parameters and local data
     bool first_time;
     int dateTimeFunc;
 
 public:
-
     enum dateTimeFuncs
     {
 	currentDateTime=0,
@@ -29,17 +25,19 @@ public:
 	currentTime,
 	implicitTimezone
     };
-   
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    PPFnDateTimeFuncNoParam(dynamic_context *_cxt_, int dateTimeFunc);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+public:    
+    PPFnDateTimeFuncNoParam(dynamic_context *_cxt_,
+                            operation_info _info_,
+                            int dateTimeFunc);
     virtual ~PPFnDateTimeFuncNoParam();
 };
 
@@ -49,13 +47,10 @@ public:
 class PPFnDateTimeFunc: public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn child;
     bool first_time;
     int dateTimeFunc;
     xmlscm_type expected_type;
-
-    void children(PPOpIn &_child_) { _child_ = child; }
 
 public:
 
@@ -85,17 +80,18 @@ public:
 	adjustDateToTimezone,
 	adjustTimeToTimezone
     };
-   
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+public:    
     PPFnDateTimeFunc(dynamic_context *_cxt_, 
+                     operation_info _info_,
                      PPOpIn _child_, 
                      int dateTimeFunc,
                      xmlscm_type _expected_type_);
@@ -108,17 +104,12 @@ public:
 class PPFnDateTimeFunc2Params: public PPIterator
 {
 protected:
-    // obtained parameters and local data
     PPOpIn child1;
     PPOpIn child2;
     bool first_time;
     int dateTimeFunc;
 
-    void children(PPOpIn &_child1_, PPOpIn &_child2_) { _child1_ = child1; 
-							_child2_ = child2;}
-
 public:
-
     enum dateTimeFuncs
     {
 	adjustDateTimeToTimezone=0,
@@ -127,17 +118,21 @@ public:
 	dateTime
     };
    
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
+private:   
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
 
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    PPFnDateTimeFunc2Params(dynamic_context *_cxt_, 
-                     PPOpIn _child1_, PPOpIn _child2_, int dateTimeFunc);
+public:    
+    PPFnDateTimeFunc2Params(dynamic_context *_cxt_,
+                            operation_info _info_,
+                            PPOpIn _child1_,
+                            PPOpIn _child2_,
+                            int dateTimeFunc);
+
     virtual ~PPFnDateTimeFunc2Params();
 };
 

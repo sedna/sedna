@@ -54,10 +54,11 @@ static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_t
 ///////////////////////////////////////////////////////////////////////////////
 
 PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
+                     operation_info _info_,
                      bool _stable_,
                      PPOpIn _child_,
                      arr_of_orb_modifier _modifiers_,
-                     int _data_size_) : PPIterator(_cxt_),
+                     int _data_size_) : PPIterator(_cxt_, _info_),
                                         stable(_stable_),
                                         child(_child_),
                                         modifiers(_modifiers_),
@@ -79,7 +80,7 @@ PPOrderBy::~PPOrderBy()
     child.op = NULL;
 }
 
-void PPOrderBy::open  ()
+void PPOrderBy::do_open ()
 {
     child.op->open();
     first_time  = true;
@@ -102,14 +103,14 @@ void PPOrderBy::open  ()
     ss = se_new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
 }
 
-void PPOrderBy::reopen()
+void PPOrderBy::do_reopen()
 {
     child.op->reopen();
     first_time  = true;
     need_reinit = true;
 }
 
-void PPOrderBy::close ()
+void PPOrderBy::do_close()
 {
     child.op->close();
     delete data_cells;
@@ -124,10 +125,9 @@ void PPOrderBy::close ()
     CHECK_PTR_AND_CLEAR(udata.temps[1]);
 }
 
-void PPOrderBy::next  (tuple &t)
+void PPOrderBy::do_next (tuple &t)
 {
-    SET_CURRENT_PP(this);
-    
+        
     if(first_time)
     {
         if(need_reinit)
@@ -244,29 +244,20 @@ void PPOrderBy::next  (tuple &t)
         data_cells -> clear();
         sort_cells -> clear();
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPOrderBy::copy(dynamic_context *_cxt_)
+PPIterator* PPOrderBy::do_copy(dynamic_context *_cxt_)
 {
-    PPOrderBy *res = se_new PPOrderBy(_cxt_, 
-                                   stable, 
-                                   child, 
-                                   modifiers, 
-                                   data_size);
+    PPOrderBy *res = se_new PPOrderBy(_cxt_,
+                                      info, 
+                                      stable, 
+                                      child, 
+                                      modifiers, 
+                                      data_size);
 
     res->child.op = child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
-
-bool PPOrderBy::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPOrderBy::result");
-}
-
-
 
 
 
@@ -831,7 +822,8 @@ void temp_buffer::create_empty_block  (int start, int size)
 
 
 PPSTuple::PPSTuple(dynamic_context *_cxt_,
-                   const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_),
+                   operation_info _info_,
+                   const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_, _info_),
                                                     ch_arr(_ch_arr_),
                                                     lt(1)
 {
@@ -846,21 +838,21 @@ PPSTuple::~PPSTuple()
     }
 }
 
-void PPSTuple::open ()
+void PPSTuple::do_open ()
 {
     for (i = 0; i < ch_arr.size(); i++) 
         ch_arr[i].op->open();
     i = 0;
 }
 
-void PPSTuple::reopen ()
+void PPSTuple::do_reopen()
 {
     for (i = 0; i < ch_arr.size(); i++) 
         ch_arr[i].op->reopen();
     i = 0;
 }
 
-void PPSTuple::close ()
+void PPSTuple::do_close()
 {
     for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->close();
@@ -877,10 +869,8 @@ void PPSTuple::close ()
     }
 }
 
-void PPSTuple::next(tuple &t)
+void PPSTuple::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);   
-    
     if (!i)
     {
         t.eos = false;
@@ -917,24 +907,16 @@ void PPSTuple::next(tuple &t)
         t.set_eos();
         i = 0;
     }
-
-    RESTORE_CURRENT_PP;
 }
 
-PPIterator* PPSTuple::copy(dynamic_context *_cxt_)
+PPIterator* PPSTuple::do_copy(dynamic_context *_cxt_)
 {
-    PPSTuple *res = se_new PPSTuple(_cxt_, ch_arr);
+    PPSTuple *res = se_new PPSTuple(_cxt_, info, ch_arr);
 
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
 
-    res->set_xquery_line(__xquery_line);
     return res;
-}
-
-bool PPSTuple::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPSTuple::result");
 }
 
 
@@ -946,13 +928,14 @@ bool PPSTuple::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 
 
 PPSLet::PPSLet(dynamic_context *_cxt_,
-             arr_of_var_dsc _var_dscs_, 
-             PPOpIn _source_child_, 
-             PPOpIn _data_child_) : PPVarIterator(_cxt_),
-                                    var_dscs(_var_dscs_),
-                                    source_child(_source_child_),
-                                    source(_source_child_.ts),
-                                    data_child(_data_child_)
+               operation_info _info_,
+               arr_of_var_dsc _var_dscs_, 
+               PPOpIn _source_child_, 
+               PPOpIn _data_child_) : PPVarIterator(_cxt_, _info_),
+                                      var_dscs(_var_dscs_),
+                                      source_child(_source_child_),
+                                      source(_source_child_.ts),
+                                      data_child(_data_child_)
 {
 }
 
@@ -965,7 +948,7 @@ PPSLet::~PPSLet()
 }
 
 
-void PPSLet::open ()
+void PPSLet::do_open ()
 {
     source_child.op->open();
     need_reopen = false;
@@ -983,7 +966,7 @@ void PPSLet::open ()
 	data_child.op->open();
 }
 
-void PPSLet::reopen ()
+void PPSLet::do_reopen()
 {
     source_child.op->reopen();
     data_child.op->reopen();
@@ -992,17 +975,15 @@ void PPSLet::reopen ()
     reinit_consumer_table();
 }
 
-void PPSLet::close ()
+void PPSLet::do_close()
 {
     source_child.op->close();
     data_child.op->close();
     if(s != NULL) s = NULL;
 }
 
-void PPSLet::next(tuple &t)
+void PPSLet::do_next(tuple &t)
 {
-    SET_CURRENT_PP(this);
-
     if (need_reopen)
     {
         source_child.op->reopen();
@@ -1015,30 +996,25 @@ void PPSLet::next(tuple &t)
     data_child.op->next(t);
 
     if (t.is_eos()) need_reopen = true;
-    
-    RESTORE_CURRENT_PP;    
 }
 
-PPIterator* PPSLet::copy(dynamic_context *_cxt_)
+PPIterator* PPSLet::do_copy(dynamic_context *_cxt_)
 {
-    PPSLet *res = se_new PPSLet(_cxt_, var_dscs, source_child, data_child);
+    PPSLet *res = se_new PPSLet(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 
-var_c_id PPSLet::register_consumer(var_dsc dsc)
+var_c_id PPSLet::do_register_consumer(var_dsc dsc)
 {
     complex_var_consumption &cvc = *(cxt->var_cxt.producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
-void PPSLet::next(tuple &t, var_dsc dsc, var_c_id id)
+void PPSLet::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP_VAR(this);
-
     producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
 
@@ -1067,16 +1043,14 @@ void PPSLet::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
         cvc[id] = 0;
     }
-
-    RESTORE_CURRENT_PP_VAR;
 }
 
-void PPSLet::reopen(var_dsc dsc, var_c_id id)
+void PPSLet::do_reopen(var_dsc dsc, var_c_id id)
 {
     cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
 }
 
-void PPSLet::close(var_dsc dsc, var_c_id id)
+void PPSLet::do_close(var_dsc dsc, var_c_id id)
 {
 }
 
@@ -1087,9 +1061,4 @@ inline void PPSLet::reinit_consumer_table()
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
-}
-
-bool PPSLet::result(PPIterator* cur, dynamic_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPSLet::result");
 }

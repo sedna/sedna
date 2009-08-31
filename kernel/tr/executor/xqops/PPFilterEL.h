@@ -18,28 +18,21 @@ class PPFilterEL : public PPIterator
 protected:
     int pos;
     sorted_sequence *s;
-
-
-    // given parameters
     PPOpIn child;
 
-    void children(PPOpIn& _child_) { _child_ = child; }
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ; 
 
-public:
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(dynamic_context *_cxt_);
-
+public:    
     PPFilterEL(dynamic_context *_cxt_,
-          PPOpIn _child_);
+               operation_info _info_,
+               PPOpIn _child_);
     virtual ~PPFilterEL();
-
-    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 
