@@ -2,6 +2,10 @@
 # Makefile for XQuery parser (development version)
 #
 
+#################################################
+# Note! DON'T FORGET TO CHANGE Makefile.release!#
+#################################################
+
 PP = ../../..
 
 include $(PP)/Makefile.include
@@ -36,3 +40,10 @@ gen_parser: XQParser.y
 clean_generated:
 	-$(REMOVE) $(GENERATED)
 	-$(REMOVE) gen_lexer gen_parser
+
+
+#################################################
+# Note! DON'T FORGET TO CHANGE Makefile.release!#
+#################################################
+
+
