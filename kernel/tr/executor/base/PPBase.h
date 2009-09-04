@@ -15,6 +15,7 @@
 
 #include "tr/executor/base/dynamic_context.h"
 #include "tr/executor/base/sequence.h"
+#include "tr/tr_globals.h"
 
 
 
@@ -48,6 +49,9 @@ namespace tr_globals
 
     extern TLS_VAR_DECL
     volatile bool is_timer_fired;
+    
+    extern TLS_VAR_DECL
+    volatile unsigned int current_stack_depth;
 
     /* FIXME: make this TLS_VAR_DECL when we start to use threads */
     extern op_str_buf tmp_op_str_buf;
@@ -63,23 +67,33 @@ namespace tr_globals
  * xxx_VAR   - in next(tuple, var)
  */
 
-#define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
-                                 tr_globals::__current_physop = (pp);
+#define INCREASE_STACK_DEPTH     tr_globals::current_stack_depth++;
 
+#define DECREASE_STACK_DEPTH     tr_globals::current_stack_depth--;
+
+#define CHECK_STACK_DEPTH        if(tr_globals::current_stack_depth > tr_globals::max_stack_depth) \
+                                     throw USER_EXCEPTION2(SE1001,             \
+    "Infinite recursion or too complex query. Consider increasing session_stack_depth configuration parameter in sednaconf.xml.");
+
+#define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
+                                 tr_globals::__current_physop = (pp); 
+                                 
 #define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = tr_globals::__current_physop; \
                                  tr_globals::__current_physop = (pp);
 
 #define RESTORE_CURRENT_PP       tr_globals::__current_physop = __current_physop_backup; \
-                                 __current_physop_backup = NULL;
+                                 __current_physop_backup = NULL; \
 
 #define RESTORE_CURRENT_PP_VAR   tr_globals::__current_physop = __current_physop_backup_var; \
                                  __current_physop_backup_var = NULL;
 
 /* Must be called after delete qep_tree in trn! */
-#define RESET_CURRENT_PP         tr_globals::__current_physop = NULL;
+#define RESET_CURRENT_PP         tr_globals::__current_physop = NULL; \
+                                 tr_globals::current_stack_depth = 0;
 
 /* Check in executor if timer is fired */
-#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
+#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) \
+                                     throw USER_EXCEPTION(SE4620);
 
 
 /*******************************************************************************
@@ -170,10 +184,15 @@ public:
     /* Saves next portion of the result of this operation in t */
     inline void        next    (tuple &t) 
     { 
-        CHECK_TIMER_FLAG;
-        SET_CURRENT_PP(this);
+        CHECK_TIMER_FLAG
+        SET_CURRENT_PP(this)
+        INCREASE_STACK_DEPTH
+        CHECK_STACK_DEPTH
+
         do_next(t);  
-        RESTORE_CURRENT_PP;
+        
+        DECREASE_STACK_DEPTH
+        RESTORE_CURRENT_PP
     }
     
     /* 

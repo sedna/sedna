@@ -19,6 +19,9 @@ using namespace std;
 
 void fun_conv_rules::next(tuple &t)
 {
+    INCREASE_STACK_DEPTH
+    CHECK_STACK_DEPTH
+
     child->next(t);
 
     if (!t.is_eos()) num++;
@@ -43,6 +46,7 @@ void fun_conv_rules::next(tuple &t)
     if (t.is_eos()) 
     {
         num = 0;
+        DECREASE_STACK_DEPTH
         return;
     }
 
@@ -64,6 +68,8 @@ void fun_conv_rules::next(tuple &t)
 
     if (!type_matches_single(tc, st->type))
         throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", given type is [" + tc.type2string() + "].").c_str());
+
+    DECREASE_STACK_DEPTH
 }
 
 string fun_conv_rules::error()

@@ -30,6 +30,7 @@ namespace tr_globals
     extern int authentication;
     extern int authorization;
     extern int query_timeout;
+    extern int max_stack_depth;
     
     extern char db_name[];
     extern char filename[];
