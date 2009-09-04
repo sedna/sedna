@@ -177,6 +177,7 @@ int main(int argc, char** argv)
             command_line += " -ping-port-number " + int2string(cfg.gov_vars.ping_port_number);
             command_line += " -el-level " + int2string(cfg.gov_vars.el_level);
             command_line += " -alive-timeout " + int2string(cfg.gov_vars.ka_timeout);
+            command_line += " -stack-depth "   + int2string(cfg.gov_vars.pp_stack_depth);
 
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());

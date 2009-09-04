@@ -36,6 +36,7 @@ void fulfill_config_parameters(gov_config_struct* cfg)
   MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_ping_port,  cfg->gov_vars.ping_port_number);
   MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_el_level,   cfg->gov_vars.el_level);
   MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_ka_timeout, cfg->gov_vars.ka_timeout);
+  MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_pp_stack_depth, cfg->gov_vars.pp_stack_depth);
 
   cfg->gov_vars.gov_pid = uGetCurrentProcessId(__sys_call_error);
 

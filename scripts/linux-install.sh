@@ -193,6 +193,13 @@ cat > $TARGET/etc/sednaconf.xml <<EOF
        0 - (default) no timeout (infinite timeout)
   -->
   <keep_alive_timeout>0</keep_alive_timeout>
+  
+  <!-- Maximum depth of the query execution plan.
+       Make sure that you have enough process stack size
+       before increasing this parameter.
+  -->
+  <session_stack_depth>5000</session_stack_depth>
+
 </sednaconf>
 EOF
 rm $TARGET/etc/sednaconf.xml.sample

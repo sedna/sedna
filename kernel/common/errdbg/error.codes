@@ -422,7 +422,7 @@ err:FOTY0012
 ###############################################################################
 sedna-err:SE1001
 
-    Stack overflow.
+    Physical plan executor stack overflow.
 sedna-err:SE1002
 
     Feature is not implemented.

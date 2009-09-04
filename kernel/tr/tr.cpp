@@ -192,8 +192,10 @@ int TRmain(int argc, char *argv[])
 
             open_gov_shm();
 
-            socket_port = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
-            SEDNA_DATA  = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
+            //get global configuration
+            socket_port     = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+            SEDNA_DATA      = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
+            max_stack_depth = GOV_HEADER_GLOBAL_PTR -> pp_stack_depth;
 
 #ifdef SE_MEMORY_TRACK
             strcpy(MT_SEDNA_DATA, SEDNA_DATA);
@@ -215,13 +217,12 @@ int TRmain(int argc, char *argv[])
             tr_globals::ppc = se_new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_TRN, &tr_globals::is_timer_fired);
             tr_globals::ppc->startup(e);
 
-            // sid is known
             event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
             event_logger_set_sid(sid);
 
             client->write_user_query_to_log();                                    /// it works only for command line client
             client->set_keep_alive_timeout(GOV_HEADER_GLOBAL_PTR -> ka_timeout);  /// it works only for socket client
-
+            
 #ifdef _WIN32
             BOOL fSuccess;
             fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TrnCtrlHandler, TRUE);      // add to list 

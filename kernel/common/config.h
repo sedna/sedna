@@ -42,6 +42,9 @@ struct gov_header_struct
     int ping_port_number;    /// Process ping port
     int el_level;            /// Event log severity level
     int ka_timeout;          /// Session keep alive timeout
+
+    /* Maximum depth of the physical operations stack in executor */
+    int pp_stack_depth;
 };
 
 struct gov_config_struct

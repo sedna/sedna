@@ -31,6 +31,7 @@ namespace tr_globals
     int authentication    = 1;
     int authorization     = 1;
     int query_timeout     = 0;
+    int max_stack_depth   = 0;
 
     char db_name     [SE_MAX_DB_NAME_LENGTH+1];
     char filename    [TR_ARG_MAX_LENGTH+1];

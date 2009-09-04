@@ -6,7 +6,8 @@
   <!-- Path to the database files:
        - path must exist;
        - path must be absolute;
-       - in Windows use '/' for separating directories (example: c:/sedna) -->
+       - in Windows use '/' for separating directories (example: c:/sedna) 
+  -->
   <sedna_data>/var/lib/sedna</sedna_data>
 
   <!-- Left bounf of range for identifiers of system resources -->
@@ -35,5 +36,11 @@
        0 - (default) no timeout (infinite timeout)
   -->
   <keep_alive_timeout>0</keep_alive_timeout>
+  
+  <!-- Maximum depth of the query execution plan.
+       Make sure that you have enough process stack size
+       before increasing this parameter.
+  -->
+  <pp_stack_depth>100000</pp_stack_depth>
 
 </sednaconf>
