@@ -50,8 +50,12 @@ namespace tr_globals
     extern TLS_VAR_DECL
     volatile bool is_timer_fired;
     
+    /*
+     * Signed integer is better here, since in some situations
+     * we can get negative value.
+     */
     extern TLS_VAR_DECL
-    volatile unsigned int current_stack_depth;
+    volatile int current_stack_depth;
 
     /* FIXME: make this TLS_VAR_DECL when we start to use threads */
     extern op_str_buf tmp_op_str_buf;

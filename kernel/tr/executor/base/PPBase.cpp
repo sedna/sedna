@@ -26,7 +26,7 @@ namespace tr_globals
     
     /* Counts depth of the physical plan in runtime */
     extern TLS_VAR_DECL
-    volatile unsigned int current_stack_depth = 0;
+    volatile int current_stack_depth = 0;
 
     /* FIXME: make this TLS_VAR_DECL when we start to use threads */
     op_str_buf tmp_op_str_buf;
