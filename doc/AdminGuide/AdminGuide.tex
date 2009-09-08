@@ -91,7 +91,8 @@ The Sedna directory hierarchy is fundamental to obtaining an overall understandi
 %\subsubsection{Sedna Installed from Precompiled Binaries}
 %\label{sec:binary-pack}
 %If you install Sedna from precompiled binaries, the directory structures are identical on Windows and Linux platforms.
-Below \verb!SEDNA_INSTALL! refers to the directory where Sedna is installed. The directory structures are identical on all supported platforms.
+Below \verb!SEDNA_INSTALL! refers to the directory where Sedna is installed.
+The directory structures are identical on all supported platforms.
 
 \begin{verbatim}
 SEDNA_INSTALL/bin          command line utilities for managing
@@ -158,8 +159,9 @@ For the installation instructions see INSTALL file shipped with the Sedna distri
 \subsubsection{Running Sedna}
 \label{StartSedna}
 
-To start the Sedna server one should start \emph{Governor} by executing the \verb!se_gov! command. This starts the main server component. After it Administrator can run databases (as discussed in Section \ref{RunDB}).
-
+To start the Sedna server one should start \emph{Governor} by executing the
+\verb!se_gov! command. This starts the main server component. After that
+Administrator can run databases (as discussed in Section \ref{RunDB}).
 
 The usage of the \verb!se_gov! command is as follows:
 
@@ -182,25 +184,42 @@ options:
                              4 - log everything (+debug messages)
   -alive-timeout timeout   session keep alive timeout
                            (default 0 - infinite timeout)
+  -stack-depth depth       maximum executor stack depth
+                           (default 5000)
 \end{verbatim}
 
-\verb!--help! and \verb!-help! options provide the exhaustive information about the \verb!se_gov! command.
+\verb!--help! and \verb!-help! options provide the exhaustive information about
+the \verb!se_gov! command.
 
 \verb!-version! option allows getting the version of the \emph{Governor}.
 
-\verb!-background-mode! option allows Administrator to start \emph{Governor} in the background mode.
+\verb!-background-mode! option allows Administrator to start \emph{Governor} in
+the background mode.
 
-\verb!-port-number! option specifies the port number on which Sedna listens for connections from clients.
-If port number is not specified Governor tries to find the \verb!sednaconf.xml! file and use port number specified as \verb!listener_port! parameter (see section \ref{sec:ConfigSedna}, Configuring Sedna).
-If it still cannot find port number it will use default 5050 value.
+\verb!-port-number! option specifies the port number on which Sedna listens for
+connections from clients.If port number is not specified Governor tries to find
+the \verb!sednaconf.xml! file and use port number specified as
+\verb!listener_port! parameter (see section \ref{sec:ConfigSedna}, Configuring
+Sedna). If it still cannot find port number it will use default 5050 value.
 
-\verb!-el-level! option specifies the event log severity level. For details refer to the section \ref{sec:event-log}, Event Log.
+\verb!-el-level! option specifies the event log severity level. For details
+refer to the section \ref{sec:event-log}, Event Log.
 
-\verb!-alive-timeout! option specifies number of seconds to wait for the next request from the some client on the same connection.
-Session keep alive timeout can be defined also in the \verb!sednaconf.xml! file.
-Value provided via command line overrides value (if any) defined in \verb!sednaconf.xml! file.
+\verb!-alive-timeout! option specifies number of seconds to wait for the next
+request from the some client on the same connection. Session keep alive timeout
+can be defined also in the \verb!sednaconf.xml! file. Value provided via command
+line overrides value (if any) defined in the \verb!sednaconf.xml! file.
 
-To get the information about which Sedna components are run use \verb!se_rc! command.
+\verb!-stack-depth! option specifies the maximum safe depth of the session's 
+physical operations stack. Setting the parameter higher than the actual process
+stack may fit will mean that a runaway recursive function can crash an individual
+session (and server in the current architecture). The default setting is 5000, 
+which is unlikely to risk crashes. However, it may be too small to allow
+execution of complex functions. Value provided via command line overrides value
+(if any) defined in the \verb!sednaconf.xml! file.
+
+To get the information about which Sedna components are run use \verb!se_rc!
+command.
 
 The usage of the \verb!se_rc! command is as follows:
 
@@ -217,7 +236,9 @@ options:
 
 \subsubsection{Stopping Sedna}
 
-To stop Sedna, Administrator should use the \verb!se_stop! command. This command stops all Sedna components including all databases, which are run. Command has several optional parameters. 
+To stop Sedna, Administrator should use the \verb!se_stop! command. This command
+stops all Sedna components including all databases, which are run. Command has
+several optional parameters. 
 
 The usage of the \verb!se_stop! command is as follows:
 
@@ -237,7 +258,8 @@ Option \verb!-hard! causes Sedna to attempt to roll back transactions as soon as
 
 \subsubsection{Configuring Sedna}
 \label{sec:ConfigSedna}
-Sedna configuration parameters are stored in the file \verb!sednaconf.xml! located in:
+Sedna configuration parameters are stored in the file \verb!sednaconf.xml!
+located in:
 \begin{verbatim}
 	[win:] SEDNA_INSTALL\etc
 	[nix:] SEDNA_INSTALL/etc
@@ -254,23 +276,45 @@ The file is an XML document, which satisfies the following DTD:
 <!ELEMENT ping_port (#PCDATA)>
 <!ELEMENT event_log_level (#PCDATA)>
 <!ELEMENT keep_alive_timeout (#PCDATA)>
+<!ELEMENT pp_stack_depth (#PCDATA)>
 \end{verbatim}
 
 The \verb!sedna_data! element contains the path to the directory where
 database configuration files (in the \verb!cfg! subdirectory) and
-databases (in the \verb!data! subdirectory) are stored. Path must be absolute and exist. The path by default is \verb!SEDNA_INSTALL!.
+databases (in the \verb!data! subdirectory) are stored. Path must be absolute
+and exist. The path by default is \verb!SEDNA_INSTALL!.
 
-The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should configure this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires a range of identifiers which length is equal to 150.
+The \verb!os_primitives_id_min_bound! element defines the minimal value for
+identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run
+several Sedna instances on one machine Administrator should configure this
+parameter in a such way that identifiers belonging to different Sedna instances
+does not intersect. In a standard configuration one Sedna instance acquires a
+range of identifiers which length is equal to 150.
 
-The \verb!listener_port! element defines the port number for listening for a connection requests from a client.
+The \verb!listener_port! element defines the port number for listening for a
+connection requests from a client.
 
-The \verb!ping_port! element defines the port number of Sedna ping server that is an internal kernel mechanism. It is used to stop all Sedna processes in case of crash.
+The \verb!ping_port! element defines the port number of Sedna ping server that
+is an internal kernel mechanism. It is used to stop all Sedna processes in case
+of crash.
 
-The \verb!event_log_level! defines event log severity level (0-4). For full description see section \ref{sec:event-log}, Event Log.
+The \verb!event_log_level! defines event log severity level (0-4). For full
+description see section \ref{sec:event-log}, Event Log.
 
-The \verb!keep_alive_timeout! defines session keep alive timeout, i.e. number of seconds to wait for the next request from the some client on the same connection.
+The \verb!keep_alive_timeout! defines session keep alive timeout, i.e. number
+of seconds to wait for the next request from the some client on the same
+connection.
 
-To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, in order for new configuration to take effect you must restart Sedna server (\verb!se_gov!).
+The \verb!session_stack_depth! defines the maximum safe depth of the session's 
+physical operations stack. Setting the parameter higher than the actual process
+stack may fit will mean that a runaway recursive function can crash an individual
+session (and server in the current architecture). The default setting is 5000, 
+which is unlikely to risk crashes. However, it may be too small to allow
+execution of complex functions. 
+
+To tune the Sedna configuration, Administrator should edit the proper elements
+of the Sedna configuration file. Note, in order for new configuration to take
+effect you must restart Sedna server (\verb!se_gov!).
 
 \subsection{Managing Databases}
 \subsubsection{Creating a Database}
