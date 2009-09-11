@@ -342,6 +342,8 @@ void add_predeleted_block(xptr block)
             ((node_blk_hdr *) (GETBLOCKBYNODE(rb)))->pblk = lb;
         }
 
+        CHECKP(block); // callers usually expect block to stay the same
+
         blocks_to_delete->insert(block);
     }
 }
