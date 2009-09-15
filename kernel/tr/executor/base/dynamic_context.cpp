@@ -61,6 +61,9 @@ static_context::static_context()
     tmp=xmlns_touch("local", "http://www.w3.org/2005/xquery-local-functions");
     insc_ns["local"].push_back(tmp);
     ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
+    tmp=xmlns_touch("se", "http://www.modis.ispras.ru/sedna");
+    insc_ns["se"].push_back(tmp);
+    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
 
 
     boundary_space = xq_boundary_space_strip;
