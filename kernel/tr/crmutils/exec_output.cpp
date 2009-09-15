@@ -170,7 +170,7 @@ se_socketostream_base::write(const char *s, int len)
 }
 
 se_ostream&
-se_socketostream_base::flush()				
+se_socketostream_base::flush(bool force)
 {
     if(max_result_size) 
     {
@@ -187,7 +187,8 @@ se_socketostream_base::flush()
         }
     }
 
-    if(_res_msg->length > 5 + _type_offset)
+    if((force && _res_msg->length == 5 + _type_offset) || 
+        _res_msg->length > 5 + _type_offset)
     {
         _res_msg->instruction = _instruction; 
 
@@ -379,7 +380,7 @@ se_socketostream::se_socketostream(USOCKET out_socket, protocol_version p_ver)
 void
 se_socketostream::end_item(qepNextAnswer res)	
 {
-    flush(); 
+    flush(true); 
 
     if (res == se_next_item_exists)
     {
@@ -410,7 +411,7 @@ se_socketostream::end_item(qepNextAnswer res)
 void
 se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt, const char* url)
 {
-    flush();
+    flush(true);
     _res_msg->length = 0;
 
     if (_p_ver.major_version >= 4) {
@@ -460,9 +461,11 @@ se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt, const c
 }
 
 se_ostream&
-se_socketostream::flush() 
+se_socketostream::flush(bool force)
 {
-    if(_res_msg->length > 5 + _type_offset) {
+    if((force && _res_msg->length == 5 + _type_offset) || 
+       _res_msg->length > 5 + _type_offset) 
+    {
          se_socketostream_base::flush();
         _instruction = se_ItemPart;
         _type_offset = 0;

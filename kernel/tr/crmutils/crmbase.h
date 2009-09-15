@@ -55,7 +55,7 @@ public:
     virtual se_ostream& write(const char *s, int n)                = 0;
     virtual se_ostream& writextext(char *s, int n);
 	virtual se_ostream& writeattribute(char *s, int n);
-    virtual se_ostream& flush()                                    = 0;
+    virtual se_ostream& flush(bool force = false)                  = 0;
     virtual void endline()                                         = 0;
     virtual void error(const char*)                                = 0;
     virtual se_ostream* get_debug_ostream() = 0;

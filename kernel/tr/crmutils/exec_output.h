@@ -49,7 +49,7 @@ public:
 
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
     virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }
-    virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
+    virtual se_ostream& flush(bool force = false)                                { o_str.flush(); return *this; }
     virtual void endline()                                                       { o_str << std::endl; }
     virtual void error(const char* str)                                          { o_str << str << std::endl; }
     virtual se_ostream* get_debug_ostream()                                      { return se_new se_stdlib_ostream(std::cerr); }
@@ -84,7 +84,7 @@ public:
     virtual se_ostream& write_debug(int /*debug_type*/,
                                     const char * /*s*/, 
                                     int /*n*/)                                  { return *this; }
-    virtual se_ostream& flush()                                                 { return *this; }
+    virtual se_ostream& flush(bool force = false)                               { return *this; }
     virtual void endline()                                                      { ; }
     virtual void error(const char* /*str*/)                                     { ; }
     virtual se_ostream* get_debug_ostream()                                     { return se_new se_nullostream(); }
@@ -129,7 +129,7 @@ public:
     /* string MUST be valid UTF-8 sequence */
     virtual se_ostream& write(const char *s, int n);
 
-    virtual se_ostream& flush();
+    virtual se_ostream& flush(bool force = false);
     virtual void endline();
     virtual void error(const char* str);
 
@@ -157,7 +157,7 @@ public:
 
     virtual se_ostream* get_debug_ostream();
     virtual void set_debug_info_type(se_debug_info_type /*type*/) {};
-    virtual se_ostream& flush();
+    virtual se_ostream& flush(bool force = false);
 };
 
 class se_debug_socketostream: public se_socketostream_base
