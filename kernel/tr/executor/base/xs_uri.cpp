@@ -234,7 +234,7 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
         bool temp = IS_BYTE_SCHEME_ALLOWED(value);
         if(!temp) break;
         ++start;
-        if(counter <= MAX_SCHEME_NAME_SIZE) scheme_buf[counter++] = TO_LOWER_CASE(value);
+        if(counter < MAX_SCHEME_NAME_SIZE) scheme_buf[counter++] = TO_LOWER_CASE(value);
     }
 
     scheme_buf[counter] = '\0';
