@@ -148,6 +148,9 @@ namespace sedna
         nsBinds["fn"] = nsPair("http://www.w3.org/2005/xpath-functions", NULL);
         nsBinds["local"] = nsPair("http://www.w3.org/2005/xquery-local-functions", NULL);
 
+        // predefined Sedna namespace
+        nsBinds["se"] = nsPair("http://www.modis.ispras.ru/sedna", NULL);
+
         // default element/function namespaces
         defElemNsp = nsPair("", NULL);
         defFuncNsp = nsPair("http://www.w3.org/2005/xpath-functions", NULL);
