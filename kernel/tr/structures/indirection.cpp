@@ -39,18 +39,18 @@ xptr add_record_to_indirection_table(xptr p)
     CHECKP(p);
     node_blk_hdr * rbh;
     node_blk_hdr * nbh=(GETBLOCKBYNODE(p));
-    
+
     if (rollback_mode==MODE_UNDO)
     {
         rba=rollback_record;
         rbh=(GETBLOCKBYNODE(rba));
-        
+
         if (blocks_to_delete->find(BLOCKXPTR(rba)) != blocks_to_delete->end()) {
             blocks_to_delete->erase(BLOCKXPTR(rba));
             createBlockNextToTheCurrentBlock(nbh, BLOCKXPTR(rba));
             CHECKP(p);
         }
-        
+
         U_ASSERT(blocks_to_delete->find(BLOCKXPTR(rba)) == blocks_to_delete->end());
     } else {
         if (nbh->free_first_indir!=0)
@@ -71,7 +71,7 @@ xptr add_record_to_indirection_table(xptr p)
     nbi->indir_count++;
     nbi->free_first_indir=*((shft*)((char*)nbi+nbi->free_first_indir));
     *(xptr*)(XADDR(rba)) = p;
-    if (nbh!=nbi)
+    if ((BLOCKXPTR(rba))!=(BLOCKXPTR(p)))
     {
         if (nbi->indir_count>=nbi->count&& 
             (nbi->pblk_indir!=XNULL ||
@@ -122,9 +122,9 @@ xptr add_record_to_indirection_table(xptr p)
             }
         }
 
-    }       
-    CHECKP(rba);    
-    
+    }
+    CHECKP(rba);
+
     last_indir = rba; // we need this hint to apply dynamic xptr remapping durind redo
 
     return rba;
@@ -148,7 +148,7 @@ void del_record_from_indirection_table(xptr p)
     *(shft*)(XADDR(p)) = nbi->free_first_indir;
     nbi->free_first_indir=CALCSHIFT(XADDR(p),nbi);
 
-    if (nbh!=nbi)
+    if ((BLOCKXPTR(node))!=(BLOCKXPTR(p)))
     {
         if (nbi->indir_count<nbi->count&& 
             (nbi->pblk_indir==XNULL &&
