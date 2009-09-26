@@ -140,10 +140,22 @@ void makeBlockConsistentAfterCuttingTheEnd(node_blk_hdr *block,n_dsc* node,shft 
 
 void updateChildPointer (n_dsc* parent,xptr old_xptr,xptr dest)
 {
- xptr* childx=(xptr*)((char*)parent+size_of_node(GETBLOCKBYNODE_ADDR(parent)));
+    xptr* childx=(xptr*)((char*)parent+size_of_node(GETBLOCKBYNODE_ADDR(parent)));
+#ifdef EL_DEBUG
+	int childcount = CHILDCOUNT(ADDR2XPTR(parent));
 
- while (*childx!=old_xptr)   childx+=1;
- *childx=dest;
+	for (int i = 0; i < childcount; i++) {
+		if (childx[i] == old_xptr) {
+			childx[i] = dest;
+			return;
+		}
+	}
+
+	U_ASSERT(false);
+#else
+    while (*childx!=old_xptr) ++childx;
+    *childx=dest;
+#endif /* DEBUG */
 }
 void shiftNodeToTheNewBlockExpanded(n_dsc* source,xptr dest,shft new_size,shft old_size,node_blk_hdr * block)
 {
