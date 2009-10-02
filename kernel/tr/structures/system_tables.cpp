@@ -37,7 +37,7 @@ inline void print_type_name(xmlscm_type keytype, char* buf)
     strcpy(buf, xmlscm_type2c_str(keytype));
 }
 
-xptr fill_schema(schema_node_cptr scm, xptr& node,xptr& neighb)
+xptr fill_schema(schema_node_cptr scm, const xptr& node, const xptr& neighb)
 {
     xptr parent=insert_element(neighb,XNULL,node,type2string(scm->type),xs_untyped,NULL_XMLNS);
     xptr indir=((n_dsc*)XADDR(parent))->indir;

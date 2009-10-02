@@ -96,7 +96,7 @@ void update_insert_sequence(xptr node,schema_node_cptr icell);
 void update_update_sequence(xptr node,schema_node_cptr icell);
 void update_delete_sequence(xptr node,schema_node_cptr icell);
 
-void init_ft_sequences (xptr& left, xptr& right, xptr& parent);
+void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent);
 #endif
 
 #endif

@@ -154,7 +154,7 @@ void update_delete_sequence(xptr node,schema_node_cptr icell)
     CHECKP(node);
 }
 
-void init_ft_sequences (xptr& left, xptr& right, xptr& parent)
+void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent)
 {
     if (IS_TMP_BLOCK(left)||IS_TMP_BLOCK(right)||IS_TMP_BLOCK(parent)) return;
     xptr tmp;

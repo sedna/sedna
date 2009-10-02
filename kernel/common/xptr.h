@@ -178,8 +178,13 @@ inline int xptr_compare(const xptr& p1, const xptr& p2)
     }    
 }
 
+inline bool same_block(const xptr& a, const xptr& b) {
+    return (BLOCKXPTR(a) == BLOCKXPTR(b));
+}
+
+
 /* NULL for xpointers */
-extern xptr XNULL;
+const xptr XNULL;
 
 #ifdef NULL_WAS_NOT_DEFINED
 #undef NULL
