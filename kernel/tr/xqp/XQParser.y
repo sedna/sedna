@@ -1529,12 +1529,12 @@ unionExpr:
         }
     |   unionExpr UNION intersectExceptExpr
         {
-            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::UNION, $1, $3));
+            $$ = new ASTBop(@$, ASTBop::UNION, $1, $3);
         }
     |   unionExpr BAR intersectExceptExpr
         {
-            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::UNION, $1, $3));
-}
+            $$ = new ASTBop(@$, ASTBop::UNION, $1, $3);
+        }
     |   unionExpr UNION error { $$ = $1; }
     |   unionExpr BAR error { $$ = $1; }
     ;
@@ -1547,11 +1547,11 @@ intersectExceptExpr:
         }
     |   intersectExceptExpr INTERSECT instanceofExpr
         {
-            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::INTERSECT, $1, $3));
+            $$ = new ASTBop(@$, ASTBop::INTERSECT, $1, $3);
         }
     |   intersectExceptExpr EXCEPT instanceofExpr
         {
-            $$ = new ASTDDO(@$, new ASTBop(@$, ASTBop::EXCEPT, $1, $3));
+            $$ = new ASTBop(@$, ASTBop::EXCEPT, $1, $3);
         }
     |   intersectExceptExpr INTERSECT error { $$ = $1; }
     |   intersectExceptExpr EXCEPT error { $$ = $1; }

@@ -23,6 +23,7 @@
 
 #define DUMP_INT(i) (std::string(" ") + int2string(i) + " ")
 #define DUMP_NULL ("(0)")
+#define DUMP_BOOL(b) ((b) ? (" #t ") : (" #f "))
 
 static std::string sc;
 
@@ -161,6 +162,7 @@ void IntVisitor::visit(ASTBop &n)
     int_str.append(int2string(n.op));
     dumpASTNode(n.lop);
     dumpASTNode(n.rop);
+    DUMP_BOOL(n.doc_order);
     int_str.append(")");
 }
 
@@ -339,7 +341,7 @@ void IntVisitor::visit(ASTDDO &n)
     int_str.append(int2string(AST_DDO));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
-    if (n.distinct_only)
+    if (n.true_ddo)
         int_str.append(" #t");
     else
         int_str.append(" #f");

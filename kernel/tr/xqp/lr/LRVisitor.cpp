@@ -453,7 +453,7 @@ void LRVisitor::visit(ASTCreateUser &n)
 
 void LRVisitor::visit(ASTDDO &n)
 {
-    if (n.distinct_only)
+    if (!n.true_ddo)
         lr_str.append("(distinct ");
     else
         lr_str.append("(ddo ");

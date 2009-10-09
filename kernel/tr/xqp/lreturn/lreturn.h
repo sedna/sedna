@@ -44,8 +44,9 @@ namespace sedna
             bool isMax1;        // child emits singleton or empty sequence
             bool isSingleLevel; // all nodes are on the same level in node-sequence
 
-            ASTNodesVector *cached; // nodes cached in the subtree (cached means PPSTuple on physical plan)
-            bool useBoundVars;   // true if some of the children is using bound variables (handy for determining if we could cache it)
+            bool isCached;                  // true, if child has been cached
+            bool useConstructors;           // true, if child subexpression uses constructor (direct or computed)
+            std::set<std::string> usedVars; // contains bound variables used in subexpression
 
             childOffer()
             {
@@ -53,46 +54,9 @@ namespace sedna
                 isDistincted = true;
                 isMax1 = true;
                 isSingleLevel = true;
-                cached = NULL;
-                useBoundVars = false;
-            }
 
-            childOffer(const childOffer &off)
-            {
-                isOrdered = off.isOrdered;
-                isDistincted = off.isDistincted;
-                isMax1 = off.isMax1;
-                isSingleLevel = off.isSingleLevel;
-                cached = NULL;
-                useBoundVars = off.useBoundVars;
-
-                if (off.cached)
-                    cached = new ASTNodesVector(*off.cached);
-            }
-
-            childOffer &operator=(const childOffer &off)
-            {
-                if (this != &off)
-                {
-                    delete cached;
-
-                    isOrdered = off.isOrdered;
-                    isDistincted = off.isDistincted;
-                    isMax1 = off.isMax1;
-                    isSingleLevel = off.isSingleLevel;
-                    cached = NULL;
-                    useBoundVars = off.useBoundVars;
-
-                    if (off.cached)
-                        cached = new ASTNodesVector(*off.cached);
-                }
-
-                return *this;
-            }
-
-            ~childOffer()
-            {
-                delete cached;
+                isCached = false;
+                useConstructors = false;
             }
         };
 
@@ -107,6 +71,7 @@ namespace sedna
         void setParamMode();
         void unsetParamMode();
 
+        bool isOfferCorrect(const childOffer &off);
         childOffer getOffer();
         void setOffer(const childOffer &off);
 
