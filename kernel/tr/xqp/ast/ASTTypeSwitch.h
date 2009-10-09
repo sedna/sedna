@@ -21,9 +21,6 @@ public:
     ASTNodesVector *cases;
     ASTNode *def_case; // ASTCase
 
-    // stored by lreturn analysis to send to case-statements
-    sedna::xqExprInfo expr_info;
-
 public:
     ASTTypeSwitch(const ASTNodeCommonData &loc, ASTNode *op_expr, ASTNodesVector *cs, ASTNode *dc) : ASTNode(loc), expr(op_expr), cases(cs), def_case(dc) {}
 
@@ -32,16 +29,6 @@ public:
     void accept(ASTVisitor &v);
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);
-
-    sedna::xqExprInfo getExprProperties() const
-    {
-        return expr_info;
-    }
-
-    void setExprProperties(const sedna::xqExprInfo ex)
-    {
-        expr_info = ex;
-    }
 
     static ASTNode *createNode(scheme_list &sl);
 };
