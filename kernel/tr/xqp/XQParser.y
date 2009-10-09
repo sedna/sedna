@@ -1121,12 +1121,12 @@ forClauseInt:
         }
     |   varRef positionalVar _IN exprSingle
         {
-            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1));
+            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTTypeSeq(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), ASTTypeSeq::NONE), static_cast<ASTVar *>($1));
             $$ = new ASTFor(@$, tv, static_cast<ASTPosVar *>($2), $4);
         }
     |   varRef _IN exprSingle
         {
-            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1));
+            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTTypeSeq(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), ASTTypeSeq::NONE), static_cast<ASTVar *>($1));
             $$ = new ASTFor(@$, tv, NULL, $3);
         }
     |   DOLLAR error _IN error { $$ = new ASTError(@$); }
@@ -1142,7 +1142,7 @@ positionalVar:
     |   AT error { $$ = new ASTError(@$); }
     ;
 
-/* [36]        LetClause      ::=      "let" "$" VarName TypeDeclaration? ":=" ExprSingle ("," "$" VarName TypeDeclaration? ":=" ExprSingle)* */
+    /* [36]        LetClause      ::=      "let" "$" VarName TypeDeclaration? ":=" ExprSingle ("," "$" VarName TypeDeclaration? ":=" ExprSingle)* */
 letClause:
         LET letClauseInt
         {
@@ -1167,7 +1167,7 @@ letClauseInt:
         }
     |   varRef ASSIGN exprSingle
         {
-            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1));
+            ASTTypeVar *tv = new ASTTypeVar(@1, new ASTTypeSeq(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), ASTTypeSeq::NONE), static_cast<ASTVar *>($1));
             $$ = new ASTLet(@$, tv, $3);
         }
     |   DOLLAR error ASSIGN error { $$ = new ASTError(@$); }
@@ -1314,7 +1314,7 @@ quantifiedExprVarList:
     |   varRef _IN exprSingle
         {
             $$ = new ASTNodesVector();
-            $$->push_back(new ASTTypeVar(@$, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($1)));
+            $$->push_back(new ASTTypeVar(@$, new ASTTypeSeq(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), ASTTypeSeq::NONE), static_cast<ASTVar *>($1)));
             $$->push_back($3);
         }
     |   quantifiedExprVarList COMMA varRef typeDeclaration _IN exprSingle
@@ -1325,7 +1325,7 @@ quantifiedExprVarList:
         }
     |   quantifiedExprVarList COMMA varRef _IN exprSingle
         {
-            $1->push_back(new ASTTypeVar(@$, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), static_cast<ASTVar *>($3)));
+            $1->push_back(new ASTTypeVar(@$, new ASTTypeSeq(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX), ASTTypeSeq::NONE), static_cast<ASTVar *>($3)));
             $1->push_back($5);
             $$ = $1;
         }
