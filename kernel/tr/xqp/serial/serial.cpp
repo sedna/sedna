@@ -126,27 +126,21 @@ void IntVisitor::visit(ASTAttribTest &n)
     int_str.append(")");
 }
 
-void IntVisitor::visit(ASTAxis &n)
-{
-    int_str.append("(");
-    int_str.append(int2string(AST_AXIS));
-    int_str.append(dumpLocation(n.loc));
-    int_str.append(int2string(n.axis));
-
-    dumpASTNode(n.expr);
-    dumpASTNode(n.test);
-    int_str.append(")");
-}
-
 void IntVisitor::visit(ASTAxisStep &n)
 {
     int_str.append("(");
     int_str.append(int2string(AST_AXISSTEP));
     int_str.append(dumpLocation(n.loc));
+    dumpASTNode(n.cont);
     int_str.append(int2string(n.axis));
-
     dumpASTNode(n.test);
     dumpASTNodesVector(n.preds);
+
+    if (n.isLast)
+        int_str.append(" #t");
+    else
+        int_str.append(" #f");
+
     int_str.append(")");
 }
 
@@ -184,9 +178,9 @@ void IntVisitor::visit(ASTCase &n)
     int_str.append("(");
     int_str.append(int2string(AST_CASE));
     int_str.append(dumpLocation(n.loc));
-
+    dumpASTNode(n.var);
     dumpASTNode(n.type);
-    dumpASTNode(n.fd);
+    dumpASTNode(n.expr);
     int_str.append(")");
 }
 
@@ -345,6 +339,10 @@ void IntVisitor::visit(ASTDDO &n)
     int_str.append(int2string(AST_DDO));
     int_str.append(dumpLocation(n.loc));
     dumpASTNode(n.expr);
+    if (n.distinct_only)
+        int_str.append(" #t");
+    else
+        int_str.append(" #f");
     int_str.append(")");
 }
 
@@ -540,8 +538,15 @@ void IntVisitor::visit(ASTFilterStep &n)
     int_str.append("(");
     int_str.append(int2string(AST_FILTERSTEP));
     int_str.append(dumpLocation(n.loc));
+    dumpASTNode(n.cont);
     dumpASTNode(n.expr);
     dumpASTNodesVector(n.preds);
+
+    if (n.isLast)
+        int_str.append(" #t");
+    else
+        int_str.append(" #f");
+
     int_str.append(")");
 }
 
@@ -576,16 +581,6 @@ void IntVisitor::visit(ASTFunCall &n)
         }
     }
 
-    int_str.append(")");
-}
-
-void IntVisitor::visit(ASTFunDef &n)
-{
-    int_str.append("(");
-    int_str.append(int2string(AST_FUNDEF));
-    int_str.append(dumpLocation(n.loc));
-    dumpASTNodesVector(n.vars);
-    dumpASTNode(n.fun);
     int_str.append(")");
 }
 
@@ -910,7 +905,9 @@ void IntVisitor::visit(ASTOrderByRet &n)
     int_str.append(int2string(AST_ORDERBYRET));
     int_str.append(dumpLocation(n.loc));
     dumpASTNode(n.iter_expr);
+    dumpASTNode(n.ord_expr);
     dumpASTNode(n.ret_expr);
+    dumpASTNodesVector(n.vars);
     int_str.append(")");
 }
 
@@ -1015,16 +1012,6 @@ void IntVisitor::visit(ASTPragma &n)
     int_str.append(")");
 }
 
-void IntVisitor::visit(ASTPred &n)
-{
-    int_str.append("(");
-    int_str.append(int2string(AST_PRED));
-    int_str.append(dumpLocation(n.loc));
-    dumpASTNode(n.iter_expr);
-    dumpASTNode(n.pred_expr);
-    int_str.append(")");
-}
-
 void IntVisitor::visit(ASTProlog &n)
 {
     int_str.append("(");
@@ -1050,8 +1037,9 @@ void IntVisitor::visit(ASTQuantExpr &n)
     int_str.append("(");
     int_str.append(int2string(AST_QUANTEXPR));
     int_str.append(dumpLocation(n.loc));
+    dumpASTNode(n.var);
     dumpASTNode(n.expr);
-    dumpASTNode(n.fd);
+    dumpASTNode(n.sat);
     int_str.append(int2string(n.type));
     int_str.append(")");
 }
@@ -1073,16 +1061,6 @@ void IntVisitor::visit(ASTRenameColl &n)
     int_str.append(dumpLocation(n.loc));
     dumpASTNode(n.name_old);
     dumpASTNode(n.name_new);
-    int_str.append(")");
-}
-
-void IntVisitor::visit(ASTRet &n)
-{
-    int_str.append("(");
-    int_str.append(int2string(AST_RET));
-    int_str.append(dumpLocation(n.loc));
-    dumpASTNode(n.iter_expr);
-    dumpASTNode(n.ret_expr);
     int_str.append(")");
 }
 
@@ -1270,6 +1248,7 @@ void IntVisitor::visit(ASTUpdMove &n)
     int_str.append("(");
     int_str.append(int2string(AST_UPDMOVE));
     int_str.append(dumpLocation(n.loc));
+    dumpASTNode(n.var);
     dumpASTNode(n.what);
     dumpASTNode(n.where);
     int_str.append(int2string(n.type));
@@ -1292,6 +1271,7 @@ void IntVisitor::visit(ASTUpdReplace &n)
     int_str.append("(");
     int_str.append(int2string(AST_UPDREPLACE));
     int_str.append(dumpLocation(n.loc));
+    dumpASTNode(n.var);
     dumpASTNode(n.what);
     dumpASTNode(n.new_expr);
     int_str.append(")");

@@ -421,4 +421,28 @@ namespace sedna
 
         return 0;
     }
+
+    ASTNode *XQueryDriver::getASTFromQuery(const char *query)
+    {
+        XQueryModule *tmp_mod;
+        ASTNode *res;
+
+        try
+        {
+            parse(query); // module for this query has been added to mods
+
+            tmp_mod = mods.back();
+            mods.pop_back();
+
+            res = dynamic_cast<ASTQuery *>(dynamic_cast<ASTMainModule *>(tmp_mod->getTree())->query)->query->dup();
+
+            delete tmp_mod;
+        }
+        catch (SednaUserException &e)
+        {
+            throw SYSTEM_EXCEPTION("internal parser error: subexpression syntax error");
+        }
+
+        return res;
+    }
 }

@@ -11,7 +11,6 @@
 
 #include "ASTTypeVar.h"
 #include "ASTPosVar.h"
-#include "ASTFunDef.h"
 
 class ASTFor : public ASTNode
 {
@@ -20,7 +19,7 @@ public:
     ASTNode *pv; // positional variable; may be NULL; ASTPosVar
     ASTNode *expr; // for expression
 
-    ASTNode *fd;  // FunDef expression for the final for-clause representation; ASTFunDef
+    ASTNode *fd;  // expression for the next forlet-clause representation; may be for, return, where expressions; NULL at start; not NULL after Bison
 
 public:
     ASTFor(ASTLocation &loc, ASTNode *var, ASTNode *pos_var, ASTNode *for_expr) : ASTNode(loc), tv(var), pv(pos_var), expr(for_expr), fd(NULL) {}
@@ -42,8 +41,8 @@ public:
     // returns list containing COPY of variables (usual and pos)
     ASTNodesVector *getVarList();
 
-    // we set funDef when we cough up the final For-clause representation
-    void setFunDef(ASTNode *funDef);
+    // we set fd when we cough up the final For-clause representation
+    void setNextExpr(ASTNode *fd_);
 
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);

@@ -6,7 +6,7 @@
 #ifndef _LR_VISITOR_H_
 #define _LR_VISITOR_H_
 
-#include "ASTVisitor.h"
+#include "tr/xqp/visitor/ASTVisitor.h"
 #include <string>
 #include "tr/xqp/XQueryDriver.h"
 
@@ -47,7 +47,6 @@ public:
     void visit(ASTAttr &n);
     void visit(ASTAttrConst &n);
     void visit(ASTAttribTest &n);
-    void visit(ASTAxis &n);
     void visit(ASTAxisStep &n);
     void visit(ASTBaseURI &n);
     void visit(ASTBop &n);
@@ -89,7 +88,6 @@ public:
     void visit(ASTFilterStep &n);
     void visit(ASTFor &n);
     void visit(ASTFunCall &n);
-    void visit(ASTFunDef &n);
     void visit(ASTFuncDecl &n);
     void visit(ASTGrantPriv &n);
     void visit(ASTGrantRole &n);
@@ -126,13 +124,11 @@ public:
     void visit(ASTPiTest &n);
     void visit(ASTPosVar &n);
     void visit(ASTPragma &n);
-    void visit(ASTPred &n);
     void visit(ASTProlog &n);
     void visit(ASTQName &n);
     void visit(ASTQuantExpr &n);
     void visit(ASTQuery &n);
     void visit(ASTRenameColl &n);
-    void visit(ASTRet &n);
     void visit(ASTRevokePriv &n);
     void visit(ASTRevokeRole &n);
     void visit(ASTSchemaAttrTest &n);

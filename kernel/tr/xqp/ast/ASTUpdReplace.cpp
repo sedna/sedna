@@ -10,6 +10,7 @@
 
 ASTUpdReplace::~ASTUpdReplace()
 {
+    delete var;
     delete what;
     delete new_expr;
 }
@@ -23,25 +24,31 @@ void ASTUpdReplace::accept(ASTVisitor &v)
 
 ASTNode *ASTUpdReplace::dup()
 {
-    return new ASTUpdReplace(loc, what->dup(), static_cast<ASTFunDef *>(new_expr->dup()));
+    return new ASTUpdReplace(loc, var->dup(), what->dup(), new_expr->dup());
 }
 
 ASTNode *ASTUpdReplace::createNode(scheme_list &sl)
 {
     ASTLocation loc;
-    ASTNode *what = NULL, *newe = NULL;
+    ASTNode *var = NULL, *what = NULL, *newe = NULL;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
 
     loc = dsGetASTLocationFromSList(*sl[1].internal.list);
-    what = dsGetASTFromSchemeList(*sl[2].internal.list);
-    newe = dsGetASTFromSchemeList(*sl[3].internal.list);
+    var = dsGetASTFromSchemeList(*sl[2].internal.list);
+    what = dsGetASTFromSchemeList(*sl[3].internal.list);
+    newe = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-    return new ASTUpdReplace(loc, what, newe);
+    return new ASTUpdReplace(loc, var, what, newe);
 }
 
 void ASTUpdReplace::modifyChild(const ASTNode *oldc, ASTNode *newc)
 {
+    if (var == oldc)
+    {
+        var = newc;
+        return;
+    }
     if (what == oldc)
     {
         what = newc;

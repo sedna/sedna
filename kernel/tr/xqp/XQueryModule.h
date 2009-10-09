@@ -49,6 +49,8 @@ namespace sedna
         std::string getIR();
         std::string getModuleURI();
 
+        ASTNode* getTree();
+
         std::vector<std::string> getImportedModules() const;
 
         ~XQueryModule()

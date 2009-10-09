@@ -1,10 +1,10 @@
 /*
- * File:  Sema.h
+ * File:  lreturn.h
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _SEMA_VISITOR_H_
-#define _SEMA_VISITOR_H_
+#ifndef _LRETURN_VISITOR_H_
+#define _LRETURN_VISITOR_H_
 
 #include "tr/xqp/visitor/ASTVisitor.h"
 #include "tr/xqp/XQueryDriver.h"
@@ -15,67 +15,54 @@
 
 namespace sedna
 {
-    class Sema : public ASTVisitor
+    class LReturn : public ASTVisitor
     {
     private:
-        enum DuplicatePrologsDecls
-        {
-            PrologBoundSpace = 0,
-            PrologColl,
-            PrologBaseURI,
-            PrologDeclConst,
-            PrologOrder,
-            PrologOrderEmpty,
-            PrologCopyNsp,
 
-            PrologDummyEnd // to evaluate the size of the dupLocations
+        struct parentRequest
+        {
+            bool distinctOnly; // require only distinct from child
+            bool calledOnce;   // child will be called only once
         };
 
-        const ASTLocation *dupLocations[PrologDummyEnd]; // locations to diagnoze duplicate prolog elements
+        struct childOffer
+        {
+            bool isOrdered;     // child is ordered
+            bool isDistincted;  // child contains distincted values
+            bool isMax1;        // child emits singleton or empty sequence
+            bool isSingleLevel; // all nodes are on the same level in node-sequence
+        };
 
-        bool is_imported; // true, if we import internal module; if so, we can skip some of the checks
+        const childOffer defDDOOffer = {true, true, true, true};
+
         bool param_mode; // true, if we are checking function params now (ASTVar sema analysis)
         unsigned int param_count; // number of parameters found in param_mode
-        bool casting_mode; // true, if we analyze types for cast or castable
-        bool att_test; // true, if name test uri should be resolved as for attribute (default namespace uri issues)
-
-        typedef std::pair<nsBindType, nsPair> elNspInfo;
-        std::vector<elNspInfo> elemNsps; // stack of pairs (namespaces, def.namespaces) overriden in direct elem constructor
+        bool isModeOrdered;     // cuurent mode of operation (global + may change on ordered-unordered expressions)
 
         std::vector<XQVariable> bound_vars; // vector of variables bound in the current expression
 
-        bool checkXQueryEncoding(const char *enc);
-        const char *resolveQName(ASTLocation &loc, const char *pref, const char *def_uri, int err_code = XPST0081);
-
-        void parseOption(const ASTLocation &loc, const std::string &opt,
-                         std::vector<std::pair<std::string, std::string> > &opts, const char delim);
-
-        void rewriteStdFunCall(ASTFunCall &n, std::string name);
-        ASTNode *getDocCollFromAbsXPath(ASTNode *path);
-        ASTNode *modifyRelIndexXPath(ASTNode *path, ASTNode *doccoll);
-        void getLeafAndTrimmedPath(ASTNode *path, std::string **ln, int *lt, ASTNode **t_path);
+        std::vector<childOffer> offers; // offers from children go in this sequence
+        parentRequest parentReq; // request from parent to child
 
         void setParamMode();
         void unsetParamMode();
 
-    public:
-        Sema(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)
-        {
-            for (unsigned int i = 0; i < PrologDummyEnd; i++)
-                dupLocations[i] = NULL;
+        childOffer getOffer();
+        void setOffer(childOffer off);
 
-            is_imported = false;
+        void VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v, parentRequest req);
+
+    public:
+        LReturn(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)
+        {
             param_mode = false;
             param_count = 0;
-            casting_mode = false;
-            att_test = false;
+            isModeOrdered = true; // ddo for default
         }
 
-        ~Sema()
+        ~LReturn()
         {
         }
-
-        static XQFunction *findFunction(std::string name, unsigned int arity, XQueryModule *mod, XQueryDriver *drv);
 
         // visiting functions
         void visit(ASTAlterUser &n);

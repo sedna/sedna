@@ -12,11 +12,12 @@
 class ASTUpdReplace : public ASTNode
 {
 public:
+    ASTNode *var; // ASTTypeVar
     ASTNode *what;
-    ASTNode *new_expr; // ASTFunDef
+    ASTNode *new_expr;
 
 public:
-    ASTUpdReplace(ASTLocation &loc, ASTNode *what_, ASTNode *new_expr_) : ASTNode(loc), what(what_), new_expr(new_expr_) {}
+    ASTUpdReplace(ASTLocation &loc, ASTNode *var_, ASTNode *what_, ASTNode *new_expr_) : ASTNode(loc), var(var_), what(what_), new_expr(new_expr_) {}
 
     ~ASTUpdReplace();
 

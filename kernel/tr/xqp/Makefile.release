@@ -13,6 +13,6 @@ include $(PP)/Makefile.include
 
 OBJS = XQueryDriver$(OBJ_EXT) XQueryParser$(OBJ_EXT) XQueryLexer$(OBJ_EXT) XQuerytoLR$(OBJ_EXT) XQueryModule$(OBJ_EXT)  XQFunction$(OBJ_EXT)
 
-SUBDIRS = ast visitor sema serial
+SUBDIRS = ast visitor sema serial lr
 
 include $(PP)/Makefile.ordlib

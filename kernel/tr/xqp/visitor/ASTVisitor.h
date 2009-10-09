@@ -40,7 +40,6 @@ public:
     virtual void visit(ASTAttr&n) = 0;
     virtual void visit(ASTAttribTest &n) = 0;
     virtual void visit(ASTAttrConst &n) = 0;
-    virtual void visit(ASTAxis &n) = 0;
     virtual void visit(ASTAxisStep &n) = 0;
     virtual void visit(ASTBaseURI &n) = 0;
     virtual void visit(ASTBop &n) = 0;
@@ -83,7 +82,6 @@ public:
     virtual void visit(ASTFor &n) = 0;
     virtual void visit(ASTFunCall &n) = 0;
     virtual void visit(ASTFuncDecl &n) = 0;
-    virtual void visit(ASTFunDef &n) = 0;
     virtual void visit(ASTGrantPriv &n) = 0;
     virtual void visit(ASTGrantRole &n) = 0;
     virtual void visit(ASTIf &n) = 0;
@@ -119,13 +117,11 @@ public:
     virtual void visit(ASTPiTest &n) = 0;
     virtual void visit(ASTPosVar &n) = 0;
     virtual void visit(ASTPragma &n) = 0;
-    virtual void visit(ASTPred &n) = 0;
     virtual void visit(ASTProlog &n) = 0;
     virtual void visit(ASTQName &n) = 0;
     virtual void visit(ASTQuantExpr &n) = 0;
     virtual void visit(ASTQuery &n) = 0;
     virtual void visit(ASTRenameColl &n) = 0;
-    virtual void visit(ASTRet &n) = 0;
     virtual void visit(ASTRevokePriv &n) = 0;
     virtual void visit(ASTRevokeRole &n) = 0;
     virtual void visit(ASTSchemaAttrTest &n) = 0;

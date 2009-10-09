@@ -11,7 +11,8 @@
 ASTCase::~ASTCase()
 {
     delete type;
-    delete fd;
+    delete var;
+    delete expr;
 }
 
 void ASTCase::accept(ASTVisitor &v)
@@ -23,33 +24,39 @@ void ASTCase::accept(ASTVisitor &v)
 
 ASTNode *ASTCase::dup()
 {
-    return new ASTCase(loc, (type) ? type->dup() : NULL, fd->dup());
+    return new ASTCase(loc, (var) ? var->dup() : NULL, (type) ? type->dup() : NULL, expr->dup());
 }
 
 ASTNode *ASTCase::createNode(scheme_list &sl)
 {
     ASTLocation loc;
-    ASTNode *type = NULL, *fd = NULL;
+    ASTNode *var = NULL, *type = NULL, *expr = NULL;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
 
     loc = dsGetASTLocationFromSList(*sl[1].internal.list);
-    type = dsGetASTFromSchemeList(*sl[2].internal.list);
-    fd = dsGetASTFromSchemeList(*sl[3].internal.list);
+    var = dsGetASTFromSchemeList(*sl[2].internal.list);
+    type = dsGetASTFromSchemeList(*sl[3].internal.list);
+    expr = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-    return new ASTCase(loc, type, fd);
+    return new ASTCase(loc, var, type, expr);
 }
 
 void ASTCase::modifyChild(const ASTNode *oldc, ASTNode *newc)
 {
+    if (var == oldc)
+    {
+        var = newc;
+        return;
+    }
     if (type == oldc)
     {
         type = newc;
         return;
     }
-    if (fd == oldc)
+    if (expr == oldc)
     {
-        fd = newc;
+        expr = newc;
         return;
     }
 }

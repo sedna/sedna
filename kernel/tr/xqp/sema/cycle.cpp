@@ -3,7 +3,7 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "tr/xqp/visitor/LRVisitor.h"
+#include "tr/xqp/lr/LRVisitor.h"
 #include "tr/xqp/sema/cycle.h"
 #include "tr/xqp/sema/Sema.h"
 #include "common/errdbg/exceptions.h"
@@ -38,15 +38,18 @@ namespace sedna
             n.type->accept(*this);
     }
 
-    void Cycle::visit(ASTAxis &n)
-    {
-        n.expr->accept(*this);
-        n.test->accept(*this);
-    }
-
     void Cycle::visit(ASTAxisStep &n)
     {
-        throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
+        if (n.cont)
+            n.cont->accept(*this);
+
+        n.test->accept(*this);
+
+        if (n.preds)
+        {
+            for (unsigned int i = 0; i < n.preds->size(); i++)
+                (*n.preds)[i]->accept(*this);
+        }
     }
 
     void Cycle::visit(ASTBaseURI &n)
@@ -67,7 +70,17 @@ namespace sedna
 
     void Cycle::visit(ASTCase &n)
     {
-        n.fd->accept(*this);
+        if (n.var)
+        {
+            setParamMode();
+            n.var->accept(*this);
+            unsetParamMode();
+        }
+
+        n.expr->accept(*this);
+
+        if (n.var)
+            bound_vars.pop_back();
     }
 
     void Cycle::visit(ASTCast &n)
@@ -271,13 +284,38 @@ namespace sedna
 
     void Cycle::visit(ASTFilterStep &n)
     {
-        throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
+        if (n.cont)
+            n.cont->accept(*this);
+
+        if (n.expr)
+            n.expr->accept(*this);
+
+        if (n.preds)
+        {
+            for (unsigned int i = 0; i < n.preds->size(); i++)
+                (*n.preds)[i]->accept(*this);
+        }
     }
 
     void Cycle::visit(ASTFor &n)
     {
+        unsigned int params;
+
         n.expr->accept(*this);
+
+        setParamMode();
+
+        n.tv->accept(*this);
+        if (n.pv)
+            n.pv->accept(*this);
+
+        unsetParamMode();
+
+        params = param_count;
+
         n.fd->accept(*this);
+
+        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
     void Cycle::visit(ASTFunCall &n)
@@ -310,21 +348,6 @@ namespace sedna
                 mod_chain.pop_back();
             }
         }
-    }
-
-    void Cycle::visit(ASTFunDef &n)
-    {
-        unsigned int params = 0;
-
-        param_mode = true;
-        param_count = 0;
-        VisitNodesVector(n.vars, *this);
-        params = param_count;
-        param_mode = false;
-
-        n.fun->accept(*this);
-
-        bound_vars.erase(bound_vars.begin() + bound_vars.size() - params, bound_vars.end());
     }
 
     void Cycle::visit(ASTFuncDecl &n)
@@ -369,15 +392,14 @@ namespace sedna
         // set bound parameters
         if (n.params)
         {
-            param_mode = true;
-            param_count = 0;
+            setParamMode();
 
             for (unsigned int i = 0; i < n.params->size(); i++)
                 (*n.params)[i]->accept(*this);
 
             params_count = param_count;
 
-            param_mode = false;
+            unsetParamMode();
         }
 
         // place itself in chain
@@ -425,7 +447,14 @@ namespace sedna
     void Cycle::visit(ASTLet &n)
     {
         n.expr->accept(*this);
+
+        setParamMode();
+        n.tv->accept(*this);
+        unsetParamMode();
+
         n.fd->accept(*this);
+
+        bound_vars.pop_back();
     }
 
     void Cycle::visit(ASTLibModule &n)
@@ -537,8 +566,19 @@ namespace sedna
 
     void Cycle::visit(ASTOrderByRet &n)
     {
+        unsigned int params = 0;
+
         n.iter_expr->accept(*this);
+
+        setParamMode();
+        VisitNodesVector(n.vars, *this);
+        unsetParamMode();
+        params = param_count;
+
+        n.ord_expr->accept(*this);
         n.ret_expr->accept(*this);
+
+        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
     void Cycle::visit(ASTOrderEmpty &n)
@@ -590,12 +630,6 @@ namespace sedna
         // nothing to do
     }
 
-    void Cycle::visit(ASTPred &n)
-    {
-        n.iter_expr->accept(*this);
-        n.pred_expr->accept(*this);
-    }
-
     void Cycle::visit(ASTProlog &n)
     {
         VisitNodesVector(n.decls, *this);
@@ -609,7 +643,14 @@ namespace sedna
     void Cycle::visit(ASTQuantExpr &n)
     {
         n.expr->accept(*this);
-        n.fd->accept(*this);
+
+        setParamMode();
+        n.var->accept(*this);
+        unsetParamMode();
+
+        n.sat->accept(*this);
+
+        bound_vars.pop_back();
     }
 
     void Cycle::visit(ASTQuery &n)
@@ -621,12 +662,6 @@ namespace sedna
     {
         n.name_old->accept(*this);
         n.name_new->accept(*this);
-    }
-
-    void Cycle::visit(ASTRet &n)
-    {
-        n.iter_expr->accept(*this);
-        n.ret_expr->accept(*this);
     }
 
     void Cycle::visit(ASTRevokePriv &n)
@@ -725,8 +760,14 @@ namespace sedna
 
     void Cycle::visit(ASTUpdMove &n)
     {
+        setParamMode();
+        n.var->accept(*this);
+        unsetParamMode();
+
         n.what->accept(*this);
         n.where->accept(*this);
+
+        bound_vars.pop_back();
     }
 
     void Cycle::visit(ASTUpdRename &n)
@@ -736,8 +777,14 @@ namespace sedna
 
     void Cycle::visit(ASTUpdReplace &n)
     {
+        setParamMode();
+        n.var->accept(*this);
+        unsetParamMode();
+
         n.what->accept(*this);
         n.new_expr->accept(*this);
+
+        bound_vars.pop_back();
     }
 
     void Cycle::visit(ASTVar &n)
@@ -878,5 +925,16 @@ namespace sedna
     void Cycle::visit(ASTXMLComm &n)
     {
         // nothing to do
+    }
+
+    void Cycle::setParamMode()
+    {
+        param_mode = true;
+        param_count = 0;
+    }
+
+    void Cycle::unsetParamMode()
+    {
+        param_mode = false;
     }
 }

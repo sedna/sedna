@@ -13,9 +13,10 @@ class ASTDDO : public ASTNode
 {
 public:
     ASTNode *expr;
+    bool distinct_only;
 
 public:
-    ASTDDO(ASTLocation &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
+    ASTDDO(ASTLocation &loc, ASTNode *expr_, bool dist = false) : ASTNode(loc), expr(expr_), distinct_only(dist) {}
 
     ~ASTDDO();
 

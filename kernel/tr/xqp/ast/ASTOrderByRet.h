@@ -12,10 +12,17 @@
 class ASTOrderByRet : public ASTNode
 {
 public:
-    ASTNode *iter_expr, *ret_expr;
+    ASTNode *iter_expr, *ord_expr, *ret_expr;
+    ASTNodesVector *vars; // var bindings for for-let clauses
 
 public:
-    ASTOrderByRet(ASTLocation &loc, ASTNode *iter_expr_, ASTNode *ret_expr_) : ASTNode(loc), iter_expr(iter_expr_), ret_expr(ret_expr_) {}
+    ASTOrderByRet(ASTLocation &loc, ASTNode *iter_expr_, ASTNode *ord_expr_, ASTNode *ret_expr_, ASTNodesVector *vars_) :
+        ASTNode(loc),
+        iter_expr(iter_expr_),
+        ord_expr(ord_expr_),
+        ret_expr(ret_expr_),
+        vars(vars_)
+    {}
 
     ~ASTOrderByRet();
 
