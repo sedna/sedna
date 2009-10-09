@@ -80,8 +80,8 @@ namespace sedna
 
     void LReturn::visit(ASTAttribTest &n)
     {
-        // don't need to go to name and type here since there is nothing down there we could compute
-        setOffer(childOffer());
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTAxisStep &n)
@@ -429,9 +429,15 @@ namespace sedna
 
             setParamMode();
             n.var->accept(*this);
+            if (n.type)
+                n.type->accept(*this);
             unsetParamMode();
 
-            bound_vars.back().exp_info = ts_off.exi;
+            // if we've got no type annotation or it isn't too precise use typeswitch analysis instead
+            if (!n.type || (!bound_vars.back().exp_info.isMax1 && bound_vars.back().isNodes))
+                bound_vars.back().exp_info = ts_off.exi;
+            else
+                bound_vars.back().exp_info.useConstructors = ts_off.exi.useConstructors;
         }
 
         setParentRequest(req);
@@ -491,8 +497,8 @@ namespace sedna
 
     void LReturn::visit(ASTCommTest &n)
     {
-        // nothing to do
-        setOffer(childOffer());
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTCommentConst &n)
@@ -648,8 +654,8 @@ namespace sedna
 
     void LReturn::visit(ASTDocTest &n)
     {
-        // nothing to do
-        setOffer(childOffer());
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTDropColl &n)
@@ -787,14 +793,14 @@ namespace sedna
 
     void LReturn::visit(ASTElementTest &n)
     {
-        // nothing to do
-        setOffer(childOffer());
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTEmptyTest &n)
     {
-        // nothing to do
-        setOffer(childOffer());
+        if (param_mode)
+            bound_vars.back().isNodes = false;
     }
 
     void LReturn::visit(ASTError &n)
@@ -978,7 +984,6 @@ namespace sedna
         off_var = childOffer();
         off_var.exi.useConstructors = off_e.exi.useConstructors;
         off_var.isCached = off_e.isCached;
-        off_var.usedVars = off_e.usedVars;
 
         bound_vars.back().exp_info = off_var.exi; // change offer for for-variable
 
@@ -1042,7 +1047,16 @@ namespace sedna
                 }
                 else
                 {
-                    req.distinctOnly = isParamDistinctOnly(xqf.decl, i);
+                    xqExprInfo exi;
+
+                    setParamMode();
+                    xqf.decl->params->at(i)->accept(*this);
+                    unsetParamMode();
+
+                    exi = bound_vars.back().exp_info;
+                    bound_vars.pop_back();
+
+                    req.distinctOnly = exi.isMax1;
                 }
 
                 n.params->at(i)->accept(*this);
@@ -1064,6 +1078,59 @@ namespace sedna
 
     void LReturn::visit(ASTFuncDecl &n)
     {
+        unsigned int count = (n.params) ? n.params->size() : 0;
+        childOffer off_this, boff;
+        std::string name = CREATE_INTNAME(*n.func_uri, *n.local);
+
+        // first, we should bind params
+        if (n.params)
+        {
+            setParamMode();
+            for (unsigned int i = 0; i < count; i++)
+            {
+                // we don't need parent requests for param-mode
+                n.params->at(i)->accept(*this);
+            }
+            unsetParamMode();
+        }
+
+        // then optimize body
+        if (n.body)
+        {
+            parentRequest req;
+
+            req.distinctOnly = false;
+            req.calledOnce = true;
+
+            setParentRequest(req);
+            n.body->accept(*this);
+            boff = getOffer();
+        }
+
+        setParamMode();
+        bound_vars.push_back(XQVariable("$%r", NULL)); // dummy variable to keep type-analysis for return
+        n.ret->accept(*this);
+        unsetParamMode();
+
+        // then, generate offer
+        XQVariable &v = bound_vars.back();
+
+        // for user-defined functions, for which type says node-sequence, use body analysis instead
+        if (n.body && !v.exp_info.isMax1 && v.isNodes)
+        {
+            funcCache[name].exp_info = boff.exi;
+        }
+        else
+        {
+            funcCache[name].exp_info = v.exp_info;
+        }
+
+        // get rid of return-type
+        bound_vars.pop_back();
+
+        // get rid of params
+        while (count--)
+            bound_vars.pop_back();
     }
 
     void LReturn::visit(ASTGrantPriv &n)
@@ -1144,29 +1211,35 @@ namespace sedna
 
     void LReturn::visit(ASTItemTest &n)
     {
-        // nothing to do
-        setOffer(childOffer());
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTLet &n)
     {
         childOffer off_e, off_this, off_var;
         parentRequest req(getParentRequest());
-        bool isVarSeq = isVarSequence(dynamic_cast<ASTTypeVar *>(n.tv));
 
-        req.distinctOnly = !isVarSeq; // if we wait for singleton then do just distinct
+        setParamMode();
+        n.tv->accept(*this);
+        unsetParamMode();
+
+        // for now we should remove our variable form bound since the expression must not see it
+        XQVariable var = bound_vars.back();
+        bound_vars.pop_back();
+
+        req.distinctOnly = var.exp_info.isMax1; // if we wait for singleton then do just distinct
         setParentRequest(req);
         n.expr->accept(*this);
         off_e = getOffer();
 
         // if type annotation tells us it waits for singleton then we should respect this
         // else, var-body analysis will know better
-        if (!isVarSeq)
+        if (var.exp_info.isMax1 || !var.isNodes)
         {
             off_var = childOffer();
 
             off_var.exi.useConstructors = off_e.exi.useConstructors;
-            off_var.usedVars = off_e.usedVars;
             off_var.isCached = off_e.isCached;
         }
         else
@@ -1174,11 +1247,9 @@ namespace sedna
             off_var = off_e;
         }
 
-        setParamMode();
-        n.tv->accept(*this);
-        unsetParamMode();
-
-        bound_vars.back().exp_info = off_var.exi;
+        // now, bind variable
+        var.exp_info = off_var.exi;
+        bound_vars.push_back(var);
 
         req = getParentRequest();
         setParentRequest(req);
@@ -1230,7 +1301,8 @@ namespace sedna
         if (drv == NULL)
             throw SYSTEM_EXCEPTION("Driver is not set for semantic analyzer!");
 
-        n.prolog->accept(*this);
+        // we don't need to analyze prolog here
+        // funcs and vars are processed on-demand
         n.query->accept(*this);
     }
 
@@ -1304,8 +1376,8 @@ namespace sedna
 
     void LReturn::visit(ASTNodeTest &n)
     {
-        // nothing to do
-        setOffer(childOffer());
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTNsp &n)
@@ -1372,6 +1444,15 @@ namespace sedna
         setParentRequest(req);
         n.iter_expr->accept(*this);
         off_fl = getOffer();
+
+        // for now we need to change info about bound for-let vars
+        for (unsigned int i = 1; i <= n.vars->size(); i++)
+        {
+            XQVariable &var = bound_vars[bound_vars.size() - i];
+
+            var.exp_info = childOffer().exi;
+            var.exp_info.useConstructors = off_fl.exi.useConstructors;
+        }
 
         setParentRequest(req); // actually it will be ignored by ASTOrderBy
         n.ord_expr->accept(*this);
@@ -1441,40 +1522,101 @@ namespace sedna
 
     void LReturn::visit(ASTPIConst &n)
     {
+        childOffer off;
+        unsigned int count = 0;
+
+        if (n.name)
+        {
+            parentRequest req(getParentRequest());
+
+            req.distinctOnly = true;
+            setParentRequest(req);
+            n.name->accept(*this);
+            count++;
+        }
+
+        if (n.expr)
+        {
+            parentRequest req(getParentRequest());
+
+            req.distinctOnly = false;
+            setParentRequest(req);
+            n.expr->accept(*this);
+            count++;
+        }
+
+        off = mergeOffers(count);
+
+        // pi constructor creates only one node
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
+        off.isCached = false;
+        off.exi.useConstructors = true;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTPi &n)
     {
+        childOffer off;
+
+        // direct pi constructor creates only one node
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
+        off.isCached = false;
+        off.exi.useConstructors = true;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTPiTest &n)
     {
-        // nothing to do
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTPosVar &n)
     {
-        n.var->accept(*this);
+        if (param_mode)
+        {
+            n.var->accept(*this);
+
+            bound_vars.back().exp_info = childOffer().exi;
+            bound_vars.back().isNodes = false;
+        }
     }
 
     void LReturn::visit(ASTPragma &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTProlog &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTQName &n)
     {
-        // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTQuantExpr &n)
     {
     }
+
     void LReturn::visit(ASTQuery &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = false;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.query->accept(*this);
     }
 
@@ -1729,64 +1871,28 @@ namespace sedna
         XQFunction xqf;
         funcInfo::iterator it;
 
-        // first, look in cache
-        if (isModeOrdered)
-        {
-            it = funcOrdCache.find(name);
+        // first,look in cache
+        it = funcCache.find(name);
 
-            if (it != funcOrdCache.end())
-                return it->second;
-        }
-        else
-        {
-            it = funcUnordCache.find(name);
-
-            if (it != funcUnordCache.end())
-                return it->second;
-        }
-
-        // try to look in library functions cache
-        it = funcLibCache.find(name);
-
-        if (it != funcLibCache.end())
+        if (it != funcCache.end())
             return it->second;
 
-        // then, try to process it as a local
+        // then, try to process it as a local one
         if (mod->getFunctionInfo(name, xqf))
         {
+            funcCache[name] = xqf;
             xqf.decl->accept(*this);
-            // now, function info is cached in ordered or unordered list
-            if (isModeOrdered)
-                return funcOrdCache[name];
-            else
-                return funcUnordCache[name];
+
+            // now, function info cache is updated
+            return funcCache[name];
         }
 
-        // else, the function is defined in some of the modules
+        // else, the function is defined in some of the library modules
         xqf = drv->getLReturnFunctionInfo(name);
 
         // since we've obtained this info from driver we should locally cache it
-        funcLibCache[name] = xqf;
+        funcCache[name] = xqf;
 
         return xqf;
-    }
-
-    bool LReturn::isVarSequence(ASTTypeVar *var)
-    {
-        ASTTypeSeq *seq = dynamic_cast<ASTTypeSeq *>(var->type);
-
-        if (seq && (seq->mod == ASTTypeSeq::ZERO_OR_MORE || seq->mod == ASTTypeSeq::ONE_OR_MORE))
-            return true;
-
-        return false;
-    }
-
-    bool LReturn::isParamDistinctOnly(const ASTFuncDecl *fd, unsigned int nparam)
-    {
-        ASTTypeVar *tv = dynamic_cast<ASTTypeVar *>(fd->params->at(nparam));
-
-        U_ASSERT(tv);
-
-        return !isVarSequence(tv);
     }
 }
