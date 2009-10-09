@@ -23,6 +23,18 @@ namespace sedna
         {
             bool distinctOnly; // require only distinct from child
             bool calledOnce;   // child will be called only once
+
+            parentRequest()
+            {
+                calledOnce = true;
+                distinctOnly = false;
+            }
+
+            parentRequest(const parentRequest &pr)
+            {
+                distinctOnly = false;
+                calledOnce = pr.calledOnce;
+            }
         };
 
         struct childOffer
@@ -45,6 +57,39 @@ namespace sedna
                 useBoundVars = false;
             }
 
+            childOffer(const childOffer &off)
+            {
+                isOrdered = off.isOrdered;
+                isDistincted = off.isDistincted;
+                isMax1 = off.isMax1;
+                isSingleLevel = off.isSingleLevel;
+                cached = NULL;
+                useBoundVars = off.useBoundVars;
+
+                if (off.cached)
+                    cached = new ASTNodesVector(*off.cached);
+            }
+
+            childOffer &operator=(const childOffer &off)
+            {
+                if (this != &off)
+                {
+                    delete cached;
+
+                    isOrdered = off.isOrdered;
+                    isDistincted = off.isDistincted;
+                    isMax1 = off.isMax1;
+                    isSingleLevel = off.isSingleLevel;
+                    cached = NULL;
+                    useBoundVars = off.useBoundVars;
+
+                    if (off.cached)
+                        cached = new ASTNodesVector(*off.cached);
+                }
+
+                return *this;
+            }
+
             ~childOffer()
             {
                 delete cached;
@@ -63,7 +108,7 @@ namespace sedna
         void unsetParamMode();
 
         childOffer getOffer();
-        void setOffer(childOffer off);
+        void setOffer(const childOffer &off);
 
         void VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v, parentRequest req);
 
@@ -82,6 +127,7 @@ namespace sedna
             param_mode = false;
             param_count = 0;
             isModeOrdered = true; // ddo for default
+            pareqs.push_back(parentRequest());
         }
 
         ~LReturn()

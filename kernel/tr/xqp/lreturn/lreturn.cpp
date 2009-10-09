@@ -12,23 +12,17 @@ namespace sedna
 {
     void LReturn::visit(ASTAlterUser &n)
     {
-        offers.push_back(childOffer());
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTAttr &n)
     {
         unsigned int count = (n.cont) ? n.cont->size() : 0;
         childOffer off;
-        parentRequest preq = parentReq;
 
         if (n.cont)
         {
-            parentRequest req;
-
-            req.calledOnce = parentReq.calledOnce;
-            req.distinctOnly = false;
-
-            VisitNodesVector(n.cont, *this, req);
+            VisitNodesVector(n.cont, *this, parentRequest());
             off = mergeOffers(count);
         }
 
@@ -42,22 +36,47 @@ namespace sedna
         if (!getParentRequest().calledOnce)
             cacheTheNode(&n, off);
 
-        offers.push_back(off);
+        setOffer(off);
     }
 
     void LReturn::visit(ASTAttrConst &n)
     {
+        childOffer off;
+        unsigned int count = 0;
+        parentRequest req(getParentRequest());
+
+        if (n.name)
+        {
+            setParentRequest(req);
+            n.name->accept(*this);
+            count++;
+        }
+
         if (n.expr)
+        {
+            setParentRequest(req);
             n.expr->accept(*this);
+            count++;
+        }
 
-        offers.pop_back();
+        off = mergeOffers(count);
 
-        offers.push_back(childOffer());
+        // computed attribute constructor creates only one node
+        off.isOrdered = true;
+        off.isDistincted = true;
+        off.isSingleLevel = true;
+        off.isMax1 = true;
+
+        // consider for caching
+        if (!getParentRequest().calledOnce)
+            cacheTheNode(&n, off);
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTAttribTest &n)
     {
-        offers.push_back(childOffer());
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTAxisStep &n)
@@ -760,7 +779,7 @@ namespace sedna
         param_mode = false;
     }
 
-    void LReturn::setOffer(const childOffer off)
+    void LReturn::setOffer(const childOffer &off)
     {
         offers.push_back(off);
     }
