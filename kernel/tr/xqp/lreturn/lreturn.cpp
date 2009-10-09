@@ -6,8 +6,6 @@
 #include "tr/xqp/lreturn/lreturn.h"
 #include "common/errdbg/exceptions.h"
 
-#define IGNORE_OFFERS(count) (offers.erase(offers.begin() + (offers.size() - count), offers.end()))
-
 namespace sedna
 {
     void LReturn::visit(ASTAlterUser &n)
@@ -209,7 +207,7 @@ namespace sedna
                 off_this.exi.isMax1 = off_cont.exi.isMax1;
                 off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
-            case ASTAxisStep::ANCESTOR: 
+            case ASTAxisStep::ANCESTOR:
                 off_this.exi.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
                 off_this.exi.isDistincted = off_cont.exi.isMax1;
                 off_this.exi.isMax1 = false;
@@ -1098,6 +1096,17 @@ namespace sedna
             unsetParamMode();
         }
 
+        // then, analyze return type
+        setParamMode();
+        bound_vars.push_back(XQVariable("$%r", NULL)); // dummy variable to keep type-analysis for return
+        n.ret->accept(*this);
+        unsetParamMode();
+
+        // body can contain recursive references
+        // so we should set pre-offer based strictly on type analysis
+        XQVariable &v = bound_vars.back();
+        funcCache[name].exp_info = v.exp_info;
+
         // then optimize body
         if (n.body)
         {
@@ -1111,14 +1120,7 @@ namespace sedna
             boff = getOffer();
         }
 
-        setParamMode();
-        bound_vars.push_back(XQVariable("$%r", NULL)); // dummy variable to keep type-analysis for return
-        n.ret->accept(*this);
-        unsetParamMode();
-
         // then, generate offer
-        XQVariable &v = bound_vars.back();
-
         // for user-defined functions, for which type says node-sequence, use body analysis instead
         if (n.body && !v.exp_info.isMax1 && v.isNodes)
         {
@@ -1228,7 +1230,7 @@ namespace sedna
         n.tv->accept(*this);
         unsetParamMode();
 
-        // for now we should remove our variable form bound since the expression must not see it
+        // for now we should remove our variable from bound since the expression must not see it
         XQVariable var = bound_vars.back();
         bound_vars.pop_back();
 
@@ -1893,43 +1895,223 @@ namespace sedna
 
     void LReturn::visit(ASTUop &n)
     {
+        parentRequest req;
+        childOffer off;
+
+        req.distinctOnly = true; // empty or singleton expected
+        req.calledOnce = getParentRequest().calledOnce;
+
+        setParentRequest(req);
         n.expr->accept(*this);
+        off = getOffer();
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTUpdDel &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true; // the order of delete doesn't matter
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.what->accept(*this);
     }
 
     void LReturn::visit(ASTUpdInsert &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = false;
+        req.calledOnce = true;
+        setParentRequest(req);
         n.what->accept(*this);
+
+        setParentRequest(req);
         n.where->accept(*this);
     }
 
     void LReturn::visit(ASTUpdMove &n)
     {
+        childOffer off_e, off_var;
+        parentRequest req;
+
+        setParamMode();
+        n.var->accept(*this);
+        unsetParamMode();
+
+        // for now we should remove our variable from bound since the expression must not see it
+        XQVariable var = bound_vars.back();
+        bound_vars.pop_back();
+
+        req.distinctOnly = var.exp_info.isMax1; // if we wait for singleton then do just distinct
+        req.calledOnce = true;
+        setParentRequest(req);
+        n.what->accept(*this);
+        off_e = getOffer();
+
+        // if type annotation tells us it waits for singleton then we should respect this
+        // else, var-body analysis will know better
+        if (var.exp_info.isMax1 || !var.isNodes)
+        {
+            off_var = childOffer();
+
+            off_var.exi.useConstructors = off_e.exi.useConstructors;
+            off_var.isCached = off_e.isCached;
+        }
+        else
+        {
+            off_var = off_e;
+        }
+
+        // now, bind variable
+        var.exp_info = off_var.exi;
+        bound_vars.push_back(var);
+
+        req.distinctOnly = false;
+        setParentRequest(req);
+        n.where->accept(*this);
     }
 
     void LReturn::visit(ASTUpdRename &n)
     {
+        parentRequest req;
+
+        req.calledOnce = true;
+        req.distinctOnly = false;
+        setParentRequest(req);
         n.what->accept(*this);
     }
 
     void LReturn::visit(ASTUpdReplace &n)
     {
+        childOffer off_e, off_var;
+        parentRequest req;
+
+        setParamMode();
+        n.var->accept(*this);
+        unsetParamMode();
+
+        // for now we should remove our variable from bound since the expression must not see it
+        XQVariable var = bound_vars.back();
+        bound_vars.pop_back();
+
+        req.distinctOnly = var.exp_info.isMax1; // if we wait for singleton then do just distinct
+        req.calledOnce = true;
+        setParentRequest(req);
+        n.what->accept(*this);
+        off_e = getOffer();
+
+        // if type annotation tells us it waits for singleton then we should respect this
+        // else, var-body analysis will know better
+        if (var.exp_info.isMax1 || !var.isNodes)
+        {
+            off_var = childOffer();
+
+            off_var.exi.useConstructors = off_e.exi.useConstructors;
+            off_var.isCached = off_e.isCached;
+        }
+        else
+        {
+            off_var = off_e;
+        }
+
+        // now, bind variable
+        var.exp_info = off_var.exi;
+        bound_vars.push_back(var);
+
+        req.distinctOnly = false;
+        setParentRequest(req);
+        n.new_expr->accept(*this);
     }
 
     void LReturn::visit(ASTVar &n)
     {
+        childOffer off;
+        std::string name = CREATE_INTNAME(*n.uri, *n.local);
+
+        // in param mode we just create record in bound_vars
+        if (param_mode)
+        {
+            XQVariable var(name.c_str(), NULL);
+
+            // for such variable we assume worst offer; type-sequence possibly will refine it
+            var.exp_info.isDistincted = false;
+            var.exp_info.isOrdered = false;
+            var.exp_info.isMax1 = false;
+            var.exp_info.isSingleLevel = false;
+            var.exp_info.useConstructors = true;
+
+            bound_vars.push_back(var);
+        }
+        else // else we process it as a var-reference
+        {
+            xqExprInfo ivar;
+            bool found = false;
+
+            // first, we should look in bound variables
+            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            {
+                const XQVariable &var = bound_vars[i];
+
+                if (var.int_name == name)
+                {
+                    ivar = var.exp_info;
+                    found = true;
+                    break;
+                }
+            }
+
+            // if we haven't found this var in bound-vars then check module and libmodule vars
+            if (!found)
+            {
+                ivar = getVariableInfo(name).exp_info;
+            }
+
+            off.exi = ivar;
+
+            setOffer(off);
+        }
     }
 
     void LReturn::visit(ASTVarDecl &n)
     {
+        parentRequest req;
+        childOffer off;
+
+        setParamMode();
+        n.var->accept(*this);
+
+        if (n.type)
+            n.type->accept(*this);
+
+        unsetParamMode();
+
+        XQVariable var = bound_vars.back();
+        bound_vars.pop_back();
+
+        // now analyze the body
+        req.calledOnce = true;
+        req.distinctOnly = var.exp_info.isMax1; // if we wait for singleton then do just distinct
+        bound_vars.pop_back();
+
+        setParentRequest(req);
+        n.expr->accept(*this);
+        off = getOffer();
+
+        // for variables for which type says node-sequence, use body analysis instead
+        if (!var.exp_info.isMax1 && var.isNodes)
+        {
+            var.exp_info = off.exi;
+        }
+
+        varCache[var.int_name] = var;
     }
 
     void LReturn::visit(ASTVersionDecl &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTXMLComm &n)
@@ -2095,6 +2277,40 @@ namespace sedna
         off.isCached = true;
     }
 
+    XQVariable LReturn::getVariableInfo(const std::string &name)
+    {
+        varInfo::iterator it;
+
+
+        // first,look in cache
+        it = varCache.find(name);
+
+        if (it != varCache.end())
+            return it->second;
+
+        // then, try to process it as a local one
+        ASTVarDecl *vd = mod->getVariableInfo(name);
+        if (vd)
+        {
+            bool oldModeOrdered = isModeOrdered;
+
+            isModeOrdered = mod->getOrderedMode();
+            vd->accept(*this);
+            isModeOrdered = oldModeOrdered;
+
+            // now, variable info cache is updated
+            return varCache[name];
+        }
+
+        // else, the variable is defined in some of the library modules
+        XQVariable xqv = drv->getLReturnVariableInfo(name);
+
+        // since we've obtained this info from driver we should locally cache it
+        varCache[name] = xqv;
+
+        return xqv;
+    }
+
     XQFunction LReturn::getFunctionInfo(const std::string &name)
     {
         XQFunction xqf;
@@ -2109,8 +2325,12 @@ namespace sedna
         // then, try to process it as a local one
         if (mod->getFunctionInfo(name, xqf))
         {
+            bool oldModeOrdered = isModeOrdered;
+
+            isModeOrdered = mod->getOrderedMode();
             funcCache[name] = xqf;
             xqf.decl->accept(*this);
+            isModeOrdered = oldModeOrdered;
 
             // now, function info cache is updated
             return funcCache[name];

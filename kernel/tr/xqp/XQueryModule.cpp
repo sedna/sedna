@@ -31,6 +31,17 @@ namespace sedna
         delete lr;
     }
 
+    void XQueryModule::doLReturnAnalysis()
+    {
+        LReturn lr(drv, this);
+
+        ast->accept(lr);
+
+#if (defined(DEBUGI) && (DEBUGI == 1))
+        testDupAndSerial(drv);
+#endif
+    }
+
     void XQueryModule::doSemanticAnalysis()
     {
         Sema sema(drv, this);
@@ -195,19 +206,44 @@ namespace sedna
         return true;
     }
 
+    ASTVarDecl *XQueryModule::getVariableInfo(const std::string &name) const
+    {
+        XQVariablesInfo::const_iterator it = vars.find(name);
+
+        if (it == vars.end())
+            return NULL;
+
+        return it->second;
+    }
+
     bool XQueryModule::getLReturnFunctionInfo(const std::string &name, XQFunction &xqf)
     {
         XQFunctionInfo::const_iterator it = funcs.find(name);
 
-        if (it != funcs.end())
-            xqf = it->second;
-        else
+        if (it == funcs.end())
             return false;
 
+        // create new lreturn visitor to process variables/functions
         if (!lr)
             lr = new LReturn(this->drv, this);
 
         xqf = lr->getFunctionInfo(name);
+
+        return true;
+    }
+
+    bool XQueryModule::getLReturnVariableInfo(const std::string &name, XQVariable &xqv)
+    {
+        XQVariablesInfo::const_iterator it = vars.find(name);
+
+        if (it == vars.end())
+            return false;
+
+        // create new lreturn visitor to process variables/functions
+        if (!lr)
+            lr = new LReturn(this->drv, this);
+
+        xqv = lr->getVariableInfo(name);
 
         return true;
     }

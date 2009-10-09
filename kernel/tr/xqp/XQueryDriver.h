@@ -78,6 +78,7 @@ namespace sedna
             void addModule(ASTNode *mod);
 
             void doSemanticAnalysis();
+            void doLReturnAnalysis();
 
             StringVector getLRRepresentation();
             StringVector getIRRepresentation();
@@ -99,6 +100,7 @@ namespace sedna
 
             XQFunction getStdFuncInfo(const std::string &name) const;
             XQFunction getLReturnFunctionInfo(const std::string &name);
+            XQVariable getLReturnVariableInfo(const std::string &name);
     };
 }
 
