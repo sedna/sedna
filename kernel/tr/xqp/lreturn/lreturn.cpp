@@ -1020,6 +1020,8 @@ namespace sedna
         childOffer off_this, off_params;
         bool standFunc = (*n.int_name != "");
 
+        int_name += "/" + int2string(arity);
+
         if (standFunc) // standard function
         {
             xqf = drv->getStdFuncInfo(int_name);
@@ -1078,15 +1080,17 @@ namespace sedna
 
     void LReturn::visit(ASTFuncDecl &n)
     {
-        unsigned int count = (n.params) ? n.params->size() : 0;
+        unsigned int arity = (n.params) ? n.params->size() : 0;
         childOffer off_this, boff;
         std::string name = CREATE_INTNAME(*n.func_uri, *n.local);
+
+        name += "/" + int2string(arity);
 
         // first, we should bind params
         if (n.params)
         {
             setParamMode();
-            for (unsigned int i = 0; i < count; i++)
+            for (unsigned int i = 0; i < arity; i++)
             {
                 // we don't need parent requests for param-mode
                 n.params->at(i)->accept(*this);
@@ -1129,7 +1133,7 @@ namespace sedna
         bound_vars.pop_back();
 
         // get rid of params
-        while (count--)
+        while (arity--)
             bound_vars.pop_back();
     }
 
@@ -1451,7 +1455,7 @@ namespace sedna
             XQVariable &var = bound_vars[bound_vars.size() - i];
 
             var.exp_info = childOffer().exi;
-            var.exp_info.useConstructors = off_fl.exi.useConstructors;
+            var.exp_info.useConstructors = var.isNodes && off_fl.exi.useConstructors; // TODO: refine it later
         }
 
         setParentRequest(req); // actually it will be ignored by ASTOrderBy
@@ -1607,6 +1611,49 @@ namespace sedna
 
     void LReturn::visit(ASTQuantExpr &n)
     {
+        childOffer off_var, off_e, off_sat, off_this;
+        parentRequest req;
+
+        req.distinctOnly = false;
+        req.calledOnce = getParentRequest().calledOnce;
+        setParentRequest(req);
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        setParamMode();
+        n.var->accept(*this);
+        unsetParamMode();
+
+        // since quant iterates over the expression we should use default offer
+        // but alleviate it with some expr-specific properties
+        off_var = childOffer();
+        off_var.exi.useConstructors = off_e.exi.useConstructors;
+        off_var.isCached = off_e.isCached;
+
+        bound_vars.back().exp_info = off_var.exi; // change offer for quant-variable
+
+        // now look into 'satisfy'-expression
+        req.distinctOnly = true; // since we need only EBV from test expression
+        req.calledOnce = false;
+        setParentRequest(req);
+        n.sat->accept(*this);
+        off_sat = getOffer();
+
+        off_this = childOffer(); // default offer will do since this expression results in boolean
+        off_this.usedVars = off_sat.usedVars;
+        ignoreVariables(off_this, 1); // ignore variable
+        off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
+
+        // consider to cache
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            if (off_this.isCached)
+                n.sat->setCached(false);
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTQuery &n)
@@ -1622,12 +1669,21 @@ namespace sedna
 
     void LReturn::visit(ASTRenameColl &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.name_old->accept(*this);
+
+        setParentRequest(req);
         n.name_new->accept(*this);
     }
 
     void LReturn::visit(ASTRevokePriv &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTRevokeRole &n)
@@ -1637,58 +1693,183 @@ namespace sedna
 
     void LReturn::visit(ASTSchemaAttrTest &n)
     {
+        // nothing to do (should be errored by sema)
     }
 
     void LReturn::visit(ASTSchemaElemTest &n)
     {
+        // nothing to do (should be errored by sema)
     }
 
     void LReturn::visit(ASTSeq &n)
     {
+        parentRequest req;
+        childOffer off;
+        unsigned int count = n.exprs->size();
+
+        req.distinctOnly = false;
+        req.calledOnce = getParentRequest().calledOnce;
+        VisitNodesVector(n.exprs, *this, req);
+        off = mergeOffers(count);
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTSpaceSeq &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer off;
+
+        setParentRequest(req);
+        n.expr->accept(*this);
+        off = getOffer();
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTTextConst &n)
     {
+        childOffer off;
+        parentRequest req;
+
+        req.distinctOnly = false;
+        req.calledOnce = getParentRequest().calledOnce;
+        setParentRequest(req);
+        n.expr->accept(*this);
+        off = getOffer();
+
+        // text-node constructor creates only one node
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
+        off.isCached = false;
+        off.exi.useConstructors = true;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTTextTest &n)
     {
-        // nothing to do
+        if (param_mode)
+            bound_vars.back().isNodes = true;
     }
 
     void LReturn::visit(ASTTreat &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer off;
+
+        setParentRequest(req);
         n.expr->accept(*this);
-        n.type->accept(*this);
+        off = getOffer();
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTType &n)
     {
+        if (param_mode)
+            bound_vars.back().isNodes = false; // not always true for our using of xs:anyType but ASTTypeSeq knows this
     }
 
     void LReturn::visit(ASTTypeSeq &n)
     {
-        // we just propagate analysis to the actual test
+        // here we need just adjust some parameters for the last bound variable in param mode
+
+        // first check the type (it'll probably set isNodes property for var)
         n.type_test->accept(*this);
+
+        XQVariable &var = bound_vars.back();
+
+        if (n.mod == ASTTypeSeq::ONE || n.mod == ASTTypeSeq::OPT)
+        {
+            var.exp_info.isDistincted = true;
+            var.exp_info.isOrdered = true;
+            var.exp_info.isSingleLevel = true;
+            var.exp_info.isMax1 = true;
+        }
+        else // NONE (which we us for xs:anyType scheme-quirk) or sequence
+        {
+            // for node sequence we cannot say anything about distinct-order properties; expression analysis will catch it later
+            // for non-node sequencies we set such properites as 'true' since they don't have meaning for non-nodes
+            var.exp_info.isDistincted = !var.isNodes;
+            var.exp_info.isOrdered = !var.isNodes;
+            var.exp_info.isSingleLevel = !var.isNodes;
+            var.exp_info.isMax1 = false;
+
+            if (n.mod == ASTTypeSeq::NONE)
+                var.isNodes = true;
+        }
     }
 
     void LReturn::visit(ASTTypeSingle &n)
     {
+        // here we need just adjust some parameters for the last bound variable in param mode
+
+        // first check the type (it'll probably set only isNodes property for var)
         n.type->accept(*this);
+
+        XQVariable &var = bound_vars.back();
+        var.exp_info.isDistincted = true;
+        var.exp_info.isOrdered = true;
+        var.exp_info.isSingleLevel = true;
+        var.exp_info.isMax1 = true;
     }
 
     void LReturn::visit(ASTTypeSwitch &n)
     {
+        parentRequest req;
+        childOffer off_e, off_this;
+
+        req.distinctOnly = false;
+        req.calledOnce = getParentRequest().calledOnce;
+        setParentRequest(req);
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        // bind internal $%ts variable for cases
+        XQVariable var("$%ts", NULL);
+        var.exp_info = off_e.exi;
+        var.isNodes = true; // always assume nodes since we cannot say for sure
+        bound_vars.push_back(var);
+
+        req = getParentRequest();
+        VisitNodesVector(n.cases, *this, req);
+
+        setParentRequest(req);
+        n.def_case->accept(*this);
+
+        off_this = mergeOffersSwitch(n.cases->size() + 1);
+
+        // unbind variable
+        bound_vars.pop_back();
+
+        // add variables from the main expression
+        off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
+
+        // consider to cache
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            if (off_this.isCached)
+            {
+                // now we should disable caching for cases
+                for (unsigned int i = 0; i < n.cases->size(); i++)
+                    n.cases->at(i)->setCached(false);
+
+                n.def_case->setCached(false);
+            }
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTTypeVar &n)
     {
-        n.type->accept(*this);
         n.var->accept(*this);
+        n.type->accept(*this); // this will change propertiers for the bound variable
     }
 
     void LReturn::visit(ASTUnio &n)
@@ -1801,6 +1982,7 @@ namespace sedna
         }
     }
 
+    // merge offers in sequence-like manner (when result will be union of the expressions)
     LReturn::childOffer LReturn::mergeOffers(unsigned int count)
     {
         childOffer res;
@@ -1815,6 +1997,38 @@ namespace sedna
         {
             childOffer c = offers.back();
             offers.pop_back();
+
+            if (!c.usedVars.empty())
+                res.usedVars.insert(c.usedVars.begin(), c.usedVars.end());
+
+            if (c.exi.useConstructors)
+                res.exi.useConstructors = true;
+        }
+
+        return res;
+    }
+
+    // merge offers in typeswitch-like manner (when result will be one of the expressions)
+    LReturn::childOffer LReturn::mergeOffersSwitch(unsigned int count)
+    {
+        childOffer res;
+
+        while (count--)
+        {
+            childOffer c = offers.back();
+            offers.pop_back();
+
+            if (!c.exi.isMax1)
+                res.exi.isMax1 = false;
+
+            if (!c.exi.isOrdered)
+                res.exi.isOrdered = false;
+
+            if (!c.exi.isDistincted)
+                res.exi.isDistincted = false;
+
+            if (!c.exi.isSingleLevel)
+                res.exi.isSingleLevel = false;
 
             if (!c.usedVars.empty())
                 res.usedVars.insert(c.usedVars.begin(), c.usedVars.end());

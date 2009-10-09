@@ -2768,7 +2768,7 @@ typeDeclaration:
 sequenceType:
         EMPTY_SEQUENCE LPAREN RPAREN
         {
-            $$ = new ASTTypeSeq(@$, new ASTEmptyTest(@$), ASTTypeSeq::NONE);
+            $$ = new ASTTypeSeq(@$, new ASTEmptyTest(@$), ASTTypeSeq::ONE); // define it as ONE for now for lreturn type-analysis
         }
     |   itemType
         {
