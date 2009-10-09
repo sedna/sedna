@@ -31,9 +31,25 @@ namespace sedna
             bool isDistincted;  // child contains distincted values
             bool isMax1;        // child emits singleton or empty sequence
             bool isSingleLevel; // all nodes are on the same level in node-sequence
-        };
 
-        static childOffer defDDOOffer;
+            ASTNodesVector *cached; // nodes cached in the subtree (cached means PPSTuple on physical plan)
+            bool useBoundVars;   // true if some of the children is using bound variables (handy for determining if we could cache it)
+
+            childOffer()
+            {
+                isOrdered = true;
+                isDistincted = true;
+                isMax1 = true;
+                isSingleLevel = true;
+                cached = NULL;
+                useBoundVars = false;
+            }
+
+            ~childOffer()
+            {
+                delete cached;
+            }
+        };
 
         bool param_mode; // true, if we are checking function params now (ASTVar sema analysis)
         unsigned int param_count; // number of parameters found in param_mode
@@ -51,6 +67,8 @@ namespace sedna
         void setOffer(childOffer off);
 
         void VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v, parentRequest req);
+
+        childOffer mergeOffers(unsigned int count);
 
     public:
         LReturn(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)
