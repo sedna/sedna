@@ -89,12 +89,18 @@ namespace sedna
         // check predicates
         if (n.preds)
         {
-            parentRequest req(getParentRequest());
+            parentRequest req;
 
             req.calledOnce = false;
+            req.distinctOnly = true;
+
+            // bind the context
+            bound_vars.push_back("$%v");
 
             VisitNodesVector(n.preds, *this, req);
             off_preds = mergeOffers(n.preds->size());
+
+            ignoreVariables(off_preds, 1); // sweep out the context
         }
 
         // try to merge some axes together
@@ -133,6 +139,8 @@ namespace sedna
             setParentRequest(req);
             n.cont->accept(*this);
             off_this = off_cont = getOffer();
+
+            off_this.isCached = false;
 
             // it seems that we need only to distinct, not order, intermediate results since we can order them at the last step
             // exception: self axis is a filter itself, so we don't want to put distinct below it
@@ -227,6 +235,9 @@ namespace sedna
                 off_this.isSingleLevel = false;
                 break;
         }
+
+        // set used variable appropriately (from context AND from predicates)
+        off_this.usedVars.insert(off_preds.usedVars.begin(), off_preds.usedVars.end());
 
         // now we need to decide if we want to cache it
         if (!getParentRequest().calledOnce)
@@ -780,6 +791,140 @@ namespace sedna
 
     void LReturn::visit(ASTFilterStep &n)
     {
+        childOffer off_cont; // by default we work with some context we don't know about (maybe need to refine this later)
+        childOffer off_this;
+        childOffer off_preds;
+        childOffer off_pe;
+
+        // check predicates
+        if (n.preds)
+        {
+            parentRequest req;
+
+            req.calledOnce = false;
+            req.distinctOnly = true;
+
+            // bind the context
+            bound_vars.push_back("$%v");
+
+            VisitNodesVector(n.preds, *this, req);
+            off_preds = mergeOffers(n.preds->size());
+
+            // clean out the context
+            ignoreVariables(off_preds, 1);
+        }
+
+        // primary expression
+        if (n.expr)
+        {
+            parentRequest req(getParentRequest());
+
+            // bind the context
+            bound_vars.push_back("$%v");
+
+            setParentRequest(req);
+            n.expr->accept(*this);
+            off_this = off_pe = getOffer();
+
+            off_this.isCached = false;
+
+            ignoreVariables(off_this, 1);
+        }
+
+        // context
+        if (n.cont)
+        {
+            parentRequest req(getParentRequest());
+
+            setParentRequest(req);
+            n.cont->accept(*this);
+            off_cont = getOffer();
+
+            // if we have context item expression then the result will be dictated by the previous step
+            if (!n.expr)
+            {
+                off_this = off_cont;
+                off_this.isCached = false;
+            }
+        }
+
+        // set usedvars properly
+        off_this.usedVars.insert(off_preds.usedVars.begin(), off_preds.usedVars.end());
+
+        // now we need to decide if we want to cache it
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            // if we cache this step then we don't need to cache the previous one
+            if (off_this.isCached && n.cont && off_cont.isCached)
+                n.cont->setCached(false);
+        }
+
+        // if we are in ordered mode and we use context nodes then we should ddo the previous step
+        if (n.cont && isModeOrdered && (!off_cont.isOrdered || !off_cont.isDistincted) && off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
+        {
+            ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont);
+
+            // if we've cached the previous step then move cache to the ddo
+            if (off_cont.isCached)
+            {
+                ddo->setCached(true);
+                n.cont->setCached(false);
+            }
+        }
+        else if (n.cont && !off_cont.isDistincted) // if we're in unordered mode or we don't use context we need only distinct
+        {
+            ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont, false);
+
+            // if we've cached the previous step then move cache to the ddo
+            if (off_cont.isCached)
+            {
+                ddo->setCached(true);
+                n.cont->setCached(false);
+            }
+        }
+
+        // if this is the last and not the only step then we need to order(distinct) it
+        if (n.isLast && n.cont)
+        {
+            ASTNode *ddo;
+
+            if (isModeOrdered && !getParentRequest().distinctOnly && (!off_this.isOrdered || !off_this.isDistincted))
+            {
+                ddo = new ASTDDO(n.getLocation(), &n);
+
+                // if we cache the node then cache upstreamed ddo instead
+                if (off_this.isCached)
+                {
+                    n.setCached(false);
+                    ddo->setCached(true);
+                }
+
+                modifyParent(ddo, false, false);
+
+                off_this.isOrdered = true;
+                off_this.isDistincted = true;
+            }
+            else if ((!isModeOrdered || getParentRequest().distinctOnly) && !off_this.isDistincted)
+            {
+                ddo = new ASTDDO(n.getLocation(), &n, false);
+
+                // if we cache the node then cache upstreamed ddo instead
+                if (off_this.isCached)
+                {
+                    n.setCached(false);
+                    ddo->setCached(true);
+                }
+
+                modifyParent(ddo, false, false);
+
+                off_this.isOrdered = false;
+                off_this.isDistincted = true;
+            }
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTFor &n)

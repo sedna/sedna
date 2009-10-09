@@ -75,6 +75,11 @@ public:
         cd.isCached = prop;
     }
 
+    bool isCached() const
+    {
+        return cd.isCached;
+    }
+
     // deep copy of the corresponding subtree
     virtual ASTNode *dup() = 0;
 
