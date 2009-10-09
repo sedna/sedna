@@ -585,10 +585,20 @@ namespace sedna
         // name is a constant, path is strict; so we need only to check-optimize do-expressions
         parentRequest req;
 
+        // add special trigger variables
+        // they all represent one const-node so the default offer will suit them
+        bound_vars.push_back(XQVariable("NEW", NULL));
+        bound_vars.push_back(XQVariable("OLD", NULL));
+        bound_vars.push_back(XQVariable("WHERE", NULL));
+
         req.calledOnce = true;
         req.distinctOnly = false;
 
         VisitNodesVector(n.do_exprs, *this, req);
+
+        bound_vars.pop_back();
+        bound_vars.pop_back();
+        bound_vars.pop_back();
     }
 
     void LReturn::visit(ASTCreateUser &n)
@@ -1023,7 +1033,7 @@ namespace sedna
         childOffer off_e, off_this, off_var;
         parentRequest req(getParentRequest());
 
-        req.distinctOnly = false;
+        // if we want distinct-only then binding-expression should also be evaluated in this mode
         setParentRequest(req);
         n.expr->accept(*this);
         off_e = getOffer();
@@ -1053,6 +1063,7 @@ namespace sedna
         off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
 
         // if we've got more than one iteration we must reconsider our offer
+        // TODO: we should refine it later for atomic; however, maybe this also will do, since it cannot influence ddo
         if (!off_e.exi.isMax1)
         {
             off_this.exi.isDistincted = false;
@@ -1304,14 +1315,14 @@ namespace sedna
         XQVariable var = bound_vars.back();
         bound_vars.pop_back();
 
-        req.distinctOnly = var.exp_info.isMax1; // if we wait for singleton then do just distinct
+        req.distinctOnly = getParentRequest().distinctOnly || var.exp_info.isMax1; // if we wait for singleton then do just distinct
         setParentRequest(req);
         n.expr->accept(*this);
         off_e = getOffer();
 
         // if type annotation tells us it waits for singleton then we should respect this
         // else, var-body analysis will know better
-        if (var.exp_info.isMax1 || !var.isNodes && !off_e.exi.isMax1)
+        if (var.exp_info.isMax1 || (!var.isNodes && !off_e.exi.isMax1))
         {
             off_var.exi = var.exp_info;
             off_var.exi.useConstructors = off_e.exi.useConstructors;
@@ -1540,12 +1551,22 @@ namespace sedna
         off_this = getOffer();
 
         // collect all used vars and unbind
-        // NOTE: order is important here; we shouldn't ignore vars used by for-let clauses
+        // NOTE: the order is important here; we shouldn't ignore vars used by for-let clauses
         off_this.usedVars.insert(off_ord.usedVars.begin(), off_ord.usedVars.end());
         ignoreVariables(off_this, n.vars->size());
         off_this.usedVars.insert(off_fl.usedVars.begin(), off_fl.usedVars.end());
 
         off_this.exi.useConstructors = off_this.exi.useConstructors || off_fl.exi.useConstructors;
+
+        // if we've got >1 tuples here (from for-let tree), then result will be different
+        // TODO: we should refine it later for atomic; however, maybe this also will do, since it cannot influence ddo
+        if (!off_fl.exi.isMax1)
+        {
+            off_this.exi.isDistincted = false;
+            off_this.exi.isMax1 = false;
+            off_this.exi.isOrdered = false;
+            off_this.exi.isSingleLevel = false;
+        }
 
         // consider to cache
         if (!getParentRequest().calledOnce)
@@ -1861,7 +1882,7 @@ namespace sedna
             var.exp_info.isSingleLevel = true;
             var.exp_info.isMax1 = true;
         }
-        else // NONE (which we us for xs:anyType scheme-quirk) or sequence
+        else // NONE (which we use for xs:anyType Scheme-quirk) or sequence
         {
             // for node sequence we cannot say anything about distinct-order properties; expression analysis will catch it later
             // for non-node sequencies we set such properites as 'true' since they don't have meaning for non-nodes
@@ -1873,6 +1894,8 @@ namespace sedna
             if (n.mod == ASTTypeSeq::NONE)
                 var.isNodes = true;
         }
+
+        var.exp_info.useConstructors = var.isNodes; // assume the possibily of tmp-nodes if var is bound to nodes
     }
 
     void LReturn::visit(ASTTypeSingle &n)
@@ -1948,18 +1971,28 @@ namespace sedna
     {
         childOffer off;
         unsigned int count = n.vars->size();
+        bool is_node = false; // some of the vars is bound to a node
+        bool is_seq = false; // some of the vars emanates sequence (let expression)
 
         for (unsigned int i = 1; i <= count; i++)
         {
-            const XQVariable &v = bound_vars[count - i];
+            const XQVariable &v = bound_vars[bound_vars.size() - i];
 
             if (v.exp_info.useConstructors)
                 off.exi.useConstructors = true;
 
             off.usedVars.insert(v.int_name);
+
+            if (v.isNodes)
+                is_node = true;
+
+            if (!v.exp_info.isMax1)
+                is_seq = true;
         }
 
-        // for unio useConstructors and usedVars only matter
+        // union emits one tuple on each binding (if 'let' exists above, then several tuples)
+        // distincted, ordered and single-level don't probably have any sense here; so we should assume the default
+        off.exi.isMax1 = !is_seq;
         setOffer(off);
     }
 
@@ -2004,6 +2037,9 @@ namespace sedna
 
     void LReturn::visit(ASTUpdMove &n)
     {
+        // It seems that move is not actually in the current version of Sedna
+        // However I provide analysis similar to replace
+
         childOffer off_e, off_var;
         parentRequest req;
 
@@ -2021,22 +2057,10 @@ namespace sedna
         n.what->accept(*this);
         off_e = getOffer();
 
-        // if type annotation tells us it waits for singleton then we should respect this
-        // else, var-body analysis will know better
-        if (var.exp_info.isMax1 || !var.isNodes)
-        {
-            off_var = childOffer();
-
-            off_var.exi.useConstructors = off_e.exi.useConstructors;
-            off_var.isCached = off_e.isCached;
-        }
-        else
-        {
-            off_var = off_e;
-        }
-
+        // move actually iterates so we should use default offer
+        // notice also that there cannot be tmp-nodes in what-sequence
         // now, bind variable
-        var.exp_info = off_var.exi;
+        var.exp_info = childOffer().exi;
         bound_vars.push_back(var);
 
         req.distinctOnly = false;
@@ -2073,22 +2097,10 @@ namespace sedna
         n.what->accept(*this);
         off_e = getOffer();
 
-        // if type annotation tells us it waits for singleton then we should respect this
-        // else, var-body analysis will know better
-        if (var.exp_info.isMax1 || !var.isNodes)
-        {
-            off_var = childOffer();
-
-            off_var.exi.useConstructors = off_e.exi.useConstructors;
-            off_var.isCached = off_e.isCached;
-        }
-        else
-        {
-            off_var = off_e;
-        }
-
+        // replace actually iterates so we should use default offer
+        // notice also that there cannot be tmp-nodes in what-sequence
         // now, bind variable
-        var.exp_info = off_var.exi;
+        var.exp_info = childOffer().exi;
         bound_vars.push_back(var);
 
         req.distinctOnly = false;
@@ -2142,6 +2154,7 @@ namespace sedna
             }
 
             off.exi = ivar;
+            off.usedVars.insert(name);
 
             setOffer(off);
         }
@@ -2171,7 +2184,7 @@ namespace sedna
         off = getOffer();
 
         // for variables for which type says node-sequence, use body analysis instead
-        if (!var.exp_info.isMax1 && var.isNodes)
+        if (!var.exp_info.isMax1 && (var.isNodes || off.exi.isMax1))
         {
             var.exp_info = off.exi;
         }

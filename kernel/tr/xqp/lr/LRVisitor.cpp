@@ -41,7 +41,8 @@ static const char *axis_str[] = {
     "preceding-sibling ",
     "preceding ",
     "ancestor-or-self ",
-};
+    "descendant-attr ",
+ };
 
 static const char *bops_str[] = {
     "or@ ",
@@ -1096,10 +1097,14 @@ void LRVisitor::visit(ASTModImport &n)
 
 void LRVisitor::visit(ASTModuleDecl &n)
 {
-    lr_str.append("(module-decl ");
+//    lr_str.append("(module-decl ");
+    lr_str.append("(declare-namespace ");
 
-    LR_NCNAME(n.name);
+    lr_str.append(*n.name);
     LR_STR(*n.uri);
+
+//    LR_NCNAME(n.name);
+//    LR_STR(*n.uri);
 
     lr_str.append(") ");
 }
@@ -1385,11 +1390,13 @@ void LRVisitor::visit(ASTPragma &n)
 
 void LRVisitor::visit(ASTProlog &n)
 {
-    lr_str.append("(prolog  ");
+    if (!is_libmodule)
+        lr_str.append("(prolog  ");
 
     VisitNodesVector(n.decls, *this);
 
-    lr_str.append(") ");
+    if (!is_libmodule)
+        lr_str.append(") ");
 }
 
 void LRVisitor::visit(ASTQName &n)
@@ -1678,7 +1685,7 @@ void LRVisitor::visit(ASTUpdRename &n)
 
 void LRVisitor::visit(ASTUpdReplace &n)
 {
-    lr_str.append("(replace ");
+    lr_str.append("(replace (return");
 
     n.what->accept(*this);
 
@@ -1686,9 +1693,12 @@ void LRVisitor::visit(ASTUpdReplace &n)
     n.var->accept(*this);
     lr_str.append(")");
 
+    lr_str.append("(sequence ");
+    dynamic_cast<ASTTypeVar *>(n.var)->var->accept(*this);
     n.new_expr->accept(*this);
+    lr_str.append("(const (type !se!separator) 1)");
 
-    lr_str.append("))");
+    lr_str.append("))))");
 }
 
 void LRVisitor::visit(ASTVar &n)
