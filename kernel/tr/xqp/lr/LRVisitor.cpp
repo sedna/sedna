@@ -185,7 +185,7 @@ void LRVisitor::visit(ASTAxisStep &n)
     std::string cont = " (var (\"\" \"$%v\")) ";
     std::string lr_save;
 
-    lr_str.append("(ddo ");
+//    lr_str.append("(ddo ");
     if (n.preds)
     {
         lr_str.append("(return ");
@@ -232,7 +232,7 @@ void LRVisitor::visit(ASTAxisStep &n)
         n.test->accept(*this);
         lr_str.append("))");
     }
-    lr_str.append(")");
+  //  lr_str.append(")");
 }
 
 void LRVisitor::visit(ASTBaseURI &n)
@@ -676,11 +676,6 @@ void LRVisitor::visit(ASTFilterStep &n)
     std::string cont = " (var (\"\" \"$%v\")) ";
     std::string lr_save;
 
-    if (n.cont)
-    {
-        lr_str.append("(ddo ");
-    }
-
     if (!n.expr)
     {
         if (n.preds)
@@ -720,7 +715,14 @@ void LRVisitor::visit(ASTFilterStep &n)
     {
         if (n.cont)
         {
-            lr_str.append("(return ");
+            if (n.expr->isCached())
+            {
+                lr_str.append("(lreturn");
+            }
+            else
+            {
+                lr_str.append("(return ");
+            }
 
             n.cont->accept(*this);
 
@@ -752,16 +754,19 @@ void LRVisitor::visit(ASTFilterStep &n)
             lr_str += "))";
         }
     }
-
-    if (n.cont)
-    {
-        lr_str.append(")");
-    }
 }
 
 void LRVisitor::visit(ASTFor &n)
 {
-    lr_str.append("(return ");
+    if (n.fd->isCached())
+    {
+        lr_str.append("(lreturn ");
+    }
+    else
+    {
+        lr_str.append("(return ");
+    }
+
     n.expr->accept(*this);
 
     lr_str.append("(fun-def (");
@@ -1226,7 +1231,10 @@ void LRVisitor::visit(ASTOrderBy &n)
 
 void LRVisitor::visit(ASTOrderByRet &n)
 {
-    lr_str.append("(return ");
+    if (n.ret_expr->isCached())
+        lr_str.append("(lreturn ");
+    else
+        lr_str.append("(return ");
 
     lr_str.append("(order-by ");
 
