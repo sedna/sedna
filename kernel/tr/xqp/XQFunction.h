@@ -6,6 +6,11 @@
 
 namespace sedna
 {
+    // param mask is a mask there each "1" bit tells us to take distinct-only param
+    // NOTE: full mask (all "1"'s) means that every parameter might be distinct-only
+    typedef unsigned char param_mask;
+    const param_mask maxParamMask = 0xFF;
+
     struct XQFunction
     {
         std::string uri;
@@ -14,7 +19,11 @@ namespace sedna
         unsigned int min_arg;
         unsigned int max_arg;
 
+        param_mask mask;
+
         std::string int_name;
+
+        bool toCache; // do we need to cache (PPStore) the result
 
         ASTFuncDecl *decl;
         ASTLocation *loc;
