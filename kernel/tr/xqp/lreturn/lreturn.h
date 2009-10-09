@@ -33,24 +33,19 @@ namespace sedna
 
         struct childOffer
         {
-            bool isOrdered;     // child is ordered
-            bool isDistincted;  // child contains distincted values
-            bool isMax1;        // child emits singleton or empty sequence
-            bool isSingleLevel; // all nodes are on the same level in node-sequence
-
+            xqExprInfo exi;
             bool isCached;                  // true, if child has been cached
-            bool useConstructors;           // true, if child subexpression uses constructor (direct or computed)
             std::set<std::string> usedVars; // contains bound variables used in subexpression
 
             childOffer()
             {
-                isOrdered = true;
-                isDistincted = true;
-                isMax1 = true;
-                isSingleLevel = true;
+                exi.isOrdered = true;
+                exi.isDistincted = true;
+                exi.isMax1 = true;
+                exi.isSingleLevel = true;
+                exi.useConstructors = false;
 
                 isCached = false;
-                useConstructors = false;
             }
         };
 

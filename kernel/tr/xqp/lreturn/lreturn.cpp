@@ -30,12 +30,12 @@ namespace sedna
         }
 
         // direct attribute constructor creates only one node
-        off.isOrdered = true;
-        off.isDistincted = true;
-        off.isSingleLevel = true;
-        off.isMax1 = true;
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
         off.isCached = false;
-        off.useConstructors = true;
+        off.exi.useConstructors = true;
 
         setOffer(off);
     }
@@ -68,12 +68,12 @@ namespace sedna
         off = mergeOffers(count);
 
         // computed attribute constructor creates only one node
-        off.isOrdered = true;
-        off.isDistincted = true;
-        off.isSingleLevel = true;
-        off.isMax1 = true;
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
         off.isCached = false;
-        off.useConstructors = true;
+        off.exi.useConstructors = true;
 
         setOffer(off);
     }
@@ -150,11 +150,11 @@ namespace sedna
             // it seems that we need only to distinct, not order, intermediate results since we can order them at the last step
             // exception: self axis is a filter itself, so we don't want to put distinct below it
             // it is commented for now: we should reason about distict-on-each-step later though
-/*            if (!off_cont.isDistincted && n.axis != ASTAxisStep::SELF)
+/*            if (!off_cont.exi.isDistincted && n.axis != ASTAxisStep::SELF)
             {
                 n.cont = new ASTDDO(n.getLocation(), n.cont, true);
-                off_cont.isDistincted = true;
-                off_cont.isOrdered = false;
+                off_cont.exi.isDistincted = true;
+                off_cont.exi.isOrdered = false;
             }*/
         }
 
@@ -162,82 +162,82 @@ namespace sedna
         switch (n.axis)
         {
             case ASTAxisStep::CHILD:
-                off_this.isOrdered = off_cont.isOrdered;
-                off_this.isDistincted = off_cont.isDistincted;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = off_cont.isSingleLevel;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered;
+                off_this.exi.isDistincted = off_cont.exi.isDistincted;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
             case ASTAxisStep::DESCENDANT:
-                off_this.isOrdered = off_cont.isOrdered && off_cont.isSingleLevel;
-                off_this.isDistincted = off_cont.isDistincted && off_cont.isSingleLevel;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = false;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered && off_cont.exi.isSingleLevel;
+                off_this.exi.isDistincted = off_cont.exi.isDistincted && off_cont.exi.isSingleLevel;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = false;
                 break;
             case ASTAxisStep::ATTRIBUTE:
-                off_this.isOrdered = off_cont.isOrdered;
-                off_this.isDistincted = off_cont.isDistincted;
-                off_this.isMax1 = false; // can refine it later (check if this is the named-attribute retrieval. then it would be true)
-                off_this.isSingleLevel = off_cont.isSingleLevel;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered;
+                off_this.exi.isDistincted = off_cont.exi.isDistincted;
+                off_this.exi.isMax1 = false; // can refine it later (check if this is the named-attribute retrieval. then it would be true)
+                off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
             case ASTAxisStep::SELF:
-                off_this.isOrdered = off_cont.isOrdered;
-                off_this.isDistincted = off_cont.isDistincted;
-                off_this.isMax1 = off_cont.isMax1;
-                off_this.isSingleLevel = off_cont.isSingleLevel;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered;
+                off_this.exi.isDistincted = off_cont.exi.isDistincted;
+                off_this.exi.isMax1 = off_cont.exi.isMax1;
+                off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
             case ASTAxisStep::DESCENDANT_OR_SELF:
-                off_this.isOrdered = off_cont.isOrdered && off_cont.isSingleLevel;
-                off_this.isDistincted = off_cont.isDistincted && off_cont.isSingleLevel;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = false;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered && off_cont.exi.isSingleLevel;
+                off_this.exi.isDistincted = off_cont.exi.isDistincted && off_cont.exi.isSingleLevel;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = false;
                 break;
             case ASTAxisStep::FOLLOWING_SIBLING:
-                off_this.isOrdered = off_cont.isMax1;
-                off_this.isDistincted = off_cont.isMax1;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = off_cont.isSingleLevel;
+                off_this.exi.isOrdered = off_cont.exi.isMax1;
+                off_this.exi.isDistincted = off_cont.exi.isMax1;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
             case ASTAxisStep::FOLLOWING:
-                off_this.isOrdered = off_cont.isMax1;
-                off_this.isDistincted = off_cont.isMax1;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = false;
+                off_this.exi.isOrdered = off_cont.exi.isMax1;
+                off_this.exi.isDistincted = off_cont.exi.isMax1;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = false;
                 break;
             case ASTAxisStep::PARENT:
-                off_this.isOrdered = off_cont.isOrdered;
-                off_this.isDistincted = off_cont.isMax1;
-                off_this.isMax1 = off_cont.isMax1;
-                off_this.isSingleLevel = off_cont.isSingleLevel;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered;
+                off_this.exi.isDistincted = off_cont.exi.isMax1;
+                off_this.exi.isMax1 = off_cont.exi.isMax1;
+                off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
             case ASTAxisStep::ANCESTOR: 
-                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
-                off_this.isDistincted = off_cont.isMax1;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = false;
+                off_this.exi.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.exi.isDistincted = off_cont.exi.isMax1;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = false;
                 break;
             case ASTAxisStep::PRECEDING_SIBLING:
-                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
-                off_this.isDistincted = off_cont.isMax1;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = off_cont.isSingleLevel;
+                off_this.exi.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.exi.isDistincted = off_cont.exi.isMax1;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
             case ASTAxisStep::PRECEDING:
-                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
-                off_this.isDistincted = off_cont.isMax1;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = false;
+                off_this.exi.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.exi.isDistincted = off_cont.exi.isMax1;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = false;
                 break;
             case ASTAxisStep::ANCESTOR_OR_SELF:
-                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
-                off_this.isDistincted = off_cont.isMax1;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = false;
+                off_this.exi.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.exi.isDistincted = off_cont.exi.isMax1;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = false;
                 break;
             case ASTAxisStep::DESCENDANT_ATTRIBUTE:
-                off_this.isOrdered = off_cont.isOrdered && off_cont.isSingleLevel;
-                off_this.isDistincted = off_cont.isDistincted && off_cont.isSingleLevel;
-                off_this.isMax1 = false;
-                off_this.isSingleLevel = false;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered && off_cont.exi.isSingleLevel;
+                off_this.exi.isDistincted = off_cont.exi.isDistincted && off_cont.exi.isSingleLevel;
+                off_this.exi.isMax1 = false;
+                off_this.exi.isSingleLevel = false;
                 break;
         }
 
@@ -259,7 +259,7 @@ namespace sedna
         {
             ASTNode *ddo;
 
-            if (isModeOrdered && !getParentRequest().distinctOnly && (!off_this.isOrdered || !off_this.isDistincted))
+            if (isModeOrdered && !getParentRequest().distinctOnly && (!off_this.exi.isOrdered || !off_this.exi.isDistincted))
             {
                 ddo = new ASTDDO(n.getLocation(), &n);
 
@@ -272,10 +272,10 @@ namespace sedna
 
                 modifyParent(ddo, false, false);
 
-                off_this.isOrdered = true;
-                off_this.isDistincted = true;
+                off_this.exi.isOrdered = true;
+                off_this.exi.isDistincted = true;
             }
-            else if ((!isModeOrdered || getParentRequest().distinctOnly) && !off_this.isDistincted)
+            else if ((!isModeOrdered || getParentRequest().distinctOnly) && !off_this.exi.isDistincted)
             {
                 ddo = new ASTDDO(n.getLocation(), &n, false);
 
@@ -288,8 +288,8 @@ namespace sedna
 
                 modifyParent(ddo, false, false);
 
-                off_this.isOrdered = false;
-                off_this.isDistincted = true;
+                off_this.exi.isOrdered = false;
+                off_this.exi.isDistincted = true;
             }
         }
 
@@ -321,64 +321,64 @@ namespace sedna
 
         bopof = mergeOffers(2);
 
-        bopof.isDistincted = true;
-        bopof.isOrdered = true;
-        bopof.isSingleLevel = true;
-        bopof.isMax1 = true;
-        bopof.useConstructors = false;
+        bopof.exi.isDistincted = true;
+        bopof.exi.isOrdered = true;
+        bopof.exi.isSingleLevel = true;
+        bopof.exi.isMax1 = true;
+        bopof.exi.useConstructors = false;
 
         if (n.op >= ASTBop::UNION && n.op <= ASTBop::EXCEPT)
         {
-            bool left_ddo = lof.isOrdered && lof.isDistincted;
-            bool right_ddo = rof.isOrdered && rof.isDistincted;
+            bool left_ddo = lof.exi.isOrdered && lof.exi.isDistincted;
+            bool right_ddo = rof.exi.isOrdered && rof.exi.isDistincted;
 
-            bopof.isSingleLevel = lof.isSingleLevel && rof.isSingleLevel;
-            bopof.useConstructors = lof.useConstructors || rof.useConstructors;
+            bopof.exi.isSingleLevel = lof.exi.isSingleLevel && rof.exi.isSingleLevel;
+            bopof.exi.useConstructors = lof.exi.useConstructors || rof.exi.useConstructors;
 
             switch (n.op)
             {
                 case ASTBop::INTERSECT:
-                    bopof.isMax1 = lof.isMax1 || rof.isMax1;
+                    bopof.exi.isMax1 = lof.exi.isMax1 || rof.exi.isMax1;
                     break;
 
                 case ASTBop::EXCEPT:
-                    bopof.isMax1 = lof.isMax1;
+                    bopof.exi.isMax1 = lof.exi.isMax1;
                     break;
 
                 case ASTBop::UNION:
-                    bopof.isMax1 = false;
+                    bopof.exi.isMax1 = false;
                     break;
 
                 default:
-                    bopof.isMax1 = true;
+                    bopof.exi.isMax1 = true;
             }
 
-            bopof.isOrdered = bopof.isMax1;
+            bopof.exi.isOrdered = bopof.exi.isMax1;
 
             if (!left_ddo || !right_ddo || !isModeOrdered || getParentRequest().distinctOnly)
             {
-                if (!lof.isMax1)
+                if (!lof.exi.isMax1)
                     n.lop = new ASTDDO(n.lop->getLocation(), n.lop, false);
 
-                if (!rof.isMax1)
+                if (!rof.exi.isMax1)
                     n.rop = new ASTDDO(n.rop->getLocation(), n.rop, false);
 
-                if (lof.isMax1 && rof.isMax1 && isModeOrdered && !getParentRequest().distinctOnly)
+                if (lof.exi.isMax1 && rof.exi.isMax1 && isModeOrdered && !getParentRequest().distinctOnly)
                 {
                     n.doc_order = true;
-                    bopof.isOrdered = true;
+                    bopof.exi.isOrdered = true;
                 }
-                else if (isModeOrdered && !getParentRequest().distinctOnly && !bopof.isMax1)
+                else if (isModeOrdered && !getParentRequest().distinctOnly && !bopof.exi.isMax1)
                 {
                     ddo = new ASTDDO(n.getLocation(), &n);
                     modifyParent(ddo, false, false);
-                    bopof.isOrdered = true;
+                    bopof.exi.isOrdered = true;
                 }
             }
             else
             {
                 n.doc_order = true;
-                bopof.isOrdered = true;
+                bopof.exi.isOrdered = true;
             }
         }
 
@@ -420,16 +420,18 @@ namespace sedna
         // first, bind variable
         if (n.var)
         {
-            ASTNode *par = getParent();
+            childOffer ts_off;
+
+            // variable is bound to typeswitch expression; so we should check its properties
+            // we do it via special typeswitch-bound "$%ts" variable, which should be last in bound_vars
+            U_ASSERT(bound_vars.back().int_name == "$%ts");
+            ts_off.exi = bound_vars.back().exp_info;
 
             setParamMode();
             n.var->accept(*this);
             unsetParamMode();
 
-            // variable is bound to typeswitch expression; so we should check its properties
-            U_ASSERT(dynamic_cast<ASTTypeSwitch *>(par));
-
-            bound_vars.back().exp_info = dynamic_cast<ASTTypeSwitch *>(par)->getExprProperties();
+            bound_vars.back().exp_info = ts_off.exi;
         }
 
         setParentRequest(req);
@@ -450,33 +452,35 @@ namespace sedna
     void LReturn::visit(ASTCast &n)
     {
         parentRequest req(getParentRequest());
-        childOffer coff;
+        childOffer off_this, eoff;
 
         req.distinctOnly = true; // cast doesn't work for >1 sequencies
         setParentRequest(req);
         n.expr->accept(*this);
 
-        coff = getOffer();
+        eoff = getOffer();
 
-        coff.isCached = false; // we don't cache this node
+        // default offer makes perfect sense here since cast always returns atomic
+        off_this.usedVars = eoff.usedVars;
 
-        setOffer(coff);
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTCastable &n)
     {
         parentRequest req(getParentRequest());
-        childOffer coff;
+        childOffer off_this, eoff;
 
-        req.distinctOnly = true; // castable always returns false for >1 sequences
+        req.distinctOnly = true; // castable always returns false for 1+ sequencies
         setParentRequest(req);
         n.expr->accept(*this);
 
-        coff = getOffer();
+        eoff = getOffer();
 
-        coff.isCached = false; // we don't cache this node
+        // default offer makes perfect sense here since castable always returns atomic
+        off_this.usedVars = eoff.usedVars;
 
-        setOffer(coff);
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTCharCont &n)
@@ -503,12 +507,12 @@ namespace sedna
         off = getOffer();
 
         // comment constructor creates only one node
-        off.isOrdered = true;
-        off.isDistincted = true;
-        off.isSingleLevel = true;
-        off.isMax1 = true;
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
         off.isCached = false;
-        off.useConstructors = true;
+        off.exi.useConstructors = true;
 
         setOffer(off);
     }
@@ -598,8 +602,8 @@ namespace sedna
 
         off = getOffer();
 
-        off.isOrdered = true;
-        off.isDistincted = true;
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
         off.isCached = false;
 
         setOffer(off);
@@ -632,12 +636,12 @@ namespace sedna
         off = getOffer();
 
         // document constructor creates only one node
-        off.isOrdered = true;
-        off.isDistincted = true;
-        off.isSingleLevel = true;
-        off.isMax1 = true;
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
         off.isCached = false;
-        off.useConstructors = true;
+        off.exi.useConstructors = true;
 
         setOffer(off);
     }
@@ -733,12 +737,12 @@ namespace sedna
         }
 
         // direct element constructor creates only one node
-        off.isOrdered = true;
-        off.isDistincted = true;
-        off.isSingleLevel = true;
-        off.isMax1 = true;
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
         off.isCached = false;
-        off.useConstructors = true;
+        off.exi.useConstructors = true;
 
         setOffer(off);
     }
@@ -771,12 +775,12 @@ namespace sedna
         off = mergeOffers(count);
 
         // computed element constructor creates only one node
-        off.isOrdered = true;
-        off.isDistincted = true;
-        off.isSingleLevel = true;
-        off.isMax1 = true;
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
         off.isCached = false;
-        off.useConstructors = true;
+        off.exi.useConstructors = true;
 
         setOffer(off);
     }
@@ -887,7 +891,7 @@ namespace sedna
         }
 
         // if we are in ordered mode and we use context nodes then we should ddo the previous step
-        if (n.cont && isModeOrdered && (!off_cont.isOrdered || !off_cont.isDistincted) && off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
+        if (n.cont && isModeOrdered && (!off_cont.exi.isOrdered || !off_cont.exi.isDistincted) && off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
         {
             ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont);
 
@@ -898,7 +902,7 @@ namespace sedna
                 n.cont->setCached(false);
             }
         }
-        else if (n.cont && !off_cont.isDistincted) // if we're in unordered mode or we don't use context we need only distinct
+        else if (n.cont && !off_cont.exi.isDistincted) // if we're in unordered mode or we don't use context we need only distinct
         {
             ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont, false);
 
@@ -915,7 +919,7 @@ namespace sedna
         {
             ASTNode *ddo;
 
-            if (isModeOrdered && !getParentRequest().distinctOnly && (!off_this.isOrdered || !off_this.isDistincted))
+            if (isModeOrdered && !getParentRequest().distinctOnly && (!off_this.exi.isOrdered || !off_this.exi.isDistincted))
             {
                 ddo = new ASTDDO(n.getLocation(), &n);
 
@@ -928,10 +932,10 @@ namespace sedna
 
                 modifyParent(ddo, false, false);
 
-                off_this.isOrdered = true;
-                off_this.isDistincted = true;
+                off_this.exi.isOrdered = true;
+                off_this.exi.isDistincted = true;
             }
-            else if ((!isModeOrdered || getParentRequest().distinctOnly) && !off_this.isDistincted)
+            else if ((!isModeOrdered || getParentRequest().distinctOnly) && !off_this.exi.isDistincted)
             {
                 ddo = new ASTDDO(n.getLocation(), &n, false);
 
@@ -944,8 +948,8 @@ namespace sedna
 
                 modifyParent(ddo, false, false);
 
-                off_this.isOrdered = false;
-                off_this.isDistincted = true;
+                off_this.exi.isOrdered = false;
+                off_this.exi.isDistincted = true;
             }
         }
 
@@ -955,21 +959,32 @@ namespace sedna
     void LReturn::visit(ASTFor &n)
     {
         unsigned int count = (n.pv) ? 2 : 1;
-        childOffer off_e, off_this;
+        childOffer off_e, off_this, off_var;
         parentRequest req(getParentRequest());
 
         req.distinctOnly = false;
+        setParentRequest(req);
         n.expr->accept(*this);
         off_e = getOffer();
 
         setParamMode();
-        n.tv->accept(*this);
         if (n.pv)
             n.pv->accept(*this);
+        n.tv->accept(*this);
         unsetParamMode();
+
+        // since for iterates over its sequence we should use default offer
+        // but alleviate it with some expr-specific properties
+        off_var = childOffer();
+        off_var.exi.useConstructors = off_e.exi.useConstructors;
+        off_var.isCached = off_e.isCached;
+        off_var.usedVars = off_e.usedVars;
+
+        bound_vars.back().exp_info = off_var.exi; // change offer for for-variable
 
         req.calledOnce = false;
         req.distinctOnly = getParentRequest().distinctOnly;
+        setParentRequest(req);
         n.fd->accept(*this);
         off_this = getOffer();
 
@@ -985,6 +1000,8 @@ namespace sedna
             // if we cache this step then we don't need to cache the previous one
             if (off_this.isCached)
                 n.fd->setCached(false);
+            if (off_var.isCached)
+                n.tv->setCached(false);
         }
 
         setOffer(off_this);
@@ -1034,11 +1051,7 @@ namespace sedna
             off_params = mergeOffers(arity);
         }
 
-        off_this.useConstructors = xqf.exp_info.useConstructors;
-        off_this.isOrdered = xqf.exp_info.isOrdered;
-        off_this.isDistincted = xqf.exp_info.isDistincted;
-        off_this.isMax1 = xqf.exp_info.isMax1;
-        off_this.isSingleLevel = xqf.exp_info.isSingleLevel;
+        off_this.exi = xqf.exp_info;
         off_this.usedVars = off_params.usedVars;
 
         if (!getParentRequest().calledOnce && xqf.toCache) // consider to cache
@@ -1055,6 +1068,7 @@ namespace sedna
 
     void LReturn::visit(ASTGrantPriv &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTGrantRole &n)
@@ -1064,33 +1078,141 @@ namespace sedna
 
     void LReturn::visit(ASTIf &n)
     {
+        parentRequest req;
+        childOffer off_this, off_if, off_t, off_e;
+
+        req.distinctOnly = true; // for if-expression we need only distinct because of EBV
+        req.calledOnce = getParentRequest().calledOnce;
+        setParentRequest(req);
         n.i_expr->accept(*this);
+        off_if = getOffer();
+
+        req = getParentRequest();
+        setParentRequest(req);
         n.t_expr->accept(*this);
+        off_t = getOffer();
+
+        setParentRequest(req);
         n.e_expr->accept(*this);
+        off_e = getOffer();
+
+        off_this.exi.isOrdered = off_t.exi.isOrdered && off_e.exi.isOrdered;
+        off_this.exi.isDistincted = off_t.exi.isDistincted && off_e.exi.isDistincted;
+        off_this.exi.isMax1 = off_t.exi.isMax1 && off_e.exi.isMax1;
+        off_this.exi.isSingleLevel = off_t.exi.isSingleLevel && off_e.exi.isSingleLevel;
+        off_this.exi.useConstructors = off_t.exi.useConstructors || off_e.exi.useConstructors;
+
+        off_this.usedVars = off_if.usedVars;
+        off_this.usedVars.insert(off_t.usedVars.begin(), off_t.usedVars.end());
+        off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
+
+        // consider to cache
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            if (off_this.isCached)
+            {
+                if (off_if.isCached)
+                    n.i_expr->setCached(false);
+                if (off_t.isCached)
+                    n.t_expr->setCached(false);
+                if (off_e.isCached)
+                    n.e_expr->setCached(false);
+            }
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTInstOf &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer off_this, eoff;
+
+        req.distinctOnly = true;
+        setParentRequest(req);
         n.expr->accept(*this);
-        n.type->accept(*this);
+
+        eoff = getOffer();
+
+        // default offer makes perfect sense here since instance-of always returns atomic
+        off_this.usedVars = eoff.usedVars;
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTItemTest &n)
     {
         // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTLet &n)
     {
+        childOffer off_e, off_this, off_var;
+        parentRequest req(getParentRequest());
+        bool isVarSeq = isVarSequence(dynamic_cast<ASTTypeVar *>(n.tv));
+
+        req.distinctOnly = !isVarSeq; // if we wait for singleton then do just distinct
+        setParentRequest(req);
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        // if type annotation tells us it waits for singleton then we should respect this
+        // else, var-body analysis will know better
+        if (!isVarSeq)
+        {
+            off_var = childOffer();
+
+            off_var.exi.useConstructors = off_e.exi.useConstructors;
+            off_var.usedVars = off_e.usedVars;
+            off_var.isCached = off_e.isCached;
+        }
+        else
+        {
+            off_var = off_e;
+        }
+
+        setParamMode();
+        n.tv->accept(*this);
+        unsetParamMode();
+
+        bound_vars.back().exp_info = off_var.exi;
+
+        req = getParentRequest();
+        setParentRequest(req);
+        n.fd->accept(*this);
+        off_this = getOffer();
+
+        ignoreVariables(off_this, 1);
+
+        off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
+
+        // consider to cache
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            // if we cache this step then we don't need to cache the previous one
+            if (off_this.isCached)
+                n.fd->setCached(false);
+            if (off_var.isCached)
+                n.tv->setCached(false);
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTLibModule &n)
     {
+        // nothing to do
+        // we optimize library vars and functions on-demand from main module
     }
 
     void LReturn::visit(ASTLit &n)
     {
-        // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTLoadFile &n)
@@ -1120,49 +1242,81 @@ namespace sedna
     void LReturn::visit(ASTMetaDocs &n)
     {
         if (n.coll)
+        {
+            parentRequest req;
+
+            req.distinctOnly = true;
+            req.calledOnce = true;
+
+            setParentRequest(req);
             n.coll->accept(*this);
+        }
     }
 
     void LReturn::visit(ASTMetaSchemaCol &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.coll->accept(*this);
     }
 
     void LReturn::visit(ASTMetaSchemaDoc &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.doc->accept(*this);
 
         if (n.coll)
+        {
+            setParentRequest(req);
             n.coll->accept(*this);
+        }
     }
 
     void LReturn::visit(ASTModImport &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTModuleDecl &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTNameTest &n)
     {
+        // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTNamespaceDecl &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTNodeTest &n)
     {
         // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTNsp &n)
     {
+        // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTOption &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTOrdExpr &n)
@@ -1385,15 +1539,15 @@ namespace sedna
 
     bool LReturn::isOfferCorrect(const childOffer &off)
     {
-        if (off.isMax1)
+        if (off.exi.isMax1)
         {
-            if (!off.isOrdered)
+            if (!off.exi.isOrdered)
                 return false;
 
-            if (!off.isDistincted)
+            if (!off.exi.isDistincted)
                 return false;
 
-            if (!off.isSingleLevel)
+            if (!off.exi.isSingleLevel)
                 return false;
         }
 
@@ -1436,23 +1590,23 @@ namespace sedna
         childOffer res;
 
         // max1 only if we have one child and he is max1
-        res.isMax1 = (count == 0) || ((count == 1) && offers.back().isMax1);
-        res.isOrdered = (count == 0) || ((count == 1) && offers.back().isOrdered);
-        res.isSingleLevel = (count == 0) || ((count == 1) && offers.back().isSingleLevel);
+        res.exi.isMax1 = (count == 0) || ((count == 1) && offers.back().exi.isMax1);
+        res.exi.isOrdered = (count == 0) || ((count == 1) && offers.back().exi.isOrdered);
+        res.exi.isSingleLevel = (count == 0) || ((count == 1) && offers.back().exi.isSingleLevel);
 
         while (count--)
         {
             childOffer c = offers.back();
             offers.pop_back();
 
-            if (!c.isDistincted)
-                res.isDistincted = false;
+            if (!c.exi.isDistincted)
+                res.exi.isDistincted = false;
 
             if (!c.usedVars.empty())
                 res.usedVars.insert(c.usedVars.begin(), c.usedVars.end());
 
-            if (c.useConstructors)
-                res.useConstructors = true;
+            if (c.exi.useConstructors)
+                res.exi.useConstructors = true;
         }
 
         return res;
@@ -1491,7 +1645,7 @@ namespace sedna
 
     void LReturn::cacheTheNode(ASTNode *nod, LReturn::childOffer &off) const
     {
-        if (!off.usedVars.empty() || off.useConstructors)
+        if (!off.usedVars.empty() || off.exi.useConstructors)
             return;
 
         nod->setCached(true);
