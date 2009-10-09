@@ -53,6 +53,9 @@ StringVector parse_batch(QueryType type, StringVector batch, std::string *module
             // do semantic analysis; any errors will be thrown as exceptions
             drv.doSemanticAnalysis();
 
+            // do lreturn optimizations
+            drv.doLReturnAnalysis();
+
             *module_name = drv.getParsedModuleName();
 
             if (*module_name == "")

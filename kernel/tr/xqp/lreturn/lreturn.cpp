@@ -138,7 +138,6 @@ namespace sedna
         {
             parentRequest req(getParentRequest());
 
-            req.distinctOnly = false;
             setParentRequest(req);
             n.cont->accept(*this);
             off_this = off_cont = getOffer();
@@ -317,13 +316,14 @@ namespace sedna
         n.rop->accept(*this);
         rof = getOffer();
 
-        bopof = mergeOffers(2);
-
         bopof.exi.isDistincted = true;
         bopof.exi.isOrdered = true;
         bopof.exi.isSingleLevel = true;
         bopof.exi.isMax1 = true;
         bopof.exi.useConstructors = false;
+
+        bopof.usedVars.insert(lof.usedVars.begin(), lof.usedVars.end());
+        bopof.usedVars.insert(rof.usedVars.begin(), rof.usedVars.end());
 
         if (n.op >= ASTBop::UNION && n.op <= ASTBop::EXCEPT)
         {
@@ -846,29 +846,11 @@ namespace sedna
             ignoreVariables(off_preds, 1);
         }
 
-        // primary expression
-        if (n.expr)
-        {
-            parentRequest req(getParentRequest());
-
-            // bind the context
-            bound_vars.push_back(XQVariable("$%v", NULL));
-
-            setParentRequest(req);
-            n.expr->accept(*this);
-            off_this = off_pe = getOffer();
-
-            off_this.isCached = false;
-
-            ignoreVariables(off_this, 1);
-        }
-
         // context
         if (n.cont)
         {
             parentRequest req(getParentRequest());
 
-            req.distinctOnly = false;
             setParentRequest(req);
             n.cont->accept(*this);
             off_cont = getOffer();
@@ -876,9 +858,29 @@ namespace sedna
             // if we have context item expression then the result will be dictated by the previous step
             if (!n.expr)
             {
-                off_this = off_cont;
+                off_this = off_pe = off_cont;
                 off_this.isCached = false;
+                off_pe.usedVars.insert("$%v"); // since . is a context
             }
+        }
+
+        // primary expression
+        if (n.expr)
+        {
+            parentRequest req;
+
+            // bind the context
+            bound_vars.push_back(XQVariable("$%v", NULL));
+
+            req.distinctOnly = getParentRequest().distinctOnly;
+            req.calledOnce = off_cont.exi.isMax1;
+            setParentRequest(req);
+            n.expr->accept(*this);
+            off_this = off_pe = getOffer();
+
+            off_this.isCached = false;
+
+            ignoreVariables(off_this, 1);
         }
 
         // set usedvars properly
@@ -895,7 +897,8 @@ namespace sedna
         }
 
         // if we are in ordered mode and we use context nodes then we should ddo the previous step
-        if (n.cont && isModeOrdered && (!off_cont.exi.isOrdered || !off_cont.exi.isDistincted) && off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
+        if (n.cont && isModeOrdered && !getParentRequest().distinctOnly && (!off_cont.exi.isOrdered || !off_cont.exi.isDistincted) &&
+                off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
         {
             ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont);
 
@@ -905,6 +908,15 @@ namespace sedna
                 ddo->setCached(true);
                 n.cont->setCached(false);
             }
+
+            // context expression now becomes ddoed
+            if (!n.expr)
+            {
+                off_this.exi.isDistincted = true;
+                off_this.exi.isOrdered = true;
+            }
+
+            n.cont = ddo;
         }
         else if (n.cont && !off_cont.exi.isDistincted) // if we're in unordered mode or we don't use context we need only distinct
         {
@@ -916,10 +928,19 @@ namespace sedna
                 ddo->setCached(true);
                 n.cont->setCached(false);
             }
+
+            // context expression now becomes distincted
+            if (!n.expr)
+            {
+                off_this.exi.isDistincted = true;
+                off_this.exi.isOrdered = false;
+            }
+
+            n.cont = ddo;
         }
 
-        // if this is the last and not the only step then we need to order(distinct) it
-        if (n.isLast && n.cont)
+        // if this is the last and not the only full-step (with primary expr) then we need to order(distinct) it
+        if (n.isLast && n.cont && n.expr)
         {
             ASTNode *ddo;
 
@@ -1022,7 +1043,8 @@ namespace sedna
 
         if (standFunc) // standard function
         {
-            xqf = drv->getStdFuncInfo(int_name);
+            // for standard function get name wo/a
+            xqf = drv->getStdFuncInfo(CREATE_INTNAME(*n.uri, *n.local));
         }
         else
         {
@@ -1059,6 +1081,7 @@ namespace sedna
                     req.distinctOnly = exi.isMax1;
                 }
 
+                setParentRequest(req);
                 n.params->at(i)->accept(*this);
             }
 
@@ -2043,6 +2066,8 @@ namespace sedna
             var.exp_info.isSingleLevel = false;
             var.exp_info.useConstructors = true;
 
+            var.isNodes = true;
+
             bound_vars.push_back(var);
         }
         else // else we process it as a var-reference
@@ -2094,8 +2119,6 @@ namespace sedna
         // now analyze the body
         req.calledOnce = true;
         req.distinctOnly = var.exp_info.isMax1; // if we wait for singleton then do just distinct
-        bound_vars.pop_back();
-
         setParentRequest(req);
         n.expr->accept(*this);
         off = getOffer();

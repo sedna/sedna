@@ -85,18 +85,18 @@ EOF
          ;                                tmp)
          ;                              query))
          ; DL: uncommented lreturn
-         (query           (if (and (>= step-id 4) (eq? (is-run-rewriter) 1))
-                              (let ((tmp (if (eq? (car query) #t)
-                                             (handle-exceptions ex
-                                                                `(#f ,(cl:get-exception-message ex))
-                                                                `(#t ,@(map 
-                                                                        (lambda (q) (mlr:rewrite-query q))
-                                                                        (cdr query))))
-                                             query)))
-                                (if (eq? 1 (is-print-intermed))
-                                    (cl:write-to-file tmp "intermed3_mark_lreturn.scm"))
-                                tmp)
-                              query))
+         ;(query           (if (and (>= step-id 4) (eq? (is-run-rewriter) 1))
+         ;                     (let ((tmp (if (eq? (car query) #t)
+         ;                                    (handle-exceptions ex
+         ;                                                       `(#f ,(cl:get-exception-message ex))
+         ;                                                       `(#t ,@(map 
+         ;                                                               (lambda (q) (mlr:rewrite-query q))
+         ;                                                               (cdr query))))
+         ;                                    query)))
+         ;                       (if (eq? 1 (is-print-intermed))
+         ;                           (cl:write-to-file tmp "intermed3_mark_lreturn.scm"))
+         ;                       tmp)
+         ;                     query))
          
          (query           (if (and (>= step-id 3) (eq? (is-run-popt) 1))
                               (let ((tmp (if (eq? (car query) #t)
