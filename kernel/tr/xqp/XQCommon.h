@@ -27,6 +27,8 @@ namespace sedna
 
         xqExprInfo exp_info;
 
+        bool isNodes; // true if var represents sequence of nodes (singletons also go here)(this is only for typed vars)
+
         XQVariable(const char *name, ASTVar *var_)
         {
             int_name = name;
