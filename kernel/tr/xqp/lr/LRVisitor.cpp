@@ -187,6 +187,15 @@ void LRVisitor::visit(ASTAxisStep &n)
 {
     std::string cont = " (var (\"\" \"$%v\")) ";
     std::string lr_save;
+    ASTFilterStep *fs;
+    bool need_checker = !n.isFirstStep() && (dynamic_cast<ASTAxisStep *>(n.cont) == NULL);
+
+    if (need_checker && (fs = dynamic_cast<ASTFilterStep*>(n.cont)))
+    {
+        if (!fs->expr)
+            need_checker = false;
+    }
+
 
 //    lr_str.append("(ddo ");
     if (n.preds)
@@ -194,9 +203,26 @@ void LRVisitor::visit(ASTAxisStep &n)
         lr_str.append("(return ");
 
         if (n.cont)
+        {
+            if (need_checker)
+            {
+                lr_str.append("(seq-checker ");
+            }
             n.cont->accept(*this);
+            if (need_checker)
+            {
+                std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
+                            int2string(n.getLocation().begin.column) + "),\"";
+
+                lr_str.append(int2string(XPTY0019));
+                lr_str.append(err);
+                lr_str.append(")");
+            }
+        }
         else
+        {
             lr_str += cont;
+        }
 
         lr_str.append("(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ");
 
@@ -227,9 +253,26 @@ void LRVisitor::visit(ASTAxisStep &n)
         lr_str.append(axis_str[n.axis]);
 
         if (n.cont)
+        {
+            if (need_checker)
+            {
+                lr_str.append("(seq-checker ");
+            }
             n.cont->accept(*this);
+            if (need_checker)
+            {
+                std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
+                            int2string(n.getLocation().begin.column) + "),\"";
+
+                lr_str.append(int2string(XPTY0019));
+                lr_str.append(err);
+                lr_str.append(")");
+            }
+        }
         else
+        {
             lr_str += cont;
+        }
 
         lr_str.append("(type ");
         n.test->accept(*this);
@@ -683,6 +726,19 @@ void LRVisitor::visit(ASTFilterStep &n)
 {
     std::string cont = " (var (\"\" \"$%v\")) ";
     std::string lr_save;
+    bool need_checker = !n.isFirstStep() && (dynamic_cast<ASTAxisStep *>(n.cont) == NULL);
+    ASTFilterStep *fs;
+
+    if (need_checker && (fs = dynamic_cast<ASTFilterStep*>(n.cont)))
+    {
+        if (!fs->expr)
+            need_checker = false;
+    }
+
+    if (n.isLast)
+    {
+        lr_str.append("(seq-checker ");
+    }
 
     if (!n.expr)
     {
@@ -691,7 +747,22 @@ void LRVisitor::visit(ASTFilterStep &n)
             lr_str.append("(return ");
 
             if (n.cont)
+            {
+                if (need_checker)
+                {
+                    lr_str.append("(seq-checker ");
+                }
                 n.cont->accept(*this);
+                if (need_checker)
+                {
+                    std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
+                                int2string(n.getLocation().begin.column) + "),\"";
+
+                    lr_str.append(int2string(XPTY0019));
+                    lr_str.append(err);
+                    lr_str.append(")");
+                }
+            }
             else
                 lr_str += cont;
 
@@ -714,9 +785,26 @@ void LRVisitor::visit(ASTFilterStep &n)
         else
         {
             if (n.cont)
+            {
+                if (need_checker)
+                {
+                    lr_str.append("(seq-checker ");
+                }
                 n.cont->accept(*this);
+                if (need_checker)
+                {
+                    std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
+                                int2string(n.getLocation().begin.column) + "),\"";
+
+                    lr_str.append(int2string(XPTY0019));
+                    lr_str.append(err);
+                    lr_str.append(")");
+                }
+            }
             else
+            {
                 lr_str += cont;
+            }
         }
     }
     else
@@ -732,7 +820,20 @@ void LRVisitor::visit(ASTFilterStep &n)
                 lr_str.append("(return ");
             }
 
+            if (need_checker)
+            {
+                lr_str.append("(seq-checker ");
+            }
             n.cont->accept(*this);
+            if (need_checker)
+            {
+                std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
+                            int2string(n.getLocation().begin.column) + "),\"";
+
+                lr_str.append(int2string(XPTY0019));
+                lr_str.append(err);
+                lr_str.append(")");
+            }
 
             lr_str.append("(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ");
         }
@@ -761,6 +862,16 @@ void LRVisitor::visit(ASTFilterStep &n)
         {
             lr_str += "))";
         }
+    }
+
+    if (n.isLast)
+    {
+        std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
+                    int2string(n.getLocation().begin.column) + "),\"";
+
+        lr_str.append(int2string(XPTY0018));
+        lr_str.append(err);
+        lr_str.append(")");
     }
 }
 

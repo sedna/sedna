@@ -875,6 +875,13 @@
                   `(,(l2p:tuple-size (car seq-operands))
                     (PPSpaceSequence ,@seq-operands)))))
 
+             ; *** sequence-checker ***
+             ((eq? op-name 'seq-checker)
+              `(1 (PPSeqChecker ,(l2p:any-lr-node2por (car node))
+                                ,(cadr node)
+                                ,(caddr node)))
+             )
+
              ; *** union ***
              ((eq? op-name 'union@)
               `(1 (PPUnion ,(l2p:any-lr-node2por (car node))

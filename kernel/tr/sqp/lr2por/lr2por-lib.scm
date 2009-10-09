@@ -10,7 +10,7 @@
 ;(define (l2p:init-subquery-modes sq)
 ;  (set! l2p:subqueries sq)
 ;  (set! l2p:subquery-modes (map (lambda (s) `(,(eighth s) mode-unknown)) (cdr sq))))
-  
+
 ;(define (l2p:update-subquery-modes sub-query-no mode)
 ;  (let ((new-subquery-modes
 ;         (map (lambda (x)
@@ -22,13 +22,13 @@
 ;    new-subquery-modes))
 
 ;(define (l2p:merge-subqueries-and-modes subqueries modes)
-;  (map 
+;  (map
 ;   (lambda (s m)
 ;     (reverse `(,(cadr m) ,@(reverse s))))
 ;   subqueries
 ;   modes))
 
-;(define (l2p:get-subqueries-with-modes-inserted) 
+;(define (l2p:get-subqueries-with-modes-inserted)
 ;  `(subqueries ,@(l2p:merge-subqueries-and-modes (cdr l2p:subqueries) l2p:subquery-modes)))
 
 (define l2p:abs-xpath-axis '(child descendant attr-axis self descendant-or-self descendant-attr))
@@ -38,7 +38,7 @@
 (define l2p:bool-unary-calc-ops '(not@))
 (define l2p:bool-binary-calc-ops '(and@ or@))
 
-(define l2p:lop2por-op-map 
+(define l2p:lop2por-op-map
   '((unary+@ UnaryOpPlus)
     (unary-@ UnaryOpMinus)
     (+@ BinaryOpAdd)
@@ -68,25 +68,25 @@
 (define (l2p:build-PPCalculate e)
   (set! l2p:cur-arg-index -1)
   (let ((result
-         (let rpt ((expr e)) 
-           (if (xlr:var? expr) 
-               `((Leaf ,(begin 
+         (let rpt ((expr e))
+           (if (xlr:var? expr)
+               `((Leaf ,(begin
                           (set! l2p:cur-arg-index (+ l2p:cur-arg-index 1))
                           l2p:cur-arg-index)) (,expr))
-               (cond 
+               (cond
                  ;In case of atom unary calc ops
                  ((memq (xlr:op-name expr) l2p:atom-unary-calc-ops)
                   (let ((first-arg (rpt (car (xlr:op-args expr)))))
-                    `((,(l2p:find-in-op-map (xlr:op-name expr)) 
+                    `((,(l2p:find-in-op-map (xlr:op-name expr))
                        ,(if (eq? (car (car first-arg)) 'Leaf)
                             `(LeafAtomOp ,(cadr (car first-arg)))
                             (car first-arg)))
                       ,(cadr first-arg))))
                  ;In case of atom binary calc ops
                  ((memq (xlr:op-name expr) l2p:atom-binary-calc-ops)
-                  (let ((first-arg (rpt (car (xlr:op-args expr)))) 
+                  (let ((first-arg (rpt (car (xlr:op-args expr))))
                         (second-arg (rpt (cadr (xlr:op-args expr)))))
-                    `((,(l2p:find-in-op-map (xlr:op-name expr)) 
+                    `((,(l2p:find-in-op-map (xlr:op-name expr))
                        ,(if (eq? (car (car first-arg)) 'Leaf)
                             `(LeafAtomOp ,(cadr (car first-arg)))
                             (car first-arg))
@@ -97,16 +97,16 @@
                  ;In case of bool unary calc ops
                  ((memq (xlr:op-name expr) l2p:bool-unary-calc-ops)
                   (let ((first-arg (rpt (car (xlr:op-args expr)))))
-                    `((,(l2p:find-in-op-map (xlr:op-name expr)) 
+                    `((,(l2p:find-in-op-map (xlr:op-name expr))
                        ,(if (eq? (car (car first-arg)) 'Leaf)
                             `(LeafEffectBoolOp ,(cadr (car first-arg)))
                             (car first-arg)))
                       ,(cadr first-arg))))
                  ;In case of bool binary calc ops
                  ((memq (xlr:op-name expr) l2p:bool-binary-calc-ops)
-                  (let ((first-arg (rpt (car (xlr:op-args expr)))) 
+                  (let ((first-arg (rpt (car (xlr:op-args expr))))
                         (second-arg (rpt (cadr (xlr:op-args expr)))))
-                    `((,(l2p:find-in-op-map (xlr:op-name expr)) 
+                    `((,(l2p:find-in-op-map (xlr:op-name expr))
                        ,(if (eq? (car (car first-arg)) 'Leaf)
                             `(LeafEffectBoolOp ,(cadr (car first-arg)))
                             (car first-arg))
@@ -115,21 +115,21 @@
                             (car second-arg)))
                       ,(append (cadr first-arg) (cadr second-arg)))))
                  ;In all other cases
-                 (else 
-                  `((Leaf 
+                 (else
+                  `((Leaf
                      ,(begin (set! l2p:cur-arg-index (+ l2p:cur-arg-index 1))
                              l2p:cur-arg-index))
                     (,expr))))))))
     (if (or (xlr:var? (car result)) (eq? (car (car result)) 'Leaf))
-        (cl:signal-error "lr2por: build-PPCalculate is called with not calc-op as parameter") 
+        (cl:signal-error "lr2por: build-PPCalculate is called with not calc-op as parameter")
         `(PPCalculate ,(car result) ,@(cadr result)))))
 
 (define (l2p:tran-lr-keyword2por-keyword lr-key-word)
-  (let ((pair 
+  (let ((pair
          (find
-          (lambda (x) 
+          (lambda (x)
             (eq? lr-key-word (car x)))
-          '((child PPAxisChild) 
+          '((child PPAxisChild)
             (attr-axis PPAxisAttribute)
             (descendant PPAxisDescendant)
             (self PPAxisSelf)
@@ -138,24 +138,24 @@
     (if pair
         (cadr pair)
         (cl:signal-error "l2p:tran-lr-keyword2por-keyword: unknown keyword"))))
-     
+
 
 (define (l2p:getDocorCollNamePor lr-name)
   (if  (and (eq? 'const (car lr-name))
             (eq? '!xs!string (cadr (cadr lr-name))))
        (caddr lr-name)
        (l2p:any-lr-node2por lr-name)))
-  
-  
+
+
 (define (l2p:findPPAbsPath e)
-  (let rpt ((expr e) (first-call #t)) 
-    (cond 
+  (let rpt ((expr e) (first-call #t))
+    (cond
       ;In case of atom unary calc ops
       ((member (xlr:op-name expr) l2p:abs-xpath-axis)
        (let ((first-arg (rpt (car (xlr:op-args expr)) #f)))
          (if
           first-arg
-          `(PPAbsPath 
+          `(PPAbsPath
             ,(cadr first-arg)
             ,(reverse
               (cons
@@ -164,7 +164,7 @@
                   (if
                    (eq? (xlr:op-name expr) 'attr-axis)
                    `(PPAxisAttribute
-                     ,@(cond 
+                     ,@(cond
                          ((eq? (car what) 'attr-test)
                           (if
                            (eq? (car (cadr what)) 'ename)
@@ -189,11 +189,11 @@
                                    (eq? (cadr (caddr (cadr (cadr what)))) '*))
                               `(wildcard_ncname_star
                                 ,(xlr:namespace-name (cadr (cadr what)))))
-                             (else 
-                              `(qname 
+                             (else
+                              `(qname
                                 (,(xlr:namespace-name (cadr (cadr what)))
                                  ,(xlr:local-name (cadr (cadr what)))
-                                 ,@(xlr:ns-prefix (cadr (cadr what))))))) 
+                                 ,@(xlr:ns-prefix (cadr (cadr what)))))))
                            (cl:signal-error
                             "l2p:findPPAbsPath: instruction is not supported - "
                             (car (cadr what)))))
@@ -203,7 +203,7 @@
                           (cl:signal-error
                            "l2p:findPPAbsPath: unknown attibute axis KindTest"))))
                    `(,(l2p:tran-lr-keyword2por-keyword (xlr:op-name expr))
-                     ,@(cond 
+                     ,@(cond
                          ((eq? (car what) 'doc-test)
                           (if
                            (null? (cdr what))
@@ -235,11 +235,11 @@
                                (eq? (cadr (caddr (cadr (cadr what)))) '*))
                               `(wildcard_ncname_star
                                 ,(xlr:namespace-name (cadr (cadr what)))))
-                             (else 
-                              `(qname 
+                             (else
+                              `(qname
                                 (,(xlr:namespace-name (cadr (cadr what)))
                                  ,(xlr:local-name (cadr (cadr what)))
-                                 ,@(xlr:ns-prefix (cadr (cadr what))))))) 
+                                 ,@(xlr:ns-prefix (cadr (cadr what)))))))
                            (cl:signal-error
                             "l2p:findPPAbsPath: instruction is not supported - "
                             (car (cadr what)))))
@@ -268,11 +268,11 @@
                                (eq? (cadr (caddr (cadr (cadr what)))) '*))
                               `(wildcard_ncname_star
                                 ,(xlr:namespace-name (cadr (cadr what)))))
-                             (else 
-                              `(qname 
+                             (else
+                              `(qname
                                 (,(xlr:namespace-name (cadr (cadr what)))
                                  ,(xlr:local-name (cadr (cadr what)))
-                                 ,@(xlr:ns-prefix (cadr (cadr what))))))) 
+                                 ,@(xlr:ns-prefix (cadr (cadr what)))))))
                            (cl:signal-error
                             "l2p:findPPAbsPath: instruction is not supported - "
                             (car (cadr what)))))
@@ -325,5 +325,7 @@
        )
       ((eq? (xlr:op-name expr) 'ddo)
        (rpt (car (xlr:op-args expr)) #t))
+      ((eq? (xlr:op-name expr) 'seq-checker)
+       (rpt (car (xlr:op-args expr)) #t))
       (else #f))))
-                       
+

@@ -101,6 +101,7 @@
 #include "tr/executor/xqops/PPCheckpoint.h"
 #include "tr/executor/xqops/PPFilterEL.h"
 #include "tr/executor/xqops/PPFnDeepEqual.h"
+#include "tr/executor/xqops/PPSeqChecker.h"
 #ifdef SQL_CONNECTION
 #include "tr/executor/xqops/PPSQL.h"
 #endif
