@@ -4,6 +4,7 @@
 #include "tr/xqp/serial/serial.h"
 #include "tr/xqp/serial/deser.h"
 #include "tr/xqp/sema/cycle.h"
+#include "tr/xqp/lreturn/lreturn.h"
 
 namespace sedna
 {
@@ -11,6 +12,7 @@ namespace sedna
     {
         ast = ast_tree;
         drv = driver;
+        lr = NULL;
 
 #if (defined(DEBUGI) && (DEBUGI == 1))
         if (drv->getErrorCode() == -1)
@@ -20,6 +22,13 @@ namespace sedna
         initXQueryInfo();
 
         xpdy0002 = NULL;
+    }
+
+    XQueryModule::~XQueryModule()
+    {
+        delete ast;
+        delete module_uri;
+        delete lr;
     }
 
     void XQueryModule::doSemanticAnalysis()
@@ -138,6 +147,7 @@ namespace sedna
     void XQueryModule::initXQueryInfo()
     {
         module_uri = NULL;
+        isDefaultOrdered = true;
 
         // must be by XQuery specs
         nsBinds["xml"] = nsPair("http://www.w3.org/XML/1998/namespace", NULL);
@@ -172,5 +182,35 @@ namespace sedna
     ASTNode* XQueryModule::getTree()
     {
         return ast;
+    }
+
+    bool XQueryModule::getFunctionInfo(const std::string &name, XQFunction &xqf) const
+    {
+        XQFunctionInfo::const_iterator it = funcs.find(name);
+
+        if (it == funcs.end())
+            return false;
+
+        xqf = it->second;
+        return true;
+    }
+
+    bool XQueryModule::getLReturnFunctionInfo(const std::string &name, XQFunction &xqf)
+    {
+        XQFunctionInfo::const_iterator it = funcs.find(name);
+
+        if (it != funcs.end())
+            xqf = it->second;
+        else
+            return false;
+
+        if (!lr)
+            lr = new LReturn(this->drv, this);
+
+        xqf.decl->accept(*lr);
+
+        xqf = lr->getLReturnCached(name, isDefaultOrdered);
+
+        return true;
     }
 }

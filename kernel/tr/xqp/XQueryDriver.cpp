@@ -3,14 +3,13 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "XQFunction.h"
 #include "XQueryDriver.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>
-
-#include "XQFunction.h"
 
 #include "tr/pq/pq.h"
 #include "tr/xqp/serial/deser.h"
@@ -444,5 +443,26 @@ namespace sedna
         }
 
         return res;
+    }
+
+    XQFunction XQueryDriver::getStdFuncInfo(const std::string &name) const
+    {
+        return stdFuncs[name];
+    }
+
+    XQFunction XQueryDriver::getLReturnFunctionInfo(const std::string &name)
+    {
+        XQFunction xqf;
+        modSequence ms;
+
+        ms = libModules[libFuncs[name].uri];
+
+        for (modSequence::iterator it = ms.begin(); it != ms.end(); it++)
+        {
+            if ((*it)->getLReturnFunctionInfo(name, xqf))
+                break;
+        }
+
+        return xqf;
     }
 }

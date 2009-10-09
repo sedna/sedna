@@ -48,8 +48,9 @@ namespace sedna
             XQFunctionInfo libFuncs;
             XQVariablesInfo libVars; // all variables declared in all processed libraries
 
+            typedef std::vector<XQueryModule *> modSequence;
             std::map<std::string, ASTType::TypeMod> xsTypes; // known XQuery types
-            std::map<std::string, std::vector<XQueryModule *> > libModules; // imported modules
+            std::map<std::string, modSequence> libModules; // imported modules
             std::vector<std::string> import_chain; // current import chain to look for cycles
 
             void initXQueryInfo();
@@ -95,6 +96,9 @@ namespace sedna
             std::string getErrorMsg() const;
 
             static void registerStandardFunctions(const char *uri_nsp, XQFunction *funcs);
+
+            XQFunction getStdFuncInfo(const std::string &name) const;
+            XQFunction getLReturnFunctionInfo(const std::string &name);
     };
 }
 

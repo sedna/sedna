@@ -2,7 +2,7 @@
 #define __XQFUNCTION_H__
 
 #include <string>
-#include "ast/ASTFuncDecl.h"
+#include "tr/xqp/ast/ASTFuncDecl.h"
 
 namespace sedna
 {
@@ -11,15 +11,7 @@ namespace sedna
     typedef unsigned char param_mask;
     const param_mask maxParamMask = 0xFF;
 
-    struct xqExprInfo
-    {
-        bool isOrdered;     // expr is ordered
-        bool isDistincted;  // expr contains distincted values
-        bool isMax1;        // expr emits singleton or empty sequence
-        bool isSingleLevel; // all nodes are on the same level in node-sequence
-        bool useConstructors; // true, if subexpression uses constructor (direct or computed)
-    };
-
+    class xqExprInfo;
     struct XQFunction
     {
         std::string uri;

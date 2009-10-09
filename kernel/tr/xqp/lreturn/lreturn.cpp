@@ -420,9 +420,16 @@ namespace sedna
         // first, bind variable
         if (n.var)
         {
+            ASTNode *par = getParent();
+
             setParamMode();
             n.var->accept(*this);
             unsetParamMode();
+
+            // variable is bound to typeswitch expression; so we should check its properties
+            U_ASSERT(dynamic_cast<ASTTypeSwitch *>(par));
+
+            bound_vars.back().exp_info = dynamic_cast<ASTTypeSwitch *>(par)->getExprProperties();
         }
 
         setParentRequest(req);
@@ -579,7 +586,7 @@ namespace sedna
 
     void LReturn::visit(ASTDDO &n)
     {
-        // in fact we should not get here since all ddo-ops are inserted in dynamic mode without lreturn visitor taking them
+        // in fact we should not get here since all ddo-ops are inserted in dynamic mode without lreturn visitor taking them (we should not do re-analysis either)
         parentRequest req;
         childOffer off;
 
@@ -985,6 +992,78 @@ namespace sedna
 
     void LReturn::visit(ASTFunCall &n)
     {
+        std::string int_name = CREATE_INTNAME(*n.uri, *n.local);
+        unsigned int arity = (n.params) ? n.params->size() : 0;
+        XQFunction xqf;
+        childOffer off_this, off_params;
+        bool standFunc = (*n.int_name != "");
+
+        if (standFunc) // standard function
+        {
+            xqf = drv->getStdFuncInfo(int_name);
+        }
+        else
+        {
+            funcInfo::iterator it;
+
+            if (isModeOrdered)
+            {
+                it = funcOrdCache.find(int_name);
+
+                if (it == funcOrdCache.end())
+                    xqf = getFunctionInfo(int_name);
+                else
+                    xqf = it->second;
+            }
+            else
+            {
+                it = funcUnordCache.find(int_name);
+
+                if (it == funcUnordCache.end())
+                    xqf = getFunctionInfo(int_name);
+                else
+                    xqf = it->second;
+            }
+        }
+
+        if (n.params)
+        {
+            parentRequest req(getParentRequest());
+
+            for (unsigned int i = 0; i < arity; i++)
+            {
+                if (i < sizeof(param_mask))
+                {
+                    req.distinctOnly = (xqf.mask & (0x1 << i));
+                }
+                else if (standFunc)
+                {
+                    req.distinctOnly = (xqf.mask == maxParamMask);
+                }
+                else
+                {
+                    req.distinctOnly = isParamDistinctOnly(xqf.decl, i);
+                }
+
+                n.params->at(i)->accept(*this);
+            }
+
+            off_params = mergeOffers(arity);
+        }
+
+        off_this.useConstructors = xqf.exp_info.useConstructors;
+        off_this.isOrdered = xqf.exp_info.isOrdered;
+        off_this.isDistincted = xqf.exp_info.isDistincted;
+        off_this.isMax1 = xqf.exp_info.isMax1;
+        off_this.isSingleLevel = xqf.exp_info.isSingleLevel;
+        off_this.usedVars = off_params.usedVars;
+
+        if (!getParentRequest().calledOnce && xqf.toCache) // consider to cache
+        {
+            cacheTheNode(&n, off_this);
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTFuncDecl &n)
@@ -1435,4 +1514,64 @@ namespace sedna
         nod->setCached(true);
         off.isCached = true;
     }
+
+    XQFunction LReturn::getFunctionInfo(const std::string &name)
+    {
+        XQFunction xqf;
+
+        if (mod->getFunctionInfo(name, xqf))
+        {
+            xqf.decl->accept(*this);
+            // now, function info is cached in ordered or unordered list
+            if (isModeOrdered)
+                return funcOrdCache[name];
+            else
+                return funcUnordCache[name];
+        }
+
+        // else, the function is defined in some of the modules
+        xqf = drv->getLReturnFunctionInfo(name);
+
+        // since we've obtained this info from driver we should locally cache it
+        if (isModeOrdered)
+            funcOrdCache[name] = xqf;
+        else
+            funcUnordCache[name] = xqf;
+
+        return xqf;
+    }
+
+    bool LReturn::isVarSequence(ASTTypeVar *var)
+    {
+        ASTTypeSeq *seq = dynamic_cast<ASTTypeSeq *>(var->type);
+
+        if (seq && (seq->mod == ASTTypeSeq::ZERO_OR_MORE || seq->mod == ASTTypeSeq::ONE_OR_MORE))
+            return true;
+
+        return false;
+    }
+
+    bool LReturn::isParamDistinctOnly(const ASTFuncDecl *fd, unsigned int nparam)
+    {
+        ASTTypeVar *tv = dynamic_cast<ASTTypeVar *>(fd->params->at(nparam));
+
+        U_ASSERT(tv);
+
+        return !isVarSequence(tv);
+    }
+
+    XQFunction LReturn::getLReturnCached(const std::string &name, bool ordered) const
+    {
+        funcInfo::const_iterator it;
+
+        U_ASSERT(funcOrdCache.find(name) != funcOrdCache.end() || funcUnordCache.find(name) != funcUnordCache.end());
+
+        if (ordered)
+            it = funcOrdCache.find(name);
+        else
+            it = funcUnordCache.find(name);
+
+        return it->second;
+        }
+
 }

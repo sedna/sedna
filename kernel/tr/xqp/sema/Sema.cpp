@@ -1383,6 +1383,11 @@ namespace sedna
         {
             dupLocations[PrologOrder] = n.getLocationAddr();
         }
+
+        if (n.mod == ASTOrder::ORDERED)
+            mod->setOrderedMode(true);
+        else
+            mod->setOrderedMode(false);
     }
 
     void Sema::visit(ASTOrderBy &n)
