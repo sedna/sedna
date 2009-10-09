@@ -56,6 +56,8 @@ namespace sedna
             int getLibraryModule(const char *uri);
             void emitErrors();
 
+            ASTNode *getASTFromQuery(const char *query);
+
         public:
 
             XQueryDriver() : lexer(NULL), errors(NULL)

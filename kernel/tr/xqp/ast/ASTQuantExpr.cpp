@@ -10,8 +10,9 @@
 
 ASTQuantExpr::~ASTQuantExpr()
 {
+    delete var;
     delete expr;
-    delete fd;
+    delete sat;
 }
 
 void ASTQuantExpr::accept(ASTVisitor &v)
@@ -23,35 +24,41 @@ void ASTQuantExpr::accept(ASTVisitor &v)
 
 ASTNode *ASTQuantExpr::dup()
 {
-    return new ASTQuantExpr(loc, expr->dup(), fd->dup(), type);
+    return new ASTQuantExpr(loc, var->dup(), expr->dup(), sat->dup(), type);
 }
 
 ASTNode *ASTQuantExpr::createNode(scheme_list &sl)
 {
     ASTLocation loc;
-    ASTNode *expr = NULL, *fd = NULL;
+    ASTNode *var = NULL, *expr = NULL, *sat = NULL;
     QuantMod mod;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_NUMBER);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_NUMBER);
 
     loc = dsGetASTLocationFromSList(*sl[1].internal.list);
-    expr = dsGetASTFromSchemeList(*sl[2].internal.list);
-    fd = dsGetASTFromSchemeList(*sl[3].internal.list);
-    mod = QuantMod(atol(sl[4].internal.num));
+    var = dsGetASTFromSchemeList(*sl[2].internal.list);
+    expr = dsGetASTFromSchemeList(*sl[3].internal.list);
+    sat = dsGetASTFromSchemeList(*sl[4].internal.list);
+    mod = QuantMod(atol(sl[5].internal.num));
 
-    return new ASTQuantExpr(loc, expr, fd, mod);
+    return new ASTQuantExpr(loc, var, expr, sat, mod);
 }
 
 void ASTQuantExpr::modifyChild(const ASTNode *oldc, ASTNode *newc)
 {
+    if (var == oldc)
+    {
+        var = newc;
+        return;
+    }
     if (expr == oldc)
     {
         expr = newc;
         return;
     }
-    if (fd == oldc)
+    if (sat == oldc)
     {
-        fd = newc;
+        sat = newc;
         return;
     }
 }

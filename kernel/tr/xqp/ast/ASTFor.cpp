@@ -23,11 +23,11 @@ void ASTFor::accept(ASTVisitor &v)
     v.removeFromPath(this);
 }
 
-void ASTFor::setFunDef(ASTNode *funDef)
+void ASTFor::setNextExpr(ASTNode *fd_)
 {
     delete fd;
 
-    fd = funDef;
+    fd = fd_;
 }
 
 ASTNodesVector *ASTFor::getVarList()
@@ -51,7 +51,7 @@ ASTNode *ASTFor::dup()
     res = new ASTFor(loc, tv->dup(), (pv) ? pv->dup() : NULL, expr->dup());
 
     if (fd)
-        res->setFunDef(fd->dup());
+        res->setNextExpr(fd->dup());
 
     return res;
 }
@@ -72,7 +72,7 @@ ASTNode *ASTFor::createNode(scheme_list &sl)
 
     res = new ASTFor(loc, tv, pv, expr);
 
-    res->setFunDef(fd);
+    res->setNextExpr(fd);
 
     return res;
 }

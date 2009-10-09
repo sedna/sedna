@@ -19,12 +19,13 @@ public:
         FOLLOWING
     };
 
+    ASTNode *var; // ASTTypeVar
     ASTNode *what;
-    ASTNode *where; // ASTFunDef
+    ASTNode *where;
     UpdType type;
 
 public:
-    ASTUpdMove(ASTLocation &loc, ASTNode *what_, ASTNode *where_, UpdType type_) : ASTNode(loc), what(what_), where(where_), type(type_) {}
+    ASTUpdMove(ASTLocation &loc, ASTNode *var_, ASTNode *what_, ASTNode *where_, UpdType type_) : ASTNode(loc), var(var_), what(what_), where(where_), type(type_) {}
 
     ~ASTUpdMove();
 

@@ -1224,6 +1224,7 @@ XQueryParser::token_type XQueryLexer::nextToken(XQueryParser::semantic_type* yyl
     if (res == token::XQUERY)
     {
         have_la = true;
+        la_lloc = *yylloc;
         la_tok = yylex(&la_lval, &la_lloc);
 
         if (la_tok != token::VERSION)
@@ -1236,6 +1237,7 @@ XQueryParser::token_type XQueryLexer::nextToken(XQueryParser::semantic_type* yyl
     else if (res == token::MODULE)
     {
         have_la = true;
+        la_lloc = *yylloc;
         la_tok = yylex(&la_lval, &la_lloc);
 
         if (la_tok != token::NAMESPACE && prev_tok != token::IMPORT && prev_tok != token::LOAD && prev_tok != token::REPLACE && prev_tok != token::DROP)

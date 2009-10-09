@@ -1,163 +1,235 @@
 /*
- * File:  Sema.cpp
+ * File:  lreturn.cpp
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "tr/xqp/lr/LRVisitor.h"
-#include "tr/xqp/sema/Sema.h"
+#include "tr/xqp/sema/LReturn.h"
 #include "common/errdbg/exceptions.h"
-#include "tr/executor/base/xs_names.h"
 
-#define DIAG_DUP_PROLOG(bl1, bc1, bl2, bc2) (std::string("first declaration at (") + int2string(bl1) + ":" + int2string(bc1) + ")")
-#define DIAG_QNAME(pref, loc) (std::string("cannot resolve QName: ") + pref + ":" + loc)
-
-#define CREATE_INTNAME(u, l) ((u == "") ? (l) : (std::string("{") + (u) + std::string("}") + (l)))
+#define IGNORE_OFFERS(count) (offers.erase(offers.begin() + (offers.size() - count), offers.end()))
 
 namespace sedna
 {
-    static const char *axis_str[] = {
-        "child ",
-        "descendant ",
-        "attr-axis ",
-        "self ",
-        "descendant-or-self ",
-        "following-sibling ",
-        "following ",
-        "parent ",
-        "ancestor ",
-        "preceding-sibling ",
-        "preceding ",
-        "ancestor-or-self ",
-    };
+    void LReturn::visit(ASTAlterUser &n)
+    {
+        offers.push_back(defDDOOffer);
+    }
 
-    static const char *priveleges[] = {
-        "CREATE-USER",
-        "CREATE-DOCUMENT",
-        "CREATE-COLLECTION",
-        "CREATE-INDEX",
-        "CREATE-TRIGGER",
-        "LOAD",
-        "DROP",
-        "QUERY",
-        "INSERT",
-        "DELETE",
-        "RENAME",
-        "REPLACE",
-        "RETRIEVE-METADATA",
-        "ALL",
-        NULL
-    };
+    void LReturn::visit(ASTAttr &n)
+    {
+        unsigned int count = (n.cont) ? n.cont->size() : 0;
 
-    void Sema::visit(ASTAlterUser &n)
+        VisisASTNodesVector(n.cont);
+
+        if (count)
+            IGNORE_OFFERS(count);
+
+        offers.push_back(defDDOOffer);
+    }
+
+    void LReturn::visit(ASTAttrConst &n)
+    {
+        if (n.expr)
+            n.expr->accept(*this);
+
+        offers.pop_back();
+
+        offers.push_back(defDDOOffer);
+    }
+
+    void LReturn::visit(ASTAttribTest &n)
+    {
+        offers.push_back(defDDOOffer);
+    }
+
+    void LReturn::visit(ASTAxisStep &n)
+    {
+        parentRequest origReq = parentReq;
+        childOffer off_cont = {true, true, true, true}; // by default we work with some context we don't know about (maybe need to refine this later)
+        childOffer off_this;
+
+        // check predicates
+        if (n.preds)
+        {
+            parentRequest req;
+
+            req.calledOnce = origReq.calledOnce;
+            req.distinctOnly = false;
+
+            VisistASTNodesVector(n.preds, *this, req);
+            IGNORE_OFFERS(n.preds->size());
+        }
+
+        // try to merge some axes together
+        if (n.axis == ASTAxisStep::CHILD || n.axis == ASTAxisStep::SELF || n.axis == ASTAxisStep::ATTRIBUTE)
+        {
+            ASTAxisStep *ns = dynamic_cast<ASTAxisStep *>(n.cont);
+
+            if (ns && ns->axis == ASTAxisStep::DESCENDANT_OR_SELF && !ns->preds && dynamic_cast<ASTNodeTest *>(ns->test)) // d-o-s::node()
+            {
+                switch (n.axis)
+                {
+                    case ASTAxisStep::CHILD:
+                        n.axis = ASTAxisStep::DESCENDANT;
+                        break;
+                    case ASTAxisStep::SELF:
+                        n.axis = ASTAxisStep::DESCENDANT_OR_SELF;
+                        break;
+                    case ASTAxisStep::ATTRIBUTE:
+                        n.axis = ASTAxisStep::DESCENDANT_ATTRIBUTE;
+                        break;
+                    default:
+                        break;
+                }
+
+                // get rid of the next step
+                n.cont = ns.cont;
+                ns.cont = NULL;
+                delete ns;
+            }
+        }
+
+        if (n.cont)
+        {
+            parentReq.toDDO = false;
+            parentReq.toDistinct = false;
+            parentReq.calledOnce = origReq.calledOnce;
+            n.cont->accept(*this);
+            off_cont = getOffer();
+
+            // it seems that we need only to distinct, not order, intermediate results since we can order them at the last step
+            // exception: self axis is a filter itself, so we don't want to put distinct below it
+            if (!off_cont.isDistincted && n.axis != ASTAxisStep::SELF)
+            {
+                n.cont = new ASTDDO(n.loc, n.cont, true);
+                off_cont.isDistincted = true;
+                off_cont.isOrdered = false;
+            }
+        }
+
+        // now we need to write our initial offer to parent
+        // important assumption here: context is already distincted (if not, we insert 'distinct' earlier)
+        switch (n.axis)
+        {
+            case ASTAxisStep::CHILD:
+                off_this.isOrdered = off_cont.isOrdered;
+                off_this.isDistincted = off_cont.isDistincted;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = off_cont.isSingleLevel;
+                break;
+            case ASTAxisStep::DESCENDANT:
+                off_this.isOrdered = off_cont.isOrdered && off_cont.isSingleLevel;
+                off_this.isDistincted = off_cont.isDistincted && off_cont.isSingleLevel;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = false;
+                break;
+            case ASTAxisStep::ATTRIBUTE:
+                off_this.isOrdered = off_cont.isOrdered;
+                off_this.isDistincted = off_cont.isDistincted;
+                off_this.isMax1 = false; // can refine it later (check if this is the named-attribute retrieval. then it would be true)
+                off_this.isSingleLevel = off_cont.isSingleLevel;
+                break;
+            case ASTAxisStep::SELF:
+                off_this.isOrdered = off_cont.isOrdered;
+                off_this.isDistincted = off_cont.isDistincted;
+                off_this.isMax1 = off_cont.isMax1;
+                off_this.isSingleLevel = off_cont.isSingleLevel;
+                break;
+            case ASTAxisStep::DESCENDANT_OR_SELF:
+                off_this.isOrdered = off_cont.isOrdered && off_cont.isSingleLevel;
+                off_this.isDistincted = off_cont.isDistincted && off_cont.isSingleLevel;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = false;
+                break;
+            case ASTAxisStep::FOLLOWING_SIBLING:
+                off_this.isOrdered = off_cont.isMax1;
+                off_this.isDistincted = off_cont.isMax1;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = off_cont.isSingleLevel;
+                break;
+            case ASTAxisStep::FOLLOWING:
+                off_this.isOrdered = off_cont.isMax1;
+                off_this.isDistincted = off_cont.isMax1;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = false;
+                break;
+            case ASTAxisStep::PARENT:
+                off_this.isOrdered = off_cont.isOrdered;
+                off_this.isDistincted = off_cont.isMax1;
+                off_this.isMax1 = off_cont.isMax1;
+                off_this.isSingleLevel = off_cont.isSingleLevel;
+                break;
+            case ASTAxisStep::ANCESTOR: 
+                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.isDistincted = off_cont.isMax1;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = false;
+                break;
+            case ASTAxisStep::PRECEDING_SIBLING:
+                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.isDistincted = off_cont.isMax1;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = off_cont.isSingleLevel;
+                break;
+            case ASTAxisStep::PRECEDING:
+                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.isDistincted = off_cont.isMax1;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = false;
+                break;
+            case ASTAxisStep::ANCESTOR_OR_SELF:
+                off_this.isOrdered = false; // assume here that it returns non-ordered even for a singleton (it'll be reverse-order probably)
+                off_this.isDistincted = off_cont.isMax1;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = false;
+                break;
+            case ASTAxisStep::DESCENDANT_ATTRIBUTE:
+                off_this.isOrdered = off_cont.isOrdered && off_cont.isSingleLevel;
+                off_this.isDistincted = off_cont.isDistincted && off_cont.isSingleLevel;
+                off_this.isMax1 = false;
+                off_this.isSingleLevel = false;
+                break;
+        }
+
+        // if this is the last step the we need to order it
+        if (n.isLast)
+        {
+            ASTNode *ddo;
+
+            if (isModeOrdered && !origReq.distinctOnly && (!off_this.isOrdered || !off_this.isDistincted))
+            {
+                ddo = new ASTDDO(n.loc, &n);
+                modifyParent(ddo, false, false);
+
+                off_this.isOrdered = true;
+                off_this.isDistincted = true;
+            }
+            else if ((!isModeOrdered || origReq.distinctOnly) && !off_this.isDistincted)
+            {
+                ddo = new ASTDDO(n.loc, &n, true);
+                modifyParent(ddo, false, false);
+
+                off_this.isOrdered = false;
+                off_this.isDistincted = true;
+            }
+        }
+
+        setOffer(off_this);
+    }
+
+    void LReturn::visit(ASTBaseURI &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTAttr &n)
-    {
-        const char *uri;
-
-        if (!n.uri)
-        {
-            // first, try to resolve prefix
-            uri = resolveQName(n.loc, n.pref->c_str(), "");
-
-            if (uri)
-                n.uri = new std::string(uri);
-        }
-
-        if (n.cont)
-            VisitNodesVector(n.cont, *this);
-    }
-
-    void Sema::visit(ASTAttrConst &n)
-    {
-        if (n.pref)
-        {
-            resolveQName(n.loc, n.pref->c_str(), "");
-        }
-        else
-        {
-            n.name->accept(*this);
-        }
-
-        if (n.expr)
-            n.expr->accept(*this);
-    }
-
-    void Sema::visit(ASTAttribTest &n)
-    {
-        att_test = true;
-        if (n.name) n.name->accept(*this);
-        att_test = false;
-
-        if (n.type) n.type->accept(*this);
-    }
-
-    void Sema::visit(ASTAxisStep &n)
-    {
-        if (n.cont)
-        {
-            n.cont->accept(*this);
-        }
-        else
-        {
-            bool found_cont = false;
-
-            // try to find context
-            for (int i = bound_vars.size() - 1; i >= 0; i--)
-            {
-                if (bound_vars[i].first == "$%v")
-                {
-                    found_cont = true;
-                    break;
-                }
-            }
-
-            if (!found_cont)
-            {
-                if (!mod->xpdy0002)
-                    mod->xpdy0002 = &n.loc;
-            }
-        }
-
-        n.test->accept(*this);
-
-        if (n.preds)
-        {
-            bound_vars.push_back(XQVariable("$%v", NULL));
-
-            for (unsigned int i = 0; i < n.preds->size(); i++)
-                (*n.preds)[i]->accept(*this);
-
-            bound_vars.pop_back();
-        }
-    }
-
-    void Sema::visit(ASTBaseURI &n)
-    {
-        std::string loc;
-
-        if (dupLocations[PrologBaseURI])
-        {
-            loc = DIAG_DUP_PROLOG(dupLocations[PrologBaseURI]->begin.line, dupLocations[PrologBaseURI]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
-
-            drv->error(n.loc, XQST0032, loc.c_str());
-        }
-        else
-        {
-            dupLocations[PrologBaseURI] = &n.loc;
-        }
-    }
-
-    void Sema::visit(ASTBop &n)
+    void LReturn::visit(ASTBop &n)
     {
         n.lop->accept(*this);
         n.rop->accept(*this);
+
     }
 
-    void Sema::visit(ASTBoundSpaceDecl &n)
+    void LReturn::visit(ASTBoundSpaceDecl &n)
     {
         std::string loc;
 
@@ -174,7 +246,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTCase &n)
+    void LReturn::visit(ASTCase &n)
     {
         bool param_ok;
 
@@ -198,7 +270,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTCast &n)
+    void LReturn::visit(ASTCast &n)
     {
         ASTLit *lit;
         ASTType *type;
@@ -252,7 +324,7 @@ namespace sedna
         delete t_loc;
     }
 
-    void Sema::visit(ASTCastable &n)
+    void LReturn::visit(ASTCastable &n)
     {
         ASTLit *lit;
         ASTType *type;
@@ -314,22 +386,22 @@ namespace sedna
         delete t_loc;
     }
 
-    void Sema::visit(ASTCharCont &n)
+    void LReturn::visit(ASTCharCont &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTCommTest &n)
+    void LReturn::visit(ASTCommTest &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTCommentConst &n)
+    void LReturn::visit(ASTCommentConst &n)
     {
         n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTConstDecl &n)
+    void LReturn::visit(ASTConstDecl &n)
     {
         std::string loc;
 
@@ -346,12 +418,12 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTCreateColl &n)
+    void LReturn::visit(ASTCreateColl &n)
     {
         n.coll->accept(*this);
     }
 
-    void Sema::visit(ASTCreateDoc &n)
+    void LReturn::visit(ASTCreateDoc &n)
     {
         n.doc->accept(*this);
 
@@ -359,7 +431,7 @@ namespace sedna
             n.coll->accept(*this);
     }
 
-    void Sema::visit(ASTCreateFtIndex &n)
+    void LReturn::visit(ASTCreateFtIndex &n)
     {
         n.name->accept(*this);
         n.path->accept(*this);
@@ -392,7 +464,7 @@ namespace sedna
         drv->error(n.loc, SE5080, *n.type);
     }
 
-    void Sema::visit(ASTCreateIndex &n)
+    void LReturn::visit(ASTCreateIndex &n)
     {
         ASTNode *doccoll;
 
@@ -412,12 +484,12 @@ namespace sedna
         n.by_path = modifyRelIndexXPath(n.by_path, doccoll);
     }
 
-    void Sema::visit(ASTCreateRole &n)
+    void LReturn::visit(ASTCreateRole &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTCreateTrg &n)
+    void LReturn::visit(ASTCreateTrg &n)
     {
         n.path->accept(*this);
 
@@ -450,17 +522,17 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTCreateUser &n)
+    void LReturn::visit(ASTCreateUser &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTDDO &n)
+    void LReturn::visit(ASTDDO &n)
     {
         n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTDeclareCopyNsp &n)
+    void LReturn::visit(ASTDeclareCopyNsp &n)
     {
         std::string loc;
 
@@ -477,7 +549,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTDefCollation &n)
+    void LReturn::visit(ASTDefCollation &n)
     {
         std::string loc;
 
@@ -494,7 +566,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTDefNamespaceDecl &n)
+    void LReturn::visit(ASTDefNamespaceDecl &n)
     {
         std::string err;
 
@@ -526,22 +598,22 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTDocConst &n)
+    void LReturn::visit(ASTDocConst &n)
     {
         n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTDocTest &n)
+    void LReturn::visit(ASTDocTest &n)
     {
         if (n.elem_test) n.elem_test->accept(*this);
     }
 
-    void Sema::visit(ASTDropColl &n)
+    void LReturn::visit(ASTDropColl &n)
     {
         n.coll->accept(*this);
     }
 
-    void Sema::visit(ASTDropDoc &n)
+    void LReturn::visit(ASTDropDoc &n)
     {
         n.doc->accept(*this);
 
@@ -549,37 +621,37 @@ namespace sedna
             n.coll->accept(*this);
     }
 
-    void Sema::visit(ASTDropFtIndex &n)
+    void LReturn::visit(ASTDropFtIndex &n)
     {
         n.index->accept(*this);
     }
 
-    void Sema::visit(ASTDropIndex &n)
+    void LReturn::visit(ASTDropIndex &n)
     {
         n.index->accept(*this);
     }
 
-    void Sema::visit(ASTDropMod &n)
+    void LReturn::visit(ASTDropMod &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTDropRole &n)
+    void LReturn::visit(ASTDropRole &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTDropTrg &n)
+    void LReturn::visit(ASTDropTrg &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTDropUser &n)
+    void LReturn::visit(ASTDropUser &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTElem &n)
+    void LReturn::visit(ASTElem &n)
     {
         std::set<std::string> attrs_names; // for duplicate resolving
         ASTNodesVector attrs;
@@ -654,7 +726,7 @@ namespace sedna
         elemNsps.pop_back();
     }
 
-    void Sema::visit(ASTElemConst &n)
+    void LReturn::visit(ASTElemConst &n)
     {
         if (n.pref)
         {
@@ -669,23 +741,23 @@ namespace sedna
             n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTElementTest &n)
+    void LReturn::visit(ASTElementTest &n)
     {
         if (n.name) n.name->accept(*this);
         if (n.type) n.type->accept(*this);
     }
 
-    void Sema::visit(ASTEmptyTest &n)
+    void LReturn::visit(ASTEmptyTest &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTError &n)
+    void LReturn::visit(ASTError &n)
     {
         throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
     }
 
-    void Sema::visit(ASTExtExpr &n)
+    void LReturn::visit(ASTExtExpr &n)
     {
         VisitNodesVector(n.pragmas, *this);
 
@@ -695,7 +767,7 @@ namespace sedna
             drv->error(n.loc, XQST0079, NULL); // since we don't support any pragmas yet
     }
 
-    void Sema::visit(ASTFilterStep &n)
+    void LReturn::visit(ASTFilterStep &n)
     {
         bool found = false;
 
@@ -742,7 +814,7 @@ namespace sedna
             bound_vars.pop_back();
     }
 
-    void Sema::visit(ASTFor &n)
+    void LReturn::visit(ASTFor &n)
     {
         unsigned int params;
 
@@ -778,7 +850,7 @@ namespace sedna
         bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
-    void Sema::visit(ASTFunCall &n)
+    void LReturn::visit(ASTFunCall &n)
     {
         const char *uri;
 
@@ -864,7 +936,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTFuncDecl &n)
+    void LReturn::visit(ASTFuncDecl &n)
     {
         const char *uri;
         XQFunction func;
@@ -981,7 +1053,7 @@ namespace sedna
             bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params_count), bound_vars.end());
     }
 
-    void Sema::visit(ASTGrantPriv &n)
+    void LReturn::visit(ASTGrantPriv &n)
     {
         unsigned int i = 0;
         bool found = false;
@@ -997,30 +1069,30 @@ namespace sedna
             drv->error(n.loc, SE3069, n.priv->c_str());
     }
 
-    void Sema::visit(ASTGrantRole &n)
+    void LReturn::visit(ASTGrantRole &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTIf &n)
+    void LReturn::visit(ASTIf &n)
     {
         n.i_expr->accept(*this);
         n.t_expr->accept(*this);
         n.e_expr->accept(*this);
     }
 
-    void Sema::visit(ASTInstOf &n)
+    void LReturn::visit(ASTInstOf &n)
     {
         n.expr->accept(*this);
         n.type->accept(*this);
     }
 
-    void Sema::visit(ASTItemTest &n)
+    void LReturn::visit(ASTItemTest &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTLet &n)
+    void LReturn::visit(ASTLet &n)
     {
         bool param_ok;
 
@@ -1038,7 +1110,7 @@ namespace sedna
             bound_vars.pop_back();
     }
 
-    void Sema::visit(ASTLibModule &n)
+    void LReturn::visit(ASTLibModule &n)
     {
         is_imported = n.is_internal;
 
@@ -1046,22 +1118,22 @@ namespace sedna
         n.prolog->accept(*this);
     }
 
-    void Sema::visit(ASTLit &n)
+    void LReturn::visit(ASTLit &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTLoadFile &n)
+    void LReturn::visit(ASTLoadFile &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTLoadModule &n)
+    void LReturn::visit(ASTLoadModule &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTMainModule &n)
+    void LReturn::visit(ASTMainModule &n)
     {
         if (drv == NULL)
             throw SYSTEM_EXCEPTION("Driver is not set for semantic analyzer!");
@@ -1070,23 +1142,23 @@ namespace sedna
         n.query->accept(*this);
     }
 
-    void Sema::visit(ASTMetaCols &n)
+    void LReturn::visit(ASTMetaCols &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTMetaDocs &n)
+    void LReturn::visit(ASTMetaDocs &n)
     {
         if (n.coll)
             n.coll->accept(*this);
     }
 
-    void Sema::visit(ASTMetaSchemaCol &n)
+    void LReturn::visit(ASTMetaSchemaCol &n)
     {
         n.coll->accept(*this);
     }
 
-    void Sema::visit(ASTMetaSchemaDoc &n)
+    void LReturn::visit(ASTMetaSchemaDoc &n)
     {
         n.doc->accept(*this);
 
@@ -1094,7 +1166,7 @@ namespace sedna
             n.coll->accept(*this);
     }
 
-    void Sema::visit(ASTModImport &n)
+    void LReturn::visit(ASTModImport &n)
     {
         std::string err;
 
@@ -1166,7 +1238,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTModuleDecl &n)
+    void LReturn::visit(ASTModuleDecl &n)
     {
         if (n.uri->size() == 0)
         {
@@ -1185,7 +1257,7 @@ namespace sedna
         mod->nsBinds[*n.name] = nsPair(*n.uri, &n.loc);
     }
 
-    void Sema::visit(ASTNameTest &n)
+    void LReturn::visit(ASTNameTest &n)
     {
         const char *uri;
 
@@ -1208,7 +1280,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTNamespaceDecl &n)
+    void LReturn::visit(ASTNamespaceDecl &n)
     {
         nsBindType::const_iterator it;
         std::string err;
@@ -1243,12 +1315,12 @@ namespace sedna
             mod->nsBinds[*n.name] = nsPair(*n.uri, &n.loc);
     }
 
-    void Sema::visit(ASTNodeTest &n)
+    void LReturn::visit(ASTNodeTest &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTNsp &n)
+    void LReturn::visit(ASTNsp &n)
     {
         if (*n.name == "xmlns")
         {
@@ -1306,7 +1378,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTOption &n)
+    void LReturn::visit(ASTOption &n)
     {
         const char *uri;
         std::string key, val, err;
@@ -1363,12 +1435,12 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTOrdExpr &n)
+    void LReturn::visit(ASTOrdExpr &n)
     {
         n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTOrder &n)
+    void LReturn::visit(ASTOrder &n)
     {
         std::string loc;
 
@@ -1385,12 +1457,12 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTOrderBy &n)
+    void LReturn::visit(ASTOrderBy &n)
     {
         VisitNodesVector(n.specs, *this);
     }
 
-    void Sema::visit(ASTOrderByRet &n)
+    void LReturn::visit(ASTOrderByRet &n)
     {
         unsigned int params = 0;
         n.iter_expr->accept(*this);
@@ -1427,7 +1499,7 @@ namespace sedna
         bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
-    void Sema::visit(ASTOrderEmpty &n)
+    void LReturn::visit(ASTOrderEmpty &n)
     {
         std::string loc;
 
@@ -1444,7 +1516,7 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTOrderMod &n)
+    void LReturn::visit(ASTOrderMod &n)
     {
         if (n.ad_mod)
             n.ad_mod->accept(*this);
@@ -1456,12 +1528,12 @@ namespace sedna
             n.col_mod->accept(*this);
     }
 
-    void Sema::visit(ASTOrderModInt &n)
+    void LReturn::visit(ASTOrderModInt &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTOrderSpec &n)
+    void LReturn::visit(ASTOrderSpec &n)
     {
         n.expr->accept(*this);
 
@@ -1469,7 +1541,7 @@ namespace sedna
             n.mod->accept(*this);
     }
 
-    void Sema::visit(ASTPIConst &n)
+    void LReturn::visit(ASTPIConst &n)
     {
         if (n.ncname && n.ncname->size() == 3 && toupper((*n.ncname)[0]) == 'X' && toupper((*n.ncname)[1]) == 'M' && toupper((*n.ncname)[2]) == 'L')
         {
@@ -1484,7 +1556,7 @@ namespace sedna
             n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTPi &n)
+    void LReturn::visit(ASTPi &n)
     {
         if (n.name->size() == 3 && toupper((*n.name)[0]) == 'X' && toupper((*n.name)[1]) == 'M' && toupper((*n.name)[2]) == 'L')
         {
@@ -1492,17 +1564,17 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTPiTest &n)
+    void LReturn::visit(ASTPiTest &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTPosVar &n)
+    void LReturn::visit(ASTPosVar &n)
     {
         n.var->accept(*this);
     }
 
-    void Sema::visit(ASTPragma &n)
+    void LReturn::visit(ASTPragma &n)
     {
         if (*n.pref == "")
         {
@@ -1513,7 +1585,7 @@ namespace sedna
         resolveQName(n.loc, n.pref->c_str(), "");
     }
 
-    void Sema::visit(ASTProlog &n)
+    void LReturn::visit(ASTProlog &n)
     {
         unsigned int i = 0;
         ASTOption *opt;
@@ -1535,12 +1607,12 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTQName &n)
+    void LReturn::visit(ASTQName &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTQuantExpr &n)
+    void LReturn::visit(ASTQuantExpr &n)
     {
         bool param_ok;
 
@@ -1558,18 +1630,18 @@ namespace sedna
             bound_vars.pop_back();
     }
 
-    void Sema::visit(ASTQuery &n)
+    void LReturn::visit(ASTQuery &n)
     {
         n.query->accept(*this);
     }
 
-    void Sema::visit(ASTRenameColl &n)
+    void LReturn::visit(ASTRenameColl &n)
     {
         n.name_old->accept(*this);
         n.name_new->accept(*this);
     }
 
-    void Sema::visit(ASTRevokePriv &n)
+    void LReturn::visit(ASTRevokePriv &n)
     {
         unsigned int i = 0;
         bool found = false;
@@ -1585,12 +1657,12 @@ namespace sedna
             drv->error(n.loc, SE3069, n.priv->c_str());
     }
 
-    void Sema::visit(ASTRevokeRole &n)
+    void LReturn::visit(ASTRevokeRole &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTSchemaAttrTest &n)
+    void LReturn::visit(ASTSchemaAttrTest &n)
     {
         att_test = true;
         n.name->accept(*this);
@@ -1599,41 +1671,41 @@ namespace sedna
         drv->error(n.loc, XPST0008, "there is no schema to test");
     }
 
-    void Sema::visit(ASTSchemaElemTest &n)
+    void LReturn::visit(ASTSchemaElemTest &n)
     {
         n.name->accept(*this);
 
         drv->error(n.loc, XPST0008, "there is no schema to test");
     }
 
-    void Sema::visit(ASTSeq &n)
+    void LReturn::visit(ASTSeq &n)
     {
         for (unsigned int i = 0; i < n.exprs->size(); i++)
             (*n.exprs)[i]->accept(*this);
     }
 
-    void Sema::visit(ASTSpaceSeq &n)
+    void LReturn::visit(ASTSpaceSeq &n)
     {
         n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTTextConst &n)
+    void LReturn::visit(ASTTextConst &n)
     {
         n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTTextTest &n)
+    void LReturn::visit(ASTTextTest &n)
     {
         // nothing to do
     }
 
-    void Sema::visit(ASTTreat &n)
+    void LReturn::visit(ASTTreat &n)
     {
         n.expr->accept(*this);
         n.type->accept(*this);
     }
 
-    void Sema::visit(ASTType &n)
+    void LReturn::visit(ASTType &n)
     {
         const char *uri;
         std::string *pref, *loc, err;
@@ -1700,31 +1772,31 @@ namespace sedna
         delete loc;
     }
 
-    void Sema::visit(ASTTypeSeq &n)
+    void LReturn::visit(ASTTypeSeq &n)
     {
         // we just propagate analysis to the actual test
         n.type_test->accept(*this);
     }
 
-    void Sema::visit(ASTTypeSingle &n)
+    void LReturn::visit(ASTTypeSingle &n)
     {
         n.type->accept(*this);
     }
 
-    void Sema::visit(ASTTypeSwitch &n)
+    void LReturn::visit(ASTTypeSwitch &n)
     {
         n.expr->accept(*this);
         VisitNodesVector(n.cases, *this);
         n.def_case->accept(*this);
     }
 
-    void Sema::visit(ASTTypeVar &n)
+    void LReturn::visit(ASTTypeVar &n)
     {
         n.type->accept(*this);
         n.var->accept(*this);
     }
 
-    void Sema::visit(ASTUnio &n)
+    void LReturn::visit(ASTUnio &n)
     {
         // we will run vars ib param mode to make duplicate removal a bit easier
         // duplicates could exist because of for-variables rebindings
@@ -1759,23 +1831,23 @@ namespace sedna
         bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
-    void Sema::visit(ASTUop &n)
+    void LReturn::visit(ASTUop &n)
     {
         n.expr->accept(*this);
     }
 
-    void Sema::visit(ASTUpdDel &n)
+    void LReturn::visit(ASTUpdDel &n)
     {
         n.what->accept(*this);
     }
 
-    void Sema::visit(ASTUpdInsert &n)
+    void LReturn::visit(ASTUpdInsert &n)
     {
         n.what->accept(*this);
         n.where->accept(*this);
     }
 
-    void Sema::visit(ASTUpdMove &n)
+    void LReturn::visit(ASTUpdMove &n)
     {
         bool param_ok;
 
@@ -1791,12 +1863,12 @@ namespace sedna
             bound_vars.pop_back();
     }
 
-    void Sema::visit(ASTUpdRename &n)
+    void LReturn::visit(ASTUpdRename &n)
     {
         n.what->accept(*this);
     }
 
-    void Sema::visit(ASTUpdReplace &n)
+    void LReturn::visit(ASTUpdReplace &n)
     {
         bool param_ok;
 
@@ -1812,7 +1884,7 @@ namespace sedna
             bound_vars.pop_back();
     }
 
-    void Sema::visit(ASTVar &n)
+    void LReturn::visit(ASTVar &n)
     {
         const char *uri;
         std::string name;
@@ -1883,7 +1955,7 @@ namespace sedna
         drv->error(n.loc, XPST0008, name);
     }
 
-    void Sema::visit(ASTVarDecl &n)
+    void LReturn::visit(ASTVarDecl &n)
     {
         ASTVar *var;
         const char *uri;
@@ -1950,7 +2022,7 @@ namespace sedna
             drv->libVars[name] = &n;
     }
 
-    void Sema::visit(ASTVersionDecl &n)
+    void LReturn::visit(ASTVersionDecl &n)
     {
         if (*n.xq_version != "1.0")
         {
@@ -1963,623 +2035,49 @@ namespace sedna
         }
     }
 
-    void Sema::visit(ASTXMLComm &n)
+    void LReturn::visit(ASTXMLComm &n)
     {
         // nothing to do
     }
 
     // Some additional function
 
-    // Checks query encoding specified via xquery...; declaration
-    // As XML1.0 specifies: EncName     ::=      [A-Za-z] ([A-Za-z0-9._] | '-')* /* Encoding name contains only Latin characters */
-    bool Sema::checkXQueryEncoding(const char *enc)
-    {
-#define IS_ALPHA(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
-        if (!IS_ALPHA(enc[0]))
-            return false;
-
-        for (unsigned int i = 1; i < strlen(enc); i++)
-        {
-            if (!IS_ALPHA(enc[i]) && !isdigit(enc[i]) && enc[i] != '-' && enc[i] != '.' && enc[i] != '_')
-                return false;
-        }
-
-        return true;
-#undef IS_ALPHA
-    }
-
-    // resolves qname prefix
-    // Parameters:
-    //      pref -- prefix to check
-    //      def_uri -- if prefix "" then use it; if it is NULL default element namespace is searched
-    // Returns:
-    //      uri if found, NULL if not (or prefix is "")
-    const char *Sema::resolveQName(ASTLocation &loc, const char *pref, const char *def_uri, int err_code)
-    {
-        nsBindType::const_iterator it;
-
-        if (pref == NULL)
-            return NULL;
-
-        if (!strlen(pref))
-        {
-            if (def_uri)
-            {
-                return def_uri;
-            }
-            else if (elemNsps.size() > 0)
-            {
-                return elemNsps.back().second.first.c_str();
-            }
-            else
-            {
-                return mod->defElemNsp.first.c_str();
-            }
-        }
-
-        // if we've got prefix we should resolve it using first in-scope namespaces
-        for (int i = elemNsps.size() - 1; i >= 0; i--)
-            if (elemNsps[i].first.find(pref) != elemNsps[i].first.end())
-                return elemNsps[i].first[pref].first.c_str();
-
-        // and then default ones
-        it = mod->nsBinds.find(pref); // find namespace
-
-        if (it == mod->nsBinds.end() || it->second.first == "")
-        {
-            if (err_code >= 0)
-            {
-                std::string err;
-
-                err = std::string("prefix '") + pref + "' has not been defined";
-
-                drv->error(loc, err_code, err.c_str());
-            }
-
-            return NULL;
-        }
-        else
-            return it->second.first.c_str();
-    }
-
-    static bool parseKeyValue(const std::string &opt, const char delim, std::string &key, std::string &val)
-    {
-        unsigned int pos, beg, end;
-
-        pos = opt.find(delim); // find delimeter
-
-        if (pos == std::string::npos) return false;
-
-        // trim WSes for key
-        beg = 0;
-        while (beg < pos && isspace(opt[beg])) beg++;
-
-        end = pos - 1;
-        while (end >= 0 && isspace(opt[end])) end--;
-
-        key = std::string(opt, beg, end - beg + 1);
-
-        // trim WSes for value
-        beg = pos + 1;
-        while (beg < opt.size() && isspace(opt[beg])) beg++;
-
-        end = opt.size() - 1;
-        while (end > pos && isspace(opt[end])) end--;
-
-        val = std::string(opt, beg, end - beg + 1);
-
-        return true;
-    }
-
-    void Sema::parseOption(const ASTLocation &loc, const std::string &opt, std::vector<std::pair<std::string, std::string> > &opts, const char delim)
-    {
-        std::string key, val;
-        unsigned int beg = 0, pos;
-
-        while((pos = opt.find(delim, beg)) != std::string::npos)
-        {
-            if (parseKeyValue(std::string(opt, beg, pos - beg), '=', key, val))
-            {
-                opts.push_back(std::pair<std::string, std::string>(key, val));
-            }
-            else if (pos == beg)
-            {
-                drv->error(loc, SE5067, "empty key=value pair");
-            }
-            else
-            {
-                drv->error(loc, SE5067, std::string(opt, beg, pos - beg).c_str());
-            }
-
-            beg = pos + 1;
-        }
-
-        // if we've got single option without delimeter parse it as well
-        if (beg < opt.size())
-        {
-            if (parseKeyValue(std::string(opt, beg, opt.size() - beg), '=', key, val))
-            {
-                opts.push_back(std::pair<std::string, std::string>(key, val));
-            }
-            else
-            {
-                drv->error(loc, SE5067, std::string(opt, beg, opt.size() - beg).c_str());
-            }
-        }
-    }
-
-    XQFunction *Sema::findFunction(std::string name, unsigned int arity, XQueryModule *mod, XQueryDriver *drv)
-    {
-        XQFunction *xqf;
-        std::string uri, name_wa;
-        unsigned int fp, lp;
-
-        // construct name with arity
-        name_wa = name + "/" + int2string(arity);
-
-        // check prolog functions
-        if (mod->funcs.find(name_wa) != mod->funcs.end())
-        {
-            return &(mod->funcs[name_wa]);
-        }
-
-        // take uri from name
-        fp = name.find('{');
-        lp = name.find('}');
-
-        if (fp == std::string::npos) // this could happen if we continue analysis after XQST0060 error
-            return NULL;
-
-        U_ASSERT(fp != std::string::npos && lp != std::string::npos);
-        uri = name.substr(fp + 1, lp - fp - 1);
-
-        // check library functions; but only if we're importing corresponding uri
-        if (mod->imported.find(uri) != mod->imported.end() && drv->libFuncs.find(name_wa) != drv->libFuncs.end())
-        {
-            return &(drv->libFuncs[name_wa]);
-        }
-
-        // check standard XQuery functions
-        if (drv->stdFuncs.find(name) != drv->stdFuncs.end())
-        {
-            xqf = &(drv->stdFuncs[name]);
-
-            if (arity >= xqf->min_arg && arity <= xqf->max_arg)
-                return xqf;
-        }
-
-        return NULL;
-    }
-
-    void Sema::rewriteStdFunCall(ASTFunCall &n, std::string name)
-    {
-        ASTNode *ddo;
-
-        if (name == "!fn!index-scan")
-        {
-            ASTLit *l;
-
-            l = dynamic_cast<ASTLit *>((*n.params)[2]);
-
-            if (!l || l->type != ASTLit::STRING || (*l->lit != "GT" && *l->lit != "LT" && *l->lit != "GE" && *l->lit != "LE" && *l->lit != "EQ"))
-                drv->error(n.loc, SE5050, "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)");
-
-            ddo = new ASTDDO(n.loc, &n);
-            modifyParent(ddo, false, false);
-        }
-        else if (name == "!fn!index-scan-between")
-        {
-            ASTLit *l;
-
-            l = dynamic_cast<ASTLit *>((*n.params)[3]);
-
-            if (!l || l->type != ASTLit::STRING || (*l->lit != "INT" && *l->lit != "SEG" && *l->lit != "HINTL" && *l->lit != "HINTR"))
-                drv->error(n.loc, SE5051, "index scan condition must be predefined string constant (INT, SEG, HINTL or HINTR)");
-
-            ddo = new ASTDDO(n.loc, &n);
-            modifyParent(ddo, false, false);
-        }
-        else if (name == "!fn!ftindex-scan" || name == "!fn!ftindex-scan2")
-        {
-            ddo = new ASTDDO(n.loc, &n);
-            modifyParent(ddo, false, false);
-        }
-        else if (name == "!fn!name" || name == "!fn!namespace-uri" || name == "!fn!string-length" || name == "!fn!normalize-space" ||
-                 name == "!fn!string" || name == "!fn!local-name" || name == "!fn!number" || name == "!fn!base-uri" || name == "!fn!root")
-        {
-            if (!n.params)
-            {
-                n.params = new ASTNodesVector();
-
-                if (name == "!fn!normalize-space")
-                {
-                    ASTNodesVector *params = new ASTNodesVector();
-
-                    params->push_back(new ASTVar(n.loc, new std::string("$%v")));
-                    n.params->push_back(new ASTFunCall(n.loc, new std::string("fn:string"), params));
-                }
-                else
-                {
-                    n.params->push_back(new ASTVar(n.loc, new std::string("$%v")));
-                }
-
-                n.params->back()->accept(*this);
-            }
-        }
-        else if (name == "!fn!position" || name == "!fn!last")
-        {
-            n.params = new ASTNodesVector();
-            n.params->push_back(new ASTVar(n.loc, new std::string("$%v")));
-
-            n.params->back()->accept(*this);
-        }
-        else if (name == "!fn!contains")
-        {
-            if (n.params->size() == 3)
-            {
-                ASTLit *l;
-
-                l = dynamic_cast<ASTLit *>((*n.params)[2]);
-
-                if (l && l->type == ASTLit::STRING && *l->lit == "http://www.w3.org/2005/xpath-functions/collation/codepoint")
-                {
-                    delete l;
-                    n.params->pop_back();
-                }
-                else
-                {
-                    drv->error(n.loc, FOCH0002, (l && l->type == ASTLit::STRING) ? *l->lit + " in fn:contains" : "fn:contains");
-                }
-            }
-        }
-        else if (name == "!fn!lang")
-        {
-            ASTNode *param, *alt;
-            ASTLet *let1, *let2;
-            std::string lang_query;
-
-            if (n.params->size() == 1)
-                param = new ASTVar(n.loc, new std::string("$%v"));
-            else
-                param = (*n.params)[1];
-
-            /* rewrite to:
-                let $testlang0 as xs:string? := 'arg0',
-                    $node as node()  := $arg1,
-                    $testlang as xs:string? := fn:lower-case(fn:string($arg0)),
-                    $attr as node()? := $node/ancestor-or-self::*[@xml:lang][1]/@xml:lang
-
-                return
-                    (fn:not(fn:empty($attr)) and
-                    (let $lang_value as xs:string := fn:lower-case(fn:string($attr))
-                        return
-                            (($lang_value eq $testlang) or fn:starts-with($lang_value, fn:concat($testlang, '-')))
-                    ))
-            */
-
-            lang_query = "let $testlang0 as xs:string? := 'arg0', $node as node() := 'arg1', $testlang as xs:string? := fn:lower-case(fn:string($testlang0)), $attr as node()? := $node/ancestor-or-self::*[@xml:lang][1]/@xml:lang return (fn:not(fn:empty($attr)) and (let $lang_value as xs:string := fn:lower-case(fn:string($attr)) return (($lang_value eq $testlang) or fn:starts-with($lang_value, fn:concat($testlang, '-')))))";
-
-            alt = drv->getASTFromQuery(lang_query.c_str());
-
-            let1 = dynamic_cast<ASTLet *>(alt);
-            let2 = dynamic_cast<ASTLet *>(let1->fd);
-
-            U_ASSERT(let1 && let2);
-
-            delete let1->expr;
-            delete let2->expr;
-
-            let1->expr = (*n.params)[0];
-            let2->expr = param;
-
-            n.params->clear();
-            delete n.params;
-            n.params = NULL;
-
-            modifyParent(alt, true, true);
-        }
-        else if (name == "!fn!id")
-        {
-            ASTNode *param, *alt;
-            ASTLet *let1, *let2;
-            std::string id_query;
-
-            if (n.params->size() == 1)
-                param = new ASTVar(n.loc, new std::string("$%v"));
-            else
-                param = (*n.params)[1];
-
-            /* rewrite to:
-                    let $arg as xs:string*    := $arg0,
-                        $node as node()       := $arg1,
-                        $idrefs as xs:string* := for $s in $arg
-                                                 return fn:tokenize(fn:normalize-space($s), ' ')
-                                                 [. castable as xs:IDREF]
-
-                        return
-                            $node/ancestor-or-self::node()[last()]/
-                                      descendant-or-self::*[@*
-                                                           [fn:ends-with(fn:lower-case(fn:local-name(.)), 'id')]
-                                                           [some $s as xs:string in $idrefs satisfies $s eq fn:string()]]
-            */
-
-            id_query = "let $arg as xs:string* := 'arg0', $node as node() := $arg1, $idrefs as xs:string* := for $s in $arg return fn:tokenize(fn:normalize-space($s), ' ')          [. castable as xs:IDREF] return $node/ancestor-or-self::node()[last()]/descendant-or-self::*[@*[fn:ends-with(fn:lower-case(fn:local-name(.)), 'id')]       [some $s as xs:string in $idrefs satisfies $s eq fn:string()]]";
-
-            alt = drv->getASTFromQuery(id_query.c_str());
-
-            let1 = dynamic_cast<ASTLet *>(alt);
-            let2 = dynamic_cast<ASTLet *>(let1->fd);
-
-            U_ASSERT(let1 && let2);
-
-            delete let1->expr;
-            delete let2->expr;
-
-            let1->expr = (*n.params)[0];
-            let2->expr = param;
-
-            n.params->clear();
-            delete n.params;
-            n.params = NULL;
-
-            modifyParent(alt, true, true);
-        }
-
-        else if (name == "!fn!idref")
-        {
-            ASTNode *param, *alt;
-            ASTLet *let1, *let2;
-            std::string idref_query;
-
-            if (n.params->size() == 1)
-                param = new ASTVar(n.loc, new std::string("$%v"));
-            else
-                param = (*n.params)[1];
-
-            /* rewrite to:
-                let $node as node()       := $arg1,
-                    $ids0 as xs:string*   := $arg0,
-                    $ids as xs:string*    := $ids0[. castable as xs:NCName]
-
-                return
-                    $node/ancestor-or-self::node()[last()]//@*
-                        [fn:contains(fn:lower-case(fn:local-name(.)), 'idref')]
-                        [let $attr_values as xs:string* := fn:tokenize(fn:normalize-space(fn:string()), ' ')
-                            return some $s as xs:string in $ids satisfies some $attr as xs:string in $attr_values satisfies $attr eq $s]
-            */
-
-            idref_query = "let $node as node() := $arg1, $ids as xs:string* := 'arg0', $ids as xs:string* := $ids0[. castable as xs:NCName] return $node/ancestor-or-self::node()[last()]//@*[fn:contains(fn:lower-case(fn:local-name(.)), 'idref')][let $attr_values as xs:string* := fn:tokenize(fn:normalize-space(fn:string()), ' ') return some $s as xs:string in $ids satisfies some $attr as xs:string in $attr_values satisfies $attr eq $s]";
-
-            alt = drv->getASTFromQuery(idref_query.c_str());
-
-            let1 = dynamic_cast<ASTLet *>(alt);
-            let2 = dynamic_cast<ASTLet *>(let1->fd);
-
-            U_ASSERT(let1 && let2);
-
-            delete let1->expr;
-            delete let2->expr;
-
-            let1->expr = param;
-            let2->expr = (*n.params)[0];
-
-            n.params->clear();
-            delete n.params;
-            n.params = NULL;
-
-            modifyParent(alt, true, true);
-        }
-    }
-
-    ASTNode *Sema::getDocCollFromAbsXPath(ASTNode *path)
-    {
-        ASTFunCall *f = dynamic_cast<ASTFunCall *>(path);
-        if (f && *f->int_name == "!fn!collection")
-            return f;
-        else if (f && *f->int_name == "!fn!document")
-        {
-            if (f->params->size() == 2)
-            {
-                drv->error(f->loc, SE5049, "document in collection instead of collection is not permitted in on-XPath");
-                return NULL;
-            }
-
-            return f;
-        }
-        else if (f)
-        {
-            drv->error(f->loc, SE5049, std::string("function call ") + *f->pref + ((*f->pref == "") ? "" : ":") +
-                    *f->local + " is not permitted in on-XPath");
-            return NULL;
-        }
-
-        if (ASTDDO *d = dynamic_cast<ASTDDO *>(path))
-            return Sema::getDocCollFromAbsXPath(d->expr);
-
-        if (ASTAxisStep *a = dynamic_cast<ASTAxisStep *>(path))
-        {
-            switch (a->axis)
-            {
-                case ASTAxisStep::CHILD:
-                case ASTAxisStep::DESCENDANT:
-                case ASTAxisStep::DESCENDANT_OR_SELF:
-                case ASTAxisStep::ATTRIBUTE:
-                case ASTAxisStep::SELF:
-                    if (a->preds)
-                    {
-                        drv->error(a->loc, SE5049, std::string("predicates are not permitted in on-XPath in this statement"));
-                        return NULL;
-                    }
-
-                    if (!a->cont)
-                    {
-                        drv->error(a->loc, SE5049, "on-XPath must start with fn:doc or fn:collection");
-                        return NULL;
-                    }
-
-                    return Sema::getDocCollFromAbsXPath(a->cont);
-                    break;
-                default:
-                    drv->error(a->loc, SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on-XPath");
-                    return NULL;
-            }
-        }
-
-        if (ASTFilterStep *f = dynamic_cast<ASTFilterStep *>(path))
-        {
-            if (f->expr || f->preds)
-            {
-                drv->error(f->loc, SE5049, std::string("filter steps are not permitted in on-XPath in this statement"));
-                return NULL;
-            }
-
-            if (!f->cont)
-            {
-                drv->error(f->loc, SE5049, "on-XPath must start with fn:doc or fn:collection");
-                return NULL;
-            }
-
-            return Sema::getDocCollFromAbsXPath(f->cont);
-        }
-
-        drv->error(path->loc, SE5049, "incorrect on-XPath");
-
-        return NULL;
-    }
-
-    ASTNode* Sema::modifyRelIndexXPath(ASTNode *path, ASTNode *doccoll)
-    {
-        if (path == NULL)
-        {
-            return doccoll->dup();
-        }
-        else if (ASTDDO *d = dynamic_cast<ASTDDO *>(path))
-        {
-            d->expr = Sema::modifyRelIndexXPath(d->expr, doccoll);
-        }
-        else if (ASTAxisStep *a = dynamic_cast<ASTAxisStep *>(path))
-        {
-            switch (a->axis)
-            {
-                case ASTAxisStep::CHILD:
-                case ASTAxisStep::DESCENDANT:
-                case ASTAxisStep::DESCENDANT_OR_SELF:
-                case ASTAxisStep::ATTRIBUTE:
-                case ASTAxisStep::SELF:
-                    if (a->preds)
-                        drv->error(a->loc, SE5049, std::string("predicates are not permitted in by-XPath in create index statement"));
-                    else
-                        a->cont = Sema::modifyRelIndexXPath(a->cont, doccoll);
-
-                    break;
-                default:
-                    drv->error(a->loc, SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in by-XPath in create index statement");
-                    break;
-            }
-        }
-        else if (ASTFilterStep *f = dynamic_cast<ASTFilterStep *>(path))
-        {
-            if (f->expr || f->preds)
-            {
-                drv->error(a->loc, SE5049, std::string("filter steps are not permitted in by-XPath in this statement"));
-            }
-            else
-            {
-                f->cont = Sema::modifyRelIndexXPath(f->cont, doccoll);
-            }
-        }
-        else
-        {
-            drv->error(path->loc, SE5049, "incorrect by-XPath in create index statement");
-        }
-
-        return path;
-    }
-
-    void Sema::getLeafAndTrimmedPath(ASTNode *path, std::string **ln, int *lt, ASTNode **t_path)
-    {
-        if (ASTDDO *d = dynamic_cast<ASTDDO *>(path))
-        {
-            Sema::getLeafAndTrimmedPath(d->expr, ln, lt, t_path);
-        }
-        else if (ASTFilterStep *f = dynamic_cast<ASTFilterStep *>(path))
-        {
-            Sema::getLeafAndTrimmedPath(f->cont, ln, lt, t_path);
-        }
-        else if (ASTAxisStep *a = dynamic_cast<ASTAxisStep *>(path))
-        {
-            ASTAttribTest *at;
-            ASTElementTest *et;
-
-            switch (a->axis)
-            {
-                case ASTAxisStep::CHILD:
-                case ASTAxisStep::ATTRIBUTE:
-                case ASTAxisStep::DESCENDANT:
-                case ASTAxisStep::DESCENDANT_OR_SELF:
-                case ASTAxisStep::SELF:
-
-                    if (!(*ln))
-                    {
-                        if ((at = dynamic_cast<ASTAttribTest *>(a->test)))
-                        {
-                            ASTNameTest *nt = dynamic_cast<ASTNameTest *>(at->name);
-
-                            *ln = new std::string(*nt->local);
-                            *lt = 1;
-                        }
-                        else if ((et = dynamic_cast<ASTElementTest *>(a->test)))
-                        {
-                            ASTNameTest *nt = dynamic_cast<ASTNameTest *>(et->name);
-
-                            *ln = new std::string(*nt->local);
-                            *lt = 0;
-                        }
-                        else
-                        {
-                            drv->error(a->loc, SE3207, "trigger path should end with element or attribute test");
-                            return;
-                        }
-                    }
-
-                    if (a->axis == ASTAxisStep::SELF)
-                    {
-                        Sema::getLeafAndTrimmedPath(a->cont, ln, lt, t_path);
-                    }
-                    else if (a->axis == ASTAxisStep::CHILD || a->axis == ASTAxisStep::ATTRIBUTE)
-                    {
-                        *t_path = a->cont->dup();
-
-                        if (ASTStep *st = dynamic_cast<ASTStep *>(*t_path))
-                            st->setAsLast();
-                    }
-                    else
-                    {
-                        *t_path = new ASTAxisStep(a->loc, ASTAxisStep::DESCENDANT_OR_SELF, new ASTElementTest(a->loc), NULL);
-                        static_cast<ASTAxisStep *>(*t_path)->setContext(a->cont->dup());
-                        static_cast<ASTAxisStep *>(*t_path)->setAsLast();
-                    }
-
-                    break;
-
-                default:
-                    drv->error(a->loc, SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on XPath in the statement");
-                    break;
-            }
-        }
-        else
-        {
-            drv->error(path->loc, SE5049, "incorrect on-XPath in the statement");
-        }
-    }
-
-    void Sema::setParamMode()
+    void LReturn::setParamMode()
     {
         param_mode = true;
         param_count = 0;
     }
-    void Sema::unsetParamMode()
+    void LReturn::unsetParamMode()
     {
         param_mode = false;
+    }
+
+    void LReturn::setOffer(const childOffer off)
+    {
+        offers.push_back(off);
+    }
+
+    childOffer LReturn::getOffer()
+    {
+        childOffer res = offers.back();
+
+        offers.pop_back();
+
+        return res;
+    }
+
+    void LReturn::VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v, parentRequest req)
+    {
+        ASTNodesVector::iterator it;
+        ASTNode *node;
+
+        if (nodes == NULL) return;
+
+        for (unsigned int i = 0; i < nodes->size(); i++)
+        {
+            parentReq = req;
+            node = (*nodes)[i];
+            node->accept(v);
+        }
     }
 }

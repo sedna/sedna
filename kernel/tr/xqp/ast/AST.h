@@ -48,8 +48,6 @@ ASTStringVector *duplicateASTStringVector(ASTStringVector *strs);
 #include "tr/xqp/ast/ASTAttr.h"
 #include "tr/xqp/ast/ASTAttrConst.h"
 #include "tr/xqp/ast/ASTAttribTest.h"
-#include "tr/xqp/ast/ASTAxis.h"
-#include "tr/xqp/ast/ASTAxisStep.h"
 #include "tr/xqp/ast/ASTBaseURI.h"
 #include "tr/xqp/ast/ASTBop.h"
 #include "tr/xqp/ast/ASTBoundSpaceDecl.h"
@@ -87,11 +85,9 @@ ASTStringVector *duplicateASTStringVector(ASTStringVector *strs);
 #include "tr/xqp/ast/ASTEmptyTest.h"
 #include "tr/xqp/ast/ASTError.h"
 #include "tr/xqp/ast/ASTExtExpr.h"
-#include "tr/xqp/ast/ASTFilterStep.h"
 #include "tr/xqp/ast/ASTFor.h"
 #include "tr/xqp/ast/ASTFunCall.h"
 #include "tr/xqp/ast/ASTFuncDecl.h"
-#include "tr/xqp/ast/ASTFunDef.h"
 #include "tr/xqp/ast/ASTGrantPriv.h"
 #include "tr/xqp/ast/ASTGrantRole.h"
 #include "tr/xqp/ast/ASTIf.h"
@@ -127,19 +123,18 @@ ASTStringVector *duplicateASTStringVector(ASTStringVector *strs);
 #include "tr/xqp/ast/ASTPIConst.h"
 #include "tr/xqp/ast/ASTPosVar.h"
 #include "tr/xqp/ast/ASTPragma.h"
-#include "tr/xqp/ast/ASTPred.h"
 #include "tr/xqp/ast/ASTProlog.h"
 #include "tr/xqp/ast/ASTQName.h"
 #include "tr/xqp/ast/ASTQuantExpr.h"
 #include "tr/xqp/ast/ASTQuery.h"
 #include "tr/xqp/ast/ASTRenameColl.h"
-#include "tr/xqp/ast/ASTRet.h"
 #include "tr/xqp/ast/ASTRevokePriv.h"
 #include "tr/xqp/ast/ASTRevokeRole.h"
 #include "tr/xqp/ast/ASTSchemaAttrTest.h"
 #include "tr/xqp/ast/ASTSchemaElemTest.h"
 #include "tr/xqp/ast/ASTSeq.h"
 #include "tr/xqp/ast/ASTSpaceSeq.h"
+#include "tr/xqp/ast/ASTStep.h"
 #include "tr/xqp/ast/ASTTextConst.h"
 #include "tr/xqp/ast/ASTTextTest.h"
 #include "tr/xqp/ast/ASTTreat.h"
@@ -167,7 +162,6 @@ enum ASTNodeType
     AST_ATTRCONST,
     AST_ATTR,
     AST_ATTRIBTEST,
-    AST_AXIS,
     AST_AXISSTEP,
     AST_BASEURI,
     AST_BOP,
@@ -210,7 +204,6 @@ enum ASTNodeType
     AST_FOR,
     AST_FUNCALL,
     AST_FUNCDECL,
-    AST_FUNDEF,
     AST_GRANTPRIV,
     AST_GRANTROLE,
     AST_IF,
@@ -247,13 +240,11 @@ enum ASTNodeType
     AST_PITEST,
     AST_POSVAR,
     AST_PRAGMA,
-    AST_PRED,
     AST_PROLOG,
     AST_QNAME,
     AST_QUANTEXPR,
     AST_QUERY,
     AST_RENAMECOLL,
-    AST_RET,
     AST_REVOKEPRIV,
     AST_REVOKEROLE,
     AST_SCHEMAATTRTEST,

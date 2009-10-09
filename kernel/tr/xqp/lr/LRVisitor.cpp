@@ -180,22 +180,59 @@ void LRVisitor::visit(ASTAttribTest &n)
     lr_str.append(")) ");
 }
 
-void LRVisitor::visit(ASTAxis &n)
-{
-    lr_str.append("(");
-    lr_str.append(axis_str[n.axis]);
-    n.expr->accept(*this);
-
-    lr_str.append("(type ");
-    n.test->accept(*this);
-    lr_str.append(")");
-
-    lr_str.append(") ");
-}
-
 void LRVisitor::visit(ASTAxisStep &n)
 {
-    throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
+    std::string cont = " (var (\"\" \"$%v\")) ";
+    std::string lr_save;
+
+    lr_str.append("(ddo ");
+    if (n.preds)
+    {
+        lr_str.append("(return ");
+
+        if (n.cont)
+            n.cont->accept(*this);
+        else
+            lr_str += cont;
+
+        lr_str.append("(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ");
+
+        lr_save = lr_str;
+        lr_str = "";
+
+        lr_str.append("(");
+        lr_str.append(axis_str[n.axis]);
+        lr_str.append(cont);
+
+        lr_str.append("(type ");
+        n.test->accept(*this);
+        lr_str.append("))");
+
+        for (unsigned int i = 0; i < n.preds->size(); i++)
+        {
+            lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
+            (*n.preds)[i]->accept(*this);
+            lr_str += " ))";
+        }
+
+        lr_str = lr_save + lr_str;
+        lr_str.append("))");
+    }
+    else
+    {
+        lr_str.append("(");
+        lr_str.append(axis_str[n.axis]);
+
+        if (n.cont)
+            n.cont->accept(*this);
+        else
+            lr_str += cont;
+
+        lr_str.append("(type ");
+        n.test->accept(*this);
+        lr_str.append("))");
+    }
+    lr_str.append(")");
 }
 
 void LRVisitor::visit(ASTBaseURI &n)
@@ -242,9 +279,24 @@ void LRVisitor::visit(ASTCase &n)
         lr_str.append(") ");
     }
 
-    n.fd->accept(*this);
+    lr_str.append("(fun-def (");
 
-    lr_str.append(") ");
+    if (n.var)
+    {
+        lr_str.append("(!xs!anyType ");
+        n.var->accept(*this);
+        lr_str.append(")");
+    }
+    else
+    {
+        lr_str.append("(!xs!anyType (var (\"\" \"%v\")))");
+    }
+
+    lr_str.append(")");
+
+    n.expr->accept(*this);
+
+    lr_str.append("))");
 }
 
 void LRVisitor::visit(ASTCast &n)
@@ -401,7 +453,11 @@ void LRVisitor::visit(ASTCreateUser &n)
 
 void LRVisitor::visit(ASTDDO &n)
 {
-    lr_str.append("(ddo ");
+    if (n.distinct_only)
+        lr_str.append("(distinct ");
+    else
+        lr_str.append("(ddo ");
+
     n.expr->accept(*this);
     lr_str.append(") ");
 }
@@ -617,15 +673,106 @@ void LRVisitor::visit(ASTExtExpr &n)
 
 void LRVisitor::visit(ASTFilterStep &n)
 {
-    throw SYSTEM_EXCEPTION("If you see this, you are very unlucky. Anyway, this is an internal parser error.");
+    std::string cont = " (var (\"\" \"$%v\")) ";
+    std::string lr_save;
+
+    if (n.cont)
+    {
+        lr_str.append("(ddo ");
+    }
+
+    if (!n.expr)
+    {
+        if (n.preds)
+        {
+            lr_str.append("(return ");
+
+            if (n.cont)
+                n.cont->accept(*this);
+            else
+                lr_str += cont;
+
+            lr_str.append("(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ");
+
+            lr_save = lr_str;
+            lr_str = cont;
+
+            for (unsigned int i = 0; i < n.preds->size(); i++)
+            {
+                lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
+                (*n.preds)[i]->accept(*this);
+                lr_str += " ))";
+            }
+
+            lr_str = lr_save + lr_str;
+
+            lr_str += "))";
+        }
+        else
+        {
+            if (n.cont)
+                n.cont->accept(*this);
+            else
+                lr_str += cont;
+        }
+    }
+    else
+    {
+        if (n.cont)
+        {
+            lr_str.append("(return ");
+
+            n.cont->accept(*this);
+
+            lr_str.append("(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ");
+        }
+
+        if (n.preds)
+        {
+            lr_save = lr_str;
+            lr_str = "";
+            n.expr->accept(*this);
+
+            for (unsigned int i = 0; i < n.preds->size(); i++)
+            {
+                lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
+                (*n.preds)[i]->accept(*this);
+                lr_str += " ))";
+            }
+
+            lr_str = lr_save + lr_str;
+        }
+        else
+        {
+            n.expr->accept(*this);
+        }
+
+        if (n.cont)
+        {
+            lr_str += "))";
+        }
+    }
+
+    if (n.cont)
+    {
+        lr_str.append(")");
+    }
 }
 
 void LRVisitor::visit(ASTFor &n)
 {
     lr_str.append("(return ");
     n.expr->accept(*this);
+
+    lr_str.append("(fun-def (");
+    n.tv->accept(*this);
+
+    if (n.pv)
+        n.pv->accept(*this);
+    lr_str.append(")");
+
     n.fd->accept(*this);
-    lr_str.append(") ");
+    lr_str.append(")) ");
 }
 
 void LRVisitor::visit(ASTFunCall &n)
@@ -651,16 +798,6 @@ void LRVisitor::visit(ASTFunCall &n)
     lr_str.append(" ");
     lr_str.append(int2string(n.getFirstLine()));
 
-    lr_str.append(") ");
-}
-
-void LRVisitor::visit(ASTFunDef &n)
-{
-    lr_str.append("(fun-def (");
-    VisitNodesVector(n.vars, *this);
-    lr_str.append(") ");
-
-    n.fun->accept(*this);
     lr_str.append(") ");
 }
 
@@ -766,9 +903,13 @@ void LRVisitor::visit(ASTLet &n)
     lr_str.append("(let@ ");
 
     n.expr->accept(*this);
+
+    lr_str.append("(fun-def (");
+    n.tv->accept(*this);
+    lr_str.append(")");
     n.fd->accept(*this);
 
-    lr_str.append(") ");
+    lr_str.append("))");
 }
 
 void LRVisitor::visit(ASTLibModule &n)
@@ -1085,12 +1226,26 @@ void LRVisitor::visit(ASTOrderBy &n)
 
 void LRVisitor::visit(ASTOrderByRet &n)
 {
+    lr_str.append("(return ");
+
     lr_str.append("(order-by ");
 
     n.iter_expr->accept(*this);
+
+    lr_str.append("(fun-def (");
+    VisitNodesVector(n.vars, *this);
+    lr_str.append(")");
+
+    n.ord_expr->accept(*this);
+    lr_str.append("))");
+
+    lr_str.append("(fun-def (");
+    VisitNodesVector(n.vars, *this);
+    lr_str.append(")");
+
     n.ret_expr->accept(*this);
 
-    lr_str.append(") ");
+    lr_str.append("))");
 }
 
 void LRVisitor::visit(ASTOrderEmpty &n)
@@ -1218,16 +1373,6 @@ void LRVisitor::visit(ASTPragma &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(ASTPred &n)
-{
-    lr_str.append("(predicate ");
-
-    n.iter_expr->accept(*this);
-    n.pred_expr->accept(*this);
-
-    lr_str.append(") ");
-}
-
 void LRVisitor::visit(ASTProlog &n)
 {
     lr_str.append("(prolog  ");
@@ -1250,9 +1395,14 @@ void LRVisitor::visit(ASTQuantExpr &n)
         lr_str.append("(every ");
 
     n.expr->accept(*this);
-    n.fd->accept(*this);
 
-    lr_str.append(") ");
+    lr_str.append("(fun-def (");
+    n.var->accept(*this);
+    lr_str.append(")");
+
+    n.sat->accept(*this);
+
+    lr_str.append("))");
 }
 
 void LRVisitor::visit(ASTQuery &n)
@@ -1272,16 +1422,6 @@ void LRVisitor::visit(ASTRenameColl &n)
 
     n.name_old->accept(*this);
     n.name_new->accept(*this);
-
-    lr_str.append(") ");
-}
-
-void LRVisitor::visit(ASTRet &n)
-{
-    lr_str.append("(return ");
-
-    n.iter_expr->accept(*this);
-    n.ret_expr->accept(*this);
 
     lr_str.append(") ");
 }
@@ -1505,9 +1645,14 @@ void LRVisitor::visit(ASTUpdMove &n)
         lr_str.append("(move-preceding ");
 
     n.what->accept(*this);
+
+    lr_str.append("(fun-def (");
+    n.var->accept(*this);
+    lr_str.append(")");
+
     n.where->accept(*this);
 
-    lr_str.append(") ");
+    lr_str.append("))");
 }
 
 void LRVisitor::visit(ASTUpdRename &n)
@@ -1526,9 +1671,14 @@ void LRVisitor::visit(ASTUpdReplace &n)
     lr_str.append("(replace ");
 
     n.what->accept(*this);
+
+    lr_str.append("(fun-def (");
+    n.var->accept(*this);
+    lr_str.append(")");
+
     n.new_expr->accept(*this);
 
-    lr_str.append(") ");
+    lr_str.append("))");
 }
 
 void LRVisitor::visit(ASTVar &n)

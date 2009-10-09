@@ -22,11 +22,11 @@ void ASTLet::accept(ASTVisitor &v)
     v.removeFromPath(this);
 }
 
-void ASTLet::setFunDef(ASTNode *funDef)
+void ASTLet::setNextExpr(ASTNode *fd_)
 {
     delete fd;
 
-    fd = funDef;
+    fd = fd_;
 }
 
 ASTNodesVector *ASTLet::getVarList()
@@ -44,10 +44,7 @@ ASTNode *ASTLet::dup()
 {
     ASTLet *res;
 
-    res = new ASTLet(loc, tv->dup(), expr->dup());
-
-    if (fd)
-        res->setFunDef(fd->dup());
+    res = new ASTLet(loc, tv->dup(), expr->dup(), (fd) ? fd->dup() : NULL);
 
     return res;
 }
@@ -65,9 +62,7 @@ ASTNode *ASTLet::createNode(scheme_list &sl)
     expr = dsGetASTFromSchemeList(*sl[3].internal.list);
     fd = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-    res = new ASTLet(loc, tv, expr);
-
-    res->setFunDef(fd);
+    res = new ASTLet(loc, tv, expr, fd);
 
     return res;
 }

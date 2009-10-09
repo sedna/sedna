@@ -1,11 +1,11 @@
 #
-# Makefile for visitor
+# Makefile for lreturn
 #
 
 PP = ../../../..
 
 include $(PP)/Makefile.include
 
-OBJS      = ASTVisitor$(OBJ_EXT)
+OBJS      = lreturn$(OBJ_EXT)
 
 include $(PP)/Makefile.pseudolib

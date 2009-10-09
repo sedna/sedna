@@ -11,7 +11,9 @@
 ASTOrderByRet::~ASTOrderByRet()
 {
     delete iter_expr;
+    delete ord_expr;
     delete ret_expr;
+    destroyASTNodesVector(vars);
 }
 
 void ASTOrderByRet::accept(ASTVisitor &v)
@@ -23,21 +25,24 @@ void ASTOrderByRet::accept(ASTVisitor &v)
 
 ASTNode *ASTOrderByRet::dup()
 {
-    return new ASTOrderByRet(loc, iter_expr->dup(), ret_expr->dup());
+    return new ASTOrderByRet(loc, iter_expr->dup(), ord_expr->dup(), ret_expr->dup(), duplicateASTNodes(vars));
 }
 
 ASTNode *ASTOrderByRet::createNode(scheme_list &sl)
 {
     ASTLocation loc;
-    ASTNode *iter = NULL, *ret = NULL;
+    ASTNode *iter = NULL, *ord = NULL, *ret = NULL;
+    ASTNodesVector *vars = NULL;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST);
 
     loc = dsGetASTLocationFromSList(*sl[1].internal.list);
     iter = dsGetASTFromSchemeList(*sl[2].internal.list);
-    ret = dsGetASTFromSchemeList(*sl[3].internal.list);
+    ord = dsGetASTFromSchemeList(*sl[3].internal.list);
+    ret = dsGetASTFromSchemeList(*sl[4].internal.list);
+    vars = dsGetASTNodesFromSList(*sl[5].internal.list);
 
-    return new ASTOrderByRet(loc, iter, ret);
+    return new ASTOrderByRet(loc, iter, ord, ret, vars);
 }
 
 void ASTOrderByRet::modifyChild(const ASTNode *oldc, ASTNode *newc)
@@ -47,9 +52,25 @@ void ASTOrderByRet::modifyChild(const ASTNode *oldc, ASTNode *newc)
         iter_expr = newc;
         return;
     }
+    if (ord_expr == oldc)
+    {
+        ord_expr = newc;
+        return;
+    }
     if (ret_expr == oldc)
     {
         ret_expr = newc;
         return;
+    }
+    if (vars)
+    {
+        for (unsigned int i = 0; i < vars->size(); i++)
+        {
+            if ((*vars)[i] == oldc)
+            {
+                (*vars)[i] = newc;
+                return;
+            }
+        }
     }
 }

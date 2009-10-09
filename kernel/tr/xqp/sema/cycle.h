@@ -28,6 +28,9 @@ namespace sedna
 
         XQStringHash var_cache;
 
+        void setParamMode();
+        void unsetParamMode();
+
     public:
         Cycle(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)
         {
@@ -45,7 +48,6 @@ namespace sedna
         void visit(ASTAttr &n);
         void visit(ASTAttrConst &n);
         void visit(ASTAttribTest &n);
-        void visit(ASTAxis &n);
         void visit(ASTAxisStep &n);
         void visit(ASTBaseURI &n);
         void visit(ASTBop &n);
@@ -87,7 +89,6 @@ namespace sedna
         void visit(ASTFilterStep &n);
         void visit(ASTFor &n);
         void visit(ASTFunCall &n);
-        void visit(ASTFunDef &n);
         void visit(ASTFuncDecl &n);
         void visit(ASTGrantPriv &n);
         void visit(ASTGrantRole &n);
@@ -124,13 +125,11 @@ namespace sedna
         void visit(ASTPiTest &n);
         void visit(ASTPosVar &n);
         void visit(ASTPragma &n);
-        void visit(ASTPred &n);
         void visit(ASTProlog &n);
         void visit(ASTQName &n);
         void visit(ASTQuantExpr &n);
         void visit(ASTQuery &n);
         void visit(ASTRenameColl &n);
-        void visit(ASTRet &n);
         void visit(ASTRevokePriv &n);
         void visit(ASTRevokeRole &n);
         void visit(ASTSchemaAttrTest &n);

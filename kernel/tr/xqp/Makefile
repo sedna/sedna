@@ -16,7 +16,7 @@ GENERATED = XQueryParser.cpp XQueryParser.hpp XQueryLexer.cpp position.hh locati
 
 CUSTOM_CLEAN = clean_generated
 
-SUBDIRS = ast visitor sema serial
+SUBDIRS = ast visitor sema serial lr lreturn
 
 include $(PP)/Makefile.ordlib
 

@@ -9,8 +9,6 @@
 #include "ASTNode.h"
 #include "AST.h"
 
-#include "ASTFunDef.h"
-
 class ASTQuantExpr : public ASTNode
 {
 public:
@@ -20,12 +18,13 @@ public:
         EVERY
     };
 
+    ASTNode *var; // ASTTypeVar
     ASTNode *expr;
-    ASTNode *fd; // ASTFunDef
+    ASTNode *sat;
     QuantMod type;
 
 public:
-    ASTQuantExpr(ASTLocation &loc, ASTNode *var_expr, ASTNode *sat_expr, QuantMod mod) : ASTNode(loc), expr(var_expr), fd(sat_expr), type(mod) {}
+    ASTQuantExpr(ASTLocation &loc, ASTNode *var_, ASTNode *var_expr, ASTNode *sat_expr, QuantMod mod) : ASTNode(loc), var(var_), expr(var_expr), sat(sat_expr), type(mod) {}
 
     ~ASTQuantExpr();
 

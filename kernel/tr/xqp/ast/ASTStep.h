@@ -1,18 +1,62 @@
 /*
- * File:  ASTAxisStep.h
+ * File:  ASTStep.h
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _AST_AXIS_STEP_H_
-#define _AST_AXIS_STEP_H_
+#ifndef _AST_STEP_H_
+#define _AST_STEP_H_
 
 #include "ASTNode.h"
 #include "ASTNameTest.h"
-#include "ASTAttribTest.h"
 #include "ASTElementTest.h"
 #include "AST.h"
 
-class ASTAxisStep : public ASTNode
+class ASTStep : public ASTNode
+{
+public:
+    ASTNode *cont; // context for this step (previous step)
+    ASTNodesVector *preds;
+    bool isLast; // last step in XPath
+
+public:
+
+    ASTStep(ASTLocation &loc, ASTNodesVector *preds_) : ASTNode(loc), cont(NULL), preds(preds_), isLast(false) {}
+
+    ~ASTStep();
+
+    void setPredicates(ASTNodesVector *preds_)
+    {
+        destroyASTNodesVector(preds);
+        preds = preds_;
+    }
+
+    ASTNodesVector *getPreds() const
+    {
+        return preds;
+    }
+
+    void setContext(ASTNode* context)
+    {
+        delete cont;
+        cont = context;
+    }
+
+    ASTNode *getContext()
+    {
+        return cont;
+    }
+
+    void setAsLast()
+    {
+        isLast = true;
+    }
+
+    void accept(ASTVisitor &v);
+    ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+};
+
+class ASTAxisStep : public ASTStep
 {
 public:
     enum AxisType
@@ -29,18 +73,18 @@ public:
         PRECEDING_SIBLING,
         PRECEDING,
         ANCESTOR_OR_SELF,
+
+        // sedna specifix axes (for internal use)
+        DESCENDANT_ATTRIBUTE,
     };
 
     AxisType axis;
     ASTNode *test;
-    ASTNodesVector *preds;
 
 public:
     ASTAxisStep(ASTLocation &loc, AxisType axis_, ASTNode *test_ = NULL, ASTNodesVector *preds_ = NULL) :
-        ASTNode(loc),
-        axis(axis_),
-        preds(preds_)
-
+        ASTStep(loc, preds_),
+        axis(axis_)
     {
         if (test_ && dynamic_cast<ASTNameTest *>(test_))
         {
@@ -74,17 +118,6 @@ public:
         }
     }
 
-    void setPredicates(ASTNodesVector *preds_)
-    {
-        destroyASTNodesVector(preds);
-        preds = preds_;
-    }
-
-    ASTNodesVector *getPreds() const
-    {
-        return preds;
-    }
-
     AxisType getAxis() const
     {
         return axis;
@@ -93,6 +126,32 @@ public:
     ASTNode *getTest() const
     {
         return test;
+    }
+
+    void accept(ASTVisitor &v);
+    ASTNode *dup();
+    void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    static ASTNode *createNode(scheme_list &sl);
+};
+
+class ASTFilterStep : public ASTStep
+{
+
+public:
+    ASTNode *expr; // may be NULL in case of context expression
+
+public:
+    ASTFilterStep(ASTLocation &loc, ASTNode *expr_, ASTNodesVector *preds_ = NULL) :
+        ASTStep(loc, preds_),
+        expr(expr_)
+    {}
+
+    ~ASTFilterStep();
+
+    ASTNode *getExpr() const
+    {
+        return expr;
     }
 
     void accept(ASTVisitor &v);

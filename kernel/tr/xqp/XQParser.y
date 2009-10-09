@@ -336,7 +336,7 @@ namespace sedna
 %type <node_list> pragmas
 %type <node> pragma
 %type <node> pathExpr
-%type <node_list> relativePathExpr
+%type <node> relativePathExpr
 %type <node> stepExpr
 %type <node> axisStep
 %type <node> forwardStep
@@ -431,7 +431,7 @@ namespace sedna
 %destructor { delete $$; } IntegerLiteral DecimalLiteral DoubleLiteral StringLiteral PREF_WCARD WCARD_LOC QNAME COMP_CONST_QNAME PREF CREF CHAR_CONT XML_CONT_WITH_END PI_TARGET PI_CONT_WITH_END PRAGMA_CONT_WITH_END CDATA_CONT_WITH_END
 
 // AST destructor
-%destructor { delete $$; } module mainModule libraryModule versionDecl moduleDecl prolog setter import namespaceDecl boundarySpaceDecl defaultNamespaceDecl optionDecl orderingModeDecl emptyOrderDecl copyNamespacesDecl defaultCollationDecl baseURIDecl schemaImport moduleImport varDecl constructionDecl functionDecl param enclosedExpr queryBody expr exprSingle flworExpr forClauseInt letClauseInt whereClause positionalVar orderByClause orderSpec orderADmod orderEGLmod orderCOLmod quantifiedExpr typeswitchExpr caseClause ifExpr orExpr andExpr comparisonExpr rangeExpr additiveExpr multiplicativeExpr unionExpr intersectExceptExpr instanceofExpr treatExpr castableExpr castExpr unaryExpr valueExpr generalComp valueComp nodeComp validateExpr extensionExpr pragma pathExpr stepExpr axisStep forwardStep forwardAxis abbrevForwardStep reverseStep reverseAxis abbrevReverseStep nodeTest nameTest wildcard filterExpr predicate primaryExpr literal numericLiteral varRef varName parenthesizedExpr orderedExpr unorderedExpr functionCall constructor directConstructor dirElemConstructor dirAttribute dirElemContent commonContent dirCommentConstructor dirPIConstructor cdataSection computedConstructor compDocConstructor compElemConstructor contentExpr compAttrConstructor compTextConstructor compCommentConstructor compPIConstructor singleType typeDeclaration sequenceType itemType atomicType kindTest documentTest elementTest schemaElementTest schemaAttributeTest piTest attributeTest commentTest textTest anyKindTest attribNameOrWildcard attributeDeclaration elementNameOrWildcard elementDeclaration attributeName elementName typeName uriLiteral ncName qName funcName createExpr userName privName triggerDoStmt metadataExpr updateExpr insertExpr deleteExpr deleteUndeepExpr replaceExpr renameExpr moveExpr
+%destructor { delete $$; } module mainModule libraryModule versionDecl moduleDecl prolog setter import namespaceDecl boundarySpaceDecl defaultNamespaceDecl optionDecl orderingModeDecl emptyOrderDecl copyNamespacesDecl defaultCollationDecl baseURIDecl schemaImport moduleImport varDecl constructionDecl functionDecl param enclosedExpr queryBody expr exprSingle flworExpr forClauseInt letClauseInt whereClause positionalVar orderByClause orderSpec orderADmod orderEGLmod orderCOLmod quantifiedExpr typeswitchExpr caseClause ifExpr orExpr andExpr comparisonExpr rangeExpr additiveExpr multiplicativeExpr unionExpr intersectExceptExpr instanceofExpr treatExpr castableExpr castExpr unaryExpr valueExpr generalComp valueComp nodeComp validateExpr extensionExpr pragma pathExpr relativePathExpr stepExpr axisStep forwardStep forwardAxis abbrevForwardStep reverseStep reverseAxis abbrevReverseStep nodeTest nameTest wildcard filterExpr predicate primaryExpr literal numericLiteral varRef varName parenthesizedExpr orderedExpr unorderedExpr functionCall constructor directConstructor dirElemConstructor dirAttribute dirElemContent commonContent dirCommentConstructor dirPIConstructor cdataSection computedConstructor compDocConstructor compElemConstructor contentExpr compAttrConstructor compTextConstructor compCommentConstructor compPIConstructor singleType typeDeclaration sequenceType itemType atomicType kindTest documentTest elementTest schemaElementTest schemaAttributeTest piTest attributeTest commentTest textTest anyKindTest attribNameOrWildcard attributeDeclaration elementNameOrWildcard elementDeclaration attributeName elementName typeName uriLiteral ncName qName funcName createExpr userName privName triggerDoStmt metadataExpr updateExpr insertExpr deleteExpr deleteUndeepExpr replaceExpr renameExpr moveExpr
 
 // Some internal static declarations
 %{
@@ -457,14 +457,15 @@ namespace sedna
                                     ASTNodesVector *var_expr,
                                     ASTNode *sat_expr);
 
-    static ASTNode *makePathExpr(sedna::XQueryParser::location_type& loc, ASTNodesVector *steps);
+    //static ASTNode *makePathExpr(sedna::XQueryParser::location_type& loc, ASTNodesVector *steps);
+    static ASTNode *makePathExpr(ASTNode *xpath, ASTNode *context);
 
     // make parser call our scan-function
     #undef yylex
     #define yylex driver.lexer->nextToken
 %}
 
-%destructor { destroyASTNodesVector($$); } paramList flClauses forClause letClause orderSpecList quantifiedExprVarList caseClauseList pragmas relativePathExpr predicateList funcParams dirAttributeList dirAttributeValue attributeValue dirElementContentList triggerDoStmts
+%destructor { destroyASTNodesVector($$); } paramList flClauses forClause letClause orderSpecList quantifiedExprVarList caseClauseList pragmas predicateList funcParams dirAttributeList dirAttributeValue attributeValue dirElementContentList triggerDoStmts
 
 %destructor { destroyASTStringVector($$); } uriLiteralList moduleList
 
@@ -1337,15 +1338,11 @@ quantifiedExprVarList:
 typeswitchExpr:
         TYPESWITCH LPAREN expr RPAREN caseClauseList DEFAULT varRef RETURN exprSingle
         {
-                $$ = new ASTTypeSwitch(@$, $3, $5, new ASTCase(@6, NULL,
-                                new ASTFunDef(@6, new ASTTypeVar(@7, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                                static_cast<ASTVar *>($7)), $9)));
+                $$ = new ASTTypeSwitch(@$, $3, $5, new ASTCase(@6, $7, NULL, $9));
         }
     |   TYPESWITCH LPAREN expr RPAREN caseClauseList DEFAULT RETURN exprSingle
         {
-                $$ = new ASTTypeSwitch(@$, $3, $5, new ASTCase(@6, NULL,
-                        new ASTFunDef(@6, new ASTTypeVar(@7, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                        new ASTVar(@6, new std::string(""), new std::string("%v"))), $8))); // %v instead of $%v to escape context binding
+                $$ = new ASTTypeSwitch(@$, $3, $5, new ASTCase(@6, NULL, NULL, $8));
         }
 
     |   TYPESWITCH LPAREN error RETURN error { $$ = new ASTError(@$); }
@@ -1376,17 +1373,11 @@ caseClauseList:
 caseClause:
         CASE varRef AS sequenceType RETURN exprSingle
         {
-            ASTFunDef *fd = new ASTFunDef(@6, new ASTTypeVar(@2, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                                    static_cast<ASTVar *>($2)), $6);
-
-            $$ = new ASTCase(@$, static_cast<ASTTypeSeq *>($4), fd);
+            $$ = new ASTCase(@$, $2, static_cast<ASTTypeSeq *>($4), $6);
         }
     |   CASE sequenceType RETURN exprSingle
         {
-            ASTFunDef *fd = new ASTFunDef(@4, new ASTTypeVar(@1, new ASTType(@1, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                                                    new ASTVar(@1, new std::string(""), new std::string("%v"))), $4); // %v instead of $%v to escape context binding
-
-            $$ = new ASTCase(@$, static_cast<ASTTypeSeq *>($2), fd);
+            $$ = new ASTCase(@$, NULL, static_cast<ASTTypeSeq *>($2), $4);
         }
     ;
 
@@ -1802,38 +1793,23 @@ pragma:
 pathExpr:
         SLASH
         {
-            ASTNodesVector *rel_path = new ASTNodesVector();
-
-            rel_path->push_back(new ASTFilterStep(@$, new ASTTreat(@$,
-                    new ASTFunCall(@$, new std::string("fn"), new std::string("root"), NULL), new ASTTypeSeq(@$, new ASTDocTest(@$))), NULL));
-
-            $$ = makePathExpr(@$, rel_path);
+            $$ = new ASTTreat(@$,
+                    new ASTFunCall(@$, new std::string("fn"), new std::string("root"), NULL), new ASTTypeSeq(@$, new ASTDocTest(@$)));
         }
     |   SLASH relativePathExpr
         {
-            ASTNodesVector *rel_path = $2;
-
-            rel_path->insert(rel_path->begin(),
-                    new ASTFilterStep(@$, new ASTTreat(@$, new ASTFunCall(@$, new std::string("fn"), new std::string("root"), NULL), new ASTTypeSeq(@$, new ASTDocTest(@$))), NULL));
-
-            $$ = makePathExpr(@$, rel_path);
+            $$ = makePathExpr($2, new ASTTreat(@$, new ASTFunCall(@$, new std::string("fn"), new std::string("root"), NULL), new ASTTypeSeq(@$, new ASTDocTest(@$))));
         }
     |   SLASH_SLASH relativePathExpr
         {
-            ASTNodesVector *rel_path = $2;
+            ASTAxisStep *cont = new ASTAxisStep(@$, ASTAxisStep::DESCENDANT_OR_SELF, new ASTNodeTest(@$), NULL);
+            cont->setContext(new ASTTreat(@$, new ASTFunCall(@$, new std::string("fn"), new std::string("root"), NULL), new ASTTypeSeq(@$, new ASTDocTest(@$))));
 
-            rel_path->insert(rel_path->begin(), new ASTAxisStep(@$, ASTAxisStep::DESCENDANT_OR_SELF, new ASTNodeTest(@$), NULL));
-
-            rel_path->insert(rel_path->begin(),
-                                new ASTFilterStep(@$,
-                                new ASTTreat(@$,
-                                new ASTFunCall(@$, new std::string("fn"), new std::string("root"), NULL), new ASTTypeSeq(@$, new ASTDocTest(@$))), NULL));
-
-            $$ = makePathExpr(@$, rel_path);
+            $$ = makePathExpr($2, cont);
         }
     |   relativePathExpr
         {
-            $$ = makePathExpr(@$, $1);
+            $$ = makePathExpr($1, NULL);
         }
 
     | SLASH_SLASH error { $$ = new ASTError(@$); }
@@ -1843,19 +1819,32 @@ pathExpr:
 relativePathExpr:
         stepExpr
         {
-            $$ = new ASTNodesVector();
-            $$->push_back($1);
+            ASTNode *res = $1;
+
+            if (ASTFilterStep *fs = dynamic_cast<ASTFilterStep *>($1))
+            {
+                // get rid of ASTFilterStep for first-step primary expressions
+                if (!fs->getPreds() && fs->getExpr())
+                {
+                    res = fs->getExpr()->dup();
+                    delete $1;
+                }
+            }
+
+            $$ = res;
         }
     |   relativePathExpr SLASH stepExpr
         {
-            $1->push_back($3);
-            $$ = $1;
+            dynamic_cast<ASTStep *>($3)->setContext($1);
+            $$ = $3;
         }
     |   relativePathExpr SLASH_SLASH stepExpr
         {
-            $1->push_back(new ASTAxisStep(@$, ASTAxisStep::DESCENDANT_OR_SELF, new ASTNodeTest(@$), NULL));
-            $1->push_back($3);
-            $$ = $1;
+            ASTAxisStep *ss_step = new ASTAxisStep(@$, ASTAxisStep::DESCENDANT_OR_SELF, new ASTNodeTest(@$), NULL);
+
+            ss_step->setContext($1);
+            dynamic_cast<ASTStep *>($3)->setContext(ss_step);
+            $$ = $3;
         }
     |   relativePathExpr SLASH error { $$ = $1; }
     |   relativePathExpr SLASH_SLASH error { $$ = $1; }
@@ -3561,11 +3550,11 @@ deleteUndeepExpr:
 replaceExpr:
         REPLACE varRef _IN_ expr WITH expr
         {
-            $$ = new ASTUpdReplace(@$, $4, new ASTFunDef(@6, new ASTTypeVar(@2, new ASTTypeSeq(@2, new ASTItemTest(@2), ASTTypeSeq::ZERO_OR_MORE), static_cast<ASTVar *>($2)), $6));
+            $$ = new ASTUpdReplace(@$, new ASTTypeVar(@2, new ASTTypeSeq(@2, new ASTItemTest(@2), ASTTypeSeq::ZERO_OR_MORE), $2), $4, $6);
         }
     |   REPLACE varRef _AS_ sequenceType _IN_ expr WITH expr
         {
-            $$ = new ASTUpdReplace(@$, $6, new ASTFunDef(@8, new ASTTypeVar(@2, static_cast<ASTTypeSeq *>($4), static_cast<ASTVar *>($2)), $8));
+            $$ = new ASTUpdReplace(@$, new ASTTypeVar(@2, $4, $2), $6, $8);
         }
     |   REPLACE varRef _IN_ error WITH expr { delete $2; delete $6; $$ = new ASTError(@$); }
     ;
@@ -3580,15 +3569,15 @@ renameExpr:
 moveExpr:
         MOVE varRef _AS_ sequenceType _IN_ expr INTO pathExpr
         {
-            $$ = new ASTUpdMove(@$, $6, new ASTFunDef(@8, new ASTTypeVar(@2, static_cast<ASTTypeSeq *>($4), static_cast<ASTVar *>($2)), $8), ASTUpdMove::INTO);
+            $$ = new ASTUpdMove(@$, new ASTTypeVar(@2, $4, $2), $6, $8, ASTUpdMove::INTO);
         }
     |   MOVE varRef _AS_ sequenceType _IN_ expr _PRECEDING_ pathExpr
         {
-            $$ = new ASTUpdMove(@$, $6, new ASTFunDef(@8, new ASTTypeVar(@2, static_cast<ASTTypeSeq *>($4), static_cast<ASTVar *>($2)), $8), ASTUpdMove::PRECEDING);
+            $$ = new ASTUpdMove(@$, new ASTTypeVar(@2, $4, $2), $6, $8, ASTUpdMove::PRECEDING);
         }
     |   MOVE varRef _AS_ sequenceType _IN_ expr _FOLLOWING_ pathExpr
         {
-            $$ = new ASTUpdMove(@$, $6, new ASTFunDef(@8, new ASTTypeVar(@2, static_cast<ASTTypeSeq *>($4), static_cast<ASTVar *>($2)), $8), ASTUpdMove::FOLLOWING);
+            $$ = new ASTUpdMove(@$, new ASTTypeVar(@2, $4, $2), $6, $8, ASTUpdMove::FOLLOWING);
         }
 
     |   MOVE varRef _AS_ sequenceType _IN_ error INTO pathExpr { delete $2; delete $4; delete $8; $$ = new ASTError(@$); }
@@ -3763,11 +3752,11 @@ static ASTNode *makeFLWORTree(sedna::XQueryParser::location_type& loc, ASTNodesV
     {
         if (ASTFor *f = dynamic_cast<ASTFor *>(*rit))
         {
-            f->setFunDef(new ASTFunDef(loc, f->getVarList(), res));
+            f->setNextExpr(res);
         }
         else if (ASTLet *l = dynamic_cast<ASTLet *>(*rit))
         {
-            l->setFunDef(new ASTFunDef(loc, l->getVarList(), res));
+            l->setNextExpr(res);
         }
         else
         {
@@ -3782,8 +3771,7 @@ static ASTNode *makeFLWORTree(sedna::XQueryParser::location_type& loc, ASTNodesV
     /* add order by if needed */
     if (orderBy)
     {
-        res = new ASTRet(loc, new ASTOrderByRet(loc, res, new ASTFunDef(loc, makeFLWORVarsCopy(flcs), orderBy)),
-                              new ASTFunDef(loc, makeFLWORVarsCopy(flcs), ret));
+        res = new ASTOrderByRet(loc, res, orderBy, ret, makeFLWORVarsCopy(flcs));
     }
 
     delete flcs;
@@ -3806,7 +3794,7 @@ static ASTNode *makeQuantExpr(sedna::XQueryParser::location_type& loc, ASTQuantE
         var = static_cast<ASTTypeVar *>(*(rit + 1));
         expr = *rit;
 
-        res = new ASTQuantExpr(loc, expr, new ASTFunDef(loc, var, res), qt);
+        res = new ASTQuantExpr(loc, var, expr, res, qt);
     }
 
     delete var_expr;
@@ -3814,110 +3802,33 @@ static ASTNode *makeQuantExpr(sedna::XQueryParser::location_type& loc, ASTQuantE
     return res;
 }
 
-/* makes predicate tree for path expression -- helper for makePathExpr */
-static ASTNode *makePredicateTree(sedna::XQueryParser::location_type& loc, ASTNodesVector *preds, ASTNode *init_expr)
+// here we just mark the last step and bind context to the first step
+// NOTE: literals and other standalone expressions go here for the sake of the grammar; 'if (!xp)' filters them out
+static ASTNode *makePathExpr(ASTNode *xpath, ASTNode *cont)
 {
-    ASTNodesVector::const_iterator it;
-    ASTNode *res;
+    ASTStep *xp = dynamic_cast<ASTStep *>(xpath);
 
-    res = init_expr;
+    // check if this is just a single-step expression
+    if (!xp)
+        return xpath;
 
-    for (it = preds->begin(); it != preds->end(); it++)
-        res = new ASTPred(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc, new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                                                new ASTVar(loc, new std::string(""), new std::string("$%v"))), (*it)->dup()));
+    xp->setAsLast();
 
-    return res;
-}
-
-/* makes relative path tree for the given sequence of steps
-   CAVEAT: 'steps' is destroyed during this!!!
-*/
-static ASTNode *makePathExpr(sedna::XQueryParser::location_type& loc, ASTNodesVector *steps)
-{
-    ASTNode *res = NULL, *pred = NULL;
-    ASTAxisStep *as;
-    ASTFilterStep *fs;
-    ASTNodesVector::const_iterator it;
-
-    // start from context
-    res = new ASTVar(loc, new std::string(""), new std::string("$%v"));
-
-    // we make somewhat copmplex path representation
-    for (it = steps->begin(); it != steps->end(); it++)
+    if (cont)
     {
-        pred = NULL;
-
-        // step is an axis step
-        if ((as = dynamic_cast<ASTAxisStep *>(*it)))
+        while (xp)
         {
-            // step with predicates
-            if (as->getPreds())
+            if (!xp->getContext())
             {
-                pred = makePredicateTree(loc, as->getPreds(), new ASTAxis(loc, as->getAxis(),
-                            new ASTVar(loc, new std::string(""), new std::string("$%v")), as->getTest()->dup()));
+                xp->setContext(cont);
+                break;
+            }
 
-                res = new ASTRet(loc, res,
-                        new ASTFunDef(loc, new ASTTypeVar(loc, new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                        new ASTVar(loc, new std::string(""), new std::string("$%v"))), pred));
-            }
-            else
-            {
-                res = new ASTDDO(loc, new ASTAxis(loc, as->getAxis(), res, as->getTest()->dup()));
-            }
+            xp = dynamic_cast<ASTStep *>(xp->getContext());
         }
-        else if ((fs = dynamic_cast<ASTFilterStep *>(*it)))
-        {
-            ASTNode *prim_expr = fs->getExpr();
-
-            // context expression
-            if (!prim_expr)
-            {
-                if (fs->getPreds())
-                {
-                    pred = new ASTRet(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc,
-                                    new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                                    new ASTVar(loc, new std::string(""), new std::string("$%v"))),
-                                    makePredicateTree(loc, fs->getPreds(), new ASTVar(loc, new std::string(""), new std::string("$%v")))));
-                }
-                else
-                {
-                    pred = res;
-                }
-
-                res = pred;
-            }
-            else // usual filter expression
-            {
-                prim_expr = prim_expr->dup();
-
-                if (fs->getPreds())
-                    pred = makePredicateTree(loc, fs->getPreds(), prim_expr);
-                else
-                    pred = prim_expr;
-
-                if (it == steps->begin())
-                {
-                    delete res;
-                    res = pred;
-                }
-                else
-                {
-                    res = new ASTRet(loc, res, new ASTFunDef(loc, new ASTTypeVar(loc,
-                            new ASTType(loc, new std::string("!xs:anyType"), ASTType::COMPLEX),
-                            new ASTVar(loc, new std::string(""), new std::string("$%v"))), pred));
-                }
-            }
-
-            if (it != steps->begin())
-                res = new ASTDDO(loc, res);
-        }
-        else
-            return NULL; /* shouldn't happen since we control parsing */
     }
 
-    destroyASTNodesVector(steps);
-
-    return res;
+    return xpath;
 }
 
 // strips boundary space form element content, merges consecutive character elements

@@ -10,6 +10,7 @@
 
 ASTUpdMove::~ASTUpdMove()
 {
+    delete var;
     delete what;
     delete where;
 }
@@ -23,27 +24,33 @@ void ASTUpdMove::accept(ASTVisitor &v)
 
 ASTNode *ASTUpdMove::dup()
 {
-    return new ASTUpdMove(loc, what->dup(), where->dup(), type);
+    return new ASTUpdMove(loc, var->dup(), what->dup(), where->dup(), type);
 }
 
 ASTNode *ASTUpdMove::createNode(scheme_list &sl)
 {
     ASTLocation loc;
-    ASTNode *what = NULL, *where = NULL;
+    ASTNode *var = NULL, *what = NULL, *where = NULL;
     UpdType type;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_NUMBER);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_NUMBER);
 
     loc = dsGetASTLocationFromSList(*sl[1].internal.list);
-    what = dsGetASTFromSchemeList(*sl[2].internal.list);
-    where = dsGetASTFromSchemeList(*sl[3].internal.list);
-    type = UpdType(atol(sl[4].internal.num));
+    var = dsGetASTFromSchemeList(*sl[2].internal.list);
+    what = dsGetASTFromSchemeList(*sl[3].internal.list);
+    where = dsGetASTFromSchemeList(*sl[4].internal.list);
+    type = UpdType(atol(sl[5].internal.num));
 
-    return new ASTUpdMove(loc, what, where, type);
+    return new ASTUpdMove(loc, var, what, where, type);
 }
 
 void ASTUpdMove::modifyChild(const ASTNode *oldc, ASTNode *newc)
 {
+    if (var == oldc)
+    {
+        what = newc;
+        return;
+    }
     if (what == oldc)
     {
         what = newc;

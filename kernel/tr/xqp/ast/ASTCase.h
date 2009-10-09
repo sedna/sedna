@@ -10,16 +10,16 @@
 #include "AST.h"
 
 #include "ASTTypeSeq.h"
-#include "ASTFunDef.h"
 
 class ASTCase : public ASTNode
 {
 public:
     ASTNode *type; // NULL if this is a default case; ASTTypeSeq
-    ASTNode *fd; // ASTFunDef
+    ASTNode *var; // ASTVar; case variable or NULL
+    ASTNode *expr; // expression for this case
 
 public:
-    ASTCase(ASTLocation &loc, ASTNode *seqtype, ASTNode *expr) : ASTNode(loc), type(seqtype), fd(expr) {}
+    ASTCase(ASTLocation &loc, ASTNode *var_, ASTNode *seqtype, ASTNode *expr_) : ASTNode(loc), type(seqtype), var(var_), expr(expr_) {}
 
     ~ASTCase();
 

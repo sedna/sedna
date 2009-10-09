@@ -10,15 +10,14 @@
 #include "AST.h"
 
 #include "ASTTypeVar.h"
-#include "ASTFunDef.h"
 
 class ASTLet : public ASTNode
 {
 public:
     ASTNode *tv; // main for variable; ASTTypeVar
-    ASTNode *expr; // for expression
+    ASTNode *expr; // let expression
 
-    ASTNode *fd;  // FunDef expression for the final for-clause representation; ASTFunDef
+    ASTNode *fd;  // expression for the next forlet-clause representation; may be for, return, where expressions; NULL at start; not NULL after Bison
 
 public:
     ASTLet(ASTLocation &loc, ASTNode *var, ASTNode *let_expr) : ASTNode(loc), tv(var), expr(let_expr), fd(NULL) {}
@@ -40,8 +39,8 @@ public:
     // returns list containing COPY of variables (usual and pos)
     ASTNodesVector *getVarList();
 
-    // we set funDef when we cough up the final For-clause representation
-    void setFunDef(ASTNode *funDef);
+    // we set fd when we cough up the final For-clause representation
+    void setNextExpr(ASTNode *fd_);
 
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);

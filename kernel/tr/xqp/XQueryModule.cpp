@@ -1,6 +1,6 @@
 #include "XQueryModule.h"
 #include "tr/xqp/sema/Sema.h"
-#include "tr/xqp/visitor/LRVisitor.h"
+#include "tr/xqp/lr/LRVisitor.h"
 #include "tr/xqp/serial/serial.h"
 #include "tr/xqp/serial/deser.h"
 #include "tr/xqp/sema/cycle.h"
@@ -171,4 +171,8 @@ namespace sedna
         return res;
     }
 
+    ASTNode* XQueryModule::getTree()
+    {
+        return ast;
+    }
 }
