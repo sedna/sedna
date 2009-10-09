@@ -1321,35 +1321,99 @@ namespace sedna
 
     void LReturn::visit(ASTOrdExpr &n)
     {
+        bool oldMode = isModeOrdered;
+        parentRequest req(getParentRequest());
+
+        if (n.type == ASTOrdExpr::ORDERED)
+            isModeOrdered = true;
+        else
+            isModeOrdered = false;
+
+        setParentRequest(req);
         n.expr->accept(*this);
+
+        isModeOrdered = oldMode;
+        setOffer(getOffer());
     }
 
     void LReturn::visit(ASTOrder &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTOrderBy &n)
     {
+        unsigned int count = n.specs->size();
+        childOffer off;
+        parentRequest req;
+
+        req.distinctOnly = true; // since there will be atomization and expected singleton
+        req.calledOnce = false;
+        VisitNodesVector(n.specs, *this, req);
+        off = mergeOffers(count);
+
+        // since result will be ignored by ASTOrderByRet except for usedVars and useConstructors parts,
+        // which will be set with mergeOffers, so we don't set other params here
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTOrderByRet &n)
     {
+        parentRequest req;
+        childOffer off_fl, off_ord, off_this;
+
+        setParamMode();
+        ASTVisitor::VisitNodesVector(n.vars, *this);
+        unsetParamMode();
+
+        req.distinctOnly = false;
+        req.calledOnce = getParentRequest().calledOnce;
+        setParentRequest(req);
+        n.iter_expr->accept(*this);
+        off_fl = getOffer();
+
+        setParentRequest(req); // actually it will be ignored by ASTOrderBy
+        n.ord_expr->accept(*this);
+        off_ord = getOffer();
+
+        req.distinctOnly = getParentRequest().distinctOnly;
+        req.calledOnce = false;
+        n.ret_expr->accept(*this);
+        off_this = getOffer();
+
+        // collect all used vars and unbind
+        // NOTE: order is important here; we shouldn't ignore vars used by for-let clauses
+        off_this.usedVars.insert(off_ord.usedVars.begin(), off_ord.usedVars.end());
+        ignoreVariables(off_this, n.vars->size());
+        off_this.usedVars.insert(off_fl.usedVars.begin(), off_fl.usedVars.end());
+
+        off_this.exi.useConstructors = off_this.exi.useConstructors || off_fl.exi.useConstructors;
+
+        // consider to cache
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            if (off_this.isCached)
+            {
+                n.iter_expr->setCached(false);
+                n.ord_expr->setCached(false);
+                n.ret_expr->setCached(false);
+            }
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTOrderEmpty &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTOrderMod &n)
     {
-        if (n.ad_mod)
-            n.ad_mod->accept(*this);
-
-        if (n.em_mod)
-            n.em_mod->accept(*this);
-
-        if (n.col_mod)
-            n.col_mod->accept(*this);
+        // nothing to do
     }
 
     void LReturn::visit(ASTOrderModInt &n)
@@ -1359,10 +1423,20 @@ namespace sedna
 
     void LReturn::visit(ASTOrderSpec &n)
     {
-        n.expr->accept(*this);
+        childOffer off;
 
-        if (n.mod)
-            n.mod->accept(*this);
+        setParentRequest(getParentRequest());
+        n.expr->accept(*this);
+        off = getOffer();
+
+        // propagate cache if any
+        if (off.isCached)
+        {
+            n.setCached(true);
+            n.expr->setCached(false);
+        }
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTPIConst &n)
@@ -1579,7 +1653,7 @@ namespace sedna
 
         for (unsigned int i = 0; i < nodes->size(); i++)
         {
-            parentReq = req;
+            setParentRequest(req);
             node = (*nodes)[i];
             node->accept(v);
         }
@@ -1593,14 +1667,12 @@ namespace sedna
         res.exi.isMax1 = (count == 0) || ((count == 1) && offers.back().exi.isMax1);
         res.exi.isOrdered = (count == 0) || ((count == 1) && offers.back().exi.isOrdered);
         res.exi.isSingleLevel = (count == 0) || ((count == 1) && offers.back().exi.isSingleLevel);
+        res.exi.isDistincted = (count == 0) || ((count == 1) && offers.back().exi.isDistincted);
 
         while (count--)
         {
             childOffer c = offers.back();
             offers.pop_back();
-
-            if (!c.exi.isDistincted)
-                res.exi.isDistincted = false;
 
             if (!c.usedVars.empty())
                 res.usedVars.insert(c.usedVars.begin(), c.usedVars.end());
