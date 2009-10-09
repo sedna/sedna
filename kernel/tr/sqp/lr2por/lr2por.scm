@@ -13,7 +13,7 @@
 
 ;(define (fac n)
 ;  (if (zero? n) 1 (* n (fac (- n 1)))))
- 
+
 (define (l2p:lr2por query-in-lr)
 ;  (fac 100000000 )
   (let ((modules+prolog (filter
@@ -66,7 +66,7 @@
                   var-binding
                   next-var-num))))))))
 
-; DL: was  
+; DL: was
 ;  (if (eq? (car query-in-lr) 'query)
 ;      (let* ((PPquery-prolog (l2p:lr-query-prolog2por (cadr query-in-lr)))
 ;             (PPquery-expr (l2p:lr-query-expr2por (caddr query-in-lr)))
@@ -118,7 +118,7 @@
    (begin
      (call-with-values
       (lambda ()
-        (l2p:fold-prolog-decls 
+        (l2p:fold-prolog-decls
          (filter
           (lambda (x)
             (not
@@ -269,7 +269,7 @@
       `(PPDefNSDeclElem ,(caddr (cadr ns-decl)))
       (cl:signal-input-error SE4008 (string-append "unknown default element namaspace declaration: "
                               (symbol->string (car ns-decl))))))
-  
+
 
 ; l2p:decl-def-func-ns2por - translates namespace declaration to the POR
 (define (l2p:decl-def-func-ns2por ns-decl)
@@ -285,12 +285,12 @@
   ;(l2p:add-func-name! (string->symbol (cadr (caddr (cadr fun-def-in-lr))))) ; update global function names list
   (if (not (eq? 'declare-function (car fun-def-in-lr)))
       (cl:signal-input-error SE4008 "wrong function definition")
-      (let* ((args-types 
+      (let* ((args-types
               (if (null? (caddr fun-def-in-lr))
                   '()
                    (map l2p:lr-sequenceType2por-sequenceType (map car (caddr fun-def-in-lr)))))
              (var-names (map cadadr (caddr fun-def-in-lr)))
-             (result-type 
+             (result-type
               (if (null? (cdr (cadddr fun-def-in-lr)))
                   '(zero_or_more (item))
               (l2p:lr-sequenceType2por-sequenceType (cadr (cadddr fun-def-in-lr)))))
@@ -360,10 +360,10 @@
 (define (l2p:any-lr-node2por node)
   ;(pp node)
 
-  (cond ;((symbol? node) `(1 (PPVariable ,node))) 
+  (cond ;((symbol? node) `(1 (PPVariable ,node)))
         ((list? node)
          (let ((op-name (car node))
-               (node (cdr node))) 
+               (node (cdr node)))
            (cond
              ((eq? op-name 'var)
               ; The identifier for global variable is represented as
@@ -381,18 +381,18 @@
                          "undeclared XQuery variable encountered: "
                          (caar node) (cadar node)))
                        `(PPGlobalVariable ,(caar node)))))
-                   ((symbol? (car node))  ; 'NEW, 'OLD, 'WHERE in create trigger 
+                   ((symbol? (car node))  ; 'NEW, 'OLD, 'WHERE in create trigger
                     `(PPXptr ,@node))
                    (else
                     `(PPVariable ,@node)))))
-             
+
              ; *** select ***
 ;             ((eq? op-name 'select)
 ;              (let* ((left-PhysOp (l2p:any-lr-node2por (cadr node)))
 ;                     (right-PhysOp (l2p:any-lr-node2por (caddr (caddr node))))
 ;                    )
 ;                `(,(l2p:tuple-size left-PhysOp)
-;                   (PPSelect 
+;                   (PPSelect
 ;                    ,(map  cadr (cadr (caddr node)))
 ;                    ,left-PhysOp
 ;                    ,right-PhysOp
@@ -400,15 +400,15 @@
 ;                 )
 ;              )
 ;             )
-              
+
              ; *** lselect ***
 ;             ((eq? op-name 'lselect)
 ;              (let* ((left-PhysOp (l2p:any-lr-node2por (cadr node)))
 ;                     (right-PhysOp (l2p:any-lr-node2por (caddr (caddr node))))
 ;                     (ts (l2p:tuple-size left-PhysOp))
-;                    ) 
+;                    )
 ;                `(,ts
-;                   (PPSelect 
+;                   (PPSelect
 ;                    ,(map  cadr (cadr (caddr node)))
 ;                    (,ts (PPStore ,left-PhysOp))
 ;                    ,right-PhysOp
@@ -452,19 +452,19 @@
                     ,@(l2p:make-por-arg-types
                        (reverse (cdr reverse-new-arg-lst))))))
                 )))
-                                                  
+
              ; *** predicate ***
              ((eq? op-name 'predicate)
               (l2p:predicate2por node))
-             
+
              ; *** order-by ***
              ((eq? op-name 'order-by)
               (l2p:order-by2por node))
-             
+
              ((eq? op-name 'tmp-tuple)
               `(,(length node)
                 (PPSTuple ,@(map l2p:any-lr-node2por node))))
-             
+
              ; *** lreturn ***
              ((eq? op-name 'lreturn)
               (let ((node (l2p:return-order-by node)))
@@ -496,7 +496,7 @@
                     ,(cadar reverse-new-arg-lst)
                     ,@(l2p:make-por-arg-types
                        (reverse (cdr reverse-new-arg-lst)))))))))
-             
+
              ((memq op-name '(let@ slet@))
               (let* ((new-fun-def (l2p:rename-vars2unique-numbers (cadr node)))
                      ;(right-operand (substitute-var-value-in-fun-body context var-name value expr))
@@ -543,7 +543,7 @@
                   (eq? op-name 'descendant-or-self)
                   (eq? op-name 'descendant-attr))
               (let ((AbsPath (l2p:findPPAbsPath `(,op-name ,@node))))
-                              
+
                 (if AbsPath
                   `(1 ,AbsPath)
                    (let* ((type (cadr node))
@@ -558,13 +558,13 @@
                                   (cond ((symbol? (car const-value))
                                          `(1 (,axis
                                               wildcard_star_ncname
-                                              ,(cadr const-value) 
+                                              ,(cadr const-value)
                                               ,(l2p:any-lr-node2por (car node)))))
-                                        
+
                                         ((symbol? (cadr const-value))
                                          `(1 (,axis
                                               wildcard_ncname_star
-                                              ,(car const-value) 
+                                              ,(car const-value)
                                               ,(l2p:any-lr-node2por (car node)))))
                                         ((and (string? (car const-value))
                                               (string? (cadr const-value)))
@@ -574,7 +574,7 @@
                                   `(1 (,axis wildcard_star () ,(l2p:any-lr-node2por (car node))))
                               )
                             ))
-                           
+
                            ((eq? test-type 'pi-test)
                             `(1
                               (,axis
@@ -594,7 +594,7 @@
                                 (eq? test-type 'node-test)
                                 (eq? test-type 'comment-test))
                             `(1 (,axis ,(l2p:lr-test2por-test test-type) () ,(l2p:any-lr-node2por (car node)))))
-                           
+
                            (else (cl:signal-input-error SE4008 (string-append "unknown test-type: "
                                                          (symbol->string test-type)))))))
                 ))
@@ -608,14 +608,14 @@
               )
              )
              ; *** attribute ***
-             ((eq? op-name 'attribute) 
+             ((eq? op-name 'attribute)
               (if (and (eq? (caar node) `const)
                        (eq? (cadr (cadr (car node))) '!xs!QName))
                   `(1 (PPAttribute ,(caddr (car node)) ,(l2p:any-lr-node2por (cadr node))))
                   `(1 (PPAttribute ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
               )
              )
-             
+
              ; *** Processing-instruction (PI) constructor ***
              ; Analogue of attribute constructor
              ((eq? op-name 'pi)
@@ -624,30 +624,30 @@
                        (and (eq? (caar node) `const)
                             (eq? (cadr (cadr (car node))) '!xs!QName))
                        caddr l2p:any-lr-node2por)
-                      (car node))                    
+                      (car node))
                     ,(l2p:any-lr-node2por
                       (if (null? (cdr node))  ; no PI body
                           '(sequence)
                           ; TODO: ensure that using '(sequence) is
                           ; semantically correct
                           (cadr node))))))
-             
+
              ; *** namespace ***
              ((eq? op-name 'namespace)
               `(1 (PPNamespace
                    ,(caddr (car node))
                    ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ; *** comment constructor ***
              ((eq? op-name 'comment)
               `(1 (PPComment
                    ,(l2p:any-lr-node2por (car node)))))
-             
+
              ; *** document node constructor ***
              ((eq? op-name 'document)
               `(1 (PPDocument
                    ,(l2p:any-lr-node2por (car node)))))
-             
+
              ; *** text node constructor ***
              ((eq? op-name 'text)
               `(1 (PPText
@@ -669,11 +669,11 @@
                 )
               )
              )
-   
+
              ; *** lsome ***
              ((eq? op-name 'lsome)
               (l2p:lsome->por node))
-             
+
               ;*** every ***
               ((eq? op-name 'every)
                    (let* ((select-left-PhysOp (l2p:any-lr-node2por (car node)))
@@ -689,10 +689,10 @@
                    )
                 )
               )
-             )             
-             
+             )
 
-            
+
+
               ; *** levery ***
               ((eq? op-name 'levery)
                (l2p:levery->por node))
@@ -703,9 +703,9 @@
              )
 
 
-             
+
              ; *** const ***
-             ((eq? op-name 'const) 
+             ((eq? op-name 'const)
               (cond
                 ((eq? (cadr node) 'true#) `(1 (PPFnTrue)))
                 ((eq? (cadr node) 'false#) `(1 (PPFnFalse)))
@@ -729,7 +729,7 @@
                    `(,ts-then (PPIf
                                ,(l2p:any-lr-node2por (car node))
                                ,then-expr
-                               (,ts-then (PPNil)))))                   
+                               (,ts-then (PPNil)))))
                   ((= (if (pair? ts-then) (car ts-then) ts-then)
                       (if (pair? ts-else) (car ts-else) ts-else))
                    `(,ts-then (PPIf
@@ -740,43 +740,43 @@
                    (cl:signal-input-error
                     SE4008
                     "bad input logical plan: tuple-size of then expr not equal to tuple-size of else expr")))))
-             
+
              ; *** General Comp ***
              ((eq? op-name '=@)
               `(1 (PPGeneralCompEQ ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ((eq? op-name '!=@)
               `(1 (PPGeneralCompNE ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ((eq? op-name '<=@)
               `(1 (PPGeneralCompLE ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ((eq? op-name '>=@)
               `(1 (PPGeneralCompGE ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
-            
+
+
              ((eq? op-name '<@)
               `(1 (PPGeneralCompLT ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ((eq? op-name '>@)
               `(1 (PPGeneralCompGT ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ; *** NodeComp ***
-             
+
              ((eq? op-name '<<@)
               `(1 (PPLTNodeComparison ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
 
              ((eq? op-name '>>@)
               `(1 (PPGTNodeComparison ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ((eq? op-name 'is@)
               `(1 (PPEQNodeComparison ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ; DL: by analogue with 'is@
              ((eq? op-name 'to@)
               `(1 (PPRange ,(l2p:any-lr-node2por (car node))
                            ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ; *** logical, ariphmetical, comparision operations ***
              ((or (eq? op-name 'and@)
                   (eq? op-name 'or@)
@@ -800,14 +800,14 @@
                 `(1 (PPCalculate ,(cadr calculate) ,@(map l2p:any-lr-node2por (cddr calculate))))
               )
              )
-             
+
              ; *** cast ***
              ((eq? op-name 'cast)
               (let ((expr (car node))
                     (type (cadr node)))
                 `(1
                   (PPCast
-                   ,(l2p:any-lr-node2por expr) 
+                   ,(l2p:any-lr-node2por expr)
                    ,@(if
                       (list? (cadr type))  ; sequence type
                       (list
@@ -821,22 +821,22 @@
                       (list
                        (l2p:lr-atomic-type2por-atomic-type (cadr type))
                        #f))))))
-             
-             ; *** instance of ***             
-             ((eq? op-name 'instance-of)
-              `(1 (PPInstanceOf ,(l2p:any-lr-node2por (car node))
-                                ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
-             
-             ; *** treat as ***
-             ((eq? op-name 'treat)
-              `(1 (PPTreat ,(l2p:any-lr-node2por (car node))
-                           ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
-             
+
              ; *** instance of ***
              ((eq? op-name 'instance-of)
               `(1 (PPInstanceOf ,(l2p:any-lr-node2por (car node))
                                 ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
-             
+
+             ; *** treat as ***
+             ((eq? op-name 'treat)
+              `(1 (PPTreat ,(l2p:any-lr-node2por (car node))
+                           ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
+
+             ; *** instance of ***
+             ((eq? op-name 'instance-of)
+              `(1 (PPInstanceOf ,(l2p:any-lr-node2por (car node))
+                                ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
+
              ; *** castable ***
              ((eq? op-name 'castable)
               (let ((single-type (cadr  ; addresses '(one type)
@@ -848,7 +848,7 @@
                    ,(and (memq (car single-type) '(optional zero-or-more))
                          #t  ; boolean value
                          )))))
-             
+
              ; *** typeswitch ***
              ((eq? op-name 'ts)
               (l2p:ts2por node))
@@ -862,11 +862,11 @@
 
              ; *** sequence ***
              ((eq? op-name 'sequence)
-              (if (null? node) 
+              (if (null? node)
                   '(1 (PPNil))
                   (let ((seq-operands (map l2p:any-lr-node2por node)))
                   `(,(l2p:tuple-size (car seq-operands)) (PPSequence ,@seq-operands)))))
-             
+
              ; *** spaceseq ***
              ((or (eq? op-name 'space-sequence) (eq? op-name 'spaceseq))
               (if (null? node)
@@ -874,24 +874,29 @@
                   (let ((seq-operands (map l2p:any-lr-node2por node)))
                   `(,(l2p:tuple-size (car seq-operands))
                     (PPSpaceSequence ,@seq-operands)))))
-             
+
              ; *** union ***
              ((eq? op-name 'union@)
-              `(1 (PPUnion ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
+              `(1 (PPUnion ,(l2p:any-lr-node2por (car node))
+                           ,(l2p:any-lr-node2por (cadr node))
+                           ,(if (eq? (caddr node) 'true) #t #f)))
              )
-             
+
              ; *** except ***
              ((eq? op-name 'except@)
-              `(1 (PPExcept ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
+              `(1 (PPExcept ,(l2p:any-lr-node2por (car node))
+                            ,(l2p:any-lr-node2por (cadr node))
+                            ,(if (eq? (caddr node) 'true) #t #f)))
              )
-             
+
              ; *** intersect ***
              ((eq? op-name 'intersect@)
               `(1 (PPIntersect
                    ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node))))
+                   ,(l2p:any-lr-node2por (cadr node))
+                   ,(if (eq? (caddr node) 'true) #t #f)))
              )
-                          
+
              ;----------------------------------------
              ; XQuery and XPath functions
              ((assq
@@ -957,7 +962,7 @@
                  ;----------------------------------------
                  ; 8 Functions on anyURI
                  (!fn!resolve-uri . PPFnResolveUri)
-                 ;----------------------------------------    
+                 ;----------------------------------------
                  ; 9 Functions and Operators on Boolean Values
                  (!fn!true .  PPFnTrue)
                  (!fn!false . PPFnFalse)
@@ -993,7 +998,7 @@
                   . PPFnAdjustDateToTimezone)
                  (!fn!adjust-time-to-timezone
                   . PPFnAdjustTimeToTimezone)
-                 ;----------------------------------------    
+                 ;----------------------------------------
                  ; 11 Functions Related to QNames
                  (!fn!resolve-QName .            PPFnResolveQName)
                  (!fn!QName .                    PPFnQName)
@@ -1079,10 +1084,10 @@
                      ,(cons (cdr pair)
                             (map
                              l2p:any-lr-node2por
-                             (l2p:discard-numbers node)))))))           
-             
+                             (l2p:discard-numbers node)))))))
+
              ;----------------------------------------
-             
+
              ; *** !fn!replace ***
              ((eq? op-name '!fn!replace)
               (let ((line-num (l2p:list-last node)))
@@ -1096,7 +1101,7 @@
                     (null? (l2p:discard-numbers (cdddr node)))  ; no 4th argument
                     '()
                     (list (l2p:any-lr-node2por (cadddr node))))))))
-             
+
              ; *** matches ***
              ((eq? op-name '!fn!matches)
               (let ((line-num (l2p:list-last node)))
@@ -1109,7 +1114,7 @@
                     (null? (l2p:discard-numbers (cddr node)))  ; no 3rd argument
                     '()
                     (list (l2p:any-lr-node2por (caddr node))))))))
-             
+
              ; *** !fn!document ***
              ((memq op-name '(!fn!document !fn!doc))
               (let ((line-num (l2p:list-last node)))
@@ -1121,7 +1126,7 @@
                               ())
                   `(PPDocInCol ,(l2p:any-lr-node2por (cadr node))
                                ,(l2p:any-lr-node2por (car node)))))))
-                          
+
              ; *** !fn!collection ***
              ((eq? op-name '!fn!collection)
               (let ((line-num (l2p:list-last node)))
@@ -1136,25 +1141,25 @@
                                 (caddr (caddr node))))
                     (line-num (l2p:list-last node)))
                 `((1 ,line-num)
-                  (PPIndexScan 
+                  (PPIndexScan
                    ,(l2p:any-lr-node2por (car node))
                    ,(l2p:any-lr-node2por (cadr node))
                    ; DL: the 4th list member was: (1 (PPConst 0 !xs!integer))
                    (1 (PPConst "0" !xs!integer))
                    ,condition))))
-             
+
              ; *** !fn!index-scan-between ***
              ((eq? op-name '!fn!index-scan-between)
               (let ((range (l2p:lr-range2por-range
                             (caddr (cadddr node))))
                     (line-num (l2p:list-last node)))
                 `((1 ,line-num)
-                  (PPIndexScan 
+                  (PPIndexScan
                    ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node)) 
+                   ,(l2p:any-lr-node2por (cadr node))
                    ,(l2p:any-lr-node2por (caddr node))
                    ,range))))
-			 
+
              ; *** scan ***
              ((eq? op-name 'scan)
               (let* ((entity
@@ -1162,20 +1167,20 @@
                           'document 'collection))
                      (ent-name (caddr (cadr (cadr node)))))
                      `(1 (PPScan ,(caddr (car node)) (,entity ,ent-name)))))
-             
+
              ; *** filterad ***
              ((eq? op-name 'adfilter)
               `(1 (PPADFilter ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ; *** filterda ***
              ((eq? op-name 'dafilter)
               `(1 (PPDAFilter ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-             
+
              ; *** up ***
              ((eq? op-name 'up)
               `(1 (PPUp ,(l2p:any-lr-node2por (car node)) ,(caddr (cadr node)))))
-           
-             
+
+
 
              ; *** xjoin ***
 ;             ((eq? op-name 'xjoin)
@@ -1183,8 +1188,8 @@
 ;                     (inner (l2p:any-lr-node2por (cadddr (cddr node))))
 ;                     (ts-outer (l2p:tuple-size outer))
 ;                     (ts-inner (l2p:tuple-size inner))
-;                    ) 
-;                  
+;                    )
+;
 ;              `(,(+ ts-outer ts-inner)
 ;                (PPAJoin ,outer ; outer
 ;                        (,ts-inner (PPStore ,inner)) ; inner
@@ -1203,7 +1208,7 @@
 ;                     (ts-outer (l2p:tuple-size outer))
 ;                     (ts-inner (l2p:tuple-size inner))
 ;                    )
-;                             
+;
 ;               `(,ts-outer
 ;                 (PPASemiJoin ,outer ; outer
 ;                              (,ts-inner (PPStore ,inner)) ; inner
@@ -1214,20 +1219,20 @@
 ;                )
 ;              )
 ;             )
-             
+
              ; *** congen1 *** The translation is not correct if congen1 multiplied be logical optimizer
              ((eq? op-name 'congen1)
               (let* ((seq (l2p:any-lr-node2por (car node)))
                      (ts-seq (+ (l2p:tuple-size seq) 1)))
               `(,ts-seq (PPConGen1 ,(l2p:gen-var) ,seq))))
-             
+
              ; *** congen2 ***
              ((eq? op-name 'congen2)
               (let* ((seq (l2p:any-lr-node2por (car node)))
                      (ts-seq (+ (l2p:tuple-size seq) 2)))
               `(,ts-seq (PPConGen2 ,seq))))
-              
-             
+
+
              ; *** fun-call ***
              ((eq? op-name 'fun-call)
                (let ((func-index
@@ -1263,7 +1268,7 @@
                          ,@(map
                             l2p:any-lr-node2por
                             (l2p:discard-numbers (cdr node)))))))))))
-             
+
              ; *** ext-fun-call ***
              ((eq? op-name 'ext-fun-call)
                (let* ((func-name (cadr (caddr (car node))))
@@ -1274,7 +1279,7 @@
                      ,@(map
                         l2p:any-lr-node2por
                         (l2p:discard-numbers (cdr node)))))))
-             
+
              ((eq? op-name 'insert-into)
               (let* ((left-operand (l2p:any-lr-node2por (car node)))
                      (left-context (if (eq? var-count 0) 0 (+ var-count 1)))
@@ -1290,7 +1295,7 @@
                      (right-context (if (eq? var-count 0) 0 (+ var-count 1))))
               `(PPInsertFollowing ,left-context ,left-operand ,right-context ,right-operand)
              ))
-             
+
              ((eq? op-name 'insert-preceding)
               (let* ((left-operand (l2p:any-lr-node2por (car node)))
                      (left-context (if (eq? var-count 0) 0 (+ var-count 1)))
@@ -1298,21 +1303,21 @@
                      (right-context (if (eq? var-count 0) 0 (+ var-count 1))))
               `(PPInsertBefore ,left-context ,left-operand ,right-context ,right-operand)
              ))
-             
+
              ((eq? op-name 'rename)
               (let* ((operand (begin (set! var-count 0) (l2p:any-lr-node2por (car node))))
                      (qname (cadr node))
                      (context (if (eq? var-count 0) 0 (+ var-count 1))))
               `(PPRename ,context ,operand ,qname)
              ))
-             
+
              ((eq? op-name 'replace)
               (let* ((operand (l2p:any-lr-node2por (car node)))
                      (context (if (eq? var-count 0) 0 (+ var-count 1))))
               `(PPReplace ,context ,operand)))
 
 
-             
+
              ((eq? op-name 'delete)
               (let* ((operand (l2p:any-lr-node2por (car node)))
                      (context (if (eq? var-count 0) 0 (+ var-count 1))))
@@ -1324,10 +1329,10 @@
                      (context (if (eq? var-count 0) 0 (+ var-count 1))))
               `(PPDeleteUndeep ,context ,operand )
              ))
-             
+
              ;---------------------
              ; Manage operations
-             
+
              ((eq? op-name 'load)
               (let* ((client-file (l2p:any-lr-node2por (car node)))
                      (file-context (if (eq? var-count 0) 0 (+ var-count 1)))
@@ -1347,8 +1352,8 @@
                                  ,col-context
                                  ,col)))))
 
-             
-             
+
+
              ((eq? op-name 'create-document)
               (let* ((doc (l2p:any-lr-node2por (car node)))
                      (doc-context (if (eq? var-count 0) 0 (+ var-count 1))))
@@ -1361,7 +1366,7 @@
                                                  ,col))
                   `(PPCreateDocument ,doc-context
                                      ,doc))))
-             
+
              ; Module management
              ((assq op-name '((load-module . #f)
                               (load-or-replace-module . #t)))
@@ -1397,7 +1402,7 @@
               (let ((context (if (eq? var-count 0) 0 (+ var-count 1))))
               `(PPDropModule ,context
                              ,(l2p:any-lr-node2por (car node)))))
-             
+
              ((eq? op-name 'create-collection)
               (let* ((col (l2p:any-lr-node2por (car node))))
               `(PPCreateCollection ,(if (eq? var-count 0) 0 (+ var-count 1))
@@ -1407,7 +1412,7 @@
               (let* ((old_name (l2p:any-lr-node2por (car node)))
                      (new_name (l2p:any-lr-node2por (cadr node))))
               `(PPRenameCollection ,(if (eq? var-count 0) 0 (+ var-count 1))
-                                   ,old_name 
+                                   ,old_name
                                    ,new_name)))
 
              ((eq? op-name 'create-index)
@@ -1418,11 +1423,11 @@
                     (abs-path2 (caddr AbsPath2))
                     (type (cadr (l2p:lr-sequenceType2por-sequenceType (cadddr node))))
                     (ind-name (l2p:any-lr-node2por (car node))))
-                `(PPCreateIndex ,entity ,abs-path ,abs-path2 ,type 
+                `(PPCreateIndex ,entity ,abs-path ,abs-path2 ,type
                                 ,(if (eq? var-count 0) 0 (+ var-count 1))
                                 ,ind-name)
               ))
-             
+
              ((eq? op-name 'create-trigger)
               (let* ((time    (string->symbol
                                (caddr (cadr node))))
@@ -1505,7 +1510,7 @@
                                   ,granularity
                                   ,action
                                   ,name))))
-                               
+
              ((eq? op-name 'create-fulltext-index)
               ; ATTENTION: `node' is bound to the operation content, not the operation!
               (let ((ind-name (l2p:any-lr-node2por (car node)))
@@ -1530,7 +1535,7 @@
                           (list (l2p:any-lr-node2por (list-ref node 3)))
                           '()))
                    ))))
-             
+
              ((memv op-name '(drop-index drop-fulltext-index drop-collection))
               (let* ((ind-name (l2p:any-lr-node2por (car node))))
               `(,(cdr
@@ -1539,8 +1544,8 @@
                                   (drop-collection . PPDropCollection))))
                 ,(if (eq? var-count 0) 0 (+ var-count 1))
                 ,ind-name)))
-             
-             
+
+
              ((eq? op-name 'drop-document)
               (let* ((doc (l2p:any-lr-node2por (car node)))
                      (doc-context (if (eq? var-count 0) 0 (+ var-count 1))))
@@ -1553,12 +1558,12 @@
                                                ,col))
                   `(PPDropDocument ,doc-context
                                    ,doc))))
-             
+
              ((eq? op-name 'drop-trigger)
               (let* ((col (l2p:any-lr-node2por (car node))))
                 `(PPDropTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
                                 ,col)))
-             
+
              ((eq? op-name 'retrieve-metadata-documents)
               (if (eq? (length node) 2)
                   (let* ((col (l2p:any-lr-node2por (car node))))
@@ -1575,7 +1580,7 @@
               `(PPRetrieveMetadata collection ,(if (eq? (caddr (car node)) 'true)
                                                              #t
                                                              #f)))
-             
+
              ((eq? op-name 'retrieve-descr-scheme)
               (if (eq? (length (car node)) 2)
                   (let* ((col (l2p:any-lr-node2por (cadr node))))
@@ -1584,14 +1589,14 @@
                   (let* ((col (l2p:any-lr-node2por (car node))))
                   `(PPRetrieveDSForDocument ,(if (eq? var-count 0) 0 (+ var-count 1))
                                             ,col))))
-             
+
             ((eq? op-name 'retrieve-descr-scheme-collection)
              (let* ((col (l2p:any-lr-node2por (car node))))
              `(PPRetrieveDSForCollection ,(if (eq? var-count 0) 0 (+ var-count 1))
                                          ,col)))
-             
 
-                          
+
+
              (else
               (cl:signal-input-error
                SE4008
@@ -1639,7 +1644,7 @@
 
 (define (l2p:lr-sequenceType2por-sequenceType SeqType)
   (let ((lr-occ-ind (car SeqType)))
-    (cond 
+    (cond
       ((eq? lr-occ-ind 'empty-test)
        '(empty (item))
        ; DL: was: `(empty xdt_untypedAtomic)
@@ -1685,7 +1690,7 @@
             (list por-occ-ind
                   `(attribute ,(l2p:lr-elem-test2por-elem-test
                                 ; was: l2p:lr-attr-test2por-attr-test
-                                item-type))))                      
+                                item-type))))
            ((eq? (car item-type) 'doc-test)
             (list
              por-occ-ind
@@ -1694,7 +1699,7 @@
               '(document)
               `(document ,(l2p:lr-elem-test2por-elem-test (cadr item-type))))))
 
-                      
+
                       (else (cl:signal-input-error SE4008 (string-append "unknown item-type: "
                                        (symbol->string (car item-type))))))))
           (else
@@ -1747,16 +1752,16 @@
         ((string=? condit "EQ") 'isc_eq)
         (else (cl:signal-input-error SE4006 "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)")))
 )
-  
+
 (define (l2p:lr-range2por-range range)
   (cond ((string=? range "INT") 'isc_gt_lt)
         ((string=? range "SEG") 'isc_ge_le)
         ((string=? range "HINTL") 'isc_ge_lt)
         ((string=? range "HINTR") 'isc_gt_le)
         (else (cl:signal-input-error SE4006 "index scan range must be predefined string constant (INT, SEG, HINTL or HINTR)")))
-)  
+)
 
-  
+
 (define (l2p:lr-oocur-ind2por-occur-ind occ-ind)
   (cond ((eq? occ-ind 'empty) 'empty)
         ((eq? occ-ind 'one) 'one)
@@ -1764,8 +1769,8 @@
         ((eq? occ-ind 'zero-or-more) 'zero_or_more)
         ((eq? occ-ind 'one-or-more) 'one_or_more)
         (else (cl:signal-input-error SE4008 (string-append "unknown occurance-indicator: "
-                                       (symbol->string occ-ind))))))        
-        
+                                       (symbol->string occ-ind))))))
+
 (define (l2p:lr-elem-test2por-elem-test elem-test)
   (let ((test-type (caadr elem-test)))
     (cond
@@ -1811,34 +1816,34 @@
                        (l2p:lr-atomic-type2por-atomic-type single-type)))))))))
 ;      (cond
 ;           ((and (eq? (caddr elem-name) 'unspecified) ; element()
-;                 (eq? (cadr elem-type) 'unspecified)) 
+;                 (eq? (cadr elem-type) 'unspecified))
 ;            `())
-;           
+;
 ;           ((and (eq? (caddr elem-name) '*) ; element(*)
 ;                 (eq? (cadr elem-type) 'unspecified))
 ;            `(element_wildcard))
-;           
+;
 ;           ((and (list? (caddr elem-name))
 ;                 (eq? (cadr elem-type) 'unspecified)) ; element(fo:name)
 ;            `(element_name ,(caddr elem-name)))
-;           
+;
 ;           ((and (eq? (caddr elem-name) '*) ; element(*,*)
 ;                 (eq? (cadr elem-type) '*))
 ;            `(element_wildcard_wildcard))
-;           
+;
 ;           ((and (eq? (caddr elem-name) '*) ; element(*, fo:type-name)
 ;                 (list? (cadr elem-type)))
 ;            `(element_wildcard_name ,(cadr elem-type)))
-;           
+;
 ;           ((and (list? (caddr elem-name)) ; element(fo:name, *)
 ;                 (eq? (cadr elem-type) '*))
 ;            `(element_name_wildcard ,(caddr elem-name)))
-;           
+;
 ;           ((and (list? (caddr elem-name))
 ;                 (list? (cadr elem-type)))
 ;            `(element_name_name ,(caddr elem-name) ,(cadr elem-type)))
-;           
-;           (else (cl:signal-input-error SE4008 (string-append 
+;
+;           (else (cl:signal-input-error SE4008 (string-append
 ;                                                (string-append "unknown combination of element name and element test: "
 ;                                                               (l2p:list2string elem-name))
 ;                                                (l2p:list2string elem-type)))))
@@ -1850,7 +1855,7 @@
        (cl:signal-input-error
         SE4008
         (string-append "unknown test-type: " (symbol->string test-type)))))))
-       
+
 
 (define (l2p:lr-attr-test2por-attr-test attr-test)
   (let ((test-type (caadr attr-test)))
@@ -1858,34 +1863,34 @@
               (let* ((attr-name (cadr (cadr attr-test)))
                      (attr-type (caddr (cadr attr-test))))
                 (cond ((and (eq? (caddr attr-name) 'unspecified) ; attribute()
-                            (eq? (cadr attr-type) 'unspecified)) 
+                            (eq? (cadr attr-type) 'unspecified))
                        `())
-                      
+
                       ((and (eq? (caddr attr-name) '*) ; attribute(*)
                             (eq? (cadr attr-type) 'unspecified))
                        `(attribute_wildcard))
-                      
+
                       ((and (list? (caddr attr-name))
                             (eq? (cadr attr-type) 'unspecified)) ; attribute(fo:name)
                        `(attribute_name ,(caddr attr-name)))
-                      
+
                       ((and (eq? (caddr attr-name) '*) ; attribute(*,*)
                             (eq? (cadr attr-type) '*))
                        `(attribute_wildcard_wildcard))
-                      
+
                       ((and (eq? (caddr attr-name) '*) ; attribute(*, fo:type-name)
                             (list? (cadr attr-type)))
                        `(attribute_wildcard_name ,(cadr attr-type)))
-                      
+
                       ((and (list? (caddr attr-name)) ; attribute(fo:name, *)
                             (eq? (cadr attr-type) '*))
                        `(attribute_name_wildcard ,(caddr attr-name)))
-                      
+
                       ((and (list? (caddr attr-name))
                             (list? (cadr attr-type)))
                        `(attribute_name_name ,(caddr attr-name) ,(cadr attr-type)))
-                      
-                      (else (cl:signal-input-error SE4008 (string-append 
+
+                      (else (cl:signal-input-error SE4008 (string-append
                                     (string-append "unknown combination of attribute name and attribute test: "
                                                   (l2p:list2string attr-name))
                                     (l2p:list2string attr-type)))))))
@@ -1926,7 +1931,7 @@
     ;(display vars-map)
   `(fun-def ,new-var-decls ,(l2p:rename-vars vars-map (xlr:fun-body fun-def))))
 )
-  
+
 (define (l2p:generate-map vars)
   (if (null? vars)
       '()
@@ -1942,7 +1947,7 @@
 (define (l2p:rename-vars vars-map expr)
   (if (null? vars-map)
       expr
-      (l2p:rename-vars 
+      (l2p:rename-vars
        (cdr vars-map)
        (xlr:substitute-var-value `(var ,(caar vars-map)) `(var ,(cadar vars-map)) expr)))
 )
@@ -2045,7 +2050,7 @@
                   (or p? pos?)
                   (or l? last?)
                   (cdr args))))))))))
-  
+
 ; For a comparison operation, returns its code for PPPred
 (define (l2p:comparison-op->ppred-code op)
   (cond
@@ -2134,7 +2139,7 @@
            `(,(l2p:tuple-size source-child)
              (,(if requires-last? 'PPPred2 'PPPred1)
               ,(map
-                cadr               
+                cadr
                 (cadr   ; function arguments
                  new-fun-def))
               ,source-child
@@ -2224,7 +2229,7 @@
     ((null? lst1) lst2)
     ((member (car lst1) lst2)
      (l2p:union-remove-equal (cdr lst1) lst2))
-    (else 
+    (else
      (cons (car lst1)
            (l2p:union-remove-equal (cdr lst1) lst2)))))
 
@@ -2246,7 +2251,7 @@
                      (lambda (x) (member x let-variables))))
                   (lambda (let-vars for-vars)
                     (values
-                     (cons 'tmp-tuple   
+                     (cons 'tmp-tuple
                            (append for-vars
                                    let-vars
                                    expr-single-lst))
@@ -2271,7 +2276,7 @@
                     (call-with-values
                      (lambda ()
                        (tree-walk
-                        (cadr expr) for-variables let-variables 
+                        (cadr expr) for-variables let-variables
                         ; No need to capture for&let-vars for a
                         ; nested FLWOR-expression
                         #f  ; Was: capture-vars?
@@ -2323,14 +2328,14 @@
 ;     ;(write expr)
 ;     ;(newline)
 ;     (cons 'tmp-tuple
-;           (append (cdr expr) expr-single-lst)))    
+;           (append (cdr expr) expr-single-lst)))
 ;    (else
 ;     (map
 ;      (lambda (kid) (l2p:replace-unio2tmp-tuple kid expr-single-lst))
 ;      expr))))
 
 ; If return-expr contains order-by as its first subexpr, rewrites arg-lst
-; accordingly. 
+; accordingly.
 ; Otherwise, returns arg-lst unchanged
 (define (l2p:return-order-by arg-lst)
   ((lambda (x)
@@ -2436,7 +2441,7 @@
                   (and (> (length (cdr modif)) 2)
                        (pair? (cadddr modif))
                        (eq? (car (cadddr modif)) 'collation))
-                  (list 
+                  (list
                    (caddr  ; constant value
                     (cadr  ; (const (type !xs!string) ...)
                      (cadddr modif))))
@@ -2453,7 +2458,7 @@
         (cases (cdr
                 (cadr arg-lst)  ; addresses '(cases ...)
                 ))
-        (var-num (l2p:gen-var)  ; HAS A SIDE EFFECT!!!!         
+        (var-num (l2p:gen-var)  ; HAS A SIDE EFFECT!!!!
                  ))
     (let ((case-pairs
            (map
@@ -2532,7 +2537,7 @@
          (new-fun-def (l2p:rename-vars2unique-numbers (cadr content)))
          (select-right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def))))
     `(1 (PPFnEmpty
-         (,tsls 
+         (,tsls
           (PPSelect
            ,(map cadr  ; argument names
                  (cadr new-fun-def))

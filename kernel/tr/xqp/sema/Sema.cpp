@@ -912,6 +912,7 @@ namespace sedna
         func.decl = (n.body) ? &n : NULL;
         func.loc = n.getLocationAddr();
         func.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
+        func.merger = NULL;
 
         name = CREATE_INTNAME(*n.func_uri, *n.local);
 
@@ -2169,8 +2170,8 @@ namespace sedna
             if (!l || l->type != ASTLit::STRING || (*l->lit != "GT" && *l->lit != "LT" && *l->lit != "GE" && *l->lit != "LE" && *l->lit != "EQ"))
                 drv->error(n.getLocation(), SE5050, "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)");
 
-            ddo = new ASTDDO(n.getLocation(), &n);
-            modifyParent(ddo, false, false);
+//            ddo = new ASTDDO(n.getLocation(), &n);
+//            modifyParent(ddo, false, false);
         }
         else if (name == "!fn!index-scan-between")
         {
@@ -2181,14 +2182,14 @@ namespace sedna
             if (!l || l->type != ASTLit::STRING || (*l->lit != "INT" && *l->lit != "SEG" && *l->lit != "HINTL" && *l->lit != "HINTR"))
                 drv->error(n.getLocation(), SE5051, "index scan condition must be predefined string constant (INT, SEG, HINTL or HINTR)");
 
-            ddo = new ASTDDO(n.getLocation(), &n);
-            modifyParent(ddo, false, false);
+//            ddo = new ASTDDO(n.getLocation(), &n);
+//            modifyParent(ddo, false, false);
         }
-        else if (name == "!fn!ftindex-scan" || name == "!fn!ftindex-scan2")
-        {
-            ddo = new ASTDDO(n.getLocation(), &n);
-            modifyParent(ddo, false, false);
-        }
+//        else if (name == "!fn!ftindex-scan" || name == "!fn!ftwindex-scan")
+//        {
+//            ddo = new ASTDDO(n.getLocation(), &n);
+//            modifyParent(ddo, false, false);
+//        }
         else if (name == "!fn!name" || name == "!fn!namespace-uri" || name == "!fn!string-length" || name == "!fn!normalize-space" ||
                  name == "!fn!string" || name == "!fn!local-name" || name == "!fn!number" || name == "!fn!base-uri" || name == "!fn!root")
         {
@@ -2353,7 +2354,7 @@ namespace sedna
                             return some $s as xs:string in $ids satisfies some $attr as xs:string in $attr_values satisfies $attr eq $s]
             */
 
-            idref_query = "let $node as node() := $arg1, $ids as xs:string* := 'arg0', $ids as xs:string* := $ids0[. castable as xs:NCName] return $node/ancestor-or-self::node()[last()]//@*[fn:contains(fn:lower-case(fn:local-name(.)), 'idref')][let $attr_values as xs:string* := fn:tokenize(fn:normalize-space(fn:string()), ' ') return some $s as xs:string in $ids satisfies some $attr as xs:string in $attr_values satisfies $attr eq $s]";
+            idref_query = "let $node as node() := $arg1, $ids0 as xs:string* := 'arg0', $ids as xs:string* := $ids0[. castable as xs:NCName] return $node/ancestor-or-self::node()[last()]//@*[fn:contains(fn:lower-case(fn:local-name(.)), 'idref')][let $attr_values as xs:string* := fn:tokenize(fn:normalize-space(fn:string()), ' ') return some $s as xs:string in $ids satisfies some $attr as xs:string in $attr_values satisfies $attr eq $s]";
 
             alt = drv->getASTFromQuery(idref_query.c_str());
 

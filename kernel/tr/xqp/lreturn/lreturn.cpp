@@ -106,7 +106,7 @@ namespace sedna
         }
 
         // try to merge some axes together
-        if (n.axis == ASTAxisStep::CHILD || n.axis == ASTAxisStep::SELF || n.axis == ASTAxisStep::ATTRIBUTE)
+        if ((n.axis == ASTAxisStep::CHILD || n.axis == ASTAxisStep::SELF || n.axis == ASTAxisStep::ATTRIBUTE) && !n.preds)
         {
             ASTAxisStep *ns = dynamic_cast<ASTAxisStep *>(n.cont);
 
@@ -320,11 +320,7 @@ namespace sedna
         n.rop->accept(*this);
         rof = getOffer();
 
-        bopof.exi.isDistincted = true;
-        bopof.exi.isOrdered = true;
-        bopof.exi.isSingleLevel = true;
         bopof.exi.isMax1 = (n.op == ASTBop::TO) ? false : true;
-        bopof.exi.useConstructors = false;
 
         bopof.usedVars.insert(lof.usedVars.begin(), lof.usedVars.end());
         bopof.usedVars.insert(rof.usedVars.begin(), rof.usedVars.end());
@@ -334,7 +330,6 @@ namespace sedna
             bool left_ddo = lof.exi.isOrdered && lof.exi.isDistincted;
             bool right_ddo = rof.exi.isOrdered && rof.exi.isDistincted;
 
-            bopof.exi.isSingleLevel = lof.exi.isSingleLevel && rof.exi.isSingleLevel;
             bopof.exi.useConstructors = lof.exi.useConstructors || rof.exi.useConstructors;
 
             switch (n.op)
@@ -356,6 +351,7 @@ namespace sedna
             }
 
             bopof.exi.isOrdered = bopof.exi.isMax1;
+            bopof.exi.isSingleLevel = (lof.exi.isSingleLevel && rof.exi.isSingleLevel) || bopof.exi.isMax1;
 
             if (!left_ddo || !right_ddo || !isModeOrdered || getParentRequest().distinctOnly)
             {
@@ -1094,6 +1090,7 @@ namespace sedna
         XQFunction xqf;
         childOffer off_this, off_params;
         bool standFunc = (*n.int_name != "");
+        ASTNode *ddo = NULL;
 
         int_name += "/" + int2string(arity);
 
@@ -1140,12 +1137,61 @@ namespace sedna
                 setParentRequest(req);
                 n.params->at(i)->accept(*this);
             }
-
-            off_params = mergeOffers(arity);
         }
 
-        off_this.exi = xqf.exp_info;
-        off_this.usedVars = off_params.usedVars;
+        // for standard functions result analysis is based on params
+        if (standFunc)
+        {
+            // first create params vector
+            std::vector<xqExprInfo> params(arity);
+            childOffer off;
+
+            for (int i = arity - 1; i >= 0; i--)
+            {
+                off = getOffer();
+                params[i] = off.exi;
+                off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
+            }
+
+            // call merger to analyse result
+            off_this.exi = xqf.merger(params);
+
+            // for index-scan functions we need custom ddo
+            if (*n.int_name == "!fn!index-scan" || *n.int_name == "!fn!index-scan-between" || *n.int_name == "!fn!ftindex-scan" ||
+                *n.int_name == "!fn!ftwindex-scan")
+            {
+                if (!getParentRequest().distinctOnly && !dynamic_cast<ASTStep *>(getParent()))
+                {
+                    ddo = new ASTDDO(n.getLocation(), &n);
+                    modifyParent(ddo, false, false);
+
+                    off_this.exi.isDistincted = true;
+                    off_this.exi.isOrdered = true;
+                }
+            }
+
+            if (*n.int_name == "!fn!unordered")
+            {
+                // if we've got final ddo, convert it to distinct
+                if (ASTDDO *param = dynamic_cast<ASTDDO *>(n.params->at(0)))
+                {
+                    param->true_ddo = false;
+
+                    off_this.exi.isDistincted = true;
+                    off_this.exi.isOrdered = false;
+                }
+
+                // we need to get rid of this fun-call
+                modifyParent(n.params->at(0), false, true);
+                n.params->clear();
+            }
+        }
+        else
+        {
+            off_params = mergeOffers(arity);
+            off_this.exi = xqf.exp_info;
+            off_this.usedVars = off_params.usedVars;
+        }
 
         if (!getParentRequest().calledOnce && xqf.toCache) // consider to cache
         {
@@ -1156,6 +1202,12 @@ namespace sedna
                 for (unsigned int i = 0; i < arity; i++)
                 {
                     n.params->at(i)->setCached(false);
+                }
+
+                if (ddo)
+                {
+                    ddo->setCached(true);
+                    n.setCached(false);
                 }
             }
         }
@@ -1493,6 +1545,10 @@ namespace sedna
 
         isModeOrdered = oldMode;
         setOffer(getOffer());
+
+        // since Scheme's lr2por doesn't know anything about ordered-unordered
+        modifyParent(n.expr, false, true);
+        n.expr = NULL;
     }
 
     void LReturn::visit(ASTOrder &n)
@@ -2203,7 +2259,17 @@ namespace sedna
 
     void LReturn::visit(ASTXMLComm &n)
     {
-        // nothing to do
+        childOffer off;
+
+        // xml comment constructor creates only one node
+        off.exi.isOrdered = true;
+        off.exi.isDistincted = true;
+        off.exi.isSingleLevel = true;
+        off.exi.isMax1 = true;
+        off.isCached = false;
+        off.exi.useConstructors = true;
+
+        setOffer(off);
     }
 
     // Some additional function
@@ -2271,11 +2337,14 @@ namespace sedna
     {
         childOffer res;
 
+        if (!count)
+            return res;
+
         // max1 only if we have one child and he is max1
-        res.exi.isMax1 = (count == 0) || ((count == 1) && offers.back().exi.isMax1);
-        res.exi.isOrdered = (count == 0) || ((count == 1) && offers.back().exi.isOrdered);
-        res.exi.isSingleLevel = (count == 0) || ((count == 1) && offers.back().exi.isSingleLevel);
-        res.exi.isDistincted = (count == 0) || ((count == 1) && offers.back().exi.isDistincted);
+        res.exi.isMax1 = ((count == 1) && offers.back().exi.isMax1);
+        res.exi.isOrdered = ((count == 1) && offers.back().exi.isOrdered);
+        res.exi.isSingleLevel = ((count == 1) && offers.back().exi.isSingleLevel);
+        res.exi.isDistincted = ((count == 1) && offers.back().exi.isDistincted);
 
         while (count--)
         {
@@ -2296,6 +2365,9 @@ namespace sedna
     LReturn::childOffer LReturn::mergeOffersSwitch(unsigned int count)
     {
         childOffer res;
+
+        if (!count)
+            return res;
 
         while (count--)
         {

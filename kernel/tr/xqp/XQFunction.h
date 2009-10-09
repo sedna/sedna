@@ -11,6 +11,8 @@ namespace sedna
     typedef unsigned char param_mask;
     const param_mask maxParamMask = 0xFF;
 
+    typedef xqExprInfo (*resultFunc)(const std::vector<xqExprInfo> &params);
+
     class xqExprInfo;
     struct XQFunction
     {
@@ -26,7 +28,8 @@ namespace sedna
 
         bool toCache; // do we need to cache (PPStore) the result
 
-        xqExprInfo exp_info; // we use it only for built-in functions
+        resultFunc merger; // we use it only for built-in functions
+        xqExprInfo exp_info; // we use it for user-defined functions (it is based on type-body analysis in lreturn)
 
         ASTFuncDecl *decl;
         ASTLocation *loc;
