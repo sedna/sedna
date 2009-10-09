@@ -47,6 +47,7 @@ namespace sedna
         XQueryModule(ASTNode *ast_tree, XQueryDriver *driver);
 
         void doSemanticAnalysis();
+        void doLReturnAnalysis();
         void doPostSemanticAnalysis(const XQVariablesInfo &libVars, bool check_cycles); // unresolved variables checking and cycle lookup
         std::string getLR();
         std::string getIR();
@@ -67,7 +68,9 @@ namespace sedna
         }
 
         bool getFunctionInfo(const std::string &name, XQFunction &xqf) const;
+        ASTVarDecl *getVariableInfo(const std::string &name) const;
         bool getLReturnFunctionInfo(const std::string &name, XQFunction &xqf);
+        bool getLReturnVariableInfo(const std::string &name, XQVariable &xqv);
 
         ~XQueryModule();
     };

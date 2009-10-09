@@ -241,6 +241,12 @@ namespace sedna
         }
     }
 
+    void XQueryDriver::doLReturnAnalysis()
+    {
+        for (unsigned int i = 0; i < mods.size(); i++)
+            mods[i]->doLReturnAnalysis();
+    }
+
     StringVector XQueryDriver::getLRRepresentation()
     {
         StringVector vec;
@@ -281,7 +287,7 @@ namespace sedna
             for (unsigned int i = 0; i < modules.size(); i++)
             {
                 lr = modules[i]->getLR();
-                lr = prepare_module(lr); // call chicken to optimize module
+                //lr = prepare_module(lr); // call chicken to optimize module
                 res_mod += lr;
             }
 
@@ -464,5 +470,29 @@ namespace sedna
         }
 
         return xqf;
+    }
+
+    XQVariable XQueryDriver::getLReturnVariableInfo(const std::string &name)
+    {
+        XQVariable xqv(name.c_str(), NULL);
+        modSequence ms;
+        std::string uri;
+        unsigned int fp, lp;
+
+        // get uri from name
+        fp = name.find('{');
+        lp = name.find('}');
+        U_ASSERT(fp != std::string::npos && lp != std::string::npos);
+        uri = name.substr(fp + 1, lp - fp - 1);
+
+        ms = libModules[uri];
+
+        for (modSequence::iterator it = ms.begin(); it != ms.end(); it++)
+        {
+            if ((*it)->getLReturnVariableInfo(name, xqv))
+                break;
+        }
+
+        return xqv;
     }
 }

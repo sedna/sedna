@@ -40,11 +40,17 @@ namespace sedna
             exp_info.isOrdered = true;
             exp_info.isMax1 = true;
         }
+
+        XQVariable()
+        {
+            int_name = "$%dummy";
+            var = NULL;
+        }
     };
 
     typedef std::pair<std::string, ASTLocation *> nsPair;
     typedef std::map<std::string, nsPair> nsBindType; // location is used to diagnoze illegal redefinition
-    typedef std::map<std::string, sedna::XQFunction> XQFunctionInfo;
+    typedef std::map<std::string, XQFunction> XQFunctionInfo;
     typedef std::map<std::string, ASTVarDecl *> XQVariablesInfo;
     typedef std::map<std::string, ASTNode *> XQStringHash;
 }
