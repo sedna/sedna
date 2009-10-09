@@ -55,6 +55,7 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPScan$(OBJ_EXT) \
         PPSelect$(OBJ_EXT) \
         PPSequence$(OBJ_EXT) \
+        PPSeqChecker$(OBJ_EXT) \
         PPSequenceOps$(OBJ_EXT) \
         PPSequenceTypes$(OBJ_EXT) \
         PPSpaceSequence$(OBJ_EXT) \
