@@ -253,6 +253,11 @@ void LRVisitor::visit(ASTBop &n)
     n.lop->accept(*this);
     n.rop->accept(*this);
 
+    if (n.op == ASTBop::INTERSECT || n.op == ASTBop::UNION || n.op == ASTBop::EXCEPT)
+    {
+        lr_str.append((n.doc_order) ? "true" : "false");
+    }
+
     lr_str.append(") ");
 }
 
@@ -788,7 +793,13 @@ void LRVisitor::visit(ASTFunCall &n)
     if (n.int_name && *n.int_name != "")
     {
         lr_str.append("(");
-        lr_str.append(*n.int_name);
+
+        if (*n.int_name == "!fn!ftwindex-scan")
+            lr_str.append("!fn!ftindex-scan2");
+        else if (*n.int_name == "!fn!fthighlight-blocks")
+            lr_str.append("!fn!fthighlight2");
+        else
+            lr_str.append(*n.int_name);
     }
     else if (n.uri)
     {
