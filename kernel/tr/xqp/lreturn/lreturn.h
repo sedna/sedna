@@ -33,7 +33,7 @@ namespace sedna
             bool isSingleLevel; // all nodes are on the same level in node-sequence
         };
 
-        const childOffer defDDOOffer = {true, true, true, true};
+        static childOffer defDDOOffer;
 
         bool param_mode; // true, if we are checking function params now (ASTVar sema analysis)
         unsigned int param_count; // number of parameters found in param_mode
