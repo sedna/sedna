@@ -23,7 +23,7 @@
 
 #define DUMP_INT(i) (std::string(" ") + int2string(i) + " ")
 #define DUMP_NULL ("(0)")
-#define DUMP_BOOL(b) ((b) ? (" #t ") : (" #f "))
+#define DUMP_BOOL(b) (int_str.append((b) ? (" #t ") : (" #f ")))
 
 static std::string sc;
 
