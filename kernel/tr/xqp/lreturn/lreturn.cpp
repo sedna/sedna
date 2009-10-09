@@ -10,23 +10,35 @@
 
 namespace sedna
 {
-    LReturn::childOffer LReturn::defDDOOffer = {true, true, true, true};
-
     void LReturn::visit(ASTAlterUser &n)
     {
-        offers.push_back(defDDOOffer);
+        offers.push_back(childOffer());
     }
 
     void LReturn::visit(ASTAttr &n)
     {
         unsigned int count = (n.cont) ? n.cont->size() : 0;
+        childOffer off;
+        parentRequest preq = parentReq;
 
-        ASTVisitor::VisitNodesVector(n.cont, *this);
+        if (n.cont)
+        {
+            parentRequest req;
 
-        if (count)
-            IGNORE_OFFERS(count);
+            req.calledOnce = parentReq.calledOnce;
+            req.distinctOnly = false;
 
-        offers.push_back(defDDOOffer);
+            VisitNodesVector(n.cont, *this, req);
+            off = mergeOffers(count);
+        }
+
+        // direct attribute constructor creates only one node
+        off.isOrdered = true;
+        off.isDistincted = true;
+        off.isSingleLevel = true;
+        off.isMax1 = true;
+
+        offers.push_back(off);
     }
 
     void LReturn::visit(ASTAttrConst &n)
@@ -36,18 +48,18 @@ namespace sedna
 
         offers.pop_back();
 
-        offers.push_back(defDDOOffer);
+        offers.push_back(childOffer());
     }
 
     void LReturn::visit(ASTAttribTest &n)
     {
-        offers.push_back(defDDOOffer);
+        offers.push_back(childOffer());
     }
 
     void LReturn::visit(ASTAxisStep &n)
     {
         parentRequest origReq = parentReq;
-        childOffer off_cont = {true, true, true, true}; // by default we work with some context we don't know about (maybe need to refine this later)
+        childOffer off_cont; // by default we work with some context we don't know about (maybe need to refine this later)
         childOffer off_this;
 
         // check predicates
@@ -771,5 +783,37 @@ namespace sedna
             node = (*nodes)[i];
             node->accept(v);
         }
+    }
+
+    LReturn::childOffer LReturn::mergeOffers(unsigned int count)
+    {
+        childOffer res;
+
+        // max1 only if we have one child and he is max1
+        res.isMax1 = (count == 0) || ((count == 1) && offers.back().isMax1);
+        res.isOrdered = (count == 0) || ((count == 1) && offers.back().isOrdered);
+        res.isSingleLevel = (count == 0) || ((count == 1) && offers.back().isSingleLevel);
+
+        while (count--)
+        {
+            childOffer c = offers.back();
+            offers.pop_back();
+
+            if (!c.isDistincted)
+                res.isDistincted = false;
+
+            if (c.cached)
+            {
+                if (!res.cached)
+                    res.cached = new ASTNodesVector();
+
+                res.cached->insert(res.cached->end(), c.cached->begin(), c.cached->end());
+            }
+
+            if (c.useBoundVars)
+                res.useBoundVars = true;
+        }
+
+        return res;
     }
 }
