@@ -28,7 +28,7 @@ public:
     TypeMod type;
 
 public:
-    ASTType(ASTLocation &loc, std::string *type_, TypeMod mod = ASTType::ANY) : ASTNode(loc), name(type_), type(mod) {}
+    ASTType(const ASTNodeCommonData &loc, std::string *type_, TypeMod mod = ASTType::ANY) : ASTNode(loc), name(type_), type(mod) {}
 
     ~ASTType();
 

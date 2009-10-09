@@ -17,18 +17,18 @@ void ASTTextTest::accept(ASTVisitor &v)
 
 ASTNode *ASTTextTest::dup()
 {
-    return new ASTTextTest(loc);
+    return new ASTTextTest(cd);
 }
 
 ASTNode *ASTTextTest::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
 
     U_ASSERT(sl[1].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
-    return new ASTTextTest(loc);
+    return new ASTTextTest(cd);
 }
 
 void ASTTextTest::modifyChild(const ASTNode *oldc, ASTNode *newc)

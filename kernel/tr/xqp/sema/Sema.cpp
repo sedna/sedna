@@ -60,7 +60,7 @@ namespace sedna
         if (!n.uri)
         {
             // first, try to resolve prefix
-            uri = resolveQName(n.loc, n.pref->c_str(), "");
+            uri = resolveQName(n.getLocation(), n.pref->c_str(), "");
 
             if (uri)
                 n.uri = new std::string(uri);
@@ -74,7 +74,7 @@ namespace sedna
     {
         if (n.pref)
         {
-            resolveQName(n.loc, n.pref->c_str(), "");
+            resolveQName(n.getLocation(), n.pref->c_str(), "");
         }
         else
         {
@@ -117,7 +117,7 @@ namespace sedna
             if (!found_cont)
             {
                 if (!mod->xpdy0002)
-                    mod->xpdy0002 = &n.loc;
+                    mod->xpdy0002 = n.getLocationAddr();
             }
         }
 
@@ -141,13 +141,13 @@ namespace sedna
         if (dupLocations[PrologBaseURI])
         {
             loc = DIAG_DUP_PROLOG(dupLocations[PrologBaseURI]->begin.line, dupLocations[PrologBaseURI]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
+                                n.getLocation().begin.line, n.getLocation().begin.column);
 
-            drv->error(n.loc, XQST0032, loc.c_str());
+            drv->error(n.getLocation(), XQST0032, loc.c_str());
         }
         else
         {
-            dupLocations[PrologBaseURI] = &n.loc;
+            dupLocations[PrologBaseURI] = n.getLocationAddr();
         }
     }
 
@@ -164,13 +164,13 @@ namespace sedna
         if (dupLocations[PrologBoundSpace])
         {
             loc = DIAG_DUP_PROLOG(dupLocations[PrologBoundSpace]->begin.line, dupLocations[PrologBoundSpace]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
+                                n.getLocation().begin.line, n.getLocation().begin.column);
 
-            drv->error(n.loc, XQST0068, loc.c_str());
+            drv->error(n.getLocation(), XQST0068, loc.c_str());
         }
         else
         {
-            dupLocations[PrologBoundSpace] = &n.loc;
+            dupLocations[PrologBoundSpace] = n.getLocationAddr();
         }
     }
 
@@ -228,16 +228,16 @@ namespace sedna
                 *l_pref = ":";
 
             if (l_pref->size() > 0 && !check_constraints_for_xs_NCName(l_pref->c_str()))
-                drv->error(n.loc, FORG0001, std::string("invalid prefix in QName constructor: ") + *l_pref);
+                drv->error(n.getLocation(), FORG0001, std::string("invalid prefix in QName constructor: ") + *l_pref);
 
             if (!check_constraints_for_xs_NCName(l_loc->c_str()))
-                drv->error(n.loc, FORG0001, std::string("invalid local part in QName constructor: ") + *l_loc);
+                drv->error(n.getLocation(), FORG0001, std::string("invalid local part in QName constructor: ") + *l_loc);
 
-            uri = resolveQName(n.loc, l_pref->c_str(), NULL, FONS0004);
+            uri = resolveQName(n.getLocation(), l_pref->c_str(), NULL, FONS0004);
 
             if (uri)
             {
-                ASTNode *qname = new ASTQName(n.loc, new std::string(uri), l_pref, l_loc);
+                ASTNode *qname = new ASTQName(n.getLocation(), new std::string(uri), l_pref, l_loc);
 
                 modifyParent(qname, true, true);
             }
@@ -284,23 +284,23 @@ namespace sedna
 
             if (l_pref->size() > 0 && !check_constraints_for_xs_NCName(l_pref->c_str()))
             {
-                tf_node = new ASTFunCall(n.loc, new std::string("fn:false"));
+                tf_node = new ASTFunCall(n.getLocation(), new std::string("fn:false"));
             }
             else if (!check_constraints_for_xs_NCName(l_loc->c_str()))
             {
-                tf_node = new ASTFunCall(n.loc, new std::string("fn:false"));
+                tf_node = new ASTFunCall(n.getLocation(), new std::string("fn:false"));
             }
             else
             {
-                uri = resolveQName(n.loc, l_pref->c_str(), NULL, -1); // -1 disables error reporting
+                uri = resolveQName(n.getLocation(), l_pref->c_str(), NULL, -1); // -1 disables error reporting
 
                 if (uri)
                 {
-                    tf_node = new ASTFunCall(n.loc, new std::string("fn:true"));
+                    tf_node = new ASTFunCall(n.getLocation(), new std::string("fn:true"));
                 }
                 else
                 {
-                    tf_node = new ASTFunCall(n.loc, new std::string("fn:false"));
+                    tf_node = new ASTFunCall(n.getLocation(), new std::string("fn:false"));
                 }
             }
 
@@ -336,13 +336,13 @@ namespace sedna
         if (dupLocations[PrologDeclConst])
         {
             loc = DIAG_DUP_PROLOG(dupLocations[PrologDeclConst]->begin.line, dupLocations[PrologDeclConst]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
+                                n.getLocation().begin.line, n.getLocation().begin.column);
 
-            drv->error(n.loc, XQST0067, loc.c_str());
+            drv->error(n.getLocation(), XQST0067, loc.c_str());
         }
         else
         {
-            dupLocations[PrologDeclConst] = &n.loc;
+            dupLocations[PrologDeclConst] = n.getLocationAddr();
         }
     }
 
@@ -373,7 +373,7 @@ namespace sedna
         {
             if (n.cust_expr)
             {
-                drv->error(n.loc, SE5081, std::string("customized-value expression is not expected for ") + *n.type + " type");
+                drv->error(n.getLocation(), SE5081, std::string("customized-value expression is not expected for ") + *n.type + " type");
             }
 
             return;
@@ -382,14 +382,14 @@ namespace sedna
         if (*n.type == "customized-value" || *n.type == "!customized-value")
         {
             if (!n.cust_expr)
-                drv->error(n.loc, SE5081, "customized-value expression is absent");
+                drv->error(n.getLocation(), SE5081, "customized-value expression is absent");
             else
                 n.cust_expr->accept(*this);
 
             return;
         }
 
-        drv->error(n.loc, SE5080, *n.type);
+        drv->error(n.getLocation(), SE5080, *n.type);
     }
 
     void Sema::visit(ASTCreateIndex &n)
@@ -446,7 +446,7 @@ namespace sedna
             dynamic_cast<ASTUpdDel *>(last) || dynamic_cast<ASTUpdReplace *>(last) ||
             dynamic_cast<ASTUpdRename *>(last) || dynamic_cast<ASTUpdMove *>(last)))
         {
-            drv->error(last->loc, SE3210, NULL);
+            drv->error(last->getLocation(), SE3210, NULL);
         }
     }
 
@@ -467,13 +467,13 @@ namespace sedna
         if (dupLocations[PrologCopyNsp])
         {
             loc = DIAG_DUP_PROLOG(dupLocations[PrologCopyNsp]->begin.line, dupLocations[PrologCopyNsp]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
+                                n.getLocation().begin.line, n.getLocation().begin.column);
 
-            drv->error(n.loc, XQST0055, loc.c_str());
+            drv->error(n.getLocation(), XQST0055, loc.c_str());
         }
         else
         {
-            dupLocations[PrologCopyNsp] = &n.loc;
+            dupLocations[PrologCopyNsp] = n.getLocationAddr();
         }
     }
 
@@ -484,13 +484,13 @@ namespace sedna
         if (dupLocations[PrologColl])
         {
             loc = DIAG_DUP_PROLOG(dupLocations[PrologColl]->begin.line, dupLocations[PrologColl]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
+                                n.getLocation().begin.line, n.getLocation().begin.column);
 
-            drv->error(n.loc, XQST0038, loc.c_str());
+            drv->error(n.getLocation(), XQST0038, loc.c_str());
         }
         else
         {
-            dupLocations[PrologColl] = &n.loc;
+            dupLocations[PrologColl] = n.getLocationAddr();
         }
     }
 
@@ -505,11 +505,11 @@ namespace sedna
                 err = "default element namespace is already defined at (" + int2string(mod->defElemNsp.second->begin.line) +
                     ":" + int2string(mod->defElemNsp.second->begin.column) + ")";
 
-                drv->error(n.loc, XQST0066, err.c_str());
+                drv->error(n.getLocation(), XQST0066, err.c_str());
                 return;
             }
 
-            mod->defElemNsp = nsPair(*n.uri, &n.loc);
+            mod->defElemNsp = nsPair(*n.uri, n.getLocationAddr());
         }
         else
         {
@@ -518,11 +518,11 @@ namespace sedna
                 err = "default function namespace is already defined at (" + int2string(mod->defFuncNsp.second->begin.line) +
                     ":" + int2string(mod->defFuncNsp.second->begin.column) + ")";
 
-                drv->error(n.loc, XQST0066, err.c_str());
+                drv->error(n.getLocation(), XQST0066, err.c_str());
                 return;
             }
 
-            mod->defFuncNsp = nsPair(*n.uri, &n.loc);
+            mod->defFuncNsp = nsPair(*n.uri, n.getLocationAddr());
         }
     }
 
@@ -620,7 +620,7 @@ namespace sedna
         VisitNodesVector(&nsps, *this);
 
         // resolve element QName (this is affected by in-scope namespaces!)
-        resolveQName(n.loc, n.pref->c_str(), NULL);
+        resolveQName(n.getLocation(), n.pref->c_str(), NULL);
 
         // then go through attributes declarations
         VisitNodesVector(&attrs, *this);
@@ -637,7 +637,7 @@ namespace sedna
 
                 if (attrs_names.find(name) != attrs_names.end())
                 {
-                    drv->error(a->loc, XQST0040, name + " is already defined");
+                    drv->error(a->getLocation(), XQST0040, name + " is already defined");
                     break;
                 }
                 else
@@ -658,7 +658,7 @@ namespace sedna
     {
         if (n.pref)
         {
-            resolveQName(n.loc, n.pref->c_str(), NULL);
+            resolveQName(n.getLocation(), n.pref->c_str(), NULL);
         }
         else
         {
@@ -692,7 +692,7 @@ namespace sedna
         if (n.expr)
             n.expr->accept(*this);
         else
-            drv->error(n.loc, XQST0079, NULL); // since we don't support any pragmas yet
+            drv->error(n.getLocation(), XQST0079, NULL); // since we don't support any pragmas yet
     }
 
     void Sema::visit(ASTFilterStep &n)
@@ -723,7 +723,7 @@ namespace sedna
             if (!found)
             {
                 if (!mod->xpdy0002)
-                    mod->xpdy0002 = &n.loc;
+                    mod->xpdy0002 = n.getLocationAddr();
                 return;
             }
         }
@@ -769,7 +769,7 @@ namespace sedna
 
             if (pos_name == for_name)
             {
-                drv->error(n.loc, XQST0089, pos_name);
+                drv->error(n.getLocation(), XQST0089, pos_name);
             }
         }
 
@@ -786,7 +786,7 @@ namespace sedna
         if (!n.uri)
         {
             // first, resolve the prefix
-            uri = resolveQName(n.loc, n.pref->c_str(), mod->defFuncNsp.first.c_str());
+            uri = resolveQName(n.getLocation(), n.pref->c_str(), mod->defFuncNsp.first.c_str());
 
             if (!uri) return;
 
@@ -800,13 +800,13 @@ namespace sedna
             // check if we've got only one argument
             if (!n.params || n.params->size() != 1)
             {
-                drv->error(n.loc, XPST0017, "constructor function must have exactly one argument");
+                drv->error(n.getLocation(), XPST0017, "constructor function must have exactly one argument");
                 return;
             }
 
             // create cast expression
-            ASTCast *cast = new ASTCast(n.loc, n.params->back(), new ASTTypeSingle(n.loc,
-                                        new ASTType(n.loc, new std::string(*n.pref + ":" + *n.local), ASTType::ATOMIC), ASTTypeSingle::OPT));
+            ASTCast *cast = new ASTCast(n.getLocation(), n.params->back(), new ASTTypeSingle(n.getLocation(),
+                                        new ASTType(n.getLocation(), new std::string(*n.pref + ":" + *n.local), ASTType::ATOMIC), ASTTypeSingle::OPT));
 
             // attach it instead of us
             modifyParent(cast, true, true);
@@ -846,7 +846,7 @@ namespace sedna
                     fun.min_arg = fun.max_arg = arity;
                     fun.int_name = "";
                     fun.decl = NULL;
-                    fun.loc = &n.loc;
+                    fun.loc = n.getLocationAddr();
                     fun.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
 
                     mod->unres_funcs[name + "/" + int2string(arity)] = fun;
@@ -874,7 +874,7 @@ namespace sedna
         if (!n.func_uri)
         {
             // first, resolve the prefix
-            uri = resolveQName(n.loc, n.pref->c_str(), mod->defFuncNsp.first.c_str());
+            uri = resolveQName(n.getLocation(), n.pref->c_str(), mod->defFuncNsp.first.c_str());
 
             if (!uri) return;
 
@@ -882,13 +882,13 @@ namespace sedna
 
             if (!strlen(uri))
             {
-                drv->error(n.loc, XQST0060, std::string("function '") + *n.pref + ((n.pref->size()) ? ":" : "") + *n.local + "' is in no namespace");
+                drv->error(n.getLocation(), XQST0060, std::string("function '") + *n.pref + ((n.pref->size()) ? ":" : "") + *n.local + "' is in no namespace");
                 return;
             }
 
             if (mod->module_uri && *mod->module_uri != *n.func_uri)
             {
-                drv->error(n.loc, XQST0048,
+                drv->error(n.getLocation(), XQST0048,
                             std::string("function '") + *n.pref + ((n.pref->size()) ? ":" : "") + *n.local + "' is not in the library module namespace " + *mod->module_uri);
 
                 return;
@@ -899,7 +899,7 @@ namespace sedna
                 *n.func_uri == "http://www.w3.org/2001/XMLSchema-instance" ||
                 *n.func_uri == "http://www.w3.org/2005/xpath-functions")
             {
-                drv->error(n.loc, XQST0045,
+                drv->error(n.getLocation(), XQST0045,
                             std::string("function '") + *n.pref + ((n.pref->size()) ? ":" : "") + *n.local + "' must not be in namespace " + *n.func_uri);
                 return;
             }
@@ -910,7 +910,7 @@ namespace sedna
         func.min_arg = func.max_arg = (n.params) ? n.params->size() : 0;
         func.int_name = "";
         func.decl = (n.body) ? &n : NULL;
-        func.loc = &n.loc;
+        func.loc = n.getLocationAddr();
         func.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
 
         name = CREATE_INTNAME(*n.func_uri, *n.local);
@@ -918,7 +918,7 @@ namespace sedna
         // check for clash in standard functions
         if (findFunction(name, func.min_arg, mod, drv))
         {
-            drv->error(n.loc, XQST0034,
+            drv->error(n.getLocation(), XQST0034,
                 std::string("function '") + *n.func_uri + ((n.func_uri->size() == 0) ? "" : ":") +
                         *n.local + "(" + int2string(func.min_arg) + ")' has been already declared");
 
@@ -933,7 +933,7 @@ namespace sedna
 
             if (drv->libFuncs.find(name_wa) != drv->libFuncs.end()) // function is being exported by another sub-module
             {
-                drv->error(n.loc, XQST0034,
+                drv->error(n.getLocation(), XQST0034,
                            std::string("function ") + name_wa + " has been already declared in another module with the same namespace");
             }
             else
@@ -957,7 +957,7 @@ namespace sedna
                 {
                     if (bound_vars[j].first == bound_vars[i].first)
                     {
-                        drv->error(n.loc, XQST0039, std::string("variable ") + bound_vars[j].first);
+                        drv->error(n.getLocation(), XQST0039, std::string("variable ") + bound_vars[j].first);
                         return;
                     }
                 }
@@ -994,7 +994,7 @@ namespace sedna
             }
 
         if (!found)
-            drv->error(n.loc, SE3069, n.priv->c_str());
+            drv->error(n.getLocation(), SE3069, n.priv->c_str());
     }
 
     void Sema::visit(ASTGrantRole &n)
@@ -1101,28 +1101,28 @@ namespace sedna
         if (n.name && (*n.name == "xml" || *n.name == "xmlns"))
         {
             err = std::string("'") + *n.name + "' cannot be used as a namespace in import module";
-            drv->error(n.loc, XQST0070, err.c_str());
+            drv->error(n.getLocation(), XQST0070, err.c_str());
             return;
         }
 
         if (*n.uri == "http://www.w3.org/XML/1998/namespace")
         {
-            drv->error(n.loc, XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as an import module URI");
+            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as an import module URI");
             return;
         }
 
         if (*n.uri == "")
         {
-            drv->error(n.loc, XQST0088, "import module URI cannot be empty");
+            drv->error(n.getLocation(), XQST0088, "import module URI cannot be empty");
             return;
         }
 
         // check for duplicate import
         if (mod->imported.find(*n.uri) != mod->imported.end())
         {
-            ASTLocation loc = mod->imported.find(*n.uri)->second->loc;
+            ASTLocation loc = mod->imported.find(*n.uri)->second->getLocation();
 
-            drv->error(n.loc, XQST0047, *n.uri + ", the first definition is at (" +
+            drv->error(n.getLocation(), XQST0047, *n.uri + ", the first definition is at (" +
                     int2string(loc.begin.line) + ":" + int2string(loc.begin.column) + ")");
             return;
         }
@@ -1139,11 +1139,11 @@ namespace sedna
                 err = std::string("'") + *n.name + "' is already defined at (" + int2string(it->second.second->begin.line) +
                         ":" + int2string(it->second.second->begin.column) + ")";
 
-                drv->error(n.loc, XQST0033, err.c_str());
+                drv->error(n.getLocation(), XQST0033, err.c_str());
                 return;
             }
             else
-                mod->nsBinds[*n.name] = nsPair(*n.uri, &n.loc);
+                mod->nsBinds[*n.name] = nsPair(*n.uri, n.getLocationAddr());
         }
 
         mod->imported[*n.uri] = &n;
@@ -1162,7 +1162,7 @@ namespace sedna
 
         if (drv->getLibraryModule(n.uri->c_str()))
         {
-            drv->error(n.loc, XQST0059, *n.uri);
+            drv->error(n.getLocation(), XQST0059, *n.uri);
         }
     }
 
@@ -1170,7 +1170,7 @@ namespace sedna
     {
         if (n.uri->size() == 0)
         {
-            drv->error(n.loc, XQST0088, "module declaration URI cannot be empty");
+            drv->error(n.getLocation(), XQST0088, "module declaration URI cannot be empty");
             return;
         }
 
@@ -1178,11 +1178,11 @@ namespace sedna
 
         if (*n.name == "xml" || *n.name == "xmlns")
         {
-            drv->error(n.loc, XQST0070, std::string("module declaration URI cannot be '") + *n.name + "'");
+            drv->error(n.getLocation(), XQST0070, std::string("module declaration URI cannot be '") + *n.name + "'");
             return;
         }
 
-        mod->nsBinds[*n.name] = nsPair(*n.uri, &n.loc);
+        mod->nsBinds[*n.name] = nsPair(*n.uri, n.getLocationAddr());
     }
 
     void Sema::visit(ASTNameTest &n)
@@ -1201,7 +1201,7 @@ namespace sedna
 
         if (!n.uri)
         {
-            uri = resolveQName(n.loc, n.pref->c_str(), (att_test) ? "" : NULL);
+            uri = resolveQName(n.getLocation(), n.pref->c_str(), (att_test) ? "" : NULL);
 
             if (uri)
                 n.uri = new std::string(uri);
@@ -1215,17 +1215,17 @@ namespace sedna
 
         if (*n.name == "xml")
         {
-            drv->error(n.loc, XQST0070, "'xml' cannot be used as a prefix");
+            drv->error(n.getLocation(), XQST0070, "'xml' cannot be used as a prefix");
             return;
         }
         else if (*n.name == "xmlns")
         {
-            drv->error(n.loc, XQST0070, "'xmlns' cannot be used as a prefix");
+            drv->error(n.getLocation(), XQST0070, "'xmlns' cannot be used as a prefix");
             return;
         }
         else if (*n.uri == "http://www.w3.org/XML/1998/namespace")
         {
-            drv->error(n.loc, XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as a namespace URI");
+            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as a namespace URI");
             return;
         }
 
@@ -1236,11 +1236,11 @@ namespace sedna
             err = std::string("'") + *n.name + "' is already defined at (" + int2string(it->second.second->begin.line) +
                     ":" + int2string(it->second.second->begin.column) + ")";
 
-            drv->error(n.loc, XQST0033, err.c_str());
+            drv->error(n.getLocation(), XQST0033, err.c_str());
             return;
         }
         else
-            mod->nsBinds[*n.name] = nsPair(*n.uri, &n.loc);
+            mod->nsBinds[*n.name] = nsPair(*n.uri, n.getLocationAddr());
     }
 
     void Sema::visit(ASTNodeTest &n)
@@ -1252,25 +1252,25 @@ namespace sedna
     {
         if (*n.name == "xmlns")
         {
-            drv->error(n.loc, XQST0070, std::string("'") + *n.name + "' cannot be used as a namespace prefix");
+            drv->error(n.getLocation(), XQST0070, std::string("'") + *n.name + "' cannot be used as a namespace prefix");
             return;
         }
 
         if (*n.name == "xml" && n.cont && *n.cont != "http://www.w3.org/XML/1998/namespace")
         {
-            drv->error(n.loc, XQST0070, "prefix 'xml' cannot be bind to namespace other than '\"http://www.w3.org/XML/1998/namespace\"'");
+            drv->error(n.getLocation(), XQST0070, "prefix 'xml' cannot be bind to namespace other than '\"http://www.w3.org/XML/1998/namespace\"'");
             return;
         }
 
         if (*n.name != "xml" && n.cont && *n.cont == "http://www.w3.org/XML/1998/namespace")
         {
-            drv->error(n.loc, XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as a namespace URI");
+            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as a namespace URI");
             return;
         }
 
         if (*n.name != "" && !n.cont)
         {
-            drv->error(n.loc, XQST0085, std::string("namespace URI for '") + *n.name + "' is a zero-length string");
+            drv->error(n.getLocation(), XQST0085, std::string("namespace URI for '") + *n.name + "' is a zero-length string");
             return;
         }
 
@@ -1280,26 +1280,26 @@ namespace sedna
 
             if (loc != NULL)
             {
-                drv->error(n.loc, XQST0071,
+                drv->error(n.getLocation(), XQST0071,
                            std::string("default namespace has been declared at (") + int2string(loc->begin.line) + ":" + int2string(loc->begin.column) + ")");
                 return;
             }
             else
             {
-                elemNsps.back().second = nsPair((n.cont) ? *n.cont : "", &n.loc);
+                elemNsps.back().second = nsPair((n.cont) ? *n.cont : "", n.getLocationAddr());
             }
         }
         else
         {
             if (elemNsps.back().first.find(*n.name) == elemNsps.back().first.end())
             {
-                elemNsps.back().first[*n.name] = nsPair(*n.cont, &n.loc);
+                elemNsps.back().first[*n.name] = nsPair(*n.cont, n.getLocationAddr());
             }
             else
             {
                 ASTLocation *loc = elemNsps.back().first[*n.name].second;
 
-                drv->error(n.loc, XQST0071, std::string("namespace '") + *n.name + "' has been declared at (" +
+                drv->error(n.getLocation(), XQST0071, std::string("namespace '") + *n.name + "' has been declared at (" +
                         int2string(loc->begin.line) + ":" + int2string(loc->begin.column) + ")");
                 return;
             }
@@ -1313,11 +1313,11 @@ namespace sedna
 
         if (*n.pref == "")
         {
-            drv->error(n.loc, XPST0081, "QName must be prefixed in option declaration");
+            drv->error(n.getLocation(), XPST0081, "QName must be prefixed in option declaration");
             return;
         }
 
-        uri = resolveQName(n.loc, n.pref->c_str(), "");
+        uri = resolveQName(n.getLocation(), n.pref->c_str(), "");
 
         if (uri == NULL)
             return;
@@ -1329,7 +1329,7 @@ namespace sedna
         if (*n.uri == "http://www.modis.ispras.ru/sedna" && *n.local == "output")
         {
             // parse options string; if error it will be signaled by the function
-            parseOption(n.loc, *n.opt, *n.options, ';');
+            parseOption(n.getLocation(), *n.opt, *n.options, ';');
 
             for (unsigned int i = 0; i < n.options->size(); i++)
             {
@@ -1339,21 +1339,21 @@ namespace sedna
                 if (key == "indent")
                 {
                     if (val != "yes" && val != "no")
-                        drv->error(n.loc, SE5072, val.c_str());
+                        drv->error(n.getLocation(), SE5072, val.c_str());
                 }
                 else if (key == "method")
                 {
                     if (val != "xml" && val != "html")
-                        drv->error(n.loc, SE5071, val.c_str());
+                        drv->error(n.getLocation(), SE5071, val.c_str());
                 }
                 else
-                    drv->error(n.loc, SE5068, key.c_str());
+                    drv->error(n.getLocation(), SE5068, key.c_str());
             }
         }
         else if (*n.uri == "http://www.modis.ispras.ru/sedna" && *n.local == "character-map")
         {
             // parse options string; if error it will be signaled by the function
-            parseOption(n.loc, *n.opt, *n.options, '!');
+            parseOption(n.getLocation(), *n.opt, *n.options, '!');
 
             for (unsigned int i = 0; i < n.options->size(); i++)
             {
@@ -1375,13 +1375,13 @@ namespace sedna
         if (dupLocations[PrologOrder])
         {
             loc = DIAG_DUP_PROLOG(dupLocations[PrologOrder]->begin.line, dupLocations[PrologOrder]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
+                                n.getLocation().begin.line, n.getLocation().begin.column);
 
-            drv->error(n.loc, XQST0065, loc.c_str());
+            drv->error(n.getLocation(), XQST0065, loc.c_str());
         }
         else
         {
-            dupLocations[PrologOrder] = &n.loc;
+            dupLocations[PrologOrder] = n.getLocationAddr();
         }
     }
 
@@ -1434,13 +1434,13 @@ namespace sedna
         if (dupLocations[PrologOrderEmpty])
         {
             loc = DIAG_DUP_PROLOG(dupLocations[PrologOrderEmpty]->begin.line, dupLocations[PrologOrderEmpty]->begin.column,
-                                n.loc.begin.line, n.loc.begin.column);
+                                n.getLocation().begin.line, n.getLocation().begin.column);
 
-            drv->error(n.loc, XQST0069, loc.c_str());
+            drv->error(n.getLocation(), XQST0069, loc.c_str());
         }
         else
         {
-            dupLocations[PrologOrderEmpty] = &n.loc;
+            dupLocations[PrologOrderEmpty] = n.getLocationAddr();
         }
     }
 
@@ -1473,7 +1473,7 @@ namespace sedna
     {
         if (n.ncname && n.ncname->size() == 3 && toupper((*n.ncname)[0]) == 'X' && toupper((*n.ncname)[1]) == 'M' && toupper((*n.ncname)[2]) == 'L')
         {
-            drv->error(n.loc, XQDY0064, std::string("reserved processing instruction name: '") + *n.ncname + "'");
+            drv->error(n.getLocation(), XQDY0064, std::string("reserved processing instruction name: '") + *n.ncname + "'");
         }
         else if (!n.ncname)
         {
@@ -1488,7 +1488,7 @@ namespace sedna
     {
         if (n.name->size() == 3 && toupper((*n.name)[0]) == 'X' && toupper((*n.name)[1]) == 'M' && toupper((*n.name)[2]) == 'L')
         {
-            drv->error(n.loc, XPST0003, std::string("reserved processing instruction name: '") + *n.name + "'");
+            drv->error(n.getLocation(), XPST0003, std::string("reserved processing instruction name: '") + *n.name + "'");
         }
     }
 
@@ -1506,11 +1506,11 @@ namespace sedna
     {
         if (*n.pref == "")
         {
-            drv->error(n.loc, XPST0081, "pragma QName must be prefixed");
+            drv->error(n.getLocation(), XPST0081, "pragma QName must be prefixed");
             return;
         }
 
-        resolveQName(n.loc, n.pref->c_str(), "");
+        resolveQName(n.getLocation(), n.pref->c_str(), "");
     }
 
     void Sema::visit(ASTProlog &n)
@@ -1582,7 +1582,7 @@ namespace sedna
         }
 
         if (!found)
-            drv->error(n.loc, SE3069, n.priv->c_str());
+            drv->error(n.getLocation(), SE3069, n.priv->c_str());
     }
 
     void Sema::visit(ASTRevokeRole &n)
@@ -1596,14 +1596,14 @@ namespace sedna
         n.name->accept(*this);
         att_test = false;
 
-        drv->error(n.loc, XPST0008, "there is no schema to test");
+        drv->error(n.getLocation(), XPST0008, "there is no schema to test");
     }
 
     void Sema::visit(ASTSchemaElemTest &n)
     {
         n.name->accept(*this);
 
-        drv->error(n.loc, XPST0008, "there is no schema to test");
+        drv->error(n.getLocation(), XPST0008, "there is no schema to test");
     }
 
     void Sema::visit(ASTSeq &n)
@@ -1641,7 +1641,7 @@ namespace sedna
 
         ASTParseQName(n.name, &pref, &loc);
 
-        uri = resolveQName(n.loc, pref->c_str(), NULL);
+        uri = resolveQName(n.getLocation(), pref->c_str(), NULL);
 
         if (uri == NULL)
         {
@@ -1656,12 +1656,12 @@ namespace sedna
             if (n.type == ASTType::ATOMIC)
             {
                 err = std::string("unknown atomic type: ") + *n.name;
-                drv->error(n.loc, XPST0051, err.c_str());
+                drv->error(n.getLocation(), XPST0051, err.c_str());
             }
             else
             {
                 err = std::string("unknown type: ") + *n.name;
-                drv->error(n.loc, XPST0008, err.c_str());
+                drv->error(n.getLocation(), XPST0008, err.c_str());
             }
 
             delete pref;
@@ -1677,12 +1677,12 @@ namespace sedna
             if (n.type == ASTType::ATOMIC)
             {
                 err = std::string("unknown atomic type: ") + *n.name;
-                drv->error(n.loc, XPST0051, err.c_str());
+                drv->error(n.getLocation(), XPST0051, err.c_str());
             }
             else
             {
                 err = std::string("unknown type: ") + *n.name;
-                drv->error(n.loc, XPST0008, err.c_str());
+                drv->error(n.getLocation(), XPST0008, err.c_str());
             }
 
             delete pref;
@@ -1693,7 +1693,7 @@ namespace sedna
 
         if (casting_mode && !strcmp(uri, "http://www.w3.org/2001/XMLSchema") && (*loc == "anyAtomicType" || *loc == "NOTATION"))
         {
-            drv->error(n.loc, XPST0080, std::string("cannot use 'xs:") + *loc + "' in casting");
+            drv->error(n.getLocation(), XPST0080, std::string("cannot use 'xs:") + *loc + "' in casting");
         }
 
         delete pref;
@@ -1820,7 +1820,7 @@ namespace sedna
         // resolve prefix
         if (n.uri == NULL)
         {
-            uri = resolveQName(n.loc, n.pref->c_str(), "");
+            uri = resolveQName(n.getLocation(), n.pref->c_str(), "");
 
             if (uri == NULL) return;
 
@@ -1852,7 +1852,7 @@ namespace sedna
         if (*n.local == "$%v")
         {
             if (!mod->xpdy0002)
-                mod->xpdy0002 = &n.loc;
+                mod->xpdy0002 = n.getLocationAddr();
             return;
         }
 
@@ -1880,7 +1880,7 @@ namespace sedna
         }
 
         // ww've looked everywhere we could
-        drv->error(n.loc, XPST0008, name);
+        drv->error(n.getLocation(), XPST0008, name);
     }
 
     void Sema::visit(ASTVarDecl &n)
@@ -1896,7 +1896,7 @@ namespace sedna
 
         if (var->uri == NULL)
         {
-            uri = resolveQName(n.loc, var->pref->c_str(), "");
+            uri = resolveQName(n.getLocation(), var->pref->c_str(), "");
 
             if (uri == NULL) return;
 
@@ -1912,7 +1912,7 @@ namespace sedna
         {
             err = std::string("variable '") + *var->pref + ":" + *var->local + "' is not in the library module namespace " + *mod->module_uri;
 
-            drv->error(n.loc, XQST0048, err.c_str());
+            drv->error(n.getLocation(), XQST0048, err.c_str());
 
             return;
         }
@@ -1921,7 +1921,7 @@ namespace sedna
 
         if (!is_imported && mod->vars.find(name) != mod->vars.end())
         {
-            drv->error(var->loc, XQST0049,
+            drv->error(var->getLocation(), XQST0049,
                     std::string("variable '") + *var->uri + ((var->uri->size() == 0) ? "" : ":") + *var->local + "' has already been declared");
 
             return;
@@ -1929,7 +1929,7 @@ namespace sedna
 
         if (!is_imported && drv->libVars.find(name) != drv->libVars.end())
         {
-            drv->error(var->loc, XQST0049,
+            drv->error(var->getLocation(), XQST0049,
                     std::string("variable '") + *var->uri + ((var->uri->size() == 0) ? "" : ":") + *var->local + "' has already been declared in another module");
 
             return;
@@ -1939,7 +1939,7 @@ namespace sedna
         // checking afterwards
         // external variables ar not supported for now
         if (n.expr == NULL)
-            drv->error(n.loc, SE5012, "external variables are not supported in Sedna");
+            drv->error(n.getLocation(), SE5012, "external variables are not supported in Sedna");
         else
             n.expr->accept(*this);
 
@@ -1954,12 +1954,12 @@ namespace sedna
     {
         if (*n.xq_version != "1.0")
         {
-            drv->error(n.loc, XQST0031, n.xq_version->c_str());
+            drv->error(n.getLocation(), XQST0031, n.xq_version->c_str());
         }
 
         if (n.encoding && !checkXQueryEncoding(n.encoding->c_str()))
         {
-            drv->error(n.loc, XQST0087, std::string("'") + *n.encoding + "'");
+            drv->error(n.getLocation(), XQST0087, std::string("'") + *n.encoding + "'");
         }
     }
 
@@ -1994,7 +1994,7 @@ namespace sedna
     //      def_uri -- if prefix "" then use it; if it is NULL default element namespace is searched
     // Returns:
     //      uri if found, NULL if not (or prefix is "")
-    const char *Sema::resolveQName(ASTLocation &loc, const char *pref, const char *def_uri, int err_code)
+    const char *Sema::resolveQName(const ASTLocation &loc, const char *pref, const char *def_uri, int err_code)
     {
         nsBindType::const_iterator it;
 
@@ -2162,9 +2162,9 @@ namespace sedna
             l = dynamic_cast<ASTLit *>((*n.params)[2]);
 
             if (!l || l->type != ASTLit::STRING || (*l->lit != "GT" && *l->lit != "LT" && *l->lit != "GE" && *l->lit != "LE" && *l->lit != "EQ"))
-                drv->error(n.loc, SE5050, "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)");
+                drv->error(n.getLocation(), SE5050, "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)");
 
-            ddo = new ASTDDO(n.loc, &n);
+            ddo = new ASTDDO(n.getLocation(), &n);
             modifyParent(ddo, false, false);
         }
         else if (name == "!fn!index-scan-between")
@@ -2174,14 +2174,14 @@ namespace sedna
             l = dynamic_cast<ASTLit *>((*n.params)[3]);
 
             if (!l || l->type != ASTLit::STRING || (*l->lit != "INT" && *l->lit != "SEG" && *l->lit != "HINTL" && *l->lit != "HINTR"))
-                drv->error(n.loc, SE5051, "index scan condition must be predefined string constant (INT, SEG, HINTL or HINTR)");
+                drv->error(n.getLocation(), SE5051, "index scan condition must be predefined string constant (INT, SEG, HINTL or HINTR)");
 
-            ddo = new ASTDDO(n.loc, &n);
+            ddo = new ASTDDO(n.getLocation(), &n);
             modifyParent(ddo, false, false);
         }
         else if (name == "!fn!ftindex-scan" || name == "!fn!ftindex-scan2")
         {
-            ddo = new ASTDDO(n.loc, &n);
+            ddo = new ASTDDO(n.getLocation(), &n);
             modifyParent(ddo, false, false);
         }
         else if (name == "!fn!name" || name == "!fn!namespace-uri" || name == "!fn!string-length" || name == "!fn!normalize-space" ||
@@ -2195,12 +2195,12 @@ namespace sedna
                 {
                     ASTNodesVector *params = new ASTNodesVector();
 
-                    params->push_back(new ASTVar(n.loc, new std::string("$%v")));
-                    n.params->push_back(new ASTFunCall(n.loc, new std::string("fn:string"), params));
+                    params->push_back(new ASTVar(n.getLocation(), new std::string("$%v")));
+                    n.params->push_back(new ASTFunCall(n.getLocation(), new std::string("fn:string"), params));
                 }
                 else
                 {
-                    n.params->push_back(new ASTVar(n.loc, new std::string("$%v")));
+                    n.params->push_back(new ASTVar(n.getLocation(), new std::string("$%v")));
                 }
 
                 n.params->back()->accept(*this);
@@ -2209,7 +2209,7 @@ namespace sedna
         else if (name == "!fn!position" || name == "!fn!last")
         {
             n.params = new ASTNodesVector();
-            n.params->push_back(new ASTVar(n.loc, new std::string("$%v")));
+            n.params->push_back(new ASTVar(n.getLocation(), new std::string("$%v")));
 
             n.params->back()->accept(*this);
         }
@@ -2228,7 +2228,7 @@ namespace sedna
                 }
                 else
                 {
-                    drv->error(n.loc, FOCH0002, (l && l->type == ASTLit::STRING) ? *l->lit + " in fn:contains" : "fn:contains");
+                    drv->error(n.getLocation(), FOCH0002, (l && l->type == ASTLit::STRING) ? *l->lit + " in fn:contains" : "fn:contains");
                 }
             }
         }
@@ -2239,7 +2239,7 @@ namespace sedna
             std::string lang_query;
 
             if (n.params->size() == 1)
-                param = new ASTVar(n.loc, new std::string("$%v"));
+                param = new ASTVar(n.getLocation(), new std::string("$%v"));
             else
                 param = (*n.params)[1];
 
@@ -2285,7 +2285,7 @@ namespace sedna
             std::string id_query;
 
             if (n.params->size() == 1)
-                param = new ASTVar(n.loc, new std::string("$%v"));
+                param = new ASTVar(n.getLocation(), new std::string("$%v"));
             else
                 param = (*n.params)[1];
 
@@ -2332,7 +2332,7 @@ namespace sedna
             std::string idref_query;
 
             if (n.params->size() == 1)
-                param = new ASTVar(n.loc, new std::string("$%v"));
+                param = new ASTVar(n.getLocation(), new std::string("$%v"));
             else
                 param = (*n.params)[1];
 
@@ -2380,7 +2380,7 @@ namespace sedna
         {
             if (f->params->size() == 2)
             {
-                drv->error(f->loc, SE5049, "document in collection instead of collection is not permitted in on-XPath");
+                drv->error(f->getLocation(), SE5049, "document in collection instead of collection is not permitted in on-XPath");
                 return NULL;
             }
 
@@ -2388,7 +2388,7 @@ namespace sedna
         }
         else if (f)
         {
-            drv->error(f->loc, SE5049, std::string("function call ") + *f->pref + ((*f->pref == "") ? "" : ":") +
+            drv->error(f->getLocation(), SE5049, std::string("function call ") + *f->pref + ((*f->pref == "") ? "" : ":") +
                     *f->local + " is not permitted in on-XPath");
             return NULL;
         }
@@ -2407,20 +2407,20 @@ namespace sedna
                 case ASTAxisStep::SELF:
                     if (a->preds)
                     {
-                        drv->error(a->loc, SE5049, std::string("predicates are not permitted in on-XPath in this statement"));
+                        drv->error(a->getLocation(), SE5049, std::string("predicates are not permitted in on-XPath in this statement"));
                         return NULL;
                     }
 
                     if (!a->cont)
                     {
-                        drv->error(a->loc, SE5049, "on-XPath must start with fn:doc or fn:collection");
+                        drv->error(a->getLocation(), SE5049, "on-XPath must start with fn:doc or fn:collection");
                         return NULL;
                     }
 
                     return Sema::getDocCollFromAbsXPath(a->cont);
                     break;
                 default:
-                    drv->error(a->loc, SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on-XPath");
+                    drv->error(a->getLocation(), SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on-XPath");
                     return NULL;
             }
         }
@@ -2429,20 +2429,20 @@ namespace sedna
         {
             if (f->expr || f->preds)
             {
-                drv->error(f->loc, SE5049, std::string("filter steps are not permitted in on-XPath in this statement"));
+                drv->error(f->getLocation(), SE5049, std::string("filter steps are not permitted in on-XPath in this statement"));
                 return NULL;
             }
 
             if (!f->cont)
             {
-                drv->error(f->loc, SE5049, "on-XPath must start with fn:doc or fn:collection");
+                drv->error(f->getLocation(), SE5049, "on-XPath must start with fn:doc or fn:collection");
                 return NULL;
             }
 
             return Sema::getDocCollFromAbsXPath(f->cont);
         }
 
-        drv->error(path->loc, SE5049, "incorrect on-XPath");
+        drv->error(path->getLocation(), SE5049, "incorrect on-XPath");
 
         return NULL;
     }
@@ -2467,13 +2467,13 @@ namespace sedna
                 case ASTAxisStep::ATTRIBUTE:
                 case ASTAxisStep::SELF:
                     if (a->preds)
-                        drv->error(a->loc, SE5049, std::string("predicates are not permitted in by-XPath in create index statement"));
+                        drv->error(a->getLocation(), SE5049, std::string("predicates are not permitted in by-XPath in create index statement"));
                     else
                         a->cont = Sema::modifyRelIndexXPath(a->cont, doccoll);
 
                     break;
                 default:
-                    drv->error(a->loc, SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in by-XPath in create index statement");
+                    drv->error(a->getLocation(), SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in by-XPath in create index statement");
                     break;
             }
         }
@@ -2481,7 +2481,7 @@ namespace sedna
         {
             if (f->expr || f->preds)
             {
-                drv->error(a->loc, SE5049, std::string("filter steps are not permitted in by-XPath in this statement"));
+                drv->error(a->getLocation(), SE5049, std::string("filter steps are not permitted in by-XPath in this statement"));
             }
             else
             {
@@ -2490,7 +2490,7 @@ namespace sedna
         }
         else
         {
-            drv->error(path->loc, SE5049, "incorrect by-XPath in create index statement");
+            drv->error(path->getLocation(), SE5049, "incorrect by-XPath in create index statement");
         }
 
         return path;
@@ -2537,7 +2537,7 @@ namespace sedna
                         }
                         else
                         {
-                            drv->error(a->loc, SE3207, "trigger path should end with element or attribute test");
+                            drv->error(a->getLocation(), SE3207, "trigger path should end with element or attribute test");
                             return;
                         }
                     }
@@ -2555,7 +2555,7 @@ namespace sedna
                     }
                     else
                     {
-                        *t_path = new ASTAxisStep(a->loc, ASTAxisStep::DESCENDANT_OR_SELF, new ASTElementTest(a->loc), NULL);
+                        *t_path = new ASTAxisStep(a->getLocation(), ASTAxisStep::DESCENDANT_OR_SELF, new ASTElementTest(a->getLocation()), NULL);
                         static_cast<ASTAxisStep *>(*t_path)->setContext(a->cont->dup());
                         static_cast<ASTAxisStep *>(*t_path)->setAsLast();
                     }
@@ -2563,13 +2563,13 @@ namespace sedna
                     break;
 
                 default:
-                    drv->error(a->loc, SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on XPath in the statement");
+                    drv->error(a->getLocation(), SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on XPath in the statement");
                     break;
             }
         }
         else
         {
-            drv->error(path->loc, SE5049, "incorrect on-XPath in the statement");
+            drv->error(path->getLocation(), SE5049, "incorrect on-XPath in the statement");
         }
     }
 

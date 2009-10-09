@@ -27,7 +27,7 @@ ASTNode *ASTAttr::dup()
 {
     ASTAttr *res;
 
-    res = new ASTAttr(loc, new std::string(*pref), new std::string(*local), duplicateASTNodes(cont));
+    res = new ASTAttr(cd, new std::string(*pref), new std::string(*local), duplicateASTNodes(cont));
 
     if (uri)
         res->uri = new std::string(*uri);
@@ -38,19 +38,19 @@ ASTNode *ASTAttr::dup()
 ASTNode *ASTAttr::createNode(scheme_list &sl)
 {
     std::string *pref = NULL, *local = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *cont = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     pref = new std::string(sl[2].internal.str);
     local = new std::string(sl[3].internal.str);
 
     cont = dsGetASTNodesFromSList(*sl[4].internal.list);
 
-    return new ASTAttr(loc, pref, local, cont);
+    return new ASTAttr(cd, pref, local, cont);
 }
 
 void ASTAttr::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -48,7 +48,7 @@ ASTNode *ASTFor::dup()
 {
     ASTFor *res;
 
-    res = new ASTFor(loc, tv->dup(), (pv) ? pv->dup() : NULL, expr->dup());
+    res = new ASTFor(cd, tv->dup(), (pv) ? pv->dup() : NULL, expr->dup());
 
     if (fd)
         res->setNextExpr(fd->dup());
@@ -58,19 +58,19 @@ ASTNode *ASTFor::dup()
 
 ASTNode *ASTFor::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *tv = NULL, *pv = NULL, *expr = NULL, *fd = NULL;
     ASTFor *res;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     tv = dsGetASTFromSchemeList(*sl[2].internal.list);
     pv = dsGetASTFromSchemeList(*sl[3].internal.list);
     expr = dsGetASTFromSchemeList(*sl[4].internal.list);
     fd = dsGetASTFromSchemeList(*sl[5].internal.list);
 
-    res = new ASTFor(loc, tv, pv, expr);
+    res = new ASTFor(cd, tv, pv, expr);
 
     res->setNextExpr(fd);
 

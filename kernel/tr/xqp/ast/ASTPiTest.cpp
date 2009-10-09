@@ -22,18 +22,18 @@ void ASTPiTest::accept(ASTVisitor &v)
 
 ASTNode *ASTPiTest::dup()
 {
-    return new ASTPiTest(loc, (test) ? new std::string(*test) : NULL, type);
+    return new ASTPiTest(cd, (test) ? new std::string(*test) : NULL, type);
 }
 
 ASTNode *ASTPiTest::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *test = NULL;
     TypeTest type;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     type = TypeTest(atol(sl[2].internal.num));
 
     if (type != NONE)
@@ -42,7 +42,7 @@ ASTNode *ASTPiTest::createNode(scheme_list &sl)
         test = new std::string(sl[3].internal.str);
     }
 
-    return new ASTPiTest(loc, test, type);
+    return new ASTPiTest(cd, test, type);
 }
 
 void ASTPiTest::modifyChild(const ASTNode *oldc, ASTNode *newc)

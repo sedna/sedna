@@ -23,21 +23,21 @@ void ASTTreat::accept(ASTVisitor &v)
 
 ASTNode *ASTTreat::dup()
 {
-    return new ASTTreat(loc, expr->dup(), type->dup());
+    return new ASTTreat(cd, expr->dup(), type->dup());
 }
 
 ASTNode *ASTTreat::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *expr = NULL, *type = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
     type = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    return new ASTTreat(loc, expr, type);
+    return new ASTTreat(cd, expr, type);
 }
 
 void ASTTreat::modifyChild(const ASTNode *oldc, ASTNode *newc)

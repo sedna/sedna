@@ -20,8 +20,8 @@ public:
     ASTNode *fd;  // expression for the next forlet-clause representation; may be for, return, where expressions; NULL at start; not NULL after Bison
 
 public:
-    ASTLet(ASTLocation &loc, ASTNode *var, ASTNode *let_expr) : ASTNode(loc), tv(var), expr(let_expr), fd(NULL) {}
-    ASTLet(ASTLocation &loc, ASTNode *var, ASTNode *let_expr, ASTNode *fd_expr) : ASTNode(loc), tv(var), expr(let_expr), fd(fd_expr)
+    ASTLet(const ASTNodeCommonData &loc, ASTNode *var, ASTNode *let_expr) : ASTNode(loc), tv(var), expr(let_expr), fd(NULL) {}
+    ASTLet(const ASTNodeCommonData &loc, ASTNode *var, ASTNode *let_expr, ASTNode *fd_expr) : ASTNode(loc), tv(var), expr(let_expr), fd(fd_expr)
     {
         if (var == NULL)
             tv = new ASTVar(loc, new std::string("dummy-var"));

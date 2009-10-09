@@ -18,7 +18,7 @@ public:
     ASTNode *type; // ASTTypeSeq
 
 public:
-    ASTInstOf(ASTLocation &loc, ASTNode *inst_expr, ASTNode *inst_type) : ASTNode(loc), expr(inst_expr), type(inst_type) {}
+    ASTInstOf(const ASTNodeCommonData &loc, ASTNode *inst_expr, ASTNode *inst_type) : ASTNode(loc), expr(inst_expr), type(inst_type) {}
     ~ASTInstOf();
 
     void accept(ASTVisitor &v);

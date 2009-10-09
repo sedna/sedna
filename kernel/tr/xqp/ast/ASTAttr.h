@@ -20,14 +20,14 @@ public:
     std::string *uri; // added by sema; just cached uri, don't need to serialize
 
 public:
-    ASTAttr(ASTLocation &loc, std::string *name, ASTNodesVector *cont_ = NULL) : ASTNode(loc), cont(cont_), uri(NULL)
+    ASTAttr(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *cont_ = NULL) : ASTNode(loc), cont(cont_), uri(NULL)
     {
         ASTParseQName(name, &pref, &local);
 
         delete name;
     }
 
-    ASTAttr(ASTLocation &loc, std::string *elem_pref, std::string *elem_local, ASTNodesVector *cont_ = NULL) :
+    ASTAttr(const ASTNodeCommonData &loc, std::string *elem_pref, std::string *elem_local, ASTNodesVector *cont_ = NULL) :
             ASTNode(loc),
             pref(elem_pref),
             local(elem_local),

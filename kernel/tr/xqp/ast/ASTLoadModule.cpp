@@ -22,22 +22,22 @@ void ASTLoadModule::accept(ASTVisitor &v)
 
 ASTNode *ASTLoadModule::dup()
 {
-    return new ASTLoadModule(loc, duplicateASTStringVector(modules), mod);
+    return new ASTLoadModule(cd, duplicateASTStringVector(modules), mod);
 }
 
 ASTNode *ASTLoadModule::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTStringVector *modules = NULL;
     LoadMod type;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     modules = dsGetASTStringsFromSList(*sl[2].internal.list);
     type = LoadMod(atol(sl[3].internal.num));
 
-    return new ASTLoadModule(loc, modules, type);
+    return new ASTLoadModule(cd, modules, type);
 }
 
 void ASTLoadModule::modifyChild(const ASTNode *oldc, ASTNode *newc)

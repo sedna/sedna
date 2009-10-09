@@ -33,7 +33,7 @@ public:
     OccurMod mod; // '?', '*', '+'
 
 public:
-    ASTTypeSeq(ASTLocation &loc, ASTNode *type, ASTTypeSeq::OccurMod omod = ONE) : ASTNode(loc), type_test(type), mod(omod) {}
+    ASTTypeSeq(const ASTNodeCommonData &loc, ASTNode *type, ASTTypeSeq::OccurMod omod = ONE) : ASTNode(loc), type_test(type), mod(omod) {}
 
     ~ASTTypeSeq();
 

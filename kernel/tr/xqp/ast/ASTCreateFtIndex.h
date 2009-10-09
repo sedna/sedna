@@ -18,7 +18,7 @@ public:
     std::string *type;
 
 public:
-    ASTCreateFtIndex(ASTLocation &loc, ASTNode *name_, ASTNode *path_, std::string *type_, ASTNode *cust_expr_ = NULL) :
+    ASTCreateFtIndex(const ASTNodeCommonData &loc, ASTNode *name_, ASTNode *path_, std::string *type_, ASTNode *cust_expr_ = NULL) :
         ASTNode(loc),
         name(name_),
         path(path_),

@@ -22,7 +22,7 @@ public:
     LoadMod mod;
 
 public:
-    ASTLoadModule(ASTLocation &loc, ASTStringVector *mods, LoadMod mod_) : ASTNode(loc), modules(mods), mod(mod_) {}
+    ASTLoadModule(const ASTNodeCommonData &loc, ASTStringVector *mods, LoadMod mod_) : ASTNode(loc), modules(mods), mod(mod_) {}
 
     ~ASTLoadModule();
 

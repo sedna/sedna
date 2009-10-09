@@ -19,7 +19,7 @@ public:
     ASTNode *var; // ASTVar
 
 public:
-    ASTTypeVar(ASTLocation &loc, ASTNode *typep, ASTNode *vard) : ASTNode(loc), type(typep), var(vard) {}
+    ASTTypeVar(const ASTNodeCommonData &loc, ASTNode *typep, ASTNode *vard) : ASTNode(loc), type(typep), var(vard) {}
 
     ~ASTTypeVar();
 

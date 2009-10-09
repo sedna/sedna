@@ -17,7 +17,7 @@ public:
     std::string *role, *role_to;
 
 public:
-    ASTGrantRole(ASTLocation &loc, std::string *r, std::string *rt) : ASTNode(loc), role(r), role_to(rt) {}
+    ASTGrantRole(const ASTNodeCommonData &loc, std::string *r, std::string *rt) : ASTNode(loc), role(r), role_to(rt) {}
 
     ~ASTGrantRole();
 

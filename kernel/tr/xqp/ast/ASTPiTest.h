@@ -23,8 +23,8 @@ public:
     TypeTest type;
 
 public:
-    ASTPiTest(ASTLocation &loc, std::string *test_, TypeTest type_) : ASTNode(loc), test(test_), type(type_) {}
-    ASTPiTest(ASTLocation &loc) : ASTNode(loc), test(NULL), type(NONE) {}
+    ASTPiTest(const ASTNodeCommonData &loc, std::string *test_, TypeTest type_) : ASTNode(loc), test(test_), type(type_) {}
+    ASTPiTest(const ASTNodeCommonData &loc) : ASTNode(loc), test(NULL), type(NONE) {}
 
     ~ASTPiTest();
 

@@ -17,7 +17,7 @@ public:
     std::string *trg;
 
 public:
-    ASTDropTrg(ASTLocation &loc, std::string *trg_) : ASTNode(loc), trg(trg_) {}
+    ASTDropTrg(const ASTNodeCommonData &loc, std::string *trg_) : ASTNode(loc), trg(trg_) {}
 
     ~ASTDropTrg();
 

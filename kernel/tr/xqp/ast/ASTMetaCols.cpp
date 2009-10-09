@@ -17,20 +17,20 @@ void ASTMetaCols::accept(ASTVisitor &v)
 
 ASTNode *ASTMetaCols::dup()
 {
-    return new ASTMetaCols(loc, need_stats);
+    return new ASTMetaCols(cd, need_stats);
 }
 
 ASTNode *ASTMetaCols::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     bool mod;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_BOOL);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     mod = sl[2].internal.b;
 
-    return new ASTMetaCols(loc, mod);
+    return new ASTMetaCols(cd, mod);
 }
 
 void ASTMetaCols::modifyChild(const ASTNode *oldc, ASTNode *newc)

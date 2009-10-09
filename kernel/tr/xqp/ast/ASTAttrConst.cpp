@@ -26,20 +26,20 @@ void ASTAttrConst::accept(ASTVisitor &v)
 ASTNode *ASTAttrConst::dup()
 {
     if (pref)
-        return new ASTAttrConst(loc, new std::string(*pref), new std::string(*local), (expr) ? expr->dup() : NULL);
+        return new ASTAttrConst(cd, new std::string(*pref), new std::string(*local), (expr) ? expr->dup() : NULL);
 
-    return new ASTAttrConst(loc, name->dup(), (expr) ? expr->dup() : NULL);
+    return new ASTAttrConst(cd, name->dup(), (expr) ? expr->dup() : NULL);
 }
 
 ASTNode *ASTAttrConst::createNode(scheme_list &sl)
 {
     std::string *pref = NULL, *local = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *name = NULL, *expr = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     if (sl[2].type == SCM_LIST) // computed name
     {
@@ -48,7 +48,7 @@ ASTNode *ASTAttrConst::createNode(scheme_list &sl)
         U_ASSERT(sl[3].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-        return new ASTAttrConst(loc, name, expr);
+        return new ASTAttrConst(cd, name, expr);
     }
     else
     {
@@ -60,7 +60,7 @@ ASTNode *ASTAttrConst::createNode(scheme_list &sl)
         U_ASSERT(sl[4].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-        return new ASTAttrConst(loc, pref, local, expr);
+        return new ASTAttrConst(cd, pref, local, expr);
     }
 }
 

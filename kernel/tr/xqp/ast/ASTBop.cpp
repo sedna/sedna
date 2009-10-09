@@ -23,24 +23,24 @@ void ASTBop::accept(ASTVisitor &v)
 
 ASTNode* ASTBop::dup()
 {
-    return new ASTBop(loc, op, lop->dup(), rop->dup());
+    return new ASTBop(cd, op, lop->dup(), rop->dup());
 }
 
 ASTNode *ASTBop::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *lop = NULL, *rop = NULL;
     Oper op;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     op = Oper(atoi(sl[2].internal.num));
 
     lop = dsGetASTFromSchemeList(*sl[3].internal.list);
     rop = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-    return new ASTBop(loc, op, lop, rop);
+    return new ASTBop(cd, op, lop, rop);
 }
 
 void ASTBop::modifyChild(const ASTNode *oldc, ASTNode *newc)

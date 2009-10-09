@@ -14,7 +14,7 @@ class IntVisitor : public ASTVisitor
 private:
     std::string int_str;
 
-    static std::string dumpLocation(const ASTLocation &loc);
+    static std::string dumpCommonData(const ASTNodeCommonData &cd);
     void dumpASTNodesVector(ASTNodesVector *vec);
     void dumpASTStrings(const ASTStringVector *vec);
     void dumpASTNode(ASTNode *vec);

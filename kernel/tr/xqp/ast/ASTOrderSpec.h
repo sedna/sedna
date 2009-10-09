@@ -18,7 +18,7 @@ public:
     ASTNode *mod; // may be NULL; ASTOrderMod
 
 public:
-    ASTOrderSpec(ASTLocation &loc, ASTNode *ord_expr, ASTNode *ord_mod = NULL) : ASTNode(loc), expr(ord_expr), mod(ord_mod) {}
+    ASTOrderSpec(const ASTNodeCommonData &loc, ASTNode *ord_expr, ASTNode *ord_mod = NULL) : ASTNode(loc), expr(ord_expr), mod(ord_mod) {}
 
     ~ASTOrderSpec();
 

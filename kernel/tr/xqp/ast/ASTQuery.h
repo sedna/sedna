@@ -26,7 +26,7 @@ public:
     QueryType type;
 
 public:
-    ASTQuery(ASTLocation &loc, ASTNode *expr, ASTQuery::QueryType qtype) : ASTNode(loc), query(expr), type(qtype) {}
+    ASTQuery(const ASTNodeCommonData &loc, ASTNode *expr, ASTQuery::QueryType qtype) : ASTNode(loc), query(expr), type(qtype) {}
 
     ~ASTQuery();
 

@@ -23,21 +23,21 @@ void ASTPi::accept(ASTVisitor &v)
 
 ASTNode *ASTPi::dup()
 {
-    return new ASTPi(loc, new std::string(*name), (cont) ? new std::string(*cont) : NULL);
+    return new ASTPi(cd, new std::string(*name), (cont) ? new std::string(*cont) : NULL);
 }
 
 ASTNode *ASTPi::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *name = NULL, *cont = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     name = new std::string(sl[2].internal.str);
     cont = new std::string(sl[3].internal.str);
 
-    return new ASTPi(loc, name, cont);
+    return new ASTPi(cd, name, cont);
 }
 
 void ASTPi::modifyChild(const ASTNode *oldc, ASTNode *newc)

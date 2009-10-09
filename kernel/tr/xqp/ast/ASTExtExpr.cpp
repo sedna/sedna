@@ -23,23 +23,23 @@ void ASTExtExpr::accept(ASTVisitor &v)
 
 ASTNode* ASTExtExpr::dup()
 {
-    return new ASTExtExpr(loc, duplicateASTNodes(pragmas), (expr) ? expr->dup() : NULL);
+    return new ASTExtExpr(cd, duplicateASTNodes(pragmas), (expr) ? expr->dup() : NULL);
 }
 
 ASTNode *ASTExtExpr::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *pragmas = NULL;
     ASTNode *expr = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     pragmas = dsGetASTNodesFromSList(*sl[2].internal.list);
     expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    return new ASTExtExpr(loc, pragmas, expr);
+    return new ASTExtExpr(cd, pragmas, expr);
 }
 
 void ASTExtExpr::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -23,22 +23,22 @@ void ASTRevokeRole::accept(ASTVisitor &v)
 
 ASTNode *ASTRevokeRole::dup()
 {
-    return new ASTRevokeRole(loc, new std::string(*role), new std::string(*role_from));
+    return new ASTRevokeRole(cd, new std::string(*role), new std::string(*role_from));
 }
 
 ASTNode *ASTRevokeRole::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *role_f = NULL, *role = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     role = new std::string(sl[2].internal.str);
     role_f = new std::string(sl[3].internal.str);
 
-    return new ASTRevokeRole(loc, role, role_f);
+    return new ASTRevokeRole(cd, role, role_f);
 }
 
 void ASTRevokeRole::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -12,7 +12,7 @@
 class ASTItemTest : public ASTNode
 {
 public:
-    ASTItemTest(ASTLocation &loc) : ASTNode(loc) {}
+    ASTItemTest(const ASTNodeCommonData &loc) : ASTNode(loc) {}
 
     ~ASTItemTest() {}
 

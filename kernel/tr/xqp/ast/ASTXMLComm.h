@@ -17,7 +17,7 @@ public:
     std::string *cont; // character content
 
 public:
-    ASTXMLComm(ASTLocation &loc, std::string *cont_) : ASTNode(loc), cont(cont_) {}
+    ASTXMLComm(const ASTNodeCommonData &loc, std::string *cont_) : ASTNode(loc), cont(cont_) {}
 
     ~ASTXMLComm();
 

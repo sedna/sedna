@@ -19,7 +19,7 @@ public:
     std::string *uri; // resolved prefix; added by semantic analyzer
 
 public:
-    ASTVar(ASTLocation &loc, std::string *var_name) : ASTNode(loc)
+    ASTVar(const ASTNodeCommonData &loc, std::string *var_name) : ASTNode(loc)
     {
         ASTParseQName(var_name, &pref, &local);
 
@@ -28,7 +28,7 @@ public:
         uri = NULL;
     }
 
-    ASTVar(ASTLocation &loc, std::string *var_pref, std::string *var_local) :
+    ASTVar(const ASTNodeCommonData &loc, std::string *var_pref, std::string *var_local) :
             ASTNode(loc), pref(var_pref), local(var_local)
     {
         uri = NULL;

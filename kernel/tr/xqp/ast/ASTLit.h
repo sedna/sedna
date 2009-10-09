@@ -24,7 +24,7 @@ public:
     std::string *lit;
 
 public:
-    ASTLit(ASTLocation &loc, LitType type_, std::string *lit_) : ASTNode(loc), type(type_), lit(lit_) {}
+    ASTLit(const ASTNodeCommonData &loc, LitType type_, std::string *lit_) : ASTNode(loc), type(type_), lit(lit_) {}
 
     ~ASTLit();
 

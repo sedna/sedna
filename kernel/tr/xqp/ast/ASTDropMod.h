@@ -17,7 +17,7 @@ public:
     std::string *module;
 
 public:
-    ASTDropMod(ASTLocation &loc, std::string *module_) : ASTNode(loc), module(module_) {}
+    ASTDropMod(const ASTNodeCommonData &loc, std::string *module_) : ASTNode(loc), module(module_) {}
 
     ~ASTDropMod();
 

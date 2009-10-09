@@ -25,10 +25,10 @@ public:
     std::string *func_uri;
 
 public:
-    ASTFuncDecl(ASTLocation &loc, std::string *func_name, ASTNodesVector *func_params = NULL,
+    ASTFuncDecl(const ASTNodeCommonData &loc, std::string *func_name, ASTNodesVector *func_params = NULL,
                 ASTNode *ret_type = NULL, ASTNode *func_body = NULL);
 
-    ASTFuncDecl(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params = NULL,
+    ASTFuncDecl(const ASTNodeCommonData &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params = NULL,
             ASTNode *ret_type = NULL, ASTNode *func_body = NULL);
 
     ~ASTFuncDecl();

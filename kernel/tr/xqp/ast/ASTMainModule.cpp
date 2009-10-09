@@ -28,21 +28,21 @@ void ASTMainModule::accept(ASTVisitor &v)
 
 ASTNode *ASTMainModule::dup()
 {
-    return new ASTMainModule(loc, prolog->dup(), query->dup());
+    return new ASTMainModule(cd, prolog->dup(), query->dup());
 }
 
 ASTNode *ASTMainModule::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *query = NULL, *prol = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     prol = dsGetASTFromSchemeList(*sl[2].internal.list);
     query = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    return new ASTMainModule(loc, prol, query);
+    return new ASTMainModule(cd, prol, query);
 }
 
 void ASTMainModule::modifyChild(const ASTNode *oldc, ASTNode *newc)

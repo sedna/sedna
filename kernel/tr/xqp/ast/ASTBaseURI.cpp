@@ -22,20 +22,20 @@ void ASTBaseURI::accept(ASTVisitor &v)
 
 ASTNode *ASTBaseURI::dup()
 {
-    return new ASTBaseURI(loc, new std::string(*uri));
+    return new ASTBaseURI(cd, new std::string(*uri));
 }
 
 ASTNode *ASTBaseURI::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *uri;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     uri = new std::string(sl[2].internal.str);
 
-    return new ASTBaseURI(loc, uri);
+    return new ASTBaseURI(cd, uri);
 }
 
 void ASTBaseURI::modifyChild(const ASTNode *oldc, ASTNode *newc)

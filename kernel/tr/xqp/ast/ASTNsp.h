@@ -18,7 +18,7 @@ public:
     std::string *cont; // namespace content; may be NULL; cannot be sequence-like since specs disallow this
 
 public:
-    ASTNsp(ASTLocation &loc, std::string *name_, std::string *cont_ = NULL) : ASTNode(loc), name(name_), cont(cont_) {}
+    ASTNsp(const ASTNodeCommonData &loc, std::string *name_, std::string *cont_ = NULL) : ASTNode(loc), name(name_), cont(cont_) {}
 
     ~ASTNsp();
 

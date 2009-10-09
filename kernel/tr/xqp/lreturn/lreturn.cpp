@@ -102,7 +102,7 @@ namespace sedna
             // exception: self axis is a filter itself, so we don't want to put distinct below it
             if (!off_cont.isDistincted && n.axis != ASTAxisStep::SELF)
             {
-                n.cont = new ASTDDO(n.loc, n.cont, true);
+                n.cont = new ASTDDO(n.getLocation(), n.cont, true);
                 off_cont.isDistincted = true;
                 off_cont.isOrdered = false;
             }
@@ -199,7 +199,7 @@ namespace sedna
 
             if (isModeOrdered && !origReq.distinctOnly && (!off_this.isOrdered || !off_this.isDistincted))
             {
-                ddo = new ASTDDO(n.loc, &n);
+                ddo = new ASTDDO(n.getLocation(), &n);
                 modifyParent(ddo, false, false);
 
                 off_this.isOrdered = true;
@@ -207,7 +207,7 @@ namespace sedna
             }
             else if ((!isModeOrdered || origReq.distinctOnly) && !off_this.isDistincted)
             {
-                ddo = new ASTDDO(n.loc, &n, true);
+                ddo = new ASTDDO(n.getLocation(), &n, true);
                 modifyParent(ddo, false, false);
 
                 off_this.isOrdered = false;

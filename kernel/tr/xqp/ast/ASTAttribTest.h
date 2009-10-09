@@ -16,7 +16,7 @@ public:
     ASTNode *type; // may be NULL; attribute(abubu)
 
 public:
-    ASTAttribTest(ASTLocation &loc, ASTNode *name_ = NULL, ASTNode *type_ = NULL) : ASTNode(loc), name(name_), type(type_) {}
+    ASTAttribTest(const ASTNodeCommonData &loc, ASTNode *name_ = NULL, ASTNode *type_ = NULL) : ASTNode(loc), name(name_), type(type_) {}
 
     ~ASTAttribTest();
 

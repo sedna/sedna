@@ -21,13 +21,13 @@ public:
     std::vector<option> *options; // declare option se:output "indent=yes"; -> options["indent"] = "yes"
 
 public:
-    ASTOption(ASTLocation &loc, std::string *pref_p, std::string *loc_p, std::string *option) : ASTNode(loc), pref(pref_p), local(loc_p), opt(option)
+    ASTOption(const ASTNodeCommonData &loc, std::string *pref_p, std::string *loc_p, std::string *option) : ASTNode(loc), pref(pref_p), local(loc_p), opt(option)
     {
         uri = NULL;
         options = NULL;
     }
 
-    ASTOption(ASTLocation &loc, std::string *qname, std::string *option) : ASTNode(loc), opt(option)
+    ASTOption(const ASTNodeCommonData &loc, std::string *qname, std::string *option) : ASTNode(loc), opt(option)
     {
         ASTParseQName(qname, &pref, &local);
         delete qname;

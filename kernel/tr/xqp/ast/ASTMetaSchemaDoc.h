@@ -16,7 +16,7 @@ public:
 
 
 public:
-    ASTMetaSchemaDoc(ASTLocation &loc, ASTNode *doc_, ASTNode *coll_ = NULL) : ASTNode(loc), doc(doc_), coll(coll_) {}
+    ASTMetaSchemaDoc(const ASTNodeCommonData &loc, ASTNode *doc_, ASTNode *coll_ = NULL) : ASTNode(loc), doc(doc_), coll(coll_) {}
 
     ~ASTMetaSchemaDoc();
 

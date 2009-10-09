@@ -25,26 +25,26 @@ ASTNode *ASTElementTest::dup()
 {
     ASTElementTest *res;
 
-    res = new ASTElementTest(loc, (name) ? name->dup() : NULL, (type) ? type->dup() : NULL, mod);
+    res = new ASTElementTest(cd, (name) ? name->dup() : NULL, (type) ? type->dup() : NULL, mod);
 
     return res;
 }
 
 ASTNode *ASTElementTest::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *type = NULL, *name = NULL;
     ASTElementTest *res;
     Mod mod = ASTElementTest::NON_NIL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     name = dsGetASTFromSchemeList(*sl[2].internal.list);
     type = dsGetASTFromSchemeList(*sl[3].internal.list);
     mod = Mod(atol(sl[4].internal.num));
 
-    res = new ASTElementTest(loc, name, type, mod);
+    res = new ASTElementTest(cd, name, type, mod);
 
     return res;
 }

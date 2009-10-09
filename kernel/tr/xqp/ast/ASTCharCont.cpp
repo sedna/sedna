@@ -42,22 +42,22 @@ void ASTCharCont::accept(ASTVisitor &v)
 
 ASTNode *ASTCharCont::dup()
 {
-    return new ASTCharCont(loc, new std::string(*cont), orig);
+    return new ASTCharCont(cd, new std::string(*cont), orig);
 }
 
 ASTNode *ASTCharCont::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     Origin ori;
     std::string *cont;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     cont = new std::string(sl[2].internal.str);
     ori = Origin(atoi(sl[3].internal.num));
 
-    return new ASTCharCont(loc, cont, ori);
+    return new ASTCharCont(cd, cont, ori);
 }
 
 void ASTCharCont::modifyChild(const ASTNode *oldc, ASTNode *newc)

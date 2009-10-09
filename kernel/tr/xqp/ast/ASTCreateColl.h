@@ -15,7 +15,7 @@ public:
     ASTNode *coll;
 
 public:
-    ASTCreateColl(ASTLocation &loc, ASTNode *coll_) : ASTNode(loc), coll(coll_) {}
+    ASTCreateColl(const ASTNodeCommonData &loc, ASTNode *coll_) : ASTNode(loc), coll(coll_) {}
 
     ~ASTCreateColl();
 

@@ -15,7 +15,7 @@ public:
     ASTNode *name; // ASTNameTest
 
 public:
-    ASTSchemaAttrTest(ASTLocation &loc, ASTNode *name_) : ASTNode(loc), name(name_)
+    ASTSchemaAttrTest(const ASTNodeCommonData &loc, ASTNode *name_) : ASTNode(loc), name(name_)
     {
     }
 

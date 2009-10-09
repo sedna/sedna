@@ -15,7 +15,7 @@ public:
     ASTNode *expr; // computed construction expression
 
 public:
-    ASTCommentConst(ASTLocation &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
+    ASTCommentConst(const ASTNodeCommonData &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
 
     ~ASTCommentConst();
 

@@ -17,7 +17,7 @@ public:
     ASTNode *index;
 
 public:
-    ASTDropIndex(ASTLocation &loc, ASTNode *index_) : ASTNode(loc), index(index_) {}
+    ASTDropIndex(const ASTNodeCommonData &loc, ASTNode *index_) : ASTNode(loc), index(index_) {}
 
     ~ASTDropIndex();
 

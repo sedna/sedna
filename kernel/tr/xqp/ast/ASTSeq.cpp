@@ -22,23 +22,23 @@ void ASTSeq::accept(ASTVisitor &v)
 
 ASTNode *ASTSeq::dup()
 {
-    return new ASTSeq(loc, duplicateASTNodes(exprs));
+    return new ASTSeq(cd, duplicateASTNodes(exprs));
 }
 
 ASTNode *ASTSeq::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *exprs = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     exprs = dsGetASTNodesFromSList(*sl[2].internal.list);
 
     if (exprs == NULL)
         exprs = new ASTNodesVector();
 
-    return new ASTSeq(loc, exprs);
+    return new ASTSeq(cd, exprs);
 }
 
 void ASTSeq::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -25,7 +25,7 @@ public:
     UpdType type;
 
 public:
-    ASTUpdMove(ASTLocation &loc, ASTNode *var_, ASTNode *what_, ASTNode *where_, UpdType type_) : ASTNode(loc), var(var_), what(what_), where(where_), type(type_) {}
+    ASTUpdMove(const ASTNodeCommonData &loc, ASTNode *var_, ASTNode *what_, ASTNode *where_, UpdType type_) : ASTNode(loc), var(var_), what(what_), where(where_), type(type_) {}
 
     ~ASTUpdMove();
 

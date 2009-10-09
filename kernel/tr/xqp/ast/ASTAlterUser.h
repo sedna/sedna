@@ -17,7 +17,7 @@ public:
     std::string *user, *psw;
 
 public:
-    ASTAlterUser(ASTLocation &loc, std::string *user_, std::string *psw_) : ASTNode(loc), user(user_), psw(psw_) {}
+    ASTAlterUser(const ASTNodeCommonData &loc, std::string *user_, std::string *psw_) : ASTNode(loc), user(user_), psw(psw_) {}
 
     ~ASTAlterUser();
 

@@ -54,7 +54,7 @@ namespace sedna
             // we should check only library variables since it is the only case variable reference can be unresolved
             if (imported.find(*var->uri) != imported.end())
                 if (libVars.find(it->first) == libVars.end())
-                    drv->error(var->loc, XPST0008, it->first);
+                    drv->error(var->getLocation(), XPST0008, it->first);
         }
         unres_vars.clear(); // we've emitted all errors already
 

@@ -22,20 +22,20 @@ void ASTXMLComm::accept(ASTVisitor &v)
 
 ASTNode *ASTXMLComm::dup()
 {
-    return new ASTXMLComm(loc, new std::string(*cont));
+    return new ASTXMLComm(cd, new std::string(*cont));
 }
 
 ASTNode *ASTXMLComm::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *cont = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     cont = new std::string(sl[2].internal.str);
 
-    return new ASTXMLComm(loc, cont);
+    return new ASTXMLComm(cd, cont);
 }
 
 void ASTXMLComm::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -23,7 +23,7 @@ public:
     UpdType type;
 
 public:
-    ASTUpdInsert(ASTLocation &loc, ASTNode *what_, ASTNode *where_, UpdType type_) : ASTNode(loc), what(what_), where(where_), type(type_) {}
+    ASTUpdInsert(const ASTNodeCommonData &loc, ASTNode *what_, ASTNode *where_, UpdType type_) : ASTNode(loc), what(what_), where(where_), type(type_) {}
 
     ~ASTUpdInsert();
 

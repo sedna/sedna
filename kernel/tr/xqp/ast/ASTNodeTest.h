@@ -12,7 +12,7 @@
 class ASTNodeTest : public ASTNode
 {
 public:
-    ASTNodeTest(ASTLocation &loc) : ASTNode(loc) {}
+    ASTNodeTest(const ASTNodeCommonData &loc) : ASTNode(loc) {}
 
     ~ASTNodeTest() {}
 

@@ -23,18 +23,18 @@ void ASTNsp::accept(ASTVisitor &v)
 
 ASTNode *ASTNsp::dup()
 {
-    return new ASTNsp(loc, new std::string(*name), (cont) ? new std::string(*cont) : NULL);
+    return new ASTNsp(cd, new std::string(*name), (cont) ? new std::string(*cont) : NULL);
 }
 
 ASTNode *ASTNsp::createNode(scheme_list &sl)
 {
     std::string *name = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *cont = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     name = new std::string(sl[2].internal.str);
 
@@ -44,7 +44,7 @@ ASTNode *ASTNsp::createNode(scheme_list &sl)
         cont = new std::string(sl[3].internal.str);
     }
 
-    return new ASTNsp(loc, name, cont);
+    return new ASTNsp(cd, name, cont);
 }
 
 void ASTNsp::modifyChild(const ASTNode *oldc, ASTNode *newc)

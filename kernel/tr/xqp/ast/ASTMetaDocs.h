@@ -16,7 +16,7 @@ public:
     bool need_stats;
 
 public:
-    ASTMetaDocs(ASTLocation &loc, ASTNode *coll_, bool stats) : ASTNode(loc), coll(coll_), need_stats(stats) {}
+    ASTMetaDocs(const ASTNodeCommonData &loc, ASTNode *coll_, bool stats) : ASTNode(loc), coll(coll_), need_stats(stats) {}
 
     ~ASTMetaDocs();
 

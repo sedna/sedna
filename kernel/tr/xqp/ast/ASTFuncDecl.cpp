@@ -8,9 +8,9 @@
 #include "tr/xqp/visitor/ASTVisitor.h"
 #include "ASTFuncDecl.h"
 
-ASTFuncDecl::ASTFuncDecl(ASTLocation &loc, std::string *func_name, ASTNodesVector *func_params,
+ASTFuncDecl::ASTFuncDecl(const ASTNodeCommonData &cd, std::string *func_name, ASTNodesVector *func_params,
                             ASTNode *ret_type, ASTNode *func_body)
-        : ASTNode(loc),
+        : ASTNode(cd),
           params(func_params),
           ret(ret_type),
           body(func_body),
@@ -21,10 +21,10 @@ ASTFuncDecl::ASTFuncDecl(ASTLocation &loc, std::string *func_name, ASTNodesVecto
     delete func_name;
 }
 
-ASTFuncDecl::ASTFuncDecl(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params,
+ASTFuncDecl::ASTFuncDecl(const ASTNodeCommonData &cd, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params,
                          ASTNode *ret_type, ASTNode *func_body)
 
-        : ASTNode(loc),
+        : ASTNode(cd),
           pref(fun_pref),
           local(fun_local),
           params(func_params),
@@ -55,7 +55,7 @@ ASTNode *ASTFuncDecl::dup()
 {
     ASTFuncDecl *fd;
 
-    fd =  new ASTFuncDecl(loc, new std::string(*pref), new std::string(*local), duplicateASTNodes(params),
+    fd =  new ASTFuncDecl(cd, new std::string(*pref), new std::string(*local), duplicateASTNodes(params),
                            (ret == NULL) ? NULL : static_cast<ASTTypeSeq *>(ret->dup()), (body == NULL) ? NULL : body->dup());
 
     if (func_uri)
@@ -67,7 +67,7 @@ ASTNode *ASTFuncDecl::dup()
 ASTNode *ASTFuncDecl::createNode(scheme_list &sl)
 {
     std::string *pref = NULL, *local = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *params = NULL;
     ASTNode *ret = NULL, *body = NULL;
     ASTFuncDecl *res;
@@ -75,7 +75,7 @@ ASTNode *ASTFuncDecl::createNode(scheme_list &sl)
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST &&
             sl[5].type == SCM_LIST && sl[6].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     pref = new std::string(sl[2].internal.str);
     local = new std::string(sl[3].internal.str);
@@ -84,7 +84,7 @@ ASTNode *ASTFuncDecl::createNode(scheme_list &sl)
     ret = dsGetASTFromSchemeList(*sl[5].internal.list);
     body = dsGetASTFromSchemeList(*sl[6].internal.list);
 
-    res = new ASTFuncDecl(loc, pref, local, params, ret, body);
+    res = new ASTFuncDecl(cd, pref, local, params, ret, body);
 
     if (sl.size() > 7)
     {

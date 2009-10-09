@@ -24,7 +24,7 @@ public:
     QuantMod type;
 
 public:
-    ASTQuantExpr(ASTLocation &loc, ASTNode *var_, ASTNode *var_expr, ASTNode *sat_expr, QuantMod mod) : ASTNode(loc), var(var_), expr(var_expr), sat(sat_expr), type(mod) {}
+    ASTQuantExpr(const ASTNodeCommonData &loc, ASTNode *var_, ASTNode *var_expr, ASTNode *sat_expr, QuantMod mod) : ASTNode(loc), var(var_), expr(var_expr), sat(sat_expr), type(mod) {}
 
     ~ASTQuantExpr();
 

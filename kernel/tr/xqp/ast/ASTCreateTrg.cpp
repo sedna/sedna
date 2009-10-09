@@ -28,7 +28,7 @@ void ASTCreateTrg::accept(ASTVisitor &v)
 ASTNode *ASTCreateTrg::dup()
 {
     ASTCreateTrg *res;
-    res = new ASTCreateTrg(loc, new std::string(*name), t_mod, a_mod, path->dup(), g_mod, duplicateASTNodes(do_exprs));
+    res = new ASTCreateTrg(cd, new std::string(*name), t_mod, a_mod, path->dup(), g_mod, duplicateASTNodes(do_exprs));
 
     if (leaf_name)
         res->leaf_name = new std::string(*leaf_name);
@@ -43,7 +43,7 @@ ASTNode *ASTCreateTrg::dup()
 
 ASTNode *ASTCreateTrg::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *name;
     ASTNode *path = NULL;
     ASTNodesVector *expr = NULL;
@@ -53,7 +53,7 @@ ASTNode *ASTCreateTrg::createNode(scheme_list &sl)
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_NUMBER && sl[4].type == SCM_NUMBER && sl[5].type == SCM_LIST &&
              sl[6].type == SCM_NUMBER && sl[7].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     name = new std::string(sl[2].internal.str);
     ab = TrgMod(atol(sl[3].internal.num));
     idr = TrgMod(atol(sl[4].internal.num));
@@ -61,7 +61,7 @@ ASTNode *ASTCreateTrg::createNode(scheme_list &sl)
     ns = TrgMod(atol(sl[6].internal.num));
     expr = dsGetASTNodesFromSList(*sl[7].internal.list);
 
-    res = new ASTCreateTrg(loc, name, ab, idr, path, ns, expr);
+    res = new ASTCreateTrg(cd, name, ab, idr, path, ns, expr);
 
     if (sl.size() > 8)
     {

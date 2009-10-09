@@ -17,7 +17,7 @@ public:
     std::string *xq_version, *encoding;
 
 public:
-    ASTVersionDecl(ASTLocation &loc, std::string *version, std::string *enc = NULL) : ASTNode(loc), xq_version(version), encoding(enc) {}
+    ASTVersionDecl(const ASTNodeCommonData &loc, std::string *version, std::string *enc = NULL) : ASTNode(loc), xq_version(version), encoding(enc) {}
 
     ~ASTVersionDecl();
 

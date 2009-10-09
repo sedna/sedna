@@ -22,20 +22,20 @@ void ASTDocTest::accept(ASTVisitor &v)
 
 ASTNode *ASTDocTest::dup()
 {
-    return new ASTDocTest(loc, (elem_test) ? elem_test->dup() : NULL);
+    return new ASTDocTest(cd, (elem_test) ? elem_test->dup() : NULL);
 }
 
 ASTNode *ASTDocTest::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *expr = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-    return new ASTDocTest(loc, expr);
+    return new ASTDocTest(cd, expr);
 }
 
 void ASTDocTest::modifyChild(const ASTNode *oldc, ASTNode *newc)

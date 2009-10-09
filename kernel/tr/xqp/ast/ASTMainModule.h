@@ -19,7 +19,7 @@ public:
     ASTNode *query; // query itself (including Sedna update expressions); not NULL
 
 public:
-    ASTMainModule(ASTLocation &loc, ASTNode *prol, ASTNode *quer) : ASTNode(loc), prolog(prol), query(quer) {}
+    ASTMainModule(const ASTNodeCommonData &loc, ASTNode *prol, ASTNode *quer) : ASTNode(loc), prolog(prol), query(quer) {}
 
     void setVersionDecl(ASTNode *vd);
 

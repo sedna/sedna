@@ -26,7 +26,7 @@ public:
     OrdType type;
 
 public:
-    ASTOrderBy(ASTLocation &loc, ASTOrderBy::OrdType t, ASTNodesVector *ord_specs = NULL) : ASTNode(loc), specs(ord_specs), type(t) {}
+    ASTOrderBy(const ASTNodeCommonData &loc, ASTOrderBy::OrdType t, ASTNodesVector *ord_specs = NULL) : ASTNode(loc), specs(ord_specs), type(t) {}
 
     void addSpec(ASTOrderSpec *spec)
     {

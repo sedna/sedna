@@ -36,7 +36,7 @@ public:
     ASTNode *trimmed_path; // path without leaf    |
 
 public:
-    ASTCreateTrg(ASTLocation &loc, std::string *name_, TrgMod ba, TrgMod idr, ASTNode *path_, TrgMod ns, ASTNodesVector *expr) :
+    ASTCreateTrg(const ASTNodeCommonData &loc, std::string *name_, TrgMod ba, TrgMod idr, ASTNode *path_, TrgMod ns, ASTNodesVector *expr) :
         ASTNode(loc),
         path(path_),
         do_exprs(expr),

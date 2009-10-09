@@ -15,7 +15,7 @@ public:
     ASTNode *elem_test; // element test; may be NULL
 
 public:
-    ASTDocTest(ASTLocation &loc, ASTNode *elem = NULL) : ASTNode(loc), elem_test(elem) {}
+    ASTDocTest(const ASTNodeCommonData &loc, ASTNode *elem = NULL) : ASTNode(loc), elem_test(elem) {}
 
     ~ASTDocTest();
 

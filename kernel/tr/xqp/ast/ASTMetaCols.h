@@ -15,7 +15,7 @@ public:
     bool need_stats;
 
 public:
-    ASTMetaCols(ASTLocation &loc, bool stats) : ASTNode(loc), need_stats(stats) {}
+    ASTMetaCols(const ASTNodeCommonData &loc, bool stats) : ASTNode(loc), need_stats(stats) {}
 
     ~ASTMetaCols() {}
 

@@ -15,7 +15,7 @@ public:
     std::string *file, *doc, *coll;
 
 public:
-    ASTLoadFile(ASTLocation &loc, std::string *file_, std::string *doc_, std::string *coll_ = NULL) : ASTNode(loc), file(file_), doc(doc_), coll(coll_) {}
+    ASTLoadFile(const ASTNodeCommonData &loc, std::string *file_, std::string *doc_, std::string *coll_ = NULL) : ASTNode(loc), file(file_), doc(doc_), coll(coll_) {}
 
     ~ASTLoadFile();
 

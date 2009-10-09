@@ -12,7 +12,7 @@
 class ASTError : public ASTNode
 {
 public:
-    ASTError(ASTLocation &loc) : ASTNode(loc) {}
+    ASTError(const ASTNodeCommonData &loc) : ASTNode(loc) {}
 
     void accept(ASTVisitor &v);
 

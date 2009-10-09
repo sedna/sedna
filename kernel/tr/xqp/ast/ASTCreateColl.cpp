@@ -22,20 +22,20 @@ void ASTCreateColl::accept(ASTVisitor &v)
 
 ASTNode *ASTCreateColl::dup()
 {
-    return new ASTCreateColl(loc, coll->dup());
+    return new ASTCreateColl(cd, coll->dup());
 }
 
 ASTNode *ASTCreateColl::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *coll = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     coll = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-    return new ASTCreateColl(loc, coll);
+    return new ASTCreateColl(cd, coll);
 }
 
 void ASTCreateColl::modifyChild(const ASTNode *oldc, ASTNode *newc)

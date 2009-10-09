@@ -22,20 +22,20 @@ void ASTPosVar::accept(ASTVisitor &v)
 
 ASTNode *ASTPosVar::dup()
 {
-    return new ASTPosVar(loc, var->dup());
+    return new ASTPosVar(cd, var->dup());
 }
 
 ASTNode *ASTPosVar::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *var = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     var = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-    return new ASTPosVar(loc, var);
+    return new ASTPosVar(cd, var);
 }
 
 void ASTPosVar::modifyChild(const ASTNode *oldc, ASTNode *newc)

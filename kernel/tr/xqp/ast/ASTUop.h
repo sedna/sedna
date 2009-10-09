@@ -22,7 +22,7 @@ public:
     Oper op;
 
 public:
-    ASTUop(ASTLocation &loc, ASTUop::Oper oper, ASTNode *uexpr) : ASTNode(loc), expr(uexpr), op(oper) {}
+    ASTUop(const ASTNodeCommonData &loc, ASTUop::Oper oper, ASTNode *uexpr) : ASTNode(loc), expr(uexpr), op(oper) {}
     ~ASTUop();
 
     void accept(ASTVisitor &v);

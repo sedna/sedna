@@ -23,7 +23,7 @@ public:
     ASTDeclareCopyNsp::opt pres_mod, inh_mod; // preserve and inherit modificators
 
 public:
-    ASTDeclareCopyNsp(ASTLocation &loc, ASTDeclareCopyNsp::opt pres_decl, ASTDeclareCopyNsp::opt inh_decl) : ASTNode(loc), pres_mod(pres_decl), inh_mod(inh_decl) {}
+    ASTDeclareCopyNsp(const ASTNodeCommonData &loc, ASTDeclareCopyNsp::opt pres_decl, ASTDeclareCopyNsp::opt inh_decl) : ASTNode(loc), pres_mod(pres_decl), inh_mod(inh_decl) {}
 
     ~ASTDeclareCopyNsp() {}
 

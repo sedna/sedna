@@ -22,20 +22,20 @@ void ASTDropTrg::accept(ASTVisitor &v)
 
 ASTNode *ASTDropTrg::dup()
 {
-    return new ASTDropTrg(loc, new std::string(*trg));
+    return new ASTDropTrg(cd, new std::string(*trg));
 }
 
 ASTNode *ASTDropTrg::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *trg = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     trg = new std::string(sl[2].internal.str);
 
-    return new ASTDropTrg(loc, trg);
+    return new ASTDropTrg(cd, trg);
 }
 
 void ASTDropTrg::modifyChild(const ASTNode *oldc, ASTNode *newc)

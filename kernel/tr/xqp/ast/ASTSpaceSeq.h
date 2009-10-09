@@ -15,7 +15,7 @@ public:
     ASTNode *expr;
 
 public:
-    ASTSpaceSeq(ASTLocation &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
+    ASTSpaceSeq(const ASTNodeCommonData &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
 
     ~ASTSpaceSeq();
 

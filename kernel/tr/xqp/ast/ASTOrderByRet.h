@@ -16,7 +16,7 @@ public:
     ASTNodesVector *vars; // var bindings for for-let clauses
 
 public:
-    ASTOrderByRet(ASTLocation &loc, ASTNode *iter_expr_, ASTNode *ord_expr_, ASTNode *ret_expr_, ASTNodesVector *vars_) :
+    ASTOrderByRet(const ASTNodeCommonData &loc, ASTNode *iter_expr_, ASTNode *ord_expr_, ASTNode *ret_expr_, ASTNodesVector *vars_) :
         ASTNode(loc),
         iter_expr(iter_expr_),
         ord_expr(ord_expr_),

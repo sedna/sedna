@@ -22,22 +22,22 @@ void ASTUpdDel::accept(ASTVisitor &v)
 
 ASTNode *ASTUpdDel::dup()
 {
-    return new ASTUpdDel(loc, what->dup(), type);
+    return new ASTUpdDel(cd, what->dup(), type);
 }
 
 ASTNode *ASTUpdDel::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *expr = NULL;
     DelType type;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
     type = DelType(atol(sl[3].internal.num));
 
-    return new ASTUpdDel(loc, expr, type);
+    return new ASTUpdDel(cd, expr, type);
 }
 
 void ASTUpdDel::modifyChild(const ASTNode *oldc, ASTNode *newc)

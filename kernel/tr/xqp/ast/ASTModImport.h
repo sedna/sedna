@@ -18,7 +18,7 @@ public:
     ASTStringVector *hints;
 
 public:
-    ASTModImport(ASTLocation &loc, std::string *mod_nsp, std::string *nsp_uri, ASTStringVector *mod_hints) : ASTNode(loc), name(mod_nsp), uri(nsp_uri), hints(mod_hints) {}
+    ASTModImport(const ASTNodeCommonData &loc, std::string *mod_nsp, std::string *nsp_uri, ASTStringVector *mod_hints) : ASTNode(loc), name(mod_nsp), uri(nsp_uri), hints(mod_hints) {}
 
     ~ASTModImport();
 

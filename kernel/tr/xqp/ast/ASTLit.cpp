@@ -22,22 +22,22 @@ void ASTLit::accept(ASTVisitor &v)
 
 ASTNode *ASTLit::dup()
 {
-    return new ASTLit(loc, type, new std::string(*lit));
+    return new ASTLit(cd, type, new std::string(*lit));
 }
 
 ASTNode *ASTLit::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *lit = NULL;
     LitType type;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     lit = new std::string(sl[2].internal.str);
     type = LitType(atol(sl[3].internal.num));
 
-    return new ASTLit(loc, type, lit);
+    return new ASTLit(cd, type, lit);
 }
 
 void ASTLit::modifyChild(const ASTNode *oldc, ASTNode *newc)

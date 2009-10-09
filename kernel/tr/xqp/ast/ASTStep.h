@@ -20,7 +20,7 @@ public:
 
 public:
 
-    ASTStep(ASTLocation &loc, ASTNodesVector *preds_) : ASTNode(loc), cont(NULL), preds(preds_), isLast(false) {}
+    ASTStep(const ASTNodeCommonData &loc, ASTNodesVector *preds_) : ASTNode(loc), cont(NULL), preds(preds_), isLast(false) {}
 
     ~ASTStep();
 
@@ -82,16 +82,16 @@ public:
     ASTNode *test;
 
 public:
-    ASTAxisStep(ASTLocation &loc, AxisType axis_, ASTNode *test_ = NULL, ASTNodesVector *preds_ = NULL) :
+    ASTAxisStep(const ASTNodeCommonData &loc, AxisType axis_, ASTNode *test_ = NULL, ASTNodesVector *preds_ = NULL) :
         ASTStep(loc, preds_),
         axis(axis_)
     {
         if (test_ && dynamic_cast<ASTNameTest *>(test_))
         {
             if (axis_ == ATTRIBUTE)
-                test = new ASTAttribTest(test_->loc, test_);
+                test = new ASTAttribTest(test_->cd.loc, test_);
             else
-                test = new ASTElementTest(test_->loc, test_);
+                test = new ASTElementTest(test_->cd.loc, test_);
         }
         else
         {
@@ -108,9 +108,9 @@ public:
         if (test_ && dynamic_cast<ASTNameTest *>(test_))
         {
             if (axis == ATTRIBUTE)
-                test = new ASTAttribTest(test_->loc, test_);
+                test = new ASTAttribTest(test_->cd.loc, test_);
             else
-                test = new ASTElementTest(test_->loc, test_);
+                test = new ASTElementTest(test_->cd.loc, test_);
         }
         else
         {
@@ -142,7 +142,7 @@ public:
     ASTNode *expr; // may be NULL in case of context expression
 
 public:
-    ASTFilterStep(ASTLocation &loc, ASTNode *expr_, ASTNodesVector *preds_ = NULL) :
+    ASTFilterStep(const ASTNodeCommonData &loc, ASTNode *expr_, ASTNodesVector *preds_ = NULL) :
         ASTStep(loc, preds_),
         expr(expr_)
     {}

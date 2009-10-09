@@ -22,7 +22,7 @@ public:
     Type type;
 
 public:
-    ASTDefNamespaceDecl(ASTLocation &loc, std::string *nsp_uri, ASTDefNamespaceDecl::Type t) : ASTNode(loc), uri(nsp_uri), type(t) {}
+    ASTDefNamespaceDecl(const ASTNodeCommonData &loc, std::string *nsp_uri, ASTDefNamespaceDecl::Type t) : ASTNode(loc), uri(nsp_uri), type(t) {}
 
     ~ASTDefNamespaceDecl();
 

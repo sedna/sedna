@@ -53,7 +53,7 @@ public:
     Oper op;
 
 public:
-    ASTBop(ASTLocation &loc, ASTBop::Oper oper, ASTNode *LExpr = NULL, ASTNode *RExpr = NULL) : ASTNode(loc), lop(LExpr), rop(RExpr), op(oper) {}
+    ASTBop(const ASTNodeCommonData &loc, ASTBop::Oper oper, ASTNode *LExpr = NULL, ASTNode *RExpr = NULL) : ASTNode(loc), lop(LExpr), rop(RExpr), op(oper) {}
     ~ASTBop();
 
     void setLExpr(ASTNode *expr)

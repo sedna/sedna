@@ -8,7 +8,7 @@
 #include "tr/xqp/visitor/ASTVisitor.h"
 #include "ASTFunCall.h"
 
-ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNodesVector *func_params) : ASTNode(loc), params(func_params)
+ASTFunCall::ASTFunCall(const ASTNodeCommonData &cd, std::string *func_name, ASTNodesVector *func_params) : ASTNode(cd), params(func_params)
 {
     ASTParseQName(func_name, &pref, &local);
 
@@ -18,7 +18,7 @@ ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNodesVector 
     delete func_name;
 }
 
-ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param) : ASTNode(loc)
+ASTFunCall::ASTFunCall(const ASTNodeCommonData &cd, std::string *func_name, ASTNode *func_param) : ASTNode(cd)
 {
     ASTParseQName(func_name, &pref, &local);
 
@@ -31,7 +31,7 @@ ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_p
     delete func_name;
 }
 
-ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2) : ASTNode(loc)
+ASTFunCall::ASTFunCall(const ASTNodeCommonData &cd, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2) : ASTNode(cd)
 {
     ASTParseQName(func_name, &pref, &local);
 
@@ -45,7 +45,7 @@ ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_p
     delete func_name;
 }
 
-ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2, ASTNode *func_param3) : ASTNode(loc)
+ASTFunCall::ASTFunCall(const ASTNodeCommonData &cd, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2, ASTNode *func_param3) : ASTNode(cd)
 {
     ASTParseQName(func_name, &pref, &local);
 
@@ -60,8 +60,8 @@ ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_p
     delete func_name;
 }
 
-ASTFunCall::ASTFunCall(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params)
-        : ASTNode(loc),
+ASTFunCall::ASTFunCall(const ASTNodeCommonData &cd, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params)
+        : ASTNode(cd),
           pref(fun_pref),
           local(fun_local),
           params(func_params)
@@ -91,7 +91,7 @@ ASTNode *ASTFunCall::dup()
 {
     ASTFunCall *res;
 
-    res = new ASTFunCall(loc, new std::string(*pref), new std::string(*local), duplicateASTNodes(params));
+    res = new ASTFunCall(cd, new std::string(*pref), new std::string(*local), duplicateASTNodes(params));
 
     if (uri)
         res->uri = new std::string(*uri);
@@ -105,20 +105,20 @@ ASTNode *ASTFunCall::dup()
 ASTNode *ASTFunCall::createNode(scheme_list &sl)
 {
     std::string *pref = NULL, *local = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *params = NULL;
     ASTFunCall *res;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     pref = new std::string(sl[2].internal.str);
     local = new std::string(sl[3].internal.str);
 
     params = dsGetASTNodesFromSList(*sl[4].internal.list);
 
-    res = new ASTFunCall(loc, pref, local, params);
+    res = new ASTFunCall(cd, pref, local, params);
 
     if (sl.size() > 5)
     {

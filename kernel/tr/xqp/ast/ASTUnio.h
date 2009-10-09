@@ -15,7 +15,7 @@ public:
     ASTNodesVector *vars;
 
 public:
-    ASTUnio(ASTLocation &loc, ASTNodesVector *vars_) : ASTNode(loc), vars(vars_) {}
+    ASTUnio(const ASTNodeCommonData &loc, ASTNodesVector *vars_) : ASTNode(loc), vars(vars_) {}
 
     ~ASTUnio();
 

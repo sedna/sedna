@@ -18,7 +18,7 @@ public:
     ASTNode *type; // ASTTypeSeq
 
 public:
-    ASTTreat(ASTLocation &loc, ASTNode *tr_expr, ASTNode *tr_type) : ASTNode(loc), expr(tr_expr), type(tr_type) {}
+    ASTTreat(const ASTNodeCommonData &loc, ASTNode *tr_expr, ASTNode *tr_type) : ASTNode(loc), expr(tr_expr), type(tr_type) {}
     ~ASTTreat();
 
     void accept(ASTVisitor &v);
