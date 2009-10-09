@@ -29,12 +29,6 @@ namespace sedna
                 calledOnce = true;
                 distinctOnly = false;
             }
-
-            parentRequest(const parentRequest &pr)
-            {
-                distinctOnly = false;
-                calledOnce = pr.calledOnce;
-            }
         };
 
         struct childOffer

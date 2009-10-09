@@ -22,7 +22,10 @@ namespace sedna
 
         if (n.cont)
         {
-            VisitNodesVector(n.cont, *this, parentRequest());
+            parentRequest req(getParentRequest());
+
+            req.distinctOnly = false;
+            VisitNodesVector(n.cont, *this, req);
             off = mergeOffers(count);
         }
 
@@ -47,7 +50,6 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = true;
-
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -56,6 +58,8 @@ namespace sedna
         if (n.expr)
         {
             parentRequest req(getParentRequest());
+
+            req.distinctOnly = false;
             setParentRequest(req);
             n.expr->accept(*this);
             count++;
@@ -136,6 +140,7 @@ namespace sedna
         {
             parentRequest req(getParentRequest());
 
+            req.distinctOnly = false;
             setParentRequest(req);
             n.cont->accept(*this);
             off_this = off_cont = getOffer();
@@ -482,17 +487,23 @@ namespace sedna
     void LReturn::visit(ASTCommentConst &n)
     {
         parentRequest req(getParentRequest());
-        childOffer coff;
+        childOffer off;
 
+        req.distinctOnly = false;
         setParentRequest(req);
         n.expr->accept(*this);
 
-        coff = getOffer();
+        off = getOffer();
 
-        coff.isCached = false; // we don't cache constructors
-        coff.useConstructors = true;
+        // comment constructor creates only one node
+        off.isOrdered = true;
+        off.isDistincted = true;
+        off.isSingleLevel = true;
+        off.isMax1 = true;
+        off.isCached = false;
+        off.useConstructors = true;
 
-        setOffer(coff);
+        setOffer(off);
     }
 
     void LReturn::visit(ASTConstDecl &n)
@@ -607,6 +618,7 @@ namespace sedna
         parentRequest req(getParentRequest());
         childOffer off;
 
+        req.distinctOnly = false;
         setParentRequest(req);
         n.expr->accept(*this);
 
@@ -706,7 +718,10 @@ namespace sedna
 
         if (n.cont)
         {
-            VisitNodesVector(n.cont, *this, parentRequest());
+            parentRequest req(getParentRequest());
+
+            req.distinctOnly = false;
+            VisitNodesVector(n.cont, *this, req);
             off = mergeOffers(count);
         }
 
@@ -731,7 +746,6 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = true;
-
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -740,6 +754,8 @@ namespace sedna
         if (n.expr)
         {
             parentRequest req(getParentRequest());
+
+            req.distinctOnly = false;
             setParentRequest(req);
             n.expr->accept(*this);
             count++;
@@ -778,8 +794,9 @@ namespace sedna
     void LReturn::visit(ASTExtExpr &n)
     {
         childOffer off;
+        parentRequest req(getParentRequest());
 
-        setParentRequest(getParentRequest());
+        setParentRequest(req);
         n.expr->accept(*this);
 
         off = getOffer();
@@ -836,6 +853,7 @@ namespace sedna
         {
             parentRequest req(getParentRequest());
 
+            req.distinctOnly = false;
             setParentRequest(req);
             n.cont->accept(*this);
             off_cont = getOffer();
@@ -929,6 +947,40 @@ namespace sedna
 
     void LReturn::visit(ASTFor &n)
     {
+        unsigned int count = (n.pv) ? 2 : 1;
+        childOffer off_e, off_this;
+        parentRequest req(getParentRequest());
+
+        req.distinctOnly = false;
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        setParamMode();
+        n.tv->accept(*this);
+        if (n.pv)
+            n.pv->accept(*this);
+        unsetParamMode();
+
+        req.calledOnce = false;
+        req.distinctOnly = getParentRequest().distinctOnly;
+        n.fd->accept(*this);
+        off_this = getOffer();
+
+        ignoreVariables(off_this, count);
+
+        off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
+
+        // consider to cache
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            // if we cache this step then we don't need to cache the previous one
+            if (off_this.isCached)
+                n.fd->setCached(false);
+        }
+
+        setOffer(off_this);
     }
 
     void LReturn::visit(ASTFunCall &n)
