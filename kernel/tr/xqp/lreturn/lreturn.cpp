@@ -285,6 +285,7 @@ namespace sedna
     {
         childOffer lof, rof, bopof;
         parentRequest req(getParentRequest());
+        ASTNode *ddo = NULL;
 
         // we want distinct-only for these ops since they either do not depend on doc-order or do not work for non-singletons (XPTY0004)
         if (n.op >= ASTBop::OR && n.op <= ASTBop::GE_G)
@@ -304,6 +305,7 @@ namespace sedna
         bopof.isOrdered = true;
         bopof.isSingleLevel = true;
         bopof.isMax1 = true;
+        bopof.useConstructors = false;
 
         if (n.op >= ASTBop::UNION && n.op <= ASTBop::EXCEPT)
         {
@@ -311,6 +313,7 @@ namespace sedna
             bool right_ddo = rof.isOrdered && rof.isDistincted;
 
             bopof.isSingleLevel = lof.isSingleLevel && rof.isSingleLevel;
+            bopof.useConstructors = lof.useConstructors || rof.useConstructors;
 
             switch (n.op)
             {
@@ -347,7 +350,8 @@ namespace sedna
                 }
                 else if (isModeOrdered && !getParentRequest().distinctOnly && !bopof.isMax1)
                 {
-                    modifyParent(new ASTDDO(n.getLocation(), &n), false, false);
+                    ddo = new ASTDDO(n.getLocation(), &n);
+                    modifyParent(ddo, false, false);
                     bopof.isOrdered = true;
                 }
             }
@@ -366,6 +370,13 @@ namespace sedna
             // if we cache this the we don't need to cache children
             if (bopof.isCached)
             {
+                // if we've upstreamed ddo the we should cache that instead of the current node
+                if (ddo)
+                {
+                    ddo->setCached(true);
+                    n.setCached(false);
+                }
+
                 if (lof.isCached)
                     n.lop->setCached(false);
                 if (rof.isCached)
