@@ -33,8 +33,8 @@ public:
 
     void VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v);
 
-    void addToPath(ASTNode *nod);
-    void removeFromPath(ASTNode *nod);
+    virtual void addToPath(ASTNode *nod);
+    virtual void removeFromPath(ASTNode *nod);
 
     virtual void visit(ASTAlterUser &n) = 0;
     virtual void visit(ASTAttr&n) = 0;
