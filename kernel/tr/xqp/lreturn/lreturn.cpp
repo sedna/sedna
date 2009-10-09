@@ -556,19 +556,32 @@ namespace sedna
 
     void LReturn::visit(ASTCreateFtIndex &n)
     {
-        // nothing to do
         // name cannot be computed
-        // path is strict, so don't need to analyze
         // cust_expr contains only constants
         // type is a constant
+        parentRequest req;
+
+        req.calledOnce = true;
+        req.distinctOnly = false;
+
+        setParentRequest(req);
+        n.path->accept(*this);
     }
 
     void LReturn::visit(ASTCreateIndex &n)
     {
-        // nothing to do
         // name cannot be computed
-        // on_path and by_path are strict, so don't need to analyze
         // type is a constant
+        parentRequest req;
+
+        req.calledOnce = true;
+        req.distinctOnly = false;
+
+        setParentRequest(req);
+        n.on_path->accept(*this);
+
+        setParentRequest(req);
+        n.by_path->accept(*this);
     }
 
     void LReturn::visit(ASTCreateRole &n)
@@ -581,14 +594,17 @@ namespace sedna
         // name is a constant, path is strict; so we need only to check-optimize do-expressions
         parentRequest req;
 
+        req.calledOnce = true;
+        req.distinctOnly = false;
+
+        setParentRequest(req);
+        n.path->accept(*this);
+
         // add special trigger variables
         // they all represent one const-node so the default offer will suit them
         bound_vars.push_back(XQVariable("NEW", NULL));
         bound_vars.push_back(XQVariable("OLD", NULL));
         bound_vars.push_back(XQVariable("WHERE", NULL));
-
-        req.calledOnce = true;
-        req.distinctOnly = false;
 
         VisitNodesVector(n.do_exprs, *this, req);
 
