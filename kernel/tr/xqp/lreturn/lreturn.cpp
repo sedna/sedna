@@ -1874,6 +1874,21 @@ namespace sedna
 
     void LReturn::visit(ASTUnio &n)
     {
+        childOffer off;
+        unsigned int count = n.vars->size();
+
+        for (unsigned int i = 1; i <= count; i++)
+        {
+            const XQVariable &v = bound_vars[count - i];
+
+            if (v.exp_info.useConstructors)
+                off.exi.useConstructors = true;
+
+            off.usedVars.insert(v.int_name);
+        }
+
+        // for unio useConstructors and usedVars only matter
+        setOffer(off);
     }
 
     void LReturn::visit(ASTUop &n)
