@@ -13,10 +13,10 @@ class ASTDDO : public ASTNode
 {
 public:
     ASTNode *expr;
-    bool distinct_only;
+    bool true_ddo;
 
 public:
-    ASTDDO(const ASTNodeCommonData &loc, ASTNode *expr_, bool dist = false) : ASTNode(loc), expr(expr_), distinct_only(dist) {}
+    ASTDDO(const ASTNodeCommonData &loc, ASTNode *expr_, bool true_ddo_ = true) : ASTNode(loc), expr(expr_), true_ddo(true_ddo_) {}
 
     ~ASTDDO();
 

@@ -22,22 +22,22 @@ void ASTDDO::accept(ASTVisitor &v)
 
 ASTNode *ASTDDO::dup()
 {
-    return new ASTDDO(cd, expr->dup(), distinct_only);
+    return new ASTDDO(cd, expr->dup(), true_ddo);
 }
 
 ASTNode *ASTDDO::createNode(scheme_list &sl)
 {
     ASTNodeCommonData cd;
     ASTNode *expr = NULL;
-    bool dist;
+    bool tddo;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_BOOL);
 
     cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
-    dist = sl[3].internal.b;
+    tddo = sl[3].internal.b;
 
-    return new ASTDDO(cd, expr, dist);
+    return new ASTDDO(cd, expr, tddo);
 }
 
 void ASTDDO::modifyChild(const ASTNode *oldc, ASTNode *newc)

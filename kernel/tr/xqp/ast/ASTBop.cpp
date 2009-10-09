@@ -23,7 +23,13 @@ void ASTBop::accept(ASTVisitor &v)
 
 ASTNode* ASTBop::dup()
 {
-    return new ASTBop(cd, op, lop->dup(), rop->dup());
+    ASTBop *res;
+
+    res = new ASTBop(cd, op, lop->dup(), rop->dup());
+
+    res->doc_order = doc_order;
+
+    return res;
 }
 
 ASTNode *ASTBop::createNode(scheme_list &sl)
@@ -31,8 +37,9 @@ ASTNode *ASTBop::createNode(scheme_list &sl)
     ASTNodeCommonData cd;
     ASTNode *lop = NULL, *rop = NULL;
     Oper op;
+    ASTBop *res;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_BOOL);
 
     cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     op = Oper(atoi(sl[2].internal.num));
@@ -40,7 +47,11 @@ ASTNode *ASTBop::createNode(scheme_list &sl)
     lop = dsGetASTFromSchemeList(*sl[3].internal.list);
     rop = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-    return new ASTBop(cd, op, lop, rop);
+    res = new ASTBop(cd, op, lop, rop);
+
+    res->doc_order = sl[5].internal.b;
+
+    return res;
 }
 
 void ASTBop::modifyChild(const ASTNode *oldc, ASTNode *newc)
