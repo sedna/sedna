@@ -816,4 +816,26 @@ namespace sedna
 
         return res;
     }
+
+    LReturn::parentRequest LReturn::getParentRequest() const
+    {
+        return pareqs.back();
+    }
+
+    void LReturn::setParentRequest(const LReturn::parentRequest &preq)
+    {
+        parentReq = preq;
+    }
+
+    void LReturn::addToPath(ASTNode *nod)
+    {
+        ASTVisitor::addToPath(nod);
+        pareqs.push_back(parentReq);
+    }
+
+    void LReturn::removeFromPath(ASTNode *nod)
+    {
+        ASTVisitor::removeFromPath(nod);
+        pareqs.pop_back();
+    }
 }

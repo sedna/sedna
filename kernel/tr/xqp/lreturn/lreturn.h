@@ -58,7 +58,6 @@ namespace sedna
         std::vector<XQVariable> bound_vars; // vector of variables bound in the current expression
 
         std::vector<childOffer> offers; // offers from children go in this sequence
-        parentRequest parentReq; // request from parent to child
 
         void setParamMode();
         void unsetParamMode();
@@ -69,6 +68,11 @@ namespace sedna
         void VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v, parentRequest req);
 
         childOffer mergeOffers(unsigned int count);
+
+        parentRequest parentReq; // request from parent to child
+        std::vector<parentRequest> pareqs; // parent requests
+        parentRequest getParentRequest() const;
+        void setParentRequest(const parentRequest &preq);
 
     public:
         LReturn(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)
@@ -81,6 +85,9 @@ namespace sedna
         ~LReturn()
         {
         }
+
+        virtual void addToPath(ASTNode *nod);
+        virtual void removeFromPath(ASTNode *nod);
 
         // visiting functions
         void visit(ASTAlterUser &n);
