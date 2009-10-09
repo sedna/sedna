@@ -24,6 +24,8 @@ protected:
     void putToGarbage(ASTNode *nod);
     void freeGarbage();
 
+    ASTNode *getParent();
+
     // some AST related common functions
     bool isVarSequence(ASTTypeVar *var); // is variable bound to a 0+ sequence
 

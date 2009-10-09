@@ -3,7 +3,6 @@
 
 #include "tr/xqp/ast/ASTNode.h"
 #include "tr/xqp/ast/ASTVarDecl.h"
-#include "tr/xqp/XQFunction.h"
 #include <string.h>
 #include <map>
 
@@ -11,6 +10,16 @@
 
 namespace sedna
 {
+    class XQFunction;
+    struct xqExprInfo
+    {
+        bool isOrdered;     // expr is ordered
+        bool isDistincted;  // expr contains distincted values
+        bool isMax1;        // expr emits singleton or empty sequence
+        bool isSingleLevel; // all nodes are on the same level in node-sequence
+        bool useConstructors; // true, if subexpression uses constructor (direct or computed)
+    };
+
     struct XQVariable
     {
         std::string int_name;

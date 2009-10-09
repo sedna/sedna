@@ -52,6 +52,14 @@ void ASTVisitor::modifyParent(ASTNode *newc, bool toAccept, bool toGarbage)
     }
 }
 
+ASTNode *ASTVisitor::getParent()
+{
+    if (vis_path.size() < 2)
+        return NULL;
+
+    return vis_path[vis_path.size() - 2];
+}
+
 void ASTVisitor::putToGarbage(ASTNode *nod)
 {
     garbNodes.push_back(nod);
@@ -63,14 +71,4 @@ void ASTVisitor::freeGarbage()
 
     for (it = garbNodes.begin(); it != garbNodes.end(); it++)
         delete *it;
-}
-
-bool ASTVisitor::isVarSequence(ASTTypeVar *var)
-{
-    ASTTypeSeq *seq = dynamic_cast<ASTTypeSeq *>(var->type);
-
-    if (seq && (seq->mod == ASTTypeSeq::ZERO_OR_MORE || seq->mod == ASTTypeSeq::ONE_OR_MORE))
-        return true;
-
-    return false;
 }

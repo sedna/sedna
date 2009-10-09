@@ -8,10 +8,11 @@
 #include "XQuerytoLR.h"
 #include "XQCommon.h"
 
-// This clas incorporates all the info about main or library module
+// This class incorporates all the info about main or library module
 namespace sedna
 {
     class XQueryDriver;
+    class LReturn;
 
     class XQueryModule
     {
@@ -21,6 +22,7 @@ namespace sedna
     private:
         ASTNode *ast; // corresponding ast tree
         XQueryDriver *drv;
+        LReturn *lr; // for library modules to process lreturn optimization whent the
 
         void testDupAndSerial(XQueryDriver *drv);
         void initXQueryInfo();
@@ -30,6 +32,7 @@ namespace sedna
         nsBindType nsBinds; // known namespaces (predefined + from-prolog)
         nsPair defElemNsp; // default element namespace
         nsPair defFuncNsp; // default function namespace
+        bool isDefaultOrdered; // true, if prolog defines default is ordered (also true by default)
 
         XQFunctionInfo funcs; // all function defined in prolog
         XQVariablesInfo vars; // all variables defined in this module
@@ -53,11 +56,20 @@ namespace sedna
 
         std::vector<std::string> getImportedModules() const;
 
-        ~XQueryModule()
+        void setOrderedMode(bool ordered)
         {
-            delete ast;
-            delete module_uri;
+            isDefaultOrdered = ordered;
         }
+
+        bool getOrderedMode() const
+        {
+            return isDefaultOrdered;
+        }
+
+        bool getFunctionInfo(const std::string &name, XQFunction &xqf) const;
+        bool getLReturnFunctionInfo(const std::string &name, XQFunction &xqf);
+
+        ~XQueryModule();
     };
 }
 

@@ -62,6 +62,17 @@ namespace sedna
 
         std::vector<childOffer> offers; // offers from children go in this sequence
 
+        typedef std::map<std::string, XQFunction> funcInfo;
+
+        // here is the deal here: function can be evaluated in ordered and unordered mode depending
+        // the current state of the static context (see "ordered" and "unordered" modifiers).
+        // To respect this (and possible optimizations) we consider the same function to go to ordered
+        // cache and unordered cache depending on the corresponding fun-calls. Also we store two different
+        // bodies for such functions (body_ord, body_unord in ASTFuncDecl)
+
+        funcInfo funcOrdCache; // cache containing info about processed functions in ordered mode
+        funcInfo funcUnordCache; // cache containing info about processed functions in unordered mode
+
         void setParamMode();
         void unsetParamMode();
 
@@ -81,12 +92,16 @@ namespace sedna
         void cacheTheNode(ASTNode *nod, childOffer &off) const;
         void ignoreVariables(LReturn::childOffer &coff, unsigned int count);
 
+        XQFunction getFunctionInfo(const std::string &name);
+        static bool isVarSequence(ASTTypeVar *var);
+        static bool isParamDistinctOnly(const ASTFuncDecl *fd, unsigned int nparam);
+
     public:
         LReturn(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)
         {
             param_mode = false;
             param_count = 0;
-            isModeOrdered = true; // ddo for default
+            isModeOrdered = mod->getOrderedMode();
             pareqs.push_back(parentRequest());
         }
 
@@ -96,6 +111,8 @@ namespace sedna
 
         virtual void addToPath(ASTNode *nod);
         virtual void removeFromPath(ASTNode *nod);
+
+        XQFunction getLReturnCached(const std::string &name, bool ordered) const;
 
         // visiting functions
         void visit(ASTAlterUser &n);
