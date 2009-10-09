@@ -8,8 +8,6 @@
 #include "tr/xqp/sema/Sema.h"
 #include "common/errdbg/exceptions.h"
 
-#define CREATE_INTNAME(u, l) ((u == "") ? (l) : (std::string("{") + (u) + std::string("}") + (l)))
-
 namespace sedna
 {
     void Cycle::visit(ASTAlterUser &n)
