@@ -33,8 +33,9 @@ endif
 MT_OBJS =    $(OBJS:$(OBJ_EXT)=.mt$(OBJ_EXT))
 DL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
 
-error_codes.d: gen_error_codes.c
+error_codes.d: error.codes
 	NO_DEP=1; export NO_DEP; $(MAKE) -C $(PP)/kernel/common/errdbg generated
+	touch error_codes.d
 
 
 ifeq ("$(PLATFORM)", "WIN32")
