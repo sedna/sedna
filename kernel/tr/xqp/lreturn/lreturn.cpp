@@ -41,10 +41,13 @@ namespace sedna
     {
         childOffer off;
         unsigned int count = 0;
-        parentRequest req(getParentRequest());
 
         if (n.name)
         {
+            parentRequest req(getParentRequest());
+
+            req.distinctOnly = true;
+
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -52,6 +55,7 @@ namespace sedna
 
         if (n.expr)
         {
+            parentRequest req(getParentRequest());
             setParentRequest(req);
             n.expr->accept(*this);
             count++;
@@ -400,9 +404,9 @@ namespace sedna
         // first, bind variable
         if (n.var)
         {
-            param_mode = true;
+            setParamMode();
             n.var->accept(*this);
-            param_mode = false;
+            unsetParamMode();
         }
 
         setParentRequest(req);
@@ -455,11 +459,13 @@ namespace sedna
     void LReturn::visit(ASTCharCont &n)
     {
         // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTCommTest &n)
     {
         // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTCommentConst &n)
@@ -513,10 +519,19 @@ namespace sedna
 
     void LReturn::visit(ASTCreateFtIndex &n)
     {
+        // nothing to do
+        // name cannot be computed
+        // path is strict, so don't need to analyze
+        // cust_expr contains only constants
+        // type is a constant
     }
 
     void LReturn::visit(ASTCreateIndex &n)
     {
+        // nothing to do
+        // name cannot be computed
+        // on_path and by_path are strict, so don't need to analyze
+        // type is a constant
     }
 
     void LReturn::visit(ASTCreateRole &n)
@@ -526,6 +541,13 @@ namespace sedna
 
     void LReturn::visit(ASTCreateTrg &n)
     {
+        // name is a constant, path is strict; so we need only to check-optimize do-expressions
+        parentRequest req;
+
+        req.calledOnce = true;
+        req.distinctOnly = false;
+
+        VisitNodesVector(n.do_exprs, *this, req);
     }
 
     void LReturn::visit(ASTCreateUser &n)
@@ -535,51 +557,114 @@ namespace sedna
 
     void LReturn::visit(ASTDDO &n)
     {
+        // in fact we should not get here since all ddo-ops are inserted in dynamic mode without lreturn visitor taking them
+        parentRequest req;
+        childOffer off;
+
+        req.distinctOnly = true;
+        req.calledOnce = getParentRequest().calledOnce;
+
+        setParentRequest(req);
         n.expr->accept(*this);
+
+        off = getOffer();
+
+        off.isOrdered = true;
+        off.isDistincted = true;
+        off.isCached = false;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTDeclareCopyNsp &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTDefCollation &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTDefNamespaceDecl &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTDocConst &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer off;
+
+        setParentRequest(req);
         n.expr->accept(*this);
+
+        off = getOffer();
+
+        // document constructor creates only one node
+        off.isOrdered = true;
+        off.isDistincted = true;
+        off.isSingleLevel = true;
+        off.isMax1 = true;
+        off.isCached = false;
+        off.useConstructors = true;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTDocTest &n)
     {
-        if (n.elem_test) n.elem_test->accept(*this);
+        // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTDropColl &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.coll->accept(*this);
     }
 
     void LReturn::visit(ASTDropDoc &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.doc->accept(*this);
 
         if (n.coll)
+        {
+            setParentRequest(req);
             n.coll->accept(*this);
+        }
     }
 
     void LReturn::visit(ASTDropFtIndex &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.index->accept(*this);
     }
 
     void LReturn::visit(ASTDropIndex &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.index->accept(*this);
     }
 
@@ -605,21 +690,73 @@ namespace sedna
 
     void LReturn::visit(ASTElem &n)
     {
+        unsigned int count = (n.cont) ? n.cont->size() : 0;
+        childOffer off;
+
+        if (n.cont)
+        {
+            VisitNodesVector(n.cont, *this, parentRequest());
+            off = mergeOffers(count);
+        }
+
+        // direct element constructor creates only one node
+        off.isOrdered = true;
+        off.isDistincted = true;
+        off.isSingleLevel = true;
+        off.isMax1 = true;
+        off.isCached = false;
+        off.useConstructors = true;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTElemConst &n)
     {
+        childOffer off;
+        unsigned int count = 0;
+
+        if (n.name)
+        {
+            parentRequest req(getParentRequest());
+
+            req.distinctOnly = true;
+
+            setParentRequest(req);
+            n.name->accept(*this);
+            count++;
+        }
+
+        if (n.expr)
+        {
+            parentRequest req(getParentRequest());
+            setParentRequest(req);
+            n.expr->accept(*this);
+            count++;
+        }
+
+        off = mergeOffers(count);
+
+        // computed element constructor creates only one node
+        off.isOrdered = true;
+        off.isDistincted = true;
+        off.isSingleLevel = true;
+        off.isMax1 = true;
+        off.isCached = false;
+        off.useConstructors = true;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTElementTest &n)
     {
-        if (n.name) n.name->accept(*this);
-        if (n.type) n.type->accept(*this);
+        // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTEmptyTest &n)
     {
         // nothing to do
+        setOffer(childOffer());
     }
 
     void LReturn::visit(ASTError &n)
@@ -629,6 +766,16 @@ namespace sedna
 
     void LReturn::visit(ASTExtExpr &n)
     {
+        childOffer off;
+
+        setParentRequest(getParentRequest());
+        n.expr->accept(*this);
+
+        off = getOffer();
+
+        off.isCached = false;
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTFilterStep &n)
