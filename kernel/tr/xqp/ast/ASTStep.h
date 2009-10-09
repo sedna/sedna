@@ -51,6 +51,11 @@ public:
         isLast = true;
     }
 
+    bool isFirstStep() const
+    {
+        return (cont == NULL);
+    }
+
     void accept(ASTVisitor &v);
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);
