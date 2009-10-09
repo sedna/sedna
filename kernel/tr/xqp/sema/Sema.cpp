@@ -105,7 +105,7 @@ namespace sedna
             // try to find context
             for (int i = bound_vars.size() - 1; i >= 0; i--)
             {
-                if (bound_vars[i].first == "$%v")
+                if (bound_vars[i].int_name == "$%v")
                 {
                     found_cont = true;
                     break;
@@ -711,7 +711,7 @@ namespace sedna
         {
             for (int i = bound_vars.size() - 1; i >= 0; i--)
             {
-                if (bound_vars[i].first == "$%v")
+                if (bound_vars[i].int_name == "$%v")
                 {
                     found = true;
                     break;
@@ -762,8 +762,8 @@ namespace sedna
 
             U_ASSERT(bound_vars.size() >= 2);
 
-            pos_name = bound_vars.back().first;
-            for_name = (*(bound_vars.end() - 2)).first;
+            pos_name = bound_vars.back().int_name;
+            for_name = (*(bound_vars.end() - 2)).int_name;
 
             if (pos_name == for_name)
             {
@@ -955,9 +955,9 @@ namespace sedna
             {
                 for (unsigned int j = bound_vars.size() - param_count; j < i; j++)
                 {
-                    if (bound_vars[j].first == bound_vars[i].first)
+                    if (bound_vars[j].int_name == bound_vars[i].int_name)
                     {
-                        drv->error(n.getLocation(), XQST0039, std::string("variable ") + bound_vars[j].first);
+                        drv->error(n.getLocation(), XQST0039, std::string("variable ") + bound_vars[j].int_name);
                         return;
                     }
                 }
@@ -1410,7 +1410,7 @@ namespace sedna
             {
                 for (j = i + 1; j < bound_vars.size(); j++)
                 {
-                    if (bound_vars[j].first == bound_vars[i].first)
+                    if (bound_vars[j].int_name == bound_vars[i].int_name)
                     {
                         delete (*n.vars)[i - bound_vars.size() + params - offs];
                         n.vars->erase(n.vars->begin() + (i - bound_vars.size() + params - offs));
@@ -1746,7 +1746,7 @@ namespace sedna
             for (i = bound_vars.size() - params; i < bound_vars.size(); i++)
             {
                 for (j = i + 1; j < bound_vars.size(); j++)
-                    if (bound_vars[j].first == bound_vars[i].first)
+                    if (bound_vars[j].int_name == bound_vars[i].int_name)
                 {
                     delete (*n.vars)[i - bound_vars.size() + params - offs];
                     n.vars->erase(n.vars->begin() + (i - bound_vars.size() + params - offs));
@@ -1831,7 +1831,7 @@ namespace sedna
         if (param_mode)
         {
             param_count++;
-            bound_vars.push_back(XQVariable(CREATE_INTNAME(*n.uri, *n.local), &n));
+            bound_vars.push_back(XQVariable(CREATE_INTNAME(*n.uri, *n.local).c_str(), &n));
             return;
         }
 
@@ -1843,7 +1843,7 @@ namespace sedna
         {
             for (int i = bound_vars.size() - 1; i >= 0; i--)
             {
-                if (bound_vars[i].first == name)
+                if (bound_vars[i].int_name == name)
                     return;
             }
         }
