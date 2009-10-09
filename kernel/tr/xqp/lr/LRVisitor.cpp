@@ -46,6 +46,7 @@ static const char *axis_str[] = {
 static const char *bops_str[] = {
     "or@ ",
     "and@ ",
+
     "to@ ",
     "+@ ",
     "-@ ",
@@ -53,16 +54,6 @@ static const char *bops_str[] = {
     "/@ ",
     "idiv@ ",
     "mod@ ",
-    "union@ ",
-    "intersect@ ",
-    "except@ ",
-
-    "=@ ",
-    "!=@ ",
-    "<@ ",
-    "<=@ ",
-    ">@ ",
-    ">=@ ",
 
     "eq@ ",
     "ne@ ",
@@ -73,7 +64,18 @@ static const char *bops_str[] = {
 
     "is@ ",
     "<<@ ",
-    ">>@ "
+    ">>@ ",
+
+    "=@ ",
+    "!=@ ",
+    "<@ ",
+    "<=@ ",
+    ">@ ",
+    ">=@ ",
+
+    "union@ ",
+    "intersect@ ",
+    "except@ ",
 };
 
 static const char *trg_str[] =

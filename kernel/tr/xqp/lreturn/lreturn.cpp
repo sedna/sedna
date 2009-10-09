@@ -138,6 +138,8 @@ namespace sedna
         {
             parentRequest req(getParentRequest());
 
+            // we propagate disrinctOnly here since neither axis-test (obviously) nor predicate (see inner-focus) cannot see
+            // ordering from the previous step and so cannot use it
             setParentRequest(req);
             n.cont->accept(*this);
             off_this = off_cont = getOffer();
@@ -147,6 +149,8 @@ namespace sedna
             // it seems that we need only to distinct, not order, intermediate results since we can order them at the last step
             // exception: self axis is a filter itself, so we don't want to put distinct below it
             // it is commented for now: we should reason about distict-on-each-step later though
+            // one pro we could consider: distinct-on-each-step allows us to shrink the sequence, which makes following steps
+            // less consuming
 /*            if (!off_cont.exi.isDistincted && n.axis != ASTAxisStep::SELF)
             {
                 n.cont = new ASTDDO(n.getLocation(), n.cont, true);
@@ -319,7 +323,7 @@ namespace sedna
         bopof.exi.isDistincted = true;
         bopof.exi.isOrdered = true;
         bopof.exi.isSingleLevel = true;
-        bopof.exi.isMax1 = true;
+        bopof.exi.isMax1 = (n.op == ASTBop::TO) ? false : true;
         bopof.exi.useConstructors = false;
 
         bopof.usedVars.insert(lof.usedVars.begin(), lof.usedVars.end());
@@ -355,10 +359,10 @@ namespace sedna
 
             if (!left_ddo || !right_ddo || !isModeOrdered || getParentRequest().distinctOnly)
             {
-                if (!lof.exi.isMax1)
+                if (!lof.exi.isMax1 && !lof.exi.isDistincted)
                     n.lop = new ASTDDO(n.lop->getLocation(), n.lop, false);
 
-                if (!rof.exi.isMax1)
+                if (!rof.exi.isMax1 && !rof.exi.isDistincted)
                     n.rop = new ASTDDO(n.rop->getLocation(), n.rop, false);
 
                 if (lof.exi.isMax1 && rof.exi.isMax1 && isModeOrdered && !getParentRequest().distinctOnly)
@@ -432,7 +436,7 @@ namespace sedna
             unsetParamMode();
 
             // if we've got no type annotation or it isn't too precise use typeswitch analysis instead
-            if (!n.type || (!bound_vars.back().exp_info.isMax1 && bound_vars.back().isNodes))
+            if (!n.type || (!bound_vars.back().exp_info.isMax1 && (bound_vars.back().isNodes || ts_off.exi.isMax1)))
                 bound_vars.back().exp_info = ts_off.exi;
             else
                 bound_vars.back().exp_info.useConstructors = ts_off.exi.useConstructors;
@@ -489,7 +493,7 @@ namespace sedna
 
     void LReturn::visit(ASTCharCont &n)
     {
-        // nothing to do
+        // text node
         setOffer(childOffer());
     }
 
@@ -606,7 +610,7 @@ namespace sedna
 
         off = getOffer();
 
-        off.exi.isOrdered = true;
+        off.exi.isOrdered = n.true_ddo;
         off.exi.isDistincted = true;
         off.isCached = false;
 
@@ -846,11 +850,36 @@ namespace sedna
             ignoreVariables(off_preds, 1);
         }
 
+        // primary expression
+        if (n.expr)
+        {
+            parentRequest req;
+
+            // bind the context
+            bound_vars.push_back(XQVariable("$%v", NULL));
+
+            req.distinctOnly = getParentRequest().distinctOnly;
+            req.calledOnce = false;
+            setParentRequest(req);
+            n.expr->accept(*this);
+            off_this = off_pe = getOffer();
+
+            off_this.isCached = false;
+
+            ignoreVariables(off_this, 1);
+        }
+
         // context
         if (n.cont)
         {
             parentRequest req(getParentRequest());
 
+            // we propagate distinctOnly here iff the primary expression doesn't use the context of the previous step
+            // if it does, then it could expose absence of mandatory ordering using position(), last() or . ops
+            // For now, we add explicit $%v in all functions that use context so expression below should tell us exactly if
+            // we are dependent on context
+            // TODO: refine it later to avoid distinct-only iff position is used
+            req.distinctOnly = (off_pe.usedVars.find("$%v") == off_pe.usedVars.end()) && getParentRequest().distinctOnly;
             setParentRequest(req);
             n.cont->accept(*this);
             off_cont = getOffer();
@@ -862,29 +891,31 @@ namespace sedna
                 off_this.isCached = false;
                 off_pe.usedVars.insert("$%v"); // since . is a context
             }
-        }
-
-        // primary expression
-        if (n.expr)
-        {
-            parentRequest req;
-
-            // bind the context
-            bound_vars.push_back(XQVariable("$%v", NULL));
-
-            req.distinctOnly = getParentRequest().distinctOnly;
-            req.calledOnce = off_cont.exi.isMax1;
-            setParentRequest(req);
-            n.expr->accept(*this);
-            off_this = off_pe = getOffer();
-
-            off_this.isCached = false;
-
-            ignoreVariables(off_this, 1);
+            else
+            {
+                off_this.usedVars.insert(off_cont.usedVars.begin(), off_cont.usedVars.end());
+            }
         }
 
         // set usedvars properly
         off_this.usedVars.insert(off_preds.usedVars.begin(), off_preds.usedVars.end());
+
+        // if we've got single context step, that means using some outer context, which we should report of
+        if (!n.cont && !n.expr)
+            off_this.usedVars.insert("$%v");
+
+        // if primary expression will be called several times then we must change the offer
+        if (n.expr && !off_cont.exi.isMax1)
+        {
+            off_this.exi.isDistincted = false;
+            off_this.exi.isMax1 = false;
+            off_this.exi.isOrdered = false;
+            off_this.exi.isSingleLevel = false;
+        }
+
+        // now we've analyzed context; if it emanates <=1 nodes then we should disable caching of primary expression
+        if (n.expr && off_cont.exi.isMax1)
+            n.expr->setCached(false);
 
         // now we need to decide if we want to cache it
         if (!getParentRequest().calledOnce)
@@ -896,51 +927,56 @@ namespace sedna
                 n.cont->setCached(false);
         }
 
-        // if we are in ordered mode and we use context nodes then we should ddo the previous step
-        if (n.cont && isModeOrdered && !getParentRequest().distinctOnly && (!off_cont.exi.isOrdered || !off_cont.exi.isDistincted) &&
-                off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
+        // if we have E1/E2 path expression and we're in E2 we don't need to order-distinct previous step if it's first filter step
+        ASTFilterStep *pfs = dynamic_cast<ASTFilterStep *>(n.cont);
+        if (pfs && !pfs->isFirstStep())
         {
-            ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont);
-
-            // if we've cached the previous step then move cache to the ddo
-            if (off_cont.isCached)
+            // if we are in ordered mode and we use context nodes then we should ddo the previous step
+            if (n.cont && isModeOrdered && !getParentRequest().distinctOnly && (!off_cont.exi.isOrdered || !off_cont.exi.isDistincted) &&
+                    off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
             {
-                ddo->setCached(true);
-                n.cont->setCached(false);
-            }
+                ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont);
 
-            // context expression now becomes ddoed
-            if (!n.expr)
+                // if we've cached the previous step then move cache to the ddo
+                if (off_cont.isCached)
+                {
+                    ddo->setCached(true);
+                    n.cont->setCached(false);
+                }
+
+                // context expression now becomes ddoed
+                if (!n.expr)
+                {
+                    off_this.exi.isDistincted = true;
+                    off_this.exi.isOrdered = true;
+                }
+
+                n.cont = ddo;
+            }
+            else if (n.cont && !off_cont.exi.isDistincted) // if we're in unordered mode or we don't use context we need only distinct
             {
-                off_this.exi.isDistincted = true;
-                off_this.exi.isOrdered = true;
-            }
+                ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont, false);
 
-            n.cont = ddo;
+                // if we've cached the previous step then move cache to the ddo
+                if (off_cont.isCached)
+                {
+                    ddo->setCached(true);
+                    n.cont->setCached(false);
+                }
+
+                // context expression now becomes distincted
+                if (!n.expr)
+                {
+                    off_this.exi.isDistincted = true;
+                    off_this.exi.isOrdered = false;
+                }
+
+                n.cont = ddo;
+            }
         }
-        else if (n.cont && !off_cont.exi.isDistincted) // if we're in unordered mode or we don't use context we need only distinct
-        {
-            ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont, false);
 
-            // if we've cached the previous step then move cache to the ddo
-            if (off_cont.isCached)
-            {
-                ddo->setCached(true);
-                n.cont->setCached(false);
-            }
-
-            // context expression now becomes distincted
-            if (!n.expr)
-            {
-                off_this.exi.isDistincted = true;
-                off_this.exi.isOrdered = false;
-            }
-
-            n.cont = ddo;
-        }
-
-        // if this is the last and not the only full-step (with primary expr) then we need to order(distinct) it
-        if (n.isLast && n.cont && n.expr)
+        // if this is the last and not the only step then we need to order(distinct) it
+        if (n.isLast && n.cont)
         {
             ASTNode *ddo;
 
@@ -1016,6 +1052,15 @@ namespace sedna
 
         off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
 
+        // if we've got more than one iteration we must reconsider our offer
+        if (!off_e.exi.isMax1)
+        {
+            off_this.exi.isDistincted = false;
+            off_this.exi.isMax1 = false;
+            off_this.exi.isOrdered = false;
+            off_this.exi.isSingleLevel = false;
+        }
+
         // consider to cache
         if (!getParentRequest().calledOnce)
         {
@@ -1025,7 +1070,7 @@ namespace sedna
             if (off_this.isCached)
                 n.fd->setCached(false);
             if (off_var.isCached)
-                n.tv->setCached(false);
+                n.expr->setCached(false);
         }
 
         setOffer(off_this);
@@ -1094,6 +1139,14 @@ namespace sedna
         if (!getParentRequest().calledOnce && xqf.toCache) // consider to cache
         {
             cacheTheNode(&n, off_this);
+
+            if (off_this.isCached)
+            {
+                for (unsigned int i = 0; i < arity; i++)
+                {
+                    n.params->at(i)->setCached(false);
+                }
+            }
         }
 
         setOffer(off_this);
@@ -1127,8 +1180,9 @@ namespace sedna
 
         // body can contain recursive references
         // so we should set pre-offer based strictly on type analysis
-        XQVariable &v = bound_vars.back();
+        XQVariable v = bound_vars.back();
         funcCache[name].exp_info = v.exp_info;
+        bound_vars.pop_back();
 
         // then optimize body
         if (n.body)
@@ -1145,17 +1199,10 @@ namespace sedna
 
         // then, generate offer
         // for user-defined functions, for which type says node-sequence, use body analysis instead
-        if (n.body && !v.exp_info.isMax1 && v.isNodes)
+        if (n.body && !v.exp_info.isMax1 && (v.isNodes || boff.exi.isMax1))
         {
             funcCache[name].exp_info = boff.exi;
         }
-        else
-        {
-            funcCache[name].exp_info = v.exp_info;
-        }
-
-        // get rid of return-type
-        bound_vars.pop_back();
 
         // get rid of params
         while (arity--)
@@ -1264,10 +1311,9 @@ namespace sedna
 
         // if type annotation tells us it waits for singleton then we should respect this
         // else, var-body analysis will know better
-        if (var.exp_info.isMax1 || !var.isNodes)
+        if (var.exp_info.isMax1 || !var.isNodes && !off_e.exi.isMax1)
         {
-            off_var = childOffer();
-
+            off_var.exi = var.exp_info;
             off_var.exi.useConstructors = off_e.exi.useConstructors;
             off_var.isCached = off_e.isCached;
         }
@@ -1298,7 +1344,7 @@ namespace sedna
             if (off_this.isCached)
                 n.fd->setCached(false);
             if (off_var.isCached)
-                n.tv->setCached(false);
+                n.expr->setCached(false);
         }
 
         setOffer(off_this);
@@ -1395,7 +1441,8 @@ namespace sedna
     void LReturn::visit(ASTNameTest &n)
     {
         // nothing to do
-        setOffer(childOffer());
+        // we should't have got here anyway
+        U_ASSERT(false);
     }
 
     void LReturn::visit(ASTNamespaceDecl &n)
@@ -2129,6 +2176,10 @@ namespace sedna
             var.exp_info = off.exi;
         }
 
+        // make global variables never report about constructors
+        // since in some sense this tmp-nodes are permanent (same on each var-ref)
+        var.exp_info.useConstructors = false;
+
         varCache[var.int_name] = var;
     }
 
@@ -2294,7 +2345,10 @@ namespace sedna
     void LReturn::cacheTheNode(ASTNode *nod, LReturn::childOffer &off) const
     {
         if (!off.usedVars.empty() || off.exi.useConstructors)
+        {
+            off.isCached = false;
             return;
+        }
 
         nod->setCached(true);
         off.isCached = true;
