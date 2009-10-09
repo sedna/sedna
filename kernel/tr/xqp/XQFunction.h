@@ -11,6 +11,15 @@ namespace sedna
     typedef unsigned char param_mask;
     const param_mask maxParamMask = 0xFF;
 
+    struct xqExprInfo
+    {
+        bool isOrdered;     // expr is ordered
+        bool isDistincted;  // expr contains distincted values
+        bool isMax1;        // expr emits singleton or empty sequence
+        bool isSingleLevel; // all nodes are on the same level in node-sequence
+        bool useConstructors; // true, if subexpression uses constructor (direct or computed)
+    };
+
     struct XQFunction
     {
         std::string uri;
@@ -24,6 +33,8 @@ namespace sedna
         std::string int_name;
 
         bool toCache; // do we need to cache (PPStore) the result
+
+        xqExprInfo exp_info; // we use it only for built-in functions
 
         ASTFuncDecl *decl;
         ASTLocation *loc;
