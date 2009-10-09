@@ -22,22 +22,22 @@ void ASTUop::accept(ASTVisitor &v)
 
 ASTNode* ASTUop::dup()
 {
-    return new ASTUop(loc, op, expr->dup());
+    return new ASTUop(cd, op, expr->dup());
 }
 
 ASTNode *ASTUop::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *expr = NULL;
     Oper op;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
     op = Oper(atol(sl[3].internal.num));
 
-    return new ASTUop(loc, op, expr);
+    return new ASTUop(cd, op, expr);
 }
 
 void ASTUop::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -15,7 +15,7 @@ public:
     ASTNode *name_old, *name_new;
 
 public:
-    ASTRenameColl(ASTLocation &loc, ASTNode *old_, ASTNode *new_) : ASTNode(loc), name_old(old_), name_new(new_) {}
+    ASTRenameColl(const ASTNodeCommonData &loc, ASTNode *old_, ASTNode *new_) : ASTNode(loc), name_old(old_), name_new(new_) {}
 
     ~ASTRenameColl();
 

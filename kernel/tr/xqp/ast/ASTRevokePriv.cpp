@@ -24,18 +24,18 @@ void ASTRevokePriv::accept(ASTVisitor &v)
 
 ASTNode *ASTRevokePriv::dup()
 {
-    return new ASTRevokePriv(loc, new std::string(*priv), (obj) ? new std::string(*obj) : NULL, new std::string(*user), mod);
+    return new ASTRevokePriv(cd, new std::string(*priv), (obj) ? new std::string(*obj) : NULL, new std::string(*user), mod);
 }
 
 ASTNode *ASTRevokePriv::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *user = NULL, *priv = NULL, *obj = NULL;
     ObjMod mod;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER && sl[3].type == SCM_STRING && sl[4].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     mod = ObjMod(atol(sl[2].internal.num));
 
     user = new std::string(sl[3].internal.str);
@@ -47,7 +47,7 @@ ASTNode *ASTRevokePriv::createNode(scheme_list &sl)
         obj = new std::string(sl[5].internal.str);
     }
 
-    return new ASTRevokePriv(loc, priv, obj, user, mod);
+    return new ASTRevokePriv(cd, priv, obj, user, mod);
 }
 
 void ASTRevokePriv::modifyChild(const ASTNode *oldc, ASTNode *newc)

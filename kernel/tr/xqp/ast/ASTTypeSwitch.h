@@ -21,7 +21,7 @@ public:
     ASTNode *def_case; // ASTCase
 
 public:
-    ASTTypeSwitch(ASTLocation &loc, ASTNode *op_expr, ASTNodesVector *cs, ASTNode *dc) : ASTNode(loc), expr(op_expr), cases(cs), def_case(dc) {}
+    ASTTypeSwitch(const ASTNodeCommonData &loc, ASTNode *op_expr, ASTNodesVector *cs, ASTNode *dc) : ASTNode(loc), expr(op_expr), cases(cs), def_case(dc) {}
 
     ~ASTTypeSwitch();
 

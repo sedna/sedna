@@ -17,9 +17,9 @@ public:
     ASTNodesVector *decls;
 
 public:
-    ASTProlog(ASTLocation &loc, ASTNodesVector *decls_) : ASTNode(loc), decls(decls_) {}
+    ASTProlog(const ASTNodeCommonData &loc, ASTNodesVector *decls_) : ASTNode(loc), decls(decls_) {}
 
-    ASTProlog(ASTLocation &loc) : ASTNode(loc)
+    ASTProlog(const ASTNodeCommonData &loc) : ASTNode(loc)
     {
         decls = new ASTNodesVector();
     }

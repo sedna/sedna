@@ -21,7 +21,7 @@ public:
     ASTConstDecl::opt mod; // strip/preserve modificator
 
 public:
-    ASTConstDecl(ASTLocation &loc, ASTConstDecl::opt decl) : ASTNode(loc), mod(decl) {}
+    ASTConstDecl(const ASTNodeCommonData &loc, ASTConstDecl::opt decl) : ASTNode(loc), mod(decl) {}
 
     ~ASTConstDecl() {}
 

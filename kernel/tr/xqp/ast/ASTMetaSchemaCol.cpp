@@ -22,20 +22,20 @@ void ASTMetaSchemaCol::accept(ASTVisitor &v)
 
 ASTNode *ASTMetaSchemaCol::dup()
 {
-    return new ASTMetaSchemaCol(loc, coll->dup());
+    return new ASTMetaSchemaCol(cd, coll->dup());
 }
 
 ASTNode *ASTMetaSchemaCol::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *col;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     col = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-    return new ASTMetaSchemaCol(loc, col);
+    return new ASTMetaSchemaCol(cd, col);
 }
 
 void ASTMetaSchemaCol::modifyChild(const ASTNode *oldc, ASTNode *newc)

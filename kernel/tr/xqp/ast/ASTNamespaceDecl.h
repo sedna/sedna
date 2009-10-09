@@ -17,7 +17,7 @@ public:
     std::string *name, *uri;
 
 public:
-    ASTNamespaceDecl(ASTLocation &loc, std::string *nsp_name, std::string *nsp_uri) : ASTNode(loc), name(nsp_name), uri(nsp_uri) {}
+    ASTNamespaceDecl(const ASTNodeCommonData &loc, std::string *nsp_name, std::string *nsp_uri) : ASTNode(loc), name(nsp_name), uri(nsp_uri) {}
 
     ~ASTNamespaceDecl();
 

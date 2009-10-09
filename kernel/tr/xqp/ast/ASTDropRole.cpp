@@ -22,20 +22,20 @@ void ASTDropRole::accept(ASTVisitor &v)
 
 ASTNode *ASTDropRole::dup()
 {
-    return new ASTDropRole(loc, new std::string(*role));
+    return new ASTDropRole(cd, new std::string(*role));
 }
 
 ASTNode *ASTDropRole::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *role = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     role = new std::string(sl[2].internal.str);
 
-    return new ASTDropRole(loc, role);
+    return new ASTDropRole(cd, role);
 }
 
 void ASTDropRole::modifyChild(const ASTNode *oldc, ASTNode *newc)

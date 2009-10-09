@@ -23,17 +23,17 @@ void ASTVersionDecl::accept(ASTVisitor &v)
 
 ASTNode *ASTVersionDecl::dup()
 {
-    return new ASTVersionDecl(loc, new std::string(*xq_version), (encoding == NULL) ? NULL : new std::string(*encoding));
+    return new ASTVersionDecl(cd, new std::string(*xq_version), (encoding == NULL) ? NULL : new std::string(*encoding));
 }
 
 ASTNode *ASTVersionDecl::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *vers = NULL, *enc = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     vers = new std::string(sl[2].internal.str);
 
     if (sl.size() > 3)
@@ -42,7 +42,7 @@ ASTNode *ASTVersionDecl::createNode(scheme_list &sl)
         enc = new std::string(sl[3].internal.str);
     }
 
-    return new ASTVersionDecl(loc, vers, enc);
+    return new ASTVersionDecl(cd, vers, enc);
 }
 
 void ASTVersionDecl::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -22,20 +22,20 @@ void ASTDefCollation::accept(ASTVisitor &v)
 
 ASTNode *ASTDefCollation::dup()
 {
-    return new ASTDefCollation(loc, new std::string(*uri));
+    return new ASTDefCollation(cd, new std::string(*uri));
 }
 
 ASTNode *ASTDefCollation::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *uri = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     uri = new std::string(sl[2].internal.str);
 
-    return new ASTDefCollation(loc, uri);
+    return new ASTDefCollation(cd, uri);
 }
 
 void ASTDefCollation::modifyChild(const ASTNode *oldc, ASTNode *newc)

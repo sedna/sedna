@@ -35,17 +35,17 @@ void ASTLoadFile::accept(ASTVisitor &v)
 
 ASTNode *ASTLoadFile::dup()
 {
-    return new ASTLoadFile(loc, new std::string(*file), new std::string(*doc), (coll) ? new std::string(*coll) : NULL);
+    return new ASTLoadFile(cd, new std::string(*file), new std::string(*doc), (coll) ? new std::string(*coll) : NULL);
 }
 
 ASTNode *ASTLoadFile::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *file = NULL, *doc = NULL, *coll = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     file = new std::string(sl[2].internal.str);
     doc = new std::string(sl[3].internal.str);
 
@@ -55,7 +55,7 @@ ASTNode *ASTLoadFile::createNode(scheme_list &sl)
         coll = new std::string(sl[4].internal.str);
     }
 
-    return new ASTLoadFile(loc, file, doc, coll);
+    return new ASTLoadFile(cd, file, doc, coll);
 }
 
 void ASTLoadFile::modifyChild(const ASTNode *oldc, ASTNode *newc)

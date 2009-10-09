@@ -22,7 +22,7 @@ ASTNode *ASTStep::dup()
 {
     ASTStep *res;
 
-    res = new ASTStep(loc, duplicateASTNodes(preds));
+    res = new ASTStep(cd, duplicateASTNodes(preds));
 
     if (cont)
         res->setContext(cont->dup());
@@ -66,7 +66,7 @@ ASTNode *ASTAxisStep::dup()
 {
     ASTAxisStep *res;
 
-    res = new ASTAxisStep(loc, axis, test->dup(), duplicateASTNodes(preds));
+    res = new ASTAxisStep(cd, axis, test->dup(), duplicateASTNodes(preds));
 
     if (cont)
         res->setContext(cont->dup());
@@ -79,7 +79,7 @@ ASTNode *ASTAxisStep::dup()
 
 ASTNode *ASTAxisStep::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *test = NULL, *cont = NULL;
     ASTNodesVector *preds = NULL;
     AxisType axis;
@@ -87,13 +87,13 @@ ASTNode *ASTAxisStep::createNode(scheme_list &sl)
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_NUMBER && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST && sl[6].type == SCM_BOOL);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     cont = dsGetASTFromSchemeList(*sl[2].internal.list);
     axis = AxisType(atoi(sl[3].internal.num));
     test = dsGetASTFromSchemeList(*sl[4].internal.list);
     preds = dsGetASTNodesFromSList(*sl[5].internal.list);
 
-    res = new ASTAxisStep(loc, axis, test, preds);
+    res = new ASTAxisStep(cd, axis, test, preds);
 
     res->setContext(cont);
 
@@ -130,7 +130,7 @@ ASTNode *ASTFilterStep::dup()
 {
     ASTFilterStep *res;
 
-    res = new ASTFilterStep(loc, (expr) ? expr->dup() : NULL, duplicateASTNodes(preds));
+    res = new ASTFilterStep(cd, (expr) ? expr->dup() : NULL, duplicateASTNodes(preds));
 
     if (cont)
         res->setContext(cont->dup());
@@ -143,7 +143,7 @@ ASTNode *ASTFilterStep::dup()
 
 ASTNode *ASTFilterStep::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *expr = NULL, *cont = NULL;
     ASTNodesVector *preds = NULL;
     ASTFilterStep *res;
@@ -151,13 +151,13 @@ ASTNode *ASTFilterStep::createNode(scheme_list &sl)
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_BOOL );
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     cont = dsGetASTFromSchemeList(*sl[2].internal.list);
     expr = dsGetASTFromSchemeList(*sl[3].internal.list);
     preds = dsGetASTNodesFromSList(*sl[4].internal.list);
     isLast = sl[5].internal.b;
 
-    res = new ASTFilterStep(loc, expr, preds);
+    res = new ASTFilterStep(cd, expr, preds);
 
     if (isLast)
         res->setAsLast();

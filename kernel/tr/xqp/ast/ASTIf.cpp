@@ -24,22 +24,22 @@ void ASTIf::accept(ASTVisitor &v)
 
 ASTNode* ASTIf::dup()
 {
-    return new ASTIf(loc, i_expr->dup(), t_expr->dup(), e_expr->dup());
+    return new ASTIf(cd, i_expr->dup(), t_expr->dup(), e_expr->dup());
 }
 
 ASTNode *ASTIf::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *i = NULL, *t = NULL, *e = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     i = dsGetASTFromSchemeList(*sl[2].internal.list);
     t = dsGetASTFromSchemeList(*sl[3].internal.list);
     e = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-    return new ASTIf(loc, i, t, e);
+    return new ASTIf(cd, i, t, e);
 }
 
 void ASTIf::modifyChild(const ASTNode *oldc, ASTNode *newc)

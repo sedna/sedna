@@ -29,7 +29,7 @@ public:
     std::string *uri; // uri for collation
 
 public:
-    ASTOrderModInt(ASTLocation &loc, ASTOrderModInt::OrderMod ord_mod, std::string *coll_uri = NULL) : ASTNode(loc), mod(ord_mod), uri(coll_uri) {}
+    ASTOrderModInt(const ASTNodeCommonData &loc, ASTOrderModInt::OrderMod ord_mod, std::string *coll_uri = NULL) : ASTNode(loc), mod(ord_mod), uri(coll_uri) {}
 
     ~ASTOrderModInt();
 

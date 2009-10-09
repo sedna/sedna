@@ -22,20 +22,20 @@ void ASTCommentConst::accept(ASTVisitor &v)
 
 ASTNode *ASTCommentConst::dup()
 {
-    return new ASTCommentConst(loc, expr->dup());
+    return new ASTCommentConst(cd, expr->dup());
 }
 
 ASTNode *ASTCommentConst::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *expr = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-    return new ASTCommentConst(loc, expr);
+    return new ASTCommentConst(cd, expr);
 }
 
 void ASTCommentConst::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -27,20 +27,20 @@ void ASTProlog::accept(ASTVisitor &v)
 
 ASTNode *ASTProlog::dup()
 {
-    return new ASTProlog(loc, duplicateASTNodes(decls));
+    return new ASTProlog(cd, duplicateASTNodes(decls));
 }
 
 ASTNode *ASTProlog::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *decls = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     decls = dsGetASTNodesFromSList(*sl[2].internal.list);
 
-    return new ASTProlog(loc, decls);
+    return new ASTProlog(cd, decls);
 }
 
 void ASTProlog::modifyChild(const ASTNode *oldc, ASTNode *newc)

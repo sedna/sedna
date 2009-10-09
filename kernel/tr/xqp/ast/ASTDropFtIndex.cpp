@@ -22,20 +22,20 @@ void ASTDropFtIndex::accept(ASTVisitor &v)
 
 ASTNode *ASTDropFtIndex::dup()
 {
-    return new ASTDropFtIndex(loc, index->dup());
+    return new ASTDropFtIndex(cd, index->dup());
 }
 
 ASTNode *ASTDropFtIndex::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *ind = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     ind = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-    return new ASTDropFtIndex(loc, ind);
+    return new ASTDropFtIndex(cd, ind);
 }
 
 void ASTDropFtIndex::modifyChild(const ASTNode *oldc, ASTNode *newc)

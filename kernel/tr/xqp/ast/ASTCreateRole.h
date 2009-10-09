@@ -17,7 +17,7 @@ public:
     std::string *role;
 
 public:
-    ASTCreateRole(ASTLocation &loc, std::string *role_) : ASTNode(loc), role(role_) {}
+    ASTCreateRole(const ASTNodeCommonData &loc, std::string *role_) : ASTNode(loc), role(role_) {}
 
     ~ASTCreateRole();
 

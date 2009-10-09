@@ -17,7 +17,7 @@ public:
     std::string *name, *uri;
 
 public:
-    ASTModuleDecl(ASTLocation &loc, std::string *mod_name, std::string *mod_uri) : ASTNode(loc), name(mod_name), uri(mod_uri) {}
+    ASTModuleDecl(const ASTNodeCommonData &loc, std::string *mod_name, std::string *mod_uri) : ASTNode(loc), name(mod_name), uri(mod_uri) {}
 
     ~ASTModuleDecl();
 

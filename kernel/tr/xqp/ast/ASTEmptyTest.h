@@ -12,7 +12,7 @@
 class ASTEmptyTest : public ASTNode
 {
 public:
-    ASTEmptyTest(ASTLocation &loc) : ASTNode(loc) {}
+    ASTEmptyTest(const ASTNodeCommonData &loc) : ASTNode(loc) {}
 
     ~ASTEmptyTest() {}
 

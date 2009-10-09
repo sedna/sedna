@@ -21,7 +21,7 @@ public:
     bool is_internal; // true, if this module was deserialized from internals
 
 public:
-    ASTLibModule(ASTLocation &loc, ASTNode *md, ASTNode *prol) : ASTNode(loc), moduleDecl(md), prolog(prol)
+    ASTLibModule(const ASTNodeCommonData &loc, ASTNode *md, ASTNode *prol) : ASTNode(loc), moduleDecl(md), prolog(prol)
     {
         is_internal = false;
     }

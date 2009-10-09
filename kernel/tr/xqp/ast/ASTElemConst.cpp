@@ -26,20 +26,20 @@ void ASTElemConst::accept(ASTVisitor &v)
 ASTNode *ASTElemConst::dup()
 {
     if (pref)
-        return new ASTElemConst(loc, new std::string(*pref), new std::string(*local), (expr) ? expr->dup() : NULL);
+        return new ASTElemConst(cd, new std::string(*pref), new std::string(*local), (expr) ? expr->dup() : NULL);
 
-    return new ASTElemConst(loc, name->dup(), (expr) ? expr->dup() : NULL);
+    return new ASTElemConst(cd, name->dup(), (expr) ? expr->dup() : NULL);
 }
 
 ASTNode *ASTElemConst::createNode(scheme_list &sl)
 {
     std::string *pref = NULL, *local = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *name = NULL, *expr = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     if (sl[2].type == SCM_LIST) // computed name
     {
@@ -48,7 +48,7 @@ ASTNode *ASTElemConst::createNode(scheme_list &sl)
         U_ASSERT(sl[3].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-        return new ASTElemConst(loc, name, expr);
+        return new ASTElemConst(cd, name, expr);
     }
     else
     {
@@ -60,7 +60,7 @@ ASTNode *ASTElemConst::createNode(scheme_list &sl)
         U_ASSERT(sl[4].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-        return new ASTElemConst(loc, pref, local, expr);
+        return new ASTElemConst(cd, pref, local, expr);
     }
 }
 

@@ -22,22 +22,22 @@ void ASTMetaDocs::accept(ASTVisitor &v)
 
 ASTNode *ASTMetaDocs::dup()
 {
-    return new ASTMetaDocs(loc, (coll) ? coll->dup() : NULL, need_stats);
+    return new ASTMetaDocs(cd, (coll) ? coll->dup() : NULL, need_stats);
 }
 
 ASTNode *ASTMetaDocs::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     bool mod;
     ASTNode *col;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_BOOL && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     mod = sl[2].internal.b;
     col = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    return new ASTMetaDocs(loc, col, mod);
+    return new ASTMetaDocs(cd, col, mod);
 }
 
 void ASTMetaDocs::modifyChild(const ASTNode *oldc, ASTNode *newc)

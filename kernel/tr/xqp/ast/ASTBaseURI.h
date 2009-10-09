@@ -15,7 +15,7 @@ public:
     std::string *uri;
 
 public:
-    ASTBaseURI(ASTLocation &loc, std::string *base_uri) : ASTNode(loc), uri(base_uri) {}
+    ASTBaseURI(const ASTNodeCommonData &loc, std::string *base_uri) : ASTNode(loc), uri(base_uri) {}
 
     ~ASTBaseURI();
 

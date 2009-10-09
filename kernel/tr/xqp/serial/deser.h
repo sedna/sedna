@@ -13,7 +13,7 @@ ASTNode *dsGetASTFromSchemeList(scheme_list &sl);
 
 /* retrireves location from scheme_list (serialize-deserialize AST logic)
     location is stored in SCM_LIST as four SCM_NUMBER */
-ASTLocation dsGetASTLocationFromSList(scheme_list &slist);
+ASTNodeCommonData dsGetASTCommonFromSList(scheme_list &slist);
 
 /* builds AST nodes vector from string; calls dsGetASTNodesFromSList */
 ASTNodesVector *dsGetASTNodesFromString(const char *str);

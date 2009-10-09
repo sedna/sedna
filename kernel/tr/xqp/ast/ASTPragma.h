@@ -18,9 +18,9 @@ public:
     std::string *cont; // pragma content
 
 public:
-    ASTPragma(ASTLocation &loc, std::string *pragma_name, std::string *pragma_cont);
+    ASTPragma(const ASTNodeCommonData &loc, std::string *pragma_name, std::string *pragma_cont);
 
-    ASTPragma(ASTLocation &loc, std::string *pr_pref, std::string *pr_local, std::string *pragma_cont);
+    ASTPragma(const ASTNodeCommonData &loc, std::string *pr_pref, std::string *pr_local, std::string *pragma_cont);
 
     ~ASTPragma();
 

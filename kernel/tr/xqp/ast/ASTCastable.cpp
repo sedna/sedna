@@ -25,25 +25,25 @@ ASTNode *ASTCastable::dup()
 {
     ASTCastable *res;
 
-    res = new ASTCastable(loc, expr->dup(), type->dup());
+    res = new ASTCastable(cd, expr->dup(), type->dup());
 
     return res;
 }
 
 ASTNode *ASTCastable::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *type = NULL, *expr = NULL;
     ASTCastable *res;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
     type = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    res = new ASTCastable(loc, expr, type);
+    res = new ASTCastable(cd, expr, type);
 
     return res;
 }

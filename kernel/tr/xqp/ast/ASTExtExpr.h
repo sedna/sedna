@@ -17,7 +17,7 @@ public:
     ASTNode *expr; // may be NULL
 
 public:
-    ASTExtExpr(ASTLocation &loc, ASTNodesVector *pragmas_, ASTNode *expr_) : ASTNode(loc), pragmas(pragmas_), expr(expr_) {}
+    ASTExtExpr(const ASTNodeCommonData &loc, ASTNodesVector *pragmas_, ASTNode *expr_) : ASTNode(loc), pragmas(pragmas_), expr(expr_) {}
     ~ASTExtExpr();
 
     void accept(ASTVisitor &v);

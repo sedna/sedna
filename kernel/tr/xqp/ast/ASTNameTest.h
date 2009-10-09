@@ -19,7 +19,7 @@ public:
     std::string *uri; // added by sema
 
 public:
-    ASTNameTest(ASTLocation &loc, std::string *name) : ASTNode(loc)
+    ASTNameTest(const ASTNodeCommonData &loc, std::string *name) : ASTNode(loc)
     {
         ASTParseQName(name, &pref, &local);
         uri = NULL;
@@ -27,7 +27,7 @@ public:
         delete name;
     }
 
-    ASTNameTest(ASTLocation &loc, std::string *pref_, std::string *local_) : ASTNode(loc), pref(pref_), local(local_)
+    ASTNameTest(const ASTNodeCommonData &loc, std::string *pref_, std::string *local_) : ASTNode(loc), pref(pref_), local(local_)
     {
         uri = NULL;
     }

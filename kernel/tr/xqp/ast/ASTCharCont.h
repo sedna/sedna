@@ -25,8 +25,8 @@ public:
     Origin orig; // origin of this content (CDATA, CharRef or just plain symbols)
 
 public:
-    ASTCharCont(ASTLocation &loc, std::string *cont_, Origin o = DIRECT) : ASTNode(loc), cont(cont_), orig(o) {}
-    ASTCharCont(ASTLocation &loc, const char *cont_, Origin o = DIRECT) : ASTNode(loc), orig(o)
+    ASTCharCont(const ASTNodeCommonData &loc, std::string *cont_, Origin o = DIRECT) : ASTNode(loc), cont(cont_), orig(o) {}
+    ASTCharCont(const ASTNodeCommonData &loc, const char *cont_, Origin o = DIRECT) : ASTNode(loc), orig(o)
     {
         cont = new std::string(cont_);
     }

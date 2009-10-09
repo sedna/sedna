@@ -21,15 +21,15 @@ public:
     std::string *int_name; // internal name (for standard functions)
 
 public:
-    ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNodesVector *func_params = NULL);
+    ASTFunCall(const ASTNodeCommonData &loc, std::string *func_name, ASTNodesVector *func_params = NULL);
 
-    ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param);
+    ASTFunCall(const ASTNodeCommonData &loc, std::string *func_name, ASTNode *func_param);
 
-    ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2);
+    ASTFunCall(const ASTNodeCommonData &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2);
 
-    ASTFunCall(ASTLocation &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2, ASTNode *func_param3);
+    ASTFunCall(const ASTNodeCommonData &loc, std::string *func_name, ASTNode *func_param1, ASTNode *func_param2, ASTNode *func_param3);
 
-    ASTFunCall(ASTLocation &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params = NULL);
+    ASTFunCall(const ASTNodeCommonData &loc, std::string *fun_pref, std::string *fun_local, ASTNodesVector *func_params = NULL);
 
     ~ASTFunCall();
 

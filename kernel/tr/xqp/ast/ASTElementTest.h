@@ -24,7 +24,7 @@ public:
     Mod mod;
 
 public:
-    ASTElementTest(ASTLocation &loc, ASTNode *name_ = NULL, ASTNode *type_ = NULL, Mod mod_ = NON_NIL) : ASTNode(loc), name(name_), type(type_), mod(mod_) {}
+    ASTElementTest(const ASTNodeCommonData &loc, ASTNode *name_ = NULL, ASTNode *type_ = NULL, Mod mod_ = NON_NIL) : ASTNode(loc), name(name_), type(type_), mod(mod_) {}
 
     ~ASTElementTest();
 

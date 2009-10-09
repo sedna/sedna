@@ -15,7 +15,7 @@ public:
     ASTNode *coll;
 
 public:
-    ASTDropColl(ASTLocation &loc, ASTNode *coll_) : ASTNode(loc), coll(coll_) {}
+    ASTDropColl(const ASTNodeCommonData &loc, ASTNode *coll_) : ASTNode(loc), coll(coll_) {}
 
     ~ASTDropColl();
 

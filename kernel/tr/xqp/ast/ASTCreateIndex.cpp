@@ -25,23 +25,23 @@ void ASTCreateIndex::accept(ASTVisitor &v)
 
 ASTNode *ASTCreateIndex::dup()
 {
-    return new ASTCreateIndex(loc, name->dup(), on_path->dup(), by_path->dup(), type->dup());
+    return new ASTCreateIndex(cd, name->dup(), on_path->dup(), by_path->dup(), type->dup());
 }
 
 ASTNode *ASTCreateIndex::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *name = NULL, *on_path = NULL, *by_path = NULL, *type = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     name = dsGetASTFromSchemeList(*sl[2].internal.list);
     on_path = dsGetASTFromSchemeList(*sl[3].internal.list);
     by_path = dsGetASTFromSchemeList(*sl[4].internal.list);
     type = dsGetASTFromSchemeList(*sl[5].internal.list);
 
-    return new ASTCreateIndex(loc, name, on_path, by_path, type);
+    return new ASTCreateIndex(cd, name, on_path, by_path, type);
 }
 
 void ASTCreateIndex::modifyChild(const ASTNode *oldc, ASTNode *newc)

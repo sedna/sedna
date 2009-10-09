@@ -17,7 +17,7 @@ void ASTError::accept(ASTVisitor &v)
 
 ASTNode *ASTError::dup()
 {
-    return new ASTError(loc);
+    return new ASTError(cd);
 }
 
 void ASTError::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -17,20 +17,20 @@ void ASTConstDecl::accept(ASTVisitor &v)
 
 ASTNode *ASTConstDecl::dup()
 {
-    return new ASTConstDecl(loc, mod);
+    return new ASTConstDecl(cd, mod);
 }
 
 ASTNode *ASTConstDecl::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     opt mod;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     mod = opt(atoi(sl[2].internal.num));
 
-    return new ASTConstDecl(loc, mod);
+    return new ASTConstDecl(cd, mod);
 }
 
 void ASTConstDecl::modifyChild(const ASTNode *oldc, ASTNode *newc)

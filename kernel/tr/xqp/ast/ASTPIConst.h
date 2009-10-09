@@ -20,8 +20,8 @@ public:
     ASTNode *expr; // computed construction expression
 
 public:
-    ASTPIConst(ASTLocation &loc, ASTNode *name_, ASTNode *expr_ = NULL) : ASTNode(loc), name(name_), ncname(NULL), expr(expr_) {}
-    ASTPIConst(ASTLocation &loc, std::string *ncname_, ASTNode *expr_ = NULL) : ASTNode(loc), name(NULL), ncname(ncname_), expr(expr_) {}
+    ASTPIConst(const ASTNodeCommonData &loc, ASTNode *name_, ASTNode *expr_ = NULL) : ASTNode(loc), name(name_), ncname(NULL), expr(expr_) {}
+    ASTPIConst(const ASTNodeCommonData &loc, std::string *ncname_, ASTNode *expr_ = NULL) : ASTNode(loc), name(NULL), ncname(ncname_), expr(expr_) {}
 
     ~ASTPIConst();
 

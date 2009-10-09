@@ -19,7 +19,7 @@ public:
     ASTNode *expr; // expression for this case
 
 public:
-    ASTCase(ASTLocation &loc, ASTNode *var_, ASTNode *seqtype, ASTNode *expr_) : ASTNode(loc), type(seqtype), var(var_), expr(expr_) {}
+    ASTCase(const ASTNodeCommonData &loc, ASTNode *var_, ASTNode *seqtype, ASTNode *expr_) : ASTNode(loc), type(seqtype), var(var_), expr(expr_) {}
 
     ~ASTCase();
 

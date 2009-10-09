@@ -17,7 +17,7 @@ public:
     std::string *user, *psw;
 
 public:
-    ASTCreateUser(ASTLocation &loc, std::string *user_, std::string *psw_) : ASTNode(loc), user(user_), psw(psw_) {}
+    ASTCreateUser(const ASTNodeCommonData &loc, std::string *user_, std::string *psw_) : ASTNode(loc), user(user_), psw(psw_) {}
 
     ~ASTCreateUser();
 

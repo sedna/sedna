@@ -25,24 +25,24 @@ void ASTCreateFtIndex::accept(ASTVisitor &v)
 
 ASTNode *ASTCreateFtIndex::dup()
 {
-    return new ASTCreateFtIndex(loc, name->dup(), path->dup(), new std::string(*type), (cust_expr) ? cust_expr->dup() : NULL);
+    return new ASTCreateFtIndex(cd, name->dup(), path->dup(), new std::string(*type), (cust_expr) ? cust_expr->dup() : NULL);
 }
 
 ASTNode *ASTCreateFtIndex::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *type;
     ASTNode *name = NULL, *path = NULL, *cust = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_STRING && sl[5].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     name = dsGetASTFromSchemeList(*sl[2].internal.list);
     path = dsGetASTFromSchemeList(*sl[3].internal.list);
     type = new std::string(sl[4].internal.str);
     cust = dsGetASTFromSchemeList(*sl[5].internal.list);
 
-    return new ASTCreateFtIndex(loc, name, path, type, cust);
+    return new ASTCreateFtIndex(cd, name, path, type, cust);
 }
 
 void ASTCreateFtIndex::modifyChild(const ASTNode *oldc, ASTNode *newc)

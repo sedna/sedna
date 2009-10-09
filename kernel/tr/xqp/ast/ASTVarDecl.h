@@ -17,7 +17,7 @@ public:
     ASTNode *expr; // NULL means that variable is external
 
 public:
-    ASTVarDecl(ASTLocation &loc, ASTNode *vard, ASTNode *var_type = NULL, ASTNode *var_expr = NULL) : ASTNode(loc), var(vard), type(var_type), expr(var_expr) {}
+    ASTVarDecl(const ASTNodeCommonData &loc, ASTNode *vard, ASTNode *var_type = NULL, ASTNode *var_expr = NULL) : ASTNode(loc), var(vard), type(var_type), expr(var_expr) {}
 
     ~ASTVarDecl();
 

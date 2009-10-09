@@ -22,20 +22,20 @@ void ASTDropMod::accept(ASTVisitor &v)
 
 ASTNode *ASTDropMod::dup()
 {
-    return new ASTDropMod(loc, new std::string(*module));
+    return new ASTDropMod(cd, new std::string(*module));
 }
 
 ASTNode *ASTDropMod::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *mod = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     mod = new std::string(sl[2].internal.str);
 
-    return new ASTDropMod(loc, mod);
+    return new ASTDropMod(cd, mod);
 }
 
 void ASTDropMod::modifyChild(const ASTNode *oldc, ASTNode *newc)

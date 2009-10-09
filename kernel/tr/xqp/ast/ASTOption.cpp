@@ -29,7 +29,7 @@ ASTNode *ASTOption::dup()
 {
     ASTOption *res;
 
-    res = new ASTOption(loc, new std::string(*pref), new std::string(*local), new std::string(*opt));
+    res = new ASTOption(cd, new std::string(*pref), new std::string(*local), new std::string(*opt));
 
     if (uri)
         res->uri = new std::string(uri->c_str());
@@ -49,19 +49,19 @@ ASTNode *ASTOption::dup()
 
 ASTNode *ASTOption::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *pref = NULL, *local = NULL, *opt = NULL;
     ASTOption *res;
     scheme_list *sl_opts = NULL, *sl_opt;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     pref = new std::string(sl[2].internal.str);
     local = new std::string(sl[3].internal.str);
     opt = new std::string(sl[4].internal.str);
 
-    res =  new ASTOption(loc, pref, local, opt);
+    res =  new ASTOption(cd, pref, local, opt);
 
     if (sl.size() > 5)
     {

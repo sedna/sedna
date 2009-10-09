@@ -184,17 +184,19 @@ ASTNodesVector *dsGetASTNodesFromSList(scheme_list &slist)
 
 /* retrireves location from scheme_list (serialize-deserialize AST logic)
     location is stored in SCM_LIST as four SCM_NUMBER */
-ASTLocation dsGetASTLocationFromSList(scheme_list &slist)
+ASTNodeCommonData dsGetASTCommonFromSList(scheme_list &slist)
 {
-    ASTLocation res;
+    ASTNodeCommonData res;
 
-    U_ASSERT(slist.size() == 4 && slist[0].type == SCM_NUMBER &&
-            slist[1].type == SCM_NUMBER && slist[2].type == SCM_NUMBER && slist[3].type == SCM_NUMBER);
+    U_ASSERT(slist.size() == 5 && slist[0].type == SCM_NUMBER &&
+            slist[1].type == SCM_NUMBER && slist[2].type == SCM_NUMBER && slist[3].type == SCM_NUMBER && slist[4].type == SCM_BOOL);
 
-    res.begin.line = atol(slist[0].internal.num);
-    res.begin.column = atol(slist[1].internal.num);
-    res.end.line = atol(slist[2].internal.num);
-    res.end.column = atol(slist[3].internal.num);
+    res.loc.begin.line = atol(slist[0].internal.num);
+    res.loc.begin.column = atol(slist[1].internal.num);
+    res.loc.end.line = atol(slist[2].internal.num);
+    res.loc.end.column = atol(slist[3].internal.num);
+
+    res.isCached = slist[4].internal.b;
 
     return res;
 }

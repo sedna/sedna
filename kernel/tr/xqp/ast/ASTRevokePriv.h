@@ -25,7 +25,7 @@ public:
     ObjMod mod;
 
 public:
-    ASTRevokePriv(ASTLocation &loc, std::string *priv_, std::string *obj_, std::string *user_, ObjMod mod_) :
+    ASTRevokePriv(const ASTNodeCommonData &loc, std::string *priv_, std::string *obj_, std::string *user_, ObjMod mod_) :
         ASTNode(loc),
         priv(priv_),
         obj(obj_),

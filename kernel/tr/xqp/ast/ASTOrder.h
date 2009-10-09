@@ -21,7 +21,7 @@ public:
     ASTOrder::opt mod; // ordered/unordered modificator
 
 public:
-    ASTOrder(ASTLocation &loc, ASTOrder::opt decl) : ASTNode(loc), mod(decl) {}
+    ASTOrder(const ASTNodeCommonData &loc, ASTOrder::opt decl) : ASTNode(loc), mod(decl) {}
 
     ~ASTOrder() {}
 

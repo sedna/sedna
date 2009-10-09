@@ -22,7 +22,7 @@ public:
     ASTNode *expr;
 
 public:
-    ASTOrdExpr(ASTLocation &loc, OrdType type_, ASTNode *expr_) : ASTNode(loc), type(type_), expr(expr_) {}
+    ASTOrdExpr(const ASTNodeCommonData &loc, OrdType type_, ASTNode *expr_) : ASTNode(loc), type(type_), expr(expr_) {}
 
     ~ASTOrdExpr();
 

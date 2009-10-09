@@ -17,7 +17,7 @@ public:
     ASTNode *new_expr;
 
 public:
-    ASTUpdReplace(ASTLocation &loc, ASTNode *var_, ASTNode *what_, ASTNode *new_expr_) : ASTNode(loc), var(var_), what(what_), new_expr(new_expr_) {}
+    ASTUpdReplace(const ASTNodeCommonData &loc, ASTNode *var_, ASTNode *what_, ASTNode *new_expr_) : ASTNode(loc), var(var_), what(what_), new_expr(new_expr_) {}
 
     ~ASTUpdReplace();
 

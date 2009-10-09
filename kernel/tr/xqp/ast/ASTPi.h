@@ -18,7 +18,7 @@ public:
     std::string *cont; // pi content
 
 public:
-    ASTPi(ASTLocation &loc, std::string *name_, std::string *cont_) : ASTNode(loc), name(name_), cont(cont_) {}
+    ASTPi(const ASTNodeCommonData &loc, std::string *name_, std::string *cont_) : ASTNode(loc), name(name_), cont(cont_) {}
 
     ~ASTPi();
 

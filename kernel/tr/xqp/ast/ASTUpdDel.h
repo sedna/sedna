@@ -22,7 +22,7 @@ public:
     DelType type;
 
 public:
-    ASTUpdDel(ASTLocation &loc, ASTNode *what_, DelType type_) : ASTNode(loc), what(what_), type(type_) {}
+    ASTUpdDel(const ASTNodeCommonData &loc, ASTNode *what_, DelType type_) : ASTNode(loc), what(what_), type(type_) {}
 
     ~ASTUpdDel();
 

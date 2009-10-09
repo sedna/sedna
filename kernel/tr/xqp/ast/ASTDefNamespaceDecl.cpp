@@ -22,22 +22,22 @@ void ASTDefNamespaceDecl::accept(ASTVisitor &v)
 
 ASTNode *ASTDefNamespaceDecl::dup()
 {
-    return new ASTDefNamespaceDecl(loc, new std::string(*uri), type);
+    return new ASTDefNamespaceDecl(cd, new std::string(*uri), type);
 }
 
 ASTNode *ASTDefNamespaceDecl::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *uri = NULL;
     Type type;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     uri = new std::string(sl[2].internal.str);
     type = Type(atol(sl[3].internal.num));
 
-    return new ASTDefNamespaceDecl(loc, uri, type);
+    return new ASTDefNamespaceDecl(cd, uri, type);
 }
 
 void ASTDefNamespaceDecl::modifyChild(const ASTNode *oldc, ASTNode *newc)

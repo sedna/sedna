@@ -17,7 +17,7 @@ public:
     std::string *role, *role_from;
 
 public:
-    ASTRevokeRole(ASTLocation &loc, std::string *r, std::string *rf) : ASTNode(loc), role(r), role_from(rf) {}
+    ASTRevokeRole(const ASTNodeCommonData &loc, std::string *r, std::string *rf) : ASTNode(loc), role(r), role_from(rf) {}
 
     ~ASTRevokeRole();
 

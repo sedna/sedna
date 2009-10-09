@@ -17,7 +17,7 @@ public:
     std::string *user;
 
 public:
-    ASTDropUser(ASTLocation &loc, std::string *user_) : ASTNode(loc), user(user_) {}
+    ASTDropUser(const ASTNodeCommonData &loc, std::string *user_) : ASTNode(loc), user(user_) {}
 
     ~ASTDropUser();
 

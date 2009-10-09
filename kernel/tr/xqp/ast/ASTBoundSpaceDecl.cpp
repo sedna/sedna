@@ -17,20 +17,20 @@ void ASTBoundSpaceDecl::accept(ASTVisitor &v)
 
 ASTNode *ASTBoundSpaceDecl::dup()
 {
-    return new ASTBoundSpaceDecl(loc, mod);
+    return new ASTBoundSpaceDecl(cd, mod);
 }
 
 ASTNode *ASTBoundSpaceDecl::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     opt mod;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     mod = opt(atoi(sl[2].internal.num));
 
-    return new ASTBoundSpaceDecl(loc, mod);
+    return new ASTBoundSpaceDecl(cd, mod);
 }
 
 void ASTBoundSpaceDecl::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -15,7 +15,7 @@ public:
     std::string *uri;
 
 public:
-    ASTDefCollation(ASTLocation &loc, std::string *coll_uri) : ASTNode(loc), uri(coll_uri) {}
+    ASTDefCollation(const ASTNodeCommonData &loc, std::string *coll_uri) : ASTNode(loc), uri(coll_uri) {}
 
     ~ASTDefCollation();
 

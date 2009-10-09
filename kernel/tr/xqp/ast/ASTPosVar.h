@@ -17,7 +17,7 @@ public:
     ASTNode *var;
 
 public:
-    ASTPosVar(ASTLocation &loc, ASTNode *pos_var) : ASTNode(loc), var(pos_var) {}
+    ASTPosVar(const ASTNodeCommonData &loc, ASTNode *pos_var) : ASTNode(loc), var(pos_var) {}
 
     ~ASTPosVar();
 

@@ -19,13 +19,33 @@
 class ASTVisitor;
 typedef sedna::location ASTLocation;
 
+struct ASTNodeCommonData
+{
+    ASTLocation loc;
+    bool isCached;
+
+    ASTNodeCommonData()
+    {
+        isCached = false;
+    }
+
+    ASTNodeCommonData(const ASTLocation &loca)
+    {
+        loc = loca;
+        isCached = false;
+    }
+};
+
 class ASTNode
 {
 public:
-    ASTLocation loc;
+    ASTNodeCommonData cd;
 
 public:
-    ASTNode(ASTLocation  &l) : loc(l) {}
+    ASTNode(const ASTNodeCommonData &common)
+    {
+        cd = common;
+    }
 
     // destructor should deal with children
     virtual ~ASTNode() {}
@@ -37,7 +57,17 @@ public:
     // returns first line of a definition
     int getFirstLine() const
     {
-        return loc.begin.line;
+        return cd.loc.begin.line;
+    }
+
+    ASTLocation getLocation() const
+    {
+        return cd.loc;
+    }
+
+    ASTLocation *getLocationAddr()
+    {
+        return &(cd.loc);
     }
 
     // deep copy of the corresponding subtree

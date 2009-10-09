@@ -23,21 +23,21 @@ void ASTAlterUser::accept(ASTVisitor &v)
 
 ASTNode *ASTAlterUser::dup()
 {
-    return new ASTAlterUser(loc, new std::string(*user), new std::string(*psw));
+    return new ASTAlterUser(cd, new std::string(*user), new std::string(*psw));
 }
 
 ASTNode *ASTAlterUser::createNode(scheme_list &sl)
 {
     std::string *user, *psw;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     user = new std::string(sl[2].internal.str);
     psw = new std::string(sl[3].internal.str);
 
-    return new ASTAlterUser(loc, user, psw);
+    return new ASTAlterUser(cd, user, psw);
 }
 
 void ASTAlterUser::modifyChild(const ASTNode *oldc, ASTNode *newc)

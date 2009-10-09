@@ -28,22 +28,22 @@ void ASTLibModule::accept(ASTVisitor &v)
 
 ASTNode *ASTLibModule::dup()
 {
-    return new ASTLibModule(loc, moduleDecl->dup(), prolog->dup());
+    return new ASTLibModule(cd, moduleDecl->dup(), prolog->dup());
 }
 
 ASTNode *ASTLibModule::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *md = NULL, *prol = NULL;
     ASTLibModule *res;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     md = dsGetASTFromSchemeList(*sl[2].internal.list);
     prol = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    res = new ASTLibModule(loc, md, prol);
+    res = new ASTLibModule(cd, md, prol);
 
     res->is_internal = true;
 

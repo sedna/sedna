@@ -27,7 +27,7 @@ public:
     OccurMod mod; // '?' or nothing (ONE)
 
 public:
-    ASTTypeSingle(ASTLocation &loc, ASTNode *type_, ASTTypeSingle::OccurMod omod = ONE) : ASTNode(loc), type(type_), mod(omod) {}
+    ASTTypeSingle(const ASTNodeCommonData &loc, ASTNode *type_, ASTTypeSingle::OccurMod omod = ONE) : ASTNode(loc), type(type_), mod(omod) {}
 
     ~ASTTypeSingle();
 

@@ -25,24 +25,24 @@ void ASTOrderByRet::accept(ASTVisitor &v)
 
 ASTNode *ASTOrderByRet::dup()
 {
-    return new ASTOrderByRet(loc, iter_expr->dup(), ord_expr->dup(), ret_expr->dup(), duplicateASTNodes(vars));
+    return new ASTOrderByRet(cd, iter_expr->dup(), ord_expr->dup(), ret_expr->dup(), duplicateASTNodes(vars));
 }
 
 ASTNode *ASTOrderByRet::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *iter = NULL, *ord = NULL, *ret = NULL;
     ASTNodesVector *vars = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     iter = dsGetASTFromSchemeList(*sl[2].internal.list);
     ord = dsGetASTFromSchemeList(*sl[3].internal.list);
     ret = dsGetASTFromSchemeList(*sl[4].internal.list);
     vars = dsGetASTNodesFromSList(*sl[5].internal.list);
 
-    return new ASTOrderByRet(loc, iter, ord, ret, vars);
+    return new ASTOrderByRet(cd, iter, ord, ret, vars);
 }
 
 void ASTOrderByRet::modifyChild(const ASTNode *oldc, ASTNode *newc)

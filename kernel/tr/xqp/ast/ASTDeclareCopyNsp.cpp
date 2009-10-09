@@ -17,21 +17,21 @@ void ASTDeclareCopyNsp::accept(ASTVisitor &v)
 
 ASTNode *ASTDeclareCopyNsp::dup()
 {
-    return new ASTDeclareCopyNsp(loc, pres_mod, inh_mod);
+    return new ASTDeclareCopyNsp(cd, pres_mod, inh_mod);
 }
 
 ASTNode *ASTDeclareCopyNsp::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     opt p_mod, i_mod;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER && sl[3].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     p_mod = opt(atoi(sl[2].internal.num));
     i_mod = opt(atoi(sl[3].internal.num));
 
-    return new ASTDeclareCopyNsp(loc, p_mod, i_mod);
+    return new ASTDeclareCopyNsp(cd, p_mod, i_mod);
 }
 
 void ASTDeclareCopyNsp::modifyChild(const ASTNode *oldc, ASTNode *newc)

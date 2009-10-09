@@ -24,23 +24,23 @@ void ASTTypeSwitch::accept(ASTVisitor &v)
 
 ASTNode *ASTTypeSwitch::dup()
 {
-    return new ASTTypeSwitch(loc, expr->dup(), duplicateASTNodes(cases), def_case->dup());
+    return new ASTTypeSwitch(cd, expr->dup(), duplicateASTNodes(cases), def_case->dup());
 }
 
 ASTNode *ASTTypeSwitch::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *cases = NULL;
     ASTNode *expr, *def;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
     cases = dsGetASTNodesFromSList(*sl[3].internal.list);
     def = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-    return new ASTTypeSwitch(loc, expr, cases, def);
+    return new ASTTypeSwitch(cd, expr, cases, def);
 }
 
 void ASTTypeSwitch::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -22,7 +22,7 @@ public:
     ASTNode *fd;  // expression for the next forlet-clause representation; may be for, return, where expressions; NULL at start; not NULL after Bison
 
 public:
-    ASTFor(ASTLocation &loc, ASTNode *var, ASTNode *pos_var, ASTNode *for_expr) : ASTNode(loc), tv(var), pv(pos_var), expr(for_expr), fd(NULL) {}
+    ASTFor(const ASTNodeCommonData &loc, ASTNode *var, ASTNode *pos_var, ASTNode *for_expr) : ASTNode(loc), tv(var), pv(pos_var), expr(for_expr), fd(NULL) {}
 
     ~ASTFor();
 

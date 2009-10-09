@@ -22,18 +22,18 @@ void ASTOrderModInt::accept(ASTVisitor &v)
 
 ASTNode *ASTOrderModInt::dup()
 {
-    return new ASTOrderModInt(loc, mod, (uri) ? new std::string(*uri) : NULL);
+    return new ASTOrderModInt(cd, mod, (uri) ? new std::string(*uri) : NULL);
 }
 
 ASTNode *ASTOrderModInt::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *uri = NULL;
     OrderMod type;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     type = OrderMod(atol(sl[2].internal.num));
 
     if (sl.size() > 3)
@@ -42,7 +42,7 @@ ASTNode *ASTOrderModInt::createNode(scheme_list &sl)
          uri = new std::string(sl[3].internal.str);
     }
 
-    return new ASTOrderModInt(loc, type, uri);
+    return new ASTOrderModInt(cd, type, uri);
 }
 
 void ASTOrderModInt::modifyChild(const ASTNode *oldc, ASTNode *newc)

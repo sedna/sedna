@@ -21,7 +21,7 @@ public:
     ASTOrderEmpty::opt mod; // ordered/unordered modificator
 
 public:
-    ASTOrderEmpty(ASTLocation &loc, ASTOrderEmpty::opt decl) : ASTNode(loc), mod(decl) {}
+    ASTOrderEmpty(const ASTNodeCommonData &loc, ASTOrderEmpty::opt decl) : ASTNode(loc), mod(decl) {}
 
     ~ASTOrderEmpty() {}
 

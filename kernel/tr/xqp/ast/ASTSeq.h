@@ -17,12 +17,12 @@ public:
     ASTNodesVector *exprs;
 
 public:
-    ASTSeq(ASTLocation &loc, ASTNodesVector *exprs_) : ASTNode(loc), exprs(exprs_)
+    ASTSeq(const ASTNodeCommonData &loc, ASTNodesVector *exprs_) : ASTNode(loc), exprs(exprs_)
     {
         U_ASSERT(exprs_ != NULL);
     }
 
-    ASTSeq(ASTLocation &loc) : ASTNode(loc)
+    ASTSeq(const ASTNodeCommonData &loc) : ASTNode(loc)
     {
         exprs = new ASTNodesVector();
     }

@@ -23,21 +23,21 @@ void ASTRenameColl::accept(ASTVisitor &v)
 
 ASTNode *ASTRenameColl::dup()
 {
-    return new ASTRenameColl(loc, name_old->dup(), name_new->dup());
+    return new ASTRenameColl(cd, name_old->dup(), name_new->dup());
 }
 
 ASTNode *ASTRenameColl::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *nold = NULL, *nnew = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     nold = dsGetASTFromSchemeList(*sl[2].internal.list);
     nnew = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    return new ASTRenameColl(loc, nold, nnew);
+    return new ASTRenameColl(cd, nold, nnew);
 }
 
 void ASTRenameColl::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -24,24 +24,24 @@ void ASTQuantExpr::accept(ASTVisitor &v)
 
 ASTNode *ASTQuantExpr::dup()
 {
-    return new ASTQuantExpr(loc, var->dup(), expr->dup(), sat->dup(), type);
+    return new ASTQuantExpr(cd, var->dup(), expr->dup(), sat->dup(), type);
 }
 
 ASTNode *ASTQuantExpr::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *var = NULL, *expr = NULL, *sat = NULL;
     QuantMod mod;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_NUMBER);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     var = dsGetASTFromSchemeList(*sl[2].internal.list);
     expr = dsGetASTFromSchemeList(*sl[3].internal.list);
     sat = dsGetASTFromSchemeList(*sl[4].internal.list);
     mod = QuantMod(atol(sl[5].internal.num));
 
-    return new ASTQuantExpr(loc, var, expr, sat, mod);
+    return new ASTQuantExpr(cd, var, expr, sat, mod);
 }
 
 void ASTQuantExpr::modifyChild(const ASTNode *oldc, ASTNode *newc)

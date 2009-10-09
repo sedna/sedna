@@ -25,20 +25,20 @@ void ASTPIConst::accept(ASTVisitor &v)
 ASTNode *ASTPIConst::dup()
 {
     if (ncname)
-        return new ASTPIConst(loc, new std::string(*ncname), (expr) ? expr->dup() : NULL);
+        return new ASTPIConst(cd, new std::string(*ncname), (expr) ? expr->dup() : NULL);
 
-    return new ASTPIConst(loc, name->dup(), (expr) ? expr->dup() : NULL);
+    return new ASTPIConst(cd, name->dup(), (expr) ? expr->dup() : NULL);
 }
 
 ASTNode *ASTPIConst::createNode(scheme_list &sl)
 {
     std::string *ncname = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *name = NULL, *expr = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     if (sl[2].type == SCM_LIST) // computed name
     {
@@ -47,7 +47,7 @@ ASTNode *ASTPIConst::createNode(scheme_list &sl)
         U_ASSERT(sl[3].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-        return new ASTPIConst(loc, name, expr);
+        return new ASTPIConst(cd, name, expr);
     }
     else
     {
@@ -58,7 +58,7 @@ ASTNode *ASTPIConst::createNode(scheme_list &sl)
         U_ASSERT(sl[3].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-        return new ASTPIConst(loc, ncname, expr);
+        return new ASTPIConst(cd, ncname, expr);
     }
 }
 

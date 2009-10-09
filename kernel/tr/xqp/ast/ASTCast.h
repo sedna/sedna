@@ -18,7 +18,7 @@ public:
     ASTNode *type; // ASTTypeSingle
 
 public:
-    ASTCast(ASTLocation &loc, ASTNode *cast_expr, ASTNode *cast_type) : ASTNode(loc), expr(cast_expr), type(cast_type)
+    ASTCast(const ASTNodeCommonData &loc, ASTNode *cast_expr, ASTNode *cast_type) : ASTNode(loc), expr(cast_expr), type(cast_type)
     {
     }
 

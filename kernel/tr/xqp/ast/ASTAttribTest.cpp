@@ -24,24 +24,24 @@ void ASTAttribTest::accept(ASTVisitor &v)
 ASTNode *ASTAttribTest::dup()
 {
     ASTAttribTest *res;
-    res = new ASTAttribTest(loc, (name) ? name->dup() : NULL, (type) ? type->dup() : NULL);
+    res = new ASTAttribTest(cd, (name) ? name->dup() : NULL, (type) ? type->dup() : NULL);
 
     return res;
 }
 
 ASTNode *ASTAttribTest::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *type = NULL, *name = NULL;
     ASTAttribTest *res;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     name = dsGetASTFromSchemeList(*sl[2].internal.list);
     type = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    res = new ASTAttribTest(loc, name, type);
+    res = new ASTAttribTest(cd, name, type);
 
     return res;
 }

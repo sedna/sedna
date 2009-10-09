@@ -21,7 +21,7 @@ public:
     ASTBoundSpaceDecl::opt mod; // strip/preserve modificator
 
 public:
-    ASTBoundSpaceDecl(ASTLocation &loc, ASTBoundSpaceDecl::opt decl) : ASTNode(loc), mod(decl) {}
+    ASTBoundSpaceDecl(const ASTNodeCommonData &loc, ASTBoundSpaceDecl::opt decl) : ASTNode(loc), mod(decl) {}
 
     ~ASTBoundSpaceDecl() {}
 

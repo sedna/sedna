@@ -17,7 +17,7 @@ public:
     std::string *uri, *pref, *local;
 
 public:
-    ASTQName(ASTLocation &loc, std::string *uri_, std::string *pref_, std::string *loc_) : ASTNode(loc), uri(uri_), pref(pref_), local(loc_) {}
+    ASTQName(const ASTNodeCommonData &loc, std::string *uri_, std::string *pref_, std::string *loc_) : ASTNode(loc), uri(uri_), pref(pref_), local(loc_) {}
 
     ~ASTQName();
 

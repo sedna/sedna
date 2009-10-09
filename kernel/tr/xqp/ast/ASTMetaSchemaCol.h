@@ -15,7 +15,7 @@ public:
     ASTNode *coll;
 
 public:
-    ASTMetaSchemaCol(ASTLocation &loc, ASTNode *coll_) : ASTNode(loc), coll(coll_) {}
+    ASTMetaSchemaCol(const ASTNodeCommonData &loc, ASTNode *coll_) : ASTNode(loc), coll(coll_) {}
 
     ~ASTMetaSchemaCol();
 

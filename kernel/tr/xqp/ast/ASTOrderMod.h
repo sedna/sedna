@@ -20,7 +20,7 @@ public:
 
 
 public:
-    ASTOrderMod(ASTLocation &loc, ASTNode *ad = NULL, ASTNode *em = NULL, ASTNode *cm = NULL)
+    ASTOrderMod(const ASTNodeCommonData &loc, ASTNode *ad = NULL, ASTNode *em = NULL, ASTNode *cm = NULL)
         : ASTNode(loc),
           ad_mod(ad),
           em_mod(em),

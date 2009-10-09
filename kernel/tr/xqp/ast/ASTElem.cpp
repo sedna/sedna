@@ -25,18 +25,18 @@ void ASTElem::accept(ASTVisitor &v)
 
 ASTNode *ASTElem::dup()
 {
-    return new ASTElem(loc, new std::string(*pref), new std::string(*local), duplicateASTNodes(attrs), duplicateASTNodes(cont));
+    return new ASTElem(cd, new std::string(*pref), new std::string(*local), duplicateASTNodes(attrs), duplicateASTNodes(cont));
 }
 
 ASTNode *ASTElem::createNode(scheme_list &sl)
 {
     std::string *pref = NULL, *local = NULL;
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNodesVector *attrs = NULL, *cont = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
     pref = new std::string(sl[2].internal.str);
     local = new std::string(sl[3].internal.str);
@@ -44,7 +44,7 @@ ASTNode *ASTElem::createNode(scheme_list &sl)
     attrs = dsGetASTNodesFromSList(*sl[4].internal.list);
     cont = dsGetASTNodesFromSList(*sl[5].internal.list);
 
-    return new ASTElem(loc, pref, local, attrs, cont);
+    return new ASTElem(cd, pref, local, attrs, cont);
 }
 
 void ASTElem::modifyChild(const ASTNode *oldc, ASTNode *newc)

@@ -29,18 +29,18 @@ ASTNode *ASTModImport::dup()
 
     vec = duplicateASTStringVector(hints);
 
-    return new ASTModImport(loc, (name == NULL) ? NULL : new std::string(*name), (uri == NULL) ? NULL : new std::string(*uri), vec);
+    return new ASTModImport(cd, (name == NULL) ? NULL : new std::string(*name), (uri == NULL) ? NULL : new std::string(*uri), vec);
 }
 
 ASTNode *ASTModImport::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     std::string *name = NULL, *uri = NULL;
     ASTStringVector *hints = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     name = new std::string(sl[2].internal.str);
     uri = new std::string(sl[3].internal.str);
     hints = dsGetASTStringsFromSList(*sl[4].internal.list);
@@ -51,7 +51,7 @@ ASTNode *ASTModImport::createNode(scheme_list &sl)
         name = NULL;
     }
 
-    return new ASTModImport(loc, name, uri, hints);
+    return new ASTModImport(cd, name, uri, hints);
 }
 
 void ASTModImport::modifyChild(const ASTNode *oldc, ASTNode *newc)

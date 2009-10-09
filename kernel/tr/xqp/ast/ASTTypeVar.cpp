@@ -23,21 +23,21 @@ void ASTTypeVar::accept(ASTVisitor &v)
 
 ASTNode *ASTTypeVar::dup()
 {
-    return new ASTTypeVar(loc, type->dup(), var->dup());
+    return new ASTTypeVar(cd, type->dup(), var->dup());
 }
 
 ASTNode *ASTTypeVar::createNode(scheme_list &sl)
 {
-    ASTLocation loc;
+    ASTNodeCommonData cd;
     ASTNode *var = NULL, *type = NULL;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST);
 
-    loc = dsGetASTLocationFromSList(*sl[1].internal.list);
+    cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     type = dsGetASTFromSchemeList(*sl[2].internal.list);
     var = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-    return new ASTTypeVar(loc, type, var);
+    return new ASTTypeVar(cd, type, var);
 }
 
 void ASTTypeVar::modifyChild(const ASTNode *oldc, ASTNode *newc)

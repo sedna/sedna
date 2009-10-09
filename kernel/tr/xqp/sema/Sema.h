@@ -45,7 +45,7 @@ namespace sedna
         std::vector<XQVariable> bound_vars; // vector of variables bound in the current expression
 
         bool checkXQueryEncoding(const char *enc);
-        const char *resolveQName(ASTLocation &loc, const char *pref, const char *def_uri, int err_code = XPST0081);
+        const char *resolveQName(const ASTLocation &loc, const char *pref, const char *def_uri, int err_code = XPST0081);
 
         void parseOption(const ASTLocation &loc, const std::string &opt,
                          std::vector<std::pair<std::string, std::string> > &opts, const char delim);
