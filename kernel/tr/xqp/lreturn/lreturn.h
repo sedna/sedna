@@ -71,6 +71,7 @@ namespace sedna
         void VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v, parentRequest req);
 
         childOffer mergeOffers(unsigned int count);
+        childOffer mergeOffersSwitch(unsigned int count);
 
         parentRequest parentReq; // request from parent to child
         std::vector<parentRequest> pareqs; // parent requests
