@@ -72,6 +72,7 @@ namespace sedna
 
         funcInfo funcOrdCache; // cache containing info about processed functions in ordered mode
         funcInfo funcUnordCache; // cache containing info about processed functions in unordered mode
+        funcInfo funcLibCache; // cache containing info about processed library functions
 
         void setParamMode();
         void unsetParamMode();
@@ -92,7 +93,6 @@ namespace sedna
         void cacheTheNode(ASTNode *nod, childOffer &off) const;
         void ignoreVariables(LReturn::childOffer &coff, unsigned int count);
 
-        XQFunction getFunctionInfo(const std::string &name);
         static bool isVarSequence(ASTTypeVar *var);
         static bool isParamDistinctOnly(const ASTFuncDecl *fd, unsigned int nparam);
 
@@ -109,10 +109,15 @@ namespace sedna
         {
         }
 
+        void setOrderedMode(bool mode)
+        {
+            isModeOrdered = mode;
+        }
+
         virtual void addToPath(ASTNode *nod);
         virtual void removeFromPath(ASTNode *nod);
 
-        XQFunction getLReturnCached(const std::string &name, bool ordered) const;
+        XQFunction getFunctionInfo(const std::string &name);
 
         // visiting functions
         void visit(ASTAlterUser &n);
