@@ -7,6 +7,8 @@
 #include <string.h>
 #include <map>
 
+#define CREATE_INTNAME(u, l) ((u == "") ? (l) : (std::string("{") + (u) + std::string("}") + (l)))
+
 namespace sedna
 {
     typedef std::pair<std::string, ASTLocation *> nsPair;

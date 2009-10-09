@@ -11,8 +11,6 @@
 #define DIAG_DUP_PROLOG(bl1, bc1, bl2, bc2) (std::string("first declaration at (") + int2string(bl1) + ":" + int2string(bc1) + ")")
 #define DIAG_QNAME(pref, loc) (std::string("cannot resolve QName: ") + pref + ":" + loc)
 
-#define CREATE_INTNAME(u, l) ((u == "") ? (l) : (std::string("{") + (u) + std::string("}") + (l)))
-
 namespace sedna
 {
     static const char *axis_str[] = {

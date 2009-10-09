@@ -7,8 +7,6 @@
 
 namespace sedna
 {
-    #define CREATE_INTNAME(u, l) ((u == "") ? (l) : (std::string("{") + (u) + std::string("}") + (l)))
-
     XQueryModule::XQueryModule(ASTNode *ast_tree, XQueryDriver *driver)
     {
         ast = ast_tree;
