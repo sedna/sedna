@@ -207,9 +207,7 @@ namespace sedna
         if (!lr)
             lr = new LReturn(this->drv, this);
 
-        xqf.decl->accept(*lr);
-
-        xqf = lr->getLReturnCached(name, isDefaultOrdered);
+        xqf = lr->getFunctionInfo(name);
 
         return true;
     }

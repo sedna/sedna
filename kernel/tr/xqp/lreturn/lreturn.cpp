@@ -1004,31 +1004,14 @@ namespace sedna
         }
         else
         {
-            funcInfo::iterator it;
-
-            if (isModeOrdered)
-            {
-                it = funcOrdCache.find(int_name);
-
-                if (it == funcOrdCache.end())
-                    xqf = getFunctionInfo(int_name);
-                else
-                    xqf = it->second;
-            }
-            else
-            {
-                it = funcUnordCache.find(int_name);
-
-                if (it == funcUnordCache.end())
-                    xqf = getFunctionInfo(int_name);
-                else
-                    xqf = it->second;
-            }
+            xqf = getFunctionInfo(int_name);
         }
 
         if (n.params)
         {
-            parentRequest req(getParentRequest());
+            parentRequest req;
+
+            req.calledOnce = getParentRequest().calledOnce;
 
             for (unsigned int i = 0; i < arity; i++)
             {
@@ -1518,7 +1501,31 @@ namespace sedna
     XQFunction LReturn::getFunctionInfo(const std::string &name)
     {
         XQFunction xqf;
+        funcInfo::iterator it;
 
+        // first, look in cache
+        if (isModeOrdered)
+        {
+            it = funcOrdCache.find(name);
+
+            if (it != funcOrdCache.end())
+                return it->second;
+        }
+        else
+        {
+            it = funcUnordCache.find(name);
+
+            if (it != funcUnordCache.end())
+                return it->second;
+        }
+
+        // try to look in library functions cache
+        it = funcLibCache.find(name);
+
+        if (it != funcLibCache.end())
+            return it->second;
+
+        // then, try to process it as a local
         if (mod->getFunctionInfo(name, xqf))
         {
             xqf.decl->accept(*this);
@@ -1533,10 +1540,7 @@ namespace sedna
         xqf = drv->getLReturnFunctionInfo(name);
 
         // since we've obtained this info from driver we should locally cache it
-        if (isModeOrdered)
-            funcOrdCache[name] = xqf;
-        else
-            funcUnordCache[name] = xqf;
+        funcLibCache[name] = xqf;
 
         return xqf;
     }
@@ -1559,19 +1563,4 @@ namespace sedna
 
         return !isVarSequence(tv);
     }
-
-    XQFunction LReturn::getLReturnCached(const std::string &name, bool ordered) const
-    {
-        funcInfo::const_iterator it;
-
-        U_ASSERT(funcOrdCache.find(name) != funcOrdCache.end() || funcUnordCache.find(name) != funcUnordCache.end());
-
-        if (ordered)
-            it = funcOrdCache.find(name);
-        else
-            it = funcUnordCache.find(name);
-
-        return it->second;
-        }
-
 }
