@@ -796,7 +796,7 @@ namespace sedna
         if (param_mode)
         {
             param_count++;
-            bound_vars.push_back(XQVariable(CREATE_INTNAME(*n.uri, *n.local), &n));
+            bound_vars.push_back(XQVariable(CREATE_INTNAME(*n.uri, *n.local).c_str(), &n));
             return;
         }
 
@@ -808,7 +808,7 @@ namespace sedna
         {
             for (int i = bound_vars.size() - 1; i >= 0; i--)
             {
-                if (bound_vars[i].first == name)
+                if (bound_vars[i].int_name == name)
                     return;
             }
         }

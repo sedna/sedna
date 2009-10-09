@@ -58,7 +58,7 @@ namespace sedna
         unsigned int param_count; // number of parameters found in param_mode
         bool isModeOrdered;     // cuurent mode of operation (global + may change on ordered-unordered expressions)
 
-        std::vector<std::string> bound_vars; // vector of variables bound in the current expression (we need only names there)
+        std::vector<XQVariable> bound_vars; // vector of variables bound in the current expression (we need only names there)
 
         std::vector<childOffer> offers; // offers from children go in this sequence
 

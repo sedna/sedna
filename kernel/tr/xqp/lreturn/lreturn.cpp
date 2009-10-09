@@ -99,7 +99,7 @@ namespace sedna
             req.distinctOnly = true;
 
             // bind the context
-            bound_vars.push_back("$%v");
+            bound_vars.push_back(XQVariable("$%v", NULL));
 
             VisitNodesVector(n.preds, *this, req);
             off_preds = mergeOffers(n.preds->size());
@@ -822,7 +822,7 @@ namespace sedna
             req.distinctOnly = true;
 
             // bind the context
-            bound_vars.push_back("$%v");
+            bound_vars.push_back(XQVariable("$%v", NULL));
 
             VisitNodesVector(n.preds, *this, req);
             off_preds = mergeOffers(n.preds->size());
@@ -837,7 +837,7 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             // bind the context
-            bound_vars.push_back("$%v");
+            bound_vars.push_back(XQVariable("$%v", NULL));
 
             setParentRequest(req);
             n.expr->accept(*this);
@@ -1400,7 +1400,7 @@ namespace sedna
     {
         for (unsigned int i = 0; i < count; i++)
         {
-            coff.usedVars.erase(bound_vars.back());
+            coff.usedVars.erase(bound_vars.back().int_name);
             bound_vars.pop_back();
         }
     }
