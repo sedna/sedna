@@ -71,8 +71,10 @@ namespace sedna
 
         parentRequest parentReq; // request from parent to child
         std::vector<parentRequest> pareqs; // parent requests
-        parentRequest getParentRequest() const;
+        const parentRequest &getParentRequest() const;
         void setParentRequest(const parentRequest &preq);
+
+        void cacheTheNode(ASTNode *nod, childOffer &off) const;
 
     public:
         LReturn(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)

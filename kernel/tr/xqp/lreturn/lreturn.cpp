@@ -38,6 +38,10 @@ namespace sedna
         off.isSingleLevel = true;
         off.isMax1 = true;
 
+        // consider for caching
+        if (!getParentRequest().calledOnce)
+            cacheTheNode(&n, off);
+
         offers.push_back(off);
     }
 
@@ -817,7 +821,7 @@ namespace sedna
         return res;
     }
 
-    LReturn::parentRequest LReturn::getParentRequest() const
+    const LReturn::parentRequest &LReturn::getParentRequest() const
     {
         return pareqs.back();
     }
@@ -837,5 +841,30 @@ namespace sedna
     {
         ASTVisitor::removeFromPath(nod);
         pareqs.pop_back();
+    }
+
+    void LReturn::cacheTheNode(ASTNode *nod, LReturn::childOffer &off) const
+    {
+        if (off.useBoundVars)
+            return;
+
+        if (off.cached)
+        {
+            while (off.cached->size())
+            {
+                ASTNode *cachedNode = off.cached->back();
+                off.cached->pop_back();
+
+                cachedNode->setCached(false); // disabel caching for child
+            }
+        }
+        else
+        {
+            off.cached = new ASTNodesVector();
+        }
+
+        nod->setCached(true);
+
+        off.cached->push_back(nod);
     }
 }
