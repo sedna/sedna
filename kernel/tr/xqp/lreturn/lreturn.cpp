@@ -247,7 +247,7 @@ namespace sedna
                 if (off_this.isCached)
                 {
                     n.setCached(false);
-                    ddo.setCached(true);
+                    ddo->setCached(true);
                 }
 
                 modifyParent(ddo, false, false);
@@ -263,7 +263,7 @@ namespace sedna
                 if (off_this.isCached)
                 {
                     n.setCached(false);
-                    ddo.setCached(true);
+                    ddo->setCached(true);
                 }
 
                 modifyParent(ddo, false, false);
@@ -390,7 +390,7 @@ namespace sedna
         if (n.var)
         {
             param_mode = true;
-            n.var->accept();
+            n.var->accept(*this);
             param_mode = false;
         }
 
@@ -1045,8 +1045,8 @@ namespace sedna
     {
         for (unsigned int i = 0; i < count; i++)
         {
-            coff.usedVars.erase(boundVars.back());
-            boundVars.pop_back();
+            coff.usedVars.erase(bound_vars.back());
+            bound_vars.pop_back();
         }
     }
 
