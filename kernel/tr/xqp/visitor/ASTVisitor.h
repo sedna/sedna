@@ -24,6 +24,9 @@ protected:
     void putToGarbage(ASTNode *nod);
     void freeGarbage();
 
+    // some AST related common functions
+    bool isVarSequence(ASTTypeVar *var); // is variable bound to a 0+ sequence
+
 public:
     ASTVisitor(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : drv(drv_), mod(mod_) {}
     virtual ~ASTVisitor()

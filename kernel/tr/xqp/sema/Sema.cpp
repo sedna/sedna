@@ -906,7 +906,9 @@ namespace sedna
         func.uri = *n.func_uri;
         func.local = *n.local;
         func.min_arg = func.max_arg = (n.params) ? n.params->size() : 0;
+        func.mask = 0; // we decide distinct-only property for params on lreturn phase dynamically
         func.int_name = "";
+        func.toCache = true; // by default cache every user-defined function
         func.decl = (n.body) ? &n : NULL;
         func.loc = n.getLocationAddr();
         func.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
