@@ -64,7 +64,7 @@ namespace sedna
         unsigned int param_count; // number of parameters found in param_mode
         bool isModeOrdered;     // cuurent mode of operation (global + may change on ordered-unordered expressions)
 
-        std::vector<XQVariable> bound_vars; // vector of variables bound in the current expression
+        std::vector<std::string> bound_vars; // vector of variables bound in the current expression (we need only names there)
 
         std::vector<childOffer> offers; // offers from children go in this sequence
 
@@ -85,6 +85,7 @@ namespace sedna
         void setParentRequest(const parentRequest &preq);
 
         void cacheTheNode(ASTNode *nod, childOffer &off) const;
+        void ignoreVariables(LReturn::childOffer &coff, unsigned int count);
 
     public:
         LReturn(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_) : ASTVisitor(drv_, mod_)

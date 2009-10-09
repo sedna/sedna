@@ -12,7 +12,7 @@ namespace sedna
 {
     void LReturn::visit(ASTAlterUser &n)
     {
-        setOffer(childOffer());
+        // nothing to do
     }
 
     void LReturn::visit(ASTAttr &n)
@@ -224,29 +224,6 @@ namespace sedna
                 break;
         }
 
-        // if this is the last step the we need to order(distinct) it
-        if (n.isLast)
-        {
-            ASTNode *ddo;
-
-            if (isModeOrdered && !getParentRequest().distinctOnly && (!off_this.isOrdered || !off_this.isDistincted))
-            {
-                ddo = new ASTDDO(n.getLocation(), &n);
-                modifyParent(ddo, false, false);
-
-                off_this.isOrdered = true;
-                off_this.isDistincted = true;
-            }
-            else if ((!isModeOrdered || getParentRequest().distinctOnly) && !off_this.isDistincted)
-            {
-                ddo = new ASTDDO(n.getLocation(), &n, false);
-                modifyParent(ddo, false, false);
-
-                off_this.isOrdered = false;
-                off_this.isDistincted = true;
-            }
-        }
-
         // now we need to decide if we want to cache it
         if (!getParentRequest().calledOnce)
         {
@@ -255,6 +232,45 @@ namespace sedna
             // if we cache this step then we don't need to cache the previous one
             if (off_this.isCached && n.cont && off_cont.isCached)
                 n.cont->setCached(false);
+        }
+
+        // if this is the last step the we need to order(distinct) it
+        if (n.isLast)
+        {
+            ASTNode *ddo;
+
+            if (isModeOrdered && !getParentRequest().distinctOnly && (!off_this.isOrdered || !off_this.isDistincted))
+            {
+                ddo = new ASTDDO(n.getLocation(), &n);
+
+                // if we cache the node then cache upstreamed ddo instead
+                if (off_this.isCached)
+                {
+                    n.setCached(false);
+                    ddo.setCached(true);
+                }
+
+                modifyParent(ddo, false, false);
+
+                off_this.isOrdered = true;
+                off_this.isDistincted = true;
+            }
+            else if ((!isModeOrdered || getParentRequest().distinctOnly) && !off_this.isDistincted)
+            {
+                ddo = new ASTDDO(n.getLocation(), &n, false);
+
+                // if we cache the node then cache upstreamed ddo instead
+                if (off_this.isCached)
+                {
+                    n.setCached(false);
+                    ddo.setCached(true);
+                }
+
+                modifyParent(ddo, false, false);
+
+                off_this.isOrdered = false;
+                off_this.isDistincted = true;
+            }
         }
 
         setOffer(off_this);
@@ -367,14 +383,62 @@ namespace sedna
 
     void LReturn::visit(ASTCase &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer coff;
+
+        // first, bind variable
+        if (n.var)
+        {
+            param_mode = true;
+            n.var->accept();
+            param_mode = false;
+        }
+
+        setParentRequest(req);
+        n.expr->accept(*this);
+
+        coff = getOffer();
+
+        coff.isCached = false; // we don't cache this node
+
+        if (n.var)
+        {
+            ignoreVariables(coff, 1);
+        }
+
+        setOffer(coff);
     }
 
     void LReturn::visit(ASTCast &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer coff;
+
+        req.distinctOnly = true; // cast doesn't work for >1 sequencies
+        setParentRequest(req);
+        n.expr->accept(*this);
+
+        coff = getOffer();
+
+        coff.isCached = false; // we don't cache this node
+
+        setOffer(coff);
     }
 
     void LReturn::visit(ASTCastable &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer coff;
+
+        req.distinctOnly = true; // castable always returns false for >1 sequences
+        setParentRequest(req);
+        n.expr->accept(*this);
+
+        coff = getOffer();
+
+        coff.isCached = false; // we don't cache this node
+
+        setOffer(coff);
     }
 
     void LReturn::visit(ASTCharCont &n)
@@ -389,24 +453,51 @@ namespace sedna
 
     void LReturn::visit(ASTCommentConst &n)
     {
+        parentRequest req(getParentRequest());
+        childOffer coff;
+
+        setParentRequest(req);
         n.expr->accept(*this);
+
+        coff = getOffer();
+
+        coff.isCached = false; // we don't cache constructors
+        coff.useConstructors = true;
+
+        setOffer(coff);
     }
 
     void LReturn::visit(ASTConstDecl &n)
     {
+        // nothing to do
     }
 
     void LReturn::visit(ASTCreateColl &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.coll->accept(*this);
     }
 
     void LReturn::visit(ASTCreateDoc &n)
     {
+        parentRequest req;
+
+        req.distinctOnly = true;
+        req.calledOnce = true;
+
+        setParentRequest(req);
         n.doc->accept(*this);
 
         if (n.coll)
+        {
+            setParentRequest(req);
             n.coll->accept(*this);
+        }
     }
 
     void LReturn::visit(ASTCreateFtIndex &n)
@@ -948,6 +1039,15 @@ namespace sedna
         }
 
         return res;
+    }
+
+    void LReturn::ignoreVariables(LReturn::childOffer &coff, unsigned int count)
+    {
+        for (unsigned int i = 0; i < count; i++)
+        {
+            coff.usedVars.erase(boundVars.back());
+            boundVars.pop_back();
+        }
     }
 
     const LReturn::parentRequest &LReturn::getParentRequest() const
