@@ -1,0 +1,297 @@
+_get_sedna_bases()
+{
+    local sedna_data
+
+    # first, we should find data path
+    if [ -f /etc/sednaconf.xml ] && [ `cat /etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'` ]; then
+        #sednaconf.xml in /etc
+        sedna_data=`cat /etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'`
+    elif [ -n "$SEDNA_HOME" ] && [ -f $SEDNA_HOME/etc/sednaconf.xml ] && [ `cat $SEDNA_HOME/etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'` ]; then
+        #sednaconf.xml in $SEDNA_HOME/etc
+        sedna_data=`cat $SEDNA_HOME/etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'`
+    else
+        #sednaconf.xml doesn't exist
+        #if SEDNA_HOME is defined use it; if not, use current working directory instead
+        if [ -n "$SEDNA_HOME" ]; then
+            sedna_data=$SEDNA_HOME
+        else
+            sedna_data=`pwd`
+        fi
+
+        if [ ! -d $sedna_data/cfg ]; then
+            sedna_data=/var/lib/sedna
+        fi
+    fi
+
+    # check if cfg subdir exists and print databases
+    if [ ! -d $sedna_data/cfg ]; then
+        echo ""
+    else
+        echo "$(ls $sedna_data/cfg/ | egrep '^*_cfg.xml$' |  sed 's#^\(.*\)_cfg\.xml$#\1#')"
+    fi
+}
+
+_segov()
+{
+    local cur opts prev
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version -background-mode -port-number -ping-port-number -el-level -alive-timeout -stack-depth"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+    else
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    fi
+}
+complete -F _segov se_gov
+
+_sesm()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version -background-mode -bufs-num -max-trs-num -upd-crt -max-log-files -tmp-file-init-size"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+    else
+        if (( ${COMP_CWORD} >= 2 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] ; then
+            COMPREPLY=()
+        else
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -W "${bases}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _sesm se_sm
+
+_setrn()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts="--help -help -version -output -show-time -print-intermed -query-type -debug -timeout -name -pswd"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+
+        case "${prev}" in
+            -output)
+                compopt -o filenames
+                _filedir
+                ;;
+            -query-type)
+                local qtypes="XQuery POR LR"
+                COMPREPLY=( $(compgen -W "${qtypes}" ${cur}) )
+                ;;
+        esac
+    else
+        if (( ${COMP_CWORD} >= 2 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] ; then
+            compopt -o filenames
+            _filedir
+        else
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -W "${bases}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _setrn se_trn
+
+_secdb()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version -data-file-max-size -tmp-file-max-size -data-file-ext-portion -tmp-file-ext-portion -data-file-init-size -tmp-file-init-size -bufs-num -max-trs-num \
+            -upd-crt -max-log-files -log-file-size -db-security"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+
+        case "${prev}" in
+            -db-security)
+                local dstypes="off authentication authorization"
+                COMPREPLY=( $(compgen -W "${dstypes}" ${cur}) )
+                ;;
+        esac
+    else
+        if (( ${COMP_CWORD} >= 2 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] ; then
+            COMPREPLY=()
+        else
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -W "${bases}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _secdb se_cdb
+
+_seddb()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+    else
+        if (( ${COMP_CWORD} >= 2 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] ; then
+            COMPREPLY=()
+        else
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -W "${bases}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _seddb se_ddb
+
+_seexp()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts="--help -help -version -verbose -host -port-number -name -pswd export restore import"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+
+        case "${prev}" in
+            -host)
+                _known_hosts
+                ;;
+        esac
+    else
+        if (( ${COMP_CWORD} >= 3 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] && [[ "${COMP_WORDS[COMP_CWORD-3]}" != -* ]] ; then
+            compopt -o filenames
+            _filedir -d
+        elif [ "${prev}" == "restore" ] || [ "${prev}" == "export" ] || [ "${prev}" == "import" ] ; then
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${bases}" -- ${cur}) )
+        else
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _seexp se_exp
+
+_sehb()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts="--help -help -version -checkpoint -time-dir -make-dir -incr-mode -port"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+
+        case "${prev}" in
+            -incr-mode)
+                local incropts="start add stop"
+                COMPREPLY=( $(compgen -W "${incropts}" -- ${cur}) )
+                ;;
+        esac
+    else
+        if (( ${COMP_CWORD} >= 2 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] ; then
+            compopt -o filenames
+            _filedir -d
+        else
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -W "${bases}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _sehb se_hb
+
+_serc()
+{
+    local cur opts prev
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version -sm-list"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+    else
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    fi
+}
+complete -F _serc se_rc
+
+_sesmsd()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+    else
+        if (( ${COMP_CWORD} >= 2 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] ; then
+            COMPREPLY=()
+        else
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -W "${bases}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _sesmsd se_smsd
+
+_sestop()
+{
+    local cur opts prev
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version -hard"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+    else
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    fi
+}
+complete -F _sestop se_stop
+
+_seterm()
+{
+    local cur prev opts bases
+    COMPREPLY=()
+    cur=`_get_cword`
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help -help -version -file -output -query -echo -show-time -debug -host -port-number -name -pswd"
+
+    if [[ ${prev} == -* ]] ; then
+        COMPREPLY=()
+        case "${prev}" in
+            -file | -output)
+                compopt -o filenames
+                _filedir
+                ;;
+            -host)
+                _known_hosts
+                ;;
+        esac
+    else
+        if (( ${COMP_CWORD} >= 2 )) && [[ "${COMP_WORDS[COMP_CWORD-2]}" != -* ]] ; then
+            COMPREPLY=()
+        else
+            bases=`_get_sedna_bases`
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) $(compgen -W "${bases}" -- ${cur}) )
+        fi
+    fi
+}
+complete -F _seterm se_term
