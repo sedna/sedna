@@ -40,6 +40,7 @@
 #include "tr/executor/root/PPCreateTrigger.h"
 #include "tr/executor/root/PPDropTrigger.h"
 #endif
+#include "tr/executor/xqops/PPLast.h"
 #include "tr/executor/xqops/PPReturn.h"
 #include "tr/executor/xqops/PPSelect.h"
 #include "tr/executor/xqops/PPLet.h"

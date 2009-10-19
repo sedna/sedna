@@ -41,6 +41,7 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPIf$(OBJ_EXT) \
         PPIndexScan$(OBJ_EXT) \
         PPIntersect$(OBJ_EXT) \
+        PPLast$(OBJ_EXT) \
         PPLet$(OBJ_EXT) \
         PPNil$(OBJ_EXT) \
         PPNodeComparison$(OBJ_EXT) \
