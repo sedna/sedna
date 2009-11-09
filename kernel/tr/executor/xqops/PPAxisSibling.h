@@ -25,23 +25,23 @@ protected:
 
     /* obtained parameters and local data */
     xptr cur;
-	bool is_col;
+    bool is_col;
     t_next_fun next_fun;   
-	std::map<schema_node_xptr,std::vector<schema_node_xptr> > desc_sch;	
-	xptrChanneledMerge* merge_tree;
+    std::map<schema_node_xptr,std::vector<schema_node_xptr> > desc_sch;	
+    xptrChanneledMerge* merge_tree;
 
-	void next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun);
-    void next_processing_instruction	(tuple &t);
-    void next_comment					(tuple &t);
-    void next_text						(tuple &t);
-    void next_node						(tuple &t);
-    void next_string					(tuple &t);
-    void next_qname						(tuple &t);
-    void next_wildcard_star				(tuple &t);
-    void next_wildcard_ncname_star		(tuple &t);
-    void next_wildcard_star_ncname		(tuple &t);
-    void next_function_call				(tuple &t);
-    void next_var_name					(tuple &t);
+    void next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun);
+
+    void next_processing_instruction    (tuple &t);
+    void next_comment                   (tuple &t);
+    void next_text                      (tuple &t);
+    void next_node                      (tuple &t);
+    void next_qname                     (tuple &t);
+    void next_attribute                 (tuple &t);
+    void next_document                  (tuple &t);
+    void next_wildcard_star             (tuple &t);
+    void next_wildcard_ncname_star      (tuple &t);
+    void next_wildcard_star_ncname      (tuple &t);
 
     bool following;
 
@@ -65,4 +65,3 @@ public:
 };
 
 #endif
-

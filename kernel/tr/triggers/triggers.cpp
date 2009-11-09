@@ -684,7 +684,7 @@ trigger_cell_xptr create_trigger (
 
     // ALGORITHM: setting up trigger over discriptive scheme
     //II. Execute abs path (object_path) on the desriptive schema
-    t_scmnodes sobj = execute_abs_path_expr(schemaroot, trigger_path);
+    t_scmnodes sobj = execute_abs_path_expr(schemaroot, trigger_path, NULL, NULL);
     //III. For each schema node found (sn_obj)
     std::vector<xptr> start_nodes;
     for (int i = 0; i < sobj.size(); i++)

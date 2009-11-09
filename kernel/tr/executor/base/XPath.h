@@ -30,27 +30,27 @@ enum Axis
 
 enum NodeTestType
 {
-    node_test_processing_instruction, // processing-instruction()
+    /* KindTest */
+    node_test_processing_instruction, // processing-instruction(name)
     node_test_comment,                // comment()
     node_test_text,                   // text()
     node_test_node,                   // node()
-    node_test_string,                 // fn:string()
+    node_test_element,                // element(name | *)
+    node_test_attribute,              // attribute(name | *)
+    node_test_document,               // document-node(element(* | name))
+    
+    /* NameTest */
     node_test_qname,                  // QName
     node_test_wildcard_star,          // *
     node_test_wildcard_ncname_star,   // NCName:*
     node_test_wildcard_star_ncname,   // *:NCName
-    node_test_function_call,          // func(?)
-    node_test_var_name                // $x
 };
-
-struct PPOpIn;
 
 struct NodeTestData
 {
     char* uri;
     char* ncname_prefix;
     char* ncname_local;
-    PPOpIn *ppnode;
 };
 
 struct NodeTest
@@ -84,8 +84,6 @@ struct PathExpr
     void print(std::ostream& str = std::cerr);
     void print_to_lr(std::ostream& str = std::cerr);
 };
-
-typedef PathExpr RelPath;
 
 struct PathExprMemoryManager {
     void * (*alloc)(size_t);

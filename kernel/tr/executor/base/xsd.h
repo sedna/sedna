@@ -129,8 +129,15 @@ const char *xs_QName_get_prefix(const char* qname);
 const char *xs_QName_get_uri(const char* qname);
 const char *xs_QName_get_local_name(const char* qname);
 xmlns_ptr xs_QName_get_xmlns(const char* qname);
-void  xs_QName_print(const char* qname, std::ostream& str);
-void  xs_QName_print_to_lr(const char* qname, std::ostream& str);
+
+void xs_QName_print(const char* prefix, 
+                    const char* local,
+                    std::ostream& str);
+
+void xs_QName_print_to_lr(const char* prefix, 
+                          const char* local,
+                          const char* uri,
+                          std::ostream& str);
 
 
 

@@ -275,24 +275,33 @@ xmlns_ptr xs_QName_get_xmlns(const char* qname)
     return _xs_QName_decode(qname);
 }
 
-void xs_QName_print(const char* qname, std::ostream& str)
+void xs_QName_print(const char* prefix, 
+                    const char* local,
+                    std::ostream& str)
 {
-    const char *prefix = xs_QName_get_prefix(qname);
     if (prefix && *prefix)
-        str << prefix << ":";
-    str << xs_QName_get_local_name(qname);
+    {
+        xs_NCName_print(prefix, str);
+        str << ":";
+    }
+    xs_NCName_print(local, str);
 }
 
-void xs_QName_print_to_lr(const char* qname, std::ostream& str)
+void xs_QName_print_to_lr(const char* prefix, 
+                          const char* local,
+                          const char* uri,
+                          std::ostream& str)
 {
-    const char *prefix = xs_QName_get_prefix(qname);
-    str << "(\"";
-    if (prefix && *prefix)
-        str << prefix;
-    str << "\" \"";
-    str << xs_QName_get_local_name(qname);
-    str << "\")";
+    str << "qname "; 
+    str << "(";
+    xs_anyURI_print_to_lr(uri, str);
+    str << " ";
+    xs_NCName_print_to_lr(local, str); 
+    str << " ";
+    xs_NCName_print_to_lr(prefix, str); 
+    str << ")";
 }
+
 
 bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
 {
