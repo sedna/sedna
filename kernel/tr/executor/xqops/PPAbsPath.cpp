@@ -226,7 +226,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
                                   PathExpr *path_expr)
 {
     t_scmnodes nodes;
-    nodes = execute_abs_path_expr(root, path_expr);
+    nodes = execute_abs_path_expr(root, path_expr, NULL, NULL);
     scmnodes_num = nodes.size();
 
     // create and fill merged_seq_arr

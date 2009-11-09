@@ -309,7 +309,7 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 	//TODO:check NULL
 
 	//FIXME: move this to ft_index_data.cpp?
-	t_scmnodes sobj = execute_abs_path_expr(ft_idx->schemaroot, ft_idx->object);
+	t_scmnodes sobj = execute_abs_path_expr(ft_idx->schemaroot, ft_idx->object, NULL, NULL);
 	//III. For each schema node found (sn_obj)
 	std::vector<xptr> start_nodes;
 	for (int i = 0; i < sobj.size(); i++)

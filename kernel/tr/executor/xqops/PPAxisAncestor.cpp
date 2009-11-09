@@ -9,23 +9,28 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/merge.h"
 
 void PPAxisAncestor::init_function()
 {
-	switch (nt_type)
+    NodeTestType type = nt_type;
+    
+	if (type == node_test_element) 
+        type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
+
+    switch (type)
     {
-        case node_test_processing_instruction	: next_fun = &PPAxisAncestor::next_processing_instruction; break;
-        case node_test_comment					: next_fun = &PPAxisAncestor::next_comment; break;
-        case node_test_text						: next_fun = &PPAxisAncestor::next_text; break;
-        case node_test_node						: next_fun = &PPAxisAncestor::next_node; break;
-        case node_test_string					: next_fun = &PPAxisAncestor::next_string; break;
-        case node_test_qname					: next_fun = &PPAxisAncestor::next_qname; break;
-        case node_test_wildcard_star			: next_fun = &PPAxisAncestor::next_wildcard_star; break;
-        case node_test_wildcard_ncname_star		: next_fun = &PPAxisAncestor::next_wildcard_ncname_star; break;
-        case node_test_wildcard_star_ncname		: next_fun = &PPAxisAncestor::next_wildcard_star_ncname; break;
-        case node_test_function_call			: next_fun = &PPAxisAncestor::next_function_call; break;
-        case node_test_var_name					: next_fun = &PPAxisAncestor::next_var_name; break;
-        default									: throw USER_EXCEPTION2(SE1003, "Unexpected node test");
+        case node_test_processing_instruction   : next_fun = &PPAxisAncestor::next_processing_instruction; break;
+        case node_test_comment                  : next_fun = &PPAxisAncestor::next_comment; break;
+        case node_test_text                     : next_fun = &PPAxisAncestor::next_text; break;
+        case node_test_node                     : next_fun = &PPAxisAncestor::next_node; break;
+        case node_test_qname                    : next_fun = &PPAxisAncestor::next_qname; break;
+        case node_test_wildcard_star            : next_fun = &PPAxisAncestor::next_wildcard_star; break;
+        case node_test_wildcard_ncname_star     : next_fun = &PPAxisAncestor::next_wildcard_ncname_star; break;
+        case node_test_wildcard_star_ncname     : next_fun = &PPAxisAncestor::next_wildcard_star_ncname; break;
+        case node_test_attribute                : next_fun = &PPAxisAncestor::next_attribute; break;
+        case node_test_document                 : next_fun = &PPAxisAncestor::next_document; break;
+        default                                 : throw USER_EXCEPTION2(SE1003, "PPAxisAncestor: unexpected node test");
     }
 }
 PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_,
@@ -59,9 +64,8 @@ PPAxisAncestorOrSelf::PPAxisAncestorOrSelf(dynamic_context *_cxt_,
                                            PPOpIn _child_,
                                            NodeTestType _nt_type_,
                                            NodeTestData _nt_data_) : 
-    PPAxisAncestor(_cxt_, _info_, _child_, _nt_type_, _nt_data_,true)
+    PPAxisAncestor(_cxt_, _info_, _child_, _nt_type_, _nt_data_, true)
 {
- 
 }
 
 
@@ -156,10 +160,7 @@ void PPAxisAncestor::next_node(tuple &t)
 			cur=XNULL;
 	}
 }
-void PPAxisAncestor::next_string(tuple &t)
-{
-    throw USER_EXCEPTION2(SE1002, "PPAxisAncestor::next_string");
-}
+
 void PPAxisAncestor::next_qname(tuple &t)
 {
     while (cur == XNULL)
@@ -302,12 +303,64 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
 	}
 }
 
-void PPAxisAncestor::next_function_call(tuple &t)
+void PPAxisAncestor::next_attribute(tuple &t)
 {
-    throw USER_EXCEPTION2(SE1002, "PPAxisAncestor::next_function_call");
+    while (true)
+    {
+        child.op->next(t);
+        if (t.is_eos()) return;
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
+        if(self) 
+        {
+            /* Works just like self::attribute() in this case! */
+            xptr node = child.get(t).get_node();
+            if (node!=XNULL)
+            {
+                CHECKP(node);
+                schema_node_cptr scm = GETSCHEMENODEX(node);
+                t_item type = scm->type;
+
+                if (type != attribute) continue;
+
+                if (nt_data.ncname_local == NULL || 
+                    comp_qname_type(scm, nt_data.uri, nt_data.ncname_local, attribute)) return;
+            }
+        }
+    }
 }
 
-void PPAxisAncestor::next_var_name(tuple &t)
+void PPAxisAncestor::next_document(tuple &t)
 {
-    throw USER_EXCEPTION2(SE1002, "PPAxisAncestor::next_var_name");
+    while (cur == XNULL)
+    {
+        child.op->next(t);
+        if (t.is_eos()) return;
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
+        
+        xptr node = child.get(t).get_node();
+        cur = getRoot(node);
+
+        U_ASSERT(cur != XNULL);
+        CHECKP(cur);
+        
+        if(GETSCHEMENODEX(cur)->type != document ||
+           (!self && cur == node)) 
+        {
+            cur = XNULL;
+        }
+        else if(nt_data.ncname_local != NULL) 
+        {
+            RelChildAxisMerge merge;
+            xptr desc = merge.init(cur,
+                                   nt_data.uri,
+                                   nt_data.ncname_local,
+                                   element,
+                                   comp_qname_type);
+
+            if(desc == XNULL || merge.next(desc) != XNULL) cur = XNULL;
+        }
+    }
+    
+    t.copy(tuple_cell::node(cur));
+    cur = XNULL;
 }

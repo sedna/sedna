@@ -918,12 +918,9 @@ xptr getAncestorIndirectionByScheme (n_dsc* node, const schema_node_cptr scm_nod
  bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {
      return 
-         (scm->type==type && 
-         my_strcmp(scm->name,name)==0 &&
-         (
-         (uri==NULL && scm->get_xmlns()==NULL) || 
-         (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0 )
-         )) ;
+         (scm->type==type && my_strcmp(scm->name,name)==0 &&
+           ( (uri==NULL && scm->get_xmlns()==NULL) || 
+             (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0) )) ;
  }
  bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {

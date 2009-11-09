@@ -16,46 +16,16 @@
 #include "tr/executor/base/XPath.h"
 
 
-typedef std::vector<schema_node_xptr> t_scmnodes_const;
-typedef std::vector<schema_node_xptr> t_scmnodes;
-typedef std::set<schema_node_xptr> t_scmnodes_set;
+typedef std::vector<schema_node_xptr>  t_scmnodes_const;
+typedef std::vector<schema_node_xptr>  t_scmnodes;
+typedef std::set<schema_node_xptr>     t_scmnodes_set;
 
 
-t_scmnodes_const descendant_or_self_nodes(schema_node_cptr node);
-t_scmnodes_const descendant_nodes        (schema_node_cptr node);
+t_scmnodes_const execute_abs_path_expr(schema_node_cptr root, 
+                                       const PathExpr *path_expr, 
+                                       t_scmnodes_set* extended_nodes, 
+                                       t_scmnodes_set* extender_nodes);
 
-t_scmnodes_const execute_node_test_axis_child             (schema_node_cptr node, const NodeTest &nt);
-t_scmnodes_const execute_node_test_axis_descendant        (schema_node_cptr node, const NodeTest &nt);
-t_scmnodes_const execute_node_test_axis_attribute         (schema_node_cptr node, const NodeTest &nt);
-t_scmnodes_const execute_node_test_axis_self              (schema_node_cptr node, const NodeTest &nt);
-t_scmnodes_const execute_node_test_axis_descendant_or_self(schema_node_cptr node, const NodeTest &nt);
-t_scmnodes_const execute_node_test_axis_descendant_attr   (schema_node_cptr node, const NodeTest &nt);
-t_scmnodes_const execute_node_test                        (schema_node_cptr node, const NodeTest &nt);
 
-t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const PathExpr &pe);
-
-t_scmnodes_const execute_abs_path_expr(schema_node_cptr root, const PathExpr *path_expr);
-//t_scmnodes       execute_abs_path_expr(schema_node_cptr root, const PathExpr *path_expr);
-
-#ifdef SE_ENABLE_TRIGGERS
-
-t_scmnodes_const descendant_or_self_nodes(schema_node_cptr node, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes_const descendant_nodes        (schema_node_cptr node, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-
-t_scmnodes_const execute_node_test_axis_child             (schema_node_cptr node, const NodeTest &nt, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes_const execute_node_test_axis_descendant        (schema_node_cptr node, const NodeTest &nt, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes_const execute_node_test_axis_attribute         (schema_node_cptr node, const NodeTest &nt, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes_const execute_node_test_axis_self              (schema_node_cptr node, const NodeTest &nt, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes_const execute_node_test_axis_descendant_or_self(schema_node_cptr node, const NodeTest &nt, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes_const execute_node_test_axis_descendant_attr   (schema_node_cptr node, const NodeTest &nt, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes_const execute_node_test                        (schema_node_cptr node, const NodeTest &nt, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-
-t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const PathExpr &pe, t_scmnodes_set* extended_nodes, t_scmnodes* extender_nodes);
-
-t_scmnodes_const execute_abs_path_expr(schema_node_cptr root, const PathExpr *path_expr, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-t_scmnodes       execute_abs_path_expr(schema_node_cptr root, const PathExpr *path_expr, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
-
-#endif
-
-#endif
+#endif /* _XPATHONSCHEMA_H */
 

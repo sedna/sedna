@@ -22,7 +22,14 @@ private:
 
 public:
     RelChildAxisMerge() : merged_seq_arr(NULL), size(0) {}
-    ~RelChildAxisMerge() { delete [] merged_seq_arr; merged_seq_arr = NULL; }
+    ~RelChildAxisMerge() 
+    {   
+        if (merged_seq_arr) 
+        {
+            delete [] merged_seq_arr; 
+            merged_seq_arr = NULL; 
+        }
+    }
 
     xptr init(const xptr& parent, const char* uri, const char* name, t_item type, comp_schema cfun);
     xptr next(const xptr &p);
@@ -38,7 +45,14 @@ private:
 
 public:
     RelAttrAxisMerge() : merged_seq_arr(NULL), size(0) {}
-    ~RelAttrAxisMerge() { delete [] merged_seq_arr; merged_seq_arr = NULL; }
+    ~RelAttrAxisMerge() 
+    {   
+        if (merged_seq_arr) 
+        {
+            delete [] merged_seq_arr; 
+            merged_seq_arr = NULL; 
+        }
+    }
 
     xptr init(const xptr& parent, const char* uri, const char* name, t_item type, comp_schema cfun);
     xptr next();

@@ -190,7 +190,6 @@ void serialize2lr_xp_op_path_nto(std::ostream &s,
             case node_test_comment               : s << "comment-test"; break;
             case node_test_text                  : s << "text-test"; break;
             case node_test_node                  : s << "node-test"; break;
-            case node_test_string                : s << "[string]"; break;
             case node_test_qname                 : 
             case node_test_wildcard_star         : 
             case node_test_wildcard_ncname_star  : 
@@ -218,8 +217,6 @@ void serialize2lr_xp_op_path_nto(std::ostream &s,
 
                                                    s << ") (type *) (const (type !xs!string) \"non-nil\")";
                                                    break;
-            case node_test_function_call         : s << "[function]"; break;
-            case node_test_var_name              : s << "[var]"; break;
             default                              : s << "UNKNOWN";
         }
         s << "))))";

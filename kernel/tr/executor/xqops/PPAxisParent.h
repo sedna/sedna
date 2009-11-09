@@ -30,13 +30,12 @@ protected:
     void next_comment					(tuple &t);
     void next_text						(tuple &t);
     void next_node						(tuple &t);
-    void next_string					(tuple &t);
     void next_qname						(tuple &t);
+    void next_attribute					(tuple &t);
+    void next_document					(tuple &t);
     void next_wildcard_star				(tuple &t);
     void next_wildcard_ncname_star		(tuple &t);
     void next_wildcard_star_ncname		(tuple &t);
-    void next_function_call				(tuple &t);
-    void next_var_name					(tuple &t);
 
 private:
     virtual void do_open   ();

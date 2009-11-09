@@ -128,7 +128,7 @@ void boolean_factor(xp_pred /*in/out*/ *pred)
                 pred->type = pred->pred_op->type;
                 pred->tc = *(pred->pred_op->op2->tc);
 
-                t_scmnodes nodes = execute_abs_path_expr(pred->scm_middle, pred->pred_op->op1->path_expr); /// !!! optimize
+                t_scmnodes nodes = execute_abs_path_expr(pred->scm_middle, pred->pred_op->op1->path_expr, NULL, NULL); /// !!! optimize
                 path_pred_const(nodes, pred);
                 break;
             }
@@ -311,7 +311,7 @@ tcost top_down_boolean_factor(schema_node_cptr top, tsel upper_s, const xp_op *o
                     || op->op1->op1) 
                     throw USER_EXCEPTION2(SE1051, "Not a well formed predicate");
 
-                t_scmnodes_const tested = execute_abs_path_expr(top, op->op1->path_expr); /// !!! optimize
+                t_scmnodes_const tested = execute_abs_path_expr(top, op->op1->path_expr, NULL, NULL); /// !!! optimize
                 return top_down_path_pred_const(op->type, top, upper_s, tested, *(op->op2->tc));
             }
         default: throw USER_EXCEPTION2(SE1051, "Unexpected case in top_down_boolean_factor");
@@ -366,7 +366,7 @@ tcost ad_filter_boolean_factor(schema_node_cptr top, const xp_op *op)
                     || op->op1->op1) 
                     throw USER_EXCEPTION2(SE1051, "Not a well formed predicate");
 
-                t_scmnodes_const tested = execute_abs_path_expr(top, op->op1->path_expr); /// !!! optimize
+                t_scmnodes_const tested = execute_abs_path_expr(top, op->op1->path_expr, NULL, NULL); /// !!! optimize
                 return ad_filter_path_pred_const(op->type, top, tested, *(op->op2->tc));
             }
         default: throw USER_EXCEPTION2(SE1051, "Unexpected case in ad_filter_boolean_factor");
@@ -470,7 +470,7 @@ tcost bottom_up_boolean_factor(schema_node_cptr top, const xp_op *op)
                     || op->op1->op1) 
                     throw USER_EXCEPTION2(SE1051, "Not a well formed predicate");
 
-                t_scmnodes_const tested = execute_abs_path_expr(top, op->op1->path_expr); /// !!! optimize
+                t_scmnodes_const tested = execute_abs_path_expr(top, op->op1->path_expr, NULL, NULL); /// !!! optimize
                 return bottom_up_path_pred_const(op->type, top, tested, *(op->op2->tc));
             }
         default: throw USER_EXCEPTION2(SE1051, "Unexpected case in bottom_up_boolean_factor");
@@ -574,7 +574,7 @@ uncovered_xp_list popt_uncover_query_trees(counted_ptr<db_entity> db_ent, xp_op 
 
         for (uncovered_xp_list::iterator it = src.begin(); it != src.end(); it++)
         {
-            t_scmnodes nodes = execute_abs_path_expr((*it)->scm, op->op1->path_expr); /// !!! optimize
+            t_scmnodes nodes = execute_abs_path_expr((*it)->scm, op->op1->path_expr, NULL, NULL); /// !!! optimize
 
             for (int i = 0; i < nodes.size(); i++)
             {
@@ -590,7 +590,7 @@ uncovered_xp_list popt_uncover_query_trees(counted_ptr<db_entity> db_ent, xp_op 
     else
     {
         schema_node_cptr root = get_schema_node(db_ent, "Unknown entity passed to popt_uncover_query_trees");
-        t_scmnodes nodes = execute_abs_path_expr(root, op->op1->path_expr); /// !!! optimize
+        t_scmnodes nodes = execute_abs_path_expr(root, op->op1->path_expr, NULL, NULL); /// !!! optimize
         for (int i = 0; i < nodes.size(); i++)
         {
             counted_ptr<uncovered_xp> tmp(se_new uncovered_xp);

@@ -1,7 +1,7 @@
 /*
- * File:  PPAxisAttribute.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  PPAxisAttribute.cpp
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
 
 #include "common/sedna.h"
 
@@ -9,35 +9,35 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// PPAxisAttribute
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 PPAxisAttribute::PPAxisAttribute(dynamic_context *_cxt_,
                                  operation_info _info_, 
                                  PPOpIn _child_,
                                  NodeTestType _nt_type_,
                                  NodeTestData _nt_data_) : PPIterator(_cxt_, _info_),
-                                                           child(_child_),
-                                                           nt_type(_nt_type_),
-                                                           nt_data(_nt_data_)
+                                 child(_child_),
+                                 nt_type(_nt_type_),
+                                 nt_data(_nt_data_)
 {
-    switch (nt_type)
+    NodeTestType type = nt_type;
+
+    if (type == node_test_attribute) 
+        type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
+
+    switch (type)
     {
-        case node_test_processing_instruction	: next_fun = &PPAxisAttribute::next_processing_instruction; break;
-        case node_test_comment					: next_fun = &PPAxisAttribute::next_comment; break;
-        case node_test_text						: next_fun = &PPAxisAttribute::next_text; break;
-        case node_test_node						: next_fun = &PPAxisAttribute::next_node; break;
-        case node_test_string					: next_fun = &PPAxisAttribute::next_string; break;
-        case node_test_qname					: next_fun = &PPAxisAttribute::next_qname; break;
-        case node_test_wildcard_star			: next_fun = &PPAxisAttribute::next_wildcard_star; break;
-        case node_test_wildcard_ncname_star		: next_fun = &PPAxisAttribute::next_wildcard_ncname_star; break;
-        case node_test_wildcard_star_ncname		: next_fun = &PPAxisAttribute::next_wildcard_star_ncname; break;
-        case node_test_function_call			: next_fun = &PPAxisAttribute::next_function_call; break;
-        case node_test_var_name					: next_fun = &PPAxisAttribute::next_var_name; break;
-        default									: throw USER_EXCEPTION2(SE1003, "Unexpected node test");
+    case node_test_processing_instruction   : next_fun = &PPAxisAttribute::next_processing_instruction; break;
+    case node_test_comment                  : next_fun = &PPAxisAttribute::next_comment; break;
+    case node_test_text                     : next_fun = &PPAxisAttribute::next_text; break;
+    case node_test_node                     : next_fun = &PPAxisAttribute::next_node; break;
+    case node_test_qname                    : next_fun = &PPAxisAttribute::next_qname; break;
+    case node_test_element                  : next_fun = &PPAxisAttribute::next_element; break;
+    case node_test_document                 : next_fun = &PPAxisAttribute::next_document; break;
+    case node_test_wildcard_star            : next_fun = &PPAxisAttribute::next_wildcard_star; break;
+    case node_test_wildcard_ncname_star	    : next_fun = &PPAxisAttribute::next_wildcard_ncname_star; break;
+    case node_test_wildcard_star_ncname	    : next_fun = &PPAxisAttribute::next_wildcard_star_ncname; break;
+
+    default									: throw USER_EXCEPTION2(SE1003, "PPAxisAttribute: unexpected node test");
     }
 }
 
@@ -50,14 +50,12 @@ PPAxisAttribute::~PPAxisAttribute()
 void PPAxisAttribute::do_open ()
 {
     child.op->open();
-
     cur = XNULL;
 }
 
 void PPAxisAttribute::do_reopen()
 {
     child.op->reopen();
-
     cur = XNULL;
 }
 
@@ -76,7 +74,6 @@ void PPAxisAttribute::next_processing_instruction(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
-
 void PPAxisAttribute::next_comment(tuple &t)
 {
     while (true)
@@ -86,7 +83,24 @@ void PPAxisAttribute::next_comment(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
-
+void PPAxisAttribute::next_element(tuple &t)
+{
+    while (true)
+    {
+        child.op->next(t);
+        if (t.is_eos()) return;
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
+    }
+}
+void PPAxisAttribute::next_document(tuple &t)
+{
+    while (true)
+    {
+        child.op->next(t);
+        if (t.is_eos()) return;
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
+    }
+}
 void PPAxisAttribute::next_text(tuple &t)
 {
     while (true)
@@ -113,11 +127,6 @@ void PPAxisAttribute::next_node(tuple &t)
     cur = getNextByOrderAttribute(cur);
 }
 
-void PPAxisAttribute::next_string(tuple &t)
-{
-    throw USER_EXCEPTION2(SE1002, "PPAxisAttribute::next_string");
-}
-
 void PPAxisAttribute::next_qname(tuple &t)
 {
     while (cur == XNULL)
@@ -128,10 +137,10 @@ void PPAxisAttribute::next_qname(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
-                         nt_data.uri,
-                         nt_data.ncname_local,
-                         attribute,
-                         comp_qname_type);
+            nt_data.uri,
+            nt_data.ncname_local,
+            attribute,
+            comp_qname_type);
     }
 
     t.copy(tuple_cell::node(cur));
@@ -192,16 +201,6 @@ void PPAxisAttribute::next_wildcard_star_ncname(tuple &t)
 
     t.copy(tuple_cell::node(cur));
     cur = merge.next();
-}
-
-void PPAxisAttribute::next_function_call(tuple &t)
-{
-    throw USER_EXCEPTION2(SE1002, "PPAxisAttribute::next_function_call");
-}
-
-void PPAxisAttribute::next_var_name(tuple &t)
-{
-    throw USER_EXCEPTION2(SE1002, "PPAxisAttribute::next_var_name");
 }
 
 PPIterator* PPAxisAttribute::do_copy(dynamic_context *_cxt_)

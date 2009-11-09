@@ -107,13 +107,13 @@ void index_cell_object::drop()
 t_scmnodes index_cell_object::fits_to_index_as_key(schema_node_cptr snode) const
 {
     t_scmnodes res;
-    t_scmnodes objs=execute_abs_path_expr(snode->root, object);
+    t_scmnodes objs=execute_abs_path_expr(snode->root, object, NULL, NULL);
     t_scmnodes::iterator it=objs.begin();
     while (it!=objs.end())
     {
         if ((*it)->is_ancestor_or_self(snode))
         {
-            t_scmnodes keys=execute_abs_path_expr(*it, key);
+            t_scmnodes keys=execute_abs_path_expr(*it, key, NULL, NULL);
             t_scmnodes::iterator it2=keys.begin();
             while (it2!=keys.end())
             {

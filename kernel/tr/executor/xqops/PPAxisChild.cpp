@@ -10,11 +10,6 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/xs_names.h"
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// PPAxisChild
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 PPAxisChild::PPAxisChild(dynamic_context *_cxt_,
                          operation_info _info_, 
@@ -25,20 +20,24 @@ PPAxisChild::PPAxisChild(dynamic_context *_cxt_,
                                                    nt_type(_nt_type_),
                                                    nt_data(_nt_data_)
 {
-    switch (nt_type)
+    NodeTestType type = nt_type;
+    
+    if (type == node_test_element) 
+        type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
+    
+    switch (type)
     {
-        case node_test_processing_instruction	: next_fun = &PPAxisChild::next_processing_instruction; break;
-        case node_test_comment					: next_fun = &PPAxisChild::next_comment; break;
-        case node_test_text						: next_fun = &PPAxisChild::next_text; break;
-        case node_test_node						: next_fun = &PPAxisChild::next_node; break;
-        case node_test_string					: next_fun = &PPAxisChild::next_string; break;
-        case node_test_qname					: next_fun = &PPAxisChild::next_qname; break;
-        case node_test_wildcard_star			: next_fun = &PPAxisChild::next_wildcard_star; break;
-        case node_test_wildcard_ncname_star		: next_fun = &PPAxisChild::next_wildcard_ncname_star; break;
-        case node_test_wildcard_star_ncname		: next_fun = &PPAxisChild::next_wildcard_star_ncname; break;
-        case node_test_function_call			: next_fun = &PPAxisChild::next_function_call; break;
-        case node_test_var_name					: next_fun = &PPAxisChild::next_var_name; break;
-        default									: throw USER_EXCEPTION2(SE1003, "Unexpected node test");
+        case node_test_processing_instruction   : next_fun = &PPAxisChild::next_processing_instruction; break;
+        case node_test_comment                  : next_fun = &PPAxisChild::next_comment; break;
+        case node_test_text                     : next_fun = &PPAxisChild::next_text; break;
+        case node_test_node                     : next_fun = &PPAxisChild::next_node; break;
+        case node_test_qname                    : next_fun = &PPAxisChild::next_qname; break;
+        case node_test_wildcard_star            : next_fun = &PPAxisChild::next_wildcard_star; break;
+        case node_test_wildcard_ncname_star     : next_fun = &PPAxisChild::next_wildcard_ncname_star; break;
+        case node_test_wildcard_star_ncname     : next_fun = &PPAxisChild::next_wildcard_star_ncname; break;
+        case node_test_attribute                : next_fun = &PPAxisChild::next_eos; break;
+        case node_test_document                 : next_fun = &PPAxisChild::next_eos; break;
+        default									: throw USER_EXCEPTION2(SE1003, "PPAxisChild: unexpected node test");
     }
 }
 
@@ -68,55 +67,56 @@ void PPAxisChild::do_close()
 }
 
 
+static inline bool 
+pi_node_name_equals(const xptr& node, const char* local) 
+{
+    CHECKP(node);
+    pi_dsc* desc = (pi_dsc*)XADDR(node);
+    int tsize = desc->target;
+	if (tsize == strlen(local))
+    {
+        xptr ind_ptr = desc->data;
+        CHECKP(ind_ptr);
+        shft shift= *((shft*)XADDR(ind_ptr));
+        const char* data = (const char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+		if (strcmp(local, std::string(data, tsize).c_str()) == 0) 
+            return true;
+    }
+    return false;
+}
+
 void PPAxisChild::next_processing_instruction(tuple &t)
 {
     while (cur == XNULL)
     {
         child.op->next(t);
         if (t.is_eos()) return;
+
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
-		cur = getChildPointerXptr(child.get(t).get_node(), NULL, pr_ins, NULL_XMLNS);
-		if (nt_data.ncname_local&&!check_constraints_for_xs_NCName(nt_data.ncname_local))
-					throw XQUERY_EXCEPTION(XPTY0004);
-		while (cur!=XNULL && nt_data.ncname_local)
-			{
-				
-				CHECKP(cur);
-				pi_dsc* desc=(pi_dsc*)XADDR(cur);
-				int tsize=desc->target;
-				if (tsize==strlen(nt_data.ncname_local))
-				{
-					xptr ind_ptr=desc->data;
-					CHECKP(ind_ptr);
-					shft shift= *((shft*)XADDR(ind_ptr));
-					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {break;}
-					else cur=getNextSiblingOfSameSortXptr(cur);
-				}
-				else cur=getNextSiblingOfSameSortXptr(cur);
-			}
+        
+        cur = getChildPointerXptr(child.get(t).get_node(), NULL, pr_ins, NULL_XMLNS);
+
+        while (cur!=XNULL && nt_data.ncname_local)
+        {
+            if (pi_node_name_equals(cur, nt_data.ncname_local))
+                break;
+            else
+                cur=getNextSiblingOfSameSortXptr(cur);    
+        }
     }
-	 t.copy(tuple_cell::node(cur));
-	 cur = getNextSiblingOfSameSortXptr(cur);
-	 while (cur!=XNULL)
-	 {
-		 if (nt_data.ncname_local)
-			{
-				CHECKP(cur);
-				pi_dsc* desc=(pi_dsc*)XADDR(cur);
-				int tsize=desc->target;
-				if (tsize==strlen(nt_data.ncname_local))
-				{
-					xptr ind_ptr=desc->data;
-					CHECKP(ind_ptr);
-					shft shift= *((shft*)XADDR(ind_ptr));
-					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {return;}
-				}
-			}
-		 else return;
-		 cur = getNextSiblingOfSameSortXptr(cur);
-	}	 
+
+    t.copy(tuple_cell::node(cur));
+    cur = getNextSiblingOfSameSortXptr(cur);
+	 
+    while (cur!=XNULL)
+    {
+        if (nt_data.ncname_local)
+		{
+            if (pi_node_name_equals(cur, nt_data.ncname_local)) return;
+		}
+        else return;
+         cur = getNextSiblingOfSameSortXptr(cur);
+    }	 
 }
 
 void PPAxisChild::next_comment(tuple &t)
@@ -167,10 +167,6 @@ void PPAxisChild::next_node(tuple &t)
     cur = getNextByOrderNoneAttribute(cur);
 }
 
-void PPAxisChild::next_string(tuple &t)
-{
-    throw USER_EXCEPTION2(SE1002, "PPAxisChild::next_string");
-}
 
 void PPAxisChild::next_qname(tuple &t)
 {
@@ -248,14 +244,14 @@ void PPAxisChild::next_wildcard_star_ncname(tuple &t)
     cur = merge.next(cur);
 }
 
-void PPAxisChild::next_function_call(tuple &t)
+void PPAxisChild::next_eos(tuple &t)
 {
-    throw USER_EXCEPTION2(SE1002, "PPAxisChild::next_function_call");
-}
-
-void PPAxisChild::next_var_name(tuple &t)
-{
-    throw USER_EXCEPTION2(SE1002, "PPAxisChild::next_var_name");
+    while (true)
+    {
+        child.op->next(t);
+        if (t.is_eos()) return;
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
+    }
 }
 
 PPIterator* PPAxisChild::do_copy(dynamic_context *_cxt_)
