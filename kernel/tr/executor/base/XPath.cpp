@@ -402,17 +402,20 @@ void set_node_test_type_and_data(scheme_list *lst,
         case node_test_attribute:
         case node_test_element:
         {
-            if (   lst->at(2).type != SCM_LIST
-                || lst->at(2).internal.list->size() != 2)
-               throw USER_EXCEPTION2(SE1004, "110.1");
-            
-            scheme_list *qname_lst = lst->at(2).internal.list;
-            
-            if (   qname_lst->at(1).type != SCM_SYMBOL 
-                || string(qname_lst->at(1).internal.symb) != "qname")
-                throw USER_EXCEPTION2(SE1004, "110.2");
+            if (  lst->at(2).type != SCM_LIST && 
+                  ( lst->at(2).internal.list->size() != 2 ||
+                    lst->at(2).internal.list->size() != 0 ))
+                throw USER_EXCEPTION2(SE1004, "110.1");
 
-            set_node_test_QName_data(qname_lst, nt_data, mm);
+            if(lst->at(2).internal.list->size() != 0) {
+                scheme_list *qname_lst = lst->at(2).internal.list;
+            
+                if (   qname_lst->at(1).type != SCM_SYMBOL 
+                    || string(qname_lst->at(1).internal.symb) != "qname")
+                    throw USER_EXCEPTION2(SE1004, "110.2");
+
+                set_node_test_QName_data(qname_lst, nt_data, mm);
+            }
             break;
         }
         
