@@ -12,6 +12,9 @@
    System Requirements
    Installing Sedna from Source Code 
    Installing Sedna from Precompiled Binaries
+     * Installing on Windows
+     * Installing on Unix like OS
+     * Post Installation Setup
    Sedna Quick Start
    Support
 
@@ -29,8 +32,8 @@
                        System Requirements
 
    Sedna runs on the following platforms:
-   - Windows 2000/XP
-   - Linux x86 kernel version 2.4 or higher
+   - Windows 2000 and higher
+   - Linux (2.4 or higher)
    - Mac OS X (PPC/Intel)
    - FreeBSD 
    - Solaris (x86)
@@ -47,7 +50,9 @@
 
             Installing Sedna from Precompiled Binaries
 
-Windows platform:
+
+   Windows platform:
+   =================
 
    Sedna is distributed as a single ".tar.gz" archive. 
 
@@ -57,28 +62,30 @@ Windows platform:
    2) Add the bin subdirectory of sedna installation to the environment 
       variable PATH (for example "c:\sedna\bin").
 
-Linux/Mac OS/FreeBSD/Solaris platforms:
+   *Nix platforms:
+   ===============
 
    Sedna is distributed as a single self-extracting script.
    The installation process consists of running self-extracting script
    and following its instruction.
-   Note: To avoid incompatibility problems with different glibc versions
-   we recommend you building Sedna from source code.
+  
+   The operating system user that is going to run Sedna must have 
+   r-w-x permissions for the following Sedna directories:
 
-   NOTE! The operating system user that is going to run Sedna must have 
-         r-w-x permissions for the following Sedna directories:
-
-$SEDNA_INSTALL/data
-$SEDNA_INSTALL/cfg
+        $SEDNA_INSTALL/data
+        $SEDNA_INSTALL/cfg
 
    To grant the necessary permisions to the user on Linux/FreeBSD/Mac OS
    you can use the following command (suppose, <sedna-user> is the user 
    that is going to run Sedna):
 
-chown <sedna-user> cfg data
+        chown <sedna-user> cfg data
 
-   NOTE! Under FreeBSD you need also some additional steps to be done.
-         See INSTALL::Post-Installation Setup::FreeBSD for the details.
+   Post-Installation Setup:
+   ========================
+
+   See INSTALL file (Post-Installation Setup) for the details on steps 
+   which may be need to be done to run Sedna on some operational systems.
 
    _______________________________________________________________________
 
@@ -98,13 +105,13 @@ chown <sedna-user> cfg data
    Please, feel free to contact us with questions, suggestions, bug reports
    and comments:
 
-modis@ispras.ru
+        modis@ispras.ru
 
    For up-to-date information and new versions of Sedna visit the Sedna 
    homepage:
 
-http://www.modis.ispras.ru/sedna
+        http://www.modis.ispras.ru/sedna
 
    You can also join the Sedna mail lists at
 
-https://lists.sourceforge.net/lists/listinfo/sedna-discussion
+        https://lists.sourceforge.net/lists/listinfo/sedna-discussion
