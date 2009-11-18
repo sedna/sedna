@@ -17,6 +17,7 @@
 #include "common/u/usafesync.h"
 
 #include "tr/vmm/vmm.h"
+#include "tr/tr_globals.h"
 #include "tr/idx/btree/btree.h"
 #include "tr/idx/btree/btstruct.h"
 #include "tr/cat/simplestream.h"
@@ -207,7 +208,7 @@ void catalog_before_commit(bool is_commit)
             local_catalog->masterdata_updated = false;
         }
 
-        if (!ccache_available) {
+        if (!ccache_available && !tr_globals::is_ro_mode) {
             CHECKP(catalog_masterblock);
             VMM_SIGNAL_MODIFICATION(catalog_masterblock);
 
@@ -223,7 +224,7 @@ void catalog_before_commit(bool is_commit)
 
             cat_free(last_nid);
         }
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         catalog_unlock_metadata();
         throw;
     }
