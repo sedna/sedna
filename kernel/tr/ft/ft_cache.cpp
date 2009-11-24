@@ -45,7 +45,6 @@ struct ftc_index_data
 	FTC_PTR docs;
 	FTC_PTR words;
 	xptr btree_root; //FIXME: this will need to change
-	sorted_sequence *ss;
 	FTC_ALLOCATOR ind_alloc;
 	char name[];
 
@@ -58,7 +57,6 @@ struct ftc_index_data
 		id->reset();
 		strcpy(id->name, name);
 		id->btree_root = btree_root;
-		id->ss = NULL;
 		return ptr;
 	}
 	void reset()
@@ -186,13 +184,7 @@ void flush_index(ftc_index_data *id)
 				while (wo != NULL)
 				{
 					bkey.setnew(wme->str);
-					if (!id->ss)
-						bt_insert_tmpl<ft_idx_btree_element>(id->btree_root, bkey, ft_idx_btree_element(doc_data->acc, wo->ind));
-					else
-					{
-						throw SYSTEM_EXCEPTION("ftc: non empty cahce and ss!=NULL");
-					}
-
+					bt_insert_tmpl<ft_idx_btree_element>(id->btree_root, bkey, ft_idx_btree_element(doc_data->acc, wo->ind));
 					wo = (ftc_word_occur *)id->ind_alloc.deref(wo->next);
 				}
 				ome = om->rb_successor(ome);
@@ -203,11 +195,9 @@ void flush_index(ftc_index_data *id)
 		wme = wm->rb_successor(wme);
 	}
 	d_printf1("ftc_flush end\n");
-	if (!id->ss)
-	{
-		ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
-		idc->ft_data.btree_root = id->btree_root;
-	}
+
+	ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
+	idc->ft_data.btree_root = id->btree_root;
 
 	id->ind_alloc.release();
 }
@@ -235,20 +225,6 @@ void ftc_add_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int wo
 {
 	ftc_index_data *id = ftc_index_data::get(index);
 
-	if (id->ss != NULL)
-	{
-		tuple t(3);
-		ftc_doc_data *dd = id->get_doc(ft_doc);
-
-		t.eos = false;
-		t.cells[0] = tuple_cell::atomic_deep(xs_string, word);
-		t.cells[1] = tuple_cell::node(dd->acc);
-		t.cells[2] = tuple_cell::atomic((int64_t)word_ind);
-
-		id->ss->add(t);
-		return;
-	}
-
 	FTC_WORDMAP *wm = FTC_WORDMAP::get_map(id->words, id->ind_alloc);
 	ftc_word_data *wd = wm->find(word);
 	if (wd == NULL)
@@ -270,7 +246,7 @@ void ftc_add_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int wo
 void ftc_scan_result::scan_word(const char *word)
 {
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
-	U_ASSERT(!id->ss);
+
 	FTC_WORDMAP *wm = FTC_WORDMAP::get_map(id->words, id->ind_alloc);
 	ftc_word_data *wd = wm->find(word);
 	
@@ -335,18 +311,4 @@ void ftc_scan_result::get_next_result(tuple &t)
 			ome = om->rb_successor(ome);
 		}
 	}
-}
-
-void ftc_set_ss(ftc_index_t idx, sorted_sequence *ss)
-{
-	ftc_index_data *id = ftc_index_data::get(idx);
-	U_ASSERT(ss == NULL || id->ss == NULL);
-
-	if (id->ss)
-	{
-		flush_index(id);
-		id->reset();
-	}
-
-	id->ss = ss;
 }

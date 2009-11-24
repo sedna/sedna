@@ -19,7 +19,6 @@ typedef FTC_ALLOCATOR::ptr_t ftc_index_t;
 
 //ft_index_sem must be accuired!
 ftc_index_t ftc_get_index(const char *name, xptr btree_root);
-void ftc_set_ss(ftc_index_t idx, sorted_sequence *ss);
 
 //returned doc may become invalid after any operation with index
 ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc);
