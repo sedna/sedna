@@ -161,7 +161,7 @@ ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc)
 }
 
 #include "common/errdbg/d_printf.h"
-//needs ft_index_sem unless id->ss is set
+//needs ft_index_sem
 //FIXME: does it really need ft_index_sem??
 void flush_index(ftc_index_data *id)
 {
