@@ -403,8 +403,6 @@ void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_in
 	idx_buffer buf;
 	sorted_sequence * ss = se_new sorted_sequence(ftc_ss_compare_less,ftc_ss_get_size,ftc_ss_serialize,ftc_ss_serialize_2_blks,ftc_ss_deserialize,ftc_ss_deserialize_2_blks,&buf);
 
-	ftc_set_ss(ftc_idx, ss);
-
 	for (std::vector<xptr>::iterator it = first_nodes->begin(); it != first_nodes->end(); ++it)
 	{
 		xptr tmp = *it;
@@ -442,7 +440,7 @@ void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_in
 			if (nres & 0xffff == 1)
 				d_printf2("nres = %d\n", nres);
 			const char *str = t.cells[0].get_str_mem();
-			xptr acc = t.cells[1].get_unsafenode();
+			xptr acc = t.cells[1].get_node();
 			int64_t ind = t.cells[2].get_xs_integer();
 
 			bkey.setnew(str);

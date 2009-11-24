@@ -245,7 +245,7 @@ ft_index_cell_xptr create_ft_index(
 #endif
 		case ft_ind_native:
 			{
-				ft_idx_create(&start_nodes, &idc->ft_data, idc->ftype, idc->custom_tree, ftc_idx);
+			ft_idx_create(&start_nodes, &idc->ft_data, idc->ftype, idc->custom_tree, ftc_idx);
 			break;
 			}
 		default:
@@ -295,7 +295,14 @@ void delete_ft_index (const char *index_title, bool just_heap)
 ft_index_cell_xptr find_ft_index(const char* title, ftc_index_t *ftc_idx)
 {
     ft_index_cell_cptr idc(title);
-    return idc.found() ? idc.ptr() : XNULL;
+	if (idc.found())
+	{
+		if (ftc_idx)
+			*ftc_idx = ftc_get_index(title, idc->ft_data.btree_root);
+		return idc.ptr();
+	}
+	else
+		return XNULL;
 }
 
 void ft_index_cell_object::update_index(xptr_sequence* upserted)
