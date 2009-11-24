@@ -313,7 +313,7 @@ void ftc_ss_serialize (tuple& t,xptr v1, const void * Udata)
 	TODO
 #else
     *((shft*)p)=sz;
-    *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_unsafenode();
+    *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_node();
 	*((int32_t*)((char*)p+sizeof(shft)+sizeof(xptr)))=(int32_t)t.cells[2].get_xs_integer();
 #endif
     shft offset=sizeof(shft)+sizeof(xptr)+sizeof(int32_t);
@@ -332,7 +332,7 @@ void ftc_ss_serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void 
     idx_buffer* buffer = (idx_buffer*)Udata;
     shft sz=t.cells[0].get_strlen();
     buffer->copy_to_buffer(&sz,sizeof(shft));
-    xptr tmp=t.cells[1].get_unsafenode();
+    xptr tmp=t.cells[1].get_node();
     buffer->copy_to_buffer(&tmp, sizeof(shft),sizeof(xptr));
 	int32_t tmp1 = (int32_t)t.cells[2].get_xs_integer();
 	buffer->copy_to_buffer(&tmp1, sizeof(shft)+sizeof(xptr),sizeof(int32_t));
@@ -373,7 +373,7 @@ void ftc_ss_deserialize (tuple &t, xptr& v1, const void * Udata)
 
 	t.eos = false;
     t.cells[0] = key;
-    t.cells[1] = tuple_cell::unsafenode(*((xptr*)XADDR(v2)));
+    t.cells[1] = tuple_cell::node(*((xptr*)XADDR(v2)));
 	t.cells[2] = tuple_cell::atomic((int64_t)*((int32_t*)XADDR(v22)));//XXX: tuple_cells suck
 #endif				
 }
@@ -390,7 +390,7 @@ void ftc_ss_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const voi
     t.cells[0] = get_tc( buffer->get_buffer_pointer()+sizeof(shft)+sizeof(xptr)+sizeof(int32_t),
 					sz
 				   );
-    t.cells[1] = tuple_cell::unsafenode(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft))));
+    t.cells[1] = tuple_cell::node(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft))));
 	t.cells[2] = tuple_cell::atomic((int64_t)*((int32_t*)(buffer->get_buffer_pointer()+sizeof(shft)+sizeof(xptr))));//XXX: tuple_cells suck
 }
 
@@ -401,7 +401,6 @@ void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_in
 	op_str_buf in_buf;
 
 	idx_buffer buf;
-	sorted_sequence * ss = se_new sorted_sequence(ftc_ss_compare_less,ftc_ss_get_size,ftc_ss_serialize,ftc_ss_serialize_2_blks,ftc_ss_deserialize,ftc_ss_deserialize_2_blks,&buf);
 
 	for (std::vector<xptr>::iterator it = first_nodes->begin(); it != first_nodes->end(); ++it)
 	{
