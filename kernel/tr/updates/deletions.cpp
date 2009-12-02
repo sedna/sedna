@@ -7,7 +7,7 @@
 
 #include "tr/updates/updates.h"
 #include "tr/executor/base/xptr_sequence.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/auth/auc.h"
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"

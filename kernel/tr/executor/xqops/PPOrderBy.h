@@ -105,7 +105,7 @@ typedef std::vector<common_type>        arr_of_common_type;
 //Udata* is used in serialization/deserialization in sorted sequence
 struct orb_user_data
 {
-    sequence_tmp *sort;                             //Initial sequence which must be sorted.    
+    sequence *sort;                             //Initial sequence which must be sorted.
     __int64 pos;                                    
     int size;                                       //Serialized size of in bytes (fixed for each tuple): 
                                                     //[position] + [tuple_cell(1) | tuple_cell(2) | .... tuple_cell(N)] + [bit_set - eos map].
@@ -138,8 +138,8 @@ private:
     int sort_size;                                  //Number of these tuple cells. This value is automaticaly
                                                     //evaluated form the 'data_size' and 'child.ts' values
 
-    sequence_tmp *data_cells;                       //Accumulates the first 'data_size' tuple cells. 
-    sequence_tmp *sort_cells;                       //Accumulates other 'sort_size' tuple cells.  
+    sequence *data_cells;                       //Accumulates the first 'data_size' tuple cells.
+    sequence *sort_cells;                       //Accumulates other 'sort_size' tuple cells.
     
     bool first_time;
     bool need_reinit;
@@ -184,7 +184,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef std::vector<sequence_tmp*> arr_of_seq_ptr;
+typedef std::vector<sequence*> arr_of_seq_ptr;
 
 class PPSTuple : public PPIterator
 {
@@ -223,7 +223,7 @@ private:
     bool need_reopen;
     bool first_time;
     __int64 size;
-    sequence_tmp *s;
+    sequence *s;
 
 
     inline void reinit_consumer_table();

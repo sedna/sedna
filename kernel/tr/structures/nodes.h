@@ -19,9 +19,13 @@
 #include "tr/cat/catptr.h"
 #include "tr/tr_base.h"
 
+struct n_dsc;
+
 struct node_blk_hdr 
 {
+  private :
     vmm_sm_blk_hdr sm_vmm;	/* sm/vmm parameters */
+  public:
     xptr pblk;				/* previoius block */
     xptr nblk;				/* next block */
 
@@ -32,12 +36,18 @@ struct node_blk_hdr
     shft    count;          /* total number of descriptors in block */    
     shft	free_first;		/* shift to the first empty space in block */
 
-	shft indir_count; /* total number of indirection records in block*/
-	shft free_first_indir; /* shift to the first free indirection pointer*/
-	xptr pblk_indir; /* previous block with free indirection space*/
-	xptr nblk_indir; /* next block with free indirection space*/
+    shft indir_count; /* total number of indirection records in block*/
+    shft free_first_indir; /* shift to the first free indirection pointer*/
+    xptr pblk_indir; /* previous block with free indirection space*/
+    xptr nblk_indir; /* next block with free indirection space*/
 
-	static void init(void *p, shft dsc_size);
+    static node_blk_hdr * init(void *p, shft dsc_size);
+    
+    void clear();
+
+    inline n_dsc * getFirstNode() { return (desc_first == 0) ? NULL : (n_dsc *) ((char *) this + desc_first); }
+    inline n_dsc * getLastNode()  { return (desc_last == 0) ? NULL : (n_dsc *) ((char *) this + desc_last);  }
+    inline n_dsc * getFreeNode()  { return (free_first == 0) ?  NULL : (n_dsc *) ((char *) this + free_first);  }
 };
 
 
@@ -123,8 +133,8 @@ inline bool is_primitive(xmlscm_type xtype)
 struct e_dsc : public n_dsc {
 	xmlscm_type		type;		/* element type according to the scheme */	
 
-	static void init(void *p);
-    static void init(void *p, xmlscm_type t);
+//    static void init(void *p);
+//    static void init(void *p, xmlscm_type t);
 };
 
 /* Descriptor of text-enabled node */
@@ -132,32 +142,32 @@ struct t_dsc : public n_dsc {
 	unsigned int	size;		/* size of the text node */
 	xptr			data;		/* pointer to the content of that item */
 
-	static void init(void *p);
+//    static void init(void *p);
 };
 
 /* Descriptor of namespace node */
 struct ns_dsc : public n_dsc {
 	xmlns_ptr_pers ns;
-	static void init(void *p);
+//    static void init(void *p);
 };
 /* Descriptor of attribute node */
 struct a_dsc : public t_dsc {
 	xmlscm_type		type;		/* attribute type according to the scheme */	
 	
-	static void init(void *p);
-	static void init(void *p, xmlscm_type t);
+//    static void init(void *p);
+//    static void init(void *p, xmlscm_type t);
 };
 
 /* Descriptor of document node  */
 struct d_dsc : public t_dsc {
     
-    static void init(void *p);
+//    static void init(void *p);
 };
 
 /* Descriptor of processing instruction node */
 struct pi_dsc : public t_dsc {
 	shft			target;		/* size of the target part */
-	static void init(void *p);
+//    static void init(void *p);
 };
 
 
@@ -167,12 +177,17 @@ extern int* indirection_fs;
 /*calculates the shift of the first address relatively to the second one */
 #define CALCSHIFT(p1,p2) (shft)((char*)(p1)-(char*)(p2))
 
+#define CALC_SHIFT(p) 
+
+inline shft calcShift(void * p) {
+    return ((shft)((char*)(p) - (char *) ((ptrdiff_t)(p) & PAGE_BIT_MASK)));
+}
 
 /* ============================================================================ 
   In all the following macros p and s is 'xptr*' pointer 
  */
-#define UPDATELEFTPOINTER(p,s) ((n_dsc*)XADDR(p))->ldsc=s;
-#define UPDATERIGHTPOINTER(p,s) ((n_dsc*)XADDR(p))->rdsc=s;
+#define UPDATE_LEFT_POINTER(p,s) ((n_dsc*)XADDR(p))->ldsc=s;
+#define UPDATE_RIGHT_POINTER(p,s) ((n_dsc*)XADDR(p))->rdsc=s;
 /* ============================================================================ 
   In all the following macros b is 'node_blk_hdr *' pointer and n is 'n_dsc*' pointer
  */
@@ -197,6 +212,7 @@ extern int* indirection_fs;
   In all the following macros b is 'node_blk_hdr *' pointer and s is shift
  */
 #define GETPOINTERTODESC(b,s) (n_dsc*)((char*)b+s)
+#define GET_DSC(b,s) GETPOINTERTODESC(b,s)
 /* ============================================================================ 
   In all the following macros p is 'shft*' pointer to inside of some block, s is shift in the block 
  */
@@ -265,8 +281,9 @@ extern int* indirection_fs;
 #define NS_DSC(p)		((ns_dsc*)(XADDR(p)))
 #define PI_DSC(p)		((pi_dsc*)(XADDR(p)))
 
+//#define getBlockHeader(block) ()(node_blk_hdr *) XADDR(block))
 
-int inline my_strcmp(const char* c1, const char* c2)
+inline int my_strcmp(const char* c1, const char* c2)
 {
  if (c1==NULL && c2==NULL) return 0;
  if (c1==NULL||c2==NULL) return (c1==NULL)?-1:1;

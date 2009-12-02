@@ -8,6 +8,7 @@
 #include "tr/ft/ft_index_data.h"
 #include "tr/idx/btree/btree.h"
 #include <inttypes.h>
+#include "tr/mo/indirection.h"
 
 //XXX: assumes that deref-ed FTC_PTR's are valid until cache is flushed.
 //FIXME: all structs here will have aliasing problems.
@@ -302,7 +303,7 @@ void ftc_scan_result::get_next_result(tuple &t)
 			return;
 		}
 		xptr p = ce.node;
-		t.copy(tuple_cell::node(removeIndirection(p)));
+		t.copy(tuple_cell::node(indirectionDereferenceCP(p)));
 		while (ce.node == p)
 			ce = bcur.bt_next_obj();
 	}
@@ -312,7 +313,7 @@ void ftc_scan_result::get_next_result(tuple &t)
 
 		if (ce.node == XNULL)
 		{
-			t.copy(tuple_cell::node(removeIndirection(doc_data->acc)));
+			t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
 			ome = om->rb_successor(ome);
 			return;
 		}
@@ -324,13 +325,13 @@ void ftc_scan_result::get_next_result(tuple &t)
 		else if (ce.node < doc_data->acc)
 		{
 			xptr p = ce.node;
-			t.copy(tuple_cell::node(removeIndirection(p)));
+			t.copy(tuple_cell::node(indirectionDereferenceCP(p)));
 			while (ce.node == p)
 				ce = bcur.bt_next_obj();
 		}
 		else //(ce.node > doc_data->acc)
 		{
-			t.copy(tuple_cell::node(removeIndirection(doc_data->acc)));
+			t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
 			ome = om->rb_successor(ome);
 		}
 	}

@@ -19,6 +19,7 @@
 #include "tr/nid/nidalloc.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/cat/catvars.h"
+#include "tr/mo/microoperations.h"
 
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))
@@ -151,30 +152,15 @@ void	nid_assign(xptr node, t_prefix p) {
 		
 		VMM_SIGNAL_MODIFICATION(node);
 		memcpy(dsc->nid.prefix, p.prefix, p.size);
-		/* my changes */
-		/* KOSTYA
-		*(shft*)(dsc->nid.prefix + sizeof(xptr))=p.size;
-		dsc->nid.external = false;
-		*/
 		dsc->nid.size=p.size;
-		// END
 	}
 	else 
 	{
 		if (p.size > PSTRMAXSIZE)
 		{
-			//1. turn off loging
 			dsc->nid.prefix[0]=1;
 			dsc->nid.size=1;
-			hl_disable_log();
-			//2. delete node
-			restore_mode=true;
-			delete_node(node);
-			restore_mode=false;
-			//3. turn on logging
-			hl_enable_log();
-			up_concurrent_micro_ops_number();
-			throw USER_EXCEPTION(SE2023);
+            moSetUserException(SE2023);
 		}
 		if (IS_DATA_BLOCK(node)) {
 			nid_holder=(GETBLOCKBYNODE(node))->snode->root;
@@ -263,6 +249,7 @@ int	nid_cmp_effective(xptr node1, xptr node2) {
 
     if (node1 == node2) return 0;
 
+    CHECKP(node1);
 	t_prefix p1 = nid_get_prefix(node1);
 	unsigned char* ptr1 = p1.prefix;
 	shft size1 = p1.size;
@@ -281,8 +268,11 @@ int	nid_cmp_effective(xptr node1, xptr node2) {
 	int result = sign(memcmp(ptr1,ptr2,min(size1,size2))); /// There is no guarantee that memcmp returns 1, -1, 0!
 	if (!result)
 	{
-		if (size1>size2) result=2;
-		else result=-2;
+        if (size1 > size2) {
+            result = (ptr1[size2] == ALPHABET_SIZE) ? 1 : 2;
+        } else {
+            result = (ptr2[size1] == ALPHABET_SIZE) ? -1 : -2;
+        }
 	}
 	nid_free(p1.prefix);
 	return result;
@@ -735,19 +725,10 @@ void nid_create_root(xptr result, bool persistent)
 /*t_prefix tp;*/
 void	nid_delete(xptr node) {
     CHECKP(node);
-	n_dsc*	dsc = (n_dsc*)XADDR(node);
-	bool	root = (dsc->pdsc == XNULL)?true:false;
 	bool	vroot = (GETBLOCKBYNODE(node))->snode->type == virtual_root;
 
 	t_nid	the_nid = nid_get_nid(node);
-	/* debug */
-	/*bool	root = true;
-	t_nid	the_nid; */
 
-	if (root) 
-	{
-
-	}
 	/* free the pstr contents */
 	if (the_nid.size==0 /*CHANGED BY LEON*/) 
 	{
@@ -819,4 +800,17 @@ void	nid_print(xptr node, se_ostream& c)
 // REMOVED	c << the_nid.dc;
 	c << ")";
 	nid_free(p.prefix);
+}
+
+void    nid_print(xptr node, std::ostream& c)
+{
+    t_nid   the_nid = nid_get_nid(node);
+    t_prefix p  = nid_get_prefix(the_nid);
+    c << "(";
+    for (int i=0; i<p.size; i++)
+        c << (int)(unsigned char)p.prefix[i]<<"=";
+    c << ",";
+// REMOVED  c << the_nid.dc;
+    c << ")";
+    nid_free(p.prefix);
 }

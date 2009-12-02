@@ -7,7 +7,7 @@
 
 #include "tr/updates/updates.h"
 #include "tr/executor/base/xptr_sequence.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/auth/auc.h"
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"
@@ -153,10 +153,8 @@ void replace(PPOpIn arg)
     do
     {
         node=(*it3).cells[0].get_node();
-        CHECKP(node);
-        xptr tind=((n_dsc*)XADDR(node))->indir;
         tuple t=(*it3);
-        t.cells[0].set_node(tind);
+        t.cells[0].set_safenode(node);
         ++it3;
         arg4seq.add(t);
 
@@ -167,13 +165,13 @@ void replace(PPOpIn arg)
     do
     {
         --it3;
-        node = old_node = removeIndirection((*it3).cells[0].get_node());
+        node = old_node = (*it3).cells[0].get_safenode();
         int pos=(*it3).cells[1].get_xs_integer();
         sit=arg2seq.begin()+pos;
         CHECKP(node);
         xptr leftn=((n_dsc*)XADDR(old_node))->ldsc;
         xptr rightn=((n_dsc*)XADDR(old_node))->rdsc;
-        xptr par_ind=((n_dsc*)XADDR(old_node))->pdsc;		
+        xptr par_ind=((n_dsc*)XADDR(old_node))->pdsc;
         bool a_m=is_node_attribute(node);
         bool d_m=a_m||is_node_text(node);
 
@@ -266,7 +264,7 @@ void replace(PPOpIn arg)
         //post_deletion
         if (!d_m)
         {		
-            del_node = removeIndirection((*it3).cells[0].get_node());
+            del_node = (*it3).cells[0].get_safenode();
             CHECKP(del_node);
             delete_node(del_node);
         }

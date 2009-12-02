@@ -10,6 +10,7 @@
 #include "common/sedna.h"
 #include "common/errdbg/d_printf.h"
 
+#include "tr/tr_base.h"
 #include "tr/structures/nodes.h"
 #include "tr/cat/catalog.h"
 #include "tr/cat/catptr.h"
@@ -151,7 +152,7 @@ struct schema_node_object : public catalog_object
 {
 private:
     xmlns_ptr_pers xmlns_pers; /* persistent */
-    xmlns_ptr xmlns_local;
+    mutable xmlns_ptr xmlns_local;
 
 public:
 
@@ -177,7 +178,7 @@ public:
     xptr bblk; /* pointer to the first block of block chain */ /* persistent */
     xptr bblk_indir; /* beggining block with free indirection quota*/ /* persistent */
 
-    inline xmlns_ptr get_xmlns() {
+    inline xmlns_ptr get_xmlns() const {
         if (xmlns_pers == XNULL) { return NULL; }
         else if (xmlns_local != NULL) { return xmlns_local; }
         else {
@@ -195,7 +196,7 @@ public:
     unsigned int blockcnt; /* persistent */
     unsigned int extnids; /* persistent */
     unsigned int indir_blk_cnt; /* persistent */
-    __int64 textcnt; /* persistent */
+    strsize_t textcnt; /* persistent */
     xptr lastnode_ind; /* persistent */ // WTF WTF WTF WTF WTF ???
 
     cat_list<index_ref> index_list; /* persistent special */
@@ -222,7 +223,7 @@ public:
     /* Create new schema node */
     static catalog_object_header * create(
         doc_schema_node_xptr root,
-        xmlns_ptr          xmlns,
+        xmlns_ptr            xmlns,
         const char *         name,
         t_item               type,
         bool                 persistent
@@ -231,44 +232,48 @@ public:
     /* Find first child of given type of this node by name */
     schema_node_xptr get_first_child(
         const xmlns_ptr xmlns,
-        const char *      name,
-        t_item            type
+        const char *    name,
+        t_item          type
     ) const;
 
     /* Returns info about the child */
     const sc_ref * get_first_child_ref(
         const xmlns_ptr xmlns,
-        const char *      name,
-        t_item            type
+        const char *    name,
+        t_item          type
     ) const;
 
     /* Insert new node to the schema as the child of the existing one */
     schema_node_xptr add_child(
         const xmlns_ptr xmlns, 
-        const char *      name, 
-        t_item            type
+        const char *    name,
+        t_item          type
     );
     
-    /* Returns true if this contains the child and data;*/
-    bool first_child_has_data (
-        const xmlns_ptr xmlns,
-        const char *      name,
-        t_item            type
-    );
-
     /* Returns position of the child with the given name and of the given descriptor 
      * type exist in schema as the child of the node that corresponds to the current 
      * block header; -1 otherwise */
     int find_first_child (
         const xmlns_ptr xmlns, 
-        const char *      name, 
-        t_item            type
+        const char *    name,
+        t_item          type
     ) const;
 
+    inline int get_node_position_in_parent() const {
+        return (parent == XNULL) ? -1 : parent->find_first_child(get_xmlns(), name, type);
+    };
+    
     bool is_ancestor_or_self (schema_node_cptr node);
 
     inline char * get_child_name(int i) { return children.get(i)->object.name; };
     inline t_item get_child_type(int i) { return children.get(i)->object.type; };
+    inline int    get_child_count() { return children.count(); }
+
+    inline static bool has_children(t_item type) { return (type == element || type == document || type == virtual_root); }
+    inline bool has_children() { return has_children(this->type); }
+
+    inline static bool has_text(t_item type) { return (type == comment || type == text || type == attribute || type == pr_ins || type == cdata); }
+    inline bool has_text() { return has_text(this->type); }
 //    inline char * get_child_name(int i) { return children.get(i)->name; };
 };
 

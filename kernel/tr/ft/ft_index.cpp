@@ -313,7 +313,7 @@ void ftc_ss_serialize (tuple& t,xptr v1, const void * Udata)
 	TODO
 #else
     *((shft*)p)=sz;
-    *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_node();
+    *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_unsafenode();
 	*((int32_t*)((char*)p+sizeof(shft)+sizeof(xptr)))=(int32_t)t.cells[2].get_xs_integer();
 #endif
     shft offset=sizeof(shft)+sizeof(xptr)+sizeof(int32_t);
@@ -332,7 +332,7 @@ void ftc_ss_serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void 
     idx_buffer* buffer = (idx_buffer*)Udata;
     shft sz=t.cells[0].get_strlen();
     buffer->copy_to_buffer(&sz,sizeof(shft));
-    xptr tmp=t.cells[1].get_node();
+    xptr tmp=t.cells[1].get_unsafenode();
     buffer->copy_to_buffer(&tmp, sizeof(shft),sizeof(xptr));
 	int32_t tmp1 = (int32_t)t.cells[2].get_xs_integer();
 	buffer->copy_to_buffer(&tmp1, sizeof(shft)+sizeof(xptr),sizeof(int32_t));
@@ -373,7 +373,7 @@ void ftc_ss_deserialize (tuple &t, xptr& v1, const void * Udata)
 
 	t.eos = false;
     t.cells[0] = key;
-    t.cells[1] = tuple_cell::node(*((xptr*)XADDR(v2)));
+    t.cells[1] = tuple_cell::unsafenode(*((xptr*)XADDR(v2)));
 	t.cells[2] = tuple_cell::atomic((int64_t)*((int32_t*)XADDR(v22)));//XXX: tuple_cells suck
 #endif				
 }
@@ -390,7 +390,7 @@ void ftc_ss_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const voi
     t.cells[0] = get_tc( buffer->get_buffer_pointer()+sizeof(shft)+sizeof(xptr)+sizeof(int32_t),
 					sz
 				   );
-    t.cells[1] = tuple_cell::node(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft))));
+    t.cells[1] = tuple_cell::unsafenode(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft))));
 	t.cells[2] = tuple_cell::atomic((int64_t)*((int32_t*)(buffer->get_buffer_pointer()+sizeof(shft)+sizeof(xptr))));//XXX: tuple_cells suck
 }
 
@@ -442,7 +442,7 @@ void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_in
 			if (nres & 0xffff == 1)
 				d_printf2("nres = %d\n", nres);
 			const char *str = t.cells[0].get_str_mem();
-			xptr acc = t.cells[1].get_node();
+			xptr acc = t.cells[1].get_unsafenode();
 			int64_t ind = t.cells[2].get_xs_integer();
 
 			bkey.setnew(str);

@@ -119,7 +119,7 @@ protected:
     PPOpIn child;
     sequence_type st;
 
-    sequence_tmp *s;
+    sequence *s;
     int pos;
 
     bool first_time;
@@ -164,7 +164,7 @@ protected:
 
     arr_of_sequence_type types;
 
-    sequence_tmp *s;
+    sequence *s;
 
 
     bool first_time;

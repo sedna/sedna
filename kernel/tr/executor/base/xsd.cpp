@@ -9,7 +9,7 @@
 #include "tr/structures/schema.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/xs_names.h"
-
+#include "tr/crmutils/node_utils.h"
 
 ///
 /// XML Schema Part 2 NCName Functions

@@ -28,7 +28,7 @@ void PPStore::do_open ()
 {
     child.op->open();
 
-    s = se_new sequence_tmp(child.ts);
+    s = se_new sequence(child.ts);
 
     pos = 0;
     eos_pos = 0;

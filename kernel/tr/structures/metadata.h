@@ -42,7 +42,7 @@ struct metadata_cell_object : public catalog_object {
     ~metadata_cell_object() { 
         cat_free(name);
     };
-    
+
     static catalog_object_header * create(bool _is_doc, const char * _name)
     {
         metadata_cell_object * obj = 

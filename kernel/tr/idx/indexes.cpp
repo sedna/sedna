@@ -119,7 +119,7 @@ index_cell_xptr create_index (PathExpr *object_path,
 
 			RECOVERY_CRASH;
 
-			blk = getUnemptyBlockFore(skey[j]->bblk);
+			blk = getNonemptyBlockLookFore(skey[j]->bblk);
 			if (blk != XNULL)
 			{
 				xptr node_key = GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)));
@@ -141,7 +141,7 @@ index_cell_xptr create_index (PathExpr *object_path,
 						
 						//XI. Create tuple with key and xptr to value object
 						tup.cells[0] = tc;
-						tup.cells[1] = tuple_cell::node(obj_indir);
+						tup.cells[1] = tuple_cell::unsafenode(obj_indir);
 						
                         //XII. Insert created tuple into sorted sequence.
                         ss->add(tup);
@@ -180,7 +180,7 @@ index_cell_xptr create_index (PathExpr *object_path,
 				bt_key key;
 				tuple_cell2bt_key(tup.cells[0], key);
 				CHECKP(idc->btree_root);
-				bt_insert(idc->btree_root, key, tup.cells[1].get_node(),false);
+				bt_insert(idc->btree_root, key, tup.cells[1].get_unsafenode(),false);
                 counter2++;
 			}
 			catch (SednaUserException &e) {
@@ -549,11 +549,11 @@ void idx_serialize (tuple& t,xptr v1, const void * Udata)
 
 #ifdef ALIGNMENT_REQUIRED
     memcpy(p, &sz, sizeof(shft));
-    xptr temp_value = t.cells[1].get_node();
+    xptr temp_value = t.cells[1].get_unsafenode();
     memcpy((char*)p+sizeof(shft), &temp_value, sizeof(xptr));
 #else
     *((shft*)p)=sz;
-    *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_node();
+    *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_unsafenode();
 #endif
     shft offset=sizeof(shft)+sizeof(xptr);
 
@@ -592,7 +592,7 @@ void idx_serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * U
     if (!sz)
         sz=t.cells[0].get_strlen();
     buffer->copy_to_buffer(&sz,sizeof(shft));
-    xptr tmp=t.cells[1].get_node();
+    xptr tmp=t.cells[1].get_unsafenode();
     buffer->copy_to_buffer(&tmp, sizeof(shft),sizeof(xptr));    
     shft offset=sizeof(shft)+sizeof(xptr);
     tuple_cell& tc=t.cells[0];
@@ -639,13 +639,13 @@ void idx_deserialize (tuple &t, xptr& v1, const void * Udata)
                 ((idx_user_data*)Udata)->t,
                 sz
                ),
-        tuple_cell::node(*((xptr*)buffer->get_buffer_pointer())));
+        tuple_cell::unsafenode(*((xptr*)buffer->get_buffer_pointer())));
 #else
     xptr v2=v1+sizeof(shft);
     xptr v3=v2+sizeof(xptr);
 	
 	tuple_cell key = get_tc( XADDR(v3),((idx_user_data*)Udata)->t,sz);
-	t.copy(key, tuple_cell::node(*((xptr*)XADDR(v2))));
+	t.copy(key, tuple_cell::unsafenode(*((xptr*)XADDR(v2))));
 #endif				
 }
 
@@ -666,7 +666,7 @@ void idx_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void *
 			        ((idx_user_data*)Udata)->t,
 					s1+s2
 				   ),
-			tuple_cell::node(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft)))));
+			tuple_cell::unsafenode(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft)))));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

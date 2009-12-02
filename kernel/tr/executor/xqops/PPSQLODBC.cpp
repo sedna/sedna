@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "common/errdbg/d_printf.h"

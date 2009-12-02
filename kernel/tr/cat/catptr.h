@@ -25,6 +25,7 @@ struct catalog_fast_xptr : public xptr {
 template <class T>
 struct catalog_cptr_template : public catalog_cptr {
     explicit inline catalog_cptr_template (catalog_object_header * aobj, bool writable = false) : catalog_cptr(aobj, writable) {} ;
+    inline catalog_cptr_template () : catalog_cptr(XNULL) {} ;
     inline catalog_cptr_template (const xptr p, bool writable = false) : catalog_cptr(p, writable) {} ;
 
     inline catalog_cptr & operator = (const catalog_cptr_template<T> & a) 

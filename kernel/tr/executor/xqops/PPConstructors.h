@@ -11,8 +11,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/structures/schema.h"
 #include "tr/strings/strings.h"
-#include "tr/structures/indirection.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPConstructor

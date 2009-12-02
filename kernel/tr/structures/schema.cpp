@@ -406,14 +406,6 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
     return ((schema_node_xptr) new_node.ptr());
 };
 
-bool schema_node_object::first_child_has_data (const xmlns_ptr xmlns, const char * name, t_item type)
-{
-    schema_node_cptr ch(this->get_first_child(xmlns, name, type));
-
-    return (ch.found() && ch->nodecnt != 0);
-};
-
-
 int schema_node_object::find_first_child (const xmlns_ptr xmlns, const char * name, t_item type) const 
 {
     int c = 0;

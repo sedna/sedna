@@ -222,7 +222,7 @@ ft_index_cell_xptr create_ft_index(
         RECOVERY_CRASH;
         if (!just_heap)
         {
-            blk = getUnemptyBlockFore(sobj[i]->bblk);
+            blk = getNonemptyBlockLookFore(sobj[i]->bblk);
             if (blk!=XNULL)
             {
                 CHECKP(blk);

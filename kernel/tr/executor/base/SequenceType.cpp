@@ -10,6 +10,7 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/sequence.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/crmutils/node_utils.h"
 
 
 using namespace std;

@@ -24,7 +24,7 @@ protected:
 
     bool seq_filled;
     bool first_time;
-    sequence_tmp *s;
+    sequence *s;
 
 private:
     virtual void do_open   ();

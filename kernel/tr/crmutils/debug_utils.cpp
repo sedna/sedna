@@ -13,10 +13,9 @@
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstrblk.h"
-#include "tr/structures/indirection.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/structures/metadata.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 
 /* predefined debug & error output stream */
 se_stdlib_ostream crm_dbg(std::cerr);

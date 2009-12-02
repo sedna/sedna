@@ -6,12 +6,12 @@
 #include "common/sedna.h"
 
 #include "tr/updates/updates.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/nid/numb_scheme.h"
-#include "tr/structures/indirection.h"
 #include "tr/executor/xqops/PPConstructors.h"
+#include "tr/mo/indirection.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"
@@ -53,7 +53,7 @@ void clear_ft_sequences()
 }
 void execute_modifications()
 {
-    if (is_rolled_back()) return; 
+    if (indirectionGetRollbackMode()) return;
     std::map<ft_index_cell_xptr,xptr_sequence*>::iterator it=inserted_nodes.begin();
     while (it!=inserted_nodes.end())
     {

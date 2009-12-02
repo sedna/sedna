@@ -41,7 +41,9 @@
 #define IS_TMP_BLOCK_LP(ptr)	(((vmm_sm_blk_hdr*)(ptr))->p.layer >= TMP_LAYER_STARTS_WITH)
 #define IS_DATA_BLOCK_LP(ptr)	(((vmm_sm_blk_hdr*)(ptr))->p.layer <  TMP_LAYER_STARTS_WITH)
 
+//struct vmm_sm_blk_hdr;
 
+//inline bool isTmpBlock(const void * p) { return ( (const vmm_sm_blk_hdr *) p )->p.layer >= TMP_LAYER_STARTS_WITH; };
 
 /* type for layer */
 typedef int t_layer;
@@ -153,6 +155,12 @@ inline xptr block_xptr(const xptr &p)
     return xptr(p.layer, (void*)((__uint32)(p.addr) & PAGE_BIT_MASK));
 }
 
+inline xptr addr2xptr(const void * p)
+{
+    U_ASSERT(((xptr *) (((uint32_t) p ) & PAGE_BIT_MASK))->addr == (void *) (((uint32_t) p ) & PAGE_BIT_MASK));
+    return xptr(* (t_layer*) (((uint32_t) p) & PAGE_BIT_MASK), const_cast<void *>(p));
+}
+
 inline void shed_state(xptr &p)
 {
     p.layer = 0; 
@@ -182,6 +190,7 @@ inline bool same_block(const xptr& a, const xptr& b) {
     return (BLOCKXPTR(a) == BLOCKXPTR(b));
 }
 
+inline bool isTmpBlock(const xptr &p) { return p.layer >= TMP_LAYER_STARTS_WITH; };
 
 /* NULL for xpointers */
 const xptr XNULL;

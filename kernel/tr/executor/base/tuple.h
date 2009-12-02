@@ -12,12 +12,15 @@
 #include "common/sedna.h"
 
 #include "common/counted_ptr.h"
-#include "tr/structures/nodes.h"
 #include "tr/executor/base/xs_decimal_t.h"
 #include "tr/executor/base/XMLDateTime.h"
 #include "tr/pstr/pstr.h"
 
-class sequence_tmp;
+#include "tr/structures/nodes.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/mo/indirection.h"
+
+class sequence;
 
 /// Array of int pairs
 typedef std::pair<int, int>			int_pair;
@@ -41,7 +44,10 @@ typedef counted_ptr<char> str_counted_ptr;
 
 /// Possible types of tuple cell
 #define tc_eos                         (__uint32)(0x80000000) // cell stores end of sequence
-#define tc_node                        (__uint32)(0x40000000) // cell stores node
+#define tc_xptr                        (__uint32)(0x40000000) // cell stores xptr
+#define tc_safenode                    (__uint32)(0x43000000) // cell stores safenode
+#define tc_node                        (__uint32)(0x42000000) // cell stores node
+#define tc_unsafenode                  (__uint32)(0x41000000) // cell stores unsafenode
 #define tc_light_atomic_fix_size       (__uint32)(0x10000000) // cell stores light atomic value (feats in dynamic memory)
 #define tc_light_atomic_var_size       (__uint32)(0x20000000) // cell stores light atomic value (feats in dynamic memory)
 #define tc_heavy_atomic_estr           (__uint32)(0x04000000) // cell stores heavy atomic value in e_strings (that is stored in VMM memory)
@@ -57,9 +63,13 @@ typedef counted_ptr<char> str_counted_ptr;
 #define TC_HEAVY_ATOMIC_MASK           (__uint32)(0x0C000000)
 #define TC_LIGHT_ATOMIC_VAR_SIZE_MASK  (__uint32)(0x20000000)
 
-#define TC_TYPE_MASK                   (__uint32)(0xFC000000)
-#define TC_XTYPE_MASK                  (__uint32)(0x03FFFFFF)
+#define TC_TYPE_MASK                   (__uint32)(0xFF000000)
+#define TC_XTYPE_MASK                  (__uint32)(0x00FFFFFF)
+#define TC_SUBTYPE_MASK                (__uint32)(0x03000000)
 
+#define TC_UNSAFENODE                  (__uint32)(0x41000000)
+#define TC_TMPSAFENODE                 (__uint32)(0x42000000)
+#define TC_SAFENODE                    (__uint32)(0x43000000)
 
 /// Tuple cell data ('data' field of tuple_cell)
 typedef struct {
@@ -96,22 +106,29 @@ bits:    X                  X               X       X                      XX
                                      //    \\
           __________________________//      \\________________
          //                 //                               \\
-        eos                node                             atomic
-                                                   ________//    \\________
-                                                  //                      \\
-                                           light atomic               heavy atomic
+        eos                xptr                             atomic
+                       //   ||   \\                ________//    \\________
+                     safe   ||  tmp-safe          //                      \\
+                          unsafe           light atomic               heavy atomic
                                            //      \\                //   ||     \\
                                           //        \\              //    ||      \\
                                         variable   fixed         estr  pstr_short  pstr_long
                                          size       size
 
 100000 -- eos
-010000 -- node
+010000 -- xptr
 001000 -- light atomic of variable size
 000100 -- light atomic of fixed size
 000001 -- heavy atomic (estr)
 000010 -- heavy atomic (pstr_short)
 000011 -- heavy atomic (pstr_long)
+
+Brand new!!! Special subtypes for "node" in 7-8 bits:
+
+01000011 -- always indirection (safe)
+01000010 -- indirection only for temporary (tmp-safe)
+01000001 -- always direct node (unsafe)
+01000000 -- "untyped" node (any xptr) 
 
 'eos' stands for END OF SEQUENCE.
 
@@ -190,15 +207,38 @@ public:
     /// SET AND GET FUNCTIONS (SOME OF THEM ARE VERY DANGEROUS)
     ////////////////////////////////////////////////////////////////////////////
     bool is_eos()          const { return t & TC_EOS_MASK; }
-    bool is_node()         const { return t & TC_NODE_MASK; }
     bool is_atomic()       const { return t & TC_ATOMIC_MASK; }
     bool is_light_atomic() const { return t & TC_LIGHT_ATOMIC_MASK; }
     bool is_heavy_atomic() const { return t & TC_HEAVY_ATOMIC_MASK; }
 
+    /* node types */
+    
+    bool is_xptr()         const { return t & TC_NODE_MASK; }
+
+    /* safenode type means that node is stored with indirection always */
+    bool is_safenode()     const { return (t & TC_TYPE_MASK) == TC_SAFENODE; }
+    /* node type means that node is stored with indirection only for temporary nodes */
+    bool is_node()         const { return (t & TC_TYPE_MASK) == TC_TMPSAFENODE; }
+    /* unsafenode type means that node xptr is stored directly (equals xptr type) */
+    bool is_unsafenode()  const { return (t & TC_TYPE_MASK) == TC_UNSAFENODE; }
+
+    bool is_anynode()     const { return (t & TC_TYPE_MASK) && (t & TC_SUBTYPE_MASK); }
 
     __uint32           get_type()        const { return t & TC_TYPE_MASK; }
     xmlscm_type        get_atomic_type() const { return t & TC_XTYPE_MASK; }
-    xptr               get_node()        const { return *(xptr*)(&data); }
+
+    xptr               get_xptr()        const { return *(xptr*)(&data); }
+    xptr               get_node()        const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
+    xptr               get_safenode()    const { return indirectionDereferenceCP(get_xptr()); }
+    xptr               get_unsafenode()  const { return get_xptr(); }
+
+    xptr               get_node_smart()  const {
+      switch (t & TC_TYPE_MASK) {
+        case TC_SAFENODE : return get_safenode(); 
+        case TC_TMPSAFENODE : return get_node(); 
+        case TC_UNSAFENODE : return get_unsafenode();
+      }
+    }
 
 
     /// fixed size atomic values
@@ -210,7 +250,7 @@ public:
     xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data); }
     xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data); }
     
-    sequence_tmp*      get_sequence_ptr()const { return *(sequence_tmp**     )(&data); }
+    sequence*          get_sequence_ptr()const { return *(sequence**         )(&data); }
     void*              get_binary_data() const { return  (void*              )(&data); }
 
 
@@ -256,11 +296,15 @@ public:
         return *this;
     }
     // for nodes
-    tuple_cell(const xptr &_p_) 
+    
+  private :
+    explicit tuple_cell(const int subtype, const xptr &_p_)
     {
-        t = tc_node;
-		*(xptr*)(&(data)) = _p_;
+        t = subtype;
+        *(xptr*)(&(data)) = _p_;
     }
+  public :
+
     // for xs:integer atomics
     tuple_cell(__int64 _data_)
     {
@@ -304,11 +348,11 @@ public:
         *(xs_packed_duration*)(&(data)) = _data_;
     }
     // for se_sequence atomics
-    tuple_cell(sequence_tmp* _sequence_ptr_)
+    tuple_cell(sequence* _sequence_ptr_)
     {
         t = tc_light_atomic_fix_size | se_sequence;
         data.x = data.y = (__int64)0;
-        *((sequence_tmp**)(&data)) = _sequence_ptr_;
+        *((sequence**)(&data)) = _sequence_ptr_;
     }
     // for variable size light atomics (without deep copy)
     tuple_cell(xmlscm_type _xtype_, char *_str_)
@@ -343,9 +387,31 @@ public:
         return tuple_cell();
     }
 
+    static tuple_cell from_xptr(const xptr &_p_)
+    {
+        return tuple_cell(tc_xptr, _p_);
+    }
+
+    static tuple_cell safenode(const xptr &_p_)
+    {
+        return tuple_cell(tc_safenode, getIndirectionSafeCP(_p_));
+    }
+
     static tuple_cell node(const xptr &_p_)
     {
-        return tuple_cell(_p_);
+        U_ASSERT(_p_ != XNULL);
+        return tuple_cell(tc_node, isTmpBlock(_p_) ? getIndirectionSafeCP(_p_) : _p_);
+    }
+
+    static tuple_cell node_indir(const xptr &_p_)
+    {
+        U_ASSERT(_p_ != XNULL);
+        return tuple_cell(tc_node, isTmpBlock(_p_) ? _p_ : indirectionDereferenceCP(_p_));
+    }
+
+    static tuple_cell unsafenode(const xptr &_p_)
+    {
+        return tuple_cell(tc_unsafenode, _p_);
     }
 
     static tuple_cell atomic(__int64 _data_)
@@ -414,7 +480,7 @@ public:
         return tuple_cell(tc_light_atomic_fix_size | se_separator);
     }
 
-    static tuple_cell atomic_se_sequence(sequence_tmp* _sequence_)
+    static tuple_cell atomic_se_sequence(sequence* _sequence_)
     {
         return tuple_cell(_sequence_);
     }
@@ -432,13 +498,38 @@ public:
         data.y = (__int64)0;
     }
 
-    void set_node(const xptr &_p_) 
+    void set_unsafenode(const xptr &_p_) 
     { 
         release();
-        t = tc_node; 
+        t = tc_unsafenode;
         *(xptr*)(&data) = _p_;
     }
-    void set_xptr(const xptr &_p_) { *(xptr*)(&data) = _p_; }
+
+    void set_node(const xptr &_p_)
+    {
+        release();
+        t = tc_node;
+        U_ASSERT(_p_ != XNULL);
+        *(xptr*)(&data) = isTmpBlock(_p_) ? getIndirectionSafeCP(_p_) : _p_;
+    }
+
+    void set_xptr(const xptr &_p_)
+    {
+        release();
+        t = tc_xptr;
+        *(xptr*)(&data) = isTmpBlock(_p_) ? getIndirectionSafeCP(_p_) : _p_;
+    }
+
+    void set_safenode(const xptr &_p_)
+    {
+        release();
+        t = tc_safenode;
+        *(xptr*)(&data) = getIndirectionSafeCP(_p_);
+    }
+
+  private :
+    void set_xptr_int(const xptr &_p_) { *(xptr*)(&data) = _p_; }
+  public:
 
     void _adjust_serialized_tc(const xptr &txt_ptr)
     {
@@ -448,7 +539,7 @@ public:
             data.x = data.y = (__int64)0;
             set_size(len);
         }
-        set_xptr(txt_ptr);
+        set_xptr_int(txt_ptr);
     }
 
     void _adjust_restored_tc(char *_str_)

@@ -167,7 +167,7 @@ class PPFnReverse : public PPIterator
 private:
     PPOpIn child;
 
-    sequence_tmp *s;
+    sequence *s;
     int pos;
     bool first_time;
 

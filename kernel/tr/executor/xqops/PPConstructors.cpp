@@ -16,6 +16,9 @@
 #include "tr/strings/e_string.h"
 #include "tr/executor/base/xs_names.h"
 
+#include "tr/mo/blocks.h"
+#include "tr/mo/microoperations.h"
+
 using namespace std;
 
 schema_node_cptr PPConstructor::root_schema = XNULL;
@@ -155,24 +158,17 @@ void getStringWSParameter(PPOpIn content)
 bool PPConstructor::checkInitial()
 {
     if (!root_schema.found()) {
+        node_info_t node_info = {XNULL, XNULL, XNULL, virtual_root};
         root_schema = doc_schema_node_object::create_virtual_root()->p;
-        xptr blk=createNewBlock(root_schema);
-        node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(blk);
-        n_dsc* node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
-        block_hdr->free_first=*((shft*)node);
-        block_hdr->desc_first=CALCSHIFT(node,block_hdr);
-        block_hdr->desc_last=block_hdr->desc_first;
-        d_dsc::init(node);
-        virt_root=ADDR2XPTR(node);
-        block_hdr->count=1;
-        xptr tmp=add_record_to_indirection_table(virt_root);
-        CHECKP(virt_root);
-        node->indir=tmp;
+        xptr blk = createBlock(root_schema, XNULL);
+        insertNodeFirst(blk, &node_info);
+
+        virt_root=node_info.node_xptr;
         cont_parind=XNULL;
         cont_leftind=XNULL;
         conscnt=0;
-        nid_create_root(virt_root,false);
         last_elem=XNULL;
+        
         return true;
     } else 
         return false;

@@ -14,7 +14,7 @@
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
 #include "tr/xqp/modules.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/structures/metadata.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/auth/auc.h"

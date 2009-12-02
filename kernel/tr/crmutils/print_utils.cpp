@@ -10,7 +10,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/structures/schema.h"
 #include "tr/idx/index_data.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/pstr/pstr.h"
 #include "tr/pstr/pstr_long.h"

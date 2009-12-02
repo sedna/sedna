@@ -11,7 +11,7 @@
 #include "expat/expat.h"
 #include "tr/structures/nodes.h"
 #include "common/xptr.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/crmutils/node_utils.h"
 
 #ifdef SE_ENABLE_FTSEARCH
@@ -153,11 +153,12 @@ void processWP(const char** s, int& len)
         {
             xptr new_node;
             if (mark)
-                new_node=insert_text(XNULL,XNULL,parent,wptail,wptailsize);
+                new_node=insert_text(XNULL,XNULL,parent,wptail,wptailsize,text_mem);
             else
             {
-                new_node=insert_text(left,XNULL,XNULL,wptail,wptailsize);
+                new_node=insert_text(left,XNULL,XNULL,wptail,wptailsize,text_mem);
             }
+            CHECKP(new_node);
             (GETBLOCKBYNODE(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
             if (is_coll)
@@ -309,10 +310,12 @@ static void start(void *s, const char *el, const char **attr)
         new_node=insert_element(left,XNULL,XNULL,local,xs_untyped,ns);
         mark=1;
     }
+    CHECKP(new_node);
     (GETBLOCKBYNODE(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node, schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
+        update_insert_sequence(new_node, schema_node_cptr((GETBLOCKBYNODE(new_node))->snode));
+    CHECKP(new_node);
 #endif
     //d_printf1("ae\n"); fflush(stdout);
     //checkChildReferenceValidity(new_node);
@@ -350,7 +353,7 @@ static void start(void *s, const char *el, const char **attr)
         att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xs_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
 #ifdef SE_ENABLE_FTSEARCH
         if (is_coll)
-            update_insert_sequence(att,schema_node_cptr((GETBLOCKBYNODE(att))->snode)); 
+            update_insert_sequence(att,schema_node_cptr((getBlockHeaderCP(att))->snode));
 #endif
         //checkChildReferenceValidity(att);
     }
@@ -425,12 +428,13 @@ void data(void *userData, const char *s, int len)
     text_inserted=true;
     xptr new_node;
     if (mark)
-        new_node=insert_text(XNULL,XNULL,parent,s,len);
+        new_node=insert_text(XNULL,XNULL,parent,s,len,text_mem);
     else
     {
-        new_node=insert_text(left,XNULL,XNULL,s,len);
+        new_node=insert_text(left,XNULL,XNULL,s,len,text_mem);
     }
-    (GETBLOCKBYNODE(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
+    CHECKP(new_node);
+    (getBlockHeader(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
         update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
@@ -603,10 +607,11 @@ void dt_comment (void *userData, const char *data)
     }
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
+        update_insert_sequence(new_node,schema_node_cptr((getBlockHeaderCP(new_node))->snode));
 #endif
     mark=0;
     left=new_node;
+    CHECKP(left);
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     parent=removeIndirection(par_ind);
 }
@@ -640,10 +645,11 @@ void dt_cdata_end (void *userData)
     }
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
+        update_insert_sequence(new_node,schema_node_cptr((getBlockHeaderCP(new_node))->snode));
 #endif
     mark=0;
     left=new_node;
+    CHECKP(left);
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     parent=removeIndirection(par_ind);
     clear_text();   
@@ -669,10 +675,11 @@ void dt_pi (void *userData, const char *target, const char *data)
     }
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
+        update_insert_sequence(new_node,schema_node_cptr((getBlockHeaderCP(new_node))->snode));
 #endif
     mark=0;
     left=new_node;
+    CHECKP(left);
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     parent=removeIndirection(par_ind);
 }
@@ -840,7 +847,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped,int& need
     parent=docnode;
     left=XNULL;
     mark=1;
-    sc_parent=(GETBLOCKBYNODE(docnode))->snode;
+    sc_parent=(getBlockHeaderCP(docnode))->snode;
 
     try
     {
