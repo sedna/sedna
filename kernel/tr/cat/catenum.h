@@ -95,7 +95,16 @@ public :
 
     inline xptr get_object() const { return it->get_object(); };
     inline const char * get_name() const { return it->get_name(); };
-    inline bool next() { return it->next(); };
+    inline bool next() {
+        bool more;
+        
+        more = it->next();
+        while (more && get_object() == XNULL) {
+            more = it->next();
+        }
+        
+        return more;
+    };
 };
 
 

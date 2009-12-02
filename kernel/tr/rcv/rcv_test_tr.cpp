@@ -1,7 +1,7 @@
 #include "tr/rcv/rcv_test_tr.h"
 #include "common/xptr.h"
 #include "tr/structures/schema.h"
-#include "tr/structures/indirection.h"
+#include "tr/mo/indirection.h"
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstr.h"
 #include "tr/idx/btree/btree.h"
@@ -41,7 +41,7 @@ void checkTreeConsistency(xptr node)
 {
     CHECKP(node);
 
-    check_indirection_consistency(node, false);
+//    check_indirection_consistency(node, false);
 
     n_dsc* node_d=(n_dsc*)XADDR(node);
     t_nid nd=node_d->nid;

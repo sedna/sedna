@@ -267,7 +267,7 @@ void PPTreat::do_open ()
     first_time = true;
     eos_reached = true;
     
-    s = se_new sequence_tmp(child.ts);
+    s = se_new sequence(child.ts);
     pos = 0;
 }                                     
 
@@ -367,7 +367,7 @@ PPTypeswitch::~PPTypeswitch()
 
 void PPTypeswitch::do_open ()
 {
-    s = se_new sequence_tmp(source_child.ts);
+    s = se_new sequence(source_child.ts);
 
     source_child.op->open();
     first_time = true;

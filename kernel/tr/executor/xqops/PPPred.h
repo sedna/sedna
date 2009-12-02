@@ -180,7 +180,7 @@ private:
     int pos;
     var_dsc pos_dsc;
     var_dsc lst_dsc;
-    sequence_tmp *s;
+    sequence *s;
 
     PPPredRange range;
 

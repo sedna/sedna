@@ -848,7 +848,7 @@ void PPPred2::do_open ()
 {
     source_child.op->open();
 
-    s = se_new sequence_tmp(source_child.ts);
+    s = se_new sequence(source_child.ts);
     first_time = true;
     result_ready = false;
     cur_tuple = NULL;

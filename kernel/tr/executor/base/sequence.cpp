@@ -387,6 +387,8 @@ int sequence::compare(const order_spec_list& osl, int a, int b)
 //////////////////////////////////////////////////////////////////////////////
 int sequence_tmp::add(const tuple &t)
 {
+    U_ASSERT(false);
+/*
     for (int i = 0; i < tuple_size; i++)
     {
         if (t.cells[i].is_node() && IS_TMP_BLOCK(t.cells[i].get_node()))
@@ -398,8 +400,7 @@ int sequence_tmp::add(const tuple &t)
                 if (t.cells[j].is_node() && IS_TMP_BLOCK(t.cells[j].get_node()))
                 {
                     p = t.cells[j].get_node();
-                    CHECKP(p);
-                    new_t.cells[j].set_node(((n_dsc*)XADDR(p))->indir);
+                    new_t.cells[j].set_safenode(p);
                 }
             }
             return sequence::add(new_t);
@@ -407,6 +408,7 @@ int sequence_tmp::add(const tuple &t)
     }
 
     return sequence::add(t);
+*/
 }
 
 void sequence_tmp::get(tuple &t, const iterator& it)
@@ -417,6 +419,8 @@ void sequence_tmp::get(tuple &t, const iterator& it)
 
 void sequence_tmp::get(tuple &t, int pos)
 {
+    U_ASSERT(false);
+/*
     sequence::get(t, pos);
 
     for (int i = 0; i < tuple_size; i++)
@@ -428,6 +432,7 @@ void sequence_tmp::get(tuple &t, int pos)
             t.cells[i].set_node(p);
         }
     }
+*/
 }
 
 void sequence_tmp::copy(sequence_tmp* s, iterator _begin, iterator _end)
@@ -452,6 +457,8 @@ void sequence_tmp::copy(sequence_tmp* s)
 
 tuple_cell sequence_tmp::get_00() const
 {
+    U_ASSERT(false);
+/*  
     if (seq_size == 0) throw USER_EXCEPTION2(SE1003, "Empty sequence passed to sequence_tmp::get_00");
 
     tuple_cell &tc = ((tuple_cell*)(mem_tuples[0]))[0];
@@ -462,6 +469,7 @@ tuple_cell sequence_tmp::get_00() const
         return tuple_cell::node(p);
     }
     else return tc;
+*/
 }
 
 //////////////////////////////////////////////////////////////////////////////

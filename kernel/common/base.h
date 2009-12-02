@@ -175,6 +175,9 @@ extern global_name CHARISMA_SM_IS_READY;
 #define CHARISMA_MAX_TRNS_NUMBER                        50
 #define MAX_SESSIONS_NUMBER								50
 #define MAX_DBS_NUMBER                                  10
+
+typedef uint64_t strsize_t;
+
 #define STRMAXSIZE                                      4000000000lu
 
 #define UPPER_SESSIONS_NUM_BOUND                        100

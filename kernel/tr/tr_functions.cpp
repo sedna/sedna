@@ -42,7 +42,6 @@ static void
 on_kernel_statement_begin(size_t mod_index,
                           PPQueryEssence* &qep_tree)
 {
-    indirection_table_on_statement_begin();
     xs_decimal_t::init();
     qep_tree = xqd->getQEPForModule(mod_index);
     is_qep_built = true;
@@ -77,7 +76,6 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
 
         vmm_delete_tmp_blocks();
         system_tables_on_kernel_statement_end();
-        indirection_table_on_statement_end();
 
         is_qep_built = false;
     }

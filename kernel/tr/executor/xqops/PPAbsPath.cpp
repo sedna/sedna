@@ -15,6 +15,7 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/executor/base/merge.h"
 #include "tr/structures/metadata.h"
+#include "tr/crmutils/node_utils.h"
 
 /**
  * The goal of this operation is to provide efficient execution for absolute
@@ -233,7 +234,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
     merged_seq_arr = se_new xptr[scmnodes_num];
     for (int i = 0; i < scmnodes_num; i++)
     {
-        xptr first_blk = getUnemptyBlockFore(nodes[i]->bblk);
+        xptr first_blk = getNonemptyBlockLookFore(nodes[i]->bblk);
         if (first_blk == XNULL) merged_seq_arr[i] = XNULL;
         else
         {

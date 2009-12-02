@@ -10,7 +10,6 @@
 #include "common/sedna.h"
 
 #include "tr/log/log.h"
-#include "tr/structures/indirection.h"
 #include "tr/log/logiclog.h"
 #include "sm/llsm/llMain.h"
 #include "tr/tr_globals.h"
@@ -19,6 +18,9 @@
 #include "sm/trmgr.h"
 #include "tr/pstr/pstr_long.h"
 #include "tr/rcv/rcv_funcs.h"
+#include "tr/mo/indirection.h"
+#include "tr/mo/boundaries.h"
+
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTindex.h"
 #endif
@@ -235,11 +237,11 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,
 #endif
 }
 
-void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted )
+void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted ) 
 {
 	if (!enable_log) return;
 	ASSERT(data_size > PSTRMAXSIZE);
-
+	
 	if (inserted)
 	{
 		pstr_long_cursor cur(value);
@@ -274,7 +276,7 @@ void hl_logical_log_text_edit(const xptr &self,int data_size,bool begin,bool ins
 {
 	if (!enable_log) return;
 	ASSERT(inserted);
-	xptr desc = removeIndirection(self);
+	xptr desc = indirectionDereferenceCP(self);
 	CHECKP(desc);
 	xptr str_ptr = ((t_dsc*)XADDR(desc))->data;
 	int  str_len = ((t_dsc*)XADDR(desc))->size; //FIXME - int
@@ -413,7 +415,7 @@ void hl_logical_log_commit(transaction_id _trid)
         up_transaction_block_sems();
         sem_released = true;
         catalog_on_transaction_end(true);
-        indirection_table_on_transaction_end();
+        storage_on_transaction_end();
         catalog_on_transaction_end(true);
         reportToWu(false, true);
         // dirty hack here!

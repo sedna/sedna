@@ -1323,13 +1323,41 @@ xptr getRoot(xptr node)
     }
 }
 
+
+xptr getNextNonemptyBlock(xptr p)
+{
+    node_blk_hdr* x = getBlockHeaderCP(p);
+
+    do {
+        p = x->nblk;
+        if (p == XNULL) { return XNULL; }
+        x = getBlockHeaderCP(p);
+    } while (x->count == 0);
+
+    return p;
+}
+
+xptr getPrevNonemptyBlock(xptr p)
+{
+    node_blk_hdr* x = getBlockHeaderCP(p);
+
+    do {
+        p = x->pblk;
+        if (p == XNULL) { return XNULL; }
+        x = getBlockHeaderCP(p);
+    } while (x->count == 0);
+
+    return p;
+}
+
+
 /*
     Function scans the block chain foreward starting from the given one, skipping all empty ones.
     Side effect: blocks are mapped to memory (CHECKP).
-    If there is no unempty blocks, function returns XNULL.
+    If there are no unempty blocks, function returns XNULL.
 */
 
-xptr getUnemptyBlockFore(xptr p) 
+xptr getNonemptyBlockLookFore(xptr p)
 {
     node_blk_hdr* x;
 
@@ -1347,10 +1375,10 @@ xptr getUnemptyBlockFore(xptr p)
 /*
     Function scans the block chain backward starting from the given one, skipping all empty ones.
     Side effect: blocks are mapped to memory (CHECKP).
-    If there is no unempty blocks, function returns XNULL.
+    If there are no unempty blocks, function returns XNULL.
 */
 
-xptr getUnemptyBlockBack(xptr p) 
+xptr getNonemptyBlockLookBack(xptr p)
 {
     node_blk_hdr* x;
 
@@ -1363,6 +1391,20 @@ xptr getUnemptyBlockBack(xptr p)
     }
     
     return p;
+}
+
+shft size_of_node(t_item type)
+{
+    switch(type)
+    {
+      case element:return (shft)sizeof(e_dsc);
+      case document: case virtual_root: return (shft)sizeof(d_dsc);
+      case attribute:return (shft)sizeof(a_dsc);
+      case text: case comment: case cdata: return (shft)sizeof(t_dsc);
+      case xml_namespace:return (shft)sizeof(ns_dsc);
+      case pr_ins:return (shft)sizeof(pi_dsc);
+    }
+    return (shft)sizeof(n_dsc);
 }
 
 shft size_of_node(node_blk_hdr* block)

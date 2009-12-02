@@ -457,6 +457,7 @@ void cs_free(xptr p)
         };
 
         CHECKP(ph.addr);
+        VMM_SIGNAL_MODIFICATION(ph.addr);
         cs_unoccupy(BLOCKXPTR(ph.addr), cell, cell_count);
     };
 }

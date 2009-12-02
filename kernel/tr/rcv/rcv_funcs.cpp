@@ -4,23 +4,21 @@
  */
 #include "common/sedna.h"
 #include "tr/rcv/logicrcv.h"
-#include "tr/structures/indirection.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/rcv/rcv_test_tr.h"
-#include "tr/rcv/logicrcv.h"
 
 void rollback_tr_by_logical_log(transaction_id trid)
 {
-	switch_to_rollback_mode(MODE_UNDO);
+	indirectionSetRollbackMode(rbm_undo);
 	llLogRollbackTrn(trid);
 }
 
 void recover_db_by_logical_log()
 {
-	switch_to_rollback_mode(MODE_REDO);
+	indirectionSetRollbackMode(rbm_redo);
 #ifdef SE_ENABLE_DTSEARCH
 	llLogicalRecover();
-	switch_to_rollback_mode(MODE_NORMAL);
+    indirectionSetRollbackMode(rbm_normal);
 	rcvRecoverFtIndexes(); // need to perform remapping of ft
 #else
 	llLogicalRecover();

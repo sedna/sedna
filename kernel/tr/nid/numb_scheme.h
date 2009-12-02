@@ -11,6 +11,8 @@
 #include "tr/nid/nid.h"
 #include "tr/crmutils/crmbase.h"
 
+#include <ostream>
+
 #define MAXINTERNALPREFIX 11
 extern int nid_block_count;
 extern bool restore_mode;
@@ -79,6 +81,7 @@ void		nid_delete(xptr node);
 
 /* prints nid */
 void		nid_print(xptr node, se_ostream& c);
+void    nid_print(xptr node, std::ostream& c);
 void		nid_print(xptr node);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

@@ -546,7 +546,7 @@ PPFnReverse::~PPFnReverse()
 void PPFnReverse::do_open ()
 {
     child.op->open();
-    s = se_new sequence_tmp(child.ts);
+    s = se_new sequence(child.ts);
     first_time = true;
 }
 

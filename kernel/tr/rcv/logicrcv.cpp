@@ -17,9 +17,9 @@
 
 #include "common/base.h"
 #include "common/xptr.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/structures/metadata.h"
-#include "tr/structures/indirection.h"
+#include "tr/mo/indirection.h"
 #include "sm/llsm/llMain.h"
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/tr_globals.h"
@@ -39,6 +39,9 @@
 #include "tr/idx/indexes.h"
 
 #include <assert.h>
+
+#include "tr/mo/mo.h"
+#include "tr/mo/microoperations.h"
 
 static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purposes
 static trn_cell_analysis_redo *rcv_list = NULL;
@@ -119,7 +122,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
            indir_map.find(parent, parent);
 	  }
 	  else
-	       set_rollback_record(self);
+	       indirectionSetRollbackRecord(self);
 
 
       // Actually assuming that 0-length string and NULL pointer are the same (prefix, uri)
@@ -133,7 +136,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
                         (strlen(prefix) != 0) ? prefix : NULL,
                         (strlen(uri) != 0) ? uri : NULL));
 
-      xptr self_res = get_last_indir();
+      xptr self_res = indirectionGetLastRecord();
       if (self_res != self) indir_map.insert(self, self_res);
     }
     else
@@ -190,7 +193,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
             indir_map.find(parent, parent);
 	   }
 	   else
-	        set_rollback_record(self);
+	        indirectionSetRollbackRecord(self);
 
        insert_attribute(removeIndirection(left),
                         removeIndirection(right),
@@ -203,7 +206,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
                            (strlen(prefix) != 0) ? prefix : NULL,
                            (strlen(uri) != 0) ? uri : NULL));
 
-       xptr self_res = get_last_indir();
+       xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
@@ -251,7 +254,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
             indir_map.find(parent, parent);
 	   }
 	   else
-           set_rollback_record(self);
+          indirectionSetRollbackRecord(self);
 
        insert_text(removeIndirection(left),
                    removeIndirection(right),
@@ -259,7 +262,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
                    value,
                    value_size);
 
-       xptr self_res = get_last_indir();
+       xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
@@ -301,9 +304,9 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
-           appendTextValue(removeIndirection(self), value, value_size, text_mem);
+           insertTextValue(ip_tail, removeIndirection(self), value, value_size, text_mem);
        else
-           insertTextValue(removeIndirection(self), value, value_size, text_mem);
+           insertTextValue(ip_head, removeIndirection(self), value, value_size, text_mem);
      }
      else
      {
@@ -313,9 +316,9 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
-          delete_text_tail(removeIndirection(self), value_size);
+          deleteTextValue(ip_tail, removeIndirection(self), value_size);
        else
-          delete_text_head(removeIndirection(self), value_size);
+          deleteTextValue(ip_head, removeIndirection(self), value_size);
      }
 }
 
@@ -368,16 +371,16 @@ static void llRcvDoc(LSN curr_lsn, void *Rec)
     {
        if (strlen(collection) == 0)
 	   {
-          if (isUNDO) set_rollback_record(self);
+          if (isUNDO) indirectionSetRollbackRecord(self);
           insert_document(name);
 	   }
        else
        {
-		  if (isUNDO) set_rollback_record(self);
+		  if (isUNDO) indirectionSetRollbackRecord(self);
           insert_document_into_collection(collection, name);
        }
 
-	   xptr self_res = get_last_indir();
+	   xptr self_res = indirectionGetLastRecord();
 	   if (self_res != self) indir_map.insert(self, self_res);
     }
     else
@@ -427,7 +430,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
             indir_map.find(parent, parent);
 	   }
 	   else
-	       set_rollback_record(self);
+	       indirectionSetRollbackRecord(self);
 
        insert_comment(removeIndirection(left),
                       removeIndirection(right),
@@ -435,7 +438,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
                       value,
                       value_size);
 
-       xptr self_res = get_last_indir();
+       xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
@@ -486,7 +489,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
             indir_map.find(parent, parent);
 	   }
 	   else
-	       set_rollback_record(self);
+	       indirectionSetRollbackRecord(self);
 
        insert_pi(removeIndirection(left),
                  removeIndirection(right),
@@ -496,7 +499,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
                  value + target_size,
                  total_size - target_size);
 
-       xptr self_res = get_last_indir();
+       xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else
@@ -567,7 +570,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
             indir_map.find(parent, parent);
 	   }
 	   else
-	       set_rollback_record(self);
+	       indirectionSetRollbackRecord(self);
 
        insert_namespace(removeIndirection(left),
                         removeIndirection(right),
@@ -576,7 +579,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
                           (strlen(prefix) != 0) ? prefix : NULL,
                           (strlen(uri) != 0) ? uri : NULL));
 
-       xptr self_res = get_last_indir();
+       xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
      }
      else

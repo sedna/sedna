@@ -160,11 +160,11 @@ void PPAxisChild::next_node(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getFirstByOrderNoneAttributeChild(child.get(t).get_node());
+        cur = getIndirectionSafeCP(getFirstByOrderNoneAttributeChild(child.get(t).get_node()));
     }
 
-    t.copy(tuple_cell::node(cur));
-    cur = getNextByOrderNoneAttribute(cur);
+    t.copy(tuple_cell::node_indir(cur));
+    cur = getIndirectionSafeCP(getNextByOrderNoneAttribute(indirectionDereferenceCP(cur)));
 }
 
 

@@ -7,9 +7,8 @@
 
 #include "tr/structures/metadata.h"
 #include "common/xptr.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/log/log.h"
-#include "tr/structures/indirection.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/idx/indexes.h"
@@ -22,6 +21,8 @@
 #include "tr/triggers/triggers.h"
 #endif
 #include "tr/cat/catstore.h"
+#include "tr/mo/blocks.h"
+#include "tr/mo/indirection.h"
 
 using namespace std;
 
@@ -140,62 +141,32 @@ void delete_document_from_collection(const char *collection_name, const char *do
 #endif
 }
 
-inline void init_doc_node(xptr &nodex, doc_schema_node_cptr &scm)
-{
-    xptr blk = createNewBlock(scm.ptr());
-    node_blk_hdr* block_hdr = (node_blk_hdr*) XADDR(blk);
-    n_dsc* node = GETPOINTERTODESC (block_hdr, block_hdr->free_first);
-    block_hdr->free_first = * ((shft*) node);
-    block_hdr->desc_first = CALCSHIFT (node, block_hdr);
-    block_hdr->desc_last = block_hdr->desc_first;
-    block_hdr->count = 1;
-
-    //NODE STATISTICS
-    block_hdr->snode->nodecnt++;
-    d_dsc::init(node);
-    nodex = ADDR2XPTR(node);
-    xptr tmp = add_record_to_indirection_table(nodex);
-    CHECKP(nodex);
-    VMM_SIGNAL_MODIFICATION (nodex);
-    node->indir = tmp;
-}
-
 xptr insert_document(const char * uri, bool persistent)
 {
     const char * name = uri;
-    xptr nodex;
+    xptr node_indir;
     metadata_cptr mdc = XNULL;
 
+    bool valid = true;
+    Uri::check_constraints(name, &valid, NULL);
+
+    if (!valid)
+        throw USER_EXCEPTION2(SE2008, (string("Invalid document name '") + name + "'").c_str());
+
+    if (catalog_find_name(catobj_metadata, name) != NULL)
+        throw USER_EXCEPTION2 (SE2001, name);
+
     if (persistent) {
-        bool valid = true;
-        Uri::check_constraints(name, &valid, NULL);
-
-        if (!valid) throw USER_EXCEPTION2(SE2008, (string("Invalid document name '") + name + "'").c_str());
-
-        if (catalog_find_name(catobj_metadata, name) != NULL) 
-            throw USER_EXCEPTION2 (SE2001, name);
-
-        down_concurrent_micro_ops_number();
-
         mdc = metadata_cptr(metadata_cell_object::create(true, name));
         cs_set_hint(mdc.ptr());
     }
 
     doc_schema_node_cptr scm(doc_schema_node_object::create(persistent));
-    init_doc_node(nodex, scm);
-    nid_create_root(nodex, persistent);
-
-    if (persistent) {
-        mdc->snode = scm.ptr();
-        CHECKP (nodex);
-        VMM_SIGNAL_MODIFICATION(nodex);
-        addTextValue(nodex, mdc->name, strlen(mdc->name));
+    node_indir = insert_doc_node(scm, name);
     
-        hl_logical_log_document(((n_dsc*) XADDR(nodex))->indir, name, NULL, true);
-        up_concurrent_micro_ops_number();
-    }
+    if (mdc.found()) { mdc->snode = scm.ptr(); }
 
-    return nodex;
+    return indirectionDereferenceCP(node_indir);
 }
 
 col_schema_node_xptr insert_collection(const char *collection_name)

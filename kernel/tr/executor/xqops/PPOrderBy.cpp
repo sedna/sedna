@@ -88,8 +88,8 @@ void PPOrderBy::do_open ()
     need_to_sort= false;
     pos = 0;
     
-    data_cells  = se_new sequence_tmp(data_size);
-    sort_cells  = se_new sequence_tmp(sort_size); 
+    data_cells  = se_new sequence(data_size);
+    sort_cells  = se_new sequence(sort_size);
 
     udata.sort      = sort_cells;
     udata.pos       = 0;
@@ -863,7 +863,7 @@ void PPSTuple::do_close()
     /// was not called is possible.
     while(seq_ptrs.size())
     {
-        sequence_tmp *st = seq_ptrs.back();
+        sequence *st = seq_ptrs.back();
         delete st;
         seq_ptrs.pop_back();
     }
@@ -887,7 +887,7 @@ void PPSTuple::do_next(tuple &t)
                 ch_arr[i].op->next(lt);
                 if(!lt.is_eos())
                 {
-                    sequence_tmp* st = se_new sequence_tmp(1);
+                    sequence* st = se_new sequence(1);
                     seq_ptrs.push_back(st); /// Save pointer. Memory will be freed in PPStuple.close().
                     tuple prev_lt(1);
                     prev_lt.copy(t.cells[i]);

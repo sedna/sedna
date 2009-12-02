@@ -13,7 +13,7 @@
 #include "common/xptr.h"
 
 #include "tr/structures/nodes.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/log/logiclog.h"
 #include "tr/executor/base/PPBase.h"
 
@@ -47,7 +47,7 @@ LSN get_lsn_of_first_record_in_logical_log();
 void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const char* uri,const char* prefix,bool inserted);
 void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const  char* value,int data_size,const char* uri,const char* prefix,bool inserted);
 void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int data_size,bool inserted); 
-void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted ); 
+void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,bool inserted );
 void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,bool begin,bool inserted); 
 void hl_logical_log_text_edit(const xptr &self,int data_size,bool begin,bool inserted); 
 #ifdef SE_ENABLE_FTSEARCH

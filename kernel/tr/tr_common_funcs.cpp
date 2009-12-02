@@ -17,11 +17,12 @@
 #include "tr/idx/index_data.h"
 #include "tr/executor/base/XPath.h"
 #include "tr/structures/metadata.h"
-#include "tr/structures/indirection.h"
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/tr_common_funcs.h"
 #include "tr/cat/catalog.h"
 #include "tr/crmutils/crmutils.h"
+#include "tr/triggers/triggers_data.h"
+#include "tr/mo/boundaries.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
@@ -35,7 +36,7 @@ static bool is_trid_obtained    = false;
 static bool need_sem            = true; // need to use semaphore for updater
 
 
-static transaction_id
+static transaction_id 
 get_transaction_id(SSMMsg* sm_server)
 {
     sm_msg_struct msg;
@@ -96,10 +97,6 @@ void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
     catalog_on_session_begin();
     d_printf1("OK\n");
 
-    d_printf1("Initializing indirection table...");
-    indirection_table_on_session_begin();
-    d_printf1("OK\n");
-
     d_printf1("Initializing metadata...");
     metadata_on_session_begin();
     d_printf1("OK\n");
@@ -155,10 +152,6 @@ void on_session_end(SSMMsg* &sm_server)
     metadata_on_session_end();
     d_printf1("OK\n");
 
-    d_printf1("Releasing indirection table...");
-    indirection_table_on_session_end();
-    d_printf1("OK\n");
-
     d_printf1("Releasing catalog...");
     catalog_on_session_end();
     d_printf1("OK\n");
@@ -201,8 +194,8 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
     catalog_on_transaction_begin();
     d_printf1("OK\n");
 
-    d_printf1("Initializing indirection table...");
-    indirection_table_on_transaction_begin();
+    d_printf1("Initializing internal storage...");
+    storage_on_transaction_begin();
     d_printf1("OK\n");
 
     d_printf1("Logical log on transaction begin...");
@@ -286,8 +279,8 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     sync_indirection_table();
     d_printf1("OK\n");*/
 
-    d_printf1("Releasing indirection table...");
-    if (!wu_reported) { indirection_table_on_transaction_end(); }
+    d_printf1("Releasing storage...");
+    if (!wu_reported) { storage_on_transaction_end(); }
     d_printf1("OK\n");
 
     d_printf1("Releasing catalog...");
@@ -325,19 +318,14 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
 void on_kernel_recovery_statement_begin()
 {
     sid = 0;
-    indirection_table_on_statement_begin();
+    indirection_table_on_statement_begin();  
 }
 
 void on_kernel_recovery_statement_end()
 {
-    //tr_globals::st_ct.clear_context();
-
     tr_globals::estr_global.clear();
-
     if (pe_local_aspace->free_all) pe_local_aspace->free_all();
-
     vmm_delete_tmp_blocks();
-    indirection_table_on_statement_end();
 }
 
 

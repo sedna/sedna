@@ -12,11 +12,11 @@
 #include "tr/structures/schema.h"
 #include "tr/structures/metadata.h"
 #include "tr/crmutils/crmutils.h"
-#include "tr/mo/micro.h"
+#include "tr/mo/mo.h"
 #include "tr/locks/locks.h"
 #include "tr/vmm/vmm.h"
 #include "tr/idx/index_data.h"
-#include "tr/structures/indirection.h"
+#include "tr/mo/indirection.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/btree.h"
@@ -31,6 +31,44 @@ extern xptr TMPNIDBLK; /* current temporary block for nid prefixes, defined in n
 
 typedef void (*system_fun)(xptr root, const char* title);
 static std::vector<schema_node_xptr>* sys_schema=NULL;
+
+
+struct system_doc_record_t {
+    enum document_type doc_type;
+    const char * name;
+    system_fun fillproc;
+};
+
+void get_schema(xptr node, const char* title);
+void get_document_full(xptr node,const char* title);
+void get_collection_full (xptr node,const char* title);
+void get_collections(xptr node,const char* title);
+void get_catalog(xptr node,const char* title);
+void get_indexes (xptr node,const char* title);
+void get_errors(xptr node,const char* title);
+void get_version(xptr node,const char* title);
+void get_triggers (xptr node,const char* title);
+void get_ftindexes (xptr node,const char* title);
+void get_documents (xptr node,const char* title);
+
+const system_doc_record_t system_doc_schemas     = {DT_SCHEMA,      "$SCHEMA.XML",        get_schema};
+const system_doc_record_t system_doc_documents   = {DT_DOCUMENTS,   "$DOCUMENTS.XML",     get_documents};
+const system_doc_record_t system_doc_indexes     = {DT_INDEXES,     "$INDEXES.XML",       get_indexes};
+const system_doc_record_t system_doc_errors      = {DT_ERRORS,      "$ERRORS.XML",        get_errors};
+const system_doc_record_t system_doc_collections = {DT_COLLECTIONS, "$COLLECTIONS.XML",   get_collections};
+const system_doc_record_t system_doc_version     = {DT_VERSION,     "$VERSION.XML",       get_version};
+
+#ifdef SE_ENABLE_TRIGGERS
+const system_doc_record_t system_doc_triggers    = {DT_TRIGGERS,    "$TRIGGERS.XML",      get_triggers};
+#endif /* SE_ENABLE_TRIGGERS */
+
+#ifdef SE_ENABLE_FTSEARCH
+const system_doc_record_t system_doc_ftindexes   = {DT_FTINDEXES,   "$FTINDEXES.XML",     get_ftindexes};
+#endif /* SE_ENABLE_FTSEARCH */
+
+const system_doc_record_t system_doc_document    = {DT_TRIGGERS,    "$DOCUMENT_%s.XML",   get_document_full};
+const system_doc_record_t system_doc_collection  = {DT_TRIGGERS,    "$COLLECTION_%s.XML", get_collection_full};
+const system_doc_record_t system_doc_schema      = {DT_TRIGGERS,    "$SCHEMA_%s.XML",     get_schema};
 
 inline void print_type_name(xmlscm_type keytype, char* buf)
 {
@@ -68,12 +106,11 @@ xptr fill_schema(schema_node_cptr scm, const xptr& node, const xptr& neighb)
         left=fill_schema(sc->object.snode,XNULL,left);
         sc=sc->next;
     }
-    return removeIndirection(indir);
+    return indirectionDereferenceCP(indir);
 }
 
 void get_schema(xptr node,const char* title)
 {
-    addTextValue(node,"$SCHEMA.XML",12);
     xptr parent=insert_element(XNULL,XNULL,node,"schema",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
 
@@ -83,11 +120,6 @@ void get_schema(xptr node,const char* title)
     while (it.next())
     {
         mdc = it.get_object();
-
-        if (!mdc.found()) {
-          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
-          continue;
-        } 
 
         if (title==NULL || my_strcmp(title, mdc->name)==0)
         {
@@ -106,12 +138,6 @@ void get_schema(xptr node,const char* title)
 
 void get_document_full (xptr node,const char* title)
 {
-    char* docn=se_new char[11+strlen(title)];
-    docn[0]='\0';
-    strcat(docn,"$DOCUMENT_");
-    strcat(docn,title);
-    addTextValue(node,docn,strlen(docn));
-    delete [] docn;
     xptr parent=insert_element(XNULL,XNULL,node,"document",xs_untyped,NULL_XMLNS);
     insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL_XMLNS);
     schema_node_xptr scn=find_document(title);  
@@ -120,12 +146,6 @@ void get_document_full (xptr node,const char* title)
 
 void get_collection_full (xptr node,const char* title)
 {
-    char* docn=se_new char[13+strlen(title)];
-    docn[0]='\0';
-    strcat(docn,"$COLLECTION_");
-    strcat(docn,title);
-    addTextValue(node,docn,strlen(docn));
-    delete [] docn;
     xptr parent=insert_element(XNULL,XNULL,node,"collection",xs_untyped,NULL_XMLNS);
     insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL_XMLNS);
     schema_node_xptr scn=find_collection(title);    
@@ -166,7 +186,6 @@ document_type get_document_type(counted_ptr<db_entity> db_ent)
 
 void get_version(xptr node,const char* title)
 {
-    addTextValue(node,"$VERSION.XML",12);
     xptr parent=insert_element(XNULL,XNULL,node,"sedna",xs_untyped,NULL_XMLNS);
     insert_attribute(XNULL,XNULL,parent,"version",xs_untypedAtomic,SEDNA_VERSION,
                         strlen(SEDNA_VERSION),NULL_XMLNS);
@@ -178,7 +197,6 @@ void get_version(xptr node,const char* title)
 
 void get_errors(xptr node,const char* title)
 {
-    addTextValue(node,"$ERRORS.XML",12);
     xptr parent=insert_element(XNULL,XNULL,node,"errors",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
     for (int i=0;i<=SE5100;i++)
@@ -202,7 +220,6 @@ void get_errors(xptr node,const char* title)
 
 void get_indexes (xptr node,const char* title)
 {
-    addTextValue(node,"$INDEXES.XML",12);
     xptr parent=insert_element(XNULL,XNULL,node,"indexes",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
 
@@ -215,11 +232,6 @@ void get_indexes (xptr node,const char* title)
     while (it.next())
     {
         ic = it.get_object();
-
-        if (!ic.found()) {
-          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
-          continue;
-        } 
 
         if (left==XNULL)
         {
@@ -248,7 +260,6 @@ void get_indexes (xptr node,const char* title)
 #ifdef SE_ENABLE_TRIGGERS
 void get_triggers (xptr node,const char* title)
 {
-    addTextValue(node,"$TRIGGERS.XML",13);
     xptr parent=insert_element(XNULL,XNULL,node,"triggers",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
     local_lock_mrg->put_lock_on_db();
@@ -259,11 +270,6 @@ void get_triggers (xptr node,const char* title)
     while (it.next())
     {
         tc = it.get_object();
-
-        if (!tc.found()) {
-          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
-          continue;
-        } 
 
         if (left==XNULL) {
             left=insert_element(XNULL,XNULL,parent,"trigger",xs_untyped,NULL_XMLNS);
@@ -312,7 +318,6 @@ void print_ft_type_name(ft_index_type ftype, char* buf)
 }
 void get_ftindexes (xptr node,const char* title)
 {
-    addTextValue(node,"$FTINDEXES.XML",14);
     xptr parent=insert_element(XNULL,XNULL,node,"ftindexes",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
     local_lock_mrg->put_lock_on_db();
@@ -324,11 +329,6 @@ void get_ftindexes (xptr node,const char* title)
     while (it.next())
     {
         ic = it.get_object();
-
-        if (!ic.found()) {
-          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
-          continue;
-        } 
 
         if (left==XNULL)
         {
@@ -375,7 +375,7 @@ void get_ftindexes (xptr node,const char* title)
                 print_ft_type_name(cc->cm,buf);
                 insert_attribute(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
                 cdc=ic->custom_tree->rb_successor(cdc);
-                left=removeIndirection(indir);
+                left=indirectionDereferenceCP(indir);
             }
         }
     }
@@ -386,13 +386,12 @@ void get_ftindexes (xptr node,const char* title)
 {
     xptr temp = insert_element(left,XNULL,parent,"document",xs_untyped,XNULL);
     temp = insert_attribute(XNULL,XNULL,temp,"name",xs_untypedAtomic,name,strlen(name),XNULL);
-    return removeIndirection(GETPARENTPOINTER(temp));
+    return indirectionDereference(GETPARENTPOINTER(temp));
 }
 */
 
 void get_documents (xptr node,const char* title)
 {
-    addTextValue(node,"$DOCUMENTS.XML",12);
     xptr parent=insert_element(XNULL,XNULL,node,"documents",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
     local_lock_mrg->put_lock_on_db();
@@ -402,11 +401,6 @@ void get_documents (xptr node,const char* title)
     while (it.next())
     {
         mdc = it.get_object();
-
-        if (!mdc.found()) {
-          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
-          continue;
-        } 
 
         if (left==XNULL)
         {
@@ -420,7 +414,7 @@ void get_documents (xptr node,const char* title)
         ////////////////////////////////////////////////////////////////////////////
         /// We must renew left pointer due to insert_attribute possibly has side effect - 
         /// it can move parent of the new attribute to another block (Ivan Shcheklein).
-        left = removeIndirection(GETPARENTPOINTER(temp));
+        left = indirectionDereferenceCP(GETPARENTPOINTER(temp));
         ////////////////////////////////////////////////////////////////////////////
         if (!mdc->is_doc)
         {
@@ -437,7 +431,7 @@ void get_documents (xptr node,const char* title)
                     ////////////////////////////////////////////////////////////////////////////
                     /// We must renew left pointer due to insert_element can have side effect - 
                     /// it can move parent of the new element to another block (Ivan Shcheklein).
-                    left = removeIndirection(GETPARENTPOINTER(d_left));
+                    left = indirectionDereferenceCP(GETPARENTPOINTER(d_left));
                     ////////////////////////////////////////////////////////////////////////////
                     insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
                         key.get_size(),NULL_XMLNS);
@@ -449,7 +443,6 @@ void get_documents (xptr node,const char* title)
 
 void get_catalog(xptr node,const char* title)
 {
-    addTextValue(node,"$CATALOG.XML",12);
     xptr parent=insert_element(XNULL,XNULL,node,"catalog",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
 
@@ -459,11 +452,6 @@ void get_catalog(xptr node,const char* title)
     while (it.next())
     {
         mdc = it.get_object();
-
-        if (!mdc.found()) {
-          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
-          continue;
-        } 
 
         if (left==XNULL)
         {
@@ -478,7 +466,6 @@ void get_catalog(xptr node,const char* title)
 
 void get_collections(xptr node,const char* title)
 {
-    addTextValue(node,"$COLLECTIONS.XML",12);
     xptr parent=insert_element(XNULL,XNULL,node,"collections",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
 
@@ -488,11 +475,6 @@ void get_collections(xptr node,const char* title)
     while (it.next())
     {
         mdc = it.get_object();
-
-        if (!mdc.found()) {
-          // This is the case when the entity is deleted in this transaction, but is pointed to from the tree
-          continue;
-        }
 
         if (!mdc->is_doc)
         {
@@ -508,51 +490,47 @@ void get_collections(xptr node,const char* title)
     }
 }
 
+
+
 schema_node_xptr get_system_doc(document_type type, const char* title)
 {
-    system_fun func   = NULL;
+    xptr nodex;
     const char* param = NULL;
+    const system_doc_record_t * sysdoc;
     
     switch(type)
     {
-        case DT_DOCUMENTS     : func = get_documents; break;
-        case DT_INDEXES       : func = get_indexes; break;
+        case DT_DOCUMENTS     : sysdoc = &system_doc_documents; break;
+        case DT_INDEXES       : sysdoc = &system_doc_indexes; break;
 #ifdef SE_ENABLE_FTSEARCH
-        case DT_FTINDEXES     : func = get_ftindexes; break;
+        case DT_FTINDEXES     : sysdoc = &system_doc_ftindexes; break;
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-        case DT_TRIGGERS      : func = get_triggers; break;
+        case DT_TRIGGERS      : sysdoc = &system_doc_triggers; break;
 #endif
-        case DT_SCHEMA        : func = get_schema; break;
-        case DT_COLLECTIONS   : func = get_collections; break;
-        case DT_ERRORS        : func = get_errors; break;
-        case DT_VERSION       : func = get_version; break;
-        case DT_DOCUMENT_     : func = get_document_full; param = title + 10; break;
-        case DT_COLLECTION_   : func = get_collection_full; param = title + 12; break;
-        case DT_SCHEMA_       : func = get_schema; param = title + 8; break;
+        case DT_SCHEMA        : sysdoc = &system_doc_schemas; break;
+        case DT_COLLECTIONS   : sysdoc = &system_doc_collections; break;
+        case DT_ERRORS        : sysdoc = &system_doc_errors; break;
+        case DT_VERSION       : sysdoc = &system_doc_version; break;
+        case DT_DOCUMENT_     : sysdoc = &system_doc_document; param = title + 10; break;
+        case DT_COLLECTION_   : sysdoc = &system_doc_collection; param = title + 12; break;
+        case DT_SCHEMA_       : sysdoc = &system_doc_schema; param = title + 8; break;
         default               : throw USER_EXCEPTION2(SE1003, (std::string("Document '") + title + "' is not system.").c_str()); 
     }
     
     local_lock_mrg->lock(lm_s);
+
+/*
+    if (param != NULL) {
+        
+    }
+*/
+
     doc_schema_node_cptr scm(doc_schema_node_object::create(false));
-    xptr blk=createNewBlock(scm.ptr());
-    node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(blk);
-    n_dsc* node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
-    block_hdr->free_first=*((shft*)node);
-    block_hdr->desc_first=CALCSHIFT(node,block_hdr);
-    block_hdr->desc_last=block_hdr->desc_first;
-    block_hdr->count=1;
-    block_hdr->snode->nodecnt++;
-    d_dsc::init(node);
-    xptr nodex=ADDR2XPTR(node);
-    xptr tmp=add_record_to_indirection_table(nodex);
-    CHECKP(nodex);
-    VMM_SIGNAL_MODIFICATION(nodex);
-    node->indir=tmp;
-    nid_create_root(nodex,false);
-    CHECKP(nodex);
-    (*func)(nodex,param);
-    if (sys_schema==NULL) sys_schema=se_new std::vector<schema_node_xptr>;
+    nodex = insert_doc_node(scm, title);
+    (*(sysdoc->fillproc))(indirectionDereferenceCP(nodex), param);
+
+    if (sys_schema==NULL) sys_schema = se_new std::vector<schema_node_xptr>;
     sys_schema->push_back(scm.ptr());
     return scm.ptr();
 }

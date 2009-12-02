@@ -46,6 +46,9 @@ USemaphore _cat_master_semaphore;
 int _cat_master_semaphore_locked;
 bool catalog_objects_initialized;
 
+
+inline catalog_object * __dbg_catalog_preview(xptr &p) { catalog_acquire_object(p)->object; };
+
 /*************************************************
  * Catalog session registering and unregistering
  */

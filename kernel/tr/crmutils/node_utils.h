@@ -10,8 +10,8 @@
 #include <set>
 
 #include "common/sedna.h"
-
 #include "common/xptr.h"
+
 #include "tr/structures/nodes.h"
 #include "tr/vmm/vmm.h"
 #include "tr/structures/schema.h"
@@ -142,10 +142,14 @@ xptr getBaseUri(xptr node);
 /* return root */
 xptr getRoot(xptr node);
 
-/* returns nearest unempty page from right */
-xptr getUnemptyBlockFore(xptr p); 
-/* returns nearest unempty page from left */
-xptr getUnemptyBlockBack(xptr p); 
+xptr getNonemptyBlockLookFore(xptr p);
+xptr getNonemptyBlockLookBack(xptr p);
+
+/* returns nearest nonempty page from right */
+xptr getNextNonemptyBlock(xptr p);
+
+/* returns nearest nonempty page from left */
+xptr getPrevNonemptyBlock(xptr p);
 
 
 /* return the vector of schema node descandants of the current schema node*/
@@ -188,9 +192,10 @@ inline xptr getAncestorIndirectionByScheme_XPTR (xptr node, schema_node_cptr scm
 
 }
 /* returns the size of the descriptor structure in the curent node*/
-shft  size_of_node(node_blk_hdr* block);
+shft size_of_node(node_blk_hdr* block);
+shft size_of_node(t_item type);
 
-inline xptr removeIndirection(xptr indir)
+/* depricated */ inline xptr removeIndirection(xptr indir) 
 {
     if (indir!=XNULL)
     {
@@ -199,6 +204,7 @@ inline xptr removeIndirection(xptr indir)
     }
     return XNULL;
 }
+
 inline xptr getNodeAncestorByScheme (xptr node, schema_node_cptr scm_anc)
 {
     xptr tmp=getNodeAncestorIndirectionByScheme (node, scm_anc);
@@ -265,6 +271,133 @@ bool inline is_next_node_attribute (xptr node)
     }
     return false;
 }
+
+/**** Fast inline routines ****/
+
+
+inline xptr getRightSibling(xptr node)
+{
+    return ((n_dsc*) XADDR(node))->rdsc;
+}
+
+inline xptr getRightSiblingCP(xptr node)
+{
+    CHECKP(node);
+    return ((n_dsc*) XADDR(node))->rdsc;
+}
+
+inline xptr getRightSiblingIndirection(xptr node)
+{
+    xptr s = ((n_dsc*) XADDR(node))->rdsc;
+    if (s == XNULL) return XNULL;
+    CHECKP(s);
+    return ((n_dsc*) XADDR(s))->indir;
+}
+
+inline xptr getLeftSibling(xptr node)
+{
+    return ((n_dsc*) XADDR(node))->ldsc;
+}
+
+inline xptr getLeftSiblingCP(xptr node)
+{
+    CHECKP(node);
+    return ((n_dsc*) XADDR(node))->ldsc;
+}
+
+inline xptr getLeftSiblingIndirection(xptr node)
+{
+    xptr s = ((n_dsc*) XADDR(node))->ldsc;
+    if (s == XNULL) return XNULL;
+    CHECKP(s);
+    return ((n_dsc*) XADDR(s))->indir;
+}
+
+inline xptr getIndirectionSafeCP(xptr node)
+{
+    if (node == XNULL) return XNULL;
+    CHECKP(node);
+    return ((n_dsc *) XADDR(node))->indir;
+}
+
+inline xptr getParent(xptr node)
+{
+    return removeIndirection(((n_dsc*) XADDR(node))->pdsc);
+}
+
+inline xptr getParentCP(xptr node)
+{
+    CHECKP(node);
+    return removeIndirection(((n_dsc*) XADDR(node))->pdsc);
+}
+
+inline xptr getParentIndirection(xptr node)
+{
+    return ((n_dsc*) XADDR(node))->pdsc;
+}
+
+inline node_blk_hdr * getBlockHeader(xptr block)
+{
+    return (node_blk_hdr *) XADDR(block_xptr(block));
+}
+
+inline node_blk_hdr * getBlockHeaderCP(xptr block)
+{
+    CHECKP(block);
+    return (node_blk_hdr *) XADDR(block_xptr(block));
+}
+
+inline node_blk_hdr * copyBlockHeaderCP(node_blk_hdr * block_header, xptr block)
+{
+    CHECKP(block);
+    memcpy(block_header, XADDR(block_xptr(block)), sizeof(node_blk_hdr));
+    return block_header;
+}
+
+inline n_dsc * getDescriptor(xptr block, shft dsc)
+{
+    return (dsc == 0) ? NULL : (n_dsc *) ((char *) XADDR(block_xptr(block)) + dsc);
+}
+
+inline void * getBlockPointer(xptr block, shft p)
+{
+    return (p == 0) ? NULL : (n_dsc *) ((char *) XADDR(block_xptr(block)) + p);
+}
+
+inline n_dsc * getDescriptor(void * block, shft dsc)
+{
+    return (dsc == 0) ? NULL : (n_dsc *) ((char *) GETBLOCKBYNODE_ADDR(block) + dsc);
+}
+
+inline int getChildCountSP(const xptr node_xptr)
+{
+    node_blk_hdr * block = getBlockHeader(node_xptr);
+    return (int) ((block->dsc_size - size_of_node(block)) / sizeof(xptr));
+}
+
+inline void getChildList(const xptr node_xptr, xptr * &child_list, int &n)
+{
+    node_blk_hdr * block = getBlockHeader(node_xptr);
+    int node_size = size_of_node(block);
+
+    child_list = (xptr*) ((char *) XADDR(node_xptr) + node_size);
+    n = (int) (block->dsc_size - node_size) / sizeof(xptr);
+}
+
+inline xptr getNodeChildSafe(const xptr node_xptr, int child_index)
+{
+    int n;
+    xptr * child_list;
+
+    CHECKP(node_xptr);
+    getChildList(node_xptr, child_list, n);
+    if (n > child_index) {
+        return child_list[child_index];
+    } else {
+        return XNULL;
+    }
+}
+
 
 //checks if the node is the descendant of one of the nodes in the vector
 bool is_scmnode_has_ancestor_or_self(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set );

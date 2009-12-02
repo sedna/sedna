@@ -12,7 +12,6 @@
 #include "common/base.h"
 #include "common/SSMMsg.h"
 #include "tr/vmm/vmm.h"
-#include "tr/structures/indirection.h"
 #include "common/ph/pers_heap.h"
 #include "common/persistent_db_data.h"
 #include "tr/structures/nodes.h"

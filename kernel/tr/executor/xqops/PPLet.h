@@ -27,7 +27,7 @@ private:
     bool seq_filled;
     bool need_reopen;
     bool first_time;
-    sequence_tmp *s;
+    sequence *s;
 
     inline void reinit_consumer_table();
 

@@ -15,12 +15,12 @@ class PPStore : public PPIterator
 private:
     PPOpIn child;
 
-    sequence_tmp *s;
+    sequence *s;
     int pos;
     int eos_pos;
     bool sequence_loaded;
 
-    typedef std::map<int, sequence_tmp*> t_stored_seqs;
+    typedef std::map<int, sequence*> t_stored_seqs;
     static t_stored_seqs stored_seqs;
 
 private:

@@ -47,7 +47,7 @@ PPLet::~PPLet()
 
 void PPLet::do_open ()
 {
-    s = se_new sequence_tmp(source_child.ts);
+    s = se_new sequence(source_child.ts);
 
     source_child.op->open();
     seq_filled = false;

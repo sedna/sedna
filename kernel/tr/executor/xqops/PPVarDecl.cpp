@@ -41,7 +41,7 @@ PPVarDecl::~PPVarDecl()
 
 void PPVarDecl::do_open ()
 {
-    s = se_new sequence_tmp(child.ts);
+    s = se_new sequence(child.ts);
     child.op->open();
     seq_filled = false;
     first_time = true;
