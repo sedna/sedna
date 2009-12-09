@@ -56,7 +56,7 @@ inline bool checkNodeOuterPointers(xptr node_ptr) {
             lparent = getParentCP(lptr);
         }
         CHECK_INVARIANT(nid_cmp_effective(test_ptr, node_ptr) == -2, ce_nid);
-        
+
         if (test_ptr != lparent) {
             int child_no = getBlockHeaderCP(node_ptr)->snode->get_node_position_in_parent();
             xptr * list;
@@ -101,21 +101,22 @@ bool checkBlock(xptr block_ptr)
     copyBlockHeaderCP(&block, block_ptr);
 
     if (block.count + block.indir_count == 0) { return true; }
-    
+
     lnode = NULL;
     rnode = getDescriptor(block_ptr, block.desc_first);
 
     while (rnode != NULL) {
+        CHECKP(block_ptr);
         xptr rnode_xptr = addr2xptr(rnode);
-        
+
         CHECK_INVARIANT(getDescriptor(block_ptr, rnode->desc_prev) == lnode, ce_inblock_pointer);
-        
+
         if (lnode != NULL) {
-            CHECK_INVARIANT(nid_cmp_effective(ADDR2XPTR(lnode), ADDR2XPTR(rnode)) == -1, ce_nid);
+            CHECK_INVARIANT(nid_cmp_effective(addr2xptr(lnode), rnode_xptr) == -1, ce_nid);
         }
-        
+
         if (!checkNodeOuterPointers(rnode_xptr)) { return false; }
-        
+
         CHECKP(block_ptr);
         lnode = rnode;
         rnode = getDescriptor(block_ptr, lnode->desc_next);
