@@ -25,16 +25,17 @@ private:
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
     PPNodeComparison(dynamic_context *_cxt_,
                      operation_info _info_,
                      PPOpIn _seq1_, 
                      PPOpIn _seq2_, 
                      int _type_);
 
+
+public:    
     virtual ~PPNodeComparison();
 
-    /* Factories for General Comparisons */
+    /* Factories for Node Comparisons */
     static PPNodeComparison* PPEQNodeComparison(dynamic_context *_cxt_,
                                                 operation_info _info_,
                                                 PPOpIn _seq1_,
@@ -57,4 +58,4 @@ public:
 
 	
 };
-#endif
+#endif /* _PPNODECOMP_H */

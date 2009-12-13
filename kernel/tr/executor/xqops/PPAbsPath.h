@@ -38,7 +38,7 @@ private:
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:
+public:    
     PPAbsPath(dynamic_context *_cxt_,
               operation_info _info_,
               PathExpr *_path_expr_,

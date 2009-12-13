@@ -23,7 +23,7 @@
  * List of classes used
  ******************************************************************************/
 class PPIterator;
-
+class PPVisitor;
 
 /*******************************************************************************
  * Global variables
@@ -159,6 +159,7 @@ private:
     virtual void        do_close   ()         = 0;
     virtual void        do_next    (tuple &t) = 0;
     virtual PPIterator* do_copy(dynamic_context *_cxt_) = 0;
+    virtual void        do_accept  (PPVisitor &v) = 0;
 
     virtual const operation_info& do_get_operation_info() const {
         return info;
@@ -213,6 +214,13 @@ public:
     inline const operation_info& get_operation_info() const {
         return do_get_operation_info();
     }
+
+    /* Traverse query tree with visitor */
+    inline void accept(PPVisitor &v) 
+    {
+        do_accept(v);
+    }
+
 
     PPIterator(dynamic_context *_cxt_, 
                operation_info _info_) : cxt(_cxt_),

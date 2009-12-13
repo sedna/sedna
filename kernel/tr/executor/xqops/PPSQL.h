@@ -104,7 +104,6 @@ protected:
 
 	bool handle_manager_carrier;
 
-public:
 	PPFnSQLBase(dynamic_context *_cxt_,
                 operation_info _info_);
 };
