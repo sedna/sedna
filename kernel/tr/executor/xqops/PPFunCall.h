@@ -62,8 +62,8 @@ public:
     fun_arg(const sequence_type *_st_, 
             PPIterator *_child_, 
             int _arg_num_): fcr(_st_, _child_, _arg_num_), 
-                            seq_filled(false) {
-                         
+                            seq_filled(false) 
+    {
         s = se_new sequence(1); 
     }
     

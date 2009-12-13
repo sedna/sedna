@@ -30,6 +30,13 @@ protected:
 	bool eos_reached2;
     CollationHandler *handler;
 
+    PPGeneralComparison(dynamic_context *_cxt_,
+                        operation_info _info_,
+                        PPOpIn _seq1_,
+                        PPOpIn _seq2_);
+
+    void generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2);
+
 private:   
     virtual void do_open   ();
     virtual void do_reopen ();
@@ -39,12 +46,6 @@ private:
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
-	virtual void generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2);
-
-    PPGeneralComparison(dynamic_context *_cxt_,
-                        operation_info _info_,
-                        PPOpIn _seq1_,
-                        PPOpIn _seq2_);
 
     virtual ~PPGeneralComparison();
 	
