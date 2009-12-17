@@ -216,6 +216,7 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
 
 void deleteTextValue(xptr node_xptr)
 {
+    CHECKP(node_xptr);
     if (((t_dsc*)XADDR(node_xptr))->size > PSTRMAXSIZE) {
         pstr_long_delete_str(node_xptr);
     } else {
