@@ -60,10 +60,10 @@ xptr getNextByOrderAttribute(xptr source);
 /*returns the first none attribute child by document order*/
 inline xptr getFirstByOrderNoneAttributeChild(xptr source) { return getFirstByOrderChildNode(source); }
 /*returns the next none attribute sibling by document order*/
-inline xptr getNextByOrderNoneAttribute(xptr source) 
-{ 
+inline xptr getNextByOrderNoneAttribute(xptr source)
+{
     CHECKP(source);
-    return GETRIGHTPOINTER(source); 
+    return GETRIGHTPOINTER(source);
 }
 
 
@@ -116,7 +116,7 @@ xptr findAttributeWithSameNameToInsertBefore(xptr parent,const char* name,xmlns_
 
 /* returns shift position either element descriptor contains pointer to the child of that type 0 otherwise*/
 xptr* elementContainsChild(n_dsc* parent,const char* name,t_item type,xmlns_ptr ns);
- 
+
 /* returns the xptr to the first child of the node identified by name and type*/
 xptr getChildPointer(n_dsc* node,const char* name,t_item type,xmlns_ptr ns);
 
@@ -158,7 +158,7 @@ int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item 
 void getSchemeChilds(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun,std::vector<schema_node_xptr> &result);
 inline void getSchemeChildsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
 {
-    if (cfun(scm,uri,name,type))    
+    if (cfun(scm,uri,name,type))
         result.push_back(scm.ptr());
     getSchemeChilds(scm,uri,name,type,cfun,result);
 }
@@ -195,7 +195,7 @@ inline xptr getAncestorIndirectionByScheme_XPTR (xptr node, schema_node_cptr scm
 shft size_of_node(node_blk_hdr* block);
 shft size_of_node(t_item type);
 
-/* depricated */ inline xptr removeIndirection(xptr indir) 
+/* depricated */ inline xptr removeIndirection(xptr indir)
 {
     if (indir!=XNULL)
     {
@@ -204,6 +204,8 @@ shft size_of_node(t_item type);
     }
     return XNULL;
 }
+
+xptr getNodeAncestorBySchemeCP(xptr node, schema_node_xptr scm_node, schema_node_xptr scm_anc);
 
 inline xptr getNodeAncestorByScheme (xptr node, schema_node_cptr scm_anc)
 {
@@ -389,6 +391,8 @@ inline xptr getNodeChildSafe(const xptr node_xptr, int child_index)
     int n;
     xptr * child_list;
 
+    if (child_index < 0) { return XNULL; };
+
     CHECKP(node_xptr);
     getChildList(node_xptr, child_list, n);
     if (n > child_index) {
@@ -396,6 +400,18 @@ inline xptr getNodeChildSafe(const xptr node_xptr, int child_index)
     } else {
         return XNULL;
     }
+}
+
+inline xptr getNodeAncestorBySchemeCP(xptr node, schema_node_xptr scm_anc)
+{
+    schema_node_xptr schema_node = getBlockHeaderCP(node)->snode;
+    if (schema_node == scm_anc) { return node; }
+    return getNodeAncestorBySchemeCP(node, schema_node, scm_anc);
+}
+
+inline t_item getNodeTypeCP(xptr node)
+{
+    return getBlockHeaderCP(node)->snode->type;
 }
 
 

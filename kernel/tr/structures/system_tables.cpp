@@ -140,7 +140,7 @@ void get_document_full (xptr node,const char* title)
 {
     xptr parent=insert_element(XNULL,XNULL,node,"document",xs_untyped,NULL_XMLNS);
     insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL_XMLNS);
-    schema_node_xptr scn=find_document(title);  
+    schema_node_xptr scn=find_document(title);
     if (scn != XNULL) getDebugInfo(scn, parent);
 }
 
@@ -148,7 +148,7 @@ void get_collection_full (xptr node,const char* title)
 {
     xptr parent=insert_element(XNULL,XNULL,node,"collection",xs_untyped,NULL_XMLNS);
     insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL_XMLNS);
-    schema_node_xptr scn=find_collection(title);    
+    schema_node_xptr scn=find_collection(title);
     if (scn != XNULL) getDebugInfo(scn, parent);
 }
 
@@ -191,8 +191,8 @@ void get_version(xptr node,const char* title)
                         strlen(SEDNA_VERSION),NULL_XMLNS);
     insert_attribute(XNULL,XNULL,parent,"build",xs_untypedAtomic,SEDNA_BUILD,
                         strlen(SEDNA_BUILD),NULL_XMLNS);
-    
-    
+
+
 }
 
 void get_errors(xptr node,const char* title)
@@ -207,7 +207,7 @@ void get_errors(xptr node,const char* title)
         }
         else
             left=insert_element(left,XNULL,XNULL,"error",xs_untyped,NULL_XMLNS);
-        
+
         insert_attribute(XNULL,XNULL,left,"code",xs_untypedAtomic,user_error_code_entries[i].code,
                         strlen(user_error_code_entries[i].code),NULL_XMLNS);
         insert_attribute(XNULL,XNULL,left,"roll_back",xs_untypedAtomic,(user_error_code_entries[i].act==ueca_ROLLBACK_TRN)?"y":"n",
@@ -239,10 +239,10 @@ void get_indexes (xptr node,const char* title)
         }
         else
             left=insert_element(left,XNULL,XNULL,"index",xs_untyped,NULL_XMLNS);
-        
+
         xptr node=insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,ic->index_title,
                         strlen(ic->index_title),NULL_XMLNS);
-        node=insert_attribute(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection", 
+        node=insert_attribute(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",
                         (ic->is_doc)?8:10,NULL_XMLNS);
         node=insert_attribute(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,
             strlen(ic->doc_name),NULL_XMLNS);
@@ -273,12 +273,12 @@ void get_triggers (xptr node,const char* title)
 
         if (left==XNULL) {
             left=insert_element(XNULL,XNULL,parent,"trigger",xs_untyped,NULL_XMLNS);
-        } else 
+        } else
             left=insert_element(left,XNULL,XNULL,"trigger",xs_untyped,NULL_XMLNS);
 
         xptr node=insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,tc->trigger_title,
                         strlen(tc->trigger_title),NULL_XMLNS);
-        node=insert_attribute(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(tc->is_doc)?"document":"collection", 
+        node=insert_attribute(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(tc->is_doc)?"document":"collection",
                         (tc->is_doc)?8:10,NULL_XMLNS);
         node=insert_attribute(node,XNULL,XNULL,"object_name",xs_untypedAtomic,tc->doc_name,
             strlen(tc->doc_name),NULL_XMLNS);
@@ -305,7 +305,7 @@ void get_triggers (xptr node,const char* title)
 
 #ifdef SE_ENABLE_FTSEARCH
 void print_ft_type_name(ft_index_type ftype, char* buf)
-{   
+{
     switch(ftype)
     {
         case ft_xml : strcpy(buf,"xml");
@@ -314,7 +314,7 @@ void print_ft_type_name(ft_index_type ftype, char* buf)
         break;case ft_delimited_value   : strcpy(buf,"delimited-value");
         break;case ft_customized_value  : strcpy(buf,"customized-value");
         break;default           : strcpy(buf,"unknown");
-    }   
+    }
 }
 void get_ftindexes (xptr node,const char* title)
 {
@@ -336,14 +336,14 @@ void get_ftindexes (xptr node,const char* title)
         }
         else
             left=insert_element(left,XNULL,XNULL,"ftindex",xs_untyped,NULL_XMLNS);
-        
+
         xptr node=insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,ic->index_title,
                         strlen(ic->index_title),NULL_XMLNS);
         node=insert_attribute(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",
                         (ic->is_doc)?8:10,NULL_XMLNS);
         node=insert_attribute(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,
             strlen(ic->doc_name),NULL_XMLNS);
-        
+
         print_ft_type_name(ic->ftype,buf);
         node=insert_attribute(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
         std::ostringstream str1;
@@ -412,7 +412,7 @@ void get_documents (xptr node,const char* title)
         xptr temp = insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,mdc->name,
                         strlen(mdc->name),NULL_XMLNS);
         ////////////////////////////////////////////////////////////////////////////
-        /// We must renew left pointer due to insert_attribute possibly has side effect - 
+        /// We must renew left pointer due to insert_attribute possibly has side effect -
         /// it can move parent of the new attribute to another block (Ivan Shcheklein).
         left = indirectionDereferenceCP(GETPARENTPOINTER(temp));
         ////////////////////////////////////////////////////////////////////////////
@@ -422,14 +422,14 @@ void get_documents (xptr node,const char* title)
             xptr d_left=XNULL;
             bt_key key;
             bt_cursor cursor=bt_lm(coll->metadata);
-            
+
             if(!cursor.is_null())
             {
                 do {
                     key=cursor.get_key();
                     d_left=insert_element(d_left,XNULL,left,"document",xs_untyped,NULL_XMLNS);
                     ////////////////////////////////////////////////////////////////////////////
-                    /// We must renew left pointer due to insert_element can have side effect - 
+                    /// We must renew left pointer due to insert_element can have side effect -
                     /// it can move parent of the new element to another block (Ivan Shcheklein).
                     left = indirectionDereferenceCP(GETPARENTPOINTER(d_left));
                     ////////////////////////////////////////////////////////////////////////////
@@ -497,7 +497,7 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
     xptr nodex;
     const char* param = NULL;
     const system_doc_record_t * sysdoc;
-    
+
     switch(type)
     {
         case DT_DOCUMENTS     : sysdoc = &system_doc_documents; break;
@@ -515,19 +515,19 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
         case DT_DOCUMENT_     : sysdoc = &system_doc_document; param = title + 10; break;
         case DT_COLLECTION_   : sysdoc = &system_doc_collection; param = title + 12; break;
         case DT_SCHEMA_       : sysdoc = &system_doc_schema; param = title + 8; break;
-        default               : throw USER_EXCEPTION2(SE1003, (std::string("Document '") + title + "' is not system.").c_str()); 
+        default               : throw USER_EXCEPTION2(SE1003, (std::string("Document '") + title + "' is not system.").c_str());
     }
-    
+
     local_lock_mrg->lock(lm_s);
 
 /*
     if (param != NULL) {
-        
+
     }
 */
 
     doc_schema_node_cptr scm(doc_schema_node_object::create(false));
-    nodex = insert_doc_node(scm, title);
+    nodex = insert_doc_node(scm, title, NULL);
     (*(sysdoc->fillproc))(indirectionDereferenceCP(nodex), param);
 
     if (sys_schema==NULL) sys_schema = se_new std::vector<schema_node_xptr>;

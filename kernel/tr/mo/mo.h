@@ -23,11 +23,12 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent, xmlns_ptr ns);
 xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const char* value, strsize_t size);
 xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent, const char* value, strsize_t size);
 xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, int tsize, const char* data, strsize_t dsize);
-xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name);
+xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name, const char * collection_name);
 
-bool delete_node(xptr node, bool is_drop_document = false);
-void delete_doc_node(xptr node);
+struct doc_info_t;
+
+bool delete_node(xptr node_xptr, const doc_info_t * doc_info = NULL, bool no_index_update = false);
+void delete_doc_node(xptr node, const char * doc_name, const char * collection_name);
 
 
 #endif /* _MO_H */
- 

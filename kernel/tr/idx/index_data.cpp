@@ -19,6 +19,7 @@
 #include "tr/idx/indexes.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/cat/catstore.h"
+#include "tr/mo/modebug.h"
 
 
 using namespace std;
@@ -102,18 +103,18 @@ void index_cell_object::drop()
     catalog_delete_object(this);
 };
 
+#define FOR_EACH(i, l, t) for (t::iterator i = l.begin(); i != l.end(); i++)
 
-
-t_scmnodes index_cell_object::fits_to_index_as_key(schema_node_cptr snode) const
+void index_cell_object::new_node_available(schema_node_cptr snode) const
 {
     t_scmnodes res;
-    t_scmnodes objs=execute_abs_path_expr(snode->root, object, NULL, NULL);
+    t_scmnodes objs=execute_abs_path_expr(snode->root, object);
     t_scmnodes::iterator it=objs.begin();
     while (it!=objs.end())
     {
         if ((*it)->is_ancestor_or_self(snode))
         {
-            t_scmnodes keys=execute_abs_path_expr(*it, key, NULL, NULL);
+            t_scmnodes keys=execute_abs_path_expr(*it, key);
             t_scmnodes::iterator it2=keys.begin();
             while (it2!=keys.end())
             {
@@ -122,14 +123,78 @@ t_scmnodes index_cell_object::fits_to_index_as_key(schema_node_cptr snode) const
                     res.push_back(*it);
                     break;
                 }
-                it2++;
+                t_scmnodes keydeps = execute_node_test(*i, node_test_nodes_deep);
+                FOR_EACH(k, keydeps, t_scmnodes) {
+                    if (snode.ptr() == *j) {
+                        snode->index_list.add(index_ref(this->p_object, *i, *j));
+                        break;
+                    }
+                }
             }
         }
-        it++;
     }
-    return res;
 }
 
+
+/*
+
+t_scmnodes index_cell_object::fits_to_index_as_key(schema_node_cptr snode) const
+{
+    t_scmnodes res;
+    t_scmnodes objs = execute_abs_path_expr(snode->root, object);
+    const NodeTest node_test_nodes_deep = {axis_descendant, node_test_wildcard_star};
+
+    FOR_EACH(i, objs, t_scmnodes) {
+        if ((*i)->is_ancestor_or_self(snode)) {
+            t_scmnodes keys=execute_abs_path_expr(*i, key);
+            FOR_EACH(j, keys, t_scmnodes) {
+                if (snode.ptr() == *j) { res.push_back(*i); break; }
+                t_scmnodes keydeps = execute_node_test(*i, node_test_nodes_deep);
+                FOR_EACH(k, keydeps, t_scmnodes) { if (snode.ptr() == *j) { res.push_back(*i); break; } }
+            }
+        }
+    }
+
+    return res;
+}
+*/
+
+void index_cell_object::put_to_index(xptr key_node, xptr object_indir)
+{
+    xptr bt_root = btree_root;
+    bt_key key;
+
+    try {
+        tuple_cell tc = dm_typed_value(key_node);
+        if (!((getNodeTypeCP(key_node) == element) && (tc.get_strlen() == 0))) {
+            tc = cast(tc, keytype);
+            bt_insert(bt_root, tuple_cell2bt_key(tc, key), object_indir);
+            if (bt_root != btree_root) { ((index_cell_object *) (this->modify_self()))->btree_root = bt_root; }
+        }
+    } catch (SednaUserException &ex) {
+        this->err_cntr++;
+    }
+}
+
+
+void index_cell_object::delete_from_index(xptr key_node, xptr object_indir)
+{
+    xptr bt_root = btree_root;
+    bt_key key;
+
+    try {
+        tuple_cell tc = dm_typed_value(key_node);
+        if (!((getNodeTypeCP(key_node) == element) && (tc.get_strlen() == 0))) {
+            tc = cast(tc, keytype);
+            bt_delete(bt_root, tuple_cell2bt_key(tc, key), object_indir);
+            if (bt_root != btree_root) { ((index_cell_object *) (this->modify_self()))->btree_root = bt_root; }
+        }
+    } catch (SednaUserException &ex) {
+        this->err_cntr--;
+    }
+}
+
+/*
 void index_cell_object::put_to_index(xptr node, schema_node_cptr accessor)
 {
     xptr acc=getNodeAncestorIndirectionByScheme(node,accessor);
@@ -220,3 +285,4 @@ void index_cell_object::put_to_index(xptr node,const char* value, int size, sche
         this->err_cntr++;
     }
 }
+*/

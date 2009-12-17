@@ -10,38 +10,26 @@
 
 #define CAT_FOR_EACH(T, list) for (cat_list<T>::item * i = list.first; i != NULL; i = i->next)
 
-void update_idx_add(xptr node)
+void indexDeleteNode_int(schema_node_cptr schema_node, xptr node)
 {
-    CAT_FOR_EACH(index_ref, getBlockHeaderCP(node)->snode->index_list) {
-        i->object.index->put_to_index(node, i->object.object);
+    xptr key, object;
+    CAT_FOR_EACH(index_ref, schema_node->index_list) {
+        key = getNodeAncestorBySchemeCP(node, i->object.key);
+        if (key != XNULL) { /* node's schema_node may differ from schema_node parameter (on text node insert, for example) */
+            object = getNodeAncestorIndirectionByScheme(key, i->object.object);
+            i->object.index->delete_from_index(key, object);
+        }
     }
 }
 
-void update_idx_add(xptr node, const char* value, strsize_t size)
+void indexAddNode_int(schema_node_cptr schema_node, xptr node)
 {
-    CAT_FOR_EACH(index_ref, getBlockHeaderCP(node)->snode->index_list) {
-        i->object.index->put_to_index(node, value, (size_t) size, i->object.object);
+    xptr key, object;
+    CAT_FOR_EACH(index_ref, schema_node->index_list) {
+        key = getNodeAncestorBySchemeCP(node, i->object.key);
+        if (key != XNULL) { /* node's schema_node may differ from schema_node parameter (on text node delete, for example) */
+            object = getNodeAncestorIndirectionByScheme(key, i->object.object);
+            i->object.index->put_to_index(key, object);
+        }
     }
-}
-
-void update_idx_add_text(xptr node) {
-    if (getBlockHeaderCP(node)->snode->parent->index_list.empty()) return;
-    
-    update_idx_add(node);
-    update_idx_add(getParentCP(node));
-}
-
-
-void update_idx_delete (xptr node)
-{
-    CAT_FOR_EACH(index_ref, getBlockHeaderCP(node)->snode->index_list) {
-        i->object.index->delete_from_index(node, i->object.object);
-    }
-}
-
-void update_idx_delete_text(xptr node) {
-    if (getBlockHeaderCP(node)->snode->parent->index_list.empty()) return;
-
-    update_idx_delete(node);
-    update_idx_delete(getParentCP(node));
 }

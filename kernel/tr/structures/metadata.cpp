@@ -75,9 +75,7 @@ void delete_document(const char *document_name)
     xptr blk = document->snode->bblk;
     U_ASSERT(blk != XNULL); // Document MUST have exactly one document node, so blk is not null
     CHECKP(blk);
-    xptr ind = ((n_dsc*)((char*)XADDR(blk)+((node_blk_hdr*)XADDR(blk))->desc_first))->indir;
-    delete_doc_node(GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk)));
-    hl_logical_log_document(ind, document_name, NULL, false);
+    delete_doc_node(GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk)), document_name, NULL);
     document->drop();
     up_concurrent_micro_ops_number();
 };
@@ -90,15 +88,15 @@ void delete_collection(const char *collection_name)
 // Delete documents from collection
     bt_key key;
     key.setnew(" ");
-    
+
     bt_cursor cursor = bt_find_gt(((col_schema_node_xptr)collection->snode)->metadata, key);
     if (!cursor.is_null()) do {
         xptr indir = cursor.bt_next_obj();
         xptr node  = removeIndirection(indir);
         if (node != XNULL) {
             CHECKP(node);
-            delete_doc_node(node);
-            hl_logical_log_document(((n_dsc*)XADDR(node))->indir, (const char*) cursor.get_key().data(), collection_name, false);
+            xptr ind = ((n_dsc*)XADDR(node))->indir;
+            delete_doc_node(node, (const char*) cursor.get_key().data(), collection_name);
             up_concurrent_micro_ops_number();
         }
     } while (cursor.bt_next_key());
@@ -107,7 +105,7 @@ void delete_collection(const char *collection_name)
 
     collection->drop();
     hl_logical_log_collection(collection_name, false);
-   
+
     up_concurrent_micro_ops_number();
 }
 
@@ -127,14 +125,11 @@ void delete_document_from_collection(const char *collection_name, const char *do
     if ((GETBLOCKBYNODE(node))->count == 1 && col_node->eblk == BLOCKXPTR(node))
           col_node.modify()->eblk = (GETBLOCKBYNODE(node))->pblk;
 
-    xptr ind=((n_dsc*)XADDR(node))->indir;
-
 #ifdef SE_ENABLE_FTSEARCH
     clear_ft_sequences();
 #endif
 
-    delete_doc_node(node);
-    hl_logical_log_document(ind, document_name, collection_name, false);
+    delete_doc_node(node, document_name, collection_name);
     up_concurrent_micro_ops_number();
 #ifdef SE_ENABLE_FTSEARCH
     execute_modifications();
@@ -162,8 +157,8 @@ xptr insert_document(const char * uri, bool persistent)
     }
 
     doc_schema_node_cptr scm(doc_schema_node_object::create(persistent));
-    node_indir = insert_doc_node(scm, name);
-    
+    node_indir = insert_doc_node(scm, name, NULL);
+
     if (mdc.found()) { mdc->snode = scm.ptr(); }
 
     return indirectionDereferenceCP(node_indir);
@@ -176,7 +171,7 @@ col_schema_node_xptr insert_collection(const char *collection_name)
 
     if (!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid collection name '") + collection_name + "'").c_str());
 
-    if (catalog_find_name(catobj_metadata, collection_name) != NULL) 
+    if (catalog_find_name(catobj_metadata, collection_name) != NULL)
         throw USER_EXCEPTION2(SE2002,collection_name);
 
     down_concurrent_micro_ops_number();
@@ -209,8 +204,7 @@ xptr insert_document_into_collection(const char *collection_name, const char *ur
 
     col_schema_node_cptr scm = collection->snode;
     xptr node_indir;
-    node_indir = insert_doc_node(collection->snode, name);
-    hl_logical_log_document(node_indir, uri, collection_name, true);
+    node_indir = insert_doc_node(collection->snode, name, collection_name);
     ((col_schema_node_xptr)collection->snode)->insert_document(name, node_indir);
 
     up_concurrent_micro_ops_number();
@@ -232,7 +226,7 @@ doc_schema_node_xptr find_document(const char *document_name) {
 xptr find_document_in_collection(const char *collection_name, const char *document_name)
 {
     metadata_cptr mdc(collection_name, false);
-    schema_node_object * snd; 
+    schema_node_object * snd;
     if (!mdc.found()) { return XNULL; }
     snd = &(*(schema_node_cptr(mdc->snode)));
     if ((dynamic_cast<col_schema_node_object *> (snd)) == NULL) { return XNULL; }
@@ -249,7 +243,7 @@ void rename_collection(const char *old_collection_name, const char *new_collecti
     if (!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid collection name '") + new_collection_name + "'").c_str());
 
     metadata_cptr collection(old_collection_name, true);
-    if (!collection.found()) 
+    if (!collection.found())
         throw USER_EXCEPTION2(SE2003, old_collection_name);
 
     if (catalog_name_exists(catobj_metadata, new_collection_name))

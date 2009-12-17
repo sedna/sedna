@@ -40,9 +40,9 @@ inline xptr findNearestTextContainerCP(xptr node_xptr)
 char * copyTextToBuffer(char * buffer, const void* text, strsize_t size, text_type ttype)
 {
     xptr ptr;
-    
+
     switch (ttype) {
-      case text_mem : 
+      case text_mem :
         U_ASSERT(size < PSTRMAXSIZE);
         memcpy(buffer, text, (size_t) size);
         break;
@@ -56,7 +56,7 @@ char * copyTextToBuffer(char * buffer, const void* text, strsize_t size, text_ty
         estr_copy_to_buffer(buffer, *(xptr*) text, size);
         break;
     }
-    
+
     return buffer;
 }
 
@@ -79,10 +79,10 @@ inline xptr pstr_allocate_u(xptr text_block, xptr node, const void * s, strsize_
 }
 
 
-void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type ttype, bool update_index)
+void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type ttype)
 {
     t_dsc* node= (t_dsc*) XADDR(node_xptr);
-    
+
     if (size > STRMAXSIZE) {
         throw USER_EXCEPTION(SE2037);
     } else if (size < 1) {
@@ -103,10 +103,6 @@ void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type
 
         pstr_allocate_u(text_block, node_xptr, text, size, ttype);
     }
-
-    if (update_index && IS_DATA_BLOCK(node_xptr)) {
-        update_idx_add_text(node_xptr);
-    }
 }
 
 
@@ -119,11 +115,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
     curr_size = node->size;
 
     if ((curr_size + size) > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
-    
-    if (IS_DATA_BLOCK(node_xptr)) {
-        update_idx_delete_text(node_xptr);
-    }
-    
+
     if (curr_size > PSTRMAXSIZE) {
         if (position == ip_tail) {
             pstr_long_append_tail(node_xptr, text, size, ttype);
@@ -133,7 +125,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
     } else {
         CHECKP(node_xptr);
         xptr data = textDereferenceCP(node->data);
-        
+
         if ((curr_size + size) > PSTRMAXSIZE) {
             U_ASSERT((ttype != text_doc) || (* (xptr *) text) != data);
             char * tmp_buffer = (char *) malloc(curr_size);
@@ -167,16 +159,11 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
                 copyTextToBuffer(buffer + (size_t) curr_size, text, (size_t) size, ttype);
             } else {
                 copyTextToBuffer(buffer, text, (size_t) size, ttype);
-                memcpy(buffer + (size_t) curr_size, XADDR(data), curr_size);
+                memcpy(buffer + (size_t) size, XADDR(data), (size_t) curr_size);
             }
             pstr_modify(node_xptr, buffer, (size_t) (size + curr_size));
             free(buffer);
         }
-    }
-    
-    if (IS_DATA_BLOCK(node_xptr))
-    {
-        update_idx_add_text(node_xptr);
     }
 }
 
@@ -194,11 +181,9 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
     CHECKP(node_xptr);
     t_dsc * node = (t_dsc *) XADDR(node_xptr);
     strsize_t cur_size = node->size;
-    
+
     if (cur_size <= size)
         throw SYSTEM_EXCEPTION("wrong recovery of text node");
-    
-    update_idx_delete_text(node_xptr);
 
     CHECKP(node_xptr);
     if (cur_size <= PSTRMAXSIZE) {
@@ -214,7 +199,7 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
             memcpy(buf, (char *) XADDR(data_ptr) + size, new_size);
         }
         pstr_modify(node_xptr, buf, new_size);
-        
+
         free(buf);
     } else {
         if (position == ip_tail) {
@@ -222,21 +207,15 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
         } else {
             pstr_long_delete_head(node_xptr, size);
         }
-        
+
         if ((cur_size - size) <= PSTRMAXSIZE) {
             convertLongtextToText(node_xptr, cur_size - size);
         }
     }
-    
-    update_idx_add_text(node_xptr);
 }
 
-void deleteTextValue(xptr node_xptr, bool update_index)
+void deleteTextValue(xptr node_xptr)
 {
-    if (update_index && IS_DATA_BLOCK(node_xptr)) {
-        update_idx_delete_text(node_xptr);
-    }
-    
     if (((t_dsc*)XADDR(node_xptr))->size > PSTRMAXSIZE) {
         pstr_long_delete_str(node_xptr);
     } else {

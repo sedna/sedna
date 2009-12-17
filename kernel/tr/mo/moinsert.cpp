@@ -134,6 +134,8 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent, const char* name
 //        node_info.snode->lastnode_ind = node_info.indirection;
     }
 
+    indexAddNode(node_info.snode, node_info.node_xptr);
+
     microoperation_end(node_info.parent);
 
     molog(("MOLOG Insert element node: L:0x%llx R:0x%llx P:0x%llx -> 0x%llx",
@@ -151,7 +153,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
 {
     node_info_t node_info = {left_sib, right_sib, parent, text, 0, NULL_XMLNS};
     schema_node_cptr parent_snode;
-    enum text_insert { ti_new_node, ti_addtext_after, ti_addtext_before } insert_type = ti_new_node;
+    enum text_insert_t { ti_new_node, ti_addtext_after, ti_addtext_before } insert_type = ti_new_node;
 
     if (size < 1 && IS_DATA_BLOCK(parent)) throw USER_EXCEPTION(SE2009);
     if (size > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
@@ -159,7 +161,10 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
     check_common_constraints(left_sib, right_sib, parent);
     find_relatives(node_info);
     parent_snode = getBlockHeaderCP(node_info.parent)->snode;
+
     microoperation_begin(node_info.parent);
+
+    indexDeleteNode(parent_snode, node_info.parent);
 
     if (node_info.left_sibling != XNULL && getBlockHeaderCP(node_info.left_sibling)->snode->type == text) {
         if (parent_snode->type == virtual_root) {
@@ -182,7 +187,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
     }
 
     if (insert_type == ti_new_node) {
-        insertTextValue(node_info.node_xptr, value, size, ttype, true);
+        insertTextValue(node_info.node_xptr, value, size, ttype);
     } else {
         node_info.indirection = getIndirectionSafeCP(node_info.node_xptr);
     }
@@ -201,9 +206,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
             t_dsc* desc = (t_dsc*) XADDR(node_info.node_xptr);
             size_t size = desc->size;
             xptr text_indirection_ptr = desc->data;
-/* TODO: Check whether it is ok, to delete the following line
-            update_idx_add_txt(node_info.node_xptr);
-*/
+
             if (size <= PSTRMAXSIZE) {
                 xptr data = textDereferance(text_indirection_ptr);
                 CHECKP(data);
@@ -226,6 +229,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
 /* Update temporary pointer */
 //        node_info.snode->lastnode_ind = node_info.indirection;
     }
+
+    indexAddNode(parent_snode, node_info.parent);
 
     microoperation_end(node_info.parent);
 
@@ -260,7 +265,6 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* na
 
     if (IS_DATA_BLOCK(node_info.node_xptr))
     {
-        update_idx_add(node_info.node_xptr, value, data_size);
 /* Update logical log */
         hl_logical_log_attribute(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir, node_info.parent_indir,
                                   node_info.name, node_info.scm_type, value, data_size,
@@ -270,6 +274,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* na
 //        node_info.snode->lastnode_ind = node_info.indirection;
     }
 
+    indexAddNode(node_info.snode, node_info.node_xptr);
     microoperation_end(node_info.parent);
 
     return node_info.node_xptr;
@@ -345,6 +350,8 @@ xptr __insert_common_text_node(node_info_t &node_info, const char* value, strsiz
 //        node_info.snode->lastnode_ind = node_info.indirection;
     }
 
+    indexAddNode(node_info.snode, node_info.node_xptr);
+
     return node_info.node_xptr;
 }
 
@@ -353,7 +360,6 @@ xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const char* valu
     node_info_t node_info = {left_sib, right_sib, parent, comment};
     __insert_common_text_node(node_info, value, size);
     if (IS_DATA_BLOCK(node_info.node_xptr)) {
-        update_idx_add(node_info.node_xptr, value, size);
 /* Update logical log */
         hl_logical_log_comment(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir, node_info.parent_indir, value, (size_t) size, true);
     }
@@ -366,7 +372,6 @@ xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent, const char* value,
     node_info_t node_info = {left_sib, right_sib, parent, cdata};
     __insert_common_text_node(node_info, value, size);
     if (IS_DATA_BLOCK(node_info.node_xptr)) {
-        update_idx_add(node_info.node_xptr, value, size);
 /* Update logical log */
         hl_logical_log_comment(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir, node_info.parent_indir, value, (size_t) size, true);
     }
@@ -388,7 +393,6 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, i
     ((pi_dsc*)XADDR(node_info.node_xptr))->target = tsize;
 
     if (IS_DATA_BLOCK(node_info.node_xptr)) {
-        update_idx_add(node_info.node_xptr, data, dsize);
 /* Update logical log */
         hl_logical_log_pi(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir, node_info.parent_indir, value, (size_t) full_size, tsize, true);
     }
@@ -397,7 +401,7 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, i
     return node_info.node_xptr;
 }
 
-xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name)
+xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char* doc_name, const char* collection_name)
 {
     xptr block = XNULL;
     col_schema_node_cptr col_snode = XNULL;
@@ -453,7 +457,7 @@ xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name)
     insertTextValue(nodex, doc_name, strlen(doc_name), text_mem);
 
     if (doc_snode->persistent) {
-        hl_logical_log_document(result, doc_name, NULL, true);
+        hl_logical_log_document(result, doc_name, collection_name, true);
         up_concurrent_micro_ops_number();
     }
 

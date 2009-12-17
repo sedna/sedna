@@ -12,12 +12,23 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 #include "tr/cat/catptr.h"
+#include "tr/structures/schema.h"
 
-void update_idx_add(xptr node);
-void update_idx_add(xptr node, const char* value, strsize_t size);
-void update_idx_add_text(xptr node);
+void indexDeleteNode_int(schema_node_cptr schema_node, xptr node);
+void indexAddNode_int(schema_node_cptr schema_node, xptr node);
 
-void update_idx_delete(xptr node);
-void update_idx_delete_text(xptr node);
+inline void indexDeleteNode(schema_node_cptr schema_node, xptr node)
+{
+    if (!schema_node->index_list.empty()) {
+        indexDeleteNode_int(schema_node, node);
+    }
+}
+
+inline void indexAddNode(schema_node_cptr schema_node, xptr node)
+{
+    if (!schema_node->index_list.empty()) {
+        indexAddNode_int(schema_node, node);
+    }
+}
 
 #endif /* _INDEXUPDATE_H */
