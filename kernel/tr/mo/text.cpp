@@ -209,7 +209,7 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
         }
 
         if ((cur_size - size) <= PSTRMAXSIZE) {
-            convertLongtextToText(node_xptr, cur_size - size);
+            convertLongtextToText(node_xptr, (size_t) (cur_size - size));
         }
     }
 }

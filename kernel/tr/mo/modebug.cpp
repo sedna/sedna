@@ -14,6 +14,7 @@
 #include "tr/vmm/vmm.h"
 #include "tr/strings/strings_base.h"
 #include "tr/crmutils/node_utils.h"
+#include "tr/pstr/pstr.h"
 
 #include <streambuf>
 #include <sstream>
@@ -30,6 +31,11 @@ inline bool checkNodeOuterPointers(xptr node_ptr) {
     test_ptr = node->indir;
     CHECKP(test_ptr);
     CHECK_INVARIANT(*(xptr*) XADDR(test_ptr) == node_ptr, ce_indirection);
+
+    if (getNodeTypeCP(node_ptr) == text) {
+        t_dsc * t = (t_dsc *) XADDR(node_ptr);
+        CHECK_INVARIANT(t->size <= PSTRMAXSIZE || t->data == block_xptr(t->data), ce_snode);
+    }
 
     CHECKP(node_ptr);
     test_ptr = node->ldsc;
