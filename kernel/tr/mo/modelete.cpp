@@ -60,15 +60,20 @@ void readNodeInfo(xptr node_xptr, node_info_t * node_info)
         node_info->text_size = 0;
     }
 
+    node_info->parent_indir = n_node.pdsc;
     node_info->indirection = n_node.indir;
     node_info->left_sibling = n_node.ldsc;
     node_info->right_sibling = n_node.rdsc;
     node_info->left_sibling_indir = getIndirectionSafeCP(node_info->left_sibling);
     node_info->right_sibling_indir = getIndirectionSafeCP(node_info->right_sibling);
-    node_info->parent_indir = n_node.pdsc;
 }
 
-void logicalLogDelete(node_info_t * node_info)
+struct doc_info_t {
+    const char* doc_name;
+    const char* collection_name;
+};
+
+void logicalLogDelete(node_info_t * node_info, const doc_info_t * doc_info)
 {
     char * text_buf = NULL;
 
@@ -125,6 +130,8 @@ void logicalLogDelete(node_info_t * node_info)
             );
         break;
       case document :
+        U_ASSERT(doc_info != NULL);
+        hl_logical_log_document(node_info->indirection, doc_info->doc_name, doc_info->collection_name, false);
         break;
       default :
         throw SYSTEM_EXCEPTION("Unexpected node deletion: consistency failure.");
@@ -158,40 +165,38 @@ void mergeSiblingTextNodes(xptr left, xptr right)
             hl_logical_log_text_edit(left, right_dsc.size, false, true);
             microoperation_end(left);
 
-            delete_node(right);
+            delete_node(right, false, true);
         } else if (left_dsc.size <= PSTRMAXSIZE) {
             microoperation_begin(right);
             insertTextValue(ip_head, right, &left_dsc.data, left_dsc.size, text_doc);
             hl_logical_log_text_edit(right, left_dsc.size, true, true);
             microoperation_end(right);
 
-            delete_node(left);
+            delete_node(left, false, true);
         } else {
             microoperation_begin(left);
-            update_idx_delete_text(left);
             pstr_long_append_tail(left, right);
             hl_logical_log_text_edit(left, right_dsc.size, false, true);
-            update_idx_add_text(left);
             microoperation_end(left);
 
-            delete_node(right);
+            delete_node(right, false, true);
         }
     }
 }
 
-
-bool delete_node(xptr node_xptr, bool is_drop_document)
+bool delete_node(xptr node_xptr, const doc_info_t * doc_info, bool no_index_update)
 {
     node_info_t node_info = {node_xptr};
     node_info.snode = getBlockHeaderCP(node_xptr)->snode;
     bool children_not_deleted = false;
     xptr node_tmp;
 
-    if (!is_drop_document && node_info.snode->type == document) {
+    if (doc_info == NULL && node_info.snode->type == document) {
         throw USER_EXCEPTION(SE2036); // Document node deletion is prohibited by this function
     }
 
-    readNodeInfo(node_xptr, &node_info);
+    CHECKP(node_xptr);
+    node_info.parent_indir = getParentIndirection(node_xptr);
 
 #ifdef SE_ENABLE_TRIGGERS
     if(apply_per_node_triggers(XNULL, node_xptr, indirectionDereferenceCP(node_info.parent_indir), node_info.snode.ptr(), TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) == XNULL)
@@ -199,7 +204,6 @@ bool delete_node(xptr node_xptr, bool is_drop_document)
     node_tmp = prepare_old_node(node_xptr, node_info.snode.ptr(), TRIGGER_DELETE_EVENT);
     CHECKP(node_xptr);
 #endif
-
 
     /* Delete node children */
 
@@ -223,12 +227,21 @@ bool delete_node(xptr node_xptr, bool is_drop_document)
 
     microoperation_begin(node_xptr);
 
-    logicalLogDelete(&node_info);
+    if (!no_index_update) {
+        if (node_info.node_type == text) {
+            node_info.parent = indirectionDereferenceCP(node_info.parent_indir);
+            indexDeleteNode(getBlockHeaderCP(node_info.parent)->snode, node_info.parent);
+        } else {
+            indexDeleteNode(node_info.snode, node_info.node_xptr);
+        }
+    }
+
+    logicalLogDelete(&node_info, doc_info);
 
     node_info.snode.modify();
 
     if (node_info.text_size != 0) {
-        deleteTextValue(node_info.node_xptr, true);
+        deleteTextValue(node_info.node_xptr);
         node_info.snode->textcnt -= node_info.text_size;
     }
 
@@ -237,6 +250,12 @@ bool delete_node(xptr node_xptr, bool is_drop_document)
     node_info.snode->nodecnt--;
 
     updateBlockChains(node_info.node_xptr, node_info.indirection, up_delete);
+
+    if (!no_index_update) {
+        if (node_info.node_type == text) {
+            indexAddNode(node_info.snode, node_info.parent);
+        }
+    }
 
     microoperation_end(node_xptr);
 
@@ -254,9 +273,10 @@ bool delete_node(xptr node_xptr, bool is_drop_document)
 }
 
 
-void delete_doc_node(xptr node)
+void delete_doc_node(xptr node, const char* doc_name, const char* collection_name)
 {
-    delete_node(node, true);
+    doc_info_t doc_info = {doc_name, collection_name};
+    delete_node(node, &doc_info);
 }
 
 

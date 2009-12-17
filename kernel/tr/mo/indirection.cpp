@@ -127,7 +127,7 @@ xptr indirectionTableAddRecord(xptr target)
             createBlock(XNULL, block_xptr(target), block_xptr(irecord));
         }
 
-        indirection_block = getBlockHeaderCP(rollback_record);
+        indirection_block = getBlockHeaderCP(irecord);
     } else {
         CHECKP(target);
         if (target_block->free_first_indir != 0)

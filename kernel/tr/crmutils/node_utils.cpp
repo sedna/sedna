@@ -26,7 +26,7 @@ xptr getNextByOrderAttribute(xptr source)
         case attribute: return right;
         case xml_namespace: right=GETRIGHTPOINTER(source);
         default: return XNULL;
-        }   
+        }
     }
     return XNULL;
 }
@@ -40,7 +40,7 @@ xptr getFirstByOrderAttributeChild(xptr source)
     xptr* childx=(xptr*)((char*)XADDR(source)+size_of_node(GETBLOCKBYNODE(source)));
     for (int i=0;i<size;i++)
     {
-        if(*childx!=XNULL && scn->get_child_type(i)==attribute) 
+        if(*childx!=XNULL && scn->get_child_type(i)==attribute)
         {
             xptr node=*childx;
             CHECKP(node);
@@ -99,7 +99,7 @@ xptr  getFirstByOrderTextChild(xptr source)
     xptr* childx=(xptr*)((char*)XADDR(source)+size_of_node(GETBLOCKBYNODE(source)));
     for (int i=0;i<size;i++)
     {
-        if(*childx!=XNULL && scn->get_child_type(i)==text) 
+        if(*childx!=XNULL && scn->get_child_type(i)==text)
         {
             xptr node=*childx;
         //  CHECKP(node);
@@ -120,7 +120,7 @@ xptr  getLastByOrderChildNode(xptr source)
 
     for (int i=size-1;i>-1;i--)
     {
-        if(*childx!=XNULL) 
+        if(*childx!=XNULL)
         {
             xptr nodex=*childx;
             CHECKP(nodex);
@@ -137,7 +137,7 @@ xptr  getLastByOrderChildNode(xptr source)
                 return nodex;
             CHECKP(source);
         }
-        childx-=1;      
+        childx-=1;
     }
     return XNULL;
 }
@@ -150,7 +150,7 @@ xptr  getFirstByOrderChildNode(xptr source)
     xptr* childx=(xptr*)((char*)XADDR(source)+size_of_node(GETBLOCKBYNODE(source)));
     for (int i=0;i<size;i++)
     {
-        if(*childx!=XNULL && scn->get_child_type(i)!=attribute && scn->get_child_type(i)!=xml_namespace ) 
+        if(*childx!=XNULL && scn->get_child_type(i)!=attribute && scn->get_child_type(i)!=xml_namespace )
         {
             xptr node=*childx;
             CHECKP(node);
@@ -175,7 +175,7 @@ xptr  getFirstByOrderNNSChildNode(xptr source)
     xptr* childx=(xptr*)((char*)XADDR(source)+size_of_node(GETBLOCKBYNODE(source)));
     for (int i=0;i<size;i++)
     {
-        if(*childx!=XNULL  && scn->get_child_type(i)!=xml_namespace ) 
+        if(*childx!=XNULL  && scn->get_child_type(i)!=xml_namespace )
         {
             xptr node=*childx;
             CHECKP(node);
@@ -197,7 +197,7 @@ xptr giveFirstByOrderChild(xptr source,shft size)
     xptr* childx=(xptr*)((char*)XADDR(source)+size_of_node(GETBLOCKBYNODE(source)));
     for (int i=0;i<size;i++)
     {
-        if (*childx!=XNULL) 
+        if (*childx!=XNULL)
         {
             xptr node=*childx;
             CHECKP(node);
@@ -217,7 +217,7 @@ xptr giveFirstByOrderChild_CP(xptr source,shft size)
 
 xptr giveAnyChild(n_dsc* source,shft size)
 {
-    
+
     xptr* childx=(xptr*)((char*)source+size_of_node(GETBLOCKBYNODE_ADDR(source)));
     for (int i=0;i<size;i++)
     {
@@ -270,7 +270,7 @@ xptr getLastNonDmChildrenChild(n_dsc* source,shft size)
     xptr* childx=(xptr*)((char*)source+size_of_node(GETBLOCKBYNODE_ADDR(source))+(size-1)*sizeof(xptr));
     for (int i=size-1;i>-1;i--)
     {
-        if(*childx!=XNULL && (scn->get_child_type(i)==attribute||scn->get_child_type(i)==xml_namespace)) 
+        if(*childx!=XNULL && (scn->get_child_type(i)==attribute||scn->get_child_type(i)==xml_namespace))
         {
             xptr node= *childx;
             CHECKP(node);
@@ -351,10 +351,10 @@ xptr findMedianNodeDescriptor (node_blk_hdr * block)
 n_dsc* getPreviousDescriptorOfSameSort(n_dsc* node)
 {
     if (node->desc_prev!=0) return GETPREVIOUSDESCRIPTOR(node);
-    else 
+    else
     {
         xptr new_block = GETBLOCKBYNODE_ADDR(node)->pblk;
-        node_blk_hdr* bl_head=(node_blk_hdr*)XADDR(new_block);      
+        node_blk_hdr* bl_head=(node_blk_hdr*)XADDR(new_block);
         while (new_block!=XNULL)
         {
             CHECKP(new_block);
@@ -368,33 +368,33 @@ n_dsc* getPreviousDescriptorOfSameSort(n_dsc* node)
             return GETPOINTERTODESC(bl_head,bl_head->desc_last);
         else
             throw SYSTEM_EXCEPTION("Bad Consistency: Empty block");
-    }                                      
+    }
 }
 
 /* returns the next in document order descriptor corresponding to the same scheme node*/
 n_dsc* getNextDescriptorOfSameSort(n_dsc* node)
 {
     if (node->desc_next!=0) return GETNEXTDESCRIPTOR(node);
-    else 
+    else
     {
         xptr new_block = GETBLOCKBYNODE_ADDR(node)->nblk;
         node_blk_hdr* bl_head=(node_blk_hdr*)XADDR(new_block);
         while (new_block!=XNULL)
         {
             CHECKP(new_block);
-            
+
             if (bl_head->count!=0)
                     break;
             new_block = bl_head->nblk;
             bl_head=(node_blk_hdr*)XADDR(new_block);
         }
         if (new_block==XNULL) return NULL;
-        
+
         if (bl_head->desc_first!=0)
             return GETPOINTERTODESC(bl_head,bl_head->desc_first);
         else
             throw SYSTEM_EXCEPTION("Bad Consistency: Empty block");
-    } 
+    }
 }
 
 /* returns the xptr to the first child of the node identified by name and type*/
@@ -418,9 +418,9 @@ xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
     {
         ++cnt;
         if (
-             sc->object.type==attribute && 
-             my_strcmp(name,sc->object.name)==0 &&  
-             (    (sc->object.get_xmlns()==NULL && NULL == uri) 
+             sc->object.type==attribute &&
+             my_strcmp(name,sc->object.name)==0 &&
+             (    (sc->object.get_xmlns()==NULL && NULL == uri)
                || (sc->object.get_xmlns()!=NULL && my_strcmp(uri,sc->object.get_xmlns()->uri)==0)) &&
              (block->dsc_size >= size_of_node(block)+(cnt+1) * sizeof(xptr)) &&
              ((child = GET_NODE_CHILD(node, cnt)) != XNULL)
@@ -433,7 +433,7 @@ xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
 }
 /* returns the xptr to the nearest left neighboring descriptor of the attribute*/
 xptr findAttributeWithSameNameToInsertAfter_CP(xptr parent,const char* name,xmlns_ptr ns)
-{ 
+{
     CHECKP(parent);
     return findAttributeWithSameNameToInsertAfter(parent,name,ns);
 }
@@ -468,7 +468,7 @@ xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr paren
         CHECKP(indirect);
         tmp=(n_dsc*)XADDR(indirect);
         indirect= tmp->pdsc;
-        n_dsc* tmp2;   
+        n_dsc* tmp2;
         xptr tmpx1 = ADDR2XPTR(tmp);
         while (1==1)
         {
@@ -502,7 +502,7 @@ xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr paren
         xptr test_sib=left_sib;
         if (test_sib==XNULL) test_sib=right_sib;
         else
-            if (tmpx==left_sib) 
+            if (tmpx==left_sib)
             {
                 CHECKP(tmpx);
                 return left_sib;
@@ -511,20 +511,20 @@ xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr paren
         {
             CHECKP(tmpx);
             tmp2=getNextDescriptorOfSameSort((n_dsc*)XADDR(tmpx));
-            if (tmp2!=NULL) 
+            if (tmp2!=NULL)
             {
                 if (tmp2->pdsc!=indir) return ADDR2XPTR(getPreviousDescriptorOfSameSort(tmp2));
                 tmpx=ADDR2XPTR(tmp2);
             }
-            else  
+            else
                 break;
         }
-        if (nid_cmp(tmpx,test_sib)<0) 
+        if (nid_cmp(tmpx,test_sib)<0)
         {
             CHECKP(tmpx);
             return tmpx;
         }
-        else 
+        else
         {
             CHECKP(tmpx);
             tmp=getPreviousDescriptorOfSameSort((n_dsc*)XADDR(tmpx));
@@ -532,7 +532,7 @@ xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr paren
             {
                 if (ADDR2XPTR(tmp)==right_sib) tmp=getPreviousDescriptorOfSameSort((n_dsc*)XADDR(tmpx));
                 if (tmp!=NULL)
-                return ADDR2XPTR(tmp);  
+                return ADDR2XPTR(tmp);
                 else return XNULL;
             }
             else
@@ -575,8 +575,8 @@ xptr findNodeWithSameNameToInsertBefore(xptr left_sib, xptr right_sib, xptr pare
         tmp= getNextDescriptorOfSameSort(tmp) ;
         if (tmp==NULL) return XNULL;
     }
-    if (tmp!=((n_dsc*)XADDR(parent))) 
-    { 
+    if (tmp!=((n_dsc*)XADDR(parent)))
+    {
         xptr res=getChildPointer(tmp,name,node_type,ns);
         CHECKP(res);
         return res;
@@ -587,7 +587,7 @@ xptr findNodeWithSameNameToInsertBefore(xptr left_sib, xptr right_sib, xptr pare
         xptr test_sib=right_sib;
         if (test_sib==XNULL) test_sib=left_sib;
         else
-            if (tmpx==right_sib) 
+            if (tmpx==right_sib)
             {
                 CHECKP(tmpx);
                 return right_sib;
@@ -596,9 +596,9 @@ xptr findNodeWithSameNameToInsertBefore(xptr left_sib, xptr right_sib, xptr pare
         {
             CHECKP(tmpx);
             tmp2=getNextDescriptorOfSameSort((n_dsc*)XADDR(tmpx));
-            if (tmp2!=NULL) 
+            if (tmp2!=NULL)
                 tmpx=ADDR2XPTR(tmp2);
-            else  
+            else
                 return XNULL;
         }
         CHECKP(tmpx);
@@ -630,12 +630,12 @@ xptr    getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node)
     t_dsc* node_a=node_d;
     t_dsc* node_l;
     while (
-           (node_l=(t_dsc*)getPreviousDescriptorOfSameSort(node_d))!=NULL && 
+           (node_l=(t_dsc*)getPreviousDescriptorOfSameSort(node_d))!=NULL &&
            ((node_l->data==XNULL)||node_l->size>PSTRMAXSIZE||(BLOCKXPTR(node_l->data)==blk))
            )
     {
            node_d=node_l;
-           if (node_l->data!=XNULL) node_a=node_l;     
+           if (node_l->data!=XNULL) node_a=node_l;
     }
     return ADDR2XPTR(node_a);
 }
@@ -650,7 +650,7 @@ xptr    getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node)
     t_dsc* node_a=node_d;
     t_dsc* node_l;
     while (
-           (node_l=(t_dsc*)getNextDescriptorOfSameSort(node_d))!=NULL && 
+           (node_l=(t_dsc*)getNextDescriptorOfSameSort(node_d))!=NULL &&
            (node_l->data==XNULL||node_l->size>PSTRMAXSIZE||BLOCKXPTR(node_l->data)==blk)
            )
     {
@@ -664,7 +664,7 @@ xptr    getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node)
 /* returns the next in document order descriptor corresponding to the same scheme node in xptr*/
 xptr getNextDescriptorOfSameSortXptr(xptr nodex)
 {
-    CHECKP(nodex);  
+    CHECKP(nodex);
     n_dsc* node= (n_dsc*)XADDR(nodex);
     node=getNextDescriptorOfSameSort(node);
     if (node!=NULL)
@@ -674,7 +674,7 @@ xptr getNextDescriptorOfSameSortXptr(xptr nodex)
 /* returns the previous in document order descriptor corresponding to the same scheme node in xptr*/
 xptr getPreviousDescriptorOfSameSortXptr(xptr nodex)
 {
-    CHECKP(nodex);  
+    CHECKP(nodex);
     n_dsc* node= (n_dsc*)XADDR(nodex);
     node=getPreviousDescriptorOfSameSort(node);
     if (node!=NULL)
@@ -687,21 +687,21 @@ xptr getNextSiblingOfSameSortXptr(xptr nodex)
     CHECKP(nodex);
     n_dsc* node= (n_dsc*)XADDR(nodex);
     xptr parent = node->pdsc;
-    n_dsc* next_node = getNextDescriptorOfSameSort(node);   
+    n_dsc* next_node = getNextDescriptorOfSameSort(node);
     return (next_node!=NULL&&next_node->pdsc == parent) ? ADDR2XPTR(next_node) : XNULL;
 }
 
 n_dsc* getNextSiblingOfSameSort(n_dsc* node)
 {
     xptr parent = node->pdsc;
-    n_dsc* next_node = getNextDescriptorOfSameSort(node);   
+    n_dsc* next_node = getNextDescriptorOfSameSort(node);
     return (next_node!=NULL&&next_node->pdsc == parent) ? next_node : NULL;
 }
 
 void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun, vector<schema_node_xptr> &result)
 {
-    //if (scm->type==type && my_strcmp(scm->name,name)==0 &&((uri==NULL && scm->get_xmlns()==NULL) || (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0 ))) 
-    if (cfun(scm,uri,name,type))    
+    //if (scm->type==type && my_strcmp(scm->name,name)==0 &&((uri==NULL && scm->get_xmlns()==NULL) || (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0 )))
+    if (cfun(scm,uri,name,type))
         result.push_back(scm.ptr());
     getSchemeDescendants(scm,uri,name,type,cfun,result);
 
@@ -729,7 +729,7 @@ int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item 
     while (cur<chcnt && sc!=NULL)
     {
 //      if (my_strcmp(name,sc->object.name)==0 && sc->object.type==type &&((uri==NULL && sc->get_xmlns()==NULL) || (sc->get_xmlns()!=NULL && my_strcmp(sc->get_xmlns()->uri,uri)==0 ))) result.push_back(sc->object.snode);
-        if (*ptr!=XNULL && cfun(sc->object.snode,uri,name,type)) 
+        if (*ptr!=XNULL && cfun(sc->object.snode,uri,name,type))
         {
             if (ctr)
             {
@@ -748,7 +748,7 @@ int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item 
         }
         sc=sc->next;
         ptr+=1;
-        cur++;      
+        cur++;
     }
     if (!ctr)
             first=XNULL;
@@ -778,7 +778,7 @@ xptr scanDescandants(xptr node,vector<schema_node_xptr> &path,int posit)
         xptr res=scanDescandants(ADDR2XPTR(tmp),path,posit-1);
         if (res!=XNULL) return res;
         tmp=getNextDescriptorOfSameSort(tmp);
-        if (tmp==NULL || tmp->pdsc!=indir) 
+        if (tmp==NULL || tmp->pdsc!=indir)
         {
             CHECKP(node);
             return XNULL;
@@ -815,14 +815,14 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node_cptr scm)
         tmp=tmp->parent;
         if (!tmp.found()) return XNULL;
     }
-    
+
     vector<schema_node_xptr>::iterator it=path.end()-1;
     CHECKP(ancestor);
     xptr child=getChildPointer((n_dsc*)XADDR(ancestor),(*it)->name,(*it)->type,(*it)->get_xmlns());
     if (child==XNULL) return XNULL;
 
     while (true)
-    {       
+    {
         if (it==path.begin())
                 return child;
         --it;
@@ -858,14 +858,14 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node_cptr scm)
             }
         }
         if (ch_ptr==NULL)
-            return XNULL;       
+            return XNULL;
     }
 }
 xptr getNextDescandantofSameSort (xptr ancestor,xptr node)
 {
     CHECKP(node);
     n_dsc* desc=getNextDescriptorOfSameSort((n_dsc*) XADDR(node));
-    if (desc!=NULL) 
+    if (desc!=NULL)
     {
         xptr res=ADDR2XPTR(desc);
         if (nid_ancestor(ancestor,res)) return res;
@@ -910,6 +910,18 @@ xptr getAncestorIndirectionByScheme (n_dsc* node, const schema_node_cptr scm_nod
     }
     return tmp_node->pdsc;
 }
+
+xptr getNodeAncestorBySchemeCP(xptr node, schema_node_xptr scm_node, schema_node_xptr scm_anc)
+{
+    while (scm_node != scm_anc) {
+        node = getParentCP(node);
+        if (node == XNULL) return XNULL;
+        scm_node = getBlockHeader(node)->snode;
+    }
+    return node;
+}
+
+
 /*comparison function for schema nodes*/
  bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {
@@ -918,22 +930,25 @@ xptr getAncestorIndirectionByScheme (n_dsc* node, const schema_node_cptr scm_nod
  bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {
      return 
-         (scm->type==type && my_strcmp(scm->name,name)==0 &&
-           ( (uri==NULL && scm->get_xmlns()==NULL) || 
-             (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0) )) ;
+         (scm->type==type && 
+         my_strcmp(scm->name,name)==0 &&
+         (
+         (uri==NULL && scm->get_xmlns()==NULL) || 
+         (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0 )
+         )) ;
  }
  bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {
-     return 
-         (scm->type==type && 
+     return
+         (scm->type==type &&
          my_strcmp(scm->name,name)==0 );
  }
  bool comp_uri_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {
-     return 
-         (scm->type==type && 
+     return
+         (scm->type==type &&
          (
-         (uri==NULL && scm->get_xmlns()==NULL) || 
+         (uri==NULL && scm->get_xmlns()==NULL) ||
          (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0 )
          )) ;
  }
@@ -948,10 +963,10 @@ bool is_text(t_item t)
 
 bool is_node(t_item t)
 {
-    return (   t == element 
-            || t == text 
-            || t == attribute 
-            || t == document 
+    return (   t == element
+            || t == text
+            || t == attribute
+            || t == document
             || t == xml_namespace
             || t == comment
             || t == pr_ins);
@@ -959,8 +974,8 @@ bool is_node(t_item t)
 
 bool dm_children_accessor_filter(t_item t)
 {
-    return (   t == element 
-            || t == text 
+    return (   t == element
+            || t == text
             || t == comment
             || t == pr_ins);
 }
@@ -972,7 +987,7 @@ bool dm_attribute_accessor_filter(t_item t)
 /*returns the next non-descendant node in document*/
 xptr getNextNDNode(xptr node)
 {
-    xptr tmp=node;  
+    xptr tmp=node;
     while(true)
     {
         CHECKP(tmp);
@@ -998,7 +1013,7 @@ xptr getNextDONode(xptr node)
     xptr tmp=getFirstByOrderChildNode(node);
     if (tmp!=XNULL) return tmp;
     else
-        return getNextNDNode(node); 
+        return getNextNDNode(node);
 
 }
 /*prereq: node is checked*/
@@ -1014,13 +1029,13 @@ bool hasLeftSiblingDM(xptr node)
 /*returns the previous node in document*/
 xptr getPreviousDONode(xptr node)
 {
-    xptr tmp=node;  
+    xptr tmp=node;
     while(true)
     {
         CHECKP(tmp);
         if (hasLeftSiblingDM(tmp))
         {
-            if ((GETBLOCKBYNODE(tmp))->snode->parent->type==virtual_root) 
+            if ((GETBLOCKBYNODE(tmp))->snode->parent->type==virtual_root)
                 return XNULL;
             else
                 break;
@@ -1028,12 +1043,12 @@ xptr getPreviousDONode(xptr node)
         else
         {
             return removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
-        }       
+        }
     }
     tmp=((n_dsc*)XADDR(tmp))->ldsc;
     xptr tmp2;
     while(true)
-    {       
+    {
         CHECKP(tmp);
         tmp2=getLastByOrderChildNode(tmp);
         if (tmp2==XNULL || !dm_children_accessor_filter((GETBLOCKBYNODE(tmp2))->snode->type))
@@ -1079,7 +1094,7 @@ xptr getNextNDNode(xptr node,schema_node_cptr scn)
             CHECKP(blk);
             blk=block->nblk;
             if (blk==XNULL) return XNULL;
-        }           
+        }
     }
     //2. finding node in block
     CHECKP(blk);
@@ -1127,18 +1142,18 @@ xptr getNextNDNode(xptr node,schema_node_cptr scn)
         {
             CHECKP(blk);
             blk=block->nblk;
-            if (blk==XNULL) 
+            if (blk==XNULL)
             {
                 return ADDR2XPTR(GETPOINTERTODESC(block,block->desc_last));
             }
-        }           
+        }
     }
     //2. finding node in block
     CHECKP(blk);
     if (nid_cmp_effective(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)),node)>=0)
     {
         CHECKP(blk);
-        return getPreviousDescriptorOfSameSortXptr(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)));       
+        return getPreviousDescriptorOfSameSortXptr(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)));
     }
     CHECKP(blk);
     int s=0;
@@ -1151,7 +1166,7 @@ xptr getNextNDNode(xptr node,schema_node_cptr scn)
         int i=getMedianDescriptor2(s,r,block,left,&med);
         if (nid_cmp_effective(ADDR2XPTR(med),node)>=0)
         {
-            r=i;            
+            r=i;
         }
         else
         {
@@ -1179,21 +1194,21 @@ xptr getPreviousNANode(xptr node,schema_node_cptr scn)
             lastn= ADDR2XPTR(nd);
             if  (nid_cmp_effective(lastn,node)!=-1)
                 break;
-        }       
+        }
         CHECKP(blk);
         blk=block->nblk;
-        if (blk==XNULL) 
+        if (blk==XNULL)
         {
                 return lastn;
         }
-                    
+
     }
     //2. finding node in block
     CHECKP(blk);
     if (nid_cmp_effective(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)),node)!=-1)
     {
         CHECKP(blk);
-        return getPreviousDescriptorOfSameSortXptr(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)));       
+        return getPreviousDescriptorOfSameSortXptr(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)));
     }
     CHECKP(blk);
     int s=0;
@@ -1206,7 +1221,7 @@ xptr getPreviousNANode(xptr node,schema_node_cptr scn)
         int i=getMedianDescriptor2(s,r,block,left,&med);
         if (nid_cmp_effective(ADDR2XPTR(med),node)!=-1)
         {
-            r=i;            
+            r=i;
         }
         else
         {
@@ -1223,7 +1238,7 @@ xptr getNextSiblingNode(xptr node,schema_node_cptr scn)
     CHECKP(node);
     xptr indir=((n_dsc*)XADDR(node))->pdsc;
     xptr parent;
-    if (indir!=XNULL) 
+    if (indir!=XNULL)
         parent=removeIndirection(indir);
     else
         return XNULL;
@@ -1247,7 +1262,7 @@ xptr getPreviousSiblingNode(xptr node,schema_node_cptr scn)
     CHECKP(node);
     xptr indir=((n_dsc*)XADDR(node))->pdsc;
     xptr parent;
-    if (indir!=XNULL) 
+    if (indir!=XNULL)
         parent=removeIndirection(indir);
     else
         return XNULL;
@@ -1259,7 +1274,7 @@ xptr getPreviousSiblingNode(xptr node,schema_node_cptr scn)
         if (child2==XNULL || (((n_dsc*)XADDR(child2))->pdsc!=indir ||nid_cmp_effective(child2,node)>=0))
             return child;
         else
-            child=child2;       
+            child=child2;
     }
     return XNULL;
 }
@@ -1291,10 +1306,10 @@ xptr getBaseUri(xptr node)
             {
                 if (
                     block->dsc_size>=((shft)size_of_node(block)+((shft)cnt+1)*
-                                    ((shft)sizeof(xptr))) 
-                                    && 
+                                    ((shft)sizeof(xptr)))
+                                    &&
                     ((*(xptr*)(((char*)XADDR(tmp))+(shft)size_of_node(block)+(shft)cnt*
-                    ((shft)sizeof(xptr))))!=XNULL)) 
+                    ((shft)sizeof(xptr))))!=XNULL))
                     return (*(xptr*)(((char*)XADDR(tmp))+(shft)size_of_node(block)+
                          (shft)cnt*((shft)sizeof(xptr))));
             }
@@ -1368,7 +1383,7 @@ xptr getNonemptyBlockLookFore(xptr p)
         if (x->count > 0) return p;
         p = x->nblk;
     }
-    
+
     return p;
 }
 
@@ -1389,7 +1404,7 @@ xptr getNonemptyBlockLookBack(xptr p)
         if (x->count > 0) return p;
         p = x->pblk;
     }
-    
+
     return p;
 }
 

@@ -24,7 +24,7 @@ void index_on_session_end();
 struct index_cell_object : public catalog_object {
 public:
 /* Common catalog object interface */
-    
+
     static const int magic = 0x007;
     int get_magic() { return magic; };
     void serialize_data(se_simplestream &stream);
@@ -32,15 +32,15 @@ public:
     void drop();
 
 /* Fields */
-    
+
     char * index_title; /* persistent string */
     xmlscm_type keytype; /* persistent */  // Xml type of key node as defined when index was created
-    xptr btree_root; /* persistent */      // Btree root page if exists; may be XNULL 
+    xptr btree_root; /* persistent */      // Btree root page if exists; may be XNULL
 
-    PathExpr *object; /* persistent special */  // absolute xPath expression for object nodes xPath 
+    PathExpr *object; /* persistent special */  // absolute xPath expression for object nodes xPath
     PathExpr *key; /* persistent special */     // relative xPath expression for key value nodes
 
-    /* 
+    /*
      * schemaroot - pointer to a document, which index is created for.
      * doc_name, is_doc - the name of the document (or collection), which the index was created for.
      * Latters are calculateble, so I don't think we should store it.
@@ -48,7 +48,7 @@ public:
 
     doc_schema_node_xptr schemaroot; /* persistent */
     char* doc_name; /* persistent string */
-    bool is_doc; /* persistent */ 
+    bool is_doc; /* persistent */
 
     /*
      * Error counter: stores the number of uncastable key values.
@@ -56,7 +56,7 @@ public:
      * Can be updated quite often.
      */
 
-    int err_cntr; /* persistent */ 
+    int err_cntr; /* persistent */
 
     void set_index_title(const char * a_index_title);
     void set_doc_name(const char * a_doc_name);
@@ -65,14 +65,19 @@ public:
  * Specific index cell interface functions
  */
 
-    t_scmnodes fits_to_index_as_key(schema_node_cptr snode) const;
+//    t_scmnodes fits_to_index_as_key(schema_node_cptr snode) const;
+    void new_node_available(schema_node_cptr snode) const;
 
+    void put_to_index(xptr key_node, xptr object_indir);
+/*
     void put_to_index(xptr node, schema_node_cptr accessor);
     void put_to_index(xptr node,const char* value, int size, schema_node_cptr accessor);
-
+*/
+    void delete_from_index(xptr key_node, xptr object_indir);
+/*
     void delete_from_index(xptr node, schema_node_cptr accessor);
     void delete_from_index(xptr node,const char* value, int size, schema_node_cptr accessor);
-
+*/
     inline index_cell_object() {};
 
     inline index_cell_object(
@@ -94,22 +99,18 @@ public:
       doc_name = cat_strcpy(this, _doc_name);
     };
 
-    ~index_cell_object() { 
+    ~index_cell_object() {
         cat_free(index_title);
         cat_free(doc_name);
-//    delete_PathExpr(idc->key);
-//    delete_PathExpr(idc->object);
-//        cat_free(object);
-//        cat_free(key);
     };
-    
+
     static catalog_object_header * create(
         const char * _index_title, doc_schema_node_xptr _schemaroot,
         xmlscm_type _keytype, xptr _btree_root, PathExpr * _object,
         PathExpr * _key, const char * _doc_name, bool _is_doc
       )
     {
-        index_cell_object * obj = 
+        index_cell_object * obj =
           new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(index_cell_object)))
           index_cell_object(_index_title, _schemaroot, _keytype, _btree_root, _object, _key, _doc_name, _is_doc);
 
@@ -131,7 +132,7 @@ struct index_cell_cptr : public catalog_cptr_template<index_cell_object> {
         catalog_cptr_template<index_cell_object>(aobj, writable) {} ;
     explicit inline index_cell_cptr (const char * index_title, bool write_mode = false) :
         catalog_cptr_template<index_cell_object>(catalog_find_name(catobj_indicies, index_title), write_mode) {};
-    inline index_cell_cptr (const xptr p, bool writable = false) : 
+    inline index_cell_cptr (const xptr p, bool writable = false) :
         catalog_cptr_template<index_cell_object>(p, writable) {};
 };
 

@@ -22,12 +22,12 @@
 #include "tr/cat/catstore.h"
 #include "tr/locks/locks.h"
 
-#define CAT_FOR_EACH(T, i, list) for (cat_list<T>::item * i = list.first; i != NULL; i = i->next) 
+#define CAT_FOR_EACH(T, i, list) for (cat_list<T>::item * i = list.first; i != NULL; i = i->next)
 
 /*
 xptr xmlns_hint = XNULL;
 
-char * xmlns_alloc_concat(const char * prefix, const char * uri) 
+char * xmlns_alloc_concat(const char * prefix, const char * uri)
 {
     size_t n1, n2, nn;
     char * fullid;
@@ -59,7 +59,7 @@ inline int str_hash(const char * a) {
     if (a == NULL) return 0;
     unsigned int i = 0;
     while (*a != '\0') { i += (* (uint8_t *) a) * 7; a++; }
-    return i % XMLNS_HASH_SIZE; 
+    return i % XMLNS_HASH_SIZE;
 };
 
 inline int mystrcmp(const char * str1, const char * str2)
@@ -240,7 +240,7 @@ void sc_node_ref_list::deserialize(se_simplestream &stream)
 
 catalog_object_header * schema_node_object::create(doc_schema_node_xptr root, xmlns_ptr xmlns, const char* name, t_item type, bool persistent)
 {
-    schema_node_object * a = 
+    schema_node_object * a =
       new(cat_malloc(persistent ? CATALOG_PERSISTENT_CONTEXT : CATALOG_TEMPORARY_CONTEXT, sizeof(schema_node_object)))
       schema_node_object(root, xmlns, name, type, persistent);
 
@@ -251,21 +251,21 @@ catalog_object_header * schema_node_object::create(doc_schema_node_xptr root, xm
 
 
 schema_node_object::schema_node_object(
-    const doc_schema_node_xptr _root, 
-    xmlns_ptr _xmlns, 
-    const char * _name, 
-    t_item _type, 
+    const doc_schema_node_xptr _root,
+    xmlns_ptr _xmlns,
+    const char * _name,
+    t_item _type,
     bool _persistent
-) :  
+) :
     xmlns_pers(XNULL),
     xmlns_local(_xmlns),
     persistent(_persistent),
     name(NULL),
-    root(_root), 
-    parent(XNULL), 
+    root(_root),
+    parent(XNULL),
     type(_type),
-    bblk(XNULL), bblk_indir(XNULL), 
-    nodecnt(0), blockcnt(0), extnids(0), indir_blk_cnt(0), textcnt(0), 
+    bblk(XNULL), bblk_indir(XNULL),
+    nodecnt(0), blockcnt(0), extnids(0), indir_blk_cnt(0), textcnt(0),
     lastnode_ind(XNULL)
 {
     name = cat_strcpy(this, _name);
@@ -341,7 +341,7 @@ void schema_node_object::deserialize_data(se_simplestream &stream)
 };
 
 
-schema_node_xptr schema_node_object::get_first_child(const xmlns_ptr xmlns, const char * name, t_item type) const 
+schema_node_xptr schema_node_object::get_first_child(const xmlns_ptr xmlns, const char * name, t_item type) const
 {
     CAT_FOR_EACH(sc_ref, i, this->children) {
         if (i->object.same_node(xmlns, name, type)) return i->object.snode;
@@ -362,7 +362,7 @@ schema_node_xptr schema_node_object::get_first_child(const xmlns_ptr xmlns, cons
  /* node header     */    - sizeof(d_dsc) \
         ) / sizeof(xptr)))
 
-schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char * name, t_item type) 
+schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char * name, t_item type)
 {
     if (((schema_node_object *) this->modify_self()) != this) {
         return ((schema_node_object *) this->modify_self())->add_child(xmlns, name, type);
@@ -383,12 +383,8 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
     new_node->parent = this->p_object;
 
     if (new_node->persistent) {
-        for (cat_list<index_cell_xptr>::item * i = this->root->full_index_list.first; i != NULL; i = i->next) {
-            t_scmnodes vec = i->object->fits_to_index_as_key(new_node);
-            t_scmnodes::iterator ii;
-            for (ii = vec.begin(); ii != vec.end(); ii++) {
-                new_node->index_list.add(index_ref(i->object, *ii));
-            }
+        CAT_FOR_EACH(index_cell_xptr, i, this->root->full_index_list) {
+            i->object->new_node_available(new_node);
         }
 
         #ifdef SE_ENABLE_FTSEARCH
@@ -406,7 +402,7 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
     return ((schema_node_xptr) new_node.ptr());
 };
 
-int schema_node_object::find_first_child (const xmlns_ptr xmlns, const char * name, t_item type) const 
+int schema_node_object::find_first_child (const xmlns_ptr xmlns, const char * name, t_item type) const
 {
     int c = 0;
 
@@ -418,11 +414,11 @@ int schema_node_object::find_first_child (const xmlns_ptr xmlns, const char * na
     return -1;
 };
 
-const sc_ref * schema_node_object::get_first_child_ref(const xmlns_ptr xmlns, const char * name, t_item type) const 
+const sc_ref * schema_node_object::get_first_child_ref(const xmlns_ptr xmlns, const char * name, t_item type) const
 {
     cat_list<sc_ref>::item * i;
 
-    for (i = this->children.first; i != NULL; i = i->next) 
+    for (i = this->children.first; i != NULL; i = i->next)
         if (i->object.same_node(xmlns, name, type)) return &(i->object);
 
     return NULL;
@@ -443,7 +439,7 @@ bool schema_node_object::is_ancestor_or_self (schema_node_cptr node)
 void schema_node_object::drop()
 {
     cat_list<sc_ref>::item * i;
-    for (i = this->children.first; i != NULL; i = i->next) 
+    for (i = this->children.first; i != NULL; i = i->next)
         i->object.snode->drop();
 
     cs_free(p_object);
@@ -517,8 +513,8 @@ void schema_node_object::remove_ft_index(const ft_index_cell_xptr &c)
 
 catalog_object_header * doc_schema_node_object::create(bool persistent)
 {
-    doc_schema_node_object * a = 
-      new(cat_malloc(persistent ? CATALOG_PERSISTENT_CONTEXT : CATALOG_TEMPORARY_CONTEXT, sizeof(doc_schema_node_object))) 
+    doc_schema_node_object * a =
+      new(cat_malloc(persistent ? CATALOG_PERSISTENT_CONTEXT : CATALOG_TEMPORARY_CONTEXT, sizeof(doc_schema_node_object)))
       doc_schema_node_object(persistent);
     catalog_object_header * b = catalog_create_object(a, persistent);
 
@@ -529,7 +525,7 @@ catalog_object_header * doc_schema_node_object::create(bool persistent)
 
 catalog_object_header * doc_schema_node_object::create_virtual_root()
 {
-    doc_schema_node_object * a = 
+    doc_schema_node_object * a =
       new(cat_malloc(CATALOG_TEMPORARY_CONTEXT, sizeof(doc_schema_node_object))) doc_schema_node_object(false);
     catalog_object_header * b = catalog_create_object(a, false);
 
@@ -571,13 +567,13 @@ void doc_schema_node_object::deserialize_data(se_simplestream &stream)
 #endif
 };
 
-/* 
- * If _doc_drop_mode is set, substructure deletion (index, for example) does not cause 
+/*
+ * If _doc_drop_mode is set, substructure deletion (index, for example) does not cause
  * its deletion from the schema node list.
  */
 volatile bool _doc_drop_mode = false;
 
-void doc_schema_node_object::delete_index(index_cell_xptr c) 
+void doc_schema_node_object::delete_index(index_cell_xptr c)
 {
     if (_doc_drop_mode) { return; }
 
@@ -591,7 +587,7 @@ void doc_schema_node_object::delete_index(index_cell_xptr c)
 
 #ifdef SE_ENABLE_TRIGGERS
 
-void doc_schema_node_object::delete_trigger(trigger_cell_xptr c) 
+void doc_schema_node_object::delete_trigger(trigger_cell_xptr c)
 {
     if (_doc_drop_mode) { return; }
 
@@ -651,7 +647,7 @@ xmlns_ptr_pers doc_schema_node_object::xmlns_register(xmlns_ptr xmlns)
 
     xmlns_ptr_pers i = this->xmlns_list;
 
-    while ((i != XNULL) && 
+    while ((i != XNULL) &&
         !((mystrcmp(xmlns->uri, i->uri) == 0) && (mystrcmp(xmlns->prefix, i->prefix) == 0))) {
         i = i->next_xmlns;
     }
@@ -675,11 +671,11 @@ xmlns_ptr_pers doc_schema_node_object::xmlns_register(xmlns_ptr xmlns)
 
 catalog_object_header * col_schema_node_object::create()
 {
-    col_schema_node_object * a = 
+    col_schema_node_object * a =
       new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(col_schema_node_object)))
       col_schema_node_object();
     catalog_object_header * b = catalog_create_object(a);
-  
+
     a->root = a->p_object;
     a->metadata = bt_create(xs_string);
 
@@ -714,7 +710,7 @@ xptr col_schema_node_object::find_document(const char * doc_name)
 void col_schema_node_object::delete_document(const char * doc_name)
 {
     xptr new_btree = metadata;
-    bt_key key; 
+    bt_key key;
     key.setnew(doc_name);
     bt_delete(new_btree, key);
 

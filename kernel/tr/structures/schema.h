@@ -19,7 +19,7 @@
 #define ISINDEXSUPPORTED(schema) schema->index_object!=NULL
 
 /******************************
- * Namespace handling routines 
+ * Namespace handling routines
  */
 
 struct xmlns_local_object {
@@ -43,9 +43,9 @@ struct xmlns_indb_object : public catalog_object {
     void deserialize_data(se_simplestream &stream);
     void drop();
 
-    inline xmlns_indb_object() : 
+    inline xmlns_indb_object() :
         prefix(NULL), uri(NULL), root(XNULL), next_xmlns(XNULL) {};
-    inline xmlns_indb_object(const char* _prefix, const char* _uri, const xptr _root, const xmlns_ptr_pers _next_xmlns) : 
+    inline xmlns_indb_object(const char* _prefix, const char* _uri, const xptr _root, const xmlns_ptr_pers _next_xmlns) :
         prefix(NULL), uri(NULL), root(_root), next_xmlns(_next_xmlns) {
         prefix = cat_strcpy(this, _prefix);
         uri = cat_strcpy(this, _uri);
@@ -74,9 +74,9 @@ inline xmlns_ptr xmlns_touch(xmlns_ptr_pers xmlns) {
 struct index_ref {
     index_cell_xptr index;
     schema_node_xptr object;
+    schema_node_xptr key;
 
-//    index_ref () : idx(_idx), snode(_snode) {};
-    index_ref (const index_cell_xptr _idx, const schema_node_xptr _snode) : index(_idx), object(_snode) {};
+    index_ref (const index_cell_xptr a_idx, const schema_node_xptr a_object, const schema_node_xptr a_key) : index(a_idx), object(a_object), key(a_key) {};
 };
 
 struct sc_ref {
@@ -90,7 +90,7 @@ struct sc_ref {
         if (xmlns_pers == XNULL) { return NULL; }
         else if (xmlns_local != NULL) { return xmlns_local; }
         else {
-            return xmlns_local = xmlns_touch(xmlns_pers->prefix, xmlns_pers->uri); 
+            return xmlns_local = xmlns_touch(xmlns_pers->prefix, xmlns_pers->uri);
         }
     };
 
@@ -157,7 +157,7 @@ private:
 public:
 
 /* Common catalog object interface */
-    
+
     static const int magic = 0x010;
     int get_magic() { return magic; };
 
@@ -182,7 +182,7 @@ public:
         if (xmlns_pers == XNULL) { return NULL; }
         else if (xmlns_local != NULL) { return xmlns_local; }
         else {
-            return xmlns_local = xmlns_touch(xmlns_pers->prefix, xmlns_pers->uri); 
+            return xmlns_local = xmlns_touch(xmlns_pers->prefix, xmlns_pers->uri);
         }
     };
 
@@ -209,7 +209,7 @@ public:
     cat_list<trigger_cell_xptr> trigger_list; /* persistent special */
     void remove_trigger(const trigger_cell_xptr &c);
 #endif
-    
+
     inline schema_node_object() : xmlns_local(NULL), persistent(true) {};
 //    inline schema_node_object(bool _persistent = true) : persistent(_persistent) {};
     schema_node_object(const doc_schema_node_xptr _root, xmlns_ptr _xmlns, const char * _name, t_item _type, bool _persistent);
@@ -245,16 +245,16 @@ public:
 
     /* Insert new node to the schema as the child of the existing one */
     schema_node_xptr add_child(
-        const xmlns_ptr xmlns, 
+        const xmlns_ptr xmlns,
         const char *    name,
         t_item          type
     );
-    
-    /* Returns position of the child with the given name and of the given descriptor 
-     * type exist in schema as the child of the node that corresponds to the current 
+
+    /* Returns position of the child with the given name and of the given descriptor
+     * type exist in schema as the child of the node that corresponds to the current
      * block header; -1 otherwise */
     int find_first_child (
-        const xmlns_ptr xmlns, 
+        const xmlns_ptr xmlns,
         const char *    name,
         t_item          type
     ) const;
@@ -262,7 +262,7 @@ public:
     inline int get_node_position_in_parent() const {
         return (parent == XNULL) ? -1 : parent->find_first_child(get_xmlns(), name, type);
     };
-    
+
     bool is_ancestor_or_self (schema_node_cptr node);
 
     inline char * get_child_name(int i) { return children.get(i)->object.name; };
@@ -282,9 +282,9 @@ public:
 struct doc_schema_node_object: public schema_node_object
 {
 /* Common catalog object interface */
-    
+
     static const int magic = 0x011;
-    int get_magic() { return magic; }; 
+    int get_magic() { return magic; };
     void serialize_data(se_simplestream &stream);
     void deserialize_data(se_simplestream &stream);
     void drop();
@@ -325,9 +325,9 @@ struct doc_schema_node_object: public schema_node_object
 struct col_schema_node_object : public doc_schema_node_object
 {
 /* Common catalog object interface */
-    
+
     static const int magic = 0x012;
-    int get_magic() { return magic; }; 
+    int get_magic() { return magic; };
     void serialize_data(se_simplestream &stream);
     void deserialize_data(se_simplestream &stream);
     void drop();

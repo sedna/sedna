@@ -15,8 +15,10 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-#define DEBUG_MO
-#define DEBUG_MO_NID
+#ifdef EL_DEBUG
+ #define DEBUG_MO
+ #define DEBUG_MO_NID
+#endif /* EL_DEBUG */
 
 extern enum consistency_error_t {
     ce_none,
@@ -52,16 +54,16 @@ inline void logNID(const char * type, xptr l, xptr r, xptr n) {};
 
 #define molog(message) elog(EL_DBG, message)
 #define MOCHECK(test) U_ASSERT(test)
-  
+
 bool checkBlock(xptr block_ptr);
-  
+
 #else  /* DEBUG_MO */
 
 #define molog(message)
 #define MOCHECK(test)
 
 inline bool checkBlock(xptr block_ptr) {};
-  
+
 #endif /* DEBUG_MO */
 
 

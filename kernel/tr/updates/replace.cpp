@@ -24,9 +24,9 @@ void replace(PPOpIn arg)
     xptr_sequence arg2seq;        // Nodes to replace with (both persistent and temp)
 
     /* Persistent nodes to replace with (+ theirs position in arg2seq) */
-    descript_sequence arg3seq(2); 
+    descript_sequence arg3seq(2);
 
-    upd_ns_map* ins_swiz = NULL;  
+    upd_ns_map* ins_swiz = NULL;
     bool is_node_updated = true;
 
     /* Fill up sequences with nodes to update and update with */
@@ -38,13 +38,13 @@ void replace(PPOpIn arg)
         {
             node=t.cells[0].get_node();
             CHECKP(node);
-            if ((!is_node_updated || is_node_persistent(node)) && !is_node_document(node)) 
+            if ((!is_node_updated || is_node_persistent(node)) && !is_node_document(node))
             {
                 xptr indir=((n_dsc*)XADDR(node))->indir;
-                if (is_node_updated) 
+                if (is_node_updated)
                 {
                     is_node_updated=false;
-                    arg1seq.add(indir);	
+                    arg1seq.add(indir);
                     arg1seq_tmp.add(node);
                 }
                 else
@@ -84,10 +84,10 @@ void replace(PPOpIn arg)
     if (arg1seq.size()<=0) return;
 
     /* Checking authorization */
-    if (is_auth_check_needed(REPLACE_STATEMENT)) 
+    if (is_auth_check_needed(REPLACE_STATEMENT))
         auth_for_update(&arg1seq, REPLACE_STATEMENT, false);
 
-    /* Find all common nodes in agr3seq (nodes to replace with) and 
+    /* Find all common nodes in agr3seq (nodes to replace with) and
     * arg1seq_tmp (nodes to be replaced). Make a copy of all such nodes. */
     arg1seq_tmp.sort();
     arg3seq.sort();
@@ -122,7 +122,7 @@ void replace(PPOpIn arg)
 #endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&arg1seq, false, NULL, false, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
-#endif    
+#endif
 
     arg3seq.clear();
     xptr_sequence::iterator it  = arg1seq.begin();
@@ -135,12 +135,12 @@ void replace(PPOpIn arg)
         * node to be replaced -> place in sequence of nodes to replace with */
         tup.copy(tuple_cell::node(removeIndirection(*it)),tuple_cell((__int64)ctr));
         arg3seq.add(tup);
-        /* XNULL separates nodes in arg2seq (nodes replace with) per each 
+        /* XNULL separates nodes in arg2seq (nodes replace with) per each
         * node in arg1seq (nodes to be replaced) */
         while(*sit!=XNULL)
         {
             sit++;
-            ctr++;			
+            ctr++;
         }
         sit++;
         ctr++;
@@ -192,27 +192,27 @@ void replace(PPOpIn arg)
                 goto next_replacement;
             tr_it++;
         }
-#endif 
+#endif
 
         //pre_deletion
         if (d_m)
-        {		
+        {
             delete_node(old_node);
         }
         //1.inserting attributes from sequence
         while(*sit != XNULL)
         {
             node_child = *sit;
-            if (is_node_attribute(removeIndirection(node_child))) 
+            if (is_node_attribute(removeIndirection(node_child)))
             {
                 parent = removeIndirection(par_ind);
-                if (is_node_persistent(node_child)) 
+                if (is_node_persistent(node_child))
                     attr_node=deep_pers_copy(XNULL, XNULL, parent, removeIndirection(node_child),true);
                 else
                     attr_node=deep_temp_copy(XNULL, XNULL, parent, removeIndirection(node_child),ins_swiz);
 #ifdef SE_ENABLE_TRIGGERS
                 apply_per_node_triggers(attr_node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
-#endif            
+#endif
             }
             sit++;
         }
@@ -248,31 +248,31 @@ void replace(PPOpIn arg)
         while(*sit != XNULL)
         {
             node_child = *sit;
-            if (!is_node_attribute(removeIndirection(node_child))) 
+            if (!is_node_attribute(removeIndirection(node_child)))
             {
                 parent = removeIndirection(par_ind);
-                if (is_node_persistent(node_child)) 
+                if (is_node_persistent(node_child))
                     node = deep_pers_copy(node, rightn, parent, removeIndirection(node_child),true);
                 else
                     node = deep_temp_copy(node, rightn, parent, removeIndirection(node_child),ins_swiz);
 #ifdef SE_ENABLE_TRIGGERS
-                apply_per_node_triggers(node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
-#endif            
+                apply_per_node_triggers(node, tmp_node, removeIndirection(par_ind), scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+#endif
             }
             sit++;
         }
         //post_deletion
         if (!d_m)
-        {		
+        {
             del_node = (*it3).cells[0].get_safenode();
             CHECKP(del_node);
             delete_node(del_node);
         }
-next_replacement:;    
+next_replacement:;
     }
     while (it3!=arg4seq.begin());
 
-    if (ins_swiz!=NULL) 
+    if (ins_swiz!=NULL)
     {
         delete ins_swiz;
     }
@@ -281,5 +281,5 @@ next_replacement:;
 #endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
-#endif 
+#endif
 }
