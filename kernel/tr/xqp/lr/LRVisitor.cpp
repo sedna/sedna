@@ -726,7 +726,7 @@ void LRVisitor::visit(ASTFilterStep &n)
             need_checker = false;
     }
 
-    if (n.isLast)
+    if (n.isLast && !n.isFirstStep())
     {
         lr_str.append("(seq-checker ");
     }
@@ -794,7 +794,7 @@ void LRVisitor::visit(ASTFilterStep &n)
         {
             if (n.expr->isCached())
             {
-                lr_str.append("(lreturn");
+                lr_str.append("(lreturn ");
             }
             else
             {
@@ -823,9 +823,7 @@ void LRVisitor::visit(ASTFilterStep &n)
 
             for (unsigned int i = 0; i < n.preds->size(); i++)
             {
-                lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
                 (*n.preds)[i]->accept(*this);
-                lr_str += " ))";
             }
 
             lr_str = lr_save + lr_str;
@@ -841,7 +839,7 @@ void LRVisitor::visit(ASTFilterStep &n)
         }
     }
 
-    if (n.isLast)
+    if (n.isLast && !n.isFirstStep())
     {
         lr_str.append(int2string(PPSeqChecker::CHECK_MIX));
         lr_str.append(")");

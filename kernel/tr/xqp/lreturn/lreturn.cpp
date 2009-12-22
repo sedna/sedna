@@ -1001,6 +1001,10 @@ namespace sedna
             off_this.isCached = false;
 
             ignoreVariables(off_this, 1);
+
+            // check if we use last and/or position in expression (needed for qep generation)
+            n.use_last = off_pe.use_last;
+            n.use_pos = off_pe.use_position;
         }
 
         // context
@@ -1282,7 +1286,6 @@ namespace sedna
 
     void LReturn::visit(ASTFor &n)
     {
-        unsigned int count = (n.pv) ? 2 : 1;
         childOffer off_e, off_this, off_var;
         parentRequest req(getParentRequest());
 

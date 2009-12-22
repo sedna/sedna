@@ -134,18 +134,21 @@ namespace sedna
         // look if we can prolong PPAbsPath
         if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && n.cont)
         {
-            std::string lr;
+            if (dynamic_cast<PPAbsPath *>(off_cont.opin.op))
+            {
+                std::string lr;
 
-            lr = getlrForAxisStep(n);
+                lr = getlrForAxisStep(n);
 
-            off_this.opin = off_cont.opin;
-            off_this.lr_path = off_cont.lr_path + lr;
+                off_this.opin = off_cont.opin;
+                off_this.lr_path = off_cont.lr_path + lr;
 
-            return;
+                return;
+            }
         }
         else if (n.cont)
         {
-             if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_this.opin.op)) // need to close PPAbsPath
+             if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
              {
                  off_cont.lr_path += ')';
 
@@ -160,10 +163,13 @@ namespace sedna
         // determine if we need sequence checker
         bool need_checker = isStepNeedsChecker(n);
 
+        if (need_checker) // check context
+            off_cont.opin.op = new PPSeqChecker(dyn_cxt, oi, off_cont.opin, PPSeqChecker::CHECK_NODE);
+
         // now we need to construct qep for xpath axis step
         if (n.preds)
         {
-            var_id axis_cxt = var_num++; // axis context
+            var_id axis_cxt = getVarNum(); // axis context
             arr_of_var_dsc vars;
             PPOpIn preds;
 
@@ -180,30 +186,29 @@ namespace sedna
                 ASTPred *pred = dynamic_cast<ASTPred *>(n.preds->at(i));
                 parentRequest req;
 
-                pred_cxt = var_num++;
+                pred_cxt = getVarNum();
                 pos_var = last_var = -1;
 
                 // bind context
                 bound_vars.push_back(l2pVarInfo("$%v", pred_cxt));
-                vars.push_back(pred_cxt);
 
                 // bind pos if needed
                 if (pred->usePosition())
                 {
-                    pos_var = var_num++;
+                    pos_var = getVarNum();
                     bound_vars.push_back(l2pVarInfo("$%pos", pos_var));
                 }
 
                 // bind last if needed
                 if (pred->useLast())
                 {
-                    last_var = var_num++;
+                    last_var = getVarNum();
                     bound_vars.push_back(l2pVarInfo("$%last", last_var));
                 }
 
                 req.pred_cxt = preds;
                 setParentRequest(req);
-                n.preds->at(i)->accept(*this);
+                (*n.preds)[i]->accept(*this);
                 off = getOffer();
 
                 preds = off.opin;
@@ -216,9 +221,6 @@ namespace sedna
 
                 bound_vars.pop_back();
             }
-
-            if (need_checker)
-                preds.op = new PPSeqChecker(dyn_cxt, oi, preds, PPSeqChecker::CHECK_NODE);
 
             vars.push_back(axis_cxt);
 
@@ -337,6 +339,36 @@ namespace sedna
                 off_this.opin = PPOpIn(new PPRange(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
                 break;
 
+            case ASTBop::UNION:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(new PPUnion(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin, n.doc_order), 1);
+                break;
+
+            case ASTBop::INTERSECT:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(new PPIntersect(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin, n.doc_order), 1);
+                break;
+
+            case ASTBop::EXCEPT:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(new PPExcept(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin, n.doc_order), 1);
+                break;
+
             default:
                 var_op_num = 0;
                 calc_ops = new arr_of_PPOpIn();
@@ -357,6 +389,38 @@ namespace sedna
 
     void lr2por::visit(ASTCase &n)
     {
+        childOffer off_this;
+
+        // first we need to bind our var if we've got it
+        if (n.var)
+        {
+            // first get typeswitch main binding; it should be the last one in bound_vars
+            U_ASSERT(bound_vars.back().first == "$%ts");
+            var_id var = bound_vars.back().second;
+
+            // then bind our var
+
+            // this should be ASTVar
+            U_ASSERT(dynamic_cast<const ASTVar *>(n.var));
+            std::string name = dynamic_cast<const ASTVar *>(n.var)->getStandardName();
+
+            bound_vars.push_back(l2pVarInfo(name, var));
+        }
+
+        n.expr->accept(*this);
+        off_this.opin = getOffer().opin;
+
+        if (n.type) // not default case
+        {
+            n.type->accept(*this);
+            off_this.st = getOffer().st;
+        }
+
+        setOffer(off_this);
+
+        // get rif of our binding if any
+        if (n.var)
+            bound_vars.pop_back();
     }
 
     void lr2por::visit(ASTCast &n)
@@ -447,6 +511,16 @@ namespace sedna
 
     void lr2por::visit(ASTDDO &n)
     {
+        childOffer off_this;
+
+        n.expr->accept(*this);
+
+        if (n.true_ddo)
+            off_this.opin = PPOpIn(new PPDDO(dyn_cxt, createOperationInfo(n), getOffer().opin), 1);
+        else
+            off_this.opin = PPOpIn(new PPSXptr(dyn_cxt, createOperationInfo(n), getOffer().opin), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTDeclareCopyNsp &n)
@@ -618,6 +692,175 @@ namespace sedna
 
     void lr2por::visit(ASTFilterStep &n)
     {
+        childOffer off_cont, off_this;
+        PPOpIn expr;
+        operation_info oi;
+
+        oi = createOperationInfo(n);
+
+        if (n.cont)
+        {
+            n.cont->accept(*this);
+            off_cont = getOffer();
+        }
+
+        if (n.cont) // we need to close abs-path if we've got it as a context
+        {
+             if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
+             {
+                 off_cont.lr_path += ')';
+
+                 if (off_cont.lr_path != "()")
+                 {
+                     PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
+                     apa->setPathExpr(pe);
+                 }
+             }
+        }
+
+        // determine if we need sequence checker
+        bool need_checker = isStepNeedsChecker(n);
+
+        if (need_checker) // check context
+            off_cont.opin.op = new PPSeqChecker(dyn_cxt, oi, off_cont.opin, PPSeqChecker::CHECK_NODE);
+
+        // special case: just '.'
+        if (!n.preds && !n.expr)
+        {
+            if (n.cont)
+                off_this.opin = off_cont.opin;
+            else
+                off_this.opin = getContextOffer(oi).opin;
+
+            setOffer(off_this);
+
+            return;
+        }
+
+        var_id cont_cxt; // step context
+        var_id var_pos = -1, var_last = -1; // variables for last, positon to use in primary expression
+
+        if (n.cont)
+        {
+            cont_cxt = getVarNum();
+
+            bound_vars.push_back(l2pVarInfo("$%v", cont_cxt));
+        }
+
+        if (n.expr)
+        {
+            childOffer off;
+            n.expr->accept(*this);
+            off = getOffer();
+
+            expr = off.opin;
+
+            // set proper position and last variables if primary expression uses them
+            // NOTE: if we've not got any context then we've got global context (which can only be one node).
+            //       Since for now global context is not implemented I won't bother to provide implementation.
+            //       However, it'll be straightforward -- check if we've got $%pos or/and $%last bound, anf if not, then assume '1' as result for
+            //       these functions.
+            if (n.use_pos && n.cont)
+            {
+                var_pos = getVarNum();
+                bound_vars.push_back(l2pVarInfo("$%pos", var_pos));
+            }
+
+            if (n.use_last && n.cont)
+            {
+                var_last = getVarNum();
+                bound_vars.push_back(l2pVarInfo("$%last", var_last));
+            }
+        }
+        else
+        {
+            expr = getContextOffer(oi).opin;
+        }
+
+
+        // now we need to construct qep for XPath filter step
+        if (n.preds)
+        {
+            PPOpIn preds = expr;
+
+            for (unsigned int i = 0; i < n.preds->size(); i++)
+            {
+                childOffer off;
+                var_id pred_cxt; // predicate context
+                var_id pos_var, last_var;
+                ASTPred *pred = dynamic_cast<ASTPred *>(n.preds->at(i));
+                parentRequest req;
+
+                pred_cxt = getVarNum();
+                pos_var = last_var = -1;
+
+                // bind context
+                bound_vars.push_back(l2pVarInfo("$%v", pred_cxt));
+
+                // bind pos if needed
+                if (pred->usePosition())
+                {
+                    pos_var = getVarNum();
+                    bound_vars.push_back(l2pVarInfo("$%pos", pos_var));
+                }
+
+                // bind last if needed
+                if (pred->useLast())
+                {
+                    last_var = getVarNum();
+                    bound_vars.push_back(l2pVarInfo("$%last", last_var));
+                }
+
+                req.pred_cxt = preds;
+                setParentRequest(req);
+                (*n.preds)[i]->accept(*this);
+                off = getOffer();
+
+                preds = off.opin;
+
+                if (last_var != -1)
+                    bound_vars.pop_back();
+
+                if (pos_var != -1)
+                    bound_vars.pop_back();
+
+                bound_vars.pop_back();
+            }
+
+            // update expression
+            expr = preds;
+        }
+
+        if (n.cont)
+        {
+            arr_of_var_dsc vars;
+            vars.push_back(cont_cxt);
+
+            if (var_last != -1)
+            {
+                // TODO: uncomment this when merged with the main branch
+                // off_this.opin.op = new PPLast(dyn_cxt, oi, var_last, off_this.opin.op);
+
+                U_ASSERT(bound_vars.back().first == "$%last");
+                bound_vars.pop_back();
+            }
+
+            off_this.opin.op = new PPReturn(dyn_cxt, oi, vars, off_cont.opin, expr, var_pos);
+            off_this.opin.ts = 1;
+
+            if (var_pos != -1)
+            {
+                U_ASSERT(bound_vars.back().first == "$%pos");
+                bound_vars.pop_back();
+            }
+
+            bound_vars.pop_back();
+        }
+
+        if (n.isLast && !n.isFirstStep())
+            off_this.opin.op = new PPSeqChecker(dyn_cxt, oi, off_this.opin, PPSeqChecker::CHECK_MIX);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTFLWOR &n)
@@ -1356,10 +1599,41 @@ namespace sedna
 
     void lr2por::visit(ASTSeq &n)
     {
+        childOffer off_this;
+        size_t count = n.exprs->size();
+
+        if (count == 0)
+        {
+            off_this.opin = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        }
+        else
+        {
+            ASTVisitor::VisitNodesVector(n.exprs, *this);
+
+            arr_of_PPOpIn ops(count);
+
+            while (count--)
+                ops[count] = getOffer().opin;
+
+            off_this.opin = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), ops), ops[0].ts);
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTSpaceSeq &n)
     {
+        childOffer off_this;
+
+        n.expr->accept(*this);
+
+        arr_of_PPOpIn ops;
+
+        ops.push_back(getOffer().opin);
+
+        off_this.opin = PPOpIn(new PPSpaceSequence(dyn_cxt, createOperationInfo(n), ops, n.atomize), ops[0].ts);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTTextConst &n)
@@ -1408,6 +1682,47 @@ namespace sedna
 
     void lr2por::visit(ASTTypeSwitch &n)
     {
+        childOffer off_this, off;
+        size_t count = n.cases->size();
+
+        // first, we need to bind the expression
+        n.expr->accept(*this);
+        PPOpIn main_e = getOffer().opin;
+
+        arr_of_var_dsc vars;
+
+        var_id main_var = getVarNum();
+
+        bound_vars.push_back(l2pVarInfo("$%ts", main_var));
+        vars.push_back(main_var);
+
+        ASTVisitor::VisitNodesVector(n.cases, *this);
+
+        arr_of_PPOpIn cases(count);
+        arr_of_sequence_type types(count);
+
+        // cases are now in stack in reverse order
+        while (count--)
+        {
+            off = getOffer();
+
+            cases[count] = off.opin;
+            types[count] = off.st;
+        }
+
+        // default case
+        n.def_case->accept(*this);
+        off = getOffer();
+
+        // NOTE on tuple size; Scheme part states that typeswitch tuple size equals main expression tuple size
+        // this seems weird since typeswitch returns effective case; since cases always return ExprSingle I make tuple size to be 1
+        off_this.opin = PPOpIn(new PPTypeswitch(dyn_cxt, createOperationInfo(n), vars, main_e, types, cases, off.opin), 1);
+
+        setOffer(off_this);
+
+        // get rid of main binding
+        U_ASSERT(bound_vars.back().first == "$%ts");
+        bound_vars.pop_back();
     }
 
     void lr2por::visit(ASTTypeVar &n)
@@ -1737,9 +2052,9 @@ namespace sedna
             {
                 ASTFilterStep *fs = dynamic_cast<ASTFilterStep *>(st.cont);
 
-                if (fs && !fs->expr)
+                if (fs && !fs->expr) // don't propagate sequence checking for contex-item steps
                     need_checker = false;
-                else
+                else // here we've got either some expression or filter-step (not context one)
                     need_checker = true;
             }
         }
@@ -1757,6 +2072,7 @@ namespace sedna
         s.test->accept(*this);
         off = getOffer();
 
+        res += " ";
         res += off.test_type;
         res += " ";
         res += off.test_data;
@@ -1774,7 +2090,7 @@ namespace sedna
 
         scheme_list *sl = make_tree_from_scheme_list(getlrForAxisStep(s).c_str());
         set_node_test_type_and_data(sl, ntype, ndata, pe_local_aspace);
-        delete sl;
+        delete_scheme_list(sl);
 
         switch (s.axis)
         {

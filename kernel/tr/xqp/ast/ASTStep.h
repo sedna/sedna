@@ -145,6 +145,9 @@ class ASTFilterStep : public ASTStep
 public:
     ASTNode *expr; // may be NULL in case of context expression
 
+    bool use_last; // expression in this step uses fn:last()
+    bool use_pos;  // // expression in this step uses fn:position()
+
 public:
     ASTFilterStep(const ASTNodeCommonData &loc, ASTNode *expr_, ASTNodesVector *preds_ = NULL) :
         ASTStep(loc, preds_),
