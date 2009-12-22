@@ -16,8 +16,9 @@ class ASTPIConst : public ASTNode
 public:
     ASTNode *name; // computed name, or
     std::string *ncname; // direct NCName
-
     ASTNode *expr; // computed construction expression
+
+    bool deep_copy; // pi will be attached to virtual_root and copied on demand
 
 public:
     ASTPIConst(const ASTNodeCommonData &loc, ASTNode *name_, ASTNode *expr_ = NULL) : ASTNode(loc), name(name_), ncname(NULL), expr(expr_) {}

@@ -16,8 +16,9 @@ class ASTAttrConst : public ASTNode
 public:
     ASTNode *name; // computed name, or
     std::string *pref, *local; // qualified name
-
     ASTNode *expr; // computed construction expression
+
+    bool deep_copy; // attribute will be attached to virtual_root and copied on demand
 
 public:
     ASTAttrConst(const ASTNodeCommonData &loc, ASTNode *name_, ASTNode *expr_ = NULL) : ASTNode(loc), name(name_), pref(NULL), local(NULL), expr(expr_) {}

@@ -84,6 +84,7 @@ public:
     virtual void visit(ASTExtExpr &n) = 0;
     virtual void visit(ASTError &n) = 0;
     virtual void visit(ASTFilterStep &n) = 0;
+    virtual void visit(ASTFLWOR &n) = 0;
     virtual void visit(ASTFor &n) = 0;
     virtual void visit(ASTFunCall &n) = 0;
     virtual void visit(ASTFuncDecl &n) = 0;

@@ -14,6 +14,8 @@ class ASTCommentConst : public ASTNode
 public:
     ASTNode *expr; // computed construction expression
 
+    bool deep_copy; // comment will be attached to virtual_root and copied on demand
+
 public:
     ASTCommentConst(const ASTNodeCommonData &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
 

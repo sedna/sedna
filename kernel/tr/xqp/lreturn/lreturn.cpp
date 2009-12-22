@@ -73,6 +73,8 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = false;
+            req.deep_copy = true;
+            req.atomize = true;
             VisitNodesVector(n.cont, *this, req);
             off = mergeOffers(count);
         }
@@ -84,6 +86,8 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
 
         setOffer(off);
     }
@@ -98,6 +102,7 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = true;
+            req.deep_copy = true;
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -108,6 +113,8 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = false;
+            req.atomize = true;
+            req.deep_copy = true;
             setParentRequest(req);
             n.expr->accept(*this);
             count++;
@@ -122,6 +129,8 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
 
         setOffer(off);
     }
@@ -567,6 +576,8 @@ namespace sedna
         childOffer off;
 
         req.distinctOnly = false;
+        req.atomize = true;
+        req.deep_copy = true;
         setParentRequest(req);
         n.expr->accept(*this);
 
@@ -579,6 +590,8 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
 
         setOffer(off);
     }
@@ -722,6 +735,8 @@ namespace sedna
         childOffer off;
 
         req.distinctOnly = false;
+        req.deep_copy = false; // attach nodes to the document
+        req.atomize = false;
         setParentRequest(req);
         n.expr->accept(*this);
 
@@ -824,6 +839,9 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = false;
+            req.deep_copy = false; // attach nodes to this element directly
+            req.atomize = false;
+
             VisitNodesVector(n.cont, *this, req);
             off = mergeOffers(count);
         }
@@ -835,6 +853,33 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
+
+        // check if prefix is redefined later with xmlns:
+        if (*n.pref != "" && n.attrs)
+        {
+            ASTNodesVector::const_iterator cit;
+
+            for (cit = n.attrs->begin(); cit != n.attrs->end(); cit++)
+            {
+                if (const ASTNsp *nsp = dynamic_cast<const ASTNsp *>(*cit))
+                {
+                    if (*nsp->name == *n.pref)
+                    {
+                        n.nsp_expected = true;
+                        break;
+                    }
+                }
+            }
+
+            if (cit == n.attrs->end())
+                n.nsp_expected = false;
+        }
+        else
+        {
+            n.nsp_expected = false;
+        }
 
         setOffer(off);
     }
@@ -849,6 +894,7 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = true;
+            req.deep_copy = true;
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -859,6 +905,8 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = false;
+            req.deep_copy = false; // attach nodes to this element directly
+            req.atomize = false;
             setParentRequest(req);
             n.expr->accept(*this);
             count++;
@@ -873,6 +921,8 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
 
         setOffer(off);
     }
@@ -1103,13 +1153,141 @@ namespace sedna
         setOffer(off_this);
     }
 
+    void LReturn::visit(ASTFLWOR &n)
+    {
+        parentRequest req;
+        ASTNodesVector::iterator it;
+        childOffer off_this, off;
+        size_t var_count;
+
+        var_count = bound_vars.size();
+
+        req.calledOnce = getParentRequest().calledOnce;
+        req.distinctOnly = false;
+
+        n.fls->at(0)->accept(*this);
+
+        req.calledOnce = false; // subsequent for-lets will be called more than once in general
+        for (it = n.fls->begin() + 1; it != n.fls->end(); it++)
+        {
+            (*it)->accept(*this);
+        }
+
+        if (n.where)
+        {
+            req.calledOnce = false;
+            req.distinctOnly = true;
+
+            n.where->accept(*this);
+        }
+
+        if (n.order_by)
+        {
+            setParentRequest(req); // actually it will be ignored by ASTOrderBy
+            n.order_by->accept(*this);
+        }
+
+        req.calledOnce = false;
+        req.distinctOnly = getParentRequest().distinctOnly;
+
+        n.ret->accept(*this);
+        off_this = getOffer();
+
+        // refine the offer
+        if (n.order_by)
+        {
+            off = getOffer();
+            off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
+
+            if (off.use_last)
+                off_this.use_last = true;
+
+            if (off.use_position)
+                off_this.use_position = true;
+        }
+
+        if (n.where)
+        {
+            off = getOffer();
+            off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
+
+            if (off.use_last)
+                off_this.use_last = true;
+
+            if (off.use_position)
+                off_this.use_position = true;
+        }
+
+        bool resIsMax1 = true; // we iterate several times over "return"?
+
+        for (int i = n.fls->size() - 1; i >= 0; i--)
+        {
+            const ASTFor *f = dynamic_cast<const ASTFor *>(n.fls->at(i));
+
+            off = getOffer();
+
+            // ignore bound vars from "return" expression,
+            ignoreVariables(off_this, (f && f->usesPosVar()) ? 2 : 1);
+
+            // but add vars from binding expression
+            off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
+
+            if (!off.exi.isMax1)
+                resIsMax1 = false;
+
+            if (off.use_last)
+                off_this.use_last = true;
+
+            if (off.use_position)
+                off_this.use_position = true;
+
+            // consider to cache for-let based on information from off_this
+            // (since it accumulates lower and current for-lets, where, order-by and return by now)
+            if (i > 0)
+            {
+                cacheTheNode(n.fls->at(i), off_this);
+            }
+        }
+
+        // consider to cache order-by (similar to for-let)
+        if (n.order_by && !getParentRequest().calledOnce)
+        {
+            cacheTheNode(n.order_by, off_this);
+        }
+
+        // if we've got 'order by' or the result is made in several iterations alter our offer
+        if (!resIsMax1 || n.order_by)
+        {
+            off_this.exi.isOrdered = off_this.exi.isMax1;
+            off_this.exi.isSingleLevel = off_this.exi.isMax1;
+            off_this.exi.isDistincted = false;
+            off_this.exi.isMax1 = false;
+        }
+
+        U_ASSERT(var_count == bound_vars.size());
+
+        // consider to cache
+        if (!getParentRequest().calledOnce)
+        {
+            cacheTheNode(&n, off_this);
+
+            if (off_this.isCached)
+            {
+                n.ret->setCached(false);
+            }
+        }
+
+        setOffer(off_this);
+    }
+
     void LReturn::visit(ASTFor &n)
     {
         unsigned int count = (n.pv) ? 2 : 1;
         childOffer off_e, off_this, off_var;
         parentRequest req(getParentRequest());
 
-        // if we want distinct-only then binding-expression should also be evaluated in this mode
+        // we should ignore distinct only since binding expression doesn't emit the result
+        req.distinctOnly = false;
         setParentRequest(req);
         n.expr->accept(*this);
         off_e = getOffer();
@@ -1128,42 +1306,7 @@ namespace sedna
 
         bound_vars.back().exp_info = off_var.exi; // change offer for for-variable
 
-        req.calledOnce = false;
-        req.distinctOnly = getParentRequest().distinctOnly;
-        setParentRequest(req);
-        n.fd->accept(*this);
-        off_this = getOffer();
-
-        ignoreVariables(off_this, count);
-
-        off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
-
-        // if we've got more than one iteration we must reconsider our offer
-        // TODO: we should refine it later for atomic; however, maybe this also will do, since it cannot influence ddo
-        if (!off_e.exi.isMax1)
-        {
-            off_this.exi.isDistincted = false;
-            off_this.exi.isMax1 = false;
-            off_this.exi.isOrdered = false;
-            off_this.exi.isSingleLevel = false;
-        }
-
-        // consider to cache
-        if (!getParentRequest().calledOnce)
-        {
-            cacheTheNode(&n, off_this);
-
-            // if we cache this step then we don't need to cache the previous one
-            if (off_this.isCached)
-                n.fd->setCached(false);
-            if (off_var.isCached)
-                n.expr->setCached(false);
-        }
-
-        off_this.use_last = off_this.use_last || off_e.use_last;
-        off_this.use_position = off_this.use_position || off_e.use_position;
-
-        setOffer(off_this);
+        setOffer(off_e);
     }
 
     void LReturn::visit(ASTFunCall &n)
@@ -1385,6 +1528,7 @@ namespace sedna
 
         req.distinctOnly = true; // for if-expression we need only distinct because of EBV
         req.calledOnce = getParentRequest().calledOnce;
+        req.deep_copy = true;
         setParentRequest(req);
         n.i_expr->accept(*this);
         off_if = getOffer();
@@ -1490,30 +1634,7 @@ namespace sedna
         var.exp_info = off_var.exi;
         bound_vars.push_back(var);
 
-        req = getParentRequest();
-        setParentRequest(req);
-        n.fd->accept(*this);
-        off_this = getOffer();
-
-        ignoreVariables(off_this, 1);
-
-        off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
-        off_this.use_last = off_this.use_last || off_e.use_last;
-        off_this.use_position = off_this.use_position || off_e.use_position;
-
-        // consider to cache
-        if (!getParentRequest().calledOnce)
-        {
-            cacheTheNode(&n, off_this);
-
-            // if we cache this step then we don't need to cache the previous one
-            if (off_this.isCached)
-                n.fd->setCached(false);
-            if (off_var.isCached)
-                n.expr->setCached(false);
-        }
-
-        setOffer(off_this);
+        setOffer(off_e);
     }
 
     void LReturn::visit(ASTLibModule &n)
@@ -1787,6 +1908,7 @@ namespace sedna
         {
             parentRequest req(getParentRequest());
 
+            req.deep_copy = true;
             req.distinctOnly = true;
             setParentRequest(req);
             n.name->accept(*this);
@@ -1798,6 +1920,8 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             req.distinctOnly = false;
+            req.deep_copy = true;
+            req.atomize = true;
             setParentRequest(req);
             n.expr->accept(*this);
             count++;
@@ -1813,6 +1937,8 @@ namespace sedna
         off.isCached = false;
         off.exi.useConstructors = true;
 
+        n.deep_copy = getParentRequest().deep_copy;
+
         setOffer(off);
     }
 
@@ -1827,6 +1953,8 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
 
         setOffer(off);
     }
@@ -2043,8 +2171,8 @@ namespace sedna
         childOffer off;
         unsigned int count = n.exprs->size();
 
+        req = getParentRequest(); // careful to propagate atomize property
         req.distinctOnly = false;
-        req.calledOnce = getParentRequest().calledOnce;
         VisitNodesVector(n.exprs, *this, req);
         off = mergeOffers(count);
 
@@ -2055,6 +2183,8 @@ namespace sedna
     {
         parentRequest req(getParentRequest());
         childOffer off;
+
+        n.atomize = req.atomize;
 
         setParentRequest(req);
         n.expr->accept(*this);
@@ -2069,6 +2199,8 @@ namespace sedna
         parentRequest req;
 
         req.distinctOnly = false;
+        req.deep_copy = true;
+        req.atomize = true;
         req.calledOnce = getParentRequest().calledOnce;
         setParentRequest(req);
         n.expr->accept(*this);
@@ -2081,6 +2213,8 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
 
         setOffer(off);
     }
@@ -2455,6 +2589,8 @@ namespace sedna
         off.exi.isMax1 = true;
         off.isCached = false;
         off.exi.useConstructors = true;
+
+        n.deep_copy = getParentRequest().deep_copy;
 
         setOffer(off);
     }

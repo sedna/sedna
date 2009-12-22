@@ -740,6 +740,24 @@ namespace sedna
             bound_vars.pop_back();
     }
 
+    void Sema::visit(ASTFLWOR &n)
+    {
+        size_t count;
+
+        VisitNodesVector(n.fls, *this);
+        count = param_count;
+
+        if (n.where)
+            n.where->accept(*this);
+
+        if (n.order_by)
+            n.order_by->accept(*this);
+
+        n.ret->accept(*this);
+
+        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - count), bound_vars.end());
+    }
+
     void Sema::visit(ASTFor &n)
     {
         unsigned int params;
@@ -770,10 +788,6 @@ namespace sedna
                 drv->error(n.getLocation(), XQST0089, pos_name);
             }
         }
-
-        n.fd->accept(*this);
-
-        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
     void Sema::visit(ASTFunCall &n)
@@ -1031,12 +1045,12 @@ namespace sedna
         n.tv->accept(*this);
         unsetParamMode();
 
-        param_ok = (param_count == 1);
+//        param_ok = (param_count == 1);
 
-        n.fd->accept(*this);
+//        n.fd->accept(*this);
 
-        if (param_ok)
-            bound_vars.pop_back();
+//        if (param_ok)
+//            bound_vars.pop_back();
     }
 
     void Sema::visit(ASTLibModule &n)
@@ -2137,7 +2151,7 @@ namespace sedna
         fp = name.find('{');
         lp = name.find('}');
 
-        if (fp == std::string::npos) 
+        if (fp == std::string::npos)
             return "";
 
         U_ASSERT(fp != std::string::npos && lp != std::string::npos);
@@ -2295,8 +2309,12 @@ namespace sedna
 
             alt = drv->getASTFromQuery(lang_query.c_str());
 
-            let1 = dynamic_cast<ASTLet *>(alt);
-            let2 = dynamic_cast<ASTLet *>(let1->fd);
+            ASTFLWOR *flwr = dynamic_cast<ASTFLWOR *>(alt);
+
+            U_ASSERT(flwr);
+
+            let1 = dynamic_cast<ASTLet *>(flwr->fls->at(0));
+            let2 = dynamic_cast<ASTLet *>(flwr->fls->at(1));
 
             U_ASSERT(let1 && let2);
 
@@ -2341,8 +2359,12 @@ namespace sedna
 
             alt = drv->getASTFromQuery(id_query.c_str());
 
-            let1 = dynamic_cast<ASTLet *>(alt);
-            let2 = dynamic_cast<ASTLet *>(let1->fd);
+            ASTFLWOR *flwr = dynamic_cast<ASTFLWOR *>(alt);
+
+            U_ASSERT(flwr);
+
+            let1 = dynamic_cast<ASTLet *>(flwr->fls->at(0));
+            let2 = dynamic_cast<ASTLet *>(flwr->fls->at(1));
 
             U_ASSERT(let1 && let2);
 
@@ -2386,8 +2408,12 @@ namespace sedna
 
             alt = drv->getASTFromQuery(idref_query.c_str());
 
-            let1 = dynamic_cast<ASTLet *>(alt);
-            let2 = dynamic_cast<ASTLet *>(let1->fd);
+            ASTFLWOR *flwr = dynamic_cast<ASTFLWOR *>(alt);
+
+            U_ASSERT(flwr);
+
+            let1 = dynamic_cast<ASTLet *>(flwr->fls->at(0));
+            let2 = dynamic_cast<ASTLet *>(flwr->fls->at(1));
 
             U_ASSERT(let1 && let2);
 

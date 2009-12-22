@@ -13,7 +13,6 @@ ASTFor::~ASTFor()
     delete tv;
     delete pv;
     delete expr;
-    delete fd;
 }
 
 void ASTFor::accept(ASTVisitor &v)
@@ -21,13 +20,6 @@ void ASTFor::accept(ASTVisitor &v)
     v.addToPath(this);
     v.visit(*this);
     v.removeFromPath(this);
-}
-
-void ASTFor::setNextExpr(ASTNode *fd_)
-{
-    delete fd;
-
-    fd = fd_;
 }
 
 ASTNodesVector *ASTFor::getVarList()
@@ -50,29 +42,23 @@ ASTNode *ASTFor::dup()
 
     res = new ASTFor(cd, tv->dup(), (pv) ? pv->dup() : NULL, expr->dup());
 
-    if (fd)
-        res->setNextExpr(fd->dup());
-
     return res;
 }
 
 ASTNode *ASTFor::createNode(scheme_list &sl)
 {
     ASTNodeCommonData cd;
-    ASTNode *tv = NULL, *pv = NULL, *expr = NULL, *fd = NULL;
+    ASTNode *tv = NULL, *pv = NULL, *expr = NULL;
     ASTFor *res;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_LIST && sl[4].type == SCM_LIST);
 
     cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     tv = dsGetASTFromSchemeList(*sl[2].internal.list);
     pv = dsGetASTFromSchemeList(*sl[3].internal.list);
     expr = dsGetASTFromSchemeList(*sl[4].internal.list);
-    fd = dsGetASTFromSchemeList(*sl[5].internal.list);
 
     res = new ASTFor(cd, tv, pv, expr);
-
-    res->setNextExpr(fd);
 
     return res;
 }
@@ -92,11 +78,6 @@ void ASTFor::modifyChild(const ASTNode *oldc, ASTNode *newc)
     if (expr == oldc)
     {
         expr = newc;
-        return;
-    }
-    if (fd == oldc)
-    {
-        fd = newc;
         return;
     }
 }

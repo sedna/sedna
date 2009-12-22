@@ -40,6 +40,11 @@ public:
     void modifyChild(const ASTNode *oldc, ASTNode *newc);
 
     static ASTNode *createNode(scheme_list &sl);
+
+    bool isStable() const
+    {
+        return type == STABLE;
+    }
 };
 
 #endif

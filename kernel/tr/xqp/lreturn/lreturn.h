@@ -23,11 +23,19 @@ namespace sedna
         {
             bool distinctOnly; // require only distinct from child
             bool calledOnce;   // child will be called only once
+            bool deep_copy; // true, if constructed node will be deep-copied in place (see PPElementConstructor for example)
+            // NOTE: true is always safe, false allows small optimization when node is inserted in its intended place
+
+            bool atomize; // true, if nodes in fact atomize on their insertion (think of an attribute for example); needed by space-seq
+            // NOTE: don't need to propagate it deep, only through ASTSeq, since ASTSpaceSeq is always direct
+            //       child of comp. constructor or of sequence in usual one
 
             parentRequest()
             {
                 calledOnce = true;
                 distinctOnly = false;
+                deep_copy = true;
+                atomize = false;
             }
         };
 
@@ -158,6 +166,7 @@ namespace sedna
         void visit(ASTError &n);
         void visit(ASTExtExpr &n);
         void visit(ASTFilterStep &n);
+        void visit(ASTFLWOR &n);
         void visit(ASTFor &n);
         void visit(ASTFunCall &n);
         void visit(ASTFuncDecl &n);

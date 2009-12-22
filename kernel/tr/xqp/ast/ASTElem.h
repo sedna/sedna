@@ -15,9 +15,11 @@ class ASTElem : public ASTNode
 {
 public:
     std::string *pref, *local; // element name
-
     ASTNodesVector *attrs; // attributes; may be NULL
     ASTNodesVector *cont; // element content; may be NULL
+
+    bool deep_copy; // element will be attached to virtual_root and copied on demand
+    bool nsp_expected; // element prefix redefined with xmlns: attribute
 
 public:
     ASTElem(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *attrs_ = NULL, ASTNodesVector *cont_ = NULL) : ASTNode(loc), attrs(attrs_), cont(cont_)

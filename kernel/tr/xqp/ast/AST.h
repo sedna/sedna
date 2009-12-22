@@ -47,6 +47,7 @@
 #include "tr/xqp/ast/ASTEmptyTest.h"
 #include "tr/xqp/ast/ASTError.h"
 #include "tr/xqp/ast/ASTExtExpr.h"
+#include "tr/xqp/ast/ASTFLWOR.h"
 #include "tr/xqp/ast/ASTFor.h"
 #include "tr/xqp/ast/ASTFunCall.h"
 #include "tr/xqp/ast/ASTFuncDecl.h"
@@ -164,6 +165,7 @@ enum ASTNodeType
     AST_ERROR,
     AST_EXTEXPR,
     AST_FILTERSTEP,
+    AST_FLWOR,
     AST_FOR,
     AST_FUNCALL,
     AST_FUNCDECL,

@@ -48,6 +48,7 @@ createNode_fun dsASTTable[AST_DUMMY] =
     NULL, // ASTError
     &ASTExtExpr::createNode,
     &ASTFilterStep::createNode,
+    &ASTFLWOR::createNode,
     &ASTFor::createNode,
     &ASTFunCall::createNode,
     &ASTFuncDecl::createNode,

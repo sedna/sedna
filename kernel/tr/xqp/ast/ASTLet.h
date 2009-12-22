@@ -17,11 +17,8 @@ public:
     ASTNode *tv; // main for variable; ASTTypeVar
     ASTNode *expr; // let expression
 
-    ASTNode *fd;  // expression for the next forlet-clause representation; may be for, return, where expressions; NULL at start; not NULL after Bison
-
 public:
-    ASTLet(const ASTNodeCommonData &loc, ASTNode *var, ASTNode *let_expr) : ASTNode(loc), tv(var), expr(let_expr), fd(NULL) {}
-    ASTLet(const ASTNodeCommonData &loc, ASTNode *var, ASTNode *let_expr, ASTNode *fd_expr) : ASTNode(loc), tv(var), expr(let_expr), fd(fd_expr)
+    ASTLet(const ASTNodeCommonData &loc, ASTNode *var, ASTNode *let_expr) : ASTNode(loc), tv(var), expr(let_expr)
     {
         if (var == NULL)
             tv = new ASTVar(loc, new std::string("dummy-var"));
@@ -38,9 +35,6 @@ public:
 
     // returns list containing COPY of variables (usual and pos)
     ASTNodesVector *getVarList();
-
-    // we set fd when we cough up the final For-clause representation
-    void setNextExpr(ASTNode *fd_);
 
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);

@@ -552,6 +552,18 @@ void IntVisitor::visit(ASTFilterStep &n)
     int_str.append(")");
 }
 
+void IntVisitor::visit(ASTFLWOR &n)
+{
+    int_str.append("(");
+    int_str.append(int2string(AST_FLWOR));
+    int_str.append(dumpCommonData(n.cd));
+    dumpASTNodesVector(n.fls);
+    dumpASTNode(n.where);
+    dumpASTNode(n.order_by);
+    dumpASTNode(n.ret);
+    int_str.append(")");
+}
+
 void IntVisitor::visit(ASTFor &n)
 {
     int_str.append("(");
@@ -560,7 +572,6 @@ void IntVisitor::visit(ASTFor &n)
     dumpASTNode(n.tv);
     dumpASTNode(n.pv);
     dumpASTNode(n.expr);
-    dumpASTNode(n.fd);
     int_str.append(")");
 }
 
@@ -664,7 +675,6 @@ void IntVisitor::visit(ASTLet &n)
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.tv);
     dumpASTNode(n.expr);
-    dumpASTNode(n.fd);
     int_str.append(")");
 }
 

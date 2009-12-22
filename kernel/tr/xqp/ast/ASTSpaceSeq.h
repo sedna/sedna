@@ -14,6 +14,8 @@ class ASTSpaceSeq : public ASTNode
 public:
     ASTNode *expr;
 
+    bool atomize; // space any nodes; false - only atomics
+
 public:
     ASTSpaceSeq(const ASTNodeCommonData &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
 
