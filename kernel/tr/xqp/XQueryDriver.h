@@ -121,6 +121,9 @@ namespace sedna
             XQFunction getLReturnFunctionInfo(const std::string &name);
             XQVariable getLReturnVariableInfo(const std::string &name);
 
+            var_id getGlobalVariableId(const std::string &name);
+            var_id getGlobalFunctionId(const std::string &name);
+
             size_t getVarCount() const;
             size_t getFuncCount() const;
             size_t getLibModCount() const;

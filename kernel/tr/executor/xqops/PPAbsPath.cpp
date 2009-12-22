@@ -244,3 +244,15 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
 
     qsort(merged_seq_arr, scmnodes_num, sizeof(xptr), doc_order_merge_cmp);
 }
+
+// true, if PPAbsPath is just wrapping over fn:document/fn:collection call
+bool PPAbsPath::isDocCollFunCall() const
+{
+    return (path_expr->s == 0);
+}
+
+void PPAbsPath::setPathExpr(PathExpr *pe)
+{
+    U_ASSERT(path_expr->s == 0);
+    path_expr = pe;
+}

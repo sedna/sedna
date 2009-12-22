@@ -8,8 +8,28 @@
 #include "tr/executor/base/dynamic_context.h"
 #include "tr/executor/base/PPOperations.h"
 
+#ifdef SE_ENABLE_TRIGGERS
+#include "tr/triggers/triggers_data.h"
+#endif
+
 namespace sedna
 {
+    static const char *axis_str[] = {
+        "PPAxisChild ",
+        "PPAxisDescendant ",
+        "PPAxisAttribute ",
+        "PPAxisSelf ",
+        "PPAxisDescendantOrSelf ",
+        "PPAxisDescendantAttr ",
+        "PPAxisFollowingSibling ",
+        "PPAxisFollowing ",
+        "PPAxisParent ",
+        "PPAxisAncestor ",
+        "PPAxisPrecedingSibling ",
+        "PPAxisPreceding ",
+        "PPAxisAncestorOrSelf ",
+    };
+
     void lr2por::visit(ASTAlterUser &n)
     {
         // nothing to do
@@ -29,6 +49,60 @@ namespace sedna
 
     void lr2por::visit(ASTAxisStep &n)
     {
+        childOffer off_cont, off_this;
+        operation_info oi;
+
+        oi.query_line = n.getLocation().begin.line;
+        oi.query_col = n.getLocation().begin.column;
+
+        if (n.cont)
+        {
+            n.cont->accept(*this);
+            off_cont = getOffer();
+        }
+        else
+        {
+            off_cont = getContextOffer(oi);
+        }
+
+        // look if we can prolong PPAbsPath
+        if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && n.cont)
+        {
+            std::string lr;
+
+            lr = getlrForAxisStep(n);
+
+            off_this.opin = off_cont.opin;
+            off_this.lr_path = off_cont.lr_path + lr;
+
+            return;
+        }
+        else if (n.cont)
+        {
+             if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_this.opin.op)) // need to close PPAbsPath
+             {
+                 off_cont.lr_path += ')';
+
+                 if (off_cont.lr_path != "()")
+                 {
+                     PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
+                     apa->setPathExpr(pe);
+                 }
+             }
+        }
+
+        // determine if we need sequence checker
+        bool need_checker = isStepNeedsChecker(n);
+
+        // now we need to construct qep for xpath axis step
+        if (n.preds)
+        {
+            
+        }
+        else
+        {
+            
+        }
     }
 
     void lr2por::visit(ASTBaseURI &n)
@@ -435,6 +509,11 @@ namespace sedna
         // nothing to do
     }
 
+    void lr2por::visit(ASTPred &n)
+    {
+        // nothing to do
+    }
+
     void lr2por::visit(ASTProlog &n)
     {
         // nothing to do
@@ -546,6 +625,74 @@ namespace sedna
 
     void lr2por::visit(ASTVar &n)
     {
+        std::string name = CREATE_INTNAME(*n.uri, *n.local);
+        childOffer off_this;
+        operation_info oi;
+
+        if (param_mode)
+        {
+            bound_vars.push_back(l2pVarInfo(name, var_num++));
+
+            return;
+        }
+
+        oi.query_line = n.getLocation().begin.line;
+        oi.query_col = n.getLocation().begin.column;
+
+        // in usual mode we must resolve name to the id given
+        // first, check if variable is bound
+        if (bound_vars.size() > 0)
+        {
+            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            {
+                if (bound_vars[i].first == name)
+                {
+                    if (name == "OLD" || name == "WHERE" || name == "NEW")
+                    {
+                        trigger_parameter_type var_type;
+
+                        if (name == "NEW")
+                            var_type = TRIGGER_PARAMETER_NEW;
+                        else if (name == "OLD")
+                            var_type = TRIGGER_PARAMETER_OLD;
+                        else
+                            var_type = TRIGGER_PARAMETER_WHERE;
+
+                        PPXptr *xp = new PPXptr(dyn_cxt, oi, var_type);
+
+#ifdef SE_ENABLE_TRIGGERS
+                        if (qep_parameters)
+                            qep_parameters->push_back(xp);
+#endif
+
+                        off_this.opin.op = xp;
+                        off_this.opin.ts = 1;
+                    }
+                    else
+                    {
+                        off_this.opin.op = new PPVariable(dyn_cxt, oi, bound_vars[i].second);
+                        off_this.opin.ts = 1;
+                    }
+
+                    setOffer(off_this);
+
+                    return;
+                }
+            }
+        }
+
+        // then find it in globals
+        var_id id = getGlobalVariableId(name);
+
+        PPGlobalVariable *pgv = new PPGlobalVariable(dyn_cxt, oi, id);
+        off_this.opin.op = pgv;
+        off_this.opin.ts = 1;
+
+        // if we've got id=-1 then it is because of module inter(intra)-relationships we resolve them later, after the main phase
+        if (id == -1)
+            mod->addToUnresolvedPor(name, pgv);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTVarDecl &n)
@@ -654,10 +801,10 @@ namespace sedna
         pareqs.pop_back();
     }
 
-    XQVariable lr2por::getVariableInfo(const std::string &name)
+    var_id lr2por::getGlobalVariableId(const std::string &name)
     {
         varInfo::iterator it;
-
+        var_id id;
 
         // first,look in cache
         it = varCache.find(name);
@@ -669,29 +816,27 @@ namespace sedna
         ASTVarDecl *vd = mod->getVariableInfo(name);
         if (vd)
         {
-            bool oldModeOrdered = isModeOrdered;
+            id = vd->getId();
 
-            isModeOrdered = mod->getOrderedMode();
-            vd->accept(*this);
-            isModeOrdered = oldModeOrdered;
+            varCache[name] = id;
 
-            // now, variable info cache is updated
-            return varCache[name];
+            return id;
         }
 
         // else, the variable is defined in some of the library modules
-        XQVariable xqv = drv->getLReturnVariableInfo(name);
+        id = drv->getGlobalVariableId(name);
 
         // since we've obtained this info from driver we should locally cache it
-        varCache[name] = xqv;
+        varCache[name] = id;
 
-        return xqv;
+        return id;
     }
 
-    XQFunction lr2por::getFunctionInfo(const std::string &name)
+    var_id lr2por::getGlobalFunctionId(const std::string &name)
     {
         XQFunction xqf;
         funcInfo::iterator it;
+        var_id id;
 
         // first,look in cache
         it = funcCache.find(name);
@@ -702,23 +847,73 @@ namespace sedna
         // then, try to process it as a local one
         if (mod->getFunctionInfo(name, xqf))
         {
-            bool oldModeOrdered = isModeOrdered;
+            id = xqf.decl->getId();
 
-            isModeOrdered = mod->getOrderedMode();
-            funcCache[name] = xqf;
-            xqf.decl->accept(*this);
-            isModeOrdered = oldModeOrdered;
+            funcCache[name] = id;
 
-            // now, function info cache is updated
-            return funcCache[name];
+            return id;
         }
 
         // else, the function is defined in some of the library modules
-        xqf = drv->getLReturnFunctionInfo(name);
+        id = drv->getGlobalFunctionId(name);
 
         // since we've obtained this info from driver we should locally cache it
-        funcCache[name] = xqf;
+        funcCache[name] = id;
 
-        return xqf;
+        return id;
+    }
+
+    lr2por::childOffer lr2por::getContextOffer(operation_info oi) const
+    {
+        var_id id = -1;
+        childOffer off_this;
+
+        for (int i = bound_vars.size() - 1; i >= 0; i--)
+        {
+            if (bound_vars[i].first == "$%v")
+            {
+                id = bound_vars[i].second;
+                break;
+            }
+        }
+
+        U_ASSERT(id != -1);
+
+        off_this.opin.op = new PPVariable(dyn_cxt, oi, id);
+        off_this.opin.ts = 1;
+
+        return off_this;
+    }
+
+    // we want to insert sequence checker when this is not a first step, and the
+    // previous step wasn't context item (.) or axis step
+    bool lr2por::isStepNeedsChecker(const ASTStep &st) const
+    {
+        bool need_checker = false;
+
+        if (!st.isFirstStep())
+        {
+            if (dynamic_cast<ASTAxisStep *>(st.cont) == NULL)
+            {
+                ASTFilterStep *fs = dynamic_cast<ASTFilterStep *>(st.cont);
+
+                if (fs && !fs->expr)
+                    need_checker = false;
+                else
+                    need_checker = true;
+            }
+        }
+
+        return need_checker;
+    }
+
+    std::string lr2por::getlrForAxisStep(const ASTAxisStep &s)
+    {
+        std::string res = "(";
+
+        res += axis_str[s.axis];
+
+        
+
     }
 }

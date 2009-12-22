@@ -160,6 +160,7 @@ namespace sedna
         void visit(ASTPiTest &n);
         void visit(ASTPosVar &n);
         void visit(ASTPragma &n);
+        void visit(ASTPred &n);
         void visit(ASTProlog &n);
         void visit(ASTQName &n);
         void visit(ASTQuantExpr &n);

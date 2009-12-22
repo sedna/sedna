@@ -628,6 +628,21 @@ namespace sedna
         // nothing to do
     }
 
+    void Cycle::visit(ASTPred &n)
+    {
+        std::vector<ASTPred::ASTConjunct>::iterator it;
+
+        for (it = n.conjuncts.begin(); it != n.conjuncts.end(); it++)
+        {
+            it->expr->accept(*this);
+        }
+
+        for (it = n.others.begin(); it != n.others.end(); it++)
+        {
+            it->expr->accept(*this);
+        }
+    }
+
     void Cycle::visit(ASTProlog &n)
     {
         VisitNodesVector(n.decls, *this);

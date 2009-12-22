@@ -36,6 +36,8 @@ namespace sedna
             xqExprInfo exi;
             bool isCached;                  // true, if child has been cached
             std::set<std::string> usedVars; // contains bound variables used in subexpression
+            bool use_last;                  // true, if child uses fn:last()
+            bool use_position;              // true, if child uses fn:position()
 
             childOffer()
             {
@@ -44,6 +46,9 @@ namespace sedna
                 exi.isMax1 = true;
                 exi.isSingleLevel = true;
                 exi.useConstructors = false;
+
+                use_last = false;
+                use_position = false;
 
                 isCached = false;
             }
@@ -106,6 +111,8 @@ namespace sedna
 
         XQFunction getFunctionInfo(const std::string &name);
         XQVariable getVariableInfo(const std::string &name);
+
+        ASTNode *checkIfPosConjunct(const ASTNode *n);
 
         // visiting functions
         void visit(ASTAlterUser &n);
@@ -189,6 +196,7 @@ namespace sedna
         void visit(ASTPiTest &n);
         void visit(ASTPosVar &n);
         void visit(ASTPragma &n);
+        void visit(ASTPred &n);
         void visit(ASTProlog &n);
         void visit(ASTQName &n);
         void visit(ASTQuantExpr &n);

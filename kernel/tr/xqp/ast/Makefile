@@ -23,7 +23,7 @@ OBJS =  ASTType$(OBJ_EXT) ASTUpdDel$(OBJ_EXT) ASTCreateIndex$(OBJ_EXT) ASTOrderB
 		ASTDropFtIndex$(OBJ_EXT) ASTInstOf$(OBJ_EXT) ASTDropColl$(OBJ_EXT) ASTCreateUser$(OBJ_EXT) ASTBaseURI$(OBJ_EXT) \
 		ASTPi$(OBJ_EXT) ASTLit$(OBJ_EXT) ASTRevokePriv$(OBJ_EXT) ASTSchemaAttrTest$(OBJ_EXT) ASTFuncDecl$(OBJ_EXT) ASTNodeTest$(OBJ_EXT) \
 		ASTEmptyTest$(OBJ_EXT) ASTCast$(OBJ_EXT) ASTBop$(OBJ_EXT) ASTVar$(OBJ_EXT) ASTTypeSwitch$(OBJ_EXT) ASTVersionDecl$(OBJ_EXT) \
-		ASTExtExpr$(OBJ_EXT) ASTOrderSpec$(OBJ_EXT) ASTCase$(OBJ_EXT) ASTElemConst$(OBJ_EXT) ASTElem$(OBJ_EXT) \
+		ASTExtExpr$(OBJ_EXT) ASTOrderSpec$(OBJ_EXT) ASTPred$(OBJ_EXT) ASTCase$(OBJ_EXT) ASTElemConst$(OBJ_EXT) ASTElem$(OBJ_EXT) \
 		ASTCommTest$(OBJ_EXT) ASTPosVar$(OBJ_EXT) ASTXMLComm$(OBJ_EXT) ASTUop$(OBJ_EXT) ASTQuery$(OBJ_EXT) ASTDropTrg$(OBJ_EXT) \
 		ASTCreateDoc$(OBJ_EXT) ASTConstDecl$(OBJ_EXT) ASTIf$(OBJ_EXT) ASTAttribTest$(OBJ_EXT) ASTPragma$(OBJ_EXT) \
 		ASTBoundSpaceDecl$(OBJ_EXT) ASTUpdInsert$(OBJ_EXT) ASTCommentConst$(OBJ_EXT) ASTMetaCols$(OBJ_EXT) ASTAttrConst$(OBJ_EXT)

@@ -305,4 +305,9 @@ namespace sedna
 
         delete l2p;
     }
+
+    void XQueryModule::addToUnresolvedPor(const std::string &name, PPGlobalVariable *var)
+    {
+        unresPorVars.insert(unresPorVarInfo(name, var));
+    }
 }

@@ -87,6 +87,7 @@ createNode_fun dsASTTable[AST_DUMMY] =
     &ASTPiTest::createNode,
     &ASTPosVar::createNode,
     &ASTPragma::createNode,
+    &ASTPred::createNode,
     &ASTProlog::createNode,
     &ASTQName::createNode,
     &ASTQuantExpr::createNode,

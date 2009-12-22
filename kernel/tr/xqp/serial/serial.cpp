@@ -1014,6 +1014,15 @@ void IntVisitor::visit(ASTPragma &n)
     int_str.append(")");
 }
 
+void IntVisitor::visit(ASTPred &n)
+{
+    int_str.append("(");
+    int_str.append(int2string(AST_PRED));
+    int_str.append(dumpCommonData(n.cd));
+    n.seriliazeConjuncts(int_str, *this);
+    int_str.append(")");
+}
+
 void IntVisitor::visit(ASTProlog &n)
 {
     int_str.append("(");

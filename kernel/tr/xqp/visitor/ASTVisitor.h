@@ -122,6 +122,7 @@ public:
     virtual void visit(ASTPiTest &n) = 0;
     virtual void visit(ASTPosVar &n) = 0;
     virtual void visit(ASTPragma &n) = 0;
+    virtual void visit(ASTPred &n) = 0;
     virtual void visit(ASTProlog &n) = 0;
     virtual void visit(ASTQName &n) = 0;
     virtual void visit(ASTQuantExpr &n) = 0;
