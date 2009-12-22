@@ -7,6 +7,7 @@
 #include "common/errdbg/exceptions.h"
 #include "tr/executor/base/dynamic_context.h"
 #include "tr/executor/base/PPOperations.h"
+#include "tr/executor/fo/op_map.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
@@ -14,7 +15,8 @@
 
 namespace sedna
 {
-    static const char *axis_str[] = {
+    static const char *axis_str[] =
+    {
         "PPAxisChild ",
         "PPAxisDescendant ",
         "PPAxisAttribute ",
@@ -238,6 +240,114 @@ namespace sedna
 
     void lr2por::visit(ASTBop &n)
     {
+        childOffer off_this, off_l, off_r;
+
+        switch (n.op)
+        {
+            case ASTBop::EQ_G:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPGeneralComparison::PPEQGeneralComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+            case ASTBop::LT_G:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPGeneralComparison::PPLTGeneralComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+            case ASTBop::LE_G:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPGeneralComparison::PPLEGeneralComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+            case ASTBop::GT_G:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPGeneralComparison::PPGTGeneralComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+            case ASTBop::GE_G:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPGeneralComparison::PPGEGeneralComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+            case ASTBop::NE_G:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPGeneralComparison::PPNEGeneralComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+
+            case ASTBop::IS:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPNodeComparison::PPEQNodeComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+            case ASTBop::PREC:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPNodeComparison::PPLTNodeComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+            case ASTBop::FOLLOW:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(PPNodeComparison::PPGTNodeComparison(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+
+            case ASTBop::TO:
+                n.lop->accept(*this);
+                off_l = getOffer();
+
+                n.rop->accept(*this);
+                off_r = getOffer();
+
+                off_this.opin = PPOpIn(new PPRange(dyn_cxt, createOperationInfo(n), off_l.opin, off_r.opin), 1);
+                break;
+
+            default:
+                var_op_num = 0;
+                calc_ops = new arr_of_PPOpIn();
+                op_tree = NULL;
+
+                make_binary_op(n); // side effects: op_tree, calc_ops and var_op_num contain meaningful values now
+
+                off_this.opin = PPOpIn(new PPCalculate(dyn_cxt, createOperationInfo(n), calc_ops, op_tree), 1);
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTBoundSpaceDecl &n)
@@ -719,6 +829,22 @@ namespace sedna
 
     void lr2por::visit(ASTIf &n)
     {
+        childOffer off_i, off_t, off_e, off_this;
+
+        n.i_expr->accept(*this);
+        off_i = getOffer();
+
+        n.t_expr->accept(*this);
+        off_t = getOffer();
+
+        n.e_expr->accept(*this);
+        off_e = getOffer();
+
+        U_ASSERT(off_t.opin.ts == off_e.opin.ts);
+
+        off_this.opin = PPOpIn(new PPIf(dyn_cxt, createOperationInfo(n), off_i.opin, off_t.opin, off_e.opin), off_t.opin.ts);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTInstOf &n)
@@ -741,6 +867,31 @@ namespace sedna
 
     void lr2por::visit(ASTLit &n)
     {
+        childOffer off_this;
+        xmlscm_type type;
+        tuple_cell tc;
+
+        switch (n.type)
+        {
+            case ASTLit::INTEGER:
+                type = xs_integer;
+                break;
+            case ASTLit::DOUBLE:
+                type = xs_double;
+                break;
+            case ASTLit::DECIMAL:
+                type = xs_decimal;
+                break;
+            case ASTLit::STRING:
+                type = xs_string;
+                break;
+        }
+
+        tc = string2tuple_cell(*n.lit, type);
+
+        off_this.opin = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTLoadFile &n)
@@ -1084,10 +1235,62 @@ namespace sedna
 
     void lr2por::visit(ASTQName &n)
     {
+        childOffer off_this;
+
+        char *qname = xs_QName_create(n.uri->c_str(), n.pref->c_str(), n.local->c_str(), malloc, dyn_cxt);
+
+        off_this.opin.op = new PPConst(dyn_cxt, createOperationInfo(n), tuple_cell::atomic(xs_QName, qname));
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTQuantExpr &n)
     {
+        childOffer off_e, off_sat, off_type, off_this;
+        bool got_type = false;
+        PPOpIn op;
+
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        setParamMode();
+        n.var->accept(*this);
+        off_type = getOffer();
+        got_type = !(off_type.st.type.type == st_atomic_type && off_type.st.type.info.single_type == xs_anyType);
+
+        unsetParamMode();
+
+        n.sat->accept(*this);
+        off_sat = getOffer();
+
+        if (n.type == ASTQuantExpr::SOME)
+        {
+            op = off_sat.opin;
+        }
+        else /* EVERY */
+        {
+            op.op = new PPFnNot(dyn_cxt, createOperationInfo(*n.sat), off_sat.opin);
+            op.ts = off_sat.opin.ts;
+        }
+
+        arr_of_var_dsc vars;
+        vars.push_back(bound_vars.back().second);
+
+        if (got_type)
+        {
+            op.op = new PPSelect(dyn_cxt, createOperationInfo(*n.expr), vars, off_e.opin, op, off_type.st);
+            op.ts = off_e.opin.ts;
+        }
+        else
+        {
+            op.op = new PPSelect(dyn_cxt, createOperationInfo(*n.expr), vars, off_e.opin, op);
+            op.ts = off_e.opin.ts;
+        }
+
+        off_this.opin = PPOpIn(new PPFnExists(dyn_cxt, createOperationInfo(n), op), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTQuery &n)
@@ -1173,6 +1376,17 @@ namespace sedna
 
     void lr2por::visit(ASTUop &n)
     {
+        childOffer off_this;
+
+        var_op_num = 0;
+        calc_ops = new arr_of_PPOpIn();
+        op_tree = NULL;
+
+        make_unary_op(n); // side effects: op_tree, calc_ops and var_op_num contain meaningful values now
+
+        off_this.opin = PPOpIn(new PPCalculate(dyn_cxt, createOperationInfo(n), calc_ops, op_tree), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTUpdDel &n)
@@ -1605,5 +1819,146 @@ namespace sedna
     var_id lr2por::getVarNum()
     {
         return var_num++;
+    }
+
+    CalcOp *lr2por::make_CalcOp(ASTNode *n, bool logical)
+    {
+        CalcOp *res;
+
+        if (ASTBop *b = dynamic_cast<ASTBop *>(n))
+        {
+            make_binary_op(*b);
+            res = op_tree;
+        }
+        else if (ASTUop *u = dynamic_cast<ASTUop *>(n))
+        {
+            make_unary_op(*u);
+            res = op_tree;
+        }
+        else
+        {
+            childOffer off;
+            int var_op_num_saved = var_op_num;
+            arr_of_PPOpIn *ops_saved = calc_ops;
+            CalcOp *op_tree_saved = op_tree;
+
+            n->accept(*this); // side effect: some subexpression might change var_op_num, ops and op_tree;
+
+            off = getOffer();
+
+            // return current ppcalculate context
+            // TODO: make this proper via accessor functions and storing contexts in vector or something
+            var_op_num = var_op_num_saved;
+            op_tree = op_tree_saved;
+            calc_ops = ops_saved;
+
+            calc_ops->push_back(off.opin);
+
+            if (logical)
+                res = new LeafEffectBoolOp(calc_ops, var_op_num++);
+            else
+                res = new LeafAtomOp(calc_ops, var_op_num++);
+        }
+
+        return res;
+    }
+
+    void lr2por::make_binary_op(ASTBop &n)
+    {
+        CalcOp *lop, *rop;
+        bool logic_op = (n.op == ASTBop::AND || n.op == ASTBop::OR);
+
+        // left operand
+        lop = make_CalcOp(n.lop, logic_op);
+        // right operand
+        rop = make_CalcOp(n.rop, logic_op);
+
+        // it seems that there are some facilities for type-based consistency checkings in por2qep
+        // however, as I see it now, types never make their way into por from Scheme's lr2por
+        // so, for now I assume that operands have xs:anyType abstract type
+        // It seems ok, and that's how it works now anyway; notice that dynamic checkings are in place
+        // regardless of what we say about types here (AK)
+        xmlscm_type lt = xs_anyType, rt = xs_anyType;
+        get_binary_op_res r;
+
+        switch (n.op)
+        {
+            case ASTBop::AND:
+                op_tree = new BinaryOpAnd(lop, rop);
+                return;
+                break;
+            case ASTBop::OR:
+                op_tree = new BinaryOpOr(lop, rop);
+                return;
+                break;
+
+            case ASTBop::EQ_V:
+                r = get_binary_op(xqbop_eq, lt, rt);
+                break;
+            case ASTBop::NE_V:
+                r = get_binary_op(xqbop_ne, lt, rt);
+                break;
+            case ASTBop::LT_V:
+                r = get_binary_op(xqbop_lt, lt, rt);
+                break;
+            case ASTBop::LE_V:
+                r = get_binary_op(xqbop_le, lt, rt);
+                break;
+            case ASTBop::GT_V:
+                r = get_binary_op(xqbop_gt, lt, rt);
+                break;
+            case ASTBop::GE_V:
+                r = get_binary_op(xqbop_ge, lt, rt);
+                break;
+            case ASTBop::PLUS:
+                r = get_binary_op(xqbop_add, lt, rt);
+                break;
+            case ASTBop::MINUS:
+                r = get_binary_op(xqbop_sub, lt, rt);
+                break;
+            case ASTBop::DIV:
+                r = get_binary_op(xqbop_div, lt, rt);
+                break;
+            case ASTBop::IDIV:
+                r = get_binary_op(xqbop_idiv, lt, rt);
+                break;
+            case ASTBop::MOD:
+                r = get_binary_op(xqbop_mod, lt, rt);
+                break;
+
+            default:
+                throw USER_EXCEPTION2(SE4001, "make_binary_op cannot process the operation");
+        }
+
+        if (r.collation)
+            op_tree = new BinaryOpCollation(lop, rop, r.f.bf_c);
+        else
+            op_tree = new BinaryOp(lop, rop, r.f.bf);
+    }
+
+    void lr2por::make_unary_op(ASTUop &n)
+    {
+        CalcOp *lop;
+
+        // operand
+        lop = make_CalcOp(n.expr, false); // unary operations are always arithmetical
+
+        // it seems that there are some facilities for type-based consistency checkings in por2qep
+        // however, as I see it now, types never make their way into por from Scheme's lr2por
+        // so, for now I assume that operands have xs:anyType abstract type
+        // It seems ok, and that's how it works now anyway; notice that dynamic checkings are in place
+        // regardless of what we say about types here (AK)
+        xmlscm_type lt = xs_anyType;
+
+        switch (n.op)
+        {
+            case ASTUop::PLUS:
+                op_tree = new UnaryOp(lop, get_unary_op(xquop_plus, lt));
+                break;
+
+            case ASTUop::MINUS:
+                op_tree = new UnaryOp(lop, get_unary_op(xquop_minus, lt));
+                break;
+        }
     }
 }

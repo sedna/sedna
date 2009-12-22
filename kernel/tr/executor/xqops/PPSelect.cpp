@@ -10,21 +10,38 @@
 
 PPSelect::PPSelect(dynamic_context *_cxt_,
                    operation_info _info_,
-                   arr_of_var_dsc _var_dscs_, 
-                   PPOpIn _source_child_, 
+                   arr_of_var_dsc _var_dscs_,
+                   PPOpIn _source_child_,
                    PPOpIn _data_child_) : PPVarIterator(_cxt_, _info_),
                                           var_dscs(_var_dscs_),
                                           source_child(_source_child_),
                                           data_child(_data_child_),
                                           data(_data_child_.ts),
-                                          source(_source_child_.ts)
+                                          source(_source_child_.ts),
+                                          check_type(false)
 {
 }
 
 PPSelect::PPSelect(dynamic_context *_cxt_,
                    operation_info _info_,
-                   arr_of_var_dsc _var_dscs_, 
-                   PPOpIn _source_child_, 
+                   arr_of_var_dsc _var_dscs_,
+                   PPOpIn _source_child_,
+                   PPOpIn _data_child_,
+                   const sequence_type &_st_) : PPVarIterator(_cxt_, _info_),
+                                                var_dscs(_var_dscs_),
+                                                source_child(_source_child_),
+                                                data_child(_data_child_),
+                                                data(_data_child_.ts),
+                                                source(_source_child_.ts),
+                                                st(_st_),
+                                                check_type(true)
+{
+}
+
+PPSelect::PPSelect(dynamic_context *_cxt_,
+                   operation_info _info_,
+                   arr_of_var_dsc _var_dscs_,
+                   PPOpIn _source_child_,
                    PPOpIn _data_child_,
                    tuple _source_) : PPVarIterator(_cxt_, _info_),
                                      var_dscs(_var_dscs_),
@@ -89,6 +106,12 @@ void PPSelect::do_next(tuple &t)
 
         if (t.is_eos()) return;
 
+        if (check_type)
+        {
+            if (st.oi == st_empty || !type_matches_single(t.cells[0], st.type))
+                throw XQUERY_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
+        }
+
         if (first_time) first_time = false;
         else
         {
@@ -125,7 +148,7 @@ void PPSelect::do_next(tuple &t, var_dsc dsc, var_c_id id)
         p.svc->at(id) = false;
         t.copy(cur_tuple->cells[p.tuple_pos]);
     }
-    else 
+    else
     {
         p.svc->at(id) = true;
         t.set_eos();

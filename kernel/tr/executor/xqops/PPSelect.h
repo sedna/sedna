@@ -21,16 +21,19 @@ private:
     tuple source;
     tuple *cur_tuple;
 
+    sequence_type st; // type to check in 'every' and 'some'
+
     bool first_time;
     bool eos_reached;
     bool standard;
+    bool check_type;
 
     inline void reinit_consumer_table();
 
     PPSelect(dynamic_context *_cxt_,
              operation_info _info_,
-             arr_of_var_dsc _var_dscs_, 
-             PPOpIn _source_child_, 
+             arr_of_var_dsc _var_dscs_,
+             PPOpIn _source_child_,
              PPOpIn _data_child_,
              tuple _source_);
 
@@ -41,7 +44,7 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
     virtual var_c_id do_register_consumer(var_dsc dsc);
     virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
     virtual void do_reopen(var_dsc dsc, var_c_id id);
@@ -50,9 +53,16 @@ private:
 public:
     PPSelect(dynamic_context *_cxt_,
              operation_info _info_,
-             arr_of_var_dsc _var_dscs_, 
-             PPOpIn _source_child_, 
+             arr_of_var_dsc _var_dscs_,
+             PPOpIn _source_child_,
              PPOpIn _data_child_);
+
+    PPSelect(dynamic_context *_cxt_,
+             operation_info _info_,
+             arr_of_var_dsc _var_dscs_,
+             PPOpIn _source_child_,
+             PPOpIn _data_child_,
+             const sequence_type &_st_);
 
     virtual ~PPSelect();
 };
