@@ -1758,7 +1758,7 @@ namespace sedna
 
         // body is evaluated in a dummy dynamic context
         dynamic_context dc(st_cxt, 0); // ok, it will become illegal when we exit the function, but since function-body is copied
-                                       // during evaluation it will not be a problem (moved from por2qep "as-is")
+                                       // during evaluation it will not be a problem (yuck!!!, but moved from por2qep "as-is")
         dyn_cxt = &dc;
         n.body->accept(*this);
 
@@ -2933,7 +2933,6 @@ namespace sedna
     void lr2por::visit(ASTVarDecl &n)
     {
         childOffer off, off_this, off_type;
-        dynamic_context *cxt;
         int id;
         PPVarIterator *var;
         operation_info oi;
@@ -2945,23 +2944,28 @@ namespace sedna
             off_type = getOffer();
         }
 
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+
         // analyze the body
         var_num = 0;
         n.expr->accept(*this);
         off = getOffer();
 
-        cxt = new dynamic_context(st_cxt, var_num);
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
         id = n.getId();
 
         oi = createOperationInfo(n);
 
         if (n.type)
-            var = new PPVarDecl(cxt, oi, id, off.opin, off_type.st);
+            var = new PPVarDecl(dyn_cxt, oi, id, off.opin, off_type.st);
         else
-            var = new PPVarDecl(cxt, oi, id, off.opin);
+            var = new PPVarDecl(dyn_cxt, oi, id, off.opin);
 
         dynamic_context::glb_var_cxt.producers[id].op = var;
-        dynamic_context::glb_var_cxt.producers[id].cxt = cxt;
+        dynamic_context::glb_var_cxt.producers[id].cxt = dyn_cxt;
+
+        dyn_cxt = NULL;
     }
 
     void lr2por::visit(ASTVersionDecl &n)
