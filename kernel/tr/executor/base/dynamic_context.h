@@ -113,8 +113,22 @@ struct variable_context
     int size;               // size of context (number of producers in array)
     producer *producers;    // array of producers
 
-    variable_context(int _size_) : size(_size_) { size > 0 ? producers = se_new producer[size] : producers = NULL; }
-    ~variable_context() { delete [] producers; }
+    variable_context(int _size_) : size(_size_)
+    {
+        producers = (size > 0) ? new producer[size] : NULL;
+    }
+
+    void resetProducers(size_t _size_)
+    {
+        delete [] producers;
+        size = _size_;
+        producers = (size > 0) ? new producer[size] : NULL;
+    }
+
+    ~variable_context()
+    {
+        delete [] producers;
+    }
 };
 
 
@@ -304,10 +318,10 @@ public:
 
     // used to properly set producers when qep tree is already built
     // before this dynamic context is created with 0 vars (see lr2por visitor)
-    // NOTE: this works IFF we don't register producers in pp-constructors
+    // NOTE: this works IFF we don't register producers in pp-class-constructors
     void set_producers(size_t num)
     {
-        var_cxt = variable_context(num);
+        var_cxt.resetProducers(num);
     }
 
     ~dynamic_context() { /* we do not delete st_cxt here because we manage it some other way */ }

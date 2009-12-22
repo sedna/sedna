@@ -161,7 +161,7 @@ namespace sedna
 
         if (n.cont)
         {
-            // we won't to propagate pers_abspath property here
+            // we want to propagate pers_abspath property here
             setParentRequest(getParentRequest());
             n.cont->accept(*this);
             off_cont = getOffer();
@@ -171,7 +171,7 @@ namespace sedna
             off_cont = getContextOffer(oi);
         }
 
-        // look if we can prolong PPAbsPath or start relative for index
+        // look if we can prolong PPAbsPath or start relative one for index
         if (!n.cont && getParentRequest().pers_abspath)
         {
             db_entity *dbe = new db_entity;
@@ -186,18 +186,23 @@ namespace sedna
 
         if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && off_cont.opin.op && (!pit || pit->type == ASTPiTest::NONE))
         {
-            if (dynamic_cast<PPAbsPath *>(off_cont.opin.op))
+            if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op))
             {
                 std::string lr;
 
                 lr = getlrForAxisStep(n);
 
                 off_this.opin = off_cont.opin;
+                off_this.lr_path = (off_cont.lr_path + lr);
 
-                if (off_this.lr_path == "") // first prolongation
-                    off_this.lr_path = "(";
+                // last step: should finalize abspath
+                if (n.isLast)
+                {
+                    finalizeAbsPath(apa, off_this.lr_path.c_str(), getParentRequest().pers_abspath);
+                    off_this.lr_path = "";
+                }
 
-                off_this.lr_path = off_cont.lr_path + lr;
+                setOffer(off_this);
 
                 return;
             }
@@ -205,18 +210,9 @@ namespace sedna
         else if (n.cont)
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
-                 if (off_cont.lr_path != "")
-                 {
-                     off_cont.lr_path += ')';
-
-                     if (off_cont.lr_path != "()")
-                     {
-                         PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(),
-                                 getParentRequest().pers_abspath ? pe_catalog_aspace : pe_local_aspace);
-
-                         apa->setPathExpr(pe);
-                     }
-                 }
+             {
+                 finalizeAbsPath(apa, off_cont.lr_path.c_str(), getParentRequest().pers_abspath);
+             }
         }
 
         // determine if we need sequence checker
@@ -1170,16 +1166,7 @@ namespace sedna
         if (n.cont && (n.expr || n.preds)) // we need to close abs-path if we've got it as a context (exception, "." - expression)
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
-                 if (off_cont.lr_path != "")
-                 {
-                     off_cont.lr_path += ')';
-
-                     if (off_cont.lr_path != "()")
-                     {
-                         PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
-                         apa->setPathExpr(pe);
-                     }
-                 }
+                     finalizeAbsPath(apa, off_cont.lr_path.c_str(), false);
         }
 
         // determine if we need sequence checker
@@ -1213,12 +1200,6 @@ namespace sedna
 
         if (n.expr)
         {
-            childOffer off;
-            n.expr->accept(*this);
-            off = getOffer();
-
-            expr = off.opin;
-
             // set proper position and last variables if primary expression uses them
             // NOTE: if we've not got any context then we've got global context (which can only be one node).
             //       Since for now global context is not implemented I won't bother to provide implementation.
@@ -1235,6 +1216,12 @@ namespace sedna
                 var_last = getVarNum();
                 bound_vars.push_back(l2pVarInfo("$%last", var_last));
             }
+
+            childOffer off;
+            n.expr->accept(*this);
+            off = getOffer();
+
+            expr = off.opin;
         }
         else
         {
@@ -1302,7 +1289,7 @@ namespace sedna
 
             if (var_last != -1)
             {
-                off_this.opin.op = new PPLast(dyn_cxt, oi, var_last, off_this.opin);
+                off_cont.opin.op = new PPLast(dyn_cxt, oi, var_last, off_cont.opin);
 
                 U_ASSERT(bound_vars.back().first == "$%last");
                 bound_vars.pop_back();
@@ -2019,7 +2006,7 @@ namespace sedna
         else
         {
             off_this.test_data = "(\"" + ((n.uri) ? *n.uri : "") + "\"";
-            off_this.test_data = " \"" + *n.local + "\" \"" + *n.pref + "\")";
+            off_this.test_data += " \"" + *n.local + "\" \"" + *n.pref + "\")";
             off_this.test_type = "qname";
 
             off_this.st.type.info.ea.nne = st_nne_name;
@@ -3160,7 +3147,7 @@ namespace sedna
 
     std::string lr2por::getlrForAxisStep(const ASTAxisStep &s)
     {
-        std::string res = "(";
+        std::string res = "((";
         childOffer off;
 
         res += axis_str[s.axis];
@@ -3172,9 +3159,22 @@ namespace sedna
         res += off.test_type;
         res += " ";
         res += off.test_data;
-        res += ")";
+        res += "))";
 
         return res;
+    }
+
+    void lr2por::finalizeAbsPath(PPAbsPath *pap, const char *lr, bool pers)
+    {
+        // null-abspath -- ignore
+        if (!strlen(lr))
+            return;
+
+        // make it list-like
+        std::string lr_list = std::string("(") + lr + ")";
+
+        PathExpr *pe = lr2PathExpr(dyn_cxt, lr_list.c_str(), pers ? pe_catalog_aspace : pe_local_aspace);
+        pap->setPathExpr(pe);
     }
 
     PPOpIn lr2por::getPPForAxis(const ASTAxisStep &s, PPOpIn cont, operation_info oi)

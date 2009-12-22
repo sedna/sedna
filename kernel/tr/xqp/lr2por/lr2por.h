@@ -16,6 +16,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/xqops/PPOrderBy.h"
 #include "tr/executor/xqops/PPCalculate.h"
+#include "tr/executor/xqops/PPAbsPath.h"
 
 namespace sedna
 {
@@ -147,6 +148,7 @@ namespace sedna
         childOffer getContextOffer(operation_info oi) const;
         bool isStepNeedsChecker(const ASTStep &st) const;
         std::string getlrForAxisStep(const ASTAxisStep &s);
+        void finalizeAbsPath(PPAbsPath *pap, const char *lr, bool pers);
         PPOpIn getPPForAxis(const ASTAxisStep &s, PPOpIn cont, operation_info oi);
 
         // visiting functions
