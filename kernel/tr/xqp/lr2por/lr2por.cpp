@@ -172,13 +172,13 @@ namespace sedna
         }
 
         // look if we can prolong PPAbsPath or start relative one for index
-        if (!n.cont && getParentRequest().pers_abspath)
+        if (!n.cont && pers_path_mode)
         {
             db_entity *dbe = new db_entity;
             dbe->type = dbe_document;
             dbe->name = new char[6];
             strcpy(dbe->name, "dummy");
-            off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), lr2PathExpr(dyn_cxt, "()", pe_local_aspace), counted_ptr<db_entity>(dbe)), 1);
+            off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), NULL, counted_ptr<db_entity>(dbe)), 1);
         }
 
         // check if we've got processing-instruction test
@@ -198,7 +198,7 @@ namespace sedna
                 // last step: should finalize abspath
                 if (n.isLast)
                 {
-                    finalizeAbsPath(apa, off_this.lr_path.c_str(), getParentRequest().pers_abspath);
+                    finalizeAbsPath(apa, off_this.lr_path.c_str(), pers_path_mode);
                     off_this.lr_path = "";
                 }
 
@@ -211,7 +211,7 @@ namespace sedna
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
              {
-                 finalizeAbsPath(apa, off_cont.lr_path.c_str(), getParentRequest().pers_abspath);
+                 finalizeAbsPath(apa, off_cont.lr_path.c_str(), pers_path_mode);
              }
         }
 
@@ -608,11 +608,10 @@ namespace sedna
         n.name->accept(*this);
         off_name = getOffer();
 
-        parentRequest req;
-        req.pers_abspath = true;
-        setParentRequest(req);
+        pers_path_mode = true;
         n.path->accept(*this);
         off_path = getOffer();
+        pers_path_mode = false;
 
         // path will definitely be PPAbsPath
         pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
@@ -622,7 +621,7 @@ namespace sedna
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         // set context
@@ -660,9 +659,7 @@ namespace sedna
         n.name->accept(*this);
         off_name = getOffer();
 
-        parentRequest req;
-        req.pers_abspath = true;
-        setParentRequest(req);
+        pers_path_mode = true;
         n.on_path->accept(*this);
         off_path = getOffer();
 
@@ -674,16 +671,12 @@ namespace sedna
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
-        // we must ensure "abs-pathness" of by-path
-        // now, I do it via pers_abspath property; another solution is to insert ASTFunCall (fn:document) in the tree
-        // however, I don't like the idea of messing up with ast-related info; it just seems wrong to me (AK)
-        req.pers_abspath = true;
-        setParentRequest(req);
         n.by_path->accept(*this);
         off_path = getOffer();
+        pers_path_mode = false;
 
         // now by-path will definitely be PPAbsPath
         pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
@@ -692,7 +685,7 @@ namespace sedna
         byp = pa->getPathExpr();
         delete pa; // we don't need it anymore (note that this won't destroy on_path)
 
-        if (byp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!byp) // should make it persistent (not-null path will be made persistent by ast-ops)
             byp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         n.type->accept(*this);
@@ -741,8 +734,10 @@ namespace sedna
         name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
 
         // on-path will definitely be PPAbsPath
+        pers_path_mode = true;
         n.path->accept(*this);
         off_path = getOffer();
+        pers_path_mode = false;
         pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
         U_ASSERT(pa);
 
@@ -750,7 +745,7 @@ namespace sedna
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
 
@@ -1154,19 +1149,19 @@ namespace sedna
         }
 
         // look if we can create PPAbsPath
-        if (!n.cont && getParentRequest().pers_abspath)
+        if (!n.cont && pers_path_mode)
         {
             db_entity *dbe = new db_entity;
             dbe->type = dbe_document;
             dbe->name = new char[6];
             strcpy(dbe->name, "dummy");
-            off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), lr2PathExpr(dyn_cxt, "()", pe_local_aspace), counted_ptr<db_entity>(dbe)), 1);
+            off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), NULL, counted_ptr<db_entity>(dbe)), 1);
         }
 
-        if (n.cont && (n.expr || n.preds)) // we need to close abs-path if we've got it as a context (exception, "." - expression)
+        if (n.cont && (n.expr || n.preds || n.isLast)) // we need to close abs-path if we've got it as a context (exception, "." - expression)
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
-                     finalizeAbsPath(apa, off_cont.lr_path.c_str(), false);
+                     finalizeAbsPath(apa, off_cont.lr_path.c_str(), pers_path_mode);
         }
 
         // determine if we need sequence checker
@@ -1306,6 +1301,10 @@ namespace sedna
 
             bound_vars.pop_back();
         }
+        else
+        {
+            off_this.opin = expr;
+        }
 
         if (n.isLast && !n.isFirstStep())
             off_this.opin.op = new PPSeqChecker(dyn_cxt, oi, off_this.opin, PPSeqChecker::CHECK_MIX);
@@ -1418,9 +1417,19 @@ namespace sedna
             bound_vars.pop_back();
 
             if (off.st.type.type == st_atomic_type && off.st.type.info.single_type == xs_anyType)
-                flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var);
+            {
+                if (dynamic_cast<const ASTFor *>((*n.fls)[i]))
+                    flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var);
+                else
+                    flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop);
+            }
             else
-                flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var, off.st);
+            {
+                if (dynamic_cast<const ASTFor *>((*n.fls)[i]))
+                    flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var, off.st);
+                else
+                    flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, off.st);
+            }
         }
 
         if (n.order_by)
@@ -1484,6 +1493,7 @@ namespace sedna
     {
         childOffer off_this;
         bool stdFunc = (*n.int_name != "");
+        size_t arity = (n.params ? n.params->size() : 0);
 
         if (stdFunc)
         {
@@ -1677,17 +1687,17 @@ namespace sedna
         }
         else
         {
-            std::string name = CREATE_INTNAME(*n.uri, *n.local);
+            std::string name = CREATE_INTNAME_FUN(*n.uri, *n.local, arity);
 
             // then find it in global functions
             int fid = getGlobalFunctionId(name);
 
             // fill out params
-            arr_of_PPOpIn para(n.params ? n.params->size() : 0);
+            arr_of_PPOpIn para(arity);
 
             if (n.params)
             {
-                size_t count = n.params->size();
+                size_t count = arity;
                 ASTVisitor::VisitNodesVector(n.params, *this);
 
                 while (count--)
@@ -1716,7 +1726,6 @@ namespace sedna
     void lr2por::visit(ASTFuncDecl &n)
     {
         int id;
-        function_declaration fd;
         unsigned int arity = (n.params) ? n.params->size() : 0;
 
         // ignore external functions since they are treated only via fun-calls
@@ -1725,7 +1734,7 @@ namespace sedna
 
         var_num = 0;
         id = n.getId();
-        fd = dynamic_context::funct_cxt.fun_decls[id];
+        function_declaration &fd = dynamic_context::funct_cxt.fun_decls[id];
 
         n.ret->accept(*this);
         fd.ret_st = getOffer().st;

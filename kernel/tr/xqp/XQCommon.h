@@ -8,6 +8,7 @@
 #include <map>
 
 #define CREATE_INTNAME(u, l) ((u == "") ? (l) : (std::string("{") + (u) + std::string("}") + (l)))
+#define CREATE_INTNAME_FUN(u, l, a) (CREATE_INTNAME(u, l) + std::string("/") + int2string(a))
 
 namespace sedna
 {

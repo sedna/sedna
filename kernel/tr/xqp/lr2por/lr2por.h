@@ -58,7 +58,7 @@ namespace sedna
 
         bool param_mode; // true, if we are checking function params now (ASTVar sema analysis)
         unsigned int param_count; // number of parameters found in param_mode
-        bool isModeOrdered;     // cuurent mode of operation (global + may change on ordered-unordered expressions)
+        bool pers_path_mode; // if true, then we the next xpath will be persistent (use only for craete indexe/ft-index/trigger, where path is already checked)
 
         typedef std::pair<std::string, var_id> l2pVarInfo; // var info int_name+id
 
@@ -110,7 +110,7 @@ namespace sedna
         {
             param_mode = false;
             param_count = 0;
-            isModeOrdered = mod->getOrderedMode();
+            pers_path_mode = false;
             pareqs.push_back(parentRequest());
 
             st_cxt = st_cxt_;
@@ -133,11 +133,6 @@ namespace sedna
         void setDynCxt(dynamic_context *dx)
         {
             dyn_cxt = dx;
-        }
-
-        void setOrderedMode(bool mode)
-        {
-            isModeOrdered = mode;
         }
 
         virtual void addToPath(ASTNode *nod);
