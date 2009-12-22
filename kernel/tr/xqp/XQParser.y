@@ -1036,19 +1036,19 @@ exprSingle:
 flworExpr:
         flClauses whereClause orderByClause RETURN exprSingle
         {
-            $$ = makeFLWORTree(@$, $1, $2, $3, $5);
+            $$ = new ASTFLWOR(@$, $1, $2, $3, $5);
         }
     |   flClauses whereClause RETURN exprSingle
         {
-            $$ = makeFLWORTree(@$, $1, $2, NULL, $4);
+            $$ = new ASTFLWOR(@$, $1, $2, NULL, $4);
         }
     |   flClauses orderByClause RETURN exprSingle
         {
-            $$ = makeFLWORTree(@$, $1, NULL, $2, $4);
+            $$ = new ASTFLWOR(@$, $1, NULL, $2, $4);
         }
     |   flClauses RETURN exprSingle
         {
-            $$ = makeFLWORTree(@$, $1, NULL, NULL, $3);
+            $$ = new ASTFLWOR(@$, $1, NULL, NULL, $3);
         }
     |   flClauses error RETURN exprSingle
         {
@@ -2064,8 +2064,9 @@ predicateList:
 predicate:
         LBRACK expr RBRACK
         {
-            $$ = $2;
+            $$ = new ASTPred(@$, $2);
         }
+        
     |   LBRACK error RBRACK { $$ = new ASTError(@$); }
 
     ;
@@ -3717,66 +3718,7 @@ static ASTNodesVector *makeFLWORVarsCopy(ASTNodesVector *flcs, bool need_type = 
 */
 static ASTNode *makeFLWORTree(sedna::XQueryParser::location_type& loc, ASTNodesVector *flcs, ASTNode *where, ASTNode *orderBy, ASTNode *ret)
 {
-    ASTNode *whereTree = NULL, *emptySeq = NULL, *res = NULL;
-    ASTNodesVector *vars_copy = NULL;
-    ASTNodesVector::reverse_iterator rit;
-
-    /* first make where tree; we're given only expression at input */
-    if (where)
-    {
-        emptySeq = new ASTSeq(loc);
-        if (orderBy)
-        {
-            vars_copy = makeFLWORVarsCopy(flcs, false);
-            whereTree = new ASTIf(loc, where, new ASTUnio(loc, vars_copy), emptySeq);
-        }
-        else
-            whereTree = new ASTIf(loc, where, ret, emptySeq);
-    }
-    else
-    {
-        if (orderBy)
-        {
-          vars_copy = makeFLWORVarsCopy(flcs, false);
-          whereTree = new ASTUnio(loc, vars_copy);
-        }
-        else
-        {
-            whereTree = ret;
-        }
-    }
-
-    /* then make for-let tree */
-    res = whereTree;
-    for (rit = flcs->rbegin(); rit != flcs->rend(); rit++)
-    {
-        if (ASTFor *f = dynamic_cast<ASTFor *>(*rit))
-        {
-            f->setNextExpr(res);
-        }
-        else if (ASTLet *l = dynamic_cast<ASTLet *>(*rit))
-        {
-            l->setNextExpr(res);
-        }
-        else
-        {
-            delete res;
-            res = new ASTError(loc);
-            break;
-        }
-
-        res = *rit;
-    }
-
-    /* add order by if needed */
-    if (orderBy)
-    {
-        res = new ASTOrderByRet(loc, res, orderBy, ret, makeFLWORVarsCopy(flcs));
-    }
-
-    delete flcs;
-
-    return res;
+    return NULL;
 }
 
 /* makes an AST tree for quantified expression

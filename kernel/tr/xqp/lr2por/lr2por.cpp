@@ -52,8 +52,7 @@ namespace sedna
         childOffer off_cont, off_this;
         operation_info oi;
 
-        oi.query_line = n.getLocation().begin.line;
-        oi.query_col = n.getLocation().begin.column;
+        oi = createOperationInfo(n);
 
         if (n.cont)
         {
@@ -308,10 +307,81 @@ namespace sedna
 
     void lr2por::visit(ASTElem &n)
     {
+        arr_of_PPOpIn seq;
+        size_t count = 0;
+        PPOpIn content;
+        childOffer off_this;
+
+        if (n.attrs)
+        {
+            ASTVisitor::VisitNodesVector(n.attrs, *this);
+            count += n.attrs->size();
+        }
+
+        if (n.cont)
+        {
+            ASTVisitor::VisitNodesVector(n.cont, *this);
+            count += n.cont->size();
+        }
+
+        if (count == 0)
+        {
+            content = new PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        }
+        else
+        {
+            seq.reserve(count);
+
+            while (count--)
+                seq.push_back(getOffer().opin);
+
+            std::reverse(seq.begin(), seq.end());
+
+            content = new PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
+        }
+
+        std::string name = *n.pref + ":" + *n.local;
+
+        off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTElemConst &n)
     {
+        childOffer off_this, off_name, off_cont;
+
+        if (n.name)
+        {
+            n.name->accept(*this);
+            off_name = getOffer();
+        }
+
+        if (n.cont)
+        {
+            n.cont->accept(*this);
+            off_cont = getOffer();
+        }
+        else
+        {
+            off_cont.opin = new PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        }
+
+        if (n.name)
+        {
+            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, false);
+        }
+        else
+        {
+            std::string name = *n.pref + ":" + *n.local;
+
+            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
+        }
+
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTElementTest &n)
@@ -335,8 +405,171 @@ namespace sedna
     {
     }
 
+    void lr2por::visit(ASTFLWOR &n)
+    {
+        ASTNodesVector::iterator it;
+        unsigned int var_count = 0;
+        std::vector<PPOpIn> fl_ops;
+        childOffer off_ob, off_this, off_where;
+        PPOpIn where, fl_close, nil;
+
+        var_count = bound_vars.size();
+        ASTVisitor::VisitNodesVector(n.fls, *this);
+        var_count = bound_vars.size() - var_count;
+
+        n.ret->accept(*this);
+        off_this = getOffer();
+
+        if (n.where)
+        {
+            n.where->accept(*this);
+            off_where = getOffer();
+
+            // create empty-sequence for 'else' part of where
+            // NOTE: we should define nil.ts later according with STuple if it's present!
+            nil.op = new PPNil(dyn_cxt, createOperationInfo(*n.where));
+        }
+
+        if (n.order_by)
+        {
+            parentRequest req;
+            req.var_count = var_count;
+            setParentRequest(req);
+
+            n.order_by->accept(*this);
+            off_ob = getOffer(); // order-by returns PPSTuple + orbs
+
+            if (n.where)
+            {
+                nil.ts = off_ob.opin.ts;
+                fl_close.op = new PPIf(dyn_cxt, createOperationInfo(*n.where), off_where.opin, off_ob.opin, nil);
+                fl_close.ts = nil.ts;
+            }
+            else
+            {
+                fl_close = off_ob.opin;
+            }
+        }
+        else
+        {
+            if (n.where)
+            {
+                nil.ts = off_this.opin.ts;
+                fl_close.op = new PPIf(dyn_cxt, createOperationInfo(*n.where), off_where.opin, off_this.opin, nil);
+                fl_close.ts = nil.ts;
+            }
+            else
+            {
+                fl_close = off_this.opin;
+            }
+        }
+
+        // make for-let tree with 'fl_close' rightmost leaf
+        PPOpIn flop = fl_close;
+        std::vector<l2pVarInfo> un_vars; // unique bindings to remedy (for $i ... for $i like situations)
+        size_t let_num = 0; // number of let-vars in un_vars
+
+        for (size_t i = 0; i < n.fls->size(); i++)
+        {
+            childOffer off = getOffer();
+            arr_of_var_dsc vars;
+            var_id pos_var = -1;
+            bool use_position = false;
+
+            // we use position only in 'for' with positional variable
+            if (const ASTFor *f = dynamic_cast<const ASTFor *>((*n.fls)[i]))
+                use_position = f->usesPosVar();
+
+            if (use_position)
+            {
+                pos_var = bound_vars.back().second;
+
+                if (n.order_by)
+                {
+                    if (checkAndAddIfUnique(un_vars, bound_vars.back()))
+                    {
+                        un_vars.back().second = getVarNum(); // need to assign new bindings for for-let variables in the main return
+                    }
+                }
+
+                bound_vars.pop_back();
+            }
+
+            vars.push_back(bound_vars.back().second); // main for(let) variable
+
+            if (n.order_by)
+            {
+                if (checkAndAddIfUnique(un_vars, bound_vars.back()))
+                {
+                    un_vars.back().second = getVarNum(); // get unique binding (see above)
+
+                    if (dynamic_cast<ASTLet *>((*n.fls)[i])) // for let-clause remember position
+                        let_num++;
+                }
+            }
+            bound_vars.pop_back();
+
+            if (off.st.type.type == st_atomic_type && off.st.type.info.single_type == xs_anyType)
+                flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var);
+            else
+                flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var, off.st);
+        }
+
+        if (n.order_by)
+        {
+            PPOpIn ob, ret;
+            arr_of_var_dsc vars(un_vars.size());
+            bool isStable = dynamic_cast<const ASTOrderBy *>(n.order_by)->isStable();
+
+            ob.op = new PPOrderBy(dyn_cxt, createOperationInfo(*n.order_by), isStable, flop, off_ob.orbs, un_vars.size());
+            ob.ts = un_vars.size();
+
+            ret = off_this.opin;
+
+            // create slets
+            for (size_t i = 0; i < un_vars.size(); i++)
+            {
+                if (i < let_num)
+                {
+                    arr_of_var_dsc slet_vars;
+                    slet_vars.push_back(getVarNum()); // new binding for PPSLet
+
+                    ret.op = new PPSLet(dyn_cxt, createOperationInfo(*n.ret), slet_vars,
+                                    PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(*n.ret), un_vars[i].second), 1), ret);
+                }
+
+                vars[un_vars.size() - i - 1] = un_vars[i].second;
+            }
+
+            off_this.opin.op = new PPReturn(dyn_cxt, createOperationInfo(n), vars, ob, ret, -1);
+            off_this.opin.ts = 1;
+        }
+        else
+        {
+            off_this.opin = flop;
+        }
+
+        setOffer(off_this);
+   }
+
     void lr2por::visit(ASTFor &n)
     {
+        childOffer off_this;
+
+        // we need to build expr before we bind variables since there could be same-name bindings
+        n.expr->accept(*this);
+
+        off_this = getOffer();
+
+        setParamMode();
+        n.tv->accept(*this);
+        off_this.st = getOffer().st;
+
+        if (n.pv)
+            n.pv->accept(*this);
+        unsetParamMode();
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTFunCall &n)
@@ -525,6 +758,47 @@ namespace sedna
 
     void lr2por::visit(ASTOrderBy &n)
     {
+        // rebind variables since there could be for-let rebindings (e.g. for $i ... for $i ... order by $i)
+        std::vector<l2pVarInfo> reb_vars;
+        childOffer off_this;
+        size_t vars_count = getParentRequest().var_count;
+
+        for (unsigned int i = 1; i <= vars_count; i++)
+        {
+            checkAndAddIfUnique(reb_vars, bound_vars[bound_vars.size() - i]);
+        }
+
+        std::reverse(reb_vars.begin(), reb_vars.end());
+
+        ASTVisitor::VisitNodesVector(n.specs, *this);
+
+        // prepare our offer
+        size_t tuple_size = reb_vars.size() + n.specs->size();
+        arr_of_PPOpIn opi(tuple_size);
+        operation_info oi = createOperationInfo(n);
+
+        for (size_t i = 0; i < reb_vars.size(); i++)
+        {
+            opi[i].op = new PPVariable(dyn_cxt, oi, reb_vars[i].second);
+            opi[i].ts = 1;
+        }
+
+        off_this.orbs = arr_of_orb_modifier(n.specs->size());
+
+        for (size_t i = 0; i < n.specs->size(); i++)
+        {
+            childOffer off = getOffer();
+
+            opi[tuple_size - i - 1] = off.opin;
+
+            off_this.orbs[n.specs->size() - i - 1] = off.orbs[0];
+        }
+
+        // create PPSTuple
+        off_this.opin.op = new PPSTuple(dyn_cxt, oi, opi);
+        off_this.opin.ts = tuple_size;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTOrderByRet &n)
@@ -579,8 +853,7 @@ namespace sedna
         childOffer off, off_this;
         operation_info oip;
 
-        oip.query_line = n.getLocation().begin.line;
-        oip.query_col = n.getLocation().begin.column;
+        oip = createOperationInfo(n);
 
         for (int i = bound_vars.size() - 1; i >= 0; i--)
         {
@@ -621,25 +894,17 @@ namespace sedna
 
             n.others[0].expr->accept(*this);
             off = getOffer();
-
-            off_this.use_cxt = off.use_cxt;
         }
         else
         {
             off.opin.op = new PPFnTrue(dyn_cxt, oip);
             off.opin.ts = 1;
-
-            off_this.use_cxt = false;
         }
 
         if (use_last)
         {
-            off_this.use_last = true;
-
             if (use_pos)
             {
-                off_this.use_position = true;
-
                 off_this.opin.op = new PPPred2(dyn_cxt, oip, vars, getParentRequest().pred_cxt, conj,
                         cond, off.opin, false, last_var, pos_var);
             }
@@ -653,8 +918,6 @@ namespace sedna
         {
             if (use_pos)
             {
-                off_this.use_position = true;
-
                 off_this.opin.op = new PPPred1(dyn_cxt, oip, vars, getParentRequest().pred_cxt, conj,
                         cond, off.opin, false, pos_var);
             }
@@ -792,8 +1055,7 @@ namespace sedna
             return;
         }
 
-        oi.query_line = n.getLocation().begin.line;
-        oi.query_col = n.getLocation().begin.column;
+        oi = createOperationInfo(n);
 
         // in usual mode we must resolve name to the id given
         // first, check if variable is bound
@@ -873,8 +1135,8 @@ namespace sedna
 
         cxt = new dynamic_context(st_cxt, var_num);
         id = drv->getNewGlobVarId();
-        oi.query_line = n.getLocation().begin.line;
-        oi.query_col = n.getLocation().begin.column;
+
+        oi = createOperationInfo(n);
 
         if (n.type)
             var = new PPVarDecl(cxt, oi, id, off.opin, off_type.st);
@@ -1138,5 +1400,46 @@ namespace sedna
         op.ts = 1;
 
         return op;
+    }
+
+    operation_info lr2por::createOperationInfo(const ASTNode &n)
+    {
+        operation_info oi;
+
+        oi.query_line = n.getLocation().begin.line;
+        oi.query_col = n.getLocation().begin.column;
+
+        return oi;
+    }
+
+    void lr2por::alterOffer(childOffer &off_this, const childOffer &off)
+    {
+    }
+
+    bool lr2por::checkAndAddIfUnique(std::vector<l2pVarInfo> &un_vars, const l2pVarInfo &var)
+    {
+        bool dup = false;
+
+        for (unsigned int i = 0; i < un_vars.size(); i++)
+        {
+            if (un_vars[i].first == var.first)
+            {
+                dup = true;
+                break;
+            }
+        }
+
+        if (!dup)
+        {
+            un_vars.push_back(var);
+            return true;
+        }
+
+        return false;
+    }
+
+    var_id lr2por::getVarNum()
+    {
+        return var_num++;
     }
 }

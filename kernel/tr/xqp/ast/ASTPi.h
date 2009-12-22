@@ -17,6 +17,8 @@ public:
     std::string *name; // pi name
     std::string *cont; // pi content
 
+    bool deep_copy; // pi will be attached to virtual_root and copied on demand
+
 public:
     ASTPi(const ASTNodeCommonData &loc, std::string *name_, std::string *cont_) : ASTNode(loc), name(name_), cont(cont_) {}
 

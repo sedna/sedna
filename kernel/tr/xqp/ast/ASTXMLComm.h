@@ -16,6 +16,8 @@ class ASTXMLComm : public ASTNode
 public:
     std::string *cont; // character content
 
+    bool deep_copy; // comment will be attached to virtual_root and copied on demand
+
 public:
     ASTXMLComm(const ASTNodeCommonData &loc, std::string *cont_) : ASTNode(loc), cont(cont_) {}
 

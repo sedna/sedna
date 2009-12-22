@@ -5,6 +5,7 @@
 
 #include "LRVisitor.h"
 #include "common/errdbg/exceptions.h"
+#include "tr/executor/xqops/PPSeqChecker.h"
 
 #define LR_STR(s)\
     do\
@@ -211,11 +212,7 @@ void LRVisitor::visit(ASTAxisStep &n)
             n.cont->accept(*this);
             if (need_checker)
             {
-                std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
-                            int2string(n.getLocation().begin.column) + "),\"";
-
-                lr_str.append(int2string(XPTY0019));
-                lr_str.append(err);
+                lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
                 lr_str.append(")");
             }
         }
@@ -259,11 +256,7 @@ void LRVisitor::visit(ASTAxisStep &n)
             n.cont->accept(*this);
             if (need_checker)
             {
-                std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
-                            int2string(n.getLocation().begin.column) + "),\"";
-
-                lr_str.append(int2string(XPTY0019));
-                lr_str.append(err);
+                lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
                 lr_str.append(")");
             }
         }
@@ -753,11 +746,7 @@ void LRVisitor::visit(ASTFilterStep &n)
                 n.cont->accept(*this);
                 if (need_checker)
                 {
-                    std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
-                                int2string(n.getLocation().begin.column) + "),\"";
-
-                    lr_str.append(int2string(XPTY0019));
-                    lr_str.append(err);
+                    lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
                     lr_str.append(")");
                 }
             }
@@ -789,11 +778,7 @@ void LRVisitor::visit(ASTFilterStep &n)
                 n.cont->accept(*this);
                 if (need_checker)
                 {
-                    std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
-                                int2string(n.getLocation().begin.column) + "),\"";
-
-                    lr_str.append(int2string(XPTY0019));
-                    lr_str.append(err);
+                    lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
                     lr_str.append(")");
                 }
             }
@@ -823,11 +808,7 @@ void LRVisitor::visit(ASTFilterStep &n)
             n.cont->accept(*this);
             if (need_checker)
             {
-                std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
-                            int2string(n.getLocation().begin.column) + "),\"";
-
-                lr_str.append(int2string(XPTY0019));
-                lr_str.append(err);
+                lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
                 lr_str.append(")");
             }
 
@@ -862,37 +843,42 @@ void LRVisitor::visit(ASTFilterStep &n)
 
     if (n.isLast)
     {
-        std::string err = std::string("\"at (") + int2string(n.getLocation().begin.line) + ":" +
-                    int2string(n.getLocation().begin.column) + "),\"";
-
-        lr_str.append(int2string(XPTY0018));
-        lr_str.append(err);
+        lr_str.append(int2string(PPSeqChecker::CHECK_MIX));
         lr_str.append(")");
     }
 }
 
+void LRVisitor::visit(ASTFLWOR &n)
+{
+//    if (n.order_by)
+//    {
+//        lr_str += "(return (order-by ";
+//
+//        for (unsigned int i = 0; i < n.fls->size(); i++)
+//        {
+//            n.fls->at(i)->accept(*this);
+//        }
+//
+//        lr_str += "(unio ";
+//
+//    }
+}
+
 void LRVisitor::visit(ASTFor &n)
 {
-    if (n.fd->isCached())
-    {
-        lr_str.append("(lreturn ");
-    }
-    else
-    {
-        lr_str.append("(return ");
-    }
-
-    n.expr->accept(*this);
-
-    lr_str.append("(fun-def (");
-    n.tv->accept(*this);
-
-    if (n.pv)
-        n.pv->accept(*this);
-    lr_str.append(")");
-
-    n.fd->accept(*this);
-    lr_str.append(")) ");
+//    lr_str.append("(return ");
+//
+//    n.expr->accept(*this);
+//
+//    lr_str.append("(fun-def (");
+//    n.tv->accept(*this);
+//
+//    if (n.pv)
+//        n.pv->accept(*this);
+//    lr_str.append(")");
+//
+//    n.fd->accept(*this);
+//    lr_str.append(")) ");
 }
 
 void LRVisitor::visit(ASTFunCall &n)
@@ -1026,16 +1012,16 @@ void LRVisitor::visit(ASTItemTest &n)
 
 void LRVisitor::visit(ASTLet &n)
 {
-    lr_str.append("(let@ ");
-
-    n.expr->accept(*this);
-
-    lr_str.append("(fun-def (");
-    n.tv->accept(*this);
-    lr_str.append(")");
-    n.fd->accept(*this);
-
-    lr_str.append("))");
+//    lr_str.append("(let@ ");
+//
+//    n.expr->accept(*this);
+//
+//    lr_str.append("(fun-def (");
+//    n.tv->accept(*this);
+//    lr_str.append(")");
+//    n.fd->accept(*this);
+//
+//    lr_str.append("))");
 }
 
 void LRVisitor::visit(ASTLibModule &n)

@@ -14,6 +14,7 @@
 #include "tr/xqp/XQueryDriver.h"
 #include "tr/xqp/XQueryModule.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/executor/xqops/PPOrderBy.h"
 
 namespace sedna
 {
@@ -23,21 +24,23 @@ namespace sedna
 
         struct parentRequest
         {
-            PPOpIn pred_cxt;
+            PPOpIn pred_cxt; // context for predicate evaluation (propagated from step)
+            size_t var_count; // number of vars bound by for-let (for order-by PPSTuple)
+            bool copy_constructor; // true, if constructed node will be deep-copied in place (see PPElementConstructor for example)
+            // NOTE: true is always safe, false allows small optimization when node is inserted in its intended place
 
             parentRequest()
             {
                 pred_cxt.op = NULL;
+                var_count = 0;
+                copy_constructor = true;
             }
         };
 
         struct childOffer
         {
-            bool use_position; // expression uses fn:position()
-            bool use_last;     // expression uses fn:last()
-            bool use_cxt;      // expression uses context
-
             PPOpIn opin;      // subtree for the expression
+            arr_of_orb_modifier orbs; // order-by modifiers
             sequence_type st;  // type for typed vars
             std::string lr_path; // for indexes, triggers, abs_path expressions
             std::string test_type; // for node-test in axis steps (type of test, e.g node, pi)
@@ -45,9 +48,6 @@ namespace sedna
 
             childOffer()
             {
-                use_position = false;
-                use_last = false;
-                use_cxt = false;
                 opin.op = NULL;
             }
         };
@@ -56,7 +56,8 @@ namespace sedna
         unsigned int param_count; // number of parameters found in param_mode
         bool isModeOrdered;     // cuurent mode of operation (global + may change on ordered-unordered expressions)
 
-        typedef std::pair<std::string, int> l2pVarInfo; // var info int_name+id
+        typedef std::pair<std::string, var_id> l2pVarInfo; // var info int_name+id
+
         std::vector<l2pVarInfo> bound_vars; // vector of variables bound in the current expression (we need only names there)
         std::vector<childOffer> offers; // offers from children go in this sequence
 
@@ -85,6 +86,12 @@ namespace sedna
         std::vector<parentRequest> pareqs; // parent requests
         const parentRequest &getParentRequest() const;
         void setParentRequest(const parentRequest &preq);
+
+        var_id getVarNum();
+
+        static operation_info createOperationInfo(const ASTNode &n);
+        static void alterOffer(childOffer &off_this, const childOffer &off);
+        static bool checkAndAddIfUnique(std::vector<l2pVarInfo> &un_vars, const l2pVarInfo &var);
 
     public:
         lr2por(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, static_context *st_cxt_) : ASTVisitor(drv_, mod_)
@@ -167,6 +174,7 @@ namespace sedna
         void visit(ASTError &n);
         void visit(ASTExtExpr &n);
         void visit(ASTFilterStep &n);
+        void visit(ASTFLWOR &n);
         void visit(ASTFor &n);
         void visit(ASTFunCall &n);
         void visit(ASTFuncDecl &n);

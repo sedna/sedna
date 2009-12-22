@@ -14,6 +14,8 @@ class ASTTextConst : public ASTNode
 public:
     ASTNode *expr; // computed construction expression
 
+    bool deep_copy; // text-node will be attached to virtual_root and copied on demand
+
 public:
     ASTTextConst(const ASTNodeCommonData &loc, ASTNode *expr_) : ASTNode(loc), expr(expr_) {}
 

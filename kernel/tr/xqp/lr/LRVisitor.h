@@ -86,6 +86,7 @@ public:
     void visit(ASTError &n);
     void visit(ASTExtExpr &n);
     void visit(ASTFilterStep &n);
+    void visit(ASTFLWOR &n);
     void visit(ASTFor &n);
     void visit(ASTFunCall &n);
     void visit(ASTFuncDecl &n);

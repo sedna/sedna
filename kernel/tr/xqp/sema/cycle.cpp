@@ -295,6 +295,24 @@ namespace sedna
         }
     }
 
+    void Cycle::visit(ASTFLWOR &n)
+    {
+        size_t count;
+
+        VisitNodesVector(n.fls, *this);
+        count = param_count;
+
+        if (n.where)
+            n.where->accept(*this);
+
+        if (n.order_by)
+            n.order_by->accept(*this);
+
+        n.ret->accept(*this);
+
+        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - count), bound_vars.end());
+    }
+
     void Cycle::visit(ASTFor &n)
     {
         unsigned int params;
@@ -308,12 +326,6 @@ namespace sedna
             n.pv->accept(*this);
 
         unsetParamMode();
-
-        params = param_count;
-
-        n.fd->accept(*this);
-
-        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
     void Cycle::visit(ASTFunCall &n)
@@ -449,10 +461,6 @@ namespace sedna
         setParamMode();
         n.tv->accept(*this);
         unsetParamMode();
-
-        n.fd->accept(*this);
-
-        bound_vars.pop_back();
     }
 
     void Cycle::visit(ASTLibModule &n)
