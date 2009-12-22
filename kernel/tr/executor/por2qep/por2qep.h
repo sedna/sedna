@@ -21,6 +21,7 @@ PPQueryEssence *build_qep(const char*  por, bool is_ast);
 qep_subtree    *build_subqep(const char*  por, bool is_ast);
 
 void delete_qep(PPQueryEssence *qep);
+void delete_qep_unmanaged(PPQueryEssence *qep);
 void delete_qep(qep_subtree *qep);
 
 db_entity *make_db_entity(scheme_list *ent_lst, bool explicit_name = true);

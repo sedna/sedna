@@ -109,20 +109,7 @@ void on_user_statement_begin(QueryType queryType,
     if (xqd->getModulesCount() > 1)
        throw USER_EXCEPTION(SE4003);
 
-    internal_auth_switch = BLOCK_AUTH_CHECK; //turn off security checkings
-
-    bool output_enabled = client->disable_output();
-    for (unsigned int i = 0; i < xqd->getModulesCount() - 1; i++)
-    {
-        on_kernel_statement_begin(i, qep_tree);
-        execute(qep_tree);
-        on_kernel_statement_end(qep_tree);
-    }
-    if(output_enabled) client->enable_output();
-
     if (xqd->getModulesCount() >= 3) clear_authmap(); // security metadata was updated - clear auth map
-
-    internal_auth_switch = DEPLOY_AUTH_CHECK;                   // turn on security checkings
 
 #ifdef SE_ENABLE_TRIGGERS
     triggers_on_statement_begin();

@@ -336,7 +336,7 @@ public:
     static int st_cxts_num;
     static int st_cxts_pos;
     // FIXME: hack
-    static static_context *unmanaged_st_cxt;
+    static std::vector<static_context *> unmanaged_st_cxts;
 
     static CollationManager collation_manager;
     /// Output method (set up in API, so it is one for all modules)
@@ -365,15 +365,21 @@ public:
         return st_cxt;
     }
 
-    static void create_unmanaged()
+    static static_context *create_unmanaged()
     {
-        unmanaged_st_cxt = se_new static_context;
+        static_context *res;
+
+        res = se_new static_context;
+
+        unmanaged_st_cxts.push_back(res);
+
+        return res;
     }
 
     static void destroy_unmanaged(dynamic_context *cxt)
     {
-        delete unmanaged_st_cxt;
-        unmanaged_st_cxt = NULL;
+//        delete unmanaged_st_cxt;
+//        unmanaged_st_cxt = NULL;
         delete cxt;
     }
 

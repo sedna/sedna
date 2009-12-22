@@ -35,7 +35,11 @@ namespace sedna
 
     void lr2por::visit(ASTAlterUser &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        qep = new PPAlterUser(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
+                              PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.psw, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTAttr &n)
@@ -702,7 +706,10 @@ namespace sedna
 
     void lr2por::visit(ASTCreateRole &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        qep = new PPCreateRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTCreateTrg &n)
@@ -805,7 +812,11 @@ namespace sedna
 
     void lr2por::visit(ASTCreateUser &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        qep = new PPCreateUser(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
+                               PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.psw, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTDDO &n)
@@ -982,7 +993,10 @@ namespace sedna
 
     void lr2por::visit(ASTDropUser &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        qep = new PPDropUser(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTElem &n)

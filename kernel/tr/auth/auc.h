@@ -55,6 +55,11 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
 
 void auth_for_rename_collection(const char* old_name, const char* new_name);
 
+void auth_for_create_user(const char* name, const char* passwd);
+void auth_for_alter_user(const char* name, const char* passwd);
+void auth_for_drop_user(const char* name);
+void auth_for_create_role(const char* name);
+
 void clear_authmap();
 
 void clear_current_statement_authmap();

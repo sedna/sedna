@@ -17,6 +17,7 @@
 #include "tr/executor/root/PPBulkLoad.h"
 #include "tr/executor/root/PPLoadModule.h"
 #include "tr/executor/root/PPCreateIndex.h"
+#include "tr/executor/root/PPSecurity.h"
 #include "tr/executor/root/PPDropIndex.h"
 #include "tr/executor/root/PPCreateMetadata.h"
 #include "tr/executor/root/PPDropMetadata.h"

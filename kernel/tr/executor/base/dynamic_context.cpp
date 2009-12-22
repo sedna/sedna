@@ -11,13 +11,13 @@
 #include "tr/executor/base/xs_helper.h"
 
 
-producer::producer() : type(pt_not_defined), 
-                 s(NULL), 
-                 op(NULL), 
-                 svc(NULL), 
-                 cvc(NULL), 
-                 tuple_pos(0), 
-                 t(NULL) 
+producer::producer() : type(pt_not_defined),
+                 s(NULL),
+                 op(NULL),
+                 svc(NULL),
+                 cvc(NULL),
+                 tuple_pos(0),
+                 t(NULL)
 {
 }
 producer::~producer()
@@ -78,7 +78,7 @@ static_context::static_context()
 
     /////////////////////////////////////////////////////////////////////////
     /// Set codepoint collation as the default one.
-    /// DO NOT call static_context::set_default_collation() here - 
+    /// DO NOT call static_context::set_default_collation() here -
     /// it is too complex to be called from constructor.
     const char* codepoint_collation_uri = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     default_collation_uri = se_new char[strlen(codepoint_collation_uri) + 1];
@@ -87,7 +87,7 @@ static_context::static_context()
     /////////////////////////////////////////////////////////////////////////
 }
 
-static_context::~static_context() 
+static_context::~static_context()
 {
     std::vector<xptr>::iterator cit=temp_docs.begin();
     while (cit!=temp_docs.end())
@@ -142,7 +142,7 @@ xmlns_ptr static_context::get_ns_pair(const char* prefix,const char* uri)
         const char* ur=(my_strcmp(uri,"http://www.w3.org/XML/1998/namespace")==0)?NULL:uri;
         xmlns_ptr res=xmlns_touch(prefix,ur);
         ns_lib[str_pair(uri,pref)]=res;
-        return res;  
+        return res;
     }
 }
 
@@ -207,7 +207,7 @@ xmlns_ptr static_context::get_xmlns_by_prefix(const char *_prefix, int count)
     std::string prefix(_prefix, count);
     if (prefix.size()==0)
     {
-        return def_ns.back();       
+        return def_ns.back();
     }
     else
     {
@@ -228,7 +228,7 @@ void static_context::set_base_uri(const char* _base_uri_)
     Uri::check_constraints(_base_uri_, &valid, &nfo);
     if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog base-uri property contains invalid URI.");
     ///////////////////////////////////////////////////////////////////////
-    
+
     ///////////////////////////////////////////////////////////////////////
     /// Delete old value if any.
     if(base_uri != NULL) delete base_uri;
@@ -236,7 +236,7 @@ void static_context::set_base_uri(const char* _base_uri_)
 
     ///////////////////////////////////////////////////////////////////////
     /// Normalize URI if needed and create new value.
-    if(!nfo.normalized) 
+    if(!nfo.normalized)
     {
         stmt_str_buf result;
         collapse_string_normalization(_base_uri_, result);
@@ -256,7 +256,7 @@ void static_context::set_base_uri(const char* _base_uri_)
 void static_context::set_default_collation_uri(const char* _default_collation_uri_)
 {
     tuple_cell tc;
-    
+
     ///////////////////////////////////////////////////////////////////////
     /// Check constraints on URILiteral.
     bool valid;
@@ -264,15 +264,15 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     Uri::check_constraints(_default_collation_uri_, &valid, &nfo);
     if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog default-collation property contains invalid URI.");
     ///////////////////////////////////////////////////////////////////////
-    
-    if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL) 
+
+    if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL)
         throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (it could not be relative while base-uri is not defined).");
-    
+
     const char* normalized_value = _default_collation_uri_;
 
     ///////////////////////////////////////////////////////////////////////
     /// Normalize URI if needed.
-    if(!nfo.normalized) 
+    if(!nfo.normalized)
     {
         stmt_str_buf result;
         collapse_string_normalization(_default_collation_uri_, result);
@@ -300,9 +300,9 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
        }
     }
     ///////////////////////////////////////////////////////////////////////
-    
+
     default_collation_handler = dynamic_context::collation_manager.get_collation_handler(normalized_value);
-    if(default_collation_handler == NULL) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");            
+    if(default_collation_handler == NULL) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");
 
     if (default_collation_uri != NULL) delete default_collation_uri;
     default_collation_uri = se_new char[strlen(normalized_value) + 1];
@@ -312,34 +312,34 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
 
 int static_context::get_collation(const char *uri, /* out */ CollationHandler** handler)
 {
-    if ( !uri ) 
+    if ( !uri )
     {
         *handler = get_default_collation();
         return 0;
     }
-        
+
     /// 1. Check constraints on the given URI.
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(uri, &valid, &nfo);
     if ( !valid ) return COLLATION_INVALID_URI;  // throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is not valid.");
-    
-    if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL) 
+
+    if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL)
         return COLLATION_RESOLVE_ERR;
         // throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri property is not defined.");
 
     tuple_cell tc;
     const char *normalized_value = uri;
-    
+
     /// 2. Normalize URI if needed.
-    if(!nfo.normalized) 
+    if(!nfo.normalized)
     {
         stmt_str_buf result;
         collapse_string_normalization(normalized_value, result);
         tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
         normalized_value = tc.get_str_mem();
     }
-    
+
 
     /// 3. And try to resolve it over base-uri property if it is relative.
     if(nfo.type == Uri::UT_RELATIVE)
@@ -358,7 +358,7 @@ int static_context::get_collation(const char *uri, /* out */ CollationHandler** 
            throw;
        }
     }
-    
+
     /// 4. Get handler from the resolved and normalized value.
     *handler = dynamic_context::collation_manager.get_collation_handler(normalized_value);
     if (!*handler) return COLLATION_MISS; // throw XQUERY_EXCEPTION(FOCH0002);
@@ -373,10 +373,10 @@ int static_context::get_collation(const char *uri, /* out */ CollationHandler** 
  ******************************************************************************/
 
 /// !!! Destructor must be here, not in 'h' file (I.S.)
-function_declaration::~function_declaration() 
-{ 
-    delete [] args; 
-    delete op; 
+function_declaration::~function_declaration()
+{
+    delete [] args;
+    delete op;
 }
 
 
@@ -391,7 +391,7 @@ static_context **dynamic_context::st_cxts = NULL;
 int dynamic_context::st_cxts_num = 0;
 int dynamic_context::st_cxts_pos = 0;
 
-static_context *dynamic_context::unmanaged_st_cxt = NULL;
+std::vector<static_context *> dynamic_context::unmanaged_st_cxts;
 
 CollationManager dynamic_context::collation_manager;
 se_output_method dynamic_context::output_method = se_output_method_xml;
@@ -438,6 +438,11 @@ void dynamic_context::static_clear()
     st_cxts_pos = 0;
     delete [] st_cxts;
     st_cxts = NULL;
+
+    for (size_t i = 0; i < unmanaged_st_cxts.size(); i++)
+        delete unmanaged_st_cxts[i];
+
+    unmanaged_st_cxts.clear();
 }
 
 
@@ -461,7 +466,7 @@ void dynamic_context::set_session_option(se_session_option type, const void* s, 
 {
     switch (type)
     {
-        case se_debug_mode: 
+        case se_debug_mode:
             stack_trace_debug = *(int*)s;
             break;
         default:

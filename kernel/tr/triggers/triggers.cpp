@@ -809,7 +809,7 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
         catch(SednaUserException &e)
         {
             if (is_qep_built)
-                delete_qep(qep_tree);
+                delete_qep_unmanaged(qep_tree);
             if (is_subqep_built)
                 delete_qep(qep_subtree);
             if(output_enabled)
