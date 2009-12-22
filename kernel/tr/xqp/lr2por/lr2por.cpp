@@ -124,6 +124,8 @@ namespace sedna
 
         if (n.cont)
         {
+            // we wont to propagate pers_abspath property here
+            setParentRequest(getParentRequest());
             n.cont->accept(*this);
             off_cont = getOffer();
         }
@@ -133,7 +135,16 @@ namespace sedna
         }
 
         // look if we can prolong PPAbsPath
-        if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && n.cont)
+        if (!n.cont && getParentRequest().pers_abspath)
+        {
+            db_entity *dbe = new db_entity;
+            dbe->type = dbe_document;
+            dbe->name = new char[6];
+            strcpy(dbe->name, "dummy");
+            off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), lr2PathExpr(dyn_cxt, "()", pe_local_aspace), counted_ptr<db_entity>(dbe)), 1);
+        }
+
+        if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && off_cont.opin.op)
         {
             if (dynamic_cast<PPAbsPath *>(off_cont.opin.op))
             {
@@ -160,7 +171,9 @@ namespace sedna
 
                      if (off_cont.lr_path != "()")
                      {
-                         PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
+                         PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(),
+                                 getParentRequest().pers_abspath ? pe_catalog_aspace : pe_local_aspace);
+
                          apa->setPathExpr(pe);
                      }
                  }
@@ -533,6 +546,54 @@ namespace sedna
 
     void lr2por::visit(ASTCreateIndex &n)
     {
+        childOffer off_name, off_path, off_type;
+        PPAbsPath *pa;
+        PathExpr *onp, *byp;
+        xmlscm_type xtype;
+        counted_ptr<db_entity> dbe;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.name->accept(*this);
+        off_name = getOffer();
+
+        n.on_path->accept(*this);
+        off_path = getOffer();
+
+        // on-path will definitely be PPAbsPath
+        pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
+        U_ASSERT(pa);
+
+        onp = pa->getPathExpr();
+        dbe = pa->getDocColl();
+        delete pa; // we don't need it anymore (note that this won't destroy onp)
+        off_path.opin.op = NULL;
+
+        // we must ensure "abs-pathness" of by-path
+        // now, I do it via pers_abspath property; another solution is to insert ASTFunCall (fn:document) in the tree
+        // however, I don't like the idea of messing up with ast-related info; it just seems wrong to me (AK)
+        parentRequest req;
+        req.pers_abspath = true;
+        setParentRequest(req);
+        n.by_path->accept(*this);
+        off_path = getOffer();
+
+        // now by-path will definitely be PPAbsPath
+        pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
+        U_ASSERT(pa);
+
+        byp = pa->getPathExpr();
+        delete pa; // we don't need it anymore (note that this won't destroy on_path)
+        off_path.opin.op = NULL;
+
+        n.type->accept(*this);
+        off_type = getOffer();
+        xtype = off_type.st.type.info.single_type;
+
+        // set context
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPCreateIndex(onp, byp, xtype, dbe, off_name.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTCreateRole &n)
@@ -813,7 +874,17 @@ namespace sedna
             off_cont = getOffer();
         }
 
-        if (n.cont) // we need to close abs-path if we've got it as a context
+        // look if we can create PPAbsPath
+        if (!n.cont && getParentRequest().pers_abspath)
+        {
+            db_entity *dbe = new db_entity;
+            dbe->type = dbe_document;
+            dbe->name = new char[6];
+            strcpy(dbe->name, "dummy");
+            off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), lr2PathExpr(dyn_cxt, "()", pe_local_aspace), counted_ptr<db_entity>(dbe)), 1);
+        }
+
+        if (n.cont && (n.expr || n.preds)) // we need to close abs-path if we've got it as a context (exception, "." - expression)
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
                  if (off_cont.lr_path != "")
@@ -837,7 +908,7 @@ namespace sedna
         // special case: just '.'
         if (!n.preds && !n.expr)
         {
-            if (n.cont)
+            if (off_cont.opin.op)
                 off_this.opin = off_cont.opin;
             else
                 off_this.opin = getContextOffer(oi).opin;
@@ -1155,7 +1226,7 @@ namespace sedna
 
                 if (name && name->type != ASTLit::STRING)
                 {
-                    drv->error(n.getLocation(), XPTY0004, "first argument to fn:document should be of xs:string");
+                    drv->error(n.getLocation(), XPTY0004, "argument to fn:collection should be of xs:string");
                 }
 
                 PathExpr *path_expr = lr2PathExpr(dyn_cxt, "()", pe_local_aspace);

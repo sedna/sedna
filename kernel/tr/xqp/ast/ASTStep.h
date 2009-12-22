@@ -152,7 +152,10 @@ public:
     ASTFilterStep(const ASTNodeCommonData &loc, ASTNode *expr_, ASTNodesVector *preds_ = NULL) :
         ASTStep(loc, preds_),
         expr(expr_)
-    {}
+    {
+        use_last = false;
+        use_pos = false;
+    }
 
     ~ASTFilterStep();
 
