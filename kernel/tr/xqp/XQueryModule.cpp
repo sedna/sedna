@@ -110,13 +110,18 @@ namespace sedna
         return lr.getResult();
     }
 
-    std::string XQueryModule::getIR()
+    std::string XQueryModule::getIR(ASTNode *ast)
     {
         IntVisitor iv(drv, this);
 
         ast->accept(iv);
 
         return iv.getResult();
+    }
+
+    std::string XQueryModule::getIR()
+    {
+        return getIR(ast);
     }
 
     std::string XQueryModule::getModuleURI()

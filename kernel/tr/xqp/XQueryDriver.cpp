@@ -247,14 +247,9 @@ namespace sedna
             mods[i]->doLReturnAnalysis();
     }
 
-    StringVector XQueryDriver::getLRRepresentation()
+    std::string XQueryDriver::getLRRepresentation(size_t mod_ind)
     {
-        StringVector vec;
-
-        for (unsigned int i = 0; i < mods.size(); i++)
-            vec.push_back(mods[i]->getLR());
-
-        return vec;
+        return mods[mod_ind]->getLR();
     }
 
     std::string XQueryDriver::getLRForModules(const XQueryModule *mod)
@@ -312,14 +307,9 @@ namespace sedna
         return res;
     }
 
-    StringVector XQueryDriver::getIRRepresentation()
+    std::string XQueryDriver::getIRRepresentation(size_t ind_mod)
     {
-        StringVector vec;
-
-        for (unsigned int i = 0; i < mods.size(); i++)
-            vec.push_back(mods[i]->getIR());
-
-        return vec;
+        return mods[ind_mod]->getIR();
     }
 
     void XQueryDriver::initXQueryInfo()
@@ -574,6 +564,6 @@ namespace sedna
     {
         U_ASSERT(xsTypes.find(type) != xsTypes.end());
 
-        return xsTypes[type].type;
+        return xsTypes[type].xtype;
     }
 }

@@ -47,22 +47,22 @@ trigger_granularity symb2trigger_granularity(const char* str)
 	else
 		throw USER_EXCEPTION2(SE1071, "unknown trigger granularity");
 }
-    
+
 t_item int2t_item(int type)
 {
     if(type == 0)
         return element;
     else if(type == 1)
         return attribute;
-    else 
+    else
 		throw USER_EXCEPTION2(SE1071, "unknown trigger inserting type parameter value");
 }
 
-PPCreateTrigger::PPCreateTrigger(char* _time_,
-                                 char* _event_,
+PPCreateTrigger::PPCreateTrigger(const char* _time_,
+                                 const char* _event_,
                                  counted_ptr<db_entity> _db_ent_,
                                  PathExpr *_trigger_path_,
-                                 char* _granularity_,
+                                 const char* _granularity_,
                                  scheme_list* _action_,
                                  PPOpIn _trigger_name_,
     						 	 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
@@ -77,13 +77,13 @@ PPCreateTrigger::PPCreateTrigger(char* _time_,
     path_to_parent = NULL;
 }
 
-PPCreateTrigger::PPCreateTrigger(char* _time_,
-                                 char* _event_,
+PPCreateTrigger::PPCreateTrigger(const char* _time_,
+                                 const char* _event_,
                                  counted_ptr<db_entity> _db_ent_,
                                  PathExpr *_trigger_path_,
-                                 char* _granularity_,
+                                 const char* _granularity_,
                                  scheme_list* _action_,
-							     char* _inserting_name_,
+							     const char* _inserting_name_,
  			   					 int _inserting_type_,
 			                     PathExpr *_path_to_parent_,
                                  PPOpIn _trigger_name_,
@@ -97,7 +97,10 @@ PPCreateTrigger::PPCreateTrigger(char* _time_,
 	time   = symb2trigger_time(_time_);
     event  = symb2trigger_event(_event_);
     gran   = symb2trigger_granularity(_granularity_);
-	innode.name = _inserting_name_;
+	innode.name = (char *)malloc(strlen(_inserting_name_) + 1);
+	if (!innode.name)
+	    throw SYSTEM_EXCEPTION("out of memory!");
+	strcpy(innode.name, _inserting_name_);
     innode.type = int2t_item(_inserting_type_);
 }
 
@@ -105,7 +108,7 @@ PPCreateTrigger::~PPCreateTrigger()
 {
     delete trigger_name.op;
     trigger_name.op = NULL;
-    
+
     delete cxt;
     cxt = NULL;
 }
@@ -138,7 +141,7 @@ void PPCreateTrigger::execute()
 
     trigger_name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_trigger(tc.get_str_mem());

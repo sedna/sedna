@@ -40,21 +40,21 @@ public:
     void close();
     void execute();
 
-    PPCreateTrigger(char* _time_,
-                    char* _event_,
+    PPCreateTrigger(const char* _time_,
+                    const char* _event_,
                     counted_ptr<db_entity> _db_ent_,
                     PathExpr *_trigger_path_,
-                    char* _granularity_,
+                    const char* _granularity_,
                     scheme_list* _action_,
                     PPOpIn _trigger_name_,
                     dynamic_context *_cxt_);
-    PPCreateTrigger(char* _time_,
-                    char* _event_,
+    PPCreateTrigger(const char* _time_,
+                    const char* _event_,
                     counted_ptr<db_entity> _db_ent_,
                     PathExpr *_trigger_path_,
-                    char* _granularity_,
+                    const char* _granularity_,
                     scheme_list* _action_,
-                    char* _inserting_name_,
+                    const char* _inserting_name_,
                     int _inserting_type,
                     PathExpr *_path_to_parent_,
                     PPOpIn _trigger_name_,

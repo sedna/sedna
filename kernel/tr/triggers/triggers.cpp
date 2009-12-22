@@ -39,7 +39,7 @@ void run_triggers(bool isOn)
 xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
 {
    	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return new_var;
-    
+
 	//if insert while constructor
 	if (IS_TMP_BLOCK(where_var)) return new_var;
 
@@ -51,7 +51,7 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
 
     //if the node is not element or attribute - return
    	if((node_type!=element)&&(node_type!=attribute))
-       	return new_var;        
+       	return new_var;
 
 	t_triggers_set treated_triggers;
     schema_node_cptr scm_parent_node = XNULL;
@@ -88,7 +88,7 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var, schema_node_cptr 
 	if (IS_TMP_BLOCK(where_var)) return;
 
     if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
-	
+
     CHECKP(new_var);
 	scm_node = GETSCHEMENODEX(new_var);
     //if the node is not element or attribute - return
@@ -98,7 +98,7 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var, schema_node_cptr 
 
 	// care about after-statement triggers
     find_triggers_for_node(scm_node, TRIGGER_INSERT_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
-    
+
 	t_triggers_set treated_triggers;
     trigger_cell_cptr trc = XNULL;
     while(true)
@@ -120,7 +120,7 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
     node_triggers_map element_fired_triggers;
     typedef std::pair< schema_node_xptr, std::vector<trigger_cell_xptr> > mapPair;
     std::pair< node_triggers_map::iterator, bool > mapRes;
-    
+
     /*1. Evalute triggers for this node if there are some in fired_triggers map*/
     node_triggers_map::iterator mapIter;
     trigger_cell_cptr trc = XNULL;
@@ -132,16 +132,16 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
             trc = mapIter->second.at(i);
             if(trc->execute_trigger_action(XNULL, node, parent) == XNULL) return XNULL;
         }
-       
+
     // if the node is attribute - it has no children to process
     if (GETTYPE(scm_node) == attribute) return node;
-    
+
     /*2. Find all fired triggers for all the children of the node (attribute_fired_triggers and element_fired_triggers)*/
     sc_ref_item* scm_child = scm_node->children.first;
     while(scm_child !=NULL)
     {
         cat_list<trigger_cell_xptr>::item* scm_trc = scm_child->object.snode->trigger_list.first;
-        if(scm_trc!=NULL) 
+        if(scm_trc!=NULL)
         {
             std::vector<trigger_cell_xptr> triggers_vec;
             if(scm_child->object.snode->type == attribute)
@@ -180,7 +180,7 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
 xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr scm_node)
 {
    	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return old_var;
-    
+
    	if (IS_TMP_BLOCK(old_var)) return old_var;
 
 //    node_triggers_map fired_triggers_for_this_node;
@@ -193,7 +193,7 @@ xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr
 //    std::vector<trigger_cell*> triggers_vec;
 //    std::pair< node_triggers_map::iterator, bool > mapRes;
 //    typedef std::pair< schema_node*, std::vector<trigger_cell*> > mapPair;
-    
+
    	t_triggers_set treated_triggers;
     trigger_cell_cptr trc = XNULL;
     while(true)
@@ -227,7 +227,7 @@ xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr
 			(scm_trc->object->trigger_granularity == TRIGGER_FOR_EACH_NODE))
             mapRes.first->second.push_back( scm_trc->trigger );
         scm_trc=scm_trc->next;
-    }       */ 
+    }       */
 }
 void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr scm_node)
 {
@@ -235,7 +235,7 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr 
 
 	// care about after-statement triggers
     find_triggers_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
-    
+
     if (old_var==XNULL) return; //old_var==XNULL if there are no for-each-node-after-triggers
     CHECKP(old_var);
 
@@ -262,11 +262,11 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr 
 xptr apply_before_replace_triggers(xptr new_node, xptr old_node, schema_node_cptr scm_node)
 {
    	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return old_node;
-    
+
 	CHECKP(old_node);
 //    cat_list<trigger_cell_xptr>::item* scm_trc = scm_node->trigger_list.first;
     xptr parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
-    
+
    	t_triggers_set treated_triggers;
     trigger_cell_cptr trc = XNULL;
     while(true)
@@ -299,7 +299,7 @@ void apply_after_replace_triggers(xptr new_node, xptr old_node, xptr where_var, 
         return;
 
 //    cat_list<trigger_cell_xptr>::item* scm_trc = scm_node->trigger_list.first;
-    
+
    	t_triggers_set treated_triggers;
     trigger_cell_cptr trc = XNULL;
     while(true)
@@ -327,7 +327,7 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
 
     //if there are no statement level triggers at all - return
     if(!has_statement_triggers(TRIGGER_INSERT_EVENT, TRIGGER_BEFORE)) return;
-    
+
     it1=target_seq->begin();
     it2=upd_seq->begin();
 
@@ -342,7 +342,7 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
         extended_nodes.insert(GETSCHEMENODEX(node));
         it1++;
     }
-    
+
     //2. creating extender_nodes vector
     while(it2!=upd_seq->end())
     {
@@ -390,7 +390,7 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
     schema_nodes_triggers_map docs_statement_triggers;
     schema_nodes_triggers_map::iterator statement_triggers_iter;
   	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
-    
+
     //if there are no statement level triggers at all - return
     if(!has_statement_triggers(TRIGGER_DELETE_EVENT, TRIGGER_BEFORE)) return;
 
@@ -448,7 +448,7 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
             }
         }
     }
-    
+
     return;
 }
 void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq, bool target_seq_direct)
@@ -461,10 +461,10 @@ void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq,
     std::set<trigger_cell_xptr>::iterator set_triggers_iter;
 
    	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
-    
+
     //if there are no statement level triggers at all - return
     if(!has_statement_triggers(TRIGGER_REPLACE_EVENT, TRIGGER_BEFORE)) return;
-	
+
 	//1. create a set of schema nodes
    	it1=target_seq->begin();
     while(it1!=target_seq->end())
@@ -487,19 +487,19 @@ void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq,
 void apply_after_statement_triggers()
 {
    	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
-    
+
     if(after_statement_triggers.size()==0) return;
-    
+
     // clear global triggers set to avoid triggers evaluation inside this evaluation
     t_triggers_set local_after_triggers;
     for(t_triggers_set::iterator i=after_statement_triggers.begin(); i!=after_statement_triggers.end(); i++)
         local_after_triggers.insert(*i);
-        
+
     after_statement_triggers.clear();
-    
+
     // clear updates trackings - after statement triggers are evaluated out of the update operation!
     clear_nested_updates_track_map();
-    
+
     for(t_triggers_set::iterator i=local_after_triggers.begin(); i!=local_after_triggers.end(); i++)
     {
         ((trigger_cell_xptr)(*i))->execute_trigger_action(XNULL, XNULL, XNULL);
@@ -515,37 +515,37 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
                  if (!isTriggersOn) return new_var;
                  return apply_before_insert_triggers(new_var, where_var);
 //                  return triggers_test(new_var, where_var, new_name, new_type);
-                  
+
              case TRIGGER_DELETE_EVENT:
                  if (!isTriggersOn) return old_var;
                   return apply_before_delete_triggers(old_var, where_var, scm_node);
-                  
+
              case TRIGGER_REPLACE_EVENT:
                  if (!isTriggersOn) return new_var;
                  return apply_before_replace_triggers(new_var, old_var, scm_node);
-             
-             default: 
+
+             default:
                   throw SYSTEM_EXCEPTION("Bad trigger event");
         }
-    
+
         case TRIGGER_AFTER:
           switch (event){
              case TRIGGER_INSERT_EVENT:
                  if (!isTriggersOn) return XNULL;
                  apply_after_insert_triggers(new_var, where_var, scm_node);
                  return XNULL;
-                  
+
              case TRIGGER_DELETE_EVENT:
                  if (!isTriggersOn) return XNULL;
                  apply_after_delete_triggers(old_var, where_var, scm_node);
                  return XNULL;
-                  
+
              case TRIGGER_REPLACE_EVENT:
                  if (!isTriggersOn) return XNULL;
                  apply_after_replace_triggers(new_var, old_var, where_var, scm_node);
                  return XNULL;
-                  
-             default: 
+
+             default:
                   throw SYSTEM_EXCEPTION("Bad trigger event");
         }
         default:
@@ -569,7 +569,7 @@ void apply_per_statement_triggers(xptr_sequence* target_seq, bool target_seq_dir
              case TRIGGER_REPLACE_EVENT:
                  apply_before_replace_for_each_statement_triggers(target_seq, target_seq_direct);
 				 return;
-             default: 
+             default:
                 throw SYSTEM_EXCEPTION("Bad trigger event");
         }
 
@@ -584,7 +584,7 @@ void apply_per_statement_triggers(xptr_sequence* target_seq, bool target_seq_dir
              case TRIGGER_REPLACE_EVENT:
                  apply_after_statement_triggers();
                  return;
-             default: 
+             default:
                   throw SYSTEM_EXCEPTION("Bad trigger event");
         }
         default:
@@ -594,16 +594,16 @@ void apply_per_statement_triggers(xptr_sequence* target_seq, bool target_seq_dir
 
 
 trigger_cell_xptr create_trigger (
-            enum trigger_time tr_time, 
-            enum trigger_event tr_event, 
-            PathExpr *trigger_path,  
-            enum trigger_granularity tr_gran, 
-            scheme_list* action, 
-            inserting_node innode, 
-            PathExpr *path_to_parent, 
-            doc_schema_node_xptr schemaroot, 
-            const char * trigger_title, 
-            const char* doc_name, 
+            enum trigger_time tr_time,
+            enum trigger_event tr_event,
+            PathExpr *trigger_path,
+            enum trigger_granularity tr_gran,
+            scheme_list* action,
+            inserting_node innode,
+            PathExpr *path_to_parent,
+            doc_schema_node_xptr schemaroot,
+            const char * trigger_title,
+            const char* doc_name,
             bool is_doc)
 {
     // I. Create and fill new trigger cell
@@ -636,19 +636,22 @@ trigger_cell_xptr create_trigger (
         trigger_action_cell* trac = trc->trigger_action;
         for(int i = 0; i < action->size(); i++)
         {
-            if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
+            trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
+            strcpy(trac->statement,action->at(i).internal.str);
+
+            /*if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
             {
                 trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
                 strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
                 trac->cxt_size = atoi(action->at(i).internal.str+35);
     // FIXME cxt_size for trigger statements must be extracted in scheme part
-    //            trac->cxt_size = atoi(action->at(i+1).internal.num); 
+    //            trac->cxt_size = atoi(action->at(i+1).internal.num);
             }
             else  //this is update
             {
                 trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
                 strcpy(trac->statement,action->at(i).internal.str);
-            }
+            }*/
             if(i==action->size()-1)
                 trac->next = NULL;
             else
@@ -688,11 +691,11 @@ trigger_cell_xptr create_trigger (
     //III. For each schema node found (sn_obj)
     std::vector<xptr> start_nodes;
     for (int i = 0; i < sobj.size(); i++)
-    {   
+    {
         sobj[i].modify()->trigger_list.add(trc.ptr());
         RECOVERY_CRASH;
     }
-        
+
     up_concurrent_micro_ops_number();
 
     return trc.ptr();
@@ -706,16 +709,16 @@ void delete_trigger (const char *trigger_title)
     {
         down_concurrent_micro_ops_number();
         hl_logical_log_trigger(
-            trc->trigger_time, 
-            trc->trigger_event, 
-            trc->trigger_path, 
-            trc->trigger_granularity, 
-            trc->trigger_action, 
-            trc->innode, 
-            trc->path_to_parent, 
-            trc->trigger_title, 
-            trc->doc_name, 
-            trc->is_doc, 
+            trc->trigger_time,
+            trc->trigger_event,
+            trc->trigger_path,
+            trc->trigger_granularity,
+            trc->trigger_action,
+            trc->innode,
+            trc->path_to_parent,
+            trc->trigger_title,
+            trc->doc_name,
+            trc->is_doc,
             false);
 
         trc->drop();
@@ -734,12 +737,12 @@ trigger_cell_xptr find_trigger(const char* title)
 
     if (!trc.found())
     {
-//        trigger_sem_up();   
+//        trigger_sem_up();
         return XNULL;
     }
     else
     {
-//        trigger_sem_up();   
+//        trigger_sem_up();
         return trc.ptr();
     }
 }
@@ -750,9 +753,9 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
     PPQueryEssence* qep_tree = NULL;
     qep_subtree* qep_subtree = NULL;
 
-    bool is_qep_opened    = false; 
-    bool is_subqep_opened = false; 
-    bool is_qep_built     = false; 
+    bool is_qep_opened    = false;
+    bool is_subqep_opened = false;
+    bool is_qep_built     = false;
     bool is_subqep_built  = false;
     bool output_enabled   = tr_globals::client->disable_output();
 
@@ -797,17 +800,17 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
                 trac = trac->next;
             }
         }
-        catch(SednaUserException &e) 
+        catch(SednaUserException &e)
         {
             if (is_qep_built)
                 delete_qep(qep_tree);
             if (is_subqep_built)
                 delete_qep(qep_subtree);
-            if(output_enabled) 
+            if(output_enabled)
                 tr_globals::client->enable_output();
             throw e;
         }
-        
+
         mapPair = built_trigger_actions.insert(trigger_actions_pair(std::string(trigger_title), built_trigger_actions_vec));
         mapIter = mapPair.first;
     }
@@ -845,11 +848,11 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
           res_xptr = t.cells[0].get_node();
 
       // retrieve all items to make the qep_subtree usable next time
-      while(!t.is_eos()) 
+      while(!t.is_eos())
           qep_subtree->tree.op->next(t);
     }
     else res_xptr = XNULL;
-    
+
     if(output_enabled) tr_globals::client->enable_output();
 
     current_nesting_level--;

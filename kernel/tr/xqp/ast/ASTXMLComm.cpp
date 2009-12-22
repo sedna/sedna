@@ -29,13 +29,18 @@ ASTNode *ASTXMLComm::createNode(scheme_list &sl)
 {
     ASTNodeCommonData cd;
     std::string *cont = NULL;
+    ASTXMLComm *res;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_BOOL);
 
     cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     cont = new std::string(sl[2].internal.str);
 
-    return new ASTXMLComm(cd, cont);
+    res = new ASTXMLComm(cd, cont);
+
+    res->deep_copy = sl[3].internal.b;
+
+    return res;
 }
 
 void ASTXMLComm::modifyChild(const ASTNode *oldc, ASTNode *newc)

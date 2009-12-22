@@ -104,7 +104,7 @@ void command_line_client::release()
     }
     if (nul_s != NULL) {
         delete nul_s;
-        nul_s = NULL; 
+        nul_s = NULL;
     }
     cur_s = NULL;
 }
@@ -125,9 +125,9 @@ void command_line_client::read_msg(msg_struct *msg)
         if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, env_buf, 8, __sys_call_error) != 0)
         {
             //init output res
-            if (string(tr_globals::output_file) == "STDOUT") 
+            if (string(tr_globals::output_file) == "STDOUT")
                 res_os = stdout;
-            else if ((res_os = fopen(tr_globals::output_file, "w")) == NULL) 
+            else if ((res_os = fopen(tr_globals::output_file, "w")) == NULL)
                 throw USER_EXCEPTION2(SE4040, tr_globals::output_file);
 
             //read batch text in string
@@ -136,21 +136,21 @@ void command_line_client::read_msg(msg_struct *msg)
                 throw USER_EXCEPTION2(SE4042, tr_globals::filename);
 
             while(!feof(f)){
-                static const size_t rdChunkSz = 0x10000; /* 64 KB */ 
+                static const size_t rdChunkSz = 0x10000; /* 64 KB */
                 size_t rdSz = 0, curSz = 0;
 
                 curSz = plain_batch_text.size();
                 plain_batch_text.resize(curSz + rdChunkSz);
-                rdSz = fread(&plain_batch_text[curSz], 1, rdChunkSz, f); /* fread NEVER return -1 on error */ 
+                rdSz = fread(&plain_batch_text[curSz], 1, rdChunkSz, f); /* fread NEVER return -1 on error */
                 plain_batch_text.resize(curSz + rdSz);
             }
         }
-        else 
+        else
         {
             plain_batch_text = string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
             if(strcmp(env_buf, "2") == 0) // database is created with db-security option != off => we need to load db_security_data
             {
-                string path_to_security_file; 
+                string path_to_security_file;
                 char path_buf[U_MAX_PATH + 32];
                 path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 
@@ -173,8 +173,9 @@ void command_line_client::read_msg(msg_struct *msg)
             }
         }
 
-        std::string dummy;
-        stmnts_array = parse_batch(tr_globals::query_type, plain_batch_text.c_str(), &dummy);
+        //std::string dummy;
+        //stmnts_array = parse_batch(tr_globals::query_type, plain_batch_text.c_str(), &dummy);
+        stmnts_array.push_back(plain_batch_text);
 
         //add 'coomit' command if there is not end of transaction (coommit or rollback) command
         if (stmnts_array.back().substr(0, 8).find("rollback") == string::npos &&
@@ -208,7 +209,7 @@ void command_line_client::read_msg(msg_struct *msg)
 
         cl_cmds.push_front(cmd);
 
-        //put queries to stack   
+        //put queries to stack
         for (int i=stmnts_array.size()-1; i>=0; i--)
         {
             cmd.type = se_Execute;
@@ -233,10 +234,12 @@ char* command_line_client::get_query_string(msg_struct *msg)
 
 QueryType command_line_client::get_query_type()
 {
-    if (tr_globals::query_type == TL_POR) 
-        return TL_POR;
-    else 
-        return TL_ForAuth;
+    return TL_XQuery;
+
+//    if (tr_globals::query_type == TL_POR)
+//        return TL_POR;
+//    else
+//        return TL_ForAuth;
 }
 
 void command_line_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)
@@ -313,11 +316,11 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
             {
                 cf_vec->at(j).f = NULL;
                 throw USER_EXCEPTION(SE3020);
-            }  
-            cf_vec->at(j).f = NULL;  
+            }
+            cf_vec->at(j).f = NULL;
         }
         throw;
-    } //try       
+    } //try
 
 }
 
@@ -359,7 +362,7 @@ void command_line_client::respond_to_client(int instruction)
         break;
     default:
         d_printf2("\nUnknown instruction = %d\n", instruction);
-        break; 
+        break;
     }
 }
 
@@ -379,7 +382,7 @@ void command_line_client::authentication_result(bool res, const string& body)
     if (res)
         d_printf1("\nAuthentication is passed successfully\n");
     else
-        d_printf2("\nAuthentication failed: %s\n", body.c_str()); 
+        d_printf2("\nAuthentication failed: %s\n", body.c_str());
 }
 
 
@@ -467,12 +470,12 @@ void command_line_client::write_user_query_to_log()
 
 }
 
-se_ostream* 
-command_line_client::get_debug_ostream() { 
+se_ostream*
+command_line_client::get_debug_ostream() {
 
-    if (NULL == dbg_s || recreate_debug_stream) 
+    if (NULL == dbg_s || recreate_debug_stream)
     {
-        if(dbg_s != NULL) 
+        if(dbg_s != NULL)
         {
             delete dbg_s;
             dbg_s = NULL;
@@ -490,7 +493,7 @@ command_line_client::disable_output() {
     return res;
 }
 
-void 
+void
 command_line_client::user_statement_begin()
 {
     enable_output();

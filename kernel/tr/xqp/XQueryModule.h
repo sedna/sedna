@@ -5,7 +5,6 @@
 #include <string>
 
 #include "XQFunction.h"
-#include "XQuerytoLR.h"
 #include "XQCommon.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/xqops/PPVariable.h"
@@ -60,6 +59,8 @@ namespace sedna
         void doPostSemanticAnalysis(const XQVariablesInfo &libVars, bool check_cycles); // unresolved variables checking and cycle lookup
         std::string getLR();
         std::string getIR();
+        std::string getIR(ASTNode *ast);
+
         std::string getModuleURI();
 
         ASTNode* getTree();

@@ -448,10 +448,6 @@ namespace sedna
 
     static void errorc(sedna::XQueryDriver &d, const sedna::XQueryParser::location_type& l, int code);
 
-    static ASTNode *makeFLWORTree(sedna::XQueryParser::location_type& loc,
-                                    ASTNodesVector *flcs, ASTNode *where,
-                                    ASTNode *orderBy, ASTNode *ret);
-
     static ASTNode *makeQuantExpr(sedna::XQueryParser::location_type& loc,
                                     ASTQuantExpr::QuantMod qt,
                                     ASTNodesVector *var_expr,
@@ -3653,68 +3649,6 @@ void XQueryParser::error(const sedna::XQueryParser::location_type& l, const std:
 static void errorc(sedna::XQueryDriver &d, const sedna::XQueryParser::location_type& l, int code)
 {
     d.error(l, code, NULL);
-}
-
-/* helper for makeFLWORTree to create duplicate list of all for-let variables */
-static ASTNodesVector *makeFLWORVarsCopy(ASTNodesVector *flcs, bool need_type = true)
-{
-    ASTNodesVector::const_iterator it;
-    ASTNodesVector *copy_vars = new ASTNodesVector();
-    ASTPosVar *pv;
-
-    for (it = flcs->begin(); it != flcs->end(); it++)
-    {
-        if (ASTFor *f = dynamic_cast<ASTFor *>(*it))
-        {
-            if (!need_type)
-            {
-                copy_vars->push_back(f->getVar()->var->dup());
-            }
-            else
-            {
-                copy_vars->push_back(f->getVar()->dup());
-            }
-
-            if ((pv = f->getPosVar()))
-            {
-                if (!need_type)
-                {
-                    copy_vars->push_back(pv->var->dup());
-                }
-                else
-                {
-                    copy_vars->push_back(pv->dup());
-                }
-            }
-        }
-        else if (ASTLet *l = dynamic_cast<ASTLet *>(*it))
-        {
-            if (!need_type)
-            {
-                copy_vars->push_back(l->getVar()->var->dup());
-            }
-            else
-            {
-                copy_vars->push_back(l->getVar()->dup());
-            }
-        }
-        else
-        {
-            destroyASTNodesVector(copy_vars);
-            copy_vars = new ASTNodesVector();
-            break;
-        }
-    }
-
-    return copy_vars;
-}
-
-/* makes FLWOR AST tree;
-   CAVEAT: 'flcs' is destroyed!!!
-*/
-static ASTNode *makeFLWORTree(sedna::XQueryParser::location_type& loc, ASTNodesVector *flcs, ASTNode *where, ASTNode *orderBy, ASTNode *ret)
-{
-    return NULL;
 }
 
 /* makes an AST tree for quantified expression

@@ -17,8 +17,8 @@ public:
     std::string *pref, *local; // attribute name
     ASTNodesVector *cont; // attribute content; may be NULL
 
-    std::string *uri; // added by sema; just cached uri, don't need to serialize
-    bool deep_copy; // attribute will be attached to virtual_root and copied on demand
+    std::string *uri; // added by sema;
+    bool deep_copy; // attribute will be attached to virtual_root and copied on demand; added by lreturn
 
 public:
     ASTAttr(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *cont_ = NULL) : ASTNode(loc), cont(cont_), uri(NULL)

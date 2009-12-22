@@ -27,6 +27,8 @@
 #include "tr/triggers/triggers_data.h"
 #endif
 
+#include "tr/xqp/XQuerytoLR.h"
+
 using namespace std;
 using namespace tr_globals;
 
@@ -35,19 +37,21 @@ static bool is_qep_opened = false;
 static bool is_stmt_built = false;
 static msg_struct sp_msg;
 
-static void 
-on_kernel_statement_begin(scheme_list *por,
+static sedna::XQueryDriver *xqd = NULL;
+
+static void
+on_kernel_statement_begin(size_t mod_index,
                           PPQueryEssence* &qep_tree)
 {
     indirection_table_on_statement_begin();
     xs_decimal_t::init();
-    qep_tree = build_qep(por);
+    qep_tree = xqd->getQEPForModule(mod_index);
     is_qep_built = true;
     qep_tree->open();
     is_qep_opened = true;
 }
 
-static 
+static
 void on_kernel_statement_end(PPQueryEssence *&qep_tree)
 {
     RESET_CURRENT_PP;
@@ -80,28 +84,43 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
     }
 }
 
-
 void on_user_statement_begin(QueryType queryType,
                              const char* query_str,
-                             PPQueryEssence* &qep_tree, 
+                             PPQueryEssence* &qep_tree,
                              StmntsArray* &st)
 {
     elog_long(EL_LOG, "User query:\n", query_str);
-    st = prepare_stmnt(queryType, query_str); //parse and build phys representation
+
+    // delete driver for previous query, if any
+    if (xqd)
+    {
+        delete xqd;
+        xqd = NULL;
+    }
+
+    xqd = new sedna::XQueryDriver;
+
+    // parse and do logical analysis (state is stored in the driver)
+    std::string dummy; // for module name
+    parse_batch(xqd, queryType, query_str, &dummy);
     is_stmt_built = true;
+
+    // we don't like >1 modules
+    if (xqd->getModulesCount() > 1)
+       throw USER_EXCEPTION(SE4003);
 
     internal_auth_switch = BLOCK_AUTH_CHECK; //turn off security checkings
 
     bool output_enabled = client->disable_output();
-    for (unsigned int i = 0; i < st->stmnts.size() - 1; i++)
+    for (unsigned int i = 0; i < xqd->getModulesCount() - 1; i++)
     {
-        on_kernel_statement_begin(st->stmnts[i].stmnt, qep_tree);
+        on_kernel_statement_begin(i, qep_tree);
         execute(qep_tree);
         on_kernel_statement_end(qep_tree);
     }
     if(output_enabled) client->enable_output();
 
-    if (st->stmnts.size() >= 3) clear_authmap(); // security metadata was updated - clear auth map
+    if (xqd->getModulesCount() >= 3) clear_authmap(); // security metadata was updated - clear auth map
 
     internal_auth_switch = DEPLOY_AUTH_CHECK;                   // turn on security checkings
 
@@ -109,7 +128,7 @@ void on_user_statement_begin(QueryType queryType,
     triggers_on_statement_begin();
 #endif
 
-    on_kernel_statement_begin(st->stmnts.back().stmnt, qep_tree);
+    on_kernel_statement_begin(xqd->getModulesCount() - 1, qep_tree);
 }
 
 void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
@@ -122,8 +141,8 @@ void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
 
     if (is_stmt_built)
     {
-        delete_scheme_list(st->root);
-        delete st;
+        //delete_scheme_list(st->root);
+        //delete st;
         is_stmt_built = false;
     }
 
@@ -131,6 +150,9 @@ void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
     st = NULL;
 
     clear_current_statement_authmap();
+
+    delete xqd;
+    xqd = NULL;
 }
 
 void set_session_finished()
@@ -181,7 +203,7 @@ void do_authentication()
 {
     if(!authentication || first_transaction) return;
 
-    string security_metadata_document = string(SECURITY_METADATA_DOCUMENT);	
+    string security_metadata_document = string(SECURITY_METADATA_DOCUMENT);
     string auth_query_in_por = "(query (query-prolog) (PPQueryRoot 2 (1 (PPIf (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_psw\" \"\") (1 (PPReturn (0) (1 (PPAbsPath (document \"" + security_metadata_document + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\")))))) (1 (PPPred1 (1) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 0)))) () (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 1)))) (1 (PPConst \"" + string(login) +  "\" !xs!string)))) 0)) -1)))) (1 (PPConst \"" + string(password) + "\" !xs!string)))) (1 (PPNil)) ((1 4) (PPFnError ((1 4) (PPFnQName (1 (PPConst \"http://www.modis.ispras.ru/sedna\" !xs!string)) (1 (PPConst \"SE3053\" !xs!string)))) (1 (PPConst \"Authentication failed.\" !xs!string))))))))";
     scheme_list *auth_query_in_scheme_lst = NULL;
     PPQueryEssence *qep_tree = NULL;
@@ -190,13 +212,14 @@ void do_authentication()
     bool output_enabled = false;
 
     try {
-        internal_auth_switch = BLOCK_AUTH_CHECK;
+/*        internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = client->disable_output();
         on_kernel_statement_begin(auth_query_in_scheme_lst, qep_tree);
         execute(qep_tree);
         on_kernel_statement_end(qep_tree);
         if(output_enabled) client->enable_output();
         internal_auth_switch = DEPLOY_AUTH_CHECK;
+*/
     }
     catch (SednaUserException &e) {
 
@@ -231,15 +254,15 @@ void register_session_on_gov()
 #endif
     }
 
-    sp_msg.instruction  = REGISTER_NEW_SESSION; 
+    sp_msg.instruction  = REGISTER_NEW_SESSION;
     sp_msg.length       = strlen(db_name)+1+sizeof(__int32)+sizeof(UPID); //dbname as a string and session process id as 4 bytes
     sp_msg.body[0]      = '\0';
 
-    int2net_int(strlen(db_name), sp_msg.body + 1);    
+    int2net_int(strlen(db_name), sp_msg.body + 1);
     memcpy(sp_msg.body+1+sizeof(__int32), db_name, strlen(db_name));
 
     __int32 tmp = s_pid;
-    char *ptr = (char*) &(tmp);	
+    char *ptr = (char*) &(tmp);
 
     memcpy(sp_msg.body+1+sizeof(__int32)+strlen(db_name),ptr,sizeof(UPID));
 
@@ -258,7 +281,7 @@ void register_session_on_gov()
         if (sid == -1)
         {
             ushutdown_close_socket(s, __sys_call_error);
-            throw USER_EXCEPTION(SE4607); 
+            throw USER_EXCEPTION(SE4607);
         }
     }
     if(sp_msg.instruction == 171)
@@ -294,4 +317,4 @@ bool check_database_existence(const char* name)
 
     if (res1 && res2 && res3) return true;
     else return false;
-}	
+}

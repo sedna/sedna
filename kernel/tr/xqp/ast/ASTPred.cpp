@@ -140,12 +140,13 @@ ASTNode *ASTPred::createNode(scheme_list &sl)
         scheme_list &l = *(sl[2].internal.list->at(i).internal.list);
         ASTConjunct c;
 
-        U_ASSERT(l[0].type == SCM_LIST && l[1].type == SCM_BOOL && l[2].type == SCM_BOOL && l[3].type == SCM_BOOL);
+        U_ASSERT(l[0].type == SCM_LIST && l[1].type == SCM_NUMBER && l[2].type == SCM_BOOL && l[3].type == SCM_BOOL && l[4].type == SCM_BOOL);
 
         c.expr = dsGetASTFromSchemeList(*l[0].internal.list);
-        c.use_cxt = l[1].internal.b;
-        c.use_last = l[2].internal.b;
-        c.use_pos = l[3].internal.b;
+        c.op = operation_compare_condition(atoi(l[1].internal.num));
+        c.use_cxt = l[2].internal.b;
+        c.use_last = l[3].internal.b;
+        c.use_pos = l[4].internal.b;
 
         res->conjuncts.push_back(c);
     }
@@ -156,9 +157,10 @@ ASTNode *ASTPred::createNode(scheme_list &sl)
         scheme_list &l = *(sl[3].internal.list->at(i).internal.list);
         ASTConjunct c;
 
-        U_ASSERT(l[0].type == SCM_LIST && l[1].type == SCM_BOOL && l[2].type == SCM_BOOL && l[3].type == SCM_BOOL);
+        U_ASSERT(l[0].type == SCM_LIST && l[1].type == SCM_NUMBER && l[2].type == SCM_BOOL && l[3].type == SCM_BOOL && l[4].type == SCM_BOOL);
 
         c.expr = dsGetASTFromSchemeList(*l[0].internal.list);
+        c.op = operation_compare_condition(atoi(l[1].internal.num));
         c.use_cxt = l[1].internal.b;
         c.use_last = l[2].internal.b;
         c.use_pos = l[3].internal.b;
@@ -201,6 +203,9 @@ void ASTPred::seriliazeConjuncts(std::string &str, ASTVisitor &v) const
     {
         str += "(";
         it->expr->accept(v);
+
+        str += int2string(it->op);
+
         if (it->use_cxt)
             str += " #t";
         else
@@ -222,6 +227,9 @@ void ASTPred::seriliazeConjuncts(std::string &str, ASTVisitor &v) const
     {
         str += "(";
         it->expr->accept(v);
+
+        str += int2string(it->op);
+
         if (it->use_cxt)
             str += " #t";
         else

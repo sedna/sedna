@@ -16,10 +16,12 @@ static std::string encoding_processing(const char *query)
 {
     unsigned int query_len = strlen(query);
 
+    // check for UTF-8 BOM and get rid of it
     if (query_len > 2 &&
         (unsigned char)query[0] == 0xef &&
         (unsigned char)query[1] == 0xbb &&
-        (unsigned char)query[2] == 0xbf) {
+        (unsigned char)query[2] == 0xbf)
+    {
         query += 3;
         query_len -= 3;
     }
@@ -31,10 +33,11 @@ static std::string encoding_processing(const char *query)
 }
 
 
-StringVector parse_batch(QueryType type, StringVector batch, std::string *module_name)
+void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, std::string *module_name)
 {
+    U_ASSERT(drv);
+
     StringVector array, batch_utf;
-    sedna::XQueryDriver drv;
 
     GET_TIME(&t1_parser);
 
@@ -48,31 +51,24 @@ StringVector parse_batch(QueryType type, StringVector batch, std::string *module
         {
             // parse query and create ast-tree; any errors will be thrown as exceptions
             for (unsigned int i = 0; i < batch_utf.size(); i++)
-                drv.parse(batch_utf[i].c_str());
+                drv->parse(batch_utf[i].c_str());
 
             // do semantic analysis; any errors will be thrown as exceptions
-            drv.doSemanticAnalysis();
+            drv->doSemanticAnalysis();
 
             // do lreturn optimizations
-            drv.doLReturnAnalysis();
+            drv->doLReturnAnalysis();
 
-            *module_name = drv.getParsedModuleName();
-
-            if (*module_name == "")
-                array = drv.getLRRepresentation();
-            else
-                array = drv.getIRRepresentation();
+            *module_name = drv->getParsedModuleName();
         }
-        else // not TL_XQuery
+        else
         {
-            array = batch_utf;
+            throw USER_EXCEPTION2(SE4002, "unknown query type: only XQuery queries are supported now");
         }
 
         GET_TIME(&t2_parser);
 
         ADD_TIME(t_total_parser, t1_parser, t2_parser);
-
-        return array;
     }
     catch (SednaUserException &e)
     {
@@ -83,12 +79,14 @@ StringVector parse_batch(QueryType type, StringVector batch, std::string *module
     }
 }
 
-StringVector parse_batch(QueryType type, const char *batch1, std::string *module_name)
+void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch1, std::string *module_name)
 {
+    U_ASSERT(drv);
+
     StringVector sv;
 
     sv.push_back(batch1);
 
-    return parse_batch(type, sv, module_name);
+    parse_batch(drv, type, sv, module_name);
 }
 

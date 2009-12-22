@@ -21,7 +21,7 @@ public:
     // added by semantic analysis
     std::string *func_uri;
 
-    // cached by lr2por
+    // cached by lr2por (no need to store)
     int id;
 
 public:

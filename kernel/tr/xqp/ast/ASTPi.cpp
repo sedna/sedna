@@ -30,6 +30,7 @@ ASTNode *ASTPi::createNode(scheme_list &sl)
 {
     ASTNodeCommonData cd;
     std::string *name = NULL, *cont = NULL;
+    ASTPi *res;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING);
 
@@ -37,7 +38,12 @@ ASTNode *ASTPi::createNode(scheme_list &sl)
     name = new std::string(sl[2].internal.str);
     cont = new std::string(sl[3].internal.str);
 
-    return new ASTPi(cd, name, cont);
+    res = new ASTPi(cd, name, cont);
+
+    U_ASSERT(sl[4].type == SCM_BOOL);
+    res->deep_copy = sl[4].internal.b;
+
+    return res;
 }
 
 void ASTPi::modifyChild(const ASTNode *oldc, ASTNode *newc)
