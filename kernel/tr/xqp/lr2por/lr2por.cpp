@@ -1032,6 +1032,38 @@ namespace sedna
 
     void lr2por::visit(ASTFunCall &n)
     {
+        childOffer off_this;
+        bool stdFunc = (*n.int_name != "");
+
+        if (stdFunc)
+        {
+            if (*n.int_name == "!fn!collection")
+            {
+
+            }
+            else if (*n.int_name == "!fn!document")
+            {
+
+            }
+            else if (*n.int_name == "!fn!index-scan")
+            {
+
+            }
+            else if (*n.int_name == "!fn!index-scan-between")
+            {
+
+            }
+            else
+            {
+
+            }
+        }
+        else
+        {
+
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTFuncDecl &n)

@@ -28,7 +28,7 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
     PPFnConcat(dynamic_context *_cxt_,
                operation_info _info_,
@@ -56,7 +56,7 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
     PPFnStringJoin(dynamic_context *_cxt_,
                    operation_info _info_,
@@ -81,12 +81,12 @@ protected:
     PPOpIn source;
     PPOpIn prefix;
     PPOpIn collation;
-    
+
     FunctionType type;
 
     bool is_collation;
     bool first_time;
-    
+
     void error(const char* msg);
 
 private:
@@ -96,7 +96,7 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
     PPFnStartsEndsWith(dynamic_context *_cxt_,
                        operation_info _info_,
@@ -110,7 +110,7 @@ public:
                        PPOpIn _prefix_,
                        PPOpIn _collation_,
                        FunctionType _type_);
- 
+
     virtual ~PPFnStartsEndsWith();
 };
 
@@ -131,9 +131,9 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
-    PPFnStringLength(dynamic_context *_cxt_, 
+    PPFnStringLength(dynamic_context *_cxt_,
                      operation_info _info_,
                      PPOpIn _child_);
     virtual ~PPFnStringLength();
@@ -155,9 +155,9 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
-    PPFnNormalizeSpace(dynamic_context *_cxt_, 
+    PPFnNormalizeSpace(dynamic_context *_cxt_,
                        operation_info _info_,
                        PPOpIn _child_);
     virtual ~PPFnNormalizeSpace();
@@ -182,9 +182,9 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
-    PPFnString2CodePoints(dynamic_context *_cxt_, 
+    PPFnString2CodePoints(dynamic_context *_cxt_,
                           operation_info _info_,
                           PPOpIn _child_);
     virtual ~PPFnString2CodePoints();
@@ -202,7 +202,7 @@ protected:
 
     bool need_clear;
     std::vector<int> codepoints;
-	
+
 private:
     virtual void do_open   ();
     virtual void do_reopen ();
@@ -210,9 +210,9 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
-    PPFnCodePoints2String(dynamic_context *_cxt_, 
+    PPFnCodePoints2String(dynamic_context *_cxt_,
                           operation_info _info_,
                           PPOpIn _child_);
     virtual ~PPFnCodePoints2String();
@@ -235,9 +235,9 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
-	PPFnTranslate(dynamic_context *_cxt_, 
+	PPFnTranslate(dynamic_context *_cxt_,
                   operation_info _info_,
                   PPOpIn _str_,
                   PPOpIn _map_str_,
@@ -263,7 +263,7 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
 	PPFnChangeCase(dynamic_context *_cxt_,
                    operation_info _info_,
@@ -301,14 +301,14 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
     PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                         operation_info _info_,
                         PPOpIn _src_child_,
                         PPOpIn _srch_child_,
                         FunctionType _type_);
- 
+
     PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                         operation_info _info_,
                         PPOpIn _src_child_,
@@ -328,7 +328,7 @@ protected:
     PPOpIn str_child;
     PPOpIn start_child;
     PPOpIn length_child;
-    
+
     bool is_length; 		//equal to length_child.op != NULL;
     bool first_time;
 
@@ -339,14 +339,14 @@ private:
     virtual void do_next   (tuple &t);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
-    PPFnSubstring(dynamic_context *_cxt_, 
+    PPFnSubstring(dynamic_context *_cxt_,
                   operation_info _info_,
                   PPOpIn _str_child_,
                   PPOpIn _start_child_);
 
-    PPFnSubstring(dynamic_context *_cxt_, 
+    PPFnSubstring(dynamic_context *_cxt_,
                   operation_info _info_,
                   PPOpIn _str_child_,
                   PPOpIn _start_child_,
@@ -355,5 +355,36 @@ public:
     virtual ~PPFnSubstring();
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNormalizeUnicode
+///////////////////////////////////////////////////////////////////////////////
+class PPFnNormalizeUnicode : public PPIterator
+{
+protected:
+    PPOpIn str_child;
+    PPOpIn type_child;
+
+    bool first_time;
+
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+public:
+    PPFnNormalizeUnicode(dynamic_context *_cxt_,
+                  operation_info _info_,
+                  PPOpIn _str_child_,
+                  PPOpIn _type_child_);
+
+    PPFnNormalizeUnicode(dynamic_context *_cxt_,
+                  operation_info _info_,
+                  PPOpIn _str_child_);
+
+    virtual ~PPFnNormalizeUnicode();
+};
 
 #endif

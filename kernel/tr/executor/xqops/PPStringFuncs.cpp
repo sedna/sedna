@@ -25,7 +25,7 @@
 
 PPFnConcat::PPFnConcat(dynamic_context *_cxt_,
                        operation_info _info_,
-                       arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_, _info_), 
+                       arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_, _info_),
                                                  ch_arr(_ch_arr_)
 {
     tcv.resize(ch_arr.size());
@@ -33,7 +33,7 @@ PPFnConcat::PPFnConcat(dynamic_context *_cxt_,
 
 PPFnConcat::~PPFnConcat()
 {
-    for (i = 0; i < ch_arr.size(); i++) 
+    for (i = 0; i < ch_arr.size(); i++)
     {
         delete (ch_arr[i].op);
         ch_arr[i].op = NULL;
@@ -42,7 +42,7 @@ PPFnConcat::~PPFnConcat()
 
 void PPFnConcat::do_open ()
 {
-    for (i = 0; i < ch_arr.size(); i++) 
+    for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->open();
 
     first_time = true;
@@ -50,7 +50,7 @@ void PPFnConcat::do_open ()
 
 void PPFnConcat::do_reopen()
 {
-    for (i = 0; i < ch_arr.size(); i++) 
+    for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->reopen();
 
     first_time = true;
@@ -64,7 +64,7 @@ void PPFnConcat::do_close()
 
 void PPFnConcat::do_next(tuple &t)
 {
-        
+
     if (!first_time)
     {
         first_time = true;
@@ -139,7 +139,7 @@ PPIterator* PPFnConcat::do_copy(dynamic_context *_cxt_)
 PPFnStringJoin::PPFnStringJoin(dynamic_context *_cxt_,
                                operation_info _info_,
                                PPOpIn _members_,
-                               PPOpIn _separator_) : PPIterator(_cxt_, _info_), 
+                               PPOpIn _separator_) : PPIterator(_cxt_, _info_),
                                                      members(_members_),
                                                      separator(_separator_)
 {
@@ -167,7 +167,7 @@ void PPFnStringJoin::do_reopen()
     separator.op -> reopen();
     first_time = true;
     need_clear = true;
-}         
+}
 
 void PPFnStringJoin::do_close()
 {
@@ -177,7 +177,7 @@ void PPFnStringJoin::do_close()
 
 void PPFnStringJoin::do_next(tuple &t)
 {
-        
+
     if (!first_time)
     {
         first_time = true;
@@ -187,7 +187,7 @@ void PPFnStringJoin::do_next(tuple &t)
     }
 
     first_time = false;
-    
+
     if(need_clear) { tcv.clear(); need_clear = false; }
 
     bool is_sep = false;
@@ -203,7 +203,7 @@ void PPFnStringJoin::do_next(tuple &t)
     if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:string-join. Argument contains more than one item.");
 
     is_sep = (sep.get_strlen() > 0);
-    
+
     while(true)
     {
         members.op->next(t);
@@ -240,7 +240,7 @@ PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
                                        operation_info _info_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
-                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_), 
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_),
                                                                                   source(_source_),
                                                                                   prefix(_prefix_),
                                                                                   type(_type_),
@@ -253,7 +253,7 @@ PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
                                        PPOpIn _collation_,
-                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_), 
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_),
                                                                                   source(_source_),
                                                                                   prefix(_prefix_),
                                                                                   collation(_collation_),
@@ -321,31 +321,31 @@ void PPFnStartsEndsWith::do_next(tuple &t)
 
     source.op->next(t);
     if (!t.is_eos())
-    { 
+    {
         src = atomize(source.get(t));
-              
+
         if(!is_string_type(src.get_atomic_type())) error("Invalid type of the first argument (xs_string/derived/promotable is expected) ");
-    
-        source.op->next(t);                                                                               
+
+        source.op->next(t);
         if (!t.is_eos()) error("Invalid arity of the first argument. Argument contains more than one item ");
         src_len = src.get_strlen();
     }
-    
+
     prefix.op->next(t);
     if (!t.is_eos())
-    { 
+    {
         prf = atomize(prefix.get(t));
-              
+
         if(!is_string_type(prf.get_atomic_type())) error("Invalid type of the second argument (xs_string/derived/promotable is expected) ");
-    
+
         prefix.op->next(t);
         if (!t.is_eos()) error("Invalid arity of the second argument. Argument contains more than one item ");
         prf_len = prf.get_strlen();
     }
 
-    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); return; } 
+    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); return; }
     else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); return; }
-    
+
     if(is_collation)
     {
         collation.op->next(t);
@@ -357,7 +357,7 @@ void PPFnStartsEndsWith::do_next(tuple &t)
 
         collation.op->next(t);
         if(!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item ");
-        
+
         col = tuple_cell::make_sure_light_atomic(col);
 
         int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
@@ -366,12 +366,12 @@ void PPFnStartsEndsWith::do_next(tuple &t)
     }
     else
         handler = cxt->st_cxt->get_default_collation();
-    
+
     if(type == PPFnStartsEndsWith::FN_STARTS_WITH)
         t.copy(tuple_cell::atomic(handler->starts_with(&src, &prf)));
     else if(type == PPFnStartsEndsWith::FN_ENDS_WITH)
         t.copy(tuple_cell::atomic(handler->ends_with(&src, &prf)));
-    else 
+    else
         throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::do_next().");
 }
 
@@ -381,7 +381,7 @@ void PPFnStartsEndsWith::error(const char* msg)
         throw XQUERY_EXCEPTION2(XPTY0004, (std::string(msg) + "in fn:starts-with().").c_str());
     else if(type == PPFnStartsEndsWith::FN_ENDS_WITH)
         throw XQUERY_EXCEPTION2(XPTY0004, (std::string(msg) + "in fn:ends-with().").c_str());
-    else 
+    else
         throw XQUERY_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::error().");
 }
 
@@ -405,7 +405,7 @@ PPIterator* PPFnStartsEndsWith::do_copy(dynamic_context *_cxt_)
 PPFnString2CodePoints::PPFnString2CodePoints(dynamic_context *_cxt_,
                                              operation_info _info_,
                                              PPOpIn _child_) : PPIterator(_cxt_, _info_),
-                                                               child(_child_), 
+                                                               child(_child_),
                                                                ucp_it(NULL)
 {
 }
@@ -425,13 +425,13 @@ PPFnString2CodePoints::~PPFnString2CodePoints()
 void PPFnString2CodePoints::do_open ()
 {
     child.op->open();
-    first_time = true;	
+    first_time = true;
 }
 
 void PPFnString2CodePoints::do_reopen()
 {
     child.op->reopen();
-    first_time = true;	
+    first_time = true;
 }
 
 void PPFnString2CodePoints::do_close()
@@ -448,7 +448,7 @@ void PPFnString2CodePoints::do_next (tuple &t)
         {
             first_time = false;
             in_str = atomize(child.get(t));
-            
+
             if(!is_string_type(in_str.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:string-to-codepoints (xs_string/derived/promotable is expected).");
 
             child.op->next(t);
@@ -470,7 +470,7 @@ void PPFnString2CodePoints::do_next (tuple &t)
 		delete ucp_it;
 		ucp_it = NULL;
 		in_str.set_eos();
-	}    
+	}
 }
 
 PPIterator* PPFnString2CodePoints::do_copy(dynamic_context *_cxt_)
@@ -501,7 +501,7 @@ PPFnCodePoints2String::~PPFnCodePoints2String()
 void PPFnCodePoints2String::do_open ()
 {
     child.op->open();
-    first_time = true;	
+    first_time = true;
     need_clear = false;
 }
 
@@ -509,7 +509,7 @@ void PPFnCodePoints2String::do_reopen()
 {
     child.op->reopen();
     first_time = true;
-    need_clear = true;	
+    need_clear = true;
 }
 
 void PPFnCodePoints2String::do_close()
@@ -528,30 +528,30 @@ void PPFnCodePoints2String::do_next (tuple &t)
         {
             child.op->next(t);
             if(t.is_eos()) break;
-        
+
             tuple_cell tc = atomize(child.get(t));
             xmlscm_type xtype = tc.get_atomic_type();
-        
+
             if(!(xtype == xs_untypedAtomic ||
                  xtype == xs_integer       ||
-                 is_derived_from_xs_integer(xtype)))  
+                 is_derived_from_xs_integer(xtype)))
                      throw XQUERY_EXCEPTION2(XPTY0004, "Invalid item type in the argument of fn:codepoints-to-string (xs:untypedAtomic, xs:integer or derived expected).");
 
-            __int64 value = (xtype == xs_untypedAtomic ? 
-                             cast(tc, xs_integer).get_xs_integer() : 
-                             tc.get_xs_integer()); 
-            
-            if(value > 0x10FFFF || !isXML10Valid(value)) 
+            __int64 value = (xtype == xs_untypedAtomic ?
+                             cast(tc, xs_integer).get_xs_integer() :
+                             tc.get_xs_integer());
+
+            if(value > 0x10FFFF || !isXML10Valid(value))
                 throw XQUERY_EXCEPTION2(FOCH0001, "Invalid codepoint in the argument of fn:codepoints-to-string.");
 
             codepoints.push_back(value);
         }
-        
+
         stmt_str_buf result;
-        
+
         for(unsigned int i = 0; i < codepoints.size(); i++)
             result.append(utf8_encode_char(codepoints[i]));
-        
+
         t.copy(result.get_tuple_cell());
     }
 	else
@@ -559,7 +559,7 @@ void PPFnCodePoints2String::do_next (tuple &t)
         first_time = true;
         need_clear = true;
         t.set_eos();
-    }    
+    }
 }
 
 PPIterator* PPFnCodePoints2String::do_copy(dynamic_context *_cxt_)
@@ -576,7 +576,7 @@ PPIterator* PPFnCodePoints2String::do_copy(dynamic_context *_cxt_)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 PPFnTranslate::PPFnTranslate(dynamic_context *_cxt_,
-                             operation_info _info_, 
+                             operation_info _info_,
 							 PPOpIn _str_,
                              PPOpIn _map_str_,
                              PPOpIn _trans_str_) : PPIterator(_cxt_, _info_),
@@ -672,7 +672,7 @@ void PPFnTranslate::do_next (tuple &t)
 		else
 			t.copy(EMPTY_STRING_TC);
 	}
-	else 
+	else
 	{
 		first_time = true;
 		t.set_eos();
@@ -789,22 +789,22 @@ void PPFnSubsBeforeAfter::do_next(tuple &t)
         handler = NULL;
         t.set_eos();
         return;
-    }    
-        
+    }
+
     handler = charset_handler->get_unicode_codepoint_collation();
 
     if (collation_child.op)
     {
         collation_child.op->next(t);
         if(t.is_eos()) error("Invalid arity of the third argument. Argument contains zero items");
-    
+
         tuple_cell col = atomize(collation_child.get(t));
-        if (!is_string_type(col.get_atomic_type())) 
+        if (!is_string_type(col.get_atomic_type()))
             error("Invalid type of the third argument (xs_string/derived/promotable is expected)");
 
         collation_child.op->next(t);
         if (!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item");
-            
+
         col = tuple_cell::make_sure_light_atomic(col);
 
         int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
@@ -816,12 +816,12 @@ void PPFnSubsBeforeAfter::do_next(tuple &t)
     __int64 src_len = 0;
 
     if (!t.is_eos())
-    { 
+    {
         src = atomize(src_child.get(t));
-              
+
         if(!is_string_type(src.get_atomic_type())) error("Invalid type of the first argument (xs_string/derived/promotable is expected) ");
-    
-        src_child.op->next(t);                                                                               
+
+        src_child.op->next(t);
         if (!t.is_eos()) error("Invalid arity of the first argument. Argument contains more than one item ");
         src_len = src.get_strlen();
     }
@@ -831,30 +831,30 @@ void PPFnSubsBeforeAfter::do_next(tuple &t)
     __int64 srch_str_len = 0;
 
     if (!t.is_eos())
-    { 
+    {
         srch_str = atomize(srch_child.get(t));
-              
+
         if(!is_string_type(srch_str.get_atomic_type())) error("Invalid type of the second argument (xs_string/derived/promotable is expected) ");
-    
-        srch_child.op->next(t);                                                                               
+
+        srch_child.op->next(t);
         if (!t.is_eos()) error("Invalid arity of the second argument. Argument contains more than one item ");
         srch_str_len = srch_str.get_strlen();
     }
-    
-    if(src_len == 0 || srch_str_len >= src_len) 
+
+    if(src_len == 0 || srch_str_len >= src_len)
     {
         t.copy(EMPTY_STRING_TC);
     }
     else if(srch_str_len == 0)
     {
-        type == PPFnSubsBeforeAfter::FN_BEFORE ? t.copy(EMPTY_STRING_TC) : t.copy(src);    
+        type == PPFnSubsBeforeAfter::FN_BEFORE ? t.copy(EMPTY_STRING_TC) : t.copy(src);
     }
     else
     {
         __int64 pos = handler->contains(&src, &srch_str);
-        if(pos >= 0) 
+        if(pos >= 0)
         {
-            type == PPFnSubsBeforeAfter::FN_BEFORE ? 
+            type == PPFnSubsBeforeAfter::FN_BEFORE ?
                     t.copy(byte_based_substring(&src, 0, pos)) :
                     t.copy(byte_based_substring(&src, pos + srch_str_len, _I64_MAX));
         }
@@ -869,7 +869,7 @@ void PPFnSubsBeforeAfter::error(const char* msg)
         throw XQUERY_EXCEPTION2(XPTY0004, (std::string(msg) + " in fn:substring-before().").c_str());
     else if(type == PPFnSubsBeforeAfter::FN_AFTER)
         throw XQUERY_EXCEPTION2(XPTY0004, (std::string(msg) + " in fn:substring-after().").c_str());
-    else 
+    else
         throw XQUERY_EXCEPTION2(SE1003, "Imposible type of function in PPFnSubsBeforeAfter::error().");
 }
 
@@ -946,7 +946,7 @@ void PPFnChangeCase::do_next (tuple &t)
 		else
 			t.copy(EMPTY_STRING_TC);
 	}
-	else 
+	else
 	{
 		first_time = true;
 		t.set_eos();
@@ -1015,7 +1015,7 @@ void PPFnStringLength::do_next (tuple &t)
 
         t.copy(tuple_cell::atomic((__int64)len));
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();
@@ -1074,12 +1074,12 @@ void PPFnNormalizeSpace::do_next (tuple &t)
         if (!t.is_eos())
         {
             tuple_cell tc = atomize(child.get(t));
-            
+
             if(!is_string_type(tc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:normalize-space (xs_string/derived/promotable is expected).");
 
             child.op->next(t);
             if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:normalize-space. Argument contains more than one item.");
-            
+
             stmt_str_buf result;
             collapse_string_normalization(&tc, result);
             t.copy(result.get_tuple_cell());
@@ -1087,7 +1087,7 @@ void PPFnNormalizeSpace::do_next (tuple &t)
         else
             t.copy(EMPTY_STRING_TC);
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();
@@ -1178,13 +1178,13 @@ void PPFnSubstring::do_next(tuple &t)
 
         start_child.op->next(t);
         if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:substring.");
-        
+
         tc = atomize(start_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
-        
-        if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
+
+        if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))
             throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:substring (xs:double or promotable expected).");
-        
+
         double temp = floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
         start_pos = u_is_nan(temp) ? _I64_MAX : u_double2int64(temp);
 
@@ -1195,20 +1195,20 @@ void PPFnSubstring::do_next(tuple &t)
         {
             length_child.op->next(t);
             if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:substring.");
-            
+
             tc = atomize(start_child.get(t));
             xtype = tc.get_atomic_type();
 
-            if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
+            if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:substring (xs:double or promotable expected).");
 
             /// u_double2int64(NaN) is 0, it is ok for us
             length = u_double2int64(floor(cast(tc, xs_double).get_xs_double() + 0.5)); //floor(x+0.5) is equal there to fn:round
-        
+
             length_child.op->next(t);
             if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:substring.");
         }
-        
+
         str_child.op->next(t);
         if (t.is_eos())
         {
@@ -1247,9 +1247,144 @@ PPIterator* PPFnSubstring::do_copy(dynamic_context *_cxt_)
 {
     PPFnSubstring *res = is_length ? se_new PPFnSubstring(_cxt_, info, str_child, start_child, length_child) :
                                      se_new PPFnSubstring(_cxt_, info, str_child, start_child);
-                                
+
     res->str_child.op = str_child.op->copy(_cxt_);
     res->start_child.op = start_child.op->copy(_cxt_);
     if(is_length) res->length_child.op = length_child.op->copy(_cxt_);
+    return res;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNormalizeUnicode
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPFnNormalizeUnicode::PPFnNormalizeUnicode(dynamic_context *_cxt_,
+                             operation_info _info_,
+                             PPOpIn _str_child_,
+                             PPOpIn _type_child_) : PPIterator(_cxt_, _info_),
+                                                    str_child(_str_child_),
+                                                    type_child(_type_child_)
+{
+}
+
+PPFnNormalizeUnicode::PPFnNormalizeUnicode(dynamic_context *_cxt_,
+                             operation_info _info_,
+                             PPOpIn _str_child_) : PPIterator(_cxt_, _info_),
+                                                   str_child(_str_child_)
+{
+}
+
+PPFnNormalizeUnicode::~PPFnNormalizeUnicode()
+{
+    delete str_child.op;
+    str_child.op = NULL;
+
+    if (type_child.op)
+    {
+        delete type_child.op;
+        type_child.op = NULL;
+    }
+}
+
+void PPFnNormalizeUnicode::do_open ()
+{
+    str_child.op->open();
+
+    if (type_child.op)
+        type_child.op->open();
+
+    first_time = true;
+}
+
+void PPFnNormalizeUnicode::do_reopen()
+{
+    str_child.op->reopen();
+
+    if (type_child.op)
+        type_child.op->reopen();
+
+    first_time = true;
+}
+
+void PPFnNormalizeUnicode::do_close()
+{
+    str_child.op->close();
+
+    if (type_child.op)
+        type_child.op->close();
+
+    first_time = true;
+}
+
+void PPFnNormalizeUnicode::do_next(tuple &t)
+{
+    if (first_time)
+    {
+        tuple_cell str_tc;
+        char *type = (char *)"NFC";
+
+        first_time = false;
+
+        str_child.op->next(t);
+        if (t.is_eos())
+        {
+            t.copy(EMPTY_STRING_TC);
+            return;
+        }
+
+        str_tc = atomize(str_child.get(t));
+
+        if (!is_string_type(str_tc.get_atomic_type()))
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the first argument to fn:normalize-unicode() (xs:string is expected)");
+
+        str_child.op->next(t);
+        if (!t.is_eos())
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the first argument of fn:normalize-unicode(). Argument contains more than one item.");
+
+        if(type_child.op)
+        {
+            tuple_cell type_tc;
+
+            type_child.op->next(t);
+            if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Empty sequence as second argument is not allowed in fn:normalize-unicode().");
+
+            type_tc = atomize(type_child.get(t));
+
+            if(!is_string_type(type_tc.get_atomic_type()))
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:normalize-unicode() (xs:string is expected).");
+
+            type_child.op->next(t);
+            if (!t.is_eos())
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:normalize-unicode(). Argument contains more than one item.");
+
+            type_tc = tuple_cell::make_sure_light_atomic(type_tc);
+            type = type_tc.get_str_mem();
+
+            if (strcmp(type, "NFC"))
+                throw XQUERY_EXCEPTION2(FOCH0003, (std::string("Normalization form ") + type + " is not supported").c_str());
+        }
+
+        // for now, NFC normalization form just copies the string;
+        // TODO: make it proper
+        t.copy(str_tc);
+    }
+    else
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+PPIterator* PPFnNormalizeUnicode::do_copy(dynamic_context *_cxt_)
+{
+    PPFnNormalizeUnicode *res = type_child.op ? se_new PPFnNormalizeUnicode(_cxt_, info, str_child, type_child) :
+                                                se_new PPFnNormalizeUnicode(_cxt_, info, str_child);
+
+    res->str_child.op = str_child.op->copy(_cxt_);
+
+    if (type_child.op)
+        res->type_child.op = type_child.op->copy(_cxt_);
+
     return res;
 }
