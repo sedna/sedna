@@ -8,6 +8,7 @@
 #include "tr/executor/root/PPDropMetadata.h"
 #include "tr/structures/metadata.h"
 #include "tr/locks/locks.h"
+#include "tr/auth/auc.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDropDocument
@@ -52,9 +53,10 @@ void PPDropDocument::execute()
 
     name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
     local_lock_mrg->put_lock_on_document(tc.get_str_mem());
+    auth_for_drop_object(tc.get_str_mem(), "document", false);
     delete_document(tc.get_str_mem());
 }
 
@@ -102,9 +104,10 @@ void PPDropCollection::execute()
 
     name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
     local_lock_mrg->put_lock_on_collection(tc.get_str_mem());
+    auth_for_drop_object(tc.get_str_mem(), "collection", false);
     delete_collection(tc.get_str_mem());
 }
 
@@ -165,7 +168,7 @@ void PPDropDocumentInCollection::execute()
         throw USER_EXCEPTION(SE1071);
 
     document.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);        
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
     tc_document = tuple_cell::make_sure_light_atomic(tc);
 
 
@@ -181,6 +184,7 @@ void PPDropDocumentInCollection::execute()
     tc_collection = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
+    auth_for_drop_object(tc_collection.get_str_mem(), "collection", true);
     delete_document_from_collection(tc_collection.get_str_mem(), tc_document.get_str_mem());
 }
 

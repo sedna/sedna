@@ -9,7 +9,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/triggers/triggers.h"
 #include "tr/locks/locks.h"
-
+#include "tr/auth/auc.h"
 
 PPDropTrigger::PPDropTrigger(PPOpIn _trigger_name_, dynamic_context *_cxt_) :	trigger_name(_trigger_name_), cxt(_cxt_)
 {
@@ -22,7 +22,7 @@ PPDropTrigger::~PPDropTrigger()
     trigger_name.op = NULL;
 
     delete cxt;
-    cxt = NULL;    
+    cxt = NULL;
 }
 
 void PPDropTrigger::open()
@@ -56,6 +56,8 @@ void PPDropTrigger::execute()
 
     if(find_trigger(tc.get_str_mem()) == XNULL)
         throw USER_EXCEPTION2(SE3211, (std::string("Trigger '") + tc.get_str_mem() + "'").c_str());
+
+    auth_for_drop_object(tc.get_str_mem(), "trigger", false);
 
     delete_trigger(tc.get_str_mem());
 }

@@ -9,7 +9,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/idx/indexes.h"
 #include "tr/locks/locks.h"
-
+#include "tr/auth/auc.h"
 
 PPCreateIndex::PPCreateIndex(PathExpr *_object_path_,
                              PathExpr *_key_path_,
@@ -64,15 +64,17 @@ void PPCreateIndex::execute()
 
     index_name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
 
-    create_index(object_path, 
-                 key_path, 
-                 key_type, 
-                 root, 
+    auth_for_create_index(tc.get_str_mem(), db_ent->name, db_ent->type == dbe_collection);
+
+    create_index(object_path,
+                 key_path,
+                 key_type,
+                 root,
                  tc.get_str_mem(),
                  db_ent->name,
                  (db_ent->type == dbe_document));

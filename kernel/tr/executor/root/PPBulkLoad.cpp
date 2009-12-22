@@ -10,7 +10,7 @@
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
-
+#include "tr/auth/auc.h"
 
 PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
                        dynamic_context *_cxt1_,
@@ -80,7 +80,7 @@ void PPBulkLoad::execute()
         throw USER_EXCEPTION(SE1071);
 
     filename.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);        
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
     tc_filename = tuple_cell::make_sure_light_atomic(tc);
 
 
@@ -92,7 +92,7 @@ void PPBulkLoad::execute()
         throw USER_EXCEPTION(SE1071);
 
     document.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);        
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
     tc_document = tuple_cell::make_sure_light_atomic(tc);
 
 
@@ -115,7 +115,7 @@ void PPBulkLoad::execute()
     }
     else
           write_to_logical_log = false;
-    
+
     // we cannot make checkpoint before commit now
     // in this case redo info woulb be lost
     // TODO: we can fix it later by releasing transaction concurrent semaphore a bit earlier
@@ -126,22 +126,24 @@ void PPBulkLoad::execute()
     bool boundary_space_strip = (cxt1->st_cxt->boundary_space == xq_boundary_space_strip);
 
     try {
-   	    if (collection.op == NULL) 
-        { 
+   	    if (collection.op == NULL)
+        {
             local_lock_mrg->put_lock_on_document(tc_document.get_str_mem());
+            auth_for_load_document(tc_document.get_str_mem());
+
             if (!write_to_logical_log) hl_disable_log();
 
-            doc_root = loadfile(cf_vec[0].f, 
+            doc_root = loadfile(cf_vec[0].f,
                                 *tr_globals::client->get_se_ostream(),
-                                tc_document.get_str_mem(), 
-                                boundary_space_strip, 
-                                need_cp, 
+                                tc_document.get_str_mem(),
+                                boundary_space_strip,
+                                need_cp,
                                 tr_globals::client->is_print_progress());
 
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
         }
-        else 
+        else
         {
             collection.op->next(t);
             if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -156,14 +158,16 @@ void PPBulkLoad::execute()
 
 
             local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
+            auth_for_load_document_collection(tc_document.get_str_mem(), tc_collection.get_str_mem());
+
             if (!write_to_logical_log) hl_disable_log();
 
-            doc_root = loadfile(cf_vec[0].f, 
+            doc_root = loadfile(cf_vec[0].f,
                                 *tr_globals::client->get_se_ostream(),
-                                tc_document.get_str_mem(), 
-                                tc_collection.get_str_mem(), 
-                                boundary_space_strip, 
-                                need_cp, 
+                                tc_document.get_str_mem(),
+                                tc_collection.get_str_mem(),
+                                boundary_space_strip,
+                                need_cp,
                                 tr_globals::client->is_print_progress());
 
             if (!write_to_logical_log) hl_enable_log();

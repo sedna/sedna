@@ -409,12 +409,6 @@ namespace sedna
         if ((doccoll = getDocCollFromAbsXPathAndCheck(n.on_path, false)) == NULL)
             return;
 
-        if (dynamic_cast<ASTLit *>(doccoll) == NULL)
-        {
-            drv->error(n.getLocation(), SE5049, "computed document name is prohibited in create-index statement");
-            return;
-        }
-
         // check by-xpath as a relative
         getDocCollFromAbsXPathAndCheck(n.by_path, true);
     }
@@ -1069,12 +1063,32 @@ namespace sedna
 
     void Sema::visit(ASTLoadFile &n)
     {
-        // nothing to do
+        secDescriptor sd;
+
+        sd.sec_type = SEC_LOAD;
+
+        if (n.coll && *n.coll != "")
+        {
+            sd.obj_type = SEC_OBJ_COLL;
+            sd.obj_name = *n.coll;
+        }
+        else
+        {
+            sd.obj_type = SEC_OBJ_DOC;
+            sd.obj_name = *n.doc;
+        }
+
+        drv->addNewSecurityPrereq(sd);
     }
 
     void Sema::visit(ASTLoadModule &n)
     {
-        // nothing to do
+        secDescriptor sd;
+
+        sd.sec_type = SEC_LOAD;
+        sd.obj_type = SEC_OBJ_MOD;
+
+        drv->addNewSecurityPrereq(sd);
     }
 
     void Sema::visit(ASTMainModule &n)
@@ -1088,13 +1102,25 @@ namespace sedna
 
     void Sema::visit(ASTMetaCols &n)
     {
-        // nothing to do
+        secDescriptor sd;
+
+        sd.sec_type = SEC_RETR_META;
+        sd.obj_type = SEC_OBJ_DOC;
+
+        drv->addNewSecurityPrereq(sd);
     }
 
     void Sema::visit(ASTMetaDocs &n)
     {
         if (n.coll)
             n.coll->accept(*this);
+
+        secDescriptor sd;
+
+        sd.sec_type = SEC_RETR_META;
+        sd.obj_type = SEC_OBJ_COLL;
+
+        drv->addNewSecurityPrereq(sd);
     }
 
     void Sema::visit(ASTMetaSchemaCol &n)

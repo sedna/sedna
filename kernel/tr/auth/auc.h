@@ -24,16 +24,34 @@
 #define DEPLOY_AUTH_CHECK                     1
 
 struct dbe_properties
-{   
+{
     int update_privileges;      // user's update privileges on this db_entity
     bool current_statement;     // is db_entity refered in curent statement
 };
-					   
+
 void getSednaAuthMetadataPath(char* path);
 
 void auth_for_query(counted_ptr<db_entity> dbe);
 
 void auth_for_load_module(const char* module_name);
+
+void auth_for_drop_module(const char* mod_name);
+
+void auth_for_create_document(const char* doc_name);
+
+void auth_for_load_document(const char* doc_name);
+
+void auth_for_create_collection(const char* coll_name);
+
+void auth_for_create_document_collection(const char* doc_name, const char *coll_name);
+
+void auth_for_load_document_collection(const char* doc_name, const char *coll_name);
+
+void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_collection);
+
+void auth_for_create_trigger(const char *trg_name);
+
+void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_check);
 
 void auth_for_rename_collection(const char* old_name, const char* new_name);
 

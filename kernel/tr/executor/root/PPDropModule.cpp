@@ -10,7 +10,7 @@
 #include "tr/locks/locks.h"
 #include "tr/mo/micro.h"
 #include "tr/structures/metadata.h"
-
+#include "tr/auth/auc.h"
 
 PPDropModule::PPDropModule(PPOpIn _module_name_) : module_name(_module_name_)
 {
@@ -46,10 +46,11 @@ void PPDropModule::execute()
 
     module_name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_collection(MODULES_COLLECTION_NAME);
+    auth_for_drop_object(tc.get_str_mem(), "module", false);
     try
     {
         delete_document_from_collection(MODULES_COLLECTION_NAME, tc.get_str_mem());
