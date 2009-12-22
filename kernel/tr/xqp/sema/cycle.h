@@ -116,7 +116,6 @@ namespace sedna
         void visit(ASTOrdExpr &n);
         void visit(ASTOrder &n);
         void visit(ASTOrderBy &n);
-        void visit(ASTOrderByRet &n);
         void visit(ASTOrderEmpty &n);
         void visit(ASTOrderMod &n);
         void visit(ASTOrderModInt &n);
@@ -146,7 +145,6 @@ namespace sedna
         void visit(ASTTypeSingle &n);
         void visit(ASTTypeSwitch &n);
         void visit(ASTTypeVar &n);
-        void visit(ASTUnio &n);
         void visit(ASTUop &n);
         void visit(ASTUpdDel &n);
         void visit(ASTUpdInsert &n);

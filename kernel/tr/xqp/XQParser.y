@@ -897,35 +897,35 @@ constructionDecl:
 
     /* [26]        FunctionDecl       ::=      "declare" "function" QName "(" ParamList? ")" ("as" SequenceType)? (EnclosedExpr | "external") */
 functionDecl:
-        DECLARE FUNCTION funcName LPAREN paramList RPAREN AS sequenceType enclosedExpr
+        DECLARE FUNCTION qName LPAREN paramList RPAREN AS sequenceType enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, $5, static_cast<ASTTypeSeq *>($8), $9);
         }
-    |   DECLARE FUNCTION funcName LPAREN paramList RPAREN AS sequenceType EXTERNAL
+    |   DECLARE FUNCTION qName LPAREN paramList RPAREN AS sequenceType EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, $5, static_cast<ASTTypeSeq *>($8));
         }
-    |   DECLARE FUNCTION funcName LPAREN RPAREN AS sequenceType enclosedExpr
+    |   DECLARE FUNCTION qName LPAREN RPAREN AS sequenceType enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, static_cast<ASTTypeSeq *>($7), $8);
         }
-    |   DECLARE FUNCTION funcName LPAREN RPAREN AS sequenceType EXTERNAL
+    |   DECLARE FUNCTION qName LPAREN RPAREN AS sequenceType EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, static_cast<ASTTypeSeq *>($7));
         }
-    |   DECLARE FUNCTION funcName LPAREN paramList RPAREN enclosedExpr
+    |   DECLARE FUNCTION qName LPAREN paramList RPAREN enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, $5, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE), $7);
         }
-    |   DECLARE FUNCTION funcName LPAREN paramList RPAREN EXTERNAL
+    |   DECLARE FUNCTION qName LPAREN paramList RPAREN EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, $5, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE));
         }
-    |   DECLARE FUNCTION funcName LPAREN RPAREN enclosedExpr
+    |   DECLARE FUNCTION qName LPAREN RPAREN enclosedExpr
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE), $6);
         }
-    |   DECLARE FUNCTION funcName LPAREN RPAREN EXTERNAL
+    |   DECLARE FUNCTION qName LPAREN RPAREN EXTERNAL
         {
             $$ = new ASTFuncDecl(@$, $3, NULL, new ASTTypeSeq(@6, new ASTItemTest(@6), ASTTypeSeq::ZERO_OR_MORE));
         }

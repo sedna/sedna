@@ -111,7 +111,6 @@ public:
     virtual void visit(ASTNsp &n) = 0;
     virtual void visit(ASTOption &n) = 0;
     virtual void visit(ASTOrderBy &n) = 0;
-    virtual void visit(ASTOrderByRet &n) = 0;
     virtual void visit(ASTOrderEmpty &n) = 0;
     virtual void visit(ASTOrderModInt &n) = 0;
     virtual void visit(ASTOrderMod &n) = 0;
@@ -143,7 +142,6 @@ public:
     virtual void visit(ASTTypeSingle &n) = 0;
     virtual void visit(ASTTypeSwitch &n) = 0;
     virtual void visit(ASTTypeVar &n) = 0;
-    virtual void visit(ASTUnio &n) = 0;
     virtual void visit(ASTUop &n) = 0;
     virtual void visit(ASTUpdDel &n) = 0;
     virtual void visit(ASTUpdInsert &n) = 0;
