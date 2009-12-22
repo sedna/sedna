@@ -2049,7 +2049,9 @@ namespace sedna
         }
 
         n.others.clear();
-        n.others.push_back(others_and);
+
+        if (others_and.expr)
+            n.others.push_back(others_and);
 
         setOffer(off_this);
     }
