@@ -21,13 +21,13 @@
 #include "tr/updates/updates.h"
 #include "tr/executor/xqops/PPConstructors.h"
 #include "tr/executor/base/XPath.h"
+#include "tr/xqp/XQueryDriver.h"
+#include "tr/xqp/XQuerytoLR.h"
 #include "tr/executor/por2qep/por2qep.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
 #endif
-
-#include "tr/xqp/XQuerytoLR.h"
 
 using namespace std;
 using namespace tr_globals;
