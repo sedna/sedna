@@ -361,10 +361,32 @@ namespace sedna
 
     void lr2por::visit(ASTCast &n)
     {
+        childOffer off_e, off_t, off_this;
+
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        n.type->accept(*this);
+        off_t = getOffer();
+
+        off_this.opin = PPOpIn(new PPCast(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st.type.type, off_t.st.oi == st_optional), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTCastable &n)
     {
+        childOffer off_e, off_t, off_this;
+
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        n.type->accept(*this);
+        off_t = getOffer();
+
+        off_this.opin = PPOpIn(new PPCastable(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st.type.type, off_t.st.oi == st_optional), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTCharCont &n)
@@ -849,6 +871,17 @@ namespace sedna
 
     void lr2por::visit(ASTInstOf &n)
     {
+        childOffer off_e, off_t, off_this;
+
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        n.type->accept(*this);
+        off_t = getOffer();
+
+        off_this.opin = PPOpIn(new PPInstanceOf(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTItemTest &n)
@@ -1348,6 +1381,17 @@ namespace sedna
 
     void lr2por::visit(ASTTreat &n)
     {
+        childOffer off_e, off_t, off_this;
+
+        n.expr->accept(*this);
+        off_e = getOffer();
+
+        n.type->accept(*this);
+        off_t = getOffer();
+
+        off_this.opin = PPOpIn(new PPTreat(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTType &n)

@@ -325,58 +325,58 @@ namespace sedna
     void XQueryDriver::initXQueryInfo()
     {
         // predefined XQuery types
-        xsTypes["anyAtomicType"] = ASTType::ATOMIC;
-        xsTypes["string"] = ASTType::ATOMIC;
-        xsTypes["normalizedString"] = ASTType::ATOMIC;
-        xsTypes["token"] = ASTType::ATOMIC;
-        xsTypes["language"] = ASTType::ATOMIC;
-        xsTypes["NMTOKEN"] = ASTType::ATOMIC;
-        xsTypes["Name"] = ASTType::ATOMIC;
-        xsTypes["NCName"] = ASTType::ATOMIC;
-        xsTypes["ID"] = ASTType::ATOMIC;
-        xsTypes["IDREF"] = ASTType::ATOMIC;
-        xsTypes["ENTITY"] = ASTType::ATOMIC;
-        xsTypes["untypedAtomic"] = ASTType::ATOMIC;
-        xsTypes["dateTime"] = ASTType::ATOMIC;
-        xsTypes["date"] = ASTType::ATOMIC;
-        xsTypes["time"] = ASTType::ATOMIC;
-        xsTypes["duration"] = ASTType::ATOMIC;
-        xsTypes["yearMonthDuration"] = ASTType::ATOMIC;
-        xsTypes["dayTimeDuration"] = ASTType::ATOMIC;
-        xsTypes["float"] = ASTType::ATOMIC;
-        xsTypes["double"] = ASTType::ATOMIC;
-        xsTypes["decimal"] = ASTType::ATOMIC;
-        xsTypes["integer"] = ASTType::ATOMIC;
-        xsTypes["nonPositiveInteger"] = ASTType::ATOMIC;
-        xsTypes["negativeInteger"] = ASTType::ATOMIC;
-        xsTypes["long"] = ASTType::ATOMIC;
-        xsTypes["int"] = ASTType::ATOMIC;
-        xsTypes["short"] = ASTType::ATOMIC;
-        xsTypes["byte"] = ASTType::ATOMIC;
-        xsTypes["nonNegativeInteger"] = ASTType::ATOMIC;
-        xsTypes["positiveInteger"] = ASTType::ATOMIC;
-        xsTypes["unsignedLong"] = ASTType::ATOMIC;
-        xsTypes["unsignedInt"] = ASTType::ATOMIC;
-        xsTypes["unsignedShort"] = ASTType::ATOMIC;
-        xsTypes["unsignedByte"] = ASTType::ATOMIC;
-        xsTypes["gYearMonth"] = ASTType::ATOMIC;
-        xsTypes["gMonthDay"] = ASTType::ATOMIC;
-        xsTypes["gDay"] = ASTType::ATOMIC;
-        xsTypes["gMonth"] = ASTType::ATOMIC;
-        xsTypes["gYear"] = ASTType::ATOMIC;
-        xsTypes["boolean"] = ASTType::ATOMIC;
-        xsTypes["base64Binary"] = ASTType::ATOMIC;
-        xsTypes["hexBinary"] = ASTType::ATOMIC;
-        xsTypes["anyURI"] = ASTType::ATOMIC;
-        xsTypes["QName"] = ASTType::ATOMIC;
-        xsTypes["NOTATION"] = ASTType::ATOMIC;
+        xsTypes["anyAtomicType"] = xsTypeInfo(ASTType::ATOMIC, xs_anyAtomicType);
+        xsTypes["string"] = xsTypeInfo(ASTType::ATOMIC, xs_string);
+        xsTypes["normalizedString"] = xsTypeInfo(ASTType::ATOMIC, xs_normalizedString);
+        xsTypes["token"] = xsTypeInfo(ASTType::ATOMIC, xs_token);
+        xsTypes["language"] = xsTypeInfo(ASTType::ATOMIC, xs_language);
+        xsTypes["NMTOKEN"] = xsTypeInfo(ASTType::ATOMIC, xs_NMTOKEN);
+        xsTypes["Name"] = xsTypeInfo(ASTType::ATOMIC, xs_Name);
+        xsTypes["NCName"] = xsTypeInfo(ASTType::ATOMIC, xs_NCName);
+        xsTypes["ID"] = xsTypeInfo(ASTType::ATOMIC, xs_ID);
+        xsTypes["IDREF"] = xsTypeInfo(ASTType::ATOMIC, xs_IDREF);
+        xsTypes["ENTITY"] = xsTypeInfo(ASTType::ATOMIC, xs_ENTITY);
+        xsTypes["untypedAtomic"] = xsTypeInfo(ASTType::ATOMIC, xs_untypedAtomic);
+        xsTypes["dateTime"] = xsTypeInfo(ASTType::ATOMIC, xs_dateTime);
+        xsTypes["date"] = xsTypeInfo(ASTType::ATOMIC, xs_date);
+        xsTypes["time"] = xsTypeInfo(ASTType::ATOMIC, xs_time);
+        xsTypes["duration"] = xsTypeInfo(ASTType::ATOMIC, xs_duration);
+        xsTypes["yearMonthDuration"] = xsTypeInfo(ASTType::ATOMIC, xs_yearMonthDuration);
+        xsTypes["dayTimeDuration"] = xsTypeInfo(ASTType::ATOMIC, xs_dayTimeDuration);
+        xsTypes["float"] = xsTypeInfo(ASTType::ATOMIC, xs_float);
+        xsTypes["double"] = xsTypeInfo(ASTType::ATOMIC, xs_double);
+        xsTypes["decimal"] = xsTypeInfo(ASTType::ATOMIC, xs_decimal);
+        xsTypes["integer"] = xsTypeInfo(ASTType::ATOMIC, xs_integer);
+        xsTypes["nonPositiveInteger"] = xsTypeInfo(ASTType::ATOMIC, xs_nonPositiveInteger);
+        xsTypes["negativeInteger"] = xsTypeInfo(ASTType::ATOMIC, xs_negativeInteger);
+        xsTypes["long"] = xsTypeInfo(ASTType::ATOMIC, xs_long);
+        xsTypes["int"] = xsTypeInfo(ASTType::ATOMIC, xs_int);
+        xsTypes["short"] = xsTypeInfo(ASTType::ATOMIC, xs_short);
+        xsTypes["byte"] = xsTypeInfo(ASTType::ATOMIC, xs_byte);
+        xsTypes["nonNegativeInteger"] = xsTypeInfo(ASTType::ATOMIC, xs_nonNegativeInteger);
+        xsTypes["positiveInteger"] = xsTypeInfo(ASTType::ATOMIC, xs_positiveInteger);
+        xsTypes["unsignedLong"] = xsTypeInfo(ASTType::ATOMIC, xs_unsignedLong);
+        xsTypes["unsignedInt"] = xsTypeInfo(ASTType::ATOMIC, xs_unsignedInt);
+        xsTypes["unsignedShort"] = xsTypeInfo(ASTType::ATOMIC, xs_unsignedShort);
+        xsTypes["unsignedByte"] = xsTypeInfo(ASTType::ATOMIC, xs_unsignedByte);
+        xsTypes["gYearMonth"] = xsTypeInfo(ASTType::ATOMIC, xs_gYearMonth);
+        xsTypes["gMonthDay"] = xsTypeInfo(ASTType::ATOMIC, xs_gMonthDay);
+        xsTypes["gDay"] = xsTypeInfo(ASTType::ATOMIC, xs_gDay);
+        xsTypes["gMonth"] = xsTypeInfo(ASTType::ATOMIC, xs_gMonth);
+        xsTypes["gYear"] = xsTypeInfo(ASTType::ATOMIC, xs_gYear);
+        xsTypes["boolean"] = xsTypeInfo(ASTType::ATOMIC, xs_boolean);
+        xsTypes["base64Binary"] = xsTypeInfo(ASTType::ATOMIC, xs_base64Binary);
+        xsTypes["hexBinary"] = xsTypeInfo(ASTType::ATOMIC, xs_hexBinary);
+        xsTypes["anyURI"] = xsTypeInfo(ASTType::ATOMIC, xs_anyURI);
+        xsTypes["QName"] = xsTypeInfo(ASTType::ATOMIC, xs_QName);
+        xsTypes["NOTATION"] = xsTypeInfo(ASTType::ATOMIC, xs_NOTATION);
 
-        xsTypes["anyType"] = ASTType::COMPLEX;
-        xsTypes["anySimpleType"] = ASTType::SIMPLE;
-        xsTypes["IDREFS"] = ASTType::LIST;
-        xsTypes["NMTOKENS"] = ASTType::LIST;
-        xsTypes["ENTITIES"] = ASTType::LIST;
-        xsTypes["untyped"] = ASTType::COMPLEX;
+        xsTypes["anyType"] = xsTypeInfo(ASTType::ABSTRACT, xs_anyType);
+        xsTypes["anySimpleType"] = xsTypeInfo(ASTType::ABSTRACT, xs_anySimpleType);
+        xsTypes["IDREFS"] = xsTypeInfo(ASTType::LIST, xs_IDREFS);
+        xsTypes["NMTOKENS"] = xsTypeInfo(ASTType::LIST, xs_NMTOKENS);
+        xsTypes["ENTITIES"] = xsTypeInfo(ASTType::LIST, xs_ENTITIES);
+        xsTypes["untyped"] = xsTypeInfo(ASTType::COMPLEX, xs_untyped);
     }
 
     void XQueryDriver::registerStandardFunctions(const char *uri_nsp, XQFunction *funcs)
@@ -545,5 +545,12 @@ namespace sedna
     var_id XQueryDriver::getGlobalFunctionId(const std::string &name)
     {
         return libFuncs.find(name)->second.decl->getId();
+    }
+
+    xmlscm_type XQueryDriver::getXsType(const char *type)
+    {
+        U_ASSERT(xsTypes.find(type) != xsTypes.end());
+
+        return xsTypes[type].type;
     }
 }
