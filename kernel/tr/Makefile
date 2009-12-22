@@ -21,8 +21,8 @@ OBJS     = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
            tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
            tr_globals$(OBJ_EXT) rcv_db$(OBJ_EXT)
 
-SUBDIRS  = auth cat crmutils executor idx locks log mo nid pstr rcv \
-           strings structures updates vmm xqp bstrie
+SUBDIRS  = xqp auth cat crmutils executor idx locks log mo nid pstr rcv \
+           strings structures updates vmm bstrie
 
 ifeq ($(ENABLE_FTSEARCH), 1)
 SUBDIRS += ft
@@ -96,10 +96,9 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
 	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
 endif
 
-
+$(TRN_OBJS): $(SUBDIROBJS)
 
 $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
-
 
 .PHONY: $(SUBDIRS:%=%-recursive)
 $(SUBDIRS:%=%-recursive):
