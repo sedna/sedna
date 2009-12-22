@@ -10,6 +10,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/locks/locks.h"
 #include "tr/triggers/triggers.h"
+#include "tr/auth/auc.h"
 
 using namespace std;
 
@@ -145,6 +146,8 @@ void PPCreateTrigger::execute()
     tc = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_trigger(tc.get_str_mem());
+
+    auth_for_create_trigger(tc.get_str_mem());
 
 	trigger_cell_cptr trc = create_trigger (time,
 				event,

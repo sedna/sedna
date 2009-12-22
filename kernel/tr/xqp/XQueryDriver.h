@@ -26,6 +26,37 @@ namespace sedna
         struct ErrorInfo *next;
     };
 
+    enum secType
+    {
+        SEC_RETR_META,
+        SEC_LOAD,
+        SEC_CREATE,
+        SEC_DROP,
+        SEC_ALTER,
+        SEC_GRANT,
+        SEC_REVOKE,
+    };
+
+    enum secObjType
+    {
+        SEC_OBJ_MOD,
+        SEC_OBJ_DOC,
+        SEC_OBJ_COLL,
+        SEC_OBJ_IDX,
+        SEC_OBJ_TRG,
+        SEC_OBJ_DB,
+        SEC_OBJ_USER,
+        SEC_OBJ_ROLE,
+    };
+
+    struct secDescriptor
+    {
+        secType sec_type;
+        secObjType obj_type;
+
+        std::string obj_name;
+    };
+
     class XQueryDriver
     {
         friend class sedna::XQueryParser; // for lexer access
@@ -53,6 +84,8 @@ namespace sedna
             unsigned int glob_fun_num;
 
             typedef std::vector<XQueryModule *> modSequence;
+
+            std::vector<secDescriptor> secPrereqs;
 
             struct xsTypeInfo
             {
@@ -111,6 +144,11 @@ namespace sedna
             unsigned int getNewGlobFunId()
             {
                 return glob_fun_num++;
+            }
+
+            void addNewSecurityPrereq(secDescriptor sd)
+            {
+                secPrereqs.push_back(sd);
             }
 
             std::string getLRRepresentation(size_t mod_ind);

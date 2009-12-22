@@ -150,9 +150,14 @@ void PPLoadModule::execute()
         xptr doc_root, elem_ptr;
         if (is_load_replace)
         {
-            try{
-               delete_document_from_collection(MODULES_COLLECTION_NAME, module_name.c_str());
-            } catch(SednaUserException& e) {}
+            auth_for_drop_module(module_name.c_str());
+            try
+            {
+                delete_document_from_collection(MODULES_COLLECTION_NAME, module_name.c_str());
+            }
+            catch(SednaUserException& e) // catch to avoid 'no such document errors'
+            {
+            }
         }
 
         try
@@ -178,7 +183,7 @@ void PPLoadModule::execute()
         elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL_XMLNS);
 
         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
-        
+
         auth_for_load_module(module_name.c_str());
     } catch (ANY_SE_EXCEPTION) {
         close_all_client_files(cf_vec);

@@ -8,6 +8,7 @@
 #include "tr/executor/root/PPCreateMetadata.h"
 #include "tr/structures/metadata.h"
 #include "tr/locks/locks.h"
+#include "tr/auth/auc.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,9 +54,13 @@ void PPCreateDocument::execute()
 
     name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
+
     local_lock_mrg->put_lock_on_document(tc.get_str_mem());
+
+    auth_for_create_document(tc.get_str_mem());
+
     insert_document(tc.get_str_mem());
 }
 
@@ -103,9 +108,13 @@ void PPCreateCollection::execute()
 
     name.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
+
     tc = tuple_cell::make_sure_light_atomic(tc);
+
     local_lock_mrg->put_lock_on_collection(tc.get_str_mem());
+
+    auth_for_create_collection(tc.get_str_mem());
+
     insert_collection(tc.get_str_mem());
 }
 
@@ -116,7 +125,7 @@ void PPCreateCollection::execute()
 PPCreateDocumentInCollection::PPCreateDocumentInCollection(PPOpIn _document_,
                                                            dynamic_context *_cxt1_,
                                                            PPOpIn _collection_,
-                                                           dynamic_context *_cxt2_) : 
+                                                           dynamic_context *_cxt2_) :
                                                                                       cxt1(_cxt1_),
                                                                                       cxt2(_cxt2_),
                                                                                       document(_document_),
@@ -167,7 +176,7 @@ void PPCreateDocumentInCollection::execute()
         throw USER_EXCEPTION(SE1071);
 
     document.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);        
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
     tc_document = tuple_cell::make_sure_light_atomic(tc);
 
 
@@ -183,6 +192,8 @@ void PPCreateDocumentInCollection::execute()
     tc_collection = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
+
+    auth_for_create_document_collection(tc_document.get_str_mem(), tc_collection.get_str_mem());
+
     insert_document_into_collection(tc_collection.get_str_mem(), tc_document.get_str_mem());
 }
-

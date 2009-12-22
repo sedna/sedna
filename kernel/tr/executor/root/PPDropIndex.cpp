@@ -9,6 +9,7 @@
 #include "tr/idx/indexes.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/locks/locks.h"
+#include "tr/auth/auc.h"
 
 
 PPDropIndex::PPDropIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
@@ -55,6 +56,7 @@ void PPDropIndex::execute()
 
     schema_node_cptr root = get_schema_node(find_db_entity_for_index(tc.get_str_mem()), "Unknown entity passed to PPDropIndex");
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
+    auth_for_drop_object(tc.get_str_mem(), "index", false);
     delete_index(tc.get_str_mem());
 }
 
