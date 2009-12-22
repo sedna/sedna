@@ -87,4 +87,11 @@ public:
     virtual void modifyChild(const ASTNode *oldc, ASTNode *newc) = 0;
 };
 
+/* vector to store sequence of AST nodes */
+#include <vector>
+typedef std::vector<ASTNode *> ASTNodesVector;
+
+#include "tr/executor/por2qep/scheme_tree.h"
+#include "ASTCommon.h"
+
 #endif

@@ -7,7 +7,7 @@
 #define _AST_ORDER_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTOrder : public ASTNode
 {

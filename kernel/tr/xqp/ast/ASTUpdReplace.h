@@ -7,7 +7,7 @@
 #define _AST_UPDATE_REPLACE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTUpdReplace : public ASTNode
 {

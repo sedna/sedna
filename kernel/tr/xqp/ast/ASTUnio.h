@@ -7,7 +7,7 @@
 #define _AST_UNIO_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTUnio : public ASTNode
 {

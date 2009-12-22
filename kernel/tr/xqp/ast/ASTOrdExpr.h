@@ -7,7 +7,7 @@
 #define _AST_ORD_EXPR_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTOrdExpr : public ASTNode
 {

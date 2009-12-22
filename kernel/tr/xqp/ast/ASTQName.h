@@ -7,7 +7,7 @@
 #define _AST_QNAME_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

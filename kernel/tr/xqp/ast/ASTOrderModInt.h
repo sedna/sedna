@@ -7,7 +7,7 @@
 #define _AST_ORDER_MOD_INT_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 
 class ASTOrderModInt : public ASTNode

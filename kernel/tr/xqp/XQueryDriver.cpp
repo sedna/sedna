@@ -495,4 +495,46 @@ namespace sedna
 
         return xqv;
     }
+
+    size_t XQueryDriver::getVarCount() const
+    {
+        return libVars.size();
+    }
+
+    size_t XQueryDriver::getFuncCount() const
+    {
+        return libFuncs.size();
+    }
+
+    size_t XQueryDriver::getLibModCount() const
+    {
+        size_t count = 0;
+        std::map<std::string, modSequence>::const_iterator it;
+
+        for (it = libModules.begin(); it != libModules.end(); it++)
+            count += it->second.size();
+
+        return count;
+    }
+
+    PPQueryEssence *XQueryDriver::getQEPForModule(unsigned int ind)
+    {
+        return (mods[ind])->getQEP();
+    }
+
+    void XQueryDriver::porLibModules()
+    {
+        std::map<std::string, modSequence>::iterator it;
+
+        for (it = libModules.begin(); it != libModules.end(); it++)
+        {
+            modSequence::iterator mit;
+
+            for (mit = it->second.begin(); mit != it->second.end(); it++)
+            {
+                (*mit)->porLibModule();
+            }
+        }
+    }
+
 }

@@ -7,7 +7,7 @@
 #define _AST_META_DOCS_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTMetaDocs : public ASTNode
 {

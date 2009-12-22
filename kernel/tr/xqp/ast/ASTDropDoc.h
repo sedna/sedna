@@ -7,7 +7,7 @@
 #define _AST_DROP_DOC_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTDropDoc : public ASTNode
 {

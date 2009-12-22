@@ -7,7 +7,7 @@
 #define _AST_ORDER_BY_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <vector>
 

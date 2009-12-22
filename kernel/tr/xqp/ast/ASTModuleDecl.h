@@ -7,7 +7,7 @@
 #define _AST_MODULE_DECL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

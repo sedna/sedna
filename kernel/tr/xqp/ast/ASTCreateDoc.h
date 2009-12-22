@@ -7,7 +7,7 @@
 #define _AST_CREATE_DOC_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTCreateDoc : public ASTNode
 {

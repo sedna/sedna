@@ -24,9 +24,7 @@ CUSTOM_CLEAN = clean_generated
 #################################################
 # Note! DON'T FORGET TO CHANGE Makefile.release!#
 #################################################
-SUBDIRS = ast visitor sema serial lr lreturn
-
-
+SUBDIRS = ast visitor sema serial lr lreturn lr2por
 
 include $(PP)/Makefile.ordlib
 

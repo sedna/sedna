@@ -7,7 +7,7 @@
 #define _AST_META_SCHEMA_COLL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTMetaSchemaCol : public ASTNode
 {

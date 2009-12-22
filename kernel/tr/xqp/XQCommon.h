@@ -3,6 +3,7 @@
 
 #include "tr/xqp/ast/ASTNode.h"
 #include "tr/xqp/ast/ASTVarDecl.h"
+#include "tr/xqp/ast/ASTVar.h"
 #include <string.h>
 #include <map>
 
@@ -29,10 +30,13 @@ namespace sedna
 
         bool isNodes; // true if var represents sequence of nodes (singletons also go here)(this is only for typed vars)
 
+        int id; // id for physical plan
+
         XQVariable(const char *name, ASTVar *var_)
         {
             int_name = name;
             var = var_;
+            id = -1;
 
             exp_info.isDistincted = true;
             exp_info.useConstructors = false;
@@ -45,6 +49,7 @@ namespace sedna
         {
             int_name = "$%dummy";
             var = NULL;
+            id = -1;
         }
     };
 

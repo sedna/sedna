@@ -7,7 +7,7 @@
 #define _AST_IF_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTIf : public ASTNode
 {

@@ -7,7 +7,7 @@
 #define _AST_DEF_NAMESPACE_DECL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTDefNamespaceDecl : public ASTNode
 {

@@ -7,7 +7,7 @@
 #define _AST_ATTR_CONST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

@@ -7,7 +7,7 @@
 #define _AST_BOUND_SPACE_DECL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTBoundSpaceDecl : public ASTNode
 {

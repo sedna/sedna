@@ -7,7 +7,7 @@
 #define _AST_QUERY_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <vector>
 
@@ -26,7 +26,9 @@ public:
     QueryType type;
 
 public:
-    ASTQuery(const ASTNodeCommonData &loc, ASTNode *expr, ASTQuery::QueryType qtype) : ASTNode(loc), query(expr), type(qtype) {}
+    ASTQuery(const ASTNodeCommonData &loc, ASTNode *expr, ASTQuery::QueryType qtype) : ASTNode(loc), query(expr), type(qtype)
+    {
+    }
 
     ~ASTQuery();
 

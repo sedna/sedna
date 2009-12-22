@@ -7,7 +7,7 @@
 #define _AST_LIT_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTLit : public ASTNode
 {

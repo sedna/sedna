@@ -7,7 +7,7 @@
 #define _AST_DROP_MODULE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

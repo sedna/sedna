@@ -7,7 +7,7 @@
 #define _AST_DROP_INDEX_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

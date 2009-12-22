@@ -7,7 +7,7 @@
 #define _AST_DECLARE_COPY_NSP_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTDeclareCopyNsp : public ASTNode
 {

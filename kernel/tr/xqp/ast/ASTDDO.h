@@ -7,7 +7,7 @@
 #define _AST_DDO_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTDDO : public ASTNode
 {

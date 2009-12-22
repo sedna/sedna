@@ -7,7 +7,7 @@
 #define _AST_UPDATE_RENAME_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTUpdRename : public ASTNode
 {

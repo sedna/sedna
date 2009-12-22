@@ -7,7 +7,7 @@
 #define _AST_CHAR_CONT_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

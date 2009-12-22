@@ -7,7 +7,7 @@
 #define _AST_MAIN_MODULE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include "ASTProlog.h"
 #include "ASTQuery.h"

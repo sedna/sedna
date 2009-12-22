@@ -7,7 +7,7 @@
 #define _AST_CONST_DECL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTConstDecl : public ASTNode
 {

@@ -7,7 +7,7 @@
 #define _AST_BASE_URI_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTBaseURI : public ASTNode
 {

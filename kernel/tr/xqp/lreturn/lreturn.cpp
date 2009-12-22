@@ -5,6 +5,7 @@
 
 #include "tr/xqp/lreturn/lreturn.h"
 #include "common/errdbg/exceptions.h"
+#include "tr/xqp/sema/Sema.h"
 
 namespace sedna
 {

@@ -7,7 +7,7 @@
 #define _AST_CASTABLE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include "ASTTypeSingle.h"
 

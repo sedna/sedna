@@ -7,7 +7,7 @@
 #define _AST_DOC_TEST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTDocTest : public ASTNode
 {

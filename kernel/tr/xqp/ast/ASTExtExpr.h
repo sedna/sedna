@@ -7,7 +7,7 @@
 #define _AST_EXT_EXPR_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTExtExpr : public ASTNode
 {

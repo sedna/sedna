@@ -7,7 +7,7 @@
 #define _AST_POS_VAR_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include "ASTVar.h"
 

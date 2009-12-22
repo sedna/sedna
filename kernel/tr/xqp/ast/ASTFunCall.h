@@ -7,7 +7,7 @@
 #define _AST_FUN_CALL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 
