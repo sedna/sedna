@@ -70,6 +70,21 @@ namespace sedna
         return res;
     }
 
+    void XQueryDriver::parseAST(const char *ast)
+    {
+        XQueryModule *mod = new XQueryModule(ast, this);
+
+        mods.push_back(mod);
+    }
+
+    void XQueryDriver::parseASTForTriggers(const char *ast, static_context *sx, dynamic_context *dx)
+    {
+        XQueryModule *mod = new XQueryModule(ast, this);
+
+        mod->setContextsForQEP(sx, dx);
+        mods.push_back(mod);
+    }
+
     void XQueryDriver::emitErrors()
     {
         std::string err_msg;

@@ -173,11 +173,21 @@ void command_line_client::read_msg(msg_struct *msg)
             }
         }
 
-        //std::string dummy;
-        //stmnts_array = parse_batch(tr_globals::query_type, plain_batch_text.c_str(), &dummy);
-        stmnts_array.push_back(plain_batch_text);
+        // here we parse our queries via driver and then get ast-strings
+        sedna::XQueryDriver *xqd = new sedna::XQueryDriver;
+        std::string dummy; // for module name
+        parse_batch(xqd, TL_XQuery, plain_batch_text.c_str(), &dummy);
 
-        //add 'coomit' command if there is not end of transaction (coommit or rollback) command
+        // then we iterate through modules and get array of ast-strings
+        for (size_t i = 0; i < xqd->getModulesCount(); i++)
+        {
+            stmnts_array.push_back(xqd->getIRRepresentation(i));
+        }
+
+        // destroy the driver
+        delete xqd;
+
+        //add 'commit' command if there is not end of transaction (coommit or rollback) command
         if (stmnts_array.back().substr(0, 8).find("rollback") == string::npos &&
             stmnts_array.back().substr(0, 6).find("commit") == string::npos)
             stmnts_array.push_back("commit");
@@ -234,7 +244,7 @@ char* command_line_client::get_query_string(msg_struct *msg)
 
 QueryType command_line_client::get_query_type()
 {
-    return TL_XQuery;
+    return TL_ASTInitial;
 
 //    if (tr_globals::query_type == TL_POR)
 //        return TL_POR;

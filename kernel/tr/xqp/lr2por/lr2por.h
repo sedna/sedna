@@ -113,6 +113,7 @@ namespace sedna
             pareqs.push_back(parentRequest());
 
             st_cxt = st_cxt_;
+            dyn_cxt = NULL;
             qep = NULL;
             var_num = 0;
             var_op_num = -1;
@@ -125,6 +126,12 @@ namespace sedna
         PPQueryEssence *getResult()
         {
             return qep;
+        }
+
+        // hack-function to enable trigger-queries (active only on usual queries; updates ALWAYS create new dyn. context)
+        void setDynCxt(dynamic_context *dx)
+        {
+            dyn_cxt = dx;
         }
 
         void setOrderedMode(bool mode)

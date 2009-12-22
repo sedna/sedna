@@ -758,14 +758,31 @@ namespace sedna
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
 
-        scheme_list *action = new scheme_list(n.do_exprs->size());
+        scheme_list *action = new scheme_list(n.do_exprs->size() * 2);
 
         for (unsigned int i = 0; i < n.do_exprs->size(); i++)
         {
-            std::string ir = mod->getIR(n.do_exprs->at(i));
+            bool is_query = (dynamic_cast<ASTQuery *>(n.do_exprs->at(i)) == NULL);
+
+            ASTNode *st_ast;
+
+            // make if full-fledged ASTQuery
+            if (is_query)
+            {
+                st_ast = new ASTQuery(n.do_exprs->at(i)->getLocation(), n.do_exprs->at(i), ASTQuery::QUERY);
+            }
+            else
+            {
+                st_ast = n.do_exprs->at(i);
+            }
+
+            std::string ir = mod->getIR(st_ast);
 
             action->at(i).type = SCM_STRING;
             action->at(i).internal.str = new char[ir.size() + 1];
+            action->at(i+1).type = SCM_BOOL;
+            action->at(i+1).internal.b = is_query;
+
             strcpy(action->at(i).internal.str, ir.c_str());
         }
 
@@ -795,7 +812,7 @@ namespace sedna
 
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 #else
-        throw USER_EXCEPTION2(SE1002, "Triggers support disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
+        throw USER_EXCEPTION2(SE1002, "Triggers support is disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
 #endif
     }
 
@@ -2496,7 +2513,9 @@ namespace sedna
         if (n.type == ASTQuery::QUERY)
         {
             var_num = 0;
-            dyn_cxt = new dynamic_context(st_cxt, 0);
+
+            if (!dyn_cxt) // trigger-hack (in case of trigger query dyn_cxt is already set)
+                dyn_cxt = new dynamic_context(st_cxt, 0);
         }
 
         n.query->accept(*this);

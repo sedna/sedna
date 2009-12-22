@@ -51,8 +51,13 @@ namespace sedna
         typedef std::pair<std::string, PPGlobalVariable *> unresPorVarInfo;
         std::multimap<std::string, PPGlobalVariable *> unresPorVars; // contains unresolved global var ids
 
+        // hack for triggers
+        static_context *hack_qep_sx;
+        dynamic_context *hack_qep_dx;
+
     public:
         XQueryModule(ASTNode *ast_tree, XQueryDriver *driver);
+        XQueryModule(const char *ast_str, XQueryDriver *driver);
 
         void doSemanticAnalysis();
         void doLReturnAnalysis();
@@ -87,6 +92,8 @@ namespace sedna
         bool getLReturnVariableInfo(const std::string &name, XQVariable &xqv);
 
         void addToUnresolvedPor(const std::string &name, PPGlobalVariable *var);
+
+        void setContextsForQEP(static_context *sx, dynamic_context *dx);
 
         size_t getFunctionCount() const
         {

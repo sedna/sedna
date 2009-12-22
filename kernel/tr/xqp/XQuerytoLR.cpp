@@ -39,10 +39,10 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
 
     StringVector array, batch_utf;
 
-    GET_TIME(&t1_parser);
-
     try
     {
+        GET_TIME(&t1_parser);
+
         // check for BOM and valid UTF-8; batch is a copy
         for (unsigned int i = 0; i < batch.size(); i++)
             batch_utf.push_back(encoding_processing(batch[i].c_str()));
@@ -60,20 +60,45 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
             drv->doLReturnAnalysis();
 
             *module_name = drv->getParsedModuleName();
+
+            GET_TIME(&t2_parser);
+            ADD_TIME(t_total_parser, t1_parser, t2_parser);
+        }
+        else if (type == TL_ASTInitial)
+        {
+            // parse query and create ast-tree; any errors will be thrown as exceptions
+            for (unsigned int i = 0; i < batch_utf.size(); i++)
+                drv->parseAST(batch_utf[i].c_str());
+
+            // do semantic analysis; any errors will be thrown as exceptions
+            drv->doSemanticAnalysis();
+
+            // do lreturn optimizations
+            drv->doLReturnAnalysis();
+
+            *module_name = drv->getParsedModuleName();
+        }
+        else if (type == TL_ASTQEPReady)
+        {
+            // parse query and create ast-tree; any errors will be thrown as exceptions
+            for (unsigned int i = 0; i < batch_utf.size(); i++)
+                drv->parseAST(batch_utf[i].c_str());
+
+            // don't need to run any analysis here sine it's QEP-ready
+            *module_name = "";
         }
         else
         {
             throw USER_EXCEPTION2(SE4002, "unknown query type: only XQuery queries are supported now");
         }
-
-        GET_TIME(&t2_parser);
-
-        ADD_TIME(t_total_parser, t1_parser, t2_parser);
     }
     catch (SednaUserException &e)
     {
-        GET_TIME(&t2_parser);
-        ADD_TIME(t_total_parser, t1_parser, t2_parser);
+        if (type == TL_XQuery)
+        {
+            GET_TIME(&t2_parser);
+            ADD_TIME(t_total_parser, t1_parser, t2_parser);
+        }
 
         throw;
     }
@@ -90,3 +115,10 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch1, s
     parse_batch(drv, type, sv, module_name);
 }
 
+void parse_batch_triggers(sedna::XQueryDriver *drv, const char *query, static_context *sx, dynamic_context *dx)
+{
+    U_ASSERT(drv);
+
+    // parse query and create ast-tree with context predefined; any errors will be thrown as exceptions
+    drv->parseASTForTriggers(query, sx, dx);
+}

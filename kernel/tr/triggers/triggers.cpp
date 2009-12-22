@@ -14,6 +14,7 @@
 #include "tr/log/log.h"
 #include "tr/locks/locks.h"
 #include "tr/crmutils/exec_output.h"
+#include "tr/xqp/XQuerytoLR.h"
 
 static t_triggers_set after_statement_triggers;
 
@@ -638,6 +639,7 @@ trigger_cell_xptr create_trigger (
         {
             trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
             strcpy(trac->statement,action->at(i).internal.str);
+            trac->cxt_size = (action->at(i+1).internal.b) ? 0 : 1;
 
             /*if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
             {
@@ -751,7 +753,7 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
 {
     xptr res_xptr = XNULL;
     PPQueryEssence* qep_tree = NULL;
-    qep_subtree* qep_subtree = NULL;
+    qep_subtree *qep_subtree = NULL;
 
     bool is_qep_opened    = false;
     bool is_subqep_opened = false;
@@ -779,25 +781,37 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
             qep_parameters = &(bta.parameters);
             while(trac!=NULL)
             {
-                if(strstr(trac->statement, "query") != NULL)
+                sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
+
+                if(trac->cxt_size == 1) // update
                 {
                     bta.action_qep_subtree = NULL;
-                    qep_tree = bta.action_qep_tree = build_qep(trac->statement);
+
+                    std::string dummy; // for module name
+                    parse_batch(xqd, TL_ASTQEPReady, trac->statement, &dummy);
+                    qep_tree = bta.action_qep_tree = xqd->getQEPForModule(0);
                     is_qep_built = true;
                     qep_tree->open();
                     is_qep_opened = true;
                     built_trigger_actions_vec.push_back(bta);
                 }
-                else
+                else // query
                 {
                     bta.action_qep_tree = NULL;
-                    qep_subtree = bta.action_qep_subtree = build_qep(trac->statement, trac->cxt_size);
+
+                    bta.action_qep_subtree->cxt = dynamic_context::create_unmanaged(0);
+                    parse_batch_triggers(xqd, trac->statement, bta.action_qep_subtree->cxt->st_cxt, bta.action_qep_subtree->cxt);
+                    PPQueryRoot *pqr = dynamic_cast<PPQueryRoot *>(xqd->getQEPForModule(0));
+                    U_ASSERT(pqr);
+                    bta.action_qep_subtree->tree = pqr->detachChild();
+                    delete pqr;
                     is_subqep_built = true;
-                    qep_subtree->tree.op->open();
+                    bta.action_qep_subtree->tree.op->open();
                     is_subqep_opened = true;
                     built_trigger_actions_vec.push_back(bta);
                 }
                 trac = trac->next;
+                delete xqd;
             }
         }
         catch(SednaUserException &e)
