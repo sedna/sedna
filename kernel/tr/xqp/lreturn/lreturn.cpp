@@ -103,6 +103,7 @@ namespace sedna
 
             req.distinctOnly = true;
             req.deep_copy = true;
+            req.atomize = false;
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -197,8 +198,10 @@ namespace sedna
         {
             parentRequest req(getParentRequest());
 
-            // we propagate disrinctOnly here since neither axis-test (obviously) nor predicate (see inner-focus) cannot see
+            // we propagate distinctOnly here since neither axis-test (obviously) nor predicate (see inner-focus) cannot see
             // ordering from the previous step and so cannot use it
+            req.deep_copy = true;
+            req.atomize = false;
             setParentRequest(req);
             n.cont->accept(*this);
             off_this = off_cont = getOffer();
@@ -376,6 +379,9 @@ namespace sedna
         if (n.op >= ASTBop::OR && n.op <= ASTBop::GE_G)
             req.distinctOnly = true;
 
+        req.atomize = false;
+        req.deep_copy = true;
+
         setParentRequest(req);
         n.lop->accept(*this);
         lof = getOffer();
@@ -505,7 +511,9 @@ namespace sedna
                 bound_vars.back().exp_info.useConstructors = ts_off.exi.useConstructors;
         }
 
+        req.atomize = false;
         setParentRequest(req);
+
         n.expr->accept(*this);
 
         coff = getOffer();
@@ -526,6 +534,8 @@ namespace sedna
         childOffer off_this, eoff;
 
         req.distinctOnly = true; // cast doesn't work for >1 sequencies
+        req.atomize = false;
+        req.deep_copy = true;
         setParentRequest(req);
         n.expr->accept(*this);
 
@@ -544,6 +554,8 @@ namespace sedna
         parentRequest req(getParentRequest());
         childOffer off_this, eoff;
 
+        req.atomize = false;
+        req.deep_copy = true;
         req.distinctOnly = true; // castable always returns false for 1+ sequencies
         setParentRequest(req);
         n.expr->accept(*this);
@@ -890,6 +902,7 @@ namespace sedna
 
             req.distinctOnly = true;
             req.deep_copy = true;
+            req.atomize = false;
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -1010,6 +1023,8 @@ namespace sedna
             // we propagate distinctOnly here iff the primary expression doesn't use the context of the previous step
             // if it does, then it could expose absence of mandatory ordering using position()
             req.distinctOnly = !n.use_pos && getParentRequest().distinctOnly;
+            req.atomize = false;
+            req.deep_copy = true;
             setParentRequest(req);
             n.cont->accept(*this);
             off_cont = getOffer();
@@ -1165,7 +1180,7 @@ namespace sedna
 
         n.fls->at(0)->accept(*this);
 
-        req.calledOnce = false; // subsequent for-lets will be called more than once in general
+        req.calledOnce = false; // subsequent for-lets will be called more than once generally
         for (it = n.fls->begin() + 1; it != n.fls->end(); it++)
         {
             (*it)->accept(*this);
@@ -1187,6 +1202,9 @@ namespace sedna
 
         req.calledOnce = false;
         req.distinctOnly = getParentRequest().distinctOnly;
+        req.atomize = false;
+        req.deep_copy = getParentRequest().deep_copy;
+        setParentRequest(req);
 
         n.ret->accept(*this);
         off_this = getOffer();
@@ -1285,6 +1303,8 @@ namespace sedna
 
         // we should ignore distinct only since binding expression doesn't emit the result
         req.distinctOnly = false;
+        req.atomize = false;
+        req.deep_copy = true;
         setParentRequest(req);
         n.expr->accept(*this);
         off_e = getOffer();
@@ -1415,10 +1435,16 @@ namespace sedna
             }
 
             if (*n.int_name == "!fn!last")
+            {
+                off_this.usedVars.clear();
                 off_this.use_last = true;
+            }
 
             if (*n.int_name == "!fn!position")
+            {
+                off_this.usedVars.clear();
                 off_this.use_position = true;
+            }
         }
         else
         {
@@ -1526,11 +1552,13 @@ namespace sedna
         req.distinctOnly = true; // for if-expression we need only distinct because of EBV
         req.calledOnce = getParentRequest().calledOnce;
         req.deep_copy = true;
+        req.atomize = false;
         setParentRequest(req);
         n.i_expr->accept(*this);
         off_if = getOffer();
 
         req = getParentRequest();
+        req.atomize = false;
         setParentRequest(req);
         n.t_expr->accept(*this);
         off_t = getOffer();
@@ -1577,6 +1605,8 @@ namespace sedna
         childOffer off_this, eoff;
 
         req.distinctOnly = true;
+        req.deep_copy = true;
+        req.atomize = false;
         setParentRequest(req);
         n.expr->accept(*this);
 
@@ -1610,6 +1640,8 @@ namespace sedna
         bound_vars.pop_back();
 
         req.distinctOnly = getParentRequest().distinctOnly || var.exp_info.isMax1; // if we wait for singleton then do just distinct
+        req.deep_copy = true;
+        req.atomize = false;
         setParentRequest(req);
         n.expr->accept(*this);
         off_e = getOffer();
@@ -1877,8 +1909,12 @@ namespace sedna
     void LReturn::visit(ASTOrderSpec &n)
     {
         childOffer off;
+        parentRequest req(getParentRequest());
 
-        setParentRequest(getParentRequest());
+        req.deep_copy = true;
+        req.atomize = false;
+        setParentRequest(req);
+
         n.expr->accept(*this);
         off = getOffer();
 
@@ -1903,6 +1939,7 @@ namespace sedna
 
             req.deep_copy = true;
             req.distinctOnly = true;
+            req.atomize = false;
             setParentRequest(req);
             n.name->accept(*this);
             count++;
@@ -2225,6 +2262,8 @@ namespace sedna
         parentRequest req(getParentRequest());
         childOffer off;
 
+        req.deep_copy = true;
+        req.atomize = false;
         setParentRequest(req);
         n.expr->accept(*this);
         off = getOffer();
@@ -2308,6 +2347,7 @@ namespace sedna
         bound_vars.push_back(var);
 
         req = getParentRequest();
+        req.atomize = false;
         VisitNodesVector(n.cases, *this, req);
 
         setParentRequest(req);
@@ -2741,23 +2781,23 @@ namespace sedna
         }
     }
 
-    const LReturn::parentRequest &LReturn::getParentRequest() const
+    inline const LReturn::parentRequest &LReturn::getParentRequest() const
     {
         return pareqs.back();
     }
 
-    void LReturn::setParentRequest(const LReturn::parentRequest &preq)
+    inline void LReturn::setParentRequest(const LReturn::parentRequest &preq)
     {
         parentReq = preq;
     }
 
-    void LReturn::addToPath(ASTNode *nod)
+    inline void LReturn::addToPath(ASTNode *nod)
     {
         ASTVisitor::addToPath(nod);
         pareqs.push_back(parentReq);
     }
 
-    void LReturn::removeFromPath(ASTNode *nod)
+    inline void LReturn::removeFromPath(ASTNode *nod)
     {
         ASTVisitor::removeFromPath(nod);
         pareqs.pop_back();

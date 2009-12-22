@@ -488,7 +488,8 @@ namespace sedna
         n.type->accept(*this);
         off_t = getOffer();
 
-        off_this.opin = PPOpIn(new PPCast(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st.type.type, off_t.st.oi == st_optional), 1);
+        U_ASSERT(off_t.st.type.type == st_atomic_type);
+        off_this.opin = PPOpIn(new PPCast(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st.type.info.single_type, off_t.st.oi == st_optional), 1);
 
         setOffer(off_this);
     }
@@ -503,7 +504,8 @@ namespace sedna
         n.type->accept(*this);
         off_t = getOffer();
 
-        off_this.opin = PPOpIn(new PPCastable(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st.type.type, off_t.st.oi == st_optional), 1);
+        U_ASSERT(off_t.st.type.type == st_atomic_type);
+        off_this.opin = PPOpIn(new PPCastable(dyn_cxt, createOperationInfo(n), off_e.opin, off_t.st.type.info.single_type, off_t.st.oi == st_optional), 1);
 
         setOffer(off_this);
     }
@@ -1319,13 +1321,18 @@ namespace sedna
         std::vector<PPOpIn> fl_ops;
         childOffer off_ob, off_this, off_where;
         PPOpIn where, fl_close, nil;
+        std::vector<l2pVarInfo> un_vars; // unique bindings to remedy (for $i ... for $i like situations)
 
         var_count = bound_vars.size();
         ASTVisitor::VisitNodesVector(n.fls, *this);
         var_count = bound_vars.size() - var_count;
 
-        n.ret->accept(*this);
-        off_this = getOffer();
+        // if we've got order-by we'll process return-statement later with new bindings
+        if (!n.order_by)
+        {
+            n.ret->accept(*this);
+            off_this = getOffer();
+        }
 
         if (n.where)
         {
@@ -1373,10 +1380,9 @@ namespace sedna
 
         // make for-let tree with 'fl_close' rightmost leaf
         PPOpIn flop = fl_close;
-        std::vector<l2pVarInfo> un_vars; // unique bindings to remedy (for $i ... for $i like situations)
         size_t let_num = 0; // number of let-vars in un_vars
 
-        for (size_t i = 0; i < n.fls->size(); i++)
+        for (int i = n.fls->size() - 1; i >= 0; i--)
         {
             childOffer off = getOffer();
             arr_of_var_dsc vars;
@@ -1434,12 +1440,35 @@ namespace sedna
 
         if (n.order_by)
         {
+            // here un_vars contains general PPReturn bindings (in reverse order)
+            // since we introduce PPSLets here, return-statement must work with the same for-bindings and SLET-bindings (not un_vars let ones)
             PPOpIn ob, ret;
             arr_of_var_dsc vars(un_vars.size());
+            std::vector<var_id> new_slet_bindings;
             bool isStable = dynamic_cast<const ASTOrderBy *>(n.order_by)->isStable();
 
             ob.op = new PPOrderBy(dyn_cxt, createOperationInfo(*n.order_by), isStable, flop, off_ob.orbs, un_vars.size());
             ob.ts = un_vars.size();
+
+            // bind for-let variables with new bindings
+            for (size_t i = 0; i < un_vars.size(); i++)
+            {
+                bound_vars.push_back(un_vars[i]);
+
+                // for let introduce new binding
+                if (i < let_num)
+                {
+                    var_id new_slet = getVarNum();
+                    new_slet_bindings.push_back(new_slet);
+                    bound_vars.back().second = new_slet;
+                }
+            }
+
+            n.ret->accept(*this);
+            off_this = getOffer();
+
+            // unbind variables
+            bound_vars.erase(bound_vars.end() - un_vars.size(), bound_vars.end());
 
             ret = off_this.opin;
 
@@ -1449,7 +1478,7 @@ namespace sedna
                 if (i < let_num)
                 {
                     arr_of_var_dsc slet_vars;
-                    slet_vars.push_back(getVarNum()); // new binding for PPSLet
+                    slet_vars.push_back(new_slet_bindings[i]); // new binding for PPSLet
 
                     ret.op = new PPSLet(dyn_cxt, createOperationInfo(*n.ret), slet_vars,
                                     PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(*n.ret), un_vars[i].second), 1), ret);
@@ -2155,8 +2184,13 @@ namespace sedna
         childOffer off_this;
         orb_modifier orb;
 
+        off_this.orbs = arr_of_orb_modifier(1);
+
         if (n.ad_mod)
         {
+            n.ad_mod->accept(*this);
+            off_this = getOffer();
+
             orb.order = off_this.orbs[0].order;
         }
         else
@@ -2166,6 +2200,9 @@ namespace sedna
 
         if (n.em_mod)
         {
+            n.em_mod->accept(*this);
+            off_this = getOffer();
+
             orb.status = off_this.orbs[0].status;
         }
         else
@@ -2175,6 +2212,9 @@ namespace sedna
 
         if (n.col_mod)
         {
+            n.ad_mod->accept(*this);
+            off_this = getOffer();
+
             orb.collation = off_this.orbs[0].collation;
         }
         else
@@ -2190,6 +2230,8 @@ namespace sedna
     void lr2por::visit(ASTOrderModInt &n)
     {
         childOffer off_this;
+
+        off_this.orbs = arr_of_orb_modifier(1);
 
         switch (n.mod)
         {
@@ -2240,7 +2282,7 @@ namespace sedna
             n.mod->accept(*this);
             off = getOffer();
 
-            off_this.orbs[0] = off.orbs[0];
+            off_this.orbs = off.orbs;
         }
         else
         {
@@ -2250,6 +2292,7 @@ namespace sedna
             orb.status = st_cxt->empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
             orb.collation = st_cxt->get_default_collation();
 
+            off_this.orbs = arr_of_orb_modifier(1);
             off_this.orbs[0] = orb;
         }
 
@@ -2416,7 +2459,7 @@ namespace sedna
             else
             {
                 off_this.opin.op = new PPPred2(dyn_cxt, oip, vars, getParentRequest().pred_cxt, conj,
-                        cond, off.opin, false, last_var);
+                        cond, off.opin, (n.others.size() == 1) ? !n.others[0].use_cxt : true,  last_var);
             }
         }
         else
