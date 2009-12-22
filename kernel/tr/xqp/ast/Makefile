@@ -8,7 +8,7 @@ include $(PP)/Makefile.include
 
 OBJS =  ASTType$(OBJ_EXT) ASTUpdDel$(OBJ_EXT) ASTCreateIndex$(OBJ_EXT) ASTOrderByRet$(OBJ_EXT) ASTDropRole$(OBJ_EXT) \
 		ASTQName$(OBJ_EXT) ASTError$(OBJ_EXT) ASTNamespaceDecl$(OBJ_EXT) ASTOption$(OBJ_EXT) ASTDropIndex$(OBJ_EXT) \
-		ASTGrantRole$(OBJ_EXT) ASTCreateTrg$(OBJ_EXT) ASTAlterUser$(OBJ_EXT) AST$(OBJ_EXT) ASTSchemaElemTest$(OBJ_EXT) \
+		ASTGrantRole$(OBJ_EXT) ASTCreateTrg$(OBJ_EXT) ASTAlterUser$(OBJ_EXT) ASTCommon$(OBJ_EXT) ASTSchemaElemTest$(OBJ_EXT) \
 		ASTCastable$(OBJ_EXT) ASTLet$(OBJ_EXT) ASTPIConst$(OBJ_EXT) ASTTextTest$(OBJ_EXT) ASTModImport$(OBJ_EXT) \
 		ASTFunCall$(OBJ_EXT) ASTItemTest$(OBJ_EXT) ASTTreat$(OBJ_EXT) ASTMetaSchemaCol$(OBJ_EXT) ASTOrderModInt$(OBJ_EXT) \
 		ASTCharCont$(OBJ_EXT) ASTTypeVar$(OBJ_EXT) ASTUpdReplace$(OBJ_EXT) ASTDocConst$(OBJ_EXT) ASTDefNamespaceDecl$(OBJ_EXT) \

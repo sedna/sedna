@@ -7,7 +7,7 @@
 #define _AST_CASE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include "ASTTypeSeq.h"
 

@@ -24,7 +24,11 @@ void ASTVarDecl::accept(ASTVisitor &v)
 
 ASTNode *ASTVarDecl::dup()
 {
-    return new ASTVarDecl(cd, var->dup(), (type == NULL) ? NULL: type->dup(), (expr == NULL) ? NULL: expr->dup());
+    ASTVarDecl *res = new ASTVarDecl(cd, var->dup(), (type == NULL) ? NULL: type->dup(), (expr == NULL) ? NULL: expr->dup());
+
+    res->id = id;
+
+    return res;
 }
 
 ASTNode *ASTVarDecl::createNode(scheme_list &sl)

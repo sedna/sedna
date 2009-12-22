@@ -3,7 +3,7 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "AST.h"
+#include "ASTCommon.h"
 #include <map>
 
 // Parses QName to prefix and local parts and stores them in pref and loc strings

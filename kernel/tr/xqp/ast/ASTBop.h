@@ -7,7 +7,7 @@
 #define _AST_BOP_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTBop : public ASTNode
 {

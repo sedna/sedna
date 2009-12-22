@@ -7,7 +7,7 @@
 #define _AST_VERSION_DECL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

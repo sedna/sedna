@@ -7,7 +7,7 @@
 #define _AST_TYPE_SINGLE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

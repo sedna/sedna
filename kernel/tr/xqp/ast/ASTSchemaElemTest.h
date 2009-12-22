@@ -7,7 +7,7 @@
 #define _AST_SCHEMA_ELEM_TEST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTSchemaElemTest : public ASTNode
 {

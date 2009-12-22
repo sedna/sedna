@@ -7,7 +7,7 @@
 #define _AST_CAST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include "ASTTypeSingle.h"
 

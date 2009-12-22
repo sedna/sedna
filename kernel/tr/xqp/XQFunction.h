@@ -3,6 +3,7 @@
 
 #include <string>
 #include "tr/xqp/ast/ASTFuncDecl.h"
+#include "XQCommon.h"
 
 namespace sedna
 {
@@ -13,7 +14,6 @@ namespace sedna
 
     typedef xqExprInfo (*resultFunc)(const std::vector<xqExprInfo> &params);
 
-    class xqExprInfo;
     struct XQFunction
     {
         std::string uri;
@@ -35,6 +35,8 @@ namespace sedna
         ASTLocation *loc;
 
         std::string mod_uri; // uri of library module, or "" if main or xquery
+
+        int id; // id of the function (qep id)
     };
 
     extern XQFunction xqueryFunctions[];

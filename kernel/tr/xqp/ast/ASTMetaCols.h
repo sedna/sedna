@@ -7,7 +7,7 @@
 #define _AST_META_COLS_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTMetaCols : public ASTNode
 {

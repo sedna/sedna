@@ -7,7 +7,7 @@
 #define _AST_UPDATE_INSERT_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTUpdInsert : public ASTNode
 {

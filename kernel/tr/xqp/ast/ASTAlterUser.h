@@ -7,7 +7,7 @@
 #define _AST_ALTER_USER_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

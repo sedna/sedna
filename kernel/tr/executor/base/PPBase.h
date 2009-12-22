@@ -134,6 +134,7 @@ struct operation_info
 {
     /* Line in the source query this operation corresponds to */
     int query_line;
+    int query_col;
 };
 
 

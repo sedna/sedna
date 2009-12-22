@@ -7,7 +7,7 @@
 #define _AST_COMMENT_CONST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTCommentConst : public ASTNode
 {

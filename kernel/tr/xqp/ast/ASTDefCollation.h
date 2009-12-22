@@ -7,7 +7,7 @@
 #define _AST_DEF_COLLATION_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTDefCollation : public ASTNode
 {

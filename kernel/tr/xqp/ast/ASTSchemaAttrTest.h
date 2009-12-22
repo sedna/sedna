@@ -7,7 +7,7 @@
 #define _AST_SCHEMA_ATTR_TEST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTSchemaAttrTest : public ASTNode
 {

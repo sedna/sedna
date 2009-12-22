@@ -7,11 +7,8 @@
 #define _AST_FUNC_DECL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
-
+class ASTVisitor;
 #include <string>
-
-#include "ASTTypeSeq.h"
 
 class ASTFuncDecl : public ASTNode
 {
@@ -23,6 +20,9 @@ public:
 
     // added by semantic analysis
     std::string *func_uri;
+
+    // cached by lr2por
+    int id;
 
 public:
     ASTFuncDecl(const ASTNodeCommonData &loc, std::string *func_name, ASTNodesVector *func_params = NULL,
@@ -36,6 +36,16 @@ public:
     void accept(ASTVisitor &v);
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);
+
+    int getId() const
+    {
+        return id;
+    }
+
+    void setId(int id_)
+    {
+        id = id_;
+    }
 
     static ASTNode *createNode(scheme_list &sl);
 };

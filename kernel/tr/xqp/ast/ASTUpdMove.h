@@ -7,7 +7,7 @@
 #define _AST_UPDATE_MOVE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTUpdMove : public ASTNode
 {

@@ -7,7 +7,7 @@
 #define _AST_LOAD_FILE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTLoadFile : public ASTNode
 {

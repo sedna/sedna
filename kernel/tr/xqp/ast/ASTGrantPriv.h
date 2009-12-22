@@ -7,7 +7,7 @@
 #define _AST_GRANT_PRIV_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

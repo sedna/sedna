@@ -7,7 +7,7 @@
 #define _AST_TREAT_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include "ASTTypeSeq.h"
 

@@ -909,7 +909,7 @@ namespace sedna
         func.mask = 0; // we decide distinct-only property for params on lreturn phase dynamically
         func.int_name = "";
         func.toCache = true; // by default cache every user-defined function
-        func.decl = (n.body) ? &n : NULL;
+        func.decl = &n;
         func.loc = n.getLocationAddr();
         func.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
         func.merger = NULL;
@@ -2112,6 +2112,21 @@ namespace sedna
                 drv->error(loc, SE5067, std::string(opt, beg, opt.size() - beg).c_str());
             }
         }
+    }
+
+    std::string Sema::uriFromGeneralName(const std::string &name)
+    {
+        unsigned int fp, lp;
+
+        // take uri from name
+        fp = name.find('{');
+        lp = name.find('}');
+
+        if (fp == std::string::npos) 
+            return "";
+
+        U_ASSERT(fp != std::string::npos && lp != std::string::npos);
+        return name.substr(fp + 1, lp - fp - 1);
     }
 
     XQFunction *Sema::findFunction(std::string name, unsigned int arity, XQueryModule *mod, XQueryDriver *drv)

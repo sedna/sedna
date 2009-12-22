@@ -5,12 +5,14 @@
 #include "tr/xqp/serial/deser.h"
 #include "tr/xqp/sema/cycle.h"
 #include "tr/xqp/lreturn/lreturn.h"
+#include "tr/xqp/lr2por/lr2por.h"
 
 namespace sedna
 {
     XQueryModule::XQueryModule(ASTNode *ast_tree, XQueryDriver *driver)
     {
         ast = ast_tree;
+        qep = NULL;
         drv = driver;
         lr = NULL;
 
@@ -246,5 +248,61 @@ namespace sedna
         xqv = lr->getVariableInfo(name);
 
         return true;
+    }
+
+    PPQueryEssence *XQueryModule::getQEP()
+    {
+        size_t mod_num, libvar_num, libfun_num;
+        size_t var_num, fun_num;
+        static_context *st_cxt;
+        lr2por *l2p;
+
+        if (imported.size())
+            mod_num = drv->getLibModCount();
+        else
+            mod_num = 0;
+
+        libvar_num = drv->getVarCount();
+        libfun_num = drv->getFuncCount();
+        var_num = vars.size();
+        fun_num = funcs.size();
+
+        dynamic_context::static_set(libfun_num + fun_num, libvar_num + var_num, mod_num + 1);
+
+        if (mod_num)
+            drv->porLibModules();
+
+        // create our own context
+        st_cxt = dynamic_context::create_static_context();
+        l2p = new lr2por(this->drv, this, st_cxt);
+
+        ast->accept(*l2p);
+
+        delete ast;
+        ast = NULL;
+
+        qep = l2p->getResult();
+
+        delete l2p;
+
+        return qep;
+    }
+
+    void XQueryModule::porLibModule()
+    {
+        U_ASSERT(module_uri != NULL);
+
+        lr2por *l2p;
+        static_context *st_cxt;
+
+        st_cxt = dynamic_context::create_static_context();
+        l2p = new lr2por(this->drv, this, st_cxt);
+
+        ast->accept(*l2p);
+
+        delete ast;
+        ast = NULL;
+
+        delete l2p;
     }
 }

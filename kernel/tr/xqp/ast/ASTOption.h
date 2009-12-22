@@ -7,7 +7,7 @@
 #define _AST_OPTION_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTOption : public ASTNode
 {

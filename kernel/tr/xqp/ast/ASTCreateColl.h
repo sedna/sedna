@@ -7,7 +7,7 @@
 #define _AST_CREATE_COLL_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTCreateColl : public ASTNode
 {

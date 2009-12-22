@@ -7,7 +7,7 @@
 #define _AST_SPACE_SEQ_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTSpaceSeq : public ASTNode
 {

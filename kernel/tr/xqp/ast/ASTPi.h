@@ -7,7 +7,7 @@
 #define _AST_PI_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include <string>
 

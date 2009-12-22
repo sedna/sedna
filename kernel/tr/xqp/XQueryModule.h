@@ -7,6 +7,7 @@
 #include "XQFunction.h"
 #include "XQuerytoLR.h"
 #include "XQCommon.h"
+#include "tr/executor/base/PPBase.h"
 
 // This class incorporates all the info about main or library module
 namespace sedna
@@ -21,6 +22,10 @@ namespace sedna
 
     private:
         ASTNode *ast; // corresponding ast tree
+        PPQueryEssence *qep; // qep-tree;
+        // NOTE: only one of the above exists; when qep has been created, ast is discarded
+        // also for library module after por has been processed qep AND ast contain NULL, since there is no qep-tree for prolog
+
         XQueryDriver *drv;
         LReturn *lr; // for library modules to process lreturn optimization whent the
 
@@ -55,6 +60,10 @@ namespace sedna
 
         ASTNode* getTree();
 
+        PPQueryEssence *getQEP();
+
+        void porLibModule();
+
         std::vector<std::string> getImportedModules() const;
 
         void setOrderedMode(bool ordered)
@@ -71,6 +80,16 @@ namespace sedna
         ASTVarDecl *getVariableInfo(const std::string &name) const;
         bool getLReturnFunctionInfo(const std::string &name, XQFunction &xqf);
         bool getLReturnVariableInfo(const std::string &name, XQVariable &xqv);
+
+        size_t getFunctionCount() const
+        {
+            return funcs.size();
+        }
+
+        size_t getVarCount() const
+        {
+            return vars.size();
+        }
 
         ~XQueryModule();
     };

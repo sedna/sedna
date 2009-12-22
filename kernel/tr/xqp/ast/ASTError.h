@@ -7,7 +7,7 @@
 #define _AST_ERROR_NODE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTError : public ASTNode
 {

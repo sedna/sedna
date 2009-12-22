@@ -7,7 +7,7 @@
 #define _AST_CREATE_TRIGGER_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTCreateTrg : public ASTNode
 {

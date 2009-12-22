@@ -7,7 +7,7 @@
 #define _AST_TEXT_CONST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTTextConst : public ASTNode
 {

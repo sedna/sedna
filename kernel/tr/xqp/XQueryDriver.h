@@ -14,6 +14,7 @@
 #include "XQueryParser.h"
 #include "XQueryModule.h"
 #include "XQFunction.h"
+#include "tr/executor/base/PPBase.h"
 
 namespace sedna
 {
@@ -48,6 +49,9 @@ namespace sedna
             XQFunctionInfo libFuncs;
             XQVariablesInfo libVars; // all variables declared in all processed libraries
 
+            unsigned int glob_var_num;
+            unsigned int glob_fun_num;
+
             typedef std::vector<XQueryModule *> modSequence;
             std::map<std::string, ASTType::TypeMod> xsTypes; // known XQuery types
             std::map<std::string, modSequence> libModules; // imported modules
@@ -71,6 +75,9 @@ namespace sedna
                     registerStandardFunctions("http://modis.ispras.ru/Sedna/SQL", sqlFunctions);
                     registerStandardFunctions("http://www.modis.ispras.ru/sedna", seFunctions);
                 }
+
+                glob_var_num = 0;
+                glob_fun_num = 0;
             }
 
             ~XQueryDriver();
@@ -79,6 +86,18 @@ namespace sedna
 
             void doSemanticAnalysis();
             void doLReturnAnalysis();
+
+            PPQueryEssence *getQEPForModule(unsigned int ind);
+
+            unsigned int getNewGlobVarId()
+            {
+                return glob_var_num++;
+            }
+
+            unsigned int getNewGlobFunId()
+            {
+                return glob_fun_num++;
+            }
 
             StringVector getLRRepresentation();
             StringVector getIRRepresentation();
@@ -101,6 +120,12 @@ namespace sedna
             XQFunction getStdFuncInfo(const std::string &name) const;
             XQFunction getLReturnFunctionInfo(const std::string &name);
             XQVariable getLReturnVariableInfo(const std::string &name);
+
+            size_t getVarCount() const;
+            size_t getFuncCount() const;
+            size_t getLibModCount() const;
+
+            void porLibModules();
     };
 }
 

@@ -7,7 +7,7 @@
 #define _AST_LIB_MODULE_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 #include "ASTModuleDecl.h"
 #include "ASTProlog.h"

@@ -7,7 +7,7 @@
 #define _AST_PI_TEST_H_
 
 #include "ASTNode.h"
-#include "AST.h"
+class ASTVisitor;
 
 class ASTPiTest : public ASTNode
 {
