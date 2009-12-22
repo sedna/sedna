@@ -4,6 +4,7 @@
 #include <string>
 #include "tr/xqp/ast/ASTFuncDecl.h"
 #include "XQCommon.h"
+#include "tr/executor/base/PPBase.h"
 
 namespace sedna
 {
@@ -13,6 +14,7 @@ namespace sedna
     const param_mask maxParamMask = 0xFF;
 
     typedef xqExprInfo (*resultFunc)(const std::vector<xqExprInfo> &params);
+    typedef PPOpIn (*l2pFunc)(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 
     struct XQFunction
     {
@@ -29,6 +31,7 @@ namespace sedna
         bool toCache; // do we need to cache (PPStore) the result
 
         resultFunc merger; // we use it only for built-in functions
+        l2pFunc l2pGen; // this function generates qep representation for the function
         xqExprInfo exp_info; // we use it for user-defined functions (it is based on type-body analysis in lreturn)
 
         ASTFuncDecl *decl;
