@@ -558,7 +558,7 @@ namespace sedna
         {
             modSequence::iterator mit;
 
-            for (mit = it->second.begin(); mit != it->second.end(); it++)
+            for (mit = it->second.begin(); mit != it->second.end(); mit++)
             {
                 (*mit)->porLibModule();
             }
