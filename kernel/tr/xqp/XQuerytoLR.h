@@ -13,6 +13,7 @@
 
 #include "tr/tr_base.h"
 #include "tr/executor/por2qep/scheme_tree.h"
+#include "tr/xqp/XQueryDriver.h"
 
 struct script_struct
 {
@@ -41,7 +42,7 @@ public:
   };
 };
 
-StringVector parse_batch(QueryType type, const char *batch, std::string *module_name);
-StringVector parse_batch(QueryType type, StringVector batch, std::string *module_name);
+void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch, std::string *module_name);
+void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, std::string *module_name);
 
 #endif /* _XQUERYTOLR_H */

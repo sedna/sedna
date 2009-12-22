@@ -36,6 +36,7 @@ ASTNode *ASTElemConst::createNode(scheme_list &sl)
     std::string *pref = NULL, *local = NULL;
     ASTNodeCommonData cd;
     ASTNode *name = NULL, *expr = NULL;
+    ASTElemConst *res;
 
     U_ASSERT(sl[1].type == SCM_LIST);
 
@@ -45,10 +46,12 @@ ASTNode *ASTElemConst::createNode(scheme_list &sl)
     {
         name = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-        U_ASSERT(sl[3].type == SCM_LIST);
+        U_ASSERT(sl[3].type == SCM_LIST && sl[4].type == SCM_BOOL);
         expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-        return new ASTElemConst(cd, name, expr);
+        res = new ASTElemConst(cd, name, expr);
+
+        res->deep_copy = sl[4].internal.b;
     }
     else
     {
@@ -57,11 +60,15 @@ ASTNode *ASTElemConst::createNode(scheme_list &sl)
         pref = new std::string(sl[2].internal.str);
         local = new std::string(sl[3].internal.str);
 
-        U_ASSERT(sl[4].type == SCM_LIST);
+        U_ASSERT(sl[4].type == SCM_LIST && sl[5].type == SCM_BOOL);
         expr = dsGetASTFromSchemeList(*sl[4].internal.list);
 
-        return new ASTElemConst(cd, pref, local, expr);
+        res = new ASTElemConst(cd, pref, local, expr);
+
+        res->deep_copy = sl[5].internal.b;
     }
+
+    return res;
 }
 
 void ASTElemConst::modifyChild(const ASTNode *oldc, ASTNode *newc)

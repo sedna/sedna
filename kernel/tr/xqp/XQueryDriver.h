@@ -98,6 +98,11 @@ namespace sedna
 
             PPQueryEssence *getQEPForModule(unsigned int ind);
 
+            size_t getModulesCount() const
+            {
+                return mods.size();
+            }
+
             unsigned int getNewGlobVarId()
             {
                 return glob_var_num++;
@@ -108,8 +113,8 @@ namespace sedna
                 return glob_fun_num++;
             }
 
-            StringVector getLRRepresentation();
-            StringVector getIRRepresentation();
+            std::string getLRRepresentation(size_t mod_ind);
+            std::string getIRRepresentation(size_t ind_mod);
             std::string getParsedModuleName();
 
             std::string getLRForModules(const sedna::XQueryModule *mod);

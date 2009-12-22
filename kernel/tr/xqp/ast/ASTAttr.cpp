@@ -40,8 +40,9 @@ ASTNode *ASTAttr::createNode(scheme_list &sl)
     std::string *pref = NULL, *local = NULL;
     ASTNodeCommonData cd;
     ASTNodesVector *cont = NULL;
+    ASTAttr *res;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST && sl[5].type == SCM_BOOL);
 
     cd = dsGetASTCommonFromSList(*sl[1].internal.list);
 
@@ -50,7 +51,17 @@ ASTNode *ASTAttr::createNode(scheme_list &sl)
 
     cont = dsGetASTNodesFromSList(*sl[4].internal.list);
 
-    return new ASTAttr(cd, pref, local, cont);
+    res = new ASTAttr(cd, pref, local, cont);
+
+    res->deep_copy = sl[5].internal.b;
+
+    if (sl.size() > 6)
+    {
+        U_ASSERT(sl[6].type == SCM_STRING);
+        res->uri = new std::string(sl[6].internal.str);
+    }
+
+    return res;
 }
 
 void ASTAttr::modifyChild(const ASTNode *oldc, ASTNode *newc)

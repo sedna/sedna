@@ -164,6 +164,10 @@ ASTNode *ASTFilterStep::createNode(scheme_list &sl)
 
     res->setContext(cont);
 
+    U_ASSERT(sl[6].type == SCM_BOOL && sl[7].type == SCM_BOOL);
+    res->use_last = sl[6].internal.b;
+    res->use_pos = sl[7].internal.b;
+
     return res;
 }
 

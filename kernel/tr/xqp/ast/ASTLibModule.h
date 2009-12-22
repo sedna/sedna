@@ -18,7 +18,7 @@ public:
     ASTNode *moduleDecl; // module declaration; ASTModuleDecl
     ASTNode *prolog; // query prolog; not NULL; ASTProlog
 
-    bool is_internal; // true, if this module was deserialized from internals
+    bool is_internal; // true, if this module was deserialized from internals (reset form createNode)
 
 public:
     ASTLibModule(const ASTNodeCommonData &loc, ASTNode *md, ASTNode *prol) : ASTNode(loc), moduleDecl(md), prolog(prol)

@@ -94,6 +94,9 @@ void IntVisitor::visit(ASTAttr &n)
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
     dumpASTNodesVector(n.cont);
+    DUMP_BOOL(n.deep_copy);
+    if (n.uri)
+        DUMP_STR(*n.uri);
     int_str.append(")");
 }
 
@@ -114,6 +117,7 @@ void IntVisitor::visit(ASTAttrConst &n)
     }
 
     dumpASTNode(n.expr);
+    DUMP_BOOL(n.deep_copy);
     int_str.append(")");
 }
 
@@ -235,6 +239,7 @@ void IntVisitor::visit(ASTCommentConst &n)
     int_str.append(int2string(AST_COMMENTCONST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
+    DUMP_BOOL(n.deep_copy);
     int_str.append(")");
 }
 
@@ -478,6 +483,8 @@ void IntVisitor::visit(ASTElem &n)
     DUMP_STR(*n.local);
     dumpASTNodesVector(n.attrs);
     dumpASTNodesVector(n.cont);
+    DUMP_BOOL(n.deep_copy);
+    DUMP_BOOL(n.nsp_expected);
     int_str.append(")");
 }
 
@@ -498,6 +505,7 @@ void IntVisitor::visit(ASTElemConst &n)
     }
 
     dumpASTNode(n.expr);
+    DUMP_BOOL(n.deep_copy);
     int_str.append(")");
 }
 
@@ -544,10 +552,9 @@ void IntVisitor::visit(ASTFilterStep &n)
     dumpASTNode(n.expr);
     dumpASTNodesVector(n.preds);
 
-    if (n.isLast)
-        int_str.append(" #t");
-    else
-        int_str.append(" #f");
+    DUMP_BOOL(n.isLast);
+    DUMP_BOOL(n.use_last);
+    DUMP_BOOL(n.use_pos);
 
     int_str.append(")");
 }
@@ -978,6 +985,7 @@ void IntVisitor::visit(ASTPIConst &n)
         DUMP_STR(*n.ncname);
 
     dumpASTNode(n.expr);
+    DUMP_BOOL(n.deep_copy);
     int_str.append(")");
 }
 
@@ -988,6 +996,7 @@ void IntVisitor::visit(ASTPi &n)
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.name);
     DUMP_STR(*n.cont);
+    DUMP_BOOL(n.deep_copy);
     int_str.append(")");
 }
 
@@ -1143,6 +1152,7 @@ void IntVisitor::visit(ASTSpaceSeq &n)
     int_str.append(int2string(AST_SPACESEQ));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
+    DUMP_BOOL(n.atomize);
     int_str.append(")");
 }
 
@@ -1152,6 +1162,7 @@ void IntVisitor::visit(ASTTextConst &n)
     int_str.append(int2string(AST_TEXTCONST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
+    DUMP_BOOL(n.deep_copy);
     int_str.append(")");
 }
 
@@ -1342,5 +1353,6 @@ void IntVisitor::visit(ASTXMLComm &n)
     int_str.append(int2string(AST_XMLCOMM));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.cont);
+    DUMP_BOOL(n.deep_copy);
     int_str.append(")");
 }

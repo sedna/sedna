@@ -33,6 +33,7 @@ ASTNode *ASTElem::createNode(scheme_list &sl)
     std::string *pref = NULL, *local = NULL;
     ASTNodeCommonData cd;
     ASTNodesVector *attrs = NULL, *cont = NULL;
+    ASTElem *res;
 
     U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_STRING && sl[3].type == SCM_STRING && sl[4].type == SCM_LIST && sl[5].type == SCM_LIST);
 
@@ -44,7 +45,14 @@ ASTNode *ASTElem::createNode(scheme_list &sl)
     attrs = dsGetASTNodesFromSList(*sl[4].internal.list);
     cont = dsGetASTNodesFromSList(*sl[5].internal.list);
 
-    return new ASTElem(cd, pref, local, attrs, cont);
+    res = new ASTElem(cd, pref, local, attrs, cont);
+
+    U_ASSERT(sl[6].type == SCM_BOOL && sl[7].type == SCM_BOOL);
+
+    res->deep_copy = sl[6].internal.b;
+    res->nsp_expected = sl[7].internal.b;
+
+    return res;
 }
 
 void ASTElem::modifyChild(const ASTNode *oldc, ASTNode *newc)

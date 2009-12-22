@@ -30,31 +30,11 @@ EXTERN_DECLARE_TIME_VARS
 
 StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type);
 
-StmntsArray *prepare_stmnt(QueryType type, const char *stmnt)
-{
-    if (type != TL_XQuery && type != TL_POR && type != TL_ForSemAnal &&
-        type != TL_ForAuth && type != TL_ForMarkLRet && type != TL_ForConvToPOR &&
-        type != TL_POR)
-        throw USER_EXCEPTION(SE4002);
-//    d_printf2("Parser %s\n --------------------------- \n", stmnt);
-    std::string dummy;
-    StringVector v = parse_batch(type, stmnt, &dummy);
+//-----------------------------------------------
+// DL: safer input string for Scheme part
 
-    if (v.size() >1) 
-       throw USER_EXCEPTION(SE4003);
-
-    StmntsArray* stmnt_;
-    stmnt_ = prepare_phys_repr(v[0].c_str(), type);
-
-    return stmnt_;
-
-}
-
-//----------------------------------------------- 
-// DL: safer input string for Scheme part 
-
-// The forward declaration is important here, since there is no way of 
-// specifying the extern "C" declaration within a friend declaration 
+// The forward declaration is important here, since there is no way of
+// specifying the extern "C" declaration within a friend declaration
 extern "C" char* get_scm_input_string();
 
 class Part_scheme_input
@@ -64,7 +44,7 @@ private:
     static char *scm_input_string;
     static bool was_allocated;
 private:
-    Part_scheme_input();  // Prohibits object creation 
+    Part_scheme_input();  // Prohibits object creation
 public:
     static void allocate_input(const std::string &in_prototype);
 };
@@ -74,8 +54,8 @@ bool    Part_scheme_input::was_allocated    = false;
 
 void Part_scheme_input::allocate_input(const std::string &in_prototype)
 {
-    // I call malloc here because this memory 
-    // will be freed later by Chicken (Andrey) 
+    // I call malloc here because this memory
+    // will be freed later by Chicken (Andrey)
     scm_input_string =
         static_cast<char*>(malloc(sizeof(char) * (in_prototype.size() + 1)));
     if(!scm_input_string)
@@ -86,7 +66,7 @@ void Part_scheme_input::allocate_input(const std::string &in_prototype)
     was_allocated = true;
 }
 
-//----------------------------------------------- 
+//-----------------------------------------------
 
 static char *scm_output_string = NULL;
 static bool Chicken_initialized = false;
@@ -107,7 +87,7 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
     {
         status = CHICKEN_initialize(0, 0, 0, (void*)C_toplevel);
         //d_printf2("CHICKEN_initialize = %d\n", status);
-        // Overriding usual_panic: 
+        // Overriding usual_panic:
         C_panic_hook = chicken_panic_throw_exception;
         status = CHICKEN_run(NULL);
         //d_printf2("CHICKEN_run = %d\n", status);
@@ -138,9 +118,9 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
 
     scheme_list *qep_trees_in_scheme_lst = NULL;
     qep_trees_in_scheme_lst = make_tree_from_scheme_list(por.c_str());
-    
+
     if (   qep_trees_in_scheme_lst->size() < 2
-        || qep_trees_in_scheme_lst->at(0).type != SCM_BOOL) 
+        || qep_trees_in_scheme_lst->at(0).type != SCM_BOOL)
        throw USER_EXCEPTION(SE4005);
 
 
@@ -149,10 +129,10 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
        string  error = (qep_trees_in_scheme_lst->at(1).internal.list)->at(2).internal.str;
        // d_printf2("error str=%s\n", error.c_str());
        int error_num = atoi((qep_trees_in_scheme_lst->at(1).internal.list)->at(1).internal.num);
- 
+
        delete_scheme_list(qep_trees_in_scheme_lst);
        delete st_array;
-       
+
        throw USER_EXCEPTION2(error_num, error.c_str());
     }
 
@@ -160,7 +140,7 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
 
     for (int k = 1; k < size; k++)
     {
-        if (qep_trees_in_scheme_lst->at(k).type != SCM_LIST) 
+        if (qep_trees_in_scheme_lst->at(k).type != SCM_LIST)
            throw USER_EXCEPTION(SE4005);
 
         st.stmnt = qep_trees_in_scheme_lst->at(k).internal.list;
@@ -183,6 +163,7 @@ std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string 
     char buf[1000];
     string  plain_batch_text, module;
     StringVector batch, arr;
+    sedna::XQueryDriver *xqd; // to parse library module
 
     for (unsigned int i = 0; i < cf_vec.size(); i++)
     {
@@ -198,12 +179,19 @@ std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string 
         batch.push_back(plain_batch_text);
     }
 
-    arr = parse_batch(TL_XQuery, batch, module_name);
+    xqd = new sedna::XQueryDriver();
+
+    parse_batch(xqd, TL_XQuery, batch, module_name);
+
+    if (xqd->getModulesCount() == 0)
+        throw USER_EXCEPTION2(4001, "faile to parse library module");
 
     module = "(";
-    for (unsigned int i = 0; i < arr.size(); i++)
-        module.append(arr[i]);
+    for (unsigned int i = 0; i < xqd->getModulesCount(); i++)
+        module.append(xqd->getIRRepresentation(i));
     module.append(")");
+
+    delete xqd;
 
     return module;
 }
@@ -218,7 +206,7 @@ std::string prepare_module(std::string init_module)
     {
         status = CHICKEN_initialize(0, 0, 0, (void*)C_toplevel);
         //d_printf2("CHICKEN_initialize = %d\n", status);
-        // Overriding usual_panic: 
+        // Overriding usual_panic:
         C_panic_hook = chicken_panic_throw_exception;
         status = CHICKEN_run(NULL);
         //d_printf2("CHICKEN_run = %d\n", status);
@@ -314,7 +302,7 @@ char* get_scm_input_string()
     const char *const res = Part_scheme_input::scm_input_string;
     Part_scheme_input::scm_input_string = 0;
     Part_scheme_input::was_allocated    = false;
-    // c-string* (will free memory) 
+    // c-string* (will free memory)
     return const_cast<char*>(res);
 }
 
@@ -382,12 +370,12 @@ char* descriptive_schema_to_scheme_list(const char* name, int is_collection)
     if (is_collection) root = find_collection(name);
     else root = find_document(name);
 
-    if (!root.found()) 
+    if (!root.found())
     {
         if (is_collection)
             throw USER_EXCEPTION2(SE2003, (std::string("Collection '") + name + "'").c_str());
         else
-            throw USER_EXCEPTION2(SE2006, (std::string("Document '") + name + "'").c_str()); 
+            throw USER_EXCEPTION2(SE2006, (std::string("Document '") + name + "'").c_str());
     }
 
     std::ostringstream sstr;
@@ -400,9 +388,9 @@ char* descriptive_schema_to_scheme_list(const char* name, int is_collection)
 
 extern "C" {
 
-char* __c__descriptive_schema_to_scheme_list(const char* name, int is_collection) 
-{ 
-    return descriptive_schema_to_scheme_list(name, is_collection); 
+char* __c__descriptive_schema_to_scheme_list(const char* name, int is_collection)
+{
+    return descriptive_schema_to_scheme_list(name, is_collection);
 }
 
 }

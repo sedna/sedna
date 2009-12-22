@@ -716,6 +716,87 @@ namespace sedna
 
     void lr2por::visit(ASTCreateTrg &n)
     {
+#ifdef SE_ENABLE_TRIGGERS
+        static const char *trg2str[] =
+        {
+            "BEFORE",
+            "AFTER",
+
+            "INSERT",
+            "DELETE",
+            "REPLACE",
+
+            "NODE",
+            "STATEMENT"
+        };
+
+        PPAbsPath *pa;
+        PathExpr *onp;
+        counted_ptr<db_entity> dbe;
+        childOffer off_path;
+        PPOpIn name;
+        tuple_cell tc;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+
+        // create trigger name
+        tc = string2tuple_cell(*n.name, xs_string);
+        name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+
+        // on-path will definitely be PPAbsPath
+        n.path->accept(*this);
+        off_path = getOffer();
+        pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
+        U_ASSERT(pa);
+
+        onp = pa->getPathExpr();
+        dbe = pa->getDocColl();
+        delete pa; // we don't need it anymore (note that this won't destroy onp)
+
+        if (onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+            onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+
+
+        scheme_list *action = new scheme_list(n.do_exprs->size());
+
+        for (unsigned int i = 0; i < n.do_exprs->size(); i++)
+        {
+            std::string ir = mod->getIR(n.do_exprs->at(i));
+
+            action->at(i).type = SCM_STRING;
+            action->at(i).internal.str = new char[ir.size() + 1];
+            strcpy(action->at(i).internal.str, ir.c_str());
+        }
+
+        if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
+        {
+            childOffer off_ipath;
+            PathExpr *ip;
+
+            n.trimmed_path->accept(*this);
+            off_ipath = getOffer();
+            pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
+            U_ASSERT(pa);
+
+            ip = pa->getPathExpr();
+            delete pa; // we don't need it anymore (note that this won't destroy onp)
+
+            if (ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+                ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+
+            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], dbe, onp, trg2str[n.g_mod], action,
+                    n.leaf_name->c_str(), n.leaf_type, ip, name, dyn_cxt);
+        }
+        else
+        {
+            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], dbe, onp, trg2str[n.g_mod], action, name, dyn_cxt);
+        }
+
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+#else
+        throw USER_EXCEPTION2(SE1002, "Triggers support disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
+#endif
     }
 
     void lr2por::visit(ASTCreateUser &n)
@@ -884,11 +965,15 @@ namespace sedna
 
     void lr2por::visit(ASTDropTrg &n)
     {
+#ifdef SE_ENABLE_TRIGGERS
         dyn_cxt = new dynamic_context(st_cxt, 0);
 
         PPOpIn name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.trg, xs_string)), 1);
 
         qep = new PPDropTrigger(name, dyn_cxt);
+#else
+        throw USER_EXCEPTION2(SE1002, "Triggers support disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
+#endif
     }
 
     void lr2por::visit(ASTDropUser &n)
@@ -2343,7 +2428,7 @@ namespace sedna
 
     void lr2por::visit(ASTProlog &n)
     {
-        // nothing to do
+        ASTVisitor::VisitNodesVector(n.decls, *this);
     }
 
     void lr2por::visit(ASTQName &n)
@@ -2408,6 +2493,22 @@ namespace sedna
 
     void lr2por::visit(ASTQuery &n)
     {
+        if (n.type == ASTQuery::QUERY)
+        {
+            var_num = 0;
+            dyn_cxt = new dynamic_context(st_cxt, 0);
+        }
+
+        n.query->accept(*this);
+
+        if (n.type == ASTQuery::QUERY)
+        {
+            childOffer off = getOffer();
+
+            dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+            qep = new PPQueryRoot(dyn_cxt, off.opin);
+        }
     }
 
     void lr2por::visit(ASTRenameColl &n)

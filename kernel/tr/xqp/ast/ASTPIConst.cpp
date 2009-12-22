@@ -35,6 +35,7 @@ ASTNode *ASTPIConst::createNode(scheme_list &sl)
     std::string *ncname = NULL;
     ASTNodeCommonData cd;
     ASTNode *name = NULL, *expr = NULL;
+    ASTPIConst *res;
 
     U_ASSERT(sl[1].type == SCM_LIST);
 
@@ -47,7 +48,7 @@ ASTNode *ASTPIConst::createNode(scheme_list &sl)
         U_ASSERT(sl[3].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-        return new ASTPIConst(cd, name, expr);
+        res = new ASTPIConst(cd, name, expr);
     }
     else
     {
@@ -58,8 +59,13 @@ ASTNode *ASTPIConst::createNode(scheme_list &sl)
         U_ASSERT(sl[3].type == SCM_LIST);
         expr = dsGetASTFromSchemeList(*sl[3].internal.list);
 
-        return new ASTPIConst(cd, ncname, expr);
+        res = new ASTPIConst(cd, ncname, expr);
     }
+
+    U_ASSERT(sl[4].type == SCM_BOOL);
+    res->deep_copy = sl[4].internal.b;
+
+    return res;
 }
 
 void ASTPIConst::modifyChild(const ASTNode *oldc, ASTNode *newc)

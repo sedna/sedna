@@ -29,13 +29,18 @@ ASTNode *ASTTextConst::createNode(scheme_list &sl)
 {
     ASTNodeCommonData cd;
     ASTNode *expr = NULL;
+    ASTTextConst *res;
 
-    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST);
+    U_ASSERT(sl[1].type == SCM_LIST && sl[2].type == SCM_LIST && sl[3].type == SCM_BOOL);
 
     cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     expr = dsGetASTFromSchemeList(*sl[2].internal.list);
 
-    return new ASTTextConst(cd, expr);
+    res = new ASTTextConst(cd, expr);
+
+    res->deep_copy = sl[3].internal.b;
+
+    return res;
 }
 
 void ASTTextConst::modifyChild(const ASTNode *oldc, ASTNode *newc)
