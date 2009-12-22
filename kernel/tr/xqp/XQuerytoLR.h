@@ -13,6 +13,7 @@
 
 #include "tr/tr_base.h"
 #include "tr/executor/por2qep/scheme_tree.h"
+#include "tr/executor/base/dynamic_context.h"
 #include "tr/xqp/XQueryDriver.h"
 
 struct script_struct
@@ -44,6 +45,6 @@ public:
 
 void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch, std::string *module_name);
 void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, std::string *module_name);
-void parse_batch_triggers(sedna::XQueryDriver *drv, const char *query, static_context *sx, dynamic_context *dx);
+void parse_batch_context(sedna::XQueryDriver *drv, const char *query, QueryType type, static_context *sx);
 
 #endif /* _XQUERYTOLR_H */

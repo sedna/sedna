@@ -117,7 +117,7 @@ void trigger_cell_object::serialize_data(se_simplestream &stream)
     for (trigger_action_cell *i = trigger_action; i != NULL; i = i->next)
     {
         stream.write_string(i->statement);
-        stream.write(&i->cxt_size, sizeof(int));
+        stream.write(&i->is_query, sizeof(bool));
     }
 
     void * n = NULL;
@@ -166,7 +166,7 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
         i->next = NULL;
         i->statement = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
         stream.read_string(SSTREAM_SAVED_LENGTH, i->statement);
-        stream.read(&i->cxt_size, sizeof(int));
+        stream.read(&i->is_query, sizeof(bool));
         if (trigger_action == NULL) { trigger_action = i; }
         if (j != NULL) { j->next = i; }
     }

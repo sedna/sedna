@@ -32,7 +32,7 @@ char *_get_pointer_to_c_str(const tuple_cell &c)
         estr_copy_to_buffer(t, c.get_str_vmm(), size);
         t[size] = '\0';
     }
-    else 
+    else
     { // On-line memory is used
         t = c.get_str_mem();
     }
@@ -46,11 +46,11 @@ static void _strip_c_str(const char* t, const char** start, const char** end)
     *start = t;
     *end = t + len - 1;
 
-    while (**start != '\0' && 
+    while (**start != '\0' &&
            (**start == ' ' || **start == '\t' || **start == '\n' || **start == '\r'))
         ++(*start);
 
-    while (*end > *start && 
+    while (*end > *start &&
            (**end == ' ' || **end == '\t' || **end == '\n' || **end == '\r'))
         --(*end);
 
@@ -74,7 +74,7 @@ float c_str2xs_float(const char *t)
     {
         char* stop = NULL;
         double d = strtod(start, &stop);
-        if ((end - start == 0) || (stop != end) || u_is_nan(d) || u_is_pos_inf(d) || u_is_neg_inf(d)) 
+        if ((end - start == 0) || (stop != end) || u_is_nan(d) || u_is_pos_inf(d) || u_is_neg_inf(d))
             throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
 		res = (float)d;
     }
@@ -99,7 +99,7 @@ double c_str2xs_double(const char *t)
     {
         char* stop = NULL;
         res = strtod(start, &stop);
-        if ((end - start == 0) || (stop != end) || u_is_nan(res) || u_is_pos_inf(res) || u_is_neg_inf(res)) 
+        if ((end - start == 0) || (stop != end) || u_is_nan(res) || u_is_pos_inf(res) || u_is_neg_inf(res))
             throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
     }
 
@@ -113,12 +113,13 @@ __int64 c_str2xs_integer(const char *t)
     const char *start = NULL;
     const char *end = NULL;
     int overflow = 0;
-    
+
     _strip_c_str(t, &start, &end);
 
+    errno = 0; // must set to zero; see strtoll man pages
     res = strto__int64(start, &stop, 10);
     if ((_I64_MAX == res || _I64_MIN == res) && errno == ERANGE) overflow = 1;
-    
+
     if ((end - start == 0) || (stop != end)) throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:integer type");
     if (overflow) throw XQUERY_EXCEPTION2(FOAR0002, "Cannot convert to xs:integer type");
 
@@ -167,7 +168,7 @@ __int64 double2__int64_bits(double d)
     double  d;
     } u;
 
-    if (u_is_nan(d)) 
+    if (u_is_nan(d))
         return _double_NaN;
 
     udouble2_int64_bits(&d);
@@ -182,7 +183,7 @@ __int32 float2__int32_bits(float f)
     float   f;
     } u;
 
-    if (u_is_nan((double)f)) 
+    if (u_is_nan((double)f))
         return _float_NaN;
 
     ufloat2_int32_bits(&f);
@@ -193,16 +194,16 @@ __int32 float2__int32_bits(float f)
 
 #define double_sign(d) (double2__int64_bits(d) & FPC_DOUBLESIGNMASK)
 
-static int _sprint__uint64(char* buffer, __uint64 x, bool m) 
+static int _sprint__uint64(char* buffer, __uint64 x, bool m)
 {
     __uint64 quot = x / (__uint64)1000;
     int chars_written = 0;
-    if (quot != 0) 
+    if (quot != 0)
     {
         chars_written = _sprint__uint64(buffer, quot, m);
         chars_written += sprintf(buffer + chars_written, "%03u", (__uint32)(x % (__uint64)1000));
     }
-    else 
+    else
     {
         if (m)
             chars_written += sprintf(buffer, "-");
@@ -213,9 +214,9 @@ static int _sprint__uint64(char* buffer, __uint64 x, bool m)
 
 inline int _sprint__int64(char* buffer, __int64 x)
 {
-    if (x < (__int64)0) 
+    if (x < (__int64)0)
         return _sprint__uint64(buffer, (__uint64)-x, true);
-    else 
+    else
         return _sprint__uint64(buffer, (__uint64)x, false);
 }
 
@@ -252,13 +253,13 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
 
     switch (c.get_atomic_type())
     {
-        case xs_gYearMonth        : 
-        case xs_gYear             : 
-        case xs_gMonthDay         : 
-        case xs_gDay              : 
-        case xs_gMonth            : 
-        case xs_dateTime          : 
-        case xs_time              : 
+        case xs_gYearMonth        :
+        case xs_gYear             :
+        case xs_gMonthDay         :
+        case xs_gDay              :
+        case xs_gMonth            :
+        case xs_dateTime          :
+        case xs_time              :
         case xs_date              : if (ptype == xml)
                                         return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_dateTime(), c.get_atomic_type()));
                                     else
@@ -270,7 +271,7 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
                                         s[len + 1] = '\0';
                                     }
 
-        case xs_duration          : 
+        case xs_duration          :
         case xs_yearMonthDuration :
         case xs_dayTimeDuration   : if (ptype == xml)
                                         return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_duration(), c.get_atomic_type()));
@@ -284,7 +285,7 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
                                     }
         case xs_boolean           : if (ptype == xml)
                                         return get_xs_boolean_lexical_representation(s, c.get_xs_boolean());
-                                    else 
+                                    else
                                         return (c.get_xs_boolean() ? strcpy(s, "#t") : strcpy(s, "#f"));
         case xs_float             : return get_xs_float_lexical_representation(s, c.get_xs_float());
         case xs_double            : return get_xs_double_lexical_representation(s, c.get_xs_double());
@@ -325,7 +326,7 @@ __int64 xs_double2xs_integer(double v)
     if (u_is_neg_inf(v) || u_is_pos_inf(v) || u_is_nan(v))
         throw XQUERY_EXCEPTION2(FOCA0002, "Error casting xs:double value to xs:integer");
 
-    if(v > _I64_MAX || v < _I64_MIN) 
+    if(v > _I64_MAX || v < _I64_MIN)
         throw XQUERY_EXCEPTION2(FOCA0003, "Error casting xs:double value to xs:integer (too long value given)");
 
     double i = 0.0;
@@ -427,7 +428,7 @@ double xs_mod(double x, double y)
     if (u_is_nan(x) || u_is_nan(y) || u_is_neg_inf(x) || u_is_pos_inf(x) || y == 0.0)
         return double_NaN;
 
-    if (x == 0.0 || u_is_neg_inf(y) || u_is_pos_inf(y)) 
+    if (x == 0.0 || u_is_neg_inf(y) || u_is_pos_inf(y))
         return x;
 
     return fmod(x, y);
@@ -438,7 +439,7 @@ float xs_mod(float x, float y)
     if (u_is_nan((double)x) || u_is_nan((double)y) || u_is_neg_inf((double)x) || u_is_pos_inf((double)x) || (double)y == 0.0)
         return float_NaN;
 
-    if ((double)x == 0.0 || u_is_neg_inf((double)y) || u_is_pos_inf((double)y)) 
+    if ((double)x == 0.0 || u_is_neg_inf((double)y) || u_is_pos_inf((double)y))
         return x;
 
     return fmodf(x, y);
@@ -458,7 +459,7 @@ xs_decimal_t xs_mod(xs_decimal_t x, xs_decimal_t y)
 
 
 double round_half_to_even_double(double d, __int64 precision)
-{   
+{
     double m_i = 0, m_f = 0;
     __int64 y = 1;
 
@@ -481,16 +482,16 @@ double round_half_to_even_double(double d, __int64 precision)
 
         if (m_f == 0.5)
         {
-            if (m_i == 0) 
+            if (m_i == 0)
             {
-                if (((__int64)i % 2) == 1) 
+                if (((__int64)i % 2) == 1)
                 {
                     i += 1;
                 }
             }
             else
             {
-                if (((__int64)m_i % 2) == 1) 
+                if (((__int64)m_i % 2) == 1)
                 {
                     m_i += 1;
                 }
@@ -498,7 +499,7 @@ double round_half_to_even_double(double d, __int64 precision)
         }
         else if (m_f > 0.5)
         {
-            if (m_i == 0) 
+            if (m_i == 0)
             {
                 i += 1;
             }
@@ -518,7 +519,7 @@ float round_half_to_even_float(float d, __int64 precision)
 }
 
 __int64 round_half_to_even_integer(__int64 d, __int64 precision)
-{   
+{
     if (precision < 0)
     {
         __int64 y = 1;
@@ -543,14 +544,14 @@ static inline void _replace_normalization(Iterator &start, const Iterator &end, 
 {
     unsigned char value;
     __int64 spaces_counter = 0;
-    
+
     while(start < end && IS_WHITESPACE(*start)) { start++; }
-    
+
     while(start < end)
     {
         value = *start++;
         if (IS_WHITESPACE(value)) spaces_counter++;
-        else 
+        else
         {
             while(spaces_counter) { out_buf << ' '; spaces_counter--; }
             out_buf << value;
@@ -563,14 +564,14 @@ static inline void _collapse_normalization(Iterator &start, const Iterator &end,
 {
     unsigned char value;
     bool is_space = false;
-    
+
     while(start < end && IS_WHITESPACE(*start)) { start++; }
 
     while(start < end)
     {
         value = *start++;
         if (IS_WHITESPACE(value)) is_space = true;
-        else 
+        else
         {
             if(is_space) { out_buf << ' '; is_space = false; }
             out_buf << value;
@@ -605,16 +606,16 @@ void remove_string_normalization  (const tuple_cell *tc, stmt_str_buf& out_buf)
 
 void replace_string_normalization (const char *s, stmt_str_buf& out_buf)
 {
-    _replace_normalization<const char*> (s, s + strlen(s), out_buf);    
+    _replace_normalization<const char*> (s, s + strlen(s), out_buf);
 }
 
 void collapse_string_normalization(const char *s, stmt_str_buf& out_buf)
 {
-    _collapse_normalization<const char*> (s, s + strlen(s), out_buf);    
+    _collapse_normalization<const char*> (s, s + strlen(s), out_buf);
 }
 
 void remove_string_normalization  (const char *s, stmt_str_buf& out_buf)
 {
-    _remove_normalization<const char*> (s, s + strlen(s), out_buf);    
+    _remove_normalization<const char*> (s, s + strlen(s), out_buf);
 }
 

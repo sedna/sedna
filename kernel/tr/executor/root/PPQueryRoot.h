@@ -39,8 +39,8 @@ public:
     bool is_update() { return false; }
 
 
-    // use it before destroying PPQueryRoot when it is used as a carrier for trigger-query-action
-    PPOpIn detachChild();
+    // use it before destroying PPQueryRoot when it is used as a carrier for trigger/module query-action
+    void detachChild(PPOpIn *poi, dynamic_context **dc);
 };
 
 

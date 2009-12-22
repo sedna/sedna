@@ -62,7 +62,7 @@ void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm)
     PathExpr *path = (PathExpr*)mm->alloc(sizeof(PathExpr));
     path->s = distr.size();
     if (path->s == 0) path->nto = NULL;
-    else 
+    else
     {
         path->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * path->s);
 
@@ -143,15 +143,15 @@ void NodeTest::print(std::ostream& str)
 
     switch (type)
     {
-        case node_test_processing_instruction: str << "processing-instruction("; 
-                                               xs_NCName_print(data.ncname_local, str); 
-                                               str << ")"; 
+        case node_test_processing_instruction: str << "processing-instruction(";
+                                               xs_NCName_print(data.ncname_local, str);
+                                               str << ")";
                                                break;
-                                               
+
         case node_test_comment               : str << "comment()"; break;
         case node_test_text                  : str << "text()"; break;
         case node_test_node                  : str << "node()"; break;
-        
+
         case node_test_element               : str << "element(";
                                                if (NULL != data.ncname_local)
                                                    xs_QName_print(data.ncname_prefix, data.ncname_local, str);
@@ -159,13 +159,13 @@ void NodeTest::print(std::ostream& str)
                                                break;
 
         case node_test_attribute             : str << "attribute(";
-                                               if (NULL != data.ncname_local) 
+                                               if (NULL != data.ncname_local)
                                                    xs_QName_print(data.ncname_prefix, data.ncname_local, str);
                                                str << ")";
                                                break;
-                                               
+
         case node_test_document              : str << "document-node(";
-                                               if (NULL != data.ncname_local) 
+                                               if (NULL != data.ncname_local)
                                                {
                                                    str << "element(";
                                                    xs_QName_print(data.ncname_prefix, data.ncname_local, str);
@@ -173,11 +173,11 @@ void NodeTest::print(std::ostream& str)
                                                }
                                                str << ")";
                                                break;
-                                       
+
 
         case node_test_qname                 : xs_QName_print(data.ncname_prefix, data.ncname_local, str);
                                                break;
-        
+
         case node_test_wildcard_star         : str << "*"; break;
         case node_test_wildcard_ncname_star  : xs_NCName_print(data.ncname_prefix, str); str << ":*"; break;
         case node_test_wildcard_star_ncname  : str << "*:"; xs_NCName_print(data.ncname_local, str); break;
@@ -208,54 +208,56 @@ void NodeTest::print_to_lr(std::ostream& str)
     switch (type)
     {
         case node_test_processing_instruction: if(NULL == data.ncname_local)
-                                                   str << "processing-instruction ()"; 
+                                                   str << "processing-instruction ()";
                                                else
                                                {
-                                                   str << "processing-instruction "; 
-                                                   xs_NCName_print_to_lr(data.ncname_local, str); 
+                                                   str << "processing-instruction ";
+                                                   xs_NCName_print_to_lr(data.ncname_local, str);
                                                }
                                                break;
         case node_test_comment               : str << "comment ()"; break;
         case node_test_text                  : str << "text ()"; break;
         case node_test_node                  : str << "node ()"; break;
- 
+
 
         case node_test_element               : str << "element (";
                                                if(NULL != data.ncname_local)
-                                                   xs_QName_print_to_lr(data.ncname_prefix, 
-                                                                        data.ncname_local, 
-                                                                        data.uri, 
+                                                   xs_QName_print_to_lr(data.ncname_prefix,
+                                                                        data.ncname_local,
+                                                                        data.uri,
                                                                         str);
                                                str << ")";
-                                               
+
         case node_test_attribute             : str << "attribute (";
                                                if(NULL != data.ncname_local)
-                                                   xs_QName_print_to_lr(data.ncname_prefix, 
-                                                                        data.ncname_local, 
-                                                                        data.uri, 
+                                                   xs_QName_print_to_lr(data.ncname_prefix,
+                                                                        data.ncname_local,
+                                                                        data.uri,
                                                                         str);
                                                str << ")";
         case node_test_document              : str << "document (";
                                                if(NULL != data.ncname_local)
-                                                   xs_QName_print_to_lr(data.ncname_prefix, 
-                                                                        data.ncname_local, 
-                                                                        data.uri, 
+                                                   xs_QName_print_to_lr(data.ncname_prefix,
+                                                                        data.ncname_local,
+                                                                        data.uri,
                                                                         str);
                                                str << ")";
-                                               
-                                               
-              
-        case node_test_qname                 : xs_QName_print_to_lr(data.ncname_prefix, 
-                                                                    data.ncname_local, 
-                                                                    data.uri, 
+
+
+
+        case node_test_qname                 : str << "qname (";
+                                               xs_QName_print_to_lr(data.ncname_prefix,
+                                                                    data.ncname_local,
+                                                                    data.uri,
                                                                     str);
+                                               str << ")";
                                                break;
         case node_test_wildcard_star         : str << "wildcard_star ()"; break;
-        case node_test_wildcard_ncname_star  : str << "wildcard_ncname_star "; 
-                                               xs_anyURI_print_to_lr(data.uri, str); 
+        case node_test_wildcard_ncname_star  : str << "wildcard_ncname_star ";
+                                               xs_anyURI_print_to_lr(data.uri, str);
                                                break;
-        case node_test_wildcard_star_ncname  : str << "wildcard_star_ncname "; 
-                                               xs_NCName_print_to_lr(data.ncname_local, str); 
+        case node_test_wildcard_star_ncname  : str << "wildcard_star_ncname ";
+                                               xs_NCName_print_to_lr(data.ncname_local, str);
                                                break;
         default                              : str << "UNKNOWN";
     }
@@ -331,27 +333,26 @@ void PathExpr2lr(PathExpr *path, std::ostream& str)
 }
 
 void static inline
-set_node_test_QName_data(scheme_list *lst, 
-                         NodeTestData &nt_data, 
+set_node_test_QName_data(scheme_list *lst,
+                         NodeTestData &nt_data,
                          PathExprMemoryManager * mm)
 {
-    if (   lst->at(2).type != SCM_LIST
-        || lst->at(2).internal.list->size() != 3
-        || lst->at(2).internal.list->at(0).type != SCM_STRING
-        || lst->at(2).internal.list->at(1).type != SCM_STRING
-        || lst->at(2).internal.list->at(2).type != SCM_STRING)
+    if (lst->size() != 3
+        || lst->at(0).type != SCM_STRING
+        || lst->at(1).type != SCM_STRING
+        || lst->at(2).type != SCM_STRING)
         throw USER_EXCEPTION2(SE1004, "Path expression");
 
-    if (*(lst->at(2).internal.list->at(0).internal.str))
-        if (strcmp(lst->at(2).internal.list->at(0).internal.str, "http://www.w3.org/XML/1998/namespace") != 0)
-            nt_data.uri = xs_anyURI_create(lst->at(2).internal.list->at(0).internal.str, mm->alloc);
+    if (*(lst->at(0).internal.str))
+        if (strcmp(lst->at(0).internal.str, "http://www.w3.org/XML/1998/namespace") != 0)
+            nt_data.uri = xs_anyURI_create(lst->at(0).internal.str, mm->alloc);
 
-    nt_data.ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, mm->alloc);
-    if (*(lst->at(2).internal.list->at(2).internal.str))
-        nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(2).internal.str, mm->alloc);
+    nt_data.ncname_local  = xs_NCName_create(lst->at(1).internal.str, mm->alloc);
+    if (*(lst->at(2).internal.str))
+        nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.str, mm->alloc);
 }
 
-void set_node_test_type_and_data(scheme_list *lst, 
+void set_node_test_type_and_data(scheme_list *lst,
                                  NodeTestType &nt_type, /* out */
                                  NodeTestData &nt_data, /* out */
                                  PathExprMemoryManager * mm)
@@ -377,23 +378,23 @@ void set_node_test_type_and_data(scheme_list *lst,
     nt_data.ncname_prefix = NULL;
     nt_data.ncname_local  = NULL;
 
-    switch(nt_type) 
+    switch(nt_type)
     {
-        case node_test_wildcard_ncname_star: 
+        case node_test_wildcard_ncname_star:
         {
             if (lst->at(2).type != SCM_STRING)
                 throw USER_EXCEPTION2(SE1004, "Path expression");
-    
+
             if (strcmp(lst->at(2).internal.str, "http://www.w3.org/XML/1998/namespace") !=0)
                 nt_data.uri = xs_anyURI_create(lst->at(2).internal.str, mm->alloc);
             break;
         }
-        
+
         case node_test_wildcard_star_ncname:
         {
             if (lst->at(2).type != SCM_STRING)
                 throw USER_EXCEPTION2(SE1004, "Path expression");
-    
+
             nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, mm->alloc);
             break;
         }
@@ -402,29 +403,34 @@ void set_node_test_type_and_data(scheme_list *lst,
         case node_test_attribute:
         case node_test_element:
         {
-            if (  lst->at(2).type != SCM_LIST && 
-                  ( lst->at(2).internal.list->size() != 2 ||
+            if (  lst->at(2).type != SCM_LIST &&
+                  ( lst->at(2).internal.list->size() != 3 ||
                     lst->at(2).internal.list->size() != 0 ))
                 throw USER_EXCEPTION2(SE1004, "110.1");
 
             if(lst->at(2).internal.list->size() != 0) {
                 scheme_list *qname_lst = lst->at(2).internal.list;
-            
-                if (   qname_lst->at(1).type != SCM_SYMBOL 
-                    || string(qname_lst->at(1).internal.symb) != "qname")
-                    throw USER_EXCEPTION2(SE1004, "110.2");
+
+//                if (   qname_lst->at(0).type != SCM_SYMBOL
+//                    || string(qname_lst->at(0).internal.symb) != "qname")
+//                    throw USER_EXCEPTION2(SE1004, "110.2");
 
                 set_node_test_QName_data(qname_lst, nt_data, mm);
             }
             break;
         }
-        
+
         case node_test_qname:
         {
-            set_node_test_QName_data(lst, nt_data, mm);
+            if (lst->size() < 3
+                || lst->at(2).type != SCM_LIST
+                || lst->at(2).internal.list->size() != 3)
+                throw USER_EXCEPTION2(SE1004, "node_test_qname");
+
+            set_node_test_QName_data(lst->at(2).internal.list, nt_data, mm);
             break;
         }
-        
+
         case node_test_processing_instruction:
         {
             if (   lst->at(2).type == SCM_LIST
@@ -439,12 +445,12 @@ void set_node_test_type_and_data(scheme_list *lst,
             else throw USER_EXCEPTION2(SE1004, "110");
             break;
         }
-        
+
         default: break;
     }
 }
 
-void set_node_test_parameters(scheme_list *lst, 
+void set_node_test_parameters(scheme_list *lst,
                               NodeTest &nt, //out parameter
                               PathExprMemoryManager * mm)
 {
@@ -536,7 +542,7 @@ PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
 
         if (cur->type == attribute)
             path_expr->nto[i].nt->axis = axis_attribute;
-        else 
+        else
             path_expr->nto[i].nt->axis = axis_child;
 
         switch (cur->type)

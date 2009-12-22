@@ -5,6 +5,7 @@
 
 #include "tr/executor/por2qep/por2qep.h"
 #include "tr/auth/auc.h"
+#include "tr/xqp/XQuerytoLR.h"
 
 char *get_module(const char *module_uri)
 {
@@ -23,17 +24,19 @@ char *get_module(const char *module_uri)
     /* authorization check */
     auth_for_query(counted_ptr<db_entity>(me));
 
-    std::string module_query_in_por = "(1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\" \"\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";
-    module_query_in_por += module_uri;
-    module_query_in_por += "\" !xs!string))))))))))";
+//    std::string module_query_in_por = "(1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\" \"\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";
+    std::string module_xquery = std::string("string(doc('") + module_uri + "', '$modules')/module/text())";
+//    module_query_in_por += module_uri;
+//    module_query_in_por += "\" !xs!string))))))))))";
 
-    try {
-        tree = build_qep(module_query_in_por.c_str(), 0);
+    try
+    {
+        tree = build_subqep(module_xquery.c_str(), false);
         tree_built = true;
+
         tuple_cell tc;
         tuple t = tuple(1);
 
-        // open qep tree
         tree->tree.op->open();
         tree_opened = true;
 
@@ -43,17 +46,15 @@ char *get_module(const char *module_uri)
             throw USER_EXCEPTION2(SE1003, "Error in get_module function");
 
         size = t.cells[0].get_strlen();
-        // Andrey Fomichev: I use malloc here because this piece of memory will be
-        // released by Chicken (by C-call free())
         res = (char*)malloc(size + 1);
         if (!res)
-            throw USER_EXCEPTION2(SE1003, "Error in get_module function"); 
+            throw USER_EXCEPTION2(SE1003, "Error in get_module function");
         mem_alloced = true;
         t.cells[0].copy_string(res);
 
         tree->tree.op->next(t);
-        if (!t.is_eos()) 
-            throw USER_EXCEPTION2(SE1003, "Error in get_module function"); 
+        if (!t.is_eos())
+            throw USER_EXCEPTION2(SE1003, "Error in get_module function");
 
         // close qep tree
         tree->tree.op->close();
@@ -61,7 +62,9 @@ char *get_module(const char *module_uri)
         delete_qep(tree);
         tree = NULL;
 
-    } catch (SednaUserException &e) {
+    }
+    catch (SednaUserException &e)
+    {
         if (mem_alloced) free(res);
         if (tree_opened) tree->tree.op->close();
         if (tree_built)  delete_qep(tree);

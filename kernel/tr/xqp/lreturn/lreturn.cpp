@@ -240,7 +240,7 @@ namespace sedna
             case ASTAxisStep::ATTRIBUTE:
                 off_this.exi.isOrdered = off_cont.exi.isOrdered;
                 off_this.exi.isDistincted = off_cont.exi.isDistincted;
-                off_this.exi.isMax1 = false; // can refine it later (check if this is the named-attribute retrieval. then it would be true)
+                off_this.exi.isMax1 = false; // TODO: can refine it later (check if this is the named-attribute retrieval. then it would be true)
                 off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
                 break;
             case ASTAxisStep::SELF:
@@ -843,7 +843,6 @@ namespace sedna
 
     void LReturn::visit(ASTElem &n)
     {
-        unsigned int count = (n.cont) ? n.cont->size() : 0;
         childOffer off;
 
         if (n.cont)
@@ -855,7 +854,7 @@ namespace sedna
             req.atomize = false;
 
             VisitNodesVector(n.cont, *this, req);
-            off = mergeOffers(count);
+            off = mergeOffers(n.cont->size());
         }
 
         // direct element constructor creates only one node
@@ -878,7 +877,7 @@ namespace sedna
             req.deep_copy = false;
 
             VisitNodesVector(n.attrs, *this, req);
-            offa = mergeOffers(count);
+            offa = mergeOffers(n.attrs->size());
 
             off.usedVars.insert(offa.usedVars.begin(), offa.usedVars.end());
 
@@ -1039,7 +1038,7 @@ namespace sedna
 
             // we propagate distinctOnly here iff the primary expression doesn't use the context of the previous step
             // if it does, then it could expose absence of mandatory ordering using position()
-            req.distinctOnly = !n.use_pos && getParentRequest().distinctOnly;
+            req.distinctOnly = !n.use_pos && off_pe.usedVars.find("$%v") == off_pe.usedVars.end();
             req.atomize = false;
             req.deep_copy = true;
             setParentRequest(req);
@@ -1094,12 +1093,13 @@ namespace sedna
         }
 
         // if we have E1/E2 path expression and we're in E2 we don't need to order-distinct previous step if it's first filter step
+        // of course, we always consider axis step for ddo-distinct
         ASTFilterStep *pfs = dynamic_cast<ASTFilterStep *>(n.cont);
-        if (pfs && !pfs->isFirstStep())
+        if ((pfs && !pfs->isFirstStep()) || !pfs)
         {
             // if we are in ordered mode and we use context nodes then we should ddo the previous step
-            if (n.cont && isModeOrdered && !getParentRequest().distinctOnly && (!off_cont.exi.isOrdered || !off_cont.exi.isDistincted) &&
-                    off_pe.usedVars.find("$%v") != off_pe.usedVars.end())
+            if (n.cont && isModeOrdered && (!off_cont.exi.isOrdered || !off_cont.exi.isDistincted) &&
+                    (off_pe.usedVars.find("$%v") != off_pe.usedVars.end() || n.use_pos))
             {
                 ASTNode *ddo = new ASTDDO(n.getLocation(), n.cont);
 

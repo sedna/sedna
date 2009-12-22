@@ -129,12 +129,6 @@ namespace sedna
             return qep;
         }
 
-        // hack-function to enable trigger-queries (active only on usual queries; updates ALWAYS create new dyn. context)
-        void setDynCxt(dynamic_context *dx)
-        {
-            dyn_cxt = dx;
-        }
-
         virtual void addToPath(ASTNode *nod);
         virtual void removeFromPath(ASTNode *nod);
 

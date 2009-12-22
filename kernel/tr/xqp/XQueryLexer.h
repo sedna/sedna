@@ -129,11 +129,12 @@ namespace sedna
             //      yylloc -- location
             //      text -- StringLiteral string
             //      len -- its length
+            //      in_attr -- means that we are parsing attribute content
             //
             // Returns:
             //      string to replace StringLiteral
             //
-            std::string *xqMakeContent(XQueryParser::location_type *loc, const char *text, int len);
+            std::string *xqMakeContent(XQueryParser::location_type *loc, const char *text, int len, bool in_attr);
 
             // check if pi-target is valid; it must consist of valid Name chars
             //

@@ -116,8 +116,6 @@ namespace sedna
         // we ignore type here except for sequence types
         childOffer off_this;
 
-        off_this.st.type.type = st_attribute;
-
         if (n.name)
         {
             n.name->accept(*this);
@@ -131,7 +129,9 @@ namespace sedna
             off_this.st.type.info.ea.nne = st_nne_wildcard;
         }
 
-        if (off_this.test_data == "wildcard_star" || off_this.test_data == "qname")
+        off_this.st.type.type = st_attribute;
+
+        if (off_this.test_type == "wildcard_star" || off_this.test_type == "qname")
             off_this.test_type = "attribute";
 
         if (n.type)
@@ -1075,8 +1075,6 @@ namespace sedna
         // we ignore type and nillability here for XPath and set it only for sequence types
         childOffer off_this;
 
-        off_this.st.type.type = st_element;
-
         if (n.name)
         {
             n.name->accept(*this);
@@ -1090,7 +1088,9 @@ namespace sedna
             off_this.st.type.info.ea.nne = st_nne_wildcard;
         }
 
-        if (off_this.test_data == "wildcard_star" || off_this.test_data == "qname")
+        off_this.st.type.type = st_element;
+
+        if (off_this.test_type == "wildcard_star" || off_this.test_type == "qname")
             off_this.test_type = "element";
 
         if (n.type)
@@ -2537,7 +2537,14 @@ namespace sedna
             op.ts = off_e.opin.ts;
         }
 
-        off_this.opin = PPOpIn(new PPFnExists(dyn_cxt, createOperationInfo(n), op), 1);
+        if (n.type == ASTQuantExpr::SOME)
+        {
+            off_this.opin = PPOpIn(new PPFnExists(dyn_cxt, createOperationInfo(n), op), 1);
+        }
+        else /* EVERY */
+        {
+            off_this.opin = PPOpIn(new PPFnEmpty(dyn_cxt, createOperationInfo(n), op), 1);
+        }
 
         setOffer(off_this);
 
@@ -2549,9 +2556,7 @@ namespace sedna
         if (n.type == ASTQuery::QUERY)
         {
             var_num = 0;
-
-            if (!dyn_cxt) // trigger-hack (in case of trigger query dyn_cxt is already set)
-                dyn_cxt = new dynamic_context(st_cxt, 0);
+            dyn_cxt = new dynamic_context(st_cxt, 0);
         }
 
         n.query->accept(*this);
@@ -2888,16 +2893,45 @@ namespace sedna
 
     void lr2por::visit(ASTUpdReplace &n)
     {
-        childOffer off_what;
+        childOffer off_what, off_new, off_var;
+        arr_of_var_dsc retv;
+        arr_of_PPOpIn new_seq;
+        PPOpIn newop;
 
         var_num = 0;
         dyn_cxt = new dynamic_context(st_cxt, 0);
-        n.what->accept(*this);
 
+        setParamMode();
+        n.var->accept(*this);
+        off_var = getOffer();
+        unsetParamMode();
+
+        bool got_type = !(off_var.st.type.type == st_atomic_type && off_var.st.type.info.single_type == xs_anyType);
+
+        n.what->accept(*this);
         off_what = getOffer();
+
+        n.new_expr->accept(*this);
+        off_new = getOffer();
+
+        // main return variable
+        retv.push_back(bound_vars.back().second);
+
+        // sequence on each updated node (data_child for return)
+        new_seq.push_back(PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(n), retv.back()), 1));
+        new_seq.push_back(off_new.opin);
+        new_seq.push_back(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell("1", se_separator)), 1));
+
+        newop = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), new_seq), 1);
+
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
-        qep = new PPReplace(off_what.opin, dyn_cxt);
+        if (got_type)
+            qep = new PPReplace(PPOpIn(new PPReturn(dyn_cxt, createOperationInfo(n), retv, off_what.opin, newop, -1, off_var.st), 1), dyn_cxt);
+        else
+            qep = new PPReplace(PPOpIn(new PPReturn(dyn_cxt, createOperationInfo(n), retv, off_what.opin, newop, -1), 1), dyn_cxt);
+
+        bound_vars.pop_back();
     }
 
     void lr2por::visit(ASTVar &n)

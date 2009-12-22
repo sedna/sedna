@@ -17,9 +17,8 @@ struct qep_subtree
     PPOpIn tree;
 };
 
-PPQueryEssence *build_qep(const char*  por);
-PPQueryEssence *build_qep(scheme_list* por);
-qep_subtree    *build_qep(const char*  por, int cxt_size);
+PPQueryEssence *build_qep(const char*  por, bool is_ast);
+qep_subtree    *build_subqep(const char*  por, bool is_ast);
 
 void delete_qep(PPQueryEssence *qep);
 void delete_qep(qep_subtree *qep);

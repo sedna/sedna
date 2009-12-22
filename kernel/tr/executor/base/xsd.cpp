@@ -100,7 +100,7 @@ static xmlns_ptr _xs_QName_decode(const void *source)
 static int _xs_QName_separator_position(const char *prefix_and_local)
 {
     int i = 0;
-    
+
     while (prefix_and_local[i] != '\0')
         if (prefix_and_local[i] == ':') return i;
         else i++;
@@ -109,7 +109,7 @@ static int _xs_QName_separator_position(const char *prefix_and_local)
 }
 
 char *xs_QName_create(xmlns_ptr xmlns,
-                      const char *local_part, 
+                      const char *local_part,
                       void* (*alloc_func)(size_t))
 {
     U_ASSERT(local_part);
@@ -145,7 +145,7 @@ char *xs_QName_create(const char *uri,
 }
 
 char *xs_QName_create(const char* uri,
-                      const char* prefix_and_local, 
+                      const char* prefix_and_local,
                       void* (*alloc_func)(size_t),
                       dynamic_context *cxt)
 {
@@ -158,11 +158,11 @@ char *xs_QName_create(const char* uri,
 
     // XQuery spec doesn't say that we have to check lexical representation for uri (AF)
 
-    // separate prefix and local name 
+    // separate prefix and local name
     pos = _xs_QName_separator_position(prefix_and_local);
-    if (pos) 
+    if (pos)
         local = prefix_and_local + pos + 1;
-    else 
+    else
         local = prefix_and_local;
 
     if (!check_constraints_for_xs_NCName(local))
@@ -193,7 +193,7 @@ char *xs_QName_create(const char* prefix_and_local,
 {
     U_ASSERT(prefix_and_local);
 
-    // separate prefix and local name 
+    // separate prefix and local name
     int pos = _xs_QName_separator_position(prefix_and_local);
 
     const char *src_prefix = NULL;
@@ -245,7 +245,7 @@ void xs_QName_release(char *qname, void (*free_func)(void*))
     // rather decrease a counter... There could be some problems with log(s) Leon says,
     // but he couldn't clarify what are the problems...
     // To my concern, finally, we should get somethins like this here:
-    // 
+    //
     //     xmlns_ptr xmlns = _xs_QName_decode(qname);
     //     xml_ns::delete_namespace_node(xmlns);
     //
@@ -256,18 +256,18 @@ void xs_QName_release(char *qname, void (*free_func)(void*))
 const char *xs_QName_get_prefix(const char* qname)
 {
     xmlns_ptr xmlns = _xs_QName_decode(qname);
-    return (xmlns != NULL_XMLNS) ? xmlns->prefix : NULL; 
+    return (xmlns != NULL_XMLNS) ? xmlns->prefix : NULL;
 }
 
 const char *xs_QName_get_uri(const char* qname)
-{ 
+{
     xmlns_ptr xmlns = _xs_QName_decode(qname);
-    return (xmlns != NULL_XMLNS) ? xmlns->uri : NULL; 
+    return (xmlns != NULL_XMLNS) ? xmlns->uri : NULL;
 }
 
 const char *xs_QName_get_local_name(const char* qname)
-{ 
-    return qname + 2 * sizeof(xmlns_ptr); 
+{
+    return qname + 2 * sizeof(xmlns_ptr);
 }
 
 xmlns_ptr xs_QName_get_xmlns(const char* qname)
@@ -275,7 +275,7 @@ xmlns_ptr xs_QName_get_xmlns(const char* qname)
     return _xs_QName_decode(qname);
 }
 
-void xs_QName_print(const char* prefix, 
+void xs_QName_print(const char* prefix,
                     const char* local,
                     std::ostream& str)
 {
@@ -287,19 +287,19 @@ void xs_QName_print(const char* prefix,
     xs_NCName_print(local, str);
 }
 
-void xs_QName_print_to_lr(const char* prefix, 
+void xs_QName_print_to_lr(const char* prefix,
                           const char* local,
                           const char* uri,
                           std::ostream& str)
 {
-    str << "qname "; 
-    str << "(";
+//    str << "qname ";
+//    str << "(";
     xs_anyURI_print_to_lr(uri, str);
     str << " ";
-    xs_NCName_print_to_lr(local, str); 
+    xs_NCName_print_to_lr(local, str);
     str << " ";
-    xs_NCName_print_to_lr(prefix, str); 
-    str << ")";
+    xs_NCName_print_to_lr(prefix, str);
+//    str << ")";
 }
 
 

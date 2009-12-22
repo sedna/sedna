@@ -9,6 +9,7 @@
 #include "tr/executor/por2qep/ext.h"
 #include "tr/strings/e_string.h"
 #include "tr/executor/fo/op_map.h"
+#include "tr/xqp/XQuerytoLR.h"
 
 #include "tr/tr_globals.h"
 
@@ -4177,51 +4178,43 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst)
     return make_pp_qe(qe, st_cxt);
 }
 
-PPQueryEssence *build_qep(const char* por)
+PPQueryEssence *build_qep(const char* por, bool is_ast)
 {
-    scheme_list *qep_tree_in_scheme_lst = NULL;
+    sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
+    std::string dummy; // for module name
 
-    /// Parse LR (extended representation by C++ part)
-    qep_tree_in_scheme_lst = make_tree_from_scheme_list(por);
+    parse_batch(xqd, is_ast? TL_ASTQEPReady : TL_XQuery, por, &dummy);
+    PPQueryEssence *qep = xqd->getQEPForModule(0);
 
-    /// Constructs QEP tree
-    PPQueryEssence *qep = scheme_list2qep(qep_tree_in_scheme_lst);
-    delete_scheme_list(qep_tree_in_scheme_lst);
+    delete xqd;
+
     return qep;
 }
 
-PPQueryEssence *build_qep(scheme_list *por)
+qep_subtree *build_subqep(const char* por, bool is_ast)
 {
-    /// Constructs QEP tree
-    PPQueryEssence *qep = scheme_list2qep(por);
-    return qep;
-}
-
-qep_subtree *build_qep(const char* por, int var_cxt_size)
-{
-    scheme_list *pp_op_in_scheme_lst = NULL;
-    pp_op_in_scheme_lst = make_tree_from_scheme_list(por);
-
+    sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
     qep_subtree *res = se_new qep_subtree();
 
-    res->cxt = dynamic_context::create_unmanaged(var_cxt_size);
-    res->tree = make_pp_op(res->cxt, pp_op_in_scheme_lst);
+    // create unmanaged static context for subquery
+    // TODO: review it with all static/dynamic context stuff!!!
+    dynamic_context::create_unmanaged();
 
-    delete_scheme_list(pp_op_in_scheme_lst);
+    // parse provided string
+    parse_batch_context(xqd, por, is_ast ? TL_ASTQEPReady : TL_XQuery, dynamic_context::unmanaged_st_cxt);
+    PPQueryRoot *pqr = dynamic_cast<PPQueryRoot *>(xqd->getQEPForModule(0));
+
+    U_ASSERT(pqr);
+
+    // receive subtree and dynamic context (created in provided static context by XQueryDriver)
+    pqr->detachChild(&res->tree, &res->cxt);
+
+    // PPQueryEssence just a carrier
+    delete pqr;
+    delete xqd;
 
     return res;
 }
-
-qep_subtree *build_qep(scheme_list* por, int var_cxt_size)
-{
-    qep_subtree *res = se_new qep_subtree();
-
-    res->cxt = dynamic_context::create_unmanaged(var_cxt_size);
-    res->tree = make_pp_op(res->cxt, por);
-
-    return res;
-}
-
 
 void delete_qep(PPQueryEssence *qep)
 {
@@ -4238,5 +4231,3 @@ void delete_qep(qep_subtree *qep)
     delete qep;
     qep = NULL;
 }
-
-

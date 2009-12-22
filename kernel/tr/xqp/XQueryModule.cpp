@@ -15,8 +15,7 @@ namespace sedna
         qep = NULL;
         drv = driver;
         lr = NULL;
-        hack_qep_sx = NULL;
-        hack_qep_dx = NULL;
+        qep_sx = NULL;
 
 #if (defined(DEBUGI) && (DEBUGI == 1))
         if (drv->getErrorCode() == -1)
@@ -34,8 +33,7 @@ namespace sedna
         qep = NULL;
         drv = driver;
         lr = NULL;
-        hack_qep_sx = NULL;
-        hack_qep_dx = NULL;
+        qep_sx = NULL;
 
 #if (defined(DEBUGI) && (DEBUGI == 1))
         if (drv->getErrorCode() == -1)
@@ -313,20 +311,19 @@ namespace sedna
             }
         }
 
-        if (!hack_qep_sx) // trigger hack
+        if (!qep_sx) // we haven't told about some specific static context
             dynamic_context::static_set(libfun_num + fun_num, libvar_num + var_num, mod_num + 1);
 
         if (mod_num)
             drv->porLibModules();
 
         // create our own context
-        if (!hack_qep_sx) // trigger hack
+        if (!qep_sx) // we haven't told about some specific static context
             st_cxt = dynamic_context::create_static_context();
         else
-            st_cxt = hack_qep_sx;
+            st_cxt = qep_sx;
 
         l2p = new lr2por(this->drv, this, st_cxt);
-        l2p->setDynCxt(hack_qep_dx);
 
         ast->accept(*l2p);
 
@@ -361,9 +358,8 @@ namespace sedna
         unresPorVars.insert(unresPorVarInfo(name, var));
     }
 
-    void XQueryModule::setContextsForQEP(static_context *sx, dynamic_context *dx)
+    void XQueryModule::setStaticContextForQEP(static_context *sx)
     {
-        hack_qep_sx = sx;
-        hack_qep_dx = dx;
+        qep_sx = sx;
     }
 }

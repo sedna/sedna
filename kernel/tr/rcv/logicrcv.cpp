@@ -65,7 +65,7 @@ static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 static void llProcessRcvError(LSN curr_lsn, void *Rec)
 {
 	char op = *((char *)Rec);
-	
+
 	if (op < LL_INSERT_ELEM || op >= LL_DEFAULT)
 		throw SYSTEM_EXCEPTION("Bad things really happen :(");
 }
@@ -95,7 +95,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
     offs = sizeof(char) + sizeof(transaction_id);
 
     name = rec + offs;
-    offs += strlen(name) + 1;  
+    offs += strlen(name) + 1;
     uri = rec + offs;
     offs += strlen(uri) + 1;
     prefix = rec + offs;
@@ -120,7 +120,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	  }
 	  else
 	       set_rollback_record(self);
-	   	 
+
 
       // Actually assuming that 0-length string and NULL pointer are the same (prefix, uri)
       // is terribly wrong, so TODO: FIX it
@@ -130,7 +130,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
                      name,
                      type,
                      xmlns_touch(
-                        (strlen(prefix) != 0) ? prefix : NULL, 
+                        (strlen(prefix) != 0) ? prefix : NULL,
                         (strlen(uri) != 0) ? uri : NULL));
 
       xptr self_res = get_last_indir();
@@ -144,7 +144,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	  }
 
       delete_node(removeIndirection(self));
-    } 
+    }
 }
 
 // Recover attribute
@@ -181,7 +181,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
      offs += sizeof(xptr);
      memcpy(&parent, rec + offs, sizeof(xptr));
 
-     if ((isUNDO && op == LL_DELETE_ATTR) || (!isUNDO && op == LL_INSERT_ATTR)) 
+     if ((isUNDO && op == LL_DELETE_ATTR) || (!isUNDO && op == LL_INSERT_ATTR))
      {
 	   if (!isUNDO)
 	   {
@@ -200,7 +200,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
                         value,
                         value_size,
                         xmlns_touch(
-                           (strlen(prefix) != 0) ? prefix : NULL, 
+                           (strlen(prefix) != 0) ? prefix : NULL,
                            (strlen(uri) != 0) ? uri : NULL));
 
        xptr self_res = get_last_indir();
@@ -214,7 +214,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
 	   }
 
        delete_node(removeIndirection(self));
-     }  
+     }
 }
 
 // Recover text node
@@ -292,7 +292,7 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
      offs += value_size;
      memcpy(&self, rec + offs, sizeof(xptr));
 
-     if ((isUNDO && (op == LL_DELETE_LEFT_TEXT || op == LL_DELETE_RIGHT_TEXT)) || 
+     if ((isUNDO && (op == LL_DELETE_LEFT_TEXT || op == LL_DELETE_RIGHT_TEXT)) ||
      	 (!isUNDO && (op == LL_INSERT_LEFT_TEXT || op == LL_INSERT_RIGHT_TEXT)))
      {
 	   if (!isUNDO)
@@ -305,7 +305,7 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
        else
            insertTextValue(removeIndirection(self), value, value_size, text_mem);
      }
-     else 
+     else
      {
 	   if (!isUNDO)
 	   {
@@ -339,7 +339,7 @@ static void llRcvRenameColl(LSN curr_lsn, void *Rec)
     if (isUNDO)
     {
     	rename_collection(new_name, old_name);
-    }   
+    }
     else
     {
     	rename_collection(old_name, new_name);
@@ -374,12 +374,12 @@ static void llRcvDoc(LSN curr_lsn, void *Rec)
        else
        {
 		  if (isUNDO) set_rollback_record(self);
-          insert_document_into_collection(collection, name);    
+          insert_document_into_collection(collection, name);
        }
 
 	   xptr self_res = get_last_indir();
 	   if (self_res != self) indir_map.insert(self, self_res);
-    }   
+    }
     else
     {
        if (strlen(collection) == 0)
@@ -513,7 +513,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
 
 // Recover collection
 static void llRcvCollection(LSN curr_lsn, void *Rec)
-{  
+{
 	 char *rec = (char *)Rec;
      const char* name;
      int offs;
@@ -573,7 +573,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
                         removeIndirection(right),
                         removeIndirection(parent),
                         xmlns_touch(
-                          (strlen(prefix) != 0) ? prefix : NULL, 
+                          (strlen(prefix) != 0) ? prefix : NULL,
                           (strlen(uri) != 0) ? uri : NULL));
 
        xptr self_res = get_last_indir();
@@ -626,7 +626,7 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
                             doc_name,
                             true);
            else throw SYSTEM_EXCEPTION("Can't create index for document");
-        } 
+        }
         else
         {
            col_schema_node_cptr col_node = find_collection(doc_name);
@@ -690,7 +690,7 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
                             ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
 							true, ft_ind_dtsearch);
            else throw SYSTEM_EXCEPTION("Can't create index for document");
-        } 
+        }
         else
         {
            col_schema_node_cptr col_node = find_collection(doc_name);
@@ -732,7 +732,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
     int tmp;
 
     int offs = sizeof(char) + sizeof(transaction_id);
-    
+
 	memcpy(&tmp, rec + offs, sizeof(int));
     offs += sizeof(int);
     tr_time = (trigger_time)tmp;
@@ -766,24 +766,24 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
     trigger_title = rec + offs;
     offs += strlen(trigger_title) + 1;
-    
+
     doc_name = rec + offs;
 
     // restore trigger_action_cell sequence
     int i = 0;
     trigger_action_cell *trac = (trigger_action_cell *)malloc(sizeof(trigger_action_cell));
     rcv_tac = trac;
-    
+
     while (i < tr_action_size)
     {
         trac->statement = (char *)malloc(strlen(tr_action_buf + i) + 1);
         strcpy(trac->statement, tr_action_buf + i);
         i += strlen(tr_action_buf + i) + 1;
 
-        memcpy(&(trac->cxt_size), tr_action_buf + i, sizeof(int));
+        memcpy(&(trac->is_query), tr_action_buf + i, sizeof(bool));
         i += sizeof(int);
 
-        if (i < tr_action_size) 
+        if (i < tr_action_size)
         	trac->next = (trigger_action_cell *)malloc(sizeof(trigger_action_cell));
         else
         	trac->next = NULL;
@@ -792,7 +792,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
     }
 
     U_ASSERT(i == tr_action_size);
-        
+
     if ((isUNDO && (op == LL_DELETE_DOC_TRG || op == LL_DELETE_COL_TRG) ) || (!isUNDO && (op == LL_INSERT_DOC_TRG || op == LL_INSERT_COL_TRG)))
     {//create trigger
         if (op == LL_DELETE_DOC_TRG || op == LL_INSERT_DOC_TRG)
@@ -800,7 +800,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
            schema_node_xptr doc_node = find_document(doc_name);
 
            if (doc_node->type == document || doc_node->type == virtual_root)
-               create_trigger(tr_time, tr_event, 
+               create_trigger(tr_time, tr_event,
                								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, pe_catalog_aspace) : NULL,
                								tr_gran,
                                             NULL,
@@ -811,11 +811,11 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
            else throw SYSTEM_EXCEPTION("Can't create trigger for document");
    		}
         else
-        {      
+        {
            schema_node_xptr coll_node = find_collection(doc_name);
 
            if (coll_node->type == document || coll_node->type == virtual_root)
-               create_trigger(tr_time, tr_event, 
+               create_trigger(tr_time, tr_event,
                								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, pe_catalog_aspace) : NULL,
                								tr_gran,
                                             NULL,
@@ -824,16 +824,16 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
                                             (doc_schema_node_xptr) coll_node,
                                             trigger_title, doc_name, false);
            else throw SYSTEM_EXCEPTION("Can't create trigger for collection");
-        }      
+        }
     }
     else // delete trigger
     	delete_trigger(trigger_title);
-#endif  
+#endif
 }
 
 // Main structure for logical recovery
 static
-struct llRecInfo llRcvLogRecsInfo[] = 
+struct llRecInfo llRcvLogRecsInfo[] =
 {
 	{LL_INSERT_ELEM, llRcvElement},
 	{LL_DELETE_ELEM, llRcvElement},
@@ -902,14 +902,14 @@ static void llRcvRedoTrns(trn_cell_analysis_redo *rcv_list, LSN start_lsn)
 // this function is run from the special recovery process
 void llLogicalRecover(const LSN start_lsn)
 {
-	LSN start_analysis_lsn; 
+	LSN start_analysis_lsn;
 
 	assert(llInfo->checkpoint_lsn != LFS_INVALID_LSN);
 
 	// determine starting lsn to analyze transactions
-	if (llInfo->min_rcv_lsn != LFS_INVALID_LSN) 
+	if (llInfo->min_rcv_lsn != LFS_INVALID_LSN)
 		start_analysis_lsn = llInfo->min_rcv_lsn;
-	else if (llInfo->checkpoint_lsn != LFS_INVALID_LSN)	
+	else if (llInfo->checkpoint_lsn != LFS_INVALID_LSN)
 		start_analysis_lsn = llInfo->checkpoint_lsn;
 	else
 		return;
@@ -922,9 +922,9 @@ void llLogicalRecover(const LSN start_lsn)
 
 	//redo committed transactions
 	llRcvRedoTrns(rcv_list, start_analysis_lsn);
-  
+
 	RECOVERY_CRASH;
- 
+
 #ifdef SE_ENABLE_DTSEARCH //TODO: make sure FTSEARCH is ok like this
 	SednaIndexJob::recover_db(rcv_list, (llInfo->hotbackup_needed) ? true : false);
 #endif

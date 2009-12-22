@@ -44,7 +44,7 @@ struct inserting_node
 struct trigger_action_cell
 {
     char* statement;
-    int cxt_size;
+    bool is_query;
     trigger_action_cell* next;
 };
 
@@ -66,7 +66,7 @@ public:
 /* Fields */
     char * trigger_title; /* persistent string */
 
-    /* 
+    /*
      * schemaroot - pointer to a document, which trigger is created for.
      * doc_name, is_doc - the name of the document (or collection), which the index was created for.
      * Latters are calculateble, so I don't think we should store it.
@@ -156,7 +156,7 @@ struct trigger_cell_cptr : public catalog_cptr_template<trigger_cell_object> {
         catalog_cptr_template<trigger_cell_object>(aobj, writable) {} ;
     explicit inline trigger_cell_cptr (const char * title, bool write_mode = false) :
         catalog_cptr_template<trigger_cell_object>(catalog_find_name(catobj_triggers, title), write_mode) {};
-    inline trigger_cell_cptr (const xptr p, bool writable = false) : 
+    inline trigger_cell_cptr (const xptr p, bool writable = false) :
         catalog_cptr_template<trigger_cell_object>(p, writable) {};
 };
 
