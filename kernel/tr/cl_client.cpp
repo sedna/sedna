@@ -176,7 +176,7 @@ void command_line_client::read_msg(msg_struct *msg)
         // here we parse our queries via driver and then get ast-strings
         sedna::XQueryDriver *xqd = new sedna::XQueryDriver;
         std::string dummy; // for module name
-        parse_batch(xqd, TL_XQuery, plain_batch_text.c_str(), &dummy);
+        parse_batch(xqd, TL_XQueryAST, plain_batch_text.c_str(), &dummy);
 
         // then we iterate through modules and get array of ast-strings
         for (size_t i = 0; i < xqd->getModulesCount(); i++)
@@ -245,11 +245,6 @@ char* command_line_client::get_query_string(msg_struct *msg)
 QueryType command_line_client::get_query_type()
 {
     return TL_ASTInitial;
-
-//    if (tr_globals::query_type == TL_POR)
-//        return TL_POR;
-//    else
-//        return TL_ForAuth;
 }
 
 void command_line_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)

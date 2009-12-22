@@ -3185,7 +3185,7 @@ namespace sedna
         PPOpIn op;
 
         scheme_list *sl = make_tree_from_scheme_list(getlrForAxisStep(s).c_str());
-        set_node_test_type_and_data(sl, ntype, ndata, pe_local_aspace);
+        set_node_test_type_and_data(sl->at(0).internal.list, ntype, ndata, pe_local_aspace);
         delete_scheme_list(sl);
 
         switch (s.axis)

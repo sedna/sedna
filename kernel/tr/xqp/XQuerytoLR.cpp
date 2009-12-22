@@ -47,49 +47,56 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
         for (unsigned int i = 0; i < batch.size(); i++)
             batch_utf.push_back(encoding_processing(batch[i].c_str()));
 
-        if (type == TL_XQuery)
+        switch (type)
         {
-            // parse query and create ast-tree; any errors will be thrown as exceptions
-            for (unsigned int i = 0; i < batch_utf.size(); i++)
-                drv->parse(batch_utf[i].c_str());
+            case TL_XQuery:
+            case TL_XQueryMod:
+            case TL_XQueryAST:
+                // parse query and create ast-tree; any errors will be thrown as exceptions
+                for (unsigned int i = 0; i < batch_utf.size(); i++)
+                    drv->parse(batch_utf[i].c_str());
 
-            // do semantic analysis; any errors will be thrown as exceptions
-            drv->doSemanticAnalysis();
+                // do semantic analysis; any errors will be thrown as exceptions
+                if (type != TL_XQueryAST)
+                {
+                    drv->doSemanticAnalysis();
 
-            // do lreturn optimizations
-            drv->doLReturnAnalysis();
+                    // do lreturn optimizations
+                    if (type != TL_XQueryMod)
+                        drv->doLReturnAnalysis();
+                }
 
-            *module_name = drv->getParsedModuleName();
+                *module_name = drv->getParsedModuleName();
 
-            GET_TIME(&t2_parser);
-            ADD_TIME(t_total_parser, t1_parser, t2_parser);
-        }
-        else if (type == TL_ASTInitial)
-        {
-            // parse query and create ast-tree; any errors will be thrown as exceptions
-            for (unsigned int i = 0; i < batch_utf.size(); i++)
-                drv->parseAST(batch_utf[i].c_str());
+                GET_TIME(&t2_parser);
+                ADD_TIME(t_total_parser, t1_parser, t2_parser);
+                break;
 
-            // do semantic analysis; any errors will be thrown as exceptions
-            drv->doSemanticAnalysis();
+            case TL_ASTInitial:
+                // parse query and create ast-tree; any errors will be thrown as exceptions
+                for (unsigned int i = 0; i < batch_utf.size(); i++)
+                    drv->parseAST(batch_utf[i].c_str());
 
-            // do lreturn optimizations
-            drv->doLReturnAnalysis();
+                // do semantic analysis; any errors will be thrown as exceptions
+                drv->doSemanticAnalysis();
 
-            *module_name = drv->getParsedModuleName();
-        }
-        else if (type == TL_ASTQEPReady)
-        {
-            // parse query and create ast-tree; any errors will be thrown as exceptions
-            for (unsigned int i = 0; i < batch_utf.size(); i++)
-                drv->parseAST(batch_utf[i].c_str());
+                // do lreturn optimizations
+                drv->doLReturnAnalysis();
 
-            // don't need to run any analysis here sine it's QEP-ready
-            *module_name = "";
-        }
-        else
-        {
-            throw USER_EXCEPTION2(SE4002, "unknown query type: only XQuery queries are supported now");
+                *module_name = drv->getParsedModuleName();
+                break;
+
+            case TL_ASTQEPReady:
+                // parse query and create ast-tree; any errors will be thrown as exceptions
+                for (unsigned int i = 0; i < batch_utf.size(); i++)
+                    drv->parseAST(batch_utf[i].c_str());
+
+                // don't need to run any analysis here sine it's QEP-ready
+                *module_name = "";
+                break;
+
+            default:
+                throw USER_EXCEPTION2(SE4002, "unknown query type: only XQuery queries are supported now");
         }
     }
     catch (SednaUserException &e)
