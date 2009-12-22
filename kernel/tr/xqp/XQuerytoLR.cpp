@@ -136,3 +136,29 @@ void parse_batch_context(sedna::XQueryDriver *drv, const char *query, QueryType 
         drv->parseASTInContext(query, sx);
     }
 }
+
+StringVector parse_xq_to_ast(const char *batch)
+{
+    StringVector res;
+    sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
+
+    try
+    {
+        xqd->parse(encoding_processing(batch).c_str());
+
+        // then we iterate through modules and get array of ast-strings
+        for (size_t i = 0; i < xqd->getModulesCount(); i++)
+        {
+            res.push_back(xqd->getIRRepresentation(i));
+        }
+    }
+    catch (SednaUserException &e)
+    {
+        delete xqd;
+        throw;
+    }
+
+    delete xqd;
+
+    return res;
+}

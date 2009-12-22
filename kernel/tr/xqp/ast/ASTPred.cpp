@@ -161,9 +161,9 @@ ASTNode *ASTPred::createNode(scheme_list &sl)
 
         c.expr = dsGetASTFromSchemeList(*l[0].internal.list);
         c.op = operation_compare_condition(atoi(l[1].internal.num));
-        c.use_cxt = l[1].internal.b;
-        c.use_last = l[2].internal.b;
-        c.use_pos = l[3].internal.b;
+        c.use_cxt = l[2].internal.b;
+        c.use_last = l[3].internal.b;
+        c.use_pos = l[4].internal.b;
 
         res->others.push_back(c);
     }

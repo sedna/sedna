@@ -184,7 +184,7 @@ std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string 
     parse_batch(xqd, TL_XQueryMod, batch, module_name);
 
     if (xqd->getModulesCount() == 0)
-        throw USER_EXCEPTION2(4001, "faile to parse library module");
+        throw USER_EXCEPTION2(4001, "failed to parse library module");
 
     module = "(";
     for (unsigned int i = 0; i < xqd->getModulesCount(); i++)

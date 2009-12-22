@@ -315,8 +315,6 @@ namespace sedna
 
     void Cycle::visit(ASTFor &n)
     {
-        unsigned int params;
-
         n.expr->accept(*this);
 
         setParamMode();

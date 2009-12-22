@@ -5,6 +5,7 @@
 
 #include "common/sedna.h"
 
+#include "tr/xqp/XQuerytoLR.h"
 #include "tr/triggers/triggers.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/tr_globals.h"
@@ -14,7 +15,6 @@
 #include "tr/log/log.h"
 #include "tr/locks/locks.h"
 #include "tr/crmutils/exec_output.h"
-#include "tr/xqp/XQuerytoLR.h"
 
 static t_triggers_set after_statement_triggers;
 

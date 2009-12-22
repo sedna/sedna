@@ -174,18 +174,7 @@ void command_line_client::read_msg(msg_struct *msg)
         }
 
         // here we parse our queries via driver and then get ast-strings
-        sedna::XQueryDriver *xqd = new sedna::XQueryDriver;
-        std::string dummy; // for module name
-        parse_batch(xqd, TL_XQueryAST, plain_batch_text.c_str(), &dummy);
-
-        // then we iterate through modules and get array of ast-strings
-        for (size_t i = 0; i < xqd->getModulesCount(); i++)
-        {
-            stmnts_array.push_back(xqd->getIRRepresentation(i));
-        }
-
-        // destroy the driver
-        delete xqd;
+        stmnts_array = parse_xq_to_ast(plain_batch_text.c_str());
 
         //add 'commit' command if there is not end of transaction (coommit or rollback) command
         if (stmnts_array.back().substr(0, 8).find("rollback") == string::npos &&

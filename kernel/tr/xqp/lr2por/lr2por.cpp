@@ -1913,8 +1913,12 @@ namespace sedna
         if (n.coll)
             dc3 = new dynamic_context(st_cxt, 0);
 
-        file = PPOpIn(new PPConst(dc1, createOperationInfo(n), string2tuple_cell(*n.file, xs_string)), 1);
+        std::string *file_name = n.getFileName();
+
+        file = PPOpIn(new PPConst(dc1, createOperationInfo(n), string2tuple_cell(*file_name, xs_string)), 1);
         doc  = PPOpIn(new PPConst(dc2, createOperationInfo(n), string2tuple_cell(*n.doc, xs_string)), 1);
+
+        delete file_name;
 
         if (n.coll)
             coll = PPOpIn(new PPConst(dc3, createOperationInfo(n), string2tuple_cell(*n.coll, xs_string)), 1);

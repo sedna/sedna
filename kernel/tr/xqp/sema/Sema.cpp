@@ -20,6 +20,7 @@ namespace sedna
         "attr-axis ",
         "self ",
         "descendant-or-self ",
+        "descendant-attribute-internal",
         "following-sibling ",
         "following ",
         "parent ",
@@ -364,7 +365,7 @@ namespace sedna
         n.path->accept(*this);
 
         // check path for well-formdness
-        if (getDocCollFromAbsXPathAndCheck(n.path, true) == NULL)
+        if (getDocCollFromAbsXPathAndCheck(n.path, false) == NULL)
             return;
 
         if (*n.type == "xml" || *n.type == "string-value" || *n.type == "delimited-value" ||
@@ -446,13 +447,13 @@ namespace sedna
             getLeafAndTrimmedPath(n.path, &n.leaf_name, &n.leaf_type, &n.trimmed_path);
         }
 
-        ASTNode *last = n.do_exprs->back();
-
-        if (n.g_mod == ASTCreateTrg::NODE && (dynamic_cast<ASTUpdInsert *>(last) ||
-            dynamic_cast<ASTUpdDel *>(last) || dynamic_cast<ASTUpdReplace *>(last) ||
-            dynamic_cast<ASTUpdRename *>(last) || dynamic_cast<ASTUpdMove *>(last)))
+        // check if node-level trigger ends with query
+        if (n.g_mod == ASTCreateTrg::NODE)
         {
-            drv->error(last->getLocation(), SE3210, NULL);
+            ASTQuery *last_st = dynamic_cast<ASTQuery *>(n.do_exprs->back());
+
+            if (last_st->type != ASTQuery::QUERY)
+                drv->error(last_st->getLocation(), SE3210, NULL);
         }
     }
 

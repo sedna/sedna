@@ -5,12 +5,12 @@
 
 #include "common/sedna.h"
 
+#include "tr/xqp/XQueryDriver.h"
+#include "tr/xqp/XQuerytoLR.h"
 #include "tr/executor/por2qep/por2qep.h"
 #include "tr/executor/por2qep/ext.h"
 #include "tr/strings/e_string.h"
 #include "tr/executor/fo/op_map.h"
-#include "tr/xqp/XQuerytoLR.h"
-
 #include "tr/tr_globals.h"
 
 #ifdef SE_ENABLE_TRIGGERS
