@@ -62,6 +62,8 @@ void auth_for_create_role(const char* name);
 void auth_for_drop_role(const char* name);
 void auth_for_grant_role(const char* name, const char *grantee);
 void auth_for_grant_privilege(const char* name, const char *obj_name, const char *obj_type, const char *grantee);
+void auth_for_revoke_privilege(const char* name, const char *obj_name, const char *obj_type, const char *grantee);
+void auth_for_revoke_role(const char* name, const char *grantee);
 
 void clear_authmap();
 

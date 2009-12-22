@@ -1821,15 +1821,15 @@ namespace sedna
 
         if (n.mod == ASTGrantPriv::DB)
         {
-            qep = new PPGrantPriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
-                                  PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1), dyn_cxt);
+            qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
+                                        PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1), dyn_cxt, false);
         }
         else
         {
-            qep = new PPGrantPriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
-                                  PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.obj, xs_string)), 1),
-                                  PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
-                                  (n.mod == ASTGrantPriv::DOCUMENT) ? "document" : "collection", dyn_cxt);
+            qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
+                                            PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.obj, xs_string)), 1),
+                                            PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
+                                            (n.mod == ASTGrantPriv::DOCUMENT) ? "document" : "collection", dyn_cxt, false);
         }
     }
 
@@ -2632,12 +2632,30 @@ namespace sedna
 
     void lr2por::visit(ASTRevokePriv &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        if (n.mod == ASTGrantPriv::DB)
+        {
+            qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
+                                        PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1), dyn_cxt, true);
+        }
+        else
+        {
+            qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
+                                            PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.obj, xs_string)), 1),
+                                            PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
+                                            (n.mod == ASTGrantPriv::DOCUMENT) ? "document" : "collection", dyn_cxt, true);
+        }
     }
 
     void lr2por::visit(ASTRevokeRole &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        qep = new PPRevokeRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1),
+                               PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role_from, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTSchemaAttrTest &n)
