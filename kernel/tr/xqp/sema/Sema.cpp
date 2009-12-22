@@ -50,7 +50,10 @@ namespace sedna
 
     void Sema::visit(ASTAlterUser &n)
     {
-        // nothing to do
+        if (!tr_globals::authentication)
+        {
+            drv->error(n.getLocation(), SE3068, NULL);
+        }
     }
 
     void Sema::visit(ASTAttr &n)
@@ -415,7 +418,10 @@ namespace sedna
 
     void Sema::visit(ASTCreateRole &n)
     {
-        // nothing to do
+        if (!tr_globals::authorization)
+        {
+            drv->error(n.getLocation(), SE4622, NULL);
+        }
     }
 
     void Sema::visit(ASTCreateTrg &n)
@@ -453,7 +459,10 @@ namespace sedna
 
     void Sema::visit(ASTCreateUser &n)
     {
-        // nothing to do
+        if (!tr_globals::authentication)
+        {
+            drv->error(n.getLocation(), SE3068, NULL);
+        }
     }
 
     void Sema::visit(ASTDDO &n)
@@ -567,7 +576,10 @@ namespace sedna
 
     void Sema::visit(ASTDropRole &n)
     {
-        // nothing to do
+        if (!tr_globals::authorization)
+        {
+            drv->error(n.getLocation(), SE4622, NULL);
+        }
     }
 
     void Sema::visit(ASTDropTrg &n)
@@ -577,7 +589,10 @@ namespace sedna
 
     void Sema::visit(ASTDropUser &n)
     {
-        // nothing to do
+        if (!tr_globals::authentication)
+        {
+            drv->error(n.getLocation(), SE3068, NULL);
+        }
     }
 
     void Sema::visit(ASTElem &n)
@@ -1005,6 +1020,12 @@ namespace sedna
         unsigned int i = 0;
         bool found = false;
 
+        if (!tr_globals::authorization)
+        {
+            drv->error(n.getLocation(), SE4622, NULL);
+            return;
+        }
+
         while (priveleges[i])
             if (!strcmp(priveleges[i++], n.priv->c_str()))
             {
@@ -1013,12 +1034,17 @@ namespace sedna
             }
 
         if (!found)
+        {
             drv->error(n.getLocation(), SE3069, n.priv->c_str());
+        }
     }
 
     void Sema::visit(ASTGrantRole &n)
     {
-        // nothing to do
+        if (!tr_globals::authorization)
+        {
+            drv->error(n.getLocation(), SE4622, NULL);
+        }
     }
 
     void Sema::visit(ASTIf &n)
@@ -1063,32 +1089,12 @@ namespace sedna
 
     void Sema::visit(ASTLoadFile &n)
     {
-        secDescriptor sd;
-
-        sd.sec_type = SEC_LOAD;
-
-        if (n.coll && *n.coll != "")
-        {
-            sd.obj_type = SEC_OBJ_COLL;
-            sd.obj_name = *n.coll;
-        }
-        else
-        {
-            sd.obj_type = SEC_OBJ_DOC;
-            sd.obj_name = *n.doc;
-        }
-
-        drv->addNewSecurityPrereq(sd);
+        // nothing to do
     }
 
     void Sema::visit(ASTLoadModule &n)
     {
-        secDescriptor sd;
-
-        sd.sec_type = SEC_LOAD;
-        sd.obj_type = SEC_OBJ_MOD;
-
-        drv->addNewSecurityPrereq(sd);
+        // nothing to do
     }
 
     void Sema::visit(ASTMainModule &n)
@@ -1102,25 +1108,13 @@ namespace sedna
 
     void Sema::visit(ASTMetaCols &n)
     {
-        secDescriptor sd;
-
-        sd.sec_type = SEC_RETR_META;
-        sd.obj_type = SEC_OBJ_DOC;
-
-        drv->addNewSecurityPrereq(sd);
+        // nothing to do
     }
 
     void Sema::visit(ASTMetaDocs &n)
     {
         if (n.coll)
             n.coll->accept(*this);
-
-        secDescriptor sd;
-
-        sd.sec_type = SEC_RETR_META;
-        sd.obj_type = SEC_OBJ_COLL;
-
-        drv->addNewSecurityPrereq(sd);
     }
 
     void Sema::visit(ASTMetaSchemaCol &n)
@@ -1631,6 +1625,12 @@ namespace sedna
         unsigned int i = 0;
         bool found = false;
 
+        if (!tr_globals::authorization)
+        {
+            drv->error(n.getLocation(), SE4622, NULL);
+            return;
+        }
+
         while (priveleges[i])
             if (!strcmp(priveleges[i++], n.priv->c_str()))
         {
@@ -1639,12 +1639,17 @@ namespace sedna
         }
 
         if (!found)
+        {
             drv->error(n.getLocation(), SE3069, n.priv->c_str());
+        }
     }
 
     void Sema::visit(ASTRevokeRole &n)
     {
-        // nothing to do
+        if (!tr_globals::authorization)
+        {
+            drv->error(n.getLocation(), SE4622, NULL);
+        }
     }
 
     void Sema::visit(ASTSchemaAttrTest &n)

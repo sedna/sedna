@@ -20,7 +20,7 @@ void nested_updates_tracking(lock_mode mode, schema_node_xptr root, const char* 
         update_root_map::iterator mapIter;
 		typedef std::pair <schema_node_xptr, int> mapPair;
         mapIter = update_roots.find(root);
-        
+
         if (mapIter == update_roots.end())
             update_roots.insert( mapPair(root, current_nesting_level) );
         else
@@ -38,7 +38,7 @@ void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr paramete
     {
         switch ((*qepParIter)->get_type())
         {
-            case TRIGGER_PARAMETER_NEW:   
+            case TRIGGER_PARAMETER_NEW:
                 if(gran==TRIGGER_FOR_EACH_STATEMENT)
                 {
                     error_detail = "Trigger variable $NEW in trigger " + std::string(trigger_title);
@@ -66,7 +66,7 @@ void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr paramete
                 CHECKP(parameter_old);
                 (*qepParIter)->set_xptr(parameter_old);
                 break;
-            case TRIGGER_PARAMETER_WHERE: 
+            case TRIGGER_PARAMETER_WHERE:
                if(gran==TRIGGER_FOR_EACH_STATEMENT)
                {
                    error_detail = "Trigger variable $WHERE in trigger " + std::string(trigger_title);
@@ -77,7 +77,7 @@ void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr paramete
                    error_detail = "Trigger variable $WHERE in trigger " + std::string(trigger_title);
                    throw USER_EXCEPTION2(SE3208, error_detail.c_str());
                }
-               CHECKP(parameter_where); 
+               CHECKP(parameter_where);
                (*qepParIter)->set_xptr(parameter_where);
                break;
             default: throw USER_EXCEPTION(SE3202);
@@ -90,9 +90,9 @@ void clear_built_trigger_actions_map()
 {
     built_trigger_actions_map::iterator mapIter;
     std::vector<built_trigger_action>::iterator vecIter;
-    
+
     if(built_trigger_actions.empty()) return;
-    
+
     for(mapIter = built_trigger_actions.begin( ); mapIter != built_trigger_actions.end( ); mapIter++)
     {
         for(vecIter = mapIter->second.begin(); vecIter != mapIter->second.end(); vecIter++)
@@ -100,7 +100,7 @@ void clear_built_trigger_actions_map()
             if(vecIter->action_qep_tree!=NULL)
             {
                 vecIter->action_qep_tree->close();
-                delete_qep(vecIter->action_qep_tree);
+                delete_qep_unmanaged(vecIter->action_qep_tree);
             }
             else
             {
@@ -123,10 +123,10 @@ bool has_statement_triggers(trigger_event event, trigger_time time)
     while(upd_root_iter!=update_roots.end())
     {
 		if(upd_root_iter->second==current_nesting_level)
-            if(find_trigger_for_docnode(upd_root_iter->first->root, 
-                                        event, 
-                                        time, 
-                                        TRIGGER_FOR_EACH_STATEMENT, 
+            if(find_trigger_for_docnode(upd_root_iter->first->root,
+                                        event,
+                                        time,
+                                        TRIGGER_FOR_EACH_STATEMENT,
                                         NULL) != XNULL)
             return true;
         upd_root_iter++;
@@ -142,10 +142,10 @@ schema_nodes_triggers_map* get_statement_triggers(schema_nodes_triggers_map* doc
     {
 		if(upd_root_iter->second==current_nesting_level)
         {
-            find_triggers_for_docnode(upd_root_iter->first->root, 
-                                      event, 
-                                      time, 
-                                      TRIGGER_FOR_EACH_STATEMENT, 
+            find_triggers_for_docnode(upd_root_iter->first->root,
+                                      event,
+                                      time,
+                                      TRIGGER_FOR_EACH_STATEMENT,
                                       &triggers);
             docs_triggers->insert(std::pair <schema_node_xptr, t_triggers_set> (upd_root_iter->first, triggers));
         }
@@ -174,7 +174,7 @@ schema_nodes_triggers_map* get_statement_triggers_on_subtree(schema_node_cptr sc
         get_statement_triggers_on_subtree(sr->object.snode, event, time, nodes_triggers);
         sr=sr->next;
     }
-    
+
     return nodes_triggers;
 }
 
@@ -191,7 +191,7 @@ xptr find_trigger_for_newly_inserted_node(schema_node_cptr parent, const char* i
 		if((sc_trigger->object->trigger_event == TRIGGER_INSERT_EVENT)&&
            (sc_trigger->object->trigger_granularity == TRIGGER_FOR_EACH_NODE)&&
 		   (sc_trigger->object->trigger_time == TRIGGER_BEFORE))
-            if( ((strcmp(sc_trigger->object->innode.name,"*") == 0)||(strcmp(sc_trigger->object->innode.name,ins_node_name) == 0)) && 
+            if( ((strcmp(sc_trigger->object->innode.name,"*") == 0)||(strcmp(sc_trigger->object->innode.name,ins_node_name) == 0)) &&
                 (sc_trigger->object->innode.type == ins_node_type) &&
                 (sc_trigger->object->fits_to_trigger_path_to_parent(parent)) &&
                 (treated_triggers->find(sc_trigger->object) == treated_triggers->end()))
@@ -225,7 +225,7 @@ t_triggers_set* find_triggers_for_node(schema_node_cptr node, trigger_event even
            (sc_trigger->object->trigger_time == time) &&
            (sc_trigger->object->trigger_granularity == granularity))
             triggers->insert(sc_trigger->object);
-	   	
+
 		sc_trigger=sc_trigger->next;
     }
     return triggers;

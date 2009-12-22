@@ -13,7 +13,7 @@ OBJS = PPBulkLoad$(OBJ_EXT) PPCreateIndex$(OBJ_EXT) \
        PPInsertBefore$(OBJ_EXT) PPInsertFollowing$(OBJ_EXT) \
        PPInsertTo$(OBJ_EXT) PPLoadModule$(OBJ_EXT) PPQueryRoot$(OBJ_EXT) \
        PPRename$(OBJ_EXT) PPReplace$(OBJ_EXT) PPRetrieveDS$(OBJ_EXT) \
-       PPRetrieveMetadata$(OBJ_EXT)
+       PPRetrieveMetadata$(OBJ_EXT) PPSecurity$(OBJ_EXT)
 
 ifeq ($(ENABLE_FTSEARCH),1)
 OBJS  +=   PPDropFtIndex$(OBJ_EXT) PPCreateFtIndex$(OBJ_EXT)

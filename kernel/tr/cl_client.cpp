@@ -20,6 +20,7 @@
 #include "tr/tr_common_funcs.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/crmutils/exec_output.h"
+#include "tr/auth/auc.h"
 
 #define BATCH_DELIMITER "\\"
 
@@ -147,7 +148,8 @@ void command_line_client::read_msg(msg_struct *msg)
         }
         else
         {
-            plain_batch_text = string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
+            tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
+
             if(strcmp(env_buf, "2") == 0) // database is created with db-security option != off => we need to load db_security_data
             {
                 string path_to_security_file;
@@ -166,11 +168,14 @@ void command_line_client::read_msg(msg_struct *msg)
 
 
 
-                plain_batch_text += string("\n\\\n") +
-                    string("LOAD ") +
+                plain_batch_text = string("LOAD ") +
                     string("\"") + path_to_security_file + string("\" ") +
                     string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"");
+
+                plain_batch_text += string("\n\\\n");
             }
+
+            plain_batch_text += string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
         }
 
         // here we parse our queries via driver and then get ast-strings

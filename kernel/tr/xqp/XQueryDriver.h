@@ -9,6 +9,7 @@
 #include <ostream>
 #include <string>
 #include <set>
+#include <deque>
 
 #include "XQueryLexer.h"
 #include "XQueryParser.h"
@@ -24,37 +25,6 @@ namespace sedna
         char *error_msg;
 
         struct ErrorInfo *next;
-    };
-
-    enum secType
-    {
-        SEC_RETR_META,
-        SEC_LOAD,
-        SEC_CREATE,
-        SEC_DROP,
-        SEC_ALTER,
-        SEC_GRANT,
-        SEC_REVOKE,
-    };
-
-    enum secObjType
-    {
-        SEC_OBJ_MOD,
-        SEC_OBJ_DOC,
-        SEC_OBJ_COLL,
-        SEC_OBJ_IDX,
-        SEC_OBJ_TRG,
-        SEC_OBJ_DB,
-        SEC_OBJ_USER,
-        SEC_OBJ_ROLE,
-    };
-
-    struct secDescriptor
-    {
-        secType sec_type;
-        secObjType obj_type;
-
-        std::string obj_name;
     };
 
     class XQueryDriver
@@ -73,7 +43,7 @@ namespace sedna
                 \
                 st2
             */
-            std::vector<XQueryModule *> mods; // main modules (library modules) that we're evaluating
+            std::deque<XQueryModule *> mods; // main modules (library modules) that we're evaluating
 
             // Some XQuery-specific info about modules, types, imported modules
             static XQFunctionInfo stdFuncs;
@@ -84,8 +54,6 @@ namespace sedna
             unsigned int glob_fun_num;
 
             typedef std::vector<XQueryModule *> modSequence;
-
-            std::vector<secDescriptor> secPrereqs;
 
             struct xsTypeInfo
             {
@@ -144,11 +112,6 @@ namespace sedna
             unsigned int getNewGlobFunId()
             {
                 return glob_fun_num++;
-            }
-
-            void addNewSecurityPrereq(secDescriptor sd)
-            {
-                secPrereqs.push_back(sd);
             }
 
             std::string getLRRepresentation(size_t mod_ind);

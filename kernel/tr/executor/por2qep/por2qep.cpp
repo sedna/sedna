@@ -4183,7 +4183,11 @@ PPQueryEssence *build_qep(const char* por, bool is_ast)
     sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
     std::string dummy; // for module name
 
-    parse_batch(xqd, is_ast? TL_ASTQEPReady : TL_XQuery, por, &dummy);
+    // create unmanaged static context for subquery
+    // TODO: review it later with all the static/dynamic context stuff!!!
+    static_context *st_cxt = dynamic_context::create_unmanaged();
+
+    parse_batch_context(xqd, por, is_ast? TL_ASTQEPReady : TL_XQuery, st_cxt);
     PPQueryEssence *qep = xqd->getQEPForModule(0);
 
     delete xqd;
@@ -4198,10 +4202,10 @@ qep_subtree *build_subqep(const char* por, bool is_ast)
 
     // create unmanaged static context for subquery
     // TODO: review it later with all the static/dynamic context stuff!!!
-    dynamic_context::create_unmanaged();
+    static_context *st_cxt = dynamic_context::create_unmanaged();
 
     // parse provided string
-    parse_batch_context(xqd, por, is_ast ? TL_ASTQEPReady : TL_XQuery, dynamic_context::unmanaged_st_cxt);
+    parse_batch_context(xqd, por, is_ast ? TL_ASTQEPReady : TL_XQuery, st_cxt);
     PPQueryRoot *pqr = dynamic_cast<PPQueryRoot *>(xqd->getQEPForModule(0));
 
     U_ASSERT(pqr);
@@ -4220,6 +4224,11 @@ void delete_qep(PPQueryEssence *qep)
 {
     delete qep;
     dynamic_context::static_clear();
+}
+
+void delete_qep_unmanaged(PPQueryEssence *qep)
+{
+    delete qep;
 }
 
 void delete_qep(qep_subtree *qep)
