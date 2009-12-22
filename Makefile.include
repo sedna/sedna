@@ -99,7 +99,7 @@ endif
 SEDNA_VERSION := $(shell cat $(PP)/ver)
 
 
-SEDNA_DIRS = $(PP)/kernel $(PP)/libs $(PP)/libs/chicken \
+SEDNA_DIRS = $(PP)/kernel $(PP)/libs \
              $(PP)/driver/c $(PP)/export $(PP)/term $(PP)/libs/dtsearch/include \
              $(PP)/libs/libedit/include/editline
 
@@ -170,15 +170,15 @@ CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS    = $(CPPFLAGS_ST) /MTd
 LFLAGS_NOLIB= /NOLOGO /INCREMENTAL:NO /DEBUG /PROFILE
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
-              /NODEFAULTLIB:LIBCD.LIB /NOD:LIBCMT.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
+              /NODEFAULTLIB:LIBCD.LIB /NOD:LIBCMT.LIB /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
-              libchicken-static.lib WS2_32.lib Advapi32.lib libexpatmt.lib \
+              WS2_32.lib Advapi32.lib libexpatmt.lib \
               libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /NOLOGO /SUBSYSTEM:CONSOLE /INCREMENTAL:NO /NODEFAULTLIB:LIBC.LIB \
-              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs \
+              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(PP)/libs \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib \
-              /LIBPATH:$(PP)/libs/pcre libchicken-static.lib \
+              /LIBPATH:$(PP)/libs/pcre \
               WS2_32.lib Advapi32.lib libexpatmt.lib libpcre.lib	\
               /DEBUG /PROFILE /NOD:LIBCMT.LIB
 endif
@@ -201,15 +201,15 @@ CFLAGS_NOOPTIM = /nologo /Od /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBU
 CPPFLAGS    = $(CPPFLAGS_ST) /MT
 LFLAGS_NOLIB= /NOLOGO
 LFLAGS      = $(LFLAGS_NOLIB) /NODEFAULTLIB:LIBC.LIB \
-              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
+              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
-              libchicken-static.lib LIBCMT.LIB WS2_32.lib Advapi32.lib libexpatmt.lib \
+              LIBCMT.LIB WS2_32.lib Advapi32.lib libexpatmt.lib \
               libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /NOLOGO /SUBSYSTEM:CONSOLE /NODEFAULTLIB:LIBC.LIB \
-              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) \
+              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
-              libchicken-static.lib WS2_32.lib Advapi32.lib \
+              WS2_32.lib Advapi32.lib \
               libexpatmt.lib libpcre.lib /NOD:LIBCMT.LIB
 endif
 endif
@@ -241,14 +241,6 @@ CPPFLAGS+= /DRCV_TEST_CRASH
 CFLAGS+= /DRCV_TEST_CRASH
 endif
 
-CFLAGS_CHICKEN_EXE = /nologo /Zi /Od $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE \
-                     /DEL_DEBUG=$(EL_DEBUG) /DC_NO_PIC_NO_DLL
-LFLAGS_CHICKEN_EXE = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
-                     /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) LIBCMT.LIB libchicken-static.lib
-LSLIBS_CHICKEN_EXE =
-CHICKEN_HOME = $(PP)/libs/chicken
-CHICKEN = $(CHICKEN_HOME)/chicken.exe
-CHICKEN_INCLUDE = $(CHICKEN_HOME)
 else
 # UNIX
 CC = gcc -c
@@ -292,7 +284,7 @@ CPPFLAGS = -g3 -ggdb -Wall -Wno-deprecated -fexceptions -fno-omit-frame-pointer 
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=1 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS
 LFLAGS_NOLIB=-g3 -ggdb -fexceptions $(STATIC_FLAG)
-LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/expat -L$(PP)/libs/pcre
 
 else # Release
 
@@ -305,11 +297,11 @@ CPPFLAGS = -O2 -w -fno-strict-aliasing -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=0 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS
 LFLAGS_NOLIB=-O2 $(STATIC_FLAG) -fexceptions
-LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+LFLAGS   = $(LFLAGS_NOLIB) -L$(PP)/libs/expat -L$(PP)/libs/pcre
 
 endif
 
-LSLIBS   = -lexpat -lchicken -lpcre -fexceptions
+LSLIBS   = -lexpat -lpcre -fexceptions
 CFLAGS_SL = -fPIC -DSE_NO_EVENT_LOG
 
 ifeq ("$(SUB_PLATFORM)","Linux")
@@ -365,19 +357,7 @@ CPPFLAGS+= -DRCV_TEST_CRASH
 CFLAGS+= -DRCV_TEST_CRASH
 endif
 
-
-CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer \
-                     -fno-strict-aliasing -Wall	-Wno-unused -Wno-uninitialized \
-                     -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -fexceptions
-LFLAGS_CHICKEN_EXE = -L$(PP)/libs/chicken -fexceptions
-LSLIBS_CHICKEN_EXE = -lchicken -fexceptions
-CHICKEN_HOME = $(PP)/libs/chicken
-CHICKEN = $(CHICKEN_HOME)/chicken
-CHICKEN_INCLUDE = $(CHICKEN_HOME)
 endif
-
-CHICKEN_HEAP_SPEC = -heap-initial-size 1M
-CHICKEN_OPTIONS = $(CHICKEN_HEAP_SPEC) -include-path $(CHICKEN_INCLUDE)
 
 #These targets simplify debugging
 Makefile.%: ;
@@ -394,10 +374,6 @@ endif
 
 %$(OBJ_EXT): %.c
 	$(CC) $(CFLAGS) $<
-
-%$(OBJ_EXT) %.c: %.scm
-	$(CHICKEN) $< -output-file $*.c $(CHICKEN_OPTIONS)
-	$(CC) $(CFLAGS_NOOPTIM) $*.c
 
 %.pdf: %.tex
 	$(PDFLATEX) $<
