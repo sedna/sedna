@@ -50,8 +50,8 @@ BOOL TrnCtrlHandler(DWORD fdwCtrlType)
 {
     switch (fdwCtrlType)
     {
-    case CTRL_C_EVENT:         // Handle the CTRL+C signal. 
-    case CTRL_CLOSE_EVENT:     // CTRL+CLOSE: confirm that the user wants to exit. 
+    case CTRL_C_EVENT:         // Handle the CTRL+C signal.
+    case CTRL_CLOSE_EVENT:     // CTRL+CLOSE: confirm that the user wants to exit.
     case CTRL_BREAK_EVENT:
     case CTRL_LOGOFF_EVENT:
     case CTRL_SHUTDOWN_EVENT:
@@ -67,7 +67,7 @@ void TrnCtrlHandler(int signo)
 {
     if (signo == SIGINT || signo == SIGQUIT || signo == SIGTERM)
     {
-        //beep(); 
+        //beep();
     }
 }
 #endif
@@ -119,8 +119,8 @@ int TRmain(int argc, char *argv[])
              * wrong Sedna installation which is not good (different vmm region settings are
              * possible though the probability is low, however the worse thing is that we wreck isolation
              * of unrelated installations; we may even fail if the shmem is created by the
-             * installation running as a different user). ZN */ 
-            
+             * installation running as a different user). ZN */
+
             InitGlobalNames(os_primitives_id_min_bound, INT_MAX);
             SetGlobalNames();
 
@@ -146,7 +146,7 @@ int TRmain(int argc, char *argv[])
             SafeMemoryContextInit();
 
             TransactionContext = AllocSetContextCreate(TopMemoryContext, "TransactionContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-            UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);   
+            UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
             // KernelStatementContext = AllocSetContextCreate(UserStatementContext, "KernelStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
             XQParserContext = AllocSetContextCreate(UserStatementContext, "XQParserContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
 #endif
@@ -222,10 +222,10 @@ int TRmain(int argc, char *argv[])
 
             client->write_user_query_to_log();                                    /// it works only for command line client
             client->set_keep_alive_timeout(GOV_HEADER_GLOBAL_PTR -> ka_timeout);  /// it works only for socket client
-            
+
 #ifdef _WIN32
             BOOL fSuccess;
-            fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TrnCtrlHandler, TRUE);      // add to list 
+            fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TrnCtrlHandler, TRUE);      // add to list
             if (!fSuccess)
                 throw USER_EXCEPTION(SE4207);
 #else
@@ -305,7 +305,7 @@ int TRmain(int argc, char *argv[])
                                     break;
                                 }
 
-                            case se_ExecuteLong:   //execute long query command 
+                            case se_ExecuteLong:   //execute long query command
                             case se_Execute:       //execute query command
                                 {
                                     u_ftime(&t_qep1);
@@ -322,9 +322,9 @@ int TRmain(int argc, char *argv[])
                                     /* Adjust client for the new statement */
                                     client->set_result_type(&client_msg);
                                     client->user_statement_begin();
-                                    
-                                    on_user_statement_begin(client->get_query_type(), 
-                                                            client->get_query_string(&client_msg), 
+
+                                    on_user_statement_begin(client->get_query_type(),
+                                                            client->get_query_string(&client_msg),
                                                             qep_tree, st);
 
 
@@ -467,7 +467,7 @@ int TRmain(int argc, char *argv[])
 
                         d_printf1("\nTr is rolled back successfully\n");
 
-                        /* Client session must be closed if we 
+                        /* Client session must be closed if we
                         * have one of the following errors
                         */
                         if (e.get_code() == SE3053 || e.get_code() == SE3006 || e.get_code() == SE3007 || e.get_code() == SE3009 || e.get_code() == SE3012)
@@ -577,7 +577,7 @@ int TRmain(int argc, char *argv[])
                 {
                     if (e.get_code() == SE3053)
                         client->authentication_result(false, e.getMsg());
-                    else 
+                    else
                         client->error(e.get_code(), e.getMsg());
 
                     client->release();
@@ -589,8 +589,8 @@ int TRmain(int argc, char *argv[])
                 d_printf1("Connection with client has been broken\n");
             }
             event_logger_release();
-            if (tr_globals::ppc) 
-            { 
+            if (tr_globals::ppc)
+            {
                 tr_globals::ppc->shutdown();
                 delete tr_globals::ppc;
                 tr_globals::ppc = NULL;

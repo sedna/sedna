@@ -233,3 +233,225 @@ void PPCreateRole::execute()
 
     auth_for_create_role(tc_role.get_str_mem());
 }
+
+// PPDropRole
+
+PPDropRole::PPDropRole(PPOpIn _rolename_, dynamic_context *_cxt_) : rolename(_rolename_), cxt(_cxt_)
+{
+}
+
+PPDropRole::~PPDropRole()
+{
+    delete rolename.op;
+    rolename.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
+}
+
+void PPDropRole::open()
+{
+    dynamic_context::global_variables_open();
+    rolename.op->open();
+    local_lock_mrg->lock(lm_x);
+}
+
+void PPDropRole::close()
+{
+    rolename.op->close();
+    dynamic_context::global_variables_close();
+}
+
+void PPDropRole::execute()
+{
+    tuple_cell tc_role;
+    tuple t(1);
+
+    rolename.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_role = rolename.get(t);
+    if (!tc_role.is_atomic() || tc_role.get_atomic_type() != xs_string)
+        throw USER_EXCEPTION(SE1071);
+
+    rolename.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_role = tuple_cell::make_sure_light_atomic(tc_role);
+
+    auth_for_drop_role(tc_role.get_str_mem());
+}
+
+// PPGrantRole
+
+PPGrantRole::PPGrantRole(PPOpIn _role_, PPOpIn _grantee_, dynamic_context *_cxt_) : role(_role_), grantee(_grantee_), cxt(_cxt_)
+{
+}
+
+PPGrantRole::~PPGrantRole()
+{
+    delete role.op;
+    role.op = NULL;
+
+    delete grantee.op;
+    grantee.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
+}
+
+void PPGrantRole::open()
+{
+    dynamic_context::global_variables_open();
+    role.op->open();
+    grantee.op->open();
+    local_lock_mrg->lock(lm_x);
+}
+
+void PPGrantRole::close()
+{
+    role.op->close();
+    grantee.op->close();
+    dynamic_context::global_variables_close();
+}
+
+void PPGrantRole::execute()
+{
+    tuple_cell tc_role, tc_grantee;
+    tuple t(1);
+
+    role.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_role = role.get(t);
+    if (!tc_role.is_atomic() || tc_role.get_atomic_type() != xs_string)
+        throw USER_EXCEPTION(SE1071);
+
+    role.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_role = tuple_cell::make_sure_light_atomic(tc_role);
+
+    grantee.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_grantee = grantee.get(t);
+    if (!tc_grantee.is_atomic() || tc_grantee.get_atomic_type() != xs_string)
+        throw USER_EXCEPTION(SE1071);
+
+    grantee.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_grantee = tuple_cell::make_sure_light_atomic(tc_grantee);
+
+    auth_for_grant_role(tc_role.get_str_mem(), tc_grantee.get_str_mem());
+}
+
+// PPGrantRole
+
+PPGrantPriv::PPGrantPriv(PPOpIn _name_,
+                         PPOpIn _obj_name_,
+                         PPOpIn _grantee_,
+                         const char *_obj_type_,
+                         dynamic_context *_cxt_) : name(_name_), obj_name(_obj_name_), grantee(_grantee_), obj_type(_obj_type_), cxt(_cxt_)
+{
+}
+
+PPGrantPriv::PPGrantPriv(PPOpIn _name_,
+                         PPOpIn _grantee_,
+                         dynamic_context *_cxt_) : name(_name_), grantee(_grantee_), cxt(_cxt_)
+{
+    obj_name.op = NULL;
+    obj_type = "db";
+}
+
+PPGrantPriv::~PPGrantPriv()
+{
+    delete name.op;
+    name.op = NULL;
+
+    delete grantee.op;
+    grantee.op = NULL;
+
+    delete obj_name.op;
+    obj_name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
+}
+
+void PPGrantPriv::open()
+{
+    dynamic_context::global_variables_open();
+    name.op->open();
+
+    if (obj_name.op)
+        obj_name.op->open();
+
+    grantee.op->open();
+    local_lock_mrg->lock(lm_x);
+}
+
+void PPGrantPriv::close()
+{
+    name.op->close();
+
+    if (obj_name.op)
+        obj_name.op->close();
+
+    grantee.op->close();
+    dynamic_context::global_variables_close();
+}
+
+void PPGrantPriv::execute()
+{
+    tuple_cell tc_name, tc_grantee;
+    tuple t(1);
+
+    name.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_name = name.get(t);
+    if (!tc_name.is_atomic() || tc_name.get_atomic_type() != xs_string)
+        throw USER_EXCEPTION(SE1071);
+
+    name.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_name = tuple_cell::make_sure_light_atomic(tc_name);
+
+    grantee.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_grantee = grantee.get(t);
+    if (!tc_grantee.is_atomic() || tc_grantee.get_atomic_type() != xs_string)
+        throw USER_EXCEPTION(SE1071);
+
+    grantee.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_grantee = tuple_cell::make_sure_light_atomic(tc_grantee);
+
+    if (obj_name.op)
+    {
+        tuple_cell tc_obj;
+
+        obj_name.op->next(t);
+        if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+        tc_obj = obj_name.get(t);
+        if (!tc_obj.is_atomic() || tc_obj.get_atomic_type() != xs_string)
+            throw USER_EXCEPTION(SE1071);
+
+        obj_name.op->next(t);
+        if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+        tc_obj = tuple_cell::make_sure_light_atomic(tc_obj);
+
+        auth_for_grant_privilege(tc_name.get_str_mem(), tc_obj.get_str_mem(), obj_type, tc_grantee.get_str_mem());
+    }
+    else
+    {
+        auth_for_grant_privilege(tc_name.get_str_mem(), NULL, NULL, tc_grantee.get_str_mem());
+    }
+}

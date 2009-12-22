@@ -72,4 +72,59 @@ public:
     ~PPCreateRole();
 };
 
+class PPDropRole : public PPUpdate
+{
+    PPOpIn rolename;
+    dynamic_context *cxt;
+
+public:
+    void open();
+    void close();
+    void execute();
+
+    PPDropRole(PPOpIn _rolename_,
+                 dynamic_context *_cxt_);
+    ~PPDropRole();
+};
+
+class PPGrantRole : public PPUpdate
+{
+    PPOpIn role, grantee;
+    dynamic_context *cxt;
+
+public:
+    void open();
+    void close();
+    void execute();
+
+    PPGrantRole(PPOpIn _role_,
+                PPOpIn _grantee_,
+                dynamic_context *_cxt_);
+    ~PPGrantRole();
+};
+
+class PPGrantPriv : public PPUpdate
+{
+    PPOpIn name, obj_name, grantee;
+    const char *obj_type;
+    dynamic_context *cxt;
+
+public:
+    void open();
+    void close();
+    void execute();
+
+    PPGrantPriv(PPOpIn _name_,
+                PPOpIn _obj_name_,
+                PPOpIn _grantee_,
+                const char *_obj_type_,
+                dynamic_context *_cxt_);
+
+    PPGrantPriv(PPOpIn _name_,
+                PPOpIn _grantee_,
+                dynamic_context *_cxt_);
+
+    ~PPGrantPriv();
+};
+
 #endif

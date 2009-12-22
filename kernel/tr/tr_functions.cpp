@@ -101,8 +101,7 @@ void on_user_statement_begin(QueryType queryType,
     xqd = new sedna::XQueryDriver;
 
     // parse and do logical analysis (state is stored in the driver)
-    std::string dummy; // for module name
-    parse_batch(xqd, queryType, query_str, &dummy);
+    parse_batch(xqd, queryType, query_str, NULL);
     is_stmt_built = true;
 
     // we don't like >1 modules
@@ -188,35 +187,49 @@ qepNextAnswer next(PPQueryEssence* qep_tree)
 
 void do_authentication()
 {
-    if(!authentication || first_transaction) return;
+    if (!authentication || first_transaction) return;
 
-    string security_metadata_document = string(SECURITY_METADATA_DOCUMENT);
-    string auth_query_in_por = "(query (query-prolog) (PPQueryRoot 2 (1 (PPIf (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_psw\" \"\") (1 (PPReturn (0) (1 (PPAbsPath (document \"" + security_metadata_document + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\")))))) (1 (PPPred1 (1) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 0)))) () (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 1)))) (1 (PPConst \"" + string(login) +  "\" !xs!string)))) 0)) -1)))) (1 (PPConst \"" + string(password) + "\" !xs!string)))) (1 (PPNil)) ((1 4) (PPFnError ((1 4) (PPFnQName (1 (PPConst \"http://www.modis.ispras.ru/sedna\" !xs!string)) (1 (PPConst \"SE3053\" !xs!string)))) (1 (PPConst \"Authentication failed.\" !xs!string))))))))";
-    scheme_list *auth_query_in_scheme_lst = NULL;
+    string query_str = "\
+            if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%' and user_psw = '%pswd%'])\
+            then\
+                fn:true()\
+            else\
+                fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3053'), 'Authentication failed')";
+
     PPQueryEssence *qep_tree = NULL;
 
-    auth_query_in_scheme_lst = make_tree_from_scheme_list(auth_query_in_por.c_str());
     bool output_enabled = false;
 
-    try {
-/*        internal_auth_switch = BLOCK_AUTH_CHECK;
+    query_str.replace(query_str.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
+    query_str.replace(query_str.find("%user%", 0), strlen("%user%"), login);
+    query_str.replace(query_str.find("%pswd%", 0), strlen("%pswd%"), password);
+
+    try
+    {
+        xqd = new sedna::XQueryDriver;
+
+        // parse and do logical analysis (state is stored in the driver)
+        parse_batch(xqd, TL_XQuery, query_str.c_str(), NULL);
+
+        internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = client->disable_output();
-        on_kernel_statement_begin(auth_query_in_scheme_lst, qep_tree);
+        on_kernel_statement_begin(xqd->getModulesCount() - 1, qep_tree);
         execute(qep_tree);
         on_kernel_statement_end(qep_tree);
         if(output_enabled) client->enable_output();
         internal_auth_switch = DEPLOY_AUTH_CHECK;
-*/
     }
-    catch (SednaUserException &e) {
-
+    catch (SednaUserException &e)
+    {
         on_kernel_statement_end(qep_tree);
-        if(output_enabled) client->enable_output();
-        delete_scheme_list(auth_query_in_scheme_lst);
+        if (output_enabled) client->enable_output();
+        delete xqd;
+        xqd = NULL;
         throw USER_EXCEPTION(SE3053);
     }
 
-    delete_scheme_list(auth_query_in_scheme_lst);
+    delete xqd;
+    xqd = NULL;
 }
 
 void register_session_on_gov()

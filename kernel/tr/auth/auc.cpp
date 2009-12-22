@@ -134,10 +134,10 @@ void auth_for_query(counted_ptr<db_entity> dbe)
                         error(QName('http://www.modis.ispras.ru/sedna','SE3065'), 'User does not have QUERY privilege on the database object')";
 
             // substitute dynamic parameters
-            auth_xquery.replace(auth_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-            auth_xquery.replace(auth_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-            auth_xquery.replace(auth_xquery.find("%type_obj%", 0), strlen("%type_obj%"), (dbe->type == dbe_document) ? "document" : "collection");
-            auth_xquery.replace(auth_xquery.find("%name_obj%", 0), strlen("%name_obj%"), dbe->name);
+            find_replace_str(&auth_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+            find_replace_str(&auth_xquery, "%user%", tr_globals::login);
+            find_replace_str(&auth_xquery, "%type_obj%", (dbe->type == dbe_document) ? "document" : "collection");
+            find_replace_str(&auth_xquery, "%name_obj%", dbe->name);
 
             tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
 
@@ -185,6 +185,8 @@ void auth_for_query(counted_ptr<db_entity> dbe)
             if(is_qep_built)
                 delete_qep(aqtree);
 
+            tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
             throw;
         }
     }
@@ -217,13 +219,9 @@ void auth_for_load_module(const char* module_name)
              doc(%db_sec_doc%)/db_security_data/users/user[user_name = '%user%']/privileges";
 
     // substitute dynamic parameters
-    update_load_module_xquery.replace(update_load_module_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-    update_load_module_xquery.replace(update_load_module_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-    update_load_module_xquery.replace(update_load_module_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-    update_load_module_xquery.replace(update_load_module_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-    update_load_module_xquery.replace(update_load_module_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-    update_load_module_xquery.replace(update_load_module_xquery.find("%name_obj%", 0), strlen("%name_obj%"), module_name);
-    update_load_module_xquery.replace(update_load_module_xquery.find("%name_obj%", 0), strlen("%name_obj%"), module_name);
+    find_replace_str(&update_load_module_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&update_load_module_xquery, "%user%", tr_globals::login);
+    find_replace_str(&update_load_module_xquery, "%name_obj%", module_name);
 
     try
     {
@@ -256,6 +254,9 @@ void auth_for_load_module(const char* module_name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -292,9 +293,9 @@ void auth_for_drop_module(const char* mod_name)
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has a privilege to rename this collection (privilege DROP is needed)
-        md_xquery.replace(md_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        md_xquery.replace(md_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        md_xquery.replace(md_xquery.find("%name_obj%", 0), strlen("%name_obj%"), mod_name);
+        find_replace_str(&md_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&md_xquery, "%user%", tr_globals::login);
+        find_replace_str(&md_xquery, "%name_obj%", mod_name);
 
         aqtree = build_subqep(md_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -324,6 +325,9 @@ void auth_for_drop_module(const char* mod_name)
             delete_qep(aqtree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -370,9 +374,9 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has a privilege to rename this collection (privilege DROP is needed)
-        rc_xquery.replace(rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        rc_xquery.replace(rc_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        rc_xquery.replace(rc_xquery.find("%old_name_obj%", 0), strlen("%old_name_obj%"), old_name);
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
+        find_replace_str(&rc_xquery, "%old_name_obj%", old_name);
 
         aqtree = build_subqep(rc_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -391,9 +395,9 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
 
         // update db_security_data for the new collection name
         // substitute dynamic parameters
-        update_rc_xquery.replace(update_rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        update_rc_xquery.replace(update_rc_xquery.find("%old_name_obj%", 0), strlen("%old_name_obj%"), old_name);
-        update_rc_xquery.replace(update_rc_xquery.find("%new_name_obj%", 0), strlen("%new_name_obj%"), new_name);
+        find_replace_str(&update_rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&update_rc_xquery, "%old_name_obj%", old_name);
+        find_replace_str(&update_rc_xquery, "%new_name_obj%", new_name);
 
         qep_tree = build_qep(update_rc_xquery.c_str(), false);
         is_qep_built = true;
@@ -425,6 +429,9 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -617,8 +624,8 @@ void auth_for_create_document(const char* doc_name)
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has the privilege
-        rc_xquery.replace(rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        rc_xquery.replace(rc_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
 
         aqtree = build_subqep(rc_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -637,10 +644,9 @@ void auth_for_create_document(const char* doc_name)
 
         // update db_security_data for the new document
         // substitute dynamic parameters
-        update_xquery.replace(update_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%name_obj%", 0), strlen("%name_obj%"), doc_name);
+        find_replace_str(&update_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&update_xquery, "%user%", tr_globals::login);
+        find_replace_str(&update_xquery, "%name_obj%", doc_name);
 
         qep_tree = build_qep(update_xquery.c_str(), false);
         is_qep_built = true;
@@ -672,6 +678,9 @@ void auth_for_create_document(const char* doc_name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -720,8 +729,8 @@ void auth_for_load_document(const char* doc_name)
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has the privilege
-        rc_xquery.replace(rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        rc_xquery.replace(rc_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
 
         aqtree = build_subqep(rc_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -740,10 +749,9 @@ void auth_for_load_document(const char* doc_name)
 
         // update db_security_data for the new document
         // substitute dynamic parameters
-        update_xquery.replace(update_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%name_obj%", 0), strlen("%name_obj%"), doc_name);
+        find_replace_str(&update_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&update_xquery, "%user%", tr_globals::login);
+        find_replace_str(&update_xquery, "%name_obj%", doc_name);
 
         qep_tree = build_qep(update_xquery.c_str(), false);
         is_qep_built = true;
@@ -775,6 +783,9 @@ void auth_for_load_document(const char* doc_name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -823,8 +834,8 @@ void auth_for_create_collection(const char* coll_name)
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has the privilege
-        rc_xquery.replace(rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        rc_xquery.replace(rc_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
 
         aqtree = build_subqep(rc_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -843,10 +854,9 @@ void auth_for_create_collection(const char* coll_name)
 
         // update db_security_data for the new collection
         // substitute dynamic parameters
-        update_xquery.replace(update_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%name_obj%", 0), strlen("%name_obj%"), coll_name);
+        find_replace_str(&update_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&update_xquery, "%user%", tr_globals::login);
+        find_replace_str(&update_xquery, "%name_obj%", coll_name);
 
         qep_tree = build_qep(update_xquery.c_str(), false);
         is_qep_built = true;
@@ -878,6 +888,9 @@ void auth_for_create_collection(const char* coll_name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -914,9 +927,9 @@ void auth_for_create_document_collection(const char* doc_name, const char *coll_
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has a privilege to rename this collection (privilege DROP is needed)
-        md_xquery.replace(md_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        md_xquery.replace(md_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        md_xquery.replace(md_xquery.find("%name_obj%", 0), strlen("%name_obj%"), coll_name);
+        find_replace_str(&md_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&md_xquery, "%user%", tr_globals::login);
+        find_replace_str(&md_xquery, "%name_obj%", coll_name);
 
         aqtree = build_subqep(md_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -946,6 +959,9 @@ void auth_for_create_document_collection(const char* doc_name, const char *coll_
             delete_qep(aqtree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -982,9 +998,9 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has a privilege to rename this collection (privilege DROP is needed)
-        md_xquery.replace(md_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        md_xquery.replace(md_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        md_xquery.replace(md_xquery.find("%name_obj%", 0), strlen("%name_obj%"), coll_name);
+        find_replace_str(&md_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&md_xquery, "%user%", tr_globals::login);
+        find_replace_str(&md_xquery, "%name_obj%", coll_name);
 
         aqtree = build_subqep(md_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -1014,6 +1030,9 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
             delete_qep(aqtree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -1064,10 +1083,10 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has the privilege
-        rc_xquery.replace(rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        rc_xquery.replace(rc_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        rc_xquery.replace(rc_xquery.find("%type_obj%", 0), strlen("%type_obj%"), (is_collection) ? "collection" : "document");
-        rc_xquery.replace(rc_xquery.find("%name_obj%", 0), strlen("%name_obj%"), obj_name);
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
+        find_replace_str(&rc_xquery, "%type_obj%", (is_collection) ? "collection" : "document");
+        find_replace_str(&rc_xquery, "%name_obj%", obj_name);
 
         aqtree = build_subqep(rc_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -1086,10 +1105,9 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
 
         // update db_security_data for the new index
         // substitute dynamic parameters
-        update_xquery.replace(update_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%name_obj%", 0), strlen("%name_obj%"), ind_name);
+        find_replace_str(&update_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&update_xquery, "%user%", tr_globals::login);
+        find_replace_str(&update_xquery, "%name_obj%", ind_name);
 
         qep_tree = build_qep(update_xquery.c_str(), false);
         is_qep_built = true;
@@ -1121,6 +1139,9 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -1169,9 +1190,9 @@ void auth_for_create_trigger(const char *trg_name)
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has the privilege
-        rc_xquery.replace(rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        rc_xquery.replace(rc_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        rc_xquery.replace(rc_xquery.find("%name_obj%", 0), strlen("%name_obj%"), trg_name);
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
+        find_replace_str(&rc_xquery, "%name_obj%", trg_name);
 
         aqtree = build_subqep(rc_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -1190,10 +1211,9 @@ void auth_for_create_trigger(const char *trg_name)
 
         // update db_security_data for the new trigger
         // substitute dynamic parameters
-        update_xquery.replace(update_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%user%", 0), strlen("%user%"), tr_globals::login);
-        update_xquery.replace(update_xquery.find("%name_obj%", 0), strlen("%name_obj%"), trg_name);
+        find_replace_str(&update_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&update_xquery, "%user%", tr_globals::login);
+        find_replace_str(&update_xquery, "%name_obj%", trg_name);
 
         qep_tree = build_qep(update_xquery.c_str(), false);
         is_qep_built = true;
@@ -1225,6 +1245,9 @@ void auth_for_create_trigger(const char *trg_name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -1268,9 +1291,10 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
         output_enabled = tr_globals::client->disable_output();
 
         // query if user has the privilege
-        rc_xquery.replace(rc_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-        rc_xquery.replace(rc_xquery.find("%type_obj%", 0), strlen("%type_obj%"), obj_type);
-        rc_xquery.replace(rc_xquery.find("%name_obj%", 0), strlen("%name_obj%"), obj_name);
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
+        find_replace_str(&rc_xquery, "%type_obj%", obj_type);
+        find_replace_str(&rc_xquery, "%name_obj%", obj_name);
 
         aqtree = build_subqep(rc_xquery.c_str(), false);
         is_qepsubtree_built = true;
@@ -1291,9 +1315,9 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
         {
             // update db_security_data for the new index
             // substitute dynamic parameters
-            update_xquery.replace(update_xquery.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-            update_xquery.replace(update_xquery.find("%type_obj%", 0), strlen("%type_obj%"), obj_type);
-            update_xquery.replace(update_xquery.find("%name_obj%", 0), strlen("%name_obj%"), obj_name);
+            find_replace_str(&update_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+            find_replace_str(&update_xquery, "%type_obj%", obj_type);
+            find_replace_str(&update_xquery, "%name_obj%", obj_name);
 
             qep_tree = build_qep(update_xquery.c_str(), false);
             is_qep_built = true;
@@ -1326,6 +1350,9 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -1368,7 +1395,7 @@ void auth_for_create_user(const char* name, const char* passwd)
                update insert\
                    <user>\
                        <user_name>%new_user%</user_name>\
-                       <user_psw>%passw%</user_psw>\
+                       <user_psw>%passwd%</user_psw>\
                        <creator>%user%</creator>\
                        <privileges/>\
                        <role role_name='PUBLIC' grantor='%user%'/>\
@@ -1376,17 +1403,16 @@ void auth_for_create_user(const char* name, const char* passwd)
                 into\
                     doc('%db_sec_doc%')/db_security_data/users";
 
-    q1.replace(q1.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-    q1.replace(q1.find("%user%", 0), strlen("%user%"), tr_globals::login);
+    find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q1, "%user%", tr_globals::login);
 
-    q2.replace(q2.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-    q2.replace(q2.find("%user%", 0), strlen("%user%"), name);
+    find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q2, "%user%", name);
 
-    q3.replace(q3.find("%db_sec_doc%", 0), strlen("%db_sec_doc%"), SECURITY_METADATA_DOCUMENT);
-    q3.replace(q3.find("%user%", 0), strlen("%user%"), tr_globals::login);
-    q3.replace(q3.find("%user%", 0), strlen("%user%"), tr_globals::login);
-    q3.replace(q3.find("%new_user%", 0), strlen("%new_user%"), name);
-    q3.replace(q3.find("%passw%", 0), strlen("%passw%"), passwd);
+    find_replace_str(&q3, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q3, "%user%", tr_globals::login);
+    find_replace_str(&q3, "%new_user%", name);
+    find_replace_str(&q3, "%passwd%", passwd);
 
     try
     {
@@ -1457,6 +1483,9 @@ void auth_for_create_user(const char* name, const char* passwd)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -1544,6 +1573,9 @@ void auth_for_drop_user(const char* name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -1634,6 +1666,9 @@ void auth_for_alter_user(const char* name, const char* passwd)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
@@ -1727,6 +1762,364 @@ void auth_for_create_role(const char* name)
             delete_qep_unmanaged(qep_tree);
         if(output_enabled)
             tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        throw;
+    }
+}
+
+void auth_for_drop_role(const char* name)
+{
+    PPQueryEssence* qep_tree   = NULL;
+    qep_subtree *aqtree        = NULL;
+    bool is_qep_opened         = false;
+    bool is_qep_built          = false;
+    bool is_qepsubtree_opened  = false;
+    bool is_qepsubtree_built   = false;
+    bool output_enabled        = false;
+
+    // checks if we have privilege
+    std::string q1 = "\
+            if ((doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'] or\
+                doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%role%' and creator = '%user%']) and\
+                '%role%' != 'DBA' and '%role%' != 'PUBLIC')\
+            then\
+                fn:true()\
+            else\
+                fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3077'), 'Not allowed to drop this role')";
+
+    std::string q2 = "update delete doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%role%']";
+
+    find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q1, "%user%", tr_globals::login);
+    find_replace_str(&q1, "%role%", name);
+
+    find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q2, "%role%", name);
+
+    try
+    {
+        tuple t = tuple(1);
+
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
+        output_enabled = tr_globals::client->disable_output();
+
+        // first subquery
+        aqtree = build_subqep(q1.c_str(), false);
+        is_qepsubtree_built = true;
+
+        aqtree->tree.op->open();
+        is_qepsubtree_opened = true;
+
+        aqtree->tree.op->next(t);
+
+        aqtree->tree.op->close();
+        is_qepsubtree_opened = false;
+
+        delete_qep(aqtree);
+        is_qepsubtree_built = false;
+
+        // update query
+        qep_tree = build_qep(q2.c_str(), false);
+        is_qep_built = true;
+
+        qep_tree->open();
+        is_qep_opened = true;
+
+        qep_tree->execute();
+
+        qep_tree->close();
+        is_qep_opened = false;
+
+        delete_qep_unmanaged(qep_tree);
+        is_qep_built = false;
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        if (output_enabled)
+            tr_globals::client->enable_output();
+    }
+    catch(SednaUserException &e)
+    {
+        if(is_qepsubtree_opened)
+            aqtree->tree.op->close();
+        if(is_qepsubtree_built)
+            delete_qep(aqtree);
+        if(is_qep_opened)
+            qep_tree->close();
+        if(is_qep_built)
+            delete_qep_unmanaged(qep_tree);
+        if(output_enabled)
+            tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        throw;
+    }
+}
+
+void auth_for_grant_role(const char* name, const char *grantee)
+{
+    PPQueryEssence* qep_tree   = NULL;
+    qep_subtree *aqtree        = NULL;
+    bool is_qep_opened         = false;
+    bool is_qep_built          = false;
+    bool is_qepsubtree_opened  = false;
+    bool is_qepsubtree_built   = false;
+    bool output_enabled        = false;
+
+    // checks if we have privilege
+    std::string q1 = "\
+            if (doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%role%'])\
+            then\
+                if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'])\
+                then\
+                    fn:true()\
+                else if (\
+                    every $p in (doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%role%']/privileges/privilege) satisfies\
+                        (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/privileges/privilege\
+                            [pr_name = 'OWNER' and fn:deep-equal(database_obj, $p/database_obj)]))\
+                    then\
+                        fn:true()\
+                    else\
+                        fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3074'), 'Not allowed to grant this role')\
+            else\
+                fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3074'), 'Role does not exist')";
+
+    // update for grantee-user
+    std::string q2 = "update insert\
+                           <role role_name='%role%' grantor='%user%'/> into\
+                           doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']";
+
+    // update for grantee-role
+    std::string q3 = "update insert\
+                               for $p in (doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%role%']/privileges/privilege)\
+                               return <privilege>{$p/pr_name, $p/database_obj, <grantor>%user%</grantor>}</privilege>\
+                      into\
+                               doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%grantee%']/privileges";
+
+    find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q1, "%user%", tr_globals::login);
+    find_replace_str(&q1, "%role%", name);
+
+    find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q2, "%user%", tr_globals::login);
+    find_replace_str(&q2, "%grantee%", grantee);
+    find_replace_str(&q2, "%role%", name);
+
+    find_replace_str(&q3, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q3, "%user%", tr_globals::login);
+    find_replace_str(&q3, "%grantee%", grantee);
+    find_replace_str(&q3, "%role%", name);
+
+    try
+    {
+        tuple t = tuple(1);
+
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
+        output_enabled = tr_globals::client->disable_output();
+
+        // first subquery
+        aqtree = build_subqep(q1.c_str(), false);
+        is_qepsubtree_built = true;
+
+        aqtree->tree.op->open();
+        is_qepsubtree_opened = true;
+
+        aqtree->tree.op->next(t);
+
+        aqtree->tree.op->close();
+        is_qepsubtree_opened = false;
+
+        delete_qep(aqtree);
+        is_qepsubtree_built = false;
+
+        // update query
+        qep_tree = build_qep(q2.c_str(), false);
+        is_qep_built = true;
+
+        qep_tree->open();
+        is_qep_opened = true;
+
+        qep_tree->execute();
+
+        qep_tree->close();
+        is_qep_opened = false;
+
+        delete_qep_unmanaged(qep_tree);
+        is_qep_built = false;
+
+        // second update query
+        qep_tree = build_qep(q3.c_str(), false);
+        is_qep_built = true;
+
+        qep_tree->open();
+        is_qep_opened = true;
+
+        qep_tree->execute();
+
+        qep_tree->close();
+        is_qep_opened = false;
+
+        delete_qep_unmanaged(qep_tree);
+        is_qep_built = false;
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        if (output_enabled)
+            tr_globals::client->enable_output();
+    }
+    catch(SednaUserException &e)
+    {
+        if(is_qepsubtree_opened)
+            aqtree->tree.op->close();
+        if(is_qepsubtree_built)
+            delete_qep(aqtree);
+        if(is_qep_opened)
+            qep_tree->close();
+        if(is_qep_built)
+            delete_qep_unmanaged(qep_tree);
+        if(output_enabled)
+            tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        throw;
+    }
+}
+
+void auth_for_grant_privilege(const char* name, const char *obj_name, const char *obj_type, const char *grantee)
+{
+    PPQueryEssence* qep_tree   = NULL;
+    qep_subtree *aqtree        = NULL;
+    bool is_qep_opened         = false;
+    bool is_qep_built          = false;
+    bool is_qepsubtree_opened  = false;
+    bool is_qepsubtree_built   = false;
+    bool output_enabled        = false;
+    std::string q1, q2;
+
+    if (!obj_type)
+    {
+        q1 = "if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'])\
+              then\
+                 fn:true()\
+              else\
+                 fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3073'), 'Only DBA is allowed to grant database privileges')";
+
+        q2 =
+            "update insert \
+                     <privilege>\
+                        <pr_name>%name%</pr_name>\
+                        <grantor>%user%</grantor>\
+                     </privilege>\
+             into\
+                 (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']/privileges,\
+                  doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%grantee%']/privileges)";
+
+        find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q1, "%user%", tr_globals::login);
+
+        find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q2, "%name%", name);
+        find_replace_str(&q2, "%user%", tr_globals::login);
+        find_replace_str(&q2, "%grantee%", grantee);
+    }
+    else
+    {
+        q1 =
+           "if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'])\
+            then\
+                fn:true()\
+            else if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/privileges/privilege\
+                        [pr_name = 'OWNER' and fn:deep-equal(database_obj, <database_obj type_obj='%obj_type%'>%obj_name%</database_obj>)])\
+                then\
+                    fn:true()\
+                else\
+                    fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3074'), 'Not allowed to grant this privilege')";
+
+        q2 =
+            "update insert \
+                     <privilege>\
+                        <pr_name>%name%</pr_name>\
+                        <database_obj type_obj='%obj_type%'>%obj_name%</database_obj>\
+                        <grantor>%user%</grantor>\
+                     </privilege>\
+             into\
+                 (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']/privileges,\
+                  doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%grantee%']/privileges)";
+
+        find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q1, "%user%", tr_globals::login);
+        find_replace_str(&q1, "%obj_type%", obj_type);
+        find_replace_str(&q1, "%obj_name%", obj_name);
+
+        find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q2, "%name%", name);
+        find_replace_str(&q2, "%user%", tr_globals::login);
+        find_replace_str(&q2, "%grantee%", grantee);
+        find_replace_str(&q2, "%obj_type%", obj_type);
+        find_replace_str(&q2, "%obj_name%", obj_name);
+    }
+
+    try
+    {
+        tuple t = tuple(1);
+
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
+        output_enabled = tr_globals::client->disable_output();
+
+        // first subquery
+        aqtree = build_subqep(q1.c_str(), false);
+        is_qepsubtree_built = true;
+
+        aqtree->tree.op->open();
+        is_qepsubtree_opened = true;
+
+        aqtree->tree.op->next(t);
+
+        aqtree->tree.op->close();
+        is_qepsubtree_opened = false;
+
+        delete_qep(aqtree);
+        is_qepsubtree_built = false;
+
+        // update query
+        qep_tree = build_qep(q2.c_str(), false);
+        is_qep_built = true;
+
+        qep_tree->open();
+        is_qep_opened = true;
+
+        qep_tree->execute();
+
+        qep_tree->close();
+        is_qep_opened = false;
+
+        delete_qep_unmanaged(qep_tree);
+        is_qep_built = false;
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        if (output_enabled)
+            tr_globals::client->enable_output();
+    }
+    catch(SednaUserException &e)
+    {
+        if(is_qepsubtree_opened)
+            aqtree->tree.op->close();
+        if(is_qepsubtree_built)
+            delete_qep(aqtree);
+        if(is_qep_opened)
+            qep_tree->close();
+        if(is_qep_built)
+            delete_qep_unmanaged(qep_tree);
+        if(output_enabled)
+            tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
         throw;
     }
 }
