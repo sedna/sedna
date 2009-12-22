@@ -25,9 +25,12 @@ public:
     ASTNode *query;
     QueryType type;
 
+    bool is_trigger;
+
 public:
     ASTQuery(const ASTNodeCommonData &loc, ASTNode *expr, ASTQuery::QueryType qtype) : ASTNode(loc), query(expr), type(qtype)
     {
+        is_trigger = false;
     }
 
     ~ASTQuery();

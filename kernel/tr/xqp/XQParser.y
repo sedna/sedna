@@ -3444,7 +3444,13 @@ triggerDoStmts:
 
 triggerDoStmt:
         exprSingle
+        {
+            $$ = new ASTQuery(@$, $1, ASTQuery::QUERY);
+        }
     |   updateExpr
+        {
+            $$ = new ASTQuery(@$, $1, ASTQuery::UPDATE);
+        }
     ;
 
 

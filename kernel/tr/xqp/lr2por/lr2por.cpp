@@ -166,7 +166,7 @@ namespace sedna
             n.cont->accept(*this);
             off_cont = getOffer();
         }
-        else
+        else if (!pers_path_mode) // we don't need context when we create persistent relative path for index
         {
             off_cont = getContextOffer(oi);
         }
@@ -623,7 +623,7 @@ namespace sedna
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (!onp) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         // set context
@@ -673,7 +673,7 @@ namespace sedna
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (!onp) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         n.by_path->accept(*this);
@@ -687,7 +687,7 @@ namespace sedna
         byp = pa->getPathExpr();
         delete pa; // we don't need it anymore (note that this won't destroy on_path)
 
-        if (!byp) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!byp || byp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             byp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         n.type->accept(*this);
@@ -747,7 +747,7 @@ namespace sedna
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (!onp) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
 
@@ -755,28 +755,19 @@ namespace sedna
 
         for (unsigned int i = 0; i < n.do_exprs->size(); i++)
         {
-            bool is_query = (dynamic_cast<ASTQuery *>(n.do_exprs->at(i)) == NULL);
+            ASTQuery *st_query = dynamic_cast<ASTQuery *>(n.do_exprs->at(i));
+            bool is_query = (st_query->type == ASTQuery::QUERY);
 
-            ASTNode *st_ast;
+            st_query->is_trigger = true;
 
-            // make if full-fledged ASTQuery
-            if (is_query)
-            {
-                st_ast = new ASTQuery(n.do_exprs->at(i)->getLocation(), n.do_exprs->at(i), ASTQuery::QUERY);
-            }
-            else
-            {
-                st_ast = n.do_exprs->at(i);
-            }
+            std::string ir = mod->getIR(st_query);
 
-            std::string ir = mod->getIR(st_ast);
+            action->at(2*i).type = SCM_STRING;
+            action->at(2*i).internal.str = new char[ir.size() + 1];
+            action->at(2*i+1).type = SCM_BOOL;
+            action->at(2*i+1).internal.b = is_query;
 
-            action->at(i).type = SCM_STRING;
-            action->at(i).internal.str = new char[ir.size() + 1];
-            action->at(i+1).type = SCM_BOOL;
-            action->at(i+1).internal.b = is_query;
-
-            strcpy(action->at(i).internal.str, ir.c_str());
+            strcpy(action->at(2*i).internal.str, ir.c_str());
         }
 
         if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
@@ -784,15 +775,18 @@ namespace sedna
             childOffer off_ipath;
             PathExpr *ip;
 
+            pers_path_mode = true;
             n.trimmed_path->accept(*this);
             off_ipath = getOffer();
-            pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
+            pers_path_mode = false;
+
+            pa = dynamic_cast<PPAbsPath *>(off_ipath.opin.op);
             U_ASSERT(pa);
 
             ip = pa->getPathExpr();
             delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-            if (ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+            if (!ip || ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
                 ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
             qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], dbe, onp, trg2str[n.g_mod], action,
@@ -1618,7 +1612,7 @@ namespace sedna
                 else if (*spec->lit == "GE")
                     isc = isc_ge;
                 else if (*spec->lit == "LT")
-                    isc = isc_le;
+                    isc = isc_lt;
                 else if (*spec->lit == "LE")
                     isc = isc_le;
                 else // "EQ"
@@ -2557,6 +2551,14 @@ namespace sedna
         {
             var_num = 0;
             dyn_cxt = new dynamic_context(st_cxt, 0);
+        }
+
+        // if we deserealize trigger statement then bind special vars
+        if (n.is_trigger)
+        {
+            bound_vars.push_back(l2pVarInfo("NEW", 0));
+            bound_vars.push_back(l2pVarInfo("OLD", 0));
+            bound_vars.push_back(l2pVarInfo("WHERE", 0));
         }
 
         n.query->accept(*this);

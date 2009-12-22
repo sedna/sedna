@@ -4197,7 +4197,7 @@ qep_subtree *build_subqep(const char* por, bool is_ast)
     qep_subtree *res = se_new qep_subtree();
 
     // create unmanaged static context for subquery
-    // TODO: review it with all static/dynamic context stuff!!!
+    // TODO: review it later with all the static/dynamic context stuff!!!
     dynamic_context::create_unmanaged();
 
     // parse provided string

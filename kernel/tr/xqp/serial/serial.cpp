@@ -1069,6 +1069,7 @@ void IntVisitor::visit(ASTQuery &n)
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.query);
     int_str.append(int2string(n.type));
+    DUMP_BOOL(n.is_trigger);
     int_str.append(")");
 }
 
