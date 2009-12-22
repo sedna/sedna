@@ -31,14 +31,13 @@ PPQueryRoot::~PPQueryRoot()
     cxt = NULL;
 }
 
-PPOpIn PPQueryRoot::detachChild()
+void PPQueryRoot::detachChild(PPOpIn *poi, dynamic_context **dc)
 {
-    PPOpIn res = child;
-
+    *poi = child;
     child.op = NULL;
-    cxt = NULL;
 
-    return res;
+    *dc = cxt;
+    cxt = NULL;
 }
 
 void PPQueryRoot::open()

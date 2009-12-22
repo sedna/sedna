@@ -639,7 +639,7 @@ trigger_cell_xptr create_trigger (
         {
             trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
             strcpy(trac->statement,action->at(i).internal.str);
-            trac->cxt_size = (action->at(i+1).internal.b) ? 0 : 1;
+            trac->is_query = (action->at(i+1).internal.b);
 
             /*if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
             {
@@ -781,37 +781,29 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
             qep_parameters = &(bta.parameters);
             while(trac!=NULL)
             {
-                sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
-
-                if(trac->cxt_size == 1) // update
+                if(!trac->is_query) // update
                 {
                     bta.action_qep_subtree = NULL;
-
-                    std::string dummy; // for module name
-                    parse_batch(xqd, TL_ASTQEPReady, trac->statement, &dummy);
-                    qep_tree = bta.action_qep_tree = xqd->getQEPForModule(0);
+                    bta.action_qep_tree = build_qep(trac->statement, true);
                     is_qep_built = true;
+
                     qep_tree->open();
                     is_qep_opened = true;
+
                     built_trigger_actions_vec.push_back(bta);
                 }
                 else // query
                 {
                     bta.action_qep_tree = NULL;
-
-                    bta.action_qep_subtree->cxt = dynamic_context::create_unmanaged(0);
-                    parse_batch_triggers(xqd, trac->statement, bta.action_qep_subtree->cxt->st_cxt, bta.action_qep_subtree->cxt);
-                    PPQueryRoot *pqr = dynamic_cast<PPQueryRoot *>(xqd->getQEPForModule(0));
-                    U_ASSERT(pqr);
-                    bta.action_qep_subtree->tree = pqr->detachChild();
-                    delete pqr;
+                    bta.action_qep_subtree = build_subqep(trac->statement, true);
                     is_subqep_built = true;
+
                     bta.action_qep_subtree->tree.op->open();
                     is_subqep_opened = true;
+
                     built_trigger_actions_vec.push_back(bta);
                 }
                 trac = trac->next;
-                delete xqd;
             }
         }
         catch(SednaUserException &e)

@@ -365,10 +365,9 @@ public:
         return st_cxt;
     }
 
-    static dynamic_context *create_unmanaged(int _var_cxt_size_)
+    static void create_unmanaged()
     {
         unmanaged_st_cxt = se_new static_context;
-        return se_new dynamic_context(unmanaged_st_cxt, _var_cxt_size_);
     }
 
     static void destroy_unmanaged(dynamic_context *cxt)

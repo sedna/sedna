@@ -35,7 +35,7 @@ static bool is_ll_on_transaction_initialized = false;
 static bool sem_released = false;
 
 USemaphore checkpoint_sem;
-USemaphore concurrent_trns_sem; 
+USemaphore concurrent_trns_sem;
 
 ///// FOR DEBUG ////
 int number_of_records = 0;
@@ -53,8 +53,8 @@ void hl_logical_log_on_session_begin(string logical_log_path, bool rcv_active)
 		throw USER_EXCEPTION2(SE4012, "SEDNA_TRNS_FINISHED");
 
 	llOpen(logical_log_path.c_str(), tr_globals::db_name, rcv_active);
-  
-	is_ll_on_session_initialized = true; 
+
+	is_ll_on_session_initialized = true;
 }
 
 void hl_logical_log_on_transaction_begin(bool rcv_active, bool tr_ro_mode)
@@ -64,13 +64,13 @@ void hl_logical_log_on_transaction_begin(bool rcv_active, bool tr_ro_mode)
 	{
 		enable_log = false;
 		tr_globals::is_need_checkpoint_on_transaction_commit = false;
-		is_ll_on_transaction_initialized = false; 
+		is_ll_on_transaction_initialized = false;
 		return;
 	}
 
 	llOnTransBegin(tr_globals::trid);
 	tr_globals::is_need_checkpoint_on_transaction_commit = tr_globals::is_log_less_mode;
-	is_ll_on_transaction_initialized = true; 
+	is_ll_on_transaction_initialized = true;
 #ifdef LOG_TRACE
 	elog(EL_LOG, ("LOG_TRACE: Transaction is started: trid=%d", tr_globals::trid));
 #endif
@@ -115,7 +115,7 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 #ifdef SE_ENABLE_DTSEARCH
 				SednaIndexJob::rollback();
 #endif
-				hl_logical_log_rollback(tr_globals::trid); 
+				hl_logical_log_rollback(tr_globals::trid);
 			}
 		}
 
@@ -131,17 +131,17 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 void activate_and_wait_for_end_checkpoint(bool force)
 {
     int res;
-    
+
     while ((res = llActivateCheckpoint()) == -2 && force)
         uSleep(1, __sys_call_error);
-    
+
     if (res == -2 && !force)
         return;
     else if (res != 0)
         throw SYSTEM_EXCEPTION("logic error in waiting on checkpoint!");
-    
+
     U_ASSERT(res == 0);
-    
+
     // wait for checkpoint to finish
     // checkpoint thread should awake this transaction
     llOnCheckpointWait();
@@ -164,7 +164,7 @@ void up_transaction_block_sems()
         sem_released = false;
         return;
     }
-    
+
 	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) != 0)
 		throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 }
@@ -172,7 +172,7 @@ void up_transaction_block_sems()
 void down_transaction_block_sems()
 {
 	if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) != 0)
-		throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
+		throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 }
 
 LSN get_lsn_of_first_record_in_logical_log()
@@ -187,10 +187,10 @@ void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,
 	llLogElement(tr_globals::trid, &self, &left, &right, &parent, name, uri, prefix, type, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Element is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Element is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Element is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Element is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -202,10 +202,10 @@ void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &righ
 	llLogAttribute(tr_globals::trid, &self, &left, &right, &parent, name, type, value, data_size, uri, prefix, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Attribute is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Attribute is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Attribute is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Attribute is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -217,10 +217,10 @@ void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,con
 	llLogText(tr_globals::trid, &self, &left, &right, &parent, (char*)value, data_size, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Text is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Text is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Text is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Text is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -235,11 +235,11 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,
 #endif
 }
 
-void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted ) 
+void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted )
 {
 	if (!enable_log) return;
 	ASSERT(data_size > PSTRMAXSIZE);
-	
+
 	if (inserted)
 	{
 		pstr_long_cursor cur(value);
@@ -320,13 +320,13 @@ void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,
 {
 	if (!enable_log) return;
 	number_of_records++;
-	llLogComment(tr_globals::trid, &self, &left, &right, &parent, value, data_size, inserted); 
+	llLogComment(tr_globals::trid, &self, &left, &right, &parent, value, data_size, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Comment is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Comment is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Comment is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Comment is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -335,13 +335,13 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 {
 	if (!enable_log) return;
 	number_of_records++;
-	llLogDocument(tr_globals::trid, &self, name, collection, inserted); 
+	llLogDocument(tr_globals::trid, &self, name, collection, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Document is inserted: trid=%d, self=%08x%08x, name=%s, coll=%s", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Document is inserted: trid=%d, self=%08x%08x, name=%s, coll=%s", tr_globals::trid,
 			self.layer, (int)self.addr, name, collection));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Document is deleted: trid=%d, self=%08x%08x, name=%s, coll=%s", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Document is deleted: trid=%d, self=%08x%08x, name=%s, coll=%s", tr_globals::trid,
 			self.layer, (int)self.addr, name, collection));
 #endif
 }
@@ -353,7 +353,7 @@ void hl_logical_log_rename_collection(const char *old_name, const char *new_name
 	llLogRenameCollection(tr_globals::trid, old_name, new_name);
 
 #ifdef LOG_TRACE
-	elog(EL_LOG, ("LOG_TRACE: Collection is renamed: trid=%d, old name=%s, new name=%s", tr_globals::trid, 
+	elog(EL_LOG, ("LOG_TRACE: Collection is renamed: trid=%d, old name=%s, new name=%s", tr_globals::trid,
 		old_name, new_name));
 #endif
 
@@ -378,10 +378,10 @@ void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &righ
 	llLogNS(tr_globals::trid, &self, &left, &right, &parent, uri, prefix, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Namespace is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Namespace is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Namespace is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Namespace is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -393,10 +393,10 @@ void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const
 	llLogPI(tr_globals::trid, &self, &left, &right, &parent, value, total_size, target_size, inserted);
 #ifdef LOG_TRACE
 	if (inserted)
-		elog(EL_LOG, ("LOG_TRACE: Pi is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Pi is inserted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 	else
-		elog(EL_LOG, ("LOG_TRACE: Pi is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid, 
+		elog(EL_LOG, ("LOG_TRACE: Pi is deleted: trid=%d, self=%08x%08x, left=%08x%08x, right=%08x%08x, parent=%08x%08x", tr_globals::trid,
 			self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
@@ -452,7 +452,7 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
 {
     if (!enable_log) return;
     number_of_records++;
-    
+
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
     std::ostringstream key_str(std::ios::out | std::ios::binary);
 
@@ -466,7 +466,7 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 {
     if (!enable_log) return;
     number_of_records++;
-    
+
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
 	PathExpr2lr(object_path, obj_str);
 
@@ -524,21 +524,21 @@ ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, int custo
 	return NULL;
 }
 #endif
-    
+
 #ifdef SE_ENABLE_TRIGGERS
 void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted)
 {
   if (!enable_log) return;
   number_of_records++;
-  
+
   std::ostringstream tr_path(std::ios::out | std::ios::binary);
-  if (trigger_path) 
+  if (trigger_path)
   	PathExpr2lr(trigger_path, tr_path);
 
   std::ostringstream path_to_par(std::ios::out | std::ios::binary);
-  if (path_to_parent) 
+  if (path_to_parent)
   	PathExpr2lr(path_to_parent, path_to_par);
-  
+
   int trac_len = 0;
 
   for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
@@ -553,7 +553,7 @@ void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathEx
       str_len = strlen(tr_act->statement);
 
       U_ASSERT(tr_action_buf_size + str_len + 1 + sizeof(int) <= trac_len);
-      
+
       if (str_len)
       {
           memcpy(tr_action_buf + tr_action_buf_size, tr_act->statement, str_len + 1);
@@ -564,11 +564,11 @@ void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathEx
           tr_action_buf[tr_action_buf_size] = '\x0';
           tr_action_buf_size++;
       }
-      memcpy(tr_action_buf + tr_action_buf_size, &(tr_act->cxt_size), sizeof(int));
+      memcpy(tr_action_buf + tr_action_buf_size, &(tr_act->is_query), sizeof(bool));
       tr_action_buf_size += sizeof(int);
   }
-  
-  llLogTrigger(tr_globals::trid, tr_time, tr_event,  tr_path.str().c_str(), tr_gran, tr_action_buf, tr_action_buf_size, 
+
+  llLogTrigger(tr_globals::trid, tr_time, tr_event,  tr_path.str().c_str(), tr_gran, tr_action_buf, tr_action_buf_size,
   	  insnode.name, insnode.type, path_to_par.str().c_str(), trigger_title, doc_name, is_doc, inserted);
 
   delete[] tr_action_buf;

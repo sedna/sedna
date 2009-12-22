@@ -77,12 +77,20 @@ namespace sedna
         mods.push_back(mod);
     }
 
-    void XQueryDriver::parseASTForTriggers(const char *ast, static_context *sx, dynamic_context *dx)
+    void XQueryDriver::parseASTInContext(const char *ast, static_context *sx)
     {
         XQueryModule *mod = new XQueryModule(ast, this);
 
-        mod->setContextsForQEP(sx, dx);
+        mod->setStaticContextForQEP(sx);
         mods.push_back(mod);
+    }
+
+    void XQueryDriver::parseXQInContext(const char *xq, static_context *sx)
+    {
+        parse(xq);
+        doSemanticAnalysis();
+        doLReturnAnalysis();
+        mods.back()->setStaticContextForQEP(sx);
     }
 
     void XQueryDriver::emitErrors()

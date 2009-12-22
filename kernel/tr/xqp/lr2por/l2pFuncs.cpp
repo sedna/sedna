@@ -1,3 +1,8 @@
+/*
+ * File:  lr2por.cpp
+ * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "l2pFuncs.h"
 #include "tr/executor/base/PPOperations.h"
 #include "tr/tr_globals.h"
@@ -17,14 +22,14 @@ PPOpIn l2pFnAdjustDateTimeToTimezone(dynamic_context *dyn_cxt, const operation_i
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc2Params::adjustDateTimeToTimezone;
-
     if (params.size() == 2)
     {
+        int ftype = PPFnDateTimeFunc2Params::adjustDateTimeToTimezone;
         res = PPOpIn(new PPFnDateTimeFunc2Params(dyn_cxt, opi, params[0], params[1], ftype), 1);
     }
     else
     {
+        int ftype = PPFnDateTimeFunc::adjustDateTimeToTimezone;
         xmlscm_type xtype = xs_dateTime;
 
         res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -37,14 +42,14 @@ PPOpIn l2pFnAdjustDateToTimezone(dynamic_context *dyn_cxt, const operation_info 
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc2Params::adjustDateToTimezone;
-
     if (params.size() == 2)
     {
+        int ftype = PPFnDateTimeFunc2Params::adjustDateToTimezone;
         res = PPOpIn(new PPFnDateTimeFunc2Params(dyn_cxt, opi, params[0], params[1], ftype), 1);
     }
     else
     {
+        int ftype = PPFnDateTimeFunc::adjustDateToTimezone;
         xmlscm_type xtype = xs_date;
 
         res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -57,14 +62,14 @@ PPOpIn l2pFnAdjustTimeToTimezone(dynamic_context *dyn_cxt, const operation_info 
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc2Params::adjustTimeToTimezone;
-
     if (params.size() == 2)
     {
+        int ftype = PPFnDateTimeFunc2Params::adjustTimeToTimezone;
         res = PPOpIn(new PPFnDateTimeFunc2Params(dyn_cxt, opi, params[0], params[1], ftype), 1);
     }
     else
     {
+        int ftype = PPFnDateTimeFunc::adjustTimeToTimezone;
         xmlscm_type xtype = xs_time;
 
         res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);

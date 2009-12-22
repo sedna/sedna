@@ -51,9 +51,9 @@ namespace sedna
         typedef std::pair<std::string, PPGlobalVariable *> unresPorVarInfo;
         std::multimap<std::string, PPGlobalVariable *> unresPorVars; // contains unresolved global var ids
 
-        // hack for triggers
-        static_context *hack_qep_sx;
-        dynamic_context *hack_qep_dx;
+        // predefined static context; used when we want to create qep in some specified static context (usually, unmanaged one)
+        // see modules import and triggers as examples
+        static_context *qep_sx;
 
     public:
         XQueryModule(ASTNode *ast_tree, XQueryDriver *driver);
@@ -93,7 +93,7 @@ namespace sedna
 
         void addToUnresolvedPor(const std::string &name, PPGlobalVariable *var);
 
-        void setContextsForQEP(static_context *sx, dynamic_context *dx);
+        void setStaticContextForQEP(static_context *sx);
 
         size_t getFunctionCount() const
         {

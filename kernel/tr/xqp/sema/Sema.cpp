@@ -1241,19 +1241,15 @@ namespace sedna
         nsBindType::const_iterator it;
         std::string err;
 
-        if (*n.name == "xml" && *n.uri != "http://www.w3.org/XML/1998/namespace")
+        if (*n.name == "xml" || *n.name == "xmlns")
         {
-            drv->error(n.getLocation(), XQST0070, "'xml' can be bound only to the XML namespace");
+            err = std::string("'") + *n.name + "' cannot be used as a prefix";
+            drv->error(n.getLocation(), XQST0070, err.c_str());
             return;
         }
-        else if (*n.uri == "http://www.w3.org/XML/1998/namespace" && *n.name != "xml")
+        else if (*n.uri == "http://www.w3.org/XML/1998/namespace")
         {
-            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be bound to other prefix than 'xml'");
-            return;
-        }
-        else if (*n.name == "xmlns")
-        {
-            drv->error(n.getLocation(), XQST0070, "'xmlns' cannot be used as a prefix");
+            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' is reserved");
             return;
         }
         else if (*n.uri == "http://www.w3.org/2000/xmlns/")

@@ -122,10 +122,17 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch1, s
     parse_batch(drv, type, sv, module_name);
 }
 
-void parse_batch_triggers(sedna::XQueryDriver *drv, const char *query, static_context *sx, dynamic_context *dx)
+void parse_batch_context(sedna::XQueryDriver *drv, const char *query, QueryType type, static_context *sx)
 {
     U_ASSERT(drv);
 
     // parse query and create ast-tree with context predefined; any errors will be thrown as exceptions
-    drv->parseASTForTriggers(query, sx, dx);
+    if (type == TL_XQuery)
+    {
+        drv->parseXQInContext(query, sx);
+    }
+    else
+    {
+        drv->parseASTInContext(query, sx);
+    }
 }

@@ -590,7 +590,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 <M_APOS_CONT>"{"  { yy_push_state(INITIAL); return token::LBRACE; }
 <M_APOS_CONT>"''" { return token::ESCAPE_APOS; }
 <M_APOS_CONT>{AposAttrContentChar}+ {
-    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng)) == NULL)
+    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng, true)) == NULL)
         return token::_ERROR_;
     return token::CHAR_CONT;
 }
@@ -609,14 +609,14 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 <M_QUOT_CONT>"{"  { yy_push_state(INITIAL); return token::LBRACE; }
 <M_QUOT_CONT>"\"\"" { return token::ESCAPE_QUOT; }
 <M_QUOT_CONT>{QuotAttrContentChar}+ {
-    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng)) == NULL)
+    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng, true)) == NULL)
         return token::_ERROR_;
     return token::CHAR_CONT;
 }
 
     /* This state corresponds to element content */
 <M_ELEM_CONT>{ElemContentChar}+ {
-    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng)) == NULL)
+    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng, false)) == NULL)
         return token::_ERROR_;
     return token::CHAR_CONT;
 }
@@ -655,7 +655,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
     AMEND_LOC_YYMORE;
 }
 <M_XML_COMMENT>"-->" {
-    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-3)) == NULL)
+    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-3, false)) == NULL)
         return token::_ERROR_;
 
     yy_pop_state();
@@ -678,7 +678,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
     AMEND_LOC_YYMORE;
 }
 <M_PI_CONTENT>"?>" {
-    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-2)) == NULL)
+    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-2, false)) == NULL)
         return token::_ERROR_;
 
     yy_pop_state();
@@ -708,7 +708,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
     AMEND_LOC_YYMORE;
 }
 <M_PRAGMA_CONTENT>"#)" {
-    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-2)) == NULL)
+    if ((yylval->scont = xqMakeContent(yylloc, yytext, yyleng-2, false)) == NULL)
         return token::_ERROR_;
 
     yy_pop_state();
@@ -729,7 +729,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 
 <M_CDATA>"]]>" {
     cdata_cont += std::string(yytext, yyleng-3);
-    if ((yylval->scont = xqMakeContent(yylloc, cdata_cont.c_str(), cdata_cont.size())) == NULL)
+    if ((yylval->scont = xqMakeContent(yylloc, cdata_cont.c_str(), cdata_cont.size(), false)) == NULL)
         return token::_ERROR_;
 
     yy_pop_state();
@@ -1116,7 +1116,7 @@ std::string *XQueryLexer::xqMakeQName(XQueryParser::location_type *loc, const ch
 // Returns:
 //      string to replace StringLiteral
 //
-std::string *XQueryLexer::xqMakeContent(XQueryParser::location_type *loc, const char *text, int len)
+std::string *XQueryLexer::xqMakeContent(XQueryParser::location_type *loc, const char *text, int len, bool in_attr)
 {
     std::string res(text, len);
 
@@ -1144,6 +1144,16 @@ std::string *XQueryLexer::xqMakeContent(XQueryParser::location_type *loc, const 
         }
 
         cont_it++;
+    }
+    
+    // normalize space for attributes
+    if (in_attr)
+    {
+        for (unsigned int i = 0; i < res.size(); i++)
+        {
+            if (res[i] == 0x0A || res[i] == 0x09 || res[i] == 0x0D)
+                res[i] = 0x20;
+        }
     }
 
     return new std::string(res);

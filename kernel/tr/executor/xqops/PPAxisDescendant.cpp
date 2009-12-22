@@ -39,7 +39,7 @@ void PPAxisDescendant::init_function()
 }
 
 PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_,
-                                   operation_info _info_, 
+                                   operation_info _info_,
                                    PPOpIn _child_,
                                    NodeTestType _nt_type_,
                                    NodeTestData _nt_data_): PPIterator(_cxt_, _info_),
@@ -47,7 +47,7 @@ PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_,
                                    nt_type(_nt_type_),
                                    nt_data(_nt_data_)
 {
-    self = false; 
+    self = false;
     init_function();
 }
 
@@ -66,7 +66,7 @@ PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_,
 }
 
 PPAxisDescendantOrSelf::PPAxisDescendantOrSelf(dynamic_context *_cxt_,
-                                               operation_info _info_, 
+                                               operation_info _info_,
                                                PPOpIn _child_,
                                                NodeTestType _nt_type_,
                                                NodeTestData _nt_data_):
@@ -139,8 +139,8 @@ void PPAxisDescendant::next_node(tuple &t)
 
     CHECKP(cur);
     xptr tmp = getFirstByOrderChildNode(cur);
-    
-    if (tmp!=XNULL) 
+
+    if (tmp!=XNULL)
     {
         cur=tmp;
         return;
@@ -148,7 +148,7 @@ void PPAxisDescendant::next_node(tuple &t)
     while (!self || descstack.size()>1)
     {
         tmp = GETRIGHTPOINTER(cur);
-        if (tmp!=XNULL) 
+        if (tmp!=XNULL)
         {
             cur=tmp;
             descstack.pop_back();
@@ -197,12 +197,12 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
             if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge(getNextDescriptorOfSameSortXptr,true);
             while (it!=curvect->end())
             {
-                cur=getFirstDescandantByScheme(tmp,*it);				
+                cur=getFirstDescandantByScheme(tmp,*it);
                 if (cur!=XNULL) merge_tree->addChannel(cur);
                 it++;
             }
 
-            cur=merge_tree->getNextNode();			
+            cur=merge_tree->getNextNode();
             ancestor=tmp;
         }
     }
@@ -295,12 +295,24 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
     {
         CHECKP(cur);
         tmp = GETRIGHTPOINTER(cur);
-        if (tmp!=XNULL) 
+        if (tmp!=XNULL)
         {
             CHECKP(tmp);
-            if ((GETBLOCKBYNODE(tmp))->snode->type!=element)
-                tmp=GETRIGHTPOINTER(tmp);
-            if (tmp!=XNULL) 
+            while ((GETBLOCKBYNODE(tmp))->snode->type != element)
+            {
+                tmp = GETRIGHTPOINTER(tmp);
+
+                if (tmp == XNULL)
+                {
+                    break;
+                }
+                else
+                {
+                    CHECKP(tmp);
+                }
+            }
+
+            if (tmp!=XNULL)
             {
                 cur=tmp;
                 descstack.pop_back();
@@ -327,12 +339,12 @@ void PPAxisDescendant::next_document(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
-        
-        if(self) 
+
+        if(self)
         {
             /* Works just like self::document(element()) in this case! */
             xptr node = child.get(t).get_node();
-            
+
             if (node != XNULL)
             {
                 CHECKP(node);
@@ -357,7 +369,7 @@ void PPAxisDescendant::next_document(tuple &t)
 
 void PPAxisDescendant::next_element(tuple &t)
 {
-    if(nt_data.ncname_local) 
+    if(nt_data.ncname_local)
         next_qname(t);
     else
         next_wildcard_star(t);
@@ -370,7 +382,7 @@ void PPAxisDescendant::next_attribute(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
-        if(self) 
+        if(self)
         {
             /* Works just like self::attribute() in this case! */
             xptr node=child.get(t).get_node();
@@ -382,7 +394,7 @@ void PPAxisDescendant::next_attribute(tuple &t)
 
                 if (type != attribute) continue;
 
-                if (nt_data.ncname_local == NULL || 
+                if (nt_data.ncname_local == NULL ||
                     comp_qname_type(scm, nt_data.uri, nt_data.ncname_local, attribute)) return;
             }
         }
@@ -400,7 +412,7 @@ PPAxisDescendantAttr::PPAxisDescendantAttr(dynamic_context *_cxt_,
                                            operation_info _info_,
                                            PPOpIn _child_,
                                            NodeTestType _nt_type_,
-                                           NodeTestData _nt_data_) : 
+                                           NodeTestData _nt_data_) :
     PPAxisDescendant(_cxt_,_info_,_child_,_nt_type_,_nt_data_)
 {
 }
@@ -453,7 +465,7 @@ void PPAxisDescendantAttr::next_element(tuple &t)
 
 void PPAxisDescendantAttr::next_attribute(tuple &t)
 {
-    if(nt_data.ncname_local) 
+    if(nt_data.ncname_local)
         next_qname(t);
     else
         next_wildcard_star(t);
