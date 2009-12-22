@@ -868,7 +868,7 @@ namespace sedna
         n.deep_copy = getParentRequest().deep_copy;
 
         // check if prefix is redefined later with xmlns:
-        if (*n.pref != "" && n.attrs)
+        if (n.attrs)
         {
             ASTNodesVector::const_iterator cit;
 

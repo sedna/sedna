@@ -2077,7 +2077,7 @@ namespace sedna
         tuple_cell tc;
         childOffer off_this;
 
-        tc = string2tuple_cell(*n.cont, xs_string);
+        tc = string2tuple_cell(n.cont ? *n.cont : "", xs_string);
         cont = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
 
         off_this.opin.op = new PPNamespaceConstructor(dyn_cxt, createOperationInfo(n), n.name->c_str(), cont);
@@ -2544,6 +2544,8 @@ namespace sedna
         off_this.opin = PPOpIn(new PPFnExists(dyn_cxt, createOperationInfo(n), op), 1);
 
         setOffer(off_this);
+
+        bound_vars.pop_back();
     }
 
     void lr2por::visit(ASTQuery &n)
