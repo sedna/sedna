@@ -356,7 +356,26 @@ namespace sedna
 
     void lr2por::visit(ASTOption &n)
     {
-        // nothing to do
+        std::vector<ASTOption::option>::const_iterator it;
+        if (*n.local == "output")
+        {
+            for (it = n.options->begin(); it != n.options->end(); it++)
+            {
+                if (it->first == "method" && it->second == "xml")
+                    dynamic_context::output_method = se_output_method_xml;
+                else if (it->first == "indent" && it->second == "yes")
+                    st_cxt->output_indent = se_output_indent_yes;
+                else if (it->first == "indent" && it->second == "no")
+                    st_cxt->output_indent = se_output_indent_no;
+            }
+        }
+        else if (*n.local == "character-map")
+        {
+            for (it = n.options->begin(); it != n.options->end(); it++)
+            {
+                dynamic_context::add_char_mapping(it->first.c_str(), it->second.c_str());
+            }
+        }
     }
 
     void lr2por::visit(ASTOrdExpr &n)
