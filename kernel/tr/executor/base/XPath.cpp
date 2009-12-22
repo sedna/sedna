@@ -227,6 +227,7 @@ void NodeTest::print_to_lr(std::ostream& str)
                                                                         data.uri,
                                                                         str);
                                                str << ")";
+                                               break;
 
         case node_test_attribute             : str << "attribute (";
                                                if(NULL != data.ncname_local)
@@ -235,6 +236,8 @@ void NodeTest::print_to_lr(std::ostream& str)
                                                                         data.uri,
                                                                         str);
                                                str << ")";
+                                               break;
+
         case node_test_document              : str << "document (";
                                                if(NULL != data.ncname_local)
                                                    xs_QName_print_to_lr(data.ncname_prefix,
@@ -242,8 +245,7 @@ void NodeTest::print_to_lr(std::ostream& str)
                                                                         data.uri,
                                                                         str);
                                                str << ")";
-
-
+                                               break;
 
         case node_test_qname                 : str << "qname (";
                                                xs_QName_print_to_lr(data.ncname_prefix,
@@ -252,13 +254,16 @@ void NodeTest::print_to_lr(std::ostream& str)
                                                                     str);
                                                str << ")";
                                                break;
+
         case node_test_wildcard_star         : str << "wildcard_star ()"; break;
         case node_test_wildcard_ncname_star  : str << "wildcard_ncname_star ";
                                                xs_anyURI_print_to_lr(data.uri, str);
                                                break;
+
         case node_test_wildcard_star_ncname  : str << "wildcard_star_ncname ";
                                                xs_NCName_print_to_lr(data.ncname_local, str);
                                                break;
+
         default                              : str << "UNKNOWN";
     }
     str << ")";

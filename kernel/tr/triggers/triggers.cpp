@@ -635,7 +635,7 @@ trigger_cell_xptr create_trigger (
     {
         trc->trigger_action = (trigger_action_cell*)malloc(sizeof(trigger_action_cell));
         trigger_action_cell* trac = trc->trigger_action;
-        for(int i = 0; i < action->size(); i++)
+        for(int i = 0; i < action->size(); i += 2)
         {
             trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
             strcpy(trac->statement,action->at(i).internal.str);
@@ -654,7 +654,7 @@ trigger_cell_xptr create_trigger (
                 trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
                 strcpy(trac->statement,action->at(i).internal.str);
             }*/
-            if(i==action->size()-1)
+            if(i==action->size()-2)
                 trac->next = NULL;
             else
                 trac->next = (trigger_action_cell*)malloc(sizeof(trigger_action_cell));
@@ -784,7 +784,7 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
                 if(!trac->is_query) // update
                 {
                     bta.action_qep_subtree = NULL;
-                    bta.action_qep_tree = build_qep(trac->statement, true);
+                    qep_tree = bta.action_qep_tree = build_qep(trac->statement, true);
                     is_qep_built = true;
 
                     qep_tree->open();
@@ -795,10 +795,10 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
                 else // query
                 {
                     bta.action_qep_tree = NULL;
-                    bta.action_qep_subtree = build_subqep(trac->statement, true);
+                    qep_subtree = bta.action_qep_subtree = build_subqep(trac->statement, true);
                     is_subqep_built = true;
 
-                    bta.action_qep_subtree->tree.op->open();
+                    qep_subtree->tree.op->open();
                     is_subqep_opened = true;
 
                     built_trigger_actions_vec.push_back(bta);

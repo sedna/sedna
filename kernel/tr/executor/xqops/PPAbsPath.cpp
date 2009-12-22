@@ -18,44 +18,44 @@
 
 /**
  * The goal of this operation is to provide efficient execution for absolute
- * path expressions (XPath expressions from the root of a document), which 
- * could be evaluated using document schema. 
+ * path expressions (XPath expressions from the root of a document), which
+ * could be evaluated using document schema.
  * These expressions must satisfy the following part of the XQuery grammar.
  *
 
 PathExpr    ::=    ("/" RelativePathExpr?) |  ("//" RelativePathExpr)
-RelativePathExpr    ::=    StepExpr (("/" |  "//") StepExpr)* 
+RelativePathExpr    ::=    StepExpr (("/" |  "//") StepExpr)*
 
 StepExpr    ::=    ForwardStep
-ForwardStep    ::=    (ForwardAxis NodeTest) |  AbbreviatedForwardStep 
+ForwardStep    ::=    (ForwardAxis NodeTest) |  AbbreviatedForwardStep
 
 ForwardAxis    ::=    <"child" "::">
                    |  <"descendant" "::">
                    |  <"attribute" "::">
                    |  <"self" "::">
-                   |  <"descendant-or-self" "::"> 
+                   |  <"descendant-or-self" "::">
 
-AbbreviatedForwardStep    ::=    "." |  ("@" NameTest) |  NodeTest 
+AbbreviatedForwardStep    ::=    "." |  ("@" NameTest) |  NodeTest
 
-NodeTest    ::=    KindTest |  NameTest 
-NameTest    ::=    QName |  Wildcard 
-Wildcard    ::=    "*" |  <NCName ":" "*"> |  <"*" ":" NCName> 
-KindTest    ::=    ProcessingInstructionTest 
-                |  CommentTest 
-                |  TextTest 
-                |  AnyKindTest 
-ProcessingInstructionTest    ::=    <"processing-instruction" "("> StringLiteral? ")" 
-CommentTest    ::=    <"comment" "("> ")" 
-TextTest    ::=    <"text" "("> ")" 
-AnyKindTest    ::=    <"node" "("> ")" 
+NodeTest    ::=    KindTest |  NameTest
+NameTest    ::=    QName |  Wildcard
+Wildcard    ::=    "*" |  <NCName ":" "*"> |  <"*" ":" NCName>
+KindTest    ::=    ProcessingInstructionTest
+                |  CommentTest
+                |  TextTest
+                |  AnyKindTest
+ProcessingInstructionTest    ::=    <"processing-instruction" "("> StringLiteral? ")"
+CommentTest    ::=    <"comment" "("> ")"
+TextTest    ::=    <"text" "("> ")"
+AnyKindTest    ::=    <"node" "("> ")"
 
  */
 
 
 
-PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
-                     operation_info _info_, 
-                     PathExpr *_path_expr_, 
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
+                     operation_info _info_,
+                     PathExpr *_path_expr_,
                      counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_, _info_),
                                                         path_expr(_path_expr_),
                                                         db_ent(_db_ent_),
@@ -65,8 +65,8 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 }
 
 PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
-                     operation_info _info_, 
-                     PathExpr *_path_expr_, 
+                     operation_info _info_,
+                     PathExpr *_path_expr_,
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_) : PPIterator(_cxt_, _info_),
                                       path_expr(_path_expr_),
@@ -76,9 +76,9 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 {
 }
 
-PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
-                     operation_info _info_, 
-                     PathExpr *_path_expr_, 
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
+                     operation_info _info_,
+                     PathExpr *_path_expr_,
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_,
                      schema_node_xptr _root_) : PPIterator(_cxt_, _info_),
@@ -136,13 +136,13 @@ void PPAbsPath::do_close()
 
 void PPAbsPath::do_next(tuple &t)
 {
-    if (root == XNULL) 
-    if (determine_root()) 
+    if (root == XNULL)
+    if (determine_root())
     {
         t.set_eos();
         return;
     }
-      
+
     if (scmnodes_num < 0)
         create_merged_seq(scmnodes_num, merged_seq_arr, root, path_expr);
     else
@@ -156,7 +156,7 @@ void PPAbsPath::do_next(tuple &t)
         merged_seq_arr = NULL;
         scmnodes_num = -1;
 		root = XNULL;	// there is no need for reopen, because it was called automatically
-						// when we obtained root (eos was reached) 
+						// when we obtained root (eos was reached)
 
         t.set_eos();
     }
@@ -231,7 +231,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
 
     // create and fill merged_seq_arr
     merged_seq_arr = se_new xptr[scmnodes_num];
-    for (int i = 0; i < scmnodes_num; i++) 
+    for (int i = 0; i < scmnodes_num; i++)
     {
         xptr first_blk = getUnemptyBlockFore(nodes[i]->bblk);
         if (first_blk == XNULL) merged_seq_arr[i] = XNULL;
@@ -253,6 +253,5 @@ bool PPAbsPath::isDocCollFunCall() const
 
 void PPAbsPath::setPathExpr(PathExpr *pe)
 {
-    U_ASSERT(path_expr->s == 0);
     path_expr = pe;
 }

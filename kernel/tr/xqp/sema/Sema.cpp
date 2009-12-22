@@ -438,7 +438,7 @@ namespace sedna
         bound_vars.pop_back();
         bound_vars.pop_back();
 
-        if (!getDocCollFromAbsXPathAndCheck(n.path, true))
+        if (!getDocCollFromAbsXPathAndCheck(n.path, false))
             return;
 
         if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
@@ -1046,8 +1046,6 @@ namespace sedna
 
     void Sema::visit(ASTLet &n)
     {
-        bool param_ok;
-
         n.expr->accept(*this);
 
         setParamMode();
@@ -2398,22 +2396,38 @@ namespace sedna
     ASTNode *Sema::getDocCollFromAbsXPathAndCheck(ASTNode *path, bool relative)
     {
         ASTFunCall *f = dynamic_cast<ASTFunCall *>(path);
+
         if (f && *f->int_name == "!fn!collection")
-            return f;
-        else if (f && *f->int_name == "!fn!document")
         {
-            if (f->params->size() == 2)
+            if (relative)
             {
-                drv->error(f->getLocation(), SE5049, "document in collection is not permitted in on-XPath");
+                drv->error(f->getLocation(), SE5049, "by-XPath must not start with fn:collection");
                 return NULL;
             }
 
-            return f;
+            return f->params->at(0);
+        }
+        else if (f && *f->int_name == "!fn!document")
+        {
+            if (relative)
+            {
+                drv->error(f->getLocation(), SE5049, "by-XPath must not start with fn:doc");
+                return NULL;
+            }
+
+            if (f->params->size() == 2)
+            {
+                drv->error(f->getLocation(), SE5049, std::string("document-in-collection is not permitted in ") +
+                        (relative ? "by-" : "on-") + "XPath");
+                return NULL;
+            }
+
+            return f->params->at(0);
         }
         else if (f)
         {
             drv->error(f->getLocation(), SE5049, std::string("function call ") + *f->pref + ((*f->pref == "") ? "" : ":") +
-                    *f->local + " is not permitted in on-XPath");
+                    *f->local + " is not permitted in " + (relative ? "by-" : "on-") + "XPath");
             return NULL;
         }
 
@@ -2431,7 +2445,8 @@ namespace sedna
                 case ASTAxisStep::SELF:
                     if (a->preds)
                     {
-                        drv->error(a->getLocation(), SE5049, std::string("predicates are not permitted in on-XPath in this statement"));
+                        drv->error(a->getLocation(), SE5049, std::string("predicates are not permitted in ") +
+                                (relative ? "by-" : "on-") + "XPath in this statement");
                         return NULL;
                     }
 
@@ -2440,11 +2455,16 @@ namespace sedna
                         drv->error(a->getLocation(), SE5049, "on-XPath must start with fn:doc or fn:collection");
                         return NULL;
                     }
+                    else if (!a->cont) // relatieve xpath is finished -- ok
+                    {
+                        return a;
+                    }
 
                     return Sema::getDocCollFromAbsXPathAndCheck(a->cont, relative);
                     break;
                 default:
-                    drv->error(a->getLocation(), SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on-XPath");
+                    drv->error(a->getLocation(), SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in " +
+                            (relative ? "by-" : "on-") + "XPath");
                     return NULL;
             }
         }
@@ -2453,7 +2473,8 @@ namespace sedna
         {
             if (f->expr || f->preds)
             {
-                drv->error(f->getLocation(), SE5049, std::string("filter steps are not permitted in on-XPath in this statement"));
+                drv->error(f->getLocation(), SE5049, std::string("filter steps are not permitted in ") +
+                        (relative ? "by-" : "on-") + "XPath in this statement");
                 return NULL;
             }
 
@@ -2462,11 +2483,15 @@ namespace sedna
                 drv->error(f->getLocation(), SE5049, "on-XPath must start with fn:doc or fn:collection");
                 return NULL;
             }
+            else if (!f->cont) // relatieve xpath is finished -- ok
+            {
+                return f;
+            }
 
             return Sema::getDocCollFromAbsXPathAndCheck(f->cont, relative);
         }
 
-        drv->error(path->getLocation(), SE5049, "incorrect on-XPath");
+        drv->error(path->getLocation(), SE5049, std::string("incorrect ") + (relative ? "by-" : "on-") + "XPath");
 
         return NULL;
     }
