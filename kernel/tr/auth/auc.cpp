@@ -710,7 +710,7 @@ void auth_for_load_document(const char* doc_name)
             then \
                 () \
             else \
-                error(QName('http://www.modis.ispras.ru/sedna','SE3072'), 'User does not have CREATE-DOCUMENT privilege')";
+                error(QName('http://www.modis.ispras.ru/sedna','SE3072'), 'User does not have LOAD privilege on database')";
 
 
     std::string update_xquery =
@@ -990,7 +990,7 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
             then \
                 () \
             else \
-                error(QName('http://www.modis.ispras.ru/sedna','SE3065'), 'User does not have CREATE-DOCUMENT privilege on the collection')";
+                error(QName('http://www.modis.ispras.ru/sedna','SE3065'), 'User does not have LOAD privilege on the collection')";
 
     try
     {
@@ -1687,7 +1687,7 @@ void auth_for_create_role(const char* name)
     std::string q1 = "\
             if (doc('%db_sec_doc%')/db_security_data/roles/role[role_name='%role%'] or '%role%' = 'DBA' or '%role%' = 'PUBLIC')\
             then\
-                fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3080'), 'Role %role% already exists')\
+                fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3080'), 'Role with this name already exists')\
             else\
                 fn:true()";
 
@@ -2062,6 +2062,233 @@ void auth_for_grant_privilege(const char* name, const char *obj_name, const char
         find_replace_str(&q2, "%obj_type%", obj_type);
         find_replace_str(&q2, "%obj_name%", obj_name);
     }
+
+    try
+    {
+        tuple t = tuple(1);
+
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
+        output_enabled = tr_globals::client->disable_output();
+
+        // first subquery
+        aqtree = build_subqep(q1.c_str(), false);
+        is_qepsubtree_built = true;
+
+        aqtree->tree.op->open();
+        is_qepsubtree_opened = true;
+
+        aqtree->tree.op->next(t);
+
+        aqtree->tree.op->close();
+        is_qepsubtree_opened = false;
+
+        delete_qep(aqtree);
+        is_qepsubtree_built = false;
+
+        // update query
+        qep_tree = build_qep(q2.c_str(), false);
+        is_qep_built = true;
+
+        qep_tree->open();
+        is_qep_opened = true;
+
+        qep_tree->execute();
+
+        qep_tree->close();
+        is_qep_opened = false;
+
+        delete_qep_unmanaged(qep_tree);
+        is_qep_built = false;
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        if (output_enabled)
+            tr_globals::client->enable_output();
+    }
+    catch(SednaUserException &e)
+    {
+        if(is_qepsubtree_opened)
+            aqtree->tree.op->close();
+        if(is_qepsubtree_built)
+            delete_qep(aqtree);
+        if(is_qep_opened)
+            qep_tree->close();
+        if(is_qep_built)
+            delete_qep_unmanaged(qep_tree);
+        if(output_enabled)
+            tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        throw;
+    }
+}
+
+void auth_for_revoke_privilege(const char* name, const char *obj_name, const char *obj_type, const char *grantee)
+{
+    PPQueryEssence* qep_tree   = NULL;
+    qep_subtree *aqtree        = NULL;
+    bool is_qep_opened         = false;
+    bool is_qep_built          = false;
+    bool is_qepsubtree_opened  = false;
+    bool is_qepsubtree_built   = false;
+    bool output_enabled        = false;
+    std::string q1, q2;
+
+    if (!obj_type)
+    {
+        q1 = "if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'])\
+              then\
+                 fn:true()\
+              else\
+                 fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3075'), 'Only DBA is allowed to revoke database privileges')";
+
+        q2 =
+            "update delete \
+                 (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']/privileges/privilege[pr_name='%name%'],\
+                  doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%grantee%']/privileges/privilege[pr_name='%name%'])";
+
+        find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q1, "%user%", tr_globals::login);
+
+        find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q2, "%name%", name);
+        find_replace_str(&q2, "%grantee%", grantee);
+    }
+    else
+    {
+        q1 =
+           "let $p1 := doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']/privileges/privilege\
+                        [pr_name = '%name%' and fn:deep-equal(database_obj, <database_obj type_obj='%obj_type%'>%obj_name%</database_obj>)],\
+                $p2 := doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%grantee%']/privileges/privilege\
+                        [pr_name = '%name%' and fn:deep-equal(database_obj, <database_obj type_obj='%obj_type%'>%obj_name%</database_obj>)]\
+            return\
+                if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'])\
+                then\
+                    fn:true()\
+                else if ((empty($p1) or $p1/grantor='%user%') and (empty($p2) or $p2/grantor='%user%'))\
+                    then\
+                        fn:true()\
+                    else\
+                        fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3075'), 'Not allowed to revoke this privilege')";
+
+        q2 =
+            "update delete\
+                 (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']/privileges/privilege\
+                    [pr_name = '%name%' and fn:deep-equal(database_obj, <database_obj type_obj='%obj_type%'>%obj_name%</database_obj>)],\
+                  doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%grantee%']/privileges/privilege\
+                    [pr_name = '%name%' and fn:deep-equal(database_obj, <database_obj type_obj='%obj_type%'>%obj_name%</database_obj>)])";
+
+        find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q1, "%user%", tr_globals::login);
+        find_replace_str(&q1, "%name%", name);
+        find_replace_str(&q1, "%grantee%", grantee);
+        find_replace_str(&q1, "%obj_type%", obj_type);
+        find_replace_str(&q1, "%obj_name%", obj_name);
+
+        find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&q2, "%name%", name);
+        find_replace_str(&q2, "%grantee%", grantee);
+        find_replace_str(&q2, "%obj_type%", obj_type);
+        find_replace_str(&q2, "%obj_name%", obj_name);
+    }
+
+    try
+    {
+        tuple t = tuple(1);
+
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
+        output_enabled = tr_globals::client->disable_output();
+
+        // first subquery
+        aqtree = build_subqep(q1.c_str(), false);
+        is_qepsubtree_built = true;
+
+        aqtree->tree.op->open();
+        is_qepsubtree_opened = true;
+
+        aqtree->tree.op->next(t);
+
+        aqtree->tree.op->close();
+        is_qepsubtree_opened = false;
+
+        delete_qep(aqtree);
+        is_qepsubtree_built = false;
+
+        // update query
+        qep_tree = build_qep(q2.c_str(), false);
+        is_qep_built = true;
+
+        qep_tree->open();
+        is_qep_opened = true;
+
+        qep_tree->execute();
+
+        qep_tree->close();
+        is_qep_opened = false;
+
+        delete_qep_unmanaged(qep_tree);
+        is_qep_built = false;
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        if (output_enabled)
+            tr_globals::client->enable_output();
+    }
+    catch(SednaUserException &e)
+    {
+        if(is_qepsubtree_opened)
+            aqtree->tree.op->close();
+        if(is_qepsubtree_built)
+            delete_qep(aqtree);
+        if(is_qep_opened)
+            qep_tree->close();
+        if(is_qep_built)
+            delete_qep_unmanaged(qep_tree);
+        if(output_enabled)
+            tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        throw;
+    }
+}
+
+void auth_for_revoke_role(const char* name, const char *grantee)
+{
+    PPQueryEssence* qep_tree   = NULL;
+    qep_subtree *aqtree        = NULL;
+    bool is_qep_opened         = false;
+    bool is_qep_built          = false;
+    bool is_qepsubtree_opened  = false;
+    bool is_qepsubtree_built   = false;
+    bool output_enabled        = false;
+
+    // checks if we have privilege
+    std::string q1 =
+       "if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'])\
+        then\
+            fn:true()\
+        else if ((doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']/role\
+                    [@role_name = '%role%' and @grantor='%user%']))\
+            then\
+                fn:true()\
+            else\
+                fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3076'), 'Not allowed to revoke this role')";
+
+    // update for grantee-user
+    std::string q2 = "update delete\
+                           doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%grantee%']/role[@role_name='%role%']";
+
+
+    find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q1, "%user%", tr_globals::login);
+    find_replace_str(&q1, "%grantee%", grantee);
+    find_replace_str(&q1, "%role%", name);
+
+    find_replace_str(&q2, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+    find_replace_str(&q2, "%grantee%", grantee);
+    find_replace_str(&q2, "%role%", name);
 
     try
     {

@@ -103,10 +103,36 @@ public:
     ~PPGrantRole();
 };
 
-class PPGrantPriv : public PPUpdate
+class PPGrantRevokePriv : public PPUpdate
 {
     PPOpIn name, obj_name, grantee;
     const char *obj_type;
+    dynamic_context *cxt;
+    bool to_revoke;
+
+public:
+    void open();
+    void close();
+    void execute();
+
+    PPGrantRevokePriv(PPOpIn _name_,
+                PPOpIn _obj_name_,
+                PPOpIn _grantee_,
+                const char *_obj_type_,
+                dynamic_context *_cxt_,
+                bool _revoke_);
+
+    PPGrantRevokePriv(PPOpIn _name_,
+                PPOpIn _grantee_,
+                dynamic_context *_cxt_,
+                bool _revoke_);
+
+    ~PPGrantRevokePriv();
+};
+
+class PPRevokeRole : public PPUpdate
+{
+    PPOpIn role, grantee;
     dynamic_context *cxt;
 
 public:
@@ -114,17 +140,10 @@ public:
     void close();
     void execute();
 
-    PPGrantPriv(PPOpIn _name_,
-                PPOpIn _obj_name_,
-                PPOpIn _grantee_,
-                const char *_obj_type_,
-                dynamic_context *_cxt_);
-
-    PPGrantPriv(PPOpIn _name_,
-                PPOpIn _grantee_,
-                dynamic_context *_cxt_);
-
-    ~PPGrantPriv();
+    PPRevokeRole(PPOpIn _role_,
+                 PPOpIn _grantee_,
+                 dynamic_context *_cxt_);
+    ~PPRevokeRole();
 };
 
 #endif

@@ -349,23 +349,25 @@ void PPGrantRole::execute()
 
 // PPGrantRole
 
-PPGrantPriv::PPGrantPriv(PPOpIn _name_,
+PPGrantRevokePriv::PPGrantRevokePriv(PPOpIn _name_,
                          PPOpIn _obj_name_,
                          PPOpIn _grantee_,
                          const char *_obj_type_,
-                         dynamic_context *_cxt_) : name(_name_), obj_name(_obj_name_), grantee(_grantee_), obj_type(_obj_type_), cxt(_cxt_)
+                         dynamic_context *_cxt_,
+                         bool _revoke_) : name(_name_), obj_name(_obj_name_), grantee(_grantee_), obj_type(_obj_type_), cxt(_cxt_), to_revoke(_revoke_)
 {
 }
 
-PPGrantPriv::PPGrantPriv(PPOpIn _name_,
+PPGrantRevokePriv::PPGrantRevokePriv(PPOpIn _name_,
                          PPOpIn _grantee_,
-                         dynamic_context *_cxt_) : name(_name_), grantee(_grantee_), cxt(_cxt_)
+                         dynamic_context *_cxt_,
+                         bool _revoke_) : name(_name_), grantee(_grantee_), cxt(_cxt_), to_revoke(_revoke_)
 {
     obj_name.op = NULL;
     obj_type = "db";
 }
 
-PPGrantPriv::~PPGrantPriv()
+PPGrantRevokePriv::~PPGrantRevokePriv()
 {
     delete name.op;
     name.op = NULL;
@@ -380,7 +382,7 @@ PPGrantPriv::~PPGrantPriv()
     cxt = NULL;
 }
 
-void PPGrantPriv::open()
+void PPGrantRevokePriv::open()
 {
     dynamic_context::global_variables_open();
     name.op->open();
@@ -392,7 +394,7 @@ void PPGrantPriv::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPGrantPriv::close()
+void PPGrantRevokePriv::close()
 {
     name.op->close();
 
@@ -403,7 +405,7 @@ void PPGrantPriv::close()
     dynamic_context::global_variables_close();
 }
 
-void PPGrantPriv::execute()
+void PPGrantRevokePriv::execute()
 {
     tuple_cell tc_name, tc_grantee;
     tuple t(1);
@@ -448,10 +450,81 @@ void PPGrantPriv::execute()
 
         tc_obj = tuple_cell::make_sure_light_atomic(tc_obj);
 
-        auth_for_grant_privilege(tc_name.get_str_mem(), tc_obj.get_str_mem(), obj_type, tc_grantee.get_str_mem());
+        if (to_revoke)
+            auth_for_revoke_privilege(tc_name.get_str_mem(), tc_obj.get_str_mem(), obj_type, tc_grantee.get_str_mem());
+        else
+            auth_for_grant_privilege(tc_name.get_str_mem(), tc_obj.get_str_mem(), obj_type, tc_grantee.get_str_mem());
     }
     else
     {
-        auth_for_grant_privilege(tc_name.get_str_mem(), NULL, NULL, tc_grantee.get_str_mem());
+        if (to_revoke)
+            auth_for_revoke_privilege(tc_name.get_str_mem(), NULL, NULL, tc_grantee.get_str_mem());
+        else
+            auth_for_grant_privilege(tc_name.get_str_mem(), NULL, NULL, tc_grantee.get_str_mem());
     }
+}
+
+// PPRevokeRole
+
+PPRevokeRole::PPRevokeRole(PPOpIn _role_, PPOpIn _grantee_, dynamic_context *_cxt_) : role(_role_), grantee(_grantee_), cxt(_cxt_)
+{
+}
+
+PPRevokeRole::~PPRevokeRole()
+{
+    delete role.op;
+    role.op = NULL;
+
+    delete grantee.op;
+    grantee.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
+}
+
+void PPRevokeRole::open()
+{
+    dynamic_context::global_variables_open();
+    role.op->open();
+    grantee.op->open();
+    local_lock_mrg->lock(lm_x);
+}
+
+void PPRevokeRole::close()
+{
+    role.op->close();
+    grantee.op->close();
+    dynamic_context::global_variables_close();
+}
+
+void PPRevokeRole::execute()
+{
+    tuple_cell tc_role, tc_grantee;
+    tuple t(1);
+
+    role.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_role = role.get(t);
+    if (!tc_role.is_atomic() || tc_role.get_atomic_type() != xs_string)
+        throw USER_EXCEPTION(SE1071);
+
+    role.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_role = tuple_cell::make_sure_light_atomic(tc_role);
+
+    grantee.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_grantee = grantee.get(t);
+    if (!tc_grantee.is_atomic() || tc_grantee.get_atomic_type() != xs_string)
+        throw USER_EXCEPTION(SE1071);
+
+    grantee.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+    tc_grantee = tuple_cell::make_sure_light_atomic(tc_grantee);
+
+    auth_for_revoke_role(tc_role.get_str_mem(), tc_grantee.get_str_mem());
 }
