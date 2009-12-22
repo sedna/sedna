@@ -38,21 +38,21 @@ private:
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPAbsPath(dynamic_context *_cxt_,
-              operation_info _info_, 
-              PathExpr *_path_expr_, 
+              operation_info _info_,
+              PathExpr *_path_expr_,
               counted_ptr<db_entity> _db_ent_);
 
-    PPAbsPath(dynamic_context *_cxt_, 
-              operation_info _info_, 
-              PathExpr *_path_expr_, 
+    PPAbsPath(dynamic_context *_cxt_,
+              operation_info _info_,
+              PathExpr *_path_expr_,
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_);
-    
-    PPAbsPath(dynamic_context *_cxt_, 
+
+    PPAbsPath(dynamic_context *_cxt_,
               operation_info _info_,
-              PathExpr *_path_expr_, 
+              PathExpr *_path_expr_,
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_,
               schema_node_xptr _root_);
@@ -60,6 +60,16 @@ public:
 
     bool isDocCollFunCall() const; // true, if PPAbsPath is just wrapping over fn:document/fn:collection call
     void setPathExpr(PathExpr *pe); // to set path expression later on qep construction
+
+    PathExpr *getPathExpr() // use it to get path_expr to use it in some other operation (i.e. when PPAbsPath just a container)
+    {
+        return path_expr;
+    }
+
+    counted_ptr<db_entity> getDocColl() // use it to get document/collection entity (i.e. when PPAbsPath just a container)
+    {
+        return db_ent;
+    }
 };
 
 

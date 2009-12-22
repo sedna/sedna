@@ -1013,22 +1013,21 @@ namespace sedna
             parentRequest req(getParentRequest());
 
             // we propagate distinctOnly here iff the primary expression doesn't use the context of the previous step
-            // if it does, then it could expose absence of mandatory ordering using position(), last() or . ops
-            // For now, we add explicit $%v in all functions that use context so expression below should tell us exactly if
-            // we are dependent on context
-            // TODO: refine it later to avoid distinct-only iff position is used
-            req.distinctOnly = (off_pe.usedVars.find("$%v") == off_pe.usedVars.end()) && getParentRequest().distinctOnly;
+            // if it does, then it could expose absence of mandatory ordering using position()
+            req.distinctOnly = !n.use_pos && getParentRequest().distinctOnly;
             setParentRequest(req);
             n.cont->accept(*this);
             off_cont = getOffer();
+
+            // if we have context, we use its position and last, not global one (ex: .[a/position()])
+            off_this.use_last = false;
+            off_this.use_position = false;
 
             // if we have context item expression then the result will be dictated by the previous step
             if (!n.expr)
             {
                 off_this = off_pe = off_cont;
                 off_this.isCached = false;
-                off_this.use_last = false;
-                off_this.use_position = false;
                 off_pe.usedVars.insert("$%v"); // since . is a context
             }
             else

@@ -51,8 +51,7 @@ namespace sedna
                          std::vector<std::pair<std::string, std::string> > &opts, const char delim);
 
         void rewriteStdFunCall(ASTFunCall &n, std::string name);
-        ASTNode *getDocCollFromAbsXPath(ASTNode *path);
-        ASTNode *modifyRelIndexXPath(ASTNode *path, ASTNode *doccoll);
+        ASTNode *getDocCollFromAbsXPathAndCheck(ASTNode *path, bool relative);
         void getLeafAndTrimmedPath(ASTNode *path, std::string **ln, int *lt, ASTNode **t_path);
 
         void setParamMode();

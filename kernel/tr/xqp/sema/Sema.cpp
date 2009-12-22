@@ -364,7 +364,7 @@ namespace sedna
         n.path->accept(*this);
 
         // check path for well-formdness
-        if (getDocCollFromAbsXPath(n.path) == NULL)
+        if (getDocCollFromAbsXPathAndCheck(n.path, true) == NULL)
             return;
 
         if (*n.type == "xml" || *n.type == "string-value" || *n.type == "delimited-value" ||
@@ -398,17 +398,24 @@ namespace sedna
         n.name->accept(*this);
         n.on_path->accept(*this);
 
-        // by-path is relatieve so we should add $%v as bounded to avoid semantic errors
+        // by-path is relative so we should add $%v as bounded to avoid semantic errors
         bound_vars.push_back(XQVariable("$%v", NULL));
         n.by_path->accept(*this);
         bound_vars.pop_back();
 
         n.type->accept(*this);
 
-        if ((doccoll = getDocCollFromAbsXPath(n.on_path)) == NULL)
+        if ((doccoll = getDocCollFromAbsXPathAndCheck(n.on_path, false)) == NULL)
             return;
 
-        n.by_path = modifyRelIndexXPath(n.by_path, doccoll);
+        if (dynamic_cast<ASTLit *>(doccoll) == NULL)
+        {
+            drv->error(n.getLocation(), SE5049, "computed document name is prohibited in create-index statement");
+            return;
+        }
+
+        // check by-xpath as a relative
+        getDocCollFromAbsXPathAndCheck(n.by_path, true);
     }
 
     void Sema::visit(ASTCreateRole &n)
@@ -431,7 +438,7 @@ namespace sedna
         bound_vars.pop_back();
         bound_vars.pop_back();
 
-        if (!getDocCollFromAbsXPath(n.path))
+        if (!getDocCollFromAbsXPathAndCheck(n.path, true))
             return;
 
         if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
@@ -2455,7 +2462,7 @@ namespace sedna
         }
     }
 
-    ASTNode *Sema::getDocCollFromAbsXPath(ASTNode *path)
+    ASTNode *Sema::getDocCollFromAbsXPathAndCheck(ASTNode *path, bool relative)
     {
         ASTFunCall *f = dynamic_cast<ASTFunCall *>(path);
         if (f && *f->int_name == "!fn!collection")
@@ -2464,7 +2471,7 @@ namespace sedna
         {
             if (f->params->size() == 2)
             {
-                drv->error(f->getLocation(), SE5049, "document in collection instead of collection is not permitted in on-XPath");
+                drv->error(f->getLocation(), SE5049, "document in collection is not permitted in on-XPath");
                 return NULL;
             }
 
@@ -2478,7 +2485,7 @@ namespace sedna
         }
 
         if (ASTDDO *d = dynamic_cast<ASTDDO *>(path))
-            return Sema::getDocCollFromAbsXPath(d->expr);
+            return Sema::getDocCollFromAbsXPathAndCheck(d->expr, relative);
 
         if (ASTAxisStep *a = dynamic_cast<ASTAxisStep *>(path))
         {
@@ -2495,13 +2502,13 @@ namespace sedna
                         return NULL;
                     }
 
-                    if (!a->cont)
+                    if (!a->cont && !relative)
                     {
                         drv->error(a->getLocation(), SE5049, "on-XPath must start with fn:doc or fn:collection");
                         return NULL;
                     }
 
-                    return Sema::getDocCollFromAbsXPath(a->cont);
+                    return Sema::getDocCollFromAbsXPathAndCheck(a->cont, relative);
                     break;
                 default:
                     drv->error(a->getLocation(), SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in on-XPath");
@@ -2517,67 +2524,18 @@ namespace sedna
                 return NULL;
             }
 
-            if (!f->cont)
+            if (!f->cont && !relative)
             {
                 drv->error(f->getLocation(), SE5049, "on-XPath must start with fn:doc or fn:collection");
                 return NULL;
             }
 
-            return Sema::getDocCollFromAbsXPath(f->cont);
+            return Sema::getDocCollFromAbsXPathAndCheck(f->cont, relative);
         }
 
         drv->error(path->getLocation(), SE5049, "incorrect on-XPath");
 
         return NULL;
-    }
-
-    ASTNode* Sema::modifyRelIndexXPath(ASTNode *path, ASTNode *doccoll)
-    {
-        if (path == NULL)
-        {
-            return doccoll->dup();
-        }
-        else if (ASTDDO *d = dynamic_cast<ASTDDO *>(path))
-        {
-            d->expr = Sema::modifyRelIndexXPath(d->expr, doccoll);
-        }
-        else if (ASTAxisStep *a = dynamic_cast<ASTAxisStep *>(path))
-        {
-            switch (a->axis)
-            {
-                case ASTAxisStep::CHILD:
-                case ASTAxisStep::DESCENDANT:
-                case ASTAxisStep::DESCENDANT_OR_SELF:
-                case ASTAxisStep::ATTRIBUTE:
-                case ASTAxisStep::SELF:
-                    if (a->preds)
-                        drv->error(a->getLocation(), SE5049, std::string("predicates are not permitted in by-XPath in create index statement"));
-                    else
-                        a->cont = Sema::modifyRelIndexXPath(a->cont, doccoll);
-
-                    break;
-                default:
-                    drv->error(a->getLocation(), SE5049, std::string("axis ") + axis_str[a->axis] + "is not permitted in by-XPath in create index statement");
-                    break;
-            }
-        }
-        else if (ASTFilterStep *f = dynamic_cast<ASTFilterStep *>(path))
-        {
-            if (f->expr || f->preds)
-            {
-                drv->error(a->getLocation(), SE5049, std::string("filter steps are not permitted in by-XPath in this statement"));
-            }
-            else
-            {
-                f->cont = Sema::modifyRelIndexXPath(f->cont, doccoll);
-            }
-        }
-        else
-        {
-            drv->error(path->getLocation(), SE5049, "incorrect by-XPath in create index statement");
-        }
-
-        return path;
     }
 
     void Sema::getLeafAndTrimmedPath(ASTNode *path, std::string **ln, int *lt, ASTNode **t_path)

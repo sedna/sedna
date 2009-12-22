@@ -28,6 +28,7 @@ namespace sedna
             PPOpIn pred_cxt; // context for predicate evaluation (propagated from step)
             size_t var_count; // number of vars bound by for-let (for order-by PPSTuple)
             bool copy_constructor; // true, if constructed node will be deep-copied in place (see PPElementConstructor for example)
+            bool pers_abspath; // true, if we need to start abs-path from relatieve path and we need it persistent(take create-index as an example)
             // NOTE: true is always safe, false allows small optimization when node is inserted in its intended place
 
             parentRequest()
