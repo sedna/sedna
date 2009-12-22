@@ -28,7 +28,7 @@ ft_index_type str2index_type(const char *str)
 }
 
 PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
-                                 char *_index_type_,
+                                 const char *_index_type_,
                                  counted_ptr<db_entity> _db_ent_,
                                  PPOpIn _index_name_,
                                  PPOpIn _cust_rules_,
@@ -49,7 +49,7 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
 	index_type = str2index_type(_index_type_);
 }
 PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
-                                 char *_index_type_,
+                                 const char *_index_type_,
                                  counted_ptr<db_entity> _db_ent_,
                                  PPOpIn _index_name_,
                                  dynamic_context *_cxt_) :
@@ -122,12 +122,12 @@ ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context 
 		if (prefix!=NULL)
 		{
 			ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
-			delete prefix;			
+			delete prefix;
 		}
 		char* name = se_new char[strlen(qname)+1];
 		strcpy(name, qname);
 		std::pair<xmlns_ptr, char*> tag(ns, name);
-	
+
 		cust_rules->op->next(t);
 		if (t.is_eos())
 			throw USER_EXCEPTION(SE1071);

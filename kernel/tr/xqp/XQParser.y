@@ -3481,10 +3481,6 @@ metadataExpr:
         {
             $$ = new ASTMetaSchemaCol(@$, $6);
         }
-    |   RETRIEVE DESCRIPTIVE _SCHEMA_ _FOR_ _DOCUMENT_ expr _IN_ COLLECTION expr
-        {
-            $$ = new ASTMetaSchemaDoc(@$, $6, $9);
-        }
     ;
 
 updateExpr:

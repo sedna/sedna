@@ -36,13 +36,13 @@ public:
     void execute();
 
     PPCreateFtIndex(PathExpr *_object_path_,
-                    char* _index_type_,
+                    const char* _index_type_,
                     counted_ptr<db_entity> _db_ent_,
                     PPOpIn _index_name_,
                     PPOpIn _cust_rules_,
                     dynamic_context *_cxt_);
     PPCreateFtIndex(PathExpr *_object_path_,
-                    char *_index_type_,
+                    const char *_index_type_,
                     counted_ptr<db_entity> _db_ent_,
                     PPOpIn _index_name_,
                     dynamic_context *_cxt_);
