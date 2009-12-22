@@ -989,7 +989,7 @@ sedna-err:SE3206
 ######################################################################
 sedna-err:SE4001
 
-    XQuery parser syntax error.
+    XQuery parser internal error.
 sedna-err:SE4002
 
     Unexpected type of the query given.

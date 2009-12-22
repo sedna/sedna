@@ -15,6 +15,7 @@
 #include "tr/xqp/XQueryModule.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/xqops/PPOrderBy.h"
+#include "tr/executor/xqops/PPCalculate.h"
 
 namespace sedna
 {
@@ -41,6 +42,7 @@ namespace sedna
         {
             PPOpIn opin;      // subtree for the expression
             arr_of_orb_modifier orbs; // order-by modifiers
+
             sequence_type st;  // type for typed vars
             std::string lr_path; // for indexes, triggers, abs_path expressions
             std::string test_type; // for node-test in axis steps (type of test, e.g node, pi)
@@ -74,6 +76,11 @@ namespace sedna
 
         unsigned int var_num;
 
+        // some special stuff for PPCalculate
+        int var_op_num; // leaf nums for ppcalculate operations
+        CalcOp *op_tree; // tree of CalcOps for ppcalculate
+        arr_of_PPOpIn *calc_ops; // operations for ppcalculate
+
         void setParamMode();
         void unsetParamMode();
 
@@ -88,6 +95,9 @@ namespace sedna
         void setParentRequest(const parentRequest &preq);
 
         var_id getVarNum();
+        CalcOp *make_CalcOp(ASTNode *n, bool logical);
+        void make_binary_op(ASTBop &n);
+        void make_unary_op(ASTUop &n);
 
         static operation_info createOperationInfo(const ASTNode &n);
         static void alterOffer(childOffer &off_this, const childOffer &off);
@@ -104,6 +114,7 @@ namespace sedna
             st_cxt = st_cxt_;
             qep = NULL;
             var_num = 0;
+            var_op_num = -1;
         }
 
         ~lr2por()
