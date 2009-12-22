@@ -260,6 +260,7 @@ void PPDropRole::close()
 {
     rolename.op->close();
     dynamic_context::global_variables_close();
+    clear_authmap();
 }
 
 void PPDropRole::execute()
@@ -313,6 +314,7 @@ void PPGrantRole::close()
     role.op->close();
     grantee.op->close();
     dynamic_context::global_variables_close();
+    clear_authmap();
 }
 
 void PPGrantRole::execute()
@@ -403,6 +405,7 @@ void PPGrantRevokePriv::close()
 
     grantee.op->close();
     dynamic_context::global_variables_close();
+    clear_authmap();
 }
 
 void PPGrantRevokePriv::execute()
@@ -495,6 +498,7 @@ void PPRevokeRole::close()
     role.op->close();
     grantee.op->close();
     dynamic_context::global_variables_close();
+    clear_authmap();
 }
 
 void PPRevokeRole::execute()
