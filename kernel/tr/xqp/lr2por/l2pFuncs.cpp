@@ -311,7 +311,12 @@ PPOpIn l2pFnDistinctValues(dynamic_context *dyn_cxt, const operation_info &opi, 
 
 PPOpIn l2pFnDoc(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
-    throw USER_EXCEPTION2(SE4001, "using fn:doc from general functions generator!");
+    PPOpIn res;
+
+    // here we always get two parameters since fn:doc() with one arg becomes PPAbsPath in lr2por
+    res = PPOpIn(new PPDocInCol(dyn_cxt, opi, params[1], params[0]), 1);
+
+    return res;
 }
 
 PPOpIn l2pFnDocAvailable(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
@@ -321,11 +326,6 @@ PPOpIn l2pFnDocAvailable(dynamic_context *dyn_cxt, const operation_info &opi, ar
     res = PPOpIn(new PPFnDocAvailable(dyn_cxt, opi, params[0]), 1);
 
     return res;
-}
-
-PPOpIn l2pFnDocument(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
-{
-    throw USER_EXCEPTION2(SE4001, "using fn:document from general functions generator!");
 }
 
 PPOpIn l2pFnDocumentUri(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)

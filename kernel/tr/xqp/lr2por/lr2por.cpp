@@ -8,6 +8,7 @@
 #include "tr/executor/base/dynamic_context.h"
 #include "tr/executor/base/PPOperations.h"
 #include "tr/executor/fo/op_map.h"
+#include "tr/executor/por2qep/ext.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
@@ -141,6 +142,10 @@ namespace sedna
                 lr = getlrForAxisStep(n);
 
                 off_this.opin = off_cont.opin;
+
+                if (off_this.lr_path == "") // first prolongation
+                    off_this.lr_path = "(";
+
                 off_this.lr_path = off_cont.lr_path + lr;
 
                 return;
@@ -149,15 +154,16 @@ namespace sedna
         else if (n.cont)
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
-             {
-                 off_cont.lr_path += ')';
-
-                 if (off_cont.lr_path != "()")
+                 if (off_cont.lr_path != "")
                  {
-                     PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
-                     apa->setPathExpr(pe);
+                     off_cont.lr_path += ')';
+
+                     if (off_cont.lr_path != "()")
+                     {
+                         PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
+                         apa->setPathExpr(pe);
+                     }
                  }
-             }
         }
 
         // determine if we need sequence checker
@@ -481,10 +487,44 @@ namespace sedna
 
     void lr2por::visit(ASTCreateColl &n)
     {
+        childOffer off_coll;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.coll->accept(*this);
+
+        off_coll = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPCreateCollection(off_coll.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTCreateDoc &n)
     {
+        childOffer off_doc, off_coll;
+        dynamic_context *cxt_doc, *cxt_coll;
+
+        var_num = 0;
+        dyn_cxt = cxt_doc = new dynamic_context(st_cxt, 0);
+        n.doc->accept(*this);
+
+        off_doc = getOffer();
+        cxt_doc->set_producers((var_num) ? (var_num + 1) : 0);
+
+        if (n.coll)
+        {
+            var_num = 0;
+            dyn_cxt = cxt_coll = new dynamic_context(st_cxt, (var_num) ? (var_num + 1) : 0);
+            n.coll->accept(*this);
+
+            off_coll = getOffer();
+            cxt_coll->set_producers((var_num) ? (var_num + 1) : 0);
+        }
+
+        if (n.coll)
+            qep = new PPCreateDocumentInCollection(off_doc.opin, cxt_doc, off_coll.opin, cxt_coll);
+        else
+            qep = new PPCreateDocument(off_doc.opin, cxt_doc);
     }
 
     void lr2por::visit(ASTCreateFtIndex &n)
@@ -560,23 +600,88 @@ namespace sedna
 
     void lr2por::visit(ASTDropColl &n)
     {
+        childOffer off_coll;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.coll->accept(*this);
+
+        off_coll = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPDropCollection(off_coll.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTDropDoc &n)
     {
+        childOffer off_doc, off_coll;
+        dynamic_context *cxt_doc, *cxt_coll;
+
+        var_num = 0;
+        dyn_cxt = cxt_doc = new dynamic_context(st_cxt, 0);
+        n.doc->accept(*this);
+
+        off_doc = getOffer();
+        cxt_doc->set_producers((var_num) ? (var_num + 1) : 0);
+
+        if (n.coll)
+        {
+            var_num = 0;
+            dyn_cxt = cxt_coll = new dynamic_context(st_cxt, (var_num) ? (var_num + 1) : 0);
+            n.coll->accept(*this);
+
+            off_coll = getOffer();
+            cxt_coll->set_producers((var_num) ? (var_num + 1) : 0);
+        }
+
+        if (n.coll)
+            qep = new PPDropDocumentInCollection(off_doc.opin, cxt_doc, off_coll.opin, cxt_coll);
+        else
+            qep = new PPDropDocument(off_doc.opin, cxt_doc);
     }
 
     void lr2por::visit(ASTDropFtIndex &n)
     {
+#ifdef SE_ENABLE_FTSEARCH
+        if (tr_globals::is_ft_disabled)
+            throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
+
+        childOffer off_ind;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.index->accept(*this);
+
+        off_ind = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPDropFtIndex(off_ind.opin, dyn_cxt);
+#else
+        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled");
+#endif
     }
 
     void lr2por::visit(ASTDropIndex &n)
     {
+        childOffer off_ind;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.index->accept(*this);
+
+        off_ind = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPDropIndex(off_ind.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTDropMod &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+
+        PPOpIn mod = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.module, xs_string)), 1);
+
+        qep = new PPDropModule(mod);
     }
 
     void lr2por::visit(ASTDropRole &n)
@@ -586,7 +691,11 @@ namespace sedna
 
     void lr2por::visit(ASTDropTrg &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+
+        PPOpIn name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.trg, xs_string)), 1);
+
+        qep = new PPDropTrigger(name, dyn_cxt);
     }
 
     void lr2por::visit(ASTDropUser &n)
@@ -707,15 +816,16 @@ namespace sedna
         if (n.cont) // we need to close abs-path if we've got it as a context
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
-             {
-                 off_cont.lr_path += ')';
-
-                 if (off_cont.lr_path != "()")
+                 if (off_cont.lr_path != "")
                  {
-                     PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
-                     apa->setPathExpr(pe);
+                     off_cont.lr_path += ')';
+
+                     if (off_cont.lr_path != "()")
+                     {
+                         PathExpr *pe = lr2PathExpr(dyn_cxt, off_cont.lr_path.c_str(), pe_local_aspace);
+                         apa->setPathExpr(pe);
+                     }
                  }
-             }
         }
 
         // determine if we need sequence checker
@@ -838,8 +948,7 @@ namespace sedna
 
             if (var_last != -1)
             {
-                // TODO: uncomment this when merged with the main branch
-                // off_this.opin.op = new PPLast(dyn_cxt, oi, var_last, off_this.opin.op);
+                off_this.opin.op = new PPLast(dyn_cxt, oi, var_last, off_this.opin);
 
                 U_ASSERT(bound_vars.back().first == "$%last");
                 bound_vars.pop_back();
@@ -1039,28 +1148,225 @@ namespace sedna
         {
             if (*n.int_name == "!fn!collection")
             {
+                db_entity *dbe = new db_entity;
+                dbe->type = dbe_collection;
 
+                ASTLit *name = dynamic_cast<ASTLit *>((*n.params)[0]);
+
+                if (name && name->type != ASTLit::STRING)
+                {
+                    drv->error(n.getLocation(), XPTY0004, "first argument to fn:document should be of xs:string");
+                }
+
+                PathExpr *path_expr = lr2PathExpr(dyn_cxt, "()", pe_local_aspace);
+
+                if (name)
+                {
+                    dbe->name = new char[name->lit->size() + 1];
+                    strcpy(dbe->name, name->lit->c_str());
+
+                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr, counted_ptr<db_entity>(dbe)), 1);
+                }
+                else
+                {
+                    childOffer off;
+
+                    (*n.params)[0]->accept(*this);
+                    off = getOffer();
+
+                    dbe->name = NULL;
+
+                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr,
+                            counted_ptr<db_entity>(dbe), off.opin), 1);
+                }
+
+                off_this.lr_path = "";
             }
-            else if (*n.int_name == "!fn!document")
+            else if (*n.int_name == "!fn!document" && n.params->size() == 1)
             {
+                db_entity *dbe = new db_entity;
+                dbe->type = dbe_document;
 
+                ASTLit *name = dynamic_cast<ASTLit *>((*n.params)[0]);
+
+                if (name && name->type != ASTLit::STRING)
+                {
+                    drv->error(n.getLocation(), XPTY0004, "first argument to fn:document should be of xs:string");
+                }
+
+                PathExpr *path_expr = lr2PathExpr(dyn_cxt, "()", pe_local_aspace);
+
+                if (name)
+                {
+                    dbe->name = new char[name->lit->size() + 1];
+                    strcpy(dbe->name, name->lit->c_str());
+
+                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr, counted_ptr<db_entity>(dbe)), 1);
+                }
+                else
+                {
+                    childOffer off;
+
+                    (*n.params)[0]->accept(*this);
+                    off = getOffer();
+
+                    dbe->name = NULL;
+
+                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr,
+                            counted_ptr<db_entity>(dbe), off.opin), 1);
+                }
+
+                off_this.lr_path = "";
             }
             else if (*n.int_name == "!fn!index-scan")
             {
+                childOffer off1, off2;
+                PPOpIn dummy = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell("0", xs_integer)), 1);
 
+                (*n.params)[0]->accept(*this);
+                off1 = getOffer();
+
+                (*n.params)[1]->accept(*this);
+                off2 = getOffer();
+
+                // last parameter is literal specifier (checked by sema)
+                ASTLit *spec = dynamic_cast<ASTLit *>((*n.params)[2]);
+                index_scan_condition isc;
+
+                if (*spec->lit == "GT")
+                    isc = isc_gt;
+                else if (*spec->lit == "GE")
+                    isc = isc_ge;
+                else if (*spec->lit == "LT")
+                    isc = isc_le;
+                else if (*spec->lit == "LE")
+                    isc = isc_le;
+                else // "EQ"
+                    isc = isc_eq;
+
+                off_this.opin = PPOpIn(new PPIndexScan(dyn_cxt, createOperationInfo(n), off1.opin, off2.opin, dummy, isc), 1);
             }
             else if (*n.int_name == "!fn!index-scan-between")
             {
+                childOffer off1, off2, off3;
 
+                (*n.params)[0]->accept(*this);
+                off1 = getOffer();
+
+                (*n.params)[1]->accept(*this);
+                off2 = getOffer();
+
+                (*n.params)[2]->accept(*this);
+                off3 = getOffer();
+
+                // last parameter is literal specifier (checked by sema)
+                ASTLit *spec = dynamic_cast<ASTLit *>((*n.params)[3]);
+                index_scan_condition isc;
+
+                if (*spec->lit == "INT")
+                    isc = isc_gt_lt;
+                else if (*spec->lit == "SEG")
+                    isc = isc_ge_le;
+                else if (*spec->lit == "HINTL")
+                    isc = isc_ge_lt;
+                else // "HINTR"
+                    isc = isc_gt_le;
+
+                off_this.opin = PPOpIn(new PPIndexScan(dyn_cxt, createOperationInfo(n), off1.opin, off2.opin, off3.opin, isc), 1);
             }
-            else
+            else if (*n.int_name == "!fn!position")
             {
+                var_id pv = -1;
 
+                // for position we need to find last bound pos var
+                for (int i = bound_vars.size() - 1; i >= 0; i--)
+                {
+                    if (bound_vars[i].first == "$%pos")
+                    {
+                        pv = bound_vars[i].second;
+                        break;
+                    }
+                }
+
+                U_ASSERT(pv != -1);
+
+                off_this.opin = PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(n), pv), 1);
+            }
+            else if (*n.int_name == "!fn!last")
+            {
+                var_id lv = -1;
+
+                // for position we need to find last bound pos var
+                for (int i = bound_vars.size() - 1; i >= 0; i--)
+                {
+                    if (bound_vars[i].first == "$%last")
+                    {
+                        lv = bound_vars[i].second;
+                        break;
+                    }
+                }
+
+                U_ASSERT(lv != -1);
+
+                off_this.opin = PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(n), lv), 1);
+            }
+            else // all other standard functions are qeped in unified way
+            {
+                std::string name = "{" + *n.uri + "}" + *n.local;
+                XQFunction fu = drv->getStdFuncInfo(name);
+
+                arr_of_PPOpIn para(n.params ? n.params->size() : 0);
+
+                if (n.params)
+                {
+                    size_t count = n.params->size();
+                    ASTVisitor::VisitNodesVector(n.params, *this);
+
+                    while (count--)
+                    {
+                        childOffer off;
+
+                        off = getOffer();
+                        para[count] = off.opin;
+                    }
+                }
+
+                off_this.opin = fu.l2pGen(dyn_cxt, createOperationInfo(n), para);
             }
         }
         else
         {
+            std::string name = CREATE_INTNAME(*n.uri, *n.local);
 
+            // then find it in global functions
+            int fid = getGlobalFunctionId(name);
+
+            // fill out params
+            arr_of_PPOpIn para(n.params ? n.params->size() : 0);
+
+            if (n.params)
+            {
+                size_t count = n.params->size();
+                ASTVisitor::VisitNodesVector(n.params, *this);
+
+                while (count--)
+                {
+                    childOffer off;
+
+                    off = getOffer();
+                    para[count] = off.opin;
+                }
+            }
+
+            if (fid != -1)
+            {
+                off_this.opin = PPOpIn(new PPFunCall(dyn_cxt, createOperationInfo(n), para, fid), 1);
+            }
+            else // external function
+            {
+                // NOTE: we ignore prefix-uri part for external functions
+                off_this.opin = PPOpIn(ext_function_manager.make_pp_ext_func(n.local->c_str(), dyn_cxt, createOperationInfo(n), para), 1);
+            }
         }
 
         setOffer(off_this);
@@ -1072,8 +1378,12 @@ namespace sedna
         function_declaration fd;
         unsigned int arity = (n.params) ? n.params->size() : 0;
 
+        // ignore external functions since they are treated only via fun-calls
+        if (!n.body)
+            return;
+
         var_num = 0;
-        id = drv->getNewGlobFunId();
+        id = n.getId();
         fd = dynamic_context::funct_cxt.fun_decls[id];
 
         n.ret->accept(*this);
@@ -1098,7 +1408,7 @@ namespace sedna
 
         // body is evaluated in a dummy dynamic context
         dynamic_context dc(st_cxt, 0); // ok, it will become illegal when we exit the function, but since function-body is copied
-                                       // during evaluation it will not be a problem
+                                       // during evaluation it will not be a problem (moved from por2qep "as-is")
         dyn_cxt = &dc;
         n.body->accept(*this);
 
@@ -1204,18 +1514,43 @@ namespace sedna
 
     void lr2por::visit(ASTLoadFile &n)
     {
-        // nothing to do
+        PPOpIn file, doc, coll;
+        dynamic_context *dc1, *dc2, *dc3 = NULL;
+
+        dc1 = new dynamic_context(st_cxt, 0);
+        dc2 = new dynamic_context(st_cxt, 0);
+
+        if (n.coll)
+            dc3 = new dynamic_context(st_cxt, 0);
+
+        file = PPOpIn(new PPConst(dc1, createOperationInfo(n), string2tuple_cell(*n.file, xs_string)), 1);
+        doc  = PPOpIn(new PPConst(dc2, createOperationInfo(n), string2tuple_cell(*n.doc, xs_string)), 1);
+
+        if (n.coll)
+            coll = PPOpIn(new PPConst(dc3, createOperationInfo(n), string2tuple_cell(*n.coll, xs_string)), 1);
+
+        qep = new PPBulkLoad(file, dc1, doc, dc2, coll, dc3);
     }
 
     void lr2por::visit(ASTLoadModule &n)
     {
-        // nothing to do
+        arr_of_PPOpIn mods;
+        ASTStringVector::iterator it;
+
+        for (it = n.modules->begin(); it != n.modules->end(); it++)
+        {
+            dyn_cxt = new dynamic_context(st_cxt, 0);
+
+            mods.push_back(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(**it, xs_string)), 1));
+        }
+
+        qep = new PPLoadModule(mods, n.mod == ASTLoadModule::REPLACE);
     }
 
     void lr2por::visit(ASTMainModule &n)
     {
         if (drv == NULL)
-            throw SYSTEM_EXCEPTION("Driver is not set for semantic analyzer!");
+            throw SYSTEM_EXCEPTION("Driver is not set for lr2por analyzer!");
 
         n.prolog->accept(*this);
         n.query->accept(*this);
@@ -1607,6 +1942,20 @@ namespace sedna
 
     void lr2por::visit(ASTRenameColl &n)
     {
+        childOffer off_old, off_new;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.name_old->accept(*this);
+
+        off_old = getOffer();
+
+        n.name_new->accept(*this);
+
+        off_new = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPRename(off_old.opin, off_new.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTRevokePriv &n)
@@ -1782,22 +2131,88 @@ namespace sedna
 
     void lr2por::visit(ASTUpdDel &n)
     {
+        childOffer off_what;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.what->accept(*this);
+
+        off_what = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        if (n.type == ASTUpdDel::DEEP)
+            qep = new PPDeleteDeep(off_what.opin, dyn_cxt);
+        else
+            qep = new PPDeleteUndeep(off_what.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTUpdInsert &n)
     {
+        childOffer off_where, off_what;
+        dynamic_context *cxt_what, *cxt_where;
+
+        var_num = 0;
+        dyn_cxt = cxt_what = new dynamic_context(st_cxt, 0);
+        n.what->accept(*this);
+
+        off_what = getOffer();
+        cxt_what->set_producers((var_num) ? (var_num + 1) : 0);
+
+        var_num = 0;
+        dyn_cxt = cxt_where = new dynamic_context(st_cxt, (var_num) ? (var_num + 1) : 0);
+        n.where->accept(*this);
+
+        off_where = getOffer();
+        cxt_where->set_producers((var_num) ? (var_num + 1) : 0);
+
+        switch (n.type)
+        {
+            case ASTUpdInsert::INTO:
+                qep = new PPInsertTo(off_what.opin, cxt_what, off_where.opin, cxt_where);
+                break;
+            case ASTUpdInsert::PRECEDING:
+                qep = new PPInsertBefore(off_what.opin, cxt_what, off_where.opin, cxt_where);
+                break;
+            case ASTUpdInsert::FOLLOWING:
+                qep = new PPInsertFollowing(off_what.opin, cxt_what, off_where.opin, cxt_where);
+                break;
+        }
     }
 
     void lr2por::visit(ASTUpdMove &n)
     {
+        throw USER_EXCEPTION2(SE4001, "update move is not supported");
     }
 
     void lr2por::visit(ASTUpdRename &n)
     {
+        childOffer off_what;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.what->accept(*this);
+
+        off_what = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        char *ncname_prefix = xs_NCName_create(n.pref->c_str(), pe_local_aspace->alloc);
+        char *ncname_local  = xs_NCName_create(n.local->c_str(), pe_local_aspace->alloc);
+
+        qep = new PPRename(off_what.opin, dyn_cxt, ncname_prefix, ncname_local);
     }
 
     void lr2por::visit(ASTUpdReplace &n)
     {
+        childOffer off_what;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.what->accept(*this);
+
+        off_what = getOffer();
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPReplace(off_what.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTVar &n)
@@ -1864,10 +2279,6 @@ namespace sedna
         off_this.opin.op = pgv;
         off_this.opin.ts = 1;
 
-        // if we've got id=-1 then it is because of module inter(intra)-relationships we resolve them later, after the main phase
-        if (id == -1)
-            mod->addToUnresolvedPor(name, pgv);
-
         setOffer(off_this);
     }
 
@@ -1892,7 +2303,7 @@ namespace sedna
         off = getOffer();
 
         cxt = new dynamic_context(st_cxt, var_num);
-        id = drv->getNewGlobVarId();
+        id = n.getId();
 
         oi = createOperationInfo(n);
 
@@ -1993,7 +2404,7 @@ namespace sedna
         varInfo::iterator it;
         var_id id;
 
-        // first,look in cache
+        // first,look in the cache
         it = varCache.find(name);
 
         if (it != varCache.end())
