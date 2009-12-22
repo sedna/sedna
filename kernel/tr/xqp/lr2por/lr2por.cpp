@@ -134,7 +134,7 @@ namespace sedna
             off_cont = getContextOffer(oi);
         }
 
-        // look if we can prolong PPAbsPath
+        // look if we can prolong PPAbsPath or start relative for index
         if (!n.cont && getParentRequest().pers_abspath)
         {
             db_entity *dbe = new db_entity;
@@ -542,6 +542,58 @@ namespace sedna
 
     void lr2por::visit(ASTCreateFtIndex &n)
     {
+#ifdef SE_ENABLE_FTSEARCH
+
+        if (tr_globals::is_ft_disabled)
+            throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
+
+        childOffer off_name, off_path;
+        PPAbsPath *pa;
+        PathExpr *onp;
+        counted_ptr<db_entity> dbe;
+
+        var_num = 0;
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        n.name->accept(*this);
+        off_name = getOffer();
+
+        parentRequest req;
+        req.pers_abspath = true;
+        setParentRequest(req);
+        n.path->accept(*this);
+        off_path = getOffer();
+
+        // path will definitely be PPAbsPath
+        pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
+        U_ASSERT(pa);
+
+        onp = pa->getPathExpr();
+        dbe = pa->getDocColl();
+        delete pa; // we don't need it anymore (note that this won't destroy onp)
+
+        if (onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+            onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+
+        // set context
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        // make qe
+        if (*n.type == "customized-value" || *n.type == "!customized-value")
+        {
+            childOffer off_cust;
+
+            n.cust_expr->accept(*this);
+            off_cust = getOffer();
+
+            qep = new PPCreateFtIndex(onp, n.type->c_str(), dbe, off_name.opin, off_cust.opin, dyn_cxt);
+        }
+        else
+        {
+            qep = new PPCreateFtIndex(onp, n.type->c_str(), dbe, off_name.opin, dyn_cxt);
+        }
+#else
+        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled");
+#endif
     }
 
     void lr2por::visit(ASTCreateIndex &n)
@@ -557,6 +609,9 @@ namespace sedna
         n.name->accept(*this);
         off_name = getOffer();
 
+        parentRequest req;
+        req.pers_abspath = true;
+        setParentRequest(req);
         n.on_path->accept(*this);
         off_path = getOffer();
 
@@ -567,12 +622,13 @@ namespace sedna
         onp = pa->getPathExpr();
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
-        off_path.opin.op = NULL;
+
+        if (onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+            onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         // we must ensure "abs-pathness" of by-path
         // now, I do it via pers_abspath property; another solution is to insert ASTFunCall (fn:document) in the tree
         // however, I don't like the idea of messing up with ast-related info; it just seems wrong to me (AK)
-        parentRequest req;
         req.pers_abspath = true;
         setParentRequest(req);
         n.by_path->accept(*this);
@@ -584,7 +640,9 @@ namespace sedna
 
         byp = pa->getPathExpr();
         delete pa; // we don't need it anymore (note that this won't destroy on_path)
-        off_path.opin.op = NULL;
+
+        if (byp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+            byp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         n.type->accept(*this);
         off_type = getOffer();
@@ -1629,19 +1687,60 @@ namespace sedna
 
     void lr2por::visit(ASTMetaCols &n)
     {
-        // nothing to do
+        PPOpIn coll; // dummy
+
+        qep = new PPRetrieveMetadata(dbe_collection, coll, NULL, n.need_stats);
     }
 
     void lr2por::visit(ASTMetaDocs &n)
     {
+        if (n.coll)
+        {
+            childOffer off_coll;
+
+            dyn_cxt = new dynamic_context(st_cxt, 0);
+
+            n.coll->accept(*this);
+            off_coll = getOffer();
+
+            dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+            qep = new PPRetrieveMetadata(dbe_document, off_coll.opin, dyn_cxt, n.need_stats);
+        }
+        else
+        {
+            PPOpIn coll; // dummy
+
+            qep = new PPRetrieveMetadata(dbe_document, coll, NULL, n.need_stats);
+        }
     }
 
     void lr2por::visit(ASTMetaSchemaCol &n)
     {
+        childOffer off_coll;
+
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+
+        n.coll->accept(*this);
+        off_coll = getOffer();
+
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPRetrieveDS(off_coll.opin, dyn_cxt, dbe_collection);
     }
 
     void lr2por::visit(ASTMetaSchemaDoc &n)
     {
+        childOffer off_doc;
+
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+
+        n.doc->accept(*this);
+        off_doc = getOffer();
+
+        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        qep = new PPRetrieveDS(off_doc.opin, dyn_cxt, dbe_document);
     }
 
     void lr2por::visit(ASTModImport &n)
