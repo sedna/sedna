@@ -696,20 +696,15 @@ namespace sedna
     void LReturn::visit(ASTDDO &n)
     {
         // in fact we should not get here since all ddo-ops are inserted in dynamic mode without lreturn visitor taking them (we should not do re-analysis either)
-        parentRequest req;
+        // to get rif of re-analysis we'll assume that we've already been under ddo and just set some more or less appropriate offer
         childOffer off;
-
-        req.distinctOnly = true;
-        req.calledOnce = getParentRequest().calledOnce;
-
-        setParentRequest(req);
-        n.expr->accept(*this);
-
-        off = getOffer();
 
         off.exi.isOrdered = n.true_ddo;
         off.exi.isDistincted = true;
-        off.isCached = false;
+        off.exi.isMax1 = false;
+        off.exi.isSingleLevel = false;
+        off.exi.useConstructors = true;
+        off.isCached = n.isCached();
 
         setOffer(off);
     }

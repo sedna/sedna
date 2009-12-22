@@ -18,11 +18,15 @@
 /**
  * Type of query that executed by query processor
  */
-enum QueryType {TL_XQuery       = 9,    // XQuery query
-                TL_ASTInitial   = 8,    // internal initial (before semantic pass) AST representation
-                TL_ASTQEPReady  = 7,    // internal QEP-ready AST representation
-                TL_ASTTrig      = 6,    // special type for trigger queries with unmanaged context (yuck!)
-               };
+enum QueryType
+{
+    TL_XQuery       = 9,    // XQuery query
+    TL_XQueryMod    = 8,    // XQuery query for modules (without further lreturn; only sema)
+    TL_XQueryAST    = 7,    // XQuery query just for parsng (only builds ast-tree; without any analysis)
+    TL_ASTInitial   = 6,    // internal initial (before semantic pass) AST representation
+    TL_ASTQEPReady  = 5,    // internal QEP-ready AST representation
+    TL_ASTTrig      = 4,    // special type for trigger queries with unmanaged context (yuck!)
+};
 
 /**
  * Possible atomic types

@@ -181,7 +181,7 @@ std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string 
 
     xqd = new sedna::XQueryDriver();
 
-    parse_batch(xqd, TL_XQuery, batch, module_name);
+    parse_batch(xqd, TL_XQueryMod, batch, module_name);
 
     if (xqd->getModulesCount() == 0)
         throw USER_EXCEPTION2(4001, "faile to parse library module");
