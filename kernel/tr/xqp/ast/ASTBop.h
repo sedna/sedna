@@ -13,7 +13,9 @@ class ASTBop : public ASTNode
 {
 public:
     // NOTICE: lreturn::ASTBop optimization depends on the order of operations in this enum
+    // NOTICE: lreturn's checkIfPosConjunct depends on the order of operations in this enum
     // NOTICE: lr2por mapping to xq_binary_op_type also depends on the order
+    // NOTICE: lr2por's make_CalcOp depends on the order
     enum Oper
     {
         // logical ops

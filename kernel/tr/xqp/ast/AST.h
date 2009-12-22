@@ -76,7 +76,6 @@
 #include "tr/xqp/ast/ASTOrdExpr.h"
 #include "tr/xqp/ast/ASTOrder.h"
 #include "tr/xqp/ast/ASTOrderBy.h"
-#include "tr/xqp/ast/ASTOrderByRet.h"
 #include "tr/xqp/ast/ASTOrderEmpty.h"
 #include "tr/xqp/ast/ASTOrderMod.h"
 #include "tr/xqp/ast/ASTOrderModInt.h"
@@ -108,7 +107,6 @@
 #include "tr/xqp/ast/ASTTypeSwitch.h"
 #include "tr/xqp/ast/ASTTypeVar.h"
 #include "tr/xqp/ast/ASTUop.h"
-#include "tr/xqp/ast/ASTUnio.h"
 #include "tr/xqp/ast/ASTUpdInsert.h"
 #include "tr/xqp/ast/ASTUpdDel.h"
 #include "tr/xqp/ast/ASTUpdMove.h"
@@ -193,7 +191,6 @@ enum ASTNodeType
     AST_NSP,
     AST_OPTION,
     AST_ORDERBY,
-    AST_ORDERBYRET,
     AST_ORDEREMPTY,
     AST_ORDER,
     AST_ORDERMOD,
@@ -225,7 +222,6 @@ enum ASTNodeType
     AST_TYPESINGLE,
     AST_TYPESWITCH,
     AST_TYPEVAR,
-    AST_UNIO,
     AST_UOP,
     AST_UPDDEL,
     AST_UPDINSERT,

@@ -9,7 +9,8 @@
 
 namespace sedna
 {
-    static operation_compare_condition operToCondition(ASTBop::Oper op)
+    // reverse means that we must return contra-operation (e.g >= becomes <=, but = remains the same)
+    static operation_compare_condition operToCondition(ASTBop::Oper op, bool reverse)
     {
         operation_compare_condition occ;
 
@@ -22,16 +23,16 @@ namespace sedna
                 occ = OCC_VALUE_NOT_EQUAL;
                 break;
             case ASTBop::GE_V:
-                occ = OCC_VALUE_GREATER_EQUAL;
+                occ = reverse ? OCC_VALUE_LESS_EQUAL : OCC_VALUE_GREATER_EQUAL;
                 break;
             case ASTBop::GT_V:
-                occ = OCC_VALUE_GREATER;
+                occ = reverse ? OCC_VALUE_LESS : OCC_VALUE_GREATER;
                 break;
             case ASTBop::LE_V:
-                occ = OCC_VALUE_LESS_EQUAL;
+                occ = reverse ? OCC_VALUE_GREATER_EQUAL : OCC_VALUE_LESS_EQUAL;
                 break;
             case ASTBop::LT_V:
-                occ = OCC_VALUE_LESS;
+                occ = reverse ? OCC_VALUE_GREATER : OCC_VALUE_LESS;
                 break;
             case ASTBop::EQ_G:
                 occ = OCC_GENERAL_EQUAL;
@@ -40,16 +41,16 @@ namespace sedna
                 occ = OCC_GENERAL_NOT_EQUAL;
                 break;
             case ASTBop::GE_G:
-                occ = OCC_GENERAL_GREATER_EQUAL;
+                occ = reverse ? OCC_GENERAL_LESS_EQUAL : OCC_GENERAL_GREATER_EQUAL;
                 break;
             case ASTBop::GT_G:
-                occ = OCC_GENERAL_GREATER;
+                occ = reverse ? OCC_GENERAL_LESS : OCC_GENERAL_GREATER;
                 break;
             case ASTBop::LE_G:
-                occ = OCC_GENERAL_LESS_EQUAL;
+                occ = reverse ? OCC_GENERAL_GREATER_EQUAL : OCC_GENERAL_LESS_EQUAL;
                 break;
             case ASTBop::LT_G:
-                occ = OCC_GENERAL_LESS;
+                occ = reverse ? OCC_GENERAL_GREATER : OCC_GENERAL_LESS;
                 break;
             default:
                 U_ASSERT(false);
@@ -870,6 +871,18 @@ namespace sedna
         // check if prefix is redefined later with xmlns:
         if (n.attrs)
         {
+            parentRequest req;
+            childOffer offa;
+
+            req.calledOnce = getParentRequest().calledOnce;
+            req.deep_copy = false;
+
+            VisitNodesVector(n.attrs, *this, req);
+            offa = mergeOffers(count);
+
+            off.usedVars.insert(offa.usedVars.begin(), offa.usedVars.end());
+
+            // check if prefix is redefined later with xmlns:
             ASTNodesVector::const_iterator cit;
 
             for (cit = n.attrs->begin(); cit != n.attrs->end(); cit++)
@@ -1820,79 +1833,10 @@ namespace sedna
         VisitNodesVector(n.specs, *this, req);
         off = mergeOffers(count);
 
-        // since result will be ignored by ASTOrderByRet except for usedVars and useConstructors parts,
+        // since result will be ignored by ASTFLWOR except for usedVars and useConstructors parts,
         // which will be set with mergeOffers, so we don't set other params here
 
         setOffer(off);
-    }
-
-    void LReturn::visit(ASTOrderByRet &n)
-    {
-        parentRequest req;
-        childOffer off_fl, off_ord, off_this;
-
-        setParamMode();
-        ASTVisitor::VisitNodesVector(n.vars, *this);
-        unsetParamMode();
-
-        req.distinctOnly = false;
-        req.calledOnce = getParentRequest().calledOnce;
-        setParentRequest(req);
-        n.iter_expr->accept(*this);
-        off_fl = getOffer();
-
-        // for now we need to change info about bound for-let vars
-        for (unsigned int i = 1; i <= n.vars->size(); i++)
-        {
-            XQVariable &var = bound_vars[bound_vars.size() - i];
-
-            var.exp_info = childOffer().exi;
-            var.exp_info.useConstructors = var.isNodes && off_fl.exi.useConstructors; // TODO: refine it later
-        }
-
-        setParentRequest(req); // actually it will be ignored by ASTOrderBy
-        n.ord_expr->accept(*this);
-        off_ord = getOffer();
-
-        req.distinctOnly = getParentRequest().distinctOnly;
-        req.calledOnce = false;
-        n.ret_expr->accept(*this);
-        off_this = getOffer();
-
-        // collect all used vars and unbind
-        // NOTE: the order is important here; we shouldn't ignore vars used by for-let clauses
-        off_this.usedVars.insert(off_ord.usedVars.begin(), off_ord.usedVars.end());
-        ignoreVariables(off_this, n.vars->size());
-        off_this.usedVars.insert(off_fl.usedVars.begin(), off_fl.usedVars.end());
-
-        off_this.exi.useConstructors = off_this.exi.useConstructors || off_fl.exi.useConstructors;
-        off_this.use_last = off_fl.use_last || off_ord.use_last || off_this.use_last;
-        off_this.use_position = off_fl.use_position || off_ord.use_position || off_this.use_position;
-
-        // if we've got >1 tuples here (from for-let tree), then result will be different
-        // TODO: we should refine it later for atomic; however, maybe this also will do, since it cannot influence ddo
-        if (!off_fl.exi.isMax1)
-        {
-            off_this.exi.isDistincted = false;
-            off_this.exi.isMax1 = false;
-            off_this.exi.isOrdered = false;
-            off_this.exi.isSingleLevel = false;
-        }
-
-        // consider to cache
-        if (!getParentRequest().calledOnce)
-        {
-            cacheTheNode(&n, off_this);
-
-            if (off_this.isCached)
-            {
-                n.iter_expr->setCached(false);
-                n.ord_expr->setCached(false);
-                n.ret_expr->setCached(false);
-            }
-        }
-
-        setOffer(off_this);
     }
 
     void LReturn::visit(ASTOrderEmpty &n)
@@ -2058,7 +2002,7 @@ namespace sedna
                 ASTBop *bop = dynamic_cast<ASTBop *>(it->expr);
 
                 it->expr = cand;
-                it->op = operToCondition(bop->op);
+                it->op = operToCondition(bop->op, cand == bop->lop);
                 n.conjuncts.push_back(*it);
 
                 // get rid of ASTBop
@@ -2387,35 +2331,6 @@ namespace sedna
     {
         n.var->accept(*this);
         n.type->accept(*this); // this will change propertiers for the bound variable
-    }
-
-    void LReturn::visit(ASTUnio &n)
-    {
-        childOffer off;
-        unsigned int count = n.vars->size();
-        bool is_node = false; // some of the vars is bound to a node
-        bool is_seq = false; // some of the vars emanates sequence (let expression)
-
-        for (unsigned int i = 1; i <= count; i++)
-        {
-            const XQVariable &v = bound_vars[bound_vars.size() - i];
-
-            if (v.exp_info.useConstructors)
-                off.exi.useConstructors = true;
-
-            off.usedVars.insert(v.int_name);
-
-            if (v.isNodes)
-                is_node = true;
-
-            if (!v.exp_info.isMax1)
-                is_seq = true;
-        }
-
-        // union emits one tuple on each binding (if 'let' exists above, then several tuples)
-        // distincted, ordered and single-level don't probably have any sense here; so we should assume the default
-        off.exi.isMax1 = !is_seq;
-        setOffer(off);
     }
 
     void LReturn::visit(ASTUop &n)

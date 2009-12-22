@@ -918,18 +918,6 @@ void IntVisitor::visit(ASTOrderBy &n)
     int_str.append(")");
 }
 
-void IntVisitor::visit(ASTOrderByRet &n)
-{
-    int_str.append("(");
-    int_str.append(int2string(AST_ORDERBYRET));
-    int_str.append(dumpCommonData(n.cd));
-    dumpASTNode(n.iter_expr);
-    dumpASTNode(n.ord_expr);
-    dumpASTNode(n.ret_expr);
-    dumpASTNodesVector(n.vars);
-    int_str.append(")");
-}
-
 void IntVisitor::visit(ASTOrderEmpty &n)
 {
     int_str.append("(");
@@ -1232,15 +1220,6 @@ void IntVisitor::visit(ASTTypeVar &n)
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.type);
     dumpASTNode(n.var);
-    int_str.append(")");
-}
-
-void IntVisitor::visit(ASTUnio &n)
-{
-    int_str.append("(");
-    int_str.append(int2string(AST_UNIO));
-    int_str.append(dumpCommonData(n.cd));
-    dumpASTNodesVector(n.vars);
     int_str.append(")");
 }
 

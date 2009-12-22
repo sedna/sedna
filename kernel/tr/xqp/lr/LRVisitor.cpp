@@ -1338,33 +1338,6 @@ void LRVisitor::visit(ASTOrderBy &n)
     lr_str.append(") ");
 }
 
-void LRVisitor::visit(ASTOrderByRet &n)
-{
-    if (n.ret_expr->isCached())
-        lr_str.append("(lreturn ");
-    else
-        lr_str.append("(return ");
-
-    lr_str.append("(order-by ");
-
-    n.iter_expr->accept(*this);
-
-    lr_str.append("(fun-def (");
-    VisitNodesVector(n.vars, *this);
-    lr_str.append(")");
-
-    n.ord_expr->accept(*this);
-    lr_str.append("))");
-
-    lr_str.append("(fun-def (");
-    VisitNodesVector(n.vars, *this);
-    lr_str.append(")");
-
-    n.ret_expr->accept(*this);
-
-    lr_str.append("))");
-}
-
 void LRVisitor::visit(ASTOrderEmpty &n)
 {
     lr_str.append("(declare-default-order ");
@@ -1730,15 +1703,6 @@ void LRVisitor::visit(ASTTypeVar &n)
     n.type->accept(*this);
 
     n.var->accept(*this);
-
-    lr_str.append(") ");
-}
-
-void LRVisitor::visit(ASTUnio &n)
-{
-    lr_str.append("(unio ");
-
-    VisitNodesVector(n.vars, *this);
 
     lr_str.append(") ");
 }

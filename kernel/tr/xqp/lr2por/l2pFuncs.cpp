@@ -377,13 +377,13 @@ PPOpIn l2pFnError(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PP
     PPOpIn child_err, child_descr, child_obj, res;
 
     if (params.size() == 3)
-        child_obj = params[0];
+        child_obj = params[2];
 
     if (params.size() >= 2)
         child_descr = params[1];
 
     if (params.size() >= 1)
-        child_err = params[2];
+        child_err = params[0];
 
     res = PPOpIn(new PPFnError(dyn_cxt, opi, child_err, child_descr, child_obj), 1);
 

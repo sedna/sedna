@@ -752,8 +752,9 @@ namespace sedna
     {
         size_t count;
 
+        count = bound_vars.size();
         VisitNodesVector(n.fls, *this);
-        count = param_count;
+        count = bound_vars.size() - count;
 
         if (n.where)
             n.where->accept(*this);
@@ -1052,12 +1053,6 @@ namespace sedna
         setParamMode();
         n.tv->accept(*this);
         unsetParamMode();
-
-//        param_ok = (param_count == 1);
-//        n.fd->accept(*this);
-
-//        if (param_ok)
-//            bound_vars.pop_back();
     }
 
     void Sema::visit(ASTLibModule &n)
@@ -1439,43 +1434,6 @@ namespace sedna
         VisitNodesVector(n.specs, *this);
     }
 
-    void Sema::visit(ASTOrderByRet &n)
-    {
-        unsigned int params = 0;
-        n.iter_expr->accept(*this);
-
-        setParamMode();
-        VisitNodesVector(n.vars, *this);
-        unsetParamMode();
-        params = param_count;
-
-        // we may have one problem here; if for-let expressions have overlapping bindings, we'll get duplicate vars, which is not an error.
-        // so, we just get rid of duplicates respecting later bindings
-        if (params == n.vars->size() && params > 1) // no error occured
-        {
-            unsigned int offs = 0, i, j;
-
-            for (i = bound_vars.size() - params; i < bound_vars.size(); i++)
-            {
-                for (j = i + 1; j < bound_vars.size(); j++)
-                {
-                    if (bound_vars[j].int_name == bound_vars[i].int_name)
-                    {
-                        delete (*n.vars)[i - bound_vars.size() + params - offs];
-                        n.vars->erase(n.vars->begin() + (i - bound_vars.size() + params - offs));
-                        offs++;
-                        break;
-                    }
-                }
-            }
-        }
-
-        n.ord_expr->accept(*this);
-        n.ret_expr->accept(*this);
-
-        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
-    }
-
     void Sema::visit(ASTOrderEmpty &n)
     {
         std::string loc;
@@ -1553,7 +1511,7 @@ namespace sedna
             tc = result.get_tuple_cell();
             tc = tuple_cell::make_sure_light_atomic(tc);
 
-            if (!check_constraints_for_xs_Name(tc.get_str_mem(), tc.get_strlen()))
+            if (!check_constraints_for_xs_NCName(tc.get_str_mem(), tc.get_strlen()))
             {
                 drv->error(n.getLocation(), XPTY0004, *n.test + " is not a valid NCName");
             }
@@ -1802,41 +1760,6 @@ namespace sedna
     {
         n.type->accept(*this);
         n.var->accept(*this);
-    }
-
-    void Sema::visit(ASTUnio &n)
-    {
-        // we will run vars ib param mode to make duplicate removal a bit easier
-        // duplicates could exist because of for-variables rebindings
-        // we cannot get 'unbound variable' errors here since they cannot contradict to ancestor fun-defs
-        unsigned int params = 0;
-
-        setParamMode();
-        VisitNodesVector(n.vars, *this);
-        params = param_count;
-        unsetParamMode();
-
-        U_ASSERT(params == n.vars->size());
-
-        // get rid of duplicates respecting later bindings
-        if (params > 1) // no error occured
-        {
-            unsigned int offs = 0, i, j;
-
-            for (i = bound_vars.size() - params; i < bound_vars.size(); i++)
-            {
-                for (j = i + 1; j < bound_vars.size(); j++)
-                    if (bound_vars[j].int_name == bound_vars[i].int_name)
-                {
-                    delete (*n.vars)[i - bound_vars.size() + params - offs];
-                    n.vars->erase(n.vars->begin() + (i - bound_vars.size() + params - offs));
-                    offs++;
-                    break;
-                }
-            }
-        }
-
-        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
     }
 
     void Sema::visit(ASTUop &n)

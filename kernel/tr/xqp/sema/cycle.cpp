@@ -570,23 +570,6 @@ namespace sedna
         VisitNodesVector(n.specs, *this);
     }
 
-    void Cycle::visit(ASTOrderByRet &n)
-    {
-        unsigned int params = 0;
-
-        n.iter_expr->accept(*this);
-
-        setParamMode();
-        VisitNodesVector(n.vars, *this);
-        unsetParamMode();
-        params = param_count;
-
-        n.ord_expr->accept(*this);
-        n.ret_expr->accept(*this);
-
-        bound_vars.erase(bound_vars.begin() + (bound_vars.size() - params), bound_vars.end());
-    }
-
     void Cycle::visit(ASTOrderEmpty &n)
     {
         // nothing to do
@@ -756,11 +739,6 @@ namespace sedna
     void Cycle::visit(ASTTypeVar &n)
     {
         n.var->accept(*this);
-    }
-
-    void Cycle::visit(ASTUnio &n)
-    {
-        // nothing to do
     }
 
     void Cycle::visit(ASTUop &n)

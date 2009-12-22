@@ -344,9 +344,6 @@ namespace sedna
     {
         U_ASSERT(module_uri != NULL);
 
-        if (!ast) // check if we've already got qep
-            return;
-
         lr2por *l2p;
         static_context *st_cxt;
 
@@ -354,9 +351,6 @@ namespace sedna
         l2p = new lr2por(this->drv, this, st_cxt);
 
         ast->accept(*l2p);
-
-        delete ast;
-        ast = NULL;
 
         // we don't need any result from l2p for library modules since static_context will be populated with global vars/funcs
         delete l2p;

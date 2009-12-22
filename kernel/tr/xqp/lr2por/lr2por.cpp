@@ -2037,7 +2037,7 @@ namespace sedna
         }
         else if (*n.local == "*")
         {
-            off_this.test_data = "\"" + *n.pref + "\"";
+            off_this.test_data = "\"" + *n.uri + "\"";
             off_this.test_type = "wildcard_ncname_star";
         }
         else
@@ -2170,10 +2170,6 @@ namespace sedna
         setOffer(off_this);
     }
 
-    void lr2por::visit(ASTOrderByRet &n)
-    {
-    }
-
     void lr2por::visit(ASTOrderEmpty &n)
     {
         st_cxt->empty_order = (n.mod == ASTOrderEmpty::EMPTY_GREATEST) ? xq_empty_order_greatest : xq_empty_order_least;
@@ -2212,7 +2208,7 @@ namespace sedna
 
         if (n.col_mod)
         {
-            n.ad_mod->accept(*this);
+            n.col_mod->accept(*this);
             off_this = getOffer();
 
             orb.collation = off_this.orbs[0].collation;
@@ -2738,7 +2734,7 @@ namespace sedna
         n.type->accept(*this);
         off_this = getOffer();
 
-        off_this.st.oi = st_one;
+        off_this.st.oi = (n.mod == ASTTypeSingle::ONE ? st_one : st_optional);
 
         setOffer(off_this);
     }
@@ -2801,10 +2797,6 @@ namespace sedna
         }
 
         setOffer(off_this);
-    }
-
-    void lr2por::visit(ASTUnio &n)
-    {
     }
 
     void lr2por::visit(ASTUop &n)
@@ -3337,8 +3329,9 @@ namespace sedna
     CalcOp *lr2por::make_CalcOp(ASTNode *n, bool logical)
     {
         CalcOp *res;
+        ASTBop *b;
 
-        if (ASTBop *b = dynamic_cast<ASTBop *>(n))
+        if ((b = dynamic_cast<ASTBop *>(n)) && (b->op >= ASTBop::OR && b->op <= ASTBop::GE_V && b->op != ASTBop::TO))
         {
             make_binary_op(*b);
             res = op_tree;
