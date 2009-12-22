@@ -20,12 +20,7 @@ public:
         OPT,
         ZERO_OR_MORE,
         ONE_OR_MORE,
-
-        // this is for our Schema quirks such as (xs:anyType) since it is analyzed via se:sa-analyze-seq-type anyway.
-        // Since i don't know what sa will do with it on the next stages, i'll stay with NONE
-        // Probably, it should be get ridden all together. For example, ((xs:anyType (var "" "i"))) --> ((zero-or-more xs:anyType) (var "" "i")))
-        // For now, though, some tests from Sedna Tests suite emanate errors on ((zero-or-more xs:anyType) (var "" "i")))
-        NONE
+        EMPTY,
     };
 
     ASTNode *type_test;

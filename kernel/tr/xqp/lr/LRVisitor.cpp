@@ -1683,7 +1683,7 @@ void LRVisitor::visit(ASTType &n)
 
 void LRVisitor::visit(ASTTypeSeq &n)
 {
-    if (n.mod == ASTTypeSeq::NONE || dynamic_cast<ASTEmptyTest *>(n.type_test))
+    if (dynamic_cast<ASTEmptyTest *>(n.type_test))
     {
         n.type_test->accept(*this);
     }

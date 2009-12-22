@@ -1543,7 +1543,21 @@ namespace sedna
 
     void Sema::visit(ASTPiTest &n)
     {
-        // nothing to do
+        // check if StringLiteral representation is a valid NCName
+        if (n.type == ASTPiTest::STRING)
+        {
+            tuple_cell tc = tuple_cell(xs_string, n.test->c_str(), true);
+
+            stmt_str_buf result;
+            collapse_string_normalization(&tc, result);
+            tc = result.get_tuple_cell();
+            tc = tuple_cell::make_sure_light_atomic(tc);
+
+            if (!check_constraints_for_xs_Name(tc.get_str_mem(), tc.get_strlen()))
+            {
+                drv->error(n.getLocation(), XPTY0004, *n.test + " is not a valid NCName");
+            }
+        }
     }
 
     void Sema::visit(ASTPosVar &n)
