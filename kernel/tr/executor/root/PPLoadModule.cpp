@@ -13,7 +13,7 @@
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
-#include "tr/pq/pq.h"
+#include "tr/xqp/modules.h"
 #include "tr/mo/micro.h"
 #include "tr/structures/metadata.h"
 #include "common/errdbg/d_printf.h"

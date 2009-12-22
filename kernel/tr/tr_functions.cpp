@@ -14,7 +14,6 @@
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 #include "tr/tr_functions.h"
-#include "tr/pq/pq.h"
 #include "tr/log/log.h"
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"

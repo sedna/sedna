@@ -11,7 +11,7 @@
 #include <string.h>
 #include <sstream>
 
-#include "tr/pq/pq.h"
+#include "tr/xqp/modules.h"
 #include "tr/xqp/serial/deser.h"
 
 namespace sedna

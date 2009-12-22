@@ -20,7 +20,6 @@
 #include "tr/tr_utils.h"
 #include "tr/cl_client.h"
 #include "tr/socket_client.h"
-#include "tr/pq/pq.h"
 #include "tr/auth/auc.h"
 #include "tr/rcv/rcv_test_tr.h"
 

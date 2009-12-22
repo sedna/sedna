@@ -25,19 +25,16 @@ generated: gen_num_ops$(EXE_EXT)
 	touch generated
 
 gen_num_ops$(EXE_EXT): gen_num_ops$(OBJ_EXT)
-	$(LD) $(LFLAGS_CHICKEN_EXE) $(LDOUT)$@ $^ $(LSLIBS_CHICKEN_EXE)
+	$(LD) $(LFLAGS_NOLIB) $(LDOUT)$@ $^
 
 gen_num_ops$(OBJ_EXT): gen_num_ops.c
-	$(CC) $(CFLAGS_CHICKEN_EXE) $<
-
-gen_num_ops.c: gen_num_ops.scm
-	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
+	$(CC) $(CFLAGS) $<
 
 ################################################################################
 # clean_generated                                                              #
 ################################################################################
 clean_generated:
-	-$(REMOVE) numeric_operations.cpp numeric_operations.h gen_num_ops.c gen_num_ops$(EXE_EXT)
+	-$(REMOVE) numeric_operations.cpp numeric_operations.h gen_num_ops$(EXE_EXT)
 
 
 
