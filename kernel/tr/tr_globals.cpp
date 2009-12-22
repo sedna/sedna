@@ -18,7 +18,7 @@
 
 using namespace tr_globals;
 
-namespace tr_globals 
+namespace tr_globals
 {
     int run_rewriter      = 1;
     int run_popt          = 0;
@@ -73,7 +73,7 @@ static arg_rec tr_argtable[] =
     {"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
     {"-popt",           " on/off",   arg_bool,  &run_popt,                  "off",     "\t\t  run physical optimizer (default off)"},
     {"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},
-    {"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, POR, LR\n\t\t\t  (default XQuery)"},
+    {"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, ASTI, ASTQ\n\t\t\t  (default XQuery)"},
     {"-debug",          " on/off",   arg_bool,  &debug_mode,                "off",     "\t\t  execute statements in debug mode (default off)\t"},
     {"-timeout",        " value",    arg_int,   &query_timeout,             "0",       "\t\t  set timeout for execution of a query in seconds (no timeout by default)\t"},
     {"-name",           " name",     arg_str,   tr_globals::login,          "SYSTEM",  "\t\t  user name (default SYSTEM)"},
@@ -82,19 +82,19 @@ static arg_rec tr_argtable[] =
     {NULL,              " filename", arg_str,   filename,                   "???",     "\t\t  file with an XQuery query\n\t\t\t  "}
 };
 
-static bool 
+static bool
 is_command_line_args_length_overflow(int argc, char ** argv)
 {
     for (int i = 1; i < argc; i++)
     {
-        if (strlen(argv[i]) > s_min(SE_MAX_DB_NAME_LENGTH, 
-            s_min(SE_MAX_PASSWORD_LENGTH, 
+        if (strlen(argv[i]) > s_min(SE_MAX_DB_NAME_LENGTH,
+            s_min(SE_MAX_PASSWORD_LENGTH,
             s_min(TR_ARG_MAX_LENGTH, SE_MAX_LOGIN_LENGTH)))) return true;
     }
     return false;
 }
 
-static void 
+static void
 print_tr_usage()
 {
     throw USER_SOFT_EXCEPTION((std::string("Usage: se_trn [options] dbname filename\n\n") +
@@ -102,7 +102,7 @@ print_tr_usage()
 }
 
 
-void 
+void
 parse_trn_command_line(int argc, char** argv)
 {
     char errmsg[1000];
@@ -115,12 +115,12 @@ parse_trn_command_line(int argc, char** argv)
 
     int res = arg_scanargv(argc, argv, tr_argtable, narg, NULL, errmsg, NULL);
 
-    if (tr_s_help == 1 || tr_l_help == 1) 
+    if (tr_s_help == 1 || tr_l_help == 1)
         print_tr_usage();
 
-    if (tr_version == 1) { 
-        print_version_and_copyright("Sedna Transaction"); 
-        throw USER_SOFT_EXCEPTION(""); 
+    if (tr_version == 1) {
+        print_version_and_copyright("Sedna Transaction");
+        throw USER_SOFT_EXCEPTION("");
     }
 
     if (0 == res)
@@ -128,8 +128,8 @@ parse_trn_command_line(int argc, char** argv)
 
     /* Convert query type */
     if (strcmp(q_type, "XQuery") == 0)   query_type = TL_XQuery;
-    else if (strcmp(q_type, "POR") == 0) query_type = TL_POR;
-    else if (strcmp(q_type, "LR") == 0)  query_type = TL_ForSemAnal;
+    else if (strcmp(q_type, "ASTI") == 0) query_type = TL_ASTInitial;
+    else if (strcmp(q_type, "ASTQ") == 0)  query_type = TL_ASTQEPReady;
     else throw USER_EXCEPTION(SE4002);
 }
 

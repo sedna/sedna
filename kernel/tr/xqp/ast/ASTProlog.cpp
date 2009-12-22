@@ -40,7 +40,10 @@ ASTNode *ASTProlog::createNode(scheme_list &sl)
     cd = dsGetASTCommonFromSList(*sl[1].internal.list);
     decls = dsGetASTNodesFromSList(*sl[2].internal.list);
 
-    return new ASTProlog(cd, decls);
+    if (decls)
+        return new ASTProlog(cd, decls);
+    else
+        return new ASTProlog(cd);
 }
 
 void ASTProlog::modifyChild(const ASTNode *oldc, ASTNode *newc)

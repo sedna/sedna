@@ -14,26 +14,24 @@
  * it is used exactly within trn and shared among
  * several trn subparts.
  */
- 
+
 /**
  * Type of query that executed by query processor
  */
 enum QueryType {TL_XQuery       = 9,    // XQuery query
-                TL_ForSemAnal   = 8,    // representation for semantic analiz
-                TL_ForAuth      = 7,    // representation for authentication processing
-                TL_ForMarkLRet	= 4,    // representation for mark LReturns
-                TL_ForConvToPOR	= 2,    // representation for converting to POR
-                TL_POR          = 1     // POR query
+                TL_ASTInitial   = 8,    // internal initial (before semantic pass) AST representation
+                TL_ASTQEPReady  = 7,    // internal QEP-ready AST representation
+                TL_ASTTrig      = 6,    // special type for trigger queries with unmanaged context (yuck!)
                };
 
-/** 
+/**
  * Possible atomic types
  */
-typedef __int16 xmlscm_type; 
+typedef __int16 xmlscm_type;
 
 
-/** 
- * Type of schema node 
+/**
+ * Type of schema node
  */
 enum t_item {
     element,
@@ -51,7 +49,7 @@ enum t_item {
 /**
  * XML Schema Part 2 Datatypes
  * NOTE!: The order of types is significant, because some functions depend on
- * this order. If you are going to change something below, think twice! 
+ * this order. If you are going to change something below, think twice!
  */
 
 // Abstract base types

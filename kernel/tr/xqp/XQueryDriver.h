@@ -125,6 +125,8 @@ namespace sedna
             void error(int code, const char *msg);
 
             bool parse(const char *query);
+            void parseAST(const char *ast);
+            void parseASTForTriggers(const char *ast, static_context *sx, dynamic_context *dx);
 
             int getErrorCode() const;
             std::string getErrorMsg() const;

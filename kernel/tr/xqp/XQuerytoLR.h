@@ -44,5 +44,6 @@ public:
 
 void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch, std::string *module_name);
 void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, std::string *module_name);
+void parse_batch_triggers(sedna::XQueryDriver *drv, const char *query, static_context *sx, dynamic_context *dx);
 
 #endif /* _XQUERYTOLR_H */

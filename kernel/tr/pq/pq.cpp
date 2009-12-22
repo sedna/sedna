@@ -216,7 +216,7 @@ std::string prepare_module(std::string init_module)
     char query_string[128];
     memset(query_string, '\0', 128);
     strcat(query_string, "(process-module-in-scheme ");
-    strcat(query_string, int2string((int)TL_ForAuth).c_str());
+    strcat(query_string, int2string((int)TL_ASTQEPReady).c_str());
     strcat(query_string, ")");
 
     C_word scheme_eval_res;
