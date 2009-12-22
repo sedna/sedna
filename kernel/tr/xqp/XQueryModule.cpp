@@ -177,7 +177,7 @@ namespace sedna
         defFuncNsp = nsPair("http://www.w3.org/2005/xpath-functions", NULL);
 
         // internal namespace to specify types as xs:anyType without worrying about original xs redeclaration
-        // notice that it cannot be redefenid since !xs is not a valid NCName
+        // notice that it cannot be redefined since !xs is not a valid NCName
         nsBinds["!xs"] = nsPair("http://www.w3.org/2001/XMLSchema", NULL);
 
     }
@@ -267,6 +267,27 @@ namespace sedna
         var_num = vars.size();
         fun_num = funcs.size();
 
+        // enumerate local vars and funcs
+        XQVariablesInfo::iterator vit;
+
+        for (vit = vars.begin(); vit != vars.end(); vit++)
+            vit->second->setId(drv->getNewGlobVarId());
+
+        XQFunctionInfo::iterator fit;
+
+        for (fit = funcs.begin(); fit != funcs.end(); fit++)
+        {
+            if (!fit->second.decl->body) // external function
+            {
+                fit->second.decl->setId(-1);
+            }
+            else
+            {
+                fit->second.decl->setId(drv->getNewGlobFunId());
+            }
+        }
+
+
         dynamic_context::static_set(libfun_num + fun_num, libvar_num + var_num, mod_num + 1);
 
         if (mod_num)
@@ -291,6 +312,9 @@ namespace sedna
     void XQueryModule::porLibModule()
     {
         U_ASSERT(module_uri != NULL);
+
+        if (!ast) // check if we've already got qep
+            return;
 
         lr2por *l2p;
         static_context *st_cxt;

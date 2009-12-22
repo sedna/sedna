@@ -371,14 +371,14 @@ void ExtFunctionManager::load_func_list()
 }
 
 
-PPIterator *ExtFunctionManager::make_pp_ext_func(char *name, dynamic_context *cxt, operation_info info, arr_of_PPOpIn arr)
+PPIterator *ExtFunctionManager::make_pp_ext_func(const char *name, dynamic_context *cxt, operation_info info, arr_of_PPOpIn arr)
 {
 	std::string name_str(name);
 	load_func_list();
 	ext_function_desc *fdesc = func_list[name_str];
 	if (fdesc == NULL)
 		throw USER_EXCEPTION2(SE1003, (std::string("external function implementation not found: '") + name_str + "'").c_str());
-	
+
 	ExtFunction *fn;
 	if (fdesc->fn == NULL)
 		fn = se_new ExtFunction(name_str, func_list[name_str]->lib, &fdesc->fn);

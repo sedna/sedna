@@ -384,7 +384,7 @@ namespace sedna
                     }
 
                     err.append(mod_uri);
-                    drv->error(XQST0073, err.c_str());
+                    drv->error(XQST0093, err.c_str());
                     return;
                 }
             }
@@ -869,16 +869,7 @@ namespace sedna
                 }
             }
         }
-
-        /*        // follow intra-modules links
-        if (mod->module_uri && *n.uri == *mod->module_uri)
-        {
-            U_ASSERT(drv->libVars.find(name) != drv->libVars.end());
-
-            if (drv->libVars[name])
-                drv->libVars[name]->accept(*this);
-        }
-*/
+        // we don't need to check inter-module dependcies for main module since inter-module cycle cannot start from main module
     }
 
     void Cycle::visit(ASTVarDecl &n)
@@ -906,7 +897,7 @@ namespace sedna
                     }
 
                     err.append(mod_uri);
-                    drv->error(XQST0073, err.c_str());
+                    drv->error(XQST0093, err.c_str());
                     var_cache[name] = &n; // cache the result
 
                     return;

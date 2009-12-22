@@ -24,8 +24,8 @@
 /*******************************************************************************
  * Define error codes for collations resolving.
  * Since F&O and XQuery specs use different error codes
- * we need to transorm these error codes in place 
- * (say in PPOrderBy) 
+ * we need to transorm these error codes in place
+ * (say in PPOrderBy)
  ******************************************************************************/
 
 #define COLLATION_INVALID_URI        ((int) 0x1)
@@ -103,7 +103,7 @@ struct producer
     int tuple_pos;
     tuple *t;
 
-    producer(); 
+    producer();
     ~producer();
 };
 
@@ -141,10 +141,10 @@ struct global_variable_context
 
     global_variable_context() : size(0), producers(NULL) {}
     ~global_variable_context() { clear(); }
-    void set(int _size_) 
-    { 
-        size = _size_; 
-        producers = size > 0 ? se_new global_producer[size] : NULL; 
+    void set(int _size_)
+    {
+        size = _size_;
+        producers = size > 0 ? se_new global_producer[size] : NULL;
     }
     void clear()
     {
@@ -188,10 +188,10 @@ struct function_context
 
     function_context() : size(0), fun_decls(NULL) {}
     ~function_context() { clear(); }
-    void set(int _size_) 
-    { 
-        size = _size_; 
-        fun_decls = size > 0 ? se_new function_declaration[size] : NULL; 
+    void set(int _size_)
+    {
+        size = _size_;
+        fun_decls = size > 0 ? se_new function_declaration[size] : NULL;
     }
     void clear()
     {
@@ -256,7 +256,7 @@ public:
     xmlns_ptr    add_to_context(const char* prefix, const char* uri);
     void           remove_from_context(const char* prefix);
     inline void    remove_from_context(xmlns_ptr ns)
-    { 
+    {
         remove_from_context(ns->prefix);
     }
 
@@ -277,10 +277,10 @@ public:
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in dynamic_context::get_error_description()");
         }
     }
-        
+
     /// 1. Resolves uri and returns collation handler through "handler".
     /// 2. If "uri" is NULL, returns default collation handler.
-    /// 3. Returns 0 if success, else return one of the collation error 
+    /// 3. Returns 0 if success, else return one of the collation error
     /// codes defined above.
     int get_collation(const char *uri, /* out */ CollationHandler** handler);
     CollationHandler* get_default_collation() { return default_collation_handler; }
@@ -297,9 +297,17 @@ public:
     variable_context var_cxt;
     static_context *st_cxt;
 
-    dynamic_context(static_context *_st_cxt_, int _var_cxt_size_) 
+    dynamic_context(static_context *_st_cxt_, int _var_cxt_size_)
         : var_cxt(_var_cxt_size_), st_cxt(_st_cxt_)
     {
+    }
+
+    // used to properly set producers when qep tree is already built
+    // before this dynamic context is created with 0 vars (see lr2por visitor)
+    // NOTE: this works IFF we don't register producers in pp-constructors
+    void set_producers(size_t num)
+    {
+        var_cxt = variable_context(num);
     }
 
     ~dynamic_context() { /* we do not delete st_cxt here because we manage it some other way */ }

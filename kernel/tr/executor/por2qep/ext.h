@@ -45,7 +45,7 @@ private:
 	};
 	func_cxt *fcxt;
 	ExtFunction **fn_ptr;
-	
+
 	SEDNA_SEQUENCE_ITEM *result;
 	SEDNA_SEQUENCE_ITEM *make_item(const tuple &t);
 	SEDNA_SEQUENCE_ITEM *get_ef_seq(const PPOpIn &inp);
@@ -83,7 +83,7 @@ private:
 public:
 	ExtFunctionManager() {}
 	~ExtFunctionManager();
-	PPIterator *make_pp_ext_func(char *name, dynamic_context *cxt, operation_info info, arr_of_PPOpIn arr);
+	PPIterator *make_pp_ext_func(const char *name, dynamic_context *cxt, operation_info info, arr_of_PPOpIn arr);
 };
 
 extern ExtFunctionManager ext_function_manager;

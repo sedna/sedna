@@ -300,7 +300,9 @@ err:XQST0089
 err:XQST0090
 
 	It is a static error if a character reference does not identify a valid character in the version of XML that is in use.
+err:XQST0093
 
+    It is a static error to import a module M1 if there exists a sequence of modules M1 ... Mi ... M1 such that each module directly depends on the next module in the sequence.
 
 ###############################################################################
 ## XQuery/XPath Functions and Operators errors

@@ -519,6 +519,29 @@ namespace sedna
 
     PPQueryEssence *XQueryDriver::getQEPForModule(unsigned int ind)
     {
+        // first we enumerate all global vars and funcs
+        glob_var_num = 0;
+        glob_fun_num = 0;
+
+        XQVariablesInfo::iterator vit;
+
+        for (vit = libVars.begin(); vit != libVars.end(); vit++)
+            vit->second->setId(getNewGlobVarId());
+
+        XQFunctionInfo::iterator fit;
+
+        for (fit = libFuncs.begin(); fit != libFuncs.end(); fit++)
+        {
+            if (!fit->second.decl->body) // external function
+            {
+                fit->second.decl->setId(-1);
+            }
+            else
+            {
+                fit->second.decl->setId(getNewGlobFunId());
+            }
+        }
+
         return (mods[ind])->getQEP();
     }
 

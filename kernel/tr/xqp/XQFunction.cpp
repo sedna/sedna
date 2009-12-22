@@ -72,7 +72,7 @@ namespace sedna
         {"", "distinct-values",  1,  2, 0xFE, "!fn!distinct-values", false, &atomicResultMany, &l2pFnDistinctValues},
         {"", "doc",  1,  2, 0xFF, "!fn!document", false, &resultOne, &l2pFnDoc},
         {"", "doc-available",  1,  1, 0xFF, "!fn!doc-available", false, &resultOne, &l2pFnDocAvailable},
-        {"", "document",  1,  2, 0xFF, "!fn!document", false, &resultOne, &l2pFnDocument},
+        {"", "document",  1,  2, 0xFF, "!fn!document", false, &resultOne, &l2pFnDoc},
         {"", "document-uri",  1,  1, 0xFF, "!fn!document-uri", false, &resultOne, &l2pFnDocumentUri},
         {"", "empty",  1,  1, 0xFF, "!fn!empty", false, &resultOne, &l2pFnEmpty},
         {"", "encode-for-uri",  1,  1, 0xFF, "!fn!encode-for-uri", false, &resultOne, &l2pFnEncodeForUri},

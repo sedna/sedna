@@ -7,6 +7,7 @@
 #include "tr/xqp/sema/Sema.h"
 #include "common/errdbg/exceptions.h"
 #include "tr/executor/base/xs_names.h"
+#include "tr/executor/base/xs_helper.h"
 
 #define DIAG_DUP_PROLOG(bl1, bc1, bl2, bc2) (std::string("first declaration at (") + int2string(bl1) + ":" + int2string(bc1) + ")")
 #define DIAG_QNAME(pref, loc) (std::string("cannot resolve QName: ") + pref + ":" + loc)
@@ -807,7 +808,7 @@ namespace sedna
 
         // then we check if we've got constructor function in fact
         if (*n.uri == "http://www.w3.org/2001/XMLSchema" && *n.local != "anyAtomicType" && *n.local != "NOTATION" &&
-             drv->xsTypes.find(*n.local) != drv->xsTypes.end() && drv->xsTypes[*n.local].mod == ASTType::ATOMIC)
+             drv->xsTypes.find(*n.local) != drv->xsTypes.end() && drv->xsTypes[*n.local].type == ASTType::ATOMIC)
         {
             // check if we've got only one argument
             if (!n.params || n.params->size() != 1)
@@ -1046,7 +1047,6 @@ namespace sedna
         unsetParamMode();
 
 //        param_ok = (param_count == 1);
-
 //        n.fd->accept(*this);
 
 //        if (param_ok)
@@ -1125,6 +1125,11 @@ namespace sedna
             drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as an import module URI");
             return;
         }
+        else if (*n.uri == "http://www.w3.org/2000/xmlns/")
+        {
+            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/2000/xmlns/' cannot be used as an import module URI");
+            return;
+        }
 
         if (*n.uri == "")
         {
@@ -1193,7 +1198,13 @@ namespace sedna
 
         if (*n.name == "xml" || *n.name == "xmlns")
         {
-            drv->error(n.getLocation(), XQST0070, std::string("module declaration URI cannot be '") + *n.name + "'");
+            drv->error(n.getLocation(), XQST0070, std::string("module declaration prefix cannot be '") + *n.name + "'");
+            return;
+        }
+
+        if (*n.uri == "http://www.w3.org/XML/1998/namespace" || *n.uri == "http://www.w3.org/2000/xmlns/")
+        {
+            drv->error(n.getLocation(), XQST0070, std::string("module declaration URI cannot be '") + *n.uri + "'");
             return;
         }
 
@@ -1228,9 +1239,14 @@ namespace sedna
         nsBindType::const_iterator it;
         std::string err;
 
-        if (*n.name == "xml")
+        if (*n.name == "xml" && *n.uri != "http://www.w3.org/XML/1998/namespace")
         {
-            drv->error(n.getLocation(), XQST0070, "'xml' cannot be used as a prefix");
+            drv->error(n.getLocation(), XQST0070, "'xml' can be bound only to the XML namespace");
+            return;
+        }
+        else if (*n.uri == "http://www.w3.org/XML/1998/namespace" && *n.name != "xml")
+        {
+            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be bound to other prefix than 'xml'");
             return;
         }
         else if (*n.name == "xmlns")
@@ -1238,9 +1254,9 @@ namespace sedna
             drv->error(n.getLocation(), XQST0070, "'xmlns' cannot be used as a prefix");
             return;
         }
-        else if (*n.uri == "http://www.w3.org/XML/1998/namespace")
+        else if (*n.uri == "http://www.w3.org/2000/xmlns/")
         {
-            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as a namespace URI");
+            drv->error(n.getLocation(), XQST0070, "namespace 'http://www.w3.org/2000/xmlns/' is reserved");
             return;
         }
 
@@ -1280,6 +1296,12 @@ namespace sedna
         if (*n.name != "xml" && n.cont && *n.cont == "http://www.w3.org/XML/1998/namespace")
         {
             drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/XML/1998/namespace' cannot be used as a namespace URI");
+            return;
+        }
+
+        if (n.cont && *n.cont == "http://www.w3.org/2000/xmlns/")
+        {
+            drv->error(n.getLocation(), XQST0070, "'http://www.w3.org/2000/xmlns/ is reserved'");
             return;
         }
 
@@ -2089,19 +2111,19 @@ namespace sedna
 
         // trim WSes for key
         beg = 0;
-        while (beg < pos && isspace(opt[beg])) beg++;
+        while (beg < pos && IS_WHITESPACE(opt[beg])) beg++;
 
         end = pos - 1;
-        while (end >= 0 && isspace(opt[end])) end--;
+        while (end >= 0 && IS_WHITESPACE(opt[end])) end--;
 
         key = std::string(opt, beg, end - beg + 1);
 
         // trim WSes for value
         beg = pos + 1;
-        while (beg < opt.size() && isspace(opt[beg])) beg++;
+        while (beg < opt.size() && IS_WHITESPACE(opt[beg])) beg++;
 
         end = opt.size() - 1;
-        while (end > pos && isspace(opt[end])) end--;
+        while (end > pos && IS_WHITESPACE(opt[end])) end--;
 
         val = std::string(opt, beg, end - beg + 1);
 

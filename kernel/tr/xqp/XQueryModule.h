@@ -42,8 +42,8 @@ namespace sedna
 
         XQFunctionInfo funcs; // all function defined in prolog
         XQVariablesInfo vars; // all variables defined in this module
-        XQStringHash unres_vars; // variables that cannot have been resolved during intiial semantic analysis phase
-        XQFunctionInfo unres_funcs; // functions that cannot have been resolved during intiial semantic analysis phase
+        XQStringHash unres_vars; // variables that could not have been resolved during intitial semantic analysis phase
+        XQFunctionInfo unres_funcs; // functions that could not have been resolved during intitial semantic analysis phase
 
         XQStringHash imported; // contains URIs for imported modules
 

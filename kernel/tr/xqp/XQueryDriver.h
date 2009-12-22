@@ -56,10 +56,10 @@ namespace sedna
 
             struct xsTypeInfo
             {
-                ASTType::TypeMod mod; // category of type, i.e. proper context
-                xmlscm_type type; // internal type
+                ASTType::TypeMod type; // category of type, i.e. proper context
+                xmlscm_type xtype; // internal type
 
-                xsTypeInfo(ASTType::TypeMod mod_ = ASTType::ABSTRACT, xmlscm_type type_ = xs_anyType) : mod(mod_), type(type_) {}
+                xsTypeInfo(ASTType::TypeMod mod_ = ASTType::ABSTRACT, xmlscm_type type_ = xs_anyType) : type(mod_), xtype(type_) {}
             };
             std::map<std::string, xsTypeInfo> xsTypes; // known XQuery types
 
