@@ -361,6 +361,10 @@ namespace sedna
         off_this.use_last = false;
         off_this.use_position = false;
 
+        // if we don't have the axis-context then we use focus-context
+        if (!n.cont)
+            off_this.usedVars.insert("$%v");
+
         setOffer(off_this);
     }
 
