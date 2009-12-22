@@ -472,7 +472,7 @@ namespace sedna
     /* we expect 54 conflicts in this grammar:
             1) 51 for 'xgs:leading-lone-slash' grammar constraint (default: 'shift' is consistent with specification)
             2) 1 for 'load or replace module' Sedna expression since 'load or xxx' is a valid expression
-                    (default: 'shift' disables expressions such as 'load or xxx'; fix: reject 'or' and accept only 'OR')
+                    (default: 'shift' disables expressions such as 'load or xxx'; possible fix: reject 'or' and accept only 'OR')
             2) 2 for 'xgs:occurrence-indicators' grammar constraint (default: 'shift' is consistent with specification)
     */
 %expect 54

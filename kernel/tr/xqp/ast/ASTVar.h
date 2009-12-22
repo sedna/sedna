@@ -36,6 +36,14 @@ public:
 
     ~ASTVar();
 
+    std::string getStandardName() const
+    {
+        if (*uri == "")
+            return *local;
+        else
+            return "{" + *pref + "}" + *local;
+    }
+
     void accept(ASTVisitor &v);
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);
