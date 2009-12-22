@@ -113,6 +113,43 @@ namespace sedna
 
     void lr2por::visit(ASTAttribTest &n)
     {
+        // we ignore type here except for sequence types
+        childOffer off_this;
+
+        off_this.st.type.type = st_attribute;
+
+        if (n.name)
+        {
+            n.name->accept(*this);
+            off_this = getOffer();
+        }
+        else
+        {
+            off_this.test_data = "()";
+            off_this.test_type = "wildcard_star";
+
+            off_this.st.type.info.ea.nne = st_nne_wildcard;
+        }
+
+        if (off_this.test_data == "wildcard_star" || off_this.test_data == "qname")
+            off_this.test_type = "attribute";
+
+        if (n.type)
+        {
+            childOffer off_type;
+
+            n.type->accept(*this);
+            off_type = getOffer();
+
+            off_this.st.type.info.ea.type_name = off_type.st.type.info.single_type;
+            off_this.st.type.info.ea.tne = st_tne_present;
+        }
+        else
+        {
+            off_this.st.type.info.ea.tne = st_tne_nothing;
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTAxisStep &n)
@@ -124,7 +161,7 @@ namespace sedna
 
         if (n.cont)
         {
-            // we wont to propagate pers_abspath property here
+            // we won't to propagate pers_abspath property here
             setParentRequest(getParentRequest());
             n.cont->accept(*this);
             off_cont = getOffer();
@@ -144,7 +181,10 @@ namespace sedna
             off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), lr2PathExpr(dyn_cxt, "()", pe_local_aspace), counted_ptr<db_entity>(dbe)), 1);
         }
 
-        if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && off_cont.opin.op)
+        // check if we've got processing-instruction test
+        ASTPiTest *pit = dynamic_cast<ASTPiTest *>(n.test);
+
+        if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && off_cont.opin.op && (!pit || pit->type == ASTPiTest::NONE))
         {
             if (dynamic_cast<PPAbsPath *>(off_cont.opin.op))
             {
@@ -474,10 +514,25 @@ namespace sedna
 
     void lr2por::visit(ASTCharCont &n)
     {
+        childOffer off_this;
+        tuple_cell tc;
+
+        tc = string2tuple_cell(*n.cont, xs_string);
+
+        off_this.opin = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTCommTest &n)
     {
+        childOffer off_this;
+
+        off_this.test_data = "()";
+        off_this.test_type = "comment";
+        off_this.st.type.type = st_comment;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTCommentConst &n)
@@ -715,6 +770,25 @@ namespace sedna
 
     void lr2por::visit(ASTDocTest &n)
     {
+        // we ignore type and nillability from element here
+        childOffer off_this;
+
+        if (n.elem_test)
+        {
+            n.elem_test->accept(*this);
+            off_this = getOffer();
+
+            off_this.st.type.type = st_document_element;
+        }
+        else
+        {
+            off_this.test_data = "()";
+            off_this.st.type.type = st_document;
+        }
+
+        off_this.test_type = "document";
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTDropColl &n)
@@ -903,10 +977,52 @@ namespace sedna
 
     void lr2por::visit(ASTElementTest &n)
     {
+        // we ignore type and nillability here for XPath and set it only for sequence types
+        childOffer off_this;
+
+        off_this.st.type.type = st_element;
+
+        if (n.name)
+        {
+            n.name->accept(*this);
+            off_this = getOffer();
+        }
+        else
+        {
+            off_this.test_data = "()";
+            off_this.test_type = "wildcard_star";
+
+            off_this.st.type.info.ea.nne = st_nne_wildcard;
+        }
+
+        if (off_this.test_data == "wildcard_star" || off_this.test_data == "qname")
+            off_this.test_type = "element";
+
+        if (n.type)
+        {
+            childOffer off_type;
+
+            n.type->accept(*this);
+            off_type = getOffer();
+
+            off_this.st.type.info.ea.type_name = off_type.st.type.info.single_type;
+            off_this.st.type.info.ea.tne = (n.mod == ASTElementTest::ANY_NIL) ? st_tne_optional : st_tne_present;
+        }
+        else
+        {
+            off_this.st.type.info.ea.tne = st_tne_nothing;
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTEmptyTest &n)
     {
+        childOffer off_this;
+
+        off_this.st.type.type = st_item;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTError &n)
@@ -916,6 +1032,13 @@ namespace sedna
 
     void lr2por::visit(ASTExtExpr &n)
     {
+        // ignore pragmas
+        childOffer off_this;
+
+        n.expr->accept(*this);
+        off_this = getOffer();
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTFilterStep &n)
@@ -1199,7 +1322,7 @@ namespace sedna
                 {
                     un_vars.back().second = getVarNum(); // get unique binding (see above)
 
-                    if (dynamic_cast<ASTLet *>((*n.fls)[i])) // for let-clause remember position
+                    if (dynamic_cast<ASTLet *>((*n.fls)[i])) // for let-clause remember the position
                         let_num++;
                 }
             }
@@ -1600,10 +1723,28 @@ namespace sedna
 
     void lr2por::visit(ASTItemTest &n)
     {
+        childOffer off_this;
+
+        off_this.st.type.type = st_item;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTLet &n)
     {
+        childOffer off_this;
+
+        // we need to build expr before we bind variables since there could be same-name bindings
+        n.expr->accept(*this);
+
+        off_this = getOffer();
+
+        setParamMode();
+        n.tv->accept(*this);
+        off_this.st = getOffer().st;
+        unsetParamMode();
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTLibModule &n)
@@ -1755,6 +1896,36 @@ namespace sedna
 
     void lr2por::visit(ASTNameTest &n)
     {
+        childOffer off_this;
+
+        if (*n.pref == "*" && *n.local == "*")
+        {
+            off_this.test_data = "()";
+            off_this.test_type = "wildcard_star";
+            off_this.st.type.info.ea.nne = st_nne_wildcard;
+        }
+        else if (*n.pref == "*")
+        {
+            off_this.test_data = "\"" + *n.local + "\"";
+            off_this.test_type = "wildcard_star_ncname";
+        }
+        else if (*n.local == "*")
+        {
+            off_this.test_data = "\"" + *n.pref + "\"";
+            off_this.test_type = "wildcard_ncname_star";
+        }
+        else
+        {
+            off_this.test_data = "(\"" + ((n.uri) ? *n.uri : "") + "\"";
+            off_this.test_data = " \"" + *n.local + "\" \"" + *n.pref + "\")";
+            off_this.test_type = "qname";
+
+            off_this.st.type.info.ea.nne = st_nne_name;
+            off_this.st.type.info.ea.node_name_uri = (!n.uri || *n.uri == "") ? NULL : xs_NCName_create(n.uri->c_str(), pe_local_aspace->alloc);
+            off_this.st.type.info.ea.node_name_local = xs_NCName_create(n.local->c_str(), pe_local_aspace->alloc);
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTNamespaceDecl &n)
@@ -1764,6 +1935,14 @@ namespace sedna
 
     void lr2por::visit(ASTNodeTest &n)
     {
+        childOffer off_this;
+
+        off_this.test_data = "()";
+        off_this.test_type = "node";
+
+        off_this.st.type.type = st_node;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTNsp &n)
@@ -1807,6 +1986,12 @@ namespace sedna
 
     void lr2por::visit(ASTOrdExpr &n)
     {
+        childOffer off_this;
+
+        n.expr->accept(*this);
+        off_this = getOffer();
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTOrder &n)
@@ -1870,16 +2055,108 @@ namespace sedna
 
     void lr2por::visit(ASTOrderMod &n)
     {
-        // nothing to do
+        childOffer off_this;
+        orb_modifier orb;
+
+        if (n.ad_mod)
+        {
+            orb.order = off_this.orbs[0].order;
+        }
+        else
+        {
+            orb.order = ORB_ASCENDING;
+        }
+
+        if (n.em_mod)
+        {
+            orb.status = off_this.orbs[0].status;
+        }
+        else
+        {
+            orb.status = st_cxt->empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
+        }
+
+        if (n.col_mod)
+        {
+            orb.collation = off_this.orbs[0].collation;
+        }
+        else
+        {
+            orb.collation = st_cxt->get_default_collation();
+        }
+
+        off_this.orbs[0] = orb;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTOrderModInt &n)
     {
-        // nothing to do
+        childOffer off_this;
+
+        switch (n.mod)
+        {
+            case ASTOrderModInt::ASCENDING:
+                off_this.orbs[0].order = ORB_ASCENDING;
+                break;
+
+            case ASTOrderModInt::DESCENDING:
+                off_this.orbs[0].order = ORB_DESCENDING;
+                break;
+
+            case ASTOrderModInt::EMPTY_GREATEST:
+                off_this.orbs[0].status = ORB_EMPTY_GREATEST;
+                break;
+
+            case ASTOrderModInt::EMPTY_LEAST:
+                off_this.orbs[0].status = ORB_EMPTY_LEAST;
+                break;
+
+            case ASTOrderModInt::COLLATION:
+                int res = st_cxt->get_collation(n.uri->c_str(), &(off_this.orbs[0].collation));
+
+                if(res != 0)
+                {
+                    // Given URI is invalid
+                    if (res == COLLATION_INVALID_URI)
+                        throw USER_EXCEPTION2(XQST0046, n.uri->c_str());
+                    else // There is no such collation, or it could not be properly resolved
+                        throw USER_EXCEPTION2(XQST0076, n.uri->c_str());
+                }
+                break;
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTOrderSpec &n)
     {
+        childOffer off, off_this;
+
+        n.expr->accept(*this);
+        off = getOffer();
+
+        off_this.opin = off.opin;
+
+        if (n.mod)
+        {
+            n.mod->accept(*this);
+            off = getOffer();
+
+            off_this.orbs[0] = off.orbs[0];
+        }
+        else
+        {
+            orb_modifier orb;
+
+            orb.order = ORB_ASCENDING;
+            orb.status = st_cxt->empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
+            orb.collation = st_cxt->get_default_collation();
+
+            off_this.orbs[0] = orb;
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTPIConst &n)
@@ -1942,10 +2219,33 @@ namespace sedna
 
     void lr2por::visit(ASTPiTest &n)
     {
+        childOffer off_this;
+
+        off_this.st.type.type = st_pi;
+
+        if (n.type == ASTPiTest::NONE)
+        {
+            off_this.test_data = "()";
+            off_this.st.type.info.ncname = NULL;
+        }
+        else
+        {
+            off_this.test_data = "\"" + *n.test + "\"";
+            off_this.st.type.info.ncname = xs_NCName_create(n.test->c_str(), pe_local_aspace->alloc);
+        }
+
+        off_this.test_type = "processing-instruction";
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTPosVar &n)
     {
+        // no childOffer here
+        if (param_mode)
+        {
+            n.var->accept(*this);
+        }
     }
 
     void lr2por::visit(ASTPragma &n)
@@ -2202,6 +2502,13 @@ namespace sedna
 
     void lr2por::visit(ASTTextTest &n)
     {
+        childOffer off_this;
+
+        off_this.test_data = "()";
+        off_this.test_type = "text";
+        off_this.st.type.type = st_text;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTTreat &n)
@@ -2221,14 +2528,59 @@ namespace sedna
 
     void lr2por::visit(ASTType &n)
     {
+        childOffer off_this;
+        std::string *pref, *loc;
+
+        ASTParseQName(n.name, &pref, &loc);
+
+        off_this.st.type.type = st_atomic_type;
+        off_this.st.type.info.single_type = drv->getXsType(loc->c_str());
+
+        delete pref;
+        delete loc;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTTypeSeq &n)
     {
+        childOffer off_this;
+
+        n.type_test->accept(*this);
+        off_this = getOffer();
+
+        switch (n.mod)
+        {
+            case ASTTypeSeq::EMPTY:
+                off_this.st.oi = st_empty;
+                break;
+            case ASTTypeSeq::ONE:
+                off_this.st.oi = st_one;
+                break;
+            case ASTTypeSeq::OPT:
+                off_this.st.oi = st_optional;
+                break;
+            case ASTTypeSeq::ZERO_OR_MORE:
+                off_this.st.oi = st_zero_or_more;
+                break;
+            case ASTTypeSeq::ONE_OR_MORE:
+                off_this.st.oi = st_one_or_more;
+                break;
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTTypeSingle &n)
     {
+        childOffer off_this;
+
+        n.type->accept(*this);
+        off_this = getOffer();
+
+        off_this.st.oi = st_one;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTTypeSwitch &n)
@@ -2278,6 +2630,17 @@ namespace sedna
 
     void lr2por::visit(ASTTypeVar &n)
     {
+        childOffer off_this;
+
+        if (param_mode)
+        {
+            n.var->accept(*this);
+            n.type->accept(*this);
+
+            off_this = getOffer();
+        }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTUnio &n)

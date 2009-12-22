@@ -1771,10 +1771,6 @@ namespace sedna
 
         isModeOrdered = oldMode;
         setOffer(getOffer());
-
-        // since Scheme's lr2por doesn't know anything about ordered-unordered (get rid of this later?)
-        modifyParent(n.expr, false, true);
-        n.expr = NULL;
     }
 
     void LReturn::visit(ASTOrder &n)
@@ -2242,7 +2238,16 @@ namespace sedna
     void LReturn::visit(ASTType &n)
     {
         if (param_mode)
-            bound_vars.back().isNodes = false; // not always true for our using of xs:anyType but ASTTypeSeq knows this
+        {
+            std::string *pref, *loc;
+
+            ASTParseQName(n.name, &pref, &loc);
+
+            bound_vars.back().isNodes = (*loc == "anyType"); // anyType is used quirky way to indicate any type (nodes included)
+
+            delete pref;
+            delete loc;
+        }
     }
 
     void LReturn::visit(ASTTypeSeq &n)
@@ -2254,14 +2259,14 @@ namespace sedna
 
         XQVariable &var = bound_vars.back();
 
-        if (n.mod == ASTTypeSeq::ONE || n.mod == ASTTypeSeq::OPT)
+        if (n.mod == ASTTypeSeq::ONE || n.mod == ASTTypeSeq::OPT || n.mod == ASTTypeSeq::EMPTY)
         {
             var.exp_info.isDistincted = true;
             var.exp_info.isOrdered = true;
             var.exp_info.isSingleLevel = true;
             var.exp_info.isMax1 = true;
         }
-        else // NONE (which we use for xs:anyType Scheme-quirk) or sequence
+        else
         {
             // for node sequence we cannot say anything about distinct-order properties; expression analysis will catch it later
             // for non-node sequencies we set such properites as 'true' since they don't have meaning for non-nodes
@@ -2269,9 +2274,6 @@ namespace sedna
             var.exp_info.isOrdered = !var.isNodes;
             var.exp_info.isSingleLevel = !var.isNodes;
             var.exp_info.isMax1 = false;
-
-            if (n.mod == ASTTypeSeq::NONE)
-                var.isNodes = true;
         }
 
         var.exp_info.useConstructors = var.isNodes; // assume the possibily of tmp-nodes if var is bound to nodes
