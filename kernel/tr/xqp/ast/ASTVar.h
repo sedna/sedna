@@ -14,7 +14,7 @@ class ASTVisitor;
 class ASTVar : public ASTNode
 {
 public:
-    std::string *pref, *local; // pragma name
+    std::string *pref, *local; // variable name
 
     std::string *uri; // resolved prefix; added by semantic analyzer
 
