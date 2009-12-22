@@ -16,10 +16,10 @@ class ASTType : public ASTNode
 public:
     enum TypeMod
     {
-        ATOMIC = 0, // xs:integer, xs:string etc.
-        COMPLEX,    // xs:anyType, xs:untyped
+        ATOMIC = 0, // xs:integer, xs:string etc. AND xs:anyAtomicType
+        ABSTRACT,   // xs:anyType, xs:anySimpleType
+        COMPLEX,    // xs:untyped
         LIST,       // xs:NMTOKENS, xs:IDREFS etc.
-        SIMPLE,     // xs:anySimpleType
         ANY,        // any type in hierarchy
     };
 

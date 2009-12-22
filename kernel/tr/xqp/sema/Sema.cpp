@@ -807,7 +807,7 @@ namespace sedna
 
         // then we check if we've got constructor function in fact
         if (*n.uri == "http://www.w3.org/2001/XMLSchema" && *n.local != "anyAtomicType" && *n.local != "NOTATION" &&
-             drv->xsTypes.find(*n.local) != drv->xsTypes.end() && drv->xsTypes[*n.local] == ASTType::ATOMIC)
+             drv->xsTypes.find(*n.local) != drv->xsTypes.end() && drv->xsTypes[*n.local].mod == ASTType::ATOMIC)
         {
             // check if we've got only one argument
             if (!n.params || n.params->size() != 1)
@@ -1672,7 +1672,7 @@ namespace sedna
     {
         const char *uri;
         std::string *pref, *loc, err;
-        std::map<std::string, ASTType::TypeMod>::const_iterator it;
+        std::map<std::string, XQueryDriver::xsTypeInfo>::const_iterator it;
 
         ASTParseQName(n.name, &pref, &loc);
 
@@ -1707,7 +1707,8 @@ namespace sedna
 
         it = drv->xsTypes.find(*loc);
 
-        if (it == drv->xsTypes.end() || (it->second != n.type && n.type != ASTType::ANY))
+        // check if we use the type in proper context (e.g. "1" cast as xs:anyType should be an error)
+        if (it == drv->xsTypes.end() || (it->second.type != n.type && n.type != ASTType::ANY))
         {
             if (n.type == ASTType::ATOMIC)
             {
@@ -1726,6 +1727,7 @@ namespace sedna
             return;
         }
 
+        // explicitly forbid casting to xs:NOTATION and xs:anyAtomicType atomic types
         if (casting_mode && !strcmp(uri, "http://www.w3.org/2001/XMLSchema") && (*loc == "anyAtomicType" || *loc == "NOTATION"))
         {
             drv->error(n.getLocation(), XPST0080, std::string("cannot use 'xs:") + *loc + "' in casting");

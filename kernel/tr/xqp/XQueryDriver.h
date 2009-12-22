@@ -53,7 +53,16 @@ namespace sedna
             unsigned int glob_fun_num;
 
             typedef std::vector<XQueryModule *> modSequence;
-            std::map<std::string, ASTType::TypeMod> xsTypes; // known XQuery types
+
+            struct xsTypeInfo
+            {
+                ASTType::TypeMod mod; // category of type, i.e. proper context
+                xmlscm_type type; // internal type
+
+                xsTypeInfo(ASTType::TypeMod mod_ = ASTType::ABSTRACT, xmlscm_type type_ = xs_anyType) : mod(mod_), type(type_) {}
+            };
+            std::map<std::string, xsTypeInfo> xsTypes; // known XQuery types
+
             std::map<std::string, modSequence> libModules; // imported modules
             std::vector<std::string> import_chain; // current import chain to look for cycles
 
@@ -123,6 +132,8 @@ namespace sedna
 
             var_id getGlobalVariableId(const std::string &name);
             var_id getGlobalFunctionId(const std::string &name);
+
+            xmlscm_type getXsType(const char *type);
 
             size_t getVarCount() const;
             size_t getFuncCount() const;
