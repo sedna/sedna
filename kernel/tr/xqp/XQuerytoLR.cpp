@@ -66,7 +66,8 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
                         drv->doLReturnAnalysis();
                 }
 
-                *module_name = drv->getParsedModuleName();
+                if (module_name)
+                    *module_name = drv->getParsedModuleName();
 
                 GET_TIME(&t2_parser);
                 ADD_TIME(t_total_parser, t1_parser, t2_parser);
@@ -83,7 +84,9 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
                 // do lreturn optimizations
                 drv->doLReturnAnalysis();
 
-                *module_name = drv->getParsedModuleName();
+                if (module_name)
+                    *module_name = drv->getParsedModuleName();
+
                 break;
 
             case TL_ASTQEPReady:
@@ -92,7 +95,9 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
                     drv->parseAST(batch_utf[i].c_str());
 
                 // don't need to run any analysis here sine it's QEP-ready
-                *module_name = "";
+                if (module_name)
+                    *module_name = "";
+
                 break;
 
             default:

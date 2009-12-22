@@ -975,7 +975,10 @@ namespace sedna
 
     void lr2por::visit(ASTDropRole &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        qep = new PPDropRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTDropTrg &n)
@@ -1813,12 +1816,30 @@ namespace sedna
 
     void lr2por::visit(ASTGrantPriv &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        if (n.mod == ASTGrantPriv::DB)
+        {
+            qep = new PPGrantPriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
+                                  PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1), dyn_cxt);
+        }
+        else
+        {
+            qep = new PPGrantPriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
+                                  PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.obj, xs_string)), 1),
+                                  PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
+                                  (n.mod == ASTGrantPriv::DOCUMENT) ? "document" : "collection", dyn_cxt);
+        }
     }
 
     void lr2por::visit(ASTGrantRole &n)
     {
-        // nothing to do
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+        dyn_cxt->set_producers(1);
+
+        qep = new PPGrantRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1),
+                              PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role_to, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTIf &n)

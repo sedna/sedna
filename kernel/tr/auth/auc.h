@@ -59,6 +59,9 @@ void auth_for_create_user(const char* name, const char* passwd);
 void auth_for_alter_user(const char* name, const char* passwd);
 void auth_for_drop_user(const char* name);
 void auth_for_create_role(const char* name);
+void auth_for_drop_role(const char* name);
+void auth_for_grant_role(const char* name, const char *grantee);
+void auth_for_grant_privilege(const char* name, const char *obj_name, const char *obj_type, const char *grantee);
 
 void clear_authmap();
 
