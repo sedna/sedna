@@ -1847,8 +1847,7 @@ namespace sedna
 
     void lr2por::visit(ASTLibModule &n)
     {
-        // nothing to do
-        // we optimize library vars and functions on-demand from main module
+        n.prolog->accept(*this);
     }
 
     void lr2por::visit(ASTLit &n)
@@ -3380,6 +3379,9 @@ namespace sedna
                 break;
             case ASTBop::MINUS:
                 r = get_binary_op(xqbop_sub, lt, rt);
+                break;
+            case ASTBop::MULT:
+                r = get_binary_op(xqbop_mul, lt, rt);
                 break;
             case ASTBop::DIV:
                 r = get_binary_op(xqbop_div, lt, rt);

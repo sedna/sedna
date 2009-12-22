@@ -358,6 +358,7 @@ namespace sedna
         delete ast;
         ast = NULL;
 
+        // we don't need any result from l2p for library modules since static_context will be populated with global vars/funcs
         delete l2p;
     }
 
