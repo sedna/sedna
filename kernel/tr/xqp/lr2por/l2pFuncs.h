@@ -45,9 +45,9 @@ PPOpIn l2pFnFilterEntryLevel(dynamic_context *dyn_cxt, const operation_info &opi
 PPOpIn l2pFnFloor(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnFtHighlight(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnFtHighlightBlocks(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
-PPOpIn l2pFnFtindexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
-PPOpIn l2pFnFtscan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
-PPOpIn l2pFnWindexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnFtIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnFtScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnFtWIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnHoursFromDateTime(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnHoursFromDuration(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnHoursFromTime(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
