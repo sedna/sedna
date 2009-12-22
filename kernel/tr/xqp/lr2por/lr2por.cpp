@@ -37,10 +37,75 @@ namespace sedna
 
     void lr2por::visit(ASTAttr &n)
     {
+        arr_of_PPOpIn seq;
+        size_t count = 0;
+        PPOpIn content;
+        childOffer off_this;
+
+        if (n.cont)
+        {
+            ASTVisitor::VisitNodesVector(n.cont, *this);
+            count += n.cont->size();
+        }
+
+        if (count == 0)
+        {
+            content = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        }
+        else
+        {
+            seq.reserve(count);
+
+            while (count--)
+                seq.push_back(getOffer().opin);
+
+            std::reverse(seq.begin(), seq.end());
+
+            content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
+        }
+
+        std::string name = *n.pref + ":" + *n.local;
+
+        off_this.opin.op = new PPAttributeConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTAttrConst &n)
     {
+        childOffer off_this, off_name, off_cont;
+
+        if (n.name)
+        {
+            n.name->accept(*this);
+            off_name = getOffer();
+        }
+
+        if (n.expr)
+        {
+            n.expr->accept(*this);
+            off_cont = getOffer();
+        }
+        else
+        {
+            off_cont.opin = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        }
+
+        if (n.name)
+        {
+            off_this.opin.op = new PPAttributeConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy);
+        }
+        else
+        {
+            std::string name = *n.pref + ":" + *n.local;
+
+            off_this.opin.op = new PPAttributeConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy);
+        }
+
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTAttribTest &n)
@@ -202,6 +267,15 @@ namespace sedna
 
     void lr2por::visit(ASTCommentConst &n)
     {
+        childOffer off_this, off_cont;
+
+        n.expr->accept(*this); // computed comments always have expression
+        off_cont = getOffer();
+
+        off_this.opin.op = new PPCommentConstructor(dyn_cxt, createOperationInfo(n), off_cont.opin, n.deep_copy);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTConstDecl &n)
@@ -263,6 +337,15 @@ namespace sedna
 
     void lr2por::visit(ASTDocConst &n)
     {
+        childOffer off_this, off_cont;
+
+        n.expr->accept(*this);
+        off_cont = getOffer();
+
+        off_this.opin.op = new PPDocumentConstructor(dyn_cxt, createOperationInfo(n), off_cont.opin);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTDocTest &n)
@@ -326,7 +409,7 @@ namespace sedna
 
         if (count == 0)
         {
-            content = new PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+            content = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
         }
         else
         {
@@ -337,7 +420,7 @@ namespace sedna
 
             std::reverse(seq.begin(), seq.end());
 
-            content = new PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
+            content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
         }
 
         std::string name = *n.pref + ":" + *n.local;
@@ -358,14 +441,14 @@ namespace sedna
             off_name = getOffer();
         }
 
-        if (n.cont)
+        if (n.expr)
         {
-            n.cont->accept(*this);
+            n.expr->accept(*this);
             off_cont = getOffer();
         }
         else
         {
-            off_cont.opin = new PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+            off_cont.opin = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
         }
 
         if (n.name)
@@ -721,6 +804,17 @@ namespace sedna
 
     void lr2por::visit(ASTNsp &n)
     {
+        PPOpIn cont;
+        tuple_cell tc;
+        childOffer off_this;
+
+        tc = string2tuple_cell(*n.cont, xs_string);
+        cont = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+
+        off_this.opin.op = new PPNamespaceConstructor(dyn_cxt, createOperationInfo(n), n.name->c_str(), cont);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTOption &n)
@@ -826,10 +920,60 @@ namespace sedna
 
     void lr2por::visit(ASTPIConst &n)
     {
+        childOffer off_this, off_name, off_cont;
+
+        if (n.name)
+        {
+            n.name->accept(*this);
+            off_name = getOffer();
+        }
+        else
+        {
+            tuple_cell tc = string2tuple_cell(*n.ncname, xs_NCName);
+
+            off_name.opin = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+        }
+
+        if (n.expr)
+        {
+            n.expr->accept(*this);
+            off_cont = getOffer();
+        }
+        else
+        {
+            off_cont.opin = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        }
+
+        off_this.opin.op = new PPPIConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTPi &n)
     {
+        PPOpIn name, cont;
+        tuple_cell tc;
+        childOffer off_this;
+
+        tc = string2tuple_cell(*n.name, xs_NCName);
+
+        name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+
+        if (*n.cont == "")
+        {
+            cont = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        }
+        else
+        {
+            tc = string2tuple_cell(*n.cont, xs_string);
+            cont = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+        }
+
+        off_this.opin.op = new PPPIConstructor(dyn_cxt, createOperationInfo(n), name, cont, n.deep_copy);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTPiTest &n)
@@ -984,6 +1128,15 @@ namespace sedna
 
     void lr2por::visit(ASTTextConst &n)
     {
+        childOffer off_this, off_cont;
+
+        n.expr->accept(*this);
+        off_cont = getOffer();
+
+        off_this.opin.op = new PPTextConstructor(dyn_cxt, createOperationInfo(n), off_cont.opin, n.deep_copy);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTTextTest &n)
@@ -1154,6 +1307,17 @@ namespace sedna
 
     void lr2por::visit(ASTXMLComm &n)
     {
+        PPOpIn cont;
+        tuple_cell tc;
+        childOffer off_this;
+
+        tc = string2tuple_cell(*n.cont, xs_string);
+        cont = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+
+        off_this.opin.op = new PPCommentConstructor(dyn_cxt, createOperationInfo(n), cont, n.deep_copy);
+        off_this.opin.ts = 1;
+
+        setOffer(off_this);
     }
 
     // Some additional function
