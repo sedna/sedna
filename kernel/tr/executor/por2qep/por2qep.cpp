@@ -1926,16 +1926,14 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
     }
     else if (op == "PPSeqChecker")
     {
-        if (   lst->size() != 4
+        if (   lst->size() != 3
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_NUMBER
-            || lst->at(3).type != SCM_STRING
            ) throw USER_EXCEPTION2(SE1004, "PPSeqChecker in por2qep");
 
         opit = se_new PPSeqChecker(cxt, info,
                            make_pp_op(cxt, lst->at(1).internal.list),
-                           atoi(lst->at(2).internal.num),
-                           lst->at(3).internal.str);
+                           PPSeqChecker::CheckMode(atoi(lst->at(2).internal.num)));
     }
 
 

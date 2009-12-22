@@ -11,21 +11,19 @@
 
 class PPSeqChecker : public PPIterator
 {
-private:
-    PPOpIn child;
-
-    enum mode
+public:
+    enum CheckMode
     {
         CHECK_NODE, // check for sequence to contain only nodes (XPTY0019)
         CHECK_MIX, // check for sequence not to contain mix of atomic and nodes (XPTY0018)
     };
 
-    bool mode;
+private:
+    PPOpIn child;
+
+    CheckMode mode;
     bool expect_nodes; // in mixed mode expect nodes only
     unsigned int pos;
-
-    unsigned int error_code;
-    const char *error_msg;
 
 private:
     virtual void do_open   ();
@@ -39,8 +37,7 @@ public:
     PPSeqChecker(dynamic_context *_cxt_,
             operation_info _info_,
             PPOpIn _child_,
-            unsigned int _error_code_,
-            const char *_error_msg_);
+            CheckMode _mode_);
 
     virtual ~PPSeqChecker();
 };

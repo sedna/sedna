@@ -1,5 +1,5 @@
 /*
- * File:  lreturn.cpp
+ * File:  lr2por.cpp
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
@@ -97,12 +97,74 @@ namespace sedna
         // now we need to construct qep for xpath axis step
         if (n.preds)
         {
-            
+            var_id axis_cxt = var_num++; // axis context
+            arr_of_var_dsc vars;
+            PPOpIn preds;
+
+            preds.op = new PPVariable(dyn_cxt, oi, axis_cxt);
+            preds.ts = 1;
+
+            preds = getPPForAxis(n, preds, oi);
+
+            for (unsigned int i = 0; i < n.preds->size(); i++)
+            {
+                childOffer off;
+                var_id pred_cxt; // predicate context
+                var_id pos_var, last_var;
+                ASTPred *pred = dynamic_cast<ASTPred *>(n.preds->at(i));
+                parentRequest req;
+
+                pred_cxt = var_num++;
+                pos_var = last_var = -1;
+
+                // bind context
+                bound_vars.push_back(l2pVarInfo("$%v", pred_cxt));
+                vars.push_back(pred_cxt);
+
+                // bind pos if needed
+                if (pred->usePosition())
+                {
+                    pos_var = var_num++;
+                    bound_vars.push_back(l2pVarInfo("$%pos", pos_var));
+                }
+
+                // bind last if needed
+                if (pred->useLast())
+                {
+                    last_var = var_num++;
+                    bound_vars.push_back(l2pVarInfo("$%last", last_var));
+                }
+
+                req.pred_cxt = preds;
+                setParentRequest(req);
+                n.preds->at(i)->accept(*this);
+                off = getOffer();
+
+                preds = off.opin;
+
+                if (last_var != -1)
+                    bound_vars.pop_back();
+
+                if (pos_var != -1)
+                    bound_vars.pop_back();
+
+                bound_vars.pop_back();
+            }
+
+            if (need_checker)
+                preds.op = new PPSeqChecker(dyn_cxt, oi, preds, PPSeqChecker::CHECK_NODE);
+
+            vars.push_back(axis_cxt);
+
+            off_this.opin.op = new PPReturn(dyn_cxt, oi, vars, off_cont.opin, preds, -1);
+            off_this.opin.ts = 1;
         }
         else
         {
-            
+            off_this.opin = getPPForAxis(n, off_cont.opin, oi);
         }
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTBaseURI &n)
@@ -511,7 +573,101 @@ namespace sedna
 
     void lr2por::visit(ASTPred &n)
     {
-        // nothing to do
+        bool use_last = n.useLast();
+        bool use_pos = n.usePosition();
+        var_id pos_var = -1, last_var = -1, cxt_var = -1;
+        childOffer off, off_this;
+        operation_info oip;
+
+        oip.query_line = n.getLocation().begin.line;
+        oip.query_col = n.getLocation().begin.column;
+
+        for (int i = bound_vars.size() - 1; i >= 0; i--)
+        {
+            if (last_var == -1 && bound_vars[i].first == "$%last")
+            {
+                last_var = bound_vars[i].second;
+            }
+            else if (pos_var == -1 && bound_vars[i].first == "$%pos")
+            {
+                pos_var = bound_vars[i].second;
+            }
+            else if (cxt_var == -1 && bound_vars[i].first == "$%v")
+            {
+                cxt_var = bound_vars[i].second;
+            }
+        }
+
+        arr_of_var_dsc vars;
+        vars.push_back(cxt_var);
+
+        arr_of_PPOpIn conj;
+        arr_of_comp_cond cond;
+
+        ASTPred::ASTConjuncts::iterator it;
+
+        for (it = n.conjuncts.begin(); it != n.conjuncts.end(); it++)
+        {
+            it->expr->accept(*this);
+            off = getOffer();
+
+            cond.push_back(it->op);
+            conj.push_back(off.opin);
+        }
+
+        if (n.others.size() > 0)
+        {
+            U_ASSERT(n.others.size() == 1);
+
+            n.others[0].expr->accept(*this);
+            off = getOffer();
+
+            off_this.use_cxt = off.use_cxt;
+        }
+        else
+        {
+            off.opin.op = new PPFnTrue(dyn_cxt, oip);
+            off.opin.ts = 1;
+
+            off_this.use_cxt = false;
+        }
+
+        if (use_last)
+        {
+            off_this.use_last = true;
+
+            if (use_pos)
+            {
+                off_this.use_position = true;
+
+                off_this.opin.op = new PPPred2(dyn_cxt, oip, vars, getParentRequest().pred_cxt, conj,
+                        cond, off.opin, false, last_var, pos_var);
+            }
+            else
+            {
+                off_this.opin.op = new PPPred2(dyn_cxt, oip, vars, getParentRequest().pred_cxt, conj,
+                        cond, off.opin, false, last_var);
+            }
+        }
+        else
+        {
+            if (use_pos)
+            {
+                off_this.use_position = true;
+
+                off_this.opin.op = new PPPred1(dyn_cxt, oip, vars, getParentRequest().pred_cxt, conj,
+                        cond, off.opin, false, pos_var);
+            }
+            else
+            {
+                off_this.opin.op = new PPPred1(dyn_cxt, oip, vars, getParentRequest().pred_cxt, conj,
+                        cond, off.opin, (n.others.size() == 1) ? !n.others[0].use_cxt : true);
+            }
+        }
+
+        off_this.opin.ts = getParentRequest().pred_cxt.ts;
+
+        setOffer(off_this);
     }
 
     void lr2por::visit(ASTProlog &n)
@@ -910,10 +1066,77 @@ namespace sedna
     std::string lr2por::getlrForAxisStep(const ASTAxisStep &s)
     {
         std::string res = "(";
+        childOffer off;
 
         res += axis_str[s.axis];
 
-        
+        s.test->accept(*this);
+        off = getOffer();
 
+        res += off.test_type;
+        res += " ";
+        res += off.test_data;
+        res += ")";
+
+        return res;
+    }
+
+    PPOpIn lr2por::getPPForAxis(const ASTAxisStep &s, PPOpIn cont, operation_info oi)
+    {
+        NodeTestType ntype;
+        NodeTestData ndata;
+        childOffer off;
+        PPOpIn op;
+
+        scheme_list *sl = make_tree_from_scheme_list(getlrForAxisStep(s).c_str());
+        set_node_test_type_and_data(sl, ntype, ndata, pe_local_aspace);
+        delete sl;
+
+        switch (s.axis)
+        {
+            case ASTAxisStep::CHILD:
+                op.op = new PPAxisChild(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::DESCENDANT:
+                op.op = new PPAxisDescendant(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::ATTRIBUTE:
+                op.op = new PPAxisAttribute(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::SELF:
+                op.op = new PPAxisSelf(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::DESCENDANT_OR_SELF:
+                op.op = new PPAxisDescendantOrSelf(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::FOLLOWING_SIBLING:
+                op.op = new PPAxisSibling(dyn_cxt, oi, cont, ntype, ndata, true);
+                break;
+            case ASTAxisStep::FOLLOWING:
+                op.op = new PPAxisFP(dyn_cxt, oi, cont, ntype, ndata, true);
+                break;
+            case ASTAxisStep::PARENT:
+                op.op = new PPAxisParent(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::ANCESTOR:
+                op.op = new PPAxisAncestor(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::PRECEDING_SIBLING:
+                op.op = new PPAxisSibling(dyn_cxt, oi, cont, ntype, ndata, false);
+                break;
+            case ASTAxisStep::PRECEDING:
+                op.op = new PPAxisFP(dyn_cxt, oi, cont, ntype, ndata, false);
+                break;
+            case ASTAxisStep::ANCESTOR_OR_SELF:
+                op.op = new PPAxisAncestorOrSelf(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+            case ASTAxisStep::DESCENDANT_ATTRIBUTE:
+                op.op = new PPAxisDescendantAttr(dyn_cxt, oi, cont, ntype, ndata);
+                break;
+        }
+
+        op.ts = 1;
+
+        return op;
     }
 }
