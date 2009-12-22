@@ -3,7 +3,6 @@
  */
 
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,6 +34,12 @@ const char *types[] =
 };
 
 typedef int (*gen_fun)(FILE *f, const char *op, const char *ops, const char *type1, const char *type2);
+
+
+static int maxi(int i1, int i2)
+{
+    return (i1 >= i2) ? i1 : i2;
+}
 
 int type2weight(const char *type)
 {
@@ -102,7 +107,7 @@ const char *find_gct(const char *op, const char *type1, const char *type2)
         if (w1 == -1 || w2 == -1)
             return NULL;
 
-        return weight2type((int)fmax(w1, w2));
+        return weight2type(maxi(w1, w2));
     }
 }
 

@@ -14,6 +14,8 @@
 #include "tr/triggers/triggers_data.h"
 #endif
 
+#include <algorithm>
+
 namespace sedna
 {
     static const char *axis_str[] =

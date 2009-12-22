@@ -2710,13 +2710,13 @@ namespace sedna
         parentReq = preq;
     }
 
-    inline void LReturn::addToPath(ASTNode *nod)
+    void LReturn::addToPath(ASTNode *nod)
     {
         ASTVisitor::addToPath(nod);
         pareqs.push_back(parentReq);
     }
 
-    inline void LReturn::removeFromPath(ASTNode *nod)
+    void LReturn::removeFromPath(ASTNode *nod)
     {
         ASTVisitor::removeFromPath(nod);
         pareqs.pop_back();
