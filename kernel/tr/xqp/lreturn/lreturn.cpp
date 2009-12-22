@@ -9,6 +9,55 @@
 
 namespace sedna
 {
+    static operation_compare_condition operToCondition(ASTBop::Oper op)
+    {
+        operation_compare_condition occ;
+
+        switch (op)
+        {
+            case ASTBop::EQ_V:
+                occ = OCC_VALUE_EQUAL;
+                break;
+            case ASTBop::NE_V:
+                occ = OCC_VALUE_NOT_EQUAL;
+                break;
+            case ASTBop::GE_V:
+                occ = OCC_VALUE_GREATER_EQUAL;
+                break;
+            case ASTBop::GT_V:
+                occ = OCC_VALUE_GREATER;
+                break;
+            case ASTBop::LE_V:
+                occ = OCC_VALUE_LESS_EQUAL;
+                break;
+            case ASTBop::LT_V:
+                occ = OCC_VALUE_LESS;
+                break;
+            case ASTBop::EQ_G:
+                occ = OCC_GENERAL_EQUAL;
+                break;
+            case ASTBop::NE_G:
+                occ = OCC_GENERAL_NOT_EQUAL;
+                break;
+            case ASTBop::GE_G:
+                occ = OCC_GENERAL_GREATER_EQUAL;
+                break;
+            case ASTBop::GT_G:
+                occ = OCC_GENERAL_GREATER;
+                break;
+            case ASTBop::LE_G:
+                occ = OCC_GENERAL_LESS_EQUAL;
+                break;
+            case ASTBop::LT_G:
+                occ = OCC_GENERAL_LESS;
+                break;
+            default:
+                U_ASSERT(false);
+        }
+
+        return occ;
+    }
+
     void LReturn::visit(ASTAlterUser &n)
     {
         // nothing to do
@@ -1810,10 +1859,18 @@ namespace sedna
         std::vector<ASTPred::ASTConjunct>::iterator it;
         childOffer off, off_this;
         std::vector<ASTPred::ASTConjunct> local_others;
+        ASTPred::ASTConjunct others_and;
 
         req.calledOnce = false;
         req.distinctOnly = true;
 
+        others_and.expr = NULL;
+        others_and.use_cxt = false;
+        others_and.use_pos = false;
+        others_and.use_last = false;
+
+        // here we mark out the "true" conjuncts (w/o pos and context usage)
+        // all other conjuncts are stitched together using logical and
         for (it = n.others.begin(); it != n.others.end(); it++)
         {
             // check if expression is a candidate for conjunct
@@ -1834,13 +1891,44 @@ namespace sedna
 
             off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
 
-            if (!it->use_pos && !it->use_cxt) // "true" positional conjunct
+            if (cand && !it->use_pos && !it->use_cxt) // "true" positional conjunct
+            {
+                ASTBop *bop = dynamic_cast<ASTBop *>(it->expr);
+
+                it->expr = cand;
+                it->op = operToCondition(bop->op);
                 n.conjuncts.push_back(*it);
+
+                // get rid of ASTBop
+                bop->modifyChild(bop->lop, NULL);
+                bop->modifyChild(bop->rop, NULL);
+
+                delete bop;
+            }
             else
-                local_others.push_back(*it);
+            {
+                if (!others_and.expr)
+                {
+                    others_and = *it;
+                }
+                else
+                {
+                    others_and.expr = new ASTBop(it->expr->getLocation(), ASTBop::AND, others_and.expr, it->expr);
+
+                    if (it->use_cxt)
+                        others_and.use_cxt = true;
+
+                    if (it->use_pos)
+                        others_and.use_pos = true;
+
+                    if (it->use_last)
+                        others_and.use_last = true;
+                }
+            }
         }
 
-        n.others = local_others;
+        n.others.clear();
+        n.others.push_back(others_and);
 
         setOffer(off_this);
     }

@@ -23,8 +23,11 @@ namespace sedna
 
         struct parentRequest
         {
+            PPOpIn pred_cxt;
+
             parentRequest()
             {
+                pred_cxt.op = NULL;
             }
         };
 
@@ -32,6 +35,8 @@ namespace sedna
         {
             bool use_position; // expression uses fn:position()
             bool use_last;     // expression uses fn:last()
+            bool use_cxt;      // expression uses context
+
             PPOpIn opin;      // subtree for the expression
             sequence_type st;  // type for typed vars
             std::string lr_path; // for indexes, triggers, abs_path expressions
@@ -42,6 +47,8 @@ namespace sedna
             {
                 use_position = false;
                 use_last = false;
+                use_cxt = false;
+                opin.op = NULL;
             }
         };
 
@@ -114,6 +121,7 @@ namespace sedna
         childOffer getContextOffer(operation_info oi) const;
         bool isStepNeedsChecker(const ASTStep &st) const;
         std::string getlrForAxisStep(const ASTAxisStep &s);
+        PPOpIn getPPForAxis(const ASTAxisStep &s, PPOpIn cont, operation_info oi);
 
         // visiting functions
         void visit(ASTAlterUser &n);
