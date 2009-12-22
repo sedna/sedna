@@ -13,7 +13,6 @@
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
-#include "tr/pq/pq.h"
 #include "tr/log/log.h"
 #include "tr/idx/index_data.h"
 #include "tr/executor/base/XPath.h"
@@ -36,7 +35,7 @@ static bool is_trid_obtained    = false;
 static bool need_sem            = true; // need to use semaphore for updater
 
 
-static transaction_id 
+static transaction_id
 get_transaction_id(SSMMsg* sm_server)
 {
     sm_msg_struct msg;
@@ -52,7 +51,7 @@ get_transaction_id(SSMMsg* sm_server)
     return msg.trid;
 }
 
-static void 
+static void
 release_transaction_id(SSMMsg* sm_server)
 {
     if ( is_trid_obtained == true )
@@ -77,10 +76,10 @@ void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
     string log_files_path = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files/");
     char buf[1024];
 
-    sm_server = se_new SSMMsg(SSMMsg::Client, 
-                              sizeof (sm_msg_struct), 
+    sm_server = se_new SSMMsg(SSMMsg::Client,
+                              sizeof (sm_msg_struct),
                               CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
-                              SM_NUMBER_OF_SERVER_THREADS, 
+                              SM_NUMBER_OF_SERVER_THREADS,
                               U_INFINITE);
 
     d_printf1("Connecting to SM...");
@@ -241,7 +240,7 @@ void reportToWu(bool rcv_active, bool is_commit)
     if (!rcv_active || (rcv_active && is_commit))
     {
         msg.cmd = 38; // transaction commit/rollback
-        msg.trid = trid; 
+        msg.trid = trid;
         msg.sid = sid;
         msg.data.data[0] = 0;
 
@@ -252,9 +251,9 @@ void reportToWu(bool rcv_active, bool is_commit)
     }
 
     wu_reported = true;
-}    
+}
 
-// is_commit defines mode: 
+// is_commit defines mode:
 //  true - transaction commit
 //  false - transaction rollback
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, bool rcv_active)
@@ -275,7 +274,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     d_printf1("OK\n");
 #endif
 
-    try { 
+    try {
         d_printf1("\nReleasing logical log...");
         hl_logical_log_on_transaction_end(is_commit, rcv_active);
         d_printf1("OK\n");
@@ -326,7 +325,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
 void on_kernel_recovery_statement_begin()
 {
     sid = 0;
-    indirection_table_on_statement_begin();  
+    indirection_table_on_statement_begin();
 }
 
 void on_kernel_recovery_statement_end()
@@ -359,10 +358,10 @@ void SwitchSessionToRO(bool flag)
     is_ro_mode = flag;
 }
 
-// switches log modes 
+// switches log modes
 // if SEDNA_LOG_LESS -- every bulkload will be logged with one record; drawback -- checkpoint at commit
 // if SEDNA_LOG_FULL -- bulkload will be logged fully. checkpoint might be made though on truncate
 void SwitchLogMode(int log_less_mode)
 {
     is_log_less_mode = (log_less_mode == SEDNA_LOG_LESS);
-}    
+}

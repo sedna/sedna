@@ -26,7 +26,6 @@ else
 BIN_LIBS=bin/$(PLATFORM)
 endif
 
-build_chicken=yes
 build_expat=yes
 build_pcre=yes
 build_libedit=yes
@@ -34,92 +33,6 @@ build_libedit=yes
 .PHONY: default build clean
 
 default: build
-
-#####################################################################
-###                          Chicken
-#####################################################################
-
-ifeq ("$(build_chicken)", "yes")
-
-.PHONY: build_chicken clean_chicken
-BUILD_DEPS += build_chicken
-CLEAN_DEPS += clean_chicken
-
-BIN_CHICKEN=$(shell if test -d $(BIN_LIBS)/chicken; then echo 1; else echo 0; fi)
-
-ifeq ("$(BIN_CHICKEN)", "1")
-
-chicken/chicken.h: $(BIN_LIBS)/chicken
-	cp -pR  $(BIN_LIBS)/chicken .
-	touch chicken/chicken.h
-	-chmod -f a+x chicken/chicken
-
-build_chicken: chicken/chicken.h
-	@echo ===================================================================
-	@echo "Chicken (binaries) has been done"
-	@echo ===================================================================
-
-clean_chicken:
-	-rm -rf chicken
-
-else # Binaries are not available
-
-CHICKEN_VERSION=4.1.0
-
-chicken/chicken.h: chicken-$(CHICKEN_VERSION).tar.gz
-	gzip -dc chicken-$(CHICKEN_VERSION).tar.gz | tar xvf -
-	touch chicken-$(CHICKEN_VERSION)/chicken.h
-	rm -rf chicken
-	mv chicken-$(CHICKEN_VERSION) chicken
-
-ifeq ("$(PLATFORM)", "WIN32")
-
-build_chicken: chicken/chicken.exe
-	@echo ===================================================================
-	@echo Chicken has been done
-	@echo ===================================================================
-
-chicken/chicken.exe: chicken/chicken.h
-	$(PATCHER) -Np1 -d chicken < chicken-make-msvc.patch
-	$(MAKE) -C chicken -f Makefile.msvc STATICBUILD=1 chicken.exe
-
-clean_chicken:
-	-cd chicken; $(MAKE) PLATFORM=msvc STATICBUILD=1 clean
-	-rm -rf chicken
-
-else # Unix
-
-CHICKEN_PLATFORM=linux
-
-ifdef SUB_PLATFORM
-ifeq ("$(SUB_PLATFORM)", "SunOS")
-CHICKEN_PLATFORM=solaris
-else
-ifeq ("$(SUB_PLATFORM)", "FreeBSD")
-CHICKEN_PLATFORM=bsd
-else
-ifeq ("$(SUB_PLATFORM)", "Darwin")
-CHICKEN_PLATFORM=macosx
-endif
-endif
-endif
-endif
-
-build_chicken: chicken/chicken
-	@echo ===================================================================
-	@echo Chicken has been done
-	@echo ===================================================================
-
-chicken/chicken: chicken/chicken.h
-	$(PATCHER) -Np1 -d chicken < chicken-make-linux.patch
-	$(MAKE) -C chicken PLATFORM=$(CHICKEN_PLATFORM) STATICBUILD=1
-
-clean_chicken:
-	-$(MAKE) -C chicken PLATFORM=$(CHICKEN_PLATFORM) STATICBUILD=1 clean
-	-rm -rf chicken
-endif
-endif
-endif
 
 #####################################################################
 ###                            Expat
