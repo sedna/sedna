@@ -53,6 +53,8 @@ public:
                      operation_info _info_,
                      var_dsc _dsc_);
     virtual ~PPGlobalVariable();
+
+    void setVarId(var_dsc _dsc_); // we use it to set id for unresolved variable after the main pass (because of deps between mnodules)
 };
 
 #endif

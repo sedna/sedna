@@ -34,6 +34,9 @@ namespace sedna
             bool use_last;     // expression uses fn:last()
             PPOpIn opin;      // subtree for the expression
             sequence_type st;  // type for typed vars
+            std::string lr_path; // for indexes, triggers, abs_path expressions
+            std::string test_type; // for node-test in axis steps (type of test, e.g node, pi)
+            std::string test_data; // for node-test in axis steps (data for test, e.g. name for pi)
 
             childOffer()
             {
@@ -46,11 +49,12 @@ namespace sedna
         unsigned int param_count; // number of parameters found in param_mode
         bool isModeOrdered;     // cuurent mode of operation (global + may change on ordered-unordered expressions)
 
-        std::vector<std::string> bound_vars; // vector of variables bound in the current expression (we need only names there)
+        typedef std::pair<std::string, int> l2pVarInfo; // var info int_name+id
+        std::vector<l2pVarInfo> bound_vars; // vector of variables bound in the current expression (we need only names there)
         std::vector<childOffer> offers; // offers from children go in this sequence
 
-        typedef std::map<std::string, XQFunction> funcInfo;
-        typedef std::map<std::string, XQVariable> varInfo;
+        typedef std::map<std::string, var_id> funcInfo;
+        typedef std::map<std::string, var_id> varInfo;
 
         funcInfo funcCache; // cache containing info about processed functions
         varInfo varCache; // cache containg info about processed global and lib variables
@@ -105,8 +109,11 @@ namespace sedna
         virtual void addToPath(ASTNode *nod);
         virtual void removeFromPath(ASTNode *nod);
 
-        XQFunction getFunctionInfo(const std::string &name);
-        XQVariable getVariableInfo(const std::string &name);
+        var_id getGlobalFunctionId(const std::string &name);
+        var_id getGlobalVariableId(const std::string &name);
+        childOffer getContextOffer(operation_info oi) const;
+        bool isStepNeedsChecker(const ASTStep &st) const;
+        std::string getlrForAxisStep(const ASTAxisStep &s);
 
         // visiting functions
         void visit(ASTAlterUser &n);
@@ -190,6 +197,7 @@ namespace sedna
         void visit(ASTPiTest &n);
         void visit(ASTPosVar &n);
         void visit(ASTPragma &n);
+        void visit(ASTPred &n);
         void visit(ASTProlog &n);
         void visit(ASTQName &n);
         void visit(ASTQuantExpr &n);

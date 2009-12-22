@@ -537,4 +537,13 @@ namespace sedna
         }
     }
 
+    var_id XQueryDriver::getGlobalVariableId(const std::string &name)
+    {
+        return libVars.find(name)->second->getId();
+    }
+
+    var_id XQueryDriver::getGlobalFunctionId(const std::string &name)
+    {
+        return libFuncs.find(name)->second.decl->getId();
+    }
 }

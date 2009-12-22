@@ -295,6 +295,11 @@ namespace sedna
             }
         }
 
+        // axis step never uses position or last
+        // except in predicates of course, but these would be not the same positions
+        off_this.use_last = false;
+        off_this.use_position = false;
+
         setOffer(off_this);
     }
 
@@ -325,6 +330,9 @@ namespace sedna
 
         bopof.usedVars.insert(lof.usedVars.begin(), lof.usedVars.end());
         bopof.usedVars.insert(rof.usedVars.begin(), rof.usedVars.end());
+
+        bopof.use_last = lof.use_last || rof.use_last;
+        bopof.use_position = lof.use_position || rof.use_position;
 
         if (n.op >= ASTBop::UNION && n.op <= ASTBop::EXCEPT)
         {
@@ -467,6 +475,8 @@ namespace sedna
 
         // default offer makes perfect sense here since cast always returns atomic
         off_this.usedVars = eoff.usedVars;
+        off_this.use_last = eoff.use_last;
+        off_this.use_position = eoff.use_position;
 
         setOffer(off_this);
     }
@@ -484,6 +494,8 @@ namespace sedna
 
         // default offer makes perfect sense here since castable always returns atomic
         off_this.usedVars = eoff.usedVars;
+        off_this.use_last = eoff.use_last;
+        off_this.use_position = eoff.use_position;
 
         setOffer(off_this);
     }
@@ -912,6 +924,8 @@ namespace sedna
             {
                 off_this = off_pe = off_cont;
                 off_this.isCached = false;
+                off_this.use_last = false;
+                off_this.use_position = false;
                 off_pe.usedVars.insert("$%v"); // since . is a context
             }
             else
@@ -1097,6 +1111,9 @@ namespace sedna
                 n.expr->setCached(false);
         }
 
+        off_this.use_last = off_this.use_last || off_e.use_last;
+        off_this.use_position = off_this.use_position || off_e.use_position;
+
         setOffer(off_this);
     }
 
@@ -1168,6 +1185,11 @@ namespace sedna
                 off = getOffer();
                 params[i] = off.exi;
                 off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
+
+                if (off.use_last)
+                    off_this.use_last = true;
+                if (off.use_position)
+                    off_this.use_position = true;
             }
 
             // call merger to analyse result
@@ -1202,12 +1224,20 @@ namespace sedna
                 modifyParent(n.params->at(0), false, true);
                 n.params->clear();
             }
+
+            if (*n.int_name == "!fn!last")
+                off_this.use_last = true;
+
+            if (*n.int_name == "!fn!position")
+                off_this.use_position = true;
         }
         else
         {
             off_params = mergeOffers(arity);
             off_this.exi = xqf.exp_info;
             off_this.usedVars = off_params.usedVars;
+            off_this.use_last = off_params.use_last;
+            off_this.use_position = off_params.use_position;
         }
 
         if (!getParentRequest().calledOnce && xqf.toCache) // consider to cache
@@ -1325,6 +1355,9 @@ namespace sedna
         off_this.exi.isSingleLevel = off_t.exi.isSingleLevel && off_e.exi.isSingleLevel;
         off_this.exi.useConstructors = off_t.exi.useConstructors || off_e.exi.useConstructors;
 
+        off_this.use_last = off_if.use_last || off_t.use_last || off_e.use_last;
+        off_this.use_position = off_if.use_position || off_t.use_position || off_e.use_position;
+
         off_this.usedVars = off_if.usedVars;
         off_this.usedVars.insert(off_t.usedVars.begin(), off_t.usedVars.end());
         off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
@@ -1361,6 +1394,8 @@ namespace sedna
 
         // default offer makes perfect sense here since instance-of always returns atomic
         off_this.usedVars = eoff.usedVars;
+        off_this.use_last = eoff.use_last;
+        off_this.use_position = eoff.use_position;
 
         setOffer(off_this);
     }
@@ -1414,6 +1449,8 @@ namespace sedna
         ignoreVariables(off_this, 1);
 
         off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
+        off_this.use_last = off_this.use_last || off_e.use_last;
+        off_this.use_position = off_this.use_position || off_e.use_position;
 
         // consider to cache
         if (!getParentRequest().calledOnce)
@@ -1563,7 +1600,7 @@ namespace sedna
         isModeOrdered = oldMode;
         setOffer(getOffer());
 
-        // since Scheme's lr2por doesn't know anything about ordered-unordered
+        // since Scheme's lr2por doesn't know anything about ordered-unordered (get rid of this later?)
         modifyParent(n.expr, false, true);
         n.expr = NULL;
     }
@@ -1630,6 +1667,8 @@ namespace sedna
         off_this.usedVars.insert(off_fl.usedVars.begin(), off_fl.usedVars.end());
 
         off_this.exi.useConstructors = off_this.exi.useConstructors || off_fl.exi.useConstructors;
+        off_this.use_last = off_fl.use_last || off_ord.use_last || off_this.use_last;
+        off_this.use_position = off_fl.use_position || off_ord.use_position || off_this.use_position;
 
         // if we've got >1 tuples here (from for-let tree), then result will be different
         // TODO: we should refine it later for atomic; however, maybe this also will do, since it cannot influence ddo
@@ -1765,6 +1804,47 @@ namespace sedna
         // nothing to do
     }
 
+    void LReturn::visit(ASTPred &n)
+    {
+        parentRequest req;
+        std::vector<ASTPred::ASTConjunct>::iterator it;
+        childOffer off, off_this;
+        std::vector<ASTPred::ASTConjunct> local_others;
+
+        req.calledOnce = false;
+        req.distinctOnly = true;
+
+        for (it = n.others.begin(); it != n.others.end(); it++)
+        {
+            // check if expression is a candidate for conjunct
+            ASTNode *cand = checkIfPosConjunct(it->expr);
+
+            setParentRequest(req);
+
+            if (cand)
+                cand->accept(*this);
+            else
+                it->expr->accept(*this);
+
+            off = getOffer();
+
+            it->use_last = off.use_last;
+            it->use_pos = off.use_position;
+            it->use_cxt = (off.usedVars.find("$%v") != off.usedVars.end());
+
+            off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
+
+            if (!it->use_pos && !it->use_cxt) // "true" positional conjunct
+                n.conjuncts.push_back(*it);
+            else
+                local_others.push_back(*it);
+        }
+
+        n.others = local_others;
+
+        setOffer(off_this);
+    }
+
     void LReturn::visit(ASTProlog &n)
     {
         // nothing to do
@@ -1809,6 +1889,8 @@ namespace sedna
         off_this.usedVars = off_sat.usedVars;
         ignoreVariables(off_this, 1); // ignore variable
         off_this.usedVars.insert(off_e.usedVars.begin(), off_e.usedVars.end());
+        off_this.use_last = off_e.use_last || off_sat.use_last;
+        off_this.use_position = off_e.use_position || off_sat.use_position;
 
         // consider to cache
         if (!getParentRequest().calledOnce)
@@ -2373,6 +2455,12 @@ namespace sedna
 
             if (c.exi.useConstructors)
                 res.exi.useConstructors = true;
+
+            if (c.use_last)
+                res.use_last = true;
+
+            if (c.use_position)
+                res.use_position = true;
         }
 
         return res;
@@ -2408,6 +2496,12 @@ namespace sedna
 
             if (c.exi.useConstructors)
                 res.exi.useConstructors = true;
+
+            if (c.use_last)
+                res.use_last = true;
+
+            if (c.use_position)
+                res.use_position = true;
         }
 
         return res;
@@ -2522,5 +2616,32 @@ namespace sedna
         funcCache[name] = xqf;
 
         return xqf;
+    }
+
+    // check if this is optimization-case conjunct (i.e. fn:position() >(<,<=, etc) <expr> where <expr> doesn't depend on position or context)
+    // if true, then return <expr>, else return NULL
+    ASTNode *LReturn::checkIfPosConjunct(const ASTNode *n)
+    {
+        // consider to check for conjunct
+        const ASTBop *bop = dynamic_cast<const ASTBop *>(n);
+
+        if (bop && ((bop->op >= ASTBop::EQ_V && bop->op <= ASTBop::GE_V) || (bop->op >= ASTBop::EQ_G && bop->op <= ASTBop::GE_G)))
+        {
+            ASTFunCall *fc = dynamic_cast<ASTFunCall *>(bop->lop);
+
+            if (fc && fc->isFnPosition())
+            {
+                return bop->rop;
+            }
+            else if (!fc)
+            {
+                fc = dynamic_cast<ASTFunCall *>(bop->rop);
+
+                if (fc && fc->isFnPosition())
+                    return bop->lop;
+            }
+        }
+
+        return NULL;
     }
 }

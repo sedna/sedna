@@ -21,6 +21,8 @@ namespace sedna
         bool useConstructors; // true, if subexpression uses constructor (direct or computed)
     };
 
+    typedef int var_id;
+
     struct XQVariable
     {
         std::string int_name;
@@ -30,7 +32,7 @@ namespace sedna
 
         bool isNodes; // true if var represents sequence of nodes (singletons also go here)(this is only for typed vars)
 
-        int id; // id for physical plan
+        var_id id; // id for physical plan
 
         XQVariable(const char *name, ASTVar *var_)
         {

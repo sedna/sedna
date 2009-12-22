@@ -38,6 +38,16 @@ public:
     void modifyChild(const ASTNode *oldc, ASTNode *newc);
 
     static ASTNode *createNode(scheme_list &sl);
+
+    bool isFnPosition() const
+    {
+        return (*int_name == "!fn!position");
+    }
+    
+    bool isFnLast() const
+    {
+        return (*int_name == "!fn!last");
+    }
 };
 
 #endif

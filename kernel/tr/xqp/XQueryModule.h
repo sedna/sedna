@@ -8,6 +8,7 @@
 #include "XQuerytoLR.h"
 #include "XQCommon.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/executor/xqops/PPVariable.h"
 
 // This class incorporates all the info about main or library module
 namespace sedna
@@ -48,6 +49,9 @@ namespace sedna
 
         ASTLocation *xpdy0002; // not NULL if after analysis we should emit dynamic error (this is just to emit dynamic errors after static ones)
 
+        typedef std::pair<std::string, PPGlobalVariable *> unresPorVarInfo;
+        std::multimap<std::string, PPGlobalVariable *> unresPorVars; // contains unresolved global var ids
+
     public:
         XQueryModule(ASTNode *ast_tree, XQueryDriver *driver);
 
@@ -80,6 +84,8 @@ namespace sedna
         ASTVarDecl *getVariableInfo(const std::string &name) const;
         bool getLReturnFunctionInfo(const std::string &name, XQFunction &xqf);
         bool getLReturnVariableInfo(const std::string &name, XQVariable &xqv);
+
+        void addToUnresolvedPor(const std::string &name, PPGlobalVariable *var);
 
         size_t getFunctionCount() const
         {

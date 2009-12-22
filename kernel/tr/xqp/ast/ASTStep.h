@@ -64,6 +64,7 @@ public:
 class ASTAxisStep : public ASTStep
 {
 public:
+    // NOTE: order of axis types matters since we use the order to simplify some axis checks
     enum AxisType
     {
         CHILD = 0,
@@ -71,6 +72,7 @@ public:
         ATTRIBUTE,
         SELF,
         DESCENDANT_OR_SELF,
+        DESCENDANT_ATTRIBUTE,         // sedna specifix axes (for internal use)
         FOLLOWING_SIBLING,
         FOLLOWING,
         PARENT,
@@ -78,9 +80,6 @@ public:
         PRECEDING_SIBLING,
         PRECEDING,
         ANCESTOR_OR_SELF,
-
-        // sedna specifix axes (for internal use)
-        DESCENDANT_ATTRIBUTE,
     };
 
     AxisType axis;

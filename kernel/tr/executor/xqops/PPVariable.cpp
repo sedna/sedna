@@ -64,6 +64,13 @@ PPGlobalVariable::~PPGlobalVariable()
     // nothing to do
 }
 
+void PPGlobalVariable::setVarId(var_dsc _dsc_)
+{
+    U_ASSERT(dsc == -1); // this function should be called only for previously unresolved vars
+
+    dsc = _dsc_;
+}
+
 void PPGlobalVariable::do_open ()
 {
     U_ASSERT(cxt);

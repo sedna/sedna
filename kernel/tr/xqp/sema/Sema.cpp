@@ -1519,6 +1519,21 @@ namespace sedna
         resolveQName(n.getLocation(), n.pref->c_str(), "");
     }
 
+    void Sema::visit(ASTPred &n)
+    {
+        std::vector<ASTPred::ASTConjunct>::iterator it;
+
+        for (it = n.conjuncts.begin(); it != n.conjuncts.end(); it++)
+        {
+            it->expr->accept(*this);
+        }
+
+        for (it = n.others.begin(); it != n.others.end(); it++)
+        {
+            it->expr->accept(*this);
+        }
+    }
+
     void Sema::visit(ASTProlog &n)
     {
         unsigned int i = 0;
@@ -2174,8 +2189,6 @@ namespace sedna
 
     void Sema::rewriteStdFunCall(ASTFunCall &n, std::string name)
     {
-        ASTNode *ddo;
-
         if (name == "!fn!index-scan")
         {
             ASTLit *l;

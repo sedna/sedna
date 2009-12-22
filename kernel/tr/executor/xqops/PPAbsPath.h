@@ -57,6 +57,9 @@ public:
               PPOpIn _name_,
               schema_node_xptr _root_);
     virtual ~PPAbsPath();
+
+    bool isDocCollFunCall() const; // true, if PPAbsPath is just wrapping over fn:document/fn:collection call
+    void setPathExpr(PathExpr *pe); // to set path expression later on qep construction
 };
 
 

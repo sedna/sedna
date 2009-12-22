@@ -34,6 +34,7 @@ static const char *axis_str[] = {
     "attr-axis ",
     "self ",
     "descendant-or-self ",
+    "descendant-attr ",
     "following-sibling ",
     "following ",
     "parent ",
@@ -41,7 +42,6 @@ static const char *axis_str[] = {
     "preceding-sibling ",
     "preceding ",
     "ancestor-or-self ",
-    "descendant-attr ",
  };
 
 static const char *bops_str[] = {
@@ -239,9 +239,7 @@ void LRVisitor::visit(ASTAxisStep &n)
 
         for (unsigned int i = 0; i < n.preds->size(); i++)
         {
-            lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
             (*n.preds)[i]->accept(*this);
-            lr_str += " ))";
         }
 
         lr_str = lr_save + lr_str;
@@ -773,9 +771,7 @@ void LRVisitor::visit(ASTFilterStep &n)
 
             for (unsigned int i = 0; i < n.preds->size(); i++)
             {
-                lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
                 (*n.preds)[i]->accept(*this);
-                lr_str += " ))";
             }
 
             lr_str = lr_save + lr_str;
@@ -1508,6 +1504,34 @@ void LRVisitor::visit(ASTPragma &n)
     LR_STR(*n.cont);
 
     lr_str.append(") ");
+}
+
+void LRVisitor::visit(ASTPred &n)
+{
+    unsigned int sz = n.others.size(), and_cnt = 0;
+    lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
+
+    if (sz > 1)
+    {
+        lr_str.append("(and@ ");
+        and_cnt++;
+    }
+
+    for (unsigned int i = 0; i < sz; i++)
+    {
+        n.others[i].expr->accept(*this);
+
+        if (sz - i - 1 > 1)
+        {
+            lr_str.append("(and@ ");
+            and_cnt++;
+        }
+    }
+    while (and_cnt--)
+    {
+        lr_str.append(")");
+    }
+    lr_str += " ))";
 }
 
 void LRVisitor::visit(ASTProlog &n)

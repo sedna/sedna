@@ -85,6 +85,7 @@
 #include "tr/xqp/ast/ASTPIConst.h"
 #include "tr/xqp/ast/ASTPosVar.h"
 #include "tr/xqp/ast/ASTPragma.h"
+#include "tr/xqp/ast/ASTPred.h"
 #include "tr/xqp/ast/ASTProlog.h"
 #include "tr/xqp/ast/ASTQName.h"
 #include "tr/xqp/ast/ASTQuantExpr.h"
@@ -202,6 +203,7 @@ enum ASTNodeType
     AST_PITEST,
     AST_POSVAR,
     AST_PRAGMA,
+    AST_PRED,
     AST_PROLOG,
     AST_QNAME,
     AST_QUANTEXPR,
