@@ -929,13 +929,10 @@ xptr getNodeAncestorBySchemeCP(xptr node, schema_node_xptr scm_node, schema_node
  }
  bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {
-     return 
-         (scm->type==type && 
-         my_strcmp(scm->name,name)==0 &&
-         (
-         (uri==NULL && scm->get_xmlns()==NULL) || 
-         (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0 )
-         )) ;
+     return
+         (scm->type==type && my_strcmp(scm->name,name)==0 &&
+           ( (uri==NULL && scm->get_xmlns()==NULL) || 
+             (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0) )) ;
  }
  bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
  {

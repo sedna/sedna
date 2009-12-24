@@ -21,10 +21,16 @@ typedef std::vector<schema_node_xptr>  t_scmnodes;
 typedef std::set<schema_node_xptr>     t_scmnodes_set;
 
 
-t_scmnodes_const execute_abs_path_expr(schema_node_cptr root, 
-                                       const PathExpr *path_expr, 
-                                       t_scmnodes_set* extended_nodes, 
-                                       t_scmnodes_set* extender_nodes);
+t_scmnodes_const execute_abs_path_expr(schema_node_cptr root,
+                                       const PathExpr *path_expr,
+                                       t_scmnodes_set* extended_nodes = NULL,
+                                       t_scmnodes_set* extender_nodes = NULL);
+
+t_scmnodes_const execute_node_test(schema_node_cptr node,
+                                   const NodeTest& nt,
+                                   t_scmnodes_set* extended_nodes = NULL,
+                                   t_scmnodes_set* extender_nodes = NULL);
+
 
 
 #endif /* _XPATHONSCHEMA_H */

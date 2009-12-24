@@ -237,11 +237,10 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,
 #endif
 }
 
-void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted ) 
+void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,bool inserted )
 {
 	if (!enable_log) return;
-	ASSERT(data_size > PSTRMAXSIZE);
-	
+
 	if (inserted)
 	{
 		pstr_long_cursor cur(value);
