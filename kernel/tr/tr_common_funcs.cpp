@@ -36,7 +36,16 @@ static bool is_trid_obtained    = false;
 static bool need_sem            = true; // need to use semaphore for updater
 
 
-static transaction_id 
+/*
+struct system_boundary_record
+{
+    char * name,
+    void (* transaction_begin) (),
+    void (* transaction_end) (),
+};
+*/
+
+static transaction_id
 get_transaction_id(SSMMsg* sm_server)
 {
     sm_msg_struct msg;
@@ -318,7 +327,6 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
 void on_kernel_recovery_statement_begin()
 {
     sid = 0;
-    indirection_table_on_statement_begin();  
 }
 
 void on_kernel_recovery_statement_end()

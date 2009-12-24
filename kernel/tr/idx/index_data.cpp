@@ -108,19 +108,15 @@ void index_cell_object::drop()
 void index_cell_object::new_node_available(schema_node_cptr snode) const
 {
     t_scmnodes res;
-    t_scmnodes objs=execute_abs_path_expr(snode->root, object);
-    t_scmnodes::iterator it=objs.begin();
-    while (it!=objs.end())
-    {
-        if ((*it)->is_ancestor_or_self(snode))
-        {
-            t_scmnodes keys=execute_abs_path_expr(*it, key);
-            t_scmnodes::iterator it2=keys.begin();
-            while (it2!=keys.end())
-            {
-                if (snode==*it2)
-                {
-                    res.push_back(*it);
+    t_scmnodes objs = execute_abs_path_expr(snode->root, object);
+    const NodeTest node_test_nodes_deep = {axis_descendant, node_test_wildcard_star};
+
+    FOR_EACH(i, objs, t_scmnodes) {
+        if ((*i)->is_ancestor_or_self(snode)) {
+            t_scmnodes keys=execute_abs_path_expr(*i, key);
+            FOR_EACH(j, keys, t_scmnodes) {
+                if (snode.ptr() == *j) {
+                    snode->index_list.add(index_ref(this->p_object, *i, *j));
                     break;
                 }
                 t_scmnodes keydeps = execute_node_test(*i, node_test_nodes_deep);
@@ -146,7 +142,7 @@ t_scmnodes index_cell_object::fits_to_index_as_key(schema_node_cptr snode) const
 
     FOR_EACH(i, objs, t_scmnodes) {
         if ((*i)->is_ancestor_or_self(snode)) {
-            t_scmnodes keys=execute_abs_path_expr(*i, key);
+            t_scmnodes keys = execute_abs_path_expr(*i, key);
             FOR_EACH(j, keys, t_scmnodes) {
                 if (snode.ptr() == *j) { res.push_back(*i); break; }
                 t_scmnodes keydeps = execute_node_test(*i, node_test_nodes_deep);
