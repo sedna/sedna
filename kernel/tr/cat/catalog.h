@@ -164,8 +164,8 @@ struct catalog_object_header {
     catalog_object_header * invalidate();
     inline void lock() { /* u_atomic_increment(cptr_refcount); */ };
     inline void unlock() {
-        U_ASSERT(cptr_refcount != 0);
-        u_atomic_decrement(cptr_refcount);
+        /* U_ASSERT(cptr_refcount != 0); */
+        /* u_atomic_decrement(cptr_refcount); */
 //        if (invalid()) cat_free(this, ...);
     };
     inline void ref() { u_atomic_increment(xptr_refcount); };
