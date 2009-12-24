@@ -256,7 +256,7 @@ void shiftManyNodesToNextBlock(xptr source_block_xptr, int node_count)
     xptr dest_block_xptr = getBlockHeaderCP(source_block_xptr)->nblk;
 
     shiftManyNodesCopy(&shift_info, source_block_xptr, shd_end);
-    shiftManyNodesPaste(&shift_info, dest_block_xptr, 0); /* FIXME: node order may be changed */
+    shiftManyNodesPaste(&shift_info, dest_block_xptr, 0);
     shiftManyNodesFixPointers(&shift_info);
     shiftManyNodesFree(&shift_info);
     updateBlockChains(source_block_xptr, dest_block_xptr, up_move);
@@ -280,60 +280,6 @@ void shiftManyNodesToPreviousBlock(xptr source_block_xptr, int node_count)
     MOCHECK(checkBlock(source_block_xptr));
     MOCHECK(checkBlock(dest_block_xptr));
 }
-
-
-#ifdef DDDDDDDDDD
-
-void ___shiftManyNodesToPreviousBlock(xptr source_block_xptr, int node_count)
-{
-    node_blk_hdr * source_block;
-    xptr_mapping * pfl, * pfl_it; /* pointer fix list */
-    node_buffer * buffer;
-    n_dsc * node;
-    int pos_in_parent;
-    xptr dest_block;
-
-    CHECKP(source_block_xptr);
-    VMM_SIGNAL_MODIFICATION(source_block_xptr);
-
-    source_block = getBlockHeader(source_block_xptr);
-    dest_block = source_block->pblk;
-    buffer = nodeBufferAlloc(source_block->dsc_size, node_count);
-    pfl_it = pfl = (xptr_mapping *) malloc(node_count * 4 * sizeof(xptr_mapping));
-    pos_in_parent = source_block->snode->get_node_position_in_parent();
-
-    /* Fill fix pointer list. We MUST do it before any nodes are deleted from the block
-        (because left or right siblings may lay in this block). */
-
-    node = source_block->getFirstNode();
-    for (int i = 0; i < node_count; i++) {
-        U_ASSERT(node != NULL);
-        pfl_it = addNodeToPFL(pfl_it, ADDR2XPTR(node), pos_in_parent);
-        CHECKP(source_block_xptr);
-        node = getDescriptor(source_block, node->desc_next);
-    }
-
-    /* Cut nodes to buffer */
-    CHECKP(source_block_xptr);
-    node = source_block->getFirstNode();
-    for (int i = 0; i < node_count; i++) {
-        n_dsc * next_node = getDescriptor(source_block, node->desc_next);
-        nodeBufferAddCP(buffer, ADDR2XPTR(node));
-        nodeListDeleteCP(source_block_xptr, node);
-        node = next_node;
-    }
-
-    pasteNodes(buffer, node_count, dest_block, LAST_NODE, pfl);
-    fixPointers(pfl, node_count);
-
-    MOCHECK(checkBlock(source_block_xptr));
-    MOCHECK(checkBlock(dest_block));
-
-    free(pfl);
-    nodeBufferFree(buffer);
-}
-
-#endif /* DDDDDDDDDD */
 
 
 xptr shiftOneNodeToNextBlock(xptr source_block_xptr)

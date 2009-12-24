@@ -15,7 +15,7 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-#ifdef EL_DEBUG
+#if EL_DEBUG == 1
  #define DEBUG_MO
  #define DEBUG_MO_NID
 #endif /* EL_DEBUG */

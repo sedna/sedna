@@ -98,14 +98,16 @@ inline void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_bro
 /* Scan parent brothers in both directions right, then left */
 
         CHECKP(node_info->parent);
+
         left = getDescriptor(node_info->parent, ((n_dsc *) XADDR(node_info->parent))->desc_prev);
+        right = getDescriptor(node_info->parent, ((n_dsc *) XADDR(node_info->parent))->desc_next);
+
         if (left == NULL) {
             left_parent = getPrevNonemptyBlock(node_info->parent);
             left = (left_parent == XNULL) ? NULL : getBlockHeaderCP(left_parent)->getLastNode();
         }
         left_parent = (left == NULL) ? XNULL : ADDR2XPTR(left);
 
-        right = getDescriptor(node_info->parent, ((n_dsc *) XADDR(node_info->parent))->desc_next);
         if (right == NULL) {
             right_parent = getNextNonemptyBlock(node_info->parent);
             right = (right_parent == XNULL) ? NULL : getBlockHeaderCP(right_parent)->getFirstNode();
