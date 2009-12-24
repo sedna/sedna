@@ -21,7 +21,7 @@
 
 #define IS_CATALOG_TMP_PTR(x) (x.layer == TEMPORARY_CATALOG_LAYER)
 
-/*********************************** 
+/***********************************
   Catalog named object identifiers
 */
 
@@ -33,7 +33,7 @@ enum catalog_named_objects {
     catobj_count = 4
 };
 
-/******************************** 
+/********************************
   Possible catalog lock objects
 */
 /*
@@ -57,7 +57,7 @@ catalog_object *        catalog_deserialize_object(xptr p, void * context);
 
 /*
   Catalog has extremely complicated name handling.
-  
+
 */
 
 bool                    catalog_set_name(enum catalog_named_objects obj_type, const char * name, catalog_object_header * obj);
@@ -151,8 +151,8 @@ struct catalog_object_header {
     catalog_object_header * next_invalid;
     catalog_object_header * latest_version;
 
-    catalog_object_header(const xptr ap) : 
-        p(ap), object(NULL), flags(0), 
+    catalog_object_header(const xptr ap) :
+        p(ap), object(NULL), flags(0),
         cptr_refcount(0), xptr_refcount(0),
         next(NULL), prev(NULL)
     { /* U_ASSERT(ap != XNULL) */ };
@@ -162,10 +162,10 @@ struct catalog_object_header {
     inline catalog_object * load();
 
     catalog_object_header * invalidate();
-    inline void lock() { u_atomic_increment(cptr_refcount); };
+    inline void lock() { /* u_atomic_increment(cptr_refcount); */ };
     inline void unlock() {
         U_ASSERT(cptr_refcount != 0);
-        u_atomic_decrement(cptr_refcount); 
+        u_atomic_decrement(cptr_refcount);
 //        if (invalid()) cat_free(this, ...);
     };
     inline void ref() { u_atomic_increment(xptr_refcount); };
@@ -212,29 +212,29 @@ struct catalog_cptr {
         }
     }
 
-    explicit catalog_cptr (catalog_object_header * aobj, bool write_mode = false) {
+    inline explicit catalog_cptr (catalog_object_header * aobj, bool write_mode = false) {
         obj = aobj;
 
         if (obj != NULL) {
             if (write_mode) { obj = obj->invalidate(); }
-            obj->lock(); 
+            obj->lock();
         }
     }
 
-    explicit catalog_cptr (const xptr p, bool write_mode = false) {
+    inline explicit catalog_cptr (const xptr p, bool write_mode = false) {
         obj = (p == XNULL) ? NULL : catalog_acquire_object(p);
-        
+
         if (obj != NULL) {
             if (write_mode) { obj = obj->invalidate(); }
-            obj->lock(); 
+            obj->lock();
         }
     }
-    
+
     inline void _modify() {
         if (obj != NULL) {
             obj->unlock();
             obj = obj->invalidate();
-            obj->lock(); 
+            obj->lock();
         }
     }
 

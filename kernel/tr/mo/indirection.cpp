@@ -136,7 +136,7 @@ xptr indirectionTableAddRecord(xptr target)
             indirection_block = getBlockHeaderCP(target_block->snode->bblk_indir);
         }
         U_ASSERT(indirection_block->free_first_indir != 0);
-        irecord = ADDR2XPTR(GET_DSC(indirection_block, indirection_block->free_first_indir));
+        irecord = addr2xptr(GET_DSC(indirection_block, indirection_block->free_first_indir));
     }
 
     CHECKP(irecord);

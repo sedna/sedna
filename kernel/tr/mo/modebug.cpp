@@ -76,6 +76,8 @@ inline bool checkNodeOuterPointers(xptr node_ptr) {
     return true;
 }
 
+#ifdef MO_DEBUG_NID
+
 void logNID(const char * type, xptr l, xptr r, xptr n)
 {
     std::stringstream a, b, c;
@@ -86,6 +88,8 @@ void logNID(const char * type, xptr l, xptr r, xptr n)
 
     monidlog(("MOLOG NID %s : %s x %s => %s", type, a.str().c_str(), b.str().c_str(), c.str().c_str()));
 }
+
+#endif /* MO_DEBUG_NID */
 
 bool checkBlockPointers(xptr block_ptr)
 {
@@ -98,6 +102,8 @@ bool checkBlockPointers(xptr block_ptr)
 
     return true;
 }
+
+#ifdef MO_DEBUG
 
 bool checkBlock(xptr block_ptr)
 {
@@ -132,3 +138,5 @@ bool checkBlock(xptr block_ptr)
 
     return true;
 }
+
+#endif /* MO_DEBUG */
