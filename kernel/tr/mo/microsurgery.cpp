@@ -3,7 +3,7 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <strings.h>
+#include <string.h>
 
 #include "tr/mo/microsurgery.h"
 #include "tr/structures/nodes.h"

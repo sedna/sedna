@@ -18,7 +18,7 @@
 sequence::sequence(int _tuple_size_,
                    int _tuples_in_memory_,
                    int _max_block_amount_,
-                   bool _copy_vmm_strings_) : 
+                   bool _copy_vmm_strings_) :
                    seq_size(0),
                    tuple_size(_tuple_size_),
                    tuple_sizeof(_tuple_size_ * sizeof(tuple_cell)),
@@ -33,7 +33,7 @@ sequence::sequence(int _tuple_size_,
 sequence::sequence(const tuple_cell &tc,
                    int _tuples_in_memory_,
                    int _max_block_amount_,
-                   bool _copy_vmm_strings_) : 
+                   bool _copy_vmm_strings_) :
                    seq_size(1),
                    tuple_size(1),
                    tuple_sizeof(sizeof(tuple_cell)),
@@ -43,7 +43,7 @@ sequence::sequence(const tuple_cell &tc,
                    copy_vmm_strings(_copy_vmm_strings_),
                    sort_mem(NULL)
 {
-    if (tuples_in_memory < 1) 
+    if (tuples_in_memory < 1)
         throw USER_EXCEPTION2(SE1003, "Wrong combination of arguments in call to sequence constructor");
     tuple_cell *mem = se_new tuple_cell[1];
     mem[0] = tc;
@@ -82,7 +82,7 @@ int sequence::add(const tuple &t)
         int tuple_str_len = 0;
         for (int i = 0; i < tuple_size; i++)
         {
-            if (t.cells[i].get_type() == tc_light_atomic_var_size || 
+            if (t.cells[i].get_type() == tc_light_atomic_var_size ||
                 (copy_vmm_strings && t.cells[i].is_atomic() && !is_fixed_size_type(t.cells[i].get_atomic_type())))
             {
                 tuple_str_len += t.cells[i].get_strlen();
@@ -111,7 +111,7 @@ int sequence::add(const tuple &t)
         CHECKP(eblk);
 		VMM_SIGNAL_MODIFICATION(eblk);
         SEQ_BLK_HDR(eblk)->nblk = new_blk;
-        
+
         eblk = new_blk;
 
         CHECKP(eblk);
@@ -122,7 +122,7 @@ int sequence::add(const tuple &t)
     {
         memcpy(dest_addr + i, t.cells + i, sizeof(tuple_cell));
 
-        if (t.cells[i].get_type() == tc_light_atomic_var_size || 
+        if (t.cells[i].get_type() == tc_light_atomic_var_size ||
             (copy_vmm_strings && t.cells[i].is_atomic() && !is_fixed_size_type(t.cells[i].get_atomic_type())))
 
         {
@@ -134,7 +134,7 @@ int sequence::add(const tuple &t)
     }
 	VMM_SIGNAL_MODIFICATION(eblk);
     SEQ_BLK_HDR(eblk)->cursor += tuple_sizeof;
-    
+
 
     return 0;
 }
@@ -149,7 +149,7 @@ void sequence::get(tuple &t, int pos)
 {
     t.eos = false;
     bool cleared = false;
-    
+
     if (t.cells_number != tuple_size)
     {
         cleared = true;
@@ -160,14 +160,14 @@ void sequence::get(tuple &t, int pos)
 
     if (pos < tuples_in_memory)
     {
-        for (int i = 0; i < tuple_size; i++) 
+        for (int i = 0; i < tuple_size; i++)
             t.cells[i] = mem_tuples[pos][i];
         return;
     }
 
     if(!cleared) /// We MUST release tuple cells before use them! (IS)
     {
-        for (int i = 0; i < tuple_size; i++) 
+        for (int i = 0; i < tuple_size; i++)
             t.cells[i].set_eos();
     }
 
@@ -180,7 +180,7 @@ void sequence::get(tuple &t, int pos)
 
     memcpy(t.cells, XADDR(p), tuple_sizeof);
 
-    for (int i = 0; i < tuple_size; i++) 
+    for (int i = 0; i < tuple_size; i++)
     {
         if (t.cells[i].get_type() == tc_light_atomic_var_size)
         {
@@ -254,18 +254,18 @@ void sequence::copy(sequence* s)
     copy(s, s->begin(), s->end());
 }
 
-void sequence::qsort(const order_spec_list& osl) 
-{ 
+void sequence::qsort(const order_spec_list& osl)
+{
     if (tuples_in_memory != 0)
         throw USER_EXCEPTION2(SE1003, "sequence::qsort works on vmm sequences only");
 
     qsort(osl, 0, seq_size);
-} 
+}
 
 void sequence::qsort(const order_spec_list& osl, int off, int len)
 {
     // Insertion sort on smallest arrays
-    if (len < 7) 
+    if (len < 7)
     {
         for (int i = off; i < len + off; i++)
             for (int j = i; j > off && compare(osl, j, j - 1) < 0; j--)
@@ -275,12 +275,12 @@ void sequence::qsort(const order_spec_list& osl, int off, int len)
 
     // Choose a partition element, v
     int m = off + (len >> 1); // Small arrays, middle element
-    if (len > 7) 
+    if (len > 7)
     {
         int l = off;
         int n = off + len - 1;
         if (len > 40) // Big arrays, pseudomedian of 9
-        { 
+        {
             int s = len / 8;
             l = med3(osl, l, l + s, l + 2 * s);
             m = med3(osl, m - s, m, m + s);
@@ -293,13 +293,13 @@ void sequence::qsort(const order_spec_list& osl, int off, int len)
     int a = off, b = a, c = off + len - 1, d = c;
     while(true)
     {
-        while (b <= c && compare(osl, b, m) <= 0) 
+        while (b <= c && compare(osl, b, m) <= 0)
         {
             if (compare(osl, b, m) == 0)
                 swap(a++, b);
             b++;
         }
-        while (c >= b && compare(osl, m, c) <= 0) 
+        while (c >= b && compare(osl, m, c) <= 0)
         {
             if (compare(osl, c, m) == 0)
                 swap(c, d--);
@@ -352,7 +352,7 @@ int sequence::med3(const order_spec_list& osl, int a, int b, int c)
                (compare(osl, c, b) < 0 ? b : compare(osl, c, a) < 0 ? c : a));
 }
 
-void sequence::vecswap(int a, int b, int n) 
+void sequence::vecswap(int a, int b, int n)
 {
     for (int i = 0; i < n; i++, a++, b++) swap(a, b);
 }
@@ -388,6 +388,7 @@ int sequence::compare(const order_spec_list& osl, int a, int b)
 int sequence_tmp::add(const tuple &t)
 {
     U_ASSERT(false);
+    return 0;
 /*
     for (int i = 0; i < tuple_size; i++)
     {
@@ -458,7 +459,8 @@ void sequence_tmp::copy(sequence_tmp* s)
 tuple_cell sequence_tmp::get_00() const
 {
     U_ASSERT(false);
-/*  
+    return tuple_cell();
+/*
     if (seq_size == 0) throw USER_EXCEPTION2(SE1003, "Empty sequence passed to sequence_tmp::get_00");
 
     tuple_cell &tc = ((tuple_cell*)(mem_tuples[0]))[0];
@@ -491,11 +493,11 @@ xptr descript_sequence::get_xptr(int a)
         return ((tuple_cell*)XADDR(p))->get_node();
     }
 }
-void descript_sequence::sort() 
-{ 
+void descript_sequence::sort()
+{
     sort1(0,seq_size);
     //    std::sort(begin(), end(), nodes_document_order_less());
-} 
+}
 void descript_sequence::sort1(int off, int len)
 {
     // Insertion sort on smallest arrays
@@ -524,13 +526,13 @@ void descript_sequence::sort1(int off, int len)
     // Establish Invariant: v* (<v)* (>v)* v*
     int a = off, b = a, c = off + len - 1, d = c;
     while(true) {
-        while (b <= c && on_less_lt( b, v)<=0) 
+        while (b <= c && on_less_lt( b, v)<=0)
         {
             if (get_xptr(b) == v)
                 swap(a++, b);
             b++;
         }
-        while (c >= b && on_less_rt(v,c)<=0) 
+        while (c >= b && on_less_rt(v,c)<=0)
         {
             if (get_xptr(c) == v)
                 swap(c, d--);
@@ -616,17 +618,17 @@ void descript_sequence::swap(int a, int b)
             delete[]p2;
 
         }
-    
+
     }
     delete[]p1;
 }
-int descript_sequence::med3( int a, int b, int c) 
+int descript_sequence::med3( int a, int b, int c)
 {
     return (on_less(a,b)<0 ?
         (on_less(b,c)<0 ? b : on_less(a,c)<0 ? c : a) :
         (on_less(c,b)<0 ? b : on_less(c,a)<0 ? c : a));
 }
-void descript_sequence::vecswap(int a, int b, int n) 
+void descript_sequence::vecswap(int a, int b, int n)
 {
     for (int i=0; i<n; i++, a++, b++) swap(a, b);
 }

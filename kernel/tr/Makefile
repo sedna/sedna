@@ -54,15 +54,15 @@ else
 FT_ADD_LIB = dten600.lib Nafxcw.lib LIBCMT.LIB
 endif
 else
-FT_ADD_LIB = 
+FT_ADD_LIB =
 endif
 else
-FT_ADD_LIB = 
+FT_ADD_LIB =
 endif
 
 
 DEPENDS_ON_LIBS = $(COMMON_FILES_LIB) $(LOGICAL_LOG_LIB)
-	   
+
 
 ################################################################################
 # tr (Transaction)                                                             #
@@ -82,7 +82,16 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
 	$(LD) $(LFLAGS) $(LDOUT)$@ $^  $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
 endif
 
-$(TRN_OBJS:$(OBJ_EXT)=.cpp): xqp/xqp$(LIB_EXT)
+
+ifeq ("$(PLATFORM)", "WIN32")
+$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
+	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(LSLIBS) $(FT_ADD_LIB)
+else					
+$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
+	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
+endif
+
+$(TRN_OBJS): $(SUBDIROBJS)
 
 $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
