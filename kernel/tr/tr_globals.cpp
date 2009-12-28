@@ -21,7 +21,6 @@ using namespace tr_globals;
 namespace tr_globals
 {
     int run_rewriter      = 1;
-    int run_popt          = 0;
     int show_time         = 0;
     int print_intermed    = 0;
     int server_mode       = 0;
@@ -32,6 +31,7 @@ namespace tr_globals
     int authorization     = 1;
     int query_timeout     = 0;
     int max_stack_depth   = 0;
+    int run_recovery      = 0;
 
     char db_name     [SE_MAX_DB_NAME_LENGTH+1];
     char filename    [TR_ARG_MAX_LENGTH+1];
@@ -69,9 +69,9 @@ static arg_rec tr_argtable[] =
     {"-help",            NULL,       arg_lit,   &tr_s_help,                 "0",       "\t\t\t  display this help and exit"},
     {"--help",           NULL,       arg_lit,   &tr_l_help,                 "0",       "\t\t  display this help and exit"},
     {"-version",         NULL,       arg_lit,   &tr_version,                "0",       "\t\t  display product version and exit"},
+    {"-rcv",             NULL,       arg_lit,   &run_recovery,              "0",       "\t\t\t  run recovery transaction (for internal use only!!!)"},
     {"-output",         " file",     arg_str,   output_file,                "STDOUT",  "\t\t  outputfile (default STDOUT)"},
     {"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
-    {"-popt",           " on/off",   arg_bool,  &run_popt,                  "off",     "\t\t  run physical optimizer (default off)"},
     {"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},
     {"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, ASTI, ASTQ\n\t\t\t  (default XQuery)"},
     {"-debug",          " on/off",   arg_bool,  &debug_mode,                "off",     "\t\t  execute statements in debug mode (default off)\t"},

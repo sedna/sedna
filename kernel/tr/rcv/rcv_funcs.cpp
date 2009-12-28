@@ -7,6 +7,7 @@
 #include "tr/structures/indirection.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/rcv/rcv_test_tr.h"
+#include "tr/rcv/logicrcv.h"
 
 void rollback_tr_by_logical_log(transaction_id trid)
 {
@@ -14,15 +15,15 @@ void rollback_tr_by_logical_log(transaction_id trid)
 	llLogRollbackTrn(trid);
 }
 
-void recover_db_by_logical_log(const LSN last_cp_lsn)
+void recover_db_by_logical_log()
 {
 	switch_to_rollback_mode(MODE_REDO);
 #ifdef SE_ENABLE_DTSEARCH
-	llLogicalRecover(last_cp_lsn);  
+	llLogicalRecover();
 	switch_to_rollback_mode(MODE_NORMAL);
 	rcvRecoverFtIndexes(); // need to perform remapping of ft
 #else
-	llLogicalRecover(last_cp_lsn);	
+	llLogicalRecover();
 #endif
 
 #ifdef TEST_AFTER_RCV

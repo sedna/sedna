@@ -1055,6 +1055,7 @@ There are following kinds of Sedna database objects:
 \item collection
 \item index
 \item module
+\item trigger
 \end{itemize}
 
 There are two types of Sedna database users:
@@ -1151,7 +1152,8 @@ RETRIEVE-METADATA    & DATABASE                       \\
 \hline
 LOAD                 & DATABASE, COLLECTION           \\
 \hline
-DROP                 & DOCUMENT, COLLECTION, INDEX, MODULE    \\
+DROP                 & DOCUMENT, COLLECTION, INDEX, \\
+                     & MODULE, TRIGGER    \\
 \hline
 QUERY                & DOCUMENT, COLLECTION           \\
 \hline
@@ -1217,7 +1219,8 @@ ON DATABASE
 TO "user-name|role-name" | PUBLIC
 \end{verbatim}
 
-To grant a role you must be allowed to grant every privilege of the role: to be owner of every database object of privileges of the role, or to be DBA user. To grant a role to one or more users or roles use:
+To grant a role you must be allowed to grant every privilege of the role: to be owner of every database object of privileges of the role, or to be DBA user. To grant a role to another role
+means grantee will add grantor's priveleges to its own set of priveleges. To grant a role to one or more users or roles use:
 
 %\begin{verbatim}
 %GRANT "role-name"
@@ -1231,7 +1234,7 @@ TO "user-name|role_name" | PUBLIC
 
 \subsection{Revoking privileges}
 
-Privileges or roles can be revoked from the user or role. Only grantor of the privilege (role) or DBA user can revoke privilege (role).
+Privileges or roles can be revoked from the user. Roles cannot be revoked from roles, however. Only grantor of the privilege (role) or DBA user can revoke privilege (role).
 
 \verb!REVOKE! statements are similar to \verb!GRANT! statements.
 
@@ -1265,16 +1268,16 @@ ON DATABASE
 FROM "user-name|role-name" | PUBLIC
 \end{verbatim}
 
-To revoke a role from one or more users or roles use:
+To revoke a role from one or more users use:
 
 %\begin{verbatim}
 %REVOKE "role-name"
-%FROM "user-name|role-name" [, "user-name|role-name"] | PUBLIC
+%FROM "user-name" [, "user-name"] | PUBLIC
 %\end{verbatim}
 
 \begin{verbatim}
 REVOKE "role-name"
-FROM "user-name|role-name" | PUBLIC
+FROM "user-name" | PUBLIC
 \end{verbatim}
 
 As mentioned above DBA user is a user that has a "DBA" role. Thus, "DBA" is a reserved name for a role: a role with name "DBA" can not be created, privileges or roles cannot be granted to "DBA" role.

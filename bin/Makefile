@@ -23,6 +23,5 @@ clean: generic_clean
 	-$(REMOVE) se_stop$(EXE_EXT)
 	-$(REMOVE) se_trn$(EXE_EXT)
 	-$(REMOVE) se_term$(EXE_EXT)
-	-$(REMOVE) se_rcv$(EXE_EXT)
 	-$(REMOVE) se_hb$(EXE_EXT)
 	-$(REMOVE) se_exp$(EXE_EXT)

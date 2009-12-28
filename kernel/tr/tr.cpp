@@ -22,6 +22,7 @@
 #include "tr/socket_client.h"
 #include "tr/auth/auc.h"
 #include "tr/rcv/rcv_test_tr.h"
+#include "tr/rcv/rcv_funcs.h"
 
 // only for MSDEV 6.0
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)
@@ -210,48 +211,69 @@ int TRmain(int argc, char *argv[])
 
             SetGlobalNamesDB(db_id);
 
-            //register session on governer
-            register_session_on_gov();
+            // register session on governer
+            if (!run_recovery)
+                register_session_on_gov();
+            else // cannot do for recovery since the database has status 'not started'
+                sid = 0;
 
-            tr_globals::ppc = se_new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_TRN, &tr_globals::is_timer_fired);
+            tr_globals::ppc = se_new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number,
+                                                  run_recovery ? EL_RCV : EL_TRN,
+                                                  run_recovery ? NULL : &tr_globals::is_timer_fired);
             tr_globals::ppc->startup(e);
 
-            event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+            event_logger_init((run_recovery) ? EL_RCV : EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
             event_logger_set_sid(sid);
 
-            client->write_user_query_to_log();                                    /// it works only for command line client
-            client->set_keep_alive_timeout(GOV_HEADER_GLOBAL_PTR -> ka_timeout);  /// it works only for socket client
+            if (!run_recovery)
+            {
+                client->write_user_query_to_log();                                    /// it works only for command line client
+                client->set_keep_alive_timeout(GOV_HEADER_GLOBAL_PTR -> ka_timeout);  /// it works only for socket client
 
 #ifdef _WIN32
-            BOOL fSuccess;
-            fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TrnCtrlHandler, TRUE);      // add to list
-            if (!fSuccess)
-                throw USER_EXCEPTION(SE4207);
+                BOOL fSuccess;
+                fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TrnCtrlHandler, TRUE);      // add to list
+                if (!fSuccess)
+                    throw USER_EXCEPTION(SE4207);
 #else
-            // For Control-C or Delete
-            if ((int) signal(SIGINT, TrnCtrlHandler) == -1)
-                throw USER_EXCEPTION(SE4207);
-            // For Control-backslash
-            if ((int) signal(SIGQUIT, TrnCtrlHandler) == -1)
-                throw USER_EXCEPTION(SE4207);
-            //For reboot or halt
-            if ((int) signal(SIGTERM, TrnCtrlHandler) == -1)
-                throw USER_EXCEPTION(SE4207);
+                // For Control-C or Delete
+                if ((int) signal(SIGINT, TrnCtrlHandler) == -1)
+                    throw USER_EXCEPTION(SE4207);
+                // For Control-backslash
+                if ((int) signal(SIGQUIT, TrnCtrlHandler) == -1)
+                    throw USER_EXCEPTION(SE4207);
+                //For reboot or halt
+                if ((int) signal(SIGTERM, TrnCtrlHandler) == -1)
+                    throw USER_EXCEPTION(SE4207);
 #endif
+            }
 
             msg_struct client_msg;
 
             // transaction initialization
-            on_session_begin(sm_server, db_id);
+            on_session_begin(sm_server, db_id, run_recovery ? true : false);
             elog(EL_LOG, ("Session is ready"));
 
             PPQueryEssence *qep_tree = NULL;        //qep of current stmnt
             StmntsArray *st = NULL;
-            bool expect_another_transaction = true;
+            bool expect_another_transaction = !run_recovery;
 
 #ifdef RCV_TEST_CRASH
             rcvReadTestCfg(); // prepare recovery tester
 #endif
+
+            // recovery routine is run instead of transaction mix
+            if (run_recovery)
+            {
+                on_transaction_begin(sm_server, tr_globals::ppc, true); // true means recovery is active
+                on_kernel_recovery_statement_begin();
+
+                recover_db_by_logical_log();
+
+                on_kernel_recovery_statement_end();
+                on_transaction_end(sm_server, true, tr_globals::ppc, true);
+            }
+
             /////////////////////////////////////////////////////////////////////////////////
             /// CYCLE BY TRANSACTIONS
             /////////////////////////////////////////////////////////////////////////////////
@@ -523,7 +545,11 @@ int TRmain(int argc, char *argv[])
 
 
             on_session_end(sm_server);
-            elog(EL_LOG, ("Session is closed"));
+
+            if (run_recovery)
+                elog(EL_LOG, ("recovery process by logical log finished"));
+            else
+                elog(EL_LOG, ("Session is closed"));
 
 
             u_ftime(&t_total2);
@@ -554,7 +580,10 @@ int TRmain(int argc, char *argv[])
             tr_globals::ppc->shutdown();
             delete tr_globals::ppc;
             tr_globals::ppc = NULL;
-            set_session_finished();
+
+            if (!run_recovery)
+                set_session_finished();
+
             event_logger_set_sid(-1);
 
             close_gov_shm();
@@ -563,6 +592,21 @@ int TRmain(int argc, char *argv[])
 
             d_printf1("Transaction has been closed\n\n");
 
+            // tell SM that we are done
+            if (run_recovery)
+            {
+                USemaphore rcv_signal_end;
+
+                // signal to SM that we are finished
+                if (0 != USemaphoreOpen(&rcv_signal_end, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, __sys_call_error))
+                    throw SYSTEM_EXCEPTION("Cannot open CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG!");
+
+                if (0 != USemaphoreUp(rcv_signal_end, __sys_call_error))
+                    throw SYSTEM_EXCEPTION("Cannot up CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG!");
+
+                if (0 != USemaphoreClose(rcv_signal_end, __sys_call_error))
+                    throw SYSTEM_EXCEPTION("Cannot close CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG!");
+            }
         }
         catch(SednaUserException & e)
         {

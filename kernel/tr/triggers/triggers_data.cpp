@@ -16,7 +16,7 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/log/log.h"
 #include "tr/structures/schema.h"
-#include "tr/executor/por2qep/por2qep.h"
+#include "tr/xqp/XQuerytoLR.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/cat/catstore.h"
 
