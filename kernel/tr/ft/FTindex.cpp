@@ -11,6 +11,7 @@
 #include "common/u/uhdd.h"
 #include "tr/log/log.h"
 #include "tr/cat/catenum.h"
+#include "tr/crmutils/node_utils.h"
 //using namespace dtSearch;
 
 #ifndef _WIN32
@@ -107,11 +108,11 @@ SednaIndexJob::SednaIndexJob(ft_index_cell_object* _ft_idx_, bool no_log) : ft_i
 	//FIXME: mb check that length fits into dtsearch options?
 	std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
 	                + std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
-					
+
 	strcpy(opts.stemmingRulesFile, stemming_file.c_str());
 	std::string noisewords_file = std::string(SEDNA_DATA) + std::string("/data/")
 	                + std::string(tr_globals::db_name) + std::string("_files/dtsearch/noisewords.dat");
-					
+
 	strcpy(opts.noiseWordFile, noisewords_file.c_str());
 	dtssSetOptions(opts, result);
 }
@@ -206,7 +207,7 @@ void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 {
 	std::string list_path1 = std::string(SEDNA_DATA) + std::string("/data/")
 		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
-	std::string list_path = list_path1 + std::string(ft_idx->index_title) + 
+	std::string list_path = list_path1 + std::string(ft_idx->index_title) +
 		std::string("/remove_list");
 
 	UFile f = uCreateFile(list_path.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_WRITE_THROUGH, NULL, __sys_call_error);
@@ -256,7 +257,7 @@ UFile SednaIndexJob::create_log(const char *index_name)
 
 	if (log_file == U_INVALID_FD)
 		throw USER_EXCEPTION2(SE4040, "failed to create log for full-text index operations");
-	
+
 	return log_file;
 }
 std::map<std::string, ftlog_file*> SednaIndexJob::log_files_map;
@@ -313,13 +314,13 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 	//III. For each schema node found (sn_obj)
 	std::vector<xptr> start_nodes;
 	for (int i = 0; i < sobj.size(); i++)
-	{	
-		xptr blk= getUnemptyBlockFore(sobj[i]->bblk);
+	{
+		xptr blk= getNonemptyBlockLookFore(sobj[i]->bblk);
 		if (blk != XNULL) {
 			start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
 		}
 	}
-	
+
 	SednaIndexJob sij(&*ft_idx, true);
 	sij.create_index(&start_nodes);
 }
@@ -385,7 +386,7 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 	ftc_index_t ftc_idx;
 	ft_index_cell_cptr ft_idx = find_ft_index(index_name, &ftc_idx);
 	//TODO:check NULL
-	
+
 	SednaIndexJob sij(&*ft_idx, true);
 	xptr_sequence *seq;
 
@@ -459,20 +460,20 @@ void SednaIndexJob::recover_db_file(const char *fname, trn_cell_analysis_redo *r
 
 	if (log_ufile == U_INVALID_FD)
 		throw SYSTEM_EXCEPTION("failed to open log for full-text index operations");
-	
+
 	ftlog_file log_file;
 	log_file.file = log_ufile;
 	LSN trans_first_lsn;
 	int res = log_file.read_header(&trans_first_lsn);
 	bool rollback = false;
-	
+
 	trn_cell_analysis_redo *it = redo_list;
 
 	while (it != NULL)
 	{
 		if (it->trid == trid && it->end_lsn > trans_first_lsn)
 			break;
-		
+
 		it = it->next;
 	}
 
@@ -544,11 +545,11 @@ void SednaIndexJob::recover_db(trn_cell_analysis_redo *redo_list, bool is_hb)
 			if (l > 4 && !strcmp((char*)dent->d_name + l - 4, ".log"))
 					recover_db_file(dent->d_name, redo_list);
 		}
-	
+
 		if (0 != closedir(dir))
 			throw USER_EXCEPTION(SE4043); //FIXME: exception code
 	}
-	
+
 #endif
 	//1. create list of all files to process
 	// 2. cycle on file list
