@@ -10,7 +10,7 @@
 #include "common/errdbg/d_printf.h"
 
 #include "tr/auth/auc.h"
-#include "tr/executor/por2qep/por2qep.h"
+#include "tr/xqp/XQuerytoLR.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
 #include "tr/structures/metadata.h"

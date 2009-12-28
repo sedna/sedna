@@ -6,7 +6,7 @@ PP = ../..
 
 include $(PP)/Makefile.include
 
-all: $(PP)/bin/se_trn$(EXE_EXT) $(PP)/bin/se_rcv$(EXE_EXT)
+all: $(PP)/bin/se_trn$(EXE_EXT)
 	@echo ===================================================================
 	@echo TR DONE
 	@echo ===================================================================
@@ -15,11 +15,6 @@ all: $(PP)/bin/se_trn$(EXE_EXT) $(PP)/bin/se_rcv$(EXE_EXT)
 TRN_OBJS = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
            tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
            tr_globals$(OBJ_EXT)
-RCV_OBJS = rcv_db$(OBJ_EXT) tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
-           tr_globals$(OBJ_EXT)
-OBJS     = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
-           tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
-           tr_globals$(OBJ_EXT) rcv_db$(OBJ_EXT)
 
 SUBDIRS  = xqp auth cat crmutils executor idx locks log mo nid pstr rcv \
            strings structures updates vmm bstrie
@@ -37,7 +32,7 @@ SUBDIROBJS = $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIB_EXT))
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
 ifndef NO_DEP
-include $(OBJS:$(OBJ_EXT)=.d)
+include $(TRN_OBJS:$(OBJ_EXT)=.d)
 endif
 endif
 
@@ -87,16 +82,7 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
 	$(LD) $(LFLAGS) $(LDOUT)$@ $^  $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
 endif
 
-
-ifeq ("$(PLATFORM)", "WIN32")
-$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
-	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(LSLIBS) $(FT_ADD_LIB)
-else					
-$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
-	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
-endif
-
-$(TRN_OBJS): $(SUBDIROBJS)
+$(TRN_OBJS:$(OBJ_EXT)=.cpp): xqp/xqp$(LIB_EXT)
 
 $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 

@@ -22,7 +22,7 @@
 #include "tr/executor/base/XPath.h"
 #include "tr/xqp/XQueryDriver.h"
 #include "tr/xqp/XQuerytoLR.h"
-#include "tr/executor/por2qep/por2qep.h"
+#include "tr/executor/root/PPQueryRoot.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"

@@ -11,7 +11,7 @@
 
 #include "tr/triggers/triggers_data.h"
 #include "common/lm_base.h"
-#include "tr/executor/por2qep/por2qep.h"
+#include "tr/xqp/XQuerytoLR.h"
 
 struct built_trigger_action{
     PPQueryEssence* action_qep_tree;
@@ -41,7 +41,7 @@ schema_nodes_triggers_map* get_statement_triggers(schema_nodes_triggers_map* tri
 
 schema_nodes_triggers_map* get_statement_triggers_on_subtree(schema_node_cptr scm_node, trigger_event event, trigger_time time, schema_nodes_triggers_map* statement_triggers);
 
-// finds trigger that must be fired before inserting a new node 
+// finds trigger that must be fired before inserting a new node
 // (when there is no the corresponding node in the descriptive schema)
 xptr find_trigger_for_newly_inserted_node(schema_node_cptr parent, const char* ins_node_name, t_item ins_node_type, t_triggers_set* treated_triggers);
 

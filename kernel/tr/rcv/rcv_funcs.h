@@ -12,10 +12,9 @@
 
 #include "common/base.h"
 #include "common/xptr.h"
-#include "common/lfsGlobals.h"
 
 void rollback_tr_by_logical_log(transaction_id _trid);
-void recover_db_by_logical_log(const LSN last_cp_lsn);
+void recover_db_by_logical_log();
 void print_value(const char* value, int value_size);
 
 extern int rcv_number_of_records;

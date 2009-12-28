@@ -17,10 +17,9 @@
 
 void parse_trn_command_line(int argc, char** argv);
 
-namespace tr_globals 
+namespace tr_globals
 {
     extern int run_rewriter;
-    extern int run_popt;
     extern int show_time;
     extern int socket_port;
     extern int print_intermed;
@@ -31,13 +30,14 @@ namespace tr_globals
     extern int authorization;
     extern int query_timeout;
     extern int max_stack_depth;
-    
+    extern int run_recovery;
+
     extern char db_name[];
     extern char filename[];
     extern char password[];
     extern char login[];
     extern char output_file[];
-    
+
     extern QueryType query_type;
 
     extern transaction_id trid;
@@ -47,10 +47,10 @@ namespace tr_globals
     extern bool is_ro_mode;       // may change during transaction execution!
     extern bool is_ft_disabled;
     extern bool is_log_less_mode; // true, if we write only one record on every bulkload
-    
+
     extern pping_client* ppc;
     extern client_core*  client;
-    
+
     extern int internal_auth_switch;
 }
 

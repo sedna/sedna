@@ -9,12 +9,10 @@
 #ifndef _LL_LOGICAL_RCV_
 #define _LL_LOGICAL_RCV_
 
-#include "sm/llsm/llMain.h"
+#include "common/base.h"
 
 // Resores logical state of the database
-// Parameters:
-// 		start_lsn - where to start looking for logical records
-void llLogicalRecover(const LSN start_lsn);
+void llLogicalRecover();
 
 // Rolls back specified transaction
 // Parameters:

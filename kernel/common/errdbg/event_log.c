@@ -20,7 +20,7 @@
 #define SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH "\n---   "
 
 
-/* Until the configuration file is read and the value is obtained, 
+/* Until the configuration file is read and the value is obtained,
  * the default value for event_log_level is EL_ERROR */
 int event_log_elevel = EL_ERROR;
 int event_log_initialized = 0;
@@ -62,7 +62,7 @@ static UShMem el_shmem;
 static USemaphoreArr el_sems;
 static UTHANDLE el_thread_handle;
 static FILE *el_ostr = NULL;
-static int el_cur_file_size = 0; /* currently this variable is not updated properly, log file size comes from fstat */ 
+static int el_cur_file_size = 0; /* currently this variable is not updated properly, log file size comes from fstat */
 static int el_component = EL_UNK;
 static const char *el_component_detail = NULL;
 static int el_sid = -1;
@@ -136,14 +136,14 @@ static int __event_log_short_write_to_stderr(const char *s, va_list ap)
  * INFO  18/04/2006 13:16:02 (SM web) The process is running w/o root privelegies, so memory lock has not been done.
  *
 */
-static int __event_log_write_hdr(int elevel, 
-                                 int component, 
-                                 const char *component_detail, 
+static int __event_log_write_hdr(int elevel,
+                                 int component,
+                                 const char *component_detail,
                                  int sid,
                                  int trid,
                                  int pid,
-                                 int lineno, 
-                                 const char *filename, 
+                                 int lineno,
+                                 const char *filename,
                                  const char *funcname)
 {
     char dt_buf[32];
@@ -196,7 +196,7 @@ static int __event_log_write_hdr(int elevel,
     if (event_log_location)
     {
         const char* component_c_str = NULL;
-    
+
         switch (component)
         {
             case EL_CDB:
@@ -223,10 +223,13 @@ static int __event_log_write_hdr(int elevel,
             case EL_TRN:
                 component_c_str = "TRN";
                 break;
+            case EL_RCV:
+                component_c_str = "RCV";
+                break;
             default:
                 component_c_str = "UNK";
         }
-    
+
         if (component_detail && *component_detail)
         {
             if (component == EL_TRN)
@@ -275,11 +278,11 @@ event_log_init_file:
         strcat(buf, "/data/");
 #endif
         strcat(buf, SE_EVENT_LOG_FILENAME);
-        
+
         el_ostr = fopen(buf, "at");
         if (!el_ostr) return;
-        
-        /// We must make it non inheritable, other way sessions created by 
+
+        /// We must make it non inheritable, other way sessions created by
         /// governor inherit it and block log file rename.
         if(uMakeLowLevelDescriptorNonInheritable(el_ostr, NULL) == -1)
         {
@@ -289,9 +292,9 @@ event_log_init_file:
         }
     }
 
-    if (fstat(fileno(el_ostr), &st) == 0) 
+    if (fstat(fileno(el_ostr), &st) == 0)
 		el_cur_file_size = st.st_size;
-    else 
+    else
 		el_cur_file_size = 0;
 
     if (el_cur_file_size >= event_log_recommended_size)
@@ -387,21 +390,21 @@ static void __event_log_write_short_msg()
     __event_log_check_output_stream();
     if (!el_ostr) return;
 
-    res = __event_log_write_hdr(el_msg->elevel, 
-                                el_msg->component, 
+    res = __event_log_write_hdr(el_msg->elevel,
+                                el_msg->component,
                                 el_msg->component_detail,
                                 el_msg->sid,
                                 el_msg->trid,
                                 el_msg->pid,
-                                el_msg->lineno, 
-                                el_msg->filename, 
+                                el_msg->lineno,
+                                el_msg->filename,
                                 el_msg->funcname);
     if (res == -1) return;
 
 	/*
 	res = fprintf(el_ostr, ": %s\n", el_msg->content);
     if (res == -1) return;
-    else el_cur_file_size += res; */ 
+    else el_cur_file_size += res; */
 	fprintf(el_ostr,": ");
 	__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
 	fprintf(el_ostr,"\n");
@@ -414,14 +417,14 @@ static void __event_log_write_long_msg_start()
     __event_log_check_output_stream();
     if (!el_ostr) return;
 
-    res = __event_log_write_hdr(el_msg->elevel, 
-                                el_msg->component, 
+    res = __event_log_write_hdr(el_msg->elevel,
+                                el_msg->component,
                                 el_msg->component_detail,
                                 el_msg->sid,
                                 el_msg->trid,
                                 el_msg->pid,
-                                el_msg->lineno, 
-                                el_msg->filename, 
+                                el_msg->lineno,
+                                el_msg->filename,
                                 el_msg->funcname);
     if (res == -1) return;
 
@@ -429,7 +432,7 @@ static void __event_log_write_long_msg_start()
 	res = fprintf(el_ostr, ": %s", el_msg->content);
     if (res == -1) return;
     else el_cur_file_size += res;
-	*/ 
+	*/
 	fprintf(el_ostr, ": ");
 	__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
 }
@@ -455,8 +458,8 @@ static bool __event_log_write_long_msg_next_end()
         }
         else
             res = fprintf(el_ostr, "%s", el_msg->content);
-			*/ 
-    
+			*/
+
         if (res != -1) el_cur_file_size += res;
     }
 
@@ -538,11 +541,11 @@ int event_log_short_msg_param(const char *s, ...)
     return res;
 }
 
-int event_log_short_msg(int elevel, 
-                        const char *filename, 
-                        int lineno, 
-                        const char *funcname, 
-                        const char *s, 
+int event_log_short_msg(int elevel,
+                        const char *filename,
+                        int lineno,
+                        const char *funcname,
+                        const char *s,
                         ...)
 {
     if (elevel <= event_log_elevel)
@@ -639,7 +642,7 @@ int event_log_long_msg(int elevel,
         el_msg->content[portion_size] = '\0';
         pos += portion_size;
 
-        if (pos < long_str_len) 
+        if (pos < long_str_len)
             el_msg->type = SE_EVENT_LOG_LONG_MSG_NEXT;
         else
         {
@@ -709,33 +712,33 @@ int event_logger_shutdown_daemon()
     if (event_log_initialized)
     {
         event_log_initialized = 0;
-    
+
         /* stop daemon thread */
         el_shutdown_daemon = true;
         USemaphoreArrUp(el_sems, 1, __sys_call_error);
-    
+
         if (uThreadJoin(el_thread_handle, __sys_call_error) != 0)
             return 1;
-    
+
         if (uCloseThreadHandle(el_thread_handle, __sys_call_error) != 0)
            return 2;
-    
+
         /* release semaphores */
         if (USemaphoreArrRelease(el_sems, SE_EVENT_LOG_SEMS_NUM, __sys_call_error) != 0)
             return 3;
-    
+
         /* release shared memory */
         if (uDettachShMem(el_shmem, el_msg, __sys_call_error) != 0)
             return 4;
-    
+
         el_msg = NULL;
-    
+
         if (uReleaseShMem(el_shmem, __sys_call_error) != 0)
             return 5;
 
         /* Release file descriptor */
         if (el_ostr) {
-            fclose(el_ostr); 
+            fclose(el_ostr);
             el_ostr = NULL;
         }
 
@@ -751,10 +754,10 @@ int event_logger_init(int component, const char* component_detail, global_name s
         return 1;
 
     el_msg = (event_log_msg*)uAttachShMem(el_shmem, NULL, sizeof(event_log_msg), __sys_call_error);
-    if (el_msg == NULL) 
+    if (el_msg == NULL)
         return 2;
 
-    /* open semaphores */    
+    /* open semaphores */
     if (USemaphoreArrOpen(&el_sems, SE_EVENT_LOG_SEMS_NUM, sems_name, __sys_call_error) != 0)
         return 3;
 
@@ -776,17 +779,17 @@ int event_logger_release()
     if (event_log_initialized)
     {
         event_log_initialized = 0;
-    
+
         /* close semaphores */
         if (USemaphoreArrClose(el_sems, SE_EVENT_LOG_SEMS_NUM, __sys_call_error) != 0)
             return 1;
-    
+
         /* close shared memory */
         if (uDettachShMem(el_shmem, el_msg, __sys_call_error) != 0)
             return 2;
-    
+
         el_msg = NULL;
-    
+
         if (uCloseShMem(el_shmem, __sys_call_error) != 0)
             return 3;
     }
@@ -850,7 +853,7 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
     const char* str = component2str(component);
     char buf[SEDNA_DATA_VAR_SIZE + 128];
 
-    if (!set_sedna_data(buf, NULL)) 
+    if (!set_sedna_data(buf, NULL))
     {
       fprintf(stderr, "Can't set sedna data to write sedna fault information\n");
       return U_INVALID_FD;
@@ -909,7 +912,7 @@ void sedna_soft_fault_log(const char* log_message, int component)
     strcpy(log_buf, "SEDNA soft fault message:\n");
     strcat(log_buf, log_message);
     res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
-    if (res == 0 || bytes_written != strlen(log_buf)) 
+    if (res == 0 || bytes_written != strlen(log_buf))
     {
         fprintf(stderr, "Cannot write to soft fault log file");
         return;
@@ -920,20 +923,20 @@ void sedna_soft_fault_log(const char* log_message, int component)
     strcat(log_buf, " command line arguments: ");
     strcat(log_buf, GetCommandLine());
     res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
-    if (res == 0 || bytes_written != strlen(log_buf)) 
+    if (res == 0 || bytes_written != strlen(log_buf))
     {
         fprintf(stderr, "Cannot write to soft fault log file");
         return;
     }
 #endif
-    
+
     res = uCloseFile(soft_fault_file_handle, NULL);
     if(res == 0)
     {
         fprintf(stderr, "Cannot close soft fault log file");
         return;
     }
-    
+
     return;
 }
 

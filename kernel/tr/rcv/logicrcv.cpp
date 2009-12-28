@@ -900,7 +900,7 @@ static void llRcvRedoTrns(trn_cell_analysis_redo *rcv_list, LSN start_lsn)
 }
 
 // this function is run from the special recovery process
-void llLogicalRecover(const LSN start_lsn)
+void llLogicalRecover()
 {
 	LSN start_analysis_lsn;
 

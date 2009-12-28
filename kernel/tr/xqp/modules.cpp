@@ -4,7 +4,6 @@
  */
 
 #include "tr/xqp/XQuerytoLR.h"
-#include "tr/executor/por2qep/por2qep.h"
 #include "tr/auth/auc.h"
 #include <string>
 

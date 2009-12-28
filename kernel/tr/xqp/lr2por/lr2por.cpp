@@ -2637,7 +2637,7 @@ namespace sedna
         dyn_cxt = new dynamic_context(st_cxt, 0);
         dyn_cxt->set_producers(1);
 
-        if (n.mod == ASTGrantPriv::DB)
+        if (n.mod == ASTRevokePriv::DB)
         {
             qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
                                         PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1), dyn_cxt, true);
@@ -2647,7 +2647,7 @@ namespace sedna
             qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
                                             PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.obj, xs_string)), 1),
                                             PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
-                                            (n.mod == ASTGrantPriv::DOCUMENT) ? "document" : "collection", dyn_cxt, true);
+                                            (n.mod == ASTRevokePriv::DOCUMENT) ? "document" : "collection", dyn_cxt, true);
         }
     }
 
