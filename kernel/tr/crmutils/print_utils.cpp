@@ -234,12 +234,13 @@ print_node_internal(xptr node,
             {   
                 if (first_ns == XNULL) first_ns = child;
 
-                ns_pair str=pref_to_str(xmlns_touch(((ns_dsc*)XADDR(child))->ns));
-                nspt_map::iterator it_map=xm_nsp.find(str);
-                if (it_map==xm_nsp.end())
+                ns_pair str = pref_to_str(xmlns_touch(((ns_dsc*)XADDR(child))->ns));
+                nspt_map::iterator it_map = xm_nsp.find(str);
+
+                if (it_map == xm_nsp.end())
                 {
-                    xmlns_ptr sns=xmlns_touch(((ns_dsc*)XADDR(child))->ns);
-                    xm_nsp[str]=sns;
+                    xmlns_ptr sns = xmlns_touch(((ns_dsc*)XADDR(child))->ns);
+                    xm_nsp[str] = sns;
                     if (!att_ns) 
                         att_ns= se_new std::vector<ns_pair> ;
                     att_ns->push_back(str);
@@ -250,19 +251,22 @@ print_node_internal(xptr node,
                         pref_ns->push_back(str.first);
                         nspt_pref.insert(str.first);
                     }
-                    if (sns->prefix==NULL)
+                    
+                    U_ASSERT(sns->prefix != NULL);
+                    
+                    if (strcmp(sns->prefix, "") == 0)
                     {
                         if (!def_set)def_inset=true;
                         def_set=true;
-
                     }
                 }
                 print_node_internal(child,crmout,wi,0,ptype,cxt);
                 CHECKP(child);
                 child=((n_dsc*)XADDR(child))->rdsc;
-                if (child==XNULL)  break;
+                if (child==XNULL) break;
                 CHECKP(child);
             }
+
             //self namespace
             if (scn->get_xmlns() != NULL_XMLNS && 
                 xm_nsp.find(pref_to_str(scn->get_xmlns()))==xm_nsp.end() &&
@@ -281,7 +285,6 @@ print_node_internal(xptr node,
                     pref_ns->push_back(prf);
                     nspt_pref.insert(prf);
                 }
-                
                 if (strcmp(scn->get_xmlns()->prefix, "") == 0)
                 {
                     if (!def_set) def_inset=true;
