@@ -17,10 +17,15 @@
 
 class CalcOp
 {
+private:
+    virtual void do_accept(PPVisitor &v) = 0; 
 public:
     virtual tuple_cell next(dynamic_context *cxt) = 0;
     virtual CalcOp* copy(arr_of_PPOpIn *children) = 0;
     virtual void reopen() = 0;
+    
+    void accept(PPVisitor &v)   { do_accept(v); }
+    
     CalcOp() {}
     virtual ~CalcOp() {}
 };
@@ -38,6 +43,9 @@ public:
     tuple_cell next(dynamic_context *cxt) { return uf(child->next(cxt)); }
     void reopen() { child->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) { return se_new UnaryOp(child->copy(children), uf); }
+    
+private:
+    virtual void do_accept(PPVisitor &v);
 };
 
 class BinaryOp : public CalcOp
@@ -70,6 +78,10 @@ public:
         res->child2 = child2->copy(children);
         return res;
     }
+
+private:
+    virtual void do_accept(PPVisitor &v);
+
 };
 
 class BinaryOpCollation : public CalcOp
@@ -102,6 +114,9 @@ public:
         res->child2 = child2->copy(children);
         return res;
     }
+    
+private:
+    virtual void do_accept(PPVisitor &v);
 };
 
 
@@ -136,6 +151,9 @@ public:
         res->child2 = child2->copy(children);
         return res;
     }
+    
+private:
+    virtual void do_accept(PPVisitor &v);
 };
 
 class BinaryOpOr : public CalcOp
@@ -170,6 +188,9 @@ public:
         res->child2 = child2->copy(children);
         return res;
     }
+    
+private:
+    virtual void do_accept(PPVisitor &v);
 };
 
 
@@ -204,6 +225,9 @@ public:
         LeafAtomOp *res = se_new LeafAtomOp(_children_, i); 
         return res;
     }
+
+private:
+    virtual void do_accept(PPVisitor &v);
 };
 
 class LeafEffectBoolOp : public CalcOp
@@ -233,6 +257,9 @@ public:
         LeafEffectBoolOp *res = se_new LeafEffectBoolOp(_children_, i);
         return res;
     }
+    
+private:
+    virtual void do_accept(PPVisitor &v);
 };
 
 
@@ -243,12 +270,12 @@ private:
     CalcOp *tree;
     bool first_time;
 
-private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t) ; 
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:    

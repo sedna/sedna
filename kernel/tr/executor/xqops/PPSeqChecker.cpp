@@ -3,10 +3,13 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
-#include "tr/executor/xqops/PPSeqChecker.h"
-#include "common/errdbg/exceptions.h"
 #include <string>
+
+#include "common/sedna.h"
+
+#include "tr/executor/xqops/PPSeqChecker.h"
+#include "tr/executor/base/PPVisitor.h"
+#include "common/errdbg/exceptions.h"
 
 using namespace std;
 
@@ -96,4 +99,12 @@ PPIterator* PPSeqChecker::do_copy(dynamic_context *_cxt_)
     PPSeqChecker *res = se_new PPSeqChecker(_cxt_, info, child, mode);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPSeqChecker::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

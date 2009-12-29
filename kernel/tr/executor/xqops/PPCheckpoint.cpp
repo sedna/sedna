@@ -7,6 +7,7 @@
 #include "tr/executor/xqops/PPCheckpoint.h"
 #include "tr/log/log.h"
 #include "tr/tr_globals.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPCheckpoint::PPCheckpoint(dynamic_context *_cxt_,
                            operation_info _info_) : PPIterator(_cxt_, _info_)
@@ -41,6 +42,14 @@ void PPCheckpoint::do_next (tuple &t)
     tr_globals::is_need_checkpoint_on_transaction_commit = true;
     // call checkpoint here
 }
+
+void PPCheckpoint::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
+}
+
 
 PPIterator* PPCheckpoint::do_copy(dynamic_context *_cxt_)
 {

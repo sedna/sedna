@@ -9,6 +9,7 @@
 
 #include "tr/executor/xqops/PPDDO.h"
 #include "tr/nid/numb_scheme.h"
+#include "tr/executor/base/PPVisitor.h"
 
 using namespace std;
 
@@ -147,6 +148,15 @@ PPIterator* PPDDO::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPDDO::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+
 int PPDDO::get_size_ser(xptr& v1)
 {
 	CHECKP(v1);
@@ -270,7 +280,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 		xptr data=get_ptr_ser(v2,s2);
 		int s2_p1=MIN(GET_FREE_SPACE(data),s2);
 		CHECKP(data);
-		int res=memcmp(temp_buffer,XADDR(data),MIN(s1,s2_p1));
+		int res = memcmp(temp_buffer,XADDR(data),MIN(s1,s2_p1));
 		if (res) return sign(res);
 		else
 		{

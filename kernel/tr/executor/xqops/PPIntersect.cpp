@@ -7,6 +7,7 @@
 
 #include "tr/executor/xqops/PPIntersect.h"
 #include "tr/executor/base/merge.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPIntersect::PPIntersect(dynamic_context *_cxt_,
@@ -151,4 +152,13 @@ PPIterator* PPIntersect::do_copy(dynamic_context *_cxt_)
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     return res;
+}
+
+void PPIntersect::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child1.op->accept(v);
+    child2.op->accept(v);
+    v.pop();
 }

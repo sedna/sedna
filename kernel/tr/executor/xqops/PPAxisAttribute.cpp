@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPAxisAttribute.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
-
+#include "tr/executor/base/PPVisitor.h"
 
 PPAxisAttribute::PPAxisAttribute(dynamic_context *_cxt_,
                                  operation_info _info_, 
@@ -64,6 +64,13 @@ void PPAxisAttribute::do_close()
     child.op->close();
 }
 
+void PPAxisAttribute::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 void PPAxisAttribute::next_processing_instruction(tuple &t)
 {

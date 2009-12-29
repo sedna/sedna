@@ -5,6 +5,8 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPNil.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPNil::PPNil(dynamic_context *_cxt_,
              operation_info _info_) : PPIterator(_cxt_, _info_)
@@ -36,4 +38,11 @@ PPIterator* PPNil::do_copy(dynamic_context *_cxt_)
 {
     PPNil *res = se_new PPNil(_cxt_, info);
     return res;
+}
+
+void PPNil::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
 }

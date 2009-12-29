@@ -13,7 +13,6 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/xqops/PPConstructors.h"
 
-
 enum sql_handle_type {
 	SQLH_CONNECTION,
 	SQLH_PREPARED_STMT
@@ -121,7 +120,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:    
@@ -148,7 +148,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
 public:
@@ -172,7 +173,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
 public:
@@ -199,7 +201,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
 public:
@@ -220,7 +223,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
 public:
@@ -240,7 +244,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
 public:

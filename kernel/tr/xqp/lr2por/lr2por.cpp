@@ -73,7 +73,9 @@ namespace sedna
             content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
         }
 
-        std::string name = *n.pref + ":" + *n.local;
+        std::string name = n.pref->empty() ? 
+                           *n.local :
+                           *n.pref + ":" + *n.local;
 
         off_this.opin.op = new PPAttributeConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy);
         off_this.opin.ts = 1;
@@ -107,7 +109,9 @@ namespace sedna
         }
         else
         {
-            std::string name = *n.pref + ":" + *n.local;
+            std::string name = n.pref->empty() ? 
+                               *n.local :
+                               *n.pref + ":" + *n.local;
 
             off_this.opin.op = new PPAttributeConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy);
         }
@@ -850,7 +854,7 @@ namespace sedna
     {
         // we don't add default function namespace, since it is resolved in sema
         if (n.type == ASTDefNamespaceDecl::ELEMENT)
-            st_cxt->add_to_context(NULL, n.uri->c_str());
+            st_cxt->add_to_context("", n.uri->c_str());
     }
 
     void lr2por::visit(ASTDocConst &n)
@@ -1039,7 +1043,9 @@ namespace sedna
             content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
         }
 
-        std::string name = *n.pref + ":" + *n.local;
+        std::string name = n.pref->empty() ? 
+                           *n.local :
+                           *n.pref + ":" + *n.local;
 
         off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
         off_this.opin.ts = 1;
@@ -1073,7 +1079,9 @@ namespace sedna
         }
         else
         {
-            std::string name = *n.pref + ":" + *n.local;
+            std::string name = n.pref->empty() ? 
+                               *n.local :
+                               *n.pref + ":" + *n.local;
 
             off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
         }

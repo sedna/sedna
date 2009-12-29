@@ -15,6 +15,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/strings/e_string.h"
 #include "tr/executor/base/xs_names.h"
+#include "tr/executor/base/PPVisitor.h"
 
 #include "tr/mo/blocks.h"
 #include "tr/mo/microoperations.h"
@@ -28,6 +29,15 @@ xptr PPConstructor::cont_parind=XNULL;
 xptr PPConstructor::cont_leftind=XNULL;
 int PPConstructor::conscnt=0;
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// Helpers and some global functions
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+/* Clears global state of constructors. */
 void clear_virtual_root()
 {
     if (PPConstructor::root_schema.found())
@@ -54,6 +64,7 @@ void separateLocalAndPrefix(char*& prefix, const char*& qname)
     }
 }
 
+static inline 
 tuple_cell getQnameParameter(PPOpIn qname)
 {
     tuple name(qname.ts);
@@ -81,7 +92,8 @@ tuple_cell getQnameParameter(PPOpIn qname)
     return res;
 }
 
-bool getStringParameter(PPOpIn content)
+static bool 
+getStringParameter(PPOpIn content)
 {
     tuple value(content.ts);
     content.op->next(value);
@@ -94,10 +106,8 @@ bool getStringParameter(PPOpIn content)
     }
     else
     {
-
         at_vals.add(value);
         content.op->next(value);
-
     }
 
     while (!(value.is_eos()))
@@ -121,7 +131,8 @@ bool getStringParameter(PPOpIn content)
     return false;
 }
 
-void getStringWSParameter(PPOpIn content)
+static void 
+getStringWSParameter(PPOpIn content)
 {
     tr_globals::tmp_op_str_buf.clear();
     tuple value(content.ts);
@@ -149,12 +160,34 @@ void getStringWSParameter(PPOpIn content)
     while (it!=at_vals.end());
 }
 
+static inline bool 
+isNameValid(const char* name, const char* prefix, const char* uri, bool check_name = true) 
+{
+    /* It has no namespace prefix and its local name is xmlns */
+    if(check_name && (prefix == NULL || strcmp(prefix,"") == 0) && my_strcmp(name,"xmlns") == 0) return false;
+
+    if(!prefix && !uri) return true;
+    
+    /* Its namespace prefix is xmlns. */
+    if(my_strcmp(prefix, "xmlns") == 0) return false;
+    /* Its namespace URI is xmlns URI. */
+    if(my_strcmp(uri, "http://www.w3.org/2000/xmlns/") == 0) return false;
+    /* Its namespace prefix is xml and its namespace URI is not xml namespace */
+    if(my_strcmp(prefix, "xml") == 0 && 
+       !(uri == NULL || my_strcmp(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
+    /* Its namespace prefix is other than xml and its namespace URI is xml namespace */
+    if(prefix != NULL && strcmp(prefix, "xml") != 0 && (uri == NULL || my_strcmp(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
+    return true;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPElementConstructor
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+
 bool PPConstructor::checkInitial()
 {
     if (!root_schema.found()) {
@@ -298,26 +331,37 @@ void PPElementConstructor::do_next (tuple &t)
         xmlns_ptr ns = NULL_XMLNS;
         if (!res.is_eos()&&res.get_atomic_type()==xs_QName)
         {
-            ns=xs_QName_get_xmlns(name);
-            name=xs_QName_get_local_name(name);
+            ns   = xs_QName_get_xmlns(name);
+            name = xs_QName_get_local_name(name);
         }
         else
         {
-            separateLocalAndPrefix(prefix,name);
+            separateLocalAndPrefix(prefix, name);
+            
+            if (!check_constraints_for_xs_NCName(name)) throw XQUERY_EXCEPTION(XQDY0074);
+            
             if (prefix != NULL)
             {
                 str_counted_ptr c_ptr(prefix);
+                if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0096);
+                if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
                 ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
             }
             else
             {
-                ns=cxt->st_cxt->get_xmlns_by_prefix("");
+                prefix = "";
+                ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
             }
         }
-        if (!check_constraints_for_xs_NCName(name)||
-            (ns!=NULL && ns->prefix!=NULL &&!check_constraints_for_xs_NCName(ns->prefix)))
-            throw XQUERY_EXCEPTION(XQDY0074);
-        //Element insertion
+        
+        /* Check constraints on full name */
+        if(!isNameValid(name, 
+                        ns == NULL_XMLNS ? NULL : ns->prefix,
+                        ns == NULL_XMLNS ? NULL : ns->uri,
+                        false))
+            throw XQUERY_EXCEPTION(XQDY0096);
+
+        /* Element insertion */
         xptr new_element;
         if (parind==XNULL || deep_copy)
         {
@@ -459,11 +503,7 @@ void PPElementConstructor::do_next (tuple &t)
                 }
 
             }
-            /*if (last_elem==local_last)
-            {
-            last_elem=removeIndirection(indir);
-            local_last=last_elem;
-            }*/
+
             if (it_st!=start_seq.end())
             {
                 it_st++;
@@ -485,10 +525,6 @@ void PPElementConstructor::do_next (tuple &t)
             sequence::iterator it=at_vals.begin();
             do
             {
-                /*if (it!=at_vals.begin())
-                {
-                str_val.append(" ");                        
-                }*/
                 tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
                 tcc=cast(tcc, xs_string);
                 tr_globals::tmp_op_str_buf.append(tcc);
@@ -547,6 +583,7 @@ PPIterator* PPElementConstructor::do_copy(dynamic_context *_cxt_)
 /// PPAttributeConstructor
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
 
 PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
                                                operation_info _info_, 
@@ -655,43 +692,35 @@ void PPAttributeConstructor::do_next (tuple &t)
             name = res1.get_str_mem();
         }
 
+        /* Get full name */
         if (!res1.is_eos() && res1.get_atomic_type() == xs_QName)
         {
             ns   = xs_QName_get_xmlns(name);
             name = xs_QName_get_local_name(name);
-            if (   ns != NULL_XMLNS &&
-                (((ns->prefix==NULL || my_strcmp(ns->prefix,"") == 0) && my_strcmp(name,"xmlns")==0) ||
-                (ns->prefix!=NULL && my_strcmp(ns->prefix,"http://www.w3.org/2000/xmlns/")==0)))
-
-                throw XQUERY_EXCEPTION(XQDY0044);
-
-            /* Default namespace is not applied to the attributes */
-            if (ns != NULL_XMLNS && ns->prefix!=NULL && my_strcmp(ns->prefix,"") == 0)
-                ns = NULL_XMLNS;
         }
         else
         {
-            char* prefix=NULL;
-            separateLocalAndPrefix(prefix,name);
-            if ((   (prefix==NULL || my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
-                || (prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0) )
+            char* prefix = NULL;
+            separateLocalAndPrefix(prefix, name);
+
+            if(!check_constraints_for_xs_NCName(name)) throw XQUERY_EXCEPTION(XQDY0074);
+
+            if (prefix != NULL)
             {
-                if (prefix != NULL) { 
-                    delete[] prefix; 
-                    prefix = NULL; 
-                } 
-                throw XQUERY_EXCEPTION(XQDY0044);
-            }
-            if (prefix != NULL) {
-                /* Default namespace is not applied to the attributes */
                 str_counted_ptr c_ptr(prefix);
-                if(my_strcmp(prefix, "")!=0) 
-                    ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
+                if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0044);
+                if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
+                /* Default namespace is not applied to the attributes */            
+                if(my_strcmp(prefix, "") != 0)
+                    ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);             
             }
         }
-        if (!check_constraints_for_xs_NCName(name)||
-            (ns != NULL_XMLNS && ns->prefix!=NULL && !check_constraints_for_xs_NCName(ns->prefix)))
-            throw XQUERY_EXCEPTION(XQDY0074);
+
+        /* Check constraints on full name */
+        if(!isNameValid(name, 
+                        ns == NULL_XMLNS ? NULL : ns->prefix,
+                        ns == NULL_XMLNS ? NULL : ns->uri))
+            throw XQUERY_EXCEPTION(XQDY0044);
 
         /* Get attribute value */
         int size;
@@ -774,7 +803,7 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
                                                PPOpIn _content_): PPConstructor(_cxt_, _info_, true),
                                                                   content(_content_)
 {
-    if (name!=NULL&&strlen(name)!=0)
+    if (name!=NULL)
     {
         at_name=se_new char[strlen(name)+1];
         strcpy(at_name,name);
@@ -782,7 +811,6 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
     else
         at_name=NULL;
     at_value=NULL;
-
 }
 
 PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
@@ -790,7 +818,7 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
                                                const char* name,
                                                const char* value): PPConstructor(_cxt_, _info_, true)
 {
-    if (name!=NULL&&strlen(name)!=0)
+    if (name!=NULL)
     {
         at_name=se_new char[strlen(name)+1];
         strcpy(at_name,name);
@@ -839,22 +867,20 @@ void PPNamespaceConstructor::do_next (tuple &t)
     if (first_time)
     {
         first_time = false;
-        //xmlns_ptr parameter
-        const char* prefix=at_name;
-        const char* uri=at_value;
-        tuple_cell res;
-        if (uri==NULL)
+
+        const char* prefix = at_name;
+        const char* uri    = at_value;
+
+        if (uri == NULL)
         {
             getStringParameter(content);
-            uri=(char*)tr_globals::tmp_op_str_buf.c_str();
+            uri = (char*)tr_globals::tmp_op_str_buf.c_str();
         }
-        xmlns_ptr ns=cxt->st_cxt->add_to_context(prefix,uri);
 
-        //Element insertion
+        xmlns_ptr ns = cxt->st_cxt->add_to_context(prefix,uri);
         xptr new_namespace= insert_namespace(XNULL,XNULL,virt_root,ns);
-        //Result
-        t.copy(tuple_cell::node(new_namespace));
 
+        t.copy(tuple_cell::node(new_namespace));
     }
     else 
     {
@@ -1482,4 +1508,71 @@ PPIterator* PPDocumentConstructor::do_copy(dynamic_context *_cxt_)
     res = se_new PPDocumentConstructor(_cxt_, info, content);
     res->content.op = content.op->copy(_cxt_);
     return res;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPVisitor Acceptors
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+void PPElementConstructor::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    if (el_name==NULL) qname.op->accept(v);
+    content.op->accept(v);
+    v.pop();
+}
+
+void PPAttributeConstructor::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    if (at_name==NULL)  qname.op->accept(v);
+    if (at_value==NULL) content.op->accept(v);
+    v.pop();
+}
+
+void PPNamespaceConstructor::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    if (at_value==NULL) content.op->accept(v);
+    v.pop();
+}
+
+void PPCommentConstructor::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    if (at_value==NULL) content.op->close();
+    v.pop();
+}
+
+void PPPIConstructor::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    if (at_name==NULL)  qname.op->accept(v);
+    if (at_value==NULL) content.op->accept(v);
+    v.pop();
+}
+
+void PPDocumentConstructor::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    content.op->accept(v);
+    v.pop();
+}
+
+void PPTextConstructor::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    if (at_value==NULL) content.op->close();
+    v.pop();
 }

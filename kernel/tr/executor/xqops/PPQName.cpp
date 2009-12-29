@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPQName.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
-
+#include "tr/executor/base/PPVisitor.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,6 +115,15 @@ PPIterator* PPFnResolveQName::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnResolveQName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child_qname.op->accept(v);
+    child_elem.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -213,6 +222,15 @@ PPIterator* PPFnQName::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnQName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child_uri.op->accept(v);
+    child_qname.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -295,6 +313,15 @@ PPIterator* PPFnPrefixFromQName::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnPrefixFromQName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnLocalNameFromQName
@@ -369,6 +396,15 @@ PPIterator* PPFnLocalNameFromQName::do_copy(dynamic_context *_cxt_)
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
+
+void PPFnLocalNameFromQName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -447,6 +483,13 @@ PPIterator* PPFnNamespaceUriFromQName::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnNamespaceUriFromQName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -556,6 +599,15 @@ PPIterator* PPFnNamespaceUriForPrefix::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnNamespaceUriForPrefix::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child_prefix.op->accept(v);
+    child_element.op->accept(v);
+    v.pop();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnInScopePrefixes
@@ -644,3 +696,12 @@ PPIterator* PPFnInScopePrefixes::do_copy(dynamic_context *_cxt_)
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
+
+void PPFnInScopePrefixes::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+

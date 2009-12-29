@@ -13,6 +13,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/PPVisitor.h"
 
 const char *sqlns_uri = "http://modis.ispras.ru/Sedna/SQL";
 
@@ -357,6 +358,16 @@ PPIterator* PPFnSQLConnect::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnSQLConnect::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (int it = 0; it < arr.size(); it++)
+        arr[it].op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnSQLExecute
 ///////////////////////////////////////////////////////////////////////////////
@@ -520,6 +531,14 @@ PPIterator* PPFnSQLExecute::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnSQLExecute::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (int it = 0; it < arr.size(); it++)
+        arr[it].op->accept(v);
+    v.pop();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnSQLPrepare
@@ -647,6 +666,17 @@ PPIterator * PPFnSQLPrepare::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnSQLPrepare::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    connection.op->accept(v);
+    statement.op->accept(v);
+    if (has_options)
+        options.op->accept(v);
+    v.pop();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnSQLClose
 ///////////////////////////////////////////////////////////////////////////////
@@ -723,10 +753,18 @@ PPIterator * PPFnSQLClose::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnSQLClose::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    connection.op->accept(v);
+    v.pop();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// PPFnSQLCommit
 ////////////////////////////////////////////////////////////////////////////////
+
 PPFnSQLCommit::PPFnSQLCommit(dynamic_context *_cxt_,
                              operation_info _info_,
                              PPOpIn _connection_) : PPFnSQLBase(_cxt_, _info_),
@@ -795,10 +833,18 @@ PPIterator * PPFnSQLCommit::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnSQLCommit::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    connection.op->accept(v);
+    v.pop();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// PPFnSQLRollback
 ////////////////////////////////////////////////////////////////////////////////
+
 PPFnSQLRollback::PPFnSQLRollback(dynamic_context *_cxt_,
                                  operation_info _info_,
                                  PPOpIn _connection_) : PPFnSQLBase(_cxt_, _info_),
@@ -857,12 +903,18 @@ void PPFnSQLRollback::do_next(tuple &t)
     t.set_eos();
 }
 
-PPIterator * PPFnSQLRollback::do_copy(dynamic_context *_cxt_)
+PPIterator* PPFnSQLRollback::do_copy(dynamic_context *_cxt_)
 {
     PPFnSQLRollback *res;
     res = se_new PPFnSQLRollback(_cxt_, info, connection);
-
     res->connection.op = connection.op->copy(_cxt_);
-
     return res;
+}
+
+void PPFnSQLRollback::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    connection.op->accept(v);
+    v.pop();
 }

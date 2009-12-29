@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPBooleanOps.h"
 #include "tr/executor/fo/boolean_operations.h"
 #include "tr/executor/base/PPUtils.h"
-
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,6 +59,13 @@ PPIterator* PPFnTrue::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnTrue::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -107,6 +114,13 @@ PPIterator* PPFnFalse::do_copy(dynamic_context *_cxt_)
 {
     PPFnFalse* res = se_new PPFnFalse(_cxt_, info);
     return res;
+}
+
+void PPFnFalse::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
 }
 
 
@@ -175,6 +189,14 @@ PPIterator* PPFnNot::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnNot::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -236,4 +258,12 @@ PPIterator* PPFnBoolean::do_copy(dynamic_context *_cxt_)
     PPFnBoolean *res = se_new PPFnBoolean(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnBoolean::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

@@ -8,6 +8,7 @@
 
 #include "tr/executor/xqops/PPExcept.h"
 #include "tr/executor/base/merge.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPExcept::PPExcept(dynamic_context *_cxt_,
@@ -142,4 +143,13 @@ PPIterator* PPExcept::do_copy(dynamic_context *_cxt_)
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     return res;
+}
+
+void PPExcept::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child1.op->accept(v);
+    child2.op->accept(v);
+    v.pop();
 }

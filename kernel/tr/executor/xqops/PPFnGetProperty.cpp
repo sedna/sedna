@@ -10,6 +10,7 @@
 #include "tr/executor/xqops/PPFnGetProperty.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/tr_globals.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPFnGetProperty::PPFnGetProperty(dynamic_context *_cxt_,
                                  operation_info _info_,
@@ -79,4 +80,12 @@ PPIterator* PPFnGetProperty::do_copy(dynamic_context *_cxt_)
     PPFnGetProperty *res = se_new PPFnGetProperty(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnGetProperty::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

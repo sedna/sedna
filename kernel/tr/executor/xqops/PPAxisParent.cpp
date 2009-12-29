@@ -10,6 +10,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/merge.h"
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,6 +72,14 @@ void PPAxisParent::do_reopen()
 void PPAxisParent::do_close()
 {
     child.op->close();
+}
+
+void PPAxisParent::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 

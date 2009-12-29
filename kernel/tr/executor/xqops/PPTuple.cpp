@@ -7,6 +7,7 @@
 #include <vector>
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPTuple.h"
+#include "tr/executor/base/PPVisitor.h"
 
 using namespace std;
 
@@ -86,4 +87,13 @@ PPIterator* PPTuple::do_copy(dynamic_context *_cxt_)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
 
     return res;
+}
+
+void PPTuple::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (i = 0; i < ch_arr.size(); i++)
+        ch_arr[i].op->accept(v);
+    v.pop();
 }

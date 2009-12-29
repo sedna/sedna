@@ -11,6 +11,8 @@
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
                          operation_info _info_,
@@ -36,6 +38,11 @@ PPIndexScan::~PPIndexScan()
     {
         delete child2.op;
         child2.op = NULL;
+    }
+    if(index_name.op)
+    {
+        delete index_name.op;
+        index_name.op = NULL;
     }
 }
 
@@ -253,14 +260,19 @@ void PPIndexScan::next_between(tuple &t)
 PPIterator* PPIndexScan::do_copy(dynamic_context *_cxt_)
 {
     PPIndexScan *res = NULL;
-
-    if (child.op && child2.op)
-    {
-        res = se_new PPIndexScan(_cxt_, info, index_name, child, child2, isc);
-		res->index_name.op = index_name.op->copy(_cxt_);
-        res->child.op = child.op->copy(_cxt_);
-        res->child2.op = child2.op->copy(_cxt_);
-    }
-
+    res = se_new PPIndexScan(_cxt_, info, index_name, child, child2, isc);
+    if(index_name.op) res->index_name.op = index_name.op->copy(_cxt_);
+    if(child.op) res->child.op = child.op->copy(_cxt_);
+    if(child2.op) res->child2.op = child2.op->copy(_cxt_);
     return res;
+}
+
+void PPIndexScan::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    if (index_name.op) index_name.op->accept(v);
+    if (child.op) child.op->accept(v);
+    if (child2.op) child2.op->accept(v);
+    v.pop();
 }

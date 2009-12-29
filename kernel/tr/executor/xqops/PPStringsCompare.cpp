@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPStringsCompare.h"
 #include "tr/executor/fo/string_operations.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -157,4 +158,14 @@ PPIterator* PPFnCompare::do_copy(dynamic_context *_cxt_)
     res->str2_child.op = str2_child.op->copy(_cxt_);
     if(collation_child.op) res->collation_child.op = collation_child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnCompare::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    str1_child.op->accept(v);
+    str2_child.op->accept(v);
+    if(collation_child.op) collation_child.op->accept(v);
+    v.pop();
 }

@@ -10,6 +10,7 @@
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/crmutils/crmutils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_,
                                    operation_info _info_, 
@@ -86,4 +87,12 @@ PPIterator* PPFnDocAvailable::do_copy(dynamic_context *_cxt_)
     PPFnDocAvailable *res = se_new PPFnDocAvailable(_cxt_, info, doc_name_op);
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
     return res;
+}
+
+void PPFnDocAvailable::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    doc_name_op.op->accept(v);
+    v.pop();
 }

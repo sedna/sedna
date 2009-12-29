@@ -5,6 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPVariable.h"
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPVariable
@@ -47,6 +48,14 @@ PPIterator* PPVariable::do_copy(dynamic_context *_cxt_)
     PPVariable *res = se_new PPVariable(_cxt_, info, dsc);
     return res;
 }
+
+void PPVariable::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -96,4 +105,11 @@ PPIterator* PPGlobalVariable::do_copy(dynamic_context *_cxt_)
 {
     PPGlobalVariable *res = se_new PPGlobalVariable(_cxt_, info, dsc);
     return res;
+}
+
+void PPGlobalVariable::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
 }

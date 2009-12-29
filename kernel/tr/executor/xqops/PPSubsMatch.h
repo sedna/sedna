@@ -35,7 +35,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
 public:
@@ -65,7 +66,7 @@ public:
 /// PPSubsMatch::contains Implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-template<class a, class b> int memcmp(a& it1, b& it2,int len)
+template<class a, class b> int memcmpt(a& it1, b& it2,int len)
 {
 	a i1 = it1;
 	b i2 = it2;
@@ -104,7 +105,7 @@ template <class a, class b>  int  PPSubsMatch::contains (a& it1, b& it2,int l1,i
     
     while (j < l1-l2) 
     {
-        if (hx == hy && memcmp<b,a>(it2, i1, l2) == 0)
+        if (hx == hy && memcmpt<b,a>(it2, i1, l2) == 0)
         {
             return j;
         }
@@ -114,7 +115,7 @@ template <class a, class b>  int  PPSubsMatch::contains (a& it1, b& it2,int l1,i
         ++i3;
     }
     
-    if (hx == hy && memcmp<b,a>(it2, i1, l2) == 0) return j;
+    if (hx == hy && memcmpt<b,a>(it2, i1, l2) == 0) return j;
     return -1;
 }
 

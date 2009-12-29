@@ -5,6 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPSpaceSequence.h"
+#include "tr/executor/base/PPVisitor.h"
 
 tuple_cell PPSpaceSequence::space_tup = tuple_cell::atomic_deep(xs_string, " ");
 
@@ -72,4 +73,13 @@ void PPSpaceSequence::do_next(tuple &t)
     t.set_eos();
     it = 0;
 	space=false;
+}
+
+void PPSpaceSequence::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (it = 0; it < ch_arr.size(); it++)
+        ch_arr[it].op->accept(v);
+    v.pop();
 }

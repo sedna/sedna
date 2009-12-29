@@ -222,7 +222,7 @@ char *xs_QName_create(const char* prefix_and_local,
 
     for (int i = 0; i < xmlns.size(); i++)
     {
-        tgt_prefix = xmlns[i]->prefix ? xmlns[i]->prefix : "";
+        tgt_prefix = xmlns[i]->prefix;
         if (strncmp(tgt_prefix, src_prefix, pos) == 0)
         {
             return xs_QName_create(xmlns[i], src_local, alloc_func);

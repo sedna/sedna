@@ -60,10 +60,10 @@ protected:
     virtual void next_wildcard_star_ncname      (tuple &t);
 
     PPAxisDescendant(dynamic_context *_cxt_,
-        operation_info _info_,
-        PPOpIn _child_,
-        NodeTestType _nt_type_,
-        NodeTestData _nt_data_,bool _self_);
+                     operation_info _info_,
+                     PPOpIn _child_,
+                     NodeTestType _nt_type_,
+                     NodeTestData _nt_data_,bool _self_);
 
 private:
     virtual void do_open   ();
@@ -72,15 +72,16 @@ private:
     virtual void do_next   (tuple &t) {
         (this->*next_fun)(t); 
     }
-
+    virtual void do_accept (PPVisitor &v);
+        
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
     PPAxisDescendant(dynamic_context *_cxt_,
-        operation_info _info_,
-        PPOpIn _child_,
-        NodeTestType _nt_type_,
-        NodeTestData _nt_data_);
+                     operation_info _info_,
+                     PPOpIn _child_,
+                     NodeTestType _nt_type_,
+                     NodeTestData _nt_data_);
     virtual ~PPAxisDescendant();
 };
 
@@ -94,10 +95,12 @@ class PPAxisDescendantOrSelf : public PPAxisDescendant
 {
 public:
     PPAxisDescendantOrSelf(dynamic_context *_cxt_,
-        operation_info _info_,
-        PPOpIn _child_,
-        NodeTestType _nt_type_,
-        NodeTestData _nt_data_);
+                           operation_info _info_,
+                           PPOpIn _child_,
+                           NodeTestType _nt_type_,
+                           NodeTestData _nt_data_);
+private:
+    virtual void do_accept (PPVisitor &v);                         
 };
 
 
@@ -122,9 +125,12 @@ protected:
 
 public:
     PPAxisDescendantAttr(dynamic_context *_cxt_,
-        operation_info _info_,
-        PPOpIn _child_,
-        NodeTestType _nt_type_,
-        NodeTestData _nt_data_);
+                         operation_info _info_,
+                         PPOpIn _child_,
+                         NodeTestType _nt_type_,
+                         NodeTestData _nt_data_);
+
+private:
+    virtual void do_accept (PPVisitor &v);                         
 };
 #endif

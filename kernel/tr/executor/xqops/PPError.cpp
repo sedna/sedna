@@ -8,6 +8,8 @@
 #include "tr/executor/xqops/PPError.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/tr_globals.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error
@@ -62,6 +64,8 @@ void PPFnError::do_close()
     if (child_descr.op) child_descr.op->close();
     if (child_obj.op) child_obj.op->close();
 }
+
+
 
 void PPFnError::do_next (tuple &t)
 {
@@ -121,6 +125,17 @@ PPIterator* PPFnError::do_copy(dynamic_context *_cxt_)
     if (child_obj.op)   res->child_obj.op   = child_obj.op->copy(_cxt_);
     return res;
 }
+
+void PPFnError::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    if (child_err.op) child_err.op->accept(v);
+    if (child_descr.op) child_descr.op->accept(v);
+    if (child_obj.op) child_obj.op->accept(v);
+    v.pop();
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -204,4 +219,13 @@ PPIterator* PPFnTrace::do_copy(dynamic_context *_cxt_)
     res->value_child.op = value_child.op->copy(_cxt_);
     res->label_child.op = label_child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnTrace::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    value_child.op->accept(v);
+    label_child.op->accept(v);
+    v.pop();
 }

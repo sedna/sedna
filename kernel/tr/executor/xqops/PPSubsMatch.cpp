@@ -9,6 +9,7 @@
 #include "tr/strings/e_string.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/strings/e_string_iterator.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,
@@ -164,4 +165,13 @@ PPIterator* PPSubsMatch::do_copy(dynamic_context *_cxt_)
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;
+}
+
+void PPSubsMatch::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq1.op->accept(v);
+    seq2.op->accept(v);
+    v.pop();
 }

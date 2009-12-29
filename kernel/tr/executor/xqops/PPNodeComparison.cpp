@@ -5,6 +5,8 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPNodeComparison.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPNodeComparison* PPNodeComparison::PPGTNodeComparison(dynamic_context *_cxt_,
                                                        operation_info _info_, 
@@ -158,4 +160,13 @@ void PPNodeComparison::do_next (tuple &t)
         first_time = true;
         t.set_eos();
     }
+}
+
+void PPNodeComparison::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq1.op->accept(v);
+    seq2.op->accept(v);
+    v.pop();
 }

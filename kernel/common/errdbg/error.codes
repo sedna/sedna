@@ -161,7 +161,7 @@ err:XQST0043
 	(Not currently used.)
 err:XQDY0044
 
-	It is a dynamic error if the node-name property of the node constructed by a computed attribute constructor is in the namespace http://www.w3.org/2000/xmlns/ (corresponding to namespace prefix xmlns), or is in no namespace and has local name xmlns.
+    It is a dynamic error the node-name of a node constructed by a computed attribute constructor has any of the following properties: its namespace prefix is xmlns, it has no namespace prefix and its local name is xmlns, its namespace URI is http://www.w3.org/2000/xmlns/, its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace, its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
 err:XQST0045
 
 	It is a static error if the function name in a function declaration is in one of the following namespaces: http://www.w3.org/XML/1998/namespace, http://www.w3.org/2001/XMLSchema, http://www.w3.org/2001/XMLSchema-instance, http://www.w3.org/2005/xpath-functions, http://www.w3.org/2005/xpath-datatypes.
@@ -239,7 +239,7 @@ err:XQST0069
 	A static error is raised if a Prolog contains more than one empty order declaration.
 err:XQST0070
 
-	A static error is raised if the predefined namespace prefix xml or xmlns is redeclared or if another namespace prefix is bound to the namespace URI associated with the prefix xml.
+	A static error is raised if one of the predefined prefixes xml or xmlns appears in a namespace declaration, or if any of the following conditions is statically detected in any expression or declaration: the prefix xml is bound to some namespace URI other than http://www.w3.org/XML/1998/namespace, a prefix other than xml is bound to the namespace URI http://www.w3.org/XML/1998/namespace, the prefix xmlns is bound to any namespace URI, a prefix other than xmlns is bound to the namespace URI http://www.w3.org/2000/xmlns/.
 err:XQST0071
 
 	A static error is raised if the namespace declaration attributes of a direct element constructor do not have distinct names.
@@ -1710,39 +1710,34 @@ sedna-err:SE4802
 sedna-err:SE2041
 
    Result is cut, because its size exceeds max allowed size (set by client).
-
 sedna-err:SE4901
 
    Internal LFS error.
-
 sedna-err:SE4902
 
    Internal LL error.
-
 sedna-err:SE4903
 
    Hot-backup error.
-
 sedna-err:SE4621
 
    Property is unknown.
-
 sedna-err:SE4622
 
     This statement is not supported because Sedna' database security level is "authentication". (To support this statement create database with -db-security option "authorization".)
-
 sedna-err:SE5200
 
    Internal Runtime Configuration utility error
-
 sedna-err:SE4623
 
    Cannot set keep alive session timeout
-
 sedna-err:SE4624
 
    Session was closed since keep alive timeout has been expired
-
 sedna-err:SE3081
 
    Can't open file with long query to execute
+err:XQDY0096
+
+   It is a dynamic error the node-name of a node constructed by a computed element constructor has any of the following properties: its namespace prefix is xmlns, its namespace URI is http://www.w3.org/2000/xmlns/, its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace, its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
+   

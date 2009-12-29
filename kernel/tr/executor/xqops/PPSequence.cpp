@@ -9,6 +9,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPSequence.h"
+#include "tr/executor/base/PPVisitor.h"
 
 using namespace std;
 
@@ -80,4 +81,13 @@ PPIterator* PPSequence::do_copy(dynamic_context *_cxt_)
         res->ch_arr[it].op = ch_arr[it].op->copy(_cxt_);
 
     return res;
+}
+
+void PPSequence::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (it = 0; it < ch_arr.size(); it++)
+        ch_arr[it].op->accept(v);
+    v.pop();
 }

@@ -9,6 +9,7 @@
 #include "tr/executor/fo/op_map.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -176,6 +177,14 @@ PPIterator* PPFnMaxMin::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnMaxMin::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    if(collation.op) collation.op->accept(v);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -244,8 +253,7 @@ void PPFnSumAvg::do_close()
 void PPFnSumAvg::do_next(tuple &t)
 {
     
-
-    if (first_time) // the same as 'first_time'
+    if (first_time)
     {
         first_time = false;
         tuple_cell res;
@@ -326,4 +334,88 @@ PPIterator* PPFnSumAvg::do_copy(dynamic_context *_cxt_)
     if (zero.op)
         res->zero.op = zero.op->copy(_cxt_);
     return res;
+}
+
+void PPFnSumAvg::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    if(zero.op) zero.op->accept(v);
+    v.pop();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnCount
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnCount::PPFnCount(dynamic_context *_cxt_,
+                     operation_info _info_,
+                     PPOpIn _child_) : PPIterator(_cxt_, _info_), 
+                                       child(_child_)
+{
+}
+
+
+PPFnCount::~PPFnCount()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnCount::do_open ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnCount::do_reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}         
+
+void PPFnCount::do_close()
+{
+    child.op->close();
+    first_time = true;
+}
+
+void PPFnCount::do_next(tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+        __int64 n = 0;
+        while (true)
+        {
+            child.op->next(t);
+            if (t.is_eos()) 
+                break;
+            n++;
+        }
+        t.copy(tuple_cell::atomic(n));
+    }
+    else
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+PPIterator* PPFnCount::do_copy(dynamic_context *_cxt_)
+{
+    PPFnCount *res = se_new PPFnCount(_cxt_, info, child);
+    res->child.op = child.op->copy(_cxt_);
+    return res;
+}
+
+void PPFnCount::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

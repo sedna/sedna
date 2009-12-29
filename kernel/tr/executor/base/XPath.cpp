@@ -349,7 +349,6 @@ set_node_test_QName_data(scheme_list *lst,
         throw USER_EXCEPTION2(SE1004, "Path expression");
 
     if (*(lst->at(0).internal.str))
-        if (strcmp(lst->at(0).internal.str, "http://www.w3.org/XML/1998/namespace") != 0)
             nt_data.uri = xs_anyURI_create(lst->at(0).internal.str, mm->alloc);
 
     nt_data.ncname_local  = xs_NCName_create(lst->at(1).internal.str, mm->alloc);
@@ -389,8 +388,6 @@ void set_node_test_type_and_data(scheme_list *lst,
         {
             if (lst->at(2).type != SCM_STRING)
                 throw USER_EXCEPTION2(SE1004, "Path expression");
-
-            if (strcmp(lst->at(2).internal.str, "http://www.w3.org/XML/1998/namespace") !=0)
                 nt_data.uri = xs_anyURI_create(lst->at(2).internal.str, mm->alloc);
             break;
         }
@@ -415,10 +412,6 @@ void set_node_test_type_and_data(scheme_list *lst,
 
             if(lst->at(2).internal.list->size() != 0) {
                 scheme_list *qname_lst = lst->at(2).internal.list;
-
-//                if (   qname_lst->at(0).type != SCM_SYMBOL
-//                    || string(qname_lst->at(0).internal.symb) != "qname")
-//                    throw USER_EXCEPTION2(SE1004, "110.2");
 
                 set_node_test_QName_data(qname_lst, nt_data, mm);
             }

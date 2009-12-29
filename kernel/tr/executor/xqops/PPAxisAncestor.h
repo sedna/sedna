@@ -59,7 +59,8 @@ private:
     virtual void do_next   (tuple &t) { 
         (this->*next_fun)(t); 
     }
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
@@ -84,5 +85,7 @@ public:
         PPOpIn _child_,
         NodeTestType _nt_type_,
         NodeTestData _nt_data_);
+private:
+    virtual void do_accept (PPVisitor &v);
 };
 #endif

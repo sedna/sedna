@@ -9,7 +9,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/merge.h"
-
+#include "tr/executor/base/PPVisitor.h"
 
 PPAxisSelf::PPAxisSelf(dynamic_context *_cxt_,
                        operation_info _info_, 
@@ -45,6 +45,14 @@ void PPAxisSelf::do_reopen()
 void PPAxisSelf::do_close()
 {
     child.op->close();
+}
+
+void PPAxisSelf::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 

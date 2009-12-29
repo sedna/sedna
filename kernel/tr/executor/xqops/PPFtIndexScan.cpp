@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPFtIndexScan.h"
+#include "tr/executor/base/PPVisitor.h"
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
 #endif
@@ -371,6 +372,19 @@ PPIterator*  PPFtIndexScan::do_copy(dynamic_context *_cxt_)
 }
 
 
+void PPFtIndexScan::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    idx_name.op->accept(v);
+    query.op->accept(v);
+    if(options.op)
+        options.op->accept(v);
+    v.pop();
+}
+
+
+
 //////////////////////////////////////////////
 //// PPFtIndexScan2
 //////////////////////////////////////////////
@@ -636,4 +650,17 @@ PPIterator*  PPFtIndexScan2::do_copy(dynamic_context *_cxt_)
 		res->field_weights.op = field_weights.op->copy(_cxt_);
 	
 	return res;
+}
+
+void PPFtIndexScan2::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    idx_name.op->accept(v);
+    query.op->accept(v);
+    if(max_results.op)
+        max_results.op->accept(v);
+    if(field_weights.op)
+        field_weights.op->accept(v);
+    v.pop();
 }

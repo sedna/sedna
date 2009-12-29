@@ -8,6 +8,7 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/strings/e_string.h"
 #include "tr/strings/strings.h"
 
@@ -68,6 +69,14 @@ PPIterator* PPFnDateTimeFuncNoParam::do_copy(dynamic_context *_cxt_)
     PPFnDateTimeFuncNoParam *res = se_new PPFnDateTimeFuncNoParam(_cxt_, info, dateTimeFunc);
     return res;
 }
+
+void PPFnDateTimeFuncNoParam::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc
@@ -285,6 +294,15 @@ PPIterator* PPFnDateTimeFunc::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnDateTimeFunc::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc2Params
 ///////////////////////////////////////////////////////////////////////////////
@@ -415,4 +433,13 @@ PPIterator* PPFnDateTimeFunc2Params::do_copy(dynamic_context *_cxt_)
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     return res;
+}
+
+void PPFnDateTimeFunc2Params::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child1.op->accept(v);
+    child2.op->accept(v);
+    v.pop();
 }

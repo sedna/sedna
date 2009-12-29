@@ -10,6 +10,7 @@
 #include "tr/executor/xqops/PPFilterEL.h"
 #include "tr/executor/xqops/PPDDO.h"
 #include "tr/nid/numb_scheme.h"
+#include "tr/executor/base/PPVisitor.h"
 
 using namespace std;
 
@@ -124,4 +125,12 @@ PPIterator* PPFilterEL::do_copy(dynamic_context *_cxt_)
     PPFilterEL *res = se_new PPFilterEL(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFilterEL::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

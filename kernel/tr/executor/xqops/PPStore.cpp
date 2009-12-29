@@ -5,8 +5,11 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPStore.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 using namespace std;
+
 
 PPStore::t_stored_seqs PPStore::stored_seqs;
 
@@ -82,4 +85,12 @@ PPIterator* PPStore::do_copy(dynamic_context *_cxt_)
     PPStore *res = se_new PPStore(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPStore::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

@@ -7,6 +7,7 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPSequenceTypes.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/executor/fo/casting_operations.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -88,6 +89,14 @@ PPIterator* PPCast::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPCast::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -167,6 +176,14 @@ PPIterator* PPCastable::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPCastable::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -237,6 +254,13 @@ PPIterator* PPInstanceOf::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPInstanceOf::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -323,6 +347,13 @@ PPIterator* PPTreat::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPTreat::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -469,6 +500,17 @@ PPIterator* PPTypeswitch::do_copy(dynamic_context *_cxt_)
     res->source_child.op = source_child.op->copy(_cxt_);
     res->default_child.op = default_child.op->copy(_cxt_);
     return res;
+}
+
+void PPTypeswitch::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (unsigned int i = 0; i < cases.size(); i++)
+        cases[i].op->accept(v);
+    source_child.op->accept(v);
+    default_child.op->accept(v);
+    v.pop();
 }
 
 var_c_id PPTypeswitch::do_register_consumer(var_dsc dsc)

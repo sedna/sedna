@@ -275,7 +275,6 @@ public:
     }
 
 
-    char * get_uri_by_prefix(const char* _prefix, t_item type) const;
     xmlns_ptr get_xmlns_by_prefix(const char* _prefix, int count = -1);
 
     void set_base_uri(const char* _base_uri_);

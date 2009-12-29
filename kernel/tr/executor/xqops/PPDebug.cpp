@@ -10,6 +10,7 @@
 
 #include "tr/executor/xqops/PPDebug.h"
 #include "tr/tr_globals.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPDebug::PPDebug(dynamic_context *_cxt_,
@@ -97,4 +98,12 @@ PPIterator* PPDebug::do_copy(dynamic_context *_cxt_)
                    se_new PPDebug(_cxt_, info, child, child_name);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPDebug::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

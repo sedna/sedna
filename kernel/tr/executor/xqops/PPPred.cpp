@@ -12,6 +12,8 @@
 #include "tr/executor/xqops/PPPred.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 using namespace std;
 
@@ -750,6 +752,18 @@ PPIterator* PPPred1::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPPred1::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (unsigned int i = 0; i < conjuncts.size(); i++)
+        conjuncts[i].op->accept(v);
+    source_child.op->accept(v);
+    data_child.op->accept(v);
+    v.pop();
+}
+
+
 var_c_id PPPred1::do_register_consumer(var_dsc dsc)
 {
     cxt->var_cxt.producers[dsc].svc->push_back(true);
@@ -1046,6 +1060,18 @@ PPIterator* PPPred2::do_copy(dynamic_context *_cxt_)
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;
 }
+
+void PPPred2::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (unsigned int i = 0; i < conjuncts.size(); i++)
+        conjuncts[i].op->accept(v);
+    source_child.op->accept(v);
+    data_child.op->accept(v);
+    v.pop();
+}
+
 
 var_c_id PPPred2::do_register_consumer(var_dsc dsc)
 {
