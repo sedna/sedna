@@ -16,6 +16,7 @@
 #include "tr/log/log.h"
 #include "tr/mo/indexupdate.h"
 #include "tr/triggers/triggers.h"
+#include "tr/updates/updates.h"
 
 
 void readNodeInfo(xptr node_xptr, node_info_t * node_info)
@@ -203,7 +204,7 @@ bool delete_node(xptr node_xptr, const doc_info_t * doc_info, bool no_index_upda
         return false;
     node_tmp = prepare_old_node(node_xptr, node_info.snode.ptr(), TRIGGER_DELETE_EVENT);
     CHECKP(node_xptr);
-#endif
+#endif /* SE_ENABLE_TRIGGERS */
 
     /* Delete node children */
 
@@ -219,6 +220,10 @@ bool delete_node(xptr node_xptr, const doc_info_t * doc_info, bool no_index_upda
     if (children_not_deleted) { return false; }
 
     readNodeInfo(node_xptr, &node_info);
+
+#ifdef SE_ENABLE_FTSEARCH
+    update_delete_sequence(node_xptr, node_info.snode);
+#endif /* SE_ENABLE_FTSEARCH */
 
     molog(("MOLOG Delete node: 0x%llx - L:0x%llx R:0x%llx ",
                   node_info.node_xptr.to_logical_int(),
