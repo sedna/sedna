@@ -7,7 +7,7 @@
 #include "tr/executor/xqops/PPScan.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
-
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPScan::PPScan(dynamic_context *_cxt_,
@@ -75,4 +75,11 @@ PPIterator* PPScan::do_copy(dynamic_context *_cxt_)
 {
     PPScan *res = se_new PPScan(_cxt_, info, scm_node, db_ent);
     return res;
+}
+
+void PPScan::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
 }

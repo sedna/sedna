@@ -7,7 +7,7 @@
 
 #include "tr/executor/xqops/PPAccessors.h"
 #include "tr/executor/base/dm_accessors.h"
-
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,6 +77,14 @@ PPIterator* PPDmStringValue::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPDmStringValue::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -144,4 +152,12 @@ PPIterator* PPDmTypedValue::do_copy(dynamic_context *_cxt_)
     PPDmTypedValue *res = se_new PPDmTypedValue(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPDmTypedValue::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

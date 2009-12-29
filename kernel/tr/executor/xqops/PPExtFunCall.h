@@ -9,7 +9,6 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "common/sedna_ef.h"
 #include "tr/executor/por2qep/ext.h"
 
 class PPExtFunCall: public PPIterator
@@ -24,7 +23,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t) ; 
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:    

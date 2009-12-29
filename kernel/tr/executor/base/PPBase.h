@@ -23,6 +23,12 @@
  * List of classes used
  ******************************************************************************/
 class PPIterator;
+
+/* Because of cyclic dependecies nature of visitor 
+ * pattern use name declaration instead of include.
+ * Unfortunately, we lose ability to call visitor's
+ * methods in PPIterato::accept.  
+ */
 class PPVisitor;
 
 /*******************************************************************************
@@ -204,23 +210,21 @@ public:
     /* 
      * Returns a copy of the operation. This is how XQuery user defined
      * functions work in Sedna. Every time someone calls declared function
-     * a copy of function's subtree created by means of recursive copy() 
+     * a copy of function's subtree is created by means of recursive copy() 
      * calls.
      */
     inline PPIterator* copy(dynamic_context *_cxt_) { 
         return do_copy(_cxt_); 
     }
 
-    inline const operation_info& get_operation_info() const {
+    inline const operation_info get_operation_info() const {
         return do_get_operation_info();
     }
 
-    /* Traverse query tree with visitor */
-    inline void accept(PPVisitor &v) 
-    {
-        do_accept(v);
-    }
-
+    /* Traverse query tree with a visitor. 
+     * Note, that we can't call visitor's operations here.
+     */
+    inline void accept(PPVisitor &v)                { do_accept (v); }
 
     PPIterator(dynamic_context *_cxt_, 
                operation_info _info_) : cxt(_cxt_),

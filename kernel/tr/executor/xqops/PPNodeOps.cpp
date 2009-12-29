@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPNodeOps.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
 
@@ -89,6 +90,14 @@ PPIterator* PPFnName::do_copy(dynamic_context *_cxt_)
     PPFnName *res = se_new PPFnName(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 
@@ -173,6 +182,14 @@ PPIterator* PPFnLocalName::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnLocalName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -252,6 +269,14 @@ PPIterator* PPFnNamespaceUri::do_copy(dynamic_context *_cxt_)
     PPFnNamespaceUri *res = se_new PPFnNamespaceUri(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnNamespaceUri::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 
@@ -340,6 +365,14 @@ PPIterator* PPFnNumber::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnNumber::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -407,4 +440,12 @@ PPIterator* PPFnRoot::do_copy(dynamic_context *_cxt_)
     PPFnRoot *res = se_new PPFnRoot(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnRoot::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

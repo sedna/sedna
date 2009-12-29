@@ -8,6 +8,8 @@
 #include "tr/executor/xqops/PPGeneralComparison.h"
 #include "tr/executor/fo/comparison_operations.h"
 #include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -168,6 +170,16 @@ PPIterator* PPGeneralComparison::do_copy(dynamic_context *_cxt_)
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;
 }
+
+void PPGeneralComparison::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq1.op->accept(v);
+    seq2.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -503,6 +515,16 @@ PPIterator* PPLMGeneralComparison::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPLMGeneralComparison::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq1.op->accept(v);
+    seq2.op->accept(v);
+    v.pop();
+}
+
+
 void PPNEQGeneralComparison::do_next (tuple &t)
 {
 	if (first_time)
@@ -797,4 +819,22 @@ PPIterator* PPNEQGeneralComparison::do_copy(dynamic_context *_cxt_)
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;
+}
+
+void PPEQLGeneralComparison::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq1.op->accept(v);
+    seq2.op->accept(v);
+    v.pop();
+}
+
+void PPNEQGeneralComparison::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq1.op->accept(v);
+    seq2.op->accept(v);
+    v.pop();
 }

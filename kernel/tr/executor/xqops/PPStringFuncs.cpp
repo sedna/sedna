@@ -16,6 +16,7 @@
 #include "tr/executor/base/xs_helper.h"
 #include "common/u/uutils.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,6 +131,16 @@ PPIterator* PPFnConcat::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnConcat::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (i = 0; i < ch_arr.size(); i++)
+        ch_arr[i].op->accept(v);
+    v.pop();
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -230,6 +241,14 @@ PPIterator* PPFnStringJoin::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnStringJoin::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    members.op->accept(v);
+    separator.op->accept(v);
+    v.pop();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -396,6 +415,17 @@ PPIterator* PPFnStartsEndsWith::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnStartsEndsWith::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    source.op->accept(v);
+    prefix.op->accept(v);
+    if(is_collation) collation.op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnString2CodePoints
@@ -479,6 +509,15 @@ PPIterator* PPFnString2CodePoints::do_copy(dynamic_context *_cxt_)
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
+
+void PPFnString2CodePoints::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -569,6 +608,13 @@ PPIterator* PPFnCodePoints2String::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnCodePoints2String::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -686,6 +732,16 @@ PPIterator* PPFnTranslate::do_copy(dynamic_context *_cxt_)
 	res->map_str.op = map_str.op->copy(_cxt_);
 	res->trans_str.op = trans_str.op->copy(_cxt_);
 	return res;
+}
+
+void PPFnTranslate::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    str.op->accept(v);
+	map_str.op->accept(v);
+	trans_str.op->accept(v);
+    v.pop();
 }
 
 
@@ -879,11 +935,22 @@ PPIterator* PPFnSubsBeforeAfter::do_copy(dynamic_context *_cxt_)
     PPFnSubsBeforeAfter *res = se_new PPFnSubsBeforeAfter(_cxt_, info, src_child, srch_child, collation_child, type);
     res->src_child.op = src_child.op->copy(_cxt_);
     res->srch_child.op = srch_child.op->copy(_cxt_);
-
     if (collation_child.op)
         res->collation_child.op = collation_child.op->copy(_cxt_);
     return res;
 }
+
+void PPFnSubsBeforeAfter::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    src_child.op->accept(v);
+    srch_child.op->accept(v);
+    if (collation_child.op)
+        collation_child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -960,6 +1027,15 @@ PPIterator* PPFnChangeCase::do_copy(dynamic_context *_cxt_)
 	return res;
 }
 
+void PPFnChangeCase::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    str.op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnStringLength
@@ -1027,6 +1103,14 @@ PPIterator* PPFnStringLength::do_copy(dynamic_context *_cxt_)
     PPFnStringLength *res = se_new PPFnStringLength(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnStringLength::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1099,6 +1183,14 @@ PPIterator* PPFnNormalizeSpace::do_copy(dynamic_context *_cxt_)
     PPFnNormalizeSpace *res = se_new PPFnNormalizeSpace(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnNormalizeSpace::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1254,6 +1346,17 @@ PPIterator* PPFnSubstring::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnSubstring::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    str_child.op->accept(v);
+    start_child.op->accept(v);
+    if(is_length) length_child.op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnNormalizeUnicode
@@ -1387,4 +1490,14 @@ PPIterator* PPFnNormalizeUnicode::do_copy(dynamic_context *_cxt_)
         res->type_child.op = type_child.op->copy(_cxt_);
 
     return res;
+}
+
+void PPFnNormalizeUnicode::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    str_child.op->accept(v);
+    if(type_child.op) 
+        type_child.op->accept(v);
+    v.pop();
 }

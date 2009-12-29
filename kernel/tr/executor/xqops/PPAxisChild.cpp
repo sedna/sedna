@@ -9,6 +9,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/xs_names.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPAxisChild::PPAxisChild(dynamic_context *_cxt_,
@@ -66,6 +67,13 @@ void PPAxisChild::do_close()
     child.op->close();
 }
 
+void PPAxisChild::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 static inline bool 
 pi_node_name_equals(const xptr& node, const char* local) 

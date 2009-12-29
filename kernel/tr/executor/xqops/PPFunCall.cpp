@@ -12,6 +12,7 @@
 #include "tr/executor/xqops/PPFunCall.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 using namespace std;
@@ -410,4 +411,13 @@ inline void PPFunCall::reinit_consumer_table()
         complex_var_consumption *cvc = new_cxt->var_cxt.producers[i].cvc;
         for (unsigned int j = 0; j < cvc->size(); j++) cvc->at(j) = 0;
     }
+}
+
+void PPFunCall::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (int i = 0; i < args_num; i++)
+        ch_arr[i].op->accept(v);
+    v.pop();
 }

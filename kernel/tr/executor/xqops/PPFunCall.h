@@ -12,7 +12,7 @@
 #include "tr/executor/base/PPBase.h"
 
 //#define STRICT_FUNS
-// actually, the max size of sequence when fun is called in strict mode is STRICT_FUNS_BOUND - 1
+//actually, the max size of sequence when fun is called in strict mode is STRICT_FUNS_BOUND - 1
 #define STRICT_FUNS_BOUND	5
 
 /* Function conversion rules */
@@ -99,7 +99,8 @@ private:
     virtual void do_reopen ();
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
     virtual var_c_id do_register_consumer(var_dsc dsc);
@@ -114,7 +115,6 @@ public:
               function_id _fn_id_);
     virtual ~PPFunCall();
 };
-
 
 
 #endif

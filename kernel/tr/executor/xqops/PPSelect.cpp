@@ -7,6 +7,8 @@
 
 #include "tr/executor/xqops/PPSelect.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPSelect::PPSelect(dynamic_context *_cxt_,
                    operation_info _info_,
@@ -129,9 +131,19 @@ PPIterator* PPSelect::do_copy(dynamic_context *_cxt_)
 {
     PPSelect *res = se_new PPSelect(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
-    res->data_child.op = data_child.op->copy(_cxt_);
+    res->data_child.op   = data_child.op->copy(_cxt_);
     return res;
 }
+
+void PPSelect::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    source_child.op->accept(v);
+    data_child.op->accept(v);
+    v.pop();
+}
+
 
 var_c_id PPSelect::do_register_consumer(var_dsc dsc)
 {

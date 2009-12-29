@@ -9,6 +9,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/merge.h"
+#include "tr/executor/base/PPVisitor.h"
 
 using namespace std;
 
@@ -106,6 +107,23 @@ void PPAxisDescendant::do_close()
 {
     child.op->close();
 }
+
+void PPAxisDescendant::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+void PPAxisDescendantOrSelf::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 PPIterator* PPAxisDescendant::do_copy(dynamic_context *_cxt_)
 {
@@ -416,6 +434,15 @@ PPAxisDescendantAttr::PPAxisDescendantAttr(dynamic_context *_cxt_,
     PPAxisDescendant(_cxt_,_info_,_child_,_nt_type_,_nt_data_)
 {
 }
+
+void PPAxisDescendantAttr::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 void PPAxisDescendantAttr::next_processing_instruction(tuple &t)
 {

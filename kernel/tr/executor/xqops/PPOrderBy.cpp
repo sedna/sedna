@@ -6,6 +6,8 @@
 #include <iostream>
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPOrderBy.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 using namespace std;
 
@@ -259,6 +261,13 @@ PPIterator* PPOrderBy::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPOrderBy::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -919,6 +928,15 @@ PPIterator* PPSTuple::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPSTuple::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (i = 0; i < ch_arr.size(); i++)
+        ch_arr[i].op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1004,6 +1022,15 @@ PPIterator* PPSLet::do_copy(dynamic_context *_cxt_)
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;
+}
+
+void PPSLet::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    source_child.op->accept(v);
+    data_child.op->accept(v);
+    v.pop();
 }
 
 var_c_id PPSLet::do_register_consumer(var_dsc dsc)

@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPRange.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPRange::PPRange(dynamic_context *_cxt_,
@@ -105,4 +106,13 @@ PPIterator* PPRange::do_copy(dynamic_context *_cxt_)
     res->start_op.op=start_op.op->copy(_cxt_);
     res->end_op.op=end_op.op->copy(_cxt_);
     return res;
+}
+
+void PPRange::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    start_op.op->accept(v);
+    end_op.op->accept(v);
+    v.pop();
 }

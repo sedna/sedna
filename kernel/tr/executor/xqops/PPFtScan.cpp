@@ -8,6 +8,8 @@
 #include "tr/executor/xqops/PPFtScan.h"
 #include "tr/ft/FTsearch.h"
 #include "tr/executor/root/PPCreateFtIndex.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPFtScan::PPFtScan(dynamic_context *_cxt_,
                    operation_info _info_,
@@ -187,4 +189,16 @@ PPIterator*  PPFtScan::do_copy(dynamic_context *_cxt_)
     if (cust_rules.op)
         res->cust_rules.op = cust_rules.op->copy(_cxt_);
     return res;
+}
+
+void PPFtScan::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq.op->accept(v);
+    query.op->accept(v);
+    index_type.op->accept(v);
+    if (cust_rules.op)
+        cust_rules.op->accept(v);
+    v.pop();
 }

@@ -10,6 +10,7 @@
 
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/strings/strings.h"
 #include "tr/pstr/pstr.h"
 
@@ -321,4 +322,12 @@ void PPTest::checkTreeConsistency(xptr node)
 		CHECKP(child);
 		child=((n_dsc*)XADDR(child))->rdsc;
 	}
+}
+
+void PPTest::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq.op->accept(v);
+    v.pop();
 }

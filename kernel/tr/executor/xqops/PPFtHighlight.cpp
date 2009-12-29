@@ -7,6 +7,7 @@
 
 #include "tr/executor/xqops/PPFtHighlight.h"
 #include "tr/ft/FTsearch.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                              operation_info _info_,
@@ -206,4 +207,14 @@ PPIterator*  PPFtHighlight::do_copy(dynamic_context *_cxt_)
 	    res->query.op = query.op->copy(_cxt_);
 	}
 	return res;
+}
+
+void PPFtHighlight::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq.op->accept(v);
+    query.op->accept(v);
+    if(index.op) index.op->accept(v);
+    v.pop();
 }

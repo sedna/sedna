@@ -12,6 +12,7 @@
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                              operation_info _info_,
@@ -311,4 +312,15 @@ PPIterator* PPFnDeepEqual::do_copy(dynamic_context *_cxt_)
 		res->collation.op = collation.op->copy(_cxt_);
 	
     return res;
+}
+
+void PPFnDeepEqual::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child1.op->accept(v);
+    child2.op->accept(v);
+    if(collation.op) 
+        collation.op->accept(v);
+    v.pop();
 }

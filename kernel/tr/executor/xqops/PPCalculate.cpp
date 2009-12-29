@@ -5,10 +5,10 @@
 
 
 #include <vector>
-
 #include "common/sedna.h"
-
 #include "tr/executor/xqops/PPCalculate.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 using namespace std;
 
@@ -94,3 +94,77 @@ PPIterator* PPCalculate::do_copy(dynamic_context *_cxt_)
 
     return res;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPVisitor Acceptors
+///////////////////////////////////////////////////////////////////////////////
+
+void PPCalculate::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    tree->accept(v);
+    v.pop();
+}
+
+void UnaryOp::do_accept(PPVisitor &v)    
+{
+    v.push(this);
+    v.visit(this);
+    child->accept(v);
+    v.pop();
+}
+
+void BinaryOp::do_accept(PPVisitor &v)    
+{
+    v.push(this);
+    v.visit(this);
+    child1->accept(v);
+    child2->accept(v);
+    v.pop();
+}
+
+void BinaryOpCollation::do_accept(PPVisitor &v)    
+{
+    v.push(this);
+    v.visit(this);
+    child1->accept(v);
+    child2->accept(v);
+    v.pop();
+}
+
+void BinaryOpAnd::do_accept(PPVisitor &v)    
+{
+    v.push(this);
+    v.visit(this);
+    child1->accept(v);
+    child2->accept(v);
+    v.pop();
+}
+
+void BinaryOpOr::do_accept(PPVisitor &v)    
+{
+    v.push(this);
+    v.visit(this);
+    child1->accept(v);
+    child2->accept(v);
+    v.pop();
+}
+
+void LeafAtomOp::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    children->at(i).op->accept(v);
+    v.pop();
+}
+
+void LeafEffectBoolOp::do_accept(PPVisitor &v)
+{
+    v.push(this);
+    v.visit(this);
+    children->at(i).op->accept(v);
+    v.pop();
+}
+

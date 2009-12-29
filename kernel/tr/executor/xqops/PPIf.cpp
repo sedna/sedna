@@ -8,6 +8,7 @@
 
 #include "tr/executor/xqops/PPIf.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPIf::PPIf(dynamic_context *_cxt_,
@@ -92,3 +93,12 @@ PPIterator* PPIf::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPIf::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    if_child.op->accept(v);
+    then_child.op->accept(v);
+    else_child.op->accept(v);
+    v.pop();
+}

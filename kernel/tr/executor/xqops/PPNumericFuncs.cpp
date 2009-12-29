@@ -9,6 +9,8 @@
 #include <math.h>
 #include "tr/executor/xqops/PPNumericFuncs.h"
 #include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -181,6 +183,14 @@ PPIterator* PPNumericFuncs::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPNumericFuncs::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -312,4 +322,13 @@ PPIterator* PPFnRoundHalfToEven::do_copy(dynamic_context *_cxt_)
     res->child_arg.op = child_arg.op->copy(_cxt_);
 
     return res;
+}
+
+void PPFnRoundHalfToEven::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    if(child_p.op) child_p.op->accept(v);
+    child_arg.op->accept(v);
+    v.pop();
 }

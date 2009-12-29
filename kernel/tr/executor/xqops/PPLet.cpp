@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPLet.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPLet::PPLet(dynamic_context *_cxt_,
@@ -119,6 +120,16 @@ PPIterator* PPLet::do_copy(dynamic_context *_cxt_)
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;
 }
+
+void PPLet::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    source_child.op->accept(v);
+    data_child.op->accept(v);
+    v.pop();
+}
+
 
 var_c_id PPLet::do_register_consumer(var_dsc dsc)
 {

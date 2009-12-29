@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPAxisSibling.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPAxisSibling::PPAxisSibling(dynamic_context *_cxt_,
                              operation_info _info_, 
@@ -55,7 +56,6 @@ PPAxisSibling::~PPAxisSibling()
 void PPAxisSibling::do_open ()
 {
     child.op->open();
-
     cur = XNULL;
 }
 
@@ -72,6 +72,14 @@ void PPAxisSibling::do_reopen()
 void PPAxisSibling::do_close()
 {
     child.op->close();
+}
+
+void PPAxisSibling::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 

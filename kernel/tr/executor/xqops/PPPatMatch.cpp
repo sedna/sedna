@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPPatMatch.h"
 #include "tr/strings/e_string.h"
 #include "tr/strings/strings.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 void PPPatMatch::cf_choice(void)
@@ -205,6 +206,18 @@ PPIterator* PPPatMatch::do_copy(dynamic_context *_cxt_)
 	}
     return res;
 }
+
+void PPPatMatch::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq1.op->accept(v);
+    seq2.op->accept(v);
+    if(ch_cnt > 2) seq3.op->accept(v);
+    if(ch_cnt > 3) seq4.op->accept(v);
+    v.pop();
+}
+
 
 static inline tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_empty_allowed, patmatch_type pmt, int arg_num)
 {

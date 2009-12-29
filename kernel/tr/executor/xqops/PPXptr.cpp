@@ -5,6 +5,8 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPXptr.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPXptr::PPXptr(dynamic_context *_cxt_,
                operation_info _info_,
@@ -59,4 +61,11 @@ PPIterator* PPXptr::do_copy(dynamic_context *_cxt_)
 {
     PPXptr *res = se_new PPXptr(_cxt_, info, var_type, p);
     return res;
+}
+
+void PPXptr::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
 }

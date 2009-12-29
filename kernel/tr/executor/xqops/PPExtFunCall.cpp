@@ -5,6 +5,8 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPExtFunCall.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPExtFunCall::PPExtFunCall(dynamic_context *_cxt_,
                            operation_info _info_,
@@ -67,3 +69,13 @@ PPIterator* PPExtFunCall::do_copy(dynamic_context *_cxt_)
 		res->arr[it].op = arr[it].op->copy(_cxt_);
 	return res;
 }
+
+void PPExtFunCall::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    for (unsigned int it = 0; it < arr.size(); it++)
+        arr[it].op->accept(v);
+    v.pop();
+}
+

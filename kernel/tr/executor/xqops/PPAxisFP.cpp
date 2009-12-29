@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPAxisFP.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPAxisFP::PPAxisFP(dynamic_context *_cxt_,
                    operation_info _info_, 
@@ -76,6 +77,13 @@ void PPAxisFP::do_close()
     child.op->close();
 }
 
+void PPAxisFP::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 void PPAxisFP::next_processing_instruction(tuple &t)
 {

@@ -7,6 +7,7 @@
 
 #include "tr/executor/xqops/PPDAFilter.h"
 #include "tr/executor/base/merge.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPDAFilter::PPDAFilter(dynamic_context *_cxt_,
@@ -139,4 +140,13 @@ PPIterator* PPDAFilter::do_copy(dynamic_context *_cxt_)
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     return res;
+}
+
+void PPDAFilter::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child1.op->accept(v);
+    child2.op->accept(v);
+    v.pop();
 }

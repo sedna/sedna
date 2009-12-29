@@ -19,47 +19,45 @@
 #include "tr/updates/updates.h"
 #endif
 
-
 #define BUFFSIZE        8192
 #define SEPARATOR '>'
-char Buff[BUFFSIZE];
-int mark;
-xptr parent;
-xptr left;
-schema_node_xptr sc_parent = XNULL;
-bool wpstrip;
-//bool last_op_text;
-bool text_inserted;
-bool print_p = true;
-int is_ns;
-char* wptail;
-int wptailsize;
-int maxwpsize=0;
-char* nodenames;
-int maxnm=0;
-int nodescnt=0;
-int curcnt=0;
-int curproc=0;
-bool cdata_mode=false;
-bool is_coll=false;
+
+static char Buff[BUFFSIZE];
+static int mark;
+static xptr parent;
+static xptr left;
+static schema_node_xptr sc_parent = XNULL;
+static bool wpstrip;
+
+static bool text_inserted;
+static bool print_p = true;
+static int is_ns;
+static char* wptail;
+static int wptailsize;
+static int maxwpsize=0;
+static char* nodenames;
+static int maxnm=0;
+static int nodescnt=0;
+static int curcnt=0;
+static int curproc=0;
+static bool cdata_mode=false;
+static bool is_coll=false;
 
 typedef std::pair<int,int> stat_pair;
 typedef std::pair<std::string,std::string> str_pair;
+typedef std::map<str_pair, xmlns_ptr> ns_map;
 
-typedef  std::map<str_pair, xmlns_ptr> ns_map;
 static ns_map  xm_nsp;
-ns_map::iterator it_map;
-std::vector<xmlns_ptr> nss;
-//fanout stat
+static ns_map::iterator it_map;
+static std::vector<xmlns_ptr> nss;
 
-std::vector<int> curr_fo;
-std::map<schema_node_xptr,stat_pair> max_fo;
+static std::vector<int> curr_fo;
+static std::map<schema_node_xptr,stat_pair> max_fo;
+static std::vector<stat_pair*> curp;
 
-std::vector<stat_pair*> curp;
-//pair
-void remove_hints(schema_node_cptr nd)
+
+static void remove_hints(schema_node_cptr nd)
 {
-    //nd->cl_hint=0;
     nd.modify()->lastnode_ind=XNULL;
     
     cat_list<sc_ref>::item * sc;
@@ -67,7 +65,8 @@ void remove_hints(schema_node_cptr nd)
         remove_hints(sc->object.snode);
     }
 }
-bool isWP(const char* data, int size )
+
+static bool isWP(const char* data, int size )
 {
     char s;
     for (int i=0;i<size;i++)
@@ -77,12 +76,17 @@ bool isWP(const char* data, int size )
     }
     return true;
 }
-void separateName( const char* triplet,const char*& uri, const char*& local,const char*& prefix)
+
+static void separateName(const char* triplet, 
+                         const char*& uri, 
+                         const char*& local,
+                         const char*& prefix)
 {
     const char* sec=NULL;
     const char* third=NULL;
     int sepcnt=0;
     for (unsigned int i=0; i < strlen(triplet); i++)
+    {
         if (triplet[i]==SEPARATOR)
         {
             if (sepcnt==0)
@@ -91,27 +95,26 @@ void separateName( const char* triplet,const char*& uri, const char*& local,cons
                 third=triplet+i+1;
             sepcnt++;
         }
+    }
     if (sepcnt)
     {
-        int tripsize=strlen(triplet)+1;
-        if (tripsize>maxnm)
-                    {
-                        if (maxnm!=0)delete [] nodenames;
-                        maxnm=tripsize;
-                        nodenames= se_new char[tripsize];
-                    }
-        memcpy(nodenames,triplet,tripsize); 
-        uri=nodenames;
-        local=nodenames+(sec-triplet);
-        nodenames[sec-triplet-1]='\0';
-        if (third!=NULL)
+        int tripsize = strlen(triplet)+1;
+        if (tripsize > maxnm)
+        {
+            if (maxnm != 0) delete [] nodenames;
+            maxnm = tripsize;
+            nodenames = se_new char[tripsize];
+        }
+        memcpy(nodenames, triplet, tripsize); 
+        uri = nodenames;
+        local = nodenames + (sec-triplet);
+        nodenames[sec-triplet-1] = '\0';
+        if (third != NULL)
         {
             prefix=local+(third-sec);
             nodenames[third-triplet-1]='\0';
         }
         else prefix=NULL;
-        if (strcmp(uri,"http://www.w3.org/XML/1998/namespace")==0)nodenames[0]='\0';
-    
     }
     else
     {
@@ -120,7 +123,8 @@ void separateName( const char* triplet,const char*& uri, const char*& local,cons
         prefix=NULL;
     }
 }
-void analyzeWP(const char** data, int& size )
+
+static  void analyzeWP(const char** data, int& size )
 {
  const char* ds=*data;
  const char* es=*data+(size-1);
@@ -142,7 +146,8 @@ void analyzeWP(const char** data, int& size )
  }
  size=size-i;   
 }
-void processWP(const char** s, int& len)
+
+static void processWP(const char** s, int& len)
 {
     const char* d=*s;
     int size=len;
@@ -194,94 +199,15 @@ void processWP(const char** s, int& len)
         len=0;
     }
 }
-/*
-    if (last_op_text)
-        {
-            if (size!=0)
-            {
-                if (wptailsize>0)
-                {
-                    xptr new_node;
-                    if (mark)
-                        new_node=insert_text(XNULL,XNULL,parent,wptail,wptailsize);
-                    else
-                    {
-                        new_node=insert_text(left,XNULL,XNULL,wptail,wptailsize);
-                    }
-                    mark=0;
-                    left=new_node;
-                    CHECKP(left);
-                    xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
-                    CHECKP(par_ind);
-                    parent=*((xptr*)XADDR(par_ind));
-                    //left=insert_text(left,XNULL,XNULL,wptail,wptailsize);
-                }
-                //checkChildReferenceValidity(left);
-                wptailsize=len-((int)d-(int)(*s)+size);
-                if (wptailsize>0)
-                {
-                    if (wptailsize>maxwpsize)
-                    {
-                        if (maxwpsize!=0)delete [] wptail;
-                        maxwpsize=wptailsize;
-                        wptail= se_new char[maxwpsize];
-                    }
-                    memcpy(wptail,d+size,wptailsize);                   
-                }
-            }
-            else
-            {
-                if (wptailsize+len>maxwpsize)
-                {
-                    char* z=se_new char[wptailsize+len];
-                    if (wptailsize>0) memcpy(z,wptail,wptailsize);
-                    memcpy(z+wptailsize,*s,len);
-                    wptailsize+=len;
-                    maxwpsize=wptailsize;
-                    delete [] wptail;
-                    wptail=z;
-                }
-                else
-                {
-                    memcpy(wptail+wptailsize,*s,len);
-                    wptailsize+=len;
-                }
-                len=0;
-            }
-        }
-        else
-        {
-            last_op_text=true;
-            if (size!=0)
-            {
-                wptailsize=0;
-            }
-            else
-            {
-                if (len>maxwpsize)
-                {
-                    if (maxwpsize!=0)delete [] wptail;
-                    maxwpsize=len;
-                    wptail= se_new char[len];
-                }
-                memcpy(wptail,*s,len);  
-                wptailsize=len;
-                len=0;
-            }
-        }
-        
-}
-*/
-void clear_text()
+
+static void clear_text()
 {
     text_inserted=false;
     wptailsize=0;
 }
+
 static void start(void *s, const char *el, const char **attr)
 {
-    //d_printf1("bs");fflush(stdout);
-//  crm_dbg<<"\n In Start PARSING ELEMENT"<<el <<endl;
-//  test_cnt++;
     const char* uri;
     const char* local;
     const char* prefix;
@@ -290,25 +216,18 @@ static void start(void *s, const char *el, const char **attr)
     xptr new_node;
     xmlns_ptr ns = NULL_XMLNS;
     
-    if (uri!=NULL || prefix!=NULL)
+    if (uri != NULL || prefix != NULL)
     {
         if (!uri) uri="";
-        else
-            if (!prefix) prefix="";
-        ns=xm_nsp.find(str_pair(prefix,uri))->second;
+        else if (!prefix) prefix="";
+        ns = xm_nsp.find(str_pair(prefix,uri))->second;
     }
-    /*if (my_strcmp(local,"asia")==0)
-    {
-        d_printf1("be"); fflush(stdout);
-
-    }*/
-    //d_printf1("be"); fflush(stdout);
     if (mark)
         new_node=insert_element(XNULL,XNULL,parent,local,xs_untyped,ns);
     else
     {
         new_node=insert_element(left,XNULL,XNULL,local,xs_untyped,ns);
-        mark=1;
+        mark = 1;
     }
     CHECKP(new_node);
     (GETBLOCKBYNODE(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
@@ -317,8 +236,6 @@ static void start(void *s, const char *el, const char **attr)
         update_insert_sequence(new_node, schema_node_cptr((GETBLOCKBYNODE(new_node))->snode));
     CHECKP(new_node);
 #endif
-    //d_printf1("ae\n"); fflush(stdout);
-    //checkChildReferenceValidity(new_node);
     xptr par_ind=((n_dsc*)XADDR(new_node))->indir;
     stat_pair* pr=&max_fo[(GETBLOCKBYNODE(new_node))->snode];
     curp.push_back(pr);
@@ -337,16 +254,13 @@ static void start(void *s, const char *el, const char **attr)
         nss.clear();
     }
     
-//  TEMP PLEASE UNCOMMENT NEXT THREE LINES
-    //d_printf1("ba"); fflush(stdout);
     for (int i = 0; attr[i]; i += 2) 
     {
         separateName((char*)attr[i],uri,local,prefix);
-        if (uri!=NULL || prefix!=NULL)
+        if (uri != NULL || prefix != NULL)
         {
             if (!uri) uri="";
-            else
-                if (!prefix) prefix="";
+            else if (!prefix) prefix="";
             ns=xm_nsp.find(str_pair(prefix,uri))->second;
         }
         else ns = NULL;
@@ -355,9 +269,7 @@ static void start(void *s, const char *el, const char **attr)
         if (is_coll)
             update_insert_sequence(att,schema_node_cptr((getBlockHeaderCP(att))->snode));
 #endif
-        //checkChildReferenceValidity(att);
     }
-    //d_printf1("aa\n"); fflush(stdout);
 
     if (att!=XNULL) 
     {
@@ -372,35 +284,26 @@ static void start(void *s, const char *el, const char **attr)
       *(se_ostream*)s << curproc <<"%"<<endl;
      curproc++;
     }
-    //d_printf1("as\n");fflush(stdout);
 }
+
+
 static void end(void *s, const char *el)
 {
-  /*crm_dbg<<"\n In End PARSING ELEMENT"<<el <<endl;
-  if ( my_strcmp( ((node_blk_hdr*)((int)parent.addr & 0xFFFF0000))->snode->name,el)!=0)
-  {
-   crm_dbg<<"here";
-  }*/
   clear_text();
   left=parent;
   CHECKP(left);
   xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
   CHECKP(par_ind);
   parent=*((xptr*)XADDR(par_ind));
-  /*
-  CHECKP(parent);
-  crm_dbg<<"\n In End PARENT ELEMENT"<<((node_blk_hdr*)((int)parent.addr & 0xFFFF0000))->snode->name <<endl;
-  */
   mark=0;
   curp.pop_back();
   sizehnt=curp.back();
 }
 
-void data(void *userData, const char *s, int len)
+
+
+static void data(void *userData, const char *s, int len)
 {
-    //d_printf1("bd");fflush(stdout);
-    //return;
-    //test_cnt++;
     if (cdata_mode)
     {
         if (wptailsize+len>maxwpsize)
@@ -423,7 +326,7 @@ void data(void *userData, const char *s, int len)
     if (wpstrip) 
     {
         processWP(&s,len);
-        if (len==0) {/*d_printf1("ad\n");fflush(stdout);*/return; }
+        if (len==0) return;
     }
     text_inserted=true;
     xptr new_node;
@@ -439,8 +342,6 @@ void data(void *userData, const char *s, int len)
     if (is_coll)
         update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
 #endif
-    //checkTextNodeCorrectness(new_node);
-    //checkChildReferenceValidity(new_node);
     mark=0;
     left=new_node;
     CHECKP(left);
@@ -454,17 +355,9 @@ void data(void *userData, const char *s, int len)
         }
 #endif
     parent=*((xptr*)XADDR(par_ind));
-    /*if (parent!=XNULL)
-    {
-        CHECKP(parent);
-        if (GETTYPE((GETBLOCKBYNODE(parent))->snode)!=element)
-     {
-        crm_dbg<<"Error";
-     }
-    }*/
-    //mark=0;
-    //d_printf1("ad\n");fflush(stdout);
 }
+
+
 static void sc_start(void *data, const char *el, const char **attr)
 {
     const char* uri;
@@ -475,18 +368,12 @@ static void sc_start(void *data, const char *el, const char **attr)
     if (uri!=NULL || prefix!=NULL)
     {
         if (!uri) uri="";
-        else
-            if (!prefix) prefix="";
+        else if (!prefix) prefix="";
         ns=xm_nsp.find(str_pair(prefix,uri))->second;
     }
     schema_node_cptr child=sc_parent->get_first_child(ns,local,element);
     if (!child.found()) child=sc_parent->add_child(ns,local,element);
-    //statistics
-    /*if (my_strcmp(sc_parent->name,"asia")==0)
-    {
-        d_printf1("be"); fflush(stdout);
-    }*/
-    //child->cl_hint++;
+
     curr_fo.back()++;
     clear_text();
     curr_fo.push_back(0);
@@ -495,7 +382,7 @@ static void sc_start(void *data, const char *el, const char **attr)
     {
         if (sc_parent->get_first_child(NULL_XMLNS,NULL,xml_namespace) == XNULL)
             sc_parent->add_child(NULL_XMLNS,NULL,xml_namespace);
-        //statistics
+
         curr_fo.back()+=is_ns;
 
         is_ns=0;
@@ -508,19 +395,18 @@ static void sc_start(void *data, const char *el, const char **attr)
         if (uri!=NULL || prefix!=NULL)
         {
             if (!uri) uri="";
-            else
-                if (!prefix) prefix="";
+            else if (!prefix) prefix="";
             ns=xm_nsp.find(str_pair(prefix,uri))->second;
         }
         else
             ns=NULL_XMLNS;
         atts=sc_parent->get_first_child(ns,local,attribute);
         if (!atts.found())atts=sc_parent->add_child(ns,local,attribute);
-        //statistics
-        //atts->cl_hint++;
         curr_fo.back()++;
     }
 }
+
+
 static void sc_end(void *data, const char *el)
 {
     std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent);
@@ -533,21 +419,19 @@ static void sc_end(void *data, const char *el)
     clear_text();
 }
 
-void sc_data(void *userData, const char *s, int len)
+static void sc_data(void *userData, const char *s, int len)
 {
     if (!text_inserted)
     {
         if (cdata_mode||(wpstrip && isWP(s,len))) return;
         schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,text);
         if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,text);
-        //statistics
-        //  xsn->cl_hint++;
         curr_fo.back()++;
         text_inserted=true;
     }
 }
 
-void el_ns (void *userData, const char *prefix, const char *uri)
+static void el_ns (void *userData, const char *prefix, const char *uri)
 {
     if(prefix == NULL && uri == NULL) return;
 
@@ -567,35 +451,40 @@ void el_ns (void *userData, const char *prefix, const char *uri)
     is_ns++;
 }
 
-void sc_ns (void *userData, const char *prefix, const char *uri)
+static void sc_ns (void *userData, const char *prefix, const char *uri)
 {
-    /// This is situation xmlns="". The attribute value in a default namespace declaration MAY be empty. 
-    /// This has the same effect, within the scope of the declaration, of there being no default namespace.
+    /* 
+     * This is situation xmlns="". The attribute value in a default namespace 
+     * declaration MAY be empty. This has the same effect, within the scope of 
+     * the declaration, of there being no default namespace.
+     */
     if(prefix == NULL && uri == NULL) return;
     
     const char* prefixm;
-    if (prefix==NULL)
-        prefixm="";
-    else
-        prefixm=prefix;
+    
+    if (prefix==NULL) prefixm="";
+    else prefixm = prefix;
+
     str_pair sp(prefixm,uri);
     it_map=xm_nsp.find(sp);
     if (it_map== xm_nsp.end())
     {
-        xm_nsp[sp] = xmlns_touch(prefix, (strcmp(uri," ")==0) ? NULL : uri);
+        xm_nsp[sp] = xmlns_touch(prefixm, uri);
     }
     is_ns++;
 }
-void sc_comment (void *userData, const char *data)
+
+
+static void sc_comment (void *userData, const char *data)
 {
     schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,comment);
     if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,comment);
-    //statistics
-    //xsn->cl_hint++;
     curr_fo.back()++;
     clear_text();
 }
-void dt_comment (void *userData, const char *data)
+
+
+static void dt_comment (void *userData, const char *data)
 {
     xptr new_node;
     clear_text();
@@ -615,25 +504,31 @@ void dt_comment (void *userData, const char *data)
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     parent=removeIndirection(par_ind);
 }
-void sc_cdata_start (void *userData)
+
+
+static void sc_cdata_start (void *userData)
 {
     schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,cdata);
     if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,cdata);
-    //statistics
-    //xsn->cl_hint++;
     curr_fo.back()++;
     cdata_mode=true;
 }
-void sc_cdata_end (void *userData)
+
+
+static void sc_cdata_end (void *userData)
 {
     cdata_mode=false;
 }
-void dt_cdata_start (void *userData)
+
+
+static void dt_cdata_start (void *userData)
 {
     cdata_mode=true;
     clear_text();
 }
-void dt_cdata_end (void *userData)
+
+
+static void dt_cdata_end (void *userData)
 {
     xptr new_node;
     cdata_mode=false;
@@ -654,16 +549,18 @@ void dt_cdata_end (void *userData)
     parent=removeIndirection(par_ind);
     clear_text();   
 }
-void sc_pi (void *userData, const char *target, const char *data)
+
+
+static void sc_pi (void *userData, const char *target, const char *data)
 {
     schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,pr_ins);
     if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,pr_ins);
     clear_text();
-    //statistics
-    //xsn->cl_hint++;
     curr_fo.back()++;
 }
-void dt_pi (void *userData, const char *target, const char *data)
+
+
+static void dt_pi (void *userData, const char *target, const char *data)
 {
     xptr new_node;
     clear_text();
@@ -683,7 +580,9 @@ void dt_pi (void *userData, const char *target, const char *data)
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     parent=removeIndirection(par_ind);
 }
-void parse_load(FILE* f, se_ostream &ostr)
+
+
+static void parse_load(FILE* f, se_ostream &ostr)
 {
     XML_Parser p = XML_ParserCreateNS(NULL,SEPARATOR);
     if (! p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser\n",true);
@@ -695,7 +594,6 @@ void parse_load(FILE* f, se_ostream &ostr)
     XML_SetCommentHandler(p, dt_comment);
     XML_SetProcessingInstructionHandler(p, dt_pi);
     XML_SetCharacterDataHandler(p, data);
-    //XML_SetCdataSectionHandler(p,dt_cdata_start,dt_cdata_end);
     XML_SetUserData (p, &ostr);
 
     cdata_mode=false;
@@ -741,16 +639,15 @@ void parse_load(FILE* f, se_ostream &ostr)
     XML_ParserFree(p);
 }
 
-void parse_schema(FILE* f)
+static void parse_schema(FILE* f)
 {
     xm_nsp.clear();
-    xm_nsp[str_pair("xml","")] = xmlns_touch("xml", NULL);
+    xm_nsp[str_pair("xml","http://www.w3.org/XML/1998/namespace")] = xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace");
     curr_fo.clear();
     curr_fo.push_back(0);
     max_fo.clear();
-    //sc_parent->cl_hint=1;
     XML_Parser p = XML_ParserCreateNS(NULL,SEPARATOR);
-    if (! p) throw USER_ENV_EXCEPTION("file_utils.cpp,549,Couldn't allocate memory for parser\n",true);
+    if (! p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser",true);
     XML_SetReturnNSTriplet(p,1);
     int done;
     int len;
@@ -760,13 +657,12 @@ void parse_schema(FILE* f)
     XML_SetCommentHandler(p, sc_comment);
     XML_SetProcessingInstructionHandler(p, sc_pi);
     XML_SetCharacterDataHandler(p, sc_data);
-    //XML_SetCdataSectionHandler(p,dt_cdata_start,dt_cdata_end);
     cdata_mode=false;
     len = fread(Buff, 1, BUFFSIZE, f);
     if (ferror(f))  
     {
         XML_ParserFree(p);
-        throw USER_ENV_EXCEPTION("file_utils.cpp,560,Read error",true);
+        throw USER_ENV_EXCEPTION("Read error",true);
     }
     done = feof(f);
     while (!done)
@@ -777,7 +673,7 @@ void parse_schema(FILE* f)
             if (ferror(f)) 
             {
                 XML_ParserFree(p);
-                throw USER_ENV_EXCEPTION("file_utils.cpp,567,Read error",true);
+                throw USER_ENV_EXCEPTION("Read error",true);
             }
             done = feof(f);
         }
@@ -801,18 +697,6 @@ void parse_schema(FILE* f)
         XML_ParserFree(p);
         throw USER_EXCEPTION2(SE2005, tmp);
     }
-    /*it_map= xm_nsp.begin();
-    while (it_map!=xm_nsp.end())
-    {
-        xmlns_ptr xns=it_map->second;
-        crm_dbg<<"\n Namespace uri=";
-        if (xns->uri!=NULL)
-            crm_dbg<<xns->uri;
-        crm_dbg<<" prefix=";
-        if (xns->prefix!=NULL)
-            crm_dbg<<xns->prefix;
-        it_map++;
-    }*/
     
     std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent);
     if (it==max_fo.end())
@@ -830,7 +714,6 @@ void parse_schema(FILE* f)
     }
     curp.push_back(&max_fo[sc_parent]);
     sizehnt=curp.back();
-    //printMFO (sc_parent,max_fo,0,0);
     XML_ParserFree(p);
 
 }
@@ -883,7 +766,6 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped,int& need
 
     if (!print_progress) print_p=true;
 
-    //return ((n_dsc*)XADDR(docnode))->indir;
     return docnode;
 }
 
@@ -942,7 +824,6 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
 #ifdef SE_ENABLE_FTSEARCH
     execute_modifications();
 #endif
-//  return ((n_dsc*)XADDR(docnode))->indir;
     return docnode; 
 }
 

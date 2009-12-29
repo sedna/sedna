@@ -5,17 +5,19 @@
 
 
 #include "common/sedna.h"
+#include "common/utils.h"
 
 #include "tr/executor/xqops/PPAbsPath.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/vmm/vmm.h"
-#include "common/utils.h"
-#include "tr/crmutils/node_utils.h"
-#include "tr/locks/locks.h"
-#include "tr/crmutils/crmutils.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/executor/base/merge.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/locks/locks.h"
+#include "tr/vmm/vmm.h"
 #include "tr/structures/metadata.h"
 #include "tr/crmutils/node_utils.h"
+
 
 /**
  * The goal of this operation is to provide efficient execution for absolute
@@ -49,8 +51,7 @@ ProcessingInstructionTest    ::=    <"processing-instruction" "("> StringLiteral
 CommentTest    ::=    <"comment" "("> ")"
 TextTest    ::=    <"text" "("> ")"
 AnyKindTest    ::=    <"node" "("> ")"
-
- */
+*/
 
 
 
@@ -77,9 +78,9 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 {
 }
 
-PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
-                     operation_info _info_,
-                     PathExpr *_path_expr_,
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
+                     operation_info _info_, 
+                     PathExpr *_path_expr_, 
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_,
                      schema_node_xptr _root_) : PPIterator(_cxt_, _info_),
@@ -244,6 +245,14 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
     }
 
     qsort(merged_seq_arr, scmnodes_num, sizeof(xptr), doc_order_merge_cmp);
+}
+
+void PPAbsPath::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    if (name.op) name.op->accept(v);
+    v.pop();
 }
 
 // true, if PPAbsPath is just wrapping over fn:document/fn:collection call

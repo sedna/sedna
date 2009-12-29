@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPUp.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPUp::PPUp(dynamic_context *_cxt_,
@@ -76,4 +77,12 @@ PPIterator* PPUp::do_copy(dynamic_context *_cxt_)
     PPUp *res = se_new PPUp(_cxt_, info, child, scm_node);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPUp::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

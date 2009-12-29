@@ -45,10 +45,13 @@ void global_producer::close() { ((PPIterator*)op)->close(); }
  ******************************************************************************/
 static_context::static_context()
 {
+    /* Initialize default namespace stack */
     def_ns.push_back(NULL_XMLNS);
-    xmlns_ptr tmp = xmlns_touch("xml", NULL);
+    
+    /* Initialize predefined namespaces */
+    xmlns_ptr tmp = xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace");
     insc_ns["xml"].push_back(tmp);
-    ns_lib[str_pair("","xml")]=tmp;
+    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
     tmp=xmlns_touch("xs", "http://www.w3.org/2001/XMLSchema");
     insc_ns["xs"].push_back(tmp);
     ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
@@ -65,7 +68,6 @@ static_context::static_context()
     insc_ns["se"].push_back(tmp);
     ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
 
-
     boundary_space = xq_boundary_space_strip;
     default_collation_uri = NULL;
     base_uri = NULL;
@@ -76,15 +78,14 @@ static_context::static_context()
     cn_inherit = false;
     output_indent = se_output_indent_yes;
 
-    /////////////////////////////////////////////////////////////////////////
-    /// Set codepoint collation as the default one.
-    /// DO NOT call static_context::set_default_collation() here -
-    /// it is too complex to be called from constructor.
+    /* 
+     * Set codepoint collation as the default one.
+     * static_context::set_default_collation() is too complex to be called from constructor.
+     */
     const char* codepoint_collation_uri = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     default_collation_uri = se_new char[strlen(codepoint_collation_uri) + 1];
     strcpy(default_collation_uri, codepoint_collation_uri);
     default_collation_handler = dynamic_context::collation_manager.get_collation_handler(codepoint_collation_uri);
-    /////////////////////////////////////////////////////////////////////////
 }
 
 static_context::~static_context()
@@ -131,26 +132,30 @@ static_context::~static_context()
     }
 }
 
-xmlns_ptr static_context::get_ns_pair(const char* prefix,const char* uri)
+xmlns_ptr static_context::get_ns_pair(const char* prefix, const char* uri)
 {
-    const char* pref=(prefix==NULL)?"":prefix;
-    ns_map::iterator it=ns_lib.find(str_pair(uri,pref));
+    U_ASSERT(prefix);
+    
+    ns_map::iterator it=ns_lib.find(str_pair(uri,prefix));
     if (it!=ns_lib.end())
         return it->second;
     else
     {
-        const char* ur=(my_strcmp(uri,"http://www.w3.org/XML/1998/namespace")==0)?NULL:uri;
-        xmlns_ptr res=xmlns_touch(prefix,ur);
-        ns_lib[str_pair(uri,pref)]=res;
+        xmlns_ptr res = xmlns_touch(prefix,uri);
+        ns_lib[str_pair(uri,prefix)] = res;
         return res;
     }
 }
 
 xmlns_ptr static_context::add_to_context(const char* prefix,const char* uri)
 {
-    xmlns_ptr res=get_ns_pair(prefix,uri);
-    if (prefix==NULL)
+    U_ASSERT(prefix);
+    
+    xmlns_ptr res = get_ns_pair(prefix,uri);
+    if (strcmp("", prefix) == 0)
+    {
         def_ns.push_back(res);
+    }
     else
     {
         inscmap ::iterator it=insc_ns.find(std::string(prefix));
@@ -161,9 +166,12 @@ xmlns_ptr static_context::add_to_context(const char* prefix,const char* uri)
     }
     return res;
 }
+
 void static_context::remove_from_context(const char* prefix)
 {
-    if (prefix==NULL&&def_ns.size()>0)
+    U_ASSERT(prefix);    
+
+    if (strcmp(prefix, "") == 0 && def_ns.size()>0)
     {
         def_ns.pop_back();
     }
@@ -177,32 +185,11 @@ void static_context::remove_from_context(const char* prefix)
     }
 }
 
-char * static_context::get_uri_by_prefix(const char* _prefix,t_item type) const
-{
-    std::string prefix(_prefix);
-    char* uri;
-    if (prefix.size()==0)
-    {
-        if (type!=attribute)
-        {
-            xmlns_ptr ns=   def_ns.back();
-            uri=(ns==NULL)?NULL:ns->uri;
-        }
-        else uri=NULL;
-    }
-    else
-    {
-        inscmap::const_iterator it=insc_ns.find(prefix);
-        if (it!=insc_ns.end()&& it->second.size()>0)
-            uri=it->second.back()->uri;
-        else
-            throw XQUERY_EXCEPTION(XPST0008);
-    }
-    return uri;
-}
 
 xmlns_ptr static_context::get_xmlns_by_prefix(const char *_prefix, int count)
 {
+    U_ASSERT(_prefix);    
+
     if (count < 0) count = strlen(_prefix);
     std::string prefix(_prefix, count);
     if (prefix.size()==0)
@@ -221,21 +208,17 @@ xmlns_ptr static_context::get_xmlns_by_prefix(const char *_prefix, int count)
 
 void static_context::set_base_uri(const char* _base_uri_)
 {
-    ///////////////////////////////////////////////////////////////////////
-    /// Check constraints on URILiteral.
+    
+    /* Check constraints on URILiteral. */
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(_base_uri_, &valid, &nfo);
     if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog base-uri property contains invalid URI.");
-    ///////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////
-    /// Delete old value if any.
+    /* Delete old value if any. */
     if(base_uri != NULL) delete base_uri;
-    ///////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////
-    /// Normalize URI if needed and create new value.
+    /* Normalize URI if needed and create new value. */
     if(!nfo.normalized)
     {
         stmt_str_buf result;
@@ -250,28 +233,24 @@ void static_context::set_base_uri(const char* _base_uri_)
         base_uri = se_new char[strlen(_base_uri_) + 1];
         strcpy(base_uri, _base_uri_);
     }
-    ///////////////////////////////////////////////////////////////////////
 }
 
 void static_context::set_default_collation_uri(const char* _default_collation_uri_)
 {
     tuple_cell tc;
 
-    ///////////////////////////////////////////////////////////////////////
-    /// Check constraints on URILiteral.
+    /* Check constraints on URILiteral. */
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(_default_collation_uri_, &valid, &nfo);
     if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog default-collation property contains invalid URI.");
-    ///////////////////////////////////////////////////////////////////////
 
     if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL)
         throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (it could not be relative while base-uri is not defined).");
 
     const char* normalized_value = _default_collation_uri_;
 
-    ///////////////////////////////////////////////////////////////////////
-    /// Normalize URI if needed.
+    /* Normalize URI if needed. */
     if(!nfo.normalized)
     {
         stmt_str_buf result;
@@ -279,10 +258,8 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
         tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
         normalized_value = tc.get_str_mem();
     }
-    ///////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////
-    /// And try to resolve it over base-uri property if it is relative.
+    /* And try to resolve it over base-uri property if it is relative. */
     if(nfo.type == Uri::UT_RELATIVE)
     {
        try
@@ -299,7 +276,6 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
            throw;
        }
     }
-    ///////////////////////////////////////////////////////////////////////
 
     default_collation_handler = dynamic_context::collation_manager.get_collation_handler(normalized_value);
     if(default_collation_handler == NULL) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");
@@ -318,20 +294,19 @@ int static_context::get_collation(const char *uri, /* out */ CollationHandler** 
         return 0;
     }
 
-    /// 1. Check constraints on the given URI.
+    /* 1. Check constraints on the given URI. */
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(uri, &valid, &nfo);
-    if ( !valid ) return COLLATION_INVALID_URI;  // throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is not valid.");
+    if ( !valid ) return COLLATION_INVALID_URI;
 
     if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL)
         return COLLATION_RESOLVE_ERR;
-        // throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri property is not defined.");
 
     tuple_cell tc;
     const char *normalized_value = uri;
 
-    /// 2. Normalize URI if needed.
+    /* 2. Normalize URI if needed. */
     if(!nfo.normalized)
     {
         stmt_str_buf result;
@@ -340,8 +315,7 @@ int static_context::get_collation(const char *uri, /* out */ CollationHandler** 
         normalized_value = tc.get_str_mem();
     }
 
-
-    /// 3. And try to resolve it over base-uri property if it is relative.
+    /* 3. And try to resolve it over base-uri property if it is relative. */
     if(nfo.type == Uri::UT_RELATIVE)
     {
        try
@@ -354,14 +328,14 @@ int static_context::get_collation(const char *uri, /* out */ CollationHandler** 
        }
        catch(SednaUserException &e)
        {
-           if(e.get_code() == FORG0009) return COLLATION_RESOLVE_ERR; //throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri contains relative URI.");
+           if(e.get_code() == FORG0009) return COLLATION_RESOLVE_ERR;
            throw;
        }
     }
 
     /// 4. Get handler from the resolved and normalized value.
     *handler = dynamic_context::collation_manager.get_collation_handler(normalized_value);
-    if (!*handler) return COLLATION_MISS; // throw XQUERY_EXCEPTION(FOCH0002);
+    if (!*handler) return COLLATION_MISS;
     return 0;
 }
 
@@ -479,18 +453,4 @@ void dynamic_context::reset_session_options()
     stack_trace_debug = SEDNA_DEBUG_OFF;
 }
 
-int __cpp_is_stack_trace_debug()
-{
-    return dynamic_context::stack_trace_debug;
-}
-
-// session options Scheme part
-extern "C" {
-
-int is_stack_trace_debug()
-{
-    return __cpp_is_stack_trace_debug();
-}
-
-} // end of extern "C"
 

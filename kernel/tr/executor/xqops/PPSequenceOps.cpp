@@ -12,6 +12,7 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/fo/comparison_operations.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,6 +77,14 @@ PPIterator* PPFnEmpty::do_copy(dynamic_context *_cxt_)
     PPFnEmpty *res = se_new PPFnEmpty(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnEmpty::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 
@@ -143,6 +152,15 @@ PPIterator* PPFnExists::do_copy(dynamic_context *_cxt_)
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
+
+void PPFnExists::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -232,6 +250,16 @@ PPIterator* PPFnItemAt::do_copy(dynamic_context *_cxt_)
     res->pos_child.op = pos_child.op->copy(_cxt_);
     return res;
 }
+
+void PPFnItemAt::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq_child.op->accept(v);
+    pos_child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -381,6 +409,17 @@ PPIterator* PPFnDistinctValues::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnDistinctValues::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    if (collation_child.op)
+        collation_child.op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnIndexOf
@@ -522,6 +561,16 @@ PPIterator* PPFnIndexOf::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnIndexOf::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq_child.op->accept(v);
+    srch_child.op->accept(v);
+    if (collation_child.op)
+        collation_child.op->accept(v);
+    v.pop();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -593,6 +642,14 @@ PPIterator* PPFnReverse::do_copy(dynamic_context *_cxt_)
     PPFnReverse *res = se_new PPFnReverse(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnReverse::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 
@@ -738,6 +795,17 @@ PPIterator* PPFnSubsequence::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnSubsequence::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq_child.op->accept(v);
+    start_child.op->accept(v);
+    if (is_length)
+        length_child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -828,6 +896,15 @@ PPIterator* PPFnRemove::do_copy(dynamic_context *_cxt_)
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->pos_child.op = pos_child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnRemove::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq_child.op->accept(v);
+    pos_child.op->accept(v);
+    v.pop();
 }
 
 
@@ -945,6 +1022,16 @@ PPIterator* PPFnInsertBefore::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnInsertBefore::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    seq_child.op->accept(v);
+    pos_child.op->accept(v);
+    ins_child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1014,6 +1101,14 @@ PPIterator* PPFnZeroOrOne::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnZeroOrOne::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1071,6 +1166,14 @@ PPIterator* PPFnOneOrMore::do_copy(dynamic_context *_cxt_)
     PPFnOneOrMore *res = se_new PPFnOneOrMore(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnOneOrMore::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 
@@ -1134,4 +1237,12 @@ PPIterator* PPFnExactlyOne::do_copy(dynamic_context *_cxt_)
     PPFnExactlyOne *res = se_new PPFnExactlyOne(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnExactlyOne::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

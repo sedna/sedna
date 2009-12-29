@@ -43,44 +43,52 @@ static void inline print_indent(se_ostream& crmout, int indent) {
     for (int i=0;i<indent;i++) crmout << " ";
 }
 
-static void print_namespace(xmlns_ptr nsd,se_ostream& crmout,t_print ptype)
+static void print_namespace(xmlns_ptr nsd, se_ostream& crmout, t_print ptype)
 {
-    if (ptype==xml )
+    U_ASSERT(nsd->prefix);
+    U_ASSERT(nsd->uri);
+    
+    if (ptype == xml)
     {
-        if (nsd->prefix==NULL)
-            crmout <<" xmlns=\"";
+        if (strcmp(nsd->prefix, "") == 0)
+            crmout << " xmlns=\"";
         else
-            crmout <<" xmlns:"<< nsd->prefix << "=\"";
-        if (nsd->uri==NULL)
-            crmout<<"http://www.w3.org/XML/1998/namespace";
-        else
-            crmout.writeattribute(nsd->uri, strlen(nsd->uri));
-        crmout<<"\"";
+            crmout << " xmlns:" << nsd->prefix << "=\"";
+        crmout.writeattribute(nsd->uri, strlen(nsd->uri));
+        crmout << "\"";
     }
 }
 
-static inline const ns_pair pref_to_str(xmlns_ptr ns)
+static inline const
+ns_pair pref_to_str(xmlns_ptr ns)
 {
-    return ns_pair((ns->prefix!=NULL)?ns->prefix:"",(ns->uri!=NULL)?ns->uri:"http://www.w3.org/XML/1998/namespace");
+    U_ASSERT(ns->prefix);
+    U_ASSERT(ns->uri);
+
+    return ns_pair(ns->prefix, ns->uri);
 }
 
 static inline const std::string 
-prefix_to_str(char* pref) {
-    return std::string((pref!=NULL)?pref:"");
+prefix_to_str(char* prefix) {
+    U_ASSERT(prefix);
+
+    return std::string(prefix);
 }
 
 static void 
-print_attribute_prefix(se_ostream& crmout,schema_node_cptr scm, int indent) {
-    char* pref=NULL;
-    if (scm->get_xmlns()==NULL) {
-        pref=NULL;
-    }
-    else if  (!indent)
-        pref=scm->get_xmlns()->prefix;
-    else
-        pref=xm_nsp[pref_to_str(scm->get_xmlns())]->prefix;
-    if (pref!=NULL) {
-        crmout<<pref<<":";
+print_attribute_prefix(se_ostream& crmout, schema_node_cptr scm, int indent) {
+
+    if (scm->get_xmlns() != NULL_XMLNS) 
+    {
+        char* prefix;
+        if (!indent)
+            prefix = scm->get_xmlns()->prefix;
+        else
+            prefix = xm_nsp[pref_to_str(scm->get_xmlns())]->prefix;
+
+        U_ASSERT(prefix);
+            
+        crmout<<prefix<<":";
     }
 }
 
@@ -193,30 +201,39 @@ print_node_internal(xptr node,
             xptr first_ns=XNULL;
             std::vector<ns_pair> *att_ns=NULL;
             std::vector<std::string> *pref_ns=NULL;
-            //bool outerns=false;
+
             char* name=GETNAME(scn);
-            if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL)
-                crmout<<scn->get_xmlns()->prefix<<":";
-            crmout <<name;
-            xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
-            if(child==XNULL)
+            xmlns_ptr nsptr = scn->get_xmlns();
+            
+            if (nsptr != NULL_XMLNS) 
             {
+                U_ASSERT(nsptr->prefix != NULL);
+                if(strcmp(nsptr->prefix, "") != 0)
+                    crmout << nsptr->prefix << ":";
+            }
+            
+            crmout << name;
+            xptr child = giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
 
-                if (scn->get_xmlns()!=NULL && xm_nsp.find(pref_to_str(scn->get_xmlns()))==xm_nsp.end()&&    my_strcmp(scn->get_xmlns()->prefix,"xml"))
-                    print_namespace(scn->get_xmlns(),crmout,ptype);
-                if (def_set&&scn->get_xmlns()==NULL)              
+            if(child == XNULL)
+            {
+                if (nsptr != NULL_XMLNS
+                    && xm_nsp.find(pref_to_str(nsptr)) == xm_nsp.end()
+                    && strcmp(nsptr->prefix, "xml"))
+                    print_namespace(nsptr, crmout, ptype);
+                if(def_set && nsptr == NULL_XMLNS)
                     crmout <<" xmlns=\"\"";
-
                 crmout << ((ptype==xml)? "/>": ")");            
                 return;         
             }
             else
                 CHECKP(child);
+        
             //namespaces print and add
-            while (GETTYPE(GETSCHEMENODEX(child))==xml_namespace)
+            while (GETTYPE(GETSCHEMENODEX(child)) == xml_namespace)
             {   
-                if (first_ns==XNULL)
-                    first_ns=child;
+                if (first_ns == XNULL) first_ns = child;
+
                 ns_pair str=pref_to_str(xmlns_touch(((ns_dsc*)XADDR(child))->ns));
                 nspt_map::iterator it_map=xm_nsp.find(str);
                 if (it_map==xm_nsp.end())
@@ -247,42 +264,39 @@ print_node_internal(xptr node,
                 CHECKP(child);
             }
             //self namespace
-            if (scn->get_xmlns()!=NULL && xm_nsp.find(pref_to_str(scn->get_xmlns()))==xm_nsp.end()&&
-                my_strcmp(scn->get_xmlns()->prefix,"xml"))
+            if (scn->get_xmlns() != NULL_XMLNS && 
+                xm_nsp.find(pref_to_str(scn->get_xmlns()))==xm_nsp.end() &&
+                strcmp(scn->get_xmlns()->prefix,"xml"))
             {
                 ns_pair str=pref_to_str(scn->get_xmlns());
                 xm_nsp[str]=scn->get_xmlns();
-                if (!att_ns) 
-                    att_ns= se_new std::vector<ns_pair> ;
+                if (!att_ns)
+                    att_ns= se_new std::vector<ns_pair>;
                 att_ns->push_back(str);
                 print_namespace(scn->get_xmlns(),crmout,ptype);
-                std::string prf=prefix_to_str(scn->get_xmlns()->prefix);
-                if (nspt_pref.find(prf)==
-                    nspt_pref.end())
+                std::string prf = prefix_to_str(scn->get_xmlns()->prefix);
+                if (nspt_pref.find(prf) == nspt_pref.end())
                 {
                     if (!pref_ns) pref_ns= se_new std::vector<std::string> ;
                     pref_ns->push_back(prf);
                     nspt_pref.insert(prf);
-
                 }
-                if (scn->get_xmlns()->prefix==NULL)
+                
+                if (strcmp(scn->get_xmlns()->prefix, "") == 0)
                 {
-                    if (!def_set)def_inset=true;
-                    def_set=true;
+                    if (!def_set) def_inset=true;
+                    def_set = true;
                 }
-
             }
             else
             {
-                if (def_set&&scn->get_xmlns()==NULL)
+                if (def_set && scn->get_xmlns() == NULL_XMLNS)
                 {
-
                     def_set=false;
                     def_inset=true;
                     crmout <<" xmlns=\"\"";
                 }
             }
-            //case of def_ns
 
             xptr* ptr=NULL;
             sc_ref_item* sch=NULL;
@@ -293,18 +307,22 @@ print_node_internal(xptr node,
                 crmout << ((ptype==xml )? "/>": "))");
                 goto nsfree;
             }
+
             //namespaces for attributes
             CHECKP(node);
-            ptr= (xptr*)((char*)XADDR(node)+sizeof(e_dsc));
-            sch=scn->children.first;
+            ptr = (xptr*)((char*)XADDR(node)+sizeof(e_dsc));
+            sch = scn->children.first;
             while (sch!=NULL)
             {
-                if (sch->object.get_xmlns()!=NULL && sch->object.type==attribute &&  xm_nsp.find(pref_to_str(sch->object.get_xmlns()))== xm_nsp.end()  && *(ptr+cnt)!=XNULL )
+                if (sch->object.get_xmlns() != NULL_XMLNS && 
+                    sch->object.type==attribute &&
+                    xm_nsp.find(pref_to_str(sch->object.get_xmlns())) == xm_nsp.end() && 
+                    *(ptr+cnt) != XNULL )
                 {
-                    if (!(/*sch->object.get_xmlns()->uri==NULL && */my_strcmp(sch->object.get_xmlns()->prefix,"xml")==0))
+                    if (my_strcmp(sch->object.get_xmlns()->prefix,"xml") != 0)
                     {
                         ns_pair str=pref_to_str(sch->object.get_xmlns());
-                        xmlns_ptr xmn=NULL_XMLNS;
+                        xmlns_ptr xmn = NULL_XMLNS;
                         if (nspt_pref.find(str.first)==nspt_pref.end())
                         {
                             xmn=sch->object.get_xmlns();
@@ -324,11 +342,10 @@ print_node_internal(xptr node,
                     }
                     else
                     {
-
-                        xmlns_ptr t=cxt->st_cxt->get_ns_pair("xml","");//xml_ns::init(NULL,"xml",false);
+                        xmlns_ptr t=cxt->st_cxt->get_ns_pair("xml","http://www.w3.org/XML/1998/namespace");
                         ns_pair str=pref_to_str(t);
                         xm_nsp[str]=t;
-                        if (!att_ns) 
+                        if (!att_ns)
                             att_ns= se_new std::vector<ns_pair> ;
                         att_ns->push_back(str);
                     }
@@ -341,7 +358,7 @@ print_node_internal(xptr node,
             CHECKP(child);
             if (GETTYPE(GETSCHEMENODEX(child))==attribute)
             {
-                if (ptype==sxml )  crmout << "(@";
+                if (ptype==sxml)  crmout << "(@";
                 do
                 {   
                     print_node_internal(child,crmout,wi,indent+1,ptype,cxt);
@@ -386,7 +403,7 @@ print_node_internal(xptr node,
             if (ptype==xml )
             {
                 crmout << "</";
-                if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL)
+                if (scn->get_xmlns() != NULL && strcmp(nsptr->prefix, "") != 0)
                     crmout<<scn->get_xmlns()->prefix<<":";
                 crmout<< name <<">";
             }
@@ -885,14 +902,8 @@ void print_descriptive(schema_node_cptr node, se_ostream& crmout, int indent)
         crmout << "local_name=\"" << node->name <<"\"";
     if (node->get_xmlns()!=NULL_XMLNS)
     {
-        if (node->get_xmlns()->prefix!=NULL)
-            crmout << " prefix=\"" << node->get_xmlns()->prefix <<"\"";
-        else
-            crmout << " prefix=\"\"";
-        if (node->get_xmlns()->uri!=NULL)
-            crmout << " uri=\"" << node->get_xmlns()->uri <<"\"";  
-        else
-            crmout << " uri=\"http://www.w3.org/XML/1998/namespace\"";
+        crmout << " prefix=\"" << node->get_xmlns()->prefix <<"\"";
+        crmout << " uri=\"" << node->get_xmlns()->uri <<"\"";  
     }
     crmout << " type=\"" <<type2string(node->type)<<"\"";
     crmout << " nodes_count=\"" <<node->nodecnt<<"\"";
@@ -952,16 +963,10 @@ void sxml_print_descriptive(schema_node_cptr node, se_ostream& crmout, int inden
     crmout << " (NODE (@";
     if (node->name!=NULL)
         crmout << " (local_name \"" << node->name <<"\")";
-    if (node->get_xmlns()!=NULL)
+    if (node->get_xmlns() != NULL_XMLNS)
     {
-        if (node->get_xmlns()->prefix!=NULL)
-            crmout << " (prefix \"" << node->get_xmlns()->prefix <<"\")";
-        else
-            crmout << " (prefix \"\")";
-        if (node->get_xmlns()->uri!=NULL)
-            crmout << " (uri \"" << node->get_xmlns()->uri <<"\")";    
-        else
-            crmout << " (uri \"http://www.w3.org/XML/1998/namespace\")";
+        crmout << " (prefix \"" << node->get_xmlns()->prefix <<"\")";
+        crmout << " (uri \"" << node->get_xmlns()->uri <<"\")";    
     }
     crmout << " (type \"" <<type2string(node->type)<<"\")";
 

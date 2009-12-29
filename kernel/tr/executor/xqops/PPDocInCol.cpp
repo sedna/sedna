@@ -10,6 +10,8 @@
 #include "tr/structures/metadata.h"
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 PPDocInCol::PPDocInCol(dynamic_context *_cxt_,
                        operation_info _info_, 
@@ -111,4 +113,13 @@ PPIterator* PPDocInCol::do_copy(dynamic_context *_cxt_)
     res->col_name_op.op = col_name_op.op->copy(_cxt_);
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
     return res;
+}
+
+void PPDocInCol::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    col_name_op.op->accept(v);
+    doc_name_op.op->accept(v);
+    v.pop();
 }

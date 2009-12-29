@@ -5,6 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPLast.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPLast::PPLast(dynamic_context *_cxt_,
@@ -133,4 +134,12 @@ PPIterator* PPLast::do_copy(dynamic_context *_cxt_)
     PPLast *res = se_new PPLast(_cxt_, info, last_dsc, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPLast::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }

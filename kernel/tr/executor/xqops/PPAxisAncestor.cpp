@@ -10,6 +10,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/merge.h"
+#include "tr/executor/base/PPVisitor.h"
 
 void PPAxisAncestor::init_function()
 {
@@ -94,12 +95,30 @@ void PPAxisAncestor::do_close()
 {
     child.op->close();
 }
+
 PPIterator* PPAxisAncestor::do_copy(dynamic_context *_cxt_)
 {
     PPAxisAncestor *res = self ? se_new PPAxisAncestor(_cxt_, info, child, nt_type, nt_data, true) :
                                  se_new PPAxisAncestor(_cxt_, info, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPAxisAncestor::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+
+void PPAxisAncestorOrSelf::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 void PPAxisAncestor::next_processing_instruction(tuple &t)

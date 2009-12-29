@@ -20,6 +20,7 @@ protected:
 private:
 	virtual PPIterator* do_copy(dynamic_context *_cxt_);
 	virtual void do_next   (tuple &t);
+    virtual void do_accept (PPVisitor &v);
 
 public:    
     PPSpaceSequence(dynamic_context *_cxt_,

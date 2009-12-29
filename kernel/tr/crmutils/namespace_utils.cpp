@@ -19,7 +19,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
     CHECKP(node);
     schema_node_cptr scm=GETSCHEMENODEX(node);
     nms_map::iterator it;
-    while ( scm->type!=virtual_root)
+    while (scm->type != virtual_root)
     {
         xptr ns=getChildPointerXptr(node,NULL,xml_namespace,NULL_XMLNS);
         
@@ -27,7 +27,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
         {
             CHECKP(ns);
             xmlns_ptr nsp=xmlns_touch(((ns_dsc*)XADDR(ns))->ns);
-            const char* pref=(nsp->prefix==NULL)?"":nsp->prefix;
+            const char* pref=nsp->prefix;
             if ((it=mp.find(pref))==mp.end())
             {
                 mp[pref]=nsp;
@@ -35,9 +35,9 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
             ns=getNextSiblingOfSameSortXptr(ns);
         }
         //2. self ns
-        if (scm->get_xmlns()!=NULL)
+        if (scm->get_xmlns()!=NULL_XMLNS)
         {
-            const char* pref=(scm->get_xmlns()->prefix==NULL)?"":scm->get_xmlns()->prefix;
+            const char* pref=scm->get_xmlns()->prefix;
             if ((it=mp.find(pref))==mp.end())
             {
                 mp[pref]=scm->get_xmlns();
@@ -61,7 +61,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
         std::set<xmlns_ptr>::iterator sit=atns.begin();
         while(sit!=atns.end())
         {
-            const char* pref=((*sit)->prefix==NULL)?"":(*sit)->prefix;
+            const char* pref=(*sit)->prefix;
             if ((it=mp.find(pref))!=mp.end())
             {
                 if (it->second!=*sit)

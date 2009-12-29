@@ -9,6 +9,7 @@
 #include "tr/strings/strings.h"
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -198,6 +199,15 @@ PPIterator* PPFnUriEncoding::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnUriEncoding::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -336,4 +346,13 @@ PPIterator* PPFnResolveUri::do_copy(dynamic_context *_cxt_)
     res->relative.op = relative.op->copy(_cxt_);
     if(!is_base_static) res->base.op = base.op->copy(_cxt_);
     return res;
+}
+
+void PPFnResolveUri::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    relative.op->accept(v);
+    if(!is_base_static) base.op->accept(v);
+    v.pop();
 }

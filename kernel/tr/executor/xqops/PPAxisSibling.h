@@ -52,7 +52,8 @@ private:
     virtual void do_next   (tuple &t) {
         (this->*next_fun)(t);
     }
-
+    virtual void do_accept (PPVisitor &v);
+    
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:

@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPFnAccessors.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -103,6 +104,14 @@ PPIterator* PPDmNodeKind::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPDmNodeKind::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -176,6 +185,14 @@ PPIterator* PPFnNodeName::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnNodeName::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -245,6 +262,14 @@ PPIterator* PPFnNilled::do_copy(dynamic_context *_cxt_)
     PPFnNilled *res = se_new PPFnNilled(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnNilled::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 
@@ -323,6 +348,14 @@ PPIterator* PPFnString::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnString::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -376,6 +409,13 @@ PPIterator* PPFnData::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnData::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -445,6 +485,14 @@ PPIterator* PPFnBaseURI::do_copy(dynamic_context *_cxt_)
     PPFnBaseURI *res = se_new PPFnBaseURI(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPFnBaseURI::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 
@@ -528,6 +576,15 @@ PPIterator* PPFnDocumentURI::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
+void PPFnDocumentURI::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnStaticBaseUri
@@ -569,12 +626,19 @@ void PPFnStaticBaseUri::do_next (tuple &t)
     }
 }
 
-
 PPIterator* PPFnStaticBaseUri::do_copy(dynamic_context *_cxt_)
 {
     PPFnStaticBaseUri *res = se_new PPFnStaticBaseUri(_cxt_, info);
     return res;
 }
+
+void PPFnStaticBaseUri::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -618,4 +682,11 @@ PPIterator* PPFnDefaultCollation::do_copy(dynamic_context *_cxt_)
 {
     PPFnDefaultCollation *res = se_new PPFnDefaultCollation(_cxt_, info);
     return res;
+}
+
+void PPFnDefaultCollation::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    v.pop();
 }

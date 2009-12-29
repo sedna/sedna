@@ -156,11 +156,9 @@ tuple_cell se_node_namespace_uri(xptr node)
         case element        : 
         case attribute      : {
                                   xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
-                                  if (xmlns != NULL) {
-                                      if(xmlns->uri) 
-                                          return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
-                                      else if(xmlns->prefix && strcmp("xml", xmlns->prefix) == 0)
-                                          return tuple_cell::atomic_deep(xs_anyURI, "http://www.w3.org/XML/1998/namespace");
+                                  if (xmlns != NULL_XMLNS) {
+                                    U_ASSERT(xmlns->uri);
+                                    return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
                                   }
                                   return tuple_cell::eos();
                               }

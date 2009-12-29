@@ -5,6 +5,8 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPSXptr.h"
+#include "tr/executor/base/PPVisitor.h"
+
 
 using namespace std;
 
@@ -119,6 +121,14 @@ PPIterator* PPSXptr::do_copy(dynamic_context *_cxt_)
     PPSXptr *res = se_new PPSXptr(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
+}
+
+void PPSXptr::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 static inline void restore_serialized_xptr(const xptr &serialized, xptr &result)

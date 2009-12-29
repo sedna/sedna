@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPVarDecl.h"
+#include "tr/executor/base/PPVisitor.h"
 
 
 PPVarDecl::PPVarDecl(dynamic_context *_cxt_,
@@ -68,6 +69,14 @@ void PPVarDecl::do_next(tuple &t)
 PPIterator* PPVarDecl::do_copy(dynamic_context *_cxt_)
 {
 	throw USER_EXCEPTION2(SE1003, "PPVarDecl::do_copy");
+}
+
+void PPVarDecl::do_accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 var_c_id PPVarDecl::do_register_consumer(var_dsc dsc)
