@@ -40,7 +40,6 @@ endif
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
 LOGICAL_LOG_LIB = $(PP)/kernel/sm/llsm/llcommon$(LIB_EXT)
 
-
 ifeq ($(PLATFORM), WIN32)
 LFLAGS += /STACK:104857600
 LFLAGS_DTS += /STACK:104857600
@@ -82,16 +81,7 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
 	$(LD) $(LFLAGS) $(LDOUT)$@ $^  $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
 endif
 
-
-ifeq ("$(PLATFORM)", "WIN32")
-$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
-	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(LSLIBS) $(FT_ADD_LIB)
-else					
-$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
-	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
-endif
-
-$(TRN_OBJS): $(SUBDIROBJS)
+$(TRN_OBJS:$(OBJ_EXT)=.cpp): xqp/xqp$(LIB_EXT)
 
 $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
