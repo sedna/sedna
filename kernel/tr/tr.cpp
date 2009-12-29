@@ -167,13 +167,21 @@ int TRmain(int argc, char *argv[])
             else                    //server mode  = 0 (run from command line)
             {
                 if (strcmp(ACTIVE_CONFIGURATION, "Release") == 0 &&
-                    uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
+                    uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0 &&
+                    uGetEnvironmentVariable(SEDNA_RUN_RECOVERY_TRANSACTION, buf, 1024, __sys_call_error) != 0)
                     throw USER_EXCEPTION(SE4613);
 
-                if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0) {
+                if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
+                {
                     first_transaction = 0;
-                } else {
+                }
+                else {
                     first_transaction = 1;
+                }
+
+                if (uGetEnvironmentVariable(SEDNA_RUN_RECOVERY_TRANSACTION, buf, 1024, __sys_call_error) == 0)
+                {
+                    run_recovery = 1;
                 }
 
                 client = se_new command_line_client(argc, argv);
