@@ -15,10 +15,8 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-#if EL_DEBUG == 1
- #define DEBUG_MO
- #define DEBUG_MO_NID
-#endif /* EL_DEBUG */
+// #define DEBUG_MO
+// #define DEBUG_MO_NID
 
 extern enum consistency_error_t {
     ce_none,
