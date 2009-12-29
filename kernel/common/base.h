@@ -77,15 +77,15 @@ struct vmm_region_values
 
 #ifdef _WIN32
 #define SESSION_EXE "se_trn.exe"
-#else 
+#else
 #define SESSION_EXE "se_trn"
 #endif
 
 
 #define MODULES_COLLECTION_NAME "$modules"
 
-/*	
-	Global Names section */ 
+/*
+	Global Names section */
 
 void InitGlobalNames(int rangeBegin, int rangeEnd);
 
@@ -168,6 +168,8 @@ extern global_name CHARISMA_SM_IS_READY;
 #define SEDNA_LOAD_METADATA_TRANSACTION                 "SEDNA_LOAD_METADATA_TRANSACTION"
 
 #define SEDNA_OS_PRIMITIVES_ID_MIN_BOUND                "SEDNA_OS_PRIMITIVES_ID_MIN_BOUND"
+
+#define SEDNA_RUN_RECOVERY_TRANSACTION                  "SEDNA_RUN_RECOVERY_TRANSACTION"
 
 #define SECURITY_METADATA_DOCUMENT                      "$db_security_data"
 #define INITIAL_SECURITY_METADATA_FILE_NAME             "sedna_auth_md.xml"
@@ -253,7 +255,7 @@ struct sm_msg_struct
     // transaction identifier
     transaction_id trid;
 
-    //identifier of session    
+    //identifier of session
     session_id sid;
 
     // additional parameters
@@ -285,7 +287,7 @@ struct sm_msg_struct
         sm_blk_stat stat; // sm block statistics
 
         char data[2 + MAX_RESOURCE_NAME_LENGTH]; // first byte->lock mode, second byte->resource type, other bytes->resource name
- 
+
     } data;
 };
 
@@ -294,22 +296,22 @@ struct sm_msg_struct
 #define  ERR_SYMBOL     ((char)254)
 #define  DELIM_SYMBOL   ((char)250)
 #define  EOD_SYMBOL     ((char)253)
-#define  EOALL_SYMBOL   ((char)252) 
+#define  EOALL_SYMBOL   ((char)252)
 
 /* Command definitions for governor */
-enum commands 
+enum commands
 {
-    CREATE_NEW_SESSION     = 110, 
-    STOP                   = 501, 
-    REGISTER_NEW_SESSION   = 121, 
-    REGISTER_DB            = 122, 
-    RUNTIME_CONFIG         = 600, 
-    HOTBACKUP_START        = 666, 
+    CREATE_NEW_SESSION     = 110,
+    STOP                   = 501,
+    REGISTER_NEW_SESSION   = 121,
+    REGISTER_DB            = 122,
+    RUNTIME_CONFIG         = 600,
+    HOTBACKUP_START        = 666,
     IS_RUN_SM              = 888
 };
 
 /* Defines variouse kinds of se_stop command */
-enum stoptype 
+enum stoptype
 {
     SE_STOP_NO   = 0, /// sedna operates
     SE_STOP_SOFT = 1, /// wait for transactions are completed

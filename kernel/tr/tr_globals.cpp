@@ -55,7 +55,7 @@ namespace tr_globals
     int internal_auth_switch = DEPLOY_AUTH_CHECK;
 }
 
-static const size_t narg = 14;
+static const size_t narg = 13;
 
 static int tr_s_help  = 0;
 static int tr_l_help  = 0;
@@ -69,7 +69,6 @@ static arg_rec tr_argtable[] =
     {"-help",            NULL,       arg_lit,   &tr_s_help,                 "0",       "\t\t\t  display this help and exit"},
     {"--help",           NULL,       arg_lit,   &tr_l_help,                 "0",       "\t\t  display this help and exit"},
     {"-version",         NULL,       arg_lit,   &tr_version,                "0",       "\t\t  display product version and exit"},
-    {"-rcv",             NULL,       arg_lit,   &run_recovery,              "0",       "\t\t\t  run recovery transaction (for internal use only!!!)"},
     {"-output",         " file",     arg_str,   output_file,                "STDOUT",  "\t\t  outputfile (default STDOUT)"},
     {"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
     {"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},

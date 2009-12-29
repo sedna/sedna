@@ -360,12 +360,17 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
   UPHANDLE h;
 
   string command_line = uGetImageProcPath(buf, __sys_call_error) +
-                        string("/se_trn -rcv ") + string(sm_globals::db_name) + string(" dummy");
+                        string("/se_trn ") + string(sm_globals::db_name) + string(" dummy");
 
   strcpy(buf, command_line.c_str());
 
   uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND,
                           u_itoa(GOV_HEADER_GLOBAL_PTR -> os_primitives_id_min_bound, buf3, 10),
+                          NULL,
+                          __sys_call_error);
+
+  uSetEnvironmentVariable(SEDNA_RUN_RECOVERY_TRANSACTION,
+                          "1",
                           NULL,
                           __sys_call_error);
 
@@ -400,6 +405,7 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
        if (res2 != 0) throw USER_EXCEPTION(SE4501);
      }
   }
+
 #endif
 }
 
