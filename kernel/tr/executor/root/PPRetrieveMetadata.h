@@ -23,6 +23,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     bool supports_next() { return false; }
     bool is_update() { return false; }

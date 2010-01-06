@@ -7,6 +7,7 @@
 
 #include "tr/executor/root/PPDropModule.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/locks/locks.h"
 #include "tr/mo/mo.h"
 #include "tr/structures/metadata.h"
@@ -31,6 +32,14 @@ void PPDropModule::open()
 void PPDropModule::close()
 {
     module_name.op->close();
+}
+
+void PPDropModule::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    module_name.op->accept(v);
+    v.pop();
 }
 
 void PPDropModule::execute()

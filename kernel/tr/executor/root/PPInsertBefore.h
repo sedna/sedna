@@ -18,6 +18,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPInsertBefore(PPOpIn _child1_, 
                    dynamic_context *_cxt1_,

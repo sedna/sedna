@@ -20,6 +20,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropDocument(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPDropDocument();
@@ -35,6 +36,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropCollection(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPDropCollection();
@@ -50,6 +52,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropDocumentInCollection(PPOpIn _document_,
                                dynamic_context *_cxt1_,

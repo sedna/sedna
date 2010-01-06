@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPDropMetadata.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/structures/metadata.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
@@ -38,6 +39,14 @@ void PPDropDocument::close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPDropDocument::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    name.op->accept(v);
+    v.pop();
 }
 
 void PPDropDocument::execute()
@@ -89,6 +98,14 @@ void PPDropCollection::close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPDropCollection::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    name.op->accept(v);
+    v.pop();
 }
 
 void PPDropCollection::execute()
@@ -153,6 +170,15 @@ void PPDropDocumentInCollection::close()
     document.op->close();
     collection.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPDropDocumentInCollection::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    document.op->accept(v);
+    collection.op->accept(v);
+    v.pop();
 }
 
 void PPDropDocumentInCollection::execute()

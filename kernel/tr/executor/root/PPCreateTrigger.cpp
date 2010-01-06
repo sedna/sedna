@@ -8,6 +8,7 @@
 #include "tr/executor/root/PPCreateTrigger.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/locks/locks.h"
 #include "tr/triggers/triggers.h"
 #include "tr/auth/auc.h"
@@ -128,6 +129,13 @@ void PPCreateTrigger::close()
     dynamic_context::global_variables_close();
 }
 
+void PPCreateTrigger::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    trigger_name.op->accept(v);    
+    v.pop();
+}
 
 void PPCreateTrigger::execute()
 {

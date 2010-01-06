@@ -19,6 +19,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPCreateUser(PPOpIn _username_,
                  PPOpIn _passwd_,
@@ -35,6 +36,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropUser(PPOpIn _username_,
                dynamic_context *_cxt_);
@@ -50,6 +52,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPAlterUser(PPOpIn _username_,
                 PPOpIn _passwd_,
@@ -66,6 +69,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPCreateRole(PPOpIn _rolename_,
                  dynamic_context *_cxt_);
@@ -81,6 +85,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropRole(PPOpIn _rolename_,
                  dynamic_context *_cxt_);
@@ -96,6 +101,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPGrantRole(PPOpIn _role_,
                 PPOpIn _grantee_,
@@ -114,6 +120,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPGrantRevokePriv(PPOpIn _name_,
                 PPOpIn _obj_name_,
@@ -139,6 +146,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPRevokeRole(PPOpIn _role_,
                  PPOpIn _grantee_,

@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPRetrieveDS.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
@@ -41,6 +42,14 @@ void PPRetrieveDS::close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPRetrieveDS::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    name.op->accept(v);
+    v.pop();
 }
 
 void PPRetrieveDS::execute()

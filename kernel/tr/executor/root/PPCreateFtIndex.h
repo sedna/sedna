@@ -34,7 +34,8 @@ public:
     void open();
     void close();
     void execute();
-
+    void accept(PPVisitor& v);
+    
     PPCreateFtIndex(PathExpr *_object_path_,
                     const char* _index_type_,
                     counted_ptr<db_entity> _db_ent_,

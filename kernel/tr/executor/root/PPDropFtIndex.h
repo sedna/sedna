@@ -22,6 +22,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_);
     ~PPDropFtIndex();

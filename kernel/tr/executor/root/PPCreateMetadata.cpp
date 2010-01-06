@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPCreateMetadata.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/structures/metadata.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
@@ -39,6 +40,14 @@ void PPCreateDocument::close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPCreateDocument::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    name.op->accept(v);
+    v.pop();
 }
 
 void PPCreateDocument::execute()
@@ -93,6 +102,14 @@ void PPCreateCollection::close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPCreateCollection::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    name.op->accept(v);
+    v.pop();
 }
 
 void PPCreateCollection::execute()
@@ -161,6 +178,15 @@ void PPCreateDocumentInCollection::close()
     document.op->close();
     collection.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPCreateDocumentInCollection::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    document.op->accept(v);
+    collection.op->accept(v);    
+    v.pop();
 }
 
 void PPCreateDocumentInCollection::execute()

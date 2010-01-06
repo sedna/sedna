@@ -30,6 +30,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     /* Returns true if successfuly got next item,
      * false - if result is over.

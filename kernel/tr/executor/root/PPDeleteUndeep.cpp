@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPDeleteUndeep.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/updates/updates.h"
 #include "tr/locks/locks.h"
 
@@ -35,6 +36,14 @@ void PPDeleteUndeep::close()
 {
     child.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPDeleteUndeep::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);    
+    v.pop();
 }
 
 void PPDeleteUndeep::execute()

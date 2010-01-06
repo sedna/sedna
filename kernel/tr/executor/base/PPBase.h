@@ -82,8 +82,9 @@ namespace tr_globals
 #define DECREASE_STACK_DEPTH     tr_globals::current_stack_depth--;
 
 #define CHECK_STACK_DEPTH        if(tr_globals::current_stack_depth > tr_globals::max_stack_depth) \
-                                     throw USER_EXCEPTION2(SE1001,             \
-    "Infinite recursion or too complex query. Consider increasing session_stack_depth configuration parameter in sednaconf.xml.");
+                                     throw USER_EXCEPTION2(SE1001,\
+"Infinite recursion or too complex query. Consider increasing\
+session_stack_depth configuration parameter in sednaconf.xml.");
 
 #define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
                                  tr_globals::__current_physop = (pp); 
@@ -291,13 +292,15 @@ public:
 class PPQueryEssence
 {
 public:
-    virtual void open() = 0;
-    virtual void close() = 0;
-    virtual void execute() = 0;
-    virtual bool supports_next() = 0;
-    virtual bool is_update() = 0;
-
+    virtual void open()                = 0;
+    virtual void close()               = 0;
+    virtual void execute()             = 0;
+    virtual bool supports_next()       = 0;
+    virtual bool is_update()           = 0;
+    virtual void accept(PPVisitor &v)  = 0;
+    
     PPQueryEssence() {}
+
     virtual ~PPQueryEssence() {}
 };
 

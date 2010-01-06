@@ -24,6 +24,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropTrigger(PPOpIn _trigger_name_, dynamic_context *_cxt_);
 

@@ -19,6 +19,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDeleteDeep(PPOpIn _child_, 
                  dynamic_context *_cxt_);

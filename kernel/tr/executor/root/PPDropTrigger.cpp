@@ -7,6 +7,7 @@
 
 #include "tr/executor/root/PPDropTrigger.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/triggers/triggers.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
@@ -34,6 +35,14 @@ void PPDropTrigger::open()
 void PPDropTrigger::close()
 {
     trigger_name.op->close();
+}
+
+void PPDropTrigger::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    trigger_name.op->accept(v);
+    v.pop();
 }
 
 void PPDropTrigger::execute()

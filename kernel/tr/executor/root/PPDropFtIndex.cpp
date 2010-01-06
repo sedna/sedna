@@ -7,6 +7,7 @@
 
 #include "tr/executor/root/PPDropFtIndex.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 
 PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
 {
@@ -32,6 +33,14 @@ void PPDropFtIndex::close()
 {
     index_name.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPDropFtIndex::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    index_name.op->accept(v);    
+    v.pop();
 }
 
 void PPDropFtIndex::execute()

@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPBulkLoad.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
@@ -65,6 +66,16 @@ void PPBulkLoad::close()
     document.op->close();
     if (collection.op) collection.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPBulkLoad::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    filename.op->accept(v);
+    document.op->accept(v);
+    if (collection.op) collection.op->accept(v);    
+    v.pop();
 }
 
 void PPBulkLoad::execute()

@@ -19,6 +19,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPDropModule(PPOpIn _module_name_);
 

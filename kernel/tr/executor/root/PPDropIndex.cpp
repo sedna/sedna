@@ -6,8 +6,9 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPDropIndex.h"
-#include "tr/idx/indexes.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
+#include "tr/idx/indexes.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 
@@ -36,6 +37,14 @@ void PPDropIndex::close()
 {
     index_name.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPDropIndex::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    index_name.op->accept(v);    
+    v.pop();
 }
 
 void PPDropIndex::execute()

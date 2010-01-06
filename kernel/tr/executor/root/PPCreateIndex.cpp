@@ -7,6 +7,7 @@
 
 #include "tr/executor/root/PPCreateIndex.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/idx/indexes.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
@@ -49,6 +50,14 @@ void PPCreateIndex::close()
     index_name.op->close();
     dynamic_context::global_variables_close();
     root = XNULL;
+}
+
+void PPCreateIndex::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    index_name.op->accept(v);    
+    v.pop();
 }
 
 void PPCreateIndex::execute()
