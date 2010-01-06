@@ -19,6 +19,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPBulkLoad(PPOpIn _filename_,
                dynamic_context *_cxt1_,

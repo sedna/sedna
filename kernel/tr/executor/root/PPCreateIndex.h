@@ -30,7 +30,8 @@ public:
     void open();
     void close();
     void execute();
-
+    void accept(PPVisitor& v);
+    
     PPCreateIndex(PathExpr *_object_path_,
                   PathExpr *_key_path_,
                   xmlscm_type _key_type_,

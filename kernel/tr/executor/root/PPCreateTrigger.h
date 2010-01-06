@@ -39,7 +39,8 @@ public:
     void open();
     void close();
     void execute();
-
+    void accept(PPVisitor& v);
+    
     PPCreateTrigger(const char* _time_,
                     const char* _event_,
                     counted_ptr<db_entity> _db_ent_,

@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPInsertFollowing.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/updates/updates.h"
 #include "tr/locks/locks.h"
 
@@ -45,6 +46,15 @@ void PPInsertFollowing::close()
     child1.op->close();
     child2.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPInsertFollowing::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child1.op->accept(v);
+    child2.op->accept(v);
+    v.pop();
 }
 
 void PPInsertFollowing::execute()

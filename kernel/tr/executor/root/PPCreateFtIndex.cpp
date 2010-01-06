@@ -9,7 +9,8 @@
 #include "tr/executor/root/PPCreateFtIndex.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
-
+#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/xsd.h"
 
 ft_index_type str2index_type(const char *str)
 {
@@ -72,7 +73,12 @@ PPCreateFtIndex::~PPCreateFtIndex()
 {
     delete index_name.op;
     index_name.op = NULL;
-
+ 
+    if (cust_rules.op)
+    {
+        delete cust_rules.op;
+        cust_rules.op = NULL;
+    }
     delete cxt;
     cxt = NULL;
 }
@@ -95,10 +101,16 @@ void PPCreateFtIndex::close()
     dynamic_context::global_variables_close();
 }
 
+void PPCreateFtIndex::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    index_name.op->accept(v);
+    if (cust_rules.op)
+		cust_rules.op->accept(v);
+    v.pop();
+}
 
-//FIXME: import it in some other way (this function is in PPConstructors.cpp)
-//void separateLocalAndPrefix(NCName*& prefix,const char*& qname);
-void separateLocalAndPrefix(char*& prefix,const char*& qname);
 ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
 {
 	tuple t(1);

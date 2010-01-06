@@ -7,6 +7,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPRetrieveMetadata.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
@@ -46,6 +47,14 @@ void PPRetrieveMetadata::close()
 {
     if (collection.op) collection.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPRetrieveMetadata::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    if(collection.op) collection.op->accept(v);
+    v.pop();
 }
 
 void PPRetrieveMetadata::execute()

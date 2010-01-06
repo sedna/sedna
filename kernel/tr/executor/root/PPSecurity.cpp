@@ -7,6 +7,7 @@
 
 #include "tr/executor/root/PPSecurity.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 
@@ -188,7 +189,8 @@ void PPAlterUser::execute()
 
 // PPCreateRole
 
-PPCreateRole::PPCreateRole(PPOpIn _rolename_, dynamic_context *_cxt_) : rolename(_rolename_), cxt(_cxt_)
+PPCreateRole::PPCreateRole(PPOpIn _rolename_, dynamic_context *_cxt_) : rolename(_rolename_), 
+                                                                        cxt(_cxt_)
 {
 }
 
@@ -532,3 +534,73 @@ void PPRevokeRole::execute()
 
     auth_for_revoke_role(tc_role.get_str_mem(), tc_grantee.get_str_mem());
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// Acceptors for security root operations
+////////////////////////////////////////////////////////////////////////////////
+
+void PPCreateUser::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    username.op->accept(v);
+    passwd.op->accept(v);
+    v.pop();
+}
+void PPDropUser::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    username.op->accept(v);
+    v.pop();
+}
+void PPAlterUser::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    username.op->accept(v);
+    passwd.op->accept(v);
+    v.pop();
+}
+void PPCreateRole::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    rolename.op->accept(v);
+    v.pop();
+}
+void PPDropRole::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    rolename.op->accept(v);
+    v.pop();
+}
+void PPGrantRole::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    role.op->accept(v);
+    grantee.op->accept(v);
+    v.pop();
+}
+void PPGrantRevokePriv::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    name.op->accept(v);
+    if (obj_name.op)
+        obj_name.op->accept(v);
+    grantee.op->accept(v);
+    v.pop();
+}
+void PPRevokeRole::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    role.op->accept(v);
+    grantee.op->accept(v);
+    v.pop();
+}
+

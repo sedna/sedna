@@ -7,8 +7,10 @@
 #include <algorithm>
 
 #include "common/sedna.h"
+#include "common/errdbg/d_printf.h"
 
 #include "tr/executor/root/PPLoadModule.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
@@ -16,7 +18,6 @@
 #include "tr/xqp/modules.h"
 #include "tr/mo/mo.h"
 #include "tr/structures/metadata.h"
-#include "common/errdbg/d_printf.h"
 #include "tr/auth/auc.h"
 
 
@@ -37,6 +38,22 @@ struct Op_deletor:
         filename.op = NULL;
     }
 };
+
+struct Op_acceptor:
+    public std::unary_function<PPOpIn, void>
+{
+private:
+    PPVisitor &v;
+
+public:
+    void operator()(PPOpIn &filename)
+    {
+        filename.op->accept(v);
+    }
+
+    Op_acceptor(PPVisitor &_v_): v(_v_) {}
+};
+
 
 struct Op_opener:
     public std::unary_function<PPOpIn, void>
@@ -78,6 +95,14 @@ void PPLoadModule::close()
         filenames.begin(), filenames.end(),
         Op_closer()
         );
+}
+
+void PPLoadModule::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    std::for_each(filenames.begin(), filenames.end(), Op_acceptor(v));
+    v.pop();
 }
 
 class Tc_filename_obtainer:

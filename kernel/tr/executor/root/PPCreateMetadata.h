@@ -20,7 +20,8 @@ public:
     void open();
     void close();
     void execute();
-
+    void accept(PPVisitor& v);
+    
     PPCreateDocument(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPCreateDocument();
 };
@@ -35,7 +36,8 @@ public:
     void open();
     void close();
     void execute();
-
+    void accept(PPVisitor& v);
+    
     PPCreateCollection(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPCreateCollection();
 };
@@ -50,7 +52,8 @@ public:
     void open();
     void close();
     void execute();
-
+    void accept(PPVisitor& v);
+    
     PPCreateDocumentInCollection(PPOpIn _document_,
                                  dynamic_context *_cxt1_,
                                  PPOpIn _collection_,

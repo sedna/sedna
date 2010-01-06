@@ -19,6 +19,7 @@ public:
     void open();
     void close();
     void execute();
+    void accept(PPVisitor& v);
 
     PPLoadModule(arr_of_PPOpIn  _filenames_,
                  bool           _is_load_replace);

@@ -8,6 +8,7 @@
 
 #include "tr/executor/root/PPQueryRoot.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
@@ -64,6 +65,14 @@ void PPQueryRoot::close()
 {
     child.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPQueryRoot::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    v.pop();
 }
 
 bool PPQueryRoot::next()

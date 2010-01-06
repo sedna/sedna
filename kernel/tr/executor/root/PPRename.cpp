@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPRename.h"
+#include "tr/executor/base/PPVisitor.h"
 #include "tr/updates/updates.h"
 #include "tr/locks/locks.h"
 #include "tr/structures/metadata.h"
@@ -61,11 +62,17 @@ void PPRename::open()
 void PPRename::close()
 {
     child.op->close();
-    if(new_name_child.op)
-    {
-        new_name_child.op->close();
-    }
+    if(new_name_child.op) new_name_child.op->close();
     dynamic_context::global_variables_close();
+}
+
+void PPRename::accept(PPVisitor &v)
+{
+    v.push  (this);
+    v.visit (this);
+    child.op->accept(v);
+    if(new_name_child.op) new_name_child.op->accept(v);
+    v.pop();
 }
 
 void PPRename::execute()
