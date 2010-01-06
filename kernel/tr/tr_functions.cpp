@@ -66,7 +66,7 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
         qep_tree = NULL;
 
         //  TODO: We should carefully clear virtual root here. To review it later.
-        clear_virtual_root();
+        PPConstructor::clear_virtual_root();
 
         tr_globals::estr_global.clear();
         stmt_str_buf::reset();

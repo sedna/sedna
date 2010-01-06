@@ -10,40 +10,41 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "tr/structures/schema.h"
-#include "tr/strings/strings.h"
-#include "tr/mo/mo.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPConstructor
 ///////////////////////////////////////////////////////////////////////////////
 class PPConstructor : public PPIterator
 {
+private:
+    static schema_node_cptr root_schema;
+    static xptr virt_root;
+
 protected:
-    bool first_time;
-    bool eos_reached;
-	static bool firstCons;
-	static schema_node_cptr root_schema;
-	static xptr virt_root;
 	static xptr last_elem;
 	static xptr cont_parind;
 	static xptr cont_leftind;
 	static int conscnt;
+
+    bool first_time;
 	bool deep_copy;
 
 private:
     virtual void do_open ();
-
+    
 public:
 	static bool checkInitial();
     PPConstructor(dynamic_context *_cxt_,
                   operation_info _info_,
                   bool _deep_copy) : PPIterator(_cxt_, _info_),
                                      deep_copy(_deep_copy) {};
-    friend xptr copy_to_temp(xptr node);
-    friend void clear_virtual_root();
-};
 
-void clear_virtual_root();
+public:
+    static void checkInitial();
+    static void clear_virtual_root();
+
+    static inline xptr get_virtual_root() { return virt_root; }
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPElementConstructor
@@ -307,4 +308,4 @@ public:
 };
 
 
-#endif
+#endif /* _PPCONSTRUCTORS_H */
