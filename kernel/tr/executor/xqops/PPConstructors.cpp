@@ -8,31 +8,25 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPConstructors.h"
-#include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/xs_names.h"
+#include "tr/executor/base/xsd.h"
+#include "tr/executor/base/PPVisitor.h"
+
 #include "tr/updates/updates.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/structures/metadata.h"
 #include "tr/strings/e_string.h"
-#include "tr/executor/base/xs_names.h"
-#include "tr/executor/base/PPVisitor.h"
-
+#include "tr/mo/mo.h"
 #include "tr/mo/blocks.h"
 #include "tr/mo/microoperations.h"
 
 using namespace std;
 
-schema_node_cptr PPConstructor::root_schema = XNULL;
-xptr PPConstructor::virt_root=XNULL;
-xptr PPConstructor::last_elem=XNULL;
-xptr PPConstructor::cont_parind=XNULL;
-xptr PPConstructor::cont_leftind=XNULL;
-int PPConstructor::conscnt=0;
-
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-/// Helpers and some global functions
+/// Static helpers
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +58,7 @@ void separateLocalAndPrefix(char*& prefix, const char*& qname)
     }
 }
 
-static inline
+static inline 
 tuple_cell getQnameParameter(PPOpIn qname)
 {
     tuple name(qname.ts);
@@ -183,14 +177,26 @@ isNameValid(const char* name, const char* prefix, const char* uri, bool check_na
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-/// PPElementConstructor
+/// PPConstructor (carries global state shared between all constructors)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 
-bool PPConstructor::checkInitial()
+/*
+ * Global state shared between all constructors and some classes 
+ * which are also inherited from PPConstructor
+ */
+schema_node_cptr PPConstructor::root_schema = XNULL;
+xptr PPConstructor::virt_root               = XNULL;
+xptr PPConstructor::last_elem               = XNULL;
+xptr PPConstructor::cont_parind             = XNULL;
+xptr PPConstructor::cont_leftind            = XNULL;
+int PPConstructor::conscnt                  = 0;
+
+void PPConstructor::checkInitial()
 {
-    if (!root_schema.found()) {
+    if (!root_schema.found()) 
+    {
         node_info_t node_info = {XNULL, XNULL, XNULL, virtual_root};
         root_schema = doc_schema_node_object::create_virtual_root()->p;
         xptr blk = createBlock(root_schema, XNULL);
@@ -201,16 +207,33 @@ bool PPConstructor::checkInitial()
         cont_leftind=XNULL;
         conscnt=0;
         last_elem=XNULL;
-
+        
         return true;
-    } else
+    } else 
         return false;
 }
 
-void PPConstructor::do_open ()
+/* 
+ * Clears global state of constructors.
+ * It's called in kernel statement end in trn.
+ */
+void PPConstructor::clear_virtual_root()
 {
-    checkInitial();
+    if (root_schema.found())
+    {
+        nid_delete(virt_root);
+        root_schema->drop();
+        root_schema = XNULL;
+        virt_root=XNULL;
+    }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPElementConstructor
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 
 PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
@@ -263,7 +286,6 @@ void PPElementConstructor::do_open ()
     if (el_name==NULL) qname.op->open();
     content.op->open();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPElementConstructor::do_reopen()
@@ -272,7 +294,6 @@ void PPElementConstructor::do_reopen()
     content.op->reopen();
 
     first_time = true;
-    eos_reached = true;
 }
 
 void PPElementConstructor::do_close()
@@ -365,7 +386,7 @@ void PPElementConstructor::do_next (tuple &t)
         xptr new_element;
         if (parind==XNULL || deep_copy)
         {
-            new_element= insert_element(removeIndirection(last_elem),XNULL,virt_root,name,xs_untyped,ns);
+            new_element= insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,xs_untyped,ns);
             last_elem=((n_dsc*)XADDR(new_element))->indir;
         }
         else
@@ -652,7 +673,6 @@ void PPAttributeConstructor::do_open ()
     if (at_name==NULL)  qname.op->open();
     if (at_value==NULL) content.op->open();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPAttributeConstructor::do_reopen()
@@ -660,7 +680,6 @@ void PPAttributeConstructor::do_reopen()
     if (at_name==NULL)  qname.op->reopen();
     if (at_value==NULL) content.op->reopen();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPAttributeConstructor::do_close()
@@ -729,7 +748,7 @@ void PPAttributeConstructor::do_next (tuple &t)
         /* Attribute insertion */
         xptr new_attribute;
         if (cont_parind==XNULL || deep_copy)
-            new_attribute= insert_attribute(XNULL,XNULL,virt_root,name,xs_untypedAtomic,value,size,ns);
+            new_attribute= insert_attribute(XNULL,XNULL,get_virtual_root(),name,xs_untypedAtomic,value,size,ns);
         else
         {
             if (cont_leftind!=XNULL)
@@ -840,14 +859,12 @@ void PPNamespaceConstructor::do_open ()
     checkInitial();
     if (at_value==NULL) content.op->open();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPNamespaceConstructor::do_reopen()
 {
     if (at_value==NULL) content.op->reopen();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPNamespaceConstructor::do_close()
@@ -871,7 +888,7 @@ void PPNamespaceConstructor::do_next (tuple &t)
         }
 
         xmlns_ptr ns = cxt->st_cxt->add_to_context(prefix,uri);
-        xptr new_namespace= insert_namespace(XNULL,XNULL,virt_root,ns);
+        xptr new_namespace= insert_namespace(XNULL,XNULL,get_virtual_root(),ns);
 
         t.copy(tuple_cell::node(new_namespace));
     }
@@ -936,14 +953,12 @@ void PPCommentConstructor::do_open ()
     checkInitial();
     if (at_value==NULL) content.op->open();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPCommentConstructor::do_reopen()
 {
     if (at_value==NULL) content.op->reopen();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPCommentConstructor::do_close()
@@ -973,7 +988,7 @@ void PPCommentConstructor::do_next (tuple &t)
             throw XQUERY_EXCEPTION(XQDY0072);
         xptr newcomm;
         if (cont_parind==XNULL || deep_copy )
-            newcomm= insert_comment(XNULL,XNULL,virt_root,value,size);
+            newcomm= insert_comment(XNULL,XNULL,get_virtual_root(),value,size);
         else
         {
             if (cont_leftind!=XNULL)
@@ -1089,7 +1104,6 @@ void PPPIConstructor::do_open ()
     if (at_name==NULL)  qname.op->open();
     if (at_value==NULL) content.op->open();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPPIConstructor::do_reopen()
@@ -1097,7 +1111,6 @@ void PPPIConstructor::do_reopen()
     if (at_name==NULL)  qname.op->reopen();
     if (at_value==NULL) content.op->reopen();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPPIConstructor::do_close()
@@ -1168,7 +1181,7 @@ void PPPIConstructor::do_next (tuple &t)
         //Attribute insertion
         xptr new_pi;
         if (cont_parind==XNULL || deep_copy)
-            new_pi= insert_pi(XNULL,XNULL,virt_root,name,strlen(name),value,size);
+            new_pi= insert_pi(XNULL,XNULL,get_virtual_root(),name,strlen(name),value,size);
         else
         {
             if (cont_leftind!=XNULL)
@@ -1249,14 +1262,12 @@ void PPTextConstructor::do_open ()
     checkInitial();
     if (at_value==NULL) content.op->open();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPTextConstructor::do_reopen()
 {
     if (at_value==NULL) content.op->reopen();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPTextConstructor::do_close()
@@ -1287,7 +1298,7 @@ void PPTextConstructor::do_next (tuple &t)
             size=strlen(value);
         xptr newcomm;
         if (cont_parind==XNULL || deep_copy || size==0)
-            newcomm= insert_text(XNULL,XNULL,virt_root,value,size);
+            newcomm= insert_text(XNULL,XNULL,get_virtual_root(),value,size);
         else
         {
             if (cont_leftind!=XNULL)
@@ -1348,14 +1359,12 @@ void PPDocumentConstructor::do_open ()
 {
     content.op->open();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPDocumentConstructor::do_reopen()
 {
     content.op->reopen();
     first_time = true;
-    eos_reached = true;
 }
 
 void PPDocumentConstructor::do_close()

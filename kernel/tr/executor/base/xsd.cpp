@@ -311,3 +311,18 @@ bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
 
     return _xs_QName_not_equal(node_uri, node_local, uri, local);
 }
+
+void separateLocalAndPrefix(char*& prefix, const char*& qname)
+{
+    for (unsigned int i=0; i<strlen(qname); i++)
+    {
+        if (qname[i]==':')
+        {
+            prefix = se_new char[i + 1];
+            memcpy(prefix, qname, i);
+            prefix[i] = '\0';
+            qname=qname+i+1;
+            return;
+        }
+    }
+}

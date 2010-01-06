@@ -4,8 +4,8 @@
  */
 
 
-#ifndef __XS_H
-#define __XS_H
+#ifndef __XSD_H
+#define __XSD_H
 
 #include "common/sedna.h"
 
@@ -172,4 +172,11 @@ inline bool _xs_QName_not_equal(const char* uri1, const char *local1, const char
 // node must be element or attribute and CHECKP should be called on node already
 bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node);
 
-#endif
+
+// Separates prefix and local name from the QName in text 
+// representaion: prefix:local. Allocates memory for prefix with malloc.
+// Changes qname to point to the local name start.
+void separateLocalAndPrefix(char*& prefix, const char*& qname);
+
+
+#endif /* __XSD_H */

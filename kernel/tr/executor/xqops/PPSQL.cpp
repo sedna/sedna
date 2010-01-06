@@ -514,7 +514,7 @@ void PPFnSQLExecute::do_next(tuple &t)
     }
     else
     {
-        executor->fetch(t, virt_root, last_elem);
+        executor->fetch(t, get_virtual_root(), last_elem);
         if (t.is_eos()) {
             first_time = true;
         }
