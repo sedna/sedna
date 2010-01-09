@@ -132,6 +132,8 @@ struct catalog_object {
 
     virtual ~catalog_object() {};
 
+    inline catalog_object() : p_object(XNULL) {};
+
     catalog_object * modify_self() const;
 };
 

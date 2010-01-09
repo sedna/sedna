@@ -11,7 +11,7 @@
 #include "tr/executor/base/PPVisitor.h"
 
 PPAxisFP::PPAxisFP(dynamic_context *_cxt_,
-                   operation_info _info_, 
+                   operation_info _info_,
                    PPOpIn _child_,
                    NodeTestType _nt_type_,
                    NodeTestData _nt_data_,
@@ -23,7 +23,7 @@ PPAxisFP::PPAxisFP(dynamic_context *_cxt_,
 {
     NodeTestType type = nt_type;
 
-    if (type == node_test_element) 
+    if (type == node_test_element)
         type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
 
     switch (type)
@@ -99,17 +99,13 @@ void PPAxisFP::next_processing_instruction(tuple &t)
             {
                 CHECKP(tmp);
                 pi_dsc* desc=(pi_dsc*)XADDR(tmp);
-                int tsize=desc->target;
-                if (tsize==strlen(nt_data.ncname_local))
-                {
-                    xptr ind_ptr=desc->data;
-                    CHECKP(ind_ptr);
-                    shft shift= *((shft*)XADDR(ind_ptr));
-                    char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+                size_t tsize=desc->target;
+                if (tsize == strlen(nt_data.ncname_local)) {
+                    char* data= (char*)XADDR(getTextPtr(desc));
                     if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
                 }
             }
-        }   
+        }
 }
 
 void PPAxisFP::next_node(tuple &t)
@@ -178,12 +174,12 @@ void PPAxisFP::next_wildcard_star(tuple &t)
             cur=getPreviousDONode(base);
             while (true)
             {
-                if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2)) 
+                if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2))
                     break;
-                else			
+                else
                     cur = getPreviousDONode(cur);
             }
-        }		
+        }
     }
     t.copy(tuple_cell::node(cur));
     if (following)
@@ -202,12 +198,12 @@ void PPAxisFP::next_wildcard_star(tuple &t)
         cur=getPreviousDONode(cur);
         while (true)
         {
-            if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2)) 
+            if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2))
                 break;
-            else			
+            else
                 cur = getPreviousDONode(cur);
         }
-    }		   
+    }
 }
 
 void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun)
@@ -239,13 +235,13 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
                 base=getPreviousDONode(cur);
                 while (true)
                 {
-                    if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2)) 
+                    if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2))
                         break;
-                    else			
+                    else
                         cur = getPreviousDONode(cur);
-                }				
+                }
             }
-        }		
+        }
         else
         {
             CHECKP(base);
@@ -255,7 +251,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
                 std::vector<schema_node_xptr> vscm;
                 desc_sch[scm]=vscm;
                 getSchemeDescendants(scm,uri,name, type, cfun,desc_sch[scm]);
-            }	
+            }
             std::vector<schema_node_xptr>* cv=&desc_sch[scm];
             std::vector<schema_node_xptr>::iterator it=cv->begin();
             if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
@@ -267,7 +263,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
             }
 
             cur=merge_tree->getNextNode();
-        }		
+        }
     }
     t.copy(tuple_cell::node(cur));
     if (is_col)
@@ -288,17 +284,17 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
             cur=getPreviousDONode(cur);
             while (true)
             {
-                if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2)) 
+                if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2))
                     break;
-                else			
+                else
                     cur = getPreviousDONode(cur);
-            }	
+            }
         }
-    }		
+    }
     else
-    {	
+    {
         cur=merge_tree->getNextNode();
-    }		 
+    }
 }
 
 void PPAxisFP::next_wildcard_ncname_star(tuple &t)

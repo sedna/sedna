@@ -38,7 +38,7 @@ void checkPointer(xptr blk, char* ptr, int size)
 /* create new pstr block */
 xptr pstr_create_blk(bool persistent) {
     xptr result;
-    if (persistent) 
+    if (persistent)
     {
         vmm_alloc_data_block(&result);
     }
@@ -53,7 +53,7 @@ xptr pstr_create_blk(bool persistent) {
 
 
 /*	Make initial markup of pstr block.
-Assume block is in-memory 
+Assume block is in-memory
 */
 void pstr_blk_markup(xptr blk) {
     /* set static fields */
@@ -94,7 +94,7 @@ void pstr_print_blk(xptr blk) {
     for(i=0; i<HHSIZE(blk); i++) {
     hh_slot* s = (hh_slot*)HH_ADDR(blk, i);
     d_printf4("HOLE[%d]=(%d, %d)\n", i, (int)(s->hole_shft), (int)(s->hole_size));
-    } 
+    }
 
     i=0;
     shft sit = SITB(blk);
@@ -120,8 +120,11 @@ xptr pstr_allocate(xptr blk, xptr node, const char* s, int s_size) {
     CHECKP(node);
 #endif
     VMM_SIGNAL_MODIFICATION(node);
-    ((t_dsc*)XADDR(node))->data=result;
-    ((t_dsc*)XADDR(node))->size=s_size;
+
+
+    T_DSC(node)->data.lsp.p = result;
+    T_DSC(node)->data.lsp.size = s_size;
+    T_DSC(node)->ss = TEXT_IN_PSTR;
 
     return result;
 }
@@ -156,7 +159,7 @@ xptr pstr_do_allocate(xptr blk, const char* s, int s_size) {
         }
         result = pstr_insert_into_tail(blk,s,s_size);
     } else {
-        if ( (!SITH(blk))&&((int)SITB(blk) - (int)SSB(blk) < (int)sizeof(shft))) 
+        if ( (!SITH(blk))&&((int)SITB(blk) - (int)SSB(blk) < (int)sizeof(shft)))
         {
             pstr_defragment(blk);
             result = pstr_insert_into_tail(blk,s,s_size);
@@ -218,7 +221,7 @@ xptr pstr_insert_into_maxhole(xptr blk, const char* s, int s_size) {
     CHECKP(blk);
 #endif
     /* this must hold if internal layout of block is correct */
-    if (h.hole_size < s_size) 
+    if (h.hole_size < s_size)
         throw SYSTEM_EXCEPTION("[pstr_insert_into_maxhole()] maxhole is smaller than the size of string to insert");
     memcpy((char*)XADDR(blk)+h.hole_shft, s, s_size); /* copy string into hole */
     if (SITH(blk)) {
@@ -255,8 +258,11 @@ xptr	pstr_modify(xptr node, char* s, int s_size) {
     CHECKP(node);
 #endif
     xptr result;
-    xptr data=((t_dsc*)XADDR(node))->data;
-    int	size = ((t_dsc*)XADDR(node))->size;
+
+    U_ASSERT(isPstr(T_DSC(node)));
+    xptr data = T_DSC(node)->data.lsp.p;
+    size_t size = (size_t) T_DSC(node)->data.lsp.size;
+
     pstr_do_deallocate(BLOCKXPTR(data), data, size, false);
     result = pstr_allocate(BLOCKXPTR(data), node, s, s_size);
     return result;
@@ -266,21 +272,22 @@ void pstr_deallocate(xptr node) {
 #ifndef PSTR_NO_CHECKP
     CHECKP(node);
 #endif
-    xptr	ps = ((t_dsc*)XADDR(node))->data;
-    int		s_size = ((t_dsc*)XADDR(node))->size;
-    xptr	blk = BLOCKXPTR(ps);
-    pstr_do_deallocate(blk, ps, s_size, true);
+
+    U_ASSERT(isPstr(T_DSC(node)));
+    xptr data = T_DSC(node)->data.lsp.p;
+    size_t size = (size_t) T_DSC(node)->data.lsp.size;
+
+    pstr_do_deallocate(BLOCKXPTR(data), data, size, true);
 
     /* Update descriptor */
 #ifndef PSTR_NO_CHECKP
     CHECKP(node);
 #endif
     VMM_SIGNAL_MODIFICATION(node);
-    ((t_dsc*)XADDR(node))->data = XNULL;
-    ((t_dsc*)XADDR(node))->size = 0;
+    T_DSC(node)->ss = 0;
 }
 
-bool pstr_do_deallocate(xptr blk, xptr ps, int s_size, bool drop_empty_block) 
+bool pstr_do_deallocate(xptr blk, xptr ps, int s_size, bool drop_empty_block)
 {
     bool	adjacent_with_ss_tail = false;
 #ifndef PSTR_NO_CHECKP
@@ -290,14 +297,14 @@ bool pstr_do_deallocate(xptr blk, xptr ps, int s_size, bool drop_empty_block)
 
     /* Check if we have enough slots in HH */
 
-    if ((HHSIZE(blk) >= HHMAXSIZE)) {	
+    if ((HHSIZE(blk) >= HHMAXSIZE)) {
         pstr_defragment(blk);
     }
 
     shft ps_shft = *(shft*)XADDR(ps);
 
     /* Check if ps_shft slot contains non-empty shft */
-    if (ps_shft == PSTR_EMPTY_SLOT||(ps_shft+s_size > SSB(blk))) 
+    if (ps_shft == PSTR_EMPTY_SLOT||(ps_shft+s_size > SSB(blk)))
         throw SYSTEM_EXCEPTION("[pstr_deallocate()] string to be deallocated occupies PSTR_EMPTY_SLOT");
 
     /* Check if the string is in SS tail (last) */
@@ -348,13 +355,13 @@ bool pstr_do_deallocate(xptr blk, xptr ps, int s_size, bool drop_empty_block)
 post_operations:
     /* update block metastructures */
     /* put the SIT slot that was occupied by deleted string into list of free slots */
-    //PHYS LOG 
+    //PHYS LOG
     if (mark_coalescence)
     {
         int left_pos=-1;
         int right_pos=-1;
         hh_size=HHSIZE(blk);
-        for (int i=0; i<hh_size; i++) 
+        for (int i=0; i<hh_size; i++)
         {
             hh_slot* tmp = (hh_slot*)HH_ADDR(blk, i);
             if (tmp->hole_shft == mark_coalescence)
@@ -389,10 +396,10 @@ post_operations:
         //lockWriteXptr(blk);
         ///TEMP!!!!
         /*shft hh_size=HHSIZE(blk);
-        for (int i=0; i<hh_size; i++) 
+        for (int i=0; i<hh_size; i++)
         {
         hh_slot* tmp = (hh_slot*)HH_ADDR(blk, i);
-        if (tmp->hole_shft+ tmp->hole_size==SSB(blk) ) 
+        if (tmp->hole_shft+ tmp->hole_size==SSB(blk) )
         {
         throw SYSTEM_EXCEPTION("[pstr_deallocate()] string can not be adjacent with with SS tail and with some hole on the right simultaneously");
         }
@@ -511,25 +518,25 @@ void pstr_defragment(xptr blk) {
 
 /*	!!!!! pstr_migrate() IS USED FOR TEXT NODE CONTENTS STORAGE, NOT FOR PREFIXES !!!!! */
 /*
-processing of situation when the string can not fit into block. New block(s) is(are) to be 
+processing of situation when the string can not fit into block. New block(s) is(are) to be
 allocated, then contents of old block are distributed between 2(or maximum 3) blocks to keep
 the property of string inter-block order in accordance with their descriptor inter-block order.
 The algorithm is as follows:
-1) find the left_bound descriptor (lbd) via micro interface function 
+1) find the left_bound descriptor (lbd) via micro interface function
 getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node) where blk is current
 pstr block and node is current descriptor to start looking from ("node" parameter of the function)
-2) find the right_bound descriptor (rbd) via micro interface function 
+2) find the right_bound descriptor (rbd) via micro interface function
 getRightmostDescriptorWithPstrInThisBlock(xptr blk, xptr node) where blk is current
 pstr block and node is current descriptor to start looking from ("node" parameter of the function)
 3) allocate new pstr migrate block where to migrate contents of old block and the string to be
 newly allocated ("s" parameter of the function)
-4) run through descriptor sequence from lbd to rbd via micro interface function 
-getNextDescriptorOfSameSort() migrating corresponding string contents from old pstr block into 
+4) run through descriptor sequence from lbd to rbd via micro interface function
+getNextDescriptorOfSameSort() migrating corresponding string contents from old pstr block into
 new pstr block and updating descriptors correspondingly
-5) in case there is no enough space in new pstr block, allocate another new pstr migrate block and 
-continue the process with this one as a new migrate block (no more than 3 new blocks must be 
+5) in case there is no enough space in new pstr block, allocate another new pstr migrate block and
+continue the process with this one as a new migrate block (no more than 3 new blocks must be
 enough in any case)
-6) drop the old pstr block 
+6) drop the old pstr block
 */
 
 xptr debug_migrate_blk = XNULL;
@@ -547,7 +554,7 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
     bool	first_iteration=true;
 #ifndef PSTR_NO_CHECKP
     CHECKP(blk);
-#endif	
+#endif
     bool is_data_block=IS_DATA_BLOCK(blk);
     /* if new node is the last one in the sequence of descriptors, just allocate new string in new block */
     if (rbd == node) {
@@ -559,18 +566,18 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
     new pstr blocks */
     do {
         /* omit getNextDescriptorOfSameSortXptr() call for the lbd node */
-        if (!first_iteration) 
+        if (!first_iteration)
             next_node = getNextDescriptorOfSameSortXptr(next_node);
         else
             first_iteration=false;
 
 #ifndef PSTR_NO_CHECKP
         CHECKP(next_node);
-#endif	
-        VMM_SIGNAL_MODIFICATION(next_node);
+#endif
         /* skip descriptors without pstr data except "node" descriptor */
-        if (((((t_dsc*)XADDR(next_node))->data == XNULL) || (((t_dsc*)XADDR(next_node))->size > PSTRMAXSIZE)) && (next_node != node))
-            continue;
+        if ((next_node != node) && isPstr(T_DSC(next_node))) { continue; }
+
+        VMM_SIGNAL_MODIFICATION(next_node);
 
         /* if this is new descriptor */
         if (next_node == node) {
@@ -592,8 +599,8 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         CHECKP(next_node);
 #endif
         /* read next_node string contents and deallocate them from old block */
-        next_s_size = ((t_dsc*)XADDR(next_node))->size;
-        next_s_xptr =  ((t_dsc*)XADDR(next_node))->data;
+        next_s_size = ((t_dsc*)XADDR(next_node))->data.lsp.size;
+        next_s_xptr =  ((t_dsc*)XADDR(next_node))->data.lsp.p;
         pstr_read_from_node(next_node,  next_s);
         pstr_do_deallocate(blk, next_s_xptr, next_s_size, false);
 
@@ -605,7 +612,7 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
 #endif
         /* update old descriptor */
         VMM_SIGNAL_MODIFICATION(next_node);
-        ((t_dsc*)XADDR(next_node))->data=tmp;
+        ((t_dsc*)XADDR(next_node))->data.lsp.p = tmp;
     } while (next_node != rbd);
 
     /* never should come here */
@@ -617,10 +624,11 @@ void pstr_read_from_node(xptr node, char* the_s) {
 #ifndef PSTR_NO_CHECKP
     //CHECKP(node);
 #endif
-    xptr ps = ((t_dsc*)XADDR(node))->data;
+    U_ASSERT(isPstr(T_DSC(node)));
+    xptr ps = T_DSC(node)->data.lsp.p;
     if (ps == XNULL)
         throw SYSTEM_EXCEPTION("[pstr_read_from_node()] the target node has XNULL pointer to it's pstr content");
-    int ps_size = ((t_dsc*)XADDR(node))->size;
+    size_t ps_size = (size_t) T_DSC(node)->data.lsp.size;
     pstr_read(ps, ps_size, the_s);
 }
 
@@ -633,7 +641,7 @@ void	pstr_read(xptr ps, int ps_size, char* the_s) {
 #ifndef PSTR_NO_CHECKP
     CHECKP(blk);
 #endif
-    if (*(shft*)XADDR(ps)) 
+    if (*(shft*)XADDR(ps))
         memcpy(the_s, (char*)XADDR(blk) + *(shft*)XADDR(ps), ps_size);
 }
 
@@ -664,7 +672,7 @@ void check_blk_consistency(xptr addr)
     if (sorted_hh_sit==NULL) return;
     while (((char*)sorted_hh_sit->next_item)!=NULL)
     {
-        sorted_hh_sit=sorted_hh_sit->next_item;	
+        sorted_hh_sit=sorted_hh_sit->next_item;
     }
     if (sorted_hh_sit->item_type == ITEM_HOLE)
         throw SYSTEM_EXCEPTION("wrong place for hole in block");

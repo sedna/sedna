@@ -64,13 +64,13 @@ void separateLocalAndPrefix(char*& prefix, const char*& qname)
     }
 }
 
-static inline 
+static inline
 tuple_cell getQnameParameter(PPOpIn qname)
 {
     tuple name(qname.ts);
 
     qname.op->next(name);
-    if (name.is_eos() || name.cells_number != 1 ) 
+    if (name.is_eos() || name.cells_number != 1 )
         throw XQUERY_EXCEPTION2(XPTY0004, "single atomic value is expected in the name expression of an attribute/element constructor");
 
     tuple_cell res = atomize(name.cells[0]);
@@ -78,7 +78,7 @@ tuple_cell getQnameParameter(PPOpIn qname)
 
     if (xtype == xs_untypedAtomic)
         res = cast(res, xs_string);
-    else if (!is_derived_from_xs_string(xtype) && 
+    else if (!is_derived_from_xs_string(xtype) &&
         xtype != xs_string &&
         xtype != xs_QName)
         throw XQUERY_EXCEPTION2(XPTY0004, "unexpected type in the name expression of an attribute/element constructor");
@@ -86,19 +86,19 @@ tuple_cell getQnameParameter(PPOpIn qname)
     res=tuple_cell::make_sure_light_atomic(res);
 
     qname.op->next(name);
-    if (!(name.is_eos())) 
+    if (!(name.is_eos()))
         throw XQUERY_EXCEPTION2(XPTY0004, "single atomic value is expected in the name expression of an attribute/element constructor");
 
     return res;
 }
 
-static bool 
+static bool
 getStringParameter(PPOpIn content)
 {
     tuple value(content.ts);
     content.op->next(value);
     sequence at_vals(1);
-    if (value.is_eos()) 
+    if (value.is_eos())
     {
         tr_globals::tmp_op_str_buf.clear();
         tr_globals::tmp_op_str_buf.append(EMPTY_STRING_TC);
@@ -131,7 +131,7 @@ getStringParameter(PPOpIn content)
     return false;
 }
 
-static void 
+static void
 getStringWSParameter(PPOpIn content)
 {
     tr_globals::tmp_op_str_buf.clear();
@@ -160,20 +160,20 @@ getStringWSParameter(PPOpIn content)
     while (it!=at_vals.end());
 }
 
-static inline bool 
-isNameValid(const char* name, const char* prefix, const char* uri, bool check_name = true) 
+static inline bool
+isNameValid(const char* name, const char* prefix, const char* uri, bool check_name = true)
 {
     /* It has no namespace prefix and its local name is xmlns */
     if(check_name && (prefix == NULL || strcmp(prefix,"") == 0) && my_strcmp(name,"xmlns") == 0) return false;
 
     if(!prefix && !uri) return true;
-    
+
     /* Its namespace prefix is xmlns. */
     if(my_strcmp(prefix, "xmlns") == 0) return false;
     /* Its namespace URI is xmlns URI. */
     if(my_strcmp(uri, "http://www.w3.org/2000/xmlns/") == 0) return false;
     /* Its namespace prefix is xml and its namespace URI is not xml namespace */
-    if(my_strcmp(prefix, "xml") == 0 && 
+    if(my_strcmp(prefix, "xml") == 0 &&
        !(uri == NULL || my_strcmp(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
     /* Its namespace prefix is other than xml and its namespace URI is xml namespace */
     if(prefix != NULL && strcmp(prefix, "xml") != 0 && (uri == NULL || my_strcmp(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
@@ -201,9 +201,9 @@ bool PPConstructor::checkInitial()
         cont_leftind=XNULL;
         conscnt=0;
         last_elem=XNULL;
-        
+
         return true;
-    } else 
+    } else
         return false;
 }
 
@@ -242,7 +242,7 @@ PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
 PPElementConstructor::~PPElementConstructor()
 {
 
-    if (el_name!=NULL) 
+    if (el_name!=NULL)
     {
         delete [] el_name;
     }
@@ -337,9 +337,9 @@ void PPElementConstructor::do_next (tuple &t)
         else
         {
             separateLocalAndPrefix(prefix, name);
-            
+
             if (!check_constraints_for_xs_NCName(name)) throw XQUERY_EXCEPTION(XQDY0074);
-            
+
             if (prefix != NULL)
             {
                 str_counted_ptr c_ptr(prefix);
@@ -353,9 +353,9 @@ void PPElementConstructor::do_next (tuple &t)
                 ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
             }
         }
-        
+
         /* Check constraints on full name */
-        if(!isNameValid(name, 
+        if(!isNameValid(name,
                         ns == NULL_XMLNS ? NULL : ns->prefix,
                         ns == NULL_XMLNS ? NULL : ns->uri,
                         false))
@@ -421,7 +421,7 @@ void PPElementConstructor::do_next (tuple &t)
                     {
                         /*if (it!=at_vals.begin())
                         {
-                        str_val.append(" ");                        
+                        str_val.append(" ");
                         }*/
                         tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
                         tcc=cast(tcc, xs_string);
@@ -444,19 +444,17 @@ void PPElementConstructor::do_next (tuple &t)
                 {
                 case xml_namespace:ns_list.push_back(xmlns_touch(((ns_dsc*)XADDR(node))->ns));break;
                 case document:
-                case element: 
+                case element:
                     {
                         mark_attr=false;
                         break;
                     }
                 case text:
                     {
-                        if (((t_dsc*)XADDR(node))->size==0) 
-                        {
-                            if (it_st!=start_seq.end())
-                            {
+                        if (isTextEmpty(T_DSC(node))) {
+                            if (it_st!=start_seq.end()) {
                                 it_st++;
-                                if (it_st==start_seq.end()) 
+                                if (it_st==start_seq.end())
                                 {
                                     content.op->next(cont);
                                     cont_ptr=&cont;
@@ -487,15 +485,15 @@ void PPElementConstructor::do_next (tuple &t)
                     if (typ==document)
                     {
                         xptr res = copy_content(removeIndirection(indir),node,removeIndirection(left),cxt->st_cxt->preserve_type);
-                        if (res!=XNULL)                 
+                        if (res!=XNULL)
                         {
                             left=((n_dsc *) XADDR(res))->indir;
                             cont_leftind=left;
-                        }                       
+                        }
                     }
                     else
                     {
-                        left=deep_pers_copy(removeIndirection(left),XNULL,removeIndirection(indir),node,cxt->st_cxt->preserve_type);
+                        left=deep_copy_nodei(left, XNULL, indir, node, NULL, cxt->st_cxt->preserve_type);
                         left=((n_dsc *) XADDR(left))->indir;
                         cont_leftind=left;
                     }
@@ -507,7 +505,7 @@ void PPElementConstructor::do_next (tuple &t)
             if (it_st!=start_seq.end())
             {
                 it_st++;
-                if (it_st==start_seq.end()) 
+                if (it_st==start_seq.end())
                 {
                     content.op->next(cont);
                     cont_ptr=&cont;
@@ -556,7 +554,7 @@ void PPElementConstructor::do_next (tuple &t)
             conscnt=oldcnt;
         //crm_dbg<<"\n after body cnt in "<<name<<" = "<<conscnt;
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();
@@ -586,7 +584,7 @@ PPIterator* PPElementConstructor::do_copy(dynamic_context *_cxt_)
 
 
 PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
-                                               operation_info _info_, 
+                                               operation_info _info_,
                                                PPOpIn _qname_,
                                                PPOpIn _content_,
                                                bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
@@ -598,7 +596,7 @@ PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
 }
 
 PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
-                                               operation_info _info_, 
+                                               operation_info _info_,
                                                const char* name,
                                                PPOpIn _content_,
                                                bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
@@ -611,7 +609,7 @@ PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
 }
 
 PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
-                                               operation_info _info_, 
+                                               operation_info _info_,
                                                PPOpIn _qname_,
                                                const char* value,
                                                bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
@@ -623,7 +621,7 @@ PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
 }
 
 PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
-                                               operation_info _info_, 
+                                               operation_info _info_,
                                                const char* name,
                                                const char* value,
                                                bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
@@ -637,19 +635,19 @@ PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
 PPAttributeConstructor::~PPAttributeConstructor()
 {
 
-    if (at_name!=NULL) 
+    if (at_name!=NULL)
         delete [] at_name;
     else
     {
         delete qname.op;
         qname.op = NULL;
     }
-    if (at_value!=NULL) 
+    if (at_value!=NULL)
         delete [] at_value;
     else
     {
         delete content.op;
-        content.op = NULL;      
+        content.op = NULL;
     }
 }
 
@@ -710,14 +708,14 @@ void PPAttributeConstructor::do_next (tuple &t)
                 str_counted_ptr c_ptr(prefix);
                 if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0044);
                 if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
-                /* Default namespace is not applied to the attributes */            
+                /* Default namespace is not applied to the attributes */
                 if(my_strcmp(prefix, "") != 0)
-                    ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);             
+                    ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
             }
         }
 
         /* Check constraints on full name */
-        if(!isNameValid(name, 
+        if(!isNameValid(name,
                         ns == NULL_XMLNS ? NULL : ns->prefix,
                         ns == NULL_XMLNS ? NULL : ns->uri))
             throw XQUERY_EXCEPTION(XQDY0044);
@@ -730,7 +728,7 @@ void PPAttributeConstructor::do_next (tuple &t)
             value=(char*)tr_globals::tmp_op_str_buf.c_str();
             size=tr_globals::tmp_op_str_buf.get_size();
         }
-        else 
+        else
             size=strlen(value);
 
         /* Attribute insertion */
@@ -754,11 +752,11 @@ void PPAttributeConstructor::do_next (tuple &t)
                 }
 
                 new_attribute= insert_attribute(removeIndirection(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
-            }           
+            }
             else
                 new_attribute= insert_attribute(XNULL,XNULL,removeIndirection(cont_parind),name,xs_untypedAtomic,value,size,ns);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(new_attribute))->indir;         
+            cont_leftind=((n_dsc*)XADDR(new_attribute))->indir;
         }
 
         /* Result */
@@ -798,7 +796,7 @@ PPIterator* PPAttributeConstructor::do_copy(dynamic_context *_cxt_)
 
 
 PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
-                                               operation_info _info_, 
+                                               operation_info _info_,
                                                const char* name,
                                                PPOpIn _content_): PPConstructor(_cxt_, _info_, true),
                                                                   content(_content_)
@@ -814,7 +812,7 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
 }
 
 PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
-                                               operation_info _info_, 
+                                               operation_info _info_,
                                                const char* name,
                                                const char* value): PPConstructor(_cxt_, _info_, true)
 {
@@ -882,7 +880,7 @@ void PPNamespaceConstructor::do_next (tuple &t)
 
         t.copy(tuple_cell::node(new_namespace));
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();
@@ -907,7 +905,7 @@ PPIterator* PPNamespaceConstructor::do_copy(dynamic_context *_cxt_)
 
 
 PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_,
-                                           operation_info _info_, 
+                                           operation_info _info_,
                                            PPOpIn _content_,
                                            bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
                                                              content(_content_)
@@ -918,7 +916,7 @@ PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_,
 }
 
 PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_,
-                                           operation_info _info_, 
+                                           operation_info _info_,
                                            const char* value,
                                            bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
 {
@@ -976,7 +974,7 @@ void PPCommentConstructor::do_next (tuple &t)
             size=strlen(value);
 
         int rst=strm.parse(value,size,NULL,NULL);
-        if (rst==1||(size>0 && value[size-1]=='-')) 
+        if (rst==1||(size>0 && value[size-1]=='-'))
             throw XQUERY_EXCEPTION(XQDY0072);
         xptr newcomm;
         if (cont_parind==XNULL || deep_copy )
@@ -988,13 +986,13 @@ void PPCommentConstructor::do_next (tuple &t)
             else
                 newcomm= insert_comment(XNULL,XNULL,removeIndirection(cont_parind),value,size);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(newcomm))->indir;           
+            cont_leftind=((n_dsc*)XADDR(newcomm))->indir;
         }
         //Result
         t.copy(tuple_cell::node(newcomm));
 
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();
@@ -1005,7 +1003,7 @@ PPIterator* PPCommentConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPCommentConstructor *res ;
     if (at_value!=NULL) res = se_new PPCommentConstructor(_cxt_, info, at_value, deep_copy);
-    else 
+    else
     {
         res = se_new PPCommentConstructor(_cxt_, info, content, deep_copy);
         res->content.op = content.op->copy(_cxt_);
@@ -1021,7 +1019,7 @@ PPIterator* PPCommentConstructor::do_copy(dynamic_context *_cxt_)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
-                                 operation_info _info_, 
+                                 operation_info _info_,
                                  PPOpIn _qname_,
                                  PPOpIn _content_,
                                  bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
@@ -1034,7 +1032,7 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
 
 }
 PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
-                                 operation_info _info_, 
+                                 operation_info _info_,
                                  const char* name,
                                  PPOpIn _content_,
                                  bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
@@ -1073,14 +1071,14 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
 PPPIConstructor::~PPPIConstructor()
 {
 
-    if (at_name!=NULL) 
+    if (at_name!=NULL)
         delete [] at_name;
     else
     {
         delete qname.op;
         qname.op = NULL;
     }
-    if (at_value!=NULL) 
+    if (at_value!=NULL)
         delete [] at_value;
     else
     {
@@ -1133,7 +1131,7 @@ void PPPIConstructor::do_next (tuple &t)
             prefix=(char*)xs_QName_get_prefix(name);
             name=xs_QName_get_local_name(name);
             if (prefix!=NULL)
-                throw XQUERY_EXCEPTION(XQDY0041);           
+                throw XQUERY_EXCEPTION(XQDY0041);
         }
         else
         {
@@ -1157,11 +1155,11 @@ void PPPIConstructor::do_next (tuple &t)
             value=(char*)tr_globals::tmp_op_str_buf.c_str();
             size=tr_globals::tmp_op_str_buf.get_size();
         }
-        else 
+        else
             size=strlen(value);
 
         int rst=strm.parse(value,size,NULL,NULL);
-        if (rst==1) 
+        if (rst==1)
             throw XQUERY_EXCEPTION(XQDY0026);
         int wp_k=0;
         int wp_s=size;
@@ -1183,12 +1181,12 @@ void PPPIConstructor::do_next (tuple &t)
             else
                 new_pi= insert_pi(XNULL,XNULL,removeIndirection(cont_parind),name,strlen(name),value,size);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(new_pi))->indir;            
+            cont_leftind=((n_dsc*)XADDR(new_pi))->indir;
         }
         //Result
         t.copy(tuple_cell::node(new_pi));
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();
@@ -1222,7 +1220,7 @@ PPIterator* PPPIConstructor::do_copy(dynamic_context *_cxt_)
 
 
 PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
-                                     operation_info _info_, 
+                                     operation_info _info_,
                                      PPOpIn _content_,
                                      bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
                                                         content(_content_)
@@ -1232,7 +1230,7 @@ PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
 }
 
 PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
-                                     operation_info _info_, 
+                                     operation_info _info_,
                                      const char* value,
                                      bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy)
 {
@@ -1242,7 +1240,7 @@ PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
 PPTextConstructor::~PPTextConstructor()
 {
 
-    if (at_value!=NULL) 
+    if (at_value!=NULL)
         delete [] at_value;
     else
     {
@@ -1302,13 +1300,13 @@ void PPTextConstructor::do_next (tuple &t)
             else
                 newcomm= insert_text(XNULL,XNULL,removeIndirection(cont_parind),value,size);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(newcomm))->indir;           
+            cont_leftind=((n_dsc*)XADDR(newcomm))->indir;
         }
         //Result
         t.copy(tuple_cell::node(newcomm));
 
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();
@@ -1319,7 +1317,7 @@ PPIterator* PPTextConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPTextConstructor *res ;
     if (at_value!=NULL) res = se_new PPTextConstructor(_cxt_, info, at_value, deep_copy);
-    else 
+    else
     {
         res = se_new PPTextConstructor(_cxt_, info, content, deep_copy);
         res->content.op = content.op->copy(_cxt_);
@@ -1336,7 +1334,7 @@ PPIterator* PPTextConstructor::do_copy(dynamic_context *_cxt_)
 
 
 PPDocumentConstructor::PPDocumentConstructor(dynamic_context *_cxt_,
-                                             operation_info _info_, 
+                                             operation_info _info_,
                                              PPOpIn _content_): PPConstructor(_cxt_, _info_, false),
                                                                 content(_content_)
 {
@@ -1381,7 +1379,7 @@ void PPDocumentConstructor::do_next (tuple &t)
         //document insertion insertion
         //context save
         xptr parind=cont_parind;
-        xptr leftind=cont_leftind;      
+        xptr leftind=cont_leftind;
         int cnt=conscnt;
         int oldcnt=conscnt;
         xptr new_doc=insert_document("tmp",false);
@@ -1426,14 +1424,13 @@ void PPDocumentConstructor::do_next (tuple &t)
                 switch (typ)
                 {
                 case document:
-                case element: 
+                case element:
                     {
                         break;
                     }
-                case text: 
+                case text:
                     {
-                        if (((t_dsc*)XADDR(node))->size==0) 
-                        {
+                        if (isTextEmpty(T_DSC(node))) {
                             content.op->next(t);
                             continue;
                         }
@@ -1455,17 +1452,17 @@ void PPDocumentConstructor::do_next (tuple &t)
                     if (typ==document)
                     {
                         xptr res = copy_content(removeIndirection(indir),node,left,cxt->st_cxt->preserve_type);
-                        if (res!=XNULL)                 
+                        if (res!=XNULL)
                             left=res;
-                        else 
+                        else
                         {
                             content.op->next(t);
-                            continue;   
+                            continue;
                         }
 
                     }
                     else
-                        left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,cxt->st_cxt->preserve_type);
+                        left=deep_copy_node(left, XNULL, removeIndirection(indir), node, NULL, cxt->st_cxt->preserve_type);
 
                 }
                 cont_leftind=((n_dsc*)XADDR(left))->indir;
@@ -1495,7 +1492,7 @@ void PPDocumentConstructor::do_next (tuple &t)
         cont_leftind=XNULL;
         conscnt=oldcnt;
     }
-    else 
+    else
     {
         first_time = true;
         t.set_eos();

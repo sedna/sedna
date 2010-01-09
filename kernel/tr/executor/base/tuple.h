@@ -32,13 +32,13 @@ typedef counted_ptr<char> str_counted_ptr;
 
 /// Used in fn:concat to determine which type of sting to create as result.
 /// Possibly, additional review is needed how we manage in-memory strings.
-#define MAX_MEM_STR_SIZE	            100      
+#define MAX_MEM_STR_SIZE	            100
 
 /// Used in casting and serialazation to create lexical atomic tuple cell
 /// representation (through tr_globals::mem_str_buf).
-/// Size should be the same as maximum lexical representaion of any fixed size 
-/// atomic value. In general, it means the same value as used in the lexical 
-/// analyzer (XQueryDLGLexer::bufsize). 
+/// Size should be the same as maximum lexical representaion of any fixed size
+/// atomic value. In general, it means the same value as used in the lexical
+/// analyzer (XQueryDLGLexer::bufsize).
 #define MAX_ATOMIC_LEX_REPR_SIZE        2000
 
 
@@ -83,7 +83,7 @@ Tuple cell is a part of tuple, which is a structure passed between QEP operation
 
 Tuple Cell Structure
 ~~~~~~~~~~~~~~~~~~~~
-Tuple cell contains two fields -- 't' and 'data'. 
+Tuple cell contains two fields -- 't' and 'data'.
 't' indicates type information of tuple cell (what it stores and of which type),
 'data' stores some information depending on 't'.
 
@@ -93,7 +93,7 @@ Lets look at 't' as an array of 32-bits.
 |____||________________________|
 
 First 6 bits are used for encoding tuple cell type (see below). Other 26 could be
-used for encoding type of the stored entity (atomic value for now) according to 
+used for encoding type of the stored entity (atomic value for now) according to
 XML Schema. Today 16 bits are used for representing values of type xmlscm_type.
 
 
@@ -128,14 +128,14 @@ Brand new!!! Special subtypes for "node" in 7-8 bits:
 01000011 -- always indirection (safe)
 01000010 -- indirection only for temporary (tmp-safe)
 01000001 -- always direct node (unsafe)
-01000000 -- "untyped" node (any xptr) 
+01000000 -- "untyped" node (any xptr)
 
 'eos' stands for END OF SEQUENCE.
 
-Light atomic value is an atomic value (according to XPath/XQuery Data Model) that feats in 
-dynamic memory. It could be of two types -- values of small fixed size (less or equal to 
-16 bytes) that are stored in 'data' field and values of variable size that are stored in 
-main memory outside tuple cell (tuple cell stores a pointer to it). Variable size light 
+Light atomic value is an atomic value (according to XPath/XQuery Data Model) that feats in
+dynamic memory. It could be of two types -- values of small fixed size (less or equal to
+16 bytes) that are stored in 'data' field and values of variable size that are stored in
+main memory outside tuple cell (tuple cell stores a pointer to it). Variable size light
 atomic value are null-terminated values.
 
 Heavy atomic value is an atomic value (according to XPath/XQuery Data Model) that is stored
@@ -156,9 +156,9 @@ in VMM memory.
         str_counted_ptr s;
 
 4. light atomic of fixed size
-   'data' stores 
+   'data' stores
         __int64
-    or 
+    or
         xs_decimal_t
     or
         float
@@ -177,6 +177,11 @@ in VMM memory.
         xptr p;
         __int64 size;
 */
+
+struct tuple_cell;
+
+extern tuple_cell EMPTY_STRING_TC;
+
 struct tuple_cell
 {
 private:
@@ -212,7 +217,7 @@ public:
     bool is_heavy_atomic() const { return t & TC_HEAVY_ATOMIC_MASK; }
 
     /* node types */
-    
+
     bool is_xptr()         const { return t & TC_NODE_MASK; }
 
     /* safenode type means that node is stored with indirection always */
@@ -234,22 +239,22 @@ public:
 
     xptr               get_node_smart()  const {
       switch (t & TC_TYPE_MASK) {
-        case TC_SAFENODE : return get_safenode(); 
-        case TC_TMPSAFENODE : return get_node(); 
+        case TC_SAFENODE : return get_safenode();
+        case TC_TMPSAFENODE : return get_node();
         case TC_UNSAFENODE : return get_unsafenode();
       }
     }
 
 
     /// fixed size atomic values
-    __int64            get_xs_integer()  const { return *(__int64*           )(&data); } 
+    __int64            get_xs_integer()  const { return *(__int64*           )(&data); }
     xs_decimal_t       get_xs_decimal()  const { return *(xs_decimal_t*      )(&data); }
     float              get_xs_float()    const { return *(float*             )(&data); }
     double             get_xs_double()   const { return *(double*            )(&data); }
     bool               get_xs_boolean()  const { return *(bool*              )(&data); }
     xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data); }
     xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data); }
-    
+
     sequence*          get_sequence_ptr()const { return *(sequence**         )(&data); }
     void*              get_binary_data() const { return  (void*              )(&data); }
 
@@ -272,7 +277,7 @@ public:
         release();
     }
     // default constructor
-    tuple_cell() : t(tc_eos) 
+    tuple_cell() : t(tc_eos)
     {
         data.x = data.y = (__uint64)0;
     }
@@ -296,7 +301,7 @@ public:
         return *this;
     }
     // for nodes
-    
+
   private :
     explicit tuple_cell(const int subtype, const xptr &_p_)
     {
@@ -469,10 +474,27 @@ public:
         __uint32 _t_ = _size_ > PSTRMAXSIZE ? tc_heavy_atomic_pstr_long : tc_heavy_atomic_pstr_short;
         return tuple_cell(_t_, _xtype_, _p_, _size_);
     }
-	
+
     static tuple_cell atomic_estr(xmlscm_type _xtype_, __int64 _size_, const xptr &_p_)
     {
         return tuple_cell(tc_heavy_atomic_estr, _xtype_, _p_, _size_);
+    }
+
+    inline static tuple_cell atomic_text(xptr node)
+    {
+        CHECKP(node);
+        if (isTextEmpty(T_DSC(node))) return EMPTY_STRING_TC;
+        return tuple_cell::atomic_pstr(xs_string, getTextSize(T_DSC(node)), getTextPtr(T_DSC(node)));
+    }
+
+    inline static tuple_cell atomic_pi(xptr node)
+    {
+        CHECKP(node);
+        size_t size = (size_t) getTextSize(PI_DSC(node));
+        size_t target_size = PI_DSC(node)->target;
+        if (size == 0 || target_size == size) return EMPTY_STRING_TC;
+        U_ASSERT(size < PSTRMAXSIZE);
+        return tuple_cell::atomic_pstr(xs_string, size, getTextPtr(T_DSC(node)) + target_size);
     }
 
     static tuple_cell atomic_se_separator()
@@ -490,16 +512,16 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     void set_xtype(xmlscm_type _xtype_) { t = (t & TC_TYPE_MASK) | _xtype_; }
 
-    void set_eos() 
-    { 
+    void set_eos()
+    {
         release();
         t = tc_eos;
         data.x = (__int64)0;
         data.y = (__int64)0;
     }
 
-    void set_unsafenode(const xptr &_p_) 
-    { 
+    void set_unsafenode(const xptr &_p_)
+    {
         release();
         t = tc_unsafenode;
         *(xptr*)(&data) = _p_;
@@ -564,12 +586,10 @@ public:
 };
 
 
-extern tuple_cell EMPTY_STRING_TC;
-
 
 struct tuple
-{ 
-    int cells_number;	// number of cells in the array 
+{
+    int cells_number;	// number of cells in the array
     tuple_cell *cells;	// array of cells
     bool eos;			// is eos?
 
@@ -599,7 +619,7 @@ struct tuple
     void copy(const tuple &t, const tuple_cell &tc)
     {
         eos = false;
-        if (t.cells_number + 1 != cells_number) 
+        if (t.cells_number + 1 != cells_number)
             throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from tuple and tuple cell (size mismatch)");
         for (int i = 0; i < t.cells_number; i++) cells[i] = t.cells[i];
         cells[cells_number - 1] = tc;
@@ -607,7 +627,7 @@ struct tuple
     void copy(const tuple &t, const tuple_cell &tc1, const tuple_cell &tc2)
     {
         eos = false;
-        if (t.cells_number + 2 != cells_number) 
+        if (t.cells_number + 2 != cells_number)
             throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from tuple and two tuple cells (size mismatch)");
         for (int i = 0; i < t.cells_number; i++) cells[i] = t.cells[i];
         cells[cells_number - 2] = tc1;
@@ -616,16 +636,16 @@ struct tuple
     void copy(const tuple &s1, const tuple &s2, const arr_of_int_pairs &order)
     {
         eos = false;
-        if (s1.cells_number + s2.cells_number != cells_number) 
+        if (s1.cells_number + s2.cells_number != cells_number)
             throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from two tuples (size mismatch)");
         const tuple* arr[2] = {&s1, &s2};
         for (int i = 0; i < cells_number; i++) cells[i] = arr[order[i].first - 1]->cells[order[i].second - 1];
     }
     ~tuple() { clear(); }
-    void clear() 
-    { 
-		if (cells != NULL) delete [] cells; 
-    } 
+    void clear()
+    {
+		if (cells != NULL) delete [] cells;
+    }
     bool is_eos() const { return eos; }
     void set_eos() { eos = true; }
 

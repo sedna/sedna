@@ -60,7 +60,7 @@ struct pstr_long_block_list_map_entry
 #define PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE sizeof(struct pstr_long_block_list_map_entry)
 
 xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
-void pstr_long_delete_str(const xptr desc);
+void pstr_long_delete_str(xptr desc);
 void pstr_long_delete_str2(const xptr str_ptr);
 void pstr_long_append_tail(const xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
 void pstr_long_append_tail(const xptr dst_desc, const xptr src_desc);
@@ -93,7 +93,7 @@ class pstr_long_cursor : public str_cursor
 {
 	//TODO!! blk should point to last_blk or last_blk->pred when pointer is at eof
 	// if cursor < 0, then blk should NEVER point to last_blk in get_blk/copy_blk
-	// i.e. blk always points to block that contains some string data & if position 
+	// i.e. blk always points to block that contains some string data & if position
 	// is not eos, current char is in blk
 	friend void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t size0);
 	friend void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
@@ -134,12 +134,12 @@ public:
     virtual int copy_blk(char *buf);
 	// get's a pointer to string part in the current block and moves cursor to the next block
 	// (same as copy_blk, but without copy)
-	// returns the length of the string part 
+	// returns the length of the string part
 	//     or 0 if end of string reached (*ptr is not modified in this case)
 	virtual int get_blk(char **ptr);
 
 
-	// like get_blk, but gets data from the first byte in the current block till 
+	// like get_blk, but gets data from the first byte in the current block till
 	// the cursor position (excluding byte, pointed by cursor)
 	// and moves cursor after the end of the previous block (thus making it incompatible with iterator functions)
 	// or to the string beginning

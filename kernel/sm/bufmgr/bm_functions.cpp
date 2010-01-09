@@ -38,7 +38,7 @@ void _bm_set_working_set_size()
                         &MaximumWorkingSetSize_orig,// maximum working set size
                         __sys_call_error
           );
-    if (res != 0) 
+    if (res != 0)
 
     elog(EL_WARN, ("Can't get working set size. Possibly, there are no admin rights."));
 
@@ -48,7 +48,7 @@ void _bm_set_working_set_size()
                         __sys_call_error
           );
 
-    if (res != 0) 
+    if (res != 0)
 
     elog(EL_WARN, ("Can't set working set size. Possibly, there are no admin rights."));
 }
@@ -73,8 +73,8 @@ static volatile sig_atomic_t canjump;
 
 void _bm_sigbus_handler(int signo)
 {
-    if(canjump == 0) return;	
-	canjump = 0;	
+    if(canjump == 0) return;
+	canjump = 0;
 	siglongjmp(jmpbuf, 1);
 }
 
@@ -87,7 +87,7 @@ static inline void _bm_guarantee_buffer_pool(void* addr, int size)
     if (size % page_size != 0) total_pages++;
 
     unsigned char* buf_mem = (unsigned char*) addr;
-    
+
     struct sigaction sigbus_act, sig_backup;
     memset(&sigbus_act, '\0', sizeof(struct sigaction));
     memset(&sig_backup, '\0', sizeof(struct sigaction));
@@ -134,7 +134,7 @@ void _bm_init_buffer_pool()
     {
         if (uMemLock(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         {
-#ifndef _WIN32            
+#ifndef _WIN32
             elog(EL_WARN, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
             _bm_guarantee_buffer_pool(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE);
 #else
@@ -227,22 +227,22 @@ void bm_startup() throw (SednaException)
     if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-    p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error); 
-    if (p_sm_callback_data == NULL) 
+    p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error);
+    if (p_sm_callback_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
     if (uCreateShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-    lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp), __sys_call_error); 
-    if (lru_global_stamp_data == NULL) 
+    lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp), __sys_call_error);
+    if (lru_global_stamp_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
     *lru_global_stamp_data = 0;
 #endif
 
     // init physical xptrs table
     phys_xptrs = se_new t_xptr_info(sm_globals::bufs_num);
-    
+
     mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     read_master_block();
 }
@@ -363,13 +363,14 @@ void bm_unregister_session(session_id sid) throw (SednaException)
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
 
-	/*	A workaround to wakeup VMM callback thread when session is unregistered. 
+	/*	A workaround to wakeup VMM callback thread when session is unregistered.
 		We can't do it in TRN since a semaphore is destroyed as a part of bm_unregister_session
 		call. We can't shutdown VMM callback thread *before* calling bm_unregister_session
-		because SM can callback TRN *after* the callback thread is already gone and will lock forever. */ 
+		because SM can callback TRN *after* the callback thread is already gone and will lock forever. */
 	/* if (USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error) != 0)
-		throw SYSTEM_ENV_EXCEPTION("Cannot up SM_TO_VMM_CALLBACK_SEM1_BASE_STR"); */ 
-	xptr special(0, (void*)-1);
+		throw SYSTEM_ENV_EXCEPTION("Cannot up SM_TO_VMM_CALLBACK_SEM1_BASE_STR"); */
+	xptr special = {0, (void*)-1};
+
 	unmap_block_in_tr(special, it->second, true);
 
     if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem1, __sys_call_error) != 0)
@@ -487,7 +488,7 @@ void bm_delete_block(session_id sid,
     ramoffs offs;
 
     res = buffer_table.find_remove(p, offs);
-    if (res == 0) 
+    if (res == 0)
     {
         used_mem.find_remove(offs);
         free_mem.push(offs);
@@ -497,7 +498,7 @@ void bm_delete_block(session_id sid,
     if (IS_DATA_BLOCK(p))
     {
         bool approved = unmap_block_in_trs(sid, p, true);
-        if (!approved) 
+        if (!approved)
            throw SYSTEM_EXCEPTION("Trying to delete data block which is used in another transaction");
         if (is_recovery_mode)
         {
@@ -508,7 +509,7 @@ void bm_delete_block(session_id sid,
             push_to_persistent_free_blocks_stack(&(it->second->freed_data_blocks), p);
         }
     }
-    else 
+    else
     {
         // we will delete it on unregister transaction or by calling special method using list of allocated tmp blocks
     }
@@ -551,7 +552,7 @@ void bm_memlock_block(session_id sid, xptr p) throw (SednaException)
     ramoffs offs = 0;
 
     res = buffer_table.find(p, offs);
-    if (res == 0) 
+    if (res == 0)
     { // we have found the block in memory
         res = blocked_mem.find(offs);
         if (res == 0) return; // block already blocked

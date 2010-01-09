@@ -82,7 +82,7 @@ xmlscm_type primitive_base_type(xmlscm_type t)
         return xs_string;
     else if (is_derived_from_xs_integer(t))
         return xs_integer;
-    else 
+    else
         return t;
 }
 
@@ -90,7 +90,7 @@ inline bool _check_st_elem_data(const xptr &p, const st_item_type& it)
 {
     switch (it.info.ea.nne)
     {
-        case st_nne_wildcard: 
+        case st_nne_wildcard:
             break;
         case st_nne_name:
             if (_xs_QName_not_equal(it.info.ea.node_name_uri, it.info.ea.node_name_local, p))
@@ -120,7 +120,7 @@ inline bool _check_st_attr_data(const xptr &p, const st_item_type& it)
 {
     switch (it.info.ea.nne)
     {
-        case st_nne_wildcard: 
+        case st_nne_wildcard:
             break;
         case st_nne_name:
             if (_xs_QName_not_equal(it.info.ea.node_name_uri, it.info.ea.node_name_local, p))
@@ -154,7 +154,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
             if (tc.is_atomic()) return is_same_or_derived(tc.get_atomic_type(), it.info.single_type);
             else return false;
 
-        case st_document: 
+        case st_document:
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
@@ -202,7 +202,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                 return _check_st_attr_data(p, it);
             }
 
-        case st_pi: 
+        case st_pi:
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
@@ -214,14 +214,12 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 
                 pi_dsc *pi = PI_DSC(p);
                 shft target = pi->target;
-                xptr data = pi->data;
-                CHECKP(data);
-                data = PSTRDEREF(data);
+                xptr data = getTextPtr(pi);
                 bool res = (strncmp((char*)XADDR(data), it.info.ncname, target) == 0);
                 return res;
             }
 
-        case st_comment: 
+        case st_comment:
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
@@ -264,11 +262,11 @@ inline void get_next(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reach
     {
         if(pos == s->size()) //does 'pos' point to the end of the sequence?
         {
-            child.op->next(t); 
+            child.op->next(t);
             if(t.is_eos()) eos_reached = true;
             else { s->add(t); pos++; }
         }
-        else s->get(t, pos++); 
+        else s->get(t, pos++);
     }
 }
 
@@ -281,12 +279,12 @@ bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached,
 {
     int pos = 0;
     eos_reached = false;
-    
+
     get_next(child, s, t, eos_reached, pos);
 
     if (t.is_eos())
-        return (st.oi == st_empty       || 
-                st.oi == st_optional    || 
+        return (st.oi == st_empty       ||
+                st.oi == st_optional    ||
                 st.oi == st_zero_or_more);
 
     if (st.oi == st_empty) return false;
@@ -314,14 +312,14 @@ bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached,
 static inline string elem_name_and_type2string(const xptr& p)
 {
     string res;
-    
+
     xmlns_ptr node_ns  = GETSCHEMENODE(XADDR(p))->get_xmlns();
     char* node_uri   = (node_ns != NULL) ? node_ns->uri : NULL;
     char *node_local = GETSCHEMENODE(XADDR(p))->name;
     if (node_uri != NULL) {res += node_uri; res += ":";}
     if (node_local != NULL) res += node_local;
     else res += "*";
-    res += ", "; res += xmlscm_type2c_str(E_DSC(p)->type); 
+    res += ", "; res += xmlscm_type2c_str(E_DSC(p)->type);
 
     return res;
 }
@@ -329,14 +327,14 @@ static inline string elem_name_and_type2string(const xptr& p)
 static inline string attr_name_and_type2string(const xptr& p)
 {
     string res;
-    
+
     xmlns_ptr node_ns  = GETSCHEMENODE(XADDR(p))->get_xmlns();
     char* node_uri   = (node_ns != NULL) ? node_ns->uri : NULL;
     char *node_local = GETSCHEMENODE(XADDR(p))->name;
     if (node_uri != NULL) {res += node_uri; res += ":";}
     if (node_local != NULL) res += node_local;
     else res += "*";
-    res += ", "; res += xmlscm_type2c_str(A_DSC(p)->type); 
+    res += ", "; res += xmlscm_type2c_str(A_DSC(p)->type);
 
     return res;
 }
@@ -345,7 +343,7 @@ static inline string attr_name_and_type2string(const xptr& p)
 string node_type2string(const xptr& node)
 {
     string res;
-    
+
     CHECKP(node);
 
     switch(GETSCHEMENODEX(node)->type)
@@ -353,9 +351,9 @@ string node_type2string(const xptr& node)
         case document:
         {
             res = "document-node(";
-            
+
             xptr p = getFirstByOrderElementChild(node);
-            if (p != XNULL && getNextByOrderElement(p) == XNULL) 
+            if (p != XNULL && getNextByOrderElement(p) == XNULL)
                 res += " element(" + elem_name_and_type2string(p) + ") ";
 
             res += ")";
@@ -365,14 +363,12 @@ string node_type2string(const xptr& node)
         case attribute:     res = "attribute(" + attr_name_and_type2string(node) + ")"; break;
         case element:       res = "element("   + elem_name_and_type2string(node) + ")"; break;
         case comment:       res = "comment()"; break;
-        case pr_ins:        
+        case pr_ins:
         {
-            res = "process-instruction("; 
+            res = "process-instruction(";
             pi_dsc *pi = PI_DSC(node);
             shft target = pi->target;
-            xptr data = pi->data;
-            CHECKP(data);
-            data = PSTRDEREF(data);
+            xptr data = getTextPtr(pi);
             res = res.append((char*)XADDR(data), target);
             res += ")";  break;
         }
@@ -402,7 +398,7 @@ void type_promotion(tuple_cell &tc, xmlscm_type type) //tc contains result tuple
     }
 }
 
-string sequence_type::to_str() const 
+string sequence_type::to_str() const
 {
     string res;
 
@@ -423,7 +419,7 @@ string sequence_type::to_str() const
 string st_item_type::to_str() const
 {
     string res;
-    
+
     switch(type)
     {
         case st_atomic_type:      res = xmlscm_type2c_str(info.single_type); break;
@@ -470,8 +466,8 @@ string st_elem_attr_data::to_str() const
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // 3.8.3 Order By and Return Clauses
 // ...
-// All the non-empty orderspec values must be convertible to a common type 
-// by subtype substitution and/or type promotion. 
+// All the non-empty orderspec values must be convertible to a common type
+// by subtype substitution and/or type promotion.
 // ...
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -480,10 +476,10 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
     if(t1 == t2) return t1;
     if(is_derived(t1, t2)) return t2;
     if(is_derived(t2, t1)) return t1;
-    
+
     switch (t1)
     {
-        case xs_yearMonthDuration   : 
+        case xs_yearMonthDuration   :
             switch(t2)
             {
                 case xs_dayTimeDuration     : return xs_duration;
@@ -495,22 +491,22 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_yearMonthDuration   : return xs_duration;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        case xs_float               : 
+        case xs_float               :
             switch(t2)
             {
-                case xs_decimal             : 
-                case xs_integer             : 
-                case xs_nonPositiveInteger  : 
-                case xs_negativeInteger     : 
-                case xs_long                : 
-                case xs_int                 : 
-                case xs_short               : 
-                case xs_byte                : 
-                case xs_nonNegativeInteger  : 
-                case xs_unsignedLong        : 
-                case xs_unsignedInt         : 
-                case xs_unsignedShort       : 
-                case xs_unsignedByte        : 
+                case xs_decimal             :
+                case xs_integer             :
+                case xs_nonPositiveInteger  :
+                case xs_negativeInteger     :
+                case xs_long                :
+                case xs_int                 :
+                case xs_short               :
+                case xs_byte                :
+                case xs_nonNegativeInteger  :
+                case xs_unsignedLong        :
+                case xs_unsignedInt         :
+                case xs_unsignedShort       :
+                case xs_unsignedByte        :
                 case xs_positiveInteger     : return xs_float;
                 case xs_double              : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
@@ -518,34 +514,34 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
         case xs_double              :
             switch(t2)
             {
-                case xs_float               : 
-                case xs_decimal             : 
-                case xs_integer             : 
-                case xs_nonPositiveInteger  : 
-                case xs_negativeInteger     : 
-                case xs_long                : 
-                case xs_int                 : 
-                case xs_short               : 
-                case xs_byte                : 
-                case xs_nonNegativeInteger  : 
-                case xs_unsignedLong        : 
-                case xs_unsignedInt         : 
-                case xs_unsignedShort       : 
-                case xs_unsignedByte        : 
+                case xs_float               :
+                case xs_decimal             :
+                case xs_integer             :
+                case xs_nonPositiveInteger  :
+                case xs_negativeInteger     :
+                case xs_long                :
+                case xs_int                 :
+                case xs_short               :
+                case xs_byte                :
+                case xs_nonNegativeInteger  :
+                case xs_unsignedLong        :
+                case xs_unsignedInt         :
+                case xs_unsignedShort       :
+                case xs_unsignedByte        :
                 case xs_positiveInteger     : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        
-        case xs_string              : 
+
+        case xs_string              :
             if(t2 == xs_anyURI) return xs_string;
             else throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
-        case xs_normalizedString    : 
+        case xs_normalizedString    :
             if(t2 == xs_anyURI) return xs_string;
             else throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
-        case xs_token               : 
+        case xs_token               :
             if(t2 == xs_anyURI) return xs_string;
             else throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
-        case xs_language            : 
+        case xs_language            :
             switch(t2)
             {
                 case xs_anyURI              : return xs_string;
@@ -557,7 +553,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_ENTITY              : return xs_token;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        case xs_NMTOKEN             : 
+        case xs_NMTOKEN             :
             switch(t2)
             {
                 case xs_anyURI              : return xs_string;
@@ -569,7 +565,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_ENTITY              : return xs_token;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        case xs_Name                : 
+        case xs_Name                :
             switch(t2)
             {
                 case xs_anyURI              : return xs_string;
@@ -577,7 +573,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_NMTOKEN             : return xs_token;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        case xs_NCName              : 
+        case xs_NCName              :
             switch(t2)
             {
                 case xs_anyURI              : return xs_string;
@@ -585,7 +581,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_NMTOKEN             : return xs_token;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        case xs_ID                  : 
+        case xs_ID                  :
             switch(t2)
             {
                 case xs_anyURI              : return xs_string;
@@ -595,7 +591,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_ENTITY              : return xs_NCName;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        case xs_IDREF               : 
+        case xs_IDREF               :
             switch(t2)
             {
                 case xs_anyURI              : return xs_string;
@@ -605,7 +601,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_ENTITY              : return xs_NCName;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        case xs_ENTITY              : 
+        case xs_ENTITY              :
             switch(t2)
             {
                 case xs_anyURI              : return xs_string;
@@ -615,135 +611,135 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
                 case xs_IDREF               : return xs_NCName;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        
-        case xs_decimal             : 
-        case xs_integer             : 
+
+        case xs_decimal             :
+        case xs_integer             :
             switch(t2)
             {
                 case xs_float               : return xs_float;
                 case xs_double              : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        
-        case xs_anyURI              : 
+
+        case xs_anyURI              :
             switch(t2)
             {
-                case xs_string              : 
-                case xs_normalizedString    : 
-                case xs_token               : 
-                case xs_language            : 
-                case xs_NMTOKEN             : 
-                case xs_Name                : 
-                case xs_NCName              : 
-                case xs_ID                  : 
-                case xs_IDREF               : 
+                case xs_string              :
+                case xs_normalizedString    :
+                case xs_token               :
+                case xs_language            :
+                case xs_NMTOKEN             :
+                case xs_Name                :
+                case xs_NCName              :
+                case xs_ID                  :
+                case xs_IDREF               :
                 case xs_ENTITY              : return xs_string;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        
+
         case xs_QName               : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
         case xs_NOTATION            : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
 
-        case xs_nonPositiveInteger  : 
+        case xs_nonPositiveInteger  :
         case xs_negativeInteger     :
             switch(t2)
             {
-                case xs_long                : 
-                case xs_int                 : 
-                case xs_short               : 
-                case xs_byte                : 
-                case xs_nonNegativeInteger  : 
-                case xs_unsignedLong        : 
-                case xs_unsignedInt         : 
-                case xs_unsignedShort       : 
-                case xs_unsignedByte        : 
+                case xs_long                :
+                case xs_int                 :
+                case xs_short               :
+                case xs_byte                :
+                case xs_nonNegativeInteger  :
+                case xs_unsignedLong        :
+                case xs_unsignedInt         :
+                case xs_unsignedShort       :
+                case xs_unsignedByte        :
                 case xs_positiveInteger     : return xs_integer;
                 case xs_float               : return xs_float;
                 case xs_double              : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        
-        case xs_long                : 
-        case xs_int                 : 
-        case xs_short               : 
-        case xs_byte                : 
+
+        case xs_long                :
+        case xs_int                 :
+        case xs_short               :
+        case xs_byte                :
             switch(t2)
             {
                 case xs_negativeInteger     :
-                case xs_nonPositiveInteger  : 
-                case xs_nonNegativeInteger  : 
-                case xs_unsignedLong        : 
-                case xs_unsignedInt         : 
-                case xs_unsignedShort       : 
-                case xs_unsignedByte        : 
+                case xs_nonPositiveInteger  :
+                case xs_nonNegativeInteger  :
+                case xs_unsignedLong        :
+                case xs_unsignedInt         :
+                case xs_unsignedShort       :
+                case xs_unsignedByte        :
                 case xs_positiveInteger     : return xs_integer;
                 case xs_float               : return xs_float;
                 case xs_double              : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        
+
         case xs_nonNegativeInteger  :
             switch(t2)
             {
-                case xs_nonPositiveInteger  : 
+                case xs_nonPositiveInteger  :
                 case xs_negativeInteger     :
-                case xs_long                : 
-                case xs_int                 : 
-                case xs_short               : 
+                case xs_long                :
+                case xs_int                 :
+                case xs_short               :
                 case xs_byte                : return xs_integer;
                 case xs_float               : return xs_float;
                 case xs_double              : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
 
-        case xs_unsignedLong        : 
-        case xs_unsignedInt         : 
-        case xs_unsignedShort       : 
-        case xs_unsignedByte        : 
+        case xs_unsignedLong        :
+        case xs_unsignedInt         :
+        case xs_unsignedShort       :
+        case xs_unsignedByte        :
             switch(t2)
             {
-                case xs_nonPositiveInteger  : 
+                case xs_nonPositiveInteger  :
                 case xs_negativeInteger     :
-                case xs_long                : 
-                case xs_int                 : 
-                case xs_short               : 
+                case xs_long                :
+                case xs_int                 :
+                case xs_short               :
                 case xs_byte                : return xs_integer;
                 case xs_positiveInteger     : return xs_nonNegativeInteger;
                 case xs_float               : return xs_float;
                 case xs_double              : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
-        
-        case xs_positiveInteger     : 
+
+        case xs_positiveInteger     :
             switch(t2)
             {
-                case xs_nonPositiveInteger  : 
+                case xs_nonPositiveInteger  :
                 case xs_negativeInteger     :
-                case xs_long                : 
-                case xs_int                 : 
-                case xs_short               : 
+                case xs_long                :
+                case xs_int                 :
+                case xs_short               :
                 case xs_byte                : return xs_integer;
-                case xs_unsignedLong        : 
-                case xs_unsignedInt         : 
-                case xs_unsignedShort       : 
+                case xs_unsignedLong        :
+                case xs_unsignedInt         :
+                case xs_unsignedShort       :
                 case xs_unsignedByte        : return xs_nonNegativeInteger;
                 case xs_float               : return xs_float;
                 case xs_double              : return xs_double;
                 default                     : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
             }
 
-        case xs_untypedAtomic       : 
-        case xs_dateTime            : 
-        case xs_date                : 
-        case xs_time                : 
-        case xs_duration            : 
-        case xs_gYearMonth          : 
-        case xs_gYear               : 
-        case xs_gMonthDay           : 
-        case xs_gDay                : 
-        case xs_gMonth              : 
-        case xs_boolean             : 
-        case xs_base64Binary        : 
+        case xs_untypedAtomic       :
+        case xs_dateTime            :
+        case xs_date                :
+        case xs_time                :
+        case xs_duration            :
+        case xs_gYearMonth          :
+        case xs_gYear               :
+        case xs_gMonthDay           :
+        case xs_gDay                :
+        case xs_gMonth              :
+        case xs_boolean             :
+        case xs_base64Binary        :
         case xs_hexBinary           : throw XQUERY_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
         default                     : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to evaluate_common_type.");
     }

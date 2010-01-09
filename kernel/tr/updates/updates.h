@@ -36,13 +36,31 @@ void rename(PPOpIn arg,const char* name);
 //update utilities
 //void checkSwiizleTab(upd_ns_map*& updmap);
 //insertion of the node to new parent
-xptr deep_node_copy(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node);
 
 //inner operations
 xptr copy_to_temp(xptr node);
-xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_types, unsigned short depth=0);
+xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** nsupdmap, bool save_types, unsigned short depth=0);
 xptr copy_content(xptr newnode,xptr node,xptr left, bool save_types=true);
-xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& updmap, unsigned short depth=0);
+
+inline xptr deep_copy_nodei(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node, upd_ns_map** nsupdmap, bool save_types,
+        unsigned short depth = 0) {
+    return deep_copy_node(indirectionDereferenceCP(left_ind), indirectionDereferenceCP(right_ind), indirectionDereferenceCP(parent_ind),
+            node, nsupdmap, save_types, depth);
+}
+
+inline xptr deep_copy_nodet(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node) {
+    upd_ns_map* ins_swiz = NULL;
+
+    xptr result = deep_copy_node(indirectionDereferenceCP(left_ind), indirectionDereferenceCP(right_ind),
+            indirectionDereferenceCP(parent_ind), node, &ins_swiz, true);
+
+    if (ins_swiz != NULL) {
+        delete ins_swiz;
+    }
+
+    return result;
+}
+
 //node tests
 
 bool inline is_node_persistent (xptr node)

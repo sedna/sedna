@@ -12,7 +12,7 @@
 #include "tr/executor/base/PPVisitor.h"
 
 PPAxisSelf::PPAxisSelf(dynamic_context *_cxt_,
-                       operation_info _info_, 
+                       operation_info _info_,
                        PPOpIn _child_,
                        NodeTestType _nt_type_,
                        NodeTestData _nt_data_) : PPIterator(_cxt_, _info_),
@@ -63,8 +63,8 @@ PPIterator* PPAxisSelf::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
-void PPAxisSelf::do_next (tuple &t) 
-{ 
+void PPAxisSelf::do_next (tuple &t)
+{
     switch (nt_type)
     {
     case node_test_processing_instruction	:
@@ -85,18 +85,14 @@ void PPAxisSelf::do_next (tuple &t)
                     else
                     {
                         pi_dsc* desc=(pi_dsc*)XADDR(node);
-                        int tsize=desc->target;
-                        if (tsize==strlen(nt_data.ncname_local))
-                        {
-                            xptr ind_ptr=desc->data;
-                            CHECKP(ind_ptr);
-                            shft shift= *((shft*)XADDR(ind_ptr));
-                            char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+                        size_t tsize=desc->target;
+                        if (tsize==strlen(nt_data.ncname_local)) {
+                            char* data= (char*)XADDR(getTextPtr(desc));
                             if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
                             else continue;
                         }
                     }
-                }  
+                }
             }
         }
     case node_test_comment					:
@@ -180,7 +176,7 @@ void PPAxisSelf::do_next (tuple &t)
             if (t.is_eos()) return;
             if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
             xptr node=child.get(t).get_node();
-            
+
             if (node!=XNULL)
             {
                 CHECKP(node);
@@ -189,7 +185,7 @@ void PPAxisSelf::do_next (tuple &t)
 
                 if (type != attribute) continue;
 
-                if (nt_data.ncname_local == NULL || 
+                if (nt_data.ncname_local == NULL ||
                     comp_qname_type(scm, nt_data.uri, nt_data.ncname_local, attribute)) return;
             }
         }
@@ -200,7 +196,7 @@ void PPAxisSelf::do_next (tuple &t)
             if (t.is_eos()) return;
             if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
             xptr node = child.get(t).get_node();
-            
+
             if (node != XNULL)
             {
                 CHECKP(node);

@@ -17,7 +17,7 @@
 using namespace std;
 //#include <atlstr.h>
 //#define USE_DTSEARCH_NAMESPACE
-//#include <dtsfc.h> 
+//#include <dtsfc.h>
 //#include "FTsearch.h"
 //#include "FTindex.h"
 //op_str_buf req_buf;
@@ -28,7 +28,7 @@ bool fit;
 PPTest::PPTest(dynamic_context *_cxt_,
                operation_info _info_,
                PPOpIn _seq_) : PPIterator(_cxt_, _info_),
-                               seq(_seq_) 
+                               seq(_seq_)
 {
 	this->test_fun=&PPTest::checkTreeConsistency;
 }
@@ -37,7 +37,7 @@ PPTest::~PPTest()
 {
 	delete seq.op;
 	seq.op = NULL;
-	
+
 }
 
 void PPTest::do_open ()
@@ -59,7 +59,7 @@ void PPTest::do_next (tuple &t)
 	tuple t1(seq.ts);
 	seq.op->next(t1);
 	//Preliminary node analysis
-	if (t1.is_eos()) 
+	if (t1.is_eos())
 	{
 		t.set_eos();
 		return;
@@ -77,20 +77,20 @@ void PPTest::do_next (tuple &t)
 	{
 		(this->*test_fun)(node);
 		strg<<"true";
-		
+
 	}
-	catch(SednaException &e) 
+	catch(SednaException &e)
 	{
        strg << e.getMsg() << endl;
 	   throw ;
     }
-	t.copy(tuple_cell::atomic_deep(xs_string,strg.str().c_str())) ; 
-	
+	t.copy(tuple_cell::atomic_deep(xs_string,strg.str().c_str())) ;
+
 	/*while (true)
 	{
 		seq.op->next(t);
 		//Preliminary node analysis
-		if (t.is_eos()) 
+		if (t.is_eos())
 		{
 			//t.set_eos();
 			return;
@@ -112,7 +112,7 @@ void PPTest::do_next (tuple &t)
 	{
 		seq.op->next(t);
 		//Preliminary node analysis
-		if (t.is_eos()) 
+		if (t.is_eos())
 		{
 			//t.set_eos();
 			return;
@@ -126,7 +126,7 @@ void PPTest::do_next (tuple &t)
 		}
 		seq.op->next(t);
 		//Preliminary node analysis
-		if (t.is_eos()) 
+		if (t.is_eos())
 		{
 			//t.set_eos();
 			return;
@@ -168,7 +168,7 @@ void PPTest::do_next (tuple &t)
 	if (t.is_eos())
 		fit=true;
 	//int res= checkFT(seq);
-	//t.copy(tuple_cell::atomic(res));	
+	//t.copy(tuple_cell::atomic(res));
 	*/
 }
 
@@ -187,7 +187,7 @@ xptr get_root (xptr node)
 	{
       if (((n_dsc*)XADDR(tmp))->pdsc==XNULL) return tmp;
 	  tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
-	}	
+	}
 }
 bool is_same_root(xptr x, xptr y)
 {
@@ -229,7 +229,7 @@ int PPTest::checkFT(PPOpIn _seq_)
     dtssDoSearchJob(*searchJob, result);
 	int res=results->getCount();
 	delete searchJob;
-	
+
 	delete results;
 	return res;
 }*/
@@ -245,15 +245,15 @@ void PPTest::checkTreeConsistency(xptr node)
 	{
 		n_dsc* pr_n=(n_dsc*)((char*)n_blk + node_d->desc_prev );
 		if (pr_n->desc_next!=CALCSHIFT(node_d,n_blk) || pr_n==node_d)
-			throw XQUERY_EXCEPTION(SE2030);	  
+			throw XQUERY_EXCEPTION(SE2030);
 	}
 	if (node_d->desc_next!=0)
 	{
 		n_dsc* pr_n=(n_dsc*)((char*)n_blk + node_d->desc_next );
 		if (pr_n->desc_prev!=CALCSHIFT(node_d,n_blk) || pr_n==node_d)
-			throw XQUERY_EXCEPTION(SE2030);	  
+			throw XQUERY_EXCEPTION(SE2030);
 	}
-	
+
 	//1. indirection test
 	xptr indir=node_d->indir;
 	if (removeIndirection(indir)!=node)
@@ -264,7 +264,7 @@ void PPTest::checkTreeConsistency(xptr node)
 	xptr parent;
 	n_dsc* prev_dsc=getPreviousDescriptorOfSameSort(node_d);
 	xptr prev_x=(prev_dsc==NULL)?XNULL:ADDR2XPTR(prev_dsc);
-    if (par_indir!=XNULL) 
+    if (par_indir!=XNULL)
 	{
 		parent=removeIndirection(par_indir);
 		if (!nid_ancestor(parent,node))
@@ -274,7 +274,7 @@ void PPTest::checkTreeConsistency(xptr node)
 			CHECKP(parent);
 			xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->get_xmlns());
 			if (ptr==NULL || *ptr!=node)
-				throw XQUERY_EXCEPTION(SE2026); 
+				throw XQUERY_EXCEPTION(SE2026);
 		}
 	}
 	//3. left siblings + nid comparison
@@ -307,12 +307,11 @@ void PPTest::checkTreeConsistency(xptr node)
 			check_blk_consistency(*((xptr*)nd.prefix));
 	//5.2 nid pstr consistency
 	CHECKP(node);
-	if (scn->textcnt&& ((t_dsc*)node_d)->data!=XNULL&&((t_dsc*)node_d)->size<=PSTRMAXSIZE && is_last_shft_in_blk(((t_dsc*)node_d)->data))
-	{
+	if ( scn->textcnt && isPstr((t_dsc*)node_d) && is_last_shft_in_blk(((t_dsc*)node_d)->data.lsp.p)) {
 		CHECKP(node);
-		check_blk_consistency(((t_dsc*)node_d)->data);	
+		check_blk_consistency(((t_dsc*)node_d)->data.lsp.p);
 	}
-#endif	
+#endif
 	//recursive walkthrough
 	CHECKP(node);
 	xptr child=giveFirstByOrderChild(node,CHILDCOUNT(node));

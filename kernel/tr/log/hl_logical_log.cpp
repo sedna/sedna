@@ -277,8 +277,8 @@ void hl_logical_log_text_edit(const xptr &self,int data_size,bool begin,bool ins
 	ASSERT(inserted);
 	xptr desc = indirectionDereferenceCP(self);
 	CHECKP(desc);
-	xptr str_ptr = ((t_dsc*)XADDR(desc))->data;
-	int  str_len = ((t_dsc*)XADDR(desc))->size; //FIXME - int
+	xptr str_ptr = getTextPtr((t_dsc*)XADDR(desc));
+	strsize_t str_len = getTextSize((t_dsc*)XADDR(desc));
 	if (str_len <= PSTRMAXSIZE)
 	{
 		if (inserted)

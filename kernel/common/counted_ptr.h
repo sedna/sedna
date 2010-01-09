@@ -42,7 +42,7 @@ public:
 
     X* detach()
     {
-        if (unique() && itsCounter) 
+        if (unique() && itsCounter)
         {
             X* ptr = itsCounter->ptr;
             delete itsCounter;
@@ -51,8 +51,6 @@ public:
         }
         else return NULL;
     }
-
-
 /*
 #ifndef NO_MEMBER_TEMPLATES
     template <class Y> friend class counted_ptr<Y>;

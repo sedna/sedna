@@ -86,6 +86,8 @@ int TRmain(int argc, char *argv[])
     }
     */
 
+    sleep(10);
+
 #ifdef SE_MEMORY_TRACK
     {
 #endif

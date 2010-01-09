@@ -23,19 +23,19 @@ void tuple_cell::print(bool b) const
 
     switch (get_type())
     {
-        case tc_eos: 
+        case tc_eos:
             if (b) d_printf1("type = ");
             d_printf1("eos");
             break;
 
-        case tc_node: 
+        case tc_node:
             if (b) d_printf1("type = node ");
             get_node().print();
             break;
 
         case tc_light_atomic_fix_size:
         case tc_light_atomic_var_size:
-            if (b) 
+            if (b)
             {
                 d_printf1("type = light_atomic ");
                 d_printf2("atomic type = %d ", get_atomic_type());
@@ -87,7 +87,7 @@ void tuple_cell::print(bool b) const
             else d_printf1("heavy_atomic_estr");
             break;
 
-        case tc_heavy_atomic_pstr_short: 
+        case tc_heavy_atomic_pstr_short:
             if (b)
             {
                 d_printf1("type = heavy_atomic_pstr ");
@@ -96,7 +96,7 @@ void tuple_cell::print(bool b) const
             else d_printf1("heavy_atomic_pstr");
             break;
 
-        case tc_heavy_atomic_pstr_long: 
+        case tc_heavy_atomic_pstr_long:
             if (b)
             {
                 d_printf1("type = heavy_atomic_pstr_long ");
@@ -105,7 +105,7 @@ void tuple_cell::print(bool b) const
             else d_printf1("heavy_atomic_pstr_long");
             break;
 
-        default: 
+        default:
             d_printf2("unknown type %d\n", get_type());
     }
 
@@ -115,14 +115,14 @@ void tuple_cell::print(bool b) const
 std::string tuple_cell::type2string() const
 {
     std::string res;
-    
+
     switch (get_type())
     {
-        case tc_eos: 
+        case tc_eos:
             res = "empty sequence";
             break;
 
-        case tc_node: 
+        case tc_node:
             res = node_type2string(get_node());
             break;
 
@@ -130,14 +130,14 @@ std::string tuple_cell::type2string() const
         case tc_light_atomic_var_size:
         case tc_heavy_atomic_estr:
         case tc_heavy_atomic_pstr_short:
-        case tc_heavy_atomic_pstr_long: 
+        case tc_heavy_atomic_pstr_long:
             res = xmlscm_type2c_str(get_atomic_type());
             break;
         default:
             throw USER_EXCEPTION2(SE1003, "Unexpected type of the tuple_cell in type2string");
     }
 
-    return res;        
+    return res;
 }
 
 tuple_cell tuple_cell::make_sure_light_atomic(const tuple_cell& tc)
@@ -161,8 +161,8 @@ char* tuple_cell::copy_string(char *buf) const
 {
     switch (get_type())
     {
-        case tc_light_atomic_var_size:  return strcpy(buf, get_str_mem()); 
-        case tc_heavy_atomic_estr:      
+        case tc_light_atomic_var_size:  return strcpy(buf, get_str_mem());
+        case tc_heavy_atomic_estr:
         case tc_heavy_atomic_pstr_short:estr_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
                                         buf[get_strlen_vmm()] = '\0';
                                         return buf;
@@ -177,15 +177,15 @@ char* tuple_cell::copy_string(char *buf, __int64 n) const
 {
     switch (get_type())
     {
-        case tc_light_atomic_var_size:  return strncpy(buf, get_str_mem(), n); 
+        case tc_light_atomic_var_size:  return strncpy(buf, get_str_mem(), n);
 
-        case tc_heavy_atomic_estr:      
+        case tc_heavy_atomic_estr:
         case tc_heavy_atomic_pstr_short:if (get_strlen_vmm() < n)
                                         {
                                             estr_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
                                             buf[get_strlen_vmm()] = '\0';
                                         }
-                                        else 
+                                        else
                                         {
                                             estr_copy_to_buffer(buf, *(xptr*)(&data), n);
                                         }
@@ -196,7 +196,7 @@ char* tuple_cell::copy_string(char *buf, __int64 n) const
                                             pstr_long_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
                                             buf[get_strlen_vmm()] = '\0';
                                         }
-                                        else 
+                                        else
                                         {
                                             pstr_long_copy_to_buffer(buf, *(xptr*)(&data), n);
                                         }
@@ -208,15 +208,15 @@ char* tuple_cell::copy_string(char *buf, __int64 n) const
 
 
 tuple::tuple(const tuple& t)
-{ 
+{
     //d_printf1("tuple::tuple(const tuple &t) begin\n");
 
     eos = t.eos;
-    cells_number = t.cells_number; 
+    cells_number = t.cells_number;
     if (t.cells == NULL) cells = NULL;
     else
     {
-        cells = se_new tuple_cell[cells_number]; 
+        cells = se_new tuple_cell[cells_number];
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 
@@ -230,11 +230,11 @@ tuple& tuple::operator=(const tuple& t)
     clear();
 
     eos = t.eos;
-    cells_number = t.cells_number; 
+    cells_number = t.cells_number;
     if (t.cells == NULL) cells = NULL;
     else
     {
-        cells = se_new tuple_cell[cells_number]; 
+        cells = se_new tuple_cell[cells_number];
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 

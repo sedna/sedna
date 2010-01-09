@@ -13,7 +13,7 @@
 
 
 PPAxisChild::PPAxisChild(dynamic_context *_cxt_,
-                         operation_info _info_, 
+                         operation_info _info_,
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
                          NodeTestData _nt_data_) : PPIterator(_cxt_, _info_),
@@ -22,10 +22,10 @@ PPAxisChild::PPAxisChild(dynamic_context *_cxt_,
                                                    nt_data(_nt_data_)
 {
     NodeTestType type = nt_type;
-    
-    if (type == node_test_element) 
+
+    if (type == node_test_element)
         type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
-    
+
     switch (type)
     {
         case node_test_processing_instruction   : next_fun = &PPAxisChild::next_processing_instruction; break;
@@ -75,19 +75,14 @@ void PPAxisChild::do_accept(PPVisitor &v)
     v.pop();
 }
 
-static inline bool 
-pi_node_name_equals(const xptr& node, const char* local) 
+static inline bool
+pi_node_name_equals(const xptr& node, const char* local)
 {
     CHECKP(node);
     pi_dsc* desc = (pi_dsc*)XADDR(node);
-    int tsize = desc->target;
-	if (tsize == strlen(local))
-    {
-        xptr ind_ptr = desc->data;
-        CHECKP(ind_ptr);
-        shft shift= *((shft*)XADDR(ind_ptr));
-        const char* data = (const char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-		if (strcmp(local, std::string(data, tsize).c_str()) == 0) 
+    size_t tsize = desc->target;
+	if (tsize == strlen(local)) {
+		if (strcmp(local, std::string((char *) XADDR(getTextPtr(desc)), tsize).c_str()) == 0)
             return true;
     }
     return false;
@@ -101,7 +96,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
         if (t.is_eos()) return;
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
-        
+
         cur = getChildPointerXptr(child.get(t).get_node(), NULL, pr_ins, NULL_XMLNS);
 
         while (cur!=XNULL && nt_data.ncname_local)
@@ -109,13 +104,13 @@ void PPAxisChild::next_processing_instruction(tuple &t)
             if (pi_node_name_equals(cur, nt_data.ncname_local))
                 break;
             else
-                cur=getNextSiblingOfSameSortXptr(cur);    
+                cur=getNextSiblingOfSameSortXptr(cur);
         }
     }
 
     t.copy(tuple_cell::node(cur));
     cur = getNextSiblingOfSameSortXptr(cur);
-	 
+
     while (cur!=XNULL)
     {
         if (nt_data.ncname_local)
@@ -124,7 +119,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
 		}
         else return;
          cur = getNextSiblingOfSameSortXptr(cur);
-    }	 
+    }
 }
 
 void PPAxisChild::next_comment(tuple &t)

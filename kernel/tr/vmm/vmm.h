@@ -23,9 +23,8 @@ namespace tr_globals {
 
 //#define VMM_GATHER_STATISTICS
 //#define VMM_TRACE
-//#define VMM_DEBUG_CHECKP
+#define VMM_DEBUG_CHECKP
 #define VMM_DEBUG_VERSIONS
-
 
 #ifdef VMM_DEBUG_CHECKP
 
@@ -52,8 +51,8 @@ namespace tr_globals {
                          REFRESH_LRU_STAMP(p)                                                    \
                      }
 
-                         
-#endif /* VMM_DEBUG_CHECKP */                         
+
+#endif /* VMM_DEBUG_CHECKP */
 
 
 
@@ -65,6 +64,8 @@ namespace tr_globals {
                                           ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;                     \
                                           RECOVERY_CRASH;                                        \
                                       }
+
+#define WRITEP(x) CHECKP(x); VMM_SIGNAL_MODIFICATION(x);
 
 // External interface to VMM
 void vmm_preliminary_call() throw (SednaException);

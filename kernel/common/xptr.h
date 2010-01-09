@@ -25,9 +25,9 @@
 // address space
 #define XADDR(p)				((p).addr)
 #define CONSTRUCT_XPTR(l, a)	(xptr(l, a))
-#define BLOCKXPTR(a)			xptr(a.layer,(void*)((__uint32)((a).addr) & PAGE_BIT_MASK))
+#define BLOCKXPTR(a)			cxptr(a.layer,(void*)((__uint32)((a).addr) & PAGE_BIT_MASK))
 
-#define ADDR2XPTR(a)			xptr(*(t_layer*)(((__uint32)(a)) & PAGE_BIT_MASK),					\
+#define ADDR2XPTR(a)			cxptr(*(t_layer*)(((__uint32)(a)) & PAGE_BIT_MASK),					\
                                      (void*)(*(__uint32*)((((__uint32)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + (((__uint32)(a)) & PAGE_REVERSE_BIT_MASK)))
 #define TEST_XPTR(p)			(*(t_layer*)((__uint32)((p).addr) & PAGE_BIT_MASK) == (p).layer)
 #define ALIGN_ADDR(a)			((void*)((__uint32)(a) & PAGE_BIT_MASK))
@@ -43,8 +43,6 @@
 
 //struct vmm_sm_blk_hdr;
 
-//inline bool isTmpBlock(const void * p) { return ( (const vmm_sm_blk_hdr *) p )->p.layer >= TMP_LAYER_STARTS_WITH; };
-
 /* type for layer */
 typedef int t_layer;
 
@@ -55,10 +53,6 @@ struct xptr
 {
     t_layer	layer;
     void *	addr;
-
-    xptr() : layer(0), addr(NULL) {}
-    xptr(t_layer _layer, void *_addr) : layer(_layer), addr(_addr) {}
-    explicit xptr(const uint64_t x) { (* (uint64_t *) this) = x; }
 
     inline uint64_t to_logical_int() const {
         union uint64_lh_t v = * (uint64_lh_t *) this;
@@ -71,9 +65,10 @@ struct xptr
     };
 
     inline uint64_t to_uint64() const { return * (uint64_t *) this; };
+    inline void from_uint64(const uint64_t x) const { (* (uint64_t *) this) = x; };
 
     xptr &operator +=(int n)
-	{ 
+	{
 		addr = (char*)(addr) + n;
 
 		if ((unsigned int)addr >= LAYER_ADDRESS_SPACE_BOUNDARY_INT)
@@ -82,24 +77,35 @@ struct xptr
 			addr = (void*)((int)addr - LAYER_ADDRESS_SPACE_SIZE);
 		}
 
-		return *this; 
+		return *this;
 	}
-    xptr &operator -=(int n) 
-    { 
-        addr = (char*)(addr) - n; 
-        
+    xptr &operator -=(int n)
+    {
+        addr = (char*)(addr) - n;
+
         if ((unsigned int)addr < LAYER_ADDRESS_SPACE_START_ADDR_INT)
 		{
 			layer--;
 			addr = (void*)((int)addr + LAYER_ADDRESS_SPACE_SIZE);
 		}
-        
-        return *this; 
+
+        return *this;
     }
 
     void print() const;
     void clear() { layer = 0; addr = NULL; }
 };
+
+inline xptr uint64_to_xptr(const uint64_t x) {
+	xptr p;
+	p.from_uint64(x);
+	return p;
+};
+
+inline xptr cxptr(t_layer l, void * a) {
+	xptr p = {l, a};
+	return p;
+}
 
 inline xptr operator+(const xptr &p, int n)
 {
@@ -152,18 +158,18 @@ inline bool operator<(const xptr &p1, const xptr &p2)
 
 inline xptr block_xptr(const xptr &p)
 {
-    return xptr(p.layer, (void*)((__uint32)(p.addr) & PAGE_BIT_MASK));
+    return cxptr(p.layer, (void*)((__uint32)(p.addr) & PAGE_BIT_MASK));
 }
 
 inline xptr addr2xptr(const void * p)
 {
     U_ASSERT(((xptr *) (((uint32_t) p ) & PAGE_BIT_MASK))->addr == (void *) (((uint32_t) p ) & PAGE_BIT_MASK));
-    return xptr(* (t_layer*) (((uint32_t) p) & PAGE_BIT_MASK), const_cast<void *>(p));
+    return cxptr(* (t_layer*) (((uint32_t) p) & PAGE_BIT_MASK), const_cast<void *>(p));
 }
 
 inline void shed_state(xptr &p)
 {
-    p.layer = 0; 
+    p.layer = 0;
     p.addr = NULL;
 }
 
@@ -183,7 +189,7 @@ inline int xptr_compare(const xptr& p1, const xptr& p2)
         if((__uint32)(p1.addr) < (__uint32)(p2.addr)) return -1;
         else if((__uint32)(p1.addr) == (__uint32)(p2.addr)) return 0;
         return 1;
-    }    
+    }
 }
 
 inline bool same_block(const xptr& a, const xptr& b) {
@@ -193,7 +199,7 @@ inline bool same_block(const xptr& a, const xptr& b) {
 inline bool isTmpBlock(const xptr &p) { return p.layer >= TMP_LAYER_STARTS_WITH; };
 
 /* NULL for xpointers */
-const xptr XNULL;
+const xptr XNULL = {};
 
 #ifdef NULL_WAS_NOT_DEFINED
 #undef NULL

@@ -269,13 +269,9 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
             {
                 CHECKP(tmp);
                 pi_dsc* desc=(pi_dsc*)XADDR(tmp);
-                int tsize=desc->target;
-                if (tsize==strlen(nt_data.ncname_local))
-                {
-                    xptr ind_ptr=desc->data;
-                    CHECKP(ind_ptr);
-                    shft shift= *((shft*)XADDR(ind_ptr));
-                    char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+                size_t tsize=desc->target;
+                if (tsize==strlen(nt_data.ncname_local)) {
+                    char* data = (char*) XADDR(getTextPtr(desc));
                     if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
                 }
             }
