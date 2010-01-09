@@ -11,6 +11,9 @@
 #include "tr/structures/schema.h"
 #include "tr/crmutils/crmutils.h"
 
+#include <vector>
+#include <algorithm>
+
 using namespace std;
 
 /*returns the next attribute sibling by document order*/
@@ -164,6 +167,21 @@ xptr  getFirstByOrderChildNode(xptr source)
         childx+=1;
     }
     return XNULL;
+}
+
+xptr getFirstByOrderChildCP(const xptr node_xptr)
+{
+    xptr * tmp;
+    vector<xptr> c;
+    int n;
+
+    CHECKP(node_xptr);
+    getChildList(node_xptr, tmp, n);
+    copy(tmp, tmp+n, c.begin());
+
+    for (vector<xptr>::iterator i = c.begin(); i != c.end(); i++) {
+        if (*i != XNULL && getLeftSiblingCP(*i) == XNULL) { return *i; }
+    }
 }
 
 /*returns the first  child  in dm:children accessor + attributes*/
@@ -631,11 +649,11 @@ xptr    getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node)
     t_dsc* node_l;
     while (
            (node_l=(t_dsc*)getPreviousDescriptorOfSameSort(node_d))!=NULL &&
-           ((node_l->data==XNULL)||node_l->size>PSTRMAXSIZE||(BLOCKXPTR(node_l->data)==blk))
+           (!isPstr(node_l)||(same_block(getTextPtr(node_l), blk)))
            )
     {
            node_d=node_l;
-           if (node_l->data!=XNULL) node_a=node_l;
+           if (isPstr(node_l)) node_a=node_l;
     }
     return ADDR2XPTR(node_a);
 }
@@ -651,12 +669,11 @@ xptr    getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node)
     t_dsc* node_l;
     while (
            (node_l=(t_dsc*)getNextDescriptorOfSameSort(node_d))!=NULL &&
-           (node_l->data==XNULL||node_l->size>PSTRMAXSIZE||BLOCKXPTR(node_l->data)==blk)
+           (!isPstr(node_l)||(same_block(getTextPtr(node_l), blk)))
            )
     {
            node_d=node_l;
-           if (node_l->data!=XNULL) node_a=node_l;
-
+           if (isPstr(node_l)) node_a=node_l;
     }
     return ADDR2XPTR(node_a);
 }
@@ -931,7 +948,7 @@ xptr getNodeAncestorBySchemeCP(xptr node, schema_node_xptr scm_node, schema_node
  {
      return
          (scm->type==type && my_strcmp(scm->name,name)==0 &&
-           ( (uri==NULL && scm->get_xmlns()==NULL) || 
+           ( (uri==NULL && scm->get_xmlns()==NULL) ||
              (scm->get_xmlns()!=NULL && my_strcmp(scm->get_xmlns()->uri,uri)==0) )) ;
  }
  bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)

@@ -60,6 +60,7 @@ void print_element_dsc(e_dsc* node,int shift, shft size, schema_node_cptr scm, s
 /* prints information in document descriptor */
 void print_document_dsc(d_dsc* node,int shift, shft size, schema_node_cptr scm, se_ostream& crmout)
 {
+    /*
     print_descriptor(node,shift,crmout);
     crmout << "\nName position = " << XADDR(node->data);
     crmout << "\nName size = " << node->size;
@@ -76,12 +77,13 @@ void print_document_dsc(d_dsc* node,int shift, shft size, schema_node_cptr scm, 
         childx+=1;
     }
     crmout <<"\n=============";
-
+     */
 }
 
 /* prints information in text descriptor */
 void print_text_dsc(t_dsc* node,int shift,  se_ostream& crmout,t_item xq_type)
 {
+    /*
     print_descriptor(node,shift,crmout);
     crmout << "\n Text position = " << XADDR(node->data);
     crmout << "\n Text size = " << XADDR(node->data);
@@ -89,11 +91,13 @@ void print_text_dsc(t_dsc* node,int shift,  se_ostream& crmout,t_item xq_type)
     crmout <<"Text = ";
     print_text(nodex,crmout,xml,xq_type);
     CHECKP(nodex);
+    */
 }
 
 /* prints information in attribute descriptor */
 void print_attribute_dsc(a_dsc* node,int shift,  se_ostream& crmout)
 {
+    /*
     print_descriptor(node,shift,crmout);
     crmout << "\n Type = " << node->type;
     crmout << "\n Text position = " << XADDR(node->data);
@@ -102,6 +106,7 @@ void print_attribute_dsc(a_dsc* node,int shift,  se_ostream& crmout)
     crmout <<"Text = ";
     print_text(nodex,crmout,xml,attribute);
     CHECKP(nodex);
+    */
 }
 
 /* prints information in block header */
@@ -129,7 +134,7 @@ void print_desc_block(xptr block, se_ostream& crmout)
     for (i=0;i<size;i++) mark[i]=true;
     shft shift=header->free_first;
     int empcnt=0;
-    while (shift!=0) 
+    while (shift!=0)
     {
         mark[(shft)((shift-sizeof(node_blk_hdr))/header->dsc_size)]=false;
         shift=*((shft*) ( (char*)header+shift ));
@@ -156,7 +161,7 @@ void print_desc_block(xptr block, se_ostream& crmout)
                 crmout << " end=" <<(sizeof(node_blk_hdr)+endfr*header->dsc_size);
             }
             switch(type)
-            { 
+            {
             case element:
                 {
                     print_element_dsc(
@@ -218,7 +223,7 @@ void print_schema(schema_node_cptr node, se_ostream& crmout)
     crmout<< "\nChildren: ";
 
     sc_ref_item * sc;
-    for (sc = node->children.first; sc != NULL; sc = sc->next) 
+    for (sc = node->children.first; sc != NULL; sc = sc->next)
     {
         crmout << "\n name= " <<sc->object.name <<" type=" << type2string(sc->object.type)
             << "address= "<<sc->object.snode.layer << "@" << sc->object.snode.addr;
@@ -232,7 +237,7 @@ void print_schema(schema_node_cptr node, se_ostream& crmout)
         block=(GETBLOCKBYNODE(block))->nblk;
     }
     crmout << "\n============================================================================";
-    for (sc = node->children.first; sc != NULL; sc = sc->next) 
+    for (sc = node->children.first; sc != NULL; sc = sc->next)
     {
         print_schema(sc->object.snode, crmout);
     }
@@ -263,7 +268,7 @@ void printMFO (schema_node_cptr node, std::map<schema_node_xptr, std::pair<int,i
         else
             crm_dbg << " prefix=\"\"";
         if (node->get_xmlns()->uri!=NULL)
-            crm_dbg << " uri=\"" << node->get_xmlns()->uri <<"\"";     
+            crm_dbg << " uri=\"" << node->get_xmlns()->uri <<"\"";
         else
             crm_dbg << " uri=\"http://www.w3.org/XML/1998/namespace\"";
     }
@@ -277,7 +282,7 @@ void printMFO (schema_node_cptr node, std::map<schema_node_xptr, std::pair<int,i
     {
         printMFO(sc->object.snode,mfo,size,indent+1);
         sc=sc->next;
-    }       
+    }
 }
 void getNIDNEWDistribution(std::map<schema_node_xptr,int> &xsfo,
                            std::map<schema_node_xptr,int> &ncnt,
@@ -299,7 +304,7 @@ void getNIDNEWDistribution(std::map<schema_node_xptr,int> &xsfo,
     {
         getNIDNEWDistribution(xsfo,ncnt,nidsz,sc->object.snode,size);
         sc=sc->next;
-    }       
+    }
 }
 void printNIDVariation(xptr root, se_ostream& crmout)
 {
@@ -357,8 +362,8 @@ void printNIDVariation(xptr root, se_ostream& crmout)
                 CHECKP(node);
             }
         }
-        node=tmp; 
-        if(node!=XNULL) 
+        node=tmp;
+        if(node!=XNULL)
         {
             fo.back()++;
             fo.push_back(0);
@@ -471,10 +476,10 @@ void printFullNIDVariation(xptr broot, se_ostream& crmout)
             else
                 nidsz[sz]++;
             //string cnt
-            if (sc->type!=element &&sc->type!=xml_namespace)
+            if (sc->has_text())
             {
                 strcnt++;
-                int strz=((t_dsc*)XADDR(node))->size;
+                int strz=getTextSize((t_dsc*)XADDR(node));
                 if (strsz.find(strz)==strsz.end())
                     strsz[strz]=1;
                 else
@@ -503,8 +508,8 @@ void printFullNIDVariation(xptr broot, se_ostream& crmout)
                     CHECKP(node);
                 }
             }
-            node=tmp; 
-            if(node!=XNULL) 
+            node=tmp;
+            if(node!=XNULL)
             {
                 fo.back()++;
                 fo.push_back(0);
@@ -617,10 +622,10 @@ void printFullNIDVariation(xptr broot, xptr node)
             else
                 nidsz[sz]++;
             //string cnt
-            if (sc->type!=element &&sc->type!=xml_namespace)
+            if (sc->has_text())
             {
                 strcnt++;
-                unsigned int strz=((t_dsc*)XADDR(node))->size;
+                unsigned int strz = getTextSize((t_dsc*)XADDR(node));
                 if (strsz.find(strz)==strsz.end())
                     strsz[strz]=1;
                 else
@@ -649,8 +654,8 @@ void printFullNIDVariation(xptr broot, xptr node)
                     CHECKP(node);
                 }
             }
-            node=tmp; 
-            if(node!=XNULL) 
+            node=tmp;
+            if(node!=XNULL)
             {
                 fo.back()++;
                 fo.push_back(0);
@@ -780,7 +785,7 @@ void printDebugInfo(schema_node_cptr snode, se_ostream& crmout)
     d_in.fill_percentage=100.*d_in.block_fill/(d_in.block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
     d_in.inner_fill_percentage=100.*d_in.inner_block_fill/(d_in.inner_block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
     crmout<<"TOTAL NODES IN SCHEMA="<<d_in.schema_count;
-    crmout<<"TOTAL NODES="<<d_in.node_count;    
+    crmout<<"TOTAL NODES="<<d_in.node_count;
     crmout<<"\nDEPTH="<<d_in.mdpth;
     crmout<<"\n\n TOTAL BLOCKS="<< vmm_data_block_count;
     crmout<<"\n TOTAL DESCRIPTOR BLOCKS="<< d_in.block_count;
@@ -884,7 +889,7 @@ void printSimpleDebugInfo(schema_node_cptr snode, se_ostream& crmout)
     d_in.inner_fill_percentage=100.*d_in.inner_block_fill/(d_in.inner_block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
     crmout<<"\n TOTAL NODES IN SCHEMA="<<d_in.schema_count;
     crmout<<"\n TOTAL TEXT NODES IN SCHEMA="<<d_in.schema_str_count;
-    crmout<<"TOTAL NODES="<<d_in.node_count;    
+    crmout<<"TOTAL NODES="<<d_in.node_count;
     crmout<<"\nDEPTH="<<d_in.mdpth;
     crmout<<"\n\n TOTAL BLOCKS EXCEPT NID and INDIR="<< d_in.block_count+d_in.str_blocks;
     crmout<<"\n TOTAL DESCRIPTOR BLOCKS="<< d_in.block_count;
@@ -919,6 +924,7 @@ void printSimpleDebugInfo(schema_node_cptr snode, se_ostream& crmout)
 }
 void getDebugInfo(schema_node_cptr snode, debug_info* d_in)
 {
+/*  FIXME
     d_in->schema_count++;
     d_in->cdp++;
     xptr block=snode->bblk;
@@ -964,9 +970,12 @@ void getDebugInfo(schema_node_cptr snode, debug_info* d_in)
     }
     if (d_in->cdp>d_in->mdpth) d_in->mdpth=d_in->cdp;
     d_in->cdp--;
+*/
 }
+
 void getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
 {
+    /*  FIXME
     d_in->schema_count++;
     if (snode->type!=element && snode->type!=xml_namespace)
         d_in->schema_str_count++;
@@ -1020,7 +1029,9 @@ void getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
     }
     if (d_in->cdp>d_in->mdpth) d_in->mdpth=d_in->cdp;
     d_in->cdp--;
+*/
 }
+
 void isSchemaPCAllRight(schema_node_cptr snode)
 {
     sc_ref_item* sc= snode->children.first;

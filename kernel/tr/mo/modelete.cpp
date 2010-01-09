@@ -45,18 +45,8 @@ void readNodeInfo(xptr node_xptr, node_info_t * node_info)
     }
 
     if (node_info->snode->has_text()) {
-        t_dsc t_node;
-
-        memcpy(&t_node, XADDR(node_xptr), sizeof(t_dsc));
-        node_info->text_size = t_node.size;
-
-        if (node_info->text_size == 0) {
-            node_info->text_data = XNULL;
-        } else if (node_info->text_size <= PSTRMAXSIZE) {
-            node_info->text_data = textDereferenceCP(t_node.data);
-        } else {
-            node_info->text_data = t_node.data;
-        }
+        node_info->text_size = getTextSize(T_DSC(node_xptr));
+        node_info->text_data = getTextPtr(T_DSC(node_xptr));
     } else {
         node_info->text_size = 0;
     }
@@ -160,27 +150,43 @@ void mergeSiblingTextNodes(xptr left, xptr right)
         CHECKP(right);
         memcpy(&right_dsc, XADDR(right), sizeof(t_dsc));
 
-        if (right_dsc.size <= PSTRMAXSIZE) {
+        if (right_dsc.ss >= 0) {
+            U_ASSERT(right_dsc.ss > 0);
             microoperation_begin(left);
-            insertTextValue(ip_tail, left, &right_dsc.data, right_dsc.size, text_doc);
-            hl_logical_log_text_edit(left, right_dsc.size, false, true);
+            insertTextValue(ip_tail, left, right_dsc.data.st, right_dsc.ss, text_mem);
+            hl_logical_log_text_edit(left, right_dsc.ss, false, true);
             microoperation_end(left);
 
-            delete_node(right, false, true);
-        } else if (left_dsc.size <= PSTRMAXSIZE) {
+            delete_node(right, NULL, true);
+        } else if (right_dsc.ss == TEXT_IN_PSTR) {
+            microoperation_begin(left);
+            insertTextValue(ip_tail, left, &right_dsc.data.lsp.p, right_dsc.data.lsp.size, text_doc);
+            hl_logical_log_text_edit(left, right_dsc.data.lsp.size, false, true);
+            microoperation_end(left);
+
+            delete_node(right, NULL, true);
+        } else if (left_dsc.ss >= 0) {
+            U_ASSERT(left_dsc.ss > 0);
             microoperation_begin(right);
-            insertTextValue(ip_head, right, &left_dsc.data, left_dsc.size, text_doc);
-            hl_logical_log_text_edit(right, left_dsc.size, true, true);
+            insertTextValue(ip_head, right, left_dsc.data.st, left_dsc.ss, text_mem);
+            hl_logical_log_text_edit(right, left_dsc.ss, true, true);
             microoperation_end(right);
 
-            delete_node(left, false, true);
+            delete_node(left, NULL, true);
+        } else if (left_dsc.ss == TEXT_IN_PSTR) {
+            microoperation_begin(right);
+            insertTextValue(ip_head, right, &left_dsc.data.lsp.p, left_dsc.data.lsp.size, text_doc);
+            hl_logical_log_text_edit(right, left_dsc.data.lsp.size, true, true);
+            microoperation_end(right);
+
+            delete_node(left, NULL, true);
         } else {
             microoperation_begin(left);
             pstr_long_append_tail(left, right);
-            hl_logical_log_text_edit(left, right_dsc.size, false, true);
+            hl_logical_log_text_edit(left, getTextSize(&right_dsc), false, true);
             microoperation_end(left);
 
-            delete_node(right, false, true);
+            delete_node(right, NULL, true);
         }
     }
 }

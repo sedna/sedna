@@ -23,6 +23,8 @@
 #define CHECK_CONSTRAINT(c) U_ASSERT(c)
 //#define CHECK_CONSTRAINT(c) if (!(c)) { throw SYSTEM_EXCEPTION("Bad parameters"); }
 
+xptr last_inserted_node_indirection = XNULL;
+
 inline void check_common_constraints(const xptr &left_sib, const xptr &right_sib, const xptr &parent)
 {
     CHECK_CONSTRAINT((right_sib != XNULL) || (left_sib != XNULL) || (parent != XNULL));
@@ -146,6 +148,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent, const char* name
 
     MOCHECK(checkBlock(block_xptr(node_info.node_xptr)));
 
+    last_inserted_node_indirection = node_info.indirection;
     return node_info.node_xptr;
 }
 
@@ -204,19 +207,17 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
         if (insert_type == ti_new_node) {
             CHECKP(node_info.node_xptr);
             t_dsc* desc = (t_dsc*) XADDR(node_info.node_xptr);
-            size_t size = desc->size;
-            xptr text_indirection_ptr = desc->data;
+            size_t size = (size_t) getTextSize(desc);
+            xptr data = getTextPtr(desc);
 
-            if (size <= PSTRMAXSIZE) {
-                xptr data = textDereferance(text_indirection_ptr);
+            if (isPstrLong(desc)) {
+                hl_logical_log_text(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir,
+                                    node_info.parent_indir, data, true);
+            } else {
                 CHECKP(data);
                 hl_logical_log_text(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir,
                                     node_info.parent_indir, (char *) XADDR(data), size, true);
-            } else {
-                hl_logical_log_text(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir,
-                                    node_info.parent_indir, text_indirection_ptr, true);
             }
-
         } else {
             if (ttype==text_mem)
                 hl_logical_log_text_edit(node_info.indirection, (char *)(value), size, (insert_type == ti_addtext_before), true);
@@ -231,9 +232,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
     }
 
     indexAddNode(parent_snode, node_info.parent);
-
     microoperation_end(node_info.parent);
-
+    last_inserted_node_indirection = node_info.indirection;
     return node_info.node_xptr;
 }
 
@@ -276,7 +276,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* na
 
     indexAddNode(node_info.snode, node_info.node_xptr);
     microoperation_end(node_info.parent);
-
+    last_inserted_node_indirection = node_info.indirection;
     return node_info.node_xptr;
 }
 
@@ -318,7 +318,7 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent, xmlns_ptr ns)
     }
 
     microoperation_end(node_info.parent);
-
+    last_inserted_node_indirection = node_info.indirection;
     return node_info.node_xptr;
 }
 
@@ -351,7 +351,7 @@ xptr __insert_common_text_node(node_info_t &node_info, const char* value, strsiz
     }
 
     indexAddNode(node_info.snode, node_info.node_xptr);
-
+    last_inserted_node_indirection = node_info.indirection;
     return node_info.node_xptr;
 }
 

@@ -11,7 +11,7 @@
 #include "tr/executor/base/PPVisitor.h"
 
 PPAxisSibling::PPAxisSibling(dynamic_context *_cxt_,
-                             operation_info _info_, 
+                             operation_info _info_,
                              PPOpIn _child_,
                              NodeTestType _nt_type_,
                              NodeTestData _nt_data_,
@@ -23,7 +23,7 @@ PPAxisSibling::PPAxisSibling(dynamic_context *_cxt_,
 {
     NodeTestType type = nt_type;
 
-    if (type == node_test_element) 
+    if (type == node_test_element)
         type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
 
     switch (type)
@@ -97,17 +97,13 @@ void PPAxisSibling::next_processing_instruction(tuple &t)
             {
                 CHECKP(tmp);
                 pi_dsc* desc=(pi_dsc*)XADDR(tmp);
-                int tsize=desc->target;
-                if (tsize==strlen(nt_data.ncname_local))
-                {
-                    xptr ind_ptr=desc->data;
-                    CHECKP(ind_ptr);
-                    shft shift= *((shft*)XADDR(ind_ptr));
-                    char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+                size_t tsize=desc->target;
+                if (tsize==strlen(nt_data.ncname_local)) {
+                    char* data= (char*)XADDR(getTextPtr(desc));
                     if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
                 }
             }
-        }   
+        }
 }
 void PPAxisSibling::next_comment(tuple &t)
 {
@@ -173,7 +169,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
 
         xptr tmp=child.get(t).get_node();
         CHECKP(tmp);
-        if (is_node_attribute(tmp)||GETSCHEMENODEX(tmp)->parent->type==virtual_root)continue;		
+        if (is_node_attribute(tmp)||GETSCHEMENODEX(tmp)->parent->type==virtual_root)continue;
         if (following)
         {
             cur=((n_dsc*)XADDR(tmp))->rdsc;
@@ -208,7 +204,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
                         cur=((n_dsc*)XADDR(cur))->ldsc;
                 }
             }
-        }		
+        }
     }
     CHECKP(cur);
     t.copy(tuple_cell::node(cur));
@@ -247,7 +243,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
                 }
             }
         }
-    }		
+    }
 }
 
 void PPAxisSibling::next_wildcard_ncname_star(tuple &t)
@@ -282,14 +278,14 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
             std::vector<schema_node_xptr> vscm;
             desc_sch[scm]=vscm;
             getSchemeChilds(scm,uri,name, type, cfun,desc_sch[scm]);
-        }	
+        }
         std::vector<schema_node_xptr>* cv=&desc_sch[scm];
         std::vector<schema_node_xptr>::iterator it=cv->begin();
         if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
         while (it!=cv->end())
         {
             xptr tmp=(following)?getNextSiblingNode(cur,*it):getPreviousSiblingNode(cur,*it);
-            if (tmp!=XNULL) 
+            if (tmp!=XNULL)
             {
                 CHECKP(tmp);
                 merge_tree->addChannel(tmp);
@@ -297,7 +293,7 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
             it++;
         }
         cur=merge_tree->getNextNode();
-    }		    
+    }
     t.copy(tuple_cell::node(cur));
     CHECKP(cur);
     xptr ind=((n_dsc*)XADDR(cur))->pdsc;
@@ -309,7 +305,7 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
             cur=tmp;
         else
         {
-            cur=XNULL;			 
+            cur=XNULL;
             merge_tree->clear_merge();
         }
     }

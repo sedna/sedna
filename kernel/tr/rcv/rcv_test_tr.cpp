@@ -18,7 +18,7 @@
 #define DESC_CONSIST
 #define PSTR_CONSIST
 
-static 
+static
 xptr get_root (xptr node)
 {
     CHECKP(node);
@@ -27,7 +27,7 @@ xptr get_root (xptr node)
     {
       if (((n_dsc*)XADDR(tmp))->pdsc==XNULL) return tmp;
       tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
-    }   
+    }
 }
 
 static
@@ -57,7 +57,7 @@ void checkTreeConsistency(xptr node)
     xptr parent;
     n_dsc* prev_dsc=getPreviousDescriptorOfSameSort(node_d);
     xptr prev_x=(prev_dsc==NULL)?XNULL:ADDR2XPTR(prev_dsc);
-    if (par_indir!=XNULL) 
+    if (par_indir!=XNULL)
     {
         parent=removeIndirection(par_indir);
         if (!nid_ancestor(parent,node))
@@ -67,7 +67,7 @@ void checkTreeConsistency(xptr node)
             CHECKP(parent);
             xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->get_xmlns());
             if (ptr==NULL || *ptr!=node)
-                throw XQUERY_EXCEPTION(SE2026); 
+                throw XQUERY_EXCEPTION(SE2026);
         }
     }
     //3. left siblings + nid comparison
@@ -100,12 +100,12 @@ void checkTreeConsistency(xptr node)
             check_blk_consistency(*((xptr*)nd.prefix));
     //5.2 nid pstr consistency
     CHECKP(node);
-    if (scn->textcnt&& ((t_dsc*)node_d)->data!=XNULL&&((t_dsc*)node_d)->size<=PSTRMAXSIZE && is_last_shft_in_blk(((t_dsc*)node_d)->data))
+    if (scn->textcnt && isPstr((t_dsc*)node_d) && is_last_shft_in_blk(((t_dsc*)node_d)->data.lsp.p))
     {
         CHECKP(node);
-        check_blk_consistency(((t_dsc*)node_d)->data);  
+        check_blk_consistency(((t_dsc*)node_d)->data.lsp.p);
     }
-#endif  
+#endif
     //recursive walkthrough
     CHECKP(node);
     xptr child=giveFirstByOrderChild(node,CHILDCOUNT(node));
@@ -128,7 +128,7 @@ void test_document(char *name, xptr doc_dsc, bool is_throw)
        checkTreeConsistency(doc_dsc);
        if (!is_throw) fprintf(logfile, "Checked document: %s\n", name);
     }
-    catch(SednaException &e) 
+    catch(SednaException &e)
     {
        if (is_throw) throw;
        elog(EL_ERROR, ("Recovery failed on document: %s, error: %s\n", name, e.what()));
@@ -140,14 +140,14 @@ void test_document(char *name, xptr doc_dsc, bool is_throw)
 void test_indexes(cat_list<index_cell_xptr>::item* sc_idx)
 {
     cat_list<index_cell_xptr>::item* p = sc_idx;
-    
+
     while (p != NULL)
     {
         try
         {
             bt_check_btree(p->object->btree_root);
                 fprintf(logfile, "Checked index: %s\n", p->object->index_title);
-            }   
+            }
         catch (SednaException &e)
         {
                 elog(EL_ERROR, ("Recovery failed on index: %s, error: %s\n", p->object->index_title, e.what()));
@@ -155,8 +155,8 @@ void test_indexes(cat_list<index_cell_xptr>::item* sc_idx)
                 isRcvOK = false;
             }
 
-        p = p->next;                
-    }   
+        p = p->next;
+    }
 }
 
 void test_collection(char *name, col_schema_node_cptr coll)
@@ -164,10 +164,10 @@ void test_collection(char *name, col_schema_node_cptr coll)
     bt_key key;
     key.setnew(" ");
     bt_cursor cursor = bt_find_gt(coll->metadata, key);
-            
+
     if (cursor.is_null()) return;
 
-    do 
+    do
     {
         key = cursor.get_key();
         try
@@ -175,13 +175,13 @@ void test_collection(char *name, col_schema_node_cptr coll)
             test_document((char*)key.data(), removeIndirection(cursor.bt_next_obj()), true);
             fprintf(logfile, "Checked collection: %s, document: %s\n", name, (char*)key.data());
         }
-        catch(SednaException &e) 
+        catch(SednaException &e)
         {
             elog(EL_ERROR, ("Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.what()));
             fprintf(logfile, "Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.what());
             isRcvOK = false;
         }
-    } 
+    }
     while(cursor.bt_next_key());
 
     test_indexes(coll->full_index_list.first);

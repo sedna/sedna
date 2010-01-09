@@ -24,7 +24,6 @@ std::map<ft_index_cell_xptr,xptr_sequence*> updated_nodes;
 std::map<ft_index_cell_xptr,xptr_sequence*> inserted_nodes;
 std::map<ft_index_cell_xptr,xptr_sequence*> deleted_nodes;
 #endif
-static bool carrier=false;
 
 #ifdef SE_ENABLE_FTSEARCH
 void clear_ft_sequences()
@@ -71,7 +70,7 @@ void execute_modifications()
     {
         it->first->delete_from_index(it->second);
         it++;
-    }       
+    }
 }
 void update_insert_sequence(xptr node,ft_index_cell_cptr icell)
 {
@@ -192,436 +191,174 @@ void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent)
 }
 #endif
 
-xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_types, unsigned short depth)
-{
-#ifdef SE_ENABLE_FTSEARCH
-    if (!depth) init_ft_sequences(left,right,parent);   
-#endif
-    xptr res;
-#ifdef SE_ENABLE_TRIGGERS
-    if (parent==XNULL)
-    {
-        if(left!=XNULL)
-        {
-            CHECKP(left);
-            parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
-        }
-        else
-        {
-            CHECKP(right);
-            parent=removeIndirection(((n_dsc*)XADDR(right))->pdsc);
-        }
-    }
-    node = apply_per_node_triggers(node, XNULL, parent, XNULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
-    if (node == XNULL)
-    {
-        if(left==XNULL) return XNULL;
-        CHECKP(left);
-        return left;
-    }
-#endif
+xptr copy_content(xptr newnode, xptr node, xptr left, bool save_types) {
     CHECKP(node);
-    switch(GETTYPE(GETSCHEMENODEX(node)))
-    {
-    case element:
-        {
-            xptr node_indir=((n_dsc*)XADDR(node))->indir;
-            res =insert_element(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((e_dsc*)XADDR(node))->type:xs_untyped,(GETSCHEMENODEX(node))->get_xmlns());
-            xptr indir= ((n_dsc*)XADDR(res))->indir;
-            node=removeIndirection(node_indir);
-            CHECKP(node);
-            xptr left_ngh=XNULL;
-            xptr child= giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),size_of_node((GETBLOCKBYNODE(node)))));
-
-            if (child!=XNULL)
-            {
-                CHECKP(child);
-                node_indir=((n_dsc*)XADDR(child))->indir;
-                left_ngh=deep_pers_copy(XNULL, XNULL, res,child,save_types,depth+1);
-                child=removeIndirection(node_indir);
-                CHECKP(child);
-                child=GETRIGHTPOINTER(child);
-
-                while (child!=XNULL)
-                {
-                    CHECKP(child);
-                    node_indir=((n_dsc*)XADDR(child))->indir;
-                    //MG: deep_pers_copy can return XNULL if a trigger canceled the insertion 
-                    //    and there were now any left sibling
-                    if(left_ngh==XNULL)  
-                        left_ngh=deep_pers_copy(XNULL, XNULL, res,child,save_types,depth+1);
-                    else
-                        left_ngh=deep_pers_copy(left_ngh, XNULL, XNULL,child,save_types,depth+1);
-                    child=removeIndirection(node_indir);
-                    CHECKP(child);
-                    child=GETRIGHTPOINTER(child);
-                }
-
-                res=removeIndirection(indir);           
-                CHECKP(res);
-            }
-        }
-        break;
-    case text:
-        {
-            int size = ((t_dsc*)XADDR(node))->size;
-            if (size > 0)
-            {
-                xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-                if (size <=PSTRMAXSIZE)
-                {
-                    CHECKP(ind_ptr);
-                    shft shift= *((shft*)XADDR(ind_ptr));
-                    char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                    res = insert_text(left, right, parent,&ADDR2XPTR(data),size,text_doc);
-                }
-                else
-                    res = insert_text(left, right, parent,&ind_ptr,size,text_doc);
-            }
-            else throw SYSTEM_EXCEPTION("BAD DATA!!!");
-        }
-        break;
-    case comment:
-        {
-            int size = ((t_dsc*)XADDR(node))->size;
-            if (size > 0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr = ((t_dsc*)XADDR(node))->data;
-                CHECKP(ind_ptr);
-                shft shift = *((shft*)XADDR(ind_ptr));
-                char* data = (char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                res = insert_comment(left, right, parent, z.get(), size);
-            }
-            else res =insert_comment(left, right, parent,NULL,0);
-        }
-        break;
-    case cdata:
-        {
-            int size = ((t_dsc*)XADDR(node))->size;
-            if (size > 0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr = ((t_dsc*)XADDR(node))->data;
-                CHECKP(ind_ptr);
-                shft shift = *((shft*)XADDR(ind_ptr));
-                char* data =(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                res = insert_cdata(left, right, parent, z.get(), size);
-            }
-            else res = insert_cdata(left, right, parent, NULL, 0);
-        }
-        break;
-    case pr_ins:
-        {
-            int size  = ((t_dsc*)XADDR(node))->size;
-            int tsize = ((pi_dsc*)XADDR(node))->target;
-            if (size > 0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-                CHECKP(ind_ptr);
-                shft shift = *((shft*)XADDR(ind_ptr));
-                char* data =(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                res = insert_pi(left, right, parent, 
-                    z.get(), tsize, 
-                    z.get()+tsize+1, size-tsize-1);
-            }
-            else res =insert_pi(left, right, parent, NULL, 0, NULL, 0);
-        }
-        break;
-    case attribute:
-        {
-            int size=((t_dsc*)XADDR(node))->size;
-            if (size > 0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr =    ((t_dsc*)XADDR(node))->data;
-                xmlscm_type typ = ((a_dsc*)XADDR(node))->type;
-                char* nam = GETNAME(GETSCHEMENODEX(node));
-                CHECKP(ind_ptr);
-                shft shift= *((shft*)XADDR(ind_ptr));
-                char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                CHECKP(node);
-                res = insert_attribute(left, right, parent, nam, 
-                    (save_types) ? typ : xs_untypedAtomic,
-                    z.get(),
-                    size,
-                    (GETSCHEMENODEX(node))->get_xmlns());
-            }
-            else
-                res = insert_attribute(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((a_dsc*)XADDR(node))->type:xs_untypedAtomic,NULL,0,(GETSCHEMENODEX(node))->get_xmlns());
-
-        }
-        break;
-    case xml_namespace:
-        {
-            res = insert_namespace(left, right, parent, xmlns_touch(((ns_dsc*)XADDR(node))->ns));
-        }
-        break;
-    default: 
-        throw SYSTEM_EXCEPTION("Deep copy error: document node copied");
-    }
-
-    CHECKP(res);
-#ifdef SE_ENABLE_FTSEARCH
-    update_insert_sequence(res, schema_node_cptr((GETBLOCKBYNODE(res))->snode));
-#endif
-#ifdef SE_ENABLE_TRIGGERS
-    if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
-    apply_per_node_triggers(res, XNULL, parent, XNULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
-#endif
-    CHECKP(res); 
-    return res;
-}
-
-
-xptr copy_content(xptr newnode,xptr node,xptr left,bool save_types)
-{
-    CHECKP(node);
-    xptr left_ngh=XNULL;
-    xptr child= giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),size_of_node((GETBLOCKBYNODE(node)))));
-    if (child!=XNULL)
-    {
+    xptr left_ngh = XNULL;
+    xptr child = giveFirstByOrderChild(node, COUNTREFERENCES((GETBLOCKBYNODE(node)),size_of_node((GETBLOCKBYNODE(node)))));
+    if (child != XNULL) {
         CHECKP(child);
-        xptr node_indir=((n_dsc*)XADDR(child))->indir;
-        left_ngh=deep_pers_copy(left, XNULL, newnode,child,save_types);
-        child=removeIndirection(node_indir);
+        xptr node_indir = ((n_dsc*) XADDR(child))->indir;
+        left_ngh = deep_copy_node(left, XNULL, newnode, child, NULL, save_types);
+        child = removeIndirection(node_indir);
         CHECKP(child);
-        child=GETRIGHTPOINTER(child);
-        while (child!=XNULL)
-        {
+        child = GETRIGHTPOINTER(child);
+        while (child != XNULL) {
             CHECKP(child);
-            node_indir=((n_dsc*)XADDR(child))->indir;
-            left_ngh=deep_pers_copy(left_ngh, XNULL, XNULL,child,save_types);
-            child=removeIndirection(node_indir);
+            node_indir = ((n_dsc*) XADDR(child))->indir;
+            left_ngh = deep_copy_node(left_ngh, XNULL, XNULL, child, NULL, save_types);
+            child = removeIndirection(node_indir);
             CHECKP(child);
-            child=GETRIGHTPOINTER(child);
+            child = GETRIGHTPOINTER(child);
         }
     }
     return left_ngh;
 }
-void swizzleNamespace (xmlns_ptr & ns,upd_ns_map*& updmap)
+
+void swizzleNamespace (xmlns_ptr & ns, upd_ns_map*& updmap)
 {
-    if (updmap==NULL)
-        updmap= se_new upd_ns_map;
-    upd_ns_map::const_iterator it=updmap->find(ns);
-    if (it==updmap->end())
-    {
+    if (updmap == NULL) updmap = se_new upd_ns_map;
+    upd_ns_map::const_iterator it = updmap->find(ns);
+    if (it == updmap->end()) {
         ns = xmlns_touch(ns->prefix, ns->uri);
-    }
-    else
+    } else {
         ns = it->second;
+    }
 }
 
-/*void checkSwiizleTab(upd_ns_map*& updmap)
+xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** nsupdmap, bool save_types, unsigned short depth)
 {
-upd_ns_map::const_iterator it=updmap->begin();
-while (it!=updmap->end())
-{
-xmlns_ptr tmp=it->second;
-if (!tmp->counter)
-xml_ns::delete_namespace_node(tmp);
-}
-}*/
+    xptr result;
+    xptr node_indir = getIndirectionSafeCP(node);
+    schema_node_cptr scmnode = getBlockHeaderCP(node)->snode;
 
-xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& updmap, unsigned short depth)
-{
 #ifdef SE_ENABLE_FTSEARCH
-    if (!depth) init_ft_sequences(left,right,parent);   
+    if (!depth) init_ft_sequences(left,right,parent);
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    if (parent==XNULL) 
-    {
-        if(left!=XNULL)
-        {
+    if (parent == XNULL) {
+        if (left != XNULL) {
             CHECKP(left);
-            parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
-        }
-        else
-        {
+            parent = removeIndirection(((n_dsc*) XADDR(left))->pdsc);
+        } else {
             CHECKP(right);
-            parent=removeIndirection(((n_dsc*)XADDR(right))->pdsc);
+            parent = removeIndirection(((n_dsc*) XADDR(right))->pdsc);
         }
     }
-    node = apply_per_node_triggers(node, XNULL, parent, XNULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
-    if (node == XNULL)
-    {
-        if(left==XNULL) return XNULL;
+    node = apply_per_node_triggers(node, XNULL, parent, XNULL, TRIGGER_BEFORE,  TRIGGER_INSERT_EVENT);
+    if (node == XNULL) {
+        if (left == XNULL) { return XNULL; }
         CHECKP(left);
         return left;
     }
 #endif
-    CHECKP(node);
-    xptr res;
 
-    switch(GETTYPE(GETSCHEMENODEX(node)))
-    {
-    case element:
-        {
-            xmlns_ptr ns=(GETSCHEMENODEX(node))->get_xmlns();
-            if (ns != NULL) swizzleNamespace(ns,updmap);
-            res =insert_element(left, right, parent,GETNAME(GETSCHEMENODEX(node)), ((e_dsc*)XADDR(node))->type,ns);
-            CHECKP(node);
-            xptr left_ngh=XNULL;
-            xptr child= giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),size_of_node((GETBLOCKBYNODE(node)))));
-            if (child!=XNULL)
-            {
-                left_ngh=deep_temp_copy(XNULL, XNULL, res,child,updmap,depth+1);
-                CHECKP(child);
-                child=GETRIGHTPOINTER(child);
-                while (child!=XNULL)
-                {
-                    CHECKP(child);
-                    //MG: deep_temp_copy can return XNULL if a trigger canceled the insertion 
-                    //    and there were now any left sibling
-                    if(left_ngh==XNULL)  
-                        left_ngh=deep_temp_copy(XNULL, XNULL, res,child,updmap,depth+1);
-                    else
-                        left_ngh=deep_temp_copy(left_ngh, XNULL, XNULL,child,updmap,depth+1);
-                    CHECKP(child);
-                    child=GETRIGHTPOINTER(child);
+    switch (GETTYPE(GETSCHEMENODEX(node))) {
+        case element: {
+            xptr result_indir;
+            xptr left_node = XNULL;
+            xptr left_node_indir = XNULL;
+            xptr childi = getIndirectionSafeCP(getFirstByOrderChildCP(node));
+            xmlns_ptr ns = scmnode->get_xmlns();
+
+            if (nsupdmap != NULL && ns != NULL_XMLNS) {
+                swizzleNamespace(ns, *nsupdmap);
+            }
+
+            result = insert_element(left, right, parent, scmnode->name, (save_types) ? ((e_dsc*) XADDR(node))->type : xs_untyped, ns);
+            result_indir = get_last_mo_inderection();
+
+            while (childi != XNULL) {
+                if (left_node_indir != XNULL) {
+                    left_node = indirectionDereferenceCP(left_node_indir);
                 }
-                if(left_ngh!=XNULL)
-                {
-                    CHECKP(left_ngh);
-                    xptr indir= ((n_dsc*)XADDR(left_ngh))->pdsc;
-                    res=removeIndirection(indir);            
+
+                left_node = deep_copy_node(left_node, XNULL, result, indirectionDereferenceCP(childi), nsupdmap, save_types, depth + 1);
+
+                /* due to : MG: deep_temp_copy can return XNULL if a trigger canceled
+                 * the insertion and there were now any left sibling */
+                if (left_node != XNULL) {
+                    left_node_indir = getIndirectionSafeCP(left_node);
                 }
+
+                childi = getRightSiblingIndirectionCP(indirectionDereferenceCP(childi));
+                result = indirectionDereferenceCP(result_indir);
+            }
+            CHECKP(result);
+        }
+            break;
+
+        case text: {
+            if (isTextEmpty(T_DSC(node))) {
+                throw SYSTEM_EXCEPTION("BAD DATA!!!");
+            } else {
+                xptr data = getTextPtr(T_DSC(node));
+                CHECKP(node);
+                result = insert_text(left, right, parent, &data, getTextSize(T_DSC(node)), text_doc);
             }
         }
-        break;
-    case text:
-        {
-            int size=((t_dsc*)XADDR(node))->size;
-            if (size>0)
-            {
-                xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-                CHECKP(ind_ptr);
-                shft shift= *((shft*)XADDR(ind_ptr));
-                char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                res =insert_text(left, right, parent,&ADDR2XPTR(data),size,text_doc);
+            break;
+
+        case cdata: {
+            text_cptr buf(node);
+            result = insert_cdata(left, right, parent, buf.get(), buf.getSize());
+        }
+            break;
+
+        case comment: {
+            text_cptr buf(node);
+            result = insert_comment(left, right, parent, buf.get(), buf.getSize());
+        }
+            break;
+
+        case pr_ins: {
+            size_t tsize = PI_DSC(node)->target;
+            text_cptr buf(node);
+            result = insert_pi(left, right, parent, buf.get(), tsize, buf.get() + tsize + 1, buf.getSize() - tsize - 1);
+        }
+            break;
+
+        case attribute: {
+            xmlns_ptr ns = scmnode->get_xmlns();
+            text_cptr buf(node);
+            if (nsupdmap != NULL && ns != NULL_XMLNS) {
+                swizzleNamespace(ns, *nsupdmap);
             }
-            else throw SYSTEM_EXCEPTION("BAD DATA!!!");
+            result = insert_attribute(left, right, parent, scmnode->name,
+                    (save_types) ? (A_DSC(node))->type : xs_untypedAtomic, buf.get(), buf.getSize(), ns);
         }
-        break;
-    case comment:
-        {
-            int size=((t_dsc*)XADDR(node))->size;
-            if (size>0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-                CHECKP(ind_ptr);
-                shft shift= *((shft*)XADDR(ind_ptr));
-                char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                res =insert_comment(left, right, parent, z.get(), size);
+            break;
+
+        case xml_namespace: {
+            xmlns_ptr ns = xmlns_touch(NS_DSC(node)->ns);
+            if (nsupdmap != NULL && ns != NULL_XMLNS) {
+                swizzleNamespace(ns, *nsupdmap);
             }
-            else res =insert_comment(left, right, parent,NULL,0);
+            result = insert_namespace(left, right, parent, ns);
         }
-        break;
-    case cdata:
-        {
-            int size=((t_dsc*)XADDR(node))->size;
-            if (size>0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-                CHECKP(ind_ptr);
-                shft shift= *((shft*)XADDR(ind_ptr));
-                char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                res =insert_cdata(left, right, parent, z.get(), size);
-            }
-            else res =insert_cdata(left, right, parent,NULL,0);
-        }
-        break;
-    case pr_ins:
-        {
-            int size=((t_dsc*)XADDR(node))->size;
-            int tsize=((pi_dsc*)XADDR(node))->target;
-            if (size>0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-                CHECKP(ind_ptr);
-                shft shift= *((shft*)XADDR(ind_ptr));
-                char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                res = insert_pi(left, right, parent, 
-                    z.get(), tsize, 
-                    z.get()+tsize+1, size-tsize-1);
-            }
-            else res =insert_pi(left, right, parent,NULL,0,NULL,0);
-        }
-        break;
-    case attribute:
-        {
-            xmlns_ptr ns=(GETSCHEMENODEX(node))->get_xmlns();
-            if (ns != NULL) swizzleNamespace(ns,updmap);
-            int size=((t_dsc*)XADDR(node))->size;
-            if (size>0)
-            {
-                str_counted_ptr z(se_new char[size]);
-                xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-                xmlscm_type typ=((a_dsc*)XADDR(node))->type;
-                char* nam= GETNAME(GETSCHEMENODEX(node));
-                CHECKP(ind_ptr);
-                shft shift= *((shft*)XADDR(ind_ptr));
-                char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-                memcpy(z.get(), data, size);
-                res =insert_attribute(left, right, parent, 
-                    nam, typ, z.get(), size, ns);
-            }
-            else
-                res =insert_attribute(left, right, parent,GETNAME(GETSCHEMENODEX(node)), ((a_dsc*)XADDR(node))->type,NULL,0,ns);
-        }
-        break;
-    case xml_namespace:
-        {
-            xmlns_ptr ns=xmlns_touch(((ns_dsc*)XADDR(node))->ns);
-            if (ns != NULL) swizzleNamespace(ns, updmap);
-            res =insert_namespace(left, right, parent,ns);
-        }
-        break;
-    default:
-        throw SYSTEM_EXCEPTION("Update error");
+            break;
+
+        default:
+            throw SYSTEM_EXCEPTION("Deep copy error: document node copied");
     }
-    CHECKP(res);
+
+    CHECKP(result);
+
 #ifdef SE_ENABLE_FTSEARCH
-    update_insert_sequence(res, schema_node_cptr((GETBLOCKBYNODE(res))->snode));
+    update_insert_sequence(result, schema_node_cptr((GETBLOCKBYNODE(result))->snode));
 #endif
+
 #ifdef SE_ENABLE_TRIGGERS
     if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
-    apply_per_node_triggers(res, XNULL, parent, XNULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+    apply_per_node_triggers(result, XNULL, parent, XNULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
-    CHECKP(res);
-    return res;
+
+    CHECKP(result);
+
+    return result;
 }
 
-xptr deep_node_copy(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node)
-{
-    // removing indirection from params
-    xptr left=removeIndirection(left_ind);
-    xptr right=removeIndirection(right_ind);
-    xptr parent=removeIndirection(parent_ind);
-    upd_ns_map* ins_swiz=NULL;
-    xptr res= deep_temp_copy(left, right, parent, node,ins_swiz);
-    if (ins_swiz!=NULL) 
-    {
-        //      checkSwiizleTab(ins_swiz);  
-        delete ins_swiz;
-    }
-    return res;
-}
-
-xptr copy_to_temp(xptr node)
-{
-    if(PPConstructor::checkInitial()) carrier=true;
-    return deep_pers_copy(XNULL,XNULL,PPConstructor::virt_root,node,true);
+xptr copy_to_temp(xptr node) {
+    PPConstructor::checkInitial();
+    return deep_copy_node(XNULL, XNULL, PPConstructor::virt_root, node, NULL, true);
 }
 

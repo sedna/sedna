@@ -109,17 +109,6 @@ inline bool nullsafe_CHECKP(xptr p)
     return false;
 }
 
-inline xptr textDereferance(xptr ptr)
-{
-    return block_xptr(ptr) + * (shft *) XADDR(ptr);
-}
-
-inline xptr textDereferenceCP(xptr ptr)
-{
-    CHECKP(ptr);
-    return block_xptr(ptr) + * (shft *) XADDR(ptr);
-}
-
 inline void setNodeChild(const xptr node_xptr, int child_index, xptr child)
 {
     int n;

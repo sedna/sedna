@@ -206,10 +206,7 @@ void replace(PPOpIn arg)
             if (is_node_attribute(removeIndirection(node_child)))
             {
                 parent = removeIndirection(par_ind);
-                if (is_node_persistent(node_child))
-                    attr_node=deep_pers_copy(XNULL, XNULL, parent, removeIndirection(node_child),true);
-                else
-                    attr_node=deep_temp_copy(XNULL, XNULL, parent, removeIndirection(node_child),ins_swiz);
+                attr_node=deep_copy_node(XNULL, XNULL, parent, removeIndirection(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
 #ifdef SE_ENABLE_TRIGGERS
                 apply_per_node_triggers(attr_node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
@@ -251,10 +248,7 @@ void replace(PPOpIn arg)
             if (!is_node_attribute(removeIndirection(node_child)))
             {
                 parent = removeIndirection(par_ind);
-                if (is_node_persistent(node_child))
-                    node = deep_pers_copy(node, rightn, parent, removeIndirection(node_child),true);
-                else
-                    node = deep_temp_copy(node, rightn, parent, removeIndirection(node_child),ins_swiz);
+                node = deep_copy_node(node, rightn, parent, removeIndirection(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
 #ifdef SE_ENABLE_TRIGGERS
                 apply_per_node_triggers(node, tmp_node, removeIndirection(par_ind), scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif

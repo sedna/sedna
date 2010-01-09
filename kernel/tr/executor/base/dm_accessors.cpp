@@ -17,13 +17,13 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
     CHECKP(node);
 
     t_item node_type = GETSCHEMENODE(XADDR(node))->type;
-    if (node_type == xml_namespace) 
+    if (node_type == xml_namespace)
         return tuple_cell::eos();
 
     if (node_type == attribute || node_type == pr_ins || node_type == comment || node_type == text)
     {
         xptr parent = GETPARENTPOINTER(node);
-        if (parent == XNULL) 
+        if (parent == XNULL)
             return tuple_cell::eos();
 
         CHECKP(parent);
@@ -41,10 +41,10 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
         tuple_cell tc = dm_string_value(xml_base_node);
         Uri::Information nfo;
         bool is_relative = Uri::is_relative(&tc, &nfo);
-        
+
         /// I suppose base usi must be stored in normalized form. (IS)
         if(!nfo.normalized) throw XQUERY_EXCEPTION2(SE1003, "Base URI is not properly normalized");
-        
+
         /// If URI is relative and static base uri is defined we should perform resolving. (IS)
         if(is_relative && cxt->st_cxt->base_uri)
         {
@@ -57,7 +57,7 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
         else
             return cast_primitive_to_xs_anyURI(tc);
     }
-    
+
     /* xml_base_node == NULL here */
     if (IS_TMP_BLOCK(node) && cxt->st_cxt->base_uri)
         return tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->base_uri);
@@ -72,7 +72,7 @@ tuple_cell dm_node_name(xptr node)
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
         case document       : return tuple_cell::eos();
-        case element        : 
+        case element        :
         case attribute      : {
                                   xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
                                   const char *n = GETSCHEMENODE(XADDR(node))->name;
@@ -81,25 +81,33 @@ tuple_cell dm_node_name(xptr node)
                               }
         case xml_namespace  : {
                                   ns_dsc *ns = NS_DSC(node);
-                                  if (ns->ns->prefix) 
+                                  if (ns->ns->prefix)
                                   {
                                       char *qname = xs_QName_create(NULL_XMLNS, ns->ns->prefix, malloc);
                                       return tuple_cell::atomic(xs_QName, qname);
                                   }
-                                  else 
+                                  else
                                       return tuple_cell::eos();
                               }
         case pr_ins         : {
                                   pi_dsc *pi = PI_DSC(node);
                                   shft target = pi->target;
-                                  xptr data = pi->data;
-                                  CHECKP(data);
-                                  data = PSTRDEREF(data);
-                                  char *t = se_new char[target + 1];
-                                  t[target] = '\0';
-                                  estr_copy_to_buffer(t, data, target);
-                                  char *qname = xs_QName_create(NULL_XMLNS, t, malloc);
-                                  delete [] t;
+                                  xptr data = getTextPtr(pi);
+
+                                  char *qname;
+
+                                  CHECKP(node);
+                                  if (isPstr(pi)) {
+                                      CHECKP(data);
+                                      char *t = se_new char[target + 1];
+                                      t[target] = '\0';
+                                      estr_copy_to_buffer(t, data, target);
+                                      qname = xs_QName_create(NULL_XMLNS, t, malloc);
+                                      delete [] t;
+                                  } else {
+                                      qname = xs_QName_create(NULL_XMLNS, (char *) XADDR(data), malloc);
+                                  }
+
                                   return tuple_cell::atomic(xs_QName, qname);
                               }
         case comment        : return tuple_cell::eos();
@@ -115,29 +123,36 @@ tuple_cell se_node_local_name(xptr node)
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
         case document       : return tuple_cell::eos();
-        case element        : 
+        case element        :
         case attribute      : {
                                   const char *local_name = GETSCHEMENODE(XADDR(node))->name;
                                   return tuple_cell::atomic_deep(xs_NCName, local_name);
                               }
         case xml_namespace  : {
                                   ns_dsc *ns = NS_DSC(node);
-                                  if (ns->ns->prefix) 
+                                  if (ns->ns->prefix)
                                   {
                                       return tuple_cell::atomic_deep(xs_NCName, ns->ns->prefix);
                                   }
-                                  else 
+                                  else
                                       return tuple_cell::eos();
                               }
         case pr_ins         : {
                                   pi_dsc *pi = PI_DSC(node);
                                   shft target = pi->target;
-                                  xptr data = pi->data;
-                                  CHECKP(data);
-                                  data = PSTRDEREF(data);
+                                  xptr data = getTextPtr(pi);
+
                                   char *t = se_new char[target + 1];
                                   t[target] = '\0';
-                                  estr_copy_to_buffer(t, data, target);
+
+                                  CHECKP(node);
+
+                                  if (isPstr(pi)) {
+                                      estr_copy_to_buffer(t, data, target);
+                                  } else {
+                                      memcpy(t, (char *) XADDR(data), target);
+                                  }
+
                                   return tuple_cell::atomic(xs_NCName, t);
                               }
         case comment        : return tuple_cell::eos();
@@ -153,7 +168,7 @@ tuple_cell se_node_namespace_uri(xptr node)
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
         case document       : return tuple_cell::eos();
-        case element        : 
+        case element        :
         case attribute      : {
                                   xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
                                   if (xmlns != NULL_XMLNS) {
@@ -162,9 +177,9 @@ tuple_cell se_node_namespace_uri(xptr node)
                                   }
                                   return tuple_cell::eos();
                               }
-        case xml_namespace  : 
-        case pr_ins         : 
-        case comment        : 
+        case xml_namespace  :
+        case pr_ins         :
+        case comment        :
         case text           : return tuple_cell::eos();
         default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
     }
@@ -193,13 +208,13 @@ tuple_cell dm_parent(xptr node)
 /*******************************************************************************
  * dm:string-value works as follows. The result is a atomic value, which type
  * is xs:string. The value is constructed from content of the node.
- * if node is a text node or a attribute node, then value is the value of a 
- * node. The resulting tuple represents descriptor of the resulting atomic 
+ * if node is a text node or a attribute node, then value is the value of a
+ * node. The resulting tuple represents descriptor of the resulting atomic
  * value. Data remains the same.
  *
  * In the case of element the result value is the concatenation of all
- * descendant _text_ nodes. New data constructed only if concatenation is 
- * needed (when element has several descendant text nodes). 
+ * descendant _text_ nodes. New data constructed only if concatenation is
+ * needed (when element has several descendant text nodes).
  ******************************************************************************/
 
 enum dm_string_value_result_type {dsvrt_empty, dsvrt_pstr_both, dsvrt_e_str};
@@ -245,11 +260,8 @@ void dm_string_value_traverse(xptr node)
                             return;
                         }
         case text:      {
-                            int size = T_DSC(node)->size;
-                            xptr data = T_DSC(node)->data;
-                            CHECKP(data);
-                            if (size <= PSTRMAXSIZE)
-                                data = PSTRDEREF(data);
+                            strsize_t size = getTextSize(T_DSC(node));
+                            xptr data = getTextPtr(T_DSC(node));
 
                             switch (dsvr.type)
                             {
@@ -288,82 +300,42 @@ tuple_cell dm_string_value(xptr node)
 {
     CHECKP(node);
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : {
-                                  return dm_string_value_call_traverse(node);
-                              }
-        case element        : {
-                                  xmlscm_type type = E_DSC(node)->type;
-                                  if (type == xs_untyped || type == xs_anyType)
-                                  {
-                                      return dm_string_value_call_traverse(node);
-                                  }
-                                  else 
-                                  {
-                                      xptr p = first_child(node);
-                                      if (p == XNULL) return EMPTY_STRING_TC;
-                                      else return dm_string_value(p);
-                                  }
-                              }
-        case attribute      : {
-                                  int size = A_DSC(node)->size;
-                                  xptr data = A_DSC(node)->data;
+    switch (GETSCHEMENODE(XADDR(node))->type) {
+        case element: {
+            xmlscm_type type = E_DSC(node)->type;
 
-                                  if (size == 0) return EMPTY_STRING_TC;
-
-                                  CHECKP(data);
-                                  return tuple_cell::atomic_pstr(xs_string, 
-                                                                 size, 
-                                                                 PSTRDEREF(data));
-                              }
-        case xml_namespace  : {
-                                  ns_dsc *ns = NS_DSC(node);
-                                  return tuple_cell::atomic_deep(xs_string, ns->ns->uri);
-                              }
-        case pr_ins         : {
-                                  int size = PI_DSC(node)->size;
-                                  xptr data = PI_DSC(node)->data;
-                                  int targ=PI_DSC(node)->target;
-                                  
-                                  int content_size = (size == targ) ? 0 : size-targ-1;
-                                  if (0 == content_size) return EMPTY_STRING_TC;
-
-                                  CHECKP(data);
-                                  return tuple_cell::atomic_pstr(xs_string, 
-                                                                 content_size, 
-                                                                 PSTRDEREF(data)+targ+1);
-                              }
-        case comment        : {
-                                  int size = T_DSC(node)->size;
-                                  xptr data = T_DSC(node)->data;
-
-                                  if (size == 0) return EMPTY_STRING_TC;
-
-                                  CHECKP(data);
-                                  return tuple_cell::atomic_pstr(xs_string, 
-                                                                 size, 
-                                                                 PSTRDEREF(data));
-                              }
-        case text           : {
-                                  int size = T_DSC(node)->size;
-                                  if (size == 0) return EMPTY_STRING_TC;
-                                  xptr data = T_DSC(node)->data;
-                                  CHECKP(data);
-                                  if (size <= PSTRMAXSIZE)
-                                      data = PSTRDEREF(data);
-
-                                  return tuple_cell::atomic_pstr(xs_string, 
-                                                                 size, 
-                                                                 data);
-                              }
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:string-value");
+            if (type == xs_untyped || type == xs_anyType) {
+                return dm_string_value_call_traverse(node);
+            } else {
+                xptr p = first_child(node);
+                if (p == XNULL)
+                    return EMPTY_STRING_TC;
+                else
+                    return dm_string_value(p);
+            }
+        }
+        case document: {
+            return dm_string_value_call_traverse(node);
+        }
+        case text:
+        case comment:
+        case attribute: {
+            return tuple_cell::atomic_text(node);
+        }
+        case xml_namespace: {
+            return tuple_cell::atomic_deep(xs_string, NS_DSC(node)->ns->uri);
+        }
+        case pr_ins: {
+            return tuple_cell::atomic_pi(node);
+        }
+        default:
+            throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:string-value");
     }
 }
 
 /*******************************************************************************
  * dm:typed-value works as follows. The result is a atomic value or nothing(?).
- * If the result is value, then s_dsc is constructed. 
+ * If the result is value, then s_dsc is constructed.
  * If kind of a node is element then its type is considered. If element has
  * SimpleType, then the resulting atomic value has the same type, else type
  * is untypedAtomic. Typed value of a attribute node is the same
@@ -384,7 +356,7 @@ tuple_cell dm_typed_value(xptr node)
                                       res.set_xtype(xs_untypedAtomic);
                                       return res;
                                   }
-                                  else 
+                                  else
                                       return cast(dm_string_value(node), type);
                               }
         case attribute      : {
@@ -473,7 +445,7 @@ const char* xmlscm_type2c_str(xmlscm_type type)
         case xs_unsignedByte        : return "xs:unsignedByte";
         case xs_positiveInteger     : return "xs:positiveInteger";
 
-        default                     : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type"); 
+        default                     : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type");
     }
 }
 /*
@@ -519,11 +491,9 @@ tuple_cell dm_document_uri(xptr node)
     {
         case document       : {
                                   d_dsc *d = D_DSC(node);
-                                  int size = d->size;
-                                  xptr data = d->data;
+                                  int size = getTextSize(d);
                                   if (size == 0) return tuple_cell::eos();
-                                  CHECKP(data);
-                                  data = PSTRDEREF(data);
+                                  xptr data = getTextPtr(d);
                                   char *t = se_new char[size + 1];
                                   t[size] = '\0';
                                   estr_copy_to_buffer(t, data, size);

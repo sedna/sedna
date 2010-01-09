@@ -22,7 +22,7 @@
 
 #define E_STR_NOT_IN_ONE_BLOCK(p)  (((int)XADDR(p.get_str_vmm())& PAGE_REVERSE_BIT_MASK) +p.get_strlen_vmm()>PAGE_SIZE)
 
-struct e_str_blk_hdr 
+struct e_str_blk_hdr
 {
     vmm_sm_blk_hdr sm_vmm;	// sm/vmm parameters
     xptr nblk;				// next block
@@ -30,10 +30,10 @@ struct e_str_blk_hdr
     int cursor;				// cursor
 
 	static void init(void *p, const xptr pblk)
-    { 
-        VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
-        ((e_str_blk_hdr*)p)->nblk = XNULL; 
-		((e_str_blk_hdr*)p)->pblk = pblk; 
+    {
+        VMM_SIGNAL_MODIFICATION(addr2xptr(p));
+        ((e_str_blk_hdr*)p)->nblk = XNULL;
+		((e_str_blk_hdr*)p)->pblk = pblk;
         ((e_str_blk_hdr*)p)->cursor = sizeof(e_str_blk_hdr);
 //        VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
     }
@@ -101,10 +101,10 @@ public:
 
     xptr append_mstr(const char *src); // memory strings
     xptr append_mstr(const char *src, int count); // memory strings
-    xptr append_estr(const xptr &src, int count); // e_str 
+    xptr append_estr(const xptr &src, int count); // e_str
     xptr append_pstr_short(const xptr &src, int count) { return append_estr(src, count); }
     xptr append_pstr_long(const xptr &src);
-    xptr append_pstr(const xptr &src, int count) { return count > PSTRMAXSIZE ? 
+    xptr append_pstr(const xptr &src, int count) { return count > PSTRMAXSIZE ?
                                                    append_pstr_long(src) :
                                                    append_pstr_short(src, count); }
 
@@ -119,7 +119,7 @@ public:
 void estr_copy_to_buffer(char *dest, xptr src, int count);
 
 
-namespace tr_globals 
+namespace tr_globals
 {
 
 /// Global e_strings
@@ -139,7 +139,7 @@ public:
     virtual int copy_blk(char *buf);
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
 	/// (same as copy_blk, but without copy)
-	/// returns the length of the string part 
+	/// returns the length of the string part
 	/// or 0 if end of string reached (*ptr is not modified in this case)
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP
@@ -187,7 +187,7 @@ public:
         else m_start = m_str->append_estr(src, count);
         m_size += count;
     }
-	
+
     void append_pstr_short(const xptr &src, int count)
     {
         append_estr(src, count);

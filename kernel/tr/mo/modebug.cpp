@@ -34,7 +34,7 @@ inline bool checkNodeOuterPointers(xptr node_ptr) {
 
     if (getNodeTypeCP(node_ptr) == text) {
         t_dsc * t = (t_dsc *) XADDR(node_ptr);
-        CHECK_INVARIANT(t->size <= PSTRMAXSIZE || t->data == block_xptr(t->data), ce_snode);
+        CHECK_INVARIANT(!isPstrLong(t) || t->data.lsp.p == block_xptr(t->data.lsp.p), ce_snode);
     }
 
     CHECKP(node_ptr);

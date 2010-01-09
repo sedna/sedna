@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/updates/updates.h"
+#include "tr/executor/base/tuple.h"
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/mo/mo.h"
 #include "tr/auth/auc.h"
@@ -25,10 +26,10 @@ void rename(PPOpIn arg,const char* name)
 		{
 			xptr node=t.cells[0].get_node();
 			CHECKP(node);
-			if (is_node_persistent(node)&& (is_node_element(node)||is_node_attribute(node)) ) 
+			if (is_node_persistent(node)&& (is_node_element(node)||is_node_attribute(node)) )
 			{
 				//xptr indir=((n_dsc*)XADDR(node))->indir;
-				argseq.add(node);	
+				argseq.add(node);
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -45,10 +46,10 @@ void rename(PPOpIn arg,const char* name)
 #endif
 		arg.op->next(t);
 	}
-	
+
 	if (argseq.size()<=0) return;
 	// Checking authorization
-	if (is_auth_check_needed(RENAME_STATEMENT)) 
+	if (is_auth_check_needed(RENAME_STATEMENT))
 		auth_for_update(&argseq, RENAME_STATEMENT, false);
 	//Sort in document order
 	argseq.sort();
@@ -85,26 +86,15 @@ void rename(PPOpIn arg,const char* name)
 //        if (apply_per_node_triggers(XNULL, node, parent, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) == XNULL)
 //    		return;
 #endif
-        
+
 		switch(type)
 		{
 		case attribute:
 			{
 				//1. insert
-				int size=((a_dsc*)desc)->size;
-				if (size>0)
-				{
-					char *z=se_new char[size];
-					xptr ind_ptr=((a_dsc*)desc)->data;
-					CHECKP(ind_ptr);
-					shft shift= *((shft*)XADDR(ind_ptr));
-					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					memcpy(z,data,size);
-					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,z,size,NULL_XMLNS);
-					delete z;
-				}
-				else
-					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,NULL,0,NULL_XMLNS);
+			    text_cptr buf(node);
+			    CHECKP(node);
+			    res = insert_attribute(left, XNULL, parent, name, (A_DSC(node))->type, buf.get(), buf.getSize(), NULL_XMLNS);
 				//2. delete
 				CHECKP(indir);
 				delete_node(*((xptr*)XADDR(indir)));

@@ -296,6 +296,12 @@ inline xptr getRightSiblingIndirection(xptr node)
     return ((n_dsc*) XADDR(s))->indir;
 }
 
+inline xptr getRightSiblingIndirectionCP(xptr node)
+{
+    CHECKP(node);
+    return getRightSiblingIndirection(node);
+}
+
 inline xptr getLeftSibling(xptr node)
 {
     return ((n_dsc*) XADDR(node))->ldsc;
@@ -401,6 +407,8 @@ inline xptr getNodeChildSafe(const xptr node_xptr, int child_index)
         return XNULL;
     }
 }
+
+xptr getFirstByOrderChildCP(const xptr node_xptr);
 
 inline xptr getNodeAncestorBySchemeCP(xptr node, schema_node_xptr scm_anc)
 {

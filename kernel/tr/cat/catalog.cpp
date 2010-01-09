@@ -103,13 +103,14 @@ void catalog_on_session_end()
 void initialize_masterblock()
 {
     elog(EL_LOG, ("Initializing catalog masterdata block"));
-    vmm_alloc_data_block(&(catalog_masterblock));
-    CHECKP(catalog_masterblock);
 
     for (int i = 0; i < catobj_count; i++) {
         local_catalog->masterdata.trees[i] = bt_create(xs_string);
     }
     local_catalog->masterdata.htable = XNULL;
+
+    vmm_alloc_data_block(&(catalog_masterblock));
+    WRITEP(catalog_masterblock);
 
     memcpy(
         &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),

@@ -36,7 +36,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 			if (is_node_persistent(node) && !is_node_document(node))
 			{
 				//xptr indir=((n_dsc*)XADDR(node))->indir;
-				arg1seq.add(node);	
+				arg1seq.add(node);
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -55,7 +55,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 	}
 	if (arg1seq.size()<=0) return;
 	// Checking authorization
-	if (is_auth_check_needed(INSERT_STATEMENT)) 
+	if (is_auth_check_needed(INSERT_STATEMENT))
 		auth_for_update(&arg1seq, INSERT_STATEMENT, false);
 
 	// Creating the second sequence (different validity tests+ indirection deref)
@@ -78,8 +78,8 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 					tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
 					arg3seq.add(tup);
 				}
-				arg2seq.add(indir);	
-				
+				arg2seq.add(indir);
+
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -130,9 +130,9 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 				xptr indir=((n_dsc*)XADDR(nd))->indir;
 				arg1seq.set(indir,it1);
 				++it1;
-			}	
+			}
 			break;
-			
+
 		case 2:
 			{
 				xptr nd=*it1;
@@ -176,17 +176,17 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&arg1seq, false, &arg2seq, false, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 #endif
-    
+
 	do
 	{
 		bool mark;
-		xptr node_par=*it1;	
+		xptr node_par=*it1;
 		it2=arg2seq.begin();
 		node_child=*it2;
 		//Check of the following is right
 		xptr tmp=removeIndirection(node_par);
 		xptr right=tmp;
-		//mark= is_node_persistent(node_child); 
+		//mark= is_node_persistent(node_child);
 		node_child=removeIndirection(node_child);
 		CHECKP(tmp);
 		tmp=GETLEFTPOINTER(tmp);
@@ -198,7 +198,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 			CHECKP(node_child);
 			mark=mark && !is_node_attribute(node_child);
 			if (!mark)
-			{ 
+			{
 				CHECKP(tmp);
 				mark= is_node_attribute(tmp);
 				xptr rght=GETRIGHTPOINTER(tmp);
@@ -212,14 +212,14 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 					CHECKP(tmp);
 					mark= is_node_attribute(tmp);
 					xptr last=*(arg2seq.end()-1);
-					last=removeIndirection(last); 
+					last=removeIndirection(last);
 					CHECKP(last);
 					mark=mark && is_node_attribute(last);
 					if (!mark)
 					{
 #ifndef IGNORE_UPDATE_ERRORS
 						throw USER_EXCEPTION(SE2038);
-#endif		
+#endif
 						goto cycle1;
 					}
 				}
@@ -229,23 +229,14 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		{
 			node_child=*it2;
 			node_child=removeIndirection(node_child);
-			mark= is_node_persistent(node_child); 			
+			mark= is_node_persistent(node_child);
 			CHECKP(node_child);
-			if (child==XNULL)
-			{
-				if (mark) 
-					node_child=deep_pers_copy( XNULL,right, XNULL, node_child,true);
-				else
-					node_child=deep_temp_copy( XNULL,right, XNULL, node_child,ins_swiz);
+			if (child==XNULL) {
+			    node_child=deep_copy_node(XNULL, right, XNULL, node_child, mark ? NULL : &ins_swiz, true);
+			} else {
+                node_child=deep_copy_node(child, XNULL, XNULL, node_child, mark ? NULL : &ins_swiz, true);
 			}
-			else
-			{
-				if (mark) 
-					node_child=deep_pers_copy(child, XNULL, XNULL, node_child,true);
-				else
-					node_child=deep_temp_copy(child, XNULL, XNULL, node_child,ins_swiz);
-			}
-			
+
 			child=node_child;
 			// inner cycle on second sequence
 			it2++;
@@ -255,9 +246,7 @@ cycle1:
 		it1++;
 	}
 	while (it1!=arg1seq.end());
-	if (ins_swiz!=NULL) 
-	{
-//		checkSwiizleTab(ins_swiz);
+	if (ins_swiz!=NULL) {
 		delete ins_swiz;
 	}
 #ifdef SE_ENABLE_FTSEARCH
@@ -289,7 +278,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 			if (is_node_persistent(node)&& !is_node_document(node) )
 			{
 				//xptr indir=((n_dsc*)XADDR(node))->indir;
-				arg1seq.add(node);	
+				arg1seq.add(node);
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -308,9 +297,9 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 	}
 	if (arg1seq.size()<=0) return;
 	// Checking authorization
-	if (is_auth_check_needed(INSERT_STATEMENT)) 
+	if (is_auth_check_needed(INSERT_STATEMENT))
 		auth_for_update(&arg1seq, INSERT_STATEMENT, true);
-	
+
 	// Creating the second sequence (different validity tests+ indirection deref)
     local_lock_mrg->lock(lm_x); // put shared lock on the second sequence (first sequence is locked with exclusive lock)
 	t_item prev_item=attribute;
@@ -331,7 +320,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 					tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
 					arg3seq.add(tup);
 				}
-				arg2seq.add(indir);					
+				arg2seq.add(indir);
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -382,9 +371,9 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 				xptr indir=((n_dsc*)XADDR(nd))->indir;
 				arg1seq.set(indir,it1);
 				++it1;
-			}	
+			}
 			break;
-			
+
 		case 2:
 			{
 				xptr nd=*it1;
@@ -432,20 +421,20 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 	do
 	{
 		bool mark;
-		xptr node_par=*it1;	
+		xptr node_par=*it1;
 		it2=arg2seq.begin();
 		node_child=*it2;
 		//Check of the following is right
 		xptr tmp=removeIndirection(node_par);
 		xptr child=tmp;
-	//	mark= is_node_persistent(node_child); 
+	//	mark= is_node_persistent(node_child);
 		 node_child=removeIndirection(node_child);
 		CHECKP(tmp);
 		mark=!is_node_attribute(tmp);
 		CHECKP(node_child);
 		mark=mark && !is_node_attribute(node_child);
 		if (!mark)
-		{ 
+		{
 			CHECKP(tmp);
 			mark= is_node_attribute(tmp);
 			xptr rght=GETRIGHTPOINTER(tmp);
@@ -459,14 +448,14 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 				CHECKP(tmp);
 				mark= is_node_attribute(tmp);
 				xptr last=*(arg2seq.end()-1);
-				last=removeIndirection(last); 
+				last=removeIndirection(last);
 				CHECKP(last);
 				mark=mark && is_node_attribute(last);
 				if (!mark)
 				{
 #ifndef IGNORE_UPDATE_ERRORS
 					throw USER_EXCEPTION(SE2038);
-#endif		
+#endif
 					goto cycle1;
 				}
 			}
@@ -475,13 +464,11 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		{
 			node_child=*it2;
 			node_child=removeIndirection(node_child);
-			mark= is_node_persistent(node_child); 			
+			mark= is_node_persistent(node_child);
+
 			CHECKP(node_child);
-			if (mark) 
-				node_child=deep_pers_copy(child, XNULL, XNULL, node_child,true);
-			else
-				node_child=deep_temp_copy(child, XNULL, XNULL, node_child,ins_swiz);
-			
+			node_child = deep_copy_node(child, XNULL, XNULL, node_child, mark ? NULL : &ins_swiz, true);
+
 			child=node_child;
 			// inner cycle on second sequence
 			it2++;
@@ -491,7 +478,7 @@ cycle1:
 		it1++;
 	}
 	while (it1!=arg1seq.end());
-	if (ins_swiz!=NULL) 
+	if (ins_swiz!=NULL)
 	{
 //		checkSwiizleTab(ins_swiz);
 		delete ins_swiz;
@@ -529,8 +516,8 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 				/*if (ch_auth)
 					auth_for_update( node, INSERT_STATEMENT);*/
 				//xptr indir=((n_dsc*)XADDR(node))->indir;
-				arg1seq.add(node);	
-				
+				arg1seq.add(node);
+
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -548,11 +535,11 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		arg1.op->next(t);
 	}
 	if (arg1seq.size()<=0) return;
-	
+
 	// Checking authorization
-	if (is_auth_check_needed(INSERT_STATEMENT)) 
+	if (is_auth_check_needed(INSERT_STATEMENT))
 		auth_for_update(&arg1seq, INSERT_STATEMENT, true);
-	
+
 	// Creating the second sequence (different validity tests+ indirection deref)
     local_lock_mrg->lock(lm_s); // put shared lock on the second sequence (first sequence is locked with exclusive lock)
 	t_item prev_item=attribute;
@@ -573,7 +560,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 					tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
 					arg3seq.add(tup);
 				}
-				arg2seq.add(indir);	
+				arg2seq.add(indir);
 				//else
 				//{
 					//deep constructing of node
@@ -595,7 +582,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 #endif
 		arg2.op->next(t2);
 	}
-	
+
 	// outer cycle on first sequence
 	if (arg2seq.size()<=0 ) return;
 
@@ -630,9 +617,9 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 				xptr indir=((n_dsc*)XADDR(nd))->indir;
 				arg1seq.set(indir,it1);
 				++it1;
-			}	
+			}
 			break;
-			
+
 		case 2:
 			{
 				xptr nd=*it1;
@@ -679,7 +666,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 	do
 	{
 		bool mark;
-		xptr node_par=*it1;	
+		xptr node_par=*it1;
 		xptr prev_child=XNULL;
 		t_item prev_item=xml_namespace;
 		it2=arg2seq.begin();
@@ -687,25 +674,22 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		do
 		{
 			node_child=*it2;
-			mark= is_node_persistent(node_child); 
-			node_child=removeIndirection(node_child);			
+			mark= is_node_persistent(node_child);
+			node_child=removeIndirection(node_child);
 			CHECKP(node_child);
-			if (prev_item==xml_namespace && ! is_node_xml_namespace(node_child)) 
+			if (prev_item==xml_namespace && ! is_node_xml_namespace(node_child))
 			{
 				prev_child=XNULL;
 				prev_item=get_node_type(node_child);
 			}
 			else
-			if (prev_item==attribute && ! is_node_attribute(node_child)) 
+			if (prev_item==attribute && ! is_node_attribute(node_child))
 			{
 				prev_child=XNULL;
 				prev_item=element;
 			}
-			
-			if (mark) 
-				prev_child=deep_pers_copy(prev_child, XNULL, removeIndirection(node_par), node_child,true);
-			else
-				prev_child=deep_temp_copy(prev_child, XNULL, removeIndirection(node_par), node_child,ins_swiz);
+
+		    prev_child = deep_copy_node(prev_child, XNULL, removeIndirection(node_par), node_child, mark ? NULL : &ins_swiz, true);
 
 			// inner cycle on second sequence
 			it2++;
@@ -715,9 +699,9 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		it1++;
 	}
 while (it1!=arg1seq.end());
-	if (ins_swiz!=NULL) 
+	if (ins_swiz!=NULL)
 	{
-//		checkSwiizleTab(ins_swiz);	
+//		checkSwiizleTab(ins_swiz);
 		delete ins_swiz;
 	}
 #ifdef SE_ENABLE_FTSEARCH

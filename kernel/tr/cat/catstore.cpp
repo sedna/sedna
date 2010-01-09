@@ -14,7 +14,7 @@
 // # define DEBUG_MEMCPY
 
 #ifdef DEBUG_MEMCPY
-inline void __debug_check_bounds(char * aaddr, cs_size_t asize, void * wdest, size_t wsize) 
+inline void __debug_check_bounds(char * aaddr, cs_size_t asize, void * wdest, size_t wsize)
 {
     uint32_t astart = (uint32_t) aaddr;
     uint32_t aend = astart + asize;
@@ -108,7 +108,7 @@ inline void cs_unoccupy(const xptr b, cell_t cell, cell_t cell_count)
     vmm_delete_block(b);
 }
 
-inline cell_t cs_find_and_occupy(xptr &b, cell_t &cell_count) 
+inline cell_t cs_find_and_occupy(xptr &b, cell_t &cell_count)
 {
     // TODO : this function extremally needs optimization! It's very ram-coded.
 
@@ -162,7 +162,7 @@ void cs_read_subsequence_descriptor(const xptr ptr, cs_chain_part_header * ph)
 
     CHECKP(ptr);
 
-    memcpy(&(desc), pp, sizeof(cs_inblock_part_descriptor)); 
+    memcpy(&(desc), pp, sizeof(cs_inblock_part_descriptor));
     pp += sizeof(cs_inblock_part_descriptor);
 
     ph->addr = ptr;
@@ -171,18 +171,18 @@ void cs_read_subsequence_descriptor(const xptr ptr, cs_chain_part_header * ph)
     ph->size = ((char *) XADDR(BLOCKXPTR(ptr)) + (cell + desc.count) * CS_CELL_SIZE) - pp;
     U_ASSERT((((uint32_t) ph->eff_addr + ph->size) & 0xff) == 0);
     U_ASSERT(ph->size < 64000);
-    ph->next = xptr(desc.next_ptr);
+    ph->next = uint64_to_xptr(desc.next_ptr);
 }
 
 
 
-/* 
+/*
  *  cs_allocate_sequence(b, ch, ph)
  *
  *  Allocates new storage sequence of size ch.full_size (or less).
  *  b is pointer to any place in the parent sequence. b can not be XNULL
  *  ch.fullsize is size of the sequence needed. If there is no such continuous sequence,
- *  allocated one may be shorter. Anyway, write function will find the place to 
+ *  allocated one may be shorter. Anyway, write function will find the place to
  *  write the rest of data. Fullsize is ALWAYS actual data length.
  *  ph is output parameter, identifying subsequence to write to.
  *
@@ -277,7 +277,7 @@ void cs_allocate_subsequence(cs_size_t size_needed, cs_chain_part_header * ph)
 inline void cs_read_sequence_header(xptr ptr, cs_chain_header * ch, cs_chain_part_header * ph)
 {
     CHECKP(ptr);
-    memcpy(ch, XADDR(ptr), sizeof(cs_chain_header)); 
+    memcpy(ch, XADDR(ptr), sizeof(cs_chain_header));
 #ifdef DEBUG_FIELD
     U_ASSERT(ch->__debug_marker == 0xDEADBEAFUL);
 #endif
@@ -286,7 +286,7 @@ inline void cs_read_sequence_header(xptr ptr, cs_chain_header * ch, cs_chain_par
 }
 
 
-void cs_cutoff(cs_chain_part_header * ph) 
+void cs_cutoff(cs_chain_part_header * ph)
 {
     // TODO TODO TODO
 }
@@ -304,7 +304,7 @@ void cs_write(xptr &p, const char * data, cs_size_t data_size)
     cs_size_t data_left = data_size;
     cs_size_t to_write;
 
- /* If p is XNULL, we need to allocate new storage sequence 
+ /* If p is XNULL, we need to allocate new storage sequence
   * that contains up to data_size number of bytes
   */
     if (p == XNULL) {
@@ -423,7 +423,7 @@ cs_size_t cs_get_size(const xptr p)
     return ch.full_size;
 }
 
-void cs_write_part(const xptr p, const char * data, off_t data_offset, size_t data_size) 
+void cs_write_part(const xptr p, const char * data, off_t data_offset, size_t data_size)
 {
 // TODO
 }
@@ -465,10 +465,10 @@ void cs_free(xptr p)
 /*
 void cs_check_consistency(const xptr &p)
 {
-    cat_blk_hdr blk = 
+    cat_blk_hdr blk =
 
     for (int i = 0; i < SBA_SIZE; i++) {
-        c = (struct bit_array *) 
+        c = (struct bit_array *)
         for (int j = 0; j < 32; j++) {
             c >>= 1;
         }
