@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPFtScan.h"
 #include "tr/ft/FTsearch.h"
 #include "tr/executor/root/PPCreateFtIndex.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPFtScan::PPFtScan(dynamic_context *_cxt_,

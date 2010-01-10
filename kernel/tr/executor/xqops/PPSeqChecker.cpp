@@ -8,7 +8,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPSeqChecker.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "common/errdbg/exceptions.h"
 
 using namespace std;

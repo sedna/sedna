@@ -9,7 +9,7 @@
 #include "tr/executor/fo/op_map.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/xs_helper.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -10,7 +10,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/merge.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 void PPAxisAncestor::init_function()
 {

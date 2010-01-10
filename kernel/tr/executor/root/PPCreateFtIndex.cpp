@@ -9,7 +9,7 @@
 #include "tr/executor/root/PPCreateFtIndex.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/executor/base/xsd.h"
 
 ft_index_type str2index_type(const char *str)

@@ -10,7 +10,7 @@
 
 #include "tr/executor/xqops/PPDebug.h"
 #include "tr/tr_globals.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPDebug::PPDebug(dynamic_context *_cxt_,

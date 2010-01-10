@@ -7,7 +7,7 @@
 
 #include "tr/executor/xqops/PPIntersect.h"
 #include "tr/executor/base/merge.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPIntersect::PPIntersect(dynamic_context *_cxt_,

@@ -23,6 +23,7 @@
 #include "tr/xqp/XQueryDriver.h"
 #include "tr/xqp/XQuerytoLR.h"
 #include "tr/executor/root/PPQueryRoot.h"
+#include "tr/nid/numb_scheme.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
@@ -49,8 +50,8 @@ on_kernel_statement_begin(size_t mod_index,
     is_qep_opened = true;
 }
 
-static
-void on_kernel_statement_end(PPQueryEssence *&qep_tree)
+static void 
+on_kernel_statement_end(PPQueryEssence *&qep_tree)
 {
     RESET_CURRENT_PP;
 
@@ -74,9 +75,13 @@ void on_kernel_statement_end(PPQueryEssence *&qep_tree)
 
         if (pe_local_aspace->free_all) pe_local_aspace->free_all();
 
-        vmm_delete_tmp_blocks();
         system_tables_on_kernel_statement_end();
-
+        
+        vmm_delete_tmp_blocks();
+        
+        /* TMPNIDBLK must be nulled when the last temp node is deleted. */
+        nid_on_kernel_statement_end();
+        
         is_qep_built = false;
     }
 }
@@ -301,8 +306,9 @@ void register_session_on_gov()
 }
 
 
-//returns true if all database files exists
-bool check_database_existence(const char* name)
+/* Returns true if all database files exist */
+bool 
+check_database_existence(const char* name)
 {
     bool res1 = false, res2 = false, res3 = false;
 

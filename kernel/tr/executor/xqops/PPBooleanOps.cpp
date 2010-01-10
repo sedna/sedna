@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPBooleanOps.h"
 #include "tr/executor/fo/boolean_operations.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

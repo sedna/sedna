@@ -7,7 +7,7 @@
 
 #include "tr/executor/root/PPCreateIndex.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/idx/indexes.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"

@@ -6,7 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPFtIndexScan.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
 #endif

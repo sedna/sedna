@@ -7,7 +7,7 @@
 #include "tr/executor/xqops/PPCheckpoint.h"
 #include "tr/log/log.h"
 #include "tr/tr_globals.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 PPCheckpoint::PPCheckpoint(dynamic_context *_cxt_,
                            operation_info _info_) : PPIterator(_cxt_, _info_)

@@ -6,28 +6,30 @@
 #ifndef _NUMB_SCHEME_H
 #define _NUMB_SCHEME_H
 
+#include <ostream>
+
 #include "common/sedna.h"
 #include "common/xptr.h"
 #include "tr/nid/nid.h"
 #include "tr/crmutils/crmbase.h"
 
-#include <ostream>
-
 #define MAXINTERNALPREFIX 11
-extern int nid_block_count;
-extern bool restore_mode;
 
 /* typedef __int64 n_scheme; */
 struct t_nid {
-	unsigned char			prefix[11]; /* actually union; if the size of string is above MAXINTERNALPREFIX 
-						   keeps xptr to string (first 8 bytes) and size of nid (2 last bytes) */
-	unsigned char	size; /*keeps the size of string if it is above MAXINTERNALPREFIX, 0 otherwise */
+	unsigned char prefix[11];  /* actually union; if the size of string is above MAXINTERNALPREFIX 
+						          keeps xptr to string (first 8 bytes) and size of nid (2 last bytes) */
+	unsigned char size;        /*keeps the size of string if it is above MAXINTERNALPREFIX, 0 otherwise */
 };
 
 typedef struct t_nid t_nid;
 
+
+extern int nid_block_count;
 extern t_nid NIDNULL;
 extern std::pair<int,int>* sizehnt;
+
+
 /* set static parameter of dividing character */
 void		nid_set_dc(char the_dc);
 
@@ -81,17 +83,22 @@ void		nid_delete(xptr node);
 
 /* prints nid */
 void		nid_print(xptr node, se_ostream& c);
-void    nid_print(xptr node, std::ostream& c);
+void    	nid_print(xptr node, std::ostream& c);
 void		nid_print(xptr node);
+
+/*
+ * All temporary blocks are deleted on the end of the kernel statement 
+ * including TMPNIDBLK. So it must be nulled when the last temporary 
+ * schema node is deleted. 
+ */
+void    	nid_on_kernel_statement_end();
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*                   Internal functions                            */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /* wrapper upon nid generation functions depending on value of "p" */
-t_prefix	nid_generate(t_prefix p1, t_prefix p2, fnumber p);
-
 char*		nid_extend_bitmap();
 
-#endif
-
+#endif /* _NUMB_SCHEME_H */

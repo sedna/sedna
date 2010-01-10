@@ -8,7 +8,7 @@
 
 #include "tr/executor/xqops/PPIf.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPIf::PPIf(dynamic_context *_cxt_,

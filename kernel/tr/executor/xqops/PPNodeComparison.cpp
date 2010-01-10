@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPNodeComparison.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPNodeComparison* PPNodeComparison::PPGTNodeComparison(dynamic_context *_cxt_,

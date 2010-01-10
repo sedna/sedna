@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPQName.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////

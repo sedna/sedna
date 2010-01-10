@@ -10,7 +10,7 @@
 
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/strings/strings.h"
 #include "tr/pstr/pstr.h"
 

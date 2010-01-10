@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPPatMatch.h"
 #include "tr/strings/e_string.h"
 #include "tr/strings/strings.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 void PPPatMatch::cf_choice(void)

@@ -12,7 +12,7 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/fo/comparison_operations.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

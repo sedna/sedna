@@ -10,7 +10,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPDocInCol::PPDocInCol(dynamic_context *_cxt_,

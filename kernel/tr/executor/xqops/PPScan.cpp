@@ -7,7 +7,7 @@
 #include "tr/executor/xqops/PPScan.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPScan::PPScan(dynamic_context *_cxt_,

@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPSpaceSequence.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 tuple_cell PPSpaceSequence::space_tup = tuple_cell::atomic_deep(xs_string, " ");
 

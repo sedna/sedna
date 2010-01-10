@@ -9,7 +9,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/xs_names.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPAxisChild::PPAxisChild(dynamic_context *_cxt_,

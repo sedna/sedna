@@ -6,7 +6,7 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPUp.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPUp::PPUp(dynamic_context *_cxt_,

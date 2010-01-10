@@ -81,6 +81,7 @@
 #include "tr/executor/xqops/PPFunCall.h"
 #include "tr/executor/xqops/PPSpaceSequence.h"
 #include "tr/executor/xqops/PPError.h"
+#include "tr/executor/xqops/PPExplain.h"
 #include "tr/executor/xqops/PPDebug.h"
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/xqops/PPDocInCol.h"

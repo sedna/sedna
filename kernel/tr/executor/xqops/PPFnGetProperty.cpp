@@ -10,7 +10,7 @@
 #include "tr/executor/xqops/PPFnGetProperty.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/tr_globals.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 PPFnGetProperty::PPFnGetProperty(dynamic_context *_cxt_,
                                  operation_info _info_,

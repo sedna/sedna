@@ -27,7 +27,6 @@
 #include "tr/ft/ft_index_data.h"
 #endif
 
-extern xptr TMPNIDBLK; /* current temporary block for nid prefixes, defined in numb_scheme.cpp */
 
 typedef void (*system_fun)(xptr root, const char* title);
 static std::vector<schema_node_xptr>* sys_schema=NULL;
@@ -520,12 +519,6 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
 
     local_lock_mrg->lock(lm_s);
 
-/*
-    if (param != NULL) {
-
-    }
-*/
-
     doc_schema_node_cptr scm(doc_schema_node_object::create(false));
     nodex = insert_doc_node(scm, title, NULL);
     (*(sysdoc->fillproc))(indirectionDereferenceCP(nodex), param);
@@ -535,8 +528,9 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
     return scm.ptr();
 }
 
-/// We should clear dynamic memory which was allocated by temporary schema nodes
-/// and check that TMPNIDBLCK is XNULL.
+/* 
+ * We should clear dynamic memory which was allocated by temporary schema nodes 
+ */
 void system_tables_on_kernel_statement_end()
 {
     if (sys_schema!=NULL)
@@ -548,7 +542,6 @@ void system_tables_on_kernel_statement_end()
             it++;
         }
 		sys_schema->clear();
-        TMPNIDBLK = XNULL;
     }
 }
 
