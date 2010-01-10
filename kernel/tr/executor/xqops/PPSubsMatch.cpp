@@ -9,7 +9,7 @@
 #include "tr/strings/e_string.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/strings/e_string_iterator.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,

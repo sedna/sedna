@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPExtFunCall.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPExtFunCall::PPExtFunCall(dynamic_context *_cxt_,

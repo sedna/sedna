@@ -10,7 +10,7 @@
 #include "common/errdbg/d_printf.h"
 
 #include "tr/executor/root/PPLoadModule.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"

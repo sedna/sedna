@@ -13,7 +13,6 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPath.h"
-#include "tr/crmutils/node_utils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisAncestor

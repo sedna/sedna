@@ -7,7 +7,7 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPSequenceTypes.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/executor/fo/casting_operations.h"
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPStringsCompare.h"
 #include "tr/executor/fo/string_operations.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

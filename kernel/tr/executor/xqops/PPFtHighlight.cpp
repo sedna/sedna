@@ -7,7 +7,7 @@
 
 #include "tr/executor/xqops/PPFtHighlight.h"
 #include "tr/ft/FTsearch.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                              operation_info _info_,

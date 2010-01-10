@@ -72,7 +72,8 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPUriFuncs$(OBJ_EXT) \
         PPVarDecl$(OBJ_EXT) \
         PPVariable$(OBJ_EXT) \
-        PPXptr$(OBJ_EXT)
+        PPXptr$(OBJ_EXT) \
+        PPExplain$(OBJ_EXT)
 
 ifeq ($(ENABLE_FTSEARCH),1)
 OBJS += PPFtIndexScan$(OBJ_EXT)

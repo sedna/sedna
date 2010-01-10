@@ -15,6 +15,6 @@ OBJS      = compare$(OBJ_EXT) dm_accessors$(OBJ_EXT) \
             xs_binary$(OBJ_EXT) xs_decimal_t$(OBJ_EXT) \
             xs_fp_converter$(OBJ_EXT) xs_helper$(OBJ_EXT) xs_names$(OBJ_EXT) \
             xs_uri$(OBJ_EXT) xsd$(OBJ_EXT)
-SUBDIRS   = decNumber lip
+SUBDIRS   = decNumber lip visitor
 
 include $(PP)/Makefile.pseudolib

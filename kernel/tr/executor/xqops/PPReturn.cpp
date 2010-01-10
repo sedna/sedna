@@ -6,7 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPReturn.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPReturn::PPReturn(dynamic_context *_cxt_,

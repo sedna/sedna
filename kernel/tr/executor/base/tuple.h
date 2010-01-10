@@ -36,9 +36,9 @@ typedef counted_ptr<char> str_counted_ptr;
 
 /// Used in casting and serialazation to create lexical atomic tuple cell
 /// representation (through tr_globals::mem_str_buf).
-/// Size should be the same as maximum lexical representaion of any fixed size
-/// atomic value. In general, it means the same value as used in the lexical
-/// analyzer (XQueryDLGLexer::bufsize).
+/// Size should be the same as maximum lexical representaion of any fixed size 
+/// atomic value. In general, it means the same value as used in the lexical 
+/// analyzer (XQueryDLGLexer::bufsize). 
 #define MAX_ATOMIC_LEX_REPR_SIZE        2000
 
 
@@ -123,7 +123,7 @@ bits:    X                  X               X       X                      XX
 000010 -- heavy atomic (pstr_short)
 000011 -- heavy atomic (pstr_long)
 
-Brand new!!! Special subtypes for "node" in 7-8 bits:
+Special subtypes for "node" in 7-8 bits:
 
 01000011 -- always indirection (safe)
 01000010 -- indirection only for temporary (tmp-safe)

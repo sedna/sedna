@@ -13,7 +13,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 const char *sqlns_uri = "http://modis.ispras.ru/Sedna/SQL";
 

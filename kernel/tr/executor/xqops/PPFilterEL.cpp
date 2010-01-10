@@ -10,7 +10,7 @@
 #include "tr/executor/xqops/PPFilterEL.h"
 #include "tr/executor/xqops/PPDDO.h"
 #include "tr/nid/numb_scheme.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 using namespace std;
 

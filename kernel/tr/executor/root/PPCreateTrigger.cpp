@@ -8,7 +8,7 @@
 #include "tr/executor/root/PPCreateTrigger.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/locks/locks.h"
 #include "tr/triggers/triggers.h"
 #include "tr/auth/auc.h"

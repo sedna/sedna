@@ -6,7 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPRename.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/updates/updates.h"
 #include "tr/locks/locks.h"
 #include "tr/structures/metadata.h"

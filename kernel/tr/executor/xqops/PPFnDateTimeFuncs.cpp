@@ -8,7 +8,7 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/strings/e_string.h"
 #include "tr/strings/strings.h"
 

@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPLast.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPLast::PPLast(dynamic_context *_cxt_,

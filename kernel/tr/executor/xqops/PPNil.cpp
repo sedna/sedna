@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPNil.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPNil::PPNil(dynamic_context *_cxt_,

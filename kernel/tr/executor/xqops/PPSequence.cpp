@@ -9,7 +9,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPSequence.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 using namespace std;
 

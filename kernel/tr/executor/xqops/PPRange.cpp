@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPRange.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 
 PPRange::PPRange(dynamic_context *_cxt_,

@@ -3,83 +3,66 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+
 #include "common/sedna.h"
-#include <string.h>
-#include <iostream>
+
 #include "tr/structures/schema.h"
-#include "tr/nid/lex.h"
-#include "tr/nid/numb_scheme.h"
 #include "tr/structures/nodes.h"
-#include "common/xptr.h"
 #include "tr/vmm/vmm.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/pstr/pstr.h"
-#include "tr/nid/nid.h"
 #include "tr/log/log.h"
-#include "tr/nid/nidalloc.h"
-#include "common/errdbg/d_printf.h"
 #include "tr/cat/catvars.h"
 #include "tr/mo/microoperations.h"
+
+#include "tr/nid/lex.h"
+#include "tr/nid/numb_scheme.h"
+#include "tr/nid/nid.h"
+#include "tr/nid/nidalloc.h"
 
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #endif
-bool restore_mode=false;
-static fnumber	PROPORTION(0,1);		/* proportion used to divide alphabet sequence */
-int nid_block_count=0;
-char   DC = ALPHABET_SIZE-1;
-doc_schema_node_xptr nid_holder;			/*current persistent block holder*/
-xptr			TMPNIDBLK;		/* current temporary block for nid prefixes */
-t_nid			NIDNULL;
+
+static fnumber PROPORTION(0,1);  /* proportion used to divide alphabet sequence */
+static xptr	TMPNIDBLK;           /* current temporary block for nid prefixes */
+static doc_schema_node_xptr nid_holder; /*current persistent block holder*/
+
+int nid_block_count = 0;
+char DC = ALPHABET_SIZE-1;
+t_nid NIDNULL;
 std::pair<int /*size*/,int /*increment*/>* sizehnt=NULL;
-void	nid_set_proportion(fnumber p) {
+
+void
+nid_set_proportion(fnumber p) {
 	PROPORTION = p;
 }
+
 /* the dividing symbol must lie in range [3-ALPHABET_SIZE-2] 
    because symbols '1' and 'ALPHABET_SIZE-1' cannot be used, as they are used for extension;
    and it must be possible to create at least one child for the given node */
-void	nid_set_dc(char the_dc) {
+void 
+nid_set_dc(char the_dc) {
 	if ((unsigned char)the_dc >ALPHABET_SIZE-1 || (unsigned char)the_dc <= 1)
 		throw SYSTEM_EXCEPTION("[nid_set_dc()] bad dividing character ");
 	DC = the_dc;
 }
 
-
-bool NID_CONSISTENT(t_prefix &a) {
+bool
+NID_CONSISTENT(t_prefix &a) {
 	return 
 		(a.prefix[a.size-1] != ALPHABET_SIZE);
 }
 
-/* 
-struct t_prefix {
-	char*	prefix;
-	shft	size;
-};
-
-struct t_nid {
-	char	prefix[10]; // actually union; if the size of string is above MAXINTERNALPREFIX (without null end-marker)
-						   keeps xptr to string (first 8 bytes) and size of nid (2 last bytes)
-	bool	external;	// flag indicating external storage of prefix
-	uchar	dc;
-};
-struct n_dsc {
-    
-    t_nid	    nid;		// ordering scheme number
-    xptr			pdsc;		// pointer to the record in the table of indirect addresses
-    xptr			ldsc;		// pointer to the descriptor of left sibling item
-    xptr			rdsc;		// pointer to the descriptor of right sibling item
-	xptr	        indir;      // record in indirection table
-    shft		desc_next;		// shift to the next descriptor in block
-    shft		desc_prev;		// shift to the previous descriptor in block
-
-};
-	get nid of node descriptor "dsc" uploading native block of this descriptor
-*/
-t_nid	nid_get_nid(xptr node) {
+/*	
+ * Get nid of node descriptor "dsc" uploading native block of this descriptor
+ */
+t_nid
+nid_get_nid(xptr node) {
 	t_nid	result;
 	n_dsc*	dsc;
 
-CHECKP(node);
+    CHECKP(node);
 	/* dsc now points to descriptor inside in-memory block */
 	dsc = (n_dsc*)XADDR(node);
 	result = dsc->nid;
@@ -87,9 +70,10 @@ CHECKP(node);
 }
 
 /*
-	locate the block where to create prefix of size p_size
+ * Locate the block where to create prefix of size p_size
  */
-xptr nid_get_blk(shft p_size, bool persistent) {
+static xptr 
+nid_get_blk(shft p_size, bool persistent) {
 	/*--------------------------------------------------------
 	>>> this is the case when block is determined by neighbouring node
 	xptr	result=XNULL;
@@ -187,9 +171,10 @@ void	nid_assign(xptr node, t_prefix p) {
 }
 
 /*
-	read the prefix of given nid from inside the nid or from external block
+ * Read the prefix of a given nid from inside the nid or from external block
  */
-t_prefix	nid_get_prefix(xptr node) {
+t_prefix
+nid_get_prefix(xptr node) {
 	CHECKP(node);
 	/* dsc now points to descriptor inside in-memory block */
 	t_nid* the_nid = &((n_dsc*)XADDR(node))->nid;
@@ -211,7 +196,8 @@ t_prefix	nid_get_prefix(xptr node) {
 	return result;
 }
 
-t_prefix nid_get_prefix(t_nid the_nid) {
+t_prefix
+nid_get_prefix(t_nid the_nid) {
 	t_prefix	result;
 	result.prefix =(unsigned char*)nid_alloc();
 	result.size = (the_nid.size==0)?*(shft*)(the_nid.prefix+sizeof(xptr)):the_nid.size;
@@ -229,21 +215,7 @@ t_prefix nid_get_prefix(t_nid the_nid) {
 	return result;
 }
 
-/*	
-	get the maximum limit of children prefixes for given prefix
-	Note that the children of given parent having nid (prefix, dc) will be lexicographically
-	less than "prefix(dc)"
-*/
-/* REMOVED BY LEON
-t_prefix	nid_child_limit(t_nid id, t_prefix p) {
-	t_prefix result;
-	result.prefix = (char*)nid_alloc();
-	result.size = p.size+1;
-	memcpy(result.prefix, p.prefix, p.size);
-	result.prefix[p.size]=id.dc;
-	return result;
-}
-*/
+
 /* effective comparison */
 int	nid_cmp_effective(xptr node1, xptr node2) {
 
@@ -750,19 +722,11 @@ void	nid_delete(xptr node) {
 		delete[] (char*)XADDR(*(xptr*)the_nid.prefix);
 		--------------------------------------------------------*/
 	}
+}
 
-    /*
-	 * If the virtual root is being deleted, then we should take care of
-	 * temporary nid string space pointer (TMPNIDBLK). All temporary blocks 
-	 * are deleted on the end of the kernel statement including TMPNIDBLK.
-	 * So it must be nulled when the last temporary schema node is deleted.
-	 * The virtual root schema node is always deleted after all others temporary
-	 * nodes, and it is always temporary by definition.
-	 */
-	if (vroot) {
-		TMPNIDBLK = XNULL;
-	}
-
+void    	nid_on_kernel_statement_end() 
+{
+    TMPNIDBLK = XNULL;
 }
 
 /* 

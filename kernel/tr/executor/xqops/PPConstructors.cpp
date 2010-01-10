@@ -12,7 +12,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/xs_names.h"
 #include "tr/executor/base/xsd.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 #include "tr/updates/updates.h"
 #include "tr/crmutils/crmutils.h"

@@ -7,7 +7,7 @@
 
 #include "tr/executor/root/PPDropFtIndex.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 
 PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
 {

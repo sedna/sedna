@@ -7,7 +7,7 @@
 
 #include "tr/executor/root/PPDropModule.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/PPVisitor.h"
+#include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/locks/locks.h"
 #include "tr/mo/mo.h"
 #include "tr/structures/metadata.h"
