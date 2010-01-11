@@ -399,7 +399,7 @@ void bm_unregister_transaction(session_id sid, transaction_id trid)  throw (Sedn
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
 
-    xptr p;
+    xptr p = XNULL;
 	tr_info *info = it->second;
 
 	//info->freed_data_blocks.print();
@@ -416,7 +416,7 @@ void bm_delete_tmp_blocks(session_id sid) throw (SednaException)
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
 
-    xptr p;
+    xptr p = XNULL;
 	tr_info *info = it->second;
 
     while (pop_from_persistent_used_blocks_stack(&(info->allocated_tmp_blocks), &p) == 0)

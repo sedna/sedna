@@ -24,7 +24,7 @@ xptr st_find_binary(const st_t tree, const char * key, size_t key_length)
 {
     struct tree_state_path * states;
     xptr page_stack[MAX_PAGE_STACK];
-    xptr result;
+    xptr result = XNULL;
 
     page_stack[0] = XNULL;
     states = find_state_path(tree, key, key_length, page_stack);
@@ -110,7 +110,7 @@ st_t st_delete_binary(st_t tree, const char * key, size_t key_length)
 {
     struct tree_state_path * states;
     struct st_page_header page_header;
-    xptr page_stack[MAX_PAGE_STACK], * page_v;
+    xptr page_stack[MAX_PAGE_STACK];
     page_stack[0] = XNULL;
 
     if (tree == XNULL) {

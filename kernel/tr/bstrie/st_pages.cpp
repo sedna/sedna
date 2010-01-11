@@ -16,7 +16,7 @@ struct tree_state * state_find_key(char * p, char ** k, size_t * key_length, str
         } else break;
     }
 
-    int i, l;
+    unsigned int i, l;
     char * prefix;
 
     state->final = (state->dsc.flags & STATE_FINAL) > 0;
@@ -299,7 +299,6 @@ void page_split(xptr * page_stack, shift_t size, shift_t state, struct st_page_h
     xptr state_long_jumps;
     struct st_page_header rpage;
     shift_t * subtrees;
-    void * state_long_jumps_ptr;
 
     if (page_header->trie.root_count == 1) {
         read_state(page_header->trie.p + page_header->trie.roots[0], &dsc);
@@ -374,8 +373,6 @@ struct tree_state_path * find_state_path(st_t tree, const char * key, size_t key
 
 void free_state_path(struct tree_state_path * state_path)
 {
-    struct tree_state * state;
-
     for (int i = 0; i < state_path->state_count; i++) {
         free(state_path->states[i]);
     }

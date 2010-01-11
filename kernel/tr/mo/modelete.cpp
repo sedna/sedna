@@ -196,7 +196,7 @@ bool delete_node(xptr node_xptr, const doc_info_t * doc_info, bool no_index_upda
     node_info_t node_info = {node_xptr};
     node_info.snode = getBlockHeaderCP(node_xptr)->snode;
     bool children_not_deleted = false;
-    xptr node_tmp;
+    xptr node_tmp = XNULL;
 
     if (doc_info == NULL && node_info.snode->type == document) {
         throw USER_EXCEPTION(SE2036); // Document node deletion is prohibited by this function

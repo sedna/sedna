@@ -165,7 +165,7 @@ void add_file_span_to_pfb_stack(
     t_layer layerAdjustment,
     __int64 offsAdjustment)
 {
-    xptr p, stackP;
+    xptr p = XNULL, stackP = XNULL;
     __int64 numFreeBlocks = 0;
     __int64 numFreeBlockSlots = 0;
     __int64 numStackBlocks = 0;

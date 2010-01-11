@@ -406,7 +406,7 @@ xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char* doc_name, const
     xptr block = XNULL;
     col_schema_node_cptr col_snode = XNULL;
     n_dsc* node = NULL;
-    xptr nodex;
+    xptr nodex = XNULL;
     xptr result = XNULL;
 
     if (doc_snode->get_magic() == col_schema_node_object::magic) {

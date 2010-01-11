@@ -182,6 +182,8 @@ xptr getFirstByOrderChildCP(const xptr node_xptr)
     for (vector<xptr>::iterator i = c.begin(); i != c.end(); i++) {
         if (*i != XNULL && getLeftSiblingCP(*i) == XNULL) { return *i; }
     }
+    
+    return XNULL;
 }
 
 /*returns the first  child  in dm:children accessor + attributes*/

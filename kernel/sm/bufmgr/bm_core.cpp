@@ -270,7 +270,7 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
     if (res == 0) return XNULL; // we have found the free block in the list of free blocks
 
     // there is no free buffer, so we should free one
-    xptr cur_p;
+    xptr cur_p = XNULL;
     while (true)
     {
 #ifdef LRU
