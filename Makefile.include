@@ -10,10 +10,10 @@ endif
 # options: Compile latex files        - 1
 #          Do not compile latex files - 0
 ifndef MAKE_DOC
-MAKE_DOC = 1
+MAKE_DOC = 0
 endif
 ifndef INSTALL_DOC
-INSTALL_DOC = 1
+INSTALL_DOC = 0
 endif
 
 # options: debug logging is on  - 1
@@ -31,7 +31,7 @@ endif
 # options: Compile java files        - 1
 #          Do not compile java files - 0
 ifndef JAVA_DRIVER
-JAVA_DRIVER = 1
+JAVA_DRIVER = 0
 endif
 
 # options: SQL connection is on  - 1

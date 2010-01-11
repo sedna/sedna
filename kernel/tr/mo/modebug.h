@@ -53,14 +53,14 @@ inline void logNID(const char * type, xptr l, xptr r, xptr n) {};
 #define molog(message) elog(EL_DBG, message)
 #define MOCHECK(test) U_ASSERT(test)
 
-bool checkBlock(xptr block_ptr);
+void checkBlock(xptr block_ptr);
 
 #else  /* DEBUG_MO */
 
 #define molog(message)
 #define MOCHECK(test)
 
-inline bool checkBlock(xptr block_ptr) {};
+inline void checkBlock(xptr block_ptr) {};
 
 #endif /* DEBUG_MO */
 

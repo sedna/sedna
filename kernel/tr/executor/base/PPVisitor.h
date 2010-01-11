@@ -141,11 +141,11 @@ public:
 #ifdef SE_ENABLE_DTSEARCH
     virtual void visit(PPFtHighlight* op)              = 0;
     virtual void visit(PPFtScan* op)                   = 0;
-#endif
+#endif /* SE_ENABLE_DTSEARCH */
 #ifdef SE_ENABLE_FTSEARCH
     virtual void visit(PPFtIndexScan* op)              = 0;
     virtual void visit(PPFtIndexScan2* op)             = 0;
-#endif SE_ENABLE_FTSEARCH    
+#endif /* SE_ENABLE_FTSEARCH */
                                                        
     /* Function call */
     virtual void visit(PPFunCall* op)                  = 0;

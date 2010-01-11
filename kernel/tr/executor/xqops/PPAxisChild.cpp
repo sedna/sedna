@@ -19,7 +19,8 @@ PPAxisChild::PPAxisChild(dynamic_context *_cxt_,
                          NodeTestData _nt_data_) : PPIterator(_cxt_, _info_),
                                                    child(_child_),
                                                    nt_type(_nt_type_),
-                                                   nt_data(_nt_data_)
+                                                   nt_data(_nt_data_),
+                                                   cur(XNULL)
 {
     NodeTestType type = nt_type;
 

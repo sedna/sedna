@@ -25,7 +25,7 @@ namespace tr_globals
     volatile bool is_timer_fired = false;
     
     /* Counts depth of the physical plan in runtime */
-    extern TLS_VAR_DECL
+    TLS_VAR_DECL
     volatile int current_stack_depth = 0;
 
     /* FIXME: make this TLS_VAR_DECL when we start to use threads */

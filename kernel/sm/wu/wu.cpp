@@ -295,7 +295,7 @@ int AllocateDataBlock (XPTR *pXptr, int *pBufferId)
 {
 	int success = 0, bufferId = -1;
 	XPTR bigXptr=0, bigSwapped=0;
-	xptr lilXptr, lilSwapped;
+	xptr lilXptr=XNULL, lilSwapped=XNULL;
 	ramoffs ofs = 0;
 
 	assert(pXptr && pBufferId); *pXptr=0; *pBufferId=-1;
@@ -320,7 +320,7 @@ int AllocateTempBlock (XPTR *pXptr, int *pBufferId)
 {
 	int success = 0, bufferId = -1;
 	XPTR bigXptr=0, bigSwapped=0;
-	xptr lilXptr, lilSwapped;
+	xptr lilXptr=XNULL, lilSwapped=XNULL;
 	ramoffs ofs = 0;
 
 	assert(pXptr && pBufferId); *pXptr=0; *pBufferId=-1;
@@ -371,7 +371,7 @@ static
 int FreeBlock(XPTR bigXptr)
 {
 	int success=0;
-	xptr lilXptr;
+	xptr lilXptr=XNULL;
 	lilXptr = WuExternaliseXptr(bigXptr);
 	try
 	{

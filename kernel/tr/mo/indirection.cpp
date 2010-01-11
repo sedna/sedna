@@ -11,7 +11,7 @@
 #include "tr/mo/modebug.h"
 
 static enum rollback_mode_t rollback_mode = rbm_normal;
-static xptr rollback_record;
+static xptr rollback_record = XNULL;
 static xptr last_indir = XNULL;
 
 static bool no_indirection_chain_update = false;
@@ -139,8 +139,7 @@ xptr indirectionTableAddRecord(xptr target)
         irecord = addr2xptr(GET_DSC(indirection_block, indirection_block->free_first_indir));
     }
 
-    CHECKP(irecord);
-    VMM_SIGNAL_MODIFICATION(irecord);
+    WRITEP(irecord);
 
     indirection_block->free_first_indir = * (shft*) XADDR(irecord);
     * (xptr*) (XADDR(irecord)) = target;

@@ -97,14 +97,14 @@ struct xptr
 };
 
 inline xptr uint64_to_xptr(const uint64_t x) {
-	xptr p;
-	p.from_uint64(x);
-	return p;
+    xptr p;
+    p.from_uint64(x);
+    return p;
 };
 
 inline xptr cxptr(t_layer l, void * a) {
-	xptr p = {l, a};
-	return p;
+    xptr p = {l, a};
+    return p;
 }
 
 inline xptr operator+(const xptr &p, int n)

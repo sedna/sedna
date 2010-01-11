@@ -64,6 +64,7 @@ void catalog_complex_iterator::build_tree(enum catalog_named_objects ot)
                 (*a)[string(r->nor.name_to_save->name)] = XNULL;
             }
             break;
+        default : ;
         }
 
         r = r->next;

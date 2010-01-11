@@ -54,11 +54,9 @@ inline bool tryWidenSingleBlock(xptr block_ptr, node_blk_hdr * block, int requir
             shft indir_count = block->indir_count;
 
             widenBlockDescriptor(block_ptr, required_dsc_size, save_indir_count);
+
+            WRITEP(block_ptr);
             block->indir_count = indir_count;
-
-            CHECKP(block_ptr);
-            VMM_SIGNAL_MODIFICATION(block_ptr);
-
             total_cells = getPageDescriptorCapacitySP(block_ptr);
             U_ASSERT(total_cells >= save_indir_count);
 

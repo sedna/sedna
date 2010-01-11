@@ -16,7 +16,6 @@
 inline xptr findNearestTextContainerCP(xptr node_xptr)
 {
     t_dsc * node;
-    xptr result;
 
     CHECKP(node_xptr);
     node = (t_dsc*) XADDR(node_xptr);
@@ -40,21 +39,23 @@ inline xptr findNearestTextContainerCP(xptr node_xptr)
 
 char * copyTextToBuffer(char * buffer, const void* text, strsize_t size, text_type ttype)
 {
-    xptr ptr;
-
     switch (ttype) {
-      case text_mem :
+      case text_mem : {
         U_ASSERT(size <= PSTRMAXSIZE);
         memcpy(buffer, text, (size_t) size);
+      }
         break;
-      case text_doc :
+      case text_doc : {
+        xptr ptr;
         ptr = * (xptr*) text;
         CHECKP(ptr);
         U_ASSERT(size <= PSTRMAXSIZE);
         memcpy(buffer, (char*) XADDR(ptr), (size_t) size);
+      }
         break;
-      case text_estr :
+      case text_estr : {
         estr_copy_to_buffer(buffer, *(xptr*) text, size);
+      }
         break;
     }
 
