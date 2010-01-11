@@ -358,7 +358,7 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
     return token::ANCESTOR_OR_SELF;
 }
 
-    /* Sedna update extensions */
+    /* Sedna update and other extensions */
 "all" { return token::ALL; }
 "ALL" { yylval->isUpper = 1; return token::ALL; }
 "after" { return token::AFTER; }
@@ -392,6 +392,8 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 "DROP" { yylval->isUpper = 1; return token::DROP; }
 "each" { return token::EACH; }
 "EACH" { yylval->isUpper = 1; return token::EACH; }
+"explain" { return token::EXPLAIN; }
+"EXPLAIN" { yylval->isUpper = 1; return token::EXPLAIN; }
 "FOLLOWING" { return token::FOLLOWING_; }
 "FOR" { return token::FOR_; }
 "from" { return token::FROM; }

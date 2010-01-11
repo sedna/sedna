@@ -170,7 +170,7 @@ namespace sedna
 %token WHERE "where"
 %token XQUERY "xquery"
 
-    /* Sedna update extensions tokens */
+    /* Sedna update and other extensions tokens */
 %token <isUpper> ALL "all"
 %token <isUpper> AFTER "after"
 %token <isUpper> ALTER "alter"
@@ -189,6 +189,7 @@ namespace sedna
 %token <isUpper> DOCUMENTS "documents"
 %token <isUpper> DROP "drop"
 %token <isUpper> EACH "each"
+%token <isUpper> EXPLAIN "explain"
 %token <isUpper> FOLLOWING_ "FOLLOWING"
 %token <isUpper> FOR_ "FOR"
 %token <isUpper> FROM "from"
@@ -465,13 +466,15 @@ namespace sedna
 
 %destructor { destroyASTStringVector($$); } uriLiteralList moduleList
 
-    /* we expect 54 conflicts in this grammar:
-            1) 51 for 'xgs:leading-lone-slash' grammar constraint (default: 'shift' is consistent with specification)
-            2) 1 for 'load or replace module' Sedna expression since 'load or xxx' is a valid expression
+    /* we expect 55 conflicts in this grammar:
+            1) 1 for Sedna explain feature (default: 'shift' always treats first 'explain' as feature-keyword, thus making impossible such
+                queries as 'explain or xxx'). See also 3) constraint on 'load'.
+            2) 51 for 'xgs:leading-lone-slash' grammar constraint (default: 'shift' is consistent with specification)
+            3) 1 for 'load or replace module' Sedna expression since 'load or xxx' is a valid expression
                     (default: 'shift' disables expressions such as 'load or xxx'; possible fix: reject 'or' and accept only 'OR')
-            2) 2 for 'xgs:occurrence-indicators' grammar constraint (default: 'shift' is consistent with specification)
+            4) 2 for 'xgs:occurrence-indicators' grammar constraint (default: 'shift' is consistent with specification)
     */
-%expect 54
+%expect 55
 
 
     /* set initial location and boundary space policy */
@@ -497,11 +500,15 @@ namespace sedna
 script:
         module
         {
-            driver.addModule($1);
+            driver.addModule($1, false);
         }
     |   script ST_SEP module
         {
-            driver.addModule($3);
+            driver.addModule($3, false);
+        }
+    |   EXPLAIN module
+        {
+            driver.addModule($2, true);
         }
     ;
 
@@ -3156,6 +3163,7 @@ funcName:
     |    DOCUMENTS { $$ = new std::string(($1 != 0) ? "DOCUMENTS" : "documents"); }
     |    DROP { $$ = new std::string(($1 != 0) ? "DROP" : "drop"); }
     |    EACH { $$ = new std::string(($1 != 0) ? "EACH" : "each"); }
+    |    EXPLAIN { $$ = new std::string(($1 != 0) ? "EXPLAIN" : "explain"); }
     |    FOLLOWING_ { $$ = new std::string(($1 != 0) ? "FOLLOWING" : "FOLLOWING"); }
     |    FOR_ { $$ = new std::string("FOR"); }
     |    FROM { $$ = new std::string(($1 != 0) ? "FROM" : "from"); }

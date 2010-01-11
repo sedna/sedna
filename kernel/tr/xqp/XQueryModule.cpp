@@ -17,6 +17,8 @@ namespace sedna
         lr = NULL;
         qep_sx = NULL;
 
+        isExplainOn = false;
+
 #if (defined(DEBUGI) && (DEBUGI == 1))
         if (drv->getErrorCode() == -1)
             testDupAndSerial(drv);
@@ -34,6 +36,8 @@ namespace sedna
         drv = driver;
         lr = NULL;
         qep_sx = NULL;
+
+        isExplainOn = false;
 
 #if (defined(DEBUGI) && (DEBUGI == 1))
         if (drv->getErrorCode() == -1)

@@ -92,7 +92,7 @@ namespace sedna
 
             ~XQueryDriver();
 
-            void addModule(ASTNode *mod);
+            void addModule(ASTNode *mod, bool explain);
 
             void doSemanticAnalysis();
             void doLReturnAnalysis();
