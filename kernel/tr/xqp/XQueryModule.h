@@ -92,6 +92,11 @@ namespace sedna
             isExplainOn = true;
         }
 
+        bool turnExplain()
+        {
+            return isExplainOn;
+        }
+
         bool getFunctionInfo(const std::string &name, XQFunction &xqf) const;
         ASTVarDecl *getVariableInfo(const std::string &name) const;
         bool getLReturnFunctionInfo(const std::string &name, XQFunction &xqf);
