@@ -40,15 +40,26 @@ void rename(PPOpIn arg,const char* name);
 //inner operations
 xptr copy_to_temp(xptr node);
 xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** nsupdmap, bool save_types, unsigned short depth=0);
-xptr copy_content(xptr newnode,xptr node,xptr left, bool save_types=true);
 
-inline xptr deep_copy_nodei(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node, upd_ns_map** nsupdmap, bool save_types,
+/** copy_node_content
+ * Copies content of the node to new node
+ * Returns (!) indirection to the last inserted node
+ */
+xptr copy_node_content(xptr new_node_i, xptr node, xptr left_node_i, upd_ns_map** nsupdmap, bool save_types, unsigned short depth=0);
+
+inline xptr deep_copy_node_i(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node, upd_ns_map** nsupdmap, bool save_types,
         unsigned short depth = 0) {
     return deep_copy_node(indirectionDereferenceCP(left_ind), indirectionDereferenceCP(right_ind), indirectionDereferenceCP(parent_ind),
             node, nsupdmap, save_types, depth);
 }
 
-inline xptr deep_copy_nodet(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node) {
+inline xptr deep_copy_node_ii(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node, upd_ns_map** nsupdmap, bool save_types,
+        unsigned short depth = 0) {
+    return getIndirectionSafeCP(deep_copy_node(indirectionDereferenceCP(left_ind), indirectionDereferenceCP(right_ind), indirectionDereferenceCP(parent_ind),
+            node, nsupdmap, save_types, depth));
+}
+
+inline xptr deep_copy_node_t(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node) {
     upd_ns_map* ins_swiz = NULL;
 
     xptr result = deep_copy_node(indirectionDereferenceCP(left_ind), indirectionDereferenceCP(right_ind),

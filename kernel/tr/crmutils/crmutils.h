@@ -44,7 +44,7 @@ struct debug_info
     long cdp;             //current depth
     long freestrspace;    //free space in string blocks
 
-    debug_info() : schema_count(0), 
+    debug_info() : schema_count(0),
                    schema_str_count(0),
  	               block_count(0),
                    block_fill(0),
@@ -61,10 +61,10 @@ struct debug_info
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Print utils 
+/// Print utils
 ////////////////////////////////////////////////////////////////////////////////
 
-void 
+void
 print_tuple           (const tuple &tup,     /* tuple to print */
                        se_ostream& crmout,   /* output strem to print into */
                        dynamic_context *cxt, /* context to get namespaces */
@@ -76,26 +76,26 @@ print_tuple           (const tuple &tup,     /* tuple to print */
 #ifdef SE_ENABLE_FTSEARCH
 void print_node_to_buffer(xptr node,
                           op_str_buf& tbuf,
-                          ft_index_type type, 
-                          ft_custom_tree_t * custom_tree=NULL, 
-                          const char *opentag="<", 
+                          ft_index_type type,
+                          ft_custom_tree_t * custom_tree=NULL,
+                          const char *opentag="<",
                           const char *closetag=">");
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Load utils 
+/// Load utils
 ////////////////////////////////////////////////////////////////////////////////
 
-xptr loadfile(FILE* f, se_ostream &ostr, const char* uri, 
-              bool stripped, int& need_cp, 
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,
+              bool stripped, int& need_cp,
               bool print_progress);
 
-xptr loadfile(FILE* f, se_ostream &ostr, const char* uri, 
-              const char * collection, bool stripped, int& need_cp, 
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,
+              const char * collection, bool stripped, int& need_cp,
               bool print_progress);
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Debug utils 
+/// Debug utils
 ////////////////////////////////////////////////////////////////////////////////
 
 /* prints information in block */
@@ -107,14 +107,14 @@ void print_desc_block_hdr(node_blk_hdr* block, se_ostream& crmout);
 void print_element(e_dsc* node,
                    int shift,
                    shft size,
-                   schema_node_cptr scm, 
+                   schema_node_cptr scm,
                    se_ostream& crmout);
 
 /* prints information in document descriptor */
 void print_document(d_dsc* node,
                     int shift,
                     shft size,
-                    schema_node_cptr scm, 
+                    schema_node_cptr scm,
                     se_ostream& crmout);
 
 /* prints information in text descriptor */
@@ -138,7 +138,7 @@ void printDebugInfo(schema_node_cptr snode, se_ostream& crmout);
 void printSimpleDebugInfo(schema_node_cptr snode, se_ostream& crmout);
 void getDebugInfo(schema_node_cptr snode, xptr& node);
 
-void printMFO (schema_node_cptr node, 
+void printMFO (schema_node_cptr node,
                std::map<schema_node_xptr, std::pair<int,int> >  &mfo,
                int par_pref,
                int indent);
@@ -163,7 +163,6 @@ void print_documents(se_ostream& crmout, bool ps = true);
 void print_documents_in_collection(se_ostream& crmout, const char* collection);
 /* prints the list of collections*/
 void print_collections(se_ostream& crmout, bool ps = true);
-
 
 #endif /* _CRMUTILS_H */
 

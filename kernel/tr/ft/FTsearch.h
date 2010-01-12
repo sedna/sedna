@@ -19,8 +19,20 @@
 #include <fstream> //needed for dtsearch (in linux), since it defines min & max macros
 
 #define USE_DTSEARCH_NAMESPACE
-#include "dtsearch/include/dtsfc.h"
+
 #include "tr/crmutils/crmutils.h"
+
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wreorder"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wreturn-type"
+#endif /* GNUC */
+
+#include "dtsearch/include/dtsfc.h"
+
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic warning "-Wreturn-type"
+#endif /* GNUC */
 
 //TODO: remove this and do not include dtsearch files here
 // (dstring.h defines true/false then boolean_operations do not compile)
@@ -157,7 +169,7 @@ private:
 
 	estr_buf *result;
 public:
-	
+
 	SednaStringHighlighter(const Iterator &_str_it_, const Iterator &_str_end_, long* _ht_,long _ht_cnt_, bool _hl_fragment_, estr_buf *_result_);
 	void run();
 };
@@ -184,12 +196,12 @@ private:
 };
 class SednaSearchJob : public dtSearch::DSearchJob {
      public:
-           
+
            virtual void OnError(long errorCode, const char *msg);
            virtual void OnFound(long totalFiles,
                  long totalHits, const char *name, long hitsInFile, dtsSearchResultsItem& item);
 		   virtual void OnSearchingIndex(const char * indexPath);
-		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);		   
+		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);
 		   SednaSearchJob(bool _hilight_=false, bool _hl_fragment_=false);
 		   void set_dtsSearchAnyWords(bool v);
 		   void set_dtsSearchAllWords(bool v);
@@ -208,7 +220,7 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		  SednaUserException *thread_exception;
 		  bool thread_up_semaphore_on_exception;
 		  void stop_thread(bool ignore_errors);
-		  
+
 		  PPOpIn* seq;
 		  UTHANDLE dtth;
 		  UUnnamedSemaphore sem1,sem2;

@@ -197,7 +197,7 @@ public:
     unsigned int extnids; /* persistent */
     unsigned int indir_blk_cnt; /* persistent */
     strsize_t textcnt; /* persistent */
-    xptr lastnode_ind; /* persistent */ // WTF WTF WTF WTF WTF ???
+    xptr lastnode_ind; /* persistent */
 
     cat_list<index_ref> index_list; /* persistent special */
     void remove_index(const index_cell_xptr &c);
@@ -210,7 +210,7 @@ public:
     void remove_trigger(const trigger_cell_xptr &c);
 #endif
 
-    inline schema_node_object() : xmlns_local(NULL), persistent(true) {};
+    inline schema_node_object() : xmlns_local(NULL), persistent(true), lastnode_ind(XNULL) {};
 //    inline schema_node_object(bool _persistent = true) : persistent(_persistent) {};
     schema_node_object(const doc_schema_node_xptr _root, xmlns_ptr _xmlns, const char * _name, t_item _type, bool _persistent);
     ~schema_node_object();
@@ -340,7 +340,7 @@ struct col_schema_node_object : public doc_schema_node_object
     /* Create new collection node */
     static catalog_object_header * create();
 
-    inline col_schema_node_object() : doc_schema_node_object(true) {};
+    inline col_schema_node_object() : doc_schema_node_object(true), eblk(XNULL), metadata(XNULL) {};
     ~col_schema_node_object() {};
 
     xptr find_document(const char * doc_name);

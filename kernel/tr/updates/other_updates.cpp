@@ -68,8 +68,7 @@ void rename(PPOpIn arg,const char* name)
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
 #endif
-	do
-	{
+	do {
 		--it;
 		xptr indir=*it;
 		xptr node=removeIndirection(indir);
@@ -87,8 +86,7 @@ void rename(PPOpIn arg,const char* name)
 //    		return;
 #endif
 
-		switch(type)
-		{
+		switch(type) {
 		case attribute:
 			{
 				//1. insert
@@ -96,19 +94,16 @@ void rename(PPOpIn arg,const char* name)
 			    CHECKP(node);
 			    res = insert_attribute(left, XNULL, parent, name, (A_DSC(node))->type, buf.get(), buf.getSize(), NULL_XMLNS);
 				//2. delete
-				CHECKP(indir);
-				delete_node(*((xptr*)XADDR(indir)));
+				delete_node(indirectionDereferenceCP(indir));
 				break;
 			}
 		case element:
 			{
 				//1.INSERT
 				res=insert_element(left, XNULL, parent,name,((e_dsc*)desc)->type,NULL_XMLNS);
-				CHECKP(indir);
-				copy_content(res,*((xptr*)XADDR(indir)),XNULL);
+				copy_node_content(get_last_mo_inderection(), indirectionDereferenceCP(indir), XNULL, NULL, true);
 				//2.DELETE
-				CHECKP(indir);
-				delete_node(*((xptr*)XADDR(indir)));
+				delete_node(indirectionDereferenceCP(indir));
 				break;
 			}
 		}
@@ -116,8 +111,7 @@ void rename(PPOpIn arg,const char* name)
         apply_per_node_triggers(res, XNULL, parent, XNULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 		if (it==argseq.begin()) break;
-	}
-	while (true);
+	} while (true);
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif

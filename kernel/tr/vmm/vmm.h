@@ -23,7 +23,7 @@ namespace tr_globals {
 
 //#define VMM_GATHER_STATISTICS
 //#define VMM_TRACE
-#define VMM_DEBUG_CHECKP
+//#define VMM_DEBUG_CHECKP
 #define VMM_DEBUG_VERSIONS
 
 #ifdef VMM_DEBUG_CHECKP

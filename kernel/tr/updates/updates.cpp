@@ -191,27 +191,23 @@ void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent)
 }
 #endif
 
-xptr copy_content(xptr newnode, xptr node, xptr left, bool save_types) {
-    CHECKP(node);
-    xptr left_ngh = XNULL;
-    xptr child = giveFirstByOrderChild(node, COUNTREFERENCES((GETBLOCKBYNODE(node)),size_of_node((GETBLOCKBYNODE(node)))));
-    if (child != XNULL) {
-        CHECKP(child);
-        xptr node_indir = ((n_dsc*) XADDR(child))->indir;
-        left_ngh = deep_copy_node(left, XNULL, newnode, child, NULL, save_types);
-        child = removeIndirection(node_indir);
-        CHECKP(child);
-        child = GETRIGHTPOINTER(child);
-        while (child != XNULL) {
-            CHECKP(child);
-            node_indir = ((n_dsc*) XADDR(child))->indir;
-            left_ngh = deep_copy_node(left_ngh, XNULL, XNULL, child, NULL, save_types);
-            child = removeIndirection(node_indir);
-            CHECKP(child);
-            child = GETRIGHTPOINTER(child);
+xptr copy_node_content(xptr new_node_i, xptr node, xptr left_node_i, upd_ns_map** nsupdmap, bool save_types, unsigned short depth) {
+    xptr left_node = XNULL;
+    xptr childi = getIndirectionSafeCP(getFirstByOrderChildCP(node));
+
+    while (childi != XNULL) {
+        left_node = deep_copy_node_i(left_node_i, XNULL, new_node_i, indirectionDereferenceCP(childi), nsupdmap, save_types, depth + 1);
+
+        /* due to : MG: deep_temp_copy can return XNULL if a trigger canceled
+         * the insertion and there were now any left sibling */
+        if (left_node != XNULL) {
+            left_node_i = getIndirectionSafeCP(left_node);
         }
+
+        childi = getRightSiblingIndirectionCP(indirectionDereferenceCP(childi));
     }
-    return left_ngh;
+
+    return left_node_i;
 }
 
 void swizzleNamespace (xmlns_ptr & ns, upd_ns_map*& updmap)
@@ -228,8 +224,8 @@ void swizzleNamespace (xmlns_ptr & ns, upd_ns_map*& updmap)
 xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** nsupdmap, bool save_types, unsigned short depth)
 {
     xptr result;
-    xptr node_indir = getIndirectionSafeCP(node);
-    schema_node_cptr scmnode = getBlockHeaderCP(node)->snode;
+    xptr node_indir;
+    schema_node_cptr scmnode;
 
 #ifdef SE_ENABLE_FTSEARCH
     if (!depth) init_ft_sequences(left,right,parent);
@@ -244,7 +240,9 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
             parent = removeIndirection(((n_dsc*) XADDR(right))->pdsc);
         }
     }
+
     node = apply_per_node_triggers(node, XNULL, parent, XNULL, TRIGGER_BEFORE,  TRIGGER_INSERT_EVENT);
+
     if (node == XNULL) {
         if (left == XNULL) { return XNULL; }
         CHECKP(left);
@@ -252,37 +250,24 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
     }
 #endif
 
-    switch (GETTYPE(GETSCHEMENODEX(node))) {
+    node_indir = getIndirectionSafeCP(node);
+    scmnode = getBlockHeaderCP(node)->snode;
+
+    switch (scmnode->type) {
         case element: {
             xptr result_indir;
-            xptr left_node = XNULL;
-            xptr left_node_indir = XNULL;
-            xptr childi = getIndirectionSafeCP(getFirstByOrderChildCP(node));
             xmlns_ptr ns = scmnode->get_xmlns();
 
             if (nsupdmap != NULL && ns != NULL_XMLNS) {
                 swizzleNamespace(ns, *nsupdmap);
             }
 
-            result = insert_element(left, right, parent, scmnode->name, (save_types) ? ((e_dsc*) XADDR(node))->type : xs_untyped, ns);
+            result = insert_element(left, right, parent, scmnode->name, (save_types) ? E_DSC(node)->type : xs_untyped, ns);
             result_indir = get_last_mo_inderection();
 
-            while (childi != XNULL) {
-                if (left_node_indir != XNULL) {
-                    left_node = indirectionDereferenceCP(left_node_indir);
-                }
+            copy_node_content(result_indir, indirectionDereferenceCP(node_indir), XNULL, nsupdmap, save_types, depth + 1);
 
-                left_node = deep_copy_node(left_node, XNULL, result, indirectionDereferenceCP(childi), nsupdmap, save_types, depth + 1);
-
-                /* due to : MG: deep_temp_copy can return XNULL if a trigger canceled
-                 * the insertion and there were now any left sibling */
-                if (left_node != XNULL) {
-                    left_node_indir = getIndirectionSafeCP(left_node);
-                }
-
-                childi = getRightSiblingIndirectionCP(indirectionDereferenceCP(childi));
-                result = indirectionDereferenceCP(result_indir);
-            }
+            result = indirectionDereferenceCP(result_indir);
             CHECKP(result);
         }
             break;

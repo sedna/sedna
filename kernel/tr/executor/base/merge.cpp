@@ -31,7 +31,7 @@ xptr RelChildAxisMerge::init(const xptr& parent, const char* uri, const char* na
         size = 0;
     }
 
-    xptr p;
+    xptr p = XNULL;
     size = getChildrenXptr(parent, uri, name, type, cfun, p, merged_seq_arr);
     if (size > 1)
     {
@@ -48,7 +48,7 @@ xptr RelChildAxisMerge::next(const xptr &p)
 {
     if (merged_seq_arr)
     {
-		xptr p;
+		xptr p = XNULL;
         elim_disturb(merged_seq_arr, size, sizeof(xptr), doc_order_merge_cmp);
 		p = merged_seq_arr[0];
 		if (p != XNULL)
@@ -69,7 +69,7 @@ xptr RelAttrAxisMerge::init(const xptr& parent, const char* uri, const char* nam
         pos = 0;
     }
 
-    xptr p;
+    xptr p = XNULL;
     size = getChildrenXptr(parent, uri, name, type, cfun, p, merged_seq_arr);
     if (size > 1)
     {

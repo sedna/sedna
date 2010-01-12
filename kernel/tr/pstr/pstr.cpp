@@ -575,7 +575,7 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         CHECKP(next_node);
 #endif
         /* skip descriptors without pstr data except "node" descriptor */
-        if ((next_node != node) && isPstr(T_DSC(next_node))) { continue; }
+        if ((next_node != node) && !isPstr(T_DSC(next_node))) { continue; }
 
         VMM_SIGNAL_MODIFICATION(next_node);
 
@@ -599,8 +599,9 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         CHECKP(next_node);
 #endif
         /* read next_node string contents and deallocate them from old block */
-        next_s_size = ((t_dsc*)XADDR(next_node))->data.lsp.size;
-        next_s_xptr =  ((t_dsc*)XADDR(next_node))->data.lsp.p;
+        U_ASSERT(isPstr(T_DSC(next_node)));
+        next_s_size = T_DSC(next_node)->data.lsp.size;
+        next_s_xptr =  T_DSC(next_node)->data.lsp.p;
         pstr_read_from_node(next_node,  next_s);
         pstr_do_deallocate(blk, next_s_xptr, next_s_size, false);
 
@@ -621,28 +622,19 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
 
 /* read contents (pstr) of the text node */
 void pstr_read_from_node(xptr node, char* the_s) {
-#ifndef PSTR_NO_CHECKP
-    //CHECKP(node);
-#endif
     U_ASSERT(isPstr(T_DSC(node)));
-    xptr ps = T_DSC(node)->data.lsp.p;
+    size_t ps_size = (size_t) getTextSize(T_DSC(node));
+    xptr ps = getTextPtr(T_DSC(node));
     if (ps == XNULL)
         throw SYSTEM_EXCEPTION("[pstr_read_from_node()] the target node has XNULL pointer to it's pstr content");
-    size_t ps_size = (size_t) T_DSC(node)->data.lsp.size;
-    pstr_read(ps, ps_size, the_s);
+    CHECKP(ps);
+    memcpy(the_s, (char*) XADDR(ps), ps_size);
 }
 
-/* read persistent string returning pointer to buffer, which must be freed */
-void	pstr_read(xptr ps, int ps_size, char* the_s) {
-    if (ps == XNULL) {
-        return;
-    }
-    xptr blk = BLOCKXPTR(ps);
-#ifndef PSTR_NO_CHECKP
-    CHECKP(blk);
-#endif
-    if (*(shft*)XADDR(ps))
-        memcpy(the_s, (char*)XADDR(blk) + *(shft*)XADDR(ps), ps_size);
+void pstr_read(xptr ps, int ps_size, char* the_s) {
+    if (ps == XNULL) { return; }
+    CHECKP(ps);
+    memcpy(the_s, (char*) XADDR(PSTRDEREF(ps)), ps_size);
 }
 
 bool is_last_shft_in_blk(xptr addr)

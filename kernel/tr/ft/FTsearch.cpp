@@ -35,7 +35,7 @@ class GenericDataSource {
    };
 
 //
-//  A TextInputStream is a "document" to be indexed.  
+//  A TextInputStream is a "document" to be indexed.
 //  The SampleDataSource object will create a TextInputStream
 //  for each document it wants to supply to the dtSearch Engine.
 //  The dtSearch Engine will use the function pointers in a
@@ -48,7 +48,7 @@ const long TextInputStreamID = 0x01010101;
 
 //
 //  SampleDataSource is a data source based on a table of
-//  records (below), each of which has an associated 
+//  records (below), each of which has an associated
 //  line of text.
 //
 
@@ -57,7 +57,7 @@ class SampleDataSource : public GenericDataSource {
         SampleDataSource(xptr _node_);
         virtual int getNextDoc(dtsInputStream& s);
         virtual int rewind();
-        static void recordToFilename(char *dest,xptr _node_);       
+        static void recordToFilename(char *dest,xptr _node_);
     protected:
         xptr node;
 		int pos;
@@ -65,18 +65,18 @@ class SampleDataSource : public GenericDataSource {
     };
 //
 //  SampleDataSource is a data source based on a table of
-//  records (below), each of which has an associated 
+//  records (below), each of which has an associated
 //  line of text.
 //
 
 
 
-GenericDataSource::GenericDataSource()   
+GenericDataSource::GenericDataSource()
 {
 }
 
 GenericDataSource::~GenericDataSource()
-{ 
+{
 }
 
 int GenericDataSource::rewindCB(void *pData)
@@ -115,11 +115,11 @@ SednaTextInputStream::SednaTextInputStream(dtsFileInfo* info,ft_index_type _cm_,
     idTextInputStream(TextInputStreamID),
 	fileInfo(info),
 	estr_it(NULL)
-{    
+{
 }
 
 SednaTextInputStream::~SednaTextInputStream()
-{   
+{
 	if (estr_it != NULL)
 		delete estr_it;
 }
@@ -135,7 +135,7 @@ int SednaTextInputStream::read_mem(void *dest, long bytes)
 }
 
 void SednaTextInputStream::seek_mem(long where)
-{   
+{
 	pos = where;
 }
 
@@ -155,7 +155,7 @@ int SednaTextInputStream::read_estr(void *dest, long bytes)
 }
 
 void SednaTextInputStream::seek_estr(long where)
-{   
+{
 	if (pos > where)
 		(*estr_it) -= (pos - where);
 	else
@@ -176,7 +176,7 @@ void SednaTextInputStream::seekCBmem(void *pData, long where)
     if (s)
         s->seek_mem(where);
 }
- 
+
 long SednaTextInputStream::readCBestr(void *pData, void *dest, long bytes)
 {   SednaTextInputStream *s = SednaTextInputStream::safeCast(pData);
     if (s)
@@ -190,7 +190,7 @@ void SednaTextInputStream::seekCBestr(void *pData, long where)
     if (s)
         s->seek_estr(where);
 }
- 
+
 void SednaTextInputStream::releaseCB(void *pData)
 {   /*SednaTextInputStream *s = safeCast(pData);
     if (s)
@@ -202,10 +202,10 @@ SednaTextInputStream *SednaTextInputStream::safeCast(void *pData)
     if (s && (s->idTextInputStream == TextInputStreamID))
         return s;
     return NULL;
-}   
+}
 
 void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
-{   
+{
 	in_buf.clear();
 	dest.pData = this;
     dest.filename = fileInfo->filename;
@@ -243,14 +243,14 @@ SednaDataSource::SednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tr
 cm(_cm_),custom_tree(_custom_tree_)
 {
 	tis = se_new SednaTextInputStream(&fileInfo, cm ,custom_tree);
-	
+
 }
 void SednaDataSource::recordToFilename(char *dest,xptr _node_)
-{    
+{
 	sprintf(dest, "%d-0x%x.xml", (int)(_node_.layer),(unsigned int)(_node_.addr));
 }
 xptr SednaDataSource::filenameToRecord(const char *dest)
-{   
+{
 	int layer;
 	unsigned int addr;
 	const char *fn = dest, *t = dest;
@@ -261,15 +261,15 @@ xptr SednaDataSource::filenameToRecord(const char *dest)
 		t++;
 	}
 	sscanf(fn, "%d-0x%x.xml", &layer, &addr);
-	return removeIndirection(xptr(layer, (void*)addr));
+	return removeIndirection(cxptr(layer, (void*)addr));
 }
 
 int SednaDataSource::getNextDoc(dtsInputStream& dest)
-{   
+{
 	/*tuple t(1);
 	seq->op->next(t);
 		//Preliminary node analysis
-   if (t.is_eos()) 
+   if (t.is_eos())
 		return FAIL;
    tuple_cell& tc= t.cells[0];
 	if (!tc.is_node())
@@ -299,7 +299,7 @@ int SednaDataSource::getNextDoc(dtsInputStream& dest)
 //	fileInfo.size = strlen(f);
     fileInfo.modified.year = 1996;
     fileInfo.modified.month = 1;
-    fileInfo.modified.day = 1;	
+    fileInfo.modified.day = 1;
     tis->makeInterface(dest,node);
 	return SUCCESS;
 }
@@ -307,7 +307,7 @@ int SednaDataSource::getNextDoc(dtsInputStream& dest)
 int SednaDataSource::rewind()
 {   //pos = 0;
     //if (pos) seq->op->reopen();
-	return SUCCESS;    
+	return SUCCESS;
 }
 CreationSednaDataSource::CreationSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,std::vector<xptr>* _first_nodes_):SednaDataSource(_cm_,_custom_tree_),first_nodes(_first_nodes_),tmp(XNULL)
 {
@@ -315,7 +315,7 @@ CreationSednaDataSource::CreationSednaDataSource(ft_index_type _cm_,ft_custom_tr
 }
 xptr CreationSednaDataSource::get_next_doc()
 {
-	if (tmp==XNULL) 
+	if (tmp==XNULL)
 	{
 		if (it!=first_nodes->end())
 			tmp=*it;
@@ -325,9 +325,9 @@ xptr CreationSednaDataSource::get_next_doc()
 	if (tmp==XNULL)
 	{
 		if (++it==first_nodes->end())return XNULL;
-		tmp=*it;		
+		tmp=*it;
 	}
-	return tmp;	
+	return tmp;
 }
 int CreationSednaDataSource::rewind()
 {
@@ -361,7 +361,7 @@ xptr OperationSednaDataSource::get_next_doc()
 {
    op->op->next(t);
 		//Preliminary node analysis
-   if (t.is_eos()) 
+   if (t.is_eos())
 		return XNULL;
    tuple_cell& tc= t.cells[0];
    if (!tc.is_node())
@@ -403,7 +403,7 @@ SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t
 	if (hilight)
 	{
 		if (_cm_ == ft_xml_hl)
-			hl=se_new SednaConvertJob(ft_xml_ne,_custom_tree_, hl_fragment);	
+			hl=se_new SednaConvertJob(ft_xml_ne,_custom_tree_, hl_fragment);
 		else
 			hl=se_new SednaConvertJob(_cm_,_custom_tree_, hl_fragment);
 	}
@@ -441,7 +441,7 @@ void SednaSearchJob::set_file_cond_for_node(tuple_cell& node)
 	CHECKP(node.get_node());
 	SednaDataSource::recordToFilename(buf,((n_dsc*)XADDR(node.get_node()))->indir);
 	std::string fc = std::string("xfilter(name \"") + buf + "\")";
-	
+
 	this->FileConditions.setU8(fc.c_str());
 }
 
@@ -452,7 +452,7 @@ void SednaSearchJob::stop_thread(bool ignore_errors)
 		this->CancelImmediate();
 		if (UUnnamedSemaphoreUp(&sem2, __sys_call_error) != 0)
 			throw USER_EXCEPTION(SE4014);
-		
+
 		if (uThreadJoin(dtth, __sys_call_error) != 0)
 			throw USER_EXCEPTION2(SE4064, "failed to join dtsearch thread"); //FIXME: this error code is (probably) wrong
 		if (uCloseThreadHandle(dtth, __sys_call_error) != 0)
@@ -464,7 +464,7 @@ void SednaSearchJob::stop_thread(bool ignore_errors)
 		throw USER_EXCEPTION(SE4013);
 	if (UUnnamedSemaphoreRelease(&sem2, __sys_call_error) != 0 && !ignore_errors)
 		;//throw USER_EXCEPTION(SE4013);
-	
+
 }
 void SednaSearchJob::get_next_result(tuple &t)
 {
@@ -478,9 +478,9 @@ void SednaSearchJob::get_next_result(tuple &t)
 			throw USER_EXCEPTION(SE4010);
 		}
         uResVal rval = uCreateThread(
-			ThreadFunc,                  // thread function 
-			this,						 // argument to thread function 
-			&dtth,                       // use default creation flags 
+			ThreadFunc,                  // thread function
+			this,						 // argument to thread function
+			&dtth,                       // use default creation flags
 			DTSEARCH_THREAD_STACK_SIZE, NULL, __sys_call_error);
 		if (rval != 0)
 		{
@@ -533,7 +533,7 @@ void SednaSearchJob::get_next_result(tuple &t)
 			t.copy(tuple_cell::node(res));
 		else
 			t.copy(hl->result.content());
-		
+
 	}
 }
 void SednaSearchJob::set_index(ft_index_cell_object* ft_idx)
@@ -550,7 +550,7 @@ void SednaSearchJob::set_index(ft_index_cell_object* ft_idx)
 	//FIXME: choose where it's better to do this - here or in constructor
 	//if (hilight)
 	//	hl=se_new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
-	
+
 }
 
 void SednaSearchJob::reopen()
@@ -584,7 +584,7 @@ void *SednaSearchJob::ThreadFunc( void* lpParam )
 			                        + std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
 
 			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
-					
+
 			dtssSetOptions(opts, result);
 		}
 		((SednaSearchJob*)lpParam)->Execute();
@@ -619,11 +619,11 @@ static int cmp_long(const void *a, const void *b)
 }
 
 template <class Iterator>
-SednaStringHighlighter<Iterator>::SednaStringHighlighter(const Iterator &_str_it_, 
-														 const Iterator &_str_end_, 
+SednaStringHighlighter<Iterator>::SednaStringHighlighter(const Iterator &_str_it_,
+														 const Iterator &_str_end_,
 														 long* _ht_,
-														 long _ht_cnt_, 
-														 bool _hl_fragment_, 
+														 long _ht_cnt_,
+														 bool _hl_fragment_,
 														 estr_buf *_result_) :
 									str_it(_str_it_),
 									str_end(_str_end_),
@@ -792,7 +792,7 @@ inline static bool iswordchar(int ch);
 
 //part of word if inside, but does not make a word by itself
 //must be false for EOF and special symbols (<>)
-inline static bool iswordsep(int ch) 
+inline static bool iswordsep(int ch)
 {
 	return (ch >= 768) && (ch <= 866);
 }
@@ -809,7 +809,7 @@ void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_
 		if (copy && !hl_fragment)
 			putch(cur_ch);
 		cur_ch = getch(str_it, str_end);
-		
+
 		tag_l--;
 		if (tag_l == 1)
 		{
@@ -849,7 +849,7 @@ void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_
 					putch(cur_ch);
 				cur_ch = getch(str_it, str_end);
 			}
-			
+
 			while (iswspace(cur_ch) && cur_ch != EOF_ch)
 			{
 				if (copy && !hl_fragment)
@@ -1139,7 +1139,7 @@ void SednaSearchJob2::get_next_result(tuple &t)
 									+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
 
 			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
-					
+
 			dtssSetOptions(opts, result);
 		}
 

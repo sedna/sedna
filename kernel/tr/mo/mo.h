@@ -34,7 +34,7 @@ void delete_doc_node(xptr node, const char * doc_name, const char * collection_n
 
 extern xptr last_inserted_node_indirection;
 
-inline xptr get_last_mo_inderection() { return last_inserted_node_indirection; }
+inline xptr get_last_mo_inderection() { U_ASSERT(last_inserted_node_indirection != XNULL); return last_inserted_node_indirection; }
 
 class text_cptr {
     struct counted_str {

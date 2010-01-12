@@ -32,7 +32,7 @@ protected:
 
 private:
     virtual void do_open ();
-    
+
 public:
 	static bool checkInitial();
     PPConstructor(dynamic_context *_cxt_,
@@ -60,16 +60,16 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
 
     PPElementConstructor(dynamic_context *_cxt_,
-                         operation_info _info_,    
-                         PPOpIn _qname_, 
+                         operation_info _info_,
+                         PPOpIn _qname_,
                          PPOpIn _content_,
                          bool _deep_copy,
                          bool _ns_inside);
@@ -100,19 +100,19 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPAttributeConstructor(dynamic_context *_cxt_,
                            operation_info _info_,
                            PPOpIn _qname_,
                            PPOpIn _content_,
                            bool _deep_copy);
 
-	PPAttributeConstructor(dynamic_context *_cxt_, 
+	PPAttributeConstructor(dynamic_context *_cxt_,
                            operation_info _info_,
                            const char* name,
                            PPOpIn _content_,
@@ -142,22 +142,22 @@ protected:
     PPOpIn content;
 	char* at_name;
 	char* at_value;
-	
+
 private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPNamespaceConstructor(dynamic_context *_cxt_,
                            operation_info _info_,
                            const char* name,
                            PPOpIn _content_);
-                           
+
 	PPNamespaceConstructor(dynamic_context *_cxt_,
                            operation_info _info_,
                            const char* name,
@@ -180,12 +180,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPCommentConstructor(dynamic_context *_cxt_,
                          operation_info _info_,
                          PPOpIn _content_,
@@ -212,12 +212,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPTextConstructor(dynamic_context *_cxt_,
                       operation_info _info_,
                       PPOpIn _content_,
@@ -243,12 +243,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPDocumentConstructor(dynamic_context *_cxt_,
                           operation_info _info_,
                           PPOpIn _content_);
@@ -268,17 +268,17 @@ protected:
 	char* at_name;
 	char* at_value;
 	StrMatcher strm;
-    
+
 private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPPIConstructor(dynamic_context *_cxt_,
                     operation_info _info_,
                     PPOpIn _qname_,
