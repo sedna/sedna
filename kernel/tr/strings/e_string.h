@@ -62,7 +62,7 @@ private:
     void copy_text_pstr_long(xptr dest, xptr src);
 
 public:
-    estr() : m_blks(0), m_size(0) {}
+    estr() : first_blk(XNULL), last_blk(XNULL), m_blks(0), m_size(0) {}
 	//estring is cleared, but allocated blocks are kept and will be used for future apeends
     void reset();
     void truncate(const xptr &ptr);
@@ -156,7 +156,7 @@ private:
     xptr m_start;
 
 public:
-    estr_buf(estr *str = &tr_globals::estr_global) : m_str(str), m_size(0) {}
+    estr_buf(estr *str = &tr_globals::estr_global) : m_str(str), m_size(0), m_start(XNULL) {}
     void reinit() { m_size = 0; m_start = XNULL; }
 
     void append(const tuple_cell& tc)

@@ -94,18 +94,25 @@ print_attribute_prefix(se_ostream& crmout, schema_node_cptr scm, int indent) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Printing fuctions
+/// Printing functions
 ///////////////////////////////////////////////////////////////////////////////
 
 void print_text(xptr txt, se_ostream& crmout, t_print ptype, t_item xq_type)
 {
     CHECKP(txt);
-    strsize_t size = getTextSize((t_dsc *) XADDR(txt));
+    strsize_t size = getTextSize(T_DSC(txt));
 
     if (size<=PSTRMAXSIZE) {
-        xptr data_p = getTextPtr((t_dsc *) XADDR(txt));
-        CHECKP(data_p);
-        char * data = (char *) XADDR(data_p);
+        char * data;
+        xptr data_p = getTextPtr(T_DSC(txt));
+
+        if (data_p == XNULL) {
+            data = NULL;
+        } else {
+            CHECKP(data_p);
+            data = (char *) XADDR(data_p);
+        }
+
         if (ptype==xml)
         {
             if (xq_type!=text && xq_type!=attribute)

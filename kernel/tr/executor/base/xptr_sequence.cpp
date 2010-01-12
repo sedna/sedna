@@ -13,7 +13,7 @@
 #include "tr/executor/base/merge.h"
 
 
-xptr_sequence::xptr_sequence() : seq_size(0), blks_num(0)
+xptr_sequence::xptr_sequence() : seq_size(0), bblk(XNULL), eblk(XNULL), blks_num(0)
 {
 }
 
@@ -79,7 +79,7 @@ void xptr_sequence::add(const xptr &p)
 		VMM_SIGNAL_MODIFICATION(eblk);
 
         SEQ_BLK_HDR(eblk)->nblk = new_blk;
-        
+
         eblk = new_blk;
 
         CHECKP(eblk);
@@ -89,7 +89,7 @@ void xptr_sequence::add(const xptr &p)
 	VMM_SIGNAL_MODIFICATION(eblk);
     *dest_xptr = p;
     SEQ_BLK_HDR(eblk)->cursor += sizeof(xptr);
-    
+
 }
 
 xptr xptr_sequence::get(const iterator& it)
@@ -121,7 +121,7 @@ void xptr_sequence::set(const xptr& p, const iterator& it)
 
 void xptr_sequence::set(const xptr& p, int pos)
 {
-    if (pos < SEQ_NUMBER_OF_TUPLES_IN_MEMORY) 
+    if (pos < SEQ_NUMBER_OF_TUPLES_IN_MEMORY)
     {
         mem_xptrs[pos] = p;
         return;
@@ -134,7 +134,7 @@ void xptr_sequence::set(const xptr& p, int pos)
     CHECKP(pp);
 	VMM_SIGNAL_MODIFICATION(pp);
     *(xptr*)(XADDR(pp)) = p;
-    
+
 }
 
 
@@ -145,16 +145,16 @@ using namespace std;
 struct nodes_document_order_less : public binary_function<xptr, xptr, bool>
 {
     bool operator()(const xptr& _Left, const xptr& _Right) const
-    {	
+    {
         return true;//(_Left < _Right);
     }
 };
 
-void xptr_sequence::sort() 
-{ 
+void xptr_sequence::sort()
+{
 	sort1(0,seq_size);
 	//    std::sort(begin(), end(), nodes_document_order_less());
-} 
+}
 void xptr_sequence::sort1(int off, int len)
 {
 	// Insertion sort on smallest arrays
@@ -216,11 +216,11 @@ void xptr_sequence::swap(int a, int b)
 	set(get(b),a);
 	set(t,b);
 }
- 
+
 /**
  * Returns the index of the median of the three indexed longs.
  */
-int xptr_sequence::med3( int a, int b, int c) 
+int xptr_sequence::med3( int a, int b, int c)
 {
 	return (ON_LESS(a,b)<0 ?
 		(ON_LESS(b,c)<0 ? b : ON_LESS(a,c)<0 ? c : a) :
@@ -230,7 +230,7 @@ int xptr_sequence::med3( int a, int b, int c)
  /**
   * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
  */
-void xptr_sequence::vecswap(int a, int b, int n) 
+void xptr_sequence::vecswap(int a, int b, int n)
 {
 	for (int i=0; i<n; i++, a++, b++) swap(a, b);
 }
@@ -265,7 +265,7 @@ void xptr_sequence::merge_sort(int prefixes_gen_size)
     n_dsc* dsc;
     xptr *array = se_new xptr[merge_sort_elem];
     bool got_prefixes_gen_size = (prefixes_gen_size < 0);
-    if (got_prefixes_gen_size) 
+    if (got_prefixes_gen_size)
     {
     }
     else prefixes_gen_size = 0;
@@ -278,7 +278,7 @@ void xptr_sequence::merge_sort(int prefixes_gen_size)
         dsc = (n_dsc*)XADDR(p);
         str_len = (dsc->nid.size == 0) ? *(shft*)(dsc->nid.prefix + sizeof(xptr)) : dsc->nid.size;
 
-        if (got_prefixes_gen_size) 
+        if (got_prefixes_gen_size)
         {
             array[i].s = s + cur_str_pos;
             memcpy(s + cur_str_pos, ___, size);
@@ -293,8 +293,8 @@ void xptr_sequence::merge_sort(int prefixes_gen_size)
     }
 
 struct t_nid {
-	unsigned char			prefix[11]; 
-	unsigned char	size; 
+	unsigned char			prefix[11];
+	unsigned char	size;
 };
 
 

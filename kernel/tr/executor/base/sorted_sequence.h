@@ -26,7 +26,7 @@ struct data_ptr
 {
 	xptr value;
 	shft size;
-}; 
+};
 static inline void  get_val(xptr ptr,xptr& val)
 {
 	CHECKP(ptr);
@@ -51,20 +51,19 @@ struct merge_cell
 	{
 		free(mc);
 	}
-	inline bool less( merge_cell *p1) 
+	inline bool less( merge_cell *p1)
 	{
 		return compareFN(in_node,p1->in_node,Udata)<0;
 	}
-	inline bool equals( merge_cell *p1) 
+	inline bool equals( merge_cell *p1)
 	{
 		return compareFN(in_node,p1->in_node,Udata)==0;
 	}
-	inline bool less(const void* p1,const void* p2) 
+	inline bool less(const void* p1,const void* p2)
 	{
-		
-		return true;		
+		return true;
 	}
-	inline bool equals(const void* p1,const void* p2) 
+	inline bool equals(const void* p1,const void* p2)
 	{
 		return true;
 	}
@@ -76,7 +75,7 @@ class sorted_sequence
 {
 public:
 
-    class iterator 
+    class iterator
     {
     private:
         friend class sorted_sequence;
@@ -98,7 +97,7 @@ public:
 
 
     public:
-        
+
         tuple operator*() { return s->get(pos); }
         tuple operator[](int i) { return s->get(i); }
 
@@ -133,11 +132,11 @@ private:
 	int blk_cnt;
 	sedna_rbtree<merge_cell>* merge_tree;
 	sedna_rbtree<merge_cell>::sedna_rbtree_entry* top;
-   
+
 
   //  void init_blks();
-	
-	void sort1(int off, int len); 
+
+	void sort1(int off, int len);
 	void swap( int a, int b);
 	int med3( int a, int b, int c) ;
 	void vecswap(int a, int b, int n);
@@ -150,16 +149,16 @@ private:
 	void set_next_ptr_with_free(xptr& ptr, bool free=true);
 	xptr merge_sequences(xptr s1,xptr s2, bool final);
 	xptr get_ptr(int pos);
-	
+
     xptr get_data(int pos);
 	int get_size_in_mem();
 	void copy_data_to_new_place(xptr ptr,xptr& place);
 	void copy_ptr_to_new_place(xptr ptr,xptr& place,bool marking);
-	void set_next_block_in_chain(xptr& place, bool marking=false);	
+	void set_next_block_in_chain(xptr& place, bool marking=false);
 	char* temp_buffer;
 	shft buf_length;
 	const void * Udata;
-	
+
 
 
 public:
@@ -167,29 +166,29 @@ public:
     sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_, serialize_fn _serializeFN_,
 	serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_,deserialize_2_blks_fn _deserialize2FN_, const void * _Udata_);
     ~sorted_sequence();
-	
+
     int size() const { return seq_size; }
     void clear();
 
-    iterator begin() 
+    iterator begin()
 	{
 		if (finalized)
 			throw USER_EXCEPTION2(SE1003, "Failed to iterate overy unsorted sequence");
-	    return iterator(0, this); 
+	    return iterator(0, this);
 	}
-    iterator end() 
-	{ 
+    iterator end()
+	{
 		if (finalized)
 			throw USER_EXCEPTION2(SE1003, "Failed to iterate overy unsorted sequence");
-		return iterator(seq_size, this); 
+		return iterator(seq_size, this);
 	}
 
     void add(tuple &p);
     tuple get(const iterator& it);
-    tuple get(int pos);  
-	void get(tuple& t, int pos); 
+    tuple get(int pos);
+	void get(tuple& t, int pos);
     tuple operator[](int i)
-    { 
+    {
         return get(i);
     }
     void sort();
@@ -205,7 +204,7 @@ public:
 		CHECKP(ptr);
 		return ((data_ptr*)XADDR(ptr))->size;
 	}
-    
+
 };
 
 

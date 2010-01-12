@@ -202,9 +202,8 @@ void sequence::get(tuple &t, int pos)
 
 void sequence::clear()
 {
-    xptr p;
+    xptr p = bblk;
 
-    p = bblk;
     while (p != XNULL)
     {
         CHECKP(p);

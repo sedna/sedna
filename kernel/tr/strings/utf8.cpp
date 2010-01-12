@@ -38,7 +38,7 @@ int CharsetHandler_utf8::length (tuple_cell *tc)
 		xptr cur_block_xptr;
 		unsigned char *p;
 		unsigned char *end;
-		
+
 		xptr data = tc->get_str_vmm();
 		CHECKP(data);
 
@@ -68,11 +68,11 @@ int CharsetHandler_utf8::length (tuple_cell *tc)
 			if (end-p > bytes_left)
 				end = p + bytes_left;
 		}
-		
+
 		return len;
 	}
-	case tc_light_atomic_fix_size: 
-	case tc_light_atomic_var_size: 
+	case tc_light_atomic_fix_size:
+	case tc_light_atomic_var_size:
 	{
 		unsigned char *p = (unsigned char *)tc->get_str_mem();
 		unsigned char *end = p + tc->get_strlen_mem();
@@ -99,7 +99,7 @@ struct mapent {
 };
 static int mapent_cmp(const void *a, const void *b)
 {
-	return 
+	return
 		(((mapent*)a)->src == ((mapent*)b)->src)
 		  ? (((mapent*)a)->ordr - ((mapent*)b)->ordr)
 		  : (((mapent*)a)->src - ((mapent*)b)->src);
@@ -110,9 +110,9 @@ static inline mapent *me_bsearch(mapent *map_arr, int size, int c)
 	int l = 0;
 	int r = size-1;
 	int m;
-	
+
 	if(map_arr == NULL) return NULL;
-	
+
 	if (map_arr[0].src == c)
 		return &map_arr[0];
 	//l.src < c <= r.src
@@ -170,7 +170,7 @@ void CharsetHandler_utf8::transtale (tuple &t, tuple_cell *arg, tuple_cell *map_
 	char_iterator_utf8 map_it(map_str->get_str_mem(), map_str->get_strlen_mem(), 0);
 	char_iterator_utf8 trans_it(trans_str->get_str_mem(), trans_str->get_strlen_mem(), 0);
 	//NOTE - in FreeBSD malloc(0) returns valid pointer by default
-	if(map_len) 
+	if(map_len)
         map_arr = (mapent *)malloc(sizeof(mapent) * map_len);
 	//FIXME: int i/map_len is ok?
 	for (int i = 0; i < map_len; i++)
@@ -284,7 +284,7 @@ tuple_cell CharsetHandler_utf8::toupper(const tuple_cell *tc)
 	stmt_str_buf sb;
 
 	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(utf8_toupper, tc, &sb);
-	
+
 	return sb.get_tuple_cell();
 }
 
@@ -328,7 +328,7 @@ static inline void utf8_substring(const Iterator &start, const Iterator &end, st
         start_pos--;
         ++it;
     }
-  
+
 	while (it.base_iterator() < end && length > 0)
 	{
 		const int c = *it;
@@ -497,7 +497,7 @@ private:
 	bool ret_empty;
 	PcrePattern re;
 public:
-	utf8_tokenize_result(Iterator _start_, Iterator _end_, tuple_cell *t2, tuple_cell *t3, tuple_cell *_str_tc_) : str_tc(*_str_tc_), start(_start_), end(_end_), pos(_start_), re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3)), ret_empty(false) 
+	utf8_tokenize_result(Iterator _start_, Iterator _end_, tuple_cell *t2, tuple_cell *t3, tuple_cell *_str_tc_) : str_tc(*_str_tc_), start(_start_), end(_end_), pos(_start_), re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3)), ret_empty(false)
 	{
 		PcreMatcher<const char *>m(re);
 		const char * x = "";
@@ -641,7 +641,7 @@ int CollationHandler_utf8::compare(str_cursor *cur1, str_cursor *cur2)
     str2_ptr = tr_globals::e_string_buf;
     int str2_part_len = cur2->copy_blk(str2_ptr);
     int str1_part_len = cur1->get_blk(&str1_ptr);
-	xptr str1xptr = ADDR2XPTR(str1_ptr);
+	xptr str1xptr = str1_ptr == NULL ? XNULL : addr2xptr(str1_ptr);
 
     while (true)
     {
@@ -730,13 +730,13 @@ static inline void utf8_starts_with(const Iterator &start, const Iterator &end, 
     (*result) = true;
     utf8_iterator<Iterator> src_it(start);
     char_iterator_utf8 pref_it((char*)prefix, pref_len, 0);
-    
+
     while (src_it.base_iterator() < end && !pref_it.at_end())
     {
-        if ( (*src_it) != (*pref_it) ) 
-        { 
-            (*result) = false; 
-            break; 
+        if ( (*src_it) != (*pref_it) )
+        {
+            (*result) = false;
+            break;
         }
         ++src_it;
         ++pref_it;
@@ -749,15 +749,15 @@ static inline void utf8_ends_with(const Iterator &start, const Iterator &end, __
     (*result) = true;
     utf8_iterator<Iterator> src_it(start);
     char_iterator_utf8 suf_it((char*)suffix, strlen(suffix), 0);
-    
+
     for(__int64 i = src_len - suf_len; i > 0; i--) ++src_it;
 
     while (src_it.base_iterator() < end && !suf_it.at_end())
     {
-        if ( (*src_it) != (*suf_it) ) 
-        { 
-            (*result) = false; 
-            break; 
+        if ( (*src_it) != (*suf_it) )
+        {
+            (*result) = false;
+            break;
         }
         ++src_it;
         ++suf_it;
@@ -767,11 +767,11 @@ static inline void utf8_ends_with(const Iterator &start, const Iterator &end, __
 bool CollationHandler_utf8::starts_with(const tuple_cell *tc, const tuple_cell *prefix)
 {
     tuple_cell pref = tuple_cell::make_sure_light_atomic(*prefix);
-    
+
     __int64 pref_len = pref.get_strlen();
-    
+
     if(tc->get_strlen() < pref_len) return false;
-    
+
     bool result;
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_starts_with, tc, pref.get_str_mem(), pref_len, &result);
     return result;
@@ -783,9 +783,9 @@ bool CollationHandler_utf8::ends_with(const tuple_cell *tc, const tuple_cell *su
 
     __int64 src_len = charset_handler->length((tuple_cell*)tc);
     __int64 suf_len = charset_handler->length((tuple_cell*)suffix);
-    
+
     if(src_len < suf_len) return false;
-    
+
     bool result;
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(utf8_ends_with, tc, src_len, suf.get_str_mem(), suf_len, &result);
     return result;

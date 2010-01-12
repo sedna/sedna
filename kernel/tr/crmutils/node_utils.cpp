@@ -177,12 +177,13 @@ xptr getFirstByOrderChildCP(const xptr node_xptr)
 
     CHECKP(node_xptr);
     getChildList(node_xptr, tmp, n);
+    c.resize(n, XNULL);
     copy(tmp, tmp+n, c.begin());
 
     for (vector<xptr>::iterator i = c.begin(); i != c.end(); i++) {
         if (*i != XNULL && getLeftSiblingCP(*i) == XNULL) { return *i; }
     }
-    
+
     return XNULL;
 }
 
