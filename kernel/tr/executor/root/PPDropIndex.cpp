@@ -41,8 +41,8 @@ void PPDropIndex::close()
 
 void PPDropIndex::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     index_name.op->accept(v);    
     v.pop();
 }

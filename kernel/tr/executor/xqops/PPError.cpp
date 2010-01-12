@@ -128,8 +128,8 @@ PPIterator* PPFnError::do_copy(dynamic_context *_cxt_)
 
 void PPFnError::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     if (child_err.op) child_err.op->accept(v);
     if (child_descr.op) child_descr.op->accept(v);
     if (child_obj.op) child_obj.op->accept(v);
@@ -223,8 +223,8 @@ PPIterator* PPFnTrace::do_copy(dynamic_context *_cxt_)
 
 void PPFnTrace::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     value_child.op->accept(v);
     label_child.op->accept(v);
     v.pop();

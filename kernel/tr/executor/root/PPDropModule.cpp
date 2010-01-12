@@ -36,8 +36,8 @@ void PPDropModule::close()
 
 void PPDropModule::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     module_name.op->accept(v);
     v.pop();
 }

@@ -249,8 +249,8 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
 
 void PPAbsPath::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     if (name.op) name.op->accept(v);
     v.pop();
 }

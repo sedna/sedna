@@ -106,8 +106,8 @@ PPIterator* PPAxisAncestor::do_copy(dynamic_context *_cxt_)
 
 void PPAxisAncestor::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -115,8 +115,8 @@ void PPAxisAncestor::do_accept(PPVisitor &v)
 
 void PPAxisAncestorOrSelf::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

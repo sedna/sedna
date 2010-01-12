@@ -316,8 +316,8 @@ PPIterator* PPFnDeepEqual::do_copy(dynamic_context *_cxt_)
 
 void PPFnDeepEqual::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child1.op->accept(v);
     child2.op->accept(v);
     if(collation.op) 

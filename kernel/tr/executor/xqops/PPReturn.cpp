@@ -142,8 +142,8 @@ PPIterator* PPReturn::do_copy(dynamic_context *_cxt_)
 
 void PPReturn::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     source_child.op->accept(v);
     data_child.op->accept(v);
     v.pop();

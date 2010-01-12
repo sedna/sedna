@@ -72,9 +72,7 @@ PPIterator* PPFnDateTimeFuncNoParam::do_copy(dynamic_context *_cxt_)
 
 void PPFnDateTimeFuncNoParam::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }
 
 
@@ -296,8 +294,8 @@ PPIterator* PPFnDateTimeFunc::do_copy(dynamic_context *_cxt_)
 
 void PPFnDateTimeFunc::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -437,8 +435,8 @@ PPIterator* PPFnDateTimeFunc2Params::do_copy(dynamic_context *_cxt_)
 
 void PPFnDateTimeFunc2Params::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child1.op->accept(v);
     child2.op->accept(v);
     v.pop();

@@ -211,8 +211,8 @@ PPIterator*  PPFtHighlight::do_copy(dynamic_context *_cxt_)
 
 void PPFtHighlight::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq.op->accept(v);
     query.op->accept(v);
     if(index.op) index.op->accept(v);

@@ -84,8 +84,8 @@ PPIterator* PPFnGetProperty::do_copy(dynamic_context *_cxt_)
 
 void PPFnGetProperty::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

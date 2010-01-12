@@ -133,8 +133,8 @@ PPIterator* PPFnConcat::do_copy(dynamic_context *_cxt_)
 
 void PPFnConcat::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->accept(v);
     v.pop();
@@ -243,8 +243,8 @@ PPIterator* PPFnStringJoin::do_copy(dynamic_context *_cxt_)
 
 void PPFnStringJoin::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     members.op->accept(v);
     separator.op->accept(v);
     v.pop();
@@ -417,8 +417,8 @@ PPIterator* PPFnStartsEndsWith::do_copy(dynamic_context *_cxt_)
 
 void PPFnStartsEndsWith::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     source.op->accept(v);
     prefix.op->accept(v);
     if(is_collation) collation.op->accept(v);
@@ -512,8 +512,8 @@ PPIterator* PPFnString2CodePoints::do_copy(dynamic_context *_cxt_)
 
 void PPFnString2CodePoints::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -610,8 +610,8 @@ PPIterator* PPFnCodePoints2String::do_copy(dynamic_context *_cxt_)
 
 void PPFnCodePoints2String::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -736,8 +736,8 @@ PPIterator* PPFnTranslate::do_copy(dynamic_context *_cxt_)
 
 void PPFnTranslate::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     str.op->accept(v);
 	map_str.op->accept(v);
 	trans_str.op->accept(v);
@@ -942,8 +942,8 @@ PPIterator* PPFnSubsBeforeAfter::do_copy(dynamic_context *_cxt_)
 
 void PPFnSubsBeforeAfter::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     src_child.op->accept(v);
     srch_child.op->accept(v);
     if (collation_child.op)
@@ -1029,8 +1029,8 @@ PPIterator* PPFnChangeCase::do_copy(dynamic_context *_cxt_)
 
 void PPFnChangeCase::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     str.op->accept(v);
     v.pop();
 }
@@ -1107,8 +1107,8 @@ PPIterator* PPFnStringLength::do_copy(dynamic_context *_cxt_)
 
 void PPFnStringLength::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -1187,8 +1187,8 @@ PPIterator* PPFnNormalizeSpace::do_copy(dynamic_context *_cxt_)
 
 void PPFnNormalizeSpace::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -1348,8 +1348,8 @@ PPIterator* PPFnSubstring::do_copy(dynamic_context *_cxt_)
 
 void PPFnSubstring::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     str_child.op->accept(v);
     start_child.op->accept(v);
     if(is_length) length_child.op->accept(v);
@@ -1494,8 +1494,8 @@ PPIterator* PPFnNormalizeUnicode::do_copy(dynamic_context *_cxt_)
 
 void PPFnNormalizeUnicode::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     str_child.op->accept(v);
     if(type_child.op) 
         type_child.op->accept(v);

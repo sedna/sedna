@@ -110,16 +110,16 @@ void PPAxisDescendant::do_close()
 
 void PPAxisDescendant::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
 
 void PPAxisDescendantOrSelf::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -433,8 +433,8 @@ PPAxisDescendantAttr::PPAxisDescendantAttr(dynamic_context *_cxt_,
 
 void PPAxisDescendantAttr::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

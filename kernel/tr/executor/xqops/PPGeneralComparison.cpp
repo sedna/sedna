@@ -173,8 +173,8 @@ PPIterator* PPGeneralComparison::do_copy(dynamic_context *_cxt_)
 
 void PPGeneralComparison::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq1.op->accept(v);
     seq2.op->accept(v);
     v.pop();
@@ -517,8 +517,8 @@ PPIterator* PPLMGeneralComparison::do_copy(dynamic_context *_cxt_)
 
 void PPLMGeneralComparison::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq1.op->accept(v);
     seq2.op->accept(v);
     v.pop();
@@ -823,8 +823,8 @@ PPIterator* PPNEQGeneralComparison::do_copy(dynamic_context *_cxt_)
 
 void PPEQLGeneralComparison::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq1.op->accept(v);
     seq2.op->accept(v);
     v.pop();
@@ -832,8 +832,8 @@ void PPEQLGeneralComparison::do_accept(PPVisitor &v)
 
 void PPNEQGeneralComparison::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq1.op->accept(v);
     seq2.op->accept(v);
     v.pop();

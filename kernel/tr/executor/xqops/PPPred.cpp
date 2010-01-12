@@ -754,8 +754,8 @@ PPIterator* PPPred1::do_copy(dynamic_context *_cxt_)
 
 void PPPred1::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (unsigned int i = 0; i < conjuncts.size(); i++)
         conjuncts[i].op->accept(v);
     source_child.op->accept(v);
@@ -1063,8 +1063,8 @@ PPIterator* PPPred2::do_copy(dynamic_context *_cxt_)
 
 void PPPred2::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (unsigned int i = 0; i < conjuncts.size(); i++)
         conjuncts[i].op->accept(v);
     source_child.op->accept(v);

@@ -70,8 +70,8 @@ void PPBulkLoad::close()
 
 void PPBulkLoad::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     filename.op->accept(v);
     document.op->accept(v);
     if (collection.op) collection.op->accept(v);    

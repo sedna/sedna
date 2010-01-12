@@ -51,8 +51,8 @@ void PPRetrieveMetadata::close()
 
 void PPRetrieveMetadata::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     if(collection.op) collection.op->accept(v);
     v.pop();
 }

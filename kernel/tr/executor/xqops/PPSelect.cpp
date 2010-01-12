@@ -137,8 +137,8 @@ PPIterator* PPSelect::do_copy(dynamic_context *_cxt_)
 
 void PPSelect::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     source_child.op->accept(v);
     data_child.op->accept(v);
     v.pop();

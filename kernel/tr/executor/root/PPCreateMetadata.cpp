@@ -44,8 +44,8 @@ void PPCreateDocument::close()
 
 void PPCreateDocument::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     name.op->accept(v);
     v.pop();
 }
@@ -106,8 +106,8 @@ void PPCreateCollection::close()
 
 void PPCreateCollection::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     name.op->accept(v);
     v.pop();
 }
@@ -182,8 +182,8 @@ void PPCreateDocumentInCollection::close()
 
 void PPCreateDocumentInCollection::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     document.op->accept(v);
     collection.op->accept(v);    
     v.pop();

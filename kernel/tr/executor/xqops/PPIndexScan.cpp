@@ -269,8 +269,8 @@ PPIterator* PPIndexScan::do_copy(dynamic_context *_cxt_)
 
 void PPIndexScan::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     if (index_name.op) index_name.op->accept(v);
     if (child.op) child.op->accept(v);
     if (child2.op) child2.op->accept(v);

@@ -68,8 +68,8 @@ void PPRename::close()
 
 void PPRename::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     if(new_name_child.op) new_name_child.op->accept(v);
     v.pop();

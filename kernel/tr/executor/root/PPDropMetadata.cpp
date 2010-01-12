@@ -43,8 +43,8 @@ void PPDropDocument::close()
 
 void PPDropDocument::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     name.op->accept(v);
     v.pop();
 }
@@ -102,8 +102,8 @@ void PPDropCollection::close()
 
 void PPDropCollection::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     name.op->accept(v);
     v.pop();
 }
@@ -174,8 +174,8 @@ void PPDropDocumentInCollection::close()
 
 void PPDropDocumentInCollection::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     document.op->accept(v);
     collection.op->accept(v);
     v.pop();

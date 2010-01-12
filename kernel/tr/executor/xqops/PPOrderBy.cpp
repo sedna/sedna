@@ -263,8 +263,8 @@ PPIterator* PPOrderBy::do_copy(dynamic_context *_cxt_)
 
 void PPOrderBy::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -930,8 +930,8 @@ PPIterator* PPSTuple::do_copy(dynamic_context *_cxt_)
 
 void PPSTuple::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->accept(v);
     v.pop();
@@ -1026,8 +1026,8 @@ PPIterator* PPSLet::do_copy(dynamic_context *_cxt_)
 
 void PPSLet::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     source_child.op->accept(v);
     data_child.op->accept(v);
     v.pop();

@@ -41,9 +41,7 @@ void PPConst::do_close()
 
 void PPConst::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }
 
 void PPConst::do_next(tuple &t)

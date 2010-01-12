@@ -164,8 +164,8 @@ void PPNodeComparison::do_next (tuple &t)
 
 void PPNodeComparison::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq1.op->accept(v);
     seq2.op->accept(v);
     v.pop();

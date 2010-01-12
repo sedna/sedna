@@ -91,8 +91,8 @@ PPIterator* PPCast::do_copy(dynamic_context *_cxt_)
 
 void PPCast::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -178,8 +178,8 @@ PPIterator* PPCastable::do_copy(dynamic_context *_cxt_)
 
 void PPCastable::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -256,8 +256,8 @@ PPIterator* PPInstanceOf::do_copy(dynamic_context *_cxt_)
 
 void PPInstanceOf::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -349,8 +349,8 @@ PPIterator* PPTreat::do_copy(dynamic_context *_cxt_)
 
 void PPTreat::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -504,8 +504,8 @@ PPIterator* PPTypeswitch::do_copy(dynamic_context *_cxt_)
 
 void PPTypeswitch::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (unsigned int i = 0; i < cases.size(); i++)
         cases[i].op->accept(v);
     source_child.op->accept(v);

@@ -325,8 +325,8 @@ void PPTest::checkTreeConsistency(xptr node)
 
 void PPTest::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq.op->accept(v);
     v.pop();
 }

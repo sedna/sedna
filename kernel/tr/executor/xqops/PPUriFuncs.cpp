@@ -201,8 +201,8 @@ PPIterator* PPFnUriEncoding::do_copy(dynamic_context *_cxt_)
 
 void PPFnUriEncoding::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -350,8 +350,8 @@ PPIterator* PPFnResolveUri::do_copy(dynamic_context *_cxt_)
 
 void PPFnResolveUri::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     relative.op->accept(v);
     if(!is_base_static) base.op->accept(v);
     v.pop();
