@@ -210,7 +210,7 @@ public:
     void remove_trigger(const trigger_cell_xptr &c);
 #endif
 
-    inline schema_node_object() : xmlns_local(NULL), persistent(true), lastnode_ind(XNULL) {};
+    inline schema_node_object() : xmlns_pers(XNULL), xmlns_local(NULL), persistent(true), lastnode_ind(XNULL) {};
 //    inline schema_node_object(bool _persistent = true) : persistent(_persistent) {};
     schema_node_object(const doc_schema_node_xptr _root, xmlns_ptr _xmlns, const char * _name, t_item _type, bool _persistent);
     ~schema_node_object();
@@ -314,7 +314,7 @@ struct doc_schema_node_object: public schema_node_object
     /* Create virtual root */
     static catalog_object_header * create_virtual_root();
 
-    inline doc_schema_node_object() {};
+    inline doc_schema_node_object() : xmlns_list(XNULL) {};
     inline doc_schema_node_object(bool _persistent) :
         schema_node_object(XNULL, NULL, NULL, document, _persistent),
         ext_nids_block(XNULL), total_ext_nids(0), xmlns_list(XNULL) {};
