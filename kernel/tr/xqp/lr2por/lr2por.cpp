@@ -2620,6 +2620,16 @@ namespace sedna
 
             qep = new PPQueryRoot(dyn_cxt, off.opin);
         }
+
+        // explain feature
+        if (mod->turnExplain())
+        {
+            // first, we need new dynamic context since we will use two root operations
+            dyn_cxt = new dynamic_context(st_cxt, 0);
+            // then, we build PPQueryRoot->PPExplain on top of actual query
+            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep), 1);
+            qep = new PPQueryRoot(dyn_cxt, expl);
+        }
     }
 
     void lr2por::visit(ASTRenameColl &n)
