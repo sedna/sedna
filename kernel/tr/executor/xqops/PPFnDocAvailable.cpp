@@ -91,8 +91,8 @@ PPIterator* PPFnDocAvailable::do_copy(dynamic_context *_cxt_)
 
 void PPFnDocAvailable::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     doc_name_op.op->accept(v);
     v.pop();
 }

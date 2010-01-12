@@ -61,9 +61,7 @@ PPIterator* PPFnTrue::do_copy(dynamic_context *_cxt_)
 
 void PPFnTrue::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }
 
 
@@ -118,9 +116,7 @@ PPIterator* PPFnFalse::do_copy(dynamic_context *_cxt_)
 
 void PPFnFalse::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }
 
 
@@ -191,8 +187,8 @@ PPIterator* PPFnNot::do_copy(dynamic_context *_cxt_)
 
 void PPFnNot::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -262,8 +258,8 @@ PPIterator* PPFnBoolean::do_copy(dynamic_context *_cxt_)
 
 void PPFnBoolean::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

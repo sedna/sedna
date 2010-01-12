@@ -99,8 +99,8 @@ void PPLoadModule::close()
 
 void PPLoadModule::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     std::for_each(filenames.begin(), filenames.end(), Op_acceptor(v));
     v.pop();
 }

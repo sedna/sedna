@@ -110,8 +110,8 @@ PPIterator* PPRange::do_copy(dynamic_context *_cxt_)
 
 void PPRange::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     start_op.op->accept(v);
     end_op.op->accept(v);
     v.pop();

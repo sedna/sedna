@@ -360,8 +360,8 @@ PPIterator* PPFnSQLConnect::do_copy(dynamic_context *_cxt_)
 
 void PPFnSQLConnect::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (int it = 0; it < arr.size(); it++)
         arr[it].op->accept(v);
     v.pop();
@@ -533,8 +533,8 @@ PPIterator* PPFnSQLExecute::do_copy(dynamic_context *_cxt_)
 
 void PPFnSQLExecute::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (int it = 0; it < arr.size(); it++)
         arr[it].op->accept(v);
     v.pop();
@@ -668,8 +668,8 @@ PPIterator * PPFnSQLPrepare::do_copy(dynamic_context *_cxt_)
 
 void PPFnSQLPrepare::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     connection.op->accept(v);
     statement.op->accept(v);
     if (has_options)
@@ -755,8 +755,8 @@ PPIterator * PPFnSQLClose::do_copy(dynamic_context *_cxt_)
 
 void PPFnSQLClose::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     connection.op->accept(v);
     v.pop();
 }
@@ -835,8 +835,8 @@ PPIterator * PPFnSQLCommit::do_copy(dynamic_context *_cxt_)
 
 void PPFnSQLCommit::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     connection.op->accept(v);
     v.pop();
 }
@@ -913,8 +913,8 @@ PPIterator* PPFnSQLRollback::do_copy(dynamic_context *_cxt_)
 
 void PPFnSQLRollback::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     connection.op->accept(v);
     v.pop();
 }

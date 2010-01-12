@@ -117,8 +117,8 @@ PPIterator* PPFnResolveQName::do_copy(dynamic_context *_cxt_)
 
 void PPFnResolveQName::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child_qname.op->accept(v);
     child_elem.op->accept(v);
     v.pop();
@@ -224,8 +224,8 @@ PPIterator* PPFnQName::do_copy(dynamic_context *_cxt_)
 
 void PPFnQName::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child_uri.op->accept(v);
     child_qname.op->accept(v);
     v.pop();
@@ -315,8 +315,8 @@ PPIterator* PPFnPrefixFromQName::do_copy(dynamic_context *_cxt_)
 
 void PPFnPrefixFromQName::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -399,8 +399,8 @@ PPIterator* PPFnLocalNameFromQName::do_copy(dynamic_context *_cxt_)
 
 void PPFnLocalNameFromQName::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -485,8 +485,8 @@ PPIterator* PPFnNamespaceUriFromQName::do_copy(dynamic_context *_cxt_)
 
 void PPFnNamespaceUriFromQName::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -601,8 +601,8 @@ PPIterator* PPFnNamespaceUriForPrefix::do_copy(dynamic_context *_cxt_)
 
 void PPFnNamespaceUriForPrefix::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child_prefix.op->accept(v);
     child_element.op->accept(v);
     v.pop();
@@ -699,8 +699,8 @@ PPIterator* PPFnInScopePrefixes::do_copy(dynamic_context *_cxt_)
 
 void PPFnInScopePrefixes::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

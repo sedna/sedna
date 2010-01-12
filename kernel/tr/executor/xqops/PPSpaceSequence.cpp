@@ -77,8 +77,8 @@ void PPSpaceSequence::do_next(tuple &t)
 
 void PPSpaceSequence::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (it = 0; it < ch_arr.size(); it++)
         ch_arr[it].op->accept(v);
     v.pop();

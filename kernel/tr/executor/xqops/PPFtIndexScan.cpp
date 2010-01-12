@@ -374,8 +374,8 @@ PPIterator*  PPFtIndexScan::do_copy(dynamic_context *_cxt_)
 
 void PPFtIndexScan::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     idx_name.op->accept(v);
     query.op->accept(v);
     if(options.op)
@@ -654,8 +654,8 @@ PPIterator*  PPFtIndexScan2::do_copy(dynamic_context *_cxt_)
 
 void PPFtIndexScan2::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     idx_name.op->accept(v);
     query.op->accept(v);
     if(max_results.op)

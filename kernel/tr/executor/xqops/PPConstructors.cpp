@@ -1514,8 +1514,8 @@ PPIterator* PPDocumentConstructor::do_copy(dynamic_context *_cxt_)
 
 void PPElementConstructor::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     if (el_name==NULL) qname.op->accept(v);
     content.op->accept(v);
     v.pop();
@@ -1523,8 +1523,8 @@ void PPElementConstructor::do_accept(PPVisitor &v)
 
 void PPAttributeConstructor::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     if (at_name==NULL)  qname.op->accept(v);
     if (at_value==NULL) content.op->accept(v);
     v.pop();
@@ -1532,24 +1532,24 @@ void PPAttributeConstructor::do_accept(PPVisitor &v)
 
 void PPNamespaceConstructor::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     if (at_value==NULL) content.op->accept(v);
     v.pop();
 }
 
 void PPCommentConstructor::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     if (at_value==NULL) content.op->close();
     v.pop();
 }
 
 void PPPIConstructor::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     if (at_name==NULL)  qname.op->accept(v);
     if (at_value==NULL) content.op->accept(v);
     v.pop();
@@ -1557,16 +1557,16 @@ void PPPIConstructor::do_accept(PPVisitor &v)
 
 void PPDocumentConstructor::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     content.op->accept(v);
     v.pop();
 }
 
 void PPTextConstructor::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     if (at_value==NULL) content.op->close();
     v.pop();
 }

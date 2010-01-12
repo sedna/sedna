@@ -542,53 +542,53 @@ void PPRevokeRole::execute()
 
 void PPCreateUser::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     username.op->accept(v);
     passwd.op->accept(v);
     v.pop();
 }
 void PPDropUser::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     username.op->accept(v);
     v.pop();
 }
 void PPAlterUser::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     username.op->accept(v);
     passwd.op->accept(v);
     v.pop();
 }
 void PPCreateRole::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     rolename.op->accept(v);
     v.pop();
 }
 void PPDropRole::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     rolename.op->accept(v);
     v.pop();
 }
 void PPGrantRole::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     role.op->accept(v);
     grantee.op->accept(v);
     v.pop();
 }
 void PPGrantRevokePriv::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     name.op->accept(v);
     if (obj_name.op)
         obj_name.op->accept(v);
@@ -597,8 +597,8 @@ void PPGrantRevokePriv::accept(PPVisitor &v)
 }
 void PPRevokeRole::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     role.op->accept(v);
     grantee.op->accept(v);
     v.pop();

@@ -185,8 +185,8 @@ PPIterator* PPNumericFuncs::do_copy(dynamic_context *_cxt_)
 
 void PPNumericFuncs::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -326,8 +326,8 @@ PPIterator* PPFnRoundHalfToEven::do_copy(dynamic_context *_cxt_)
 
 void PPFnRoundHalfToEven::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     if(child_p.op) child_p.op->accept(v);
     child_arg.op->accept(v);
     v.pop();

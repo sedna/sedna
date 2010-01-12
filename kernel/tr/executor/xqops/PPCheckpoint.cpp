@@ -45,9 +45,7 @@ void PPCheckpoint::do_next (tuple &t)
 
 void PPCheckpoint::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }
 
 

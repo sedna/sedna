@@ -15,33 +15,29 @@
 #include "tr/executor/base/visitor/PPVisitor.h"
 
 
+typedef std::pair<xptr, xptr> xptr_pair;
+
 class PPExplainVisitor : public PPVisitor {
 
 private:
-    static xptr root;
-    /* True if result() was already called */
-    static bool cached;   
-
     doc_schema_node_cptr scm;
-    xptr parent, left;
+    xptr root, parent, left;
 
-    /* Flag for push/pop call consistency checking */
-    bool visited;
-    
+    /* True if result() was already called */
+    bool cached;
     /* Maintains stack of indirection pointers */
-    std::stack<xptr> parents;
+    std::stack<xptr_pair> pointers;
 
     void push();
-
-    friend void insertElement(const char* name, xptr& left, xptr& parent);
+    void insertElement(const char* name, xptr& left, xptr& parent);
 
 public:
     /* 
      * Returns indirection of the doc("$explain").
-     * Result is globally cached and each subsequent call 
+     * Result is cached and each subsequent call 
      * (except the first one) of the accept will not change it.
-     * Returns XNULL if no one calls accept with this instance (i.e. visitor
-     * knows nothing about the QEP).
+     * Returns XNULL if there were not accept calls with this instance 
+     * (i.e. visitor knows nothing about the QEP).
      */
     virtual xptr result();
 
@@ -155,11 +151,11 @@ public:
 #ifdef SE_ENABLE_DTSEARCH
     virtual void visit(PPFtHighlight* op);
     virtual void visit(PPFtScan* op);
-#endif
+#endif 
 #ifdef SE_ENABLE_FTSEARCH
     virtual void visit(PPFtIndexScan* op);
     virtual void visit(PPFtIndexScan2* op);
-#endif SE_ENABLE_FTSEARCH    
+#endif
                                                        
     virtual void visit(PPFunCall* op);
     virtual void visit(PPGeneralComparison* op);

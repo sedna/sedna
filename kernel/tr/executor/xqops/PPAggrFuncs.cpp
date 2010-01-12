@@ -179,8 +179,8 @@ PPIterator* PPFnMaxMin::do_copy(dynamic_context *_cxt_)
 
 void PPFnMaxMin::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     if(collation.op) collation.op->accept(v);
 }
@@ -338,8 +338,8 @@ PPIterator* PPFnSumAvg::do_copy(dynamic_context *_cxt_)
 
 void PPFnSumAvg::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     if(zero.op) zero.op->accept(v);
     v.pop();
@@ -414,8 +414,8 @@ PPIterator* PPFnCount::do_copy(dynamic_context *_cxt_)
 
 void PPFnCount::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

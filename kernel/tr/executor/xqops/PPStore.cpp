@@ -89,8 +89,8 @@ PPIterator* PPStore::do_copy(dynamic_context *_cxt_)
 
 void PPStore::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

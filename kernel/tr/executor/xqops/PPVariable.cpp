@@ -51,9 +51,7 @@ PPIterator* PPVariable::do_copy(dynamic_context *_cxt_)
 
 void PPVariable::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }
 
 
@@ -109,7 +107,5 @@ PPIterator* PPGlobalVariable::do_copy(dynamic_context *_cxt_)
 
 void PPGlobalVariable::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }

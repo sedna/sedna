@@ -415,8 +415,8 @@ inline void PPFunCall::reinit_consumer_table()
 
 void PPFunCall::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (int i = 0; i < args_num; i++)
         ch_arr[i].op->accept(v);
     v.pop();

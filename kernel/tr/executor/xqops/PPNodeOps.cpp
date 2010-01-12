@@ -94,8 +94,8 @@ PPIterator* PPFnName::do_copy(dynamic_context *_cxt_)
 
 void PPFnName::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -184,8 +184,8 @@ PPIterator* PPFnLocalName::do_copy(dynamic_context *_cxt_)
 
 void PPFnLocalName::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -273,8 +273,8 @@ PPIterator* PPFnNamespaceUri::do_copy(dynamic_context *_cxt_)
 
 void PPFnNamespaceUri::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -367,8 +367,8 @@ PPIterator* PPFnNumber::do_copy(dynamic_context *_cxt_)
 
 void PPFnNumber::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -444,8 +444,8 @@ PPIterator* PPFnRoot::do_copy(dynamic_context *_cxt_)
 
 void PPFnRoot::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

@@ -193,8 +193,8 @@ PPIterator*  PPFtScan::do_copy(dynamic_context *_cxt_)
 
 void PPFtScan::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq.op->accept(v);
     query.op->accept(v);
     index_type.op->accept(v);

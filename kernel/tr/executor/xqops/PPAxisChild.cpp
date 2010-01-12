@@ -70,8 +70,8 @@ void PPAxisChild::do_close()
 
 void PPAxisChild::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

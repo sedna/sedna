@@ -91,8 +91,8 @@ PPIterator* PPTuple::do_copy(dynamic_context *_cxt_)
 
 void PPTuple::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->accept(v);
     v.pop();

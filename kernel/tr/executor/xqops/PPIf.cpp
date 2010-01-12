@@ -95,8 +95,8 @@ PPIterator* PPIf::do_copy(dynamic_context *_cxt_)
 
 void PPIf::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     if_child.op->accept(v);
     then_child.op->accept(v);
     else_child.op->accept(v);

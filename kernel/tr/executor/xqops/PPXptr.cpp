@@ -65,7 +65,5 @@ PPIterator* PPXptr::do_copy(dynamic_context *_cxt_)
 
 void PPXptr::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
-    v.pop();
 }

@@ -76,8 +76,8 @@ void PPAxisParent::do_close()
 
 void PPAxisParent::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

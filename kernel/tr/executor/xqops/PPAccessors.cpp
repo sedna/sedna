@@ -79,8 +79,8 @@ PPIterator* PPDmStringValue::do_copy(dynamic_context *_cxt_)
 
 void PPDmStringValue::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -156,8 +156,8 @@ PPIterator* PPDmTypedValue::do_copy(dynamic_context *_cxt_)
 
 void PPDmTypedValue::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

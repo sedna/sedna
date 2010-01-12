@@ -131,8 +131,8 @@ void PPCreateTrigger::close()
 
 void PPCreateTrigger::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     trigger_name.op->accept(v);    
     v.pop();
 }

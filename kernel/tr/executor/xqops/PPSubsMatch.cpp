@@ -169,8 +169,8 @@ PPIterator* PPSubsMatch::do_copy(dynamic_context *_cxt_)
 
 void PPSubsMatch::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq1.op->accept(v);
     seq2.op->accept(v);
     v.pop();

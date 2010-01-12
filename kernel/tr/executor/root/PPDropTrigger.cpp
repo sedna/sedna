@@ -39,8 +39,8 @@ void PPDropTrigger::close()
 
 void PPDropTrigger::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     trigger_name.op->accept(v);
     v.pop();
 }

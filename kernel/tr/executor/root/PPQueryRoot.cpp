@@ -69,8 +69,8 @@ void PPQueryRoot::close()
 
 void PPQueryRoot::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

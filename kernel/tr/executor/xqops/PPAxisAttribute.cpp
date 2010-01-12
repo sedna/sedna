@@ -66,8 +66,8 @@ void PPAxisAttribute::do_close()
 
 void PPAxisAttribute::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }

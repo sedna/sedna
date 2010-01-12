@@ -102,24 +102,24 @@ PPIterator* PPCalculate::do_copy(dynamic_context *_cxt_)
 
 void PPCalculate::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     tree->accept(v);
     v.pop();
 }
 
 void UnaryOp::do_accept(PPVisitor &v)    
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     child->accept(v);
     v.pop();
 }
 
 void BinaryOp::do_accept(PPVisitor &v)    
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     child1->accept(v);
     child2->accept(v);
     v.pop();
@@ -127,8 +127,8 @@ void BinaryOp::do_accept(PPVisitor &v)
 
 void BinaryOpCollation::do_accept(PPVisitor &v)    
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     child1->accept(v);
     child2->accept(v);
     v.pop();
@@ -136,8 +136,8 @@ void BinaryOpCollation::do_accept(PPVisitor &v)
 
 void BinaryOpAnd::do_accept(PPVisitor &v)    
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     child1->accept(v);
     child2->accept(v);
     v.pop();
@@ -145,8 +145,8 @@ void BinaryOpAnd::do_accept(PPVisitor &v)
 
 void BinaryOpOr::do_accept(PPVisitor &v)    
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     child1->accept(v);
     child2->accept(v);
     v.pop();
@@ -154,16 +154,16 @@ void BinaryOpOr::do_accept(PPVisitor &v)
 
 void LeafAtomOp::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     children->at(i).op->accept(v);
     v.pop();
 }
 
 void LeafEffectBoolOp::do_accept(PPVisitor &v)
 {
-    v.push(this);
-    v.visit(this);
+    v.visit (this);
+    v.push  (this);
     children->at(i).op->accept(v);
     v.pop();
 }

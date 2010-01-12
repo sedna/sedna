@@ -162,8 +162,8 @@ PPIterator* PPFnCompare::do_copy(dynamic_context *_cxt_)
 
 void PPFnCompare::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     str1_child.op->accept(v);
     str2_child.op->accept(v);
     if(collation_child.op) collation_child.op->accept(v);

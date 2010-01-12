@@ -72,8 +72,8 @@ PPIterator* PPExtFunCall::do_copy(dynamic_context *_cxt_)
 
 void PPExtFunCall::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     for (unsigned int it = 0; it < arr.size(); it++)
         arr[it].op->accept(v);
     v.pop();

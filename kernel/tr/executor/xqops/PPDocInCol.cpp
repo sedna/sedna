@@ -117,8 +117,8 @@ PPIterator* PPDocInCol::do_copy(dynamic_context *_cxt_)
 
 void PPDocInCol::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     col_name_op.op->accept(v);
     doc_name_op.op->accept(v);
     v.pop();

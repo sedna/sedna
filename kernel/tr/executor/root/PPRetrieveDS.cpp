@@ -46,8 +46,8 @@ void PPRetrieveDS::close()
 
 void PPRetrieveDS::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     name.op->accept(v);
     v.pop();
 }

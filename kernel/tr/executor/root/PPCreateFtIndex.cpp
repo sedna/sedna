@@ -103,8 +103,8 @@ void PPCreateFtIndex::close()
 
 void PPCreateFtIndex::accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     index_name.op->accept(v);
     if (cust_rules.op)
 		cust_rules.op->accept(v);

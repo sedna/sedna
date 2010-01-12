@@ -209,8 +209,8 @@ PPIterator* PPPatMatch::do_copy(dynamic_context *_cxt_)
 
 void PPPatMatch::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq1.op->accept(v);
     seq2.op->accept(v);
     if(ch_cnt > 2) seq3.op->accept(v);

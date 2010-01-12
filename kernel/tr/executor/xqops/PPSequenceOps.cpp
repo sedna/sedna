@@ -81,8 +81,8 @@ PPIterator* PPFnEmpty::do_copy(dynamic_context *_cxt_)
 
 void PPFnEmpty::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -155,8 +155,8 @@ PPIterator* PPFnExists::do_copy(dynamic_context *_cxt_)
 
 void PPFnExists::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -253,8 +253,8 @@ PPIterator* PPFnItemAt::do_copy(dynamic_context *_cxt_)
 
 void PPFnItemAt::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq_child.op->accept(v);
     pos_child.op->accept(v);
     v.pop();
@@ -411,8 +411,8 @@ PPIterator* PPFnDistinctValues::do_copy(dynamic_context *_cxt_)
 
 void PPFnDistinctValues::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     if (collation_child.op)
         collation_child.op->accept(v);
@@ -563,8 +563,8 @@ PPIterator* PPFnIndexOf::do_copy(dynamic_context *_cxt_)
 
 void PPFnIndexOf::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq_child.op->accept(v);
     srch_child.op->accept(v);
     if (collation_child.op)
@@ -646,8 +646,8 @@ PPIterator* PPFnReverse::do_copy(dynamic_context *_cxt_)
 
 void PPFnReverse::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -797,8 +797,8 @@ PPIterator* PPFnSubsequence::do_copy(dynamic_context *_cxt_)
 
 void PPFnSubsequence::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq_child.op->accept(v);
     start_child.op->accept(v);
     if (is_length)
@@ -900,8 +900,8 @@ PPIterator* PPFnRemove::do_copy(dynamic_context *_cxt_)
 
 void PPFnRemove::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq_child.op->accept(v);
     pos_child.op->accept(v);
     v.pop();
@@ -1024,8 +1024,8 @@ PPIterator* PPFnInsertBefore::do_copy(dynamic_context *_cxt_)
 
 void PPFnInsertBefore::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     seq_child.op->accept(v);
     pos_child.op->accept(v);
     ins_child.op->accept(v);
@@ -1103,8 +1103,8 @@ PPIterator* PPFnZeroOrOne::do_copy(dynamic_context *_cxt_)
 
 void PPFnZeroOrOne::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -1170,8 +1170,8 @@ PPIterator* PPFnOneOrMore::do_copy(dynamic_context *_cxt_)
 
 void PPFnOneOrMore::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
@@ -1241,8 +1241,8 @@ PPIterator* PPFnExactlyOne::do_copy(dynamic_context *_cxt_)
 
 void PPFnExactlyOne::do_accept(PPVisitor &v)
 {
-    v.push  (this);
     v.visit (this);
+    v.push  (this);
     child.op->accept(v);
     v.pop();
 }
