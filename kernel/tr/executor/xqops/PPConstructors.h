@@ -29,11 +29,6 @@ protected:
     bool first_time;
 	bool deep_copy;
 
-private:
-    virtual void do_open ();
-    
-public:
-	static bool checkInitial();
     PPConstructor(dynamic_context *_cxt_,
                   operation_info _info_,
                   bool _deep_copy) : PPIterator(_cxt_, _info_),

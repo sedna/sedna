@@ -38,7 +38,8 @@ typedef counted_ptr<char> str_counted_ptr;
 /// representation (through tr_globals::mem_str_buf).
 /// Size should be the same as maximum lexical representaion of any fixed size 
 /// atomic value. In general, it means the same value as used in the lexical 
-/// analyzer (XQueryDLGLexer::bufsize). 
+/// analyzer.
+
 #define MAX_ATOMIC_LEX_REPR_SIZE        2000
 
 
