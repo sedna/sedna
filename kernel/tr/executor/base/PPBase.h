@@ -84,7 +84,7 @@ namespace tr_globals
 #define CHECK_STACK_DEPTH        if(tr_globals::current_stack_depth > tr_globals::max_stack_depth) \
                                      throw USER_EXCEPTION2(SE1001,\
 "Infinite recursion or too complex query. Consider increasing\
-session_stack_depth configuration parameter in sednaconf.xml.");
+ session_stack_depth configuration parameter in sednaconf.xml.");
 
 #define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
                                  tr_globals::__current_physop = (pp); 
