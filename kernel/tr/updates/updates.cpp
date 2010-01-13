@@ -344,7 +344,12 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
 
 xptr copy_to_temp(xptr node)
 {
-    if(PPConstructor::checkInitial()) carrier=true;
-    return deep_pers_copy(XNULL,XNULL,PPConstructor::virt_root,node,true);
+    PPConstructor::checkInitial();
+    return deep_copy_node(XNULL,
+                          XNULL,
+                          PPConstructor::get_virtual_root(),
+                          node,
+                          NULL,
+                          true);
 }
 

@@ -30,34 +30,6 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
-/* Clears global state of constructors. */
-void clear_virtual_root()
-{
-    if (PPConstructor::root_schema.found())
-    {
-        nid_delete(PPConstructor::virt_root);
-        PPConstructor::root_schema->drop();
-        PPConstructor::root_schema = XNULL;
-        PPConstructor::virt_root=XNULL;
-    }
-}
-
-void separateLocalAndPrefix(char*& prefix, const char*& qname)
-{
-    for (unsigned int i=0; i<strlen(qname); i++)
-    {
-        if (qname[i]==':')
-        {
-            prefix = se_new char[i + 1];
-            memcpy(prefix, qname, i);
-            prefix[i] = '\0';
-            qname=qname+i+1;
-            return;
-        }
-    }
-}
-
 static inline 
 tuple_cell getQnameParameter(PPOpIn qname)
 {
@@ -207,10 +179,7 @@ void PPConstructor::checkInitial()
         cont_leftind=XNULL;
         conscnt=0;
         last_elem=XNULL;
-        
-        return true;
-    } else 
-        return false;
+    } 
 }
 
 /* 
