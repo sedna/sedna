@@ -15,6 +15,7 @@
 #include "tr/tr_base.h"
 #include "tr/structures/schema.h"
 #include "tr/strings/strings_base.h"
+#include "tr/mo/indirection.h"
 
 class text_cptr;
 
@@ -27,14 +28,51 @@ xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent, const char* value,
 xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, int tsize, const char* data, strsize_t dsize);
 xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name, const char * collection_name);
 
+extern xptr last_inserted_node_indirection;
+
+inline xptr get_last_mo_inderection() {
+    U_ASSERT(last_inserted_node_indirection != XNULL);
+    return last_inserted_node_indirection;
+}
+
+inline xptr insert_element_i(xptr left_sibling, xptr right_sibling, xptr parent, const char* name, xmlscm_type type, xmlns_ptr ns) {
+    insert_element(
+            indirectionDereferenceCP(left_sibling),
+            indirectionDereferenceCP(right_sibling),
+            indirectionDereferenceCP(parent),
+            name, type, ns
+        );
+
+    return get_last_mo_inderection();
+}
+
+inline xptr insert_text_i(xptr left_sib, xptr right_sib, xptr parent, const void* value, strsize_t size, text_type ttype = text_mem) {
+    insert_text(
+            indirectionDereferenceCP(left_sib),
+            indirectionDereferenceCP(right_sib),
+            indirectionDereferenceCP(parent),
+            value, size, ttype
+        );
+
+    return get_last_mo_inderection();
+}
+
+inline xptr insert_attribute_i(xptr left_sib, xptr right_sib, xptr parent, const char* name, xmlscm_type type, const char* value, int data_size, xmlns_ptr ns) {
+    insert_attribute(
+            indirectionDereferenceCP(left_sib),
+            indirectionDereferenceCP(right_sib),
+            indirectionDereferenceCP(parent),
+            name, type, value, data_size, ns
+        );
+
+    return get_last_mo_inderection();
+}
+
 struct doc_info_t;
 
 bool delete_node(xptr node_xptr, const doc_info_t * doc_info = NULL, bool no_index_update = false);
+
 void delete_doc_node(xptr node, const char * doc_name, const char * collection_name);
-
-extern xptr last_inserted_node_indirection;
-
-inline xptr get_last_mo_inderection() { U_ASSERT(last_inserted_node_indirection != XNULL); return last_inserted_node_indirection; }
 
 class text_cptr {
     struct counted_str {

@@ -571,9 +571,7 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         else
             first_iteration=false;
 
-#ifndef PSTR_NO_CHECKP
         CHECKP(next_node);
-#endif
         /* skip descriptors without pstr data except "node" descriptor */
         if ((next_node != node) && !isPstr(T_DSC(next_node))) { continue; }
 
@@ -595,9 +593,9 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         /* create new block if not created yet */
         if (new_blk == XNULL)
             new_blk = pstr_create_blk(is_data_block);
-#ifndef PSTR_NO_CHECKP
+
         CHECKP(next_node);
-#endif
+
         /* read next_node string contents and deallocate them from old block */
         U_ASSERT(isPstr(T_DSC(next_node)));
         next_s_size = T_DSC(next_node)->data.lsp.size;
@@ -608,11 +606,8 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         tmp = pstr_do_allocate(new_blk, next_s, next_s_size);
         if (tmp == XNULL)
             throw SYSTEM_EXCEPTION("[pstr_migrate()] existing pstr from old block didn't fit into new block");
-#ifndef PSTR_NO_CHECKP
-        CHECKP(next_node);
-#endif
-        /* update old descriptor */
-        VMM_SIGNAL_MODIFICATION(next_node);
+
+        WRITEP(next_node);
         ((t_dsc*)XADDR(next_node))->data.lsp.p = tmp;
     } while (next_node != rbd);
 

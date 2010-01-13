@@ -225,6 +225,10 @@ inline shft calcShift(void * p) {
     return ((shft)((char*)(p) - (char *) ((ptrdiff_t)(p) & PAGE_BIT_MASK)));
 }
 
+inline node_blk_hdr * getBlockByNode(n_dsc * node) {
+    return (node_blk_hdr *) ((uint32_t)(node) & PAGE_BIT_MASK);
+}
+
 /* ============================================================================
   In all the following macros p and s is 'xptr*' pointer
  */
