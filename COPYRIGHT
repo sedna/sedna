@@ -30,14 +30,7 @@ This product also includes software developed by other legal entities:
    Release 5 of PCRE is distributed under the terms of the "BSD" licence, as
    specified at http://www.pcre.org/license.txt.
    
-2. Chicken (http://www.call-with-current-continuation.org)
-   Copyright (c) 2000-2004, Felix L. Winkelmann
-   All rights reserved.
-   Distributed free for use and modification under the terms of the BSD License
-   (See accompanying file libs/chicken/COPYRIGHT (source code distribution) or 
-   copy at http://www.opensource.org/licenses/bsd-license.php)
-
-3. Expat (http://expat.sourceforge.net)
+2. Expat (http://expat.sourceforge.net)
    Copyright (c) 1998, 1999, 2000 Thai Open Source Software Center Ltd
                                   and Clark Cooper
    Copyright (c) 2001, 2002, 2003 Expat maintainers.
@@ -45,7 +38,7 @@ This product also includes software developed by other legal entities:
    (See accompanying file libs/expat/COPYING (source code distribution) or copy 
    at http://www.opensource.org/licenses/mit-license.php)
 
-4. Argtable (http://argtable.sourceforge.net)
+3. Argtable (http://argtable.sourceforge.net)
    Copyright (C) 2003, 2004 ISP RAS
    Copyright (C) 1998, 1999, 2001 Stewart Heitmann
    You may redistribute this library under the terms of the
@@ -54,7 +47,7 @@ This product also includes software developed by other legal entities:
    (See accompanying file kernel/common/ph/COPYING (source code distribution) or
    copy at http://www.gnu.org/copyleft/library.txt).
 
-5. PostgreSQL Database Management System
+4. PostgreSQL Database Management System
    (formerly known as Postgres, then as Postgres95)
 
    Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
@@ -65,23 +58,7 @@ This product also includes software developed by other legal entities:
    is hereby granted, provided that the above copyright notice and this
    paragraph and the following two paragraphs appear in all copies.
 
-6. Xerces C++
-   Copyright 2005-2006 ISP RAS
-   Copyright 2001-2004 The Apache Software Foundation
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-  
-        http://www.apache.org/licenses/LICENSE-2.0
-   
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-
-7. Editline library (http://www.thrysoee.dk/editline)
+5. Editline library (http://www.thrysoee.dk/editline)
    Copyright (c) 1992, 1993
    The Regents of the University of California.  All rights reserved.
 
