@@ -276,7 +276,6 @@ bool inline is_next_node_attribute (xptr node)
 
 /**** Fast inline routines ****/
 
-
 inline xptr getRightSibling(xptr node)
 {
     return ((n_dsc*) XADDR(node))->rdsc;
@@ -377,6 +376,16 @@ inline n_dsc * getDescriptor(void * block, shft dsc)
     return (dsc == 0) ? NULL : (n_dsc *) ((char *) GETBLOCKBYNODE_ADDR(block) + dsc);
 }
 
+inline n_dsc * getNextDescriptor(n_dsc * dsc)
+{
+    return getDescriptor(dsc, dsc->desc_next);
+}
+
+inline n_dsc * getPrevDescriptor(n_dsc * dsc)
+{
+    return getDescriptor(dsc, dsc->desc_prev);
+}
+
 inline int getChildCountSP(const xptr node_xptr)
 {
     node_blk_hdr * block = getBlockHeader(node_xptr);
@@ -421,6 +430,43 @@ inline t_item getNodeTypeCP(xptr node)
 {
     return getBlockHeaderCP(node)->snode->type;
 }
+
+inline n_dsc* getNextDescriptorOfSameSort(n_dsc* node)
+{
+    if (node->desc_next != 0) {
+        return getNextDescriptor(node);
+    } else {
+        xptr blk = getNonemptyBlockLookFore(getBlockByNode(node)->nblk);
+        if (blk == XNULL) return NULL;
+        return getBlockHeader(blk)->getFirstNode();
+    }
+}
+
+inline xptr getNextDescriptorOfSameSortXptr(xptr nodex)
+{
+    CHECKP(nodex);
+    n_dsc * node = getNextDescriptorOfSameSort(N_DSC(nodex));
+    return (node == NULL) ? XNULL : ADDR2XPTR(node);
+}
+
+inline n_dsc* getPreviousDescriptorOfSameSort(n_dsc* node)
+{
+    if (node->desc_prev != 0) {
+        return getPrevDescriptor(node);
+    } else {
+        xptr blk = getNonemptyBlockLookBack(getBlockByNode(node)->pblk);
+        if (blk == XNULL) return NULL;
+        return getBlockHeader(blk)->getLastNode();
+    }
+}
+
+inline xptr getPreviousDescriptorOfSameSortXptr(xptr nodex)
+{
+    CHECKP(nodex);
+    n_dsc * node = getPreviousDescriptorOfSameSort(N_DSC(nodex));
+    return (node == NULL) ? XNULL : ADDR2XPTR(node);
+}
+
 
 
 //checks if the node is the descendant of one of the nodes in the vector

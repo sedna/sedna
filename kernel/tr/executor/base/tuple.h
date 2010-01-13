@@ -36,8 +36,8 @@ typedef counted_ptr<char> str_counted_ptr;
 
 /// Used in casting and serialazation to create lexical atomic tuple cell
 /// representation (through tr_globals::mem_str_buf).
-/// Size should be the same as maximum lexical representaion of any fixed size 
-/// atomic value. In general, it means the same value as used in the lexical 
+/// Size should be the same as maximum lexical representaion of any fixed size
+/// atomic value. In general, it means the same value as used in the lexical
 /// analyzer.
 
 #define MAX_ATOMIC_LEX_REPR_SIZE        2000
@@ -485,7 +485,9 @@ public:
     {
         CHECKP(node);
         if (isTextEmpty(T_DSC(node))) return EMPTY_STRING_TC;
-        return tuple_cell::atomic_pstr(xs_string, getTextSize(T_DSC(node)), getTextPtr(T_DSC(node)));
+        size_t size = (size_t) getTextSize(T_DSC(node));
+        xptr p = getTextPtr(T_DSC(node));
+        return tuple_cell::atomic_pstr(xs_string, size, p);
     }
 
     inline static tuple_cell atomic_pi(xptr node)

@@ -350,18 +350,6 @@ schema_node_xptr schema_node_object::get_first_child(const xmlns_ptr xmlns, cons
     return XNULL;
 }
 
-#define MAX_ELEMENT_CHILDREN ((int) ((PAGE_SIZE \
- /* block header    */    - sizeof(node_blk_hdr) \
- /* indirection rec */    - sizeof(xptr) \
- /* node header     */    - sizeof(e_dsc) \
-        ) / sizeof(xptr)))
-
-#define MAX_DOCUMENT_CHILDREN ((int) ((PAGE_SIZE \
- /* block header    */    - sizeof(node_blk_hdr) \
- /* indirection rec */    - sizeof(xptr) \
- /* node header     */    - sizeof(d_dsc) \
-        ) / sizeof(xptr)))
-
 schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char * name, t_item type)
 {
     if (((schema_node_object *) this->modify_self()) != this) {

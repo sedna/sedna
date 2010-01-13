@@ -169,19 +169,22 @@ xptr  getFirstByOrderChildNode(xptr source)
     return XNULL;
 }
 
+uint64_t tmp_buf[PAGE_SIZE / sizeof(uint64_t)];
+xptr * tmp_child_array = (xptr *) tmp_buf;
+
 xptr getFirstByOrderChildCP(const xptr node_xptr)
 {
     xptr * tmp;
-    vector<xptr> c;
     int n;
 
     CHECKP(node_xptr);
     getChildList(node_xptr, tmp, n);
-    c.resize(n, XNULL);
-    copy(tmp, tmp+n, c.begin());
+    memcpy(tmp_child_array, tmp, n * sizeof(xptr));
+    tmp = tmp_child_array;
 
-    for (vector<xptr>::iterator i = c.begin(); i != c.end(); i++) {
-        if (*i != XNULL && getLeftSiblingCP(*i) == XNULL) { return *i; }
+    while (n-- > 0) {
+        if (*tmp != XNULL && getLeftSiblingCP(*tmp) == XNULL) { return *tmp; }
+        tmp++;
     }
 
     return XNULL;
@@ -368,54 +371,6 @@ xptr findMedianNodeDescriptor (node_blk_hdr * block)
         i+=2;
     }
     return ADDR2XPTR(med);
-}
-n_dsc* getPreviousDescriptorOfSameSort(n_dsc* node)
-{
-    if (node->desc_prev!=0) return GETPREVIOUSDESCRIPTOR(node);
-    else
-    {
-        xptr new_block = GETBLOCKBYNODE_ADDR(node)->pblk;
-        node_blk_hdr* bl_head=(node_blk_hdr*)XADDR(new_block);
-        while (new_block!=XNULL)
-        {
-            CHECKP(new_block);
-            if (bl_head->count!=0)
-                    break;
-            new_block = bl_head->pblk;
-            bl_head=(node_blk_hdr*)XADDR(new_block);
-        }
-        if (new_block==XNULL) return NULL;
-        if (bl_head->desc_last!=0)
-            return GETPOINTERTODESC(bl_head,bl_head->desc_last);
-        else
-            throw SYSTEM_EXCEPTION("Bad Consistency: Empty block");
-    }
-}
-
-/* returns the next in document order descriptor corresponding to the same scheme node*/
-n_dsc* getNextDescriptorOfSameSort(n_dsc* node)
-{
-    if (node->desc_next!=0) return GETNEXTDESCRIPTOR(node);
-    else
-    {
-        xptr new_block = GETBLOCKBYNODE_ADDR(node)->nblk;
-        node_blk_hdr* bl_head=(node_blk_hdr*)XADDR(new_block);
-        while (new_block!=XNULL)
-        {
-            CHECKP(new_block);
-
-            if (bl_head->count!=0)
-                    break;
-            new_block = bl_head->nblk;
-            bl_head=(node_blk_hdr*)XADDR(new_block);
-        }
-        if (new_block==XNULL) return NULL;
-
-        if (bl_head->desc_first!=0)
-            return GETPOINTERTODESC(bl_head,bl_head->desc_first);
-        else
-            throw SYSTEM_EXCEPTION("Bad Consistency: Empty block");
-    }
 }
 
 /* returns the xptr to the first child of the node identified by name and type*/
@@ -679,27 +634,6 @@ xptr    getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node)
            if (isPstr(node_l)) node_a=node_l;
     }
     return ADDR2XPTR(node_a);
-}
-
-/* returns the next in document order descriptor corresponding to the same scheme node in xptr*/
-xptr getNextDescriptorOfSameSortXptr(xptr nodex)
-{
-    CHECKP(nodex);
-    n_dsc* node= (n_dsc*)XADDR(nodex);
-    node=getNextDescriptorOfSameSort(node);
-    if (node!=NULL)
-        return ADDR2XPTR(node);
-    else return XNULL;
-}
-/* returns the previous in document order descriptor corresponding to the same scheme node in xptr*/
-xptr getPreviousDescriptorOfSameSortXptr(xptr nodex)
-{
-    CHECKP(nodex);
-    n_dsc* node= (n_dsc*)XADDR(nodex);
-    node=getPreviousDescriptorOfSameSort(node);
-    if (node!=NULL)
-        return ADDR2XPTR(node);
-    else return XNULL;
 }
 
 xptr getNextSiblingOfSameSortXptr(xptr nodex)

@@ -18,6 +18,19 @@
 
 #define ISINDEXSUPPORTED(schema) schema->index_object!=NULL
 
+#define MAX_ELEMENT_CHILDREN ((int) ((PAGE_SIZE \
+ /* block header    */    - sizeof(node_blk_hdr) \
+ /* indirection rec */    - sizeof(xptr) \
+ /* node header     */    - sizeof(e_dsc) \
+        ) / sizeof(xptr)))
+
+#define MAX_DOCUMENT_CHILDREN ((int) ((PAGE_SIZE \
+ /* block header    */    - sizeof(node_blk_hdr) \
+ /* indirection rec */    - sizeof(xptr) \
+ /* node header     */    - sizeof(d_dsc) \
+        ) / sizeof(xptr)))
+
+
 /******************************
  * Namespace handling routines
  */
