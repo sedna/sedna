@@ -33,11 +33,13 @@ namespace tr_globals {
                          vmm_checkp_xptr = p;                                                    \
                          VMM_TRACE_CHECKP(vmm_checkp_xptr)                                       \
                          check_if_null_xptr(vmm_checkp_xptr);                                    \
-                         if (vmm_cur_ptr) _vmm_unmap_severe(ALIGN_ADDR(vmm_cur_ptr));            \
-                         vmm_cur_ptr = XADDR(vmm_checkp_xptr);                                   \
-                         vmm_cur_xptr = vmm_checkp_xptr;                                         \
-                         if (!TEST_XPTR(vmm_checkp_xptr)) vmm_unswap_block(vmm_checkp_xptr);     \
-                         REFRESH_LRU_STAMP(vmm_checkp_xptr)                                      \
+                         if (!same_block(vmm_checkp_xptr, vmm_cur_xptr)) {                       \
+                             if (vmm_cur_ptr) _vmm_unmap_severe(ALIGN_ADDR(vmm_cur_ptr));        \
+                             vmm_cur_ptr = XADDR(vmm_checkp_xptr);                               \
+                             vmm_cur_xptr = vmm_checkp_xptr;                                     \
+                             if (!TEST_XPTR(vmm_checkp_xptr)) vmm_unswap_block(vmm_checkp_xptr); \
+                             REFRESH_LRU_STAMP(vmm_checkp_xptr)                                  \
+                         }                                                                       \
                      }
 
 #else /* ! VMM_DEBUG_CHECKP */

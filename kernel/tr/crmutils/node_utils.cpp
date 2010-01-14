@@ -595,46 +595,39 @@ xptr* elementContainsChild(n_dsc* parent,const char* name,t_item type,xmlns_ptr 
     else
         return (xptr*)((char*)parent+(shft)size_of_node(block)+(shft)posit*((shft)sizeof(xptr)));
 }
-/* utils for persistent string library */
-xptr    getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node)
-{
+
+template < typename Iterator > static inline
+xptr getDescriptorWithPstrInThisBlock(xptr blk, xptr node) {
     CHECKP(node);
-    t_item type=GETTYPE(GETSCHEMENODEX(node));
-    if (type==element || type==xml_namespace)
-        throw SYSTEM_EXCEPTION("Wrong type of node:  either element or namespace");
-    t_dsc* node_d=(t_dsc*) XADDR(node);
-    t_dsc* node_a=node_d;
-    t_dsc* node_l;
-    while (
-           (node_l=(t_dsc*)getPreviousDescriptorOfSameSort(node_d))!=NULL &&
-           (!isPstr(node_l)||(same_block(getTextPtr(node_l), blk)))
-           )
-    {
-           node_d=node_l;
-           if (isPstr(node_l)) node_a=node_l;
+
+    if (!getBlockHeader(node)->snode->has_text()) {
+        throw SYSTEM_EXCEPTION("Wrong type of node: should be text node descendant");
     }
-    return ADDR2XPTR(node_a);
+
+    xptr p = node;
+    t_dsc * i = T_DSC(node);
+
+    while (i != NULL) {
+        i = (t_dsc *) Iterator::nextNode(i);
+
+        if (i == NULL) { break; }
+
+        if (isPstr(i)) {
+            if (!same_block(i->data.lsp.p, blk)) { break; };
+            p = addr2xptr(i);
+        }
+    }
+
+    return p;
 }
 
-xptr    getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node)
-{
-    CHECKP(node);
-    t_item type=GETTYPE(GETSCHEMENODEX(node));
-    if (type==element || type==xml_namespace)
-        throw SYSTEM_EXCEPTION("Wrong type of node:  either element or namespace");
-    t_dsc* node_d=(t_dsc*) XADDR(node);
-    t_dsc* node_a=node_d;
-    t_dsc* node_l;
-    while (
-           (node_l=(t_dsc*)getNextDescriptorOfSameSort(node_d))!=NULL &&
-           (!isPstr(node_l)||(same_block(getTextPtr(node_l), blk)))
-           )
-    {
-           node_d=node_l;
-           if (isPstr(node_l)) node_a=node_l;
-    }
-    return ADDR2XPTR(node_a);
-}
+xptr getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node) {
+    return getDescriptorWithPstrInThisBlock<NodeIteratorBackward>(blk, node);
+};
+
+xptr getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node) {
+    return getDescriptorWithPstrInThisBlock<NodeIteratorForeward>(blk, node);
+};
 
 xptr getNextSiblingOfSameSortXptr(xptr nodex)
 {

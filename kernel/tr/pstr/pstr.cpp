@@ -67,9 +67,8 @@ void pstr_blk_markup(xptr blk) {
 
 /* checks if the string of given size will fit into block */
 bool	pstr_fit_into_blk(xptr blk, shft s_size) {
-#ifndef PSTR_NO_CHECKP
     CHECKP(blk);
-#endif
+
     if(BFS(blk) >= s_size + sizeof(shft))
         return true;
     else
@@ -570,6 +569,8 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
             next_node = getNextDescriptorOfSameSortXptr(next_node);
         else
             first_iteration=false;
+
+        U_ASSERT(next_node != XNULL);
 
         CHECKP(next_node);
         /* skip descriptors without pstr data except "node" descriptor */
