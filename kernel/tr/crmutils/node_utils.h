@@ -128,11 +128,6 @@ inline xptr getChildPointerXptr(xptr node,const char* name,t_item type,xmlns_ptr
 /*returns true iff there is already attribute set with the same local name and uri*/
 xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri);
 
-/* utils for persistent string library */
-xptr    getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node);
-
-xptr    getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node);
-
 /* return the vector of schema node descandants of the current schema node*/
 void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result);
 void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun,std::vector<schema_node_xptr> &result);
@@ -166,7 +161,6 @@ inline void getSchemeChildsOrSelf(schema_node_cptr scm,const char* uri,const cha
 xptr getFirstAttributeDescendantAndFillPath(std::vector<xptr> &descstack);
 /* returns the first descandant or self of the current node that corresponds to the stated schema_node */
 xptr getFirstDescandantByScheme(xptr ancestor,schema_node_cptr scm);
-
 
 xptr getNextDescandantofSameSort (xptr ancestor,xptr node);
 /*comparison function for schema nodes*/
@@ -467,7 +461,22 @@ inline xptr getPreviousDescriptorOfSameSortXptr(xptr nodex)
     return (node == NULL) ? XNULL : ADDR2XPTR(node);
 }
 
+struct NodeIteratorForeward {
+    static inline n_dsc* nextInBlock(n_dsc* t) { return getNextDescriptor(t); }
+    static inline n_dsc* nextNode(n_dsc* t) { return getNextDescriptorOfSameSort(t); }
+    static inline xptr nextNodeCP(xptr t) { return getNextDescriptorOfSameSortXptr(t); }
+    static inline xptr nextNodeBlock(xptr t) { return getNonemptyBlockLookFore(t); }
+};
 
+struct NodeIteratorBackward {
+    static inline n_dsc* nextInBlock(n_dsc* t) { return getPrevDescriptor(t); }
+    static inline n_dsc* nextNode(n_dsc* t) { return getPreviousDescriptorOfSameSort(t); }
+    static inline xptr nextNodeCP(xptr t) { return getPreviousDescriptorOfSameSortXptr(t); }
+    static inline xptr nextNodeBlock(xptr t) { return getNonemptyBlockLookBack(t); }
+};
+
+xptr getLeftmostDescriptorWithPstrInThisBlock(xptr blk, xptr node);
+xptr getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node);
 
 //checks if the node is the descendant of one of the nodes in the vector
 bool is_scmnode_has_ancestor_or_self(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set );

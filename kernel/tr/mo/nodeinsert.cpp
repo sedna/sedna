@@ -11,7 +11,7 @@
 #include "tr/mo/indirection.h"
 #include "tr/mo/blocks.h"
 
-inline void createNID(xptr left_sibling, xptr right_sibling, xptr parent, xptr node)
+inline static void createNID(xptr left_sibling, xptr right_sibling, xptr parent, xptr node)
 {
     if (left_sibling != XNULL) {
         if (right_sibling != XNULL) {
@@ -31,7 +31,7 @@ inline void createNID(xptr left_sibling, xptr right_sibling, xptr parent, xptr n
 }
 
 
-inline void init_node(n_dsc* node, t_item ntype, xmlscm_type type) {
+inline static void init_node(n_dsc* node, t_item ntype, xmlscm_type type) {
     switch (ntype) {
     case(element) :
         ((e_dsc *) node)->type = type;
@@ -44,7 +44,18 @@ inline void init_node(n_dsc* node, t_item ntype, xmlscm_type type) {
     }
 }
 
-inline void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_brother, /*out*/ xptr &right_brother)
+template <typename Iterator> static
+xptr scanForChild(xptr p, int child_pos) {
+    xptr child;
+
+    while (p != XNULL) {
+        child = getNodeChildSafe(p, child_pos);
+        if (child != XNULL) { return child; }
+        p = Iterator::nextNodeCP(p);
+    }
+}
+
+static void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_brother, /*out*/ xptr &right_brother)
 {
     schema_node_cptr parent_snode = getBlockHeaderCP(node_info->parent)->snode;
     int child_pos = parent_snode->find_first_child(node_info->ns, node_info->name, node_info->node_type);
@@ -92,79 +103,24 @@ inline void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_bro
             }
         }
     } else {
-        xptr left_parent, right_parent;
-        n_dsc * left, * right;
+        xptr child;
 
-/* Scan parent brothers in both directions right, then left */
-
-        CHECKP(node_info->parent);
-
-        left = getDescriptor(node_info->parent, ((n_dsc *) XADDR(node_info->parent))->desc_prev);
-        right = getDescriptor(node_info->parent, ((n_dsc *) XADDR(node_info->parent))->desc_next);
-
-        if (left == NULL) {
-            left_parent = getPrevNonemptyBlock(node_info->parent);
-            left = (left_parent == XNULL) ? NULL : getBlockHeaderCP(left_parent)->getLastNode();
-        }
-        left_parent = (left == NULL) ? XNULL : ADDR2XPTR(left);
-
-        if (right == NULL) {
-            right_parent = getNextNonemptyBlock(node_info->parent);
-            right = (right_parent == XNULL) ? NULL : getBlockHeaderCP(right_parent)->getFirstNode();
-        }
-        right_parent = (right == NULL) ? XNULL : ADDR2XPTR(right);
-
-        while ((right != NULL) || (left != NULL)) {
-            if (right_parent != XNULL) {
-                CHECKP(right_parent);
-                while (right != NULL) {
-                    n_dsc * next;
-                    child = getNodeChildSafe(ADDR2XPTR(right), child_pos);
-                    if (child != XNULL) { break; }
-                    next = getDescriptor(right, right->desc_next);
-                    if (next == NULL) { break; }
-                    right = next;
-                }
-
-                if (child != XNULL) {
-    /* Child found to the right of the given parent node */
-                    right_brother = child;
-                    molog(("MOLOG right brother found hardly : 0x%llx", child.to_logical_int()));
-                    return ;
-                }
-            }
-
-            if (left_parent != XNULL) {
-                CHECKP(left_parent);
-                while (left != NULL) {
-                    n_dsc * next;
-                    child = getNodeChildSafe(ADDR2XPTR(left), child_pos);
-                    if (child != XNULL) { break; }
-                    next = getDescriptor(left, left->desc_prev);
-                    if (next == NULL) { break; }
-                    left = next;
-                }
-
-                if (child != XNULL) {
-    /* Child found to the left of the given parent node */
-                    left_parent = ADDR2XPTR(left);
-                    break;
-                }
-            }
-
-            if (right_parent != XNULL) { right_parent = getNextNonemptyBlock(right_parent); }
-            right = (right_parent == XNULL) ? NULL : getBlockHeaderCP(right_parent)->getFirstNode();
-
-            if (left_parent != XNULL) { left_parent = getPrevNonemptyBlock(left_parent); }
-            left = (left_parent == XNULL) ? NULL : getBlockHeaderCP(left_parent)->getLastNode();
-        }
-
+        child = scanForChild<NodeIteratorForeward>(node_info->parent, child_pos);
         if (child != XNULL) {
-/* Child found to the left of the given parent node, so we need to find the rightmost node of this kind that belong to this parent */
+            right_brother = child;
+            molog(("MOLOG right brother found hardly : 0x%llx", child.to_logical_int()));
+            return ;
+        }
+
+        child = scanForChild<NodeIteratorBackward>(node_info->parent, child_pos);
+        if (child != XNULL) {
+            /* Child found to the left of the given parent node, so we need to find the rightmost node of this kind that belong to this parent */
+            CHECKP(child);
+            xptr left_parent = getParentIndirection(child);
             do {
                 left_brother = child;
                 child = getNextDescriptorOfSameSortXptr(child);
-            } while (nullsafe_CHECKP(child) && (getParentCP(child) == left_parent));
+            } while (nullsafe_CHECKP(child) && (getParentIndirection(child) == left_parent));
             molog(("MOLOG left brother found hardly : 0x%llx", left_brother.to_logical_int()));
         }
     }
