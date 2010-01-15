@@ -86,6 +86,8 @@ parse_cdb_command_line(int argc, char** argv)
 }
 
 
+
+
 void 
 setup_cdb_globals(gov_config_struct* cfg)
 {
@@ -108,6 +110,20 @@ setup_cdb_globals(gov_config_struct* cfg)
    if (strcmp(sm_globals::db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
    
+   if(data_file_initial_size < 1)
+	   throw USER_EXCEPTION2(SE4601, "'data_file_init_size' parameter is incorrect (must be >= 1)");
+   if(sm_globals::tmp_file_initial_size < 1)
+	   throw USER_EXCEPTION2(SE4601, "'tmp_file_init_size' parameter is incorrect (must be >= 1)");
+   if(data_file_max_size != 0 && (data_file_max_size < 0 || data_file_max_size < data_file_initial_size))
+	   throw USER_EXCEPTION2(SE4601, "'data_file_max_size' parameter is incorrect (must be >= 1 and < data_file_initial_size, or 0 for infinite size)");
+   if(tmp_file_max_size != 0 && (tmp_file_max_size < 1 || tmp_file_max_size < sm_globals::tmp_file_initial_size))
+	   throw USER_EXCEPTION2(SE4601, "'tmp_file_max_size' parameter is incorrect (must be >= 1 and < tmp_file_initial_size, or 0 for infinite size)");
+
+   if(data_file_extending_portion < 1 || data_file_extending_portion > (data_file_max_size == 0 ? INT32_MAX : data_file_max_size ))
+	   throw USER_EXCEPTION2(SE4601, "'data_file_ext_portion' parameter is incorrect (must be >= 1 and <= data_file_max_size)");
+   if(tmp_file_extending_portion < 1 || tmp_file_extending_portion > (tmp_file_max_size == 0 ? INT32_MAX : tmp_file_max_size ))
+	   throw USER_EXCEPTION2(SE4601, "'tmp_file_ext_portion' parameter is incorrect (must be >= 1 and <= tmp_file_max_size)");
+       
    check_db_name_validness(sm_globals::db_name);
 
    if (strlen(cfg->gov_vars.SEDNA_DATA) + strlen(sm_globals::db_name) + 14 > U_MAX_PATH)
