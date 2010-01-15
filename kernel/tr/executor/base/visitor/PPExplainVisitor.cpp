@@ -5,21 +5,27 @@
 
 
 #include "common/sedna.h"
+#include "common/base.h"
+#include "common/u/uutils.h"
+
 #include "tr/executor/base/visitor/PPExplainVisitor.h"
+#include "tr/cat/catptr.h"
 #include "tr/mo/mo.h"
 
+static xmlns_ptr explain_ns = NULL_XMLNS;
 
-
-PPExplainVisitor::PPExplainVisitor() : scm(doc_schema_node_object::create(false)),
-                                       root(XNULL),
-                                       parent(XNULL),
-                                       left(XNULL),
-                                       cached(false)
+PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_) : cxt(_cxt_), 
+                                                             scm(doc_schema_node_object::create(false)),
+                                                             root(XNULL),
+                                                             parent(XNULL),
+                                                             left(XNULL),
+                                                             cached(false)
                                         
 {
     /* insert_doc_node already returns indirection */
     parent = insert_doc_node(scm, "$explain", NULL);
     root = parent;
+    explain_ns = cxt->st_cxt->get_ns_pair(SEDNA_NAMESPACE_PREFIX, SEDNA_NAMESPACE_URI);
 }
 
 PPExplainVisitor::~PPExplainVisitor() 
@@ -53,511 +59,519 @@ xptr PPExplainVisitor::result()
     return root;
 }
     
-/* Helper to insert nodes with indirection pointers */
-void PPExplainVisitor::insertElement(const char* name, xptr& left, xptr& parent)
+/* Helper to insert operation nodes */
+void PPExplainVisitor::insertOperationElement(const char* name, xptr& left, xptr& parent, PPIterator* op = NULL)
 {
     if(!cached)
     {
         U_ASSERT(parent != XNULL);
-    
         elog(EL_DBG, ("[EXPLAIN] Going to insert element '%s', parent (0x%x, 0x%x), left (0x%x, 0x%x)", name, 
                                                                parent.layer, parent.addr, 
                                                                left.layer, left.addr));
-                                                               
-        left = insert_element(indirectionDereferenceCP(left),
-                              XNULL,
-                              indirectionDereferenceCP(parent),
-                              name,
-                              xs_untyped,
-                              NULL_XMLNS);
-        left = getIndirectionSafeCP(left);
+        left = insert_element_i(left,XNULL,parent,"operation",xs_untyped,explain_ns);
+        xptr attr_left = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic, name, strlen(name), explain_ns);
+
+        if(NULL != op) 
+        {
+            char buf[20];
+            if(op->get_operation_info().query_line != 0)
+            {
+                u_itoa(op->get_operation_info().query_line,buf,10);
+                attr_left = insert_attribute_i(attr_left,XNULL,left,"line",xs_untypedAtomic,buf,strlen(buf),explain_ns);
+            }
+            if(op->get_operation_info().query_col != 0)
+            {
+                u_itoa(op->get_operation_info().query_col,buf,10);
+                attr_left = insert_attribute_i(attr_left,XNULL,left,"column",xs_untypedAtomic,buf,strlen(buf),explain_ns);
+            }
+        }
     }
 }
 
 
 void PPExplainVisitor::visit(PPDmStringValue* op)
 {
-    insertElement("PPDmStringValue", left, parent);
+    insertOperationElement("PPDmStringValue", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPDmTypedValue* op)
 {
-    insertElement("PPDmTypedValue", left, parent);
+    insertOperationElement("PPDmTypedValue", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPDmNodeKind* op)
 {
-    insertElement("PPDmNodeKind", left, parent);
+    insertOperationElement("PPDmNodeKind", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNodeName* op)
 {
-    insertElement("PPFnNodeName", left, parent);
+    insertOperationElement("PPFnNodeName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNilled* op)
 {
-    insertElement("PPFnNilled", left, parent);
+    insertOperationElement("PPFnNilled", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnString* op)
 {
-    insertElement("PPFnString", left, parent);
+    insertOperationElement("PPFnString", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnData* op)
 {
-    insertElement("PPFnData", left, parent);
+    insertOperationElement("PPFnData", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnBaseURI* op)
 {
-    insertElement("PPFnBaseURI", left, parent);
+    insertOperationElement("PPFnBaseURI", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDocumentURI* op)
 {
-    insertElement("PPFnDocumentURI", left, parent);
+    insertOperationElement("PPFnDocumentURI", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnStaticBaseUri* op)
 {
-    insertElement("PPFnStaticBaseUri", left, parent);
+    insertOperationElement("PPFnStaticBaseUri", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDefaultCollation* op)
 {
-    insertElement("PPFnDefaultCollation", left, parent);
+    insertOperationElement("PPFnDefaultCollation", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnCount* op)
 {
-    insertElement("PPFnCount", left, parent);
+    insertOperationElement("PPFnCount", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnMaxMin* op)
 {
-    insertElement("PPFnMaxMin", left, parent);
+    insertOperationElement("PPFnMaxMin", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnSumAvg* op)
 {
-    insertElement("PPFnSumAvg", left, parent);
+    insertOperationElement("PPFnSumAvg", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAbsPath* op)
 {
-    insertElement("PPAbsPath", left, parent);
+    insertOperationElement("PPAbsPath", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisAncestor* op)
 {
-    insertElement("PPAxisAncestor", left, parent);
+    insertOperationElement("PPAxisAncestor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisAncestorOrSelf* op)
 {
-    insertElement("PPAxisAncestorOrSelf", left, parent);
+    insertOperationElement("PPAxisAncestorOrSelf", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisAttribute* op)
 {
-    insertElement("PPAxisAttribute", left, parent);
+    insertOperationElement("PPAxisAttribute", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisChild* op)
 {
-    insertElement("PPAxisChild", left, parent);
+    insertOperationElement("PPAxisChild", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisDescendant* op)
 {
-    insertElement("PPAxisDescendant", left, parent);
+    insertOperationElement("PPAxisDescendant", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisDescendantOrSelf* op)
 {
-    insertElement("PPAxisDescendantOrSelf", left, parent);
+    insertOperationElement("PPAxisDescendantOrSelf", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisDescendantAttr* op)
 {
-    insertElement("PPAxisDescendantAttr", left, parent);
+    insertOperationElement("PPAxisDescendantAttr", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisFP* op)
 {
-    insertElement("PPAxisFP", left, parent);
+    insertOperationElement("PPAxisFP", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisParent* op)
 {
-    insertElement("PPAxisParent", left, parent);
+    insertOperationElement("PPAxisParent", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisSelf* op)
 {
-    insertElement("PPAxisSelf", left, parent);
+    insertOperationElement("PPAxisSelf", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAxisSibling* op)
 {
-    insertElement("PPAxisSibling", left, parent);
+    insertOperationElement("PPAxisSibling", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPPred1* op)
 {
-    insertElement("PPPred1", left, parent);
+    insertOperationElement("PPPred1", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPPred2* op)
 {
-    insertElement("PPPred2", left, parent);
+    insertOperationElement("PPPred2", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnTrue* op)
 {
-    insertElement("PPFnTrue", left, parent);
+    insertOperationElement("PPFnTrue", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnFalse* op)
 {
-    insertElement("PPFnFalse", left, parent);
+    insertOperationElement("PPFnFalse", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNot* op)
 {
-    insertElement("PPFnNot", left, parent);
+    insertOperationElement("PPFnNot", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnBoolean* op)
 {
-    insertElement("PPFnBoolean", left, parent);
+    insertOperationElement("PPFnBoolean", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPCalculate* op)
 {
-    insertElement("PPCalculate", left, parent);
+    insertOperationElement("PPCalculate", left, parent, op);
 }
 
 void PPExplainVisitor::visit(UnaryOp* op)
 {
-    insertElement("UnaryOp", left, parent);
+    insertOperationElement("UnaryOp", left, parent);
 }
 
 void PPExplainVisitor::visit(BinaryOp* op)
 {
-    insertElement("BinaryOp", left, parent);
+    insertOperationElement("BinaryOp", left, parent);
 }
 
 void PPExplainVisitor::visit(BinaryOpCollation* op)
 {
-    insertElement("BinaryOpCollation", left, parent);
+    insertOperationElement("BinaryOpCollation", left, parent);
 }
 
 void PPExplainVisitor::visit(BinaryOpAnd* op)
 {
-    insertElement("BinaryOpAnd", left, parent);
+    insertOperationElement("BinaryOpAnd", left, parent);
 }
 
 void PPExplainVisitor::visit(BinaryOpOr* op)
 {
-    insertElement("BinaryOpOr", left, parent);
+    insertOperationElement("BinaryOpOr", left, parent);
 }
 
 void PPExplainVisitor::visit(LeafAtomOp* op)
 {
-    insertElement("LeafAtomOp", left, parent);
+    insertOperationElement("LeafAtomOp", left, parent);
 }
 
 void PPExplainVisitor::visit(LeafEffectBoolOp* op)
 {
-    insertElement("LeafEffectBoolOp", left, parent);
+    insertOperationElement("LeafEffectBoolOp", left, parent);
 }
 
 void PPExplainVisitor::visit(PPElementConstructor* op)
 {
-    insertElement("PPElementConstructor", left, parent);
+    insertOperationElement("PPElementConstructor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPAttributeConstructor* op)
 {
-    insertElement("PPAttributeConstructor", left, parent);
+    insertOperationElement("PPAttributeConstructor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPNamespaceConstructor* op)
 {
-    insertElement("PPNamespaceConstructor", left, parent);
+    insertOperationElement("PPNamespaceConstructor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPCommentConstructor* op)
 {
-    insertElement("PPCommentConstructor", left, parent);
+    insertOperationElement("PPCommentConstructor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPTextConstructor* op)
 {
-    insertElement("PPTextConstructor", left, parent);
+    insertOperationElement("PPTextConstructor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPDocumentConstructor* op)
 {
-    insertElement("PPDocumentConstructor", left, parent);
+    insertOperationElement("PPDocumentConstructor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPPIConstructor* op)
 {
-    insertElement("PPPIConstructor", left, parent);
+    insertOperationElement("PPPIConstructor", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnError* op)
 {
-    insertElement("PPFnError", left, parent);
+    insertOperationElement("PPFnError", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnTrace* op)
 {
-    insertElement("PPFnTrace", left, parent);
+    insertOperationElement("PPFnTrace", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPDebug* op)
 {
-    insertElement("PPDebug", left, parent);
+    insertOperationElement("PPDebug", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPExcept* op)
 {
-    insertElement("PPExcept", left, parent);
+    insertOperationElement("PPExcept", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPUnion* op)
 {
-    insertElement("PPUnion", left, parent);
+    insertOperationElement("PPUnion", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPIntersect* op)
 {
-    insertElement("PPIntersect", left, parent);
+    insertOperationElement("PPIntersect", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDeepEqual* op)
 {
-    insertElement("PPFnDeepEqual", left, parent);
+    insertOperationElement("PPFnDeepEqual", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDocAvailable* op)
 {
-    insertElement("PPFnDocAvailable", left, parent);
+    insertOperationElement("PPFnDocAvailable", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPRange* op)
 {
-    insertElement("PPRange", left, parent);
+    insertOperationElement("PPRange", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSequence* op)
 {
-    insertElement("PPSequence", left, parent);
+    insertOperationElement("PPSequence", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSpaceSequence* op)
 {
-    insertElement("PPSpaceSequence", left, parent);
+    insertOperationElement("PPSpaceSequence", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnEmpty* op)
 {
-    insertElement("PPFnEmpty", left, parent);
+    insertOperationElement("PPFnEmpty", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnExists* op)
 {
-    insertElement("PPFnExists", left, parent);
+    insertOperationElement("PPFnExists", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnItemAt* op)
 {
-    insertElement("PPFnItemAt", left, parent);
+    insertOperationElement("PPFnItemAt", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDistinctValues* op)
 {
-    insertElement("PPFnDistinctValues", left, parent);
+    insertOperationElement("PPFnDistinctValues", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnIndexOf* op)
 {
-    insertElement("PPFnIndexOf", left, parent);
+    insertOperationElement("PPFnIndexOf", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnReverse* op)
 {
-    insertElement("PPFnReverse", left, parent);
+    insertOperationElement("PPFnReverse", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnSubsequence* op)
 {
-    insertElement("PPFnSubsequence", left, parent);
+    insertOperationElement("PPFnSubsequence", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnRemove* op)
 {
-    insertElement("PPFnRemove", left, parent);
+    insertOperationElement("PPFnRemove", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnInsertBefore* op)
 {
-    insertElement("PPFnInsertBefore", left, parent);
+    insertOperationElement("PPFnInsertBefore", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnZeroOrOne* op)
 {
-    insertElement("PPFnZeroOrOne", left, parent);
+    insertOperationElement("PPFnZeroOrOne", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnOneOrMore* op)
 {
-    insertElement("PPFnOneOrMore", left, parent);
+    insertOperationElement("PPFnOneOrMore", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnExactlyOne* op)
 {
-    insertElement("PPFnExactlyOne", left, parent);
+    insertOperationElement("PPFnExactlyOne", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDateTimeFuncNoParam* op)
 {
-    insertElement("PPFnDateTimeFuncNoParam", left, parent);
+    insertOperationElement("PPFnDateTimeFuncNoParam", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDateTimeFunc* op)
 {
-    insertElement("PPFnDateTimeFunc", left, parent);
+    insertOperationElement("PPFnDateTimeFunc", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnDateTimeFunc2Params* op)
 {
-    insertElement("PPFnDateTimeFunc2Params", left, parent);
+    insertOperationElement("PPFnDateTimeFunc2Params", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPADFilter* op)
 {
-    insertElement("PPADFilter", left, parent);
+    insertOperationElement("PPADFilter", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPDAFilter* op)
 {
-    insertElement("PPDAFilter", left, parent);
+    insertOperationElement("PPDAFilter", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFilterEL* op)
 {
-    insertElement("PPFilterEL", left, parent);
+    insertOperationElement("PPFilterEL", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPCheckpoint* op)
 {
-    insertElement("PPCheckpoint", left, parent);
+    insertOperationElement("PPCheckpoint", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPTest* op)
 {
-    insertElement("PPTest", left, parent);
+    insertOperationElement("PPTest", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPConst* op)
 {
-    insertElement("PPConst", left, parent);
+    insertOperationElement("PPConst", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPDDO* op)
 {
-    insertElement("PPDDO", left, parent);
+    insertOperationElement("PPDDO", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSXptr* op)
 {
-    insertElement("PPSXptr", left, parent);
+    insertOperationElement("PPSXptr", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPDocInCol* op)
 {
-    insertElement("PPDocInCol", left, parent);
+    insertOperationElement("PPDocInCol", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPExtFunCall* op)
 {
-    insertElement("PPExtFunCall", left, parent);
+    insertOperationElement("PPExtFunCall", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnGetProperty* op)
 {
-    insertElement("PPFnGetProperty", left, parent);
+    insertOperationElement("PPFnGetProperty", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPIndexScan* op)
 {
-    insertElement("PPIndexScan", left, parent);
+    insertOperationElement("PPIndexScan", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPLast* op)
 {
-    insertElement("PPLast", left, parent);
+    insertOperationElement("PPLast", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPNil* op)
 {
-    insertElement("PPNil", left, parent);
+    insertOperationElement("PPNil", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPScan* op)
 {
-    insertElement("PPScan", left, parent);
+    insertOperationElement("PPScan", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSelect* op)
 {
-    insertElement("PPSelect", left, parent);
+    insertOperationElement("PPSelect", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSeqChecker* op)
 {
-    insertElement("PPSeqChecker", left, parent);
+    insertOperationElement("PPSeqChecker", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPStore* op)
 {
-    insertElement("PPStore", left, parent);
+    insertOperationElement("PPStore", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPTuple* op)
 {
-    insertElement("PPTuple", left, parent);
+    insertOperationElement("PPTuple", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPUp* op)
 {
-    insertElement("PPUp", left, parent);
+    insertOperationElement("PPUp", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPVarDecl* op)
 {
-    insertElement("PPVarDecl", left, parent);
+    insertOperationElement("PPVarDecl", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPVariable* op)
 {
-    insertElement("PPVariable", left, parent);
+    insertOperationElement("PPVariable", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPGlobalVariable* op)
 {
-    insertElement("PPGlobalVariable", left, parent);
+    insertOperationElement("PPGlobalVariable", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPXptr* op)
 {
-    insertElement("PPXptr", left, parent);
+    insertOperationElement("PPXptr", left, parent, op);
 }
 
 
@@ -565,11 +579,11 @@ void PPExplainVisitor::visit(PPXptr* op)
 #ifdef SE_ENABLE_DTSEARCH
 void PPExplainVisitor::visit(PPFtHighlight* op)
 {
-    insertElement("PPFtHighlight", left, parent);
+    insertOperationElement("PPFtHighlight", left, parent, op);
 }
 void PPExplainVisitor::visit(PPFtScan* op)
 {
-    insertElement("PPFtScan", left, parent);
+    insertOperationElement("PPFtScan", left, parent, op);
 }
 #endif /* SE_ENABLE_DTSEARCH */
 
@@ -578,11 +592,11 @@ void PPExplainVisitor::visit(PPFtScan* op)
 #ifdef SE_ENABLE_FTSEARCH
 void PPExplainVisitor::visit(PPFtIndexScan* op)
 {
-    insertElement("PPFtIndexScan", left, parent);
+    insertOperationElement("PPFtIndexScan", left, parent, op);
 }
 void PPExplainVisitor::visit(PPFtIndexScan2* op)
 {
-    insertElement("PPFtIndexScan2", left, parent);
+    insertOperationElement("PPFtIndexScan2", left, parent, op);
 }
 #endif /* SE_ENABLE_FTSEARCH */
 
@@ -590,162 +604,162 @@ void PPExplainVisitor::visit(PPFtIndexScan2* op)
 
 void PPExplainVisitor::visit(PPFunCall* op)
 {
-    insertElement("PPFunCall", left, parent);
+    insertOperationElement("PPFunCall", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPGeneralComparison* op)
 {
-    insertElement("PPGeneralComparison", left, parent);
+    insertOperationElement("PPGeneralComparison", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPLMGeneralComparison* op)
 {
-    insertElement("PPLMGeneralComparison", left, parent);
+    insertOperationElement("PPLMGeneralComparison", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPNEQGeneralComparison* op)
 {
-    insertElement("PPNEQGeneralComparison", left, parent);
+    insertOperationElement("PPNEQGeneralComparison", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPEQLGeneralComparison* op)
 {
-    insertElement("PPEQLGeneralComparison", left, parent);
+    insertOperationElement("PPEQLGeneralComparison", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPNodeComparison* op)
 {
-    insertElement("PPNodeComparison", left, parent);
+    insertOperationElement("PPNodeComparison", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPIf* op)
 {
-    insertElement("PPIf", left, parent);
+    insertOperationElement("PPIf", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPLet* op)
 {
-    insertElement("PPLet", left, parent);
+    insertOperationElement("PPLet", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPOrderBy* op)
 {
-    insertElement("PPOrderBy", left, parent);
+    insertOperationElement("PPOrderBy", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSTuple* op)
 {
-    insertElement("PPSTuple", left, parent);
+    insertOperationElement("PPSTuple", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSLet* op)
 {
-    insertElement("PPSLet", left, parent);
+    insertOperationElement("PPSLet", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPReturn* op)
 {
-    insertElement("PPReturn", left, parent);
+    insertOperationElement("PPReturn", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnName* op)
 {
-    insertElement("PPFnName", left, parent);
+    insertOperationElement("PPFnName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnLocalName* op)
 {
-    insertElement("PPFnLocalName", left, parent);
+    insertOperationElement("PPFnLocalName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNamespaceUri* op)
 {
-    insertElement("PPFnNamespaceUri", left, parent);
+    insertOperationElement("PPFnNamespaceUri", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNumber* op)
 {
-    insertElement("PPFnNumber", left, parent);
+    insertOperationElement("PPFnNumber", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnRoot* op)
 {
-    insertElement("PPFnRoot", left, parent);
+    insertOperationElement("PPFnRoot", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPNumericFuncs* op)
 {
-    insertElement("PPNumericFuncs", left, parent);
+    insertOperationElement("PPNumericFuncs", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnRoundHalfToEven* op)
 {
-    insertElement("PPFnRoundHalfToEven", left, parent);
+    insertOperationElement("PPFnRoundHalfToEven", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPPatMatch* op)
 {
-    insertElement("PPPatMatch", left, parent);
+    insertOperationElement("PPPatMatch", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnResolveQName* op)
 {
-    insertElement("PPFnResolveQName", left, parent);
+    insertOperationElement("PPFnResolveQName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnQName* op)
 {
-    insertElement("PPFnQName", left, parent);
+    insertOperationElement("PPFnQName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnPrefixFromQName* op)
 {
-    insertElement("PPFnPrefixFromQName", left, parent);
+    insertOperationElement("PPFnPrefixFromQName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnLocalNameFromQName* op)
 {
-    insertElement("PPFnLocalNameFromQName", left, parent);
+    insertOperationElement("PPFnLocalNameFromQName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNamespaceUriFromQName* op)
 {
-    insertElement("PPFnNamespaceUriFromQName", left, parent);
+    insertOperationElement("PPFnNamespaceUriFromQName", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNamespaceUriForPrefix* op)
 {
-    insertElement("PPFnNamespaceUriForPrefix", left, parent);
+    insertOperationElement("PPFnNamespaceUriForPrefix", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnInScopePrefixes* op)
 {
-    insertElement("PPFnInScopePrefixes", left, parent);
+    insertOperationElement("PPFnInScopePrefixes", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPCast* op)
 {
-    insertElement("PPCast", left, parent);
+    insertOperationElement("PPCast", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPCastable* op)
 {
-    insertElement("PPCastable", left, parent);
+    insertOperationElement("PPCastable", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPTreat* op)
 {
-    insertElement("PPTreat", left, parent);
+    insertOperationElement("PPTreat", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPTypeswitch* op)
 {
-    insertElement("PPTypeswitch", left, parent);
+    insertOperationElement("PPTypeswitch", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPInstanceOf* op)
 {
-    insertElement("PPInstanceOf", left, parent);
+    insertOperationElement("PPInstanceOf", left, parent, op);
 }
 
 
@@ -753,27 +767,27 @@ void PPExplainVisitor::visit(PPInstanceOf* op)
 #ifdef SQL_CONNECTION
 void PPExplainVisitor::visit(PPFnSQLConnect* op)
 {
-    insertElement("PPFnSQLConnect", left, parent);
+    insertOperationElement("PPFnSQLConnect", left, parent, op);
 }
 void PPExplainVisitor::visit(PPFnSQLExecute* op)
 {
-    insertElement("PPFnSQLExecute", left, parent);
+    insertOperationElement("PPFnSQLExecute", left, parent, op);
 }
 void PPExplainVisitor::visit(PPFnSQLPrepare* op)
 {
-    insertElement("PPFnSQLPrepare", left, parent);
+    insertOperationElement("PPFnSQLPrepare", left, parent, op);
 }
 void PPExplainVisitor::visit(PPFnSQLClose* op)
 {
-    insertElement("PPFnSQLClose", left, parent);
+    insertOperationElement("PPFnSQLClose", left, parent, op);
 }
 void PPExplainVisitor::visit(PPFnSQLCommit* op)
 {
-    insertElement("PPFnSQLCommit", left, parent);
+    insertOperationElement("PPFnSQLCommit", left, parent, op);
 }
 void PPExplainVisitor::visit(PPFnSQLRollback* op)
 {
-    insertElement("PPFnSQLRollback", left, parent);
+    insertOperationElement("PPFnSQLRollback", left, parent, op);
 }
 #endif /* SQL_CONNECTION */
 
@@ -781,246 +795,251 @@ void PPExplainVisitor::visit(PPFnSQLRollback* op)
 
 void PPExplainVisitor::visit(PPFnConcat* op)
 {
-    insertElement("PPFnConcat", left, parent);
+    insertOperationElement("PPFnConcat", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnStringJoin* op)
 {
-    insertElement("PPFnStringJoin", left, parent);
+    insertOperationElement("PPFnStringJoin", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnStartsEndsWith* op)
 {
-    insertElement("PPFnStartsEndsWith", left, parent);
+    insertOperationElement("PPFnStartsEndsWith", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnStringLength* op)
 {
-    insertElement("PPFnStringLength", left, parent);
+    insertOperationElement("PPFnStringLength", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNormalizeSpace* op)
 {
-    insertElement("PPFnNormalizeSpace", left, parent);
+    insertOperationElement("PPFnNormalizeSpace", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnNormalizeUnicode* op)
 {
-    insertElement("PPFnNormalizeUnicode", left, parent);
+    insertOperationElement("PPFnNormalizeUnicode", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnString2CodePoints* op)
 {
-    insertElement("PPFnString2CodePoints", left, parent);
+    insertOperationElement("PPFnString2CodePoints", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnCodePoints2String* op)
 {
-    insertElement("PPFnCodePoints2String", left, parent);
+    insertOperationElement("PPFnCodePoints2String", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnTranslate* op)
 {
-    insertElement("PPFnTranslate", left, parent);
+    insertOperationElement("PPFnTranslate", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnChangeCase* op)
 {
-    insertElement("PPFnChangeCase", left, parent);
+    insertOperationElement("PPFnChangeCase", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnSubsBeforeAfter* op)
 {
-    insertElement("PPFnSubsBeforeAfter", left, parent);
+    insertOperationElement("PPFnSubsBeforeAfter", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnSubstring* op)
 {
-    insertElement("PPFnSubstring", left, parent);
+    insertOperationElement("PPFnSubstring", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnCompare* op)
 {
-    insertElement("PPFnCompare", left, parent);
+    insertOperationElement("PPFnCompare", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSubsMatch* op)
 {
-    insertElement("PPSubsMatch", left, parent);
+    insertOperationElement("PPSubsMatch", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnUriEncoding* op)
 {
-    insertElement("PPFnUriEncoding", left, parent);
+    insertOperationElement("PPFnUriEncoding", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPFnResolveUri* op)
 {
-    insertElement("PPFnResolveUri", left, parent);
+    insertOperationElement("PPFnResolveUri", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPQueryRoot* op)
 {
-    insertElement("PPQueryRoot", left, parent);
+    insertOperationElement("PPQueryRoot", left, parent);
 }
 
 void PPExplainVisitor::visit(PPBulkLoad* op)
 {
-    insertElement("PPBulkLoad", left, parent);
-}
-
-void PPExplainVisitor::visit(PPCreateFtIndex* op)
-{
-    insertElement("PPCreateFtIndex", left, parent);
+    insertOperationElement("PPBulkLoad", left, parent);
 }
 
 void PPExplainVisitor::visit(PPCreateIndex* op)
 {
-    insertElement("PPCreateIndex", left, parent);
+    insertOperationElement("PPCreateIndex", left, parent);
 }
 
 void PPExplainVisitor::visit(PPCreateDocument* op)
 {
-    insertElement("PPCreateDocument", left, parent);
+    insertOperationElement("PPCreateDocument", left, parent);
 }
 
 void PPExplainVisitor::visit(PPCreateCollection* op)
 {
-    insertElement("PPCreateCollection", left, parent);
+    insertOperationElement("PPCreateCollection", left, parent);
 }
 
 void PPExplainVisitor::visit(PPCreateDocumentInCollection* op)
 {
-    insertElement("PPCreateDocumentInCollection", left, parent);
+    insertOperationElement("PPCreateDocumentInCollection", left, parent);
 }
 
+#ifdef SE_ENABLE_TRIGGERS
 void PPExplainVisitor::visit(PPCreateTrigger* op)
 {
-    insertElement("PPCreateTrigger", left, parent);
+    insertOperationElement("PPCreateTrigger", left, parent);
 }
+void PPExplainVisitor::visit(PPDropTrigger* op)
+{
+    insertOperationElement("PPDropTrigger", left, parent);
+}
+#endif
+
 
 void PPExplainVisitor::visit(PPDeleteDeep* op)
 {
-    insertElement("PPDeleteDeep", left, parent);
+    insertOperationElement("PPDeleteDeep", left, parent);
 }
 
 void PPExplainVisitor::visit(PPDeleteUndeep* op)
 {
-    insertElement("PPDeleteUndeep", left, parent);
+    insertOperationElement("PPDeleteUndeep", left, parent);
 }
 
+
+#ifdef SE_ENABLE_FTSEARCH
+void PPExplainVisitor::visit(PPCreateFtIndex* op)
+{
+    insertOperationElement("PPCreateFtIndex", left, parent);
+}
 void PPExplainVisitor::visit(PPDropFtIndex* op)
 {
-    insertElement("PPDropFtIndex", left, parent);
+    insertOperationElement("PPDropFtIndex", left, parent);
 }
+#endif
+
 
 void PPExplainVisitor::visit(PPDropIndex* op)
 {
-    insertElement("PPDropIndex", left, parent);
+    insertOperationElement("PPDropIndex", left, parent);
 }
 
 void PPExplainVisitor::visit(PPDropDocument* op)
 {
-    insertElement("PPDropDocument", left, parent);
+    insertOperationElement("PPDropDocument", left, parent);
 }
 
 void PPExplainVisitor::visit(PPDropCollection* op)
 {
-    insertElement("PPDropCollection", left, parent);
+    insertOperationElement("PPDropCollection", left, parent);
 }
 
 void PPExplainVisitor::visit(PPDropDocumentInCollection* op)
 {
-    insertElement("PPDropDocumentInCollection", left, parent);
+    insertOperationElement("PPDropDocumentInCollection", left, parent);
 }
 
 void PPExplainVisitor::visit(PPLoadModule* op)
 {
-    insertElement("PPLoadModule", left, parent);
+    insertOperationElement("PPLoadModule", left, parent);
 }
 
 void PPExplainVisitor::visit(PPDropModule* op)
 {
-    insertElement("PPDropModule", left, parent);
-}
-
-void PPExplainVisitor::visit(PPDropTrigger* op)
-{
-    insertElement("PPDropTrigger", left, parent);
+    insertOperationElement("PPDropModule", left, parent);
 }
 
 void PPExplainVisitor::visit(PPInsertTo* op)
 {
-    insertElement("PPInsertTo", left, parent);
+    insertOperationElement("PPInsertTo", left, parent);
 }
 
 void PPExplainVisitor::visit(PPInsertBefore* op)
 {
-    insertElement("PPInsertBefore", left, parent);
+    insertOperationElement("PPInsertBefore", left, parent);
 }
 
 void PPExplainVisitor::visit(PPInsertFollowing* op)
 {
-    insertElement("PPInsertFollowing", left, parent);
+    insertOperationElement("PPInsertFollowing", left, parent);
 }
 
 void PPExplainVisitor::visit(PPRename* op)
 {
-    insertElement("PPRename", left, parent);
+    insertOperationElement("PPRename", left, parent);
 }
 
 void PPExplainVisitor::visit(PPReplace* op)
 {
-    insertElement("PPReplace", left, parent);
+    insertOperationElement("PPReplace", left, parent);
 }
 
 void PPExplainVisitor::visit(PPRetrieveDS* op)
 {
-    insertElement("PPRetrieveDS", left, parent);
+    insertOperationElement("PPRetrieveDS", left, parent);
 }
 
 void PPExplainVisitor::visit(PPRetrieveMetadata* op)
 {
-    insertElement("PPRetrieveMetadata", left, parent);
+    insertOperationElement("PPRetrieveMetadata", left, parent);
 }
 
 void PPExplainVisitor::visit(PPCreateUser* op)
 {
-    insertElement("PPCreateUser", left, parent);
+    insertOperationElement("PPCreateUser", left, parent);
 }
 
 void PPExplainVisitor::visit(PPDropUser* op)
 {
-    insertElement("PPDropUser", left, parent);
+    insertOperationElement("PPDropUser", left, parent);
 }
 
 void PPExplainVisitor::visit(PPAlterUser* op)
 {
-    insertElement("PPAlterUser", left, parent);
+    insertOperationElement("PPAlterUser", left, parent);
 }
 
 void PPExplainVisitor::visit(PPCreateRole* op)
 {
-    insertElement("PPCreateRole", left, parent);
+    insertOperationElement("PPCreateRole", left, parent);
 }
 
 void PPExplainVisitor::visit(PPDropRole* op)
 {
-    insertElement("PPDropRole", left, parent);
+    insertOperationElement("PPDropRole", left, parent);
 }
 
 void PPExplainVisitor::visit(PPGrantRole* op)
 {
-    insertElement("PPGrantRole", left, parent);
+    insertOperationElement("PPGrantRole", left, parent);
 }
 
 void PPExplainVisitor::visit(PPGrantRevokePriv* op)
 {
-    insertElement("PPGrantRevokePriv", left, parent);
+    insertOperationElement("PPGrantRevokePriv", left, parent);
 }
 
 void PPExplainVisitor::visit(PPRevokeRole* op)
 {
-    insertElement("PPRevokeRole", left, parent);
+    insertOperationElement("PPRevokeRole", left, parent);
 }
 

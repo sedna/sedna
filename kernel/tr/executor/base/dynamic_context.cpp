@@ -4,6 +4,7 @@
  */
 
 #include "common/sedna.h"
+#include "common/base.h"
 
 #include "tr/executor/base/dynamic_context.h"
 #include "tr/executor/base/PPBase.h"
@@ -64,7 +65,7 @@ static_context::static_context()
     tmp=xmlns_touch("local", "http://www.w3.org/2005/xquery-local-functions");
     insc_ns["local"].push_back(tmp);
     ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-    tmp=xmlns_touch("se", "http://www.modis.ispras.ru/sedna");
+    tmp=xmlns_touch(SEDNA_NAMESPACE_PREFIX, SEDNA_NAMESPACE_URI);
     insc_ns["se"].push_back(tmp);
     ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
 

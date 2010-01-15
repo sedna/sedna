@@ -126,8 +126,8 @@ cleanup_db_and_check_result()
 {
     if(cleanup_db(sm_globals::db_name) == 2) {
         fprintf(stderr, "Cannot complete cleanup. Please stop Sedna and remove the following:\n");
-        fprintf(stderr, "file   -  /cfg/%s_cfg.xml\n");
-        fprintf(stderr, "folder -  /data/%s_files\n");
+        fprintf(stderr, "file   -  /cfg/%s_cfg.xml\n", sm_globals::db_name);
+        fprintf(stderr, "folder -  /data/%s_files\n", sm_globals::db_name);
         fprintf(stderr, "Sorry for inconvenience.\n");
     }
 }
