@@ -70,35 +70,7 @@ inline	char*	HH_ADDR(xptr p, int i)	{
 inline	char*	SS_ADDR(xptr p)	{
 						return ((char*)XADDR(p) + sizeof(struct vmm_sm_blk_hdr) + 6*sizeof(shft) + HHMAXSIZE*sizeof(hh_slot));
 }
-//#endif
 
-/* obsolete */
-/*
-#define PSTRBLK_BODY(p)	((char*)XADDR(p) + sizeof(struct vmm_sm_blk_hdr))
-#define	SITB_ADDR(p)	PSTRBLK_BODY(p)
-#define	SITB(p)			(*(shft*)SITB_ADDR(p))
-#define SITH_ADDR(p)	(PSTRBLK_BODY(p) + sizeof(shft))
-#define SITH(p)			(*(shft*)SITH_ADDR(p))
-#define SSB_ADDR(p)		(PSTRBLK_BODY(p) + 2*sizeof(shft))
-#define SSB(p)			(*(shft*)SSB_ADDR(p))
-#define BFS_ADDR(p)		(PSTRBLK_BODY(p) + 3*sizeof(shft))
-#define	BFS(p)			(*(shft*)BFS_ADDR(p))
-#define HHSIZE_ADDR(p)	(PSTRBLK_BODY(p) + 4*sizeof(shft))
-#define	HHSIZE(p)		(*(shft*)HHSIZE_ADDR(p))
-#define HH_ADDR(p,i)	(PSTRBLK_BODY(p) + 5*sizeof(shft) + (i)*sizeof(hh_slot))
-#define SS_ADDR(p)		(HH_ADDR(p, 0) + HHMAXSIZE*sizeof(hh_slot))
-*/
-
-/* debug
-inline char* HH_ADDR(xptr p,int i)
-{
-	char* res=HH_ADDR1(p,i);
-	if (res-XADDR(p)>PAGE_SIZE-sizeof(hh_slot) || res<XADDR(p))
-	{
-		throw CharismaException("");
-	}
-	 return res;
-}*/
 
 #define	PSTR_EMPTY_SLOT	(shft)0
 

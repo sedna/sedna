@@ -10,7 +10,6 @@
 #include "tr/structures/metadata.h"
 #include "tr/structures/schema.h"
 #include "tr/idx/index_data.h"
-#include "tr/mo/mo.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/pstr/pstr.h"
 #include "tr/pstr/pstr_long.h"
@@ -1013,35 +1012,6 @@ void sxml_print_descriptive_schema_col(const char * colname, se_ostream& crmout)
     crmout << "))";    // end-tag for </XML_DESCRIPTIVE_SCHEMA> and *TOP*
 }
 
-/* prints the list of metadata features*/
-void print_metadata(se_ostream& crmout)
-{
-    crmout << "<?xml version=\"1.0\" standalone=\"yes\"?>";
-    crmout << "\n<METADATA>";
-
-    metadata_cell_cptr mdc = XNULL;
-    catalog_iterator it(catobj_metadata);
-
-    while (it.next())
-    {
-        mdc = it.get_object();
-
-        if (!mdc->is_doc)
-        {
-            crmout<<"\n <Collection name=\""<<mdc->name<<"\">";
-            printSimpleDebugInfo(mdc->snode,crmout);
-            crmout<<"\n </Collection>";
-        }
-        else
-        {
-            crmout<<"\n<Document name=\""<<mdc->name<<"\"";
-            crmout<<">";
-            printSimpleDebugInfo(mdc->snode,crmout);
-            crmout<<"\n </Document>";
-        }
-    }
-    crmout << "\n</METADATA>";
-}
 
 /* prints the list of documents*/
 void print_documents(se_ostream& crmout, bool ps)
@@ -1059,9 +1029,7 @@ void print_documents(se_ostream& crmout, bool ps)
         if (mdc->is_doc)
         {
             crmout<<"\n<Document name=\""<<mdc->name<<"\"";
-            crmout<<">";
-            if (ps) printSimpleDebugInfo(mdc->snode,crmout);
-            crmout<<"\n </Document>";
+            crmout<<"/>";
         }
     }
     crmout << "\n</XML_DOCUMENTS>";
@@ -1109,9 +1077,7 @@ void print_collections(se_ostream& crmout, bool ps)
 
         if (!mdc->is_doc)
         {
-            crmout<<"\n <Collection name=\""<<mdc->name<<"\">";
-            if (ps) printSimpleDebugInfo(mdc->snode,crmout);
-            crmout<<"\n </Collection>";
+            crmout<<"\n <Collection name=\""<<mdc->name<<"\"/>";
         }
     }
     crmout << "\n</COLLECTIONS>";

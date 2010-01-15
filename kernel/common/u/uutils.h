@@ -4,8 +4,8 @@
  */
 
 
-#ifndef UUTILS_H
-#define UUTILS_H
+#ifndef _UUTILS_H
+#define _UUTILS_H
 
 
 #include "common/u/u.h"
@@ -15,19 +15,18 @@
 #include <netinet/tcp.h>
 #endif
 
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 #ifdef _WIN32
-#define u_itoa _itoa
-#define u_ltoa _ltoa
-#define u_i64toa _i64toa
-#define u_ui64toa _ui64toa
-#define u_ultoa _ultoa
-#define u_gcvt _gcvt
+  #define u_itoa _itoa
+  #define u_ltoa _ltoa
+  #define u_i64toa _i64toa
+  #define u_ui64toa _ui64toa
+  #define u_ultoa _ultoa
+  #define u_gcvt _gcvt
 #else
     char *u_itoa(int value, char *str, int radix);
     char *u_ltoa(long value, char *str, int radix);
@@ -44,22 +43,23 @@ extern "C"
     void int2net_int(__int32 i, char *buf);
     void net_int2int(__int32 *i, const char *buf);
 
-    /// buf length must not be less than 20 
+    /* buf length must not be less than 20 */
     char *int2c_str(int value, char *buf);
 
     __int64  strto__int64(const char *nptr, char **endptr, int base);
     __uint64 strto__uint64(const char *nptr, char **endptr, int base);
 
-    /// (__int64)INF, (__int64)NaN is undefined behaviour and give different
-    /// results on Win/Linux/Mac OS
-    /// returns 0 if NaN
-    ///         __I64_MAX if +INF, or v > _I64_MAX
-    ///         __I64_MIN if -INF, or v < _I64_MIN
-    __int64 u_double2int64(double v);
+    /* 
+     * (__int64)INF, (__int64)NaN is undefined behaviour and give different
+     * results on Win/Linux/Mac OS
+     * returns 0 if NaN
+     *         __I64_MAX if +INF, or v > _I64_MAX
+     *         __I64_MIN if -INF, or v < _I64_MIN
+     */
+     __int64 u_double2int64(double v); 
 
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif
+#endif /* _UUTILS_H */

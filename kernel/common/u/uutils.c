@@ -18,7 +18,6 @@ char *u_itoa(int value, char *str, int radix)
         d_printf1("radix in call to _ultoa has unsupported value\n");
         return NULL;
     }
-
     sprintf(str, "%d", value);
     return str;
 }
@@ -30,7 +29,6 @@ char *u_ltoa(long value, char *str, int radix)
         d_printf1("radix in call to _ltoa has unsupported value\n");
         return NULL;
     }
-
     sprintf(str, "%ld", value);
     return str;
 }
@@ -42,41 +40,29 @@ char *u_ultoa(unsigned long value, char *str, int radix)
         d_printf1("radix in call to _ultoa has unsupported value\n");
         return NULL;
     }
-
     sprintf(str, "%lu", value);
     return str;
 }
 
 char *u_i64toa(__int64 value, char *str, int radix)
 {
-#ifdef _WIN32
-    _i64toa(value, str, radix);
-#else
     if (radix != 10)
     {
         d_printf1("radix in call to _ultoa has unsupported value\n");
         return NULL;
     }
-
     sprintf(str, "%lld", value);
-#endif
-	return str;
 }
 
 char *u_ui64toa(__uint64 value, char *str, int radix)
 {
-#ifdef _WIN32
-    _ui64toa(value, str, radix);
-#else
     if (radix != 10)
     {
         d_printf1("radix in call to _ui64toa has unsupported value\n");
         return NULL;
     }
-
     sprintf(str, "%llu", value);
     return str;
-#endif
 }
 
 char *u_gcvt(double value, int digits, char *buf)
@@ -106,8 +92,7 @@ int _vsnprintf(char *str, size_t size, const char *format, va_list ap)
     return res;
 }
 
-
-#endif
+#endif /* _WIN32 */
 
 void int2net_int(__int32 i, char *buf)
 {
