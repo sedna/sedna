@@ -20,6 +20,7 @@ typedef std::pair<xptr, xptr> xptr_pair;
 class PPExplainVisitor : public PPVisitor {
 
 private:
+    dynamic_context* cxt;
     doc_schema_node_cptr scm;
     xptr root, parent, left;
 
@@ -29,7 +30,7 @@ private:
     std::stack<xptr_pair> pointers;
 
     void push();
-    void insertElement(const char* name, xptr& left, xptr& parent);
+    void insertOperationElement(const char* name, xptr& left, xptr& parent, PPIterator* op);
 
 public:
     /* 
@@ -42,7 +43,7 @@ public:
     virtual xptr result();
 
     
-    PPExplainVisitor();
+    PPExplainVisitor(dynamic_context* _cxt_);
     virtual ~PPExplainVisitor();
 
     virtual void push(PPIterator* op)       { push(); }
@@ -217,22 +218,30 @@ public:
     virtual void visit(PPFnResolveUri* op);
     virtual void visit(PPQueryRoot* op);
     virtual void visit(PPBulkLoad* op);
+
+#ifdef SE_ENABLE_FTSEARCH
     virtual void visit(PPCreateFtIndex* op);
+    virtual void visit(PPDropFtIndex* op);
+#endif
+    
     virtual void visit(PPCreateIndex* op);
     virtual void visit(PPCreateDocument* op);
     virtual void visit(PPCreateCollection* op);
     virtual void visit(PPCreateDocumentInCollection* op);
+
+#ifdef SE_ENABLE_TRIGGERS
     virtual void visit(PPCreateTrigger* op);
+    virtual void visit(PPDropTrigger* op);
+#endif
+
     virtual void visit(PPDeleteDeep* op);
     virtual void visit(PPDeleteUndeep* op);
-    virtual void visit(PPDropFtIndex* op);
     virtual void visit(PPDropIndex* op);
     virtual void visit(PPDropDocument* op);
     virtual void visit(PPDropCollection* op);
     virtual void visit(PPDropDocumentInCollection* op);
     virtual void visit(PPLoadModule* op);
     virtual void visit(PPDropModule* op);
-    virtual void visit(PPDropTrigger* op);
     virtual void visit(PPInsertTo* op);
     virtual void visit(PPInsertBefore* op);
     virtual void visit(PPInsertFollowing* op);

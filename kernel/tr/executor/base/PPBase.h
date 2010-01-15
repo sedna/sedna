@@ -327,6 +327,7 @@ class SednaXQueryException : public SednaUserException
 {
 protected:
     int xquery_line;
+    int xquery_col;
 
 public:
     SednaXQueryException(const char* _file_, 
@@ -338,10 +339,12 @@ public:
                                                                             _line_,
                                                                             "",
                                                                             _internal_code_),
-                                                                            xquery_line(0) {
+                                                                            xquery_line(0),
+                                                                            xquery_col(0) {
         if(_current_physop_)
         {
             xquery_line = _current_physop_->get_operation_info().query_line;
+            xquery_col  = _current_physop_->get_operation_info().query_col;
         }
         RESET_CURRENT_PP;
     }
@@ -356,10 +359,12 @@ public:
                                                                             _line_,
                                                                             _err_msg_,
                                                                             _internal_code_), 
-                                                                            xquery_line(0) {
+                                                                            xquery_line(0),
+                                                                            xquery_col(0) {
         if(_current_physop_)
         {
             xquery_line = _current_physop_->get_operation_info().query_line;
+            xquery_col  = _current_physop_->get_operation_info().query_col;
         }
         RESET_CURRENT_PP;
     }
@@ -378,7 +383,12 @@ protected:
             res += err_msg + "\n";
         }
         if (xquery_line != 0)
-            res += "Query line: " + int2string(xquery_line) + "\n";
+        {
+            res += "Query line: " + int2string(xquery_line);
+            if(xquery_col != 0)
+                res += ", column:" + int2string(xquery_col);
+            res += "\n";
+        }
 #if (EL_DEBUG == 1)
         res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
 #endif

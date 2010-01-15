@@ -568,7 +568,7 @@ print_tuple_internal  (const tuple &tup,     /* tuple to print */
                         const char *prefix = xs_QName_get_prefix(tup.cells[i].get_str_mem());
                         if (prefix && strlen(prefix) != 0)
                         {
-                            crmout.writextext((char*)prefix, strlen(prefix));
+                            crmout.writextext(prefix, strlen(prefix));
                             crmout.writextext(":", 1);
                         }
                         crmout.writextext((char*)xs_QName_get_local_name(tup.cells[i].get_str_mem()),

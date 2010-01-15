@@ -96,13 +96,13 @@ se_ostream& se_ostream::operator<<(__int64 n)
     return *this;
 }
 
-se_ostream& se_ostream::writextext(char *s, int n)
+se_ostream& se_ostream::writextext(const char *s, int n)
 {
     dynamic_context::stm.parse(s,n,write_func,this,(int)pat_element);
     return *this; 
 }
 
-se_ostream& se_ostream::writeattribute(char *s, int n)
+se_ostream& se_ostream::writeattribute(const char *s, int n)
 { 
     dynamic_context::stm.parse(s,n,write_func,this,(int)pat_attribute);
     return *this; 

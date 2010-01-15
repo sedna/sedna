@@ -16,6 +16,7 @@
 #include "common/rcv_test.h"
 #include "common/wutypes.h"
 
+
 #define SEDNA_DATA_STRUCTURES_VER 9
 
 // buffer memory offset; this type is used for addressing buffers in buffer
@@ -33,6 +34,9 @@ typedef __uint32 CP_counter;
 
 #define MAX_FILE_SIZE_WITHOUT_CHECKPOINT 50*(1024*1024)
 
+
+#define SEDNA_NAMESPACE_URI     "http://www.modis.ispras.ru/sedna"
+#define SEDNA_NAMESPACE_PREFIX  "se"
 
 typedef int session_id;
 

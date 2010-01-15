@@ -45,7 +45,7 @@ void PPExplain::do_next (tuple &t)
 
         if(visitor == NULL)
         {
-            visitor = new PPExplainVisitor();
+            visitor = new PPExplainVisitor(cxt);
             qep_tree->accept(*visitor);
         }
 

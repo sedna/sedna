@@ -339,8 +339,7 @@ void PPElementConstructor::do_next (tuple &t)
             }
             else
             {
-                prefix = "";
-                ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
+                ns = cxt->st_cxt->get_xmlns_by_prefix("");
             }
         }
 

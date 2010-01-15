@@ -332,7 +332,6 @@ static inline void utf8_substring(const Iterator &start, const Iterator &end, st
 	while (it.base_iterator() < end && length > 0)
 	{
 		const int c = *it;
-		int c_type, c_case;
 		++it;
 	    *outp++ = c;
         length--;
@@ -497,7 +496,13 @@ private:
 	bool ret_empty;
 	PcrePattern re;
 public:
-	utf8_tokenize_result(Iterator _start_, Iterator _end_, tuple_cell *t2, tuple_cell *t3, tuple_cell *_str_tc_) : str_tc(*_str_tc_), start(_start_), end(_end_), pos(_start_), re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3)), ret_empty(false)
+	utf8_tokenize_result(Iterator _start_, Iterator _end_, tuple_cell *t2, tuple_cell *t3, tuple_cell *_str_tc_) : str_tc(*_str_tc_), 
+                                                                                                                   start(_start_), 
+                                                                                                                   end(_end_), 
+                                                                                                                   pos(_start_), 
+                                                                                                                   ret_empty(false),
+                                                                                                                   re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3))
+
 	{
 		PcreMatcher<const char *>m(re);
 		const char * x = "";

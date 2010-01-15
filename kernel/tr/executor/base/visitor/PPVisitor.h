@@ -230,22 +230,30 @@ public:
    /* Root operations */
     virtual void visit(PPQueryRoot* op)                  = 0;
     virtual void visit(PPBulkLoad* op)                   = 0;
-    virtual void visit(PPCreateFtIndex* op)              = 0;
     virtual void visit(PPCreateIndex* op)                = 0;
     virtual void visit(PPCreateDocument* op)             = 0;
     virtual void visit(PPCreateCollection* op)           = 0;
     virtual void visit(PPCreateDocumentInCollection* op) = 0;
+
+#ifdef SE_ENABLE_TRIGGERS
     virtual void visit(PPCreateTrigger* op)              = 0;
+    virtual void visit(PPDropTrigger* op)                = 0;
+#endif
+
     virtual void visit(PPDeleteDeep* op)                 = 0;
     virtual void visit(PPDeleteUndeep* op)               = 0;
+
+#ifdef SE_ENABLE_FTSEARCH
+    virtual void visit(PPCreateFtIndex* op)              = 0;
     virtual void visit(PPDropFtIndex* op)                = 0;
+#endif
+    
     virtual void visit(PPDropIndex* op)                  = 0;
     virtual void visit(PPDropDocument* op)               = 0;
     virtual void visit(PPDropCollection* op)             = 0;
     virtual void visit(PPDropDocumentInCollection* op)   = 0;
     virtual void visit(PPLoadModule* op)                 = 0;
     virtual void visit(PPDropModule* op)                 = 0;
-    virtual void visit(PPDropTrigger* op)                = 0;
     virtual void visit(PPInsertTo* op)                   = 0;
     virtual void visit(PPInsertBefore* op)               = 0;
     virtual void visit(PPInsertFollowing* op)            = 0;
