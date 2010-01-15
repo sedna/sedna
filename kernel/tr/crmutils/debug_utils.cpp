@@ -4,6 +4,7 @@
 */
 
 #include <math.h>
+#include <map>
 
 #include "common/sedna.h"
 #include "common/u/uutils.h"
@@ -20,572 +21,47 @@
 /* predefined debug & error output stream */
 se_stdlib_ostream crm_dbg(std::cerr);
 
-/* prints information in  descriptor */
-void print_descriptor(n_dsc* node,int shift, se_ostream& crmout)
+/* some statistics counters */
+struct debug_info
 {
-    crmout << "\n====================";
-    crmout << "\n Shift = " << shift;
-    crmout << "\n Next descriptor = " << node->desc_next;
-    crmout << "\n Previous descriptor = " << node->desc_prev;
-    crmout << "\n Left sibling = " << XADDR(node->ldsc);
-    crmout << "\n Right sibling = " << XADDR(node->rdsc);
-    crmout << "\n Parent indirection = " << XADDR(node->pdsc);
-    crmout << "\n Numbering Scheme = " ;
-    xptr nodex=ADDR2XPTR(node);
-    nid_print(nodex,crmout);
-    CHECKP(nodex);
-}
+    long schema_count;
+    long schema_str_count;
+    long block_count;
+    long block_fill;
+    long inner_block_count;
+    
+    __int64 inner_block_fill;
+    float inner_fill_percentage;
+    float fill_percentage;
+    __int64 node_count;
+    __int64 ext_nid_count;
+    __int64 str_size;
+    long mdpth;           //max depth
+    long cdp;             //current depth
+};
 
-/* prints information in element descriptor */
-void print_element_dsc(e_dsc* node,int shift, shft size, schema_node_cptr scm, se_ostream& crmout)
+
+static xptr 
+insertStatisticsInteger(xptr neighbour,const char* title, char* buf,__int64 count)
 {
-    print_descriptor(node,shift,crmout);
-    crmout << "\n Type = " << node->type;
-    int cnt_ptrs=(size-sizeof(e_dsc))/sizeof(xptr);
-    crmout <<"\nChilds=======";
-    xptr* childx=(xptr*)((char*)node+sizeof(e_dsc));
-    for (int i=0;i<cnt_ptrs;i++)
-    {
-        char* str=scm->get_child_name(i);
-        if (str!=NULL)
-            crmout <<"\n"<< str << " = " << XADDR(*childx);
-        else
-            crmout <<"\nText node = " << XADDR(*childx);
-
-        childx+=1;
-    }
-    crmout <<"\n=============";
+    xptr left=insert_element_i(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
+    u_i64toa(count,buf,10);
+    insert_text_i(XNULL,XNULL,left,buf,strlen(buf));
+    return left;
 }
 
-/* prints information in document descriptor */
-void print_document_dsc(d_dsc* node,int shift, shft size, schema_node_cptr scm, se_ostream& crmout)
+static xptr
+insertStatisticsDouble(xptr neighbour,const char* title, char* buf,double count)
 {
-    /*
-    print_descriptor(node,shift,crmout);
-    crmout << "\nName position = " << XADDR(node->data);
-    crmout << "\nName size = " << node->size;
-    xptr nodex=ADDR2XPTR(node);
-    crmout <<"\n Name = ";
-    print_text(nodex, crmout, xml, document);
-    CHECKP(nodex);
-    int cnt_ptrs=(size-sizeof(d_dsc))/sizeof(xptr);
-    crmout <<"\nChilds=======";
-    xptr* childx=(xptr*)((char*)node+sizeof(d_dsc));
-    for (int i=0;i<cnt_ptrs;i++)
-    {
-        crmout <<"\n"<<    scm->get_child_name(i) << " = " << XADDR(*childx);
-        childx+=1;
-    }
-    crmout <<"\n=============";
-     */
+    xptr left=insert_element_i(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
+    u_gcvt(count,10,buf);
+    insert_text_i(XNULL,XNULL,left,buf,strlen(buf));
+    return left;
 }
 
-/* prints information in text descriptor */
-void print_text_dsc(t_dsc* node,int shift,  se_ostream& crmout,t_item xq_type)
-{
-    /*
-    print_descriptor(node,shift,crmout);
-    crmout << "\n Text position = " << XADDR(node->data);
-    crmout << "\n Text size = " << XADDR(node->data);
-    xptr nodex=ADDR2XPTR(node);
-    crmout <<"Text = ";
-    print_text(nodex,crmout,xml,xq_type);
-    CHECKP(nodex);
-    */
-}
 
-/* prints information in attribute descriptor */
-void print_attribute_dsc(a_dsc* node,int shift,  se_ostream& crmout)
-{
-    /*
-    print_descriptor(node,shift,crmout);
-    crmout << "\n Type = " << node->type;
-    crmout << "\n Text position = " << XADDR(node->data);
-    crmout << "\n Text size = " << XADDR(node->data);
-    xptr nodex=ADDR2XPTR(node);
-    crmout <<"Text = ";
-    print_text(nodex,crmout,xml,attribute);
-    CHECKP(nodex);
-    */
-}
-
-/* prints information in block header */
-void print_desc_block_hdr(node_blk_hdr* block, se_ostream& crmout)
-{
-    crmout <<"\nBLOCK address = " << block;
-    crmout <<"\nTotal descriptors = " << block->count;
-    crmout <<"\nFirst descriptor = " << block->desc_first;
-    crmout <<"\nLast descriptor = " << block->desc_last;
-    crmout <<"\nDescriptor size = " << block->dsc_size;
-    crmout <<"\nFirst free space = " << block->free_first;
-    crmout <<"\nNext block address = " << XADDR(block->nblk);
-    crmout <<"\nPrevious block address = " << XADDR(block->pblk);
-}
-
-/* prints information in block */
-void print_desc_block(xptr block, se_ostream& crmout)
-{
-    CHECKP(block);
-    node_blk_hdr* header= (node_blk_hdr*)XADDR(block);
-    shft size=((shft)(PAGE_SIZE-sizeof(node_blk_hdr)))/header->dsc_size;
-    t_item type=GETTYPE(header->snode);
-    bool *mark=se_new bool[size];
-    shft i = 0;
-    for (i=0;i<size;i++) mark[i]=true;
-    shft shift=header->free_first;
-    int empcnt=0;
-    while (shift!=0)
-    {
-        mark[(shft)((shift-sizeof(node_blk_hdr))/header->dsc_size)]=false;
-        shift=*((shft*) ( (char*)header+shift ));
-        empcnt++;
-    }
-    crmout << "\nFree space count = " <<empcnt;
-    crmout << "\n============================================================================";
-    print_desc_block_hdr(header, crmout);
-    int begfr=-1;
-    int endfr=-1;
-    for (i=0; i < size; i++)
-    {
-        if (mark[i]==false)
-        {
-            if (begfr==-1) begfr=i;
-            endfr=i;
-        }
-        else
-        {
-            if (begfr!=-1)
-            {
-                crmout << "\n====================";
-                crmout << "Empty Space start=" <<(sizeof(node_blk_hdr)+begfr*header->dsc_size);
-                crmout << " end=" <<(sizeof(node_blk_hdr)+endfr*header->dsc_size);
-            }
-            switch(type)
-            {
-            case element:
-                {
-                    print_element_dsc(
-                        (e_dsc*)(GETPOINTERTODESC(header,sizeof(node_blk_hdr)+i*header->dsc_size)),
-                        sizeof(node_blk_hdr)+i*header->dsc_size,
-                        header->dsc_size,
-                        header->snode,
-                        crmout);
-                    break;
-                }
-            case document: case virtual_root:
-                {
-                    print_document_dsc(
-                        (d_dsc*)(GETPOINTERTODESC(header,sizeof(node_blk_hdr)+i*header->dsc_size)),
-                        sizeof(node_blk_hdr)+i*header->dsc_size,
-                        header->dsc_size,
-                        header->snode,
-                        crmout);
-                    break;
-                }
-            case text:
-                {
-                    print_text_dsc(
-                        (t_dsc*)(GETPOINTERTODESC(header,sizeof(node_blk_hdr)+i*header->dsc_size)),
-                        sizeof(node_blk_hdr)+i*header->dsc_size,
-                        crmout,text);
-                    break;
-                }
-            case attribute:
-                {
-                    print_attribute_dsc(
-                        (a_dsc*)(GETPOINTERTODESC(header,sizeof(node_blk_hdr)+i*header->dsc_size)),
-                        sizeof(node_blk_hdr)+i*header->dsc_size,
-                        crmout);
-                    break;
-                }
-            }
-            begfr=-1;
-        }
-    }
-    if (begfr!=-1)
-    {
-        crmout << "\n====================";
-        crmout << "Empty Space start=" <<(sizeof(node_blk_hdr)+begfr*header->dsc_size);
-        crmout << " end=" <<(sizeof(node_blk_hdr)+endfr*header->dsc_size);
-    }
-    crmout << "\n============================================================================";
-    delete[] mark;
-}
-
-/* prints information in schema node */
-void print_schema(schema_node_cptr node, se_ostream& crmout)
-{
-    crmout << "\n============================================================================";
-    crmout << "\n Schema node. Address= " << node.ptr().layer << "@" << node.ptr().addr;
-    if (node->name!=NULL)
-        crmout << "\nname=" <<node->name;
-    crmout << "\ntype=" <<type2string(node->type);
-    crmout<< "\nChildren: ";
-
-    sc_ref_item * sc;
-    for (sc = node->children.first; sc != NULL; sc = sc->next)
-    {
-        crmout << "\n name= " <<sc->object.name <<" type=" << type2string(sc->object.type)
-            << "address= "<<sc->object.snode.layer << "@" << sc->object.snode.addr;
-    }
-    crmout<< "\nData: ";
-    xptr block=node->bblk;
-    while (block!=XNULL)
-    {
-        CHECKP(block);
-        print_desc_block( block,  crmout);
-        block=(GETBLOCKBYNODE(block))->nblk;
-    }
-    crmout << "\n============================================================================";
-    for (sc = node->children.first; sc != NULL; sc = sc->next)
-    {
-        print_schema(sc->object.snode, crmout);
-    }
-}
-
-static void inline print_indent(se_ostream& crmout, int indent) {
-    for (int i=0;i<indent;i++) crmout << " ";
-}
-
-void printMFO (schema_node_cptr node, std::map<schema_node_xptr, std::pair<int,int> > &mfo,int par_pref,int indent)
-{
-    int size=1;
-    int increment=0;
-    if (node->parent!=XNULL)
-    {
-        size=par_pref+mfo[node->parent].first;
-        increment=mfo[node->parent].second;
-    }
-    crm_dbg << "\n";
-    for (int i=0;i<indent;i++) crm_dbg << " ";
-    crm_dbg << "<NODE ";// << node;
-    if (node->name!=NULL)
-        crm_dbg << "local_name=\"" << node->name <<"\"";
-    if (node->get_xmlns()!=NULL)
-    {
-        if (node->get_xmlns()->prefix!=NULL)
-            crm_dbg << " prefix=\"" << node->get_xmlns()->prefix <<"\"";
-        else
-            crm_dbg << " prefix=\"\"";
-        if (node->get_xmlns()->uri!=NULL)
-            crm_dbg << " uri=\"" << node->get_xmlns()->uri <<"\"";
-        else
-            crm_dbg << " uri=\"http://www.w3.org/XML/1998/namespace\"";
-    }
-    crm_dbg << " type=\"" <<type2string(node->type)<<"\"";
-    //crm_dbg << " fan-out=\"" <<((node->children.first)?mfo[node]:0 )<<"\"";
-    crm_dbg << " pref_length=\"" <<size <<"\"";
-    crm_dbg << " incr=\"" <<increment <<"\"";
-    //recursive walkthrough
-    sc_ref_item* sc= node->children.first;
-    while (sc!=NULL)
-    {
-        printMFO(sc->object.snode,mfo,size,indent+1);
-        sc=sc->next;
-    }
-}
-void getNIDNEWDistribution(std::map<schema_node_xptr,int> &xsfo,
-                           std::map<schema_node_xptr,int> &ncnt,
-                           std::map<int,int> &nidsz,
-                           schema_node_cptr node, int par_pref)
-{
-    int size=1;
-    if (node->parent!=XNULL)
-        size=par_pref+
-        (int)ceil(s_max (log10(1.*xsfo[node->parent])/log10((double)ALPHABET_SIZE),1.));
-    std::map<int,int>::iterator it= nidsz.find(size);
-    if (it!=nidsz.end())
-        it->second+=ncnt[node.ptr()];
-    else
-        nidsz[size]=ncnt[node.ptr()];
-    //recursive walkthrough
-    sc_ref_item * sc= node->children.first;
-    while (sc!=NULL)
-    {
-        getNIDNEWDistribution(xsfo,ncnt,nidsz,sc->object.snode,size);
-        sc=sc->next;
-    }
-}
-void printNIDVariation(xptr root, se_ostream& crmout)
-{
-    std::map<int,int> nidsz;
-    std::map<schema_node_xptr,int> xsfo;
-    std::map<schema_node_xptr,int> ncnt;
-    std::vector<int> fo;
-    int maxfo=0;
-    __int64 midfo=0;
-    int cnt=0;
-    xptr node=root;
-    fo.push_back(0);
-
-    while(node!=XNULL)
-    {
-        cnt++;
-        //size count
-        CHECKP(node);
-        //scheme cnt
-        schema_node_xptr sc =(GETBLOCKBYNODE(node))->snode;
-        std::map<schema_node_xptr,int>::iterator cit=ncnt.find(sc);
-        if (cit!=ncnt.end())
-        {
-            ncnt[sc]++;
-        }
-        else
-            ncnt[sc]=1;
-        t_nid& nd=((n_dsc*)XADDR(node))->nid;
-        int sz=(nd.size>0)?nd.size:*((shft*)(nd.prefix+sizeof(xptr)));
-        if (nidsz.find(sz)==nidsz.end())
-            nidsz[sz]=1;
-        else
-            nidsz[sz]++;
-        //next node
-        xptr tmp= giveFirstByOrderChild(node,CHILDCOUNT(node));
-        while (tmp==XNULL /*&& GETPARENTPOINTER(node)!=XNULL*/)
-        {
-            if (fo.back()>maxfo) maxfo=fo.back();
-            midfo+=fo.back();
-            //CHECKP(root)
-            schema_node_xptr scm =(GETBLOCKBYNODE(node))->snode;
-            std::map<schema_node_xptr,int>::iterator it=xsfo.find(scm);
-            if (it!=xsfo.end())
-            {
-                if (fo.back()>xsfo[scm]) xsfo[scm]=fo.back();
-            }
-            else
-                xsfo[scm]=fo.back();
-            fo.pop_back();
-            tmp=GETRIGHTPOINTER(node);
-            if (tmp==XNULL)
-            {
-                if (GETPARENTPOINTER(node)==XNULL)break;
-                node=removeIndirection(GETPARENTPOINTER(node));
-                CHECKP(node);
-            }
-        }
-        node=tmp;
-        if(node!=XNULL)
-        {
-            fo.back()++;
-            fo.push_back(0);
-        }
-        /*  else
-        {
-        if (fo.back()>maxfo) maxfo=fo.back();
-        midfo+=fo.back();
-        schema_node_xptr scm =(GETBLOCKBYNODE(node))->snode;
-        std::map<schema_node_xptr,int>::iterator it=xsfo.find(scm);
-        if (it!=xsfo.end())
-        {
-        if (fo.back()>xsfo[scm]) xsfo[scm]=fo.back();
-        }
-        else
-        xsfo[scm]=fo.back();
-        fo.pop_back();
-        }*/
-    }
-    crmout<<"\n max Fan-out="<<maxfo;
-    crmout<<"\n mid Fan-out="<<(1.*midfo/cnt);
-    //counting total
-    __int64 cnt_sz=0;
-    __int64 cnt_out=0;
-    int max=0;
-    std::map<int,int>::const_iterator it=nidsz.begin();
-    while (it!=nidsz.end())
-    {
-        cnt_sz+=it->second*it->first;
-        if (it->first>11)
-            cnt_out+=it->second*it->first;
-        if (it->first>max) max=it->first;
-        it++;
-    }
-    crmout<<"\n Nid size total,MGB="<<(cnt_sz/1024./1024.);
-    crmout<<"\n Nid size external total,MGB="<<(cnt_out/1024./1024.);
-    crmout<<"\n Nid size distribution";
-    for (int i=1;i<=max;i++)
-    {
-        it=nidsz.find(i);
-        if (it!=nidsz.end())
-            crmout<<"\n "<<i<<"{--} "<<(100.*it->second/cnt)<<"%"<<"  total="<<it->second;
-        else
-            crmout<<"\n "<<i<<"{--} 0%" <<"  total=0";
-    }
-    nidsz.clear();
-    CHECKP(root);
-    schema_node_xptr sc =(GETBLOCKBYNODE(root))->snode;
-    /*  getNIDNEWDistribution(xsfo,ncnt,nidsz,sc,0);
-    cnt_sz=0;
-    cnt_out=0;
-    max=0;
-    it=nidsz.begin();
-    while (it!=nidsz.end())
-    {
-    cnt_sz+=it->second*it->first;
-    if (it->first>11)
-    cnt_out+=it->second*it->first;
-    if (it->first>max) max=it->first;
-    it++;
-    }
-    crmout<<"\n Theory Nid size total,MGB="<<(cnt_sz/1024./1024.);
-    crmout<<"\n Theory Nid size external total,MGB="<<(cnt_out/1024./1024.);
-    crmout<<"\n Theory Nid size distribution";
-    for (int i=1;i<=max;i++)
-    {
-    it=nidsz.find(i);
-    if (it!=nidsz.end())
-    crmout<<"\n "<<i<<"<--> "<<(100.*it->second/cnt)<<"%"<<"  total="<<it->second;
-    else
-    crmout<<"\n "<<i<<"<--> 0%" <<"  total=0";
-    }
-    */
-
-}
-void printFullNIDVariation(xptr broot, se_ostream& crmout)
-{
-    std::map<int,int> nidsz;
-    std::map<int,int> strsz;
-    std::map<schema_node_xptr,int> xsfo;
-    std::map<schema_node_xptr,int> ncnt;
-    std::vector<int> fo;
-    int maxfo=0;
-    __int64 midfo=0;
-    int cnt=0;
-    int strcnt=0;
-    xptr root=broot;
-    while (root!=XNULL)
-    {
-        xptr node=root;
-        fo.push_back(0);
-        while(node!=XNULL)
-        {
-            cnt++;
-            //size count
-            CHECKP(node);
-            //scheme cnt
-            schema_node_xptr sc =(GETBLOCKBYNODE(node))->snode;
-            std::map<schema_node_xptr,int>::iterator cit=ncnt.find(sc);
-            if (cit!=ncnt.end())
-            {
-                ncnt[sc]++;
-            }
-            else
-                ncnt[sc]=1;
-            t_nid& nd=((n_dsc*)XADDR(node))->nid;
-            int sz=(nd.size>0)?nd.size:*((shft*)(nd.prefix+sizeof(xptr)));
-            if (nidsz.find(sz)==nidsz.end())
-                nidsz[sz]=1;
-            else
-                nidsz[sz]++;
-            //string cnt
-            if (sc->has_text())
-            {
-                strcnt++;
-                int strz=getTextSize((t_dsc*)XADDR(node));
-                if (strsz.find(strz)==strsz.end())
-                    strsz[strz]=1;
-                else
-                    strsz[strz]++;
-            }
-            //next node
-            xptr tmp= giveFirstByOrderChild(node,CHILDCOUNT(node));
-            while (tmp==XNULL /*&& GETPARENTPOINTER(node)!=XNULL*/)
-            {
-                if (fo.back()>maxfo) maxfo=fo.back();
-                midfo+=fo.back();
-                schema_node_xptr scm =(GETBLOCKBYNODE(node))->snode;
-                std::map<schema_node_xptr,int>::iterator it=xsfo.find(scm);
-                if (it!=xsfo.end())
-                {
-                    if (fo.back()>xsfo[scm]) xsfo[scm]=fo.back();
-                }
-                else
-                    xsfo[scm]=fo.back();
-                fo.pop_back();
-                tmp=GETRIGHTPOINTER(node);
-                if (tmp==XNULL)
-                {
-                    if (GETPARENTPOINTER(node)==XNULL)break;
-                    node=removeIndirection(GETPARENTPOINTER(node));
-                    CHECKP(node);
-                }
-            }
-            node=tmp;
-            if(node!=XNULL)
-            {
-                fo.back()++;
-                fo.push_back(0);
-            }
-            /*  else
-            {
-            if (fo.back()>maxfo) maxfo=fo.back();
-            midfo+=fo.back();
-            schema_node_xptr scm =(GETBLOCKBYNODE(node))->snode;
-            std::map<schema_node_xptr,int>::iterator it=xsfo.find(scm);
-            if (it!=xsfo.end())
-            {
-            if (fo.back()>xsfo[scm]) xsfo[scm]=fo.back();
-            }
-            else
-            xsfo[scm]=fo.back();
-            fo.pop_back();
-            }*/
-        }
-        root=getNextDescriptorOfSameSortXptr(root);
-    }
-    crmout<<"\n max Fan-out="<<maxfo;
-    crmout<<"\n mid Fan-out="<<(1.*midfo/cnt);
-    //counting total Nid
-    __int64 cnt_sz=0;
-    __int64 cnt_out=0;
-    int max=0;
-    std::map<int,int>::const_iterator it=nidsz.begin();
-    while (it!=nidsz.end())
-    {
-        cnt_sz+=it->second*it->first;
-        if (it->first>11)
-            cnt_out+=it->second*it->first;
-        if (it->first>max) max=it->first;
-        it++;
-    }
-    crmout<<"\n Nid size total,MGB="<<(cnt_sz/1024./1024.);
-    crmout<<"\n Nid size external total,MGB="<<(cnt_out/1024./1024.);
-    crmout<<"\n Nid size distribution";
-    int i=1;
-    for (i=1;i<=max;i++)
-    {
-        it=nidsz.find(i);
-        if (it!=nidsz.end())
-            crmout<<"\n "<<i<<"{--} "<<(100.*it->second/cnt)<<"%"<<"  total="<<it->second;
-        else
-            crmout<<"\n "<<i<<"{--} 0%" <<"  total=0";
-    }
-    nidsz.clear();
-    //counting total String
-    cnt_sz=0;
-    max=0;
-    it=strsz.begin();
-    while (it!=strsz.end())
-    {
-        cnt_sz+=it->second*it->first;
-        if (it->first>max) max=it->first;
-        it++;
-    }
-    crmout<<"\n String size total,MGB="<<(cnt_sz/1024./1024.);
-    crmout<<"\n Strings total="<<strcnt;
-    crmout<<"\n Strings size distribution";
-    for (i=0;i<=max;i++)
-    {
-        it=strsz.find(i);
-        if (it!=strsz.end())
-            crmout<<"\n "<<i<<"{--} "<<(100.*it->second/strcnt)<<"%"<<"  total="<<it->second;
-        else
-            crmout<<"\n "<<i<<"{--} 0%" <<"  total=0";
-    }
-    strsz.clear();
-
-
-
-}
-void printFullNIDVariation(xptr broot, xptr node)
+static void 
+insertNidAndStringsStatistics(xptr broot, xptr node)
 {
     std::map<unsigned int,unsigned int> nidsz;
     std::map<unsigned int,unsigned int> strsz;
@@ -596,10 +72,11 @@ void printFullNIDVariation(xptr broot, xptr node)
     __int64 midfo=0;
     unsigned int cnt=0;
     unsigned int strcnt=0;
-    xptr root=broot;
+
+    xptr root = broot;
     while (root!=XNULL)
     {
-        xptr node=root;
+        xptr node = root;
         fo.push_back(0);
         while(node!=XNULL)
         {
@@ -660,29 +137,16 @@ void printFullNIDVariation(xptr broot, xptr node)
                 fo.back()++;
                 fo.push_back(0);
             }
-            /*  else
-            {
-            if (fo.back()>maxfo) maxfo=fo.back();
-            midfo+=fo.back();
-            schema_node_xptr scm =(GETBLOCKBYNODE(node))->snode;
-            std::map<schema_node_xptr,int>::iterator it=xsfo.find(scm);
-            if (it!=xsfo.end())
-            {
-            if (fo.back()>xsfo[scm]) xsfo[scm]=fo.back();
-            }
-            else
-            xsfo[scm]=fo.back();
-            fo.pop_back();
-            }*/
         }
         root=getNextDescriptorOfSameSortXptr(root);
     }
-    xptr parent=insert_element(node,XNULL,XNULL,"NID",xs_untyped,NULL_XMLNS);
+
+    xptr parent=insert_element_i(node,XNULL,XNULL,"NID",xs_untyped,NULL_XMLNS);
     char buf[20];
     u_itoa(maxfo,buf,10);
-    xptr left=insert_attribute(XNULL,XNULL,parent,"max_fan_out",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+    xptr left=insert_attribute_i(XNULL,XNULL,parent,"max_fan_out",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
     u_gcvt((1.*midfo/cnt),10,buf);
-    left=insert_attribute(left,XNULL,XNULL,"mid_fan_out",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+    left=insert_attribute_i(left,XNULL,XNULL,"mid_fan_out",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
 
     //counting total Nid
     __int64 cnt_sz=0;
@@ -698,12 +162,12 @@ void printFullNIDVariation(xptr broot, xptr node)
         it++;
     }
     u_gcvt((cnt_sz/1024./1024.),10,buf);
-    left=insert_attribute(left,XNULL,XNULL,"total_size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+    left=insert_attribute_i(left,XNULL,XNULL,"total_size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
     u_gcvt((cnt_out/1024./1024.),10,buf);
-    left=insert_attribute(left,XNULL,XNULL,"total_size_ext",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+    left=insert_attribute_i(left,XNULL,XNULL,"total_size_ext",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
 
 
-    left=insert_element(left,XNULL,XNULL,"histogram",xs_untyped,NULL_XMLNS);
+    left=insert_element_i(left,XNULL,XNULL,"histogram",xs_untyped,NULL_XMLNS);
     xptr lf=XNULL;
     int i=1;
     for (i=1;i<=max;i++)
@@ -711,26 +175,17 @@ void printFullNIDVariation(xptr broot, xptr node)
         it=nidsz.find(i);
         if (it!=nidsz.end())
         {
-            lf=insert_element(lf,XNULL,left,"bucket",xs_untyped,NULL_XMLNS);
+            lf=insert_element_i(lf,XNULL,left,"bucket",xs_untyped,NULL_XMLNS);
             u_itoa(i,buf,10);
-            xptr att=insert_attribute(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+            xptr att=insert_attribute_i(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
             u_itoa(it->second,buf,10);
-            att=insert_attribute(att,XNULL,XNULL,"total",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+            att=insert_attribute_i(att,XNULL,XNULL,"total",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
             u_gcvt((100.*it->second/cnt),10,buf);
-            insert_attribute(att,XNULL,XNULL,"percentage",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
-        }
-        else
-        {
-            /*
-            lf=insert_element(lf,XNULL,left,"bucket",xs_untyped,NULL);
-            u_itoa(i,buf,10);
-            xptr att=insert_attribute(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),XNULL);
-            att=insert_attribute(att,XNULL,XNULL,"total",xs_untypedAtomic,"0",1,NULL);
-            insert_attribute(att,XNULL,XNULL,"percentage",xs_untypedAtomic,"0",1,NULL);
-            */
+            insert_attribute_i(att,XNULL,XNULL,"percentage",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
         }
     }
     nidsz.clear();
+
     //counting total String
     cnt_sz=0;
     max=0;
@@ -741,247 +196,41 @@ void printFullNIDVariation(xptr broot, xptr node)
         if (it->first>max) max=it->first;
         it++;
     }
-    parent=insert_element(parent,XNULL,XNULL,"STRINGS",xs_untyped,NULL_XMLNS);
+    parent=insert_element_i(parent,XNULL,XNULL,"STRINGS",xs_untyped,NULL_XMLNS);
     u_gcvt((cnt_sz/1024./1024.),10,buf);
-    left=insert_attribute(XNULL,XNULL,parent,"total_size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+    left=insert_attribute_i(XNULL,XNULL,parent,"total_size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
     u_itoa(strcnt,buf,10);
-    left=insert_attribute(left,XNULL,XNULL,"total_count",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
-    left=insert_element(left,XNULL,XNULL,"histogram",xs_untyped,NULL_XMLNS);
+    left=insert_attribute_i(left,XNULL,XNULL,"total_count",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+    left=insert_element_i(left,XNULL,XNULL,"histogram",xs_untyped,NULL_XMLNS);
     lf=XNULL;
     for (i=0;i<=max;i++)
     {
         it=strsz.find(i);
         if (it!=strsz.end())
         {
-            lf=insert_element(lf,XNULL,left,"bucket",xs_untyped,NULL_XMLNS);
+            lf=insert_element_i(lf,XNULL,left,"bucket",xs_untyped,NULL_XMLNS);
             u_itoa(i,buf,10);
-            xptr att=insert_attribute(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+            xptr att=insert_attribute_i(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
             u_itoa(it->second,buf,10);
-            att=insert_attribute(att,XNULL,XNULL,"total",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+            att=insert_attribute_i(att,XNULL,XNULL,"total",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
             u_gcvt((100.*it->second/strcnt),10,buf);
-            insert_attribute(att,XNULL,XNULL,"percentage",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+            insert_attribute_i(att,XNULL,XNULL,"percentage",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
 
 
-        }
-        else
-        {
-            /*lf=insert_element(lf,XNULL,left,"bucket",xs_untyped,NULL);
-            u_itoa(i,buf,10);
-            xptr att=insert_attribute(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),NULL);
-            att=insert_attribute(att,XNULL,XNULL,"total",xs_untypedAtomic,"0",1,NULL);
-            insert_attribute(att,XNULL,XNULL,"percentage",xs_untypedAtomic,"0",1,NULL);*/
         }
     }
     strsz.clear();
-
-
-
-}
-#ifdef VMM_GATHER_STATISTICS
-void printDebugInfo(schema_node_cptr snode, se_ostream& crmout)
-{
-    debug_info d_in;
-    getDebugInfo(snode,(debug_info*)&d_in);
-    d_in.fill_percentage=100.*d_in.block_fill/(d_in.block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
-    d_in.inner_fill_percentage=100.*d_in.inner_block_fill/(d_in.inner_block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
-    crmout<<"TOTAL NODES IN SCHEMA="<<d_in.schema_count;
-    crmout<<"TOTAL NODES="<<d_in.node_count;
-    crmout<<"\nDEPTH="<<d_in.mdpth;
-    crmout<<"\n\n TOTAL BLOCKS="<< vmm_data_block_count;
-    crmout<<"\n TOTAL DESCRIPTOR BLOCKS="<< d_in.block_count;
-    crmout<<"\n TOTAL STRING BLOCKS ="<<d_in.str_blocks;
-    crmout<<"\n TOTAL NID BLOCKS ="<<nid_block_count;
-    crmout<<"\n TOTAL INDIR BLOCKS ="<<indir_block_count;
-    crmout<<"\n TOTAL LEAKED BLOCKS="<<(vmm_data_block_count-nid_block_count-indir_block_count-d_in.block_count-d_in.str_blocks);
-    //crmout<<"\n TOTAL SIZE="<<(d_in.block_count*PAGE_SIZE);
-
-
-    crmout<<"\n\n FILL PERCENTAGE="<<d_in.fill_percentage;
-    crmout<<"\n TOTAL INNER BLOCKS="<< d_in.inner_block_count;
-    crmout<<"\n TOTAL INNER NODES SIZE="<<(d_in.inner_block_count*PAGE_SIZE);
-    crmout<<"\n INNER FILL PERCENTAGE="<<d_in.inner_fill_percentage;
-
-
-    crmout<<"\n\n STRINGS percentage="<<(100.*d_in.str_blocks/vmm_data_block_count)<<"%";
-    crmout<<"\n DESCRIPTORS percentage="<<(100.*d_in.block_count/vmm_data_block_count)<<"%";
-    crmout<<"\n NIDS percentage="<<(100.*nid_block_count/vmm_data_block_count)<<"%";
-    crmout<<"\n INDIRECTION percentage="<<(100.*indir_block_count/vmm_data_block_count)<<"%";
-    crmout<<"\n LEAKED BLOCKS percentage="<<(100./vmm_data_block_count*(vmm_data_block_count-nid_block_count-indir_block_count-d_in.block_count-d_in.str_blocks))<<"%";
-
-    crmout<<"\n\n TOTAL SIZE Mgb="<<(0.0625*vmm_data_block_count);
-    crmout<<"\n STRINGS size,MGB="<<(0.0625*d_in.str_blocks);
-    crmout<<"\n DESCRIPTORS size,MGB="<<(0.0625*d_in.block_count);
-    crmout<<"\n NIDS size,MGB="<<(0.0625*nid_block_count);
-    crmout<<"\n INDIRECTION size,MGB="<<(0.0625*indir_block_count);
-    crmout<<"\n LEAKED BLOCKS size,MGB="<<(0.0625*(vmm_data_block_count-nid_block_count-indir_block_count-d_in.block_count-d_in.str_blocks));
-
-    if (snode->bblk!=XNULL)
-    {
-        CHECKP(snode->bblk);
-        printNIDVariation(GETBLOCKFIRSTDESCRIPTORABSOLUTE((XADDR(snode->bblk))), crmout);
-    }
-    crmout<<"\n";
-}
-#endif
-xptr fillStatistics(xptr neighbour,const char* title, char* buf,__int64 count)
-{
-    xptr left=insert_element(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
-#ifdef WIN32
-    _i64toa(count,buf,10);
-#else
-    sprintf(buf,"%lld",count);
-#endif
-    insert_text(XNULL,XNULL,left,buf,strlen(buf));
-    return left;
-}
-xptr fillStatistics2(xptr neighbour,const char* title, char* buf,double count)
-{
-    xptr left=insert_element(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
-    u_gcvt(count,10,buf);
-    insert_text(XNULL,XNULL,left,buf,strlen(buf));
-    return left;
-}
-void getDebugInfo(schema_node_cptr snode, xptr& node)
-{
-    debug_info d_in;
-    getSimpleDebugInfo(snode,(debug_info*)&d_in);
-    d_in.fill_percentage=100.*d_in.block_fill/(d_in.block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
-    d_in.inner_fill_percentage=100.*d_in.inner_block_fill/(d_in.inner_block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
-    char buf[40];
-
-    xptr left=insert_element(XNULL,XNULL,node,"total_schema_nodes",xs_untyped,NULL_XMLNS);
-    u_itoa(d_in.schema_count,buf,10);
-    insert_text(XNULL,XNULL,left,buf,strlen(buf));
-
-    left=fillStatistics(left,"total_schema_text_nodes",buf,d_in.schema_str_count);
-    left=fillStatistics(left,"schema_depth",buf,d_in.mdpth);
-    left=fillStatistics(left,"total_nodes",buf,d_in.node_count);
-    left=fillStatistics(left,"total_desc_blk",buf,d_in.block_count);
-    left=fillStatistics(left,"total_str_blk",buf,d_in.str_blocks);
-    left=fillStatistics2(left,"saturation",buf,d_in.fill_percentage);
-    left=fillStatistics2(left,"innr_blk_saturation",buf,d_in.inner_fill_percentage);
-    left=fillStatistics(left,"total_innr_blk",buf,d_in.inner_block_count);
-    left=fillStatistics(left,"total_innr_size",buf,d_in.inner_block_count*PAGE_SIZE);
-    double dbc=0.0625*(d_in.str_blocks+d_in.block_count)+0.00000095367431640625*(d_in.ext_nid_count);
-    left=fillStatistics2(left,"strings",buf,(100.*0.0625*d_in.str_blocks/dbc));
-    left=fillStatistics2(left,"descriptors",buf,(100.*0.0625*d_in.block_count/dbc));
-    /*left=fillStatistics2(left,"indirection",buf,(100.*0.00000095367431640625*sizeof(xptr)*d_in.node_count/dbc));*/
-    left=fillStatistics2(left,"nid",buf,(100.*0.00000095367431640625*d_in.ext_nid_count/dbc));
-    left=fillStatistics2(left,"total_size",buf,dbc);
-    left=fillStatistics2(left,"string_size",buf,(0.0625*d_in.str_blocks));
-    left=fillStatistics2(left,"descriptor_size",buf,(0.0625*d_in.block_count));
-    left=fillStatistics2(left,"nids_size",buf,(0.00000095367431640625*d_in.ext_nid_count));
-    left=fillStatistics2(left,"free_space_in_str_blocks",buf,(0.00000095367431640625*d_in.freestrspace));
-    /*left=fillStatistics(left,"indirection_size",buf,(0.00000095367431640625*sizeof(xptr)*d_in.node_count));*/
-    left=insert_element(left,XNULL,XNULL,"distribution",xs_untyped,NULL_XMLNS);
-    if (snode->bblk!=XNULL)
-    {
-        CHECKP(snode->bblk);
-        printFullNIDVariation(GETBLOCKFIRSTDESCRIPTORABSOLUTE((XADDR(snode->bblk))), left);
-    }
-
-}
-void printSimpleDebugInfo(schema_node_cptr snode, se_ostream& crmout)
-{
-    debug_info d_in;
-    getSimpleDebugInfo(snode,(debug_info*)&d_in);
-    d_in.fill_percentage=100.*d_in.block_fill/(d_in.block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
-    d_in.inner_fill_percentage=100.*d_in.inner_block_fill/(d_in.inner_block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
-    crmout<<"\n TOTAL NODES IN SCHEMA="<<d_in.schema_count;
-    crmout<<"\n TOTAL TEXT NODES IN SCHEMA="<<d_in.schema_str_count;
-    crmout<<"TOTAL NODES="<<d_in.node_count;
-    crmout<<"\nDEPTH="<<d_in.mdpth;
-    crmout<<"\n\n TOTAL BLOCKS EXCEPT NID and INDIR="<< d_in.block_count+d_in.str_blocks;
-    crmout<<"\n TOTAL DESCRIPTOR BLOCKS="<< d_in.block_count;
-    crmout<<"\n TOTAL STRING BLOCKS ="<<d_in.str_blocks;
-
-
-    crmout<<"\n\n FILL PERCENTAGE="<<d_in.fill_percentage;
-    crmout<<"\n TOTAL INNER BLOCKS="<< d_in.inner_block_count;
-    crmout<<"\n TOTAL INNER NODES SIZE="<<(d_in.inner_block_count*PAGE_SIZE);
-    crmout<<"\n INNER FILL PERCENTAGE="<<d_in.inner_fill_percentage;
-
-    double dbc=0.0625*(d_in.str_blocks+d_in.block_count)+0.00000095367431640625*(/*sizeof(xptr)*d_in.node_count+*/d_in.ext_nid_count);
-
-    crmout<<"\n\n STRINGS percentage="<<(100.*0.0625*d_in.str_blocks/dbc)<<"%";
-    crmout<<"\n DESCRIPTORS percentage="<<(100.*0.0625*d_in.block_count/dbc)<<"%";
-    /*crmout<<"\n NIDS percentage="<<(100.*0.00000095367431640625*sizeof(xptr)*d_in.node_count/dbc)<<"%";*/
-    crmout<<"\n NIDS percentage="<<(100.*0.00000095367431640625*d_in.ext_nid_count/dbc)<<"%";
-
-
-    crmout<<"\n\n TOTAL SIZE Mgb="<<dbc;
-    crmout<<"\n STRINGS size,MGB="<<(0.0625*d_in.str_blocks);
-    crmout<<"\n DESCRIPTORS size,MGB="<<(0.0625*d_in.block_count);
-    crmout<<"\n NIDS size,MGB="<<(0.00000095367431640625*d_in.ext_nid_count);
-    crmout<<"\n FREE SPACE IN STRING BLOCKS size,MGB="<<(0.00000095367431640625*d_in.freestrspace);
-    /*crmout<<"\n INDIRECTION size,MGB="<<(0.00000095367431640625*sizeof(xptr)*d_in.node_count);*/
-    if (snode->bblk!=XNULL)
-    {
-        CHECKP(snode->bblk);
-        printFullNIDVariation(GETBLOCKFIRSTDESCRIPTORABSOLUTE((XADDR(snode->bblk))), crmout);
-    }
-    crmout<<"\n";
-}
-void getDebugInfo(schema_node_cptr snode, debug_info* d_in)
-{
-/*  FIXME
-    d_in->schema_count++;
-    d_in->cdp++;
-    xptr block=snode->bblk;
-    node_blk_hdr* bltxt=NULL;
-    while (block!=XNULL)
-    {
-        CHECKP(block);
-        node_blk_hdr* blk=GETBLOCKBYNODE(block);
-        d_in->block_fill+=blk->count*blk->dsc_size;
-        d_in->block_count++;
-        d_in->node_count+=blk->count;
-        if (blk->nblk!=XNULL)
-        {
-            d_in->inner_block_fill+=blk->count*blk->dsc_size;
-            d_in->inner_block_count++;
-        }
-        block=blk->nblk;
-        if (blk->snode->type!=element && blk->snode->type!=xml_namespace)
-        {
-            t_dsc* node= (t_dsc*)((char*)blk+blk->desc_first);
-
-            while (node!=NULL)
-            {
-                node_blk_hdr* tmp=GETBLOCKBYNODE(node->data);
-                if (tmp!=NULL&& tmp!=bltxt)
-                {
-                    d_in->str_blocks++;
-                    bltxt=tmp;
-                }
-                if (node->desc_next!=0)
-                    node= (t_dsc*)((char*)blk+node->desc_next);
-                else
-                    node=NULL;
-            }
-
-        }
-    }
-    sc_ref_item* sc= snode->children.first;
-    while (sc!=NULL)
-    {
-        getDebugInfo(sc->object.snode, d_in);
-        sc=sc->next;
-    }
-    if (d_in->cdp>d_in->mdpth) d_in->mdpth=d_in->cdp;
-    d_in->cdp--;
-*/
 }
 
-void getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
+static void 
+getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
 {
-    /*  FIXME
     d_in->schema_count++;
     if (snode->type!=element && snode->type!=xml_namespace)
         d_in->schema_str_count++;
     d_in->cdp++;
-    xptr block=snode->bblk;
-    node_blk_hdr* bltxt=NULL;
+    xptr block = snode->bblk;
+
     while (block!=XNULL)
     {
         CHECKP(block);
@@ -1000,22 +249,14 @@ void getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
         {
             if (node->nid.size==0)
             {
-                d_in->ext_nid_count+=*(shft*)(node->nid.prefix+sizeof(xptr));
+                d_in->ext_nid_count += *(shft*)(node->nid.prefix+sizeof(xptr));
             }
             if (blk->snode->type!=element && blk->snode->type!=xml_namespace)
             {
-                node_blk_hdr* tmp=GETBLOCKBYNODE(((t_dsc*)node)->data);
-                if (tmp!=NULL&& tmp!=bltxt)
-                {
-                    d_in->str_blocks++;
-                    CHECKP(((t_dsc*)node)->data);
-                    d_in->freestrspace+=BFS(ADDR2XPTR(tmp));
-                    bltxt=tmp;
-                    CHECKP(block);
-                }
+                d_in->str_size += getTextSize((t_dsc*)node);
             }
             if (node->desc_next!=0)
-                node= (t_dsc*)((char*)blk+node->desc_next);
+                node = (n_dsc*)((char*)blk+node->desc_next);
             else
                 node=NULL;
         }
@@ -1029,115 +270,48 @@ void getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
     }
     if (d_in->cdp>d_in->mdpth) d_in->mdpth=d_in->cdp;
     d_in->cdp--;
-*/
 }
 
-void isSchemaPCAllRight(schema_node_cptr snode)
+static inline void 
+error_msg(const char * ermsg,se_ostream& crmout)
 {
-    sc_ref_item* sc= snode->children.first;
-    while (sc!=NULL)
-    {
-        if (sc->object.snode->parent!=snode.ptr())
-        {
-            crm_dbg<<"Error";
-        }
-        isSchemaPCAllRight(sc->object.snode);
-        sc=sc->next;
-    }
-}
-//verifies that there is no two neighboring text nodes
-void checkTextNodeCorrectness(xptr node)
-{
-    CHECKP(node);
-    xptr left=GETLEFTPOINTER(node);
-    xptr right=GETRIGHTPOINTER(node);
-    if (left!=XNULL)
-    {
-        CHECKP(left);
-        if (GETTYPE((GETBLOCKBYNODE(left))->snode)==text)
-        {
-            crm_dbg<<"ERROR-DEBUG-UTILS";
-        }
-    }
-    if (right!=XNULL)
-    {
-        CHECKP(right);
-        if (GETTYPE((GETBLOCKBYNODE(right))->snode)==text)
-        {
-            crm_dbg<<"ERROR-DEBUG-UTILS";
-        }
-    }
-}
-void checkChildReferenceValidity(xptr node)
-{
-    CHECKP(node);
-    n_dsc* node_dsc=(n_dsc*)XADDR(node);
-    n_dsc* prev_dsc=getPreviousDescriptorOfSameSort(node_dsc);
-    bool test1;
-    bool test2=true;
-    xptr prev_par=XNULL;
-    if (prev_dsc!=NULL)  prev_par=prev_dsc->pdsc;
-    CHECKP(node);
-    xptr parind=(node_dsc)->pdsc;
-    test1=(prev_par==parind);
-    CHECKP(parind);
-    xptr parent=*((xptr*)XADDR(parind));
-    CHECKP (parent);
-    node_blk_hdr* block=GETBLOCKBYNODE(parent);
-    xptr* childx=(xptr*)((char*)XADDR(parent)+size_of_node(block));
-    int chcnt=COUNTREFERENCES(block,size_of_node(block));
-    int cnt=0;
-    while (cnt!=chcnt)
-    {
-        if(*childx==node) test2=false;
-        cnt++;
-        childx+=1;
-    }
-    if (test1!=test2)
-    {
-        childx=(xptr*)((char*)XADDR(parent)+size_of_node(block));
-        cnt=0;
-        while (cnt!=chcnt)
-        {
-            crm_dbg<<"\nAddr= "<<XADDR(*childx);
-            childx+=1;
-            cnt++;
-        }
-        crm_dbg<<"ERROR-DEBUG-UTILS-WP";
-    }
-    CHECKP(node);
+    crmout << ermsg;
 }
 
-void error_msg(const char * ermsg,se_ostream& crmout)
+
+
+void getDebugInfo(schema_node_cptr snode, xptr& node)
 {
-    crmout<< ermsg;
-}
-void checkBlockSequenceConsistency(schema_node_cptr snode, se_ostream& crmout)
-{
-    xptr block=snode->bblk;
-    while (block!=XNULL)
+    debug_info d_in = {};
+    getSimpleDebugInfo(snode, (debug_info*)&d_in);
+    d_in.fill_percentage=100.*d_in.block_fill/(d_in.block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
+    d_in.inner_fill_percentage=100.*d_in.inner_block_fill/(d_in.inner_block_count*(PAGE_SIZE-sizeof(node_blk_hdr)));
+    char buf[40];
+
+    xptr left=insert_element_i(XNULL,XNULL,node,"total_schema_nodes",xs_untyped,NULL_XMLNS);
+    u_itoa(d_in.schema_count,buf,10);
+    insert_text_i(XNULL,XNULL,left,buf,strlen(buf));
+
+    left=insertStatisticsInteger(left,"total_schema_text_nodes",buf,d_in.schema_str_count);
+    left=insertStatisticsInteger(left,"schema_depth",buf,d_in.mdpth);
+    left=insertStatisticsInteger(left,"total_nodes",buf,d_in.node_count);
+    left=insertStatisticsInteger(left,"total_desc_blk",buf,d_in.block_count);
+    left=insertStatisticsDouble (left,"saturation",buf,d_in.fill_percentage);
+    left=insertStatisticsDouble (left,"innr_blk_saturation",buf,d_in.inner_fill_percentage);
+    left=insertStatisticsInteger(left,"total_innr_blk",buf,d_in.inner_block_count);
+    left=insertStatisticsInteger(left,"total_innr_size",buf,d_in.inner_block_count*PAGE_SIZE);
+    left=insertStatisticsDouble (left,"descriptor_size",buf,(0.0625*d_in.block_count));
+    left=insertStatisticsDouble (left,"nids_size",buf,(0.00000095367431640625*d_in.ext_nid_count));
+
+    left=insert_element_i(left,XNULL,XNULL,"distribution",xs_untyped,NULL_XMLNS);
+
+    if (snode->bblk!=XNULL)
     {
-        CHECKP(block);
-        node_blk_hdr* blk=GETBLOCKBYNODE(block);
-        if (blk->pblk==XNULL && block!=snode->bblk)
-            error_msg("First block inconsistency",crmout);
-        xptr tmp=blk->nblk;
-        if (tmp!=XNULL)
-        {
-            CHECKP(tmp);
-            if ((GETBLOCKBYNODE(tmp))->pblk!=block)
-                error_msg("block sequence inconsistency",crmout);
-        }
-        block=tmp;
-    }
-    //recursive walkthrough
-    sc_ref_item* sc= snode->children.first;
-    while (sc!=NULL)
-    {
-        checkBlockSequenceConsistency(sc->object.snode, crmout);
-        sc=sc->next;
+        CHECKP(snode->bblk);
+        insertNidAndStringsStatistics(GETBLOCKFIRSTDESCRIPTORABSOLUTE((XADDR(snode->bblk))), left);
     }
 }
+
 void checkTreeConsistency(xptr node,se_ostream& crmout)
 {
     CHECKP(node);
@@ -1188,19 +362,5 @@ void checkTreeConsistency(xptr node,se_ostream& crmout)
         checkTreeConsistency(child,crmout);
         CHECKP(child);
         child=((n_dsc*)XADDR(child))->rdsc;
-    }
-}
-void testSaDoc(const char* docname)
-{
-    schema_node_cptr rscm=find_document(docname);
-    if (rscm.found())
-    {
-        checkBlockSequenceConsistency(rscm,crm_dbg);
-        if (rscm->bblk!=XNULL)
-        {
-            CHECKP(rscm->bblk);
-            xptr rnode=GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(rscm->bblk));
-            checkTreeConsistency(rnode,crm_dbg);
-        }
     }
 }
