@@ -569,7 +569,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
 
     /* if mb->data_file_max_size == 0 than size is unlimited */
     if (mb->data_file_max_size > 0 && 
-        fileSizeNew > mb->data_file_max_size)
+        fileSizeNew > mb->data_file_max_size * PAGE_SIZE)
         throw USER_EXCEPTION(SE1011);
     
 	llLogDecrease(fileSizeCurrent);
@@ -607,7 +607,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
 
     /* if mb->data_file_max_size == 0 than size is unlimited */
     if (mb->tmp_file_max_size > 0 && 
-        fileSizeNew > mb->tmp_file_max_size)
+        fileSizeNew > mb->tmp_file_max_size * PAGE_SIZE)
         throw USER_EXCEPTION(SE1012);
 
     /* Extend the file. */ 

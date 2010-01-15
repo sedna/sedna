@@ -268,8 +268,10 @@ The file is optional. If there is no such file, the default values are used.
 The file is an XML document, which satisfies the following DTD:
 
 \begin{verbatim}
-<!ELEMENT sednaconf (sedna_data, os_primitives_id_min_bound, listener_port,
- ping_port)>
+<!ELEMENT sednaconf (sedna_data, os_primitives_id_min_bound, 
+                     listener_port, ping_port,
+                     event_log_level, keep_alive_timeout, 
+                     session_stack_depth)>
 <!ELEMENT sedna_data (#PCDATA)>
 <!ELEMENT os_primitives_id_min_bound (#PCDATA)>
 <!ELEMENT listener_port (#PCDATA)>
@@ -327,7 +329,6 @@ Each database consists of the following files, which are located as described in
 \item The \verb!<db_name>.sedata! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions.
 \item The \verb!<db_name>.setmp! file is used for storing temporary XML data. It appears in the database during query execution and contains intermediate results.
 \item The \verb!<db_name>.*llog! files are used for storing database logical log.
-%\item The \verb!buf! directory contains some intermidiate data. It is created when the database is run and removed when the database is stopped.
 \end{itemize}
 
 Besides, for each database there are run-time configuration parameters, which are stored in the database configuration file (see Section \ref{ConfigDB}).
@@ -342,9 +343,9 @@ options:
   -help							display this help and exit
   -version						display product version and exit
   -data-file-max-size Mbs		the max size of data file (in Mb), infinite size
-								by default
+								by default (0)
   -tmp-file-max-size Mbs		the max size of tmp file (in Mb), infinite size
-								by default
+								by default (0)
   -data-file-ext-portion Mbs	the data file extending portion size (in Mb),
 								default 100Mb
   -tmp-file-ext-portion Mbs		the tmp file extending portion size (in Mb),
@@ -376,9 +377,11 @@ The first and second options are straightforward, typing one of these options Ad
 
 The third option allows getting the version of the \verb!se_cdb! command.
 
-The \verb!-data-file-max-size! option allows Administrator to set up the maximum size (in Mb) of the file where the persistent data are stored. The default value for this option is infinite.
+The \verb!-data-file-max-size! option allows Administrator to set up the maximum size (in Mb) of the file where the persistent data are stored. The default value for this option is infinite (0). 
+Note, when database hits this limit it raises system error (SE1012) and shutdowns.
 
-The \verb!-tmp-file-max-size! option allows Administrator to set up the maximum size (in Mb) of the file where the temporary data are stored. The default value for this option is infinite.
+The \verb!-tmp-file-max-size! option allows Administrator to set up the maximum size (in Mb) of the file where the temporary data are stored. The default value for this option is infinite (0).
+Note, when database hits this limit it raises system error (SE1012) and shutdowns.
 
 The \verb!-data-file-ext-portion! option allows Administrator to set up the size (in Mb) of the portion to which the persistent data file will be extended as result of executing resize operation. Resize operation is applied to the persistent data file if its size is less than needed for storing XML documents. The default value is 100 Mb.
 
@@ -418,15 +421,18 @@ For each database there is a set of run-time configuration parameters, which sto
 The configuration file is an XML document, which satisfies the following DTD:
 
 \begin{verbatim}
-<!ELEMENT db (name, bufs_num, max_trs_num, init_phys_log_size, phys_log_ext_portion, upd_crt)>
+<!ELEMENT db (name, bufs_num, max_trs_num, upd_crt, 
+              tmp_file_initial_size)>
 <!ELEMENT name (#PCDATA)>
 <!ELEMENT bufs_num (#PCDATA)>
 <!ELEMENT max_trs_num (#PCDATA)>
 <!ELEMENT max_log_files (#PCDATA)>
 <!ELEMENT upd_crt (#PCDATA)>
+<?ELEMENT tmp_file_initial_size (#PCDATA)>
 \end{verbatim}
 
 The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!max_log_files! element defines the maximum number of log files prior to truncation attempt. The \verb!upd_crt! element defines the fraction of the database updating of which will result in snapshot advancement.
+The \verb!tmp-file-initial-size! defines initial size of the temporary data file in megabytes. Once the database is started up, old temporary file is removed and empty one of this size is initialized. Default value is 100 Mb.
 
 To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file. Note, in order for new configuration to take effect you must restart Storage Manager.
 
@@ -476,6 +482,8 @@ options:
   -upd-crt N               criterion parameter to advance snapshots,
                            (default value retrieved from config file)
   -max-log-files N         maximum log files until log truncate (default: 3)
+  -tmp-file-init-size Mbs  the tmp file initial size (in Mb),
+                           (default value retrieved from config file)
    db-name                 The name of the database
 \end{verbatim}
 
@@ -493,7 +501,10 @@ The \verb!-upd-crt! option allows Administrator to specify the fraction of the d
 The \verb!-max-log-files! option allows Administrator to control how many log files will be created until Storage Manager will try
 to truncate logical log by making a checkpoint. For example, if the value is $3$, then after creating fourth file Storage Manager will try to truncate log. This may significantly speed up recovery process, since there would be much shorter log to analyze. Note, however, that checkpoint may be quite a performance-heavy procedure. So you should not set the value too small. This parameter can be changed on every Storage Manager run.
 
-The last parameter \verb!dbname!  defines the name of the database to be started up.
+The \verb!-tmp-file-init-size! defines initial size of the temporary data file in megabytes. Once the database is started up, old temporary file is removed and empty one of this size is initialized. Default value
+of this parameter is retrieved from the database configuration file \ref{ConfigDB}.
+
+The last parameter \verb!dbname! defines the name of the database to be started up.
 
 
 Note: before running any database be sure that Sedna Server is strarted up (see section \ref{StartSedna}).
