@@ -3,14 +3,19 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <string>
 
 #include "common/sedna.h"
 #include "common/base.h"
 #include "common/u/uutils.h"
 
 #include "tr/executor/base/visitor/PPExplainVisitor.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/executor/fo/casting_operations.h"
 #include "tr/cat/catptr.h"
 #include "tr/mo/mo.h"
+
+using namespace std;
 
 static xmlns_ptr explain_ns = NULL_XMLNS;
 
@@ -466,6 +471,14 @@ void PPExplainVisitor::visit(PPTest* op)
 void PPExplainVisitor::visit(PPConst* op)
 {
     insertOperationElement("PPConst", left, parent, op);
+    tuple_cell tc = op->get_tuple_cell();
+    string type = tc.type2string();
+    xptr attr_left = insert_attribute_i(XNULL,XNULL,left,"type",xs_untypedAtomic, type.c_str(), type.size(), explain_ns);
+    if(is_castable(tc, xs_string))
+    {
+    	tc = tuple_cell::make_sure_light_atomic(cast(tc, xs_string));
+	    insert_attribute_i(attr_left,XNULL,left,"value",xs_untypedAtomic, tc.get_str_mem(), tc.get_strlen_mem(), explain_ns);
+    }
 }
 
 void PPExplainVisitor::visit(PPDDO* op)
