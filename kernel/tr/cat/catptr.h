@@ -9,6 +9,8 @@
 #include "common/xptr.h"
 #include "tr/cat/catalog.h"
 
+/** For information on catalog pointers, please refer to catalog.h */
+
 template <class T>
 struct catalog_fast_xptr : public xptr {
     inline catalog_fast_xptr() : xptr() {};
@@ -28,10 +30,10 @@ struct catalog_cptr_template : public catalog_cptr {
     inline catalog_cptr_template () : catalog_cptr(XNULL) {} ;
     inline catalog_cptr_template (const xptr p, bool writable = false) : catalog_cptr(p, writable) {} ;
 
-    inline catalog_cptr & operator = (const catalog_cptr_template<T> & a) 
+    inline catalog_cptr & operator = (const catalog_cptr_template<T> & a)
         { return (* (catalog_cptr *) this) = a; };
 /*
-    inline catalog_cptr & operator = (const xptr & a) 
+    inline catalog_cptr & operator = (const xptr & a)
         { return (* (catalog_cptr *) this) = a; };
 */
     inline bool operator == (const catalog_cptr_template<T> & a) const
