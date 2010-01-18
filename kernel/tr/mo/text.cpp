@@ -13,6 +13,8 @@
 #include "tr/pstr/pstr_long.h"
 #include "tr/strings/e_string.h"
 
+static char tmp_text_buffer[PAGE_SIZE];
+
 inline xptr findNearestTextContainerCP(xptr node_xptr)
 {
     t_dsc * node;
@@ -71,16 +73,12 @@ inline xptr pstr_allocate_u(xptr text_block, xptr node, const void * s, strsize_
     if (ttype==text_mem) {
         result = pstr_allocate(text_block, node, (char *) s, (size_t) size);
     } else {
-        char * buffer = (char *) malloc((size_t) size);
-        copyTextToBuffer(buffer, s, (size_t) size, ttype);
-        result = pstr_allocate(text_block, node, buffer, (size_t) size);
-        free(buffer);
+        copyTextToBuffer(tmp_text_buffer, s, (size_t) size, ttype);
+        result = pstr_allocate(text_block, node, tmp_text_buffer, (size_t) size);
     }
 
     return result;
 }
-
-static char tmp_buffer[max_indsc_text_size];
 
 void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type ttype)
 {
@@ -97,7 +95,7 @@ void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type
             if (ttype==text_mem) {
                 buffer = (char *) text;
             } else {
-                buffer = tmp_buffer;
+                buffer = tmp_text_buffer;
                 copyTextToBuffer(buffer, text, (size_t) size, ttype);
                 WRITEP(node_xptr);
             }
@@ -112,7 +110,6 @@ void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type
         pstr_allocate_u(findNearestTextContainerCP(node_xptr), node_xptr, text, size, ttype);
     }
 }
-
 
 void insertTextValue(enum insert_position_t position, xptr node_xptr, const void* text, strsize_t size, text_type ttype)
 {
@@ -135,7 +132,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
 
         if ((curr_size + size) > PSTRMAXSIZE) {
             U_ASSERT((ttype != text_doc) || (* (xptr *) text) != data);
-            char * tmp_buffer = (char *) malloc(curr_size);
+            char * tmp_buffer = tmp_text_buffer;
             copyTextToBuffer(tmp_buffer, (char*) XADDR(data), curr_size, text_mem);
             pstr_deallocate(node_xptr);
 
@@ -156,16 +153,15 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
                 }
                 pstr_long_append_tail(node_xptr, tmp_buffer, curr_size, text_mem);
             }
-
-            free(tmp_buffer);
         } else {
-            char * buffer = (char *) malloc((size_t) (size + curr_size));
-            CHECKP(data);
+            char * buffer = tmp_text_buffer;
             if (position == ip_tail) {
+                CHECKP(data);
                 memcpy(buffer, XADDR(data), curr_size);
                 copyTextToBuffer(buffer + (size_t) curr_size, text, (size_t) size, ttype);
             } else {
                 copyTextToBuffer(buffer, text, (size_t) size, ttype);
+                CHECKP(data);
                 memcpy(buffer + (size_t) size, XADDR(data), (size_t) curr_size);
             }
             if (isPstr(node)) {
@@ -173,18 +169,15 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
             } else {
                 pstr_allocate(findNearestTextContainerCP(node_xptr), node_xptr, buffer, (size_t) (size + curr_size));
             }
-            free(buffer);
         }
     }
 }
 
 inline void convertLongtextToText(xptr node_xptr, size_t size)
 {
-    char * buf = (char *) malloc(size);
-    pstr_long_copy_to_buffer(buf, node_xptr);
+    pstr_long_copy_to_buffer(tmp_text_buffer, node_xptr);
     pstr_long_delete_str(node_xptr);
-    insertTextValue(node_xptr, buf, size);
-    free(buf);
+    insertTextValue(node_xptr, tmp_text_buffer, size);
 }
 
 void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t size)
@@ -209,17 +202,14 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
         size_t new_size = (size_t) (cur_size - size);
         xptr data_ptr = getTextPtr(node);
 
-        char * buf = (char *) malloc(new_size);
-
         CHECKP(data_ptr);
         if (position == ip_tail) {
-            memcpy(buf, XADDR(data_ptr), new_size);
+            memcpy(tmp_text_buffer, XADDR(data_ptr), new_size);
         } else {
-            memcpy(buf, (char *) XADDR(data_ptr) + size, new_size);
+            memcpy(tmp_text_buffer, (char *) XADDR(data_ptr) + size, new_size);
         }
-        pstr_modify(node_xptr, buf, new_size);
 
-        free(buf);
+        pstr_modify(node_xptr, tmp_text_buffer, new_size);
     } else {
         CHECKP(node_xptr);
         U_ASSERT(isPstrLong(node));

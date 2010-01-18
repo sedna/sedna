@@ -265,7 +265,7 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
             result = insert_element(left, right, parent, scmnode->name, (save_types) ? E_DSC(node)->type : xs_untyped, ns);
             result_indir = get_last_mo_inderection();
 
-            copy_node_content(result_indir, indirectionDereferenceCP(node_indir), XNULL, nsupdmap, save_types, depth + 1);
+            copy_node_content(result_indir, indirectionDereferenceCP(node_indir), XNULL, nsupdmap, save_types, depth);
 
             result = indirectionDereferenceCP(result_indir);
             CHECKP(result);
