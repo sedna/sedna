@@ -449,7 +449,7 @@ namespace sedna
 
     void lr2por::visit(ASTBoundSpaceDecl &n)
     {
-        st_cxt->boundary_space = (n.mod == ASTBoundSpaceDecl::STRIP) ? xq_boundary_space_strip : xq_boundary_space_preserve;
+        st_cxt->set_boundary_space((n.mod == ASTBoundSpaceDecl::STRIP) ? xq_boundary_space_strip : xq_boundary_space_preserve);
     }
 
     void lr2por::visit(ASTCase &n)
@@ -558,7 +558,7 @@ namespace sedna
 
     void lr2por::visit(ASTConstDecl &n)
     {
-        st_cxt->preserve_type = (n.mod == ASTConstDecl::PRESERVE) ? true : false;
+        st_cxt->set_construction_mode((n.mod == ASTConstDecl::PRESERVE) ? true : false);
     }
 
     void lr2por::visit(ASTCreateColl &n)
@@ -841,8 +841,8 @@ namespace sedna
 
     void lr2por::visit(ASTDeclareCopyNsp &n)
     {
-        st_cxt->cn_preserve = (n.pres_mod == ASTDeclareCopyNsp::PRESERVE) ? true : false;
-        st_cxt->cn_inherit = (n.pres_mod == ASTDeclareCopyNsp::INHERIT) ? true : false;
+        st_cxt->set_namespace_preserve((n.pres_mod == ASTDeclareCopyNsp::PRESERVE) ? true : false);
+        st_cxt->set_namespace_inherit((n.pres_mod == ASTDeclareCopyNsp::INHERIT) ? true : false);
     }
 
     void lr2por::visit(ASTDefCollation &n)
@@ -2139,9 +2139,9 @@ namespace sedna
                 if (it->first == "method" && it->second == "xml")
                     dynamic_context::output_method = se_output_method_xml;
                 else if (it->first == "indent" && it->second == "yes")
-                    st_cxt->output_indent = se_output_indent_yes;
+                    st_cxt->set_output_indent(se_output_indent_yes);
                 else if (it->first == "indent" && it->second == "no")
-                    st_cxt->output_indent = se_output_indent_no;
+                    st_cxt->set_output_indent(se_output_indent_no);
             }
         }
         else if (*n.local == "character-map")
@@ -2165,7 +2165,7 @@ namespace sedna
 
     void lr2por::visit(ASTOrder &n)
     {
-        st_cxt->ordering_mode = (n.mod == ASTOrder::ORDERED) ? xq_ordering_mode_ordered : xq_ordering_mode_unordered;
+        st_cxt->set_ordering_mode((n.mod == ASTOrder::ORDERED) ? xq_ordering_mode_ordered : xq_ordering_mode_unordered);
     }
 
     void lr2por::visit(ASTOrderBy &n)
@@ -2215,7 +2215,7 @@ namespace sedna
 
     void lr2por::visit(ASTOrderEmpty &n)
     {
-        st_cxt->empty_order = (n.mod == ASTOrderEmpty::EMPTY_GREATEST) ? xq_empty_order_greatest : xq_empty_order_least;
+        st_cxt->set_empty_order ((n.mod == ASTOrderEmpty::EMPTY_GREATEST) ? xq_empty_order_greatest : xq_empty_order_least);
     }
 
     void lr2por::visit(ASTOrderMod &n)
@@ -2246,7 +2246,7 @@ namespace sedna
         }
         else
         {
-            orb.status = st_cxt->empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
+            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
         }
 
         if (n.col_mod)
@@ -2328,7 +2328,7 @@ namespace sedna
             orb_modifier orb;
 
             orb.order = ORB_ASCENDING;
-            orb.status = st_cxt->empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
+            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
             orb.collation = st_cxt->get_default_collation();
 
             off_this.orbs = arr_of_orb_modifier(1);

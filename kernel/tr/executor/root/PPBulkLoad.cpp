@@ -134,7 +134,7 @@ void PPBulkLoad::execute()
     // llNeedCheckpoint() takes responsibility for truncating logical log now
     //tr_globals::is_need_checkpoint_on_transaction_commit = false;
 
-    bool boundary_space_strip = (cxt1->st_cxt->boundary_space == xq_boundary_space_strip);
+    bool boundary_space_strip = (cxt1->st_cxt->get_boundary_space() == xq_boundary_space_strip);
 
     try {
    	    if (collection.op == NULL)

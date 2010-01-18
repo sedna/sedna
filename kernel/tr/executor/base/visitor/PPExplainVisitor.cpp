@@ -14,23 +14,16 @@
 
 static xmlns_ptr explain_ns = NULL_XMLNS;
 
-PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_) : cxt(_cxt_), 
-                                                             scm(doc_schema_node_object::create(false)),
-                                                             root(XNULL),
-                                                             parent(XNULL),
-                                                             left(XNULL),
-                                                             cached(false)
-                                        
+PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
+                                   xptr _root_) : cxt(_cxt_), 
+                                                  parent(_root_),
+                                                  left(XNULL)
 {
-    /* insert_doc_node already returns indirection */
-    parent = insert_doc_node(scm, "$explain", NULL);
-    root = parent;
-    explain_ns = cxt->st_cxt->get_ns_pair(SEDNA_NAMESPACE_PREFIX, SEDNA_NAMESPACE_URI);
+    explain_ns = cxt->st_cxt->get_xmlns_by_prefix(SEDNA_NAMESPACE_PREFIX);
 }
 
 PPExplainVisitor::~PPExplainVisitor() 
 {
-    scm->drop();
 }
 
 void PPExplainVisitor::push()
@@ -53,37 +46,28 @@ void PPExplainVisitor::pop()
 }
    
 
-xptr PPExplainVisitor::result() 
-{
-    cached = true;
-    return root;
-}
-    
 /* Helper to insert operation nodes */
 void PPExplainVisitor::insertOperationElement(const char* name, xptr& left, xptr& parent, PPIterator* op = NULL)
 {
-    if(!cached)
-    {
-        U_ASSERT(parent != XNULL);
-        elog(EL_DBG, ("[EXPLAIN] Going to insert element '%s', parent (0x%x, 0x%x), left (0x%x, 0x%x)", name, 
-                                                               parent.layer, parent.addr, 
-                                                               left.layer, left.addr));
-        left = insert_element_i(left,XNULL,parent,"operation",xs_untyped,explain_ns);
-        xptr attr_left = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic, name, strlen(name), explain_ns);
+    U_ASSERT(parent != XNULL);
+    elog(EL_DBG, ("[EXPLAIN] Going to insert element '%s', parent (0x%x, 0x%x), left (0x%x, 0x%x)", name, 
+                                                           parent.layer, parent.addr, 
+                                                           left.layer, left.addr));
+    left = insert_element_i(left,XNULL,parent,"operation",xs_untyped,explain_ns);
+    xptr attr_left = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic, name, strlen(name), explain_ns);
 
-        if(NULL != op) 
+    if(NULL != op) 
+    {
+        char buf[20];
+        if(op->get_operation_info().query_line != 0)
         {
-            char buf[20];
-            if(op->get_operation_info().query_line != 0)
-            {
-                u_itoa(op->get_operation_info().query_line,buf,10);
-                attr_left = insert_attribute_i(attr_left,XNULL,left,"line",xs_untypedAtomic,buf,strlen(buf),explain_ns);
-            }
-            if(op->get_operation_info().query_col != 0)
-            {
-                u_itoa(op->get_operation_info().query_col,buf,10);
-                attr_left = insert_attribute_i(attr_left,XNULL,left,"column",xs_untypedAtomic,buf,strlen(buf),explain_ns);
-            }
+            u_itoa(op->get_operation_info().query_line,buf,10);
+            attr_left = insert_attribute_i(attr_left,XNULL,left,"line",xs_untypedAtomic,buf,strlen(buf),explain_ns);
+        }
+        if(op->get_operation_info().query_col != 0)
+        {
+            u_itoa(op->get_operation_info().query_col,buf,10);
+            attr_left = insert_attribute_i(attr_left,XNULL,left,"column",xs_untypedAtomic,buf,strlen(buf),explain_ns);
         }
     }
 }

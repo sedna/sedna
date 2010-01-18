@@ -360,9 +360,9 @@ void PPElementConstructor::do_next (tuple &t)
         else
         {
             if (leftind!=XNULL)
-                new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->st_cxt->preserve_type)?xs_anyType:xs_untyped,ns);
+                new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
             else
-                new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->st_cxt->preserve_type)?xs_anyType:xs_untyped,ns);
+                new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
             conscnt++;
         }
         int cnt=conscnt;
@@ -472,13 +472,13 @@ void PPElementConstructor::do_next (tuple &t)
                 else
                 {
                     if (typ==document) {
-                        xptr res = copy_node_content(indir, node, left, NULL, cxt->st_cxt->preserve_type);
+                        xptr res = copy_node_content(indir, node, left, NULL, cxt->st_cxt->get_construction_mode());
                         if (res != XNULL) {
                             left = res;
                             cont_leftind = left;
                         }
                     } else {
-                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->st_cxt->preserve_type);
+                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->st_cxt->get_construction_mode());
                         cont_leftind=left;
                     }
 
@@ -1345,17 +1345,13 @@ void PPDocumentConstructor::do_next (tuple &t)
     if (first_time)
     {
         first_time = false;
-
-        //Name parameter
         tuple_cell res;
-        //document insertion insertion
-        //context save
-        xptr parind=cont_parind;
-        xptr leftind=cont_leftind;
+        xptr parind  = cont_parind;
+        xptr leftind = cont_leftind;
         int cnt=conscnt;
         int oldcnt=conscnt;
-        xptr new_doc=insert_document("tmp",false);
-        cxt->st_cxt->temp_docs.push_back(new_doc);
+        xptr new_doc = insert_document("tmp",false);
+        cxt->st_cxt->add_temporary_doc_node(new_doc);
         xptr indir=((n_dsc*)XADDR(new_doc))->indir;
         cont_parind=indir;
         cont_leftind=XNULL;
@@ -1368,8 +1364,6 @@ void PPDocumentConstructor::do_next (tuple &t)
             if (tc.is_atomic())
             {
                 at_vals.add(t);
-                //if (val->get_size()>0) val->append(" ");
-                //val->append(cont_ptr);
             }
             else
             {
@@ -1420,7 +1414,7 @@ void PPDocumentConstructor::do_next (tuple &t)
                     cnt = conscnt;
                 } else {
                     if (typ==document) {
-                        xptr res = copy_node_content(indir, node, lefti, NULL, cxt->st_cxt->preserve_type);
+                        xptr res = copy_node_content(indir, node, lefti, NULL, cxt->st_cxt->get_construction_mode());
                         if (res != XNULL) {
                             lefti = res;
                         } else {
@@ -1428,7 +1422,7 @@ void PPDocumentConstructor::do_next (tuple &t)
                             continue;
                         }
                     } else {
-                        lefti = deep_copy_node_ii(lefti, XNULL, indir, node, NULL, cxt->st_cxt->preserve_type);
+                        lefti = deep_copy_node_ii(lefti, XNULL, indir, node, NULL, cxt->st_cxt->get_construction_mode());
                     }
                 }
                 cont_leftind = lefti;

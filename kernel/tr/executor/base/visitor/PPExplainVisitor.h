@@ -17,15 +17,13 @@
 
 typedef std::pair<xptr, xptr> xptr_pair;
 
+
 class PPExplainVisitor : public PPVisitor {
 
 private:
     dynamic_context* cxt;
-    doc_schema_node_cptr scm;
-    xptr root, parent, left;
+    xptr parent, left;
 
-    /* True if result() was already called */
-    bool cached;
     /* Maintains stack of indirection pointers */
     std::stack<xptr_pair> pointers;
 
@@ -33,17 +31,7 @@ private:
     void insertOperationElement(const char* name, xptr& left, xptr& parent, PPIterator* op);
 
 public:
-    /* 
-     * Returns indirection of the doc("$explain").
-     * Result is cached and each subsequent call 
-     * (except the first one) of the accept will not change it.
-     * Returns XNULL if there were not accept calls with this instance 
-     * (i.e. visitor knows nothing about the QEP).
-     */
-    virtual xptr result();
-
-    
-    PPExplainVisitor(dynamic_context* _cxt_);
+    PPExplainVisitor(dynamic_context* _cxt_, xptr root);
     virtual ~PPExplainVisitor();
 
     virtual void push(PPIterator* op)       { push(); }
