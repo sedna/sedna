@@ -29,6 +29,7 @@ public:
             operation_info _info_,
             const tuple_cell& _c_);
     virtual ~PPConst();
+    inline tuple_cell get_tuple_cell() { return c; }
 };
 
 #endif
