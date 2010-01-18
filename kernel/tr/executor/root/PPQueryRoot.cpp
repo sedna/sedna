@@ -136,7 +136,7 @@ bool PPQueryRoot::next()
     }
     else
     {
-        switch (cxt->st_cxt->output_indent)
+        switch (cxt->st_cxt->get_output_indent())
         {
             case se_output_indent_yes: print_tuple(data, *output_stream, cxt, print_mode, first, true);  break;
             case se_output_indent_no : print_tuple(data, *output_stream, cxt, print_mode, first, false); break;

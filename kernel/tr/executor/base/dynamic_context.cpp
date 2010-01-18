@@ -40,7 +40,6 @@ void global_producer::open() { op->open(); }
 void global_producer::close() { ((PPIterator*)op)->close(); }
 
 
-
 /*******************************************************************************
  * Static context
  ******************************************************************************/
@@ -50,25 +49,23 @@ static_context::static_context()
     def_ns.push_back(NULL_XMLNS);
     
     /* Initialize predefined namespaces */
-    xmlns_ptr tmp = xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace");
-    insc_ns["xml"].push_back(tmp);
-    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-    tmp=xmlns_touch("xs", "http://www.w3.org/2001/XMLSchema");
-    insc_ns["xs"].push_back(tmp);
-    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-    tmp=xmlns_touch("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-    insc_ns["xsi"].push_back(tmp);
-    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-    tmp=xmlns_touch("fn", "http://www.w3.org/2005/xpath-functions");
-    insc_ns["fn"].push_back(tmp);
-    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-    tmp=xmlns_touch("local", "http://www.w3.org/2005/xquery-local-functions");
-    insc_ns["local"].push_back(tmp);
-    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-    tmp=xmlns_touch(SEDNA_NAMESPACE_PREFIX, SEDNA_NAMESPACE_URI);
-    insc_ns["se"].push_back(tmp);
-    ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-
+    insc_ns["xml"].  push_back(xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace"));
+    insc_ns["xs"].   push_back(xmlns_touch("xs", "http://www.w3.org/2001/XMLSchema"));
+    insc_ns["xsi"].  push_back(xmlns_touch("xsi", "http://www.w3.org/2001/XMLSchema-instance"));
+    insc_ns["fn"].   push_back(xmlns_touch("fn", "http://www.w3.org/2005/xpath-functions"));
+    insc_ns["local"].push_back(xmlns_touch("local", "http://www.w3.org/2005/xquery-local-functions"));
+    insc_ns["se"].   push_back(xmlns_touch(SEDNA_NAMESPACE_PREFIX, SEDNA_NAMESPACE_URI));
+    
+    inscmap::iterator it_end = insc_ns.end();
+    for(inscmap::iterator it = insc_ns.begin(); it != it_end; it++)
+    {
+        xmlns_ptr tmp = it->second.front();
+        ns_lib[str_pair(tmp->uri,tmp->prefix)] = tmp;
+        predefined_ns.insert(tmp);
+    }
+    
+    /* Initialize default values for prolog defined values */
+    prolog_set_fields = 0;
     boundary_space = xq_boundary_space_strip;
     default_collation_uri = NULL;
     base_uri = NULL;
@@ -82,6 +79,7 @@ static_context::static_context()
     /* 
      * Set codepoint collation as the default one.
      * static_context::set_default_collation() is too complex to be called from constructor.
+     * Probably it's better to make default value NULL?
      */
     const char* codepoint_collation_uri = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     default_collation_uri = se_new char[strlen(codepoint_collation_uri) + 1];
@@ -97,30 +95,14 @@ static_context::~static_context()
         xptr nd=*cit;
         CHECKP(nd);
         GETSCHEMENODEX(nd)->drop();
-        //nid_delete(nd);
         ++cit;
     }
     temp_docs.clear();
 
-// # warning "This place is commented, but should be wisely considered"
-/*
-    ns_map ::iterator it=ns_lib.begin();
-    while (it !=ns_lib.end())
-    {
-        if  (it->second!=NULL)
-        {
-            xml_ns::delete_namespace_node(it->second);
-        }
-        it++;
-    }
-*/
     insc_ns.clear();
     ns_lib.clear();
     def_ns.clear();
 
-
-    //if (def_ns!=NULL)xml_ns::
-    //NEED DELETION
     if (base_uri != NULL)
     {
         delete[] base_uri;
@@ -133,6 +115,10 @@ static_context::~static_context()
     }
 }
 
+/* 
+ * Seems this fucntion should be private, in most cases you want to
+ * use get_xmlns_by_prefix() instead. 
+ */
 xmlns_ptr static_context::get_ns_pair(const char* prefix, const char* uri)
 {
     U_ASSERT(prefix);
@@ -156,14 +142,16 @@ xmlns_ptr static_context::add_to_context(const char* prefix,const char* uri)
     if (strcmp("", prefix) == 0)
     {
         def_ns.push_back(res);
+        set_field_flag(SC_DEFAULT_NAMESPACE);
     }
     else
     {
-        inscmap ::iterator it=insc_ns.find(std::string(prefix));
+        inscmap::iterator it = insc_ns.find(std::string(prefix));
         if (it!=insc_ns.end())
             it->second.push_back(res);
         else
             insc_ns[std::string(prefix)].push_back(res);
+        set_field_flag(SC_NAMESPACE);
     }
     return res;
 }
@@ -207,6 +195,32 @@ xmlns_ptr static_context::get_xmlns_by_prefix(const char *_prefix, int count)
     }
 }
 
+/* Returns all explicitly defined (except predefined) namespaces */
+std::vector<xmlns_ptr> static_context::get_explicit_namespaces()
+{
+    std::vector<xmlns_ptr> res;
+    inscmap::iterator it_end = insc_ns.end();
+    for(inscmap::iterator it = insc_ns.begin(); it != it_end; it++)
+    {
+        xmlns_ptr tmp = it->second.front();
+        std::set<xmlns_ptr>::iterator predefined_it = predefined_ns.find(tmp);
+        if(predefined_it == predefined_ns.end())
+        {
+            res.push_back(tmp);
+        }
+    }
+    return res;
+
+}
+
+/* Returns current default namespaces or NULL_XMLNS if there's no one */
+xmlns_ptr static_context::get_default_namespace()
+{
+    if(def_ns.empty()) return NULL_XMLNS;
+    else return def_ns.back();
+}
+
+
 void static_context::set_base_uri(const char* _base_uri_)
 {
     
@@ -234,6 +248,7 @@ void static_context::set_base_uri(const char* _base_uri_)
         base_uri = se_new char[strlen(_base_uri_) + 1];
         strcpy(base_uri, _base_uri_);
     }
+    set_field_flag(SC_BASE_URI);
 }
 
 void static_context::set_default_collation_uri(const char* _default_collation_uri_)
@@ -284,6 +299,7 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     if (default_collation_uri != NULL) delete default_collation_uri;
     default_collation_uri = se_new char[strlen(normalized_value) + 1];
     strcpy(default_collation_uri, normalized_value);
+    set_field_flag(SC_DEFAULT_COLLATION_URI);
 }
 
 
@@ -389,7 +405,7 @@ void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_c
     st_cxts_pos = 0;
     st_cxts = se_new static_context*[st_cxts_num];
 
-    stm.reset();//REDO!!!!
+    stm.reset();
     stm.add_str(">","&gt;");
     stm.add_str("<","&lt;");
     stm.add_str("&","&amp;");

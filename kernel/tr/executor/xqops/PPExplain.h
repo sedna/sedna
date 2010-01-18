@@ -17,8 +17,8 @@ class PPExplain : public PPIterator
 {
 private:
     PPQueryEssence* qep_tree;
-    PPVisitor* visitor;
     bool first_time;
+    doc_schema_node_cptr scm;
     
 private:
     virtual void do_open   ();

@@ -11,6 +11,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <set>
 
 #include "common/sedna.h"
 
@@ -50,9 +51,7 @@ typedef int var_dsc;    // var descriptor
 typedef int var_c_id;   // var consumption id
 // every element of the array is the info about consumption of specific consumer
 typedef std::vector<bool> simple_var_consumption;
-
 typedef std::vector<int>  complex_var_consumption;
-
 typedef std::list<int>    free_entries_list;
 
 
@@ -65,18 +64,16 @@ typedef std::pair<std::string,std::string> str_pair;
 typedef std::map< str_pair, xmlns_ptr> ns_map;
 typedef std::map<std::string,std::vector<xmlns_ptr> > inscmap;
 
+/// session options
 enum se_session_option {se_debug_mode};
 
+
 /// query prolog enumerations
-enum se_output_method {se_output_method_xml};
-
-enum se_output_indent {se_output_indent_yes, se_output_indent_no};
-
+enum se_output_method  {se_output_method_xml};
+enum se_output_indent  {se_output_indent_yes, se_output_indent_no};
 enum xq_boundary_space {xq_boundary_space_strip, xq_boundary_space_preserve};
-
-enum xq_ordering_mode {xq_ordering_mode_ordered, xq_ordering_mode_unordered};
-
-enum xq_empty_order {xq_empty_order_greatest, xq_empty_order_least};
+enum xq_ordering_mode  {xq_ordering_mode_ordered, xq_ordering_mode_unordered};
+enum xq_empty_order    {xq_empty_order_greatest, xq_empty_order_least};
 
 
 
@@ -219,11 +216,28 @@ struct function_context
 /*******************************************************************************
  * Static context
  ******************************************************************************/
+
 class static_context
 {
 public:
+    enum static_context_fields_flags
+    {
+        SC_BOUNDARY_SPACE         = 0x1,
+        SC_DEFAULT_COLLATION_URI  = 0x2,
+        SC_BASE_URI               = 0x4,
+        SC_CONSTRUCTION           = 0x8,
+        SC_ORDERING_MODE          = 0x10,
+        SC_EMPTY_ORDER            = 0x20,
+        SC_NAMESPACE_PRESERVE     = 0x40,
+        SC_NAMESPACE_INHERIT      = 0x80,
+        SC_NAMESPACE              = 0x100,
+        SC_DEFAULT_NAMESPACE      = 0x200,
+        SC_OUTPUT_INDENT          = 0x400
+    };
+
+private:
     /// Prolog Declarations
-    /// ~~~~~~~~~~~~~~~~~~~
+    uint32_t prolog_set_fields;
     /// Boundary-space Declaration
     xq_boundary_space boundary_space;
     /// Default Collation Declaration
@@ -250,35 +264,38 @@ public:
     CollationHandler *default_collation_handler;
 
 
-    std::vector<xmlns_ptr> def_ns;
-    std::vector<xptr> temp_docs;
-    inscmap insc_ns;
-    ns_map ns_lib;
+    std::vector<xmlns_ptr>   def_ns;
+    std::set<xmlns_ptr>      predefined_ns;
+    std::vector<xptr>        temp_docs;
+    inscmap                  insc_ns;
+    ns_map                   ns_lib;
+    inline void set_field_flag(static_context_fields_flags flag) { prolog_set_fields |= flag; }
 
-
+public:
     static_context();
     ~static_context();
+
     void _init_context();
     void _release_resources();
     void clear_context();
+    
+    void inline add_temporary_doc_node(xptr n) { temp_docs.push_back(n); }
+
+    bool is_field_set_in_prolog(static_context_fields_flags flag) { return prolog_set_fields & flag; }
 
     xmlns_ptr        get_ns_pair(const char*  prefix, const char* uri);
     inline xmlns_ptr get_ns_pair(std::string& prefix, std::string& uri)
     {
         return get_ns_pair((prefix.size()>0)?prefix.c_str():NULL,uri.c_str());
     }
-    xmlns_ptr    add_to_context(const char* prefix, const char* uri);
+    xmlns_ptr      add_to_context(const char* prefix, const char* uri);
     void           remove_from_context(const char* prefix);
     inline void    remove_from_context(xmlns_ptr ns)
     {
         remove_from_context(ns->prefix);
     }
 
-
     xmlns_ptr get_xmlns_by_prefix(const char* _prefix, int count = -1);
-
-    void set_base_uri(const char* _base_uri_);
-    void set_default_collation_uri(const char* _default_collation_uri_);
 
     static inline std::string get_error_description(int err_code)
     {
@@ -297,6 +314,39 @@ public:
     /// codes defined above.
     int get_collation(const char *uri, /* out */ CollationHandler** handler);
     CollationHandler* get_default_collation() { return default_collation_handler; }
+    
+    ///Getters and setters for different prolog options
+    inline xq_boundary_space get_boundary_space()  { return boundary_space; }
+    inline void set_boundary_space(xq_boundary_space bs)  { boundary_space = bs; set_field_flag(SC_BOUNDARY_SPACE); }
+    
+    inline const char* get_default_collation_uri() { return default_collation_uri; }
+    void set_default_collation_uri(const char* _default_collation_uri_);
+    
+    inline const char* get_base_uri() { return base_uri; }
+    void set_base_uri(const char* _base_uri_);
+    
+    inline bool get_construction_mode() { return preserve_type; }
+    inline void set_construction_mode(bool cm) { preserve_type = cm; set_field_flag(SC_CONSTRUCTION); }
+    
+    inline xq_ordering_mode get_ordering_mode() { return ordering_mode; }
+    inline void set_ordering_mode(xq_ordering_mode om) { ordering_mode = om; set_field_flag(SC_ORDERING_MODE); }
+    
+    inline xq_empty_order get_empty_order() { return empty_order; }
+    inline void set_empty_order(xq_empty_order eo) { empty_order = eo; set_field_flag(SC_EMPTY_ORDER); }
+    
+    inline bool is_namespace_preserve() { return cn_preserve; }
+    inline void set_namespace_preserve(bool np) { cn_preserve = np; set_field_flag(SC_NAMESPACE_PRESERVE); }
+    
+    inline bool is_namespace_inherit() { return cn_inherit; }
+    inline void set_namespace_inherit(bool ni) { cn_inherit = ni; set_field_flag(SC_NAMESPACE_INHERIT); }
+    
+    inline se_output_indent get_output_indent() { return output_indent; }
+    inline void set_output_indent(se_output_indent oi) { output_indent = oi; set_field_flag(SC_OUTPUT_INDENT); }
+    
+    /* Returns defined namespaces except predefined */
+    std::vector<xmlns_ptr> get_explicit_namespaces();
+    /* Returns current default namespaces or NULL_XMLNS if there's no one */
+    xmlns_ptr get_default_namespace();
 };
 
 
@@ -324,8 +374,6 @@ public:
     }
 
     ~dynamic_context() { /* we do not delete st_cxt here because we manage it some other way */ }
-
-
 
     /// Static part
 public:
