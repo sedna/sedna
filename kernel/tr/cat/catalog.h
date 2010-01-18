@@ -14,6 +14,107 @@
 
 #include "tr/cat/simplestream.h"
 
+
+/** Catalog objects are heap-stored structures, that may be saved in the physical block memory.
+ *
+ * They possess several basic properties :
+ *  - each catalog object is bind to its "storage canton" (document or collection);
+ *  - each object has unique xptr, that never changes, once the object has been created;
+ *  - object can be temporary (never stored in blocks) or persistent (is saved to block on the end of transaction);
+ *  - some objects have names (see "Catalog name handling" further).
+ *
+ */
+
+/** Catalog object pointers
+ *
+ * Catalog object can be accessed either via name (if it has one), or via its pointer (like in schema_node case).
+ *
+ ** Catalog name handling *************************************************
+ *
+ *    Each catalog object type, that may be referred by name has it's own global (in scope of the
+ *   whole database) name table. In this name table each instance must have the unique name.
+ *   Usually, catalog_name_exists() and catalog_find_name() functions should be enough to deal with
+ *   names:
+ *
+ *     index_cell_cptr index;
+ *
+ *     if (catalog_name_exists(catobj_indicies, index_name)) {
+ *         index = catalog_find_name(catobj_indicies, index_name);
+ *     }
+ *
+ *   However this is completely equal to:
+ *
+ *     index_cell_cptr index = catalog_find_name(catobj_indicies, index_name);
+ *
+ *    Note, that if you just need to check the object existence, use catalog_name_exists()
+ *   for it does not deserialize object, and does not read block with actual cell.
+ *
+ ** Pointer access (direct pointer: fast_xptr) ****************************
+ *
+ *    Catalog object xptr in some structures may be extended by catalog fast xptr, like this :
+ *
+ *     struct node_block_header {
+ *      ...
+ *      schema_node_xptr snode;
+ *      ...
+ *     }
+ *
+ *   This kind of pointer extends usual xptr only by adding overloaded dereference operator, that
+ *   dereferences xptr directly to goal catalog object type, like this:
+ *
+ *     node_block_header * header = getBlockHeader(block);
+ *     U_ASSERT(header->snode->has_text()); // has_text() is a method of schema_node_object
+ *
+ *    Each dereference in this case calls catalog_acquire_object(). It is considered to be a bit slow,
+ *   but such code is fast and easy to be written (that's why such pointers are called "fast" in spite
+ *   of the fact, they are actually quite "slow" ones).
+ *
+ *  Note: This pointer is implemented mainly for backward compatibility. However, it should be still
+ *        used, when only one short dereference is needed. In other cases it is strongly recommended
+ *        to create local _cptr variable and use it.
+ *
+ ** Pointer access ("counted" pointer : _cptr) *****************************
+ *
+ *   _cptr is the main type of pointer planned to be used for catalog objects. It is much like any
+ *  counted pointer (but it is not actually counted in current implementation). The main difference
+ *  between _cptr and the fast_ptr is that _cptr is actually faster: catalog_acquire_object() called
+ *  only once for _cptr, and after that direct pointer is stored and used. For example:
+ *
+ *    // snode is being constructed from xptr, and catalog_acquire_object() is called at this point
+ *    schema_node_cptr snode = getBlockHeader(block)->snode;
+ *    // Further, snode may be dereferenced like simple pointer
+ *    if (snode->has_text()) { strsize += snode->textcnt; }
+ *
+ *   Each dereference in this case is just a simple pointer dereference without any function calls
+ *  or hash searches.
+ *
+ *  Note: This pointer is not actually counted, so "CPtr" may be considered to stand for "Catalog Pointer".
+ *
+ *  Note: Both _cptr and fast_xptr pointers do not change current block while being dereferenced
+ *        (There is no need to call CHECKP after it).
+ *
+ ** Modifying catalog objects **********************************************
+ *
+ *   Members of objects, referenced by both _cptr and fast_xptr can not be simply modified. Each object
+ *  instance has a flag, that tells whether or not the object should be written to data blocks. This flag
+ *  is set by special modify() function, implemented for both types of pointers. For example:
+ *
+ *    schema_node_cptr snode = getBlockHeader(block)->snode;
+ *    snode->modify();
+ *    snode->nodecnt++;
+ *
+ *  Latter code is equal to:
+ *
+ *    schema_node_cptr snode = getBlockHeader(block)->snode;
+ *    snode->modify()->nodecnt++;
+ *
+ *  Or even more simple, using fast_xptr:
+ *
+ *    getBlockHeader(block)->snode->modify()->nodecnt++;
+ *
+ */
+
+
 #define CCACHE_XPTR_BUCKETS 256
 #define CCACHE_NAME_BUCKETS 128
 
@@ -33,15 +134,6 @@ enum catalog_named_objects {
     catobj_count = 4
 };
 
-/********************************
-  Possible catalog lock objects
-*/
-/*
-struct catalog_locks {
-    uslock_t name_lock;
-    uslock_t hash_lock;
-};
-*/
 /******************************
  * Catalog interface functions
  */
@@ -54,11 +146,6 @@ catalog_object_header * catalog_acquire_object(const xptr &ptr);
 void                    catalog_release_object(catalog_object_header * object);
 void                    catalog_delete_object(catalog_object * object);
 catalog_object *        catalog_deserialize_object(xptr p, void * context);
-
-/*
-  Catalog has extremely complicated name handling.
-
-*/
 
 bool                    catalog_set_name(enum catalog_named_objects obj_type, const char * name, catalog_object_header * obj);
 catalog_object_header * catalog_find_name(enum catalog_named_objects obj_type, const char * name);
