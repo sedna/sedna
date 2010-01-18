@@ -15,7 +15,11 @@
 
 #include "tr/log/log.h"
 #include "tr/mo/indexupdate.h"
+
+#ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"
+#endif /* SE_ENABLE_TRIGGERS */
+
 #include "tr/updates/updates.h"
 
 
