@@ -36,39 +36,39 @@ using namespace std;
 static void print_gov_usage()
 {
     fprintf(stdout, "Usage: se_gov [options]\n\n");
-    fprintf(stdout, "options:\n%s\n", arg_glossary(gov_argtable, narg, "  ")); 
+    fprintf(stdout, "options:\n%s\n", arg_glossary(gov_argtable, narg, "  "));
 }
 
 #ifdef _WIN32
-BOOL GOVCtrlHandler(DWORD fdwCtrlType) 
-{ 
-    switch (fdwCtrlType) 
-    { 
-        case CTRL_C_EVENT		: // Handle the CTRL+C signal. 
-        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit. 
-        case CTRL_BREAK_EVENT	: 
-        case CTRL_LOGOFF_EVENT	: 
+BOOL GOVCtrlHandler(DWORD fdwCtrlType)
+{
+    switch (fdwCtrlType)
+    {
+        case CTRL_C_EVENT		: // Handle the CTRL+C signal.
+        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit.
+        case CTRL_BREAK_EVENT	:
+        case CTRL_LOGOFF_EVENT	:
         case CTRL_SHUTDOWN_EVENT:
-        { 
+        {
              // Beep(1000, 1000);
              open_gov_shm();
              GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
              send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
              close_gov_shm();
 
-             return TRUE; 
+             return TRUE;
         }
-        default	: return FALSE; 
-    } 
-} 
+        default	: return FALSE;
+    }
+}
 
 #else /* !_WIN32 */
 void GOVCtrlHandler(int signo)
 {
 
-    if (   signo == SIGINT 
+    if (   signo == SIGINT
         || signo == SIGQUIT
-        || signo == SIGTERM) 
+        || signo == SIGTERM)
      {
          // beep();
          open_gov_shm();
@@ -82,7 +82,6 @@ void GOVCtrlHandler(int signo)
 
 int main(int argc, char** argv)
 {
-    
     program_name_argv_0 = argv[0];
     pping_server *pps = NULL;
     gov_config_struct cfg;
@@ -102,10 +101,14 @@ int main(int argc, char** argv)
         SafeMemoryContextInit();
 #endif
 
+        /* Parse command line */
+
         arg_scan_ret_val = arg_scanargv(argc, argv, gov_argtable, narg, NULL, buf, NULL);
 
         if (arg_scan_ret_val == 0)
             throw USER_EXCEPTION2(SE4601, buf);
+
+        /* Process technical arguments */
 
         if (gov_help_l == 1 || gov_help_s == 1)
         {
@@ -118,18 +121,18 @@ int main(int argc, char** argv)
            print_version_and_copyright("Sedna Governor");
            return 0;
         }
-         
+
         fulfill_config_parameters(&cfg);
 
         SEDNA_DATA = cfg.gov_vars.SEDNA_DATA;
-      
+
         check_data_folder_existence();
 
         RenameLastSoftFaultDir();
 
         pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
 
-        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) 
+        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR)
             throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
 #ifdef REQUIRE_ROOT
@@ -146,7 +149,7 @@ int main(int argc, char** argv)
         if (uGetEnvironmentVariable(GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON, buf, 1024, __sys_call_error) == 0)
             // we were started by command "gov -background-mode off" from "gov -background-mode on"
             background_off_from_background_on = true;
-        else 
+        else
             // we were started by command "gov -background-mode on" or
             // "gov -background-mode off" directly
             background_off_from_background_on = false;
@@ -215,7 +218,7 @@ int main(int argc, char** argv)
 
         } catch (SednaUserException &e) {
             fprintf(stderr, "%s\n", e.what());
-            return 1;            
+            return 1;
         } catch (SednaException &e) {
             sedna_soft_fault(e, EL_GOV);
         } catch (ANY_SE_EXCEPTION) {
@@ -226,26 +229,26 @@ int main(int argc, char** argv)
 
 
       gov_table = new info_table();
-      gov_table->init(&cfg);  
+      gov_table->init(&cfg);
 
       if (event_logger_start_daemon(el_convert_log_level(cfg.gov_vars.el_level), SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
           throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
       elog(EL_INFO, ("SEDNA version is %s.%s", SEDNA_VERSION, SEDNA_BUILD));
       log_out_system_information();
-            
+
       create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
 
       pps->startup();
       is_pps_close = false;
-      
+
       d_printf1("Process ping server has been started\n");
       elog(EL_LOG, ("Process ping server is ready"));
 
 #ifdef _WIN32
-      BOOL fSuccess; 
+      BOOL fSuccess;
       SetProcessShutdownParameters(0x3FF, 0);
-      fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) GOVCtrlHandler, TRUE);                           // add to list 
+      fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) GOVCtrlHandler, TRUE);                           // add to list
       if (!fSuccess) throw USER_EXCEPTION(SE4403);
 #else
         if ((int)signal(SIGINT, GOVCtrlHandler) == -1)
@@ -259,14 +262,14 @@ int main(int argc, char** argv)
 #endif
 
       set_session_common_environment();
-      
+
       client_listener(gov_table->get_config_struct(), background_off_from_background_on);
 
       gov_table->wait_all_notregistered_sess();
 
       pps->shutdown();
       delete pps;
-      pps = NULL; 
+      pps = NULL;
       is_pps_close = true;
 
       if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
@@ -294,6 +297,6 @@ int main(int argc, char** argv)
     } catch (ANY_SE_EXCEPTION) {
         sedna_soft_fault(EL_GOV);
     }
-    
+
     return 0;
 }

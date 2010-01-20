@@ -73,8 +73,7 @@ xptr createBlock(schema_node_cptr schema_node, xptr prev_block_xptr, const xptr 
     } else {
         node_blk_hdr * prev_block = getBlockHeader(prev_block_xptr);
 
-        CHECKP(prev_block_xptr);
-        VMM_SIGNAL_MODIFICATION(prev_block_xptr);
+        WRITEP(prev_block_xptr);
 
         U_ASSERT(prev_block->snode == schema_node.ptr());
 
@@ -83,16 +82,13 @@ xptr createBlock(schema_node_cptr schema_node, xptr prev_block_xptr, const xptr 
     }
 
     if (next_block_xptr != XNULL) {
-        CHECKP(next_block_xptr);
-        VMM_SIGNAL_MODIFICATION(next_block_xptr);
+        WRITEP(next_block_xptr);
         getBlockHeader(next_block_xptr)->pblk = block_xptr;
     }
 
     /* Initialize block */
 
-    CHECKP(block_xptr);
-    VMM_SIGNAL_MODIFICATION(block_xptr);
-
+    WRITEP(block_xptr);
     desc_size = size_of_node(schema_node->type);
 
     if (schema_node->has_children()) {

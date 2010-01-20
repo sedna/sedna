@@ -15,8 +15,9 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-// #define DEBUG_MO
-// #define DEBUG_MO_NID
+//#define DEBUG_MO_CHECK
+//#define DEBUG_MO_LOG
+//#define DEBUG_MO_NID
 
 extern enum consistency_error_t {
     ce_none,
@@ -36,33 +37,36 @@ extern enum consistency_error_t {
 #ifdef DEBUG_MO_NID
 
 #define monidlog(message) elog(EL_DBG, message)
-
 void logNID(const char * type, xptr l, xptr r, xptr n);
 
 #else  /* DEBUG_MO_NID */
 
 #define monidlog(message)
-
 inline void logNID(const char * type, xptr l, xptr r, xptr n) {};
 
 #endif /* DEBUG_MO_NID */
 
 
-#ifdef DEBUG_MO
+#ifdef DEBUG_MO_CHECK
+
+#define MOCHECK(test) U_ASSERT(test)
+bool checkBlock(xptr block_ptr);
+
+#else
+
+#define MOCHECK(test)
+inline bool checkBlock(xptr block_ptr) { return true; };
+
+#endif /* DEBUG_MO_CHECK */
+
+#ifdef DEBUG_MO_LOG
 
 #define molog(message) elog(EL_DBG, message)
-#define MOCHECK(test) U_ASSERT(test)
 
-void checkBlock(xptr block_ptr);
-
-#else  /* DEBUG_MO */
+#else
 
 #define molog(message)
-#define MOCHECK(test)
 
-inline void checkBlock(xptr block_ptr) {};
-
-#endif /* DEBUG_MO */
-
+#endif /* DEBUG_MO_LOG */
 
 #endif /* _MODEBUG_H */

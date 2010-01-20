@@ -52,6 +52,7 @@ char *u_i64toa(__int64 value, char *str, int radix)
         return NULL;
     }
     sprintf(str, "%lld", value);
+    return str;
 }
 
 char *u_ui64toa(__uint64 value, char *str, int radix)

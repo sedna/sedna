@@ -104,12 +104,13 @@ bool checkBlockPointers(xptr block_ptr)
     return true;
 }
 
-#ifdef DEBUG_MO
+#ifdef DEBUG_MO_CHECK
 
 bool checkBlock(xptr block_ptr)
 {
     n_dsc * lnode, * rnode;
     node_blk_hdr block;
+    xptr * indir, * endpoint;
 
     copyBlockHeaderCP(&block, block_ptr);
 
@@ -135,9 +136,17 @@ bool checkBlock(xptr block_ptr)
         rnode = getDescriptor(block_ptr, lnode->desc_next);
     }
 
+    indir = (xptr *) getBlockPointer(block_ptr, getBlockHeaderCP(block_ptr)->free_first_indir);
+
+    while (indir != NULL) {
+        U_ASSERT((uint32_t) indir > 0x8888);
+        U_ASSERT(((shft *) indir)[1] == 0);
+        indir = (xptr *) getBlockPointer(block_ptr, * (shft *) indir);
+    }
+
     if (!checkBlockPointers(block_ptr)) { return false; }
 
     return true;
 }
 
-#endif /* DEBUG_MO */
+#endif /* DEBUG_MO_CHECK */

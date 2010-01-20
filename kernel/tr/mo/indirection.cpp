@@ -14,38 +14,8 @@ static enum rollback_mode_t rollback_mode = rbm_normal;
 static xptr rollback_record = XNULL;
 static xptr last_indir = XNULL;
 
-static bool no_indirection_chain_update = false;
-
-void indirectionSetUnconditionalHint()
-{
-    no_indirection_chain_update = true;
-}
-
-void indirectionSetInsertHint(xptr block_ptr)
-{
-    node_blk_hdr * block = getBlockHeaderCP(block_ptr);
-
-    if (block->count == block->indir_count) {
-        no_indirection_chain_update = true;
-    }
-}
-
-void indirectionUnsetHint()
-{
-    no_indirection_chain_update = false;
-}
-
-void indirectionSetDeleteHint(xptr node, xptr indirection)
-{
-    if (same_block(node, indirection)) {
-//        no_indirection_chain_update = true;
-    }
-}
-
 void indirectionChainDeleteBlock(xptr block_xptr)
 {
-    if (no_indirection_chain_update) { return; }
-
     node_blk_hdr * block = getBlockHeaderCP(block_xptr);
     schema_node_cptr block_snode = block->snode;
 
@@ -62,22 +32,17 @@ void indirectionChainDeleteBlock(xptr block_xptr)
         if (block_snode->bblk_indir == block_xptr)
             block_snode.modify()->bblk_indir = nblk;
 
-        if (pblk != XNULL)
-        {
-            CHECKP(pblk);
-            VMM_SIGNAL_MODIFICATION(pblk);
+        if (pblk != XNULL) {
+            WRITEP(pblk);
             getBlockHeader(pblk)->nblk_indir = nblk;
         }
 
-        if (nblk != XNULL)
-        {
-            CHECKP(nblk);
-            VMM_SIGNAL_MODIFICATION(nblk);
+        if (nblk != XNULL) {
+            WRITEP(nblk);
             getBlockHeader(nblk)->pblk_indir = pblk;
         }
 
-        CHECKP(block_xptr);
-        VMM_SIGNAL_MODIFICATION(block_xptr);
+        WRITEP(block_xptr);
         block->pblk_indir = XNULL;
         block->nblk_indir = XNULL;
     }
@@ -86,8 +51,6 @@ void indirectionChainDeleteBlock(xptr block_xptr)
 
 void indirectionChainAddBlock(xptr block_xptr)
 {
-    if (no_indirection_chain_update) { return; }
-
     node_blk_hdr * block = getBlockHeaderCP(block_xptr);
     schema_node_cptr block_snode = block->snode;
 
@@ -102,13 +65,11 @@ void indirectionChainAddBlock(xptr block_xptr)
         molog(("MOLOG (chain:0x%llx, block:0x%llx)", block_snode.ptr().to_logical_int(),  block_xptr.to_logical_int()));
 
         if (nblk!=XNULL) {
-            CHECKP(nblk);
-            VMM_SIGNAL_MODIFICATION(nblk);
+            WRITEP(nblk);
             getBlockHeader(nblk)->pblk_indir = block_xptr;
         }
 
-        CHECKP(block_xptr);
-        VMM_SIGNAL_MODIFICATION(block_xptr);
+        WRITEP(block_xptr);
 
         block->nblk_indir = nblk;
     }
@@ -119,6 +80,7 @@ xptr indirectionTableAddRecord(xptr target)
     xptr irecord;
     node_blk_hdr * indirection_block;
     node_blk_hdr * target_block = getBlockHeaderCP(target);
+    shft * precord;
 
     if (rollback_mode == rbm_undo) {
         irecord = rollback_record;
@@ -128,24 +90,44 @@ xptr indirectionTableAddRecord(xptr target)
         }
 
         indirection_block = getBlockHeaderCP(irecord);
+
+        /* As we insert our record to the arbitrary place of indirection list,
+         * we now need to fix the whole list!
+         * TODO: make this list double-linked!
+         */
+
+        CHECKP(irecord);
+        shft p = 0, i = indirection_block->free_first_indir, ir = calcShift(XADDR(irecord));
+        while (i != ir) {
+            p = i;
+            i = * (shft*) getBlockPointer(irecord, i);
+            U_ASSERT(i != 0);
+        }
+        if (p == 0) {
+            precord = &(indirection_block->free_first_indir);
+        } else {
+            precord = (shft *) getBlockPointer(irecord, p);
+        }
     } else {
         CHECKP(target);
-        if (target_block->free_first_indir != 0)
+        if (target_block->free_first_indir != 0) {
             indirection_block = target_block;
-        else {
+        } else {
             indirection_block = getBlockHeaderCP(target_block->snode->bblk_indir);
         }
         U_ASSERT(indirection_block->free_first_indir != 0);
         irecord = addr2xptr(GET_DSC(indirection_block, indirection_block->free_first_indir));
+
+        CHECKP(irecord);
+        precord = &(indirection_block->free_first_indir);
     }
 
     WRITEP(irecord);
-
-    indirection_block->free_first_indir = * (shft*) XADDR(irecord);
+    * precord = * (shft *) XADDR(irecord);
     * (xptr*) (XADDR(irecord)) = target;
     indirection_block->indir_count++;
 
-    last_indir = irecord; // we need this hint to apply dynamic xptr remapping durind redo
+    last_indir = irecord; // we need this hint to apply dynamic xptr remapping during redo
 
     return irecord;
 }
@@ -155,8 +137,7 @@ void indirectionTableDeleteRecord(xptr target_indirection)
     xptr object = indirectionDereferenceCP(target_indirection);
     node_blk_hdr * indirection_block = getBlockHeader(target_indirection);
 
-    CHECKP(target_indirection);
-    VMM_SIGNAL_MODIFICATION(target_indirection);
+    WRITEP(target_indirection);
 
     indirection_block->indir_count--;
     * (shft*) (XADDR(target_indirection)) = indirection_block->free_first_indir;
@@ -177,6 +158,15 @@ enum rollback_mode_t indirectionGetRollbackMode()
 void indirectionSetRollbackRecord(xptr p)
 {
     rollback_record = p;
+}
+
+xptr indirectionGetRollbackRecord()
+{
+    if (rollback_mode == rbm_undo) {
+        return rollback_record;
+    } else {
+        return XNULL;
+    }
 }
 
 xptr indirectionGetLastRecord()

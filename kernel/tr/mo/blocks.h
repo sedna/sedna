@@ -20,7 +20,7 @@
 #include "tr/vmm/vmm.h"
 #include "tr/strings/strings_base.h"
 
-/** Transaction finalization routine, that actially deletes all virtually deleted blocks.
+/** Transaction finalization routine, that actually deletes all virtually deleted blocks.
  */
 void deleteDeadBlocks();
 
@@ -30,7 +30,7 @@ void deleteDeadBlocks();
 bool undeleteBlock(xptr block_xptr);
 
 /** Delete block.
- * Function does not delete block phisycally, but just adds it to special list.
+ * Function does not delete block physically, but just adds it to special list.
  * Blocks are deleted from this list on the end of transaction.
  * This is made in order to have the original blocks for indirection in case of transaction rollback.
  */
