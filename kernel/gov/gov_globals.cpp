@@ -6,13 +6,12 @@
 #include "common/sedna.h"
 #include "gov/gov_globals.h"
 
-/* 
+/*
  * NOTE! If you want to add some new sednaconf.xml global parameter
  * make sure that you also change linux_install.sh script appropriately.
  */
 
 info_table *gov_table;
-
 
 int background_mode = 0;
 int gov_help_s = 0;
@@ -21,17 +20,17 @@ int gov_version = 0;
 
 const size_t narg = 9;
 
-/* 
+/*
  * -1 means that parameter was not defined through command line
  * In ths case it will be set futher in fulfill_config_parameters().
  */
-namespace gov_globals 
+namespace gov_globals
 {
     int cl_el_level       = -1;    // Event log severity level
     int cl_lstnr_port     = -1;    // Governor listen port
     int cl_ping_port      = -1;    // Process ping port
     int cl_ka_timeout     = -1;    // Session keep alive timeout
-    int cl_pp_stack_depth = -1;    // Session keep alive timeout
+    int cl_pp_stack_depth = -1;
 }
 
 

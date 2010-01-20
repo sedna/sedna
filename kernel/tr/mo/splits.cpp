@@ -24,42 +24,52 @@ inline int canAcceptNodes(xptr block_xptr, int desc_size)
 inline bool tryWidenSingleBlock(xptr block_ptr, node_blk_hdr * block, int required_dsc_size)
 {
     CHECKP(block_ptr);
-
     xptr * endpoint = (xptr *) ((char *) XADDR(block_ptr) + PAGE_SIZE) - 1;
     int total_cells = getPageDescriptorCapacitySP(block_ptr);
+    int new_total_cells;
     bit_set free_cells(total_cells);
     void * indir;
     int save_indir_count;
     int i;
 
+    free_cells.clear();
+
+    indir = getBlockPointer(block_ptr, getBlockHeaderCP(block_ptr)->free_first_indir);
+
     try {
-        free_cells.clear();
-
-        indir = getBlockPointer(block_ptr, getBlockHeader(block_ptr)->free_first_indir);
-
         while (indir != NULL) {
             i = endpoint - ((xptr *) indir);
             free_cells.setAt(i);
 
             indir = getBlockPointer(block_ptr, * (shft *) indir);
         };
+    } catch (ANY_SE_EXCEPTION) {
+        throw SYSTEM_EXCEPTION("Exception at tryWidenSingleBlock");
+    }
 
+    try {
         i = total_cells - 1;
         while (i >= 0 && free_cells.testAt(i)) { i--; }
+    } catch (ANY_SE_EXCEPTION) {
+        throw SYSTEM_EXCEPTION("Exception at tryWidenSingleBlock");
+    }
 
-        save_indir_count = i + 1;
+    save_indir_count = i + 1;
 
-        if (save_indir_count * (required_dsc_size + sizeof(xptr)) <= (PAGE_SIZE - sizeof(node_blk_hdr))) {
-            shft prev;
-            shft indir_count = block->indir_count;
+    if (save_indir_count * (required_dsc_size + sizeof(xptr)) <= (PAGE_SIZE - sizeof(node_blk_hdr))) {
+        shft prev;
+        shft indir_count = block->indir_count;
 
-            widenBlockDescriptor(block_ptr, required_dsc_size, save_indir_count);
+        widenBlockDescriptor(block_ptr, required_dsc_size, save_indir_count);
 
-            WRITEP(block_ptr);
-            block->indir_count = indir_count;
-            total_cells = getPageDescriptorCapacitySP(block_ptr);
-            U_ASSERT(total_cells >= save_indir_count);
+        WRITEP(block_ptr);
+        block->indir_count = indir_count;
+        new_total_cells = getPageDescriptorCapacitySP(block_ptr);
+        U_ASSERT(new_total_cells <= total_cells);
+        total_cells = new_total_cells;
+        U_ASSERT(total_cells >= save_indir_count);
 
+        try {
             prev = 0;
             for (i = total_cells - 1; i >=0 ; i--) {
                 if (free_cells.testAt(i)) {
@@ -68,16 +78,17 @@ inline bool tryWidenSingleBlock(xptr block_ptr, node_blk_hdr * block, int requir
                     prev = calcShift(iptr);
                 }
             }
-
-            getBlockHeader(block_ptr)->free_first_indir = prev;
-
-            MOCHECK(checkBlock(block_ptr));
-
-            return true;
+        } catch (ANY_SE_EXCEPTION) {
+            throw SYSTEM_EXCEPTION("Exception at tryWidenSingleBlock");
         }
-    } catch (ANY_SE_EXCEPTION) {
-        throw SYSTEM_EXCEPTION("Widen block exception");
+
+        getBlockHeader(block_ptr)->free_first_indir = prev;
+
+        MOCHECK(checkBlock(block_ptr));
+
+        return true;
     }
+
     return false;
 }
 
@@ -94,7 +105,6 @@ xptr widenDescriptor(xptr node_xptr, int pos, xptr set_value)
     molog(("MOLOG (0x%llx, %d, 0x%llx)", node_xptr.to_logical_int(), pos, set_value.to_logical_int()));
 
     if (MAX(block->count, block->indir_count) * (required_dsc_size + sizeof(xptr)) <= (PAGE_SIZE - sizeof(node_blk_hdr))) {
-        CHECKP(node_xptr);
         widened = tryWidenSingleBlock(block_xptr(node_xptr), block, required_dsc_size);
     }
 

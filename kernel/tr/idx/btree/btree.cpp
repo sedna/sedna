@@ -94,14 +94,13 @@ bt_cursor_tmpl<object> bt_find_ge_tmpl(const xptr &root, const bt_key &key)
         if (next != XNULL)
         {
             CHECKP(next);
-            return bt_cursor_tmpl<object>((char*)XADDR(next), 0); 
-        } 
+            return bt_cursor_tmpl<object>((char*)XADDR(next), 0);
+        }
         else return bt_cursor_tmpl<object>();
-    } 
+    }
     else return bt_cursor_tmpl<object>((char*)XADDR(res_blk), key_idx);
 }
 
-/// !!! potential error here
 template<typename object>
 bt_cursor_tmpl<object> bt_find_gt_tmpl(const xptr &root, const bt_key &key)
 {
@@ -142,13 +141,15 @@ bt_cursor_tmpl<object> bt_find_gt_tmpl(const xptr &root, const bt_key &key)
 		}
 		else
 		{
-			return c;			
+			return c;
 		}
     }
+
+    return bt_cursor_tmpl<object>();
 }
 
 template<typename object>
-bt_cursor_tmpl<object> bt_lm_tmpl(const xptr& root) 
+bt_cursor_tmpl<object> bt_lm_tmpl(const xptr& root)
 {
     if (root == XNULL) return bt_cursor_tmpl<object>();
 
@@ -159,11 +160,11 @@ bt_cursor_tmpl<object> bt_lm_tmpl(const xptr& root)
     /// !!! FIX ME UP
 #endif
 
-    if (!BT_IS_LEAF(pg)) 
-    {	
+    if (!BT_IS_LEAF(pg))
+    {
         return bt_lm_tmpl<object>(BT_LMP(pg));
-	} 
-    else 
+	}
+    else
     {
         return bt_cursor_tmpl<object>(pg, 0);
     }
@@ -230,7 +231,7 @@ void bt_delete_tmpl(xptr &root, const bt_key& key, const object &obj)
 
     if (bt_find_key(delete_xpg, (bt_key*)&key, key_idx, &merge_path))
     {
-		if (!bt_leaf_find_obj_tmpl<object>(delete_xpg, obj, key_idx, obj_idx)) { 
+		if (!bt_leaf_find_obj_tmpl<object>(delete_xpg, obj, key_idx, obj_idx)) {
 			U_ASSERT(false);
 			throw USER_EXCEPTION2(SE1008, "Cannot delete object which is not in the btree");
 		}
@@ -243,7 +244,7 @@ void bt_delete_tmpl(xptr &root, const bt_key& key, const object &obj)
 
 		bt_internal_delete_tmpl<object>(root, key, obj_idx, merge_path);
     }
-	else 
+	else
 	{
 		U_ASSERT(false);
 		throw USER_EXCEPTION2(SE1008, "Cannot delete object which is not in the btree");
@@ -256,7 +257,7 @@ void bt_delete_tmpl(xptr &root, const bt_key& key, const object &obj)
 
 /* delete key and all associated objects */
 template<typename object>
-void bt_delete_tmpl(xptr &root, const bt_key &key) 
+void bt_delete_tmpl(xptr &root, const bt_key &key)
 {
     bool    rc;
     shft    key_idx;
@@ -287,7 +288,7 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 		CHECKP(left);
 		VMM_SIGNAL_MODIFICATION(left);
 		((btree_blk_hdr*)XADDR(left))->next=right;
-		
+
 
 	}
 	if (right!=XNULL)
@@ -295,18 +296,18 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 		CHECKP(right);
 		VMM_SIGNAL_MODIFICATION(right);
 		((btree_blk_hdr*)XADDR(right))->prev=left;
-		
+
 
 	}
 	//remove key from upper layers
 	xptr parent=page_hdr->parent;
-	if (parent==XNULL) 
+	if (parent==XNULL)
 		return;
-	vmm_delete_block(page);	
+	vmm_delete_block(page);
 	CHECKP(parent);
 	btree_blk_hdr * par_hdr= (btree_blk_hdr*)XADDR(parent);
 	// fix lmp
-	if (par_hdr->lmp==page) 
+	if (par_hdr->lmp==page)
 		par_hdr->lmp=right;
 	//find key by xptr
 	int key_idx=-1;
@@ -320,7 +321,7 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 	}
 	if (key_idx<0)
 		throw USER_EXCEPTION2(SE1008, "System error in indexes");
-    
+
 	bt_nleaf_delete_key((char*)par_hdr,key_idx);
 	//VMM_SIGNAL_MODIFICATION(parent);
 	//recursive walthrough
@@ -342,12 +343,12 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 			par_hdr->parent=grandpa;//restore
 			par_hdr->prev=left_unc;
 			par_hdr->next=right_unc;
-			
+
 			vmm_delete_block(lmp);
 
 		}
 		else
-			bt_drop_page(par_hdr);	 
+			bt_drop_page(par_hdr);
 	}
 }
 */

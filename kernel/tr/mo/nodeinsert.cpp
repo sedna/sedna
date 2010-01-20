@@ -53,6 +53,8 @@ xptr scanForChild(xptr p, int child_pos) {
         if (child != XNULL) { return child; }
         p = Iterator::nextNodeCP(p);
     }
+
+    return XNULL;
 }
 
 static void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_brother, /*out*/ xptr &right_brother)
@@ -133,8 +135,7 @@ inline xptr doInsertNodeCP(xptr block, shft left, node_info_t* node_info)
 {
     n_dsc * new_node;
 
-    CHECKP(block);
-    VMM_SIGNAL_MODIFICATION(block);
+    WRITEP(block);
 
     node_info->snode = getBlockHeader(block)->snode;
     new_node = nodeListInsertCP(block, left);
@@ -297,7 +298,14 @@ xptr insertNodeGeneral(node_info_t * node_info)
         node_xptr = insertNodeWithLeftBrother(left_brother, node_info);
     } else if (snode->nodecnt == 0) {
     /* If there are no nodes in this sequence */
-        if (snode->bblk == XNULL) { snode->bblk = createBlock(snode); }
+        if (snode->bblk == XNULL) {
+            xptr rbblk = block_xptr(indirectionGetRollbackRecord());
+            if (rbblk != XNULL && undeleteBlock(rbblk)) {
+                snode->bblk = createBlock(snode, XNULL, rbblk);
+            } else {
+                snode->bblk = createBlock(snode);
+            }
+        }
         node_xptr = insertNodeFirst(snode->bblk, node_info);
     } else {
     /* Common case : find brothers if nothing is known */
