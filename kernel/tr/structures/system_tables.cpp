@@ -3,8 +3,8 @@
  * Copyright (C) 2007 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <sstream>
-
+#include <string>
+ 
 #include "common/sedna.h"
 #include "common/u/uutils.h"
 
@@ -217,11 +217,10 @@ get_indexes (xptr node,const char* title)
         print_type_name(ic->keytype,buf);
         node=insert_attribute_i(node,XNULL,XNULL,"as_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
-        std::ostringstream str1, str2;
-        ic->object->print(str1);
-        node=insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str1.str().c_str(), strlen(str1.str().c_str()),NULL_XMLNS);
-        ic->key->print(str2);
-        node=insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str2.str().c_str(),strlen(str2.str().c_str()),NULL_XMLNS);
+        std::string str = ic->object->to_string();
+        node=insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(), str.length(),NULL_XMLNS);
+        str = ic->key->to_string();
+        node=insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     }
 }
 
@@ -262,9 +261,8 @@ get_triggers (xptr node,const char* title)
         (tc->trigger_granularity == TRIGGER_FOR_EACH_NODE) ? trigger_granularity="FOR_EACH_NODE" : trigger_granularity="FOR_EACH_STATEMENT";
         node = insert_attribute_i(node,XNULL,XNULL,"granularity", xs_untypedAtomic, trigger_granularity.c_str(), trigger_granularity.length(), NULL_XMLNS);
 
-        std::ostringstream str1;
-        tc->trigger_path->print(str1);
-        node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str1.str().c_str(),strlen(str1.str().c_str()),NULL_XMLNS);
+        std::string str = tc->trigger_path->to_string();
+        node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     }
 }
 #endif /* SE_ENABLE_TRIGGERS */
@@ -315,9 +313,8 @@ get_ftindexes (xptr node,const char* title)
         print_ft_type_name(ic->ftype,buf);
         node = insert_attribute_i(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
         
-        std::ostringstream str1;
-        ic->object->print(str1);
-        node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str1.str().c_str(),strlen(str1.str().c_str()),NULL_XMLNS);
+        std::string str  = ic->object->to_string();
+        node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     
         if (ic->ftype == ft_customized_value && ic->custom_tree != NULL)
         {

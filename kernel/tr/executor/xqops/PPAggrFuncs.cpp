@@ -21,6 +21,8 @@
 static bin_op_tuple_cell_tuple_cell_collation PPFnMaxMin_fun_arr[] = {op_gt, op_lt};
 static const char* PPFnMaxMin_fun_name[] = {"fn:max()", "fn:min()"};
 
+using namespace std;
+
 PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                        operation_info _info_,
                        int _i_,
@@ -28,6 +30,8 @@ PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                                          child(_child_),
                                          i(_i_)
 {
+    U_ASSERT(i == 0 || i == 1);
+    function_name = PPFnMaxMin_fun_name[i];
 }
 
 PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
@@ -39,6 +43,8 @@ PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                                              collation(_collation_),
                                              i(_i_)
 {
+    U_ASSERT(i == 0 || i == 1);
+    function_name = PPFnMaxMin_fun_name[i];
 }
 
 PPFnMaxMin::~PPFnMaxMin()
@@ -89,20 +95,20 @@ void PPFnMaxMin::do_next(tuple &t)
         {
             collation.op->next(t);
             if(t.is_eos()) 
-                throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the second argument. Argument contains zero items in ") + PPFnMaxMin_fun_name[i]).c_str());
+                throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid arity of the second argument. Argument contains zero items in ") + function_name).c_str());
 
             tuple_cell col = atomize(collation.get(t));
             if (!is_string_type(col.get_atomic_type())) 
-                throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid type of the second argument in ") + PPFnMaxMin_fun_name[i] + " (xs_string/derived/promotable is expected)").c_str());
+                throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type of the second argument in ") + function_name + " (xs_string/derived/promotable is expected)").c_str());
 
             collation.op->next(t);
             if (!t.is_eos()) 
-                throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the second argument in ") + PPFnMaxMin_fun_name[i] + ". Argument contains more than one item").c_str());
+                throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid arity of the second argument in ") + function_name + ". Argument contains more than one item").c_str());
             
             col = tuple_cell::make_sure_light_atomic(col);
 
             int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
-            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in" + PPFnMaxMin_fun_name[i] + ".").c_str()); 
+            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in" + function_name + ".").c_str()); 
         }
 
         tuple_cell res;
@@ -132,10 +138,8 @@ void PPFnMaxMin::do_next(tuple &t)
                 (type == xs_double && u_is_nan(tca.get_xs_double())))
                     has_NaN = true;
 
-            if (is_numeric_type(type) || type == xs_boolean || type == xs_string || type == xs_date || type == xs_time || type == xs_dateTime || type == xs_yearMonthDuration || type == xs_dayTimeDuration)
-                ;
-            else
-                throw XQUERY_EXCEPTION2(FORG0006, (std::string("Error in evaluation of ") + PPFnMaxMin_fun_name[i]).c_str());
+            if (!(is_numeric_type(type) || type == xs_boolean || type == xs_string || type == xs_date || type == xs_time || type == xs_dateTime || type == xs_yearMonthDuration || type == xs_dayTimeDuration))
+                throw XQUERY_EXCEPTION2(FORG0006, (string("Bad argument type in ") + function_name).c_str());
 
             if (res.is_eos()) 
             {
@@ -149,7 +153,7 @@ void PPFnMaxMin::do_next(tuple &t)
                 if (cond) 
                     res = tca;
             } catch (SednaUserException &e) {
-                throw XQUERY_EXCEPTION2(FORG0006, (std::string("Error in evaluation of ") + PPFnMaxMin_fun_name[i]).c_str());
+                throw XQUERY_EXCEPTION2(FORG0006, (string("Can't compare values in ") + function_name).c_str());
             }
 
             if (!(least_common_type == xs_double || least_common_type == xs_string))
@@ -192,6 +196,8 @@ void PPFnMaxMin::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+static const char* PPFnSumAvg_fun_name[] = {"fn:sum()", "fn:avg()"};
+
 PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                        operation_info _info_,
                        int _i_,
@@ -199,6 +205,8 @@ PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                                          child(_child_),
                                          i(_i_)
 {
+    U_ASSERT(i == 0 || i == 1);
+    function_name = PPFnSumAvg_fun_name[i];
 }
 
 PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
@@ -210,6 +218,8 @@ PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                                         zero(_zero_),
                                         i(_i_)
 {
+    U_ASSERT(i == 0 || i == 1);
+    function_name = PPFnSumAvg_fun_name[i];
 }
 
 PPFnSumAvg::~PPFnSumAvg()
@@ -276,10 +286,8 @@ void PPFnSumAvg::do_next(tuple &t)
                 type = xs_double;
             }
 
-            if (is_numeric_type(type) || type == xs_yearMonthDuration || type == xs_dayTimeDuration)
-                ;
-            else
-                throw XQUERY_EXCEPTION2(FORG0006, "Error in evaluation of fn:sum()");
+            if (!is_numeric_type(type) && type != xs_yearMonthDuration && type != xs_dayTimeDuration)
+                throw XQUERY_EXCEPTION2(FORG0006, (string("Numeric or duration type is expected in: ") + function_name + string("Given type is: ") + tca.type2string()).c_str());
 
             if (res.is_eos())
                 res = tca;
@@ -288,7 +296,7 @@ void PPFnSumAvg::do_next(tuple &t)
                 try {
                     res = op_add(tca, res);
                 } catch (SednaUserException &e) {
-                    throw XQUERY_EXCEPTION2(FORG0006, "Error in evaluation of fn:sum()");
+                    throw XQUERY_EXCEPTION2(FORG0006, (string("Cannot sum values in ") + function_name).c_str());
                 }
             }
         }
@@ -303,7 +311,7 @@ void PPFnSumAvg::do_next(tuple &t)
                     tuple_cell z = atomize(zero.get(t));
                     zero.op->next(t);
                     if (!t.is_eos()) 
-                        throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:sum(). Argument contains more than one item");
+                        throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid arity of the second argument in ") + function_name + ". Argument contains more than one item").c_str());
 
                     t.copy(z);
                 } else first_time = true;

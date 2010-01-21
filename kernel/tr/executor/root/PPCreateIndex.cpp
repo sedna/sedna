@@ -3,6 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <string>
+ 
 #include "common/sedna.h"
 
 #include "tr/executor/root/PPCreateIndex.h"
@@ -12,19 +14,17 @@
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 
-PPCreateIndex::PPCreateIndex(PathExpr *_object_path_,
+PPCreateIndex::PPCreateIndex(PPOpIn _index_name_,
+                             PathExprRoot _root_,
+                             PathExpr *_object_path_,
                              PathExpr *_key_path_,
                              xmlscm_type _key_type_,
-                             counted_ptr<db_entity> _db_ent_,
-                             PPOpIn _index_name_,
-                             dynamic_context *_cxt_) :
-                                                    root(XNULL),
-                                                    object_path(_object_path_),
-                                                    key_path(_key_path_),
-                                                    key_type(_key_type_),
-                                                    db_ent(_db_ent_),
-                                                    index_name(_index_name_),
-                                                    cxt(_cxt_)
+                             dynamic_context *_cxt_) : index_name(_index_name_),
+                                                       root(_root_),
+                                                       object_path(_object_path_),
+                                                       key_path(_key_path_),
+                                                       key_type(_key_type_),
+                                                       cxt(_cxt_)
 {
 }
 
@@ -32,24 +32,27 @@ PPCreateIndex::~PPCreateIndex()
 {
     delete index_name.op;
     index_name.op = NULL;
-
+    
+    root.release();
+    
     delete cxt;
     cxt = NULL;
 }
 
 void PPCreateIndex::open()
 {
-    local_lock_mrg->lock(lm_x); // because Leon changes the descriptive schema of the document/collection
-    root = get_schema_node(db_ent, "Unknown entity passed to PPCreateIndex");
+    /* descriptive schema of the document/collection changes */
+    local_lock_mrg->lock(lm_x); 
     dynamic_context::global_variables_open();
     index_name.op->open();
+    root.open();
 }
 
 void PPCreateIndex::close()
 {
     index_name.op->close();
+    root.close();
     dynamic_context::global_variables_close();
-    root = XNULL;
 }
 
 void PPCreateIndex::accept(PPVisitor &v)
@@ -57,36 +60,32 @@ void PPCreateIndex::accept(PPVisitor &v)
     v.visit (this);
     v.push  (this);
     index_name.op->accept(v);    
+    if(root.get_operation().op != NULL)
+    {
+        root.get_operation().op->accept(v);
+    }
     v.pop();
 }
 
 void PPCreateIndex::execute()
 {
-    tuple_cell tc;
-    tuple t(1);
-    index_name.op->next(t);
-    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+    /* Determine index name */
+    tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create index");
 
-    tc = index_name.get(t);
-    if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION(SE1071);
+    /* Determine document or collection name to create index on */
+    counted_ptr<db_entity> db_ent = root.get_entity("index", "create index"); 
 
-    index_name.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-
-    tc = tuple_cell::make_sure_light_atomic(tc);
+    /* Get xptr on this document or collection*/
+    xptr root_obj = get_schema_node(db_ent, (std::string("Unknown document/collection passed to create index: ") + db_ent->name).c_str());
 
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
-
     auth_for_create_index(tc.get_str_mem(), db_ent->name, db_ent->type == dbe_collection);
-
     create_index(object_path,
                  key_path,
                  key_type,
-                 root,
+                 root_obj,
                  tc.get_str_mem(),
                  db_ent->name,
                  (db_ent->type == dbe_document));
-
 }
 

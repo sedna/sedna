@@ -11,6 +11,7 @@
 #include "common/errdbg/d_printf.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/xs_uri.h"
+#include "tr/executor/base/xsd.h"
 
 tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
 {

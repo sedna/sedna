@@ -26,10 +26,12 @@ void xs_NCName_release(char *ncname, void (*free_func)(void*))
     free_func(ncname);
 }
 
-void xs_NCName_print(const char *ncname, std::ostream& str)
+std::string xs_NCName2string(const char *ncname)
 {
+    std::string res;
     if (ncname && *ncname)
-        str << ncname;
+        res = ncname;
+    return res;
 }
 
 void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str)
@@ -275,16 +277,18 @@ xmlns_ptr xs_QName_get_xmlns(const char* qname)
     return _xs_QName_decode(qname);
 }
 
-void xs_QName_print(const char* prefix,
-                    const char* local,
-                    std::ostream& str)
+std::string
+xs_QName2string(const char* prefix,
+                                 const char* local)
 {
+    std::string res;
     if (prefix && *prefix)
     {
-        xs_NCName_print(prefix, str);
-        str << ":";
+        res += xs_NCName2string(prefix);
+        res += ":";
     }
-    xs_NCName_print(local, str);
+    res += xs_NCName2string(local);
+    return res;
 }
 
 void xs_QName_print_to_lr(const char* prefix,
@@ -292,14 +296,11 @@ void xs_QName_print_to_lr(const char* prefix,
                           const char* uri,
                           std::ostream& str)
 {
-//    str << "qname ";
-//    str << "(";
     xs_anyURI_print_to_lr(uri, str);
     str << " ";
     xs_NCName_print_to_lr(local, str);
     str << " ";
     xs_NCName_print_to_lr(prefix, str);
-//    str << ")";
 }
 
 

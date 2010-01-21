@@ -77,7 +77,11 @@ inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &e
 
 xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details);
 
+tuple_cell get_name_from_PPOpIn(const PPOpIn& name, 
+                                const char* obj_name,
+                                const char* op_name,
+                                bool eos_allowed = false,
+                                int error_code = XPTY0004);
 
-
-#endif
+#endif /* _PPUTILS_H */
 

@@ -186,8 +186,7 @@ namespace sedna
         {
             db_entity *dbe = new db_entity;
             dbe->type = dbe_document;
-            dbe->name = new char[6];
-            strcpy(dbe->name, "dummy");
+            dbe->name = NULL;
             off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), NULL, counted_ptr<db_entity>(dbe)), 1);
         }
 
@@ -707,7 +706,9 @@ namespace sedna
         // set context
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
-        qep = new PPCreateIndex(onp, byp, xtype, dbe, off_name.opin, dyn_cxt);
+        PathExprRoot peroot(dbe);
+        
+        qep = new PPCreateIndex(off_name.opin, peroot, onp, byp, xtype, dyn_cxt);
     }
 
     void lr2por::visit(ASTCreateRole &n)
@@ -759,6 +760,7 @@ namespace sedna
         onp = pa->getPathExpr();
         dbe = pa->getDocColl();
         delete pa; // we don't need it anymore (note that this won't destroy onp)
+        PathExprRoot peroot(dbe);
 
         if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
@@ -782,7 +784,7 @@ namespace sedna
 
             strcpy(action->at(2*i).internal.str, ir.c_str());
         }
-
+          
         if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
         {
             childOffer off_ipath;
@@ -802,12 +804,12 @@ namespace sedna
             if (!ip || ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
                 ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
-            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], dbe, onp, trg2str[n.g_mod], action,
+            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], peroot, onp, trg2str[n.g_mod], action,
                     n.leaf_name->c_str(), n.leaf_type, ip, name, dyn_cxt);
         }
         else
         {
-            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], dbe, onp, trg2str[n.g_mod], action, name, dyn_cxt);
+            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], peroot, onp, trg2str[n.g_mod], action, name, dyn_cxt);
         }
 
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);

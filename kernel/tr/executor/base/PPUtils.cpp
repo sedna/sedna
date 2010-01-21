@@ -294,3 +294,32 @@ xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
     return root;
 }
 
+tuple_cell get_name_from_PPOpIn(const PPOpIn& name, 
+                                const char* obj_name,
+                                const char* op_name,
+                                bool eos_allowed,
+                                int error_code)
+{
+    tuple t(1);
+    
+    std::string message = std::string("Invalid type of the ") + obj_name +
+                          std::string(" name in ") + op_name;
+    
+    name.op->next(t);
+    if (t.is_eos()) 
+    {
+        if(eos_allowed)
+            return name.get(t);
+        else
+            throw XQUERY_EXCEPTION2(error_code, (message + ". Name cannot be empty.").c_str());
+    }
+    tuple_cell tc = atomize(name.get(t));
+    if(!is_string_type(tc.get_atomic_type()))
+        throw XQUERY_EXCEPTION2(error_code, (message + " (xs_string, derived or promotable type is expected).").c_str());
+    name.op->next(t);
+    if (!t.is_eos())
+        throw XQUERY_EXCEPTION2(error_code, (message + ". Name argument contains more than one item.").c_str());
+
+    return tuple_cell::make_sure_light_atomic(tc);
+}
+

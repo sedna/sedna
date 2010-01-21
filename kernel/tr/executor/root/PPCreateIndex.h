@@ -10,21 +10,18 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "tr/executor/base/XPathOnSchema.h"
-#include "tr/structures/system_tables.h"
+#include "tr/executor/base/XPath.h"
+
 
 class PPCreateIndex : public PPUpdate
 {
-    // obtained parameters and local data
-    schema_node_xptr root;
-
-    // given parameters
+private:
     PathExpr *object_path;
     PathExpr *key_path;
+    PathExprRoot root;
     xmlscm_type key_type;
-    counted_ptr<db_entity> db_ent;
-    PPOpIn index_name;
     dynamic_context *cxt;
+    PPOpIn index_name;
 
 public:
     void open();
@@ -32,15 +29,15 @@ public:
     void execute();
     void accept(PPVisitor& v);
     
-    PPCreateIndex(PathExpr *_object_path_,
+    PPCreateIndex(PPOpIn _index_name_,
+                  PathExprRoot _root_,
+                  PathExpr *_object_path_,
                   PathExpr *_key_path_,
                   xmlscm_type _key_type_,
-                  counted_ptr<db_entity> _db_ent_,
-                  PPOpIn _index_name_,
                   dynamic_context *_cxt_);
 
     ~PPCreateIndex();
 };
 
-#endif
+#endif /* _PPCREATEINDEX_H */
 

@@ -100,7 +100,12 @@ void auth_for_query(counted_ptr<db_entity> dbe)
         {
             //query metadata for new dbe
             string type_obj;
-            type_obj = (dbe->type == dbe_document) ? "document" : "collection";
+            switch(dbe->type)
+            {
+                case dbe_document: type_obj = "document"; break;
+                case dbe_collection: type_obj = "collection"; break;
+                case dbe_module: type_obj = "module"; break;
+            }
             string security_metadata_document = string(SECURITY_METADATA_DOCUMENT);
 
             // get maximum available priveleges

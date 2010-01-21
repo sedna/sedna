@@ -9,7 +9,6 @@
 
 #include "common/sedna.h"
 
-#include "tr/executor/base/XPath.h"
 #include "tr/structures/nodes.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/vmm/vmm.h"

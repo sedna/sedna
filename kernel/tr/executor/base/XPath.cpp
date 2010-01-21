@@ -9,6 +9,7 @@
 
 #include "common/base.h"
 #include "tr/executor/base/XPath.h"
+#include "tr/executor/base/PPUtils.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/structures/schema.h"
 #include "tr/executor/base/PPBase.h"
@@ -125,64 +126,71 @@ void delete_PathExpr(PathExpr *path)
 }
 
 
-void NodeTest::print(std::ostream& str)
+std::string 
+NodeTest::to_string(const NodeTestType& type, const NodeTestData& data)
 {
-    switch (axis)
-    {
-        case axis_child             : str << "child"; break;
-        case axis_descendant        : str << "descendant"; break;
-        case axis_attribute         : str << "attribute"; break;
-        case axis_self              : str << "self"; break;
-        case axis_descendant_or_self: str << "descendant-or-self"; break;
-        case axis_descendant_attr   : str << "descendant-attr"; break;
-        case axis_parent            : str << "parent"; break;
-        default                     : str << "UNKNOWN";
-    }
-
-    str << "::";
-
+    string res;
     switch (type)
     {
-        case node_test_processing_instruction: str << "processing-instruction(";
-                                               xs_NCName_print(data.ncname_local, str);
-                                               str << ")";
+        case node_test_processing_instruction: res += "processing-instruction(";
+                                               res += xs_NCName2string(data.ncname_local);
+                                               res += ")";
                                                break;
 
-        case node_test_comment               : str << "comment()"; break;
-        case node_test_text                  : str << "text()"; break;
-        case node_test_node                  : str << "node()"; break;
+        case node_test_comment               : res += "comment()"; break;
+        case node_test_text                  : res += "text()"; break;
+        case node_test_node                  : res += "node()"; break;
 
-        case node_test_element               : str << "element(";
+        case node_test_element               : res += "element(";
                                                if (NULL != data.ncname_local)
-                                                   xs_QName_print(data.ncname_prefix, data.ncname_local, str);
-                                               str << ")";
+                                                   res += xs_QName2string(data.ncname_prefix, data.ncname_local);
+                                               res += ")";
                                                break;
 
-        case node_test_attribute             : str << "attribute(";
+        case node_test_attribute             : res += "attribute(";
                                                if (NULL != data.ncname_local)
-                                                   xs_QName_print(data.ncname_prefix, data.ncname_local, str);
-                                               str << ")";
+                                                   res += xs_QName2string(data.ncname_prefix, data.ncname_local);
+                                               res += ")";
                                                break;
 
-        case node_test_document              : str << "document-node(";
+        case node_test_document              : res += "document-node(";
                                                if (NULL != data.ncname_local)
                                                {
-                                                   str << "element(";
-                                                   xs_QName_print(data.ncname_prefix, data.ncname_local, str);
-                                                   str << ")";
+                                                   res += "element(";
+                                                   res += xs_QName2string(data.ncname_prefix, data.ncname_local);
+                                                   res += ")";
                                                }
-                                               str << ")";
+                                               res += ")";
                                                break;
 
-
-        case node_test_qname                 : xs_QName_print(data.ncname_prefix, data.ncname_local, str);
+        case node_test_qname                 : res += xs_QName2string(data.ncname_prefix, data.ncname_local);
                                                break;
 
-        case node_test_wildcard_star         : str << "*"; break;
-        case node_test_wildcard_ncname_star  : xs_NCName_print(data.ncname_prefix, str); str << ":*"; break;
-        case node_test_wildcard_star_ncname  : str << "*:"; xs_NCName_print(data.ncname_local, str); break;
-        default                              : str << "UNKNOWN";
+        case node_test_wildcard_star         : res += "*"; break;
+        case node_test_wildcard_ncname_star  : res += xs_NCName2string(data.ncname_prefix); res += ":*"; break;
+        case node_test_wildcard_star_ncname  : res += "*:"; xs_NCName2string(data.ncname_local); break;
+        default                              : res += "UNKNOWN";
     }
+    return res;
+}
+
+std::string NodeTest::to_string()
+{
+    string res;
+    switch (axis)
+    {
+        case axis_child             : res += "child"; break;
+        case axis_descendant        : res += "descendant"; break;
+        case axis_attribute         : res += "attribute"; break;
+        case axis_self              : res += "self"; break;
+        case axis_descendant_or_self: res += "descendant-or-self"; break;
+        case axis_descendant_attr   : res += "descendant-attr"; break;
+        case axis_parent            : res += "parent"; break;
+        default                     : res += "UNKNOWN";
+    }
+    res += "::";
+    res += NodeTest::to_string(type, data);
+    return res;
 }
 
 
@@ -204,7 +212,6 @@ void NodeTest::print_to_lr(std::ostream& str)
 
     str << " ";
 
-    /// TODO: attribute, element, document-node tests printing
     switch (type)
     {
         case node_test_processing_instruction: if(NULL == data.ncname_local)
@@ -269,24 +276,26 @@ void NodeTest::print_to_lr(std::ostream& str)
     str << ")";
 }
 
-void NodeTestOr::print(std::ostream& str)
+std::string NodeTestOr::to_string()
 {
+    string res ;
     if (s == 1)
     {
-        nt[0].print(str);
+        res += nt[0].to_string();
     }
     else
     {
         int i = 0;
-        str << "(";
-        nt[0].print(str);
+        res += "(";
+        res += nt[0].to_string();
         for (i = 1; i < s; i++)
         {
-            str << " | ";
-            nt[i].print(str);
+            res += " | ";
+            res += nt[i].to_string();
         }
-        str << ")";
+        res += ")";
     }
+    return res;
 }
 
 void NodeTestOr::print_to_lr(std::ostream& str)
@@ -302,18 +311,20 @@ void NodeTestOr::print_to_lr(std::ostream& str)
     str << ")";
 }
 
-void PathExpr::print(std::ostream& str)
+std::string PathExpr::to_string()
 {
+    string res;
     int i = 0;
     if (s > 0)
     {
-        nto[0].print(str);
+        res += nto[0].to_string();
         for (i = 1; i < s; i++)
         {
-            str << "/";
-            nto[i].print(str);
+            res += "/";
+            res += nto[i].to_string();
         }
     }
+    return res;
 }
 
 void PathExpr::print_to_lr(std::ostream& str)
@@ -581,4 +592,61 @@ PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
     }
 
     return path_expr;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// PathExprRoot - manages document or collection PathExpr is evaluated on
+////////////////////////////////////////////////////////////////////////////////
+
+void PathExprRoot::release()
+{
+    if(name.op != NULL)
+    {
+        delete name.op;
+        name.op = NULL;
+    }
+}
+
+void PathExprRoot::open()
+{
+    if(name.op != NULL)
+    {
+        name.op->open();
+    }
+}
+
+void PathExprRoot::reopen()
+{
+    if(name.op != NULL)
+    {
+        name.op->reopen();
+    }
+}
+
+void PathExprRoot::close()
+{
+    if(name.op != NULL)
+    {
+        name.op->close();
+    }
+}
+
+const PPOpIn& PathExprRoot::get_operation()
+{
+    return name;
+}
+
+const counted_ptr<db_entity>& PathExprRoot::get_entity(const char* obj_name,
+                                                       const char* op_name)
+{
+    U_ASSERT(db_ent->type != dbe_module);
+    
+    if(name.op != NULL)
+    {
+       tuple_cell root_tc = get_name_from_PPOpIn(name, obj_name, op_name);
+       if (db_ent->name) delete [] db_ent->name;
+       db_ent->name = se_new char[root_tc.get_strlen_mem() + 1];
+       strcpy(db_ent->name, root_tc.get_str_mem());
+    }
+    return db_ent;
 }

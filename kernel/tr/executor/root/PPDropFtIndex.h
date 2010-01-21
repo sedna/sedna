@@ -10,11 +10,10 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPathOnSchema.h"
-#include "tr/ft/ft_index_data.h"
 
 class PPDropFtIndex : public PPUpdate
 {
-    // given parameters
+private:
     PPOpIn index_name;
     dynamic_context *cxt;
 
@@ -29,4 +28,4 @@ public:
 };
 
 
-#endif
+#endif /* _PPDROPFTINDEX_H */
