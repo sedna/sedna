@@ -36,4 +36,4 @@ public:
     virtual ~PPDocInCol();
 };
 
-#endif
+#endif /* _PPDOCINCOL_H */

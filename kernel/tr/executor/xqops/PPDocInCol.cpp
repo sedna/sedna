@@ -58,36 +58,31 @@ void PPDocInCol::do_next(tuple &t)
 {
     if (first_time)
     {
-        col_name_op.op->next(t);
-        if (t.is_eos()) return;
-        
-        tuple_cell tc_col= atomize(col_name_op.get(t));
-        if(!is_string_type(tc_col.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:doc (xs_string/derived/promotable is expected).");
-        col_name_op.op->next(t);
-        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:doc. Argument contains more than one item.");
-        tc_col = tuple_cell::make_sure_light_atomic(tc_col);
+        tuple_cell tc_col = get_name_from_PPOpIn(col_name_op, "collection", "fn:doc(, )", true);
+        if (tc_col.is_eos()) 
+        {
+            t.set_eos();
+            return;
+        }
 
-        doc_name_op.op->next(t);
-        if (t.is_eos()) return;
-
-        tuple_cell tc_doc= atomize(doc_name_op.get(t));
-        if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:doc (xs_string/derived/promotable is expected).");
-        doc_name_op.op->next(t);
-        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:doc. Argument contains more than one item.");
-        tc_doc = tuple_cell::make_sure_light_atomic(tc_doc);
+        tuple_cell tc_doc = get_name_from_PPOpIn(doc_name_op, "document", "fn:doc(, )", true);
+        if (tc_doc.is_eos())
+        {
+            t.set_eos();
+            return;
+        }
 
         first_time = false;
 
-        // Put lock on collection and check security
 		counted_ptr<db_entity> db_ent(se_new db_entity);
         db_ent->name = se_new char[tc_col.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc_col.get_str_mem());
 		db_ent->type = dbe_collection;
-        schema_node_cptr root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol");
+        schema_node_cptr root = get_schema_node(db_ent, (std::string("Unknown entity passed to fn:doc( , ): ") + db_ent->name).c_str());
 
         bool valid;
         Uri::check_constraints(&tc_doc, &valid, NULL);
-        if(!valid) throw XQUERY_EXCEPTION2(FODC0005, "Invalid uri in the first argument of fn:doc.");
+        if(!valid) throw XQUERY_EXCEPTION2(FODC0005, "Invalid uri in the first argument of fn:doc( , ).");
 
         xptr res = find_document_in_collection((const char*)tc_col.get_str_mem(), (const char*)tc_doc.get_str_mem());
         if (res == XNULL)

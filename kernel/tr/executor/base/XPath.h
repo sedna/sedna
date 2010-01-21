@@ -14,8 +14,11 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/xsd.h"
+#include "tr/executor/base/PPbase.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 #include "tr/structures/schema.h"
+#include "tr/structures/system_tables.h"
+
 
 enum Axis
 {
@@ -59,7 +62,8 @@ struct NodeTest
     NodeTestType type;
     NodeTestData data;
 
-    void print(std::ostream& str);
+    std::string to_string();
+    static std::string to_string(const NodeTestType& type, const NodeTestData& data);
     void print_to_lr(std::ostream& str);
 };
 
@@ -69,7 +73,7 @@ struct NodeTestOr
     NodeTest *nt;  // NodeTest array
     int s;         // size
 
-    void print(std::ostream& str);
+    std::string to_string();
     void print_to_lr(std::ostream& str);
 };
 
@@ -81,9 +85,35 @@ struct PathExpr
     NodeTestOr *nto;  // NodeTestOr array
     int s;            // size
 
-    void print(std::ostream& str = std::cerr);
-    void print_to_lr(std::ostream& str = std::cerr);
+    std::string to_string();
+    void print_to_lr(std::ostream& str);
 };
+
+
+struct PathExprRoot
+{
+private:
+    counted_ptr<db_entity> db_ent;
+    PPOpIn name;    
+
+public:
+    PathExprRoot(counted_ptr<db_entity> _db_ent_,
+                 PPOpIn _name_): db_ent(_db_ent_),
+                                 name(_name_) {}
+
+    PathExprRoot(counted_ptr<db_entity> _db_ent_): db_ent(_db_ent_) {}
+    
+    void close();
+    void open();
+    void reopen();
+    void release();
+    
+    const PPOpIn& get_operation();
+    
+    const counted_ptr<db_entity>& get_entity(const char* obj_name,
+                                             const char* op_name);
+};
+
 
 struct PathExprMemoryManager {
     void * (*alloc)(size_t);
@@ -92,8 +122,8 @@ struct PathExprMemoryManager {
     void * (*realloc)(void*, size_t);
 };
 
-extern PathExprMemoryManager * pe_local_aspace;
-extern PathExprMemoryManager * pe_catalog_aspace;
+extern PathExprMemoryManager* pe_local_aspace;
+extern PathExprMemoryManager* pe_catalog_aspace;
 
 void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm);
 //void delete_PathExpr(PathExpr *expr);
@@ -110,7 +140,5 @@ void set_node_test_type_and_data(scheme_list *lst,
                                  NodeTestData &nt_data, //out parameter
                                  PathExprMemoryManager * mm);
 
-#endif
-
-
+#endif /* _XPATH_H */
 

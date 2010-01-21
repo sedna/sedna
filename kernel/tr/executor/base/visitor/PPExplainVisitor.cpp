@@ -141,16 +141,35 @@ void PPExplainVisitor::visit(PPFnCount* op)
 void PPExplainVisitor::visit(PPFnMaxMin* op)
 {
     insertOperationElement("PPFnMaxMin", left, parent, op);
+    const char* function = op->get_function_name();
+    insert_attribute_i(XNULL,XNULL,left,"function",xs_untypedAtomic, function, strlen(function), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPFnSumAvg* op)
 {
     insertOperationElement("PPFnSumAvg", left, parent, op);
+    const char* function = op->get_function_name();
+    insert_attribute_i(XNULL,XNULL,left,"function",xs_untypedAtomic, function, strlen(function), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAbsPath* op)
 {
     insertOperationElement("PPAbsPath", left, parent, op);
+    string path_expr = op->getPathExpr()->to_string();
+    counted_ptr<db_entity> dbe = op->getDocColl();
+    const char* root_type;
+    switch(dbe->type)
+    {
+        case dbe_document: root_type = "document"; break;
+        case dbe_collection: root_type = "collection"; break;
+        case dbe_module: root_type = "module"; break;
+    }
+    xptr attr_left = insert_attribute_i(XNULL,XNULL,left,"root-type",xs_untypedAtomic, root_type, strlen(root_type), explain_ns);
+    if(NULL != dbe->name) 
+    {
+        attr_left = insert_attribute_i(attr_left,XNULL,left,"root-name",xs_untypedAtomic, dbe->name, strlen(dbe->name), explain_ns);
+    }
+    insert_attribute_i(attr_left,XNULL,left,"XPath",xs_untypedAtomic, path_expr.c_str(), path_expr.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisAncestor* op)
@@ -519,11 +538,6 @@ void PPExplainVisitor::visit(PPLast* op)
 void PPExplainVisitor::visit(PPNil* op)
 {
     insertOperationElement("PPNil", left, parent, op);
-}
-
-void PPExplainVisitor::visit(PPScan* op)
-{
-    insertOperationElement("PPScan", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPSelect* op)

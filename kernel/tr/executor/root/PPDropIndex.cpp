@@ -13,7 +13,9 @@
 #include "tr/auth/auc.h"
 
 
-PPDropIndex::PPDropIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
+PPDropIndex::PPDropIndex(PPOpIn _index_name_, 
+                         dynamic_context *_cxt_) : index_name(_index_name_), 
+                                                   cxt(_cxt_)
 {
 }
 
@@ -49,21 +51,9 @@ void PPDropIndex::accept(PPVisitor &v)
 
 void PPDropIndex::execute()
 {
-    tuple_cell tc;
-    tuple t(1);
-    index_name.op->next(t);
-    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+    tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "drop index");
 
-    tc = index_name.get(t);
-    if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION(SE1071);
-
-    index_name.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-
-    tc = tuple_cell::make_sure_light_atomic(tc);
-
-    schema_node_cptr root = get_schema_node(find_db_entity_for_index(tc.get_str_mem()), "Unknown entity passed to PPDropIndex");
+    schema_node_cptr root = get_schema_node(find_db_entity_for_index(tc.get_str_mem()), "Unknown entity passed to drop index");
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
     auth_for_drop_object(tc.get_str_mem(), "index", false);
     delete_index(tc.get_str_mem());

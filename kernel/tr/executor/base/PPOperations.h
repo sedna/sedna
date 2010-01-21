@@ -87,7 +87,6 @@
 #include "tr/executor/xqops/PPDocInCol.h"
 #include "tr/executor/xqops/PPTuple.h"
 #include "tr/executor/xqops/PPPred.h"
-#include "tr/executor/xqops/PPScan.h"
 #include "tr/executor/xqops/PPUnion.h"
 #include "tr/executor/xqops/PPIntersect.h"
 #include "tr/executor/xqops/PPExcept.h"

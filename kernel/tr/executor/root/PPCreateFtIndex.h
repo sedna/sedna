@@ -11,7 +11,6 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/ft/ft_index_data.h"
-#include "tr/structures/system_tables.h"
 
 ft_index_type str2index_type(const char *str);
 ft_index_template_t * make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);
@@ -24,12 +23,10 @@ class PPCreateFtIndex : public PPUpdate
 	ft_index_type index_type;
 	ft_index_impl index_impl;
 	PPOpIn cust_rules;
-    counted_ptr<db_entity> db_ent;
+    PathExprRoot root;    
     PPOpIn index_name;
     dynamic_context *cxt;
 
-    // obtained parameters and local data
-    schema_node_xptr root;
 public:
     void open();
     void close();
@@ -38,13 +35,13 @@ public:
     
     PPCreateFtIndex(PathExpr *_object_path_,
                     const char* _index_type_,
-                    counted_ptr<db_entity> _db_ent_,
+                    PathExprRoot _root_,
                     PPOpIn _index_name_,
                     PPOpIn _cust_rules_,
                     dynamic_context *_cxt_);
     PPCreateFtIndex(PathExpr *_object_path_,
                     const char *_index_type_,
-                    counted_ptr<db_entity> _db_ent_,
+                    PathExprRoot _root_,
                     PPOpIn _index_name_,
                     dynamic_context *_cxt_);
 
@@ -53,4 +50,4 @@ public:
 
 
 
-#endif
+#endif /* _PPCREATEFTINDEX_H */

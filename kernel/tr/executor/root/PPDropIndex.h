@@ -12,7 +12,7 @@
 
 class PPDropIndex : public PPUpdate
 {
-    // given parameters
+private:
     PPOpIn index_name;
     dynamic_context *cxt;
 
@@ -27,5 +27,5 @@ public:
     ~PPDropIndex();
 };
 
-#endif
+#endif /* _PPDROPINDEX_H */
 

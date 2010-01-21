@@ -5,6 +5,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/fo/other_fo.h"
+#include "tr/executor/base/xsd.h"
 
 
 /*******************************************************************************

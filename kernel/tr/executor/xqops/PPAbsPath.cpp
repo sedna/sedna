@@ -138,8 +138,7 @@ void PPAbsPath::do_close()
 
 void PPAbsPath::do_next(tuple &t)
 {
-    if (root == XNULL)
-    if (determine_root())
+    if (root == XNULL && determine_root())
     {
         t.set_eos();
         return;
@@ -174,20 +173,8 @@ bool PPAbsPath::determine_root()
     tuple_cell tc;
     if (name.op)
     {
-        tuple t(1);
-        name.op->next(t);
-
-        /* If $uri is the empty sequence, the result is an empty sequence */
-        if (t.is_eos()) return true;
-
-        tc= atomize(name.get(t));
-
-        if(!is_string_type(tc.get_atomic_type()))
-            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc (xs_string/derived/promotable is expected).");
-
-        name.op->next(t);
-        if (!t.is_eos())
-            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc. Argument contains more than one item.");
+        tc = get_name_from_PPOpIn(name, "fn:doc() or fn:collection()", "XPath expression", true);
+        if (tc.is_eos()) return true;
 
         tc = tuple_cell::make_sure_light_atomic(tc);
         if (db_ent->name) delete [] db_ent->name;
@@ -198,7 +185,7 @@ bool PPAbsPath::determine_root()
 	document_type dt = get_document_type(db_ent);
 
 	if (dt == DT_NON_SYSTEM)
-        root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath");
+        root = get_schema_node(db_ent, "Unknown entity passed to fn:doc() or fn:collection() in XPath expression");
 	else
 	   	root = get_system_doc(dt, db_ent->name);
 

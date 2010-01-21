@@ -128,7 +128,6 @@ public:
     virtual void visit(PPIndexScan* op)                  = 0;
     virtual void visit(PPLast* op)                       = 0;
     virtual void visit(PPNil* op)                        = 0;
-    virtual void visit(PPScan* op)                       = 0;
     virtual void visit(PPSelect* op)                     = 0;
     virtual void visit(PPSeqChecker* op)                 = 0;
     virtual void visit(PPStore* op)                      = 0;

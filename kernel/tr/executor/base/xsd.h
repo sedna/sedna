@@ -10,6 +10,8 @@
 #include "common/sedna.h"
 
 #include <iostream>
+#include <string>
+
 #include "common/xptr.h"
 #include "tr/structures/schema.h"
 
@@ -70,7 +72,7 @@ xs:positiveInteger      8                   __uint64
 //// paramters to xs_NCName_create.
 char *xs_NCName_create(const char* value, void* (*alloc_func)(size_t));
 void  xs_NCName_release(char *ncname, void (*free_func)(void*));
-void  xs_NCName_print(const char *ncname, std::ostream& str);
+std::string  xs_NCName2string(const char *ncname);
 void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str);
 
 
@@ -130,9 +132,8 @@ const char *xs_QName_get_uri(const char* qname);
 const char *xs_QName_get_local_name(const char* qname);
 xmlns_ptr xs_QName_get_xmlns(const char* qname);
 
-void xs_QName_print(const char* prefix, 
-                    const char* local,
-                    std::ostream& str);
+std::string xs_QName2string(const char* prefix,
+                            const char* local);
 
 void xs_QName_print_to_lr(const char* prefix, 
                           const char* local,

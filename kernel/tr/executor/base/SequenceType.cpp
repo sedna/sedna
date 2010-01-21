@@ -7,6 +7,7 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/SequenceType.h"
+#include "tr/executor/base/xsd.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/sequence.h"
 #include "tr/executor/base/dm_accessors.h"

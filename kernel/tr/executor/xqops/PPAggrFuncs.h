@@ -7,6 +7,7 @@
 #ifndef _PPAGGRFUNCS_H
 #define _PPAGGRFUNCS_H
 
+
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
@@ -22,6 +23,7 @@ private:
     PPOpIn collation;
     CollationHandler* handler;
     int i; // 0 means fn:max, 1 means fn:min
+    const char* function_name;
 
 private:
     virtual void do_open   ();
@@ -43,6 +45,8 @@ public:
                PPOpIn _child_,
                PPOpIn _collation_);
     virtual ~PPFnMaxMin();
+    inline const char* get_function_name() { return function_name; }
+    
 };
 
 
@@ -57,6 +61,7 @@ private:
     PPOpIn zero;
     bool first_time;
     int i; // 0 means fn:sum, 1 means fn:avg
+    const char* function_name;
 
 private:
     virtual void do_open   ();
@@ -78,6 +83,7 @@ public:
                PPOpIn _child_,
                PPOpIn _zero_);
     virtual ~PPFnSumAvg();
+    inline const char* get_function_name() { return function_name; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////

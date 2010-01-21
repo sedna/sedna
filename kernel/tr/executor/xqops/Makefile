@@ -53,7 +53,6 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPQName$(OBJ_EXT) \
         PPRange$(OBJ_EXT) \
         PPReturn$(OBJ_EXT) \
-        PPScan$(OBJ_EXT) \
         PPSelect$(OBJ_EXT) \
         PPSequence$(OBJ_EXT) \
         PPSeqChecker$(OBJ_EXT) \
