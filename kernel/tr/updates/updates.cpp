@@ -226,6 +226,7 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
     xptr result;
     xptr node_indir;
     schema_node_cptr scmnode;
+    xmlscm_type scm_type;
 
 #ifdef SE_ENABLE_FTSEARCH
     if (!depth) init_ft_sequences(left,right,parent);
@@ -262,7 +263,8 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                 swizzleNamespace(ns, *nsupdmap);
             }
 
-            result = insert_element(left, right, parent, scmnode->name, (save_types) ? E_DSC(node)->type : xs_untyped, ns);
+            scm_type = (save_types) ? E_DSC(node)->type : xs_untyped;
+            result = insert_element(left, right, parent, scmnode->name, scm_type, ns);
             result_indir = get_last_mo_inderection();
 
             copy_node_content(result_indir, indirectionDereferenceCP(node_indir), XNULL, nsupdmap, save_types, depth);
@@ -305,11 +307,14 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
         case attribute: {
             xmlns_ptr ns = scmnode->get_xmlns();
             text_cptr buf(node);
+
             if (nsupdmap != NULL && ns != NULL_XMLNS) {
                 swizzleNamespace(ns, *nsupdmap);
             }
-            result = insert_attribute(left, right, parent, scmnode->name,
-                    (save_types) ? (A_DSC(node))->type : xs_untypedAtomic, buf.get(), buf.getSize(), ns);
+
+            CHECKP(node);
+            scm_type = (save_types) ? A_DSC(node)->type : xs_untypedAtomic;
+            result = insert_attribute(left, right, parent, scmnode->name, scm_type, buf.get(), buf.getSize(), ns);
         }
             break;
 
