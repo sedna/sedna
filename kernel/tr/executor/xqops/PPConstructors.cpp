@@ -964,7 +964,7 @@ void PPCommentConstructor::do_next (tuple &t)
             else
                 newcomm= insert_comment(XNULL,XNULL,removeIndirection(cont_parind),value,size);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(newcomm))->indir;
+            cont_leftind=get_last_mo_inderection();
         }
         //Result
         t.copy(tuple_cell::node(newcomm));
@@ -1157,7 +1157,7 @@ void PPPIConstructor::do_next (tuple &t)
             else
                 new_pi= insert_pi(XNULL,XNULL,removeIndirection(cont_parind),name,strlen(name),value,size);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(new_pi))->indir;
+            cont_leftind=get_last_mo_inderection();
         }
         //Result
         t.copy(tuple_cell::node(new_pi));
@@ -1274,7 +1274,7 @@ void PPTextConstructor::do_next (tuple &t)
             else
                 newcomm= insert_text(XNULL,XNULL,removeIndirection(cont_parind),value,size);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(newcomm))->indir;
+            cont_leftind=get_last_mo_inderection();
         }
         //Result
         t.copy(tuple_cell::node(newcomm));
