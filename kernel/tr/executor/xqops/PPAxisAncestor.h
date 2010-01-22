@@ -45,11 +45,11 @@ protected:
     virtual void next_wildcard_star_ncname      (tuple &t);
 
     PPAxisAncestor(dynamic_context *_cxt_,
-        operation_info _info_,
-        PPOpIn _child_,
-        NodeTestType _nt_type_,
-        NodeTestData _nt_data_,
-        bool _self_);
+                   operation_info _info_,
+                   PPOpIn _child_,
+                   NodeTestType _nt_type_,
+                   NodeTestData _nt_data_,
+                   bool _self_);
 
 private:
     virtual void do_open   ();
@@ -69,6 +69,9 @@ public:
         NodeTestType _nt_type_,
         NodeTestData _nt_data_);
     virtual ~PPAxisAncestor();
+    
+    inline const NodeTestType& get_node_test_type() { return nt_type; }
+    inline const NodeTestData& get_node_test_data() { return nt_data; }
 };
 
 

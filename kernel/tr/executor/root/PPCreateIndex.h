@@ -16,12 +16,12 @@
 class PPCreateIndex : public PPUpdate
 {
 private:
+    PPOpIn index_name;
+    PathExprRoot root;
     PathExpr *object_path;
     PathExpr *key_path;
-    PathExprRoot root;
     xmlscm_type key_type;
     dynamic_context *cxt;
-    PPOpIn index_name;
 
 public:
     void open();

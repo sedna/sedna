@@ -14,7 +14,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/xsd.h"
-#include "tr/executor/base/PPbase.h"
+#include "tr/executor/base/PPBase.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 #include "tr/structures/schema.h"
 #include "tr/structures/system_tables.h"
