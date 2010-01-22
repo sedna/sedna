@@ -54,6 +54,9 @@ public:
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_);
     virtual ~PPAxisChild();
+    
+    inline const NodeTestType& get_node_test_type() { return nt_type; }
+    inline const NodeTestData& get_node_test_data() { return nt_data; }
 };
 
 #endif

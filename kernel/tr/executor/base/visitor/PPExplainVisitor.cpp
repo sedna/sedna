@@ -175,56 +175,89 @@ void PPExplainVisitor::visit(PPAbsPath* op)
 void PPExplainVisitor::visit(PPAxisAncestor* op)
 {
     insertOperationElement("PPAxisAncestor", left, parent, op);
+    string node_test = "ancestor::" + NodeTest::to_string(op->get_node_test_type(),
+                                                          op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisAncestorOrSelf* op)
 {
     insertOperationElement("PPAxisAncestorOrSelf", left, parent, op);
+    string node_test = "ancestor-or-self::" + NodeTest::to_string(op->get_node_test_type(),
+                                                                  op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisAttribute* op)
 {
     insertOperationElement("PPAxisAttribute", left, parent, op);
+    string node_test = "attribute::" + NodeTest::to_string(op->get_node_test_type(),
+                                                           op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisChild* op)
 {
     insertOperationElement("PPAxisChild", left, parent, op);
+    string node_test = "child::" + NodeTest::to_string(op->get_node_test_type(),
+                                                       op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisDescendant* op)
 {
     insertOperationElement("PPAxisDescendant", left, parent, op);
+    string node_test = "descendant::" + NodeTest::to_string(op->get_node_test_type(),
+                                                            op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisDescendantOrSelf* op)
 {
     insertOperationElement("PPAxisDescendantOrSelf", left, parent, op);
+    string node_test = "descendant-or-self::" + NodeTest::to_string(op->get_node_test_type(),
+                                                                    op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisDescendantAttr* op)
 {
     insertOperationElement("PPAxisDescendantAttr", left, parent, op);
+    string node_test = "@descendant::" + NodeTest::to_string(op->get_node_test_type(),
+                                                             op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisFP* op)
 {
     insertOperationElement("PPAxisFP", left, parent, op);
+    string node_test = (op->is_following() ? "following::" : "preceding::") + NodeTest::to_string(op->get_node_test_type(),
+                                                                  op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisParent* op)
 {
     insertOperationElement("PPAxisParent", left, parent, op);
+    string node_test = "parent::" + NodeTest::to_string(op->get_node_test_type(),
+                                                        op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisSelf* op)
 {
     insertOperationElement("PPAxisSelf", left, parent, op);
+    string node_test = "self::" + NodeTest::to_string(op->get_node_test_type(),
+                                                      op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPAxisSibling* op)
 {
     insertOperationElement("PPAxisSibling", left, parent, op);
+    string node_test = (op->is_following() ? "following-sibling::" : "preceding-sibling::") + NodeTest::to_string(op->get_node_test_type(),
+                                                                  op->get_node_test_data());
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), explain_ns);
 }
 
 void PPExplainVisitor::visit(PPPred1* op)
