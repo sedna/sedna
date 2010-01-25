@@ -22,13 +22,13 @@ class PPExplainVisitor : public PPVisitor {
 
 private:
     dynamic_context* cxt;
-    xptr parent, left;
+    xptr parent, left, left_inside;
 
     /* Maintains stack of indirection pointers */
     std::stack<xptr_pair> pointers;
 
     void push();
-    void insertOperationElement(const char* name, xptr& left, xptr& parent, PPIterator* op);
+    void insertOperationElement(const char* name, xptr& left, const xptr& parent, PPIterator* op);
 
 public:
     PPExplainVisitor(dynamic_context* _cxt_, xptr root);
@@ -112,10 +112,8 @@ public:
     virtual void visit(PPFnDateTimeFuncNoParam* op);
     virtual void visit(PPFnDateTimeFunc* op);
     virtual void visit(PPFnDateTimeFunc2Params* op);
-    virtual void visit(PPADFilter* op);
-    virtual void visit(PPDAFilter* op);
-    virtual void visit(PPFilterEL* op);
     virtual void visit(PPCheckpoint* op);
+    virtual void visit(PPFilterEL* op);
     virtual void visit(PPTest* op);
     virtual void visit(PPConst* op);
     virtual void visit(PPDDO* op);
@@ -130,7 +128,6 @@ public:
     virtual void visit(PPSeqChecker* op);
     virtual void visit(PPStore* op);
     virtual void visit(PPTuple* op);
-    virtual void visit(PPUp* op);
     virtual void visit(PPVarDecl* op);
     virtual void visit(PPVariable* op);
     virtual void visit(PPGlobalVariable* op);

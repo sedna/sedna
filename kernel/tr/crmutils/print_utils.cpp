@@ -39,7 +39,7 @@ static bool                   is_atomic =false;
 static std::set<std::string>  nspt_pref;
 
 static void inline print_indent(se_ostream& crmout, int indent) {
-    for (int i=0;i<indent;i++) crmout << " ";
+    for (int i=0;i<indent;i++) crmout << "  ";
 }
 
 static void print_namespace(xmlns_ptr nsd, se_ostream& crmout, t_print ptype)

@@ -45,6 +45,7 @@ private:
 	};
 	func_cxt *fcxt;
 	ExtFunction **fn_ptr;
+    std::string function_name;
 
 	SEDNA_SEQUENCE_ITEM *result;
 	SEDNA_SEQUENCE_ITEM *make_item(const tuple &t);
@@ -54,9 +55,11 @@ private:
 	void free_item(SEDNA_SEQUENCE_ITEM *item);
 public:
 	ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_fn_ptr_);
-	ExtFunction(func_cxt *_fcxt_, ExtFunction **_fn_ptr_);
+	/* For PPExtFunCall copy call */
+    ExtFunction(func_cxt *_fcxt_, ExtFunction **_fn_ptr_);
 	~ExtFunction();
 	ExtFunction *copy();
+
 	void invoke(const arr_of_PPOpIn &arr);
 	void result_skip();
 	void result_clear();

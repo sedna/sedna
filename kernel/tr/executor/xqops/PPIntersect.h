@@ -39,6 +39,7 @@ public:
                 PPOpIn _child2_,
                 bool _doc_order_);
     virtual ~PPIntersect();
+    inline bool is_document_order() { return doc_order; }
 };
 
 

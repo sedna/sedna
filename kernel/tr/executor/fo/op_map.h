@@ -81,5 +81,40 @@ struct get_binary_op_res
 get_binary_op_res get_binary_op(xq_binary_op_type t, xmlscm_type t1, xmlscm_type t2);
 un_op_tuple_cell get_unary_op(xq_unary_op_type t, xmlscm_type t1);
 
-#endif
+inline const char* 
+xq_binary_op_type2string(xq_binary_op_type type)
+{
+    switch(type)
+    {
+        case xqbop_add: return "+";
+        case xqbop_sub: return "-";
+        case xqbop_mul: return "*";
+        case xqbop_div: return "div";
+        case xqbop_idiv: return "idiv";
+        case xqbop_mod: return "mod";
+        case xqbop_eq: return "eq";
+        case xqbop_ne: return "ne";
+        case xqbop_gt: return "gt";
+        case xqbop_lt: return "lt";
+        case xqbop_ge: return "ge";
+        case xqbop_le: return "le";
+        default:
+            throw USER_EXCEPTION2(SE1003, "impossible binary operation in binary operation -> string");
+    }
+}
+
+inline const char* 
+xq_unary_op_type2string(xq_unary_op_type type)
+{
+    switch(type)
+    {
+        case xquop_plus: return "+";
+        case xquop_minus: return "-";
+        default:
+            throw USER_EXCEPTION2(SE1003, "impossible unary operation in unary operation -> string");
+    }
+}
+
+
+#endif /* _OP_MAP_H */
 

@@ -17,6 +17,17 @@ public:
         CHECK_NODE, // check for sequence to contain only nodes (XPTY0019)
         CHECK_MIX, // check for sequence not to contain mix of atomic and nodes (XPTY0018)
     };
+    
+    static inline const char* 
+    CheckMode2string(CheckMode cm) 
+    {
+        switch(cm)
+        {
+        case CHECK_NODE: return "node";
+        case CHECK_MIX: return "mix";
+        default: throw USER_EXCEPTION2(SE1003, "Impossible case in check mode to string conversion");
+        }
+    }
 
 private:
     PPOpIn child;
@@ -41,6 +52,7 @@ public:
             CheckMode _mode_);
 
     virtual ~PPSeqChecker();
+    inline CheckMode get_check_mode() { return mode; }
 };
 
-#endif
+#endif /* __PPSEQCHECKER_H */

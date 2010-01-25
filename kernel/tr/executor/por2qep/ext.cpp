@@ -4,11 +4,11 @@
  */
 
 #include "common/sedna.h"
+#include "common/sedna_ef.h"
 
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/por2qep/ext.h"
-#include "common/sedna_ef.h"
 #include "tr/executor/xqops/PPExtFunCall.h"
 #include "tr/tr_globals.h"
 #include "tr/strings/e_string.h"
@@ -19,17 +19,17 @@
 #include <strings.h>
 #endif
 
+///////////////////////////////////////////////////////////////////////////////
+/// ExtFunction
+///////////////////////////////////////////////////////////////////////////////
 
-////////////////////
-// ExtFunction
-////////////////////
 SEDNA_SEQUENCE_ITEM *ExtFunction::global_result_item = NULL;
 char *ExtFunction::error_msg_buf = NULL;
 int ExtFunction::instance_count = 0;
 
 ExtFunction::ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_fn_ptr_)
 {
-	if (global_result_item == NULL)
+    if (global_result_item == NULL)
 		global_result_item = (SEDNA_SEQUENCE_ITEM *)malloc(sizeof(SEDNA_SEQUENCE_ITEM));
 
 	if (error_msg_buf == NULL)
@@ -58,7 +58,10 @@ ExtFunction::ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_
 	this->fn_ptr = _fn_ptr_;
 	*(this->fn_ptr) = this;
 }
-ExtFunction::ExtFunction(func_cxt *_fcxt_, ExtFunction **_fn_ptr_) : fcxt(_fcxt_), fn_ptr(_fn_ptr_), result(NULL)
+
+ExtFunction::ExtFunction(func_cxt *_fcxt_, ExtFunction **_fn_ptr_) : fcxt(_fcxt_),
+                                                                     fn_ptr(_fn_ptr_),
+                                                                     result(NULL)
 {
 	instance_count++;
 	fcxt->ref_count++;
@@ -278,9 +281,9 @@ void ExtFunction::result_next(tuple &t)
 	result_skip();
 }
 
-//////////////////////////
-// ExtFunctionManager
-//////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// ExtFunctionManager
+///////////////////////////////////////////////////////////////////////////////
 
 ExtFunctionManager ext_function_manager = ExtFunctionManager();
 
@@ -385,7 +388,7 @@ PPIterator *ExtFunctionManager::make_pp_ext_func(const char *name, dynamic_conte
 	else
 		fn = fdesc->fn->copy();
 
-	return se_new PPExtFunCall(cxt, info, arr, fn);
+	return se_new PPExtFunCall(cxt, info, arr, fn, name_str);
 }
 
 ExtFunctionManager::~ExtFunctionManager()

@@ -3501,6 +3501,7 @@ namespace sedna
         // regardless of what we say about types here (AK)
         xmlscm_type lt = xs_anyType, rt = xs_anyType;
         get_binary_op_res r;
+        xq_binary_op_type op_type;
 
         switch (n.op)
         {
@@ -3514,50 +3515,52 @@ namespace sedna
                 break;
 
             case ASTBop::EQ_V:
-                r = get_binary_op(xqbop_eq, lt, rt);
+                op_type = xqbop_eq;
                 break;
             case ASTBop::NE_V:
-                r = get_binary_op(xqbop_ne, lt, rt);
+                op_type = xqbop_ne;
                 break;
             case ASTBop::LT_V:
-                r = get_binary_op(xqbop_lt, lt, rt);
+                op_type = xqbop_lt;
                 break;
             case ASTBop::LE_V:
-                r = get_binary_op(xqbop_le, lt, rt);
+                op_type = xqbop_le;
                 break;
             case ASTBop::GT_V:
-                r = get_binary_op(xqbop_gt, lt, rt);
+                op_type = xqbop_gt;
                 break;
             case ASTBop::GE_V:
-                r = get_binary_op(xqbop_ge, lt, rt);
+                op_type = xqbop_ge;
                 break;
             case ASTBop::PLUS:
-                r = get_binary_op(xqbop_add, lt, rt);
+                op_type = xqbop_add;
                 break;
             case ASTBop::MINUS:
-                r = get_binary_op(xqbop_sub, lt, rt);
+                op_type = xqbop_sub;
                 break;
             case ASTBop::MULT:
-                r = get_binary_op(xqbop_mul, lt, rt);
+                op_type = xqbop_mul;
                 break;
             case ASTBop::DIV:
-                r = get_binary_op(xqbop_div, lt, rt);
+                op_type = xqbop_div;
                 break;
             case ASTBop::IDIV:
-                r = get_binary_op(xqbop_idiv, lt, rt);
+                op_type = xqbop_idiv;
                 break;
             case ASTBop::MOD:
-                r = get_binary_op(xqbop_mod, lt, rt);
+                op_type = xqbop_mod;
                 break;
 
             default:
                 throw USER_EXCEPTION2(SE4001, "make_binary_op cannot process the operation");
         }
 
+        r = get_binary_op(op_type, lt, rt);
+
         if (r.collation)
-            op_tree = new BinaryOpCollation(lop, rop, r.f.bf_c);
+            op_tree = new BinaryOpCollation(lop, rop, r.f.bf_c, op_type);
         else
-            op_tree = new BinaryOp(lop, rop, r.f.bf);
+            op_tree = new BinaryOp(lop, rop, r.f.bf, op_type);
     }
 
     void lr2por::make_unary_op(ASTUop &n)
@@ -3577,11 +3580,11 @@ namespace sedna
         switch (n.op)
         {
             case ASTUop::PLUS:
-                op_tree = new UnaryOp(lop, get_unary_op(xquop_plus, lt));
+                op_tree = new UnaryOp(lop, get_unary_op(xquop_plus, lt), xquop_plus);
                 break;
 
             case ASTUop::MINUS:
-                op_tree = new UnaryOp(lop, get_unary_op(xquop_minus, lt));
+                op_tree = new UnaryOp(lop, get_unary_op(xquop_minus, lt), xquop_minus);
                 break;
         }
     }

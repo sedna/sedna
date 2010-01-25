@@ -30,6 +30,7 @@ private:
 public:
     PPVariable(dynamic_context *_cxt_, operation_info _info_, var_dsc _dsc_);
     virtual ~PPVariable();
+    inline var_dsc get_variable_descriptor() { return dsc; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -57,6 +58,7 @@ public:
     virtual ~PPGlobalVariable();
 
     void setVarId(var_dsc _dsc_); // we use it to set id for unresolved variable after the main pass (because of deps between mnodules)
+    inline var_dsc get_variable_descriptor() { return dsc; }
 };
 
-#endif
+#endif /* __PPVARIABLE_H */

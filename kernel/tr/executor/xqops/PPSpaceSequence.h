@@ -28,6 +28,7 @@ public:
                     const arr_of_PPOpIn &_children_, 
                     bool _IsAtomized_);
     virtual ~PPSpaceSequence();
+    inline bool is_atomized() { return isAtomized; }
 };
 
 #endif

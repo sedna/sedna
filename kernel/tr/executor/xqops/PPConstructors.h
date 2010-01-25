@@ -39,6 +39,7 @@ public:
     static void clear_virtual_root();
 
     static inline xptr get_virtual_root() { return virt_root; }
+    inline bool is_deep_copy() { return deep_copy; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,6 +79,10 @@ public:
                          bool _ns_inside);
 
     virtual ~PPElementConstructor();
+    
+    /* May return NULL if name is not predefined */
+    inline const char* get_name() { return el_name; }
+    inline bool is_ns_inside() { return ns_inside; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -127,6 +132,10 @@ public:
                            bool _deep_copy);
 
     virtual ~PPAttributeConstructor();
+    /* May return NULL if name is not predefined */
+    inline const char* get_name() { return at_name; }
+    /* May return NULL if value is not predefined */
+    inline const char* get_value() { return at_value; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -160,6 +169,9 @@ public:
                            const char* value);
 
     virtual ~PPNamespaceConstructor();
+    inline const char* get_name() { return at_name; }
+    /* May return NULL if value is not predefined */
+    inline const char* get_value() { return at_value; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -193,6 +205,8 @@ public:
                          bool _deep_copy);
 
     virtual ~PPCommentConstructor();
+    /* May return NULL if value is not predefined */
+    inline const char* get_value() { return at_value; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -225,6 +239,8 @@ public:
                       bool _deep_copy);
 
     virtual ~PPTextConstructor();
+    /* May return NULL if value is not predefined */
+    inline const char* get_value() { return at_value; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -300,6 +316,10 @@ public:
                     bool _deep_copy);
 
     virtual ~PPPIConstructor();
+    /* May return NULL if name is not predefined */
+    inline const char* get_name() { return at_name; }
+    /* May return NULL if value is not predefined */
+    inline const char* get_value() { return at_value; }
 };
 
 

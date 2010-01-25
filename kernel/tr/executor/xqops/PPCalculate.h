@@ -36,13 +36,17 @@ class UnaryOp : public CalcOp
 protected:
     CalcOp *child;
     un_op_tuple_cell uf;
+    xq_unary_op_type type;
 
 public:
-    UnaryOp(CalcOp *_child_, un_op_tuple_cell _uf_) : child(_child_), uf(_uf_) {}
+    UnaryOp(CalcOp *_child_, 
+            un_op_tuple_cell _uf_, 
+            xq_unary_op_type _type_) : child(_child_), uf(_uf_), type(_type_) {}
     ~UnaryOp() { delete child; }
     tuple_cell next(dynamic_context *cxt) { return uf(child->next(cxt)); }
     void reopen() { child->reopen(); }
-    CalcOp* copy(arr_of_PPOpIn *children) { return se_new UnaryOp(child->copy(children), uf); }
+    CalcOp* copy(arr_of_PPOpIn *children) { return se_new UnaryOp(child->copy(children), uf, type); }
+    inline xq_unary_op_type get_operation_type() { return type; }
     
 private:
     virtual void do_accept(PPVisitor &v);
@@ -53,11 +57,13 @@ class BinaryOp : public CalcOp
 protected:
     CalcOp *child1, *child2;
     bin_op_tuple_cell_tuple_cell bf;
+    xq_binary_op_type type;
 
 public:
     BinaryOp(CalcOp *_child1_, 
              CalcOp *_child2_, 
-             bin_op_tuple_cell_tuple_cell _bf_) : child1(_child1_), child2(_child2_), bf(_bf_) {}
+             bin_op_tuple_cell_tuple_cell _bf_,
+             xq_binary_op_type _type_) : child1(_child1_), child2(_child2_), bf(_bf_), type(_type_) {}
     ~BinaryOp() 
 	{ 
 		delete child1; 
@@ -73,11 +79,13 @@ public:
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
-        BinaryOp *res = se_new BinaryOp(child1, child2, bf); 
+        BinaryOp *res = se_new BinaryOp(child1, child2, bf, type);
         res->child1 = child1->copy(children);
         res->child2 = child2->copy(children);
         return res;
     }
+    inline xq_binary_op_type get_operation_type() { return type; }
+    
 
 private:
     virtual void do_accept(PPVisitor &v);
@@ -89,11 +97,13 @@ class BinaryOpCollation : public CalcOp
 protected:
     CalcOp *child1, *child2;
     bin_op_tuple_cell_tuple_cell_collation bf;
+    xq_binary_op_type type;
 
 public:
     BinaryOpCollation(CalcOp *_child1_, 
                       CalcOp *_child2_, 
-                      bin_op_tuple_cell_tuple_cell_collation _bf_) : child1(_child1_), child2(_child2_), bf(_bf_) {}
+                      bin_op_tuple_cell_tuple_cell_collation _bf_,
+                      xq_binary_op_type _type_) : child1(_child1_), child2(_child2_), bf(_bf_), type(_type_) {}                      
     ~BinaryOpCollation() 
 	{ 
 		delete child1; 
@@ -109,11 +119,12 @@ public:
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
-        BinaryOpCollation *res = se_new BinaryOpCollation(child1, child2, bf); 
+        BinaryOpCollation *res = se_new BinaryOpCollation(child1, child2, bf, type); 
         res->child1 = child1->copy(children);
         res->child2 = child2->copy(children);
         return res;
     }
+    inline xq_binary_op_type get_operation_type() { return type; }
     
 private:
     virtual void do_accept(PPVisitor &v);

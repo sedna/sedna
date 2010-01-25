@@ -53,6 +53,10 @@ public:
               PPOpIn _child_);
 
     virtual ~PPVarDecl();
+    
+    inline bool is_check_type() { return need_to_check_type; }
+    inline const sequence_type& get_type() { return st; }
+    inline var_dsc get_variable_descriptor() { return v_dsc; }
 };
 
-#endif
+#endif /* __PPVARDECL_H */

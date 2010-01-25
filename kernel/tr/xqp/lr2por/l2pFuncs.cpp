@@ -24,12 +24,12 @@ PPOpIn l2pFnAdjustDateTimeToTimezone(dynamic_context *dyn_cxt, const operation_i
 
     if (params.size() == 2)
     {
-        int ftype = PPFnDateTimeFunc2Params::adjustDateTimeToTimezone;
+        PPFnDateTimeFunc2Params::dateTimeFuncs ftype = PPFnDateTimeFunc2Params::adjustDateTimeToTimezone;
         res = PPOpIn(new PPFnDateTimeFunc2Params(dyn_cxt, opi, params[0], params[1], ftype), 1);
     }
     else
     {
-        int ftype = PPFnDateTimeFunc::adjustDateTimeToTimezone;
+        PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::adjustDateTimeToTimezone;
         xmlscm_type xtype = xs_dateTime;
 
         res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -44,12 +44,12 @@ PPOpIn l2pFnAdjustDateToTimezone(dynamic_context *dyn_cxt, const operation_info 
 
     if (params.size() == 2)
     {
-        int ftype = PPFnDateTimeFunc2Params::adjustDateToTimezone;
+        PPFnDateTimeFunc2Params::dateTimeFuncs ftype = PPFnDateTimeFunc2Params::adjustDateToTimezone;
         res = PPOpIn(new PPFnDateTimeFunc2Params(dyn_cxt, opi, params[0], params[1], ftype), 1);
     }
     else
     {
-        int ftype = PPFnDateTimeFunc::adjustDateToTimezone;
+        PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::adjustDateToTimezone;
         xmlscm_type xtype = xs_date;
 
         res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -64,12 +64,12 @@ PPOpIn l2pFnAdjustTimeToTimezone(dynamic_context *dyn_cxt, const operation_info 
 
     if (params.size() == 2)
     {
-        int ftype = PPFnDateTimeFunc2Params::adjustTimeToTimezone;
+        PPFnDateTimeFunc2Params::dateTimeFuncs ftype = PPFnDateTimeFunc2Params::adjustTimeToTimezone;
         res = PPOpIn(new PPFnDateTimeFunc2Params(dyn_cxt, opi, params[0], params[1], ftype), 1);
     }
     else
     {
-        int ftype = PPFnDateTimeFunc::adjustTimeToTimezone;
+        PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::adjustTimeToTimezone;
         xmlscm_type xtype = xs_time;
 
         res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -188,7 +188,7 @@ PPOpIn l2pFnCurrentDate(dynamic_context *dyn_cxt, const operation_info &opi, arr
 {
     PPOpIn res;
 
-    int type = PPFnDateTimeFuncNoParam::currentDate;
+    PPFnDateTimeFuncNoParam::dateTimeFuncs type = PPFnDateTimeFuncNoParam::currentDate;
 
     res = PPOpIn(new PPFnDateTimeFuncNoParam(dyn_cxt, opi, type), 1);
 
@@ -199,7 +199,7 @@ PPOpIn l2pFnCurrentDateTime(dynamic_context *dyn_cxt, const operation_info &opi,
 {
     PPOpIn res;
 
-    int type = PPFnDateTimeFuncNoParam::currentDateTime;
+    PPFnDateTimeFuncNoParam::dateTimeFuncs type = PPFnDateTimeFuncNoParam::currentDateTime;
 
     res = PPOpIn(new PPFnDateTimeFuncNoParam(dyn_cxt, opi, type), 1);
 
@@ -210,7 +210,7 @@ PPOpIn l2pFnCurrentTime(dynamic_context *dyn_cxt, const operation_info &opi, arr
 {
     PPOpIn res;
 
-    int type = PPFnDateTimeFuncNoParam::currentTime;
+    PPFnDateTimeFuncNoParam::dateTimeFuncs type = PPFnDateTimeFuncNoParam::currentTime;
 
     res = PPOpIn(new PPFnDateTimeFuncNoParam(dyn_cxt, opi, type), 1);
 
@@ -230,7 +230,7 @@ PPOpIn l2pFnDateTime(dynamic_context *dyn_cxt, const operation_info &opi, arr_of
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc2Params::dateTime;
+    PPFnDateTimeFunc2Params::dateTimeFuncs ftype = PPFnDateTimeFunc2Params::dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc2Params(dyn_cxt, opi, params[0], params[1], ftype), 1);
 
@@ -241,7 +241,7 @@ PPOpIn l2pFnDayFromDate(dynamic_context *dyn_cxt, const operation_info &opi, arr
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::dayFromDate;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::dayFromDate;
     xmlscm_type xtype = xs_date;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -253,7 +253,7 @@ PPOpIn l2pFnDayFromDateTime(dynamic_context *dyn_cxt, const operation_info &opi,
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::dayFromDateTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::dayFromDateTime;
     xmlscm_type xtype = xs_dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -265,7 +265,7 @@ PPOpIn l2pFnDaysFromDuration(dynamic_context *dyn_cxt, const operation_info &opi
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::daysFromDuration;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::daysFromDuration;
     xmlscm_type xtype = xs_duration;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -576,7 +576,7 @@ PPOpIn l2pFnHoursFromDateTime(dynamic_context *dyn_cxt, const operation_info &op
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::hoursFromDateTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::hoursFromDateTime;
     xmlscm_type xtype = xs_dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -588,7 +588,7 @@ PPOpIn l2pFnHoursFromDuration(dynamic_context *dyn_cxt, const operation_info &op
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::hoursFromDuration;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::hoursFromDuration;
     xmlscm_type xtype = xs_duration;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -600,7 +600,7 @@ PPOpIn l2pFnHoursFromTime(dynamic_context *dyn_cxt, const operation_info &opi, a
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::hoursFromTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::hoursFromTime;
     xmlscm_type xtype = xs_time;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -622,7 +622,7 @@ PPOpIn l2pFnImplicitTimezone(dynamic_context *dyn_cxt, const operation_info &opi
 {
     PPOpIn res;
 
-    int type = PPFnDateTimeFuncNoParam::implicitTimezone;
+    PPFnDateTimeFuncNoParam::dateTimeFuncs type = PPFnDateTimeFuncNoParam::implicitTimezone;
 
     res = PPOpIn(new PPFnDateTimeFuncNoParam(dyn_cxt, opi, type), 1);
 
@@ -789,7 +789,7 @@ PPOpIn l2pFnMinutesFromDateTime(dynamic_context *dyn_cxt, const operation_info &
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::minutesFromDateTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::minutesFromDateTime;
     xmlscm_type xtype = xs_dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -801,7 +801,7 @@ PPOpIn l2pFnMinutesFromDuration(dynamic_context *dyn_cxt, const operation_info &
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::minutesFromDuration;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::minutesFromDuration;
     xmlscm_type xtype = xs_duration;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -813,7 +813,7 @@ PPOpIn l2pFnMinutesFromTime(dynamic_context *dyn_cxt, const operation_info &opi,
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::minutesFromTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::minutesFromTime;
     xmlscm_type xtype = xs_time;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -825,7 +825,7 @@ PPOpIn l2pFnMonthFromDate(dynamic_context *dyn_cxt, const operation_info &opi, a
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::monthFromDate;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::monthFromDate;
     xmlscm_type xtype = xs_date;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -837,7 +837,7 @@ PPOpIn l2pFnMonthFromDateTime(dynamic_context *dyn_cxt, const operation_info &op
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::monthFromDateTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::monthFromDateTime;
     xmlscm_type xtype = xs_dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -849,7 +849,7 @@ PPOpIn l2pFnMonthsFromDuration(dynamic_context *dyn_cxt, const operation_info &o
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::monthsFromDuration;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::monthsFromDuration;
     xmlscm_type xtype = xs_duration;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1094,7 +1094,7 @@ PPOpIn l2pFnSecondsFromDateTime(dynamic_context *dyn_cxt, const operation_info &
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::secondsFromDateTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::secondsFromDateTime;
     xmlscm_type xtype = xs_dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1106,7 +1106,7 @@ PPOpIn l2pFnSecondsFromDuration(dynamic_context *dyn_cxt, const operation_info &
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::secondsFromDuration;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::secondsFromDuration;
     xmlscm_type xtype = xs_duration;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1118,7 +1118,7 @@ PPOpIn l2pFnSecondsFromTime(dynamic_context *dyn_cxt, const operation_info &opi,
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::secondsFromTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::secondsFromTime;
     xmlscm_type xtype = xs_time;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1290,7 +1290,7 @@ PPOpIn l2pFnTimezoneFromDate(dynamic_context *dyn_cxt, const operation_info &opi
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::timezoneFromDate;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::timezoneFromDate;
     xmlscm_type xtype = xs_date;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1302,7 +1302,7 @@ PPOpIn l2pFnTimezoneFromDateTime(dynamic_context *dyn_cxt, const operation_info 
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::timezoneFromDateTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::timezoneFromDateTime;
     xmlscm_type xtype = xs_dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1314,7 +1314,7 @@ PPOpIn l2pFnTimezoneFromTime(dynamic_context *dyn_cxt, const operation_info &opi
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::timezoneFromTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::timezoneFromTime;
     xmlscm_type xtype = xs_time;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1392,7 +1392,7 @@ PPOpIn l2pFnYearFromDate(dynamic_context *dyn_cxt, const operation_info &opi, ar
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::yearFromDate;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::yearFromDate;
     xmlscm_type xtype = xs_date;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1404,7 +1404,7 @@ PPOpIn l2pFnYearFromDateTime(dynamic_context *dyn_cxt, const operation_info &opi
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::yearFromDateTime;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::yearFromDateTime;
     xmlscm_type xtype = xs_dateTime;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
@@ -1416,7 +1416,7 @@ PPOpIn l2pFnYearsFromDuration(dynamic_context *dyn_cxt, const operation_info &op
 {
     PPOpIn res;
 
-    int ftype = PPFnDateTimeFunc::yearsFromDuration;
+    PPFnDateTimeFunc::dateTimeFuncs ftype = PPFnDateTimeFunc::yearsFromDuration;
     xmlscm_type xtype = xs_duration;
 
     res = PPOpIn(new PPFnDateTimeFunc(dyn_cxt, opi, params[0], ftype, xtype), 1);
