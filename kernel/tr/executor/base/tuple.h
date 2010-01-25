@@ -27,7 +27,7 @@ typedef std::pair<int, int>			int_pair;
 typedef std::vector<int_pair>		arr_of_int_pairs;
 
 
-typedef counted_ptr<char> str_counted_ptr;
+typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 
 
 /// Used in fn:concat to determine which type of sting to create as result.
