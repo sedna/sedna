@@ -135,6 +135,8 @@ public:
                 bool _revoke_);
 
     ~PPGrantRevokePriv();
+    
+    inline const char* get_object_type() { return obj_type; } 
 };
 
 class PPRevokeRole : public PPUpdate

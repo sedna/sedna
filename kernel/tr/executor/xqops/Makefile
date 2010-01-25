@@ -8,7 +8,6 @@ include $(PP)/Makefile.include
 
 OBJS =  PPAbsPath$(OBJ_EXT) \
         PPAccessors$(OBJ_EXT) \
-        PPADFilter$(OBJ_EXT) \
         PPAggrFuncs$(OBJ_EXT) \
         PPAxisAncestor$(OBJ_EXT) \
         PPAxisAttribute$(OBJ_EXT) \
@@ -23,7 +22,6 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPCheckpoint$(OBJ_EXT) \
         PPConst$(OBJ_EXT) \
         PPConstructors$(OBJ_EXT) \
-        PPDAFilter$(OBJ_EXT) \
         PPDDO$(OBJ_EXT) \
         PPDebug$(OBJ_EXT) \
         PPDocInCol$(OBJ_EXT) \
@@ -67,7 +65,6 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPTest$(OBJ_EXT) \
         PPTuple$(OBJ_EXT) \
         PPUnion$(OBJ_EXT) \
-        PPUp$(OBJ_EXT) \
         PPUriFuncs$(OBJ_EXT) \
         PPVarDecl$(OBJ_EXT) \
         PPVariable$(OBJ_EXT) \

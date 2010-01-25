@@ -6,6 +6,8 @@
 #ifndef _PPEXTFUNCALL_H
 #define _PPEXTFUNCALL_H
 
+#include <string>
+
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
@@ -17,6 +19,7 @@ private:
 	arr_of_PPOpIn	arr;
 	bool			first_time;
 	ExtFunction		*func;
+    std::string     name;
 
 private:
     virtual void do_open   ();
@@ -31,9 +34,11 @@ public:
     PPExtFunCall(dynamic_context *_cxt_, 
                  operation_info _info_,
                  const arr_of_PPOpIn &_arr_, 
-                 ExtFunction *_func_);
+                 ExtFunction *_func_,
+                 const std::string& _name_);
 
     virtual ~PPExtFunCall();
+    inline const std::string& get_name() const { return name; }
 };
 
 

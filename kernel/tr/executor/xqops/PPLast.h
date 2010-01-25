@@ -39,6 +39,7 @@ public:
            var_dsc _last_dsc_,
            PPOpIn _child_);
     virtual ~PPLast();
+    inline var_dsc get_last_var_dsc() { return last_dsc; }
 };
 
 

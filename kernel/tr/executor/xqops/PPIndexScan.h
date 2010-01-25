@@ -29,6 +29,24 @@ enum index_scan_condition
     isc_ge_le
 };
 
+inline const char* 
+index_scan_condition2string(index_scan_condition isc)
+{
+    switch(isc)
+    {
+    case isc_eq: return "EQ";
+    case isc_lt: return "LT";
+    case isc_le: return "LE";
+    case isc_gt: return "GT";
+    case isc_ge: return "GE";
+    case isc_gt_lt: return "INT";
+    case isc_gt_le: return "HINTR";
+    case isc_ge_lt: return "HINTL";
+    case isc_ge_le: return "SEG";
+    default: throw USER_EXCEPTION2(SE1003, "Impossible case in index scan condition to string conversion");
+    }
+}
+
 class PPIndexScan : public PPIterator
 {
 protected:
@@ -74,6 +92,7 @@ public:
                 index_scan_condition _isc_);
 
     virtual ~PPIndexScan();
+    inline index_scan_condition get_index_scan_condition() { return isc; }
 };
 
 

@@ -13,10 +13,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnDateTimeFuncNoParam: public PPIterator
 {
-protected:
-    bool first_time;
-    int dateTimeFunc;
-
 public:
     enum dateTimeFuncs
     {
@@ -25,7 +21,12 @@ public:
 	currentTime,
 	implicitTimezone
     };
+    static const char* dateTimeFunc2string(dateTimeFuncs f);
 
+protected:
+    bool first_time;
+    dateTimeFuncs dateTimeFunc;
+    
 private:   
     virtual void do_open   ();
     virtual void do_reopen ();
@@ -38,8 +39,9 @@ private:
 public:    
     PPFnDateTimeFuncNoParam(dynamic_context *_cxt_,
                             operation_info _info_,
-                            int dateTimeFunc);
+                            dateTimeFuncs dateTimeFunc);
     virtual ~PPFnDateTimeFuncNoParam();
+    inline dateTimeFuncs get_function_type() { return dateTimeFunc; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,14 +49,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnDateTimeFunc: public PPIterator
 {
-protected:
-    PPOpIn child;
-    bool first_time;
-    int dateTimeFunc;
-    xmlscm_type expected_type;
-
 public:
-
     enum dateTimeFuncs
     { yearsFromDuration=0,
 	monthsFromDuration,
@@ -81,6 +76,13 @@ public:
 	adjustDateToTimezone,
 	adjustTimeToTimezone
     };
+    static const char* dateTimeFunc2string(dateTimeFuncs f);
+
+protected:
+    PPOpIn child;
+    bool first_time;
+    dateTimeFuncs dateTimeFunc;
+    xmlscm_type expected_type;
 
 private:   
     virtual void do_open   ();
@@ -95,9 +97,10 @@ public:
     PPFnDateTimeFunc(dynamic_context *_cxt_, 
                      operation_info _info_,
                      PPOpIn _child_, 
-                     int dateTimeFunc,
+                     dateTimeFuncs dateTimeFunc,
                      xmlscm_type _expected_type_);
     virtual ~PPFnDateTimeFunc();
+    inline dateTimeFuncs get_function_type() { return dateTimeFunc; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -105,12 +108,6 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnDateTimeFunc2Params: public PPIterator
 {
-protected:
-    PPOpIn child1;
-    PPOpIn child2;
-    bool first_time;
-    int dateTimeFunc;
-
 public:
     enum dateTimeFuncs
     {
@@ -119,7 +116,15 @@ public:
 	adjustTimeToTimezone,
 	dateTime
     };
-   
+    static const char* dateTimeFunc2string(dateTimeFuncs f);
+
+protected:
+    PPOpIn child1;
+    PPOpIn child2;
+    bool first_time;
+    dateTimeFuncs dateTimeFunc;
+
+       
 private:   
     virtual void do_open   ();
     virtual void do_reopen ();
@@ -134,9 +139,10 @@ public:
                             operation_info _info_,
                             PPOpIn _child1_,
                             PPOpIn _child2_,
-                            int dateTimeFunc);
+                            dateTimeFuncs dateTimeFunc);
 
     virtual ~PPFnDateTimeFunc2Params();
+    inline dateTimeFuncs get_function_type() { return dateTimeFunc; }
 };
 
 #endif

@@ -17,6 +17,17 @@ enum trigger_parameter_type
     TRIGGER_PARAMETER_WHERE
 };
 
+inline const char*
+trigger_parameter_type2c_string(trigger_parameter_type t)
+{
+    switch(t)
+    {
+    case TRIGGER_PARAMETER_NEW: return "$NEW";
+    case TRIGGER_PARAMETER_OLD: return "$OLD";
+    case TRIGGER_PARAMETER_WHERE: return "$WHERE";
+    default: throw USER_EXCEPTION2(SE1003, "Impossible case in trigger parameter type to string conversion");
+    }
+}
 
 class PPXptr : public PPIterator
 {
@@ -47,7 +58,7 @@ public:
     virtual ~PPXptr();
 
     void set_xptr(const xptr& _p_) { p = _p_; }
-    trigger_parameter_type get_type() const { return var_type; }
+    inline trigger_parameter_type get_type() const { return var_type; }
 };
 
-#endif
+#endif /* __PPXPTR_H */

@@ -66,8 +66,12 @@ public:
              const sequence_type &_st_);
 
     virtual ~PPSelect();
+
+    inline bool is_check_type() { return check_type; }
+    inline const sequence_type& get_sequence_type() { return st; }
+    inline const arr_of_var_dsc& get_variable_descriptors() { return var_dscs; }
 };
 
 
 
-#endif
+#endif /* __PPSELECT_H */

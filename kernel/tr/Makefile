@@ -16,9 +16,9 @@ TRN_OBJS = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
            tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
            tr_globals$(OBJ_EXT)
 
-SUBDIRS  = xqp auth cat crmutils executor idx locks log mo nid pstr rcv \
+SUBDIRS  = auth cat crmutils executor idx locks log mo nid pstr rcv \
            strings structures updates vmm bstrie
-
+           
 ifeq ($(ENABLE_FTSEARCH), 1)
 SUBDIRS += ft
 endif
@@ -27,7 +27,9 @@ ifeq ($(ENABLE_TRIGGERS), 1)
 SUBDIRS += triggers
 endif
 
-SUBDIROBJS = $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIB_EXT))
+SUBDIRS_PARSER = xqp $(SUBDIRS)
+
+SUBDIROBJS = $(foreach dir,$(SUBDIRS_PARSER),$(dir)/$(dir)$(LIB_EXT))
 
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
@@ -81,14 +83,15 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(DEPENDS_ON_LIBS)
 	$(LD) $(LFLAGS) $(LDOUT)$@ $^  $(SUBDIROBJS) $(DEPENDS_ON_LIBS) $(LSLIBS) $(FT_ADD_LIB)
 endif
 
-$(TRN_OBJS:$(OBJ_EXT)=.cpp): xqp/xqp$(LIB_EXT)
+$(TRN_OBJS:$(OBJ_EXT)=.cpp): xqp-recursive
 
-$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
+$(SUBDIROBJS): $(SUBDIRS_PARSER:%=%-recursive) ;
 
-.PHONY: $(SUBDIRS:%=%-recursive)
-$(SUBDIRS:%=%-recursive):
+.PHONY: $(SUBDIRS_PARSER:%=%-recursive)
+$(SUBDIRS:%=%-recursive): xqp-recursive
 	$(MAKE) -C $(subst -recursive,,$@)
-
+xqp-recursive:
+	$(MAKE) -C $(subst -recursive,,$@)
 
 ################################################################################
 # Clean                                                                        #

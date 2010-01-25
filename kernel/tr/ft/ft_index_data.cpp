@@ -373,7 +373,7 @@ void ft_index_cell_object::change_index(xptr_sequence* inserted,xptr_sequence* u
 
 xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 {
-	xptr res;
+	xptr res = XNULL;
 	int sz=tbuf.get_size();
 	if (sz<=PSTRMAXSIZE)
 	{

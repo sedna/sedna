@@ -45,7 +45,7 @@ insertPrologDeclaration(const char* name,
                         const xmlns_ptr& ns)
 {
     xptr tmp = insert_element_i(left,XNULL,parent,"declaration",xs_untyped,ns);
-    insert_attribute_i(XNULL,XNULL,tmp,name,xs_untypedAtomic,value,strlen(value),ns);
+    insert_attribute_i(XNULL,XNULL,tmp,name,xs_untypedAtomic,value,strlen(value),NULL_XMLNS);
     return tmp;
 }
 
@@ -55,7 +55,8 @@ void PPExplain::do_next (tuple &t)
     {
         first_time = false;
         char buf[20];
-        xmlns_ptr explain_ns = cxt->st_cxt->get_xmlns_by_prefix(SEDNA_NAMESPACE_PREFIX);
+        bool cache_def_ns_flag = cxt->st_cxt->is_field_set_in_prolog(static_context::SC_DEFAULT_NAMESPACE);
+        xmlns_ptr explain_ns = cxt->st_cxt->add_to_context("", SEDNA_NAMESPACE_URI);
 
         xptr root = insert_doc_node(scm, "$explain", NULL);
         /* Fill information about prolog */
@@ -114,16 +115,19 @@ void PPExplain::do_next (tuple &t)
         for(std::vector<xmlns_ptr>::iterator it = nss.begin(); it != it_end; it++)
         {
             tmp = insert_element_i(tmp,XNULL,left,"namespace",xs_untyped,explain_ns);
-            xptr aleft = insert_attribute_i(XNULL,XNULL,tmp,"prefix",xs_untypedAtomic, (*it)->prefix, strlen((*it)->prefix), explain_ns);
-            insert_attribute_i(aleft,XNULL,tmp,"uri",xs_untypedAtomic, (*it)->uri, strlen((*it)->uri), explain_ns);
+            xptr aleft = insert_attribute_i(XNULL,XNULL,tmp,"prefix",xs_untypedAtomic, (*it)->prefix, strlen((*it)->prefix), NULL_XMLNS);
+            insert_attribute_i(aleft,XNULL,tmp,"uri",xs_untypedAtomic, (*it)->uri, strlen((*it)->uri), NULL_XMLNS);
         }
         
         /* Insert default element namespace declaration */
-        xmlns_ptr defnsptr = cxt->st_cxt->get_default_namespace();
-        if(defnsptr != NULL_XMLNS)
+        if(cache_def_ns_flag)
         {
-            tmp = insert_element_i(tmp,XNULL,left,"default-element-namespace",xs_untyped,explain_ns);
-            insert_attribute_i(XNULL,XNULL,tmp,"uri",xs_untypedAtomic, defnsptr->uri, strlen(defnsptr->uri), explain_ns);
+            xmlns_ptr defnsptr = cxt->st_cxt->get_default_namespace();
+            if(defnsptr != NULL_XMLNS)
+            {
+                tmp = insert_element_i(tmp,XNULL,left,"default-element-namespace",xs_untyped,explain_ns);
+                insert_attribute_i(XNULL,XNULL,tmp,"uri",xs_untypedAtomic, defnsptr->uri, strlen(defnsptr->uri), NULL_XMLNS);
+            }
         }
 
         /* Insert physical plan for each global variable */
@@ -131,7 +135,7 @@ void PPExplain::do_next (tuple &t)
         {
             tmp = insert_element_i(tmp,XNULL,left,"variable",xs_untyped,explain_ns);
             u_itoa(i,buf,10);
-            insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), explain_ns);
+            insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
             PPExplainVisitor visitor(cxt, tmp);
             (dynamic_context::glb_var_cxt.producers[i]).op->accept(visitor);
         }
@@ -141,7 +145,7 @@ void PPExplain::do_next (tuple &t)
         {
             tmp = insert_element_i(tmp,XNULL,left,"function",xs_untyped,explain_ns);
             u_itoa(i,buf,10);
-            insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), explain_ns);
+            insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
             PPExplainVisitor visitor(cxt, tmp);
             (dynamic_context::funct_cxt.fun_decls[i]).op->accept(visitor);
         }

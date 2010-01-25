@@ -112,8 +112,6 @@ public:
     virtual void visit(PPFnDateTimeFunc2Params* op)      = 0;
 
     /* Sedna specific and non classified operations */
-    virtual void visit(PPADFilter* op)                   = 0;
-    virtual void visit(PPDAFilter* op)                   = 0;
     virtual void visit(PPFilterEL* op)                   = 0;
     virtual void visit(PPCheckpoint* op)                 = 0;
     virtual void visit(PPTest* op)                       = 0;
@@ -130,7 +128,6 @@ public:
     virtual void visit(PPSeqChecker* op)                 = 0;
     virtual void visit(PPStore* op)                      = 0;
     virtual void visit(PPTuple* op)                      = 0;
-    virtual void visit(PPUp* op)                         = 0;
     virtual void visit(PPVarDecl* op)                    = 0;
     virtual void visit(PPVariable* op)                   = 0;
     virtual void visit(PPGlobalVariable* op)             = 0;
