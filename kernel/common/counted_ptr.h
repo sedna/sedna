@@ -1,103 +1,77 @@
 /*
- * Copyright (c) Yonat Sharon (yonat@ootips.org)
+ * The following code example is taken from the book
+ * The C++ Standard Library - A Tutorial and Reference
  *
- * This is the file originated from http://ootips.org/yonat/4dev/counted_ptr.h
- * Its author is Yonat Sharon. He says "fill free to use it".
- */
-
-/*
- * counted_ptr - simple reference counted pointer.
- *
- * The is a non-intrusive implementation that allocates an additional
- * int and pointer for every counted object.
+ * by Nicolai M. Josuttis, Addison-Wesley, 1999
+ * © Copyright Nicolai M. Josuttis 1999
  */
 
 #ifndef COUNTED_PTR_H
 #define COUNTED_PTR_H
 
-/* For ANSI-challenged compilers, you may want to #define
- * NO_MEMBER_TEMPLATES or explicit */
+template <class T> struct de_delete {
+    inline static void deallocate(T * p) { delete p; }
+};
 
-//#define NO_MEMBER_TEMPLATES
+template <class T> struct de_delete_array {
+    inline static void deallocate(T * p) { delete[] p; }
+};
 
-template <class X> class counted_ptr
-{
-public:
-    typedef X element_type;
+template <class T> struct de_free {
+    inline static void deallocate(T * p) { free(p); }
+};
 
-    explicit counted_ptr(X* p = 0) // allocate a new counter
-        : itsCounter(0) {if (p) itsCounter = se_new counter(p);}
-    ~counted_ptr()
-        {release();}
-    counted_ptr(const counted_ptr& r) throw()
-        {acquire(r.itsCounter);}
-    counted_ptr& operator=(const counted_ptr& r)
-    {
-        if (this != &r) {
-            release();
-            acquire(r.itsCounter);
+template <class T, class Deallocator = de_delete<T> >
+class counted_ptr {
+  private:
+    T* ptr;        // pointer to the value
+    long* count;   // shared number of owners
+
+  public:
+    // initialize pointer with existing pointer
+    // - requires that the pointer p is a return value of new
+    counted_ptr (T* p = NULL)
+     : ptr(p), count(new long(1)) {
+    }
+
+    // copy pointer (one more owner)
+    counted_ptr (const counted_ptr<T, Deallocator>& p) throw()
+     : ptr(p.ptr), count(p.count) {
+        ++*count;
+    }
+
+    // destructor (delete value if this was the last owner)
+    ~counted_ptr () throw() {
+        dispose();
+    }
+
+    // assignment (unshare old and share new value)
+    counted_ptr<T, Deallocator>& operator= (const counted_ptr<T, Deallocator>& p) throw() {
+        if (this != &p) {
+            dispose();
+            ptr = p.ptr;
+            count = p.count;
+            ++*count;
         }
         return *this;
     }
 
-    X* detach()
-    {
-        if (unique() && itsCounter)
-        {
-            X* ptr = itsCounter->ptr;
-            delete itsCounter;
-            itsCounter = 0;
-            return ptr;
-        }
-        else return NULL;
-    }
-/*
-#ifndef NO_MEMBER_TEMPLATES
-    template <class Y> friend class counted_ptr<Y>;
-    template <class Y> counted_ptr(const counted_ptr<Y>& r) throw()
-        {acquire(r.itsCounter);}
-    template <class Y> counted_ptr& operator=(const counted_ptr<Y>& r)
-    {
-        if (this != &r) {
-            release();
-            acquire(r.itsCounter);
-        }
-        return *this;
-    }
-#endif // NO_MEMBER_TEMPLATES
-*/
-    X& operator[](int i)  const throw()   {return itsCounter->ptr[i];} // added by Andrey Fomichev
-    X& operator*()        const throw()   {return *itsCounter->ptr;}
-    X* operator->()       const throw()   {return itsCounter->ptr;}
-    X* get()              const throw()   {return itsCounter ? itsCounter->ptr : 0;}
-    bool unique()         const throw()
-        {return (itsCounter ? itsCounter->count == 1 : true);}
+    // access the value to which the pointer refers
+    T& operator*() const throw() { return *ptr; }
+    T* operator->() const throw() { return ptr; }
+    T& operator[](int i) const throw() { return ptr[i]; }
+    T* get() const throw() { return ptr;}
+    bool unique() const throw() {return *count == 1; }
 
-private:
-
-    struct counter {
-        counter(X* p = 0, unsigned c = 1) : ptr(p), count(c) {}
-        X*          ptr;
-        unsigned    count;
-    }* itsCounter;
-
-    void acquire(counter* c) throw()
-    { // increment the count
-        itsCounter = c;
-        if (c) ++c->count;
-    }
-
-    void release()
-    { // decrement the count, delete if it is 0
-        if (itsCounter) {
-            if (--itsCounter->count == 0) {
-                delete itsCounter->ptr;
-                delete itsCounter;
-            }
-            itsCounter = 0;
+  private:
+    void dispose() {
+        if (count != NULL && --*count == 0) {
+             delete count;
+             Deallocator::deallocate(ptr);
         }
     }
 };
+
 
 #endif // COUNTED_PTR_H
 
