@@ -208,13 +208,13 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
             CHECKP(node_info.node_xptr);
             t_dsc* desc = (t_dsc*) XADDR(node_info.node_xptr);
             size_t size = (size_t) getTextSize(desc);
+            bool isPstrLongS = isPstrLong(desc);
             xptr data = getTextPtr(desc);
 
-            if (isPstrLong(desc)) {
+            if (isPstrLongS) {
                 hl_logical_log_text(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir,
                                     node_info.parent_indir, data, true);
             } else {
-                CHECKP(data);
                 hl_logical_log_text(node_info.indirection, node_info.left_sibling_indir, node_info.right_sibling_indir,
                                     node_info.parent_indir, (char *) XADDR(data), size, true);
             }
