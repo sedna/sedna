@@ -99,4 +99,4 @@ xqp-recursive:
 .PHONY: clean
 
 clean: generic_clean
-	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
+	for dir in $(SUBDIRS_PARSER); do $(MAKE) -C $$dir $@ || exit; done
