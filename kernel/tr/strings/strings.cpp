@@ -23,11 +23,11 @@ void str_buf_base::move_to_mem_buf()
 	if (m_buf_size <= m_len)
 	{
 		if (m_buf_size > 0)
-			free(m_buf);
+			delete[] m_buf;
 		m_buf_size = m_len + 1;
 		if (m_buf_size < T_STR_MEMBUF_SIZE)
 			m_buf_size = T_STR_MEMBUF_SIZE;
-		m_buf = (char*)malloc(m_buf_size);
+		m_buf = se_new char[m_buf_size];
 	}
 	if (m_len == 0)
 	{
@@ -144,13 +144,18 @@ void str_buf_base::append(const tuple_cell &tc)
 					m_buf_size = T_STR_MEMBUF_SIZE;
 					while (m_buf_size <= new_len)
 						m_buf_size *= 2;
-					m_buf = (char *)malloc(m_buf_size);
+					m_buf = se_new char[m_buf_size];
 				}
 				else if (m_buf_size <= new_len)
 				{
+					char *old_buf;
 					while (m_buf_size <= new_len)
 						m_buf_size *= 2;
-					m_buf = (char*)realloc(m_buf, m_buf_size);
+					
+					old_buf = m_buf;
+					m_buf = se_new char[m_buf_size];
+					memcpy(m_buf, old_buf, m_len+1);
+					delete[] old_buf;
 				}
 				move_to_mem_buf();
 				if (m_flags & f_text_in_estr_buf)
@@ -185,13 +190,18 @@ void str_buf_base::append(const char *str, int add_len)
 			while (m_buf_size <= new_len)
 				m_buf_size *= 2;
 			U_ASSERT(m_buf == NULL);
-			m_buf = (char *)malloc(m_buf_size);
+			m_buf = se_new char[m_buf_size];
 		}
 		else if (m_buf_size <= new_len)
 		{
+			char *old_buf;
 			while (m_buf_size <= new_len)
 				m_buf_size *= 2;
-			m_buf = (char*)realloc(m_buf, m_buf_size);
+			
+			old_buf = m_buf;
+			m_buf = se_new char[m_buf_size];
+			memcpy(m_buf, old_buf, m_len+1);
+			delete[] old_buf;
 		}
 		if (m_len > 0)
 		{
@@ -255,7 +265,7 @@ char * str_buf_base::get_str()
 str_buf_base::~str_buf_base()
 {
 	if (m_buf_size > 0)
-		free(m_buf);
+		delete[] m_buf;
 }
 
 stmt_str_buf_impl stmt_str_buf::buf_impl;
