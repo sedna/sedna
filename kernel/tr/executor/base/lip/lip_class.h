@@ -56,6 +56,8 @@ public:
         zuintoz((__uint32)(vv << 32 >> 32), &lower);
         zlshift(upper, 32, &upper);
         zor(upper, lower, &x);
+        zfree(&upper);
+        zfree(&lower);
         if (s) znegate(&x);
     }
     lip(const char *str)

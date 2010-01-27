@@ -73,7 +73,7 @@ namespace sedna
             content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
         }
 
-        std::string name = n.pref->empty() ? 
+        std::string name = n.pref->empty() ?
                            *n.local :
                            *n.pref + ":" + *n.local;
 
@@ -109,7 +109,7 @@ namespace sedna
         }
         else
         {
-            std::string name = n.pref->empty() ? 
+            std::string name = n.pref->empty() ?
                                *n.local :
                                *n.pref + ":" + *n.local;
 
@@ -301,7 +301,14 @@ namespace sedna
 
     void lr2por::visit(ASTBaseURI &n)
     {
-        st_cxt->set_base_uri(n.uri->c_str());
+        try
+        {
+            st_cxt->set_base_uri(n.uri->c_str());
+        }
+        catch (SednaUserException &e) // invalid uri exception
+        {
+            drv->error(e.get_code(), e.getDescription().c_str());
+        }
     }
 
     void lr2por::visit(ASTBop &n)
@@ -607,7 +614,7 @@ namespace sedna
 #ifdef SE_ENABLE_FTSEARCH
 
         if (tr_globals::is_ft_disabled)
-            throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
+            drv->error(SE1002, "full-text search support is disabled in RO-mode");
 
         childOffer off_name, off_path;
         PPAbsPath *pa;
@@ -653,7 +660,7 @@ namespace sedna
             qep = new PPCreateFtIndex(onp, n.type->c_str(), dbe, off_name.opin, dyn_cxt);
         }
 #else
-        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled");
+        drv->error(SE1002, "full-text search support is disabled");
 #endif
     }
 
@@ -814,7 +821,7 @@ namespace sedna
 
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 #else
-        throw USER_EXCEPTION2(SE1002, "Triggers support is disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
+        drv->error(SE1002, "Triggers support is disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
 #endif
     }
 
@@ -849,7 +856,14 @@ namespace sedna
 
     void lr2por::visit(ASTDefCollation &n)
     {
-        st_cxt->set_default_collation_uri(n.uri->c_str());
+        try
+        {
+            st_cxt->set_default_collation_uri(n.uri->c_str());
+        }
+        catch (SednaUserException &e) // invalid uri
+        {
+            drv->error(e.get_code(), e.getDescription().c_str());
+        }
     }
 
     void lr2por::visit(ASTDefNamespaceDecl &n)
@@ -941,7 +955,7 @@ namespace sedna
     {
 #ifdef SE_ENABLE_FTSEARCH
         if (tr_globals::is_ft_disabled)
-            throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
+            drv->error(SE1002, "full-text search support is disabled in RO-mode");
 
         childOffer off_ind;
 
@@ -954,7 +968,7 @@ namespace sedna
 
         qep = new PPDropFtIndex(off_ind.opin, dyn_cxt);
 #else
-        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled");
+        drv->error(SE1002, "full-text search support is disabled");
 #endif
     }
 
@@ -978,7 +992,7 @@ namespace sedna
 
         PPOpIn mod = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.module, xs_string)), 1);
 
-        qep = new PPDropModule(mod);
+        qep = new PPDropModule(mod, dyn_cxt);
     }
 
     void lr2por::visit(ASTDropRole &n)
@@ -998,7 +1012,7 @@ namespace sedna
 
         qep = new PPDropTrigger(name, dyn_cxt);
 #else
-        throw USER_EXCEPTION2(SE1002, "Triggers support disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
+        drv->error(SE1002, "Triggers support disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
 #endif
     }
 
@@ -1045,7 +1059,7 @@ namespace sedna
             content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
         }
 
-        std::string name = n.pref->empty() ? 
+        std::string name = n.pref->empty() ?
                            *n.local :
                            *n.pref + ":" + *n.local;
 
@@ -1081,7 +1095,7 @@ namespace sedna
         }
         else
         {
-            std::string name = n.pref->empty() ? 
+            std::string name = n.pref->empty() ?
                                *n.local :
                                *n.pref + ":" + *n.local;
 
@@ -1942,7 +1956,16 @@ namespace sedna
                 break;
         }
 
-        tc = string2tuple_cell(*n.lit, type);
+        // catch overflow exception
+        try
+        {
+            tc = string2tuple_cell(*n.lit, type);
+        }
+        catch (SednaUserException &e)
+        {
+            drv->error(e.get_code(), e.getDescription().c_str());
+            tc = string2tuple_cell("dummy", xs_string);
+        }
 
         off_this.opin = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
 
@@ -1978,14 +2001,14 @@ namespace sedna
         arr_of_PPOpIn mods;
         ASTStringVector::iterator it;
 
+        dyn_cxt = new dynamic_context(st_cxt, 0);
+
         for (it = n.modules->begin(); it != n.modules->end(); it++)
         {
-            dyn_cxt = new dynamic_context(st_cxt, 0);
-
             mods.push_back(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(**it, xs_string)), 1));
         }
 
-        qep = new PPLoadModule(mods, n.mod == ASTLoadModule::REPLACE);
+        qep = new PPLoadModule(mods, n.mod == ASTLoadModule::REPLACE, dyn_cxt);
     }
 
     void lr2por::visit(ASTMainModule &n)
@@ -2299,9 +2322,9 @@ namespace sedna
                 {
                     // Given URI is invalid
                     if (res == COLLATION_INVALID_URI)
-                        throw USER_EXCEPTION2(XQST0046, n.uri->c_str());
+                        drv->error(n.getLocation(), XQST0046, n.uri->c_str());
                     else // There is no such collation, or it could not be properly resolved
-                        throw USER_EXCEPTION2(XQST0076, n.uri->c_str());
+                        drv->error(n.getLocation(), XQST0076, n.uri->c_str());
                 }
                 break;
         }
@@ -2531,7 +2554,7 @@ namespace sedna
     {
         childOffer off_this;
 
-        char *qname = xs_QName_create(n.uri->c_str(), n.pref->c_str(), n.local->c_str(), malloc, dyn_cxt);
+        char *qname = xs_QName_create(n.uri->c_str(), n.pref->c_str(), n.local->c_str(), tuple_char_alloc, dyn_cxt);
 
         off_this.opin.op = new PPConst(dyn_cxt, createOperationInfo(n), tuple_cell::atomic(xs_QName, qname));
         off_this.opin.ts = 1;
@@ -2952,7 +2975,7 @@ namespace sedna
 
     void lr2por::visit(ASTUpdMove &n)
     {
-        throw USER_EXCEPTION2(SE4001, "update move is not supported");
+        drv->error(SE4001, "update move is not supported");
     }
 
     void lr2por::visit(ASTUpdRename &n)
@@ -3552,7 +3575,7 @@ namespace sedna
                 break;
 
             default:
-                throw USER_EXCEPTION2(SE4001, "make_binary_op cannot process the operation");
+                drv->error(SE4001, "make_binary_op cannot process the operation");
         }
 
         r = get_binary_op(op_type, lt, rt);

@@ -13,7 +13,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/auth/auc.h"
 
-PPDropModule::PPDropModule(PPOpIn _module_name_) : module_name(_module_name_)
+PPDropModule::PPDropModule(PPOpIn _module_name_, dynamic_context *_cxt_) : module_name(_module_name_), cxt(_cxt_)
 {
 }
 
@@ -21,10 +21,14 @@ PPDropModule::~PPDropModule()
 {
     delete module_name.op;
     module_name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPDropModule::open()
 {
+    dynamic_context::global_variables_open();
     local_lock_mrg->lock(lm_x); // because Leon changes the descriptive schema of the document/collection
     module_name.op->open();
 }
@@ -32,6 +36,7 @@ void PPDropModule::open()
 void PPDropModule::close()
 {
     module_name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPDropModule::accept(PPVisitor &v)

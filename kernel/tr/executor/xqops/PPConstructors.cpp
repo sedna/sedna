@@ -328,7 +328,11 @@ void PPElementConstructor::do_next (tuple &t)
         {
             separateLocalAndPrefix(prefix, name);
 
-            if (!check_constraints_for_xs_NCName(name)) throw XQUERY_EXCEPTION(XQDY0074);
+            if (!check_constraints_for_xs_NCName(name))
+            {
+                delete [] prefix;
+                throw XQUERY_EXCEPTION(XQDY0074);
+            }
 
             if (prefix != NULL)
             {
@@ -683,7 +687,11 @@ void PPAttributeConstructor::do_next (tuple &t)
             char* prefix = NULL;
             separateLocalAndPrefix(prefix, name);
 
-            if(!check_constraints_for_xs_NCName(name)) throw XQUERY_EXCEPTION(XQDY0074);
+            if(!check_constraints_for_xs_NCName(name))
+            {
+                delete [] prefix;
+                throw XQUERY_EXCEPTION(XQDY0074);
+            }
 
             if (prefix != NULL)
             {

@@ -17,7 +17,7 @@
 #include "term_ile.h"
 
 // table of chains, which contains all possible alternatives to match
-#define MAX_CHAINS 33
+#define MAX_CHAINS 34
 const char *chain_table[][13][11] =
 {
     {{"UPDATE", NULL}, {"insert", NULL}, {"@any", NULL}, {"into", "preceding", "following", NULL}, {NULL}},
@@ -54,6 +54,7 @@ const char *chain_table[][13][11] =
     {{"RETRIEVE", NULL}, {"METADATA", NULL}, {"FOR", NULL}, {"DOCUMENTS", "COLLECTIONS", NULL}, {"WITH", NULL}, {"STATISTICS", NULL}, {NULL}},
     {{"RETRIEVE", NULL}, {"DESCRIPTIVE", NULL}, {"SCHEMA", NULL}, {"FOR", NULL}, {"DOCUMENT", NULL}, {"@any", NULL}, {"IN", NULL}, {"COLLECTION", NULL}, {NULL}},
     {{"RETRIEVE", NULL}, {"DESCRIPTIVE", NULL}, {"SCHEMA", NULL}, {"FOR", NULL}, {"COLLECTION", NULL}, {NULL}},
+    {{"EXPLAIN", NULL}, {NULL}},
     {{"\\set", "\\unset", NULL}, {"AUTOCOMMIT", "ON_ERROR_STOP", "DEBUG", "TRANSACTION_READ_ONLY", "QUERY_TIMEOUT=", "LOG_LESS_MODE", NULL}, {NULL}},
     {{"\\set?", "\\unset?", "\\?", "\\commit", "\\rollback", "\\showtime", "\\quit", "\\commit", "\\rollback",
         "\\showtime", NULL}, {NULL}},
@@ -364,6 +365,13 @@ char **term_complet(const char *text, int start, int end)
     word = get_word(total_query);
     while (word != NULL)
     {
+        // special case: "explain" should be "ignored" in the beginning to allow every query
+        if (global_pos == 0 && (!strcmp(word, "EXPLAIN") || !strcmp(word, "explain")))
+        {
+            word = get_word(NULL);
+            continue;
+        }
+
         found = determine_chains(word, possible_chains, MAX_CHAINS);
 
         // shift position

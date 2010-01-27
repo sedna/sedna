@@ -495,7 +495,7 @@ char* remove_dot_segments(const char* path)
     }
     else result = NULL;
 
-    delete output_buffer;
+    delete [] output_buffer;
     output_buffer = NULL;
 
     return result;
@@ -611,7 +611,7 @@ bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
              /////////////////////////////////////////////////////////////////////////////////////////////
 
              T.path = str_counted_ptr(remove_dot_segments(temp_path));
-             delete temp_path;
+             delete [] temp_path;
            }
            T.query = R.query;
            T.query_defined = R.query_defined;

@@ -183,6 +183,13 @@ struct tuple_cell;
 
 extern tuple_cell EMPTY_STRING_TC;
 
+// allocator for xs_QName_create; 'void' to avoid changing alloc_func in every signature
+inline void *tuple_char_alloc(size_t size)
+{
+    char *res = new char[size];
+    return res;
+}
+
 struct tuple_cell
 {
 private:

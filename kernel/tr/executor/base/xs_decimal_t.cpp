@@ -101,14 +101,14 @@ void xs_decimal_t::set(const char *a, bool xs_compliant)
 
         dec_cxt.status = 0;
         decNumberFromString(&dv, norm_a, &dec_cxt);
-        free(norm_a);
+        str_buf_base::free_str(norm_a);
         norm_a = NULL;
     }
     catch(SednaUserException &ex)
     {
         if (norm_a != NULL)
         {
-            free(norm_a);
+            str_buf_base::free_str(norm_a);
             norm_a = NULL;
         }
         throw ex;

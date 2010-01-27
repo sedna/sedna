@@ -2006,9 +2006,7 @@ namespace sedna
                 n.conjuncts.push_back(*it);
 
                 // get rid of ASTBop
-                bop->modifyChild(bop->lop, NULL);
-                bop->modifyChild(bop->rop, NULL);
-
+                bop->modifyChild(cand, NULL);
                 delete bop;
             }
             else

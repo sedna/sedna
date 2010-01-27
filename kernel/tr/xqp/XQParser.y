@@ -1824,6 +1824,7 @@ relativePathExpr:
         {
             ASTNode *res = $1;
 
+    /*
             if (ASTFilterStep *fs = dynamic_cast<ASTFilterStep *>($1))
             {
                 // get rid of ASTFilterStep for first-step primary expressions
@@ -1833,6 +1834,7 @@ relativePathExpr:
                     delete $1;
                 }
             }
+    */
 
             $$ = res;
         }
@@ -3689,28 +3691,52 @@ static ASTNode *makeQuantExpr(sedna::XQueryParser::location_type& loc, ASTQuantE
 }
 
 // here we just mark the last step and bind context to the first step
-// NOTE: literals and other standalone expressions go here for the sake of the grammar; 'if (!xp)' filters them out
 static ASTNode *makePathExpr(ASTNode *xpath, ASTNode *cont)
 {
     ASTStep *xp = dynamic_cast<ASTStep *>(xpath);
+    ASTStep *fs = NULL, *pfs = NULL;
 
-    // check if this is just a single-step expression
-    if (!xp)
-        return xpath;
+    U_ASSERT(xp);
 
+    // set flag for the last step
     xp->setAsLast();
 
+    // find the first step and the previous to first
+    while (xp)
+    {
+        // first step is the one without a context
+        if (!xp->getContext())
+        {
+            fs = xp;
+            break;
+        }
+
+        pfs = xp;
+        xp = dynamic_cast<ASTStep *>(xp->getContext());
+    }
+
+    // we should have some first step
+    U_ASSERT(fs);
+
+    // set context such as fn:root() for leading-slash expressions
+    // if first step is an expression without preds then make it usual expression
     if (cont)
     {
-        while (xp)
+        fs->setContext(cont);
+    }
+    else if (ASTFilterStep *fils = dynamic_cast<ASTFilterStep *>(fs))
+    {
+        // get rid of ASTFilterStep for first-step primary expressions
+        if (!fils->getPreds() && fils->getExpr())
         {
-            if (!xp->getContext())
-            {
-                xp->setContext(cont);
-                break;
-            }
+            ASTNode *dup = fils->getExpr()->dup();
 
-            xp = dynamic_cast<ASTStep *>(xp->getContext());
+            if (pfs)
+                pfs->setContext(dup);
+            else
+                xpath = dup;
+
+            delete fils;
         }
     }
 
@@ -3754,6 +3780,8 @@ static void ProcessDirectContent(ASTNodesVector *cont, bool isPreserveBS)
                 // if we encounter CharRef or CDATA, boundary space check is not needed, since CharRef and CDATA never define boundary-spaces
                 if (ncc->getOrigin() == ASTCharCont::CDATA || ncc->getOrigin() == ASTCharCont::CREF)
                     stripBS = false;
+                    
+                delete ncc;
             }
 
             // delete merged content following pos-node
