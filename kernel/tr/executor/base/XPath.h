@@ -41,7 +41,7 @@ enum NodeTestType
     node_test_element,                // element(name | *)
     node_test_attribute,              // attribute(name | *)
     node_test_document,               // document-node(element(* | name))
-    
+
     /* NameTest */
     node_test_qname,                  // QName
     node_test_wildcard_star,          // *
@@ -94,7 +94,7 @@ struct PathExprRoot
 {
 private:
     counted_ptr<db_entity> db_ent;
-    PPOpIn name;    
+    PPOpIn name;
 
 public:
     PathExprRoot(counted_ptr<db_entity> _db_ent_,
@@ -102,14 +102,19 @@ public:
                                  name(_name_) {}
 
     PathExprRoot(counted_ptr<db_entity> _db_ent_): db_ent(_db_ent_) {}
-    
+
     void close();
     void open();
     void reopen();
     void release();
-    
+
     const PPOpIn& get_operation();
-    
+
+    void set_name(PPOpIn &_name_)
+    {
+        name = _name_;
+    }
+
     const counted_ptr<db_entity>& get_entity(const char* obj_name,
                                              const char* op_name);
 };
