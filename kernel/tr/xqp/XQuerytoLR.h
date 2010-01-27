@@ -52,7 +52,6 @@ struct qep_subtree
 void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch, std::string *module_name);
 StringVector parse_xq_to_ast(const char *batch);
 void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, std::string *module_name);
-void parse_batch_context(sedna::XQueryDriver *drv, const char *query, QueryType type, static_context *sx);
 
 PPQueryEssence *build_qep(const char*  por, bool is_ast);
 qep_subtree    *build_subqep(const char*  por, bool is_ast);

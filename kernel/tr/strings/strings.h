@@ -226,6 +226,10 @@ public:
 	void append(const tuple_cell &tc);
 	char *c_str();
 	char *get_str();
+    static void free_str(char *str)
+    {
+        delete[] str;
+    }
 
 	~str_buf_base();
 
@@ -321,6 +325,7 @@ class CollationHandler;
 class TokenizerResult
 {
 public:
+    virtual ~TokenizerResult() {};
 	virtual void get_next_result(tuple& t)=0;
 };
 

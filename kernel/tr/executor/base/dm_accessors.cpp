@@ -77,14 +77,14 @@ tuple_cell dm_node_name(xptr node)
         case attribute      : {
                                   xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
                                   const char *n = GETSCHEMENODE(XADDR(node))->name;
-                                  char *qname = xs_QName_create(xmlns, n, malloc);
+                                  char *qname = xs_QName_create(xmlns, n, tuple_char_alloc);
                                   return tuple_cell::atomic(xs_QName, qname);
                               }
         case xml_namespace  : {
                                   ns_dsc *ns = NS_DSC(node);
                                   if (ns->ns->prefix)
                                   {
-                                      char *qname = xs_QName_create(NULL_XMLNS, ns->ns->prefix, malloc);
+                                      char *qname = xs_QName_create(NULL_XMLNS, ns->ns->prefix, tuple_char_alloc);
                                       return tuple_cell::atomic(xs_QName, qname);
                                   }
                                   else
@@ -103,10 +103,10 @@ tuple_cell dm_node_name(xptr node)
                                       char *t = se_new char[target + 1];
                                       t[target] = '\0';
                                       estr_copy_to_buffer(t, data, target);
-                                      qname = xs_QName_create(NULL_XMLNS, t, malloc);
+                                      qname = xs_QName_create(NULL_XMLNS, t, tuple_char_alloc);
                                       delete [] t;
                                   } else {
-                                      qname = xs_QName_create(NULL_XMLNS, (char *) XADDR(data), malloc);
+                                      qname = xs_QName_create(NULL_XMLNS, (char *) XADDR(data), tuple_char_alloc);
                                   }
 
                                   return tuple_cell::atomic(xs_QName, qname);

@@ -94,7 +94,7 @@ inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 /*
     // !!! FIXME: check lexical representation
     tuple_cell tmp = tuple_cell::make_sure_light_atomic(c);
-    char *qname = xs_QName_create(tmp.get_str_mem(), malloc);
+    char *qname = xs_QName_create(tmp.get_str_mem(), tuple_char_alloc);
     return tuple_cell::atomic(xs_QName, qname);
 */
 }

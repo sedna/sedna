@@ -124,6 +124,10 @@ namespace sedna
             void error(const sedna::XQueryParser::location_type &loc, int code, const char *msg);
             void error(const sedna::XQueryParser::location_type &loc, int code, std::string msg);
             void error(int code, const char *msg);
+            bool gotErrors() const
+            {
+                return (errors != NULL);
+            }
 
             bool parse(const char *query);
             void parseAST(const char *ast);

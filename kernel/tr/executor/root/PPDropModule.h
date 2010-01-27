@@ -14,6 +14,7 @@ class PPDropModule : public PPUpdate
 {
     // given parameters
     PPOpIn module_name;
+    dynamic_context *cxt;
 
 public:
     void open();
@@ -21,7 +22,7 @@ public:
     void execute();
     void accept(PPVisitor& v);
 
-    PPDropModule(PPOpIn _module_name_);
+    PPDropModule(PPOpIn _module_name_, dynamic_context *_cxt_);
 
     ~PPDropModule();
 };

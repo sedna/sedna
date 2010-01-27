@@ -33,21 +33,9 @@ public:
 
     ~ASTCharCont();
 
-    void appendContent(std::string *cont_)
-    {
-        cont->append(*cont_);
-        delete cont_;
-    }
-
-    void appendContent(const char *cont_)
-    {
-        cont->append(cont_);
-    }
-
     void appendContent(ASTCharCont *cont_)
     {
         cont->append(*(cont_->cont));
-        delete cont_;
     }
 
     ASTCharCont::Origin getOrigin() const

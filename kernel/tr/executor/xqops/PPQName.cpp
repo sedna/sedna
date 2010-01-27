@@ -95,7 +95,7 @@ void PPFnResolveQName::do_next(tuple &t)
 
         char *qname = xs_QName_create(qname_tc.get_str_mem(),
                                       node, 
-                                      malloc,
+                                      tuple_char_alloc,
                                       cxt);
 
         t.copy(tuple_cell::atomic(xs_QName, qname));
@@ -202,7 +202,7 @@ void PPFnQName::do_next(tuple &t)
 
         char *qname = xs_QName_create(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(),
                                       qname_tc.get_str_mem(), 
-                                      malloc,
+                                      tuple_char_alloc,
                                       cxt);
 
         t.copy(tuple_cell::atomic(xs_QName, qname));

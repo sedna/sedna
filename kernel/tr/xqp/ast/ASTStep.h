@@ -37,7 +37,6 @@ public:
 
     void setContext(ASTNode* context)
     {
-        delete cont;
         cont = context;
     }
 

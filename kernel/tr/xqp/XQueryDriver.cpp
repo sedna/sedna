@@ -558,7 +558,16 @@ namespace sedna
             }
         }
 
-        return (mods[ind])->getQEP();
+        PPQueryEssence *res = (mods[ind])->getQEP();
+
+        // some errors might have happened
+        if (gotErrors())
+        {
+            delete res;
+            emitErrors(); // this function will throw an exception
+        }
+
+        return res;
     }
 
     void XQueryDriver::porLibModules()

@@ -23,9 +23,11 @@
 
 PPLoadModule::PPLoadModule(
     arr_of_PPOpIn   _filenames_,
-    bool            _is_load_replace_)
+    bool            _is_load_replace_,
+    dynamic_context *_cxt_)
     : filenames         (_filenames_)
-    , is_load_replace   (_is_load_replace_)
+    , is_load_replace   (_is_load_replace_),
+    cxt(_cxt_)
 {
 }
 
@@ -79,10 +81,14 @@ PPLoadModule::~PPLoadModule()
         filenames.begin(), filenames.end(),
         Op_deletor()
         );
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPLoadModule::open()
 {
+    dynamic_context::global_variables_open();
     std::for_each(
         filenames.begin(), filenames.end(),
         Op_opener()
@@ -95,6 +101,8 @@ void PPLoadModule::close()
         filenames.begin(), filenames.end(),
         Op_closer()
         );
+
+    dynamic_context::global_variables_close();
 }
 
 void PPLoadModule::accept(PPVisitor &v)

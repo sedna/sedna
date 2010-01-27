@@ -13,6 +13,7 @@ ASTFLWOR::~ASTFLWOR()
     destroyASTNodesVector(fls);
     delete where;
     delete order_by;
+    delete ret;
 }
 
 void ASTFLWOR::accept(ASTVisitor &v)

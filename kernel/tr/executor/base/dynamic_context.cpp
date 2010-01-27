@@ -296,7 +296,7 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     default_collation_handler = dynamic_context::collation_manager.get_collation_handler(normalized_value);
     if(default_collation_handler == NULL) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");
 
-    if (default_collation_uri != NULL) delete default_collation_uri;
+    if (default_collation_uri != NULL) delete [] default_collation_uri;
     default_collation_uri = se_new char[strlen(normalized_value) + 1];
     strcpy(default_collation_uri, normalized_value);
     set_field_flag(SC_DEFAULT_COLLATION_URI);

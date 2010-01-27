@@ -34,7 +34,6 @@ using namespace tr_globals;
 
 static bool is_qep_built  = false;
 static bool is_qep_opened = false;
-static bool is_stmt_built = false;
 static msg_struct sp_msg;
 
 static sedna::XQueryDriver *xqd = NULL;
@@ -44,8 +43,20 @@ on_kernel_statement_begin(size_t mod_index,
                           PPQueryEssence* &qep_tree)
 {
     xs_decimal_t::init();
-    qep_tree = xqd->getQEPForModule(mod_index);
-    is_qep_built = true;
+
+    try
+    {
+        is_qep_built = true; // always consider qep-tree as built; in case of error this allows cleaning up
+        qep_tree = xqd->getQEPForModule(mod_index);
+    }
+    catch (SednaUserException)
+    {
+        delete xqd;
+        xqd = NULL;
+        qep_tree = NULL;
+        throw;
+    }
+
     qep_tree->open();
     is_qep_opened = true;
 }
@@ -104,7 +115,6 @@ void on_user_statement_begin(QueryType queryType,
 
     // parse and do logical analysis (state is stored in the driver)
     parse_batch(xqd, queryType, query_str, NULL);
-    is_stmt_built = true;
 
     // we don't like >1 modules
     if (xqd->getModulesCount() > 1)
@@ -126,13 +136,6 @@ void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
 #endif
 
     on_kernel_statement_end(qep_tree);
-
-    if (is_stmt_built)
-    {
-        //delete_scheme_list(st->root);
-        //delete st;
-        is_stmt_built = false;
-    }
 
     qep_tree = NULL;
     st = NULL;

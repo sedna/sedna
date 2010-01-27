@@ -14,6 +14,7 @@ class PPLoadModule : public PPUpdate
 {
     arr_of_PPOpIn   filenames;
     bool            is_load_replace;
+    dynamic_context *cxt;
 
 public:
     void open();
@@ -22,7 +23,8 @@ public:
     void accept(PPVisitor& v);
 
     PPLoadModule(arr_of_PPOpIn  _filenames_,
-                 bool           _is_load_replace);
+                 bool           _is_load_replace,
+                 dynamic_context *_cxt_);
     ~PPLoadModule();
 };
 
