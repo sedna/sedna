@@ -187,6 +187,7 @@ struct function_declaration
     PPIterator *op;
     int cxt_size;
     static_context *st_cxt;
+    std::string func_name, func_name_uri;
 
     function_declaration() : num(0), args(NULL), op(NULL) {}
     ~function_declaration();
@@ -278,7 +279,7 @@ public:
     void _init_context();
     void _release_resources();
     void clear_context();
-    
+
     void inline add_temporary_doc_node(xptr n) { temp_docs.push_back(n); }
 
     bool is_field_set_in_prolog(static_context_fields_flags flag) { return prolog_set_fields & flag; }
@@ -314,35 +315,35 @@ public:
     /// codes defined above.
     int get_collation(const char *uri, /* out */ CollationHandler** handler);
     CollationHandler* get_default_collation() { return default_collation_handler; }
-    
+
     ///Getters and setters for different prolog options
     inline xq_boundary_space get_boundary_space()  { return boundary_space; }
     inline void set_boundary_space(xq_boundary_space bs)  { boundary_space = bs; set_field_flag(SC_BOUNDARY_SPACE); }
-    
+
     inline const char* get_default_collation_uri() { return default_collation_uri; }
     void set_default_collation_uri(const char* _default_collation_uri_);
-    
+
     inline const char* get_base_uri() { return base_uri; }
     void set_base_uri(const char* _base_uri_);
-    
+
     inline bool get_construction_mode() { return preserve_type; }
     inline void set_construction_mode(bool cm) { preserve_type = cm; set_field_flag(SC_CONSTRUCTION); }
-    
+
     inline xq_ordering_mode get_ordering_mode() { return ordering_mode; }
     inline void set_ordering_mode(xq_ordering_mode om) { ordering_mode = om; set_field_flag(SC_ORDERING_MODE); }
-    
+
     inline xq_empty_order get_empty_order() { return empty_order; }
     inline void set_empty_order(xq_empty_order eo) { empty_order = eo; set_field_flag(SC_EMPTY_ORDER); }
-    
+
     inline bool is_namespace_preserve() { return cn_preserve; }
     inline void set_namespace_preserve(bool np) { cn_preserve = np; set_field_flag(SC_NAMESPACE_PRESERVE); }
-    
+
     inline bool is_namespace_inherit() { return cn_inherit; }
     inline void set_namespace_inherit(bool ni) { cn_inherit = ni; set_field_flag(SC_NAMESPACE_INHERIT); }
-    
+
     inline se_output_indent get_output_indent() { return output_indent; }
     inline void set_output_indent(se_output_indent oi) { output_indent = oi; set_field_flag(SC_OUTPUT_INDENT); }
-    
+
     /* Returns defined namespaces except predefined */
     std::vector<xmlns_ptr> get_explicit_namespaces();
     /* Returns current default namespaces or NULL_XMLNS if there's no one */

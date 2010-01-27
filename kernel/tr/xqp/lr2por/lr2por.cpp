@@ -620,6 +620,7 @@ namespace sedna
         PPAbsPath *pa;
         PathExpr *onp;
         counted_ptr<db_entity> dbe;
+        PPOpIn comp_name;
 
         var_num = 0;
         dyn_cxt = new dynamic_context(st_cxt, 0);
@@ -637,6 +638,10 @@ namespace sedna
 
         onp = pa->getPathExpr();
         dbe = pa->getDocColl();
+
+        if (!dbe->name)
+            comp_name = pa->getCompName();
+
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
         if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
@@ -644,6 +649,14 @@ namespace sedna
 
         // set context
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
+
+        PathExprRoot peroot(dbe);
+
+        // computed name in doc/coll
+        if (!dbe->name)
+        {
+            peroot.set_name(comp_name);
+        }
 
         // make qe
         if (*n.type == "customized-value" || *n.type == "!customized-value")
@@ -653,11 +666,11 @@ namespace sedna
             n.cust_expr->accept(*this);
             off_cust = getOffer();
 
-            qep = new PPCreateFtIndex(onp, n.type->c_str(), dbe, off_name.opin, off_cust.opin, dyn_cxt);
+            qep = new PPCreateFtIndex(onp, n.type->c_str(), peroot, off_name.opin, off_cust.opin, dyn_cxt);
         }
         else
         {
-            qep = new PPCreateFtIndex(onp, n.type->c_str(), dbe, off_name.opin, dyn_cxt);
+            qep = new PPCreateFtIndex(onp, n.type->c_str(), peroot, off_name.opin, dyn_cxt);
         }
 #else
         drv->error(SE1002, "full-text search support is disabled");
@@ -671,6 +684,7 @@ namespace sedna
         PathExpr *onp, *byp;
         xmlscm_type xtype;
         counted_ptr<db_entity> dbe;
+        PPOpIn comp_name;
 
         var_num = 0;
         dyn_cxt = new dynamic_context(st_cxt, 0);
@@ -687,6 +701,10 @@ namespace sedna
 
         onp = pa->getPathExpr();
         dbe = pa->getDocColl();
+
+        if (!dbe->name)
+            comp_name = pa->getCompName();
+
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
         if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
@@ -714,7 +732,13 @@ namespace sedna
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         PathExprRoot peroot(dbe);
-        
+
+        // computed name in doc/coll
+        if (!dbe->name)
+        {
+            peroot.set_name(comp_name);
+        }
+
         qep = new PPCreateIndex(off_name.opin, peroot, onp, byp, xtype, dyn_cxt);
     }
 
@@ -746,7 +770,7 @@ namespace sedna
         PathExpr *onp;
         counted_ptr<db_entity> dbe;
         childOffer off_path;
-        PPOpIn name;
+        PPOpIn name, comp_name;
         tuple_cell tc;
 
         var_num = 0;
@@ -766,8 +790,18 @@ namespace sedna
 
         onp = pa->getPathExpr();
         dbe = pa->getDocColl();
+
+        if (!dbe->name)
+            comp_name = pa->getCompName();
+
         delete pa; // we don't need it anymore (note that this won't destroy onp)
         PathExprRoot peroot(dbe);
+
+        // computed name in doc/coll
+        if (!dbe->name)
+        {
+            peroot.set_name(comp_name);
+        }
 
         if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
@@ -791,7 +825,7 @@ namespace sedna
 
             strcpy(action->at(2*i).internal.str, ir.c_str());
         }
-          
+
         if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
         {
             childOffer off_ipath;
@@ -1815,6 +1849,10 @@ namespace sedna
         var_num = 0;
         id = n.getId();
         function_declaration &fd = dynamic_context::funct_cxt.fun_decls[id];
+
+        // some info for proper explain
+        fd.func_name = (n.pref && *n.pref != "") ? *n.pref + ":" + *n.local : *n.local;
+        fd.func_name_uri = *n.func_uri;
 
         n.ret->accept(*this);
         fd.ret_st = getOffer().st;

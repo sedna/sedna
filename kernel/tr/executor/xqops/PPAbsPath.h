@@ -72,6 +72,16 @@ public:
     {
         return db_ent;
     }
+
+    // use it to get computed document/collection name (i.e. when PPAbsPath just a container)
+    // side effect: after this PPAbsPath won't be storing name-PPOpIn since it gets stripped from it
+    PPOpIn getCompName()
+    {
+        PPOpIn res = name;
+        name.op = NULL;
+
+        return res;
+    }
 };
 
 
