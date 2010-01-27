@@ -1748,7 +1748,14 @@ namespace sedna
                     }
                 }
 
-                off_this.opin = fu.l2pGen(dyn_cxt, createOperationInfo(n), para);
+                try
+                {
+                    off_this.opin = fu.l2pGen(dyn_cxt, createOperationInfo(n), para);
+                }
+                catch (SednaUserException &e) // exceptions about turned off features
+                {
+                    drv->error(e.get_code(), e.getDescription().c_str());
+                }
             }
         }
         else
@@ -1781,8 +1788,15 @@ namespace sedna
             }
             else // external function
             {
-                // NOTE: we ignore prefix-uri part for external functions
-                off_this.opin = PPOpIn(ext_function_manager.make_pp_ext_func(n.local->c_str(), dyn_cxt, createOperationInfo(n), para), 1);
+                try
+                {
+                    // NOTE: we ignore prefix-uri part for external functions
+                    off_this.opin = PPOpIn(ext_function_manager.make_pp_ext_func(n.local->c_str(), dyn_cxt, createOperationInfo(n), para), 1);
+                }
+                catch (SednaUserException &e) // "external function not found"
+                {
+                    drv->error(e.get_code(), e.getDescription().c_str());
+                }
             }
         }
 
