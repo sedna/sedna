@@ -23,7 +23,7 @@ PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,
 {
     switch (smt)
     {
-        case sm_contains: comp_fun = 0; break;
+        case SM_CONTAINS: comp_fun = 0; break;
         default:          throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPSubsMatch::PPSubsMatch().");
     }
 }
@@ -80,7 +80,7 @@ void PPSubsMatch::error(const char* msg)
 {
     switch (smt)
     {
-        case sm_contains: throw XQUERY_EXCEPTION2(XPTY0004, (std::string(msg) + " in fn:contains().").c_str());
+        case SM_CONTAINS: throw XQUERY_EXCEPTION2(XPTY0004, (std::string(msg) + " in fn:contains().").c_str());
         default:          throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPSubsMatch::error().");
     }
 }

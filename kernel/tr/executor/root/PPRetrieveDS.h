@@ -13,7 +13,6 @@
 
 class PPRetrieveDS : public PPQueryEssence
 {
-    // given parameters
     PPOpIn name;
     dynamic_context *cxt;
     db_entity_type type;

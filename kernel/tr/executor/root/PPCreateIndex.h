@@ -37,6 +37,11 @@ public:
                   dynamic_context *_cxt_);
 
     ~PPCreateIndex();
+    
+    inline xmlscm_type get_index_type() const { return key_type; }
+    inline const PathExpr* get_object_path() const { return object_path; }
+    inline const PathExpr* get_key_path() const { return key_path; }
+    inline const PathExprRoot& get_path_root() const { return root; }
 };
 
 #endif /* _PPCREATEINDEX_H */

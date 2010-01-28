@@ -12,7 +12,6 @@
 
 class PPDropModule : public PPUpdate
 {
-    // given parameters
     PPOpIn module_name;
     dynamic_context *cxt;
 

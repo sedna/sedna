@@ -26,6 +26,5 @@ public:
     ~PPDeleteUndeep();
 };
 
-
-#endif
+#endif /* _PPDELETEUNDEEP_H */
 

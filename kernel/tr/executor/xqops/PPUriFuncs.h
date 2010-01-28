@@ -18,20 +18,30 @@ class PPFnUriEncoding : public PPIterator
 
 /// Exact type of the function to be evaluated.
 public: 
-enum uri_function_type {
-     ENCODE_FOR_URI,        //fn:encode-for-uri()
-     IRI_TO_URI,            //fn:iri-to-uri()
-     ESCAPE_HTML_URI        //fn:escape-html-uri()
-};
+    enum uri_function_type {
+         ENCODE_FOR_URI,        //fn:encode-for-uri()
+         IRI_TO_URI,            //fn:iri-to-uri()
+         ESCAPE_HTML_URI        //fn:escape-html-uri()
+    };
 
-protected:
+    static inline const char* uri_function_type2c_string(uri_function_type uft)
+    {
+        switch(uft)
+        {
+        case ENCODE_FOR_URI: return "fn:encode-for-uri()";
+        case IRI_TO_URI: return "fn:iri-to-uri()";
+        case ESCAPE_HTML_URI: return "fn:escape-html-uri()";
+        default: throw USER_EXCEPTION2(SE1003, "Impossible case in uri function type to string conversion.");
+        }
+    }
+
+private:
     PPOpIn child;
     uri_function_type type;
     bool first_time;
 
     const char* error();
 
-private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
@@ -46,6 +56,8 @@ public:
                     PPOpIn _child_,
                     uri_function_type _type_);
     virtual ~PPFnUriEncoding();
+    
+    inline uri_function_type get_function_type() const { return type; }
 };
 
 
@@ -83,4 +95,4 @@ public:
 };
 
 
-#endif
+#endif /* _PPURIFUNCS_H */

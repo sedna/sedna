@@ -6,6 +6,8 @@
 #ifndef _SYSTEM_TABLES_H
 #define _SYSTEM_TABLES_H
 
+#include <string>
+
 #include "common/sedna.h"
 #include "common/counted_ptr.h"
 
@@ -22,7 +24,23 @@ struct db_entity
 {
     db_entity_type type;		// type of the db entity
     char *name;					// name of the db entity
+    
     ~db_entity() { delete [] name; name = NULL; }
+    
+    inline std::string to_string() const
+    {
+        std::string res;
+        switch(type)
+        {
+        case dbe_document: res += "document("; break;
+        case dbe_collection: res += "collection("; break;
+        case dbe_module: res += "module("; break;
+        throw USER_EXCEPTION2(SE1003, "Impossible type in database entry to string conversion");
+        }
+        if(name != NULL) res += name;
+        res += ")";
+        return res;
+    }
 };
 
 

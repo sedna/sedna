@@ -13,7 +13,6 @@
 
 class PPRetrieveMetadata : public PPQueryEssence
 {
-    // given parameters
     db_entity_type type;
     PPOpIn collection;
     dynamic_context *cxt;

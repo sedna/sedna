@@ -45,7 +45,9 @@ public:
                   bool _hl_fragment_);
 
     virtual ~PPFtHighlight();
+
+    inline bool is_highlight_fragment() { return hl_fragment; } 
 };
 
 
-#endif
+#endif /* _PPFTHIGHLIGHT_H */

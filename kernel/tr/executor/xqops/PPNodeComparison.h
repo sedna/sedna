@@ -57,6 +57,19 @@ public:
                                                 PPOpIn _seq1_,
                                                 PPOpIn _seq2_); 
 
+    inline const char* get_operation_comparison_type()
+    { 
+        switch(type)
+        {
+            case 1: return "follows";
+            case -1:return "precedes";
+            case 0: return "is";
+            case 2: return "fn:is_ancestor()";
+            default: throw USER_EXCEPTION2(SE1003, "Impossible case in node comparison type to string conversion");
+        }
+    }
+
 	
 };
+
 #endif /* _PPNODECOMP_H */

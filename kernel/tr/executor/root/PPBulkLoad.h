@@ -10,6 +10,7 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
+
 class PPBulkLoad : public PPUpdate
 {
     dynamic_context *cxt1, *cxt2, *cxt3;
@@ -31,5 +32,4 @@ public:
 };
 
 
-#endif
-
+#endif /* _PPBULKLOAD_H */

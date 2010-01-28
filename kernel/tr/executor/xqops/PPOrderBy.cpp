@@ -4,10 +4,14 @@
  */
 
 #include <iostream>
+
 #include "common/sedna.h"
+#include "common/bit_set.h"
+
 #include "tr/executor/xqops/PPOrderBy.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/fo/string_operations.h"
 
 using namespace std;
 
@@ -322,15 +326,15 @@ static inline void get_deserialized_value(void* value, const void* addr, xmlscm_
 }
 
 
-static inline int compare_doubles(double value1, double value2, orb_empty_status o)
+static inline int compare_doubles(double value1, double value2, orb_modifier::orb_empty_status o)
 {
     if (value2 == value1) return 0;
     
     bool is_nan1 = u_is_nan(value1);
     bool is_nan2 = u_is_nan(value2);
 
-    if(is_nan1 && !is_nan2) return (o == ORB_EMPTY_GREATEST ? -1 : 1);
-    if(is_nan2 && !is_nan1) return (o == ORB_EMPTY_GREATEST ? 1 : -1);
+    if(is_nan1 && !is_nan2) return (o == orb_modifier::ORB_EMPTY_GREATEST ? -1 : 1);
+    if(is_nan2 && !is_nan1) return (o == orb_modifier::ORB_EMPTY_GREATEST ? 1 : -1);
     
     return (value2 > value1 ? 1 : -1);
 } 
@@ -374,16 +378,16 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
         xmlscm_type type = ct.xtype;
         int type_size = ct.size;        
 
-        int order = m.order == ORB_ASCENDING ? -1 : 1;
+        int order = m.order == orb_modifier::ORB_ASCENDING ? -1 : 1;
         if(temp1 == NULL) CHECKP(v1);
         bool is_eos1 = bs1.testAt(i);
         if(temp2 == NULL) CHECKP(v2);
         bool is_eos2 = bs2.testAt(i);
 
         if     (is_eos1 && !is_eos2)                   /// there we have (j)-th is eos and (j-1)-th is not eos
-            result = (m.status == ORB_EMPTY_GREATEST ? -1 : 1) * order;
+            result = (m.status == orb_modifier::ORB_EMPTY_GREATEST ? -1 : 1) * order;
         else if(is_eos2 && !is_eos1)                   /// there we have (j-1)-th is eos and (j)-th is not eos    
-            result = (m.status == ORB_EMPTY_GREATEST ? 1 : -1) * order;
+            result = (m.status == orb_modifier::ORB_EMPTY_GREATEST ? 1 : -1) * order;
         
         else if(!is_eos2 && !is_eos1)        
         {

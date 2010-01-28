@@ -256,7 +256,7 @@ void PPFunCall::do_close()
 
 void PPFunCall::do_next(tuple &t)
 {
-    #ifdef STRICT_FUNS
+#ifdef STRICT_FUNS
     if (spos != -1)
     {
         if (spos < s->size()) s->get(t, spos++);

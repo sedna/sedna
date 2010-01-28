@@ -12,13 +12,13 @@
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/ft/ft_index_data.h"
 
-ft_index_type str2index_type(const char *str);
-ft_index_template_t * make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);
+ft_index_type str2ft_index_type(const char *str);
+const char* ft_index_type2str(ft_index_type type);
+ft_index_template_t* make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);
 void delete_cust_rules_vector(ft_index_template_t* &v);
 
 class PPCreateFtIndex : public PPUpdate
 {
-    // given parameters
     PathExpr *object_path;
 	ft_index_type index_type;
 	ft_index_impl index_impl;
@@ -26,7 +26,7 @@ class PPCreateFtIndex : public PPUpdate
     PathExprRoot root;    
     PPOpIn index_name;
     dynamic_context *cxt;
-
+    
 public:
     void open();
     void close();
@@ -39,6 +39,7 @@ public:
                     PPOpIn _index_name_,
                     PPOpIn _cust_rules_,
                     dynamic_context *_cxt_);
+ 
     PPCreateFtIndex(PathExpr *_object_path_,
                     const char *_index_type_,
                     PathExprRoot _root_,
@@ -46,8 +47,10 @@ public:
                     dynamic_context *_cxt_);
 
     ~PPCreateFtIndex();
+    
+    inline ft_index_type get_index_type() const { return index_type; }
+    inline const PathExpr* get_path_expression() const { return object_path; }
+    inline const PathExprRoot& get_path_root() const { return root; }
 };
-
-
 
 #endif /* _PPCREATEFTINDEX_H */

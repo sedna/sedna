@@ -18,9 +18,6 @@
 
 class dynamic_context;
 
-typedef bool (*comp_schema)(schema_node_cptr scm,const char* uri,const char* name, t_item type);
-
-
 xptr giveAnyChild(n_dsc* source,shft size);
 
 /*returns any non-attribute child of the current node*/

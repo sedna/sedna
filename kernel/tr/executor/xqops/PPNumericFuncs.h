@@ -31,6 +31,15 @@ public:
     tuple_cell fn_ceiling           (const tuple_cell& tc);
     tuple_cell fn_floor             (const tuple_cell& tc);
     tuple_cell fn_round             (const tuple_cell& tc);
+    
+    inline const char* value_func2c_string(value_func func)
+    {
+        if(func == &PPNumericFuncs::fn_abs) return "fn:abs()";
+        if(func == &PPNumericFuncs::fn_ceiling) return "fn:ceiling()";
+        if(func == &PPNumericFuncs::fn_floor) return "fn:floor()";
+        if(func == &PPNumericFuncs::fn_round) return "fn:round()";
+        throw USER_EXCEPTION2(SE1003, "Impossible case in numeric function type to string conversion");
+    }
 
 private:
     virtual void do_open   ();
@@ -47,6 +56,8 @@ public:
                    PPOpIn _child_,
                    PPNumericFuncs::value_func _func_);
     virtual ~PPNumericFuncs();
+
+    inline value_func get_function() const { return func; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////

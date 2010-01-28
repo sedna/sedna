@@ -7,28 +7,22 @@
 #ifndef __XSD_H
 #define __XSD_H
 
-#include "common/sedna.h"
-
 #include <iostream>
 #include <string>
 
+#include "common/sedna.h"
 #include "common/xptr.h"
+
 #include "tr/structures/schema.h"
 
 class dynamic_context;
 
 /**
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 XML Schema Part 2 Datatypes to C++ Types Mapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-
-
 xs:string               variable            char*
 xs:boolean              1                   bool
-xs:decimal              8                   xs_decimal           should be fixed to have length of 12
+xs:decimal              8                   xs_decimal
 xs:float                4                   float
 xs:double               8                   double
 xs:duration
@@ -56,10 +50,7 @@ xs:unsignedInt          4                   __uint32
 xs:unsignedShort        2                   __uint16
 xs:unsignedByte         1                   __uint8
 xs:positiveInteger      8                   __uint64
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-*/
+**/
 
 ///
 /// XML Schema Part 2 NCName Functions
@@ -70,12 +61,11 @@ xs:positiveInteger      8                   __uint64
 /// we should aware of memory being allocated. For this purpose we provide addition 
 /// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
 //// paramters to xs_NCName_create.
+
 char *xs_NCName_create(const char* value, void* (*alloc_func)(size_t));
 void  xs_NCName_release(char *ncname, void (*free_func)(void*));
 std::string  xs_NCName2string(const char *ncname);
 void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str);
-
-
 
 ///
 /// XML Schema Part 2 anyURI Functions
@@ -92,9 +82,6 @@ void  xs_anyURI_print(const char *uri, std::ostream& str);
 void  xs_anyURI_print_to_lr(const char *uri, std::ostream& str);
 
 
-
-
-
 ///
 /// XML Schema Part 2 QName (qualified name from Namespaces in XML standard) Functions
 ///
@@ -104,22 +91,22 @@ void  xs_anyURI_print_to_lr(const char *uri, std::ostream& str);
 /// we should aware of memory being allocated. For this purpose we provide addition 
 /// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
 /// paramters to xs_QName_create.
-// when xmlns is known use this function
+/// when xmlns is known use this function
 char *xs_QName_create(xmlns_ptr xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t));
-// backs up xs:QName() function
+/// backs up xs:QName() function
 char *xs_QName_create(const char *uri,
                       const char *prefix,
                       const char *local,
                       void* (*alloc_func)(size_t),
                       dynamic_context *cxt);
-// backs up fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
+/// backs up fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
 char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 
                       void* (*alloc_func)(size_t),
                       dynamic_context *cxt);
-// backs up fn:resolve-QName() function (prefix_and_local constains prefix and local part separated by ':')
+/// backs up fn:resolve-QName() function (prefix_and_local constains prefix and local part separated by ':')
 char *xs_QName_create(const char* prefix_and_local,
                       const xptr& elem_node,
                       void* (*alloc_func)(size_t),
@@ -166,17 +153,17 @@ inline bool _xs_QName_not_equal(const char* uri1, const char *local1, const char
     return strcmp(uri1, uri2) != 0;
 }
 
-// This function is used for Sequence Type implementation and intended to be faster
-// than creating xs:QNames from prefix and local part and calling dm:node-name (bla-bla-bla)
-// Parameters:
-// uri could be NULL
-// node must be element or attribute and CHECKP should be called on node already
+/// This function is used for Sequence Type implementation and intended to be faster
+/// than creating xs:QNames from prefix and local part and calling dm:node-name (bla-bla-bla)
+/// Parameters:
+/// uri could be NULL
+/// node must be element or attribute and CHECKP should be called on node already
 bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node);
 
 
-// Separates prefix and local name from the QName in text 
-// representaion: prefix:local. Allocates memory for prefix with malloc.
-// Changes qname to point to the local name start.
+/// Separates prefix and local name from the QName in text 
+/// representaion: prefix:local. Allocates memory for prefix with malloc.
+/// Changes qname to point to the local name start.
 void separateLocalAndPrefix(char*& prefix, const char*& qname);
 
 

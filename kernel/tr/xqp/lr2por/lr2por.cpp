@@ -2353,7 +2353,7 @@ namespace sedna
         }
         else
         {
-            orb.order = ORB_ASCENDING;
+            orb.order = orb_modifier::ORB_ASCENDING;
         }
 
         if (n.em_mod)
@@ -2365,7 +2365,9 @@ namespace sedna
         }
         else
         {
-            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
+            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? 
+                                                      orb_modifier::ORB_EMPTY_LEAST : 
+                                                      orb_modifier::ORB_EMPTY_GREATEST;
         }
 
         if (n.col_mod)
@@ -2394,19 +2396,19 @@ namespace sedna
         switch (n.mod)
         {
             case ASTOrderModInt::ASCENDING:
-                off_this.orbs[0].order = ORB_ASCENDING;
+                off_this.orbs[0].order = orb_modifier::ORB_ASCENDING;
                 break;
 
             case ASTOrderModInt::DESCENDING:
-                off_this.orbs[0].order = ORB_DESCENDING;
+                off_this.orbs[0].order = orb_modifier::ORB_DESCENDING;
                 break;
 
             case ASTOrderModInt::EMPTY_GREATEST:
-                off_this.orbs[0].status = ORB_EMPTY_GREATEST;
+                off_this.orbs[0].status = orb_modifier::ORB_EMPTY_GREATEST;
                 break;
 
             case ASTOrderModInt::EMPTY_LEAST:
-                off_this.orbs[0].status = ORB_EMPTY_LEAST;
+                off_this.orbs[0].status = orb_modifier::ORB_EMPTY_LEAST;
                 break;
 
             case ASTOrderModInt::COLLATION:
@@ -2446,8 +2448,10 @@ namespace sedna
         {
             orb_modifier orb;
 
-            orb.order = ORB_ASCENDING;
-            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
+            orb.order = orb_modifier::ORB_ASCENDING;
+            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? 
+                                                      orb_modifier::ORB_EMPTY_LEAST : 
+                                                      orb_modifier::ORB_EMPTY_GREATEST;
             orb.collation = st_cxt->get_default_collation();
 
             off_this.orbs = arr_of_orb_modifier(1);

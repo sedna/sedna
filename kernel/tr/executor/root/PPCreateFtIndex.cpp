@@ -14,7 +14,7 @@
 #include "tr/executor/base/xsd.h"
 
 
-ft_index_type str2index_type(const char *str)
+ft_index_type str2ft_index_type(const char *str)
 {
 	if (!strcmp(str, "xml"))
 		return  ft_xml;
@@ -28,6 +28,19 @@ ft_index_type str2index_type(const char *str)
 		return ft_customized_value;
 	else
 		throw USER_EXCEPTION2(SE1071, "unknown full-text index type");
+}
+
+const char* ft_index_type2str(ft_index_type type)
+{
+    switch(type)
+    {
+    case ft_xml: return "xml";
+    case ft_xml_hl: return "xml-hl";
+    case ft_string_value: return "string-value";
+    case ft_delimited_value: return "delimited-value";
+    case ft_customized_value: return "customized-value";
+    default: throw USER_EXCEPTION2(SE1003, "Impossible case in full text index type to string conversion");
+    }
 }
 
 ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
@@ -70,7 +83,7 @@ ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context 
 
 		const char *index_type = tc.get_str_mem();
 
-		ft_index_type itype = str2index_type(index_type);
+		ft_index_type itype = str2ft_index_type(index_type);
 
 		res->push_back(ft_index_pair_t(tag, itype));
 	}
@@ -111,7 +124,7 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
 	}
 	else
 		this->index_impl = ft_ind_dtsearch;
-	index_type = str2index_type(_index_type_);
+	index_type = str2ft_index_type(_index_type_);
 }
 
 PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
@@ -131,7 +144,7 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
 	}
 	else
 		this->index_impl = ft_ind_dtsearch;
-	index_type = str2index_type(_index_type_);
+	index_type = str2ft_index_type(_index_type_);
 }
 
 PPCreateFtIndex::~PPCreateFtIndex()
@@ -173,12 +186,10 @@ void PPCreateFtIndex::accept(PPVisitor &v)
     v.visit (this);
     v.push  (this);
     index_name.op->accept(v);
+    if(root.get_operation().op != NULL)
+        root.get_operation().op->accept(v);
     if (cust_rules.op)
 		cust_rules.op->accept(v);
-    if(root.get_operation().op != NULL)
-    {
-        root.get_operation().op->accept(v);
-    }
     v.pop();
 }
 

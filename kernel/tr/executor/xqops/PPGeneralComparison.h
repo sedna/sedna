@@ -79,7 +79,7 @@ public:
 	static PPGeneralComparison* PPEQGeneralComparison(dynamic_context *_cxt_, 
                                                       operation_info _info_, 
                                                       PPOpIn _seq1_,
-                                                      PPOpIn _seq2_); 
+                                                      PPOpIn _seq2_);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -136,6 +136,14 @@ public:
                           PPOpIn _seq2_,
                           bool _more_,
                           bool strict);
+
+    inline const char* get_operation_comparison_type() 
+    { 
+        if(more && strict) return "gt";
+        else if(more) return "ge";
+        else if(strict) return "lt";
+        return "le";
+    }
 
 private:
     virtual void do_next (tuple &t);
