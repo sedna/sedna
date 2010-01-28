@@ -135,7 +135,7 @@ void PPFtScan::do_next(tuple &t)
         if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
             throw XQUERY_EXCEPTION(SE1071);
         tc = tuple_cell::make_sure_light_atomic(tc);
-        ft_index_type itype = str2index_type(tc.get_str_mem());
+        ft_index_type itype = str2ft_index_type(tc.get_str_mem());
 
         if (cust_rules.op)
         {

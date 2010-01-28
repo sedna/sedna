@@ -15,21 +15,10 @@ void PPPatMatch::cf_choice(void)
 {
     switch (pmt)
 	{
-		case pm_match:    comp_fun = &PPPatMatch::matches; break;
-		case pm_replace:  comp_fun = &PPPatMatch::replace; break;
-		case pm_tokenize: comp_fun = &PPPatMatch::tokenize; break;
+		case PM_MATCH:    comp_fun = &PPPatMatch::matches; break;
+		case PM_REPLACE:  comp_fun = &PPPatMatch::replace; break;
+		case PM_TOKENIZE: comp_fun = &PPPatMatch::tokenize; break;
 		default: throw USER_EXCEPTION2(SE1003, "Impossible case in pattern matching choise function");
-	}
-}
-
-static inline const char* get_function_name(patmatch_type pmt)
-{
-    switch (pmt)
-	{
-		case pm_match:    return "fn:matches";
-		case pm_replace:  return "fn:replace";
-		case pm_tokenize: return "fn:tokenize";
-		default: throw USER_EXCEPTION2(SE1003, "Impossible case in pattern matching get name function");
 	}
 }
 
@@ -219,20 +208,21 @@ void PPPatMatch::do_accept(PPVisitor &v)
 }
 
 
-static inline tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_empty_allowed, patmatch_type pmt, int arg_num)
+static inline 
+tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_empty_allowed, PPPatMatch::patmatch_type pmt, int arg_num)
 {
     seq.op->next(t);
     if(t.is_eos()) 
     {
         if(is_empty_allowed) return EMPTY_STRING_TC;
-        else throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + ". Argument contains empty sequence.").c_str());
+        else throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + PPPatMatch::patmatch_type2c_string(pmt) + ". Argument contains empty sequence.").c_str());
     }
     tuple_cell res = atomize(seq.get(t));
     if(!is_string_type(res.get_atomic_type())) 
-        throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid type of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + " (xs_string/derived/promotable is expected).").c_str());
+        throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid type of the ") + get_argument_name(arg_num) + " of " + PPPatMatch::patmatch_type2c_string(pmt) + " (xs_string/derived/promotable is expected).").c_str());
     seq.op->next(t);
     if(!t.is_eos())
-        throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + ". Argument contains more than one item.").c_str());
+        throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + PPPatMatch::patmatch_type2c_string(pmt) + ". Argument contains more than one item.").c_str());
     return res;
 }
 

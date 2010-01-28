@@ -60,6 +60,10 @@ public:
           PPOpIn _data_child_);
 
     virtual ~PPLet();
+    
+    inline bool is_check_type() const { return need_to_check_type; }
+    inline const sequence_type& get_type() const { return st;}
+    inline const arr_of_var_dsc& get_variable_descriptors() const { return var_dscs; }
 };
 
 #endif

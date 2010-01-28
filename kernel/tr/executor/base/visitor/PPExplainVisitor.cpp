@@ -215,17 +215,7 @@ void PPExplainVisitor::visit(PPAbsPath* op)
 {
     insertOperationElement("PPAbsPath", left, parent, op);
     string path_expr = op->getPathExpr()->to_string();
-    counted_ptr<db_entity> dbe = op->getDocColl();
-    string root;
-    switch(dbe->type)
-    {
-        case dbe_document: root+= "document("; break;
-        case dbe_collection: root += "collection("; break;
-        case dbe_module: root += "module("; break;
-    }
-    if(NULL != dbe->name) root += dbe->name;
-    root += ")";
-    xptr attr_left = insertAttributeHelper("root", XNULL, left, root);
+    xptr attr_left = insertAttributeHelper("root", XNULL, left, op->getDocColl()->to_string());
     if(path_expr.length() != 0)
     {
         insertAttributeHelper("path",attr_left, left, path_expr);
@@ -756,12 +746,17 @@ void PPExplainVisitor::visit(PPNil* op)
 void PPExplainVisitor::visit(PPSelect* op)
 {
     insertOperationElement("PPSelect", left, parent, op);
-    xptr attr_left = XNULL;
     if(op->is_check_type())
     {
-        attr_left = insertAttributeHelper("type", XNULL, left, (op->get_sequence_type()).to_str());
+        insertAttributeHelper("type", XNULL, left, (op->get_sequence_type()).to_str());
     }
-    insertAttributeHelper("variables", attr_left, left, arr_of_var_dsc2string(op->get_variable_descriptors()));
+    left_inside = insertElementHelper("produces", left_inside, left);
+    const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
+    xptr var_left = XNULL;
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    {
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+    }
 }
 
 void PPExplainVisitor::visit(PPSeqChecker* op)
@@ -815,6 +810,7 @@ void PPExplainVisitor::visit(PPXptr* op)
 void PPExplainVisitor::visit(PPFtHighlight* op)
 {
     insertOperationElement("PPFtHighlight", left, parent, op);
+    insertAttributeHelper("fragment-highlight", XNULL, left, bool2string(op->is_highlight_fragment()));
 }
 void PPExplainVisitor::visit(PPFtScan* op)
 {
@@ -840,6 +836,7 @@ void PPExplainVisitor::visit(PPFtIndexScan2* op)
 void PPExplainVisitor::visit(PPFunCall* op)
 {
     insertOperationElement("PPFunCall", left, parent, op);
+    insertAttributeHelper("id", XNULL, left, int2string(op->get_function_id()));
 }
 
 void PPExplainVisitor::visit(PPGeneralComparison* op)
@@ -850,21 +847,25 @@ void PPExplainVisitor::visit(PPGeneralComparison* op)
 void PPExplainVisitor::visit(PPLMGeneralComparison* op)
 {
     insertOperationElement("PPLMGeneralComparison", left, parent, op);
+    insertAttributeHelper("comparison", XNULL, left, string(op->get_operation_comparison_type()));
 }
 
 void PPExplainVisitor::visit(PPNEQGeneralComparison* op)
 {
     insertOperationElement("PPNEQGeneralComparison", left, parent, op);
+    insertAttributeHelper("comparison", XNULL, left, string("ne"));
 }
 
 void PPExplainVisitor::visit(PPEQLGeneralComparison* op)
 {
     insertOperationElement("PPEQLGeneralComparison", left, parent, op);
+    insertAttributeHelper("comparison", XNULL, left, string("eq"));
 }
 
 void PPExplainVisitor::visit(PPNodeComparison* op)
 {
     insertOperationElement("PPNodeComparison", left, parent, op);
+    insertAttributeHelper("comparison", XNULL, left, string(op->get_operation_comparison_type()));
 }
 
 void PPExplainVisitor::visit(PPIf* op)
@@ -875,11 +876,32 @@ void PPExplainVisitor::visit(PPIf* op)
 void PPExplainVisitor::visit(PPLet* op)
 {
     insertOperationElement("PPLet", left, parent, op);
+    if(op->is_check_type())
+    {
+        insertAttributeHelper("type", XNULL, left, (op->get_type()).to_str());
+    }
+    left_inside = insertElementHelper("produces", left_inside, left);
+    const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
+    xptr var_left = XNULL;
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    {
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+    }
 }
 
 void PPExplainVisitor::visit(PPOrderBy* op)
 {
     insertOperationElement("PPOrderBy", left, parent, op);
+    xptr attr_left = insertAttributeHelper("stable", XNULL, left, bool2string(op->is_stable()));
+    insertAttributeHelper("tuple-size", attr_left, left, int2string(op->get_tuple_size()));
+    left_inside = insertElementHelper("modifiers", left_inside, left);
+    const arr_of_orb_modifier& modifiers = op->get_modifiers();
+    xptr var_left = XNULL;
+    for (unsigned int i = 0; i < modifiers.size(); i++)
+    {
+        var_left = insertElementHelper("modifier", var_left, left_inside);
+        insertAttributeHelper("type", XNULL, var_left, modifiers.at(i).to_string());
+    }
 }
 
 void PPExplainVisitor::visit(PPSTuple* op)
@@ -890,11 +912,30 @@ void PPExplainVisitor::visit(PPSTuple* op)
 void PPExplainVisitor::visit(PPSLet* op)
 {
     insertOperationElement("PPSLet", left, parent, op);
+    left_inside = insertElementHelper("produces", left_inside, left);
+    const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
+    xptr var_left = XNULL;
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    {
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+    }
 }
 
 void PPExplainVisitor::visit(PPReturn* op)
 {
     insertOperationElement("PPReturn", left, parent, op);
+    if(op->is_check_type())
+    {
+        insertAttributeHelper("type", XNULL, left, (op->get_type()).to_str());
+    }
+    left_inside = insertElementHelper("produces", left_inside, left);
+    const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
+    xptr var_left = XNULL;
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    {
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+    }
+    insertVariableHelper("position", var_left, left_inside, op->get_position_var_dsc());
 }
 
 void PPExplainVisitor::visit(PPFnName* op)
@@ -925,6 +966,7 @@ void PPExplainVisitor::visit(PPFnRoot* op)
 void PPExplainVisitor::visit(PPNumericFuncs* op)
 {
     insertOperationElement("PPNumericFuncs", left, parent, op);
+    insertAttributeHelper("function", XNULL, left, string(op->value_func2c_string(op->get_function())));
 }
 
 void PPExplainVisitor::visit(PPFnRoundHalfToEven* op)
@@ -935,6 +977,7 @@ void PPExplainVisitor::visit(PPFnRoundHalfToEven* op)
 void PPExplainVisitor::visit(PPPatMatch* op)
 {
     insertOperationElement("PPPatMatch", left, parent, op);
+    insertAttributeHelper("function", XNULL, left, string(PPPatMatch::patmatch_type2c_string(op->get_function_type())));
 }
 
 void PPExplainVisitor::visit(PPFnResolveQName* op)
@@ -975,26 +1018,51 @@ void PPExplainVisitor::visit(PPFnInScopePrefixes* op)
 void PPExplainVisitor::visit(PPCast* op)
 {
     insertOperationElement("PPCast", left, parent, op);
+    string type;
+    type += xmlscm_type2c_str(op->get_target_type());
+    if(op->is_empty_allowed()) type+="?";
+    insertAttributeHelper("type", XNULL, left, type);
 }
 
 void PPExplainVisitor::visit(PPCastable* op)
 {
     insertOperationElement("PPCastable", left, parent, op);
+    string type;
+    type += xmlscm_type2c_str(op->get_target_type());
+    if(op->is_empty_allowed()) type+="?";
+    insertAttributeHelper("type", XNULL, left, type);
 }
 
 void PPExplainVisitor::visit(PPTreat* op)
 {
     insertOperationElement("PPTreat", left, parent, op);
+    insertAttributeHelper("type", XNULL, left, (op->get_sequence_type()).to_str());
 }
 
 void PPExplainVisitor::visit(PPTypeswitch* op)
 {
     insertOperationElement("PPTypeswitch", left, parent, op);
+    left_inside = insertElementHelper("produces", XNULL, left);
+    const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
+    xptr var_left = XNULL;
+    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    {
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+    }
+    left_inside = insertElementHelper("cases-types", left_inside, left);
+    const arr_of_sequence_type& sts = op->get_sequence_types();
+    xptr st_left = XNULL;
+    for (unsigned int i = 0; i < sts.size(); i++)
+    {
+        st_left = insertElementHelper("case", st_left, left_inside);
+        insertAttributeHelper("type", XNULL, st_left, sts.at(i).to_str());
+    }
 }
 
 void PPExplainVisitor::visit(PPInstanceOf* op)
 {
     insertOperationElement("PPInstanceOf", left, parent, op);
+    insertAttributeHelper("type", XNULL, left, (op->get_sequence_type()).to_str());
 }
 
 
@@ -1007,6 +1075,7 @@ void PPExplainVisitor::visit(PPFnSQLConnect* op)
 void PPExplainVisitor::visit(PPFnSQLExecute* op)
 {
     insertOperationElement("PPFnSQLExecute", left, parent, op);
+    insertAttributeHelper("update", XNULL, left, bool2string(op->is_update()));
 }
 void PPExplainVisitor::visit(PPFnSQLPrepare* op)
 {
@@ -1041,6 +1110,7 @@ void PPExplainVisitor::visit(PPFnStringJoin* op)
 void PPExplainVisitor::visit(PPFnStartsEndsWith* op)
 {
     insertOperationElement("PPFnStartsEndsWith", left, parent, op);
+    insertAttributeHelper("function", XNULL, left, string(PPFnStartsEndsWith::FunctionType2c_string(op->get_function_type())));
 }
 
 void PPExplainVisitor::visit(PPFnStringLength* op)
@@ -1076,11 +1146,16 @@ void PPExplainVisitor::visit(PPFnTranslate* op)
 void PPExplainVisitor::visit(PPFnChangeCase* op)
 {
     insertOperationElement("PPFnChangeCase", left, parent, op);
+    string function;
+    op->is_to_upper() ? function = "fn:upper-case()" 
+                      : function = "fn:lower-case()";
+    insertAttributeHelper("update", XNULL, left, function);
 }
 
 void PPExplainVisitor::visit(PPFnSubsBeforeAfter* op)
 {
     insertOperationElement("PPFnSubsBeforeAfter", left, parent, op);
+    insertAttributeHelper("function", XNULL, left, string(PPFnSubsBeforeAfter::FunctionType2c_string(op->get_function_type())));
 }
 
 void PPExplainVisitor::visit(PPFnSubstring* op)
@@ -1096,11 +1171,13 @@ void PPExplainVisitor::visit(PPFnCompare* op)
 void PPExplainVisitor::visit(PPSubsMatch* op)
 {
     insertOperationElement("PPSubsMatch", left, parent, op);
+    insertAttributeHelper("function", XNULL, left, string(PPSubsMatch::subsmatch_type2c_string(op->get_function_type())));
 }
 
 void PPExplainVisitor::visit(PPFnUriEncoding* op)
 {
     insertOperationElement("PPFnUriEncoding", left, parent, op);
+    insertAttributeHelper("function", XNULL, left, string(PPFnUriEncoding::uri_function_type2c_string(op->get_function_type())));
 }
 
 void PPExplainVisitor::visit(PPFnResolveUri* op)
@@ -1121,6 +1198,16 @@ void PPExplainVisitor::visit(PPBulkLoad* op)
 void PPExplainVisitor::visit(PPCreateIndex* op)
 {
     insertOperationElement("PPCreateIndex", left, parent);
+    xptr attr_left = insertAttributeHelper("type", XNULL, left, string(xmlscm_type2c_str(op->get_index_type())));
+    string obj_path = op->get_object_path()->to_string();
+    string key_path = op->get_key_path()->to_string();
+    attr_left = insertAttributeHelper("root", XNULL, left, op->get_path_root().get_entity()->to_string());
+    if(obj_path.length() != 0) {
+        attr_left = insertAttributeHelper("object-path", attr_left, left, obj_path);
+    }
+    if(key_path.length() != 0) {
+        insertAttributeHelper("key-path", attr_left, left, key_path);
+    }
 }
 
 void PPExplainVisitor::visit(PPCreateDocument* op)
@@ -1165,6 +1252,13 @@ void PPExplainVisitor::visit(PPDeleteUndeep* op)
 void PPExplainVisitor::visit(PPCreateFtIndex* op)
 {
     insertOperationElement("PPCreateFtIndex", left, parent);
+    xptr attr_left = insertAttributeHelper("type", XNULL, left, string(ft_index_type2str(op->get_index_type())));
+    string path_expr = op->get_path_expression()->to_string();
+    attr_left = insertAttributeHelper("root", attr_left, left, op->get_path_root().get_entity()->to_string());
+    if(path_expr.length() != 0)
+    {
+        insertAttributeHelper("path", attr_left, left, path_expr);
+    }
 }
 void PPExplainVisitor::visit(PPDropFtIndex* op)
 {
@@ -1196,6 +1290,7 @@ void PPExplainVisitor::visit(PPDropDocumentInCollection* op)
 void PPExplainVisitor::visit(PPLoadModule* op)
 {
     insertOperationElement("PPLoadModule", left, parent);
+    insertAttributeHelper("replace", XNULL, left, bool2string(op->is_replace()));
 }
 
 void PPExplainVisitor::visit(PPDropModule* op)

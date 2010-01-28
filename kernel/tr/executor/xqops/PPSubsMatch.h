@@ -15,13 +15,25 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPSubsMatch
 ///////////////////////////////////////////////////////////////////////////////
-typedef __int16 subsmatch_type;
-
-#define sm_contains				0
 
 class PPSubsMatch : public PPIterator
 {
-protected:
+public:
+    enum subsmatch_type
+    {
+        SM_CONTAINS
+    };
+    
+    static inline const char* subsmatch_type2c_string(subsmatch_type pm)
+    {
+        switch(pm)
+        {
+        case SM_CONTAINS: return "fn:contains()";
+        default: throw USER_EXCEPTION2(SE1003, "Impossible case in match function type to string conversion (substring match).");
+        }
+    }
+
+private:
     PPOpIn seq1;
 	PPOpIn seq2;
 	subsmatch_type smt;
@@ -30,7 +42,6 @@ protected:
 	
 	void error(const char* msg);
 
-private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
@@ -57,8 +68,10 @@ public:
                                      operation_info _info_,
                                      PPOpIn _seq1_, 
                                      PPOpIn _seq2_)	{
-        return se_new PPSubsMatch(_cxt_,_info_,_seq1_,_seq2_,sm_contains);
+        return se_new PPSubsMatch(_cxt_,_info_,_seq1_,_seq2_,SM_CONTAINS);
 	}
+    
+    inline subsmatch_type get_function_type() const { return smt; }
 };
 
 

@@ -114,6 +114,8 @@ public:
               const arr_of_PPOpIn &_ch_arr_,
               function_id _fn_id_);
     virtual ~PPFunCall();
+
+    inline function_id get_function_id() { return fn_id; }
 };
 
 

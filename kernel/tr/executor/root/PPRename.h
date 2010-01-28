@@ -13,14 +13,26 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/XPath.h"
 
-enum pp_rename_type {
-    PP_RENAME_NODE,
-    PP_RENAME_COLLECTION,
-};
-
-
 class PPRename : public PPUpdate
 {
+public:
+    enum pp_rename_type {
+        PP_RENAME_NODE,
+        PP_RENAME_COLLECTION,
+    };
+    
+    static inline const char* pp_rename_type2c_string(pp_rename_type type)
+    {
+        switch(type)
+        {
+        case PP_RENAME_NODE: return "node";
+        case PP_RENAME_COLLECTION: return "collection";
+        default: throw USER_EXCEPTION2(SE1003, "Impossible type in rename type to string conversion");
+        }
+    }
+    
+private:
+    
     PPOpIn child;
     PPOpIn new_name_child;
     dynamic_context *cxt;
@@ -44,6 +56,7 @@ public:
              dynamic_context *_cxt_);
 
     ~PPRename();
+     
 };
 
 

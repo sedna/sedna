@@ -78,6 +78,16 @@ public:
         FN_STARTS_WITH,
         FN_ENDS_WITH
     };
+    
+    static inline const char* FunctionType2c_string(FunctionType type)
+    {
+        switch(type)
+        {
+        case FN_STARTS_WITH: return "fn:starts-with()";
+        case FN_ENDS_WITH: return "fn:ends-with()";
+        default: throw USER_EXCEPTION2(SE1003, "Impossible case in function type to string conversion (starts/ends with)");
+        }
+    }
 
 protected:
     PPOpIn source;
@@ -115,6 +125,8 @@ public:
                        FunctionType _type_);
 
     virtual ~PPFnStartsEndsWith();
+    
+    inline FunctionType get_function_type() const { return type; }
 };
 
 
@@ -279,6 +291,7 @@ public:
                    PPOpIn _str_,
                    bool _to_upper_);
 	virtual ~PPFnChangeCase();
+    inline bool is_to_upper() const { return to_upper; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -292,6 +305,16 @@ public:
         FN_BEFORE,
         FN_AFTER
     };
+
+    static inline const char* FunctionType2c_string(FunctionType type)
+    {
+        switch(type)
+        {
+        case FN_BEFORE: return "fn:starts-with()";
+        case FN_AFTER: return "fn:ends-with()";
+        default: throw USER_EXCEPTION2(SE1003, "Impossible case in function type to string conversion (substring before/after)");
+        }
+    }
 
 protected:
     PPOpIn src_child;
@@ -326,6 +349,8 @@ public:
                         PPOpIn _collation_child_,
                         FunctionType _type_);
     virtual ~PPFnSubsBeforeAfter();
+ 
+    inline FunctionType get_function_type() const { return type; }
 };
 
 
@@ -399,4 +424,4 @@ public:
     virtual ~PPFnNormalizeUnicode();
 };
 
-#endif
+#endif /* _PPSTRINGFUNCS_H */

@@ -14,9 +14,7 @@
 
 class PPDropTrigger : public PPUpdate
 {
-    // given parameters
     PathExpr *trigger_path;
-//	ft_index_type index_type;
     PPOpIn trigger_name;
     dynamic_context *cxt;
     

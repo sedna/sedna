@@ -11,17 +11,28 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/PPUtils.h"
 
-typedef __int16 patmatch_type;
-
-#define pm_match 0
-#define pm_replace 1
-#define pm_tokenize 2
-
 class PPPatMatch : public PPIterator
 {
+public:
+    enum patmatch_type
+    {
+        PM_MATCH,
+        PM_REPLACE,
+        PM_TOKENIZE
+    };
+    static inline const char* patmatch_type2c_string(patmatch_type pm)
+    {
+        switch(pm)
+        {
+        case PM_MATCH: return "fn:match()";
+        case PM_REPLACE: return "fn:replace()";
+        case PM_TOKENIZE: return "fn:tokenize()";
+        default: throw USER_EXCEPTION2(SE1003, "Impossible case in match function type to string conversion (pattern match).");
+        }
+    }
+
 private:
 	TokenizerResult* tknzr;
-protected:
     typedef void (PPPatMatch::*t_comp_fun)(tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 
     PPOpIn seq1;
@@ -38,7 +49,6 @@ protected:
 	void tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 	void replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 
-private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
@@ -70,15 +80,9 @@ public:
                patmatch_type _pmt_);
 
     virtual ~PPPatMatch();
-	
-    /* Factories for Pattern Matching */
-	static PPPatMatch* PPFnMatch(dynamic_context *_cxt_, 
-                                 operation_info _info_,
-                                 PPOpIn _seq1_,
-                                 PPOpIn _seq2_)	{
-		return se_new PPPatMatch(_cxt_, _info_, _seq1_,_seq2_,pm_match);
-	}
+    
+    inline patmatch_type get_function_type() const { return pmt; }
 };
 
-#endif
+#endif /* _PPPATMATCH_H */
 

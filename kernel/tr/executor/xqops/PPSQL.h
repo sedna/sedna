@@ -158,6 +158,7 @@ public:
                    const arr_of_PPOpIn &arr,
                    bool _exec_update_);
     virtual ~PPFnSQLExecute();
+    inline bool is_update() const { return exec_update; }
 };
 
 class PPFnSQLPrepare : public PPFnSQLBase

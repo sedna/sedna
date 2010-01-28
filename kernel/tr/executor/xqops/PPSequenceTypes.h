@@ -42,6 +42,9 @@ public:
            xmlscm_type _target_type_,
            bool _can_be_empty_seq_);
     virtual ~PPCast();
+    
+    inline bool is_empty_allowed() const { return can_be_empty_seq; }
+    inline xmlscm_type get_target_type() const { return target_type; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,6 +79,9 @@ public:
                xmlscm_type _target_type_,
                bool _can_be_empty_seq_);
     virtual ~PPCastable();
+    
+    inline bool is_empty_allowed() const { return can_be_empty_seq; }
+    inline xmlscm_type get_target_type() const { return target_type; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -108,6 +114,8 @@ public:
                  PPOpIn _child_,
                  const sequence_type& _st_);
     virtual ~PPInstanceOf();
+    
+    inline const sequence_type& get_sequence_type() const { return st; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -143,6 +151,8 @@ public:
             PPOpIn _child_,
             const sequence_type& _st_);
     virtual ~PPTreat();
+
+    inline const sequence_type& get_sequence_type() const { return st; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -201,7 +211,10 @@ public:
                  PPOpIn _default_child_);
     
     virtual ~PPTypeswitch();
+    
+    inline const arr_of_sequence_type& get_sequence_types() const { return types; }
+    inline const arr_of_var_dsc& get_variable_descriptors() const { return var_dscs; }
 };
 
-#endif
+#endif /* _PPSEQUENCETYPES_H */
 

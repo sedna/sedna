@@ -506,9 +506,9 @@ void PPTypeswitch::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
+    source_child.op->accept(v);
     for (unsigned int i = 0; i < cases.size(); i++)
         cases[i].op->accept(v);
-    source_child.op->accept(v);
     default_child.op->accept(v);
     v.pop();
 }

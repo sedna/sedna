@@ -62,7 +62,7 @@ struct NodeTest
     NodeTestType type;
     NodeTestData data;
 
-    std::string to_string();
+    std::string to_string() const;
     static std::string to_string(const NodeTestType& type, const NodeTestData& data);
     void print_to_lr(std::ostream& str);
 };
@@ -73,7 +73,7 @@ struct NodeTestOr
     NodeTest *nt;  // NodeTest array
     int s;         // size
 
-    std::string to_string();
+    std::string to_string() const;
     void print_to_lr(std::ostream& str);
 };
 
@@ -85,7 +85,7 @@ struct PathExpr
     NodeTestOr *nto;  // NodeTestOr array
     int s;            // size
 
-    std::string to_string();
+    std::string to_string() const;
     void print_to_lr(std::ostream& str);
 };
 
@@ -108,7 +108,8 @@ public:
     void reopen();
     void release();
 
-    const PPOpIn& get_operation();
+    const PPOpIn& get_operation() const { return name; }
+    const counted_ptr<db_entity>& get_entity() const { return db_ent; } ;
 
     void set_name(PPOpIn &_name_)
     {

@@ -3,7 +3,6 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #ifndef _PPDROPMETADATA_H
 #define _PPDROPMETADATA_H
 
@@ -12,7 +11,6 @@
 
 class PPDropDocument : public PPUpdate
 {
-    // given parameters
     PPOpIn name;
     dynamic_context *cxt;
 
@@ -28,7 +26,6 @@ public:
 
 class PPDropCollection : public PPUpdate
 {
-    // given parameters
     PPOpIn name;
     dynamic_context *cxt;
 
@@ -44,7 +41,6 @@ public:
 
 class PPDropDocumentInCollection : public PPUpdate
 {
-    // given parameters
     PPOpIn document, collection;
     dynamic_context *cxt1, *cxt2;
 
@@ -61,5 +57,5 @@ public:
     ~PPDropDocumentInCollection();
 };
 
-#endif
+#endif /* _PPDROPMETADATA_H */
 

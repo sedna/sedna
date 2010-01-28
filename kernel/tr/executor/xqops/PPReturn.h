@@ -61,8 +61,11 @@ public:
              var_dsc _pos_dsc_);
 
     virtual ~PPReturn();
+
+    inline bool is_check_type() const { return need_to_check_type; }
+    inline const sequence_type& get_type() const { return st;}
+    inline const arr_of_var_dsc& get_variable_descriptors() const { return var_dscs; }
+    inline var_dsc get_position_var_dsc() const { return pos_dsc; }
 };
 
-
-
-#endif
+#endif /* __PPRETURN_H */

@@ -27,5 +27,4 @@ public:
     ~PPDropFtIndex();
 };
 
-
 #endif /* _PPDROPFTINDEX_H */

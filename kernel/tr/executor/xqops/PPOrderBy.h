@@ -7,16 +7,12 @@
 #define _PPORDERBY_H
 
 #include <vector>
-#include "common/sedna.h"
-#include "tr/executor/base/PPBase.h"
-#include "tr/executor/base/PPUtils.h"
-#include "common/bit_set.h"
-#include "tr/executor/base/sorted_sequence.h"
-#include "tr/strings/e_string.h"
-#include "tr/executor/fo/op_map.h"
-#include "tr/executor/fo/string_operations.h"
-#include "tr/executor/fo/casting_operations.h"
+#include <string>
 
+#include "common/sedna.h"
+
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/sorted_sequence.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,20 +72,30 @@ public:
 };
 ///////////////////////////////////////////////////////////////////////////////
 
-enum orb_empty_status {
-    ORB_EMPTY_GREATEST,
-    ORB_EMPTY_LEAST,
-};
-
-enum orb_sort_order {
-    ORB_ASCENDING,
-    ORB_DESCENDING,
-};
-
 struct orb_modifier {
+    enum orb_empty_status {
+        ORB_EMPTY_GREATEST,
+        ORB_EMPTY_LEAST,
+    };
+
+    enum orb_sort_order {
+        ORB_ASCENDING,
+        ORB_DESCENDING,
+    };
+
     orb_sort_order   order;                         
     orb_empty_status status;
-    CollationHandler* collation; 
+    CollationHandler* collation;
+
+    inline std::string to_string() const
+    {
+        std::string res;
+        if(order == ORB_ASCENDING) res += "ascending";
+        else res += "descending";
+        if(status == ORB_EMPTY_GREATEST) res += " empty greatest";
+        else res += " empty least";
+        return res;
+    }
 };
 
 struct common_type
@@ -105,7 +111,7 @@ typedef std::vector<common_type>        arr_of_common_type;
 //Udata* is used in serialization/deserialization in sorted sequence
 struct orb_user_data
 {
-    sequence *sort;                             //Initial sequence which must be sorted.
+    sequence *sort;                                 //Initial sequence which must be sorted.
     __int64 pos;                                    
     int size;                                       //Serialized size of in bytes (fixed for each tuple): 
                                                     //[position] + [tuple_cell(1) | tuple_cell(2) | .... tuple_cell(N)] + [bit_set - eos map].
@@ -138,8 +144,8 @@ private:
     int sort_size;                                  //Number of these tuple cells. This value is automaticaly
                                                     //evaluated form the 'data_size' and 'child.ts' values
 
-    sequence *data_cells;                       //Accumulates the first 'data_size' tuple cells.
-    sequence *sort_cells;                       //Accumulates other 'sort_size' tuple cells.
+    sequence *data_cells;                           //Accumulates the first 'data_size' tuple cells.
+    sequence *sort_cells;                           //Accumulates other 'sort_size' tuple cells.
     
     bool first_time;
     bool need_reinit;
@@ -175,6 +181,10 @@ public:
               int _data_size_);
 
     virtual ~PPOrderBy();
+    
+    inline bool is_stable() const { return stable; }
+    inline int get_tuple_size() const { return data_size; }
+    inline const arr_of_orb_modifier& get_modifiers() const { return modifiers; }
 };
 
 
@@ -227,7 +237,6 @@ private:
     __int64 size;
     sequence *s;
 
-
     inline void reinit_consumer_table();
 
 private:
@@ -252,6 +261,8 @@ public:
            PPOpIn _data_child_);
 
     virtual ~PPSLet();
+
+    inline const arr_of_var_dsc& get_variable_descriptors() { return var_dscs; }
 };
 
 

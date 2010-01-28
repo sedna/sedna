@@ -26,6 +26,8 @@ public:
                  bool           _is_load_replace,
                  dynamic_context *_cxt_);
     ~PPLoadModule();
+    
+    inline bool is_replace() const { return is_load_replace; }
 };
 
 

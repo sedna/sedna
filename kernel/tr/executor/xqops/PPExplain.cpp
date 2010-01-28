@@ -55,7 +55,7 @@ void PPExplain::do_next (tuple &t)
     {
         first_time = false;
         char buf[20];
-        bool cache_def_ns_flag = cxt->st_cxt->is_field_set_in_prolog(static_context::SC_DEFAULT_NAMESPACE);
+        xmlns_ptr defnsptr = cxt->st_cxt->get_default_namespace();
         xmlns_ptr explain_ns = cxt->st_cxt->add_to_context("", SEDNA_NAMESPACE_URI);
 
         xptr root = insert_doc_node(scm, "$explain", NULL);
@@ -120,14 +120,10 @@ void PPExplain::do_next (tuple &t)
         }
         
         /* Insert default element namespace declaration */
-        if(cache_def_ns_flag)
+        if(defnsptr != NULL_XMLNS)
         {
-            xmlns_ptr defnsptr = cxt->st_cxt->get_default_namespace();
-            if(defnsptr != NULL_XMLNS)
-            {
-                tmp = insert_element_i(tmp,XNULL,left,"default-element-namespace",xs_untyped,explain_ns);
-                insert_attribute_i(XNULL,XNULL,tmp,"uri",xs_untypedAtomic, defnsptr->uri, strlen(defnsptr->uri), NULL_XMLNS);
-            }
+            tmp = insert_element_i(tmp,XNULL,left,"default-element-namespace",xs_untyped,explain_ns);
+            insert_attribute_i(XNULL,XNULL,tmp,"uri",xs_untypedAtomic, defnsptr->uri, strlen(defnsptr->uri), NULL_XMLNS);
         }
 
         /* Insert physical plan for each global variable */
@@ -143,11 +139,26 @@ void PPExplain::do_next (tuple &t)
         /* Insert physical plan for each function */
         for(int i = 0; i < dynamic_context::funct_cxt.size; i++)
         {
+            const function_declaration& fd = dynamic_context::funct_cxt.fun_decls[i];
             tmp = insert_element_i(tmp,XNULL,left,"function",xs_untyped,explain_ns);
             u_itoa(i,buf,10);
-            insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
+            xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
+            std::string ret_type = fd.ret_st.to_str();
+            insert_attribute_i(attr_left,XNULL,tmp,"type",xs_untypedAtomic, ret_type.c_str(), ret_type.length(), NULL_XMLNS);
+                        
             PPExplainVisitor visitor(cxt, tmp);
-            (dynamic_context::funct_cxt.fun_decls[i]).op->accept(visitor);
+            fd.op->accept(visitor);
+
+            xptr args = insert_element_i(XNULL,XNULL,tmp,"arguments",xs_untyped,explain_ns);
+            xptr args_left = XNULL;
+            for (int j = 0; j < fd.num; j++)
+            {
+                args_left = insert_element_i(args_left,XNULL,args,"argument",xs_untyped,explain_ns);
+                u_itoa(j,buf,10);
+                xptr attr_left = insert_attribute_i(XNULL,XNULL,args_left,"descriptor",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
+                std::string type = fd.args[j].to_str();
+                insert_attribute_i(attr_left,XNULL,args_left,"type",xs_untypedAtomic, type.c_str(), type.length(), NULL_XMLNS);
+            }
         }
        
         

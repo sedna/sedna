@@ -743,11 +743,11 @@ PPOpIn l2pFnMatches(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_
 
     if (params.size() == 3)
     {
-        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], pm_match), 1);
+        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], PPPatMatch::PM_MATCH), 1);
     }
     else
     {
-        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], pm_match), 1);
+        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], PPPatMatch::PM_MATCH), 1);
     }
 
     return res;
@@ -1010,11 +1010,11 @@ PPOpIn l2pFnReplace(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_
 
     if (params.size() == 4)
     {
-        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], params[3], pm_replace), 1);
+        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], params[3], PPPatMatch::PM_REPLACE), 1);
     }
     else
     {
-        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], pm_replace), 1);
+        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], PPPatMatch::PM_REPLACE), 1);
     }
 
     return res;
@@ -1328,11 +1328,11 @@ PPOpIn l2pFnTokenize(dynamic_context *dyn_cxt, const operation_info &opi, arr_of
 
     if (params.size() == 3)
     {
-        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], pm_tokenize), 1);
+        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], params[2], PPPatMatch::PM_TOKENIZE), 1);
     }
     else
     {
-        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], pm_tokenize), 1);
+        res = PPOpIn(new PPPatMatch(dyn_cxt, opi, params[0], params[1], PPPatMatch::PM_TOKENIZE), 1);
     }
 
     return res;

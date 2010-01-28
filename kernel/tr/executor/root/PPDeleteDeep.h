@@ -3,7 +3,6 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #ifndef _PPDELETEDEEP_H
 #define _PPDELETEDEEP_H
 
@@ -26,6 +25,4 @@ public:
     ~PPDeleteDeep();
 };
 
-
-#endif
-
+#endif /* _PPDELETEDEEP_H */

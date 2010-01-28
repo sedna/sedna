@@ -3,7 +3,6 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #ifndef _PPCREATEMETADATA_H
 #define _PPCREATEMETADATA_H
 
@@ -12,7 +11,6 @@
 
 class PPCreateDocument : public PPUpdate
 {
-    // given parameters
     PPOpIn name;
     dynamic_context *cxt;
 
@@ -28,7 +26,6 @@ public:
 
 class PPCreateCollection : public PPUpdate
 {
-    // given parameters
     PPOpIn name;
     dynamic_context *cxt;
 
@@ -44,7 +41,6 @@ public:
 
 class PPCreateDocumentInCollection : public PPUpdate
 {
-    // given parameters
     dynamic_context *cxt1, *cxt2;
     PPOpIn document, collection;
 
@@ -61,6 +57,4 @@ public:
     ~PPCreateDocumentInCollection();
 };
 
-
-#endif
-
+#endif /* _PPCREATEMETADATA_H */

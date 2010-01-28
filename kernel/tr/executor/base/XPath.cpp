@@ -174,7 +174,7 @@ NodeTest::to_string(const NodeTestType& type, const NodeTestData& data)
     return res;
 }
 
-std::string NodeTest::to_string()
+std::string NodeTest::to_string() const
 {
     string res;
     switch (axis)
@@ -276,7 +276,7 @@ void NodeTest::print_to_lr(std::ostream& str)
     str << ")";
 }
 
-std::string NodeTestOr::to_string()
+std::string NodeTestOr::to_string() const
 {
     string res ;
     if (s == 1)
@@ -311,7 +311,7 @@ void NodeTestOr::print_to_lr(std::ostream& str)
     str << ")";
 }
 
-std::string PathExpr::to_string()
+std::string PathExpr::to_string() const
 {
     string res;
     int i = 0;
@@ -629,11 +629,6 @@ void PathExprRoot::close()
     {
         name.op->close();
     }
-}
-
-const PPOpIn& PathExprRoot::get_operation()
-{
-    return name;
 }
 
 const counted_ptr<db_entity>& PathExprRoot::get_entity(const char* obj_name,
