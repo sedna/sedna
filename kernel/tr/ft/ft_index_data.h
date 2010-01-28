@@ -116,7 +116,7 @@ struct ft_index_cell_object : public catalog_object
 
     doc_schema_node_xptr schemaroot;
     char * index_title;
-    PathExpr *object; 
+    PathExpr *object;
     char* doc_name;
     bool is_doc;
     ft_index_type ftype;
@@ -135,7 +135,7 @@ struct ft_index_cell_object : public catalog_object
     inline ft_index_cell_object() {};
 
     inline ft_index_cell_object(
-        PathExpr *_object_path, ft_index_type _it, 
+        PathExpr *_object_path, ft_index_type _it,
         const doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
 	ft_index_impl _impl = ft_ind_dtsearch
@@ -156,22 +156,21 @@ struct ft_index_cell_object : public catalog_object
         doc_name = cat_strcpy(this, _doc_name);
     };
 
-    ~ft_index_cell_object() { 
+    ~ft_index_cell_object() {
         cat_free(index_title);
         cat_free(doc_name);
-//        cat_free(object);
 
         if (this->custom_tree!=NULL)  delete_ft_custom_tree(this->custom_tree);
     };
-    
+
     static catalog_object_header * create(
-        PathExpr *_object_path, ft_index_type _it, 
+        PathExpr *_object_path, ft_index_type _it,
         const doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
         ft_index_impl _impl = ft_ind_dtsearch
       )
     {
-        ft_index_cell_object * obj = 
+        ft_index_cell_object * obj =
           new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(ft_index_cell_object)))
           ft_index_cell_object(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, _impl);
 
@@ -197,7 +196,7 @@ struct ft_index_cell_object : public catalog_object
 };
 
 ft_index_cell_xptr create_ft_index(
-        PathExpr *_object_path, ft_index_type _it, 
+        PathExpr *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
         ft_index_template_t* _templ, bool just_heap, ft_index_impl _impl
@@ -220,7 +219,7 @@ struct ft_index_cell_cptr : public catalog_cptr_template<ft_index_cell_object> {
         catalog_cptr_template<ft_index_cell_object>(aobj, writable) {} ;
     explicit inline ft_index_cell_cptr (const char * index_title, bool write_mode = false) :
         catalog_cptr_template<ft_index_cell_object>(catalog_find_name(catobj_ft_indicies, index_title), write_mode) {};
-    inline ft_index_cell_cptr (const xptr p, bool writable = false) : 
+    inline ft_index_cell_cptr (const xptr p, bool writable = false) :
         catalog_cptr_template<ft_index_cell_object>(p, writable) {};
 };
 
