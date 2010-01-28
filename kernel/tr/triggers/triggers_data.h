@@ -107,7 +107,7 @@ public:
 
     inline trigger_cell_object() {};
 
-    inline ~trigger_cell_object() {};
+    ~trigger_cell_object();
 
     inline trigger_cell_object(const char * _title, const doc_schema_node_xptr _schemaroot) :
         schemaroot(_schemaroot), doc_name(NULL), is_doc(false),

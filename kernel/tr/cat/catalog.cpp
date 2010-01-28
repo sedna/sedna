@@ -672,7 +672,7 @@ char * catalog_htable_get(
     }
 
     object_len = st_get_object(object, NULL);
-    result = (char *) cat_malloc(CATALOG_TEMPORARY_CONTEXT, object_len);
+    result = new char[object_len];
     st_get_object(object, result);
 
     return result;

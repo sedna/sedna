@@ -692,7 +692,7 @@ trigger_cell_xptr create_trigger (
     t_scmnodes sobj = execute_abs_path_expr(schemaroot, trigger_path, NULL, NULL);
     //III. For each schema node found (sn_obj)
     std::vector<xptr> start_nodes;
-    for (int i = 0; i < sobj.size(); i++)
+    for (size_t i = 0; i < sobj.size(); i++)
     {
         sobj[i].modify()->trigger_list.add(trc.ptr());
         RECOVERY_CRASH;
