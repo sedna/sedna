@@ -33,19 +33,19 @@ public:
     void execute();
     void accept(PPVisitor& v);
     
-    PPCreateTrigger(const char* _time_,
-                    const char* _event_,
+    PPCreateTrigger(trigger_time _time_,
+                    trigger_event _event_,
                     PathExprRoot _root_,
                     PathExpr *_trigger_path_,
-                    const char* _granularity_,
+                    trigger_granularity _granularity_,
                     scheme_list* _action_,
                     PPOpIn _trigger_name_,
                     dynamic_context *_cxt_);
-    PPCreateTrigger(const char* _time_,
-                    const char* _event_,
+    PPCreateTrigger(trigger_time _time_,
+                    trigger_event _event_,
                     PathExprRoot _root_,
                     PathExpr *_trigger_path_,
-                    const char* _granularity_,
+                    trigger_granularity _granularity_,
                     scheme_list* _action_,
                     const char* _inserting_name_,
                     int _inserting_type,

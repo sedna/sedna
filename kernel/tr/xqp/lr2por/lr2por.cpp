@@ -750,21 +750,55 @@ namespace sedna
         qep = new PPCreateRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1), dyn_cxt);
     }
 
+#ifdef SE_ENABLE_TRIGGERS
+    inline trigger_event trgmod2te(ASTCreateTrg::TrgMod tm, XQueryDriver *drv)
+    {
+        switch (tm)
+        {
+            case ASTCreateTrg::INSERT:
+                return TRIGGER_INSERT_EVENT;
+            case ASTCreateTrg::DEL:
+                return TRIGGER_DELETE_EVENT;
+            case ASTCreateTrg::REPLACE:
+                return TRIGGER_REPLACE_EVENT;
+            default:
+                drv->error(SE4001, "unknown trigger event in ast");
+                return TRIGGER_INSERT_EVENT;
+        }
+    }
+
+    inline trigger_time trgmod2tt(ASTCreateTrg::TrgMod tm, XQueryDriver *drv)
+    {
+        switch (tm)
+        {
+            case ASTCreateTrg::BEFORE:
+                return TRIGGER_BEFORE;
+            case ASTCreateTrg::AFTER:
+                return TRIGGER_AFTER;
+            default:
+                drv->error(SE4001, "unknown trigger time in ast");
+                return TRIGGER_AFTER;
+        }
+    }
+
+    inline trigger_granularity trgmod2tg(ASTCreateTrg::TrgMod tm, XQueryDriver *drv)
+    {
+        switch (tm)
+        {
+            case ASTCreateTrg::NODE:
+                return TRIGGER_FOR_EACH_NODE;
+            case ASTCreateTrg::STATEMENT:
+                return TRIGGER_FOR_EACH_STATEMENT;
+            default:
+                drv->error(SE4001, "unknown trigger granularity in ast");
+                return TRIGGER_FOR_EACH_NODE;
+        }
+    }
+#endif /* SE_ENABLE_TRIGGERS */
+
     void lr2por::visit(ASTCreateTrg &n)
     {
 #ifdef SE_ENABLE_TRIGGERS
-        static const char *trg2str[] =
-        {
-            "BEFORE",
-            "AFTER",
-
-            "INSERT",
-            "DELETE",
-            "REPLACE",
-
-            "NODE",
-            "STATEMENT"
-        };
 
         PPAbsPath *pa;
         PathExpr *onp;
@@ -845,12 +879,12 @@ namespace sedna
             if (!ip || ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
                 ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
-            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], peroot, onp, trg2str[n.g_mod], action,
+            qep = new PPCreateTrigger(trgmod2tt(n.t_mod, drv), trgmod2te(n.a_mod, drv), peroot, onp, trgmod2tg(n.g_mod, drv), action,
                     n.leaf_name->c_str(), n.leaf_type, ip, name, dyn_cxt);
         }
         else
         {
-            qep = new PPCreateTrigger(trg2str[n.t_mod], trg2str[n.a_mod], peroot, onp, trg2str[n.g_mod], action, name, dyn_cxt);
+            qep = new PPCreateTrigger(trgmod2tt(n.t_mod, drv), trgmod2te(n.a_mod, drv), peroot, onp, trgmod2tg(n.g_mod, drv), action, name, dyn_cxt);
         }
 
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
