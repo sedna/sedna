@@ -6,6 +6,8 @@
 #ifndef _FTINDEX_H
 #define _FTINDEX_H
 
+#include <algorithm>
+
 #include "common/sedna.h"
 
 #include "tr/ft/FTsearch.h"

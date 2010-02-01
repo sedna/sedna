@@ -126,6 +126,10 @@ namespace sedna
     {
         ErrorInfo *err = (ErrorInfo *)malloc(sizeof(ErrorInfo));
 
+        // if message is empty string -- discard it
+        if (msg && !strlen(msg))
+            msg = NULL;
+
         if (msg)
         {
             err->error_msg = (char *)malloc(strlen(msg) + 64);

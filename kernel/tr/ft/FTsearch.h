@@ -6,6 +6,8 @@
 #ifndef _FTSEARCH_H
 #define _FTSEARCH_H
 
+#include <algorithm>
+
 #include "common/sedna.h"
 
 #include "tr/executor/base/dm_accessors.h"

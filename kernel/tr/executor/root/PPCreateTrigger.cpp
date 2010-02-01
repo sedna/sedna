@@ -92,6 +92,7 @@ PPCreateTrigger::PPCreateTrigger(const char* _time_,
     time   = symb2trigger_time(_time_);
     event  = symb2trigger_event(_event_);
     gran   = symb2trigger_granularity(_granularity_);
+    innode.name = NULL;
     path_to_parent = NULL;
 }
 
@@ -129,7 +130,12 @@ PPCreateTrigger::~PPCreateTrigger()
 
     delete cxt;
     cxt = NULL;
-    
+
+    delete_scheme_list(action);
+    action = NULL;
+
+    free(innode.name);
+
     root.release();
 }
 
