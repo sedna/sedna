@@ -17,49 +17,6 @@
 
 using namespace std;
 
-///////////////////////////////////////////////////////////////////////////////
-/// Local argument converteds
-/// Do we need them actually?
-///////////////////////////////////////////////////////////////////////////////
-
-static trigger_event
-symb2trigger_event(const char* str)
-{
-    string event = string(str);
-	if (event == "INSERT")
-		return  TRIGGER_INSERT_EVENT;
-	else if (event == "DELETE")
-		return TRIGGER_DELETE_EVENT;
-	else if (event == "REPLACE")
-		return TRIGGER_REPLACE_EVENT;
-	else
-		throw USER_EXCEPTION2(SE1071, "unknown trigger event");
-}
-
-static trigger_time
-symb2trigger_time(const char* str)
-{
-    string time = string(str);
-	if (time == "BEFORE")
-		return  TRIGGER_BEFORE;
-	else if (time == "AFTER")
-		return TRIGGER_AFTER;
-	else
-		throw USER_EXCEPTION2(SE1071, "unknown trigger time");
-}
-
-static trigger_granularity
-symb2trigger_granularity(const char* str)
-{
-    string granularity = string(str);
-	if (granularity == "NODE")
-		return  TRIGGER_FOR_EACH_NODE;
-	else if (granularity == "STATEMENT")
-		return TRIGGER_FOR_EACH_STATEMENT;
-	else
-		throw USER_EXCEPTION2(SE1071, "unknown trigger granularity");
-}
-
 static t_item
 int2t_item(int type)
 {
@@ -76,11 +33,11 @@ int2t_item(int type)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPCreateTrigger::PPCreateTrigger(const char* _time_,
-                                 const char* _event_,
+PPCreateTrigger::PPCreateTrigger(trigger_time _time_,
+                                 trigger_event _event_,
                                  PathExprRoot _root_,
                                  PathExpr *_trigger_path_,
-                                 const char* _granularity_,
+                                 trigger_granularity _granularity_,
                                  scheme_list* _action_,
                                  PPOpIn _trigger_name_,
     						 	 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
@@ -89,18 +46,18 @@ PPCreateTrigger::PPCreateTrigger(const char* _time_,
                                                             trigger_name(_trigger_name_),
     														cxt(_cxt_)
 {
-    time   = symb2trigger_time(_time_);
-    event  = symb2trigger_event(_event_);
-    gran   = symb2trigger_granularity(_granularity_);
+    time   = _time_;
+    event  = _event_;
+    gran   = _granularity_;
     innode.name = NULL;
     path_to_parent = NULL;
 }
 
-PPCreateTrigger::PPCreateTrigger(const char* _time_,
-                                 const char* _event_,
+PPCreateTrigger::PPCreateTrigger(trigger_time _time_,
+                                 trigger_event _event_,
                                  PathExprRoot _root_,
                                  PathExpr *_trigger_path_,
-                                 const char* _granularity_,
+                                 trigger_granularity _granularity_,
                                  scheme_list* _action_,
 							     const char* _inserting_name_,
  			   					 int _inserting_type_,
@@ -113,9 +70,9 @@ PPCreateTrigger::PPCreateTrigger(const char* _time_,
                                                             trigger_name(_trigger_name_),
     														cxt(_cxt_)
 {
-    time   = symb2trigger_time(_time_);
-    event  = symb2trigger_event(_event_);
-    gran   = symb2trigger_granularity(_granularity_);
+    time   = _time_;
+    event  = _event_;
+    gran   = _granularity_;
     innode.name = (char *)malloc(strlen(_inserting_name_) + 1);
     if (!innode.name)
         throw SYSTEM_EXCEPTION("out of memory!");
