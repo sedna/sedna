@@ -678,8 +678,6 @@ trigger_cell_xptr create_trigger (
         trc->path_to_parent = NULL;
         trc->innode.name = NULL;
     }
-    trc->trigger_title=(char*)malloc(strlen(trigger_title)+1);
-    strcpy(trc->trigger_title,trigger_title);
     trc->doc_name=(char*)malloc(strlen(doc_name)+1);
     strcpy(trc->doc_name,doc_name);
     trc->is_doc=is_doc;

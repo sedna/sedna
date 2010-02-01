@@ -50,7 +50,7 @@ void delete_ft_custom_tree (ft_custom_tree_t * custom_tree)
     {
         ft_custom_cell* mdc=tmp->obj;
         if (mdc->local) cat_free(mdc->local);
-        cat_free(mdc);
+        delete mdc;
         tmp->obj=NULL;
         tmp=custom_tree->rb_successor(tmp);
     }
@@ -128,17 +128,15 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
 
     stream.read(&marker, sizeof(uint8_t));
 
-    custom_tree = NULL;
+    custom_tree = (marker == 0) ? NULL : ft_custom_tree_t::init();
     while (marker != 0) {
-        custom_tree = new (cat_malloc(this, sizeof(ft_custom_tree_t))) ft_custom_tree_t;
-
         stream.read(&ct_cm, sizeof(ft_index_type));
-        ct_local = (char *) cat_malloc(this, stream.read_string_len());
+        ct_local = new char[stream.read_string_len()];
         stream.read_string(SSTREAM_SAVED_LENGTH, ct_local);
         stream.read(&ct_ns, sizeof(xmlns_ptr_pers));
 
-        custom_tree->put(new (cat_malloc(this, sizeof(ft_custom_cell)))
-              ft_custom_cell(ct_ns, NULL_XMLNS, ct_local, ct_cm));
+        custom_tree->put(new ft_custom_cell(ct_ns, NULL_XMLNS, ct_local, ct_cm));
+        delete [] ct_local;
 
         stream.read(&marker, sizeof(uint8_t));
     }
@@ -188,12 +186,11 @@ ft_index_cell_xptr create_ft_index(
 
     if (_it == ft_customized_value && _templ != NULL)
     {
-        idc->custom_tree = new (cat_malloc(&(*idc), sizeof(ft_custom_tree_t))) ft_custom_tree_t;
+        idc->custom_tree = ft_custom_tree_t::init();
         ft_index_template_t::iterator tmp=_templ->begin();
         while (tmp!=_templ->end())
         {
-            idc->custom_tree->put(new (cat_malloc(&(*idc), sizeof(ft_custom_cell)))
-              ft_custom_cell(_schemaroot->xmlns_register(tmp->first.first), NULL_XMLNS, tmp->first.second, tmp->second));
+            idc->custom_tree->put(new ft_custom_cell(_schemaroot->xmlns_register(tmp->first.first), NULL_XMLNS, tmp->first.second, tmp->second));
             tmp++;
         }
     }

@@ -509,7 +509,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                             result = XMLDateTime::compare(value2, value1)*order;
                         }
                         
-                        delete buffer;
+                        delete [] buffer;
                     }
                     break;
                 }

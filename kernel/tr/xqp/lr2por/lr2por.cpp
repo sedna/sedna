@@ -1788,6 +1788,10 @@ namespace sedna
                 }
                 catch (SednaUserException &e) // exceptions about turned off features
                 {
+                    for (size_t i = 0; i < para.size(); i++)
+                        delete para[i].op;
+
+                    off_this.opin = PPOpIn(NULL, 1);
                     drv->error(e.get_code(), e.getDescription().c_str());
                 }
             }
@@ -1829,7 +1833,11 @@ namespace sedna
                 }
                 catch (SednaUserException &e) // "external function not found"
                 {
-                    drv->error(e.get_code(), e.getDescription().c_str());
+                    for (size_t i = 0; i < para.size(); i++)
+                        delete para[i].op;
+
+                    off_this.opin = PPOpIn(NULL, 1);
+                    drv->error(n.getLocation(), e.get_code(), e.getDescription().c_str());
                 }
             }
         }
