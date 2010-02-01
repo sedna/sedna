@@ -17,7 +17,7 @@
 #include "term_ile.h"
 
 // table of chains, which contains all possible alternatives to match
-#define MAX_CHAINS 34
+#define MAX_CHAINS 35
 const char *chain_table[][13][11] =
 {
     {{"UPDATE", NULL}, {"insert", NULL}, {"@any", NULL}, {"into", "preceding", "following", NULL}, {NULL}},
@@ -36,7 +36,8 @@ const char *chain_table[][13][11] =
     {{"CREATE", "DROP", NULL}, {"COLLECTION", NULL}, {NULL}},
     {{"CREATE", NULL}, {"INDEX", NULL}, {"@any", NULL}, {"ON", NULL}, {"@any", NULL}, {"BY", NULL}, {"@any", NULL},
         {"AS", NULL}, {NULL}},
-    {{"DROP", NULL}, {"USER", NULL}, {NULL}},
+    {{"DROP", NULL}, {"USER", "INDEX", NULL}, {NULL}},
+    {{"DROP", NULL}, {"FULL-TEXT", NULL}, {"INDEX", NULL}, {NULL}},
     {{"CREATE", "ALTER", NULL}, {"USER", NULL}, {"@any", NULL}, {"WITH", NULL}, {"PASSWORD", NULL}, {NULL},},
     {{"CREATE", NULL}, {"FULL-TEXT", NULL}, {"INDEX", NULL}, {"@any", NULL}, {"ON", NULL}, {"@any", NULL}, {"TYPE", NULL}, {NULL}},
     {{"CREATE", NULL}, {"TRIGGER", NULL}, {"@any", NULL}, {"BEFORE", "AFTER", NULL},
