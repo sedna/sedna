@@ -1229,6 +1229,16 @@ void PPExplainVisitor::visit(PPCreateDocumentInCollection* op)
 void PPExplainVisitor::visit(PPCreateTrigger* op)
 {
     insertOperationElement("PPCreateTrigger", left, parent);
+    string type;
+    type += trigger_event2string(op->get_trigger_event()); type += " ";
+    type += trigger_time2string(op->get_trigger_time()); type += " ";
+    type += trigger_granularity2string(op->get_trigger_granularity());
+    xptr attr_left = insertAttributeHelper("type", XNULL, left, type);
+    attr_left = insertAttributeHelper("root", attr_left, left, op->get_path_expression_root().get_entity()->to_string());
+    string trg_path = op->get_trigger_path()->to_string();
+    if(trg_path.length() != 0) {
+        attr_left = insertAttributeHelper("trigger-path", attr_left, left, trg_path);
+    }
 }
 void PPExplainVisitor::visit(PPDropTrigger* op)
 {

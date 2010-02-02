@@ -17,67 +17,46 @@
 
 using namespace std;
 
-static t_item
-int2t_item(int type)
+PPCreateTrigger::PPCreateTrigger(dynamic_context *_cxt_,
+                                 PathExprRoot _root_,
+                                 trigger_event _event_,                    
+                                 trigger_time _time_,
+                                 trigger_granularity _gran_,
+                                 PathExpr *_trigger_path_,
+                                 scheme_list* _action_,
+                                 PPOpIn _trigger_name_) : cxt(_cxt_),
+                                                          root(_root_),
+                                                          event(_event_),
+                                                          time(_time_),
+                                                          gran(_gran_),
+                                                          trigger_path(_trigger_path_),                         
+                                                          action(_action_),
+                                                          trigger_name(_trigger_name_),
+                                                          path_to_parent(NULL)
 {
-    if(type == 0)
-        return element;
-    else if(type == 1)
-        return attribute;
-    else
-		throw USER_EXCEPTION2(SE1071, "unknown trigger inserting type parameter value");
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// Create trigget root operation
-///////////////////////////////////////////////////////////////////////////////
-
-
-PPCreateTrigger::PPCreateTrigger(trigger_time _time_,
-                                 trigger_event _event_,
+PPCreateTrigger::PPCreateTrigger(dynamic_context *_cxt_,
                                  PathExprRoot _root_,
+                                 trigger_event _event_,                    
+                                 trigger_time _time_,
+                                 trigger_granularity _gran_,
                                  PathExpr *_trigger_path_,
-                                 trigger_granularity _granularity_,
                                  scheme_list* _action_,
                                  PPOpIn _trigger_name_,
-    						 	 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
-                                                            root(_root_),
-                                                            action(_action_),
-                                                            trigger_name(_trigger_name_),
-    														cxt(_cxt_)
+                                 PathExpr *_path_to_parent_,
+                                 inserting_node _innode_) :                      
+                                                          cxt(_cxt_),
+                                                          root(_root_),
+                                                          event(_event_),
+                                                          time(_time_),
+                                                          gran(_gran_),
+                                                          trigger_path(_trigger_path_),                         
+                                                          action(_action_),
+                                                          trigger_name(_trigger_name_),
+                                                          path_to_parent(_path_to_parent_),
+                                                          innode(_innode_)
 {
-    time   = _time_;
-    event  = _event_;
-    gran   = _granularity_;
-    innode.name = NULL;
-    path_to_parent = NULL;
-}
-
-PPCreateTrigger::PPCreateTrigger(trigger_time _time_,
-                                 trigger_event _event_,
-                                 PathExprRoot _root_,
-                                 PathExpr *_trigger_path_,
-                                 trigger_granularity _granularity_,
-                                 scheme_list* _action_,
-							     const char* _inserting_name_,
- 			   					 int _inserting_type_,
-			                     PathExpr *_path_to_parent_,
-                                 PPOpIn _trigger_name_,
-    							 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
-                                                            root(_root_),
-                                                            action(_action_),
-                                                            path_to_parent(_path_to_parent_),
-                                                            trigger_name(_trigger_name_),
-    														cxt(_cxt_)
-{
-    time   = _time_;
-    event  = _event_;
-    gran   = _granularity_;
-    innode.name = (char *)malloc(strlen(_inserting_name_) + 1);
-    if (!innode.name)
-        throw SYSTEM_EXCEPTION("out of memory!");
-    strcpy(innode.name, _inserting_name_);
-    innode.type = int2t_item(_inserting_type_);
 }
 
 PPCreateTrigger::~PPCreateTrigger()
@@ -91,8 +70,7 @@ PPCreateTrigger::~PPCreateTrigger()
     delete_scheme_list(action);
     action = NULL;
 
-    free(innode.name);
-
+    innode.release();
     root.release();
 }
 
@@ -131,7 +109,7 @@ void PPCreateTrigger::execute()
     counted_ptr<db_entity> db_ent = root.get_entity("trigger", "create trigger");
 
     /* Get xptr on this document or collection*/
-    xptr root_obj = get_schema_node(db_ent, (std::string("Unknown document/collection passed to create trigger: ") + db_ent->name).c_str());
+    xptr root_obj = get_schema_node(db_ent, (string("Unknown document/collection passed to create trigger: ") + db_ent->name).c_str());
 
     local_lock_mrg->put_lock_on_trigger(tc.get_str_mem());
     auth_for_create_trigger(tc.get_str_mem());
