@@ -27,7 +27,7 @@ PPLast::~PPLast()
 void PPLast::do_open ()
 {
     child.op->open();
-    s = se_new sequence_tmp(child.ts);
+    s = se_new sequence(child.ts);
     last = 0;
     pos = 0;
     last_computed = false;

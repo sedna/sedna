@@ -7,6 +7,7 @@
 #define _TRIGGERS_DATA_H
 
 #include <vector>
+#include <string>
 
 #include "common/sedna.h"
 #include "common/u/usem.h"
@@ -17,6 +18,8 @@
 #include "tr/cat/simplestream.h"
 
 extern bool isTriggersOn;
+
+
 
 enum trigger_event
 {
@@ -35,11 +38,73 @@ enum trigger_granularity
     TRIGGER_FOR_EACH_STATEMENT
 };
 
+
+
+inline const char* 
+trigger_event2string(trigger_event te)
+{
+    switch(te)
+    {
+    case TRIGGER_INSERT_EVENT:  return "INSERT";
+    case TRIGGER_DELETE_EVENT:  return "DELETE";
+    case TRIGGER_REPLACE_EVENT: return "REPLACE";
+    default: throw USER_EXCEPTION2(SE1003, "Imossible case in trigger event to string conversion");
+    }
+}
+inline const char* 
+trigger_time2string(trigger_time te)
+{
+    switch(te)
+    {
+    case TRIGGER_BEFORE: return "BEFORE";
+    case TRIGGER_AFTER:  return "AFTER";
+    default: throw USER_EXCEPTION2(SE1003, "Imossible case in trigger time to string conversion");
+    }
+}
+inline const char* 
+trigger_granularity2string(trigger_granularity te)
+{
+    switch(te)
+    {
+    case TRIGGER_FOR_EACH_NODE:      return "FOR EACH NODE";
+    case TRIGGER_FOR_EACH_STATEMENT: return "FOR EACH STATEMENT";
+    default: throw USER_EXCEPTION2(SE1003, "Imossible case in trigger granularity to string conversion");
+    }
+}
+
+
+
 struct inserting_node
 {
     char* name;
     t_item type;
+    
+    inserting_node(): name(NULL), type(element) {}
+    inserting_node(const char* _name_,
+                   t_item _type_) {
+        name = (char*)malloc(strlen(_name_) + 1);
+        strcpy(name, _name_);
+        type = _type_;
+    }
+
+    inline void release() {
+        if(name != NULL) {
+            free(name);
+            name = NULL;
+        }
+    }
+    inline std::string to_string() const {
+        std::string res("");
+        if(name!=NULL)
+        {
+            if(type == attribute) res += "@";
+            res += name;
+        }
+        return res;
+    }
 };
+
+
 
 struct trigger_action_cell
 {
@@ -49,13 +114,12 @@ struct trigger_action_cell
 };
 
 extern trigger_action_cell *rcv_tac; // for recovery purposes
-
 typedef std::vector<PPXptr*> qep_parameters_vec;
-
 struct trigger_cell_object : public catalog_object {
+
 public:
 
-/* Common catalog object interface */
+    /* Common catalog object interface */
 
     static const int magic = 0x037;
     int get_magic() { return magic; };
@@ -63,7 +127,7 @@ public:
     void deserialize_data(se_simplestream &stream);
     void drop();
 
-/* Fields */
+    /* Fields */
     char * trigger_title; /* persistent string */
 
     /*
@@ -72,33 +136,20 @@ public:
      * Latters are calculateble, so I don't think we should store it.
      */
     doc_schema_node_xptr schemaroot; /* persistent */
-    char * doc_name; /* persistent string */
-    bool is_doc; /* persistent */
+    char * doc_name;                 /* persistent string */
+    bool is_doc;                     /* persistent */
 
-/* Trigger options */
-
+    /* trigger type */
     enum trigger_event trigger_event; /* persistent */
     enum trigger_time trigger_time; /* persistent */
     enum trigger_granularity trigger_granularity; /* persistent */
 
-/* Trigger action */
-
+    /* trigger action */
     trigger_action_cell* trigger_action; /* persistent special */
 
-//private:
-//    trigger_action_cell* action_serialized;
-//    xptr action_xptr; /* persitent */
-//    void serialize_trigger_action();
-
-//public:
-//    inline trigger_action_cell* get_trigger_action() {
-//        if (action_serialized == NULL) { serialize_trigger_action(); }
-//        return action_serialized;
-//    };
-
-    PathExpr *trigger_path; /* persistent special */
+    PathExpr *trigger_path;   /* persistent special */
     PathExpr *path_to_parent; /* persistent special */
-    inserting_node innode; /* persistent special */
+    inserting_node innode;    /* persistent special */
 
     bool fits_to_trigger(schema_node_cptr snode);
     bool fits_to_trigger_path_to_parent(schema_node_cptr parent);
@@ -109,18 +160,23 @@ public:
 
     ~trigger_cell_object();
 
-    inline trigger_cell_object(const char * _title, const doc_schema_node_xptr _schemaroot) :
-        schemaroot(_schemaroot), doc_name(NULL), is_doc(false),
-        trigger_event(TRIGGER_INSERT_EVENT), trigger_time(TRIGGER_BEFORE), trigger_granularity(TRIGGER_FOR_EACH_NODE),
-        trigger_action(NULL), trigger_path(NULL), path_to_parent(NULL)
+    inline trigger_cell_object(const char * _title, 
+                               const doc_schema_node_xptr _schemaroot) : schemaroot(_schemaroot),
+                                                                         doc_name(NULL),
+                                                                         is_doc(false),
+                                                                         trigger_event(TRIGGER_INSERT_EVENT),
+                                                                         trigger_time(TRIGGER_BEFORE),
+                                                                         trigger_granularity(TRIGGER_FOR_EACH_NODE),
+                                                                         trigger_action(NULL),
+                                                                         trigger_path(NULL),
+                                                                         path_to_parent(NULL)
     {
         innode.name = NULL;
         this->trigger_title = cat_strcpy(this, _title);
-    };
+    }
 
-    static catalog_object_header * create(
-        const char * _title, const doc_schema_node_xptr _schemaroot
-      )
+    static catalog_object_header * create(const char * _title, 
+                                          const doc_schema_node_xptr _schemaroot)
     {
         trigger_cell_object * obj =
           new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(trigger_cell_object)))
@@ -130,13 +186,12 @@ public:
 
         catalog_set_name(catobj_triggers, _title, header);
         return header;
-    };
-
+    }
 };
 
 extern qep_parameters_vec* qep_parameters;
 
-//inits metadata library
+/* Inits metadata library */
 void triggers_on_session_begin();
 void triggers_on_session_end();
 
@@ -160,4 +215,4 @@ struct trigger_cell_cptr : public catalog_cptr_template<trigger_cell_object> {
         catalog_cptr_template<trigger_cell_object>(p, writable) {};
 };
 
-#endif
+#endif /* _TRIGGERS_DATA_H */

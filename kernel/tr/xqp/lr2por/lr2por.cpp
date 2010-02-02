@@ -878,13 +878,30 @@ namespace sedna
 
             if (!ip || ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
                 ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+            
+            inserting_node innode(n.leaf_name->c_str(), n.leaf_type == 0 ? element : attribute);
 
-            qep = new PPCreateTrigger(trgmod2tt(n.t_mod, drv), trgmod2te(n.a_mod, drv), peroot, onp, trgmod2tg(n.g_mod, drv), action,
-                    n.leaf_name->c_str(), n.leaf_type, ip, name, dyn_cxt);
+            qep = new PPCreateTrigger(dyn_cxt, //dynamic context
+                                      peroot,  //PathExprRoot
+                                      trgmod2te(n.a_mod, drv), //trigger event
+                                      trgmod2tt(n.t_mod, drv), //trigger time
+                                      trgmod2tg(n.g_mod, drv), //trigger granularity
+                                      onp,     //trigger path
+                                      action,  //action list in scheme
+                                      name,    //trigger name operation
+                                      ip,      //path to parent (inserting path)
+                                      innode); //inserting node
         }
         else
         {
-            qep = new PPCreateTrigger(trgmod2tt(n.t_mod, drv), trgmod2te(n.a_mod, drv), peroot, onp, trgmod2tg(n.g_mod, drv), action, name, dyn_cxt);
+            qep = new PPCreateTrigger(dyn_cxt, //dynamic context
+                                      peroot,  //PathExprRoot
+                                      trgmod2te(n.a_mod, drv), //trigger event
+                                      trgmod2tt(n.t_mod, drv), //trigger time
+                                      trgmod2tg(n.g_mod, drv), //trigger granularity
+                                      onp,     //trigger path
+                                      action,  //action list in scheme
+                                      name);   //trigger name operation
         }
 
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);

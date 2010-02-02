@@ -33,22 +33,12 @@ static bool triggers_initialized = false;
 //inits metadata library
 void triggers_on_session_begin()
 {
-	//SEMAPHORE INIT SECTION
-/*
-	if (USemaphoreOpen(&trigger_sem, TRIGGER_SEMAPHORE_STR, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4012, "TRIGGER_SEMAPHORE_STR");
-*/
     triggers_initialized = true;
 }
 
 void triggers_on_session_end()
 {
     if (!triggers_initialized) return;
-	//SEMAPHORE RELEASE SECTION
-/*
-    if (USemaphoreClose(trigger_sem, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4013, "TRIGGER_SEMAPHORE_STR");
-*/
     triggers_initialized = false;
 }
 
@@ -173,8 +163,8 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
 
     stream.read(&i, sizeof(void *));
 
-    char * trigger_path_str;
-    char * path_to_parent_str;
+    char* trigger_path_str;
+    char* path_to_parent_str;
 
     trigger_path_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, trigger_path_str);

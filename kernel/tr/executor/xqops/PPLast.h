@@ -14,7 +14,7 @@ class PPLast : public PPVarIterator
 private:
     var_dsc last_dsc;
     PPOpIn child;
-    sequence_tmp *s;
+    sequence *s;
     
     __int64 last, pos;
     bool last_computed;

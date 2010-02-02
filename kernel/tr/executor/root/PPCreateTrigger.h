@@ -12,20 +12,19 @@
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/triggers/triggers_data.h"
 
-
 class PPCreateTrigger : public PPUpdate
 {
 private:
-    PathExpr *trigger_path;
+    dynamic_context *cxt;
     PathExprRoot root;
     trigger_event event;
     trigger_time time;
     trigger_granularity gran;
+    PathExpr *trigger_path;
     scheme_list* action;
-    inserting_node innode;
-    PathExpr *path_to_parent;
     PPOpIn trigger_name;
-    dynamic_context *cxt;
+    PathExpr *path_to_parent;
+    inserting_node innode;
 
 public:
     void open();
@@ -33,26 +32,35 @@ public:
     void execute();
     void accept(PPVisitor& v);
     
-    PPCreateTrigger(trigger_time _time_,
-                    trigger_event _event_,
+    PPCreateTrigger(dynamic_context *_cxt_,
                     PathExprRoot _root_,
+                    trigger_event _event_,                    
+                    trigger_time _time_,
+                    trigger_granularity _gran_,
                     PathExpr *_trigger_path_,
-                    trigger_granularity _granularity_,
+                    scheme_list* _action_,
+                    PPOpIn _trigger_name_);
+
+    PPCreateTrigger(dynamic_context *_cxt_,
+                    PathExprRoot _root_,
+                    trigger_event _event_,
+                    trigger_time _time_,
+                    trigger_granularity _gran_,
+                    PathExpr *_trigger_path_,
                     scheme_list* _action_,
                     PPOpIn _trigger_name_,
-                    dynamic_context *_cxt_);
-    PPCreateTrigger(trigger_time _time_,
-                    trigger_event _event_,
-                    PathExprRoot _root_,
-                    PathExpr *_trigger_path_,
-                    trigger_granularity _granularity_,
-                    scheme_list* _action_,
-                    const char* _inserting_name_,
-                    int _inserting_type,
                     PathExpr *_path_to_parent_,
-                    PPOpIn _trigger_name_,
-                    dynamic_context *_cxt_);
+                    inserting_node _innode_);
+    
     ~PPCreateTrigger();
+    
+    inline trigger_event get_trigger_event() const { return event; }
+    inline trigger_time get_trigger_time() const { return time; }
+    inline trigger_granularity get_trigger_granularity() const { return gran; }
+    inline const inserting_node& get_inserting_node() const { return innode; }
+    inline const PathExprRoot& get_path_expression_root() const { return root; }
+    inline const PathExpr* get_trigger_path() { return trigger_path; }
+    inline const PathExpr* get_path_to_parent() { return path_to_parent; }
 };
 
 #endif /* _PPCREATETRIGGER_H */

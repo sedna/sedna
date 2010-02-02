@@ -146,49 +146,6 @@ inline bool operator !=(const sequence::iterator& it1, const sequence::iterator&
 
 
 //////////////////////////////////////////////////////////////////////////////
-/// sequence_tmp
-//////////////////////////////////////////////////////////////////////////////
-
-class sequence_tmp : public sequence
-{
-public:
-    sequence_tmp(int _tuple_size_,
-                 int _tuples_in_memory_ = SEQ_NUMBER_OF_TUPLES_IN_MEMORY,
-                 int _max_block_amount_ = -1,
-                 bool _copy_vmm_strings_ = false) : sequence(_tuple_size_, 
-                                                             _tuples_in_memory_, 
-                                                             _max_block_amount_,
-                                                             _copy_vmm_strings_) {}
-    sequence_tmp(const tuple_cell &tc,
-                 int _tuples_in_memory_ = SEQ_NUMBER_OF_TUPLES_IN_MEMORY,
-                 int _max_block_amount_ = -1,
-                 bool _copy_vmm_strings_ = false) : sequence(tc, 
-                                                             _tuples_in_memory_, 
-                                                             _max_block_amount_,
-                                                             _copy_vmm_strings_) {}
-
-    ~sequence_tmp() {}
-
-    virtual int  add(const tuple &t);
-    virtual void get(tuple &t, const iterator& it);
-    virtual void get(tuple &t, int pos);
-
-    virtual tuple operator[](int i)
-    { 
-        tuple res(tuple_size); 
-        get(res, i);
-        return res;
-    }
-
-    sequence_tmp(const sequence_tmp&) : sequence(1) { throw USER_EXCEPTION2(SE1003, "Copy constructor for sequence_tmp is not implemented"); }
-    sequence_tmp& operator=(const sequence_tmp&) { throw USER_EXCEPTION2(SE1003, "Assign operator for sequence_tmp is not implemented"); }
-    virtual void copy(sequence_tmp* s);
-    virtual void copy(sequence_tmp* s, iterator _begin, iterator _end);
-
-    virtual tuple_cell get_00() const;
-};
-
-//////////////////////////////////////////////////////////////////////////////
 /// A special kind of sequence such that first tuple_cell in each tuple
 /// contains node descriptor's pointers
 //////////////////////////////////////////////////////////////////////////////

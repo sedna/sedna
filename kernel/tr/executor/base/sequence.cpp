@@ -386,98 +386,6 @@ int sequence::compare(const order_spec_list& osl, int a, int b)
 
 
 //////////////////////////////////////////////////////////////////////////////
-/// sequence_tmp
-//////////////////////////////////////////////////////////////////////////////
-int sequence_tmp::add(const tuple &t)
-{
-    U_ASSERT(false);
-    return 0;
-/*
-    for (int i = 0; i < tuple_size; i++)
-    {
-        if (t.cells[i].is_node() && IS_TMP_BLOCK(t.cells[i].get_node()))
-        {
-            tuple new_t(t);
-            xptr p;
-            for (int j = i; j < tuple_size; j++)
-            {
-                if (t.cells[j].is_node() && IS_TMP_BLOCK(t.cells[j].get_node()))
-                {
-                    p = t.cells[j].get_node();
-                    new_t.cells[j].set_safenode(p);
-                }
-            }
-            return sequence::add(new_t);
-        }
-    }
-
-    return sequence::add(t);
-*/
-}
-
-void sequence_tmp::get(tuple &t, const iterator& it)
-{
-    if (this != it.s) throw USER_EXCEPTION2(SE1003, "Wrong iterator passed to sequence_tmp::get");
-    get(t, it.pos);
-}
-
-void sequence_tmp::get(tuple &t, int pos)
-{
-    U_ASSERT(false);
-/*
-    sequence::get(t, pos);
-
-    for (int i = 0; i < tuple_size; i++)
-    {
-        if (t.cells[i].is_node() && IS_TMP_BLOCK(t.cells[i].get_node()))
-        {
-            xptr p = t.cells[i].get_node();
-            p = removeIndirection(p);
-            t.cells[i].set_node(p);
-        }
-    }
-*/
-}
-
-void sequence_tmp::copy(sequence_tmp* s, iterator _begin, iterator _end)
-{
-    if (s->tuple_size != tuple_size)
-        throw USER_EXCEPTION2(SE1003, "Tuple size mismatch in sequence_tmp::copy");
-
-    clear();
-
-    tuple t(tuple_size);
-    for (sequence::iterator it = _begin; it != _end; it++)
-    {
-        s->get(t, it);
-        add(t);
-    }
-}
-
-void sequence_tmp::copy(sequence_tmp* s)
-{
-    copy(s, s->begin(), s->end());
-}
-
-tuple_cell sequence_tmp::get_00() const
-{
-    U_ASSERT(false);
-    return tuple_cell();
-/*
-    if (seq_size == 0) throw USER_EXCEPTION2(SE1003, "Empty sequence passed to sequence_tmp::get_00");
-
-    tuple_cell &tc = ((tuple_cell*)(mem_tuples[0]))[0];
-    if (tc.is_node() && IS_TMP_BLOCK(tc.get_node()))
-    {
-        xptr p = tc.get_node();
-        p = removeIndirection(p);
-        return tuple_cell::node(p);
-    }
-    else return tc;
-*/
-}
-
-//////////////////////////////////////////////////////////////////////////////
 /// descript_sequence
 //////////////////////////////////////////////////////////////////////////////
 xptr descript_sequence::get_xptr(int a)
@@ -625,12 +533,14 @@ void descript_sequence::swap(int a, int b)
     }
     delete[]p1;
 }
+
 int descript_sequence::med3( int a, int b, int c)
 {
     return (on_less(a,b)<0 ?
         (on_less(b,c)<0 ? b : on_less(a,c)<0 ? c : a) :
         (on_less(c,b)<0 ? b : on_less(c,a)<0 ? c : a));
 }
+
 void descript_sequence::vecswap(int a, int b, int n)
 {
     for (int i=0; i<n; i++, a++, b++) swap(a, b);
