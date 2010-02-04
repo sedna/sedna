@@ -345,9 +345,11 @@ void sorted_sequence::sort1(int off, int len)
 	    sort1(n-s, s);
 }
 
+
 void sorted_sequence::swap(int a, int b)
 {
-	xptr t = get_data(a);
+	if(a == b) return;
+    xptr t = get_data(a);
 	data_ptr* ct=(data_ptr*)XADDR(t);
 	data_ptr dp,sp;
 	CHECKP(t);
@@ -366,8 +368,6 @@ void sorted_sequence::swap(int a, int b)
 	VMM_SIGNAL_MODIFICATION(t);
 	ct->size=sp.size;
 	ct->value=sp.value;
-
-
 }
 
 /**

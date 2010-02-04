@@ -25,7 +25,6 @@ public:
     {
     private:
         friend class sequence;
-        friend class sequence_tmp;
         friend bool operator ==(const iterator& it1, const iterator& it2);
 
         int pos;
@@ -66,20 +65,13 @@ protected:
     xptr eblk;			// pointer to the last block of the block chain
     int blks_num;		// number of blocks bound to this node (in chain)
 
-    // stores txt data
-    estr txt;
+    estr txt;           // stores txt data
 
     int tuples_in_memory;
     int max_block_amount;
     bool copy_vmm_strings;
-    char *sort_mem;
 
     void init_blks();
-    void qsort(const order_spec_list& osl, int off, int len);
-    void swap(int a, int b);
-    int  med3(const order_spec_list& osl, int a, int b, int c);
-    void vecswap(int a, int b, int n);
-    int  compare(const order_spec_list& osl, int a, int b);
 
 public:
 
@@ -124,15 +116,7 @@ public:
         if (seq_size == 0) throw USER_EXCEPTION2(SE1003, "Empty sequence passed to sequence::get_00");
         return ((tuple_cell*)(mem_tuples[0]))[0];
     }
-
-    void qsort(const order_spec_list& osl);
-    void sort_merge(const order_spec_list& osl);
-
-    void fix_blocks();
-    void unfix_blocks();
 };
-
-
 
 inline bool operator ==(const sequence::iterator& it1, const sequence::iterator& it2)
 {
@@ -177,5 +161,6 @@ public:
 
    
 };
-#endif
+
+#endif /* _SEQUENCE_H */
 
