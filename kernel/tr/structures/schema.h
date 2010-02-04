@@ -285,7 +285,7 @@ public:
     inline static bool has_children(t_item type) { return (type == element || type == document || type == virtual_root); }
     inline bool has_children() { return has_children(this->type); }
 
-    inline static bool has_text(t_item type) { return (type == comment || type == text || type == attribute || type == pr_ins || type == cdata); }
+    inline static bool has_text(t_item type) { return (type == comment || type == text || type == attribute || type == pr_ins || type == cdata || type == document); }
     inline bool has_text() { return has_text(this->type); }
 //    inline char * get_child_name(int i) { return children.get(i)->name; };
 };
