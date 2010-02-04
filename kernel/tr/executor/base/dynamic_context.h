@@ -138,6 +138,7 @@ struct global_producer
     dynamic_context *cxt;           // for each global producer we have dynamic_context created in por2qep::PPVarDecl
     complex_var_consumption cvc;
     free_entries_list fel;
+    std::string var_name, var_name_uri; // name and URI of the variable for explain feature
 
     global_producer() : op(NULL), cxt(NULL) {}
     ~global_producer();
