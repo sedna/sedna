@@ -129,11 +129,13 @@ void PPExplain::do_next (tuple &t)
         /* Insert physical plan for each global variable */
         for(int i = 0; i < dynamic_context::glb_var_cxt.size; i++)
         {
+            const global_producer& gp = dynamic_context::glb_var_cxt.producers[i];
             tmp = insert_element_i(tmp,XNULL,left,"variable",xs_untyped,explain_ns);
             u_itoa(i,buf,10);
-            insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
+            xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
+            attr_left = insert_attribute_i(attr_left,XNULL,tmp,"variable-name",xs_untypedAtomic, gp.var_name.c_str(), gp.var_name.length(), NULL_XMLNS);
             PPExplainVisitor visitor(cxt, tmp);
-            (dynamic_context::glb_var_cxt.producers[i]).op->accept(visitor);
+            gp.op->accept(visitor);
         }
         
         /* Insert physical plan for each function */
@@ -143,7 +145,7 @@ void PPExplain::do_next (tuple &t)
             tmp = insert_element_i(tmp,XNULL,left,"function",xs_untyped,explain_ns);
             u_itoa(i,buf,10);
             xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
-            attr_left = insert_attribute_i(XNULL,XNULL,tmp,"function-name",xs_untypedAtomic, fd.func_name.c_str(), fd.func_name.length(), NULL_XMLNS);
+            attr_left = insert_attribute_i(attr_left,XNULL,tmp,"function-name",xs_untypedAtomic, fd.func_name.c_str(), fd.func_name.length(), NULL_XMLNS);
             std::string ret_type = fd.ret_st.to_str();
             insert_attribute_i(attr_left,XNULL,tmp,"type",xs_untypedAtomic, ret_type.c_str(), ret_type.length(), NULL_XMLNS);
                         
