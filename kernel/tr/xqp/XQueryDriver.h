@@ -118,9 +118,6 @@ namespace sedna
             std::string getIRRepresentation(size_t ind_mod);
             std::string getParsedModuleName();
 
-            std::string getLRForModules(const sedna::XQueryModule *mod);
-            std::string getLRForModule(const char *mod_uri, std::set<std::string> &lred);
-
             void error(const sedna::XQueryParser::location_type &loc, int code, const char *msg);
             void error(const sedna::XQueryParser::location_type &loc, int code, std::string msg);
             void error(int code, const char *msg);

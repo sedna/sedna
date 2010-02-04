@@ -1101,7 +1101,7 @@ void LRVisitor::visit(ASTMainModule &n)
 {
     lr_str = "(";
     lr_str.append(query_str[dynamic_cast<ASTQuery *>(n.query)->type]);
-    lr_str.append(drv->getLRForModules(mod));
+    //lr_str.append(drv->getLRForModules(mod));
 
     purge_imports = true;
     n.prolog->accept(*this);

@@ -878,7 +878,7 @@ namespace sedna
 
             if (!ip || ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
                 ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
-            
+
             inserting_node innode(n.leaf_name->c_str(), n.leaf_type == 0 ? element : attribute);
 
             qep = new PPCreateTrigger(dyn_cxt, //dynamic context
@@ -1414,6 +1414,10 @@ namespace sedna
                 bound_vars.pop_back();
             }
 
+            // use PPStore to cache the expression
+            if (n.expr && n.expr->isCached())
+                expr.op = new PPStore(dyn_cxt, oi, expr);
+
             off_this.opin.op = new PPReturn(dyn_cxt, oi, vars, off_cont.opin, expr, var_pos);
             off_this.opin.ts = 1;
 
@@ -1454,6 +1458,10 @@ namespace sedna
         {
             n.ret->accept(*this);
             off_this = getOffer();
+
+            // try to PPStore-cache the node
+            if (n.ret->isCached())
+                off_this.opin.op = new PPStore(dyn_cxt, createOperationInfo(n), off_this.opin);
         }
 
         if (n.where)
@@ -1547,16 +1555,32 @@ namespace sedna
             if (off.st.type.type == st_atomic_type && off.st.type.info.single_type == xs_anyType)
             {
                 if (dynamic_cast<const ASTFor *>((*n.fls)[i]))
+                {
+                    // check if we can cache previous for/let
+                    if ((size_t)i < n.fls->size() - 1 && (*n.fls)[i + 1]->isCached())
+                        flop.op = new PPStore(dyn_cxt, createOperationInfo(*(*n.fls)[i]), flop);
+
                     flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var);
+                }
                 else
+                {
                     flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop);
+                }
             }
             else
             {
                 if (dynamic_cast<const ASTFor *>((*n.fls)[i]))
+                {
+                    // check if we can cache previous for/let
+                    if ((size_t)i < n.fls->size() - 1 && (*n.fls)[i + 1]->isCached())
+                        flop.op = new PPStore(dyn_cxt, createOperationInfo(*(*n.fls)[i]), flop);
+
                     flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var, off.st);
+                }
                 else
+                {
                     flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, off.st);
+                }
             }
         }
 
@@ -1608,6 +1632,10 @@ namespace sedna
 
                 vars[un_vars.size() - i - 1] = un_vars[i].second;
             }
+
+            // Strange case for PPStore -- return-statement doesn't depend on all that for-let-order-by mess
+            if (n.ret->isCached())
+                ret.op = new PPStore(dyn_cxt, createOperationInfo(n), ret);
 
             off_this.opin.op = new PPReturn(dyn_cxt, createOperationInfo(n), vars, ob, ret, -1);
             off_this.opin.ts = 1;
@@ -2382,8 +2410,8 @@ namespace sedna
         }
         else
         {
-            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? 
-                                                      orb_modifier::ORB_EMPTY_LEAST : 
+            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ?
+                                                      orb_modifier::ORB_EMPTY_LEAST :
                                                       orb_modifier::ORB_EMPTY_GREATEST;
         }
 
@@ -2466,8 +2494,8 @@ namespace sedna
             orb_modifier orb;
 
             orb.order = orb_modifier::ORB_ASCENDING;
-            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ? 
-                                                      orb_modifier::ORB_EMPTY_LEAST : 
+            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ?
+                                                      orb_modifier::ORB_EMPTY_LEAST :
                                                       orb_modifier::ORB_EMPTY_GREATEST;
             orb.collation = st_cxt->get_default_collation();
 
@@ -3136,6 +3164,10 @@ namespace sedna
         // main return variable
         retv.push_back(bound_vars.back().second);
 
+        // check if we can PPStore-cache new-expression
+        if (n.new_expr->isCached())
+            off_new.opin.op = new PPStore(dyn_cxt, createOperationInfo(n), off_new.opin);
+
         // sequence on each updated node (data_child for return)
         new_seq.push_back(PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(n), retv.back()), 1));
         new_seq.push_back(off_new.opin);
@@ -3254,6 +3286,15 @@ namespace sedna
 
         dynamic_context::glb_var_cxt.producers[id].op = var;
         dynamic_context::glb_var_cxt.producers[id].cxt = dyn_cxt;
+
+        // some info for proper explain
+        const ASTVar *var_info = dynamic_cast<const ASTVar *>(n.var);
+        U_ASSERT(var_info);
+
+        dynamic_context::glb_var_cxt.producers[id].var_name = (var_info->pref && *(var_info->pref) != "") ?
+                                                                *(var_info->pref) + ":" + *(var_info->local) :
+                                                                *(var_info->local);
+        dynamic_context::glb_var_cxt.producers[id].var_name_uri = *(var_info->uri);
 
         dyn_cxt = NULL;
     }

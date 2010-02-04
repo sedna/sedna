@@ -12,7 +12,7 @@
 
 namespace sedna
 {
-    class XQFunction;
+    struct XQFunction;
     struct xqExprInfo
     {
         bool isOrdered;     // expr is ordered

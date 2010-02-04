@@ -282,61 +282,6 @@ namespace sedna
         return mods[mod_ind]->getLR();
     }
 
-    std::string XQueryDriver::getLRForModules(const XQueryModule *mod)
-    {
-        std::string res;
-        std::set<std::string> lred;
-        std::vector<std::string> imported;
-
-        imported = mod->getImportedModules();
-
-        for (unsigned int i = 0; i < imported.size(); i++)
-            res += getLRForModule(imported[i].c_str(), lred);
-
-        return res;
-    }
-
-    std::string XQueryDriver::getLRForModule(const char *mod_uri, std::set<std::string> &lred)
-    {
-        std::string res, lr, res_mod;
-        std::vector<XQueryModule *> modules;
-
-        if (libModules.find(mod_uri) == libModules.end())
-            return "";
-
-        modules = libModules[mod_uri];
-
-        // then, lr modules themselves
-        if (lred.find(mod_uri) == lred.end())
-        {
-            for (unsigned int i = 0; i < modules.size(); i++)
-            {
-                lr = modules[i]->getLR();
-                //lr = prepare_module(lr); // call chicken to optimize module
-                res_mod += lr;
-            }
-
-            lred.insert(mod_uri);
-        }
-        else
-        {
-            return res;
-        }
-
-        // first, lr children modules
-        for (unsigned int i = 0; i < modules.size(); i++)
-        {
-            std::vector<std::string> imported = modules[i]->getImportedModules();
-
-            for (unsigned int j = 0; j < imported.size(); j++)
-                res += getLRForModule(imported[j].c_str(), lred);
-        }
-
-        res += res_mod;
-
-        return res;
-    }
-
     std::string XQueryDriver::getIRRepresentation(size_t ind_mod)
     {
         return mods[ind_mod]->getIR();
