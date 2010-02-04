@@ -143,6 +143,7 @@ void PPExplain::do_next (tuple &t)
             tmp = insert_element_i(tmp,XNULL,left,"function",xs_untyped,explain_ns);
             u_itoa(i,buf,10);
             xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
+            attr_left = insert_attribute_i(XNULL,XNULL,tmp,"function-name",xs_untypedAtomic, fd.func_name.c_str(), fd.func_name.length(), NULL_XMLNS);
             std::string ret_type = fd.ret_st.to_str();
             insert_attribute_i(attr_left,XNULL,tmp,"type",xs_untypedAtomic, ret_type.c_str(), ret_type.length(), NULL_XMLNS);
                         

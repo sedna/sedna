@@ -836,7 +836,10 @@ void PPExplainVisitor::visit(PPFtIndexScan2* op)
 void PPExplainVisitor::visit(PPFunCall* op)
 {
     insertOperationElement("PPFunCall", left, parent, op);
-    insertAttributeHelper("id", XNULL, left, int2string(op->get_function_id()));
+    int fid = op->get_function_id();
+    xptr attr_left = insertAttributeHelper("id", XNULL, left, int2string(fid));
+    const function_declaration& fd = dynamic_context::funct_cxt.fun_decls[fid];
+    insertAttributeHelper("function-name", attr_left, left, fd.func_name);
 }
 
 void PPExplainVisitor::visit(PPGeneralComparison* op)
