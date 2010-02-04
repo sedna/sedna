@@ -795,7 +795,10 @@ void PPExplainVisitor::visit(PPVariable* op)
 void PPExplainVisitor::visit(PPGlobalVariable* op)
 {
     insertOperationElement("PPGlobalVariable", left, parent, op);
-    insertAttributeHelper("descriptor", XNULL, left, int2string(op->get_variable_descriptor()));
+    int gpid = op->get_variable_descriptor();
+    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, int2string(gpid));
+    const global_producer& gp = dynamic_context::glb_var_cxt.producers[gpid];
+    insertAttributeHelper("variable-name", attr_left, left, gp.var_name);
 }
 
 void PPExplainVisitor::visit(PPXptr* op)
