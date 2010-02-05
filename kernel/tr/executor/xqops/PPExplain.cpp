@@ -134,7 +134,7 @@ void PPExplain::do_next (tuple &t)
             u_itoa(i,buf,10);
             xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
             attr_left = insert_attribute_i(attr_left,XNULL,tmp,"variable-name",xs_untypedAtomic, gp.var_name.c_str(), gp.var_name.length(), NULL_XMLNS);
-            PPExplainVisitor visitor(cxt, tmp);
+            PPExplainVisitor visitor(cxt, tmp, cxt->var_map);
             gp.op->accept(visitor);
         }
         
@@ -149,7 +149,7 @@ void PPExplain::do_next (tuple &t)
             std::string ret_type = fd.ret_st.to_str();
             insert_attribute_i(attr_left,XNULL,tmp,"type",xs_untypedAtomic, ret_type.c_str(), ret_type.length(), NULL_XMLNS);
                         
-            PPExplainVisitor visitor(cxt, tmp);
+            PPExplainVisitor visitor(cxt, tmp, fd.var_map);
             fd.op->accept(visitor);
 
             xptr args = insert_element_i(XNULL,XNULL,tmp,"arguments",xs_untyped,explain_ns);
@@ -168,7 +168,7 @@ void PPExplain::do_next (tuple &t)
         /* Fill information about query body */
         left = insert_element_i(left,XNULL,root,"query",xs_untyped,explain_ns);
 
-        PPExplainVisitor visitor(cxt, left);
+        PPExplainVisitor visitor(cxt, left, cxt->var_map);
         qep_tree->accept(visitor);
         
         t.copy(tuple_cell::node_indir(root));

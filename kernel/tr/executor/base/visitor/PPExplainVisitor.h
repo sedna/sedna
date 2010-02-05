@@ -23,15 +23,22 @@ class PPExplainVisitor : public PPVisitor {
 private:
     dynamic_context* cxt;
     xptr parent, left, left_inside;
-
+    /* Var_dsc -> name map */
+    var_map_id_name var_names;
     /* Maintains stack of indirection pointers */
     std::stack<xptr_pair> pointers;
 
     void push();
-    void insertOperationElement(const char* name, xptr& left, const xptr& parent, PPIterator* op);
+    void insertOperationElement(const char* name, 
+                                xptr& left, 
+                                const xptr& parent, 
+                                PPIterator* op);
 
 public:
-    PPExplainVisitor(dynamic_context* _cxt_, xptr root);
+    PPExplainVisitor(dynamic_context* _cxt_, 
+                     xptr root, 
+                     var_map_id_name _var_names_);
+
     virtual ~PPExplainVisitor();
 
     virtual void push(PPIterator* op)       { push(); }

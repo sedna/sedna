@@ -59,7 +59,8 @@ static inline
 xptr insertVariableHelper(const char* name,
                           const xptr& left,
                           const xptr& parent,
-                          int dsc)
+                          int dsc,
+                          const var_map_id_name& var_names)
 {
     xptr var = left;
     if(dsc >= 0)
@@ -70,16 +71,26 @@ xptr insertVariableHelper(const char* name,
         {
             insertAttributeHelper("name", attr_left, var, string(name));
         }
+        else
+        {
+            var_map_id_name::const_iterator it = var_names.find(dsc);
+            if(it != var_names.end() && it->second.first.length() != 0)
+            {
+                insertAttributeHelper("name", attr_left, left, it->second.first);
+            }
+        }
     }
     return var;
 }
 
 
 PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
-                                   xptr _root_) : cxt(_cxt_), 
-                                                  parent(_root_),
-                                                  left(XNULL),
-                                                  left_inside(XNULL)
+                                   xptr _root_,
+                                   var_map_id_name _var_names_) : cxt(_cxt_), 
+                                                                  parent(_root_),
+                                                                  left(XNULL),
+                                                                  left_inside(XNULL),
+                                                                  var_names(_var_names_)
 {
     explain_ns = cxt->st_cxt->get_default_namespace();
 }
@@ -330,9 +341,9 @@ void PPExplainVisitor::visit(PPPred1* op)
     xptr var_left = XNULL;
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i), var_names);
     }
-    insertVariableHelper("position", var_left, left_inside, op->get_position_var_dsc());
+    insertVariableHelper("position", var_left, left_inside, op->get_position_var_dsc(), var_names);
 }
 
 void PPExplainVisitor::visit(PPPred2* op)
@@ -355,10 +366,10 @@ void PPExplainVisitor::visit(PPPred2* op)
     xptr var_left = XNULL;
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i), var_names);
     }
-    insertVariableHelper("position", var_left, left_inside, op->get_position_var_dsc());
-    insertVariableHelper("last", var_left, left_inside, op->get_last_var_dsc());
+    insertVariableHelper("position", var_left, left_inside, op->get_position_var_dsc(), var_names);
+    insertVariableHelper("last", var_left, left_inside, op->get_last_var_dsc(), var_names);
 }
 
 void PPExplainVisitor::visit(PPFnTrue* op)
@@ -755,7 +766,7 @@ void PPExplainVisitor::visit(PPSelect* op)
     xptr var_left = XNULL;
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i), var_names);
     }
 }
 
@@ -789,7 +800,13 @@ void PPExplainVisitor::visit(PPVarDecl* op)
 void PPExplainVisitor::visit(PPVariable* op)
 {
     insertOperationElement("PPVariable", left, parent, op);
-    insertAttributeHelper("descriptor", XNULL, left, int2string(op->get_variable_descriptor()));
+    var_dsc vid = op->get_variable_descriptor();
+    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, int2string(vid));
+    var_map_id_name::iterator it = var_names.find(vid);
+    if(it != var_names.end() && it->second.first.length() != 0)
+    {
+        insertAttributeHelper("variable-name", attr_left, left, it->second.first);
+    }
 }
 
 void PPExplainVisitor::visit(PPGlobalVariable* op)
@@ -891,7 +908,7 @@ void PPExplainVisitor::visit(PPLet* op)
     xptr var_left = XNULL;
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i), var_names);
     }
 }
 
@@ -923,7 +940,7 @@ void PPExplainVisitor::visit(PPSLet* op)
     xptr var_left = XNULL;
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i), var_names);
     }
 }
 
@@ -939,9 +956,9 @@ void PPExplainVisitor::visit(PPReturn* op)
     xptr var_left = XNULL;
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i), var_names);
     }
-    insertVariableHelper("position", var_left, left_inside, op->get_position_var_dsc());
+    insertVariableHelper("position", var_left, left_inside, op->get_position_var_dsc(), var_names);
 }
 
 void PPExplainVisitor::visit(PPFnName* op)
@@ -1053,7 +1070,7 @@ void PPExplainVisitor::visit(PPTypeswitch* op)
     xptr var_left = XNULL;
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i));
+        var_left = insertVariableHelper(NULL, var_left, left_inside, var_dscs.at(i), var_names);
     }
     left_inside = insertElementHelper("cases-types", left_inside, left);
     const arr_of_sequence_type& sts = op->get_sequence_types();
