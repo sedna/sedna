@@ -351,7 +351,6 @@ void descript_sequence::swap(int a, int b)
             CHECKP(p);
             memcpy(&mem_tuples[a][0],XADDR(p), tuple_sizeof);
             memcpy(XADDR(p),p1 ,tuple_sizeof);
-
         }
     }
     else
