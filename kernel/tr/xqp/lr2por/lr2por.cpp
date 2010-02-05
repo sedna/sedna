@@ -1944,6 +1944,11 @@ namespace sedna
         n.ret->accept(*this);
         fd.ret_st = getOffer().st;
 
+        // body and params are evaluated in a dummy dynamic context
+        dynamic_context dc(st_cxt, 0); // ok, it will become illegal when we exit the function, but since function-body is copied
+                                       // during evaluation it will not be a problem (yuck!!!, but moved from por2qep "as-is")
+        dyn_cxt = &dc;
+
         if (n.params)
         {
             fd.args = se_new sequence_type[arity];
@@ -1961,13 +1966,13 @@ namespace sedna
             fd.args = NULL;
         }
 
-        // body is evaluated in a dummy dynamic context
-        dynamic_context dc(st_cxt, 0); // ok, it will become illegal when we exit the function, but since function-body is copied
-                                       // during evaluation it will not be a problem (yuck!!!, but moved from por2qep "as-is")
-        dyn_cxt = &dc;
         n.body->accept(*this);
 
         fd.op = getOffer().opin.op;
+
+        // copy variable map for explain to fd since dyn_cxt will be destroyed on exit from this function
+        fd.var_map = dyn_cxt->var_map;
+
         dyn_cxt = NULL;
 
         fd.st_cxt = st_cxt;
@@ -2792,8 +2797,12 @@ namespace sedna
         // explain feature
         if (mod->turnExplain())
         {
+            dynamic_context *old_dyn_cxt = dyn_cxt;
+
             // first, we need new dynamic context since we will use two root operations
             dyn_cxt = new dynamic_context(st_cxt, 0);
+            dyn_cxt->var_map = old_dyn_cxt->var_map;
+
             // then, we build PPQueryRoot->PPExplain on top of actual query
             PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep), 1);
             qep = new PPQueryRoot(dyn_cxt, expl);
@@ -3193,7 +3202,12 @@ namespace sedna
 
         if (param_mode)
         {
-            bound_vars.push_back(l2pVarInfo(name, var_num++));
+            var_id vid = var_num++;
+            std::string exp_name = (n.pref && *(n.pref) != "") ? *(n.pref) + ":" + *(n.local) : *(n.local);
+
+            dyn_cxt->var_map[vid] = var_name_exp(exp_name, *n.uri);
+
+            bound_vars.push_back(l2pVarInfo(name, vid));
 
             return;
         }
