@@ -179,14 +179,18 @@ print_node_internal(xptr node,
                 if (ptype==sxml)  crmout << ")";
             }
 
-            if (IS_DATA_BLOCK(node)) crmout << ((ptype==xml )? "?>\n": "\n");
+            if (IS_DATA_BLOCK(node)) 
+            {
+                crmout << ((ptype==xml )? "?>": "");
+                if(wi) crmout << "\n";
+            }
             while (child!=XNULL)
             {
                 CHECKP(child);
                 print_node_internal(child,crmout,wi,0,ptype,cxt);
                 CHECKP(child);
                 child=((n_dsc*)XADDR(child))->rdsc;
-                if(child != XNULL) crmout << "\n";
+                if(child != XNULL && wi) crmout << "\n";
             }
             if (ptype==sxml)  crmout << ")";
             break;
