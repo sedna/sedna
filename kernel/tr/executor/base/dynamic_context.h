@@ -75,7 +75,9 @@ enum xq_boundary_space {xq_boundary_space_strip, xq_boundary_space_preserve};
 enum xq_ordering_mode  {xq_ordering_mode_ordered, xq_ordering_mode_unordered};
 enum xq_empty_order    {xq_empty_order_greatest, xq_empty_order_least};
 
-
+/// map var_dsc->var_name
+typedef std::pair<std::string, std::string> var_name_exp;
+typedef std::map<var_dsc, var_name_exp> var_map_id_name;
 
 /*******************************************************************************
  * Variable context
@@ -189,6 +191,7 @@ struct function_declaration
     int cxt_size;
     static_context *st_cxt;
     std::string func_name, func_name_uri;
+    var_map_id_name var_map;
 
     function_declaration() : num(0), args(NULL), op(NULL) {}
     ~function_declaration();
@@ -361,6 +364,7 @@ class dynamic_context
 public:
     variable_context var_cxt;
     static_context *st_cxt;
+    var_map_id_name var_map;
 
     dynamic_context(static_context *_st_cxt_, int _var_cxt_size_)
         : var_cxt(_var_cxt_size_), st_cxt(_st_cxt_)
