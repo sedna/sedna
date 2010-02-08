@@ -29,7 +29,13 @@ void replace(PPOpIn arg)
     upd_ns_map* ins_swiz = NULL;
     bool is_node_updated = true;
 
-    /* Fill up sequences with nodes to update and update with */
+    /* 
+     * Fill up sequences with nodes to update and update with,
+     * child (arg) returns the following sequence of items:
+     * 1. node to be replaced (1)
+     * 2. nodes to replace with (2)
+     * 3. special tuple which contains separator value (3)
+     */
     arg.op->next(t);
 
     while (!t.is_eos())
@@ -38,17 +44,27 @@ void replace(PPOpIn arg)
         {
             node=t.cells[0].get_node();
             CHECKP(node);
+            /*
+             * In (1) case node must be persistent (is_node_updated is true)
+             * In (2) case it can be temporary
+             * In both cases document nodes are not allowed
+             */
             if ((!is_node_updated || is_node_persistent(node)) && !is_node_document(node))
             {
                 xptr indir=((n_dsc*)XADDR(node))->indir;
+                
                 if (is_node_updated)
                 {
+                    /* Case (1) - fill up sequence with nodes to be replaced */
                     is_node_updated=false;
+                    /* Next nodes from arg are case (2) nodes, so we can use shared lock */
+                    local_lock_mrg->lock(lm_s);
                     arg1seq.add(indir);
                     arg1seq_tmp.add(node);
                 }
                 else
                 {
+                    /* Case (2) - fill up sequence with nodes to replace with */
                     if (is_node_persistent(node))
                     {
                         tuple tup(2);
@@ -67,10 +83,13 @@ void replace(PPOpIn arg)
         }
         else
         {
+            /* Must be separator in this case (3) */
             if (t.cells[0].get_atomic_type() == se_separator)
             {
                 arg2seq.add(XNULL);
                 is_node_updated=true;
+                /* Next nodes from arg are case (1) node, so we can use shared lock */
+                local_lock_mrg->lock(lm_x);
             }
 #ifndef IGNORE_UPDATE_ERRORS
             else throw USER_EXCEPTION(SE2021);

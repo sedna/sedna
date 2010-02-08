@@ -199,7 +199,7 @@ xptr copy_node_content(xptr new_node_i, xptr node, xptr left_node_i, upd_ns_map*
         left_node = deep_copy_node_i(left_node_i, XNULL, new_node_i, indirectionDereferenceCP(childi), nsupdmap, save_types, depth + 1);
 
         /* due to : MG: deep_temp_copy can return XNULL if a trigger canceled
-         * the insertion and there were now any left sibling */
+        * the insertion and there were now any left sibling */
         if (left_node != XNULL) {
             left_node_i = getIndirectionSafeCP(left_node);
         }
@@ -271,8 +271,8 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
 
             result = indirectionDereferenceCP(result_indir);
             CHECKP(result);
-        }
-            break;
+                      }
+                      break;
 
         case text: {
             if (isTextEmpty(T_DSC(node))) {
@@ -282,27 +282,27 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                 CHECKP(node);
                 result = insert_text(left, right, parent, &data, getTextSize(T_DSC(node)), text_doc);
             }
-        }
-            break;
+                   }
+                   break;
 
         case cdata: {
             text_cptr buf(node);
             result = insert_cdata(left, right, parent, buf.get(), buf.getSize());
-        }
-            break;
+                    }
+                    break;
 
         case comment: {
             text_cptr buf(node);
             result = insert_comment(left, right, parent, buf.get(), buf.getSize());
-        }
-            break;
+                      }
+                      break;
 
         case pr_ins: {
             size_t tsize = PI_DSC(node)->target;
             text_cptr buf(node);
             result = insert_pi(left, right, parent, buf.get(), tsize, buf.get() + tsize + 1, buf.getSize() - tsize - 1);
-        }
-            break;
+                     }
+                     break;
 
         case attribute: {
             xmlns_ptr ns = scmnode->get_xmlns();
@@ -315,8 +315,8 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
             CHECKP(node);
             scm_type = (save_types) ? A_DSC(node)->type : xs_untypedAtomic;
             result = insert_attribute(left, right, parent, scmnode->name, scm_type, buf.get(), buf.getSize(), ns);
-        }
-            break;
+                        }
+                        break;
 
         case xml_namespace: {
             xmlns_ptr ns = xmlns_touch(NS_DSC(node)->ns);
@@ -324,8 +324,8 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                 swizzleNamespace(ns, *nsupdmap);
             }
             result = insert_namespace(left, right, parent, ns);
-        }
-            break;
+                            }
+                            break;
 
         default:
             throw SYSTEM_EXCEPTION("Deep copy error: document node copied");
@@ -351,10 +351,10 @@ xptr copy_to_temp(xptr node)
 {
     PPConstructor::checkInitial();
     return deep_copy_node(XNULL,
-                          XNULL,
-                          PPConstructor::get_virtual_root(),
-                          node,
-                          NULL,
-                          true);
+        XNULL,
+        PPConstructor::get_virtual_root(),
+        node,
+        NULL,
+        true);
 }
 
