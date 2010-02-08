@@ -1,7 +1,7 @@
 /*
- * File:  deletions.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  deletions.cpp
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
 
 #include "common/sedna.h"
 
@@ -15,92 +15,92 @@
 
 void delete_undeep(PPOpIn arg)
 {
-	// Creating the first sequence (different validity tests+ indirection deref)
-	tuple t(arg.ts);
-	xptr_sequence argseq;
-	arg.op->next(t);
-	while (!t.is_eos())
-	{
-		if (t.cells[0].is_node())
-		{
-			xptr node=t.cells[0].get_node();
-			CHECKP(node);
-			if (is_node_persistent(node)&& !is_node_document(node))
-			{
-				//xptr indir=((n_dsc*)XADDR(node))->indir;
-				argseq.add(node);
-			}
+    // Creating the first sequence (different validity tests+ indirection deref)
+    tuple t(arg.ts);
+    xptr_sequence argseq;
+    arg.op->next(t);
+    while (!t.is_eos())
+    {
+        if (t.cells[0].is_node())
+        {
+            xptr node=t.cells[0].get_node();
+            CHECKP(node);
+            if (is_node_persistent(node)&& !is_node_document(node))
+            {
+                //xptr indir=((n_dsc*)XADDR(node))->indir;
+                argseq.add(node);
+            }
 #ifndef IGNORE_UPDATE_ERRORS
-			else
-			{
-				throw USER_EXCEPTION(SE2010);
-			}
+            else
+            {
+                throw USER_EXCEPTION(SE2010);
+            }
 #endif
-		}
+        }
 #ifndef IGNORE_UPDATE_ERRORS
-			else
-			{
-				throw USER_EXCEPTION(SE2011);
-			}
+        else
+        {
+            throw USER_EXCEPTION(SE2011);
+        }
 #endif
-		arg.op->next(t);
-	}
+        arg.op->next(t);
+    }
 
-	//Sort in document order
-	if (argseq.size()<=0) return;
-	argseq.sort();
-	// INDIR
-	xptr_sequence::iterator it=argseq.begin();
-	xptr node;
-	while (it!=argseq.end())
-	{
-		node=*it;
-		CHECKP(node);
-		xptr indir=((n_dsc*)XADDR(node))->indir;
-		argseq.set(indir,it);
-		it++;
-	}
-	// Checking authorization
-	if (is_auth_check_needed(DELETE_STATEMENT))
-		auth_for_update(&argseq, DELETE_STATEMENT, false);
+    //Sort in document order
+    if (argseq.size()<=0) return;
+    argseq.sort();
+    // INDIR
+    xptr_sequence::iterator it=argseq.begin();
+    xptr node;
+    while (it!=argseq.end())
+    {
+        node=*it;
+        CHECKP(node);
+        xptr indir=((n_dsc*)XADDR(node))->indir;
+        argseq.set(indir,it);
+        it++;
+    }
+    // Checking authorization
+    if (is_auth_check_needed(DELETE_STATEMENT))
+        auth_for_update(&argseq, DELETE_STATEMENT, false);
 
-	//  cycle on  sequence
+    //  cycle on  sequence
 #ifdef SE_ENABLE_FTSEARCH
-	clear_ft_sequences();
+    clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-	apply_per_statement_triggers(&argseq, false, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+    apply_per_statement_triggers(&argseq, false, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
 #endif
-	it=argseq.end();
-	do
-	{
-		--it;
-		xptr node=indirectionDereferenceCP(*it);
-		CHECKP(node);
-		{
-			t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
-			switch(type)
-			{
-			case attribute: case text: case comment: case pr_ins:
-				{
-				 delete_node(node);
-				 break;
-				}
-			case element:
-				{
-					//1.INSERT
-					copy_node_content(getParentIndirection(node), node, getIndirectionSafeCP(node), NULL, true);
-					//2.DELETE
-					delete_node(indirectionDereferenceCP(*it));
-				}
-			}
-		}
+    it=argseq.end();
+    do
+    {
+        --it;
+        xptr node=indirectionDereferenceCP(*it);
+        CHECKP(node);
+        {
+            t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
+            switch(type)
+            {
+            case attribute: case text: case comment: case pr_ins:
+                {
+                    delete_node(node);
+                    break;
+                }
+            case element:
+                {
+                    //1.INSERT
+                    copy_node_content(getParentIndirection(node), node, getIndirectionSafeCP(node), NULL, true);
+                    //2.DELETE
+                    delete_node(indirectionDereferenceCP(*it));
+                }
+            }
+        }
 
-		if (it==argseq.begin()) break;
-	}
-	while (true);
+        if (it==argseq.begin()) break;
+    }
+    while (true);
 #ifdef SE_ENABLE_FTSEARCH
-	execute_modifications();
+    execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
@@ -108,83 +108,83 @@ void delete_undeep(PPOpIn arg)
 }
 void delete_deep(PPOpIn arg)
 {
-	// Creating the first sequence (different validity tests+ indirection deref)
-	/*xptr blk(0,(void*)0x33fd0000);
-	CHECKP(blk)
-	{shft hh_size=HHSIZE(blk);
-		for (int i=0; i<hh_size; i++)
-		{
-			hh_slot* tmp = (hh_slot*)HH_ADDR(blk, i);
-			if (tmp->hole_shft+ tmp->hole_size==SSB(blk) )
-			{
-				throw SYSTEM_EXCEPTION("[pstr_deallocate()] string can not be adjacent with with SS tail and with some hole on the right simultaneously");
-			}
-		}
-	}*/
-	tuple t(arg.ts);
-	xptr_sequence argseq;
-	arg.op->next(t);
-	while (!t.is_eos())
-	{
-		if (t.cells[0].is_node())
-		{
-			xptr node=t.cells[0].get_node();
-//			node.print();
-			CHECKP(node);
-			if (is_node_persistent(node) ) argseq.add(node);
+    // Creating the first sequence (different validity tests+ indirection deref)
+    /*xptr blk(0,(void*)0x33fd0000);
+    CHECKP(blk)
+    {shft hh_size=HHSIZE(blk);
+    for (int i=0; i<hh_size; i++)
+    {
+    hh_slot* tmp = (hh_slot*)HH_ADDR(blk, i);
+    if (tmp->hole_shft+ tmp->hole_size==SSB(blk) )
+    {
+    throw SYSTEM_EXCEPTION("[pstr_deallocate()] string can not be adjacent with with SS tail and with some hole on the right simultaneously");
+    }
+    }
+    }*/
+    tuple t(arg.ts);
+    xptr_sequence argseq;
+    arg.op->next(t);
+    while (!t.is_eos())
+    {
+        if (t.cells[0].is_node())
+        {
+            xptr node=t.cells[0].get_node();
+            //			node.print();
+            CHECKP(node);
+            if (is_node_persistent(node) ) argseq.add(node);
 #ifndef IGNORE_UPDATE_ERRORS
-			else
-			{
-				throw USER_EXCEPTION(SE2012);
-			}
+            else
+            {
+                throw USER_EXCEPTION(SE2012);
+            }
 #endif
-		}
+        }
 #ifndef IGNORE_UPDATE_ERRORS
-			else
-			{
-				throw USER_EXCEPTION(SE2011);
-			}
+        else
+        {
+            throw USER_EXCEPTION(SE2011);
+        }
 #endif
-		arg.op->next(t);
-	}
+        arg.op->next(t);
+    }
 
-	// Checking authorization
-	if (is_auth_check_needed(DELETE_STATEMENT))
-		auth_for_update(&argseq, DELETE_STATEMENT, true);
+    // Checking authorization
+    if (is_auth_check_needed(DELETE_STATEMENT))
+        auth_for_update(&argseq, DELETE_STATEMENT, true);
 
-	//Sort in document order
-	if (argseq.size()<=0) return;
+    //Sort in document order
+    if (argseq.size()<=0) return;
 
-	//!!! debug
-	/*
-	xptr_sequence::iterator my_it;
-	for (my_it = argseq.begin(); my_it != argseq.end(); my_it++)
-	{
-		xptr p = argseq.get(my_it);
-		p.print();
-	}
-	*/
+    //!!! debug
+    /*
+    xptr_sequence::iterator my_it;
+    for (my_it = argseq.begin(); my_it != argseq.end(); my_it++)
+    {
+    xptr p = argseq.get(my_it);
+    p.print();
+    }
+    */
 #ifdef SE_ENABLE_FTSEARCH
-	clear_ft_sequences();
+    clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-	apply_per_statement_triggers(&argseq, true, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+    apply_per_statement_triggers(&argseq, true, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
 #endif
 
-	argseq.sort();
-	//  cycle on  sequence
-	xptr_sequence::iterator it=argseq.begin();
-	bool mark=false;
-	do {
-		xptr node=*it;
-		do {
-			if (it+1==argseq.end()) { mark=true; break;}
-			++it;
-		} while ((node == *it) || nid_ancestor(node,*it));
-       	delete_node(node);
-	} while (!mark);
+    argseq.sort();
+    //  cycle on  sequence
+    xptr_sequence::iterator it=argseq.begin();
+    bool mark=false;
+    do {
+        xptr node=*it;
+        do {
+            if (it+1==argseq.end()) { mark=true; break;}
+            ++it;
+        } while ((node == *it) || nid_ancestor(node,*it));
+        delete_node(node);
+    } while (!mark);
 #ifdef SE_ENABLE_FTSEARCH
-	execute_modifications();
+    execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
