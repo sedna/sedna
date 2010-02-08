@@ -67,17 +67,14 @@ xptr insertVariableHelper(const char* name,
     {
         var = insert_element_i(left,XNULL,parent,"variable",xs_untyped,explain_ns);
         xptr attr_left = insertAttributeHelper("descriptor", XNULL, var, int2string(dsc));
-        if(name != NULL)
+        var_map_id_name::const_iterator it = var_names.find(dsc);
+        if(it != var_names.end() && it->second.first.length() != 0)
+        {
+            insertAttributeHelper("name", attr_left, left, it->second.first);
+        }
+        else if(name != NULL)
         {
             insertAttributeHelper("name", attr_left, var, string(name));
-        }
-        else
-        {
-            var_map_id_name::const_iterator it = var_names.find(dsc);
-            if(it != var_names.end() && it->second.first.length() != 0)
-            {
-                insertAttributeHelper("name", attr_left, left, it->second.first);
-            }
         }
     }
     return var;
