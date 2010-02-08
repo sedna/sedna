@@ -9,6 +9,8 @@
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/mo/mo.h"
 #include "tr/auth/auc.h"
+#include "tr/locks/locks.h"
+
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"
 #endif

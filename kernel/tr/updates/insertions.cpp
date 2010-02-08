@@ -94,7 +94,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
         {
             throw USER_EXCEPTION(SE2015);
         }
-
+#endif
         arg2.op->next(t2);
     }
 
