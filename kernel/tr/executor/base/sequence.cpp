@@ -122,6 +122,7 @@ int sequence::add(const tuple &t)
     tuple_cell* dest_addr = (tuple_cell*)(SEQ_BLK_CURSOR(XADDR(eblk)));
     for (int i = 0; i < tuple_size; i++)
     {
+        VMM_SIGNAL_MODIFICATION(eblk);
         memcpy(dest_addr + i, t.cells + i, sizeof(tuple_cell));
 
         if (t.cells[i].get_type() == tc_light_atomic_var_size ||
@@ -350,6 +351,7 @@ void descript_sequence::swap(int a, int b)
             xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
             CHECKP(p);
             memcpy(&mem_tuples[a][0],XADDR(p), tuple_sizeof);
+            VMM_SIGNAL_MODIFICATION(p);
             memcpy(XADDR(p),p1 ,tuple_sizeof);
         }
     }
@@ -364,6 +366,7 @@ void descript_sequence::swap(int a, int b)
             xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
             CHECKP(p);
             memcpy(&mem_tuples[b][0],XADDR(p), tuple_sizeof);
+            VMM_SIGNAL_MODIFICATION(p);
             memcpy(XADDR(p),p1 ,tuple_sizeof);
         }
         else
@@ -380,8 +383,10 @@ void descript_sequence::swap(int a, int b)
             xptr p_b = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
             CHECKP(p_b);
             memcpy(p2,XADDR(p_b),tuple_sizeof);
+            VMM_SIGNAL_MODIFICATION(p_b);
             memcpy(XADDR(p_b),p1,tuple_sizeof);
             CHECKP(p);
+            VMM_SIGNAL_MODIFICATION(p);
             memcpy(XADDR(p),p2,tuple_sizeof);
             delete[]p2;
 
