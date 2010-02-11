@@ -18,6 +18,7 @@ namespace sedna
         qep_sx = NULL;
 
         isExplainOn = false;
+        isProfileOn = false;
 
 #if (defined(DEBUGI) && (DEBUGI == 1))
         if (drv->getErrorCode() == -1)
@@ -38,6 +39,7 @@ namespace sedna
         qep_sx = NULL;
 
         isExplainOn = false;
+        isProfileOn = false;
 
 #if (defined(DEBUGI) && (DEBUGI == 1))
         if (drv->getErrorCode() == -1)

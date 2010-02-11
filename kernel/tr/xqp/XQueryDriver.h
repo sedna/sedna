@@ -92,7 +92,10 @@ namespace sedna
 
             ~XQueryDriver();
 
-            void addModule(ASTNode *mod, bool explain);
+            // flags set options for module:
+            //     1 - turn on explain
+            //     2 - turn on profile
+            void addModule(ASTNode *mod, uint8_t flags);
 
             void doSemanticAnalysis();
             void doLReturnAnalysis();

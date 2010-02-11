@@ -423,6 +423,8 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 "password" { return token::PASSWORD; }
 "PASSWORD" { yylval->isUpper = 1; return token::PASSWORD; }
 "PRECEDING" { return token::PRECEDING_; }
+"profile" { return token::PROFILE; }
+"PROFILE" { yylval->isUpper = 1; return token::PROFILE; }
 "public" { return token::PUBLIC; }
 "PUBLIC" { yylval->isUpper = 1; return token::PUBLIC; }
 "rename" { return token::RENAME; }
