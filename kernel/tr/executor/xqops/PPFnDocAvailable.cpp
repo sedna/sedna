@@ -48,15 +48,18 @@ void PPFnDocAvailable::do_next(tuple &t)
 {
     if (first_time)
     {
+        first_time = false;
         doc_name_op.op->next(t);
-        if (t.is_eos()) return;    //if $uri is the empty sequence, the result is an empty sequence.
+        if (t.is_eos()) 
+        {
+            t.copy(tuple_cell::atomic(false));
+            return;
+        }
 
         tuple_cell tc_doc= atomize(doc_name_op.get(t));
         if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc-available (xs_string/derived/promotable is expected).");
         doc_name_op.op->next(t);
         if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc-available. Argument contains more than one item.");
-
-        first_time = false;
 
         bool valid;
         Uri::check_constraints(&tc_doc, &valid, NULL);

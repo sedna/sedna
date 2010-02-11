@@ -381,7 +381,7 @@ err:FORG0001
 	Invalid value for cast/constructor. 
 err:FORG0002
 
-	Invalid argument to fn:resolve-uri(). 
+	Invalid argument to URL resolve algorithm. 
 err:FORG0003
 
 	fn:zero-or-one called with a sequence containing more than one item. 
