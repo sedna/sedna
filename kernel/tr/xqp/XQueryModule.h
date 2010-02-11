@@ -39,6 +39,7 @@ namespace sedna
         nsPair defFuncNsp; // default function namespace
         bool isDefaultOrdered; // true, if prolog defines default is ordered (also true by default)
         bool isExplainOn; // true, if we will use Sedna explain feature on query execution
+        bool isProfileOn; // true, if we will use Sedna profile feature on query execution
 
         XQFunctionInfo funcs; // all function defined in prolog
         XQVariablesInfo vars; // all variables defined in this module
@@ -87,14 +88,23 @@ namespace sedna
             return isDefaultOrdered;
         }
 
-        void turnExplainOn()
+        void setFlags(uint8_t flags)
         {
-            isExplainOn = true;
+            if (flags & 1)
+                isExplainOn = true;
+
+            if (flags & 2)
+                isProfileOn = true;
         }
 
-        bool turnExplain()
+        bool turnedExplain() const
         {
             return isExplainOn;
+        }
+
+        bool turnedProfile() const
+        {
+            return isProfileOn;
         }
 
         bool getFunctionInfo(const std::string &name, XQFunction &xqf) const;

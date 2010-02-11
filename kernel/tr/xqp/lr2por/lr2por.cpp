@@ -2794,8 +2794,7 @@ namespace sedna
             qep = new PPQueryRoot(dyn_cxt, off.opin);
         }
 
-        // explain feature
-        if (mod->turnExplain())
+        if (mod->turnedExplain()) // explain feature
         {
             dynamic_context *old_dyn_cxt = dyn_cxt;
 
@@ -2804,6 +2803,15 @@ namespace sedna
             dyn_cxt->var_map = old_dyn_cxt->var_map;
 
             // then, we build PPQueryRoot->PPExplain on top of actual query
+            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep), 1);
+            qep = new PPQueryRoot(dyn_cxt, expl);
+        }
+        else if (mod->turnedProfile()) // profile feature
+        {
+            // first, we need new dynamic context since we will use two root operations
+            dyn_cxt = new dynamic_context(st_cxt, 0);
+            // then, we build PPQueryRoot->PPProfile on top of actual query
+            // TODO: PPExplain --> PPProfile
             PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep), 1);
             qep = new PPQueryRoot(dyn_cxt, expl);
         }

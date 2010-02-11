@@ -199,12 +199,12 @@ namespace sedna
         return err_msg;
     }
 
-    void XQueryDriver::addModule(ASTNode *mod, bool explain)
+    void XQueryDriver::addModule(ASTNode *mod, uint8_t flags)
     {
         XQueryModule *xqmod = new XQueryModule(mod, this);
 
-        if (explain)
-            xqmod->turnExplainOn();
+        // set feature flags on module
+        xqmod->setFlags(flags);
 
         mods.push_back(xqmod);
     }

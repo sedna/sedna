@@ -208,6 +208,7 @@ namespace sedna
 %token <isUpper> OR_ "OR"
 %token <isUpper> PASSWORD "password"
 %token <isUpper> PRECEDING_ "PRECEDING"
+%token <isUpper> PROFILE "profile"
 %token <isUpper> PUBLIC "public"
 %token <isUpper> RENAME "rename"
 %token <isUpper> REPLACE "replace"
@@ -466,15 +467,17 @@ namespace sedna
 
 %destructor { destroyASTStringVector($$); } uriLiteralList moduleList
 
-    /* we expect 55 conflicts in this grammar:
+    /* we expect 56 conflicts in this grammar:
             1) 1 for Sedna explain feature (default: 'shift' always treats first 'explain' as feature-keyword, thus making impossible such
-                queries as 'explain or xxx'). See also 3) constraint on 'load'.
-            2) 51 for 'xgs:leading-lone-slash' grammar constraint (default: 'shift' is consistent with specification)
-            3) 1 for 'load or replace module' Sedna expression since 'load or xxx' is a valid expression
+                queries as 'explain or xxx'). See also 4) constraint on 'load'.
+            2) 1 for Sedna profile feature (default: 'shift' always treats first 'profile' as feature-keyword, thus making impossible such
+                queries as 'profile or xxx'). See also 4) constraint on 'load'.
+            3) 51 for 'xgs:leading-lone-slash' grammar constraint (default: 'shift' is consistent with specification)
+            4) 1 for 'load or replace module' Sedna expression since 'load or xxx' is a valid expression
                     (default: 'shift' disables expressions such as 'load or xxx'; possible fix: reject 'or' and accept only 'OR')
-            4) 2 for 'xgs:occurrence-indicators' grammar constraint (default: 'shift' is consistent with specification)
+            5) 2 for 'xgs:occurrence-indicators' grammar constraint (default: 'shift' is consistent with specification)
     */
-%expect 55
+%expect 56
 
 
     /* set initial location and boundary space policy */
@@ -500,15 +503,19 @@ namespace sedna
 script:
         module
         {
-            driver.addModule($1, false);
+            driver.addModule($1, 0);
         }
     |   script ST_SEP module
         {
-            driver.addModule($3, false);
+            driver.addModule($3, 0);
         }
     |   EXPLAIN module
         {
-            driver.addModule($2, true);
+            driver.addModule($2, 1);
+        }
+    |   PROFILE module
+        {
+            driver.addModule($2, 2);
         }
     ;
 
@@ -3184,6 +3191,7 @@ funcName:
     |    OR_ { $$ = new std::string("OR"); }
     |    PASSWORD { $$ = new std::string(($1 != 0) ? "PASSWORD" : "password"); }
     |    PRECEDING_ { $$ = new std::string("preceding"); }
+    |    PROFILE { $$ = new std::string(($1 != 0) ? "PROFILE" : "profile"); }
     |    PUBLIC { $$ = new std::string(($1 != 0) ? "PUBLIC" : "public"); }
     |    RENAME { $$ = new std::string(($1 != 0) ? "RENAME" : "rename"); }
     |    REPLACE { $$ = new std::string(($1 != 0) ? "REPLACE" : "replace"); }
