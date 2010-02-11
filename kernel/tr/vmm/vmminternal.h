@@ -1,0 +1,35 @@
+/*
+* File:  vmminternal.h
+* Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
+
+#ifndef _VMM_INTERNAL_H
+#define _VMM_INTERNAL_H
+
+#include "common/sm_vmm_data.h"
+
+extern UMMap global_memory_mapping;
+
+/* Is any block mapped on position */
+inline static bool _vmm_is_address_busy(void * p) {
+    return (XADDR(((vmm_sm_blk_hdr*)p)->p) == NULL);
+}
+
+enum vmm_map_protection_t {
+    access_null = 0,
+    access_readonly = 1,
+    access_readwrite = 2,
+    access_writeonly = 3
+};
+
+int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection_t p);
+int _uvmm_unmap(void *addr);
+int __vmm_check_region(uint32_t cur, void ** res_addr, uint32_t * segment_size, bool log, FILE * logfile);
+
+inline static void check_bounds(xptr p) {
+    if (!(LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)XADDR(p) &&
+        (int)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
+        throw USER_EXCEPTION(SE1036);
+}
+
+#endif /* _VMM_INTERNAL_H */
