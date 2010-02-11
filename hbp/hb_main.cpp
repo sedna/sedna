@@ -13,6 +13,7 @@
 #include "common/u/uprocess.h"
 #include "common/u/usocket.h"
 #include "common/u/uutils.h"
+#include "common/sm_vmm_data.h"
 
 #include <string>
 

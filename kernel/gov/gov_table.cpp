@@ -17,6 +17,7 @@
 #include "config_utils.h"
 #include "common/ipc_ops.h"
 
+#include "common/sm_vmm_data.h"
 
 
 /*****************************************************************************/
@@ -37,7 +38,7 @@ void Session::print_session()
 void info_table::init(gov_config_struct* cfg)
 {
    int i = 0;
-  
+
    for (i=0; i< MAX_SESSIONS_NUMBER; i++)
        _ids_table_.push_back(i);
 
@@ -103,7 +104,7 @@ int info_table::get_session_info(const session_id& s_id, UPID& pid, UPHANDLE& pr
   c_it = _session_table_.find(s_id);
 
   if ( c_it != _session_table_.end() )//exist record with key s_id
-  { 
+  {
      pid = c_it->second.pid;
      proc_handle = c_it->second.p;
      is_child = c_it->second.is_child;
@@ -120,7 +121,7 @@ int info_table::get_database_info(const database_id& db_id, UPID& pid/*out*/, UP
   c_it = _database_table_.find(db_id);
 
   if ( c_it != _database_table_.end() )//exist record with key db_id
-  { 
+  {
      pid = c_it->second.pid;
      proc_handle = c_it->second.p;
      return 0;
@@ -167,15 +168,15 @@ void info_table::stop_session(const session_id& s_id)
 }
 
 /// Returns session_id and locks pid until end of session
-int 
-info_table::insert_session(/* in */  UPID &pid, 
-                                     UPHANDLE* h_p, 
-                           /* in */  std::string &db_name, 
-                                     bool is_child, 
+int
+info_table::insert_session(/* in */  UPID &pid,
+                                     UPHANDLE* h_p,
+                           /* in */  std::string &db_name,
+                                     bool is_child,
                            /* out */ session_id& s_id) {
 
   UPHANDLE proc_handle;
-  
+
   if (h_p == NULL)
   {
      if (uOpenProcess(pid, &proc_handle, __sys_call_error) != 0)
@@ -197,13 +198,13 @@ info_table::insert_session(/* in */  UPID &pid,
      return -2;
   }
 
-  std::pair<s_table_iter, bool> it;  
-  
+  std::pair<s_table_iter, bool> it;
+
   Session s = Session(db_name, pid, proc_handle, is_child);
   it = _session_table_.insert(s_record(s_id, s));
 
   if (!(it.second))
-  { 
+  {
      this->give_id(s_id);
      if (!is_child)  uCloseProcess(proc_handle, __sys_call_error);
      return -3;
@@ -230,11 +231,11 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
         ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = 0;
         ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = pid;
         break;
-     }   
+     }
   }
 
   if (i== MAX_DBS_NUMBER)
-  { 
+  {
      uCloseProcess(proc_handle, __sys_call_error);
      return -2;
   }
@@ -269,10 +270,10 @@ void info_table::erase_database(const database_id& db_id)
         ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = -1;
         ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = -1;
         break;
-     }   
+     }
   }
 
-   _database_table_.erase(db_id);  
+   _database_table_.erase(db_id);
 }
 
 
@@ -300,7 +301,7 @@ void info_table::erase_all_closed_pids()
   {
       uNonBlockingWaitForChildProcess(it->first);
       res = uIsProcessExist(it->first, it->second.p, __sys_call_error);
-      if (-1 == res) 
+      if (-1 == res)
           tmp.push_back(it->first);
       else if (-2 == res)
           throw SYSTEM_EXCEPTION("Governor failed while erasing closed pids");
@@ -315,16 +316,16 @@ void info_table::stop_sessions(const std::string &db_name)
 {
   s_table_iter it;
   std::vector<session_id> tmp;
-  
+
   for(it = _session_table_.begin(); it!=_session_table_.end(); it++)
   {
      if ( it->second.db_name == db_name )
         tmp.push_back(it->first);
   }
 
-  for (unsigned int i = 0; i < tmp.size(); i++)  
+  for (unsigned int i = 0; i < tmp.size(); i++)
       stop_session(tmp[i]);
-   
+
   elog(EL_DBG, ("%"PRIu32" session(s) on '%s' database stopped", tmp.size(), db_name.c_str()));
 }
 
@@ -346,23 +347,23 @@ void info_table::stop_sessions()
 
 void info_table::stop_database(const database_id& db_id)
 {
-  UPID pid;  
+  UPID pid;
   UPHANDLE proc_handle;
   SSMMsg *sm_server = NULL;
   int res;
   char buf[1024];
 
   d_printf2("database id =%s\n", db_id.c_str());
-  
+
   if (this->get_database_info(db_id, pid, proc_handle) != 0)
      throw SYSTEM_EXCEPTION("Error in Logic of Governor service (database is not found)");
 
-  sm_server = new SSMMsg(SSMMsg::Client, 
-                         sizeof (sm_msg_struct), 
-                         CHARISMA_SSMMSG_SM_ID(get_db_id_by_name((gov_config_struct*)gov_shared_mem, db_id.c_str()), buf, 1024), 
+  sm_server = new SSMMsg(SSMMsg::Client,
+                         sizeof (sm_msg_struct),
+                         CHARISMA_SSMMSG_SM_ID(get_db_id_by_name((gov_config_struct*)gov_shared_mem, db_id.c_str()), buf, 1024),
                          SM_NUMBER_OF_SERVER_THREADS);
 
-  if (sm_server->init() != 0) 
+  if (sm_server->init() != 0)
      throw SYSTEM_EXCEPTION("Failed to initialize SSMMsg service (message service)");
 
   this->erase_database(db_id);//this call must be before send message to sm
@@ -370,7 +371,7 @@ void info_table::stop_database(const database_id& db_id)
   sm_msg_struct msg;
   msg.cmd = 10;
 
-  if (sm_server->send_msg(&msg) != 0) 
+  if (sm_server->send_msg(&msg) != 0)
      throw SYSTEM_EXCEPTION("Can't send message via SSMMsg");
 
   if (sm_server->shutdown() != 0)
@@ -378,7 +379,7 @@ void info_table::stop_database(const database_id& db_id)
 
   delete sm_server;
   sm_server = NULL;
-  
+
 
   res = uWaitForProcess(pid, proc_handle, __sys_call_error);
   if (res != 0)
@@ -392,7 +393,7 @@ void info_table::stop_database(const database_id& db_id)
 bool info_table::is_database_run(const database_id& db_id)
 {
   db_table_const_iter c_it;
-  
+
   c_it = _database_table_.find(db_id);
 
   if ( c_it != _database_table_.end() )//exist record with key db_id
@@ -411,7 +412,7 @@ void info_table::stop_databases()
   for(it = _database_table_.begin(); it!=_database_table_.end(); it++)
      tmp.push_back(it->first);
 
-  for(i=0; i< tmp.size(); i++) 
+  for(i=0; i< tmp.size(); i++)
      stop_database(tmp[i]);
 
   d_printf1("All databases over Sedna has been closed succesfully\n");
@@ -431,7 +432,7 @@ int info_table::check_stop_gov()
 int info_table::check_stop_databases()
 {
   int ret_code =0;
-  for (unsigned int i=0; i< MAX_DBS_NUMBER; i++) 
+  for (unsigned int i=0; i< MAX_DBS_NUMBER; i++)
   {
      if ((((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name)[0] != '\0' &&
          ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop == 1)
@@ -448,14 +449,14 @@ int info_table::check_stop_databases()
 }
 
 /// Fulfills the given runtime configuration vector
-/// If the function succeeds, the return value is 0. 
-/// Else it returns 1 which means that gov table 
+/// If the function succeeds, the return value is 0.
+/// Else it returns 1 which means that gov table
 /// state is not consistent at the moment.
 int info_table::get_rc(/*in*/ rc_vector& rc)
 {
    db_table_const_iter dit     = _database_table_.begin();
    db_table_const_iter dit_end = _database_table_.end();
-   
+
    for(; dit != dit_end; dit++)
    {
        rc.insert ( rc_pair(dit->first, 0) );
@@ -471,7 +472,7 @@ int info_table::get_rc(/*in*/ rc_vector& rc)
       {
           (rit->second)++;
       }
-      else 
+      else
           return 1;
    }
    return 0;
@@ -492,7 +493,7 @@ bool info_table::find_pid(UPID pid, UPHANDLE& p)
    pids_table_iter it;
    if ( (it = _pids_table_.find(pid)) == _pids_table_.end())
       return false;
-   else 
+   else
    {
       p = it->second.p;
       return true;
@@ -518,7 +519,7 @@ void info_table::wait_remove_pid(UPID pid, bool is_child_process)
 
     uCloseProcess(proc_handle, __sys_call_error);
 
-    this->remove_pid(pid);    
+    this->remove_pid(pid);
   }
   else
   {
@@ -562,7 +563,7 @@ gov_config_struct* info_table::get_config_struct()
 void info_table::print_info_table()
 {
   s_table_iter c_it;
-  
+
   d_printf1("\n\n=============== SESSION TABLE ====================\n");
   for(c_it = _session_table_.begin(); c_it!=_session_table_.end(); c_it++)
   {

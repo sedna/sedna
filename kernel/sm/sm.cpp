@@ -22,6 +22,7 @@
 #include "common/mmgr/memutils.h"
 #include "common/config.h"
 #include "common/ipc_ops.h"
+#include "common/sm_vmm_data.h"
 
 #include "sm/wu/wu.h"
 #include "sm/llsm/llMain.h"
@@ -232,7 +233,7 @@ int sm_server_handler(void *arg)
                          bm_reset_io_statistics();
                          bm_register_session(msg->sid, msg->data.reg.num);
                          msg->data.reg.num = bufs_num;
-                         msg->data.reg.mptr = * (__int64 *) (&mb->catalog_masterdata_block);
+                         msg->data.reg.mptr = mb->catalog_masterdata_block;
                          msg->data.reg.transaction_flags = mb->transaction_flags;
                          msg->cmd = 0;
                          break;
@@ -247,18 +248,18 @@ int sm_server_handler(void *arg)
             case 23: {
                          //d_printf1("query 23: bm_allocate_data_block\n");
                          WuAllocateDataBlockExn(msg->sid,
-                                                (xptr*)(&(msg->data.swap_data.ptr)),
+                                                &(msg->data.swap_data.ptr),
                                                 (ramoffs*)(&(msg->data.swap_data.offs)),
-                                                (xptr*)(&(msg->data.swap_data.swapped)));
+                                                &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
                      }
             case 24: {
                          //d_printf1("query 24: bm_allocate_tmp_block\n");
                          WuAllocateTempBlockExn(msg->sid,
-                                               (xptr*)(&(msg->data.swap_data.ptr)),
+                                               &(msg->data.swap_data.ptr),
                                                (ramoffs*)(&(msg->data.swap_data.offs)),
-                                               (xptr*)(&(msg->data.swap_data.swapped)));
+                                               &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
                      }
@@ -272,9 +273,9 @@ int sm_server_handler(void *arg)
             case 26: {
                          //d_printf1("query 26: bm_get_block\n");
                          WuGetBlockExn(msg->sid,
-                                      *(xptr*)(&(msg->data.swap_data.ptr)),
+                                      msg->data.swap_data.ptr,
                                       (ramoffs*)(&(msg->data.swap_data.offs)),
-                                      (xptr*)(&(msg->data.swap_data.swapped)));
+                                      &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
                      }
@@ -352,8 +353,8 @@ int sm_server_handler(void *arg)
 						 WuOnUnregisterTransactionExn(msg->sid);
                          bm_unregister_transaction(msg->sid, msg->trid);
 
-                         if (mb->catalog_masterdata_block != * (xptr *) (&msg->data.ptr)) {
-                             mb->catalog_masterdata_block = * (xptr *) (&msg->data.ptr);
+                         if (mb->catalog_masterdata_block != msg->data.ptr) {
+                             mb->catalog_masterdata_block = msg->data.ptr;
                              flush_master_block();
                          }
 
@@ -372,9 +373,9 @@ int sm_server_handler(void *arg)
                      {
 						 /* create version for the block */
                          WuCreateBlockVersionExn(msg->sid,
-                                      *(xptr*)(&(msg->data.swap_data.ptr)),
+                                      msg->data.swap_data.ptr,
                                       (ramoffs*)(&(msg->data.swap_data.offs)),
-                                      (xptr*)(&(msg->data.swap_data.swapped)));
+                                      &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
                      }

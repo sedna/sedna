@@ -130,7 +130,7 @@ int sequence::add(const tuple &t)
 
         {
             xptr txt_ptr = txt.append(t.cells[i]);
-            CHECKP(eblk);
+            WRITEP(eblk);
             (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
         }
     }
@@ -300,7 +300,7 @@ void descript_sequence::sort1(int off, int len)
 
     // Establish Invariant: v* (<v)* (>v)* v*
     int a = off, b = a, c = off + len - 1, d = c;
-    while(true) 
+    while(true)
     {
         while (b <= c && on_less_lt(b,v)<=0)
         {

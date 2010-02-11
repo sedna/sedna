@@ -11,6 +11,7 @@
 #include "tr/crmutils/exec_output.h"
 #include "tr/crmutils/crmbase.h"
 #include "tr/cat/catptr.h"
+#include "tr/executor/base/tuple.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
@@ -48,11 +49,11 @@ void print_node_to_buffer(xptr node,
 ////////////////////////////////////////////////////////////////////////////////
 
 xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,
-              bool stripped, int& need_cp,
+              bool stripped,
               bool print_progress);
 
 xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,
-              const char * collection, bool stripped, int& need_cp,
+              const char * collection, bool stripped,
               bool print_progress);
 
 ////////////////////////////////////////////////////////////////////////////////

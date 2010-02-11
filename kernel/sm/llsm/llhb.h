@@ -9,6 +9,8 @@
 #ifndef _LL_HB_LOG_
 #define _LL_HB_LOG_
 
+#include "common/sm_vmm_data.h"
+
 // Main log hot-backup routine
 // Returns:
 // 		-1 - error; 0 - all ok;

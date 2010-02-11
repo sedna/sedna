@@ -402,8 +402,8 @@ void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
         (int)(info->si_addr) < LAYER_ADDRESS_SPACE_BOUNDARY_INT)
     { 
         // VMM page fault
-        if (vmm_is_busy_called) longjmp(vmm_is_busy_env, 0);
-        else vmm_unswap_block(vmm_cur_xptr);
+//        if (vmm_is_busy_called) longjmp(vmm_is_busy_env, 0);
+        vmm_unswap_block(vmm_cur_xptr);
     }
     else
     {
