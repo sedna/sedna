@@ -164,6 +164,8 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
                 CHECKP(data);
                 memcpy(buffer + (size_t) size, XADDR(data), (size_t) curr_size);
             }
+
+            CHECKP(node_xptr);
             if (isPstr(node)) {
                 pstr_modify(node_xptr, buffer, (size_t) (size + curr_size));
             } else {

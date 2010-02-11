@@ -8,6 +8,7 @@
 
 #include "common/sp.h"
 #include "common/u/usocket.h"
+#include "common/sm_vmm_data.h"
 
 // init new hot-backup connection
 int hbNewClient(USOCKET sock);

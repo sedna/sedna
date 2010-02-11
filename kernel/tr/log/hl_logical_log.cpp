@@ -257,16 +257,23 @@ void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,con
 	{
 		pstr_long_cursor cur(value, true);
 		char *ptr1, *ptr2;
+		xptr p1, p2;
 		int len1 = cur.get_blk_rev(&ptr1);
+		p1 = addr2xptr(ptr1);
 		int len2 = cur.get_blk_rev(&ptr2);
+        p2 = addr2xptr(ptr2);
 		ASSERT(len1 > 0);
 		while (len2 > 0)
 		{
+		    CHECKP(p1);
 			hl_logical_log_text_edit(self, ptr1, len1, false, false);
 			len1 = len2;
 			ptr1 = ptr2;
+			p1 = p2;
 			len2 = cur.get_blk_rev(&ptr2);
+	        p2 = addr2xptr(ptr2);
 		}
+        CHECKP(p1);
 		hl_logical_log_text(self, left, right, parent, ptr1, len1, false);
 	}
 }
@@ -277,8 +284,8 @@ void hl_logical_log_text_edit(const xptr &self,int data_size,bool begin,bool ins
 	ASSERT(inserted);
 	xptr desc = indirectionDereferenceCP(self);
 	CHECKP(desc);
+    strsize_t str_len = getTextSize((t_dsc*)XADDR(desc));
 	xptr str_ptr = getTextPtr((t_dsc*)XADDR(desc));
-	strsize_t str_len = getTextSize((t_dsc*)XADDR(desc));
 	if (str_len <= PSTRMAXSIZE)
 	{
 		if (inserted)

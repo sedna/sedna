@@ -74,7 +74,7 @@ void PPBulkLoad::do_accept(PPVisitor &v)
     v.push  (this);
     filename.op->accept(v);
     document.op->accept(v);
-    if (collection.op) collection.op->accept(v);    
+    if (collection.op) collection.op->accept(v);
     v.pop();
 }
 
@@ -148,7 +148,6 @@ void PPBulkLoad::do_execute()
                                 *tr_globals::client->get_se_ostream(),
                                 tc_document.get_str_mem(),
                                 boundary_space_strip,
-                                need_cp,
                                 tr_globals::client->is_print_progress());
 
             if (!write_to_logical_log) hl_enable_log();
@@ -178,7 +177,6 @@ void PPBulkLoad::do_execute()
                                 tc_document.get_str_mem(),
                                 tc_collection.get_str_mem(),
                                 boundary_space_strip,
-                                need_cp,
                                 tr_globals::client->is_print_progress());
 
             if (!write_to_logical_log) hl_enable_log();

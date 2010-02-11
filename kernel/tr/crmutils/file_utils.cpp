@@ -6,6 +6,8 @@
 #include "common/sedna.h"
 
 #include <math.h>
+#include <map>
+
 #include "tr/crmutils/crmutils.h"
 #include "tr/structures/metadata.h"
 #include "expat/expat.h"
@@ -59,7 +61,7 @@ static std::vector<stat_pair*> curp;
 static void remove_hints(schema_node_cptr nd)
 {
     nd.modify()->lastnode_ind=XNULL;
-    
+
     cat_list<sc_ref>::item * sc;
     for (sc = nd->children.first; sc != NULL; sc = sc->next) {
         remove_hints(sc->object.snode);
@@ -77,8 +79,8 @@ static bool isWP(const char* data, int size )
     return true;
 }
 
-static void separateName(const char* triplet, 
-                         const char*& uri, 
+static void separateName(const char* triplet,
+                         const char*& uri,
                          const char*& local,
                          const char*& prefix)
 {
@@ -105,7 +107,7 @@ static void separateName(const char* triplet,
             maxnm = tripsize;
             nodenames = se_new char[tripsize];
         }
-        memcpy(nodenames, triplet, tripsize); 
+        memcpy(nodenames, triplet, tripsize);
         uri = nodenames;
         local = nodenames + (sec-triplet);
         nodenames[sec-triplet-1] = '\0';
@@ -144,7 +146,7 @@ static  void analyzeWP(const char** data, int& size )
     if (s==32 || s==9 || s==10 || s==13 )   es--;
     else break;
  }
- size=size-i;   
+ size=size-i;
 }
 
 static void processWP(const char** s, int& len)
@@ -167,7 +169,7 @@ static void processWP(const char** s, int& len)
             (GETBLOCKBYNODE(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
             if (is_coll)
-                update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
+                update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode));
 #endif
             mark=0;
             left=new_node;
@@ -215,7 +217,7 @@ static void start(void *s, const char *el, const char **attr)
     clear_text();
     xptr new_node;
     xmlns_ptr ns = NULL_XMLNS;
-    
+
     if (uri != NULL || prefix != NULL)
     {
         if (!uri) uri="";
@@ -253,8 +255,8 @@ static void start(void *s, const char *el, const char **attr)
         is_ns=0;
         nss.clear();
     }
-    
-    for (int i = 0; attr[i]; i += 2) 
+
+    for (int i = 0; attr[i]; i += 2)
     {
         separateName((char*)attr[i],uri,local,prefix);
         if (uri != NULL || prefix != NULL)
@@ -271,7 +273,7 @@ static void start(void *s, const char *el, const char **attr)
 #endif
     }
 
-    if (att!=XNULL) 
+    if (att!=XNULL)
     {
         left=att;
         mark=0;
@@ -323,7 +325,7 @@ static void data(void *userData, const char *s, int len)
         }
         return;
     }
-    if (wpstrip) 
+    if (wpstrip)
     {
         processWP(&s,len);
         if (len==0) return;
@@ -340,14 +342,14 @@ static void data(void *userData, const char *s, int len)
     (getBlockHeader(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode)); 
+        update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode));
 #endif
     mark=0;
     left=new_node;
     CHECKP(left);
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     CHECKP(par_ind);
-    
+
 #ifdef _MYDEBUG1
     if ((*((xptr*)XADDR(par_ind))).layer>0)
         {
@@ -389,7 +391,7 @@ static void sc_start(void *data, const char *el, const char **attr)
     }
     schema_node_cptr atts = XNULL;
     nodescnt++;
-    for (int i = 0; attr[i]; i += 2) 
+    for (int i = 0; attr[i]; i += 2)
     {
         separateName((char*)attr[i],uri,local,prefix);
         if (uri!=NULL || prefix!=NULL)
@@ -453,15 +455,15 @@ static void el_ns (void *userData, const char *prefix, const char *uri)
 
 static void sc_ns (void *userData, const char *prefix, const char *uri)
 {
-    /* 
-     * This is situation xmlns="". The attribute value in a default namespace 
-     * declaration MAY be empty. This has the same effect, within the scope of 
+    /*
+     * This is situation xmlns="". The attribute value in a default namespace
+     * declaration MAY be empty. This has the same effect, within the scope of
      * the declaration, of there being no default namespace.
      */
     if(prefix == NULL && uri == NULL) return;
-    
+
     const char* prefixm;
-    
+
     if (prefix==NULL) prefixm="";
     else prefixm = prefix;
 
@@ -547,7 +549,7 @@ static void dt_cdata_end (void *userData)
     CHECKP(left);
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
     parent=removeIndirection(par_ind);
-    clear_text();   
+    clear_text();
 }
 
 
@@ -598,18 +600,18 @@ static void parse_load(FILE* f, se_ostream &ostr)
 
     cdata_mode=false;
     len = fread(Buff, 1, BUFFSIZE, f);
-    if (ferror(f)) 
+    if (ferror(f))
     {
         XML_ParserFree(p);
         throw USER_ENV_EXCEPTION("Read error",true);
     }
     done = feof(f);
-    while (!done) 
+    while (!done)
     {
         if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
         {
             len = fread(Buff, 1, BUFFSIZE, f);
-            if (ferror(f)) 
+            if (ferror(f))
             {
                 XML_ParserFree(p);
                 throw USER_ENV_EXCEPTION("Read error",true);
@@ -618,7 +620,7 @@ static void parse_load(FILE* f, se_ostream &ostr)
         }
         else
         {
-            char tmp[256]; 
+            char tmp[256];
             sprintf(tmp, "line %d:\n%s\n",
                 XML_GetCurrentLineNumber(p),
                 XML_ErrorString(XML_GetErrorCode(p)));
@@ -628,7 +630,7 @@ static void parse_load(FILE* f, se_ostream &ostr)
     }
     if (XML_Parse(p, Buff, len, done)== XML_STATUS_ERROR)
     {
-        char tmp[256]; 
+        char tmp[256];
         sprintf(tmp, "line %d:\n%s\n",
             XML_GetCurrentLineNumber(p),
             XML_ErrorString(XML_GetErrorCode(p)));
@@ -659,7 +661,7 @@ static void parse_schema(FILE* f)
     XML_SetCharacterDataHandler(p, sc_data);
     cdata_mode=false;
     len = fread(Buff, 1, BUFFSIZE, f);
-    if (ferror(f))  
+    if (ferror(f))
     {
         XML_ParserFree(p);
         throw USER_ENV_EXCEPTION("Read error",true);
@@ -670,7 +672,7 @@ static void parse_schema(FILE* f)
         if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
         {
             len = fread(Buff, 1, BUFFSIZE, f);
-            if (ferror(f)) 
+            if (ferror(f))
             {
                 XML_ParserFree(p);
                 throw USER_ENV_EXCEPTION("Read error",true);
@@ -679,31 +681,31 @@ static void parse_schema(FILE* f)
         }
         else
         {
-            char tmp[256]; 
+            char tmp[256];
             sprintf(tmp, "line %d:\n%s\n",
                 XML_GetCurrentLineNumber(p),
                 XML_ErrorString(XML_GetErrorCode(p)));
             XML_ParserFree(p);
             throw USER_EXCEPTION2(SE2005, tmp);
-            
+
         }
     }
     if (XML_Parse(p, Buff, len, done)== XML_STATUS_ERROR)
     {
-        char tmp[256]; 
+        char tmp[256];
         sprintf(tmp, "line %d:\n%s\n",
             XML_GetCurrentLineNumber(p),
             XML_ErrorString(XML_GetErrorCode(p)));
         XML_ParserFree(p);
         throw USER_EXCEPTION2(SE2005, tmp);
     }
-    
+
     std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent);
     if (it==max_fo.end())
         max_fo[sc_parent]=stat_pair(curr_fo.back(),0);
     else
         if (it->second.first<curr_fo.back()) it->second.first=curr_fo.back();
-    curr_fo.pop_back(); 
+    curr_fo.pop_back();
     it= max_fo.begin();
     while (it!=max_fo.end())
     {
@@ -718,12 +720,11 @@ static void parse_schema(FILE* f)
 
 }
 
-xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped,int& need_cp, bool print_progress)
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped, bool print_progress)
 {
     //test_cnt=0;
     is_coll=false;
     if (!print_progress) print_p = print_progress;
-    need_cp=vmm_data_blocks_allocated();
     wpstrip=stripped;
     nid_set_proportion(fnumber());
     xptr docnode=insert_document(uri);
@@ -738,7 +739,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped,int& need
         fseek (f, 0, SEEK_SET);
         docnode = ((n_dsc*) XADDR(docnode))->indir;
         parse_load(f, ostr);
-    
+
         if (print_p)
             ostr <<"100%" << endl;
 
@@ -749,11 +750,6 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped,int& need
 
         remove_hints(sc_parent);
         sc_parent = XNULL;
-
-        if (vmm_data_blocks_allocated()-need_cp > 100)
-            need_cp=1;
-        else
-            need_cp=0;
     }
     catch (SednaUserException &e)
     {
@@ -769,11 +765,10 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped,int& need
     return docnode;
 }
 
-xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress)
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection, bool stripped, bool print_progress)
 {
     is_coll=true;
     if (!print_progress) print_p = print_progress;
-    need_cp=vmm_data_blocks_allocated();
     wpstrip=stripped;
     nid_set_proportion(fnumber());
 
@@ -793,28 +788,23 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
         fseek(f, 0, SEEK_SET);
         docnode = ((n_dsc*) XADDR(docnode))->indir;
         parse_load (f, ostr);
-    
+
         if (print_p)
             ostr <<"100%" << endl;
-    
+
         nodescnt=0;
         curcnt=0;
         curproc=0;
         CHECKP(docnode);
-    
+
         remove_hints(sc_parent);
         sc_parent = XNULL;
-    
-        if (vmm_data_blocks_allocated()-need_cp > 1000)
-            need_cp=1;
-        else
-            need_cp=0;
     }
     catch (SednaUserException &e)
     {
         remove_hints(sc_parent);
         sc_parent = XNULL;
-    
+
         delete_document_from_collection(collection, uri);
         throw;
     }
@@ -824,6 +814,6 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
 #ifdef SE_ENABLE_FTSEARCH
     execute_modifications();
 #endif
-    return docnode; 
+    return docnode;
 }
 

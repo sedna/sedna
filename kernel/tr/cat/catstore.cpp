@@ -3,9 +3,12 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "common/sm_vmm_data.h"
+
 #include "tr/cat/catstore.h"
 #include "tr/vmm/vmm.h"
 #include "tr/cat/catalog.h"
+#include "tr/tr_globals.h"
 
 #define SBA_SIZE ((int) CS_CELL_BITMAP_SIZE)
 #include "tr/cat/smallbitarray.h"
@@ -27,8 +30,9 @@ inline void __debug_check_bounds(char * aaddr, cs_size_t asize, void * wdest, si
 }
 #endif
 
-xptr safe_block = XNULL;
-xptr hint_ptr = XNULL;
+static xptr safe_block = XNULL;
+static xptr hint_ptr = XNULL;
+static bool safe_block_write = false;
 
 typedef uint16_t cell_t;
 
@@ -62,11 +66,22 @@ struct cs_inblock_part_descriptor {
 
 int __debug_blockstack_level = 0;
 
+void cs_initp()
+{
+    safe_block = XNULL;
+    safe_block_write = false;
+}
+
 void cs_pushp()
 {
     U_ASSERT(__debug_blockstack_level++ == 0);
     U_ASSERT(safe_block == XNULL);
     safe_block = vmm_cur_xptr;
+
+    if (safe_block != XNULL) {
+        vmm_sm_blk_hdr * bh = (vmm_sm_blk_hdr *) XADDR(safe_block);
+        safe_block_write = bh->is_changed && bh->trid_wr_access == tr_globals::sid;
+    }
 }
 
 void cs_popp()
@@ -74,6 +89,7 @@ void cs_popp()
     U_ASSERT(__debug_blockstack_level-- == 1);
     if (safe_block != XNULL) {
         CHECKP(safe_block);
+        if (safe_block_write) { VMM_SIGNAL_MODIFICATION(safe_block); }
         safe_block = XNULL;
     }
 }

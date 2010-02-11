@@ -39,7 +39,6 @@ uint64_t deserialized_objects;
 
 inline char * catalog_ht_fullname_string(enum catalog_named_objects obj_type, const char * key);
 
-//struct local_catalog_header * local_catalog;
 struct local_catalog_header * local_catalog;
 
 USemaphore _cat_master_semaphore;
@@ -124,6 +123,8 @@ void initialize_masterblock()
     memset(
         &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
         0, sizeof(int));
+
+    cs_initp();
 }
 
 catalog_journal_record * __catalog_ff(catalog_journal_record * p, enum catalog_named_objects obj_type)
@@ -160,6 +161,8 @@ void catalog_before_commit(bool is_commit)
  * Final journal commit. Done by single transaction at a time
  */
     catalog_lock_metadata();
+
+    cs_initp();
 
     try {
         catalog_journal_record *p, *r = local_catalog->catalog_journal;
@@ -240,11 +243,14 @@ void catalog_before_commit(bool is_commit)
 
 void catalog_after_commit(bool is_commit)
 {
+    cs_initp();
     catalog_unlock_metadata();
 }
 
 void catalog_on_transaction_begin()
 {
+    cs_initp();
+
     catalog_zero_counter(deserialized_objects);
 
     SafeMetadataSemaphore cat_masterlock;

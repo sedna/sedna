@@ -21,6 +21,7 @@ typedef uint32_t cs_size_t;
 
 void cs_pushp();
 void cs_popp();
+void cs_initp();
 
 void cs_write(xptr &p, const char * data, cs_size_t data_size);
 // void cs_read(const xptr &p, char * data, cs_size_t data_size);

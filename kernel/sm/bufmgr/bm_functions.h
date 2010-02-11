@@ -9,7 +9,7 @@
 
 #include "common/sedna.h"
 #include "common/xptr.h"
-
+#include "common/sm_vmm_data.h"
 
 void bm_startup() throw (SednaException);
 

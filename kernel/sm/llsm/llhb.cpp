@@ -9,6 +9,7 @@
 #include "common/base.h"
 #include "sm/llsm/llMain.h"
 #include "sm/llsm/lfsStorage.h"
+#include "common/sm_vmm_data.h"
 
 static hb_state hbStatus = HB_END;  // status of hot-backup process
 static int64_t hbLastFileNum = -1;  // number of the archive file
@@ -32,12 +33,12 @@ int llHotBackup(hb_state state, hb_state state_incr)
     if (hbStatus == HB_START)
     {
     	hbIncrStatus = state_incr;
-    	
+
     	// check if increment is possible
     	if (state_incr == HB_ADD_INCR && llInfo->next_arch_file == 0)
     		return -1;
     }
-    
+
     if (hbStatus == HB_END || hbStatus == HB_ERR)
     {
 	    if (hbStatus == HB_END)
@@ -46,7 +47,7 @@ int llHotBackup(hb_state state, hb_state state_incr)
 	       		llInfo->next_arch_file = 0;
 	    	else
 	    		llInfo->next_arch_file = hbLastFileNum + 1;
-	
+
 	  	    llFlushAll(); // we must flush log here because of header changes
 	  	}
 
