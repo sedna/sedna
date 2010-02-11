@@ -291,7 +291,7 @@ void PPFnResolveUri::do_next (tuple &t)
 
         Uri::Information nfo;
         Uri::check_constraints(&relative_tc, &valid, &nfo);
-        if(!valid) throw XQUERY_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not valid URI.");
+        if(!valid) throw XQUERY_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not a valid URI.");
         relative_tc = tuple_cell::make_sure_light_atomic(relative_tc);
         
         if(is_base_static)
@@ -312,7 +312,7 @@ void PPFnResolveUri::do_next (tuple &t)
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:resolve-uri (xs_string/derived/promotable is expected).");
 
             Uri::check_constraints(&base_tc, &valid, &nfo);
-            if(!valid) throw XQUERY_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not valid URI.");
+            if(!valid) throw XQUERY_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not a valid URI.");
 
             base.op->next(t);
             if(!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument contains more than one item.");
