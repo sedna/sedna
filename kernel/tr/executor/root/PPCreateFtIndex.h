@@ -19,6 +19,8 @@ void delete_cust_rules_vector(ft_index_template_t* &v);
 
 class PPCreateFtIndex : public PPUpdate
 {
+private:
+
     PathExpr *object_path;
 	ft_index_type index_type;
 	ft_index_impl index_impl;
@@ -27,11 +29,12 @@ class PPCreateFtIndex : public PPUpdate
     PPOpIn index_name;
     dynamic_context *cxt;
     
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
     
     PPCreateFtIndex(PathExpr *_object_path_,
                     const char* _index_type_,

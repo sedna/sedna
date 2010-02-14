@@ -104,41 +104,41 @@ inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 
 inline tuple_cell cast_xs_float_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
-    get_xs_float_lexical_representation(tr_globals::mem_str_buf, c.get_xs_float());
-    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
+    get_xs_float_lexical_representation(executor_globals::mem_str_buf, c.get_xs_float());
+    return tuple_cell::atomic_deep(res_type, executor_globals::mem_str_buf);
 }
 
 inline tuple_cell cast_xs_double_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
-    get_xs_double_lexical_representation(tr_globals::mem_str_buf, c.get_xs_double());
-    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
+    get_xs_double_lexical_representation(executor_globals::mem_str_buf, c.get_xs_double());
+    return tuple_cell::atomic_deep(res_type, executor_globals::mem_str_buf);
 }
 
 inline tuple_cell cast_xs_decimal_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
-    c.get_xs_decimal().get_c_str(tr_globals::mem_str_buf);
-    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
+    c.get_xs_decimal().get_c_str(executor_globals::mem_str_buf);
+    return tuple_cell::atomic_deep(res_type, executor_globals::mem_str_buf);
 }
 
 inline tuple_cell cast_xs_integer_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
-    get_xs_integer_lexical_representation(tr_globals::mem_str_buf, c.get_xs_integer());
-    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
+    get_xs_integer_lexical_representation(executor_globals::mem_str_buf, c.get_xs_integer());
+    return tuple_cell::atomic_deep(res_type, executor_globals::mem_str_buf);
 }
 
 inline tuple_cell cast_xs_dateTime_to_string_type(const tuple_cell &c, xmlscm_type xtype, xmlscm_type res_type)
 {
     if (xtype == xs_duration || xtype == xs_yearMonthDuration || xtype == xs_dayTimeDuration )
-        get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_duration(), xtype));
+        get_xs_dateTime_lexical_representation(executor_globals::mem_str_buf, XMLDateTime(c.get_xs_duration(), xtype));
     else
-        get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_dateTime(), xtype));
-    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
+        get_xs_dateTime_lexical_representation(executor_globals::mem_str_buf, XMLDateTime(c.get_xs_dateTime(), xtype));
+    return tuple_cell::atomic_deep(res_type, executor_globals::mem_str_buf);
 }
 
 inline tuple_cell cast_xs_boolean_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
-    get_xs_boolean_lexical_representation(tr_globals::mem_str_buf, c.get_xs_boolean());
-    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
+    get_xs_boolean_lexical_representation(executor_globals::mem_str_buf, c.get_xs_boolean());
+    return tuple_cell::atomic_deep(res_type, executor_globals::mem_str_buf);
 }
 
 inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c, xmlscm_type res_type)

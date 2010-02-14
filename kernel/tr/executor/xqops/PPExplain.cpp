@@ -3,6 +3,8 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <string>
+
 #include "common/sedna.h"
 
 #include "common/u/uutils.h"
@@ -10,12 +12,17 @@
 #include "tr/executor/base/visitor/PPExplainVisitor.h"
 #include "tr/mo/mo.h"
 
+using namespace std;
+
 PPExplain::PPExplain(dynamic_context *_cxt_,
                      operation_info _info_,
-                     PPQueryEssence* _qep_tree_) : PPIterator(_cxt_, _info_),
-                                                   qep_tree(_qep_tree_),
-                                                   scm(doc_schema_node_object::create(false))
+                     PPQueryEssence* _qep_tree_,
+                     bool _profiler_mode_) : PPIterator(_cxt_, _info_),
+                                            qep_tree(_qep_tree_),
+                                            scm(doc_schema_node_object::create(false)),
+                                            profiler_mode(_profiler_mode_)
 {
+    executor_globals::profiler_mode = profiler_mode;
 }
 
 PPExplain::~PPExplain()
@@ -26,6 +33,7 @@ PPExplain::~PPExplain()
 void PPExplain::do_open ()
 {
     first_time = true;
+    if(profiler_mode) qep_tree->open();
 }
 
 void PPExplain::do_reopen()
@@ -35,6 +43,7 @@ void PPExplain::do_reopen()
 
 void PPExplain::do_close()
 {
+    if(profiler_mode) qep_tree->close();
 }
 
 static inline xptr 
@@ -56,11 +65,33 @@ void PPExplain::do_next (tuple &t)
         first_time = false;
         char buf[20];
         xmlns_ptr defnsptr = cxt->st_cxt->get_default_namespace();
-        xmlns_ptr explain_ns = cxt->st_cxt->add_to_context("", SEDNA_NAMESPACE_URI);
+        profile_info pi_total;
 
+        if(profiler_mode)
+        {
+            u_timeb start, stop;
+            u_ftime(&start);
+            bool output = tr_globals::client->disable_output();
+            qep_tree->execute();
+            if(output) tr_globals::client->enable_output();
+            u_ftime(&stop);
+            pi_total.time = stop - start;
+        }
+        
+        xmlns_ptr explain_ns = cxt->st_cxt->add_to_context("", SEDNA_NAMESPACE_URI);
         xptr root = insert_doc_node(scm, "$explain", NULL);
+        xptr left = XNULL;
+
+        if(profiler_mode)
+        {
+            left = insert_element_i(XNULL,XNULL,root,"profile",xs_untyped,explain_ns);
+            xptr tmp = insert_element_i(XNULL,XNULL,left,"total-time",xs_untyped,explain_ns);
+            string time = to_string(pi_total.time);
+            insert_text_i(XNULL, XNULL, tmp, time.c_str(), time.length());
+        }
+
         /* Fill information about prolog */
-        xptr left = insert_element_i(XNULL,XNULL,root,"plolog",xs_untyped,explain_ns);
+        left = insert_element_i(left,XNULL,root,"plolog",xs_untyped,explain_ns);
 
         xptr tmp = XNULL;
         /* Insert boundary space declaration */
@@ -134,7 +165,7 @@ void PPExplain::do_next (tuple &t)
             u_itoa(i,buf,10);
             xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
             attr_left = insert_attribute_i(attr_left,XNULL,tmp,"variable-name",xs_untypedAtomic, gp.var_name.c_str(), gp.var_name.length(), NULL_XMLNS);
-            PPExplainVisitor visitor(cxt, tmp, cxt->var_map);
+            PPExplainVisitor visitor(cxt, tmp, cxt->var_map, profiler_mode);
             gp.op->accept(visitor);
         }
         
@@ -149,7 +180,7 @@ void PPExplain::do_next (tuple &t)
             std::string ret_type = fd.ret_st.to_str();
             insert_attribute_i(attr_left,XNULL,tmp,"type",xs_untypedAtomic, ret_type.c_str(), ret_type.length(), NULL_XMLNS);
                         
-            PPExplainVisitor visitor(cxt, tmp, fd.var_map);
+            PPExplainVisitor visitor(cxt, tmp, fd.var_map, profiler_mode);
             fd.op->accept(visitor);
 
             xptr args = insert_element_i(XNULL,XNULL,tmp,"arguments",xs_untyped,explain_ns);
@@ -168,7 +199,7 @@ void PPExplain::do_next (tuple &t)
         /* Fill information about query body */
         left = insert_element_i(left,XNULL,root,"query",xs_untyped,explain_ns);
 
-        PPExplainVisitor visitor(cxt, left, cxt->var_map);
+        PPExplainVisitor visitor(cxt, left, cxt->var_map, profiler_mode);
         qep_tree->accept(visitor);
         
         t.copy(tuple_cell::node_indir(root));

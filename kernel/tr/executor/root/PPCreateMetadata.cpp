@@ -28,7 +28,7 @@ PPCreateDocument::~PPCreateDocument()
     cxt = NULL;
 }
 
-void PPCreateDocument::open()
+void PPCreateDocument::do_open()
 {
     local_lock_mrg->lock(lm_x);
 
@@ -36,13 +36,13 @@ void PPCreateDocument::open()
     name.op->open();
 }
 
-void PPCreateDocument::close()
+void PPCreateDocument::do_close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPCreateDocument::accept(PPVisitor &v)
+void PPCreateDocument::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -50,7 +50,7 @@ void PPCreateDocument::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPCreateDocument::execute()
+void PPCreateDocument::do_execute()
 {
     tuple_cell tc;
     tuple t(1);
@@ -90,7 +90,7 @@ PPCreateCollection::~PPCreateCollection()
     cxt = NULL;
 }
 
-void PPCreateCollection::open()
+void PPCreateCollection::do_open()
 {
     dynamic_context::global_variables_open();
     name.op->open();
@@ -98,13 +98,13 @@ void PPCreateCollection::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPCreateCollection::close()
+void PPCreateCollection::do_close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPCreateCollection::accept(PPVisitor &v)
+void PPCreateCollection::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -112,7 +112,7 @@ void PPCreateCollection::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPCreateCollection::execute()
+void PPCreateCollection::do_execute()
 {
     tuple_cell tc;
     tuple t(1);
@@ -164,7 +164,7 @@ PPCreateDocumentInCollection::~PPCreateDocumentInCollection()
     cxt2 = NULL;
 }
 
-void PPCreateDocumentInCollection::open()
+void PPCreateDocumentInCollection::do_open()
 {
     dynamic_context::global_variables_open();
     document.op->open();
@@ -173,14 +173,14 @@ void PPCreateDocumentInCollection::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPCreateDocumentInCollection::close()
+void PPCreateDocumentInCollection::do_close()
 {
     document.op->close();
     collection.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPCreateDocumentInCollection::accept(PPVisitor &v)
+void PPCreateDocumentInCollection::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -189,7 +189,7 @@ void PPCreateDocumentInCollection::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPCreateDocumentInCollection::execute()
+void PPCreateDocumentInCollection::do_execute()
 {
     tuple_cell tc, tc_document, tc_collection;
     tuple t(1);

@@ -563,8 +563,8 @@ print_tuple_internal  (const tuple &tup,     /* tuple to print */
             {
                 if (is_fixed_size_type(tup.cells[i].get_atomic_type()))
                 {
-                    get_lexical_representation_for_fixed_size_atomic(tr_globals::mem_str_buf2, tup.cells[i], ptype);
-                    crmout.writextext(tr_globals::mem_str_buf2,strlen(tr_globals::mem_str_buf2));
+                    get_lexical_representation_for_fixed_size_atomic(executor_globals::mem_str_buf2, tup.cells[i], ptype);
+                    crmout.writextext(executor_globals::mem_str_buf2,strlen(executor_globals::mem_str_buf2));
                 }
                 else
                 {

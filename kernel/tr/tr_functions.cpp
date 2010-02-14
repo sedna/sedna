@@ -64,8 +64,6 @@ on_kernel_statement_begin(size_t mod_index,
 static void 
 on_kernel_statement_end(PPQueryEssence *&qep_tree)
 {
-    RESET_CURRENT_PP;
-
     if (is_qep_opened)
     {
         qep_tree->close();
@@ -80,9 +78,9 @@ on_kernel_statement_end(PPQueryEssence *&qep_tree)
         //  TODO: We should carefully clear virtual root here. To review it later.
         PPConstructor::clear_virtual_root();
 
-        tr_globals::estr_global.clear();
         stmt_str_buf::reset();
-        tr_globals::tmp_op_str_buf.reset();
+        tr_globals::estr_global.clear();
+        executor_globals::on_kernel_statement_end();
 
         if (pe_local_aspace->free_all) pe_local_aspace->free_all();
 

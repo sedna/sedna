@@ -33,7 +33,7 @@ PPInsertTo::~PPInsertTo()
     cxt2 = NULL;
 }
 
-void PPInsertTo::open()
+void PPInsertTo::do_open()
 {
     local_lock_mrg->lock(lm_x);
     dynamic_context::global_variables_open();
@@ -41,14 +41,14 @@ void PPInsertTo::open()
     child2.op->open();
 }
 
-void PPInsertTo::close()
+void PPInsertTo::do_close()
 {
     child1.op->close();
     child2.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPInsertTo::accept(PPVisitor &v)
+void PPInsertTo::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -57,7 +57,7 @@ void PPInsertTo::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPInsertTo::execute()
+void PPInsertTo::do_execute()
 {
     insert_to(child1, child2);
 }

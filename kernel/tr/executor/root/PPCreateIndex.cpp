@@ -39,7 +39,7 @@ PPCreateIndex::~PPCreateIndex()
     cxt = NULL;
 }
 
-void PPCreateIndex::open()
+void PPCreateIndex::do_open()
 {
     /* descriptive schema of the document/collection changes */
     local_lock_mrg->lock(lm_x); 
@@ -48,14 +48,14 @@ void PPCreateIndex::open()
     root.open();
 }
 
-void PPCreateIndex::close()
+void PPCreateIndex::do_close()
 {
     index_name.op->close();
     root.close();
     dynamic_context::global_variables_close();
 }
 
-void PPCreateIndex::accept(PPVisitor &v)
+void PPCreateIndex::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -67,7 +67,7 @@ void PPCreateIndex::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPCreateIndex::execute()
+void PPCreateIndex::do_execute()
 {
     /* Determine index name */
     tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create index");

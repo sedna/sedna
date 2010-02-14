@@ -23,11 +23,12 @@ private:
     xmlscm_type key_type;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
     
     PPCreateIndex(PPOpIn _index_name_,
                   PathExprRoot _root_,

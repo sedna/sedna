@@ -19,10 +19,10 @@
 
 using namespace std;
 
-string int2string(int value)
+string int2string(__int64 value)
 {
     char buf[20];
-    int2c_str(value, buf);
+    u_i64toa(value, buf, 10);
     return string(buf);
 }
 
@@ -43,56 +43,14 @@ void u_ftime(u_timeb *t)
     t->timezone = tz.tz_minuteswest; 
 }
 
-#else
-
-void u_ftime(u_timeb *t)
-{
-    _ftime(t);
-}
-
 #endif
-
-u_timeb operator -(u_timeb t1, u_timeb t2)
-{
-    u_timeb t;
-    if (t2.millitm > t1.millitm)
-    {
-        t.time = t1.time - t2.time - 1;
-        t.millitm = 1000 - t2.millitm + t1.millitm;
-    }
-    else
-    {
-        t.time = t1.time - t2.time;
-        t.millitm = t1.millitm - t2.millitm;
-    }
-
-    t.dstflag = t1.dstflag;
-    t.timezone = t1.timezone;
-
-    return t;
-}
-
-u_timeb operator+ (u_timeb t1, u_timeb t2)
-{
-    u_timeb t;
-    t.time = t1.time + t2.time + (((t1.millitm + t2.millitm) > 1000) ? 1: 0 );
-
-    t.millitm = (((t1.millitm + t2.millitm) > 1000) ? (t1.millitm + t2.millitm - 1000) : (t1.millitm + t2.millitm) );
-    
-    t.dstflag = t1.dstflag;
-    t.timezone = t1.timezone;
-
-    return t;
-}
 
 
 
 string to_string(u_timeb t)
 {
     char buf[80];
-    
-    sprintf(buf, "%d.%03ld secs", (int)t.time, t.millitm);
-
+    sprintf(buf, "%d.%03ld", (int)t.time, t.millitm);
     return string(buf);
 }
 

@@ -26,11 +26,12 @@ private:
     PathExpr *path_to_parent;
     inserting_node innode;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
     
     PPCreateTrigger(dynamic_context *_cxt_,
                     PathExprRoot _root_,

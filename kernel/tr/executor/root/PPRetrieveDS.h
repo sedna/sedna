@@ -13,15 +13,17 @@
 
 class PPRetrieveDS : public PPQueryEssence
 {
+private:
     PPOpIn name;
     dynamic_context *cxt;
     db_entity_type type;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     bool supports_next() { return false; }
     bool is_update() { return false; }

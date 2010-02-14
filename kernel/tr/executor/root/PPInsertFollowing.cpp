@@ -33,7 +33,7 @@ PPInsertFollowing::~PPInsertFollowing()
     cxt2 = NULL;
 }
 
-void PPInsertFollowing::open()
+void PPInsertFollowing::do_open()
 {
     local_lock_mrg->lock(lm_x);
     dynamic_context::global_variables_open();
@@ -41,14 +41,14 @@ void PPInsertFollowing::open()
     child2.op->open();
 }
 
-void PPInsertFollowing::close()
+void PPInsertFollowing::do_close()
 {
     child1.op->close();
     child2.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPInsertFollowing::accept(PPVisitor &v)
+void PPInsertFollowing::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -57,7 +57,7 @@ void PPInsertFollowing::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPInsertFollowing::execute()
+void PPInsertFollowing::do_execute()
 {
     insert_following(child1, child2);
 }

@@ -12,15 +12,17 @@
 
 class PPLoadModule : public PPUpdate
 {
+private:
     arr_of_PPOpIn   filenames;
     bool            is_load_replace;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPLoadModule(arr_of_PPOpIn  _filenames_,
                  bool           _is_load_replace,

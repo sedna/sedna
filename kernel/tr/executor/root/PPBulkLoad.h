@@ -13,15 +13,16 @@
 
 class PPBulkLoad : public PPUpdate
 {
+private:
     dynamic_context *cxt1, *cxt2, *cxt3;
     PPOpIn filename, document, collection;
 
-public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
 
+public:
     PPBulkLoad(PPOpIn _filename_,
                dynamic_context *_cxt1_,
                PPOpIn _document_,

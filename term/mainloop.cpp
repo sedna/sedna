@@ -21,7 +21,7 @@ int quit_term()
 {
 	if(show_time != 0)
 	{
-		fprintf(stderr, "total time: %s\n",SEshowTime(&conn));
+		fprintf(stderr, "total time: %s\n secs",SEshowTime(&conn));
         fflush(stderr);
 	}
 
@@ -358,7 +358,7 @@ int process_command(char* buffer)
 	}
    	if(strcmp(buffer,"showtime") == 0)
 	{
-		term_output2("Time: %s\n", SEshowTime(&conn));
+		term_output2("Time: %s\n secs", SEshowTime(&conn));
         return EXIT_SUCCESS;
 	}
 	if(strcmp(buffer,"commit") == 0)

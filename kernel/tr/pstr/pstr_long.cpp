@@ -75,7 +75,7 @@ static inline void intl_alloc_string_block(const xptr desc, const bool plog)
 
 static inline char *intl_block_list_end_addr()
 {
-	return ((char *)tr_globals::e_string_buf + sizeof(tr_globals::e_string_buf));
+	return ((char *)executor_globals::e_string_buf + sizeof(executor_globals::e_string_buf));
 }
 
 static inline struct pstr_long_block_list_entry  *intl_block_list_end()

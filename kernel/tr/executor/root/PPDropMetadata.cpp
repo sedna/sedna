@@ -27,7 +27,7 @@ PPDropDocument::~PPDropDocument()
     cxt = NULL;
 }
 
-void PPDropDocument::open()
+void PPDropDocument::do_open()
 {
     local_lock_mrg->lock(lm_x);
 
@@ -35,13 +35,13 @@ void PPDropDocument::open()
     name.op->open();
 }
 
-void PPDropDocument::close()
+void PPDropDocument::do_close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDropDocument::accept(PPVisitor &v)
+void PPDropDocument::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -49,7 +49,7 @@ void PPDropDocument::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDropDocument::execute()
+void PPDropDocument::do_execute()
 {
     tuple_cell tc;
     tuple t(1);
@@ -86,7 +86,7 @@ PPDropCollection::~PPDropCollection()
     cxt = NULL;
 }
 
-void PPDropCollection::open()
+void PPDropCollection::do_open()
 {
     dynamic_context::global_variables_open();
     name.op->open();
@@ -94,13 +94,13 @@ void PPDropCollection::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPDropCollection::close()
+void PPDropCollection::do_close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDropCollection::accept(PPVisitor &v)
+void PPDropCollection::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -108,7 +108,7 @@ void PPDropCollection::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDropCollection::execute()
+void PPDropCollection::do_execute()
 {
     tuple_cell tc;
     tuple t(1);
@@ -156,7 +156,7 @@ PPDropDocumentInCollection::~PPDropDocumentInCollection()
     cxt2 = NULL;
 }
 
-void PPDropDocumentInCollection::open()
+void PPDropDocumentInCollection::do_open()
 {
     dynamic_context::global_variables_open();
     document.op->open();
@@ -165,14 +165,14 @@ void PPDropDocumentInCollection::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPDropDocumentInCollection::close()
+void PPDropDocumentInCollection::do_close()
 {
     document.op->close();
     collection.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDropDocumentInCollection::accept(PPVisitor &v)
+void PPDropDocumentInCollection::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -181,7 +181,7 @@ void PPDropDocumentInCollection::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDropDocumentInCollection::execute()
+void PPDropDocumentInCollection::do_execute()
 {
     tuple_cell tc, tc_document, tc_collection;
     tuple t(1);

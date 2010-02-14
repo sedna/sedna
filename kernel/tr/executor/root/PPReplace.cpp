@@ -25,20 +25,20 @@ PPReplace::~PPReplace()
     cxt = NULL;
 }
 
-void PPReplace::open()
+void PPReplace::do_open()
 {
     local_lock_mrg->lock(lm_x);
     dynamic_context::global_variables_open();
     child.op->open();
 }
 
-void PPReplace::close()
+void PPReplace::do_close()
 {
     child.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPReplace::accept(PPVisitor &v)
+void PPReplace::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -46,7 +46,7 @@ void PPReplace::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPReplace::execute()
+void PPReplace::do_execute()
 {
     replace(child);
 }

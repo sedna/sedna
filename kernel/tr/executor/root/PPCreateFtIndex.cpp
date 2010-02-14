@@ -163,7 +163,7 @@ PPCreateFtIndex::~PPCreateFtIndex()
     cxt = NULL;
 }
 
-void PPCreateFtIndex::open()
+void PPCreateFtIndex::do_open()
 {
     dynamic_context::global_variables_open();
     index_name.op->open();
@@ -172,7 +172,7 @@ void PPCreateFtIndex::open()
     root.open();
 }
 
-void PPCreateFtIndex::close()
+void PPCreateFtIndex::do_close()
 {
     index_name.op->close();
 	if (cust_rules.op)
@@ -181,7 +181,7 @@ void PPCreateFtIndex::close()
     dynamic_context::global_variables_close();
 }
 
-void PPCreateFtIndex::accept(PPVisitor &v)
+void PPCreateFtIndex::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -193,7 +193,7 @@ void PPCreateFtIndex::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPCreateFtIndex::execute()
+void PPCreateFtIndex::do_execute()
 {
     /* Determine index name */
     tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create full-text index");

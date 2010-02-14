@@ -168,10 +168,10 @@ void estr::copy_text_estr(xptr dest, xptr src, int count)
     int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (int)XADDR(src);
     int real_count = s_min(dest_spc_blk, s_min(src_spc_blk, count));
 
-    memcpy(tr_globals::e_string_buf, XADDR(src), real_count);
+    memcpy(executor_globals::e_string_buf, XADDR(src), real_count);
     CHECKP(dest);
 	VMM_SIGNAL_MODIFICATION(dest);
-    memcpy(XADDR(dest), tr_globals::e_string_buf, real_count);
+    memcpy(XADDR(dest), executor_globals::e_string_buf, real_count);
     m_size += real_count;
 
     dest_blk->cursor += real_count;
@@ -220,7 +220,7 @@ void estr::copy_text_pstr_long(xptr dest, xptr src)
 
     CHECKP(dest);
     int dest_spc_blk = E_STR_BLK_FREE_SPACE(dest_blk);
-    int src_spc_blk = src_cur.copy_blk(tr_globals::e_string_buf);
+    int src_spc_blk = src_cur.copy_blk(executor_globals::e_string_buf);
 	int copied_count = 0;
 
 	while (src_spc_blk > 0)
@@ -236,7 +236,7 @@ void estr::copy_text_pstr_long(xptr dest, xptr src)
         const int real_count = s_min(dest_spc_blk, src_spc_blk - copied_count);
         CHECKP(dest);
 		VMM_SIGNAL_MODIFICATION(dest);
-        memcpy(XADDR(dest), tr_globals::e_string_buf + copied_count, real_count);
+        memcpy(XADDR(dest), executor_globals::e_string_buf + copied_count, real_count);
         m_size += real_count;
 		dest_spc_blk -= real_count;
 		copied_count += real_count;
@@ -245,7 +245,7 @@ void estr::copy_text_pstr_long(xptr dest, xptr src)
     
 		if (copied_count == src_spc_blk)
 		{
-			src_spc_blk = src_cur.copy_blk(tr_globals::e_string_buf);
+			src_spc_blk = src_cur.copy_blk(executor_globals::e_string_buf);
 			copied_count = 0;
 		}
 	}

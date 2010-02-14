@@ -26,20 +26,20 @@ PPDropModule::~PPDropModule()
     cxt = NULL;
 }
 
-void PPDropModule::open()
+void PPDropModule::do_open()
 {
     dynamic_context::global_variables_open();
     local_lock_mrg->lock(lm_x); // because Leon changes the descriptive schema of the document/collection
     module_name.op->open();
 }
 
-void PPDropModule::close()
+void PPDropModule::do_close()
 {
     module_name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDropModule::accept(PPVisitor &v)
+void PPDropModule::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -47,7 +47,7 @@ void PPDropModule::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDropModule::execute()
+void PPDropModule::do_execute()
 {
     tuple_cell tc;
     tuple t(1);

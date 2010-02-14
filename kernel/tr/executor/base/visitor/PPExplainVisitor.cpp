@@ -3,6 +3,8 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <iostream>
+#include <sstream>
 #include <string>
 
 #include "common/sedna.h"
@@ -83,11 +85,13 @@ xptr insertVariableHelper(const char* name,
 
 PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
                                    xptr _root_,
-                                   var_map_id_name _var_names_) : cxt(_cxt_), 
-                                                                  parent(_root_),
-                                                                  left(XNULL),
-                                                                  left_inside(XNULL),
-                                                                  var_names(_var_names_)
+                                   var_map_id_name _var_names_,
+                                   bool _profiler_mode_) : cxt(_cxt_), 
+                                                          parent(_root_),
+                                                          left(XNULL),
+                                                          left_inside(XNULL),
+                                                          var_names(_var_names_),
+                                                          profiler_mode(_profiler_mode_)
 {
     explain_ns = cxt->st_cxt->get_default_namespace();
 }
@@ -119,27 +123,41 @@ void PPExplainVisitor::pop()
    
 
 /* Helper to insert operation nodes */
-void PPExplainVisitor::insertOperationElement(const char* name, xptr& left, const xptr& parent, PPIterator* op = NULL)
+void PPExplainVisitor::insertOperationElement(const char* name, 
+                                              xptr& left, 
+                                              const xptr& parent, 
+                                              const PPIterator* op,
+                                              const PPQueryEssence* qep)
 {
     U_ASSERT(parent != XNULL);
+    U_ASSERT(op == NULL || qep == NULL);
+
     elog(EL_DBG, ("[EXPLAIN] Going to insert element '%s', parent (0x%x, 0x%x), left (0x%x, 0x%x)", name, 
                                                            parent.layer, parent.addr, 
                                                            left.layer, left.addr));
     left = insert_element_i(left,XNULL,parent,"operation",xs_untyped,explain_ns);
     xptr attr_left = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic, name, strlen(name), NULL_XMLNS);
 
-    if(NULL != op) 
+    if(NULL != op)
     {
-        char buf[20];
-        if(op->get_operation_info().query_line != 0)
+        const operation_info& oi = op->get_operation_info();
+        ostringstream oss;
+        oss << oi.query_line << ":" << oi.query_col;
+        string pos(oss.str());
+        attr_left = insertAttributeHelper("position", attr_left, left, pos);
+        if(profiler_mode)
         {
-            u_itoa(op->get_operation_info().query_line,buf,10);
-            attr_left = insert_attribute_i(attr_left,XNULL,left,"line",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+             attr_left = insertAttributeHelper("time", attr_left, left, to_string(oi.profile->time));
+             attr_left = insertAttributeHelper("calls", attr_left, left, int2string(oi.profile->calls));
         }
-        if(op->get_operation_info().query_col != 0)
+    }
+    if(NULL != qep)
+    {
+        if(profiler_mode)
         {
-            u_itoa(op->get_operation_info().query_col,buf,10);
-            attr_left = insert_attribute_i(attr_left,XNULL,left,"column",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
+             const profile_info& pi = qep->get_profile_info();
+             attr_left = insertAttributeHelper("time", attr_left, left, to_string(pi.time));
+             attr_left = insertAttributeHelper("calls", attr_left, left, int2string(pi.calls));
         }
     }
 }
@@ -324,14 +342,17 @@ void PPExplainVisitor::visit(PPPred1* op)
     insertAttributeHelper("once", XNULL, left, bool2string(op->is_once()));
 
     /* Insert conjuncts details */
+    left_inside = XNULL;
     unsigned int conj_num = op->get_conjuncts_number();
-    left_inside = insertElementHelper("conjuncts", XNULL, left);
-    xptr conj_left = XNULL;
-    for (unsigned int i = 0; i < conj_num; i++) {
-        conj_left = insertElementHelper("conjunct", conj_left, left_inside);
-        insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
+    if(conj_num > 0) 
+    {
+        left_inside = insertElementHelper("conjuncts", XNULL, left);
+        xptr conj_left = XNULL;
+        for (unsigned int i = 0; i < conj_num; i++) {
+            conj_left = insertElementHelper("conjunct", conj_left, left_inside);
+            insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
+        }
     }
-
     /* Insert variables details */    
     left_inside = insertElementHelper("produces", left_inside, left);
     const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
@@ -349,14 +370,17 @@ void PPExplainVisitor::visit(PPPred2* op)
     insertAttributeHelper("once", XNULL, left, bool2string(op->is_once()));
 
     /* Insert conjuncts details */
+    left_inside = XNULL;
     unsigned int conj_num = op->get_conjuncts_number();
-    left_inside = insertElementHelper("conjuncts", XNULL, left);
-    xptr conj_left = XNULL;
-    for (unsigned int i = 0; i < conj_num; i++) {
-        conj_left = insertElementHelper("conjunct", conj_left, left_inside);
-        insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
+    if(conj_num > 0) 
+    {
+        left_inside = insertElementHelper("conjuncts", XNULL, left);
+        xptr conj_left = XNULL;
+        for (unsigned int i = 0; i < conj_num; i++) {
+            conj_left = insertElementHelper("conjunct", conj_left, left_inside);
+            insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
+        }
     }
-
     /* Insert variables details */    
     left_inside = insertElementHelper("produces", left_inside, left);
     const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
@@ -1207,17 +1231,17 @@ void PPExplainVisitor::visit(PPFnResolveUri* op)
 
 void PPExplainVisitor::visit(PPQueryRoot* op)
 {
-    insertOperationElement("PPQueryRoot", left, parent);
+    insertOperationElement("PPQueryRoot", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPBulkLoad* op)
 {
-    insertOperationElement("PPBulkLoad", left, parent);
+    insertOperationElement("PPBulkLoad", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPCreateIndex* op)
 {
-    insertOperationElement("PPCreateIndex", left, parent);
+    insertOperationElement("PPCreateIndex", left, parent, NULL, op);
     xptr attr_left = insertAttributeHelper("type", XNULL, left, string(xmlscm_type2c_str(op->get_index_type())));
     string obj_path = op->get_object_path()->to_string();
     string key_path = op->get_key_path()->to_string();
@@ -1232,23 +1256,23 @@ void PPExplainVisitor::visit(PPCreateIndex* op)
 
 void PPExplainVisitor::visit(PPCreateDocument* op)
 {
-    insertOperationElement("PPCreateDocument", left, parent);
+    insertOperationElement("PPCreateDocument", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPCreateCollection* op)
 {
-    insertOperationElement("PPCreateCollection", left, parent);
+    insertOperationElement("PPCreateCollection", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPCreateDocumentInCollection* op)
 {
-    insertOperationElement("PPCreateDocumentInCollection", left, parent);
+    insertOperationElement("PPCreateDocumentInCollection", left, parent, NULL, op);
 }
 
 #ifdef SE_ENABLE_TRIGGERS
 void PPExplainVisitor::visit(PPCreateTrigger* op)
 {
-    insertOperationElement("PPCreateTrigger", left, parent);
+    insertOperationElement("PPCreateTrigger", left, parent, NULL, op);
     string type;
     type += trigger_event2string(op->get_trigger_event()); type += " ";
     type += trigger_time2string(op->get_trigger_time()); type += " ";
@@ -1262,26 +1286,26 @@ void PPExplainVisitor::visit(PPCreateTrigger* op)
 }
 void PPExplainVisitor::visit(PPDropTrigger* op)
 {
-    insertOperationElement("PPDropTrigger", left, parent);
+    insertOperationElement("PPDropTrigger", left, parent, NULL, op);
 }
 #endif
 
 
 void PPExplainVisitor::visit(PPDeleteDeep* op)
 {
-    insertOperationElement("PPDeleteDeep", left, parent);
+    insertOperationElement("PPDeleteDeep", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPDeleteUndeep* op)
 {
-    insertOperationElement("PPDeleteUndeep", left, parent);
+    insertOperationElement("PPDeleteUndeep", left, parent, NULL, op);
 }
 
 
 #ifdef SE_ENABLE_FTSEARCH
 void PPExplainVisitor::visit(PPCreateFtIndex* op)
 {
-    insertOperationElement("PPCreateFtIndex", left, parent);
+    insertOperationElement("PPCreateFtIndex", left, parent, NULL, op);
     xptr attr_left = insertAttributeHelper("type", XNULL, left, string(ft_index_type2str(op->get_index_type())));
     string path_expr = op->get_path_expression()->to_string();
     attr_left = insertAttributeHelper("root", attr_left, left, op->get_path_root().get_entity()->to_string());
@@ -1292,115 +1316,115 @@ void PPExplainVisitor::visit(PPCreateFtIndex* op)
 }
 void PPExplainVisitor::visit(PPDropFtIndex* op)
 {
-    insertOperationElement("PPDropFtIndex", left, parent);
+    insertOperationElement("PPDropFtIndex", left, parent, NULL, op);
 }
 #endif
 
 
 void PPExplainVisitor::visit(PPDropIndex* op)
 {
-    insertOperationElement("PPDropIndex", left, parent);
+    insertOperationElement("PPDropIndex", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPDropDocument* op)
 {
-    insertOperationElement("PPDropDocument", left, parent);
+    insertOperationElement("PPDropDocument", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPDropCollection* op)
 {
-    insertOperationElement("PPDropCollection", left, parent);
+    insertOperationElement("PPDropCollection", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPDropDocumentInCollection* op)
 {
-    insertOperationElement("PPDropDocumentInCollection", left, parent);
+    insertOperationElement("PPDropDocumentInCollection", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPLoadModule* op)
 {
-    insertOperationElement("PPLoadModule", left, parent);
+    insertOperationElement("PPLoadModule", left, parent, NULL, op);
     insertAttributeHelper("replace", XNULL, left, bool2string(op->is_replace()));
 }
 
 void PPExplainVisitor::visit(PPDropModule* op)
 {
-    insertOperationElement("PPDropModule", left, parent);
+    insertOperationElement("PPDropModule", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPInsertTo* op)
 {
-    insertOperationElement("PPInsertTo", left, parent);
+    insertOperationElement("PPInsertTo", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPInsertBefore* op)
 {
-    insertOperationElement("PPInsertBefore", left, parent);
+    insertOperationElement("PPInsertBefore", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPInsertFollowing* op)
 {
-    insertOperationElement("PPInsertFollowing", left, parent);
+    insertOperationElement("PPInsertFollowing", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPRename* op)
 {
-    insertOperationElement("PPRename", left, parent);
+    insertOperationElement("PPRename", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPReplace* op)
 {
-    insertOperationElement("PPReplace", left, parent);
+    insertOperationElement("PPReplace", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPRetrieveDS* op)
 {
-    insertOperationElement("PPRetrieveDS", left, parent);
+    insertOperationElement("PPRetrieveDS", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPRetrieveMetadata* op)
 {
-    insertOperationElement("PPRetrieveMetadata", left, parent);
+    insertOperationElement("PPRetrieveMetadata", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPCreateUser* op)
 {
-    insertOperationElement("PPCreateUser", left, parent);
+    insertOperationElement("PPCreateUser", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPDropUser* op)
 {
-    insertOperationElement("PPDropUser", left, parent);
+    insertOperationElement("PPDropUser", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPAlterUser* op)
 {
-    insertOperationElement("PPAlterUser", left, parent);
+    insertOperationElement("PPAlterUser", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPCreateRole* op)
 {
-    insertOperationElement("PPCreateRole", left, parent);
+    insertOperationElement("PPCreateRole", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPDropRole* op)
 {
-    insertOperationElement("PPDropRole", left, parent);
+    insertOperationElement("PPDropRole", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPGrantRole* op)
 {
-    insertOperationElement("PPGrantRole", left, parent);
+    insertOperationElement("PPGrantRole", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPGrantRevokePriv* op)
 {
-    insertOperationElement("PPGrantRevokePriv", left, parent);
+    insertOperationElement("PPGrantRevokePriv", left, parent, NULL, op);
     insertAttributeHelper("object-type", XNULL, left, string(op->get_object_type()));
 }
 
 void PPExplainVisitor::visit(PPRevokeRole* op)
 {
-    insertOperationElement("PPRevokeRole", left, parent);
+    insertOperationElement("PPRevokeRole", left, parent, NULL, op);
 }
 

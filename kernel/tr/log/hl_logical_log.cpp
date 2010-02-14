@@ -473,7 +473,7 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 
 	int custom_tree_count = 0;
 	int custom_tree_size = 0;
-	char *custom_tree_buf = tr_globals::e_string_buf;
+	char *custom_tree_buf = executor_globals::e_string_buf;
 
 	if (custom_tree != NULL)
 	{
@@ -486,18 +486,18 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 
 			custom_tree_count++;
 
-			U_ASSERT(custom_tree_size + sizeof(ft_index_type) <= sizeof(tr_globals::e_string_buf));
+			U_ASSERT(custom_tree_size + sizeof(ft_index_type) <= sizeof(executor_globals::e_string_buf));
 			memcpy(custom_tree_buf + custom_tree_size, &tmp->obj->cm, sizeof(ft_index_type));
 			custom_tree_size += sizeof(ft_index_type);
 
 #define PUT_STR(str) \
 	if (str == NULL) {\
-		U_ASSERT(custom_tree_size < sizeof(tr_globals::e_string_buf));\
+		U_ASSERT(custom_tree_size < sizeof(executor_globals::e_string_buf));\
 		custom_tree_buf[custom_tree_size] = '\x0';\
 		custom_tree_size++;\
 	} else {\
 		len = strlen(str);\
-		U_ASSERT(custom_tree_size + len + 1 <= sizeof(tr_globals::e_string_buf));\
+		U_ASSERT(custom_tree_size + len + 1 <= sizeof(executor_globals::e_string_buf));\
 		memcpy(custom_tree_buf + custom_tree_size, str, len + 1);\
 		custom_tree_size += len + 1;\
 	}

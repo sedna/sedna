@@ -23,19 +23,19 @@ PPDropFtIndex::~PPDropFtIndex()
     cxt = NULL;
 }
 
-void PPDropFtIndex::open()
+void PPDropFtIndex::do_open()
 {
     index_name.op->open();
     dynamic_context::global_variables_open();
 }
 
-void PPDropFtIndex::close()
+void PPDropFtIndex::do_close()
 {
     index_name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDropFtIndex::accept(PPVisitor &v)
+void PPDropFtIndex::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -43,7 +43,7 @@ void PPDropFtIndex::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDropFtIndex::execute()
+void PPDropFtIndex::do_execute()
 {
     tuple_cell tc;
     tuple t(1);

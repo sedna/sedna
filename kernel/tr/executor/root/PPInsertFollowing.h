@@ -12,14 +12,16 @@
 
 class PPInsertFollowing : public PPUpdate
 {
+private:
     PPOpIn child1, child2;
     dynamic_context *cxt1, *cxt2;
-public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
+public:
     PPInsertFollowing(PPOpIn _child1_, 
                       dynamic_context *_cxt1_,
                       PPOpIn _child2_,

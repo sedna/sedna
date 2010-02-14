@@ -11,29 +11,33 @@
 
 class PPCreateDocument : public PPUpdate
 {
+private:
     PPOpIn name;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
-    
+
     PPCreateDocument(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPCreateDocument();
 };
 
 class PPCreateCollection : public PPUpdate
 {
+private:
     PPOpIn name;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
     
     PPCreateCollection(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPCreateCollection();
@@ -41,14 +45,16 @@ public:
 
 class PPCreateDocumentInCollection : public PPUpdate
 {
+private:
     dynamic_context *cxt1, *cxt2;
     PPOpIn document, collection;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
     
     PPCreateDocumentInCollection(PPOpIn _document_,
                                  dynamic_context *_cxt1_,

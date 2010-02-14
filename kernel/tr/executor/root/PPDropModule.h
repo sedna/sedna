@@ -12,19 +12,21 @@
 
 class PPDropModule : public PPUpdate
 {
+private:
     PPOpIn module_name;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPDropModule(PPOpIn _module_name_, dynamic_context *_cxt_);
 
     ~PPDropModule();
 };
 
-#endif
+#endif /* _PPDROPMODULE_H */
 

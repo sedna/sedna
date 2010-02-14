@@ -35,7 +35,7 @@ typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 #define MAX_MEM_STR_SIZE	            100
 
 /// Used in casting and serialazation to create lexical atomic tuple cell
-/// representation (through tr_globals::mem_str_buf).
+/// representation (through executor_globals::mem_str_buf).
 /// Size should be the same as maximum lexical representaion of any fixed size
 /// atomic value. In general, it means the same value as used in the lexical
 /// analyzer.

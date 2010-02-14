@@ -40,12 +40,12 @@ private:
     const char *ncname_local;
     pp_rename_type type;
 
-public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
 
+public:
     PPRename(PPOpIn _child_, 
              dynamic_context *_cxt_,
              const char *_ncname_prefix_,

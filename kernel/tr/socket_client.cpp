@@ -652,16 +652,17 @@ void socket_client::error()
     }
 }
 
-void socket_client::show_time(string qep_time)
+void socket_client::show_time(u_timeb qep_time)
 {
-    d_printf2("Show time. Time %s\n",qep_time.c_str());
+    string ex_time = to_string(qep_time);
+    d_printf2("Show time. Time %s\n secs", ex_time.c_str());
 
     sp_msg.instruction = se_LastQueryTime;// LastQueryTime message
-    sp_msg.length = 1 + sizeof(int) + qep_time.length();
+    sp_msg.length = 1 + sizeof(int) + ex_time.length();
 
     sp_msg.body[0] = 0; //C-string
-    int2net_int(qep_time.length(), sp_msg.body + 1);
-    strcpy(sp_msg.body + 1 + sizeof(int), qep_time.c_str());
+    int2net_int(ex_time.length(), sp_msg.body + 1);
+    strcpy(sp_msg.body + 1 + sizeof(int), ex_time.c_str());
 
     if(sp_send_msg(Sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
 }

@@ -42,8 +42,8 @@ void xs_decimal_t::init()
  ******************************************************************************/
 void xs_decimal_t::set(__int64 a)
 {
-    get_xs_integer_lexical_representation(tr_globals::mem_str_buf, a);
-    this->set(tr_globals::mem_str_buf, true);
+    get_xs_integer_lexical_representation(executor_globals::mem_str_buf, a);
+    this->set(executor_globals::mem_str_buf, true);
 }
 
 void xs_decimal_t::set(float a)
@@ -60,8 +60,8 @@ void xs_decimal_t::set(double a)
     if (abs_a > XS_DECIMAL_MAX_VALUE_DOUBLE || (a != 0 && abs_a < XS_DECIMAL_MIN_VALUE_DOUBLE))
         throw XQUERY_EXCEPTION2(FOCA0001, "Cannot convert to xs:decimal type");
 
-    sprintf(tr_globals::mem_str_buf, "%E", a);
-    this->set(tr_globals::mem_str_buf, false);
+    sprintf(executor_globals::mem_str_buf, "%E", a);
+    this->set(executor_globals::mem_str_buf, false);
 }
 
 void xs_decimal_t::set(bool a)
@@ -147,20 +147,20 @@ __int64 xs_decimal_t::get_int   () const
 	dec_cxt.round = DEC_ROUND_DOWN;
     decNumberToIntegralValue(&r, &dv, &dec_cxt);
 	dec_cxt.round = old;
-    decNumberToString(&r, tr_globals::mem_str_buf);
-    return c_str2xs_integer(tr_globals::mem_str_buf);
+    decNumberToString(&r, executor_globals::mem_str_buf);
+    return c_str2xs_integer(executor_globals::mem_str_buf);
 }
 
 float   xs_decimal_t::get_float () const
 {
-	decimal128ToString((decimal128*)(v.v1), tr_globals::mem_str_buf);
-    return c_str2xs_float(tr_globals::mem_str_buf);
+	decimal128ToString((decimal128*)(v.v1), executor_globals::mem_str_buf);
+    return c_str2xs_float(executor_globals::mem_str_buf);
 }
 
 double  xs_decimal_t::get_double() const
 {
-	decimal128ToString((decimal128*)(v.v1), tr_globals::mem_str_buf);
-    return c_str2xs_double(tr_globals::mem_str_buf);
+	decimal128ToString((decimal128*)(v.v1), executor_globals::mem_str_buf);
+    return c_str2xs_double(executor_globals::mem_str_buf);
 }
 
 bool    xs_decimal_t::get_bool  () const
@@ -339,7 +339,7 @@ bool xs_decimal_t::is_negative() const
 
 void xs_decimal_t::print() const
 { 
-    printf("%s", get_c_str(tr_globals::mem_str_buf)); 
+    printf("%s", get_c_str(executor_globals::mem_str_buf)); 
 }
 
 
