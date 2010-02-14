@@ -172,14 +172,14 @@ Errors could be outputted to the user in the format of <sedna-message>:
     (elog(EL_ERROR, ("(%s) %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr)), \
-     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, tr_globals::__current_physop))
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, executor_globals::__current_physop))
 
 #define XQUERY_EXCEPTION2(internal_code, details) \
     (elog(EL_ERROR, ("(%s) %s Details: %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr, \
                      details)), \
-     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code, tr_globals::__current_physop))
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code, executor_globals::__current_physop))
 
 #define USER_EXCEPTION_FNERROR(err_name, err_descr) \
     (elog(EL_ERROR, ("(%s) %s", \

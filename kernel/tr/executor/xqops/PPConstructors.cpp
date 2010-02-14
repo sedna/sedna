@@ -66,8 +66,8 @@ getStringParameter(PPOpIn content)
     sequence at_vals(1);
     if (value.is_eos())
     {
-        tr_globals::tmp_op_str_buf.clear();
-        tr_globals::tmp_op_str_buf.append(EMPTY_STRING_TC);
+        executor_globals::tmp_op_str_buf.clear();
+        executor_globals::tmp_op_str_buf.append(EMPTY_STRING_TC);
         return true;
     }
     else
@@ -82,14 +82,14 @@ getStringParameter(PPOpIn content)
         at_vals.add(value);
         content.op->next(value);
     }
-    tr_globals::tmp_op_str_buf.clear();
+    executor_globals::tmp_op_str_buf.clear();
     sequence::iterator it=at_vals.begin();
     do
     {
         tuple_cell res=atomize((*it).cells[0]);
         res=cast(res, xs_string);
         res=tuple_cell::make_sure_light_atomic(res);
-        tr_globals::tmp_op_str_buf.append(res);
+        executor_globals::tmp_op_str_buf.append(res);
         it++;
 
     }
@@ -100,7 +100,7 @@ getStringParameter(PPOpIn content)
 static void
 getStringWSParameter(PPOpIn content)
 {
-    tr_globals::tmp_op_str_buf.clear();
+    executor_globals::tmp_op_str_buf.clear();
     tuple value(content.ts);
     content.op->next(value);
     sequence at_vals(1);
@@ -112,14 +112,14 @@ getStringWSParameter(PPOpIn content)
         at_vals.add(value);
         content.op->next(value);
     }
-    tr_globals::tmp_op_str_buf.clear();
+    executor_globals::tmp_op_str_buf.clear();
     sequence::iterator it=at_vals.begin();
     do
     {
         tuple_cell res=atomize((*it).cells[0]);
         res=cast(res, xs_string);
         res=tuple_cell::make_sure_light_atomic(res);
-        tr_globals::tmp_op_str_buf.append(res);
+        executor_globals::tmp_op_str_buf.append(res);
         it++;
 
     }
@@ -408,7 +408,7 @@ void PPElementConstructor::do_next (tuple &t)
                 {
                     //normalize
                     tuple_cell tcc;
-                    tr_globals::tmp_op_str_buf.clear();
+                    executor_globals::tmp_op_str_buf.clear();
                     sequence::iterator it=at_vals.begin();
                     do
                     {
@@ -418,14 +418,19 @@ void PPElementConstructor::do_next (tuple &t)
                         }*/
                         tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
                         tcc=cast(tcc, xs_string);
-                        tr_globals::tmp_op_str_buf.append(tcc);
+                        executor_globals::tmp_op_str_buf.append(tcc);
                         it++;
 
                     }
                     while (it!=at_vals.end());
                     at_vals.clear();
-                    if(tr_globals::tmp_op_str_buf.get_size()>0) {
-                        insert_text(removeIndirection(left),XNULL,removeIndirection(indir),tr_globals::tmp_op_str_buf.get_ptr_to_text(),tr_globals::tmp_op_str_buf.get_size(),tr_globals::tmp_op_str_buf.get_type());
+                    if(executor_globals::tmp_op_str_buf.get_size()>0) {
+                        insert_text(removeIndirection(left),
+                                    XNULL,
+                                    removeIndirection(indir),
+                                    executor_globals::tmp_op_str_buf.get_ptr_to_text(),
+                                    executor_globals::tmp_op_str_buf.get_size(),
+                                    executor_globals::tmp_op_str_buf.get_type());
                         left = get_last_mo_inderection();
                     }
                     mark_attr=false;
@@ -506,27 +511,30 @@ void PPElementConstructor::do_next (tuple &t)
         }
         if (at_vals.size()>0)
         {
-            tr_globals::tmp_op_str_buf.clear();
+            executor_globals::tmp_op_str_buf.clear();
             tuple_cell tcc;
             sequence::iterator it=at_vals.begin();
             do
             {
                 tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
                 tcc=cast(tcc, xs_string);
-                tr_globals::tmp_op_str_buf.append(tcc);
+                executor_globals::tmp_op_str_buf.append(tcc);
                 it++;
 
             }
             while (it!=at_vals.end());
             at_vals.clear();
-            if(tr_globals::tmp_op_str_buf.get_size() > 0) {
-                insert_text(removeIndirection(left),XNULL,removeIndirection(indir),tr_globals::tmp_op_str_buf.get_ptr_to_text(),tr_globals::tmp_op_str_buf.get_size(),tr_globals::tmp_op_str_buf.get_type());
+            if(executor_globals::tmp_op_str_buf.get_size() > 0) {
+                insert_text(removeIndirection(left),
+                            XNULL,
+                            removeIndirection(indir),
+                            executor_globals::tmp_op_str_buf.get_ptr_to_text(),
+                            executor_globals::tmp_op_str_buf.get_size(),
+                            executor_globals::tmp_op_str_buf.get_type());
                 left = get_last_mo_inderection();
             }
         }
         //Result
-        /*if (last_elem==local_last)
-        last_elem=removeIndirection(indir);*/
         t.copy(tuple_cell::node_indir(indir));
         //clear in-scope context deleteng local namespace declarations
         vector<xmlns_ptr>::iterator it=ns_list.begin();
@@ -540,7 +548,6 @@ void PPElementConstructor::do_next (tuple &t)
         cont_leftind=XNULL;
         if (deep_copy)
             conscnt=oldcnt;
-        //crm_dbg<<"\n after body cnt in "<<name<<" = "<<conscnt;
     }
     else
     {
@@ -715,8 +722,8 @@ void PPAttributeConstructor::do_next (tuple &t)
         if (value==NULL)
         {
             getStringWSParameter(content);
-            value=(char*)tr_globals::tmp_op_str_buf.c_str();
-            size=tr_globals::tmp_op_str_buf.get_size();
+            value=(char*)executor_globals::tmp_op_str_buf.c_str();
+            size=executor_globals::tmp_op_str_buf.get_size();
         }
         else
             size=strlen(value);
@@ -860,7 +867,7 @@ void PPNamespaceConstructor::do_next (tuple &t)
         if (uri == NULL)
         {
             getStringParameter(content);
-            uri = (char*)tr_globals::tmp_op_str_buf.c_str();
+            uri = (char*)executor_globals::tmp_op_str_buf.c_str();
         }
 
         xmlns_ptr ns = cxt->st_cxt->add_to_context(prefix,uri);
@@ -953,8 +960,8 @@ void PPCommentConstructor::do_next (tuple &t)
         if (value==NULL)
         {
             getStringParameter(content);
-            value=(char*)tr_globals::tmp_op_str_buf.c_str();
-            size=tr_globals::tmp_op_str_buf.get_size();
+            value=(char*)executor_globals::tmp_op_str_buf.c_str();
+            size=executor_globals::tmp_op_str_buf.get_size();
         }
         else
             size=strlen(value);
@@ -1136,8 +1143,8 @@ void PPPIConstructor::do_next (tuple &t)
         if (value==NULL)
         {
             getStringParameter(content);
-            value=(char*)tr_globals::tmp_op_str_buf.c_str();
-            size=tr_globals::tmp_op_str_buf.get_size();
+            value=(char*)executor_globals::tmp_op_str_buf.c_str();
+            size=executor_globals::tmp_op_str_buf.get_size();
         }
         else
             size=strlen(value);
@@ -1266,9 +1273,9 @@ void PPTextConstructor::do_next (tuple &t)
                 t.set_eos();
                 return;
             }
-            value=(char*)tr_globals::tmp_op_str_buf.c_str();
+            value=(char*)executor_globals::tmp_op_str_buf.c_str();
 
-            size=tr_globals::tmp_op_str_buf.get_size();
+            size=executor_globals::tmp_op_str_buf.get_size();
         }
         else
             size=strlen(value);
@@ -1378,19 +1385,24 @@ void PPDocumentConstructor::do_next (tuple &t)
                 if (at_vals.size()>0)
                 {
                     tuple_cell tcc;
-                    tr_globals::tmp_op_str_buf.clear();
+                    executor_globals::tmp_op_str_buf.clear();
                     sequence::iterator it=at_vals.begin();
                     do
                     {
                         tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
                         tcc=cast(tcc, xs_string);
-                        tr_globals::tmp_op_str_buf.append(tcc);
+                        executor_globals::tmp_op_str_buf.append(tcc);
                         it++;
                     }
                     while (it!=at_vals.end());
                     at_vals.clear();
-                    if(tr_globals::tmp_op_str_buf.get_size()>0) {
-                        insert_text(indirectionDereferenceCP(lefti), XNULL, indirectionDereferenceCP(indir), tr_globals::tmp_op_str_buf.get_ptr_to_text(), tr_globals::tmp_op_str_buf.get_size(), tr_globals::tmp_op_str_buf.get_type());
+                    if(executor_globals::tmp_op_str_buf.get_size()>0) {
+                        insert_text(indirectionDereferenceCP(lefti),
+                                    XNULL,
+                                    indirectionDereferenceCP(indir),
+                                    executor_globals::tmp_op_str_buf.get_ptr_to_text(),
+                                    executor_globals::tmp_op_str_buf.get_size(),
+                                    executor_globals::tmp_op_str_buf.get_type());
                         lefti = get_last_mo_inderection();
                     }
                 }
@@ -1440,20 +1452,25 @@ void PPDocumentConstructor::do_next (tuple &t)
         }
         if (at_vals.size()>0)
         {
-            tr_globals::tmp_op_str_buf.clear();
+            executor_globals::tmp_op_str_buf.clear();
             tuple_cell tcc;
             sequence::iterator it=at_vals.begin();
             do
             {
                 tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
                 tcc=cast(tcc, xs_string);
-                tr_globals::tmp_op_str_buf.append(tcc);
+                executor_globals::tmp_op_str_buf.append(tcc);
                 it++;
             }
             while (it!=at_vals.end());
             at_vals.clear();
-            if(tr_globals::tmp_op_str_buf.get_size()>0)
-                lefti = getIndirectionSafeCP(insert_text(indirectionDereferenceCP(lefti),XNULL,indirectionDereferenceCP(indir),tr_globals::tmp_op_str_buf.get_ptr_to_text(),tr_globals::tmp_op_str_buf.get_size(),tr_globals::tmp_op_str_buf.get_type()));
+            if(executor_globals::tmp_op_str_buf.get_size()>0)
+                lefti = getIndirectionSafeCP(insert_text(indirectionDereferenceCP(lefti),
+                                                         XNULL,
+                                                         indirectionDereferenceCP(indir),
+                                                         executor_globals::tmp_op_str_buf.get_ptr_to_text(),
+                                                         executor_globals::tmp_op_str_buf.get_size(),
+                                                         executor_globals::tmp_op_str_buf.get_type()));
         }
         t.copy(tuple_cell::node_indir(indir));
 

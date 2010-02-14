@@ -12,14 +12,16 @@
 
 class PPCreateUser : public PPUpdate
 {
+private:
     PPOpIn username, passwd;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPCreateUser(PPOpIn _username_,
                  PPOpIn _passwd_,
@@ -29,14 +31,16 @@ public:
 
 class PPDropUser : public PPUpdate
 {
+private:
     PPOpIn username;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPDropUser(PPOpIn _username_,
                dynamic_context *_cxt_);
@@ -45,14 +49,16 @@ public:
 
 class PPAlterUser : public PPUpdate
 {
+private:
     PPOpIn username, passwd;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPAlterUser(PPOpIn _username_,
                 PPOpIn _passwd_,
@@ -62,14 +68,16 @@ public:
 
 class PPCreateRole : public PPUpdate
 {
+private:
     PPOpIn rolename;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPCreateRole(PPOpIn _rolename_,
                  dynamic_context *_cxt_);
@@ -78,14 +86,16 @@ public:
 
 class PPDropRole : public PPUpdate
 {
+private:
     PPOpIn rolename;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPDropRole(PPOpIn _rolename_,
                  dynamic_context *_cxt_);
@@ -94,14 +104,16 @@ public:
 
 class PPGrantRole : public PPUpdate
 {
+private:
     PPOpIn role, grantee;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPGrantRole(PPOpIn _role_,
                 PPOpIn _grantee_,
@@ -111,16 +123,18 @@ public:
 
 class PPGrantRevokePriv : public PPUpdate
 {
+private:
     PPOpIn name, obj_name, grantee;
     const char *obj_type;
     dynamic_context *cxt;
     bool to_revoke;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPGrantRevokePriv(PPOpIn _name_,
                 PPOpIn _obj_name_,
@@ -141,14 +155,16 @@ public:
 
 class PPRevokeRole : public PPUpdate
 {
+private:
     PPOpIn role, grantee;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPRevokeRole(PPOpIn _role_,
                  PPOpIn _grantee_,
@@ -156,4 +172,4 @@ public:
     ~PPRevokeRole();
 };
 
-#endif
+#endif /* _PPSECURITY_H */

@@ -28,20 +28,20 @@ PPDropIndex::~PPDropIndex()
     cxt = NULL;
 }
 
-void PPDropIndex::open()
+void PPDropIndex::do_open()
 {
     local_lock_mrg->lock(lm_x); // because Leon changes the descriptive schema of the document/collection
     dynamic_context::global_variables_open();
     index_name.op->open();
 }
 
-void PPDropIndex::close()
+void PPDropIndex::do_close()
 {
     index_name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDropIndex::accept(PPVisitor &v)
+void PPDropIndex::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -49,7 +49,7 @@ void PPDropIndex::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDropIndex::execute()
+void PPDropIndex::do_execute()
 {
     tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "drop index");
 

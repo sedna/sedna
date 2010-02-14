@@ -50,7 +50,7 @@ PPBulkLoad::~PPBulkLoad()
     cxt3 = NULL;
 }
 
-void PPBulkLoad::open()
+void PPBulkLoad::do_open()
 {
     local_lock_mrg->lock(lm_x);
 
@@ -60,7 +60,7 @@ void PPBulkLoad::open()
     if (collection.op) collection.op->open();
 }
 
-void PPBulkLoad::close()
+void PPBulkLoad::do_close()
 {
     filename.op->close();
     document.op->close();
@@ -68,7 +68,7 @@ void PPBulkLoad::close()
     dynamic_context::global_variables_close();
 }
 
-void PPBulkLoad::accept(PPVisitor &v)
+void PPBulkLoad::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -78,7 +78,7 @@ void PPBulkLoad::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPBulkLoad::execute()
+void PPBulkLoad::do_execute()
 {
     tuple_cell tc, tc_filename, tc_document, tc_collection;
     tuple t(1);

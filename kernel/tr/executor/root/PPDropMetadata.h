@@ -11,29 +11,32 @@
 
 class PPDropDocument : public PPUpdate
 {
+private:
     PPOpIn name;
     dynamic_context *cxt;
 
-public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
 
+public:
     PPDropDocument(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPDropDocument();
 };
 
 class PPDropCollection : public PPUpdate
 {
+private:
     PPOpIn name;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPDropCollection(PPOpIn _name_, dynamic_context *_cxt_);
     ~PPDropCollection();
@@ -41,14 +44,16 @@ public:
 
 class PPDropDocumentInCollection : public PPUpdate
 {
+private:
     PPOpIn document, collection;
     dynamic_context *cxt1, *cxt2;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPDropDocumentInCollection(PPOpIn _document_,
                                dynamic_context *_cxt1_,

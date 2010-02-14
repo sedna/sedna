@@ -27,7 +27,7 @@ PPCreateUser::~PPCreateUser()
     cxt = NULL;
 }
 
-void PPCreateUser::open()
+void PPCreateUser::do_open()
 {
     dynamic_context::global_variables_open();
     username.op->open();
@@ -35,14 +35,14 @@ void PPCreateUser::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPCreateUser::close()
+void PPCreateUser::do_close()
 {
     username.op->close();
     passwd.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPCreateUser::execute()
+void PPCreateUser::do_execute()
 {
     tuple_cell tc_user, tc_passwd;
     tuple t(1);
@@ -89,20 +89,20 @@ PPDropUser::~PPDropUser()
     cxt = NULL;
 }
 
-void PPDropUser::open()
+void PPDropUser::do_open()
 {
     dynamic_context::global_variables_open();
     username.op->open();
     local_lock_mrg->lock(lm_x);
 }
 
-void PPDropUser::close()
+void PPDropUser::do_close()
 {
     username.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDropUser::execute()
+void PPDropUser::do_execute()
 {
     tuple_cell tc_user;
     tuple t(1);
@@ -140,7 +140,7 @@ PPAlterUser::~PPAlterUser()
     cxt = NULL;
 }
 
-void PPAlterUser::open()
+void PPAlterUser::do_open()
 {
     dynamic_context::global_variables_open();
     username.op->open();
@@ -148,14 +148,14 @@ void PPAlterUser::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPAlterUser::close()
+void PPAlterUser::do_close()
 {
     username.op->close();
     passwd.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPAlterUser::execute()
+void PPAlterUser::do_execute()
 {
     tuple_cell tc_user, tc_passwd;
     tuple t(1);
@@ -203,20 +203,20 @@ PPCreateRole::~PPCreateRole()
     cxt = NULL;
 }
 
-void PPCreateRole::open()
+void PPCreateRole::do_open()
 {
     dynamic_context::global_variables_open();
     rolename.op->open();
     local_lock_mrg->lock(lm_x);
 }
 
-void PPCreateRole::close()
+void PPCreateRole::do_close()
 {
     rolename.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPCreateRole::execute()
+void PPCreateRole::do_execute()
 {
     tuple_cell tc_role;
     tuple t(1);
@@ -251,21 +251,21 @@ PPDropRole::~PPDropRole()
     cxt = NULL;
 }
 
-void PPDropRole::open()
+void PPDropRole::do_open()
 {
     dynamic_context::global_variables_open();
     rolename.op->open();
     local_lock_mrg->lock(lm_x);
 }
 
-void PPDropRole::close()
+void PPDropRole::do_close()
 {
     rolename.op->close();
     dynamic_context::global_variables_close();
     clear_authmap();
 }
 
-void PPDropRole::execute()
+void PPDropRole::do_execute()
 {
     tuple_cell tc_role;
     tuple t(1);
@@ -303,7 +303,7 @@ PPGrantRole::~PPGrantRole()
     cxt = NULL;
 }
 
-void PPGrantRole::open()
+void PPGrantRole::do_open()
 {
     dynamic_context::global_variables_open();
     role.op->open();
@@ -311,7 +311,7 @@ void PPGrantRole::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPGrantRole::close()
+void PPGrantRole::do_close()
 {
     role.op->close();
     grantee.op->close();
@@ -319,7 +319,7 @@ void PPGrantRole::close()
     clear_authmap();
 }
 
-void PPGrantRole::execute()
+void PPGrantRole::do_execute()
 {
     tuple_cell tc_role, tc_grantee;
     tuple t(1);
@@ -386,7 +386,7 @@ PPGrantRevokePriv::~PPGrantRevokePriv()
     cxt = NULL;
 }
 
-void PPGrantRevokePriv::open()
+void PPGrantRevokePriv::do_open()
 {
     dynamic_context::global_variables_open();
     name.op->open();
@@ -398,7 +398,7 @@ void PPGrantRevokePriv::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPGrantRevokePriv::close()
+void PPGrantRevokePriv::do_close()
 {
     name.op->close();
 
@@ -410,7 +410,7 @@ void PPGrantRevokePriv::close()
     clear_authmap();
 }
 
-void PPGrantRevokePriv::execute()
+void PPGrantRevokePriv::do_execute()
 {
     tuple_cell tc_name, tc_grantee;
     tuple t(1);
@@ -487,7 +487,7 @@ PPRevokeRole::~PPRevokeRole()
     cxt = NULL;
 }
 
-void PPRevokeRole::open()
+void PPRevokeRole::do_open()
 {
     dynamic_context::global_variables_open();
     role.op->open();
@@ -495,7 +495,7 @@ void PPRevokeRole::open()
     local_lock_mrg->lock(lm_x);
 }
 
-void PPRevokeRole::close()
+void PPRevokeRole::do_close()
 {
     role.op->close();
     grantee.op->close();
@@ -503,7 +503,7 @@ void PPRevokeRole::close()
     clear_authmap();
 }
 
-void PPRevokeRole::execute()
+void PPRevokeRole::do_execute()
 {
     tuple_cell tc_role, tc_grantee;
     tuple t(1);
@@ -540,7 +540,7 @@ void PPRevokeRole::execute()
 /// Acceptors for security root operations
 ////////////////////////////////////////////////////////////////////////////////
 
-void PPCreateUser::accept(PPVisitor &v)
+void PPCreateUser::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -548,14 +548,14 @@ void PPCreateUser::accept(PPVisitor &v)
     passwd.op->accept(v);
     v.pop();
 }
-void PPDropUser::accept(PPVisitor &v)
+void PPDropUser::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
     username.op->accept(v);
     v.pop();
 }
-void PPAlterUser::accept(PPVisitor &v)
+void PPAlterUser::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -563,21 +563,21 @@ void PPAlterUser::accept(PPVisitor &v)
     passwd.op->accept(v);
     v.pop();
 }
-void PPCreateRole::accept(PPVisitor &v)
+void PPCreateRole::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
     rolename.op->accept(v);
     v.pop();
 }
-void PPDropRole::accept(PPVisitor &v)
+void PPDropRole::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
     rolename.op->accept(v);
     v.pop();
 }
-void PPGrantRole::accept(PPVisitor &v)
+void PPGrantRole::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -585,7 +585,7 @@ void PPGrantRole::accept(PPVisitor &v)
     grantee.op->accept(v);
     v.pop();
 }
-void PPGrantRevokePriv::accept(PPVisitor &v)
+void PPGrantRevokePriv::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -595,7 +595,7 @@ void PPGrantRevokePriv::accept(PPVisitor &v)
     grantee.op->accept(v);
     v.pop();
 }
-void PPRevokeRole::accept(PPVisitor &v)
+void PPRevokeRole::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);

@@ -24,26 +24,12 @@
 #include "tr/rcv/rcv_test_tr.h"
 #include "tr/rcv/rcv_funcs.h"
 
-// only for MSDEV 6.0
-#if (_MSC_VER == 1200) && (WINVER < 0x0500)
-extern "C" long _ftol(double);  //defined by VC6 C libs
-extern "C" long _ftol2(double dblSource)
-{
-    return _ftol(dblSource);
-}
-#endif
-
-
 using namespace std;
 using namespace tr_globals;
 
-
-DECLARE_TIME_VARS
 // variables for time measurement
-u_timeb t_total1, t_total2, t_qep1, t_qep2, t_total, t_qep;
-
-
-string total_time = "0.000 secs", qep_time = "0.000 secs";
+DECLARE_TIME_VARS
+u_timeb t_total1, t_total2, t_qep1, t_qep2, t_qep;
 
 #ifdef _WIN32
 BOOL TrnCtrlHandler(DWORD fdwCtrlType)
@@ -62,7 +48,6 @@ BOOL TrnCtrlHandler(DWORD fdwCtrlType)
 }
 #else
 #include <signal.h>
-
 void TrnCtrlHandler(int signo)
 {
     if (signo == SIGINT || signo == SIGQUIT || signo == SIGTERM)
@@ -227,7 +212,7 @@ int TRmain(int argc, char *argv[])
 
             tr_globals::ppc = se_new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number,
                                                   run_recovery ? EL_RCV : EL_TRN,
-                                                  run_recovery ? NULL : &tr_globals::is_timer_fired);
+                                                  run_recovery ? NULL : &executor_globals::is_timer_fired);
             tr_globals::ppc->startup(e);
 
             event_logger_init((run_recovery) ? EL_RCV : EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -392,8 +377,7 @@ int TRmain(int argc, char *argv[])
 
                                     u_ftime(&t_qep2);
                                     t_qep = (t_qep2 - t_qep1);
-                                    qep_time = to_string(t_qep);
-
+                                    
                                     ADD_TIME(t_total_exec, t1_exec, t2_exec);
 
                                     break;
@@ -413,10 +397,8 @@ int TRmain(int argc, char *argv[])
                                         }
                                         client->end_item(item_status);
                                         u_ftime(&t_qep2);
-
                                         t_qep = (t_qep2 - (t_qep1 - t_qep));
 
-                                        qep_time = to_string(t_qep);
                                         if (item_status != se_next_item_exists)
                                         {
                                             on_user_statement_end(qep_tree, st);
@@ -451,7 +433,7 @@ int TRmain(int argc, char *argv[])
                                 }
                             case se_ShowTime:      //show time
                                 {
-                                    client->show_time(qep_time);
+                                    client->show_time(t_qep);
                                     break;
                                 }
                             case se_CloseConnection:       //close connection
@@ -526,7 +508,7 @@ int TRmain(int argc, char *argv[])
                 }
                 else if (client_msg.instruction == se_ShowTime)             // ShowTime
                 {
-                    client->show_time(qep_time);
+                    client->show_time(t_qep);
                 }
                 else if (client_msg.instruction == se_SetSessionOptions)    // Set session options
                 {
@@ -560,16 +542,12 @@ int TRmain(int argc, char *argv[])
                 elog(EL_LOG, ("Session is closed"));
 
 
-            u_ftime(&t_total2);
-            total_time = to_string(t_total2 - t_total1);
-
-            //   PRINT_DEBUG_TIME_RESULTS
-
             if (show_time == 1)
             {
-                cerr << "\nStatistics: total time: " << total_time.c_str() << "\n";
+                u_ftime(&t_total2);
+                string total_time = to_string(t_total2 - t_total1);
+                cerr << "\nStatistics: total time: " << total_time.c_str() << " secs\n";
                 cerr << "<step>\t\t\t<time>\n";
-                //cerr << "query execution\t\t" << qep_time.c_str() << "\n";
                 cerr << endl;
 #ifdef VMM_GATHER_STATISTICS
                 cerr << "vmm_different_blocks_touched : " << vmm_different_blocks_touched() << endl;

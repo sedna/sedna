@@ -275,7 +275,7 @@ static char *getStringParameter(PPOpIn content, const char *err_pref)
         at_vals.add(value);
         content.op->next(value);
     }
-    tr_globals::tmp_op_str_buf.clear();
+    executor_globals::tmp_op_str_buf.clear();
     sequence::iterator it=at_vals.begin();
     do
     {
@@ -284,14 +284,14 @@ static char *getStringParameter(PPOpIn content, const char *err_pref)
         res=tuple_cell::make_sure_light_atomic(res);
         if (it!=at_vals.begin())
         {
-			tr_globals::tmp_op_str_buf.append(" ");
+			executor_globals::tmp_op_str_buf.append(" ");
         }
-        tr_globals::tmp_op_str_buf.append(res);
+        executor_globals::tmp_op_str_buf.append(res);
         it++;
     }
     while (it!=at_vals.end());
     //str_val.push_to_memory();
-    return tr_globals::tmp_op_str_buf.c_str();
+    return executor_globals::tmp_op_str_buf.c_str();
 }
 
 void PPFnSQLConnect::do_next(tuple &t)

@@ -41,15 +41,12 @@ void PPQueryRoot::detachChild(PPOpIn *poi, dynamic_context **dc)
     cxt = NULL;
 }
 
-void PPQueryRoot::open()
+void PPQueryRoot::do_open()
 {
     local_lock_mrg->lock(lm_s);
     first = true;
     dynamic_context::global_variables_open();
     child.op->open();
-
-    print_mode    = tr_globals::client->get_result_type();
-    output_stream = tr_globals::client->get_se_ostream();
 
     if (print_mode == sxml)
     {
@@ -61,13 +58,13 @@ void PPQueryRoot::open()
     }
 }
 
-void PPQueryRoot::close()
+void PPQueryRoot::do_close()
 {
     child.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPQueryRoot::accept(PPVisitor &v)
+void PPQueryRoot::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -90,6 +87,16 @@ bool PPQueryRoot::next()
     xmlscm_type st = 0;    /* by default there is no type (anyType) */
     bool is_node;
     str_counted_ptr uri;   /* for document and attribute nodes */
+
+    
+    if(first)
+    {
+        /* Can't initialize these variables in open() since PPExplain
+         * turns off otput after open called.
+         */
+        output_stream = tr_globals::client->get_se_ostream();
+        print_mode    = tr_globals::client->get_result_type();
+    }
 
     if((is_node = tc.is_node()))
     {
@@ -150,7 +157,7 @@ bool PPQueryRoot::next()
     return true;
 }
 
-void PPQueryRoot::execute()
+void PPQueryRoot::do_execute()
 {
     while (next());
 }

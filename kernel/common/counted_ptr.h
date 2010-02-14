@@ -1,9 +1,6 @@
 /*
- * The following code example is taken from the book
- * The C++ Standard Library - A Tutorial and Reference
- *
- * by Nicolai M. Josuttis, Addison-Wesley, 1999
- * © Copyright Nicolai M. Josuttis 1999
+ * File:  counted_ptr.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef COUNTED_PTR_H

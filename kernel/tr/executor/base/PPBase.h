@@ -35,7 +35,7 @@ class PPVisitor;
  * Global variables
  ******************************************************************************/
 
-namespace tr_globals 
+namespace executor_globals 
 {
     /* 
      * Buffer for strings that fit in main memory (used for various intermediate 
@@ -55,6 +55,12 @@ namespace tr_globals
 
     extern TLS_VAR_DECL
     volatile bool is_timer_fired;
+
+    /* In this mode each operation collects execution time,
+     * i/o statistics, etc to be used in query profiler statement.
+     */
+    extern TLS_VAR_DECL
+    volatile bool profiler_mode;
     
     /*
      * Signed integer is better here, since in some situations
@@ -65,6 +71,9 @@ namespace tr_globals
 
     /* FIXME: make this TLS_VAR_DECL when we start to use threads */
     extern op_str_buf tmp_op_str_buf;
+
+    /* Reinitialize state before next statement execution */
+    void on_kernel_statement_end();
 }
 
 /*******************************************************************************
@@ -77,33 +86,33 @@ namespace tr_globals
  * xxx_VAR   - in next(tuple, var)
  */
 
-#define INCREASE_STACK_DEPTH     tr_globals::current_stack_depth++;
+#define INCREASE_STACK_DEPTH     executor_globals::current_stack_depth++;
 
-#define DECREASE_STACK_DEPTH     tr_globals::current_stack_depth--;
+#define DECREASE_STACK_DEPTH     executor_globals::current_stack_depth--;
 
-#define CHECK_STACK_DEPTH        if(tr_globals::current_stack_depth > tr_globals::max_stack_depth) \
+#define CHECK_STACK_DEPTH        if(executor_globals::current_stack_depth > tr_globals::max_stack_depth) \
                                      throw USER_EXCEPTION2(SE1001,\
 "Infinite recursion or too complex query. Consider increasing\
  session_stack_depth configuration parameter in sednaconf.xml.");
 
-#define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
-                                 tr_globals::__current_physop = (pp); 
+#define SET_CURRENT_PP(pp)       __current_physop_backup = executor_globals::__current_physop; \
+                                 executor_globals::__current_physop = (pp); 
                                  
-#define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = tr_globals::__current_physop; \
-                                 tr_globals::__current_physop = (pp);
+#define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = executor_globals::__current_physop; \
+                                 executor_globals::__current_physop = (pp);
 
-#define RESTORE_CURRENT_PP       tr_globals::__current_physop = __current_physop_backup; \
+#define RESTORE_CURRENT_PP       executor_globals::__current_physop = __current_physop_backup; \
                                  __current_physop_backup = NULL; \
 
-#define RESTORE_CURRENT_PP_VAR   tr_globals::__current_physop = __current_physop_backup_var; \
+#define RESTORE_CURRENT_PP_VAR   executor_globals::__current_physop = __current_physop_backup_var; \
                                  __current_physop_backup_var = NULL;
 
 /* Must be called after delete qep_tree in trn! */
-#define RESET_CURRENT_PP         tr_globals::__current_physop = NULL; \
-                                 tr_globals::current_stack_depth = 0;
+#define RESET_CURRENT_PP         executor_globals::__current_physop = NULL; \
+                                 executor_globals::current_stack_depth = 0;
 
 /* Check in executor if timer is fired */
-#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) \
+#define CHECK_TIMER_FLAG         if (executor_globals::is_timer_fired) \
                                      throw USER_EXCEPTION(SE4620);
 
 
@@ -137,11 +146,43 @@ typedef std::vector<var_dsc>		arr_of_var_dsc;
  * Struct encapsulates physical operation properties
  ******************************************************************************/
 
+struct profile_info
+{
+    /* Operation execution time in msec */
+    u_timeb time;
+    /* Operation locks update of the structure.
+     * We need this to prevent simultaneous updates in 
+     * user defined functions recursive calls.
+     */
+    void* lock;
+    /* Number of calls */
+    __int64 calls;
+     
+    profile_info(): lock(NULL), 
+                    calls(0) 
+    { 
+        u_timeb_init(&time);  
+    }
+};
+
+typedef counted_ptr<profile_info> profile_info_ptr;
+
 struct operation_info
 {
     /* Line in the source query this operation corresponds to */
     int query_line;
+    /* Column in the source query this operation corresponds to */
     int query_col;
+    /* Profile information: execution time, read/write blocks, etc*/
+	profile_info_ptr profile;
+
+	operation_info(): query_line(0), query_col(0) {}
+
+    inline void initialize()
+    { 
+         if(NULL == profile.get()) 
+              profile = profile_info_ptr(new profile_info());
+    }
 };
 
 
@@ -153,6 +194,7 @@ class PPIterator
 protected:
     dynamic_context*  cxt;
     operation_info    info;
+    u_timeb current1, current2;
 
     /* 
      * Backs up  __current_physop pointer when operation is called from 
@@ -178,7 +220,12 @@ public:
      * Usually opan() implementation may contain quite heavy operations 
      * like memory allocations.
      */
-    inline void        open    ()                   { do_open();   }
+    inline void        open    ()                   
+    { 
+         if(executor_globals::profiler_mode)
+              info.initialize();
+         do_open();
+    }
     
     /* 
      * Equivalent of the consecutive calls close()-open() but in most cases
@@ -197,6 +244,16 @@ public:
     /* Saves next portion of the result of this operation in t */
     inline void        next    (tuple &t) 
     { 
+        if(executor_globals::profiler_mode)
+        {
+            U_ASSERT(info.profile.get() != NULL);
+            info.profile->calls++;
+            if(NULL == info.profile->lock) 
+            {
+                info.profile->lock = (void*)this;
+                u_ftime(&current1);
+            }
+        }
         CHECK_TIMER_FLAG
         SET_CURRENT_PP(this)
         INCREASE_STACK_DEPTH
@@ -206,6 +263,15 @@ public:
         
         DECREASE_STACK_DEPTH
         RESTORE_CURRENT_PP
+        if(executor_globals::profiler_mode)
+        {
+            if((void*)this == info.profile->lock)
+            {
+                u_ftime(&current2);
+                info.profile->time = info.profile->time + (current2 - current1);
+                info.profile->lock = NULL;
+            }
+        }
     }
     
     /* 
@@ -214,11 +280,14 @@ public:
      * a copy of function's subtree is created by means of recursive copy() 
      * calls.
      */
-    inline PPIterator* copy(dynamic_context *_cxt_) { 
+    inline PPIterator* copy(dynamic_context *_cxt_) 
+    { 
+        if(executor_globals::profiler_mode)
+            info.initialize();
         return do_copy(_cxt_); 
     }
 
-    inline const operation_info get_operation_info() const {
+    inline const operation_info& get_operation_info() const {
         return do_get_operation_info();
     }
 
@@ -291,16 +360,46 @@ public:
  ******************************************************************************/
 class PPQueryEssence
 {
-public:
-    virtual void open()                = 0;
-    virtual void close()               = 0;
-    virtual void execute()             = 0;
-    virtual bool supports_next()       = 0;
-    virtual bool is_update()           = 0;
-    virtual void accept(PPVisitor &v)  = 0;
-    
-    PPQueryEssence() {}
+protected:
+    profile_info profile;
+    u_timeb current1, current2;
 
+private:
+    virtual void do_open()               = 0;
+    virtual void do_close()              = 0;
+    virtual void do_execute()            = 0;
+    virtual void do_accept(PPVisitor &v) = 0;
+
+public:
+    inline void open()                   { do_open();    }
+    inline void execute() 
+    { 
+        if(executor_globals::profiler_mode)
+        {
+            profile.calls++;
+            u_ftime(&current1);
+        }
+
+        do_execute();
+ 
+        if(executor_globals::profiler_mode)
+        {
+            u_ftime(&current2);
+            profile.time = current2 - current1;
+        }
+    }
+
+    inline void close()                  { do_close();   }
+    inline void accept(PPVisitor &v)     { do_accept(v); }
+
+    virtual bool supports_next()         = 0;
+    virtual bool is_update()             = 0;
+
+    inline const profile_info& get_profile_info() const {
+        return profile;
+    }
+
+    PPQueryEssence() {}
     virtual ~PPQueryEssence() {}
 };
 
@@ -312,7 +411,7 @@ class PPUpdate : public PPQueryEssence
 {
 public:
     virtual bool supports_next() { return false; }
-    virtual bool is_update() { return true; }
+    virtual bool is_update()     { return true; }
 
     PPUpdate() {}
     virtual ~PPUpdate() {}
@@ -409,7 +508,7 @@ inline SednaXQueryException __xquery_exception2(const char *file,
                              user_error_code_entries[code].descr,
                              details)), 
              SednaXQueryException(file, func, line, details, code, 
-                                  tr_globals::__current_physop));
+                                  executor_globals::__current_physop));
 
 }
 #endif /* DARWIN */

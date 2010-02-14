@@ -35,7 +35,7 @@ PPRetrieveMetadata::~PPRetrieveMetadata()
     }
 }
 
-void PPRetrieveMetadata::open()
+void PPRetrieveMetadata::do_open()
 {
     local_lock_mrg->lock(lm_s);
 
@@ -43,13 +43,13 @@ void PPRetrieveMetadata::open()
     if (collection.op) collection.op->open();
 }
 
-void PPRetrieveMetadata::close()
+void PPRetrieveMetadata::do_close()
 {
     if (collection.op) collection.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPRetrieveMetadata::accept(PPVisitor &v)
+void PPRetrieveMetadata::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -57,7 +57,7 @@ void PPRetrieveMetadata::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPRetrieveMetadata::execute()
+void PPRetrieveMetadata::do_execute()
 {
     if (type == dbe_collection)
     {

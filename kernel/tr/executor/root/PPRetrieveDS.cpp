@@ -30,7 +30,7 @@ PPRetrieveDS::~PPRetrieveDS()
     cxt = NULL;
 }
 
-void PPRetrieveDS::open()
+void PPRetrieveDS::do_open()
 {
     local_lock_mrg->lock(lm_s);
 
@@ -38,13 +38,13 @@ void PPRetrieveDS::open()
     name.op->open();
 }
 
-void PPRetrieveDS::close()
+void PPRetrieveDS::do_close()
 {
     name.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPRetrieveDS::accept(PPVisitor &v)
+void PPRetrieveDS::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -52,7 +52,7 @@ void PPRetrieveDS::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPRetrieveDS::execute()
+void PPRetrieveDS::do_execute()
 {
     tuple_cell tc;
     tuple t(1);

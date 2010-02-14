@@ -22,15 +22,15 @@ private:
     t_print print_mode;
     se_ostream* output_stream;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
     PPQueryRoot(dynamic_context *_cxt_,
                 PPOpIn _child_);
     virtual ~PPQueryRoot();
-
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     /* Returns true if successfuly got next item,
      * false - if result is over.
@@ -38,7 +38,6 @@ public:
     bool next();
     bool supports_next() { return true; }
     bool is_update() { return false; }
-
 
     // use it before destroying PPQueryRoot when it is used as a carrier for trigger/module query-action
     void detachChild(PPOpIn *poi, dynamic_context **dc);

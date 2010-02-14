@@ -28,7 +28,7 @@ char *_get_pointer_to_c_str(const tuple_cell &c)
     { // VMM is used for storing
         int size = c.get_strlen_vmm();
         if (size > MAX_ATOMIC_LEX_REPR_SIZE) throw USER_EXCEPTION2(SE1003, "Buffer overflow");
-        t = tr_globals::mem_str_buf;
+        t = executor_globals::mem_str_buf;
         estr_copy_to_buffer(t, c.get_str_vmm(), size);
         t[size] = '\0';
     }

@@ -74,21 +74,21 @@ PPCreateTrigger::~PPCreateTrigger()
     root.release();
 }
 
-void PPCreateTrigger::open()
+void PPCreateTrigger::do_open()
 {
     trigger_name.op->open();
     root.open();
     dynamic_context::global_variables_open();
 }
 
-void PPCreateTrigger::close()
+void PPCreateTrigger::do_close()
 {
     trigger_name.op->close();
     root.close();
     dynamic_context::global_variables_close();
 }
 
-void PPCreateTrigger::accept(PPVisitor &v)
+void PPCreateTrigger::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -100,7 +100,7 @@ void PPCreateTrigger::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPCreateTrigger::execute()
+void PPCreateTrigger::do_execute()
 {
     /* Determine trigger name */
     tuple_cell tc = get_name_from_PPOpIn(trigger_name, "trigger", "create trigger");

@@ -19,6 +19,7 @@ private:
     PPQueryEssence* qep_tree;
     bool first_time;
     doc_schema_node_cptr scm;
+    bool profiler_mode;
     
 private:
     virtual void do_open   ();
@@ -32,7 +33,8 @@ private:
 public:
     PPExplain(dynamic_context *_cxt_,
               operation_info _info_,
-              PPQueryEssence* _qep_tree_);
+              PPQueryEssence* _qep_tree_,
+              bool _profiler_mode_ = false);
     virtual ~PPExplain();
 };
 

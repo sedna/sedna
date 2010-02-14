@@ -13,16 +13,18 @@
 
 class PPRetrieveMetadata : public PPQueryEssence
 {
+private:
     db_entity_type type;
     PPOpIn collection;
     dynamic_context *cxt;
     bool output_statistics;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     bool supports_next() { return false; }
     bool is_update() { return false; }

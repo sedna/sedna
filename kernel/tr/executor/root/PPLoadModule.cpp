@@ -86,7 +86,7 @@ PPLoadModule::~PPLoadModule()
     cxt = NULL;
 }
 
-void PPLoadModule::open()
+void PPLoadModule::do_open()
 {
     dynamic_context::global_variables_open();
     std::for_each(
@@ -95,7 +95,7 @@ void PPLoadModule::open()
         );
 }
 
-void PPLoadModule::close()
+void PPLoadModule::do_close()
 {
     std::for_each(
         filenames.begin(), filenames.end(),
@@ -105,7 +105,7 @@ void PPLoadModule::close()
     dynamic_context::global_variables_close();
 }
 
-void PPLoadModule::accept(PPVisitor &v)
+void PPLoadModule::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -158,7 +158,7 @@ void close_all_client_files(std::vector<client_file> &cf_vec)
 
 }
 
-void PPLoadModule::execute()
+void PPLoadModule::do_execute()
 {
     const int                   fnames_size = filenames.size();
     std::vector<std::string>    tc_filenames(fnames_size);

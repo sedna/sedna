@@ -437,9 +437,9 @@ void command_line_client::clear_stack_for_stop_signal()
     }
 }
 
-void command_line_client::show_time(string qep_time)
+void command_line_client::show_time(u_timeb qep_time)
 {
-    d_printf2("Execution time of the latest query %s\n",qep_time.c_str());
+    d_printf2("Execution time of the latest query %s\n secs", to_string(qep_time).c_str());
 }
 
 void command_line_client::write_user_query_to_log()

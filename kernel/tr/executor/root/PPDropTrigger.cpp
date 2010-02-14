@@ -26,18 +26,18 @@ PPDropTrigger::~PPDropTrigger()
     cxt = NULL;
 }
 
-void PPDropTrigger::open()
+void PPDropTrigger::do_open()
 {
     trigger_name.op->open();
     local_lock_mrg->lock(lm_x);
 }
 
-void PPDropTrigger::close()
+void PPDropTrigger::do_close()
 {
     trigger_name.op->close();
 }
 
-void PPDropTrigger::accept(PPVisitor &v)
+void PPDropTrigger::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -45,7 +45,7 @@ void PPDropTrigger::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDropTrigger::execute()
+void PPDropTrigger::do_execute()
 {
     tuple_cell tc;
     tuple t(1);

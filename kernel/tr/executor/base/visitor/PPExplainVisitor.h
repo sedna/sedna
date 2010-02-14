@@ -25,6 +25,11 @@ private:
     xptr parent, left, left_inside;
     /* Var_dsc -> name map */
     var_map_id_name var_names;
+    /* 
+     * Turns on profile mode. In this mode visitor additionally 
+     * collects various profile statistics from physical operations.
+     */
+    bool profiler_mode;
     /* Maintains stack of indirection pointers */
     std::stack<xptr_pair> pointers;
 
@@ -32,12 +37,14 @@ private:
     void insertOperationElement(const char* name, 
                                 xptr& left, 
                                 const xptr& parent, 
-                                PPIterator* op);
+                                const PPIterator* op = NULL,
+                                const PPQueryEssence* qep = NULL);
 
 public:
     PPExplainVisitor(dynamic_context* _cxt_, 
                      xptr root, 
-                     var_map_id_name _var_names_);
+                     var_map_id_name _var_names_,
+                     bool _profiler_mode_ = false);
 
     virtual ~PPExplainVisitor();
 

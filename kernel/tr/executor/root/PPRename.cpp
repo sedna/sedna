@@ -48,7 +48,7 @@ PPRename::~PPRename()
     cxt = NULL;
 }
 
-void PPRename::open()
+void PPRename::do_open()
 {
     local_lock_mrg->lock(lm_x);
     dynamic_context::global_variables_open();
@@ -59,14 +59,14 @@ void PPRename::open()
     }
 }
 
-void PPRename::close()
+void PPRename::do_close()
 {
     child.op->close();
     if(new_name_child.op) new_name_child.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPRename::accept(PPVisitor &v)
+void PPRename::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -75,7 +75,7 @@ void PPRename::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPRename::execute()
+void PPRename::do_execute()
 {
     switch(type)
     {

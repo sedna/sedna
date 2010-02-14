@@ -25,20 +25,20 @@ PPDeleteDeep::~PPDeleteDeep()
     cxt = NULL;
 }
 
-void PPDeleteDeep::open()
+void PPDeleteDeep::do_open()
 {
     local_lock_mrg->lock(lm_x);
     dynamic_context::global_variables_open();
     child.op->open();
 }
 
-void PPDeleteDeep::close()
+void PPDeleteDeep::do_close()
 {
     child.op->close();
     dynamic_context::global_variables_close();
 }
 
-void PPDeleteDeep::accept(PPVisitor &v)
+void PPDeleteDeep::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
@@ -46,7 +46,7 @@ void PPDeleteDeep::accept(PPVisitor &v)
     v.pop();
 }
 
-void PPDeleteDeep::execute()
+void PPDeleteDeep::do_execute()
 {
     delete_deep(child);
 }

@@ -11,14 +11,16 @@
 
 class PPDeleteDeep : public PPUpdate
 {
+private:
     PPOpIn child;
     dynamic_context *cxt;
 
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+
 public:
-    void open();
-    void close();
-    void execute();
-    void accept(PPVisitor& v);
 
     PPDeleteDeep(PPOpIn _child_, 
                  dynamic_context *_cxt_);

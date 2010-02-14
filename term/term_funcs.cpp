@@ -199,7 +199,7 @@ int process_commandline_query()
     
     if(show_time != 0)
     {
-    	fprintf(stderr, "total time: %s\n",SEshowTime(&conn));
+    	fprintf(stderr, "total time: %s\n secs",SEshowTime(&conn));
         fflush(res_os);
     }
 	
