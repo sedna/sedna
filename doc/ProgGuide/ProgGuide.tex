@@ -2895,7 +2895,7 @@ DO
 %																				 ==
 %==================================================================================
 
-\subsection{Debug Facilities}
+\subsection{Debug and Profile Facilities}
 \subsubsection{Trace}
 \label{trace}
 Sedna supports standard XQuery function \verb!fn:trace! \cite{paper:query-fo} providing user helper facility to trace queries. While executing XQuery query using fn:trace function intermediate results are shown to the user.
@@ -2938,9 +2938,12 @@ If you want to use trace facility in your application working through Sedna API 
 
 \subsubsection{Session Debug Mode}
 \label{session-debug-mode}
-In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can turn on session debug mode. You can turn on session debug mode in Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's Administration Guide) or in your application using corresponding Sedna API functions (see \ref{session-option-capi} section).
+In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can use session debug mode. You can turn on session
+debug mode in Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's Administration Guide) or in your application using corresponding 
+Sedna API functions (see \ref{session-option-capi} section).
 
-Each query in Sedna is represented and executed internally as a tree of the physical operations. Debug mode is mechanism that allows to get stack of physical operations (operations names list) after dynamic error was raised. It serves two objectives:
+Each query in Sedna is represented and executed internally as a tree of the physical operations. Debug mode is mechanism that allows to get stack of the 
+physical operations after dynamic error was raised. It serves two goals:
 
 \begin{itemize}
 \item localize error in the query's source code;
@@ -2979,6 +2982,104 @@ As you can see in the output above each item of the operations stack list consis
 \item optional additional information (qualified name of the function in the example).
 \end{itemize}
 
+\subsubsection{Explain Query}
+The explain statement has the following syntax:
+\begin{verbatim}
+EXPLAIN
+{XQuery or Update statement to explain}
+\end{verbatim}
+Each query in Sedna is represented and executed internally as a tree of the physical operations. With the help of \verb!EXPLAIN! statement you
+can obtain detailed query execution plan which shows how Sedna executes this query. 
+\newline
+\newline
+The following query illustrates \verb!EXPLAIN! statement execution:
+\newline
+\newline
+\textbf{Query:}
+\begin{verbatim}
+explain
+declare function local:fact($i as xs:integer) as xs:integer {
+    if ($i <= 1)
+    then 1
+    else $i * local:fact($i - 1)
+};
+
+local:fact(10)
+\end{verbatim}
+\textbf{Output:}
+
+\begin{verbatim}
+<plolog xmlns="http://www.modis.ispras.ru/sedna">
+  <function id="0" function-name="local:fact" type="xs:integer">
+    <arguments>
+      <argument descriptor="0" type="xs:integer"/>
+    </arguments>
+    <operation name="PPIf" position="2:5">
+
+      <operation name="PPLMGeneralComparison" 
+                 comparison="le" position="2:12">
+
+        <operation name="PPVariable" descriptor="0" 
+                   variable-name="i" position="2:9"/>
+
+        <operation name="PPConst" type="xs:integer" 
+                   value="1" position="2:15"/>
+      </operation>
+      <operation name="PPConst" type="xs:integer" 
+                 value="1" position="3:10"/>
+
+      <operation name="PPCalculate" position="4:10">
+        <operation name="BinaryOp" operation="*">
+          <operation name="LeafAtomOp">
+
+            <operation name="PPVariable" descriptor="0" 
+                       variable-name="i" position="4:10"/>
+          </operation>
+
+          <operation name="LeafAtomOp">
+            <operation name="PPFunCall" id="0" 
+                       function-name="local:fact" position="4:15">
+              <operation name="PPCalculate" position="4:26">
+                <operation name="BinaryOp" operation="-">
+                  <operation name="LeafAtomOp">
+                    <operation name="PPVariable" descriptor="0" 
+                               variable-name="i" position="4:26"/>
+                  </operation>
+                  <operation name="LeafAtomOp">
+                    <operation name="PPConst" type="xs:integer" 
+                               value="1" position="4:31"/>
+                  </operation>
+                </operation>
+              </operation>
+            </operation>
+          </operation>
+        </operation>
+      </operation>
+    
+    </operation>
+  </function>
+</plolog>
+
+<query xmlns="http://www.modis.ispras.ru/sedna">
+  <operation name="PPQueryRoot">
+    <operation name="PPFunCall" id="0" 
+               function-name="local:fact" position="7:1">
+
+      <operation name="PPConst" type="xs:integer" 
+                 value="10" position="7:12"/>
+
+    </operation>
+  </operation>
+</query>
+\end{verbatim}
+
+Explain output consists of two parts (just like any XQuery query): prolog and query body explanations. Prolog part includes complete 
+information about all declarations: namespaces, functions, global variables with complete physical plan for each user defined function and global variable. 
+Query body explanation part describes physical tree of the query.
+
+For each physical operation \verb!EXPLAIN! returns: name of the operation (\verb!PPConst!, \verb!PPFunCall!, etc), corresponding position in the source query
+(e.g. 4:31 means that operation \verb!PPConst! corresponds to the '1' atomic at the line 4, column 26). Output may also contain additional information 
+depending on the operation type (for example, variable name for some \verb!PPVariable! operations).
 
 
 \begin{thebibliography}{9}
