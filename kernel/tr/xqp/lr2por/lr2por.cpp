@@ -2810,9 +2810,8 @@ namespace sedna
         {
             // first, we need new dynamic context since we will use two root operations
             dyn_cxt = new dynamic_context(st_cxt, 0);
-            // then, we build PPQueryRoot->PPProfile on top of actual query
-            // TODO: PPExplain --> PPProfile
-            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep), 1);
+            // then, we build PPQueryRoot->PPExplain in profile mode on top of actual query
+            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep, true), 1);
             qep = new PPQueryRoot(dyn_cxt, expl);
         }
     }
