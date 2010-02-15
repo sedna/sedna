@@ -26,27 +26,6 @@ string int2string(__int64 value)
     return string(buf);
 }
 
-
-/* datatypes and functions for working with time (time in sec + time in millisec)*/
-#ifndef _WIN32
-
-void u_ftime(u_timeb *t)
-{
-    struct timeval tv;
-    struct timezone tz;
-    
-    gettimeofday(&tv, &tz);    /// ftime() is obsolete in FreeBSD 6.2 and higher
-    
-    t->time     = tv.tv_sec;
-    t->millitm  = tv.tv_usec/1000;
-    t->dstflag  = tz.tz_dsttime;
-    t->timezone = tz.tz_minuteswest; 
-}
-
-#endif
-
-
-
 string to_string(u_timeb t)
 {
     char buf[80];

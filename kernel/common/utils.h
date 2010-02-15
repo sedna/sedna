@@ -19,7 +19,7 @@
 
 std::string int2string(__int64 value);
 
-/* datatypes and functions for working with time (time in sec + time in millisec)*/
+/* datatypes and functions to with time (time in sec + time in millisec)*/
 #ifndef _WIN32
 struct _timeb
 {
@@ -30,15 +30,23 @@ struct _timeb
 };
 #endif
 
-
 typedef _timeb u_timeb;
 
-
-#ifndef _WIN32
-void u_ftime(u_timeb *t);
+#ifdef _WIN32
+inline void u_ftime(u_timeb *t) {_ftime((t)); }
 #else
-#define u_ftime(t) _ftime((t));
-#endif
+inline void u_ftime(u_timeb *t)
+{
+    struct timeval tv;
+    struct timezone tz;
+    /* ftime() is obsolete in FreeBSD 6.2 and higher */
+    gettimeofday(&tv, &tz);    
+    t->time     = tv.tv_sec;
+    t->millitm  = tv.tv_usec/1000;
+    t->dstflag  = tz.tz_dsttime;
+    t->timezone = tz.tz_minuteswest; 
+}
+#endif /* _WIN32 */
 
 
 inline void u_timeb_init(u_timeb *t)
@@ -121,6 +129,5 @@ inline int sign(int i)
     if (i < 0) return -1;
     return i;
 }
-
 
 #endif /* __UTILS_H */
