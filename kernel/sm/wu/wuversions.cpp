@@ -7,10 +7,13 @@
 #include <algorithm>
 #include "common/u/uhash_map.h"
 #include "wuaux.h"
+#include "wudock.h"
 #include "wuerr.h"
 #include "wuversions.h"
 #include "wuclients.h"
 #include "wusnapshots.h"
+#include "common/base.h"
+#include "sm/bufmgr/bm_core.h"
 
 #define VE_SNAPSHOTS_COUNT						3
 #define VE_BUFSZ							1024
@@ -305,9 +308,9 @@ int UpdateRestrictionsOnFreeBlock(XPTR xptr)
 	{
 		assert(restrictionHash);
 		VeRestrictionHash::iterator iter = restrictionHash->find(xptr);
-		if (iter == restrictionHash->end() || 
-			iter->second.type != VE_RESTRICTION_OLD_VERSION &&
-			iter->second.type != VE_RESTRICTION_DEAD_BLOCK)
+		if (iter == restrictionHash->end() ||
+			(iter->second.type != VE_RESTRICTION_OLD_VERSION &&
+			 iter->second.type != VE_RESTRICTION_DEAD_BLOCK))
 		{
 			/* we have an internal error */ 
 			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
@@ -549,10 +552,10 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 		{
 			TIMESTAMP transactionTs = INVALID_TIMESTAMP;
 			if (!ImpGetTransactionTs(&transactionTs)) {}
-			else if (restriction.creatorId>=0 && 
-					 restriction.creatorId!=ClGetCurrentClientId(setup.clientStateTicket) ||
-					 tsOutBuf[0] == SN_WORKING_VERSION_TIMESTAMP && 
-					 versionHeader->creatorTs[0] != transactionTs)
+			else if ((restriction.creatorId>=0 &&
+					 restriction.creatorId!=ClGetCurrentClientId(setup.clientStateTicket)) ||
+					 (tsOutBuf[0] == SN_WORKING_VERSION_TIMESTAMP &&
+					 versionHeader->creatorTs[0] != transactionTs))
 			{
 				WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
 			}
@@ -946,6 +949,30 @@ int VeAllocateBlock(LXPTR *pLxptr, int *pBufferId)
 	return success;
 }
 
+static
+ramoffs RamoffsFromBufferId(int id)
+{
+    return id * PAGE_SIZE;
+}
+
+// Makes old version flush to a new location and new version flush to the logical xptr
+static int FixFlushXptrs(int oldVerBufferId, int newVerBufferId, XPTR newBlock, XPTR lxptr)
+{
+    ramoffs dummy; // to store result from XptrHash::replace
+
+    assert((*phys_xptrs)[oldVerBufferId] == WuExternaliseXptr(lxptr));
+
+    // first, we change flush-xptrs to make buffers flush on new locations
+    (*phys_xptrs)[newVerBufferId] = WuExternaliseXptr(lxptr);
+    (*phys_xptrs)[oldVerBufferId] = WuExternaliseXptr(newBlock);
+
+    // the we must alter buffer_table since it contains phys_xptr --> buf_offset map
+    buffer_table.replace(WuExternaliseXptr(newBlock), RamoffsFromBufferId(oldVerBufferId), dummy);
+    buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(newVerBufferId), dummy);
+
+    return 1;
+}
+
 int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 {
 	int success = 0, trnStatusAndType = 0, bufferId = -1;
@@ -975,7 +1002,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 		TIMESTAMP tsOutBuf[VE_VERSIONS_COUNT+2] = {};
 		int idOutBuf[VE_VERSIONS_COUNT+2] = {};
 		size_t outSz = VE_VERSIONS_COUNT+2;
-		VersionsHeader *pOldHeader = NULL, header = {};
+		VersionsHeader *pOldHeader = NULL, *pNewHeader = NULL, header = {};
 		XPTR newBlock = 0;
 		int newBlockBufferId = -1;
 
@@ -992,7 +1019,8 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 			WuSetLastErrorMacro(WUERR_WORKING_VERSION_ALREADY_CREATED);
 		}
 		else if (!ComposeHeader(&header, pOldHeader, lxptr, trnTs, tsOutBuf, idOutBuf, outSz) ||
-				 !ImpAllocateBlockAndCopyData(&newBlock, &newBlockBufferId, bufferId))
+				 !ImpAllocateBlockAndCopyData(&newBlock, &newBlockBufferId, bufferId) ||
+				 !ImpLocateHeader(newBlockBufferId, &pNewHeader))
 		{
 			/* error! */ 
 		}
@@ -1012,13 +1040,18 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 			restrictMaster.xptr = lxptr;
             restrictSlave.type = VE_RESTRICTION_OLD_VERSION;
 			restrictSlave.xptr = newBlock;
-			/* ---------- */ 
-			*pOldHeader = header;
-			if (!ImpMarkBufferDirty(bufferId) ||
+			/* Old version stays right here; new version is in the newBlock */
+			*pNewHeader = header;
+			*pBufferId = newBlockBufferId;
+			if (!FixFlushXptrs(bufferId, newBlockBufferId, newBlock, lxptr))
+			{
+                /* error! */
+			}
+			else if (!ImpMarkBufferDirty(bufferId) ||
 				!UpdateRestriction(&restrictMaster, &state->restrictionList) ||
 				!UpdateRestriction(&restrictSlave, &state->restrictionList) ||
 				!OnCreateVersion(lxptr, bufferId, newBlock, newBlockBufferId, isPers) ||
-				!ImpGrantExclusiveAccessToBuffer(bufferId))
+				!ImpGrantExclusiveAccessToBuffer(newBlockBufferId))
 			{
 				/* error! */ 
 			}
@@ -1036,7 +1069,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 			}
 		}
 	}
-	if (success) { *pBufferId = bufferId; }
+	if (!success) { *pBufferId = -1; }
 	return success;
 }
 
@@ -1141,7 +1174,7 @@ int VeOnTransactionEnd(int how, TIMESTAMP currentSnapshotTs)
 	int success = 0;
 	VeClientState *state = NULL;
 
-	if (how != VE_ROLLBACK_TRANSACTION && how != VE_COMMIT_TRANSACTION ||
+	if ((how != VE_ROLLBACK_TRANSACTION && how != VE_COMMIT_TRANSACTION) ||
 		!IsValidTimestamp(currentSnapshotTs))
 	{
 		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
