@@ -2121,7 +2121,7 @@ namespace sedna
         PPOpIn file, doc, coll;
         dynamic_context *dc1, *dc2, *dc3 = NULL;
 
-        dc1 = new dynamic_context(st_cxt, 0);
+        dyn_cxt = dc1 = new dynamic_context(st_cxt, 0);
         dc2 = new dynamic_context(st_cxt, 0);
 
         if (n.coll)
