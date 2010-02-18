@@ -19,7 +19,7 @@
 #include "tr/rcv/rcv_test_tr.h"
 #include "tr/vmm/vmmtrace.h"
 
-#define VMM_LINUX_DEBUG_CHECKP
+// #define VMM_LINUX_DEBUG_CHECKP
 // #define VMM_DEBUG_CHECKP
 
 namespace tr_globals {
@@ -45,6 +45,22 @@ void vmm_delete_tmp_blocks() throw (SednaException);
 
 void vmm_unswap_block(xptr p) throw (SednaException);
 void vmm_unswap_block_write(xptr p) throw (SednaException);
+
+/* Microtransaction is the mechanism with isolated block readings
+ * On the end of microtransaction all blocks read during its work are unmapped
+ */
+
+class VMMMicrotransaction {
+  private:
+    bool mStarted;
+    static bool singletonSentinell;
+  public:
+    void begin();
+    void end();
+
+    VMMMicrotransaction() : mStarted(false) {};
+    ~VMMMicrotransaction();
+};
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
 

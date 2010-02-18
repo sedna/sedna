@@ -301,6 +301,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     wu_reported = false;
 
     d_printf1("Releasing VMM...");
+    vmm_delete_tmp_blocks();
     vmm_on_transaction_end();
     d_printf1("OK\n");
 

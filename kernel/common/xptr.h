@@ -30,6 +30,7 @@
 #define ADDR2XPTR(a)			cxptr(*(t_layer*)(((__uint32)(a)) & PAGE_BIT_MASK),					\
                                      (void*)(*(__uint32*)((((__uint32)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + (((__uint32)(a)) & PAGE_REVERSE_BIT_MASK)))
 #define TEST_XPTR(p)			(*(t_layer*)((__uint32)((p).addr) & PAGE_BIT_MASK) == (p).layer)
+//#define TEST_XPTR(p)            ((* (xptr *) XADDR(p)) == p)
 #define ALIGN_ADDR(a)			((void*)((__uint32)(a) & PAGE_BIT_MASK))
 #define LAYERS_EQUAL(a, p)      (*(t_layer*)((__uint32)(a) & PAGE_BIT_MASK) == ((p).layer))
 

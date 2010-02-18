@@ -254,6 +254,9 @@ void catalog_on_transaction_begin()
     catalog_zero_counter(deserialized_objects);
 
     SafeMetadataSemaphore cat_masterlock;
+    VMMMicrotransaction mtrn;
+
+    mtrn.begin();
     cat_masterlock.Aquire();
 
     local_catalog = new local_catalog_header;
@@ -283,6 +286,7 @@ void catalog_on_transaction_begin()
     }
 
     cat_masterlock.Release();
+    mtrn.end();
 }
 
 void catalog_on_transaction_end(bool is_commit)
@@ -460,11 +464,14 @@ void catalog_update_metadata()
 inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
 {
     SafeMetadataSemaphore lock;
+    VMMMicrotransaction mtrn;
+
     bt_key k;
     xptr obj;
 
     if (tree == XNULL) { return XNULL; }
 
+    mtrn.begin();
     lock.Aquire();
 
     catalog_update_metadata();
@@ -475,6 +482,7 @@ inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
     obj = c.bt_next_obj();
 
     lock.Release();
+    mtrn.end();
 
     return obj;
 }
@@ -610,9 +618,13 @@ inline char * catalog_ht_fullname_string(enum catalog_named_objects obj_type, co
 inline xptr catalog_htable_find_name(const char * name)
 {
     if (local_catalog->masterdata.htable == XNULL) { return XNULL; }
+
     SafeMetadataSemaphore lock;
+    VMMMicrotransaction mtrn;
+
     xptr obj;
 
+    mtrn.begin();
     lock.Aquire();
 
     CHECKP(catalog_masterblock);
@@ -624,6 +636,7 @@ inline xptr catalog_htable_find_name(const char * name)
     obj = st_find_string(local_catalog->masterdata.htable, name);
 
     lock.Release();
+    mtrn.end();
 
     return obj;
 }
