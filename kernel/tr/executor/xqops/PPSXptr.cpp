@@ -61,7 +61,7 @@ void PPSXptr::do_next (tuple &t)
         if(!t.is_eos()) {
             tuple_cell tc = child.get(t); 
             if (tc.is_node())
-                throw XQUERY_EXCEPTION2(XPTY0018, "Atomic or node sequence is expected");
+                throw XQUERY_EXCEPTION2(SE1003, "Atomic or node sequence is expected. Sequence checker missed?");
         }
         else {
             atomic_mode = false;
@@ -84,7 +84,7 @@ void PPSXptr::do_next (tuple &t)
                 }
                 else {
                     if(s->size() != 0)
-                        throw XQUERY_EXCEPTION2(XPTY0018, "Atomic or node sequence is expected");
+                        throw XQUERY_EXCEPTION2(SE1003, "Atomic or node sequence is expected. Sequence checker missed?");
                     atomic_mode = true;
                     return;
                 }
