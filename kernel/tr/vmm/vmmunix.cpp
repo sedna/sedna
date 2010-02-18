@@ -52,4 +52,15 @@ int __vmm_check_region(uint32_t cur, void ** res_addr, uint32_t * segment_size, 
     return 0;
 }
 
+void __vmm_set_sigusr_handler()
+{
+    struct sigaction sig_act;
+
+    memset(&sig_act, '\0', sizeof(struct sigaction));
+    sig_act.sa_sigaction = _vmm_signal_handler;
+    sig_act.sa_flags = SA_SIGINFO;
+    if (sigaction(SIGUSR1, &sig_act, NULL) == -1)
+        throw USER_EXCEPTION(SE1033);
+}
+
 #endif /* _WIN32 */

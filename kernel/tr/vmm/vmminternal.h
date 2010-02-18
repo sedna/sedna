@@ -12,7 +12,7 @@ extern UMMap global_memory_mapping;
 
 /* Is any block mapped on position */
 inline static bool _vmm_is_address_busy(void * p) {
-    return (XADDR(((vmm_sm_blk_hdr*)p)->p) == NULL);
+    return (XADDR(((vmm_sm_blk_hdr*)p)->p) != NULL);
 }
 
 enum vmm_map_protection_t {
@@ -25,6 +25,13 @@ enum vmm_map_protection_t {
 int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection_t p);
 int _uvmm_unmap(void *addr);
 int __vmm_check_region(uint32_t cur, void ** res_addr, uint32_t * segment_size, bool log, FILE * logfile);
+
+void __vmm_set_sigusr_handler();
+
+#ifndef _WIN32
+void _vmm_signal_handler(int signo, siginfo_t *info, void *cxt);
+#endif /* _WIN32 */
+
 
 inline static void check_bounds(xptr p) {
     if (!(LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)XADDR(p) &&

@@ -18,6 +18,8 @@
 
 #include "tr/cat/catvars.h"
 
+#include <set>
+
 static bool vmm_session_initialized = false;
 static bool vmm_transaction_initialized = false;
 
@@ -59,6 +61,10 @@ static USemaphore sm_to_vmm_callback_sem1, sm_to_vmm_callback_sem2; // callback 
 
 static bit_set * mapped_pages = NULL;
 
+static std::set<void*> mtrBlocks;
+static VMMMicrotransaction * activeMT = NULL;
+
+
 void __vmm_set_sigusr_handler();
 
 /* Sets current pointer to XNULL (gently) */
@@ -76,7 +82,10 @@ inline static void __vmm_init_current_xptr()
 
 static void vmm_remap(void *addr, ramoffs offs, enum vmm_map_protection_t p)
 {
-    mapped_pages->setAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
+    int i = ((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE;
+    mapped_pages->setAt(i);
+
+    if (activeMT != NULL) { mtrBlocks.insert(addr); }
 
     if (_uvmm_unmap(addr) || _uvmm_map(addr, offs, &file_mapping, p)) {
         throw USER_EXCEPTION(SE1035);
@@ -85,11 +94,35 @@ static void vmm_remap(void *addr, ramoffs offs, enum vmm_map_protection_t p)
 
 void vmm_unmap(void *addr)
 {
-    mapped_pages->clearAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
+    int i = ((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE;
 
-    if (_uvmm_unmap(addr) || _uvmm_map(addr, 0, &global_memory_mapping, access_null)) {
-        throw USER_EXCEPTION(SE1035);
+    if (mapped_pages->testAt(i)) {
+        mapped_pages->clearAt(i);
+
+        if (_uvmm_unmap(addr) || _uvmm_map(addr, 0, &global_memory_mapping, access_null)) {
+            throw USER_EXCEPTION(SE1035);
+        }
     }
+}
+
+inline static void vmm_swap_unmap_conditional(const xptr p) {
+    if (p == XNULL) return;
+
+#ifdef VMM_LINUX_DEBUG_CHECKP
+    mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
+#endif /* VMM_FAST_DEBUG_MODE */
+
+    if ((*(xptr *) XADDR(p)) == p) {
+        vmm_unmap(XADDR(p));
+    };
+}
+
+/* We always unmap the block, that lay at the given address when
+ * the block to be swapped may already be replaced by the other
+ * one on SM by this call */
+inline static void vmm_swap_unmap_unconditional(const xptr p) {
+    if (p == XNULL) return;
+    vmm_unmap(XADDR(p));
 }
 
 /* Locks the space for block mapping. This function needs
@@ -136,73 +169,96 @@ void _vmm_process_sm_error(int cmd)
     }
 }
 
+void VMMMicrotransaction::begin() {
+    if (activeMT != NULL || mStarted) { throw SYSTEM_EXCEPTION("Nested microtransactions detected"); }
+    mStarted = true;
+    activeMT = this;
+    mtrBlocks.clear();
+}
+
+void VMMMicrotransaction::end() {
+    mStarted = false;
+    activeMT = NULL;
+
+    for (std::set<void *>::iterator i = mtrBlocks.begin(); i != mtrBlocks.end(); i++) {
+        vmm_unmap(*i);
+    }
+
+    __vmm_init_current_xptr();
+
+    mtrBlocks.clear();
+}
+
+VMMMicrotransaction::~VMMMicrotransaction() {
+    if (mStarted) { end(); };
+}
+
+inline static int send_sm_message(int cmd) {
+    int result;
+
+    msg.cmd = cmd; // bm_get_block
+    msg.trid = tr_globals::trid;
+    msg.sid  = tr_globals::sid;
+
+    if ((result = ssmmsg->send_msg(&msg)) != 0) { return result; }
+    if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+
+    return 0;
+}
+
+enum sm_command_t {
+    smc_alloc_data = 23,
+    smc_alloc_temp = 24,
+    smc_delete_block = 25,
+    smc_unswap_block = 26,
+    smc_delete_temp_blocks = 34,
+    smc_create_version = 37
+};
+
 /* Asking SM to read the block */
 void vmm_unswap_block(xptr p) throw (SednaException)
 {
+    SafeSemaphore sem(vmm_sm_sem);
+
     check_bounds(p);
+    sem.Aquire();
+    p = block_xptr(p);
 
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
-    try {
-        p = block_xptr(p);
+    msg.data.swap_data.ptr = p;
+    if (send_sm_message(smc_unswap_block) != 0) { throw USER_EXCEPTION(SE1034); }
 
-        msg.cmd = 26; // bm_get_block
-        msg.trid = tr_globals::trid;
-        msg.sid  = tr_globals::sid;
-        msg.data.swap_data.ptr = p;
+    ramoffs offs = msg.data.swap_data.offs;
+    xptr swapped = msg.data.swap_data.swapped;
 
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
+    VMM_TRACE_UNSWAP(p, swapped);
 
-        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+    vmm_swap_unmap_unconditional(swapped);
+    vmm_remap(XADDR(p), offs, access_readonly);
 
-        ramoffs offs = msg.data.swap_data.offs;
-        xptr swapped = msg.data.swap_data.swapped;
-
-        VMM_TRACE_UNSWAP(p, swapped);
-
-        if (swapped != XNULL) { vmm_unmap(XADDR(swapped)); }
-        vmm_remap(XADDR(p), offs, access_readonly);
-    } catch (ANY_SE_EXCEPTION) {
-        USemaphoreUp(vmm_sm_sem, __sys_call_error);
-        throw;
-    }
-
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    sem.Release();
 }
 
 /* Informing SM of writing to the block */
 void vmm_unswap_block_write(xptr p) throw (SednaException)
 {
+    SafeSemaphore sem(vmm_sm_sem);
+
     check_bounds(p);
+    sem.Aquire();
+    p = block_xptr(p);
 
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
+    msg.data.swap_data.ptr = p;
+    if (send_sm_message(smc_create_version) != 0) { throw USER_EXCEPTION(SE1034); }
 
-    try {
-        p = block_xptr(p);
+    ramoffs offs = msg.data.swap_data.offs;
+    xptr swapped = msg.data.swap_data.swapped;
 
-        msg.cmd = 37; // bm_create_new_version
-        msg.trid = tr_globals::trid;
-        msg.sid = tr_globals::sid;
-        msg.data.swap_data.ptr = p;
+    VMM_TRACE_UNSWAP(p, swapped);
 
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
+    vmm_swap_unmap_unconditional(swapped);
+    vmm_remap(XADDR(p), offs, access_readwrite);
 
-        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
-
-        ramoffs offs = msg.data.swap_data.offs;
-        xptr swapped = msg.data.swap_data.swapped;
-
-        VMM_TRACE_UNSWAP(p, swapped);
-
-        if (swapped != XNULL) { vmm_unmap(XADDR(swapped)); }
-        vmm_remap(XADDR(p), offs, access_readwrite);
-    } catch (ANY_SE_EXCEPTION) {
-        USemaphoreUp(vmm_sm_sem, __sys_call_error);
-        throw;
-    }
-
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    sem.Release();
 }
 
 /* Allocate new block */
@@ -212,23 +268,16 @@ void vmm_request_alloc_block(xptr *p, bool is_data)
 
     sem.Aquire();
 
-    msg.cmd = is_data ? 23 : 24; // bm_alloc_data_block / bm_alloc_tmp_block
-    msg.trid = tr_globals::trid;
-    msg.sid = tr_globals::sid;
-
-    if (ssmmsg->send_msg(&msg) != 0)
-        throw USER_EXCEPTION(SE1034);
-
-    if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+    if (send_sm_message(is_data ? smc_alloc_data : smc_alloc_temp) != 0) { throw USER_EXCEPTION(SE1034); }
 
     *p = msg.data.swap_data.ptr;
     xptr swapped = msg.data.swap_data.swapped;
     ramoffs offs = *(ramoffs*)(&(msg.data.swap_data.offs));
 
-    if (swapped != XNULL) vmm_unmap(XADDR(swapped));
-    vmm_remap(XADDR(*p), offs, access_readonly);
-
     VMM_TRACE_ALLOC_BLOCK(*p, swapped);
+
+    vmm_swap_unmap_unconditional(swapped);
+    vmm_remap(XADDR(*p), offs, access_readonly);
 
     sem.Release();
 
@@ -237,68 +286,39 @@ void vmm_request_alloc_block(xptr *p, bool is_data)
 
 void vmm_delete_block(xptr p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
-    try {
-        p = block_xptr(p);
+    SafeSemaphore sem(vmm_sm_sem);
 
-        VMM_TRACE_DELETE_BLOCK(p);
+    sem.Aquire();
+    p = block_xptr(p);
+    VMM_TRACE_DELETE_BLOCK(p);
 
-#ifdef VMM_LINUX_DEBUG_CHECKP
-        mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
-#endif /* VMM_FAST_DEBUG_MODE */
-
-        // ... and if it busy we should free it
-        if (_vmm_is_address_busy(XADDR(p)) && TEST_XPTR(p))
-        { // address is busy and block has the same layer
-            vmm_unmap(XADDR(p));
-        }
-        else ; // the block to release is not in memory
+    vmm_swap_unmap_conditional(p);
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
-        mprotect(XADDR(p), PAGE_SIZE, PROT_NONE);
+    mprotect(XADDR(p), PAGE_SIZE, PROT_NONE);
 #endif /* VMM_FAST_DEBUG_MODE */
 
-        // Anyway we have to notify SM about deletion of the block
-        msg.cmd = 25; // bm_delete_block
-        msg.trid = tr_globals::trid;
-        msg.sid = tr_globals::sid;
-        msg.data.ptr = p;
+    // If current block is deleted, the pointer may break something. T.I.
+    if (same_block(vmm_cur_xptr, p)) { __vmm_init_current_xptr(); }
 
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
+    // Anyway we have to notify SM about deletion of the block
+    msg.data.ptr = p;
+    if (send_sm_message(smc_delete_block) != 0) { throw USER_EXCEPTION(SE1034); }
 
-        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
-
-        // If current block is deleted, the pointer may break something. T.I.
-        if (BLOCKXPTR(vmm_cur_xptr) == BLOCKXPTR(p)) { __vmm_init_current_xptr(); }
-    } catch (ANY_SE_EXCEPTION) {
-        USemaphoreUp(vmm_sm_sem, __sys_call_error);
-        throw;
-    }
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    sem.Release();
 }
 
 void vmm_delete_tmp_blocks() throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
-    try {
-        vmm_cur_ptr = NULL;
-        vmm_cur_xptr = XNULL;
+    SafeSemaphore sem(vmm_sm_sem);
 
-        // Anyway we have to notify SM about deletion of the block
-        msg.cmd = 34; // bm_delete_tmp_blocks
-        msg.trid = tr_globals::trid;
-        msg.sid = tr_globals::sid;
+    sem.Aquire();
+    __vmm_init_current_xptr();
 
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
+    // Anyway we have to notify SM about deletion of the block
+    if (send_sm_message(smc_delete_temp_blocks) != 0) { throw USER_EXCEPTION(SE1034); }
 
-        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
-    } catch (ANY_SE_EXCEPTION) {
-        USemaphoreUp(vmm_sm_sem, __sys_call_error);
-        throw;
-    }
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    sem.Release();
 }
 
 /* VMM_determine_region is called the first time the database starts to find active layer region */
@@ -434,10 +454,11 @@ inline static void vmm_callback_unmap()
 {
     /* We check only vmm_cur_ptr to be sure it is set if main thread have been stopped inside CHECKP */
     if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*) p_sm_callback_data)) {
-        vmm_unmap(XADDR(*(xptr*)p_sm_callback_data));
+        VMM_TRACE_CALLBACK(*(xptr*)p_sm_callback_data);
+        vmm_swap_unmap_conditional(*(xptr*)p_sm_callback_data);
         *(bool*)p_sm_callback_data = true;
     } else {
-#ifdef VMM_FAST_DEBUG_MODE
+#ifdef VMM_LINUX_DEBUG_CHECKP
         *(bool*)p_sm_callback_data = (*(int*)((xptr*)p_sm_callback_data + 1));
 #else
         *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1))
@@ -447,25 +468,12 @@ inline static void vmm_callback_unmap()
 }
 
 #ifndef _WIN32
+
 void _vmm_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
     vmm_callback_unmap();
     USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
 }
-
-void __vmm_set_sigusr_handler()
-{
-    struct sigaction sig_act;
-
-    memset(&sig_act, '\0', sizeof(struct sigaction));
-    sig_act.sa_sigaction = _vmm_signal_handler;
-    sig_act.sa_flags = SA_SIGINFO;
-    if (sigaction(SIGUSR1, &sig_act, NULL) == -1)
-        throw USER_EXCEPTION(SE1033);
-}
-#else
-
-void __vmm_set_sigusr_handler() {}
 
 #endif /* _WIN32 */
 
@@ -507,7 +515,7 @@ void __vmmdcp_checkp(xptr p) {
         if (!TEST_XPTR(vmm_cur_xptr)) vmm_unswap_block(vmm_cur_xptr);
     }
 
-    vmm_cur_ptr = XADDR(p);
+    U_ASSERT(((vmm_sm_blk_hdr *) XADDR(vmm_cur_xptr))->p == vmm_cur_xptr);
 }
 
 void __vmmdcp_vmm_signal_modification(xptr p)
@@ -577,6 +585,8 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
         p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error);
         if (p_sm_callback_data == NULL)
             throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+        vmm_trace_start(NULL);
 
         main_thread = uGetCurrentThread(__sys_call_error);
         uResVal res = uCreateThread(_vmm_thread, NULL, &vmm_thread_handle, VMM_THREAD_STACK_SIZE, NULL, __sys_call_error);

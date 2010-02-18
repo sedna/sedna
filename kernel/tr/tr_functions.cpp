@@ -61,7 +61,7 @@ on_kernel_statement_begin(size_t mod_index,
     is_qep_opened = true;
 }
 
-static void 
+static void
 on_kernel_statement_end(PPQueryEssence *&qep_tree)
 {
     if (is_qep_opened)
@@ -85,12 +85,10 @@ on_kernel_statement_end(PPQueryEssence *&qep_tree)
         if (pe_local_aspace->free_all) pe_local_aspace->free_all();
 
         system_tables_on_kernel_statement_end();
-        
-        vmm_delete_tmp_blocks();
-        
+
         /* TMPNIDBLK must be nulled when the last temp node is deleted. */
         nid_on_kernel_statement_end();
-        
+
         is_qep_built = false;
     }
 }
@@ -308,7 +306,7 @@ void register_session_on_gov()
 
 
 /* Returns true if all database files exist */
-bool 
+bool
 check_database_existence(const char* name)
 {
     bool res1 = false, res2 = false, res3 = false;
