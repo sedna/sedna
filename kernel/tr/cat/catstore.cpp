@@ -79,7 +79,7 @@ void cs_pushp()
     safe_block = vmm_cur_xptr;
 
     if (safe_block != XNULL) {
-        vmm_sm_blk_hdr * bh = (vmm_sm_blk_hdr *) XADDR(safe_block);
+        vmm_sm_blk_hdr * bh = (vmm_sm_blk_hdr *) XADDR(BLOCKXPTR(safe_block));
         safe_block_write = bh->is_changed && bh->trid_wr_access == tr_globals::sid;
     }
 }
