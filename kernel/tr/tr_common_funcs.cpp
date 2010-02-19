@@ -23,9 +23,11 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/triggers/triggers_data.h"
 #include "tr/mo/boundaries.h"
+#include "sm/llsm/llMain.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
+#include "tr/ft/FTindex.h"
 #endif
 
 using namespace std;
@@ -232,6 +234,18 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
 // sorry i couldn't find a more appropriate solution to this
 static bool wu_reported = false; // are we already reported? needed for checkpoint-on-commit
 static SSMMsg* sm_server_wu = NULL; // server to report to wu
+
+static void rollbackTransaction()
+{
+#ifdef SE_ENABLE_DTSEARCH
+            SednaIndexJob::rollback();
+#endif
+            hl_logical_log_rollback(tr_globals::trid);
+
+            //Here trid is a global variable inited before
+            llOnTransEnd(tr_globals::trid);
+}
+
 void reportToWu(bool rcv_active, bool is_commit)
 {
     sm_msg_struct msg;
@@ -241,15 +255,24 @@ void reportToWu(bool rcv_active, bool is_commit)
 
     if (!rcv_active || (rcv_active && is_commit))
     {
+#ifdef LOG_TRACE
+        if (!is_commit)
+            elog(EL_LOG, ("LOG_TRACE: Transaction starts rolling back: trid=%d", tr_globals::trid));
+#endif
         msg.cmd = 38; // transaction commit/rollback
         msg.trid = trid;
         msg.sid = sid;
-        msg.data.data[0] = 0;
+        msg.data.data[0] = (is_commit) ? 0 : 1;
 
         catalog_before_commit(is_commit);
         if (sm_server_wu->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
         catalog_after_commit(is_commit);
+
+        if (!is_commit)
+        {
+            rollbackTransaction();
+        }
     }
 
     wu_reported = true;

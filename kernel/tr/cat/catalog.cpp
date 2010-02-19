@@ -160,9 +160,6 @@ void catalog_before_commit(bool is_commit)
 /*
  * Final journal commit. Done by single transaction at a time
  */
-    catalog_lock_metadata();
-
-    cs_initp();
 
     try {
         catalog_journal_record *p, *r = local_catalog->catalog_journal;
@@ -170,74 +167,78 @@ void catalog_before_commit(bool is_commit)
         bt_key name;
         char * htname;
 
-        while (r != NULL) {
-            switch (r->type) {
-            case catalog_journal_record::add_name:
-                tree = &(CATALOG_NAME_TREE(r->nor.object_type));
-                name.setnew(r->nor.name_to_save->name);
-                if (*tree == XNULL) { *tree = bt_create(xs_string); }
-                bt_insert(*tree, name, r->nor.name_to_save->obj->p);
-                break;
+            catalog_lock_metadata();
 
-            case catalog_journal_record::del_name:
-                tree = &(CATALOG_NAME_TREE(r->nor.object_type));
-                name.setnew(r->nor.name_to_save->name);
-                bt_delete(*tree, name, r->nor.name_to_save->obj->p);
-                htname = catalog_ht_fullname_string(r->nor.object_type, r->nor.name_to_save->name);
-                st_delete_string(local_catalog->masterdata.htable, htname);
-                cat_free(htname);
-                break;
+            r = local_catalog->catalog_journal;
 
-            case catalog_journal_record::add_htable_record:
-                local_catalog->masterdata.htable = st_insert_string(local_catalog->masterdata.htable, r->htr.name, r->htr.data, strlen(r->htr.data) + 2, true);
-                cat_free(r->htr.name);
-                cat_free(r->htr.data);
-                break;
+            while (r != NULL) {
+                switch (r->type) {
+                case catalog_journal_record::add_name:
+                    tree = &(CATALOG_NAME_TREE(r->nor.object_type));
+                    name.setnew(r->nor.name_to_save->name);
+                    if (*tree == XNULL) { *tree = bt_create(xs_string); }
+                    bt_insert(*tree, name, r->nor.name_to_save->obj->p);
+                    break;
+
+                case catalog_journal_record::del_name:
+                    tree = &(CATALOG_NAME_TREE(r->nor.object_type));
+                    name.setnew(r->nor.name_to_save->name);
+                    bt_delete(*tree, name, r->nor.name_to_save->obj->p);
+                    htname = catalog_ht_fullname_string(r->nor.object_type, r->nor.name_to_save->name);
+                    st_delete_string(local_catalog->masterdata.htable, htname);
+                    cat_free(htname);
+                    break;
+
+                case catalog_journal_record::add_htable_record:
+                    local_catalog->masterdata.htable = st_insert_string(local_catalog->masterdata.htable, r->htr.name, r->htr.data, strlen(r->htr.data) + 2, true);
+                    cat_free(r->htr.name);
+                    cat_free(r->htr.data);
+                    break;
+                }
+
+                p = r->next;
+                cat_free(r);
+                r = p;
+                local_catalog->masterdata_updated = true;
             }
 
-            p = r->next;
-            cat_free(r);
-            r = p;
-            local_catalog->masterdata_updated = true;
+            local_catalog->catalog_journal = NULL;
+
+            if (local_catalog->masterdata_updated) {
+                CHECKP(catalog_masterblock);
+                VMM_SIGNAL_MODIFICATION(catalog_masterblock);
+
+                memcpy(
+                    &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
+                    &(local_catalog->masterdata),
+                    sizeof(catalog_name_trees));
+
+                local_catalog->masterdata_updated = false;
+            }
+
+            if (!ccache_available && !tr_globals::is_ro_mode) {
+                CHECKP(catalog_masterblock);
+                VMM_SIGNAL_MODIFICATION(catalog_masterblock);
+
+                memcpy(
+                    &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
+                    &last_nid_size,
+                    sizeof(int));
+
+                memcpy(
+                    ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
+                    last_nid,
+                    last_nid_size);
+
+                cat_free(last_nid);
+            }
+        } catch (ANY_SE_EXCEPTION) {
+            catalog_unlock_metadata();
+            throw;
         }
-
-        local_catalog->catalog_journal = NULL;
-
-        if (local_catalog->masterdata_updated) {
-            CHECKP(catalog_masterblock);
-            VMM_SIGNAL_MODIFICATION(catalog_masterblock);
-
-            memcpy(
-                &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
-                &(local_catalog->masterdata),
-                sizeof(catalog_name_trees));
-
-            local_catalog->masterdata_updated = false;
-        }
-
-        if (!ccache_available && !tr_globals::is_ro_mode) {
-            CHECKP(catalog_masterblock);
-            VMM_SIGNAL_MODIFICATION(catalog_masterblock);
-
-            memcpy(
-                &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
-                &last_nid_size,
-                sizeof(int));
-
-            memcpy(
-                ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
-                last_nid,
-                last_nid_size);
-
-            cat_free(last_nid);
-        }
-    } catch (ANY_SE_EXCEPTION) {
-        catalog_unlock_metadata();
-        throw;
     }
 
     if (pe_catalog_aspace->free_all) pe_catalog_aspace->free_all();
-
     delete local_catalog;
 }
 
@@ -291,18 +292,12 @@ void catalog_on_transaction_begin()
 
 void catalog_on_transaction_end(bool is_commit)
 {
-    // TODO: EXIT IF READONLY!
-
     elog(EL_DBG, ("Catalog objects deserialized : %d", deserialized_objects));
-
-/*
-    if (!is_commit) {
-        delete local_catalog;
-        return;
+    
+    if (is_commit)
+    {
+        catalog_validate_objects();
     }
-*/
-
-    catalog_validate_objects();
 }
 
 catalog_object_header * catalog_object_header::invalidate() {

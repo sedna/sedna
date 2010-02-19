@@ -21,7 +21,7 @@
 
 #define WU_SWAPPED_XPTRS_COUNT	1
 
-/* global variables */ 
+/* global variables */
 
 static TIMESTAMP timestamp = INVALID_TIMESTAMP;
 static uMutexType gMutex;
@@ -30,7 +30,7 @@ static int isSynchrObjectsInitialized = 0;
 static XPTR swapped[WU_SWAPPED_XPTRS_COUNT] = {};
 static size_t numSwapped = 0;
 
-/* utility functions */ 
+/* utility functions */
 
 void AnalyzePopularFailure(const char *fn, XPTR xptr, XPTR lxptr, VersionsHeader *hdr)
 {
@@ -38,9 +38,9 @@ void AnalyzePopularFailure(const char *fn, XPTR xptr, XPTR lxptr, VersionsHeader
     char buf[1024] = "{}", *p = buf;
     int i;
 
-    /* compose hint message */ 
+    /* compose hint message */
     if (is_in_persistent_free_blocks_stack(
-                mb->free_data_blocks, 
+                mb->free_data_blocks,
                 WuExternaliseXptr(xptr)))
     {
         hint = "invalid lxptr (free block)";
@@ -54,8 +54,8 @@ void AnalyzePopularFailure(const char *fn, XPTR xptr, XPTR lxptr, VersionsHeader
         hint = "either invalid lxptr (unexpected block type) or data corruption";
     }
 
-    /* print version header to string */ 
-    for (i=0; i<VE_VERSIONS_COUNT; ++i) 
+    /* print version header to string */
+    for (i=0; i<VE_VERSIONS_COUNT; ++i)
     {
         if (hdr->xptr[i] == 0) break;
         p += sprintf(p, "{%016" I64FMT "x, %016" I64FMT "x} ", hdr->xptr[i], hdr->creatorTs[i]);
@@ -92,7 +92,7 @@ int DeinitSynchrObjects()
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
-	else 
+	else
 	{
 		if (uMutexDestroy(&gMutex,__sys_call_error)==0) success = 1;
 		isSynchrObjectsInitialized=0;
@@ -101,23 +101,10 @@ int DeinitSynchrObjects()
 }
 
 static
-int BufferIdFromRamoffs(ramoffs ofs)
-{
-	assert(ofs % PAGE_SIZE == 0);
-	return ofs / PAGE_SIZE;
-}
-
-static
-ramoffs RamoffsFromBufferId(int id)
-{
-	return id * PAGE_SIZE;
-}
-
-static
 int LocateBlockHeader(int bufferId, vmm_sm_blk_hdr **header)
 {
 	int success = 0;
-	
+
 	assert(header); *header=NULL;
 	if (bufferId<0)
 	{
@@ -158,9 +145,9 @@ XPTR PopSwappedXptr()
 	return xptr;
 }
 
-/* wiring functions */ 
+/* wiring functions */
 
-static 
+static
 int PutBlockToBuffer (XPTR xptr, int *bufferId)
 {
 	int success = 0;
@@ -170,7 +157,7 @@ int PutBlockToBuffer (XPTR xptr, int *bufferId)
 	assert(bufferId); *bufferId = -1;
 	try
 	{
-		swapped = 
+		swapped =
 			WuInternaliseXptr(put_block_to_buffer(GetSwapCode(), WuExternaliseXptr(xptr), &ofs, true));
 
 		PushSwappedXptr(swapped);
@@ -182,12 +169,12 @@ int PutBlockToBuffer (XPTR xptr, int *bufferId)
 	return success;
 }
 
-static 
+static
 int FindBlockInBuffers (XPTR xptr, int *bufferId)
 {
 	int success = 0;
 	ramoffs ofs = 0;
-	
+
 	assert(bufferId); *bufferId = -1;
 	try
 	{
@@ -224,7 +211,7 @@ int FlushBuffer(int bufferId)
 {
 	ramoffs offs = 0;
 	int success = 0;
-	
+
 	try
 	{
 		offs = RamoffsFromBufferId(bufferId);
@@ -249,7 +236,7 @@ int GrantExclusiveAccessToBuffer(int bufferId)
 	}
 	else if (!LocateBlockHeader(bufferId, &header))
 	{
-		/* error */ 
+		/* error */
 	}
 	else if (header->trid_wr_access!=-1 && header->trid_wr_access!=curClientId)
 	{
@@ -276,7 +263,7 @@ int RevokeExclusiveAccessToBuffer(int bufferId)
 	}
 	else if (!LocateBlockHeader(bufferId, &header))
 	{
-		/* error */ 
+		/* error */
 	}
 	else if(header->trid_wr_access!=-1 && header->trid_wr_access!=curClientId)
 	{
@@ -350,11 +337,11 @@ int AllocateDataBlockAndCopyData (XPTR *xptr, int *bufferId, int srcBufferId)
 
 	if (!LocateBlockHeader(srcBufferId, &srcHeader))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else
 	{
-		/* we protect a source buffer from beeng victimized by get_free_buffer */ 
+		/* we protect a source buffer from beeng victimized by get_free_buffer */
         buffer_on_stake = RamoffsFromBufferId(srcBufferId);
 		if (AllocateDataBlock(xptr, bufferId) && LocateBlockHeader(*bufferId, &destHeader))
 		{
@@ -413,7 +400,7 @@ int OnBeforeDiscardSnapshot(TIMESTAMP snapshotTs, int *bDenyDiscarding)
 }
 
 /* mode==1 : version is just created
-   mode==2 : versions is flushing */ 
+   mode==2 : versions is flushing */
 static
 int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
 {
@@ -431,7 +418,7 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
                 LocateBlockHeader(bufferId, &header))
 			{
 				oldVerTs = header->versionsHeader.creatorTs[0];
-				header->lsn = llLogPersSnapshotInfo(&versionEntry, oldVerTs);			
+				header->lsn = llLogPersSnapshotInfo(&versionEntry, oldVerTs);
 			}
 			success = 1;
 			break;
@@ -455,7 +442,7 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
 	return success;
 }
 
-/* public api */ 
+/* public api */
 
 int WuGetTimestamp(TIMESTAMP *ts)
 {
@@ -495,7 +482,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	VeSetup veSetup = {};
 	SnSetup snSetup = {};
 
-	/* static */ 
+	/* static */
 	clSetup.maxClientsCount = CHARISMA_MAX_TRNS_NUMBER;
 	clSetup.maxSizePerClient = 0x10000;
 
@@ -517,7 +504,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	snSetup.onBeforeDiscardSnapshot = OnBeforeDiscardSnapshot;
 	snSetup.onDiscardSnapshot = OnDiscardSnapshot;
 
-	/* param */ 
+	/* param */
 	snSetup.initialPersSnapshotTs = persSnapshotTs;
 	if (isRecoveryMode || isVersionsDisabled)
 	{
@@ -534,7 +521,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 		!SnInitialize() ||
 		!VeInitialize())
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else
 	{
@@ -550,9 +537,9 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 			!VeStartup(&veSetup) ||
 			!SnStartup(&snSetup))
 		{
-			/* error! */ 
+			/* error! */
 		}
-		else 
+		else
 		{
 			success = 1;
 		}
@@ -609,8 +596,8 @@ struct WuEnumerateAdapter
 };
 
 static
-int WuEnumerateHelperProc(WuEnumerateVersionsParams *params, 
-						  WuVersionEntry *buf, 
+int WuEnumerateHelperProc(WuEnumerateVersionsParams *params,
+						  WuVersionEntry *buf,
 						  size_t count, int isGarbage)
 {
 	int success=0;
@@ -640,7 +627,7 @@ int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
 
 	assert(params);
 	params2.userData = &adapter;
-	
+
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
@@ -779,7 +766,7 @@ int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
 {
 	LXPTR lxptr=0;
 	int success=0, bufferId=0;
-	
+
 	assert(offs && swapped);
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
@@ -796,10 +783,10 @@ int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
 			}
 			else
 			{
-				success = 
+				success =
 					(PutBlockToBuffer(lxptr, &bufferId) && GrantExclusiveAccessToBuffer(bufferId));
 			}
-					
+
 			if (success) *offs=RamoffsFromBufferId(bufferId);
 			ClSetCurrentClientId(-1);
 		}
@@ -814,7 +801,7 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs)
 	int success=0;
 
 	assert(snapshotTs);
-	
+
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
@@ -829,12 +816,12 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs)
 				else if (!VeOnRegisterClient()) {}
 				else if (!ClMarkClientReady(sid)) {}
 				else
-                { 
-                    success=1; 
+                {
+                    success=1;
                 }
 				ClSetCurrentClientId(-1);
 			}
-			if (!success) ClUnregisterClient(sid);			
+			if (!success) ClUnregisterClient(sid);
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
@@ -879,7 +866,7 @@ int WuOnRollbackTransaction(int sid)
 				success=1;
 			}
 			ClSetCurrentClientId(-1);
-		}		
+		}
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
 	return success;
@@ -931,14 +918,14 @@ int WuTryAdvanceSnapshots(int *bSuccess)
 	TIMESTAMP curSnapshotTs = INVALID_TIMESTAMP;
 	TIMESTAMP damagedSnapshots[VE_VERSIONS_COUNT];
 	int tsDamCount = 0;
-	
+
 	int success=0;
 
 	assert(bSuccess); *bSuccess=0;
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
-		if (!SnTryAdvanceSnapshots(&curSnapshotTs) || curSnapshotTs==INVALID_TIMESTAMP) 
+		if (!SnTryAdvanceSnapshots(&curSnapshotTs) || curSnapshotTs==INVALID_TIMESTAMP)
 		{
 			success =  (WuGetLastError() == WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
 		}
@@ -967,10 +954,10 @@ int WuOnFlushBuffer(xptr lilXptr)
 {
 	XPTR bigXptr = 0;
 	int success = 0;
-	
+
 	if (!isSynchrObjectsInitialized)
 	{
-		/* we are called from BM, but wu is not currently initialised - silently ignore */ 
+		/* we are called from BM, but wu is not currently initialised - silently ignore */
 		success = 1;
 	}
 	else if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
@@ -983,7 +970,7 @@ int WuOnFlushBuffer(xptr lilXptr)
 	return success;
 }
 
-/* public api, exn adapters */ 
+/* public api, exn adapters */
 
 void WuInitExn(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 {
@@ -1018,7 +1005,7 @@ void WuAllocateDataBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 
 void WuAllocateTempBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 {
-	if (!WuAllocateTempBlock(sid, p, offs, swapped)) WuThrowException(); 
+	if (!WuAllocateTempBlock(sid, p, offs, swapped)) WuThrowException();
 }
 
 void WuCreateBlockVersionExn(int sid, xptr p, ramoffs *offs, xptr *swapped)

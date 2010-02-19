@@ -96,33 +96,18 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 {
 	if (is_ll_on_transaction_initialized)
 	{
-		if (!rcv_active)
+		if (!rcv_active && is_commit)
 		{
-			if (is_commit)
-			{
 #ifdef SE_ENABLE_DTSEARCH
-				SednaIndexJob::start_commit();
+            SednaIndexJob::start_commit();
 #endif
-				hl_logical_log_commit(tr_globals::trid);
+            hl_logical_log_commit(tr_globals::trid);
 #ifdef SE_ENABLE_DTSEARCH
-				SednaIndexJob::fix_commit();
+            SednaIndexJob::fix_commit();
 #endif
-       		}
-        	else
-	        {
-#ifdef LOG_TRACE
-				elog(EL_LOG, ("LOG_TRACE: Transaction starts rolling back: trid=%d", tr_globals::trid));
-#endif
-				rollback_tr_by_logical_log(tr_globals::trid);
-#ifdef SE_ENABLE_DTSEARCH
-				SednaIndexJob::rollback();
-#endif
-				hl_logical_log_rollback(tr_globals::trid);
-			}
+            //Here trid is a global variable inited before
+            llOnTransEnd(tr_globals::trid);
 		}
-
-		//Here trid is a global variable inited before
-		llOnTransEnd(tr_globals::trid);
 	}
 
 	enable_log = true;  // log might have been disabled for RO-mode

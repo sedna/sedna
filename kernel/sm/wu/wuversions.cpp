@@ -36,8 +36,8 @@ struct VeRestriction
 	TIMESTAMP deletorTs;
 	union
 	{
-		int type;		/* type<0 */ 
-		int creatorId;	/* creatorId>=0 */ 
+		int type;		/* type<0 */
+		int creatorId;	/* creatorId>=0 */
 	};
 	VeRestriction *next;
 };
@@ -63,14 +63,14 @@ struct VeClientState
 	VeRestriction *restrictionList;
 };
 
-/* global state */ 
+/* global state */
 
 static int isInitialized = 0;
 static VeSetup setup = {};
 static VeRestrictionHash *restrictionHash = NULL;
 static VeFlushingDependenciesHash *flushingDependenciesHash = NULL;
 
-/* functions from other modules */ 
+/* functions from other modules */
 static int ImpGetCurrentStateBlock (VeClientState **ptr)
 {
 	return ClGetCurrentStateBlock((void**)ptr, setup.clientStateTicket);
@@ -123,7 +123,7 @@ static int ImpDamageSnapshots(TIMESTAMP timestampMax)
 	return SnDamageSnapshots(timestampMax);
 }
 
-static int ImpSubmitRequestForGc(TIMESTAMP currentSnapshotTs, 
+static int ImpSubmitRequestForGc(TIMESTAMP currentSnapshotTs,
 								 SnRequestForGc *buf, size_t count)
 {
 	return SnSubmitRequestForGc(currentSnapshotTs, buf, count);
@@ -195,7 +195,7 @@ static int ImpOnPersVersionRelocating(LXPTR lxptr, XPTR xptr, int event)
 	return setup.onPersVersionRelocating(lxptr, xptr, event);
 }
 
-/* utility functions */ 
+/* utility functions */
 
 static
 int LookupRestriction(XPTR xptr, VeRestriction *restriction)
@@ -207,13 +207,13 @@ int LookupRestriction(XPTR xptr, VeRestriction *restriction)
 	restriction->next = NULL;
 	if (setup.flags & VE_SETUP_DISABLE_CORRECTNESS_CHECKS_FLAG)
 	{
-		/* no restrictions */ 
+		/* no restrictions */
 	}
 	else
 	{
 		assert(restrictionHash);
 		VeRestrictionHash::iterator iter = restrictionHash->find(xptr);
-		if (iter != restrictionHash->end()) 
+		if (iter != restrictionHash->end())
 		{
 			*restriction = iter->second;
 			restriction->next = NULL;
@@ -223,16 +223,16 @@ int LookupRestriction(XPTR xptr, VeRestriction *restriction)
 }
 
 static
-int UpdateRestriction(const VeRestriction *newRestriction, VeRestriction **restrictionList) 
+int UpdateRestriction(const VeRestriction *newRestriction, VeRestriction **restrictionList)
 {
 	int success = 0;
 	assert(newRestriction && restrictionList);
 	if (setup.flags & VE_SETUP_DISABLE_CORRECTNESS_CHECKS_FLAG)
 	{
-		/* no restrictions */ 
+		/* no restrictions */
 		success = 1;
 	}
-	else if (newRestriction->creatorId<0 && 
+	else if (newRestriction->creatorId<0 &&
 			 newRestriction->type != VE_RESTRICTION_OLD_VERSION &&
 			 newRestriction->type != VE_RESTRICTION_DEAD_BLOCK)
 	{
@@ -244,9 +244,9 @@ int UpdateRestriction(const VeRestriction *newRestriction, VeRestriction **restr
 		VeRestriction restriction = *newRestriction;
 		VeRestrictionHash::iterator iter = restrictionHash->find(restriction.xptr);
 
-		if (iter == restrictionHash->end()) 
+		if (iter == restrictionHash->end())
 		{
-			/* no existing restriction with this xptr, update restrictionList */ 
+			/* no existing restriction with this xptr, update restrictionList */
 			restriction.next = *restrictionList;
 			iter = restrictionHash->insert(
 				VeRestrictionHash::value_type(restriction.xptr, restriction)).first;
@@ -255,13 +255,13 @@ int UpdateRestriction(const VeRestriction *newRestriction, VeRestriction **restr
 		}
 		else if (restriction.type != VE_RESTRICTION_DEAD_BLOCK)
 		{
-			/* only DEAD_BLOCK restrictions can override other restrictions */ 
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR); 
+			/* only DEAD_BLOCK restrictions can override other restrictions */
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
 		{
-			/* restriction found, update it inplace, don't change restrictionList */ 
-			restriction.next = iter->second.next;			
+			/* restriction found, update it inplace, don't change restrictionList */
+			restriction.next = iter->second.next;
 			iter->second = restriction;
 			success = 1;
 		}
@@ -274,7 +274,7 @@ int DismissRestrictionList(VeRestriction *head, int isCleaningUp)
 {
 	if (setup.flags & VE_SETUP_DISABLE_CORRECTNESS_CHECKS_FLAG)
 	{
-		/* no restrictions */ 
+		/* no restrictions */
 	}
 	else
 	{
@@ -284,9 +284,9 @@ int DismissRestrictionList(VeRestriction *head, int isCleaningUp)
 			VeRestriction *inspected = head;
 			int isRemoving = isCleaningUp || inspected->creatorId>=0;
 
-			head = head->next;		
+			head = head->next;
 			inspected->next = NULL;
-			if (isRemoving) 
+			if (isRemoving)
 			{
 				restrictionHash->erase(restrictionHash->find(inspected->xptr));
 			}
@@ -301,7 +301,7 @@ int UpdateRestrictionsOnFreeBlock(XPTR xptr)
 	int success = 0;
 	if (setup.flags & VE_SETUP_DISABLE_CORRECTNESS_CHECKS_FLAG)
 	{
-		/* no restrictions */ 
+		/* no restrictions */
 		success = 1;
 	}
 	else
@@ -312,7 +312,7 @@ int UpdateRestrictionsOnFreeBlock(XPTR xptr)
 			(iter->second.type != VE_RESTRICTION_OLD_VERSION &&
 			 iter->second.type != VE_RESTRICTION_DEAD_BLOCK))
 		{
-			/* we have an internal error */ 
+			/* we have an internal error */
 			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
@@ -334,14 +334,14 @@ int ValidateHeader(VersionsHeader *hdr)
 	assert(hdr);
 	if (hdr->xptr[0]==0 || !IsValidTimestamp(hdr->creatorTs[0]))
 	{
-		/* must have at least one valid entry */ 
+		/* must have at least one valid entry */
 	}
 	else
 	{
 		for (i=1; i<VE_VERSIONS_COUNT; ++i)
 		{
-			if (hdr->xptr[i]==0 || 
-				!IsValidTimestamp(hdr->creatorTs[i]) /*|| 
+			if (hdr->xptr[i]==0 ||
+				!IsValidTimestamp(hdr->creatorTs[i]) /*||
 				hdr->creatorTs[i]>=hdr->creatorTs[i-1]*/) break;
 		}
 		while (i<VE_VERSIONS_COUNT && hdr->xptr[i]==0 && hdr->creatorTs[i]==INVALID_TIMESTAMP) ++i;
@@ -416,16 +416,16 @@ static int OnFlushBuffer(XPTR xptr)
 
 	if (!LookupFlushingDependency(xptr, &target))
 	{
-		/* internal error */ 
+		/* internal error */
 	}
 	else if (!target)
 	{
-		/* no buffer must be flushed ahead of this one  */ 
+		/* no buffer must be flushed ahead of this one  */
 		success = 1;
 	}
 	else if (!ImpFindBlockInBuffers(target, &bufferId))
 	{
-		/* the block to be flushed ahead of the current one not in buffers? fine for us */ 
+		/* the block to be flushed ahead of the current one not in buffers? fine for us */
 		success = (WuGetLastError() == WUERR_BLOCK_NOT_IN_BUFFERS);
 	}
 	else
@@ -441,7 +441,7 @@ static int OnFlushBuffer(XPTR xptr)
 		{
 			if (isPers)
 			{
-				/* call AK function */ 
+				/* call AK function */
 				success = ImpOnPersVersionRelocating(header->xptr[0], xptr, 2);
 			}
 			success = 1;
@@ -450,7 +450,7 @@ static int OnFlushBuffer(XPTR xptr)
 	return success;
 }
 
-static 
+static
 void ResetHeader(VersionsHeader *hdr)
 {
 	int i=0;
@@ -465,24 +465,24 @@ void ResetHeader(VersionsHeader *hdr)
 
 /*	Finds apropriate version of the block identified by lxptr.
 	The result depends on the calling client transaction settings,
-	including: whether the transaction is running on snapshot, 
+	including: whether the transaction is running on snapshot,
 	the snapshot timestamp (if using snapshot) and the timestamp
-	assigned to transaction (if NOT using snapshot). 
-	
-	The caller have to pass buffers of sufficient size via tsOutBuf and 
+	assigned to transaction (if NOT using snapshot).
+
+	The caller have to pass buffers of sufficient size via tsOutBuf and
 	idOutBuf params, VE_VERSIONS_COUNT+2 elements per each buffer
 	is sufficient. POutSz param should point to a variable initialised
-	with the buffer size (in elements). When function returns the 
+	with the buffer size (in elements). When function returns the
 	variable is assigned the number of elements actually
-	stored (in one buffer). 
-	
+	stored (in one buffer).
+
 	The function is primarily designed as a base for VePutBlockToBuffer
 	from the module's public API. Extra parameters correspond to
 	SnExpandDfvHeader out parameters. Since SnExpandDfvHeader is rather
-	heavy it makes sence to reuse the results obtained from it. 
-	VeCreateBlockVersion is also implemented on top of PutBlockVersionToBuffer. */ 
+	heavy it makes sence to reuse the results obtained from it.
+	VeCreateBlockVersion is also implemented on top of PutBlockVersionToBuffer. */
 static
-int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId, 
+int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 							TIMESTAMP tsOutBuf[],
 							int idOutBuf[],
 							size_t *pOutSz,
@@ -496,13 +496,13 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 
 	assert(pBufferId); *pBufferId=-1;
 	assert(tsOutBuf && pOutSz && anchorTs);
-	/* get state data and validate as much as possible */ 
-	if (!ImpGetCurrentStateBlock(&state) || 
+	/* get state data and validate as much as possible */
+	if (!ImpGetCurrentStateBlock(&state) ||
 		!ImpGetTransactionStatusAndType(&trnStatusAndType) ||
-		!LookupRestriction(lxptr, &restriction))  
-	{ 
-		/* error! */ 
-	} 
+		!LookupRestriction(lxptr, &restriction))
+	{
+		/* error! */
+	}
 	else if (trnStatusAndType == SN_COMPLETED_TRANSACTION || state->isCompleted)
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -511,19 +511,19 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 	{
 		WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 	}
-	else if (!ImpPutBlockToBuffer(lxptr, &bufferId) || 
+	else if (!ImpPutBlockToBuffer(lxptr, &bufferId) ||
 			 !ImpLocateHeader(bufferId, &versionHeader))
-	{ 
-		/* error! */ 
+	{
+		/* error! */
 	}
 	else if (!ValidateHeader(versionHeader) || versionHeader->xptr[0]!=lxptr)
 	{
 		WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
         AnalyzePopularFailure(__FUNCTION__, lxptr, lxptr, versionHeader);
 	}
-	/* generic validation passed, now interpret version header */ 
+	/* generic validation passed, now interpret version header */
 	else
-	{		
+	{
 		int okStatus = 0;
 
 		if (restriction.type == VE_RESTRICTION_DEAD_BLOCK)
@@ -533,8 +533,8 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 
 			tsInBuf[0] = restriction.deletorTs;
 			memcpy(tsInBuf+1, versionHeader->creatorTs, sizeof(TIMESTAMP)*VE_VERSIONS_COUNT);
-					
-			if (ImpExpandDfvHeader(tsInBuf, VE_VERSIONS_COUNT+1, tsOutBuf, idOutBuf, pOutSz, anchorTs, false)) 
+
+			if (ImpExpandDfvHeader(tsInBuf, VE_VERSIONS_COUNT+1, tsOutBuf, idOutBuf, pOutSz, anchorTs, false))
 			{
 				okStatus = 1;
 				for (i=0; i<*pOutSz; ++i) idOutBuf[i]+=-1;
@@ -542,12 +542,12 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 		}
 		else
 		{
-			okStatus = ImpExpandDfvHeader(versionHeader->creatorTs, VE_VERSIONS_COUNT, 
+			okStatus = ImpExpandDfvHeader(versionHeader->creatorTs, VE_VERSIONS_COUNT,
 										  tsOutBuf, idOutBuf, pOutSz, anchorTs, false);
 		}
 
 		if (!okStatus) {}
-		/* updater branch */ 
+		/* updater branch */
 		else if (trnStatusAndType == SN_UPDATER_TRANSACTION)
 		{
 			TIMESTAMP transactionTs = INVALID_TIMESTAMP;
@@ -565,15 +565,15 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 			}
 			else
 			{
-				int isGrantingExclAccess = 
-					(tsOutBuf[0] == SN_WORKING_VERSION_TIMESTAMP || 
+				int isGrantingExclAccess =
+					(tsOutBuf[0] == SN_WORKING_VERSION_TIMESTAMP ||
 					setup.flags & VE_SETUP_DISABLE_VERSIONS_FLAG);
 
-				success = 
+				success =
 					(!isGrantingExclAccess || ImpGrantExclusiveAccessToBuffer(bufferId));
 			}
 		}
-		/* query branch */ 
+		/* query branch */
 		else
 		{
 			TIMESTAMP snapshotTs = INVALID_TIMESTAMP;
@@ -587,13 +587,13 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 				{
 					WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 				}
-				else 
+				else
 				{
 					XPTR olderXptr = versionHeader->xptr[idOutBuf[i]];
 					if (!ImpPutBlockToBuffer(olderXptr, &bufferId) ||
 						!ImpLocateHeader(bufferId, &versionHeader))
 					{
-						/* error! */ 
+						/* error! */
 					}
 					else if (!ValidateHeader(versionHeader) || versionHeader->xptr[0]!=lxptr)
 					{
@@ -611,12 +611,12 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 	return success;
 }
 
-int ComposeHeader(VersionsHeader *pHeaderOut, 
-				  const VersionsHeader *pHeaderIn, 
+int ComposeHeader(VersionsHeader *pHeaderOut,
+				  const VersionsHeader *pHeaderIn,
 				  XPTR xptr,
-				  TIMESTAMP creatorTs, 
-				  const TIMESTAMP tsBuf[], 
-				  const int idBuf[], 
+				  TIMESTAMP creatorTs,
+				  const TIMESTAMP tsBuf[],
+				  const int idBuf[],
 				  size_t sz)
 {
 	int success = 0, prevId = -1;
@@ -632,7 +632,7 @@ int ComposeHeader(VersionsHeader *pHeaderOut,
 	{
 		ResetHeader(pHeaderOut);
 
-		/* copy all unique entries */ 
+		/* copy all unique entries */
 		while (i<sz && o<l)
 		{
 			if (idBuf[i]!=prevId)
@@ -652,17 +652,17 @@ int ComposeHeader(VersionsHeader *pHeaderOut,
 	return success;
 }
 
-int OnCreateVersion(LXPTR lxptr, 
-					int bufferId, 
-					XPTR oldVerXptr, 
-					int oldVerBufferId, 
+int OnCreateVersion(LXPTR lxptr,
+					int bufferId,
+					XPTR oldVerXptr,
+					int oldVerBufferId,
 					int isOldVerPers)
 {
 	int success = 0;
-	
+
 	if (isOldVerPers)
 	{
-		success = UpdateFlushingDependency(lxptr, oldVerXptr) && 
+		success = UpdateFlushingDependency(lxptr, oldVerXptr) &&
 				  ImpOnPersVersionRelocating(lxptr, oldVerXptr, 1);
 	}
 	else success = 1;
@@ -678,7 +678,7 @@ int OnFreeBlock(LXPTR lxptr, TIMESTAMP *pAnchorTs)
 	if (!ImpFindBlockInBuffers(lxptr, &bufferId))
 	{
 		/*	block not in buffers - unable to make an assumption when it is safe to
-			discard block, thus not changing pAnchorTs */ 
+			discard block, thus not changing pAnchorTs */
 		success = (WuGetLastError() == WUERR_BLOCK_NOT_IN_BUFFERS);
 	}
 	else
@@ -686,8 +686,8 @@ int OnFreeBlock(LXPTR lxptr, TIMESTAMP *pAnchorTs)
         // here we must change pAnchorTs according to the oldest needed version
         // since this version must be accessible by navigation, and bogus version
         // must not be purged before that; it is done through isTotalAnchor parameter
-        
-        /*	we are going to update pAnchorTs */ 
+
+        /*	we are going to update pAnchorTs */
 		success = ImpLocateHeader(bufferId, &header) &&
 				  ImpExpandDfvHeader(header->creatorTs, VE_VERSIONS_COUNT, NULL, NULL, NULL, pAnchorTs, true);
 	}
@@ -703,7 +703,7 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 
 	if (state->functionList == NULL)
 	{
-		/* transaction runs on read-only snapshot */ 
+		/* transaction runs on read-only snapshot */
 		success=1;
 	}
 	else
@@ -712,16 +712,16 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 		{
 			if (ibuf==ebuf)
 			{
-				/* flush buffer */ 
+				/* flush buffer */
 				if (!ImpSubmitRequestForGc(currentSnapshotTs, buf, VE_BUFSZ)) break;
 				ibuf = buf;
 			}
 
 			*ibuf=*i;
 			/*	QUICK & DIRTY
-				need to revoke exclusive access to buffer form trn 
+				need to revoke exclusive access to buffer form trn
 				this should normally be a part of buffer manager, consider
-			*/ 
+			*/
 			if (ibuf->type == VE_FUNCTION_ALLOCATE_BLOCK ||
 				ibuf->type == VE_FUNCTION_CREATE_VERSION ||
 				ibuf->type == VE_FUNCTION_CREATE_VERSION_PERS)
@@ -733,10 +733,10 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 				else
 				{
 					if (WUERR_BLOCK_NOT_IN_BUFFERS != WuGetLastError()) break;
-				}					
+				}
 			}
 			/*	END OF QUICK & DIRTY
-			*/ 
+			*/
 			switch (i->type)
 			{
 			case VE_FUNCTION_ALLOCATE_BLOCK:
@@ -753,19 +753,105 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 			}
 			++ibuf;
 		}
-		success = 
+		success =
 			(i == state->functionList->end() && ImpSubmitRequestForGc(currentSnapshotTs, buf, ibuf-buf));
 	}
 	return success;
 }
 
-int OnTransactionRollback(VeClientState *state)
+// fixes xptr-to-flush-to on rollback to make old relocated version come back
+static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+    ramoffs old_offs, dummy; // for buffer_table methods
+    
+    assert((*phys_xptrs)[oldVerBufferId] == WuExternaliseXptr(xptr));
+    assert(!buffer_table.find(WuExternaliseXptr(xptr), dummy) && dummy == RamoffsFromBufferId(oldVerBufferId));
+
+    // first, we change flush-xptr to make buffer flush on new location
+    (*phys_xptrs)[oldVerBufferId] = WuExternaliseXptr(lxptr);
+
+    // the we must alter buffer_table since it contains phys_xptr --> buf_offset map
+    buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId), old_offs);
+    buffer_table.replace(WuExternaliseXptr(xptr), old_offs, dummy);
+
+    return 1;
 }
 
-/* public API */ 
+int OnTransactionRollback(VeClientState *state)
+{
+    VeFunctionList::iterator i;
+    int success = 1, bufferId = 0;
+    ramoffs offs;
+
+    if (state->functionList == NULL)
+    {
+        /* transaction runs on read-only snapshot -- nothing to do for rollback */
+        success = 1;
+    }
+    else
+    {
+        for (i = state->functionList->begin(); i != state->functionList->end() && success; i++)
+        {
+            switch (i->type)
+            {
+                case VE_FUNCTION_ALLOCATE_BLOCK:
+                    // on rollback we just delete the block (safe, since transaction will unmap it anyway)
+                    ImpFreeBlock(i->lxptr);
+                    break;
+
+                case VE_FUNCTION_CREATE_VERSION:
+                case VE_FUNCTION_CREATE_VERSION_PERS:
+                    // the worst case: we should delete new version and relocate the old one back
+                    // put old version in buffers
+                    try
+                    {
+                        success = 0;
+                        put_block_to_buffer(-1, WuExternaliseXptr(i->xptr), &offs, true);
+                        bufferId = BufferIdFromRamoffs(offs);
+                        success = 1;
+                    }
+                    WU_CATCH_EXCEPTIONS()
+                    if (!success) break;
+
+                    // old version is now in buffers: move it to a new physical xpt == lxptr
+                    if (!FixFlushXptr(bufferId, i->xptr, i->lxptr) ||
+                        !ImpMarkBufferDirty(bufferId))
+                    {
+                        success = 0;
+                        break;
+                    }
+                    
+                    ImpFreeBlock(i->xptr); // delete old version block
+                    break;
+
+                case VE_FUNCTION_FREE_BLOCK:
+                    // ignore this record on rollback since block'll just stay untouched
+                    // we need to revoke exclusive access to this buffer, though
+                    if (ImpFindBlockInBuffers(i->lxptr, &bufferId))
+                    {
+                        if (!ImpRevokeExclusiveAccessToBuffer(bufferId))
+                            success = 0;
+                    }
+                    else
+                    {
+                        if (WUERR_BLOCK_NOT_IN_BUFFERS != WuGetLastError())
+                            success = 0;
+                    }
+                    break;
+                default:
+                    WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+                    success = 0;
+                    break;
+            }
+        }
+
+        success = (i == state->functionList->end());
+    }
+
+    return success;
+}
+
+/* public API */
 
 void VeQueryResourceDemand(VeResourceDemand *resourceDemand)
 {
@@ -824,16 +910,16 @@ int VeOnRegisterClient()
 	int success = 0, statusAndType = 0;
 	VeClientState *state = NULL;
 
-	if (!ImpGetCurrentStateBlock(&state) || 
-		!ImpGetTransactionStatusAndType(&statusAndType)) 
+	if (!ImpGetCurrentStateBlock(&state) ||
+		!ImpGetTransactionStatusAndType(&statusAndType))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else if (statusAndType == SN_READ_ONLY_TRANSACTON && (setup.flags & VE_SETUP_DISABLE_VERSIONS_FLAG))
 	{
 		WuSetLastErrorMacro(WUERR_VERSIONS_DISABLED);
 	}
-	else 
+	else
 	{
 		state->isCompleted = 0;
 		state->functionList = NULL;
@@ -853,16 +939,16 @@ int VeOnUnregisterClient()
 	VeClientState *state = NULL;
 
 	if (!ImpGetCurrentStateBlock(&state) ||
-		!DismissRestrictionList(state->restrictionList, 1)) 
+		!DismissRestrictionList(state->restrictionList, 1))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else
 	{
 		delete state->functionList;
 		state->functionList = NULL;
 		state->restrictionList = NULL;
-		success = 1;		
+		success = 1;
 	}
 	return success;
 }
@@ -874,7 +960,7 @@ int VePutBlockToBuffer(LXPTR lxptr, int *pBufferId)
 	TIMESTAMP tsOutBuf[VE_VERSIONS_COUNT+2] = {};
 	int idOutBuf[VE_VERSIONS_COUNT+2] = {};
 
-	return PutBlockVersionToBuffer(lxptr, pBufferId, 
+	return PutBlockVersionToBuffer(lxptr, pBufferId,
 								   tsOutBuf, idOutBuf, &outSz, &anchorTs);
 }
 
@@ -891,7 +977,7 @@ int VeAllocateBlock(LXPTR *pLxptr, int *pBufferId)
 		!ImpGetTransactionStatusAndType(&trnStatusAndType) ||
 		!ImpGetTransactionTs(&transactionTs))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else if (trnStatusAndType == SN_COMPLETED_TRANSACTION || state->isCompleted)
 	{
@@ -901,10 +987,10 @@ int VeAllocateBlock(LXPTR *pLxptr, int *pBufferId)
 	{
 		WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 	}
-	else if (!ImpAllocateBlock(&xptr, &bufferId) ||			 
+	else if (!ImpAllocateBlock(&xptr, &bufferId) ||
 			 !ImpLocateHeader(bufferId, &versionsHeader))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else
 	{
@@ -917,7 +1003,7 @@ int VeAllocateBlock(LXPTR *pLxptr, int *pBufferId)
 		if (!ImpGrantExclusiveAccessToBuffer(bufferId) ||
 			!ImpMarkBufferDirty(bufferId))
 		{
-			/* error! */ 
+			/* error! */
 		}
 		else if (setup.flags & VE_SETUP_DISABLE_VERSIONS_FLAG)
 		{
@@ -949,12 +1035,6 @@ int VeAllocateBlock(LXPTR *pLxptr, int *pBufferId)
 	return success;
 }
 
-static
-ramoffs RamoffsFromBufferId(int id)
-{
-    return id * PAGE_SIZE;
-}
-
 // Makes old version flush to a new location and new version flush to the logical xptr
 static int FixFlushXptrs(int oldVerBufferId, int newVerBufferId, XPTR newBlock, XPTR lxptr)
 {
@@ -979,10 +1059,10 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 	VeClientState *state = NULL;
 
 	assert(pBufferId); *pBufferId = -1;
-	if (!ImpGetCurrentStateBlock(&state) || 
+	if (!ImpGetCurrentStateBlock(&state) ||
 		!ImpGetTransactionStatusAndType(&trnStatusAndType))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else if (trnStatusAndType == SN_READ_ONLY_TRANSACTON)
 	{
@@ -1008,11 +1088,11 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 
 		if (!ImpGetSnapshotTimestamps(NULL, &persTs) ||
 			!ImpGetTransactionTs(&trnTs) ||
-			!PutBlockVersionToBuffer(lxptr, &bufferId, 
+			!PutBlockVersionToBuffer(lxptr, &bufferId,
 									 tsOutBuf, idOutBuf, &outSz, &anchorTs) ||
 			!ImpLocateHeader(bufferId, &pOldHeader))
 		{
-			/* error! */ 
+			/* error! */
 		}
 		else if (tsOutBuf[0] == SN_WORKING_VERSION_TIMESTAMP)
 		{
@@ -1022,7 +1102,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 				 !ImpAllocateBlockAndCopyData(&newBlock, &newBlockBufferId, bufferId) ||
 				 !ImpLocateHeader(newBlockBufferId, &pNewHeader))
 		{
-			/* error! */ 
+			/* error! */
 		}
 		else
 		{
@@ -1030,12 +1110,12 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 			int isPers = 0;
 			unsigned i = 0;
 
-			/* determine whether the LC version is persistent */ 
+			/* determine whether the LC version is persistent */
 			while (i<outSz && tsOutBuf[i]!=persTs) ++i;
 			isPers = (i<outSz && idOutBuf[0]==idOutBuf[i]);
-			/* store a link to older version in the header */ 
+			/* store a link to older version in the header */
 			header.xptr[1] = newBlock;
-			/* prepare restrictions */ 
+			/* prepare restrictions */
 			restrictMaster.creatorId = ClGetCurrentClientId(setup.clientStateTicket);
 			restrictMaster.xptr = lxptr;
             restrictSlave.type = VE_RESTRICTION_OLD_VERSION;
@@ -1053,12 +1133,12 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 				!OnCreateVersion(lxptr, bufferId, newBlock, newBlockBufferId, isPers) ||
 				!ImpGrantExclusiveAccessToBuffer(newBlockBufferId))
 			{
-				/* error! */ 
+				/* error! */
 			}
-			else 
+			else
 			{
 				VeFunction function = {};
-				
+
 				function.anchorTs = anchorTs;
 				function.lxptr = lxptr;
 				function.xptr = newBlock;
@@ -1085,7 +1165,7 @@ int VeFreeBlock(LXPTR lxptr)
 		!ImpGetTransactionTs(&transactionTs) ||
 		!LookupRestriction(lxptr, &restriction))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else if (trnStatusAndType == SN_COMPLETED_TRANSACTION || state->isCompleted)
 	{
@@ -1100,7 +1180,7 @@ int VeFreeBlock(LXPTR lxptr)
 		TIMESTAMP anchorTs = TIMESTAMP_MIN;
 
 		assert(trnStatusAndType == SN_UPDATER_TRANSACTION);
-		if (restriction.creatorId > 0 && 
+		if (restriction.creatorId > 0 &&
 			restriction.creatorId!=ClGetCurrentClientId(setup.clientStateTicket))
 		{
 			WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
@@ -1116,7 +1196,7 @@ int VeFreeBlock(LXPTR lxptr)
 		}
 		else if (!OnFreeBlock(lxptr, &anchorTs))
 		{
-			/* error! */ 
+			/* error! */
 		}
 		else
 		{
@@ -1134,7 +1214,7 @@ int VeFreeBlock(LXPTR lxptr)
 
 			if (!UpdateRestriction(&restriction, &state->restrictionList))
 			{
-				/* error! */ 
+				/* error! */
 			}
 			else
 			{
@@ -1160,7 +1240,7 @@ int VeClearTransactionRestrictions(int how)
 	{
 		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
 	}
-	else if (ImpGetCurrentStateBlock(&state) && 
+	else if (ImpGetCurrentStateBlock(&state) &&
 			 DismissRestrictionList(state->restrictionList, how == VE_ROLLBACK_TRANSACTION))
 	{
 		state->restrictionList = NULL;
@@ -1174,27 +1254,26 @@ int VeOnTransactionEnd(int how, TIMESTAMP currentSnapshotTs)
 	int success = 0;
 	VeClientState *state = NULL;
 
-	if ((how != VE_ROLLBACK_TRANSACTION && how != VE_COMMIT_TRANSACTION) ||
-		!IsValidTimestamp(currentSnapshotTs))
+	if (how == VE_COMMIT_TRANSACTION ? !IsValidTimestamp(currentSnapshotTs) : (how != VE_ROLLBACK_TRANSACTION))
 	{
 		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
 	}
 	else if (!ImpGetCurrentStateBlock(&state))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else if (state->isCompleted)
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
-	else if (setup.flags & VE_SETUP_DISABLE_VERSIONS_FLAG && 
+	else if (setup.flags & VE_SETUP_DISABLE_VERSIONS_FLAG &&
 			 how == VE_ROLLBACK_TRANSACTION)
 	{
 		WuSetLastErrorMacro(WUERR_VERSIONS_DISABLED);
 	}
 	else if (!VeClearTransactionRestrictions(how))
 	{
-		/* error! */ 
+		/* error! */
 	}
 	else
 	{
@@ -1223,9 +1302,9 @@ int VeOnFlushBuffer(XPTR xptr)
 
 int VeOnCheckpoint()
 {
-	/* we shouldn't reset dependencies here because this might mess up 
+	/* we shouldn't reset dependencies here because this might mess up
 	the following total buffer flush on checkpoint
-	
+
 	return ResetFlushingDependencies();
 	*/
     return 1;
@@ -1233,5 +1312,5 @@ int VeOnCheckpoint()
 
 void VeDbgDump(int reserved)
 {
-	fprintf(stderr,"VeDbgDump (not implemented)\n\n"); 
+	fprintf(stderr,"VeDbgDump (not implemented)\n\n");
 }
