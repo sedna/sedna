@@ -160,12 +160,14 @@ void catalog_before_commit(bool is_commit)
 /*
  * Final journal commit. Done by single transaction at a time
  */
+    cs_initp();
 
-    try {
-        catalog_journal_record *p, *r = local_catalog->catalog_journal;
-        xptr *tree;
-        bt_key name;
-        char * htname;
+    if (is_commit) {
+        try {
+            catalog_journal_record *p, *r;
+            xptr *tree;
+            bt_key name;
+            char * htname;
 
             catalog_lock_metadata();
 
