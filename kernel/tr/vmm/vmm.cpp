@@ -24,6 +24,7 @@
 #include "tr/tr_globals.h"
 #include "tr/cat/catvars.h"
 
+#include <set>
 
 static bool vmm_session_initialized = false;
 static bool vmm_transaction_initialized = false;
@@ -65,8 +66,7 @@ static void * p_sm_callback_data;
 static USemaphore sm_to_vmm_callback_sem1, sm_to_vmm_callback_sem2; // callback semaphores for SM
 
 static bit_set * mapped_pages = NULL;
-
-static std::set<void*> mtrBlocks;
+static bit_set * mtrBlocks = NULL;
 static VMMMicrotransaction * activeMT = NULL;
 
 
@@ -90,7 +90,7 @@ static void vmm_remap(void *addr, ramoffs offs, enum vmm_map_protection_t p)
     int i = ((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE;
     mapped_pages->setAt(i);
 
-    if (activeMT != NULL) { mtrBlocks.insert(addr); }
+    if (activeMT != NULL) { mtrBlocks->setAt(i); }
 
     if (_uvmm_unmap(addr) || _uvmm_map(addr, offs, &file_mapping, p)) {
         throw USER_EXCEPTION(SE1035);
@@ -142,6 +142,7 @@ void vmm_preliminary_call()
     global_memory_mapping = get_global_memory_mapping();
 
     mapped_pages = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
+    mtrBlocks = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
 
     __uint32 cur;
     for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
@@ -172,30 +173,6 @@ void _vmm_process_sm_error(int cmd)
         default: throw SYSTEM_EXCEPTION("Unknown SM error");
         }
     }
-}
-
-void VMMMicrotransaction::begin() {
-    if (activeMT != NULL || mStarted) { throw SYSTEM_EXCEPTION("Nested microtransactions detected"); }
-    mStarted = true;
-    activeMT = this;
-    mtrBlocks.clear();
-}
-
-void VMMMicrotransaction::end() {
-    mStarted = false;
-    activeMT = NULL;
-
-    for (std::set<void *>::iterator i = mtrBlocks.begin(); i != mtrBlocks.end(); i++) {
-        vmm_unmap(*i);
-    }
-
-    __vmm_init_current_xptr();
-
-    mtrBlocks.clear();
-}
-
-VMMMicrotransaction::~VMMMicrotransaction() {
-    if (mStarted) { end(); };
 }
 
 inline static int send_sm_message(int cmd) {
@@ -680,21 +657,41 @@ void vmm_on_session_end()
 
     close_global_memory_mapping();
 
-    delete mapped_pages;
-    mapped_pages = NULL;
+    delete mapped_pages; mapped_pages = NULL;
+    delete mtrBlocks; mtrBlocks = NULL;
 
     vmm_session_initialized = false;
     vmm_trace_stop();
 }
 
-void unmapAllBlocks()
+static void unmapAllBlocks()
 {
     int p = -1;
 
-    while ((p = mapped_pages->getNextSetBitIdx(p + 1)) != -1)
+    while ((p = map->getNextSetBitIdx(p + 1)) != -1)
         vmm_unmap((char *)LAYER_ADDRESS_SPACE_START_ADDR + PAGE_SIZE * p);
 
-    mapped_pages->clear();
+    map->clear();
+}
+
+void VMMMicrotransaction::begin() {
+    if (activeMT != NULL || mStarted) { throw SYSTEM_EXCEPTION("Nested microtransactions detected"); }
+    mStarted = true;
+    activeMT = this;
+
+    mtrBlocks->clear();
+}
+
+void VMMMicrotransaction::end() {
+    mStarted = false;
+    activeMT = NULL;
+
+    unmapAllBlocks(mtrBlocks);
+    __vmm_init_current_xptr();
+}
+
+VMMMicrotransaction::~VMMMicrotransaction() {
+    if (mStarted) { end(); };
 }
 
 void vmm_unmap_all_blocks()
@@ -731,7 +728,7 @@ void vmm_on_transaction_end()
          * we use bitset here, because just reading INVALID_LAYER from block takes very 
          * long time on MAC OS more efficient fix of the aforementioned bug
          */
-        unmapAllBlocks();
+        unmapAllBlocks(mapped_pages);
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
