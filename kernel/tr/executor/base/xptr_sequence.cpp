@@ -14,10 +14,34 @@
 
 #define XPTRS_IN_BLOCK                      ((PAGE_SIZE - sizeof(seq_blk_hdr)) / sizeof(xptr));
 
-#define ON_LESS(a,b)                        nid_cmp_effective(get(a),get(b))
-#define ON_LESS_LT(a,b)                     nid_cmp_effective(get(a),b)
-#define ON_LESS_RT(a,b)                     nid_cmp_effective(a,get(b))
-
+//FIXME: int is not the best return value here
+struct nid_comparator
+{
+	nid_comparator() {}
+	int on_less(xptr_sequence *s, int a, int b) { return nid_cmp_effective(s->get(a),s->get(b)); }
+	int on_less_lt(xptr_sequence *s, int a, xptr b) {return nid_cmp_effective(s->get(a),b); }
+	int on_less_rt(xptr_sequence *s, xptr a, int b) { return nid_cmp_effective(a,s->get(b)); }
+	int med3(xptr_sequence *s, int a, int b, int c)
+	{
+		return (on_less(s,a,b)<0 ?
+	        (on_less(s,b,c)<0 ? b : on_less(s,a,c)<0 ? c : a) :
+			(on_less(s,c,b)<0 ? b : on_less(s,c,a)<0 ? c : a));
+	}
+};
+struct xptr_comparator
+{
+	xptr_comparator() {}
+	int xptr_cmp(const xptr a, const xptr b) { return (b < a) - (a < b); }
+	int on_less(xptr_sequence *s, int a, int b) { return xptr_cmp(s->get(a),s->get(b)); }
+	int on_less_lt(xptr_sequence *s, int a, xptr b) {return xptr_cmp(s->get(a),b); }
+	int on_less_rt(xptr_sequence *s, xptr a, int b) { return xptr_cmp(a,s->get(b)); }
+	int med3(xptr_sequence *s, int a, int b, int c)
+	{
+		return (on_less(s,a,b)<0 ?
+	        (on_less(s,b,c)<0 ? b : on_less(s,a,c)<0 ? c : a) :
+			(on_less(s,c,b)<0 ? b : on_less(s,c,a)<0 ? c : a));
+	}
+};
 
 xptr_sequence::xptr_sequence() : seq_size(0), 
                                  bblk(XNULL), 
@@ -146,13 +170,20 @@ void xptr_sequence::sort()
 {
     sort1(0,seq_size);
 }
-void xptr_sequence::sort1(int off, int len)
+void xptr_sequence::sort_by_xptr()
 {
+	sort_template<xptr_comparator>(this, 0, seq_size);
+}
+
+template<class Comparator>
+void sort_template(xptr_sequence *xs, int off, int len)
+{
+	typename Comparator comp;
     // Insertion sort on smallest arrays
     if (len < 7) {
         for (int i=off; i<len+off; i++)
-            for (int j=i; j>off && ON_LESS(j,j-1)<0; j--)
-                swap(j, j-1);
+            for (int j=i; j>off && comp.on_less(xs, j,j-1)<0; j--)
+                xs->swap(j, j-1);
         return;
     }
 
@@ -163,42 +194,47 @@ void xptr_sequence::sort1(int off, int len)
         int n = off + len - 1;
         if (len > 40) {        // Big arrays, pseudomedian of 9
             int s = len/8;
-            l = med3(l,     l+s, l+2*s);
-            m = med3(m-s,   m,   m+s);
-            n = med3(n-2*s, n-s, n);
+            l = comp.med3(xs, l,     l+s, l+2*s);
+            m = comp.med3(xs, m-s,   m,   m+s);
+            n = comp.med3(xs, n-2*s, n-s, n);
         }
-        m = med3( l, m, n);   // Mid-size, med of 3
+        m = comp.med3(xs, l, m, n);   // Mid-size, med of 3
     }
-    xptr v = get(m);
+    xptr v = xs->get(m);
 
     // Establish Invariant: v* (<v)* (>v)* v*
     int a = off, b = a, c = off + len - 1, d = c;
     while(true) {
-        while (b <= c && ON_LESS_LT( b, v)<=0) {
-            if (get(b) == v)
-                swap(a++, b);
+        while (b <= c && comp.on_less_lt(xs, b, v)<=0) {
+            if (xs->get(b) == v)
+                xs->swap(a++, b);
             b++;
         }
-        while (c >= b && ON_LESS_RT(v,c)<=0) {
-            if (get(c) == v)
-                swap(c, d--);
+        while (c >= b && comp.on_less_rt(xs,v,c)<=0) {
+            if (xs->get(c) == v)
+                xs->swap(c, d--);
             c--;
         }
         if (b > c)
             break;
-        swap(b++, c--);
+        xs->swap(b++, c--);
     }
 
     // Swap partition elements back to middle
     int s, n = off + len;
-    s = min(a-off, b-a  );  vecswap( off, b-s, s);
-    s = min(d-c,   n-d-1);  vecswap( b,   n-s, s);
+    s = min(a-off, b-a  );  xs->vecswap( off, b-s, s);
+    s = min(d-c,   n-d-1);  xs->vecswap( b,   n-s, s);
 
     // Recursively sort non-partition-elements
     if ((s = b-a) > 1)
-        sort1( off, s);
+        sort_template<Comparator>(xs, off, s);
     if ((s = d-c) > 1)
-        sort1(n-s, s);
+        sort_template<Comparator>(xs, n-s, s);
+}
+
+void xptr_sequence::sort1(int off, int len)
+{
+	sort_template<nid_comparator>(this, off, len);
 }
 
 void xptr_sequence::swap(int a, int b)
@@ -207,13 +243,6 @@ void xptr_sequence::swap(int a, int b)
     xptr t = get(a);
     set(get(b), a);
     set(t, b);
-}
-
-int xptr_sequence::med3( int a, int b, int c)
-{
-    return (ON_LESS(a,b)<0 ?
-        (ON_LESS(b,c)<0 ? b : ON_LESS(a,c)<0 ? c : a) :
-        (ON_LESS(c,b)<0 ? b : ON_LESS(c,a)<0 ? c : a));
 }
 
 void xptr_sequence::vecswap(int a, int b, int n)
