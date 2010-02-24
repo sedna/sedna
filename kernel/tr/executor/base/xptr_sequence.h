@@ -68,8 +68,9 @@ private:
 
     void sort1(int off, int len); 
     void swap( int a, int b);
-    int  med3( int a, int b, int c) ;
     void vecswap(int a, int b, int n);
+
+	template<class Comparator> friend void sort_template(xptr_sequence *xs, int off, int len);
 
 
 public:
@@ -93,6 +94,7 @@ public:
     }
 
     void sort();
+	void sort_by_xptr();
 };
 
 
