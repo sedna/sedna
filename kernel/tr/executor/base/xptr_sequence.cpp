@@ -178,7 +178,7 @@ void xptr_sequence::sort_by_xptr()
 template<class Comparator>
 void sort_template(xptr_sequence *xs, int off, int len)
 {
-	typename Comparator comp;
+	Comparator comp;
     // Insertion sort on smallest arrays
     if (len < 7) {
         for (int i=off; i<len+off; i++)
@@ -222,8 +222,8 @@ void sort_template(xptr_sequence *xs, int off, int len)
 
     // Swap partition elements back to middle
     int s, n = off + len;
-    s = min(a-off, b-a  );  xs->vecswap( off, b-s, s);
-    s = min(d-c,   n-d-1);  xs->vecswap( b,   n-s, s);
+    s = s_min(a-off, b-a  );  xs->vecswap( off, b-s, s);
+    s = s_min(d-c,   n-d-1);  xs->vecswap( b,   n-s, s);
 
     // Recursively sort non-partition-elements
     if ((s = b-a) > 1)
