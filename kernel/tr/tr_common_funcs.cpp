@@ -27,6 +27,9 @@
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
+#endif
+
+#ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTindex.h"
 #endif
 

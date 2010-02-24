@@ -760,10 +760,11 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 }
 
 // fixes xptr-to-flush-to on rollback to make old relocated version come back
+// it is guaranteed that xptr-version is in buffers, but not lxptr-version!!!
 static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
 {
     ramoffs old_offs, dummy; // for buffer_table methods
-    
+
     assert((*phys_xptrs)[oldVerBufferId] == WuExternaliseXptr(xptr));
     assert(!buffer_table.find(WuExternaliseXptr(xptr), dummy) && dummy == RamoffsFromBufferId(oldVerBufferId));
 
@@ -771,15 +772,22 @@ static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
     (*phys_xptrs)[oldVerBufferId] = WuExternaliseXptr(lxptr);
 
     // the we must alter buffer_table since it contains phys_xptr --> buf_offset map
-    buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId), old_offs);
-    buffer_table.replace(WuExternaliseXptr(xptr), old_offs, dummy);
+    if (!buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId), old_offs)) // lxptr and xptr in buffers
+    {
+        buffer_table.replace(WuExternaliseXptr(xptr), old_offs, dummy);
+    }
+    else // lxptr isn't in memory, but xptr is -- just insert the new record and delete the old one
+    {
+        buffer_table.insert(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId));
+        buffer_table.remove(WuExternaliseXptr(xptr));
+    }
 
     return 1;
 }
 
 int OnTransactionRollback(VeClientState *state)
 {
-    VeFunctionList::iterator i;
+    VeFunctionList::reverse_iterator i;
     int success = 1, bufferId = 0;
     ramoffs offs;
 
@@ -790,7 +798,7 @@ int OnTransactionRollback(VeClientState *state)
     }
     else
     {
-        for (i = state->functionList->begin(); i != state->functionList->end() && success; i++)
+        for (i = state->functionList->rbegin(); i != state->functionList->rend() && success; i++)
         {
             switch (i->type)
             {
@@ -802,7 +810,10 @@ int OnTransactionRollback(VeClientState *state)
                 case VE_FUNCTION_CREATE_VERSION:
                 case VE_FUNCTION_CREATE_VERSION_PERS:
                     // the worst case: we should delete new version and relocate the old one back
-                    // put old version in buffers
+                    // CAREFUL: we don't want to overwrite persistent version here: consider situation when (lxptr; xptr) pair has been flushed to disk
+                    //          we relocate xptr on lxptr, delete xptr and then someone reuse xptr --> persistent version is lost --> recovery would fail
+
+                    // first, put old version in buffers
                     try
                     {
                         success = 0;
@@ -820,8 +831,17 @@ int OnTransactionRollback(VeClientState *state)
                         success = 0;
                         break;
                     }
-                    
-                    ImpFreeBlock(i->xptr); // delete old version block
+
+                    // if we had replaced persistent version, make persistent version flush to avoid relocating it on recovery
+                    // this will guarantee that the situation described in the header of the case will be impossible
+                    if (i->type == VE_FUNCTION_CREATE_VERSION_PERS && !ImpFlushBuffer(bufferId))
+                    {
+                        success = 0;
+                        break;
+                    }
+
+                    // delete old version
+                    ImpFreeBlock(i->xptr);
                     break;
 
                 case VE_FUNCTION_FREE_BLOCK:
@@ -845,7 +865,7 @@ int OnTransactionRollback(VeClientState *state)
             }
         }
 
-        success = (i == state->functionList->end());
+        success = (i == state->functionList->rend());
     }
 
     return success;
