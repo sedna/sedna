@@ -46,6 +46,9 @@ void vmm_delete_tmp_blocks() throw (SednaException);
 void vmm_unswap_block(xptr p) throw (SednaException);
 void vmm_unswap_block_write(xptr p) throw (SednaException);
 
+// this function unmaps all blocks mapped on this transaction
+void unmapAllBlocks();
+
 /* Microtransaction is the mechanism with isolated block readings
  * On the end of microtransaction all blocks read during its work are unmapped
  */

@@ -682,7 +682,7 @@ void vmm_on_session_end() throw (SednaException)
     vmm_trace_stop();
 }
 
-static void unmapAllBlocks()
+void unmapAllBlocks()
 {
     int p = -1;
 
