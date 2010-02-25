@@ -160,95 +160,92 @@ void catalog_before_commit(bool is_commit)
 /*
  * Final journal commit. Done by single transaction at a time
  */
-    cs_initp();
+    if (!is_commit) { return; }
 
-    if (is_commit) {
-        try {
-            catalog_journal_record *p, *r;
-            xptr *tree;
-            bt_key name;
-            char * htname;
+    try {
+        catalog_journal_record *r;
+        xptr *tree;
+        bt_key name;
+        char * htname;
 
-            catalog_lock_metadata();
+        catalog_lock_metadata();
 
-            r = local_catalog->catalog_journal;
+        cs_initp();
+        r = local_catalog->catalog_journal;
+        while (r != NULL) {
+            switch (r->type) {
+              case catalog_journal_record::add_name:
+                tree = &(CATALOG_NAME_TREE(r->nor.object_type));
+                name.setnew(r->nor.name_to_save->name);
+                if (*tree == XNULL) { *tree = bt_create(xs_string); }
+                bt_insert(*tree, name, r->nor.name_to_save->obj->p);
+                break;
 
-            while (r != NULL) {
-                switch (r->type) {
-                case catalog_journal_record::add_name:
-                    tree = &(CATALOG_NAME_TREE(r->nor.object_type));
-                    name.setnew(r->nor.name_to_save->name);
-                    if (*tree == XNULL) { *tree = bt_create(xs_string); }
-                    bt_insert(*tree, name, r->nor.name_to_save->obj->p);
-                    break;
+              case catalog_journal_record::del_name:
+                tree = &(CATALOG_NAME_TREE(r->nor.object_type));
+                name.setnew(r->nor.name_to_save->name);
+                bt_delete(*tree, name, r->nor.name_to_save->obj->p);
+                htname = catalog_ht_fullname_string(r->nor.object_type, r->nor.name_to_save->name);
+                st_delete_string(local_catalog->masterdata.htable, htname);
+                cat_free(htname);
+                break;
 
-                case catalog_journal_record::del_name:
-                    tree = &(CATALOG_NAME_TREE(r->nor.object_type));
-                    name.setnew(r->nor.name_to_save->name);
-                    bt_delete(*tree, name, r->nor.name_to_save->obj->p);
-                    htname = catalog_ht_fullname_string(r->nor.object_type, r->nor.name_to_save->name);
-                    st_delete_string(local_catalog->masterdata.htable, htname);
-                    cat_free(htname);
-                    break;
-
-                case catalog_journal_record::add_htable_record:
-                    local_catalog->masterdata.htable = st_insert_string(local_catalog->masterdata.htable, r->htr.name, r->htr.data, strlen(r->htr.data) + 2, true);
-                    cat_free(r->htr.name);
-                    cat_free(r->htr.data);
-                    break;
-                }
-
-                p = r->next;
-                cat_free(r);
-                r = p;
-                local_catalog->masterdata_updated = true;
+              case catalog_journal_record::add_htable_record:
+                local_catalog->masterdata.htable = st_insert_string(local_catalog->masterdata.htable, r->htr.name, r->htr.data, strlen(r->htr.data) + 2, true);
+                break;
             }
 
-            local_catalog->catalog_journal = NULL;
-
-            if (local_catalog->masterdata_updated) {
-                CHECKP(catalog_masterblock);
-                VMM_SIGNAL_MODIFICATION(catalog_masterblock);
-
-                memcpy(
-                    &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
-                    &(local_catalog->masterdata),
-                    sizeof(catalog_name_trees));
-
-                local_catalog->masterdata_updated = false;
-            }
-
-            if (!ccache_available && !tr_globals::is_ro_mode) {
-                CHECKP(catalog_masterblock);
-                VMM_SIGNAL_MODIFICATION(catalog_masterblock);
-
-                memcpy(
-                    &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
-                    &last_nid_size,
-                    sizeof(int));
-
-                memcpy(
-                    ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
-                    last_nid,
-                    last_nid_size);
-
-                cat_free(last_nid);
-            }
-        } catch (ANY_SE_EXCEPTION) {
-            catalog_unlock_metadata();
-            throw;
+            r = r->next;
+            local_catalog->masterdata_updated = true;
         }
-    }
 
-    if (pe_catalog_aspace->free_all) pe_catalog_aspace->free_all();
-    delete local_catalog;
+        local_catalog->catalog_journal = NULL;
+
+        if (local_catalog->masterdata_updated) {
+            WRITEP(catalog_masterblock);
+
+            memcpy(
+                &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
+                &(local_catalog->masterdata),
+                sizeof(catalog_name_trees));
+
+            local_catalog->masterdata_updated = false;
+        }
+
+        if (!tr_globals::is_ro_mode) {
+            WRITEP(catalog_masterblock);
+
+            memcpy(
+                &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
+                &last_nid_size,
+                sizeof(int));
+
+            memcpy(
+                ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
+                last_nid,
+                last_nid_size);
+        }
+    } catch (ANY_SE_EXCEPTION) {
+        catalog_unlock_metadata();
+        throw;
+    }
 }
 
 void catalog_after_commit(bool is_commit)
 {
+    if (pe_catalog_aspace->free_all) pe_catalog_aspace->free_all();
+    delete local_catalog;
+
     cs_initp();
     catalog_unlock_metadata();
 }
+
+/*
+void catalog_light_rollback()
+{
+    local_catalog->pointer_list.freeAll();
+}
+*/
 
 void catalog_on_transaction_begin()
 {
@@ -274,19 +271,18 @@ void catalog_on_transaction_begin()
             sizeof(catalog_name_trees));
     }
 
-    if (!ccache_available) {
-        memcpy(
-            &last_nid_size,
-            &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
-            sizeof(int));
+    memcpy(
+        &last_nid_size,
+        &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
+        sizeof(int));
 
-        last_nid = (unsigned char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, MAX_ROOT_NID_SIZE);
+    last_nid = (unsigned char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, MAX_ROOT_NID_SIZE);
+    local_catalog->pointer_list.add(last_nid);
 
-        memcpy(
-            last_nid,
-            ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
-            last_nid_size);
-    }
+    memcpy(
+        last_nid,
+        ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
+        last_nid_size);
 
     cat_masterlock.Release();
     mtrn.end();
@@ -429,8 +425,6 @@ catalog_object_header * catalog_acquire_object(const xptr &ptr)
 void catalog_release_object(catalog_object_header * object)
 {
     if (GET_FLAG(object->flags, CAT_OBJECT_INVALID_FLAG)) { object->validate(); }
-//    object->object->~catalog_object();
-//    cat_free(object->object);
     object->object = NULL;
     CLEAR_FLAG(object->flags, CAT_OBJECT_INVALID_FLAG);
 }
@@ -438,8 +432,6 @@ void catalog_release_object(catalog_object_header * object)
 static void catalog_delete_object_internal(catalog_object_header * object)
 {
     U_ASSERT(object->object != NULL);
-//    object->object->~catalog_object();
-//    object->object = NULL;
     SET_FLAG(object->flags, CAT_OBJECT_DELETED_FLAG);
     object->invalidate();
 }
@@ -713,6 +705,9 @@ bool catalog_htable_set(
     strncpy(cr->htr.data, par_name, pname_len);
     cr->htr.data[pname_len] = 0;
     cr->htr.data[pname_len+1] = flag;
+
+    local_catalog->pointer_list.add(cr->htr.name);
+    local_catalog->pointer_list.add(cr->htr.data);
 
     local_catalog->add_journal_record(cr);
 

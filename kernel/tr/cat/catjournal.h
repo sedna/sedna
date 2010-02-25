@@ -68,6 +68,7 @@ struct local_catalog_header : public catalog_header {
     FastPointerArray header_list;
     FastPointerArray object_list;
     FastPointerArray namerecord_list;
+    FastPointerArray pointer_list;
 
     catalog_name_trees masterdata;
 
@@ -86,9 +87,9 @@ struct local_catalog_header : public catalog_header {
             this->catalog_journal_tail->next = cr;
         }
 
-        this->catalog_journal_tail = cr;
-
+        catalog_journal_tail = cr;
         cr->next = NULL;
+        pointer_list.add(cr);
     }
 
     local_catalog_header() :
@@ -100,6 +101,7 @@ struct local_catalog_header : public catalog_header {
         header_list.destroyAll<catalog_object_header>();
         object_list.destroyAll<catalog_object>();
         namerecord_list.destroyAll<catalog_name_record>();
+        pointer_list.freeAll();
     };
 };
 

@@ -195,6 +195,7 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
         down_transaction_block_sems();
 
     d_printf1("Getting transaction identifier...");
+
     trid = get_transaction_id(sm_server);
     d_printf1("OK\n");
 
@@ -240,8 +241,18 @@ static SSMMsg* sm_server_wu = NULL; // server to report to wu
 
 static void rollbackTransaction()
 {
+            // we should unmap all blocks here since sm will "fix" some offsets and xptrs on physical rollback
+            // they might be not valid anymore
+            // for now it is needed only for ft-indexes to see consistent state
+            // note, that won't hamper our performance since the second call will just exit on empty unmap bitset
+            // or will unmap just the blocks ft-indexes rollback have read
+            unmapAllBlocks();
 #ifdef SE_ENABLE_DTSEARCH
+            catalog_on_transaction_begin();
             SednaIndexJob::rollback();
+            catalog_on_transaction_end(false);
+            catalog_before_commit(false);
+            catalog_after_commit(false);
 #endif
             hl_logical_log_rollback(tr_globals::trid);
 

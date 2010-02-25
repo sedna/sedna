@@ -59,6 +59,7 @@ typedef U_HASH_MAP_W_CUSTOM_HASH_FN(XPTR, XPTR, XptrHashFunc) VeFlushingDependen
 struct VeClientState
 {
 	int isCompleted;
+    int isRolledBack;
 	VeFunctionList *functionList;
 	VeRestriction *restrictionList;
 };
@@ -350,6 +351,7 @@ int ValidateHeader(VersionsHeader *hdr)
 	return success;
 }
 
+/*
 static
 int ResetFlushingDependencies()
 {
@@ -357,6 +359,7 @@ int ResetFlushingDependencies()
 	flushingDependenciesHash->clear();
 	return 1;
 }
+*/
 
 static
 int UpdateFlushingDependency(XPTR trigger, XPTR target)
@@ -503,7 +506,8 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 	{
 		/* error! */
 	}
-	else if (trnStatusAndType == SN_COMPLETED_TRANSACTION || state->isCompleted)
+    // give rolledback transaction read blocks after physical rollback (for ft-indexes sake)
+	else if (trnStatusAndType == SN_COMPLETED_TRANSACTION || (state->isCompleted && !state->isRolledBack))
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
@@ -942,6 +946,7 @@ int VeOnRegisterClient()
 	else
 	{
 		state->isCompleted = 0;
+        state->isRolledBack = 0;
 		state->functionList = NULL;
 		state->restrictionList = NULL;
 		if (statusAndType == SN_UPDATER_TRANSACTION)
@@ -1310,7 +1315,14 @@ int VeOnTransactionEnd(int how, TIMESTAMP currentSnapshotTs)
 			assert(how == VE_ROLLBACK_TRANSACTION);
 			success = OnTransactionRollback(state);
 		}
-		if (success) state->isCompleted = 1;
+		if (success)
+        {
+            state->isCompleted = 1;
+            if (how == VE_ROLLBACK_TRANSACTION)
+            {
+                state->isRolledBack = 1;
+            }
+        }
 	}
 	return success;
 }

@@ -850,7 +850,6 @@ int WuOnCommitTransaction(int sid)
 
 int WuOnRollbackTransaction(int sid)
 {
-	TIMESTAMP currentSnapshotTs = INVALID_TIMESTAMP;
 	int success=0;
 
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
@@ -859,8 +858,9 @@ int WuOnRollbackTransaction(int sid)
 		if (!ClSetCurrentClientId(sid)) {}
 		else
 		{
-			if (!VeOnTransactionEnd(VE_ROLLBACK_TRANSACTION, INVALID_TIMESTAMP) ||
-				!SnOnTransactionEnd(&currentSnapshotTs)) {}
+            // don't call SnOnTransactionEnd here since transaction may read blocks after rollback
+            // SnOnTransactionEnd will be called by SnOnUnregisterClient anyway if needed
+            if (!VeOnTransactionEnd(VE_ROLLBACK_TRANSACTION, INVALID_TIMESTAMP)) {}
 			else
 			{
 				success=1;
