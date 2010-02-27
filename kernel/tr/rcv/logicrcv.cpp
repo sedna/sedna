@@ -53,6 +53,16 @@ static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
 	return llGetPrevLsnFromRecord(RecBuf);
 }
 
+/* Converts logical log namespace presentation into pointer the real object */
+static inline xmlns_ptr
+llGetNamespaceFromRecord(const char* prefix, 
+                         const char* uri)
+{
+    U_ASSERT(prefix != NULL && uri != NULL);
+    if(strlen(prefix) == 0 && strlen(uri) == 0) return NULL_XMLNS;
+    else return xmlns_touch(prefix, uri);
+}
+
 static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
 {
 	LSN lsn = curr_lsn + llGetRecordSize(RecBuf, 0);
@@ -124,17 +134,14 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	  else
 	       indirectionSetRollbackRecord(self);
 
-
-      // Actually assuming that 0-length string and NULL pointer are the same (prefix, uri)
-      // is terribly wrong, so TODO: FIX it
+      xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
+      
       insert_element(removeIndirection(left),
                      removeIndirection(right),
                      removeIndirection(parent),
                      name,
                      type,
-                     xmlns_touch(
-                        (strlen(prefix) != 0) ? prefix : NULL,
-                        (strlen(uri) != 0) ? uri : NULL));
+                     ns);
 
       xptr self_res = indirectionGetLastRecord();
       if (self_res != self) indir_map.insert(self, self_res);
@@ -195,6 +202,8 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
 	   else
 	        indirectionSetRollbackRecord(self);
 
+       xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
+
        insert_attribute(removeIndirection(left),
                         removeIndirection(right),
                         removeIndirection(parent),
@@ -202,9 +211,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
                         type,
                         value,
                         value_size,
-                        xmlns_touch(
-                           (strlen(prefix) != 0) ? prefix : NULL,
-                           (strlen(uri) != 0) ? uri : NULL));
+                        ns);
 
        xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
@@ -572,12 +579,13 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
 	   else
 	       indirectionSetRollbackRecord(self);
 
+       xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
+       U_ASSERT(ns != NULL_XMLNS);
+       
        insert_namespace(removeIndirection(left),
                         removeIndirection(right),
                         removeIndirection(parent),
-                        xmlns_touch(
-                          (strlen(prefix) != 0) ? prefix : NULL,
-                          (strlen(uri) != 0) ? uri : NULL));
+                        ns);
 
        xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
