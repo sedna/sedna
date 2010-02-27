@@ -911,6 +911,7 @@ void sedna_soft_fault_log(const char* log_message, int component)
     }
     strcpy(log_buf, "SEDNA soft fault message:\n");
     strcat(log_buf, log_message);
+    strcat(log_buf, "\n\n");
     res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
     if (res == 0 || bytes_written != strlen(log_buf))
     {
@@ -922,6 +923,7 @@ void sedna_soft_fault_log(const char* log_message, int component)
     strcat(log_buf, str);
     strcat(log_buf, " command line arguments: ");
     strcat(log_buf, GetCommandLine());
+    strcat(log_buf, "\n\n");
     res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
     if (res == 0 || bytes_written != strlen(log_buf))
     {
