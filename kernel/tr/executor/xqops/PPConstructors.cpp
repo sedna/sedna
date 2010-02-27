@@ -146,6 +146,47 @@ isNameValid(const char* name, const char* prefix, const char* uri, bool check_na
     return true;
 }
 
+/* 
+ * Helper for element and docuemnt constructors to insert sequence 
+ * of atomic values. Returns true if node was actually inserted.
+ * In this case left pointer is changed to the last inserted indirection.
+ * In any case at_vals sequence is cleared.
+ */
+static inline bool 
+process_atomic_values(xptr& left,
+                      const xptr& parent,
+                      sequence& at_vals)
+{
+    if (at_vals.size() > 0)
+    {
+        executor_globals::tmp_op_str_buf.clear();
+        tuple_cell tcc;
+        sequence::iterator it = at_vals.begin();
+        do
+        {
+            tcc = tuple_cell::make_sure_light_atomic((*it).cells[0]);
+            tcc = cast(tcc, xs_string);
+            executor_globals::tmp_op_str_buf.append(tcc);
+            it++;
+        }
+        while (it != at_vals.end());
+
+        at_vals.clear();
+        if(executor_globals::tmp_op_str_buf.get_size() > 0) {
+            insert_text(indirectionDereferenceCP(left),
+                        XNULL,
+                        indirectionDereferenceCP(parent),
+                        executor_globals::tmp_op_str_buf.get_ptr_to_text(),
+                        executor_globals::tmp_op_str_buf.get_size(),
+                        executor_globals::tmp_op_str_buf.get_type());
+            left = get_last_mo_inderection();
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -277,24 +318,23 @@ void PPElementConstructor::do_next (tuple &t)
     {
         first_time = false;
 
-        //Name parameter
-        const char* name=el_name;
+        /* Name parameter */
+        const char* name = el_name;
         tuple_cell res;
-        if (name==NULL)
+        if (NULL == name)
         {
-            res=getQnameParameter(qname);
-            name=res.get_str_mem();
+            res  = getQnameParameter(qname);
+            name = res.get_str_mem();
         }
 
+        /* Context save */
+        xptr parind  = cont_parind;
+        xptr leftind = cont_leftind;
+        cont_parind  = XNULL;
+        cont_leftind = XNULL;
+        int oldcnt   = conscnt;
 
-        //context save
-        xptr parind=cont_parind;
-        xptr leftind=cont_leftind;
-        cont_parind=XNULL;
-        cont_leftind=XNULL;
-        int oldcnt=conscnt;
-        //crm_dbg<<"\n befory body cnt in "<<name<<" = "<<conscnt;
-        //Preliminaries for static context
+        /* Preliminaries for static context */
         vector<xmlns_ptr> ns_list;
         vector<tuple> start_seq;
         tuple cont(content.ts);
@@ -311,12 +351,11 @@ void PPElementConstructor::do_next (tuple &t)
                 t_item typ=GETTYPE(GETSCHEMENODE(XADDR(node)));
                 if(typ!=xml_namespace)
                     break;
-                //ns_list.push_back(((ns_dsc*)XADDR(node))->ns);
                 content.op->next(cont);
             }
         }
-        //namespace search
 
+        /* Namespace search */
         char* prefix = NULL;
         xmlns_ptr ns = NULL_XMLNS;
         if (!res.is_eos()&&res.get_atomic_type()==xs_QName)
@@ -346,7 +385,12 @@ void PPElementConstructor::do_next (tuple &t)
                 ns = cxt->st_cxt->get_xmlns_by_prefix("");
             }
         }
-
+        /*
+         * The attribute value in a default namespace declaration MAY be empty. 
+         * This has the same effect, within the scope of the declaration, of there being no default namespace
+         */
+        if(is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
+        
         /* Check constraints on full name */
         if(!isNameValid(name,
                         ns == NULL_XMLNS ? NULL : ns->prefix,
@@ -356,115 +400,88 @@ void PPElementConstructor::do_next (tuple &t)
 
         /* Element insertion */
         xptr new_element;
-        if (parind==XNULL || deep_copy)
+        if (parind == XNULL || deep_copy)
         {
-            new_element= insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,xs_untyped,ns);
-            last_elem=get_last_mo_inderection();
+            new_element = insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,xs_untyped,ns);
+            last_elem   = get_last_mo_inderection();
         }
         else
         {
             if (leftind!=XNULL)
-                new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
+                new_element = insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
             else
-                new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
+                new_element = insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
             conscnt++;
         }
-        int cnt=conscnt;
+        int cnt = conscnt;
+        xptr indir = getIndirectionSafeCP(new_element);
 
-        //xptr local_last=new_element;
-        xptr indir= getIndirectionSafeCP(new_element);
-        //context change
-        cont_parind=indir;
-        cont_leftind=XNULL;
-        //MAIN PART
+        /* Context change */
+        cont_parind  = indir;
+        cont_leftind = XNULL;
+
+        /* Process content sequence */
         sequence at_vals(1);
-        xptr left=XNULL;
-        bool mark_attr=true;
-        vector<tuple>::iterator it_st;
-        tuple* cont_ptr=NULL;
-        if (ns_inside)
+        xptr left = XNULL;
+        bool mark_attr = true;   // If the content sequence contains an attribute node following a node that is not an attribute node
+        tuple* cont_ptr = NULL;
+        unsigned int ss_size = start_seq.size();
+        unsigned int ss_it = 0;
+        
+        while (true)
         {
-            it_st=start_seq.begin();
-            cont_ptr=&(*it_st);
-        }
-        else
-        {
-            content.op->next(cont);
-            it_st=start_seq.end();
-            cont_ptr=&cont;
-        }
-        while (!cont_ptr->is_eos())
-        {
-            tuple_cell tc=cont_ptr->cells[0];
+            /* Get next content sequence tuple cell */
+            if (ss_it <= ss_size)
+            {
+                if (ss_it == ss_size) {
+                    content.op->next(cont);
+                    cont_ptr = &cont;
+                }
+                else cont_ptr = &start_seq.at(ss_it++);
+            }
+            else
+                content.op->next(cont);
+
+            if(cont_ptr->is_eos()) break;
+            tuple_cell tc = cont_ptr->cells[0];
+
+
+            /* Analyze and insert it */
             if (tc.is_atomic())
             {
                 at_vals.add(*cont_ptr);
-                //if (val->get_size()>0) val->append(" ");
-                //val->append(cont_ptr);
             }
             else
             {
-                if (at_vals.size()>0)
-                {
-                    //normalize
-                    tuple_cell tcc;
-                    executor_globals::tmp_op_str_buf.clear();
-                    sequence::iterator it=at_vals.begin();
-                    do
-                    {
-                        /*if (it!=at_vals.begin())
-                        {
-                        str_val.append(" ");
-                        }*/
-                        tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-                        tcc=cast(tcc, xs_string);
-                        executor_globals::tmp_op_str_buf.append(tcc);
-                        it++;
+                /* Process atomic values */
+                if(process_atomic_values(left, indir, at_vals)) mark_attr = false;
 
-                    }
-                    while (it!=at_vals.end());
-                    at_vals.clear();
-                    if(executor_globals::tmp_op_str_buf.get_size()>0) {
-                        insert_text(removeIndirection(left),
-                                    XNULL,
-                                    removeIndirection(indir),
-                                    executor_globals::tmp_op_str_buf.get_ptr_to_text(),
-                                    executor_globals::tmp_op_str_buf.get_size(),
-                                    executor_globals::tmp_op_str_buf.get_type());
-                        left = get_last_mo_inderection();
-                    }
-                    mark_attr=false;
-                }
-                xptr node=tc.get_node();
+                xptr node = tc.get_node();
                 CHECKP(node);
-                t_item typ=GETTYPE(GETSCHEMENODE(XADDR(node)));
+                t_item typ = GETTYPE(GETSCHEMENODE(XADDR(node)));
+
                 switch (typ)
                 {
-                case xml_namespace:ns_list.push_back(xmlns_touch(((ns_dsc*)XADDR(node))->ns));break;
+                case xml_namespace: 
+                    {
+                        xmlns_ptr nsptr = xmlns_touch(((ns_dsc*)XADDR(node))->ns);
+                        ns_list.push_back(nsptr);
+                        if(is_empty_default_ns_declaration(nsptr)) continue;
+                        break;     
+                    }
+                case comment:
+                case pr_ins:
                 case document:
                 case element:
                     {
-                        mark_attr=false;
+                        mark_attr = false;
                         break;
                     }
+                case cdata:
                 case text:
                     {
-                        if (isTextEmpty(T_DSC(node))) {
-                            if (it_st!=start_seq.end()) {
-                                it_st++;
-                                if (it_st==start_seq.end())
-                                {
-                                    content.op->next(cont);
-                                    cont_ptr=&cont;
-                                }
-                                else cont_ptr=&(*it_st);
-
-                            }
-                            else
-                                content.op->next(cont);
-                            continue;
-                        }
-                        mark_attr=false;
+                        if (isTextEmpty(T_DSC(node))) continue; 
+                        mark_attr = false;
                         break;
                     }
                 case attribute:
@@ -472,15 +489,16 @@ void PPElementConstructor::do_next (tuple &t)
                         if (!mark_attr) throw XQUERY_EXCEPTION(XQTY0024);
                     }
                 }
-                if (conscnt>cnt)
+                
+                if (conscnt > cnt)
                 {
-                    left= getIndirectionSafeCP(node);
-                    cnt=conscnt;
-                    cont_leftind=left;
+                    left = getIndirectionSafeCP(node);
+                    cnt =conscnt;
+                    cont_leftind = left;
                 }
                 else
                 {
-                    if (typ==document) {
+                    if (typ == document) {
                         xptr res = copy_node_content(indir, node, left, NULL, cxt->st_cxt->get_construction_mode());
                         if (res != XNULL) {
                             left = res;
@@ -488,66 +506,30 @@ void PPElementConstructor::do_next (tuple &t)
                         }
                     } else {
                         left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->st_cxt->get_construction_mode());
-                        cont_leftind=left;
+                        cont_leftind = left;
                     }
-
                 }
-
-            }
-
-            if (it_st!=start_seq.end())
-            {
-                it_st++;
-                if (it_st==start_seq.end())
-                {
-                    content.op->next(cont);
-                    cont_ptr=&cont;
-                }
-                else cont_ptr=&(*it_st);
-
-            }
-            else
-                content.op->next(cont);
-        }
-        if (at_vals.size()>0)
-        {
-            executor_globals::tmp_op_str_buf.clear();
-            tuple_cell tcc;
-            sequence::iterator it=at_vals.begin();
-            do
-            {
-                tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-                tcc=cast(tcc, xs_string);
-                executor_globals::tmp_op_str_buf.append(tcc);
-                it++;
-
-            }
-            while (it!=at_vals.end());
-            at_vals.clear();
-            if(executor_globals::tmp_op_str_buf.get_size() > 0) {
-                insert_text(removeIndirection(left),
-                            XNULL,
-                            removeIndirection(indir),
-                            executor_globals::tmp_op_str_buf.get_ptr_to_text(),
-                            executor_globals::tmp_op_str_buf.get_size(),
-                            executor_globals::tmp_op_str_buf.get_type());
-                left = get_last_mo_inderection();
             }
         }
-        //Result
+        
+        /* Process remained atomic values */
+        process_atomic_values(left, indir, at_vals);
+
+        /* Result */
         t.copy(tuple_cell::node_indir(indir));
-        //clear in-scope context deleteng local namespace declarations
+
+        /* Clear in-scope context deleteng local namespace declarations */
         vector<xmlns_ptr>::iterator it=ns_list.begin();
-        while (it!=ns_list.end())
+        while (it != ns_list.end())
         {
             cxt->st_cxt->remove_from_context(*it);
             it++;
         }
-        //context return;
-        cont_parind=parind;
-        cont_leftind=XNULL;
-        if (deep_copy)
-            conscnt=oldcnt;
+
+        /* Restore context */
+        cont_parind  = parind;
+        cont_leftind = XNULL;
+        if (deep_copy) conscnt = oldcnt;
     }
     else
     {
@@ -710,6 +692,11 @@ void PPAttributeConstructor::do_next (tuple &t)
                     ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
             }
         }
+        /*
+         * The attribute value in a default namespace declaration MAY be empty. 
+         * This has the same effect, within the scope of the declaration, of there being no default namespace
+         */
+        if(is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
 
         /* Check constraints on full name */
         if(!isNameValid(name,
@@ -871,7 +858,7 @@ void PPNamespaceConstructor::do_next (tuple &t)
         }
 
         xmlns_ptr ns = cxt->st_cxt->add_to_context(prefix,uri);
-        xptr new_namespace= insert_namespace(XNULL,XNULL,get_virtual_root(),ns);
+        xptr new_namespace = insert_namespace(XNULL,XNULL,get_virtual_root(),ns);
 
         t.copy(tuple_cell::node(new_namespace));
     }
@@ -1372,9 +1359,12 @@ void PPDocumentConstructor::do_next (tuple &t)
         cont_leftind=XNULL;
         sequence at_vals(1);
         xptr lefti=XNULL;
-        content.op->next(t);
-        while (!t.is_eos())
+
+        while (true)
         {
+            content.op->next(t);
+            if(t.is_eos()) break;
+
             tuple_cell tc=t.cells[0];
             if (tc.is_atomic())
             {
@@ -1382,96 +1372,45 @@ void PPDocumentConstructor::do_next (tuple &t)
             }
             else
             {
-                if (at_vals.size()>0)
-                {
-                    tuple_cell tcc;
-                    executor_globals::tmp_op_str_buf.clear();
-                    sequence::iterator it=at_vals.begin();
-                    do
-                    {
-                        tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-                        tcc=cast(tcc, xs_string);
-                        executor_globals::tmp_op_str_buf.append(tcc);
-                        it++;
-                    }
-                    while (it!=at_vals.end());
-                    at_vals.clear();
-                    if(executor_globals::tmp_op_str_buf.get_size()>0) {
-                        insert_text(indirectionDereferenceCP(lefti),
-                                    XNULL,
-                                    indirectionDereferenceCP(indir),
-                                    executor_globals::tmp_op_str_buf.get_ptr_to_text(),
-                                    executor_globals::tmp_op_str_buf.get_size(),
-                                    executor_globals::tmp_op_str_buf.get_type());
-                        lefti = get_last_mo_inderection();
-                    }
-                }
+                process_atomic_values(lefti, indir, at_vals);
+                
                 xptr node=tc.get_node();
                 CHECKP(node);
-                t_item typ=GETTYPE(GETSCHEMENODE(XADDR(node)));
+                t_item typ = GETTYPE(GETSCHEMENODE(XADDR(node)));
+                
                 switch (typ)
                 {
-                case document:
-                case element:
+                  case document:
+                  case element:
+                  case pr_ins:
+                  case comment: break;
+                  case text:
+                  case cdata:
                     {
+                        if (isTextEmpty(T_DSC(node))) continue;
                         break;
                     }
-                case text:
-                    {
-                        if (isTextEmpty(T_DSC(node))) {
-                            content.op->next(t);
-                            continue;
-                        }
-                        break;
-                    }
-                case attribute:
-                    {
-                        throw XQUERY_EXCEPTION(XPTY0004);
-                    }
+                  case attribute: throw XQUERY_EXCEPTION(XPTY0004);
                 }
-                if (conscnt>cnt) {
+
+                if (conscnt > cnt) {
                     lefti = getIndirectionSafeCP(node);
-                    cnt = conscnt;
+                    cnt   = conscnt;
                 } else {
-                    if (typ==document) {
+                    if (typ == document) {
                         xptr res = copy_node_content(indir, node, lefti, NULL, cxt->st_cxt->get_construction_mode());
-                        if (res != XNULL) {
-                            lefti = res;
-                        } else {
-                            content.op->next(t);
-                            continue;
-                        }
+                        if (res != XNULL) lefti = res;
+                        else continue;
                     } else {
                         lefti = deep_copy_node_ii(lefti, XNULL, indir, node, NULL, cxt->st_cxt->get_construction_mode());
                     }
                 }
                 cont_leftind = lefti;
             }
+        }
 
-            content.op->next(t);
-        }
-        if (at_vals.size()>0)
-        {
-            executor_globals::tmp_op_str_buf.clear();
-            tuple_cell tcc;
-            sequence::iterator it=at_vals.begin();
-            do
-            {
-                tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-                tcc=cast(tcc, xs_string);
-                executor_globals::tmp_op_str_buf.append(tcc);
-                it++;
-            }
-            while (it!=at_vals.end());
-            at_vals.clear();
-            if(executor_globals::tmp_op_str_buf.get_size()>0)
-                lefti = getIndirectionSafeCP(insert_text(indirectionDereferenceCP(lefti),
-                                                         XNULL,
-                                                         indirectionDereferenceCP(indir),
-                                                         executor_globals::tmp_op_str_buf.get_ptr_to_text(),
-                                                         executor_globals::tmp_op_str_buf.get_size(),
-                                                         executor_globals::tmp_op_str_buf.get_type()));
-        }
+        process_atomic_values(lefti, indir, at_vals);
+
         t.copy(tuple_cell::node_indir(indir));
 
         cont_parind=parind;

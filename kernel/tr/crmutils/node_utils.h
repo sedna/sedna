@@ -479,11 +479,41 @@ xptr getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node);
 bool is_scmnode_has_ancestor_or_self(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set );
 
 #define get_in_scope_namespaces(n, r, cxt)  get_in_scope_namespaces_local(n, r, cxt)
+
+
 //Namespaces
 void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dynamic_context *cxt);
 void get_in_scope_namespaces_broad(xptr node,std::vector<xmlns_ptr> &result,dynamic_context *cxt);
 void get_namespaces_for_inherit(xptr node,std::vector<xmlns_ptr> &result);
 xmlns_ptr generate_pref(int ctr,const char* uri,dynamic_context *cxt);
+
+/* 
+ * Returns true for <a xmlns=""/> case. 
+ * The attribute value in a default namespace declaration MAY be empty. 
+ * This has the same effect, within the scope of the declaration, 
+ * of there being no default namespace
+ * Returns false for NULL_XMLNS.
+ */
+inline bool 
+is_empty_default_ns_declaration(xmlns_ptr ns) 
+{
+    U_ASSERT(ns == NULL_XMLNS || (ns->prefix != NULL && ns->uri != NULL));
+    return ns != NULL_XMLNS && strlen(ns->prefix)==0 && strlen(ns->uri)==0;
+}
+
+/* 
+ * Checks general namespace constraints while inserting new
+ * element or attribute. The following cases are allowed:
+ * 1. NULL_XMLNS - means that attribute/element doesn't have namespace at all;
+ * 2. 'prefix' - zero length string, 'uri' - not empty string - default
+      namespace;
+ * 3. 'prefix' and 'uri' - not empty strings - general namespace
+ */
+inline void 
+check_ns_constraints_on_insert(xmlns_ptr ns)
+{
+    U_ASSERT(ns == NULL_XMLNS || (ns->prefix != NULL && ns->uri != NULL && strlen(ns->uri) != 0));
+}
 
 #endif /* __NODE_UTILS_H */
 
