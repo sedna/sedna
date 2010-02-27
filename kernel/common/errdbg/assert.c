@@ -22,13 +22,17 @@
 /*
  * se_ExceptionalCondition - Handles the failure of an SE_ASSERT()
  */
-int se_ExceptionalCondition(const char *conditionName, const char *errorType,
-                            const char *fileName, int lineNumber)
+int se_ExceptionalCondition(const char *conditionName, 
+                            const char *errorType,
+                            const char *fileName, 
+                            int lineNumber)
 {
 	char buf[SEDNA_DATA_VAR_SIZE + 128];
+    char log_buf[1024];
+    int res, bytes_written = 0;
     UFile a_fh;
 
-	if (!PointerIsValid(conditionName)
+	if (   !PointerIsValid(conditionName)
 		|| !PointerIsValid(fileName)
 		|| !PointerIsValid(errorType))
         fprintf(stderr, "TRAP: ExceptionalCondition: bad arguments\n");
@@ -38,8 +42,6 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
                          errorType, conditionName,
                          fileName, lineNumber);
 	}
-
-
 
     strcpy(buf, SEDNA_DATA);
 #ifdef _WIN32
@@ -65,17 +67,16 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #ifdef _WIN32
-	strcat(buf, ".dmp");
+    strcat(buf, ".dmp");
     a_fh = uCreateFile(buf, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
     if (a_fh == U_INVALID_FD)
         fprintf(stderr, "Can't create assert_failed.dmp file\n");
-	else
-	{
-		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), a_fh, MiniDumpWithDataSegs, NULL, NULL, NULL);
-
-		uCloseFile(a_fh, NULL);
-	}
-	buf[strlen(buf)-4] = 0;
+    else
+    {
+        MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), a_fh, MiniDumpWithDataSegs, NULL, NULL, NULL);
+        uCloseFile(a_fh, NULL);
+    }
+    buf[strlen(buf)-4] = 0;
 #endif
 #endif
 
@@ -84,17 +85,38 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
         fprintf(stderr, "Can't create assert_failed file\n");
 	else
 	{    
+        char log_buf[1024];
+        if (   !PointerIsValid(conditionName)
+    		|| !PointerIsValid(fileName)
+    		|| !PointerIsValid(errorType) 
+            || strlen(errorType) + strlen(fileName) + strlen(conditionName) > 900)
+        {
+            sprintf(log_buf, "TRAP: ExceptionalCondition: bad arguments or overflow, process: %d\n", uGetCurrentProcessId());
+        }
+        else
+        { 
+            sprintf(log_buf, "TRAP: %s(\"%s\", File: \"%s\", Line: %d, Process: %d)\n",
+                              errorType, conditionName,
+                              fileName, lineNumber, uGetCurrentProcessId());
+        }
+                          
+        res = uWriteFile(a_fh, log_buf, strlen(log_buf), &bytes_written, NULL);
+        if (res == 0 || bytes_written != strlen(log_buf))
+        {
+            fprintf(stderr, "Cannot write to assert_failed file");
+        }
+        
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-		if (StackTraceInit() != 0)
-		{
-			StackTraceWriteFd(NULL, (intptr_t)a_fh, 9999, 1);
-			
-			StackTraceDeinit();
-		}
-		else
-			fprintf(stderr, "StackTraceInit() failed\n");
+        if (StackTraceInit() != 0)
+        {
+            StackTraceWriteFd(NULL, (intptr_t)a_fh, 9999, 1);
+            StackTraceDeinit();
+        }
+        else
+            fprintf(stderr, "StackTraceInit() failed\n");
 #endif
-		uCloseFile(a_fh, NULL);
+
+        uCloseFile(a_fh, NULL);
 	}
 
 #ifdef SE_SLEEP_ON_ASSERT
