@@ -263,7 +263,7 @@ static void start(void *s, const char *el, const char **attr)
         {
             if (!uri) uri="";
             else if (!prefix) prefix="";
-            ns=xm_nsp.find(str_pair(prefix,uri))->second;
+            ns = xm_nsp.find(str_pair(prefix,uri))->second;
         }
         else ns = NULL;
         att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xs_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
@@ -444,7 +444,7 @@ static void el_ns (void *userData, const char *prefix, const char *uri)
         prefixm=prefix;
     str_pair sp(prefixm,uri);
     it_map=xm_nsp.find(sp);
-    if (it_map== xm_nsp.end() )
+    if (it_map == xm_nsp.end())
     {
         throw SYSTEM_EXCEPTION("Error of namespace parsing");
     }

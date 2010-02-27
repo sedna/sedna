@@ -109,6 +109,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent, const char* name
     node_info_t node_info = {left_sib, right_sib, parent, element, type, ns, const_cast<char *>(name)};
 
     check_common_constraints(left_sib, right_sib, parent);
+    check_ns_constraints_on_insert(ns);
     find_relatives(node_info);
     microoperation_begin(node_info.parent);
 
@@ -244,6 +245,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* na
     schema_node_cptr parent_snode;
 
     check_common_constraints(left_sib, right_sib, parent);
+    check_ns_constraints_on_insert(ns);
     find_relatives(node_info);
 
 /* Special attribute user-error-level constraints */

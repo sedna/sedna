@@ -21,20 +21,18 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
     nms_map::iterator it;
     while (scm->type != virtual_root)
     {
-        xptr ns=getChildPointerXptr(node,NULL,xml_namespace,NULL_XMLNS);
-        
-        while (ns!=XNULL)
+        //1. namespace nodes
+        xptr ns = getChildPointerXptr(node,NULL,xml_namespace,NULL_XMLNS);
+        while (ns != XNULL)
         {
             CHECKP(ns);
             xmlns_ptr nsp=xmlns_touch(((ns_dsc*)XADDR(ns))->ns);
             const char* pref=nsp->prefix;
             if ((it=mp.find(pref))==mp.end())
-            {
                 mp[pref]=nsp;
-            }           
-            ns=getNextSiblingOfSameSortXptr(ns);
+            ns = getNextSiblingOfSameSortXptr(ns);
         }
-        //2. self ns
+        //2. self namespace
         if (scm->get_xmlns()!=NULL_XMLNS)
         {
             const char* pref=scm->get_xmlns()->prefix;
@@ -57,11 +55,11 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
             attr=getNextByOrderAttribute(attr);
         }
         //3.2 copying to map
-        int ctr=0;
-        std::set<xmlns_ptr>::iterator sit=atns.begin();
-        while(sit!=atns.end())
+        int ctr = 0;
+        std::set<xmlns_ptr>::iterator sit = atns.begin();
+        while(sit != atns.end())
         {
-            const char* pref=(*sit)->prefix;
+            const char* pref = (*sit)->prefix;
             if ((it=mp.find(pref))!=mp.end())
             {
                 if (it->second!=*sit)
@@ -77,15 +75,13 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
             ++sit;
         }
         CHECKP(node);
-        if ((GETPARENTPOINTER(node))==XNULL)
-            break;
-        node=removeIndirection(GETPARENTPOINTER(node));
+        if ((GETPARENTPOINTER(node)) == XNULL) break;
+        node = removeIndirection(GETPARENTPOINTER(node));
         CHECKP(node);
         scm=GETSCHEMENODEX(node);
     }
-    //1. ns childs
     
-    it=mp.begin();
+    it = mp.begin();
     while (it!=mp.end())
     {
         result.push_back(it->second);
