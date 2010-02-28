@@ -10,6 +10,7 @@
 #include "common/sedna.h"
 #include "common/errdbg/event_log.h"
 #include "common/u/uhdd.h"
+#include "common/u/uprocess.h"
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #include "common/st/stacktrace.h"
 #ifdef _WIN32
@@ -91,13 +92,13 @@ int se_ExceptionalCondition(const char *conditionName,
     		|| !PointerIsValid(errorType) 
             || strlen(errorType) + strlen(fileName) + strlen(conditionName) > 900)
         {
-            sprintf(log_buf, "TRAP: ExceptionalCondition: bad arguments or overflow, process: %d\n", uGetCurrentProcessId());
+            sprintf(log_buf, "TRAP: ExceptionalCondition: bad arguments or overflow, process: %d\n", uGetCurrentProcessId(NULL));
         }
         else
         { 
             sprintf(log_buf, "TRAP: %s(\"%s\", File: \"%s\", Line: %d, Process: %d)\n",
                               errorType, conditionName,
-                              fileName, lineNumber, uGetCurrentProcessId());
+                              fileName, lineNumber, uGetCurrentProcessId(NULL));
         }
                           
         res = uWriteFile(a_fh, log_buf, strlen(log_buf), &bytes_written, NULL);

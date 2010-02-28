@@ -27,7 +27,7 @@ typedef struct {
         *  0 if Standard,
         * <0 if unknown */
    /* extensions to ANSI standard */
-   char *utm_zone;  /* time zone name    */
+   const char *utm_zone;  /* time zone name    */
    long utm_gmtoff; /* offset from GMT   */
 } utm;
 

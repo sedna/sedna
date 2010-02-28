@@ -106,8 +106,6 @@ void PPBulkLoad::do_execute()
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
     tc_document = tuple_cell::make_sure_light_atomic(tc);
 
-
-    int need_cp;
     xptr doc_root;
     std::vector<std::string> filenames(1, tc_filename.get_str_mem());
     std::vector<client_file> cf_vec(1);
