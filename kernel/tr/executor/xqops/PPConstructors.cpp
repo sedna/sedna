@@ -462,6 +462,7 @@ void PPElementConstructor::do_next (tuple &t)
 
                 switch (typ)
                 {
+                case virtual_root: throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the element constructor content sequence");
                 case xml_namespace: 
                     {
                         xmlns_ptr nsptr = xmlns_touch(((ns_dsc*)XADDR(node))->ns);
@@ -1390,7 +1391,9 @@ void PPDocumentConstructor::do_next (tuple &t)
                         if (isTextEmpty(T_DSC(node))) continue;
                         break;
                     }
-                  case attribute: throw XQUERY_EXCEPTION(XPTY0004);
+                  case attribute:     throw XQUERY_EXCEPTION2(XPTY0004, "Attribute node in the document constructor content sequence");
+                  case virtual_root:  throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the document constructor content sequence");
+                  case xml_namespace: throw XQUERY_EXCEPTION2(XPTY0004, "Namespace node in the document constructor content sequence");
                 }
 
                 if (conscnt > cnt) {

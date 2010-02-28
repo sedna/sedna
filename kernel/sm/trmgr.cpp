@@ -354,7 +354,6 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
   //create recovery process
   int res, res2;
   char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
-  char buf2[1024];
   char buf3[1024];
   UPID pid;
   UPHANDLE h;
@@ -475,7 +474,7 @@ void give_transaction_id(transaction_id& trid)
 
   if (!(trid < 0 || trid >= CHARISMA_MAX_TRNS_NUMBER))
   {//check that there is no the same identifier
-     for(int i=0; i< _ids_table_.size(); i++)
+     for(unsigned int i=0; i< _ids_table_.size(); i++)
      {
          if (_ids_table_[i] == trid)
             throw SYSTEM_EXCEPTION("Error in logic of Transaction Identifiers Table (double identifier)");
