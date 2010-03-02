@@ -2620,7 +2620,7 @@ DROP MODULE "target_namespace_URI"
 
 It results in removing the library module with the given target namespace URI from the database.
 
-You can obtain information about modules loaded into the database by querying the system document named \verb!$modules! as follows \verb!doc("$modules")!.
+You can obtain information about modules loaded into the database by querying the system collection named \verb!$modules! as follows \verb!collection("$modules")!.
 
 
 \subsubsection{Retrieving Metadata, System Parameters and Environment Information}
@@ -2636,7 +2636,6 @@ Also these documents are not listed in \verb!$documents!.
 \begin{itemize}
 \item (*) document \verb!$documents! - list of all stand-alone documents, collections and in-collection documents except those documents of this enumeration that are marked with (*).
 \item (*) document \verb!$collections! - list of all collections
-\item (*) document \verb!$modules! - list of the names of all XQuery modules
 \item collection \verb!$modules! - contains documents with precompiled definitions of XQuery modules
 \item (*) document \verb!$indexes! - list of indexes with information about them
 \item (*) document \verb!$ftindexes! - list of full-text indexes with information about them (if compiled with \verb!SE_ENABLE_FTSEARCH!)
@@ -3080,6 +3079,135 @@ Query body explanation part describes physical tree of the query.
 For each physical operation \verb!EXPLAIN! returns: name of the operation (\verb!PPConst!, \verb!PPFunCall!, etc), corresponding position in the source query
 (e.g. 4:31 means that operation \verb!PPConst! corresponds to the '1' atomic at the line 4, column 26). Output may also contain additional information 
 depending on the operation type (for example, variable name for some \verb!PPVariable! operations).
+
+\subsubsection{Profile Query}
+The profile statement has the following syntax:
+\begin{verbatim}
+PROFILE
+{XQuery or Update statement to profile}
+\end{verbatim}
+Each query in Sedna is represented and executed internally as a tree of the physical operations. With the help of \verb!PROFILE! statement you
+can obtain detailed tree of physical operation and execution time for each of them.
+\newline
+\newline
+The following query illustrates \verb!PROFILE! statement execution:
+\newline
+\newline
+\textbf{Query:}
+\begin{verbatim}
+profile fn:doc('TestSources/XMarkAuction.xml')//
+            person[@id = "person0"]/name
+\end{verbatim}
+\textbf{Output:}
+
+\begin{alltt}
+<operation name="PPQueryRoot" time="13.426" calls="1">
+  <operation name="PPAxisChild" step="child::element(name)" 
+                                time="13.426" calls="2">
+    <operation name="PPReturn" time="13.426" calls="2">
+      
+      \emph{<operation name="PPAbsPath" root="document(auction)" 
+                                  path="descendant-or-self::node()" 
+                                  time="12.772" calls="85405"/>}
+      
+      <operation name="PPPred1" time="0.530" calls="85405">
+        
+        <operation name="PPAxisChild" step="child::element(person)" 
+                                      time="0.461" calls="86168">
+          <operation name="PPVariable" descr="0" 
+                     time="0.380" calls="170808"/>
+        </operation>
+        
+        <operation name="PPEQLGeneralComparison" 
+                   comparison="eq" time="0.013" calls="1528">
+
+          <operation name="PPAxisAttribute" 
+                     step="attribute::attribute(id)" 
+                     time="0.001" calls="1527">
+
+            <operation name="PPVariable" descr="1" 
+                       time="0.001" calls="1527"/>
+                       
+          </operation>
+
+          <operation name="PPConst" 
+                     type="xs:string" value="person0" 
+                     time="0.001" calls="1527"/>
+
+        </operation>
+      </operation>
+    </operation>
+  </operation>
+</operation>
+\end{alltt}
+
+Explain output consists of two parts (just like any XQuery query): prolog and query body explanations. Prolog part includes complete 
+profile information for global variables and user defined functions. Query body profile part describes physical tree of the query and 
+provides execution time and number of calls for each physical operation.
+
+For each physical operation \verb!EXPLAIN! returns: name of the operation (\verb!PPConst!, \verb!PPFunCall!, etc), corresponding position in the source query
+(e.g. 4:31 means that operation \verb!PPConst! corresponds to the '1' atomic at the line 4, column 26), execution time of this operation and number of calls. 
+Output may also contain additional information depending on the operation type (for example, variable name for some \verb!PPVariable! operations).
+
+In above example you can see that \verb!PPAbsPath! operation takes almost all time (12.772 seconds of 13.426 total) and was called 12772 times. Profiling in this
+case shows that \verb!//! may be very hard to execute and it is much better to use "single" XPath steps everywhere it is possible:
+\newline
+\newline
+\textbf{Query:}
+\begin{verbatim}
+profile fn:doc('TestSources/XMarkAuction.xml')/
+          site/people/person[@id = "person0"]/name
+\end{verbatim}
+\textbf{Output:}
+
+\begin{alltt}
+<operation name="PPQueryRoot" time="0.018" calls="1">
+
+  <operation name="PPAxisChild" step="child::element(name)" 
+                                time="0.018" calls="2">
+  
+    <operation name="PPReturn" time="0.018" calls="2">
+      <produces>
+        <variable descriptor="0"/>
+      </produces>
+
+      \emph{<operation name="PPAbsPath" 
+                 root="document(auction)" 
+                 path="child::element(site)/child::element(people)"
+                 time="0.001" calls="2"/>}
+
+      <operation name="PPPred1" time="0.017" calls="2">
+        <produces>
+          <variable descriptor="1"/>
+        </produces>
+        
+        <operation name="PPAxisChild" step="child::element(person)" 
+                                      time="0.001" calls="765">
+
+          <operation name="PPVariable" descr="0"
+                     time="0.000" calls="2"/>
+        </operation>
+
+        <operation name="PPEQLGeneralComparison"
+                   comparison="eq" time="0.013" calls="1528">
+                   
+          <operation name="PPAxisAttribute" 
+                     step="attribute::attribute(id)" 
+                     time="0.005" calls="1527">
+
+            <operation name="PPVariable" descr="1" 
+                       time="0.003" calls="1527"/>
+                       
+          </operation>
+          <operation name="PPConst" type="xs:string" value="person0"
+                                    time="0.000" calls="1527"/>
+        </operation>
+      </operation>
+    </operation>
+  </operation>
+</operation>
+\end{alltt}
+
 
 
 \begin{thebibliography}{9}
