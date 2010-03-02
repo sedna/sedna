@@ -221,12 +221,17 @@ namespace sedna
                 off_cont.exi.isOrdered = false;
             }*/
         }
+        else
+        {
+            // if we've got axis without context then we use some outer context -- report this
+            off_this.usedVars.insert("$%v");
+        }
 
         // now we need to write our initial offer to parent
         switch (n.axis)
         {
             case ASTAxisStep::CHILD:
-                off_this.exi.isOrdered = off_cont.exi.isOrdered;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered && off_cont.exi.isSingleLevel;
                 off_this.exi.isDistincted = off_cont.exi.isDistincted;
                 off_this.exi.isMax1 = false;
                 off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
@@ -238,7 +243,7 @@ namespace sedna
                 off_this.exi.isSingleLevel = false;
                 break;
             case ASTAxisStep::ATTRIBUTE:
-                off_this.exi.isOrdered = off_cont.exi.isOrdered;
+                off_this.exi.isOrdered = off_cont.exi.isOrdered && off_cont.exi.isSingleLevel;
                 off_this.exi.isDistincted = off_cont.exi.isDistincted;
                 off_this.exi.isMax1 = false; // TODO: can refine it later (check if this is the named-attribute retrieval. then it would be true)
                 off_this.exi.isSingleLevel = off_cont.exi.isSingleLevel;
@@ -361,10 +366,6 @@ namespace sedna
         // except in predicates of course, but these would be not the same positions
         off_this.use_last = false;
         off_this.use_position = false;
-
-        // if we don't have the axis-context then we use focus-context
-        if (!n.cont)
-            off_this.usedVars.insert("$%v");
 
         setOffer(off_this);
     }
