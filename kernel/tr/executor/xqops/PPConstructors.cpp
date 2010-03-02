@@ -402,7 +402,7 @@ void PPElementConstructor::do_next (tuple &t)
         xptr new_element;
         if (parind == XNULL || deep_copy)
         {
-            new_element = insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,xs_untyped,ns);
+            new_element = insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
             last_elem   = get_last_mo_inderection();
         }
         else
