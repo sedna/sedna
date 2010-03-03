@@ -13,6 +13,7 @@
 #include "tr/executor/base/xs_names.h"
 #include "tr/executor/base/xsd.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "tr/executor/base/xs_helper.h"
 
 #include "tr/updates/updates.h"
 #include "tr/crmutils/crmutils.h"
@@ -1096,73 +1097,82 @@ void PPPIConstructor::do_next (tuple &t)
     {
         first_time = false;
 
-        //Name parameter
+        /* Determine parameter */
         const char* name=at_name;
         tuple_cell res1;
         if (name==NULL)
         {
-            res1=getQnameParameter(qname);
-            name=res1.get_str_mem();
+            res1 = getQnameParameter(qname);
+            name = res1.get_str_mem();
+            /* Perform name normalization */
+            stmt_str_buf res;
+            replace_string_normalization(name, res);
+            res1 = res.get_tuple_cell();
+            name = res1.get_str_mem();
         }
-        char* prefix=NULL;
-        if (!res1.is_eos()&&res1.get_atomic_type()==xs_QName)
+        char* prefix = NULL;
+        if (!res1.is_eos() && res1.get_atomic_type()==xs_QName)
         {
-            prefix=(char*)xs_QName_get_prefix(name);
-            name=xs_QName_get_local_name(name);
-            if (prefix!=NULL)
+            prefix = (char*)xs_QName_get_prefix(name);
+            name = xs_QName_get_local_name(name);
+            if (prefix != NULL)
                 throw XQUERY_EXCEPTION(XQDY0041);
         }
         else
         {
             separateLocalAndPrefix(prefix,name);
-            if (prefix!=NULL)
+            if (prefix != NULL)
             {
                 delete[] prefix;
                 throw XQUERY_EXCEPTION(XQDY0041);
             }
         }
+        
+        /* Check name constraints */
         if (!check_constraints_for_xs_NCName(name))
             throw XQUERY_EXCEPTION(XQDY0041);
         if(charset_handler->matches(name, "^(?i:xml)$"))
             throw XQUERY_EXCEPTION(XQDY0064);
-        const char* value=at_value;
+
+        const char* value = at_value;
         tuple_cell res;
         int size;
-        if (value==NULL)
+        if (value == NULL)
         {
             getStringParameter(content);
-            value=(char*)executor_globals::tmp_op_str_buf.c_str();
-            size=executor_globals::tmp_op_str_buf.get_size();
+            value = (char*)executor_globals::tmp_op_str_buf.c_str();
+            size  = executor_globals::tmp_op_str_buf.get_size();
         }
         else
-            size=strlen(value);
+            size = strlen(value);
 
-        int rst=strm.parse(value,size,NULL,NULL);
-        if (rst==1)
+        int rst = strm.parse(value,size,NULL,NULL);
+        if (rst == 1)
             throw XQUERY_EXCEPTION(XQDY0026);
-        int wp_k=0;
-        int wp_s=size;
-        while (wp_k<wp_s)
+        int wp_k = 0;
+        int wp_s = size;
+        while (wp_k < wp_s)
         {
-            char s=value[0];
-            if (s!=32 && s!=9 && s!=10 && s!=13) break;
-            ++value;--size;
-
+            char s = value[0];
+            if (s != 32 && s != 9 && s != 10 && s != 13) break;
+            ++value; --size;
         }
-        //Attribute insertion
+
+        /* Attribute insertion */
         xptr new_pi;
-        if (cont_parind==XNULL || deep_copy)
-            new_pi= insert_pi(XNULL,XNULL,get_virtual_root(),name,strlen(name),value,size);
+        if (cont_parind == XNULL || deep_copy)
+            new_pi = insert_pi(XNULL,XNULL,get_virtual_root(),name,strlen(name),value,size);
         else
         {
             if (cont_leftind!=XNULL)
-                new_pi= insert_pi(removeIndirection(cont_leftind),XNULL,XNULL,name,strlen(name),value,size);
+                new_pi = insert_pi(removeIndirection(cont_leftind),XNULL,XNULL,name,strlen(name),value,size);
             else
-                new_pi= insert_pi(XNULL,XNULL,removeIndirection(cont_parind),name,strlen(name),value,size);
+                new_pi = insert_pi(XNULL,XNULL,removeIndirection(cont_parind),name,strlen(name),value,size);
             conscnt++;
-            cont_leftind=get_last_mo_inderection();
+            cont_leftind = get_last_mo_inderection();
         }
-        //Result
+ 
+        /* Result */
         t.copy(tuple_cell::node(new_pi));
     }
     else

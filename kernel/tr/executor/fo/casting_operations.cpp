@@ -3,9 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <math.h>
+
 #include "common/sedna.h"
 
-#include <math.h>
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/dm_accessors.h"
