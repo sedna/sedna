@@ -379,20 +379,49 @@ string node_type2string(const xptr& node)
     return res;
 }
 
-void type_promotion(tuple_cell &tc, xmlscm_type type) //tc contains result tuple_cell after promotion
+/*
+ * Covers B.1 Type Promotion section of the XQuery 1.0 spec.
+ * tc contains result tuple_cell after promotion
+ */
+void type_promotion(tuple_cell &tc, xmlscm_type type) 
 {
-    if (!tc.is_atomic()) throw XQUERY_EXCEPTION2(SE1003, "Type promotion is called on none atomic value");
+    if (!tc.is_atomic()) 
+        throw XQUERY_EXCEPTION2(SE1003, "Type promotion is called on a none atomic value");
 
     xmlscm_type stype = tc.get_atomic_type();
 
+    /* Numeric type promotion: 
+     *
+     * A value of type xs:float (or any type derived by restriction from 
+     * xs:float) can be promoted to the type xs:double. The result is the 
+     * xs:double value that is the same as the original value.
+     */
     if (stype == xs_float && type == xs_double)
     {
         tc = cast_primitive_to_xs_double(tc);
         return;
     }
 
+    /*
+     * A value of type xs:decimal (or any type derived by restriction from 
+     * xs:decimal) can be promoted to either of the types xs:float or xs:double.
+     * The result of this promotion is created by casting the original value to
+     * the required type. This kind of promotion may cause loss of precision.
+     */
     if ((stype == xs_decimal || stype == xs_integer) &&
         (type == xs_float || type == xs_double))
+    {
+        tc = cast(tc, type);
+        return;
+    }
+    
+    /* URI type promotion 
+     *
+     * A value of type xs:anyURI (or any type derived by restriction from
+     * xs:anyURI) can be promoted to the type xs:string. The result of this
+     * promotion is created by casting the original value to the type xs:string.
+     */
+    if (stype == xs_anyURI && type == xs_string)
     {
         tc = cast(tc, type);
         return;

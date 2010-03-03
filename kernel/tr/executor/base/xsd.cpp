@@ -132,9 +132,10 @@ char *xs_QName_create(const char *uri,
                       dynamic_context *cxt)
 {
     xmlns_ptr ns = NULL_XMLNS;
-    if (uri && *uri && prefix && *prefix)
+    if (uri && *uri)
     {
-        if (!check_constraints_for_xs_NCName(prefix))
+        U_ASSERT(prefix != NULL);
+        if (*prefix && !check_constraints_for_xs_NCName(prefix))
             throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
 
         ns = cxt->st_cxt->get_ns_pair(prefix, uri);

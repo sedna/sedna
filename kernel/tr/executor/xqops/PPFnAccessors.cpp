@@ -600,7 +600,7 @@ PPFnStaticBaseUri::~PPFnStaticBaseUri() { }
 
 void PPFnStaticBaseUri::do_open ()        { first_time = true; }
 
-void PPFnStaticBaseUri::do_reopen()        { first_time = true; }
+void PPFnStaticBaseUri::do_reopen()       { first_time = true; }
 
 void PPFnStaticBaseUri::do_close()        { }
 
@@ -613,8 +613,13 @@ void PPFnStaticBaseUri::do_next (tuple &t)
 
         if ( cxt->st_cxt->get_base_uri() == NULL ) 
         {
-            t.copy( EMPTY_STRING_TC );
-            (&t.cells[0]) -> set_xtype(xs_anyURI);
+            /* 
+             * Base URI is undefined in the static context. 
+             * Note also that Sedna does not allow relative URIs to be used in prolog. 
+             * In this case base URI property is considered undefined.
+             */
+            t.set_eos();
+            first_time = true;
         }
         else 
             t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->get_base_uri()) );
