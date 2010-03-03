@@ -241,23 +241,23 @@ static SSMMsg* sm_server_wu = NULL; // server to report to wu
 
 static void rollbackTransaction()
 {
-            // we should unmap all blocks here since sm will "fix" some offsets and xptrs on physical rollback
-            // they might be not valid anymore
-            // for now it is needed only for ft-indexes to see consistent state
-            // note, that won't hamper our performance since the second call will just exit on empty unmap bitset
-            // or will unmap just the blocks ft-indexes rollback have read
-            unmapAllBlocks();
+    // we should unmap all blocks here since sm will "fix" some offsets and xptrs on physical rollback
+    // they might be not valid anymore
+    // for now it is needed only for ft-indexes to see consistent state
+    // note, that won't hamper our performance since the second call will just exit on empty unmap bitset
+    // or will unmap just the blocks ft-indexes rollback have read
 #ifdef SE_ENABLE_DTSEARCH
-            catalog_on_transaction_begin();
-            SednaIndexJob::rollback();
-            catalog_on_transaction_end(false);
-            catalog_before_commit(false);
-            catalog_after_commit(false);
+    vmm_unmap_all_blocks();
+    catalog_on_transaction_begin();
+    SednaIndexJob::rollback();
+    catalog_on_transaction_end(false);
+    catalog_before_commit(false);
+    catalog_after_commit(false);
 #endif
-            hl_logical_log_rollback(tr_globals::trid);
+    hl_logical_log_rollback(tr_globals::trid);
 
-            //Here trid is a global variable inited before
-            llOnTransEnd(tr_globals::trid);
+    //Here trid is a global variable inited before
+    llOnTransEnd(tr_globals::trid);
 }
 
 void reportToWu(bool rcv_active, bool is_commit)

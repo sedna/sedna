@@ -1,4 +1,12 @@
+/*
+ * File:  vmm.cpp
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include <set>
+
 #include "common/sedna.h"
+
 #include "common/u/usem.h"
 #include "common/u/ushm.h"
 #include "common/u/ummap.h"
@@ -8,17 +16,14 @@
 #include "common/sm_vmm_data.h"
 #include "common/bit_set.h"
 #include "common/gmm.h"
-
 #include "common/errdbg/d_printf.h"
 #include "common/XptrHash.h"
 
 #include "tr/vmm/vmm.h"
 #include "tr/vmm/vmminternal.h"
 #include "tr/tr_globals.h"
-
 #include "tr/cat/catvars.h"
 
-#include <set>
 
 static bool vmm_session_initialized = false;
 static bool vmm_transaction_initialized = false;
@@ -129,7 +134,7 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
  * to be called as early as possible to prevent others from
  * locking this memory.  */
 
-void vmm_preliminary_call() throw (SednaException)
+void vmm_preliminary_call() 
 {
     open_global_memory_mapping(SE4400);
     get_vmm_region_values();
@@ -216,7 +221,7 @@ enum sm_command_t {
 };
 
 /* Asking SM to read the block */
-void vmm_unswap_block(xptr p) throw (SednaException)
+void vmm_unswap_block(xptr p) 
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -239,7 +244,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 }
 
 /* Informing SM of writing to the block */
-void vmm_unswap_block_write(xptr p) throw (SednaException)
+void vmm_unswap_block_write(xptr p) 
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -284,7 +289,7 @@ void vmm_request_alloc_block(xptr *p, bool is_data)
     CHECKP(*p);
 }
 
-void vmm_delete_block(xptr p) throw (SednaException)
+void vmm_delete_block(xptr p) 
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -308,7 +313,7 @@ void vmm_delete_block(xptr p) throw (SednaException)
     sem.Release();
 }
 
-void vmm_delete_tmp_blocks() throw (SednaException)
+void vmm_delete_tmp_blocks() 
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -352,7 +357,7 @@ if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1)
 static FILE * f_se_trn_log;
 #define VMM_SE_TRN_LOG "se_trn_log"
 
-void vmm_determine_region(bool log) throw (SednaException)
+void vmm_determine_region(bool log) 
 {
     if (log) {
         f_se_trn_log = fopen(VMM_SE_TRN_LOG, "w");
@@ -417,17 +422,17 @@ void vmm_determine_region(bool log) throw (SednaException)
     }
 }
 
-void vmm_alloc_data_block(xptr *p) throw (SednaException)
+void vmm_alloc_data_block(xptr *p) 
 {
     vmm_request_alloc_block(p, true);
 }
 
-void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
+void vmm_alloc_tmp_block(xptr *p) 
 {
     vmm_request_alloc_block(p, false);
 }
 
-void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaException)
+void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) 
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
@@ -535,7 +540,7 @@ void __vmmdcp_vmm_signal_modification(xptr p)
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 
 
-void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException)
+void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) 
 {
     if (USemaphoreOpen(&vmm_sm_sem, VMM_SM_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "VMM_SM_SEMAPHORE_STR");
@@ -600,7 +605,7 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaExcept
     vmm_session_initialized = true;
 }
 
-void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) throw (SednaException)
+void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) 
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -628,7 +633,7 @@ void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) throw (SednaExceptio
     vmm_transaction_initialized = true;
 }
 
-void vmm_on_session_end() throw (SednaException)
+void vmm_on_session_end() 
 {
     if (!vmm_session_initialized) return;
 
@@ -692,7 +697,14 @@ void unmapAllBlocks()
     mapped_pages->clear();
 }
 
-void vmm_on_transaction_end() throw (SednaException)
+void vmm_unmap_all_blocks()
+{
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
+    unmapAllBlocks();
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+}
+
+void vmm_on_transaction_end() 
 {
     if (!vmm_transaction_initialized) return;
 
@@ -701,7 +713,7 @@ void vmm_on_transaction_end() throw (SednaException)
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
 
-        msg.cmd = 36; // bm_unregister_transaction
+        msg.cmd = 36; /* bm_unregister_transaction */
         msg.trid = tr_globals::trid;
         msg.sid = tr_globals::sid;
         msg.data.ptr = catalog_masterblock;
@@ -711,11 +723,14 @@ void vmm_on_transaction_end() throw (SednaException)
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-        // reset blocks with write access from current trid
-        // there was a bug here: reusing read-mapped versions between transactions leads to problems because of old versions
-        // temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
-        // we use bitset here, because just reading INVALID_LAYER from block takes very long time on MAC OS
-        // more efficient fix of the aforementioned bug
+        /* 
+         * Reset blocks with write access from the current trid.
+         * There was a bug here: reusing read-mapped versions between 
+         * transactions leads to problems because of old versions
+         * temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
+         * we use bitset here, because just reading INVALID_LAYER from block takes very 
+         * long time on MAC OS more efficient fix of the aforementioned bug
+         */
         unmapAllBlocks();
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
