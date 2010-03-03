@@ -1,11 +1,7 @@
-
 /*
  * File:  exceptions.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
-
-/*	I could be more happy if this file extension was *.c 
-	ZN */ 
 
 #include "common/errdbg/d_printf.h"
 #include "common/commutil.h"

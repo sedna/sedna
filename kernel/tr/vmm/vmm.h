@@ -29,25 +29,24 @@ namespace tr_globals {
 extern xptr vmm_cur_xptr;
 extern volatile void * vmm_cur_ptr;
 
-void vmm_determine_region(bool log = false) throw (SednaException);
+void vmm_determine_region(bool log = false);
 
-void vmm_preliminary_call() throw (SednaException);
+void vmm_preliminary_call();
 
-void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException);
-void vmm_on_session_end() throw (SednaException);
-void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) throw (SednaException);
-void vmm_on_transaction_end() throw (SednaException);
+void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode);
+void vmm_on_session_end();
+void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts);
+void vmm_on_transaction_end();
 
-void vmm_alloc_data_block(xptr /*out*/ *p) throw (SednaException);
-void vmm_alloc_tmp_block(xptr /*out*/ *p) throw (SednaException);
-void vmm_delete_block(xptr p) throw (SednaException);
-void vmm_delete_tmp_blocks() throw (SednaException);
+void vmm_alloc_data_block(xptr /*out*/ *p);
+void vmm_alloc_tmp_block(xptr /*out*/ *p);
+void vmm_delete_block(xptr p);
+void vmm_delete_tmp_blocks();
 
-void vmm_unswap_block(xptr p) throw (SednaException);
-void vmm_unswap_block_write(xptr p) throw (SednaException);
+void vmm_unswap_block(xptr p);
+void vmm_unswap_block_write(xptr p);
 
-// this function unmaps all blocks mapped on this transaction
-void unmapAllBlocks();
+void vmm_unmap_all_blocks();
 
 /* Microtransaction is the mechanism with isolated block readings
  * On the end of microtransaction all blocks read during its work are unmapped
@@ -127,7 +126,7 @@ extern xptr vmm_checkp_xptr;
 
 #define WRITEP(x) CHECKP(x); VMM_SIGNAL_MODIFICATION(x);
 
-void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaException);
+void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat);
 
 
 #endif /* _VMM_H */
