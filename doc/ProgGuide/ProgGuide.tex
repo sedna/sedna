@@ -3141,11 +3141,11 @@ profile fn:doc('TestSources/XMarkAuction.xml')//
 </operation>
 \end{alltt}
 
-Explain output consists of two parts (just like any XQuery query): prolog and query body explanations. Prolog part includes complete 
+Profiling output consists of two parts (just like any XQuery query): prolog and query body explanations. Prolog part includes complete 
 profile information for global variables and user defined functions. Query body profile part describes physical tree of the query and 
 provides execution time and number of calls for each physical operation.
 
-For each physical operation \verb!EXPLAIN! returns: name of the operation (\verb!PPConst!, \verb!PPFunCall!, etc), corresponding position in the source query
+For each physical operation \verb!PROFILE! returns: name of the operation (\verb!PPConst!, \verb!PPFunCall!, etc), corresponding position in the source query
 (e.g. 4:31 means that operation \verb!PPConst! corresponds to the '1' atomic at the line 4, column 26), execution time of this operation and number of calls. 
 Output may also contain additional information depending on the operation type (for example, variable name for some \verb!PPVariable! operations).
 
