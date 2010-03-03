@@ -1,11 +1,10 @@
-
 % File:  ProgGuide.tex
-% Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+% Sedna Programmer's Guide
+% Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
 \documentclass[a4paper,12pt]{article}
 \makeatletter
 \makeatother
-%\usepackage[russian]{babel}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -77,11 +76,11 @@ To open a session application uses static method \verb!getConnection! of the \ve
 
 \small{
 \begin{verbatim}
- public static SednaConnection getConnection(java.lang.String url,
-                                             java.lang.String DBName,
-                                             java.lang.String user,
-                                             java.lang.String password)
-                                                    throws DriverException
+ SednaConnection getConnection(String url,
+                               String DBName,
+                               String user,
+                               String password)
+                                 throws DriverException
 \end{verbatim}
 }
 Parameters:
@@ -223,12 +222,14 @@ Some statements (such as XQuery statements or the retrieve metadata command) pro
 The results of XQuery queries to the Sedna DBMS can be represented either in XML or SXML~\cite{paper:sxml}. To specify the type of the result use:
 
 \begin{verbatim}
-public boolean execute(InputStream in, ResultType resultType)
-                                        throws DriverException, IOException;
+boolean execute(InputStream in, 
+                ResultType resultType)
+                    throws DriverException, IOException;
 \end{verbatim}
 \begin{verbatim}
-public boolean execute(String queryText, ResultType resultType)
-                                        throws DriverException, IOException;
+boolean execute(String queryText, 
+                ResultType resultType)
+                    throws DriverException, IOException;
 \end{verbatim}
 
 The \verb!resultType! parameter is either \verb!ResultType.XML! or \verb!ResultType.SXML!.
@@ -387,7 +388,6 @@ The source code of this example program can be found in
 [nix:] INSTALL_DIR/examples/api/java/Client.java
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
-%Before run the example make sure that the Sedna DBMS is running with the listener started. For more detail see the Sedna Administration Guide.
 
 Before running the example make sure that the Sedna DBMS is installed and do the following steps:
 \begin{enumerate}
@@ -1537,24 +1537,27 @@ implementation in running the program.
 The Sedna query language is XQuery \cite{paper:query-language} developed by W3C.
 Sedna conforms to January 2007 specification of XQuery except the following features:
 \begin{itemize}
-\item copy-namespaces declaration
-\item fn:normalize-unicode function
-\item external variables
+\item \verb!copy-namespaces declaration! works only in \verb!preserve!, \verb!inherit! mode regardless of actual prolog values;
+\item \verb!fn:normalize-unicode function! is not conformant (it always returns the same string or raises exception);
+\item External variables are not supported. However they are supported by XQJ driver by Charles Foster (see donwload page);
+\item Regular expressions (e.g. \verb!fn:matches()! use them) are based on PCRE~\cite{lib:pcre-lib} syntax which differs from the one defined in W3C specifications.
 \end{itemize}
 Sedna also has full support for two optional XQuery features:
 \begin{itemize}
-\item full axis
-\item modules
+\item Full Axis. The following optional axes are supported: \verb!ancestor!, \verb!ancestor-or-self!, \verb!following!, \verb!following-sibling!, \verb!preceding!, and \verb!preceding-sibling!;
+\item Module Feature allows a query Prolog to contain a Module Import and allows library modules to be created.
 \end{itemize}
 
-Sedna passes "XML Query Test Suite (XQTS)" and has official "almost passed" status. The detailed report can be found at \verb!http://www.w3.org/XML/Query/test-suite/XQTSReport.html!
+Sedna passes "XML Query Test Suite (XQTS)" and has official "almost passed" status. The detailed report can be found at \url{http://www.w3.org/XML/Query/test-suite/XQTSReport.html}
 
 \subsection{XQuery Options and Extensions}
 \label{sec:xquery-extensions}
 
 \subsubsection{Controlling Serialization}
 \label{indents}
-Serialization is the process of converting XML nodes evaluated by XQuery into a stream of characters. In Sedna serialization is carried out when the result of a query is returned to the user. You can control the serialization by setting the \emph{serialization parameters} specified in \cite{paper:query-serialization}. Currently, Sedna supports the following serialization parameters:
+Serialization is the process of converting XML nodes evaluated by XQuery into a stream of characters. In Sedna serialization 
+is carried out when the result of a query is returned to the user. You can control the serialization by setting the \emph{serialization parameters} 
+specified in \cite{paper:query-serialization}. Currently, Sedna supports the following serialization parameters:
 
 \begin{tabular}{|l|l|l|}
 \hline
@@ -1565,8 +1568,9 @@ indent & "yes" or "no" (default yes) & Output indented \\
 \hline
 \end{tabular}
 
-To set a serialization parameter, use the \verb!output! option in a query prolog. The \verb!output! option is in the Sedna namespace (
-http://www.modis.ispras.ru/sedna) which is the predefined namespace in Sedna so you can omit its declaration. The value of the \verb!output! option must have the following structure "parameter-name=value; parameter-name=value". Consider the following examples.
+To set a serialization parameter, use the \verb!output! option in a query prolog. The \verb!output! option is in the Sedna namespace 
+(http://www.modis.ispras.ru/sedna) which is the predefined namespace in Sedna so you can omit its declaration. The value of the \verb!output! 
+option must have the following structure "\verb!parameter-name=value; parameter-name=value!". Consider the following examples:
 
 \begin{verbatim}
 declare namespace se = "http://www.modis.ispras.ru/sedna";
@@ -3209,55 +3213,82 @@ profile fn:doc('TestSources/XMarkAuction.xml')/
 \end{alltt}
 
 
+\newpage
+
 
 \begin{thebibliography}{9}
-\bibitem{doc:admin} ``Sedna Administration Guide''
-\bibitem{paper:data-model} ``XQuery 1.0 and XPath 2.0 Data Model'', W3C Recommendation
-\bibitem{paper:query-language} ``XQuery 1.0: An XML Query Language'', W3C Recommendation
-\bibitem{paper:query-fo} ``XQuery 1.0 and XPath 2.0 Functions and Operators'', W3C Recommendation
-\bibitem{paper:query-serialization} ``XSLT 2.0 and XQuery 1.0 Serialization'', W3C Recommendation
-\bibitem{paper:query-update} Patrick Lehti. ``Design and Implementation of a Data Manipulation Processor for a XML Query Language'', http://www.ipsi.fraunhofer.de/~lehti/
-\bibitem{lib:pcre-lib} http://www.pcre.org/
-\bibitem{paper:sedna-overview}
-Maxim Grinev, Andrey Fomichev, Sergey Kuznetsov, Kostantin Antipin, Alexander Boldakov, Dmitry Lizorkin, Leonid Novak, Maria Rekouts, Peter Pleshachkov. ``Sedna: A Native XML DBMS'', http://www.modis.ispras.ru/publications.htm
 
-\bibitem{paper:sedna-api} Rekouts Maria. ``Application Programming Interface for XML DBMS: design and implementation proposal'', http://www.modis.ispras.ru/publications.htm
+\bibitem{doc:admin}
+``Sedna Administration Guide'',
+\url{http://modis.ispras.ru/sedna/adminguide/AdminGuide.html}
+
+\bibitem{paper:data-model}
+``XQuery 1.0 and XPath 2.0 Data Model'', W3C Recommendation,
+\url{http://www.w3.org/TR/xpath-datamodel/}
+
+\bibitem{paper:query-language}
+``XQuery 1.0: An XML Query Language'', W3C Recommendation,
+\url{http://www.w3.org/TR/xquery/}
+
+\bibitem{paper:query-fo}
+``XQuery 1.0 and XPath 2.0 Functions and Operators'', W3C Recommendation,
+\url{http://www.w3.org/TR/xpath-functions/}
+
+\bibitem{paper:query-serialization}
+``XSLT 2.0 and XQuery 1.0 Serialization'', W3C Recommendation,
+\url{http://www.w3.org/TR/xslt-xquery-serialization/}
+
+\bibitem{paper:query-update} Patrick Lehti.
+``Design and Implementation of a Data Manipulation Processor for a XML Query Language'',
+\url{http://www.lehti.de/beruf/diplomarbeit.pdf}
+
+\bibitem{lib:pcre-lib}
+``PCRE - Perl Compatible Regular Expressions'',
+\url{http://www.pcre.org/}
+
+\bibitem{paper:sedna-overview}
+Maxim Grinev, Andrey Fomichev, Sergey Kuznetsov, Kostantin Antipin, Alexander Boldakov, Dmitry Lizorkin, Leonid Novak, Maria Rekouts, Peter Pleshachkov.
+``Sedna: A Native XML DBMS'',
+\url{http://www.modis.ispras.ru/publications.htm}
+
+\bibitem{paper:sedna-api} Rekouts Maria.
+``Application Programming Interface for XML DBMS: design and implementation proposal'',
+\url{http://www.modis.ispras.ru/publications.htm}
 
 \bibitem{paper:scheme-ql}
 Noel Welsh, Francisco Solsona, Ian Glover.
 ``SchemeUnit and SchemeQL: Two little languages'',
 Scheme Workshop 2002,
-http://schematics.sourceforge.net/schemeunit-schemeql.ps
+\url{http://schematics.sourceforge.net/schemeunit-schemeql.ps}
 
 \bibitem{paper:sxml}
 Oleg Kiselyov.
 ``SXML Specification, Revision 3.0'',
-http://www.okmij.org/ftp/Scheme/SXML.html
+\url{http://www.okmij.org/ftp/Scheme/SXML.html}
 
 \bibitem{paper:srfi-12}
 William Clinger, R.\ Kent Dybvig, Matthew Flatt, and Marc Feeley.
 ``SRFI-12: Exception Handling'',
-http://srfi.schemers.org/srfi-12/srfi-12.html
+\url{http://srfi.schemers.org/srfi-12/srfi-12.html}
 
 \bibitem{paper:chicken}
 Felix L.\ Winkelmann.
 ``Chicken -- A practical and portable Scheme system'',
-http://www.call-with-current-continuation.org/chicken.pdf
+\url{http://www.call-with-current-continuation.org}
 
 \bibitem{paper:sxpath}
 Kirill Lisovsky, Dmitry Lizorkin.
 ``XML Path Language (XPath) and its functional implementation SXPath'',
 Russian Digital Libraries Journal , 2003, Volume 6, Issue 4,
-http://www.elbib.ru/index.phtml?page=elbib/eng/journal/2003/part4/LL
+\url{http://www.elbib.ru/index.phtml?page=elbib/eng/journal/2003/part4/LL}
 
 \bibitem{link:dtsearch-engine}
 dtSearch Engine home page,
-http://www.dtsearch.com/PLF\_engine\_2.html
+\url{http://www.dtsearch.com/PLF\_engine\_2.html}
 
 \bibitem{doc:dtsearch}
 dtSearch Web Help
-http://support.dtsearch.com/webhelp/dtsearch
-
+\url{http://support.dtsearch.com/webhelp/dtsearch}
 
 \end{thebibliography}
 
