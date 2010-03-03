@@ -123,8 +123,8 @@ xmlns_ptr static_context::get_ns_pair(const char* prefix, const char* uri)
 {
     U_ASSERT(prefix);
     
-    ns_map::iterator it=ns_lib.find(str_pair(uri,prefix));
-    if (it!=ns_lib.end())
+    ns_map::iterator it = ns_lib.find(str_pair(uri,prefix));
+    if (it != ns_lib.end())
         return it->second;
     else
     {
@@ -223,7 +223,6 @@ xmlns_ptr static_context::get_default_namespace()
 
 void static_context::set_base_uri(const char* _base_uri_)
 {
-    
     /* Check constraints on URILiteral. */
     bool valid;
     Uri::Information nfo;
@@ -231,7 +230,14 @@ void static_context::set_base_uri(const char* _base_uri_)
     if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog base-uri property contains invalid URI.");
 
     /* Delete old value if any. */
-    if(base_uri != NULL) delete base_uri;
+    if(base_uri != NULL) 
+    { 
+        delete base_uri;
+        base_uri = NULL;
+    }
+    
+    /* If provided URI is relative considering this property as undefined */
+    if(nfo.type == Uri::UT_RELATIVE) return;
 
     /* Normalize URI if needed and create new value. */
     if(!nfo.normalized)

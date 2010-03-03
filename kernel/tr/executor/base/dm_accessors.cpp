@@ -43,10 +43,10 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
         Uri::Information nfo;
         bool is_relative = Uri::is_relative(&tc, &nfo);
 
-        /// I suppose base usi must be stored in normalized form. (IS)
+        /* I suppose base usi must be stored in normalized form. */
         if(!nfo.normalized) throw XQUERY_EXCEPTION2(SE1003, "Base URI is not properly normalized");
 
-        /// If URI is relative and static base uri is defined we should perform resolving. (IS)
+        /* If URI is relative and static base uri is defined we should perform resolving. */
         if(is_relative && cxt->st_cxt->get_base_uri())
         {
              stmt_str_buf result(1);
