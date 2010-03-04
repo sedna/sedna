@@ -168,7 +168,7 @@ NodeTest::to_string(const NodeTestType& type, const NodeTestData& data)
 
         case node_test_wildcard_star         : res += "*"; break;
         case node_test_wildcard_ncname_star  : res += xs_NCName2string(data.ncname_prefix); res += ":*"; break;
-        case node_test_wildcard_star_ncname  : res += "*:"; xs_NCName2string(data.ncname_local); break;
+        case node_test_wildcard_star_ncname  : res += "*:"; res += xs_NCName2string(data.ncname_local); break;
         default                              : res += "UNKNOWN";
     }
     return res;

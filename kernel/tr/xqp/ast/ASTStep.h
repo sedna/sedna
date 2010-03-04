@@ -130,6 +130,14 @@ public:
     {
         return test;
     }
+    
+    bool isSuitableForAbsPath() const
+    {
+        // check if we've got processing-instruction test
+        ASTPiTest *pit = dynamic_cast<ASTPiTest *>(test);
+
+        return (axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !preds && (!pit || pit->type == ASTPiTest::NONE));
+    }
 
     void accept(ASTVisitor &v);
     ASTNode *dup();

@@ -29,6 +29,10 @@ namespace sedna
             bool atomize; // true, if nodes in fact atomize on their insertion (think of an attribute for example); needed by space-seq
             // NOTE: don't need to propagate it deep, only through ASTSeq, since ASTSpaceSeq is always direct
             //       child of comp. constructor or of sequence in usual one
+            
+            bool start_abspath; // if true -- try to start AbsPath optimization (valid for AxisTest mostly)
+            // NOTE: false doesn't necessarily mean that we won't use abs-path; true forces even relative XPath to consider the
+            //       opportunity; for indexes and triggers, relative abs-path is crucial, so "true" here means "force"
 
             parentRequest()
             {
@@ -36,6 +40,7 @@ namespace sedna
                 distinctOnly = false;
                 deep_copy = true;
                 atomize = false;
+                start_abspath = false;
             }
         };
 
@@ -46,6 +51,7 @@ namespace sedna
             std::set<std::string> usedVars; // contains bound variables used in subexpression
             bool use_last;                  // true, if child uses fn:last()
             bool use_position;              // true, if child uses fn:position()
+            bool in_abs_path;               // true, if we continue AbsPath chain -- see PPAbsPath execution logic
 
             childOffer()
             {
@@ -57,6 +63,8 @@ namespace sedna
 
                 use_last = false;
                 use_position = false;
+                
+                in_abs_path = false;
 
                 isCached = false;
             }
