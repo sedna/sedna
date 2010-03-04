@@ -369,6 +369,10 @@ void ft_index_cell_object::change_index(xptr_sequence* inserted,xptr_sequence* u
 			break;
 		}
 #endif
+	case ft_ind_native:
+		{
+			//TODO!
+		}
 	default:
 		throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation"); //TODO: check it's ok to trow here
 	}

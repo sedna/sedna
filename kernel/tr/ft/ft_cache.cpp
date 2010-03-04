@@ -297,6 +297,7 @@ void ftc_scan_result::get_next_result(tuple &t)
 		if (ce.node == doc_data->acc)
 		{
 			//TODO, impossible now
+			U_ASSERT(false);
 		}
 		else if (ce.node < doc_data->acc)
 		{
