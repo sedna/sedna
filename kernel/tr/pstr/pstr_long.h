@@ -11,6 +11,9 @@
 #include "common/sm_vmm_data.h"
 #include "tr/strings/strings_base.h"
 
+/* functions with '2' in the end take pointers to strings instead of pointers to string descriptors
+ */
+
 //typedef int pstr_long_off_t;
 typedef __int64 pstr_long_off_t;
 typedef int pstr_long_map_size_t; //type for storing char count in blb map
@@ -60,6 +63,7 @@ struct pstr_long_block_list_map_entry
 #define PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE sizeof(struct pstr_long_block_list_map_entry)
 
 xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
+xptr pstr_long_create_str2(bool persistent, const void *data, pstr_long_off_t size, text_type ttype);
 void pstr_long_delete_str(xptr desc);
 void pstr_long_delete_str2(const xptr str_ptr);
 void pstr_long_append_tail(const xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
@@ -78,7 +82,7 @@ inline void pstr_long_writextext(xptr desc, se_ostream& crmout)
 }
 
 
-void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
+void pstr_long_copy_to_buffer2(char *buf, const xptr &str_ptr, pstr_long_off_t size); //FIXME: must str_ptr be passed by ref here?
 void pstr_long_copy_to_buffer(char *buf, xptr desc);
 
 
@@ -88,15 +92,16 @@ pstr_long_off_t pstr_long_length(const xptr data);
 void pstr_long_str_info(xptr desc);
 #endif
 
-
+//need to declare it here, because it's a friend of pstr_long_cursor
+static xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_ptr, pstr_long_off_t size0);
 class pstr_long_cursor : public str_cursor
 {
 	//TODO!! blk should point to last_blk or last_blk->pred when pointer is at eof
 	// if cursor < 0, then blk should NEVER point to last_blk in get_blk/copy_blk
 	// i.e. blk always points to block that contains some string data & if position
 	// is not eos, current char is in blk
-	friend void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t size0);
-	friend void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
+    friend xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_ptr, pstr_long_off_t size0);
+	friend void pstr_long_copy_to_buffer2(char *buf, const xptr &str_ptr, pstr_long_off_t size);
 protected:
 	xptr m_start;
 	pstr_long_cursor() {} //dummy default constructor for pstr_long_iterator

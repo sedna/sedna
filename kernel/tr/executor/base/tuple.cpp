@@ -166,7 +166,7 @@ char* tuple_cell::copy_string(char *buf) const
         case tc_heavy_atomic_pstr_short:estr_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
                                         buf[get_strlen_vmm()] = '\0';
                                         return buf;
-        case tc_heavy_atomic_pstr_long: pstr_long_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
+        case tc_heavy_atomic_pstr_long: pstr_long_copy_to_buffer2(buf, *(xptr*)(&data), get_strlen_vmm());
                                         buf[get_strlen_vmm()] = '\0';
                                         return buf;
         default:                        throw USER_EXCEPTION2(SE1003, "None-atomic value in call to tuple_cell::copy_string");
@@ -193,12 +193,12 @@ char* tuple_cell::copy_string(char *buf, __int64 n) const
 
         case tc_heavy_atomic_pstr_long: if (get_strlen_vmm() < n)
                                         {
-                                            pstr_long_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
+                                            pstr_long_copy_to_buffer2(buf, *(xptr*)(&data), get_strlen_vmm());
                                             buf[get_strlen_vmm()] = '\0';
                                         }
                                         else
                                         {
-                                            pstr_long_copy_to_buffer(buf, *(xptr*)(&data), n);
+                                            pstr_long_copy_to_buffer2(buf, *(xptr*)(&data), n);
                                         }
                                         return buf;
 
