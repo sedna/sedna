@@ -471,7 +471,7 @@ void PPExplainVisitor::visit(PPElementConstructor* op)
     const char* deep_copy = op->is_deep_copy() ? "true" : "false";
     const char* ns_inside = op->is_ns_inside() ? "true" : "false";
     attr_left = insert_attribute_i(attr_left,XNULL,left,"deep-copy",xs_untypedAtomic, deep_copy, strlen(deep_copy), NULL_XMLNS);
-    insert_attribute_i(attr_left,XNULL,left,"namespace-iside",xs_untypedAtomic, ns_inside, strlen(ns_inside), NULL_XMLNS);
+    insert_attribute_i(attr_left,XNULL,left,"namespace-inside",xs_untypedAtomic, ns_inside, strlen(ns_inside), NULL_XMLNS);
 }
 
 void PPExplainVisitor::visit(PPAttributeConstructor* op)

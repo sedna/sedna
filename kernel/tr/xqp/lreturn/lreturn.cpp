@@ -148,6 +148,7 @@ namespace sedna
         childOffer off_cont; // by default we work with some context we don't know about (maybe need to refine this later)
         childOffer off_this;
         childOffer off_preds;
+        bool trying_abs_path = false; // trying to add this axis to abs-path
 
         // check predicates
         if (n.preds)
@@ -220,13 +221,22 @@ namespace sedna
                 off_cont.exi.isDistincted = true;
                 off_cont.exi.isOrdered = false;
             }*/
+            
+            trying_abs_path = off_cont.in_abs_path;
         }
         else
         {
             // if we've got axis without context then we use some outer context -- report this
             off_this.usedVars.insert("$%v");
+            
+            // if we haven't got the context then ask parent if we need abs-path
+            trying_abs_path = getParentRequest().start_abspath;
         }
 
+        // check if we can add this axis to abs-path
+        if (trying_abs_path && !n.isSuitableForAbsPath())
+            trying_abs_path = false;
+        
         // now we need to write our initial offer to parent
         switch (n.axis)
         {
@@ -314,7 +324,7 @@ namespace sedna
         off_this.usedVars.insert(off_preds.usedVars.begin(), off_preds.usedVars.end());
 
         // now we need to decide if we want to cache it
-        if (!getParentRequest().calledOnce)
+        if (!trying_abs_path && !getParentRequest().calledOnce)
         {
             cacheTheNode(&n, off_this);
 
@@ -323,6 +333,18 @@ namespace sedna
                 n.cont->setCached(false);
         }
 
+        // abs-path ddoed by its design
+        if (trying_abs_path)
+        {
+            off_this.exi.isOrdered = true;
+            off_this.exi.isDistincted = true;
+            off_this.in_abs_path = true;
+        }
+        else
+        {
+            off_this.in_abs_path = false;
+        }
+        
         // if this is the last step the we need to order(distinct) it
         if (n.isLast)
         {
@@ -673,6 +695,7 @@ namespace sedna
         setParentRequest(req);
         n.on_path->accept(*this);
 
+        req.start_abspath = true;
         setParentRequest(req);
         n.by_path->accept(*this);
     }
@@ -990,6 +1013,7 @@ namespace sedna
         childOffer off_this;
         childOffer off_preds;
         childOffer off_pe;
+        bool trying_abs_path = false; // true, if we try to merge filter step into abs-path
 
         // check predicates
         if (n.preds)
@@ -1056,6 +1080,7 @@ namespace sedna
                 off_this = off_pe = off_cont;
                 off_this.isCached = false;
                 off_pe.usedVars.insert("$%v"); // since . is a context
+                trying_abs_path = !n.preds; // since . without preds cannot destroy abspath
             }
             else
             {
@@ -1068,7 +1093,10 @@ namespace sedna
 
         // if we've got single context step, that means using some outer context, which we should report of
         if (!n.cont && !n.expr)
+        {
             off_this.usedVars.insert("$%v");
+            trying_abs_path = getParentRequest().start_abspath && !n.preds;
+        }
 
         // if primary expression will be called several times then we must change the offer
         if (n.expr && !off_cont.exi.isMax1)
@@ -1084,7 +1112,7 @@ namespace sedna
             n.expr->setCached(false);
 
         // now we need to decide if we want to cache it
-        if (!getParentRequest().calledOnce)
+        if (!trying_abs_path && !getParentRequest().calledOnce)
         {
             cacheTheNode(&n, off_this);
 
@@ -1142,6 +1170,18 @@ namespace sedna
             }
         }
 
+        // abs-path ddoed by its design
+        if (trying_abs_path)
+        {
+            off_this.exi.isOrdered = true;
+            off_this.exi.isDistincted = true;
+            off_this.in_abs_path = true;
+        }
+        else
+        {
+            off_this.in_abs_path = false;
+        }
+        
         // if this is the last and not the only step then we need to order(distinct) it
         if (n.isLast && n.cont)
         {
@@ -1180,7 +1220,8 @@ namespace sedna
                 off_this.exi.isDistincted = true;
             }
         }
-
+        
+        // filter steps usually don't participate in abs-paths; execpt for context-expression
         setOffer(off_this);
     }
 
@@ -1435,8 +1476,7 @@ namespace sedna
                     off_this.exi.isOrdered = true;
                 }
             }
-
-            if (*n.int_name == "!fn!unordered")
+            else if (*n.int_name == "!fn!unordered")
             {
                 // if we've got final ddo, convert it to distinct
                 if (ASTDDO *param = dynamic_cast<ASTDDO *>(n.params->at(0)))
@@ -1451,17 +1491,19 @@ namespace sedna
                 modifyParent(n.params->at(0), false, true);
                 n.params->clear();
             }
-
-            if (*n.int_name == "!fn!last")
+            else if (*n.int_name == "!fn!last")
             {
                 off_this.usedVars.clear();
                 off_this.use_last = true;
             }
-
-            if (*n.int_name == "!fn!position")
+            else if (*n.int_name == "!fn!position")
             {
                 off_this.usedVars.clear();
                 off_this.use_position = true;
+            }
+            else if (*n.int_name == "!fn!collection" || (*n.int_name == "!fn!document" && n.params->size() == 1))
+            {
+                off_this.in_abs_path = true; // start analyze abs-path possibility
             }
         }
         else

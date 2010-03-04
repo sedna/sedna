@@ -190,10 +190,7 @@ namespace sedna
             off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), NULL, counted_ptr<db_entity>(dbe)), 1);
         }
 
-        // check if we've got processing-instruction test
-        ASTPiTest *pit = dynamic_cast<ASTPiTest *>(n.test);
-
-        if (n.axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !n.preds && off_cont.opin.op && (!pit || pit->type == ASTPiTest::NONE))
+        if (n.isSuitableForAbsPath() && off_cont.opin.op) // if op == NULL then this axis starts a relative non-abspath XPath
         {
             if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op))
             {
@@ -1286,6 +1283,24 @@ namespace sedna
         {
              if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
                      finalizeAbsPath(apa, off_cont.lr_path.c_str(), pers_path_mode);
+        }
+
+        // try to propagate abs-path via '.'-expression
+        if (!n.expr && !n.preds && off_cont.opin.op)
+        {
+             if (dynamic_cast<PPAbsPath *>(off_cont.opin.op))
+             {
+                 off_this.opin = off_cont.opin;
+
+                 if (!n.isLast)
+                 {
+                     off_this.lr_path = off_cont.lr_path;
+                 }
+
+                 setOffer(off_this);
+
+                 return;
+             }
         }
 
         // determine if we need sequence checker
