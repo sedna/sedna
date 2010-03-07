@@ -3,6 +3,35 @@
 
      _________________________________________________________________
 
+                             Release 3.3
+
+     Release date: 2010-04-10
+     _________________________________________________________________
+
+New:
+
+- XQuery execution errors details significantly improved: Sedna reports
+  the location of runtime errors with both line and column number.
+- Query Explain Statement - shows query execution plan of the query or
+  update statement.
+- Query Profile Statement - executes query and shows profile information
+  for each operation in the query execution plan.
+- Sedna Client/Server Protocol version 4: each returned item now has 
+  XQuery Data Model type.
+- Metadata system document '$modules' removed. Use collection '$modules'
+  instead to get names of all modules.  
+- Bug fixes, improvements like improved internal representation, 
+  XQuery parser completely written in C++, etc.
+
+Important note: 
+
+Databases created with previous versions of Sedna will not work properly
+with Sedna 3.3. Please, use Sedna import/export utility to migrate your 
+data to Sedna 3.3 (see Sedna Administration Guide, section 2.5).
+
+     
+     _________________________________________________________________
+
                              Release 3.2
 
      Release date: 2009-06-30
