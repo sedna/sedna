@@ -1,7 +1,7 @@
 /*
-* File:  vmmtrace.h
-* Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  vmmtrace.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #ifndef _VMM_TRACE_H
 #define _VMM_TRACE_H

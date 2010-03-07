@@ -21,8 +21,7 @@ New:
 - Metadata system document '$modules' removed. Use collection '$modules'
   instead to get names of all modules.  
 - Bug fixes, improvements like improved internal representation, 
-  XQuery parser completely written in C++, etc.
-
+  completely C/C++ source code.
 Important note: 
 
 Databases created with previous versions of Sedna will not work properly
