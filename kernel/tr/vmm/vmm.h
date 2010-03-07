@@ -1,7 +1,7 @@
 /*
-* File:  vmm.h
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  vmm.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #ifndef _VMM_H
 #define _VMM_H

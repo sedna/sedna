@@ -1,3 +1,8 @@
+/*
+ * File:  vmmunix.cpp
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _WIN32
 
 #include "common/sedna.h"
