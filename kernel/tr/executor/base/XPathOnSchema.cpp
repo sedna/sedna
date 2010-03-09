@@ -18,7 +18,11 @@
 
 static inline int compare_schema_node(const void *e1, const void *e2)
 {
-    return *(int*)e1 - *(int*)e2;
+    schema_node_xptr v1 = *(schema_node_xptr*)e1;
+    schema_node_xptr v2 = *(schema_node_xptr*)e2;
+    if ( v1 == v2 ) return 0;
+    else if ( v1 < v2 ) return -1;
+    return 1;
 }
 
 static t_scmnodes_const descendant_nodes(schema_node_cptr node,
