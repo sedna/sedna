@@ -1710,7 +1710,6 @@ int SnGetTransactionTs(TIMESTAMP *timestamp)
 	return success;
 }
 
-static
 int SnFilterOutDamaged(TIMESTAMP tsOut[], int idOut[], size_t *szOut)
 {
     int i = 0, k;
@@ -1856,9 +1855,6 @@ int SnExpandDfvHeader(const TIMESTAMP tsIn[],
                     tsOut[n - 1] != SN_WORKING_VERSION_TIMESTAMP)            
                     anchorTs = tsOut[n - 1];
             }
-    
-            // last but not least: we must filter out damaged snapshots
-            SnFilterOutDamaged(tsOut, idOut, szOut);
 		}
 	}
 	else

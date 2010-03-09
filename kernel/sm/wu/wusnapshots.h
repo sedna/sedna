@@ -135,6 +135,11 @@ int SnExpandDfvHeader(const TIMESTAMP tsInBuf[],
 
 int SnDamageSnapshots(TIMESTAMP timestampFrom);
 
+/* Fucntion to filter out damaged snapshots' versions since we don't need them in version header.
+ * In fact, this is critical -- since if we don't filter them out we might get version header overflow 
+ */
+int SnFilterOutDamaged(TIMESTAMP tsOut[], int idOut[], size_t *szOut);
+
 /* SnDbgDump */ 
 #define SN_DUMP_ATIMESTAMPS						0x2000
 #define SN_DUMP_SNAPSHOTS						0x4000
