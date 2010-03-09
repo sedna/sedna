@@ -1078,6 +1078,21 @@ static int FixFlushXptrs(int oldVerBufferId, int newVerBufferId, XPTR newBlock, 
     return 1;
 }
 
+/* Determine if we've got persistent version relocating based on SnExpandDfvHeader output */
+static int
+VeIsVersionPersistent(int *res, TIMESTAMP tsOut[], int idOut[], size_t outSz, TIMESTAMP persTs)
+{
+    size_t i;
+    
+    // point i to persistent version
+    while (i < outSz && tsOut[i] != persTs) ++i;
+    
+    // check if we've got relocation -- persistent version equals LC one
+    *res = (i < outSz && idOut[0] == idOut[i]);
+    
+    return 1;
+}
+
 int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 {
 	int success = 0, trnStatusAndType = 0, bufferId = -1;
@@ -1110,6 +1125,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 		VersionsHeader *pOldHeader = NULL, *pNewHeader = NULL, header = {};
 		XPTR newBlock = 0;
 		int newBlockBufferId = -1;
+        int isPers = 0;
 
 		if (!ImpGetSnapshotTimestamps(NULL, &persTs) ||
 			!ImpGetTransactionTs(&trnTs) ||
@@ -1118,6 +1134,15 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 			!ImpLocateHeader(bufferId, &pOldHeader))
 		{
 			/* error! */
+		}
+		/* First determine if we're relocating persistent version and only THEN filter out "damaged" versions
+		 * The order is important since we might get damaged persstent snapshot -- we don't want it filtered out
+		 * prematurely
+		 */ 
+		else if (!VeIsVersionPersistent(&isPers, tsOutBuf, idOutBuf, outSz, persTs) ||
+		         !SnFilterOutDamaged(tsOutBuf, idOutBuf, &outSz))
+		{
+            /* error! */
 		}
 		else if (tsOutBuf[0] == SN_WORKING_VERSION_TIMESTAMP)
 		{
@@ -1132,12 +1157,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 		else
 		{
 			VeRestriction restrictMaster = {}, restrictSlave = {};
-			int isPers = 0;
-			unsigned i = 0;
 
-			/* determine whether the LC version is persistent */
-			while (i<outSz && tsOutBuf[i]!=persTs) ++i;
-			isPers = (i<outSz && idOutBuf[0]==idOutBuf[i]);
 			/* store a link to older version in the header */
 			header.xptr[1] = newBlock;
 			/* prepare restrictions */
