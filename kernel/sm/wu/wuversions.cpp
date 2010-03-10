@@ -365,9 +365,11 @@ static
 int UpdateFlushingDependency(XPTR trigger, XPTR target)
 {
 	assert (flushingDependenciesHash);
+	
 	if (target)
 	{
 		(*flushingDependenciesHash)[trigger] = target;
+        wulog(("WULOG: introducing new flushing dependency, flush xptr = %"PRI_XPTR" only after xptr = %"PRI_XPTR, trigger, target));
 	}
 	else
 	{
@@ -405,7 +407,7 @@ int IsPersSnapshotVersion(VersionsHeader *hdr, int *bIsPers)
 		ImpExpandDfvHeader(hdr->creatorTs, VE_VERSIONS_COUNT, tss, ids, &tssNum, NULL, false))
 	{
 		i = 0; while (i<(int)tssNum && tss[i]!=persSnapshotTs) ++i;
-		*bIsPers = (ids[i]==0);
+		*bIsPers = (i < (int)tssNum && ids[i]==0);
 		success = 1;
 	}
 	return success;
@@ -433,6 +435,7 @@ static int OnFlushBuffer(XPTR xptr)
 	}
 	else
 	{
+	    wulog(("WULOG: flushed xptr = %"PRI_XPTR" on dependency from xptr = %"PRI_XPTR, target, xptr));
 		success = UpdateFlushingDependency(xptr, 0) && ImpFlushBuffer(bufferId);
 	}
 	if (success)
@@ -532,16 +535,18 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 
 		if (restriction.type == VE_RESTRICTION_DEAD_BLOCK)
 		{
+		    /* DEAD_BLOCK restriction is not a failure -- we may be reading some snapshot using the version as a navigator */
 			TIMESTAMP tsInBuf[VE_VERSIONS_COUNT + 1];
 			unsigned i=0;
 
+			/* adding deletorTs allows to catch access on deleted version */ 
 			tsInBuf[0] = restriction.deletorTs;
 			memcpy(tsInBuf+1, versionHeader->creatorTs, sizeof(TIMESTAMP)*VE_VERSIONS_COUNT);
 
 			if (ImpExpandDfvHeader(tsInBuf, VE_VERSIONS_COUNT+1, tsOutBuf, idOutBuf, pOutSz, anchorTs, false))
 			{
 				okStatus = 1;
-				for (i=0; i<*pOutSz; ++i) idOutBuf[i]+=-1;
+				for (i=0; i<*pOutSz; ++i) idOutBuf[i]+=-1; /* see comment above on deletorTs */
 			}
 		}
 		else
@@ -705,6 +710,7 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 	VeFunctionList::iterator i;
 	int success = 0, bufferId = 0;
 
+	wulog(("WULOG: Versions: Starting transaction commit..."));
 	if (state->functionList == NULL)
 	{
 		/* transaction runs on read-only snapshot */
@@ -760,6 +766,7 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 		success =
 			(i == state->functionList->end() && ImpSubmitRequestForGc(currentSnapshotTs, buf, ibuf-buf));
 	}
+    wulog(("WULOG: Versions: Completed transaction commit..."));
 	return success;
 }
 
@@ -779,11 +786,20 @@ static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
     if (!buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId), old_offs)) // lxptr and xptr in buffers
     {
         buffer_table.replace(WuExternaliseXptr(xptr), old_offs, dummy);
+        
+        wulog(("WULOG: Rollback: cancelling creation of a new version: version header for returned LC-version..."));
+        wulogheader(oldVerBufferId);
+        
+        wulog(("WULOG: Rollback: cancelling creation of a new version: version header for discarded old version..."));
+        wulogheader(BufferIdFromRamoffs(old_offs));
     }
     else // lxptr isn't in memory, but xptr is -- just insert the new record and delete the old one
     {
         buffer_table.insert(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId));
         buffer_table.remove(WuExternaliseXptr(xptr));
+        
+        wulog(("WULOG: Rollback: cancelling creation of a new version: version header for returned LC-version (discarded version isn't in buffers)..."));
+        wulogheader(oldVerBufferId);
     }
 
     return 1;
@@ -795,6 +811,7 @@ int OnTransactionRollback(VeClientState *state)
     int success = 1, bufferId = 0;
     ramoffs offs;
 
+    wulog(("WULOG: Versions: Starting transaction rollback..."));
     if (state->functionList == NULL)
     {
         /* transaction runs on read-only snapshot -- nothing to do for rollback */
@@ -808,6 +825,7 @@ int OnTransactionRollback(VeClientState *state)
             {
                 case VE_FUNCTION_ALLOCATE_BLOCK:
                     // on rollback we just delete the block (safe, since transaction will unmap it anyway)
+                    wulog(("WULOG: Rollback: deleted newly allocated block: lxptr = %"PRI_XPTR, i->lxptr));
                     ImpFreeBlock(i->lxptr);
                     break;
 
@@ -817,6 +835,8 @@ int OnTransactionRollback(VeClientState *state)
                     // CAREFUL: we don't want to overwrite persistent version here: consider situation when (lxptr; xptr) pair has been flushed to disk
                     //          we relocate xptr on lxptr, delete xptr and then someone reuse xptr --> persistent version is lost --> recovery would fail
 
+                    wulog(("WULOG: Rollback: cancelling creation of a new version: lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR, i->lxptr, i->xptr));
+                    
                     // first, put old version in buffers
                     try
                     {
@@ -851,6 +871,8 @@ int OnTransactionRollback(VeClientState *state)
                 case VE_FUNCTION_FREE_BLOCK:
                     // ignore this record on rollback since block'll just stay untouched
                     // we need to revoke exclusive access to this buffer, though
+                    wulog(("WULOG: Rollback: returned deleted block: lxptr = %"PRI_XPTR, i->lxptr));
+                    
                     if (ImpFindBlockInBuffers(i->lxptr, &bufferId))
                     {
                         if (!ImpRevokeExclusiveAccessToBuffer(bufferId))
@@ -861,6 +883,7 @@ int OnTransactionRollback(VeClientState *state)
                         if (WUERR_BLOCK_NOT_IN_BUFFERS != WuGetLastError())
                             success = 0;
                     }
+                    
                     break;
                 default:
                     WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -872,6 +895,7 @@ int OnTransactionRollback(VeClientState *state)
         success = (i == state->functionList->rend());
     }
 
+    wulog(("WULOG: Versions: Completed transaction rollback..."));
     return success;
 }
 
@@ -1054,6 +1078,8 @@ int VeAllocateBlock(LXPTR *pLxptr, int *pBufferId)
 	}
 	if (success)
 	{
+	    
+        wulog(("WULOG: Allocated new block: lxptr = %"PRI_XPTR", ts = %"PRIx64, xptr, transactionTs));
 		*pBufferId = bufferId;
 		*pLxptr = xptr;
 	}
@@ -1192,6 +1218,10 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 
 				success = 1;
 			}
+			
+	        wulog(("WULOG: Created new version for block: lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR, lxptr, newBlock));
+	        wulogheader(newBlockBufferId);
+            wulogheader(bufferId);
 		}
 	}
 	if (!success) { *pBufferId = -1; }
@@ -1266,6 +1296,8 @@ int VeFreeBlock(LXPTR lxptr)
 				state->functionList->push_back(function);
 				success = 1;
 			}
+			
+            wulog(("WULOG: Predeletion of block: lxptr = %"PRI_XPTR", anchorTs = %"PRIx64, lxptr, anchorTs));
 		}
 	}
 	return success;

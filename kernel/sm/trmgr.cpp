@@ -35,9 +35,6 @@
 using namespace std;
 
 /* global variables for checkpoint */
-//USemaphore wait_for_checkpoint;
-//USemaphore checkpoint_finished;
-//USemaphore checkpoint_sem;
 USemaphore concurrent_trns_sem;
 
 USemaphore wait_for_recovery;
@@ -55,7 +52,6 @@ UEvent end_of_rotr_event; // this event signals
 USemaphore trn_table_ids_sync_sem;
 USemaphore trns_num_sem;
 vector<transaction_id> _ids_table_;
-//int trn_ids[CHARISMA_MAX_TRNS_NUMBER];//values: 0->free; 1->busy
 
 /*****************************************************************************
                   !!! Checkpoint functions
@@ -123,129 +119,122 @@ U_THREAD_PROC (checkpoint_thread, arg)
 {
 #ifdef CHECKPOINT_ON
 	bool isGiantLockObtained = false;
- try{
+ try
+ {
 
-
-  int times=1;
-
-  while (true)
-  {
-//    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
-//       throw SYSTEM_EXCEPTION("Can't down semaphore for checkpoint wait");
-    if (UEventWait(&start_checkpoint_snapshot,  __sys_call_error) != 0)
-       throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
-
-    d_printf2("checkpoint thread procedure started num=%d\n", times);
-
-    shutdown_event_call = shutdown_checkpoint_thread;
-
-    // we come to this thread at the end of each updater transaction to check if we need to
-    // make checkpoint or advance snapshots
-
-    // we do checkpoint if:
-    //	1) when transaction says so (currently only at commit via se:checkpoint() user call)
-    //  2) when se_sm is being shutdowned
-    //  3) when we need truncation of log
-
-    // we advance snapshots only if SnapshotAdvanceCriterion() says so
-    if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
+    while (true)
     {
-	    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
-    	{
-        	if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
-	         throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
-
-        	d_printf2("Sem %d acquired\n", i);
-
-	    }
-    	d_printf1("All sems acquired\n");
-
-		WuSnapshotStats wuStats;
-   		// obtain timestamps of persistent and current snapshots
-   		WuGatherSnapshotsStatsExn(&wuStats);
-
-		//if (!is_recovery_mode)
-//			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
-		AdvanceSnapshots(); // TODO: check for shutdown on recovery
-
-   		WuOnBeginCheckpointExn();
-
-		RECOVERY_CRASH;
-
-		ObtainGiantLock(); isGiantLockObtained = true;
-		{
-			flush_data_buffers();
-    			d_printf1("flush data buffers completed\n");
-
-			WuEnumerateVersionsParams params;
-   			WuEnumerateVersionsForCheckpointExn(&params, llLogCheckpoint);
-
-			RECOVERY_CRASH;
-
-			llFlushAll();
-    			d_printf1("flush logical log completed\n");
-
-			RECOVERY_CRASH;
-
-			llTruncateLog();
-
-    			WuOnCompleteCheckpointExn();
-		}
-		ReleaseGiantLock(); isGiantLockObtained = false;
-
-    	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
-        	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
-	         throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
-
-		llOnCheckpointFinish();
-
-   		elog(EL_LOG, ("Checkpoint procedure is finished"));
-	}
-	else // we need only snapshot advance (subject to criterion)
-	{
-		if (!is_recovery_mode && SnapshotAdvanceCriterion())
-		{
-		    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
-    		{
-        		if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
-	        	 throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
-
-	        	d_printf2("Sem %d acquired\n", i);
-
-		    }
-    		d_printf1("All sems acquired\n");
-
-			ObtainGiantLock(); isGiantLockObtained = true;
-			{
-				AdvanceSnapshots();
-			}
-			ReleaseGiantLock(); isGiantLockObtained = false;
-
-			RECOVERY_CRASH;
-
-	    	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
-    	    	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
-	    	     throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
-	    }
-   	}
-
-    d_printf2("checkpoint finished times=%d\n", times);
-
-    times++;
-
-///////////////////
-//for DEBUG
-//exit(1);
-///////////////////
-
-   	if (shutdown_event_call == true) return 0;
-
-
-  }//end while
- } catch(SednaException &e) {
+        if (UEventWait(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+           throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
+        
+        shutdown_event_call = shutdown_checkpoint_thread;
+        
+        // we come to this thread at the end of each updater transaction to check if we need to
+        // make checkpoint or advance snapshots
+        
+        // we do checkpoint if:
+        //	1) when transaction says so (currently only at commit via se:checkpoint() user call or bulk-load optimizations)
+        //  2) when se_sm is being shutdowned
+        //  3) when we need truncation of log
+        
+        // we advance snapshots only if SnapshotAdvanceCriterion() says so
+        if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
+        {
+            for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+            {
+                if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
+                 throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
+            }
+            d_printf1("All checkpoint sems acquired\n");
+            
+            elog(EL_LOG, ("Starting checkpoint procedure"));
+        
+            WuSnapshotStats wuStats;
+            // obtain timestamps of persistent and current snapshots
+            WuGatherSnapshotsStatsExn(&wuStats);
+        
+            /* It is critical for now to advance snapshots before checkpoint:
+             *     1) When we relocate persistent version, we check only if LC equals persistent one
+             *     2) min_rcv_lsn in logical log for now doesn't reflect the situation -- we could have LC versions younger than persistent ones,
+             *        so in that case we should start recovery from some point past in time to consider some committed transactions;
+             *        for now, though, min_rcv_lsn takes into consideration only active transactions
+             *        
+             */
+            AdvanceSnapshots(); // Persistent snapshot will be the most recent one
+        
+            WuOnBeginCheckpointExn();
+        
+            RECOVERY_CRASH;
+        
+            ObtainGiantLock(); isGiantLockObtained = true;
+            {
+                d_printf1("flushing all data buffers...\n");
+                flush_data_buffers();
+                d_printf1("flushing all data buffers completed\n");
+        
+                WuEnumerateVersionsParams params;
+                WuEnumerateVersionsForCheckpointExn(&params, llLogCheckpoint);
+        
+                RECOVERY_CRASH;
+        
+                d_printf1("flushing logical log...\n");
+                llFlushAll();
+                d_printf1("flushing logical log completed\n");
+        
+                RECOVERY_CRASH;
+        
+                llTruncateLog();
+        
+                WuOnCompleteCheckpointExn();
+            }
+            ReleaseGiantLock(); isGiantLockObtained = false;
+        
+            for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+                if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
+                 throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
+        
+            llOnCheckpointFinish();
+        
+            elog(EL_LOG, ("Checkpoint procedure is finished"));
+        }
+        else // we need only snapshot advance (subject to criterion)
+        {
+            if (!is_recovery_mode && SnapshotAdvanceCriterion())
+            {
+                for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+                {
+                    if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
+                     throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
+                }
+                d_printf1("All advancement sems acquired\n");
+        
+                elog(EL_LOG, ("Starting snapshot advancement"));
+                ObtainGiantLock(); isGiantLockObtained = true;
+                {
+                    AdvanceSnapshots();
+                }
+                ReleaseGiantLock(); isGiantLockObtained = false;
+        
+                RECOVERY_CRASH;
+        
+                for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+                    if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
+                     throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
+                
+                elog(EL_LOG, ("Completed snapshot advancement"));
+            }
+        }
+        
+        if (shutdown_event_call == true) return 0;
+    }
+ } 
+ catch(SednaException &e) 
+ {
    if (isGiantLockObtained) ReleaseGiantLock();
    sedna_soft_fault(e, EL_SM);
- } catch (ANY_SE_EXCEPTION) {
+ } 
+ catch (ANY_SE_EXCEPTION) 
+ {
    if (isGiantLockObtained) ReleaseGiantLock();
    sedna_soft_fault(EL_SM);
  }
@@ -354,7 +343,7 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
   //create recovery process
   int res, res2;
   char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
-  char buf3[1024];
+  char buf2[1024];
   UPID pid;
   UPHANDLE h;
 
@@ -364,7 +353,7 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
   strcpy(buf, command_line.c_str());
 
   uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND,
-                          u_itoa(GOV_HEADER_GLOBAL_PTR -> os_primitives_id_min_bound, buf3, 10),
+                          u_itoa(GOV_HEADER_GLOBAL_PTR -> os_primitives_id_min_bound, buf2, 10),
                           NULL,
                           __sys_call_error);
 
@@ -419,7 +408,7 @@ void init_transaction_ids_table()
   if (0 != USemaphoreCreate(&trn_table_ids_sync_sem, 1, 1, CHARISMA_SYNC_TRN_IDS_TABLE, NULL, __sys_call_error))
      throw USER_EXCEPTION2(SE4010, "CHARISMA_SYNC_TRN_IDS_TABLE");
 
-  for (int i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
+  for (size_t i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
       _ids_table_.push_back(i);
 
 #endif
@@ -474,7 +463,7 @@ void give_transaction_id(transaction_id& trid)
 
   if (!(trid < 0 || trid >= CHARISMA_MAX_TRNS_NUMBER))
   {//check that there is no the same identifier
-     for(unsigned int i=0; i< _ids_table_.size(); i++)
+     for (size_t i=0; i< _ids_table_.size(); i++)
      {
          if (_ids_table_[i] == trid)
             throw SYSTEM_EXCEPTION("Error in logic of Transaction Identifiers Table (double identifier)");
@@ -488,3 +477,4 @@ void give_transaction_id(transaction_id& trid)
      throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_SYNC_TRN_IDS_TABLE");
 #endif
 }
+

@@ -5,6 +5,8 @@
 #ifndef WUDOCK_INCLUDED
 #define WUDOCK_INCLUDED
 
+//#define WU_DEBUG_LOGGING // turns on extensive logging on wu in custom file
+
 #include "wutypes.h"
 #include "wuerr.h"
 #include "common/xptr.h"
@@ -16,6 +18,18 @@ XPTR WuInternaliseXptr(const xptr& v);
 xptr WuExternaliseXptr(XPTR v);
 void WuSetLastExceptionObject(const SednaException &e);
 void WuThrowException();
+
+void WuLogHeader(int bufferId);
+
+#ifdef WU_DEBUG_LOGGING
+#define wulog(message) elog(EL_DBG, message)
+#define wulogheader(bufferId) WuLogHeader(bufferId)
+#else
+#define wulog(message)
+#define wulogheader(bufferId)
+#endif /* WU_DEBUG_LOGGING */
+
+#define PRI_XPTR PRIx64
 
 inline int BufferIdFromRamoffs(ramoffs ofs)
 {

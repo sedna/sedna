@@ -22,7 +22,7 @@ struct vmm_sm_blk_hdr
 	int blockType;  // (c) A. Kalinin
 	ramoffs roffs;	// address of block in buffer memory
     int is_changed;
-	int trid_wr_access; /* Motherfuckers! Session id (sid) is actually stored here! */
+	int trid_wr_access; /* session id (sid) is actually stored here for historical reasons */
 
 	static void init(vmm_sm_blk_hdr *hdr)
 	{

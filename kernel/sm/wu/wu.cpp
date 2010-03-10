@@ -203,6 +203,8 @@ int MarkBufferDirty(int bufferId)
 		header->is_changed = true;
 		success = 1;
 	}
+	
+	wulog(("WULOG: Marked buffer as dirty: bufferId = %d, lxptr = %"PRI_XPTR, bufferId, WuInternaliseXptr(header->p)));
 	return success;
 }
 
@@ -247,6 +249,10 @@ int GrantExclusiveAccessToBuffer(int bufferId)
 		header->trid_wr_access = curClientId;
 		success = 1;
 	}
+	
+    wulog(("WULOG: Granted exclusive access: clientId = %d, bufferId = %d, lxptr = %"PRI_XPTR, curClientId, 
+            bufferId, WuInternaliseXptr(header->p)));
+    
 	return success;
 }
 
@@ -274,6 +280,10 @@ int RevokeExclusiveAccessToBuffer(int bufferId)
 		header->trid_wr_access = -1;
 		success = 1;
 	}
+	
+    wulog(("WULOG: Revoked exclusive access: clientId = %d, bufferId = %d, lxptr = %"PRI_XPTR, curClientId, 
+            bufferId, WuInternaliseXptr(header->p)));
+    
 	return success;
 }
 
@@ -299,6 +309,8 @@ int AllocateDataBlock (XPTR *pXptr, int *pBufferId)
 	WU_CATCH_EXCEPTIONS()
 	*pBufferId = bufferId; *pXptr = bigXptr;
 
+    wulog(("WULOG: Allocated new block: bufferId = %d, xptr = %"PRI_XPTR, bufferId, *pXptr));
+    
 	return success;
 }
 
@@ -347,10 +359,15 @@ int AllocateDataBlockAndCopyData (XPTR *xptr, int *bufferId, int srcBufferId)
 		{
 			memcpy(destHeader, srcHeader, PAGE_SIZE);
 			destHeader->is_changed = true;
+			destHeader->roffs = RamoffsFromBufferId(*bufferId);
 			success = 1;
 		}
 		buffer_on_stake = -1;
 	}
+	
+	wulog(("WULOG: Allocated new block for new version, lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR, srcHeader->versionsHeader.xptr[0], *xptr));
+	wulogheader(srcBufferId);
+    
 	return success;
 }
 
@@ -366,6 +383,9 @@ int FreeBlock(XPTR bigXptr)
 		success=1;
 	}
 	WU_CATCH_EXCEPTIONS();
+
+    wulog(("WULOG: Deleted data block, xptr = %"PRI_XPTR, bigXptr));
+    
 	return success;
 }
 
@@ -421,12 +441,15 @@ int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr, int mode)
 				header->lsn = llLogPersSnapshotInfo(&versionEntry, oldVerTs);
 			}
 			success = 1;
+		    wulog(("WULOG: logging persistent version reloc, lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR", flushLSN = %"PRIx64, 
+		            lxptr, oldVerXptr, header->lsn));
 			break;
 		case 2:
             if (FindBlockInBuffers(oldVerXptr, &bufferId) &&
                 LocateBlockHeader(bufferId, &header))
             {
                 llLogRecordBlock(WuExternaliseXptr(oldVerXptr), (void *)header, PAGE_SIZE);
+                wulog(("WULOG: logging entire persistent version (hot-backup logging), lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR, lxptr, oldVerXptr));
                 success=1;
             }
             else
@@ -572,6 +595,8 @@ int WuOnBeginCheckpoint()
 	TIMESTAMP ts = INVALID_TIMESTAMP;
 	if (uMutexLock(&gMutex,__sys_call_error)==0)
 	{
+	    wulog(("WULOG: Starting checkpoint..."));
+	    WuDbgDump(WU_DBG_DUMP_SNAPSHOTS, SN_DUMP_ATIMESTAMPS | SN_DUMP_SNAPSHOTS | SN_DUMP_GC_NODES);
 		success = SnOnBeginCheckpoint(&ts) && VeOnCheckpoint();
 		uMutexUnlock(&gMutex,__sys_call_error);
 	}
@@ -584,6 +609,8 @@ int WuOnCompleteCheckpoint()
 	if (uMutexLock(&gMutex,__sys_call_error)==0)
 	{
 		success = SnOnCompleteCheckpoint();
+        WuDbgDump(WU_DBG_DUMP_SNAPSHOTS, SN_DUMP_ATIMESTAMPS | SN_DUMP_SNAPSHOTS | SN_DUMP_GC_NODES);
+        wulog(("WULOG: completed checkpoint..."));
 		uMutexUnlock(&gMutex,__sys_call_error);
 	}
 	return success;
@@ -916,8 +943,6 @@ int WuGatherSnapshotsStats(WuSnapshotStats *stats)
 int WuTryAdvanceSnapshots(int *bSuccess)
 {
 	TIMESTAMP curSnapshotTs = INVALID_TIMESTAMP;
-	TIMESTAMP damagedSnapshots[VE_VERSIONS_COUNT];
-	int tsDamCount = 0;
 
 	int success=0;
 
@@ -929,7 +954,6 @@ int WuTryAdvanceSnapshots(int *bSuccess)
 		{
 			success =  (WuGetLastError() == WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
 		}
-		else if (!SnGetDamagedTimestamps(damagedSnapshots, &tsDamCount)) {}
 		else
 		{
 			*bSuccess=1;
@@ -944,9 +968,11 @@ int WuTryAdvanceSnapshots(int *bSuccess)
 void WuDbgDump(int selector, int reserved)
 {
 #if (EL_DEBUG == 1)
+        wulog(("WULOG: Starting DbgDump..."));
 		if (selector & WU_DBG_DUMP_CLIENTS) ClDbgDump(reserved);
 		if (selector & WU_DBG_DUMP_VERSIONS) VeDbgDump(reserved);
 		if (selector & WU_DBG_DUMP_SNAPSHOTS) SnDbgDump(reserved);
+        wulog(("WULOG: Completed DbgDump..."));
 #endif
 }
 

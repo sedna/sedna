@@ -9,6 +9,7 @@
 #include "wusnapshots.h"
 #include "wuaux.h"
 #include "wuerr.h"
+#include "wudock.h"
 
 #define SN_SNAPSHOTS_COUNT		3
 #define SN_BUFSZ				1024
@@ -690,7 +691,7 @@ int FlushEnumerateVersionsBuf(SnEnumerateVersionsBuf *enumBuf,
 
 
 	/* flush normal buf */ 
-	if (bFlushAll && normalCount>0 || normalCount==enumBuf->bufferSz)
+	if ((bFlushAll && normalCount>0) || normalCount==enumBuf->bufferSz)
 	{
 		if (!enumBuf->enumProc(enumBuf->params, 
 							   enumBuf->normalBufPos - normalCount, 
@@ -700,7 +701,7 @@ int FlushEnumerateVersionsBuf(SnEnumerateVersionsBuf *enumBuf,
 		enumBuf->normalBufPos-=normalCount;
 	}
 	/* flush garbage buf */ 
-	if (bFlushAll && garbageCount>0 || garbageCount==enumBuf->bufferSz)
+	if ((bFlushAll && garbageCount>0) || garbageCount==enumBuf->bufferSz)
 	{
 		if (!enumBuf->enumProc(enumBuf->params, 
 							   enumBuf->garbageBufPos - garbageCount, 
@@ -719,8 +720,8 @@ int BufferVersionEntry(SnEnumerateVersionsBuf *enumBuf,
 					   SnVersionEntry entry,
 					   int isGarbage)
 {
-	if (isGarbage && enumBuf->garbageBufPos == enumBuf->garbageBufEnd ||
-		!isGarbage && enumBuf->normalBufPos == enumBuf->normalBufEnd)
+	if ((isGarbage && enumBuf->garbageBufPos == enumBuf->garbageBufEnd) ||
+		(!isGarbage && enumBuf->normalBufPos == enumBuf->normalBufEnd))
 	{
 		if (!FlushEnumerateVersionsBuf(enumBuf, 0)) return 0;
 	}
@@ -848,6 +849,14 @@ int ValidateRequestForGc(const SnRequestForGc *req)
 	return success;
 }
  
+TIMESTAMP SnGetPersistentSnapshotTimestamp()
+{
+    TIMESTAMP persTs = INVALID_TIMESTAMP;
+    SnGetSnapshotTimestamps(NULL, &persTs);
+    
+    return persTs;
+}
+
 static
 int SubmitRequestForGc(SnSnapshotsList *snLst, 
 					   const SnSnapshot *pSn, 
@@ -859,6 +868,7 @@ int SubmitRequestForGc(SnSnapshotsList *snLst,
 	if (!ValidateRequestForGc(&request)) { WuSetLastErrorMacro(WUERR_BAD_PARAMS); }
 	else if (request.type == SN_REQUEST_NOP)
 	{
+        wulog(("WULOG: Commit: ignoring new block allocation: lxptr = %"PRI_XPTR, request.lxptr));
 		success = 1;
 	}
 	else
@@ -893,9 +903,15 @@ int SubmitRequestForGc(SnSnapshotsList *snLst,
 		switch(request.type)
 		{
 		case SN_REQUEST_DISCARD_VERSION:
+	        wulog(("WULOG: Commit: deleted old version: lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR", anchorTs = %"PRIx64", persTs = %"PRIx64,
+	                request.lxptr, request.xptr, request.anchorTs, SnGetPersistentSnapshotTimestamp()));
+	        
 			success = ImpFreeBlock(request.xptr);
 			break;
 		case SN_REQUEST_ADD_BOGUS_VERSION:
+            wulog(("WULOG: Commit: deleted block stays as navigator: lxptr = %"PRI_XPTR", anchorTs = %"PRIx64", depTs = %"PRIx64", persTs = %"PRIx64,
+                    request.lxptr, request.anchorTs, pSn->timestamp, SnGetPersistentSnapshotTimestamp()));
+            
 			pGn->garbageCount++;
 			/* fallthrough */ 
 		case SN_REQUEST_ADD_NORMAL_VERSION:
@@ -903,6 +919,12 @@ int SubmitRequestForGc(SnSnapshotsList *snLst,
 			entry.lxptr = (request.type == SN_REQUEST_ADD_BOGUS_VERSION ? 0 : request.lxptr);
 			pGn->entries.push_back(entry);
 			success = 1;
+			
+            if (request.type == SN_REQUEST_ADD_NORMAL_VERSION)
+            {
+                wulog(("WULOG: Commit: added new version: lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR,
+                        request.lxptr, request.xptr));
+            }
 			break;
 		default:
 			WuSetLastErrorMacro(WUERR_BAD_PARAMS);
@@ -1001,15 +1023,15 @@ void DbgDumpTimestamps(const TIMESTAMP *begin,
 	if (!padding) padding = "";
 	if (!padding1st) padding1st = padding;
 	int lineno = 0;
-	if (begin>=end) printf("\n");
+	if (begin>=end) wulog(("\n"));
 	while (begin<end)
 	{
-		printf("%s",(lineno==0 ? padding1st : padding));
+		wulog(("%s",(lineno==0 ? padding1st : padding)));
 		for (int i=0; i<3 && begin<end; ++i, ++begin)
 		{
-			printf(" %016"I64FMT"x", *begin);
+			wulog((" %016"I64FMT"x", *begin));
 		}
-		printf("\n"); ++lineno;
+		wulog(("\n")); ++lineno;
 	}
 }
 
@@ -1033,7 +1055,7 @@ void DbgDumpSnapshots(SnSnapshotsList *snapshots,
 	}
 	if (!sniter) 
 	{
-		printf("\n");
+		wulog(("\n"));
 	}
 	else if (0 == (flags & SN_DUMP_SNAPSHOT_ATIMESTAMPS_FLAG) &&
 			 0 == (flags & SN_DUMP_SNAPSHOT_PROPERTIES_FLAG))
@@ -1041,20 +1063,20 @@ void DbgDumpSnapshots(SnSnapshotsList *snapshots,
 		while (sniter)
 		{
 			int i=0;
-			printf("%s",(lineno==0 ? padding1st : padding));
+			wulog(("%s",(lineno==0 ? padding1st : padding)));
 			while (sniter && i<3)
 			{
-				printf(" %016"I64FMT"x", sniter->timestamp);
+				wulog((" %016"I64FMT"x", sniter->timestamp));
 				sniter = sniter->next;
 				++i;
 			}
-			printf("\n"); ++lineno;
+			wulog(("\n")); ++lineno;
 		}
 	}
 	else while (sniter)
 	{
-		printf("%s",(lineno==0 ? padding1st : padding));
-		printf(" %016"I64FMT"x", sniter->timestamp);
+		wulog(("%s",(lineno==0 ? padding1st : padding)));
+		wulog((" %016"I64FMT"x", sniter->timestamp));
 		if (flags & SN_DUMP_SNAPSHOT_PROPERTIES_FLAG)
 		{
 			const char *typeStr = "unknown";
@@ -1069,10 +1091,10 @@ void DbgDumpSnapshots(SnSnapshotsList *snapshots,
 			case SN_FUTURE_SNAPSHOT:
 				typeStr="future"; break;
 			}
-			printf(" %11s %2d tr.%s", typeStr, sniter->occupancy, 
-				(sniter->isDamaged ? " [damaged]" : ""));
+			wulog((" %11s %2d tr.%s", typeStr, sniter->occupancy, 
+				(sniter->isDamaged ? " [damaged]" : "")));
 		}
-		printf("\n"); ++lineno;
+		wulog(("\n")); ++lineno;
 		if (flags & SN_DUMP_SNAPSHOT_ATIMESTAMPS_FLAG &&
 			sniter->tsBegin != sniter->tsEnd)
 		{
@@ -1131,11 +1153,11 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 			/* all chains exhausted? */ 
 			if (rowDensity==0)
 			{
-				if (lineno==0) printf("\n");
+				if (lineno==0) wulog(("\n"));
 				break;
 			}
 			/* output headers */ 
-			printf("%s", (lineno==0 ? padding1st : padding));
+			wulog(("%s", (lineno==0 ? padding1st : padding)));
 			for (i=0; i<SN_SNAPSHOTS_COUNT; ++i)
 			{
 				char buf[32] = "";
@@ -1146,9 +1168,9 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 						hscan[i]->entries.size() - hscan[i]->garbageCount,
 						hscan[i]->garbageCount);
 				}
-				printf("  %18s", buf);
+				wulog(("  %18s", buf));
 			}
-			printf("\n"); lineno++;
+			wulog(("\n")); lineno++;
 			/* output content */ 
 			for (j=0; j<limit2; ++j)
 			{
@@ -1158,7 +1180,7 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 					if (hscan[i] && xscan[i]!=hscan[i]->entries.end()) ++rowDensity;
 				}
 				if (rowDensity==0) break;
-				printf("%s", padding);
+				wulog(("%s", padding));
 				for (i=0; i<SN_SNAPSHOTS_COUNT; ++i)
 				{
 					char buf[32] = "";
@@ -1173,7 +1195,7 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 						else
 						{
 							if (perChainOutCountX2[i]/2+1==limit ||
-								j+1 == limit2 || j+2==limit2 && xscan[i]->lxptr)
+								j+1 == limit2 || (j+2==limit2 && xscan[i]->lxptr))
 							{
 								strcpy(buf,"................");
 								xscan[i]=hscan[i]->entries.end();
@@ -1191,9 +1213,9 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 							}							
 						}
 					}
-					printf("  %18s", buf);
+					wulog(("  %18s", buf));
 				}
-				printf("\n");
+				wulog(("\n"));
 			}
 			/* descent down the chains */ 
 			rowDensity=0;
@@ -1206,7 +1228,7 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 				}
 			}
 			/* output extra space */ 
-			if (rowDensity&&j>0) printf("\n");
+			if (rowDensity&&j>0) wulog(("\n"));
 		}
 }
 
@@ -1301,7 +1323,6 @@ int SnStartup(const SnSetup *setupParam)
 int SnShutdown()
 {
 	int failure=0, success=0;
-	size_t nVersions = 0;
 	SnSnapshot *persSn=NULL;
 	if (GetSnapshotByType(&snapshots,&persSn,NULL,SN_PERSISTENT_SNAPSHOT))
 	{
@@ -1426,7 +1447,6 @@ int SnOnUnregisterClient()
 {
 	int success=0;
 	SnClientState *state=NULL;
-	SnSnapshot *snapshot=NULL;
 
 	ImpGetCurrentStateBlock(&state);
 	if (state)
@@ -1497,6 +1517,7 @@ int SnTryAdvanceSnapshots(TIMESTAMP *snapshotTs)
 	else if (ImpGetTimestamp(snapshotTs) && 
 			 CreateSnapshot(&snapshots, *snapshotTs, SN_REGULAR_SNAPSHOT))
 	{
+	    wulog(("WULOG: Advanced snapshots: newSnTs =%"PRIx64, *snapshotTs));
 		snapshots.runawayCount = 0;
 		success = 1;
 	}
@@ -1765,7 +1786,7 @@ int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 	TIMESTAMP anchorTs = INVALID_TIMESTAMP;
 	int *idOutCur = idOut;
 
-	assert(szOut && (tsIn || szIn==0) && (tsOut && idOut || *szOut==0));
+	assert(szOut && (tsIn || szIn==0) && ((tsOut && idOut) || *szOut==0));
 	tsOutEnd = tsOut + *szOut;
 	InitFakeHeadSnapshot(&snapshots, &fakeHead);
 
@@ -1905,19 +1926,19 @@ void SnDbgDump(int flags)
 	static const char *padding = "          ";
 	if (flags & SN_DUMP_ATIMESTAMPS)
 	{
-		printf("active TS:");
+		wulog(("active TS:"));
 		DbgDumpTimestamps(snapshots.tsBegin, snapshots.tsEnd, padding, "");
 	}
 
 	if (flags & SN_DUMP_SNAPSHOTS)
 	{		
-		printf("snapshots:");
+		wulog(("snapshots:"));
 		DbgDumpSnapshots(&snapshots, flags, padding, "");
 	}
 
 	if (flags & SN_DUMP_GC_NODES)
 	{
-		printf("GC nodes: ");
+		wulog(("GC nodes: "));
 		DbgDumpGcNodes(
 			&snapshots, INT_MAX, 
 			(flags & SN_DUMP_UNLIMITED_FLAG ? INT_MAX : SN_DUMP_LIMIT), 
