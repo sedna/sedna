@@ -295,7 +295,7 @@ void info_table::erase_all_closed_pids()
 {
   pids_table_iter it;
   std::vector<UPID> tmp;
-  int i, res;
+  int res;
 
   for(it = _pids_table_.begin(); it != _pids_table_.end(); it++)
   {
@@ -307,7 +307,7 @@ void info_table::erase_all_closed_pids()
           throw SYSTEM_EXCEPTION("Governor failed while erasing closed pids");
   }
 
-  for (i = 0; i< tmp.size(); i++)
+  for (size_t i = 0; i< tmp.size(); i++)
     _pids_table_.erase(tmp[i]);
 }
 
@@ -406,13 +406,11 @@ void info_table::stop_databases()
 {
   db_table_iter it;
   std::vector<std::string> tmp;
-  int i=0;
-
 
   for(it = _database_table_.begin(); it!=_database_table_.end(); it++)
      tmp.push_back(it->first);
 
-  for(i=0; i< tmp.size(); i++)
+  for(size_t i=0; i< tmp.size(); i++)
      stop_database(tmp[i]);
 
   d_printf1("All databases over Sedna has been closed succesfully\n");
@@ -540,7 +538,7 @@ void info_table::wait_all_notregistered_sess()
 {
   pids_table_iter it;
 
-  elog(EL_DBG, ("%"PRIu32" unregistered session(s) will be terminated"));
+  elog(EL_DBG, ("%u unregistered session(s) will be terminated", (unsigned int)_pids_table_.size()));
   for(it = _pids_table_.begin(); it!=_pids_table_.end(); it++)
   {
      uTerminateProcess(it->first, it->second.p, 1, __sys_call_error);

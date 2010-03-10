@@ -99,7 +99,7 @@ ErrorProperties errorProperties =
 
 int WuIsAppError(int error)
 {
-	return error>=WUERR_FIRST_ERR && error<WUERR_FIRST_ERR+appErrorsNum;
+	return error>=WUERR_FIRST_ERR && error<(int)(WUERR_FIRST_ERR+appErrorsNum);
 }
 
 void WuSetLastError(int error)
@@ -161,7 +161,7 @@ void PackStrings(char *buf, size_t sz, ...)
 		output=va_arg(marker,const char**);
 		assert(output);
 		len = strlen(input);
-		if (len>(ebuf-buf)-1) len=ebuf-buf-1;
+		if (len>(size_t)((ebuf-buf)-1)) len=ebuf-buf-1;
 		memcpy(buf,input,len);
 		buf[len]='\0';
 		*output=buf;
