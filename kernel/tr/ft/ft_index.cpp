@@ -31,6 +31,10 @@
 //words with length more than this are truncated
 #define MAX_WORD_LENGTH 150
 
+enum ft_index_op_t
+{
+	ft_insert
+};
 
 struct ft_parse_data
 {
@@ -156,7 +160,7 @@ static void p_finish(void *state)
 }
 
 
-void ft_index_new_node(xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx)
+static void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx)
 {
 	//TODO: reuse parser&parse_data for parsing multiple documents (or don't use expat and reuse parse_data)
 	XML_Parser p = XML_ParserCreateNS(NULL, SEPARATOR);
@@ -168,6 +172,7 @@ void ft_index_new_node(xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, f
 	parse_data->word_ind = 0;
 	parse_data->overfl = false;
 	parse_data->cur_idx = ftc_idx;
+	U_ASSERT(op == ft_insert);
 	parse_data->cur_doc = ftc_add_new_doc(ftc_idx, acc);
 
 	XML_SetUserData(p, parse_data);
@@ -175,10 +180,15 @@ void ft_index_new_node(xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, f
 	XML_SetElementHandler(p, p_start, p_end);
 	XML_SetCharacterDataHandler(p, p_data);
 
-	//FIXME: add some function to str_buf/op_str_buf to make this less weird
-	if (text_buf->get_type() == text_mem)
+	str_cursor *cur = text_buf->get_cursor();
+
+	char buf[PAGE_SIZE]; //FIXME?
+	int len;
+
+	do
 	{
-		if (XML_Parse(p, (char*)text_buf->get_ptr_to_text(), text_buf->get_size(), XML_TRUE) == XML_STATUS_ERROR)
+		len = cur->copy_blk(buf);
+		if (XML_Parse(p, buf, len, len > 0 ? XML_FALSE : XML_TRUE) == XML_STATUS_ERROR)
 		{
 			char tmp[256];
 			//FIXME!!!!: buf, message, cleanup
@@ -189,29 +199,9 @@ void ft_index_new_node(xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, f
 			XML_ParserFree(p);
 			throw USER_EXCEPTION2(SE2005, tmp);
 		}
-	}
-	else
-	{
-		estr_cursor cur(*(xptr*)text_buf->get_ptr_to_text(), text_buf->get_size());
-		char buf[PAGE_SIZE]; //FIXME?
-		int len;
+	} while (len > 0);
+	text_buf->free_cursor(cur);
 
-		do
-		{
-			len = cur.copy_blk(buf);
-			if (XML_Parse(p, buf, len, len > 0 ? XML_FALSE : XML_TRUE) == XML_STATUS_ERROR)
-			{
-				char tmp[256];
-				//FIXME!!!!: buf, message, cleanup
-				sprintf(tmp, "in ftsearch\nline %d:\n%s\n",
-					XML_GetCurrentLineNumber(p),
-					XML_ErrorString(XML_GetErrorCode(p)));
-				free(parse_data);
-				XML_ParserFree(p);
-				throw USER_EXCEPTION2(SE2005, tmp);
-			}
-		} while (len > 0);
-	}
 	free(parse_data);
 	XML_ParserFree(p);
 }
@@ -221,8 +211,6 @@ void ft_index_new_node(xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, f
 void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_index_type cm, ft_custom_tree_t* custom_tree, ftc_index_t ftc_idx)
 {
 	op_str_buf in_buf;
-
-	idx_buffer buf;
 
 	for (std::vector<xptr>::iterator it = first_nodes->begin(); it != first_nodes->end(); ++it)
 	{
@@ -234,7 +222,7 @@ void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_in
 			//TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
 			in_buf.clear();
 			print_node_to_buffer(tmp,in_buf,cm,custom_tree);
-			ft_index_new_node(tmp_indir, &in_buf, ft_data, ftc_idx);
+			ft_index_update(ft_insert, tmp_indir, &in_buf, ft_data, ftc_idx);
 
 			tmp=getNextDescriptorOfSameSortXptr(tmp);
 		}

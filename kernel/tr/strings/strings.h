@@ -143,6 +143,42 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(func, tcell_ptr, p1, p2, p3)     STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1, p2, p3))
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(func, tcell_ptr, p1, p2, p3, p4) STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1, p2, p3, p4))
 
+class str_cursor_mem : public str_cursor
+{
+private:
+	char *m_buf;
+	int m_bytes_left; //FIMXE: int
+public:
+	str_cursor_mem(char *buf, int size) : m_buf(buf), m_bytes_left(size) {}
+    /// Block oriented copy. buf must have size not less than a page size
+	virtual int copy_blk(char *buf) {
+		const int size = s_min(m_bytes_left, PAGE_SIZE);
+		if (size > 0)
+		{
+			memcpy(buf, m_buf, size);
+			m_buf += size;
+			m_bytes_left -= size;
+		}
+		return size;
+	}
+	/// Gets a pointer to string part in the current block and moves cursor to the next block
+	/// (same as copy_blk, but without copy)
+	/// returns the length of the string part 
+	/// or 0 if end of string reached (*ptr is not modified in this case)
+    /// The function calls CHECKP on the given string, so the pointer is
+    /// valid until next call to CHECKP
+	virtual int get_blk(char **ptr) {
+		const int size = s_min(m_bytes_left, PAGE_SIZE);
+		if (size > 0)
+		{
+			*ptr = m_buf;
+			m_buf += size;
+			m_bytes_left -= size;
+		}
+		return size;
+	}
+};
+
 class str_buf_base
 {
 private:
@@ -217,6 +253,13 @@ public:
 			return m_str_ptr.get();
 		else
 			return &m_ptr;
+	}
+	///gets cursor to the text stored in the buffer
+	///caller is responsible for deleting cursor with free_cursor method
+	///buffer can't be modified until cursor is freed
+	str_cursor *get_cursor() const;
+	const void free_cursor(str_cursor *cur) {
+		delete cur;
 	}
 	int get_size() { return m_len; } //FIXME (don't use int type)
 	void clear();

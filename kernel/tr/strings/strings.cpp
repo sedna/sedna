@@ -95,6 +95,24 @@ void str_buf_base::move_to_estr()
 	throw USER_EXCEPTION2(SE1003, "Impossible case in op_str_buf::move_to_estr()");
 }
 
+str_cursor *str_buf_base::get_cursor() const
+{
+	switch (m_ttype)
+	{
+	case text_mem:
+		return new str_cursor_mem(m_buf, m_len);
+	case text_estr:
+		return new estr_cursor(m_ptr, m_len);
+	case text_doc:
+		if (m_len < PSTRMAXSIZE)
+			return new estr_cursor(m_ptr, m_len);
+		else
+			return new pstr_long_cursor(m_ptr);
+	default:
+		U_ASSERT(false);
+	}
+}
+
 void str_buf_base::clear()
 {
 	m_len = 0;
