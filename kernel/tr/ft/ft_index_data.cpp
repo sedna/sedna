@@ -299,7 +299,7 @@ ft_index_cell_xptr find_ft_index(const char* title, ftc_index_t *ftc_idx)
     ft_index_cell_cptr idc(title);
 	if (idc.found())
 	{
-		if (ftc_idx)
+		if (ftc_idx && idc->impl == ft_ind_native)
 			*ftc_idx = ftc_get_index(title, idc->ft_data.btree_root);
 		return idc.ptr();
 	}
