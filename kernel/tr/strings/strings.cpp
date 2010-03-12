@@ -97,10 +97,12 @@ void str_buf_base::move_to_estr()
 
 str_cursor *str_buf_base::get_cursor() const
 {
+	if (m_flags & f_text_in_buf)
+		return new str_cursor_mem(m_buf, m_len);
 	switch (m_ttype)
 	{
 	case text_mem:
-		return new str_cursor_mem(m_buf, m_len);
+		return new str_cursor_mem(m_str_ptr.get(), m_len);
 	case text_estr:
 		return new estr_cursor(m_ptr, m_len);
 	case text_doc:
