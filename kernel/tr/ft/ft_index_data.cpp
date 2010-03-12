@@ -244,10 +244,11 @@ ft_index_cell_xptr create_ft_index(
 			}
 #endif
 		case ft_ind_native:
-			{
+		{
+			idc->init_serial_tree();
 			ft_idx_create(&start_nodes, &idc->ft_data, idc->ftype, idc->custom_tree, ftc_idx);
 			break;
-			}
+		}
 		default:
 			throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation"); //TODO: check it's ok to throw here
 		}
@@ -279,6 +280,7 @@ void delete_ft_index (const char *index_title, bool just_heap)
             case ft_ind_native:
                 {
                     ft_idx_delete(&idc->ft_data);
+					idc->destroy_serial_tree();
                     break;
                 }
             default:
@@ -396,10 +398,10 @@ xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 	}
 	else
 	{
-		//long pstr
-		//TODO ROMA
+		xptr pstr = pstr_long_create_str2(true, tbuf.get_ptr_to_text(), tbuf.get_size(), tbuf.get_type());
+		return pstr;
 	}
-	return res;
+	U_ASSERT(false);
 }
 
 

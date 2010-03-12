@@ -38,8 +38,7 @@ public:
             dst += c;
         *dst = 0;
     }
-protected:
-	~str_cursor() {};
+	virtual ~str_cursor() {};
 
 };
 

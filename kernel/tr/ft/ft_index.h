@@ -17,7 +17,4 @@ void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_in
 void ft_idx_delete(ft_idx_data_t *ft_data);
 
 
-
-
-void ft_index_new_node(xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx);
 #endif
