@@ -185,8 +185,9 @@ xptr get_root (xptr node)
 	xptr tmp=node;
 	while (true)
 	{
-      if (((n_dsc*)XADDR(tmp))->pdsc==XNULL) return tmp;
-	  tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
+            CHECKP(tmp);      
+            if (((n_dsc*)XADDR(tmp))->pdsc==XNULL) return tmp;
+            tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
 	}
 }
 bool is_same_root(xptr x, xptr y)
@@ -269,6 +270,7 @@ void PPTest::checkTreeConsistency(xptr node)
 		parent=removeIndirection(par_indir);
 		if (!nid_ancestor(parent,node))
 			throw XQUERY_EXCEPTION(SE2025);
+		if(prev_x != XNULL) CHECKP(prev_x);
 		if (prev_dsc==NULL|| prev_dsc->pdsc!=par_indir)
 		{
 			CHECKP(parent);
