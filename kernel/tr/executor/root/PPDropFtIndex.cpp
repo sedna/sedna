@@ -8,6 +8,7 @@
 #include "tr/executor/root/PPDropFtIndex.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "tr/auth/auc.h"
 
 PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
 {
@@ -58,7 +59,7 @@ void PPDropFtIndex::do_execute()
     if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
 
     tc = tuple_cell::make_sure_light_atomic(tc);
-
+    auth_for_drop_object(tc.get_str_mem(), "ft-index", false);
 	delete_ft_index(tc.get_str_mem());
 }
 

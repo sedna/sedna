@@ -49,6 +49,10 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
 
 void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_collection);
 
+#ifdef SE_ENABLE_FTSEARCH
+void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is_collection);
+#endif /* SE_ENABLE_FTSEARCH */
+
 void auth_for_create_trigger(const char *trg_name);
 
 void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_check);
