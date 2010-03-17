@@ -1108,7 +1108,7 @@ static int FixFlushXptrs(int oldVerBufferId, int newVerBufferId, XPTR newBlock, 
 static int
 VeIsVersionPersistent(int *res, TIMESTAMP tsOut[], int idOut[], size_t outSz, TIMESTAMP persTs)
 {
-    size_t i;
+    size_t i = 0;
     
     // point i to persistent version
     while (i < outSz && tsOut[i] != persTs) ++i;
