@@ -292,6 +292,10 @@ void auth_for_load_module(const char* module_name)
     }
     catch(SednaUserException &e)
     {
+        if(is_qepsubtree_opened)
+            aqtree->tree.op->close();
+        if(is_qepsubtree_built)
+            delete_qep(aqtree);
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
