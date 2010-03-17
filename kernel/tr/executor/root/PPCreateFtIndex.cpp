@@ -12,6 +12,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/executor/base/xsd.h"
+#include "tr/auth/auc.h"
 
 
 ft_index_type str2ft_index_type(const char *str)
@@ -204,7 +205,10 @@ void PPCreateFtIndex::do_execute()
     /* Get xptr on this document or collection*/
     xptr root_obj = get_schema_node(db_ent, (std::string("Unknown document/collection passed to create full-text index: ") + db_ent->name).c_str());
 
-    //local_lock_mrg->put_lock_on_index(tc.get_str_mem());
+    auth_for_create_ftindex(tc.get_str_mem(), db_ent->name, db_ent->type == dbe_collection);
+
+    /* TODO: Review lock for full-text index!
+    local_lock_mrg->put_lock_on_index(tc.get_str_mem()); */
 
 	ft_index_template_t * cust_rules_vec = NULL;
 

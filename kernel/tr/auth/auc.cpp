@@ -202,11 +202,30 @@ void auth_for_load_module(const char* module_name)
     if (!tr_globals::authorization) return; //if authorization if off
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
-    PPQueryEssence* qep_tree = NULL;
-    bool is_qep_opened  = false;
-    bool is_qep_built   = false;
-    bool output_enabled = false;
+    PPQueryEssence* qep_tree   = NULL;
+    qep_subtree *aqtree        = NULL;
+    bool is_qep_opened         = false;
+    bool is_qep_built          = false;
+    bool is_qepsubtree_opened  = false;
+    bool is_qepsubtree_built   = false;
+    bool output_enabled        = false;
 
+
+    std::string rc_xquery = "\
+        declare ordering unordered; \
+        \
+        let $security := doc('%db_sec_doc%')/db_security_data,\
+            $u := $security/users/user[user_name='%user%'],\
+            $r := $security/roles/role[role_name=$u/role/@role_name],\
+            $pr_db := ($u, $r)/privileges/privilege[(pr_name = 'LOAD-MODULE' or pr_name = 'ALL') and empty(database_obj)]\
+        return\
+            if ($u/role/@role_name='DBA' or not(empty($pr_db)))\
+            then \
+                () \
+            else \
+                error(QName('http://www.modis.ispras.ru/sedna','SE3072'), 'User does not have LOAD-MODULE privilege on database')";
+
+    
     std::string update_load_module_xquery =
         "declare ordering unordered;\
          \
@@ -221,7 +240,7 @@ void auth_for_load_module(const char* module_name)
                     <grantor>{'%user%'}</grantor>\
                  </privilege>\
          into\
-             doc(%db_sec_doc%)/db_security_data/users/user[user_name = '%user%']/privileges";
+             doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/privileges";
 
     // substitute dynamic parameters
     find_replace_str(&update_load_module_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
@@ -233,6 +252,26 @@ void auth_for_load_module(const char* module_name)
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
 
+        // query if user has the privilege
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
+
+        aqtree = build_subqep(rc_xquery.c_str(), false);
+        is_qepsubtree_built = true;
+
+        aqtree->tree.op->open();
+        is_qepsubtree_opened = true;
+
+        tuple t = tuple(1);
+        aqtree->tree.op->next(t);
+
+        aqtree->tree.op->close();
+        is_qepsubtree_opened = false;
+
+        delete_qep(aqtree);
+        is_qepsubtree_built = false;
+
+        // update db_security_data for the new module name
         qep_tree = build_qep(update_load_module_xquery.c_str(), false);
         is_qep_built = true;
 
@@ -1151,6 +1190,117 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
     }
 }
 
+#ifdef SE_ENABLE_FTSEARCH
+void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is_collection)
+{
+    if (!tr_globals::authorization) return;
+    if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
+
+    PPQueryEssence* qep_tree   = NULL;
+    qep_subtree *aqtree        = NULL;
+    bool is_qep_opened         = false;
+    bool is_qep_built          = false;
+    bool is_qepsubtree_opened  = false;
+    bool is_qepsubtree_built   = false;
+    bool output_enabled        = false;
+
+    std::string rc_xquery = "\
+        declare ordering unordered; \
+        \
+        let $security := doc('%db_sec_doc%')/db_security_data,\
+            $u := $security/users/user[user_name='%user%'],\
+            $r := $security/roles/role[role_name=$u/role/@role_name],\
+            $pr := ($u, $r)/privileges/privilege[database_obj/@type_obj='%type_obj%' and database_obj='%name_obj%'],\
+            $pr_ren := $pr[pr_name=('CREATE-FT-INDEX','OWNER','ALL')],\
+            $pr_db := ($u, $r)/privileges/privilege[pr_name = 'ALL' and empty(database_obj)]\
+        return\
+            if ($u/role/@role_name='DBA' or not(empty($pr_ren)) or not(empty($pr_db)))\
+            then \
+                () \
+            else \
+                error(QName('http://www.modis.ispras.ru/sedna','SE3065'), 'User does not have CREATE-FT-INDEX privilege for the object')";
+
+
+    std::string update_xquery =
+        "update insert \
+                 <privilege>\
+                    <pr_name>OWNER</pr_name>\
+                    <database_obj type_obj='ft-index'>{'%name_obj%'}</database_obj>\
+                    <grantor>{'%user%'}</grantor>\
+                 </privilege>\
+         into\
+             doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/privileges";
+
+    try
+    {
+        tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
+        output_enabled = tr_globals::client->disable_output();
+
+        // query if user has the privilege
+        find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&rc_xquery, "%user%", tr_globals::login);
+        find_replace_str(&rc_xquery, "%type_obj%", (is_collection) ? "collection" : "document");
+        find_replace_str(&rc_xquery, "%name_obj%", obj_name);
+
+        aqtree = build_subqep(rc_xquery.c_str(), false);
+        is_qepsubtree_built = true;
+
+        aqtree->tree.op->open();
+        is_qepsubtree_opened = true;
+
+        tuple t = tuple(1);
+        aqtree->tree.op->next(t);
+
+        aqtree->tree.op->close();
+        is_qepsubtree_opened = false;
+
+        delete_qep(aqtree);
+        is_qepsubtree_built = false;
+
+        // update db_security_data for the new index
+        // substitute dynamic parameters
+        find_replace_str(&update_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
+        find_replace_str(&update_xquery, "%user%", tr_globals::login);
+        find_replace_str(&update_xquery, "%name_obj%", ind_name);
+
+        qep_tree = build_qep(update_xquery.c_str(), false);
+        is_qep_built = true;
+
+        qep_tree->open();
+        is_qep_opened = true;
+
+        qep_tree->execute();
+
+        qep_tree->close();
+        is_qep_opened = false;
+
+        delete_qep_unmanaged(qep_tree);
+        is_qep_built = false;
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+        if (output_enabled)
+            tr_globals::client->enable_output();
+    }
+    catch(SednaUserException &e)
+    {
+        if(is_qepsubtree_opened)
+            aqtree->tree.op->close();
+        if(is_qepsubtree_built)
+            delete_qep(aqtree);
+        if(is_qep_opened)
+            qep_tree->close();
+        if(is_qep_built)
+            delete_qep_unmanaged(qep_tree);
+        if(output_enabled)
+            tr_globals::client->enable_output();
+
+        tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+        throw;
+    }
+}
+#endif /* SE_ENABLE_FTSEARCH */
+
 void auth_for_create_trigger(const char *trg_name)
 {
     if (!tr_globals::authorization) return;
@@ -1508,8 +1658,7 @@ void auth_for_drop_user(const char* name)
     // checks if we have privilege
     std::string q1 = "\
             if (doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%user%']/role[@role_name = 'DBA'] or\
-                doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%drop_user%' and creator = '%user%'] or\
-                '%user%' = '%drop_user%')\
+                doc('%db_sec_doc%')/db_security_data/users/user[user_name = '%drop_user%' and creator = '%user%'])\
             then\
                 fn:true()\
             else\
