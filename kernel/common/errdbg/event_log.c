@@ -334,6 +334,7 @@ event_log_init_file:
         }
         else
         {
+            static uint32_t counter = 0;
             char dt_buf[32];
             struct tm *newtime;
             time_t aclock;
@@ -341,9 +342,9 @@ event_log_init_file:
             time(&aclock);                   /* Get time in seconds */
             newtime = localtime(&aclock);    /* Convert time to struct tm form */
 
-            sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-%02d",
+            sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-%02d-%03d",
                     newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
-                    newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+                    newtime->tm_hour, newtime->tm_min, newtime->tm_sec, ++counter);
 
             strcpy(buf2, SEDNA_DATA);
 #ifdef _WIN32
