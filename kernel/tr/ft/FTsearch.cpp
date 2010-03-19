@@ -218,6 +218,9 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 		in_buf.append(">");
 	}
 	print_node_to_buffer(node,in_buf,cm,custom_tree);
+	/*FILE *f = fopen("last_dts_file", "wb");
+	fwrite(in_buf.c_str(), 1, in_buf.get_size(), f);
+	fclose(f);*/
 	pos = 0;
 	dest.size = in_buf.get_size();
 	fileInfo->size=dest.size;
