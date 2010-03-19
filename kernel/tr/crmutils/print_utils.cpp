@@ -792,7 +792,6 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             while (child!=XNULL)
             {
                 CHECKP(child);
-                //CHECKP(child);
                 cit=(GETSCHEMENODEX(child)->type==element);
                 print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
                 CHECKP(child);
@@ -823,7 +822,7 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             case ft_xml_ne:
             case ft_xml_hl:
                 {
-                    if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL)
+                    if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL && *(scn->get_xmlns()->prefix))
                         tbuf <<" "<<scn->get_xmlns()->prefix<<":"<< scn->name << "=\"";
                     else
                         tbuf <<" "<< scn->name << "=\"";
