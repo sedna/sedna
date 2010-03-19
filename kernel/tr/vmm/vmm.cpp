@@ -24,8 +24,6 @@
 #include "tr/tr_globals.h"
 #include "tr/cat/catvars.h"
 
-#include <set>
-
 static bool vmm_session_initialized = false;
 static bool vmm_transaction_initialized = false;
 
@@ -134,7 +132,7 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
  * to be called as early as possible to prevent others from
  * locking this memory.  */
 
-void vmm_preliminary_call() 
+void vmm_preliminary_call()
 {
     open_global_memory_mapping(SE4400);
     get_vmm_region_values();
@@ -198,7 +196,7 @@ enum sm_command_t {
 };
 
 /* Asking SM to read the block */
-void vmm_unswap_block(xptr p) 
+void vmm_unswap_block(xptr p)
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -221,7 +219,7 @@ void vmm_unswap_block(xptr p)
 }
 
 /* Informing SM of writing to the block */
-void vmm_unswap_block_write(xptr p) 
+void vmm_unswap_block_write(xptr p)
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -266,7 +264,7 @@ void vmm_request_alloc_block(xptr *p, bool is_data)
     CHECKP(*p);
 }
 
-void vmm_delete_block(xptr p) 
+void vmm_delete_block(xptr p)
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -290,7 +288,7 @@ void vmm_delete_block(xptr p)
     sem.Release();
 }
 
-void vmm_delete_tmp_blocks() 
+void vmm_delete_tmp_blocks()
 {
     SafeSemaphore sem(vmm_sm_sem);
 
@@ -334,7 +332,7 @@ if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1)
 static FILE * f_se_trn_log;
 #define VMM_SE_TRN_LOG "se_trn_log"
 
-void vmm_determine_region(bool log) 
+void vmm_determine_region(bool log)
 {
     if (log) {
         f_se_trn_log = fopen(VMM_SE_TRN_LOG, "w");
@@ -399,17 +397,17 @@ void vmm_determine_region(bool log)
     }
 }
 
-void vmm_alloc_data_block(xptr *p) 
+void vmm_alloc_data_block(xptr *p)
 {
     vmm_request_alloc_block(p, true);
 }
 
-void vmm_alloc_tmp_block(xptr *p) 
+void vmm_alloc_tmp_block(xptr *p)
 {
     vmm_request_alloc_block(p, false);
 }
 
-void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) 
+void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat)
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
@@ -517,7 +515,7 @@ void __vmmdcp_vmm_signal_modification(xptr p)
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 
 
-void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) 
+void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
 {
     if (USemaphoreOpen(&vmm_sm_sem, VMM_SM_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "VMM_SM_SEMAPHORE_STR");
@@ -582,7 +580,7 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
     vmm_session_initialized = true;
 }
 
-void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts) 
+void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts)
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -610,7 +608,7 @@ void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts)
     vmm_transaction_initialized = true;
 }
 
-void vmm_on_session_end() 
+void vmm_on_session_end()
 {
     if (!vmm_session_initialized) return;
 
@@ -664,7 +662,7 @@ void vmm_on_session_end()
     vmm_trace_stop();
 }
 
-static void unmapAllBlocks()
+static void unmapAllBlocks(bit_set * map)
 {
     int p = -1;
 
@@ -696,12 +694,14 @@ VMMMicrotransaction::~VMMMicrotransaction() {
 
 void vmm_unmap_all_blocks()
 {
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
-    unmapAllBlocks();
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    SafeSemaphore sem(vmm_sm_sem);
+
+    sem.Aquire();
+    unmapAllBlocks(mapped_pages);
+    sem.Release();
 }
 
-void vmm_on_transaction_end() 
+void vmm_on_transaction_end()
 {
     if (!vmm_transaction_initialized) return;
 
@@ -720,12 +720,12 @@ void vmm_on_transaction_end()
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-        /* 
+        /*
          * Reset blocks with write access from the current trid.
-         * There was a bug here: reusing read-mapped versions between 
+         * There was a bug here: reusing read-mapped versions between
          * transactions leads to problems because of old versions
          * temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
-         * we use bitset here, because just reading INVALID_LAYER from block takes very 
+         * we use bitset here, because just reading INVALID_LAYER from block takes very
          * long time on MAC OS more efficient fix of the aforementioned bug
          */
         unmapAllBlocks(mapped_pages);

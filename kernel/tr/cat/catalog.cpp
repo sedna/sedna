@@ -291,7 +291,7 @@ void catalog_on_transaction_begin()
 void catalog_on_transaction_end(bool is_commit)
 {
     elog(EL_DBG, ("Catalog objects deserialized : %d", deserialized_objects));
-    
+
     if (is_commit)
     {
         catalog_validate_objects();
@@ -458,12 +458,12 @@ inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
     bt_key k;
     xptr obj;
 
-    if (tree == XNULL) { return XNULL; }
-
     mtrn.begin();
     lock.Aquire();
 
     catalog_update_metadata();
+
+    if (tree == XNULL) { return XNULL; }
 
     k.setnew(name);
 

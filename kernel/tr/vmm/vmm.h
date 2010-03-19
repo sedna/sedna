@@ -19,7 +19,7 @@
 #include "tr/rcv/rcv_test_tr.h"
 #include "tr/vmm/vmmtrace.h"
 
-// #define VMM_LINUX_DEBUG_CHECKP
+//#define VMM_LINUX_DEBUG_CHECKP
 // #define VMM_DEBUG_CHECKP
 
 namespace tr_globals {
@@ -46,6 +46,7 @@ void vmm_delete_tmp_blocks();
 void vmm_unswap_block(xptr p);
 void vmm_unswap_block_write(xptr p);
 
+// This function unmaps all blocks mapped on this transaction
 void vmm_unmap_all_blocks();
 
 /* Microtransaction is the mechanism with isolated block readings
