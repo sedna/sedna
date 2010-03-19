@@ -754,7 +754,7 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             }
             //std::vector<std::string> *att_ns=NULL;
             char* name=GETNAME(scn);
-            if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL)
+            if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL && *(scn->get_xmlns()->prefix))
                 if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<scn->get_xmlns()->prefix<<":";
             if (type==ft_xml || type==ft_xml_ne) tbuf<<name;
             if (type==ft_xml_hl) tbuf<<"a";
@@ -803,7 +803,7 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
                 if (type==ft_xml_hl) tbuf<<opentag<<"/";
                 else
                     if (type==ft_delimited_value && !cit) tbuf<<" ";
-            if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL)
+            if (scn->get_xmlns()!=NULL && scn->get_xmlns()->prefix!=NULL && *(scn->get_xmlns()->prefix))
                 if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<scn->get_xmlns()->prefix<<":";
             if (type==ft_xml || type==ft_xml_ne) tbuf<<name<<closetag;
             if (type==ft_xml_hl) tbuf<<"a"<<closetag<<" ";
