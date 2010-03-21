@@ -1,30 +1,42 @@
-
-% File:  QuickStart.tex
-% Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+% QuickStart.tex: Sedna Quick Start
+% Copyright (C) 2010 ISP RAS
+% The Institute for System Programming of the Russian Academy of Sciences
 
 \documentclass[a4paper,12pt]{article}
+
 \font\mmmm cmtt9
 \makeatletter
 \def\verbatim@font{\mmmm}
 \makeatother
-%\usepackage[russian]{babel}
-  
-\usepackage{amsmath}
-\usepackage{amssymb}
+
+\usepackage{alltt}         % Like verbatim but supports commands inside
 \usepackage{theorem}
-\usepackage{alltt}
-\newtheorem{definition}{Definition}
-{\theorembodyfont{\rmfamily} \newtheorem{proof}{Proof}}
-\newtheorem{theo}{Theorem}
-\newtheorem{note}{Note}
-
-\usepackage[dvips]{epsfig}
-
-\usepackage{multirow}
+\newtheorem{note}{Note}    % To insert notes
+\usepackage{multirow}      % Allows inserting tables
+\usepackage{ifpdf}         % Package for conditionals in TeX
+\newcommand{\TocAt}[6]{}   % To avoid processing \TocAt by LaTeX
 
 \title{Sedna Quick Start}
 \date{}
-%\author{Dmitry Lizorkin}
+
+% Switch for between PDF and other formats to generate bookmarks,
+% pretty table of contents and set document's information in PDF
+\ifpdf
+  \usepackage[colorlinks=true, linkcolor=blue, 
+              citecolor=blue, urlcolor=blue,
+              pdftex,                %%% hyper-references for pdflatex
+              bookmarks=true,        %%% generate bookmarks ...
+              bookmarksnumbered=true %%% ... with numbers
+  ]{hyperref}
+  \pdfadjustspacing=1
+  \hypersetup{
+	pdfauthor   = {Sedna Team},
+	pdftitle    = {Sedna Quick Start}
+  }
+\else
+  \usepackage[colorlinks=true, linkcolor=blue,
+			  citecolor=blue, urlcolor=blue]{hyperref}
+\fi
 
 \begin{document}
 
@@ -114,7 +126,7 @@ We also provide ten sample XQuery queries to the document, that give a good illu
 \end{enumerate}
 
 \begin{thebibliography}{9}
-\bibitem{xmark} The XML benchmark project (XMark), www.xml-benchmark.org
+\bibitem{xmark} The XML benchmark project (XMark), \url{www.xml-benchmark.org}
 \end{thebibliography}
 
 \end{document}
