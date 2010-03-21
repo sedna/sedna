@@ -1,54 +1,38 @@
-% File:  ProgGuide.tex
-% Sedna Programmer's Guide
-% Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+% ProgGuide.tex: Sedna Programmer's Guide
+% Copyright (C) 2010 ISP RAS 
+% The Institute for System Programming of the Russian Academy of Sciences
 
 \documentclass[a4paper,12pt]{article}
-\makeatletter
-\makeatother
 
-\usepackage{amsmath}
-\usepackage{amssymb}
+\usepackage{alltt}         % Like verbatim but supports commands inside
 \usepackage{theorem}
-\usepackage{alltt}
-\newtheorem{definition}{Definition}
-{\theorembodyfont{\rmfamily} \newtheorem{proof}{Proof}}
-\newtheorem{theo}{Theorem}
-\newtheorem{note}{Note}
-
-%\usepackage{tex4ht}
-
-%to avoid processing \TocAt by latex
-\newcommand{\TocAt}[6]{}
-\newcommand{\comments}[1]{}
-
-% Allows inserting tables
-\usepackage{multirow}
-
+\newtheorem{note}{Note}    % To insert notes
+\usepackage{multirow}      % Allows inserting tables
+\usepackage{ifpdf}         % Package for conditionals in TeX
+\newcommand{\TocAt}[6]{}   % To avoid processing \TocAt by LaTeX
 
 \title{Sedna Programmer's Guide}
 \date{}
 
-%\comments{
-\usepackage{ifthen}    % package for conditionals in TeX
-% Switch for PdfLaTeX or LaTeX
-\ifx\pdfoutput\undefined %%%% LaTeX %%%
-  \usepackage[dvips]{epsfig}
-\else %%% PdfLaTeX %%%
-  \usepackage[pdftex]{graphicx}      %%% graphics for pdftex
+% Switch for between PDF and other formats to generate bookmarks,
+% pretty table of contents and set document's information in PDF
+\ifpdf
   \usepackage[colorlinks=true, linkcolor=blue, 
               citecolor=blue, urlcolor=blue,
               pdftex,                %%% hyper-references for pdflatex
               bookmarks=true,        %%% generate bookmarks ...
-              bookmarksnumbered=true,%%% ... with numbers
+              bookmarksnumbered=true %%% ... with numbers
   ]{hyperref}
-  \pdfadjustspacing=1    %%% force LaTeX-like character spacing
-\fi %%% End of condition %%%
+  \pdfadjustspacing=1
+  \hypersetup{
+	pdfauthor   = {Sedna Team},
+	pdftitle    = {Sedna Programmer's Guide}
+  }
+\else
+  \usepackage[colorlinks=true, linkcolor=blue,
+			  citecolor=blue, urlcolor=blue]{hyperref}
+\fi
 
-\hypersetup{
-pdfauthor   = {Sedna Team},
-pdftitle    = {Sedna Programmer's Guide}
-}
-%}
 
 \begin{document}
 \sloppy
