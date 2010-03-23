@@ -263,12 +263,6 @@ void catalog_on_transaction_begin()
 
     if (catalog_masterblock == XNULL) {
         initialize_masterblock();
-    } else {
-        CHECKP(catalog_masterblock);
-        memcpy(
-            &(local_catalog->masterdata),
-            &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
-            sizeof(catalog_name_trees));
     }
 
     memcpy(
@@ -301,12 +295,6 @@ void catalog_on_transaction_end(bool is_commit)
 catalog_object_header * catalog_object_header::invalidate() {
     if (IS_CATALOG_TMP_PTR(this->p) || GET_FLAG(this->flags, CAT_OBJECT_INVALID_FLAG))
         return this;
-
-#ifdef AAADEBUG
-    for (catalog_object_header * i = local_catalog->invalid_list; i != NULL; i = i->next_invalid) {
-        U_ASSERT(i != this);
-    }
-#endif
 
     if (local_catalog->invalid_list == NULL) {
         local_catalog->invalid_list = this;
@@ -616,11 +604,7 @@ inline xptr catalog_htable_find_name(const char * name)
     mtrn.begin();
     lock.Aquire();
 
-    CHECKP(catalog_masterblock);
-    memcpy(
-        &(local_catalog->masterdata),
-        &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
-        sizeof(catalog_name_trees));
+    catalog_update_metadata();
 
     obj = st_find_string(local_catalog->masterdata.htable, name);
 
