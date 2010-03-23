@@ -35,8 +35,11 @@ void catalog_complex_iterator::build_tree(enum catalog_named_objects ot)
 {
     NameTree * a = new NameTree();
     this->tmp_tree = a;
-    SafeMetadataSemaphore lock;
 
+    SafeMetadataSemaphore lock;
+    VMMMicrotransaction mtrn;
+
+    mtrn.begin();
     lock.Aquire();
 
     catalog_update_metadata();
@@ -47,7 +50,9 @@ void catalog_complex_iterator::build_tree(enum catalog_named_objects ot)
         (*a)[string((char *) c.get_key().data())] = c.bt_next_obj();
         if (!c.bt_next_key()) break;
     }
+
     lock.Release();
+    mtrn.end();
 
     catalog_journal_record *r = local_catalog->catalog_journal;
 

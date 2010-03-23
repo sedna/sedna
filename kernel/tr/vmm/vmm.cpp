@@ -681,11 +681,15 @@ void VMMMicrotransaction::begin() {
 }
 
 void VMMMicrotransaction::end() {
+    SafeSemaphore sem(vmm_sm_sem);
+
     mStarted = false;
     activeMT = NULL;
 
+    sem.Aquire();
     unmapAllBlocks(mtrBlocks);
     __vmm_init_current_xptr();
+    sem.Release();
 }
 
 VMMMicrotransaction::~VMMMicrotransaction() {
