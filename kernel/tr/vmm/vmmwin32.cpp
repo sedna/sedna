@@ -5,11 +5,9 @@
 
 #ifdef _WIN32
 
-#include "common/sedna.h"
-#include "common/base.h"
-#include "common/u/ummap.h"
 #include "common/u/uthread.h"
 #include "common/errdbg/d_printf.h"
+
 #include "tr/vmm/vmminternal.h"
 
 /* As far as we know Windows does not provide option to protect page from reading */

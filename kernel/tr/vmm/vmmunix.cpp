@@ -5,11 +5,9 @@
 
 #ifndef _WIN32
 
-#include "common/sedna.h"
-#include "common/base.h"
-#include "common/u/ummap.h"
 #include "common/u/uthread.h"
 #include "common/errdbg/d_printf.h"
+
 #include "tr/vmm/vmminternal.h"
 
 const static int map_to_unix[4] = {PROT_NONE, PROT_READ, PROT_READ | PROT_WRITE, PROT_WRITE};
