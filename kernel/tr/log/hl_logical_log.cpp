@@ -405,7 +405,6 @@ void hl_logical_log_commit(transaction_id _trid)
     {
         up_transaction_block_sems();
         sem_released = true;
-        catalog_on_transaction_end(true);
         storage_on_transaction_end();
         catalog_on_transaction_end(true);
         reportToWu(false, true);
