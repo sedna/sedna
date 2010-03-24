@@ -6,7 +6,12 @@
 #ifndef _VMM_INTERNAL_H
 #define _VMM_INTERNAL_H
 
+#include "common/sedna.h"
+#include "common/base.h"
+#include "common/u/ummap.h"
 #include "common/sm_vmm_data.h"
+
+#include "tr/vmm/vmm.h"
 
 extern UMMap global_memory_mapping;
 
