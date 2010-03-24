@@ -672,19 +672,15 @@ void nid_create_root(xptr result, bool persistent)
     n_dsc* dsc = (n_dsc*)XADDR(result);
     VMM_SIGNAL_MODIFICATION(result);
 
-    if (persistent)
-    {
+    if (persistent) {
         updateEP_nid(&last_nid_size, last_nid);
-        if (last_nid_size <= MAXINTERNALPREFIX)
-        {
+        if (last_nid_size <= MAXINTERNALPREFIX) {
             dsc->nid.size = last_nid_size;
             memcpy(dsc->nid.prefix, last_nid, dsc->nid.size);
-        }
-        else
+        } else {
             nid_assign_pers_data(result, (char*)last_nid, last_nid_size);
-    }
-    else
-    {
+        }
+    } else {
         dsc->nid.prefix[0]=0;
         dsc->nid.size=1;
     }

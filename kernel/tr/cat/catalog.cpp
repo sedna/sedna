@@ -247,6 +247,8 @@ void catalog_light_rollback()
 }
 */
 
+void catalog_update_nid();
+
 void catalog_on_transaction_begin()
 {
     cs_initp();
@@ -265,18 +267,10 @@ void catalog_on_transaction_begin()
         initialize_masterblock();
     }
 
-    memcpy(
-        &last_nid_size,
-        &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
-        sizeof(int));
-
     last_nid = (unsigned char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, MAX_ROOT_NID_SIZE);
     local_catalog->pointer_list.add(last_nid);
 
-    memcpy(
-        last_nid,
-        ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
-        last_nid_size);
+    catalog_update_nid();
 
     cat_masterlock.Release();
     mtrn.end();
@@ -436,6 +430,21 @@ void catalog_update_metadata()
         &(local_catalog->masterdata),
         &(((catalog_master_record *) XADDR(catalog_masterblock))->masterdata),
         sizeof(catalog_name_trees));
+}
+
+void catalog_update_nid()
+{
+    catalog_update_metadata();
+    
+    memcpy(
+        &last_nid_size,
+        &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
+        sizeof(int));
+
+    memcpy(
+        last_nid,
+        ((catalog_master_record *) XADDR(catalog_masterblock))->last_nid,
+        last_nid_size);
 }
 
 inline xptr catalog_nametree_find_name(const xptr &tree, const char * name)
