@@ -61,8 +61,8 @@ public:
 typedef struct fnumber fnumber;
 
 struct t_prefix {
-	unsigned char*	prefix;// was char*, now unsigned char*
-	shft	size;// was int, now unsigned shft
+	unsigned char*  prefix; // was char*, now unsigned char*
+	shft            size;   // was int, now unsigned shft
 	t_prefix() {
 		prefix=NULL;
 		size=0;

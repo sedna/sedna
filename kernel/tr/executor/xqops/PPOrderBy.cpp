@@ -797,7 +797,7 @@ void temp_buffer::copy_from_buffer    (xptr addr)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void temp_buffer::copy_from_buffer      (int start, int size, void* addr)        
+void temp_buffer::copy_from_buffer      (int start, int size, void* addr)
 {
     memcpy(addr, buffer+start, size);    
 }
