@@ -17,9 +17,9 @@
 
 /* typedef __int64 n_scheme; */
 struct t_nid {
-	unsigned char prefix[11];  /* actually union; if the size of string is above MAXINTERNALPREFIX 
-						          keeps xptr to string (first 8 bytes) and size of nid (2 last bytes) */
-	unsigned char size;        /*keeps the size of string if it is above MAXINTERNALPREFIX, 0 otherwise */
+    unsigned char prefix[11];  /* actually union; if the size of string is above MAXINTERNALPREFIX 
+                                  keeps xptr to string (first 8 bytes) and size of nid (2 last bytes) */
+    unsigned char size;        /* keeps the size of string if it is above MAXINTERNALPREFIX, 0 otherwise */
 };
 
 typedef struct t_nid t_nid;

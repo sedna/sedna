@@ -9,23 +9,22 @@
 #include "common/u/uutils.h"
 
 #include "tr/structures/system_tables.h"
-#include "tr/structures/schema.h"
 #include "tr/structures/metadata.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/PPUtils.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/mo/mo.h"
-#include "tr/locks/locks.h"
-#include "tr/vmm/vmm.h"
-#include "tr/idx/index_data.h"
-#include "tr/mo/indirection.h"
-#include "tr/executor/base/dm_accessors.h"
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/btree.h"
-#include "tr/triggers/triggers_data.h"
 #include "tr/cat/catenum.h"
+#include "tr/locks/locks.h"
+#include "tr/idx/index_data.h"
+
+#ifdef SE_ENABLE_TRIGGERS
+#include "tr/triggers/triggers_data.h"
+#endif /* SE_ENABLE_TRIGGERS */
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
-#endif
+#endif /* SE_ENABLE_FTSEARCH */
 
 
 typedef void (*system_fun)(xptr root, const char* title);
@@ -38,17 +37,17 @@ struct system_doc_record_t {
     system_fun fillproc;
 };
 
-static void get_schema(xptr node, const char* title);
-static void get_document_full(xptr node,const char* title);
-static void get_collection_full (xptr node,const char* title);
-static void get_collections(xptr node,const char* title);
-static void get_catalog(xptr node,const char* title);
-static void get_indexes (xptr node,const char* title);
-static void get_errors(xptr node,const char* title);
-static void get_version(xptr node,const char* title);
-static void get_triggers (xptr node,const char* title);
-static void get_ftindexes (xptr node,const char* title);
-static void get_documents (xptr node,const char* title);
+static void get_schema          (xptr node, const char* title);
+static void get_document_full   (xptr node, const char* title);
+static void get_collection_full (xptr node, const char* title);
+static void get_collections     (xptr node, const char* /* title */);
+static void get_indexes         (xptr node, const char* /* title */);
+static void get_errors          (xptr node, const char* /* title */);
+static void get_version         (xptr node, const char* /* title */);
+static void get_modules         (xptr node, const char* /* title */);
+static void get_triggers        (xptr node, const char* /* title */);
+static void get_ftindexes       (xptr node, const char* /* title */);
+static void get_documents       (xptr node, const char* /* title */);
 
 static const system_doc_record_t system_doc_schemas     = {DT_SCHEMA,      "$SCHEMA.XML",        get_schema};
 static const system_doc_record_t system_doc_documents   = {DT_DOCUMENTS,   "$DOCUMENTS.XML",     get_documents};
@@ -56,6 +55,7 @@ static const system_doc_record_t system_doc_indexes     = {DT_INDEXES,     "$IND
 static const system_doc_record_t system_doc_errors      = {DT_ERRORS,      "$ERRORS.XML",        get_errors};
 static const system_doc_record_t system_doc_collections = {DT_COLLECTIONS, "$COLLECTIONS.XML",   get_collections};
 static const system_doc_record_t system_doc_version     = {DT_VERSION,     "$VERSION.XML",       get_version};
+static const system_doc_record_t system_doc_modules     = {DT_MODULES,     "$MODULES.XML",       get_modules};
 
 #ifdef SE_ENABLE_TRIGGERS
 static const system_doc_record_t system_doc_triggers    = {DT_TRIGGERS,    "$TRIGGERS.XML",      get_triggers};
@@ -73,6 +73,22 @@ static inline void
 print_type_name(xmlscm_type keytype, char* buf)
 {
     strcpy(buf, xmlscm_type2c_str(keytype));
+}
+
+/*
+ * Helper to create new counted_ptr<db_entity> specified by name and type.
+ * C-string provided by name is copied and will be released in created
+ * db_entity destructor.
+ */
+static inline 
+counted_ptr<db_entity> create_db_entity_ptr(db_entity_type type, const char* name)
+{
+    U_ASSERT(name != NULL);
+    counted_ptr<db_entity> db_ent(new db_entity);
+    db_ent->name = new char[strlen(name) + 1];
+    strcpy(db_ent->name, name);
+    db_ent->type = type;
+    return db_ent;
 }
 
 static xptr 
@@ -108,7 +124,7 @@ fill_schema(schema_node_cptr scm, const xptr& node, const xptr& neighb)
 }
 
 static void 
-get_schema(xptr node,const char* title)
+get_schema(xptr node, const char* title)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"schema",xs_untyped,NULL_XMLNS);
     xptr left   = XNULL;
@@ -139,7 +155,8 @@ get_document_full (xptr node,const char* title)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"document",xs_untyped,NULL_XMLNS);
     insert_attribute_i(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL_XMLNS);
-    schema_node_xptr scn = find_document(title);
+    counted_ptr<db_entity> db_ent = create_db_entity_ptr(dbe_document, title);
+    schema_node_xptr scn = get_schema_node(db_ent, "Unknown entity passed to doc('$document_') function");
     if (scn != XNULL) getDebugInfo(scn, parent);
 }
 
@@ -148,26 +165,60 @@ get_collection_full (xptr node,const char* title)
 {
     xptr parent=insert_element_i(XNULL,XNULL,node,"collection",xs_untyped,NULL_XMLNS);
     insert_attribute_i(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL_XMLNS);
-    schema_node_xptr scn = find_collection(title);
+    counted_ptr<db_entity> db_ent = create_db_entity_ptr(dbe_collection, title);
+    schema_node_xptr scn = get_schema_node(db_ent, "Unknown entity passed to doc('$collection_') function");
     if (scn != XNULL) getDebugInfo(scn, parent);
 }
 
 
 
 static void 
-get_version(xptr node,const char* title)
+get_version(xptr node,const char* /* title */)
 {
     xptr parent=insert_element_i(XNULL,XNULL,node,"sedna",xs_untyped,NULL_XMLNS);
     insert_attribute_i(XNULL,XNULL,parent,"version",xs_untypedAtomic,SEDNA_VERSION,
-                        strlen(SEDNA_VERSION),NULL_XMLNS);
+                       strlen(SEDNA_VERSION),NULL_XMLNS);
     insert_attribute_i(XNULL,XNULL,parent,"build",xs_untypedAtomic,SEDNA_BUILD,
-                        strlen(SEDNA_BUILD),NULL_XMLNS);
-
-
+                       strlen(SEDNA_BUILD),NULL_XMLNS);
 }
 
 static void 
-get_errors(xptr node,const char* title)
+get_modules(xptr node,const char* /* title */)
+{
+    xptr parent=insert_element_i(XNULL,XNULL,node,"modules",xs_untyped,NULL_XMLNS);    
+    counted_ptr<db_entity> db_ent = create_db_entity_ptr(dbe_collection, MODULES_COLLECTION_NAME);
+    schema_node_xptr scn = get_schema_node(db_ent, "Unknown entity passed to doc('$modules') function");
+
+    /* Just like in PPAbsPath, we take first not empty block, then 
+     * take first document node descripor and follow all of them via
+     * getNextDescriptorOfSameSortXptr.
+     */
+    xptr d_left = XNULL;
+    xptr first_blk = getNonemptyBlockLookFore(scn->bblk);
+
+    if (first_blk != XNULL) 
+    {
+        CHECKP(first_blk);
+        xptr cur = GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(first_blk));
+        while(cur != XNULL) {
+            /* Get name (URI) of the document */
+            tuple_cell tc = dm_document_uri(cur);
+            
+            if ( !tc.is_eos() ) {
+                tc = tuple_cell::make_sure_light_atomic(tc);
+                const char* uri = tc.get_str_ptr().get();
+                d_left = insert_element_i(d_left,XNULL,parent,"module",xs_untyped,NULL_XMLNS);
+                insert_attribute_i(XNULL,XNULL,d_left,"name",xs_untypedAtomic,uri,strlen(uri),NULL_XMLNS);
+            }
+
+            /* Follow to the next document */
+            cur = getNextDescriptorOfSameSortXptr(cur);
+        }
+    }    
+}
+
+static void 
+get_errors(xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"errors",xs_untyped,NULL_XMLNS);
     xptr left   = XNULL;
@@ -188,7 +239,7 @@ get_errors(xptr node,const char* title)
 }
 
 static void 
-get_indexes (xptr node,const char* title)
+get_indexes (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"indexes",xs_untyped,NULL_XMLNS);
     xptr left   = XNULL;
@@ -227,12 +278,12 @@ get_indexes (xptr node,const char* title)
 
 #ifdef SE_ENABLE_TRIGGERS
 static void 
-get_triggers (xptr node,const char* title)
+get_triggers (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"triggers",xs_untyped,NULL_XMLNS);
     xptr left   = XNULL;
-    local_lock_mrg->put_lock_on_db();
 
+    local_lock_mrg->put_lock_on_db();
     trigger_cell_cptr tc = XNULL;
     catalog_iterator it(catobj_triggers);
 
@@ -275,22 +326,22 @@ print_ft_type_name(ft_index_type ftype, char* buf)
 {
     switch(ftype)
     {
-        case ft_xml : strcpy(buf,"xml");
-        break;case ft_xml_hl    : strcpy(buf,"ft_xml_hl");
-        break;case ft_string_value  : strcpy(buf,"string-value");
-        break;case ft_delimited_value   : strcpy(buf,"delimited-value");
-        break;case ft_customized_value  : strcpy(buf,"customized-value");
-        break;default           : strcpy(buf,"unknown");
+        case ft_xml               : strcpy(buf,"xml"); break;
+        case ft_xml_hl            : strcpy(buf,"ft_xml_hl"); break;
+        case ft_string_value      : strcpy(buf,"string-value"); break;
+        case ft_delimited_value   : strcpy(buf,"delimited-value"); break;
+        case ft_customized_value  : strcpy(buf,"customized-value"); break;
+        default                   : strcpy(buf,"unknown");
     }
 }
 
 static void 
-get_ftindexes (xptr node,const char* title)
+get_ftindexes (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"ftindexes",xs_untyped,NULL_XMLNS);
     xptr left=XNULL;
-    local_lock_mrg->put_lock_on_db();
 
+    local_lock_mrg->put_lock_on_db();
     ft_index_cell_cptr ic = XNULL;
     catalog_iterator it(catobj_ft_indicies);
 
@@ -348,13 +399,12 @@ get_ftindexes (xptr node,const char* title)
 #endif /* SE_ENABLE_FTSEARCH */
 
 
-
-
 static void 
-get_documents (xptr node,const char* title)
+get_documents (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"documents",xs_untyped,NULL_XMLNS);
     xptr left   = XNULL;
+
     local_lock_mrg->put_lock_on_db();
     metadata_cell_cptr mdc = XNULL;
     catalog_iterator it(catobj_metadata);
@@ -392,37 +442,13 @@ get_documents (xptr node,const char* title)
 }
 
 
-
 static void 
-get_catalog(xptr node,const char* title)
-{
-    xptr parent = insert_element_i(XNULL,XNULL,node,"catalog",xs_untyped,NULL_XMLNS);
-    xptr left   = XNULL;
-
-    metadata_cell_cptr mdc = XNULL;
-    catalog_iterator it(catobj_metadata);
-
-    while (it.next())
-    {
-        mdc = it.get_object();
-
-        if (left==XNULL)
-        {
-            left=insert_element_i(XNULL,XNULL,parent,(mdc->is_doc)?"document":"collection",xs_untyped,NULL_XMLNS);
-        }
-        else
-            left=insert_element_i(left,XNULL,XNULL,(mdc->is_doc)?"document":"collection",xs_untyped,NULL_XMLNS);
-
-        insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,mdc->name,strlen(mdc->name),NULL_XMLNS);
-    }
-}
-
-static void 
-get_collections(xptr node,const char* title)
+get_collections(xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"collections",xs_untyped,NULL_XMLNS);
     xptr left   = XNULL;
 
+    local_lock_mrg->put_lock_on_db();
     metadata_cell_cptr mdc = XNULL;
     catalog_iterator it(catobj_metadata);
 
@@ -473,6 +499,7 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
         case DT_COLLECTIONS   : sysdoc = &system_doc_collections; break;
         case DT_ERRORS        : sysdoc = &system_doc_errors; break;
         case DT_VERSION       : sysdoc = &system_doc_version; break;
+        case DT_MODULES       : sysdoc = &system_doc_modules; break;
         case DT_DOCUMENT_     : sysdoc = &system_doc_document; param = title + 10; break;
         case DT_COLLECTION_   : sysdoc = &system_doc_collection; param = title + 12; break;
         case DT_SCHEMA_       : sysdoc = &system_doc_schema; param = title + 8; break;
@@ -522,9 +549,10 @@ document_type get_document_type(const char* title, db_entity_type type)
         if(!my_strcmp(title, "$ftindexes"))       return DT_FTINDEXES;
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-        if(!my_strcmp(title, "$triggers"))       return DT_TRIGGERS;
+        if(!my_strcmp(title, "$triggers"))        return DT_TRIGGERS;
 #endif
         if(!my_strcmp(title, "$errors"))          return DT_ERRORS;
+        if(!my_strcmp(title, "$modules"))         return DT_MODULES;
         if(strstr(title, "$collection_")==title)  return DT_COLLECTION_;
         if(strstr(title, "$document_")==title)    return DT_DOCUMENT_;
         if(strstr(title, "$schema_")==title)      return DT_SCHEMA_;
