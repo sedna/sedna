@@ -146,7 +146,6 @@ static int __event_log_write_hdr(int elevel,
                                  const char *filename,
                                  const char *funcname)
 {
-    char dt_buf[32];
     struct tm *newtime;
     time_t aclock;
     const char* elevel_c_str = NULL;
@@ -898,7 +897,6 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 void sedna_soft_fault_log(const char* log_message, int component)
 {
     char log_buf[SE_SOFT_FAULT_LOG_CONTENT_LEN + 128];
-    char dt_buf[32];
     UFile soft_fault_file_handle;
     int res, bytes_written = 0;
     const char* str = component2str(component);

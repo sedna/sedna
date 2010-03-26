@@ -286,7 +286,7 @@ public:
 
     void inline add_temporary_doc_node(xptr n) { temp_docs.push_back(n); }
 
-    bool is_field_set_in_prolog(static_context_fields_flags flag) { return prolog_set_fields & flag; }
+    bool is_field_set_in_prolog(static_context_fields_flags flag) { return (prolog_set_fields & flag) != 0; }
 
     xmlns_ptr        get_ns_pair(const char*  prefix, const char* uri);
     inline xmlns_ptr get_ns_pair(std::string& prefix, std::string& uri)

@@ -29,7 +29,6 @@ int se_ExceptionalCondition(const char *conditionName,
                             int lineNumber)
 {
 	char buf[SEDNA_DATA_VAR_SIZE + 128];
-    char log_buf[1024];
     int res, bytes_written = 0;
     UFile a_fh;
 

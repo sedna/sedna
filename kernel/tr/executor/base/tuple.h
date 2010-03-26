@@ -219,14 +219,14 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     /// SET AND GET FUNCTIONS (SOME OF THEM ARE VERY DANGEROUS)
     ////////////////////////////////////////////////////////////////////////////
-    bool is_eos()          const { return t & TC_EOS_MASK; }
-    bool is_atomic()       const { return t & TC_ATOMIC_MASK; }
-    bool is_light_atomic() const { return t & TC_LIGHT_ATOMIC_MASK; }
-    bool is_heavy_atomic() const { return t & TC_HEAVY_ATOMIC_MASK; }
+    bool is_eos()          const { return (t & TC_EOS_MASK) != 0; }
+    bool is_atomic()       const { return (t & TC_ATOMIC_MASK) != 0; }
+    bool is_light_atomic() const { return (t & TC_LIGHT_ATOMIC_MASK) != 0; }
+    bool is_heavy_atomic() const { return (t & TC_HEAVY_ATOMIC_MASK) != 0; }
 
     /* node types */
 
-    bool is_xptr()         const { return t & TC_NODE_MASK; }
+    bool is_xptr()         const { return (t & TC_NODE_MASK) != 0; }
 
     /* safenode type means that node is stored with indirection always */
     bool is_safenode()     const { return (t & TC_TYPE_MASK) == TC_SAFENODE; }

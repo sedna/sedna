@@ -101,7 +101,6 @@ int getSednaErrorStatus(const char *errorMessage) {
 
 int check_sedna_feature(struct SednaConnection *conn, const char *query, FILE* log) {
 	int res;
-	char *result;
     char needBeginCommit = 1;
     
     if (SEtransactionStatus(conn) != SEDNA_TRANSACTION_ACTIVE) {

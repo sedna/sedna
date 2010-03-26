@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 
             elog(EL_LOG, ("Request for runtime configuration satisfied"));
 
-            parse_and_print_rc(&msg, rc_sm_list);
+            parse_and_print_rc(&msg, rc_sm_list != 0);
         }
         else
             throw USER_EXCEPTION(SE3003);

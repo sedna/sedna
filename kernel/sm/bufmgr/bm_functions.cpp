@@ -175,7 +175,7 @@ void _bm_release_buffer_pool()
         _bm_restore_working_set_size();
 }
 
-void bm_startup() throw (SednaException)
+void bm_startup()
 {
     // open data and tmp files
     string data_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".sedata";
@@ -247,7 +247,7 @@ void bm_startup() throw (SednaException)
     read_master_block();
 }
 
-void bm_shutdown() throw (SednaException)
+void bm_shutdown()
 {
     flush_buffers();
 
@@ -330,7 +330,7 @@ void bm_shutdown() throw (SednaException)
     se_delete(phys_xptrs);
 }
 
-void bm_register_session(session_id sid, int is_rcv_mode) throw (SednaException)
+void bm_register_session(session_id sid, int is_rcv_mode)
 {
     tr_info_map::iterator it = trs.find(sid);
     if (it != trs.end()) throw USER_EXCEPTION(SE1018);
@@ -357,7 +357,7 @@ void bm_register_session(session_id sid, int is_rcv_mode) throw (SednaException)
     if (is_rcv_mode) is_recovery_mode = true;
 }
 
-void bm_unregister_session(session_id sid) throw (SednaException)
+void bm_unregister_session(session_id sid)
 {
     d_printf2("Unregister session with sid = %d\n", sid);
     tr_info_map::iterator it = trs.find(sid);
@@ -386,13 +386,13 @@ void bm_unregister_session(session_id sid) throw (SednaException)
     is_recovery_mode = false;
 }
 
-void bm_register_transaction(session_id sid, transaction_id trid) throw (SednaException)
+void bm_register_transaction(session_id sid, transaction_id trid)
 {
     // for now trid is not used in any extent
     d_printf2("Register transaction with trid = %d\n", trid);
 }
 
-void bm_unregister_transaction(session_id sid, transaction_id trid)  throw (SednaException)
+void bm_unregister_transaction(session_id sid, transaction_id trid) 
 {
     // for now trid is not used in any extent
     d_printf2("Unregister transaction with trid = %d\n", trid);
@@ -411,7 +411,7 @@ void bm_unregister_transaction(session_id sid, transaction_id trid)  throw (Sedn
         delete_tmp_block(p, info);
 }
 
-void bm_delete_tmp_blocks(session_id sid) throw (SednaException)
+void bm_delete_tmp_blocks(session_id sid)
 {
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
@@ -426,7 +426,7 @@ void bm_delete_tmp_blocks(session_id sid) throw (SednaException)
 void bm_allocate_data_block(session_id sid,
                             xptr /*out*/ *p,
                             ramoffs /*out*/ *offs,
-                            xptr /*out*/ *swapped) throw (SednaException)
+                            xptr /*out*/ *swapped)
 {
     //d_printf1("bm_allocate_data_block: begin\n");
 //d_printf1("allocate 1\n");
@@ -454,7 +454,7 @@ void bm_allocate_data_block(session_id sid,
 void bm_allocate_tmp_block(session_id sid,
                            xptr /*out*/ *p,
                            ramoffs /*out*/ *offs,
-                           xptr /*out*/ *swapped) throw (SednaException)
+                           xptr /*out*/ *swapped)
 {
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
@@ -478,7 +478,7 @@ void bm_allocate_tmp_block(session_id sid,
 }
 
 void bm_delete_block(session_id sid,
-                     xptr p) throw (SednaException)
+                     xptr p)
 {
     //d_printf1("sm_delete_block: begin\n");
     tr_info_map::iterator it = trs.find(sid);
@@ -519,13 +519,13 @@ void bm_delete_block(session_id sid,
 void bm_get_block(session_id sid,
                   xptr p,
                   ramoffs /*out*/ *offs,
-                  xptr /*out*/ *swapped) throw (SednaException)
+                  xptr /*out*/ *swapped)
 {
     *swapped = put_block_to_buffer(sid, p, offs);
 }
 
 void bm_enter_exclusive_mode(session_id sid,
-                             int *number_of_potentially_allocated_blocks) throw (SednaException)
+                             int *number_of_potentially_allocated_blocks)
 {
     if (xmode_sid != -1) throw SYSTEM_EXCEPTION("Exclusive mode already obtained by another transaction");
 
@@ -534,7 +534,7 @@ void bm_enter_exclusive_mode(session_id sid,
     *number_of_potentially_allocated_blocks = sm_globals::bufs_num - sm_globals::max_trs_num;
 }
 
-void bm_exit_exclusive_mode(session_id sid) throw (SednaException)
+void bm_exit_exclusive_mode(session_id sid)
 {
     if (xmode_sid != sid) throw SYSTEM_EXCEPTION("Transaction is not in exclusive mode");
 
@@ -544,7 +544,7 @@ void bm_exit_exclusive_mode(session_id sid) throw (SednaException)
     while (blocked_mem.pop(offs) == 0) used_mem.push(offs);
 }
 
-void bm_memlock_block(session_id sid, xptr p) throw (SednaException)
+void bm_memlock_block(session_id sid, xptr p)
 {
     if (xmode_sid != sid) throw SYSTEM_EXCEPTION("Transaction is not in exclusive mode");
 
@@ -571,7 +571,7 @@ void bm_memlock_block(session_id sid, xptr p) throw (SednaException)
         throw SYSTEM_EXCEPTION("Error working with internal structures");
 }
 
-void bm_memunlock_block(session_id sid, xptr p) throw (SednaException)
+void bm_memunlock_block(session_id sid, xptr p)
 {
     if (xmode_sid != sid) throw SYSTEM_EXCEPTION("Transaction is not in exclusive mode");
 
@@ -594,13 +594,13 @@ void bm_memunlock_block(session_id sid, xptr p) throw (SednaException)
 }
 /*
 void bm_pseudo_allocate_data_block(session_id sid,
-                                   xptr *p) throw (SednaException)
+                                   xptr *p)
 {
     new_data_block(p);
 }
 
 void bm_pseudo_delete_data_block(session_id sid,
-                                 xptr p) throw (SednaException)
+                                 xptr p)
 {
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
@@ -610,7 +610,7 @@ void bm_pseudo_delete_data_block(session_id sid,
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }
 */
-void bm_block_statistics(sm_blk_stat *stat) throw (SednaException)
+void bm_block_statistics(sm_blk_stat *stat)
 {
     stat->free_data_blocks_num = count_elems_of_persistent_free_blocks_stack(mb->free_data_blocks);
     stat->free_tmp_blocks_num = count_elems_of_persistent_free_blocks_stack(mb->free_tmp_blocks);

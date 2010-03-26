@@ -3,13 +3,16 @@
  * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#ifdef _WIN32
+#include <io.h>
+#endif
+
 #include "common/u/u.h"
 #include "common/errdbg/d_printf.h"
 
 #if !(defined(SE_NO_EVENT_LOG))
 #include "common/errdbg/event_log.h"
 #endif
-
 
 static char ustrerror_buf[256];
 

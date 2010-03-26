@@ -1078,7 +1078,7 @@ bool WuTryAdvanceSnapshotsExn()
 {
 	int bSuccess = 0;
 	if (!WuTryAdvanceSnapshots(&bSuccess)) WuThrowException();
-	return bSuccess;
+	return bSuccess != 0;
 }
 
 void WuOnFlushBufferExn(xptr p)
