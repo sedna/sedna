@@ -43,6 +43,9 @@ void execute_modifications()
         it->first->update_index(it->second);
         it++;
     }
+	//FIXME: dirty fix for bug with missing clear_ft_sequences() call
+	//TODO: remove this and add clear_ft_sequences() call or remove all other clear_ft_sequences() calls
+	clear_ft_sequences(); 
 }
 void update_insert_sequence(xptr node,ft_index_cell_cptr icell)
 {
