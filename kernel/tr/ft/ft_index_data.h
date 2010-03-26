@@ -16,6 +16,7 @@
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/ft/ft_cache.h"
 //#include "tr/ft/ft_index.h"
+#include "tr/ft/update_history.h"
 
 #include "tr/cat/catmem.h"
 
@@ -179,10 +180,7 @@ struct ft_index_cell_object : public catalog_object
         return header;
     };
 
-	void update_index(xptr_sequence* upserted);
-	void insert_to_index(xptr_sequence* upserted);
-	void delete_from_index(xptr_sequence* deleted);
-	void change_index(xptr_sequence* inserted,xptr_sequence* updated,xptr_sequence* deleted);
+	void update_index(update_history *h);
 
 	void init_serial_tree();
 	void destroy_serial_tree();
