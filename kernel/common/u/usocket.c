@@ -464,14 +464,14 @@ int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun)
 int uselect_read_arr(U_SSET *s, int maxfd, struct timeval *timeout, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    int res = 0, i;
+    int res = 0;
 
     res = select(1, s, (fd_set *) NULL, (fd_set *) NULL, timeout);
     if (res == U_SOCKET_ERROR) sys_call_error("select");
 
     return res;
 #else
-	int res = 0, i;
+	int res = 0;
 
     while (1)
     {

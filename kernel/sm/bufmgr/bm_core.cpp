@@ -177,7 +177,7 @@ void calculate_offset_and_file_handler(const xptr &p,
     }
 }
 
-void read_block(const xptr &p, ramoffs offs) throw (SednaException)
+void read_block(const xptr &p, ramoffs offs)
 {
     __int64 dsk_offs = 0;
     UFile file_handler;
@@ -200,7 +200,7 @@ void read_block(const xptr &p, ramoffs offs) throw (SednaException)
 }
 
 
-void write_block(const xptr &p, ramoffs offs) throw (SednaException)
+void write_block(const xptr &p, ramoffs offs)
 {
 #if 0
 	/* moved to flush_buffer */ 

@@ -20,7 +20,6 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
     PACL pACL = NULL;
     PSECURITY_DESCRIPTOR pSD = NULL;
     EXPLICIT_ACCESS ea;
-    PSID SID;
     HANDLE hToken;
     PTOKEN_USER puser_info;
     DWORD token_info_size = 0;

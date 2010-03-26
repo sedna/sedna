@@ -115,7 +115,7 @@ int cleanup_db(const char* db_name)
 
 bool exist_db(const char* db_name)
 {
-   bool res1, res2, res3, res5;
+   int res1, res2, res3, res5;
 
    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 

@@ -190,11 +190,11 @@ void WuSetLastExceptionObject(const SednaException &e)
 	{
 		e.raise();
 	}
-	catch (const SednaSystemEnvException &e)
+	catch (const SednaSystemEnvException)
 	{
 		error = WUERR_SEDNA_SYSTEM_ENV_EXCEPTION;
 	}
-	catch (const SednaSystemException &e)
+	catch (const SednaSystemException)
 	{
 		error = WUERR_SEDNA_SYSTEM_EXCEPTION;
 	}

@@ -559,7 +559,7 @@ extend_file_helper(UFile fileHandle,
     return freeStackHd;
 }
 
-void extend_data_file(int extend_portion) throw (SednaException)
+void extend_data_file(int extend_portion)
 {
     __int64 fileSizeCurrent;
     __int64 fileSizeNew;
@@ -597,7 +597,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
 }
 
 
-void extend_tmp_file(int extend_portion) throw (SednaException)
+void extend_tmp_file(int extend_portion)
 {
     __int64 fileSizeCurrent;
     __int64 fileSizeNew;

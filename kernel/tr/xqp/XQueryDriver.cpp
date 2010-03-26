@@ -62,7 +62,7 @@ namespace sedna
         XQueryParser parser(*this);
 
         lexer = &lex; // parser use lexer to get next token
-        res = parser.parse();
+        res = (parser.parse() != 0);
         lexer = NULL;
 
         emitErrors();
@@ -408,7 +408,7 @@ namespace sedna
 
             delete tmp_mod;
         }
-        catch (SednaUserException &e)
+        catch (SednaUserException)
         {
             throw SYSTEM_EXCEPTION("internal parser error: subexpression syntax error");
         }

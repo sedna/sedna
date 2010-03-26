@@ -329,7 +329,7 @@ int sm_server_handler(void *arg)
                      }
             case 35: {
                          //d_printf1("query 35: bm_register_transaction\n");
-						 bool isUsingSnapshot = msg->data.data[0];
+						 bool isUsingSnapshot = (msg->data.data[0]) != 0;
 
                          bm_register_transaction(msg->sid, msg->trid);
 						 try
@@ -938,7 +938,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
   } catch (SednaUserException &e) {
        fprintf(stderr, "%s\n", e.what());
        throw USER_EXCEPTION(SE4205);
-  } catch (SednaException &e) {
+  } catch (SednaException) {
         throw;
   } catch (ANY_SE_EXCEPTION) {
         throw;
