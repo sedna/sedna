@@ -90,7 +90,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
   char *upd_sec_query = NULL;
   qbuf_t blq = {NULL,0,0};
   FILE *log = NULL;
-  int i,error_status=1,res;
+  int i,error_status=1;
   int value;
 
   int ft_search_feature = SEDNA_FEATURE_DISABLED;
@@ -176,8 +176,6 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 		goto imp_error;
 	*/
     FTRACE((log,"done\n"));
-
-
 
 	FTRACE((log,"Creating collections..."));
 	if (strlen(cr_col_query)==0)

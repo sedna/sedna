@@ -102,7 +102,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	xmlscm_type type;
 	xptr self, left, right, parent;
 	int offs;
-	bool isUNDO = rollback_active;
+	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
     offs = sizeof(char) + sizeof(transaction_id);
@@ -166,7 +166,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
      xmlscm_type type;
      xptr self, left, right, parent;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -235,7 +235,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
      int value_size;
      xptr self, left, right, parent;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -291,7 +291,7 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
      int value_size;
      xptr self;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -335,7 +335,7 @@ static void llRcvRenameColl(LSN curr_lsn, void *Rec)
     char *rec = (char *)Rec;
     const char *old_name, *new_name;
     int offs;
-	bool isUNDO = rollback_active;
+	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
     assert(op == LL_RENAME_COLLECTION);
@@ -363,7 +363,7 @@ static void llRcvDoc(LSN curr_lsn, void *Rec)
     const char* name, *collection;
     xptr self;
     int offs;
-	bool isUNDO = rollback_active;
+	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
     offs = sizeof(char) + sizeof(transaction_id);
@@ -411,7 +411,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
      int value_size;
      xptr self, left, right, parent;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -468,7 +468,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
      shft target_size;
      xptr self, left, right, parent;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -527,7 +527,7 @@ static void llRcvCollection(LSN curr_lsn, void *Rec)
 	 char *rec = (char *)Rec;
      const char* name;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -551,7 +551,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
      const char *uri, *prefix;
      xptr self, left, right, parent;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -608,7 +608,7 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
      const char *obj_path, *key_path, *ind_name, *doc_name;
      xmlscm_type key_type;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
@@ -737,7 +737,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
     int tr_action_size;
     const char *tr_action_buf;
     inserting_node innode;
-	bool isUNDO = rollback_active;
+	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
     int tmp;

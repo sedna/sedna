@@ -189,9 +189,9 @@ extern "C"
 /* If the function fails, the return value is -1*/
     int uChangeWorkingDirectory(const char *path, sys_call_error_fun fun);
 
-    char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun);
+    char *uGetDirectoryFromFilePath(const char *path, char *buf, uint32_t buf_len, sys_call_error_fun fun);
 
-    char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun);
+    char *uGetFileNameFromFilePath(const char *path, char *buf, uint32_t buf_len, sys_call_error_fun fun);
 
     UDir uFindFirstFile(const char* filename, struct UFindDataStruct* find_data, sys_call_error_fun fun);
 

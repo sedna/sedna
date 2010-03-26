@@ -142,7 +142,7 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
     while (start < end)
     {
         value = *start;
-	bool temp = IS_BYTE_HEX_ALLOWED(value);
+	bool temp = (IS_BYTE_HEX_ALLOWED(value) != 0);
         if( !temp ) 
         {
             if( IS_WHITESPACE(value) ) break;

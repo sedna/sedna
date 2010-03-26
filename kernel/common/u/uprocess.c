@@ -71,10 +71,10 @@ int uSetEnvironmentVariable(const char* name, const char* value, char** buffer, 
 #endif
 }
 
-int uGetEnvironmentVariable(const char* name, char* buf, int size, sys_call_error_fun fun)
+int uGetEnvironmentVariable(const char* name, char* buf, uint32_t size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    DWORD res = 0;
+    DWORD res;
     memset(buf, 0, size);
     res = GetEnvironmentVariable(
              name,		/* environment variable name */

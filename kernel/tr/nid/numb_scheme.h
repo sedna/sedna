@@ -30,9 +30,6 @@ extern t_nid NIDNULL;
 extern std::pair<int,int>* sizehnt;
 
 
-/* set static parameter of dividing character */
-void		nid_set_dc(char the_dc);
-
 /* set static parameter of alphabet division proportion */
 void		nid_set_proportion(fnumber p);
 
