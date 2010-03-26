@@ -11,7 +11,6 @@ import java.lang.System;
 class SednaStatementImpl implements SednaStatement {
 
     private SednaSerializedResultImpl serializedResult = null;
-    private SednaSerializedResult     currentResult    = null;
     private BufferedInputStream       bufInputStream;
     private OutputStream              outputStream;
     private boolean                   doTraceOutput;
@@ -19,19 +18,17 @@ class SednaStatementImpl implements SednaStatement {
 
     SednaStatementImpl(OutputStream outputStream,
                        BufferedInputStream bufInputStream,
-                       SednaSerializedResult currentResult,
                        boolean doTraceOutput) {
         this.outputStream   = outputStream;
         this.bufInputStream = bufInputStream;
-        this.currentResult  = currentResult;
         this.doTraceOutput = doTraceOutput;
     }
 
     /** 
-     * @param - stream to get query from
-     * @return true if PlaneResult of this Statement is a result of a query, 
-     * false if it was Update
-     * @throws DriverException on an error
+     * @param in stream to get query from
+     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
+     * <code>false</code> if it was Update
+     * @throws DriverException on an execution error
      */
     public boolean execute(InputStream in)
             throws DriverException, IOException {
@@ -39,10 +36,10 @@ class SednaStatementImpl implements SednaStatement {
     }
 
     /** 
-     * @param - query as a String  
-     * @return true if PlaneResult of this Statement is a result of a query, 
-     * false if it was Update
-     * @throws DriverException on an error
+     * @param queryText query as a String
+     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
+     * <code>false</code> if it was Update
+     * @throws DriverException on an execution error
      */
     public boolean execute(String queryText) throws DriverException {
         return execute(queryText, ResultType.XML);
@@ -50,9 +47,9 @@ class SednaStatementImpl implements SednaStatement {
 
     /** 
      * @param in stream to get query from
-     * @return true if PlaneResult of this Statement is a result of a query, 
-     * false if it was Update
-     * @throws DriverException on an error
+     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
+     * <code>false</code> if it was Update
+     * @throws DriverException on an execution error
      */
     public boolean execute(InputStream in, ResultType resultType)
             throws DriverException, IOException {
@@ -85,9 +82,10 @@ class SednaStatementImpl implements SednaStatement {
     }
 
     /** 
-     * @param - query as a String  
-     * @return true if PlaneResult of this Statement is a result of a query, 
-     * false if it was Update
+     * @param queryText query as a String
+     * @param resultType query as a String
+     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
+     * <code>false</code> if it was Update
      * @throws DriverException on an error
      */
     public boolean execute(String queryText, ResultType resultType)
@@ -110,9 +108,9 @@ class SednaStatementImpl implements SednaStatement {
                     msg.length = bytes_to_send + 6;
                     setQueryResultType(msg, resultType);
 
-                    System.arraycopy((Object) query_bytes, bytes_sent,
-                                     (Object) msg.body, 6,
-                                      bytes_to_send);
+                    System.arraycopy(query_bytes, bytes_sent,
+                                     msg.body, 6,
+                                     bytes_to_send);
                     NetOps.writeInt(bytes_to_send, msg.body, 2);
 
                     bytes_sent += bytes_to_send;
@@ -129,8 +127,7 @@ class SednaStatementImpl implements SednaStatement {
                 setQueryResultType(msg, resultType);
 
                 NetOps.writeInt(query_bytes.length, msg.body, 2);
-                System.arraycopy((Object) query_bytes, 0, (Object) msg.body,
-                                  6, query_bytes.length);
+                System.arraycopy(query_bytes, 0, msg.body, 6, query_bytes.length);
                 NetOps.writeMsg(msg, outputStream);
             }
 
@@ -145,7 +142,7 @@ class SednaStatementImpl implements SednaStatement {
 
     private boolean executeResponseAnalyze(NetOps.Message msg) throws DriverException {
         StringBuffer debugInfo = new StringBuffer();
-        boolean gotDebug = false;
+        boolean gotDebug;
 
         NetOps.readMsg(msg, bufInputStream);
 
@@ -209,7 +206,7 @@ class SednaStatementImpl implements SednaStatement {
 
         byte query_bytes[] = queryText.getBytes();
 
-		System.arraycopy((Object) query_bytes, 0, (Object) msg.body, 6, queryText.length());
+		System.arraycopy(query_bytes, 0, msg.body, 6, queryText.length());
         NetOps.writeMsg(msg, outputStream);
         NetOps.readMsg(msg, bufInputStream);
 

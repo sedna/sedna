@@ -15,8 +15,6 @@ import java.nio.charset.*;
  * client application and Sedna server
  */
 class NetOps {
-    static Object    currentStatement                  = null;
-
     /* This driver supports version 3.0 of the Sedna Client/Server protocol */
     final static int           majorProtocolVer        = 3;
     final static int           minorProtocolVer        = 0;
@@ -57,12 +55,12 @@ class NetOps {
     final static int se_UpdateSucceeded                = 340;
     final static int se_UpdateFailed                   = 350;
     final static int se_TransactionRollbackBeforeClose = 520;
-    final static int se_ShowTime                       = 451;
+    //final static int se_ShowTime                       = 451;
     final static int se_ResultEnd                      = 375;
-    final static int se_LastQueryTime                  = 452;
+    //final static int se_LastQueryTime                  = 452;
     final static int se_ItemPart                       = 360;
     final static int se_ItemEnd                        = 370;
-    final static int se_ExecuteSchemeProgram           = 95;
+    //final static int se_ExecuteSchemeProgram           = 95;
     final static int se_CloseConnectionOk              = 510;
     final static int se_CloseConnection                = 500;
     final static int se_BulkLoadSucceeded              = 440;
@@ -72,11 +70,11 @@ class NetOps {
     final static int se_BulkLoadFailed                 = 450;
     final static int se_BulkLoadError                  = 400;
     final static int se_BulkLoadEnd                    = 420;
-    final static int se_Authenticate                   = 90;
+    //final static int se_Authenticate                   = 90;
     final static int se_SetSessionOptions              = 530;
     final static int se_SetSessionOptionsOk            = 540;
-    final static int se_ResetSessionOptions            = 550;
-    final static int se_ResetSessionOptionsOk          = 560;
+    //final static int se_ResetSessionOptions            = 550;
+    //final static int se_ResetSessionOptionsOk          = 560;
 
     final static int se_Session_Debug_Off              = 0;
     final static int se_Session_Debug_On               = 1;
@@ -84,7 +82,6 @@ class NetOps {
     /**
      * Bulk loads data to the server from the given input stream.
      * Sends se_BulkLoadEnd on the end in case of success.
-     *
      * @param in                input stream to load from.
      * @param bufInputStream    stream from the server.
      * @param outputStream      stream to the server.
@@ -135,7 +132,6 @@ class NetOps {
     /**
      * Bulk loads data to the server from the given input stream.
      * Handles status response from the server.
-     *
      * @param in                input stream to load from.
      * @param bufInputStream    stream from the server.
      * @param outputStream      stream to the server.
@@ -170,7 +166,6 @@ class NetOps {
      * Bulk loads one or more files to the server (either module or XML
      * document). After the first file has been loaded server may send
      * se_BulkLoadFileName messages with additional files to be loaded.
-     *
      * @param fileName          path to the file to be loaded.
      * @param bufInputStream    stream from the server.
      * @param outputStream      stream to the server.
@@ -186,14 +181,14 @@ class NetOps {
         NetOps.Message msg = new NetOps.Message();
         FileInputStream fis = null;
         String previousFileName = null;
-        
+
         try {
 
             while (true) {
                 if (fis != null) {
                     fis.close();
                     fis = null;
-                }        
+                }
                 fis = new FileInputStream(fileName);
                 loadStream(fis, bufInputStream, outputStream);
                 NetOps.readMsg(msg, bufInputStream);
@@ -247,15 +242,9 @@ class NetOps {
         }
     }
 
-    static void driverPrintOut(String str) {
-        if (Debug.DEBUG) {
-            System.err.print(str);
-        }
-    }
-
     static int readInt(BufferedInputStream bufInputStream)
             throws DriverException {
-        int call_res, integer = 0;
+        int call_res, integer;
         byte int_array[] = new byte[4];
 
         try {
@@ -283,7 +272,7 @@ class NetOps {
             }
 
             if (msg.length != 0) {
-                int count = 0;
+                int count;
                 int pos   = 0;
 
                 while (pos < msg.length) {
@@ -301,11 +290,16 @@ class NetOps {
     }
 
     /**
-     *  Reads query debug information. If there were any return true, otherwise returns false.
+     * Reads query debug information.
+     * @param msg initial message from the server which may contain debug info
+     * @param is connection stream with the server to read messages from
+     * @param item buffer to write information into
+     * @return if there were any inforamtion returns <code>true</code> and appends it to the <i>item</i> buffer,
+     * otherwise returns <code>false</code>.
+     * @throws DriverException if failed to get debug information or something wrong with connection
      */
     static boolean readDebugInfo(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException
     {
-
         ByteBuffer  byteBuf;
         CharBuffer  charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
         CharsetDecoder csd  = Charset.forName("utf8").newDecoder();
@@ -316,7 +310,7 @@ class NetOps {
 
         gotDebug = ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug)) ?  true : false;
 
-        // read debug information if any
+        /* Read debug information if any */
         while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug))
         {
             byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
@@ -329,7 +323,6 @@ class NetOps {
 
             charBuf.clear();
 
-
             NetOps.readMsg(msg, is);
             debug_type = net_int2int(msg.body);
         }
@@ -338,7 +331,13 @@ class NetOps {
     }
 
     /**
-     *  Reads query trace. If there were any return true, otherwise returns false.
+     * Reads query trace information.
+     * @param msg initial message from the server which may contain trace info
+     * @param is connection stream with the server to read messages from
+     * @param item buffer to write information into
+     * @return if there were any inforamtion returns <code>true</code> and appends it to the <i>item</i> buffer,
+     * otherwise returns <code>false</code>.
+     * @throws DriverException if failed to get trace information or something wrong with connection
      */
     static boolean readTrace(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException
     {
@@ -375,7 +374,12 @@ class NetOps {
     }
 
     /**
-     *  Reads a whole item from the socket.
+     * Reads complete item from the stream connected with server.
+     * @param is connection stream with the server to read item from
+     * @param doTraceOutput either read trace information or not
+     * @return {@link ru.ispras.sedna.driver.NetOps.StringItem} which encapsulates text represention of the item
+     * and provides information if there is next item.
+     * @throws DriverException if failed to get item or something wrong with connection
      */
     static StringItem readStringItem(BufferedInputStream is, boolean doTraceOutput)
             throws DriverException {
@@ -485,15 +489,18 @@ class NetOps {
     }
 
     /**
-     *  Gets error message body and
-     *  Makes a string that is error info (usually for DriverException)
+     * Gets error message body and makes a string that is error info.
+     * @param body byte array which contains text to retrieve message from
+     * @param length shift of error code in the array 
+     * @return error message retrieved from the message text representation
      */
     static String getErrorInfo(byte[] body, int length) {
         return new String(body, 9, length - 9);
     }
 
     /**
-     *  Gets error code
+     * @param body byte array which contains text to retrieve error code from
+     * @return error code rerieved from the text representation
      */
     static int getErrorCode(byte[] body) {
         return net_int2int(body);
@@ -508,8 +515,7 @@ class NetOps {
     }
 
     /**
-     * Class encapsulates one message which is passed between
-     * the server and a client.
+     * Class encapsulates one message which is passed between the server and a client.
      */
     static class Message {
         byte body[];
@@ -524,6 +530,9 @@ class NetOps {
         }
     }
 
+    /**
+     * Class encapsulates one XQuery item returned by server. 
+     */
     static class StringItem {
         boolean      hasNextItem;
         StringBuffer item;

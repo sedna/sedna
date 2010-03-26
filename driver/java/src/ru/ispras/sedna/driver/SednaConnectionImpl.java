@@ -1,4 +1,3 @@
-
 /*
  * File:  SednaConnectionImpl.java
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
@@ -9,17 +8,14 @@ package ru.ispras.sedna.driver;
 import java.io.*;
 import java.net.Socket;
 
-
 class SednaConnectionImpl implements SednaConnection {
     private boolean       isClose       = false;
     private boolean       doTraceOutput = true;
-    private Integer       id;
     private Socket        socket;
-    SednaSerializedResult currentResult = null;    // all statements that were created in this connection
     BufferedInputStream   bufInputStream;
     OutputStream          outputStream;
-        
-     public void begin() throws DriverException {
+
+    public void begin() throws DriverException {
         if (this.isClose) {
             throw new DriverException(ErrorCodes.SE3028, "");
         }
@@ -39,7 +35,6 @@ class SednaConnectionImpl implements SednaConnection {
         }
     }
 
-    // closes connection (exits connection process on server)  
     public void close() throws DriverException {
         if (this.isClose) {
             throw new DriverException(ErrorCodes.SE3028, "");
@@ -59,7 +54,7 @@ class SednaConnectionImpl implements SednaConnection {
                 this.bufInputStream.close();
                 this.isClose = true;
             } catch (IOException ioe) {
-                
+
             }
         } else if (msg.instruction == NetOps.se_ErrorResponse) {
             this.isClose = true;
@@ -102,9 +97,8 @@ class SednaConnectionImpl implements SednaConnection {
         }
 
         SednaStatement st = new SednaStatementImpl(this.outputStream,
-                                                   this.bufInputStream, 
-                                                   this.currentResult,
-                                                   this.doTraceOutput);
+                this.bufInputStream,
+                this.doTraceOutput);
 
         return st;
     }
@@ -132,26 +126,26 @@ class SednaConnectionImpl implements SednaConnection {
     }
 
     public void setTraceOutput(boolean trace) throws DriverException {
-    	this.doTraceOutput = trace;
+        this.doTraceOutput = trace;
     }
-    
+
     public void setDebugMode(boolean debug) throws DriverException {
         if (this.isClose) {
             throw new DriverException(ErrorCodes.SE3028, "");
         }
-    	      NetOps.Message msg = new NetOps.Message();
+        NetOps.Message msg = new NetOps.Message();
 
         msg.instruction = NetOps.se_SetSessionOptions;
         msg.length      = 9;
-        
+
         if(debug){
-        	NetOps.writeInt(NetOps.se_Session_Debug_On, msg.body, 0); // option type
+            NetOps.writeInt(NetOps.se_Session_Debug_On, msg.body, 0); // option type
         } else {
-        	NetOps.writeInt(NetOps.se_Session_Debug_Off, msg.body, 0); //option type
+            NetOps.writeInt(NetOps.se_Session_Debug_Off, msg.body, 0); //option type
         }
         msg.body[4] = 0; //option value string type
         NetOps.writeInt(0, msg.body, 5); // option value length
-        
+
         NetOps.writeMsg(msg, outputStream);
         NetOps.readMsg(msg, bufInputStream);
 
@@ -161,39 +155,21 @@ class SednaConnectionImpl implements SednaConnection {
         } else if (msg.instruction != NetOps.se_SetSessionOptionsOk) {
             throw new DriverException(ErrorCodes.SE3008, "");
         }
-    	
-    }
-    
-    // gets session id (for driver-internal use)  
-    Integer getId() {
-        return this.id;
-    }
 
-    // gets socket (for driver-internal use)  
-    Socket getSocket() {
-        return this.socket;
     }
 
     public boolean isClose() {
         return this.isClose;
     }
 
-    // sets DataInputStream of the connections socket (for driver-internal use)
     void setBIS(BufferedInputStream bufInputStream) {
         this.bufInputStream = bufInputStream;
     }
 
-    // sets session id (for driver-internal use)  
-    void setId(Integer id) {
-        this.id = id;
-    }
-
-    // sets OutputStream of the connections socket (for driver-internal use)  
     void setOS(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
-    // sets socket (for driver-internal use)  
     void setSocket(Socket s) {
         this.socket = s;
     }

@@ -1,4 +1,3 @@
-
 /*
  * File:  SednaSerializedResultImpl.java
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
@@ -16,7 +15,7 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
     boolean             doTraceOutput;
 
     SednaSerializedResultImpl(StringBuffer stringItem,
-                              boolean hasNextItem, 
+                              boolean hasNextItem,
                               BufferedInputStream is,
                               OutputStream os,
                               boolean doTraceOutput) {
@@ -27,34 +26,35 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
         this.doTraceOutput  = doTraceOutput;
     }
 
-    // returns string item if success
-    // null if the end of the sequence
-    // throws exception if errors
+    /**
+     * @return string item if success, null if the end of the sequence
+     * @throws DriverException exception if errors
+     */
     public String next() throws DriverException {
         String         tmpItem;
         NetOps.Message msg = new NetOps.Message();
-        
-        if (this.stringItem == null) 
-           tmpItem = null;
-        else 
-           tmpItem = this.stringItem.toString();
-        
+
+        if (this.stringItem == null)
+            tmpItem = null;
+        else
+            tmpItem = this.stringItem.toString();
+
         try {
-        	if(this.hasNextItem) {
-        		msg.instruction = NetOps.se_GetNextItem;
-        		msg.length      = 0;
-        		NetOps.writeMsg(msg, outputStream);
-        		
-        		NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
-        		
-        		this.stringItem  = sitem.item;
-        		this.hasNextItem = sitem.hasNextItem;
-        	} else {
-        		this.stringItem = null;
-        	}
+            if(this.hasNextItem) {
+                msg.instruction = NetOps.se_GetNextItem;
+                msg.length      = 0;
+                NetOps.writeMsg(msg, outputStream);
+
+                NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
+
+                this.stringItem  = sitem.item;
+                this.hasNextItem = sitem.hasNextItem;
+            } else {
+                this.stringItem = null;
+            }
 
         } catch (OutOfMemoryError e) {
-        	throw new DriverException(ErrorCodes.SE5501, "");
+            throw new DriverException(ErrorCodes.SE5501, "");
         } catch (DriverException e) {
             NetOps.driverErrOut(e.toString() + "\n");
             throw e;
@@ -63,33 +63,35 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
         return tmpItem;
     }
 
-    // returns 0 - if success,
-    // -1 - if end of the sequence 
-    // throws exception if errors
+    /**
+     * @param writer a <code>java.io.Writer</code> object to write an result item to.
+     * @return 0 - if success, -1 - if end of the sequence
+     * @throws DriverException on errors
+     */
     public int next(Writer writer) throws DriverException {
         NetOps.Message msg = new NetOps.Message();
-        
-        try {
-        	if (this.stringItem == null) 
-        	   return -1;
 
-       	    writer.write(this.stringItem.toString());
-        
-        	if(this.hasNextItem) {
-        		msg.instruction = NetOps.se_GetNextItem;
-        		msg.length      = 0;
-        		NetOps.writeMsg(msg, outputStream);
-        		
-        		NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
-        		
-        		this.stringItem  = sitem.item;
-        		this.hasNextItem = sitem.hasNextItem;
-        	} else {
-        		this.stringItem = null;
-        	}
+        try {
+            if (this.stringItem == null)
+                return -1;
+
+            writer.write(this.stringItem.toString());
+
+            if(this.hasNextItem) {
+                msg.instruction = NetOps.se_GetNextItem;
+                msg.length      = 0;
+                NetOps.writeMsg(msg, outputStream);
+
+                NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
+
+                this.stringItem  = sitem.item;
+                this.hasNextItem = sitem.hasNextItem;
+            } else {
+                this.stringItem = null;
+            }
 
         } catch (OutOfMemoryError e) {
-        	throw new DriverException(ErrorCodes.SE5501, "");
+            throw new DriverException(ErrorCodes.SE5501, "");
         } catch (IOException e) {
             throw new DriverException(ErrorCodes.SE3007, "");
         } catch (DriverException e) {
