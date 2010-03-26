@@ -242,6 +242,11 @@ ft_index_cell_xptr create_ft_index(
 			sij.create_index(&start_nodes);
 			break;
 			}
+#else
+		case ft_ind_dtsearch:
+		{
+			throw USER_EXCEPTION2(SE1002, "dtSearch support is disabled"); //TODO: check it's ok to throw here
+		}
 #endif
 		case ft_ind_native:
 		{
@@ -307,58 +312,10 @@ ft_index_cell_xptr find_ft_index(const char* title, ftc_index_t *ftc_idx)
 		return XNULL;
 }
 
-void ft_index_cell_object::update_index(xptr_sequence* upserted)
+void ft_index_cell_object::update_index(update_history *h)
 {
-	switch (this->impl)
-	{
-#ifdef SE_ENABLE_DTSEARCH
-	case ft_ind_dtsearch:
-		{
-			SednaIndexJob sij(this);
-			sij.update_index(upserted);
-			break;
-		}
-#endif
-	default:
-		throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation"); //TODO: check it's ok to trow here
-	}
-
-}
-void ft_index_cell_object::insert_to_index(xptr_sequence* upserted)
-{
-	switch (this->impl)
-	{
-#ifdef SE_ENABLE_DTSEARCH
-	case ft_ind_dtsearch:
-		{
-			SednaIndexJob sij(this);
-			sij.insert_into_index(upserted);
-			break;
-		}
-#endif
-	default:
-		throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation"); //TODO: check it's ok to trow here
-	}
-
-}
-void ft_index_cell_object::delete_from_index(xptr_sequence* deleted)
-{
-	switch (this->impl)
-	{
-#ifdef SE_ENABLE_DTSEARCH
-	case ft_ind_dtsearch:
-		{
-			SednaIndexJob sij(this);
-			sij.delete_from_index(deleted);
-			break;
-		}
-#endif
-	default:
-		throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation"); //TODO: check it's ok to trow here
-	}
-}
-void ft_index_cell_object::change_index(xptr_sequence* inserted,xptr_sequence* updated,xptr_sequence* deleted)
-{
+	xptr_sequence *inserted, *updated, *deleted;
+	h->get_update_sequences(&inserted, &updated, &deleted);
 	switch (this->impl)
 	{
 #ifdef SE_ENABLE_DTSEARCH
@@ -376,8 +333,10 @@ void ft_index_cell_object::change_index(xptr_sequence* inserted,xptr_sequence* u
 			//TODO!
 		}
 	default:
+		h->free_update_sequences(inserted, updated, deleted);
 		throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation"); //TODO: check it's ok to trow here
 	}
+	h->free_update_sequences(inserted, updated, deleted);
 }
 
 

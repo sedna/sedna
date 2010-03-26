@@ -20,95 +20,66 @@
 #define IGNORE_UPDATE_ERRORS
 
 #ifdef SE_ENABLE_FTSEARCH
-std::map<ft_index_cell_xptr,xptr_sequence*> updated_nodes;
-std::map<ft_index_cell_xptr,xptr_sequence*> inserted_nodes;
-std::map<ft_index_cell_xptr,xptr_sequence*> deleted_nodes;
+std::map<ft_index_cell_xptr,update_history*> ft_updates;
 #endif
 
 #ifdef SE_ENABLE_FTSEARCH
 void clear_ft_sequences()
 {
-    std::map<ft_index_cell_xptr,xptr_sequence*>::iterator it=updated_nodes.begin();
-    while (it!=updated_nodes.end())
+    std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.begin();
+    while (it!=ft_updates.end())
     {
         delete it->second;
         it++;
     }
-    updated_nodes.clear();
-    it=inserted_nodes.begin();
-    while (it!=inserted_nodes.end())
-    {
-        delete it->second;
-        it++;
-    }
-    inserted_nodes.clear();
-    it=deleted_nodes.begin();
-    while (it!=deleted_nodes.end())
-    {
-        delete it->second;
-        it++;
-    }
-    deleted_nodes.clear();
+    ft_updates.clear();
 }
 void execute_modifications()
 {
     if (indirectionGetRollbackMode()) return;
-    std::map<ft_index_cell_xptr,xptr_sequence*>::iterator it=inserted_nodes.begin();
-    while (it!=inserted_nodes.end())
-    {
-        it->first->insert_to_index(it->second);
-        it++;
-    }
-    it=updated_nodes.begin();
-    while (it!=updated_nodes.end())
+    std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.begin();
+    while (it!=ft_updates.end())
     {
         it->first->update_index(it->second);
-        it++;
-    }
-    it=deleted_nodes.begin();
-    while (it!=deleted_nodes.end())
-    {
-        it->first->delete_from_index(it->second);
         it++;
     }
 }
 void update_insert_sequence(xptr node,ft_index_cell_cptr icell)
 {
-    std::map<ft_index_cell_xptr,xptr_sequence*>::iterator it=inserted_nodes.find(icell.ptr());
-    if (it==inserted_nodes.end())
+    std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.find(icell.ptr());
+    if (it==ft_updates.end())
     {
-        xptr_sequence* seq=se_new xptr_sequence();
-        seq->add(node);
-        inserted_nodes[icell.ptr()]=seq;
+        update_history *h=se_new update_history();
+		h->add_insert_node(node);
+        ft_updates[icell.ptr()]=h;
     }
     else
-        it->second->add(node);
+        it->second->add_insert_node(node);
 
 }
 void update_update_sequence(xptr node,ft_index_cell_cptr icell)
 {
-    std::map<ft_index_cell_xptr,xptr_sequence*>::iterator it=updated_nodes.find(icell.ptr());
-    if (it==updated_nodes.end())
+    std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.find(icell.ptr());
+    if (it==ft_updates.end())
     {
-        xptr_sequence* seq=se_new xptr_sequence();
-        seq->add(node);
-        updated_nodes[icell.ptr()]=seq;
+        update_history *h=se_new update_history();
+        h->add_update_node(node);
+        ft_updates[icell.ptr()]=h;
     }
     else
-        it->second->add(node);
-
+        it->second->add_update_node(node);
 }
 void update_delete_sequence(xptr node,ft_index_cell_cptr icell)
 {
-    std::map<ft_index_cell_xptr,xptr_sequence*>::iterator it=deleted_nodes.find(icell.ptr());
-    if (it==deleted_nodes.end())
+    std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.find(icell.ptr());
+    if (it==ft_updates.end())
     {
-        xptr_sequence* seq=se_new xptr_sequence();
-        seq->add(node);
-        deleted_nodes[icell.ptr()]=seq;
+        update_history* h=se_new update_history();
+        h->add_delete_node(node);
+        ft_updates[icell.ptr()]=h;
     }
     else
-        it->second->add(node);
+        it->second->add_delete_node(node);
 }
 
 void update_insert_sequence(xptr node,schema_node_cptr icell)
