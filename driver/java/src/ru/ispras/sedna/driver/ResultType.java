@@ -1,41 +1,39 @@
-
 /*
  * File:  ResultType.java
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
-
 package ru.ispras.sedna.driver;
 
-//~--- JDK imports ------------------------------------------------------------
-
-import java.io.*;
-
-//~--- classes ----------------------------------------------------------------
-/*
- * <code>ResultType</code> is used to set the type of the query result. 
- * There are two possible formats for XQuery query result in Sedna: XML and SXML 
- * (see Sedna Programmer's Guide for details).
+/**
+ * Used to set the type of the query result. There are two possible formats for XQuery
+ * query result in Sedna: XML and SXML (see Sedna Programmer's Guide for details).
  */
 public final class ResultType {
+    /**
+     * Predefined XML result type
+     */
     public static final ResultType XML  = new ResultType("xml");
+    /**
+     * Predefined SXML result type
+     */
     public static final ResultType SXML = new ResultType("sxml");
-
-    //~--- fields -------------------------------------------------------------
 
     private String code;
 
-    //~--- constructors -------------------------------------------------------
-
+    /**
+     * Creates a new instance of the <code>ResultType</code> specified by code:
+     * either "sxml" or "xml". 
+     * @param code string representaion of the result type
+     */
     private ResultType(String code) {
-
-        // assert code != null ???
         this.code = code;
     }
 
-    //~--- get methods --------------------------------------------------------
-
+    /**
+     * Returns code of the result type.
+     * @return either "xml" or "sxml" result type
+     */
     public String getCode() {
         return code;
     }

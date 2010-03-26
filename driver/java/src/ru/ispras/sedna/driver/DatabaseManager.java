@@ -1,48 +1,45 @@
-
 /*
  * File:  DatabaseManager.java
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
-
 package ru.ispras.sedna.driver;
-
-//~--- JDK imports ------------------------------------------------------------
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
 
-//~--- classes ----------------------------------------------------------------
 /**
  * To start working with Sedna application has to open a session via establishing
- * an authenticated connection with the Sedna server. <code>DatabaseManager</code> provides <code>getConnection</code>
+ * an authenticated connection with the Sedna server.
+ * Use {@link DatabaseManager#getConnection(String, String, String, String)} 
  * method to open connections to one of the Sedna databases. 
  */
 public class DatabaseManager {
-/**
- * To open a session application uses static method <code>getConnection</code> of the
- * DatabaseManager class.
- *
- * @param  url_string  the name of the computer where the Sedna DBMS is running. This parameter may contain a port number. If the port number is not specified, the default port number (5050) is used
- * @param  db_name     the name of the database to connect to
- * @param  login       user name
- * @param  password    user password
- * @return             If the connection is established and authentication succeeds the method returns an object that implements the <code>SednaConnection</code> interface. Otherwise, <code>DriverException</code> is thrown
- * @see         SednaConnection
- */
-	
+
+    /**
+     * Try to establish connection with the Sedna database server.
+     * @param  url_string the name of the computer where the Sedna DBMS is running.
+     * This parameter may contain a port number. For example <code>127.0.0.1:6060</code> specifies that Sedna
+     * server is running on the localhost and listening on the TCP port <code>6060</code>. If the port number is not specified,
+     * the default port number <code>5050</code> is used
+     * @param  db_name     the name of the database to connect to
+     * @param  login       user name
+     * @param  password    user password
+     * @return If the connection has been established and authentication succeeded the method returns an object that implements the
+     * {@link ru.ispras.sedna.driver.SednaConnection} interface
+     * @throws DriverException if failed to establish connection
+     * @see ru.ispras.sedna.driver.SednaConnection
+     */
     public static SednaConnection getConnection(String url_string,
-                                                String db_name, 
-                                                String login, 
+                                                String db_name,
+                                                String login,
                                                 String password)
             throws DriverException {
         InputStream         inputStream;
         BufferedInputStream bufInputStream;
         OutputStream        outputStream;
         SednaConnectionImpl con    = new SednaConnectionImpl();
-        Socket              socket = null;
+        Socket              socket;
         String              url    = "";
         int                 socket_port;
 
@@ -50,8 +47,8 @@ public class DatabaseManager {
             if (url_string.indexOf(":") != (-1)) {
                 url         = url_string.substring(0, url_string.indexOf(":"));
                 socket_port = Integer.parseInt(
-                    url_string.substring(
-                        url_string.indexOf(":") + 1, url_string.length()));
+                        url_string.substring(
+                                url_string.indexOf(":") + 1, url_string.length()));
             } else {
                 url         = url_string;
                 socket_port = 5050;
@@ -101,7 +98,7 @@ public class DatabaseManager {
                 body_position += 2;
 
                 // writing login
-                msg.body[body_position] = 0;    // format code
+                msg.body[body_position] = 0;  // format code
                 NetOps.writeInt(login.length(), msg.body, body_position + 1);
 
                 byte login_bytes[] = login.getBytes();
@@ -115,7 +112,7 @@ public class DatabaseManager {
                 body_position += login.length();
 
                 // writing db_name
-                msg.body[body_position] = 0;                   // format code
+                msg.body[body_position] = 0;   // format code
                 NetOps.writeInt(db_name.length(), msg.body, body_position + 1);
 
                 byte db_name_bytes[] = db_name.getBytes();
@@ -132,8 +129,6 @@ public class DatabaseManager {
 
             if (msg.instruction == NetOps.se_ErrorResponse)    // ErrorResponse
             {
-                con = null;
-
                 throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             }
 
@@ -173,12 +168,8 @@ public class DatabaseManager {
             }
 
             if (msg.instruction == NetOps.se_ErrorResponse) {
-                con = null;
-
                 throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             } else if (msg.instruction != NetOps.se_AuthenticationOK) {
-                con = null;
-
                 throw new DriverException(ErrorCodes.SE3008, "");
             }
         } catch (UnknownHostException e) {
@@ -188,11 +179,5 @@ public class DatabaseManager {
         }
 
         return con;
-    }
-    
-    /**
-     * @deprecated
-     */
-    protected DatabaseManager(){
     }
 }

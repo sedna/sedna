@@ -6,21 +6,20 @@
 package ru.ispras.sedna.driver;
 
 /**
- * Instance of this exception is thrown when some
- * error occured while working with Sedna.
+ * Signals that driver exception of some sort has been occurred.
+ * This class is the general class of exceptions produced by failed
+ * operation with Sedna server.
  */
 public class DriverException extends Exception {
 
     /* One of the error code defined in ./kernel/common/errdbg/errror.code */
     private int error_code;
-
     /* Debug information returned by server */
     private String debugInfo;
 
     /**
      * Constructs a new DriverException with the specified error_code
      * and defined main error message.
-     *
      * @param error_msg    basic error message.
      * @param error_code   error code.
      */
@@ -34,7 +33,6 @@ public class DriverException extends Exception {
     /**
      * Constructs a new DriverException with the specified details message
      * and defined error code.
-     *
      * @param error_code  one of the error codes.
      * @param details     exception details.
      */
@@ -43,14 +41,14 @@ public class DriverException extends Exception {
         this.error_code = error_code;
     }
     /**
-     *  Returns the error code
+     *  @return error code
      */
     public int getErrorCode() {
         return this.error_code;
     }
 
     /**
-     * Returns the error message.
+     * @return the detail message string of the error occured.
      */
     public String getErrorMessage() {
         return this.toString();
@@ -58,7 +56,7 @@ public class DriverException extends Exception {
 
     /**
      * When session debug mode is on (see Sedna Programmer's Guide for details on Sedna's debug facilities)
-     * {@link #DriverException} provides debug information when query fails.
+     * provides debug information when query fails.
      *
      * @return  debug inforamation as a string.
      * @see     SednaConnection#setDebugMode
@@ -69,6 +67,7 @@ public class DriverException extends Exception {
 
     /**
      * Used for the internal needs.
+     * @param debugInfo text of the debug information
      */
     protected void setDebugInfo(StringBuffer debugInfo) {
         this.debugInfo = debugInfo.toString();
@@ -76,7 +75,6 @@ public class DriverException extends Exception {
 
     /**
      * Constructs a full description for exception.
-     *
      * @param error_code   one of the error codes defined in Sedna
      * @param details      error details
      * @return             full description of the error which
