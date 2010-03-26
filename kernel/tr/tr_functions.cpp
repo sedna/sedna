@@ -49,7 +49,7 @@ on_kernel_statement_begin(size_t mod_index,
         is_qep_built = true; // always consider qep-tree as built; in case of error this allows cleaning up
         qep_tree = xqd->getQEPForModule(mod_index);
     }
-    catch (SednaUserException)
+    catch (SednaUserException &e)
     {
         delete xqd;
         xqd = NULL;
