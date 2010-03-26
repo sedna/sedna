@@ -10,7 +10,7 @@
 
 #include "tr/crmutils/crmutils.h"
 #include "tr/structures/metadata.h"
-#include "expat/expat.h"
+#include "expat.h"
 #include "tr/structures/nodes.h"
 #include "common/xptr.h"
 #include "tr/mo/mo.h"

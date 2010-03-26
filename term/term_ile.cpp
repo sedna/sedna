@@ -38,6 +38,12 @@ const char *get_query_from_term_buffer()
 #include "term_globals.h"
 #include "complet.h"
 #include <readline.h>
+
+// readline defines history as a separate library
+#ifdef USE_HISTORY_H
+    #include <history.h>
+#endif
+
 #include "common/u/u.h"
 #include "common/u/uprocess.h"
 

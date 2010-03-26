@@ -9,7 +9,7 @@
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
 #include "sm/wu/wu.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "sm/llsm/physlog.h"
 
 /*******************************************************************************

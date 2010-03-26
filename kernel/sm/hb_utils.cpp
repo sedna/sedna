@@ -8,7 +8,7 @@
 #include "sm/hb_utils.h"
 
 #include "sm/llsm/llhb.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 
 #include "common/lfsGlobals.h"
 

@@ -7,8 +7,8 @@
  */
 
 #include "common/base.h"
-#include "sm/llsm/llMain.h"
-#include "sm/llsm/lfsStorage.h"
+#include "common/llcommon/llMain.h"
+#include "common/llcommon/lfsStorage.h"
 #include "common/sm_vmm_data.h"
 
 static hb_state hbStatus = HB_END;  // status of hot-backup process

@@ -6,3 +6,4 @@
 char **term_complet(const char *text, int start, int end);
 
 #endif /* __TERM_COMPLET_H__ */
+

@@ -7,7 +7,6 @@
 %require "2.3"
 %defines
 %name-prefix="sedna"
-%output="XQueryParser.cpp"
 %define "parser_class_name" "XQueryParser"
 %error-verbose
 

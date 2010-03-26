@@ -23,7 +23,7 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/triggers/triggers_data.h"
 #include "tr/mo/boundaries.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"

@@ -25,7 +25,7 @@
 #include "common/sm_vmm_data.h"
 
 #include "sm/wu/wu.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "sm/llsm/physrcv.h"
 
 #include "common/rcv_test.h"

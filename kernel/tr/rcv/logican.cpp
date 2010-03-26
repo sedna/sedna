@@ -9,7 +9,7 @@
  *
  */
 
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "tr/rcv/logican.h"
 
 static trn_cell_analysis_redo *rcv_list = NULL;

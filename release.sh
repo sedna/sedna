@@ -25,7 +25,7 @@ usage() {
     failwith "Wrong arguments"
 }
 
-BUILD_DTSEARCH=0
+BUILD_DTSEARCH=OFF
 VERSION_SUFFIX=
 if test $# -ne 1; then
     usage;
@@ -40,7 +40,7 @@ else
             ;;
         local-dts)
             BUILD_TYPE=local
-            BUILD_DTSEARCH=1
+            BUILD_DTSEARCH=ON
             VERSION_SUFFIX=dt
             ;;
         *)
@@ -89,7 +89,7 @@ if test "$OS" "=" "Linux"; then
   export BUILD_PLATFORM=`uname -m` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
-  export SQL_CONNECTION=0
+  export SQL_CONNECTION=OFF
   MAKE_COMMAND=make
   MD5=md5sum
   OS_TYPE=nix
@@ -100,7 +100,7 @@ elif test "$OS" "=" "Darwin"; then
   export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
-  export SQL_CONNECTION=0
+  export SQL_CONNECTION=OFF
   MAKE_COMMAND=make
   MD5=md5
   OS_TYPE=nix
@@ -111,7 +111,7 @@ elif test "$OS" "=" "FreeBSD"; then
   export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
-  export SQL_CONNECTION=0
+  export SQL_CONNECTION=OFF
   MAKE_COMMAND=gmake
   MD5=md5
   OS_TYPE=nix
@@ -122,7 +122,7 @@ elif test "$OS" "=" "SunOS"; then
   export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
-  export SQL_CONNECTION=0
+  export SQL_CONNECTION=OFF
   MAKE_COMMAND=gmake
   MD5="digest -a md5"
   OS_TYPE=nix
@@ -133,8 +133,8 @@ else  #Windows (Cygwin)
   export BUILD_PLATFORM=""
   export DISTR_EXT=tar.gz
   export SRC_EXT=tar.gz
-  export SQL_CONNECTION=1
-  MAKE_COMMAND=make
+  export SQL_CONNECTION=ON
+  MAKE_COMMAND=nmake
   MD5=md5sum
   OS_TYPE=win
 
@@ -146,38 +146,12 @@ fi
 
 prepare_win_source() {
     echo prepare_windows_source &&
-    rm -rf $FILE_BASE/libs/*.tar.gz &&
-    rm -rf $FILE_BASE/libs/pcre/*.a &&
-    $MAKE_COMMAND -C $FILE_BASE/libs &&
-    rm -rf $FILE_BASE/libs/bin &&
-    rm -rf $FILE_BASE/libs/src &&
-    rm -rf $FILE_BASE/libs/chicken_panic_hook.diff &&
-    echo "build:" > $FILE_BASE/libs/Makefile &&
-    echo "clean:" >> $FILE_BASE/libs/Makefile
-}
-
-prepare_nix_source() {
-    rm -rf $FILE_BASE/libs/expat &&
-    rm -rf $FILE_BASE/libs/chicken &&
-    rm -rf $FILE_BASE/libs/pcre &&
     rm -rf $FILE_BASE/libs/bin
 }
 
-create_sed_script()
-{
-    cat > $SEDSCRIPT <<EEE
-s/^ACTIVE_CONFIGURATION[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ACTIVE_CONFIGURATION = Release\1/
-s/^MAKE_DOC[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/MAKE_DOC = 0\1/
-s/^INSTALL_DOC[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/INSTALL_DOC = 1\1/
-s/^EL_DEBUG[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/EL_DEBUG = 0\1/
-s/^JAVA_DRIVER[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/JAVA_DRIVER = 0\1/
-s/^SQL_CONNECTION[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SQL_CONNECTION = 0\1/
-s/^STATIC_SYS_LIBS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/STATIC_SYS_LIBS = 0\1/
-s/^SE_ENABLE_GCOV[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/SE_ENABLE_GCOV = 0\1/
-s/^ENABLE_DTSEARCH[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_DTSEARCH = $BUILD_DTSEARCH\1/
-s/^ENABLE_TRIGGERS[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/ENABLE_TRIGGERS = 1\1/
-s/^CLEANUP_LIBRARIES[ ]*=[A-Za-z0-9 ]\{1,\}\(\r\{0,1\}\)$/CLEANUP_LIBRARIES = 1\1/
-EEE
+prepare_nix_source() {
+    echo prepare_linux_source &&
+    rm -rf $FILE_BASE/libs/bin
 }
 
 exclude_files() {
@@ -192,27 +166,13 @@ prepare_source() {
     else
 	  prepare_win_source
     fi
-    mv $FILE_BASE/Makefile.include $FILE_BASE/Makefile.include.orig &&
-    SEDSCRIPT=Makefile.include.sed &&
-    create_sed_script &&
-    sed -f $SEDSCRIPT $FILE_BASE/Makefile.include.orig > $FILE_BASE/Makefile.include &&
-    rm -f $FILE_BASE/Makefile.include.orig &&
-    exclude_files &&
     OLDDIR="`pwd`" &&
-
-    cd $FILE_BASE/doc &&
-    $MAKE_COMMAND &&
-    rm -f AdminGuide/*.{aux,log,tex,toc,out} AdminGuide/Makefile &&
-    rm -f QuickStart/*.{aux,log,tex,toc,out} QuickStart/Makefile &&
-    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc,out} ProgGuide/ClientServerProtocol/Makefile &&
-    rm -f ProgGuide/*.{aux,log,tex,toc,out} ProgGuide/Makefile &&
-    rm Makefile &&
-    cd "$OLDDIR" &&
 
     cd $FILE_BASE/kernel/tr/xqp &&
     chmod +x release.sh &&
     ./release.sh &&
-    cd "$OLDDIR"
+    cd "$OLDDIR" &&
+    exclude_files
 }
 
 
@@ -270,7 +230,6 @@ put_results_to_build_machine() {
 get_build_file
 
 echo -n $BUILD > build || failwith "Cannot write to build file"
-
 FILE_BASE=sedna-$SEDNA_VERSION.$BUILD$VERSION_SUFFIX
 if [ $BUILD_PLATFORM ]; then
   BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX-$BUILD_PLATFORM
@@ -282,46 +241,41 @@ fi
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 
 
-
-##### MAKE CLEAN ##############################################################
-$MAKE_COMMAND clean || failwith "make clean failed"
-##### MAKE CLEAN ##############################################################
-
-
-
 ##### SOURCE RELEASE ##########################################################
 (cd .. &&
  cp -r sedna $FILE_BASE &&
  prepare_source &&
  (tar cvf - $FILE_BASE | gzip 1>$SRC_FILE_NAME.$SRC_EXT) &&
  rm -rf $FILE_BASE &&
- mv $SRC_FILE_NAME.$SRC_EXT $SEDNA_INSTALL) || 
+ mv $SRC_FILE_NAME.$SRC_EXT $SEDNA_INSTALL) ||
                                failwith "Failed to create source distribution"
 ##### SOURCE RELEASE ##########################################################
 
-
-
 ##### MAKE ####################################################################
-rm -rf libs/bin/*
-export ACTIVE_CONFIGURATION=Release
-export DOCUMENTATION=1
-export EL_DEBUG=0
-export JAVA_DRIVER=1
+rm -rf libs/bin/* # remove binary cache
+STATIC_SYS_LIBS=OFF
 if test "$STATIC_LIBS"x = "true"x; then
-  export STATIC_SYS_LIBS=1
+  STATIC_SYS_LIBS=ON
 fi
-export ENABLE_DTSEARCH=$BUILD_DTSEARCH
-$MAKE_COMMAND || failwith "make failed"
-##### MAKE ####################################################################
+ENABLE_DTSEARCH=$BUILD_DTSEARCH
 
+# configure
+rm -rf buildr
+mkdir -p buildr
+pushd buildr > /dev/null 2>&1
 
+# determine generator name
+if test "$OS_TYPE" "=" "nix"; then
+    CMAKE_GENERATOR="Unix Makefiles"
+else
+    CMAKE_GENERATOR="NMake Makefiles"
+fi
+cmake -G "$CMAKE_GENERATOR" -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=$SEDNA_INSTALL/sedna -D SQL_CONNECTION=$SQL_CONNECTION -D STATIC_SYS_LIBS=$STATIC_SYS_LIBS -D ENABLE_DTSEARCH=$ENABLE_DTSEARCH .. || failwith "cmake failed"
 
-##### MAKE INSTALL ############################################################
 rm -fr $SEDNA_INSTALL/sedna
-$MAKE_COMMAND grouped_install || failwith "make install failed"
-##### MAKE INSTALL ############################################################
-
-
+$MAKE_COMMAND install || failwith "make (install) failed"
+popd
+##### MAKE ####################################################################
 
 ##### RELEASE #################################################################
 if test "$OS_TYPE" "=" "nix"; then 
@@ -348,6 +302,3 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
      put_results_to_build_machine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
  fi)
 ##### RELEASE #################################################################
-
-
-

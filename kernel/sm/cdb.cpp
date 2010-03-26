@@ -13,7 +13,7 @@
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/cdb_globals.h"
 #include "sm/sm_functions.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "sm/db_utils.h"
 #include "common/errdbg/d_printf.h"
 #include "common/u/uhdd.h"
