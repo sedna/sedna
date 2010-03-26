@@ -29,23 +29,12 @@ static xptr	TMPNIDBLK;           /* current temporary block for nid prefixes */
 static doc_schema_node_xptr nid_holder; /*current persistent block holder*/
 
 int nid_block_count = 0;
-char DC = ALPHABET_SIZE-1;
 t_nid NIDNULL;
 std::pair<int /*size*/,int /*increment*/>* sizehnt=NULL;
 
 void
 nid_set_proportion(fnumber p) {
 	PROPORTION = p;
-}
-
-/* the dividing symbol must lie in range [3-ALPHABET_SIZE-2] 
-   because symbols '1' and 'ALPHABET_SIZE-1' cannot be used, as they are used for extension;
-   and it must be possible to create at least one child for the given node */
-void 
-nid_set_dc(char the_dc) {
-	if ((unsigned char)the_dc >ALPHABET_SIZE-1 || (unsigned char)the_dc <= 1)
-		throw SYSTEM_EXCEPTION("[nid_set_dc()] bad dividing character ");
-	DC = the_dc;
 }
 
 bool
@@ -87,7 +76,6 @@ nid_get_blk(shft p_size, bool persistent) {
 	
 	--------------------------------------------------------*/
 
-	char	ss[10];
 	if (persistent) {
 		if (nid_holder->ext_nids_block == XNULL) {
 			nid_holder.modify()->ext_nids_block = pstr_create_blk(true);
@@ -107,7 +95,6 @@ nid_get_blk(shft p_size, bool persistent) {
 		}
 		return TMPNIDBLK;
 	}
-	//return result;
 }
 
 /* 

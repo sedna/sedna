@@ -382,7 +382,7 @@ int sm_server_handler(void *arg)
 			case 38:
                      {
 						 /* rollback or commit notification */
-						 bool isRollback = msg->data.data[0];
+						 bool isRollback = (msg->data.data[0] != 0);
 						 if (isRollback)
 						 {
 							 WuOnRollbackTransactionExn(msg->sid);

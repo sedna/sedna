@@ -309,7 +309,7 @@ void register_session_on_gov()
 bool
 check_database_existence(const char* name)
 {
-    bool res1 = false, res2 = false, res3 = false;
+    int res1 = false, res2 = false, res3 = false;
 
     res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(name) + "_cfg.xml").c_str(), __sys_call_error);
 

@@ -153,7 +153,7 @@ inline bool isXML10Valid(int c)
 {
     return (c & (~0x0 << 7)) ? 
            ( (0x80 <= c && c <= 0xD7FF) || (0xE000 <= c && c <= 0xFFFD) || (0x10000 <= c && c <= 0x10FFFF) ) :
-           xml10_one_byte_valid[(c >> 3)] & (0x80 >> (c & 7));
+           xml10_one_byte_valid[(c >> 3)] & (0x80 >> (c & 7)) != 0;
 }
 
 

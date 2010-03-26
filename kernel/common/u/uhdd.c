@@ -873,7 +873,7 @@ int uChangeWorkingDirectory(const char *path, sys_call_error_fun fun)
 #endif
 }
 
-char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun)
+char *uGetDirectoryFromFilePath(const char *path, char *buf, uint32_t buf_len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     char drive[_MAX_DRIVE];
@@ -904,7 +904,7 @@ char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len, sys_ca
 #endif
 }
 
-char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun)
+char *uGetFileNameFromFilePath(const char *path, char *buf, uint32_t buf_len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     char fname[_MAX_FNAME];
