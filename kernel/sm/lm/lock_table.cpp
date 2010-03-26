@@ -616,7 +616,7 @@ bool lock_table::deadlock(transaction_id trid, bool sync)
   {
      visit(it->second->tran);
   }
-  catch (SednaUserException)
+  catch (SednaUserException &e)
   {
      up_sem(sync);
      return true;//deadlock is detected

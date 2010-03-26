@@ -408,7 +408,7 @@ namespace sedna
 
             delete tmp_mod;
         }
-        catch (SednaUserException)
+        catch (SednaUserException &e)
         {
             throw SYSTEM_EXCEPTION("internal parser error: subexpression syntax error");
         }

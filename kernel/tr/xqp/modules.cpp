@@ -60,7 +60,7 @@ char *get_module(const char *module_uri)
         tree = NULL;
 
     }
-    catch (SednaUserException)
+    catch (SednaUserException &e)
     {
         if (mem_alloced) free(res);
         if (tree_opened) tree->tree.op->close();
@@ -108,7 +108,7 @@ std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string 
             module.append(xqd->getIRRepresentation(i));
         module.append(")");
     }
-    catch (SednaUserException)
+    catch (SednaUserException &e)
     {
         delete xqd;
         throw;
