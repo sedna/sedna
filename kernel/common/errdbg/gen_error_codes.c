@@ -11,7 +11,6 @@
 #define ERROR_DESCRIPTION_MAX_SIZE       1000
 
 /// File names
-#define ERRORS_FILE_NAME                 "error.codes"
 #define C_ERROR_CODES                    "error_codes.c"
 #define H_ERROR_CODES                    "error_codes.h"
 #define JAVA_ERROR_CODES                 "ErrorCodes.java"
@@ -120,7 +119,7 @@ extern const int user_error_code_entries_size;\n\n\
 #endif\n\n";
 
     char* c_tail = "};\n\nconst int user_error_code_entries_size = sizeof user_error_code_entries;\n";
-    char* h_tail = "\n#endif\n";    
+    char* h_tail = "\n#endif\n";
 
 
     if((cerrors = fopen(C_ERROR_CODES, "wb")) == NULL)
@@ -134,19 +133,19 @@ extern const int user_error_code_entries_size;\n\n\
         exit(1);
     }
 
-    write_with_handler(cerrors, C_ERROR_CODES, c_header);    
+    write_with_handler(cerrors, C_ERROR_CODES, c_header);
     write_with_handler(herrors, H_ERROR_CODES, h_header);
 
     for(counter = 0; counter < codes_len; counter++)
     {
         write_with_handler(herrors, H_ERROR_CODES, "#define %s           %d  // %s\n", codes[counter].code, counter, codes[counter].description);
- 
+
         write_with_handler  (cerrors, C_ERROR_CODES, "%c{\"%s\", ueca_ROLLBACK_TRN, \"", counter == 0 ? ' ' : ',', codes[counter].code);
         write_quoted_string (cerrors, C_ERROR_CODES, codes[counter].description);
         write_with_handler  (cerrors, C_ERROR_CODES, "\"}\n");
     }
 
-    write_with_handler(cerrors, C_ERROR_CODES, c_tail);    
+    write_with_handler(cerrors, C_ERROR_CODES, c_tail);
     write_with_handler(herrors, H_ERROR_CODES, h_tail);
 
 
@@ -172,7 +171,7 @@ void write_scm_error_codes(const struct error_code* codes, const int codes_len)
         exit(1);
     }
 
-    write_with_handler(errors, SCM_ERROR_CODES, header);    
+    write_with_handler(errors, SCM_ERROR_CODES, header);
 
     for(counter = 0; counter < codes_len; counter++)
     {
@@ -215,7 +214,7 @@ class ErrorCodes {\n";
 
     for(counter = 0; counter < codes_len; counter++)
     {
-        write_with_handler  (errors, JAVA_ERROR_CODES, "        %c{ \"%s\", \"", counter == 0 ? ' ' : ',', codes[counter].code); 
+        write_with_handler  (errors, JAVA_ERROR_CODES, "        %c{ \"%s\", \"", counter == 0 ? ' ' : ',', codes[counter].code);
         write_quoted_string (errors, JAVA_ERROR_CODES, codes[counter].description);
         write_with_handler  (errors, JAVA_ERROR_CODES, "\"}\n");
     }
@@ -234,12 +233,17 @@ int main(int argc, char** argv)
     char buf[1024];
     int line = 0;
     struct error_code* codes = NULL;
-    int codes_size = 0, counter = 0, code_len = 0, description_len = 0; 
+    int codes_size = 0, counter = 0, code_len = 0, description_len = 0;
 
-
-    if((ferrors = fopen(ERRORS_FILE_NAME, "r")) == NULL)
+    if (argc < 2)
     {
-        fprintf(stderr, "Can't open file with error code: '%s'!\n", ERRORS_FILE_NAME);
+        fprintf(stderr, "Input file with error codes isn't specified!\n");
+        return 1;
+    }
+
+    if ((ferrors = fopen(argv[1], "r")) == NULL)
+    {
+        fprintf(stderr, "Can't open file with error code: '%s'!\n", argv[1]);
         return 1;
     }
 
@@ -248,7 +252,7 @@ int main(int argc, char** argv)
         char *code = NULL, *new_code = NULL, *new_description = NULL;
 
         if(fgets(buf, sizeof(buf), ferrors) == NULL)
-        { 
+        {
             if(feof(ferrors)) break;
             else return 1;
         }
@@ -267,10 +271,10 @@ int main(int argc, char** argv)
             fprintf(stderr, "Error code can't have leading whitespace or be empty, line %d\n", line);
             return 1;
         }
-        
+
         code_len = strlen(code + 1);
-        if(code_len > ERROR_CODE_MAX_SIZE) 
-        { 
+        if(code_len > ERROR_CODE_MAX_SIZE)
+        {
             fprintf(stderr, "Too long error code, line %d\n", line);
             return 1;
         }
@@ -280,22 +284,22 @@ int main(int argc, char** argv)
 
         /// II. Prepare error description
         if(fgets(buf, sizeof(buf), ferrors) == NULL || fgets(buf, sizeof(buf), ferrors) == NULL)
-        { 
+        {
             fprintf(stderr, "Two lines are expected after error code, line %d\n", line);
             return 1;
         }
         line+=2;
-        
+
         description_len = strlen(buf);
-        if(description_len > ERROR_DESCRIPTION_MAX_SIZE) 
-        { 
+        if(description_len > ERROR_DESCRIPTION_MAX_SIZE)
+        {
             fprintf(stderr, "Too long error code description, line %d\n", line);
             return 1;
         }
-        
+
         new_description = (char*)malloc(description_len + 1);
         if(prepare_error_description(new_description, buf) == 0)
-        { 
+        {
             fprintf(stderr, "Empty error description, line %d\n", line);
             return 1;
         }
@@ -306,12 +310,12 @@ int main(int argc, char** argv)
         /// III. Allocate new error code wrapper
         if(codes_size < counter)
         {
-            if(!codes_size) 
+            if(!codes_size)
             {
                 codes = (struct error_code*)malloc(sizeof(struct error_code) * 100);
                 codes_size = 100;
             }
-            else 
+            else
             {
                 codes = (struct error_code*)realloc(codes, sizeof(struct error_code) * codes_size * 2);
                 codes_size *= 2;
@@ -322,9 +326,9 @@ int main(int argc, char** argv)
         codes[counter-1].description = new_description;
     }
 
-    write_c_error_codes(codes, counter); 
-    write_scm_error_codes(codes, counter); 
-    write_java_error_codes(codes, counter);    
+    write_c_error_codes(codes, counter);
+    write_scm_error_codes(codes, counter);
+    write_java_error_codes(codes, counter);
 
     while(counter > 0)
     {

@@ -20,7 +20,7 @@
 #include "tr/mo/mo.h"
 #include "tr/structures/metadata.h"
 #include "tr/mo/indirection.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/tr_globals.h"
 #include "tr/log/log.h"

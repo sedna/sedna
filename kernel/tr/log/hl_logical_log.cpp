@@ -11,7 +11,7 @@
 
 #include "tr/log/log.h"
 #include "tr/log/logiclog.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "tr/tr_globals.h"
 #include "common/errdbg/d_printf.h"
 #include "common/tr_debug.h"

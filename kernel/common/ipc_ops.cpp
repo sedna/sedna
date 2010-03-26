@@ -15,7 +15,7 @@
 #include "common/u/uhdd.h"
 #include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
-#include "expat/expat.h"
+#include "expat.h"
 
 
 static std::string elem_content;

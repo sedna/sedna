@@ -1,0 +1,5 @@
+if ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+    set(vmm_SRC os_exceptions.cpp vmm.cpp vmmwin32.cpp vmmtrace.cpp)
+else ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+    set(vmm_SRC os_exceptions.cpp vmm.cpp vmmunix.cpp vmmtrace.cpp)
+endif ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")

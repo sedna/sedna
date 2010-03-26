@@ -77,10 +77,7 @@ bool				bt_print_tree(xptr xp);
 
 //wapper
 //XXX: why rcv_test includes btintern.h?????
-inline void			bt_check_btree(xptr btree)
-{
-	bt_check_btree_tmpl<xptr>(btree);
-}
+void			bt_check_btree(xptr btree);
 
 
 

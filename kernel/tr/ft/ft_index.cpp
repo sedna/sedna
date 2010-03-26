@@ -8,7 +8,7 @@
 #include "tr/idx/btree/btree.h"
 #include "tr/crmutils/node_utils.h"
 #include "tr/crmutils/crmutils.h"
-#include "expat/expat.h"
+#include "expat.h"
 #include "tr/ft/ft_cache.h"
 #include "tr/executor/base/sorted_sequence.h"
 #include "tr/tr_globals.h"

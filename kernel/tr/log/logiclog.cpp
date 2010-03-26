@@ -7,7 +7,7 @@
  */
 
 #include "tr/log/logiclog.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 
 // mem copy with offset increment
 inline

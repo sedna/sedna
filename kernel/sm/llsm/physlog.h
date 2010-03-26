@@ -9,7 +9,7 @@
 #ifndef _LL_PHYS_LOG_
 #define _LL_PHYS_LOG_
 
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "common/base.h"
 #include "common/xptr.h"
 #include "common/lfsGlobals.h"

@@ -1,4 +1,5 @@
 _darcs
+.git
 exclude_files
 ftpscript.txt
 copyright.sh
@@ -6,6 +7,6 @@ linecount.sh
 release.sh
 coverage.pl
 doc/CodingGuidelines
-libs/chicken.mak
-libs/expat_static.mak
 libs/dtsearch
+configure.sh
+kernel/tr/xqp/release.sh

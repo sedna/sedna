@@ -33,7 +33,7 @@ INTDIR=..\lib
 OutDir=..\lib
 # End Custom Macros
 
-ALL : "$(OUTDIR)\libexpatMT.lib"
+ALL : "$(OUTDIR)\expat.lib"
 
 
 CLEAN :
@@ -41,7 +41,7 @@ CLEAN :
 	-@erase "$(INTDIR)\xmlparse.obj"
 	-@erase "$(INTDIR)\xmlrole.obj"
 	-@erase "$(INTDIR)\xmltok.obj"
-	-@erase "$(OUTDIR)\libexpatMT.lib"
+	-@erase "$(OUTDIR)\expat.lib"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -85,13 +85,13 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\expat_static.bsc"
 BSC32_SBRS= \
 	
 LIB32=link.exe -lib
-LIB32_FLAGS=/nologo /out:"$(OUTDIR)\libexpatMT.lib" 
+LIB32_FLAGS=/nologo /out:"$(OUTDIR)\expat.lib"
 LIB32_OBJS= \
 	"$(INTDIR)\xmlparse.obj" \
 	"$(INTDIR)\xmlrole.obj" \
 	"$(INTDIR)\xmltok.obj"
 
-"$(OUTDIR)\libexpatMT.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+"$(OUTDIR)\expat.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
     $(LIB32) @<<
   $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<
@@ -104,7 +104,7 @@ INTDIR=.\Debug_static
 OutDir=.\Debug_static
 # End Custom Macros
 
-ALL : "$(OUTDIR)\libexpatMT.lib" "$(OUTDIR)\expat_static.bsc"
+ALL : "$(OUTDIR)\expat.lib" "$(OUTDIR)\expat_static.bsc"
 
 
 CLEAN :
@@ -117,7 +117,7 @@ CLEAN :
 	-@erase "$(INTDIR)\xmltok.obj"
 	-@erase "$(INTDIR)\xmltok.sbr"
 	-@erase "$(OUTDIR)\expat_static.bsc"
-	-@erase "$(OUTDIR)\libexpatMT.lib"
+	-@erase "$(OUTDIR)\expat.lib"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -169,13 +169,13 @@ BSC32_SBRS= \
 <<
 
 LIB32=link.exe -lib
-LIB32_FLAGS=/nologo /out:"$(OUTDIR)\libexpatMT.lib" 
+LIB32_FLAGS=/nologo /out:"$(OUTDIR)\expat.lib"
 LIB32_OBJS= \
 	"$(INTDIR)\xmlparse.obj" \
 	"$(INTDIR)\xmlrole.obj" \
 	"$(INTDIR)\xmltok.obj"
 
-"$(OUTDIR)\libexpatMT.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+"$(OUTDIR)\expat.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
     $(LIB32) @<<
   $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<

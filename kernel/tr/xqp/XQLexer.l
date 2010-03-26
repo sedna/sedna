@@ -103,7 +103,6 @@ static std::string cdata_cont; // we accumulate CDATA content here
 %option stack
 %option 8bit
 %option prefix="sedna"
-%option outfile="XQueryLexer.cpp"
 
 Digits [0-9]+
 HexDigits [0-9a-fA-F]+

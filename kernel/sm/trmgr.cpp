@@ -27,7 +27,7 @@
 #include "sm/trmgr.h"
 #include "sm/sm_functions.h"
 #include "sm/llsm/physlog.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "common/ipc_ops.h"
 
 #include "common/rcv_test.h"

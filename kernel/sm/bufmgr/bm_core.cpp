@@ -8,7 +8,7 @@
 #include "common/u/uutils.h"
 #include "common/sm_vmm_data.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/llsm/llMain.h"
+#include "common/llcommon/llMain.h"
 #include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
 #include "sm/wu/wu.h"

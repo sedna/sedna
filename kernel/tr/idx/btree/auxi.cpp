@@ -135,3 +135,8 @@ void bt_check_btree_tmpl(xptr pg)
 	bt_check_bsubtree_tmpl<object>(pg, &k, true);
 }
 
+void  bt_check_btree(xptr btree)
+{
+    bt_check_btree_tmpl<xptr>(btree);
+}
+

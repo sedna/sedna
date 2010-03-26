@@ -73,7 +73,7 @@ void term_debug_info_output(const char *msg)
 
 int process_commandline_query()
 {
-    SednaConnection conn;
+    SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
     char buf[RESULT_MSG_SIZE+1];
     
    	term_output2("%s> ",db_name);
@@ -87,17 +87,6 @@ int process_commandline_query()
     	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
 	
-    //begin transaction
-    res = SEbegin(&conn);
-    if(res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
-    {
-    	fprintf(stderr, "failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
-        fflush(stderr);
-        //closing session
-        SEclose(&conn);
-    	return EXIT_STATEMENT_OR_COMMAND_FAILED;
-    }
-    
     // execute XQuery query	or update
     res = SEexecute(&conn, query); 
     if(res == SEDNA_QUERY_FAILED) 
@@ -204,20 +193,6 @@ int process_commandline_query()
     }
 	
 
-    if(!conn.autocommit)
-    {
-        //commiting the transaction
-        res = SEcommit(&conn);
-        if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
-        {
-            fprintf(stderr, "failed to commit transaction \n%s\n", SEgetLastErrorMsg(&conn));
-            fflush(stderr);
-            //closing session
-            SEclose(&conn);
-            return EXIT_STATEMENT_OR_COMMAND_FAILED;
-        }
-    }
-	
     //closing session
     res = SEclose(&conn);
     if(res != SEDNA_SESSION_CLOSED) 

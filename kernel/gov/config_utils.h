@@ -11,7 +11,7 @@
 #include "common/sedna.h"
 
 #include "common/config.h"
-#include "expat/expat.h"
+#include "expat.h"
 
 
 void fulfill_config_parameters (gov_config_struct* cfg);
