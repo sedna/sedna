@@ -171,10 +171,16 @@ prepare_source() {
     cd $FILE_BASE/kernel/tr/xqp &&
     chmod +x release.sh &&
     ./release.sh &&
-    cd "$OLDDIR" &&
-    exclude_files
+    cd "$OLDDIR"
 }
 
+prepare_post_source() {
+    cp $SEDNA_INSTALL/sedna/doc/AdminGuide.pdf $FILE_BASE/doc/AdminGuide &&
+    cp $SEDNA_INSTALL/sedna/doc/ProgGuide.pdf $FILE_BASE/doc/ProgGuide &&
+    cp $SEDNA_INSTALL/sedna/doc/ClientServerProtocol.pdf $FILE_BASE/doc/ProgGuide/ClientServerProtocol &&
+    cp $SEDNA_INSTALL/sedna/doc/QuickStart.pdf $FILE_BASE/doc/QuickStart &&
+    exclude_files
+}
 
 #script for downloading build-number-file
 get_build_file() {
@@ -241,18 +247,11 @@ fi
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 
 
-##### SOURCE RELEASE ##########################################################
-(cd .. &&
- cp -r sedna $FILE_BASE &&
- prepare_source &&
- (tar cvf - $FILE_BASE | gzip 1>$SRC_FILE_NAME.$SRC_EXT) &&
- rm -rf $FILE_BASE &&
- mv $SRC_FILE_NAME.$SRC_EXT $SEDNA_INSTALL) ||
-                               failwith "Failed to create source distribution"
-##### SOURCE RELEASE ##########################################################
+##### PREPARE SOURCE RELEASE ##########################################################
+(cd .. && cp -r sedna $FILE_BASE && prepare_source) || failwith "Failed to prepare source distribution"
+##### PREPARE SOURCE RELEASE ##########################################################
 
 ##### MAKE ####################################################################
-rm -rf libs/bin/* # remove binary cache
 STATIC_SYS_LIBS=OFF
 if test "$STATIC_LIBS"x = "true"x; then
   STATIC_SYS_LIBS=ON
@@ -260,9 +259,8 @@ fi
 ENABLE_DTSEARCH=$BUILD_DTSEARCH
 
 # configure
-rm -rf buildr
-mkdir -p buildr
-pushd buildr > /dev/null 2>&1
+mkdir -p ../$FILE_BASE.build
+pushd ../$FILE_BASE.build > /dev/null 2>&1
 
 # determine generator name
 if test "$OS_TYPE" "=" "nix"; then
@@ -270,14 +268,26 @@ if test "$OS_TYPE" "=" "nix"; then
 else
     CMAKE_GENERATOR="NMake Makefiles"
 fi
-cmake -G "$CMAKE_GENERATOR" -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=$SEDNA_INSTALL/sedna -D SQL_CONNECTION=$SQL_CONNECTION -D STATIC_SYS_LIBS=$STATIC_SYS_LIBS -D ENABLE_DTSEARCH=$ENABLE_DTSEARCH .. || failwith "cmake failed"
+
+cmake -G "$CMAKE_GENERATOR" -D CMAKE_INSTALL_PREFIX=$SEDNA_INSTALL/sedna -D SQL_CONNECTION=$SQL_CONNECTION -D STATIC_SYS_LIBS=$STATIC_SYS_LIBS -D ENABLE_DTSEARCH=$ENABLE_DTSEARCH -D MAKE_DOC=ON -D JAVA_DRIVER=ON ../$FILE_BASE || failwith "cmake failed"
 
 rm -fr $SEDNA_INSTALL/sedna
 $MAKE_COMMAND install || failwith "make (install) failed"
 popd
+rm -rf ../$FILE_BASE.build
+
+(cd .. && prepare_post_source) || failwith "Failed to prepare source distribution (post-phase)"
+
 ##### MAKE ####################################################################
 
-##### RELEASE #################################################################
+##### SOURCE RELEASE #################################################################
+(cd .. &&
+    (tar cvf - $FILE_BASE | gzip 1>$SRC_FILE_NAME.$SRC_EXT) &&
+    rm -rf $FILE_BASE &&
+    mv $SRC_FILE_NAME.$SRC_EXT $SEDNA_INSTALL) || failwith "Failed to create source distribution"
+##### SOURCE RELEASE #################################################################
+
+##### BINARY RELEASE #################################################################
 if test "$OS_TYPE" "=" "nix"; then 
     cp scripts/linux-install.sh $SEDNA_INSTALL; 
 fi || failwith "Cannot copy scripts/linux-install.sh"
@@ -301,4 +311,4 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
  if test "$BUILD_TYPE" "!=" "local"; then 
      put_results_to_build_machine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
  fi)
-##### RELEASE #################################################################
+##### BINARY RELEASE #################################################################
