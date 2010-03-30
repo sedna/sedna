@@ -34,6 +34,7 @@ macro (GET_REL_PATH SUBFOLDER)
 endmacro (GET_REL_PATH SUBFOLDER)
 
 # This macros adds header files to "dest_src" source files and sets Visual Studio folders in more or less sane manner
+#     - get_recurse_headers == true means that we want header files from all the tree, while false means we want them from current dir only
 macro (SET_SOURCES dest_src get_recurse_headers)
     if (${get_recurse_headers})
         file(GLOB_RECURSE h_srcs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h *.hpp *.hh)
@@ -41,10 +42,10 @@ macro (SET_SOURCES dest_src get_recurse_headers)
         file(GLOB h_srcs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h *.hpp *.hh)
     endif (${get_recurse_headers})
     list(APPEND ${dest_src} ${h_srcs})
-    
+
     foreach (src ${${dest_src}})
         get_filename_component(src_grp ${src} PATH)
-        
+
         if (src_grp)
             string(REPLACE "/" "\\" src_grp ${src_grp})
             source_group(${src_grp} FILES ${src})
