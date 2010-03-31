@@ -223,12 +223,15 @@ public:
 	pstr_long_iterator operator ++(int) {pstr_long_iterator old(*this); ++(*this); return old; }
 	pstr_long_iterator operator --(int) {pstr_long_iterator old(*this); --(*this); return old; }
 
-	pstr_long_iterator &operator +=(int x)
+	//FIXME: += -= and mb other operators don't work with negative values of arguments!!!
+
+	pstr_long_iterator &operator +=(pstr_long_off_t x)
 	{
+		U_ASSERT(x >= 0);
 		//no error checks here, TODO - add some assertions
 		//we don't care if we go after the end of string too far
 		m_pos += x;
-		while (((int)ofs+x) >= (int)PAGE_SIZE)
+		while (((pstr_long_off_t)ofs+x) >= PAGE_SIZE)
 		{
 			CHECKP(blk);
 			if (PSTR_LONG_BLK_HDR(blk)->next_blk != XNULL &&
@@ -241,15 +244,17 @@ public:
 			else
 				break;
 		}
-		ofs += x;
+		U_ASSERT(x >= 0 && x < PAGE_SIZE);
+		ofs += (unsigned int)x;
 		return *this;
 	}
-	pstr_long_iterator &operator -=(int x)
+	pstr_long_iterator &operator -=(pstr_long_off_t x)
 	{
+		U_ASSERT(x >= 0);
 		//no error checks here, TODO - add some assertions
 		//we don't care if we go before the start of string too far
 		m_pos -= x;
-		while (((int)ofs - x) < (int)PSTR_LONG_BLK_HDR_SIZE)
+		while (((pstr_long_off_t)ofs) < x + PSTR_LONG_BLK_HDR_SIZE) //ofs - x < PSTR_LONG_BLK_HDR_SIZE
 		{
 			CHECKP(blk);
 			if (PSTR_LONG_BLK_HDR(blk)->prev_blk != XNULL)
@@ -261,7 +266,8 @@ public:
 			else
 				break;
 		}
-		ofs -= x;
+		U_ASSERT(x >= 0 && x <= (pstr_long_off_t)ofs);
+		ofs -= (unsigned int)x;
 		return *this;
 	}
 
@@ -292,8 +298,7 @@ inline bool operator > (const pstr_long_iterator& it1, const pstr_long_iterator&
 {
 	return it1.get_pos() > it2.get_pos();
 }
-//FIXME: int
-inline int operator - (const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+inline pstr_long_off_t operator - (const pstr_long_iterator& it1, const pstr_long_iterator& it2)
 {
 	return it1.get_pos() - it2.get_pos();
 }

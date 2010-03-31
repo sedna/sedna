@@ -212,7 +212,7 @@ ft_index_cell_xptr create_ft_index(
     //III. For each schema node found (sn_obj)
 
     std::vector<xptr> start_nodes;
-    for (int i = 0; i < sobj.size(); i++)
+    for (unsigned int i = 0; i < sobj.size(); i++)
     {
         xptr blk;
         sobj[i].modify()->ft_index_list.add(idc.ptr()); // just_heap modified because this must be recovered (AK)
@@ -343,15 +343,15 @@ void ft_index_cell_object::update_index(update_history *h)
 xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 {
 	xptr res = XNULL;
-	int sz=tbuf.get_size();
+	str_off_t sz=tbuf.get_size();
 	if (sz<=PSTRMAXSIZE)
 	{
 		char* mem=tbuf.c_str();
-		res=pstr_do_allocate(this->pstr_sequence,mem,sz);
+		res=pstr_do_allocate(this->pstr_sequence,mem,(int)sz);
 		if (res==XNULL)
 		{
 			xptr new_blk = pstr_create_blk(true);
-			res= pstr_do_allocate(new_blk, mem, sz);
+			res= pstr_do_allocate(new_blk, mem, (int)sz);
 		}
 		return res;
 	}
@@ -370,7 +370,7 @@ void ft_index_cell_object::remove_from_pstr(doc_serial_header& head )
 	{
 		pstr_do_deallocate(
 			BLOCKXPTR(head.ptr),
-			head.ptr, head.length, true);
+			head.ptr, (int)head.length, true);
 	}
 	else
 	{
@@ -488,7 +488,7 @@ void doc_serial_header::serialize(string_consumer_fn fn, void *p)
 		CHECKP(this->ptr);
 		shft shift= *((shft*)XADDR(this->ptr));
 		char* data=(char*)XADDR(BLOCKXPTR(this->ptr))+shift;
-		parse(data,length,&dp);
+		parse(data,(int)length,&dp);
 	}
 	else
 	{

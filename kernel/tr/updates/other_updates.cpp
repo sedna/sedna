@@ -65,9 +65,6 @@ void rename(PPOpIn arg,const char* name)
         ++it;
     }
     it=argseq.end();
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
     do {
         --it;
         xptr indir=*it;

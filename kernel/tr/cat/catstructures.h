@@ -7,7 +7,7 @@
 #define _CATSTRUCTURES_H
 
 #include "tr/cat/catmem.h"
-// # include "tr/cat/catstore.h"
+#include "tr/cat/simplestream.h"
 
 template<class T>
 struct cat_list {

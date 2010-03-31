@@ -33,16 +33,6 @@ void ftlog_file::write_xptr_sequence(xptr_sequence* seq)
 		this->write_data(&ptr, sizeof(ptr));
 	}
 }
-int ftlog_file::skip_xptr_sequence()
-{
-	int count, res;
-	res = this->read_data(&count, sizeof(count));
-	if (res == 0)
-		return 0;
-	
-	res = this->seek_rel(sizeof(xptr) * count);
-	return res;
-}
 
 xptr_sequence *ftlog_file::read_xptr_sequence()
 {
@@ -314,7 +304,7 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 	t_scmnodes sobj = execute_abs_path_expr(ft_idx->schemaroot, ft_idx->object, NULL, NULL);
 	//III. For each schema node found (sn_obj)
 	std::vector<xptr> start_nodes;
-	for (int i = 0; i < sobj.size(); i++)
+	for (unsigned int i = 0; i < sobj.size(); i++)
 	{
 		xptr blk= getNonemptyBlockLookFore(sobj[i]->bblk);
 		if (blk != XNULL) {
@@ -386,7 +376,6 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 	bool ftindex_is_consistent = true;
 	cur_lsn = log_file->next_lsn;
 	RECOVERY_CRASH;
-	//TODO: remove log_file->skip_xptr_sequence() if it's not used anymore
 	while (log_file->read_data(&lrec, sizeof(ftlog_record)))
 	{
 		switch (lrec.rec_type)

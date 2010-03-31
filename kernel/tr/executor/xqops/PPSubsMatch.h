@@ -62,7 +62,7 @@ public:
     /* Factories for Substring Matching */
 	template <class a, class b> static void contains(a& it1, a&it1end, b& it2, b& it2end, tuple &t);
 	template <class b> static void contains (b &it2, b &it2end, const tuple_cell *tcptr1, tuple &t);
-    template <class a, class b> static  int  contains (a& it1, b& it2,int l1,int l2);
+    template <class a, class b> static  int  contains (a& it1, b& it2,str_off_t l1,str_off_t l2);
 	
 	static PPSubsMatch* PPFnContains(dynamic_context *_cxt_, 
                                      operation_info _info_,
@@ -79,7 +79,7 @@ public:
 /// PPSubsMatch::contains Implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-template<class a, class b> int memcmpt(a& it1, b& it2,int len)
+template<class a, class b> int memcmpt(a& it1, b& it2,str_off_t len)
 {
 	a i1 = it1;
 	b i2 = it2;
@@ -90,7 +90,7 @@ template<class a, class b> int memcmpt(a& it1, b& it2,int len)
 	return 0;
 }
 
-template <class a, class b>  int  PPSubsMatch::contains (a& it1, b& it2,int l1,int l2)
+template <class a, class b>  int  PPSubsMatch::contains (a& it1, b& it2,str_off_t l1,str_off_t l2)
 {
     if (l2==0) return 0;
     if (l1==0) return -1;

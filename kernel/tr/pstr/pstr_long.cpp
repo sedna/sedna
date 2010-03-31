@@ -470,9 +470,9 @@ inline pstr_long_block_list_entry * intl_last_blk_last_ble(const int mapsize, co
 }
 
 
-static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, pstr_long_off_t size0)
+static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, str_off_t size0)
 {
-	//TODO: ���������� ������� ������
+	//TODO: move string first
 	pstr_long_off_t size = size0;
 	intl_last_blk = str_ptr;
 
@@ -686,8 +686,8 @@ int  pstr_long_cursor::copy_blk(char *data_buf)
 		CHECKP(blk);
 		if (((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk == last_blk && cursor < 0)
 		{
-			memcpy(data_buf, (char*)XADDR(blk) + ofs, -ofs-cursor);
-			data_buf_cnt = -ofs-cursor;
+			memcpy(data_buf, (char*)XADDR(blk) + ofs, -cursor-ofs);
+			data_buf_cnt = -cursor-ofs;
 		}
 		else
 		{

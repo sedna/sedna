@@ -75,11 +75,20 @@ bool delete_node(xptr node_xptr, const doc_info_t * doc_info = NULL, bool no_ind
 void delete_doc_node(xptr node, const char * doc_name, const char * collection_name);
 
 class text_cptr {
+
+#ifdef _MSC_VER
+#pragma warning( disable : 4200 )
+#endif /* _MSC_VER */
+
     struct counted_str {
         int counter;
         size_t size;
         char text[0];
     } * target;
+
+#ifdef _MSC_VER
+#pragma warning( default : 4200 )
+#endif /* _MSC_VER */
 
     inline void release() {
         if (target != NULL) {

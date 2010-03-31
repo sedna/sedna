@@ -41,7 +41,7 @@ private:
     xptr s;
 
 public:	
-	estr_iterator(int _chars_left_, xptr _s_);
+	estr_iterator(str_off_t _chars_left_, xptr _s_);
 	estr_iterator(): chars_left(-1) { }
 
 	unsigned char operator*() const { CHECKP(cur_block_xptr); return *cur_p; }

@@ -81,12 +81,20 @@ void nodeUpdateLinks(xptr node_xptr, xptr child_in_parent_xptr);
   */
 xptr findNodeInParentCP(const xptr& node_xptr, int hint_child = -1);
 
+#ifdef _MSC_VER
+#pragma warning( disable : 4200 )
+#endif /* _MSC_VER */
+
 struct node_buffer
 {
     shft size;       /// Size of one node
     shft count;      /// Number of nodes in buffer
     char content[0]; /// The content of the buffer
 };
+
+#ifdef _MSC_VER
+#pragma warning( default : 4200 )
+#endif /* _MSC_VER */
 
 char * nodeBufferGetNode(node_buffer * b, int pos);
 node_buffer * nodeBufferAlloc(shft size, shft count);

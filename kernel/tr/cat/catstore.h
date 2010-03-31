@@ -9,6 +9,7 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 #include "common/sm_vmm_data.h"
+
 #include "tr/cat/simplestream.h"
 
 #define CS_CELL_SIZE 256

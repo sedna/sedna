@@ -954,7 +954,7 @@ void rcvRecoverFtIndexes()
 
     if (llInfo->hotbackup_needed) return; // since we rebuild ft-indexes on hot-backup anyway
 
-    clear_ft_sequences();
+    clear_ft_sequences(); //FIXME: remove this?
 
     for (it = indir_map.begin(); it != indir_map.end(); ++it)
     {

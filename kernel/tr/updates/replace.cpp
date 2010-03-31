@@ -138,9 +138,6 @@ void replace(PPOpIn arg)
             break;
         }
     }
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&arg1seq, false, NULL, false, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
 #endif

@@ -171,9 +171,6 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
     upd_ns_map* ins_swiz=NULL;
     xptr_sequence::iterator it2;
     xptr node_child=XNULL;
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&arg1seq, false, &arg2seq, false, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 #endif
@@ -412,9 +409,6 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
     xptr_sequence::iterator it2;
     upd_ns_map* ins_swiz=NULL;
     xptr node_child=XNULL;
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&arg1seq, true, &arg2seq, false, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 #endif
@@ -658,9 +652,6 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
     xptr_sequence::iterator it2;
     upd_ns_map* ins_swiz=NULL;
     xptr node_child=XNULL;
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&arg1seq, false, &arg2seq, false, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 #endif

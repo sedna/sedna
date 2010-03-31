@@ -105,21 +105,21 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 #include "tr/strings/e_string_iterator.h"
 #include "tr/strings/char_iterator.h"
 
-//FIXME - length is pstr_long should not be int
+//FIXME: int conversions in char_iterator constructors
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, tcell_ptr, params) \
 	switch (tcell_ptr->get_type()) \
 	{ \
 	case tc_light_atomic_var_size: \
 	case tc_light_atomic_fix_size: {\
 		char *__str = tcell_ptr->get_str_mem(); \
-		int __len = tcell_ptr->get_strlen_mem(); \
-		char_iterator __start1(__str, __len, 0); \
-		char_iterator __end1(__str, __len, __len); \
+		str_off_t __len = tcell_ptr->get_strlen_mem(); \
+		char_iterator __start1(__str, (int)__len, 0); \
+		char_iterator __end1(__str, (int)__len, (int)__len); \
 		func params; \
 		break; }\
 	case tc_heavy_atomic_estr: \
 	case tc_heavy_atomic_pstr_short: {\
-		int __len = tcell_ptr->get_strlen_vmm(); \
+		str_off_t __len = tcell_ptr->get_strlen_vmm(); \
 		xptr __data = tcell_ptr->get_str_vmm(); \
 \
 		estr_iterator __start1(__len, __data); \
@@ -127,7 +127,7 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 		func params; \
 		break; }\
 	case tc_heavy_atomic_pstr_long: {\
-		int __len = tcell_ptr->get_strlen_vmm(); \
+		pstr_long_off_t __len = tcell_ptr->get_strlen_vmm(); \
 		xptr __data = tcell_ptr->get_str_vmm(); \
 \
 		pstr_long_iterator __start1(__data); \
@@ -185,11 +185,10 @@ private:
 	xptr m_ptr;
 	bool m_mem_only;
 	unsigned char m_flags;
-        int m_buf_size;
-        char *m_buf;
-	int m_len;//FIXME (don't use int type)
-
-        estr m_estr;
+	int m_buf_size;
+	char *m_buf;
+	str_off_t m_len;
+	estr m_estr;
 	str_counted_ptr m_str_ptr;
 	text_type m_ttype;
 	static const int f_text_in_buf = 1;
@@ -261,7 +260,7 @@ public:
 	const void free_cursor(str_cursor *cur) {
 		delete cur;
 	}
-	int get_size() { return m_len; } //FIXME (don't use int type)
+	str_off_t get_size() { return m_len; } //FIXME (don't use int type)
 	void clear();
 	void reset() { clear(); m_ptr = XNULL; m_estr.clear();}
 	void append(const char *str, int add_len);//always copy to inner buffer
@@ -353,7 +352,7 @@ public:
 	//parse sequence of bytes
 	//returns full chars count, +1 if parsing ended in the middle of a character
 	// (i.e. the number of first bytes of chars)
-	virtual int count_chars(const char *str, int len) = 0;
+	virtual int count_chars(const char *str, str_off_t len) = 0;
 };
 
 class unicode_cp_iterator
