@@ -46,20 +46,11 @@ void PPDropFtIndex::do_accept(PPVisitor &v)
 
 void PPDropFtIndex::do_execute()
 {
-    tuple_cell tc;
-    tuple t(1);
-    index_name.op->next(t);
-    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 
-    tc = index_name.get(t);
-    if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION(SE1071);
-
-    index_name.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-
-    tc = tuple_cell::make_sure_light_atomic(tc);
+    tuple_cell tc = get_name_from_PPOpIn(index_name, "full-text index", "drop full-text index");
+    get_schema_node(find_db_entity_for_object(catobj_ft_indicies, tc.get_str_mem()),
+                    "Unknown database entity passed to drop index");
     auth_for_drop_object(tc.get_str_mem(), "ft-index", false);
-	delete_ft_index(tc.get_str_mem());
+    delete_ft_index(tc.get_str_mem());
 }
 

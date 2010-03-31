@@ -52,8 +52,8 @@ void PPDropIndex::do_accept(PPVisitor &v)
 void PPDropIndex::do_execute()
 {
     tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "drop index");
-
-    schema_node_cptr root = get_schema_node(find_db_entity_for_index(tc.get_str_mem()), "Unknown entity passed to drop index");
+    get_schema_node(find_db_entity_for_object(catobj_indicies, tc.get_str_mem()), 
+                    "Unknown database entity passed to drop index");
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
     auth_for_drop_object(tc.get_str_mem(), "index", false);
     delete_index(tc.get_str_mem());
