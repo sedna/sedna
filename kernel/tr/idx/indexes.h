@@ -13,7 +13,6 @@
 #include "tr/executor/base/XPath.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/idx/btree/btree.h"
-#include "tr/structures/system_tables.h"
 #include "tr/vmm/vmm.h"
 
 
@@ -43,7 +42,6 @@ void delete_index (const char *index_title);
 /* deletes the following node modified to key  together with some objects from all the indexes needed */
 //void delete_node_from_indexes (xptr node);
 
-counted_ptr<db_entity> find_db_entity_for_index(const char* title);
 xptr find_btree(const char* title);
 
 xmlscm_type get_index_xmlscm_type(const char* title);

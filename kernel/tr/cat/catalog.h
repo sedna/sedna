@@ -11,8 +11,10 @@
 #include "common/u/uatomic.h"
 #include "common/commutil.h"
 #include "common/errdbg/d_printf.h"
+#include "common/counted_ptr.h"
 
 #include "tr/cat/simplestream.h"
+#include "tr/tr_base.h"
 
 /** Catalog objects are heap-stored structures, that may be saved in the physical block memory.
  *
@@ -132,6 +134,19 @@ enum catalog_named_objects {
     catobj_ft_indicies = 3,
     catobj_count = 4
 };
+
+inline const char* object_type2c_str(enum catalog_named_objects obj_type)
+{
+    switch(obj_type)
+    {
+    case catobj_metadata:    return "metadata";
+    case catobj_indicies:    return "index";
+    case catobj_triggers:    return "trigger";
+    case catobj_ft_indicies: return "ft-index";
+    case catobj_count:       return "count";
+    default: throw USER_EXCEPTION2(SE1003, "Unknown catalog named object type");
+    }
+}
 
 /******************************
  * Catalog interface functions
@@ -335,4 +350,14 @@ struct catalog_cptr {
 };
 
 
-#endif
+/**
+ * Returns document/collection the provided object provided 
+ * (index, ft-index, etc) is created on. Throws SE1061 if 
+ * object hasn't been found.
+ */
+counted_ptr<db_entity> 
+find_db_entity_for_object(enum catalog_named_objects obj_type, 
+                          const char* title);
+
+
+#endif /* CATALOG_H */

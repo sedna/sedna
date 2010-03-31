@@ -207,33 +207,6 @@ index_cell_xptr create_index (PathExpr *object_path,
 	return idc.ptr();
 }
 
-counted_ptr<db_entity> find_db_entity_for_index(const char* title)
-{
-    SafeMetadataSemaphore lock;
-    char t;
-
-    lock.Aquire();
-
-    if (!catalog_name_exists(catobj_indicies, title)) {
-        throw USER_EXCEPTION2(SE1061, (std::string("Index '") + title + "'").c_str());
-    }
-
-    counted_ptr<db_entity> result(se_new db_entity);
-    result->name = catalog_htable_get(catobj_indicies, title);
-    size_t len = strlen(result->name);
-
-    lock.Release();
-
-    t = result->name[len + 1];
-    if (t == 'D') {
-        result->type = dbe_document;
-    } else {
-        result->type = dbe_collection;
-    }
-
-    return result;
-}
-
 void delete_index (const char *index_title)
 {
     index_cell_cptr idc(index_title, true);

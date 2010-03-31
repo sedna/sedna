@@ -624,9 +624,8 @@ inline xptr catalog_htable_find_name(const char * name)
 }
 
 
-char * catalog_htable_get(
-        enum catalog_named_objects obj_type,
-        const char * key)
+char * catalog_htable_get(enum catalog_named_objects obj_type,
+                          const char * key)
 {
     char * result = NULL;
     xptr object;
@@ -744,3 +743,38 @@ inline catalog_object * catalog_object_header::load() {
     return object;
 };
 
+
+/*
+ * Returns document/collection the provided object provided 
+ * (index, ft-index, etc) is created on. Throws SE1061 if 
+ * object hasn't been found.
+ */
+counted_ptr<db_entity> 
+find_db_entity_for_object(enum catalog_named_objects obj_type, 
+                          const char* title)
+{
+    SafeMetadataSemaphore lock;
+    char t;
+
+    lock.Aquire();
+
+    if (!catalog_name_exists(obj_type, title)) {
+        throw USER_EXCEPTION2(SE1061, (std::string(object_type2c_str(obj_type)) + " '" + title + "'").c_str());
+    }
+
+    counted_ptr<db_entity> result(new db_entity);
+    /* catalog_htable_get allocates memory which must be freed by counted ptr*/
+    result->name = catalog_htable_get(obj_type, title);
+    size_t len = strlen(result->name);
+
+    lock.Release();
+
+    t = result->name[len + 1];
+    if (t == 'D') {
+        result->type = dbe_document;
+    } else {
+        result->type = dbe_collection;
+    }
+
+    return result;
+}

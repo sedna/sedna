@@ -203,6 +203,8 @@ ft_index_cell_xptr create_ft_index(
 void delete_ft_index (const char *index_title, bool just_heap=false);
 
 ft_index_cell_xptr find_ft_index(const char* title, ftc_index_t *ftc_idx);
+counted_ptr<db_entity> find_db_entity_for_ft_index(const char* title);
+
 
 //inits metadata library
 

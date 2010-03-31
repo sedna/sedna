@@ -10,38 +10,8 @@
 
 #include "common/sedna.h"
 #include "common/counted_ptr.h"
-
+#include "tr/tr_base.h"
 #include "tr/cat/catptr.h"
-
-/* Type of the entity that is stored in database */
-enum db_entity_type { dbe_document,		// document
-                      dbe_collection,	// collection
-                      dbe_module        // module
-                    };
-
-/* Database entity */
-struct db_entity
-{
-    db_entity_type type;		// type of the db entity
-    char *name;					// name of the db entity
-    
-    ~db_entity() { delete [] name; name = NULL; }
-    
-    inline std::string to_string() const
-    {
-        std::string res;
-        switch(type)
-        {
-        case dbe_document: res += "document("; break;
-        case dbe_collection: res += "collection("; break;
-        case dbe_module: res += "module("; break;
-        throw USER_EXCEPTION2(SE1003, "Impossible type in database entry to string conversion");
-        }
-        if(name != NULL) res += name;
-        res += ")";
-        return res;
-    }
-};
 
 
 enum document_type {
