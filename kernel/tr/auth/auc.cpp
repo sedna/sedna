@@ -183,7 +183,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
             pair<auth_map::iterator, bool> pr;
             pr = amap.insert(authPair(dbe, dbe_p ));
         }
-        catch(SednaUserException &e)
+        catch(SednaUserException)
         {
             if(is_qep_opened)
                 aqtree->tree.op->close();
@@ -290,7 +290,7 @@ void auth_for_load_module(const char* module_name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -365,7 +365,7 @@ void auth_for_drop_module(const char* mod_name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -465,7 +465,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -619,7 +619,7 @@ void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
             it++;
         }
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         security_metadata_upd_controll();
         throw;
@@ -714,7 +714,7 @@ void auth_for_create_document(const char* doc_name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -819,7 +819,7 @@ void auth_for_load_document(const char* doc_name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -924,7 +924,7 @@ void auth_for_create_collection(const char* coll_name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -999,7 +999,7 @@ void auth_for_create_document_collection(const char* doc_name, const char *coll_
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1070,7 +1070,7 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1175,7 +1175,7 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1285,7 +1285,7 @@ void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1392,7 +1392,7 @@ void auth_for_create_trigger(const char *trg_name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1497,7 +1497,7 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1630,7 +1630,7 @@ void auth_for_create_user(const char* name, const char* passwd)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1719,7 +1719,7 @@ void auth_for_drop_user(const char* name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1812,7 +1812,7 @@ void auth_for_alter_user(const char* name, const char* passwd)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1908,7 +1908,7 @@ void auth_for_create_role(const char* name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -1998,7 +1998,7 @@ void auth_for_drop_role(const char* name)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -2128,7 +2128,7 @@ void auth_for_grant_role(const char* name, const char *grantee)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -2263,7 +2263,7 @@ void auth_for_grant_privilege(const char* name, const char *obj_name, const char
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -2393,7 +2393,7 @@ void auth_for_revoke_privilege(const char* name, const char *obj_name, const cha
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();
@@ -2490,7 +2490,7 @@ void auth_for_revoke_role(const char* name, const char *grantee)
         if (output_enabled)
             tr_globals::client->enable_output();
     }
-    catch(SednaUserException &e)
+    catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
             aqtree->tree.op->close();

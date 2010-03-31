@@ -784,7 +784,7 @@ bool is_castable(const tuple_cell &SV, xmlscm_type TT)
 		cast(SV, TT);	
 		return true;
 	}
-	catch(SednaUserException &e)
+	catch(SednaUserException)
 	{
 		return false;
 	}

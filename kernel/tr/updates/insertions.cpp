@@ -687,7 +687,6 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
                 it2++;
         }
         while (it2!=arg2seq.end());
-cycle1:
         it1++;
     }
     while (it1!=arg1seq.end());

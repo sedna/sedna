@@ -308,7 +308,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                     if (res == 1) 
                         throw USER_EXCEPTION(SE3012);
                 }
-            } catch (SednaUserException & e) {
+            } catch (SednaUserException) {
                 uCloseFile(fs.f, __sys_call_error);
                 if(uDeleteFile(fs.name, __sys_call_error) == 0) 
                     d_printf1("tmp file delete error");

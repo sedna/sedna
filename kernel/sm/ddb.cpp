@@ -44,7 +44,7 @@ static void ddb_open_gov_shm()
 {
     try{
         open_gov_shm();
-    } catch(SednaUserException &e) { }
+    } catch(SednaUserException) { }
 }
 
 

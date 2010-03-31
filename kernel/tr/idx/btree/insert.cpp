@@ -464,7 +464,6 @@ void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object
 {
 	xptr        pg_xptr = ADDR2XPTR(pg);
     xptr        next_for_rpg;
-	xptr        pg_parent;
 //    xmlscm_type pg_type = BT_KEY_TYPE(pg);
 	btree_chnk_hdr c = *(BT_CHNK_ITEM_AT(pg, 0));
 	char * tmp_rpg = insert_buf;

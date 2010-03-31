@@ -747,7 +747,6 @@ void llLogCommit(transaction_id trid)
 
 	char *tmp_rec;  
 	int rec_len;
-	LSN ret_lsn;
 
 	// don't need to log empty transaction
 	if (llInfo->llTransInfoTable[trid].first_lsn == LFS_INVALID_LSN)

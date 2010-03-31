@@ -317,7 +317,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
         d_printf1("\nReleasing logical log...");
         hl_logical_log_on_transaction_end(is_commit, rcv_active);
         d_printf1("OK\n");
-    } catch (SednaUserException &e) {
+    } catch (SednaUserException) {
         throw SYSTEM_EXCEPTION("Double error: user exception on rollback!");
     }
 
