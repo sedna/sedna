@@ -49,7 +49,7 @@ on_kernel_statement_begin(size_t mod_index,
         is_qep_built = true; // always consider qep-tree as built; in case of error this allows cleaning up
         qep_tree = xqd->getQEPForModule(mod_index);
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         delete xqd;
         xqd = NULL;
@@ -220,7 +220,7 @@ void do_authentication()
         if(output_enabled) client->enable_output();
         internal_auth_switch = DEPLOY_AUTH_CHECK;
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         on_kernel_statement_end(qep_tree);
         if (output_enabled) client->enable_output();

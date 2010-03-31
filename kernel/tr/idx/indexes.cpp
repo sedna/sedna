@@ -157,7 +157,7 @@ index_cell_xptr create_index (PathExpr *object_path,
                         ss->add(tup);
                         counter1++;
 
-                    } catch (SednaUserException &e) {
+                    } catch (SednaUserException) {
 						//IX. Increment the counter, which shows the number of
                         //    items that were not inserted because they have
                         //    the type other than the index has
@@ -193,7 +193,7 @@ index_cell_xptr create_index (PathExpr *object_path,
 				bt_insert(idc->btree_root, key, tup.cells[1].get_unsafenode(),false);
                 counter2++;
 			}
-			catch (SednaUserException &e) {
+			catch (SednaUserException) {
                 //XIV. Increment the counter, which shows the number of
                 //     items that were not inserted because they have
                 //     the type other than the index has

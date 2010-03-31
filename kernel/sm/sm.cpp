@@ -938,7 +938,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
   } catch (SednaUserException &e) {
        fprintf(stderr, "%s\n", e.what());
        throw USER_EXCEPTION(SE4205);
-  } catch (SednaException &e) {
+  } catch (SednaException&) {
         throw;
   } catch (ANY_SE_EXCEPTION) {
         throw;

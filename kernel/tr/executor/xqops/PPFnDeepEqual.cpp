@@ -261,7 +261,7 @@ void PPFnDeepEqual::do_next (tuple &t)
 							return;
 						}
 					}
-					catch (SednaUserException &e)
+					catch (SednaUserException)
 					{
 						t.copy(tuple_cell::atomic(false));
 						return;

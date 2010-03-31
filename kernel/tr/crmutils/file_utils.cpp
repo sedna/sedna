@@ -751,7 +751,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped, bool pri
         remove_hints(sc_parent);
         sc_parent = XNULL;
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         remove_hints(sc_parent);
         sc_parent = XNULL;
@@ -799,7 +799,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
         remove_hints(sc_parent);
         sc_parent = XNULL;
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         remove_hints(sc_parent);
         sc_parent = XNULL;

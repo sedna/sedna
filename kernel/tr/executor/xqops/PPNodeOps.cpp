@@ -345,7 +345,7 @@ void PPFnNumber::do_next(tuple &t)
             {
                 t.copy(cast(tc, xs_double));
             }
-            catch(SednaUserException &e)
+            catch(SednaUserException)
             {
                 t.copy(tuple_cell::atomic(double_NaN));
             }

@@ -386,7 +386,7 @@ void PPFnDistinctValues::do_next(tuple &t)
             try {
                 tuple_cell comp_res = op_eq(tc, t.cells[0], handler);
                 if (comp_res.get_xs_boolean()) break;
-            } catch (SednaUserException &e) {
+            } catch (SednaUserException) {
                 // continue cycle
             }
         }
@@ -544,7 +544,7 @@ void PPFnIndexOf::do_next(tuple &t)
             tc = op_eq(tc, search_param, handler);
             if (tc.get_xs_boolean())  break; 
         } 
-        catch (SednaUserException &e) { /* continue cycle */ }
+        catch (SednaUserException) { /* continue cycle */ }
     }
 
     t.copy(tuple_cell::atomic(pos));

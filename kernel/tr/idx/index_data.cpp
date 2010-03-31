@@ -167,7 +167,7 @@ void index_cell_object::put_to_index(xptr key_node, xptr object_indir)
             bt_insert(bt_root, tuple_cell2bt_key(tc, key), object_indir);
             if (bt_root != btree_root) { ((index_cell_object *) (this->modify_self()))->btree_root = bt_root; }
         }
-    } catch (SednaUserException &ex) {
+    } catch (SednaUserException) {
         this->err_cntr++;
     }
 }
@@ -185,7 +185,7 @@ void index_cell_object::delete_from_index(xptr key_node, xptr object_indir)
             bt_delete(bt_root, tuple_cell2bt_key(tc, key), object_indir);
             if (bt_root != btree_root) { ((index_cell_object *) (this->modify_self()))->btree_root = bt_root; }
         }
-    } catch (SednaUserException &ex) {
+    } catch (SednaUserException) {
         this->err_cntr--;
     }
 }

@@ -102,7 +102,7 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
                 throw USER_EXCEPTION2(SE4002, "unknown query type: only XQuery queries are supported now");
         }
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         if (type == TL_XQuery)
         {
@@ -157,7 +157,7 @@ StringVector parse_xq_to_ast(const char *batch)
 
         delete xqd;
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         delete xqd;
         throw;
@@ -184,7 +184,7 @@ PPQueryEssence *build_qep(const char* por, bool is_ast)
 
         return qep;
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         delete xqd;
         throw USER_EXCEPTION2(SE1003, "Error on parsing internal subquery!");
@@ -218,7 +218,7 @@ qep_subtree *build_subqep(const char* por, bool is_ast)
 
         return res;
     }
-    catch (SednaUserException &e)
+    catch (SednaUserException)
     {
         delete xqd;
         throw USER_EXCEPTION2(SE1003, "Error on parsing internal subquery!");

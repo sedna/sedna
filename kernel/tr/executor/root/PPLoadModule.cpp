@@ -188,7 +188,7 @@ void PPLoadModule::do_execute()
             {
                 delete_document_from_collection(MODULES_COLLECTION_NAME, module_name.c_str());
             }
-            catch(SednaUserException& e) // catch to avoid 'no such document errors'
+            catch(SednaUserException) // catch to avoid 'no such document errors'
             {
             }
         }

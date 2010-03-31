@@ -41,7 +41,6 @@ CHECKP(xpg);
 	char*	pg=(char*)XADDR(xpg);
 	int		rc;
 	shft	el_size;
-	void*	clu_tail_pg;
 	bool	var_key_type;
 	//bt_page_consistency(pg, key);
 	/* calculate size of key table element */
@@ -118,7 +117,6 @@ bool bt_leaf_find_obj_tmpl(xptr &xpg, object obj, shft key_idx, shft &obj_idx) {
 CHECKP(xpg);
 	char*	pg = (char*)XADDR(xpg);
 	bool	rc;
-	xptr	pg_xptr;
 	btree_chnk_hdr c;
 
 	if (key_idx >= BT_KEY_NUM(pg)) throw USER_EXCEPTION2(SE1008, "Bad key index");
@@ -162,9 +160,6 @@ bool bt_nleaf_find_key(char* pg, bt_key* key, shft &key_idx,bool with_bt) {
 bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx, bt_path *path, bool with_bt) {
 	CHECKP(xpg);
 	char*	pg=(char*)XADDR(xpg);
-	bool	rc;
-	shft	el_size;
-	xptr	next_pg_xptr;
 	bt_path_item pi(xpg, 0);
 
 	/* pg - currently processed page */

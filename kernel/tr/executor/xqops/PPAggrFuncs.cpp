@@ -152,7 +152,7 @@ void PPFnMaxMin::do_next(tuple &t)
                 bool cond = (PPFnMaxMin_fun_arr[i])(tca, res, handler).get_xs_boolean();
                 if (cond) 
                     res = tca;
-            } catch (SednaUserException &e) {
+            } catch (SednaUserException) {
                 throw XQUERY_EXCEPTION2(FORG0006, (string("Can't compare values in ") + function_name).c_str());
             }
 
@@ -295,7 +295,7 @@ void PPFnSumAvg::do_next(tuple &t)
             {
                 try {
                     res = op_add(tca, res);
-                } catch (SednaUserException &e) {
+                } catch (SednaUserException) {
                     throw XQUERY_EXCEPTION2(FORG0006, (string("Cannot sum values in ") + function_name).c_str());
                 }
             }
