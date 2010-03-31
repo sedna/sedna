@@ -80,6 +80,7 @@ static inline int ss_serialize_tc(tuple_cell &tc, sequence_sorter::sort_type st,
 		return sizeof(uint64_t);
 	default:
 		U_ASSERT(false);
+		return 0;
 	}
 }
 //returns size of serialized data
@@ -109,6 +110,7 @@ static inline int ss_deserialize_tc(tuple_cell &tc, sequence_sorter::sort_type s
 		}
 	default:
 		U_ASSERT(false);
+		return 0;
 	}
 }
 

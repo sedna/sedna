@@ -15,6 +15,7 @@
 CharsetHandler *charset_handler = NULL;
 
 #define T_STR_MEMBUF_SIZE 100
+#define MAX_ALLOC_FOR_STR_BUF SIZE_MAX
 
 void str_buf_base::move_to_mem_buf()
 {
@@ -24,10 +25,11 @@ void str_buf_base::move_to_mem_buf()
 	{
 		if (m_buf_size > 0)
 			delete[] m_buf;
-		m_buf_size = m_len + 1;
+		U_ASSERT(m_len < MAX_ALLOC_FOR_STR_BUF);
+		m_buf_size = (size_t)m_len + 1;
 		if (m_buf_size < T_STR_MEMBUF_SIZE)
 			m_buf_size = T_STR_MEMBUF_SIZE;
-		m_buf = se_new char[m_buf_size];
+		m_buf = se_new char[m_buf_size]; //FIXME: check return value?
 	}
 	if (m_len == 0)
 	{
@@ -98,11 +100,11 @@ void str_buf_base::move_to_estr()
 str_cursor *str_buf_base::get_cursor() const
 {
 	if (m_flags & f_text_in_buf)
-		return new str_cursor_mem(m_buf, m_len);
+		return new str_cursor_mem(m_buf, (int)m_len); //FIXME: check m_len?
 	switch (m_ttype)
 	{
 	case text_mem:
-		return new str_cursor_mem(m_str_ptr.get(), m_len);
+		return new str_cursor_mem(m_str_ptr.get(), (int)m_len);//FIXME: check m_len?
 	case text_estr:
 		return new estr_cursor(m_ptr, m_len);
 	case text_doc:
@@ -112,6 +114,7 @@ str_cursor *str_buf_base::get_cursor() const
 			return new pstr_long_cursor(m_ptr);
 	default:
 		U_ASSERT(false);
+		return NULL;
 	}
 }
 
@@ -220,7 +223,7 @@ void str_buf_base::append(const char *str, int add_len)
 			
 			old_buf = m_buf;
 			m_buf = se_new char[m_buf_size];
-			memcpy(m_buf, old_buf, m_len+1);
+			memcpy(m_buf, old_buf, (size_t)m_len+1); //FIXME: check m_len?
 			delete[] old_buf;
 		}
 		if (m_len > 0)

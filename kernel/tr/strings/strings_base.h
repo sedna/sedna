@@ -8,6 +8,8 @@
 
 #include "common/sedna.h"
 
+typedef int64_t str_off_t;
+
 enum text_type {
 	text_mem,
 	text_doc,

@@ -21,9 +21,9 @@
 #include "tr/strings/strings_base.h"
 struct doc_serial_header
 {
-	unsigned int length;
+	str_off_t length;
 	xptr ptr;
-	doc_serial_header(int _length, xptr _ptr):length(_length),ptr(_ptr){}
+	doc_serial_header(str_off_t _length, xptr _ptr):length(_length),ptr(_ptr){}
 	doc_serial_header():length(0),ptr(XNULL){}
 	static void parse(const char* data, int size, void* p);
 	void serialize(string_consumer_fn fn, void *p);

@@ -9,7 +9,7 @@
 using namespace std;
 
 //Take xptr to the string stored in blocks and the size of the string in bytes
-estr_iterator::estr_iterator(int _chars_left_, xptr _s_)
+estr_iterator::estr_iterator(str_off_t _chars_left_, xptr _s_)
 {
   chars_left = _chars_left_; 
   s = _s_;

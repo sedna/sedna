@@ -779,7 +779,6 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
     CHECKP(docnode);
     sc_parent=(GETBLOCKBYNODE(docnode))->snode;
 #ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
     update_insert_sequence(docnode, schema_node_cptr(sc_parent));
 #endif
     try

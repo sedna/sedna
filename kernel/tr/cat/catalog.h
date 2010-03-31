@@ -14,7 +14,6 @@
 
 #include "tr/cat/simplestream.h"
 
-
 /** Catalog objects are heap-stored structures, that may be saved in the physical block memory.
  *
  * They possess several basic properties :

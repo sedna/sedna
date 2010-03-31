@@ -230,10 +230,10 @@ class CharCounter_utf8 : public CharCounter
 public:
 	CharCounter_utf8() {}
 
-	virtual int count_chars(const char *str, int len);
+	virtual int count_chars(const char *str, str_off_t len);
 };
 
-int CharCounter_utf8::count_chars(const char *str, int len)
+int CharCounter_utf8::count_chars(const char *str, str_off_t len)
 {
 	int cnt = 0;
 	while (--len >= 0)
@@ -749,7 +749,7 @@ static inline void utf8_starts_with(const Iterator &start, const Iterator &end, 
 }
 
 template <class Iterator>
-static inline void utf8_ends_with(const Iterator &start, const Iterator &end, __int64 src_len, const char* suffix, __int64 suf_len, bool* result)
+static inline void utf8_ends_with(const Iterator &start, const Iterator &end, __int64 src_len, const char* suffix, str_off_t suf_len, bool* result)
 {
     (*result) = true;
     utf8_iterator<Iterator> src_it(start);
@@ -773,7 +773,7 @@ bool CollationHandler_utf8::starts_with(const tuple_cell *tc, const tuple_cell *
 {
     tuple_cell pref = tuple_cell::make_sure_light_atomic(*prefix);
 
-    __int64 pref_len = pref.get_strlen();
+    str_off_t pref_len = pref.get_strlen();
 
     if(tc->get_strlen() < pref_len) return false;
 
@@ -798,16 +798,16 @@ bool CollationHandler_utf8::ends_with(const tuple_cell *tc, const tuple_cell *su
 
 
 template <class Iterator1, class Iterator2>
-static inline void utf8_contains_part2(Iterator2 &start1, const Iterator2 &end1, int *res, Iterator1 &start, const int len)
+static inline void utf8_contains_part2(Iterator2 &start1, const Iterator2 &end1, int *res, Iterator1 &start, const str_off_t len)
 {
-	int len1 = end1 - start1;
+	str_off_t len1 = end1 - start1;
 	(*res) = PPSubsMatch::contains<Iterator1, Iterator2>(start, start1, len, len1);
 }
 
 template <class Iterator>
 static inline void utf8_contains(Iterator &start, const Iterator &end, const tuple_cell *subs, int *res)
 {
-    int len = end - start;
+    str_off_t len = end - start;
 	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_contains_part2, subs, res, start, len);
 }
 

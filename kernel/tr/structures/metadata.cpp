@@ -125,10 +125,6 @@ void delete_document_from_collection(const char *collection_name, const char *do
     if ((GETBLOCKBYNODE(node))->count == 1 && col_node->eblk == BLOCKXPTR(node))
           col_node.modify()->eblk = (GETBLOCKBYNODE(node))->pblk;
 
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
-
     delete_doc_node(node, document_name, collection_name);
     up_concurrent_micro_ops_number();
 #ifdef SE_ENABLE_FTSEARCH

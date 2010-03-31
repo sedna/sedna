@@ -61,7 +61,7 @@ struct ftlog_file
 	}
 	inline void write_data(void *data, int size)
 	{
-		if (sizeof(buf) - buf_pos < size)
+		if ((int)sizeof(buf) - buf_pos < size)
 		{
 			const int left = sizeof(buf) - buf_pos;
 			if (left > 0)
@@ -80,14 +80,13 @@ struct ftlog_file
 				return;
 			}
 		}
-		U_ASSERT(sizeof(buf) - buf_pos >= size);
+		U_ASSERT((int)sizeof(buf) - buf_pos >= size);
 		memcpy(buf + buf_pos, data, size);
 		next_lsn += size;
 		buf_pos += size;
 	}
 	void write_xptr_sequence(xptr_sequence* seq);
 	//returns non-zero on success
-	int skip_xptr_sequence();
 	xptr_sequence *read_xptr_sequence();
 	//returns non-zero on success
 	//buf_pos must be 0
@@ -102,27 +101,8 @@ struct ftlog_file
                    &res_pos,
                    U_FILE_BEGIN,
 		   __sys_call_error);
-		next_lsn = res_pos; //FIXME: is it ok to set next_lsn in seek funcs?
+		next_lsn = (lsn_t)res_pos; //FIXME: is it ok to set next_lsn in seek funcs?
 		if (res == 0 || res_pos != pos)
-			return 0;
-		else
-			return 1;
-	}
-	//returns non-zero on success
-	//buf_pos must be 0
-	int seek_rel(lsn_t ofs)
-	{
-		__int64 res_pos;
-		int res;
-		U_ASSERT(buf_pos == 0);
-		res = uSetFilePointer(
-                   file,
-                   ofs,
-                   &res_pos,
-				   U_FILE_CURRENT,
-		   __sys_call_error);
-		next_lsn = res_pos; //FIXME: is it ok to set next_lsn in seek funcs?
-		if (res == 0) //FIXME: check that there was enough bytes in the file?
 			return 0;
 		else
 			return 1;

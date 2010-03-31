@@ -77,7 +77,7 @@ xptr estr::append_mstr(const char *src, int count)
 }
 
 
-xptr estr::append_estr(const xptr &src, int count)
+xptr estr::append_estr(const xptr &src, str_off_t count)
 {
     xptr dest = xptr_for_data();
     copy_text_estr(dest, src, count);
@@ -157,7 +157,7 @@ void estr::copy_text_mstr(xptr dest, const char *src)
 	estr::copy_text_mstr(dest, src, strlen(src));
 }
 
-void estr::copy_text_estr(xptr dest, xptr src, int count)
+void estr::copy_text_estr(xptr dest, xptr src, str_off_t count)
 {
     e_str_blk_hdr *dest_blk = E_STR_BLK_HDR(dest);
 
@@ -307,12 +307,7 @@ int estr_cursor::get_blk(char **ptr)
 }
 
 
-
-
-
-
-
-void estr_feed(string_consumer_fn fn, void *p, xptr src, int count) // or pstr,  FIXME: int count
+void estr_feed(string_consumer_fn fn, void *p, xptr src, str_off_t count) // or pstr
 {
 	while (count > 0)
 	{
@@ -331,7 +326,7 @@ void estr_feed(string_consumer_fn fn, void *p, xptr src, int count) // or pstr, 
 }
 
 //almost the same as estr_feed
-void estr_copy_to_buffer(char *dest, xptr src, int count)
+void estr_copy_to_buffer(char *dest, xptr src, str_off_t count)
 {
 	while (count > 0)
 	{

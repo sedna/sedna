@@ -127,7 +127,7 @@ SednaTextInputStream::~SednaTextInputStream()
 int SednaTextInputStream::read_mem(void *dest, long bytes)
 {
 	if (bytes + pos >= in_buf.get_size())
-		bytes = in_buf.get_size() - pos;
+		bytes = (long)in_buf.get_size() - pos;
     if (bytes > 0)
 		memmove(dest, (char*)in_buf.get_ptr_to_text() + pos, bytes);
     pos += bytes;
@@ -142,7 +142,7 @@ void SednaTextInputStream::seek_mem(long where)
 int SednaTextInputStream::read_estr(void *dest, long bytes)
 {
 	if (bytes + pos > in_buf.get_size())
-        bytes = in_buf.get_size() - pos;
+        bytes = (long)in_buf.get_size() - pos;
 	long bytes_left = bytes;
     while (bytes_left-- > 0)
 	{
@@ -222,7 +222,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	fwrite(in_buf.c_str(), 1, in_buf.get_size(), f);
 	fclose(f);*/
 	pos = 0;
-	dest.size = in_buf.get_size();
+	dest.size = (long)in_buf.get_size();
 	fileInfo->size=dest.size;
 	if (in_buf.get_type() == text_mem)
 	{
@@ -1109,7 +1109,7 @@ void SednaSearchJob2::set_request(tuple_cell& request)
 
 	if (this->request)
 		free(this->request);
-	this->request = (char*)malloc(buf.get_size() + 1);
+	this->request = (char*)malloc((size_t)buf.get_size() + 1);
 	strcpy(this->request, buf.c_str()); //FIXME: c_str call may be replaced with copy_to_buf (currently not implemented)
 
 	this->dts_job.request2 = this->request;
@@ -1120,7 +1120,7 @@ void SednaSearchJob2::set_field_weights(tuple_cell& fw)
 
 	if (this->field_weights)
 		free(this->field_weights);
-	this->field_weights = (char*)malloc(buf.get_size() + 1);
+	this->field_weights = (char*)malloc((size_t)buf.get_size() + 1);
 	strcpy(this->field_weights, buf.c_str()); //FIXME: c_str call may be replaced with copy_to_buf (currently not implemented)
 
 	this->dts_job.fieldWeights = this->field_weights;

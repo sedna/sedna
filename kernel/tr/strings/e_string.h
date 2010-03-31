@@ -52,13 +52,13 @@ private:
     xptr last_blk;
 
     int m_blks;
-    int m_size;
+    str_off_t m_size;
 
     void init();
     xptr xptr_for_data();
     void copy_text_mstr(xptr dest, const char *src, int count);
     void copy_text_mstr(xptr dest, const char *src);
-    void copy_text_estr(xptr dest, xptr src, int count);
+    void copy_text_estr(xptr dest, xptr src, str_off_t count);
     void copy_text_pstr_long(xptr dest, xptr src);
 
 public:
@@ -101,7 +101,7 @@ public:
 
     xptr append_mstr(const char *src); // memory strings
     xptr append_mstr(const char *src, int count); // memory strings
-    xptr append_estr(const xptr &src, int count); // e_str
+    xptr append_estr(const xptr &src, str_off_t count); // e_str
     xptr append_pstr_short(const xptr &src, int count) { return append_estr(src, count); }
     xptr append_pstr_long(const xptr &src);
     xptr append_pstr(const xptr &src, int count) { return count > PSTRMAXSIZE ?
@@ -111,12 +111,12 @@ public:
 	//returns number of blocks occupied by the e_string
 	//actual number of allocated block may be larger in case e_str::reset() has been called before
     int blks() const { return m_blks; }
-    int size() const { return m_size; }
+    str_off_t size() const { return m_size; }
     // how many new blocks will be allocated if we append a string of length str_len
     int blks_to_allocate(int str_len);
 };
 
-void estr_copy_to_buffer(char *dest, xptr src, int count);
+void estr_copy_to_buffer(char *dest, xptr src, str_off_t count);
 
 
 namespace tr_globals
@@ -132,9 +132,9 @@ class estr_cursor : public str_cursor
 {
 private:
     xptr m_str;
-    int  m_count;
+    str_off_t  m_count;
 public:
-    estr_cursor(const xptr& str, int count) : m_str(str), m_count(count) {}
+    estr_cursor(const xptr& str, str_off_t count) : m_str(str), m_count(count) {}
     /// Block oriented copy. buf must have size not less than a page size
     virtual int copy_blk(char *buf);
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
@@ -152,7 +152,7 @@ class estr_buf
 private:
     estr *m_str;
 
-    int m_size;
+    str_off_t m_size;
     xptr m_start;
 
 public:
@@ -161,7 +161,7 @@ public:
 
     void append(const tuple_cell& tc)
     {
-        int old_size = m_str->size();
+        str_off_t old_size = m_str->size();
         if (m_size) m_str->append(tc);
         else m_start = m_str->append(tc);
         m_size += m_str->size() - old_size;
@@ -169,14 +169,14 @@ public:
 
     void append_mstr(const char *src) // memory strings
     {
-        int old_size = m_str->size();
+        str_off_t old_size = m_str->size();
         if (m_size) m_str->append_mstr(src);
         else m_start = m_str->append_mstr(src);
         m_size += m_str->size() - old_size;
     }
 	void append_mstr(const char *src, int count) // e_str
     {
-        int old_size = m_str->size();
+        str_off_t old_size = m_str->size();
         if (m_size) m_str->append_mstr(src, count);
         else m_start = m_str->append_mstr(src, count);
         m_size += m_str->size() - old_size;
@@ -214,7 +214,7 @@ public:
 
 
 
-void estr_feed(string_consumer_fn fn, void *p, xptr src, int count); // or pstr,  FIXME: int count
+void estr_feed(string_consumer_fn fn, void *p, xptr src, str_off_t count); // or pstr
 
 #endif
 

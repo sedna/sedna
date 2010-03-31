@@ -144,9 +144,10 @@ SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
 	default:
 		res = cast(res, xs_string);
 		node->data.type = SEDNATYPE_string;
-		int len = res.get_strlen();
+		str_off_t len = res.get_strlen();
         //TODO: check len < MAX_WE_CAN_ALLOC
-		node->data.val_string = (SEDNA_string)malloc(len+1);
+		U_ASSERT(len >= 0 && len < SIZE_MAX);
+		node->data.val_string = (SEDNA_string)malloc((size_t)len+1);
         res.copy_string(node->data.val_string);
 		break;
 	}

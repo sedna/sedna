@@ -65,9 +65,6 @@ void delete_undeep(PPOpIn arg)
         auth_for_update(&argseq, DELETE_STATEMENT, false);
 
     //  cycle on  sequence
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&argseq, false, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
 #endif
@@ -164,9 +161,6 @@ void delete_deep(PPOpIn arg)
     p.print();
     }
     */
-#ifdef SE_ENABLE_FTSEARCH
-    clear_ft_sequences();
-#endif
 #ifdef SE_ENABLE_TRIGGERS
     apply_per_statement_triggers(&argseq, true, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
 #endif
