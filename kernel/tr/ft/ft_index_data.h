@@ -177,6 +177,8 @@ struct ft_index_cell_object : public catalog_object
 
         catalog_object_header * header = catalog_create_object(obj);
         catalog_set_name(catobj_ft_indicies, _index_title, header);
+        catalog_htable_set(catobj_ft_indicies, _index_title, (_is_doc ? 'D' : 'C'), _doc_name);
+        
         return header;
     };
 
