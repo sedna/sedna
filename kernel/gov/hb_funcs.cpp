@@ -192,7 +192,7 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 
 	smmsg.cmd = 39;
 	smmsg.data.hb_struct.state = req;
-	smmsg.data.hb_struct.is_checkp = (*status == HB_WAIT) ? 0 : msg->body[0];
+	smmsg.data.hb_struct.is_checkp = (*status == HB_WAIT) ? false : (msg->body[0] != 0);
 
 	net_int2int((__int32 *)(&incr_req), &(msg->body[1]));
 	smmsg.data.hb_struct.incr_state = incr_req;

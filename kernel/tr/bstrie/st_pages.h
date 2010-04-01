@@ -9,7 +9,14 @@ struct tree_state_path {
     int key_break;
 
     struct tree_state * last_state;
+#ifdef _MSC_VER
+#pragma warning( disable : 4200 )
+#endif
     struct tree_state * states[0];
+#ifdef _MSC_VER
+#pragma warning( default : 4200 )
+#endif
+
 };
 
 struct st_page_header {

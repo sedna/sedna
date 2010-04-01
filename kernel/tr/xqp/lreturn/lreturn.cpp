@@ -1416,7 +1416,7 @@ namespace sedna
             {
                 if (i < sizeof(param_mask))
                 {
-                    req.distinctOnly = (xqf.mask & (0x1 << i));
+                    req.distinctOnly = ((xqf.mask & (0x1 << i)) != 0);
                 }
                 else if (standFunc)
                 {
