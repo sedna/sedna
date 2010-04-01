@@ -5,7 +5,7 @@
 
 # This is script for making release of the Sedna system.
 # Unfortunately, it depends on the environment of MODIS group and
-# will not work in other places without modification
+# may not work in other places without modification
 
 BUILD_MACHINE=volga.ispras.ru
 
