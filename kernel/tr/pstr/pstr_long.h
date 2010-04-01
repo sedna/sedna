@@ -145,7 +145,8 @@ class pstr_long_iterator : public pstr_long_cursor
 protected:
 	pstr_long_off_t m_pos;
 public:
-	/// creates NULL iterator (i.e. not equal to any valid iterator)
+    typedef pstr_long_off_t off_t;
+    /// creates NULL iterator (i.e. not equal to any valid iterator)
 	pstr_long_iterator() : pstr_long_cursor()
 	{
 		m_pos = -1;

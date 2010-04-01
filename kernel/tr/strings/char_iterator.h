@@ -47,6 +47,7 @@ class char_iterator : public std::iterator<std::bidirectional_iterator_tag,char>
 		int size;
 		int shift;
     public:
+        typedef int off_t;
 		char_iterator(char* _begin_, int _size_,int _shift_) :
 			begin(_begin_) ,size(_size_) ,shift(_shift_)
        	{
