@@ -46,9 +46,15 @@ struct ftc_index_data
 	FTC_PTR words;
 	xptr btree_root; //FIXME: this will need to change
 	FTC_ALLOCATOR ind_alloc;
-	char name[];
+#ifdef _MSC_VER
+#pragma warning( disable : 4200 )
+#endif
+    char name[];
+#ifdef _MSC_VER
+#pragma warning( default : 4200 )
+#endif
 
-	//need ft_index_sem
+    //need ft_index_sem
 	static FTC_PTR create(const char *name, xptr btree_root)
 	{
 		FTC_PTR ptr = m_alloc.alloc(sizeof(ftc_index_data) + strlen(name) + 1); //TODO: check null

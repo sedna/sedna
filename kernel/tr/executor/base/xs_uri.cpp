@@ -266,7 +266,7 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
     while(start < end)
     {
         value = *start;
-        bool temp = IS_BYTE_SCHEME_ALLOWED(value);
+        bool temp = (IS_BYTE_SCHEME_ALLOWED(value) != 0); 
         if(!temp) break;
         ++start;
     }

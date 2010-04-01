@@ -75,7 +75,13 @@ public:
 		typename AllocatorT::ptr_t s_parent;
 		str_len_t str_len;
 		bool black;
-		char str[];
+#ifdef _MSC_VER
+#pragma warning( disable : 4200 )
+#endif
+        char str[];
+#ifdef _MSC_VER
+#pragma warning( default : 4200 )
+#endif
 		
 		inline const char *get_str() { return (this->str);}
 		inline const str_len_t get_str_len() { return (this->str_len);}

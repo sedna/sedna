@@ -542,7 +542,6 @@ void SednaIndexJob::recover_db(trn_cell_analysis_redo *redo_list, bool is_hb)
 #ifdef _WIN32
 
     WIN32_FIND_DATA find_data;
-    struct file_struct fs;
     UFile fhanldle;
 
 	std::string log_path = std::string(SEDNA_DATA) + std::string("/data/")

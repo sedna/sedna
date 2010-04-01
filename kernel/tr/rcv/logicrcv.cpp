@@ -668,7 +668,7 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
      int itconst;
      int custom_tree_size;
      int offs;
-	 bool isUNDO = rollback_active;
+	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
