@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # common options
 ENHANCE_TERM=Readline
