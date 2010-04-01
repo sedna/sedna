@@ -220,9 +220,9 @@ static inline bool intl_append_str_pc(bool persistent, const char *data, pstr_lo
 		CHECKP(intl_last_blk);
 		VMM_SIGNAL_MODIFICATION(intl_last_blk);
 	}
-
-	memcpy((char *)XADDR(intl_last_blk) + intl_ftr.cursor, data, size);
-	intl_ftr.cursor += size;
+	//size <= avail <= PAGE_SIZE here
+	memcpy((char *)XADDR(intl_last_blk) + intl_ftr.cursor, data, (size_t)size);
+	intl_ftr.cursor += (int)size;
 	intl_ftr.char_count += intl_char_counter->count_chars(data, size);
 
 	RECOVERY_CRASH;
@@ -251,7 +251,7 @@ static inline void intl_finalize_str(bool persistent, bool plog)
 	}
 	((pstr_long_blk_hdr*)XADDR(intl_last_blk))->next_blk = XNULL;
 
-	if (intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE > avail)
+	if (((int)intl_ftr.block_list_size)*(int)PSTR_LONG_BLOCK_LIST_ENTRY_SIZE > avail)
 	{
 		//TODO! - make sure that if cursor < 0, last str-block ref stays in last block
 		intl_move_list_to_blb(persistent);
@@ -327,10 +327,10 @@ xptr pstr_long_create_str2(bool persistent, const void *data, pstr_long_off_t si
 	case text_doc:
 		if (size <= PSTRMAXSIZE)
 		{
-			char *tmp = (char*)malloc(size); //FIXME? sb
+			char *tmp = (char*)malloc((size_t)size); //FIXME? sb
 			const xptr ptr=*(xptr*)data;
 			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), size);
+			memcpy(tmp, (char*)XADDR(ptr), (size_t)size);
 			const xptr res = pstr_long_create_str2(persistent, tmp, size);
 			free(tmp);
 			return res;
@@ -472,6 +472,7 @@ inline pstr_long_block_list_entry * intl_last_blk_last_ble(const int mapsize, co
 
 static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, str_off_t size0)
 {
+	U_ASSERT(size0 < SIZE_MAX);
 	//TODO: move string first
 	pstr_long_off_t size = size0;
 	intl_last_blk = str_ptr;
@@ -490,13 +491,13 @@ static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, str_
 		VMM_SIGNAL_MODIFICATION(prev);
 		if (avail >= size)
 		{
-			memcpy((char*)XADDR(prev) + cursor, data, size);
+			memcpy((char*)XADDR(prev) + cursor, data, (size_t)size);
 			CHECKP(intl_last_blk);
 			VMM_SIGNAL_MODIFICATION(intl_last_blk);
 			if (avail == size)
 				ftr->cursor = PSTR_LONG_BLK_HDR_SIZE;
 			else
-				ftr->cursor -= size;
+				ftr->cursor -= (int)size;
 			//FIXME!!!
 			ftr->char_count += intl_char_counter->count_chars(data, size);
 
@@ -519,8 +520,8 @@ static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, str_
 	{
 		CHECKP(intl_last_blk);
 		VMM_SIGNAL_MODIFICATION(intl_last_blk);
-		memcpy((char*)XADDR(intl_last_blk + intl_ftr.cursor), data, size);
-		intl_ftr.cursor += size;
+		memcpy((char*)XADDR(intl_last_blk + intl_ftr.cursor), data, (size_t)size);
+		intl_ftr.cursor += (int)size;
 		intl_ftr.char_count += intl_char_counter->count_chars(data, size);
 
 		ftr->cursor		= intl_ftr.cursor;
@@ -594,9 +595,9 @@ static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, str_
 				memcpy(ptr, intl_last_block_list_entry, blocklist_bytes);
 			}
 		}
-		//FIXME: log only part that intersects block list/map?
-		memcpy((char*)XADDR(intl_last_blk + intl_ftr.cursor), data, size);
-		intl_ftr.cursor += size;
+		U_ASSERT(size >= 0);
+		memcpy((char*)XADDR(intl_last_blk + intl_ftr.cursor), data, (size_t)size);
+		intl_ftr.cursor += (int)size;
 		intl_ftr.char_count += intl_char_counter->count_chars(data, size);
 
 		memcpy(ftr, &intl_ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
@@ -725,7 +726,7 @@ int  pstr_long_cursor::get_blk(char **ptr)
 		if (((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk == last_blk && cursor < 0)
 		{
 			*ptr = (char*)XADDR(blk) + ofs;
-			data_buf_cnt = -ofs-cursor;
+			data_buf_cnt = -cursor-ofs;
 		}
 		else
 		{
@@ -784,10 +785,11 @@ int  pstr_long_cursor::get_blk_rev(char **ptr)
 //pre:	size0 is actual string size, FIXME
 static xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_ptr, pstr_long_off_t size0)
 {
+	U_ASSERT(size0 >= 0);
 	U_TRACE(("dst_str_ptr.addr=%p, src_str_ptr.addr=%p, size0=%ld\n", dst_str_ptr.addr, src_str_ptr.addr, size0));
 	if (size0 < (PAGE_SIZE * 2))
 	{//FIXME?
-		char *tmp_buf = (char*)malloc(size0); //FIXME: use static buf?
+		char *tmp_buf = (char*)malloc((size_t)size0); //FIXME: use static buf?
 		pstr_long_copy_to_buffer2(tmp_buf, src_str_ptr, size0);
 		xptr res = pstr_long_append_tail_mem2(dst_str_ptr, tmp_buf, size0);
 		free(tmp_buf);
@@ -797,7 +799,7 @@ static xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_pt
 	{
 		//make sure cursor > 0, etc and use intl_append_str_pc
 
-		//TODO: ���������� ������� ������
+		//TODO: move string first
 		pstr_long_off_t size = size0;
 		intl_last_blk = dst_str_ptr;
 
@@ -809,12 +811,7 @@ static xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_pt
 		memcpy(&intl_ftr, ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
 		intl_char_counter = charset_handler->new_char_counter();
 
-		const xptr src_last_blk = src_str_ptr;
-
-		CHECKP(src_last_blk);
-		xptr start = (PSTR_LONG_LAST_BLK_FTR(src_last_blk))->start;
-
-		pstr_long_cursor src_cur(start, src_last_blk);
+		pstr_long_cursor src_cur(src_str_ptr);
 
 		if (intl_ftr.cursor < 0)
 		{
@@ -884,7 +881,7 @@ static xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_pt
 			data_buf_cnt = src_cur.copy_blk(data_buf);
 			if (data_buf_cnt > size)
 			{
-				data_buf_cnt = size;
+				data_buf_cnt = (int)size;
 				U_ASSERT(dst_str_ptr == src_str_ptr);
 			}
 			data_buf_ofs = 0;
@@ -937,10 +934,10 @@ static xptr pstr_long_append_tail2(xptr str_ptr,const void *data, pstr_long_off_
 	case text_doc:
 		if (size <= PSTRMAXSIZE)
 		{
-			char *tmp = (char*)malloc(size); //FIXME? sb
+			char *tmp = (char*)malloc((size_t)size); //FIXME? sb
 			const xptr ptr=*(xptr*)data;
 			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), size);
+			memcpy(tmp, (char*)XADDR(ptr), (size_t)size);
 			str_ptr = pstr_long_append_tail_mem2(str_ptr, tmp, size);
 			free(tmp);
 			return str_ptr;
@@ -954,6 +951,7 @@ static xptr pstr_long_append_tail2(xptr str_ptr,const void *data, pstr_long_off_
 		return pstr_long_append_tail_estr2(str_ptr, *(xptr*)data, size);
 	}
 	U_ASSERT(false);
+	return XNULL;
 }
 
 void pstr_long_append_tail(const xptr desc,const void *data, pstr_long_off_t size, text_type ttype)
@@ -1011,17 +1009,19 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 		if (cur + sz > ofs)
 		{
 			CHECKP(mapent->list_blk);
+			//ind is actually < PSTR_LONG_FULL_BLOCK_LIST_SIZE, it's pstr_long_off_t only to avoid conversion in the next line
 			const pstr_long_off_t ind = (ofs - cur)/(pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
+			U_ASSERT(ind < PSTR_LONG_FULL_BLOCK_LIST_SIZE);
 			cur += ind * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
 			int ble_ofs = PAGE_SIZE - ((int)ind + 1 + gap)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
 			pstr_long_block_list_entry *ble = (pstr_long_block_list_entry *)((char*)XADDR(mapent->list_blk) + ble_ofs);
 
+			U_ASSERT(ofs-cur >= 0);
+			U_ASSERT(ofs-cur < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
 			const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
-			U_ASSERT(ofs_in_blk > 0);
-			U_ASSERT(ofs_in_blk < PAGE_SIZE);
 
 			res = ble->str_blk + ofs_in_blk;
-			blb_ind = ind + gap;
+			blb_ind = (int)ind + gap;
 
 			return;
 		}
@@ -1032,17 +1032,18 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 	mapent = NULL;
 
 	const pstr_long_off_t skip_fb = (ofs - cur)/(pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
-	if ((int)skip_fb < intl_ftr.block_list_size)
+	U_ASSERT(skip_fb < PSTR_LONG_FULL_BLOCK_LIST_SIZE);
+	if (skip_fb < (pstr_long_off_t)intl_ftr.block_list_size)
 	{
 		cur += skip_fb * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
 
 		pstr_long_block_list_entry *ble = (pstr_long_block_list_entry *)(intl_block_list_end_addr() - (((int)skip_fb + 1)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE));
+		U_ASSERT(ofs-cur >= 0);
+		U_ASSERT(ofs-cur < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
 		const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
-		U_ASSERT(ofs_in_blk > 0);
-		U_ASSERT(ofs_in_blk < PAGE_SIZE);
 
 		res = ble->str_blk + ofs_in_blk;
-		blb_ind = skip_fb;
+		blb_ind = (int)skip_fb;
 
 		return;
 	}
@@ -1050,12 +1051,12 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 	cur += sz;
 	U_ASSERT((int)skip_fb == intl_ftr.block_list_size);
 	U_ASSERT(intl_ftr.cursor > 0);
+	U_ASSERT(ofs-cur >= 0);
+	U_ASSERT(ofs-cur < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
 	const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
-	U_ASSERT(ofs_in_blk > 0);
-	U_ASSERT(ofs_in_blk < PAGE_SIZE);
 
 	res = intl_last_blk + ofs_in_blk;
-	blb_ind = skip_fb;
+	blb_ind = (int)skip_fb;
 }
 
 static inline void intl_remove_last_ble()
@@ -1087,7 +1088,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 		U_ASSERT((PSTR_LONG_BLK_HDR(intl_last_blk))->prev_blk != XNULL);
 		if (cursor - PSTR_LONG_BLK_HDR_SIZE >= size)
 		{
-			intl_ftr.cursor += size;
+			intl_ftr.cursor += (int)size;
 			xptr pred_blk = (PSTR_LONG_BLK_HDR(intl_last_blk))->prev_blk;
 
 			int bs = intl_ftr.block_list_size; //FIXME: these 2 vars suxx
@@ -1198,7 +1199,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 			CHECKP(intl_last_blk);
 			VMM_SIGNAL_MODIFICATION(intl_last_blk);
 			ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
-			intl_ftr.cursor -= size;
+			intl_ftr.cursor -= (int)size;
 			const int cnt = intl_char_counter->count_chars((char*)XADDR(intl_last_blk) + intl_ftr.cursor, size);
 
 			ftr->char_count -= cnt;
@@ -1335,15 +1336,15 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 		//FIXME!: first_blk may also be last_blk
 		intl_ftr.first_blk_char_count += intl_char_counter->count_chars(data, size);
-		intl_ftr.start -= size;
+		intl_ftr.start -= (int)size;
 		ftr->start = intl_ftr.start;
 		ftr->first_blk_char_count = intl_ftr.first_blk_char_count;
 
 		CHECKP(first_blk);
 		VMM_SIGNAL_MODIFICATION(first_blk);
-		//we don't overwrite data => no phys-log
+		
 		U_ASSERT(BLOCKXPTR(intl_ftr.start) == first_blk); // we changed ftr->start
-		memcpy(XADDR(intl_ftr.start), data, size);
+		memcpy(XADDR(intl_ftr.start), data, (size_t)size);
 
 	    WRITEP(desc);
 	    U_ASSERT(isPstrLong(T_DSC(desc)));
@@ -1357,6 +1358,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	const pstr_long_off_t blk_count = (part12-1) / (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
 	const int part1 = (int)(part12 - (blk_count * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE)));
 
+	//FIXME: make sure blk_count fits into int
 	int new_blk_count = blk_count + 1;
 	int next_bls = 0;
 	const int fblb_avail = intl_ftr.first_blb_gap_size;
@@ -1594,10 +1596,10 @@ void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, tex
 	case text_doc:
 		if (size <= PSTRMAXSIZE)
 		{
-			char *tmp = (char*)malloc(size); //FIXME? sb
+			char *tmp = (char*)malloc((size_t)size); //FIXME? sb
 			const xptr ptr=*(xptr*)data;
 			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), size);
+			memcpy(tmp, (char*)XADDR(ptr), (size_t)size);
 			pstr_long_append_head(desc, tmp, size);
 			free(tmp);
 			return;
@@ -1862,48 +1864,18 @@ void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p)
 
 void pstr_long_copy_to_buffer2(char *buf, const xptr &str_ptr, pstr_long_off_t size)
 {
-	intl_last_blk = str_ptr;
-
-	CHECKP(intl_last_blk);
-	xptr start = (PSTR_LONG_LAST_BLK_FTR(intl_last_blk))->start;
-
-	pstr_long_cursor cur(start, intl_last_blk);
-
-	while (cur.blk != cur.last_blk)
+	pstr_long_cursor cur(str_ptr);
+	while (size > 0)
 	{
-		CHECKP(cur.blk);
-		if (((struct pstr_long_blk_hdr *)XADDR(cur.blk))->next_blk == cur.last_blk && cur.cursor < 0)
-		{
-			if (-cur.ofs-cur.cursor >= size)
-			{
-				memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, size);
-				return;
-			}
-			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, -cur.ofs-cur.cursor);
-			buf += -cur.ofs-cur.cursor;
-			size -= -cur.ofs-cur.cursor;
-		}
-		else
-		{
-			if (PAGE_SIZE-cur.ofs >= size)
-			{
-				memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, size);
-				return;
-			}
-			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, PAGE_SIZE-cur.ofs);
-			buf += PAGE_SIZE-cur.ofs;
-			size -= PAGE_SIZE-cur.ofs;
-		}
-		cur.blk = ((struct pstr_long_blk_hdr *)XADDR(cur.blk))->next_blk;
-		cur.ofs = PSTR_LONG_BLK_HDR_SIZE;
-	}
-	if (cur.cursor > 0)
-	{
-		CHECKP(cur.blk);
-		if (cur.cursor-cur.ofs > size)
-			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, size);
-		else
-			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, cur.cursor-cur.ofs);
+		char *ptr;
+		int cnt = cur.get_blk(&ptr);
+		if (cnt == 0)
+			return; //specified size is less than string size
+		if (cnt > size)
+			cnt = (int)size;
+		memcpy(buf, ptr, cnt);
+		buf += cnt;
+		size -= cnt;
 	}
 }
 

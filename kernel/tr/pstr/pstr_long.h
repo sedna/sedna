@@ -93,26 +93,15 @@ void pstr_long_str_info(xptr desc);
 #endif
 
 //need to declare it here, because it's a friend of pstr_long_cursor
-static xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_ptr, pstr_long_off_t size0);
 class pstr_long_cursor : public str_cursor
 {
 	//TODO!! blk should point to last_blk or last_blk->pred when pointer is at eof
 	// if cursor < 0, then blk should NEVER point to last_blk in get_blk/copy_blk
 	// i.e. blk always points to block that contains some string data & if position
 	// is not eos, current char is in blk
-    friend xptr pstr_long_append_tail2(const xptr dst_str_ptr, const xptr src_str_ptr, pstr_long_off_t size0);
-	friend void pstr_long_copy_to_buffer2(char *buf, const xptr &str_ptr, pstr_long_off_t size);
 protected:
 	xptr m_start;
 	pstr_long_cursor() {} //dummy default constructor for pstr_long_iterator
-	//pre: CHECKP(_last_)
-	pstr_long_cursor(const xptr &_start_, const xptr &_last_) {
-		blk = BLOCKXPTR(_start_);
-		cursor = (PSTR_LONG_LAST_BLK_FTR(_last_))->cursor;
-		ofs = (char*)XADDR(_start_) - (char*)XADDR(blk);
-		last_blk = _last_;
-		m_start = _start_;//FIXME
-	}
 public:
 	pstr_long_cursor(const xptr &_ptr_) {
 		last_blk = _ptr_;
@@ -149,8 +138,6 @@ public:
 	// and moves cursor after the end of the previous block (thus making it incompatible with iterator functions)
 	// or to the string beginning
 	int get_blk_rev(char **ptr);
-
-	bool eos() {return blk == XNULL; } //FIXME
 };
 
 class pstr_long_iterator : public pstr_long_cursor
