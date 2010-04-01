@@ -254,7 +254,7 @@ static void move_part(char * source, shift_t * subtrees, size_t * sizes, int sli
 
 static void split_pages(xptr xpage, shift_t * subtrees, shift_t offset, int count, xptr out)
 {
-    size_t * sizes;
+    /*size_t * sizes;
     size_t counter = 0, total_size = 0;
     int split_index;
     struct st_page_header page, rpage_header;
@@ -289,7 +289,7 @@ static void split_pages(xptr xpage, shift_t * subtrees, shift_t offset, int coun
     move_part(state_tmp_buffer, subtrees, sizes, split_index, count, xpage, out);
 
     free(state_tmp_buffer);
-    free(sizes);
+    free(sizes);*/
 }
 
 void page_split(xptr * page_stack, shift_t size, shift_t state, struct st_page_header * page_header)
