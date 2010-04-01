@@ -177,7 +177,7 @@ prepare_source() {
 prepare_post_source() {
     cp $SEDNA_INSTALL/sedna/doc/AdminGuide.pdf $FILE_BASE/doc/AdminGuide &&
     cp $SEDNA_INSTALL/sedna/doc/ProgGuide.pdf $FILE_BASE/doc/ProgGuide &&
-    cp $SEDNA_INSTALL/sedna/doc/ClientServerProtocol.pdf $FILE_BASE/doc/ProgGuide/ClientServerProtocol &&
+    cp $SEDNA_INSTALL/sedna/doc/ClientServerProtocol.pdf $FILE_BASE/doc/ClientServerProtocol &&
     cp $SEDNA_INSTALL/sedna/doc/QuickStart.pdf $FILE_BASE/doc/QuickStart &&
     exclude_files
 }

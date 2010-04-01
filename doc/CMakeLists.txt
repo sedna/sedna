@@ -10,7 +10,7 @@ endif (PDFLATEX_COMPILER)
 
 # create rules to build documentation
 if (MAKE_DOC)
-    set(docs_SRC AdminGuide/AdminGuide.tex ProgGuide/ProgGuide.tex ProgGuide/ClientServerProtocol/ClientServerProtocol.tex QuickStart/QuickStart.tex)
+    set(docs_SRC AdminGuide/AdminGuide.tex ProgGuide/ProgGuide.tex ClientServerProtocol/ClientServerProtocol.tex QuickStart/QuickStart.tex)
     set(doc_out_pdfs)
 
     foreach(doc ${docs_SRC})
