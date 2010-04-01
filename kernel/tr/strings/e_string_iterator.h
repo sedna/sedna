@@ -41,7 +41,8 @@ private:
     xptr s;
 
 public:	
-	estr_iterator(str_off_t _chars_left_, xptr _s_);
+	typedef str_off_t off_t;
+    estr_iterator(str_off_t _chars_left_, xptr _s_);
 	estr_iterator(): chars_left(-1) { }
 
 	unsigned char operator*() const { CHECKP(cur_block_xptr); return *cur_p; }
@@ -53,14 +54,14 @@ public:
 	estr_iterator operator ++(int) {estr_iterator old(*this); ++(*this); return old; }
 	estr_iterator operator --(int) {estr_iterator old(*this); --(*this); return old; }
 
-	//FIXME!
-	estr_iterator& operator +=(int x) { while (x-- > 0) ++(*this); return *this; }
-	estr_iterator  operator +(int x) { 
+	//FIXME! Remove while (x-- > 0)
+	estr_iterator& operator +=(off_t x) { while (x-- > 0) ++(*this); return *this; }
+	estr_iterator  operator +(off_t x) { 
 		estr_iterator tmp(*this);
 		tmp += x;
 		return tmp;
 	}
-	estr_iterator& operator -=(int x) { while (x-- > 0) --(*this); return *this; }
+	estr_iterator& operator -=(off_t x) { while (x-- > 0) --(*this); return *this; }
 
 	int operator -(const estr_iterator &it) const { return it.chars_left - chars_left; }
     

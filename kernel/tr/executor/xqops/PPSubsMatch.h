@@ -113,7 +113,7 @@ template <class a, class b>  int  PPSubsMatch::contains (a& it1, b& it2,str_off_
 
     j = 0;
     i1 = it1;
-    it1 += l2;
+    it1 += (a::off_t)l2;
     a i3=it1;
     
     while (j < l1-l2) 
