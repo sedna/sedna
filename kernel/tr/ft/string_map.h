@@ -538,4 +538,3 @@ template<class T, class X> void pers_sset<T,X>::rb_fixup(pers_sset_entry* entry,
 }*/
 
 #endif
-

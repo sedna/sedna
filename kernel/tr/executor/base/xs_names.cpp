@@ -254,8 +254,10 @@ static inline void check_constraints_for_name_type(Iterator &start, const Iterat
         {
             case 1:
             {
-                bool temp = (UTF8_GET_NMSTRT1(value[0]) != 0);
-                if(!temp || (!colon_allowed && value[0] == ':'))
+                /* Some versions of GCC are going crazy here. Don't 
+                   optimize it removing temp variable. */
+                int temp = UTF8_GET_NMSTRT1(value[0]);
+                if(temp == 0 || (!colon_allowed && value[0] == ':'))
                 {
                     if(IS_WHITESPACE(value[0])) whitespace_reached = true;
                     else return;
@@ -289,8 +291,10 @@ static inline void check_constraints_for_name_type(Iterator &start, const Iterat
        {
            case 1:
            {
-                bool temp = (UTF8_GET_NAMING1(value[0]) != 0);
-                if(!temp || (!colon_allowed && value[0] == ':'))
+                /* Some versions of GCC are going crazy here. Don't 
+                   optimize it removing temp variable. */
+                int temp = UTF8_GET_NAMING1(value[0]);
+                if(temp == 0 || (!colon_allowed && value[0] == ':'))
                 {
                     if(IS_WHITESPACE(value[0])) whitespace_reached = true;
                     else return;
