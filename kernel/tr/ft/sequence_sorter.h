@@ -38,4 +38,4 @@ private:
 	sorted_sequence *ss;
 };
 
-#endif
+#endif /* SEQUENCE_SORTER_H */

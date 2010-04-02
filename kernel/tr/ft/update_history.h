@@ -37,4 +37,4 @@ public:
 	}
 };
 
-#endif
+#endif /* UPDATE_HISTORY_H */
