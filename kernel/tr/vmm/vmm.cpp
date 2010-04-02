@@ -432,7 +432,8 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat)
 
 inline static void vmm_callback_unmap()
 {
-    /* We check only vmm_cur_ptr to be sure it is set if main thread have been stopped inside CHECKP */
+    /* We check only vmm_cur_ptr to be sure it is set 
+     * if main thread have been stopped inside CHECKP */
     if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*) p_sm_callback_data)) {
         VMM_TRACE_CALLBACK(*(xptr*)p_sm_callback_data);
         vmm_swap_unmap_conditional(*(xptr*)p_sm_callback_data);
@@ -462,7 +463,8 @@ U_THREAD_PROC(_vmm_thread, arg)
     while (true) {
         USemaphoreDown(sm_to_vmm_callback_sem1, __sys_call_error);
 
-        /* quick and dirty workaround - request unmapping of 0xffffffff to stop VMM callback thread */
+        /* quick and dirty workaround - request unmapping of 
+         * 0xffffffff to stop VMM callback thread */
         if (XADDR(*(xptr*)p_sm_callback_data) == (void*)-1) {
             *(bool*)p_sm_callback_data = true;
             USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
@@ -473,8 +475,8 @@ U_THREAD_PROC(_vmm_thread, arg)
         pthread_kill(main_thread, SIGUSR1);
 #else
         uSuspendThread(main_thread, __sys_call_error);
-        uResumeThread(main_thread, __sys_call_error);
         vmm_callback_unmap();
+        uResumeThread(main_thread, __sys_call_error);
         USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
 #endif /* _WIN32 */
     }
@@ -521,7 +523,6 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
         throw USER_EXCEPTION2(SE4012, "VMM_SM_SEMAPHORE_STR");
 
     __vmm_set_sigusr_handler();
-
     __vmm_init_current_xptr();
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
