@@ -113,14 +113,15 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
     mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
-#endif /* VMM_FAST_DEBUG_MODE */
+#endif /* VMM_LINUX_DEBUG_CHECKP */
 
     if ((*(xptr *) XADDR(p)) == p) {
         vmm_unmap(XADDR(p));
     };
 }
 
-/* We always unmap the block, that lay at the given address when
+
+/* We always unmap the block that lay at the given address when
  * the block to be swapped may already be replaced by the other
  * one on SM by this call */
 inline static void vmm_swap_unmap_unconditional(const xptr p) {
@@ -128,10 +129,10 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
     vmm_unmap(XADDR(p));
 }
 
+
 /* Locks the space for block mapping. This function needs
  * to be called as early as possible to prevent others from
  * locking this memory.  */
-
 void vmm_preliminary_call()
 {
     open_global_memory_mapping(SE4400);
@@ -276,7 +277,7 @@ void vmm_delete_block(xptr p)
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
     mprotect(XADDR(p), PAGE_SIZE, PROT_NONE);
-#endif /* VMM_FAST_DEBUG_MODE */
+#endif /* VMM_LINUX_DEBUG_CHECKP */
 
     // If current block is deleted, the pointer may break something. T.I.
     if (same_block(vmm_cur_xptr, p)) { __vmm_init_current_xptr(); }
@@ -295,7 +296,6 @@ void vmm_delete_tmp_blocks()
     sem.Aquire();
     __vmm_init_current_xptr();
 
-    // Anyway we have to notify SM about deletion of the block
     if (send_sm_message(smc_delete_temp_blocks) != 0) { throw USER_EXCEPTION(SE1034); }
 
     sem.Release();
@@ -436,6 +436,7 @@ inline static void vmm_callback_unmap()
      * if main thread have been stopped inside CHECKP */
     if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*) p_sm_callback_data)) {
         VMM_TRACE_CALLBACK(*(xptr*)p_sm_callback_data);
+        /* Check that layer is the same and unmap it*/
         vmm_swap_unmap_conditional(*(xptr*)p_sm_callback_data);
         *(bool*)p_sm_callback_data = true;
     } else {
@@ -444,7 +445,7 @@ inline static void vmm_callback_unmap()
 #else
         *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1))
             && !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
-#endif /* VMM_FAST_DEBUG_MODE */
+#endif /* VMM_LINUX_DEBUG_CHECKP */
     }
 }
 

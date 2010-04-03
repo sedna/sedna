@@ -270,7 +270,7 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
         value = *start;
         /* Some versions of GCC are going crazy here. Don't 
            optimize it removing temp variable. */
-        int temp = (IS_BYTE_SCHEME_ALLOWED(value) != 0); 
+        int temp = IS_BYTE_SCHEME_ALLOWED(value); 
         if(temp == 0) break;
         ++start;
     }
