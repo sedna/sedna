@@ -69,7 +69,7 @@ UPID uGetCurrentProcessId(sys_call_error_fun fun);
 int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun);
 int uOpenProcess(UPID pid, UPHANDLE /*out*/ *h, sys_call_error_fun fun);
 
-int uCloseProcess(UPHANDLE h, sys_call_error_fun fun);
+int uCloseProcessHandle(UPHANDLE h, sys_call_error_fun fun);
 
 int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status, sys_call_error_fun fun);
 int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun);

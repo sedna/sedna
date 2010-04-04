@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 
         send_command_to_gov(port_number, command);
         uWaitForProcess(sm_pid, proc_handle, __sys_call_error);
-        uCloseProcess(proc_handle, __sys_call_error);
+        uCloseProcessHandle(proc_handle, __sys_call_error);
 
         elog(EL_LOG, ("Request for SM shutdown satisfied"));
         event_logger_release();

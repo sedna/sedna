@@ -95,7 +95,7 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
         if (0 != res || status) 
             throw SYSTEM_ENV_EXCEPTION((std::string("Cannot determine VMM region, status: ") + int2string(status) + ", result: " + int2string(res)).c_str());
 
-        uCloseProcess(process_handle, __sys_call_error);
+        uCloseProcessHandle(process_handle, __sys_call_error);
         uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0", NULL, __sys_call_error);
 
         v = *(vmm_region_values*)((char*)global_memory + PAGE_SIZE - sizeof(vmm_region_values));

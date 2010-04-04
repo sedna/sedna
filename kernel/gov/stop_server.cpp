@@ -117,7 +117,7 @@ int main(int argc, char** argv)
         send_command_to_gov(port_number, STOP);
 
         uWaitForProcess(gov_pid, proc_handle, __sys_call_error);
-        uCloseProcess(proc_handle, __sys_call_error);
+        uCloseProcessHandle(proc_handle, __sys_call_error);
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3000);
 
         close_gov_shm();
