@@ -412,7 +412,8 @@ uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun) {
 #endif /* _WIN32 */
 }
 
-/* Win: Opens an existing local process object. 
+/* Win: Opens an existing local process object with
+ *      SYNCHRONIZE privilege.
  * Nix: Simply checks out if process exists.
  * Return values:
  *  0 - process successfully opened
@@ -421,7 +422,9 @@ uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun) {
 int 
 uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun) {
 #ifdef _WIN32
-    *h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid); 
+    /* SYNCHRONIZE enough since we want just to call
+       WaitForSingleObject fuction on this handle */
+    *h = OpenProcess(SYNCHRONIZE, FALSE, pid); 
     if (*h == NULL) {
         sys_call_error("OpenProcess"); 
         return -1;
@@ -429,6 +432,9 @@ uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun) {
     else 
         return 0;
 #else
+    /*On NIX we don't need process handle.
+      So just check if process exists.
+     */
     int res = uIsProcessExist(pid, 0, fun);
     *h = 0;
     return (0 == res) ? 0 : -1;
@@ -436,7 +442,7 @@ uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun) {
 }
 
 
-int uCloseProcess(UPHANDLE h, sys_call_error_fun fun)
+int uCloseProcessHandle(UPHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res;
@@ -495,6 +501,12 @@ int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status, sys_call_error_fun f
 #endif
 }
 
+/*
+ * Waits for process specified by PID (by HANDLE on Win32 API) to
+ * be finished. On Windows HANDLE must be with SYNCHRONIZE privilege
+ * enabled. We request it via OpenProcess or automatically get if
+ * process was created with CreateProcess.
+ */
 int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
