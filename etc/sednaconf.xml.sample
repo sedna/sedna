@@ -1,46 +1,66 @@
 <?xml version="1.0" standalone="yes"?>
 
-<!-- Sample configuration file for Sedna database -->
+<!-- Configuration file for Sedna database.
+     Change values and rename this file into sednaconf.xml.
+     Note! Don't forget to change <sedna_data> value!
+ -->
 <sednaconf>
 
-  <!-- Path to the database files:
-       - path must exist;
-       - path must be absolute;
-       - in Windows use '/' for separating directories (example: c:/sedna) 
+  <!-- 
+       Path to the database files:
+        - path must exist;
+        - path must be absolute;
+        - on Windows use '/' for separating directories (example: c:/sedna) 
   -->
   <sedna_data>/var/lib/sedna</sedna_data>
 
-  <!-- Left bounf of range for identifiers of system resources -->
+  <!-- 
+       Left bounf of range for identifiers of system resources.
+       If you run multiple Sedna instances this value MUST differ
+       between them with enough delta (e.g. +10000 for each next
+       instance)
+       Default: 1500
+  -->
   <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
 
-  <!-- Sedna server listening port number -->
+  <!-- 
+       Sedna server listening port number. If you run multiple
+       Sedna instances this value MUST differ between them.
+       Default: 5050
+  -->
   <listener_port>5050</listener_port>
 
-  <!-- Sedna server ping port number -->
+  <!-- 
+       Sedna server ping port number. If you run multiple
+       Sedna instances this value MUST differ between them.
+       Default: 5151
+  -->
   <ping_port>5151</ping_port>
 
   <!-- 
        Event logging level 
-       0 -           event logging is off
-       1 -           log only fatal errors when system goes down
-       2 -           log all errors/warnings (e.g. errors in queries)
-       3 - (default) server operational messages. This is 
-                     quite complete log of what is going on in system.
-       4 -           log everything including internal debug messages
+       0 -  event logging is off
+       1 -  log only fatal errors when system goes down
+       2 -  log all errors/warnings (e.g. errors in queries)
+       3 -  server operational messages. This is 
+            quite complete log of what is going on in system.
+       4 -  log everything including internal debug messages
+       Default: 3
   -->
   <event_log_level>3</event_log_level>
 
   <!-- Session keep alive timeout
        Number of seconds to wait for the next request
        from the some client on the same connection
-       0 - (default) no timeout (infinite timeout)
+       Default: 0 - no timeout (infinite timeout)
   -->
   <keep_alive_timeout>0</keep_alive_timeout>
   
   <!-- Maximum depth of the query execution plan.
        Make sure that you have enough process stack size
        before increasing this parameter.
+       Default: 5000
   -->
-  <session_stack_depth>100000</session_stack_depth>
+  <session_stack_depth>5000</session_stack_depth>
 
 </sednaconf>
