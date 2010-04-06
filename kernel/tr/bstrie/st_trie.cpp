@@ -319,7 +319,6 @@ struct trie_data * split_state(struct trie_data * data, struct tree_state * stat
         } else {
             char * image = state->dsc.edges;
             shift_t * shifts = (shift_t *) state->dsc.pointers;
-            int i;
 
             for (int i = 0; i < state->dsc.edge_count; i++) {
                 shifts[i] += new_state_len;
@@ -328,13 +327,13 @@ struct trie_data * split_state(struct trie_data * data, struct tree_state * stat
             * (uint8_t *) p += 1;
 
             state_image_find_prefix(*key, state);
-            i = state->edge_index;
+            int j = state->edge_index;
 
-            memmove_ABd(shifts + i, state->end_ptr, sizeof(shift_t) + sizeof(char));
-            memmove_ABd(image + i, shifts + i, sizeof(char));
+            memmove_ABd(shifts + j, state->end_ptr, sizeof(shift_t) + sizeof(char));
+            memmove_ABd(image + j, shifts + j, sizeof(char));
             shifts = (shift_t *) ( (char *) shifts + sizeof(char) );
-            image[i] = *key;
-            shifts[i] = 0;
+            image[j] = *key;
+            shifts[j] = 0;
         }
     } else {
         U_ASSERT(!state->final);

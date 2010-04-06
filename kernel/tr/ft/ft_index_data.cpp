@@ -312,33 +312,6 @@ ft_index_cell_xptr find_ft_index(const char* title, ftc_index_t *ftc_idx)
 		return XNULL;
 }
 
-counted_ptr<db_entity> find_db_entity_for_index(const char* title)
-{
-    SafeMetadataSemaphore lock;
-    char t;
-
-    lock.Aquire();
-
-    if (!catalog_name_exists(catobj_ft_indicies, title)) {
-        throw USER_EXCEPTION2(SE1061, (std::string("Full-text index '") + title + "'").c_str());
-    }
-
-    counted_ptr<db_entity> result(se_new db_entity);
-    result->name = catalog_htable_get(catobj_ft_indicies, title);
-    size_t len = strlen(result->name);
-
-    lock.Release();
-
-    t = result->name[len + 1];
-    if (t == 'D') {
-        result->type = dbe_document;
-    } else {
-        result->type = dbe_collection;
-    }
-
-    return result;
-}
-
 
 void ft_index_cell_object::update_index(update_history *h)
 {
