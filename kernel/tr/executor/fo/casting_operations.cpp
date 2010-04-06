@@ -603,7 +603,7 @@ static bool check_constraints_for_xs_unsignedLong(const __int64& value)
 
 static bool check_constraints_for_xs_unsignedInt(const __int64& value)
 {
-    return value >= 0 && value <= (__int64)4294967295L;
+    return value >= 0 && value <= (__int64)4294967295UL;
 }
 
 static bool check_constraints_for_xs_unsignedShort(const __int64& value)
