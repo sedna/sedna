@@ -108,12 +108,22 @@ void vmm_unmap(void *addr)
     }
 }
 
+/*
+ * If you call it in the VMM_LINUX_DEBUG_CHECKP mode make sure 
+ * that block at vmm_cur_ptr is readable. It's not true
+ * only in one case: when it's called from the vmm thread
+ * when the main thread hasn't finished CHECKP yet.
+ */
 inline static void vmm_swap_unmap_conditional(const xptr p) {
     if (p == XNULL) return;
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
-    /* Block at the vmm_cur_ptr must be readable at least */
-    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr) {
+    /* Block at the vmm_cur_ptr must be readable at least.
+     * Actually it's not true when call is made by vmm_thread, 
+     * but in that case we have guarantee that vmm_cur_ptr !=
+     * XADDR(p).
+     */
+    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr)) {
         mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
     }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
@@ -123,9 +133,9 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
     };
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
-    /* Revert protection level if it was changed. 
+    /* Revert protection level if it was changed.
      * Any block at except current must be non set as PROT_NONE */
-    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr) { 
+    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr)) { 
         mprotect(XADDR(p), PAGE_SIZE, PROT_NONE); 
     }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
