@@ -112,12 +112,23 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
     if (p == XNULL) return;
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
-    mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
+    /* Block at the vmm_cur_ptr must be readable at least */
+    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr) {
+        mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
+    }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 
     if ((*(xptr *) XADDR(p)) == p) {
         vmm_unmap(XADDR(p));
     };
+
+#ifdef VMM_LINUX_DEBUG_CHECKP
+    /* Revert protection level if it was changed. 
+     * Any block at except current must be non set as PROT_NONE */
+    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr) { 
+        mprotect(XADDR(p), PAGE_SIZE, PROT_NONE); 
+    }
+#endif /* VMM_LINUX_DEBUG_CHECKP */
 }
 
 
@@ -273,18 +284,18 @@ void vmm_delete_block(xptr p)
     p = block_xptr(p);
     VMM_TRACE_DELETE_BLOCK(p);
 
+    /* If layer of the current block at XADDR(p) is the same we must unmap it */
     vmm_swap_unmap_conditional(p);
 
-#ifdef VMM_LINUX_DEBUG_CHECKP
-    mprotect(XADDR(p), PAGE_SIZE, PROT_NONE);
-#endif /* VMM_LINUX_DEBUG_CHECKP */
-
-    // If current block is deleted, the pointer may break something. T.I.
+    /* If current block is being deleted, the pointer may break something. 
+     * So we must reinit it. */
     if (same_block(vmm_cur_xptr, p)) { __vmm_init_current_xptr(); }
 
-    // Anyway we have to notify SM about deletion of the block
+    /* Notify SM about deletion of the block */
     msg.data.ptr = p;
-    if (send_sm_message(smc_delete_block) != 0) { throw USER_EXCEPTION(SE1034); }
+    if (send_sm_message(smc_delete_block) != 0) {
+        throw USER_EXCEPTION(SE1034);
+    }
 
     sem.Release();
 }
@@ -296,42 +307,42 @@ void vmm_delete_tmp_blocks()
     sem.Aquire();
     __vmm_init_current_xptr();
 
-    if (send_sm_message(smc_delete_temp_blocks) != 0) { throw USER_EXCEPTION(SE1034); }
+    if (send_sm_message(smc_delete_temp_blocks) != 0) {
+        throw USER_EXCEPTION(SE1034);
+    }
 
     sem.Release();
 }
-
-/* VMM_determine_region is called the first time the database starts to find active layer region */
-
-/* Some "technical" comments:
-
-1. Mapping with readonly and both read/write permissions in some systems behave differently.
-    Since vmm_determine_region intended only to find free continuous region it is better to use
-    readonly access protection.
-2. Similarly, in Linux/UNIX it is better to use MAP_PRIVATE.
-3. MAP_NORESERVE in Linux can be used since we will never commit simultaneously more than
-    database buffers size (100MiB is default).
-4. mmap() of /dev/zero can be used in systems under which MAP_ANON(YMOUS)
-    flag is not supported.
-
-Example:
-
-int fd_dev_zero;  // Don't forget to properly close fd_dev_zero!
-
-if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1)
-{
-    perror("Can't open /dev/zero");
-    if(log) fprintf(f_se_trn_log, "Can't open /dev/zero.\nError: %d\n", errno);
-    else vmm_determine_region(true);
-    return;
-}
-
-*/
 
 /* Log file for determine region */
 static FILE * f_se_trn_log;
 #define VMM_SE_TRN_LOG "se_trn_log"
 
+/* 
+ * vmm_determine_region is called the first time the Sedna server starts
+ * to find active layer region.
+ *
+ * Some comments:
+ *
+ * - Mapping with readonly and both read/write permissions in some systems
+ *   behave differently. Since vmm_determine_region intended only to find free
+ *   continuous region it's better to use readonly access protection.
+ * - Similarly, in Linux/UNIX it is better to use MAP_PRIVATE.
+ * - MAP_NORESERVE in Linux can be used since we will never commit
+ *   simultaneously more than database buffers size (100MiB is default).
+ * - mmap() of /dev/zero can be used in systems on which MAP_ANON(YMOUS) flag
+ *   is not supported. Example:
+ *   int fd_dev_zero;  // Don't forget to properly close fd_dev_zero!
+ *   if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1)
+ *   {
+ *       perror("Can't open /dev/zero");
+ *       if(log) fprintf(f_se_trn_log,
+ *                       "Can't open /dev/zero.\nError: %d\n",
+ *                       errno);
+ *       else vmm_determine_region(true);
+ *       return;
+ *   }
+ */
 void vmm_determine_region(bool log)
 {
     if (log) {
@@ -546,11 +557,10 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
         tr_globals::authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
         int bufs_num = msg.data.reg.num;
 
-        // Open buffer memory
+        /* Open buffer memory */
         file_mapping = uOpenFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error);
         if (U_INVALID_FILEMAPPING(file_mapping))
             throw USER_EXCEPTION(SE1037);
-        // Buffer memory has been opened
 
         char buf[100];
         if (USemaphoreOpen(&sm_to_vmm_callback_sem1,
@@ -675,7 +685,11 @@ static void unmapAllBlocks(bit_set * map)
 }
 
 void VMMMicrotransaction::begin() {
-    if (activeMT != NULL || mStarted) { throw SYSTEM_EXCEPTION("Nested microtransactions detected"); }
+    if (activeMT != NULL || mStarted) 
+    { 
+        /* Nested microtransactions are not allowed */
+        throw SYSTEM_EXCEPTION("Nested microtransactions detected"); 
+    }
     mStarted = true;
     activeMT = this;
 
@@ -727,13 +741,13 @@ void vmm_on_transaction_end()
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         /*
-         * Reset blocks with write access from the current trid.
-         * There was a bug here: reusing read-mapped versions between
-         * transactions leads to problems because of old versions
-         * temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
-         * we use bitset here, because just reading INVALID_LAYER from block takes very
-         * long time on MAC OS more efficient fix of the aforementioned bug
-         */
+        * Reset blocks with write access from the current trid.
+        * There was a bug here: reusing read-mapped versions between
+        * transactions leads to problems because of old versions
+        * temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
+        * we use bitset here, because just reading INVALID_LAYER from block takes very
+        * long time on MAC OS more efficient fix of the aforementioned bug
+        */
         unmapAllBlocks(mapped_pages);
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);

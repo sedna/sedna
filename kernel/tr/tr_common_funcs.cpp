@@ -41,15 +41,6 @@ static bool is_trid_obtained    = false;
 static bool need_sem            = true; // need to use semaphore for updater
 
 
-/*
-struct system_boundary_record
-{
-    char * name,
-    void (* transaction_begin) (),
-    void (* transaction_end) (),
-};
-*/
-
 static transaction_id
 get_transaction_id(SSMMsg* sm_server)
 {
@@ -320,10 +311,6 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     } catch (SednaUserException) {
         throw SYSTEM_EXCEPTION("Double error: user exception on rollback!");
     }
-
-    /* d_printf1("Syncing indirection table...");
-    sync_indirection_table();
-    d_printf1("OK\n");*/
 
     d_printf1("Releasing storage...");
     if (!wu_reported) { storage_on_transaction_end(); }
