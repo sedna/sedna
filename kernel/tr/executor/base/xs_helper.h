@@ -110,8 +110,8 @@ __int64 round_half_to_even_integer(__int64 d, __int64 precision);
 /// "remove"   - all leading and trailing (after first occurence of whitespace) 
 ///              #x9 (tab), #xA (line feed) and #xD (carriage return) are 
 ///              removed. This normalization is not described in XML Schema 
-///              Datatypes spec. It is used for datatypes that are not allowed to
-///              contain whitespace except leading and trailing (e.g. xs:anyURI).
+///              Datatypes spec. It is used for datatypes that aren't allowed to
+///              contain whitespace except leading and trailing (e.g. anyURI).
 
 void replace_string_normalization (const tuple_cell *tc, stmt_str_buf& out_buf);
 void collapse_string_normalization(const tuple_cell *tc, stmt_str_buf& out_buf);

@@ -111,12 +111,12 @@ index_cell_xptr create_index (PathExpr *object_path,
     t_scmnodes sobj = execute_abs_path_expr((schema_node_xptr) schemaroot.ptr(), object_path);
 
     //III. For each schema node found (sn_obj)
-    for (int i = 0; i < sobj.size(); i++)
+    for (unsigned int i = 0; i < sobj.size(); i++)
     {
         //IV. Execute path expression (key_path) on the descriptive schema
         t_scmnodes skey = execute_abs_path_expr(sobj[i], key_path);
         //V. For each schema node found (sn_key)
-        for (int j = 0; j < skey.size(); j++)
+        for (unsigned int j = 0; j < skey.size(); j++)
 		{
 			xptr blk;
 			//VI. Add pair <&ind,&sn_obj> into schema node (the special list is used)

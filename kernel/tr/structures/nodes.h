@@ -8,8 +8,8 @@
 #define _NODES_H
 
 /*
- structures describing internal representation of XML data
-*/
+ * Structures describing internal representation of XML data
+ */
 
 #include "common/sedna.h"
 
@@ -19,6 +19,7 @@
 #include "tr/nid/numb_scheme.h"
 #include "tr/cat/catptr.h"
 #include "tr/tr_base.h"
+#include "tr/strings/strings_base.h"
 
 struct n_dsc;
 

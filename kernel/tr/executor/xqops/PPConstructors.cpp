@@ -707,20 +707,20 @@ void PPAttributeConstructor::do_next (tuple &t)
             throw XQUERY_EXCEPTION(XQDY0044);
 
         /* Get attribute value */
-        int size;
+        strsize_t size;
         if (value==NULL)
         {
             getStringWSParameter(content);
             value=(char*)executor_globals::tmp_op_str_buf.c_str();
-            size=executor_globals::tmp_op_str_buf.get_size();
+            size = executor_globals::tmp_op_str_buf.get_size();
         }
         else
-            size=strlen(value);
+            size = strlen(value);
 
         /* Attribute insertion */
         xptr new_attribute;
         if (cont_parind==XNULL || deep_copy)
-            new_attribute= insert_attribute(XNULL,XNULL,get_virtual_root(),name,xs_untypedAtomic,value,size,ns);
+            new_attribute = insert_attribute(XNULL,XNULL,get_virtual_root(),name,xs_untypedAtomic,value,size,ns);
         else
         {
             if (cont_leftind!=XNULL)
@@ -944,7 +944,7 @@ void PPCommentConstructor::do_next (tuple &t)
     {
         first_time = false;
         const char* value=at_value;
-        int size=0;
+        strsize_t size=0;
         tuple_cell res;
         if (value==NULL)
         {
@@ -1098,45 +1098,41 @@ void PPPIConstructor::do_next (tuple &t)
         first_time = false;
 
         /* Determine parameter */
-        const char* name=at_name;
+        const char* name = at_name;
         tuple_cell res1;
-        if (name==NULL)
+        res1.set_eos();
+
+        if (name == NULL)
         {
             res1 = getQnameParameter(qname);
             name = res1.get_str_mem();
-            /* Perform name normalization */
-            stmt_str_buf res;
-            replace_string_normalization(name, res);
-            res1 = res.get_tuple_cell();
-            name = res1.get_str_mem();
         }
-        char* prefix = NULL;
-        if (!res1.is_eos() && res1.get_atomic_type()==xs_QName)
+        
+        if (!res1.is_eos() && res1.get_atomic_type() == xs_QName)
         {
-            prefix = (char*)xs_QName_get_prefix(name);
+            const char* prefix = (char*)xs_QName_get_prefix(name);
             name = xs_QName_get_local_name(name);
             if (prefix != NULL)
                 throw XQUERY_EXCEPTION(XQDY0041);
         }
         else
         {
-            separateLocalAndPrefix(prefix,name);
-            if (prefix != NULL)
-            {
-                delete[] prefix;
+            /* Perform name normalization */
+            stmt_str_buf res;
+            collapse_string_normalization(name, res);
+            res1 = res.get_tuple_cell();
+            name = res1.get_str_mem();
+            /* Check name constraints */
+            if (!check_constraints_for_xs_NCName(name))
                 throw XQUERY_EXCEPTION(XQDY0041);
-            }
         }
         
-        /* Check name constraints */
-        if (!check_constraints_for_xs_NCName(name))
-            throw XQUERY_EXCEPTION(XQDY0041);
         if(charset_handler->matches(name, "^(?i:xml)$"))
             throw XQUERY_EXCEPTION(XQDY0064);
 
         const char* value = at_value;
         tuple_cell res;
-        int size;
+        strsize_t size;
         if (value == NULL)
         {
             getStringParameter(content);
@@ -1262,7 +1258,7 @@ void PPTextConstructor::do_next (tuple &t)
     {
         first_time = false;
         const char* value=at_value;
-        int size=0;
+        strsize_t size=0;
         tuple_cell res;
         if (value==NULL)
         {

@@ -239,7 +239,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, 
 }
 
 
-xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* name, xmlscm_type type, const char* value, int data_size, xmlns_ptr ns)
+xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* name, xmlscm_type type, const char* value, strsize_t data_size, xmlns_ptr ns)
 {
     node_info_t node_info = {left_sib, right_sib, parent, attribute, type, ns, const_cast<char *>(name)};
     schema_node_cptr parent_snode;

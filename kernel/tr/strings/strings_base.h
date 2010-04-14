@@ -9,6 +9,7 @@
 #include "common/sedna.h"
 
 typedef int64_t str_off_t;
+typedef int64_t strsize_t;
 
 enum text_type {
 	text_mem,

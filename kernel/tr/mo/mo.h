@@ -21,7 +21,7 @@ class text_cptr;
 
 xptr insert_element(xptr left_sibling, xptr right_sibling, xptr parent, const char* name, xmlscm_type type, xmlns_ptr ns);
 xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, strsize_t size, text_type ttype = text_mem);
-xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* name, xmlscm_type type, const char* value, int data_size, xmlns_ptr ns);
+xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* name, xmlscm_type type, const char* value, strsize_t data_size, xmlns_ptr ns);
 xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent, xmlns_ptr ns);
 xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const char* value, strsize_t size);
 xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent, const char* value, strsize_t size);
@@ -57,7 +57,7 @@ inline xptr insert_text_i(xptr left_sib, xptr right_sib, xptr parent, const void
     return get_last_mo_inderection();
 }
 
-inline xptr insert_attribute_i(xptr left_sib, xptr right_sib, xptr parent, const char* name, xmlscm_type type, const char* value, int data_size, xmlns_ptr ns) {
+inline xptr insert_attribute_i(xptr left_sib, xptr right_sib, xptr parent, const char* name, xmlscm_type type, const char* value, strsize_t data_size, xmlns_ptr ns) {
     insert_attribute(
             indirectionDereferenceCP(left_sib),
             indirectionDereferenceCP(right_sib),

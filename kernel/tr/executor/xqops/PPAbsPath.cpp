@@ -178,7 +178,7 @@ bool PPAbsPath::determine_root()
 
         tc = tuple_cell::make_sure_light_atomic(tc);
         if (db_ent->name) delete [] db_ent->name;
-        db_ent->name = se_new char[tc.get_strlen_mem() + 1];
+        db_ent->name = new char[tc.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc.get_str_mem());
     }
 
