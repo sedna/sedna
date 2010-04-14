@@ -223,7 +223,7 @@ get_errors(xptr node,const char* /* title */)
     xptr parent = insert_element_i(XNULL,XNULL,node,"errors",xs_untyped,NULL_XMLNS);
     xptr left   = XNULL;
 
-    for (int i=0; i < user_error_code_entries_size/sizeof(user_error_code_entry); i++)
+    for (uint64_t i=0; i < user_error_code_entries_size/sizeof(user_error_code_entry); i++)
     {
         if (left==XNULL)
         {

@@ -84,36 +84,50 @@ PPEQLGeneralComparison::PPEQLGeneralComparison(dynamic_context *_cxt_,
 {
 
 }
+
+/* See XQuery 1.0 Errata for complete casting rules for general comparison */
 void PPGeneralComparison::generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2)
 {
-	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()==xs_untypedAtomic)
-	{
-		cell1=cast_primitive_to_xs_string(cell1);
-		cell2=cast_primitive_to_xs_string(cell2);
-		return; 
-	}
-	if (cell1.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell2.get_atomic_type()))
-	{
-		cell1=cast(cell1, xs_double);
-		return; 
-	}
-	if (cell2.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell1.get_atomic_type()))
-	{
-		cell2=cast(cell2, xs_double);
-		return; 
-	}
-	
-	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()!=xs_untypedAtomic)
-	{
-		cell1=cast(cell1,cell2.get_atomic_type());
-		return;
-	}
 
-	if (cell2.get_atomic_type()==xs_untypedAtomic && cell1.get_atomic_type()!=xs_untypedAtomic)
+    tuple_cell* untyped = &cell2;
+    tuple_cell* typed   = &cell1;
+
+    if (cell1.get_atomic_type() == xs_untypedAtomic)
 	{
-		cell2=cast(cell2,cell1.get_atomic_type());
-		return;
+		untyped = &cell1;
+        typed   = &cell2;
+    }
+    else if (cell2.get_atomic_type() != xs_untypedAtomic) {
+        return;
+    }
+
+    xmlscm_type type = typed->get_atomic_type();
+    
+    /* If both atomic values are instances of xs:untypedAtomic, then the values
+       are cast to the type xs:string. */
+    if(type == xs_untypedAtomic)
+    {
+        *untyped = cast_primitive_to_xs_string(*untyped);
+		*typed   = cast_primitive_to_xs_string(*typed);
 	}
+    /* If T is an instance of a numeric type, V is cast to xs:double */
+    else if(is_numeric_type(type)) 
+    {
+        *untyped = cast(*untyped, xs_double);
+    }
+    /* If T is xs:dayTimeDuration or is derived from xs:dayTimeDuration,
+     * then V is cast to xs:dayTimeDuration. 
+     * If T is xs:yearMonthDuration or is derived from xs:yearMonthDuration, 
+     * then V is cast to xs:yearMonthDuration.*/
+    else if(type == xs_dayTimeDuration || type == xs_yearMonthDuration)
+    {
+        *untyped = cast(*untyped, type);
+    }
+    /* In all other cases, V is cast to the primitive base type of T */
+    else 
+    {
+        *untyped = cast(*untyped, primitive_base_type(type));
+    }
 }
 
 PPGeneralComparison::~PPGeneralComparison()
