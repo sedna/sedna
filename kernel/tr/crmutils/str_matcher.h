@@ -8,6 +8,7 @@
 #define _STR_MATCHER_H
 
 #include "tr/executor/base/tuple.h"
+#include "tr/strings/strings_base.h"
 
 enum pat_class
 {
@@ -55,7 +56,7 @@ public:
 
 	// if write_cb == NULL, returs 1 if something matched
 	// if write_cb != NULL, parses and returns number of replaces
-	int parse(const char *str, int len, write_func_t write_cb, void *p, int pc = -1);
+	int parse(const char *str, str_off_t len, write_func_t write_cb, void *p, int pc = -1);
 	int parse_tc(const tuple_cell *tc, write_func_t write_cb, void *p, int pc);
 	void flush(write_func_t write_cb, void *p);
 	

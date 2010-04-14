@@ -200,8 +200,9 @@ inline void put_prefix(char *where, trie_node_t *node)
     - A test for unicode escape range can be done with HasBetweenInWord method on the "head byte".
 	ZNV
 */ 
-int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, int pc)
+int StrMatcher::parse(const char *str, str_off_t len, write_func_t write_cb, void *p, int pc)
 {
+	U_ASSERT(len >= 0 && len <= SIZE_MAX);
 	//TODO: implement (write_cb == 0) case
 	int k = -buf_used;
 	for (int i = 0; i < len; i++)
