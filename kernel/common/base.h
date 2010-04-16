@@ -38,7 +38,7 @@ typedef __uint32 CP_counter;
 #define SEDNA_NAMESPACE_URI     "http://www.modis.ispras.ru/sedna"
 #define SEDNA_NAMESPACE_PREFIX  "se"
 
-typedef int session_id;
+typedef int32_t session_id;
 
 /**
  * Transaction identifier

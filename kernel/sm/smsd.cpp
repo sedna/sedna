@@ -116,7 +116,7 @@ int main(int argc, char **argv)
         if (res != 0) 
             throw USER_ENV_EXCEPTION("An error occurred while trying to open Sedna server process", false);
 
-        GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].is_stop = 1;
+        GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].mode = OM_SM_SHUTDOWN;
 
         send_command_to_gov(port_number, command);
         uWaitForProcess(sm_pid, proc_handle, __sys_call_error);

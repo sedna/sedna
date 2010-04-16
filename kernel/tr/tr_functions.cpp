@@ -238,6 +238,9 @@ void register_session_on_gov()
     UPID s_pid  = uGetCurrentProcessId(__sys_call_error);
     USOCKET s   = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
+    /* If this is the case when TRN is started for some special purpose? */
+    bool special_mode = tr_globals::first_transaction;
+
     if(U_SOCKET_ERROR == s) throw USER_EXCEPTION (SE3001);
 
     while(0 != uconnect_tcp(s, socket_port, "127.0.0.1", __sys_call_error))
@@ -255,29 +258,46 @@ void register_session_on_gov()
 #endif
     }
 
+    size_t db_name_len = strlen(db_name);
     sp_msg.instruction  = REGISTER_NEW_SESSION;
-    sp_msg.length       = strlen(db_name)+1+sizeof(__int32)+sizeof(UPID); //dbname as a string and session process id as 4 bytes
-    sp_msg.body[0]      = '\0';
+    /* Special mode flag, database name as a string and TRN
+     * process id and string length as sizeof(int) bytes. */
+    sp_msg.length = sizeof(char) + db_name_len + 2 * sizeof(int32_t);
+    size_t off = 0;
 
-    int2net_int(strlen(db_name), sp_msg.body + 1);
-    memcpy(sp_msg.body+1+sizeof(__int32), db_name, strlen(db_name));
+    /* First write db_name length */
+    int2net_int((int32_t)db_name_len, sp_msg.body + off);
+    off += sizeof(int32_t);
 
-    __int32 tmp = s_pid;
-    char *ptr = (char*) &(tmp);
+    /* Then write name itself */
+    memmove(sp_msg.body + off, db_name, db_name_len);
+    off += db_name_len;
+    
+    /* Write process id (PID) */
+    int32_t tmp = htonl(s_pid);
+    memmove(sp_msg.body + off, (void*) &tmp, sizeof(int32_t));
+    off += sizeof(int32_t);
 
-    memcpy(sp_msg.body+1+sizeof(__int32)+strlen(db_name),ptr,sizeof(UPID));
+    /* Write special mode flag */
+    sp_msg.body[off] = special_mode ? 1 : 0;
+    off += sizeof(char);
 
+    if(sp_send_msg(s, &sp_msg) != 0) 
+        throw USER_EXCEPTION2(SE3006,usocket_error_translator());
 
-    if(sp_send_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
-    if(sp_recv_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
+    if(sp_recv_msg(s, &sp_msg) != 0) 
+        throw USER_EXCEPTION2(SE3007,usocket_error_translator());
 
     if(sp_msg.instruction == 161)
     {
-        d_printf2("se_trn: Trn with %d registered on gov successfully\n", s_pid);
-        memmove(ptr, sp_msg.body, 4);
-        sid = (*(__int32*)ptr);                            //sid (session identificator) is a global parameter
-        d_printf2("session sid=%d\n", sid);
-        if (sid >= MAX_SESSIONS_NUMBER) throw SYSTEM_EXCEPTION("Got incorrect session id from GOV");
+        /* Trn registered on gov successfully, get  
+         * sid (session identificator) is a global parameter */
+        int32_t tmp;
+        memcpy(&tmp, sp_msg.body, sizeof(int32_t));
+        sid = (session_id)tmp;
+        
+        if (sid >= MAX_SESSIONS_NUMBER) 
+            throw SYSTEM_EXCEPTION("Got incorrect session id from GOV");
 
         if (sid == -1)
         {
@@ -287,36 +307,73 @@ void register_session_on_gov()
     }
     if(sp_msg.instruction == 171)
     {
+        /* Database is not started */
         ushutdown_close_socket(s, __sys_call_error);
-        throw USER_EXCEPTION2(SE4409,db_name);                   //no db started
+        throw USER_EXCEPTION2(SE4409,db_name);
     }
     if(sp_msg.instruction == 172)
     {
+        /* Currently there are maximum number of session in the system */
         ushutdown_close_socket(s, __sys_call_error);
-        throw USER_EXCEPTION(SE3046);                            //currently there are maximum number of session in the system
+        throw USER_EXCEPTION(SE3046);
     }
     if(sp_msg.instruction == 173)
     {
+        /* failed to register */
         ushutdown_close_socket(s, __sys_call_error);
-        throw USER_EXCEPTION(SE3043);                            //failed to register
+        throw USER_EXCEPTION(SE3043);
     }
 
-    if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
+    if(ushutdown_close_socket(s, __sys_call_error)!=0) 
+        throw USER_EXCEPTION (SE3011);
 }
 
 
-/* Returns true if all database files exist */
-bool
-check_database_existence(const char* name)
+#ifdef _WIN32
+BOOL TrnCtrlHandler(DWORD fdwCtrlType)
 {
-    int res1 = false, res2 = false, res3 = false;
-
-    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(name) + "_cfg.xml").c_str(), __sys_call_error);
-
-    res2 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(name) + "_files/" + string(name) + ".sedata").c_str(), __sys_call_error);
-
-    res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(name) + "_files/" + string(name) + ".setmp").c_str(), __sys_call_error);
-
-    if (res1 && res2 && res3) return true;
-    else return false;
+    switch (fdwCtrlType)
+    {
+    case CTRL_C_EVENT:         // Handle the CTRL+C signal.
+    case CTRL_CLOSE_EVENT:     // CTRL+CLOSE: confirm that the user wants to exit.
+    case CTRL_BREAK_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
+#else /* !_WIN32 */
+#include <signal.h>
+void TrnCtrlHandler(int signo)
+{
+    if (signo == SIGINT || signo == SIGQUIT || signo == SIGTERM)
+    {
+        //beep();
+    }
+}
+#endif /* _WIN32 */
+
+void set_trn_ctrl_handler() 
+{
+#ifdef _WIN32
+            BOOL fSuccess;
+            fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) TrnCtrlHandler, TRUE);
+            if (!fSuccess)
+                throw USER_EXCEPTION(SE4207);
+#else /* !_WIN32 */
+            // For Control-C or Delete
+            if ((int) signal(SIGINT, TrnCtrlHandler) == -1)
+                throw USER_EXCEPTION(SE4207);
+            // For Control-backslash
+            if ((int) signal(SIGQUIT, TrnCtrlHandler) == -1)
+                throw USER_EXCEPTION(SE4207);
+            //For reboot or halt
+            if ((int) signal(SIGTERM, TrnCtrlHandler) == -1)
+                throw USER_EXCEPTION(SE4207);
+#endif /* _WIN32 */
+}
+
+
+

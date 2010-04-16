@@ -159,7 +159,8 @@ info_table::insert_session(/* in */  UPID &pid,
                            UPHANDLE* h_p,
                            /* in */  std::string &db_name,
                            bool is_child,
-                           /* out */ session_id& s_id)
+                           /* out */ session_id& s_id,
+                           bool special_mode)
 {
     UPHANDLE proc_handle;
 
@@ -170,7 +171,20 @@ info_table::insert_session(/* in */  UPID &pid,
     }
     else proc_handle = *h_p;
 
-    /* Check if database exists */
+    /* Check if database is running */
+    int i;
+    for (i = 0; i < MAX_DBS_NUMBER; i++)
+    {
+        if (strcmp(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name, db_name.c_str()) == 0)
+        {
+            sm_operation_mode m = ((gov_config_struct*)gov_shared_mem)->db_vars[i].mode;
+            if (m != OM_SM_WORKING && !(special_mode && m == OM_SM_SPECIAL_MODE)) return -1;
+            break;
+        }
+    }
+    if( i == MAX_DBS_NUMBER ) return -1;
+
+    /* Check if database exists in database table */
     if (_database_table_.count(db_name) == 0)
     {
         if (!is_child) uCloseProcessHandle(proc_handle, __sys_call_error);
@@ -203,25 +217,24 @@ info_table::insert_session(/* in */  UPID &pid,
 }
 
 
-int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -1 if error
+int info_table::insert_database(UPID &pid, std::string &db_name, bool special_mode)
 {
     int i = 0;
     UPHANDLE proc_handle;
     if (uOpenProcess(pid, &proc_handle, __sys_call_error) != 0)
         return -4;
 
-
     for (i=0; i< MAX_DBS_NUMBER; i++)
     {
         if (strcmp(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name, db_name.c_str()) == 0)
         {
-            ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = 0;
+            ((gov_config_struct*)gov_shared_mem)->db_vars[i].mode = special_mode ? OM_SM_SPECIAL_MODE : OM_SM_WORKING;
             ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = pid;
             break;
         }
     }
 
-    if (i== MAX_DBS_NUMBER)
+    if (MAX_DBS_NUMBER == i)
     {
         uCloseProcessHandle(proc_handle, __sys_call_error);
         return -2;
@@ -234,9 +247,8 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
     {
         uCloseProcessHandle(proc_handle, __sys_call_error);
         ((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name[0] = '\0';
-        ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = 0;
+        ((gov_config_struct*)gov_shared_mem)->db_vars[i].mode = OM_SM_DOWN;
         ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = -1;
-
         return -3;
     }
 
@@ -252,7 +264,7 @@ void info_table::erase_database(const database_id& db_id)
     {
         if (strcmp(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name, db_id.c_str()) == 0)
         {
-            ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = -1;
+            ((gov_config_struct*)gov_shared_mem)->db_vars[i].mode = OM_SM_DOWN;
             ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = -1;
             break;
         }
@@ -420,7 +432,7 @@ int info_table::check_stop_databases()
     for (unsigned int i=0; i< MAX_DBS_NUMBER; i++)
     {
         if ((((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name)[0] != '\0' &&
-            ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop == 1)
+            ((gov_config_struct*)gov_shared_mem)->db_vars[i].mode == OM_SM_SHUTDOWN)
         {
             fprintf(stderr,"%s: %d %s\n", __FUNCTION__, i, ((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name);
             stop_sessions(std::string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));

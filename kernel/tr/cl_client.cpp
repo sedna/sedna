@@ -28,7 +28,6 @@ using namespace std;
 
 command_line_client::command_line_client(int argc, char** argv)
 {
-    char buf[1024];
     cur_s = NULL;
     dbg_s = NULL;
     nul_s = NULL;
@@ -37,7 +36,7 @@ command_line_client::command_line_client(int argc, char** argv)
     statements_ready = false;
 
     /* Load metadata transaction */
-    if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
+    if (tr_globals::first_transaction)
     {
         if (argc != 2)
             throw SYSTEM_EXCEPTION("Bad number of input parameters to load metadata");
@@ -59,7 +58,7 @@ command_line_client::command_line_client(int argc, char** argv)
 
 void command_line_client::init()
 {
-    //check the correctness of input parameters from command line
+    /* Check the correctness of input parameters from command line */
     if (string(tr_globals::filename) == "???" || string(tr_globals::db_name) == "???")
         throw USER_EXCEPTION(SE4601);
 
@@ -72,22 +71,22 @@ void command_line_client::init()
     nul_s = se_new se_nullostream();
     cur_s = out_s;
 
-    //!!!init stack!!!
+    /* Initialize commands stack */
     cl_command cmd;
 
     cmd.type = se_BeginTransaction;
     cmd.length = 0;
     cl_cmds.push_front(cmd);
 
-    cmd.type = se_CommitTransaction;//commit tr
+    cmd.type = se_CommitTransaction;
     cmd.length = 0;
     cl_cmds.push_front(cmd);
 
-    cmd.type = se_Authenticate;//authenticate
+    cmd.type = se_Authenticate;
     cmd.length = 0;
     cl_cmds.push_front(cmd);
 
-    cmd.type = se_BeginTransaction;//begin tr
+    cmd.type = se_BeginTransaction;
     cmd.length = 0;
     cl_cmds.push_front(cmd);
 }
@@ -123,15 +122,15 @@ void command_line_client::read_msg(msg_struct *msg)
         string plain_batch_text;
 
         char env_buf[8];
-        if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, env_buf, 8, __sys_call_error) != 0)
+        if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, env_buf, sizeof(env_buf), __sys_call_error) != 0)
         {
-            //init output res
+            /* Init output res */
             if (string(tr_globals::output_file) == "STDOUT")
                 res_os = stdout;
             else if ((res_os = fopen(tr_globals::output_file, "w")) == NULL)
                 throw USER_EXCEPTION2(SE4040, tr_globals::output_file);
 
-            //read batch text in string
+            /* Read batch text in string */
             FILE *f;
             if ((f = fopen(tr_globals::filename, "r")) == NULL)
                 throw USER_EXCEPTION2(SE4042, tr_globals::filename);
@@ -146,36 +145,30 @@ void command_line_client::read_msg(msg_struct *msg)
                 plain_batch_text.resize(curSz + rdSz);
             }
         }
-        else
+        else /* load metadata transaction is running */
         {
             tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
 
-            if(strcmp(env_buf, "2") == 0) // database is created with db-security option != off => we need to load db_security_data
+            /* database is created with db-security option != off => we need to load db_security_data */
+            if(strcmp(env_buf, "2") == 0)
             {
                 string path_to_security_file;
                 char path_buf[U_MAX_PATH + 32];
-                path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+                path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + 
+                                        string("/../share/") + 
+                                        string(INITIAL_SECURITY_METADATA_FILE_NAME);
 
-    #ifdef _WIN32
-                for (int i=0; i<path_to_security_file.size(); i++)
+                for (string::size_type i=0; i<path_to_security_file.size(); i++)
                     if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
-                /*
-                MG: now metadata is stored locally in sedna/share/sedna_auth_md.xml
-                #else
-                if(!uIsFileExist(path_to_security_file.c_str(), __sys_call_error))
-                path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");*/
-    #endif
 
-
-
-                plain_batch_text = string("LOAD ") +
-                    string("\"") + path_to_security_file + string("\" ") +
-                    string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"");
-
-                plain_batch_text += string("\n\\\n");
+                plain_batch_text = string("LOAD ") + 
+                                   string("'") + path_to_security_file + string("' ") +
+                                   string("'") + string(SECURITY_METADATA_DOCUMENT) + string("'") +
+                                   string("\n\\\n");
             }
 
-            plain_batch_text += string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
+            plain_batch_text += string("CREATE COLLECTION ") + 
+                                string("'") + string(MODULES_COLLECTION_NAME) + string("'");
         }
 
         // here we parse our queries via driver and then get ast-strings
@@ -230,6 +223,7 @@ void command_line_client::read_msg(msg_struct *msg)
     cl_cmds.pop_front();
 }
 
+
 char* command_line_client::get_query_string(msg_struct *msg)
 {
     return (char*)stmnts_array[statement_index++].c_str();
@@ -243,17 +237,16 @@ QueryType command_line_client::get_query_type()
 
 void command_line_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)
 {
-    unsigned int i;
+    std::vector<string>::size_type i;
 
     try {
-        for(i=0; i<filenames->size(); i++)
+        for(i = 0; i < filenames->size(); i++)
         {
-            char buf[1024];
             const char* client_filename = filenames->at(i).c_str();
             client_file &cf = cf_vec->at(i);
 
-            if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
-            {//load metadata case (client_filename must be absolute path)
+            if (tr_globals::first_transaction)
+            {   /* Load metadata case (client_filename must be absolute path) */
                 if ((cf.f = fopen (client_filename, "r")) == NULL)
                     throw USER_EXCEPTION2(SE4042, client_filename);
                 if (uGetFileSizeByName(client_filename, &(cf.file_size), __sys_call_error) == 0)
@@ -283,17 +276,12 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
                 throw USER_EXCEPTION2(SE4604, new_dir);
 
             res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
-            /*if (res == NULL)
-            throw USER_EXCEPTION2(SE4603, client_filename);
-            */
+            
             if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
                 throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
             if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
             {
                 res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
-                /*     if (res == NULL)
-                throw USER_EXCEPTION2(SE4603, client_filename);
-                */
                 if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
                     throw USER_EXCEPTION2(SE4042, client_filename);
                 if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
@@ -305,11 +293,10 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
                     throw USER_EXCEPTION2(SE4050, client_filename);
             }
             strcpy(cf.name, client_filename);
-        } //for
-
+        }
     } catch (ANY_SE_EXCEPTION) {
-        // close all files from cf_vec
-        for (unsigned int j=0; j<i; j++)
+        /* Close all files from cf_vec */
+        for (std::vector<string>::size_type j = 0; j < i; j++)
         {
             if (cf_vec->at(j).f && (fclose(cf_vec->at(j).f) != 0))
             {
@@ -319,8 +306,7 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
             cf_vec->at(j).f = NULL;
         }
         throw;
-    } //try
-
+    }
 }
 
 void command_line_client::close_file_from_client(client_file &cf)
@@ -446,11 +432,9 @@ void command_line_client::write_user_query_to_log()
 {
     char buf[1000000];
 
-    if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
+    if (!tr_globals::first_transaction)
     {
-
-        //read batch text in string
-
+        /* Read batch text in string */
         FILE *f;
         if ((f = fopen(tr_globals::filename, "r")) == NULL)
             throw USER_EXCEPTION2(SE4042, tr_globals::filename);
@@ -466,7 +450,6 @@ void command_line_client::write_user_query_to_log()
 
         elog_long(EL_LOG, "User's query:\n", plain_batch_text.c_str());
     }
-
 }
 
 se_ostream*

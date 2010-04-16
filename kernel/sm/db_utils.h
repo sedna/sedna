@@ -13,15 +13,14 @@ int cleanup_db(const char* db_name);
 
 bool exist_db(const char* db_name);
 
-int load_metadata_in_database(const char* db_name, const char* db_security_level, const gov_header_struct& cfg);
+int load_metadata_in_database(const char* db_name,
+                              const char* db_security_level,
+                              const gov_header_struct& cfg);
 
 int delete_logical_log(const char* db_name);
 
 #ifdef SE_ENABLE_FTSEARCH
 int delete_dtsearch_files(const char* db_name);
-#endif
-
-int delete_ph_files(const char* db_name);
+#endif /* SE_ENABLE_FTSEARCH */
 
 #endif /* _DB_UTILS_H */
-

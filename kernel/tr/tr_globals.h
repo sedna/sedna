@@ -23,14 +23,15 @@ namespace tr_globals
     extern int show_time;
     extern int socket_port;
     extern int print_intermed;
-    extern int server_mode;
     extern int debug_mode;
-    extern int first_transaction;
     extern int authentication;
     extern int authorization;
     extern int query_timeout;
     extern int max_stack_depth;
-    extern int run_recovery;
+    
+    /* Special transactions */
+    extern bool run_recovery;
+    extern bool first_transaction;
 
     extern char db_name[];
     extern char filename[];

@@ -144,7 +144,7 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                                    int tmp_file_initial_size /* size in PAGES */)
 {
    strcpy(cfg->db_vars[db_id].db_name, db_name);
-   cfg->db_vars[db_id].is_stop = -1;
+   cfg->db_vars[db_id].mode = OM_SM_DOWN;
    cfg->db_vars[db_id].sm_pid = -1;
    cfg->db_vars[db_id].bufs_num = bufs_num;
    cfg->db_vars[db_id].max_trs_num = max_trs_num;

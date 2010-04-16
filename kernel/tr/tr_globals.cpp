@@ -23,15 +23,16 @@ namespace tr_globals
     int run_rewriter      = 1;
     int show_time         = 0;
     int print_intermed    = 0;
-    int server_mode       = 0;
     int debug_mode        = 0;
     int socket_port       = 0;
-    int first_transaction = 0;
     int authentication    = 1;
     int authorization     = 1;
     int query_timeout     = 0;
     int max_stack_depth   = 0;
-    int run_recovery      = 0;
+    
+    /* Special transactions */
+    bool run_recovery      = false;
+    bool first_transaction = false;
 
     char db_name     [SE_MAX_DB_NAME_LENGTH+1];
     char filename    [TR_ARG_MAX_LENGTH+1];

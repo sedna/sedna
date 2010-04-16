@@ -79,14 +79,14 @@ send_stop_sm_msg()
     int port_number = GOV_HEADER_GLOBAL_PTR->lstnr_port_number;
     int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, sm_globals::db_name);
 
-    GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].is_stop = 1;
+    GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].mode = OM_SM_SHUTDOWN;
     send_command_to_gov(port_number, STOP);
 }
 
 bool
 is_database_running(int database_id)
 {
-    return GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].is_stop != -1;
+    return GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].mode != OM_SM_DOWN;
 }
 
 

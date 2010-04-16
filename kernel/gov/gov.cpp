@@ -9,22 +9,22 @@
 
 #include "common/sedna.h"
 
-#include "common/SSMMsg.h"
 #include "common/u/usem.h"
+#include "common/u/uprocess.h"
+#include "common/SSMMsg.h"
 #include "common/base.h"
-#include "gov/gov_globals.h"
-#include "gov/gov_functions.h"
 #include "common/errdbg/d_printf.h"
 #include "common/pping.h"
 #include "common/version.h"
 #include "common/ugc.h"
-#include "gov/gov_table.h"
-#include "gov/listener.h"
-#include "common/u/uprocess.h"
 #include "common/gmm.h"
 #include "common/ipc_ops.h"
-#include "common/mmgr/memutils.h"
 #include "common/config.h"
+
+#include "gov/gov_globals.h"
+#include "gov/gov_functions.h"
+#include "gov/gov_table.h"
+#include "gov/listener.h"
 #include "gov/config_utils.h"
 
 #define GOV_BACKGROUND_MODE_TIMEOUT					15000
@@ -97,19 +97,13 @@ int main(int argc, char** argv)
 #endif
 
     try {
-#ifdef SE_MEMORY_MNG
-        SafeMemoryContextInit();
-#endif
-
         /* Parse command line */
-
         arg_scan_ret_val = arg_scanargv(argc, argv, gov_argtable, narg, NULL, buf, NULL);
 
         if (arg_scan_ret_val == 0)
             throw USER_EXCEPTION2(SE4601, buf);
 
         /* Process technical arguments */
-
         if (gov_help_l == 1 || gov_help_s == 1)
         {
             print_gov_usage();

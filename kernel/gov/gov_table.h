@@ -91,8 +91,8 @@ public:
     void init(gov_config_struct* cfg);
     void release();
 
-    int insert_session(UPID &pid, UPHANDLE *p, std::string &db_name, bool is_child, session_id& s_id/*out*/);//init s_id locks pid until end of session
-    int insert_database(UPID &pid/*in*/, std::string &db_name);//return -1 if error
+    int insert_session(UPID &pid, UPHANDLE *p, std::string &db_name, bool is_child, session_id& s_id/*out*/, bool special_mode);
+    int insert_database(UPID &pid, std::string &db_name, bool special_mode);
     void put_all_free_sids_in_ids_table();
     void erase_all_closed_pids();
     void stop_sessions(const std::string &db_name);//stop all sessions of db_name and erase sessions from the table
