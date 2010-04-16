@@ -860,14 +860,14 @@ xptr getAncestorIndirectionByScheme (n_dsc* node, const schema_node_cptr scm_nod
 
 xptr getNodeAncestorBySchemeCP(xptr node, schema_node_xptr scm_node, schema_node_xptr scm_anc)
 {
+    CHECKP(node);
     while (scm_node != scm_anc) {
-        node = getParentCP(node);
+        node = getParent(node);
         if (node == XNULL) return XNULL;
-        scm_node = getBlockHeader(node)->snode;
+        scm_node = getBlockHeaderCP(node)->snode;
     }
     return node;
 }
-
 
 /*comparison function for schema nodes*/
  bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
