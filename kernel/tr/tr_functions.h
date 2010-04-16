@@ -27,6 +27,7 @@ qepNextAnswer next    (PPQueryEssence* qep_tree);
 void do_authentication();
 void register_session_on_gov();
 
-bool check_database_existence(const char* name);
+/* Sets handlers for keyboard events like Ctrl+C */
+void set_trn_ctrl_handler();
 
 #endif /* _TR_FUNCTIONS */

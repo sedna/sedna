@@ -43,7 +43,7 @@ void fulfill_config_parameters(gov_config_struct* cfg)
   for (int i = 0; i<MAX_DBS_NUMBER; i++)
   {
      cfg->db_vars[i].db_name[0] = '\0';
-     cfg->db_vars[i].is_stop = -1;
+     cfg->db_vars[i].mode = OM_SM_DOWN;
      cfg->db_vars[i].sm_pid = -1;
      cfg->db_vars[i].upd_crt = 0.25;
      cfg->db_vars[i].max_log_files = 3;

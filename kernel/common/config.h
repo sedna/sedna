@@ -11,16 +11,31 @@
 #include "common/config.h"
 #include "common/u/uprocess.h"
 
+/*
+ * Defines possible states in which each database can be.
+ * SM_OM_WORKING      - SM is working and any transaction is able to connect
+ * OM_SM_SHUTDOWN     - SM is going to shutdown
+ * OM_SM_SPECIAL_MODE - SM is working but only transactions in special mode are
+                        able to connect
+ * OM_SM_DOWN         - SM is not running
+ */
+enum sm_operation_mode {
+    OM_SM_WORKING = 0,
+    OM_SM_SHUTDOWN = 1,
+    OM_SM_SPECIAL_MODE = 2,
+    OM_SM_DOWN = 3,
+};
+
 struct gov_sess_struct
 {
     int idfree; //0->not used 1->session in progress 2->session finished
-    int stop; //1->stop command; 0->not stop
+    int stop;   //1->stop command; 0->not stop
 };
 
 struct gov_db_struct
 {
     char db_name[SE_MAX_DB_NAME_LENGTH + 1];
-    int is_stop; //0->indicates that sm is working, 1->indicates that sm want to stop; -1 indicates that sm is down
+    sm_operation_mode mode;
     UPID sm_pid;
 
     int bufs_num;

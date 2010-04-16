@@ -23,11 +23,9 @@
 using namespace std;
 using namespace sm_globals;
 
-/*******************************************************************************
-********************************************************************************
-      GLOBAL VARIABLES
-********************************************************************************
-*******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+///                  STORAGE MANAGER GLOBAL VARIABLES                       ///
+///////////////////////////////////////////////////////////////////////////////
 
 namespace sm_globals {
     int    bufs_num;                                /* Number of pages to allocate for buffer memory */
@@ -139,19 +137,24 @@ setup_sm_globals(gov_config_struct* cfg, int db_id)
 }
 
 
-/*****************************************************************************
- *****************************************************************************
-      FUNCTIONS FOR REGISTERING/UNREGISTERING SM ON GOVERNOR 
-******************************************************************************
-******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////
+///       FUNCTIONS FOR REGISTERING/UNREGISTERING SM ON GOVERNOR            ///
+///////////////////////////////////////////////////////////////////////////////
 void
 register_sm_on_gov()
 {
     USOCKET s;
     int32_t sm_id;
-    msg_struct msg;
     int32_t port_number;
+    msg_struct msg;
 
+    /* If this is the case when SM is started for some special purpose,
+     * and usuaaly we don't want many transactions to be run now */
+    char buf[1024];
+    bool special_mode = 
+        (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, 
+                                 buf, 1024, __sys_call_error) == 0);
+    
     port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
 
 	sm_id = uGetCurrentProcessId(__sys_call_error);
@@ -166,27 +169,39 @@ register_sm_on_gov()
         throw USER_EXCEPTION (SE3003);
     }
 
-    /*  Database as a string and session process id
-     *  and string length as sizeof(int) bytes.
-     */
-    msg.length = strlen(db_name)+ 1 + 2 * sizeof(int32_t);
-    msg.instruction = 122;
-    msg.body[0] = 0;
-    int2net_int(strlen(db_name), msg.body+1);
-    memmove(msg.body+5, db_name, strlen(db_name));
+    size_t db_name_len = strlen(db_name);
+    /* Special mode flag, database name as a string and SM
+     * process id and string length as sizeof(int) bytes. */
+    msg.length = sizeof(char) + db_name_len  + 2 * sizeof(int32_t);
+    msg.instruction = REGISTER_DB;
+    size_t off = 0;
 
+    /* First write db_name length */
+    int2net_int((int32_t)db_name_len, msg.body + off);
+    off += sizeof(int32_t);
+
+    /* Then write name itself */
+    memmove(msg.body + off, db_name, db_name_len);
+    off += db_name_len;
+    
+    /* Write process id (PID) */
     int32_t tmp = htonl(sm_id);
+    memmove(msg.body + off, (void*) &tmp, sizeof(int32_t));
+    off += sizeof(int32_t);
 
-    memmove(msg.body + 1 + sizeof(int32_t) + strlen(db_name),
-            (void*) &tmp,
-            sizeof(int32_t));
+    /* Write special mode flag */
+    msg.body[off] = special_mode ? 1 : 0;
+    off += sizeof(char);
 
     if(sp_send_msg(s,&msg) != 0)
-        throw USER_EXCEPTION2(SE3006,usocket_error_translator());    /// Socket error
+        /* Socket error occured */
+        throw USER_EXCEPTION2(SE3006,usocket_error_translator());
     if(sp_recv_msg(s,&msg) != 0)
-        throw USER_EXCEPTION2(SE3006,usocket_error_translator());    /// Socket error
+        /* Socket error occured */
+        throw USER_EXCEPTION2(SE3006,usocket_error_translator());
     if(msg.instruction == 182)
-    	throw USER_EXCEPTION(SE3045);                                /// Failed to register
+    	/* Failed to register */
+        throw USER_EXCEPTION(SE3045);
 
     if(ushutdown_close_socket(s, __sys_call_error) !=0)
         throw USER_EXCEPTION (SE3011);

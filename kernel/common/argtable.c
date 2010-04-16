@@ -644,7 +644,8 @@ int arg_checktable(arg_rec *argtable, /* ptr to argument table */
 
 void arg_catargs(int argc, char **argv, char *str)
   {
-  int i,j;
+  int i;
+  size_t j;
   str[0]='\0';
   for (i=0; i<argc; i++)
      {

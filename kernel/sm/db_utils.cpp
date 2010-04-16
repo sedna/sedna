@@ -1,7 +1,7 @@
 /*
- * File:  db_utils.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
+* File:  db_utils.cpp
+* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+*/
 
 #include "common/sedna.h"
 #include <string>
@@ -26,207 +26,210 @@ using namespace std;
 //returns 2 if database can't be deleted
 int cleanup_db(const char* db_name)
 {
-   int res;
-   bool db_exist = false;
-   //delete cfg file
+    int res;
+    bool db_exist = false;
+    //delete cfg file
 
-   if (uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error))  
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
-      if (res == 0)//failure
-         return 2;
-   }
+    if (uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error))  
+    {
+        db_exist = true;
+        res = uDeleteFile((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
+        if (res == 0)//failure
+            return 2;
+    }
 
-   //delete data file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error)) 
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;
-   }
+    //delete data file
+    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error)) 
+    {
+        db_exist = true;
+        res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error);
+        if (res == 0)
+            return 2;
+    }
 
-   //delete tmp file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error))
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;
-   }
+    //delete tmp file
+    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error))
+    {
+        db_exist = true;
+        res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
+        if (res == 0)
+            return 2;
+    }
 
 #ifdef SE_ENABLE_FTSEARCH
-   //delete dtsearch files
-   res = delete_dtsearch_files(db_name);
+    //delete dtsearch files
+    res = delete_dtsearch_files(db_name);
 
-   if (res == 2) return 2;
-   if (res > 0) db_exist = true;
+    if (res == 2) return 2;
+    if (res > 0) db_exist = true;
 #endif
 
-   //delete llog file
-   res = delete_logical_log(db_name);
+    //delete llog file
+    res = delete_logical_log(db_name);
 
-   if (res == 2) return 2;
-   if (res > 0) db_exist = true;
+    if (res == 2) return 2;
+    if (res > 0) db_exist = true;
 
-   //delete ph files
-   res = delete_ph_files(db_name);
+    if (res == 2) return 2;
+    if (res > 0) db_exist = true;
 
-   if (res == 2) return 2;
-   if (res > 0) db_exist = true;
+    //delete rcv testing files
+    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_ok").c_str(), __sys_call_error)) 
+    {
+        db_exist = true;
+        res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_ok").c_str(), __sys_call_error);
+        if (res == 0)
+            return 2;
+    }
+    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_failed").c_str(), __sys_call_error)) 
+    {
+        db_exist = true;
+        res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_failed").c_str(), __sys_call_error);
+        if (res == 0)
+            return 2;
+    }
+    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_test_result.log").c_str(), __sys_call_error)) 
+    {
+        db_exist = true;
+        res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_test_result.log").c_str(), __sys_call_error);
+        if (res == 0)
+            return 2;
+    }
 
-   //delete rcv testing files
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_ok").c_str(), __sys_call_error)) 
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_ok").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;
-   }
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_failed").c_str(), __sys_call_error)) 
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_failed").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;
-   }
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_test_result.log").c_str(), __sys_call_error)) 
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_test_result.log").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;
-   }
+    //delete db data directory
+    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error))
+    {
+        db_exist = true;
+        res = uDelDir((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
+        if (res == 0)
+            return 2;
 
-   //delete db data directory
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error))
-   {
-     db_exist = true;
-     res = uDelDir((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;
+    }
 
-   }
-
-   if (!db_exist) return 0;
-   else return 1;
+    if (!db_exist) return 0;
+    else return 1;
 }
 
 bool exist_db(const char* db_name)
 {
-   int res1, res2, res3, res5;
+    int res1, res2, res3, res5;
 
-   res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
+    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 
-   res2 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error);
+    res2 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error);
 
-   res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
+    res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".setmp").c_str(), __sys_call_error);
 
-   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
+    res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
 
 
-   if (res1 || res2 || res3 || res5) return true;
-   else return false;
+    if (res1 || res2 || res3 || res5) return true;
+    else return false;
 }
 
 
 int load_metadata_in_database(const char* db_name, const char* db_security_level, const gov_header_struct& cfg)
 {
-  UPID pid;
-  UPHANDLE proc_h;
+    UPID pid;
+    UPHANDLE proc_h;
 
-  /* Run SM */
-  string run_command;
-  int ret_status;
-  int res;
-  char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
+    /* Run SM */
+    string run_command;
+    int ret_status;
+    int res;
+    char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
 
-  run_command = uGetImageProcPath(buf, __sys_call_error) + 
-                string("/se_sm '") + db_name + string("'"); 
-  strcpy(buf, run_command.c_str());
-  if (0 != uCreateProcess(buf,
-                          true, // inherit handles
-                          NULL,
-                          U_DETACHED_PROCESS,
-                          &proc_h,
-                          NULL,
-                          &pid,
-                          NULL,
-                          NULL,
-                          __sys_call_error
-                         ))
-     throw SYSTEM_EXCEPTION("Can't stratup SM to load metadata");
+    /* 
+     * - We want SM to be able to determine if it's being run in a special
+     *   mode, so we define this environment variable here
+     * - If db-security is not off we need to load db_security data,
+     *   command line client in TRN checks this value
+     */
+    if(strcmp(db_security_level, "off") == 0)
+        uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", NULL, __sys_call_error);
+    else
+        uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "2", NULL,  __sys_call_error); 
 
-  res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
+    run_command = uGetImageProcPath(buf, __sys_call_error) + 
+        string("/se_sm '") + db_name + string("'"); 
+    strcpy(buf, run_command.c_str());
+    if (0 != uCreateProcess(buf,
+        true, // inherit handles
+        NULL,
+        U_DETACHED_PROCESS,
+        &proc_h,
+        NULL,
+        &pid,
+        NULL,
+        NULL,
+        __sys_call_error
+        ))
+        throw SYSTEM_EXCEPTION("Can't stratup SM to load metadata");
 
-  if (res == 0 && ret_status != 0)
-      throw USER_EXCEPTION2(SE4211, (string(db_name) + string(" (may be because there is no enough RAM)")).c_str());
-  else if (res != 0 || ret_status != 0)
-  {
-     throw SYSTEM_EXCEPTION("Can't startup SM to load metadata");
-  }
+    res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
 
-  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/") +
-                SESSION_EXE + string(" ") + db_name;
+    if (res == 0 && ret_status != 0)
+        throw USER_EXCEPTION2(SE4211, (string(db_name) + string(" (may be because there is no enough RAM)")).c_str());
+    else if (res != 0 || ret_status != 0)
+    {
+        throw SYSTEM_EXCEPTION("Can't startup SM to load metadata");
+    }
 
-  if(strcmp(db_security_level, "off") == 0)
-      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", NULL, __sys_call_error);
-  else // if db-security is not off we need to load db_security data
-      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "2", NULL,  __sys_call_error); 
+    run_command = uGetImageProcPath(buf, __sys_call_error) + string("/") +
+        SESSION_EXE + string(" ") + db_name;
 
-  char buf2[1024];
-  uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf2, 10), NULL,  __sys_call_error);    
+    char buf2[1024];
+    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf2, 10), NULL,  __sys_call_error);    
 
-  strcpy(buf, run_command.c_str());
-  if (0 != uCreateProcess(buf,
-                          true, // inherit handles
-                          NULL,
-                          U_DETACHED_PROCESS,
-                          &proc_h,
-                          NULL,
-                          &pid,
-                          NULL,
-                          NULL,
-                          __sys_call_error
-                         ))
-     throw SYSTEM_EXCEPTION("Can't load metadata");
+    strcpy(buf, run_command.c_str());
+    if (0 != uCreateProcess(buf,
+        true, // inherit handles
+        NULL,
+        U_DETACHED_PROCESS,
+        &proc_h,
+        NULL,
+        &pid,
+        NULL,
+        NULL,
+        __sys_call_error
+        ))
+        throw SYSTEM_EXCEPTION("Can't load metadata");
 
 
-  res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
+    res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
 
-  if (res != 0)
-     throw SYSTEM_EXCEPTION("Can't load metadata");
+    if (res != 0)
+        throw SYSTEM_EXCEPTION("Can't load metadata");
 
-  int ret_code = 0;
+    int ret_code = 0;
 
-  if (ret_status != 0)
-     ret_code = 1;//database creation failure (may be because of concurrent transactions)
+    if (ret_status != 0)
+        ret_code = 1;//database creation failure (may be because of concurrent transactions)
 
-  /* Stop SM */
-  run_command = uGetImageProcPath(buf, __sys_call_error) + 
-                string("/se_smsd '") + db_name + string("'"); 
-  strcpy(buf, run_command.c_str());
+    /* Stop SM */
+    run_command = uGetImageProcPath(buf, __sys_call_error) + 
+        string("/se_smsd '") + db_name + string("'"); 
+    strcpy(buf, run_command.c_str());
 
-  if (0 != uCreateProcess(buf,
-                          true, // inherit handles
-                          NULL,
-                          U_DETACHED_PROCESS,
-                          &proc_h,
-                          NULL,
-                          &pid,
-                          NULL,
-                          NULL,
-                          __sys_call_error
-                         ))
-     throw SYSTEM_EXCEPTION("Can't run smsd utility");
+    if (0 != uCreateProcess(buf,
+        true, // inherit handles
+        NULL,
+        U_DETACHED_PROCESS,
+        &proc_h,
+        NULL,
+        &pid,
+        NULL,
+        NULL,
+        __sys_call_error
+        ))
+        throw SYSTEM_EXCEPTION("Can't run smsd utility");
 
-  res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
+    res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
 
-  if (res != 0 || ret_status != 0)
-     throw SYSTEM_EXCEPTION("Can't stop Storage Manager");
+    if (res != 0 || ret_status != 0)
+        throw SYSTEM_EXCEPTION("Can't stop Storage Manager");
 
-  return ret_code;
+    return ret_code;
 }
 
 //returns 0 if logical log not exist
@@ -237,78 +240,78 @@ int delete_logical_log(const char* db_name)
 {
 #ifdef _WIN32
 
-  char buf[4096];
-  char *cur_dir;
-  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
-  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+    char buf[4096];
+    char *cur_dir;
+    cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
+    string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
 
-  if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
-     return 2;
-  
-
-  struct _finddata_t log_file;
-  long dsc;
-
-  if ( (dsc = _findfirst("*llog", &log_file)) == -1L)
-  {
-     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+    if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
         return 2;
 
-     return 0;
-  }
 
-  do 
-  {
-     if (uDeleteFile(log_file.name, __sys_call_error) == 0) 
-     {
-        uChangeWorkingDirectory(cur_dir, __sys_call_error);
-        return 2;
-     }
+    struct _finddata_t log_file;
+    long dsc;
 
-  } while(_findnext(dsc, &log_file) == 0);
+    if ( (dsc = _findfirst("*llog", &log_file)) == -1L)
+    {
+        if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+            return 2;
 
-    
-  _findclose(dsc);
+        return 0;
+    }
 
-  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-     return 2;
-
-  return 1;
-#else
-  DIR *dir;
-  struct dirent* dent;
-  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
-
-  dir = opendir(path_to_db_files.c_str());
-
-  if (dir == NULL)
-     return 2;
-
-  dent = readdir (dir);
-  if (dent == NULL) return 2; 
-
-  string is_llog;
-  bool find_log = false;  
-  do 
-  {
-     is_llog =  dent->d_name;
-
-     if (is_llog.size() >=7)
-        if ( is_llog.substr(is_llog.size()-4, 4) == "llog") 
+    do 
+    {
+        if (uDeleteFile(log_file.name, __sys_call_error) == 0) 
         {
-          find_log = true;
-          if (uDeleteFile((path_to_db_files + dent->d_name).c_str(), __sys_call_error) == 0) 
-             return 2;
+            uChangeWorkingDirectory(cur_dir, __sys_call_error);
+            return 2;
         }
 
-  } while(NULL != (dent=readdir(dir)));
+    } while(_findnext(dsc, &log_file) == 0);
 
-  if (0 != closedir(dir))
-     return 2;
 
-  if (!find_log) return 0;
+    _findclose(dsc);
 
-  return 1;
+    if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+        return 2;
+
+    return 1;
+#else
+    DIR *dir;
+    struct dirent* dent;
+    string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+
+    dir = opendir(path_to_db_files.c_str());
+
+    if (dir == NULL)
+        return 2;
+
+    dent = readdir (dir);
+    if (dent == NULL) return 2; 
+
+    string is_llog;
+    bool find_log = false;  
+    do 
+    {
+        is_llog =  dent->d_name;
+
+        if (is_llog.size() >=7)
+            if ( is_llog.substr(is_llog.size()-4, 4) == "llog") 
+            {
+                find_log = true;
+                if (uDeleteFile((path_to_db_files + dent->d_name).c_str(), __sys_call_error) == 0) 
+                    return 2;
+            }
+
+    } while(NULL != (dent=readdir(dir)));
+
+    if (0 != closedir(dir))
+        return 2;
+
+    if (!find_log) return 0;
+
+    return 1;
 #endif  
 
 }
@@ -321,237 +324,153 @@ int delete_dtsearch_files(const char* db_name)
 {
 #ifdef _WIN32
 
-  char buf[4096];
-  char *cur_dir;
-  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
-  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+    char buf[4096];
+    char *cur_dir;
+    cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
+    string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
 
-  if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
-     return 2;
-  
-  if (uChangeWorkingDirectory("dtsearch", __sys_call_error) != 0 )
-  {
-     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+    if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
         return 2;
 
-     return 0;
-  }
+    if (uChangeWorkingDirectory("dtsearch", __sys_call_error) != 0 )
+    {
+        if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+            return 2;
 
-  struct _finddata_t dts_file;
-  long dsc;
+        return 0;
+    }
 
-  if ( (dsc = _findfirst("*", &dts_file)) == -1L)
-  {
-     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-        return 2;
+    struct _finddata_t dts_file;
+    long dsc;
 
-     return 0;
-  }
+    if ( (dsc = _findfirst("*", &dts_file)) == -1L)
+    {
+        if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+            return 2;
 
-  do 
-  {
-	 if (!strcmp(dts_file.name, ".") || !strcmp(dts_file.name, ".."))
-		 continue;
-  	 if (dts_file.attrib & _A_SUBDIR)
-  	 {
-  	 	 if (uChangeWorkingDirectory(dts_file.name, __sys_call_error) != 0 )
-  	 	 {
-	        uChangeWorkingDirectory(cur_dir, __sys_call_error);
-	        return 2;
-  	 	 }
-         struct _finddata_t dts_dir_file;
-         long dsc1;
-         if ( (dsc1 = _findfirst("*", &dts_dir_file)) != -1L)
-         {
-         	 do
-         	 {
-				 if (!strcmp(dts_dir_file.name, ".") || !strcmp(dts_dir_file.name, ".."))
-					 continue;
-			     if (uDeleteFile(dts_dir_file.name, __sys_call_error) == 0) 
-			     {
-			        uChangeWorkingDirectory(cur_dir, __sys_call_error);
-			        return 2;
-			     }
-         	 } while (_findnext(dsc1, &dts_dir_file) == 0);
-         }
-         _findclose(dsc1);
-		if (uChangeWorkingDirectory("..", __sys_call_error) != 0)
-		{
-	        uChangeWorkingDirectory(cur_dir, __sys_call_error);
-	        return 2;
-		}
+        return 0;
+    }
 
-		if (uDelDir(dts_file.name, __sys_call_error) == 0) 
-		{
-			uChangeWorkingDirectory(cur_dir, __sys_call_error);
-			return 2;
-		}
-  	 }
-	 else
-	 {
-		 if (uDeleteFile(dts_file.name, __sys_call_error) == 0) 
-		 {
-			uChangeWorkingDirectory(cur_dir, __sys_call_error);
-			return 2;
-		 }
-	 }
-  } while(_findnext(dsc, &dts_file) == 0);
+    do 
+    {
+        if (!strcmp(dts_file.name, ".") || !strcmp(dts_file.name, ".."))
+            continue;
+        if (dts_file.attrib & _A_SUBDIR)
+        {
+            if (uChangeWorkingDirectory(dts_file.name, __sys_call_error) != 0 )
+            {
+                uChangeWorkingDirectory(cur_dir, __sys_call_error);
+                return 2;
+            }
+            struct _finddata_t dts_dir_file;
+            long dsc1;
+            if ( (dsc1 = _findfirst("*", &dts_dir_file)) != -1L)
+            {
+                do
+                {
+                    if (!strcmp(dts_dir_file.name, ".") || !strcmp(dts_dir_file.name, ".."))
+                        continue;
+                    if (uDeleteFile(dts_dir_file.name, __sys_call_error) == 0) 
+                    {
+                        uChangeWorkingDirectory(cur_dir, __sys_call_error);
+                        return 2;
+                    }
+                } while (_findnext(dsc1, &dts_dir_file) == 0);
+            }
+            _findclose(dsc1);
+            if (uChangeWorkingDirectory("..", __sys_call_error) != 0)
+            {
+                uChangeWorkingDirectory(cur_dir, __sys_call_error);
+                return 2;
+            }
 
-  _findclose(dsc);
+            if (uDelDir(dts_file.name, __sys_call_error) == 0) 
+            {
+                uChangeWorkingDirectory(cur_dir, __sys_call_error);
+                return 2;
+            }
+        }
+        else
+        {
+            if (uDeleteFile(dts_file.name, __sys_call_error) == 0) 
+            {
+                uChangeWorkingDirectory(cur_dir, __sys_call_error);
+                return 2;
+            }
+        }
+    } while(_findnext(dsc, &dts_file) == 0);
 
-  if (uChangeWorkingDirectory("..", __sys_call_error) != 0)
-  {
-	  uChangeWorkingDirectory(cur_dir, __sys_call_error);
-	  return 2;
-  }
+    _findclose(dsc);
 
-  if (uDelDir("dtsearch", __sys_call_error) == 0) 
-  {
-	  uChangeWorkingDirectory(cur_dir, __sys_call_error);
-	  return 2;
-  }
-
-  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-     return 2;
-
-  return 1;
-#else
-  DIR *dir;
-  struct dirent* dent;
-  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/dtsearch/";
-
-  dir = opendir(path_to_db_files.c_str());
-
-  if (dir == NULL)
-     return 0;
-
-  dent = readdir (dir);
-  if (dent == NULL) return 2;
-
-  do 
-  {
-     if (!strcmp(dent->d_name, ".") || !strcmp(dent->d_name, ".."))
-		 continue;
-
-     string file_path = path_to_db_files + string(dent->d_name);
-     struct stat f;
-     if (lstat(file_path.c_str(), &f) == -1)
-         return 2;
-	 if (S_ISDIR(f.st_mode))
-	 {
-	 	 string subdir_path = file_path + string("/");
-	 	 DIR *sub_dir = opendir(subdir_path.c_str());
-	 	 struct dirent *sdent;
-	 	 if (sub_dir == NULL)
-	 	 	 return 2;
-	 	 while(NULL != (sdent=readdir(sub_dir)))
-	 	 {
-	 	 	 if (!strcmp(sdent->d_name, ".") || !strcmp(sdent->d_name, ".."))
-                 continue;
-			 if (uDeleteFile((subdir_path + sdent->d_name).c_str(), __sys_call_error) == 0) 
-				 return 2;
-	 	 }
-		 if (uDelDir(file_path.c_str(), __sys_call_error) == 0) 
-			 return 2;
-	 }
-	 else
-	 {
-		 if (uDeleteFile(file_path.c_str(), __sys_call_error) == 0) 
-			 return 2;
-	 }
-  } while(NULL != (dent=readdir(dir)));
-
-  if (0 != closedir(dir))
-     return 2;
-  if (uDelDir(path_to_db_files.c_str(), __sys_call_error) == 0)
-     return 2;
-  
-  return 1;
-#endif  
-
-}
-#endif
-
-//returns 0 if ph files do not exist
-//returns 1 if ph files were deleted succesfully
-//returns 2 if ph files can't be deleted
-
-int delete_ph_files(const char* db_name)
-{
-#ifdef _WIN32
-
-  char buf[4096];
-  char *cur_dir;
-  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
-  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
-
-  if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
-     return 2;
-  
-
-  struct _finddata_t ph_file;
-  long dsc;
-
-  if ( (dsc = _findfirst("*seph", &ph_file)) == -1L)
-  {
-     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-        return 2;
-
-     return 0;
-  }
-
-  do 
-  {
-     if (uDeleteFile(ph_file.name, __sys_call_error) == 0) 
-     {
+    if (uChangeWorkingDirectory("..", __sys_call_error) != 0)
+    {
         uChangeWorkingDirectory(cur_dir, __sys_call_error);
         return 2;
-     }
+    }
 
-  } while(_findnext(dsc, &ph_file) == 0);
+    if (uDelDir("dtsearch", __sys_call_error) == 0) 
+    {
+        uChangeWorkingDirectory(cur_dir, __sys_call_error);
+        return 2;
+    }
 
-    
-  _findclose(dsc);
+    if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+        return 2;
 
-  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-     return 2;
-
-  return 1;
+    return 1;
 #else
-  DIR *dir;
-  struct dirent* dent;
-  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+    DIR *dir;
+    struct dirent* dent;
+    string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/dtsearch/";
 
-  dir = opendir(path_to_db_files.c_str());
+    dir = opendir(path_to_db_files.c_str());
 
-  if (dir == NULL)
-     return 2;
+    if (dir == NULL)
+        return 0;
 
-  dent = readdir (dir);
-  if (dent == NULL) return 2; 
+    dent = readdir (dir);
+    if (dent == NULL) return 2;
 
-  string is_seph;
-  bool find_ph = false;  
-  do 
-  {
-     is_seph =  dent->d_name;
+    do 
+    {
+        if (!strcmp(dent->d_name, ".") || !strcmp(dent->d_name, ".."))
+            continue;
 
-     if (is_seph.size() >=6)
-        if ( is_seph.substr(is_seph.size()-4, 4) == "seph") 
+        string file_path = path_to_db_files + string(dent->d_name);
+        struct stat f;
+        if (lstat(file_path.c_str(), &f) == -1)
+            return 2;
+        if (S_ISDIR(f.st_mode))
         {
-          find_ph = true;
-          if (uDeleteFile((path_to_db_files + dent->d_name).c_str(), __sys_call_error) == 0) 
-             return 2;
+            string subdir_path = file_path + string("/");
+            DIR *sub_dir = opendir(subdir_path.c_str());
+            struct dirent *sdent;
+            if (sub_dir == NULL)
+                return 2;
+            while(NULL != (sdent=readdir(sub_dir)))
+            {
+                if (!strcmp(sdent->d_name, ".") || !strcmp(sdent->d_name, ".."))
+                    continue;
+                if (uDeleteFile((subdir_path + sdent->d_name).c_str(), __sys_call_error) == 0) 
+                    return 2;
+            }
+            if (uDelDir(file_path.c_str(), __sys_call_error) == 0) 
+                return 2;
         }
+        else
+        {
+            if (uDeleteFile(file_path.c_str(), __sys_call_error) == 0) 
+                return 2;
+        }
+    } while(NULL != (dent=readdir(dir)));
 
-  } while(NULL != (dent=readdir(dir)));
+    if (0 != closedir(dir))
+        return 2;
+    if (uDelDir(path_to_db_files.c_str(), __sys_call_error) == 0)
+        return 2;
 
-  if (0 != closedir(dir))
-     return 2;
-
-  if (!find_ph) return 0;
-
-  return 1;
-#endif  
-
+    return 1;
+#endif /* _WIN32*/
 }
+#endif /* SE_ENABLE_FTSEARCH */
+

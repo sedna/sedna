@@ -71,16 +71,22 @@ int uSetEnvironmentVariable(const char* name, const char* value, char** buffer, 
 #endif
 }
 
+/*
+ * Gets the of the environment variable specified by the name.
+ * Puts it into buffer of the defined size.
+ * If the function succeeds, it returns 0; otherwise it retunrs non-zero
+ * value (inclusing situation when there is not enough space in buffer 
+ * to place the value.
+ */
 int uGetEnvironmentVariable(const char* name, char* buf, uint32_t size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     DWORD res;
     memset(buf, 0, size);
     res = GetEnvironmentVariable(
-             name,		/* environment variable name */
-             buf,
-             size - 1
-          );
+             name,      /* environment variable name */
+             buf,       /* buffer to place the value*/
+             size - 1); /* buffer size*/
     if (res == 0)
     {
        sys_call_error("GetEnvironmentVariable");

@@ -546,8 +546,7 @@ int main(int argc, char **argv)
         {
             /* We were started by command "se_sm -background-mode off"
              * from "se_sm -background-mode on". Perform standard routines
-             * to run the process in the background mode.
-             */
+             * to run the process in the background mode. */
 #ifdef _WIN32
 #else
             setsid();
@@ -617,15 +616,15 @@ int main(int argc, char **argv)
 
         //init transacion ids table
         init_transaction_ids_table();
-        elog(EL_LOG, ("init_transaction_ids_table done"));
+        elog(EL_DBG, ("init_transaction_ids_table done"));
 
         //init checkpoint resources
         init_checkpoint_sems();
-        elog(EL_LOG, ("init_checkpoint_sems done"));
+        elog(EL_DBG, ("init_checkpoint_sems done"));
 
         //create checkpoint thread
         start_chekpoint_thread();
-        elog(EL_LOG, ("start_chekpoint_thread done"));
+        elog(EL_DBG, ("start_chekpoint_thread done"));
 
         //start up logical log
         bool is_stopped_correctly;
@@ -645,11 +644,11 @@ int main(int argc, char **argv)
 
 #ifdef LOCK_MGR_ON
         lm_table.init_lock_table();
-        elog(EL_LOG, ("init_lock_table done"));
+        elog(EL_DBG, ("init_lock_table done"));
 #endif
         //start buffer manager
         bm_startup();
-        elog(EL_LOG, ("Buffer manager has been started"));
+        elog(EL_LOG, ("Buffer manager started"));
 
 #ifdef _WIN32
         BOOL fSuccess;
@@ -797,16 +796,16 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        //init transacion ids table
        init_transaction_ids_table();
-       elog(EL_LOG, ("init_transaction_ids_table done"));
+       elog(EL_DBG, ("init_transaction_ids_table done"));
 
        //init checkpoint resources
        init_checkpoint_sems();
-       elog(EL_LOG, ("init_checkpoint_sems done"));
+       elog(EL_DBG, ("init_checkpoint_sems done"));
 
        elog(EL_LOG, ("Starting database recovery or hot-backup restoration..."));
        fprintf(res_os, "Starting database recovery or hot-backup restoration...\n");
        llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, true);
-       elog(EL_LOG, ("logical log is started"));
+       elog(EL_DBG, ("logical log is started"));
 
        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
        {
@@ -821,7 +820,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        //create checkpoint thread
        start_chekpoint_thread();
-       elog(EL_LOG, ("start_chekpoint_thread done"));
+       elog(EL_DBG, ("start_chekpoint_thread done"));
 
 	   // check for tmp file (may be absent in hot-backup copy)
 	   string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
@@ -863,9 +862,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
 #ifdef LOCK_MGR_ON
        lm_table.init_lock_table();
-       elog(EL_LOG, ("lm_table.init_lock_table done"));
+       elog(EL_DBG, ("lm_table.init_lock_table done"));
 #endif
-
 
        // Starting SSMMsg server
        d_printf1("Starting SSMMsg...");
@@ -917,18 +915,18 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        //shutdown logical log
 	   llRelease();
-       elog(EL_LOG, ("Logical log is stopped"));
+       elog(EL_DBG, ("Logical log is stopped"));
 
        //release checkpoint resources
        release_checkpoint_sems();
-       elog(EL_LOG, ("release_checkpoint_sems done"));
+       elog(EL_DBG, ("release_checkpoint_sems done"));
 
        release_transaction_ids_table();
-       elog(EL_LOG, ("release_transaction_ids_table done"));
+       elog(EL_DBG, ("release_transaction_ids_table done"));
 
 #ifdef LOCK_MGR_ON
        lm_table.release_lock_table();
-       elog(EL_LOG, ("lm_table.release_lock_table done"));
+       elog(EL_DBG, ("lm_table.release_lock_table done"));
 #endif
        elog(EL_LOG, ("Recovery procedure has been finished successfully"));
        event_logger_release();
