@@ -29,3 +29,15 @@ macro (ConfigOutputTree)
         configure_file(share/sedna_auth_md.xml ${CMAKE_BINARY_DIR}/share/sedna_auth_md.xml COPYONLY)
     endif (MSVC_IDE AND NOT ver_res EQUAL -1)
 endmacro (ConfigOutputTree)
+
+# This macro performs some binaries finalization:
+#   1) sets VERSION properly
+#   2) sets binary output dir appropriately
+macro(FinalizeBinaries ...)
+    ConfigOutputDir(${targ1} ${ARGV})
+
+    # set version only for windows since on linux cmake makes strange links
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        set_target_properties(${targ1} ${ARGV} PROPERTIES VERSION ${SEDNA_BUILD_VERSION})
+    endif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+endmacro(FinalizeBinaries ...)

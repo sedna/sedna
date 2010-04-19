@@ -23,6 +23,7 @@ if (MAKE_DOC)
             COMMAND ${PDFLATEX_COMPILER} ${doc_path}
             COMMAND ${PDFLATEX_COMPILER} ${doc_path}
             COMMAND ${PDFLATEX_COMPILER} ${doc_path}
+            DEPENDS ${doc}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
     endforeach(doc ${docs_SRC})

@@ -15,7 +15,7 @@ endif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 add_executable(se_exp ${exp_SRC})
 set_target_properties(se_exp PROPERTIES LINKER_LANGUAGE "CXX")
 target_link_libraries(se_exp common ${EXP_SEDNA_LIB} expat ${sysaux_LIB})
-ConfigOutputDir(se_exp)
+FinalizeBinaries(se_exp)
 
 # install
 install(TARGETS se_exp DESTINATION bin)

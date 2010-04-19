@@ -903,7 +903,7 @@ namespace sedna
 
         dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 #else
-        drv->error(SE1002, "Triggers support is disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
+        drv->error(SE1002, "Triggers support is disabled. Rebuild Sedna with enabled triggers.");
 #endif
     }
 
@@ -1094,7 +1094,7 @@ namespace sedna
 
         qep = new PPDropTrigger(name, dyn_cxt);
 #else
-        drv->error(SE1002, "Triggers support disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
+        drv->error(SE1002, "Triggers support is disabled. Rebuild Sedna with enabled triggers.");
 #endif
     }
 

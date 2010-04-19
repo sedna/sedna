@@ -40,7 +40,7 @@ target_link_libraries(se_smsd ${common_libs})
 
 # place binaries in build/bin directory
 set(sm_execs se_sm se_cdb se_ddb se_smsd)
-ConfigOutputDir(${sm_execs})
+FinalizeBinaries(${sm_execs})
 
 # set common dependencies
 foreach(sm_exec ${sm_execs})

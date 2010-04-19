@@ -24,7 +24,7 @@ target_link_libraries(se_rc ${common_libs})
 
 # place binaries in build/bin directory
 set(gov_execs se_gov se_stop se_rc)
-ConfigOutputDir(${gov_execs})
+FinalizeBinaries(${gov_execs})
 
 # install it in bin
 install(TARGETS ${gov_execs} RUNTIME DESTINATION bin)
