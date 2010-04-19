@@ -31,7 +31,7 @@
 
 using namespace std;
 
-static int sector_size = 512;
+static unsigned int sector_size = 512;
 static void *ctrl_blk = NULL;
 
 // Recovery functions for physical records

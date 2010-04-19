@@ -115,7 +115,8 @@ struct ftlog_file
 	//returns 0 if failed, 1 if operation is successful
 	int read_data(void *data, int size)
 	{
-		int res, nread = 0;
+		int res;
+		unsigned int nread = 0;
 		res = uReadFile(file, data, size, &nread, __sys_call_error);
 		next_lsn += nread;
 		if (res == 0 || nread != size)
@@ -147,7 +148,8 @@ struct ftlog_file
 private:
 	inline void write_to_file(void *buf, int size)
 	{
-		int res, written;
+		int res;
+		unsigned int written;
 		res = uWriteFile(file, buf, size, &written, __sys_call_error);
 		if (res == 0 || buf_pos != written)
 			throw USER_EXCEPTION2(SE4045, "failed to write to full-text index log file");

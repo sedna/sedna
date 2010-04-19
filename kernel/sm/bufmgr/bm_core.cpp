@@ -59,7 +59,6 @@ UShMem p_sm_callback_file_mapping;
 UShMem lru_global_stamp_file_mapping;
 #endif
 
-
 // Global VMM-SM semaphore
 USemaphore vmm_sm_sem;
 
@@ -125,7 +124,7 @@ void read_master_block()
     if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
 
-    int number_of_bytes_read = 0;
+    unsigned int number_of_bytes_read = 0;
     int res = uReadFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
@@ -137,7 +136,7 @@ void flush_master_block()
     if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
-    int number_of_bytes_written = 0;
+    unsigned int number_of_bytes_written = 0;
     int res = uWriteFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
@@ -189,7 +188,7 @@ void read_block(const xptr &p, ramoffs offs)
 
     vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
 
-    int number_of_bytes_read = 0;
+    unsigned int number_of_bytes_read = 0;
     int res = uReadFile(file_handler, blk, PAGE_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != PAGE_SIZE)
         throw SYSTEM_ENV_EXCEPTION("Cannot read block");
@@ -223,7 +222,7 @@ void write_block(const xptr &p, ramoffs offs)
     if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
-    int number_of_bytes_written = 0;
+    unsigned int number_of_bytes_written = 0;
     int res = uWriteFile(file_handler, OFFS2ADDR(offs), PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != PAGE_SIZE)
         throw SYSTEM_ENV_EXCEPTION("Cannot write block");

@@ -152,7 +152,7 @@ replaceAll(string context, const char* src, const char* dst) {
 void create_cfg_file() 
 {
    char buf[100];
-   int nbytes_written;
+   unsigned int nbytes_written = 0;
    string cfg_file_content;
    UFile cfg_file_handle;
    USECURITY_ATTRIBUTES *def_sa, *dir_sa;
@@ -222,4 +222,67 @@ void create_data_directory()
    uReleaseSA(dir_sa, __sys_call_error);
 }
 
+/*
+lsize_t determine_layer_size(int db_id)
+{
+    char buf[128];
+    char path_buf[U_MAX_PATH + 10];
+    lsize_t layer_size = 0;
+    UPID pid;
+    UPHANDLE process_handle;
+    UShMem p_cdb_callback_file_mapping;
+    lsize_t *p_cdb_callback_data;
 
+    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1", NULL, __sys_call_error);
+    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(os_primitives_id_min_bound, buf, 10), NULL, __sys_call_error);
+
+    std::string path_str = uGetImageProcPath(path_buf, __sys_call_error) + std::string("/") + SESSION_EXE;
+    strcpy(path_buf, path_str.c_str());
+
+    // Result from transaction will be returned to this shared memory segment
+    // So, we should create and attach it
+    if (uCreateShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof lsize_t, NULL, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+    p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof lsize_t, __sys_call_error);
+    if (p_sm_callback_data == NULL)
+        throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+    p_cdb_callback_data = 0;
+
+    if (uCreateProcess(path_buf,
+        false, // inherit handles
+        NULL,
+        U_DETACHED_PROCESS,
+        &process_handle,
+        NULL,
+        &pid,
+        NULL,
+        NULL,
+        __sys_call_error) != 0)
+        throw SYSTEM_ENV_EXCEPTION("Cannot create process to determine VMM region");
+
+    int status = 0;
+    int res = 0;
+
+    res = uWaitForChildProcess(pid, process_handle, &status, __sys_call_error);
+    if (0 != res || status)
+        throw SYSTEM_ENV_EXCEPTION((std::string("Cannot determine VMM region, status: ") + int2string(status) + ", result: " + int2string(res)).c_str());
+
+    uCloseProcess(process_handle, __sys_call_error);
+    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0", NULL, __sys_call_error);
+
+    layer_size = *p_cdb_callback_data;
+
+    // dettach/destroy the mapping
+    if (uDettachShMem(p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+    if (uReleaseShMem(p_cdb_callback_file_mapping, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4020, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+    if (layer_size < VMM_REGION_MIN_SIZE)
+        throw USER_EXCEPTION2(SE1031, (std::string("Determined layer size: ") + int2string(LAYER_ADDRESS_SPACE_SIZE)).c_str());
+
+    elog(EL_INFO,  ("Layer address space size = 0x%x", layer_size));
+
+    return layer_size;
+}
+*/

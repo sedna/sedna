@@ -35,6 +35,7 @@ void create_cfg_file();
 
 void create_data_directory();
 
+//lsize_t determine_layer_size(int db_id);
 
 #endif /* _CDB_GLOBALS_H */
 

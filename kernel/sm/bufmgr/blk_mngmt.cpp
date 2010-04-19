@@ -492,7 +492,7 @@ extend_file_helper(UFile fileHandle,
         __int64 offset;
         void *buf = NULL;
         vmm_sm_blk_hdr *hdr = NULL;
-        int bytesOutCnt;
+        unsigned int bytesOutCnt;
 
         /* Allocate aligned buffer and initialize header struct. */ 
         buf = malloc(VMM_SM_BLK_HDR_MAX_SIZE * 2);

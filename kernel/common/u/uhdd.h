@@ -132,11 +132,12 @@ extern "C"
 /* is nonzero and the number of bytes read is zero, the file pointer was beyond */
 /* the current end of the file at the time of the read operation.*/
 /* If the function fails, the return value is zero*/
-    int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_error_fun fun);
+    int uReadFile(UFile fd, void *buf, unsigned int to_read, unsigned int *already_read, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sys_call_error_fun fun);
+    int uWriteFile(UFile fd, const void *buf, unsigned int to_write, unsigned int *already_written,
+                   sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
@@ -167,7 +168,7 @@ extern "C"
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fun);
+    int uGetDiskSectorSize(unsigned int *sector_size, const char *path, sys_call_error_fun fun);
 
 /* If the function succeeds, it returns nonzero.*/
 /* If the function fails, it returns 1.*/

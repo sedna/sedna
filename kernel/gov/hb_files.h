@@ -13,16 +13,16 @@
 
 // make data file name and write it to buf
 // return: length of str
-int hbMakeDataFileName(char *buf, int maxlen, const char *dbname);
+int hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname);
 
 // make llog file name and write it to buf
 // return: length of str
-int hbMakeLogFileName(char *buf, int maxlen, const char *dbname, int lnum);
+int hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64_t lnum);
 
 // retrieves vmm.dat file name
-int	hbMakeVmmFileName(char *buf, int maxlen);
+int	hbMakeVmmFileName(char *buf, unsigned int maxlen);
 
 // retrieves db config file name
-int	hbMakeConfFileName(char *buf, int maxlen, const char *dbname);
+int	hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname);
 
 #endif

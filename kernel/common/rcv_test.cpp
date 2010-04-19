@@ -40,7 +40,8 @@ static void rcvSerializeInfoToFile(const char *file_name)
 	char tmp_file_name[U_MAX_PATH];
 	UFile tfh;
 	table_it it = fname_cfg_table.begin();
-	int written, err = 0, len;
+	unsigned int written, len;
+    int err = 0;
 
 	sprintf(tmp_file_name, "%s/%s", SEDNA_DATA, file_name);
 
@@ -101,7 +102,7 @@ static int rcvLoadInfoFromFile(const char *file_name)
 {
 	char tmp_file_name[U_MAX_PATH], func_buf[1024];
 	UFile tfh;
-	int readb, len;
+	unsigned int readb, len;
 	rcvPointInfo *rcvInfo;
 	table_it it;
 
@@ -165,7 +166,7 @@ void rcvTestCrashPoint(const char *func_name)
 	table_it it;
 	char crash_info[256];
 	double prob;
-	int written;
+	unsigned int written;
 
 	// if we don't have points to crash then return
 	if (fname_cfg_table.empty()) return;

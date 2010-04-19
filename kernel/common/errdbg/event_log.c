@@ -898,7 +898,8 @@ void sedna_soft_fault_log(const char* log_message, int component)
 {
     char log_buf[SE_SOFT_FAULT_LOG_CONTENT_LEN + 128];
     UFile soft_fault_file_handle;
-    int res, bytes_written = 0;
+    int res;
+    unsigned int bytes_written = 0;
     const char* str = component2str(component);
 
     if(log_message == NULL) return;

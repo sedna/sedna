@@ -10,7 +10,7 @@
 
 // make data file name and write it to buf
 // return: length of str
-int hbMakeDataFileName(char *buf, int maxlen, const char *dbname)
+int hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname)
 {
     char data_file_name[U_MAX_PATH + 1];
 
@@ -31,7 +31,7 @@ int hbMakeDataFileName(char *buf, int maxlen, const char *dbname)
 
 // make llog file name and write it to buf
 // return: length of str
-int hbMakeLogFileName(char *buf, int maxlen, const char *dbname, int lnum)
+int hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64_t lnum)
 {
     char log_file_name[U_MAX_PATH + 1];
 
@@ -44,7 +44,7 @@ int hbMakeLogFileName(char *buf, int maxlen, const char *dbname, int lnum)
     strcat(log_file_name, "_files/");
     strcat(log_file_name, dbname);
     strcat(log_file_name, ".");
-    strcat(log_file_name, u_itoa(lnum, ui_buf, 10));
+    strcat(log_file_name, u_ui64toa(lnum, ui_buf, 10));
    	strcat(log_file_name, ".llog");
 
     if (strlen(log_file_name) > maxlen) return -1;
@@ -55,7 +55,7 @@ int hbMakeLogFileName(char *buf, int maxlen, const char *dbname, int lnum)
 }
 
 // retrieves vmm.dat file name
-int	hbMakeVmmFileName(char *buf, int maxlen)
+int	hbMakeVmmFileName(char *buf, unsigned int maxlen)
 {
     char vmm_file_name[U_MAX_PATH + 1];
 
@@ -72,7 +72,7 @@ int	hbMakeVmmFileName(char *buf, int maxlen)
 }
 
 // retrieves db config file name
-int	hbMakeConfFileName(char *buf, int maxlen, const char *dbname)
+int	hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname)
 {
     char cfg_file_name[U_MAX_PATH + 1];
 

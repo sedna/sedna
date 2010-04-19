@@ -47,7 +47,7 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
         if (fd == U_INVALID_FD)
             throw USER_EXCEPTION2(SE4042, "vmm.dat");
 
-        int bytes_read = 0;
+        unsigned int bytes_read = 0;
         int res = uReadFile(fd, &v, sizeof(vmm_region_values), &bytes_read, __sys_call_error);
         if (res == 0 || bytes_read != sizeof(vmm_region_values))
             throw USER_EXCEPTION2(SE4044, "vmm.dat");
@@ -114,7 +114,7 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
         if (fd == U_INVALID_FD)
             throw USER_EXCEPTION2(SE4040, "vmm.dat");
 
-        int bytes_written = 0;
+        unsigned int bytes_written = 0;
         res = uWriteFile(fd, &v, sizeof(vmm_region_values), &bytes_written, __sys_call_error);
         if (res == 0 || bytes_written != sizeof(vmm_region_values))
             throw USER_EXCEPTION2(SE4045, "vmm.dat");

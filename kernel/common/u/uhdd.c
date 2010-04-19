@@ -174,7 +174,7 @@ int uDelDir(const char *dir, sys_call_error_fun fun)
 /* is nonzero and the number of bytes read is zero, the file pointer was beyond */
 /* the current end of the file at the time of the read operation.*/
 /* If the function fails, the return value is zero*/
-int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_error_fun fun)
+int uReadFile(UFile fd, void *buf, unsigned int to_read, unsigned int *already_read, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = ReadFile(fd, buf, to_read, (LPDWORD) already_read, NULL);
@@ -193,10 +193,10 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_erro
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sys_call_error_fun fun)
+int uWriteFile(UFile fd, const void *buf, unsigned int to_write, unsigned int *already_written, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    int written = 0;
+    unsigned int written = 0;
 	BOOL res = 0;
 
     if(to_write == 0)
@@ -218,7 +218,8 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
     *already_written = written;
     return written;
 #else
-    int res = 0, written = 0;
+    int res = 0;
+    unsigned int written = 0;
 
     if(to_write == 0)
     {
@@ -495,7 +496,7 @@ int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun
  *        On Windows it must include drive specification (for example, C:\).
  */
 int 
-uGetDiskSectorSize(int *sector_size, /* out */ 
+uGetDiskSectorSize(unsigned int *sector_size, /* out */
                    const char *path, /* in  */ 
                    sys_call_error_fun fun)
 {

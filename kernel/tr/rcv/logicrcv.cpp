@@ -74,15 +74,6 @@ static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
     return lsn;
 }
 
-// called when something bad happen
-static void llProcessRcvError(LSN curr_lsn, void *Rec)
-{
-	char op = *((char *)Rec);
-
-	if (op < LL_INSERT_ELEM || op >= LL_DEFAULT)
-		throw SYSTEM_EXCEPTION("Bad things really happen :(");
-}
-
 static bool llRcvPrereqRedo(LSN lsn, void *RecBuf)
 {
 	char *rec = (char *)RecBuf;

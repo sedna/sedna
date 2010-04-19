@@ -9,8 +9,8 @@
 static 
 uint32_t BigEndianByteOrder(uint32_t arg)
 {
-	return (arg<<24) & UINT32_C(0xFF000000) | (arg<<8) & UINT32_C(0x00FF0000) | 
-		(arg>>8) & UINT32_C(0x0000FF00) | (arg>>24) & UINT32_C(0x000000FF);
+	return ((arg<<24) & UINT32_C(0xFF000000)) | ((arg<<8) & UINT32_C(0x00FF0000)) | 
+		((arg>>8) & UINT32_C(0x0000FF00)) | ((arg>>24) & UINT32_C(0x000000FF));
 }
 
 struct GuardMemoryVars
@@ -93,9 +93,9 @@ void DbgInitGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill)
 	uint32_t *i=0;
 	GuardMemoryVars gmv;
 	InitGuardMemoryVars(&gmv,ptr,dist,fill);
-	*gmv.frag0=*gmv.frag0 & ~gmv.m0 | gmv.fill & gmv.m0;
+	*gmv.frag0=(*gmv.frag0 & ~gmv.m0) | (gmv.fill & gmv.m0);
 	for(i=gmv.begin; i<gmv.end; ++i) *i=gmv.fill;
-	*gmv.frag1=*gmv.frag1 & ~gmv.m1 | gmv.fill & gmv.m1;
+	*gmv.frag1=(*gmv.frag1 & ~gmv.m1) | (gmv.fill & gmv.m1);
 }
 
 #if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
@@ -128,7 +128,7 @@ int DbgCheckGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill, int isReportin
 	GuardMemoryVars gmv;
 	InitGuardMemoryVars(&gmv,ptr,dist,fill);
 
-	expect=*gmv.frag0 & ~gmv.m0 | gmv.fill & gmv.m0;
+	expect=(*gmv.frag0 & ~gmv.m0) | (gmv.fill & gmv.m0);
 	content=*gmv.frag0;
 	if (expect!=content) 
 	{
@@ -149,7 +149,7 @@ int DbgCheckGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill, int isReportin
 		}
 	}
 
-	expect=*gmv.frag1 & ~gmv.m1 | gmv.fill & gmv.m1;
+	expect=(*gmv.frag1 & ~gmv.m1) | (gmv.fill & gmv.m1);
 	content=*gmv.frag1;
 	if (expect!=content)
 	{

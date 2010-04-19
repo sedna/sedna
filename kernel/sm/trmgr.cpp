@@ -70,7 +70,7 @@ static bool SnapshotAdvanceCriterion()
     WuGatherSnapshotsStatsExn(&wuStats);
 
     size_t updatedBlocks = wuStats.curSnapshotVersionsCount;
-    size_t blocksCount = mb->data_file_cur_size / PAGE_SIZE - wuStats.versionsCount;
+    size_t blocksCount = (size_t)(mb->data_file_cur_size / PAGE_SIZE - wuStats.versionsCount);
     size_t createdBlocks = 0; // TODO: add this statistics in proper manner
 
     double updFract = (double)updatedBlocks / (blocksCount - createdBlocks);

@@ -400,7 +400,8 @@ bulkload (struct SednaConnection *conn,
     UFile file_handle = U_INVALID_FD;
     char cur_dir_abspath[SE_MAX_DIR_LENGTH+1];
     char cfile_abspath[SE_MAX_DIR_LENGTH+1];
-    int already_read = 1, res = 1;
+    unsigned int already_read = 1;
+    int res = 1;
     char *filename = conn->msg.body + 5;
     filename[s_min(conn->msg.length - 5, SE_SOCKET_MSG_BUF_SIZE - 6)] = '\0';
 

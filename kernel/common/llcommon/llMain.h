@@ -91,7 +91,7 @@ struct llGlobalInfo
 	bool checkpoint_flag;                                   // true, if checkpoint is enabled
 	bool checkpoint_on;                                     // true, if checkpoint is currently in progress
 	bool hotbackup_needed;                                  // recover from hotbackup copy needed
-	uint64_t next_arch_file;       							// next file to archive; if 0 - then db isn't in incremental mode
+	uint64_t next_arch_file;       							// file from which to archive on next increment; if 0 - then db isn't in incremental mode
 };
 
 
@@ -296,7 +296,7 @@ struct llRecInfo
 //						"true" - corresponding function will be called; "false" - the record is ignored
 // Returns: 
 //     -1 - error; 0 - all ok; 1 - lfs: out of bounds (this is not an error if we perform simple forward scan)
-int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llNextLSN funNextLSN, llPrereqRec funPrereq);
+int llScanRecords(llRecInfo *RecordsInfo, unsigned int RecordsInfoLen, LSN start_lsn, llNextLSN funNextLSN, llPrereqRec funPrereq);
 
 // Archives logical log
 // Returns:

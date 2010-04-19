@@ -242,7 +242,8 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
 {
     string tmp_file_path_str;
     unsigned int i = 0;
-    int got, written = 0, res;
+    int got, res;
+    unsigned int written = 0;
 
     
     if ((filenames->size() > 1) && (p_ver.major_version < 2))
