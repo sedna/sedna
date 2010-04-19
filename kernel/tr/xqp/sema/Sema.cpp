@@ -1532,6 +1532,11 @@ namespace sedna
             {
                 drv->error(n.getLocation(), XPTY0004, *n.test + " is not a valid NCName");
             }
+            else
+            {
+                delete n.test;
+                n.test = new std::string(tc.get_str_mem(), (size_t)tc.get_strlen());
+            }
         }
     }
 
