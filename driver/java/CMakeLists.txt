@@ -52,8 +52,8 @@ if (JAVA_DRIVER)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/out
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/lib
         COMMAND ${JAVA_COMPILE} -classpath ${java_driver_cp} ${JAVAC_OPTIONS} -d ${CMAKE_CURRENT_BINARY_DIR}/out ${java_driver_SRC}
-        COMMAND ${JAVA_ARCHIVE} cvf ${CMAKE_CURRENT_BINARY_DIR}/lib/sednadriver.jar -C ${CMAKE_CURRENT_BINARY_DIR}/out ru
         COMMAND ${JAVA_DOC} -classpath ${java_driver_cp} -d ${CMAKE_CURRENT_BINARY_DIR}/javadoc ${java_driver_SRC}
+        COMMAND ${JAVA_ARCHIVE} cvf ${CMAKE_CURRENT_BINARY_DIR}/lib/sednadriver.jar -C ${CMAKE_CURRENT_BINARY_DIR}/out ru
         DEPENDS ${java_driver_SRC}
         COMMENT "Generating Sedna Java driver and Java Docs"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

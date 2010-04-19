@@ -93,7 +93,7 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows" AND ENABLE_DTSEARCH)
 endif ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows" AND ENABLE_DTSEARCH)
 
 # put in build/bin
-ConfigOutputDir(se_trn)
+FinalizeBinaries(se_trn)
 
 # install trn in bin
 install(TARGETS se_trn RUNTIME DESTINATION bin)
