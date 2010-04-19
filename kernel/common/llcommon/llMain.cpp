@@ -24,7 +24,7 @@
 #define LL_FILE_PORTION_SIZE (INT64_C(100) * (1024 * 1024))   // size of chunk of logical log
 #define LL_WRITEBUF_SIZE 1024 * 1024                          // write buffer size (for lfs)
 #define LL_READBUF_SIZE 1024                                  // read buffer size (for lfs)
-#define LL_MAX_LOG_FILES max_log_files                        // maximum files until truncate
+#define LL_MAX_LOG_FILES ((uint32_t)max_log_files)            // maximum files until truncate
 
 struct llRecordHead
 {
@@ -98,7 +98,7 @@ int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_fil
 		log_file_size = LL_WRITEBUF_SIZE + 512;
 
 	lfsCreateNew(db_files_path, db_name, "llog",
-		     (log_file_size == -1) ? LL_FILE_PORTION_SIZE : log_file_size,
+		     (log_file_size == (uint64_t)-1) ? LL_FILE_PORTION_SIZE : log_file_size,
 		      &fileHead, sizeof(llFileHead));
 
 	return 0;
@@ -719,9 +719,10 @@ LSN llGetHighLSNBoundary()
 }
 
 // This function scans records starting from given start_lsn.
-int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llNextLSN funNextLSN, llPrereqRec funPrereq)
+int llScanRecords(llRecInfo *RecordsInfo, unsigned int RecordsInfoLen, LSN start_lsn, llNextLSN funNextLSN, llPrereqRec funPrereq)
 {
-	char *RecBuf, cop;
+	char *RecBuf;
+    unsigned int cop;
 	LSN lsn = start_lsn;
 
 	assert(RecordsInfo != NULL && RecordsInfoLen > 0 && funNextLSN != NULL);
@@ -741,7 +742,7 @@ int llScanRecords(llRecInfo *RecordsInfo, int RecordsInfoLen, LSN start_lsn, llN
 			if (funPrereq == NULL || funPrereq(lsn, RecBuf)) RecordsInfo[cop].fun(lsn, RecBuf);
 		}
 		else
-			for (int i = 0; i < RecordsInfoLen; i++)
+			for (unsigned int i = 0; i < RecordsInfoLen; i++)
 				if (RecordsInfo[i].rec_oper == (llOperations)cop || RecordsInfo[i].rec_oper == LL_DEFAULT)
 				{
 					if (funPrereq == NULL || funPrereq(lsn, RecBuf)) RecordsInfo[i].fun(lsn, RecBuf);

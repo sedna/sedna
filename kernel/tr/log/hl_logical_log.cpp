@@ -454,6 +454,26 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
     llLogIndex(tr_globals::trid, obj_str.str().c_str(), key_str.str().c_str(), key_type, index_title, doc_name, is_doc, inserted);
 }
 #ifdef SE_ENABLE_FTSEARCH
+
+static void custom_put_str(const char *str, char *cust_buf, unsigned int *cust_size)
+{
+    size_t len;
+
+    if (str == NULL)
+    {
+        U_ASSERT(*cust_size < sizeof(executor_globals::e_string_buf));
+        cust_buf[*cust_size] = '\x0';
+        (*cust_size)++;
+    }
+    else
+    {
+        len = strlen(str);
+        U_ASSERT(*cust_size + len + 1 <= sizeof(executor_globals::e_string_buf));
+        memcpy(cust_buf + *cust_size, str, len + 1);
+        cust_size += (len + 1);
+    }
+}
+
 void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name,bool is_doc,ft_custom_tree_t * custom_tree,bool inserted)
 {
     if (!enable_log) return;
@@ -462,8 +482,8 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
 	PathExpr2lr(object_path, obj_str);
 
-	int custom_tree_count = 0;
-	int custom_tree_size = 0;
+	unsigned int custom_tree_count = 0;
+	unsigned int custom_tree_size = 0;
 	char *custom_tree_buf = executor_globals::e_string_buf;
 
 	if (custom_tree != NULL)
@@ -473,37 +493,23 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 
 		while (tmp != NULL)
 		{
-			int len;
-
 			custom_tree_count++;
 
 			U_ASSERT(custom_tree_size + sizeof(ft_index_type) <= sizeof(executor_globals::e_string_buf));
 			memcpy(custom_tree_buf + custom_tree_size, &tmp->obj->cm, sizeof(ft_index_type));
 			custom_tree_size += sizeof(ft_index_type);
 
-#define PUT_STR(str) \
-	if (str == NULL) {\
-		U_ASSERT(custom_tree_size < sizeof(executor_globals::e_string_buf));\
-		custom_tree_buf[custom_tree_size] = '\x0';\
-		custom_tree_size++;\
-	} else {\
-		len = strlen(str);\
-		U_ASSERT(custom_tree_size + len + 1 <= sizeof(executor_globals::e_string_buf));\
-		memcpy(custom_tree_buf + custom_tree_size, str, len + 1);\
-		custom_tree_size += len + 1;\
-	}
 			if (tmp->obj->get_xmlns() == NULL)
 			{
-				PUT_STR(NULL);
-				PUT_STR(NULL);
-			}
+                custom_put_str(NULL, custom_tree_buf, &custom_tree_size);
+                custom_put_str(NULL, custom_tree_buf, &custom_tree_size);
+            }
 			else
 			{
-				PUT_STR(tmp->obj->get_xmlns()->uri);
-				PUT_STR(tmp->obj->get_xmlns()->prefix);
-			}
-			PUT_STR(tmp->obj->local);
-#undef PUT_STR
+                custom_put_str(tmp->obj->get_xmlns()->uri, custom_tree_buf, &custom_tree_size);
+                custom_put_str(tmp->obj->get_xmlns()->prefix, custom_tree_buf, &custom_tree_size);
+            }
+            custom_put_str(tmp->obj->local, custom_tree_buf, &custom_tree_size);
 
 			tmp = custom_tree->rb_successor(tmp);
 		}
@@ -531,14 +537,14 @@ void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathEx
   if (path_to_parent)
   	PathExpr2lr(path_to_parent, path_to_par);
 
-  int trac_len = 0;
+  unsigned int trac_len = 0;
 
   for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
       trac_len += strlen(tr_act->statement) + 1 + sizeof(int);
 
   char *tr_action_buf = new char[trac_len];
-  int tr_action_buf_size = 0;
-  int str_len = 0;
+  unsigned int tr_action_buf_size = 0;
+  unsigned int str_len = 0;
 
   for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
   {

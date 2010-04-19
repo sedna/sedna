@@ -29,7 +29,8 @@ int se_ExceptionalCondition(const char *conditionName,
                             int lineNumber)
 {
 	char buf[SEDNA_DATA_VAR_SIZE + 128];
-    int res, bytes_written = 0;
+    int res;
+    unsigned int bytes_written = 0;
     UFile a_fh;
 
 	if (   !PointerIsValid(conditionName)

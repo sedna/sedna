@@ -228,7 +228,7 @@ int llLogCheckpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size
 	inc_mem_copy(tmp_rec, offs, &isGarbage, sizeof(int));
 	inc_mem_copy(tmp_rec, offs, &count, sizeof(size_t));
 
-	for (int i = 0; i < count; i++)
+	for (unsigned int i = 0; i < count; i++)
 		inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(WuVersionEntry));
 	
 	// additional info for the first record

@@ -102,7 +102,7 @@ void create_db()
     // write first page to data file, which serves as master block
     char tmp[PAGE_SIZE];
 
-    int number_of_bytes_written = 0;
+    unsigned int number_of_bytes_written = 0;
     int res = uWriteFile(data_file_handler, tmp, PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != PAGE_SIZE)
         throw USER_EXCEPTION2(SE4045, "data file");

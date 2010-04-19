@@ -31,18 +31,13 @@ void bm_rcv_release()
         throw USER_EXCEPTION2(SE4043, ".sedata file");
 }
 
-//void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_size)
-void bm_rcv_change(const xptr& xaddr, const void *p, int size, __int64 file_size)
+void bm_rcv_change(const xptr& xaddr, const void *p, size_t size)
 {
-    __int64 _dsk_offs;
+    uint64_t _dsk_offs;
 
     if (IS_DATA_BLOCK(xaddr))
     {
         _dsk_offs = ABS_DATA_OFFSET(xaddr) + (__int64)PAGE_SIZE;
-
-        if (file_size != 0)
-            if (!((__int64)PAGE_SIZE <= _dsk_offs && _dsk_offs <= file_size - (__int64)PAGE_SIZE))
-                throw SYSTEM_EXCEPTION("Offset is out of range");
     }
     else throw SYSTEM_EXCEPTION("Wrong physical log record (for tmp file)");
 
@@ -50,7 +45,7 @@ void bm_rcv_change(const xptr& xaddr, const void *p, int size, __int64 file_size
     if (uSetFilePointer(data_file_handler, _dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
-    int number_of_bytes_written = 0;
+    unsigned int number_of_bytes_written = 0;
     int res = uWriteFile(data_file_handler, p, size, &number_of_bytes_written, __sys_call_error);
 	if (res == 0 || number_of_bytes_written != size)
         throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
@@ -58,7 +53,7 @@ void bm_rcv_change(const xptr& xaddr, const void *p, int size, __int64 file_size
 
 void bm_rcv_read_block(const xptr &p, void *buf)
 {
-    __int64 _dsk_offs;
+    uint64_t _dsk_offs;
 
     _dsk_offs = ABS_DATA_OFFSET(p) + (__int64)PAGE_SIZE;
 
@@ -66,7 +61,7 @@ void bm_rcv_read_block(const xptr &p, void *buf)
     if (uSetFilePointer(data_file_handler, _dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
-    int number_of_bytes_read = 0;
+    unsigned int number_of_bytes_read = 0;
     int res = uReadFile(data_file_handler, buf, PAGE_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != PAGE_SIZE)
         throw SYSTEM_ENV_EXCEPTION("Cannot read block");
@@ -86,7 +81,7 @@ void bm_rcv_master_block(const void* p)
     if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
-    int number_of_bytes_written = 0;
+    unsigned int number_of_bytes_written = 0;
     int res = uWriteFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);

@@ -22,8 +22,8 @@
 ********************************************************************************
 *******************************************************************************/
 
-#define MASTER_BLOCK_SIZE		(__uint32)4096
-#define VMM_SM_BLK_HDR_MAX_SIZE	(__uint32)4096
+#define MASTER_BLOCK_SIZE          (uint32_t)4096
+#define VMM_SM_BLK_HDR_MAX_SIZE    (uint32_t)4096
 
 #define ABS_DATA_OFFSET(p)		((__int64)((p).layer) *												\
                                  (__int64)(LAYER_ADDRESS_SPACE_SIZE) +								\
@@ -73,7 +73,6 @@ extern UShMem p_sm_callback_file_mapping;
 // LRU global stamp counter
 extern UShMem lru_global_stamp_file_mapping;
 #endif
-
 
 // Global VMM-SM semaphore
 extern USemaphore vmm_sm_sem;

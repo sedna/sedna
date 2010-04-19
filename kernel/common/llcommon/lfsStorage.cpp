@@ -52,10 +52,10 @@ struct lfsInfo_t
 	uint64_t LastFileNum;  // number of the last file
 	uint64_t ChunkSize;    // maximum size of log file
 
-	int BufSize;           // buffer size in bytes
-	int BufStart;          // begin of buffer records
-	int BufOffset;         // current place to write in buffer
-	int BufKeepBytes;      // number of keep bytes
+	unsigned int BufSize;           // buffer size in bytes
+    unsigned int BufStart;          // begin of buffer records
+    unsigned int BufOffset;         // current place to write in buffer
+    unsigned int BufKeepBytes;      // number of keep bytes
 };
 
 // LFS-specific header of each file
@@ -77,7 +77,7 @@ static lfsInfo_t *lfsInfo   = NULL; // pointer to lfsInfo shared in memory
 static void *lfsWriteBuffer = NULL; // write buffer (in shared memory)
 
 static void *lfsReadBuf  = NULL;    // local read buffer
-static int ReadBufSize = 0;         // size of read buffer (can variate depending on the process)
+static unsigned int ReadBufSize = 0;         // size of read buffer (can variate depending on the process)
 static LSN StartReadLSN = 0, EndReadLSN = 0; // boundaries for info in read buffer
 
 static USemaphore SyncSem;  // to synchronize multiple processes
@@ -87,7 +87,7 @@ static string ChainPath;    // path for files chain
 static string Prefix;    	// name of the prefix (file name: <prefix>.<number>.<ext>, specified in lfsInit)
 static string Ext;          // name of the extension
 
-static int lfsSectorSize = 512; // size of disc sector
+static unsigned int lfsSectorSize = 512; // size of disc sector
 
 // cache for open descriptors (it's just a simple hash; file_number % LFS_CACHE_SIZE)
 #define LFS_CACHE_SIZE 16
@@ -183,9 +183,9 @@ static int _lfsCloseAllCachedFiles()
 // closes cached descriptor
 static int _lfsCloseCachedDesc(uint64_t fileNum)
 {
-    int CacheNum;
+    unsigned int CacheNum;
 
-	CacheNum = fileNum % LFS_CACHE_SIZE;
+	CacheNum = (unsigned int)(fileNum % LFS_CACHE_SIZE);
 
 	if (lfsDescCache[CacheNum].FileNum == fileNum && lfsDescCache[CacheNum].FileDsc != U_INVALID_FD)
 	{
@@ -207,13 +207,13 @@ static int _lfsCloseCachedDesc(uint64_t fileNum)
 // synchronizaion must be provided by the caller!
 static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
 {
-	int CacheNum;
+	unsigned int CacheNum;
 	UFile fileDsc;
 	string fName;
 
 	assert(fileNum > 0 && fileNum < UINT64_MAX);
 
-	CacheNum = fileNum % LFS_CACHE_SIZE;
+	CacheNum = (unsigned int)(fileNum % LFS_CACHE_SIZE);
 
 	if (lfsDescCache[CacheNum].FileNum == fileNum && lfsDescCache[CacheNum].FileDsc != U_INVALID_FD)
 		return lfsDescCache[CacheNum].FileDsc;
@@ -244,10 +244,11 @@ static UFile _lfsOpenAndCacheFile(uint64_t fileNum)
 }
 
 // Reads file header from the specified file
-static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, int HeaderSize)
+static int _lfsGetHeaderFromFile(uint64_t filenum, void *HeaderBuf, unsigned int HeaderSize)
 {
 	UFile fileDsc;
-	int readbytes, res;
+	unsigned int readbytes;
+    int res;
 
 	assert(filenum > 0 && filenum < UINT64_MAX && HeaderBuf != NULL);
 
@@ -440,12 +441,13 @@ static int _lfsInitSync(int BufSize)
 // creates another file in the chain with the given number and writes first HeaderSize bytes into it
 // this function is not atomic! there is a possibility of creating a file without a header (due to a crash)
 // synchronization (if any) must be provided by the caller!
-static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, int HeaderSize)
+static int _lfsCreateAnotherFile(uint64_t filenum, void *HeaderBuf, unsigned int HeaderSize)
 {
 	string fName;
 	USECURITY_ATTRIBUTES *sa;
     UFile fdsc;
-    int res, written;
+    int res;
+    unsigned int written;
 
 	if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) != 0)
 	{
@@ -533,9 +535,10 @@ static int _lfsExtend()
 // return: -1 - error; 0 - all ok
 static int _lfsFlushBufLSN(LSN ulsn)
 {
-	int toflush, written, portion, res;
+	unsigned int written, portion;
+    int res;
     UFile fileDsc;
-    uint64_t fileOffs;
+    uint64_t fileOffs, toflush;
 
 	assert(lfsInfo != NULL);
 
@@ -547,7 +550,9 @@ static int _lfsFlushBufLSN(LSN ulsn)
 	else
 		toflush = ulsn - lfsInfo->NextLSN;
 
-	// open file for writing
+	assert(toflush <= UINT32_MAX);
+
+    // open file for writing
 	fileDsc = _lfsOpenAndCacheFile(lfsInfo->LastFileNum);
 
 	// file offset
@@ -564,14 +569,14 @@ static int _lfsFlushBufLSN(LSN ulsn)
 	if (lfsInfo->BufStart + toflush <= lfsInfo->BufSize) // we have one continuous part here
 	{
 		//write toflush bytes
-		res = uWriteFile(fileDsc, (char *)lfsWriteBuffer + lfsInfo->BufStart, toflush, &written, __sys_call_error);
+		res = uWriteFile(fileDsc, (char *)lfsWriteBuffer + lfsInfo->BufStart, (unsigned int)toflush, &written, __sys_call_error);
 		if (res == 0 || written != toflush)
 		{
 	    	LFS_ERROR("lfs error: critical error in lfs chain: cannot write into file");
 	    	return -1;
 	    }
 
-		lfsInfo->BufStart += toflush;
+		lfsInfo->BufStart += (unsigned int)toflush;
 		if (lfsInfo->BufStart == lfsInfo->BufSize) lfsInfo->BufStart = 0;
 	}
 	else // we have two continuous portions here: from BufStart to the end, and from the start to BufOffset
@@ -586,7 +591,7 @@ static int _lfsFlushBufLSN(LSN ulsn)
 	    	return -1;
 	    }
 
-		portion = toflush - written;
+		portion = (unsigned int)toflush - written;
 
 		// write second portion
 		res = uWriteFile(fileDsc, (char *)lfsWriteBuffer, portion, &written, __sys_call_error);
@@ -600,7 +605,7 @@ static int _lfsFlushBufLSN(LSN ulsn)
 	}
 
 	// correct buffer and lfs metainfo
-	lfsInfo->BufKeepBytes -= toflush;
+	lfsInfo->BufKeepBytes -= (unsigned int)toflush;
 	assert(lfsInfo->BufKeepBytes >= 0);
 
 	lfsInfo->NextLSN += toflush;
@@ -895,14 +900,14 @@ int lfsCreateNew(const char *cDataPath, const char *cPrefix, const char *cExt, u
 // 		buf - where to copy (must be allocated by the caller)
 //      len - how many bytes to copy
 //      wb_off - offset from the beginning of the write buffer
-static int _lfsGetDataFromBuffer(void *buf, int len, int wb_off)
+static int _lfsGetDataFromBuffer(void *buf, unsigned int len, unsigned int wb_off)
 {
 	int portion = 0;
 	int offs = 0;
 
 	assert(buf != NULL);
-	assert(len >= 0 && len <= lfsInfo->BufKeepBytes);
-	assert(wb_off >= 0 && wb_off < lfsInfo->BufKeepBytes);
+	assert(len <= lfsInfo->BufKeepBytes);
+	assert(wb_off < lfsInfo->BufKeepBytes);
 
 	// offset must be wrapped over start
 	if (lfsInfo->BufStart + wb_off >= lfsInfo->BufSize)
@@ -933,7 +938,8 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 {
 	uint64_t fileNum, fileOffs, fileSize;
 	UFile fileDsc;
-	int readbytes, res;
+	unsigned int readbytes;
+    int res;
 
 	assert(lfsInfo != NULL);
 
@@ -956,7 +962,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 		// check if record is still in the write buffer
 		if (*RecLSN >= lfsInfo->NextLSN && *RecLSN + RecSize <= lfsInfo->NextLSN + lfsInfo->BufKeepBytes)
 		{
-			_lfsGetDataFromBuffer(RecBuf, RecSize, (*RecLSN - lfsInfo->NextLSN));
+			_lfsGetDataFromBuffer(RecBuf, RecSize, (unsigned int)(*RecLSN - lfsInfo->NextLSN));
 			lfsUnlock();
 			return RecSize;
 		}
@@ -1129,7 +1135,8 @@ LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
 static int _lfsWriteSectorHeader(uint64_t fileNum, lfsHeader_t lfsHeader, void *HeaderBuf, size_t HeaderSize)
 {
 	UFile fileDsc;
-	int written, res;
+	unsigned int written;
+    int res;
 	void *lfsHeaderBuf;
 
 	if (HeaderSize > lfsSectorSize - sizeof(lfsHeader_t))
@@ -1190,21 +1197,21 @@ uint64_t lfsArchiveCurrentFile(void *HeaderBuf, size_t HeaderSize)
 	if (_lfsFlushBufLSN(lfsInfo->NextLSN + lfsInfo->BufKeepBytes) != 0) // flush the entire buffer
 	{
 		lfsUnlock();
-		return -1;
+        return LFS_INVALID_FILE;
 	}
 
 	// check if need to extend file
 	if ((fileDsc = _lfsOpenAndCacheFile(lfsInfo->LastFileNum)) == U_INVALID_FD)
 	{
 		lfsUnlock();
-		return -1;
+        return LFS_INVALID_FILE;
 	}
 
 	if (uGetFileSize(fileDsc, &ressize, __sys_call_error) == 0)
 	{
     	LFS_ERROR("lfs error: critical error in lfs chain: cannot get last file size");
 		lfsUnlock();
-		return -1;
+        return LFS_INVALID_FILE;
 	}
 
 	if (ressize > lfsSectorSize) // file contains something except header
@@ -1213,7 +1220,7 @@ uint64_t lfsArchiveCurrentFile(void *HeaderBuf, size_t HeaderSize)
 		if (_lfsExtend() != 0)
 		{
 			lfsUnlock();
-			return -1;
+            return LFS_INVALID_FILE;
 		}
 
 		if (HeaderBuf != NULL) // we need to update user header there
@@ -1223,7 +1230,7 @@ uint64_t lfsArchiveCurrentFile(void *HeaderBuf, size_t HeaderSize)
 			{
 				LFS_ERROR("lfs error: cannot read file header");
 				lfsUnlock();
-				return -1;
+                return LFS_INVALID_FILE;
 			}
 
 			// write lfs+provided user header in it
@@ -1231,7 +1238,7 @@ uint64_t lfsArchiveCurrentFile(void *HeaderBuf, size_t HeaderSize)
 			{
 				LFS_ERROR("lfs error: cannot write file header");
 				lfsUnlock();
-				return -1;
+                return LFS_INVALID_FILE;
 			}
 		}
 	}
@@ -1290,7 +1297,7 @@ int lfsGetHeader(void *HeaderBuf, size_t HeaderSize)
 
 // get previous file number in lsf chain
 // return: LFS_INVALID_FILE - previous file doesn't exist; file number - success
-uint64_t lfsGetPrevFileNumber(int FileNum)
+uint64_t lfsGetPrevFileNumber(uint64_t FileNum)
 {
 	uint64_t res;
 

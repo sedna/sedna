@@ -12,7 +12,7 @@
 #include "common/sm_vmm_data.h"
 
 static hb_state hbStatus = HB_END;  // status of hot-backup process
-static int64_t hbLastFileNum = -1;  // number of the archive file
+static uint64_t hbLastFileNum = LFS_INVALID_FILE;  // number of the last archived file
 static hb_state hbIncrStatus = HB_NONE_INCR;// increment mode, if any
 
 // Archives current logical log file
@@ -22,6 +22,7 @@ static void llHbArchive()
        	llInfo->next_arch_file = 0;
 
 	hbLastFileNum = llLogArchive();
+    U_ASSERT(hbLastFileNum != LFS_INVALID_FILE);
 	hbStatus = HB_END;
 }
 
@@ -51,7 +52,7 @@ int llHotBackup(hb_state state, hb_state state_incr)
 	  	    llFlushAll(); // we must flush log here because of header changes
 	  	}
 
-	    hbLastFileNum = -1;
+        hbLastFileNum = LFS_INVALID_FILE;
 	    hbIncrStatus = HB_NONE_INCR;
 	    hbStatus = HB_END;
 	}

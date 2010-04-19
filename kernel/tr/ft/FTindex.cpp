@@ -207,7 +207,7 @@ void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 	char tmp_buf[32];
 	while (it != deleted->end())
 	{
-		int wr;
+		unsigned int wr;
 		SednaDataSource::recordToFilename(tmp_buf, *it);
 		uWriteFile(f, tmp_buf, strlen(tmp_buf), &wr, __sys_call_error);
 		tmp_buf[0] = '\n';

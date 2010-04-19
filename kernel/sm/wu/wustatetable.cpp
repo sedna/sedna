@@ -73,7 +73,7 @@ int GetColumnInfo(StateTable *t, TICKET ticket,
 	if (!followingUnused) followingUnused = &dummy;
 
 	if (colbase<begin || colbase>=end || !CheckTicket(ticket) || colnum<0 || colnum>=t->columnsCount ||
-		DEBUGI && t->columnBase[colnum]!=colbase)
+		(DEBUGI && t->columnBase[colnum]!=colbase))
 	{
 		WuSetLastErrorMacro(WUERR_BAD_TICKET);
 	}
@@ -182,7 +182,7 @@ int ValidateGuardMemoryProc(StateTable* t, int rowId, int colId, void *ptr, ptrd
 	{
 		if (colId>0) sprintf(buf1,"%d",colId-1);
 		if (colId<t->columnsCount) sprintf(buf2,"%d",colId);
-		sprintf(buf,"StateTable %08p row %d, columns %s-%s", t, rowId, buf1, buf2);
+		sprintf(buf,"StateTable %8p row %d, columns %s-%s", t, rowId, buf1, buf2);
 		DbgCheckGuardMemory(ptr,dist,ST_GUARD_FILL,1,buf);
 	}
 	return isPassed;
@@ -344,7 +344,7 @@ int  OccupyStateTableFirstVacantRow(StateTable *t, int *rowId, int rngBegin, int
 	if (rngBegin<0) rngBegin=0;
 	if (rngEnd>t->rowsCount) rngEnd=t->rowsCount;
 	m0<<=rngBegin&31;
-	m1>>=(32-rngEnd&31);
+	m1>>=((32-rngEnd)&31);
 	i=(uint32_t*)t->mem+rngBegin/32;
 	e=(uint32_t*)t->mem+(rngEnd+31)/32;
 

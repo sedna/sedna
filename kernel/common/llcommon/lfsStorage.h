@@ -147,7 +147,7 @@ int lfsGetHeader(void *HeaderBuf, size_t HeaderSize);
 // Returns:
 //     file number - success;
 //     -1 - previous file doesn't exist;
-uint64_t lfsGetPrevFileNumber(int FileNum);
+uint64_t lfsGetPrevFileNumber(uint64_t FileNum);
 
 // Returns number of lfs files (can be used to make decision about truncating)
 // Returns:
