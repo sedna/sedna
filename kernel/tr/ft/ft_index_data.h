@@ -186,11 +186,11 @@ struct ft_index_cell_object : public catalog_object
 
 	void init_serial_tree();
 	void destroy_serial_tree();
-	doc_serial_header serial_put (xptr& node, op_str_buf& tbuf);
-	doc_serial_header serial_get (xptr& node);
-	void serial_remove (xptr& node);
+	doc_serial_header serial_put (xptr& node, xptr& node_indir, op_str_buf& tbuf);
+	doc_serial_header serial_get (xptr& node_indir);
+	void serial_remove (xptr& node_indir);
 	void remove_from_pstr(doc_serial_header& head );
-	doc_serial_header serial_update (xptr& node, op_str_buf& tbuf);
+	doc_serial_header serial_update (xptr& node, xptr& node_indir, op_str_buf& tbuf);
 
 	xptr put_buf_to_pstr(op_str_buf& tbuf);
 };

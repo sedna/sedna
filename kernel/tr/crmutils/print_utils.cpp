@@ -696,6 +696,7 @@ static void print_text(xptr txt, op_str_buf& tbuf, t_item xq_type, bool escapes 
 
 void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custom_tree_t * custom_tree, const char *opentag, const char *closetag)
 {
+	CHECKP(node);
     switch(GETTYPE(GETSCHEMENODEX(node)))
     {
     case document: case virtual_root:

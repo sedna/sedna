@@ -19,6 +19,7 @@
 
 //FIXME
 #include "tr/strings/strings_base.h"
+#include "tr/strings/strings.h"
 struct doc_serial_header
 {
 	str_off_t length;
@@ -27,6 +28,7 @@ struct doc_serial_header
 	doc_serial_header():length(0),ptr(XNULL){}
 	static void parse(const char* data, int size, void* p);
 	void serialize(string_consumer_fn fn, void *p);
+	void serialize_to_buf(op_str_buf *buf);
 };
 inline bool operator<(const doc_serial_header &p1, const doc_serial_header &p2)
 {
