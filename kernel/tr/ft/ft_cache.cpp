@@ -25,7 +25,7 @@ struct ftc_doc_data
 	char str_id[24];
 };
 enum wo_type {
-	wo_add, wo_del
+	wo_add, wo_del, wo_null
 };
 struct ftc_word_occur
 {
@@ -67,13 +67,14 @@ struct ftc_index_data
 	}
 	void reset()
 	{
-		docs = FTC_NULL;
+		docs = FTC_DOCMAP::init(&ind_alloc); //TODO: check null!
 		words = FTC_WORDMAP::init(&ind_alloc); //TODO: check null!
 	}
 	static inline ftc_index_data *get(ftc_index_t idx)
 	{
 		return (ftc_index_data *)m_alloc.deref(idx);
 	}
+	//add document to the cache, returns null if fails to allocate memory
 	ftc_doc_t create_doc(const xptr &acc)
 	{
 		FTC_PTR ptr = ind_alloc.alloc(sizeof(ftc_doc_data));
@@ -82,15 +83,38 @@ struct ftc_index_data
 		ftc_doc_data * doc = (ftc_doc_data*)ind_alloc.deref(ptr);
 		doc->acc = acc;
 		sprintf(doc->str_id, "%020" PRIx64, *(uint64_t*)&acc);
+
+		FTC_DOCMAP *dm = FTC_DOCMAP::get_map(docs, ind_alloc);
+		FTC_DOCMAP::pers_sset_entry *e = dm->put(doc->str_id, ptr);
+		if (e == NULL)
+			return ind_alloc.null_ptr();
+
 		return ptr;
 	}
-	ftc_doc_data * get_doc(ftc_doc_t ptr)
+	//returns null if document is not in the cache
+	ftc_doc_t find_doc(const xptr &acc)
+	{
+		//FIXME!
+		char str_id[25];
+		sprintf(str_id, "%020" PRIx64, *(uint64_t*)&acc);
+		FTC_DOCMAP *dm = FTC_DOCMAP::get_map(docs, ind_alloc);
+		FTC_PTR *pptr = dm->find(str_id);
+		if (pptr != NULL)
+			return *pptr;
+		else
+			return ind_alloc.null_ptr();
+	}
+	inline bool doc_is_null(ftc_doc_t d)
+	{
+		return (d == ind_alloc.null_ptr());
+	}
+	ftc_doc_data * get_doc_data(ftc_doc_t ptr)
 	{
 		return (ftc_doc_data*)ind_alloc.deref(ptr);
 	}
-	bool add_occur(ftc_word_data *wd, ftc_doc_t doc, int word_ind, wo_type wot)
+	bool upd_occur(ftc_word_data *wd, ftc_doc_t doc, int word_ind, wo_type wot)
 	{
-		ftc_doc_data *doc_data = get_doc(doc);
+		ftc_doc_data *doc_data = get_doc_data(doc);
 		if (wd->occur_map == FTC_ALLOCATOR::null_ptr())
 		{
 			wd->occur_map = FTC_OCCURMAP::init(&ind_alloc);
@@ -100,34 +124,119 @@ struct ftc_index_data
 		FTC_OCCURMAP *om = FTC_OCCURMAP::get_map(wd->occur_map, ind_alloc);
 		ftc_occur_data *od= om->find(doc_data->str_id);
 
-		FTC_PTR new_occur_ptr = ind_alloc.alloc(sizeof(ftc_word_occur));
-		if (new_occur_ptr == ind_alloc.null_ptr())
-			return false;
-		ftc_word_occur *new_occur = (ftc_word_occur *)ind_alloc.deref(new_occur_ptr);
-
-		new_occur->ind = word_ind;
-		new_occur->next = ind_alloc.null_ptr();
-
-		if (od == NULL)
+		//check if similar occur is already in the cache
+		if (od != NULL)
 		{
+			FTC_PTR pred_ptr = od->cursor;
+			ftc_word_occur *pred_occur = (ftc_word_occur *)ind_alloc.deref(pred_ptr);
+			if (pred_occur->ind > word_ind)
+			{
+				//need to search from start;
+				pred_ptr = od->first;
+				pred_occur = (ftc_word_occur *)ind_alloc.deref(pred_ptr);
+
+				if (pred_occur->ind > word_ind)
+				{
+					//new occur will become first
+					FTC_PTR new_occur_ptr = ind_alloc.alloc(sizeof(ftc_word_occur));
+					if (new_occur_ptr == ind_alloc.null_ptr())
+						return false;
+					ftc_word_occur *new_occur = (ftc_word_occur *)ind_alloc.deref(new_occur_ptr);
+					new_occur->ind = word_ind;
+					new_occur->type = wot;
+					new_occur->next = pred_ptr;
+					new_occur->pred = ind_alloc.null_ptr();
+					pred_occur->pred = new_occur_ptr;
+
+					od->first = new_occur_ptr;
+					od->cursor = new_occur_ptr;
+					return true;
+				}
+			}
+			//search for place to insert/update occur
+			while (true)
+			{
+				if (pred_occur->ind == word_ind)
+				{
+					//reuse deleted node
+					od->cursor = pred_ptr;
+					if (pred_occur->type == wo_null)
+					{
+						pred_occur->type = wot;
+						return true;
+					}
+					if (pred_occur->type == wot)
+						throw SYSTEM_EXCEPTION("ft_cache: double add/delete of word occur");
+					//it's add+del or del+add, both are equiv. to doing nothing
+					pred_occur->type = wo_null;
+					return true;
+				}
+				U_ASSERT(pred_occur->ind < word_ind);
+				if (pred_occur->next == ind_alloc.null_ptr())
+				{
+					//new occur will become the last one
+					FTC_PTR new_occur_ptr = ind_alloc.alloc(sizeof(ftc_word_occur));
+					if (new_occur_ptr == ind_alloc.null_ptr())
+						return false;
+
+					ftc_word_occur *new_occur = (ftc_word_occur *)ind_alloc.deref(new_occur_ptr);
+					new_occur->ind = word_ind;
+					new_occur->type = wot;
+					new_occur->next = ind_alloc.null_ptr();
+					new_occur->pred = pred_ptr;
+					pred_occur->next = new_occur_ptr;
+					od->cursor = new_occur_ptr;
+					return true;
+				}
+				else
+				{
+					ftc_word_occur *next_occur = (ftc_word_occur *)ind_alloc.deref(pred_occur->next);
+					if (next_occur->ind > word_ind)
+					{
+						//insert new occur between pred_occur and next_occur
+						FTC_PTR new_occur_ptr = ind_alloc.alloc(sizeof(ftc_word_occur));
+						if (new_occur_ptr == ind_alloc.null_ptr())
+							return false;
+
+						ftc_word_occur *new_occur = (ftc_word_occur *)ind_alloc.deref(new_occur_ptr);
+						new_occur->ind = word_ind;
+						new_occur->type = wot;
+						new_occur->next = pred_occur->next;
+						new_occur->pred = pred_ptr;
+						pred_occur->next = new_occur_ptr;
+						next_occur->pred = new_occur_ptr;
+						od->cursor = new_occur_ptr;
+						return true;
+					}
+					//next_occur->ind <= word_ind, iterate
+					pred_ptr = pred_occur->next;
+					pred_occur = next_occur;
+				}
+			}
+		}
+		else
+		{
+			FTC_PTR new_occur_ptr = ind_alloc.alloc(sizeof(ftc_word_occur));
+			if (new_occur_ptr == ind_alloc.null_ptr())
+				return false;
+			ftc_word_occur *new_occur = (ftc_word_occur *)ind_alloc.deref(new_occur_ptr);
+
+			new_occur->ind = word_ind;
+			new_occur->type = wot;
+			new_occur->next = ind_alloc.null_ptr();
+			new_occur->pred = ind_alloc.null_ptr();
+
 			FTC_OCCURMAP::pers_sset_entry *e = om->put(doc_data->str_id, ftc_occur_data());
 			if (e == NULL)
 				return false;
 			od = &e->obj;
-			od->first = od->last = new_occur_ptr;
-			new_occur->pred = ind_alloc.null_ptr();
+			od->first = od->cursor = new_occur_ptr;
 			od->doc = doc;
-		}
-		else
-		{
-			FTC_PTR pred_ptr = od->last;
-			ftc_word_occur *pred_occur = (ftc_word_occur *)ind_alloc.deref(pred_ptr);
 
-			od->last = new_occur_ptr;
-			new_occur->pred = pred_ptr;
-			pred_occur->next = new_occur_ptr;
+			return true;
 		}
-		return true;
+		U_ASSERT(false);
+		return false;
 	}
 };
 
@@ -156,12 +265,29 @@ ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc)
 	//FIXME: check if it exists
 	ftc_index_data *id = ftc_index_data::get(idx);
 	ftc_doc_t res = id->create_doc(acc);
-	if (res == id->ind_alloc.null_ptr())
+	if (id->doc_is_null(res))
 	{
 		index_oom_flush(id);
 		res = id->create_doc(acc);
-		if (res == id->ind_alloc.null_ptr())
+		if (id->doc_is_null(res))
 			throw SYSTEM_EXCEPTION("ftc_add_new_doc: failed to create doc");
+	}
+	return res;
+}
+ftc_doc_t ftc_get_doc(ftc_index_t idx, xptr acc)
+{
+	//FIXME: this may (unlikely) cause double flush (if called after another flush)
+	ftc_index_data *id = ftc_index_data::get(idx);
+	ftc_doc_t res = id->find_doc(acc);
+	if (!id->doc_is_null(res))
+		return res;
+	res = id->create_doc(acc);
+	if (id->doc_is_null(res))
+	{
+		index_oom_flush(id);
+		res = id->create_doc(acc);
+		if (id->doc_is_null(res))
+			throw SYSTEM_EXCEPTION("ftc_get_doc: failed to create doc");
 	}
 	return res;
 }
@@ -185,12 +311,25 @@ void flush_index(ftc_index_data *id)
 			//FTC_OCCURMAP::pers_sset_entry *ome = om->rb_maximum(FTC_OCCURMAP::get_entry(om->root, id->ind_alloc));
 			while (ome != NULL)
 			{
-				ftc_doc_data *doc_data = id->get_doc(ome->obj.doc);
+				ftc_doc_data *doc_data = id->get_doc_data(ome->obj.doc);
 				ftc_word_occur *wo = (ftc_word_occur *)id->ind_alloc.deref(ome->obj.first);
 				while (wo != NULL)
 				{
-					bkey.setnew(wme->str);
-					bt_insert_tmpl<ft_idx_btree_element>(id->btree_root, bkey, ft_idx_btree_element(doc_data->acc, wo->ind));
+					if (wo->type != wo_null)
+					{
+						bkey.setnew(wme->str);
+						switch (wo->type)
+						{
+						case wo_add:
+							bt_insert_tmpl<ft_idx_btree_element>(id->btree_root, bkey, ft_idx_btree_element(doc_data->acc, wo->ind));
+							break;
+						case wo_del:
+							bt_delete_tmpl<ft_idx_btree_element>(id->btree_root, bkey, ft_idx_btree_element(doc_data->acc, wo->ind));
+							break;
+						default:
+							U_ASSERT(false);
+						}
+					}
 					wo = (ftc_word_occur *)id->ind_alloc.deref(wo->next);
 				}
 				ome = om->rb_successor(ome);
@@ -227,24 +366,38 @@ void ftc_flush()
 	}
 }
 
-void ftc_add_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int word_ind, bool no_flush)
+//returns true on success, false if alloc failed
+static bool ftc_upd_word_try(ftc_index_data *id, ftc_doc_t &ft_doc, const char *word, int word_ind, bool insert)
 {
-	ftc_index_data *id = ftc_index_data::get(index);
-
 	FTC_WORDMAP *wm = FTC_WORDMAP::get_map(id->words, id->ind_alloc);
 	ftc_word_data *wd = wm->find(word);
 	if (wd == NULL)
-		wd = &wm->put(word, ftc_word_data())->obj; //TODO: check null!
-
-	if (!id->add_occur(wd, ft_doc, word_ind, wo_add))
 	{
-		if (no_flush)
-			throw SYSTEM_EXCEPTION("ftc: add_occur failed");
-		ftc_doc_data *dd = id->get_doc(ft_doc);
+		FTC_WORDMAP::pers_sset_entry *e = wm->put(word, ftc_word_data());
+		if (e == NULL)
+			return false;
+		wd = &e->obj;
+	}
+
+	if (!id->upd_occur(wd, ft_doc, word_ind, insert ? wo_add : wo_del))
+	{
+		return false;
+	}
+	return true;
+}
+
+void ftc_upd_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int word_ind, bool insert, bool no_flush)
+{
+	ftc_index_data *id = ftc_index_data::get(index);
+
+	if (!ftc_upd_word_try(id, ft_doc, word, word_ind, insert))
+	{
+		ftc_doc_data *dd = id->get_doc_data(ft_doc);
 		xptr acc = dd->acc;
 		index_oom_flush(id);
 		ft_doc = ftc_add_new_doc(index, acc);
-		ftc_add_word(index, ft_doc, word, word_ind, true);
+		if (!ftc_upd_word_try(id, ft_doc, word, word_ind, insert))
+			throw SYSTEM_EXCEPTION("ftc: add_occur failed");
 	}
 }
 
@@ -267,14 +420,26 @@ void ftc_scan_result::scan_word(const char *word)
 		ome = NULL;
 	}
 
-
 	bt_key bkey;
 	bkey.setnew(word);
 	bcur = bt_find_tmpl<ft_idx_btree_element>(id->btree_root, bkey);
 	ce = bcur.bt_next_obj();
 }
 
-void ftc_scan_result::get_next_result(tuple &t)
+//scan occurs for wo_add entries, starting with cur_occur, returns true if some are found
+static inline bool scan_occurs(ftc_index_data *id, ftc_word_occur *cur_occur)
+{
+	while (cur_occur != NULL)
+	{
+		if (cur_occur->type == wo_add)
+			return true;
+		cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(cur_occur->next);
+	}
+	return false;
+}
+
+//try to get next result, returns true if successful, false if this functions needs to be called again
+bool ftc_scan_result::get_next_result_step(tuple &t)
 {
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
 	if (ome == NULL)
@@ -282,28 +447,117 @@ void ftc_scan_result::get_next_result(tuple &t)
 		if (ce.node == XNULL)
 		{
 			t.set_eos();
-			return;
+			return true;
 		}
 		xptr p = ce.node;
 		t.copy(tuple_cell::node(indirectionDereferenceCP(p)));
 		while (ce.node == p)
 			ce = bcur.bt_next_obj();
+		return true;
 	}
 	else
 	{
-		ftc_doc_data *doc_data = id->get_doc(ome->obj.doc);
+		ftc_doc_data *doc_data = id->get_doc_data(ome->obj.doc);
 
 		if (ce.node == XNULL)
 		{
-			t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
-			ome = om->rb_successor(ome);
-			return;
+			//check that there is at least one wo_add occur
+			ftc_word_occur *cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
+			if (scan_occurs(id, cur_occur))
+			{
+				t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+				ome = om->rb_successor(ome);
+				return true;
+			}
+			else
+			{
+				//FIXME: assert that there are only wo_null occurs in ome
+				ome = om->rb_successor(ome);
+				return false;
+			}
 		}
 
 		if (ce.node == doc_data->acc)
 		{
-			//TODO, impossible now
-			U_ASSERT(false);
+			ftc_word_occur *cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
+
+			while (true)
+			{
+				if (ce.node == doc_data->acc)
+				{
+					if (cur_occur == NULL)
+					{
+						xptr p = ce.node;
+						t.copy(tuple_cell::node(indirectionDereferenceCP(p)));
+						while (ce.node == p)
+							ce = bcur.bt_next_obj();
+						return true;
+					}
+					if (cur_occur->ind < ce.word_ind)
+					{
+						if (cur_occur->type == wo_add)
+						{
+							//first word ind is in the cache
+							t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+							while (ce.node == doc_data->acc)
+								ce = bcur.bt_next_obj();
+							ome = om->rb_successor(ome);
+
+							return true;
+						}
+						//skip this occur in chache and try again
+						U_ASSERT(cur_occur->type == wo_null);
+						cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(cur_occur->next);
+						continue;
+					}
+					else if (cur_occur->ind > ce.word_ind)
+					{
+						//first word ind is in the b-tree
+						t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+						while (ce.node == doc_data->acc)
+							ce = bcur.bt_next_obj();
+						ome = om->rb_successor(ome);
+
+						return true;
+					}
+					else
+					{
+						//cur_occur->ind == ce.word_ind
+						if (cur_occur->type == wo_del)
+						{
+							//skip deleted occur in b-tree and in cache and continue
+							ce = bcur.bt_next_obj();
+							cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(cur_occur->next);
+							continue;
+						}
+						U_ASSERT(cur_occur->type == wo_null);
+
+						t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+						while (ce.node == doc_data->acc)
+							ce = bcur.bt_next_obj();
+						ome = om->rb_successor(ome);
+
+						return true;
+					}
+				}
+				else
+				{
+					//only cache entries are left for this node
+					//check that there is at least one wo_add occur
+					if (scan_occurs(id, cur_occur))
+					{
+						t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+						ome = om->rb_successor(ome);
+						return true;
+					}
+					else
+					{
+						//FIXME: assert that there are only wo_null occurs in ome
+						ome = om->rb_successor(ome);
+						return false;
+					}
+				}
+			}
 		}
 		else if (ce.node < doc_data->acc)
 		{
@@ -311,11 +565,29 @@ void ftc_scan_result::get_next_result(tuple &t)
 			t.copy(tuple_cell::node(indirectionDereferenceCP(p)));
 			while (ce.node == p)
 				ce = bcur.bt_next_obj();
+			return true;
 		}
 		else //(ce.node > doc_data->acc)
 		{
-			t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
-			ome = om->rb_successor(ome);
+			//check that there is at least one wo_add occur
+			ftc_word_occur *cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
+			if (scan_occurs(id, cur_occur))
+			{
+				t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+				ome = om->rb_successor(ome);
+				return true;
+			}
+			else
+			{
+				//FIXME: assert that there are only wo_null occurs in ome
+				ome = om->rb_successor(ome);
+				return false;
+			}
 		}
+		U_ASSERT(false);
 	}
+}
+void ftc_scan_result::get_next_result(tuple &t)
+{
+	while (!this->get_next_result_step(t)) ;
 }

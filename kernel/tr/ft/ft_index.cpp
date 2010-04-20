@@ -31,11 +31,6 @@
 //words with length more than this are truncated
 #define MAX_WORD_LENGTH 150
 
-enum ft_index_op_t
-{
-	ft_insert
-};
-
 struct ft_parse_data
 {
 	char word_buf[MAX_WORD_LENGTH+1]; //+1 is because ftc_add_word wants a null terminated string
@@ -44,6 +39,7 @@ struct ft_parse_data
 	bool overfl; //next char of current word could not fit into word_buf
 	ftc_index_t cur_idx;
 	ftc_doc_t cur_doc;
+	ft_index_op_t op;
 };
 
 
@@ -122,6 +118,12 @@ static void p_end(void *state, const char *el)
 	//TODO
 }
 
+static void process_word(struct ft_parse_data *parse_data)
+{
+	parse_data->word_buf[parse_data->word_len] = 0;
+	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind, parse_data->op == ft_insert);
+}
+
 //assumes that s contains full characters (i.e. multibyte chars are not splited between calls)
 static void p_data(void *state, const char *s, int len)
 {
@@ -141,8 +143,7 @@ static void p_data(void *state, const char *s, int len)
 		{
 			if (parse_data->word_len > 0)
 			{
-				parse_data->word_buf[parse_data->word_len] = 0;
-				ftc_add_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
+				process_word(parse_data);
 
 				parse_data->word_len = 0;
 				parse_data->overfl = false;
@@ -160,8 +161,9 @@ static void p_finish(void *state)
 }
 
 
-static void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx)
+void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx)
 {
+	U_ASSERT(op == ft_insert || op == ft_delete);
 	//TODO: reuse parser&parse_data for parsing multiple documents (or don't use expat and reuse parse_data)
 	XML_Parser p = XML_ParserCreateNS(NULL, SEPARATOR);
 	//FIXME: check exception & rollback
@@ -172,8 +174,11 @@ static void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft
 	parse_data->word_ind = 0;
 	parse_data->overfl = false;
 	parse_data->cur_idx = ftc_idx;
-	U_ASSERT(op == ft_insert);
-	parse_data->cur_doc = ftc_add_new_doc(ftc_idx, acc);
+	if (op == ft_insert)
+		parse_data->cur_doc = ftc_add_new_doc(ftc_idx, acc);
+	else
+		parse_data->cur_doc = ftc_get_doc(ftc_idx, acc);
+	parse_data->op = op;
 
 	XML_SetUserData(p, parse_data);
 	XML_SetReturnNSTriplet(p,XML_TRUE);
@@ -207,27 +212,6 @@ static void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft
 }
 
 #include "tr/idx/indexes.h"
-
-void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_index_type cm, ft_custom_tree_t* custom_tree, ftc_index_t ftc_idx)
-{
-	op_str_buf in_buf;
-
-	for (std::vector<xptr>::iterator it = first_nodes->begin(); it != first_nodes->end(); ++it)
-	{
-		xptr tmp = *it;
-		while (tmp != XNULL)
-		{
-			CHECKP(tmp);
-			xptr tmp_indir = ((n_dsc*)XADDR(tmp))->indir;
-			//TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
-			in_buf.clear();
-			print_node_to_buffer(tmp,in_buf,cm,custom_tree);
-			ft_index_update(ft_insert, tmp_indir, &in_buf, ft_data, ftc_idx);
-
-			tmp=getNextDescriptorOfSameSortXptr(tmp);
-		}
-	}
-}
 
 void ft_idx_delete(ft_idx_data_t *ft_data)
 {

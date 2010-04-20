@@ -22,22 +22,25 @@ ftc_index_t ftc_get_index(const char *name, xptr btree_root);
 
 //returned doc may become invalid after any operation with index
 ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc);
+ftc_doc_t ftc_get_doc(ftc_index_t idx, xptr acc);
 
-void ftc_add_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int word_ind, bool no_flush=false);
+void ftc_upd_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int word_ind, bool insert, bool no_flush=false);
 
 void ftc_flush();
 
 #define FTC_PTR      FTC_ALLOCATOR::ptr_t
 #define FTC_NULL     FTC_ALLOCATOR::null_ptr()
+//TODO: move these to cpp
 #define FTC_MAP      string_map<FTC_ALLOCATOR::ptr_t, FTC_ALLOCATOR>
 #define FTC_WORDMAP  string_map<ftc_word_data, FTC_ALLOCATOR>
 #define FTC_OCCURMAP string_map<ftc_occur_data, FTC_ALLOCATOR>
+#define FTC_DOCMAP   string_map<ftc_doc_t, FTC_ALLOCATOR>
 
 struct ftc_occur_data
 {
 	ftc_doc_t doc;
-	FTC_PTR first;
-	FTC_PTR last;
+	FTC_PTR first;   //first occur
+	FTC_PTR cursor;  //last updated occur
 };
 
 //FIXME: fix .h files dependencies
@@ -53,6 +56,7 @@ private:
 
 	bt_cursor_tmpl<ft_idx_btree_element> bcur;
 	ft_idx_btree_element ce;
+	inline bool get_next_result_step(tuple &t);
 public:
 	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx) {}
 	void scan_word(const char *word);

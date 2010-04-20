@@ -12,8 +12,13 @@
 #include "tr/strings/strings.h"
 #include "tr/ft/ft_cache.h"
 
+enum ft_index_op_t
+{
+	ft_insert, ft_delete, ft_update
+};
 
-void ft_idx_create(std::vector<xptr> *first_nodes, ft_idx_data_t *ft_data, ft_index_type cm, ft_custom_tree_t* custom_tree, ftc_index_t ftc_idx);
+//op must be insert or delete
+void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx);
 void ft_idx_delete(ft_idx_data_t *ft_data);
 
 
