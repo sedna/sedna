@@ -109,7 +109,7 @@ void vmm_unmap(void *addr)
 }
 
 /*
- * If you call it in the VMM_LINUX_DEBUG_CHECKP mode make sure 
+ * If you call it in the VMM_LINUX_DEBUG_CHECKP mode make sure
  * that block at vmm_cur_ptr is readable. It's not true
  * only in one case: when it's called from the vmm thread
  * when the main thread hasn't finished CHECKP yet.
@@ -119,7 +119,7 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
     /* Block at the vmm_cur_ptr must be readable at least.
-     * Actually it's not true when call is made by vmm_thread, 
+     * Actually it's not true when call is made by vmm_thread,
      * but in that case we have guarantee that vmm_cur_ptr !=
      * XADDR(p).
      */
@@ -135,8 +135,8 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
 #ifdef VMM_LINUX_DEBUG_CHECKP
     /* Revert protection level if it was changed.
      * Any block at except current must be non set as PROT_NONE */
-    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr)) { 
-        mprotect(XADDR(p), PAGE_SIZE, PROT_NONE); 
+    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr)) {
+        mprotect(XADDR(p), PAGE_SIZE, PROT_NONE);
     }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 }
@@ -153,18 +153,35 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
 
 /* Locks the space for block mapping. This function needs
  * to be called as early as possible to prevent others from
- * locking this memory.  */
-void vmm_preliminary_call()
+ * locking this memory.
+ *
+ * I'm trying to move it below, in vmm_on_session_begin, according
+ * to our plan of going only with per-base LAYER_SIZE.
+ * In this case it's logical to receive it from se_sm.
+ *
+ * In case of any problems we should think of another solution
+ *
+ * A.K.
+ */
+void vmm_preliminary_call(lsize_t layer_size)
 {
     open_global_memory_mapping(SE4400);
-    get_vmm_region_values();
 
     global_memory_mapping = get_global_memory_mapping();
+
+    if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR, &LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
+        throw SYSTEM_ENV_EXCEPTION("Cannot map vmm region in transaction!");
+
+    U_ASSERT(LAYER_ADDRESS_SPACE_SIZE == layer_size);
+
+    LAYER_ADDRESS_SPACE_START_ADDR_INT = (uintptr_t)LAYER_ADDRESS_SPACE_START_ADDR;
+    LAYER_ADDRESS_SPACE_BOUNDARY_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT + layer_size;
+    LAYER_ADDRESS_SPACE_BOUNDARY = (void *)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
 
     mapped_pages = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
     mtrBlocks = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
 
-    __uint32 cur;
+    uintptr_t cur;
     for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
         cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
         cur += (uint32_t)PAGE_SIZE)
@@ -172,6 +189,9 @@ void vmm_preliminary_call()
         if (_uvmm_map((void*)cur, 0, &global_memory_mapping, access_null) == -1)
             throw USER_EXCEPTION(SE1031);
     }
+
+    elog(EL_INFO,  ("preliminary call: layer address space start addr = 0x%x", LAYER_ADDRESS_SPACE_START_ADDR));
+    elog(EL_INFO,  ("preliminary call: layer address space size = 0x%x", LAYER_ADDRESS_SPACE_SIZE));
 }
 
 /* SM query check function */
@@ -297,7 +317,7 @@ void vmm_delete_block(xptr p)
     /* If layer of the current block at XADDR(p) is the same we must unmap it */
     vmm_swap_unmap_conditional(p);
 
-    /* If current block is being deleted, the pointer may break something. 
+    /* If current block is being deleted, the pointer may break something.
      * So we must reinit it. */
     if (same_block(vmm_cur_xptr, p)) { __vmm_init_current_xptr(); }
 
@@ -328,7 +348,7 @@ void vmm_delete_tmp_blocks()
 static FILE * f_se_trn_log;
 #define VMM_SE_TRN_LOG "se_trn_log"
 
-/* 
+/*
  * vmm_determine_region is called the first time the Sedna server starts
  * to find active layer region.
  *
@@ -386,34 +406,29 @@ void vmm_determine_region(bool log)
         }
         else
         {
+            UShMem p_cdb_callback_file_mapping;
+            lsize_t *p_cdb_callback_data;
+
             d_printf3("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, (__uint32)res_addr);
 
             if(segment_size > VMM_REGION_MAX_SIZE)
-            {
-                LAYER_ADDRESS_SPACE_SIZE = VMM_REGION_MAX_SIZE;
+                segment_size = VMM_REGION_MAX_SIZE;
 
-                int pages_in_found_segment = segment_size / (uint32_t)PAGE_SIZE;
-                int pages_in_needed_region = (VMM_REGION_MAX_SIZE) / (uint32_t)PAGE_SIZE;
-                int pages_left_shift       = (pages_in_found_segment - pages_in_needed_region) / 2;
+            // need to give the result back to cdb
+            if (uOpenShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(lsize_t), __sys_call_error) != 0)
+                throw USER_EXCEPTION2(SE4021, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-                LAYER_ADDRESS_SPACE_BOUNDARY_INT = (uint32_t)res_addr +
-                    (pages_left_shift * (uint32_t)PAGE_SIZE)+
-                    (LAYER_ADDRESS_SPACE_SIZE);
-            }
-            else /* PH_SIZE + VMM_REGION_MAX_SIZE >= segment_size >= PH_SIZE + VMM_REGION_MIN_SIZE */
-            {
-                LAYER_ADDRESS_SPACE_SIZE = segment_size;
-                LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + segment_size;
-            }
+            p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof(lsize_t), __sys_call_error);
+            if (p_cdb_callback_data == NULL)
+                throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-            LAYER_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_BOUNDARY_INT - LAYER_ADDRESS_SPACE_SIZE;
+            *p_cdb_callback_data = segment_size;
 
-            LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
-            LAYER_ADDRESS_SPACE_BOUNDARY   = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+            if (uDettachShMem(p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
+                throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-            open_global_memory_mapping(SE4400);
-            set_vmm_region_values();
-            close_global_memory_mapping();
+            if (uCloseShMem(p_cdb_callback_file_mapping, __sys_call_error) != 0)
+                throw USER_EXCEPTION2(SE4022, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
         }
     }
 }
@@ -453,7 +468,7 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat)
 
 inline static void vmm_callback_unmap()
 {
-    /* We check only vmm_cur_ptr to be sure it is set 
+    /* We check only vmm_cur_ptr to be sure it is set
      * if main thread have been stopped inside CHECKP */
     if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*) p_sm_callback_data)) {
         VMM_TRACE_CALLBACK(*(xptr*)p_sm_callback_data);
@@ -485,9 +500,10 @@ U_THREAD_PROC(_vmm_thread, arg)
     while (true) {
         USemaphoreDown(sm_to_vmm_callback_sem1, __sys_call_error);
 
-        /* quick and dirty workaround - request unmapping of 
+        /* quick and dirty workaround - request unmapping of
          * 0xffffffff to stop VMM callback thread */
-        if (XADDR(*(xptr*)p_sm_callback_data) == (void*)-1) {
+        if (((xptr*)p_sm_callback_data)->getOffs() == (lsize_t)-1 &&
+            ((xptr*)p_sm_callback_data)->layer == 0) {
             *(bool*)p_sm_callback_data = true;
             USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
             return 0;
@@ -566,6 +582,8 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
         tr_globals::authentication = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHENTICATION_FLAG);
         tr_globals::authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
         int bufs_num = msg.data.reg.num;
+
+        vmm_preliminary_call(msg.data.reg.layer_size);
 
         /* Open buffer memory */
         file_mapping = uOpenFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error);
@@ -695,10 +713,10 @@ static void unmapAllBlocks(bit_set * map)
 }
 
 void VMMMicrotransaction::begin() {
-    if (activeMT != NULL || mStarted) 
-    { 
+    if (activeMT != NULL || mStarted)
+    {
         /* Nested microtransactions are not allowed */
-        throw SYSTEM_EXCEPTION("Nested microtransactions detected"); 
+        throw SYSTEM_EXCEPTION("Nested microtransactions detected");
     }
     mStarted = true;
     activeMT = this;

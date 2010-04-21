@@ -34,7 +34,7 @@ using namespace cdb_globals;
 void create_db()
 {
     string db_common_path = string(sm_globals::db_files_path) + string(sm_globals::db_name);
-    
+
     // create files
     USECURITY_ATTRIBUTES *sa;
     if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
@@ -59,10 +59,6 @@ void create_db()
     event_logger_init(EL_CDB, sm_globals::db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
     elog(EL_LOG, ("Request for database creation"));
 
-    open_global_memory_mapping(SE4400);
-    get_vmm_region_values();
-    close_global_memory_mapping();
-    
     /* This call is to debug transactions */
     CREATE_DEBUG_LOG(sm_globals::db_name);
 
@@ -89,6 +85,7 @@ void create_db()
     }
 
     mb->catalog_masterdata_block = XNULL;
+    mb->layer_size = LAYER_ADDRESS_SPACE_SIZE;
 
     // open files
     data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
@@ -121,7 +118,7 @@ void create_db()
 }
 
 /* If we can't perform cleanup the maximum we can do is to give user an advice. */
-static inline void 
+static inline void
 cleanup_db_and_check_result()
 {
     if(cleanup_db(sm_globals::db_name) == 2) {
@@ -154,7 +151,7 @@ int main(int argc, char **argv)
         SafeMemoryContextInit();
 #endif
         parse_cdb_command_line(argc, argv);
-        
+
         get_sednaconf_values(&cfg);
         InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
@@ -168,10 +165,10 @@ int main(int argc, char **argv)
 #endif
 
         /* Check if database already exists */
-        string cfg_file_name = string(SEDNA_DATA) + string("/cfg/") + 
+        string cfg_file_name = string(SEDNA_DATA) + string("/cfg/") +
                                string(sm_globals::db_name) + "_cfg.xml";
 
-        if (uIsFileExist(sm_globals::db_files_path, __sys_call_error) || 
+        if (uIsFileExist(sm_globals::db_files_path, __sys_call_error) ||
             uIsFileExist(cfg_file_name.c_str(), __sys_call_error))
         {
             string reason = "A database with the name '";
@@ -207,6 +204,10 @@ int main(int argc, char **argv)
              ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_CDB);
              ppc->startup(ppc_ex);
 
+             d_printf1("determining size of the layer...");
+             set_layer_parameters(determine_layer_size(db_id, cfg));
+             d_printf1("ok\n");
+
              create_cfg_file();
              create_data_directory();
              create_db();
@@ -220,13 +221,13 @@ int main(int argc, char **argv)
              bool is_stopped_correctly;
              int sedna_db_version = 0;
 
-             llInit(sm_globals::db_files_path, 
-                    sm_globals::db_name, 
-                    sm_globals::max_log_files, 
-                    &sedna_db_version, 
-                    &is_stopped_correctly, 
+             llInit(sm_globals::db_files_path,
+                    sm_globals::db_name,
+                    sm_globals::max_log_files,
+                    &sedna_db_version,
+                    &is_stopped_correctly,
                     false);
-             
+
              d_printf1("logical_log_startup call successful\n");
 
              bm_startup();

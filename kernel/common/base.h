@@ -57,21 +57,6 @@ typedef unsigned short int shft;
 #define PAGE_BIT_MASK                           (__uint32)0xFFFF0000
 #define PAGE_REVERSE_BIT_MASK                   (__uint32)0x0000FFFF
 
-
-extern void  *LAYER_ADDRESS_SPACE_START_ADDR;
-extern void  *LAYER_ADDRESS_SPACE_BOUNDARY;
-extern uint32_t LAYER_ADDRESS_SPACE_START_ADDR_INT;
-extern uint32_t LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-
-extern uint32_t LAYER_ADDRESS_SPACE_SIZE;
-
-struct vmm_region_values
-{
-    __uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT;
-    __uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-    __uint32 LAYER_ADDRESS_SPACE_SIZE;
-};
-
 #define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0x79C00000)
 #define VMM_REGION_MIN_SIZE                             ((__uint32)0x4000000)
 #define VMM_REGION_MAX_SIZE                             ((__uint32)0x40000000)

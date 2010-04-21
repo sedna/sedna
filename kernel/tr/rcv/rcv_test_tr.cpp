@@ -184,7 +184,7 @@ void test_collection(char *name, col_schema_node_cptr coll)
     }
     while(cursor.bt_next_key());
 
-    test_indexes(coll->full_index_list.first);
+    test_indexes(coll->full_index_list->first);
 }
 
 void test_db_after_rcv()
@@ -208,7 +208,7 @@ void test_db_after_rcv()
             CHECKP(blk);
             xptr doc_dsc = GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk));
             test_document(mdc->name, doc_dsc, false);
-            test_indexes(((doc_schema_node_xptr)mdc->snode)->full_index_list.first);
+            test_indexes(((doc_schema_node_xptr)mdc->snode)->full_index_list->first);
         }
     }
     while(cursor.bt_next_key());

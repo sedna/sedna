@@ -14,7 +14,7 @@
 #include "tr/structures/rbtree.h"
 
 #define MAX_BLOCKS_IN_CHAIN 500 //should be changed after meeting with Andrey
-#define GET_FREE_SPACE(p) (shft)((__uint32)PAGE_SIZE - ((__uint32)((p).addr) & PAGE_REVERSE_BIT_MASK))
+#define GET_FREE_SPACE(p) (shft)((uint32_t)PAGE_SIZE - ((XADDR_INT(p)) & PAGE_REVERSE_BIT_MASK))
 
 typedef int (*compare_fn)(xptr v1,xptr v2, const void *);
 typedef int (*get_size_fn)(tuple& t, const void *);

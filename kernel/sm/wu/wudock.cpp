@@ -8,12 +8,12 @@
 
 XPTR WuInternaliseXptr(const xptr& v)
 {
-	return ((XPTR)UINTPTR_MAX+1)*v.layer + (uintptr_t)v.addr;
+	return ((XPTR)UINT32_MAX+1)*v.layer + (uint32_t)v.offs;
 }
 
 xptr WuExternaliseXptr(XPTR v)
 {
-	return cxptr((t_layer)(v/((XPTR)UINTPTR_MAX+1)),(void*)(uintptr_t)(v));
+	return cxptr((t_layer)(v/((XPTR)UINT32_MAX+1)),(uint32_t)(v));
 }
 
 static

@@ -14,13 +14,6 @@
 
 using namespace std;
 
-void  *LAYER_ADDRESS_SPACE_START_ADDR     = NULL;
-void  *LAYER_ADDRESS_SPACE_BOUNDARY       = NULL;
-__uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0;
-__uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0;
-
-__uint32 LAYER_ADDRESS_SPACE_SIZE           = 0;
-
 FILE* res_os = stdout; //otput stream of transaction results (result of the user's query)
 
 /*	global names */ 

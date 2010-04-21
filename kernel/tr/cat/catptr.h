@@ -21,6 +21,10 @@ struct catalog_fast_xptr : public xptr {
     inline T * operator ->() const {
         return (T *) (catalog_acquire_object(*this)->object);
     };
+
+    inline T * get_object() const {
+        return (T *) (catalog_acquire_object(*this)->object);
+    }
 };
 
 

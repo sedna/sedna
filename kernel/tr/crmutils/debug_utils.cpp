@@ -29,7 +29,7 @@ struct debug_info
     long block_count;
     long block_fill;
     long inner_block_count;
-    
+
     __int64 inner_block_fill;
     float inner_fill_percentage;
     float fill_percentage;
@@ -41,7 +41,7 @@ struct debug_info
 };
 
 
-static xptr 
+static xptr
 insertStatisticsInteger(xptr neighbour,const char* title, char* buf,__int64 count)
 {
     xptr left=insert_element_i(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
@@ -60,7 +60,7 @@ insertStatisticsDouble(xptr neighbour,const char* title, char* buf,double count)
 }
 
 
-static void 
+static void
 insertNidAndStringsStatistics(xptr broot, xptr node)
 {
     std::map<unsigned int,unsigned int> nidsz;
@@ -222,7 +222,7 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
     strsz.clear();
 }
 
-static void 
+static void
 getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
 {
     d_in->schema_count++;
@@ -262,7 +262,7 @@ getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
         }
         block=blk->nblk;
     }
-    sc_ref_item* sc= snode->children.first;
+    sc_ref_item* sc= snode->children->first;
     while (sc!=NULL)
     {
         getSimpleDebugInfo(sc->object.snode, d_in);
@@ -272,7 +272,7 @@ getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
     d_in->cdp--;
 }
 
-static inline void 
+static inline void
 error_msg(const char * ermsg,se_ostream& crmout)
 {
     crmout << ermsg;

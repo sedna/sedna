@@ -63,10 +63,6 @@ struct xmlns_indb_object : public catalog_object {
         prefix = cat_strcpy(this, _prefix);
         uri = cat_strcpy(this, _uri);
     };
-    inline ~xmlns_indb_object() {
-        cat_free(prefix);
-        cat_free(uri);
-    };
     static catalog_object_header * create(const char* prefix, const char* uri, const xptr root, const xmlns_ptr_pers next_xmlns);
 };
 
@@ -110,33 +106,6 @@ struct sc_ref {
     inline sc_ref() : name(NULL), xmlns_local(NULL) {
     };
 
-    inline sc_ref(sc_ref const &source) : xmlns_local(NULL) {
-        this->snode = source.snode;
-        this->name = cat_strcpy(this, source.name);
-        this->xmlns_pers = source.xmlns_pers;
-        this->type = source.type;
-    };
-
-    inline sc_ref & operator = (sc_ref const &source) {
-        if (this != &source) {
-            this->snode = source.snode;
-            this->name = cat_strcpy(this, source.name);
-            this->xmlns_pers = source.xmlns_pers;
-            this->xmlns_local = NULL;
-            this->type = source.type;
-        }
-        return *this;
-    };
-
-    inline ~sc_ref() {
-        cat_free(name);
-    };
-
-    inline sc_ref(schema_node_xptr _snode, const char* _name, xmlns_ptr_pers _xmlns, t_item _type) :
-       snode(_snode), name(NULL), xmlns_pers(_xmlns), xmlns_local(NULL), type(_type) {
-        this->name = cat_strcpy(this, _name);
-    };
-
     inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) {
         return (my_strcmp(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
     }
@@ -147,7 +116,7 @@ typedef cat_list<sc_ref>::item sc_ref_item;
 struct sc_node_ref_list : public cat_list<sc_ref> {
     sc_ref_item * last;
 
-    void add_object_tail(sc_ref obj);
+    void add_object_tail(schema_node_xptr snode, const char* name, xmlns_ptr_pers xmlns, t_item type);
     sc_ref_item * get(int i) const;
     int count() const;
 
@@ -201,7 +170,7 @@ public:
 
 /* Child list */
 
-    sc_node_ref_list children;  /* persistent special */
+    sc_node_ref_list *children;  /* persistent special */
 
 /* Statistics */
 
@@ -212,18 +181,18 @@ public:
     strsize_t textcnt; /* persistent */
     xptr lastnode_ind; /* persistent */
 
-    cat_list<index_ref> index_list; /* persistent special */
+    cat_list<index_ref> *index_list; /* persistent special */
     void remove_index(const index_cell_xptr &c);
 #ifdef SE_ENABLE_FTSEARCH
-    cat_list<ft_index_cell_xptr> ft_index_list; /* persistent special */
+    cat_list<ft_index_cell_xptr> *ft_index_list; /* persistent special */
     void remove_ft_index(const ft_index_cell_xptr &c);
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    cat_list<trigger_cell_xptr> trigger_list; /* persistent special */
+    cat_list<trigger_cell_xptr> *trigger_list; /* persistent special */
     void remove_trigger(const trigger_cell_xptr &c);
 #endif
 
-    inline schema_node_object() : xmlns_pers(XNULL), xmlns_local(NULL), persistent(true), lastnode_ind(XNULL) {};
+    schema_node_object();
 //    inline schema_node_object(bool _persistent = true) : persistent(_persistent) {};
     schema_node_object(const doc_schema_node_xptr _root, xmlns_ptr _xmlns, const char * _name, t_item _type, bool _persistent);
     ~schema_node_object();
@@ -278,9 +247,9 @@ public:
 
     bool is_ancestor_or_self (schema_node_cptr node);
 
-    inline char * get_child_name(int i) { return children.get(i)->object.name; };
-    inline t_item get_child_type(int i) { return children.get(i)->object.type; };
-    inline int    get_child_count() { return children.count(); }
+    inline char * get_child_name(int i) { return children->get(i)->object.name; };
+    inline t_item get_child_type(int i) { return children->get(i)->object.type; };
+    inline int    get_child_count() { return children->count(); }
 
     inline static bool has_children(t_item type) { return (type == element || type == document || type == virtual_root); }
     inline bool has_children() { return has_children(this->type); }
@@ -305,17 +274,17 @@ struct doc_schema_node_object: public schema_node_object
 /* Fields */
 
     xptr    ext_nids_block; /* persistent */
-    __int64 total_ext_nids; /* persistent */
+    uint64_t total_ext_nids; /* persistent */
     xmlns_ptr_pers xmlns_list;
 
-    cat_list<index_cell_xptr> full_index_list; /* persistent special */
+    cat_list<index_cell_xptr> *full_index_list; /* persistent special */
     void delete_index(index_cell_xptr c);
 #ifdef SE_ENABLE_FTSEARCH
-    cat_list<ft_index_cell_xptr> full_ft_index_list; /* persistent special */
+    cat_list<ft_index_cell_xptr> *full_ft_index_list; /* persistent special */
     void delete_ftindex(ft_index_cell_xptr c);
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    cat_list<trigger_cell_xptr> full_trigger_list; /* persistent special */
+    cat_list<trigger_cell_xptr> *full_trigger_list; /* persistent special */
     void delete_trigger(trigger_cell_xptr c);
 #endif
 
@@ -327,10 +296,8 @@ struct doc_schema_node_object: public schema_node_object
     /* Create virtual root */
     static catalog_object_header * create_virtual_root();
 
-    inline doc_schema_node_object() : xmlns_list(XNULL) {};
-    inline doc_schema_node_object(bool _persistent) :
-        schema_node_object(XNULL, NULL, NULL, document, _persistent),
-        ext_nids_block(XNULL), total_ext_nids(0), xmlns_list(XNULL) {};
+    doc_schema_node_object();
+    doc_schema_node_object(bool _persistent);
     ~doc_schema_node_object() {};
 };
 

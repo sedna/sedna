@@ -168,7 +168,7 @@ schema_nodes_triggers_map* get_statement_triggers_on_subtree(schema_node_cptr sc
      if(statement_triggers.size()>0)
          nodes_triggers->insert(std::pair<schema_node_xptr, t_triggers_set> (scm_node.ptr(), statement_triggers));
 
-    sc_ref_item*	sr = scm_node->children.first;
+    sc_ref_item*	sr = scm_node->children->first;
     while(sr!=NULL)
     {
         get_statement_triggers_on_subtree(sr->object.snode, event, time, nodes_triggers);
@@ -183,7 +183,7 @@ xptr find_trigger_for_newly_inserted_node(schema_node_cptr parent, const char* i
     cat_list<trigger_cell_xptr>::item* sc_trigger;
     // check if insert into a document (not into constructor)
     if(parent->root != XNULL)
-        sc_trigger=parent->root->full_trigger_list.first;
+        sc_trigger=parent->root->full_trigger_list->first;
     else return XNULL;
 
 	while (sc_trigger!=NULL)
@@ -203,7 +203,7 @@ xptr find_trigger_for_newly_inserted_node(schema_node_cptr parent, const char* i
 
 xptr find_trigger_for_node(schema_node_cptr node, trigger_event event, trigger_time time, trigger_granularity granularity, t_triggers_set* treated_triggers)
 {
-    cat_list<trigger_cell_xptr>::item* sc_trigger=node->trigger_list.first;
+    cat_list<trigger_cell_xptr>::item* sc_trigger=node->trigger_list->first;
 	while (sc_trigger!=NULL)
 	{
         if((sc_trigger->object->trigger_event == event) &&
@@ -218,7 +218,7 @@ xptr find_trigger_for_node(schema_node_cptr node, trigger_event event, trigger_t
 
 t_triggers_set* find_triggers_for_node(schema_node_cptr node, trigger_event event, trigger_time time, trigger_granularity granularity, t_triggers_set* triggers)
 {
-    cat_list<trigger_cell_xptr>::item* sc_trigger = node->trigger_list.first;
+    cat_list<trigger_cell_xptr>::item* sc_trigger = node->trigger_list->first;
 	while (sc_trigger!=NULL)
 	{
         if((sc_trigger->object->trigger_event == event) &&
@@ -233,7 +233,7 @@ t_triggers_set* find_triggers_for_node(schema_node_cptr node, trigger_event even
 
 xptr find_trigger_for_docnode(doc_schema_node_cptr doc_node, trigger_event event, trigger_time time, trigger_granularity granularity, t_triggers_set* treated_triggers)
 {
-    cat_list<trigger_cell_xptr>::item* sc_trigger=doc_node->full_trigger_list.first;
+    cat_list<trigger_cell_xptr>::item* sc_trigger=doc_node->full_trigger_list->first;
     while (sc_trigger!=NULL)
     {
         if((sc_trigger->object->trigger_event == event) &&
@@ -247,7 +247,7 @@ xptr find_trigger_for_docnode(doc_schema_node_cptr doc_node, trigger_event event
 }
 t_triggers_set* find_triggers_for_docnode(doc_schema_node_cptr doc_node, trigger_event event, trigger_time time, trigger_granularity granularity, t_triggers_set* triggers)
 {
-    cat_list<trigger_cell_xptr>::item* sc_trigger=doc_node->full_trigger_list.first;
+    cat_list<trigger_cell_xptr>::item* sc_trigger=doc_node->full_trigger_list->first;
     while (sc_trigger!=NULL)
     {
         if((sc_trigger->object->trigger_event == event) &&

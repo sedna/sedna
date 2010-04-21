@@ -25,21 +25,16 @@
 #define MASTER_BLOCK_SIZE          (uint32_t)4096
 #define VMM_SM_BLK_HDR_MAX_SIZE    (uint32_t)4096
 
-#define ABS_DATA_OFFSET(p)		((__int64)((p).layer) *												\
-                                 (__int64)(LAYER_ADDRESS_SPACE_SIZE) +								\
-                                 (__int64)((__uint32)((p).addr) - LAYER_ADDRESS_SPACE_START_ADDR_INT))
+#define ABS_DATA_OFFSET(p)       ((uint64_t)((p).layer - 1) *                  \
+                                 (uint64_t)(LAYER_ADDRESS_SPACE_SIZE) +        \
+                                 (uint64_t)((uint32_t)((p).offs)))
 
-#define ABS_TMP_OFFSET(p)		((__int64)((p).layer - TMP_LAYER_STARTS_WITH) *						\
-                                 (__int64)(LAYER_ADDRESS_SPACE_SIZE) +								\
-                                 (__int64)((__uint32)((p).addr) - LAYER_ADDRESS_SPACE_START_ADDR_INT))
+#define ABS_TMP_OFFSET(p)        ((uint64_t)((p).layer - TMP_LAYER_STARTS_WITH) * \
+                                 (uint64_t)(LAYER_ADDRESS_SPACE_SIZE) +           \
+                                 (uint64_t)((uint32_t)((p).offs)))
 
-#define DATA_FILE_OFFS2XPTR(s)	xptr((t_layer)((__int64)(s) / (__int64)(LAYER_ADDRESS_SPACE_SIZE)),								\
-                                     (void*)((__uint32)((__int64)(s) % (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + LAYER_ADDRESS_SPACE_START_ADDR_INT))
 
-#define TMP_FILE_OFFS2XPTR(s)	xptr((t_layer)((__int64)(s) / (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + TMP_LAYER_STARTS_WITH,		\
-                                     (void*)((__uint32)((__int64)(s) % (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + LAYER_ADDRESS_SPACE_START_ADDR_INT))
-
-#define OFFS2ADDR(offs)			((char*)buf_mem_addr + (offs))
+#define OFFS2ADDR(offs)          ((char*)buf_mem_addr + (offs))
 
 
 /*******************************************************************************
@@ -147,6 +142,8 @@ struct bm_masterblock
     int transaction_flags;
 
     xptr catalog_masterdata_block;
+
+    lsize_t layer_size; /* layer size for the database */
 };
 
 // Master block

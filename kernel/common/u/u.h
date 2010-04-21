@@ -12,6 +12,14 @@
  *                         Config Section
  *                         ~~~~~~~~~~~~~~
  *===========================================================================*/
+#if (defined(__x86_64__) || defined(__ppc64__) || defined(_WIN64) || defined(__LP64__))
+#define SEDNA_X64
+#elif (defined(__i386__) || defined(_WIN32) || defined(__ppc__))
+#define SEDNA_X32
+#else
+#error "error: cannot determine architecture!"
+#endif
+
 #if (defined(_WIN32) && !defined(WIN32))
 #define WIN32
 #define _WIN32_WINNT 0x0400
@@ -126,14 +134,14 @@
 // only for MSDEV 6.0
 #if (_MSC_VER == 1200)
 #define __SE_FUNCTION__ "<unknown>"
-#else 
+#else
 #define __SE_FUNCTION__ __FUNCTION__
 #endif
 
 #ifdef _WIN32
 #ifdef _MSC_VER
 #define TLS_VAR_DECL    __declspec(thread)
-#else 
+#else
 #define TLS_VAR_DECL
 #endif
 #else
@@ -170,7 +178,7 @@
 #if (defined(_WIN32) && defined(__cplusplus))
 /* To avod problems with dependencies generation on Cygwin environment */
 #include <sstream>
-#endif 
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -207,7 +215,7 @@
 #include <math.h>
 #endif /* _WIN32 */
 
-/// In FreeBSD PAGE_SIZE definition can be injected from the <sys/params.h> 
+/// In FreeBSD PAGE_SIZE definition can be injected from the <sys/params.h>
 #if defined(FreeBSD) && defined(PAGE_SIZE)
 #undef PAGE_SIZE
 #endif
@@ -248,7 +256,7 @@ typedef uint64_t               __uint64;
 #else
 #define _I64_MAX (((__int64)0x7FFFFFFF << 32) | 0xFFFFFFFF)
 #define _I64_MIN (-_I64_MAX - 1)
-#endif 
+#endif
 
 
 /*
@@ -426,7 +434,7 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 
 
 /*
- * These constants define the maximum length in bytes for the path and 
+ * These constants define the maximum length in bytes for the path and
  * for the individual fields within the path.
  * U_MAX_PATH  - Maximum length of full path
  * U_MAX_DIR   - Maximum length of directory component
@@ -437,7 +445,7 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 #define U_MAX_FNAME         _MAX_FNAME
 #define U_MAX_DIR           _MAX_DIR
 #else
-#define U_MAX_PATH          PATH_MAX 
+#define U_MAX_PATH          PATH_MAX
 #define U_MAX_FNAME         NAME_MAX
 #define U_MAX_DIR           NAME_MAX
 #endif /* _WIN32 */
@@ -624,24 +632,24 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
  * NaN, INF and -INF check functions
  * Portability notes:
  * 1. In Darwin isinf/isnan functions are not defined in C++ headers.
- *    At the moment we define C wrappers for them which can give a 
+ *    At the moment we define C wrappers for them which can give a
  *    little runtime overhead though.
- * 2. In FreeBSD isinf() returns 1 in both cases INF and -INF 
+ * 2. In FreeBSD isinf() returns 1 in both cases INF and -INF
  *    so we need to check value itself also.
  */
 #ifdef _WIN32
 #define u_is_nan(d)         (_isnan(d))
 #define u_is_neg_inf(d)     (_fpclass(d) == _FPCLASS_NINF)
 #define u_is_pos_inf(d)     (_fpclass(d) == _FPCLASS_PINF)
-#else 
+#else
 
-#if defined(DARWIN) 
+#if defined(DARWIN)
 SE_EXTERN_C int u_is_nan(double d);
 #else
 #define u_is_nan(d)         (isnan(d))
 #endif
 
-#if  defined(FreeBSD) 
+#if  defined(FreeBSD)
 #define u_is_neg_inf(d)     (isinf(d) && (d) < 0.0)
 #define u_is_pos_inf(d)     (isinf(d) && (d) > 0.0)
 #elif defined(DARWIN)
@@ -663,7 +671,7 @@ SE_EXTERN_C bool u_is_pos_inf(double d);
 /*=============================================================================
  *                       u-Calls Errors Handling
  *                       ~~~~~~~~~~~~~~~~~~~~~~~
- * sys_call_error - must be used inside u-function when it perfroms system 
+ * sys_call_error - must be used inside u-function when it perfroms system
  *                  call to write (e.g. using perror()) why it has been failed
  * u_call_error   - must be used inside u-function when it is going to return
  *                  failed status. It allows additional error diagnostic to

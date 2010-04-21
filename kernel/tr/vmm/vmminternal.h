@@ -39,8 +39,7 @@ void _vmm_signal_handler(int signo, siginfo_t *info, void *cxt);
 
 
 inline static void check_bounds(xptr p) {
-    if (!(LAYER_ADDRESS_SPACE_START_ADDR_INT <= (uint32_t)XADDR(p) &&
-        (uint32_t)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
+    if (p.getOffs() >= LAYER_ADDRESS_SPACE_SIZE)
         throw USER_EXCEPTION(SE1036);
 }
 

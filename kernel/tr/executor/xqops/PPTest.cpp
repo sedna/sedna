@@ -72,7 +72,7 @@ void PPTest::do_next (tuple &t)
 	xptr node=tc.get_node();
 	CHECKP(node);
 	std::ostringstream strg;
-	strg<< "checking the node: xptr=(" << node.layer<< ",0x"<< hex << node.addr <<")\n";
+	strg<< "checking the node: xptr=(" << node.layer<< ",0x"<< hex << node.getOffs() <<")\n";
 	try
 	{
 		(this->*test_fun)(node);
@@ -185,7 +185,7 @@ xptr get_root (xptr node)
 	xptr tmp=node;
 	while (true)
 	{
-            CHECKP(tmp);      
+            CHECKP(tmp);
             if (((n_dsc*)XADDR(tmp))->pdsc==XNULL) return tmp;
             tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
 	}

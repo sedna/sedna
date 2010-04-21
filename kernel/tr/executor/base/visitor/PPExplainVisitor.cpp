@@ -21,7 +21,7 @@ using namespace std;
 
 static xmlns_ptr explain_ns = NULL_XMLNS;
 
-static inline string 
+static inline string
 arr_of_var_dsc2string(const arr_of_var_dsc& var_dscs)
 {
     string variables;
@@ -39,7 +39,7 @@ bool2string(bool b)
     return b ? string("true") : string("false");
 }
 
-static inline 
+static inline
 xptr insertAttributeHelper(const char* name,
                            const xptr& left,
                            const xptr& parent,
@@ -47,9 +47,9 @@ xptr insertAttributeHelper(const char* name,
 {
     return insert_attribute_i(left,XNULL,parent,name,xs_untypedAtomic,value.c_str(),value.length(),NULL_XMLNS);
 }
-                             
 
-static inline 
+
+static inline
 xptr insertElementHelper(const char* name,
                          const xptr& left,
                          const xptr& parent)
@@ -57,7 +57,7 @@ xptr insertElementHelper(const char* name,
     return insert_element_i(left,XNULL,parent,name,xs_untyped,explain_ns);
 }
 
-static inline 
+static inline
 xptr insertVariableHelper(const char* name,
                           const xptr& left,
                           const xptr& parent,
@@ -86,7 +86,7 @@ xptr insertVariableHelper(const char* name,
 PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
                                    xptr _root_,
                                    var_map_id_name _var_names_,
-                                   bool _profiler_mode_) : cxt(_cxt_), 
+                                   bool _profiler_mode_) : cxt(_cxt_),
                                                           parent(_root_),
                                                           left(XNULL),
                                                           left_inside(XNULL),
@@ -96,14 +96,14 @@ PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
     explain_ns = cxt->st_cxt->get_default_namespace();
 }
 
-PPExplainVisitor::~PPExplainVisitor() 
+PPExplainVisitor::~PPExplainVisitor()
 {
 }
 
 void PPExplainVisitor::push()
 {
     U_ASSERT(left != XNULL);
-    
+
     pointers.push(xptr_pair(parent, left));
     parent = left;
     left = left_inside;
@@ -112,7 +112,7 @@ void PPExplainVisitor::push()
 
 void PPExplainVisitor::pop()
 {
-    U_ASSERT(!pointers.empty());    
+    U_ASSERT(!pointers.empty());
 
     xptr_pair ptrs = pointers.top();
     pointers.pop();
@@ -120,21 +120,21 @@ void PPExplainVisitor::pop()
     left   = ptrs.second;
     left_inside = XNULL;
 }
-   
+
 
 /* Helper to insert operation nodes */
-void PPExplainVisitor::insertOperationElement(const char* name, 
-                                              xptr& left, 
-                                              const xptr& parent, 
+void PPExplainVisitor::insertOperationElement(const char* name,
+                                              xptr& left,
+                                              const xptr& parent,
                                               const PPIterator* op,
                                               const PPQueryEssence* qep)
 {
     U_ASSERT(parent != XNULL);
     U_ASSERT(op == NULL || qep == NULL);
 
-    elog(EL_DBG, ("[EXPLAIN] Going to insert element '%s', parent (0x%x, 0x%x), left (0x%x, 0x%x)", name, 
-                                                           parent.layer, parent.addr, 
-                                                           left.layer, left.addr));
+    elog(EL_DBG, ("[EXPLAIN] Going to insert element '%s', parent (0x%x, 0x%x), left (0x%x, 0x%x)", name,
+                                                           parent.layer, parent.getOffs(),
+                                                           left.layer, left.getOffs()));
     left = insert_element_i(left,XNULL,parent,"operation",xs_untyped,explain_ns);
     xptr attr_left = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic, name, strlen(name), NULL_XMLNS);
 
@@ -344,7 +344,7 @@ void PPExplainVisitor::visit(PPPred1* op)
     /* Insert conjuncts details */
     left_inside = XNULL;
     unsigned int conj_num = op->get_conjuncts_number();
-    if(conj_num > 0) 
+    if(conj_num > 0)
     {
         left_inside = insertElementHelper("conjuncts", XNULL, left);
         xptr conj_left = XNULL;
@@ -353,7 +353,7 @@ void PPExplainVisitor::visit(PPPred1* op)
             insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
         }
     }
-    /* Insert variables details */    
+    /* Insert variables details */
     left_inside = insertElementHelper("produces", left_inside, left);
     const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
     xptr var_left = XNULL;
@@ -372,7 +372,7 @@ void PPExplainVisitor::visit(PPPred2* op)
     /* Insert conjuncts details */
     left_inside = XNULL;
     unsigned int conj_num = op->get_conjuncts_number();
-    if(conj_num > 0) 
+    if(conj_num > 0)
     {
         left_inside = insertElementHelper("conjuncts", XNULL, left);
         xptr conj_left = XNULL;
@@ -381,7 +381,7 @@ void PPExplainVisitor::visit(PPPred2* op)
             insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
         }
     }
-    /* Insert variables details */    
+    /* Insert variables details */
     left_inside = insertElementHelper("produces", left_inside, left);
     const arr_of_var_dsc& var_dscs = op->get_variable_descriptors();
     xptr var_left = XNULL;
@@ -753,9 +753,9 @@ void PPExplainVisitor::visit(PPFnGetProperty* op)
 void PPExplainVisitor::visit(PPIndexScan* op)
 {
     insertOperationElement("PPIndexScan", left, parent, op);
-    insertAttributeHelper("index-scan-condition", 
-                             XNULL, 
-                             left, 
+    insertAttributeHelper("index-scan-condition",
+                             XNULL,
+                             left,
                              string(index_scan_condition2string(op->get_index_scan_condition())));
 }
 
@@ -1186,7 +1186,7 @@ void PPExplainVisitor::visit(PPFnChangeCase* op)
 {
     insertOperationElement("PPFnChangeCase", left, parent, op);
     string function;
-    op->is_to_upper() ? function = "fn:upper-case()" 
+    op->is_to_upper() ? function = "fn:upper-case()"
                       : function = "fn:lower-case()";
     insertAttributeHelper("update", XNULL, left, function);
 }

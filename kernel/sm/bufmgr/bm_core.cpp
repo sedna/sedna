@@ -361,7 +361,7 @@ xptr put_block_to_buffer(session_id sid,
 		read_block(p, *offs);
 		vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
 		hdr->trid_wr_access = -1;
-		if(!XADDR(hdr->p)) throw SYSTEM_EXCEPTION("Null xptr in the header of block has been read from disk.");
+        U_ASSERT(hdr->p.getOffs() < LAYER_ADDRESS_SPACE_SIZE);
 	}
 	else
 	{
@@ -487,7 +487,7 @@ void dump_bufmgr_state()
 			}
 			if (hdr->is_changed) strcat(flags,"D");
 			fprintf(stderr, "%4d xptr:%8x%08p lxptr:%8x%08p %4s %s\n",
-				i, physXptr.layer, physXptr.addr, logXptr.layer, logXptr.addr, flags, auxInfo);
+				i, physXptr.layer, physXptr.offs, logXptr.layer, logXptr.offs, flags, auxInfo);
 		}
 	}
 	fprintf(stderr,"---FINISHED DUMP OF BUFMGR STATE---\n");

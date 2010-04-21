@@ -25,7 +25,7 @@ static inline se_item_class
 node_type2se_item_class(t_item t, bool is_atomic) {
     if(is_atomic)
         return se_atomic;
-    else 
+    else
     {
         switch(t)
         {
@@ -41,11 +41,11 @@ node_type2se_item_class(t_item t, bool is_atomic) {
     }
 }
 
-static inline const char* 
+static inline const char*
 found_last_utf8_valid_byte(const char* str, int shift) {
-    
+
     const unsigned char* cur = (const unsigned char*) str;
-    
+
     while (shift > 0) {
         if((*(cur-1) & 0x80) == 0)             /* 0xxxxxxx */
             break;
@@ -62,7 +62,7 @@ found_last_utf8_valid_byte(const char* str, int shift) {
     }
     return (const char*)cur;
 }
-   
+
 void write_func(void *param, const char *str, int len)
 {
     ((se_ostream*)param)->write(str,len);
@@ -99,13 +99,13 @@ se_ostream& se_ostream::operator<<(__int64 n)
 se_ostream& se_ostream::writextext(const char *s, int n)
 {
     dynamic_context::stm.parse(s,n,write_func,this,(int)pat_element);
-    return *this; 
+    return *this;
 }
 
 se_ostream& se_ostream::writeattribute(const char *s, int n)
-{ 
+{
     dynamic_context::stm.parse(s,n,write_func,this,(int)pat_attribute);
-    return *this; 
+    return *this;
 }
 
 
@@ -116,9 +116,9 @@ se_ostream& se_ostream::writeattribute(const char *s, int n)
 
 
 /* string MUST be a valid UTF-8 sequence */
-se_ostream& 
-se_socketostream_base::operator<<(const char *s)	
-{ 
+se_ostream&
+se_socketostream_base::operator<<(const char *s)
+{
     return write(s, strlen(s));
 }
 
@@ -127,17 +127,17 @@ se_ostream&
 se_socketostream_base::write(const char *s, int len)
 {
     int shift = 0;
-    
+
     while (shift < len)
     {
         int written_bytes = MIN(len - shift, AVAILABLE_SPACE(_res_msg));
-    
+
         U_ASSERT(written_bytes >= 0);
-    
+
         if(0 != written_bytes)
         {
-            memcpy(_res_msg->body + _res_msg->length, 
-                   s + shift, 
+            memcpy(_res_msg->body + _res_msg->length,
+                   s + shift,
                    written_bytes);
 
             _res_msg->length += written_bytes;
@@ -149,14 +149,14 @@ se_socketostream_base::write(const char *s, int len)
             if (shift < len && shift != 0) {
 
                U_ASSERT(_res_msg->length > 5 + _type_offset);
-               
+
                const char* end = _res_msg->body +_res_msg->length;
                const char* cur = found_last_utf8_valid_byte(end, shift);
                int delta = end - cur;
-               
-               U_ASSERT(shift >= delta && 
+
+               U_ASSERT(shift >= delta &&
                         _res_msg->length >= 5 + _type_offset + delta);
-               
+
                shift -= delta;
                _res_msg->length -= delta;
             }
@@ -166,15 +166,15 @@ se_socketostream_base::write(const char *s, int len)
             shift += written_bytes;
     }
 
-    return *this; 
+    return *this;
 }
 
 se_ostream&
 se_socketostream_base::flush(bool force)
 {
-    if(max_result_size) 
+    if(max_result_size)
     {
-         /* If result portion sent is already of maximum size - 
+         /* If result portion sent is already of maximum size -
           * do not send anymore. */
         if(result_portion_sent + _res_msg->length - 5 - _type_offset > max_result_size)
         {
@@ -187,23 +187,23 @@ se_socketostream_base::flush(bool force)
         }
     }
 
-    if((force && _res_msg->length == 5 + _type_offset) || 
+    if((force && _res_msg->length == 5 + _type_offset) ||
         _res_msg->length > 5 + _type_offset)
     {
-        _res_msg->instruction = _instruction; 
+        _res_msg->instruction = _instruction;
 
-        int2net_int(_res_msg->length - 5 - _type_offset, 
+        int2net_int(_res_msg->length - 5 - _type_offset,
                     _res_msg->body   + 1 + _type_offset);
 
         if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
-        
+
         if(max_result_size)
             result_portion_sent += _res_msg->length - 5 - _type_offset;
 
         _res_msg->length = 5 + _type_offset;
     }
 
-    return *this; 
+    return *this;
 }
 
 void
@@ -215,8 +215,8 @@ se_socketostream_base::error(const char* str)
     memcpy(_res_msg->body + 5, str, strlen(str));
     int2net_int(strlen(str), _res_msg->body + 1);
     _res_msg->length = strlen(str) + 5;
-    
-    if(sp_send_msg(_out_socket, _res_msg) !=0 ) 
+
+    if(sp_send_msg(_out_socket, _res_msg) !=0 )
         throw USER_EXCEPTION(SE3006);
 }
 
@@ -224,75 +224,75 @@ void
 se_socketostream_base::endline()
 {
     if (AVAILABLE_SPACE(_res_msg) < 1) flush();
-    _res_msg->body[_res_msg->length] = '\n'; 
+    _res_msg->body[_res_msg->length] = '\n';
     _res_msg->length += 1;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(char c)
-{	
+{
     if (AVAILABLE_SPACE(_res_msg) < 1) flush();
     _res_msg->body[_res_msg->length] = c;
     _res_msg->length += 1;
-    return *this; 
+    return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(bool n)
-{ 
+{
     if (AVAILABLE_SPACE(_res_msg) < 1) flush();
-    (n) ? _res_msg->body[_res_msg->length] = '1' 
+    (n) ? _res_msg->body[_res_msg->length] = '1'
         : _res_msg->body[_res_msg->length] = '0';
     _res_msg->length += 1;
     return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(short n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
-    u_ltoa((long)n, _res_msg->body+_res_msg->length, 10); 
+    u_ltoa((long)n, _res_msg->body+_res_msg->length, 10);
     _res_msg->length += strlen(_res_msg->body + 5 + _type_offset);
-    return *this; 
+    return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(unsigned short n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
     u_ultoa((unsigned long)n, _res_msg->body + _res_msg->length, 10);
     _res_msg->length += strlen(_res_msg->body + _res_msg->length);
-    return *this; 
+    return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(int n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
     u_ltoa((long)n, _res_msg->body +_res_msg->length, 10);
     _res_msg->length += strlen(_res_msg->body + _res_msg->length);
-    return *this; 
+    return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(unsigned int n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
-    u_ultoa((long)n, _res_msg->body + _res_msg->length, 10); 
-    _res_msg->length += strlen(_res_msg->body + _res_msg->length);
-    return *this; 
-}
-
-se_ostream& 
-se_socketostream_base::operator<<(long n)
-{
-    if (AVAILABLE_SPACE(_res_msg) < 20) flush();
-    u_ltoa((long)n, _res_msg->body + _res_msg->length, 10); 
+    u_ultoa((long)n, _res_msg->body + _res_msg->length, 10);
     _res_msg->length += strlen(_res_msg->body + _res_msg->length);
     return *this;
 }
 
-se_ostream& 
+se_ostream&
+se_socketostream_base::operator<<(long n)
+{
+    if (AVAILABLE_SPACE(_res_msg) < 20) flush();
+    u_ltoa((long)n, _res_msg->body + _res_msg->length, 10);
+    _res_msg->length += strlen(_res_msg->body + _res_msg->length);
+    return *this;
+}
+
+se_ostream&
 se_socketostream_base::operator<<(unsigned long n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
@@ -301,7 +301,7 @@ se_socketostream_base::operator<<(unsigned long n)
     return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(float n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
@@ -310,7 +310,7 @@ se_socketostream_base::operator<<(float n)
     return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(double n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
@@ -319,7 +319,7 @@ se_socketostream_base::operator<<(double n)
     return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(long double n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 20) flush();
@@ -328,27 +328,27 @@ se_socketostream_base::operator<<(long double n)
     return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(void* n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 8) flush();
-    sprintf(_res_msg->body + _res_msg->length, "%08"PRIXPTR"", (uint32_t) n); 
+    sprintf(_res_msg->body + _res_msg->length, "%08"PRIXPTR"", (uint32_t) n);
     _res_msg->length += 8;
     return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::operator<<(xptr n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 17) flush();
-    sprintf(_res_msg->body + _res_msg->length, 
-            "%08"PRIXPTR"@%08"PRIXPTR"", 
-            n.layer, (uint32_t) n.addr); 
+    sprintf(_res_msg->body + _res_msg->length,
+            "%08"PRIXPTR"@%08"PRIXPTR"",
+            n.layer, (uint32_t) n.getOffs());
     _res_msg->length += 17;
     return *this;
 }
 
-se_ostream& 
+se_ostream&
 se_socketostream_base::put(char c)
 {
     if (AVAILABLE_SPACE(_res_msg) < 1) flush();
@@ -363,28 +363,28 @@ se_socketostream_base::put(char c)
 ///////////////////////////////////////////////////////////////////////////////
 
 se_socketostream::se_socketostream(USOCKET out_socket, protocol_version p_ver)
-{  
+{
     _out_socket = out_socket;
     _p_ver = p_ver;
     _res_msg = &res_msg;
     _instruction = se_ItemPart;
     _type_offset = 0;
     _res_msg->body[_type_offset] = 0;       // in this version string format is always 0
-    _res_msg->length = 5 + _type_offset;    // the body contains string format - 1 byte, 
-                                            //                   string length - 4 bytes 
+    _res_msg->length = 5 + _type_offset;    // the body contains string format - 1 byte,
+                                            //                   string length - 4 bytes
                                             //                   and a string
     max_result_size = 0;
     result_portion_sent = 0;
 }
 
 void
-se_socketostream::end_item(qepNextAnswer res)	
+se_socketostream::end_item(qepNextAnswer res)
 {
-    flush(true); 
+    flush(true);
 
     if (res == se_next_item_exists)
     {
-        _res_msg->instruction = se_ItemEnd;      
+        _res_msg->instruction = se_ItemEnd;
         _res_msg->length = 0;
     }
     else if ((res == se_no_next_item) || (res == se_result_is_cut_off))
@@ -395,7 +395,7 @@ se_socketostream::end_item(qepNextAnswer res)
     else
         throw SYSTEM_EXCEPTION("Got incorrect qepNextAnswer in end_item");
 
-    /* This feature is not implemented yet 
+    /* This feature is not implemented yet
        The flag means result was cut. */
     //else // res == se_result_is_cut_off
     //{
@@ -415,24 +415,24 @@ se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt, const c
     _res_msg->length = 0;
 
     if (_p_ver.major_version >= 4) {
-        /* Since protocol version 4 we send type of the item in the 
-         * first message. Then in se_socketostream::flush() we change 
-         * _instruction back to the se_ItemPart. 
+        /* Since protocol version 4 we send type of the item in the
+         * first message. Then in se_socketostream::flush() we change
+         * _instruction back to the se_ItemPart.
          */
         _instruction      = se_ItemStart;
-        _type_offset      = 3; 
+        _type_offset      = 3;
         _res_msg->body[0] = (unsigned char) node_type2se_item_class(nt, is_atomic);
         _res_msg->body[1] = (unsigned char) xmlscm_type2se_item_type(st);
-        
+
         if(url != NULL)
         {
             /* set url flag */
             _res_msg->body[2] = (unsigned char) 1;
             /* set string type, always 0 at this version */
             _res_msg->body[3] = (unsigned char) 0;
-            
+
             int url_len = strlen(url);
-            
+
             if ( url_len > SE_SOCKET_MSG_BUF_SIZE - 30)
                 throw USER_EXCEPTION2(SE3012, "too long node URI");
 
@@ -443,12 +443,12 @@ se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt, const c
             strcpy(_res_msg->body + _type_offset + 5, url);
             _type_offset += 5 + url_len;
         }
-        else 
+        else
         {
             /* unset url flag */
             _res_msg->body[2] = (unsigned char) 0;
         }
-        
+
     }
     else
     {
@@ -463,8 +463,8 @@ se_socketostream::begin_item (bool is_atomic, xmlscm_type st, t_item nt, const c
 se_ostream&
 se_socketostream::flush(bool force)
 {
-    if((force && _res_msg->length == 5 + _type_offset) || 
-       _res_msg->length > 5 + _type_offset) 
+    if((force && _res_msg->length == 5 + _type_offset) ||
+       _res_msg->length > 5 + _type_offset)
     {
          se_socketostream_base::flush();
         _instruction = se_ItemPart;
@@ -475,8 +475,8 @@ se_socketostream::flush(bool force)
     return *this;
 }
 
-se_ostream* 
-se_socketostream::get_debug_ostream() { 
+se_ostream*
+se_socketostream::get_debug_ostream() {
     if (_p_ver.major_version < 2)
         return se_new se_nullostream();
     else
@@ -488,8 +488,8 @@ se_socketostream::get_debug_ostream() {
 /// se_debug_socketostream
 ///////////////////////////////////////////////////////////////////////////////
 
-se_debug_socketostream::se_debug_socketostream(se_socketostream& sostream) 
-{  
+se_debug_socketostream::se_debug_socketostream(se_socketostream& sostream)
+{
     _out_socket  = sostream._out_socket;
     _p_ver       = sostream._p_ver;
     _res_msg     = &debug_msg;
@@ -505,17 +505,17 @@ se_debug_socketostream::se_debug_socketostream(se_socketostream& sostream)
     int2net_int(type, _res_msg->body);
 
     /* In this version string format is always 0 */
-    _res_msg->body[_type_offset] = 0;    
+    _res_msg->body[_type_offset] = 0;
 
-    /* Body contains type          - 4 bytes, 
-    *                string format - 1 byte, 
-    *                string length - 4 bytes 
-    *  and a string itself 
+    /* Body contains type          - 4 bytes,
+    *                string format - 1 byte,
+    *                string length - 4 bytes
+    *  and a string itself
     */
     _res_msg->length = 5 + _type_offset;
 }
 
-void 
+void
 se_debug_socketostream::set_debug_info_type(se_debug_info_type type) {
     int2net_int(type, _res_msg->body);
 }

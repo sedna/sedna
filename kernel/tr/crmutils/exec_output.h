@@ -45,7 +45,7 @@ public:
     virtual se_ostream& operator<<(double n)                                     { o_str << n; return *this; }
     virtual se_ostream& operator<<(long double n)                                { o_str << n; return *this; }
     virtual se_ostream& operator<<(void * n)                                     { o_str << n; return *this; }
-    virtual se_ostream& operator<<(xptr n)                                       { o_str << n.layer << "@" << n.addr; return *this; }
+    virtual se_ostream& operator<<(xptr n)                                       { o_str << n.layer << "@" << n.getOffs(); return *this; }
 
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
     virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }

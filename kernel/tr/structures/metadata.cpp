@@ -233,7 +233,6 @@ xptr find_document_in_collection(const char *collection_name, const char *docume
 void rename_collection(const char *old_collection_name, const char *new_collection_name)
 {
     bool valid = true;
-    int n;
 
     Uri::check_constraints(new_collection_name, &valid, NULL);
     if (!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid collection name '") + new_collection_name + "'").c_str());
@@ -249,9 +248,7 @@ void rename_collection(const char *old_collection_name, const char *new_collecti
 
     collection.modify();
     catalog_delete_name(catobj_metadata, collection->name);
-    n = strlen(new_collection_name) + 1;
-    collection->name = (char *) cat_realloc(collection->name, n);
-    strncpy(collection->name, new_collection_name, n);
+    collection->name = cat_strcpy(collection->name, new_collection_name);
     catalog_set_name(catobj_metadata, collection->name, collection.obj);
 
     hl_logical_log_rename_collection(old_collection_name, new_collection_name);

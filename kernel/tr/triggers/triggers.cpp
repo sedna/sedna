@@ -138,10 +138,10 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
     if (GETTYPE(scm_node) == attribute) return node;
 
     /*2. Find all fired triggers for all the children of the node (attribute_fired_triggers and element_fired_triggers)*/
-    sc_ref_item* scm_child = scm_node->children.first;
+    sc_ref_item* scm_child = scm_node->children->first;
     while(scm_child !=NULL)
     {
-        cat_list<trigger_cell_xptr>::item* scm_trc = scm_child->object.snode->trigger_list.first;
+        cat_list<trigger_cell_xptr>::item* scm_trc = scm_child->object.snode->trigger_list->first;
         if(scm_trc!=NULL)
         {
             std::vector<trigger_cell_xptr> triggers_vec;
@@ -583,7 +583,7 @@ trigger_cell_xptr create_trigger (enum trigger_time tr_time,
 
     trigger_cell_cptr trc(trigger_cell_object::create(trigger_title, schemaroot), true);
 
-    schemaroot.modify()->full_trigger_list.add(trc.ptr());
+    schemaroot.modify()->full_trigger_list->add(trc.ptr());
     trc->trigger_path        = trigger_path;
     trc->trigger_event       = tr_event;
     trc->trigger_time        = tr_time;
@@ -638,7 +638,7 @@ trigger_cell_xptr create_trigger (enum trigger_time tr_time,
     std::vector<xptr> start_nodes;
     for (size_t i = 0; i < sobj.size(); i++)
     {
-        sobj[i].modify()->trigger_list.add(trc.ptr());
+        sobj[i].modify()->trigger_list->add(trc.ptr());
         RECOVERY_CRASH;
     }
 

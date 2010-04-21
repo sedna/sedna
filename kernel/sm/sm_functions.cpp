@@ -113,3 +113,7 @@ void ReleaseGiantLock()
 		throw SYSTEM_EXCEPTION("failed to release giant lock");
 }
 
+void set_layer_parameters(lsize_t layer_size)
+{
+    LAYER_ADDRESS_SPACE_SIZE = layer_size;
+}

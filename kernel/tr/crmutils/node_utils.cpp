@@ -387,7 +387,7 @@ xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
 {
     node_blk_hdr* block=GETBLOCKBYNODE_ADDR(node);
     schema_node_cptr scm_node=block->snode;
-    sc_ref_item* sc=scm_node->children.first;
+    sc_ref_item* sc=scm_node->children->first;
     xptr child;
     int cnt=-1;
     while (sc!=NULL)
@@ -655,7 +655,7 @@ void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char*
 }
 void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,vector<schema_node_xptr> &result)
 {
-    sc_ref_item* sc=scm->children.first;
+    sc_ref_item* sc=scm->children->first;
     while (sc!=NULL)
     {
 //      if (my_strcmp(name,sc->object.name)==0 && sc->object.type==type &&((uri==NULL && sc->get_xmlns()==NULL) || (sc->get_xmlns()!=NULL && my_strcmp(sc->get_xmlns()->uri,uri)==0 ))) result.push_back(sc->object.snode);
@@ -672,7 +672,7 @@ int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item 
     int cur=0;
     int ctr=0;
     schema_node_cptr scm=GETSCHEMENODEX(parent);
-    sc_ref_item* sc=scm->children.first;
+    sc_ref_item* sc=scm->children->first;
     while (cur<chcnt && sc!=NULL)
     {
 //      if (my_strcmp(name,sc->object.name)==0 && sc->object.type==type &&((uri==NULL && sc->get_xmlns()==NULL) || (sc->get_xmlns()!=NULL && my_strcmp(sc->get_xmlns()->uri,uri)==0 ))) result.push_back(sc->object.snode);
@@ -703,7 +703,7 @@ int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item 
 }
 void getSchemeChilds(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,vector<schema_node_xptr> &result)
 {
-    sc_ref_item* sc=scm->children.first;
+    sc_ref_item* sc=scm->children->first;
     while (sc!=NULL)
     {
 //      if (my_strcmp(name,sc->object.name)==0 && sc->object.type==type &&((uri==NULL && sc->get_xmlns()==NULL) || (sc->get_xmlns()!=NULL && my_strcmp(sc->get_xmlns()->uri,uri)==0 ))) result.push_back(sc->object.snode);
@@ -1241,7 +1241,7 @@ xptr getBaseUri(xptr node)
         CHECKP(tmp);
         node_blk_hdr* block=GETBLOCKBYNODE(tmp);
         schema_node_cptr scm_node=block->snode;
-        sc_ref_item* sc=scm_node->children.first;
+        sc_ref_item* sc=scm_node->children->first;
         int cnt=-1;
         while (sc!=NULL)
         {

@@ -87,10 +87,8 @@ xptr ConsumeNextBlockInSpan(
         result.layer =
             layerAdjustment + (offset + offsAdjustment) / LAYER_ADDRESS_SPACE_SIZE;
 
-        result.addr =
-            OFFSET_PTR(
-                LAYER_ADDRESS_SPACE_START_ADDR, 
-                (offset + offsAdjustment) % LAYER_ADDRESS_SPACE_SIZE);
+        result.offs =
+                (offset + offsAdjustment) % LAYER_ADDRESS_SPACE_SIZE;
 
         *spanBeginOffsPtr = spanBeginOffs;
         *spanEndOffsPtr = spanEndOffs;
@@ -492,7 +490,7 @@ extend_file_helper(UFile fileHandle,
         __int64 offset;
         void *buf = NULL;
         vmm_sm_blk_hdr *hdr = NULL;
-        unsigned int bytesOutCnt;
+        unsigned int bytesOutCnt = 0;
 
         /* Allocate aligned buffer and initialize header struct. */ 
         buf = malloc(VMM_SM_BLK_HDR_MAX_SIZE * 2);
@@ -588,8 +586,8 @@ void extend_data_file(int extend_portion)
                                 fileSizeCurrent,
                                 fileSizeNew,
                                 mb->free_data_blocks,
-                                0,
-                                -PAGE_SIZE,
+                                1,          /* 0-layer is reserved */
+                                -PAGE_SIZE, /* since first block is master-block */
                                 false);
 
     elog(EL_LOG, ("Data file has been extended, size: %" PRIx64 "", fileSizeNew));

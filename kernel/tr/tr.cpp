@@ -22,6 +22,7 @@
 #include "tr/auth/auc.h"
 #include "tr/rcv/rcv_test_tr.h"
 #include "tr/rcv/rcv_funcs.h"
+#include "common/gmm.h"
 
 using namespace std;
 using namespace tr_globals;
@@ -37,7 +38,7 @@ int TRmain(int argc, char *argv[])
     tr_globals::ppc = NULL; /* pping client */
     char buf[1024]; /* buffer enough to get environment variables */
     SSMMsg *sm_server = NULL; /* shared memory messenger to communicate with SM */
-    int determine_vmm_region = 0;
+    int determine_vmm_region = -1;
     bool sedna_server_is_running = false;
     int os_primitives_id_min_bound;
     SednaUserException e = USER_EXCEPTION(SE4400);
@@ -52,8 +53,12 @@ int TRmain(int argc, char *argv[])
 
         INIT_TOTAL_TIME_VARS u_ftime(&t_total1);
 
+        /*
+         * determine_vmm_region specifies db_id for which to search layer_size
+         * db_id is needed since we must report back to the proper cdb
+         */
         if (uGetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, buf, 1024, NULL) != 0)
-            determine_vmm_region = 0;
+            determine_vmm_region = -1;
         else
             determine_vmm_region = atoi(buf);
 
@@ -68,15 +73,18 @@ int TRmain(int argc, char *argv[])
         InitGlobalNames(os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
 
-        if (determine_vmm_region == 1)
+        if (determine_vmm_region != -1)
         {
+            SetGlobalNamesDB(determine_vmm_region);
             vmm_determine_region();
+            ReleaseGlobalNames();
             return 0;
         }
         else
         {
             try {
-                vmm_preliminary_call();
+                open_global_memory_mapping(SE4400);
+                close_global_memory_mapping();
                 sedna_server_is_running = true;
             } catch (SednaUserException &e) {
                 if (e.get_code() != SE4400) throw;

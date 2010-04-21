@@ -250,12 +250,12 @@ cm(_cm_),custom_tree(_custom_tree_)
 }
 void SednaDataSource::recordToFilename(char *dest,xptr _node_)
 {
-	sprintf(dest, "%d-0x%x.xml", (int)(_node_.layer),(unsigned int)(_node_.addr));
+	sprintf(dest, "%d-0x%x.xml", (int)(_node_.layer),(_node_.getOffs()));
 }
 xptr SednaDataSource::filenameToRecord(const char *dest)
 {
 	int layer;
-	unsigned int addr;
+	lsize_t addr;
 	const char *fn = dest, *t = dest;
 	while (*t)
 	{
@@ -264,7 +264,7 @@ xptr SednaDataSource::filenameToRecord(const char *dest)
 		t++;
 	}
 	sscanf(fn, "%d-0x%x.xml", &layer, &addr);
-	return removeIndirection(cxptr(layer, (void*)addr));
+	return removeIndirection(cxptr(layer, addr));
 }
 
 int SednaDataSource::getNextDoc(dtsInputStream& dest)

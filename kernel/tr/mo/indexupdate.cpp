@@ -8,7 +8,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/structures/schema.h"
 
-#define CAT_FOR_EACH(T, list) for (cat_list<T>::item * i = list.first; i != NULL; i = i->next)
+#define CAT_FOR_EACH(T, list) for (cat_list<T>::item * i = list->first; i != NULL; i = i->next)
 
 void indexDeleteNode_int(schema_node_cptr schema_node, xptr node)
 {

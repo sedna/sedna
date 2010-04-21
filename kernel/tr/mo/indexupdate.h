@@ -19,14 +19,14 @@ void indexAddNode_int(schema_node_cptr schema_node, xptr node);
 
 inline void indexDeleteNode(schema_node_cptr schema_node, xptr node)
 {
-    if (!schema_node->index_list.empty()) {
+    if (!schema_node->index_list->empty()) {
         indexDeleteNode_int(schema_node, node);
     }
 }
 
 inline void indexAddNode(schema_node_cptr schema_node, xptr node)
 {
-    if (!schema_node->index_list.empty()) {
+    if (!schema_node->index_list->empty()) {
         indexAddNode_int(schema_node, node);
     }
 }

@@ -9,6 +9,7 @@
 
 
 #include "common/u/ummap.h"
+#include "common/xptr.h"
 
 
 void create_global_memory_mapping(int os_primitives_id_min_bound);
@@ -20,10 +21,5 @@ void open_global_memory_mapping(int err_code);
 void close_global_memory_mapping();
 
 UMMap get_global_memory_mapping();
-
-void get_vmm_region_values();
-
-void set_vmm_region_values();
-
 
 #endif

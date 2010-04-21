@@ -23,7 +23,7 @@
 #endif
 
 
-catalog_object * catalog_deserialize_object(xptr p, void * context)
+catalog_object * catalog_deserialize_object(xptr p, CatalogMemoryContext* context)
 {
     int magic;
     catalog_object * result = NULL;

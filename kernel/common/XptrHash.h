@@ -167,7 +167,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::insert(xptr key, T val
 {
 //    T val1;
 //    if (find(key, val1) == 0) throw USER_ENV_EXCEPTION("xxx", false);
-    cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
+    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
     if (start.is_present)
     {
         add_cell * new_cell = se_new add_cell;
@@ -193,7 +193,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::insert(xptr key, T val
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::find(xptr key, T &val)
 {
-    cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
+    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
     if (start.is_present)
     {
         if (start.key == key)
@@ -250,7 +250,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find(xptr key, T &val)
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
 {
-    cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
+    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
 
     if (start.is_present)
     {
@@ -313,7 +313,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, T &val)
 {
-    cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
+    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
 
     if (start.is_present)
     {
@@ -379,7 +379,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, 
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::replace(xptr key, const T &new_val, T &old_val)
 {
-    cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
+    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
     if (start.is_present)
     {
         if (start.key == key)

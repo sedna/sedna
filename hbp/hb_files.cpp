@@ -10,7 +10,6 @@
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/cfg/sednaconf.xml
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/data/<db-name>.sedata
  * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/data/<db-name>.<number>llog
- * <dist-dir-from-cmd>/backup-<db-name>-<curr time>/data/vmm.dat
  *
  */
 

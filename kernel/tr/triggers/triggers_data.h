@@ -40,7 +40,7 @@ enum trigger_granularity
 
 
 
-inline const char* 
+inline const char*
 trigger_event2string(trigger_event te)
 {
     switch(te)
@@ -51,7 +51,7 @@ trigger_event2string(trigger_event te)
     default: throw USER_EXCEPTION2(SE1003, "Imossible case in trigger event to string conversion");
     }
 }
-inline const char* 
+inline const char*
 trigger_time2string(trigger_time te)
 {
     switch(te)
@@ -61,7 +61,7 @@ trigger_time2string(trigger_time te)
     default: throw USER_EXCEPTION2(SE1003, "Imossible case in trigger time to string conversion");
     }
 }
-inline const char* 
+inline const char*
 trigger_granularity2string(trigger_granularity te)
 {
     switch(te)
@@ -78,7 +78,7 @@ struct inserting_node
 {
     char* name;
     t_item type;
-    
+
     inserting_node(): name(NULL), type(element) {}
     inserting_node(const char* _name_,
                    t_item _type_) {
@@ -158,9 +158,7 @@ public:
 
     inline trigger_cell_object() {};
 
-    ~trigger_cell_object();
-
-    inline trigger_cell_object(const char * _title, 
+    inline trigger_cell_object(const char * _title,
                                const doc_schema_node_xptr _schemaroot) : schemaroot(_schemaroot),
                                                                          doc_name(NULL),
                                                                          is_doc(false),
@@ -175,11 +173,11 @@ public:
         this->trigger_title = cat_strcpy(this, _title);
     }
 
-    static catalog_object_header * create(const char * _title, 
+    static catalog_object_header * create(const char * _title,
                                           const doc_schema_node_xptr _schemaroot)
     {
         trigger_cell_object * obj =
-          new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(trigger_cell_object)))
+          new (cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(trigger_cell_object)))
           trigger_cell_object(_title, _schemaroot);
 
         catalog_object_header * header = catalog_create_object(obj);

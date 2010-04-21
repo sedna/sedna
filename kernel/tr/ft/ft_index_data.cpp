@@ -49,7 +49,7 @@ void delete_ft_custom_tree (ft_custom_tree_t * custom_tree)
     while (tmp!=NULL)
     {
         ft_custom_cell* mdc=tmp->obj;
-        if (mdc->local) cat_free(mdc->local);
+        if (mdc->local) delete [] mdc->local;
         delete mdc;
         tmp->obj=NULL;
         tmp=custom_tree->rb_successor(tmp);
@@ -113,10 +113,10 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     stream.read(&impl, sizeof(ft_index_type));
     stream.read(&ft_data, sizeof(ft_idx_data_t));
 
-    obj_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    obj_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, obj_str);
     object = lr2PathExpr(NULL, obj_str, pe_catalog_aspace);
-    cat_free(obj_str);
+    free(obj_str);
 
     doc_name = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, doc_name);
@@ -159,8 +159,8 @@ bool ft_index_cell_object::fits_to_index(schema_node_cptr snode)
 	t_scmnodes::iterator it=objs.begin();
 	while (it!=objs.end())
 	{
-		if (*it==snode.ptr())		
-			return true;		
+		if (*it==snode.ptr())
+			return true;
 		it++;
 	}
 	return false;
@@ -168,7 +168,7 @@ bool ft_index_cell_object::fits_to_index(schema_node_cptr snode)
 
 
 ft_index_cell_xptr create_ft_index(
-        PathExpr *_object_path, ft_index_type _it, 
+        PathExpr *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
         ft_index_template_t* _templ, bool just_heap, ft_index_impl _impl
@@ -182,7 +182,7 @@ ft_index_cell_xptr create_ft_index(
 
     down_concurrent_micro_ops_number();
     ft_index_cell_cptr idc(ft_index_cell_object::create(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, _impl));
-    _schemaroot.modify()->full_ft_index_list.add(idc.ptr());
+    _schemaroot.modify()->full_ft_index_list->add(idc.ptr());
 
     if (_it == ft_customized_value && _templ != NULL)
     {
@@ -215,7 +215,7 @@ ft_index_cell_xptr create_ft_index(
     for (unsigned int i = 0; i < sobj.size(); i++)
     {
         xptr blk;
-        sobj[i].modify()->ft_index_list.add(idc.ptr()); // just_heap modified because this must be recovered (AK)
+        sobj[i].modify()->ft_index_list->add(idc.ptr()); // just_heap modified because this must be recovered (AK)
         RECOVERY_CRASH;
         if (!just_heap)
         {
@@ -266,7 +266,7 @@ ft_index_cell_xptr create_ft_index(
 					//print_node_to_buffer(tmp, in_buf, idc->ftype, idc->custom_tree);
 					idc->serial_put(tmp, tmp_indir, in_buf);
 					ft_index_update(ft_insert, tmp_indir, &in_buf, &idc->ft_data, ftc_idx);
-					
+
 
 					tmp=getNextDescriptorOfSameSortXptr(tmp);
 				}
@@ -442,7 +442,7 @@ void ft_index_cell_object::init_serial_tree()
 {
 	//1. create b-tree
 	this->serial_root=bt_create(xs_integer);
-	
+
 	//2. create pstr block
 	pstr_sequence=
 		pstr_create_blk(true);
@@ -465,11 +465,11 @@ void ft_index_cell_object::destroy_serial_tree()
 					//2. delete all long pstrs
 					pstr_long_delete_str2(head.ptr);
 				}
-				
+
 			}
 			while (cursor.bt_next_key());
 		}
-	
+
 	//4. delete b-tree
 	bt_drop(this->serial_root);
 	//5. delete pstrs
@@ -482,7 +482,7 @@ void ft_index_cell_object::destroy_serial_tree()
 }
 doc_serial_header ft_index_cell_object::serial_put (xptr& node, xptr &node_indir, op_str_buf& tbuf)
 {
-	
+
 	//1. serialize node to buf and fill serial header
 	print_node_to_buffer(node,tbuf,this->ftype,this->custom_tree);
 	//2. put buf to pstr
@@ -499,7 +499,7 @@ void ft_index_cell_object::serial_remove (xptr& node_indir)
 	//1. find header in b-tree
 	bt_key key;
 	key.setnew(*((int64_t*)&node_indir));
-	
+
 	bt_cursor_tmpl<doc_serial_header> cursor=bt_find_tmpl<doc_serial_header>(this->serial_root, key);
 	if (cursor.is_null())
 	{	U_ASSERT(false); return;}
@@ -508,21 +508,21 @@ void ft_index_cell_object::serial_remove (xptr& node_indir)
 	bt_delete_tmpl<doc_serial_header>(this->serial_root,key);
 	//4. remove data from  pstr
 	remove_from_pstr(head);
-	
+
 }
 doc_serial_header ft_index_cell_object::serial_get (xptr& node_indir)
 {
 	//1. find header in b-tree
 	bt_key key;
 	key.setnew(*((int64_t*)&node_indir));
-	
+
 	bt_cursor_tmpl<doc_serial_header> cursor=
 		bt_find_tmpl<doc_serial_header>(this->serial_root, key);
 	if (cursor.is_null())
 	{	U_ASSERT(false); return doc_serial_header();}
 	doc_serial_header head=cursor.bt_next_obj();
 	//2. find pstr and copy to tbuf
-		
+
 	return head;
 }
 doc_serial_header ft_index_cell_object::serial_update (xptr& node, xptr& node_indir, op_str_buf& tbuf)
@@ -542,7 +542,7 @@ void doc_serial_header::serialize(string_consumer_fn fn, void *p)
 	doc_parser dp(fn,p);
 	if (this->length<=PSTRMAXSIZE)
 	{
-		
+
 		CHECKP(this->ptr);
 		shft shift= *((shft*)XADDR(this->ptr));
 		char* data=(char*)XADDR(BLOCKXPTR(this->ptr))+shift;

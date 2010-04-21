@@ -129,14 +129,6 @@ static int RetrieveAllFileNames(bool only_log)
 		if (msg.data.hb_struct.state == HB_ERR) return -1;
 	}
 
-	if (only_log) return 0;
-
-    // retrieve vmm.dat file
-	if ((len = hbMakeVmmFileName(buf, MAX_SE_SOCKET_STR)) == -1)
-		return -1;
-
-    hbFiles->push_back(string(buf, len));
-
     return 0;
 }
 

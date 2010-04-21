@@ -120,7 +120,7 @@ int xptr_mapping_compare(const void * a, const void * b)
     const xptr_mapping * xb = (const xptr_mapping *) b;
 
     if (!((xa->flags == xptr_mapping::mf_indirection_pointer) ^ (xb->flags == xptr_mapping::mf_indirection_pointer))) {
-        return (xa->ptr.layer == xb->ptr.layer) ? ((int) ((char *) xa->ptr.addr - (char *) xb->ptr.addr)) : ((int) (xa->ptr.layer - xb->ptr.layer));
+        return (xa->ptr.layer == xb->ptr.layer) ? ((int) (xa->ptr.getOffs() - xb->ptr.getOffs())) : ((int) (xa->ptr.layer - xb->ptr.layer));
     } else if (xa->flags == xptr_mapping::mf_indirection_pointer) {
         return -1;
     } else {
