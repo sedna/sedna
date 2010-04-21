@@ -8,6 +8,7 @@
 
 #include "common/sedna.h"
 #include "expat.h"
+#include "common/xptr.h"
 
 /* Handlers to parse config files */
 void startElement_sm_cfg(void *tag_name, const char *name, const char **atts);
@@ -26,5 +27,7 @@ void InitGiantLock();
 void DestroyGiantLock();
 void ObtainGiantLock();
 void ReleaseGiantLock();
+
+void set_layer_parameters(lsize_t layer_size);
 
 #endif /* _SM_FUNCTIONS_H */

@@ -19,9 +19,6 @@ int hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname);
 // return: length of str
 int hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64_t lnum);
 
-// retrieves vmm.dat file name
-int	hbMakeVmmFileName(char *buf, unsigned int maxlen);
-
 // retrieves db config file name
 int	hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname);
 

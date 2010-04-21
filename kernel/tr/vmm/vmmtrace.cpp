@@ -49,7 +49,7 @@ inline static void vmm_trace_xptr(const char cmd, const xptr& p)
         default  : op = "ERRORN";
     }
 
-    fprintf(trace_file, "%s %c %03x:0x%08x\n", op, istmp, layer, p.addr);
+    fprintf(trace_file, "%s %c %03x:0x%08x\n", op, istmp, layer, p.getOffs());
 }
 
 void vmm_trace_checkp(const xptr& p)

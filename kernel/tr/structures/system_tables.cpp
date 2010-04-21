@@ -4,7 +4,7 @@
  */
 
 #include <string>
- 
+
 #include "common/sedna.h"
 #include "common/u/uutils.h"
 
@@ -69,7 +69,7 @@ static const system_doc_record_t system_doc_document    = {DT_TRIGGERS,    "$DOC
 static const system_doc_record_t system_doc_collection  = {DT_TRIGGERS,    "$COLLECTION_%s.XML", get_collection_full};
 static const system_doc_record_t system_doc_schema      = {DT_TRIGGERS,    "$SCHEMA_%s.XML",     get_schema};
 
-static inline void 
+static inline void
 print_type_name(xmlscm_type keytype, char* buf)
 {
     strcpy(buf, xmlscm_type2c_str(keytype));
@@ -80,7 +80,7 @@ print_type_name(xmlscm_type keytype, char* buf)
  * C-string provided by name is copied and will be released in created
  * db_entity destructor.
  */
-static inline 
+static inline
 counted_ptr<db_entity> create_db_entity_ptr(db_entity_type type, const char* name)
 {
     U_ASSERT(name != NULL);
@@ -91,18 +91,18 @@ counted_ptr<db_entity> create_db_entity_ptr(db_entity_type type, const char* nam
     return db_ent;
 }
 
-static xptr 
+static xptr
 fill_schema(schema_node_cptr scm, const xptr& node, const xptr& neighb)
 {
     xptr parent = insert_element_i(neighb, XNULL, node, type2string(scm->type), xs_untyped, NULL_XMLNS);
     xptr left   = insert_attribute_i(XNULL,XNULL,parent,"name",xs_untypedAtomic,scm->name,(scm->name==NULL)?0:strlen(scm->name),NULL_XMLNS);
-    
+
     if (scm->get_xmlns()!=NULL)
     {
         left=insert_attribute_i(left,XNULL,XNULL,"prefix",xs_untypedAtomic,scm->get_xmlns()->prefix,(scm->get_xmlns()->prefix==NULL)?0:strlen(scm->get_xmlns()->prefix),NULL_XMLNS);
         left=insert_attribute_i(left,XNULL,XNULL,"uri",xs_untypedAtomic,scm->get_xmlns()->uri,(scm->get_xmlns()->uri==NULL)?0:strlen(scm->get_xmlns()->uri),NULL_XMLNS);
     }
-    
+
     char buf[20];
     u_itoa(scm->nodecnt,buf,10);
     left = insert_attribute_i(left,XNULL,XNULL,"total_nodes",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
@@ -114,7 +114,7 @@ fill_schema(schema_node_cptr scm, const xptr& node, const xptr& neighb)
     left = insert_attribute_i(left,XNULL,XNULL,"total_indir_blocks",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
     u_i64toa(scm->textcnt,buf,10);
     left = insert_attribute_i(left,XNULL,XNULL,"total_text",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
-    sc_ref_item * sc= scm->children.first;
+    sc_ref_item * sc= scm->children->first;
     while (sc!=NULL)
     {
         left = fill_schema(sc->object.snode,XNULL,left);
@@ -123,7 +123,7 @@ fill_schema(schema_node_cptr scm, const xptr& node, const xptr& neighb)
     return parent;
 }
 
-static void 
+static void
 get_schema(xptr node, const char* title)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"schema",xs_untyped,NULL_XMLNS);
@@ -139,8 +139,8 @@ get_schema(xptr node, const char* title)
         if (title == NULL || my_strcmp(title, mdc->name)==0)
         {
             left = insert_element_i(left, /* possibly XNULL */
-                                    XNULL, 
-                                    (XNULL  == left) ? parent     : XNULL, 
+                                    XNULL,
+                                    (XNULL  == left) ? parent     : XNULL,
                                     (mdc->is_doc)    ? "document" : "collection",
                                     xs_untyped,
                                     NULL_XMLNS);
@@ -150,7 +150,7 @@ get_schema(xptr node, const char* title)
     }
 }
 
-static void 
+static void
 get_document_full (xptr node,const char* title)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"document",xs_untyped,NULL_XMLNS);
@@ -172,7 +172,7 @@ get_collection_full (xptr node,const char* title)
 
 
 
-static void 
+static void
 get_version(xptr node,const char* /* title */)
 {
     xptr parent=insert_element_i(XNULL,XNULL,node,"sedna",xs_untyped,NULL_XMLNS);
@@ -182,28 +182,28 @@ get_version(xptr node,const char* /* title */)
                        strlen(SEDNA_BUILD),NULL_XMLNS);
 }
 
-static void 
+static void
 get_modules(xptr node,const char* /* title */)
 {
-    xptr parent=insert_element_i(XNULL,XNULL,node,"modules",xs_untyped,NULL_XMLNS);    
+    xptr parent=insert_element_i(XNULL,XNULL,node,"modules",xs_untyped,NULL_XMLNS);
     counted_ptr<db_entity> db_ent = create_db_entity_ptr(dbe_collection, MODULES_COLLECTION_NAME);
     schema_node_xptr scn = get_schema_node(db_ent, "Unknown entity passed to doc('$modules') function");
 
-    /* Just like in PPAbsPath, we take first not empty block, then 
+    /* Just like in PPAbsPath, we take first not empty block, then
      * take first document node descripor and follow all of them via
      * getNextDescriptorOfSameSortXptr.
      */
     xptr d_left = XNULL;
     xptr first_blk = getNonemptyBlockLookFore(scn->bblk);
 
-    if (first_blk != XNULL) 
+    if (first_blk != XNULL)
     {
         CHECKP(first_blk);
         xptr cur = GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(first_blk));
         while(cur != XNULL) {
             /* Get name (URI) of the document */
             tuple_cell tc = dm_document_uri(cur);
-            
+
             if ( !tc.is_eos() ) {
                 tc = tuple_cell::make_sure_light_atomic(tc);
                 const char* uri = tc.get_str_ptr().get();
@@ -214,10 +214,10 @@ get_modules(xptr node,const char* /* title */)
             /* Follow to the next document */
             cur = getNextDescriptorOfSameSortXptr(cur);
         }
-    }    
+    }
 }
 
-static void 
+static void
 get_errors(xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"errors",xs_untyped,NULL_XMLNS);
@@ -238,7 +238,7 @@ get_errors(xptr node,const char* /* title */)
     }
 }
 
-static void 
+static void
 get_indexes (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"indexes",xs_untyped,NULL_XMLNS);
@@ -277,7 +277,7 @@ get_indexes (xptr node,const char* /* title */)
 
 
 #ifdef SE_ENABLE_TRIGGERS
-static void 
+static void
 get_triggers (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"triggers",xs_untyped,NULL_XMLNS);
@@ -321,7 +321,7 @@ get_triggers (xptr node,const char* /* title */)
 
 
 #ifdef SE_ENABLE_FTSEARCH
-static void 
+static void
 print_ft_type_name(ft_index_type ftype, char* buf)
 {
     switch(ftype)
@@ -335,7 +335,7 @@ print_ft_type_name(ft_index_type ftype, char* buf)
     }
 }
 
-static void 
+static void
 get_ftindexes (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"ftindexes",xs_untyped,NULL_XMLNS);
@@ -363,10 +363,10 @@ get_ftindexes (xptr node,const char* /* title */)
 
         print_ft_type_name(ic->ftype,buf);
         node = insert_attribute_i(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
-        
+
         std::string str  = ic->object->to_string();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
-    
+
         if (ic->ftype == ft_customized_value && ic->custom_tree != NULL)
         {
             ft_custom_tree_t::sedna_rbtree_entry* cdc=ic->custom_tree->rb_minimum(ic->custom_tree->root);
@@ -388,7 +388,7 @@ get_ftindexes (xptr node,const char* /* title */)
                     node=insert_attribute_i(node,XNULL,XNULL,"ns_prefix",xs_untypedAtomic,cc->get_xmlns()->prefix,strlen(cc->get_xmlns()->prefix),NULL_XMLNS);
                     node=insert_attribute_i(node,XNULL,XNULL,"ns_uri",xs_untypedAtomic,cc->get_xmlns()->uri,strlen(cc->get_xmlns()->uri),NULL_XMLNS);
                 }
-                
+
                 print_ft_type_name(cc->cm,buf);
                 insert_attribute_i(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
                 cdc=ic->custom_tree->rb_successor(cdc);
@@ -399,7 +399,7 @@ get_ftindexes (xptr node,const char* /* title */)
 #endif /* SE_ENABLE_FTSEARCH */
 
 
-static void 
+static void
 get_documents (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"documents",xs_untyped,NULL_XMLNS);
@@ -408,7 +408,7 @@ get_documents (xptr node,const char* /* title */)
     local_lock_mrg->put_lock_on_db();
     metadata_cell_cptr mdc = XNULL;
     catalog_iterator it(catobj_metadata);
-    
+
     while (it.next())
     {
         mdc = it.get_object();
@@ -442,7 +442,7 @@ get_documents (xptr node,const char* /* title */)
 }
 
 
-static void 
+static void
 get_collections(xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"collections",xs_untyped,NULL_XMLNS);
@@ -516,8 +516,8 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
     return scm.ptr();
 }
 
-/* 
- * We should clear dynamic memory which was allocated by temporary schema nodes 
+/*
+ * We should clear dynamic memory which was allocated by temporary schema nodes
  */
 void system_tables_on_kernel_statement_end()
 {

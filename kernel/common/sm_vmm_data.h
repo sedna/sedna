@@ -114,6 +114,7 @@ struct sm_msg_struct
             int num; // number of potentially allocated blocks in call to bm_enter_exclusive_mode
             xptr mptr; // pointer for catalog master block
             int transaction_flags;
+            lsize_t layer_size; // layer size to report to trn
         } reg;
 
         xptr ptr; // xptr for deletion, locking and unlocking

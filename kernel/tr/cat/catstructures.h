@@ -27,7 +27,6 @@ struct cat_list {
             j = i;
             i = i->next;
             j->object.~T();
-            cat_free(j);
         }
     };
 
@@ -51,7 +50,6 @@ struct cat_list {
         if (item->prev != NULL) { item->prev->next = item->next; }
         if (item == this->first) { this->first = item->next; }
         item->object.~T();
-        cat_free(item);
     }
 
     void remove(T obj) {
@@ -65,7 +63,6 @@ struct cat_list {
                 if (j->prev != NULL) { j->prev->next = j->next; }
                 if (j == this->first) { this->first = j->next; }
                 j->object.~T();
-                cat_free(j);
             }
         }
     }
@@ -79,7 +76,7 @@ struct cat_list {
     void serialize(se_simplestream &stream) {
         int c = get_count();
         stream.write(&c, sizeof(int));
-        for (typename cat_list<T>::item *i = this->first; i != NULL; i = i->next) 
+        for (typename cat_list<T>::item *i = this->first; i != NULL; i = i->next)
             stream.write(&(i->object), sizeof(T));
     }
 

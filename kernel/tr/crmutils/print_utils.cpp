@@ -179,7 +179,7 @@ print_node_internal(xptr node,
                 if (ptype==sxml)  crmout << ")";
             }
 
-            if (IS_DATA_BLOCK(node)) 
+            if (IS_DATA_BLOCK(node))
             {
                 crmout << ((ptype==xml )? "?>": "");
                 if(wi) crmout << "\n";
@@ -324,7 +324,7 @@ print_node_internal(xptr node,
             //namespaces for attributes
             CHECKP(node);
             ptr = (xptr*)((char*)XADDR(node)+sizeof(e_dsc));
-            sch = scn->children.first;
+            sch = scn->children->first;
             while (sch!=NULL)
             {
                 if (sch->object.get_xmlns() != NULL_XMLNS &&
@@ -943,7 +943,7 @@ void print_descriptive(schema_node_cptr node, se_ostream& crmout, int indent)
     crmout << " nodes_count=\"" <<node->nodecnt<<"\"";
     crmout << " block_count=\"" <<node->blockcnt<<"\"";
     crmout << " ext_nid_size=\"" <<node->extnids<<"\"";
-    if (node->children.empty())
+    if (node->children->empty())
     {
         crmout << "/>";
         return;
@@ -952,7 +952,7 @@ void print_descriptive(schema_node_cptr node, se_ostream& crmout, int indent)
         crmout << ">\n";
 
     sc_ref_item * sc;
-    for (sc = node->children.first; sc != NULL; sc = sc->next)
+    for (sc = node->children->first; sc != NULL; sc = sc->next)
     {
         print_descriptive(sc->object.snode, crmout, indent+1);
     }
@@ -1005,7 +1005,7 @@ void sxml_print_descriptive(schema_node_cptr node, se_ostream& crmout, int inden
     crmout << " (type \"" <<type2string(node->type)<<"\")";
 
     crmout << ")";   // closing just the attr-list
-    sc_ref_item *sc= node->children.first;
+    sc_ref_item *sc= node->children->first;
     while (sc!=NULL)
     {
         sxml_print_descriptive(sc->object.snode, crmout, indent+1);

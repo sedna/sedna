@@ -58,7 +58,7 @@ int __vmm_check_region(uint32_t cur, void ** res_addr, uint32_t * segment_size, 
         if (log) fprintf(logfile, "PASSED\n");
         *segment_size = cur;
         VirtualFree(*res_addr, 0, MEM_RELEASE);
-        *res_addr = (void*)(((uint32_t)*res_addr + (uint32_t)PAGE_SIZE) & PAGE_BIT_MASK);
+        *res_addr = (void*)(((uintptr_t)*res_addr + (uint32_t)PAGE_SIZE) & PAGE_BIT_MASK);
         return 1;
     } else if(log)
         fprintf(logfile, "FAILED with error %d\n", GetLastError());

@@ -5,6 +5,9 @@
 
 #include "tr/cat/catmem.h"
 
+CatalogMemoryContext *CATALOG_TEMPORARY_CONTEXT = NULL;
+CatalogMemoryContext *CATALOG_COMMON_CONTEXT = NULL;
+
 int allocated_objects;
 int deallocated_objects;
 

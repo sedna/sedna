@@ -299,11 +299,11 @@ static void rollbackTransaction()
     // or will unmap just the blocks ft-indexes rollback have read
 #ifdef SE_ENABLE_DTSEARCH
     vmm_unmap_all_blocks();
-    catalog_on_transaction_begin();
+    /*
+     * We need to rollback Ft-Indexes AFTER physical rollback since ft-rollback
+     * will be reading before-data
+     */
     SednaIndexJob::rollback();
-    catalog_on_transaction_end(false);
-    catalog_before_commit(false);
-    catalog_after_commit(false);
 #endif
     hl_logical_log_rollback(tr_globals::trid);
 
@@ -376,13 +376,13 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     if (!wu_reported) { storage_on_transaction_end(); }
     d_printf1("OK\n");
 
-    d_printf1("Releasing catalog...");
-    if (!wu_reported) { catalog_on_transaction_end(is_commit); }
-    d_printf1("OK\n");
-
     d_printf1("\nNotifying sm of commit...");
     reportToWu(rcv_active, is_commit);
     wu_reported = false;
+
+    d_printf1("Releasing catalog...");
+    if (!wu_reported) { catalog_on_transaction_end(is_commit); }
+    d_printf1("OK\n");
 
     d_printf1("Releasing VMM...");
     vmm_delete_tmp_blocks();

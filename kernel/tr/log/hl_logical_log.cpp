@@ -404,10 +404,9 @@ void hl_logical_log_commit(transaction_id _trid)
     if (tr_globals::is_need_checkpoint_on_transaction_commit)
     {
         storage_on_transaction_end();
-        catalog_on_transaction_end(true);
-
         // report to sm about commit
         reportToWu(false /* not recovery */, true /* commit */);
+        catalog_on_transaction_end(true);
 
         // dirty hack here!
         // we don't want this transaction to be redone ever

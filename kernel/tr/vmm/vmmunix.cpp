@@ -40,13 +40,14 @@ int _uvmm_unmap(void *addr)
 
 int __vmm_check_region(uint32_t cur, void ** res_addr, uint32_t * segment_size, bool log, FILE * logfile)
 {
-    *res_addr = mmap(0, cur + (__uint32)PAGE_SIZE, PROT_READ, MAP_PRIVATE | U_MAP_NORESERVE | U_MAP_ANONYMOUS, -1, 0);
+    /* additional PAGE_SIZE needed for alignment of res_addr on page boundary */
+    *res_addr = mmap(0, cur + (uint32_t)PAGE_SIZE, PROT_READ, MAP_PRIVATE | U_MAP_NORESERVE | U_MAP_ANONYMOUS, -1, 0);
 
     if (*res_addr != MAP_FAILED) {
         if (log) fprintf(logfile, "PASSED\n");
         *segment_size = cur;
         munmap(*res_addr, cur);
-        *res_addr = (void*)(((__uint32)*res_addr + (__uint32)PAGE_SIZE) & PAGE_BIT_MASK);
+        *res_addr = (void*)(((uintptr_t)*res_addr + (uint32_t)PAGE_SIZE) & PAGE_BIT_MASK);
         return 1;
     } else if(log) {
         fprintf(logfile, "FAILED with error: %s\n", strerror(errno));

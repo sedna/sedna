@@ -54,23 +54,6 @@ int hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64
     return strlen(log_file_name);
 }
 
-// retrieves vmm.dat file name
-int	hbMakeVmmFileName(char *buf, unsigned int maxlen)
-{
-    char vmm_file_name[U_MAX_PATH + 1];
-
-    // make data file name
-    strcpy(vmm_file_name, SEDNA_DATA);
-    strcat(vmm_file_name, "/data/");
-    strcat(vmm_file_name, "vmm.dat");
-
-    if (strlen(vmm_file_name) > maxlen) return -1;
-
-    strncpy(buf, vmm_file_name, maxlen);
-
-    return strlen(vmm_file_name);
-}
-
 // retrieves db config file name
 int	hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname)
 {

@@ -20,34 +20,21 @@ using namespace std;
 /// PathExpr memory management
 ////////////////////////////////////////////////////////////////////////////////
 
-FastPointerArray pe_local_heap_warden;
-FastPointerArray pe_catalog_heap_warden;
-
 void * pe_malloc(size_t size)
 {
-    return pe_local_heap_warden.add(cat_malloc(NULL, size));
+    return cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, size);
 };
 
 void pe_free(void *) { };
-
-void pe_free_all()
-{
-    pe_local_heap_warden.freeAll();
-    pe_local_heap_warden.clear();
-};
+void pe_free_all() { };
 
 void * cat_pe_malloc(size_t size)
 {
-    return pe_catalog_heap_warden.add(cat_malloc(NULL, size));
+    return cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, size);
 };
 
 void cat_pe_free(void *) { };
-
-void cat_pe_free_all()
-{
-    pe_catalog_heap_warden.freeAll();
-    pe_catalog_heap_warden.clear();
-};
+void cat_pe_free_all() { };
 
 PathExprMemoryManager pe_local_memory_manager = { pe_malloc, pe_free, pe_free_all, NULL };
 PathExprMemoryManager pe_catalog_memory_manager = { cat_pe_malloc, cat_pe_free, cat_pe_free_all, NULL };
@@ -126,7 +113,7 @@ void delete_PathExpr(PathExpr *path)
 }
 
 
-std::string 
+std::string
 NodeTest::to_string(const NodeTestType& type, const NodeTestData& data)
 {
     string res;
@@ -635,7 +622,7 @@ const counted_ptr<db_entity>& PathExprRoot::get_entity(const char* obj_name,
                                                        const char* op_name)
 {
     U_ASSERT(db_ent->type != dbe_module);
-    
+
     if(name.op != NULL)
     {
        tuple_cell root_tc = get_name_from_PPOpIn(name, obj_name, op_name);

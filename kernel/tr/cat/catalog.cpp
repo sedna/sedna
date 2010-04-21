@@ -37,8 +37,6 @@ void catalog_issue_warning(const char * warning) {
 
 uint64_t deserialized_objects;
 
-inline char * catalog_ht_fullname_string(enum catalog_named_objects obj_type, const char * key);
-
 struct local_catalog_header * local_catalog;
 
 USemaphore _cat_master_semaphore;
@@ -46,7 +44,27 @@ int _cat_master_semaphore_locked;
 bool catalog_objects_initialized;
 
 
+
 inline catalog_object * __dbg_catalog_preview(xptr &p) { return catalog_acquire_object(p)->object; };
+
+/********************************
+ *  catalog interface functions
+ */
+
+static
+inline char *catalog_ht_fullname_string(enum catalog_named_objects obj_type,
+        const char * key, CatalogMemoryContext *context)
+{
+    size_t len = strlen(key);
+    char * result = (char *) cat_malloc_context(context, len + 1 + 1);
+    char t = 'A' + (char) obj_type;
+
+    strncpy(result + 1, key, len);
+    result[0] = t;
+    result[len+1] = 0;
+
+    return result;
+}
 
 /*************************************************
  * Catalog session registering and unregistering
@@ -77,7 +95,9 @@ void catalog_on_session_begin()
 
     _cat_master_semaphore_locked = 0;
 
-    catalog_objects_initialized = true;
+   CATALOG_COMMON_CONTEXT = new CatalogMemoryContext(DEF_CHUNK_SIZE);
+
+   catalog_objects_initialized = true;
 }
 
 void catalog_on_session_end()
@@ -92,7 +112,9 @@ void catalog_on_session_end()
     if (USemaphoreClose(_cat_master_semaphore, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4013, "CATALOG_MASTER_SEMAPHORE_STR");
 
-//    printf("\nAllocated : %d / %d\n", allocated_objects, deallocated_objects);
+    delete CATALOG_COMMON_CONTEXT;
+    CATALOG_COMMON_CONTEXT = NULL;
+    //    printf("\nAllocated : %d / %d\n", allocated_objects, deallocated_objects);
 }
 
 /*****************************************************
@@ -168,6 +190,8 @@ void catalog_before_commit(bool is_commit)
         bt_key name;
         char * htname;
 
+        catalog_validate_objects();
+
         catalog_lock_metadata();
 
         cs_initp();
@@ -185,9 +209,9 @@ void catalog_before_commit(bool is_commit)
                 tree = &(CATALOG_NAME_TREE(r->nor.object_type));
                 name.setnew(r->nor.name_to_save->name);
                 bt_delete(*tree, name, r->nor.name_to_save->obj->p);
-                htname = catalog_ht_fullname_string(r->nor.object_type, r->nor.name_to_save->name);
+                htname = catalog_ht_fullname_string(r->nor.object_type, r->nor.name_to_save->name, NULL);
                 local_catalog->masterdata.htable = sbtrie_delete_str(local_catalog->masterdata.htable, htname);
-                cat_free(htname);
+                free(htname);
                 break;
 
               case catalog_journal_record::add_htable_record:
@@ -234,23 +258,17 @@ void catalog_before_commit(bool is_commit)
 void catalog_after_commit(bool is_commit)
 {
     if (pe_catalog_aspace->free_all) pe_catalog_aspace->free_all();
-    delete local_catalog;
 
     cs_initp();
     catalog_unlock_metadata();
 }
 
-/*
-void catalog_light_rollback()
-{
-    local_catalog->pointer_list.freeAll();
-}
-*/
-
 void catalog_update_nid();
 
 void catalog_on_transaction_begin()
 {
+    CATALOG_TEMPORARY_CONTEXT = new CatalogMemoryContext(DEF_CHUNK_SIZE);
+
     cs_initp();
 
     catalog_zero_counter(deserialized_objects);
@@ -267,8 +285,7 @@ void catalog_on_transaction_begin()
         initialize_masterblock();
     }
 
-    last_nid = (unsigned char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, MAX_ROOT_NID_SIZE);
-    local_catalog->pointer_list.add(last_nid);
+    last_nid = (unsigned char *) cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, MAX_ROOT_NID_SIZE);
 
     catalog_update_nid();
 
@@ -280,10 +297,11 @@ void catalog_on_transaction_end(bool is_commit)
 {
     elog(EL_DBG, ("Catalog objects deserialized : %d", deserialized_objects));
 
-    if (is_commit)
-    {
-        catalog_validate_objects();
-    }
+    delete local_catalog;
+    local_catalog = NULL;
+
+    delete CATALOG_TEMPORARY_CONTEXT;
+    CATALOG_TEMPORARY_CONTEXT = NULL;
 }
 
 catalog_object_header * catalog_object_header::invalidate() {
@@ -347,9 +365,10 @@ catalog_object_header * catalog_create_object(catalog_object * object, bool pers
         cs_popp();
         obj = new (cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(object->p_object);
     } else {
+        U_ASSERT(CATALOG_TEMPORARY_CONTEXT);
         obj = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(XNULL);
-        object->p_object.addr = obj;
-        object->p_object.layer = TEMPORARY_CATALOG_LAYER;
+        object->p_object.offs = CATALOG_TEMPORARY_CONTEXT->addr2offs(obj);
+        object->p_object.layer = CHUNK2TEMP_CAT_LAYER(CATALOG_TEMPORARY_CONTEXT->addr2chunk(obj));
         obj->p = object->p_object;
     }
 
@@ -375,7 +394,8 @@ catalog_object_header * catalog_acquire_object(const xptr &ptr)
 
     /* for temporary schema nodes, return pointer immidiately:
        temporary xptr = TEMPORARY_LAYER (special) + CATALOG HEADER POINTER */
-    if (IS_CATALOG_TMP_PTR(ptr)) return (catalog_object_header *) (XADDR(ptr));
+    if (IS_CATALOG_TMP_PTR(ptr))
+        return (catalog_object_header *)(CATALOG_TEMPORARY_CONTEXT->offs2addr(TEMP_CAT_LAYER2CHUNK(ptr.layer), ptr.offs));
 
     /* look up for a catalog header, corresponding to the xpointer in hash table */
     catalog_object_header * obj =
@@ -383,7 +403,7 @@ catalog_object_header * catalog_acquire_object(const xptr &ptr)
 
     /* if not found in hash table, try to deserialize pointer */
     if (obj == NULL) {
-        obj = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(ptr);
+        obj = new (cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(ptr);
         local_catalog->xptrhash.set(ptr, obj);
         obj->object = catalog_deserialize_object(ptr, CATALOG_PERSISTENT_CONTEXT);
         catalog_increment_counter(deserialized_objects);
@@ -484,7 +504,7 @@ bool catalog_set_name(
 
     n = catalog_cachetree_add_name(obj_type, name, obj);
 
-    cr = new (cat_malloc(local_catalog, sizeof(catalog_journal_record))) catalog_journal_record;
+    cr = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_journal_record))) catalog_journal_record;
     cr->type = catalog_journal_record::add_name;
     cr->nor.object_type = obj_type;
     cr->nor.name_to_save = n;
@@ -578,7 +598,7 @@ bool catalog_delete_name(
     n = catalog_cachetree_add_name(obj_type, name, obj);
     n->name_deleted = true;
 
-    cr = new (cat_malloc(local_catalog, sizeof(catalog_journal_record))) catalog_journal_record;
+    cr = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_journal_record))) catalog_journal_record;
     cr->type = catalog_journal_record::del_name;
     cr->nor.object_type = obj_type;
     cr->nor.name_to_save = n;
@@ -586,19 +606,6 @@ bool catalog_delete_name(
     local_catalog->add_journal_record(cr);
 
     return true;
-}
-
-inline char * catalog_ht_fullname_string(enum catalog_named_objects obj_type, const char * key)
-{
-    size_t len = strlen(key);
-    char * result = (char *) malloc(len + 1 + 1);
-    char t = 'A' + (char) obj_type;
-
-    strncpy(result + 1, key, len);
-    result[0] = t;
-    result[len+1] = 0;
-
-    return result;
 }
 
 inline char * catalog_htable_find_name(const char * name)
@@ -632,6 +639,10 @@ inline char * catalog_htable_find_name(const char * name)
 }
 
 
+/*
+ * This function allocates result using 'new' since it will be dealloced
+ * by counted_ptr
+ */
 char * catalog_htable_get(enum catalog_named_objects obj_type,
                           const char * key)
 {
@@ -648,13 +659,13 @@ char * catalog_htable_get(enum catalog_named_objects obj_type,
         }
 
         r = local_catalog->catalog_journal;
-        fullname = catalog_ht_fullname_string(obj_type, key);
+        fullname = catalog_ht_fullname_string(obj_type, key, NULL /* use malloc */);
 
         while (r != NULL) {
             if ((r->type == catalog_journal_record::add_htable_record) &&
                   (strcmp(r->htr.name, fullname) == 0)) {
                 size_t object_len = strlen(r->htr.data);
-                result = (char *) cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, object_len + 2);
+                result = new char[object_len + 2];
                 memcpy(result, r->htr.data, object_len + 2);
 
                 break;
@@ -668,7 +679,7 @@ char * catalog_htable_get(enum catalog_named_objects obj_type,
 
     U_ASSERT(result == NULL);
 
-    fullname = catalog_ht_fullname_string(obj_type, key);
+    fullname = catalog_ht_fullname_string(obj_type, key, NULL /* use malloc */);
     result = catalog_htable_find_name(fullname);
     free(fullname);
 
@@ -684,19 +695,16 @@ bool catalog_htable_set(
     size_t pname_len;
     catalog_journal_record * cr;
 
-    cr = new (cat_malloc(local_catalog, sizeof(catalog_journal_record))) catalog_journal_record;
+    cr = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_journal_record))) catalog_journal_record;
     cr->type = catalog_journal_record::add_htable_record;
     cr->htr.object_type = obj_type;
-    cr->htr.name = catalog_ht_fullname_string(obj_type, key);
+    cr->htr.name = catalog_ht_fullname_string(obj_type, key, CATALOG_TEMPORARY_CONTEXT);
 
     pname_len = strlen(par_name);
     cr->htr.data = (char *) cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, pname_len+2);
     strncpy(cr->htr.data, par_name, pname_len);
     cr->htr.data[pname_len] = 0;
     cr->htr.data[pname_len+1] = flag;
-
-    local_catalog->pointer_list.add(cr->htr.name);
-    local_catalog->pointer_list.add(cr->htr.data);
 
     local_catalog->add_journal_record(cr);
 

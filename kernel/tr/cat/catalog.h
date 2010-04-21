@@ -14,6 +14,7 @@
 #include "common/counted_ptr.h"
 
 #include "tr/cat/simplestream.h"
+#include "tr/cat/catmem.h"
 #include "tr/tr_base.h"
 
 /** Catalog objects are heap-stored structures, that may be saved in the physical block memory.
@@ -119,9 +120,11 @@
 #define CCACHE_XPTR_BUCKETS 256
 #define CCACHE_NAME_BUCKETS 128
 
-#define TEMPORARY_CATALOG_LAYER     -2
+#define TEMPORARY_CATALOG_LAYER_START     -2
+#define IS_CATALOG_TMP_PTR(x) ((x).layer <= TEMPORARY_CATALOG_LAYER_START)
+#define TEMP_CAT_LAYER2CHUNK(layer) (TEMPORARY_CATALOG_LAYER_START - (layer))
+#define CHUNK2TEMP_CAT_LAYER(chunk) (TEMPORARY_CATALOG_LAYER_START - (chunk))
 
-#define IS_CATALOG_TMP_PTR(x) (x.layer == TEMPORARY_CATALOG_LAYER)
 
 /***********************************
   Catalog named object identifiers
@@ -159,7 +162,7 @@ catalog_object_header * catalog_create_object(catalog_object * object, bool pers
 catalog_object_header * catalog_acquire_object(const xptr &ptr);
 void                    catalog_release_object(catalog_object_header * object);
 void                    catalog_delete_object(catalog_object * object);
-catalog_object *        catalog_deserialize_object(xptr p, void * context);
+catalog_object *        catalog_deserialize_object(xptr p, CatalogMemoryContext *context);
 
 bool                    catalog_set_name(enum catalog_named_objects obj_type, const char * name, catalog_object_header * obj);
 catalog_object_header * catalog_find_name(enum catalog_named_objects obj_type, const char * name);
@@ -351,12 +354,12 @@ struct catalog_cptr {
 
 
 /**
- * Returns document/collection the provided object provided 
- * (index, ft-index, etc) is created on. Throws SE1061 if 
+ * Returns document/collection the provided object provided
+ * (index, ft-index, etc) is created on. Throws SE1061 if
  * object hasn't been found.
  */
-counted_ptr<db_entity> 
-find_db_entity_for_object(enum catalog_named_objects obj_type, 
+counted_ptr<db_entity>
+find_db_entity_for_object(enum catalog_named_objects obj_type,
                           const char* title);
 
 

@@ -99,11 +99,6 @@ public:
       doc_name = cat_strcpy(this, _doc_name);
     };
 
-    ~index_cell_object() {
-        cat_free(index_title);
-        cat_free(doc_name);
-    };
-
     static catalog_object_header * create(
         const char * _index_title, doc_schema_node_xptr _schemaroot,
         xmlscm_type _keytype, xptr _btree_root, PathExpr * _object,
@@ -111,7 +106,7 @@ public:
       )
     {
         index_cell_object * obj =
-          new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(index_cell_object)))
+          new(cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(index_cell_object)))
           index_cell_object(_index_title, _schemaroot, _keytype, _btree_root, _object, _key, _doc_name, _is_doc);
 
         catalog_object_header * header = catalog_create_object(obj);

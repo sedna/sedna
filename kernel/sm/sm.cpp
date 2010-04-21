@@ -80,323 +80,326 @@ int sm_server_handler(void *arg)
         ObtainGiantLock(); isGiantLockObtained = true;
         switch (msg->cmd)
         {
-        case 1:  {//get identifier for transaction
-            bool isRO = (msg->data.data[0]) != 0;
-            bool isExcl = (msg->data.data[1]) != 0;
+            case 1:  {//get identifier for transaction
+                         bool isRO = (msg->data.data[0]) != 0;
+                         bool isExcl = (msg->data.data[1]) != 0;
 
-            // even in an exclusive mode we don't block ro-transactions
-            if (xmGetExclusiveModeId() != -1 && !isRO)
-            {
-                xmBlockSession(msg->sid);
+                         // even in an exclusive mode we don't block ro-transactions
+                         if (xmGetExclusiveModeId() != -1 && !isRO)
+                         {
+                             xmBlockSession(msg->sid);
 
-                msg->cmd = 1; // come again later
-            }
-            else
-            {
-                msg->trid = get_transaction_id(isRO);
+                             msg->cmd = 1; // come again later
+                         }
+                         else
+                         {
+                             msg->trid = get_transaction_id(isRO);
 
-                if (msg->trid != -1)
-                {
-                    if (isExcl)
-                    {
-                        xmEnterExclusiveMode(msg->sid);
-                    }
-                }
+                             if (msg->trid != -1)
+                             {
+                                 if (isExcl)
+                                 {
+                                     xmEnterExclusiveMode(msg->sid);
+                                 }
+                             }
 
-                msg->cmd = 0; // all ok
-            }
+                             msg->cmd = 0; // all ok
+                         }
 
-            break;
-                 }
-        case 2:  {//give identifier for transaction
+                         break;
+                     }
+            case 2:  {//give identifier for transaction
 
-            session_id excl_sid = xmGetExclusiveModeId();
-            bool isRO = (msg->data.data[0]) != 0;
+                         session_id excl_sid = xmGetExclusiveModeId();
+                         bool isRO = (msg->data.data[0]) != 0;
 
-            give_transaction_id(msg->trid, isRO);
+                         give_transaction_id(msg->trid, isRO);
 
-            if (isRO) // query has just finished; snapshot advancement might be possible
-            {
-                if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0)
-                    throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
-            }
-            else // updater has just ended; check for need to advance snapshots or truncate the log
-            {
-                if (llNeedCheckpoint())
-                {
-                    llActivateCheckpoint(); // maintenance checkpoint
-                }
-                else
-                {
-                    if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
-                        throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
-                }
+                         if (isRO) // query has just finished; snapshot advancement might be possible
+  						 {
+                             if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0)
+                                 throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
+						 }
+						 else // updater has just ended; check for need to advance snapshots or truncate the log
+						 {
+                             if (llNeedCheckpoint())
+                             {
+                                 llActivateCheckpoint(); // maintenance checkpoint
+                             }
+                             else
+                             {
+                                 if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+                                      throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
+                             }
 
-                if (msg->sid == excl_sid)
-                {
-                    xmExitExclusiveMode(); // exclusive tr ended
-                }
-                else if (excl_sid != -1)
-                {
-                    xmTryToStartExclusive(); // updater ended and exclusive tr is waiting: try to start it
-                }
-            }
+                             if (msg->sid == excl_sid)
+                             {
+                                 xmExitExclusiveMode(); // exclusive tr ended
+                             }
+                             else if (excl_sid != -1)
+                             {
+                                 xmTryToStartExclusive(); // updater ended and exclusive tr is waiting: try to start it
+                             }
+                         }
 
-            break;
-                 }
-        case 3:  {//obtain lock on database entity
-            lock_mode mode;
-            resource_kind kind;
+                         break;
+                     }
+            case 3:  {//obtain lock on database entity
+                         lock_mode mode;
+                         resource_kind kind;
 
-            if (msg->data.data[0] == 's') mode = lm_s;
-            else if (msg->data.data[0] == 'x') mode = lm_x;
-            else if (msg->data.data[0] == 'r') mode = lm_is;
-            else mode = lm_ix;
+                         if (msg->data.data[0] == 's') mode = lm_s;
+                         else if (msg->data.data[0] == 'x') mode = lm_x;
+                         else if (msg->data.data[0] == 'r') mode = lm_is;
+                         else mode = lm_ix;
 
-            if (msg->data.data[1] == 'd') kind = LM_DOCUMENT;
-            else if (msg->data.data[1] == 'c') kind = LM_COLLECTION;
-            else if (msg->data.data[1] == 'i') kind = LM_INDEX;
-            else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
-            else kind = LM_DATABASE;
+                         if (msg->data.data[1] == 'd') kind = LM_DOCUMENT;
+                         else if (msg->data.data[1] == 'c') kind = LM_COLLECTION;
+                         else if (msg->data.data[1] == 'i') kind = LM_INDEX;
+                         else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
+                         else kind = LM_DATABASE;
 
-            lock_reply r = lm_table.lock(msg->trid, msg->sid, resource_id(string((msg->data.data)+2), kind), mode, LOCK_LONG, 0/*timeout is not important by now*/);
+                         lock_reply r = lm_table.lock(msg->trid, msg->sid, resource_id(string((msg->data.data)+2), kind), mode, LOCK_LONG, 0/*timeout is not important by now*/);
 
-            if (r == LOCK_OK) msg->data.data[0] = '1';
-            else if (r == LOCK_NOT_LOCKED && !lm_table.deadlock(msg->trid, true)) msg->data.data[0] = '0';
-            else
-            {
-                msg->data.data[0] = '2';
-                tr_lock_head* tr_head = tr_table.find_tr_lock_head(msg->trid);
-                if (tr_head == NULL) throw SYSTEM_EXCEPTION("Incorrect logic in SM's lock manager");
-                tr_head->tran->status = ROLLING_BACK_AFTER_DEADLOCK;
-            }
-            break;
-                 }
+                         if (r == LOCK_OK) msg->data.data[0] = '1';
+                         else if (r == LOCK_NOT_LOCKED && !lm_table.deadlock(msg->trid, true)) msg->data.data[0] = '0';
+                         else
+                         {
+                             msg->data.data[0] = '2';
+                             tr_lock_head* tr_head = tr_table.find_tr_lock_head(msg->trid);
+                             if (tr_head == NULL) throw SYSTEM_EXCEPTION("Incorrect logic in SM's lock manager");
+                             tr_head->tran->status = ROLLING_BACK_AFTER_DEADLOCK;
+                         }
 
-        case 4:  {//release all transaction's locks
-            lm_table.release_tr_locks(msg->trid);
-            break;
-                 }
-        case 5:  {
-            resource_kind kind;
+                         break;
+                     }
 
-            if (msg->data.data[1] == 'd') kind = LM_DOCUMENT;
-            else if (msg->data.data[1] == 'c') kind = LM_COLLECTION;
-            else if (msg->data.data[1] == 'i') kind = LM_INDEX;
-            else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
-            else kind = LM_DATABASE;
+            case 4:  {//release all transaction's locks
+                         lm_table.release_tr_locks(msg->trid);
 
-            lm_table.unlock(msg->trid, resource_id(string((msg->data.data)+2), kind));
-            break;
+                         break;
+                     }
+            case 5:  {
+                         resource_kind kind;
 
-                 }
+                         if (msg->data.data[1] == 'd') kind = LM_DOCUMENT;
+                         else if (msg->data.data[1] == 'c') kind = LM_COLLECTION;
+                         else if (msg->data.data[1] == 'i') kind = LM_INDEX;
+                         else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
+                         else kind = LM_DATABASE;
 
-        case 10: {
-            //d_printf1("query 10: soft shutdown\n");
-            USemaphoreUp(wait_for_shutdown, __sys_call_error);
-            msg->cmd = 0;
-            break;
-                 }
-        case 11: {
-            //d_printf1("query 11: hard shutdown\n");
-            USemaphoreUp(wait_for_shutdown, __sys_call_error);
-            msg->cmd = 0;
-            break;
-                 }
-        case 21: {
-            //d_printf1("query 21: bm_register_session\n");
-            bm_reset_io_statistics();
-            bm_register_session(msg->sid, msg->data.reg.num);
-            msg->data.reg.num = bufs_num;
-            msg->data.reg.mptr = mb->catalog_masterdata_block;
-            msg->data.reg.transaction_flags = mb->transaction_flags;
-            msg->cmd = 0;
-            break;
-                 }
-        case 22: {
-            //d_printf1("query 22: bm_unregister_session\n");
-            bm_unregister_session(msg->sid);
-            msg->cmd = 0;
-            bm_log_out_io_statistics();
-            break;
-                 }
-        case 23: {
-            //d_printf1("query 23: bm_allocate_data_block\n");
-            WuAllocateDataBlockExn(msg->sid,
-                &(msg->data.swap_data.ptr),
-                (ramoffs*)(&(msg->data.swap_data.offs)),
-                &(msg->data.swap_data.swapped));
-            msg->cmd = 0;
-            break;
-                 }
-        case 24: {
-            //d_printf1("query 24: bm_allocate_tmp_block\n");
-            WuAllocateTempBlockExn(msg->sid,
-                &(msg->data.swap_data.ptr),
-                (ramoffs*)(&(msg->data.swap_data.offs)),
-                &(msg->data.swap_data.swapped));
-            msg->cmd = 0;
-            break;
-                 }
-        case 25: {
-            //d_printf1("query 25: bm_delete_block\n");
-            WuDeleteBlockExn(msg->sid, *(xptr*)(&(msg->data.ptr)));
-            msg->cmd = 0;
+                         lm_table.unlock(msg->trid, resource_id(string((msg->data.data)+2), kind));
 
-            break;
-                 }
-        case 26: {
-            //d_printf1("query 26: bm_get_block\n");
-            WuGetBlockExn(msg->sid,
-                msg->data.swap_data.ptr,
-                (ramoffs*)(&(msg->data.swap_data.offs)),
-                &(msg->data.swap_data.swapped));
-            msg->cmd = 0;
-            break;
-                 }
-        case 27: {
-            //d_printf1("query 27: bm_enter_exclusive_mode\n");
-            bm_enter_exclusive_mode(msg->sid, &(msg->data.reg.num));
-            msg->cmd = 0;
-            break;
-                 }
-        case 28: {
-            //d_printf1("query 28: bm_exit_exclusive_mode\n");
-            bm_exit_exclusive_mode(msg->sid);
-            msg->cmd = 0;
-            break;
-                 }
-        case 29: {
-            //d_printf1("query 29: bm_memlock_block\n");
-            bm_memlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
-            msg->cmd = 0;
-            break;
-                 }
-        case 30: {
-            //d_printf1("query 30: bm_memunlock_block\n");
-            bm_memunlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
-            msg->cmd = 0;
-            break;
-                 }
-        case 31: {
-            //d_printf1("query 31: bm_block_statistics\n");
-            bm_block_statistics(&(msg->data.stat));
-            msg->cmd = 0;
-            break;
-                 }
-        case 32: {
-            //d_printf1("query 32: bm_pseudo_allocate_data_block\n");
-            //bm_pseudo_allocate_data_block(msg->sid, (xptr*)(&(msg->data.ptr)));
-            msg->cmd = 0;
-            break;
-                 }
-        case 33: {
-            //d_printf1("query 33: bm_pseudo_delete_data_block\n");
-            //bm_pseudo_delete_data_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
-            msg->cmd = 0;
-            break;
-                 }
-        case 34: {
-            //d_printf1("query 34: bm_delete_tmp_blocks\n");
-            bm_delete_tmp_blocks(msg->sid);
-            msg->cmd = 0;
-            break;
-                 }
-        case 35: {
-            //d_printf1("query 35: bm_register_transaction\n");
-            bool isUsingSnapshot = (msg->data.data[0]) != 0;
+                         break;
 
-            bm_register_transaction(msg->sid, msg->trid);
-            try
-            {
-                WuOnRegisterTransactionExn(msg->sid, isUsingSnapshot, (TIMESTAMP*) &msg->data.snp_ts);
-            }
-            catch(ANY_SE_EXCEPTION)
-            {
-                bm_unregister_transaction(msg->sid, msg->trid);
-                throw;
-            }
+                     }
 
-            msg->cmd = 0;
-            break;
-                 }
-        case 36: {
-            //d_printf1("query 36: bm_unregister_transaction\n");
-            msg->cmd = 0;
+            case 10: {
+                         //d_printf1("query 10: soft shutdown\n");
+                         USemaphoreUp(wait_for_shutdown, __sys_call_error);
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 11: {
+                         //d_printf1("query 11: hard shutdown\n");
+                         USemaphoreUp(wait_for_shutdown, __sys_call_error);
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 21: {
+                         //d_printf1("query 21: bm_register_session\n");
+                         bm_reset_io_statistics();
+                         bm_register_session(msg->sid, msg->data.reg.num);
+                         msg->data.reg.num = bufs_num;
+                         msg->data.reg.mptr = mb->catalog_masterdata_block;
+                         msg->data.reg.transaction_flags = mb->transaction_flags;
+                         msg->data.reg.layer_size = mb->layer_size;
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 22: {
+                         //d_printf1("query 22: bm_unregister_session\n");
+                         bm_unregister_session(msg->sid);
+                         msg->cmd = 0;
+                         bm_log_out_io_statistics();
+                         break;
+                     }
+            case 23: {
+                         //d_printf1("query 23: bm_allocate_data_block\n");
+                         WuAllocateDataBlockExn(msg->sid,
+                                                &(msg->data.swap_data.ptr),
+                                                (ramoffs*)(&(msg->data.swap_data.offs)),
+                                                &(msg->data.swap_data.swapped));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 24: {
+                         //d_printf1("query 24: bm_allocate_tmp_block\n");
+                         WuAllocateTempBlockExn(msg->sid,
+                                               &(msg->data.swap_data.ptr),
+                                               (ramoffs*)(&(msg->data.swap_data.offs)),
+                                               &(msg->data.swap_data.swapped));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 25: {
+                         //d_printf1("query 25: bm_delete_block\n");
+                         WuDeleteBlockExn(msg->sid, *(xptr*)(&(msg->data.ptr)));
+                         msg->cmd = 0;
 
-            WuOnUnregisterTransactionExn(msg->sid);
-            bm_unregister_transaction(msg->sid, msg->trid);
+                         break;
+                     }
+            case 26: {
+                         //d_printf1("query 26: bm_get_block\n");
+                         WuGetBlockExn(msg->sid,
+                                      msg->data.swap_data.ptr,
+                                      (ramoffs*)(&(msg->data.swap_data.offs)),
+                                      &(msg->data.swap_data.swapped));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 27: {
+                         //d_printf1("query 27: bm_enter_exclusive_mode\n");
+                         bm_enter_exclusive_mode(msg->sid, &(msg->data.reg.num));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 28: {
+                         //d_printf1("query 28: bm_exit_exclusive_mode\n");
+                         bm_exit_exclusive_mode(msg->sid);
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 29: {
+                         //d_printf1("query 29: bm_memlock_block\n");
+                         bm_memlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 30: {
+                         //d_printf1("query 30: bm_memunlock_block\n");
+                         bm_memunlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 31: {
+                         //d_printf1("query 31: bm_block_statistics\n");
+                         bm_block_statistics(&(msg->data.stat));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 32: {
+                         //d_printf1("query 32: bm_pseudo_allocate_data_block\n");
+                         //bm_pseudo_allocate_data_block(msg->sid, (xptr*)(&(msg->data.ptr)));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 33: {
+                         //d_printf1("query 33: bm_pseudo_delete_data_block\n");
+                         //bm_pseudo_delete_data_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 34: {
+                         //d_printf1("query 34: bm_delete_tmp_blocks\n");
+                         bm_delete_tmp_blocks(msg->sid);
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 35: {
+                         //d_printf1("query 35: bm_register_transaction\n");
+						 bool isUsingSnapshot = (msg->data.data[0]) != 0;
 
-            if (mb->catalog_masterdata_block != msg->data.ptr) {
-                mb->catalog_masterdata_block = msg->data.ptr;
-                flush_master_block();
-            }
+                         bm_register_transaction(msg->sid, msg->trid);
+						 try
+						 {
+							 WuOnRegisterTransactionExn(msg->sid, isUsingSnapshot, (TIMESTAMP*) &msg->data.snp_ts);
+						 }
+						 catch(ANY_SE_EXCEPTION)
+						 {
+							 bm_unregister_transaction(msg->sid, msg->trid);
+							 throw;
+						 }
 
-            /* TODO: check if we can advance snapshots and probably advance */
-            msg->cmd = 0;
-            break;
-                 }
-        case 37:
-            {
-                /* create version for the block */
-                WuCreateBlockVersionExn(msg->sid,
-                    msg->data.swap_data.ptr,
-                    (ramoffs*)(&(msg->data.swap_data.offs)),
-                    &(msg->data.swap_data.swapped));
-                msg->cmd = 0;
-                break;
-            }
-        case 38:
-            {
-                /* rollback or commit notification */
-                bool isRollback = (msg->data.data[0] != 0);
-                if (isRollback)
-                {
-                    WuOnRollbackTransactionExn(msg->sid);
-                }
-                else
-                {
-                    WuOnCommitTransactionExn(msg->sid);
-                }
-                msg->cmd = 0;
-                break;
-            }
-        case 39:
-            {
-                /*
-                * hot-backup request
-                * important note: sm doesn't check consistency of requests. it presumes correct sequence of calls.
-                * for now such checkings are performed in gov process, so we should be ok with this.
-                */
+                         msg->cmd = 0;
+                         break;
+                     }
+            case 36: {
+                         //d_printf1("query 36: bm_unregister_transaction\n");
+                         msg->cmd = 0;
 
-                if (msg->data.hb_struct.state == HB_START)
-                    msg->data.hb_struct.state =	hbProcessStartRequest(msg->data.hb_struct.state,
-                    msg->data.hb_struct.is_checkp,
-                    msg->data.hb_struct.incr_state);
+						 WuOnUnregisterTransactionExn(msg->sid);
+                         bm_unregister_transaction(msg->sid, msg->trid);
 
-                else if (msg->data.hb_struct.state == HB_ARCHIVELOG)
-                    msg->data.hb_struct.state =	hbProcessLogArchRequest(&(msg->data.hb_struct.lnumber));
+                         if (mb->catalog_masterdata_block != msg->data.ptr) {
+                             mb->catalog_masterdata_block = msg->data.ptr;
+                             flush_master_block();
+                         }
 
-                else if (msg->data.hb_struct.state == HB_GETPREVLOG)
-                    msg->data.hb_struct.state =	hbProcessGetPrevLogRequest(&(msg->data.hb_struct.lnumber));
+                         msg->cmd = 0;
+                         break;
+                     }
+			case 37:
+                     {
+						 /* create version for the block */
+                         WuCreateBlockVersionExn(msg->sid,
+                                      msg->data.swap_data.ptr,
+                                      (ramoffs*)(&(msg->data.swap_data.offs)),
+                                      &(msg->data.swap_data.swapped));
+                         msg->cmd = 0;
+                         break;
+                     }
+			case 38:
+                     {
+						 /* rollback or commit notification */
+						 bool isRollback = (msg->data.data[0] != 0);
+						 if (isRollback)
+						 {
+							 WuOnRollbackTransactionExn(msg->sid);
+						 }
+						 else
+						 {
+							 WuOnCommitTransactionExn(msg->sid);
+						 }
+						 msg->cmd = 0;
+						 break;
+                     }
+			case 39:
+                     {
+						 /*
+						  * hot-backup request
+						  * important note: sm doesn't check consistency of requests. it presumes correct sequence of calls.
+						  * for now such checkings are performed in gov process, so we should be ok with this.
+						  */
 
-                else if (msg->data.hb_struct.state == HB_END)
-                    msg->data.hb_struct.state =	hbProcessEndRequest();
+						 if (msg->data.hb_struct.state == HB_START)
+							msg->data.hb_struct.state =	hbProcessStartRequest(msg->data.hb_struct.state,
+																			  msg->data.hb_struct.is_checkp,
+																			  msg->data.hb_struct.incr_state);
 
-                else if (msg->data.hb_struct.state == HB_ERR)
-                    msg->data.hb_struct.state =	hbProcessErrorRequest();
+						 else if (msg->data.hb_struct.state == HB_ARCHIVELOG)
+						 	msg->data.hb_struct.state =	hbProcessLogArchRequest(&(msg->data.hb_struct.lnumber));
 
-                else
-                    msg->data.hb_struct.state = HB_ERR;
+						 else if (msg->data.hb_struct.state == HB_GETPREVLOG)
+						 	msg->data.hb_struct.state =	hbProcessGetPrevLogRequest(&(msg->data.hb_struct.lnumber));
 
-                msg->cmd = 0;
-                break;
-            }
-        default: {
-            //d_printf2("query unknown (%d)\n", msg->cmd);
-            msg->cmd = 1;
-            break;
-                 }
+						 else if (msg->data.hb_struct.state == HB_END)
+						 	msg->data.hb_struct.state =	hbProcessEndRequest();
+
+						 else if (msg->data.hb_struct.state == HB_ERR)
+						 	msg->data.hb_struct.state =	hbProcessErrorRequest();
+
+						 else
+						 	msg->data.hb_struct.state = HB_ERR;
+
+						 msg->cmd = 0;
+						 break;
+                     }
+            default: {
+                         //d_printf2("query unknown (%d)\n", msg->cmd);
+                         msg->cmd = 1;
+                         break;
+                     }
         }
         ReleaseGiantLock(); isGiantLockObtained = false;
     } catch (SednaUserException &e) {
@@ -502,12 +505,6 @@ int main(int argc, char **argv)
         ppc->startup(ppc_ex);
 
         elog(EL_LOG, ("Ping client has been started"));
-
-        open_global_memory_mapping(SE4400);
-        get_vmm_region_values();
-        close_global_memory_mapping();
-
-        elog(EL_LOG, ("VMM region values determined"));
 
         if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) == 0)
         {
@@ -695,8 +692,6 @@ int main(int argc, char **argv)
 
         delete ssmmsg;
         ssmmsg = NULL;
-
-        //		WuAdvanceSnapshotsExn();
 
         //shutdown checkpoint thread (it also makes checkpoint)
         shutdown_chekpoint_thread();

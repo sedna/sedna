@@ -54,7 +54,11 @@ struct ft_custom_cell
 	inline ft_custom_cell() : ns_local(NULL_XMLNS) {};
 
 	inline ft_custom_cell(xmlns_ptr_pers _ns, xmlns_ptr _ns_local, const char* _local,ft_index_type _cm) :
-        	ns_pers(_ns), ns_local(_ns_local), local(NULL), cm(_cm) { local = cat_strcpy(this, _local); };
+        	ns_pers(_ns), ns_local(_ns_local), local(NULL), cm(_cm)
+    {
+	    local = new char[strlen(_local) + 1];
+	    strcpy(local, _local);
+    };
 
     inline bool less( ft_custom_cell *p1)
     {
@@ -158,9 +162,6 @@ struct ft_index_cell_object : public catalog_object
     };
 
     ~ft_index_cell_object() {
-        cat_free(index_title);
-        cat_free(doc_name);
-
         if (this->custom_tree!=NULL)  delete_ft_custom_tree(this->custom_tree);
     };
 
@@ -172,13 +173,13 @@ struct ft_index_cell_object : public catalog_object
       )
     {
         ft_index_cell_object * obj =
-          new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(ft_index_cell_object)))
+          new(cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(ft_index_cell_object)))
           ft_index_cell_object(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, _impl);
 
         catalog_object_header * header = catalog_create_object(obj);
         catalog_set_name(catobj_ft_indicies, _index_title, header);
         catalog_htable_set(catobj_ft_indicies, _index_title, (_is_doc ? 'D' : 'C'), _doc_name);
-        
+
         return header;
     };
 

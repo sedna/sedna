@@ -205,24 +205,6 @@ void bm_startup()
     if (USemaphoreCreate(&cat_master_sem, 1, 1, CATALOG_MASTER_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "CATALOG_MASTER_SEMAPHORE_STR");
 
-/*
-    if (USemaphoreCreate(&indirection_table_sem, 1, 1, INDIRECTION_TABLE_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4010, "INDIRECTION_TABLE_SEMAPHORE_STR");
-
-    if (USemaphoreCreate(&metadata_sem, 1, 1, METADATA_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4010, "METADATA_SEMAPHORE_STR");
-
-    if (USemaphoreCreate(&index_sem, 1, 1, INDEX_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4010, "INDEX_SEMAPHORE_STR");
-#ifdef SE_ENABLE_FTSEARCH
-    if (USemaphoreCreate(&ft_index_sem, 1, 1, FT_INDEX_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4010, "FT_INDEX_SEMAPHORE_STR");
-#endif
-#ifdef SE_ENABLE_TRIGGERS
-    if (USemaphoreCreate(&trigger_sem, 1, 1, TRIGGER_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4010, "TRIGGER_SEMAPHORE_STR");
-#endif
-*/
     // Create shared memory
     if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
@@ -243,8 +225,12 @@ void bm_startup()
     // init physical xptrs table
     phys_xptrs = se_new t_xptr_info(sm_globals::bufs_num);
 
-    mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
+    mb = (bm_masterblock*)(((uint32_t)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     read_master_block();
+
+    LAYER_ADDRESS_SPACE_SIZE = mb->layer_size;
+
+    U_ASSERT(LAYER_ADDRESS_SPACE_SIZE != 0);
 }
 
 void bm_shutdown()
@@ -284,21 +270,6 @@ void bm_shutdown()
     if (USemaphoreRelease(cat_master_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "CATALOG_MASTER_SEMAPHORE_STR");
 
-/*
-    if (USemaphoreRelease(metadata_sem, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "METADATA_SEMAPHORE_STR");
-
-    if (USemaphoreRelease(index_sem, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "INDEX_SEMAPHORE_STR");
-#ifdef SE_ENABLE_FTSEARCH
-    if (USemaphoreRelease(ft_index_sem, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "FT_INDEX_SEMAPHORE_STR");
-#endif
-#ifdef SE_ENABLE_TRIGGERS
-    if (USemaphoreRelease(trigger_sem, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "TRIGGER_SEMAPHORE_STR");
-#endif
-*/
     d_printf1("Release semaphores: complete\n");
 
     _bm_release_buffer_pool();
@@ -369,7 +340,7 @@ void bm_unregister_session(session_id sid)
 		because SM can callback TRN *after* the callback thread is already gone and will lock forever. */
 	/* if (USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error) != 0)
 		throw SYSTEM_ENV_EXCEPTION("Cannot up SM_TO_VMM_CALLBACK_SEM1_BASE_STR"); */
-	xptr special = {0, (void*)-1};
+	xptr special = {0, (lsize_t)-1};
 
 	unmap_block_in_tr(special, it->second, true);
 
@@ -392,7 +363,7 @@ void bm_register_transaction(session_id sid, transaction_id trid)
     d_printf2("Register transaction with trid = %d\n", trid);
 }
 
-void bm_unregister_transaction(session_id sid, transaction_id trid) 
+void bm_unregister_transaction(session_id sid, transaction_id trid)
 {
     // for now trid is not used in any extent
     d_printf2("Unregister transaction with trid = %d\n", trid);

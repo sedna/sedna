@@ -91,7 +91,7 @@ index_cell_xptr create_index (PathExpr *object_path,
         doc_name, is_doc
       ), true);
 
-    schemaroot.modify()->full_index_list.add(idc.ptr());
+    schemaroot.modify()->full_index_list->add(idc.ptr());
 
     idx_user_data ud;
     ud.t=keytype;
@@ -120,11 +120,11 @@ index_cell_xptr create_index (PathExpr *object_path,
 		{
 			xptr blk;
 			//VI. Add pair <&ind,&sn_obj> into schema node (the special list is used)
-			skey[j].modify()->index_list.add(index_ref(idc.ptr(), sobj[i], skey[j]));
+			skey[j].modify()->index_list->add(index_ref(idc.ptr(), sobj[i], skey[j]));
 
             t_scmnodes skeydep = execute_node_test(skey[j], node_test_nodes_deep);
             for (t_scmnodes::iterator k = skeydep.begin(); k != skeydep.end(); k++) {
-                (*k)->index_list.add(index_ref(idc.ptr(), sobj[i], skey[j]));
+                (*k)->index_list->add(index_ref(idc.ptr(), sobj[i], skey[j]));
             }
 
 			RECOVERY_CRASH;

@@ -75,12 +75,12 @@ void index_cell_object::deserialize_data(se_simplestream &stream)
     char * obj_str;
     char * key_str;
 
-    obj_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    obj_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, obj_str);
     object = lr2PathExpr(NULL, obj_str, pe_catalog_aspace);
     free(obj_str);
 
-    key_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    key_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, key_str);
     key = lr2PathExpr(NULL, key_str, pe_catalog_aspace);
     free(key_str);
@@ -117,13 +117,13 @@ void index_cell_object::new_node_available(schema_node_cptr snode) const
             t_scmnodes keys=execute_abs_path_expr(*i, key);
             FOR_EACH(j, keys, t_scmnodes) {
                 if (snode.ptr() == *j) {
-                    snode->index_list.add(index_ref(this->p_object, *i, *j));
+                    snode->index_list->add(index_ref(this->p_object, *i, *j));
                     break;
                 }
                 t_scmnodes keydeps = execute_node_test(*i, node_test_nodes_deep);
                 FOR_EACH(k, keydeps, t_scmnodes) {
                     if (snode.ptr() == *j) {
-                        snode->index_list.add(index_ref(this->p_object, *i, *j));
+                        snode->index_list->add(index_ref(this->p_object, *i, *j));
                         break;
                     }
                 }

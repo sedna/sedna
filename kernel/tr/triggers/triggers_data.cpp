@@ -137,10 +137,10 @@ void trigger_cell_object::serialize_data(se_simplestream &stream)
 
 void trigger_cell_object::deserialize_data(se_simplestream &stream)
 {
-    trigger_title = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    trigger_title = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, trigger_title);
     stream.read(&schemaroot, sizeof(doc_schema_node_xptr));
-    doc_name = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    doc_name = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, doc_name);
     stream.read(&is_doc, sizeof(bool));
     stream.read(&trigger_event, sizeof(enum trigger_event));
@@ -152,9 +152,9 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
 
     while (* (void **) stream.get_content() != NULL) {
         j = i;
-        i = (trigger_action_cell *) cat_malloc_context(CATALOG_COMMON_CONTEXT, sizeof(trigger_action_cell));
+        i = (trigger_action_cell *) cat_malloc(this, sizeof(trigger_action_cell));
         i->next = NULL;
-        i->statement = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+        i->statement = (char *) cat_malloc(this, stream.read_string_len());
         stream.read_string(SSTREAM_SAVED_LENGTH, i->statement);
         stream.read(&i->is_query, sizeof(bool));
         if (trigger_action == NULL) { trigger_action = i; }
@@ -166,45 +166,30 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
     char* trigger_path_str;
     char* path_to_parent_str;
 
-    trigger_path_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    trigger_path_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, trigger_path_str);
 
     if (trigger_path_str != NULL) {
         trigger_path = lr2PathExpr(NULL, trigger_path_str, pe_catalog_aspace);
-        cat_free(trigger_path_str);
+        free(trigger_path_str);
     } else {
         trigger_path = NULL;
     }
 
-    path_to_parent_str = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    path_to_parent_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, path_to_parent_str);
 
     if (path_to_parent_str != NULL) {
         path_to_parent = lr2PathExpr(NULL, path_to_parent_str, pe_catalog_aspace);
-        cat_free(path_to_parent_str);
+        free(path_to_parent_str);
     } else {
         path_to_parent = NULL;
     }
 
-    innode.name = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, stream.read_string_len());
+    innode.name = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, innode.name);
     stream.read(&innode.type, sizeof(t_item));
 }
-
-trigger_cell_object::~trigger_cell_object()
-{
-    cat_free(trigger_title);
-    cat_free(doc_name);
-    trigger_action_cell *j, *i = trigger_action;
-    while (i != NULL) {
-        j = i;
-        i = i->next;
-        cat_free(j->statement);
-        cat_free(j);
-    }
-    cat_free(innode.name);
-}
-
 
 void trigger_cell_object::drop()
 {

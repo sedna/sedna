@@ -31,7 +31,7 @@ extern volatile void * vmm_cur_ptr;
 
 void vmm_determine_region(bool log = false);
 
-void vmm_preliminary_call();
+void vmm_preliminary_call(lsize_t layer_size);
 
 void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode);
 void vmm_on_session_end();
@@ -117,9 +117,9 @@ extern xptr vmm_checkp_xptr;
 
 #define VMM_SIGNAL_MODIFICATION(p)    {                                                          \
                                           VMM_TRACE_SIGNAL_MODIFICATION(p)                       \
-                                          if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != tr_globals::sid) \
+                                          if (((vmm_sm_blk_hdr*)((uintptr_t)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != tr_globals::sid) \
                                           vmm_unswap_block_write(p);                             \
-                                          ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;                     \
+                                          ((vmm_sm_blk_hdr*)((uintptr_t)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;                     \
                                           RECOVERY_CRASH;                                        \
                                       }
 

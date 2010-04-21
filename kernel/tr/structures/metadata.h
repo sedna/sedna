@@ -25,7 +25,7 @@ struct metadata_cell_object : public catalog_object {
     bool is_doc; /* persistent */
 
 /* Common catalog object interface */
-    
+
     static const int magic = 0x020;
     int get_magic() { return magic; };
     void serialize_data(se_simplestream &stream);
@@ -39,14 +39,10 @@ struct metadata_cell_object : public catalog_object {
         is_doc(_is_doc)
       { name = cat_strcpy(this, _name); };
 
-    ~metadata_cell_object() { 
-        cat_free(name);
-    };
-
     static catalog_object_header * create(bool _is_doc, const char * _name)
     {
-        metadata_cell_object * obj = 
-          new(cat_malloc(CATALOG_PERSISTENT_CONTEXT, sizeof(metadata_cell_object)))
+        metadata_cell_object * obj =
+          new(cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(metadata_cell_object)))
           metadata_cell_object(_is_doc, _name);
 
         catalog_object_header * header = catalog_create_object(obj);
@@ -62,7 +58,7 @@ struct metadata_cell_cptr : public catalog_cptr_template<metadata_cell_object> {
         catalog_cptr_template<metadata_cell_object>(aobj, writable) {} ;
     explicit inline metadata_cell_cptr (const char * title, bool write_mode = false) :
         catalog_cptr_template<metadata_cell_object>(catalog_find_name(catobj_metadata, title), write_mode) {};
-    inline metadata_cell_cptr (const xptr p, bool writable = false) : 
+    inline metadata_cell_cptr (const xptr p, bool writable = false) :
         catalog_cptr_template<metadata_cell_object>(p, writable) {};
 };
 

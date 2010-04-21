@@ -11,6 +11,7 @@
 #include "common/argtable.h"
 #include "common/base.h"
 #include "sm/sm_globals.h"
+#include "common/xptr.h"
 
 #include <stdint.h>
 
@@ -35,7 +36,6 @@ void create_cfg_file();
 
 void create_data_directory();
 
-//lsize_t determine_layer_size(int db_id);
+lsize_t determine_layer_size(int db_id, const gov_header_struct& cfg);
 
 #endif /* _CDB_GLOBALS_H */
-

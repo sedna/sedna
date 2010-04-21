@@ -44,7 +44,7 @@ void execute_modifications()
         it++;
     }
 
-	clear_ft_sequences(); 
+	clear_ft_sequences();
 }
 void update_insert_sequence(xptr node,ft_index_cell_cptr icell)
 {
@@ -86,7 +86,7 @@ void update_delete_sequence(xptr node,ft_index_cell_cptr icell)
 
 void update_insert_sequence(xptr node,schema_node_cptr icell)
 {
-    cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list.first;
+    cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list->first;
     if (obj == NULL) return;
     CHECKP(node);
     xptr ind=((n_dsc*)XADDR(node))->indir;
@@ -100,7 +100,7 @@ void update_insert_sequence(xptr node,schema_node_cptr icell)
 
 void update_update_sequence(xptr node,schema_node_cptr icell)
 {
-    cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list.first;
+    cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list->first;
     if (obj==NULL) return;
     CHECKP(node);
     xptr ind=((n_dsc*)XADDR(node))->indir;
@@ -114,7 +114,7 @@ void update_update_sequence(xptr node,schema_node_cptr icell)
 
 void update_delete_sequence(xptr node,schema_node_cptr icell)
 {
-    cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list.first;
+    cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list->first;
     if (obj==NULL) return;
     CHECKP(node);
     xptr ind=((n_dsc*)XADDR(node))->indir;
@@ -144,11 +144,11 @@ void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent)
         scn=(GETBLOCKBYNODE(tmp))->snode->parent;
     }
 
-    if (scn->root == scn.ptr() || scn->root->full_ft_index_list.empty()) return;
+    if (scn->root == scn.ptr() || scn->root->full_ft_index_list->empty()) return;
 
     while (scn.found())
     {
-        cat_list<ft_index_cell_xptr>::item* obj=scn->ft_index_list.first;
+        cat_list<ft_index_cell_xptr>::item* obj=scn->ft_index_list->first;
         if (obj!=NULL)
         {
             tmp=getNodeAncestorIndirectionByScheme(tmp,scn);

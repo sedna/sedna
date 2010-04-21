@@ -8,12 +8,14 @@
 #include "common/sedna.h"
 
 #include "common/base.h"
+#include "common/config.h"
 #include "sm/cdb_globals.h"
 #include "common/utils.h"
 #include "common/u/uprocess.h"
 #include "common/u/uhdd.h"
+#include "common/u/uutils.h"
 #include "common/version.h"
-
+#include "common/xptr.h"
 
 using namespace std;
 using namespace cdb_globals;
@@ -56,22 +58,22 @@ static arg_rec cdb_argtable[] =
 };
 
 
-static void 
-print_cdb_usage(int ret_code) 
+static void
+print_cdb_usage(int ret_code)
 {
     fprintf(stdout, "Usage: se_cdb [options] dbname\n\n");
-    fprintf(stdout, "options:\n%s\n", arg_glossary(cdb_argtable, cdb_narg, "  ")); 
+    fprintf(stdout, "options:\n%s\n", arg_glossary(cdb_argtable, cdb_narg, "  "));
     exit(ret_code);
 }
 
-void 
+void
 parse_cdb_command_line(int argc, char** argv)
 {
    char errmsg[1000];
 
-   if (argc == 1) 
+   if (argc == 1)
        print_cdb_usage(1);
-   
+
    int res = arg_scanargv(argc, argv, cdb_argtable, cdb_narg, NULL, errmsg, NULL);
 
    if (cdb_s_help == 1 || cdb_l_help == 1)
@@ -88,7 +90,7 @@ parse_cdb_command_line(int argc, char** argv)
 
 
 
-void 
+void
 setup_cdb_globals(gov_config_struct* cfg)
 {
 
@@ -109,7 +111,7 @@ setup_cdb_globals(gov_config_struct* cfg)
 
    if (strcmp(sm_globals::db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
-   
+
    if(data_file_initial_size < 1)
 	   throw USER_EXCEPTION2(SE4601, "'data_file_init_size' parameter is incorrect (must be >= 1)");
    if(sm_globals::tmp_file_initial_size < 1)
@@ -123,12 +125,12 @@ setup_cdb_globals(gov_config_struct* cfg)
 	   throw USER_EXCEPTION2(SE4601, "'data_file_ext_portion' parameter is incorrect (must be >= 1 and <= data_file_max_size)");
    if(tmp_file_extending_portion < 1 || tmp_file_extending_portion > (tmp_file_max_size == 0 ? INT32_MAX : tmp_file_max_size ))
 	   throw USER_EXCEPTION2(SE4601, "'tmp_file_ext_portion' parameter is incorrect (must be >= 1 and <= tmp_file_max_size)");
-       
+
    check_db_name_validness(sm_globals::db_name);
 
    if (strlen(cfg->gov_vars.SEDNA_DATA) + strlen(sm_globals::db_name) + 14 > U_MAX_PATH)
        throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
-   
+
    strcpy(sm_globals::db_files_path, cfg->gov_vars.SEDNA_DATA);
    strcat(sm_globals::db_files_path, "/data/");
    strcat(sm_globals::db_files_path, sm_globals::db_name);
@@ -136,7 +138,7 @@ setup_cdb_globals(gov_config_struct* cfg)
 }
 
 
-static inline string 
+static inline string
 replaceAll(string context, const char* src, const char* dst) {
     size_t lookHere = 0;
     size_t foundHere;
@@ -149,7 +151,7 @@ replaceAll(string context, const char* src, const char* dst) {
     return context;
 }
 
-void create_cfg_file() 
+void create_cfg_file()
 {
    char buf[100];
    unsigned int nbytes_written = 0;
@@ -177,7 +179,7 @@ void create_cfg_file()
    uReleaseSA(dir_sa, __sys_call_error);
 
    string db_name_str = replaceAll(string(sm_globals::db_name), "&", "&amp;");
-   
+
    cfg_file_content =  "<?xml version=\"1.0\" standalone=\"yes\"?>\n";
    cfg_file_content += "<db>\n";
    cfg_file_content += "   <name>" + db_name_str + string("</name>\n");
@@ -194,7 +196,7 @@ void create_cfg_file()
    int res = uWriteFile(cfg_file_handle,
                         cfg_file_content.c_str(),
                         cfg_file_content.size(),
-                        &nbytes_written, 
+                        &nbytes_written,
                         __sys_call_error);
 
    if ( res == 0 || nbytes_written != cfg_file_content.size())
@@ -222,8 +224,8 @@ void create_data_directory()
    uReleaseSA(dir_sa, __sys_call_error);
 }
 
-/*
-lsize_t determine_layer_size(int db_id)
+
+lsize_t determine_layer_size(int db_id, const gov_header_struct& cfg)
 {
     char buf[128];
     char path_buf[U_MAX_PATH + 10];
@@ -233,20 +235,21 @@ lsize_t determine_layer_size(int db_id)
     UShMem p_cdb_callback_file_mapping;
     lsize_t *p_cdb_callback_data;
 
-    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1", NULL, __sys_call_error);
-    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(os_primitives_id_min_bound, buf, 10), NULL, __sys_call_error);
+    U_ASSERT(db_id != -1);
+
+    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, u_itoa(db_id, buf, 10), NULL, __sys_call_error);
+    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf, 10), NULL, __sys_call_error);
 
     std::string path_str = uGetImageProcPath(path_buf, __sys_call_error) + std::string("/") + SESSION_EXE;
     strcpy(path_buf, path_str.c_str());
 
     // Result from transaction will be returned to this shared memory segment
     // So, we should create and attach it
-    if (uCreateShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof lsize_t, NULL, __sys_call_error) != 0)
+    if (uCreateShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(lsize_t), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-    p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof lsize_t, __sys_call_error);
-    if (p_sm_callback_data == NULL)
+    p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof(lsize_t), __sys_call_error);
+    if (p_cdb_callback_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-    p_cdb_callback_data = 0;
 
     if (uCreateProcess(path_buf,
         false, // inherit handles
@@ -258,18 +261,21 @@ lsize_t determine_layer_size(int db_id)
         NULL,
         NULL,
         __sys_call_error) != 0)
-        throw SYSTEM_ENV_EXCEPTION("Cannot create process to determine VMM region");
+        throw USER_ENV_EXCEPTION("Cannot create process to determine VMM region", false);
 
     int status = 0;
     int res = 0;
 
     res = uWaitForChildProcess(pid, process_handle, &status, __sys_call_error);
     if (0 != res || status)
-        throw SYSTEM_ENV_EXCEPTION((std::string("Cannot determine VMM region, status: ") + int2string(status) + ", result: " + int2string(res)).c_str());
+        throw USER_ENV_EXCEPTION((std::string("Cannot determine VMM region, status: ") + int2string(status) + ", result: " + int2string(res)).c_str(), false);
 
-    uCloseProcess(process_handle, __sys_call_error);
-    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0", NULL, __sys_call_error);
+    uCloseProcessHandle(process_handle, __sys_call_error);
 
+    // for the next se_trn run
+    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "-1", NULL, __sys_call_error);
+
+    // size of the layer should be right there
     layer_size = *p_cdb_callback_data;
 
     // dettach/destroy the mapping
@@ -285,4 +291,3 @@ lsize_t determine_layer_size(int db_id)
 
     return layer_size;
 }
-*/

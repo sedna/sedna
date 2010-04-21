@@ -55,7 +55,7 @@ static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
 
 /* Converts logical log namespace presentation into pointer the real object */
 static inline xmlns_ptr
-llGetNamespaceFromRecord(const char* prefix, 
+llGetNamespaceFromRecord(const char* prefix,
                          const char* uri)
 {
     U_ASSERT(prefix != NULL && uri != NULL);
@@ -126,7 +126,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	       indirectionSetRollbackRecord(self);
 
       xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
-      
+
       insert_element(removeIndirection(left),
                      removeIndirection(right),
                      removeIndirection(parent),
@@ -572,7 +572,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
 
        xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
        U_ASSERT(ns != NULL_XMLNS);
-       
+
        insert_namespace(removeIndirection(left),
                         removeIndirection(right),
                         removeIndirection(parent),
@@ -952,7 +952,7 @@ void rcvRecoverFtIndexes()
         new_x = removeIndirection(*it);
         CHECKP(new_x);
         scm = (GETBLOCKBYNODE(new_x))->snode;
-        sft = scm->ft_index_list.first;
+        sft = scm->ft_index_list->first;
 
         while (sft != NULL)
         {

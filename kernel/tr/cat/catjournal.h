@@ -10,8 +10,6 @@ struct catalog_name_record {
     catalog_object_header * obj;
     catalog_name_record * next;
     bool name_deleted;
-
-    ~catalog_name_record() { cat_free(name); }
 };
 
 struct catalog_name_trees {
@@ -68,7 +66,6 @@ struct local_catalog_header : public catalog_header {
     FastPointerArray header_list;
     FastPointerArray object_list;
     FastPointerArray namerecord_list;
-    FastPointerArray pointer_list;
 
     catalog_name_trees masterdata;
 
@@ -89,7 +86,6 @@ struct local_catalog_header : public catalog_header {
 
         catalog_journal_tail = cr;
         cr->next = NULL;
-        pointer_list.add(cr);
     }
 
     local_catalog_header() :
@@ -98,16 +94,15 @@ struct local_catalog_header : public catalog_header {
         catalog_journal(NULL), catalog_journal_tail(NULL) { }
 
     ~local_catalog_header() {
-        header_list.destroyAll<catalog_object_header>();
-        object_list.destroyAll<catalog_object>();
-        namerecord_list.destroyAll<catalog_name_record>();
-        pointer_list.freeAll();
+        header_list.destroyAll<catalog_object_header>(NULL);
+        object_list.destroyAll<catalog_object>(NULL);
+        namerecord_list.destroyAll<catalog_name_record>(NULL);
     };
 };
 
 void catalog_update_metadata();
 
-inline uint16_t hash(const xptr &p) { return ((uint32_t) p.addr >> 7) % CCACHE_XPTR_BUCKETS ; };
+inline uint16_t hash(const xptr &p) { return ((uint32_t) p.offs >> 7) % CCACHE_XPTR_BUCKETS ; };
 
 inline uint16_t hash(const char * a) {
     uint8_t i = 0;
@@ -134,7 +129,7 @@ inline catalog_name_record * catalog_cachetree_add_name(
         catalog_object_header * obj)
 {
     catalog_name_record ** r = &(local_catalog->names[hash(name)]);
-    catalog_name_record * n = new(cat_malloc(local_catalog->names, sizeof(catalog_name_record))) catalog_name_record;
+    catalog_name_record * n = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_name_record))) catalog_name_record;
 
     n->name = cat_strcpy(n, name);
     n->obj = obj;

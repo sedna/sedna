@@ -63,7 +63,7 @@ static void remove_hints(schema_node_cptr nd)
     nd.modify()->lastnode_ind=XNULL;
 
     cat_list<sc_ref>::item * sc;
-    for (sc = nd->children.first; sc != NULL; sc = sc->next) {
+    for (sc = nd->children->first; sc != NULL; sc = sc->next) {
         remove_hints(sc->object.snode);
     }
 }
