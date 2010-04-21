@@ -33,7 +33,7 @@ else (EXISTS ${CMAKE_SOURCE_DIR}/libs/${CMAKE_SYSTEM_NAME}/expat) # extract expa
         if (NOT NMAKE_BINARY)
             message(FATAL_ERROR "Cannot find nmake to build expat library -- aborting")
         endif (NOT NMAKE_BINARY)
-        set(expat_config_command echo Expat configure...)
+        set(expat_config_command cmd /C echo Expat configure...)
         set(expat_make_command ${NMAKE_BINARY} /f ${CMAKE_SOURCE_DIR}/libs/expat_static.mak)
     set(expat_build_dir ${EXPAT_TAR_DIR}/lib)
     else (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

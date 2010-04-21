@@ -62,7 +62,7 @@ else (GEN_LEXER)
     foreach (lf ${generated_lexer_files})
         if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/xqp/${lf})
             MESSAGE(FATAL_ERROR "Pregenerated lexer file ${CMAKE_CURRENT_SOURCE_DIR}/xqp/${lf} not found. Use Sedna source build or generate it manually")
-        endif (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/xqp${lf})
+        endif (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/xqp/${lf})
     endforeach (lf)
 endif (GEN_LEXER)
 
