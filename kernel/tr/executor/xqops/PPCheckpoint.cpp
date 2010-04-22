@@ -8,6 +8,7 @@
 #include "tr/log/log.h"
 #include "tr/tr_globals.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "common/llcommon/llMain.h"
 
 PPCheckpoint::PPCheckpoint(dynamic_context *_cxt_,
                            operation_info _info_) : PPIterator(_cxt_, _info_)
@@ -37,10 +38,11 @@ void PPCheckpoint::do_close()
 void PPCheckpoint::do_next (tuple &t)
 {
      t.set_eos();
-    //activate_and_wait_for_end_checkpoint();
-    // change of semantics -- se:checkpoint() makes checkpoint on transaction commit now
-    tr_globals::is_need_checkpoint_on_transaction_commit = true;
-    // call checkpoint here
+
+     /* Activate checkpoint without waiting for it.
+      * Due to our architecture it'll probably start after this transaction ended.
+      */
+     llActivateCheckpoint();
 }
 
 void PPCheckpoint::do_accept(PPVisitor &v)

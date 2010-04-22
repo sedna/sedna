@@ -1422,8 +1422,7 @@ sedna-err:SE4705
    Deadlock is detected
 sedna-err:SE4706
 
-   Cannot provide X-locks in RO-mode
-
+   Cannot perform update operations in Read-Only mode
 
 ######################################################################
 ### Static (semantic) analyzer errors (SA)

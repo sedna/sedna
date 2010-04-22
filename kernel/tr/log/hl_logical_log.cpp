@@ -403,19 +403,26 @@ void hl_logical_log_commit(transaction_id _trid)
 
     if (tr_globals::is_need_checkpoint_on_transaction_commit)
     {
-        up_transaction_block_sems();
-        sem_released = true;
         storage_on_transaction_end();
         catalog_on_transaction_end(true);
-        reportToWu(false, true);
+
+        // report to sm about commit
+        reportToWu(false /* not recovery */, true /* commit */);
+
         // dirty hack here!
         // we don't want this transaction to be redone ever
         // so we pretend it've been rolled back
         llLogRollback(_trid);
+
+        up_transaction_block_sems();
+        sem_released = true;
+
         activate_and_wait_for_end_checkpoint(true);
     }
     else
+    {
         llLogCommit(_trid);
+    }
 
 #ifdef LOG_TRACE
 	elog(EL_LOG, ("LOG_TRACE: Transaction is committed: trid=%d", tr_globals::trid));

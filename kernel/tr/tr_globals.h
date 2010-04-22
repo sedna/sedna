@@ -53,6 +53,12 @@ namespace tr_globals
     extern client_core*  client;
 
     extern int internal_auth_switch;
+    
+    /* waiting semaphore for tarnsaction. In some cases transaction may be asked to wait by sm after 
+     * an SSMMSG call. This is the semaphore to do the waiting. SM will up it when it's possible for 
+     * transaction to continue
+     */
+    extern USemaphore wait_sem;
 }
 
 

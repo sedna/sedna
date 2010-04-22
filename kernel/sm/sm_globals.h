@@ -50,16 +50,4 @@ std::string  construct_sm_command_line (char** argv);
 
 void         register_sm_on_gov();
 
-/*******************************************************************************
-********************************************************************************
-  GLOBAL VARIABLES FOR CHECKPOINT
-********************************************************************************
-*******************************************************************************/
-
-extern USemaphore wait_for_checkpoint;
-extern USemaphore checkpoint_sem;
-extern USemaphore concurrent_trns_sem;
-extern USemaphore wait_for_recovery;
-
 #endif /* _SM_GLOBALS_H */
-

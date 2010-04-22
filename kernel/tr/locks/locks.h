@@ -38,7 +38,6 @@ private:
     //std::list<resource_id> resource_l;
     bool tr_ro_mode; // is transaction in RO-mode?
     lock_mode mode;
-    USemaphore sem;
     SSMMsg *sm_server;
     void obtain_lock(const char* name, resource_kind kind, bool intention_mode = false);
 public:

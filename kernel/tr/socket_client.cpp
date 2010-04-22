@@ -551,6 +551,11 @@ void socket_client::set_session_options(msg_struct *msg)
         }
         pos += option_len;
     }
+
+    // disable ro-mode if log-less mode requested
+    if (tr_globals::is_log_less_mode)
+        tr_globals::is_ro_mode = false;
+
     d_printf1("\nSetting session option\n");
     sp_msg.instruction = se_SetSessionOptionsOk; // Session options have been set ok
     sp_msg.length = 0; 

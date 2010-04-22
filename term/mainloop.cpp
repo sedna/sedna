@@ -117,9 +117,10 @@ int set_commans_help()
     term_output1("\nLOG_LESS_MODE (\\ll - set, \\fl - unset) \n");
     term_output1("  When set, every bulkload will be less logged.\n  When unset, every bulkload will be\n");
     term_output1("  fully logged. By default transactions are run in full log mode.\n");
-    term_output1("       CAVEATS:\n");
-    term_output1("   1) this will commit any current transaction!\n");
+    term_output1("\n  CAVEATS:\n");
+    term_output1("   1) this will commit any current transaction in this session!\n");
     term_output1("   2) every commit might be much longer!\n");
+    term_output1("   3) transaction activity will be almost stalled since we're entering exclusive mode!\n");
     term_output1("\nQUERY_TIMEOUT=<time in secs>\n");
     term_output1("  When set, every query execution will be dropped on server if it lasts\n  longer than timeout set.\n");
     term_output1("  By default there is no any timeout set (query is executed as long as needed).\n");

@@ -37,17 +37,61 @@ using namespace std;
 using namespace tr_globals;
 
 static bool is_sm_server_inited = false;
+static bool wait_sem_inited     = false;
 static bool is_trid_obtained    = false;
 static bool need_sem            = true; // need to use semaphore for updater
 
+
+void wait_for_sm_to_unblock()
+{
+    int res;
+
+    for (;;)
+    {
+        res = USemaphoreDownTimeout(tr_globals::wait_sem, 1000, __sys_call_error);
+
+        if (res == 0) //unblocked
+        {
+            break;
+        }
+        else if (res == 2) // timeout
+        {
+            if (is_stop_session())
+                throw USER_EXCEPTION(SE4608);
+        }
+        else // error
+        {
+            throw USER_EXCEPTION2(SE4015, "SEDNA_TRANSACTION_LOCK");
+        }
+    }
+}
 
 static transaction_id
 get_transaction_id(SSMMsg* sm_server)
 {
     sm_msg_struct msg;
-    msg.cmd = 1;
-    if (sm_server->send_msg(&msg) !=0 )
-        throw USER_EXCEPTION(SE3034);
+
+    for (;;)
+    {
+        msg.cmd = 1; // give me a trid
+        msg.sid = tr_globals::sid;
+        msg.data.data[0] = tr_globals::is_ro_mode;
+        msg.data.data[1] = tr_globals::is_log_less_mode;
+
+        if (sm_server->send_msg(&msg) != 0)
+            throw USER_EXCEPTION(SE3034);
+
+        U_ASSERT(msg.cmd == 0 || msg.cmd == 1);
+
+        if (tr_globals::is_log_less_mode || msg.cmd == 1)
+        {
+            // wait for sm to unblock
+            wait_for_sm_to_unblock();
+        }
+
+        // we've obtained a trid
+        if (msg.cmd == 0) break;
+    }
 
     if (msg.trid == -1)
         throw USER_EXCEPTION(SE4607);
@@ -68,19 +112,27 @@ release_transaction_id(SSMMsg* sm_server)
         sm_msg_struct msg;
         msg.cmd = 2;
         msg.trid = trid;
-        msg.data.data[0] = !need_sem;
+        msg.sid = tr_globals::sid;
+        msg.data.data[0] = tr_globals::is_ro_mode;
 
         if (sm_server->send_msg(&msg) !=0 )
             throw USER_EXCEPTION(SE3034);
     }
-    is_trid_obtained = false;
 
+    is_trid_obtained = false;
 }
 
 void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
 {
     string log_files_path = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files/");
     char buf[1024];
+
+    d_printf1("Initializing waiting semaphore...");
+    if (0 != USemaphoreCreate(&tr_globals::wait_sem, 0, 1,
+            SEDNA_TRANSACTION_LOCK(tr_globals::sid, buf, 1024), NULL, __sys_call_error))
+       throw USER_EXCEPTION2(SE4010, "SEDNA_TRANSACTION_LOCK");
+    wait_sem_inited = true;
+    d_printf1("OK\n");
 
     sm_server = se_new SSMMsg(SSMMsg::Client,
                               sizeof (sm_msg_struct),
@@ -174,6 +226,15 @@ void on_session_end(SSMMsg* &sm_server)
         is_sm_server_inited = false;
     }
     d_printf1("OK\n");
+
+    d_printf1("Releasing waiting semaphore...");
+    if (wait_sem_inited)
+    {
+        if (0 != USemaphoreRelease(tr_globals::wait_sem, __sys_call_error))
+            throw USER_EXCEPTION2(SE4011, "SEDNA_TRANSACTION_LOCK");
+        wait_sem_inited = false;
+    }
+    d_printf1("OK\n");
 }
 
 void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active)
@@ -182,13 +243,12 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
 
     need_sem = !is_ro_mode;
 
-    if (need_sem)
-        down_transaction_block_sems();
-
     d_printf1("Getting transaction identifier...");
-
     trid = get_transaction_id(sm_server);
     d_printf1("OK\n");
+
+    if (need_sem)
+        down_transaction_block_sems();
 
     event_logger_set_trid(trid);
 
