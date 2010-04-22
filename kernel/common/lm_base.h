@@ -10,16 +10,6 @@
 #include "common/sedna.h"
 #include "common/base.h"
 
-/*
-#ifdef _WIN32
-#include <hash_map>
-#else
-#include <ext/hash_map>
-#endif
-*/
-
-#define LOCK_MGR_ON
-
 enum resource_kind {LM_DOCUMENT, LM_COLLECTION, LM_INDEX, LM_TRIGGER, LM_DATABASE};
 
 enum lock_mode

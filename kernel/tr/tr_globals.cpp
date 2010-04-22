@@ -54,6 +54,8 @@ namespace tr_globals
     pping_client* ppc     = NULL;
 
     int internal_auth_switch = DEPLOY_AUTH_CHECK;
+
+    USemaphore wait_sem;
 }
 
 static const size_t narg = 13;

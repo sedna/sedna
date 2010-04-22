@@ -14,45 +14,45 @@
 
 #include "common/lfsGlobals.h"
 
-#ifdef _WIN32
-#define CHEKPOINT_THREAD_STACK_SIZE		10024
-#else
-#define CHEKPOINT_THREAD_STACK_SIZE		102400
-#endif
+/******************************************************************************
+ * Some exclusive mode stuff
+ ******************************************************************************/
 
-#define TRMGR_ON
-//must be uncommneted
-#define CHECKPOINT_ON
-//#define TEST_CHECKPOINT_ON
-//must be uncommneted
-#define RECOVERY_ON
-//must be uncommneted
-//#define TEST_RECOVERY_ON
-//must be uncommneted
-#define RECOVERY_EXEC_MICRO_OP
+transaction_id xmGetExclusiveModeId();
+void xmEnterExclusiveMode(session_id sid);
+void xmExitExclusiveMode();
+void xmBlockSession(session_id sid);
+void xmTryToStartExclusive();
+
+/******************************************************************************
+ * Some checkpoint stuff
+ ******************************************************************************/
 
 void start_chekpoint_thread();
 void init_checkpoint_sems();
 void shutdown_chekpoint_thread();
 void release_checkpoint_sems();
-void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn);
-void recover_database_by_physical_and_logical_log(int db_id);
-
-void init_transaction_ids_table();
-void release_transaction_ids_table();
-transaction_id get_transaction_id();
-void give_transaction_id(transaction_id& trid);
-
-//extern USemaphore wait_for_checkpoint; 
-extern USemaphore checkpoint_finished;
 
 extern UEvent start_checkpoint_snapshot;
 extern UEvent end_of_rotr_event;
 
+/******************************************************************************
+ * Some trid management stuff
+ ******************************************************************************/
+
+void init_transaction_ids_table();
+void release_transaction_ids_table();
+transaction_id get_transaction_id(bool is_read_only);
+void give_transaction_id(transaction_id& trid, bool is_read_only);
+size_t get_active_transaction_num(bool updaters_only);
+
+/******************************************************************************
+ * Some recovery stuff
+ ******************************************************************************/
+
+void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn);
+void recover_database_by_physical_and_logical_log(int db_id);
+
 volatile extern bool is_recovery_mode;
 
-int PhOnInitialSnapshotCreate(TIMESTAMP ts);
-int PhOnSnapshotCreate(TIMESTAMP ts, TIMESTAMP *damTs, int damTsSize);
-void PhOnSnapshotDelete(TIMESTAMP ts, bool isDelete = true);
-int GetPhIndex(TIMESTAMP ts);
-#endif
+#endif /* _TR_MGR_H */

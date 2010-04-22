@@ -136,7 +136,9 @@ struct sm_msg_struct
 
         sm_blk_stat stat; // sm block statistics
 
-        char data[2 + MAX_RESOURCE_NAME_LENGTH]; // first byte->lock mode, second byte->resource type, other bytes->resource name
+        // for locks: first byte->lock mode, second byte->resource type, other bytes->resource name
+        // for others: first byte->read only?, second byte->need exclusive?
+        char data[2 + MAX_RESOURCE_NAME_LENGTH];
 
     } data;
 };

@@ -23,4 +23,6 @@ bool is_stop_session();
 void SwitchSessionToRO (bool flag);
 void SwitchLogMode     (int log_less_mode);
 
+void wait_for_sm_to_unblock();
+
 #endif /* _TR_COMMON_FUNCTIONS */

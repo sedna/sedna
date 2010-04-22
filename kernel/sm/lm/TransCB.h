@@ -13,21 +13,22 @@
 
 class lock_request;
 
-enum {NORMAL_PROCESSING, ROLLING_BACK_AFTER_DEADLOCK};
+enum
+{
+    NORMAL_PROCESSING, ROLLING_BACK_AFTER_DEADLOCK
+};
 
 class TransCB
 {
 public:
-  lock_request* locks; //anchor of transaction lock list
-  lock_request* wait; //lock waited for by this transaction (or NULL)  
-  TransCB* cycle; //used by deadlock detector
-  transaction_id tr_id; // the identifier of transaction
-  int status; //transaction status
+    lock_request* locks; //anchor of transaction lock list
+    lock_request* wait; //lock waited for by this transaction (or NULL)
+    TransCB* cycle; //used by deadlock detector
+    transaction_id tr_id; // the identifier of transaction
+    int status; //transaction status
   
-  TransCB(transaction_id _tr_id_);
-  void print();
-  //bool operator== (TransCB &);
-  //bool operator!= (TransCB &);
+    TransCB(transaction_id _tr_id_);
+    void print();
 };
 
-#endif
+#endif /* _TRANS_CB_H_ */

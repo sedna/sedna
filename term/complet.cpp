@@ -294,7 +294,7 @@ char *fromchain_comp_generator(const char *text, int state)
 static
 int determine_chains(const char *word, int *chains, int count)
 {
-    int i, j, found;
+    int i, j, found = 0;
     const char **chain;
     char *upword, *loword;
 

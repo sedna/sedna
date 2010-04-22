@@ -82,31 +82,69 @@ int sm_server_handler(void *arg)
         switch (msg->cmd)
         {
             case 1:  {//get identifier for transaction
-                         msg->trid = get_transaction_id();
-                         break;
-                     }
-            case 2:  {//give identifier for transaction
-                         give_transaction_id(msg->trid);
+                         bool isRO = (msg->data.data[0]) != 0;
+                         bool isExcl = (msg->data.data[1]) != 0;
 
-                         if (msg->data.data[0]) // query has just finished; snapshot advancement might be possible
-  						 {
-  						 	if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0)
-                         		throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
-						 }
-						 else // updater has just ended; check for need to advance snapshots or truncate the log
-						 {
-  						 	 // if we need maintenance checkpoint (truncate) do it
-                             if (llNeedCheckpoint())
-                                 llActivateCheckpoint();
-                             // else, activate thread for possible snapshot advancement
-                             else
-                                if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
-                         		     throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
+                         // even in an exclusive mode we don't block ro-transactions
+                         if (xmGetExclusiveModeId() != -1 && !isRO)
+                         {
+                             xmBlockSession(msg->sid);
+
+                             msg->cmd = 1; // come again later
+                         }
+                         else
+                         {
+                             msg->trid = get_transaction_id(isRO);
+
+                             if (msg->trid != -1)
+                             {
+                                 if (isExcl)
+                                 {
+                                     xmEnterExclusiveMode(msg->sid);
+                                 }
+                             }
+
+                             msg->cmd = 0; // all ok
                          }
 
                          break;
                      }
-#ifdef LOCK_MGR_ON
+            case 2:  {//give identifier for transaction
+
+                         session_id excl_sid = xmGetExclusiveModeId();
+                         bool isRO = (msg->data.data[0]) != 0;
+
+                         give_transaction_id(msg->trid, isRO);
+
+                         if (isRO) // query has just finished; snapshot advancement might be possible
+  						 {
+                             if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0)
+                                 throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
+						 }
+						 else // updater has just ended; check for need to advance snapshots or truncate the log
+						 {
+                             if (llNeedCheckpoint())
+                             {
+                                 llActivateCheckpoint(); // maintenance checkpoint
+                             }
+                             else
+                             {
+                                 if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+                                      throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
+                             }
+
+                             if (msg->sid == excl_sid)
+                             {
+                                 xmExitExclusiveMode(); // exclusive tr ended
+                             }
+                             else if (excl_sid != -1)
+                             {
+                                 xmTryToStartExclusive(); // updater ended and exclusive tr is waiting: try to start it
+                             }
+                         }
+
+                         break;
+                     }
             case 3:  {//obtain lock on database entity
                          lock_mode mode;
                          resource_kind kind;
@@ -214,7 +252,6 @@ int sm_server_handler(void *arg)
                          break;
 
                      }
-#endif
 
             case 10: {
                          //d_printf1("query 10: soft shutdown\n");
@@ -642,10 +679,9 @@ int main(int argc, char **argv)
         else
             elog(EL_WARN, ("Temporary files haven't been (or partially) deleted"));
 
-#ifdef LOCK_MGR_ON
         lm_table.init_lock_table();
         elog(EL_DBG, ("init_lock_table done"));
-#endif
+
         //start buffer manager
         bm_startup();
         elog(EL_LOG, ("Buffer manager started"));
@@ -749,9 +785,7 @@ int main(int argc, char **argv)
 
         release_transaction_ids_table();
 
-#ifdef LOCK_MGR_ON
         lm_table.release_lock_table();
-#endif
 
         event_logger_release();
 
@@ -860,10 +894,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
        llDisableCheckpoints();
        elog(EL_LOG, ("Checkpoints are disabled"));
 
-#ifdef LOCK_MGR_ON
        lm_table.init_lock_table();
        elog(EL_DBG, ("lm_table.init_lock_table done"));
-#endif
 
        // Starting SSMMsg server
        d_printf1("Starting SSMMsg...");
@@ -924,10 +956,9 @@ void recover_database_by_physical_and_logical_log(int db_id)
        release_transaction_ids_table();
        elog(EL_DBG, ("release_transaction_ids_table done"));
 
-#ifdef LOCK_MGR_ON
        lm_table.release_lock_table();
        elog(EL_DBG, ("lm_table.release_lock_table done"));
-#endif
+
        elog(EL_LOG, ("Recovery procedure has been finished successfully"));
        event_logger_release();
 
