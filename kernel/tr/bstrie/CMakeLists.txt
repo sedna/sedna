@@ -1,1 +1,1 @@
-set(bstrie_SRC st_frontend.cpp st_pages.cpp st_trie.cpp)
+set(bstrie_SRC btrie_frontend.cpp btrie_search.cpp btrie_split.cpp btrie_insert.cpp btrie_pages.cpp)

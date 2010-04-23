@@ -24,7 +24,7 @@
 
 #include "tr/cat/catjournal.h"
 #include "tr/executor/base/XPath.h"
-#include "tr/bstrie/block_string_tree.h"
+#include "tr/bstrie/sednabtrie.h"
 
 void catalog_issue_warning(const char * warning) {
     elog(EL_WARN, (warning));
@@ -186,12 +186,12 @@ void catalog_before_commit(bool is_commit)
                 name.setnew(r->nor.name_to_save->name);
                 bt_delete(*tree, name, r->nor.name_to_save->obj->p);
                 htname = catalog_ht_fullname_string(r->nor.object_type, r->nor.name_to_save->name);
-                st_delete_string(local_catalog->masterdata.htable, htname);
+                local_catalog->masterdata.htable = sbtrie_delete_str(local_catalog->masterdata.htable, htname);
                 cat_free(htname);
                 break;
 
               case catalog_journal_record::add_htable_record:
-                local_catalog->masterdata.htable = st_insert_string(local_catalog->masterdata.htable, r->htr.name, r->htr.data, strlen(r->htr.data) + 2, true);
+                local_catalog->masterdata.htable = sbtrie_insert_str(local_catalog->masterdata.htable, r->htr.name, r->htr.data, strlen(r->htr.data) + 2, true);
                 break;
             }
 
@@ -435,7 +435,7 @@ void catalog_update_metadata()
 void catalog_update_nid()
 {
     catalog_update_metadata();
-    
+
     memcpy(
         &last_nid_size,
         &(((catalog_master_record *) XADDR(catalog_masterblock))->last_nid_size),
@@ -615,7 +615,7 @@ inline xptr catalog_htable_find_name(const char * name)
 
     catalog_update_metadata();
 
-    obj = st_find_string(local_catalog->masterdata.htable, name);
+    obj = sbtrie_find_str(local_catalog->masterdata.htable, name);
 
     lock.Release();
     mtrn.end();
@@ -671,9 +671,9 @@ char * catalog_htable_get(enum catalog_named_objects obj_type,
         return NULL;
     }
 
-    object_len = st_get_object(object, NULL);
+    object_len = btrie_get_object(object, NULL);
     result = new char[object_len];
-    st_get_object(object, result);
+    btrie_get_object(object, result);
 
     return result;
 }
@@ -745,12 +745,12 @@ inline catalog_object * catalog_object_header::load() {
 
 
 /*
- * Returns document/collection the provided object provided 
- * (index, ft-index, etc) is created on. Throws SE1061 if 
+ * Returns document/collection the provided object provided
+ * (index, ft-index, etc) is created on. Throws SE1061 if
  * object hasn't been found.
  */
-counted_ptr<db_entity> 
-find_db_entity_for_object(enum catalog_named_objects obj_type, 
+counted_ptr<db_entity>
+find_db_entity_for_object(enum catalog_named_objects obj_type,
                           const char* title)
 {
     SafeMetadataSemaphore lock;
