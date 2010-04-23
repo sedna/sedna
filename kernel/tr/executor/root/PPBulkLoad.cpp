@@ -110,27 +110,29 @@ void PPBulkLoad::do_execute()
     std::vector<std::string> filenames(1, tc_filename.get_str_mem());
     std::vector<client_file> cf_vec(1);
     tr_globals::client->get_file_from_client(&filenames, &cf_vec);
-    bool write_to_logical_log;
+    bool write_to_logical_log  = !tr_globals::is_need_checkpoint_on_transaction_commit;
 
-    if (!tr_globals::is_need_checkpoint_on_transaction_commit)
+    /*
+     * The following optimization commented out by me (AK)
+     *
+     * There is a problem with making checkpoints before the commit:
+     *    1) We cannot release locks due to problems with recovery afterwards
+     *       Case: release locks (t1) -> commit (t2) -> crash (before t1's checkpoint) :
+     *             recovery won't find t1, but finds t2, which could reference t1's data
+     *    2) If we don't release locks there could be deadlock between t1 and t2: t2 waits for lock,
+     *       t1 waits for checkpoint, but checkpoint waits for t2 to end
+     *
+     * So, for now this leaves us only manual optimization (LOGLESS mode), which guarantees such
+     * transaction to be exclusive.
+     */
+
+    /*
+    if (write_to_logical_log && cf_vec[0].file_size >= MAX_FILE_SIZE_WITHOUT_CHECKPOINT)
     {
-       if (cf_vec[0].file_size >= MAX_FILE_SIZE_WITHOUT_CHECKPOINT)
-       {
-          write_to_logical_log = false;
-          tr_globals::is_need_checkpoint_on_transaction_commit = true;
-       }
-       else
-          write_to_logical_log = true;
+        write_to_logical_log = false;
+        tr_globals::is_need_checkpoint_on_transaction_commit = true;
     }
-    else
-          write_to_logical_log = false;
-
-    // we cannot make checkpoint before commit now
-    // in this case redo info woulb be lost
-    // TODO: we can fix it later by releasing transaction concurrent semaphore a bit earlier
-    //write_to_logical_log = true;
-    // llNeedCheckpoint() takes responsibility for truncating logical log now
-    //tr_globals::is_need_checkpoint_on_transaction_commit = false;
+    */
 
     bool boundary_space_strip = (cxt1->st_cxt->get_boundary_space() == xq_boundary_space_strip);
 
