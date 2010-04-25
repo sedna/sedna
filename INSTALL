@@ -52,7 +52,6 @@
    4. FreeBSD (see also Post-Installation Setup::FreeBSD below)
    5. Solaris (x86)
 
-  
    NOTE! Sedna can be build from sources only on 32-bit platforms. However,it's
    possible to build Sedna C driver on a 64bit system. Just run make (gmake 
    on FreeBSD or Solaris) in SEDNA_SOURCES/driver/c folder.
