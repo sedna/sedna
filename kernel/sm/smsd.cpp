@@ -1,18 +1,18 @@
 /*
  * File:  smsd.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Storage Manager Shutdwon Utility
+ * Copyright (C) 2004-2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
-#include "common/sedna.h"
 #include <iostream>
 #include <string.h>
+
+#include "common/sedna.h"
 #include "common/base.h"
-#include "common/errdbg/d_printf.h"
 #include "common/argtable.h"
 #include "common/version.h"
 #include "common/pping.h"
-#include "common/u/usecurity.h"
 #include "common/ipc_ops.h"
 
 using namespace std;
@@ -39,8 +39,6 @@ static void print_smsd_usage()
 }
 
 
-#define SMSD_TIMEOUT		30000
-
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
@@ -51,9 +49,9 @@ int main(int argc, char **argv)
     int res;
     pping_client *ppc = NULL;
     char errmsg[1000];
+    UPHANDLE proc_handle;
  
     try {
-
         SednaUserException e = USER_EXCEPTION(SE4400);
 
 #ifdef REQUIRE_ROOT
@@ -79,7 +77,6 @@ int main(int argc, char **argv)
 
         check_db_name_validness(db_name);
      
-        d_printf1("Shutdowning SM... ");
         gov_header_struct cfg;
         get_sednaconf_values(&cfg);
      
@@ -88,14 +85,14 @@ int main(int argc, char **argv)
 
         open_gov_shm();
 
-        SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
-        db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
+        SEDNA_DATA  = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
+        db_id       = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
         port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
-
-        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
         /* There is no such database? */
         if (db_id == -1) goto end;
+        
+        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
         SetGlobalNamesDB(db_id);
 
@@ -106,15 +103,20 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("Request for SM shutdown issued"));
 
         port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+        sm_pid      = GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].sm_pid;
 
-        UPHANDLE proc_handle;
+        /* Check if database is already stopped */
+        if(sm_pid == -1 ||
+           GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].mode == OM_SM_SHUTDOWN ||
+           GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].mode == OM_SM_DOWN) {
+            sm_pid = -1;
+            goto end;
+        }
 
-        sm_pid = GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].sm_pid;
-
-        /* Sm is already closed? */
+        /* Check once again if there is SM process? */
         res = uOpenProcess(sm_pid, &proc_handle, __sys_call_error);
-        if (res != 0) 
-            throw USER_ENV_EXCEPTION("An error occurred while trying to open Sedna server process", false);
+        if (res != 0)
+            throw USER_ENV_EXCEPTION("Cannot open SM process to stop. SM is already stopped?", false);
 
         GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].mode = OM_SM_SHUTDOWN;
 
@@ -125,8 +127,7 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("Request for SM shutdown satisfied"));
         event_logger_release();
 
-end:    if(ppc) 
-        {
+end:    if(ppc) {
             ppc->shutdown();
             delete ppc;
             ppc = NULL;
@@ -137,16 +138,25 @@ end:    if(ppc)
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
         if (db_id != -1)
-           fprintf(res_os, "The database '%s' has been successfully shut down\n", db_name);
+        {
+            if(sm_pid == -1)
+                fprintf(res_os, "The database '%s' is not running or already stopped\n", db_name);
+            else
+                fprintf(res_os, "The database '%s' has been successfully shut down\n", db_name);
+        }
         else
-           fprintf(res_os, "There is no database with name '%s'\n", db_name);
+            fprintf(res_os, "There is no database with name '%s'\n", db_name);
 
         fflush(res_os);
         
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.what());
         event_logger_release();
-        if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
+        if (ppc) { 
+            ppc->shutdown(); 
+            delete ppc; 
+            ppc = NULL; 
+        }
         close_gov_shm();
         return 1;
     } catch (SednaException &e) {

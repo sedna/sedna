@@ -434,7 +434,7 @@ int info_table::check_stop_databases()
         if ((((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name)[0] != '\0' &&
             ((gov_config_struct*)gov_shared_mem)->db_vars[i].mode == OM_SM_SHUTDOWN)
         {
-            fprintf(stderr,"%s: %d %s\n", __FUNCTION__, i, ((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name);
+            d_printf4("%s: %d %s\n", __FUNCTION__, i, ((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name);
             stop_sessions(std::string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
 
             stop_database(std::string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));

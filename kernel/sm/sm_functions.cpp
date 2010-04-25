@@ -82,13 +82,6 @@ send_stop_sm_msg()
     send_command_to_gov(port_number, STOP);
 }
 
-bool
-is_database_running(int database_id)
-{
-    return GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].mode != OM_SM_DOWN;
-}
-
-
 
 static uMutexType giantLockMutex;
 static bool isGiantLockInitialized = false;

@@ -29,6 +29,9 @@ get_next_free_db_id(gov_config_struct* cfg);
 void
 erase_database_cell_in_gov_shm(int db_id, gov_config_struct* cfg);
 
+bool
+is_database_running(gov_config_struct* cfg, int database_id);
+
 void
 fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                               int db_id,
