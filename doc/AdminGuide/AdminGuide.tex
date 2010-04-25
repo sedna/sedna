@@ -1,4 +1,4 @@
-% AdminGuide.tex Sedna Administration Guide
+% AdminGuide.tex: Sedna Administration Guide
 % Copyright (C) 2010 ISP RAS
 % The Institute for System Programming of the Russian Academy of Sciences
 
@@ -9,21 +9,19 @@
 \newtheorem{note}{Note}    % To insert notes
 \usepackage{multirow}      % Allows inserting tables
 \usepackage{ifpdf}         % Package for conditionals in TeX
-\usepackage{mdwlist}       % Use itemize* to produce tightly packed lists 
 \newcommand{\TocAt}[6]{}   % To avoid processing \TocAt by LaTeX
 
 \title{Sedna Administration Guide}
 \date{}
-\author{}
 
-% Switch between PDF and other formats to generate bookmarks,
+% Switch for between PDF and other formats to generate bookmarks,
 % pretty table of contents and set document's information in PDF
 \ifpdf
   \usepackage[colorlinks=true, linkcolor=blue, 
               citecolor=blue, urlcolor=blue,
-              pdftex,                % hyper-references for pdflatex
-              bookmarks=true,        % generate bookmarks ...
-              bookmarksnumbered=true % ... with numbers
+              pdftex,                %%% hyper-references for pdflatex
+              bookmarks=true,        %%% generate bookmarks ...
+              bookmarksnumbered=true %%% ... with numbers
   ]{hyperref}
   \pdfadjustspacing=1
   \hypersetup{
@@ -32,8 +30,16 @@
   }
 \else
   \usepackage[colorlinks=true, linkcolor=blue,
-              citecolor=blue, urlcolor=blue]{hyperref}
+			  citecolor=blue, urlcolor=blue]{hyperref}
 \fi
+
+% Use citemize environment to produce tightly packed lists
+\newenvironment{citemize}
+{\begin{itemize}
+  \setlength{\itemsep}{0pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}}
+{\end{itemize}}
 
 
 %===============================================================================
@@ -1357,7 +1363,7 @@ user, then you can create more users and change default password (if you care
 for preventing unauthorized access to your database).
 
 There are following kinds of Sedna database objects:
-\begin{itemize*}
+\begin{citemize}
 \item Standalone document
 \item Collection of documents
 \item Value based index
@@ -1365,18 +1371,18 @@ There are following kinds of Sedna database objects:
 \item Module
 \item Trigger
 \item Metadata document
-\end{itemize*}
+\end{citemize}
 
 There are two types of Sedna database users:
 
-\begin{itemize*}
+\begin{citemize}
 \item Database administrator (DBA user). Formally, DBA user is a user that has
 the "DBA" role.
 \item Ordinary user (below we call "user")
-\end{itemize*}
+\end{citemize}
 
 DBA user:
-\begin{itemize*}
+\begin{citemize}
 \item has all possible privileges on any object in the database;
 \item can remove any object in the database;
 \item can remove any user of the database;
@@ -1384,16 +1390,16 @@ DBA user:
 \item can grant "DBA" role to a user, thus making that user also a DBA user
 (not recommended, as the database with multiple DBA users is hard to
 administrate). Any DBA user can also revoke the "DBA" role from any DBA user.
-\end{itemize*}
+\end{citemize}
 
 An ordinary user:
-\begin{itemize*}
+\begin{citemize}
 \item can act according to the privileges that he has;
 \item can grant and revoke any privileges on the database object that he owns
 to any user;
 \item can remove database objects that he owns and drop users that he has
 created.
-\end{itemize*}
+\end{citemize}
 
 Every user has its name and password.
 
@@ -1451,7 +1457,7 @@ to use it, \emph{privileges} must be granted.
 
 There are several possible privileges:
 
-\begin{itemize*}
+\begin{citemize}
 \item CREATE-USER - create new user
 \item CREATE-DOCUMENT - create new document
 \item CREATE-COLLECTION - create new collection
@@ -1466,7 +1472,7 @@ There are several possible privileges:
 \item DELETE - perform update delete statements
 \item RENAME - perform update rename statements
 \item RETRIEVE-METADATA - retrieve metadata
-\end{itemize*}
+\end{citemize}
 
 Privileges are assigned to database objects or to the whole database. The table
 below for every privilege lists all kinds of database objects or the whole

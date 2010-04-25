@@ -6,7 +6,7 @@
 
    _______________________________________________________________________
 
-                              Contents
+                                Contents
 
    Note
    System Requirements
@@ -21,7 +21,7 @@
 
    _______________________________________________________________________
 
-                               Note
+                                   Note
 
    Please, read the LICENSE, before using the system. If you do not agree
    to all the terms of the LICENSE, you must not install or use Sedna.
@@ -29,26 +29,26 @@
 
    _______________________________________________________________________
 
-                       System Requirements
+                            System Requirements
 
    Sedna runs on the following platforms:
    - Windows 2000 and higher
-   - Linux (2.4 or higher)
-   - Mac OS X (PPC/Intel)
-   - FreeBSD 
-   - Solaris (x86)
+   - Linux (kernel 2.4 and higher)
+   - Mac OS X (PPC/x68/amd64)
+   - FreeBSD
+   - Solaris (x86/amd64)
 
 
    _______________________________________________________________________
 
-            Installing Sedna from Source Code 
+                    Installing Sedna from Source Code 
 
-   See file INSTALL supplied with the source code package.
+   See file INSTALL file supplied with the source code package.
 
 
    _______________________________________________________________________
 
-            Installing Sedna from Precompiled Binaries
+                Installing Sedna from Precompiled Binaries
 
 
    Windows platform:
@@ -59,11 +59,11 @@
    The installation process consists of the following steps:
 
    1) Unzip archive to any directory (for example "c:\sedna").
-   2) Add the bin subdirectory of sedna installation to the environment 
-      variable PATH (for example "c:\sedna\bin").
+   2) (optional) Add the bin subdirectory of sedna installation to the
+      environment variable PATH (for example "c:\sedna\bin").
 
-   *Nix platforms:
-   ===============
+   UNIX-like platforms:
+   ====================
 
    Sedna is distributed as a single self-extracting script.
    The installation process consists of running self-extracting script
@@ -89,7 +89,7 @@
 
    _______________________________________________________________________
 
-                       Sedna Quick Start
+                             Sedna Quick Start
 
    Sedna is distributed with examples and instructions on how to run them. 
    See Sedna Quick Start to start working with Sedna. Sedna Programmer's 
@@ -100,18 +100,27 @@
 
    _______________________________________________________________________
 
-                           Support
+                                 Support
 
-   Please, feel free to contact us with questions, suggestions, bug reports
-   and comments:
+   If you want to report a bug, please use bug tracker system at:
+   
+       http://sourceforge.net/projects/sedna
+       
+   Please, feel free to contact us with questions, suggestions, bug reports and
+   comments:
 
-        modis@ispras.ru
+       modis@ispras.ru
 
    For up-to-date information and new versions of Sedna visit the Sedna 
    homepage:
 
-        http://www.modis.ispras.ru/sedna
+       http://www.modis.ispras.ru/sedna
 
-   You can also join the Sedna mail lists at
+   You can also join the Sedna mail lists at:
 
-        https://lists.sourceforge.net/lists/listinfo/sedna-discussion
+       https://lists.sourceforge.net/lists/listinfo/sedna-discussion
+   
+   Archive of the mail list you can find here:
+   
+       http://news.gmane.org/gmane.text.xml.sedna
+   
