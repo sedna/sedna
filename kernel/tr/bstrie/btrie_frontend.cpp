@@ -11,7 +11,7 @@ int btrie_last_error;
 
 btrie_t btrie_open(const xptr_t root)
 {
-    btrie_t result = (btrie_t) malloc(sizeof(btrie_t));
+    btrie_t result = (btrie_t) malloc(sizeof(struct btrie));
     result->root_page = (xptr_t) root;
     return result;
 }
