@@ -601,9 +601,9 @@ inline char * catalog_ht_fullname_string(enum catalog_named_objects obj_type, co
     return result;
 }
 
-inline xptr catalog_htable_find_name(const char * name)
+inline char * catalog_htable_find_name(const char * name)
 {
-    if (local_catalog->masterdata.htable == XNULL) { return XNULL; }
+    if (local_catalog->masterdata.htable == XNULL) { return NULL; }
 
     SafeMetadataSemaphore lock;
     VMMMicrotransaction mtrn;
@@ -617,10 +617,18 @@ inline xptr catalog_htable_find_name(const char * name)
 
     obj = sbtrie_find_str(local_catalog->masterdata.htable, name);
 
+    if (obj == XNULL) {
+        return NULL;
+    }
+
+    size_t object_len = btrie_get_object(obj, NULL);
+    char * result = new char[object_len];
+    btrie_get_object(obj, result);
+
     lock.Release();
     mtrn.end();
 
-    return obj;
+    return result;
 }
 
 
@@ -628,7 +636,6 @@ char * catalog_htable_get(enum catalog_named_objects obj_type,
                           const char * key)
 {
     char * result = NULL;
-    xptr object;
     char * fullname;
     catalog_name_record * cache_result;
     catalog_journal_record *r;
@@ -661,19 +668,9 @@ char * catalog_htable_get(enum catalog_named_objects obj_type,
 
     U_ASSERT(result == NULL);
 
-    size_t object_len;
-
     fullname = catalog_ht_fullname_string(obj_type, key);
-    object = catalog_htable_find_name(fullname);
+    result = catalog_htable_find_name(fullname);
     free(fullname);
-
-    if (object == XNULL) {
-        return NULL;
-    }
-
-    object_len = btrie_get_object(object, NULL);
-    result = new char[object_len];
-    btrie_get_object(object, result);
 
     return result;
 }
