@@ -20,6 +20,7 @@
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/cat/catstore.h"
 #include "tr/mo/modebug.h"
+#include "tr/bstrie/sednabtrie.h"
 
 
 using namespace std;
