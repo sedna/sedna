@@ -434,12 +434,9 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                 case xs_string               :
                 {
                     bool flag1, flag2;
-                    if(temp1 != NULL || temp2 !=NULL)
+                    if(temp1 != NULL || temp2 != NULL)
                     {
-                        if(temp1 != NULL) CHECKP(v1);
-                        if(temp2 != NULL) CHECKP(v2);
-                        get_deserialized_value(&flag1, (char*)addr1+offset, xs_boolean);
-                        get_deserialized_value(&flag2, (char*)addr2+offset, xs_boolean);
+                        GET_DESERIALIZED_VALUES(&flag1, &flag2, xs_boolean, offset);
                         result = sign(strcmp((char*)addr2+offset+sizeof(bool), (char*)addr1+offset+sizeof(bool))*order);
                     }
                     else 

@@ -477,7 +477,7 @@ located in the same folder as \verb!Client.java!.
 
 
 %===============================================================================
-%                        Sedna Programmer's Guide: C API
+%                       Sedna Programmer's Guide: C API
 %===============================================================================
 \subsection{C API}
 \label{c-api}
@@ -779,9 +779,9 @@ committed.
 \item\verb!SEDNA_ATTR_QUERY_EXEC_TIMEOUT! connection attribute allows to set the
 limit on query execution time. If set, for each next query in this session,
 query execution will be stopped if it lasts longer than timeout set. In this
-case transaction in bounds of which the query run is rollback. By default there
-is no any timeout for query execution, that is a query can be executed as long
-as needed.
+case transaction in bounds of which the query run is rollback. By default (value
+0) there is no any timeout for query execution, that is a query can be executed
+as long as needed.
 
 \begin{tabular}{|l|l|}
 \hline
