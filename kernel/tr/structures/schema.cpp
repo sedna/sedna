@@ -220,6 +220,7 @@ void sc_node_ref_list::deserialize(se_simplestream &stream)
     t_item type;
     xmlns_ptr_pers xmlns_pers;
     char *name;
+    se_size_t len;
 
     stream.read(&count, sizeof(int));
 
@@ -228,7 +229,10 @@ void sc_node_ref_list::deserialize(se_simplestream &stream)
         stream.read(&type, sizeof(t_item));
         stream.read(&xmlns_pers, sizeof(xmlns_ptr_pers));
 
-        name = (char *) cat_malloc_context(NULL, stream.read_string_len());
+        if ((len = stream.read_string_len()) != 0)
+            name = (char *)malloc(len);
+        else
+            name = NULL;
         stream.read_string(SSTREAM_SAVED_LENGTH, name);
         add_object_tail(snode, name, xmlns_pers, type);
         free(name);

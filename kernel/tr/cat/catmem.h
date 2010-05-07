@@ -111,50 +111,13 @@ public :
      * Treats every address as a start of a chunk of size cust_chunk_size and
      * returns addr of the chunk that includes it
      */
-    void *search_for_chunk_addr(uint32_t cust_chunk_size, void *addr)
-    {
-        FastPointerArrayChunk *i = chunks;
-        unsigned c = lastPtr;
+    void *search_for_chunk_addr(uint32_t cust_chunk_size, void *addr);
 
-        while (i != NULL)
-        {
-            for (unsigned j = 0; j < c; j++)
-            {
-                uintptr_t chunk_start = (uintptr_t)i->data[j];
-                uintptr_t chunk_boundary = chunk_start + cust_chunk_size;
-
-                if ((uintptr_t)addr >= chunk_start && (uintptr_t)addr < chunk_boundary)
-                    return i->data[j];
-            }
-
-            c = FPA_SIZE;
-            i = i->next;
-        }
-
-        return NULL;
-    }
-
-    void *get_elem(uint32_t ind)
-    {
-        unsigned i, j;
-        FastPointerArrayChunk *chunk = chunks;
-
-        i = chunk_num - ind / FPA_SIZE - 1;
-        j = ind % FPA_SIZE;
-
-        U_ASSERT(i <= chunk_num);
-
-        while (i--)
-            chunk = chunk->next;
-
-        return chunk->data[j];
-    }
+    /*
+     * Returns element by the given index
+     */
+    void *get_elem(uint32_t ind);
 };
-
-/*
- * This class represents some type of memory context.
- * That is: it allocates and frees memory by chunks of size TEMP_CHUNK_SIZE.
- */
 
 /* DEF_CHUNK_SIZE defines defsult size of a chunk for context */
 #ifdef SEDNA_X64
@@ -163,8 +126,17 @@ public :
 #define DEF_CHUNK_SIZE 0xA00000 /* 10mb */
 #endif
 
-#define CONTEXT_MAGIC 0xFDB3E6AC
+/* Context verify stamp */
+#define CONTEXT_MAGIC 0xC0C0C0C0
 
+/*
+ * This class represents some type of memory context.
+ * That is: it allocates and frees memory by chunks of size TEMP_CHUNK_SIZE.
+ *
+ * In a nutshell: context contains several chunks. Each chunk consists of chunk_head, and continuous
+ *                area of allocations (as in malloc). Each allocation is of 'size' bytes (malloc(size))
+ *                plus alloc_head in the begining.
+ */
 class CatalogMemoryContext
 {
     struct chunk_head
@@ -177,6 +149,9 @@ class CatalogMemoryContext
     struct alloc_head
     {
         chunk_head *chunk_addr;
+#ifdef CATMEM_DEBUG
+        uint32_t magic;
+#endif
     };
 
     FastPointerArray chunks;
@@ -185,32 +160,15 @@ class CatalogMemoryContext
     void *curr_chunk_addr;
     uint32_t chunk_size;
 
-    int allocate_chunk()
-    {
-        chunk_head *header;
-
-        if (chunk_num == UINT32_MAX - 1)
-            return -1;
-
-        curr_chunk_addr = malloc(chunk_size);
-
-        if (!curr_chunk_addr)
-            return -1;
-
-        header = (chunk_head *)curr_chunk_addr;
-        header->context = this;
-        header->chunk_num = chunk_num++;
-        header->magic = CONTEXT_MAGIC;
-
-        chunks.add(curr_chunk_addr);
-        curr_chunk_offset = sizeof(struct chunk_head);
-
-        return 0;
-    }
+    int allocate_chunk();
 
     static alloc_head *get_alloc_head(void *addr)
     {
-        return (alloc_head *)((char *)addr - sizeof(struct alloc_head));
+        alloc_head *res = (alloc_head *)((char *)addr - sizeof(struct alloc_head));
+#ifdef CATMEM_DEBUG
+        U_ASSERT(res->magic == CONTEXT_MAGIC);
+#endif
+        return res;
     }
 
     static chunk_head *get_chunk_head(void *addr)
@@ -233,32 +191,7 @@ public:
         chunks.freeAll(free);
     }
 
-    void *cust_malloc(size_t size)
-    {
-        char *res = NULL;
-        alloc_head *header;
-
-        if (size == 0) return NULL;
-
-        size += sizeof(struct alloc_head);
-
-        if (size > chunk_size)
-            return NULL;
-
-        if (chunk_num == 0 && allocate_chunk() != 0) /* first allocation */
-            return NULL;
-
-        if (curr_chunk_offset + size > chunk_size && allocate_chunk() != 0)
-            return NULL;
-
-        res = (char *)curr_chunk_addr + curr_chunk_offset;
-        header = (alloc_head *)res;
-        header->chunk_addr = (chunk_head *)curr_chunk_addr;
-        res += sizeof(struct alloc_head);
-        curr_chunk_offset += size;
-
-        return res;
-    }
+    void *cust_malloc(size_t size);
 
     /*
      * Implements somewhat hackish mapping addr<->offs.
@@ -281,6 +214,7 @@ public:
 
     /*
      * Returns chunk number to use for offs2addr mapping
+     * Chunks are numbered from 1, 0 represents non-existent chunk
      */
     uint32_t addr2chunk(void *addr)
     {
@@ -312,6 +246,13 @@ public:
         return addr;
     }
 
+    /*
+     * Function determines if diven addr lies in the context.
+     * It doesn't make any assumptions: it just searches each chunk
+     * for the given addr.
+     *
+     * NOTE: could be somewhat slow if multiple chunks are involved
+     */
     bool is_addr_in_context(void *addr)
     {
         if (addr == NULL)
@@ -320,17 +261,31 @@ public:
         return (chunks.search_for_chunk_addr(chunk_size, addr) != NULL);
     }
 
+    /*
+     * Finds context for the given address. It makes assumption
+     * about structure of the context. Thus it works only for
+     * addresses returned by cust_malloc.
+     *
+     * If you want the answer for ANY address, then use _safe function instead
+     */
     static CatalogMemoryContext *find_context_for_addr(void *addr)
     {
         return get_chunk_head(addr)->context;
     }
+
+    /*
+     * Somewhat safe implementation of the function above. It doesn't
+     * make any assumptions about context infrastructure. It just
+     * searches any known contexts for the address.
+     */
+    static CatalogMemoryContext *find_context_for_addr_safe(void *addr);
 };
 
 /***********************************************
  * Some common catalog contexts.
  *
  * If you want to add something don't forget to
- * edit find_context_for_addr() function
+ * edit find_context_for_addr_safe() function
  *
  ***********************************************/
 
@@ -348,152 +303,96 @@ public:
 extern CatalogMemoryContext *CATALOG_COMMON_CONTEXT;
 
 /* context for temporary data: not shared, t-o-l: transaction
- * use for: storing temporary database objects, local catalog objects
+ * use for: storing temporary database objects (e.g. constructed data), local catalog objects
  */
 extern CatalogMemoryContext *CATALOG_TEMPORARY_CONTEXT;
-
-/*
- * Finds context address belongs to (SLOW DEBUG VERSION)
- * If address belongs to no context returns NULL.
- */
-inline
-CatalogMemoryContext *find_context_for_addr(void *addr)
-{
-    if (CATALOG_TEMPORARY_CONTEXT && CATALOG_TEMPORARY_CONTEXT->is_addr_in_context(addr))
-        return CATALOG_TEMPORARY_CONTEXT;
-    else if (CATALOG_COMMON_CONTEXT && CATALOG_COMMON_CONTEXT->is_addr_in_context(addr))
-        return CATALOG_COMMON_CONTEXT;
-    else if (CATALOG_PERSISTENT_CONTEXT && CATALOG_PERSISTENT_CONTEXT->is_addr_in_context(addr))
-        return CATALOG_PERSISTENT_CONTEXT;
-
-    return NULL;
-}
 
 /*****************************
     Catalog memory management
 */
 
+/*
+ * Catalog debug and trace facilities
+ */
+
 #ifdef CATMEM_TRACE
 
-extern int allocated_objects;
-extern int deallocated_objects;
+extern unsigned allocated_objects;
+extern unsigned deallocated_objects;
 
-// Allocate  memory in the same context as specified pointer
+#define TRACE_CAT_ALLOC(addr, file, line) \
+    do \
+    { \
+        allocated_objects++; \
+        d_printf4("{%p alloc on %s:%d}\n", (addr), file, line); \
+    } while(0)
 
-inline void * _cat_malloc(void * parent, size_t size) {
-    allocated_objects++;
-    return (size == 0) ? NULL : malloc(size);
-};
+#define TRACE_CAT_FREE(addr, file, line) \
+    do \
+    { \
+        deallocated_objects++; \
+        d_printf4("{%p free on %s:%d}\n", (addr), file, line); \
+    } while(0)
 
-inline void * _malloc_print_return(const char * s1, int s2, void * parent, size_t size) {
-    void * a = _cat_malloc(parent, size);
-    d_printf4("{%p alloc on %s:%d}\n", a, s1, s2);
-    return a;
-}
+#else /* CATMEM_TRACE */
 
-#define cat_malloc(p, s) _malloc_print_return(__FILE__, __LINE__, p, s)
-#define cat_malloc_context(p, s) _malloc_print_return(__FILE__, __LINE__, p, s)
+#define TRACE_CAT_ALLOC(addr, file, line)
+#define TRACE_CAT_FREE(addr, file, line)
 
-// Allocate memory in the specified context
-inline void * _cat_malloc_context(void * context, size_t size) { allocated_objects++; return (size == 0) ? NULL : malloc(size); };
+#endif /* CATMEM_TRACE */
 
-inline void _cat_free(void * p) { deallocated_objects++; return free(p); };
-
-inline void _free_print_return(const char * s1, int s2, void * p) {
-    d_printf4("{%p free on %s:%d}\n", p, s1, s2);
-    _cat_free(p);
-}
-
-#define cat_free(p) _free_print_return(__FILE__, __LINE__, p)
-
-
-#else /* !CATMEM_TRACE */
 #ifdef CATMEM_DEBUG
 
-inline void * cat_malloc(void * parent, size_t size) {
-    if (size == 0) return NULL;
-    size += 4;
-    uint32_t * a = (uint32_t*) malloc(size);
-    *(uint32_t*) a = 0xdeadbeaf;
-    return (a + 1);
+void *cat_malloc_context_debug(CatalogMemoryContext *context, size_t size, const char *file, unsigned line);
+#define cat_malloc_context(cont, size) cat_malloc_context_debug(cont, size, __FILE__, __LINE__)
 
-//    return (size == 0) ? NULL : malloc(size);
-};
+void cat_free_debug(void *p, const char *file, unsigned line);
+#define cat_free(addr) \
+    do \
+    { \
+        cat_free_debug(addr, __FILE__, __LINE__); \
+        addr = NULL; \
+    } while(0)
 
-inline void * cat_malloc_context(void * context, size_t size)
-{
-    if (context)
-        return context->cust_malloc(size);
-    else
-        return cat_malloc(context, size);
-//    return (size == 0) ? NULL : malloc(size);
-};
+#else /* CATMEM_DEBUG */
 
-inline void _cat_free(void * p) {
-    if (p == NULL) return;
-    uint32_t * a = (uint32_t*) p;
+#define cat_malloc_context(cont, size) cat_malloc_context_(cont, size)
+#define cat_free(addr) cat_free_(addr)
 
-    a -= 1;
-    U_ASSERT(*(uint32_t*) a == 0xdeadbeaf);
-    *(uint32_t*) a = 0;
-
-    return free(a);
-};
-
-#define cat_free(p) _cat_free(p); (p) = NULL
-
-#else /* !CATMEM_DEBUG */
+#endif /* CATMEM_DEBUG */
 
 /*
  * Allocates memory in context. If context is NULL, uses system malloc
  * If allocation isn't successful throws bad_alloc exception
  */
-inline void *cat_malloc_context(CatalogMemoryContext *context, size_t size)
-{
-    void *mem;
-
-    if (size == 0) return NULL;
-
-    if (context)
-        mem = context->cust_malloc(size);
-    else
-        mem = malloc(size);
-
-    if (!mem) throw std::bad_alloc();
-
-    return mem;
-}
+void *cat_malloc_context_(CatalogMemoryContext *context, size_t size);
 
 /*
  * Allocates size bytes in the context of parent.
  * If parents belongs to no context, behaviour is not defined
  */
-inline void *cat_malloc(void * parent, size_t size)
-{
-    CatalogMemoryContext *parent_context = CatalogMemoryContext::find_context_for_addr(parent);
+void *cat_malloc(void * parent, size_t size);
 
-    return cat_malloc_context(parent_context, size);
-}
+/*
+ * Somewhat safer but more slow implementation of the above.
+ * 'Safer' because it finds context for sure. But it is done
+ * by trading off speed. Should be tolerable, if contexts consists
+ * of small number of chunk.
+ * Should be mainly used if addr is not alligned on the boundary of a chunk
+ *
+ * NOTE: if 'addr' doesn't belong to any context system malloc will be used instead
+ */
+void *cat_malloc_safe(void * parent, size_t size);
 
 /*
  * cat_free essentially is deprecated since we don't need to free context memory.
- * for now, it is in pretty slow version, which checks for context and either does
+ * for now, it is in somewhat slow version, which checks for context and either does
  * nothing (addr in some contex) or calls system 'free'
  *
- * should not be used in common code. main purpose is to make a pair to
- * cat_malloc_context(NULL), which calls malloc anyway and thus should not be used.
+ * should not be used in common code too lightly. main purpose is to make a pair to
+ * cat_malloc_safe, which calls malloc if parent doesn't belong to any context.
  */
-inline void cat_free(void * p)
-{
-    /* we don't want to call free for context address since we do bulk free there */
-    if (find_context_for_addr(p))
-        return;
-
-    return free(p);
-}
-
-#endif /* CATMEM_DEBUG */
-#endif /* CATMEM_TRACE */
+void cat_free_(void * p);
 
 // Allocates string in the context of parent and copies src to new string
 // src MUST be null-terminated.

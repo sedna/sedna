@@ -105,7 +105,8 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     xmlns_ptr_pers ct_ns;
     char* ct_local;
     ft_index_type ct_cm;
-    char* obj_str;
+    char* obj_str = NULL;
+    se_size_t len;
 
     index_title = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, index_title);
@@ -113,7 +114,8 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     stream.read(&impl, sizeof(ft_index_type));
     stream.read(&ft_data, sizeof(ft_idx_data_t));
 
-    obj_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
+    if ((len = stream.read_string_len()) != 0)
+        obj_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, obj_str);
     object = lr2PathExpr(NULL, obj_str, pe_catalog_aspace);
     free(obj_str);
