@@ -46,7 +46,7 @@ int _uvmm_unmap(void *addr)
     return (UnmapViewOfFile(addr) == 0 ? -1 : 0);
 }
 
-int __vmm_check_region(uint32_t cur, void ** res_addr, uint32_t * segment_size, bool log, FILE * logfile)
+int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size, bool log, FILE * logfile)
 {
     *res_addr = VirtualAlloc(
         NULL,                      // system determines where to allocate the region

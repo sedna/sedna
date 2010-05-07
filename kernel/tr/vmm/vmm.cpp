@@ -348,6 +348,29 @@ void vmm_delete_tmp_blocks()
 static FILE * f_se_trn_log;
 #define VMM_SE_TRN_LOG "se_trn_log"
 
+void read_write_cdb_layer_size(lsize_t *data, bool write)
+{
+    UShMem p_cdb_callback_file_mapping;
+    lsize_t *p_cdb_callback_data;
+
+    if (uOpenShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(lsize_t), __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4021, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+    p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof(lsize_t), __sys_call_error);
+    if (p_cdb_callback_data == NULL)
+        throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+    if (write)
+        *p_cdb_callback_data = *data;
+    else
+        *data = *p_cdb_callback_data;
+
+    if (uDettachShMem(p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+    if (uCloseShMem(p_cdb_callback_file_mapping, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4022, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+}
 /*
  * vmm_determine_region is called the first time the Sedna server starts
  * to find active layer region.
@@ -383,12 +406,17 @@ void vmm_determine_region(bool log)
         }
     }
 
-    uint32_t cur = 0;
-    uint32_t segment_size = 0;
+    lsize_t cur = 0;
+    lsize_t segment_size = 0, start_segment_size;
 
     void *res_addr = NULL;
 
-    for (cur = VMM_REGION_SEARCH_MAX_SIZE; cur >= VMM_REGION_MIN_SIZE; cur -= (uint32_t)PAGE_SIZE)
+    read_write_cdb_layer_size(&start_segment_size, false /* read */);
+
+    if (start_segment_size == 0)
+        start_segment_size = VMM_REGION_SEARCH_MAX_SIZE;
+
+    for (cur = start_segment_size; cur >= VMM_REGION_MIN_SIZE; cur -= (uint32_t)PAGE_SIZE)
     {
         if (log) fprintf(f_se_trn_log, "Probing size %u... ", cur);
         if (__vmm_check_region(cur, &res_addr, &segment_size, log, f_se_trn_log)) { break; }
@@ -396,7 +424,7 @@ void vmm_determine_region(bool log)
 
     if (log) {
         if (0 == segment_size) fprintf(f_se_trn_log, "Nothing has been found\n");
-        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (uint32_t)PAGE_SIZE, (uint32_t)res_addr);
+        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
         if (fclose(f_se_trn_log) != 0) printf("Can't close file se_trn_log\n");
     } else {
         if (0 == segment_size) {
@@ -406,29 +434,13 @@ void vmm_determine_region(bool log)
         }
         else
         {
-            UShMem p_cdb_callback_file_mapping;
-            lsize_t *p_cdb_callback_data;
+            d_printf3("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
 
-            d_printf3("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, (__uint32)res_addr);
-
-            if(segment_size > VMM_REGION_MAX_SIZE)
+            if (segment_size > VMM_REGION_MAX_SIZE)
                 segment_size = VMM_REGION_MAX_SIZE;
 
             // need to give the result back to cdb
-            if (uOpenShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(lsize_t), __sys_call_error) != 0)
-                throw USER_EXCEPTION2(SE4021, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-
-            p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof(lsize_t), __sys_call_error);
-            if (p_cdb_callback_data == NULL)
-                throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-
-            *p_cdb_callback_data = segment_size;
-
-            if (uDettachShMem(p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
-                throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-
-            if (uCloseShMem(p_cdb_callback_file_mapping, __sys_call_error) != 0)
-                throw USER_EXCEPTION2(SE4022, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+            read_write_cdb_layer_size(&segment_size, true /* write */);
         }
     }
 }

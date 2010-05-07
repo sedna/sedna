@@ -38,7 +38,7 @@ int _uvmm_unmap(void *addr)
     return munmap(addr, PAGE_SIZE);
 }
 
-int __vmm_check_region(uint32_t cur, void ** res_addr, uint32_t * segment_size, bool log, FILE * logfile)
+int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size, bool log, FILE * logfile)
 {
     /* additional PAGE_SIZE needed for alignment of res_addr on page boundary */
     *res_addr = mmap(0, cur + (uint32_t)PAGE_SIZE, PROT_READ, MAP_PRIVATE | U_MAP_NORESERVE | U_MAP_ANONYMOUS, -1, 0);

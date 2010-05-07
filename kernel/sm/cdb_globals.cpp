@@ -28,6 +28,7 @@ namespace cdb_globals {
     int tmp_file_extending_portion;          /* size in Mb */
     int data_file_initial_size;              /* size in Mb */
     int log_file_size;                       /* size in Mb */
+    int layer_size;                          /* size of database layer -- Mb */
     char db_security[32];                    /* either 'authorization', 'authentication' or 'off' */
 }
 
@@ -35,7 +36,7 @@ static int cdb_s_help = 0;
 static int cdb_l_help = 0;
 static int cdb_version = 0;
 
-static const size_t cdb_narg = 16;
+static const size_t cdb_narg = 17;
 
 static arg_rec cdb_argtable[] =
 {
@@ -53,6 +54,7 @@ static arg_rec cdb_argtable[] =
   {"-upd-crt",                 " N",   arg_dbl, &sm_globals::upd_crt,              "0.25","\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
   {"-max-log-files",           " N",   arg_int, &sm_globals::max_log_files,        "3",   "\t\tmaximum log files until log truncate\n\t\t\t\tdefault: 3"},
   {"-log-file-size",           " Mbs", arg_int, &log_file_size,                    "100", "\t\tmaximum one log file size (in Mb)\n\t\t\t\tdefault 100Mb"},
+  {"-layer-size",              " Mbs", arg_int, &layer_size,                       "0",   "\t\tmaximum size of the database layer (in Mb)\n\t\t\t\tdefault 1Gb"},
   {"-db-security",             "  security level",  arg_str,  &db_security,         "authentication", "  level of database security:\n\t\t\t\t 1) 'off' - none;\n\t\t\t\t 2) 'authentication' (default);\n\t\t\t\t 3) 'authorization'"},
   {NULL,                       "\n   db_name", arg_str, &sm_globals::db_name,      "???", "   \t\t\tname of the database to be created"}
 };
@@ -102,6 +104,9 @@ setup_cdb_globals(gov_config_struct* cfg)
 
    if (sm_globals::max_log_files < 1)
 	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
+
+   if (cdb_globals::layer_size != 0 && (cdb_globals::layer_size < 0 || (lsize_t)cdb_globals::layer_size * 1024 * 1024 < VMM_REGION_MIN_SIZE))
+       throw USER_EXCEPTION2(SE4601, "'layer_size' parameter is incorrect (must be >=64Mb)");
 
    if (strcmp(db_security, "???") == 0)
        strcpy(db_security, "authentication");
@@ -250,6 +255,9 @@ lsize_t determine_layer_size(int db_id, const gov_header_struct& cfg)
     p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof(lsize_t), __sys_call_error);
     if (p_cdb_callback_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+    // setting hint size from command line
+    *p_cdb_callback_data = (lsize_t)(cdb_globals::layer_size * 1024 * 1024);
 
     if (uCreateProcess(path_buf,
         false, // inherit handles
