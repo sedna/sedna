@@ -72,15 +72,18 @@ void index_cell_object::deserialize_data(se_simplestream &stream)
     stream.read(&keytype, sizeof(xmlscm_type));
     stream.read(&btree_root, sizeof(xptr));
 
-    char * obj_str;
-    char * key_str;
+    char * obj_str = NULL;
+    char * key_str = NULL;
+    se_size_t len;
 
-    obj_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
+    if ((len = stream.read_string_len()) != 0)
+        obj_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, obj_str);
     object = lr2PathExpr(NULL, obj_str, pe_catalog_aspace);
     free(obj_str);
 
-    key_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
+    if ((len = stream.read_string_len()) != 0)
+        key_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, key_str);
     key = lr2PathExpr(NULL, key_str, pe_catalog_aspace);
     free(key_str);

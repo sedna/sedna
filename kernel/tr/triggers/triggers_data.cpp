@@ -163,10 +163,12 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
 
     stream.read(&i, sizeof(void *));
 
-    char* trigger_path_str;
-    char* path_to_parent_str;
+    char* trigger_path_str = NULL;
+    char* path_to_parent_str = NULL;
+    se_size_t len;
 
-    trigger_path_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
+    if ((len = stream.read_string_len()) != 0)
+        trigger_path_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, trigger_path_str);
 
     if (trigger_path_str != NULL) {
@@ -176,7 +178,8 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
         trigger_path = NULL;
     }
 
-    path_to_parent_str = (char *) cat_malloc_context(NULL, stream.read_string_len());
+    if ((len = stream.read_string_len()) != 0)
+        path_to_parent_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, path_to_parent_str);
 
     if (path_to_parent_str != NULL) {

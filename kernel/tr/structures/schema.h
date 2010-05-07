@@ -103,8 +103,7 @@ struct sc_ref {
         }
     };
 
-    inline sc_ref() : name(NULL), xmlns_local(NULL) {
-    };
+    inline sc_ref() : name(NULL), xmlns_pers(XNULL), xmlns_local(NULL) {};
 
     inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) {
         return (my_strcmp(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
