@@ -98,7 +98,7 @@ struct orb_modifier {
     }
 };
 
-struct common_type
+struct orb_common_type
 {
     int size;                                       //Size of type in bytes.
     xmlscm_type xtype;                              //One of the atomic built-in types.
@@ -106,7 +106,7 @@ struct common_type
 };
 
 typedef std::vector<orb_modifier>       arr_of_orb_modifier;
-typedef std::vector<common_type>        arr_of_common_type; 
+typedef std::vector<orb_common_type>    arr_of_common_type; 
 
 //Udata* is used in serialization/deserialization in sorted sequence
 struct orb_user_data
