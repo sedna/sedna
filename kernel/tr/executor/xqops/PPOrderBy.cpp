@@ -178,7 +178,7 @@ void PPOrderBy::do_next (tuple &t)
                         sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ? 
                                                           cast_primitive_to_xs_string(tc) : tc ;
                         
-                        common_type* ct = &types.at(i - data_size);
+                        orb_common_type* ct = &types.at(i - data_size);
                         xmlscm_type t = sort_tuple.cells[i - data_size].get_atomic_type();
                         
                         if(ct->initialized)
@@ -199,7 +199,7 @@ void PPOrderBy::do_next (tuple &t)
         
         for(i = 0; i < sort_size; i++)
         {
-            common_type* ct = &types.at(i);
+            orb_common_type* ct = &types.at(i);
             if(!ct->initialized) continue;
             ct->size = ORB_SERIALIZED_SIZE(ct->xtype);
             udata.size += ct->size;
@@ -372,7 +372,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 
     for(int i=0; i < length; i++)
     {
-        common_type  &ct = (ud -> header) -> at(i);
+        orb_common_type  &ct = (ud -> header) -> at(i);
         if (!ct.initialized) continue;
         orb_modifier &m  = (ud -> modifiers) -> at(i);
         xmlscm_type type = ct.xtype;
@@ -454,7 +454,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     {
                         if      (!flag1 && flag2) result = -1*order;
                         else if (!flag2 && flag1) result =  1*order;
-                        else /// both strings are not fully serialized ! 
+                        else /// both strings are not fully serialized !
                         { 
                             __int64 position1, position2;
                             GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
@@ -552,7 +552,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
         buffer->copy_to_buffer(&pos, sizeof(__int64));
         for(int i = 0; i < t.cells_number; i++)
         {
-            common_type &ct = (ud -> header) -> at(i);
+            orb_common_type &ct = (ud -> header) -> at(i);
             if (!ct.initialized) continue;              //if ct.initialized == false we have a column of eos values
             xmlscm_type type = ct.xtype;                //thus we don't need to serialize this column and sort by it
             int type_size = ct.size;
@@ -580,7 +580,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
         int offset = sizeof(__int64);
         for(int i = 0; i < t.cells_number; i++)
         {
-            common_type &ct = (ud -> header) -> at(i);
+            orb_common_type &ct = (ud -> header) -> at(i);
             if (!ct.initialized) continue;
             xmlscm_type type = ct.xtype;
             int type_size = ct.size;
@@ -639,7 +639,7 @@ void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, cons
     buffer->copy_to_buffer(&pos, sizeof(__int64));
     for(int i = 0; i < t.cells_number; i++)
     {
-        common_type &ct = (ud -> header) -> at(i);
+        orb_common_type &ct = (ud -> header) -> at(i);
         if (!ct.initialized) continue;
         xmlscm_type type = ct.xtype;
         int type_size = ct.size;

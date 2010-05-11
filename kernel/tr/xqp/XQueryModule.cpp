@@ -192,23 +192,27 @@ namespace sedna
         module_uri = NULL;
         isDefaultOrdered = true;
 
+        //Note: VS2010 bug require (sedna::location*)NULL hack
         // must be by XQuery specs
-        nsBinds["xml"] = nsPair("http://www.w3.org/XML/1998/namespace", NULL);
-        nsBinds["xs"] = nsPair("http://www.w3.org/2001/XMLSchema", NULL);
-        nsBinds["xsi"] = nsPair("http://www.w3.org/2001/XMLSchema-instance", NULL);
-        nsBinds["fn"] = nsPair("http://www.w3.org/2005/xpath-functions", NULL);
-        nsBinds["local"] = nsPair("http://www.w3.org/2005/xquery-local-functions", NULL);
+        nsBinds["xml"] = nsPair("http://www.w3.org/XML/1998/namespace", (sedna::location*)NULL);
+        nsBinds["xs"] = nsPair("http://www.w3.org/2001/XMLSchema", (sedna::location*)NULL);
+        nsBinds["xsi"] = nsPair("http://www.w3.org/2001/XMLSchema-instance", (sedna::location*)NULL);
+        nsBinds["fn"] = nsPair("http://www.w3.org/2005/xpath-functions", (sedna::location*)NULL);
+        nsBinds["local"] = nsPair("http://www.w3.org/2005/xquery-local-functions", (sedna::location*)NULL);
 
+        //Note: VS2010 bug require (sedna::location*)NULL hack
         // predefined Sedna namespace
-        nsBinds["se"] = nsPair("http://www.modis.ispras.ru/sedna", NULL);
+        nsBinds["se"] = nsPair("http://www.modis.ispras.ru/sedna", (sedna::location*)NULL);
 
+        //Note: VS2010 bug require (sedna::location*)NULL hack
         // default element/function namespaces
-        defElemNsp = nsPair("", NULL);
-        defFuncNsp = nsPair("http://www.w3.org/2005/xpath-functions", NULL);
+        defElemNsp = nsPair("", (sedna::location*)NULL);
+        defFuncNsp = nsPair("http://www.w3.org/2005/xpath-functions", (sedna::location*)NULL);
 
+        //Note: VS2010 bug require (sedna::location*)NULL hack
         // internal namespace to specify types as xs:anyType without worrying about original xs redeclaration
         // notice that it cannot be redefined since !xs is not a valid NCName
-        nsBinds["!xs"] = nsPair("http://www.w3.org/2001/XMLSchema", NULL);
+        nsBinds["!xs"] = nsPair("http://www.w3.org/2001/XMLSchema", (sedna::location*)NULL);
 
     }
 
