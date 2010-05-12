@@ -206,10 +206,11 @@ rm $TARGET/etc/sednaconf.xml.sample
 echo "done"
 
 if test -d "bin"; then
-  echo "Do you want to install new system links within the bin subdirectory of "
-  echo "\"$where\", "
-  echo "possibly overriding existing links for the programs se_cdb, se_ddb, se_gov, "
-  printf "se_rc, se_sm, se_smsd, se_stop, se_term, se_trn, se_exp, se_hb? "
+  echo "Do you want to install new system links within the "
+  echo "bin subdirectory of \"$where\", "
+  echo "possibly overriding existing links for the programs "
+  echo "se_cdb, se_ddb, se_gov, se_rc, se_sm, se_smsd, se_stop, "
+  printf "se_term, se_trn, se_exp, se_hb?"
   read yesno
   case "$yesno" in
     [yY]* ) sysdir="$where" ;;
@@ -217,11 +218,11 @@ if test -d "bin"; then
   esac
 else
   cd "$origpwd"
-  echo "If you want to install new system links within the bin "
-  echo "subdirectory of a common directory prefix (for "
-  echo "example, \"/usr/local\") for the programs se_cdb, se_ddb, se_gov, se_rc, "
-  echo "se_sm, se_smsd, se_serv, se_term, se_trn, se_exp, se_hb then enter the prefix you "
-  echo "want to use."
+  echo "If you want to install new system links within the bin"
+  echo "subdirectory of a common directory prefix (for example,"
+  echo "\"/usr/local\") for the programs se_cdb, se_ddb, se_gov, se_rc,"
+  echo "se_sm, se_smsd, se_serv, se_term, se_trn, se_exp, se_hb"
+  echo "then enter the prefix you want to use."
   printf "(default: skip links) > "
   read sysdir
   if test ! "x$sysdir" = "x"; then
