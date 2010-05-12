@@ -10,7 +10,7 @@ trie_node_t *StrMatcher::make_node(trie_node_t *parent, char ch)
 {
 	trie_node_t *tn = (trie_node_t *)malloc(sizeof(trie_node_t));
 	memset(tn->next, 0, sizeof(tn->next));
-	tn->res_ofs = -1;
+	tn->res_ofs.offs = -1;
 	tn->res_len = 0;
 	tn->pc = 0;
 	if (parent == NULL)
@@ -71,7 +71,7 @@ void StrMatcher::add_string_to_buf(const char *str, int *ofs, int *len)
 void StrMatcher::add_str (const char * str, const char * map_str, int pc)
 {
 	trie_node *node = get_node(root, str, pc);
-	add_string_to_buf(map_str, &node->res_ofs, &node->res_len);
+	add_string_to_buf(map_str, &node->res_ofs.offs, &node->res_len);
 }
 
 
@@ -89,7 +89,7 @@ void StrMatcher::add_unicode_escape_range (int start_symbol, int end_symbol, int
 	{
 		const char *str = utf8_encode_char(symbol);
 		trie_node *node = get_node(root, str, pc);
-		node->res_ofs = (int)print_unicode_escape;
+		node->res_ofs.ptr = (uintptr_t)print_unicode_escape;
 		node->res_len = -1;
 	}
 }
@@ -132,7 +132,7 @@ void StrMatcher::reset()
 		for (i = 0; i <= 255; i++)
 			s2->next[i] = s3;
 
-		s3->res_ofs = (int)print_unicode_escape;
+		s3->res_ofs.ptr = (uintptr_t)print_unicode_escape;
 		s3->res_len = -1;
 	}
 }
@@ -216,7 +216,7 @@ int StrMatcher::parse(const char *str, str_off_t len, write_func_t write_cb, voi
 		{
 			state = state->next[(unsigned char)str[i]];
 			state->ch = (unsigned char)str[i]; //FIXME: this is a dirty hack for replace_surr, and was never tested
-			if (state->res_ofs != -1)
+			if (state->res_ofs.offs != -1)
 			{
 				if (write_cb==NULL) return 1;
 				printpart(k, i - state->len, str, len, write_cb, p, buf, buf_used);
@@ -225,11 +225,11 @@ int StrMatcher::parse(const char *str, str_off_t len, write_func_t write_cb, voi
 					char *str_part = (char*)malloc(state->len + 1);
 					copypart(str_part, i + 1 - state->len, i, str, len, buf, buf_used);
 					str_part[state->len] = 0;
-					((replace_cb)state->res_ofs)(str_part, state->len, write_cb, p);
+					((replace_cb)state->res_ofs.ptr)(str_part, state->len, write_cb, p);
 					free(str_part);
 				}
 				else
-					write_cb(p, &strings_buf[state->res_ofs], state->res_len);
+					write_cb(p, &strings_buf[state->res_ofs.offs], state->res_len);
 				k = i+1;
 				state = root;
 			}

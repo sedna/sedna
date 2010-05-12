@@ -15,12 +15,12 @@
 #include "tr/pstr/pstr.h"
 #include "tr/executor/base/tuple.h"
 
-#define BLK_BEGIN_INT(p)			((int)(p) & PAGE_BIT_MASK)
+#define BLK_BEGIN_INT(p)			((uintptr_t)(p) & PAGE_BIT_MASK)
 #define E_STR_PROLONGATION(p)		(((e_str_blk_hdr*)(BLK_BEGIN_INT(XADDR(p))))->nblk + sizeof(e_str_blk_hdr))
 #define E_STR_BLK_HDR(p)			((e_str_blk_hdr*)(BLK_BEGIN_INT(XADDR(p))))
 #define E_STR_BLK_FREE_SPACE(p)		(PAGE_SIZE - ((e_str_blk_hdr*)(p))->cursor)
 
-#define E_STR_NOT_IN_ONE_BLOCK(p)  (((int)XADDR(p.get_str_vmm())& PAGE_REVERSE_BIT_MASK) +p.get_strlen_vmm()>PAGE_SIZE)
+#define E_STR_NOT_IN_ONE_BLOCK(p)  (((uintptr_t)XADDR(p.get_str_vmm())& PAGE_REVERSE_BIT_MASK) +p.get_strlen_vmm()>PAGE_SIZE)
 
 struct e_str_blk_hdr
 {

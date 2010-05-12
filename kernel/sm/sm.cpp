@@ -619,11 +619,11 @@ int main(int argc, char **argv)
         if (!fSuccess) throw USER_EXCEPTION(SE4207);
 #else
         // For Control-C or Delete
-        if ((int)signal(SIGINT, SMCtrlHandler) == -1) throw USER_EXCEPTION(SE4207);
+        if (signal(SIGINT, SMCtrlHandler) == SIG_ERR) throw USER_EXCEPTION(SE4207);
         // For Control-backslash
-        if ((int)signal(SIGQUIT, SMCtrlHandler) == -1) throw USER_EXCEPTION(SE4207);
+        if (signal(SIGQUIT, SMCtrlHandler) == SIG_ERR) throw USER_EXCEPTION(SE4207);
         //For reboot or halt
-        if ((int)signal(SIGTERM, SMCtrlHandler) == -1) throw USER_EXCEPTION(SE4207);
+        if (signal(SIGTERM, SMCtrlHandler) == SIG_ERR) throw USER_EXCEPTION(SE4207);
 #endif
 
         try {

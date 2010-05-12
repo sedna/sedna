@@ -24,7 +24,7 @@ struct seq_blk_hdr
 };
 
 
-#define SEQ_BLK_HDR(p)					((seq_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))
+#define SEQ_BLK_HDR(p)					((seq_blk_hdr*)((uintptr_t)(XADDR(p)) & PAGE_BIT_MASK))
 #define SEQ_BLK_FREE_SPACE(p)			(int)(PAGE_SIZE - ((seq_blk_hdr*)(p))->cursor)
 #define SEQ_BLK_CURSOR(p)				((void*)((char*)(p) + ((seq_blk_hdr*)(p))->cursor))
 

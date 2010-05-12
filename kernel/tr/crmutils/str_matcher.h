@@ -19,7 +19,15 @@ enum pat_class
 
 struct trie_node
 {
-	int res_ofs;
+    /* 
+     * since res_ofs is used to store pointer to a function (ZOMG!!!) I'm
+     * promoting it to a union. But all this mess should be fixed ASAP (AK).
+     */
+    union
+    {
+        int offs;
+        uintptr_t ptr;
+    } res_ofs;
 	int res_len;
 	int pc;
 	int len;

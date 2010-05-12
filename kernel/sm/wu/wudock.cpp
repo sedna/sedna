@@ -6,9 +6,12 @@
 #include "wuaux.h"
 #include "sm/bufmgr/bm_core.h"
 
+/*
+ * NOTE: we should be careful here since offs could be > 32-bit in the future
+ */
 XPTR WuInternaliseXptr(const xptr& v)
 {
-	return ((XPTR)UINT32_MAX+1)*v.layer + (uint32_t)v.offs;
+	return ((XPTR)UINT32_MAX+1)*v.layer + (uint32_t)v.getOffs();
 }
 
 xptr WuExternaliseXptr(XPTR v)

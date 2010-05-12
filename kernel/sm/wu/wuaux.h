@@ -15,7 +15,7 @@
 #ifdef _WIN32
 #define  I64FMT		"I64"
 #else
-#define I64FMT		"ll"
+#define I64FMT		__PRI64_PREFIX
 #endif
 
 static

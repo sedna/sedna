@@ -390,8 +390,8 @@ void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
     U_ASSERT(false);
 
-    if (LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)(info->si_addr) && 
-        (int)(info->si_addr) < LAYER_ADDRESS_SPACE_BOUNDARY_INT)
+    if (LAYER_ADDRESS_SPACE_START_ADDR_INT <= (uintptr_t)(info->si_addr) &&
+        (uintptr_t)(info->si_addr) < LAYER_ADDRESS_SPACE_BOUNDARY_INT)
     { 
         // VMM page fault
 //        if (vmm_is_busy_called) longjmp(vmm_is_busy_env, 0);

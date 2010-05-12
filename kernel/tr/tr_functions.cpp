@@ -369,13 +369,13 @@ void set_trn_ctrl_handler()
                 throw USER_EXCEPTION(SE4207);
 #else /* !_WIN32 */
             // For Control-C or Delete
-            if ((int) signal(SIGINT, TrnCtrlHandler) == -1)
+            if (signal(SIGINT, TrnCtrlHandler) == SIG_ERR)
                 throw USER_EXCEPTION(SE4207);
             // For Control-backslash
-            if ((int) signal(SIGQUIT, TrnCtrlHandler) == -1)
+            if (signal(SIGQUIT, TrnCtrlHandler) == SIG_ERR)
                 throw USER_EXCEPTION(SE4207);
             //For reboot or halt
-            if ((int) signal(SIGTERM, TrnCtrlHandler) == -1)
+            if (signal(SIGTERM, TrnCtrlHandler) == SIG_ERR)
                 throw USER_EXCEPTION(SE4207);
 #endif /* _WIN32 */
 }

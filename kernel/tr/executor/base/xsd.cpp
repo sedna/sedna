@@ -79,7 +79,7 @@ void xs_anyURI_print_to_lr(const char *uri, std::ostream& str)
 ///
 static void _xs_QName_encode(xmlns_ptr source, void *dest)
 {
-    for (int i = 0; i < sizeof(xmlns_ptr); i++)
+    for (unsigned i = 0; i < sizeof(xmlns_ptr); i++)
     {
         if (((unsigned char*)&source)[i] == 0xFF)
         {
@@ -96,7 +96,7 @@ static void _xs_QName_encode(xmlns_ptr source, void *dest)
 
 static xmlns_ptr _xs_QName_decode(const void *source)
 {
-    return (xmlns_ptr) ((uint32_t) (*(uint32_t *)source ^ *((uint32_t *)source + 1)));
+    return (xmlns_ptr) ((uintptr_t) (*(uintptr_t *)source ^ *((uintptr_t *)source + 1)));
 }
 
 static int _xs_QName_separator_position(const char *prefix_and_local)
@@ -223,7 +223,7 @@ char *xs_QName_create(const char* prefix_and_local,
     get_in_scope_namespaces(elem_node, xmlns, cxt);
     const char *tgt_prefix = NULL;
 
-    for (int i = 0; i < xmlns.size(); i++)
+    for (size_t i = 0; i < xmlns.size(); i++)
     {
         tgt_prefix = xmlns[i]->prefix;
         if (strncmp(tgt_prefix, src_prefix, pos) == 0)

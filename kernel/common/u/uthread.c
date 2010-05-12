@@ -194,12 +194,12 @@ int uThreadJoin(UTHANDLE id, sys_call_error_fun fun)
 #endif
 }
 
-void uExitThread(int rc, sys_call_error_fun fun) 
+void uExitThread(unsigned rc, sys_call_error_fun fun)
 {
 #ifdef _WIN32
 	ExitThread(rc);
 #else
-    pthread_exit((void*)rc); 
+    pthread_exit((void*)(uintptr_t)rc);
 #endif
 }
 

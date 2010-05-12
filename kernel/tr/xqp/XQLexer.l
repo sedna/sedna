@@ -887,7 +887,7 @@ std::string *XQueryLexer::xqMakeNumLiteral(XQueryParser::location_type *yylloc, 
 // Helper function that scans str and replaces all 'find' with 'repl' beginning with start_pos and ending with end_pos
 static void find_replace_str(std::string *str, const char *find, const char *repl, unsigned int start_pos, unsigned int end_pos)
 {
-    unsigned int pos = start_pos;
+    std::string::size_type pos = start_pos;
 
     while (pos <= end_pos)
     {
@@ -992,7 +992,7 @@ std::string *XQueryLexer::xqMakeStrLiteral(XQueryParser::location_type *loc, con
 {
     std::string res, *repl;
     bool isQuoted = (text[0] == '"');
-    unsigned int pos, pos2;
+    std::string::size_type pos, pos2;
     std::string find;
 
     res = std::string(text + 1, len - 2); // strip boundary " or '

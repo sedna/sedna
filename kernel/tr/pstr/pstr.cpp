@@ -82,12 +82,12 @@ void pstr_print_blk(xptr blk) {
     if (blk == XNULL) return;
     d_printf2(" Block #0x%x\n", XADDR(blk));
     d_printf1("============================================\n");
-    d_printf3("PSTRNUM[%d]=%d\n", (int)PSTRNUM_ADDR(blk), (int)PSTRNUM(blk));
-    d_printf3("SITB[%d]=%d\n", (int)SITB_ADDR(blk), (int)SITB(blk));
-    d_printf3("SITH[%d]=%d\n", (int)SITH_ADDR(blk), (int)SITH(blk));
-    d_printf3("SSB[%d]=%d\n", (int)SSB_ADDR(blk), (int)SSB(blk));
-    d_printf3("BFS[%d]=%d\n", (int)BFS_ADDR(blk), (int)BFS(blk));
-    d_printf3("HHSIZE[%d]=%d\n", (int)HHSIZE_ADDR(blk), (int)HHSIZE(blk));
+    d_printf3("PSTRNUM[0x%x]=%d\n", PSTRNUM_ADDR(blk), (int)PSTRNUM(blk));
+    d_printf3("SITB[0x%x]=%d\n", SITB_ADDR(blk), (int)SITB(blk));
+    d_printf3("SITH[0x%x]=%d\n", SITH_ADDR(blk), (int)SITH(blk));
+    d_printf3("SSB[0x%x]=%d\n", SSB_ADDR(blk), (int)SSB(blk));
+    d_printf3("BFS[0x%x]=%d\n", BFS_ADDR(blk), (int)BFS(blk));
+    d_printf3("HHSIZE[0x%x]=%d\n", HHSIZE_ADDR(blk), (int)HHSIZE(blk));
     d_printf1("----------------------\n");
     /*int i;
     for(i=0; i<HHSIZE(blk); i++) {
@@ -640,7 +640,7 @@ bool is_last_shft_in_blk(xptr addr)
     sh=sh+sizeof(shft);
     xptr blk=BLOCKXPTR(addr);
     CHECKP(blk);
-    while (((int)XADDR(sh)-(int)XADDR(blk))<=PAGE_SIZE-sizeof(shft))
+    while (((uintptr_t)XADDR(sh)-(uintptr_t)XADDR(blk))<=PAGE_SIZE-sizeof(shft))
     {
         if ((*(shft*)XADDR(sh))<SSB(blk) &&(*(shft*)XADDR(sh))>0 ) return false;
         sh=sh+sizeof(shft);

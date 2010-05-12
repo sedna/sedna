@@ -64,7 +64,7 @@ void create_db()
 
     /* Allcoate master block */
 
-    mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
+    mb = (bm_masterblock*)(((uintptr_t)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
 
     /* Set master block initial values */
     mb->free_data_blocks = XNULL;

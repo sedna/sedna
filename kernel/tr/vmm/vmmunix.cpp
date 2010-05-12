@@ -26,7 +26,7 @@ int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection
 
     if (addr == MAP_FAILED) {
         d_perror("mmap failed");
-        d_printf2("Addr = 0x%x\n", (int)(addr));
+        d_printf2("Addr = 0x%x\n", (uintptr_t)(addr));
         return -1;
     }
 

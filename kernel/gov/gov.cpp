@@ -245,13 +245,13 @@ int main(int argc, char** argv)
       fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) GOVCtrlHandler, TRUE);                           // add to list
       if (!fSuccess) throw USER_EXCEPTION(SE4403);
 #else
-        if ((int)signal(SIGINT, GOVCtrlHandler) == -1)
+        if (signal(SIGINT, GOVCtrlHandler) == SIG_ERR)
            throw USER_EXCEPTION(SE4403);
 		// For Control-backslash
-        if ((int)signal(SIGQUIT, GOVCtrlHandler) == -1)
+        if (signal(SIGQUIT, GOVCtrlHandler) == SIG_ERR)
            throw USER_EXCEPTION(SE4403);
 		//For reboot or halt
-        if ((int)signal(SIGTERM, GOVCtrlHandler) == -1)
+        if (signal(SIGTERM, GOVCtrlHandler) == SIG_ERR)
            throw USER_EXCEPTION(SE4403);
 #endif
 

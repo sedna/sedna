@@ -210,7 +210,7 @@ LSN llRecoverPhysicalState()
 	if ((ctrl_blk_buf = malloc(2 * PAGE_SIZE)) == NULL)
 		throw SYSTEM_EXCEPTION("Cannot allocate memory");
 	// sector alligned buffer
-	ctrl_blk = (void *)((uint32_t)((char *)ctrl_blk_buf + sector_size - 1) & ~(sector_size - 1));
+	ctrl_blk = (void *)((uintptr_t)((char *)ctrl_blk_buf + sector_size - 1) & ~(uintptr_t)(sector_size - 1));
 
 	if (uGetDiskSectorSize(&sector_size, sm_globals::db_files_path, __sys_call_error) == 0)
 		throw USER_EXCEPTION(SE4051);
