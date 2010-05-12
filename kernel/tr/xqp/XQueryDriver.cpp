@@ -442,7 +442,7 @@ namespace sedna
         XQVariable xqv(name.c_str(), NULL);
         modSequence ms;
         std::string uri;
-        unsigned int fp, lp;
+        std::string::size_type fp, lp;
 
         // get uri from name
         fp = name.find('{');

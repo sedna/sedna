@@ -183,9 +183,9 @@ void cs_read_subsequence_descriptor(const xptr ptr, cs_chain_part_header * ph)
 
     ph->addr = ptr;
     ph->eff_addr = pp;
-    cell = ((uint32_t) p & PAGE_REVERSE_BIT_MASK) / CS_CELL_SIZE;
+    cell = ((uintptr_t) p & PAGE_REVERSE_BIT_MASK) / CS_CELL_SIZE;
     ph->size = ((char *) XADDR(BLOCKXPTR(ptr)) + (cell + desc.count) * CS_CELL_SIZE) - pp;
-    U_ASSERT((((uint32_t) ph->eff_addr + ph->size) & 0xff) == 0);
+    U_ASSERT((((uintptr_t) ph->eff_addr + ph->size) & 0xff) == 0);
     U_ASSERT(ph->size < 64000);
     ph->next = uint64_to_xptr(desc.next_ptr);
 }

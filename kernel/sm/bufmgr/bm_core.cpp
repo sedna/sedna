@@ -487,7 +487,7 @@ void dump_bufmgr_state()
 			}
 			if (hdr->is_changed) strcat(flags,"D");
 			fprintf(stderr, "%4d xptr:%8x%08p lxptr:%8x%08p %4s %s\n",
-				i, physXptr.layer, physXptr.offs, logXptr.layer, logXptr.offs, flags, auxInfo);
+				i, physXptr.layer, physXptr.getOffs(), logXptr.layer, logXptr.getOffs(), flags, auxInfo);
 		}
 	}
 	fprintf(stderr,"---FINISHED DUMP OF BUFMGR STATE---\n");

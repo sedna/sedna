@@ -182,29 +182,29 @@ int load_metadata_in_database(const char* db_name, const char* db_security_level
     uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf2, 10), NULL,  __sys_call_error);    
 
     strcpy(buf, run_command.c_str());
-    if (0 != uCreateProcess(buf,
-        true, // inherit handles
-        NULL,
-        U_DETACHED_PROCESS,
-        &proc_h,
-        NULL,
-        &pid,
-        NULL,
-        NULL,
-        __sys_call_error
-        ))
-        throw SYSTEM_EXCEPTION("Can't load metadata");
+     if (0 != uCreateProcess(buf,
+         true, // inherit handles
+         NULL,
+         U_DETACHED_PROCESS,
+         &proc_h,
+         NULL,
+         &pid,
+         NULL,
+         NULL,
+         __sys_call_error
+         ))
+         throw SYSTEM_EXCEPTION("Can't load metadata");
 
 
-    res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
+     res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
 
-    if (res != 0)
-        throw SYSTEM_EXCEPTION("Can't load metadata");
+     if (res != 0)
+         throw SYSTEM_EXCEPTION("Can't load metadata");
 
-    int ret_code = 0;
+     int ret_code = 0;
 
-    if (ret_status != 0)
-        ret_code = 1;//database creation failure (may be because of concurrent transactions)
+     if (ret_status != 0)
+         ret_code = 1;//database creation failure (may be because of concurrent transactions)
 
     /* Stop SM */
     run_command = uGetImageProcPath(buf, __sys_call_error) + 

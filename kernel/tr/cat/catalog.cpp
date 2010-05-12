@@ -367,7 +367,7 @@ catalog_object_header * catalog_create_object(catalog_object * object, bool pers
     } else {
         U_ASSERT(CATALOG_TEMPORARY_CONTEXT);
         obj = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(XNULL);
-        object->p_object.offs = CATALOG_TEMPORARY_CONTEXT->addr2offs(obj);
+        object->p_object.setOffs(CATALOG_TEMPORARY_CONTEXT->addr2offs(obj));
         object->p_object.layer = CHUNK2TEMP_CAT_LAYER(CATALOG_TEMPORARY_CONTEXT->addr2chunk(obj));
         obj->p = object->p_object;
     }
@@ -395,7 +395,7 @@ catalog_object_header * catalog_acquire_object(const xptr &ptr)
     /* for temporary schema nodes, return pointer immidiately:
        temporary xptr = TEMPORARY_LAYER (special) + CATALOG HEADER POINTER */
     if (IS_CATALOG_TMP_PTR(ptr))
-        return (catalog_object_header *)(CATALOG_TEMPORARY_CONTEXT->offs2addr(TEMP_CAT_LAYER2CHUNK(ptr.layer), ptr.offs));
+        return (catalog_object_header *)(CATALOG_TEMPORARY_CONTEXT->offs2addr(TEMP_CAT_LAYER2CHUNK(ptr.layer), ptr.getOffs()));
 
     /* look up for a catalog header, corresponding to the xpointer in hash table */
     catalog_object_header * obj =

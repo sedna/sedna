@@ -300,31 +300,31 @@ void get_sednaconf_values(gov_header_struct* cfg)
  */
 static void get_sedna_data_path(const char* cfg_text, char* buf)
 {
-    const char* beg, *fin;
-    const char* sedna_data_open_tag  = "<sedna_data>";
-    const char* sedna_data_close_tag = "</sedna_data>";
-    unsigned short value_shift = strlen(sedna_data_open_tag);
-    std::string save_buf(buf);
+      const char* beg, *fin;
+      const char* sedna_data_open_tag  = "<sedna_data>";
+      const char* sedna_data_close_tag = "</sedna_data>";
+      unsigned short value_shift = strlen(sedna_data_open_tag);
+      std::string save_buf(buf);
 
-    beg = strstr(cfg_text, sedna_data_open_tag);
-    fin = strstr(cfg_text, sedna_data_close_tag);
+      beg = strstr(cfg_text, sedna_data_open_tag);
+      fin = strstr(cfg_text, sedna_data_close_tag);
 
-    d_printf2("cfg_text=%s\n", cfg_text);
-    if (beg == NULL || fin == NULL) return;
+      d_printf2("cfg_text=%s\n", cfg_text);
+      if (beg == NULL || fin == NULL) return;
 
-    memcpy(buf, beg + value_shift, (int)fin-((int)beg + value_shift));
-    buf[(int)fin-((int)beg + value_shift)] = '\0';
+      memcpy(buf, beg + value_shift, fin - beg + value_shift);
+      buf[fin - beg + value_shift] = '\0';
 
-    std::string tmp(buf);
-    tmp = trim(tmp);
+      std::string tmp(buf);
+      tmp = trim(tmp);
 
-    if(tmp.length() > U_MAX_PATH)
-    {
-        fprintf(stderr, "Path in the 'sedna_data' parameter is too long in sednaconf.xml. Going to use default value.\n");
-        strcpy(buf, save_buf.c_str());
-    }
-    else
-        strcpy(buf, tmp.c_str());
+      if(tmp.length() > U_MAX_PATH)
+      {
+          fprintf(stderr, "Path in the 'sedna_data' parameter is too long in sednaconf.xml. Going to use default value.\n");
+          strcpy(buf, save_buf.c_str());
+      }
+      else
+          strcpy(buf, tmp.c_str());
 }
 
 int set_sedna_data(char* sd_buf, sys_call_error_fun fun)

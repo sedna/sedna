@@ -36,14 +36,14 @@ extern lsize_t LAYER_ADDRESS_SPACE_SIZE;
 
 // user this macros when you want obtain pointer in terms of process' virtual
 // address space
-#define XADDR(p)				((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).offs))
-#define XADDR_INT(p)            (LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).offs)
-#define BLOCKXPTR(a)			cxptr(a.layer,((a).offs & PAGE_BIT_MASK))
+#define XADDR(p)				((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()))
+#define XADDR_INT(p)            (LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs())
+#define BLOCKXPTR(a)			cxptr(a.layer,((a).getOffs() & PAGE_BIT_MASK))
 
 #define ADDR2XPTR(a)			cxptr(*(t_layer*)(((uintptr_t)(a)) & PAGE_BIT_MASK),   \
                                       *(lsize_t *)((((uintptr_t)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + \
                                       (lsize_t)(((uintptr_t)(a)) & PAGE_REVERSE_BIT_MASK))
-#define TEST_XPTR(p)			(*(t_layer*)((LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).offs) & PAGE_BIT_MASK) == (p).layer)
+#define TEST_XPTR(p)			(*(t_layer*)((LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()) & PAGE_BIT_MASK) == (p).layer)
 #define ALIGN_ADDR(a)			((void*)((uintptr_t)(a) & PAGE_BIT_MASK))
 #define LAYERS_EQUAL(a, p)      (*(t_layer*)((uintptr_t)(a) & PAGE_BIT_MASK) == ((p).layer))
 
@@ -65,7 +65,7 @@ struct xptr
     t_layer	layer;
     lsize_t offs;
 
-    /* Careful! This should be changed if lsize_t will become > 32bit */
+    /* Careful! This should be changed if lsize_t becomes > 32bit */
     inline uint64_t to_logical_int() const {
         union uint64_lh_t v = * (uint64_lh_t *) this;
 #ifndef BIG_ENDIAN_ORDER
@@ -82,6 +82,12 @@ struct xptr
     inline lsize_t getOffs() const
     {
         return offs;
+    }
+
+    inline void setOffs(lsize_t offs_)
+    {
+        U_ASSERT(offs_ < LAYER_ADDRESS_SPACE_SIZE);
+        offs = offs_;
     }
 
     // TODO: check for overflow
@@ -156,15 +162,15 @@ inline lsize_t operator-(const xptr &p1, const xptr &p2)
     if (p1.layer != p2.layer)
         throw USER_EXCEPTION2(SE1003, "Bad parameters in xptr operator-(const xptr &p1, const xptr &p2)");
 
-    U_ASSERT(p1.offs >= p2.offs);
+    U_ASSERT(p1.getOffs() >= p2.getOffs());
 
-    return p1.offs - p2.offs;
+    return p1.getOffs() - p2.getOffs();
 }
 
 // TODO: check for legacy logic: (l1, NULL) == (l2, NULL)
 inline bool operator==(const xptr &p1, const xptr &p2)
 {
-    return p1.layer == p2.layer && (p1.layer == 0 || (p1.offs == p2.offs));
+    return p1.layer == p2.layer && (p1.layer == 0 || (p1.getOffs() == p2.getOffs()));
 }
 
 inline bool operator!=(const xptr &p1, const xptr &p2)
@@ -174,12 +180,12 @@ inline bool operator!=(const xptr &p1, const xptr &p2)
 
 inline bool operator<(const xptr &p1, const xptr &p2)
 {
-    return p1.layer != p2.layer ? p1.layer < p2.layer : p1.offs < p2.offs;
+    return p1.layer != p2.layer ? p1.layer < p2.layer : p1.getOffs() < p2.getOffs();
 }
 
 inline xptr block_xptr(const xptr &p)
 {
-    return cxptr(p.layer, (p.offs) & PAGE_BIT_MASK);
+    return cxptr(p.layer, (p.getOffs()) & PAGE_BIT_MASK);
 }
 
 inline xptr addr2xptr(const void * p)
@@ -202,8 +208,8 @@ inline int xptr_compare(const xptr& p1, const xptr& p2)
     }
     else
     {
-        if (p1.offs < p2.offs) return -1;
-        else if (p1.offs == p2.offs) return 0;
+        if (p1.getOffs() < p2.getOffs()) return -1;
+        else if (p1.getOffs() == p2.getOffs()) return 0;
         return 1;
     }
 }

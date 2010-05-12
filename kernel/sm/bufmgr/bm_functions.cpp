@@ -225,7 +225,7 @@ void bm_startup()
     // init physical xptrs table
     phys_xptrs = se_new t_xptr_info(sm_globals::bufs_num);
 
-    mb = (bm_masterblock*)(((uint32_t)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
+    mb = (bm_masterblock*)(((uintptr_t)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     read_master_block();
 
     LAYER_ADDRESS_SPACE_SIZE = mb->layer_size;

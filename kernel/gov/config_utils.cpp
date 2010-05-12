@@ -130,7 +130,7 @@ static void fulfill_sm_parameters_from_config_files(gov_config_struct* cfg)
    UDir cfg_dir;
    UFindDataStruct find_data;
    int res;
-   unsigned int index;
+   std::string::size_type index;
    FILE * fs;
    char buf[1024];
    std::string cfg_text;

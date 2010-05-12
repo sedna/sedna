@@ -191,7 +191,7 @@ void DumpUnfreed(int component)
         fprintf(du_ostr, "\t\t<file>%s</file>\n",              itr->file);
         fprintf(du_ostr, "\t\t<line>%d</line>\n",              itr->line);
         fprintf(du_ostr, "\t\t<address>%"PRIxPTR"</address>\n", (uintptr_t)(itr->address));
-        fprintf(du_ostr, "\t\t<size>%d</size>\n",              itr->size);
+        fprintf(du_ostr, "\t\t<size>%u</size>\n",              (unsigned)itr->size);
         fprintf(du_ostr, "\t\t<flag>%s</flag>\n",              itr->flag);
         fprintf(du_ostr, "\t</block>\n");
 #endif

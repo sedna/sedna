@@ -2080,7 +2080,7 @@ namespace sedna
 
     static bool parseKeyValue(const std::string &opt, const char delim, std::string &key, std::string &val)
     {
-        unsigned int pos, beg, end;
+        std::string::size_type pos, beg, end;
 
         pos = opt.find(delim); // find delimeter
 
@@ -2110,7 +2110,7 @@ namespace sedna
     void Sema::parseOption(const ASTLocation &loc, const std::string &opt, std::vector<std::pair<std::string, std::string> > &opts, const char delim)
     {
         std::string key, val;
-        unsigned int beg = 0, pos;
+        std::string::size_type beg = 0, pos;
 
         while((pos = opt.find(delim, beg)) != std::string::npos)
         {
@@ -2146,7 +2146,7 @@ namespace sedna
 
     std::string Sema::uriFromGeneralName(const std::string &name)
     {
-        unsigned int fp, lp;
+        std::string::size_type fp, lp;
 
         // take uri from name
         fp = name.find('{');
@@ -2163,7 +2163,7 @@ namespace sedna
     {
         XQFunction *xqf;
         std::string uri, name_wa;
-        unsigned int fp, lp;
+        std::string::size_type fp, lp;
 
         // construct name with arity
         name_wa = name + "/" + int2string(arity);

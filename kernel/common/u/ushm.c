@@ -188,7 +188,7 @@ void* uAttachShMem(UShMem id, void *ptr, int size, sys_call_error_fun fun)
 #else
 {
 	void *res = NULL;
-	if ((int)(res = shmat(id, ptr, 0)) == -1)
+	if ((res = shmat(id, ptr, 0)) == (void *)-1)
 	{
         sys_call_error("shmat");
     	return NULL;

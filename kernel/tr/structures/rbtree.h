@@ -40,7 +40,7 @@ struct sedna_rbtree
 			else
 			this->s_parent=0;
 		}
-		inline unsigned int shift(sedna_rbtree_entry* mem_pool) {return (unsigned int)( ((int)this-(int)mem_pool) / sizeof(sedna_rbtree_entry))+1;}
+		inline unsigned int shift(sedna_rbtree_entry* mem_pool) {return (unsigned int)(this - mem_pool) + 1;}
 		static void init (sedna_rbtree_entry* res,T* obj)
 		{
 			res->obj=obj;
@@ -276,7 +276,7 @@ template<class T> void sedna_rbtree<T>::rb_delete(sedna_rbtree_entry* entry)
 	}
 	// y deletion
 	*((int*)y)=mem_free_place;
-	mem_free_place=((int)y-(int)mem_pool)/sizeof(sedna_rbtree_entry)+1;
+	mem_free_place=(y - mem_pool) + 1;
 	mem_pool_cnt--;
 
 }

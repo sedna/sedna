@@ -102,7 +102,7 @@ struct local_catalog_header : public catalog_header {
 
 void catalog_update_metadata();
 
-inline uint16_t hash(const xptr &p) { return ((uint32_t) p.offs >> 7) % CCACHE_XPTR_BUCKETS ; };
+inline uint16_t hash(const xptr &p) { return ((uint32_t) p.getOffs() >> 7) % CCACHE_XPTR_BUCKETS ; };
 
 inline uint16_t hash(const char * a) {
     uint8_t i = 0;

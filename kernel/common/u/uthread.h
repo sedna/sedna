@@ -83,7 +83,7 @@ int uTerminateThread(UTHANDLE id, sys_call_error_fun fun);
 int uCloseThreadHandle(UTHANDLE id, sys_call_error_fun fun);
 int uThreadJoin(UTHANDLE id, sys_call_error_fun fun);
 // use UEXITTHREAD_OK or UEXITTHREAD_FAIL as arguments to uExitThread
-void uExitThread(int rc, sys_call_error_fun fun);
+void uExitThread(unsigned rc, sys_call_error_fun fun);
 UTHANDLE uGetCurrentThread(sys_call_error_fun fun);
 int uThreadBlockAllSignals(sys_call_error_fun fun);
 

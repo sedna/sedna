@@ -94,7 +94,7 @@ void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 		for (int i = 0; i < BT_KEY_NUM(p); i++) {
 			xptr pt = *((xptr *) BT_BIGPTR_TAB_AT(p, i)); 
 			char * ptr = (char *) XADDR(pt);
-			CHECK_ASSERTION((((int) ptr) & PAGE_REVERSE_BIT_MASK) == 0);
+			CHECK_ASSERTION((((uintptr_t) ptr) & PAGE_REVERSE_BIT_MASK) == 0);
 		}
 	}
 }

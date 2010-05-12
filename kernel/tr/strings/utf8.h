@@ -327,19 +327,19 @@ public:
 	  }
 	  inline bool operator > (const utf8_iterator<char *, int>& it2) const
 	  {
-		  return ((int)(this->m_begin+this->shift)>(int)(it2.m_begin+it2.shift));
+		  return ((uintptr_t)(this->m_begin+this->shift)>(uintptr_t)(it2.m_begin+it2.shift));
 	  }
 	  inline bool operator >=(const utf8_iterator<char *, int>& it2) const
 	  {
-		  return ((int)(this->m_begin+this->shift)>=(int)(it2.m_begin+it2.shift));
+		  return ((uintptr_t)(this->m_begin+this->shift)>=(uintptr_t)(it2.m_begin+it2.shift));
 	  }
 	  inline bool operator < (const utf8_iterator<char *, int>& it2) const
 	  {
-		  return ((int)(this->m_begin+this->shift)<(int)(it2.m_begin+it2.shift));
+		  return ((uintptr_t)(this->m_begin+this->shift)<(uintptr_t)(it2.m_begin+it2.shift));
 	  }
 	  inline bool operator <=(const utf8_iterator<char *, int>& it2) const
 	  {
-		  return ((int)(this->m_begin+this->shift)<=(int)(it2.m_begin+it2.shift));
+		  return ((uintptr_t)(this->m_begin+this->shift)<=(uintptr_t)(it2.m_begin+it2.shift));
 	  }
 };
 

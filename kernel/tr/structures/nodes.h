@@ -227,7 +227,7 @@ inline shft calcShift(void * p) {
 }
 
 inline node_blk_hdr * getBlockByNode(n_dsc * node) {
-    return (node_blk_hdr *) ((uint32_t)(node) & PAGE_BIT_MASK);
+    return (node_blk_hdr *) ((uintptr_t)(node) & PAGE_BIT_MASK);
 }
 
 /* ============================================================================
@@ -254,7 +254,7 @@ inline node_blk_hdr * getBlockByNode(n_dsc * node) {
 
 #define GETSCHEMENODE(b) GETBLOCKBYNODE_ADDR(b)->snode
 /* returns the pointer to the node block header*/
-#define GETBLOCKBYNODE_ADDR(p) ((node_blk_hdr*)((int)p & PAGE_BIT_MASK))
+#define GETBLOCKBYNODE_ADDR(p) ((node_blk_hdr*)((uintptr_t)p & PAGE_BIT_MASK))
  /* ============================================================================
   In all the following macros b is 'node_blk_hdr *' pointer and s is shift
  */
@@ -274,7 +274,7 @@ inline node_blk_hdr * getBlockByNode(n_dsc * node) {
   In all the following macros p is 'xptr*' pointer to inside of some block
  */
 /* returns the pointer to the block header*/
-#define GETBLOCKBYNODE(p) (node_blk_hdr*)((int)XADDR(p) & PAGE_BIT_MASK)
+#define GETBLOCKBYNODE(p) (node_blk_hdr*)((uintptr_t)XADDR(p) & PAGE_BIT_MASK)
 /* adress of the left sibling of the node*/
 #define GETLEFTPOINTER(p) ( ((n_dsc*)XADDR(p))->ldsc)
 /* adress of the right sibling of the node*/

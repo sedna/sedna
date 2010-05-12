@@ -87,8 +87,7 @@ xptr ConsumeNextBlockInSpan(
         result.layer =
             layerAdjustment + (offset + offsAdjustment) / LAYER_ADDRESS_SPACE_SIZE;
 
-        result.offs =
-                (offset + offsAdjustment) % LAYER_ADDRESS_SPACE_SIZE;
+        result.setOffs((offset + offsAdjustment) % LAYER_ADDRESS_SPACE_SIZE);
 
         *spanBeginOffsPtr = spanBeginOffs;
         *spanEndOffsPtr = spanEndOffs;

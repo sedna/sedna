@@ -18,7 +18,7 @@
 //      pref and loc
 void ASTParseQName(const std::string *qname, std::string **pref, std::string **loc)
 {
-    unsigned int pos;
+    std::string::size_type pos;
 
     if (qname == NULL)
     {
@@ -31,14 +31,15 @@ void ASTParseQName(const std::string *qname, std::string **pref, std::string **l
     if ((pos = qname->find(":")) != std::string::npos)
     {
         *pref = new std::string(qname->substr(0, pos));
+        pos++;
     }
     else
     {
         *pref = new std::string("");
-        pos = -1;
+        pos = 0;
     }
 
-    *loc = new std::string(qname->substr(pos + 1, qname->size() - pos - 1));
+    *loc = new std::string(qname->substr(pos, qname->size() - pos));
 }
 
 /* helper to destroy vector of nodes and corresponding elements */

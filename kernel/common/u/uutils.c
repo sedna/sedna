@@ -51,7 +51,7 @@ char *u_i64toa(__int64 value, char *str, int radix)
         d_printf1("radix in call to _ultoa has unsupported value\n");
         return NULL;
     }
-    sprintf(str, "%lld", value);
+    sprintf(str, "%"PRId64, value);
     return str;
 }
 
@@ -62,7 +62,7 @@ char *u_ui64toa(__uint64 value, char *str, int radix)
         d_printf1("radix in call to _ui64toa has unsupported value\n");
         return NULL;
     }
-    sprintf(str, "%llu", value);
+    sprintf(str, "%"PRIu64, value);
     return str;
 }
 

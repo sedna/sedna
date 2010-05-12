@@ -332,7 +332,7 @@ se_ostream&
 se_socketostream_base::operator<<(void* n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 8) flush();
-    sprintf(_res_msg->body + _res_msg->length, "%08"PRIXPTR"", (uint32_t) n);
+    sprintf(_res_msg->body + _res_msg->length, "%08"PRIXPTR"", (uintptr_t) n);
     _res_msg->length += 8;
     return *this;
 }
@@ -342,8 +342,8 @@ se_socketostream_base::operator<<(xptr n)
 {
     if (AVAILABLE_SPACE(_res_msg) < 17) flush();
     sprintf(_res_msg->body + _res_msg->length,
-            "%08"PRIXPTR"@%08"PRIXPTR"",
-            n.layer, (uint32_t) n.getOffs());
+            "%08"PRId32"@%08"PRIu32,
+            n.layer, n.getOffs());
     _res_msg->length += 17;
     return *this;
 }

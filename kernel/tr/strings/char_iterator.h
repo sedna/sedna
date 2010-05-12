@@ -28,19 +28,19 @@ class char_iterator : public std::iterator<std::bidirectional_iterator_tag,char>
 		}
         inline friend bool operator > (const char_iterator& it1, const char_iterator& it2)
 		{
-			return ((int)(it1.begin+it1.shift)>(int)(it2.begin+it2.shift));
+			return ((uintptr_t)(it1.begin+it1.shift)>(uintptr_t)(it2.begin+it2.shift));
 		}
         inline friend bool operator >=(const char_iterator& it1, const char_iterator& it2)
 		{
-			return ((int)(it1.begin+it1.shift)>=(int)(it2.begin+it2.shift));
+			return ((uintptr_t)(it1.begin+it1.shift)>=(uintptr_t)(it2.begin+it2.shift));
 		}
         inline friend bool operator < (const char_iterator& it1, const char_iterator& it2)
 		{
-			return ((int)(it1.begin+it1.shift)<(int)(it2.begin+it2.shift));
+			return ((uintptr_t)(it1.begin+it1.shift)<(uintptr_t)(it2.begin+it2.shift));
 		}
         inline friend bool operator <=(const char_iterator& it1, const char_iterator& it2)
 		{
-			return ((int)(it1.begin+it1.shift)<=(int)(it2.begin+it2.shift));
+			return ((uintptr_t)(it1.begin+it1.shift)<=(uintptr_t)(it2.begin+it2.shift));
 		}
 		//number of chars left to the end of the string
 		char* begin;

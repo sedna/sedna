@@ -49,8 +49,17 @@ public:
     virtual se_ostream& operator<<(long double n)                  = 0;
     virtual se_ostream& operator<<(void * n)                       = 0;
     virtual se_ostream& operator<<(xptr n)                         = 0;
+/*
+ * Here we need to determine if we need __int64 function at all. Since, for
+ * example, GCC on x64 defines int64_t as 'long' and we have type clash there.
+ * We need to do the test in more elegant way; perhaps when config.h will be
+ * in place.
+ *
+ * For now, let's use the function for MSVC and non-x64 compilers
+ */
+#if defined(_MSC_VER) || !defined(SEDNA_X64)
     virtual se_ostream& operator<<(__int64 n);
-
+#endif
     virtual se_ostream& put(char c)                                = 0;
     virtual se_ostream& write(const char *s, int n)                = 0;
     virtual se_ostream& writextext(const char *s, int n);

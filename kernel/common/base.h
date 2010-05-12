@@ -54,12 +54,12 @@ typedef unsigned short int shft;
 
 #define PAGE_SIZE                               65536
 #define PAGE_BIT_SIZE                           16
-#define PAGE_BIT_MASK                           (__uint32)0xFFFF0000
-#define PAGE_REVERSE_BIT_MASK                   (__uint32)0x0000FFFF
+#define PAGE_BIT_MASK                           (uintptr_t)0xFFFFFFFFFFFF0000
+#define PAGE_REVERSE_BIT_MASK                   (uintptr_t)0x000000000000FFFF
 
-#define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0x79C00000)
-#define VMM_REGION_MIN_SIZE                             ((__uint32)0x4000000)
-#define VMM_REGION_MAX_SIZE                             ((__uint32)0x40000000)
+#define VMM_REGION_SEARCH_MAX_SIZE                      ((uint32_t)0x79C00000)
+#define VMM_REGION_MIN_SIZE                             ((uint32_t)0x4000000)
+#define VMM_REGION_MAX_SIZE                             ((uint32_t)0x40000000)
 
 #define TR_AUTHENTICATION_FLAG 1
 #define TR_AUTHORIZATION_FLAG  2
