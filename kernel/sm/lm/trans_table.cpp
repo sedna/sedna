@@ -78,13 +78,9 @@ int trans_table::insert_tr_lock_head(tr_pair p)
 
 }
 
-int trans_table::remove_tr(transaction_id tr_id)
+size_t trans_table::remove_tr(transaction_id tr_id)
 {
-   int ret;
-
-   ret =_tr_table_.erase(tr_id);
-
-   return ret;
+   return _tr_table_.erase(tr_id);
 }
 
 void trans_table::print()

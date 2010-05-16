@@ -302,8 +302,7 @@ void check_db_name_validness(const char* name)
         throw USER_EXCEPTION2(SE1003, 
             "database name validation failed (null database name was given)");
     
-    int len     = strlen(name);
-    int counter = 0;
+    size_t len = strlen(name), counter = 0;
 
     /* Name must contain at least one symbol and its length must
      * be less or equal than MAX_DATABASE_NAME_LENGTH */

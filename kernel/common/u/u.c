@@ -81,7 +81,7 @@ int ustrerror_r(int errnum, char *buf, size_t n)
                 errnum,
                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
                 (LPTSTR)buf,
-                n - 1,
+                (DWORD)(n - 1),
                 NULL);
 
     if (!res) 

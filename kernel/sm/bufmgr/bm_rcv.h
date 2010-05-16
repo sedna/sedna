@@ -14,7 +14,7 @@ void bm_rcv_init();
 
 void bm_rcv_release();
 
-void bm_rcv_change(const xptr& xaddr, const void *p, size_t size);
+void bm_rcv_change(const xptr& xaddr, const void *p, unsigned int size);
 
 void bm_rcv_read_block(const xptr &p, void *buf);
 

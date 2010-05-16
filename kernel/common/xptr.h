@@ -192,7 +192,7 @@ inline xptr addr2xptr(const void * p)
 {
     U_ASSERT(LAYER_ADDRESS_SPACE_START_ADDR_INT + ((xptr *) (((uintptr_t)p) & PAGE_BIT_MASK))->offs ==
              (((uintptr_t) p ) & PAGE_BIT_MASK));
-    return cxptr(* (t_layer*) (((uintptr_t) p) & PAGE_BIT_MASK), ((uintptr_t)p) - LAYER_ADDRESS_SPACE_START_ADDR_INT);
+    return cxptr(* (t_layer*) (((uintptr_t) p) & PAGE_BIT_MASK), (lsize_t)(((uintptr_t)p) - LAYER_ADDRESS_SPACE_START_ADDR_INT));
 }
 
 // TODO: check for legacy logic: (<any layer>, NULL) >= (any xptr)

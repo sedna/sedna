@@ -80,7 +80,7 @@ int sp_send_msg(USOCKET s, const struct msg_struct *msg)
 int sp_error_message_handler(USOCKET s, int error_ins, int error_code, const char *error_info)
 {
     struct msg_struct server_msg;
-    int err_length = strlen(error_info);
+    int err_length = (int)strlen(error_info);
 
     server_msg.instruction = error_ins;
     server_msg.length = err_length + 5 + 4;

@@ -119,7 +119,7 @@ void sedna_soft_fault(const SednaException &e,  int component)
     SEDNA_SOFT_FAULT_BASE_MSG;
 
 	char log_message[SE_SOFT_FAULT_LOG_CONTENT_LEN];
-    int log_message_len = e.getDescription().length();
+    size_t log_message_len = e.getDescription().length();
 
     if (log_message_len != 0)
         fprintf(stderr, "Details: %s\n", e.getDescription().c_str());

@@ -235,7 +235,7 @@ void get_sednaconf_values(gov_header_struct* cfg)
 
     FILE* fs;
     char buf[1024];
-    int size;
+    size_t size;
     std::string cfg_text;
     cfg_text.reserve(10240);
 
@@ -303,7 +303,7 @@ static void get_sedna_data_path(const char* cfg_text, char* buf)
       const char* beg, *fin;
       const char* sedna_data_open_tag  = "<sedna_data>";
       const char* sedna_data_close_tag = "</sedna_data>";
-      unsigned short value_shift = strlen(sedna_data_open_tag);
+      unsigned short value_shift = (unsigned short)strlen(sedna_data_open_tag);
       std::string save_buf(buf);
 
       beg = strstr(cfg_text, sedna_data_open_tag);
@@ -333,7 +333,7 @@ int set_sedna_data(char* sd_buf, sys_call_error_fun fun)
     char sedna_cfg_file[U_MAX_PATH + 1];
     FILE* fs;
     char buf[1024];
-    int size;
+    size_t size;
     std::string cfg_text;
     cfg_text.reserve(10240);
 

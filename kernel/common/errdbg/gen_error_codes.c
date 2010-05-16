@@ -272,7 +272,7 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        code_len = strlen(code + 1);
+        code_len = (int)strlen(code + 1);
         if(code_len > ERROR_CODE_MAX_SIZE)
         {
             fprintf(stderr, "Too long error code, line %d\n", line);
@@ -290,7 +290,7 @@ int main(int argc, char** argv)
         }
         line+=2;
 
-        description_len = strlen(buf);
+        description_len = (int)strlen(buf);
         if(description_len > ERROR_DESCRIPTION_MAX_SIZE)
         {
             fprintf(stderr, "Too long error code description, line %d\n", line);

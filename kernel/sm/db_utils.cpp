@@ -250,7 +250,7 @@ int delete_logical_log(const char* db_name)
 
 
     struct _finddata_t log_file;
-    long dsc;
+    intptr_t dsc;
 
     if ( (dsc = _findfirst("*llog", &log_file)) == -1L)
     {
@@ -341,7 +341,7 @@ int delete_dtsearch_files(const char* db_name)
     }
 
     struct _finddata_t dts_file;
-    long dsc;
+    intptr_t dsc;
 
     if ( (dsc = _findfirst("*", &dts_file)) == -1L)
     {
@@ -363,7 +363,7 @@ int delete_dtsearch_files(const char* db_name)
                 return 2;
             }
             struct _finddata_t dts_dir_file;
-            long dsc1;
+            intptr_t dsc1;
             if ( (dsc1 = _findfirst("*", &dts_dir_file)) != -1L)
             {
                 do

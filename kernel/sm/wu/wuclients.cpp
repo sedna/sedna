@@ -352,7 +352,7 @@ int ClEnumerateClients(ClEnumerateClientsParams *params,
 			bitid=ResetLowestBitSet(&temp);
 			params->clientsCount=readyClientsCount;
 			params->alreadyEnumeratedCount=cnt;
-			if (0==enumProc(params,(i-begin)*32+bitid)) break;
+			if (0==enumProc(params,(int)(i-begin)*32+bitid)) break;
 			++cnt;
 		}
 	}

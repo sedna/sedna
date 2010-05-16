@@ -98,8 +98,8 @@ void elim_disturb(void *base, size_t num, size_t width, compare_fun compare)
 
 void elim_disturb2(void *base, size_t num, size_t width, compare_fun compare)
 {
-    int lb = 0, rb = 0, med = 0;
-    int pos = 0, cmp = 0;
+    size_t lb = 0, rb = 0, med = 0, pos = 0;
+    int cmp = 0;
 
     lb = 1; 
     rb = num;
