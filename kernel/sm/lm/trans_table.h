@@ -37,9 +37,9 @@ public:
     tr_lock_head* find_tr_lock_head(transaction_id);
     int insert_tr_lock_head(tr_pair);
     //returns the number of removed elements
-    int remove_tr(transaction_id);
+    size_t remove_tr(transaction_id);
     void print();
-    int get_trns_num()
+    size_t get_trns_num() const
     {
         return _tr_table_.size();
     }

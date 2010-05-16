@@ -101,7 +101,7 @@ int se_ExceptionalCondition(const char *conditionName,
                               fileName, lineNumber, uGetCurrentProcessId(NULL));
         }
                           
-        res = uWriteFile(a_fh, log_buf, strlen(log_buf), &bytes_written, NULL);
+        res = uWriteFile(a_fh, log_buf, (unsigned int)strlen(log_buf), &bytes_written, NULL);
         if (res == 0 || bytes_written != strlen(log_buf))
         {
             fprintf(stderr, "Cannot write to assert_failed file");

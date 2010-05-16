@@ -392,7 +392,7 @@ void init_transaction_ids_table()
     if (uMutexInit(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot initialize trid table sync mutex");
 
-    for (size_t i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
+    for (transaction_id i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
         _ids_table_.push_back(i);
 }
 

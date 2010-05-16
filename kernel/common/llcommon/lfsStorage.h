@@ -62,7 +62,7 @@ int lfsDisconnect();
 //     RecSize - size of a record
 // Return: 
 //     -1 - error; number of bytes read (0 - lfs is out of bound)
-int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize);
+int lfsGetRecord(LSN *RecLSN, void *RecBuf, unsigned int RecSize);
 
 // Write data from RecBuf; RecSize - size of data in bytes
 // Data can be stored in memory. To guarantee write on disk, lfsFlush should be used.
@@ -73,7 +73,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize);
 // Returns: 
 //     LSN of the first byte after the written data (new position of cursor, lsn of record would be: returned lsn - RecSize); 
 //     LFS_INVALID_LSN in case of error;
-LSN lfsAppendRecord(void *RecBuf, size_t RecSize);
+LSN lfsAppendRecord(void *RecBuf, unsigned int RecSize);
 
 // Archive current log file (switch to another file). This guarantees that all current written data will be flushed
 // on disk, and that all files so far will not be written again (example of use would be hot-backup procedure)

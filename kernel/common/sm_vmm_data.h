@@ -92,10 +92,10 @@ enum hb_state
 
 struct sm_blk_stat
 {
-    int free_data_blocks_num;
-    int free_tmp_blocks_num;
-    int used_data_blocks_num;
-    int used_tmp_blocks_num;
+    int64_t free_data_blocks_num;
+    int64_t free_tmp_blocks_num;
+    int64_t used_data_blocks_num;
+    int64_t used_tmp_blocks_num;
 };
 
 struct sm_msg_struct

@@ -56,7 +56,7 @@ static void rcvSerializeInfoToFile(const char *file_name)
 	while (it != fname_cfg_table.end())
 	{
 		// get function name length
-		len = (it->first).size();
+		len = (unsigned int)(it->first).size();
 
 		// store string length
 		if (uWriteFile(tfh, &len, sizeof len, &written, __sys_call_error) == 0 ||
@@ -206,7 +206,7 @@ void rcvTestCrashPoint(const char *func_name)
 			point_info->try_numbers);
 
 		// write this info to the file (ignore errors)
-		uWriteFile(r_fh, crash_info, strlen(crash_info), &written, __sys_call_error);
+		uWriteFile(r_fh, crash_info, (unsigned int)strlen(crash_info), &written, __sys_call_error);
 
 		uCloseFile(r_fh, NULL);
 

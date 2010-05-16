@@ -506,9 +506,10 @@ U_THREAD_PROC(pping_server_lstn_thread_proc_st, arg)
 
     U_SSET allset, rset;
     pping_server *pps = (pping_server*)arg;
-    int i, maxfd, client_sock, res;
+    int i, maxfd, res;
     char c = PPING_DISCONNECT_MSG;
     bool maxfd_valid = true;
+    USOCKET client_sock;
 
     U_SSET_ZERO(&allset);
     U_SSET_SET(pps->sock, &allset);

@@ -589,8 +589,8 @@ int event_log_long_msg(int elevel,
                        const char *short_str,
                        const char *long_str)
 {
-    int pos = 0, portion_size = 0;
-    int short_str_len = 0, long_str_len = 0;
+    size_t pos = 0, portion_size = 0;
+    size_t short_str_len = 0, long_str_len = 0;
     bool copy = true;
 
     USemaphoreArrDown(el_sems, 0, __sys_call_error);
@@ -912,7 +912,7 @@ void sedna_soft_fault_log(const char* log_message, int component)
     strcpy(log_buf, "SEDNA soft fault message:\n");
     strcat(log_buf, log_message);
     strcat(log_buf, "\n\n");
-    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
+    res = uWriteFile(soft_fault_file_handle, log_buf, (unsigned int)strlen(log_buf), &bytes_written, NULL);
     if (res == 0 || bytes_written != strlen(log_buf))
     {
         fprintf(stderr, "Cannot write to soft fault log file");
@@ -924,7 +924,7 @@ void sedna_soft_fault_log(const char* log_message, int component)
     strcat(log_buf, " command line arguments: ");
     strcat(log_buf, GetCommandLine());
     strcat(log_buf, "\n\n");
-    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
+    res = uWriteFile(soft_fault_file_handle, log_buf, (unsigned int)strlen(log_buf), &bytes_written, NULL);
     if (res == 0 || bytes_written != strlen(log_buf))
     {
         fprintf(stderr, "Cannot write to soft fault log file");

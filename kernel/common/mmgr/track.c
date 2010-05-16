@@ -136,7 +136,7 @@ static const char* __get_component_string_name(int component)
 
 void DumpUnfreed(int component) 
 {
-    int totalSize = 0;
+    size_t totalSize = 0;
     ALLOC_INFO* itr = NULL;
 #ifdef SE_MEMORY_DUMP_TO_FILE
     FILE *du_ostr = NULL;

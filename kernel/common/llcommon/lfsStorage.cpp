@@ -934,7 +934,7 @@ static int _lfsGetDataFromBuffer(void *buf, unsigned int len, unsigned int wb_of
 // get data at RecLSN and write it to the RecBuf;
 // RecSize bytes will be written; RecBuf must be allocated by the caller
 // return: -1 - error; number of bytes read (0 - lfs is out of bound)
-int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
+int lfsGetRecord(LSN *RecLSN, void *RecBuf, unsigned int RecSize)
 {
 	uint64_t fileNum, fileOffs, fileSize;
 	UFile fileDsc;
@@ -1053,7 +1053,7 @@ int lfsGetRecord(LSN *RecLSN, void *RecBuf, size_t RecSize)
 // write data from RecBuf; RecSize - size of data in bytes
 // data is appended to the end of the storage
 // return: LSN after the written data (LSN of record + record size; equal to current lsn pointer); LFS_INVALID_LSN in case of error
-LSN lfsAppendRecord(void *RecBuf, size_t RecSize)
+LSN lfsAppendRecord(void *RecBuf, unsigned int RecSize)
 {
 	uint64_t fileOffs;
 	int FirstRecPart, SecondRecPart;

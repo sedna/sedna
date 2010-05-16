@@ -598,7 +598,7 @@ AllocSetAlloc(MemoryContext context, usize_t size)
 	/*
 	 * Choose the actual chunk size to allocate.
 	 */
-	chunk_size = 1 << (fidx + ALLOC_MINBITS);
+	chunk_size = (usize_t)1 << (fidx + ALLOC_MINBITS);
 	U_ASSERT(chunk_size >= size);
 
 	/*
@@ -633,11 +633,11 @@ AllocSetAlloc(MemoryContext context, usize_t size)
 				 * freelist than the one we need to put this chunk on.	The
 				 * exception is when availchunk is exactly a power of 2.
 				 */
-				if (availchunk != (1 << (a_fidx + ALLOC_MINBITS)))
+				if (availchunk != ((usize_t)1 << (a_fidx + ALLOC_MINBITS)))
 				{
 					a_fidx--;
 					U_ASSERT(a_fidx >= 0);
-					availchunk = (1 << (a_fidx + ALLOC_MINBITS));
+					availchunk = ((usize_t)1 << (a_fidx + ALLOC_MINBITS));
 				}
 
 				chunk = (AllocChunk) (block->freeptr);
@@ -980,7 +980,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, usize_t size)
 				usize_t		delta;
 
 				fidx = AllocSetFreeIndex(size);
-				newsize = 1 << (fidx + ALLOC_MINBITS);
+				newsize = (usize_t)1 << (fidx + ALLOC_MINBITS);
 				U_ASSERT(newsize >= oldsize);
 				delta = newsize - oldsize;
 				if (freespace >= delta)

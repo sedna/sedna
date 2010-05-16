@@ -31,7 +31,7 @@ void bm_rcv_release()
         throw USER_EXCEPTION2(SE4043, ".sedata file");
 }
 
-void bm_rcv_change(const xptr& xaddr, const void *p, size_t size)
+void bm_rcv_change(const xptr& xaddr, const void *p, unsigned int size)
 {
     uint64_t _dsk_offs;
 

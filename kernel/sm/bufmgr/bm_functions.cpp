@@ -586,6 +586,6 @@ void bm_block_statistics(sm_blk_stat *stat)
     stat->free_data_blocks_num = count_elems_of_persistent_free_blocks_stack(mb->free_data_blocks);
     stat->free_tmp_blocks_num = count_elems_of_persistent_free_blocks_stack(mb->free_tmp_blocks);
 
-    stat->used_data_blocks_num = (int)((mb->data_file_cur_size - (__int64)PAGE_SIZE) / (__int64)PAGE_SIZE) - stat->free_data_blocks_num;
-    stat->used_tmp_blocks_num = (int)(mb->tmp_file_cur_size / (__int64)PAGE_SIZE) - stat->free_tmp_blocks_num;
+    stat->used_data_blocks_num = (mb->data_file_cur_size - PAGE_SIZE) / PAGE_SIZE - stat->free_data_blocks_num;
+    stat->used_tmp_blocks_num  = (mb->tmp_file_cur_size / PAGE_SIZE) - stat->free_tmp_blocks_num;
 }

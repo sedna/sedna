@@ -201,7 +201,7 @@ void DbgDumpMemory(DbgDumpMemoryParams *dumpMemoryParams)
 			params.sectionsSize=defaultSectionsSize;			
 		}
 		/* number of rows */ 
-		n=params.size/params.stride;
+		n=(int)(params.size/params.stride);
 		/* estimate width to reserve for marks */ 
 		for (m=params.marks;m;m=m->next)
 		{
