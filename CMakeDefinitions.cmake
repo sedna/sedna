@@ -1,3 +1,8 @@
+# stdint definitions (see c++ standard)
+add_definitions(-D__STDC_CONSTANT_MACROS)
+add_definitions(-D__STDC_FORMAT_MACROS)
+add_definitions(-D__STDC_LIMIT_MACROS)
+
 # lfs extensions to glibc
 if (UNIX)
     add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64)

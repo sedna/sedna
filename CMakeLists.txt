@@ -211,11 +211,6 @@ if (MSVC)
     include_directories(${CMAKE_SOURCE_DIR}/libs/compat/stdint)
 endif (MSVC)
 
-# stdint definitions (see c++ standard)
-add_definitions(-D__STDC_CONSTANT_MACROS)
-add_definitions(-D__STDC_FORMAT_MACROS)
-add_definitions(-D__STDC_LIMIT_MACROS)
-
 # perform some platform specific definitions setup
 include(CMakeDefinitions.cmake)
 
@@ -235,11 +230,17 @@ include(ConfigOutput)
 # first, build some libraries
 add_subdirectory(libs)
 
-# import expat library and headers
-include_directories(${CUSTOM_EXPAT_INCLUDE})
-add_library(expat STATIC IMPORTED)
-set_target_properties(expat PROPERTIES
-    IMPORTED_LOCATION ${CUSTOM_EXPAT_LIB}/${CMAKE_STATIC_LIBRARY_PREFIX}expat${CMAKE_STATIC_LIBRARY_SUFFIX})
+# expat headers
+include_directories(${CUSTOM_EXPAT_DIR})
+
+# on Linux and alike we must define IMPORT library since expat is built via configure there
+# however, cmake doesn't allow IMPORT libraries to be visible in parent scope (ZOMG!!!) so we
+# should define it via internal CUSTOM_EXPAT_DIR variable
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_library(expat STATIC IMPORTED)
+    set_target_properties(expat PROPERTIES IMPORTED_LOCATION
+        ${CUSTOM_EXPAT_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}expat${CMAKE_STATIC_LIBRARY_SUFFIX})
+endif (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 # then start bulduing Sedna
 add_subdirectory(kernel)
