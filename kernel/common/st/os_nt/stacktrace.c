@@ -17,7 +17,7 @@
 /*	Conditionally defining STACK_GROWS_UPWARDS and STACK_GROWS_DOWNWARDS
 	boolean constants. "Upwards" means stack grows towards higher addresses 
 	and "downwards" means stack grows towards lower addresses. */ 
-#ifdef _X86_
+#if defined(_X86_) || defined(_AMD64_)
 #define STACK_GROWS_UPWARDS		0
 #define STACK_GROWS_DOWNWARDS	1
 #else
@@ -158,8 +158,13 @@ int StackTraceWalkInternal2(PCONTEXT pContext, void *paramsPtr)
 	DWORD2ADDRESS64(&stackFrame.AddrPC, context.Eip);
 	DWORD2ADDRESS64(&stackFrame.AddrFrame, context.Ebp);
 	DWORD2ADDRESS64(&stackFrame.AddrStack, context.Esp);
+#elif defined(_AMD64_)
+    machineType = IMAGE_FILE_MACHINE_AMD64;
+	DWORD2ADDRESS64(&stackFrame.AddrPC, context.Rip);
+	DWORD2ADDRESS64(&stackFrame.AddrFrame, context.Rbp);
+	DWORD2ADDRESS64(&stackFrame.AddrStack, context.Rsp);
 #else
-#error 0
+#error "Unknown architecture format!"
 #endif
 
 	while (bContinue)
