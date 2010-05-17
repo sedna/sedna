@@ -949,7 +949,7 @@ std::string *XQueryLexer::xqDecodePredRef(XQueryParser::location_type *loc, cons
 std::string *XQueryLexer::xqDecodeCharRef(XQueryParser::location_type *loc, const char *text, int len)
 {
     std::string ref;
-    int code;
+    long code;
 
     if (text[2] == 'x') // hex ref
     {
@@ -961,11 +961,11 @@ std::string *XQueryLexer::xqDecodeCharRef(XQueryParser::location_type *loc, cons
     {
         ref = std::string(&text[2], len - 3);
 
-        code = atoi(ref.c_str());
+        code = strtol(ref.c_str(), NULL, 10);
     }
 
     // check for validity to XML 1.1
-    if (!isXML10Valid(code))
+    if ((code == LONG_MAX && errno == ERANGE) || code > INT32_MAX || !isXML10Valid((int)code))
     {
         driver.error(*loc, XQST0090, NULL);
         return NULL;
@@ -1148,7 +1148,7 @@ std::string *XQueryLexer::xqMakeContent(XQueryParser::location_type *loc, const 
 
         cont_it++;
     }
-    
+
     // normalize space for attributes
     if (in_attr)
     {
