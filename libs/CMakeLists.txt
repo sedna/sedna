@@ -1,15 +1,6 @@
 # pcre library
 add_subdirectory(pcre)
 
-# try to find gmake, and then fall back to make
-if (UNIX)
-    find_program(GMAKE_BINARY gmake)
-    if (NOT GMAKE_BINARY)
-        message(STATUS "Cannot find gmake -- will try to use make to build custom libraries")
-        set(GMAKE_BINARY make)
-    endif (NOT GMAKE_BINARY)
-endif (UNIX)
-
 # expat "external" library
 # we use internal cached variables to determine directories for -I and -L: 1) look for cache 2) then try to describe builduing expat from scratch
 set(EXPAT_VER "1.95.8")
@@ -30,10 +21,10 @@ add_custom_command(OUTPUT ${expat_files_src}
                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                    VERBATIM
                    )
-                  
+
 # full library path (exported to parent via INTERNAL)
 set(CUSTOM_EXPAT_DIR ${EXPAT_TAR_DIR}/lib CACHE INTERNAL "Internal expat full path")
-    
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_library(expat STATIC ${expat_files_src})
     set_property(TARGET expat PROPERTY COMPILE_DEFINITIONS _MBCS _LIB COMPILED_FROM_DSP)
@@ -42,7 +33,7 @@ else (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # on unix/linux we just use configure+make
     add_custom_command(OUTPUT ${expat_files_lib}
                        COMMAND /bin/sh configure --enable-shared=no --prefix=${EXPAT_TAR_DIR}
-                       COMMAND ${GMAKE_BINARY} install
+                       COMMAND make install
                        DEPENDS ${expat_files_src}
                        WORKING_DIRECTORY ${EXPAT_TAR_DIR}
                        VERBATIM
@@ -78,4 +69,3 @@ add_custom_target(custom_libedit DEPENDS ${libedit_files})
 
 MESSAGE(STATUS "Custom libedit includes in -- ${CUSTOM_LIBEDIT_INCLUDE}")
 MESSAGE(STATUS "Custom libedit library in  -- ${CUSTOM_LIBEDIT_LIB}")
-

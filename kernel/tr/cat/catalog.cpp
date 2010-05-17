@@ -367,8 +367,8 @@ catalog_object_header * catalog_create_object(catalog_object * object, bool pers
     } else {
         U_ASSERT(CATALOG_TEMPORARY_CONTEXT);
         obj = new (cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, sizeof(catalog_object_header))) catalog_object_header(XNULL);
-        object->p_object.setOffs(CATALOG_TEMPORARY_CONTEXT->addr2offs(obj));
         object->p_object.layer = CHUNK2TEMP_CAT_LAYER(CATALOG_TEMPORARY_CONTEXT->addr2chunk(obj));
+        object->p_object.setOffs(CATALOG_TEMPORARY_CONTEXT->addr2offs(obj));
         obj->p = object->p_object;
     }
 
