@@ -32,6 +32,8 @@ extern lsize_t LAYER_ADDRESS_SPACE_SIZE;
 // but with the goal to be easyly ported to 64-bit architecture
 
 #define TMP_LAYER_STARTS_WITH	0x40000000
+ /* catalog tmp layers go down as: -2, -3, -4, etc. depending on context chunk */
+#define TEMPORARY_CATALOG_LAYER_START     -2
 #define INVALID_LAYER			0xFFFFFFFF
 
 // user this macros when you want obtain pointer in terms of process' virtual
@@ -86,7 +88,7 @@ struct xptr
 
     inline void setOffs(lsize_t offs_)
     {
-        U_ASSERT(offs_ < LAYER_ADDRESS_SPACE_SIZE);
+        U_ASSERT(layer <= TEMPORARY_CATALOG_LAYER_START || offs_ < LAYER_ADDRESS_SPACE_SIZE);
         offs = offs_;
     }
 
