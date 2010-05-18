@@ -121,7 +121,12 @@ public :
 
 /* DEF_CHUNK_SIZE defines defsult size of a chunk for context */
 #ifdef SEDNA_X64
-#define DEF_CHUNK_SIZE 0x64000000 /* 100mb */
+/* 
+ * On x64 we could probably ask for more but I don't see it right now
+ * Anyway, since context is multi-chunk it'll work anyway
+ * In case of performance problems feel free to increase the value (AK)
+ */
+#define DEF_CHUNK_SIZE 0xA00000 /* 10mb */
 #else
 #define DEF_CHUNK_SIZE 0xA00000 /* 10mb */
 #endif
