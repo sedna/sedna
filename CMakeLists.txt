@@ -14,6 +14,9 @@ if (NOT CMAKE_VERSION)
 endif (NOT CMAKE_VERSION )
 message(STATUS "CMake version is -- ${CMAKE_VERSION}")
 
+# platform info
+message(STATUS "Building for: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+
 # prohibit in-source-builds
 if (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     message(STATUS "In-source-builds are not allowed")
@@ -56,7 +59,6 @@ option(ENABLE_DTSEARCH "Enable dtsearch full-text search integration" OFF)
 option(ENABLE_FTSEARCH "Enable internal full-text search" ON)
 option(ENABLE_TRIGGERS "Enable triggers support" ON)
 set(ENHANCE_TERM Libedit CACHE STRING "Enhance terminal with completion, history etc. Possible values: Readline -- use GNU Readline library, Libedit -- use libedit, None -- Don't do anything")
-option(GCC_USE_M32 "Enable 32-bit build on 64-bit architecture via -m32 flag (GCC only)" OFF)
 
 # this contains path to dtsearch includes to build Sedna with dtsearch support
 set(DTSEARCH_PREFIX "${CMAKE_SOURCE_DIR}/libs" CACHE PATH "Path to dtsearch sources to build Sedna with dtsearch support (dtsearch lib, commmon and includes are expected to be there)")

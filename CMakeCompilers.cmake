@@ -53,16 +53,4 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused -Wno-uninitialized")
 
-    # force 32-bit buid on 64-bit architectures
-    # temporal solution here: FORCE_64_BIT_COMPILE will force 64-bit compilation (needed for 64-bit driver build)
-    if (CMAKE_SIZEOF_VOID_P MATCHES 8 AND GCC_USE_M32)
-        message(STATUS "Forcing 32-bit compilation on 64-bit platform...")
-        find_file(GCC_32_STUB "gnu/stubs-32.h")
-        if (NOT GCC_32_STUB)
-            message(STATUS "Stub file for compiling 32-bit code on 64-bit platform not found. Try to install gcc-multilib")
-        endif (NOT GCC_32_STUB)
-
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-    endif (CMAKE_SIZEOF_VOID_P MATCHES 8 AND GCC_USE_M32)
 endif(CMAKE_COMPILER_IS_GNUCXX)
