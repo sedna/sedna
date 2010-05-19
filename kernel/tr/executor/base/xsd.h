@@ -37,19 +37,19 @@ xs:gMonth
 xs:hexBinary            variable            char* or xs_hexBinary
 xs:base64Binary         variable            char* or xs_base64Binary
 
-xs:integer              8                   __int64
-xs:nonPositiveInteger   8                   __int64
-xs:negativeInteger      8                   __int64
-xs:long                 8                   __int64
-xs:int                  4                   __int32
-xs:short                2                   __int16
-xs:byte                 1                   __int8
-xs:nonNegativeInteger   8                   __int64
-xs:unsignedLong         8                   __uint64
-xs:unsignedInt          4                   __uint32
-xs:unsignedShort        2                   __uint16
-xs:unsignedByte         1                   __uint8
-xs:positiveInteger      8                   __uint64
+xs:integer              8                   int64_t
+xs:nonPositiveInteger   8                   int64_t
+xs:negativeInteger      8                   int64_t
+xs:long                 8                   int64_t
+xs:int                  4                   int32_t
+xs:short                2                   int16_t
+xs:byte                 1                   int8_t
+xs:nonNegativeInteger   8                   int64_t
+xs:unsignedLong         8                   uint64_t
+xs:unsignedInt          4                   uint32_t
+xs:unsignedShort        2                   uint16_t
+xs:unsignedByte         1                   uint8_t
+xs:positiveInteger      8                   uint64_t
 **/
 
 ///

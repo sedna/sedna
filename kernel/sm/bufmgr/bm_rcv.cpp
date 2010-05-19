@@ -37,7 +37,7 @@ void bm_rcv_change(const xptr& xaddr, const void *p, unsigned int size)
 
     if (IS_DATA_BLOCK(xaddr))
     {
-        _dsk_offs = ABS_DATA_OFFSET(xaddr) + (__int64)PAGE_SIZE;
+        _dsk_offs = ABS_DATA_OFFSET(xaddr) + (int64_t)PAGE_SIZE;
     }
     else throw SYSTEM_EXCEPTION("Wrong physical log record (for tmp file)");
 
@@ -55,7 +55,7 @@ void bm_rcv_read_block(const xptr &p, void *buf)
 {
     uint64_t _dsk_offs;
 
-    _dsk_offs = ABS_DATA_OFFSET(p) + (__int64)PAGE_SIZE;
+    _dsk_offs = ABS_DATA_OFFSET(p) + (int64_t)PAGE_SIZE;
 
     // read block
     if (uSetFilePointer(data_file_handler, _dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
@@ -67,7 +67,7 @@ void bm_rcv_read_block(const xptr &p, void *buf)
         throw SYSTEM_ENV_EXCEPTION("Cannot read block");
 }
 
-void bm_rcv_decrease(__int64 old_size)
+void bm_rcv_decrease(int64_t old_size)
 {
     if (uSetEndOfFile(data_file_handler, old_size, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot decrease data file");
@@ -78,7 +78,7 @@ void bm_rcv_master_block(const void* p)
     memset(mb, '\0', MASTER_BLOCK_SIZE);
     memcpy(mb, p, sizeof(bm_masterblock));
 
-    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetFilePointer(data_file_handler, (int64_t)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
     unsigned int number_of_bytes_written = 0;

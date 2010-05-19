@@ -136,7 +136,7 @@ protected:
 
     tuple_cell search_param;
     
-    __int64 pos;
+    int64_t pos;
 
     CollationHandler* handler;
     
@@ -207,7 +207,7 @@ protected:
     bool first_time;
     bool need_reopen;
 
-    __int64 current_pos;
+    int64_t current_pos;
     double start_pos;
     double length;
 
@@ -247,8 +247,8 @@ protected:
     
     bool first_time;
 
-    __int64 current_pos;
-    __int64 remove_pos;
+    int64_t current_pos;
+    int64_t remove_pos;
 
 private:
     virtual void do_open   ();
@@ -284,8 +284,8 @@ protected:
     bool inserted;       //'eos' reached on the inserted sequence child
     bool eos_reached;    //'eos' reached on the seq_child
 
-    __int64 current_pos;
-    __int64 insert_pos;
+    int64_t current_pos;
+    int64_t insert_pos;
 
 private:
     virtual void do_open   ();

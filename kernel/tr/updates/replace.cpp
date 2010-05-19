@@ -70,7 +70,7 @@ void replace(PPOpIn arg)
                     if (is_node_persistent(node))
                     {
                         tuple tup(2);
-                        tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
+                        tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                         arg3seq.add(tup);
                     }
                     arg2seq.add(indir);
@@ -151,7 +151,7 @@ void replace(PPOpIn arg)
         tuple tup(2);
         /* arg3seq will contain pairs: node -> int, namely
         * node to be replaced -> place in sequence of nodes to replace with */
-        tup.copy(tuple_cell::node(removeIndirection(*it)),tuple_cell((__int64)ctr));
+        tup.copy(tuple_cell::node(removeIndirection(*it)),tuple_cell((int64_t)ctr));
         arg3seq.add(tup);
         /* XNULL separates nodes in arg2seq (nodes replace with) per each
         * node in arg1seq (nodes to be replaced) */

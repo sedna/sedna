@@ -247,7 +247,7 @@ int uWriteFile(UFile fd, const void *buf, unsigned int to_write, unsigned int *a
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth, sys_call_error_fun fun)
+int uSetFilePointer(UFile fd, int64_t offs, int64_t * res_pos, UFlag meth, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     LARGE_INTEGER _offs, _res_pos;
@@ -260,7 +260,7 @@ int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth, sys_c
         *res_pos = _res_pos.QuadPart;
     return res;
 #else
-    __int64 _res_pos = lseek64(fd, offs, meth);
+    int64_t _res_pos = lseek64(fd, offs, meth);
     if (res_pos)
         *res_pos = _res_pos;
     if (_res_pos == (__off64_t) -1)
@@ -274,7 +274,7 @@ int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth, sys_c
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth, sys_call_error_fun fun)
+int uSetEndOfFile(UFile fd, int64_t offs, UFlag meth, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     LARGE_INTEGER _offs, _res_pos;
@@ -316,7 +316,7 @@ int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth, sys_call_error_fun fun)
     }
     else if (meth == U_FILE_CURRENT)
     {
-        __int64 cur_pos = lseek64(fd, offs, U_FILE_CURRENT);
+        int64_t cur_pos = lseek64(fd, offs, U_FILE_CURRENT);
         if (cur_pos == (__off64_t) - 1)
         {
             sys_call_error("lseek64");
@@ -395,7 +395,7 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
     int des = 0;
     int src = 0;
     char buf[BUFFLEN];
-    __int64 src_file_size = (__int64) 0;
+    int64_t src_file_size = (int64_t) 0;
 
     if (fail_if_exists)
         des = open(new_file, O_CREAT | O_EXCL | O_LARGEFILE | O_WRONLY | O_SYNC | O_TRUNC, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
@@ -438,7 +438,7 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
 #endif
 }
 
-int uGetFileSize(UFile fd, __int64 * file_size, sys_call_error_fun fun)
+int uGetFileSize(UFile fd, int64_t * file_size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     LARGE_INTEGER size;
@@ -462,7 +462,7 @@ int uGetFileSize(UFile fd, __int64 * file_size, sys_call_error_fun fun)
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun fun)
+int uGetFileSizeByName(const char* name, int64_t * file_size, sys_call_error_fun fun)
 {
    int res;
    UFile fd;

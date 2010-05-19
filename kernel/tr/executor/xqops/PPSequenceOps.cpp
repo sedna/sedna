@@ -213,13 +213,13 @@ void PPFnItemAt::do_next(tuple &t)
         pos_child.op->next(t);
         if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
 
-        __int64 pos = cast(pos_child.get(t), xs_integer).get_xs_integer();
+        int64_t pos = cast(pos_child.get(t), xs_integer).get_xs_integer();
 
         pos_child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
         if (pos < 1) throw USER_EXCEPTION(SE1007);
 
-        for (__int64 i = 1; i <= pos; i++)
+        for (int64_t i = 1; i <= pos; i++)
         {
             seq_child.op->next(t);
             if (t.is_eos())

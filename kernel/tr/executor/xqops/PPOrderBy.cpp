@@ -101,7 +101,7 @@ void PPOrderBy::do_open ()
     udata.pos       = 0;
     udata.header    = &types;
     udata.modifiers = &modifiers;
-    udata.size      = sizeof(__int64);            
+    udata.size      = sizeof(int64_t);            
     udata.buffer    = NULL;
     udata.stable    = stable;
     udata.temps[0]  = NULL;
@@ -143,7 +143,7 @@ void PPOrderBy::do_next (tuple &t)
             ss         -> clear();
             pos = 0;
             udata.pos   = 0;
-            udata.size  = sizeof(__int64);
+            udata.size  = sizeof(int64_t);
             need_reinit = false;
             need_to_sort= false;
         }
@@ -283,7 +283,7 @@ void PPOrderBy::do_accept(PPVisitor &v)
 /// Works correctrly only if dest is pointer within dynamic memory!
 static inline void serialize_string(const tuple_cell& tc, void* dest)
 {
-    __int64 length_all = tc.get_strlen();
+    int64_t length_all = tc.get_strlen();
     int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
     bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
     memcpy(dest, &flag, sizeof(bool));
@@ -318,7 +318,7 @@ static inline void get_deserialized_value(void* value, const void* addr, xmlscm_
             case xs_float                  : *((float*)value) = *((float*)addr); break;
             case xs_double                 : *((double*)value) = *((double*)addr); break;
             case xs_decimal                : *((xs_decimal_t*)value) = *((xs_decimal_t*)addr); break;
-            case xs_integer                : *((__int64*)value) = *((__int64*)addr); break;
+            case xs_integer                : *((int64_t*)value) = *((int64_t*)addr); break;
             case xs_boolean                : *((bool*)value) = *((bool*)addr); break;
             default                        : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or deserialization is not implemented.");
         }    
@@ -367,7 +367,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
     if(temp2 == NULL) CHECKP(v2);
     bit_set bs2((char *)addr2+ud->bit_set_offset, length);
 
-    int offset = sizeof(__int64);
+    int offset = sizeof(int64_t);
     int result = 0;
 
     for(int i=0; i < length; i++)
@@ -417,7 +417,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                 }
                 case xs_integer              : 
                 {
-                    __int64 value1, value2;
+                    int64_t value1, value2;
                     GET_DESERIALIZED_VALUES(&value1, &value2, xs_integer, offset);
                     if (value2 == value1) result = 0;
                     else result = (value2 > value1 ? 1 : -1) * order;
@@ -456,7 +456,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                         else if (!flag2 && flag1) result =  1*order;
                         else /// both strings are not fully serialized !
                         { 
-                            __int64 position1, position2;
+                            int64_t position1, position2;
                             GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
                             tuple t(length);
                             ud->sort->get(t, position1);
@@ -523,7 +523,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
     
     if(result == 0 && ud->stable)
     {
-        __int64 position1, position2;
+        int64_t position1, position2;
         GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
         if(position1 == position2) return 0;
 		result = position1 > position2 ? 1 : -1;
@@ -542,14 +542,14 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
     CHECK_TIMER_FLAG
     
     orb_user_data* ud = (orb_user_data*)Udata;
-    __int64 pos = ud  -> pos;
+    int64_t pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
     temp_buffer* buffer = ud -> buffer;
 
     #ifdef ALIGNMENT_REQUIRED
 
         buffer->clear();
-        buffer->copy_to_buffer(&pos, sizeof(__int64));
+        buffer->copy_to_buffer(&pos, sizeof(int64_t));
         for(int i = 0; i < t.cells_number; i++)
         {
             orb_common_type &ct = (ud -> header) -> at(i);
@@ -576,8 +576,8 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
         CHECKP(v1);
         VMM_SIGNAL_MODIFICATION(v1);
         void* p = XADDR(v1);
-        *((__int64 *)p) = pos;
-        int offset = sizeof(__int64);
+        *((int64_t *)p) = pos;
+        int offset = sizeof(int64_t);
         for(int i = 0; i < t.cells_number; i++)
         {
             orb_common_type &ct = (ud -> header) -> at(i);
@@ -595,7 +595,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     case xs_float                : *((float*)((char*)p+offset)) = t.cells[i].get_xs_float(); break;
                     case xs_double               : *((double*)((char*)p+offset)) = t.cells[i].get_xs_double(); break;
                     case xs_decimal              : *((xs_decimal_t*)((char*)p+offset)) = t.cells[i].get_xs_decimal(); break;
-                    case xs_integer              : *((__int64*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
+                    case xs_integer              : *((int64_t*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
                     case xs_boolean              : *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
                     case xs_string               : 
                     {
@@ -631,12 +631,12 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
 {
     orb_user_data* ud = (orb_user_data*)Udata;
-    __int64 pos = ud  -> pos;
+    int64_t pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
     
     temp_buffer* buffer = ud -> buffer;
     buffer->clear();
-    buffer->copy_to_buffer(&pos, sizeof(__int64));
+    buffer->copy_to_buffer(&pos, sizeof(int64_t));
     for(int i = 0; i < t.cells_number; i++)
     {
         orb_common_type &ct = (ud -> header) -> at(i);
@@ -664,28 +664,28 @@ void PPOrderBy::deserialize (tuple& t, xptr& v1, const void * Udata)
 {
     CHECKP(v1);
     void* p = XADDR(v1);
-    __int64 pos;
+    int64_t pos;
 
     #ifdef ALIGNMENT_REQUIRED
-        memcpy(&pos, p, sizeof(__int64));
+        memcpy(&pos, p, sizeof(int64_t));
     #else
-        pos = *((__int64*)p);
+        pos = *((int64_t*)p);
     #endif
 
-    t.cells[0] = tuple_cell::atomic((__int64)pos);
+    t.cells[0] = tuple_cell::atomic((int64_t)pos);
 }
 
 void PPOrderBy::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
 {
-    if(size1 < sizeof(__int64))
+    if(size1 < sizeof(int64_t))
     {
-        __int64 pos;
+        int64_t pos;
         temp_buffer* buffer = ((orb_user_data*)Udata) -> buffer;
         buffer->clear();
         buffer->copy_to_buffer(v1, size1);
-        buffer->copy_to_buffer(v2, sizeof(__int64)-size1);
+        buffer->copy_to_buffer(v2, sizeof(int64_t)-size1);
         buffer->copy_from_buffer(&pos);
-        t.cells[0] = tuple_cell::atomic((__int64)pos);
+        t.cells[0] = tuple_cell::atomic((int64_t)pos);
     }
     else
         deserialize(t, v1, Udata);
@@ -743,7 +743,7 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
         case xs_float                : {float value = tc.get_xs_float(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_double               : {double value = tc.get_xs_double(); memcpy(buffer + pos, &value, type_size);  break;}
         case xs_decimal              : {xs_decimal_t value = tc.get_xs_decimal(); memcpy(buffer + pos, &value, type_size); break;}
-        case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_integer              : {int64_t value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean              : {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_string               : {serialize_string(tc, buffer+pos); break; }
         case xs_time                 :

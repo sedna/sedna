@@ -16,7 +16,7 @@ private:
     PPOpIn child;
     sequence *s;
     
-    __int64 last, pos;
+    int64_t last, pos;
     bool last_computed;
     
 private:

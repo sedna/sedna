@@ -44,7 +44,7 @@ char *u_ultoa(unsigned long value, char *str, int radix)
     return str;
 }
 
-char *u_i64toa(__int64 value, char *str, int radix)
+char *u_i64toa(int64_t value, char *str, int radix)
 {
     if (radix != 10)
     {
@@ -55,7 +55,7 @@ char *u_i64toa(__int64 value, char *str, int radix)
     return str;
 }
 
-char *u_ui64toa(__uint64 value, char *str, int radix)
+char *u_ui64toa(uint64_t value, char *str, int radix)
 {
     if (radix != 10)
     {
@@ -95,15 +95,15 @@ int _vsnprintf(char *str, size_t size, const char *format, va_list ap)
 
 #endif /* _WIN32 */
 
-void int2net_int(__int32 i, char *buf)
+void int2net_int(int32_t i, char *buf)
 {
     i = htonl(i);
-    memcpy(buf, (void*)&i, sizeof(__int32));
+    memcpy(buf, (void*)&i, sizeof(int32_t));
 }
 
-void net_int2int(__int32* i, const char *buf)
+void net_int2int(int32_t* i, const char *buf)
 {
-    memcpy((void*)i, buf, sizeof(__int32));
+    memcpy((void*)i, buf, sizeof(int32_t));
     *i = ntohl(*i);
 }
 
@@ -113,7 +113,7 @@ char *int2c_str(int value, char *buf)
     return buf;
 }
 
-__int64  strto__int64(const char *nptr, char **endptr, int base)
+int64_t  strto__int64(const char *nptr, char **endptr, int base)
 {
 #ifdef _WIN32
     return _strtoi64(nptr, endptr, base);
@@ -122,12 +122,22 @@ __int64  strto__int64(const char *nptr, char **endptr, int base)
 #endif
 }
 
-__int64 u_double2int64(double v)
+uint64_t strto__uint64(const char *nptr, char **endptr, int base)
 {
-    __int64 res;
+#ifdef _WIN32
+    return _strtoui64(nptr, endptr,base);
+#else
+    return strtoull(nptr, endptr,base);
+#endif
+}
+
+int64_t u_double2int64(double v)
+{
+    int64_t res;
     if(u_is_nan(v)) return 0;
-    if(u_is_neg_inf(v) || v < _I64_MIN) return _I64_MIN;
-    if(u_is_pos_inf(v) || v > _I64_MAX) return _I64_MAX;
-    res = (__int64)v;
+    if(u_is_neg_inf(v) || v < INT64_MIN) return INT64_MIN;
+    if(u_is_pos_inf(v) || v > INT64_MAX) return INT64_MAX;
+    res = (int64_t)v;
     return res;
 }
+

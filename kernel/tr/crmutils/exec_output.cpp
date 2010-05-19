@@ -78,11 +78,11 @@ se_ostream& endl(se_ostream& s)
 /// se_ostream
 ///////////////////////////////////////////////////////////////////////////////
 
-se_ostream& se_ostream::operator<<(__int64 n)
+se_ostream& se_ostream::operator<<(int64_t n)
 {
     char z[20];
     short pos = 19;
-    __int64 k = n;
+    int64_t k = n;
     int i = 0;
     while (k > 9)
     {

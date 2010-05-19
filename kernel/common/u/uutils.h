@@ -31,8 +31,8 @@ extern "C"
     char *u_itoa(int value, char *str, int radix);
     char *u_ltoa(long value, char *str, int radix);
     char *u_ultoa(unsigned long value, char *str, int radix);
-    char *u_i64toa(__int64 value, char *str, int radix);
-	char *u_ui64toa(__uint64 value, char *str, int radix);
+    char *u_i64toa(int64_t value, char *str, int radix);
+	char *u_ui64toa(uint64_t value, char *str, int radix);
     char *u_gcvt(double value, int digits, char *buf);
     int _stricmp(const char *str1, const char *str2);
     int _strnicmp(const char *str1, const char *str2, size_t n);
@@ -40,22 +40,23 @@ extern "C"
 #define _snprintf snprintf
 #endif
 
-    void int2net_int(__int32 i, char *buf);
-    void net_int2int(__int32 *i, const char *buf);
+    void int2net_int(int32_t i, char *buf);
+    void net_int2int(int32_t *i, const char *buf);
 
     /* buf length must not be less than 20 */
     char *int2c_str(int value, char *buf);
 
-    __int64  strto__int64(const char *nptr, char **endptr, int base);
+    int64_t  strto__int64(const char *nptr, char **endptr, int base);
+    uint64_t strto__uint64(const char *nptr, char **endptr, int base);
 
     /* 
-     * (__int64)INF, (__int64)NaN is undefined behaviour and give different
+     * (int64_t)INF, (int64_t)NaN is undefined behaviour and give different
      * results on Win/Linux/Mac OS
      * returns 0 if NaN
-     *         __I64_MAX if +INF, or v > _I64_MAX
-     *         __I64_MIN if -INF, or v < _I64_MIN
+     *         INT64_MAX if +INF, or v > INT64_MAX
+     *         INT64_MIN if -INF, or v < INT64_MIN
      */
-     __int64 u_double2int64(double v); 
+     int64_t u_double2int64(double v); 
 
 #ifdef __cplusplus
 }

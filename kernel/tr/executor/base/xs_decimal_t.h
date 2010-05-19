@@ -18,8 +18,8 @@ protected:
     union {
         char v1[16];
         struct {
-            __int64 x;
-            __int64 y;
+            int64_t x;
+            int64_t y;
         } v2;
     } v;
 
@@ -31,8 +31,8 @@ protected:
 public:
     static void init();
 
-    xs_decimal_t() { v.v2.x = v.v2.y = (__int64)0; }
-    xs_decimal_t(__int64 v)     { this->set(v); }
+    xs_decimal_t() { v.v2.x = v.v2.y = (int64_t)0; }
+    xs_decimal_t(int64_t v)     { this->set(v); }
     xs_decimal_t(float v)       { this->set(v); }
     xs_decimal_t(double v)      { this->set(v); }
     xs_decimal_t(bool v)        { this->set(v); }
@@ -41,13 +41,13 @@ public:
     xs_decimal_t(const xs_decimal_t& d) { v.v2.x = d.v.v2.x; v.v2.y = d.v.v2.y; }
     xs_decimal_t &operator =(const xs_decimal_t &d) { v = d.v; return *this; }
 
-    void set(__int64 a);
+    void set(int64_t a);
     void set(float a);
     void set(double a);
     void set(bool a);
     void set(const char *a, bool xs_compliant);
 
-    __int64 get_int   () const;
+    int64_t get_int   () const;
     float   get_float () const;
     double  get_double() const;
     bool    get_bool  () const;
@@ -61,7 +61,7 @@ public:
     xs_decimal_t ceil() const;
     xs_decimal_t floor() const;
     xs_decimal_t round() const;
-    xs_decimal_t round_half_to_even(__int64 precision) const;
+    xs_decimal_t round_half_to_even(int64_t precision) const;
 
     xs_decimal_t operator - () const;
     xs_decimal_t operator - (const xs_decimal_t & d) const { return numerical_operation(d, noi_sub); }

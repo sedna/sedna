@@ -194,7 +194,7 @@ int xmlscm_type_size(xmlscm_type xtype)
         case xs_float  : return sizeof(float);
         case xs_double : return sizeof(double);
         case xs_decimal: return sizeof(xs_decimal_t);
-        case xs_integer: return sizeof(__int64);
+        case xs_integer: return sizeof(int64_t);
         case xs_boolean: return sizeof(bool);
         default        :
             if (!is_fixed_size_type(xtype)) 
@@ -207,7 +207,7 @@ int xmlscm_type_size(xmlscm_type xtype)
                     return sizeof(xs_packed_datetime);
             }	
             else if (is_derived_from_xs_integer(xtype)) 
-                return sizeof(__int64);
+                return sizeof(int64_t);
             else 
                 throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type in xmlscm_type_size.");
     }

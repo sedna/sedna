@@ -26,7 +26,7 @@ char *_get_pointer_to_c_str(const tuple_cell &c)
 
     if (c.is_heavy_atomic())
     { // VMM is used for storing
-         __int64 size = c.get_strlen_vmm();
+         int64_t size = c.get_strlen_vmm();
         if (size > MAX_ATOMIC_LEX_REPR_SIZE) throw USER_EXCEPTION2(SE1003, "Buffer overflow");
         t = executor_globals::mem_str_buf;
         estr_copy_to_buffer(t, c.get_str_vmm(), size);
@@ -106,9 +106,9 @@ double c_str2xs_double(const char *t)
     return res;
 }
 
-__int64 c_str2xs_integer(const char *t)
+int64_t c_str2xs_integer(const char *t)
 {
-    __int64 res = 0;
+    int64_t res = 0;
     char* stop = NULL;
     const char *start = NULL;
     const char *end = NULL;
@@ -118,7 +118,7 @@ __int64 c_str2xs_integer(const char *t)
 
     errno = 0; // must set to zero; see strtoll man pages
     res = strto__int64(start, &stop, 10);
-    if ((_I64_MAX == res || _I64_MIN == res) && errno == ERANGE) overflow = 1;
+    if ((INT64_MAX == res || INT64_MIN == res) && errno == ERANGE) overflow = 1;
 
     if ((end - start == 0) || (stop != end)) throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:integer type");
     if (overflow) throw XQUERY_EXCEPTION2(FOAR0002, "Cannot convert to xs:integer type");
@@ -159,12 +159,12 @@ bool c_str2xs_boolean(const char *t)
 #define udouble2_int64_bits(p)
 #define ufloat2_int32_bits(p)
 
-#define FPC_DOUBLESIGNMASK  ((__int64)0x8000 << (__int64)48) // 0x8000000000000000L
+#define FPC_DOUBLESIGNMASK  ((int64_t)0x8000 << (int64_t)48) // 0x8000000000000000L
 
-__int64 double2__int64_bits(double d)
+int64_t double2__int64_bits(double d)
 {
     union {
-    __int64 l;
+    int64_t l;
     double  d;
     } u;
 
@@ -176,10 +176,10 @@ __int64 double2__int64_bits(double d)
     return u.l;
 }
 
-__int32 float2__int32_bits(float f)
+int32_t float2__int32_bits(float f)
 {
     union {
-    __int32 i;
+    int32_t i;
     float   f;
     } u;
 
@@ -194,30 +194,30 @@ __int32 float2__int32_bits(float f)
 
 #define double_sign(d) (double2__int64_bits(d) & FPC_DOUBLESIGNMASK)
 
-static int _sprint__uint64(char* buffer, __uint64 x, bool m)
+static int _sprint__uint64(char* buffer, uint64_t x, bool m)
 {
-    __uint64 quot = x / (__uint64)1000;
+    uint64_t quot = x / (uint64_t)1000;
     int chars_written = 0;
     if (quot != 0)
     {
         chars_written = _sprint__uint64(buffer, quot, m);
-        chars_written += sprintf(buffer + chars_written, "%03u", (__uint32)(x % (__uint64)1000));
+        chars_written += sprintf(buffer + chars_written, "%03u", (uint32_t)(x % (uint64_t)1000));
     }
     else
     {
         if (m)
             chars_written += sprintf(buffer, "-");
-        chars_written += sprintf(buffer + chars_written, "%u", (__uint32)(x % (__uint64)1000));
+        chars_written += sprintf(buffer + chars_written, "%u", (uint32_t)(x % (uint64_t)1000));
     }
     return chars_written;
 }
 
-inline int _sprint__int64(char* buffer, __int64 x)
+inline int _sprint__int64(char* buffer, int64_t x)
 {
-    if (x < (__int64)0)
-        return _sprint__uint64(buffer, (__uint64)-x, true);
+    if (x < (int64_t)0)
+        return _sprint__uint64(buffer, (uint64_t)-x, true);
     else
-        return _sprint__uint64(buffer, (__uint64)x, false);
+        return _sprint__uint64(buffer, (uint64_t)x, false);
 }
 
 char *get_xs_double_lexical_representation(char *s, double d)
@@ -230,7 +230,7 @@ char *get_xs_float_lexical_representation(char *s, float f)
     return get_xs_float_lexical_representation_Saxon(s, f);
 }
 
-char *get_xs_integer_lexical_representation(char *s, __int64 v)
+char *get_xs_integer_lexical_representation(char *s, int64_t v)
 {
     _sprint__int64(s, v);
     return s;
@@ -311,27 +311,27 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
 /////////////////////////////////////////////////////////////////////////
 /// XML Schema fixed datatypes to fixed datatypes conversion routines.
 /////////////////////////////////////////////////////////////////////////
-__int64 xs_float2xs_integer(float v)
+int64_t xs_float2xs_integer(float v)
 {
     if (u_is_neg_inf((double)v) || u_is_pos_inf((double)v) || u_is_nan((double)v))
         throw XQUERY_EXCEPTION2(FOCA0002, "Error casting xs:float value to xs:integer");
 
     double i = 0.0;
     modf((double)v, &i);
-    return (__int64)i;
+    return (int64_t)i;
 }
 
-__int64 xs_double2xs_integer(double v)
+int64_t xs_double2xs_integer(double v)
 {
     if (u_is_neg_inf(v) || u_is_pos_inf(v) || u_is_nan(v))
         throw XQUERY_EXCEPTION2(FOCA0002, "Error casting xs:double value to xs:integer");
 
-    if(v > _I64_MAX || v < _I64_MIN)
+    if(v > INT64_MAX || v < INT64_MIN)
         throw XQUERY_EXCEPTION2(FOCA0003, "Error casting xs:double value to xs:integer (too long value given)");
 
     double i = 0.0;
     modf(v, &i);
-    return (__int64)i;
+    return (int64_t)i;
 }
 
 
@@ -339,12 +339,12 @@ __int64 xs_double2xs_integer(double v)
 /// ANumeric operations.
 /////////////////////////////////////////////////////////////////////////
 
-__int64 _double_NaN = ((__int64)0x7FF00000 << (__int64)32) | 0x1;
-__int64 _double_Neg_INF = ((__int64)0xFFF00000 << (__int64)32);
-__int64 _double_Pos_INF = ((__int64)0x7FF00000 << (__int64)32);
-__int32 _float_NaN = 0x7F800001;
-__int32 _float_Neg_INF = 0xFF800000;
-__int32 _float_Pos_INF = 0x7F800000;
+int64_t _double_NaN = ((int64_t)0x7FF00000 << (int64_t)32) | 0x1;
+int64_t _double_Neg_INF = ((int64_t)0xFFF00000 << (int64_t)32);
+int64_t _double_Pos_INF = ((int64_t)0x7FF00000 << (int64_t)32);
+int32_t _float_NaN = 0x7F800001;
+int32_t _float_Neg_INF = 0xFF800000;
+int32_t _float_Pos_INF = 0x7F800000;
 
 
 double xs_divide(double x, double y)
@@ -377,7 +377,7 @@ float xs_divide(float x, float y)
     return x / y;
 }
 
-xs_decimal_t xs_divide(__int64 x, __int64 y)
+xs_decimal_t xs_divide(int64_t x, int64_t y)
 {
     if (y == 0) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-divide");
     return xs_decimal_t(x) / xs_decimal_t(y);
@@ -389,7 +389,7 @@ xs_decimal_t xs_divide(xs_decimal_t x, xs_decimal_t y)
     return x / y;
 }
 
-__int64 xs_integer_divide(double x, double y)
+int64_t xs_integer_divide(double x, double y)
 {
     if (y == 0.0)
         throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
@@ -400,7 +400,7 @@ __int64 xs_integer_divide(double x, double y)
     return xs_double2xs_integer(x / y);
 }
 
-__int64 xs_integer_divide(float x, float y)
+int64_t xs_integer_divide(float x, float y)
 {
     if ((double)y == 0.0)
         throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
@@ -411,13 +411,13 @@ __int64 xs_integer_divide(float x, float y)
     return xs_float2xs_integer(x / y);
 }
 
-__int64 xs_integer_divide(__int64 x, __int64 y)
+int64_t xs_integer_divide(int64_t x, int64_t y)
 {
     if (y == 0) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
     return x / y;
 }
 
-__int64 xs_integer_divide(xs_decimal_t x, xs_decimal_t y)
+int64_t xs_integer_divide(xs_decimal_t x, xs_decimal_t y)
 {
     if (y.is_zero()) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
     return (x / y).get_int();
@@ -445,7 +445,7 @@ float xs_mod(float x, float y)
     return fmodf(x, y);
 }
 
-__int64 xs_mod(__int64 x, __int64 y)
+int64_t xs_mod(int64_t x, int64_t y)
 {
     if (y == 0) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
     return x % y;
@@ -458,13 +458,13 @@ xs_decimal_t xs_mod(xs_decimal_t x, xs_decimal_t y)
 }
 
 
-double round_half_to_even_double(double d, __int64 precision)
+double round_half_to_even_double(double d, int64_t precision)
 {
     double m_i = 0, m_f = 0;
-    __int64 y = 1;
+    int64_t y = 1;
 
-    __int64 p = precision < 0 ? -precision : precision;
-    for (__int64 j = 0; j < p; j++) y *= 10;
+    int64_t p = precision < 0 ? -precision : precision;
+    for (int64_t j = 0; j < p; j++) y *= 10;
 
     if (precision < 0)
     {
@@ -484,14 +484,14 @@ double round_half_to_even_double(double d, __int64 precision)
         {
             if (m_i == 0)
             {
-                if (((__int64)i % 2) == 1)
+                if (((int64_t)i % 2) == 1)
                 {
                     i += 1;
                 }
             }
             else
             {
-                if (((__int64)m_i % 2) == 1)
+                if (((int64_t)m_i % 2) == 1)
                 {
                     m_i += 1;
                 }
@@ -513,17 +513,17 @@ double round_half_to_even_double(double d, __int64 precision)
     }
 }
 
-float round_half_to_even_float(float d, __int64 precision)
+float round_half_to_even_float(float d, int64_t precision)
 {
     return (float)round_half_to_even_double((float)d, precision);
 }
 
-__int64 round_half_to_even_integer(__int64 d, __int64 precision)
+int64_t round_half_to_even_integer(int64_t d, int64_t precision)
 {
     if (precision < 0)
     {
-        __int64 y = 1;
-        for (__int64 j = 0; j < -precision; j++) y *= 10;
+        int64_t y = 1;
+        for (int64_t j = 0; j < -precision; j++) y *= 10;
 
         return (d / y) * y;
     }
@@ -543,7 +543,7 @@ template <class Iterator>
 static inline void _replace_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
 {
     unsigned char value;
-    __int64 spaces_counter = 0;
+    int64_t spaces_counter = 0;
 
     while(start < end && IS_WHITESPACE(*start)) { start++; }
 

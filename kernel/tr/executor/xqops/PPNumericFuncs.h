@@ -68,10 +68,10 @@ class PPFnRoundHalfToEven : public PPIterator
 protected:
     PPOpIn child_arg;
     PPOpIn child_p;
-    __int64 precision;
+    int64_t precision;
     bool first_time;
 
-    tuple_cell round_half_to_even(const tuple_cell& tc, __int64 precision);
+    tuple_cell round_half_to_even(const tuple_cell& tc, int64_t precision);
 
 private:
     virtual void do_open   ();
@@ -86,7 +86,7 @@ public:
     PPFnRoundHalfToEven(dynamic_context *_cxt_,
                         operation_info _info_,
                         PPOpIn _child_arg_,
-                        __int64 _precision_);
+                        int64_t _precision_);
 
     PPFnRoundHalfToEven(dynamic_context *_cxt_,
                         operation_info _info_,

@@ -542,8 +542,8 @@ xs_decimal_t divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& 
 {
 	if (d1.getValue(XMLDateTime::Type) == xs_yearMonthDuration)
 	{
-		__int64 m1 = d1.getValue(XMLDateTime::CentYear)*12 + d1.getValue(XMLDateTime::Month);
-		__int64 m2 = d2.getValue(XMLDateTime::CentYear)*12 + d2.getValue(XMLDateTime::Month);
+		int64_t m1 = d1.getValue(XMLDateTime::CentYear)*12 + d1.getValue(XMLDateTime::Month);
+		int64_t m2 = d2.getValue(XMLDateTime::CentYear)*12 + d2.getValue(XMLDateTime::Month);
 		return (xs_decimal_t(m1)/ xs_decimal_t(m2));
 	}
 	else // must be xs_dayTimeDuration

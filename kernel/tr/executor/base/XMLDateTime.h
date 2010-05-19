@@ -22,7 +22,7 @@
 #include "common/u/utime.h"
 #include "xs_decimal_t.h"
 
-typedef __int64 bigint;
+typedef int64_t bigint;
 
 typedef struct 
 {

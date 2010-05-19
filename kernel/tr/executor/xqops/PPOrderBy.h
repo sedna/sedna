@@ -112,7 +112,7 @@ typedef std::vector<orb_common_type>    arr_of_common_type;
 struct orb_user_data
 {
     sequence *sort;                                 //Initial sequence which must be sorted.
-    __int64 pos;                                    
+    int64_t pos;                                    
     int size;                                       //Serialized size of in bytes (fixed for each tuple): 
                                                     //[position] + [tuple_cell(1) | tuple_cell(2) | .... tuple_cell(N)] + [bit_set - eos map].
     int bit_set_offset;                             //Offset to bit_set (i.e. size of position + size of tuple cells in serialized presentation).
@@ -151,7 +151,7 @@ private:
     bool need_reinit;
     bool need_to_sort;                              //If we have only eos values then we don't need to sort by them
     sorted_sequence *ss;
-    __int64 pos;
+    int64_t pos;
     
     arr_of_common_type types;
     orb_user_data udata;
@@ -234,7 +234,7 @@ private:
 
     bool need_reopen;
     bool first_time;
-    __int64 size;
+    int64_t size;
     sequence *s;
 
     inline void reinit_consumer_table();

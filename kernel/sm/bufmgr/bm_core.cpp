@@ -25,8 +25,8 @@ using namespace std;
 
 // IO statistics
 struct bm_core_io_stats {
-  __int64 reads;
-  __int64 writes;
+  int64_t reads;
+  int64_t writes;
   
   void reset() { reads = 0; writes = 0; }
 };
@@ -121,7 +121,7 @@ char *system_data_aligned_ptr = NULL;
 ////////////////////////////////////////////////////////////////////////////////
 void read_master_block()
 {
-    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetFilePointer(data_file_handler, (int64_t)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
 
     unsigned int number_of_bytes_read = 0;
@@ -133,7 +133,7 @@ void read_master_block()
 
 void flush_master_block()
 {
-    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetFilePointer(data_file_handler, (int64_t)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
     unsigned int number_of_bytes_written = 0;
@@ -150,15 +150,15 @@ void flush_master_block()
 ////////////////////////////////////////////////////////////////////////////////
 
 void calculate_offset_and_file_handler(const xptr &p, 
-                                       __int64 *dsk_offs, 
+                                       int64_t *dsk_offs, 
                                        UFile *file_handler)
 {
     if (IS_DATA_BLOCK(p)) 
     {
         //d_printf1("calculate_offset_and_file_handler: data block\n");
-        *dsk_offs = ABS_DATA_OFFSET(p) + (__int64)PAGE_SIZE;
+        *dsk_offs = ABS_DATA_OFFSET(p) + (int64_t)PAGE_SIZE;
         
-        if (!((__int64)PAGE_SIZE <= *dsk_offs && *dsk_offs <= mb->data_file_cur_size - (__int64)PAGE_SIZE))
+        if (!((int64_t)PAGE_SIZE <= *dsk_offs && *dsk_offs <= mb->data_file_cur_size - (int64_t)PAGE_SIZE))
         {
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
@@ -168,7 +168,7 @@ void calculate_offset_and_file_handler(const xptr &p,
     {
         //d_printf1("calculate_offset_and_file_handler: tmp block\n");
         *dsk_offs = ABS_TMP_OFFSET(p);
-        if (!((__int64)0 <= *dsk_offs && *dsk_offs <= mb->tmp_file_cur_size - (__int64)PAGE_SIZE))
+        if (!((int64_t)0 <= *dsk_offs && *dsk_offs <= mb->tmp_file_cur_size - (int64_t)PAGE_SIZE))
         {
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
@@ -178,7 +178,7 @@ void calculate_offset_and_file_handler(const xptr &p,
 
 void read_block(const xptr &p, ramoffs offs)
 {
-    __int64 dsk_offs = 0;
+    int64_t dsk_offs = 0;
     UFile file_handler;
     calculate_offset_and_file_handler(p, &dsk_offs, &file_handler);
 
@@ -215,7 +215,7 @@ void write_block(const xptr &p, ramoffs offs)
 #endif
 
     // write block
-    __int64 dsk_offs = 0;
+    int64_t dsk_offs = 0;
     UFile file_handler;
     calculate_offset_and_file_handler(p, &dsk_offs, &file_handler);
 

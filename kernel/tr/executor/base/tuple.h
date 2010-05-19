@@ -44,37 +44,37 @@ typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 
 
 /// Possible types of tuple cell
-#define tc_eos                         (__uint32)(0x80000000) // cell stores end of sequence
-#define tc_xptr                        (__uint32)(0x40000000) // cell stores xptr
-#define tc_safenode                    (__uint32)(0x43000000) // cell stores safenode
-#define tc_node                        (__uint32)(0x42000000) // cell stores node
-#define tc_unsafenode                  (__uint32)(0x41000000) // cell stores unsafenode
-#define tc_light_atomic_fix_size       (__uint32)(0x10000000) // cell stores light atomic value (feats in dynamic memory)
-#define tc_light_atomic_var_size       (__uint32)(0x20000000) // cell stores light atomic value (feats in dynamic memory)
-#define tc_heavy_atomic_estr           (__uint32)(0x04000000) // cell stores heavy atomic value in e_strings (that is stored in VMM memory)
-#define tc_heavy_atomic_pstr_short     (__uint32)(0x08000000) // cell stores heavy atomic value in short pstrings (that is stored in VMM memory)
-#define tc_heavy_atomic_pstr_long      (__uint32)(0x0C000000) // cell stores heavy atomic value in long pstrings (that is stored in VMM memory)
+#define tc_eos                         (uint32_t)(0x80000000) // cell stores end of sequence
+#define tc_xptr                        (uint32_t)(0x40000000) // cell stores xptr
+#define tc_safenode                    (uint32_t)(0x43000000) // cell stores safenode
+#define tc_node                        (uint32_t)(0x42000000) // cell stores node
+#define tc_unsafenode                  (uint32_t)(0x41000000) // cell stores unsafenode
+#define tc_light_atomic_fix_size       (uint32_t)(0x10000000) // cell stores light atomic value (feats in dynamic memory)
+#define tc_light_atomic_var_size       (uint32_t)(0x20000000) // cell stores light atomic value (feats in dynamic memory)
+#define tc_heavy_atomic_estr           (uint32_t)(0x04000000) // cell stores heavy atomic value in e_strings (that is stored in VMM memory)
+#define tc_heavy_atomic_pstr_short     (uint32_t)(0x08000000) // cell stores heavy atomic value in short pstrings (that is stored in VMM memory)
+#define tc_heavy_atomic_pstr_long      (uint32_t)(0x0C000000) // cell stores heavy atomic value in long pstrings (that is stored in VMM memory)
 
 
 /// Masks for 't' field of tuple cell
-#define TC_EOS_MASK                    (__uint32)(0x80000000)
-#define TC_NODE_MASK                   (__uint32)(0x40000000)
-#define TC_ATOMIC_MASK                 (__uint32)(0x3C000000)
-#define TC_LIGHT_ATOMIC_MASK           (__uint32)(0x30000000)
-#define TC_HEAVY_ATOMIC_MASK           (__uint32)(0x0C000000)
-#define TC_LIGHT_ATOMIC_VAR_SIZE_MASK  (__uint32)(0x20000000)
+#define TC_EOS_MASK                    (uint32_t)(0x80000000)
+#define TC_NODE_MASK                   (uint32_t)(0x40000000)
+#define TC_ATOMIC_MASK                 (uint32_t)(0x3C000000)
+#define TC_LIGHT_ATOMIC_MASK           (uint32_t)(0x30000000)
+#define TC_HEAVY_ATOMIC_MASK           (uint32_t)(0x0C000000)
+#define TC_LIGHT_ATOMIC_VAR_SIZE_MASK  (uint32_t)(0x20000000)
 
-#define TC_TYPE_MASK                   (__uint32)(0xFF000000)
-#define TC_XTYPE_MASK                  (__uint32)(0x00FFFFFF)
-#define TC_SUBTYPE_MASK                (__uint32)(0x03000000)
+#define TC_TYPE_MASK                   (uint32_t)(0xFF000000)
+#define TC_XTYPE_MASK                  (uint32_t)(0x00FFFFFF)
+#define TC_SUBTYPE_MASK                (uint32_t)(0x03000000)
 
-#define TC_UNSAFENODE                  (__uint32)(0x41000000)
-#define TC_TMPSAFENODE                 (__uint32)(0x42000000)
-#define TC_SAFENODE                    (__uint32)(0x43000000)
+#define TC_UNSAFENODE                  (uint32_t)(0x41000000)
+#define TC_TMPSAFENODE                 (uint32_t)(0x42000000)
+#define TC_SAFENODE                    (uint32_t)(0x43000000)
 
 /// Tuple cell data ('data' field of tuple_cell)
 typedef struct {
-    __uint64 x, y;
+    uint64_t x, y;
 } tcdata;
 
 
@@ -158,7 +158,7 @@ in VMM memory.
 
 4. light atomic of fixed size
    'data' stores
-        __int64
+        int64_t
     or
         xs_decimal_t
     or
@@ -176,7 +176,7 @@ in VMM memory.
 5. heavy atomic (estr, pstr_short, pstr_long)
    'data' stores
         xptr p;
-        __int64 size;
+        int64_t size;
 */
 
 struct tuple_cell;
@@ -193,7 +193,7 @@ inline void *tuple_char_alloc(size_t size)
 struct tuple_cell
 {
 private:
-    __uint32 t;
+    uint32_t t;
     tcdata data;
 
     void assign(const tuple_cell& tc)
@@ -201,7 +201,7 @@ private:
         t = tc.t;
         if (tc.t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK)
         {
-            data.x = data.y = (__int64)0;
+            data.x = data.y = (int64_t)0;
             *(str_counted_ptr*)(&data) = *(str_counted_ptr*)(&(tc.data));
         }
         else
@@ -213,7 +213,7 @@ private:
             ((str_counted_ptr*)(&data))->~str_counted_ptr();
     }
 
-    void set_size(__int64 _size_) { *(__int64*)((char*)(&data) + sizeof(xptr)) = _size_; }
+    void set_size(int64_t _size_) { *(int64_t*)((char*)(&data) + sizeof(xptr)) = _size_; }
 
 public:
     ////////////////////////////////////////////////////////////////////////////
@@ -237,7 +237,7 @@ public:
 
     bool is_anynode()     const { return (t & TC_TYPE_MASK) && (t & TC_SUBTYPE_MASK); }
 
-    __uint32           get_type()        const { return t & TC_TYPE_MASK; }
+    uint32_t           get_type()        const { return t & TC_TYPE_MASK; }
     xmlscm_type        get_atomic_type() const { return t & TC_XTYPE_MASK; }
 
     xptr               get_xptr()        const { return *(xptr*)(&data); }
@@ -255,7 +255,7 @@ public:
 
 
     /// fixed size atomic values
-    __int64            get_xs_integer()  const { return *(__int64*           )(&data); }
+    int64_t            get_xs_integer()  const { return *(int64_t*           )(&data); }
     xs_decimal_t       get_xs_decimal()  const { return *(xs_decimal_t*      )(&data); }
     float              get_xs_float()    const { return *(float*             )(&data); }
     double             get_xs_double()   const { return *(double*            )(&data); }
@@ -270,9 +270,9 @@ public:
     /// variable size atomic values
     char*              get_str_mem()     const { return ((str_counted_ptr*)(&data))->get(); }
     xptr               get_str_vmm()     const { return *(xptr*)(&data); }
-    __int64            get_strlen_mem()  const { return (__int64)strlen(get_str_mem()); }
-    __int64            get_strlen_vmm()  const { return *(__int64*)((char*)(&data) + sizeof(xptr)); }
-    __int64            get_strlen()      const { return is_light_atomic() ? get_strlen_mem() : get_strlen_vmm(); }
+    int64_t            get_strlen_mem()  const { return (int64_t)strlen(get_str_mem()); }
+    int64_t            get_strlen_vmm()  const { return *(int64_t*)((char*)(&data) + sizeof(xptr)); }
+    int64_t            get_strlen()      const { return is_light_atomic() ? get_strlen_mem() : get_strlen_vmm(); }
 
     str_counted_ptr    get_str_ptr()     const { return *(str_counted_ptr*)(&data); }
 
@@ -287,15 +287,15 @@ public:
     // default constructor
     tuple_cell() : t(tc_eos)
     {
-        data.x = data.y = (__uint64)0;
+        data.x = data.y = (uint64_t)0;
     }
     // type field constructor
-    tuple_cell(__uint32 _t_) : t(_t_)
+    tuple_cell(uint32_t _t_) : t(_t_)
     {
-        data.x = data.y = (__uint64)0;
+        data.x = data.y = (uint64_t)0;
     }
     // all fields constructor
-    tuple_cell(__uint32 _t_, const tcdata &_data_) : t(_t_), data(_data_) {}
+    tuple_cell(uint32_t _t_, const tcdata &_data_) : t(_t_), data(_data_) {}
     // copy constructor
     tuple_cell(const tuple_cell& tc)
     {
@@ -319,10 +319,10 @@ public:
   public :
 
     // for xs:integer atomics
-    tuple_cell(__int64 _data_)
+    tuple_cell(int64_t _data_)
     {
         t = tc_light_atomic_fix_size | xs_integer;
-		*(__int64*)(&(data)) = _data_;
+		*(int64_t*)(&(data)) = _data_;
     }
     // for xs_decimal atomics
     tuple_cell(xs_decimal_t _data_)
@@ -364,14 +364,14 @@ public:
     tuple_cell(sequence* _sequence_ptr_)
     {
         t = tc_light_atomic_fix_size | se_sequence;
-        data.x = data.y = (__int64)0;
+        data.x = data.y = (int64_t)0;
         *((sequence**)(&data)) = _sequence_ptr_;
     }
     // for variable size light atomics (without deep copy)
     tuple_cell(xmlscm_type _xtype_, char *_str_)
     {
         t = tc_light_atomic_var_size | _xtype_;
-        data.x = data.y = (__int64)0;
+        data.x = data.y = (int64_t)0;
         *(str_counted_ptr*)(&data) = str_counted_ptr(_str_);
     }
     // for variable size light atomics (with deep copy)
@@ -380,15 +380,15 @@ public:
         char *tmp = se_new char[strlen(_str_) + 1];
         strcpy(tmp, _str_);
         t = tc_light_atomic_var_size | _xtype_;
-        data.x = data.y = (__int64)0;
+        data.x = data.y = (int64_t)0;
         *(str_counted_ptr*)(&data) = str_counted_ptr(tmp);
     }
     // for heavy atomics
-    tuple_cell(__uint32 _t_, xmlscm_type _xtype_, const xptr &_p_, __int64 _size_)
+    tuple_cell(uint32_t _t_, xmlscm_type _xtype_, const xptr &_p_, int64_t _size_)
     {
         t = _t_ | _xtype_;
 		*(xptr*)(&(data)) = _p_;
-        *(__int64*)((char*)(&data) + sizeof(xptr)) = _size_;
+        *(int64_t*)((char*)(&data) + sizeof(xptr)) = _size_;
     }
 
 
@@ -427,7 +427,7 @@ public:
         return tuple_cell(tc_unsafenode, _p_);
     }
 
-    static tuple_cell atomic(__int64 _data_)
+    static tuple_cell atomic(int64_t _data_)
     {
         return tuple_cell(_data_);
     }
@@ -472,18 +472,18 @@ public:
         return tuple_cell(_xtype_, _str_, true);
     }
 
-    static tuple_cell atomic(__uint32 _t_, xmlscm_type _xtype_, __int64 _size_, const xptr &_p_)
+    static tuple_cell atomic(uint32_t _t_, xmlscm_type _xtype_, int64_t _size_, const xptr &_p_)
     {
         return tuple_cell(_t_, _xtype_, _p_, _size_);
     }
 
-    static tuple_cell atomic_pstr(xmlscm_type _xtype_, __int64 _size_, const xptr &_p_)
+    static tuple_cell atomic_pstr(xmlscm_type _xtype_, int64_t _size_, const xptr &_p_)
     {
-        __uint32 _t_ = _size_ > PSTRMAXSIZE ? tc_heavy_atomic_pstr_long : tc_heavy_atomic_pstr_short;
+        uint32_t _t_ = _size_ > PSTRMAXSIZE ? tc_heavy_atomic_pstr_long : tc_heavy_atomic_pstr_short;
         return tuple_cell(_t_, _xtype_, _p_, _size_);
     }
 
-    static tuple_cell atomic_estr(xmlscm_type _xtype_, __int64 _size_, const xptr &_p_)
+    static tuple_cell atomic_estr(xmlscm_type _xtype_, int64_t _size_, const xptr &_p_)
     {
         return tuple_cell(tc_heavy_atomic_estr, _xtype_, _p_, _size_);
     }
@@ -527,8 +527,8 @@ public:
     {
         release();
         t = tc_eos;
-        data.x = (__int64)0;
-        data.y = (__int64)0;
+        data.x = (int64_t)0;
+        data.y = (int64_t)0;
     }
 
     void set_unsafenode(const xptr &_p_)
@@ -568,8 +568,8 @@ public:
     {
         if (is_light_atomic())
         {
-            __int64 len = get_strlen_mem();
-            data.x = data.y = (__int64)0;
+            int64_t len = get_strlen_mem();
+            data.x = data.y = (int64_t)0;
             set_size(len);
         }
         set_xptr_int(txt_ptr);
@@ -577,7 +577,7 @@ public:
 
     void _adjust_restored_tc(char *_str_)
     {
-        data.x = data.y = (__int64)0;
+        data.x = data.y = (int64_t)0;
         *(str_counted_ptr*)(&data) = str_counted_ptr(_str_);
     }
 
@@ -591,7 +591,7 @@ public:
     static tuple_cell make_sure_light_atomic(const tuple_cell& tc);
     /// copy content of the string to buf (!!! FIXME: not very well designed approach...)
     char* copy_string(char *buf) const;
-    char* copy_string(char *buf, __int64 n) const;
+    char* copy_string(char *buf, int64_t n) const;
 
     std::string type2string() const;
 };

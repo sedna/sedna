@@ -333,9 +333,9 @@ void PPFnStartsEndsWith::do_next(tuple &t)
 
     CollationHandler* handler;
     tuple_cell src;
-    __int64 src_len = 0;
+    int64_t src_len = 0;
     tuple_cell prf;
-    __int64 prf_len = 0;
+    int64_t prf_len = 0;
     tuple_cell col;
 
     source.op->next(t);
@@ -491,7 +491,7 @@ void PPFnString2CodePoints::do_next (tuple &t)
 	int code = ucp_it->get_next_char();
 	if (code != -1)
 	{
-		t.copy(tuple_cell::atomic((__int64)code));
+		t.copy(tuple_cell::atomic((int64_t)code));
 	}
 	else
 	{
@@ -576,7 +576,7 @@ void PPFnCodePoints2String::do_next (tuple &t)
                  is_derived_from_xs_integer(xtype)))
                      throw XQUERY_EXCEPTION2(XPTY0004, "Invalid item type in the argument of fn:codepoints-to-string (xs:untypedAtomic, xs:integer or derived expected).");
 
-            __int64 value = (xtype == xs_untypedAtomic ?
+            int64_t value = (xtype == xs_untypedAtomic ?
                              cast(tc, xs_integer).get_xs_integer() :
                              tc.get_xs_integer());
 
@@ -817,7 +817,7 @@ void PPFnSubsBeforeAfter::do_close()
 ///////////////////////////////////////////////////////////////////////////////////////////
 /// We need byte based version of substring because PPSubsMatch::contains is byte based.
 template <class Iterator>
-static inline void byte_based_substring_call_stub(Iterator &start, const Iterator &end, stmt_str_buf &res, __int64 start_pos, __int64 length)
+static inline void byte_based_substring_call_stub(Iterator &start, const Iterator &end, stmt_str_buf &res, int64_t start_pos, int64_t length)
 {
     while (start < end && start_pos > 0) { start_pos--; start++; }
 
@@ -829,7 +829,7 @@ static inline void byte_based_substring_call_stub(Iterator &start, const Iterato
     }
 }
 
-static inline tuple_cell byte_based_substring(const tuple_cell *tc, __int64 start_pos, __int64 length)
+static inline tuple_cell byte_based_substring(const tuple_cell *tc, int64_t start_pos, int64_t length)
 {
 	stmt_str_buf res;
 	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(byte_based_substring_call_stub, tc, res, start_pos, length);
@@ -869,7 +869,7 @@ void PPFnSubsBeforeAfter::do_next(tuple &t)
 
     src_child.op->next(t);
     tuple_cell src;
-    __int64 src_len = 0;
+    int64_t src_len = 0;
 
     if (!t.is_eos())
     {
@@ -884,7 +884,7 @@ void PPFnSubsBeforeAfter::do_next(tuple &t)
 
     srch_child.op->next(t);
     tuple_cell srch_str;
-    __int64 srch_str_len = 0;
+    int64_t srch_str_len = 0;
 
     if (!t.is_eos())
     {
@@ -907,12 +907,12 @@ void PPFnSubsBeforeAfter::do_next(tuple &t)
     }
     else
     {
-        __int64 pos = handler->contains(&src, &srch_str);
+        int64_t pos = handler->contains(&src, &srch_str);
         if(pos >= 0)
         {
             type == PPFnSubsBeforeAfter::FN_BEFORE ?
                     t.copy(byte_based_substring(&src, 0, pos)) :
-                    t.copy(byte_based_substring(&src, pos + srch_str_len, _I64_MAX));
+                    t.copy(byte_based_substring(&src, pos + srch_str_len, INT64_MAX));
         }
         else
             t.copy(EMPTY_STRING_TC);
@@ -1089,7 +1089,7 @@ void PPFnStringLength::do_next (tuple &t)
             if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
         }
 
-        t.copy(tuple_cell::atomic((__int64)len));
+        t.copy(tuple_cell::atomic((int64_t)len));
     }
     else
     {
@@ -1260,8 +1260,8 @@ void PPFnSubstring::do_close()
 
 void PPFnSubstring::do_next(tuple &t)
 {
-    __int64 start_pos = 0;
-    __int64 length = 0;
+    int64_t start_pos = 0;
+    int64_t length = 0;
     if (first_time)
     {
         tuple_cell tc;
@@ -1278,7 +1278,7 @@ void PPFnSubstring::do_next(tuple &t)
             throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:substring (xs:double or promotable expected).");
 
         double temp = floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
-        start_pos = u_is_nan(temp) ? _I64_MAX : u_double2int64(temp);
+        start_pos = u_is_nan(temp) ? INT64_MAX : u_double2int64(temp);
 
         start_child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:substring.");
@@ -1326,7 +1326,7 @@ void PPFnSubstring::do_next(tuple &t)
                 t.copy(EMPTY_STRING_TC);
         }
         else
-            t.copy(charset_handler->substring(&tc, start_pos-1, _I64_MAX));
+            t.copy(charset_handler->substring(&tc, start_pos-1, INT64_MAX));
     }
     else
     {

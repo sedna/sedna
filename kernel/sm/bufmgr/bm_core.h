@@ -132,11 +132,11 @@ struct bm_masterblock
     xptr free_data_blocks;
     xptr free_tmp_blocks;
 
-    __int64 data_file_cur_size;
-    __int64 tmp_file_cur_size;
+    int64_t data_file_cur_size;
+    int64_t tmp_file_cur_size;
 
-    __int64 data_file_max_size;  /* size in PAGES, 0 means unlimited size */
-    __int64 tmp_file_max_size;   /* size in PAGES, 0 means unlimited size */
+    int64_t data_file_max_size;  /* size in PAGES, 0 means unlimited size */
+    int64_t tmp_file_max_size;   /* size in PAGES, 0 means unlimited size */
 
     // in PAGE_SIZE
     int data_file_extending_portion;

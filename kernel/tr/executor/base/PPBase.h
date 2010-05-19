@@ -156,7 +156,7 @@ struct profile_info
      * user defined functions recursive calls. */
     void* lock;
     /* Number of calls */
-    __int64 calls;
+    int64_t calls;
      
     profile_info(): lock(NULL), 
                     calls(0) 

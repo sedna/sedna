@@ -141,7 +141,7 @@ tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
     xmlscm_type xtype = t.get_atomic_type();
 
     if(is_numeric_type(xtype)) 
-	    return op_eq(tuple_cell::atomic((__int64)pos), t, NULL/*it will not be string comparison*/);
+	    return op_eq(tuple_cell::atomic((int64_t)pos), t, NULL/*it will not be string comparison*/);
     else
 	    return effective_boolean_value(t);
 }

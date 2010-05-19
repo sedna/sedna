@@ -226,40 +226,6 @@
  *===========================================================================*/
 
 /*
- * signed integers types definition
- */
-#ifdef _WIN32
-/*
- * Already defined
- */
-#else
-typedef int8_t                __int8;
-typedef int16_t               __int16;
-typedef int32_t               __int32;
-typedef int64_t               __int64;
-#endif
-
-
-/*
- * unsigned integers types definition
- */
-typedef uint8_t                __uint8;
-typedef uint16_t               __uint16;
-typedef uint32_t               __uint32;
-typedef uint64_t               __uint64;
-
-#ifdef _WIN32
-/*
- * Already defined
- */
-
-#else
-#define _I64_MAX (((__int64)0x7FFFFFFF << 32) | 0xFFFFFFFF)
-#define _I64_MIN (-_I64_MAX - 1)
-#endif
-
-
-/*
  * usize_t
  *		Size of any memory resident object, as returned by sizeof
  */
@@ -305,32 +271,6 @@ typedef HANDLE UHANDLE;
 typedef int UHANDLE;
 #endif /* _WIN32 */
 
-
-/*
- * LARGE_INTEGER
- *     Union for manipulating 64-bit integers as a whole or as 32-bit parts
- */
-#ifdef _WIN32
-/*
- * Already defined
- */
-#else
-typedef union _LARGE_INTEGER
-{
-    struct
-    {
-        unsigned long LowPart;
-        long HighPart;
-    };
-    struct
-    {
-        unsigned long LowPart;
-        long HighPart;
-    } u;
-    __int64 QuadPart;
-} LARGE_INTEGER;
-#endif /* _WIN32 */
-
 #ifdef _WIN32
 typedef DWORD  UFlag;
 #else
@@ -360,7 +300,7 @@ typedef int    UFlag;
  *		True iff pointer is properly aligned to point to the given type.
  */
 #define PointerIsAligned(pointer, type) \
-		(((long)(pointer) % (sizeof (type))) == 0)
+		(((uintptr_t)(pointer) % (sizeof (type))) == 0)
 
 
 
@@ -540,7 +480,7 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 
 
 /* Get a bit mask of the bits set in non-int32 aligned addresses */
-#define INT_ALIGN_MASK (sizeof(__int32) - 1)
+#define INT_ALIGN_MASK (sizeof(int32_t) - 1)
 
 /*
  * MemSet
@@ -567,8 +507,8 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 			_val == 0 && \
 			_len <= MEMSET_LOOP_LIMIT) \
 		{ \
-			__int32 *_start = (__int32 *) _vstart; \
-			__int32 *_stop = (__int32 *) ((char *) _start + _len); \
+			int32_t *_start = (int32_t *) _vstart; \
+			int32_t *_stop = (int32_t *) ((char *) _start + _len); \
 			while (_start < _stop) \
 				*_start++ = 0; \
 		} \
@@ -587,7 +527,7 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 #define MemSetAligned(start, val, len) \
 	do \
 	{ \
-		__int32  *_start = (__int32 *) (start); \
+		int32_t  *_start = (int32_t *) (start); \
 		int		_val = (val); \
 		usize_t	_len = (len); \
 \
@@ -595,7 +535,7 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 			_val == 0 && \
 			_len <= MEMSET_LOOP_LIMIT) \
 		{ \
-			__int32 *_stop = (__int32 *) ((char *) _start + _len); \
+			int32_t *_stop = (int32_t *) ((char *) _start + _len); \
 			while (_start < _stop) \
 				*_start++ = 0; \
 		} \
@@ -620,8 +560,8 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 #define MemSetLoop(start, val, len) \
 	do \
 	{ \
-		__int32 * _start = (__int32 *) (start); \
-		__int32 * _stop = (__int32 *) ((char *) _start + (usize_t) (len)); \
+		int32_t * _start = (int32_t *) (start); \
+		int32_t * _stop = (int32_t *) ((char *) _start + (usize_t) (len)); \
 	\
 		while (_start < _stop) \
 			*_start++ = 0; \

@@ -156,7 +156,7 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     tc_type != xs_yearMonthDuration )
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getYears())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_duration(), tc_type).getYears())));
                 break;
             case yearFromDateTime:
             case yearFromDate:
@@ -164,14 +164,14 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     tc_type != xs_date )
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getYears())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getYears())));
                 break;
             case monthsFromDuration:
                 if (tc_type != xs_duration &&
                     tc_type != xs_yearMonthDuration )
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getMonths())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_duration(), tc_type).getMonths())));
                 break;
             case monthFromDateTime:
             case monthFromDate:
@@ -179,14 +179,14 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     tc_type != xs_date )
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getMonths())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getMonths())));
                 break;
             case daysFromDuration:
                 if (tc_type != xs_duration &&
                     tc_type != xs_dayTimeDuration)
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getDays())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_duration(), tc_type).getDays())));
                 break;
             case dayFromDateTime:
             case dayFromDate:
@@ -194,14 +194,14 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     tc_type != xs_date)
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getDays())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getDays())));
                 break;
             case hoursFromDuration:
                 if (tc_type != xs_duration &&
                     tc_type != xs_dayTimeDuration)
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getHours())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_duration(), tc_type).getHours())));
                 break;
             case hoursFromDateTime:
             case hoursFromTime:
@@ -209,14 +209,14 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     tc_type != xs_time)
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getHours())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getHours())));
                 break;
             case minutesFromDuration:
                 if (tc_type != xs_duration &&
                     tc_type != xs_dayTimeDuration)
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getMinutes())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_duration(), tc_type).getMinutes())));
                 break;
             case minutesFromDateTime:
             case minutesFromTime:
@@ -224,7 +224,7 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     tc_type != xs_time)
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
-                t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getMinutes())));
+                t.copy(tuple_cell::atomic((int64_t)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getMinutes())));
                 break;
             case secondsFromDuration:
                 {
@@ -238,7 +238,7 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     if (dur.getValue(XMLDateTime::MiliSecond) != 0)
                         t.copy(tuple_cell::atomic(seconds));
                     else
-                        t.copy(tuple_cell::atomic((__int64)seconds));
+                        t.copy(tuple_cell::atomic((int64_t)seconds));
 
                     break;
                 }
@@ -254,7 +254,7 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     if (dt.getValue(XMLDateTime::MiliSecond) != 0)
                         t.copy(tuple_cell::atomic(seconds));
                     else
-                        t.copy(tuple_cell::atomic((__int64)seconds));
+                        t.copy(tuple_cell::atomic((int64_t)seconds));
 
                     break;
                 }

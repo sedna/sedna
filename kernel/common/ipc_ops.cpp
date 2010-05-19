@@ -77,7 +77,7 @@ void send_command_to_gov(int port_number, int cmd)
     USOCKET s;
     int rc;
     char *ptr;
-    __int32 tmp;
+    int32_t tmp;
 
     s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 

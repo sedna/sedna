@@ -28,7 +28,7 @@ typedef int ramoffs;
 //typedef __int64 LSN;
 //typedef long LSN;
 //typedef __int64 LONG_LSN;
-typedef __uint32 CP_counter;
+typedef uint32_t CP_counter;
 //#define  NULL_LSN (-1)
 #define  NULL_FILE (-1)
 
@@ -54,8 +54,8 @@ typedef unsigned short int shft;
 
 #define PAGE_SIZE                               65536
 #define PAGE_BIT_SIZE                           16
-#define PAGE_BIT_MASK                           (uintptr_t)0xFFFFFFFFFFFF0000
-#define PAGE_REVERSE_BIT_MASK                   (uintptr_t)0x000000000000FFFF
+#define PAGE_BIT_MASK                           ((uintptr_t)(UINTPTR_MAX - 0xFFFF))
+#define PAGE_REVERSE_BIT_MASK                   (uintptr_t)0xFFFF
 
 #define VMM_REGION_SEARCH_MAX_SIZE                      ((uint32_t)0x79C00000)
 #define VMM_REGION_MIN_SIZE                             ((uint32_t)0x4000000)

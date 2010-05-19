@@ -28,7 +28,7 @@ enum QueryType
 /*
  * Possible atomic types
  */
-typedef __int16 xmlscm_type;
+typedef int16_t xmlscm_type;
 
 
 /* Type of the entity that is stored in database */

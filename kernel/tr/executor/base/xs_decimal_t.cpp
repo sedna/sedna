@@ -40,7 +40,7 @@ void xs_decimal_t::init()
 /*******************************************************************************
  * SET FUNCTIONS
  ******************************************************************************/
-void xs_decimal_t::set(__int64 a)
+void xs_decimal_t::set(int64_t a)
 {
     get_xs_integer_lexical_representation(executor_globals::mem_str_buf, a);
     this->set(executor_globals::mem_str_buf, true);
@@ -138,7 +138,7 @@ void xs_decimal_t::set(const char *a, bool xs_compliant)
 /*******************************************************************************
  * GET FUNCTIONS
  ******************************************************************************/
-__int64 xs_decimal_t::get_int   () const
+int64_t xs_decimal_t::get_int   () const
 {
     decNumber dv, r;
     decimal128ToNumber((decimal128*)(v.v1), &dv);
@@ -422,13 +422,13 @@ xs_decimal_t xs_decimal_t::round() const
     else return c;
 }
 
-xs_decimal_t xs_decimal_t::round_half_to_even(__int64 precision) const
+xs_decimal_t xs_decimal_t::round_half_to_even(int64_t precision) const
 {
     xs_decimal_t m_i, m_f;
-    __int64 y = 1;
+    int64_t y = 1;
 
-    __int64 p = precision < 0 ? -precision : precision;
-    for (__int64 j = 0; j < p; j++) y *= 10;
+    int64_t p = precision < 0 ? -precision : precision;
+    for (int64_t j = 0; j < p; j++) y *= 10;
 
     if (precision < 0)
     {
@@ -451,14 +451,14 @@ xs_decimal_t xs_decimal_t::round_half_to_even(__int64 precision) const
             {
                 if ((i.get_int() % 2) == 1) 
                 {
-                    i = i + xs_decimal_t((__int64)1);
+                    i = i + xs_decimal_t((int64_t)1);
                 }
             }
             else
             {
                 if ((m_i.get_int() % 2) == 1) 
                 {
-                    m_i = m_i + xs_decimal_t((__int64)1);
+                    m_i = m_i + xs_decimal_t((int64_t)1);
                 }
             }
         }
@@ -466,15 +466,15 @@ xs_decimal_t xs_decimal_t::round_half_to_even(__int64 precision) const
         {
             if (m_i.is_zero()) 
             {
-                i = i + xs_decimal_t((__int64)1);
+                i = i + xs_decimal_t((int64_t)1);
             }
             else
             {
-                m_i = m_i + xs_decimal_t((__int64)1);
+                m_i = m_i + xs_decimal_t((int64_t)1);
             }
         }
 
-        return xs_decimal_t((__int64)s) * (i + m_i / y);
+        return xs_decimal_t((int64_t)s) * (i + m_i / y);
     }
 }
 

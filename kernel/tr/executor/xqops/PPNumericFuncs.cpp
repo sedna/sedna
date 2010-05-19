@@ -200,7 +200,7 @@ void PPNumericFuncs::do_accept(PPVisitor &v)
 PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
                                          operation_info _info_,
                                          PPOpIn _child_arg_,
-                                         __int64 _precision_) : PPIterator(_cxt_, _info_, "PPFnRoundHalfToEven"),
+                                         int64_t _precision_) : PPIterator(_cxt_, _info_, "PPFnRoundHalfToEven"),
                                                                 child_arg(_child_arg_),
                                                                 precision(_precision_)
 {
@@ -250,7 +250,7 @@ void PPFnRoundHalfToEven::do_close()
 
 #define round_half_to_even_decimal(v, p) ((v).round_half_to_even(p))
 
-tuple_cell PPFnRoundHalfToEven::round_half_to_even(const tuple_cell& tc, __int64 precision)
+tuple_cell PPFnRoundHalfToEven::round_half_to_even(const tuple_cell& tc, int64_t precision)
 {
     xmlscm_type res_type = primitive_base_type(tc.get_atomic_type());
     switch (res_type)

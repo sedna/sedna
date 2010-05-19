@@ -92,7 +92,7 @@ struct ftlog_file
 	//buf_pos must be 0
 	int seek(lsn_t pos)
 	{
-		__int64 res_pos;
+		int64_t res_pos;
 		int res;
 		U_ASSERT(buf_pos == 0);
 		res = uSetFilePointer(

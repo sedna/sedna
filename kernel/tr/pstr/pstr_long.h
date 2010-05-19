@@ -15,7 +15,7 @@
  */
 
 //typedef int pstr_long_off_t;
-typedef __int64 pstr_long_off_t;
+typedef int64_t pstr_long_off_t;
 typedef int pstr_long_map_size_t; //type for storing char count in blb map
 
 struct pstr_long_blk_hdr

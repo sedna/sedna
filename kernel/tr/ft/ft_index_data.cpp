@@ -491,7 +491,7 @@ doc_serial_header ft_index_cell_object::serial_put (xptr& node, xptr &node_indir
 	doc_serial_header dsh(tbuf.get_size(),put_buf_to_pstr(tbuf));
 	//3. put header to b-tree
 	bt_key key;
-	key.setnew(*((__int64 *)&node_indir));
+	key.setnew(*((int64_t *)&node_indir));
 	bt_insert_tmpl<doc_serial_header>(this->serial_root,key,dsh);
 	//4. return header
 	return dsh;

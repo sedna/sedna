@@ -15,7 +15,7 @@
 // 000000...001111................11110000.........0000
 // \_________/\______________________/\_______________/
 //             middle_significan_bits  right_zero_bits
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 class XptrHash
 {
 private:
@@ -35,7 +35,7 @@ private:
         bool is_present;
     };
 
-    __uint32 templ;
+    uint32_t templ;
 
     typedef cell t_tbl[1 << middle_significan_bits];
 
@@ -136,13 +136,13 @@ public:
 
 
 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 XptrHash<T, middle_significan_bits, right_zero_bits>::XptrHash() 
 {
-    __uint32 k = (__uint32)32 - middle_significan_bits - right_zero_bits;
-    templ = (__uint32)0xFFFFFFFF << k >> k >> right_zero_bits << right_zero_bits;
+    uint32_t k = (uint32_t)32 - middle_significan_bits - right_zero_bits;
+    templ = (uint32_t)0xFFFFFFFF << k >> k >> right_zero_bits << right_zero_bits;
 
-    for (__uint32 i = 0; i < ((__uint32)1 << middle_significan_bits); i++)
+    for (uint32_t i = 0; i < ((uint32_t)1 << middle_significan_bits); i++)
     {
         tbl[i].next = NULL;
         tbl[i].key.clear();
@@ -153,7 +153,7 @@ XptrHash<T, middle_significan_bits, right_zero_bits>::XptrHash()
 }
 
 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 XptrHash<T, middle_significan_bits, right_zero_bits>::~XptrHash() 
 {
     clear();
@@ -162,12 +162,12 @@ XptrHash<T, middle_significan_bits, right_zero_bits>::~XptrHash()
 /*
 	Multiple entries with the same key may exist!!!
 */ 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::insert(xptr key, T val)
 {
 //    T val1;
 //    if (find(key, val1) == 0) throw USER_ENV_EXCEPTION("xxx", false);
-    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
+    cell &start = tbl[((uint32_t)(key.getOffs()) & templ) >> right_zero_bits];
     if (start.is_present)
     {
         add_cell * new_cell = se_new add_cell;
@@ -190,10 +190,10 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::insert(xptr key, T val
 }
 
 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::find(xptr key, T &val)
 {
-    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
+    cell &start = tbl[((uint32_t)(key.getOffs()) & templ) >> right_zero_bits];
     if (start.is_present)
     {
         if (start.key == key)
@@ -247,10 +247,10 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find(xptr key, T &val)
 	to write a safe code that does for-each-element-remove-those-that-meet-some-condition with
 	XptrHash.
 */ 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
 {
-    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
+    cell &start = tbl[((uint32_t)(key.getOffs()) & templ) >> right_zero_bits];
 
     if (start.is_present)
     {
@@ -310,10 +310,10 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
 }
 
 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, T &val)
 {
-    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
+    cell &start = tbl[((uint32_t)(key.getOffs()) & templ) >> right_zero_bits];
 
     if (start.is_present)
     {
@@ -376,10 +376,10 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, 
 }
 
 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::replace(xptr key, const T &new_val, T &old_val)
 {
-    cell &start = tbl[((__uint32)(key.getOffs()) & templ) >> right_zero_bits];
+    cell &start = tbl[((uint32_t)(key.getOffs()) & templ) >> right_zero_bits];
     if (start.is_present)
     {
         if (start.key == key)
@@ -406,14 +406,14 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::replace(xptr key, cons
     return 0;
 }
 
-template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
+template <class T, uint32_t middle_significan_bits, uint32_t right_zero_bits>
 void XptrHash<T, middle_significan_bits, right_zero_bits>::clear()
 {
     if (num != 0)
     {
         add_cell *p = NULL, *tmp = NULL;
     
-        for (__uint32 i = 0; i < ((__uint32)1 << middle_significan_bits); i++)
+        for (uint32_t i = 0; i < ((uint32_t)1 << middle_significan_bits); i++)
         {
             p = tbl[i].next;
             while (p)

@@ -267,7 +267,7 @@ void PPFnSumAvg::do_next(tuple &t)
     {
         first_time = false;
         tuple_cell res;
-        __int64 n = 0;
+        int64_t n = 0;
 
         while (true)
         {
@@ -319,7 +319,7 @@ void PPFnSumAvg::do_next(tuple &t)
             else 
             {
                 if (i) t.set_eos();
-                else t.copy(tuple_cell::atomic((__int64)0));
+                else t.copy(tuple_cell::atomic((int64_t)0));
             }
         }
         else
@@ -396,7 +396,7 @@ void PPFnCount::do_next(tuple &t)
     if (first_time)
     {
         first_time = false;
-        __int64 n = 0;
+        int64_t n = 0;
         while (true)
         {
             child.op->next(t);

@@ -19,7 +19,7 @@
 
 using namespace std;
 
-string int2string(__int64 value)
+string int2string(int64_t value)
 {
     char buf[20];
     u_i64toa(value, buf, 10);

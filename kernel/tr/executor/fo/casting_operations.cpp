@@ -457,7 +457,7 @@ tuple_cell cast_primitive_to_xs_boolean(const tuple_cell &c)
                    tuple_cell::atomic(true);
         }
         case xs_decimal			: return c.get_xs_decimal().is_zero()        ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
-        case xs_integer 		: return c.get_xs_integer() == (__int64)0    ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
+        case xs_integer 		: return c.get_xs_integer() == (int64_t)0    ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
         case xs_boolean			: return c;
         default					: return _cast_is_not_supported(c.get_atomic_type(), xs_boolean);
     }
@@ -560,63 +560,63 @@ tuple_cell cast_primitive(const tuple_cell &c, xmlscm_type xtype)
 /*******************************************************************************
  * CAST FOR DERIVED DATATYPES: Casting within a branch of the type hierarchy
  ******************************************************************************/
-static bool check_constraints_for_xs_nonPositiveInteger(const __int64& value)
+static bool check_constraints_for_xs_nonPositiveInteger(const int64_t& value)
 {
     return value <= 0;
 }
 
-static bool check_constraints_for_xs_negativeInteger(const __int64& value)
+static bool check_constraints_for_xs_negativeInteger(const int64_t& value)
 {
     return value < 0;
 }
 
-static bool check_constraints_for_xs_long(const __int64& value)
+static bool check_constraints_for_xs_long(const int64_t& value)
 {
-    // because __int64 fully conforms to xs:long...
+    // because int64_t fully conforms to xs:long...
     return true;
 }
 
-static bool check_constraints_for_xs_int(const __int64& value)
+static bool check_constraints_for_xs_int(const int64_t& value)
 {
-    return value >= (__int64)(-2147483647 - 1) && value <= (__int64)2147483647;
+    return value >= (int64_t)(-2147483647 - 1) && value <= (int64_t)2147483647;
 }
 
-static bool check_constraints_for_xs_short(const __int64& value)
+static bool check_constraints_for_xs_short(const int64_t& value)
 {
-    return value >= (__int64)-32768 && value <= (__int64)32767;
+    return value >= (int64_t)-32768 && value <= (int64_t)32767;
 }
 
-static bool check_constraints_for_xs_byte(const __int64& value)
+static bool check_constraints_for_xs_byte(const int64_t& value)
 {
-    return value >= (__int64)-128 && value <= (__int64)127;
+    return value >= (int64_t)-128 && value <= (int64_t)127;
 }
 
-static bool check_constraints_for_xs_nonNegativeInteger(const __int64& value)
-{
-    return value >= 0;
-}
-
-static bool check_constraints_for_xs_unsignedLong(const __int64& value)
+static bool check_constraints_for_xs_nonNegativeInteger(const int64_t& value)
 {
     return value >= 0;
 }
 
-static bool check_constraints_for_xs_unsignedInt(const __int64& value)
+static bool check_constraints_for_xs_unsignedLong(const int64_t& value)
 {
-    return value >= 0 && value <= (__int64)4294967295UL;
+    return value >= 0;
 }
 
-static bool check_constraints_for_xs_unsignedShort(const __int64& value)
+static bool check_constraints_for_xs_unsignedInt(const int64_t& value)
 {
-    return value >= 0 && value <= (__int64)65535;
+    return value >= 0 && value <= (int64_t)4294967295UL;
 }
 
-static bool check_constraints_for_xs_unsignedByte(const __int64& value)
+static bool check_constraints_for_xs_unsignedShort(const int64_t& value)
 {
-    return value >= 0 && value <= (__int64)255;
+    return value >= 0 && value <= (int64_t)65535;
 }
 
-static bool check_constraints_for_xs_positiveInteger(const __int64& value)
+static bool check_constraints_for_xs_unsignedByte(const int64_t& value)
+{
+    return value >= 0 && value <= (int64_t)255;
+}
+
+static bool check_constraints_for_xs_positiveInteger(const int64_t& value)
 {
     return value > 0;
 }
@@ -639,7 +639,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     
     if (base_type == xs_integer)
     {
-        __int64 value = SV.get_xs_integer();
+        int64_t value = SV.get_xs_integer();
 
         switch (TT)
         {
