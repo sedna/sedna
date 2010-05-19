@@ -76,7 +76,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
                 if (is_node_persistent(node))
                 {
                     tuple tup(2);
-                    tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
+                    tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                     arg3seq.add(tup);
                 }
                 arg2seq.add(indir);
@@ -315,7 +315,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
                 if (is_node_persistent(node))
                 {
                     tuple tup(2);
-                    tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
+                    tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                     arg3seq.add(tup);
                 }
                 arg2seq.add(indir);
@@ -552,7 +552,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
                 if (is_node_persistent(node))
                 {
                     tuple tup(2);
-                    tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
+                    tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                     arg3seq.add(tup);
                 }
                 arg2seq.add(indir);

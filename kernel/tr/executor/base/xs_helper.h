@@ -24,7 +24,7 @@ char *_get_pointer_to_c_str(const tuple_cell &c);
 
 float   c_str2xs_float  (const char *t);
 double  c_str2xs_double (const char *t);
-__int64 c_str2xs_integer(const char *t);
+int64_t c_str2xs_integer(const char *t);
 bool    c_str2xs_boolean(const char *t);
 
 
@@ -34,7 +34,7 @@ bool    c_str2xs_boolean(const char *t);
 
 char *get_xs_double_lexical_representation  (char *s, double d);
 char *get_xs_float_lexical_representation   (char *s, float f);
-char *get_xs_integer_lexical_representation (char *s, __int64 v);
+char *get_xs_integer_lexical_representation (char *s, int64_t v);
 char *get_xs_boolean_lexical_representation (char *s, bool b);
 char *get_xs_dateTime_lexical_representation(char *s, const XMLDateTime &d);
 
@@ -44,11 +44,11 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
 /////////////////////////////////////////////////////////////////////////
 /// XML Schema fixed datatypes to fixed datatypes conversion routines.
 /////////////////////////////////////////////////////////////////////////
-__int64 xs_float2xs_integer(float v);
-__int64 xs_double2xs_integer(double v);
-inline __int64 xs_boolean2xs_integer(bool v)
+int64_t xs_float2xs_integer(float v);
+int64_t xs_double2xs_integer(double v);
+inline int64_t xs_boolean2xs_integer(bool v)
 {
-    return (v ? (__int64)1 : (__int64)0);
+    return (v ? (int64_t)1 : (int64_t)0);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -62,35 +62,35 @@ inline __int64 xs_boolean2xs_integer(bool v)
 #define float_Neg_INF       (*(float*)(&_float_Neg_INF))
 #define float_Pos_INF       (*(float*)(&_float_Pos_INF))
 
-extern __int64 _double_NaN;
-extern __int64 _double_Neg_INF;
-extern __int64 _double_Pos_INF;
-extern __int32 _float_NaN;
-extern __int32 _float_Neg_INF;
-extern __int32 _float_Pos_INF;
+extern int64_t _double_NaN;
+extern int64_t _double_Neg_INF;
+extern int64_t _double_Pos_INF;
+extern int32_t _float_NaN;
+extern int32_t _float_Neg_INF;
+extern int32_t _float_Pos_INF;
 
-__int64 double2__int64_bits(double d);
-__int32 float2__int32_bits (float  f);
+int64_t double2__int64_bits(double d);
+int32_t float2__int32_bits (float  f);
 
 
 double       xs_divide(double       x, double       y);
 float        xs_divide(float        x, float        y);
-xs_decimal_t xs_divide(__int64      x, __int64      y);
+xs_decimal_t xs_divide(int64_t      x, int64_t      y);
 xs_decimal_t xs_divide(xs_decimal_t x, xs_decimal_t y);
 
-__int64 xs_integer_divide(double       x, double       y);
-__int64 xs_integer_divide(float        x, float        y);
-__int64 xs_integer_divide(__int64      x, __int64      y);
-__int64 xs_integer_divide(xs_decimal_t x, xs_decimal_t y);
+int64_t xs_integer_divide(double       x, double       y);
+int64_t xs_integer_divide(float        x, float        y);
+int64_t xs_integer_divide(int64_t      x, int64_t      y);
+int64_t xs_integer_divide(xs_decimal_t x, xs_decimal_t y);
 
 double       xs_mod(double       x, double       y);
 float        xs_mod(float        x, float        y);
-__int64      xs_mod(__int64      x, __int64      y);
+int64_t      xs_mod(int64_t      x, int64_t      y);
 xs_decimal_t xs_mod(xs_decimal_t x, xs_decimal_t y);
 
-double round_half_to_even_double(double d, __int64 precision);
-float round_half_to_even_float(float d, __int64 precision);
-__int64 round_half_to_even_integer(__int64 d, __int64 precision);
+double round_half_to_even_double(double d, int64_t precision);
+float round_half_to_even_float(float d, int64_t precision);
+int64_t round_half_to_even_integer(int64_t d, int64_t precision);
 
 
 

@@ -80,7 +80,7 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
     {
         case xs_integer	: 
         {
-            __int64 k1 = *(__int64*)tab_el;
+            int64_t k1 = *(int64_t*)tab_el;
             if(k1 == k2.v.i_v) return 0;
             return (k1 > k2.v.i_v ? 1 : -1);
         }

@@ -60,14 +60,14 @@
   #endif
   #if !defined(uint64_t)
     #ifdef _WIN32
-    typedef unsigned __int64 uint64_t;
+    typedef unsigned int64_t uint64_t;
     #else
     typedef unsigned long long uint64_t;
     #endif
   #endif
   #if !defined(int64_t)
     #ifdef _WIN32
-    typedef __int64 int64_t;
+    typedef int64_t int64_t;
     #else
     typedef long long int64_t;
     #endif

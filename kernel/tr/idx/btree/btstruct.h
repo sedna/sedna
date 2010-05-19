@@ -32,7 +32,7 @@ struct doc_serial_header
 };
 inline bool operator<(const doc_serial_header &p1, const doc_serial_header &p2)
 {
-    return (p1.ptr != p2.ptr ? p1.ptr < p2.ptr : (__uint32)(p1.length) < (__uint32)(p2.length));
+    return (p1.ptr != p2.ptr ? p1.ptr < p2.ptr : (uint32_t)(p1.length) < (uint32_t)(p2.length));
 }
 
 struct ft_idx_btree_element
@@ -44,7 +44,7 @@ struct ft_idx_btree_element
 };
 inline bool operator<(const ft_idx_btree_element &p1, const ft_idx_btree_element &p2)
 {
-    return (p1.node != p2.node ? p1.node < p2.node : (__uint32)(p1.word_ind) < (__uint32)(p2.word_ind));
+    return (p1.node != p2.node ? p1.node < p2.node : (uint32_t)(p1.word_ind) < (uint32_t)(p2.word_ind));
 }
 
 
@@ -90,7 +90,7 @@ typedef std::list<bt_path_item> bt_path;
 class bt_key {
 private:
     union {
-        __int64    i_v;
+        int64_t    i_v;
         float  f_v;
         double d_v;
         char*  s_v;
@@ -136,7 +136,7 @@ public:
         free();
         init(pg, key_idx);
     }
-    void setnew(__int64 nv);
+    void setnew(int64_t nv);
     void setnew(float nv);
     void setnew(double nv);
     void setnew(const char* nv);

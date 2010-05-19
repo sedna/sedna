@@ -173,7 +173,7 @@ char* tuple_cell::copy_string(char *buf) const
     }
 }
 
-char* tuple_cell::copy_string(char *buf, __int64 n) const
+char* tuple_cell::copy_string(char *buf, int64_t n) const
 {
     switch (get_type())
     {

@@ -17,7 +17,7 @@
 #define PAGES2MBS(s)   ((int64_t) (s) * (int64_t)PAGE_SIZE / (int64_t) 0x100000)
 
 
-std::string int2string(__int64 value);
+std::string int2string(int64_t value);
 
 /* datatypes and functions to with time (time in sec + time in millisec)*/
 #ifndef _WIN32

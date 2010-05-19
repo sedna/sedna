@@ -777,7 +777,7 @@ void PPPred1::do_next(tuple &t, var_dsc dsc, var_c_id id)
     if (p.svc->at(id))
     {
         p.svc->at(id) = false;
-        t.copy(dsc == pos_dsc ? tuple_cell::atomic((__int64)pos)
+        t.copy(dsc == pos_dsc ? tuple_cell::atomic((int64_t)pos)
                               : cur_tuple->cells[p.tuple_pos]);
     }
     else 
@@ -1086,8 +1086,8 @@ void PPPred2::do_next(tuple &t, var_dsc dsc, var_c_id id)
     if (p.svc->at(id))
     {
         p.svc->at(id) = false;
-        if (dsc == pos_dsc)         t.copy(tuple_cell::atomic((__int64)pos));
-        else if (dsc == lst_dsc)    t.copy(tuple_cell::atomic((__int64)(s->size())));
+        if (dsc == pos_dsc)         t.copy(tuple_cell::atomic((int64_t)pos));
+        else if (dsc == lst_dsc)    t.copy(tuple_cell::atomic((int64_t)(s->size())));
         else                        t.copy(cur_tuple->cells[p.tuple_pos]);
     }
     else 

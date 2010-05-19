@@ -20,7 +20,7 @@ PPRange::PPRange(dynamic_context *_cxt_,
 {
 }
 
-__int64 
+int64_t
 PPRange::getIntFromOp(PPOpIn & op)
 {
     tuple t(1);
@@ -96,7 +96,7 @@ void PPRange::do_next(tuple &t)
         is_emp=false;
         return;
     }
-    t.copy(tuple_cell::atomic((__int64)cur));
+    t.copy(tuple_cell::atomic((int64_t)cur));
     cur++;
 }
 

@@ -318,7 +318,7 @@ tuple_cell CharsetHandler_utf8::tolower(const tuple_cell *tc)
 }
 
 template <class Iterator>
-static inline void utf8_substring(const Iterator &start, const Iterator &end, stmt_str_buf *sb, __int64 start_pos, __int64 length)
+static inline void utf8_substring(const Iterator &start, const Iterator &end, stmt_str_buf *sb, int64_t start_pos, int64_t length)
 {
 	utf8_o_iterator<stmt_str_buf> outp(*sb);
 	utf8_iterator<Iterator> it(start);
@@ -337,7 +337,7 @@ static inline void utf8_substring(const Iterator &start, const Iterator &end, st
         length--;
 	}
 }
-tuple_cell CharsetHandler_utf8::substring(const tuple_cell *tc, __int64 start_pos, __int64 length)
+tuple_cell CharsetHandler_utf8::substring(const tuple_cell *tc, int64_t start_pos, int64_t length)
 {
 	stmt_str_buf sb;
 
@@ -749,13 +749,13 @@ static inline void utf8_starts_with(const Iterator &start, const Iterator &end, 
 }
 
 template <class Iterator>
-static inline void utf8_ends_with(const Iterator &start, const Iterator &end, __int64 src_len, const char* suffix, str_off_t suf_len, bool* result)
+static inline void utf8_ends_with(const Iterator &start, const Iterator &end, int64_t src_len, const char* suffix, str_off_t suf_len, bool* result)
 {
     (*result) = true;
     utf8_iterator<Iterator> src_it(start);
     char_iterator_utf8 suf_it((char*)suffix, strlen(suffix), 0);
 
-    for(__int64 i = src_len - suf_len; i > 0; i--) ++src_it;
+    for(int64_t i = src_len - suf_len; i > 0; i--) ++src_it;
 
     while (src_it.base_iterator() < end && !suf_it.at_end())
     {
@@ -786,8 +786,8 @@ bool CollationHandler_utf8::ends_with(const tuple_cell *tc, const tuple_cell *su
 {
     tuple_cell suf = tuple_cell::make_sure_light_atomic(*suffix);
 
-    __int64 src_len = charset_handler->length((tuple_cell*)tc);
-    __int64 suf_len = charset_handler->length((tuple_cell*)suffix);
+    int64_t src_len = charset_handler->length((tuple_cell*)tc);
+    int64_t suf_len = charset_handler->length((tuple_cell*)suffix);
 
     if(src_len < suf_len) return false;
 

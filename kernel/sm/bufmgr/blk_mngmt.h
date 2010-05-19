@@ -12,7 +12,7 @@
 
 int push_to_persistent_free_blocks_stack(xptr *hd, xptr p, bool canStoreFreeBlocks = true);
 int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p);
-__int64 count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnly = false);
+int64_t count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnly = false);
 bool is_in_persistent_free_blocks_stack(xptr hd, xptr what);
 
 int push_to_persistent_used_blocks_stack(xptr *hd, xptr p);

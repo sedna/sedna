@@ -263,7 +263,7 @@ void ExtFunction::result_peek(tuple &t)
 		t.copy(tuple_cell::atomic_deep(xs_string, result->data.val_string));
 		break;
 	case SEDNATYPE_integer:
-		t.copy(tuple_cell::atomic((__int64)(result->data.val_integer)));
+		t.copy(tuple_cell::atomic((int64_t)(result->data.val_integer)));
 		break;
 	case SEDNATYPE_float:
 		t.copy(tuple_cell::atomic(result->data.val_float));

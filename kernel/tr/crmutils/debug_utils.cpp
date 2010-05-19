@@ -30,19 +30,19 @@ struct debug_info
     long block_fill;
     long inner_block_count;
 
-    __int64 inner_block_fill;
+    int64_t inner_block_fill;
     float inner_fill_percentage;
     float fill_percentage;
-    __int64 node_count;
-    __int64 ext_nid_count;
-    __int64 str_size;
+    int64_t node_count;
+    int64_t ext_nid_count;
+    int64_t str_size;
     long mdpth;           //max depth
     long cdp;             //current depth
 };
 
 
 static xptr
-insertStatisticsInteger(xptr neighbour,const char* title, char* buf,__int64 count)
+insertStatisticsInteger(xptr neighbour,const char* title, char* buf,int64_t count)
 {
     xptr left=insert_element_i(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
     u_i64toa(count,buf,10);
@@ -69,7 +69,7 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
     std::map<schema_node_xptr,int> ncnt;
     std::vector<int> fo;
     int maxfo=0;
-    __int64 midfo=0;
+    int64_t midfo=0;
     unsigned int cnt=0;
     unsigned int strcnt=0;
 
@@ -149,8 +149,8 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
     left=insert_attribute_i(left,XNULL,XNULL,"mid_fan_out",xs_untypedAtomic,buf,strlen(buf),NULL_XMLNS);
 
     //counting total Nid
-    __int64 cnt_sz=0;
-    __int64 cnt_out=0;
+    int64_t cnt_sz=0;
+    int64_t cnt_out=0;
     unsigned int max=0;
     std::map<unsigned int,unsigned int>::const_iterator it=nidsz.begin();
     while (it!=nidsz.end())

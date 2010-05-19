@@ -35,7 +35,7 @@ public:
 	virtual void free_char_counter(CharCounter *);
 	virtual tuple_cell toupper(const tuple_cell *tc);
 	virtual tuple_cell tolower(const tuple_cell *tc);
-    virtual tuple_cell substring(const tuple_cell *tc, __int64 start_pos, __int64 length);
+    virtual tuple_cell substring(const tuple_cell *tc, int64_t start_pos, int64_t length);
     virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc);
 
 	//all tuple cells must be strings

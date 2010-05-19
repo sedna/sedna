@@ -141,11 +141,11 @@ extern "C"
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth, sys_call_error_fun fun);
+    int uSetFilePointer(UFile fd, int64_t offs, int64_t * res_pos, UFlag meth, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth, sys_call_error_fun fun);
+    int uSetEndOfFile(UFile fd, int64_t offs, UFlag meth, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
@@ -160,11 +160,11 @@ extern "C"
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uGetFileSize(UFile fd, __int64 * file_size, sys_call_error_fun fun);
+    int uGetFileSize(UFile fd, int64_t * file_size, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun fun);
+    int uGetFileSizeByName(const char* name, int64_t * file_size, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/

@@ -335,7 +335,7 @@ void PPFnSQLConnect::do_next(tuple &t)
             options = &arr[3];
         int h = sql_handle_manager->new_connection(connect_str, connect_str_len, 
             uid, uid_len, pass, pass_len, options);
-        t.copy(tuple_cell::atomic((__int64)h));
+        t.copy(tuple_cell::atomic((int64_t)h));
 
         delete connect_str;
         if (uid != NULL)
@@ -502,7 +502,7 @@ void PPFnSQLExecute::do_next(tuple &t)
 
         if (exec_update)
         {
-            t.copy(tuple_cell::atomic((__int64)executor->update_row_count()));
+            t.copy(tuple_cell::atomic((int64_t)executor->update_row_count()));
             return;
         }
     }
@@ -642,7 +642,7 @@ void PPFnSQLPrepare::do_next(tuple &t)
         else
             stmt = handle->prepare_stmt(query, query_len, NULL);
 
-        t.copy(tuple_cell::atomic((__int64)sql_handle_manager->new_handle(stmt)));
+        t.copy(tuple_cell::atomic((int64_t)sql_handle_manager->new_handle(stmt)));
     }
     else
     {

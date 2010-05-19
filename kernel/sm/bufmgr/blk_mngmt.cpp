@@ -46,8 +46,8 @@ void free_blk_hdr::init(void *p)
 
 static
 void FixSpan(
-    __int64 *spanBeginOffsPtr, 
-    __int64 *spanEndOffsPtr)
+    int64_t *spanBeginOffsPtr, 
+    int64_t *spanEndOffsPtr)
 {
     *spanBeginOffsPtr = (*spanBeginOffsPtr + PAGE_SIZE - 1) / PAGE_SIZE * PAGE_SIZE;
     *spanEndOffsPtr = *spanEndOffsPtr / PAGE_SIZE * PAGE_SIZE;
@@ -58,15 +58,15 @@ enum ConsumeType {CONSUME_NORMAL, CONSUME_REVERSE};
 /* Iterate over blocks in file span, either in normal direction or in reverse. */ 
 static
 xptr ConsumeNextBlockInSpan(
-    __int64 *spanBeginOffsPtr, 
-    __int64 *spanEndOffsPtr,
+    int64_t *spanBeginOffsPtr, 
+    int64_t *spanEndOffsPtr,
     t_layer layerAdjustment,
-    __int64 offsAdjustment,
+    int64_t offsAdjustment,
     enum ConsumeType consumeType)
 {
-    __int64 offset;
-    __int64 spanBeginOffs = *spanBeginOffsPtr;
-    __int64 spanEndOffs = *spanEndOffsPtr;
+    int64_t offset;
+    int64_t spanBeginOffs = *spanBeginOffsPtr;
+    int64_t spanEndOffs = *spanEndOffsPtr;
     xptr result = XNULL;
 
     /* If have room for another block ... */ 
@@ -157,16 +157,16 @@ xptr ConsumeNextBlockInSpan(
 static
 void add_file_span_to_pfb_stack(
     xptr *hd, 
-    __int64 spanBeginOffs, 
-    __int64 spanEndOffs,
+    int64_t spanBeginOffs, 
+    int64_t spanEndOffs,
     t_layer layerAdjustment,
-    __int64 offsAdjustment)
+    int64_t offsAdjustment)
 {
     xptr p = XNULL, stackP = XNULL;
-    __int64 numFreeBlocks = 0;
-    __int64 numFreeBlockSlots = 0;
-    __int64 numStackBlocks = 0;
-    __int64 stackSpanBeginOffs, stackSpanEndOffs;
+    int64_t numFreeBlocks = 0;
+    int64_t numFreeBlockSlots = 0;
+    int64_t numStackBlocks = 0;
+    int64_t stackSpanBeginOffs, stackSpanEndOffs;
 
     /* Make offsets aligned. */ 
     FixSpan(&spanBeginOffs, &spanEndOffs);
@@ -347,12 +347,12 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
     return 0;
 }
 
-__int64 count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnly)
+int64_t count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnly)
 {
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
 
-    __int64  num = 0;
+    int64_t  num = 0;
     while (hd != XNULL)
     {
         put_block_to_buffer(-1, hd, &offs);
@@ -472,11 +472,11 @@ int pop_from_persistent_used_blocks_stack(xptr *hd, xptr *p)
 static 
 xptr
 extend_file_helper(UFile fileHandle,
-                   __int64 fileSizeCurrent,
-                   __int64 fileSizeNew,
+                   int64_t fileSizeCurrent,
+                   int64_t fileSizeNew,
                    xptr freeStackHd,
                    t_layer layerAdjustment,
-                   __int64 offsAdjustment,
+                   int64_t offsAdjustment,
                    bool initializeData)
 {
     /* Does it make sense to initialize every block header? 
@@ -484,9 +484,9 @@ extend_file_helper(UFile fileHandle,
        instead header is initialized when block is put to buffer. */ 
     if (initializeData)
     {
-        __int64 spanBeginOffs = fileSizeCurrent;
-        __int64 spanEndOffs = fileSizeNew;
-        __int64 offset;
+        int64_t spanBeginOffs = fileSizeCurrent;
+        int64_t spanEndOffs = fileSizeNew;
+        int64_t offset;
         void *buf = NULL;
         vmm_sm_blk_hdr *hdr = NULL;
         unsigned int bytesOutCnt = 0;
@@ -558,11 +558,11 @@ extend_file_helper(UFile fileHandle,
 
 void extend_data_file(int extend_portion)
 {
-    __int64 fileSizeCurrent;
-    __int64 fileSizeNew;
+    int64_t fileSizeCurrent;
+    int64_t fileSizeNew;
 
     fileSizeCurrent = mb->data_file_cur_size;
-    fileSizeNew = fileSizeCurrent + (__int64)extend_portion * PAGE_SIZE;
+    fileSizeNew = fileSizeCurrent + (int64_t)extend_portion * PAGE_SIZE;
 
     /* if mb->data_file_max_size == 0 than size is unlimited */
     if (mb->data_file_max_size > 0 && 
@@ -596,11 +596,11 @@ void extend_data_file(int extend_portion)
 
 void extend_tmp_file(int extend_portion)
 {
-    __int64 fileSizeCurrent;
-    __int64 fileSizeNew;
+    int64_t fileSizeCurrent;
+    int64_t fileSizeNew;
 
     fileSizeCurrent = mb->tmp_file_cur_size;
-    fileSizeNew = fileSizeCurrent + (__int64)extend_portion * PAGE_SIZE;
+    fileSizeNew = fileSizeCurrent + (int64_t)extend_portion * PAGE_SIZE;
 
     /* if mb->data_file_max_size == 0 than size is unlimited */
     if (mb->tmp_file_max_size > 0 && 

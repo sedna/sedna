@@ -180,7 +180,7 @@ private:
     int upper_bound;              //just caches bound after the predevaluation
     int lower_bound;              //just caches bound after the predevaluation
 
-    var_dsc pos_dsc;              //returns current position (__int64) of the tuple
+    var_dsc pos_dsc;              //returns current position (int64_t) of the tuple
                                   //source child
 
     inline void reinit_consumer_table();
@@ -251,7 +251,7 @@ private:
     tuple data;
     tuple *cur_tuple;
     int pos;
-    var_dsc pos_dsc;              //returns current position (__int64) of the source child
+    var_dsc pos_dsc;              //returns current position (int64_t) of the source child
     var_dsc lst_dsc;              //returns last source child tuple through this variable
     sequence *s;
 

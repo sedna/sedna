@@ -28,7 +28,7 @@ bt_key& tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
 
     switch (ltc.get_atomic_type())
     {
-        case xs_integer 		 : key.setnew((__int64)(ltc.get_xs_integer()));	break; //!!! FIX THIS
+        case xs_integer 		 : key.setnew((int64_t)(ltc.get_xs_integer()));	break; //!!! FIX THIS
         case xs_float			 : key.setnew(ltc.get_xs_float());	break;
         case xs_double			 : key.setnew(ltc.get_xs_double());	break;
         case xs_string			 : key.setnew(ltc.get_str_mem());	break;
@@ -69,8 +69,8 @@ index_cell_xptr create_index (PathExpr *object_path,
                           const char* doc_name,
                           bool is_doc)
 {
-    __int64 counter1 = 0;
-    __int64 counter2 = 0;
+    int64_t counter1 = 0;
+    int64_t counter2 = 0;
     const NodeTest node_test_nodes_deep = {axis_descendant, node_test_wildcard_star};
 
     // 0. Check index type
@@ -357,7 +357,7 @@ static tuple_cell get_tc(void* buf, xmlscm_type type, shft size)
     {
 		case xs_float                : {float value = *((float*)buf); return tuple_cell::tuple_cell(value); }
         case xs_double               : {double value = *((double*)buf); return tuple_cell::tuple_cell(value); }
-        case xs_integer              : {__int64 value = *((__int64*)buf); return tuple_cell::tuple_cell(value); }
+        case xs_integer              : {int64_t value = *((int64_t*)buf); return tuple_cell::tuple_cell(value); }
 		case xs_string               :
 		{
 			char* str = se_new char[size+1];
@@ -547,7 +547,7 @@ void idx_serialize (tuple& t,xptr v1, const void * Udata)
     {
         case xs_float                : {float value = tc.get_xs_float();  memcpy((char*)p+offset, &value, sz); break;}
         case xs_double               : {double value = tc.get_xs_double(); memcpy((char*)p+offset, &value, sz); break;}
-        case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy((char*)p+offset, &value, sz); break;}
+        case xs_integer              : {int64_t value = tc.get_xs_integer(); memcpy((char*)p+offset, &value, sz); break;}
 		case xs_string               :
 		{
 			tc = tuple_cell::make_sure_light_atomic(tc);
@@ -584,7 +584,7 @@ void idx_serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * U
     {
         case xs_float                : {float value = tc.get_xs_float();  buffer->copy_to_buffer(&value, offset, sz); break;}
         case xs_double               : {double value = tc.get_xs_double(); buffer->copy_to_buffer(&value, offset, sz);  break;}
-        case xs_integer              : {__int64 value = tc.get_xs_integer(); buffer->copy_to_buffer(&value, offset, sz); break;}
+        case xs_integer              : {int64_t value = tc.get_xs_integer(); buffer->copy_to_buffer(&value, offset, sz); break;}
 		case xs_string               :
 		{
 			buffer->expand_to_size(offset+sz);

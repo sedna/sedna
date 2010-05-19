@@ -27,11 +27,11 @@
 
 
 
-#define FPC_doubleSignMask  ((__int64)0x8000 << (__int64)48) // 0x8000000000000000L
-#define FPC_doubleExpMask   ((__int64)0x7ff0 << (__int64)48) // 0x7ff0000000000000L
+#define FPC_doubleSignMask  ((int64_t)0x8000 << (int64_t)48) // 0x8000000000000000L
+#define FPC_doubleExpMask   ((int64_t)0x7ff0 << (int64_t)48) // 0x7ff0000000000000L
 #define FPC_doubleExpShift  52
 #define FPC_doubleExpBias   1023
-#define FPC_doubleFractMask (((__int64)0xfffff << (__int64)32) | (__int64)0xffffffff) // 0xfffffffffffffL
+#define FPC_doubleFractMask (((int64_t)0xfffff << (int64_t)32) | (int64_t)0xffffffff) // 0xfffffffffffffL
 #define FPC_floatSignMask   0x80000000
 #define FPC_floatExpMask    0x7f800000
 #define FPC_floatExpShift   23
@@ -68,7 +68,7 @@ public:
 };
 
 // Format an integer, appending the string representation of the integer to a string buffer
-static void appendInt(appender &a, __int32 i) 
+static void appendInt(appender &a, int32_t i) 
 {
     if (i < 0) 
     {
@@ -191,33 +191,33 @@ static void appendInt(appender &a, __int32 i)
  * number is f * 2^(e-p), with p>=0 and 0 lt f lt 2^p
  * param p - the precision
  */
-static void fppfpp(appender &a, __int32 e, __int64 f, __int32 p) 
+static void fppfpp(appender &a, int32_t e, int64_t f, int32_t p) 
 {
-    __int64 R = f << (__int64)s_max(e-p, 0);
-    __int64 S = (__int64)1 << (__int64)s_max(0, -(e-p));
-    __int64 Mminus = (__int64)1 << (__int64)s_max(e-p, 0);
-    __int64 Mplus = Mminus;
+    int64_t R = f << (int64_t)s_max(e-p, 0);
+    int64_t S = (int64_t)1 << (int64_t)s_max(0, -(e-p));
+    int64_t Mminus = (int64_t)1 << (int64_t)s_max(e-p, 0);
+    int64_t Mplus = Mminus;
     bool initial = true;
 
     // simpleFixup
 
-    if (f == (__int64)1 << (__int64)(p-1)) 
+    if (f == (int64_t)1 << (int64_t)(p-1)) 
     {
-        Mplus = Mplus << (__int64)1;
-        R = R << (__int64)1;
-        S = S << (__int64)1;
+        Mplus = Mplus << (int64_t)1;
+        R = R << (int64_t)1;
+        S = S << (int64_t)1;
     }
     int k = 0;
-    while (R < (S+(__int64)9)/(__int64)10)  // (S+9)/10 == ceiling(S/10)
+    while (R < (S+(int64_t)9)/(int64_t)10)  // (S+9)/10 == ceiling(S/10)
     {
         k--;
-        R *= (__int64)10;
-        Mminus *= (__int64)10;
-        Mplus *= (__int64)10;
+        R *= (int64_t)10;
+        Mminus *= (int64_t)10;
+        Mplus *= (int64_t)10;
     }
-    while ((__int64)2*R + Mplus >= (__int64)2*S) 
+    while ((int64_t)2*R + Mplus >= (int64_t)2*S) 
     {
-        S*= (__int64)10;
+        S*= (int64_t)10;
         k++;
     }
 
@@ -240,12 +240,12 @@ static void fppfpp(appender &a, __int32 e, __int64 f, __int32 p)
     while (true) 
     {
         k--;
-        U = (int)(R*(__int64)10 / S);
-        R = R*(__int64)10 % S;
-        Mminus *= (__int64)10;
-        Mplus *= (__int64)10;
-        low = (__int64)2*R < Mminus;
-        high = (__int64)2*R > (__int64)2*S - Mplus;
+        U = (int)(R*(int64_t)10 / S);
+        R = R*(int64_t)10 % S;
+        Mminus *= (int64_t)10;
+        Mplus *= (int64_t)10;
+        low = (int64_t)2*R < Mminus;
+        high = (int64_t)2*R > (int64_t)2*S - Mplus;
         if (low || high) break;
         if (k == -1) 
         {
@@ -256,7 +256,7 @@ static void fppfpp(appender &a, __int32 e, __int64 f, __int32 p)
         a.append(charForDigit[U]);
         initial = false;
     }
-    if (high && (!low || (__int64)2*R > S))
+    if (high && (!low || (int64_t)2*R > S))
         U++;
     if (k == -1) 
     {
@@ -279,7 +279,7 @@ static void fppfpp(appender &a, __int32 e, __int64 f, __int32 p)
  * number is f * 2^(e-p), with p>=0 and 0 lt f lt 2^p
  * param p - the precision
  */
-static void fppfppBig(appender &a, __int32 e, __int64 f, __int32 p) 
+static void fppfppBig(appender &a, int32_t e, int64_t f, int32_t p) 
 {
     //long R = f << Math.max(e-p, 0);
     lip R = lip(f) << s_max(e - p, 0);
@@ -297,7 +297,7 @@ static void fppfppBig(appender &a, __int32 e, __int64 f, __int32 p)
 
     // simpleFixup
 
-    if (f == (__int64)1 << (p-1)) 
+    if (f == (int64_t)1 << (p-1)) 
     {
         Mplus = Mplus << 1;
         R = R << 1;
@@ -376,7 +376,7 @@ static void fppfppBig(appender &a, __int32 e, __int64 f, __int32 p)
  * number is f * 2^(e-p), with p>=0 and 0 lt f lt 2^p
  * param p - the precision
  */
-static void fppfppExponential(appender &a, __int32 e, __int64 f, __int32 p) 
+static void fppfppExponential(appender &a, int32_t e, int64_t f, int32_t p) 
 {
 	//char buf[1024];
     //long R = f << Math.max(e-p, 0);
@@ -397,7 +397,7 @@ static void fppfppExponential(appender &a, __int32 e, __int64 f, __int32 p)
 
     // simpleFixup
 
-    if (f == (__int64)1 << (p-1)) 
+    if (f == (int64_t)1 << (p-1)) 
     {
         Mplus = Mplus << 1;
         R = R << 1;
@@ -504,10 +504,10 @@ char *get_xs_double_lexical_representation_Saxon(char* s, double value)
         }
 
         bool exponential = (d >= 1000000 || d < 0.000001);
-        __int64 bits = double2__int64_bits(d);
-        __int64 fraction = ((__int64)1<<(__int64)52) | (bits & FPC_doubleFractMask);
-        __int64 rawExp = (bits & FPC_doubleExpMask) >> FPC_doubleExpShift;
-        __int32 exp = (__int32)rawExp - FPC_doubleExpBias;
+        int64_t bits = double2__int64_bits(d);
+        int64_t fraction = ((int64_t)1<<(int64_t)52) | (bits & FPC_doubleFractMask);
+        int64_t rawExp = (bits & FPC_doubleExpMask) >> FPC_doubleExpShift;
+        int32_t exp = (int32_t)rawExp - FPC_doubleExpBias;
 
         if (rawExp == 0) 
             // don't know how to handle this currently: hand it over to printf to deal with
@@ -559,10 +559,10 @@ char *get_xs_float_lexical_representation_Saxon(char* s, float value)
             f = -f;
         }
         bool exponential = (f >= 1000000 || f < 0.000001F);
-        __int32 bits = float2__int32_bits(f);
-        __int32 fraction = (1<<23) | (bits & FPC_floatFractMask);
-        __int32 rawExp = ((bits & FPC_floatExpMask) >> FPC_floatExpShift);
-        __int32 exp = rawExp - FPC_floatExpBias;
+        int32_t bits = float2__int32_bits(f);
+        int32_t fraction = (1<<23) | (bits & FPC_floatFractMask);
+        int32_t rawExp = ((bits & FPC_floatExpMask) >> FPC_floatExpShift);
+        int32_t exp = rawExp - FPC_floatExpBias;
         if (rawExp == 0)
             // don't know how to handle this currently: hand it over to printf to deal with
             sprintf(s, "%E", d);

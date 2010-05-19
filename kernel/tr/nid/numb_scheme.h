@@ -15,7 +15,7 @@
 
 #define MAXINTERNALPREFIX 11
 
-/* typedef __int64 n_scheme; */
+/* typedef int64_t n_scheme; */
 struct t_nid {
     unsigned char prefix[11];  /* actually union; if the size of string is above MAXINTERNALPREFIX 
                                   keeps xptr to string (first 8 bytes) and size of nid (2 last bytes) */

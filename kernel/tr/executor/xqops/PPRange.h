@@ -14,12 +14,12 @@ class PPRange : public PPIterator
 protected:
     PPOpIn start_op;
 	PPOpIn end_op;
-    __int64 start, end, cur;
+    int64_t start, end, cur;
 	bool is_emp;
     bool first_time;
 
 private:
-	__int64 getIntFromOp(PPOpIn & op);
+	int64_t getIntFromOp(PPOpIn & op);
 
     virtual void do_open   ();
     virtual void do_reopen ();

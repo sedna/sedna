@@ -167,7 +167,7 @@ void socket_client::read_msg(msg_struct *msg)
 
 char* socket_client::get_query_string(msg_struct *msg)
 {
-    __int32 query_portion_length;
+    int32_t query_portion_length;
     int res, query_size = 0;
     bool query_too_large = false;
     int malloced_size = SE_SOCKET_MSG_BUF_SIZE*5;
@@ -431,10 +431,10 @@ void socket_client::get_session_parameters()
     }
 
     buf_position += 3;
-    __int32 length;
+    int32_t length;
     net_int2int(&length, sp_msg.body+buf_position);
 
-    buf_position += sizeof(__int32);
+    buf_position += sizeof(int32_t);
 
     if(length > SE_MAX_LOGIN_LENGTH)
     {
@@ -450,7 +450,7 @@ void socket_client::get_session_parameters()
     d_printf3("In authorization length = %d login = %s\n", length, tr_globals::login);
 
     net_int2int(&length, sp_msg.body+buf_position+1);
-    buf_position += 1 + sizeof(__int32);
+    buf_position += 1 + sizeof(int32_t);
 
     d_printf2("length =%d\n", length);
     if(length > SE_MAX_DB_NAME_LENGTH)
@@ -485,7 +485,7 @@ void socket_client::get_session_parameters()
 
     buf_position = 1;
     net_int2int(&length, sp_msg.body+buf_position);
-    buf_position += sizeof(__int32);
+    buf_position += sizeof(int32_t);
 
     if(length > SE_MAX_PASSWORD_LENGTH)
     {

@@ -134,7 +134,7 @@ void PPFnCompare::do_next(tuple &t)
         if (is_codepoint_equal)
             t.copy(tuple_cell::atomic(fn_compare(tc1, tc2, handler) == 0));
         else 
-            t.copy(tuple_cell::atomic((__int64)(fn_compare(tc1, tc2, handler))));
+            t.copy(tuple_cell::atomic((int64_t)(fn_compare(tc1, tc2, handler))));
     }
     else
     {

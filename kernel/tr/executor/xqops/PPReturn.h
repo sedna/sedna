@@ -23,7 +23,7 @@ private:
 
     bool first_time;
     
-    __int64  pos;               //stores current position;
+    int64_t  pos;               //stores current position;
     bool need_to_check_type;    //if 'st' is absent this flag must be false;
     var_dsc pos_dsc;            //-1 if counter is not used;
     sequence_type st;

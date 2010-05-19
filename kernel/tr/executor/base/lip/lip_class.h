@@ -26,34 +26,34 @@ public:
         x = 0;
         zcopy(Value.x, &x);
     }
-	lip(__int32 Value)
+	lip(int32_t Value)
     {
         x = 0;
         zintoz(Value, &x);
     }
-	lip(__uint32 Value)
+	lip(uint32_t Value)
     {
         x = 0;
         zuintoz(Value, &x);
     }
-	lip(__int64 Value)
+	lip(int64_t Value)
     {
         x = 0;
-        __uint64 vv = 0;
+        uint64_t vv = 0;
         bool s = false;
         if (Value < 0)
         {
-            vv = (__uint64)(-Value);
+            vv = (uint64_t)(-Value);
             s = true;
         }
         else
         {
-            vv = (__uint64)Value;
+            vv = (uint64_t)Value;
             s = false;
         }        
         verylong upper = 0, lower = 0;
-        zuintoz((__uint32)(vv >> 32), &upper);
-        zuintoz((__uint32)(vv << 32 >> 32), &lower);
+        zuintoz((uint32_t)(vv >> 32), &upper);
+        zuintoz((uint32_t)(vv << 32 >> 32), &lower);
         zlshift(upper, 32, &upper);
         zor(upper, lower, &x);
         zfree(&upper);
@@ -72,13 +72,13 @@ public:
     }
 
 // Conversion Operators
-	operator __int32() const 
+	operator int32_t() const 
     {
-        return (__int32)ztoint(x);
+        return (int32_t)ztoint(x);
     }
-	operator __uint32() const 
+	operator uint32_t() const 
     {
-        return (__uint32)ztouint(x);
+        return (uint32_t)ztouint(x);
     }
 
 // Unary Operators
@@ -97,14 +97,14 @@ public:
 
 	lip& operator --()		// Prefix decrement
     {
-        zsub(x, lip((__int32)1).x, &x);
+        zsub(x, lip((int32_t)1).x, &x);
         return *this;
     }
 
 	lip operator --(int)	// Postfix decrement
     {
         lip res(*this);
-        zsub(x, lip((__int32)1).x, &x);
+        zsub(x, lip((int32_t)1).x, &x);
         return res;
     }
 
@@ -128,7 +128,7 @@ public:
         return res;
     }
 
-	lip operator +(__int32 Value) const
+	lip operator +(int32_t Value) const
     {
         lip res;
         zsadd(x, Value, &(res.x));
@@ -142,7 +142,7 @@ public:
         return res;
     }
 
-	lip operator -(__int32 Value) const
+	lip operator -(int32_t Value) const
     {
         lip res;
         zsub(x, lip(Value).x, &(res.x));
@@ -156,7 +156,7 @@ public:
         return res;
     }
 
-	lip operator *(__int32 Value) const
+	lip operator *(int32_t Value) const
     {
         lip res;
         zsmul(x, Value, &(res.x));
@@ -170,7 +170,7 @@ public:
         return q;
     }
 
-	lip operator /(__int32 Value) const
+	lip operator /(int32_t Value) const
     {
         lip q;
         zsdiv(x, Value, &(q.x));
@@ -184,11 +184,11 @@ public:
         return r;
     }
 
-	lip operator %(__int32 Value) const
+	lip operator %(int32_t Value) const
     {
         lip q;
         long r = zsdiv(x, Value, &(q.x));
-        return lip((__int32)r);
+        return lip((int32_t)r);
     }
 
 	lip operator &(const lip& Value) const
@@ -212,14 +212,14 @@ public:
         return res;
     }
 
-	lip operator <<(__int32 nBits) const
+	lip operator <<(int32_t nBits) const
     {
         lip res;
         zlshift(x, nBits, &(res.x));
         return res;
     }
 
-	lip operator >>(__int32 nBits) const
+	lip operator >>(int32_t nBits) const
     {
         lip res;
         zrshift(x, nBits, &(res.x));
@@ -267,24 +267,24 @@ public:
     }
 
 	lip& operator +=(const lip& Value) { return *this = operator +(Value); }
-	lip& operator +=(__int32    Value) { return *this = operator +(Value); }
+	lip& operator +=(int32_t    Value) { return *this = operator +(Value); }
 	lip& operator -=(const lip& Value) { return *this = operator -(Value); }
-	lip& operator -=(__int32    Value) { return *this = operator -(Value); }
+	lip& operator -=(int32_t    Value) { return *this = operator -(Value); }
 	lip& operator *=(const lip& Value) { return *this = operator *(Value); }
-	lip& operator *=(__int32    Value) { return *this = operator *(Value); }
+	lip& operator *=(int32_t    Value) { return *this = operator *(Value); }
 	lip& operator /=(const lip& Value) { return *this = operator /(Value); }
-	lip& operator /=(__int32    Value) { return *this = operator /(Value); }
+	lip& operator /=(int32_t    Value) { return *this = operator /(Value); }
 	lip& operator %=(const lip& Value) { return *this = operator %(Value); }
-	lip& operator %=(__int32    Value) { return *this = operator %(Value); }
+	lip& operator %=(int32_t    Value) { return *this = operator %(Value); }
 	lip& operator &=(const lip& Value) { return *this = operator &(Value); }
 	lip& operator |=(const lip& Value) { return *this = operator |(Value); }
 	lip& operator ^=(const lip& Value) { return *this = operator ^(Value); }
-	lip& operator <<=(__int32 nBits)
+	lip& operator <<=(int32_t nBits)
     {
         zlshift(x, nBits, &x);
         return *this;
     }
-	lip& operator >>=(__int32 nBits)
+	lip& operator >>=(int32_t nBits)
     {
         zrshift(x, nBits, &x);
         return *this;
