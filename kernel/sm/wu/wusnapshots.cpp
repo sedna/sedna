@@ -1023,13 +1023,12 @@ void DbgDumpTimestamps(const TIMESTAMP *begin,
 	if (!padding) padding = "";
 	if (!padding1st) padding1st = padding;
 	int lineno = 0;
-#ifdef _MSC_VER
-#pragma warning(disable : 4390)
-#endif
-	if (begin>=end) wulog(("\n"));
-#ifdef _MSC_VER
-#pragma warning(default : 4390)
-#endif
+
+	if (begin>=end)
+    {
+	    wulog(("\n"));
+    }
+
 	while (begin<end)
 	{
 		wulog(("%s",(lineno==0 ? padding1st : padding)));
@@ -1159,13 +1158,10 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 			/* all chains exhausted? */ 
 			if (rowDensity==0)
 			{
-#ifdef _MSC_VER
-#pragma warning(disable : 4390)
-#endif
-				if (lineno==0) wulog(("\n"));
-#ifdef _MSC_VER
-#pragma warning(default : 4390)
-#endif
+				if (lineno==0)
+                {
+				    wulog(("\n"));
+                }
 				break;
 			}
 			/* output headers */ 
@@ -1239,14 +1235,11 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 					rowDensity++;
 				}
 			}
-#ifdef _MSC_VER
-#pragma warning(disable : 4390)
-#endif
 			/* output extra space */ 
-			if (rowDensity&&j>0) wulog(("\n"));
-#ifdef _MSC_VER
-#pragma warning(default : 4390)
-#endif
+			if (rowDensity&&j>0)
+			{
+			    wulog(("\n"));
+			}
 		}
 }
 
