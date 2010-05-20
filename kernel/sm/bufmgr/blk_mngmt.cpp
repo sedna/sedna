@@ -84,10 +84,12 @@ xptr ConsumeNextBlockInSpan(
             spanEndOffs -= PAGE_SIZE;
         }
 
-        result.layer =
-            layerAdjustment + (offset + offsAdjustment) / LAYER_ADDRESS_SPACE_SIZE;
+        U_ASSERT(layerAdjustment + (offset + offsAdjustment) / LAYER_ADDRESS_SPACE_SIZE <= INT32_MAX);
 
-        result.setOffs((offset + offsAdjustment) % LAYER_ADDRESS_SPACE_SIZE);
+        result.layer =
+            (t_layer)(layerAdjustment + (offset + offsAdjustment) / LAYER_ADDRESS_SPACE_SIZE);
+
+        result.setOffs((lsize_t)((offset + offsAdjustment) % LAYER_ADDRESS_SPACE_SIZE));
 
         *spanBeginOffsPtr = spanBeginOffs;
         *spanEndOffsPtr = spanEndOffs;
