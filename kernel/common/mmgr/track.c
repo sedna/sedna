@@ -204,7 +204,7 @@ void DumpUnfreed(int component)
 	d_printf1("-----------------------------------------------------------\n");
     d_printf2("Total Unfreed: %d bytes\n", totalSize);
 #else
-    fprintf(du_ostr, "\t<total>"PRIu64"</total>\n</unfreed>", (uint64_t)totalSize);
+    fprintf(du_ostr, "\t<total>%"PRIu64"</total>\n</unfreed>", (uint64_t)totalSize);
 
     fflush(du_ostr);
     fclose(du_ostr);
