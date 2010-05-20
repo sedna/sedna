@@ -73,8 +73,8 @@ void create_db()
     mb->tmp_file_cur_size  = 0;
     mb->data_file_max_size = MBS2PAGES(data_file_max_size);
     mb->tmp_file_max_size  = MBS2PAGES(tmp_file_max_size);
-    mb->data_file_extending_portion = MBS2PAGES(data_file_extending_portion);
-    mb->tmp_file_extending_portion  = MBS2PAGES(tmp_file_extending_portion);
+    mb->data_file_extending_portion = (int)MBS2PAGES(data_file_extending_portion);
+    mb->tmp_file_extending_portion  = (int)MBS2PAGES(tmp_file_extending_portion);
 
     mb->transaction_flags = 0;
     if (strcmp(db_security, "authorization") == 0) {
