@@ -162,7 +162,7 @@ private:
 	static char *res_buf;
 	static int	res_buf_size;
 
-	SQLINTEGER param_ind;
+	SQLLEN param_ind;
 	std::vector<SQLSMALLINT> param_types;
 	inline void set_param_type(int i, SQLSMALLINT vtype, SQLSMALLINT ptype, SQLUINTEGER colsize);
 

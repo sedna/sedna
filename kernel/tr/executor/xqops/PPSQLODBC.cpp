@@ -661,7 +661,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 
 	for (int i = 0; i < results_count; i++)
 	{
-		SQLINTEGER res_len;
+		SQLLEN res_len;
 		rc = SQLODBCBase::fSQLGetData(hstmt, (SQLUSMALLINT)(i+1), SQL_C_CHAR, res_buf, res_buf_size, &res_len);
 		if (!result_ok(rc))
 		{
@@ -727,7 +727,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 int  SQLODBCExecutor::update_row_count()
 {
 	SQLRETURN rc;
-	SQLINTEGER cnt;
+	SQLLEN cnt;
 
 	rc = SQLODBCBase::fSQLRowCount(hstmt, &cnt);
 	return cnt;
