@@ -85,7 +85,7 @@ inline static void __vmm_init_current_xptr()
 
 static void vmm_remap(void *addr, ramoffs offs, enum vmm_map_protection_t p)
 {
-    int i = ((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE;
+    int i = (int)(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
     mapped_pages->setAt(i);
 
     if (activeMT != NULL) { mtrBlocks->setAt(i); }
@@ -97,7 +97,7 @@ static void vmm_remap(void *addr, ramoffs offs, enum vmm_map_protection_t p)
 
 void vmm_unmap(void *addr)
 {
-    int i = ((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE;
+    int i = (int)(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
 
     if (mapped_pages->testAt(i)) {
         mapped_pages->clearAt(i);

@@ -170,12 +170,12 @@ int hbCopyFile(char *file_path)
 
     // make backup file name
     strcpy(backup_file_name, hbDistance);
-    int len = strlen(file_name);
+    size_t len = strlen(file_name);
 
     if (len >= 3 && !strcmp(&(file_name[len - 3]), "xml"))
-   	    strcat(backup_file_name, "/cfg/");
-    else if (!strcmp(file_name, "vmm.dat"))
-	    strcat(backup_file_name, "/data/");
+    {
+        strcat(backup_file_name, "/cfg/");
+    }
     else
     {
 	    strcat(backup_file_name, "/data/");
@@ -197,7 +197,7 @@ int hbCopyFile(char *file_path)
 // makes cleanup of hot-backup files in case of failure
 void hbMakeCleanup()
 {
-	for (int i = hbCreatedFiles.size() - 1; i >= 0; i--)
+	for (size_t i = hbCreatedFiles.size() - 1; i >= 0; i--)
 	{
 		if (hbCreatedFiles[i].second) // this is a directory
 		{

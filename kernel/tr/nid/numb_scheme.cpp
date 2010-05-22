@@ -123,7 +123,7 @@ void	nid_assign(xptr node, t_prefix p) {
 		
 		VMM_SIGNAL_MODIFICATION(node);
 		memcpy(dsc->nid.prefix, p.prefix, p.size);
-		dsc->nid.size=p.size;
+		dsc->nid.size=(unsigned char)p.size;
 	}
 	else 
 	{

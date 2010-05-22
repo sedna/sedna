@@ -10,7 +10,7 @@
 
 // make data file name and write it to buf
 // return: length of str
-int hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname)
+unsigned hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname)
 {
     char data_file_name[U_MAX_PATH + 1];
 
@@ -22,16 +22,16 @@ int hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname)
     strcat(data_file_name, dbname);
     strcat(data_file_name, ".sedata");
 
-    if (strlen(data_file_name) > maxlen) return -1;
+    if (strlen(data_file_name) > maxlen) return (unsigned)-1;
 
     strncpy(buf, data_file_name, maxlen);
 
-    return strlen(data_file_name);
+    return (unsigned)strlen(data_file_name);
 }
 
 // make llog file name and write it to buf
 // return: length of str
-int hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64_t lnum)
+unsigned hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64_t lnum)
 {
     char log_file_name[U_MAX_PATH + 1];
 
@@ -47,15 +47,15 @@ int hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64
     strcat(log_file_name, u_ui64toa(lnum, ui_buf, 10));
    	strcat(log_file_name, ".llog");
 
-    if (strlen(log_file_name) > maxlen) return -1;
+    if (strlen(log_file_name) > maxlen) return (unsigned)-1;
 
     strncpy(buf, log_file_name, maxlen);
 
-    return strlen(log_file_name);
+    return (unsigned)strlen(log_file_name);
 }
 
 // retrieves db config file name
-int	hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname)
+unsigned hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname)
 {
     char cfg_file_name[U_MAX_PATH + 1];
 
@@ -65,9 +65,9 @@ int	hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname)
     strcat(cfg_file_name, dbname);
     strcat(cfg_file_name, "_cfg.xml");
 
-    if (strlen(cfg_file_name) > maxlen) return -1;
+    if (strlen(cfg_file_name) > maxlen) return (unsigned)-1;
 
     strncpy(buf, cfg_file_name, maxlen);
 
-    return strlen(cfg_file_name);
+    return (unsigned)strlen(cfg_file_name);
 }

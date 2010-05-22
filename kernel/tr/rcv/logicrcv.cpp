@@ -92,7 +92,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	const char *name, *uri, *prefix;
 	xmlscm_type type;
 	xptr self, left, right, parent;
-	int offs;
+	size_t offs;
 	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
@@ -156,7 +156,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
      int value_size;
      xmlscm_type type;
      xptr self, left, right, parent;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -225,7 +225,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
      const char* value;
      int value_size;
      xptr self, left, right, parent;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -281,7 +281,7 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
      const char* value;
      int value_size;
      xptr self;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -325,7 +325,7 @@ static void llRcvRenameColl(LSN curr_lsn, void *Rec)
 {
     char *rec = (char *)Rec;
     const char *old_name, *new_name;
-    int offs;
+    size_t offs;
 	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
@@ -353,7 +353,7 @@ static void llRcvDoc(LSN curr_lsn, void *Rec)
     char *rec = (char *)Rec;
     const char* name, *collection;
     xptr self;
-    int offs;
+    size_t offs;
 	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
@@ -401,7 +401,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
      const char* value;
      int value_size;
      xptr self, left, right, parent;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -458,7 +458,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
      int total_size;
      shft target_size;
      xptr self, left, right, parent;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -517,7 +517,7 @@ static void llRcvCollection(LSN curr_lsn, void *Rec)
 {
 	 char *rec = (char *)Rec;
      const char* name;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -541,7 +541,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
 	 char *rec = (char *)Rec;
      const char *uri, *prefix;
      xptr self, left, right, parent;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -598,7 +598,7 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
 	 char *rec = (char *)Rec;
      const char *obj_path, *key_path, *ind_name, *doc_name;
      xmlscm_type key_type;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -658,7 +658,7 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
      const char *obj_path, *ind_name, *doc_name, *custom_tree_buf;
      int itconst;
      int custom_tree_size;
-     int offs;
+     size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
 
@@ -733,7 +733,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
     int tmp;
 
-    int offs = sizeof(char) + sizeof(transaction_id);
+    size_t offs = sizeof(char) + sizeof(transaction_id);
 
 	memcpy(&tmp, rec + offs, sizeof(int));
     offs += sizeof(int);

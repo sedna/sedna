@@ -129,7 +129,7 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 
     // sending hot-backup request
     msg.instruction = HB_START;
-    msg.length = 1 + 4 + 5 + strlen(hb_db_name); // is_chekpoint + increment_mode + db_name
+    msg.length = 1 + 4 + 5 + (sp_int32)strlen(hb_db_name); // is_chekpoint + increment_mode + db_name
 
     // options: checkpoint and increment
     msg.body[0] = (is_checkp) ? 1 : 0;
@@ -137,7 +137,7 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 
     // db_name
     msg.body[5] = 0;
-	int2net_int(strlen(hb_db_name), &(msg.body[6]));
+	int2net_int((int32_t)strlen(hb_db_name), &(msg.body[6]));
 	strncpy(&(msg.body[10]), hb_db_name, strlen(hb_db_name));
 
 	hbSendMsgAndRcvResponse(hbSocket, &msg);

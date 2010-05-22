@@ -45,6 +45,7 @@ static inline int ss_get_tc_serialized_size(sequence_sorter::sort_type st)
 		return sizeof(uint64_t);
 	default:
 		U_ASSERT(false);
+        return 0;
 	}
 }
 

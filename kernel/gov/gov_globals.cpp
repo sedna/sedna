@@ -18,7 +18,7 @@ int gov_help_s = 0;
 int gov_help_l = 0;
 int gov_version = 0;
 
-const size_t narg = 9;
+const int narg = 9;
 
 /*
  * -1 means that parameter was not defined through command line

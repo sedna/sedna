@@ -105,7 +105,7 @@ int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_fil
 }
 
 // Insert record in logical log.
-LSN llInsertRecord(const void *RecBuf, int RecLen, transaction_id trid)
+LSN llInsertRecord(const void *RecBuf, unsigned int RecLen, transaction_id trid)
 {
 	RECOVERY_CRASH;
 	void *rec_all;

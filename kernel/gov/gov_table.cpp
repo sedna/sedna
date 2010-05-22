@@ -559,7 +559,7 @@ void info_table::wait_all_notregistered_sess()
 }
 
 
-int info_table::get_total_session_procs_num()
+size_t info_table::get_total_session_procs_num()
 {
     return _pids_table_.size() + _session_table_.size();
 }

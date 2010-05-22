@@ -64,7 +64,7 @@ static void parse_and_print_rc(const msg_struct* msg, bool sm_list)
         case SE_RC_VALID:
         {
             rc_vector rc;
-            int offset = 1;
+            size_t offset = 1;
             int db_number;
 
             net_int2int(&db_number, msg->body + offset);

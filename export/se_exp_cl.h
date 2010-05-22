@@ -5,7 +5,7 @@
 #define PARSE_ERR_MSG_SIZE 1000
 #define SPROMT_LOGIN_SIZE 100
 
-const size_t narg = 11;
+const int narg = 11;
 
 int exp_s_help = 0;
 int exp_l_help = 0;

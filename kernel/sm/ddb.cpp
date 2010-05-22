@@ -141,7 +141,7 @@ int main(int argc, char** argv)
                 if (strlen (db_name) > SE_MAX_DB_NAME_LENGTH)
                     throw USER_EXCEPTION(SE3015);
                 strcpy(msg.body, db_name);
-                msg.length = strlen(db_name)+1;
+                msg.length = (sp_int32)strlen(db_name)+1;
                 sp_send_msg(sock, &msg);
                 sp_recv_msg(sock, &msg);
                 ushutdown_close_socket(sock, __sys_call_error);

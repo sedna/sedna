@@ -39,7 +39,7 @@ extern char micro_prompt[];
 
 extern FILE* res_os; //output stream of term results (result of the user's queres)
 
-extern const size_t narg;
+extern const int narg;
 extern arg_rec term_argtable[];
 
 extern bool on_error_stop;

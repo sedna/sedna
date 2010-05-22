@@ -42,10 +42,10 @@ static map <USOCKET, hbInfo> hbClients;
 static void hbMakeErrorMsg(msg_struct *msg, const char *err_msg)
 {
 	msg->instruction = HB_ERR;
-	msg->length = 5 + strlen(err_msg);
+	msg->length = 5 + (sp_int32)strlen(err_msg);
 
 	msg->body[0] = 0;
-	int2net_int(strlen(err_msg), &(msg->body[1]));
+	int2net_int((int32_t)strlen(err_msg), &(msg->body[1]));
 
 	strncpy(&(msg->body[5]), err_msg, strlen(err_msg));
 }
@@ -254,9 +254,9 @@ int hbProcessLogArchRequest(msg_struct *msg)
 		msg->instruction = HB_CONT;
         msg->body[0] = 0;
 		strncpy(&(msg->body[5]), (*hbFiles)[0].c_str(), (*hbFiles)[0].length());
-		int2net_int((*hbFiles)[0].length(), &(msg->body[1]));
+		int2net_int((int32_t)((*hbFiles)[0].length()), &(msg->body[1]));
 
-		msg->length = (*hbFiles)[0].length() + 5;
+		msg->length = (sp_int32)((*hbFiles)[0].length()) + 5;
 
 		hbFiles->erase(hbFiles->begin());
 	}
@@ -292,9 +292,9 @@ static int hbProcessNextFile(msg_struct *msg)
 		msg->instruction = HB_CONT;
         msg->body[0] = 0;
 		strncpy(&(msg->body[5]), (*hbFiles)[0].c_str(), (*hbFiles)[0].length());
-		int2net_int((*hbFiles)[0].length(), &(msg->body[1]));
+		int2net_int((int32_t)((*hbFiles)[0].length()), &(msg->body[1]));
 
-		msg->length = (*hbFiles)[0].length() + 5;
+		msg->length = (sp_int32)((*hbFiles)[0].length()) + 5;
 
 		hbFiles->erase(hbFiles->begin());
 	}

@@ -196,12 +196,12 @@ static void llupdateMinRcvLSN()
 //  	op (1 byte)
 //      prevLSN // lsn of the previous record in physical records chain
 //      is_garbage(int)
-//      count of blocks(size_t)
+//      count of blocks(unsigned)
 //      info about each block(count times sizeof(WuVersionEntry))
 int llLogCheckpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage)
 {
 	char *tmp_rec;  
-	int rec_len;
+	unsigned rec_len;
 	char op = LL_CHECKPOINT;
 	int offs = 0;
 	LSN ret_lsn;
@@ -209,8 +209,11 @@ int llLogCheckpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size
 
 	isFirstRec = (params->persVersionsSent == 0 && params->garbageVersionsSent == 0);
 
-	rec_len = sizeof(char) + sizeof(LSN) + sizeof(int) + sizeof(size_t) + 
-				sizeof(WuVersionEntry) * count;
+	if (count > UINT32_MAX)
+        throw SYSTEM_EXCEPTION("Cannot log checkpount record: too many blocks!");
+
+    rec_len = sizeof(char) + sizeof(LSN) + sizeof(int) + sizeof(unsigned) + 
+				sizeof(WuVersionEntry) * (unsigned)count;
 
 	if (isFirstRec)
 	{
@@ -226,7 +229,7 @@ int llLogCheckpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size
 	inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
 	inc_mem_copy(tmp_rec, offs, &(llInfo->last_chain_lsn), sizeof(LSN));
 	inc_mem_copy(tmp_rec, offs, &isGarbage, sizeof(int));
-	inc_mem_copy(tmp_rec, offs, &count, sizeof(size_t));
+	inc_mem_copy(tmp_rec, offs, &count, sizeof(unsigned));
 
 	for (unsigned int i = 0; i < count; i++)
 		inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(WuVersionEntry));
@@ -239,7 +242,7 @@ int llLogCheckpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size
 		inc_mem_copy(tmp_rec, offs, &(llInfo->min_rcv_lsn), sizeof(LSN));
 	}
 
-	ret_lsn = llInsertRecord(tmp_rec, rec_len, -1);
+    ret_lsn = llInsertRecord(tmp_rec, rec_len, -1);
 
 	if (isFirstRec)
 		llInfo->checkpoint_lsn = ret_lsn;

@@ -1057,8 +1057,8 @@ AllocSetStats(MemoryContext context)
 	AllocSet	set = (AllocSet) context;
 	long		nblocks = 0;
 	long		nchunks = 0;
-	long		totalspace = 0;
-	long		freespace = 0;
+	usize_t		totalspace = 0;
+	usize_t		freespace = 0;
 	AllocBlock	block;
 	AllocChunk	chunk;
 	int			fidx;
@@ -1079,9 +1079,9 @@ AllocSetStats(MemoryContext context)
 		}
 	}
 	fprintf(stderr,
-			"%s: %ld total in %ld blocks; %ld free (%ld chunks); %ld used\n",
-			set->header.name, totalspace, nblocks, freespace, nchunks,
-			totalspace - freespace);
+			"%s: %"PRIu64" total in %ld blocks; %"PRIu64" free (%ld chunks); %"PRIu64" used\n",
+			set->header.name, (uint64_t)totalspace, nblocks, (uint64_t)freespace, nchunks,
+			(uint64_t)(totalspace - freespace));
 }
 
 

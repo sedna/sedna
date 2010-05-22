@@ -42,15 +42,15 @@
 
 typedef struct str_buf_t {
 	char *buf;
-	int size;
-	int d_size;
+	size_t size;
+	size_t d_size;
 } str_buf_t;
 
 
 typedef struct qbuf_t {
 	char **buf;
-	int size;
-	int d_size;
+	size_t size;
+	size_t d_size;
 } qbuf_t;
 
 extern int exp_verbose;

@@ -110,7 +110,7 @@ public:
     bool find_pid(UPID pid, UPHANDLE& p);//returns true if pid is found (and inits p)
     void wait_all_notregistered_sess();
 
-    int  get_total_session_procs_num();
+    size_t get_total_session_procs_num();
     gov_config_struct* get_config_struct();
     void print_info_table();
 };

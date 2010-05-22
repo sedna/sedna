@@ -18,7 +18,7 @@ extern int background_mode;
 extern int gov_help_l;
 extern int gov_help_s;
 extern int gov_version;
-extern const size_t narg;
+extern const int narg;
 
 namespace gov_globals 
 {

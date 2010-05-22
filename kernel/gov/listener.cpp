@@ -15,11 +15,11 @@
 
 using namespace std;
 
-static USOCKET sockfd;
+static USOCKET sockfd, maxfd;
 
 static clClient clClients[U_SSET_SIZE];
 static U_SSET allset, rset;
-static int maxfd, maxi = -1, nres;
+static int maxi = -1, nres;
 
 static int clRegisterClient(USOCKET sock, clProcess_fun fun)
 {
@@ -575,7 +575,7 @@ void send_runtime_config(USOCKET s)
 {
     rc_vector rc;     /// runtime configuration vector of (database name, sessions count) pairs
     msg_struct msg;   /// message we are going to sent to the se_rc
-    int len = 1;      /// current offset within the msg.body(), 
+    size_t len = 1;      /// current offset within the msg.body(), 
     /// fist byte is always indicates validness and oveflow
     int res;
 
@@ -590,7 +590,7 @@ void send_runtime_config(USOCKET s)
         msg.body[0] = SE_RC_VALID;
 
         /// write number of databases
-        int2net_int(rc.size(), msg.body + len);
+        int2net_int((int32_t)rc.size(), msg.body + len);
         len += sizeof(int);
 
         rc_const_iterator rit = rc.begin();
@@ -598,7 +598,7 @@ void send_runtime_config(USOCKET s)
 
         for(; rit != rit_end; rit++)
         {
-            int db_name_len = rit->first.size();
+            size_t db_name_len = rit->first.size();
 
             /// sizeof(int) + (db_name_len + 1) means number of sessions and zero ended database name
             if( len + sizeof(int) + (db_name_len + 1) > SE_SOCKET_MSG_BUF_SIZE )
@@ -619,7 +619,7 @@ void send_runtime_config(USOCKET s)
             len += db_name_len + 1;
         }
 
-        msg.length = len;
+        msg.length = (sp_int32)len;
     }
 
     res = sp_send_msg(s, &msg);

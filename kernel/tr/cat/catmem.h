@@ -148,7 +148,7 @@ class CatalogMemoryContext
     {
         uint32_t magic;
         CatalogMemoryContext *context;
-        size_t chunk_num;
+        uint32_t chunk_num;
     };
 
     struct alloc_head
@@ -210,7 +210,7 @@ public:
 #ifdef SEDNA_X64
         void *res_chunk;
         res_chunk = get_chunk_head(addr);
-        offs = (char *)addr - (char *)res_chunk;
+        offs = (uint32_t)((char *)addr - (char *)res_chunk);
 #else
         offs = (uint32_t)addr;
 #endif
