@@ -193,7 +193,7 @@ MainLoop(FILE *source)
 			quit_term();
 	        return 1;
         }
-	    if (SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY, session_dir, strlen(session_dir)) != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+	    if (SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY, session_dir, (int)strlen(session_dir)) != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
         {
 	        fprintf(stderr, "failed to set the Sedna session directory attribute \n%s\n", SEgetLastErrorMsg(&conn));
             fflush(stderr);
@@ -320,7 +320,7 @@ comm_alias aliases[] =
 static
 const char *find_alias(char *cmd)
 {
-    int i;
+    size_t i;
 
     if (!strlen(cmd)) return NULL;
 
@@ -793,7 +793,7 @@ static size_t append_line_to_buffer(FILE* source, std::vector<char> & buffer, si
 	while(1)
 	{
 		buffer.resize(sz+1024);
-		str=fgets(&buffer[sz],buffer.size()-sz,source);
+		str=fgets(&buffer[sz],(int)(buffer.size()-sz),source);
 		if (0==str) break;
 		sz+=strlen(str);
 		if(buffer[sz-1]=='\n') break;

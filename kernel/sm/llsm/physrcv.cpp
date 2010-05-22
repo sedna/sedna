@@ -39,7 +39,7 @@ static void llRcvCheckpoint(LSN lsn, void *RecBuf)
 {
 	char *offs;
 	int is_garbage;
-    size_t count;
+    unsigned count;
 	WuVersionEntry *blocks_info;
 
 	offs = (char *)RecBuf + sizeof(char) + sizeof(LSN); // skip operation code and next-chain-lsn
@@ -47,11 +47,11 @@ static void llRcvCheckpoint(LSN lsn, void *RecBuf)
 	is_garbage = *((int *)offs);
 	offs += sizeof(int);
 
-	count = *((size_t *)offs);
-	offs += sizeof(size_t);
+	count = *((unsigned *)offs);
+	offs += sizeof(unsigned);
 
 	blocks_info = (WuVersionEntry *)offs;
-	for (size_t i = 0; i < count; i++)
+	for (unsigned i = 0; i < count; i++)
 	{
 		if (is_garbage)
 			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), WuExternaliseXptr(blocks_info[i].xptr));

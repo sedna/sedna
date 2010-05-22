@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 
   char parse_errmsg[PARSE_ERR_MSG_SIZE];
   char *input_login=NULL,*input_password=NULL;
-  int tmp;
+  size_t tmp;
   
 	if (arg_scanargv(argc, argv, exp_argtable, narg, NULL, parse_errmsg, NULL)==0) {
 		fprintf(stderr, "ERROR: %s\n\n", parse_errmsg);

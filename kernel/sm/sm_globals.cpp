@@ -172,7 +172,7 @@ register_sm_on_gov()
     size_t db_name_len = strlen(db_name);
     /* Special mode flag, database name as a string and SM
      * process id and string length as sizeof(int) bytes. */
-    msg.length = sizeof(char) + db_name_len  + 2 * sizeof(int32_t);
+    msg.length = sizeof(char) + (sp_int32)db_name_len  + 2 * sizeof(int32_t);
     msg.instruction = REGISTER_DB;
     size_t off = 0;
 

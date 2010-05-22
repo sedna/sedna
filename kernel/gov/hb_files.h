@@ -12,14 +12,15 @@
 // all functions return length of the result buf string and -1 in the case of error
 
 // make data file name and write it to buf
-// return: length of str
-int hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname);
+// return: length of str; (unsigned)-1 in case of error
+unsigned hbMakeDataFileName(char *buf, unsigned int maxlen, const char *dbname);
 
 // make llog file name and write it to buf
-// return: length of str
-int hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64_t lnum);
+// return: length of str; (unsigned)-1 in case of error
+unsigned hbMakeLogFileName(char *buf, unsigned int maxlen, const char *dbname, uint64_t lnum);
 
 // retrieves db config file name
-int	hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname);
+// return: length of str; (unsigned)-1 in case of error
+unsigned hbMakeConfFileName(char *buf, unsigned int maxlen, const char *dbname);
 
 #endif

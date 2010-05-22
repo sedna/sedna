@@ -102,7 +102,7 @@ extern "C"
 		(s is changed and contains result of FD_ISSET)
    returns 0 if timeout
    returns U_SOCKET_ERROR if failed */
-	int uselect_read_arr(U_SSET *s, int maxfd, struct timeval *timeout, sys_call_error_fun fun);
+	int uselect_read_arr(U_SSET *s, USOCKET maxfd, struct timeval *timeout, sys_call_error_fun fun);
 
 /* retrieves the last socket error description */
     const char *usocket_error_translator();

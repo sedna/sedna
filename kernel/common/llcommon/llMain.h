@@ -120,7 +120,7 @@ int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_fil
 // Returns: 
 //     LSN of the written record;
 //     LFS_INVALID_LSN in case of error;
-LSN llInsertRecord(const void* RecBuf, int RecLen, transaction_id trid);
+LSN llInsertRecord(const void* RecBuf, unsigned int RecLen, transaction_id trid);
 
 // Locks logical log (global ll synchronization)
 void llLock();

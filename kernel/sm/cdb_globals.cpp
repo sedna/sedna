@@ -200,7 +200,7 @@ void create_cfg_file()
 
    int res = uWriteFile(cfg_file_handle,
                         cfg_file_content.c_str(),
-                        cfg_file_content.size(),
+                        (unsigned)cfg_file_content.size(),
                         &nbytes_written,
                         __sys_call_error);
 

@@ -121,7 +121,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	value = SEDNA_AUTOCOMMIT_OFF;
     SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
 
-    SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,strlen(path));
+    SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,(int)strlen(path));
 
     value = SEDNA_LOG_LESS;
     SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));

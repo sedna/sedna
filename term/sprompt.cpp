@@ -25,7 +25,7 @@ bool		prompt_state = false;
 char *
 simple_prompt(const char *prompt, int maxlen, bool echo)
 {
-	int			length;
+	size_t     length;
 	char	   *destination;
 	FILE	   *termin,
 			   *termout;
@@ -103,7 +103,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		{
 			if (fgets(buf, sizeof(buf), termin) == NULL)
 				break;
-			buflen = strlen(buf);
+			buflen = (int)strlen(buf);
 		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
 

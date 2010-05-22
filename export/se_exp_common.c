@@ -4,8 +4,8 @@
 
 // function adds string to rp_buf structure
 int rp_add_data(str_buf_t *rp_buf, const char *data) {
-  int d_len = strlen(data);
-  int new_buf_size;
+  size_t d_len = strlen(data);
+  size_t new_buf_size;
  
    while (rp_buf->size < (rp_buf->d_size + d_len + 1) ) {
 		new_buf_size = (rp_buf->size == 0) ? STR_BUF_INIT_SIZE : rp_buf->size*2;
@@ -25,7 +25,7 @@ int rp_add_data(str_buf_t *rp_buf, const char *data) {
 // if required the realloc is performed
 // new_buf_size is in items, not bytes! 
 int qadd(qbuf_t *qbuf, const char *q) {
-  int new_buf_size;
+  size_t new_buf_size;
 	 
 	while ((qbuf->d_size + 2) > qbuf->size) {
 		new_buf_size = (qbuf->size == 0) ? Q_BUF_INIT_SIZE : qbuf->size*2;
@@ -66,7 +66,7 @@ int split_query(char *query,qbuf_t *qbuf) {
 // function reads the requested file and returns the buffer with the query 
 char* read_query(char *filename) {
   FILE *f=NULL;
-  int real_read;
+  size_t real_read;
   str_buf_t file_buf = {NULL, 0 , 0};
   char fr_buf[RF_PORTION_SIZE+1];
 

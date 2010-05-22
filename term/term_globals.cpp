@@ -32,7 +32,7 @@ char debug_indent[TERM_ARGSTRLEN+1];
 char prompt[16]="> ";
 char micro_prompt[16]="> ";
 
-const size_t narg = 14;
+const int narg = 14;
 
 arg_rec term_argtable[] =
 {

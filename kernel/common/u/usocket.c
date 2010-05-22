@@ -461,7 +461,7 @@ int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun)
 		(s is changed and contains result)
    returns 0 if timeout
    returns U_SOCKET_ERROR if failed */
-int uselect_read_arr(U_SSET *s, int maxfd, struct timeval *timeout, sys_call_error_fun fun)
+int uselect_read_arr(U_SSET *s, USOCKET maxfd, struct timeval *timeout, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = 0;

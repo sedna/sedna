@@ -670,8 +670,10 @@ handle_execute_result(struct SednaConnection *conn)
 int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name, const char *login, const char *password)
 {
     char host[SE_HOSTNAMELENGTH + 1];
-    int port = 5050, db_name_len = 0, login_len = 0, password_len = 0, url_len = 0;
-    int body_position = 0, host_len = 0, socket_optval = 1, socket_optsize = sizeof(int);
+    int port = 5050;
+    size_t db_name_len = 0, login_len = 0, password_len = 0, url_len = 0, host_len = 0;
+    sp_int32 body_position = 0;
+    int socket_optval = 1, socket_optsize = sizeof(int);
 
     db_name_len = strlen(db_name);
     login_len = strlen(login);
@@ -731,7 +733,9 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         port = atoi(url + host_len + 1);
     }
     else
+    {
         host_len = url_len;
+    }
 
     if (_strnicmp(url, "localhost", host_len) == 0)
     {
@@ -782,7 +786,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         /*minor protocol version*/
         /* login string*/
         /*dbname string                  */
-        conn->msg.length = 2 + 5 + login_len + 5 + db_name_len;
+        conn->msg.length = 2 + 5 + (sp_int32)login_len + 5 + (sp_int32)db_name_len;
 
         /* writing protocol version 3.0*/
         conn->msg.body[0] = SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR;
@@ -790,13 +794,13 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
         /* writing login */
         conn->msg.body[2] = 0;  /* format code*/
-        int2net_int(login_len, conn->msg.body + 3);
+        int2net_int((int32_t)login_len, conn->msg.body + 3);
         memcpy(conn->msg.body + 7, login, login_len);
-        body_position += 7 + strlen(login);
+        body_position += 7 + (sp_int32)strlen(login);
 
         /* writing db_name       */
         conn->msg.body[body_position] = 0;      /* format code*/
-        int2net_int(db_name_len, conn->msg.body + body_position + 1);
+        int2net_int((int32_t)db_name_len, conn->msg.body + body_position + 1);
         body_position += 5;
         memcpy(conn->msg.body + body_position, db_name, db_name_len);
 
@@ -828,11 +832,11 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     {
         /* send authentication paramaters - password. 130 - AuthenticationParameters*/
         conn->msg.instruction = se_AuthenticationParameters;    /*AuthenticationParameters*/
-        conn->msg.length = 5 + password_len;
+        conn->msg.length = 5 + (sp_int32)password_len;
 
         /* writing password      */
         conn->msg.body[0] = 0;  /* format code*/
-        int2net_int(password_len, conn->msg.body + 1);
+        int2net_int((int32_t)password_len, conn->msg.body + 1);
         memcpy(conn->msg.body + 5, password, password_len);
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
@@ -1056,7 +1060,7 @@ int SEcommit(struct SednaConnection *conn)
 
 int SEexecuteLong(struct SednaConnection *conn, const char* query_file_path)
 {
-    int read = 0;
+    size_t read = 0;
     FILE* query_file;
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
@@ -1096,8 +1100,8 @@ int SEexecuteLong(struct SednaConnection *conn, const char* query_file_path)
         conn->msg.instruction = se_Execute;
         conn->msg.body[0] = 0;  /* result format code*/
         conn->msg.body[1] = 0;  /* string format*/
-        int2net_int(read, conn->msg.body + 2);
-        conn->msg.length = read + 6;    /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
+        int2net_int((int32_t)read, conn->msg.body + 2);
+        conn->msg.length = (sp_int32)read + 6;    /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
         /* string format - 1 byte;*/
         /* string length - 4 bytes*/
         /* string*/
@@ -1115,8 +1119,8 @@ int SEexecuteLong(struct SednaConnection *conn, const char* query_file_path)
             conn->msg.instruction = se_ExecuteLong;
             conn->msg.body[0] = 0;      /* result format code*/
             conn->msg.body[1] = 0;      /* string format*/
-            int2net_int(read, conn->msg.body + 2);
-            conn->msg.length = read + 6;        /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
+            int2net_int((int32_t)read, conn->msg.body + 2);
+            conn->msg.length = (sp_int32)read + 6;        /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
             /* string format - 1 byte;*/
             /* string length - 4 bytes*/
             /* string*/
@@ -1147,7 +1151,8 @@ int SEexecuteLong(struct SednaConnection *conn, const char* query_file_path)
 
 int SEexecute(struct SednaConnection *conn, const char *query)
 {
-    int query_length = 0, query_portion_size = 0, i = 0;
+    size_t query_length = 0, i = 0;
+    sp_int32 query_portion_size = 0;
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
@@ -1180,7 +1185,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
             conn->msg.instruction = se_ExecuteLong;
             conn->msg.body[0] = 0;      /* result format code*/
             conn->msg.body[1] = 0;      /* string format*/
-            query_portion_size = ((query_length - i) >= (SE_SOCKET_MSG_BUF_SIZE - 6)) ? (SE_SOCKET_MSG_BUF_SIZE - 6) : (query_length - i);
+            query_portion_size = ((query_length - i) >= (SE_SOCKET_MSG_BUF_SIZE - 6)) ? (SE_SOCKET_MSG_BUF_SIZE - 6) : (sp_int32)(query_length - i);
             int2net_int(query_portion_size, conn->msg.body + 2);
 
             memcpy(conn->msg.body + 6, query + i, query_portion_size);
@@ -1211,13 +1216,13 @@ int SEexecute(struct SednaConnection *conn, const char *query)
     {
         /*send 300 - ExecuteQuery*/
         conn->msg.instruction = se_Execute;
-        conn->msg.length = query_length + 6;    /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
+        conn->msg.length = (sp_int32)query_length + 6;    /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
         /* string format - 1 byte;*/
         /* string length - 4 bytes*/
         /* string*/
         conn->msg.body[0] = 0;  /* result format code*/
         conn->msg.body[1] = 0;  /* string format*/
-        int2net_int(query_length, conn->msg.body + 2);
+        int2net_int((int32_t)query_length, conn->msg.body + 2);
 
         memcpy(conn->msg.body + 6, query, query_length);
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
@@ -1437,7 +1442,7 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
     if (!isBulkLoadStarted(conn))
     {
         char *query_str = NULL;
-        int query_size = 0;
+        size_t query_size = 0;
 
         /*send 300 - ExecuteQuery*/
         conn->msg.instruction = 300;
@@ -1463,8 +1468,8 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         }
         query_size = strlen(query_str);
 
-        int2net_int(query_size, conn->msg.body + 2);
-        conn->msg.length = query_size + 6;      /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
+        int2net_int((int32_t)query_size, conn->msg.body + 2);
+        conn->msg.length = (sp_int32)query_size + 6;      /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
         /* string format - 1 byte;*/
         /* string length - 4 bytes*/
         /* string*/
@@ -1950,7 +1955,7 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
         case SEDNA_ATTR_SESSION_DIRECTORY:
             memcpy(attrValue, conn->session_directory, strlen(conn->session_directory));
-            *attrValueLength = strlen(conn->session_directory);
+            *attrValueLength = (int)strlen(conn->session_directory);
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
         case SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD:
             value = (conn->boundary_space_preserve) ? SEDNA_BOUNDARY_SPACE_PRESERVE_ON: SEDNA_BOUNDARY_SPACE_PRESERVE_OFF;
