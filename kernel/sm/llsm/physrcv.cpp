@@ -178,7 +178,7 @@ LSN llRecoverPhysicalState()
 {
 	char *rec, *offs;
 	LSN lsn;
-	size_t count;
+	unsigned count;
 	void *ctrl_blk_buf;
 
 	lsn = llInfo->checkpoint_lsn;
@@ -196,8 +196,8 @@ LSN llRecoverPhysicalState()
 		throw USER_EXCEPTION(SE4153);
 
 	offs = rec + sizeof(char) + sizeof(LSN) + sizeof(int);
-	count = *((size_t *)offs);
-	offs += sizeof(size_t) + sizeof(WuVersionEntry) * count;
+	count = *((unsigned *)offs);
+	offs += sizeof(unsigned) + sizeof(WuVersionEntry) * count;
 
 	// recover master block
 	bm_rcv_master_block(offs);
