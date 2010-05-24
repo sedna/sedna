@@ -1150,10 +1150,6 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 					xscan[i] = hscan[i]->entries.begin();
 					rowDensity ++;
 				}
-				else
-				{
-					xscan[i] = std::list<SnVersionEntry>::iterator();					
-				}
 			}
 			/* all chains exhausted? */ 
 			if (rowDensity==0)
