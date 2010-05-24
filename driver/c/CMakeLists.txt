@@ -33,8 +33,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set_target_properties(sedna_mt PROPERTIES COMPILE_FLAGS "/MT")
     endif (MS_LINK_RUNTIME_STATIC AND MSVC)
 
-    # install
-    install(TARGETS sedna_md sedna_mt DESTINATION driver/c)
+    # static libs
+    set(sedna_st_libs sedna_md sedna_mt)
 else (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_library(sedna_npic STATIC ${cdriver_SRC})
     add_dependencies(sedna_npic generate_error_codes)
@@ -51,8 +51,8 @@ else (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif ("${CMAKE_SYSTEM_NAME}" MATCHES "FreeBSD")
     set_target_properties(sedna_pic PROPERTIES OUTPUT_NAME sedna_pic)
 
-    # install
-    install(TARGETS sedna_pic sedna_npic DESTINATION driver/c)
+    # static libs
+    set(sedna_st_libs sedna_pic sedna_npic)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 # dynamic sedna library
@@ -79,6 +79,14 @@ endif (MSVC AND NOT MS_LINK_RUNTIME_STATIC)
 # set proper build and library version
 set_target_properties(sedna_dyn PROPERTIES SOVERSION ${SEDNA_PROTOCOL_VERSION})
 
+# custom target to build all sedna libraries
+add_custom_target(sedna_library ALL
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/libsedna.h ${CMAKE_CURRENT_BINARY_DIR}
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/sp_defs.h ${CMAKE_CURRENT_BINARY_DIR}
+                  DEPENDS ${sedna_st_libs} sedna_dyn
+                 )
+
 # install
+install(TARGETS ${sedna_st_libs} DESTINATION driver/c)
 install(TARGETS sedna_dyn DESTINATION driver/c)
 install(FILES libsedna.h sp_defs.h DESTINATION driver/c)
