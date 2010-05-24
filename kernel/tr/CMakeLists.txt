@@ -73,9 +73,9 @@ add_dependencies(se_trn generate_error_codes) # generate error files before se_t
 add_dependencies(se_trn custom_expat)         # find/build expat before se_trn
 
 # msvc-specific options: 
-#    1) it seems that 10mb stack is not enough for debug modes, make it 15mb
+#    1) it seems that 10mb stack is not enough for debug modes, make it 25mb
 #       note that there are software checks on executor, but in debug modes
-#       frame-size is larger than expected
+#       frame-size is larger than expected (especially on x64)
 #    2) we want to turn off ASLR since it might mess up our layer architecture
 #    3) we add /LARGEADDRESSAWARE (Handle Large Addresses). it seems to make
 #    life easier on x64
@@ -84,7 +84,7 @@ if (MSVC)
     if (NOT MSVC_VERSION LESS 1500)
         set(trn_msvc_linker_flags "${trn_msvc_linker_flags} /DYNAMICBASE:NO")     # turn off ASLR
     endif (NOT MSVC_VERSION LESS 1500)
-    set_target_properties(se_trn PROPERTIES LINK_FLAGS "${trn_msvc_linker_flags}" LINK_FLAGS_DEBUG "/STACK:15000000")
+    set_target_properties(se_trn PROPERTIES LINK_FLAGS "${trn_msvc_linker_flags}" LINK_FLAGS_DEBUG "/STACK:25000000")
 endif (MSVC)
 
 # resolve dtsearch library issues on Windows -- use symbols from Nafxcw[d] by default
