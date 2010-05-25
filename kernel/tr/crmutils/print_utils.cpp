@@ -599,8 +599,8 @@ print_tuple           (const tuple &tup,     /* tuple to print */
                        dynamic_context *cxt, /* context to get namespaces */
                        t_print ptype,        /* xml, sxml, etc ... */
                        bool is_first,        /* is item first in result */
-                       bool ind) {           /* server indents result items*/
-    print_tuple_internal(tup, crmout, cxt, ptype, is_first, ind);
+                       bool indent) {        /* server indents result items*/
+    print_tuple_internal(tup, crmout, cxt, ptype, is_first, indent);
 }
 
 
@@ -893,6 +893,34 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
 }
 #endif /* SE_ENABLE_FTSEARCH */
 
+///////////////////////////////////////////////////////////////////////////////
+/// Print physical operations stack
+///////////////////////////////////////////////////////////////////////////////
+
+void print_pp_stack(se_ostream* dostr)
+{
+    const char* indent = "  ";
+    std::ostringstream message;
+    message << "<stack xmlns='" << SEDNA_NAMESPACE_URI << "'>" << std::endl;
+    
+    while(!executor_globals::pp_stack.empty()) {
+        const operation_info& oi = executor_globals::pp_stack.back();
+        executor_globals::pp_stack.pop_back();
+        message << indent << "<operation name='" << oi.name;
+        if(oi.query_line != 0) 
+            message << "' line='" << oi.query_line;
+        if(oi.query_col != 0) 
+            message << "' column='" << oi.query_col;
+        message << "' calls='" << oi.profile->calls;
+        message << "'/>" << std::endl;
+    }
+
+    message << "</stack>" << std::endl;
+    
+    dostr->set_debug_info_type(se_QueryDebug);
+    (*dostr) << message.str().c_str();
+    dostr->flush();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Legacy metadata printings (should be removed in the future releases)

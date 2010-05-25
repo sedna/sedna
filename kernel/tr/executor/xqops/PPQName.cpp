@@ -20,7 +20,7 @@
 PPFnResolveQName::PPFnResolveQName(dynamic_context *_cxt_,
                                    operation_info _info_,
                                    PPOpIn _child_qname_,
-                                   PPOpIn _child_elem_) : PPIterator(_cxt_, _info_),
+                                   PPOpIn _child_elem_) : PPIterator(_cxt_, _info_, "PPFnResolveQName"),
                                                           child_qname(_child_qname_),
                                                           child_elem(_child_elem_)
 {
@@ -134,7 +134,7 @@ void PPFnResolveQName::do_accept(PPVisitor &v)
 PPFnQName::PPFnQName(dynamic_context *_cxt_,
                      operation_info _info_,
                      PPOpIn _child_uri_,
-                     PPOpIn _child_qname_) : PPIterator(_cxt_, _info_),
+                     PPOpIn _child_qname_) : PPIterator(_cxt_, _info_, "PPFnQName"),
                                              child_uri(_child_uri_),
                                              child_qname(_child_qname_)
 {
@@ -240,7 +240,7 @@ void PPFnQName::do_accept(PPVisitor &v)
 
 PPFnPrefixFromQName::PPFnPrefixFromQName(dynamic_context *_cxt_,
                                          operation_info _info_,
-                                         PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                         PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnPrefixFromQName"),
                                                            child(_child_)
 {
 }
@@ -330,7 +330,7 @@ void PPFnPrefixFromQName::do_accept(PPVisitor &v)
 
 PPFnLocalNameFromQName::PPFnLocalNameFromQName(dynamic_context *_cxt_,
                                                operation_info _info_,
-                                               PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                               PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnLocalNameFromQName"),
                                                                  child(_child_)
 {
 }
@@ -414,7 +414,7 @@ void PPFnLocalNameFromQName::do_accept(PPVisitor &v)
 
 PPFnNamespaceUriFromQName::PPFnNamespaceUriFromQName(dynamic_context *_cxt_,
                                                      operation_info _info_,
-                                                     PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                                     PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnNamespaceUriFromQName"),
                                                                        child(_child_)
 {
 }
@@ -500,7 +500,7 @@ void PPFnNamespaceUriFromQName::do_accept(PPVisitor &v)
 PPFnNamespaceUriForPrefix::PPFnNamespaceUriForPrefix(dynamic_context *_cxt_,
                                                      operation_info _info_,
                                                      PPOpIn _child_prefix_,
-                                                     PPOpIn _child_element_) : PPIterator(_cxt_, _info_),
+                                                     PPOpIn _child_element_) : PPIterator(_cxt_, _info_, "PPFnNamespaceUriForPrefix"),
                                                                                child_prefix(_child_prefix_),
                                                                                child_element(_child_element_)
 {
@@ -616,7 +616,7 @@ void PPFnNamespaceUriForPrefix::do_accept(PPVisitor &v)
 
 PPFnInScopePrefixes::PPFnInScopePrefixes(dynamic_context *_cxt_,
                                          operation_info _info_,
-                                         PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                         PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnInScopePrefixes"),
                                                            child(_child_)
 {
 }

@@ -509,8 +509,7 @@ void socket_client::set_session_options(msg_struct *msg)
     int pos = 0;
     int option_len;
     int option;
-    int log_param = 0;
-
+    
     if (p_ver.major_version < 3) throw USER_EXCEPTION(SE3009);
 
     while (pos < msg->length)
@@ -522,51 +521,75 @@ void socket_client::set_session_options(msg_struct *msg)
         switch (option)
         {
         case SEDNA_DEBUG_ON:
-            dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
+            tr_globals::debug_mode = 1;
             break;
         case SEDNA_DEBUG_OFF:
-            dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
+            tr_globals::debug_mode = 0;
             break;
         case SEDNA_READONLY_TRANSACTION:
-            // set Sasha's parameter here
             SwitchSessionToRO(true);
             break;
         case SEDNA_UPDATE_TRANSACTION:
-            // set Sasha's parameter here
             SwitchSessionToRO(false);
             break;
         case SEDNA_QUERY_EXEC_TIMEOUT:
-            net_int2int(&tr_globals::query_timeout, msg->body+pos);
-            break;
+            {
+                int value;
+                net_int2int(&value, msg->body+pos);
+                if(value < 0) 
+                    throw USER_EXCEPTION2(SE4617, "query execution timeout must be greater than or equal to zero.");
+                tr_globals::query_timeout = value;
+                break;
+            }
         case SEDNA_MAX_RESULT_SIZE:
-            net_int2int(&max_result_size_to_pass, msg->body+pos);
-            out_s->set_max_result_size_to_pass(max_result_size_to_pass);
-            break;
+            {
+                int value;
+                net_int2int(&value, msg->body+pos);
+                if(value < 0)
+                    throw USER_EXCEPTION2(SE4617, "limit on query result size must be greater than or equal to zero.");
+                max_result_size_to_pass = value;
+                out_s->set_max_result_size_to_pass(max_result_size_to_pass);
+                break;
+            }
         case SEDNA_LOG_AMMOUNT:
-            net_int2int(&log_param, msg->body+pos);
-            SwitchLogMode(log_param);
-            break;
+            {
+                int value;
+                net_int2int(&value, msg->body+pos);
+                if(SEDNA_LOG_LESS != value || SEDNA_LOG_FULL != value)
+                    throw USER_EXCEPTION2(SE4617, "unknown log-less mode");
+                SwitchLogMode(value);
+                break;
+            }
         default: 
-            throw USER_EXCEPTION2(SE4619,int2string(option).c_str());
+            /* Unknown option */
+            throw USER_EXCEPTION2(SE4619, int2string(option).c_str());
         }
         pos += option_len;
     }
 
-    // disable ro-mode if log-less mode requested
+    /* Disable ro-mode if log-less mode requested */
     if (tr_globals::is_log_less_mode)
         tr_globals::is_ro_mode = false;
-
-    d_printf1("\nSetting session option\n");
-    sp_msg.instruction = se_SetSessionOptionsOk; // Session options have been set ok
+    
+    /* Send reply that option has been set succcessfully */
+    sp_msg.instruction = se_SetSessionOptionsOk;
     sp_msg.length = 0; 
     if(sp_send_msg(Sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
 }
 
 void socket_client::reset_session_options()
 {
-    dynamic_context::reset_session_options();
-    sp_msg.instruction = se_ResetSessionOptionsOk; // Session options have been reset ok
-    sp_msg.length = 0; 
+    /* Set default session options' values */
+    tr_globals::query_timeout = 0;
+    max_result_size_to_pass = 0;
+    out_s->set_max_result_size_to_pass(max_result_size_to_pass);
+    tr_globals::debug_mode = 0;
+    SwitchLogMode(SEDNA_LOG_FULL);
+    SwitchSessionToRO(false);
+    
+    /* Send reply that options have been reset succcessfully */
+    sp_msg.instruction = se_ResetSessionOptionsOk;
+    sp_msg.length = 0;
     if(sp_send_msg(Sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
 }
 

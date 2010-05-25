@@ -37,11 +37,17 @@ namespace executor_globals
     /* FIXME: make this TLS_VAR_DECL when we start to use threads */
     op_str_buf tmp_op_str_buf;
 
+    /* Physical operations execution stack.
+     * It's being filled only when debug mode is turned on by
+     * the client application. */
+    std::deque<operation_info> pp_stack(10);
+
     void on_kernel_statement_end()
     {
         tmp_op_str_buf.reset();
         __current_physop = NULL;
         current_stack_depth = 0;
         profiler_mode = false;
+        pp_stack.clear();
     }
 }

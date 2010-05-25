@@ -21,7 +21,7 @@
 PPNumericFuncs::PPNumericFuncs(dynamic_context *_cxt_,
                                operation_info _info_,
                                PPOpIn _child_,
-                               PPNumericFuncs::value_func _func_) : PPIterator(_cxt_, _info_),
+                               PPNumericFuncs::value_func _func_) : PPIterator(_cxt_, _info_, "PPNumericFuncs"),
                                                                     child(_child_),
                                                                     func(_func_)
 {
@@ -200,7 +200,7 @@ void PPNumericFuncs::do_accept(PPVisitor &v)
 PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
                                          operation_info _info_,
                                          PPOpIn _child_arg_,
-                                         __int64 _precision_) : PPIterator(_cxt_, _info_),
+                                         __int64 _precision_) : PPIterator(_cxt_, _info_, "PPFnRoundHalfToEven"),
                                                                 child_arg(_child_arg_),
                                                                 precision(_precision_)
 {
@@ -209,7 +209,7 @@ PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
 PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
                                          operation_info _info_,
                                          PPOpIn _child_arg_,
-                                         PPOpIn _child_p_) : PPIterator(_cxt_, _info_),
+                                         PPOpIn _child_p_) : PPIterator(_cxt_, _info_, "PPFnRoundHalfToEven"),
                                                              child_arg(_child_arg_),
                                                              child_p(_child_p_),
                                                              precision(0)

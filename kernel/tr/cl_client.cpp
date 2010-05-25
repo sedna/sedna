@@ -49,9 +49,6 @@ command_line_client::command_line_client(int argc, char** argv)
     {
         /* Parse command line */
         parse_trn_command_line(argc, argv);
-        /* Set session options */
-        int option = tr_globals::debug_mode ? SEDNA_DEBUG_ON : SEDNA_DEBUG_OFF;
-        dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
     }
 }
 

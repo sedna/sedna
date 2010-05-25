@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnTrue::PPFnTrue(dynamic_context *_cxt_,
-                   operation_info _info_) : PPIterator(_cxt_, _info_)
+                   operation_info _info_) : PPIterator(_cxt_, _info_, "PPFnTrue")
 {
 }
 
@@ -72,7 +72,7 @@ void PPFnTrue::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnFalse::PPFnFalse(dynamic_context *_cxt_,
-                     operation_info _info_) : PPIterator(_cxt_, _info_)
+                     operation_info _info_) : PPIterator(_cxt_, _info_, "PPFnFalse")
 {
 }
 
@@ -128,7 +128,7 @@ void PPFnFalse::do_accept(PPVisitor &v)
 
 PPFnNot::PPFnNot(dynamic_context *_cxt_,
                  operation_info _info_,
-                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                 PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnNot"),
                                    child(_child_)
 {
 }
@@ -202,7 +202,7 @@ void PPFnNot::do_accept(PPVisitor &v)
 
 PPFnBoolean::PPFnBoolean(dynamic_context *_cxt_,
                          operation_info _info_,
-                         PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                         PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnBoolean"),
                                            child(_child_)
 {
 }

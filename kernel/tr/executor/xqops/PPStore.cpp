@@ -15,7 +15,7 @@ PPStore::t_stored_seqs PPStore::stored_seqs;
 
 PPStore::PPStore(dynamic_context *_cxt_,
                  operation_info _info_,
-                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                 PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPStore"),
                                    child(_child_),
 								   s(NULL)
 {

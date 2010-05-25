@@ -389,7 +389,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
 
 /* Send file to the client. 
  * On an ERROR - returns 1 (in this case errorcode contains code of the error), 
- *        else - returns 0 (in this case errorcode valueis undefined).
+ *        else - returns 0 (in this case errorcode value is undefined).
  * This function is used for loading modules and bulk loading.
  */
 static int 
@@ -502,17 +502,15 @@ SednaErr:
     return 1;
 }
 
-static int execute(struct SednaConnection *conn)
-{
-    /* read 320 - QuerySucceeded, 330 - QueryFailed, 340 - UpdateSucceeded or 350 - UpdateFailed*/
-    /* or 430 - BulkLoadFileName, 431 - BulkLoadFromStream, 100 - ErrorResponse, */
-    /* or 325 - DebugInfo (retrieve all DebugInfo messages if there are) */
-    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
-        return SEDNA_ERROR;
-    }
 
+/**
+ * Helper to handle debug information messages from the server.
+ * Just reads them and either connection debug handler or skips.
+ * On error returns -1, 0 if handled successfully.
+ */
+static int
+handle_debug_info(struct SednaConnection *conn) 
+{
     while (conn->msg.instruction == se_DebugInfo)
     {
         if (conn->debug_handler)
@@ -522,15 +520,17 @@ static int execute(struct SednaConnection *conn)
             char debug_info[SE_SOCKET_MSG_BUF_SIZE];
             if (conn->msg.length <= 0) 
             {
-                connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
-                return SEDNA_ERROR;
+                /* "Unknown message from server" */
+                connectionFailure(conn, SE3008, NULL, NULL);
+                return -1;
             }
             net_int2int(&debug_type, conn->msg.body);
             net_int2int(&length, conn->msg.body + 5);
             if (length <= 0)
             {
-                connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
-                return SEDNA_ERROR;
+                /* "Unknown message from server" */
+                connectionFailure(conn, SE3008, NULL, NULL);
+                return -1;
             }
             memcpy(debug_info, conn->msg.body + 9, length);
             debug_info[length] = '\0';
@@ -540,23 +540,42 @@ static int execute(struct SednaConnection *conn)
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
             connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
-            return SEDNA_ERROR;
+            return -1;
         }
     }
+    return 0;
+}
+
+/**
+ * Helper to handle result of the query/update statement execution.
+ * It iterates through messages which are returned from the server after
+ * it receives se_Execute or se_ExecuteLong commands.
+ */
+static int
+handle_execute_result(struct SednaConnection *conn)
+{
+    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
+        return SEDNA_ERROR;
+    }
+
+    if(handle_debug_info(conn) < 0) return SEDNA_ERROR;
+    
     if (conn->msg.instruction == se_ErrorResponse)
     {
         setServerErrorMsg(conn, conn->msg);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_ERROR;
     }
-    else if (conn->msg.instruction == se_QuerySucceeded)        /*QuerySucceeded*/
+    else if (conn->msg.instruction == se_QuerySucceeded)
     {
         int query_result;
         query_result = resultQueryHandler(conn);
         conn->first_next = 1;
         return query_result;
     }
-    else if (conn->msg.instruction == se_QueryFailed)   /*QueryFailed*/
+    else if (conn->msg.instruction == se_QueryFailed)
     {
         setServerErrorMsg(conn, conn->msg);
         conn->in_query = 0;
@@ -586,14 +605,15 @@ static int execute(struct SednaConnection *conn)
         while(conn->msg.instruction == se_BulkLoadFileName)
         {
             int status = 0;
-            
-            if ( bulkload(conn, &status) != 0 )
+            if ( bulkload(conn, &status) != 0 ) {
+                if(handle_debug_info(conn) < 0) return SEDNA_ERROR;
                 return status;
-            
+            }
             if (sp_recv_msg(conn->socket, &(conn->msg)) != 0) {
                 connectionFailure(conn, SE3007, "Connection was broken while obtaining bulk load result", NULL);
                 return SEDNA_ERROR;
             }
+            if(handle_debug_info(conn) < 0) return SEDNA_ERROR;
         }
 
         if (conn->msg.instruction == se_ErrorResponse)
@@ -629,7 +649,8 @@ static int execute(struct SednaConnection *conn)
             return SEDNA_ERROR;
         }
     } 
-    else if (conn->msg.instruction == se_BulkLoadFromStream)    /* Bulk Load from Stream */
+    /* Bulk Load from Stream */
+    else if (conn->msg.instruction == se_BulkLoadFromStream)
     {
         conn->in_query = 0;
         return SEDNA_UPDATE_FAILED;
@@ -1121,7 +1142,7 @@ int SEexecuteLong(struct SednaConnection *conn, const char* query_file_path)
 
     fclose(query_file);
 
-    return execute(conn);
+    return handle_execute_result(conn);
 }
 
 int SEexecute(struct SednaConnection *conn, const char *query)
@@ -1205,7 +1226,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
             return SEDNA_ERROR;
         }
     }
-    return execute(conn);
+    return handle_execute_result(conn);
 }
 
 
@@ -1524,7 +1545,8 @@ int SEendLoadData(struct SednaConnection *conn)
 {
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
+        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -1536,7 +1558,8 @@ int SEendLoadData(struct SednaConnection *conn)
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
 
-    conn->msg.instruction = se_BulkLoadEnd;     /*BulkLoadEnd*/
+    /*BulkLoadEnd*/
+    conn->msg.instruction = se_BulkLoadEnd;
     conn->msg.length = 0;
 
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
@@ -1559,8 +1582,9 @@ int SEendLoadData(struct SednaConnection *conn)
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_ERROR;
     }
-    else if ((conn->msg.instruction == se_BulkLoadSucceeded) || (conn->msg.instruction == se_UpdateSucceeded))  /*BulkLoadSucceeded*/
+    else if ((conn->msg.instruction == se_BulkLoadSucceeded) || (conn->msg.instruction == se_UpdateSucceeded))
     {
+        /*BulkLoadSucceeded*/
         conn->in_query = 0;
         if (conn->autocommit)
         {
@@ -1570,8 +1594,9 @@ int SEendLoadData(struct SednaConnection *conn)
         }
         return SEDNA_BULK_LOAD_SUCCEEDED;
     }
-    else if ((conn->msg.instruction == se_BulkLoadFailed) || (conn->msg.instruction == se_UpdateFailed))        /*BulkLoadFailed*/
+    else if ((conn->msg.instruction == se_BulkLoadFailed) || (conn->msg.instruction == se_UpdateFailed))
     {
+        /*BulkLoadFailed*/
         conn->in_query = 0;
         setServerErrorMsg(conn, conn->msg);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
@@ -1579,7 +1604,8 @@ int SEendLoadData(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, "Unknown message got while passing bulk load ending message to the server", NULL);            /* "Unknown message from server" */
+        /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, "Unknown message got while passing bulk load ending message to the server", NULL);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_BULK_LOAD_FAILED;
     }
@@ -1783,7 +1809,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             value = (int*) attrValue;
             if (*value < 0)
             {
-                setDriverErrorMsg(conn, SE3022, "Timeout value must be > 0");        /* "Invalid argument."*/
+                setDriverErrorMsg(conn, SE3022, "Timeout value must be >= 0");        /* "Invalid argument."*/
                 return SEDNA_ERROR;
             }
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/

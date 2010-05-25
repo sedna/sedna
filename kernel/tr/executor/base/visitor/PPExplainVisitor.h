@@ -102,7 +102,6 @@ public:
     virtual void visit(PPPIConstructor* op);
     virtual void visit(PPFnError* op);
     virtual void visit(PPFnTrace* op);
-    virtual void visit(PPDebug* op);
     virtual void visit(PPExcept* op);
     virtual void visit(PPUnion* op);
     virtual void visit(PPIntersect* op);

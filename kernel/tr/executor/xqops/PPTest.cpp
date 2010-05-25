@@ -27,7 +27,7 @@ bool fit;
 
 PPTest::PPTest(dynamic_context *_cxt_,
                operation_info _info_,
-               PPOpIn _seq_) : PPIterator(_cxt_, _info_),
+               PPOpIn _seq_) : PPIterator(_cxt_, _info_, "PPTest"),
                                seq(_seq_)
 {
 	this->test_fun=&PPTest::checkTreeConsistency;

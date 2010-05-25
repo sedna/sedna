@@ -32,7 +32,7 @@ print_tuple           (const tuple &tup,     /* tuple to print */
                        dynamic_context *cxt, /* context to get namespaces */
                        t_print ptype,        /* xml, sxml, etc ... */
                        bool is_first,        /* is item first in result */
-                       bool ind);            /* server indents result items*/
+                       bool indent);         /* server indents result items*/
 
 
 #ifdef SE_ENABLE_FTSEARCH
@@ -43,6 +43,9 @@ void print_node_to_buffer(xptr node,
                           const char *opentag="<",
                           const char *closetag=">");
 #endif
+
+/* Print physical operations stack in debug mode */
+void print_pp_stack(se_ostream* dostr);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Load utils

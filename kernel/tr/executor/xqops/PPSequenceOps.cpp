@@ -22,7 +22,7 @@
 
 PPFnEmpty::PPFnEmpty(dynamic_context *_cxt_,
                      operation_info _info_,
-                     PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                     PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnEmpty"),
                                        child(_child_)
 {
 }
@@ -96,7 +96,7 @@ void PPFnEmpty::do_accept(PPVisitor &v)
 
 PPFnExists::PPFnExists(dynamic_context *_cxt_,
                        operation_info _info_,
-                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnExists"),
                                          child(_child_)
 {
 }
@@ -170,7 +170,7 @@ void PPFnExists::do_accept(PPVisitor &v)
 PPFnItemAt::PPFnItemAt(dynamic_context *_cxt_,
                        operation_info _info_,
                        PPOpIn _seq_child_,
-                       PPOpIn _pos_child_) : PPIterator(_cxt_, _info_),
+                       PPOpIn _pos_child_) : PPIterator(_cxt_, _info_, "PPFnItemAt"),
                                              seq_child(_seq_child_),
                                              pos_child(_pos_child_)
 {
@@ -269,7 +269,7 @@ void PPFnItemAt::do_accept(PPVisitor &v)
 
 PPFnDistinctValues::PPFnDistinctValues(dynamic_context *_cxt_,
                                        operation_info _info_,
-                                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnDistinctValues"),
                                                          child(_child_)
 {
 }
@@ -277,7 +277,7 @@ PPFnDistinctValues::PPFnDistinctValues(dynamic_context *_cxt_,
 PPFnDistinctValues::PPFnDistinctValues(dynamic_context *_cxt_,
                                        operation_info _info_,
                                        PPOpIn _child_,
-                                       PPOpIn _collation_child_) : PPIterator(_cxt_, _info_),
+                                       PPOpIn _collation_child_) : PPIterator(_cxt_, _info_, "PPFnDistinctValues"),
                                                                    child(_child_),
                                                                    collation_child(_collation_child_)
 {
@@ -429,7 +429,7 @@ void PPFnDistinctValues::do_accept(PPVisitor &v)
 PPFnIndexOf::PPFnIndexOf(dynamic_context *_cxt_,
                          operation_info _info_,
                          PPOpIn _seq_child_,
-                         PPOpIn _srch_child_) : PPIterator(_cxt_, _info_),
+                         PPOpIn _srch_child_) : PPIterator(_cxt_, _info_, "PPFnIndexOf"),
                                                 seq_child(_seq_child_),
                                                 srch_child(_srch_child_)
 {
@@ -439,7 +439,7 @@ PPFnIndexOf::PPFnIndexOf(dynamic_context *_cxt_,
                          operation_info _info_,
                          PPOpIn _seq_child_,
                          PPOpIn _srch_child_,
-                         PPOpIn _collation_child_) : PPIterator(_cxt_, _info_),
+                         PPOpIn _collation_child_) : PPIterator(_cxt_, _info_, "PPFnIndexOf"),
                                                      seq_child(_seq_child_),
                                                      srch_child(_srch_child_),
                                                      collation_child(_collation_child_)
@@ -580,7 +580,7 @@ void PPFnIndexOf::do_accept(PPVisitor &v)
 
 PPFnReverse::PPFnReverse(dynamic_context *_cxt_,
                          operation_info _info_,
-                         PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                         PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnReverse"),
                                            child(_child_),
 								           s(NULL)
 {
@@ -662,7 +662,7 @@ void PPFnReverse::do_accept(PPVisitor &v)
 PPFnSubsequence::PPFnSubsequence(dynamic_context *_cxt_,
                                  operation_info _info_,
                                  PPOpIn _seq_child_,
-                                 PPOpIn _start_child_) : PPIterator(_cxt_, _info_),
+                                 PPOpIn _start_child_) : PPIterator(_cxt_, _info_, "PPFnSubsequence"),
                                                          seq_child(_seq_child_),
                                                          start_child(_start_child_),
                                                          is_length(false)
@@ -673,7 +673,7 @@ PPFnSubsequence::PPFnSubsequence(dynamic_context *_cxt_,
                                  operation_info _info_,
                                  PPOpIn _seq_child_,
                                  PPOpIn _start_child_,
-                                 PPOpIn _length_child_) : PPIterator(_cxt_, _info_),
+                                 PPOpIn _length_child_) : PPIterator(_cxt_, _info_, "PPFnSubsequence"),
                                                           seq_child(_seq_child_),
                                                           start_child(_start_child_),
                                                           length_child(_length_child_),
@@ -816,7 +816,7 @@ void PPFnSubsequence::do_accept(PPVisitor &v)
 PPFnRemove::PPFnRemove(dynamic_context *_cxt_,
                        operation_info _info_,
                        PPOpIn _seq_child_,
-                       PPOpIn _pos_child_) : PPIterator(_cxt_, _info_),
+                       PPOpIn _pos_child_) : PPIterator(_cxt_, _info_, "PPFnRemove"),
                                              seq_child(_seq_child_),
                                              pos_child(_pos_child_)
 {
@@ -918,7 +918,7 @@ PPFnInsertBefore::PPFnInsertBefore(dynamic_context *_cxt_,
                                    operation_info _info_,
                                    PPOpIn _seq_child_,
                                    PPOpIn _pos_child_,
-                                   PPOpIn _ins_child_) : PPIterator(_cxt_, _info_),
+                                   PPOpIn _ins_child_) : PPIterator(_cxt_, _info_, "PPFnInsertBefore"),
                                                          seq_child(_seq_child_),
                                                          pos_child(_pos_child_),
                                                          ins_child(_ins_child_)
@@ -1041,7 +1041,7 @@ void PPFnInsertBefore::do_accept(PPVisitor &v)
 
 PPFnZeroOrOne::PPFnZeroOrOne(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnZeroOrOne"),
                                                child(_child_)
 {
 }
@@ -1118,7 +1118,7 @@ void PPFnZeroOrOne::do_accept(PPVisitor &v)
 
 PPFnOneOrMore::PPFnOneOrMore(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnOneOrMore"),
                                                child(_child_)
 {
 }
@@ -1185,7 +1185,7 @@ void PPFnOneOrMore::do_accept(PPVisitor &v)
 
 PPFnExactlyOne::PPFnExactlyOne(dynamic_context *_cxt_,
                                operation_info _info_,
-                               PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                               PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnExactlyOne"),
                                                  child(_child_)
 {
 }

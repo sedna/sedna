@@ -16,7 +16,7 @@ using namespace std;
 PPCalculate::PPCalculate(dynamic_context *_cxt_,
                          operation_info _info_, 
                          arr_of_PPOpIn *_ch_arr_,
-                         CalcOp *_tree_) : PPIterator(_cxt_, _info_),
+                         CalcOp *_tree_) : PPIterator(_cxt_, _info_, "PPCalculate"),
                                            ch_arr(_ch_arr_),
                                            tree(_tree_)
 {

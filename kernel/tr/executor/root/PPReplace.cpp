@@ -11,7 +11,7 @@
 #include "tr/locks/locks.h"
 
 PPReplace::PPReplace(PPOpIn _child_, 
-                     dynamic_context *_cxt_) : PPUpdate(),
+                     dynamic_context *_cxt_) : PPUpdate("PPReplace"),
                                                child(_child_),
                                                cxt(_cxt_)
 {

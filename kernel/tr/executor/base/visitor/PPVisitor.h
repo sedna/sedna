@@ -82,7 +82,6 @@ public:
     /* Error and trace functions */
     virtual void visit(PPFnError* op)                    = 0;
     virtual void visit(PPFnTrace* op)                    = 0;
-    virtual void visit(PPDebug* op)                      = 0;
 
     /* Sequence functions and operations */
     virtual void visit(PPExcept* op)                     = 0;

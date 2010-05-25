@@ -13,7 +13,7 @@ using namespace std;
 
 PPSXptr::PPSXptr(dynamic_context *_cxt_,
                  operation_info _info_,
-                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                 PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPSXptr"),
                                    pos(0),
                                    s(NULL),
                                    child(_child_)

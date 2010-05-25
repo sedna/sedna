@@ -9,7 +9,7 @@
 
 
 PPNil::PPNil(dynamic_context *_cxt_,
-             operation_info _info_) : PPIterator(_cxt_, _info_)
+             operation_info _info_) : PPIterator(_cxt_, _info_, "PPNil")
 {
 }
 

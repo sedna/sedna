@@ -7,11 +7,12 @@
 #ifndef _PPBASE_H
 #define _PPBASE_H
 
-#include "common/sedna.h"
-
 #include <vector>
 #include <list>
 #include <map>
+#include <deque>
+
+#include "common/sedna.h"
 
 #include "tr/executor/base/dynamic_context.h"
 #include "tr/executor/base/sequence.h"
@@ -152,8 +153,7 @@ struct profile_info
     u_timeb time;
     /* Operation locks update of the structure.
      * We need this to prevent simultaneous updates in 
-     * user defined functions recursive calls.
-     */
+     * user defined functions recursive calls. */
     void* lock;
     /* Number of calls */
     __int64 calls;
@@ -175,8 +175,12 @@ struct operation_info
     int query_col;
     /* Profile information: execution time, read/write blocks, etc*/
 	profile_info_ptr profile;
+    /* Operation name */
+    const char* name;
 
-	operation_info(): query_line(0), query_col(0) {}
+	operation_info(): query_line(0), 
+                      query_col(0), 
+                      name("PPIterator") {}
 
     inline void initialize()
     { 
@@ -185,7 +189,13 @@ struct operation_info
     }
 };
 
-
+namespace executor_globals 
+{
+    /* Physical operations execution stack.
+     * It's being filled only when debug mode is turned on by
+     * the clien application.*/
+    extern std::deque<operation_info> pp_stack;
+}
 /*******************************************************************************
  * Base iterator of a physical plan tree
  ******************************************************************************/
@@ -195,7 +205,7 @@ protected:
     dynamic_context*  cxt;
     operation_info    info;
     u_timeb current1, current2;
-
+    
     /* 
      * Backs up  __current_physop pointer when operation is called from 
      * the parent operation by next(tuple& t)
@@ -222,8 +232,8 @@ public:
      */
     inline void        open    ()                   
     { 
-         if(executor_globals::profiler_mode)
-              info.initialize();
+         if(executor_globals::profiler_mode || 1 == tr_globals::debug_mode)
+             info.initialize();
          do_open();
     }
     
@@ -254,6 +264,13 @@ public:
                 u_ftime(&current1);
             }
         }
+        if(1 == tr_globals::debug_mode) 
+        {
+            U_ASSERT(info.profile.get() != NULL);
+            if(!executor_globals::profiler_mode) info.profile->calls++;
+            executor_globals::pp_stack.push_back(info);
+        }
+     
         CHECK_TIMER_FLAG
         SET_CURRENT_PP(this)
         INCREASE_STACK_DEPTH
@@ -261,6 +278,8 @@ public:
 
         do_next(t);  
         
+        if(1 == tr_globals::debug_mode) 
+            executor_globals::pp_stack.pop_back();
         DECREASE_STACK_DEPTH
         RESTORE_CURRENT_PP
         if(executor_globals::profiler_mode)
@@ -297,9 +316,13 @@ public:
     inline void accept(PPVisitor &v)                { do_accept (v); }
 
     PPIterator(dynamic_context *_cxt_, 
-               operation_info _info_) : cxt(_cxt_),
-                                        info(_info_),
-                                        __current_physop_backup(NULL) {}
+               operation_info _info_,
+               const char* _name_) : cxt(_cxt_),
+                                   info(_info_),
+                                    __current_physop_backup(NULL) 
+    {
+        info.name = _name_;
+    }
 
     virtual ~PPIterator()  {}
 };
@@ -348,10 +371,10 @@ public:
     }
 
     PPVarIterator(dynamic_context *_cxt_, 
-                  operation_info _info_) : PPIterator(_cxt_, _info_),  
-                                           __current_physop_backup_var(NULL) {}
+                  operation_info _info_,
+                  const char* _name_) : PPIterator(_cxt_, _info_, _name_),  
+                                         __current_physop_backup_var(NULL) {}
     virtual ~PPVarIterator() {}
-	
 };
 
 
@@ -361,9 +384,9 @@ public:
 class PPQueryEssence
 {
 protected:
-    profile_info profile;
+    operation_info info;
     u_timeb current1, current2;
-
+    
 private:
     virtual void do_open()               = 0;
     virtual void do_close()              = 0;
@@ -371,21 +394,36 @@ private:
     virtual void do_accept(PPVisitor &v) = 0;
 
 public:
-    inline void open()                   { do_open();    }
+    inline void open()                   
+    { 
+        if(executor_globals::profiler_mode || 1 == tr_globals::debug_mode)
+             info.initialize();
+        do_open();
+    }
+    
     inline void execute() 
     { 
         if(executor_globals::profiler_mode)
         {
-            profile.calls++;
+            U_ASSERT(info.profile.get() != NULL);
+            info.profile->calls++;
             u_ftime(&current1);
+        }
+        if(1 == tr_globals::debug_mode) 
+        {
+            U_ASSERT(info.profile.get() != NULL);
+            if(!executor_globals::profiler_mode) info.profile->calls++;
+            executor_globals::pp_stack.push_back(info);
         }
 
         do_execute();
  
+        if(1 == tr_globals::debug_mode) 
+            executor_globals::pp_stack.pop_back();
         if(executor_globals::profiler_mode)
         {
             u_ftime(&current2);
-            profile.time = current2 - current1;
+            info.profile->time = current2 - current1;
         }
     }
 
@@ -395,11 +433,16 @@ public:
     virtual bool supports_next()         = 0;
     virtual bool is_update()             = 0;
 
-    inline const profile_info& get_profile_info() const {
-        return profile;
+    inline const operation_info& get_operation_info() const {
+        return info;
     }
 
-    PPQueryEssence() {}
+    PPQueryEssence(const char* _name_) 
+    { 
+        info.name = _name_;
+        info.query_col = 0;
+        info.query_line = 0;
+    }
     virtual ~PPQueryEssence() {}
 };
 
@@ -413,7 +456,7 @@ public:
     virtual bool supports_next() { return false; }
     virtual bool is_update()     { return true; }
 
-    PPUpdate() {}
+    PPUpdate(const char* _name_): PPQueryEssence(_name_) {}
     virtual ~PPUpdate() {}
 };
 

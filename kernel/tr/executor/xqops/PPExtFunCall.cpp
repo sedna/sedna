@@ -12,7 +12,7 @@ PPExtFunCall::PPExtFunCall(dynamic_context *_cxt_,
                            operation_info _info_,
                            const arr_of_PPOpIn &_arr_,
                            ExtFunction *_func_,
-                           const std::string& _name_) : PPIterator(_cxt_, _info_),
+                           const std::string& _name_) : PPIterator(_cxt_, _info_, "PPExtFunCall"),
                                                         arr(_arr_),
                                                         func(_func_),
                                                         name(_name_)

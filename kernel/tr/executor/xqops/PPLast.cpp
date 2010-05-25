@@ -11,7 +11,7 @@
 PPLast::PPLast(dynamic_context *_cxt_,
                operation_info _info_,
                var_dsc _last_dsc_,
-               PPOpIn _child_) : PPVarIterator(_cxt_, _info_),
+               PPOpIn _child_) : PPVarIterator(_cxt_, _info_, "PPLast"),
                                  last_dsc(_last_dsc_),
                                  child(_child_),
                                  s(NULL)

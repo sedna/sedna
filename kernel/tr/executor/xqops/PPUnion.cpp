@@ -13,7 +13,7 @@ PPUnion::PPUnion(dynamic_context *_cxt_,
                  operation_info _info_,
                  PPOpIn _child1_,
                  PPOpIn _child2_,
-                 bool _doc_order_) : PPIterator(_cxt_, _info_),
+                 bool _doc_order_) : PPIterator(_cxt_, _info_, "PPUnion"),
                                      child1(_child1_),
                                      child2(_child2_),
                                      doc_order(_doc_order_)

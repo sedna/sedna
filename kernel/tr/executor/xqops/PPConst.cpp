@@ -14,7 +14,7 @@
 
 PPConst::PPConst(dynamic_context *_cxt_,
                  operation_info _info_,
-                 const tuple_cell &_c_) : PPIterator(_cxt_, _info_)
+                 const tuple_cell &_c_) : PPIterator(_cxt_, _info_, "PPConst")
 {
     c = _c_;
 }

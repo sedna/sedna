@@ -64,7 +64,7 @@ PPGeneralComparison* PPGeneralComparison::PPNEGeneralComparison(dynamic_context 
 PPGeneralComparison::PPGeneralComparison(dynamic_context *_cxt_,
                                          operation_info _info_,
                                          PPOpIn _seq1_,
-                                         PPOpIn _seq2_): PPIterator(_cxt_, _info_),
+                                         PPOpIn _seq2_): PPIterator(_cxt_, _info_, "PPGeneralComparison"),
                                                          seq1(_seq1_),
                                                          seq2(_seq2_)
 {

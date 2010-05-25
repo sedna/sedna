@@ -11,7 +11,7 @@
 #include "common/llcommon/llMain.h"
 
 PPCheckpoint::PPCheckpoint(dynamic_context *_cxt_,
-                           operation_info _info_) : PPIterator(_cxt_, _info_)
+                           operation_info _info_) : PPIterator(_cxt_, _info_, "PPCheckpoint")
 {
 }
 

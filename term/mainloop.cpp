@@ -81,7 +81,8 @@ int slash_commands_help()
 	term_output1("\\commit   - to commit transaction\n");
 	term_output1("\\rollback - to rollback transaction\n");
 	term_output1("\\showtime - to show the time of the latest query execution\n");
-	term_output1("\\set      - to set the terminal internal variable (on help for internal variables type \\set?)\n");
+	term_output1("\\set      - to set the terminal internal variable\n");
+    term_output1("             (on help for internal variables type \\set?)\n");
 	term_output1("\\unset    - to unset the terminal internal variable\n");
 	term_output1("\\quit     - to close session and quit the Sedna Terminal\n");
 
@@ -105,32 +106,33 @@ int set_commans_help()
     term_output1("  When set, autocommit mode is on.\n  When unset manual-commit mode is on. \n");
     term_output1("  By default AUTOCOMMIT mode is set on.\n");
     term_output1("\nON_ERROR_STOP\n");
-    term_output1("  When set, se_term returns with the code 3 when\n  statement or meta-command fails.\n");
-    term_output1("  When unset se_term processing continues, unless\n  it is the connection failure. \n");
+    term_output1("  When set, terminal returns with the code 3 when\n  statement or meta-command fails.\n");
+    term_output1("  When unset terminal processing continues, unless\n  it is the connection failure. \n");
     term_output1("\nDEBUG\n");
     term_output1("  When set, session debug mode is on.\n  When unset, session debug mode is off.\n");
+    term_output1("  In debug mode physical operations stack is printed when error is raised.\n");
     term_output1("\nTRANSACTION_READ_ONLY (\\ro - set, \\upd - unset)\n");
-    term_output1("  When set, transactions are run as READ-ONLY.\n ");
+    term_output1("  When set, transactions are run as READ-ONLY.\n");
     term_output1("  When unset, transactions are run as UPDATE-transactions.\n");
     term_output1("  By default transactions are run as UPDATE-transactions.\n");
     term_output1("  (Setting this option will immediately commit any current transaction)\n");
     term_output1("\nLOG_LESS_MODE (\\ll - set, \\fl - unset) \n");
     term_output1("  When set, every bulkload will be less logged.\n  When unset, every bulkload will be\n");
     term_output1("  fully logged. By default transactions are run in full log mode.\n");
-    term_output1("\n  CAVEATS:\n");
+    term_output1("\n  Caveats:\n");
     term_output1("   1) this will commit any current transaction in this session!\n");
     term_output1("   2) every commit might be much longer!\n");
     term_output1("   3) transaction activity will be almost stalled since we're entering exclusive mode!\n");
     term_output1("\nQUERY_TIMEOUT=<time in secs>\n");
     term_output1("  When set, every query execution will be dropped on server if it lasts\n  longer than timeout set.\n");
-    term_output1("  By default there is no any timeout set (query is executed as long as needed).\n");
+    term_output1("  Default value = 0 (no timeout, query is executed as long as needed).\n");
 
    	return 0;
 }
 
 /*
  * Main processing loop for reading lines of input
- *	and sending them to the backend.
+ * and sending them to the backend.
  */
 int
 MainLoop(FILE *source)
@@ -276,7 +278,7 @@ MainLoop(FILE *source)
 		    			fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
                         error_code = SEgetLastErrorCode(&conn);
                         // if socket is broken
-                        if((error_code == 207) || (error_code == 208))
+                        if((error_code == SE3006) || (error_code == SE3007))
                             return EXIT_CONNECTION_BROKEN;           // socket connection is broken
                         else
                             return EXIT_STATEMENT_OR_COMMAND_FAILED; // statement or command failed and on_error_stop is on
@@ -381,7 +383,7 @@ int process_command(char* buffer)
                     fflush(stderr);
                     error_code = SEgetLastErrorCode(&conn);
                     // if socket is broken
-                    if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                    if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
                     else return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
             }
@@ -408,7 +410,7 @@ int process_command(char* buffer)
                    fflush(stderr);
                    error_code = SEgetLastErrorCode(&conn);
                    // if socket is broken
-                   if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                   if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
                    return EXIT_STATEMENT_OR_COMMAND_FAILED;
                }
             }
@@ -429,7 +431,7 @@ int process_command(char* buffer)
                 fflush(stderr);
                 error_code = SEgetLastErrorCode(&conn);
                 // if socket is broken
-                if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
 	    		return EXIT_STATEMENT_OR_COMMAND_FAILED;
 	    	}
 			term_output1("Ok\n");
@@ -636,7 +638,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             fflush(stderr);
             error_code = SEgetLastErrorCode(&conn);
             // if socket is broken
-            if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+            if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
             else return EXIT_STATEMENT_OR_COMMAND_FAILED;
 		}
 	}
@@ -665,7 +667,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
         if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
-        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_UPDATE_FAILED)
@@ -675,7 +677,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
-        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_BULK_LOAD_FAILED)
@@ -685,7 +687,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
-        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_ERROR)
@@ -695,7 +697,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
         if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
-        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
         else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_QUERY_SUCCEEDED)
@@ -728,7 +730,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                 error_code = SEgetLastErrorCode(&conn);
                 // if socket is broken
-                if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
                 else return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
     		while(bytes_read > 0)
@@ -744,7 +746,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
                 	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                     error_code = SEgetLastErrorCode(&conn);
                     // if socket is broken
-                    if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                    if((error_code == SE3006) || (error_code == SE3007)) return EXIT_CONNECTION_BROKEN;
                     else return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
     		}

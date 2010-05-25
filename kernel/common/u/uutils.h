@@ -47,7 +47,6 @@ extern "C"
     char *int2c_str(int value, char *buf);
 
     __int64  strto__int64(const char *nptr, char **endptr, int base);
-    __uint64 strto__uint64(const char *nptr, char **endptr, int base);
 
     /* 
      * (__int64)INF, (__int64)NaN is undefined behaviour and give different

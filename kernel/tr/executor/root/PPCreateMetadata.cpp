@@ -15,7 +15,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPCreateDocument
 ///////////////////////////////////////////////////////////////////////////////
-PPCreateDocument::PPCreateDocument(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
+PPCreateDocument::PPCreateDocument(PPOpIn _name_, 
+                                   dynamic_context *_cxt_) : PPUpdate("PPCreateDocument"),
+                                                             name(_name_), 
+                                                             cxt(_cxt_)
 {
 }
 
@@ -77,7 +80,10 @@ void PPCreateDocument::do_execute()
 ///////////////////////////////////////////////////////////////////////////////
 /// PPCreateCollection
 ///////////////////////////////////////////////////////////////////////////////
-PPCreateCollection::PPCreateCollection(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
+PPCreateCollection::PPCreateCollection(PPOpIn _name_,
+                                       dynamic_context *_cxt_) : PPUpdate("PPCreateCollection"),
+                                                                 name(_name_),
+                                                                 cxt(_cxt_)
 {
 }
 
@@ -142,7 +148,7 @@ void PPCreateCollection::do_execute()
 PPCreateDocumentInCollection::PPCreateDocumentInCollection(PPOpIn _document_,
                                                            dynamic_context *_cxt1_,
                                                            PPOpIn _collection_,
-                                                           dynamic_context *_cxt2_) :
+                                                           dynamic_context *_cxt2_) : PPUpdate("PPCreateDocumentInCollection"),
                                                                                       cxt1(_cxt1_),
                                                                                       cxt2(_cxt2_),
                                                                                       document(_document_),

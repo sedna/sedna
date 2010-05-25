@@ -23,7 +23,7 @@ PPAxisParent::PPAxisParent(dynamic_context *_cxt_,
                            operation_info _info_, 
                            PPOpIn _child_,
                            NodeTestType _nt_type_,
-                           NodeTestData _nt_data_) : PPIterator(_cxt_, _info_),
+                           NodeTestData _nt_data_) : PPIterator(_cxt_, _info_, "PPAxisParent"),
                            child(_child_),
                            nt_type(_nt_type_),
                            nt_data(_nt_data_)

@@ -19,7 +19,7 @@ int PPDDO::buf_lgth = 0;
 
 PPDDO::PPDDO(dynamic_context *_cxt_,
              operation_info _info_,
-             PPOpIn _child_) : PPIterator(_cxt_, _info_),
+             PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPDDO"),
              child(_child_)
 {
     ret_val = XNULL;

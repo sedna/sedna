@@ -1393,10 +1393,10 @@ sedna-err:SE4616
    Can't load a document because the session is loading another document. Finish current loading before beginning a new one.
 sedna-err:SE4617
 
-   Failed to set session option.
+   Failed to set session option (invalid value)
 sedna-err:SE4618
 
-   Failed to reset session options.
+   Reserved.
 
 
 ######################################################################

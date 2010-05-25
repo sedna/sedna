@@ -10,7 +10,10 @@
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/auth/auc.h"
 
-PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
+PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_,
+                             dynamic_context *_cxt_) : PPUpdate("PPDropFtIndex"),
+                                                       index_name(_index_name_),
+                                                       cxt(_cxt_)
 {
 }
 

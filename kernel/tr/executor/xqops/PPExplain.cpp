@@ -17,7 +17,7 @@ using namespace std;
 PPExplain::PPExplain(dynamic_context *_cxt_,
                      operation_info _info_,
                      PPQueryEssence* _qep_tree_,
-                     bool _profiler_mode_) : PPIterator(_cxt_, _info_),
+                     bool _profiler_mode_) : PPIterator(_cxt_, _info_, "PPExplain"),
                                             qep_tree(_qep_tree_),
                                             scm(doc_schema_node_object::create(false)),
                                             profiler_mode(_profiler_mode_)

@@ -17,7 +17,7 @@
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                              operation_info _info_,
                              PPOpIn _child1_,
-                             PPOpIn _child2_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _child2_) : PPIterator(_cxt_, _info_, "PPFnDeepEqual"),
                                                 child1(_child1_),
                                                 child2(_child2_)
 {
@@ -26,7 +26,7 @@ PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                              operation_info _info_,
                              PPOpIn _child1_,
                              PPOpIn _child2_,
-							 PPOpIn _collation_) : PPIterator(_cxt_, _info_),
+							 PPOpIn _collation_) : PPIterator(_cxt_, _info_, "PPFnDeepEqual"),
                                                    child1(_child1_),
                                                    child2(_child2_),
 									               collation(_collation_)

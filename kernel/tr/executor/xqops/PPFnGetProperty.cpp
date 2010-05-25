@@ -14,7 +14,7 @@
 
 PPFnGetProperty::PPFnGetProperty(dynamic_context *_cxt_,
                                  operation_info _info_,
-                                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                 PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnGetProperty"),
                                                    child(_child_)
 {
 }
