@@ -105,7 +105,7 @@ static inline void escape_html_uri(Iterator &start, const Iterator &end, stmt_st
 PPFnUriEncoding::PPFnUriEncoding(dynamic_context *_cxt_,
                                  operation_info _info_,
                                  PPOpIn _child_,
-                                 uri_function_type _type_) : PPIterator(_cxt_,_info_),
+                                 uri_function_type _type_) : PPIterator(_cxt_,_info_, "PPFnUriEncoding"),
                                                              child(_child_),
                                                              type(_type_)
 {
@@ -216,7 +216,7 @@ void PPFnUriEncoding::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnResolveUri::PPFnResolveUri(dynamic_context *_cxt_,
                                operation_info _info_,
-                               PPOpIn _relative_) : PPIterator(_cxt_, _info_),
+                               PPOpIn _relative_) : PPIterator(_cxt_, _info_, "PPFnResolveUri"),
                                                     relative(_relative_),
                                                     is_base_static(true)
 {
@@ -225,7 +225,7 @@ PPFnResolveUri::PPFnResolveUri(dynamic_context *_cxt_,
 PPFnResolveUri::PPFnResolveUri(dynamic_context *_cxt_,
                                operation_info _info_,
                                PPOpIn _relative_,
-                               PPOpIn _base_) : PPIterator(_cxt_, _info_),
+                               PPOpIn _base_) : PPIterator(_cxt_, _info_, "PPFnResolveUri"),
                                                 relative(_relative_),
                                                 base(_base_),
                                                 is_base_static(false)

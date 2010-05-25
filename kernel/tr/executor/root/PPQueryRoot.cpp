@@ -15,7 +15,7 @@
 
 
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
-                         PPOpIn _child_) :       PPQueryEssence(),
+                         PPOpIn _child_) :       PPQueryEssence("PPQueryRoot"),
                                                  child(_child_),
                                                  data(_child_.ts),
                                                  cxt(_cxt_),
@@ -73,6 +73,34 @@ void PPQueryRoot::do_accept(PPVisitor &v)
 }
 
 bool PPQueryRoot::next()
+{
+    if(executor_globals::profiler_mode)
+    {
+        U_ASSERT(info.profile.get() != NULL);
+        info.profile->calls++;
+        u_ftime(&current1);
+    }
+    if(1 == tr_globals::debug_mode) 
+    {
+        U_ASSERT(info.profile.get() != NULL);
+        if(!executor_globals::profiler_mode) info.profile->calls++;
+        executor_globals::pp_stack.push_back(info);
+    }
+    
+    bool result = PPQueryRoot::do_next();
+    
+    if(1 == tr_globals::debug_mode) 
+        executor_globals::pp_stack.pop_back();
+    if(executor_globals::profiler_mode)
+    {
+        u_ftime(&current2);
+        info.profile->time = current2 - current1;
+    }
+    
+    return result;
+}
+
+bool PPQueryRoot::do_next()
 {
     child.op->next(data);
 
@@ -159,5 +187,5 @@ bool PPQueryRoot::next()
 
 void PPQueryRoot::do_execute()
 {
-    while (next());
+    while (do_next());
 }

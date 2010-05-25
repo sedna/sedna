@@ -42,13 +42,13 @@ arg_rec term_argtable[] =
 {"-file",           " filename", arg_str,   filename,                     "???",     "\tfile with an XQuery query"},
 {"-output",         " filename", arg_str,   output_file,                  "STDOUT",  "\toutput file (default stdout)"},
 {"-query",          " \"query\"",arg_str,   query,                        "???",     "\tXQuery query to execute\n"},
-{"-echo",           " on/off",   arg_str,   echo_str,                     "???",      "\t\tdisplay se_term output\n\t\t\t(default: on for interactive mode,\n\t\t\t\t  off for batch mode)\n"},
-{"-show-time",       " on/off",   arg_bool,  &show_time,                   "off",     "\tshow time of the latest query execution\n\t\t\t(default off)\n"},
-{"-debug",      "  on/off",   arg_bool,  &debug_mode,                  "off",     "\texecute statements in debug mode\n\t\t\t(default off)\n"},
+{"-echo",           " on/off",   arg_str,   echo_str,                     "???",     "\t\tdisplay se_term output\n\t\t\t(default: on for interactive mode,\n\t\t\t\t  off for batch mode)\n"},
+{"-show-time",      " on/off",   arg_bool,  &show_time,                   "off",     "\tshow time of the latest query execution\n\t\t\t(default off)\n"},
+{"-debug",          " on/off",   arg_bool,  &debug_mode,                  "off",     "\texecute statements in debug mode\n\t\t\t(default off)\n"},
 {"-host",           " host",     arg_str,   host,                         "???",     "\t\thostname of the machine with Sedna running\n\t\t\t(default localhost)\n"},
 {"-port-number",    " port",     arg_int,   &socket_port,                 "5050",    "\tsocket listening port (default 5050)"},
-{"-name",           " name",     arg_str,   login,                        "???",  "\t\tuser name "},
-{"-pswd",           " password", arg_str,   password,                     "???", "\tuser password "},
+{"-name",           " name",     arg_str,   login,                        "???",     "\t\tuser name "},
+{"-pswd",           " password", arg_str,   password,                     "???",     "\tuser password "},
 {NULL,              " db-name",  arg_str,   db_name,                      "???",     "\t\tdatabase name"}
 };
 

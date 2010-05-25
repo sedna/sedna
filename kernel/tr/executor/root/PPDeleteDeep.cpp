@@ -11,7 +11,7 @@
 #include "tr/locks/locks.h"
 
 PPDeleteDeep::PPDeleteDeep(PPOpIn _child_, 
-                           dynamic_context *_cxt_) : PPUpdate(),
+                           dynamic_context *_cxt_) : PPUpdate("PPDeleteDeep"),
                                                      child(_child_),
                                                      cxt(_cxt_)
 {

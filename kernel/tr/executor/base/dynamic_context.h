@@ -3,7 +3,6 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #ifndef _DYNAMIC_CONTEXT_H
 #define _DYNAMIC_CONTEXT_H
 
@@ -452,14 +451,7 @@ public:
     }
 
     static void set_datetime();
-
-    /// Session parameters (they are temporally placed in the dynamic context)
-    /// print call stack in case of error
-    static int stack_trace_debug;
-
-    static void set_session_option(se_session_option type, const void* s, int n);
-    static void reset_session_options();
 };
 
 
-#endif
+#endif /* _DYNAMIC_CONTEXT_H */

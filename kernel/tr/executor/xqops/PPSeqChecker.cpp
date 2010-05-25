@@ -16,7 +16,7 @@ using namespace std;
 PPSeqChecker::PPSeqChecker(dynamic_context *_cxt_,
                  operation_info _info_,
                  PPOpIn _child_,
-                 PPSeqChecker::CheckMode _mode_) : PPIterator(_cxt_, _info_),
+                 PPSeqChecker::CheckMode _mode_) : PPIterator(_cxt_, _info_, "PPSeqChecker"),
                                                    child(_child_),
                                                    mode(_mode_)
 {

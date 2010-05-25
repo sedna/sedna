@@ -31,7 +31,7 @@ protected:
 
     PPConstructor(dynamic_context *_cxt_,
                   operation_info _info_,
-                  bool _deep_copy) : PPIterator(_cxt_, _info_),
+                  bool _deep_copy) : PPIterator(_cxt_, _info_, "PPConstructor"),
                                      deep_copy(_deep_copy) {};
 
 public:

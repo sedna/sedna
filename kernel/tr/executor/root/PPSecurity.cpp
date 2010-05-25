@@ -11,7 +11,12 @@
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 
-PPCreateUser::PPCreateUser(PPOpIn _username_, PPOpIn _passwd_, dynamic_context *_cxt_) : username(_username_), passwd(_passwd_), cxt(_cxt_)
+PPCreateUser::PPCreateUser(PPOpIn _username_,
+                           PPOpIn _passwd_,
+                           dynamic_context *_cxt_) : PPUpdate("PPCreateUser"),
+                                                     username(_username_),
+                                                     passwd(_passwd_),
+                                                     cxt(_cxt_)
 {
 }
 
@@ -74,9 +79,11 @@ void PPCreateUser::do_execute()
     auth_for_create_user(tc_user.get_str_mem(), tc_passwd.get_str_mem());
 }
 
-// PPDropUser
 
-PPDropUser::PPDropUser(PPOpIn _username_, dynamic_context *_cxt_) : username(_username_), cxt(_cxt_)
+PPDropUser::PPDropUser(PPOpIn _username_,
+                       dynamic_context *_cxt_) : PPUpdate("PPDropUser"),
+                                                 username(_username_),
+                                                 cxt(_cxt_)
 {
 }
 
@@ -122,9 +129,13 @@ void PPDropUser::do_execute()
     auth_for_drop_user(tc_user.get_str_mem());
 }
 
-// PPAlterUser
 
-PPAlterUser::PPAlterUser(PPOpIn _username_, PPOpIn _passwd_, dynamic_context *_cxt_) : username(_username_), passwd(_passwd_), cxt(_cxt_)
+PPAlterUser::PPAlterUser(PPOpIn _username_,
+                         PPOpIn _passwd_,
+                         dynamic_context *_cxt_) : PPUpdate("PPAlterUser"),
+                                                   username(_username_),
+                                                   passwd(_passwd_),
+                                                   cxt(_cxt_)
 {
 }
 
@@ -187,10 +198,11 @@ void PPAlterUser::do_execute()
     auth_for_alter_user(tc_user.get_str_mem(), tc_passwd.get_str_mem());
 }
 
-// PPCreateRole
 
-PPCreateRole::PPCreateRole(PPOpIn _rolename_, dynamic_context *_cxt_) : rolename(_rolename_), 
-                                                                        cxt(_cxt_)
+PPCreateRole::PPCreateRole(PPOpIn _rolename_,
+                           dynamic_context *_cxt_) : PPUpdate("PPCreateRole"),
+                                                     rolename(_rolename_),
+                                                     cxt(_cxt_)
 {
 }
 
@@ -236,9 +248,11 @@ void PPCreateRole::do_execute()
     auth_for_create_role(tc_role.get_str_mem());
 }
 
-// PPDropRole
 
-PPDropRole::PPDropRole(PPOpIn _rolename_, dynamic_context *_cxt_) : rolename(_rolename_), cxt(_cxt_)
+PPDropRole::PPDropRole(PPOpIn _rolename_,
+                       dynamic_context *_cxt_) : PPUpdate("PPDropRole"),
+                                                 rolename(_rolename_),
+                                                 cxt(_cxt_)
 {
 }
 
@@ -285,9 +299,13 @@ void PPDropRole::do_execute()
     auth_for_drop_role(tc_role.get_str_mem());
 }
 
-// PPGrantRole
 
-PPGrantRole::PPGrantRole(PPOpIn _role_, PPOpIn _grantee_, dynamic_context *_cxt_) : role(_role_), grantee(_grantee_), cxt(_cxt_)
+PPGrantRole::PPGrantRole(PPOpIn _role_,
+                         PPOpIn _grantee_,
+                         dynamic_context *_cxt_) : PPUpdate("PPGrantRole"),
+                                                   role(_role_),
+                                                   grantee(_grantee_),
+                                                   cxt(_cxt_)
 {
 }
 
@@ -351,21 +369,30 @@ void PPGrantRole::do_execute()
     auth_for_grant_role(tc_role.get_str_mem(), tc_grantee.get_str_mem());
 }
 
-// PPGrantRole
 
 PPGrantRevokePriv::PPGrantRevokePriv(PPOpIn _name_,
-                         PPOpIn _obj_name_,
-                         PPOpIn _grantee_,
-                         const char *_obj_type_,
-                         dynamic_context *_cxt_,
-                         bool _revoke_) : name(_name_), obj_name(_obj_name_), grantee(_grantee_), obj_type(_obj_type_), cxt(_cxt_), to_revoke(_revoke_)
+                                     PPOpIn _obj_name_,
+                                     PPOpIn _grantee_,
+                                     const char *_obj_type_,
+                                     dynamic_context *_cxt_,
+                                     bool _revoke_) : PPUpdate("PPGrantRevokePriv"),
+                                                      name(_name_),
+                                                      obj_name(_obj_name_),
+                                                      grantee(_grantee_),
+                                                      obj_type(_obj_type_),
+                                                      cxt(_cxt_),
+                                                      to_revoke(_revoke_)
 {
 }
 
 PPGrantRevokePriv::PPGrantRevokePriv(PPOpIn _name_,
-                         PPOpIn _grantee_,
-                         dynamic_context *_cxt_,
-                         bool _revoke_) : name(_name_), grantee(_grantee_), cxt(_cxt_), to_revoke(_revoke_)
+                                     PPOpIn _grantee_,
+                                     dynamic_context *_cxt_,
+                                     bool _revoke_) : PPUpdate("PPGrantRevokePriv"),
+                                                      name(_name_),
+                                                      grantee(_grantee_),
+                                                      cxt(_cxt_),
+                                                      to_revoke(_revoke_)
 {
     obj_name.op = NULL;
     obj_type = "db";
@@ -469,9 +496,13 @@ void PPGrantRevokePriv::do_execute()
     }
 }
 
-// PPRevokeRole
 
-PPRevokeRole::PPRevokeRole(PPOpIn _role_, PPOpIn _grantee_, dynamic_context *_cxt_) : role(_role_), grantee(_grantee_), cxt(_cxt_)
+PPRevokeRole::PPRevokeRole(PPOpIn _role_,
+                           PPOpIn _grantee_,
+                           dynamic_context *_cxt_) : PPUpdate("PPRevokeRole"),
+                                                     role(_role_),
+                                                     grantee(_grantee_),
+                                                     cxt(_cxt_)
 {
 }
 

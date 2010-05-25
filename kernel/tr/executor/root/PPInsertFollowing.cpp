@@ -13,7 +13,7 @@
 PPInsertFollowing::PPInsertFollowing(PPOpIn _child1_, 
                                      dynamic_context *_cxt1_,
                                      PPOpIn _child2_,
-                                     dynamic_context *_cxt2_) : PPUpdate(),
+                                     dynamic_context *_cxt2_) : PPUpdate("PPInsertFollowing"),
                                                                 child1(_child1_),
                                                                 child2(_child2_),
                                                                 cxt1(_cxt1_),

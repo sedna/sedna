@@ -13,7 +13,7 @@ using namespace std;
 
 PPTuple::PPTuple(dynamic_context *_cxt_,
                  operation_info _info_,
-                 const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_, _info_),
+                 const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_, _info_, "PPTuple"),
                                                   ch_arr(_ch_arr_),
                                                   lt(1)
 {

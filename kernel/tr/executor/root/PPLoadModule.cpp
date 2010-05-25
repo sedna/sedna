@@ -21,13 +21,12 @@
 #include "tr/auth/auc.h"
 
 
-PPLoadModule::PPLoadModule(
-    arr_of_PPOpIn   _filenames_,
-    bool            _is_load_replace_,
-    dynamic_context *_cxt_)
-    : filenames         (_filenames_)
-    , is_load_replace   (_is_load_replace_),
-    cxt(_cxt_)
+PPLoadModule::PPLoadModule(arr_of_PPOpIn   _filenames_,
+                           bool            _is_load_replace_,
+                           dynamic_context *_cxt_) : PPUpdate("PPLoadModule"),
+                                                     filenames(_filenames_),
+                                                     is_load_replace(_is_load_replace_),
+                                                     cxt(_cxt_)
 {
 }
 

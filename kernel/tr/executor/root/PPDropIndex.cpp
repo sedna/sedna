@@ -14,7 +14,8 @@
 
 
 PPDropIndex::PPDropIndex(PPOpIn _index_name_, 
-                         dynamic_context *_cxt_) : index_name(_index_name_), 
+                         dynamic_context *_cxt_) : PPUpdate("PPDropIndex"),
+                                                   index_name(_index_name_), 
                                                    cxt(_cxt_)
 {
 }

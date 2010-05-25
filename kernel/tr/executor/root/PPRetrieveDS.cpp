@@ -15,7 +15,8 @@
 
 PPRetrieveDS::PPRetrieveDS(PPOpIn _name_,
                            dynamic_context *_cxt_,
-                           db_entity_type _type_) : name(_name_),
+                           db_entity_type _type_) : PPQueryEssence("PPRetrieveDS"),
+                                                    name(_name_),
                                                     cxt(_cxt_),
                                                     type(_type_)
 {

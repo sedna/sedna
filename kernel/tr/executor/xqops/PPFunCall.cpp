@@ -148,7 +148,7 @@ void fun_arg::next(tuple /*out*/ &t, var_c_id /*out*/ &id)
 PPFunCall::PPFunCall(dynamic_context *_cxt_,
                      operation_info _info_,
                      const arr_of_PPOpIn &_ch_arr_,
-                     function_id _fn_id_) : PPVarIterator(_cxt_, _info_),
+                     function_id _fn_id_) : PPVarIterator(_cxt_, _info_, "PPFunCall"),
                                             ch_arr(_ch_arr_),
                                             fn_id(_fn_id_),
                                             body(NULL),

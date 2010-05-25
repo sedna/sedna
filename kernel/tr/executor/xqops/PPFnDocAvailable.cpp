@@ -14,7 +14,7 @@
 
 PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_,
                                    operation_info _info_, 
-                                   PPOpIn _doc_name_op_) : PPIterator(_cxt_, _info_),
+                                   PPOpIn _doc_name_op_) : PPIterator(_cxt_, _info_, "PPFnDocAvailable"),
                                                            doc_name_op(_doc_name_op_)
 {
 }

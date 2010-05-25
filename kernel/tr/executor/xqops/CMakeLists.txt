@@ -1,7 +1,7 @@
 set(xqops_SRC PPAbsPath.cpp PPAccessors.cpp PPAggrFuncs.cpp PPAxisAncestor.cpp
         PPAxisAttribute.cpp PPAxisChild.cpp PPAxisDescendant.cpp PPAxisFP.cpp PPAxisParent.cpp
         PPAxisSelf.cpp PPAxisSibling.cpp PPBooleanOps.cpp PPCalculate.cpp PPCheckpoint.cpp
-        PPConst.cpp PPConstructors.cpp PPDDO.cpp PPDebug.cpp PPDocInCol.cpp
+        PPConst.cpp PPConstructors.cpp PPDDO.cpp PPDocInCol.cpp
         PPError.cpp PPExcept.cpp PPExtFunCall.cpp PPFilterEL.cpp PPFnAccessors.cpp
         PPFnGetProperty.cpp PPFnDateTimeFuncs.cpp PPFnDeepEqual.cpp PPFnDocAvailable.cpp
         PPFunCall.cpp PPGeneralComparison.cpp PPIf.cpp PPIndexScan.cpp PPIntersect.cpp

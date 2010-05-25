@@ -26,7 +26,7 @@ using namespace std;
 PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                        operation_info _info_,
                        int _i_,
-                       PPOpIn _child_) : PPIterator(_cxt_, _info_), 
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnMaxMin"),
                                          child(_child_),
                                          i(_i_)
 {
@@ -38,7 +38,7 @@ PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                        operation_info _info_,
                        int _i_,
                        PPOpIn _child_,
-                       PPOpIn _collation_) : PPIterator(_cxt_, _info_), 
+                       PPOpIn _collation_) : PPIterator(_cxt_, _info_, "PPFnMaxMin"),
                                              child(_child_),
                                              collation(_collation_),
                                              i(_i_)
@@ -201,7 +201,7 @@ static const char* PPFnSumAvg_fun_name[] = {"fn:sum()", "fn:avg()"};
 PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                        operation_info _info_,
                        int _i_,
-                       PPOpIn _child_) : PPIterator(_cxt_, _info_), 
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnSumAvg"),
                                          child(_child_),
                                          i(_i_)
 {
@@ -213,7 +213,7 @@ PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                        operation_info _info_,
                        int _i_,
                        PPOpIn _child_,
-                       PPOpIn _zero_) : PPIterator(_cxt_, _info_), 
+                       PPOpIn _zero_) : PPIterator(_cxt_, _info_, "PPFnSumAvg"),
                                         child(_child_),
                                         zero(_zero_),
                                         i(_i_)
@@ -361,7 +361,7 @@ void PPFnSumAvg::do_accept(PPVisitor &v)
 
 PPFnCount::PPFnCount(dynamic_context *_cxt_,
                      operation_info _info_,
-                     PPOpIn _child_) : PPIterator(_cxt_, _info_), 
+                     PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnCount"), 
                                        child(_child_)
 {
 }

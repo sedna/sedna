@@ -24,6 +24,7 @@
 #include "tr/xqp/XQuerytoLR.h"
 #include "tr/executor/root/PPQueryRoot.h"
 #include "tr/nid/numb_scheme.h"
+#include "tr/crmutils/crmutils.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
@@ -160,6 +161,8 @@ qepNextAnswer execute(PPQueryEssence* qep_tree)
         qep_tree->execute();
     } catch (SednaUserException &e) {
         OS_exceptions_handler::leave_stack_overflow_critical_section();
+        if (1 == tr_globals::debug_mode) 
+            print_pp_stack(tr_globals::client->get_debug_ostream());
         if (e.get_code() == SE2041) return se_result_is_cut_off;
         throw;
     }
@@ -177,6 +180,8 @@ qepNextAnswer next(PPQueryEssence* qep_tree)
         res = ((PPQueryRoot*)qep_tree)->next();
     } catch (SednaUserException &e) {
         OS_exceptions_handler::leave_stack_overflow_critical_section();
+        if (1 == tr_globals::debug_mode) 
+            print_pp_stack(tr_globals::client->get_debug_ostream());
         if (e.get_code() == SE2041) return se_result_is_cut_off;
         throw;
     }

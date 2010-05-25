@@ -14,7 +14,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDropDocument
 ///////////////////////////////////////////////////////////////////////////////
-PPDropDocument::PPDropDocument(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
+PPDropDocument::PPDropDocument(PPOpIn _name_,
+                               dynamic_context *_cxt_) : PPUpdate("PPDropDocument"),
+                                                         name(_name_),
+                                                         cxt(_cxt_)
 {
 }
 
@@ -73,7 +76,10 @@ void PPDropDocument::do_execute()
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDropCollection
 ///////////////////////////////////////////////////////////////////////////////
-PPDropCollection::PPDropCollection(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
+PPDropCollection::PPDropCollection(PPOpIn _name_,
+                                   dynamic_context *_cxt_) : PPUpdate("PPDropCollection"),
+                                                             name(_name_),
+                                                             cxt(_cxt_)
 {
 }
 
@@ -135,7 +141,8 @@ void PPDropCollection::do_execute()
 PPDropDocumentInCollection::PPDropDocumentInCollection(PPOpIn _document_,
                                                        dynamic_context *_cxt1_,
                                                        PPOpIn _collection_,
-                                                       dynamic_context *_cxt2_) : document(_document_),
+                                                       dynamic_context *_cxt2_) : PPUpdate("PPDropDocumentInCollection"),
+                                                                                  document(_document_),
                                                                                   collection(_collection_),
                                                                                   cxt1(_cxt1_),
                                                                                   cxt2(_cxt2_)

@@ -122,8 +122,8 @@ if certain fatal errors have occurred.
 \end{verbatim}
 
 Setting connection into debug mode allows getting debug information when XQuery
-query fails due to some reason (see \ref{session-debug-mode} for details). To
-set the connection into debug mode use \verb!setDebugMode! method of
+query fails due to some reason (see \ref{debug-mode} for details). To set the
+connection into debug mode use \verb!setDebugMode! method of
 \verb!SednaConnection! interface:
 
 \begin{verbatim}
@@ -3628,8 +3628,8 @@ help to monitor and analyze queries and update statements:
 \begin{itemize}
 \item\textbf{Trace} -- provides a query execution trace intended to be used in
 debugging queries (section \ref{trace});
-\item\textbf{Session Debug Mode} -- provides stack of physical operations when
-error is raised (section \ref{session-debug-mode});
+\item\textbf{Debug Mode} -- provides stack of physical operations when error is
+raised (section \ref{debug-mode});
 \item\textbf{Explain Query} -- shows complete physical execution plan of the
 query or update statement (section \ref{explain});
 \item\textbf{Profile Query} -- creates complete physical execution plan of the
@@ -3663,34 +3663,36 @@ return $r[id_region="afr"]
 \noindent
 \textbf{Output:}
 
+\small{
 \begin{verbatim}
-## <africa>
-##  <id_region>afr</id_region>
-## </africa>
+## <africa><id_region>afr</id_region></africa>
+
 <africa>
- <id_region>afr</id_region>
+  <id_region>afr</id_region>
 </africa>
-##
-## <asia>
-##  <id_region>asi</id_region>
-## </asia>
-\end{verbatim}
+
+## <asia><id_region>asi</id_region></asia>
+## <australia><id_region>aus</id_region></australia>
+## <europe><id_region>eur</id_region></europe>
+## <namerica><id_region>nam</id_region></namerica>
+## <samerica><id_region>sam</id_region></samerica>
+\end{verbatim}}
 
 If you want to use trace facility in your application working through Sedna API
 you should set your own debug handler as it is shown in \ref{exec-capi} section.
 
 
 %===============================================================================
-%               Debug and Profile Facilities: Session Debug Mode
+%               Debug and Profile Facilities: Debug Mode
 %===============================================================================
-\subsubsection{Session Debug Mode}
-\label{session-debug-mode}
+\subsubsection{Debug Mode}
+\label{debug-mode}
 
 In addition to trace facility provided by standard XQuery \verb!fn:trace!
-function (see previous section, \ref{trace} ) you can use session debug mode.
-You can turn on session debug mode in Sedna Terminal (for details see "Sedna
-Terminal" section of the Sedna's Administration Guide) or in your application
-using corresponding Sedna API functions (see \ref{session-option-capi} section).
+function (see previous section, \ref{trace} ) debug mode can be turned on in 
+Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's
+Administration Guide) or in your application using corresponding Sedna API
+functions (see \ref{session-option-capi} section).
 
 Each query in Sedna is represented and executed internally as a tree of the
 physical operations. Debug mode is mechanism that allows to get stack of the
@@ -3710,20 +3712,37 @@ Let us consider the following query to illustrate execution in the debug mode:
 \begin{verbatim}
 (: In this query dynamic error will be raised   :)
 (: due to "aaaa" is not castable to xs:integer. :)
-declare function local:f()
+declare function local:f($i as item()) as xs:integer
 {
-    "aaaa" cast as xs:integer
+   $i cast as xs:integer
 };
-local:f()
+
+for $i in (1,2,3,"aaaa")
+return local:f($i)
 \end{verbatim}
+
+\medskip
+\noindent
 \textbf{Output:}
+
+\small{
 \begin{verbatim}
-PPCast : 1
-PPFunCall : 1 : http://www.w3.org/2005/xquery-local-functions:f
+1
+2
+3
+
+<stack xmlns='http://www.modis.ispras.ru/sedna'>
+  <operation name='PPCast' line='3' column='4' calls='7'/>
+  <operation name='PPFunCall' line='7' column='8' calls='7'/>
+  <operation name='PPReturn' line='6' column='5' calls='4'/>
+  <operation name='PPQueryRoot' calls='4'/>
+</stack>
+
 SEDNA Message: ERROR FORG0001
-        Invalid value for cast/constructor.
+Invalid value for cast/constructor.
 Details: Cannot convert to xs:integer type
-\end{verbatim}
+Query line: 3, column:4
+\end{verbatim}}
 
 As you can see in the output above each item of the operations stack list
 consists of the following parts:
@@ -3731,6 +3750,7 @@ consists of the following parts:
 \begin{itemize}
 \item operation name (\verb!PPCast! and \verb!PPFunCall! in the example);
 \item calls counter - number of calls of the operation;
+\item corresponding query and column numbers;
 \item optional additional information (qualified name of the function in the
 example).
 \end{itemize}
@@ -3768,6 +3788,9 @@ declare function local:fact($i as xs:integer) as xs:integer {
 
 local:fact(10)
 \end{verbatim}
+
+\medskip
+\noindent
 \textbf{Output:}
 
 \small{
@@ -3876,6 +3899,9 @@ The following query illustrates \verb!PROFILE! statement execution:
 profile fn:doc('TestSources/XMarkAuction.xml')//
             person[@id = "person0"]/name
 \end{verbatim}
+
+\medskip
+\noindent
 \textbf{Output:}
 
 \small{

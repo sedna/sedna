@@ -16,7 +16,8 @@
 PPRetrieveMetadata::PPRetrieveMetadata(db_entity_type _type_,
                                        PPOpIn _collection_,
                                        dynamic_context *_cxt_,
-                                       bool _output_statistics_) : type(_type_),
+                                       bool _output_statistics_) : PPQueryEssence("PPRetrieveMetadata"),
+                                                                   type(_type_),
                                                                    collection(_collection_),
                                                                    cxt(_cxt_),
                                                                    output_statistics(_output_statistics_)

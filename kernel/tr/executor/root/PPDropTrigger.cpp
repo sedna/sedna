@@ -12,7 +12,10 @@
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 
-PPDropTrigger::PPDropTrigger(PPOpIn _trigger_name_, dynamic_context *_cxt_) :	trigger_name(_trigger_name_), cxt(_cxt_)
+PPDropTrigger::PPDropTrigger(PPOpIn _trigger_name_,
+                             dynamic_context *_cxt_) : PPUpdate("PPDropTrigger"),
+                                                       trigger_name(_trigger_name_),
+                                                       cxt(_cxt_)
 {
 }
 

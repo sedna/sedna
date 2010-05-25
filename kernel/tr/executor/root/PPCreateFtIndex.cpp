@@ -111,12 +111,12 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
                                  PathExprRoot _root_,
                                  PPOpIn _index_name_,
                                  PPOpIn _cust_rules_,
-                                 dynamic_context *_cxt_) :
-                                                        object_path(_object_path_),
-                                                        cust_rules(_cust_rules_),
-                                                        root(_root_),
-                                                        index_name(_index_name_),
-                                                        cxt(_cxt_)
+                                 dynamic_context *_cxt_) : PPUpdate("PPCreateFtIndex"),
+                                                           object_path(_object_path_),
+                                                           cust_rules(_cust_rules_),
+                                                           root(_root_),
+                                                           index_name(_index_name_),
+                                                           cxt(_cxt_)
 {
 	if (_index_type_[0] == '!')
 	{
@@ -132,11 +132,11 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
                                  const char *_index_type_,
                                  PathExprRoot _root_,
                                  PPOpIn _index_name_,
-                                 dynamic_context *_cxt_) :
-                                                        object_path(_object_path_),
-                                                        root(_root_),
-                                                        index_name(_index_name_),
-                                                        cxt(_cxt_)
+                                 dynamic_context *_cxt_) : PPUpdate("PPCreateFtIndex"),
+                                                           object_path(_object_path_),
+                                                           root(_root_),
+                                                           index_name(_index_name_),
+                                                           cxt(_cxt_)
 {
 	if (_index_type_[0] == '!')
 	{

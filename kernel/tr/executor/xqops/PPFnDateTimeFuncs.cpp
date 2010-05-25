@@ -20,7 +20,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 PPFnDateTimeFuncNoParam::PPFnDateTimeFuncNoParam(dynamic_context *_cxt_,
                                                  operation_info _info_,
-                                                 dateTimeFuncs _dateTimeFunc_) : PPIterator(_cxt_, _info_),
+                                                 dateTimeFuncs _dateTimeFunc_) : PPIterator(_cxt_, _info_, "PPFnDateTimeFuncNoParam"),
                                                  dateTimeFunc(_dateTimeFunc_)
 {
 }
@@ -100,7 +100,7 @@ PPFnDateTimeFunc::PPFnDateTimeFunc(dynamic_context *_cxt_,
                                    operation_info _info_,
                                    PPOpIn _child_, 
                                    dateTimeFuncs _dateTimeFunc_,
-                                   xmlscm_type _expected_type_) : PPIterator(_cxt_, _info_),
+                                   xmlscm_type _expected_type_) : PPIterator(_cxt_, _info_, "PPFnDateTimeFunc"),
                                                                   child(_child_), 
                                                                   dateTimeFunc(_dateTimeFunc_),
                                                                   expected_type(_expected_type_)
@@ -359,7 +359,7 @@ PPFnDateTimeFunc2Params::PPFnDateTimeFunc2Params(dynamic_context *_cxt_,
                                                  operation_info _info_,
                                                  PPOpIn _child1_,
                                                  PPOpIn _child2_,
-                                                 dateTimeFuncs _dateTimeFunc_) : PPIterator(_cxt_, _info_),
+                                                 dateTimeFuncs _dateTimeFunc_) : PPIterator(_cxt_, _info_, "PPFnDateTimeFunc2Params"),
                                                  child1(_child1_),
                                                  child2(_child2_),
                                                  dateTimeFunc(_dateTimeFunc_)

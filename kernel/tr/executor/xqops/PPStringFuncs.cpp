@@ -26,7 +26,7 @@
 
 PPFnConcat::PPFnConcat(dynamic_context *_cxt_,
                        operation_info _info_,
-                       arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_, _info_),
+                       arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_, _info_, "PPFnConcat"),
                                                  ch_arr(_ch_arr_)
 {
     tcv.resize(ch_arr.size());
@@ -150,7 +150,7 @@ void PPFnConcat::do_accept(PPVisitor &v)
 PPFnStringJoin::PPFnStringJoin(dynamic_context *_cxt_,
                                operation_info _info_,
                                PPOpIn _members_,
-                               PPOpIn _separator_) : PPIterator(_cxt_, _info_),
+                               PPOpIn _separator_) : PPIterator(_cxt_, _info_, "PPFnStringJoin"),
                                                      members(_members_),
                                                      separator(_separator_)
 {
@@ -259,7 +259,7 @@ PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
                                        operation_info _info_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
-                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_),
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_, "PPFnStartsEndsWith"),
                                                                                   source(_source_),
                                                                                   prefix(_prefix_),
                                                                                   type(_type_),
@@ -272,7 +272,7 @@ PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
                                        PPOpIn _collation_,
-                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_),
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_, _info_, "PPFnStartsEndsWith"),
                                                                                   source(_source_),
                                                                                   prefix(_prefix_),
                                                                                   collation(_collation_),
@@ -434,7 +434,7 @@ void PPFnStartsEndsWith::do_accept(PPVisitor &v)
 
 PPFnString2CodePoints::PPFnString2CodePoints(dynamic_context *_cxt_,
                                              operation_info _info_,
-                                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                             PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnString2CodePoints"),
                                                                child(_child_),
                                                                ucp_it(NULL)
 {
@@ -526,7 +526,7 @@ void PPFnString2CodePoints::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnCodePoints2String::PPFnCodePoints2String(dynamic_context *_cxt_,
                                              operation_info _info_,
-                                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                             PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnCodePoints2String"),
                                                                child(_child_)
 {
 }
@@ -625,7 +625,7 @@ PPFnTranslate::PPFnTranslate(dynamic_context *_cxt_,
                              operation_info _info_,
 							 PPOpIn _str_,
                              PPOpIn _map_str_,
-                             PPOpIn _trans_str_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _trans_str_) : PPIterator(_cxt_, _info_, "PPFnTranslate"),
 								                   str(_str_),
                                                    map_str(_map_str_),
                                                    trans_str(_trans_str_)
@@ -754,7 +754,7 @@ PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                                          operation_info _info_,
                                          PPOpIn _src_child_,
                                          PPOpIn _srch_child_,
-                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_, _info_),
+                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_, _info_, "PPFnSubsBeforeAfter"),
                                                                                      src_child(_src_child_),
                                                                                      srch_child(_srch_child_),
                                                                                      type(_type_)
@@ -766,7 +766,7 @@ PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                                          PPOpIn _src_child_,
                                          PPOpIn _srch_child_,
                                          PPOpIn _collation_child_,
-                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_, _info_),
+                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_, _info_, "PPFnSubsBeforeAfter"),
                                                                                      src_child(_src_child_),
                                                                                      srch_child(_srch_child_),
                                                                                      collation_child(_collation_child_),
@@ -961,7 +961,7 @@ void PPFnSubsBeforeAfter::do_accept(PPVisitor &v)
 PPFnChangeCase::PPFnChangeCase(dynamic_context *_cxt_,
                                operation_info _info_,
                                PPOpIn _str_,
-                               bool _to_upper_) : PPIterator(_cxt_, _info_),
+                               bool _to_upper_) : PPIterator(_cxt_, _info_, "PPFnChangeCase"),
                                                   str(_str_),
                                                   to_upper(_to_upper_)
 {
@@ -1043,7 +1043,7 @@ void PPFnChangeCase::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnStringLength::PPFnStringLength(dynamic_context *_cxt_,
                                    operation_info _info_,
-                                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                   PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnStringLength"),
                                                      child(_child_)
 {
 }
@@ -1120,7 +1120,7 @@ void PPFnStringLength::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnNormalizeSpace::PPFnNormalizeSpace(dynamic_context *_cxt_,
                                        operation_info _info_,
-                                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnNormalizeSpace"),
                                                          child(_child_)
 {
 }
@@ -1201,7 +1201,7 @@ void PPFnNormalizeSpace::do_accept(PPVisitor &v)
 PPFnSubstring::PPFnSubstring(dynamic_context *_cxt_,
                              operation_info _info_,
                              PPOpIn _str_child_,
-                             PPOpIn _start_child_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _start_child_) : PPIterator(_cxt_, _info_, "PPFnSubstring"),
                                                      str_child(_str_child_),
                                                      start_child(_start_child_),
                                                      is_length(false)
@@ -1212,7 +1212,7 @@ PPFnSubstring::PPFnSubstring(dynamic_context *_cxt_,
                              operation_info _info_,
                              PPOpIn _str_child_,
                              PPOpIn _start_child_,
-                             PPOpIn _length_child_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _length_child_) : PPIterator(_cxt_, _info_, "PPFnSubstring"),
                                                       str_child(_str_child_),
                                                       start_child(_start_child_),
                                                       length_child(_length_child_),
@@ -1365,7 +1365,7 @@ void PPFnSubstring::do_accept(PPVisitor &v)
 PPFnNormalizeUnicode::PPFnNormalizeUnicode(dynamic_context *_cxt_,
                              operation_info _info_,
                              PPOpIn _str_child_,
-                             PPOpIn _type_child_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _type_child_) : PPIterator(_cxt_, _info_, "PPFnNormalizeUnicode"),
                                                     str_child(_str_child_),
                                                     type_child(_type_child_)
 {
@@ -1373,7 +1373,7 @@ PPFnNormalizeUnicode::PPFnNormalizeUnicode(dynamic_context *_cxt_,
 
 PPFnNormalizeUnicode::PPFnNormalizeUnicode(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _str_child_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _str_child_) : PPIterator(_cxt_, _info_, "PPFnNormalizeUnicode"),
                                                    str_child(_str_child_)
 {
 }

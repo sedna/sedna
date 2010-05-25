@@ -44,30 +44,8 @@ void term_debug_info_output(const char *msg)
 {
     if (debug_output)
     {
-        int i = 0;
-        int msg_length = strlen(msg);
-        if (strncmp(msg, "\nSEDNA TRACE", 12) == 0)
-        {
-            i = 13;
-            while((i<523) && (i<msg_length) && (msg[i]!='\n'))
-            {
-                i++;
-            }
-            memcpy(debug_indent, msg+13, i);
-            debug_indent[i-13]='\0';
-			i++;
-        }
-
-        fprintf(res_os, "\n%s", debug_indent);
+        fprintf(res_os, "\n%s\n", msg);
         fflush(res_os);
-
-        while(i<msg_length)
-        {
-            fprintf(res_os, "%c", msg[i]);
-            fflush(res_os);
-            if (msg[i]=='\n') fprintf(res_os, "%s", debug_indent);
-            i++;
-        }
     }
 }
 

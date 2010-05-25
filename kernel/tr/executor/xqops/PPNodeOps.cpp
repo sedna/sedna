@@ -20,7 +20,7 @@
 
 PPFnName::PPFnName(dynamic_context *_cxt_,
                    operation_info _info_,
-                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                   PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnName"),
                                      child(_child_)
 {
 }
@@ -109,7 +109,7 @@ void PPFnName::do_accept(PPVisitor &v)
 
 PPFnLocalName::PPFnLocalName(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                             PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnLocalName"),
                                                child(_child_)
 {
 }
@@ -199,7 +199,7 @@ void PPFnLocalName::do_accept(PPVisitor &v)
 
 PPFnNamespaceUri::PPFnNamespaceUri(dynamic_context *_cxt_,
                                    operation_info _info_,
-                                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                   PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnNamespaceUri"),
                                                      child(_child_)
 {
 }
@@ -288,7 +288,7 @@ void PPFnNamespaceUri::do_accept(PPVisitor &v)
 
 PPFnNumber::PPFnNumber(dynamic_context *_cxt_,
                        operation_info _info_,
-                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnNumber"),
                                          child(_child_)
 {
 }
@@ -382,7 +382,7 @@ void PPFnNumber::do_accept(PPVisitor &v)
 
 PPFnRoot::PPFnRoot(dynamic_context *_cxt_,
                    operation_info _info_,
-                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                   PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnRoot"),
                                      child(_child_)
 {
 }

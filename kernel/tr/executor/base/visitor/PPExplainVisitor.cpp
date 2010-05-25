@@ -155,9 +155,9 @@ void PPExplainVisitor::insertOperationElement(const char* name,
     {
         if(profiler_mode)
         {
-             const profile_info& pi = qep->get_profile_info();
-             attr_left = insertAttributeHelper("time", attr_left, left, to_string(pi.time));
-             attr_left = insertAttributeHelper("calls", attr_left, left, int2string(pi.calls));
+            const operation_info& oi = qep->get_operation_info();
+            attr_left = insertAttributeHelper("time", attr_left, left, to_string(oi.profile->time));
+            attr_left = insertAttributeHelper("calls", attr_left, left, int2string(oi.profile->calls));
         }
     }
 }
@@ -565,11 +565,6 @@ void PPExplainVisitor::visit(PPFnError* op)
 void PPExplainVisitor::visit(PPFnTrace* op)
 {
     insertOperationElement("PPFnTrace", left, parent, op);
-}
-
-void PPExplainVisitor::visit(PPDebug* op)
-{
-    insertOperationElement("PPDebug", left, parent, op);
 }
 
 void PPExplainVisitor::visit(PPExcept* op)

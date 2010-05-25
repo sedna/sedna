@@ -456,24 +456,3 @@ void dynamic_context::set_datetime()
     }
 }
 
-
-int dynamic_context::stack_trace_debug;
-
-void dynamic_context::set_session_option(se_session_option type, const void* s, int n)
-{
-    switch (type)
-    {
-        case se_debug_mode:
-            stack_trace_debug = *(int*)s;
-            break;
-        default:
-            throw USER_EXCEPTION2(SE4617, "Unknown option");
-    }
-}
-
-void dynamic_context::reset_session_options()
-{
-    stack_trace_debug = SEDNA_DEBUG_OFF;
-}
-
-

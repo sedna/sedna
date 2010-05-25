@@ -26,6 +26,7 @@ private:
     virtual void do_close();
     virtual void do_execute();
     virtual void do_accept(PPVisitor& v);
+    virtual bool do_next();
 
 public:
     PPQueryRoot(dynamic_context *_cxt_,
@@ -33,15 +34,14 @@ public:
     virtual ~PPQueryRoot();
 
     /* Returns true if successfuly got next item,
-     * false - if result is over.
-     */
+     * false - if result is over. */
     bool next();
     bool supports_next() { return true; }
     bool is_update() { return false; }
 
-    // use it before destroying PPQueryRoot when it is used as a carrier for trigger/module query-action
+    /* Use it before destroying PPQueryRoot when it is
+     * used as a carrier for trigger/module query-action */
     void detachChild(PPOpIn *poi, dynamic_context **dc);
 };
-
 
 #endif /* _PPQUERYROOT_H */

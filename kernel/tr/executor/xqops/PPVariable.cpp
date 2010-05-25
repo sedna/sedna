@@ -12,7 +12,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 PPVariable::PPVariable(dynamic_context *_cxt_,
                        operation_info _info_, 
-                       var_dsc _dsc_) : PPIterator(_cxt_, _info_), 
+                       var_dsc _dsc_) : PPIterator(_cxt_, _info_, "PPVariable"), 
                                         dsc(_dsc_)
 {
 }
@@ -61,7 +61,7 @@ void PPVariable::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPGlobalVariable::PPGlobalVariable(dynamic_context *_cxt_,
                                    operation_info _info_, 
-                                   var_dsc _dsc_) : PPIterator(_cxt_, _info_), 
+                                   var_dsc _dsc_) : PPIterator(_cxt_, _info_, "PPGlobalVariable"), 
                                                     dsc(_dsc_)
 {
 }

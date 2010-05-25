@@ -17,7 +17,7 @@
 
 PPDmStringValue::PPDmStringValue(dynamic_context *_cxt_,
                                  operation_info _info_,
-                                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                 PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPDmStringValue"),
                                                    child(_child_)
 {
 }
@@ -94,7 +94,7 @@ void PPDmStringValue::do_accept(PPVisitor &v)
 
 PPDmTypedValue::PPDmTypedValue(dynamic_context *_cxt_,
                                operation_info _info_,
-                               PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                               PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPDmTypedValue"),
                                                  child(_child_)
 {
 }

@@ -41,7 +41,7 @@ PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,
                                    operation_info _info_,
                                    PPOpIn _seq1_,
                                    PPOpIn _seq2_,
-                                   int _type_): PPIterator(_cxt_, _info_),
+                                   int _type_): PPIterator(_cxt_, _info_, "PPNodeComparison"),
                                                 seq1(_seq1_),
                                                 seq2(_seq2_),
                                                 type(_type_)

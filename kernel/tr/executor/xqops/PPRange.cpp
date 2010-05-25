@@ -14,7 +14,7 @@
 PPRange::PPRange(dynamic_context *_cxt_,
                  operation_info _info_,
                  const PPOpIn& _start_,
-                 const PPOpIn& _end_) : PPIterator(_cxt_, _info_),
+                 const PPOpIn& _end_) : PPIterator(_cxt_, _info_, "PPRange"),
                  start_op(_start_),
                  end_op(_end_)
 {

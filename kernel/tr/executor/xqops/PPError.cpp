@@ -18,7 +18,7 @@ PPFnError::PPFnError(dynamic_context *_cxt_,
                      operation_info _info_, 
                      PPOpIn &_child_err_,
                      PPOpIn &_child_descr_,
-                     PPOpIn &_child_obj_) : PPIterator(_cxt_, _info_),
+                     PPOpIn &_child_obj_) : PPIterator(_cxt_, _info_, "PPFnError"),
                                             child_err(_child_err_),
                                             child_descr(_child_descr_),
                                             child_obj(_child_obj_)
@@ -144,7 +144,7 @@ void PPFnError::do_accept(PPVisitor &v)
 PPFnTrace::PPFnTrace(dynamic_context *_cxt_,
                      operation_info _info_,
                      PPOpIn _value_child_,
-                     PPOpIn _label_child_) : PPIterator(_cxt_, _info_),
+                     PPOpIn _label_child_) : PPIterator(_cxt_, _info_, "PPFnTrace"),
                                              value_child(_value_child_),
                                              label_child(_label_child_),
                                              first_time(true),
@@ -182,33 +182,39 @@ void PPFnTrace::do_close()
 
 void PPFnTrace::do_next(tuple &t)
 {
-    bool is_first = false;
     if (first_time)
     {
         first_time = false;
-        is_first = true;
 
         label_child.op->next(t);    
-        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
+        if (t.is_eos())
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace. Label argument cannot be empty sequence.");
     
-        tc = label_child.get(t);
-        if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
+        tc = atomize(label_child.get(t));
+        if (!is_string_type(tc.get_atomic_type()))
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace. Invalid label type (xs_string/derived/promotable is expected).");
     
         label_child.op->next(t);
-        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
+        if (!t.is_eos())
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace. Argument contains more than one item.");
             
         tc = tuple_cell::make_sure_light_atomic(tc);
+        
+        if (tc.get_strlen_mem() > 50) 
+            throw XQUERY_EXCEPTION2(XPTY0004, "Too long trace prefix is given in fn:trace function");
     }
 
     value_child.op->next(t);
-    if (t.is_eos()) 
+    
+    if (t.is_eos())
+    {
         first_time = true;
+    }
     else 
     {
         dostr->set_debug_info_type(se_QueryTrace);
-        (*dostr) << "\nSEDNA TRACE " << tc.get_str_mem() << "\n";
-        print_tuple(t, *dostr, cxt, xml, is_first, true);
+        (*dostr) << tc.get_str_mem() << " ";
+        print_tuple(t, *dostr, cxt, xml, true, false);
         dostr->flush();
     }
 }

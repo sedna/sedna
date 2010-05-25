@@ -19,7 +19,7 @@
 
 PPDmNodeKind::PPDmNodeKind(dynamic_context *_cxt_,
                            operation_info _info_,
-                           PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                           PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPDmNodeKind"),
                                              child(_child_)
 {
 }
@@ -121,7 +121,7 @@ void PPDmNodeKind::do_accept(PPVisitor &v)
 
 PPFnNodeName::PPFnNodeName(dynamic_context *_cxt_,
                            operation_info _info_,
-                           PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                           PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnNodeName"),
                                              child(_child_)
 {
 }
@@ -201,7 +201,7 @@ void PPFnNodeName::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnNilled::PPFnNilled(dynamic_context *_cxt_,
                        operation_info _info_,
-                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnNilled"),
                                          child(_child_)
 {
 }
@@ -281,7 +281,7 @@ void PPFnNilled::do_accept(PPVisitor &v)
 
 PPFnString::PPFnString(dynamic_context *_cxt_,
                        operation_info _info_,
-                       PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                       PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnString"),
                                          child(_child_)
 {
 }
@@ -365,7 +365,7 @@ void PPFnString::do_accept(PPVisitor &v)
 
 PPFnData::PPFnData(dynamic_context *_cxt_,
                    operation_info _info_,
-                   PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                   PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnData"),
                                      child(_child_)
 {
 }
@@ -424,7 +424,7 @@ void PPFnData::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnBaseURI::PPFnBaseURI(dynamic_context *_cxt_,
                          operation_info _info_,
-                         PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                         PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnBaseURI"),
                                            child(_child_)
 {
 }
@@ -503,7 +503,7 @@ void PPFnBaseURI::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnDocumentURI::PPFnDocumentURI(dynamic_context *_cxt_,
                                  operation_info _info_,
-                                 PPOpIn _child_) : PPIterator(_cxt_, _info_),
+                                 PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnDocumentURI"),
                                                    child(_child_)
 {
 }
@@ -592,7 +592,7 @@ void PPFnDocumentURI::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnStaticBaseUri::PPFnStaticBaseUri(dynamic_context *_cxt_, 
-                                     operation_info _info_) : PPIterator(_cxt_, _info_)
+                                     operation_info _info_) : PPIterator(_cxt_, _info_, "PPFnStaticBaseUri")
 {
 }
 
@@ -650,7 +650,7 @@ void PPFnStaticBaseUri::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPFnDefaultCollation::PPFnDefaultCollation(dynamic_context *_cxt_,
-                                           operation_info _info_) : PPIterator(_cxt_, _info_)
+                                           operation_info _info_) : PPIterator(_cxt_, _info_, "PPFnDefaultCollation")
 {
 }
 

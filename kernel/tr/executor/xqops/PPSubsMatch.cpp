@@ -16,7 +16,7 @@ PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,
                          operation_info _info_,
 						 PPOpIn _seq1_, 
 						 PPOpIn _seq2_,
-						 subsmatch_type _smt_):	PPIterator(_cxt_, _info_), 
+						 subsmatch_type _smt_):	PPIterator(_cxt_, _info_, "PPSubsMatch"), 
 						                        seq1(_seq1_), 
 						                        seq2(_seq2_),
 						                        smt(_smt_)

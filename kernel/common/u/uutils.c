@@ -122,15 +122,6 @@ __int64  strto__int64(const char *nptr, char **endptr, int base)
 #endif
 }
 
-__uint64 strto__uint64(const char *nptr, char **endptr, int base)
-{
-#ifdef _WIN32
-    return _strtoui64(nptr, endptr,base);
-#else
-    return strtoull(nptr, endptr,base);
-#endif
-}
-
 __int64 u_double2int64(double v)
 {
     __int64 res;
