@@ -6,7 +6,8 @@ copyright.sh
 linecount.sh
 release.sh
 coverage.pl
-doc/CodingGuidelines
+scripts
+doc/man
 libs/dtsearch
 configure.sh
 kernel/tr/xqp/release.sh

@@ -1,0 +1,93 @@
+a.non-underline {
+	text-decoration: none;
+}
+a.non-underline:hover {
+	text-decoration: none;
+}
+
+body {
+   	font-family: verdana,arial,helvetica,sans-serif;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+.ver-7 {
+	font-size: 7pt;
+}
+.ver-7rov {
+	font-size: 7pt;
+	text-align: justify;
+}
+.ver8 {
+	font-size: 8pt;
+}
+.ver-8rov {
+	font-size: 8pt;
+	text-align: justify;
+	color: #FFFFFF;
+}
+.ver9 {
+	font-size: 9pt;
+}
+.ver9-rov {
+	font-size: 9pt;
+	text-align: justify;
+}
+.command {
+    margin:15px 20px 15px 0px;
+    padding:2px 40px;
+    font-family:  monospace;
+    background-color: #eae8e9;
+   	font-weight: bold;
+}
+
+#footer	{ 
+	clear: both;
+	width:99%; 
+	margin: 5px 0px 0px 0px; 
+	padding:2px 0px 0px 0px; 
+	border-top:1px solid #ccc; 
+	color:#555; 
+}
+#footer #copyright	{ 
+	font-size: 85%;
+	margin:0px 12px 0px 12px; 
+	float:right; 
+}
+
+#footer ul	{ 
+	margin:0px; 
+	padding:0px; 
+	list-style: none; 
+	float:left; 
+}
+
+/* Fixes odd ordering problem in FF */
+#page #footer ul {
+	list-style: none;
+}
+#footer li	{ 
+	font-size:90%; 
+	margin:0px; 
+	padding:0px 8px 0px 6px; 
+	float:left; 
+	background:url("../images/sep.png") no-repeat right top;
+}
+#footer li.last	{ 
+	background:none; 
+}
+#footer a{
+	color:#555; 
+}
+.style3 {
+	color: #D95032;
+	font-weight: bold;
+}
+#contents li	{ 
+	list-style: none;
+	font-size:90%; 
+	padding:0px 0px 0px 20px; 
+	background:url("../images/arrow_down.gif") no-repeat left top;
+}
+
