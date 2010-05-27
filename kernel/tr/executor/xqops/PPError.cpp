@@ -200,7 +200,7 @@ void PPFnTrace::do_next(tuple &t)
             
         tc = tuple_cell::make_sure_light_atomic(tc);
         
-        if (tc.get_strlen_mem() > 50) 
+        if (tc.get_strlen_mem() > 500) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Too long trace prefix is given in fn:trace function");
     }
 
