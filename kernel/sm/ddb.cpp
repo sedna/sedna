@@ -67,6 +67,7 @@ int main(int argc, char** argv)
 
 
     try {
+        if (uSocketInit(__sys_call_error) != 0) throw USER_EXCEPTION(SE3001);
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
@@ -111,9 +112,6 @@ int main(int argc, char** argv)
         if (!exist_db(db_name))
             throw USER_EXCEPTION2(SE4308 , (string("There is no database: ") + db_name).c_str());
    
-        if (uSocketInit(__sys_call_error) != 0)
-            throw USER_EXCEPTION(SE3001);
-
         /* Case when sedna works and we must 
          * check whether database is running
          */
