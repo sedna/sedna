@@ -112,7 +112,7 @@ elif test "$OS" "=" "FreeBSD"; then
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=OFF
-  MAKE_COMMAND=gmake
+  MAKE_COMMAND=make
   MD5=md5
   OS_TYPE=nix
 
@@ -123,7 +123,7 @@ elif test "$OS" "=" "SunOS"; then
   export DISTR_EXT=sh
   export SRC_EXT=tar.gz
   export SQL_CONNECTION=OFF
-  MAKE_COMMAND=gmake
+  MAKE_COMMAND=make
   MD5="digest -a md5"
   OS_TYPE=nix
 
