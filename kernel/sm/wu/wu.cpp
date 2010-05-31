@@ -58,11 +58,11 @@ void AnalyzePopularFailure(const char *fn, XPTR xptr, XPTR lxptr, VersionsHeader
     for (i=0; i<VE_VERSIONS_COUNT; ++i)
     {
         if (hdr->xptr[i] == 0) break;
-        p += sprintf(p, "{%016" I64FMT "x, %016" I64FMT "x} ", hdr->xptr[i], hdr->creatorTs[i]);
+        p += sprintf(p, "{%016"PRIx64", %016"PRIx64"} ", hdr->xptr[i], hdr->creatorTs[i]);
     }
 
     elog(EL_ERROR, ("%s - %s", fn, hint));
-    elog(EL_ERROR, ("%s - xptr %016" I64FMT "x, lxptr %016" I64FMT "x", fn, xptr, lxptr));
+    elog(EL_ERROR, ("%s - xptr %016"PRIx64", lxptr %016"PRIx64, fn, xptr, lxptr));
     elog(EL_ERROR, ("%s - vheader %s", fn, buf));
 }
 
