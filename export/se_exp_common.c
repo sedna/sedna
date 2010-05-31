@@ -245,9 +245,15 @@ int write_xquery_script(qbuf_t *qbuf,const char * filename) {
 		  printf("\nERROR: failed to open file %s for writing",filename);
 		  return -1;
 	}
-	for (i=0;i<(qbuf->d_size-1);i++) 
-		  fprintf(file,"%s%s",qbuf->buf[i],DELIMITER);
-	if (qbuf->d_size > 0) fprintf(file,"%s",qbuf->buf[qbuf->d_size-1]);
+
+    if (qbuf->d_size > 0)
+    {
+        for (i = 0; i < (qbuf->d_size - 1); i++)
+            fprintf(file,"%s%s",qbuf->buf[i],DELIMITER);
+
+        fprintf(file,"%s",qbuf->buf[qbuf->d_size - 1]);
+    }
+
 	fclose(file);
 	return 0;
 }
