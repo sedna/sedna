@@ -12,12 +12,6 @@
 #include "wuincguard.h"
 #include <string.h>
 
-#ifdef _WIN32
-#define  I64FMT		"I64"
-#else
-#define I64FMT		__PRI64_PREFIX
-#endif
-
 static
 inline
 int Is2Power(int val)

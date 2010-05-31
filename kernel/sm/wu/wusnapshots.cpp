@@ -1192,7 +1192,7 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 					{
 						if (perChainOutCountX2[i]&1)
 						{
-							sprintf(buf,". %016"I64FMT"x",xscan[i]->xptr);
+							sprintf(buf,". %016"PRIx64, xscan[i]->xptr);
 							xscan[i]++;
 							perChainOutCountX2[i]++;
 						}
@@ -1206,13 +1206,13 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 							}
 							else if (xscan[i]->lxptr==0)
 							{
-								sprintf(buf,"  %016"I64FMT"x",xscan[i]->xptr);
+								sprintf(buf,"  %016"PRIx64, xscan[i]->xptr);
 								xscan[i]++;
 								perChainOutCountX2[i]+=2;
 							}
 							else
 							{
-								sprintf(buf,"L %016"I64FMT"x",xscan[i]->lxptr);
+								sprintf(buf,"L %016"PRIx64, xscan[i]->lxptr);
 								perChainOutCountX2[i]++;
 							}							
 						}
