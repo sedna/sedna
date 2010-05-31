@@ -220,30 +220,43 @@ int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec, sys_call_error_
 #else
 {
     int res = 0;
-    unsigned int count = 0;
     
-    //struct sembuf op_op[1] = {{0, -1, IPC_NOWAIT}};
     struct sembuf op_op[1];
     op_op[0].sem_num = 0;
     op_op[0].sem_op = -1;
     op_op[0].sem_flg = IPC_NOWAIT;
 
-        
-    for(; count < (millisec/1000); count++)
+    do
     {    
     	res = semop(sem, op_op, 1);
 	
-    	if (res == 0) return 0; 
+    	if (res == 0)
+    	{
+    	    return 0;
+    	}
         else if (errno == EAGAIN)
         {
-            sleep(1);
+            if (millisec >= 1000)
+            {
+                sleep(1);
+                millisec -= 1000;
+            }
+            else
+            {
+                /* we should do something here instead of break;
+                 * for example:
+                 *
+                 * nanosleep(...);
+                 */
+                millisec = 0;
+            }
         }
         else 
         {
             sys_call_error("semop");
             return 1;
         }
-    }
+    } while (millisec);
 
     return 2;
 } 
