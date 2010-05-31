@@ -555,7 +555,7 @@ void socket_client::set_session_options(msg_struct *msg)
             {
                 int value;
                 net_int2int(&value, msg->body+pos);
-                if(SEDNA_LOG_LESS != value || SEDNA_LOG_FULL != value)
+                if (SEDNA_LOG_LESS != value && SEDNA_LOG_FULL != value)
                     throw USER_EXCEPTION2(SE4617, "unknown log-less mode");
                 SwitchLogMode(value);
                 break;
