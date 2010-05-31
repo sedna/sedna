@@ -562,7 +562,7 @@ int llActivateCheckpoint()
 
     // semaphore may be already down if last checkpoint was initiated by transaction
     // if checkpoint was initiated by llNeedCheckpoint logic then it'd be upped
-    res = USemaphoreDownTimeout(WaitCheckpoint, 1, __sys_call_error);
+    res = USemaphoreDownTimeout(WaitCheckpoint, 0, __sys_call_error);
 
     if (res != 0 && res != 2) // normal down (0) or timeout (2)
          LL_ERROR("internal ll error: cannot down wait for checkpoint semaphore");
