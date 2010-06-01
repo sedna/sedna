@@ -15,6 +15,7 @@
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/ft/ft_cache.h"
+#include "tr/ft/ft_storage.h"
 //#include "tr/ft/ft_index.h"
 #include "tr/ft/update_history.h"
 
@@ -98,13 +99,6 @@ struct doc_parser
 	doc_parser(string_consumer_fn _fn,void* _p): fn(_fn),p(_p){};
 };
 
-struct ft_idx_data
-{
-	xptr btree_root;
-};
-
-typedef struct ft_idx_data ft_idx_data_t;
-
 void delete_ft_custom_tree(ft_custom_tree_t * custom_tree);
 
 struct ft_index_cell_object : public catalog_object
@@ -126,7 +120,7 @@ struct ft_index_cell_object : public catalog_object
     bool is_doc;
     ft_index_type ftype;
     ft_index_impl impl;
-    ft_idx_data_t ft_data;
+    struct FtsData fts_data;
 
     xptr serial_root;
     xptr pstr_sequence;
@@ -154,9 +148,9 @@ struct ft_index_cell_object : public catalog_object
         impl(_impl),
         serial_root(XNULL),
         pstr_sequence(XNULL),
-        custom_tree(NULL)
+        custom_tree(NULL),
+        fts_data()
     {
-        ft_data.btree_root = XNULL;
         index_title = cat_strcpy(this, _index_title);
         doc_name = cat_strcpy(this, _doc_name);
     };

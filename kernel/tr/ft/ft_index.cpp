@@ -161,7 +161,7 @@ static void p_finish(void *state)
 }
 
 
-void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx)
+void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct FtsData *ft_data, ftc_index_t ftc_idx)
 {
 	U_ASSERT(op == ft_insert || op == ft_delete);
 	//TODO: reuse parser&parse_data for parsing multiple documents (or don't use expat and reuse parse_data)
@@ -213,7 +213,7 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft_idx_da
 
 #include "tr/idx/indexes.h"
 
-void ft_idx_delete(ft_idx_data_t *ft_data)
+void ft_idx_delete(struct FtsData *ft_data)
 {
 	bt_drop(ft_data->btree_root);
 }

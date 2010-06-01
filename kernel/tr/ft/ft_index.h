@@ -11,6 +11,7 @@
 #include "tr/ft/ft_index_data.h"
 #include "tr/strings/strings.h"
 #include "tr/ft/ft_cache.h"
+#include "tr/ft/ft_storage.h"
 
 enum ft_index_op_t
 {
@@ -18,8 +19,8 @@ enum ft_index_op_t
 };
 
 //op must be insert or delete
-void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ft_idx_data_t *ft_data, ftc_index_t ftc_idx);
-void ft_idx_delete(ft_idx_data_t *ft_data);
+void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct FtsData *ft_data, ftc_index_t ftc_idx);
+void ft_idx_delete(struct FtsData *ft_data);
 
 
 #endif

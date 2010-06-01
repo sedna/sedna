@@ -9,6 +9,7 @@
 #include "common/xptr.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/sorted_sequence.h"
+#include "tr/ft/ft_storage.h"
 #include "tr/ft/string_map.h" //FIXME: remove (need allocator), don't use MallocAllocator
 
 #define FTC_ALLOCATOR MallocAllocator
@@ -18,7 +19,7 @@ typedef FTC_ALLOCATOR::ptr_t ftc_doc_t;
 typedef FTC_ALLOCATOR::ptr_t ftc_index_t;
 
 //ft_index_sem must be accuired!
-ftc_index_t ftc_get_index(const char *name, xptr btree_root);
+ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data);
 
 //returned doc may become invalid after any operation with index
 ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc);
@@ -54,8 +55,8 @@ private:
 	FTC_OCCURMAP *om;
 	FTC_OCCURMAP::pers_sset_entry *ome;
 
-	bt_cursor_tmpl<ft_idx_btree_element> bcur;
-	ft_idx_btree_element ce;
+	struct FtsScanData fts_sd;
+
 	inline bool get_next_result_step(tuple &t);
 public:
 	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx) {}
