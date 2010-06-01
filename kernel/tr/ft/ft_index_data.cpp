@@ -67,7 +67,7 @@ void ft_index_cell_object::serialize_data(se_simplestream &stream)
     stream.write_string(index_title);
     stream.write(&ftype, sizeof(ft_index_type));
     stream.write(&impl, sizeof(ft_index_type));
-    stream.write(&ft_data, sizeof(ft_idx_data_t));
+    stream.write(&fts_data, sizeof(struct FtsData));
 
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
     PathExpr2lr(object, obj_str);
@@ -112,7 +112,7 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     stream.read_string(SSTREAM_SAVED_LENGTH, index_title);
     stream.read(&ftype, sizeof(ft_index_type));
     stream.read(&impl, sizeof(ft_index_type));
-    stream.read(&ft_data, sizeof(ft_idx_data_t));
+    stream.read(&fts_data, sizeof(struct FtsData));
 
     if ((len = stream.read_string_len()) != 0)
         obj_str = (char *)malloc(len);
@@ -202,8 +202,8 @@ ft_index_cell_xptr create_ft_index(
     ftc_index_t ftc_idx;
     if (_impl == ft_ind_native)
     {
-        idc->ft_data.btree_root = bt_create(xs_string); //FIXME: moved from ft_idx_create
-        ftc_idx = ftc_get_index(_index_title, idc->ft_data.btree_root);
+		fts_create(&idc->fts_data);
+        ftc_idx = ftc_get_index(_index_title, &idc->fts_data);
     }
 
     hl_logical_log_ft_index(_object_path, _it, _index_title, _doc_name, _is_doc, idc->custom_tree, true);
@@ -267,8 +267,7 @@ ft_index_cell_xptr create_ft_index(
 					in_buf.clear();
 					//print_node_to_buffer(tmp, in_buf, idc->ftype, idc->custom_tree);
 					idc->serial_put(tmp, tmp_indir, in_buf);
-					ft_index_update(ft_insert, tmp_indir, &in_buf, &idc->ft_data, ftc_idx);
-
+					ft_index_update(ft_insert, tmp_indir, &in_buf, &idc->fts_data, ftc_idx);
 
 					tmp=getNextDescriptorOfSameSortXptr(tmp);
 				}
@@ -306,7 +305,7 @@ void delete_ft_index (const char *index_title, bool just_heap)
     #endif
             case ft_ind_native:
                 {
-                    ft_idx_delete(&idc->ft_data);
+                    ft_idx_delete(&idc->fts_data);
 					idc->destroy_serial_tree();
                     break;
                 }
@@ -327,7 +326,7 @@ ft_index_cell_xptr find_ft_index(const char* title, ftc_index_t *ftc_idx)
 	if (idc.found())
 	{
 		if (ftc_idx && idc->impl == ft_ind_native)
-			*ftc_idx = ftc_get_index(title, idc->ft_data.btree_root);
+			*ftc_idx = ftc_get_index(title, &idc->fts_data);
 		return idc.ptr();
 	}
 	else
@@ -351,7 +350,7 @@ static void ft_update_seq(xptr_sequence *seq, ft_index_cell_object *idc, ftc_ind
 			{
 				in_buf.clear();
 				idc->serial_get(node_indir).serialize_to_buf(&in_buf);
-				ft_index_update(ft_delete, node_indir, &in_buf, &idc->ft_data, ftc_idx);
+				ft_index_update(ft_delete, node_indir, &in_buf, &idc->fts_data, ftc_idx);
 				if (op == ft_delete)
 					idc->serial_remove(node_indir);
 			}
@@ -363,7 +362,7 @@ static void ft_update_seq(xptr_sequence *seq, ft_index_cell_object *idc, ftc_ind
 					idc->serial_update(node, node_indir, in_buf);
 				else //ft_insert
 					idc->serial_put(node, node_indir, in_buf);
-				ft_index_update(ft_insert, node_indir, &in_buf, &idc->ft_data, ftc_idx);
+				ft_index_update(ft_insert, node_indir, &in_buf, &idc->fts_data, ftc_idx);
 			}
 		}
 	}
@@ -387,7 +386,7 @@ void ft_index_cell_object::update_index(update_history *h)
 #endif
 	case ft_ind_native:
 		{
-			ftc_index_t ftc_idx = ftc_get_index(this->index_title, this->ft_data.btree_root);
+			ftc_index_t ftc_idx = ftc_get_index(this->index_title, &this->fts_data);
 			ft_update_seq(deleted, this, ftc_idx, ft_delete);
 			ft_update_seq(updated, this, ftc_idx, ft_update);
 			ft_update_seq(inserted, this, ftc_idx, ft_insert);
@@ -405,6 +404,7 @@ xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 {
 	xptr res = XNULL;
 	str_off_t sz=tbuf.get_size();
+
 	if (sz<=PSTRMAXSIZE)
 	{
 		char* mem=tbuf.c_str();
@@ -413,6 +413,7 @@ xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 		{
 			xptr new_blk = pstr_create_blk(true);
 			res= pstr_do_allocate(new_blk, mem, (int)sz);
+			this->pstr_sequence = new_blk;
 		}
 		return res;
 	}
@@ -431,7 +432,7 @@ void ft_index_cell_object::remove_from_pstr(doc_serial_header& head )
 	{
 		pstr_do_deallocate(
 			BLOCKXPTR(head.ptr),
-			head.ptr, (int)head.length, true);
+			head.ptr, (int)head.length, !same_block(this->pstr_sequence, head.ptr));
 	}
 	else
 	{
