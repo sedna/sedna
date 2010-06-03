@@ -221,7 +221,7 @@ PPFnSQLConnect::PPFnSQLConnect(dynamic_context *_cxt_,
 
 PPFnSQLConnect::~PPFnSQLConnect()
 {
-    for (int i = 0; i < arr.size(); i++)
+    for (arr_of_PPOpIn::size_type i = 0; i < arr.size(); i++)
     {
         delete arr[i].op;
         arr[i].op = NULL;
@@ -352,7 +352,7 @@ PPIterator* PPFnSQLConnect::do_copy(dynamic_context *_cxt_)
 {
     PPFnSQLConnect *res = se_new PPFnSQLConnect(_cxt_, info, arr);
 
-    for (int it = 0; it < arr.size(); it++)
+    for (arr_of_PPOpIn::size_type it = 0; it < arr.size(); it++)
         res->arr[it].op = arr[it].op->copy(_cxt_);
 
     return res;
@@ -362,7 +362,7 @@ void PPFnSQLConnect::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
-    for (int it = 0; it < arr.size(); it++)
+    for (arr_of_PPOpIn::size_type it = 0; it < arr.size(); it++)
         arr[it].op->accept(v);
     v.pop();
 }
@@ -384,7 +384,7 @@ PPFnSQLExecute::PPFnSQLExecute(dynamic_context *_cxt_,
 
 PPFnSQLExecute::~PPFnSQLExecute()
 {
-    for (int i = 0; i < arr.size(); i++)
+    for (arr_of_PPOpIn::size_type i = 0; i < arr.size(); i++)
     {
         delete arr[i].op;
         arr[i].op = NULL;
@@ -525,7 +525,7 @@ PPIterator* PPFnSQLExecute::do_copy(dynamic_context *_cxt_)
 {
     PPFnSQLExecute *res = se_new PPFnSQLExecute(_cxt_, info, arr, exec_update);
 
-    for (int it = 0; it < arr.size(); it++)
+    for (arr_of_PPOpIn::size_type it = 0; it < arr.size(); it++)
         res->arr[it].op = arr[it].op->copy(_cxt_);
 
     return res;
@@ -535,7 +535,7 @@ void PPFnSQLExecute::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
-    for (int it = 0; it < arr.size(); it++)
+    for (arr_of_PPOpIn::size_type it = 0; it < arr.size(); it++)
         arr[it].op->accept(v);
     v.pop();
 }

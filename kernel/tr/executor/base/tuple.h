@@ -270,7 +270,7 @@ public:
     /// variable size atomic values
     char*              get_str_mem()     const { return ((str_counted_ptr*)(&data))->get(); }
     xptr               get_str_vmm()     const { return *(xptr*)(&data); }
-    int64_t            get_strlen_mem()  const { return (int64_t)strlen(get_str_mem()); }
+    size_t             get_strlen_mem()  const { return strlen(get_str_mem()); }
     int64_t            get_strlen_vmm()  const { return *(int64_t*)((char*)(&data) + sizeof(xptr)); }
     int64_t            get_strlen()      const { return is_light_atomic() ? get_strlen_mem() : get_strlen_vmm(); }
 
@@ -591,7 +591,7 @@ public:
     static tuple_cell make_sure_light_atomic(const tuple_cell& tc);
     /// copy content of the string to buf (!!! FIXME: not very well designed approach...)
     char* copy_string(char *buf) const;
-    char* copy_string(char *buf, int64_t n) const;
+    char* copy_string(char *buf, size_t n) const;
 
     std::string type2string() const;
 };
@@ -664,4 +664,4 @@ struct tuple
 };
 
 
-#endif
+#endif /* _TUPLE_H */

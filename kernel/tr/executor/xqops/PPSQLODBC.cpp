@@ -509,7 +509,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 	charsize--;
 	char* tmp=se_new char[charsize];
 	int shift=0;
-	for (int i=0;i<at_vals.size();i++)
+    for (std::vector<tuple_cell>::size_type i=0;i<at_vals.size();i++)
 	{
         at_vals[i].copy_string(tmp+shift);
         shift += at_vals[i].get_strlen();
@@ -530,7 +530,7 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 		throw XQUERY_EXCEPTION2(SE2106, "bad parameters count");
 
 	std::vector<tuple_cell> values(param_types.size());
-	for (id = 1; id < params.size(); id++)
+    for (arr_of_PPOpIn::size_type id = 1; id < params.size(); id++)
 	{
 		tuple_cell tmp = getStringOrNullParameter(params[id]);
 		values[id-1] = tmp;
@@ -781,7 +781,7 @@ void SQLODBCConnection::close()
 {
 	SQLRETURN rc;
 	//XXX - this suxx if some prepared_stmts deleted
-	for (int i = 0; i < prepared_stmts.size(); i++)
+    for (std::vector<SQLHandle *>::size_type i = 0; i < prepared_stmts.size(); i++)
 		prepared_stmts[i]->close();
 	//TODO - try to release all executors first?
 	rc = SQLODBCBase::fSQLDisconnect(hdbc);

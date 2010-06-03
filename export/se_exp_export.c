@@ -16,7 +16,8 @@ int export(const char * path,const char *url,const char *db_name,const char *log
   qbuf_t create_indexes = {NULL,0,0};
   qbuf_t create_ftindexes = {NULL,0,0};
   qbuf_t create_sec = {NULL,0,0};
-  int i,res,value;
+  int res,value;
+  size_t i;
   FILE *log,*f;
   char strbuf[PATH_SIZE];
   //int error_status=1;

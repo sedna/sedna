@@ -9,11 +9,11 @@ if (UNIX)
 endif (UNIX)
 
 if ("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
-    add_definitions(-D_POSIX_PTHREAD_SEMANTICS)
+    add_definitions(-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT)
 endif ("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
 
 if ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
     add_definitions(-D_CONSOLE)   # needed? CMake probably inserts this anyway
     add_definitions(-DXML_STATIC) # needed for expat
-    add_definitions(-DNOMINMAX) # don't let windows.h to define min-max macroses
+    add_definitions(-DNOMINMAX)   # don't let windows.h to define min-max macroses
 endif ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")

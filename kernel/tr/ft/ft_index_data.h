@@ -146,10 +146,10 @@ struct ft_index_cell_object : public catalog_object
         is_doc(_is_doc),
         ftype(_it),
         impl(_impl),
+        fts_data(),
         serial_root(XNULL),
         pstr_sequence(XNULL),
-        custom_tree(NULL),
-        fts_data()
+        custom_tree(NULL)
     {
         index_title = cat_strcpy(this, _index_title);
         doc_name = cat_strcpy(this, _doc_name);

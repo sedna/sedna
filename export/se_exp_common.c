@@ -240,7 +240,7 @@ int fill_qbuf(struct SednaConnection *conn, qbuf_t* qbuf, const char *query, FIL
 
 int write_xquery_script(qbuf_t *qbuf,const char * filename) {
   FILE* file;
-  int i;
+  size_t i;
 	if ((file=fopen(filename,"wb"))==NULL) {
 		  printf("\nERROR: failed to open file %s for writing",filename);
 		  return -1;
@@ -262,7 +262,7 @@ int write_xquery_script(qbuf_t *qbuf,const char * filename) {
 // function executes update sequence
 int execute_multiquery(struct SednaConnection *conn, char *query, FILE* log) {
   qbuf_t mq = {NULL,0,0};
-  int i;
+  size_t i;
   if (split_query(query,&mq)!=0) 
 	  return SE_EXP_DEV_ERROR;
   for (i=0;i<mq.d_size;i++) {
