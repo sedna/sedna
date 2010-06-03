@@ -146,10 +146,12 @@ tuple_cell tuple_cell::make_sure_light_atomic(const tuple_cell& tc)
 
     if (tc.is_heavy_atomic())
     {
-        /*if (tc.size > MAX_MEM_STR_SIZE)
-            throw USER_EXCEPTION2(SE1003, "Heave atomic is too large in call to tuple_cell::make_sure_light_atomic");
-		 */
-		 int sizep = tc.get_strlen_vmm();
+         /* Check that we will no be out of size_t bounds */ 
+         if (tc.get_strlen_vmm() > SIZE_MAX-1)
+            throw USER_EXCEPTION2(SE1003, "Too large atomic string");
+		 
+		 /* Convsersion is valid since we've checked length */
+         size_t sizep = (size_t)tc.get_strlen_vmm();
 		 char *tmp = se_new char[sizep + 1];
          tc.copy_string(tmp);
 		 return atomic(tc.get_atomic_type(), tmp);
@@ -173,7 +175,7 @@ char* tuple_cell::copy_string(char *buf) const
     }
 }
 
-char* tuple_cell::copy_string(char *buf, int64_t n) const
+char* tuple_cell::copy_string(char *buf, size_t n) const
 {
     switch (get_type())
     {

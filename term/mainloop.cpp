@@ -17,9 +17,11 @@
 #include "term_funcs.h"
 #include "term_ile.h"
 
+using namespace term_globals;
+
 int quit_term()
 {
-	if(show_time != 0)
+	if(show_time)
 	{
 		fprintf(stderr, "total time: %s\n secs",SEshowTime(&conn));
         fflush(stderr);

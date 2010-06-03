@@ -90,7 +90,8 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
   char *upd_sec_query = NULL;
   qbuf_t blq = {NULL,0,0};
   FILE *log = NULL;
-  int i,error_status=1;
+  int error_status=1;
+  size_t i;
   int value;
 
   int ft_search_feature = SEDNA_FEATURE_DISABLED;

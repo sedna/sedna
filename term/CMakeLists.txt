@@ -37,7 +37,7 @@ if (NOT ${ENHANCE_TERM} STREQUAL "None")
     endif (NOT TERM_LIB AND ${ENHANCE_TERM} STREQUAL "Libedit")
 endif (NOT ${ENHANCE_TERM} STREQUAL "None")
 
-set(term_SRC term_funcs.cpp term_globals.cpp sprompt.cpp startup.cpp mainloop.cpp term_ile.cpp complet.cpp)
+set(term_SRC term_funcs.cpp sprompt.cpp startup.cpp mainloop.cpp term_ile.cpp complet.cpp)
 SET_SOURCES(term_SRC 1)
 
 if (TERM_LIB)

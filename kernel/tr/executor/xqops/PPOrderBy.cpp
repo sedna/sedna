@@ -284,7 +284,8 @@ void PPOrderBy::do_accept(PPVisitor &v)
 static inline void serialize_string(const tuple_cell& tc, void* dest)
 {
     int64_t length_all = tc.get_strlen();
-    int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
+    /* We pretty sure that cast is valid since we check string length */
+    size_t length_ser = (size_t)(length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE);
     bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
     memcpy(dest, &flag, sizeof(bool));
     tc.copy_string((char*)dest + sizeof(bool), length_ser);

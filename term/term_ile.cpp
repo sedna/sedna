@@ -47,6 +47,8 @@ const char *get_query_from_term_buffer()
 #include "common/u/u.h"
 #include "common/u/uprocess.h"
 
+using namespace term_globals;
+
 static int se_analyze_line(char *, int lineno); // check if we need another line
 static int multiline = 0; // number of lines in a query
 

@@ -128,7 +128,7 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
     mapIter = fired_triggers->find(scm_node.ptr());
     xptr parent=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
     if( mapIter != fired_triggers->end())
-        for(int i=0; i< mapIter->second.size(); i++)
+        for(std::vector<trigger_cell_xptr>::size_type i=0; i< mapIter->second.size(); i++)
         {
             trc = mapIter->second.at(i);
             if(trc->execute_trigger_action(XNULL, node, parent) == XNULL) return XNULL;
@@ -333,7 +333,7 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
             trigger_cell_cptr trc = *trigers_iter;
 
 	   	    matched_nodes = execute_abs_path_expr((const schema_node_xptr)(statement_triggers_iter->first), trc->trigger_path, &extended_nodes, &extender_nodes);
-    	   	for(int i=0;i<matched_nodes.size(); i++)
+            for(std::vector<schema_node_xptr>::size_type i=0;i<matched_nodes.size(); i++)
         	    if(is_scmnode_has_ancestor_or_self((schema_node_xptr)(matched_nodes.at(i)),&extender_nodes))
             	    //4. check if extender nodes has data of the type schema_node
                     for(it2=upd_seq->begin(); it2!=upd_seq->end(); it2++)
@@ -598,7 +598,7 @@ trigger_cell_xptr create_trigger (enum trigger_time tr_time,
     {
         trc->trigger_action = (trigger_action_cell*)malloc(sizeof(trigger_action_cell));
         trigger_action_cell* trac = trc->trigger_action;
-        for(int i = 0; i < action->size(); i += 2)
+        for(std::vector<scm_elem>::size_type i = 0; i < action->size(); i += 2)
         {
             trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
             strcpy(trac->statement,action->at(i).internal.str);
@@ -759,7 +759,7 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
     }
 
     //executing built actions
-    int i = 0;
+    std::vector<built_trigger_action>::size_type i;
     int action_returns_value = ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
     for(i = 0; i < mapIter->second.size()-action_returns_value; i++)
     {

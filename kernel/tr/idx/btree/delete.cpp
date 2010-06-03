@@ -45,9 +45,9 @@ bool bt_pages_mergable(xptr p1, xptr p2, int additional_space)
 
 
 /*
-	Merges leaf pages pl and pr (pl MUST be left and pr MUST be right).
-	Works only if pr is not cluster, etc.
-*/
+ * Merges leaf pages pl and pr (pl MUST be left and pr MUST be right).
+ * Works only if pr is not cluster, etc.
+ */
 
 bool bt_merge_pages(xptr pl, xptr pr) 
 {

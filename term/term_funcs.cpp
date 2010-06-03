@@ -9,9 +9,11 @@
 #include "term_globals.h"
 #include "mainloop.h"
 
+using namespace term_globals;
+
 void term_output1(const char *buf)
 {
-    if (echo) 
+    if (term_globals::echo)
     {
         fprintf(res_os, "%s", buf);
         fflush(res_os);
@@ -20,7 +22,7 @@ void term_output1(const char *buf)
 
 void term_output2(const char *buf, const void* arg1)
 {
-    if (echo) 
+    if (term_globals::echo)
     {
     	char echo_buf[256];
     	sprintf(echo_buf,buf,arg1);
@@ -31,7 +33,7 @@ void term_output2(const char *buf, const void* arg1)
 
 void term_output3(const char *buf, const void* arg1, const void* arg2)
 {
-    if (echo) 
+    if (term_globals::echo)
     {
     	char echo_buf[256];
     	sprintf(echo_buf,buf,arg1,arg2);
@@ -42,7 +44,7 @@ void term_output3(const char *buf, const void* arg1, const void* arg2)
 
 void term_debug_info_output(const char *msg)
 {
-    if (debug_output)
+    if (term_globals::debug_output)
     {
         fprintf(res_os, "\n%s\n", msg);
         fflush(res_os);
@@ -164,7 +166,7 @@ int process_commandline_query()
         fflush(res_os);
     }
     
-    if(show_time != 0)
+    if(show_time)
     {
     	fprintf(stderr, "total time: %s\n secs",SEshowTime(&conn));
         fflush(res_os);
