@@ -17,7 +17,6 @@ PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_,
 {
 }
 
-
 PPDropFtIndex::~PPDropFtIndex()
 {
     delete index_name.op;
@@ -30,13 +29,13 @@ PPDropFtIndex::~PPDropFtIndex()
 void PPDropFtIndex::do_open()
 {
     index_name.op->open();
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
 }
 
 void PPDropFtIndex::do_close()
 {
     index_name.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPDropFtIndex::do_accept(PPVisitor &v)
@@ -56,4 +55,3 @@ void PPDropFtIndex::do_execute()
     auth_for_drop_object(tc.get_str_mem(), "ft-index", false);
     delete_ft_index(tc.get_str_mem());
 }
-

@@ -556,7 +556,7 @@ void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathEx
   {
       str_len = strlen(tr_act->statement);
 
-      U_ASSERT(tr_action_buf_size + str_len + 1 + sizeof(int) <= trac_len);
+      U_ASSERT(tr_action_buf_size + str_len + 1 <= trac_len);
 
       if (str_len)
       {
@@ -568,8 +568,6 @@ void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathEx
           tr_action_buf[tr_action_buf_size] = '\x0';
           tr_action_buf_size++;
       }
-      memcpy(tr_action_buf + tr_action_buf_size, &(tr_act->is_query), sizeof(bool));
-      tr_action_buf_size += sizeof(int);
   }
 
   llLogTrigger(tr_globals::trid, tr_time, tr_event,  tr_path.str().c_str(), tr_gran, tr_action_buf, tr_action_buf_size,

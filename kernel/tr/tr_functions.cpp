@@ -49,7 +49,7 @@ on_kernel_statement_begin(size_t mod_index,
     try
     {
         is_qep_built = true; // always consider qep-tree as built; in case of error this allows cleaning up
-        qep_tree = xqd->getQEPForModule(mod_index);
+        qep_tree = xqd->getQEPForModule(mod_index, false);
     }
     catch (SednaUserException)
     {
@@ -74,7 +74,7 @@ on_kernel_statement_end(PPQueryEssence *&qep_tree)
 
     if (is_qep_built)
     {
-        delete_qep(qep_tree);
+        delete qep_tree;
         qep_tree = NULL;
 
         //  TODO: We should carefully clear virtual root here. To review it later.

@@ -15,6 +15,11 @@
 class PPVariable : public PPIterator
 {
 private:
+    /*
+     * Can't use current variable context from cxt since
+     * during function body copying we in fact get a new variable_context
+     */
+    producer *var_prod;
     var_dsc dsc;
     var_c_id id;
 
@@ -39,7 +44,7 @@ public:
 class PPGlobalVariable : public PPIterator
 {
 private:
-    var_dsc dsc;
+    global_var_dsc dsc;
     var_c_id id;
 
 private:
@@ -54,11 +59,10 @@ private:
 public:
     PPGlobalVariable(dynamic_context *_cxt_,
                      operation_info _info_,
-                     var_dsc _dsc_);
+                     global_var_dsc _dsc_);
     virtual ~PPGlobalVariable();
 
-    void setVarId(var_dsc _dsc_); // we use it to set id for unresolved variable after the main pass (because of deps between mnodules)
-    inline var_dsc get_variable_descriptor() { return dsc; }
+    inline global_var_dsc get_variable_descriptor() { return dsc; }
 };
 
 #endif /* __PPVARIABLE_H */

@@ -97,6 +97,7 @@ print_attribute_prefix(se_ostream& crmout, schema_node_cptr scm, int indent) {
 /// Printing functions
 ///////////////////////////////////////////////////////////////////////////////
 
+static
 void print_text(xptr txt, se_ostream& crmout, t_print ptype, t_item xq_type)
 {
     CHECKP(txt);
@@ -139,7 +140,8 @@ void print_text(xptr txt, se_ostream& crmout, t_print ptype, t_item xq_type)
         if (ptype!=xml)
             crmout<<"\"";
     }
-    dynamic_context::stm.flush(write_func,&crmout);
+
+    tr_globals::client->get_serialization_params()->stm.flush(write_func, &crmout);
 }
 
 static void
@@ -356,7 +358,7 @@ print_node_internal(xptr node,
                     }
                     else
                     {
-                        xmlns_ptr t=cxt->st_cxt->get_ns_pair("xml","http://www.w3.org/XML/1998/namespace");
+                        xmlns_ptr t=xmlns_touch("xml","http://www.w3.org/XML/1998/namespace");
                         ns_pair str=pref_to_str(t);
                         xm_nsp[str]=t;
                         if (!att_ns)
@@ -587,7 +589,8 @@ print_tuple_internal  (const tuple &tup,     /* tuple to print */
             {
                 print_tuple_cell(crmout,tup.cells[i]);
             }
-            dynamic_context::stm.flush(write_func,&crmout);
+
+            tr_globals::client->get_serialization_params()->stm.flush(write_func,&crmout);
         }
 
         if (ind && i<(tup.cells_number-1)) crmout<<" ,";

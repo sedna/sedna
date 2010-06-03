@@ -11,6 +11,7 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "tr/crmutils/crmbase.h"
+#include "common/lm_base.h"
 
 class PPQueryRoot : public PPQueryEssence
 {
@@ -38,10 +39,36 @@ public:
     bool next();
     bool supports_next() { return true; }
     bool is_update() { return false; }
+};
 
-    /* Use it before destroying PPQueryRoot when it is
-     * used as a carrier for trigger/module query-action */
-    void detachChild(PPOpIn *poi, dynamic_context **dc);
+/*
+ * PPSubQuery encapsulates logic behind subqueries such as trigger queries or
+ * module requests
+ */
+class PPSubQuery : public PPQueryEssence
+{
+private:
+    PPOpIn child;
+    lock_mode lmode;
+    tuple data;
+    dynamic_context *cxt;
+
+    virtual void do_open();
+    virtual void do_close();
+    virtual void do_execute();
+    virtual void do_accept(PPVisitor& v);
+    virtual bool do_next();
+
+public:
+    PPSubQuery(dynamic_context *_cxt_,
+                PPOpIn _child_);
+    virtual ~PPSubQuery();
+
+    /* Returns true if successfuly got next item,
+     * false - if result is over. */
+    bool next(tuple &t);
+    bool supports_next() { return true; }
+    bool is_update() { return false; }
 };
 
 #endif /* _PPQUERYROOT_H */

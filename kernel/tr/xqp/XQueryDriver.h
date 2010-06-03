@@ -46,12 +46,9 @@ namespace sedna
             std::deque<XQueryModule *> mods; // main modules (library modules) that we're evaluating
 
             // Some XQuery-specific info about modules, types, imported modules
-            static XQFunctionInfo stdFuncs;
+            static XQStdFunctionInfo stdFuncs;
             XQFunctionInfo libFuncs;
             XQVariablesInfo libVars; // all variables declared in all processed libraries
-
-            unsigned int glob_var_num;
-            unsigned int glob_fun_num;
 
             typedef std::vector<XQueryModule *> modSequence;
 
@@ -85,9 +82,6 @@ namespace sedna
                     registerStandardFunctions("http://modis.ispras.ru/Sedna/SQL", sqlFunctions);
                     registerStandardFunctions("http://www.modis.ispras.ru/sedna", seFunctions);
                 }
-
-                glob_var_num = 0;
-                glob_fun_num = 0;
             }
 
             ~XQueryDriver();
@@ -100,21 +94,11 @@ namespace sedna
             void doSemanticAnalysis();
             void doLReturnAnalysis();
 
-            PPQueryEssence *getQEPForModule(unsigned int ind);
+            PPQueryEssence *getQEPForModule(unsigned int ind, bool is_subquery);
 
             size_t getModulesCount() const
             {
                 return mods.size();
-            }
-
-            unsigned int getNewGlobVarId()
-            {
-                return glob_var_num++;
-            }
-
-            unsigned int getNewGlobFunId()
-            {
-                return glob_fun_num++;
             }
 
             std::string getLRRepresentation(size_t mod_ind);
@@ -131,28 +115,26 @@ namespace sedna
 
             bool parse(const char *query);
             void parseAST(const char *ast);
-            void parseASTInContext(const char *ast, static_context *sx);
-            void parseXQInContext(const char *xq, static_context *sx);
 
             int getErrorCode() const;
             std::string getErrorMsg() const;
 
             static void registerStandardFunctions(const char *uri_nsp, XQFunction *funcs);
 
-            XQFunction getStdFuncInfo(const std::string &name) const;
-            XQFunction getLReturnFunctionInfo(const std::string &name);
-            XQVariable getLReturnVariableInfo(const std::string &name);
+            // returns lreturn-specific info about funcs and vars (xquery ones included)
+            XQFunction *getStdFuncInfo(const std::string &name) const;
+            XQFunction *getLReturnFunctionInfo(const std::string &name);
+            XQVariable *getLReturnVariableInfo(const std::string &name);
 
-            var_id getGlobalVariableId(const std::string &name);
-            var_id getGlobalFunctionId(const std::string &name);
+            // returns vars and funcs ids
+            global_var_dsc getGlobalVariableId(const std::string &name);
+            function_id getGlobalFunctionId(const std::string &name);
 
+            // returns type by string
             xmlscm_type getXsType(const char *type);
 
-            size_t getVarCount() const;
-            size_t getFuncCount() const;
-            size_t getLibModCount() const;
-
-            void porLibModules();
+            // process library modules and attach them to parent_context
+            void porLibModules(dynamic_context *parent_context);
     };
 }
 

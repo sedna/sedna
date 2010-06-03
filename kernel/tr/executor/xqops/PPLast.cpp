@@ -32,7 +32,7 @@ void PPLast::do_open ()
     pos = 0;
     last_computed = false;
     
-    producer &p = cxt->var_cxt.producers[last_dsc];
+    producer &p = cxt->get_var_producer(last_dsc, var_cxt);
     p.type = pt_lazy_simple;
     p.op = this;
     p.svc = se_new simple_var_consumption;
@@ -46,7 +46,7 @@ void PPLast::do_reopen()
     pos = 0;
     last_computed = false;
 
-    producer &p = cxt->var_cxt.producers[last_dsc];
+    producer &p = cxt->get_var_producer(last_dsc, var_cxt);
 
     for (unsigned int j = 0; j < p.svc->size(); j++) 
         p.svc->at(j) = true;
@@ -85,14 +85,14 @@ void PPLast::do_next (tuple &t)
 
 var_c_id PPLast::do_register_consumer(var_dsc dsc)
 {
-    simple_var_consumption &svc = *(cxt->var_cxt.producers[dsc].svc);
+    simple_var_consumption &svc = *(cxt->get_var_producer(dsc, var_cxt).svc);
     svc.push_back(true);
     return svc.size() - 1;
 }
 
 void PPLast::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {  
-    producer &p = cxt->var_cxt.producers[dsc];
+    producer &p = cxt->get_var_producer(dsc, var_cxt);
 
     if (p.svc->at(id))
     {
@@ -121,7 +121,7 @@ void PPLast::do_next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPLast::do_reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->var_cxt.producers[dsc].svc->at(id) = true;
+    cxt->get_var_producer(dsc, var_cxt).svc->at(id) = true;
 }
 
 void PPLast::do_close(var_dsc dsc, var_c_id id)
@@ -133,6 +133,7 @@ PPIterator* PPLast::do_copy(dynamic_context *_cxt_)
 {
     PPLast *res = se_new PPLast(_cxt_, info, last_dsc, child);
     res->child.op = child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
     return res;
 }
 

@@ -93,7 +93,7 @@ PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
                                                           var_names(_var_names_),
                                                           profiler_mode(_profiler_mode_)
 {
-    explain_ns = cxt->st_cxt->get_default_namespace();
+    explain_ns = cxt->get_default_namespace();
 }
 
 PPExplainVisitor::~PPExplainVisitor()
@@ -828,9 +828,9 @@ void PPExplainVisitor::visit(PPVariable* op)
 void PPExplainVisitor::visit(PPGlobalVariable* op)
 {
     insertOperationElement("PPGlobalVariable", left, parent, op);
-    int gpid = op->get_variable_descriptor();
-    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, int2string(gpid));
-    const global_producer& gp = dynamic_context::glb_var_cxt.producers[gpid];
+    global_var_dsc gpid = op->get_variable_descriptor();
+    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, int2string(gpid.second));
+    const global_producer& gp = gpid.first->get_global_var_producer(gpid.second);
     insertAttributeHelper("variable-name", attr_left, left, gp.var_name);
 }
 
@@ -872,9 +872,9 @@ void PPExplainVisitor::visit(PPFtIndexScan2* op)
 void PPExplainVisitor::visit(PPFunCall* op)
 {
     insertOperationElement("PPFunCall", left, parent, op);
-    int fid = op->get_function_id();
-    xptr attr_left = insertAttributeHelper("id", XNULL, left, int2string(fid));
-    const function_declaration& fd = dynamic_context::funct_cxt.fun_decls[fid];
+    function_id fid = op->get_function_id();
+    xptr attr_left = insertAttributeHelper("id", XNULL, left, int2string(fid.second));
+    const function_declaration& fd = fid.first->get_func_decl(fid.second);
     insertAttributeHelper("function-name", attr_left, left, fd.func_name);
 }
 
@@ -1227,6 +1227,11 @@ void PPExplainVisitor::visit(PPFnResolveUri* op)
 void PPExplainVisitor::visit(PPQueryRoot* op)
 {
     insertOperationElement("PPQueryRoot", left, parent, NULL, op);
+}
+
+void PPExplainVisitor::visit(PPSubQuery* op)
+{
+    insertOperationElement("PPSubQuery", left, parent, NULL, op);
 }
 
 void PPExplainVisitor::visit(PPBulkLoad* op)

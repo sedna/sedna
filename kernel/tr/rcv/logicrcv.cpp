@@ -782,9 +782,6 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
         strcpy(trac->statement, tr_action_buf + i);
         i += strlen(tr_action_buf + i) + 1;
 
-        memcpy(&(trac->is_query), tr_action_buf + i, sizeof(bool));
-        i += sizeof(int);
-
         if (i < tr_action_size)
         	trac->next = (trigger_action_cell *)malloc(sizeof(trigger_action_cell));
         else

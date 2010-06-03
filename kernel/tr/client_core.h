@@ -13,6 +13,7 @@
 #include "common/u/uhdd.h"
 
 #include "tr/crmutils/crmbase.h"
+#include "tr/crmutils/serialization.h"
 #include "tr/tr_base.h"
 
 struct client_file{
@@ -23,8 +24,21 @@ struct client_file{
 
 class client_core
 {
+private:
+    serialization_params *params;
+
 public:
     //virtual ~client_core() {}
+
+    void set_serialization_params(serialization_params *params_)
+    {
+        params = params_;
+    }
+
+    serialization_params *get_serialization_params()
+    {
+        return params;
+    }
 
     virtual void init() = 0;
     virtual void release() = 0;

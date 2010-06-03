@@ -87,7 +87,7 @@ PPLoadModule::~PPLoadModule()
 
 void PPLoadModule::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     std::for_each(
         filenames.begin(), filenames.end(),
         Op_opener()
@@ -101,7 +101,7 @@ void PPLoadModule::do_close()
         Op_closer()
         );
 
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPLoadModule::do_accept(PPVisitor &v)

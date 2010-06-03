@@ -854,7 +854,7 @@ namespace sedna
         // "usual" function
         unsigned int arity = (n.params) ? n.params->size() : 0;
         std::string name = CREATE_INTNAME(*n.uri, *n.local);
-        const XQFunction *xqf;
+        XQFunction *xqf;
 
         // first of all, we should check arguments
         VisitNodesVector(n.params, *this);
@@ -867,20 +867,20 @@ namespace sedna
             if (xqf == NULL) // not found, try to resolve later
             {
                 // ignore external module's function imports on load module phase
-                if (mod->module_uri && !is_imported && *n.uri != *mod->module_uri && mod->imported.find(*n.uri) != mod->imported.end())
+                if (mod->module_uri && !is_postload && *n.uri != *mod->module_uri && mod->imported.find(*n.uri) != mod->imported.end())
                     return;
 
                 if (mod->unres_funcs.find(name) == mod->unres_funcs.end())
                 {
-                    XQFunction fun;
+                    XQFunction *fun = new XQFunction();
 
-                    fun.uri = *n.uri;
-                    fun.local = *n.local;
-                    fun.min_arg = fun.max_arg = arity;
-                    fun.int_name = "";
-                    fun.decl = NULL;
-                    fun.loc = n.getLocationAddr();
-                    fun.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
+                    fun->uri = *n.uri;
+                    fun->local = *n.local;
+                    fun->min_arg = fun->max_arg = arity;
+                    fun->int_name = "";
+                    fun->decl = NULL;
+                    fun->loc = n.getLocationAddr();
+                    fun->mod_uri = (mod->module_uri) ? *mod->module_uri : "";
 
                     mod->unres_funcs[name + "/" + int2string(arity)] = fun;
                 }
@@ -900,7 +900,7 @@ namespace sedna
     void Sema::visit(ASTFuncDecl &n)
     {
         const char *uri;
-        XQFunction func;
+        XQFunction *func;
         std::string name;
         unsigned int params_count = 0;
 
@@ -938,34 +938,39 @@ namespace sedna
             }
         }
 
-        func.uri = *n.func_uri;
-        func.local = *n.local;
-        func.min_arg = func.max_arg = (n.params) ? n.params->size() : 0;
-        func.mask = 0; // we decide distinct-only property for params on lreturn phase dynamically
-        func.int_name = "";
-        func.toCache = true; // by default cache every user-defined function
-        func.decl = &n;
-        func.loc = n.getLocationAddr();
-        func.mod_uri = (mod->module_uri) ? *mod->module_uri : "";
-        func.merger = NULL;
+        func = new XQFunction();
+
+        func->uri = *n.func_uri;
+        func->local = *n.local;
+        func->min_arg = func->max_arg = (n.params) ? n.params->size() : 0;
+        func->mask = 0; // we decide distinct-only property for params on lreturn phase dynamically
+        func->int_name = "";
+        func->toCache = true; // by default cache every user-defined function
+        func->decl = &n;
+        func->loc = n.getLocationAddr();
+        func->mod_uri = (mod->module_uri) ? *mod->module_uri : "";
+        func->merger = NULL;
+        func->id = function_id(NULL, INVALID_VAR_DSC); // ASTFuncDecl in lr2por will probably change it to something more meaningful
+        func->mod = mod;
+        func->is_used = false;
 
         name = CREATE_INTNAME(*n.func_uri, *n.local);
 
         // check for clash in standard functions
-        if (findFunction(name, func.min_arg, mod, drv))
+        if (findFunction(name, func->min_arg, mod, drv))
         {
             drv->error(n.getLocation(), XQST0034,
                 std::string("function '") + *n.func_uri + ((n.func_uri->size() == 0) ? "" : ":") +
-                        *n.local + "(" + int2string(func.min_arg) + ")' has been already declared");
+                        *n.local + "(" + int2string(func->min_arg) + ")' has been already declared");
 
             return;
         }
 
-        mod->funcs[name + "/" + int2string(func.min_arg)] = func;
+        mod->funcs[name + "/" + int2string(func->min_arg)] = func;
 
-        if (mod->module_uri)
+        if (mod->module_uri) // we're parsing library module
         {
-            std::string name_wa = name + "/" + int2string(func.min_arg);
+            std::string name_wa = name + "/" + int2string(func->min_arg);
 
             if (drv->libFuncs.find(name_wa) != drv->libFuncs.end()) // function is being exported by another sub-module
             {
@@ -974,7 +979,7 @@ namespace sedna
             }
             else
             {
-                drv->libFuncs[name + "/" + int2string(func.min_arg)] = func;
+                drv->libFuncs[name + "/" + int2string(func->min_arg)] = func;
             }
         }
 
@@ -1078,7 +1083,7 @@ namespace sedna
 
     void Sema::visit(ASTLibModule &n)
     {
-        is_imported = n.is_internal;
+        is_postload = n.is_internal;
 
         n.moduleDecl->accept(*this);
         n.prolog->accept(*this);
@@ -1196,7 +1201,7 @@ namespace sedna
             return;
 
         // we don't follow external imports during 'load module' phase
-        if (!is_imported && mod->module_uri && *mod->module_uri != *n.uri)
+        if (!is_postload && mod->module_uri && *mod->module_uri != *n.uri)
             return;
 
         // check if we've already got this one
@@ -1867,7 +1872,7 @@ namespace sedna
         if (param_mode)
         {
             param_count++;
-            bound_vars.push_back(XQVariable(CREATE_INTNAME(*n.uri, *n.local).c_str(), &n));
+            bound_vars.push_back(XQVariable(CREATE_INTNAME(*n.uri, *n.local).c_str(), &n, mod));
             return;
         }
 
@@ -1877,9 +1882,9 @@ namespace sedna
         // first, check if variable is bound
         if (bound_vars.size() > 0)
         {
-            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            for (size_t i = 0; i < bound_vars.size() ; i++)
             {
-                if (bound_vars[i].int_name == name)
+                if (bound_vars[bound_vars.size() - i - 1].int_name == name)
                     return;
             }
         }
@@ -1907,7 +1912,7 @@ namespace sedna
             }
             else if (mod->module_uri) // if library module, maybe try to resolve later (intra(inter)-module imports)
             {
-                if (!is_imported && *mod->module_uri != *n.uri) // ignore external imports during load module
+                if (!is_postload && *mod->module_uri != *n.uri) // ignore external imports during library module preload
                     return;
 
                 mod->unres_vars[name] = &n; // try to resolve var later
@@ -1940,11 +1945,11 @@ namespace sedna
         }
 
         // then analyze the type
-        if (!is_imported && n.type)
+        if (!is_postload && n.type)
             n.type->accept(*this);
 
         // for library module main URI and var-uri must be equal
-        if (!is_imported && mod->module_uri && *mod->module_uri != *var->uri)
+        if (!is_postload && mod->module_uri && *mod->module_uri != *var->uri)
         {
             err = std::string("variable '") + *var->pref + ":" + *var->local + "' is not in the library module namespace " + *mod->module_uri;
 
@@ -1955,7 +1960,7 @@ namespace sedna
 
         name = CREATE_INTNAME(*var->uri, *var->local);
 
-        if (!is_imported && mod->vars.find(name) != mod->vars.end())
+        if (!is_postload && mod->vars.find(name) != mod->vars.end())
         {
             drv->error(var->getLocation(), XQST0049,
                     std::string("variable '") + *var->uri + ((var->uri->size() == 0) ? "" : ":") + *var->local + "' has already been declared");
@@ -1963,7 +1968,7 @@ namespace sedna
             return;
         }
 
-        if (!is_imported && drv->libVars.find(name) != drv->libVars.end())
+        if (!is_postload && drv->libVars.find(name) != drv->libVars.end())
         {
             drv->error(var->getLocation(), XQST0049,
                     std::string("variable '") + *var->uri + ((var->uri->size() == 0) ? "" : ":") + *var->local + "' has already been declared in another module");
@@ -1979,11 +1984,15 @@ namespace sedna
         else
             n.expr->accept(*this);
 
-        // then add variables as known
-        mod->vars[name] = &n;
+        // then add variable as known
+        XQVariable *xqv = new XQVariable(name.c_str(), &n, mod);
 
+        // to module
+        mod->vars[name] = xqv;
+
+        // and maybe to driver (as a library one)
         if (mod->module_uri)
-            drv->libVars[name] = &n;
+            drv->libVars[name] = xqv;
     }
 
     void Sema::visit(ASTVersionDecl &n)
@@ -2171,7 +2180,7 @@ namespace sedna
         // check prolog functions
         if (mod->funcs.find(name_wa) != mod->funcs.end())
         {
-            return &(mod->funcs[name_wa]);
+            return mod->funcs[name_wa];
         }
 
         // take uri from name
@@ -2187,13 +2196,13 @@ namespace sedna
         // check library functions; but only if we're importing corresponding uri
         if (mod->imported.find(uri) != mod->imported.end() && drv->libFuncs.find(name_wa) != drv->libFuncs.end())
         {
-            return &(drv->libFuncs[name_wa]);
+            return drv->libFuncs[name_wa];
         }
 
         // check standard XQuery functions
         if (drv->stdFuncs.find(name) != drv->stdFuncs.end())
         {
-            xqf = &(drv->stdFuncs[name]);
+            xqf = &drv->stdFuncs[name];
 
             if (arity >= xqf->min_arg && arity <= xqf->max_arg)
                 return xqf;

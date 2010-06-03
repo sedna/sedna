@@ -1,4 +1,4 @@
-#include "XQFunction.h"
+#include "tr/xqp/XQFunction.h"
 #include "tr/xqp/lr2por/l2pFuncs.h"
 
 namespace sedna

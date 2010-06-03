@@ -379,12 +379,12 @@ void PPFnStartsEndsWith::do_next(tuple &t)
 
         col = tuple_cell::make_sure_light_atomic(col);
 
-        int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+        int res = cxt->get_static_context()->get_collation(col.get_str_mem(), &handler);
         if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + ".").c_str());
 
     }
     else
-        handler = cxt->st_cxt->get_default_collation();
+        handler = cxt->get_static_context()->get_default_collation();
 
     if(type == PPFnStartsEndsWith::FN_STARTS_WITH)
         t.copy(tuple_cell::atomic(handler->starts_with(&src, &prf)));
@@ -863,7 +863,7 @@ void PPFnSubsBeforeAfter::do_next(tuple &t)
 
         col = tuple_cell::make_sure_light_atomic(col);
 
-        int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+        int res = cxt->get_static_context()->get_collation(col.get_str_mem(), &handler);
         if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + ".").c_str());
     }
 

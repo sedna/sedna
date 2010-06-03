@@ -1,5 +1,5 @@
 set(base_SRC compare.cpp dm_accessors.cpp
-            dynamic_context.cpp merge.cpp
+            dynamic_context.cpp static_context.cpp merge.cpp
             PPBase.cpp PPUtils.cpp sequence.cpp
             SequenceType.cpp sorted_sequence.cpp tuple.cpp
             XMLDateTime.cpp XPath.cpp XPathOnSchema.cpp

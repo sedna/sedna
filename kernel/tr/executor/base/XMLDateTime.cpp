@@ -259,7 +259,7 @@ XMLDateTime::XMLDateTime(const xs_packed_duration& dur, xmlscm_type type)
     setValue(utc, dur.neg == 0 ? UTC_POS : UTC_NEG );
 }
 
-xs_packed_datetime XMLDateTime::getPackedDateTime()
+xs_packed_datetime XMLDateTime::getPackedDateTime() const
 {
     xs_packed_datetime retval;
 
@@ -277,7 +277,7 @@ xs_packed_datetime XMLDateTime::getPackedDateTime()
     return retval;
 }
 
-xs_packed_duration XMLDateTime::getPackedDuration()
+xs_packed_duration XMLDateTime::getPackedDuration() const
 {
     xs_packed_duration retval;
 
@@ -747,16 +747,12 @@ XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2)
 
     if (lTemp.getValue(XMLDateTime::utc) == XMLDateTime::UTC_UNKNOWN)
     {	
-        if (!dynamic_context::datetime_initialized)
-            dynamic_context::set_datetime();
-        lTemp = adjustToTimezone(lTemp, dynamic_context::implicit_timezone);
+	    lTemp = adjustToTimezone(lTemp, XMLDateTime(getLocalTime()).getTimezone());
     }	
 
     if (rTemp.getValue(XMLDateTime::utc) == XMLDateTime::UTC_UNKNOWN)
     {	
-        if (!dynamic_context::datetime_initialized)
-            dynamic_context::set_datetime();
-        rTemp = adjustToTimezone(rTemp, dynamic_context::implicit_timezone);
+        rTemp = adjustToTimezone(rTemp, XMLDateTime(getLocalTime()).getTimezone());
     }	
 
     lTemp.normalize();

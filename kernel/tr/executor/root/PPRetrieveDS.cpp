@@ -35,14 +35,14 @@ void PPRetrieveDS::do_open()
 {
     local_lock_mrg->lock(lm_s);
 
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     name.op->open();
 }
 
 void PPRetrieveDS::do_close()
 {
     name.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPRetrieveDS::do_accept(PPVisitor &v)

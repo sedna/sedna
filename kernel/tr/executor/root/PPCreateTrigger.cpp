@@ -79,14 +79,14 @@ void PPCreateTrigger::do_open()
 {
     trigger_name.op->open();
     root.open();
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
 }
 
 void PPCreateTrigger::do_close()
 {
     trigger_name.op->close();
     root.close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateTrigger::do_accept(PPVisitor &v)

@@ -33,7 +33,7 @@ namespace sedna
 
         const ASTLocation *dupLocations[PrologDummyEnd]; // locations to diagnoze duplicate prolog elements
 
-        bool is_imported; // true, if we import internal module; if so, we can skip some of the checks
+        bool is_postload; // true, if we import internal module; if so, we can skip some of the checks
         bool param_mode; // true, if we are checking function params now (ASTVar sema analysis)
         unsigned int param_count; // number of parameters found in param_mode
         bool casting_mode; // true, if we analyze types for cast or castable
@@ -63,7 +63,7 @@ namespace sedna
             for (unsigned int i = 0; i < PrologDummyEnd; i++)
                 dupLocations[i] = NULL;
 
-            is_imported = false;
+            is_postload = false;
             param_mode = false;
             param_count = 0;
             casting_mode = false;

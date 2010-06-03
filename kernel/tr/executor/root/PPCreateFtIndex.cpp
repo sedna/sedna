@@ -66,7 +66,7 @@ ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context 
 		xmlns_ptr ns=NULL_XMLNS;
 		if (prefix!=NULL)
 		{
-			ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
+			ns=cxt->get_xmlns_by_prefix(prefix);
 			delete prefix;
 		}
 		char* name = se_new char[strlen(qname)+1];
@@ -166,7 +166,7 @@ PPCreateFtIndex::~PPCreateFtIndex()
 
 void PPCreateFtIndex::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     index_name.op->open();
 	if (cust_rules.op)
 		cust_rules.op->open();
@@ -179,7 +179,7 @@ void PPCreateFtIndex::do_close()
 	if (cust_rules.op)
 		cust_rules.op->close();
     root.close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateFtIndex::do_accept(PPVisitor &v)

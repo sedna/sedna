@@ -28,14 +28,14 @@ PPReplace::~PPReplace()
 void PPReplace::do_open()
 {
     local_lock_mrg->lock(lm_x);
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     child.op->open();
 }
 
 void PPReplace::do_close()
 {
     child.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPReplace::do_accept(PPVisitor &v)

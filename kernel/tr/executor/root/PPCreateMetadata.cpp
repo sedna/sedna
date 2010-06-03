@@ -35,14 +35,14 @@ void PPCreateDocument::do_open()
 {
     local_lock_mrg->lock(lm_x);
 
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     name.op->open();
 }
 
 void PPCreateDocument::do_close()
 {
     name.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateDocument::do_accept(PPVisitor &v)
@@ -98,7 +98,7 @@ PPCreateCollection::~PPCreateCollection()
 
 void PPCreateCollection::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     name.op->open();
 
     local_lock_mrg->lock(lm_x);
@@ -107,7 +107,7 @@ void PPCreateCollection::do_open()
 void PPCreateCollection::do_close()
 {
     name.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateCollection::do_accept(PPVisitor &v)
@@ -146,11 +146,9 @@ void PPCreateCollection::do_execute()
 /// PPCreateDocumentInCollection
 ///////////////////////////////////////////////////////////////////////////////
 PPCreateDocumentInCollection::PPCreateDocumentInCollection(PPOpIn _document_,
-                                                           dynamic_context *_cxt1_,
                                                            PPOpIn _collection_,
-                                                           dynamic_context *_cxt2_) : PPUpdate("PPCreateDocumentInCollection"),
-                                                                                      cxt1(_cxt1_),
-                                                                                      cxt2(_cxt2_),
+                                                           dynamic_context *_cxt_) : PPUpdate("PPCreateDocumentInCollection"),
+                                                                                      cxt(_cxt_),
                                                                                       document(_document_),
                                                                                       collection(_collection_)
 {
@@ -164,15 +162,13 @@ PPCreateDocumentInCollection::~PPCreateDocumentInCollection()
     delete collection.op;
     collection.op = NULL;
 
-    delete cxt1;
-    cxt1 = NULL;
-    delete cxt2;
-    cxt2 = NULL;
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPCreateDocumentInCollection::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     document.op->open();
     collection.op->open();
 
@@ -183,7 +179,7 @@ void PPCreateDocumentInCollection::do_close()
 {
     document.op->close();
     collection.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateDocumentInCollection::do_accept(PPVisitor &v)

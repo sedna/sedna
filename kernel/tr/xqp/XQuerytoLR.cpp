@@ -125,21 +125,6 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, const char *batch1, s
     parse_batch(drv, type, sv, module_name);
 }
 
-static void parse_batch_context(sedna::XQueryDriver *drv, const char *query, QueryType type, static_context *sx)
-{
-    U_ASSERT(drv);
-
-    // parse query and create ast-tree with context predefined; any errors will be thrown as exceptions
-    if (type == TL_XQuery)
-    {
-        drv->parseXQInContext(query, sx);
-    }
-    else
-    {
-        drv->parseASTInContext(query, sx);
-    }
-}
-
 StringVector parse_xq_to_ast(const char *batch)
 {
     StringVector res;
@@ -166,23 +151,20 @@ StringVector parse_xq_to_ast(const char *batch)
     return res;
 }
 
-PPQueryEssence *build_qep(const char* por, bool is_ast)
+PPQueryEssence *build_subquery_qep(const char* query, QueryType type)
 {
     sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
     std::string dummy; // for module name
 
-    // create unmanaged static context for subquery
-    // TODO: review it later with all the static/dynamic context stuff!!!
-    static_context *st_cxt = dynamic_context::create_unmanaged();
-
     try
     {
-        parse_batch_context(xqd, por, is_ast? TL_ASTQEPReady : TL_XQuery, st_cxt);
-        PPQueryEssence *qep = xqd->getQEPForModule(0);
+        parse_batch(xqd, type, query, &dummy);
+
+        PPQueryEssence *qep = xqd->getQEPForModule(0, true);
 
         delete xqd;
 
-        return qep;
+	return qep;
     }
     catch (SednaUserException)
     {
@@ -191,57 +173,3 @@ PPQueryEssence *build_qep(const char* por, bool is_ast)
     }
 }
 
-qep_subtree *build_subqep(const char* por, bool is_ast)
-{
-    sedna::XQueryDriver *xqd = new sedna::XQueryDriver();
-    qep_subtree *res = se_new qep_subtree();
-
-    // create unmanaged static context for subquery
-    // TODO: review it later with all the static/dynamic context stuff!!!
-    static_context *st_cxt = dynamic_context::create_unmanaged();
-
-    // parse provided string
-    try
-    {
-        parse_batch_context(xqd, por, is_ast ? TL_ASTQEPReady : TL_XQuery, st_cxt);
-        PPQueryRoot *pqr = dynamic_cast<PPQueryRoot *>(xqd->getQEPForModule(0));
-
-        U_ASSERT(pqr);
-
-        // receive subtree and dynamic context (created in provided static context by XQueryDriver)
-        pqr->detachChild(&res->tree, &res->cxt);
-
-        // PPQueryEssence just a carrier
-        delete pqr;
-
-        delete xqd;
-
-        return res;
-    }
-    catch (SednaUserException)
-    {
-        delete xqd;
-        throw USER_EXCEPTION2(SE1003, "Error on parsing internal subquery!");
-    }
-}
-
-void delete_qep(PPQueryEssence *qep)
-{
-    delete qep;
-    dynamic_context::static_clear();
-}
-
-void delete_qep_unmanaged(PPQueryEssence *qep)
-{
-    delete qep;
-}
-
-void delete_qep(qep_subtree *qep)
-{
-    dynamic_context::destroy_unmanaged(qep->cxt);
-    qep->cxt = NULL;
-    delete (qep->tree.op);
-    qep->tree.op = NULL;
-    delete qep;
-    qep = NULL;
-}

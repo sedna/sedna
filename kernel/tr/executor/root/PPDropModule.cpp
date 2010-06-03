@@ -31,7 +31,7 @@ PPDropModule::~PPDropModule()
 
 void PPDropModule::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     /* the descriptive schema of the document/collection is changed */ 
     local_lock_mrg->lock(lm_x);
     module_name.op->open();
@@ -40,7 +40,7 @@ void PPDropModule::do_open()
 void PPDropModule::do_close()
 {
     module_name.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPDropModule::do_accept(PPVisitor &v)

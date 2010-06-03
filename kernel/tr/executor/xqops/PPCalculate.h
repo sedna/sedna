@@ -113,7 +113,7 @@ public:
     { 
         tuple_cell r1 = child1->next(cxt);
         tuple_cell r2 = child2->next(cxt);
-        return bf(r1, r2, cxt->st_cxt->get_default_collation()); 
+        return bf(r1, r2, cxt->get_static_context()->get_default_collation());
     }
 
     void reopen() { child1->reopen(); child2->reopen(); }

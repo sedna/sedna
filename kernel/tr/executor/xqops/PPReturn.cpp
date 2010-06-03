@@ -58,16 +58,16 @@ void PPReturn::do_open ()
 
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = se_new simple_var_consumption;
         p.tuple_pos = i;
     }
 
-    if (pos_dsc >= 0)
+    if (pos_dsc != INVALID_VAR_DSC)
     {
-        producer &p = cxt->var_cxt.producers[pos_dsc];
+        producer &p = cxt->get_var_producer(pos_dsc, var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = se_new simple_var_consumption;
@@ -137,6 +137,8 @@ PPIterator* PPReturn::do_copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -151,14 +153,14 @@ void PPReturn::do_accept(PPVisitor &v)
 
 var_c_id PPReturn::do_register_consumer(var_dsc dsc)
 {
-    simple_var_consumption &svc = *(cxt->var_cxt.producers[dsc].svc);
+    simple_var_consumption &svc = *(cxt->get_var_producer(dsc, var_cxt).svc);
     svc.push_back(true);
     return svc.size() - 1;
 }
 
 void PPReturn::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    producer &p = cxt->var_cxt.producers[dsc];
+    producer &p = cxt->get_var_producer(dsc, var_cxt);
 
     if (p.svc->at(id))
     {
@@ -175,7 +177,7 @@ void PPReturn::do_next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPReturn::do_reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->var_cxt.producers[dsc].svc->at(id) = true;
+    cxt->get_var_producer(dsc, var_cxt).svc->at(id) = true;
 }
 
 void PPReturn::do_close(var_dsc dsc, var_c_id id)
@@ -186,13 +188,13 @@ inline void PPReturn::reinit_consumer_table()
 {
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         for (unsigned int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 
-    if (pos_dsc >= 0)
+    if (pos_dsc != INVALID_VAR_DSC)
     {
-        producer &p = cxt->var_cxt.producers[pos_dsc];
+        producer &p = cxt->get_var_producer(pos_dsc, var_cxt);
         for (unsigned int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }

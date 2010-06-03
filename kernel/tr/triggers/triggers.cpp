@@ -598,20 +598,21 @@ trigger_cell_xptr create_trigger (enum trigger_time tr_time,
     {
         trc->trigger_action = (trigger_action_cell*)malloc(sizeof(trigger_action_cell));
         trigger_action_cell* trac = trc->trigger_action;
-        for(std::vector<scm_elem>::size_type i = 0; i < action->size(); i += 2)
+        for (std::vector<scm_elem>::size_type i = 0; i < action->size(); i++)
         {
             trac->statement = (char*)malloc(strlen(action->at(i).internal.str)+1);
             strcpy(trac->statement,action->at(i).internal.str);
-            trac->is_query = (action->at(i+1).internal.b);
 
-            if(i==action->size()-2)
+            if (i == action->size() - 1)
                 trac->next = NULL;
             else
                 trac->next = (trigger_action_cell*)malloc(sizeof(trigger_action_cell));
+
             trac = trac->next;
             RECOVERY_CRASH;
         }
     }
+
     // if the trigger is on before insert and statement level
     if((trc->trigger_event == TRIGGER_INSERT_EVENT) &&
        (trc->trigger_time == TRIGGER_BEFORE) &&
@@ -690,12 +691,9 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
 {
     xptr res_xptr = XNULL;
     PPQueryEssence* qep_tree = NULL;
-    qep_subtree *qep_subtree = NULL;
 
     bool is_qep_opened    = false;
-    bool is_subqep_opened = false;
     bool is_qep_built     = false;
-    bool is_subqep_built  = false;
     bool output_enabled   = tr_globals::client->disable_output();
 
     std::vector<built_trigger_action> built_trigger_actions_vec;
@@ -714,41 +712,21 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
         try
         {
             built_trigger_action bta;
-            is_qep_built = is_subqep_built = false;
+            is_qep_built = false;
             qep_parameters = &(bta.parameters);
-            while(trac!=NULL)
+            while (trac!=NULL)
             {
-                if(!trac->is_query) // update
-                {
-                    bta.action_qep_subtree = NULL;
-                    qep_tree = bta.action_qep_tree = build_qep(trac->statement, true);
-                    is_qep_built = true;
+                qep_tree = bta.action_qep_tree = build_subquery_qep(trac->statement, TL_ASTQEPReady);
+                is_qep_built = true;
 
-                    qep_tree->open();
-                    is_qep_opened = true;
-
-                    built_trigger_actions_vec.push_back(bta);
-                }
-                else // query
-                {
-                    bta.action_qep_tree = NULL;
-                    qep_subtree = bta.action_qep_subtree = build_subqep(trac->statement, true);
-                    is_subqep_built = true;
-
-                    qep_subtree->tree.op->open();
-                    is_subqep_opened = true;
-
-                    built_trigger_actions_vec.push_back(bta);
-                }
+                built_trigger_actions_vec.push_back(bta);
                 trac = trac->next;
             }
         }
         catch(SednaUserException &e)
         {
             if (is_qep_built)
-                delete_qep_unmanaged(qep_tree);
-            if (is_subqep_built)
-                delete_qep(qep_subtree);
+                delete qep_tree;
             if(output_enabled)
                 tr_globals::client->enable_output();
             throw e;
@@ -760,48 +738,55 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
 
     //executing built actions
     std::vector<built_trigger_action>::size_type i;
-    int action_returns_value = ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
-    for(i = 0; i < mapIter->second.size()-action_returns_value; i++)
+    unsigned action_returns_value = ((trigger_time == TRIGGER_BEFORE) && (trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
+
+    for (i = 0; i < mapIter->second.size() - action_returns_value; i++)
     {
-        if(mapIter->second.at(i).action_qep_tree)
-        {
-            qep_tree = mapIter->second.at(i).action_qep_tree;
-            qep_parameters = &(mapIter->second.at(i).parameters);
-            set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-            if(qep_tree->is_update())
-                qep_tree->execute();
-        }
+        qep_tree = mapIter->second.at(i).action_qep_tree;
+        qep_parameters = &(mapIter->second.at(i).parameters);
+        set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
+
+        qep_tree->open();
+
+        if (qep_tree->is_update())
+            qep_tree->execute();
+
+        qep_tree->close();
     }
+
     if (action_returns_value)
     {
-      /* Since we truncate PPQueryRoot in create_trigger we must set lm_s
-         explicitly there. If not we will receive nested updates exception
-         even if execute read only query there.
-        */
-      local_lock_mrg->lock(lm_s);
+        qep_tree = mapIter->second.at(i).action_qep_tree;
+        qep_parameters = &(mapIter->second.at(i).parameters);
+        set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
+        tuple t = tuple(1);
 
-      qep_subtree = mapIter->second.at(i).action_qep_subtree;
-      qep_parameters = &(mapIter->second.at(i).parameters);
-      set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-      tuple t = tuple(1);
-      qep_subtree->tree.op->next(t);
-      if (!t.cells[0].is_node())
-          res_xptr = XNULL;
-      else
-          res_xptr = t.cells[0].get_node();
+        // We should only get a subquery here; actually it's checked on sema
+        U_ASSERT(dynamic_cast<PPSubQuery *>(qep_tree) != NULL);
 
-      // retrieve all items to make the qep_subtree usable next time
-      while(!t.is_eos())
-          qep_subtree->tree.op->next(t);
+        qep_tree->open();
+
+        dynamic_cast<PPSubQuery *>(qep_tree)->next(t);
+        if (!t.cells[0].is_node())
+            res_xptr = XNULL;
+        else
+            res_xptr = t.cells[0].get_node();
+
+        qep_tree->close();
     }
-    else res_xptr = XNULL;
+    else
+    {
+        res_xptr = XNULL;
+    }
 
-    if(output_enabled) tr_globals::client->enable_output();
+    if (output_enabled)
+        tr_globals::client->enable_output();
 
     current_nesting_level--;
     local_lock_mrg->lock(cur_lock);
 
-    if(res_xptr!=XNULL) CHECKP(res_xptr);
+    if (res_xptr!=XNULL)
+        CHECKP(res_xptr);
+
     return res_xptr;
 }
-

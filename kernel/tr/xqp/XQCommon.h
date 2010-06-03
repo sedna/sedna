@@ -4,6 +4,7 @@
 #include "tr/xqp/ast/ASTNode.h"
 #include "tr/xqp/ast/ASTVarDecl.h"
 #include "tr/xqp/ast/ASTVar.h"
+#include "tr/executor/base/dynamic_context.h"
 #include <string.h>
 #include <map>
 
@@ -12,7 +13,6 @@
 
 namespace sedna
 {
-    struct XQFunction;
     struct xqExprInfo
     {
         bool isOrdered;     // expr is ordered
@@ -22,44 +22,63 @@ namespace sedna
         bool useConstructors; // true, if subexpression uses constructor (direct or computed)
     };
 
-    typedef int var_id;
+    class XQueryModule;
 
+    /*
+     * Variable info: used throughout the parsing-qep process
+     */
     struct XQVariable
     {
+        // internal info
         std::string int_name;
-        ASTVar *var;
+        XQueryModule *mod;
 
+        ASTNode *var;
+
+        // lreturn info
         xqExprInfo exp_info;
-
         bool isNodes; // true if var represents sequence of nodes (singletons also go here)(this is only for typed vars)
 
-        var_id id; // id for physical plan
+        // lr2por info
+        global_var_dsc id; // id for physical plan
 
-        XQVariable(const char *name, ASTVar *var_)
+        // true if variable is actually being used
+        bool is_used;
+
+        XQVariable(const char *name, ASTNode *var_, XQueryModule *mod_ = NULL)
         {
             int_name = name;
+            mod = mod_;
             var = var_;
-            id = -1;
+            isNodes = false;
 
             exp_info.isDistincted = true;
             exp_info.useConstructors = false;
             exp_info.isSingleLevel = true;
             exp_info.isOrdered = true;
             exp_info.isMax1 = true;
+
+            id = global_var_dsc(NULL, INVALID_VAR_DSC);
+            is_used = false;
         }
 
         XQVariable()
         {
             int_name = "$%dummy";
+            mod = NULL;
             var = NULL;
-            id = -1;
+            id = global_var_dsc(NULL, INVALID_VAR_DSC);
+            is_used = false;
         }
     };
 
+    struct XQFunction;
+
     typedef std::pair<std::string, ASTLocation *> nsPair;
     typedef std::map<std::string, nsPair> nsBindType; // location is used to diagnoze illegal redefinition
-    typedef std::map<std::string, XQFunction> XQFunctionInfo;
-    typedef std::map<std::string, ASTVarDecl *> XQVariablesInfo;
+    typedef std::map<std::string, XQFunction *> XQFunctionInfo;
+    typedef std::map<std::string, XQFunction> XQStdFunctionInfo;
+    typedef std::map<std::string, XQVariable *> XQVariablesInfo;
     typedef std::map<std::string, ASTNode *> XQStringHash;
 }
 

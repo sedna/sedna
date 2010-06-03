@@ -46,7 +46,7 @@ public:
 class PPCreateDocumentInCollection : public PPUpdate
 {
 private:
-    dynamic_context *cxt1, *cxt2;
+    dynamic_context *cxt;
     PPOpIn document, collection;
 
     virtual void do_open();
@@ -57,9 +57,8 @@ private:
 public:
     
     PPCreateDocumentInCollection(PPOpIn _document_,
-                                 dynamic_context *_cxt1_,
                                  PPOpIn _collection_,
-                                 dynamic_context *_cxt2_);
+                                 dynamic_context *_cxt_);
     ~PPCreateDocumentInCollection();
 };
 

@@ -138,7 +138,7 @@ char *xs_QName_create(const char *uri,
         if (*prefix && !check_constraints_for_xs_NCName(prefix))
             throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
 
-        ns = cxt->st_cxt->get_ns_pair(prefix, uri);
+        ns = xmlns_touch(prefix, uri);
     }
 
     if (!check_constraints_for_xs_NCName(local))
@@ -177,7 +177,7 @@ char *xs_QName_create(const char* uri,
             if (!check_constraints_for_xs_NCName(prefix_and_local, pos))
                 throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
-        xmlns = cxt->st_cxt->get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
+        xmlns = xmlns_touch(std::string(prefix_and_local, pos).c_str(), uri);
     }
     else
     { // uri is empty...

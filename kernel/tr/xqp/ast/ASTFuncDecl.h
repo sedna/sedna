@@ -21,9 +21,6 @@ public:
     // added by semantic analysis
     std::string *func_uri;
 
-    // cached by lr2por (no need to store)
-    int id;
-
 public:
     ASTFuncDecl(const ASTNodeCommonData &loc, std::string *func_name, ASTNodesVector *func_params = NULL,
                 ASTNode *ret_type = NULL, ASTNode *func_body = NULL);
@@ -36,16 +33,6 @@ public:
     void accept(ASTVisitor &v);
     ASTNode *dup();
     void modifyChild(const ASTNode *oldc, ASTNode *newc);
-
-    int getId() const
-    {
-        return id;
-    }
-
-    void setId(int id_)
-    {
-        id = id_;
-    }
 
     static ASTNode *createNode(scheme_list &sl);
 };

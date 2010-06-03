@@ -214,6 +214,7 @@ public:
     virtual void visit(PPFnUriEncoding* op);
     virtual void visit(PPFnResolveUri* op);
     virtual void visit(PPQueryRoot* op);
+    virtual void visit(PPSubQuery* op);
     virtual void visit(PPBulkLoad* op);
 
 #ifdef SE_ENABLE_FTSEARCH

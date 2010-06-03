@@ -203,6 +203,13 @@ class PPIterator
 {
 protected:
     dynamic_context*  cxt;
+
+    /*
+     * We need this because of function body copy, which creates new variable context
+     * for local func vars and args
+     */
+    variable_context *var_cxt;
+
     operation_info    info;
     u_timeb current1, current2;
     
@@ -322,6 +329,7 @@ public:
                                     __current_physop_backup(NULL) 
     {
         info.name = _name_;
+        var_cxt = cxt->get_copy_var_context();
     }
 
     virtual ~PPIterator()  {}

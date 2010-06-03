@@ -179,8 +179,8 @@ public:
     //------------------------------------------------------------------------
     // Gets a raw representation of the character array where the data is stored
     //------------------------------------------------------------------------
-    xs_packed_datetime getPackedDateTime();
-    xs_packed_duration getPackedDuration();
+    xs_packed_datetime getPackedDateTime() const;
+    xs_packed_duration getPackedDuration() const;
 
     //-----------------------------------------------------------------------
     // Getter and setter functions
