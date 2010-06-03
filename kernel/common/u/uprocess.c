@@ -719,8 +719,8 @@ int find_executable(const char *name, char *buf, int size)
                 if (!S_ISREG(stat_temp.st_mode))
                     continue;
 #endif
-                strncpy(buf, tbuf, size);
-                return 0;
+                if(realpath(tbuf, buf) != NULL)
+                    return 0;            
             }
         }
     }
