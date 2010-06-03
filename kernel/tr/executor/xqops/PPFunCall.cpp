@@ -85,23 +85,6 @@ string fun_conv_rules::error()
     return res;
 }
 
-#ifdef STRICT_FUNS
-void fun_arg::init()
-{
-    tuple t(1);
-    for (int i = 0; i < STRICT_FUNS_BOUND; i++)
-    {
-        fcr.next(t);
-        if (t.is_eos())
-        {
-            seq_filled = true;
-            break;
-        }
-        else s->add(t);
-    }
-}
-#endif
-
 void fun_arg::reopen()
 {
     if (!seq_filled) fcr.reopen();
@@ -155,20 +138,15 @@ PPFunCall::PPFunCall(dynamic_context *_cxt_,
                                             body_fcr(NULL),
                                             args(NULL),
                                             args_num(ch_arr.size()),
-                                            new_cxt(NULL)
-#ifdef STRICT_FUNS
-                                            ,s(NULL)
-                                            ,spos(-1)
-#endif
-
+                                            var_cxt(NULL)
 {
-    for (int i = 0; i < args_num; i++)
+    for (unsigned i = 0; i < args_num; i++)
         if (ch_arr[i].ts != 1) throw USER_EXCEPTION2(SE1003, "Children of PPFunCall operation have wrong tuple size");
 }
 
 PPFunCall::~PPFunCall()
 {
-    for (int i = 0; i < args_num; i++) 
+    for (unsigned i = 0; i < args_num; i++)
     {
         delete (ch_arr[i].op);
         ch_arr[i].op = NULL;
@@ -178,10 +156,9 @@ PPFunCall::~PPFunCall()
     body = NULL;
 }
 
-
-void PPFunCall::do_open ()
+void PPFunCall::do_open()
 {
-    for (int i = 0; i < args_num; i++) 
+    for (unsigned i = 0; i < args_num; i++)
         ch_arr[i].op->open();
 
     need_reopen    = false;
@@ -192,44 +169,30 @@ void PPFunCall::do_reopen()
 {
     if (body) 
     {
-        for (int i = 0; i < args_num; i++) args[i]->reopen();
+        for (unsigned i = 0; i < args_num; i++) args[i]->reopen();
         body_fcr->reopen();
         reinit_consumer_table();
     }
 
     need_reopen = false;
-
-#ifdef STRICT_FUNS
-    if (spos != -1)
-    {
-        spos = -1;
-        delete s;
-        s = NULL;
-    }
-#endif
 }
 
 void PPFunCall::do_close()
 {
-    int i = 0;
+    unsigned i;
+
     for (i = 0; i < args_num; i++) ch_arr[i].op->close();
 
     if (body) 
     {
-        if(is_body_opened) 
+        if (is_body_opened)
         {
             is_body_opened = false;
             body->close();
         }
+
         delete body_fcr;
         body_fcr = NULL;
-    }
-
-    if (new_cxt)
-    {
-        for (i = 0; i < args_num; i++) new_cxt->var_cxt.producers[i].s = NULL;
-        delete new_cxt;
-        new_cxt = NULL;
     }
 
     if (args)
@@ -243,119 +206,52 @@ void PPFunCall::do_close()
         delete [] args;
         args = NULL;
     }
-
-#ifdef STRICT_FUNS
-    if (spos != -1)
-    {
-        spos = -1;
-        delete s;
-        s = NULL;
-    }
-#endif
 }
 
 void PPFunCall::do_next(tuple &t)
 {
-#ifdef STRICT_FUNS
-    if (spos != -1)
-    {
-        if (spos < s->size()) s->get(t, spos++);
-        else 
-        {
-            t.set_eos(); 
-            spos = -1;
-            delete s;
-            s = NULL;
-        }
-        return;
-    }
-#endif
-
+    /* here we need to create new body by cloning the old one
+     *
+     * think recursive functions, for instance, where body is cloned
+     * every time the same fun-call is met
+     *
+     * for example, fact(10) will create 10 cloned PPFunCalls with identical qep-bodies
+     */
     if (body == NULL)
     {
-        int i = 0;
+        unsigned i;
 
-#ifdef STRICT_FUNS
-        if (args == NULL)
-        {
-#endif
-            args = se_new fun_arg*[args_num];
+        function_declaration &fd = fn_id.first->get_func_decl(fn_id.second);
 
-            for (i = 0; i < args_num; i++)
-                args[i] = se_new fun_arg(&(dynamic_context::funct_cxt.fun_decls[fn_id].args[i]),
-                                         ch_arr[i].op, 
-                                         i+1);
-#ifdef STRICT_FUNS
-        }
-        else args[i]->reopen();
-#endif
+        args = new fun_arg*[args_num];
 
-#ifdef STRICT_FUNS
-        bool strict_mode = true;
+        for (i = 0; i < args_num; i++)
+            args[i] = new fun_arg(&(fd.args[i]),
+                                    ch_arr[i].op,
+                                    i + 1);
+
+        /*
+         * here we need to create new variable context for our execution
+         * since all variable ids start from 0
+         */
+        var_cxt = new variable_context();
+        var_cxt->setProducers(fd.vars_total);
+
+        // set producers for arguments
         for (i = 0; i < args_num; i++)
         {
-            args[i]->init();
-            strict_mode = strict_mode && args[i]->is_filled();
+            var_cxt->producers[i].type = pt_lazy_complex;
+            var_cxt->producers[i].op = this;
+            var_cxt->producers[i].cvc = se_new complex_var_consumption;
+            var_cxt->producers[i].tuple_pos = 0;
         }
-#endif
 
-        function_declaration &fd = dynamic_context::funct_cxt.fun_decls[fn_id];
+        // this sets proper copy-context
+        fn_id.first->add_var_func_context(var_cxt);
 
-#ifdef STRICT_FUNS
-        if (new_cxt == NULL)
-#endif
-            new_cxt = se_new dynamic_context(fd.st_cxt, fd.cxt_size);
-
-#ifdef STRICT_FUNS
-        if (strict_mode)
-        {
-            for (i = 0; i < args_num; i++)
-            {
-                new_cxt->var_cxt.producers[i].type = pt_seq;
-                new_cxt->var_cxt.producers[i].s = args[i]->get_sequence();
-            }
-
-            void *fun_r;
-            bool fun_s = (fd.op->res_fun())(fd.op, new_cxt, fun_r);
-
-            if (fun_s) 
-            { 
-                s = (sequence*)fun_r; 
-
-                if (s->size() == 0)
-                {
-                    t.set_eos();
-                    spos = -1;
-                    delete s;
-                    s = NULL;
-                }
-                else { s->get(t, 0); spos = 1; }
-
-                return;
-            }
-            else
-            {
-                body = (PPIterator*)fun_r;
-                // body->open(); !!! ???
-            }
-        }
-        else
-        {
-#endif
-            for (i = 0; i < args_num; i++)
-            {
-                new_cxt->var_cxt.producers[i].type = pt_lazy_complex;
-                new_cxt->var_cxt.producers[i].op = this;
-                new_cxt->var_cxt.producers[i].cvc = se_new complex_var_consumption;
-                new_cxt->var_cxt.producers[i].tuple_pos = 0;
-            }
-
-            body = fd.op->copy(new_cxt);
-            body->open();
-            is_body_opened = true;
-#ifdef STRICT_FUNS
-        }
-#endif
+        body = fd.op->copy(fn_id.first);
+        body->open();
+        is_body_opened = true;
 
         body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, 0);  /// arg_num == 0 means function return value
     }
@@ -363,7 +259,7 @@ void PPFunCall::do_next(tuple &t)
 
     if (need_reopen)
     {
-        for (int i = 0; i < args_num; i++) args[i]->reopen();
+        for (unsigned i = 0; i < args_num; i++) args[i]->reopen();
         reinit_consumer_table();
         need_reopen = false;
     }
@@ -377,7 +273,7 @@ PPIterator* PPFunCall::do_copy(dynamic_context *_cxt_)
 {
     PPFunCall *res = se_new PPFunCall(_cxt_, info, ch_arr, fn_id);
 
-    for (int i = 0; i < args_num; i++)
+    for (unsigned i = 0; i < args_num; i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
 
     return res;
@@ -385,19 +281,19 @@ PPIterator* PPFunCall::do_copy(dynamic_context *_cxt_)
 
 var_c_id PPFunCall::do_register_consumer(var_dsc dsc)
 {
-    complex_var_consumption &cvc = *(new_cxt->var_cxt.producers[dsc].cvc);
+    complex_var_consumption &cvc = *(var_cxt->producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
 void PPFunCall::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    args[dsc]->next(t, new_cxt->var_cxt.producers[dsc].cvc->at(id));
+    args[dsc]->next(t, var_cxt->producers[dsc].cvc->at(id));
 }
 
 void PPFunCall::do_reopen(var_dsc dsc, var_c_id id)
 {
-    new_cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
+    var_cxt->producers[dsc].cvc->at(id) = 0;
 }
 
 void PPFunCall::do_close(var_dsc dsc, var_c_id id)
@@ -406,9 +302,9 @@ void PPFunCall::do_close(var_dsc dsc, var_c_id id)
 
 inline void PPFunCall::reinit_consumer_table()
 {
-    for (int i = 0; i < args_num; i++)
+    for (unsigned i = 0; i < args_num; i++)
     {
-        complex_var_consumption *cvc = new_cxt->var_cxt.producers[i].cvc;
+        complex_var_consumption *cvc = var_cxt->producers[i].cvc;
         for (unsigned int j = 0; j < cvc->size(); j++) cvc->at(j) = 0;
     }
 }
@@ -417,7 +313,7 @@ void PPFunCall::do_accept(PPVisitor &v)
 {
     v.visit (this);
     v.push  (this);
-    for (int i = 0; i < args_num; i++)
+    for (unsigned i = 0; i < args_num; i++)
         ch_arr[i].op->accept(v);
     v.pop();
 }

@@ -12,7 +12,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 PPVariable::PPVariable(dynamic_context *_cxt_,
                        operation_info _info_, 
-                       var_dsc _dsc_) : PPIterator(_cxt_, _info_, "PPVariable"), 
+                       var_dsc _dsc_) : PPIterator(_cxt_, _info_, "PPVariable"),
+                                        var_prod(NULL),
                                         dsc(_dsc_)
 {
 }
@@ -25,12 +26,15 @@ PPVariable::~PPVariable()
 void PPVariable::do_open ()
 {
     U_ASSERT(cxt);
-    id = cxt->var_cxt.producers[dsc].op->register_consumer(dsc);
+
+    var_prod = &(cxt->get_var_producer(dsc, var_cxt));
+
+    id = var_prod->op->register_consumer(dsc);
 }
 
 void PPVariable::do_reopen()
 {
-    cxt->var_cxt.producers[dsc].op->reopen(dsc, id);
+    var_prod->op->reopen(dsc, id);
 }
 
 void PPVariable::do_close()
@@ -40,12 +44,15 @@ void PPVariable::do_close()
 
 void PPVariable::do_next (tuple &t)
 {
-    cxt->var_cxt.producers[dsc].op->next(t, dsc, id);
+    var_prod->op->next(t, dsc, id);
 }
 
 PPIterator* PPVariable::do_copy(dynamic_context *_cxt_)
 {
     PPVariable *res = se_new PPVariable(_cxt_, info, dsc);
+
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -54,14 +61,12 @@ void PPVariable::do_accept(PPVisitor &v)
     v.visit (this);
 }
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 /// PPGlobalVariable
 ///////////////////////////////////////////////////////////////////////////////
 PPGlobalVariable::PPGlobalVariable(dynamic_context *_cxt_,
                                    operation_info _info_, 
-                                   var_dsc _dsc_) : PPIterator(_cxt_, _info_, "PPGlobalVariable"), 
+                                   global_var_dsc _dsc_) : PPIterator(_cxt_, _info_, "PPGlobalVariable"),
                                                     dsc(_dsc_)
 {
 }
@@ -71,32 +76,25 @@ PPGlobalVariable::~PPGlobalVariable()
     // nothing to do
 }
 
-void PPGlobalVariable::setVarId(var_dsc _dsc_)
-{
-    U_ASSERT(dsc == -1); // this function should be called only for previously unresolved vars
-
-    dsc = _dsc_;
-}
-
 void PPGlobalVariable::do_open ()
 {
     U_ASSERT(cxt);
-    id = dynamic_context::glb_var_cxt.producers[dsc].op->register_consumer(dsc);
+    id = dsc.first->get_global_var_producer(dsc.second).op->register_consumer(dsc.second);
 }
 
 void PPGlobalVariable::do_reopen()
 {
-    dynamic_context::glb_var_cxt.producers[dsc].op->reopen(dsc, id);
+    dsc.first->get_global_var_producer(dsc.second).op->reopen(dsc.second, id);
 }
 
 void PPGlobalVariable::do_close()
 {
-    dynamic_context::glb_var_cxt.producers[dsc].op->close(dsc, id);
+    dsc.first->get_global_var_producer(dsc.second).op->close(dsc.second, id);
 }
 
 void PPGlobalVariable::do_next (tuple &t)
 {
-    dynamic_context::glb_var_cxt.producers[dsc].op->next(t, dsc, id);
+    dsc.first->get_global_var_producer(dsc.second).op->next(t, dsc.second, id);
 }
 
 PPIterator* PPGlobalVariable::do_copy(dynamic_context *_cxt_)

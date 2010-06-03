@@ -30,6 +30,8 @@ enum qepNextAnswer
     se_result_is_cut_off
 };
 
+struct serialization_params;
+
 /* base class for Sedna output streams */
 class se_ostream
 {

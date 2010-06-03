@@ -51,7 +51,7 @@ PPRename::~PPRename()
 void PPRename::do_open()
 {
     local_lock_mrg->lock(lm_x);
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     child.op->open();
     if(new_name_child.op)
     {
@@ -63,7 +63,7 @@ void PPRename::do_close()
 {
     child.op->close();
     if(new_name_child.op) new_name_child.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPRename::do_accept(PPVisitor &v)

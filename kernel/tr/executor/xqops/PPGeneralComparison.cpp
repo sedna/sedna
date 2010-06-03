@@ -145,7 +145,7 @@ void PPGeneralComparison::do_open ()
     first_time = true;
     eos_reached1 = true;
 	eos_reached2 = true;
-    handler = cxt->st_cxt->get_default_collation();
+    handler = cxt->get_static_context()->get_default_collation();
 }
 
 void PPGeneralComparison::do_reopen()

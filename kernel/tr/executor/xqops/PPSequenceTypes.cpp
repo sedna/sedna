@@ -86,6 +86,8 @@ PPIterator* PPCast::do_copy(dynamic_context *_cxt_)
 {
     PPCast *res = se_new PPCast(_cxt_, info, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -173,6 +175,8 @@ PPIterator* PPCastable::do_copy(dynamic_context *_cxt_)
 {
     PPCastable *res = se_new PPCastable(_cxt_, info, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -251,6 +255,8 @@ PPIterator* PPInstanceOf::do_copy(dynamic_context *_cxt_)
 {
     PPInstanceOf *res = se_new PPInstanceOf(_cxt_, info, child, st);
     res->child.op = child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -344,6 +350,8 @@ PPIterator* PPTreat::do_copy(dynamic_context *_cxt_)
 {
     PPTreat *res = se_new PPTreat(_cxt_, info, child, st);
     res->child.op = child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -408,7 +416,7 @@ void PPTypeswitch::do_open ()
     
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_complex;
         p.op = this;
         p.cvc = se_new complex_var_consumption;
@@ -499,6 +507,8 @@ PPIterator* PPTypeswitch::do_copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->default_child.op = default_child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -515,14 +525,14 @@ void PPTypeswitch::do_accept(PPVisitor &v)
 
 var_c_id PPTypeswitch::do_register_consumer(var_dsc dsc)
 {
-    complex_var_consumption &cvc = *(cxt->var_cxt.producers[dsc].cvc);
+    complex_var_consumption &cvc = *(cxt->get_var_producer(dsc, var_cxt).cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
 void PPTypeswitch::do_next(tuple &t, var_dsc dsc, var_c_id id)                    
 {
-    producer &p = cxt->var_cxt.producers[dsc];
+    producer &p = cxt->get_var_producer(dsc, var_cxt);
     complex_var_consumption &cvc = *(p.cvc);
 
     if (cvc[id] < s->size())
@@ -559,7 +569,7 @@ void PPTypeswitch::do_next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPTypeswitch::do_reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
+    cxt->get_var_producer(dsc, var_cxt).cvc->at(id) = 0;
 }
 
 void PPTypeswitch::do_close(var_dsc dsc, var_c_id id)
@@ -570,7 +580,7 @@ inline void PPTypeswitch::reinit_consumer_table()
 {
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }

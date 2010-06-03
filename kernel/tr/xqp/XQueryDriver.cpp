@@ -16,7 +16,7 @@
 
 namespace sedna
 {
-    XQFunctionInfo XQueryDriver::stdFuncs;
+    XQStdFunctionInfo XQueryDriver::stdFuncs;
 
     XQueryDriver::~XQueryDriver()
     {
@@ -75,22 +75,6 @@ namespace sedna
         XQueryModule *mod = new XQueryModule(ast, this);
 
         mods.push_back(mod);
-    }
-
-    void XQueryDriver::parseASTInContext(const char *ast, static_context *sx)
-    {
-        XQueryModule *mod = new XQueryModule(ast, this);
-
-        mod->setStaticContextForQEP(sx);
-        mods.push_back(mod);
-    }
-
-    void XQueryDriver::parseXQInContext(const char *xq, static_context *sx)
-    {
-        parse(xq);
-        doSemanticAnalysis();
-        doLReturnAnalysis();
-        mods.back()->setStaticContextForQEP(sx);
     }
 
     void XQueryDriver::emitErrors()
@@ -416,98 +400,42 @@ namespace sedna
         return res;
     }
 
-    XQFunction XQueryDriver::getStdFuncInfo(const std::string &name) const
+    XQFunction *XQueryDriver::getStdFuncInfo(const std::string &name) const
     {
-        return stdFuncs[name];
+        return &stdFuncs[name];
     }
 
-    XQFunction XQueryDriver::getLReturnFunctionInfo(const std::string &name)
+    XQFunction *XQueryDriver::getLReturnFunctionInfo(const std::string &name)
     {
-        XQFunction xqf;
-        modSequence ms;
+        XQFunction *xqf;
 
-        ms = libModules[libFuncs[name].uri];
+        // function should be resolved by sema
+        U_ASSERT(libFuncs.find(name) != libFuncs.end());
 
-        for (modSequence::iterator it = ms.begin(); it != ms.end(); it++)
-        {
-            if ((*it)->getLReturnFunctionInfo(name, xqf))
-                break;
-        }
+        xqf = libFuncs[name];
+
+        xqf->mod->getLReturnFunctionInfo(name, &xqf);
 
         return xqf;
     }
 
-    XQVariable XQueryDriver::getLReturnVariableInfo(const std::string &name)
+    XQVariable *XQueryDriver::getLReturnVariableInfo(const std::string &name)
     {
-        XQVariable xqv(name.c_str(), NULL);
-        modSequence ms;
-        std::string uri;
-        std::string::size_type fp, lp;
+        XQVariable *xqv;
 
-        // get uri from name
-        fp = name.find('{');
-        lp = name.find('}');
-        U_ASSERT(fp != std::string::npos && lp != std::string::npos);
-        uri = name.substr(fp + 1, lp - fp - 1);
+        // variable should be resolved by sema
+        U_ASSERT(libVars.find(name) != libVars.end());
 
-        ms = libModules[uri];
+        xqv = libVars[name];
 
-        for (modSequence::iterator it = ms.begin(); it != ms.end(); it++)
-        {
-            if ((*it)->getLReturnVariableInfo(name, xqv))
-                break;
-        }
+        xqv->mod->getLReturnVariableInfo(name, &xqv);
 
         return xqv;
     }
 
-    size_t XQueryDriver::getVarCount() const
+    PPQueryEssence *XQueryDriver::getQEPForModule(unsigned int ind, bool is_subquery)
     {
-        return libVars.size();
-    }
-
-    size_t XQueryDriver::getFuncCount() const
-    {
-        return libFuncs.size();
-    }
-
-    size_t XQueryDriver::getLibModCount() const
-    {
-        size_t count = 0;
-        std::map<std::string, modSequence>::const_iterator it;
-
-        for (it = libModules.begin(); it != libModules.end(); it++)
-            count += it->second.size();
-
-        return count;
-    }
-
-    PPQueryEssence *XQueryDriver::getQEPForModule(unsigned int ind)
-    {
-        // first we enumerate all global vars and funcs
-        glob_var_num = 0;
-        glob_fun_num = 0;
-
-        XQVariablesInfo::iterator vit;
-
-        for (vit = libVars.begin(); vit != libVars.end(); vit++)
-            vit->second->setId(getNewGlobVarId());
-
-        XQFunctionInfo::iterator fit;
-
-        for (fit = libFuncs.begin(); fit != libFuncs.end(); fit++)
-        {
-            if (!fit->second.decl->body) // external function
-            {
-                fit->second.decl->setId(-1);
-            }
-            else
-            {
-                fit->second.decl->setId(getNewGlobFunId());
-            }
-        }
-
-        PPQueryEssence *res = (mods[ind])->getQEP();
+        PPQueryEssence *res = (mods[ind])->getQEP(is_subquery);
 
         // some errors might have happened
         if (gotErrors())
@@ -519,29 +447,71 @@ namespace sedna
         return res;
     }
 
-    void XQueryDriver::porLibModules()
+    void XQueryDriver::porLibModules(dynamic_context *parent_context)
     {
         std::map<std::string, modSequence>::iterator it;
 
+        /*
+         * The main caveat here is that we want to issue function
+         * anf global vars ids _before_ we do main qep-build pass.
+         * We must do it because, for example, functions from different
+         * modules can reference each other.
+         *
+         * So, we do it in two-pass fashion: first we enumerate vars
+         * and funcs and then perform qep-building.
+         *
+         * Also we process only library modules that we actually need. We need
+         * only the modules we are using funcs and vars from.
+         */
+
+        // First step: setting dynamic contexts and enumerating
         for (it = libModules.begin(); it != libModules.end(); it++)
         {
             modSequence::iterator mit;
 
             for (mit = it->second.begin(); mit != it->second.end(); mit++)
             {
-                (*mit)->porLibModule();
+                if ((*mit)->module_is_needed())
+                {
+                    dynamic_context *dyn_cxt = new dynamic_context(new static_context());
+                    parent_context->add_child_context(dyn_cxt);
+                    (*mit)->set_dynamic_context(dyn_cxt);
+                    (*mit)->enumerate_vars_funcs();
+                }
+            }
+        }
+
+        // Second step: processing funcs and vars
+        for (it = libModules.begin(); it != libModules.end(); it++)
+        {
+            modSequence::iterator mit;
+
+            for (mit = it->second.begin(); mit != it->second.end(); mit++)
+            {
+                if ((*mit)->module_is_needed())
+                {
+                    (*mit)->porLibModule();
+                }
             }
         }
     }
 
-    var_id XQueryDriver::getGlobalVariableId(const std::string &name)
+    global_var_dsc XQueryDriver::getGlobalVariableId(const std::string &name)
     {
-        return libVars.find(name)->second->getId();
+        XQVariable *xqv = libVars.find(name)->second;
+
+        U_ASSERT(xqv->id.first && xqv->id.second != INVALID_VAR_DSC);
+
+        return xqv->id;
     }
 
-    var_id XQueryDriver::getGlobalFunctionId(const std::string &name)
+    function_id XQueryDriver::getGlobalFunctionId(const std::string &name)
     {
-        return libFuncs.find(name)->second.decl->getId();
+        XQFunction *xqf = libFuncs.find(name)->second;
+
+        U_ASSERT(xqf->id.first);
+
+        return xqf->id;
     }
 
     xmlscm_type XQueryDriver::getXsType(const char *type)
@@ -551,3 +521,4 @@ namespace sedna
         return xsTypes[type].xtype;
     }
 }
+

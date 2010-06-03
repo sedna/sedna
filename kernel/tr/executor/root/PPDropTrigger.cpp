@@ -31,6 +31,7 @@ PPDropTrigger::~PPDropTrigger()
 
 void PPDropTrigger::do_open()
 {
+    cxt->global_variables_open();
     trigger_name.op->open();
     local_lock_mrg->lock(lm_x);
 }
@@ -38,6 +39,7 @@ void PPDropTrigger::do_open()
 void PPDropTrigger::do_close()
 {
     trigger_name.op->close();
+    cxt->global_variables_close();
 }
 
 void PPDropTrigger::do_accept(PPVisitor &v)

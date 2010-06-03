@@ -224,6 +224,7 @@ public:
     
    /* Root operations */
     virtual void visit(PPQueryRoot* op)                  = 0;
+    virtual void visit(PPSubQuery* op)                   = 0;
     virtual void visit(PPBulkLoad* op)                   = 0;
     virtual void visit(PPCreateIndex* op)                = 0;
     virtual void visit(PPCreateDocument* op)             = 0;

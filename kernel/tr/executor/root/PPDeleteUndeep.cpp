@@ -28,14 +28,14 @@ PPDeleteUndeep::~PPDeleteUndeep()
 void PPDeleteUndeep::do_open()
 {
     local_lock_mrg->lock(lm_x);
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     child.op->open();
 }
 
 void PPDeleteUndeep::do_close()
 {
     child.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPDeleteUndeep::do_accept(PPVisitor &v)
@@ -50,4 +50,3 @@ void PPDeleteUndeep::do_execute()
 {
     delete_undeep(child);
 }
-

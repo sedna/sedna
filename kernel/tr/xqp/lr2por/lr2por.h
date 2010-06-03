@@ -60,23 +60,21 @@ namespace sedna
         unsigned int param_count; // number of parameters found in param_mode
         bool pers_path_mode; // if true, then we the next xpath will be persistent (use only for craete indexe/ft-index/trigger, where path is already checked)
 
-        typedef std::pair<std::string, var_id> l2pVarInfo; // var info int_name+id
+        typedef std::pair<std::string, var_dsc> l2pVarInfo; // var info int_name+id
 
         std::vector<l2pVarInfo> bound_vars; // vector of variables bound in the current expression (we need only names there)
         std::vector<childOffer> offers; // offers from children go in this sequence
 
-        typedef std::map<std::string, var_id> funcInfo;
-        typedef std::map<std::string, var_id> varInfo;
+        typedef std::map<std::string, function_id> funcInfo;
+        typedef std::map<std::string, global_var_dsc> varInfo;
 
         funcInfo funcCache; // cache containing info about processed functions
         varInfo varCache; // cache containg info about processed global and lib variables
 
-        static_context *st_cxt; // global static context for the module
         dynamic_context *dyn_cxt; // current context for ops (different for every function-variable)
 
         PPQueryEssence *qep; // result tree
-
-        unsigned int var_num;
+        bool is_subquery; // true if we're building a subquery
 
         // some special stuff for PPCalculate
         int var_op_num; // leaf nums for ppcalculate operations
@@ -96,7 +94,7 @@ namespace sedna
         const parentRequest &getParentRequest() const;
         void setParentRequest(const parentRequest &preq);
 
-        var_id getVarNum();
+        var_dsc getVarNum();
         CalcOp *make_CalcOp(ASTNode *n, bool logical);
         void make_binary_op(ASTBop &n);
         void make_unary_op(ASTUop &n);
@@ -106,18 +104,18 @@ namespace sedna
         static bool checkAndAddIfUnique(std::vector<l2pVarInfo> &un_vars, const l2pVarInfo &var);
 
     public:
-        lr2por(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, static_context *st_cxt_) : ASTVisitor(drv_, mod_)
+        lr2por(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, dynamic_context *dyn_cxt_, bool is_subquery_) : ASTVisitor(drv_, mod_)
         {
             param_mode = false;
             param_count = 0;
             pers_path_mode = false;
             pareqs.push_back(parentRequest());
 
-            st_cxt = st_cxt_;
-            dyn_cxt = NULL;
+            dyn_cxt = dyn_cxt_;
             qep = NULL;
-            var_num = 0;
             var_op_num = -1;
+
+            is_subquery = is_subquery_;
         }
 
         ~lr2por()
@@ -132,8 +130,8 @@ namespace sedna
         virtual void addToPath(ASTNode *nod);
         virtual void removeFromPath(ASTNode *nod);
 
-        var_id getGlobalFunctionId(const std::string &name);
-        var_id getGlobalVariableId(const std::string &name);
+        function_id getGlobalFunctionId(const std::string &name);
+        global_var_dsc getGlobalVariableId(const std::string &name);
         childOffer getContextOffer(operation_info oi) const;
         bool isStepNeedsChecker(const ASTStep &st) const;
         std::string getlrForAxisStep(const ASTAxisStep &s);

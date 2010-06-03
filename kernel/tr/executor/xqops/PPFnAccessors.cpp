@@ -611,7 +611,7 @@ void PPFnStaticBaseUri::do_next (tuple &t)
     {
         first_time = false;    
 
-        if ( cxt->st_cxt->get_base_uri() == NULL ) 
+        if (cxt->get_static_context()->get_base_uri() == NULL)
         {
             /* 
              * Base URI is undefined in the static context. 
@@ -622,7 +622,7 @@ void PPFnStaticBaseUri::do_next (tuple &t)
             first_time = true;
         }
         else 
-            t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->get_base_uri()) );
+            t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->get_static_context()->get_base_uri()) );
     }
     else 
     {
@@ -668,10 +668,10 @@ void PPFnDefaultCollation::do_next (tuple &t)
     {
         first_time = false;    
 
-        if ( cxt->st_cxt->get_default_collation_uri() == NULL ) 
+        if ( cxt->get_static_context()->get_default_collation_uri() == NULL )
             throw USER_EXCEPTION2(SE1003, "Default collation property could not be undefined in PPFnDefaultCollation.");
         else 
-            t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->get_default_collation_uri()) );
+            t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->get_static_context()->get_default_collation_uri()) );
     }
     else 
     {

@@ -221,7 +221,7 @@ void PPFnDeepEqual::do_next (tuple &t)
             
             col = tuple_cell::make_sure_light_atomic(col);
 
-            int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+            int res = cxt->get_static_context()->get_collation(col.get_str_mem(), &handler);
             if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:deep-equal.").c_str()); 
         }
 

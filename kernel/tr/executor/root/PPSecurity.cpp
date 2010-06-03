@@ -34,7 +34,7 @@ PPCreateUser::~PPCreateUser()
 
 void PPCreateUser::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     username.op->open();
     passwd.op->open();
     local_lock_mrg->lock(lm_x);
@@ -44,7 +44,7 @@ void PPCreateUser::do_close()
 {
     username.op->close();
     passwd.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateUser::do_execute()
@@ -98,7 +98,7 @@ PPDropUser::~PPDropUser()
 
 void PPDropUser::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     username.op->open();
     local_lock_mrg->lock(lm_x);
 }
@@ -106,7 +106,7 @@ void PPDropUser::do_open()
 void PPDropUser::do_close()
 {
     username.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPDropUser::do_execute()
@@ -153,7 +153,7 @@ PPAlterUser::~PPAlterUser()
 
 void PPAlterUser::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     username.op->open();
     passwd.op->open();
     local_lock_mrg->lock(lm_x);
@@ -163,7 +163,7 @@ void PPAlterUser::do_close()
 {
     username.op->close();
     passwd.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPAlterUser::do_execute()
@@ -217,7 +217,7 @@ PPCreateRole::~PPCreateRole()
 
 void PPCreateRole::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     rolename.op->open();
     local_lock_mrg->lock(lm_x);
 }
@@ -225,7 +225,7 @@ void PPCreateRole::do_open()
 void PPCreateRole::do_close()
 {
     rolename.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateRole::do_execute()
@@ -267,7 +267,7 @@ PPDropRole::~PPDropRole()
 
 void PPDropRole::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     rolename.op->open();
     local_lock_mrg->lock(lm_x);
 }
@@ -275,7 +275,7 @@ void PPDropRole::do_open()
 void PPDropRole::do_close()
 {
     rolename.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
     clear_authmap();
 }
 
@@ -323,7 +323,7 @@ PPGrantRole::~PPGrantRole()
 
 void PPGrantRole::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     role.op->open();
     grantee.op->open();
     local_lock_mrg->lock(lm_x);
@@ -333,7 +333,7 @@ void PPGrantRole::do_close()
 {
     role.op->close();
     grantee.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
     clear_authmap();
 }
 
@@ -415,7 +415,7 @@ PPGrantRevokePriv::~PPGrantRevokePriv()
 
 void PPGrantRevokePriv::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     name.op->open();
 
     if (obj_name.op)
@@ -433,7 +433,7 @@ void PPGrantRevokePriv::do_close()
         obj_name.op->close();
 
     grantee.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
     clear_authmap();
 }
 
@@ -520,7 +520,7 @@ PPRevokeRole::~PPRevokeRole()
 
 void PPRevokeRole::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     role.op->open();
     grantee.op->open();
     local_lock_mrg->lock(lm_x);
@@ -530,7 +530,7 @@ void PPRevokeRole::do_close()
 {
     role.op->close();
     grantee.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
     clear_authmap();
 }
 

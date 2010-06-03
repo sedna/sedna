@@ -57,7 +57,7 @@ void PPLet::do_open ()
 
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_complex;
         p.op = this;
         p.cvc = se_new complex_var_consumption;
@@ -118,6 +118,8 @@ PPIterator* PPLet::do_copy(dynamic_context *_cxt_)
                                     : se_new PPLet(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
+    res->var_cxt = _cxt_->get_copy_var_context();
+
     return res;
 }
 
@@ -133,14 +135,14 @@ void PPLet::do_accept(PPVisitor &v)
 
 var_c_id PPLet::do_register_consumer(var_dsc dsc)
 {
-    complex_var_consumption &cvc = *(cxt->var_cxt.producers[dsc].cvc);
+    complex_var_consumption &cvc = *(cxt->get_var_producer(dsc, var_cxt).cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
 void PPLet::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    producer &p = cxt->var_cxt.producers[dsc];
+    producer &p = cxt->get_var_producer(dsc, var_cxt);
     complex_var_consumption &cvc = *(p.cvc);
 
     if (cvc[id] < s->size())
@@ -177,7 +179,7 @@ void PPLet::do_next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPLet::do_reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
+    cxt->get_var_producer(dsc, var_cxt).cvc->at(id) = 0;
 }
 
 void PPLet::do_close(var_dsc dsc, var_c_id id)
@@ -188,7 +190,7 @@ inline void PPLet::reinit_consumer_table()
 {
     for (unsigned int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }

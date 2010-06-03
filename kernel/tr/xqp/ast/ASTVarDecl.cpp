@@ -26,8 +26,6 @@ ASTNode *ASTVarDecl::dup()
 {
     ASTVarDecl *res = new ASTVarDecl(cd, var->dup(), (type == NULL) ? NULL: type->dup(), (expr == NULL) ? NULL: expr->dup());
 
-    res->id = id;
-
     return res;
 }
 

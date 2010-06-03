@@ -37,9 +37,6 @@ namespace sedna
 
     void lr2por::visit(ASTAlterUser &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         qep = new PPAlterUser(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
                               PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.psw, xs_string)), 1), dyn_cxt);
     }
@@ -68,6 +65,7 @@ namespace sedna
             while (count--)
                 seq.push_back(getOffer().opin);
 
+            // we've obtained our context sequence in reverse order
             std::reverse(seq.begin(), seq.end());
 
             content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
@@ -230,7 +228,7 @@ namespace sedna
         // now we need to construct qep for xpath axis step
         if (n.preds)
         {
-            var_id axis_cxt = getVarNum(); // axis context
+            var_dsc axis_cxt = getVarNum(); // axis context
             arr_of_var_dsc vars;
             PPOpIn preds;
 
@@ -242,13 +240,13 @@ namespace sedna
             for (unsigned int i = 0; i < n.preds->size(); i++)
             {
                 childOffer off;
-                var_id pred_cxt; // predicate context
-                var_id pos_var, last_var;
+                var_dsc pred_cxt; // predicate context
+                var_dsc pos_var, last_var;
                 ASTPred *pred = dynamic_cast<ASTPred *>(n.preds->at(i));
                 parentRequest req;
 
                 pred_cxt = getVarNum();
-                pos_var = last_var = -1;
+                pos_var = last_var = INVALID_VAR_DSC;
 
                 // bind context
                 bound_vars.push_back(l2pVarInfo("$%v", pred_cxt));
@@ -274,10 +272,10 @@ namespace sedna
 
                 preds = off.opin;
 
-                if (last_var != -1)
+                if (last_var != INVALID_VAR_DSC)
                     bound_vars.pop_back();
 
-                if (pos_var != -1)
+                if (pos_var != INVALID_VAR_DSC)
                     bound_vars.pop_back();
 
                 bound_vars.pop_back();
@@ -285,7 +283,7 @@ namespace sedna
 
             vars.push_back(axis_cxt);
 
-            off_this.opin.op = new PPReturn(dyn_cxt, oi, vars, off_cont.opin, preds, -1);
+            off_this.opin.op = new PPReturn(dyn_cxt, oi, vars, off_cont.opin, preds, INVALID_VAR_DSC);
             off_this.opin.ts = 1;
         }
         else
@@ -300,7 +298,7 @@ namespace sedna
     {
         try
         {
-            st_cxt->set_base_uri(n.uri->c_str());
+            dyn_cxt->get_static_context()->set_base_uri(n.uri->c_str());
         }
         catch (SednaUserException &e) // invalid uri exception
         {
@@ -452,7 +450,7 @@ namespace sedna
 
     void lr2por::visit(ASTBoundSpaceDecl &n)
     {
-        st_cxt->set_boundary_space((n.mod == ASTBoundSpaceDecl::STRIP) ? xq_boundary_space_strip : xq_boundary_space_preserve);
+        dyn_cxt->get_static_context()->set_boundary_space((n.mod == ASTBoundSpaceDecl::STRIP) ? xq_boundary_space_strip : xq_boundary_space_preserve);
     }
 
     void lr2por::visit(ASTCase &n)
@@ -464,10 +462,9 @@ namespace sedna
         {
             // first get typeswitch main binding; it should be the last one in bound_vars
             U_ASSERT(bound_vars.back().first == "$%ts");
-            var_id var = bound_vars.back().second;
+            var_dsc var = bound_vars.back().second;
 
             // then bind our var
-
             // this should be ASTVar
             U_ASSERT(dynamic_cast<const ASTVar *>(n.var));
             std::string name = dynamic_cast<const ASTVar *>(n.var)->getStandardName();
@@ -561,19 +558,15 @@ namespace sedna
 
     void lr2por::visit(ASTConstDecl &n)
     {
-        st_cxt->set_construction_mode((n.mod == ASTConstDecl::PRESERVE) ? true : false);
+        dyn_cxt->get_static_context()->set_construction_mode((n.mod == ASTConstDecl::PRESERVE) ? true : false);
     }
 
     void lr2por::visit(ASTCreateColl &n)
     {
         childOffer off_coll;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.coll->accept(*this);
-
         off_coll = getOffer();
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         qep = new PPCreateCollection(off_coll.opin, dyn_cxt);
     }
@@ -581,29 +574,20 @@ namespace sedna
     void lr2por::visit(ASTCreateDoc &n)
     {
         childOffer off_doc, off_coll;
-        dynamic_context *cxt_doc, *cxt_coll;
 
-        var_num = 0;
-        dyn_cxt = cxt_doc = new dynamic_context(st_cxt, 0);
         n.doc->accept(*this);
-
         off_doc = getOffer();
-        cxt_doc->set_producers((var_num) ? (var_num + 1) : 0);
 
         if (n.coll)
         {
-            var_num = 0;
-            dyn_cxt = cxt_coll = new dynamic_context(st_cxt, (var_num) ? (var_num + 1) : 0);
             n.coll->accept(*this);
-
             off_coll = getOffer();
-            cxt_coll->set_producers((var_num) ? (var_num + 1) : 0);
         }
 
         if (n.coll)
-            qep = new PPCreateDocumentInCollection(off_doc.opin, cxt_doc, off_coll.opin, cxt_coll);
+            qep = new PPCreateDocumentInCollection(off_doc.opin, off_coll.opin, dyn_cxt);
         else
-            qep = new PPCreateDocument(off_doc.opin, cxt_doc);
+            qep = new PPCreateDocument(off_doc.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTCreateFtIndex &n)
@@ -619,8 +603,6 @@ namespace sedna
         counted_ptr<db_entity> dbe;
         PPOpIn comp_name;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.name->accept(*this);
         off_name = getOffer();
 
@@ -643,9 +625,6 @@ namespace sedna
 
         if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
-
-        // set context
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         PathExprRoot peroot(dbe);
 
@@ -683,8 +662,6 @@ namespace sedna
         counted_ptr<db_entity> dbe;
         PPOpIn comp_name;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.name->accept(*this);
         off_name = getOffer();
 
@@ -725,9 +702,6 @@ namespace sedna
         off_type = getOffer();
         xtype = off_type.st.type.info.single_type;
 
-        // set context
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
-
         PathExprRoot peroot(dbe);
 
         // computed name in doc/coll
@@ -741,9 +715,6 @@ namespace sedna
 
     void lr2por::visit(ASTCreateRole &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         qep = new PPCreateRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1), dyn_cxt);
     }
 
@@ -804,9 +775,6 @@ namespace sedna
         PPOpIn name, comp_name;
         tuple_cell tc;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-
         // create trigger name
         tc = string2tuple_cell(*n.name, xs_string);
         name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
@@ -837,24 +805,23 @@ namespace sedna
         if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
+        scheme_list *action = new scheme_list(n.do_exprs->size());
 
-        scheme_list *action = new scheme_list(n.do_exprs->size() * 2);
-
+        // serialize trigger-query into scheme_list
         for (size_t i = 0; i < n.do_exprs->size(); i++)
         {
             ASTQuery *st_query = dynamic_cast<ASTQuery *>(n.do_exprs->at(i));
-            bool is_query = (st_query->type == ASTQuery::QUERY);
 
             st_query->is_trigger = true;
 
+            // internal representation for a query
             std::string ir = mod->getIR(st_query);
 
-            action->at(2*i).type = SCM_STRING;
-            action->at(2*i).internal.str = new char[ir.size() + 1];
-            action->at(2*i+1).type = SCM_BOOL;
-            action->at(2*i+1).internal.b = is_query;
+            // trigger actions are pairs: (query: ir_string, is_query: bool)
+            action->at(i).type = SCM_STRING;
+            action->at(i).internal.str = new char[ir.size() + 1];
 
-            strcpy(action->at(2*i).internal.str, ir.c_str());
+            strcpy(action->at(i).internal.str, ir.c_str());
         }
 
         if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
@@ -900,8 +867,6 @@ namespace sedna
                                       action,  //action list in scheme
                                       name);   //trigger name operation
         }
-
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 #else
         drv->error(SE1002, "Triggers support is disabled. Rebuild Sedna with enabled triggers.");
 #endif
@@ -909,9 +874,6 @@ namespace sedna
 
     void lr2por::visit(ASTCreateUser &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         qep = new PPCreateUser(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
                                PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.psw, xs_string)), 1), dyn_cxt);
     }
@@ -932,15 +894,15 @@ namespace sedna
 
     void lr2por::visit(ASTDeclareCopyNsp &n)
     {
-        st_cxt->set_namespace_preserve((n.pres_mod == ASTDeclareCopyNsp::PRESERVE) ? true : false);
-        st_cxt->set_namespace_inherit((n.pres_mod == ASTDeclareCopyNsp::INHERIT) ? true : false);
+        dyn_cxt->get_static_context()->set_namespace_preserve((n.pres_mod == ASTDeclareCopyNsp::PRESERVE) ? true : false);
+        dyn_cxt->get_static_context()->set_namespace_inherit((n.pres_mod == ASTDeclareCopyNsp::INHERIT) ? true : false);
     }
 
     void lr2por::visit(ASTDefCollation &n)
     {
         try
         {
-            st_cxt->set_default_collation_uri(n.uri->c_str());
+            dyn_cxt->get_static_context()->set_default_collation_uri(n.uri->c_str());
         }
         catch (SednaUserException &e) // invalid uri
         {
@@ -952,7 +914,7 @@ namespace sedna
     {
         // we don't add default function namespace, since it is resolved in sema
         if (n.type == ASTDefNamespaceDecl::ELEMENT)
-            st_cxt->add_to_context("", n.uri->c_str());
+            dyn_cxt->add_to_context("", n.uri->c_str());
     }
 
     void lr2por::visit(ASTDocConst &n)
@@ -995,12 +957,8 @@ namespace sedna
     {
         childOffer off_coll;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.coll->accept(*this);
-
         off_coll = getOffer();
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         qep = new PPDropCollection(off_coll.opin, dyn_cxt);
     }
@@ -1008,29 +966,20 @@ namespace sedna
     void lr2por::visit(ASTDropDoc &n)
     {
         childOffer off_doc, off_coll;
-        dynamic_context *cxt_doc, *cxt_coll;
 
-        var_num = 0;
-        dyn_cxt = cxt_doc = new dynamic_context(st_cxt, 0);
         n.doc->accept(*this);
-
         off_doc = getOffer();
-        cxt_doc->set_producers((var_num) ? (var_num + 1) : 0);
 
         if (n.coll)
         {
-            var_num = 0;
-            dyn_cxt = cxt_coll = new dynamic_context(st_cxt, (var_num) ? (var_num + 1) : 0);
             n.coll->accept(*this);
-
             off_coll = getOffer();
-            cxt_coll->set_producers((var_num) ? (var_num + 1) : 0);
         }
 
         if (n.coll)
-            qep = new PPDropDocumentInCollection(off_doc.opin, cxt_doc, off_coll.opin, cxt_coll);
+            qep = new PPDropDocumentInCollection(off_doc.opin, off_coll.opin, dyn_cxt);
         else
-            qep = new PPDropDocument(off_doc.opin, cxt_doc);
+            qep = new PPDropDocument(off_doc.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTDropFtIndex &n)
@@ -1041,12 +990,9 @@ namespace sedna
 
         childOffer off_ind;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.index->accept(*this);
 
         off_ind = getOffer();
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         qep = new PPDropFtIndex(off_ind.opin, dyn_cxt);
 #else
@@ -1058,40 +1004,27 @@ namespace sedna
     {
         childOffer off_ind;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.index->accept(*this);
-
         off_ind = getOffer();
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         qep = new PPDropIndex(off_ind.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTDropMod &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-
         PPOpIn mod = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.module, xs_string)), 1);
-
         qep = new PPDropModule(mod, dyn_cxt);
     }
 
     void lr2por::visit(ASTDropRole &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         qep = new PPDropRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1), dyn_cxt);
     }
 
     void lr2por::visit(ASTDropTrg &n)
     {
 #ifdef SE_ENABLE_TRIGGERS
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-
         PPOpIn name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.trg, xs_string)), 1);
-
         qep = new PPDropTrigger(name, dyn_cxt);
 #else
         drv->error(SE1002, "Triggers support is disabled. Rebuild Sedna with enabled triggers.");
@@ -1100,9 +1033,6 @@ namespace sedna
 
     void lr2por::visit(ASTDropUser &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         qep = new PPDropUser(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1), dyn_cxt);
     }
 
@@ -1322,8 +1252,8 @@ namespace sedna
             return;
         }
 
-        var_id cont_cxt; // step context
-        var_id var_pos = -1, var_last = -1; // variables for last, positon to use in primary expression
+        var_dsc cont_cxt; // step context
+        var_dsc var_pos = INVALID_VAR_DSC, var_last = INVALID_VAR_DSC; // variables for last, positon to use in primary expression
 
         if (n.cont)
         {
@@ -1371,13 +1301,13 @@ namespace sedna
             for (unsigned int i = 0; i < n.preds->size(); i++)
             {
                 childOffer off;
-                var_id pred_cxt; // predicate context
-                var_id pos_var, last_var;
+                var_dsc pred_cxt; // predicate context
+                var_dsc pos_var, last_var;
                 ASTPred *pred = dynamic_cast<ASTPred *>(n.preds->at(i));
                 parentRequest req;
 
                 pred_cxt = getVarNum();
-                pos_var = last_var = -1;
+                pos_var = last_var = INVALID_VAR_DSC;
 
                 // bind context
                 bound_vars.push_back(l2pVarInfo("$%v", pred_cxt));
@@ -1403,10 +1333,10 @@ namespace sedna
 
                 preds = off.opin;
 
-                if (last_var != -1)
+                if (last_var != INVALID_VAR_DSC)
                     bound_vars.pop_back();
 
-                if (pos_var != -1)
+                if (pos_var != INVALID_VAR_DSC)
                     bound_vars.pop_back();
 
                 bound_vars.pop_back();
@@ -1421,7 +1351,7 @@ namespace sedna
             arr_of_var_dsc vars;
             vars.push_back(cont_cxt);
 
-            if (var_last != -1)
+            if (var_last != INVALID_VAR_DSC)
             {
                 off_cont.opin.op = new PPLast(dyn_cxt, oi, var_last, off_cont.opin);
 
@@ -1436,7 +1366,7 @@ namespace sedna
             off_this.opin.op = new PPReturn(dyn_cxt, oi, vars, off_cont.opin, expr, var_pos);
             off_this.opin.ts = 1;
 
-            if (var_pos != -1)
+            if (var_pos != INVALID_VAR_DSC)
             {
                 U_ASSERT(bound_vars.back().first == "$%pos");
                 bound_vars.pop_back();
@@ -1527,15 +1457,16 @@ namespace sedna
         PPOpIn flop = fl_close;
         size_t let_num = 0; // number of let-vars in un_vars
 
-        for (int i = n.fls->size() - 1; i >= 0; i--)
+        for (size_t i = 0; i < n.fls->size(); i++)
         {
+            size_t ind = n.fls->size() - i - 1;
             childOffer off = getOffer();
             arr_of_var_dsc vars;
-            var_id pos_var = -1;
+            var_dsc pos_var = INVALID_VAR_DSC;
             bool use_position = false;
 
             // we use position only in 'for' with positional variable
-            if (const ASTFor *f = dynamic_cast<const ASTFor *>((*n.fls)[i]))
+            if (const ASTFor *f = dynamic_cast<const ASTFor *>((*n.fls)[ind]))
                 use_position = f->usesPosVar();
 
             if (use_position)
@@ -1561,7 +1492,7 @@ namespace sedna
                 {
                     un_vars.back().second = getVarNum(); // get unique binding (see above)
 
-                    if (dynamic_cast<ASTLet *>((*n.fls)[i])) // for let-clause remember the position
+                    if (dynamic_cast<ASTLet *>((*n.fls)[ind])) // for let-clause remember the position
                         let_num++;
                 }
             }
@@ -1569,32 +1500,32 @@ namespace sedna
 
             if (off.st.type.type == st_atomic_type && off.st.type.info.single_type == xs_anyType)
             {
-                if (dynamic_cast<const ASTFor *>((*n.fls)[i]))
+                if (dynamic_cast<const ASTFor *>((*n.fls)[ind]))
                 {
                     // check if we can cache previous for/let
-                    if ((size_t)i < n.fls->size() - 1 && (*n.fls)[i + 1]->isCached())
-                        flop.op = new PPStore(dyn_cxt, createOperationInfo(*(*n.fls)[i]), flop);
+                    if (ind < n.fls->size() - 1 && (*n.fls)[ind + 1]->isCached())
+                        flop.op = new PPStore(dyn_cxt, createOperationInfo(*(*n.fls)[ind]), flop);
 
-                    flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var);
+                    flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[ind]), vars, off.opin, flop, pos_var);
                 }
                 else
                 {
-                    flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop);
+                    flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[ind]), vars, off.opin, flop);
                 }
             }
             else
             {
-                if (dynamic_cast<const ASTFor *>((*n.fls)[i]))
+                if (dynamic_cast<const ASTFor *>((*n.fls)[ind]))
                 {
                     // check if we can cache previous for/let
-                    if ((size_t)i < n.fls->size() - 1 && (*n.fls)[i + 1]->isCached())
-                        flop.op = new PPStore(dyn_cxt, createOperationInfo(*(*n.fls)[i]), flop);
+                    if (ind < n.fls->size() - 1 && (*n.fls)[ind + 1]->isCached())
+                        flop.op = new PPStore(dyn_cxt, createOperationInfo(*(*n.fls)[ind]), flop);
 
-                    flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, pos_var, off.st);
+                    flop.op = new PPReturn(dyn_cxt, createOperationInfo(*(*n.fls)[ind]), vars, off.opin, flop, pos_var, off.st);
                 }
                 else
                 {
-                    flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[i]), vars, off.opin, flop, off.st);
+                    flop.op = new PPLet(dyn_cxt, createOperationInfo(*(*n.fls)[ind]), vars, off.opin, flop, off.st);
                 }
             }
         }
@@ -1605,7 +1536,7 @@ namespace sedna
             // since we introduce PPSLets here, return-statement must work with the same for-bindings and SLET-bindings (not un_vars let ones)
             PPOpIn ob, ret;
             arr_of_var_dsc vars(un_vars.size());
-            std::vector<var_id> new_slet_bindings;
+            std::vector<var_dsc> new_slet_bindings;
             bool isStable = dynamic_cast<const ASTOrderBy *>(n.order_by)->isStable();
 
             ob.op = new PPOrderBy(dyn_cxt, createOperationInfo(*n.order_by), isStable, flop, off_ob.orbs, un_vars.size());
@@ -1619,7 +1550,7 @@ namespace sedna
                 // for let introduce new binding
                 if (i < let_num)
                 {
-                    var_id new_slet = getVarNum();
+                    var_dsc new_slet = getVarNum();
                     new_slet_bindings.push_back(new_slet);
                     bound_vars.back().second = new_slet;
                 }
@@ -1652,7 +1583,7 @@ namespace sedna
             if (n.ret->isCached())
                 ret.op = new PPStore(dyn_cxt, createOperationInfo(n), ret);
 
-            off_this.opin.op = new PPReturn(dyn_cxt, createOperationInfo(n), vars, ob, ret, -1);
+            off_this.opin.op = new PPReturn(dyn_cxt, createOperationInfo(n), vars, ob, ret, INVALID_VAR_DSC);
             off_this.opin.ts = 1;
         }
         else
@@ -1821,44 +1752,44 @@ namespace sedna
             }
             else if (*n.int_name == "!fn!position")
             {
-                var_id pv = -1;
+                var_dsc pv = INVALID_VAR_DSC;
 
                 // for position we need to find last bound pos var
-                for (int i = bound_vars.size() - 1; i >= 0; i--)
+                for (size_t i = 0; i < bound_vars.size(); i++)
                 {
-                    if (bound_vars[i].first == "$%pos")
+                    if (bound_vars[bound_vars.size() - i - 1].first == "$%pos")
                     {
-                        pv = bound_vars[i].second;
+                        pv = bound_vars[bound_vars.size() - i - 1].second;
                         break;
                     }
                 }
 
-                U_ASSERT(pv != -1);
+                U_ASSERT(pv != INVALID_VAR_DSC);
 
                 off_this.opin = PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(n), pv), 1);
             }
             else if (*n.int_name == "!fn!last")
             {
-                var_id lv = -1;
+                var_dsc lv = INVALID_VAR_DSC;
 
                 // for position we need to find last bound pos var
-                for (int i = bound_vars.size() - 1; i >= 0; i--)
+                for (size_t i = 0; i < bound_vars.size(); i++)
                 {
-                    if (bound_vars[i].first == "$%last")
+                    if (bound_vars[bound_vars.size() - i - 1].first == "$%last")
                     {
-                        lv = bound_vars[i].second;
+                        lv = bound_vars[bound_vars.size() - i - 1].second;
                         break;
                     }
                 }
 
-                U_ASSERT(lv != -1);
+                U_ASSERT(lv != INVALID_VAR_DSC);
 
                 off_this.opin = PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(n), lv), 1);
             }
             else // all other standard functions are qeped in unified way
             {
                 std::string name = "{" + *n.uri + "}" + *n.local;
-                XQFunction fu = drv->getStdFuncInfo(name);
+                XQFunction *fu = drv->getStdFuncInfo(name);
 
                 arr_of_PPOpIn para(n.params ? n.params->size() : 0);
 
@@ -1878,7 +1809,7 @@ namespace sedna
 
                 try
                 {
-                    off_this.opin = fu.l2pGen(dyn_cxt, createOperationInfo(n), para);
+                    off_this.opin = fu->l2pGen(dyn_cxt, createOperationInfo(n), para);
                 }
                 catch (SednaUserException &e) // exceptions about turned off features
                 {
@@ -1890,12 +1821,12 @@ namespace sedna
                 }
             }
         }
-        else
+        else // user-defined function
         {
             std::string name = CREATE_INTNAME_FUN(*n.uri, *n.local, arity);
 
             // then find it in global functions
-            int fid = getGlobalFunctionId(name);
+            function_id fid = getGlobalFunctionId(name);
 
             // fill out params
             arr_of_PPOpIn para(arity);
@@ -1914,7 +1845,7 @@ namespace sedna
                 }
             }
 
-            if (fid != -1)
+            if (fid.second != INVALID_VAR_DSC)
             {
                 off_this.opin = PPOpIn(new PPFunCall(dyn_cxt, createOperationInfo(n), para, fid), 1);
             }
@@ -1941,16 +1872,30 @@ namespace sedna
 
     void lr2por::visit(ASTFuncDecl &n)
     {
-        int id;
+        unsigned id;
         unsigned int arity = (n.params) ? n.params->size() : 0;
+        XQFunction *xqf;
+        std::string full_name = CREATE_INTNAME_FUN(*n.func_uri, *n.local, arity);
+
+        mod->getFunctionInfo(full_name, &xqf);
+
+        U_ASSERT(xqf);
+
+        // if the function isn't needed then don't process it
+        if (!xqf->is_used)
+            return;
 
         // ignore external functions since they are treated only via fun-calls
         if (!n.body)
             return;
 
-        var_num = 0;
-        id = n.getId();
-        function_declaration &fd = dynamic_context::funct_cxt.fun_decls[id];
+        // zero var-num since all functions use their own variable contexts
+        dyn_cxt->reset_local_var_counter();
+
+        // id was obtained earlier
+        id = xqf->id.second;
+
+        function_declaration fd;
 
         // some info for proper explain
         fd.func_name = (n.pref && *n.pref != "") ? *n.pref + ":" + *n.local : *n.local;
@@ -1958,11 +1903,6 @@ namespace sedna
 
         n.ret->accept(*this);
         fd.ret_st = getOffer().st;
-
-        // body and params are evaluated in a dummy dynamic context
-        dynamic_context dc(st_cxt, 0); // ok, it will become illegal when we exit the function, but since function-body is copied
-                                       // during evaluation it will not be a problem (yuck!!!, but moved from por2qep "as-is")
-        dyn_cxt = &dc;
 
         if (n.params)
         {
@@ -1982,17 +1922,15 @@ namespace sedna
         }
 
         n.body->accept(*this);
-
         fd.op = getOffer().opin.op;
 
-        // copy variable map for explain to fd since dyn_cxt will be destroyed on exit from this function
-        fd.var_map = dyn_cxt->var_map;
-
-        dyn_cxt = NULL;
-
-        fd.st_cxt = st_cxt;
-        fd.cxt_size = var_num;
+        fd.dyn_cxt = dyn_cxt;
+        fd.vars_total = dyn_cxt->get_local_vars_number();
         fd.num = arity;
+        fd.var_map = dyn_cxt->get_var_map();
+
+        // add function to context
+        dyn_cxt->add_function(fd, id);
 
         // get rid of vars
         while (arity--)
@@ -2001,9 +1939,6 @@ namespace sedna
 
     void lr2por::visit(ASTGrantPriv &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         if (n.mod == ASTGrantPriv::DB)
         {
             qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
@@ -2020,9 +1955,6 @@ namespace sedna
 
     void lr2por::visit(ASTGrantRole &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         qep = new PPGrantRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1),
                               PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role_to, xs_string)), 1), dyn_cxt);
     }
@@ -2134,33 +2066,24 @@ namespace sedna
     void lr2por::visit(ASTLoadFile &n)
     {
         PPOpIn file, doc, coll;
-        dynamic_context *dc1, *dc2, *dc3 = NULL;
-
-        dyn_cxt = dc1 = new dynamic_context(st_cxt, 0);
-        dc2 = new dynamic_context(st_cxt, 0);
-
-        if (n.coll)
-            dc3 = new dynamic_context(st_cxt, 0);
 
         std::string *file_name = n.getFileName();
 
-        file = PPOpIn(new PPConst(dc1, createOperationInfo(n), string2tuple_cell(*file_name, xs_string)), 1);
-        doc  = PPOpIn(new PPConst(dc2, createOperationInfo(n), string2tuple_cell(*n.doc, xs_string)), 1);
+        file = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*file_name, xs_string)), 1);
+        doc  = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.doc, xs_string)), 1);
 
         delete file_name;
 
         if (n.coll)
-            coll = PPOpIn(new PPConst(dc3, createOperationInfo(n), string2tuple_cell(*n.coll, xs_string)), 1);
+            coll = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.coll, xs_string)), 1);
 
-        qep = new PPBulkLoad(file, dc1, doc, dc2, coll, dc3);
+        qep = new PPBulkLoad(file, doc, coll, dyn_cxt);
     }
 
     void lr2por::visit(ASTLoadModule &n)
     {
         arr_of_PPOpIn mods;
         ASTStringVector::iterator it;
-
-        dyn_cxt = new dynamic_context(st_cxt, 0);
 
         for (it = n.modules->begin(); it != n.modules->end(); it++)
         {
@@ -2183,7 +2106,7 @@ namespace sedna
     {
         PPOpIn coll; // dummy
 
-        qep = new PPRetrieveMetadata(dbe_collection, coll, NULL, n.need_stats);
+        qep = new PPRetrieveMetadata(dbe_collection, coll, dyn_cxt, n.need_stats);
     }
 
     void lr2por::visit(ASTMetaDocs &n)
@@ -2192,12 +2115,8 @@ namespace sedna
         {
             childOffer off_coll;
 
-            dyn_cxt = new dynamic_context(st_cxt, 0);
-
             n.coll->accept(*this);
             off_coll = getOffer();
-
-            dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
             qep = new PPRetrieveMetadata(dbe_document, off_coll.opin, dyn_cxt, n.need_stats);
         }
@@ -2205,7 +2124,7 @@ namespace sedna
         {
             PPOpIn coll; // dummy
 
-            qep = new PPRetrieveMetadata(dbe_document, coll, NULL, n.need_stats);
+            qep = new PPRetrieveMetadata(dbe_document, coll, dyn_cxt, n.need_stats);
         }
     }
 
@@ -2213,12 +2132,8 @@ namespace sedna
     {
         childOffer off_coll;
 
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-
         n.coll->accept(*this);
         off_coll = getOffer();
-
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         qep = new PPRetrieveDS(off_coll.opin, dyn_cxt, dbe_collection);
     }
@@ -2227,12 +2142,8 @@ namespace sedna
     {
         childOffer off_doc;
 
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-
         n.doc->accept(*this);
         off_doc = getOffer();
-
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         qep = new PPRetrieveDS(off_doc.opin, dyn_cxt, dbe_document);
     }
@@ -2283,7 +2194,7 @@ namespace sedna
 
     void lr2por::visit(ASTNamespaceDecl &n)
     {
-        st_cxt->add_to_context(n.name->c_str(), n.uri->c_str());
+        dyn_cxt->add_to_context(n.name->c_str(), n.uri->c_str());
     }
 
     void lr2por::visit(ASTNodeTest &n)
@@ -2321,18 +2232,18 @@ namespace sedna
             for (it = n.options->begin(); it != n.options->end(); it++)
             {
                 if (it->first == "method" && it->second == "xml")
-                    dynamic_context::output_method = se_output_method_xml;
+                    dyn_cxt->get_static_context()->set_output_method(se_output_method_xml);
                 else if (it->first == "indent" && it->second == "yes")
-                    st_cxt->set_output_indent(se_output_indent_yes);
+                    dyn_cxt->get_static_context()->set_output_indent(se_output_indent_yes);
                 else if (it->first == "indent" && it->second == "no")
-                    st_cxt->set_output_indent(se_output_indent_no);
+                    dyn_cxt->get_static_context()->set_output_indent(se_output_indent_no);
             }
         }
         else if (*n.local == "character-map")
         {
             for (it = n.options->begin(); it != n.options->end(); it++)
             {
-                dynamic_context::add_char_mapping(it->first.c_str(), it->second.c_str());
+                dyn_cxt->add_char_mapping(it->first.c_str(), it->second.c_str());
             }
         }
     }
@@ -2349,7 +2260,7 @@ namespace sedna
 
     void lr2por::visit(ASTOrder &n)
     {
-        st_cxt->set_ordering_mode((n.mod == ASTOrder::ORDERED) ? xq_ordering_mode_ordered : xq_ordering_mode_unordered);
+        dyn_cxt->get_static_context()->set_ordering_mode((n.mod == ASTOrder::ORDERED) ? xq_ordering_mode_ordered : xq_ordering_mode_unordered);
     }
 
     void lr2por::visit(ASTOrderBy &n)
@@ -2399,7 +2310,7 @@ namespace sedna
 
     void lr2por::visit(ASTOrderEmpty &n)
     {
-        st_cxt->set_empty_order ((n.mod == ASTOrderEmpty::EMPTY_GREATEST) ? xq_empty_order_greatest : xq_empty_order_least);
+        dyn_cxt->get_static_context()->set_empty_order ((n.mod == ASTOrderEmpty::EMPTY_GREATEST) ? xq_empty_order_greatest : xq_empty_order_least);
     }
 
     void lr2por::visit(ASTOrderMod &n)
@@ -2430,7 +2341,7 @@ namespace sedna
         }
         else
         {
-            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ?
+            orb.status = dyn_cxt->get_static_context()->get_empty_order() == xq_empty_order_least ?
                                                       orb_modifier::ORB_EMPTY_LEAST :
                                                       orb_modifier::ORB_EMPTY_GREATEST;
         }
@@ -2444,7 +2355,7 @@ namespace sedna
         }
         else
         {
-            orb.collation = st_cxt->get_default_collation();
+            orb.collation = dyn_cxt->get_static_context()->get_default_collation();
         }
 
         off_this.orbs[0] = orb;
@@ -2477,7 +2388,7 @@ namespace sedna
                 break;
 
             case ASTOrderModInt::COLLATION:
-                int res = st_cxt->get_collation(n.uri->c_str(), &(off_this.orbs[0].collation));
+                int res = dyn_cxt->get_static_context()->get_collation(n.uri->c_str(), &(off_this.orbs[0].collation));
 
                 if(res != 0)
                 {
@@ -2514,10 +2425,10 @@ namespace sedna
             orb_modifier orb;
 
             orb.order = orb_modifier::ORB_ASCENDING;
-            orb.status = st_cxt->get_empty_order() == xq_empty_order_least ?
+            orb.status = dyn_cxt->get_static_context()->get_empty_order() == xq_empty_order_least ?
                                                       orb_modifier::ORB_EMPTY_LEAST :
                                                       orb_modifier::ORB_EMPTY_GREATEST;
-            orb.collation = st_cxt->get_default_collation();
+            orb.collation = dyn_cxt->get_static_context()->get_default_collation();
 
             off_this.orbs = arr_of_orb_modifier(1);
             off_this.orbs[0] = orb;
@@ -2624,25 +2535,27 @@ namespace sedna
     {
         bool use_last = n.useLast();
         bool use_pos = n.usePosition();
-        var_id pos_var = -1, last_var = -1, cxt_var = -1;
+        var_dsc pos_var = INVALID_VAR_DSC, last_var = INVALID_VAR_DSC, cxt_var = INVALID_VAR_DSC;
         childOffer off, off_this;
         operation_info oip;
 
         oip = createOperationInfo(n);
 
-        for (int i = bound_vars.size() - 1; i >= 0; i--)
+        for (size_t i = 0; i < bound_vars.size(); i++)
         {
-            if (last_var == -1 && bound_vars[i].first == "$%last")
+            size_t ind = bound_vars.size() - i - 1;
+
+            if (last_var == INVALID_VAR_DSC && bound_vars[ind].first == "$%last")
             {
-                last_var = bound_vars[i].second;
+                last_var = bound_vars[ind].second;
             }
-            else if (pos_var == -1 && bound_vars[i].first == "$%pos")
+            else if (pos_var == INVALID_VAR_DSC && bound_vars[ind].first == "$%pos")
             {
-                pos_var = bound_vars[i].second;
+                pos_var = bound_vars[ind].second;
             }
-            else if (cxt_var == -1 && bound_vars[i].first == "$%v")
+            else if (cxt_var == INVALID_VAR_DSC && bound_vars[ind].first == "$%v")
             {
-                cxt_var = bound_vars[i].second;
+                cxt_var = bound_vars[ind].second;
             }
         }
 
@@ -2784,11 +2697,7 @@ namespace sedna
 
     void lr2por::visit(ASTQuery &n)
     {
-        if (n.type == ASTQuery::QUERY)
-        {
-            var_num = 0;
-            dyn_cxt = new dynamic_context(st_cxt, 0);
-        }
+        dyn_cxt->reset_local_var_counter();
 
         // if we deserealize trigger statement then bind special vars
         if (n.is_trigger)
@@ -2804,18 +2713,20 @@ namespace sedna
         {
             childOffer off = getOffer();
 
-            dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
-
-            qep = new PPQueryRoot(dyn_cxt, off.opin);
+            if (is_subquery)
+                qep = new PPSubQuery(dyn_cxt, off.opin);
+            else
+                qep = new PPQueryRoot(dyn_cxt, off.opin);
         }
 
         if (mod->turnedExplain()) // explain feature
         {
             dynamic_context *old_dyn_cxt = dyn_cxt;
+            old_dyn_cxt->set_producers();
 
             // first, we need new dynamic context since we will use two root operations
-            dyn_cxt = new dynamic_context(st_cxt, 0);
-            dyn_cxt->var_map = old_dyn_cxt->var_map;
+            dyn_cxt = new dynamic_context(new static_context());
+            dyn_cxt->set_var_map(old_dyn_cxt->get_var_map());
 
             // then, we build PPQueryRoot->PPExplain on top of actual query
             PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep), 1);
@@ -2823,8 +2734,13 @@ namespace sedna
         }
         else if (mod->turnedProfile()) // profile feature
         {
+            dynamic_context *old_dyn_cxt = dyn_cxt;
+            old_dyn_cxt->set_producers();
+
             // first, we need new dynamic context since we will use two root operations
-            dyn_cxt = new dynamic_context(st_cxt, 0);
+            dyn_cxt = new dynamic_context(new static_context());
+            dyn_cxt->set_var_map(old_dyn_cxt->get_var_map());
+
             // then, we build PPQueryRoot->PPExplain in profile mode on top of actual query
             PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep, true), 1);
             qep = new PPQueryRoot(dyn_cxt, expl);
@@ -2835,25 +2751,17 @@ namespace sedna
     {
         childOffer off_old, off_new;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.name_old->accept(*this);
-
         off_old = getOffer();
 
         n.name_new->accept(*this);
-
         off_new = getOffer();
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         qep = new PPRename(off_old.opin, off_new.opin, dyn_cxt);
     }
 
     void lr2por::visit(ASTRevokePriv &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         if (n.mod == ASTRevokePriv::DB)
         {
             qep = new PPGrantRevokePriv(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.priv, xs_string)), 1),
@@ -2870,9 +2778,6 @@ namespace sedna
 
     void lr2por::visit(ASTRevokeRole &n)
     {
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-        dyn_cxt->set_producers(1);
-
         qep = new PPRevokeRole(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role, xs_string)), 1),
                                PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.role_from, xs_string)), 1), dyn_cxt);
     }
@@ -3033,7 +2938,7 @@ namespace sedna
 
         arr_of_var_dsc vars;
 
-        var_id main_var = getVarNum();
+        var_dsc main_var = getVarNum();
 
         bound_vars.push_back(l2pVarInfo("$%ts", main_var));
         vars.push_back(main_var);
@@ -3101,12 +3006,8 @@ namespace sedna
     {
         childOffer off_what;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.what->accept(*this);
-
         off_what = getOffer();
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         if (n.type == ASTUpdDel::DEEP)
             qep = new PPDeleteDeep(off_what.opin, dyn_cxt);
@@ -3117,32 +3018,23 @@ namespace sedna
     void lr2por::visit(ASTUpdInsert &n)
     {
         childOffer off_where, off_what;
-        dynamic_context *cxt_what, *cxt_where;
 
-        var_num = 0;
-        dyn_cxt = cxt_what = new dynamic_context(st_cxt, 0);
         n.what->accept(*this);
-
         off_what = getOffer();
-        cxt_what->set_producers((var_num) ? (var_num + 1) : 0);
 
-        var_num = 0;
-        dyn_cxt = cxt_where = new dynamic_context(st_cxt, (var_num) ? (var_num + 1) : 0);
         n.where->accept(*this);
-
         off_where = getOffer();
-        cxt_where->set_producers((var_num) ? (var_num + 1) : 0);
 
         switch (n.type)
         {
             case ASTUpdInsert::INTO:
-                qep = new PPInsertTo(off_what.opin, cxt_what, off_where.opin, cxt_where);
+                qep = new PPInsertTo(off_what.opin, off_where.opin, dyn_cxt);
                 break;
             case ASTUpdInsert::PRECEDING:
-                qep = new PPInsertBefore(off_what.opin, cxt_what, off_where.opin, cxt_where);
+                qep = new PPInsertBefore(off_what.opin, off_where.opin, dyn_cxt);
                 break;
             case ASTUpdInsert::FOLLOWING:
-                qep = new PPInsertFollowing(off_what.opin, cxt_what, off_where.opin, cxt_where);
+                qep = new PPInsertFollowing(off_what.opin, off_where.opin, dyn_cxt);
                 break;
         }
     }
@@ -3156,12 +3048,8 @@ namespace sedna
     {
         childOffer off_what;
 
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
         n.what->accept(*this);
-
         off_what = getOffer();
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
 
         char *ncname_prefix = xs_NCName_create(n.pref->c_str(), pe_local_aspace->alloc);
         char *ncname_local  = xs_NCName_create(n.local->c_str(), pe_local_aspace->alloc);
@@ -3175,9 +3063,6 @@ namespace sedna
         arr_of_var_dsc retv;
         arr_of_PPOpIn new_seq;
         PPOpIn newop;
-
-        var_num = 0;
-        dyn_cxt = new dynamic_context(st_cxt, 0);
 
         setParamMode();
         n.var->accept(*this);
@@ -3206,12 +3091,10 @@ namespace sedna
 
         newop = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), new_seq), 1);
 
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
-
         if (got_type)
-            qep = new PPReplace(PPOpIn(new PPReturn(dyn_cxt, createOperationInfo(n), retv, off_what.opin, newop, -1, off_var.st), 1), dyn_cxt);
+            qep = new PPReplace(PPOpIn(new PPReturn(dyn_cxt, createOperationInfo(n), retv, off_what.opin, newop, INVALID_VAR_DSC, off_var.st), 1), dyn_cxt);
         else
-            qep = new PPReplace(PPOpIn(new PPReturn(dyn_cxt, createOperationInfo(n), retv, off_what.opin, newop, -1), 1), dyn_cxt);
+            qep = new PPReplace(PPOpIn(new PPReturn(dyn_cxt, createOperationInfo(n), retv, off_what.opin, newop, INVALID_VAR_DSC), 1), dyn_cxt);
 
         bound_vars.pop_back();
     }
@@ -3224,10 +3107,10 @@ namespace sedna
 
         if (param_mode)
         {
-            var_id vid = var_num++;
+            var_dsc vid = getVarNum();
             std::string exp_name = (n.pref && *(n.pref) != "") ? *(n.pref) + ":" + *(n.local) : *(n.local);
 
-            dyn_cxt->var_map[vid] = var_name_exp(exp_name, *n.uri);
+            dyn_cxt->add_to_var_map(vid, var_name_exp(exp_name, *n.uri));
 
             bound_vars.push_back(l2pVarInfo(name, vid));
 
@@ -3240,9 +3123,11 @@ namespace sedna
         // first, check if variable is bound
         if (bound_vars.size() > 0)
         {
-            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            for (size_t i = 0; i < bound_vars.size(); i++)
             {
-                if (bound_vars[i].first == name)
+                size_t ind = bound_vars.size() - i - 1;
+
+                if (bound_vars[ind].first == name)
                 {
                     if (name == "OLD" || name == "WHERE" || name == "NEW")
                     {
@@ -3267,7 +3152,7 @@ namespace sedna
                     }
                     else
                     {
-                        off_this.opin.op = new PPVariable(dyn_cxt, oi, bound_vars[i].second);
+                        off_this.opin.op = new PPVariable(dyn_cxt, oi, bound_vars[ind].second);
                         off_this.opin.ts = 1;
                     }
 
@@ -3279,7 +3164,7 @@ namespace sedna
         }
 
         // then find it in globals
-        var_id id = getGlobalVariableId(name);
+        global_var_dsc id = getGlobalVariableId(name);
 
         PPGlobalVariable *pgv = new PPGlobalVariable(dyn_cxt, oi, id);
         off_this.opin.op = pgv;
@@ -3291,9 +3176,23 @@ namespace sedna
     void lr2por::visit(ASTVarDecl &n)
     {
         childOffer off, off_this, off_type;
-        int id;
+        var_dsc id;
         PPVarIterator *var;
         operation_info oi;
+        global_producer var_prod;
+        XQVariable *xqv;
+        const ASTVar *var_info = dynamic_cast<const ASTVar *>(n.var);
+
+        U_ASSERT(var_info);
+        std::string full_name = CREATE_INTNAME(*var_info->uri, *var_info->local);
+
+        mod->getVariableInfo(full_name, &xqv);
+
+        U_ASSERT(xqv);
+
+        // if the variable isn't needed then don't process it
+        if (!xqv->is_used)
+            return;
 
         // analyze the type
         if (n.type)
@@ -3302,17 +3201,11 @@ namespace sedna
             off_type = getOffer();
         }
 
-        dyn_cxt = new dynamic_context(st_cxt, 0);
-
         // analyze the body
-        var_num = 0;
         n.expr->accept(*this);
         off = getOffer();
 
-        dyn_cxt->set_producers((var_num) ? (var_num + 1) : 0);
-
-        id = n.getId();
-
+        id = xqv->id.second;
         oi = createOperationInfo(n);
 
         if (n.type)
@@ -3320,19 +3213,16 @@ namespace sedna
         else
             var = new PPVarDecl(dyn_cxt, oi, id, off.opin);
 
-        dynamic_context::glb_var_cxt.producers[id].op = var;
-        dynamic_context::glb_var_cxt.producers[id].cxt = dyn_cxt;
+        var_prod.op = var;
+        var_prod.cxt = dyn_cxt;
 
         // some info for proper explain
-        const ASTVar *var_info = dynamic_cast<const ASTVar *>(n.var);
-        U_ASSERT(var_info);
-
-        dynamic_context::glb_var_cxt.producers[id].var_name = (var_info->pref && *(var_info->pref) != "") ?
+        var_prod.var_name = (var_info->pref && *(var_info->pref) != "") ?
                                                                 *(var_info->pref) + ":" + *(var_info->local) :
                                                                 *(var_info->local);
-        dynamic_context::glb_var_cxt.producers[id].var_name_uri = *(var_info->uri);
+        var_prod.var_name_uri = *(var_info->uri);
 
-        dyn_cxt = NULL;
+        dyn_cxt->add_global_var(var_prod, id);
     }
 
     void lr2por::visit(ASTVersionDecl &n)
@@ -3418,10 +3308,11 @@ namespace sedna
         pareqs.pop_back();
     }
 
-    var_id lr2por::getGlobalVariableId(const std::string &name)
+    global_var_dsc lr2por::getGlobalVariableId(const std::string &name)
     {
         varInfo::iterator it;
-        var_id id;
+        global_var_dsc id;
+        XQVariable *xqv;
 
         // first,look in the cache
         it = varCache.find(name);
@@ -3430,14 +3321,10 @@ namespace sedna
             return it->second;
 
         // then, try to process it as a local one
-        ASTVarDecl *vd = mod->getVariableInfo(name);
-        if (vd)
+        if (mod->getVariableInfo(name, &xqv))
         {
-            id = vd->getId();
-
-            varCache[name] = id;
-
-            return id;
+            varCache[name] = xqv->id;
+            return xqv->id;
         }
 
         // else, the variable is defined in some of the library modules
@@ -3449,11 +3336,11 @@ namespace sedna
         return id;
     }
 
-    var_id lr2por::getGlobalFunctionId(const std::string &name)
+    function_id lr2por::getGlobalFunctionId(const std::string &name)
     {
-        XQFunction xqf;
+        XQFunction *xqf;
         funcInfo::iterator it;
-        var_id id;
+        function_id id;
 
         // first,look in cache
         it = funcCache.find(name);
@@ -3462,13 +3349,10 @@ namespace sedna
             return it->second;
 
         // then, try to process it as a local one
-        if (mod->getFunctionInfo(name, xqf))
+        if (mod->getFunctionInfo(name, &xqf))
         {
-            id = xqf.decl->getId();
-
-            funcCache[name] = id;
-
-            return id;
+            funcCache[name] = xqf->id;
+            return xqf->id;
         }
 
         // else, the function is defined in some of the library modules
@@ -3482,19 +3366,19 @@ namespace sedna
 
     lr2por::childOffer lr2por::getContextOffer(operation_info oi) const
     {
-        var_id id = -1;
+        var_dsc id = INVALID_VAR_DSC;
         childOffer off_this;
 
-        for (int i = bound_vars.size() - 1; i >= 0; i--)
+        for (size_t i = 0; i < bound_vars.size(); i++)
         {
-            if (bound_vars[i].first == "$%v")
+            if (bound_vars[bound_vars.size() - i - 1].first == "$%v")
             {
-                id = bound_vars[i].second;
+                id = bound_vars[bound_vars.size() - i - 1].second;
                 break;
             }
         }
 
-        U_ASSERT(id != -1);
+        U_ASSERT(id != INVALID_VAR_DSC);
 
         off_this.opin.op = new PPVariable(dyn_cxt, oi, id);
         off_this.opin.ts = 1;
@@ -3651,9 +3535,9 @@ namespace sedna
         return false;
     }
 
-    var_id lr2por::getVarNum()
+    var_dsc lr2por::getVarNum()
     {
-        return var_num++;
+        return dyn_cxt->get_new_var_id();
     }
 
     CalcOp *lr2por::make_CalcOp(ASTNode *n, bool logical)

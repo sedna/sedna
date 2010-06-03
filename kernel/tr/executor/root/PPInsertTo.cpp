@@ -11,13 +11,11 @@
 #include "tr/locks/locks.h"
 
 PPInsertTo::PPInsertTo(PPOpIn _child1_, 
-                       dynamic_context *_cxt1_,
                        PPOpIn _child2_,
-                       dynamic_context *_cxt2_) : PPUpdate("PPInsertTo"),
+                       dynamic_context *_cxt_) : PPUpdate("PPInsertTo"),
                                                   child1(_child1_),
                                                   child2(_child2_),
-                                                  cxt1(_cxt1_),
-                                                  cxt2(_cxt2_)
+                                                  cxt(_cxt_)
 {
 }
 
@@ -25,18 +23,16 @@ PPInsertTo::~PPInsertTo()
 {
     delete child1.op;
     child1.op = NULL;
-    delete cxt1;
-    cxt1 = NULL;
     delete child2.op;
     child2.op = NULL;
-    delete cxt2;
-    cxt2 = NULL;
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPInsertTo::do_open()
 {
     local_lock_mrg->lock(lm_x);
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     child1.op->open();
     child2.op->open();
 }
@@ -45,7 +41,7 @@ void PPInsertTo::do_close()
 {
     child1.op->close();
     child2.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPInsertTo::do_accept(PPVisitor &v)

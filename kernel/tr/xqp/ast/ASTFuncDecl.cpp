@@ -18,8 +18,6 @@ ASTFuncDecl::ASTFuncDecl(const ASTNodeCommonData &cd, std::string *func_name, AS
 {
     ASTParseQName(func_name, &pref, &local);
 
-    id = -1;
-
     delete func_name;
 }
 
@@ -34,7 +32,6 @@ ASTFuncDecl::ASTFuncDecl(const ASTNodeCommonData &cd, std::string *fun_pref, std
           body(func_body),
           func_uri(NULL)
 {
-    id = -1;
 }
 
 ASTFuncDecl::~ASTFuncDecl()
@@ -63,8 +60,6 @@ ASTNode *ASTFuncDecl::dup()
 
     if (func_uri)
         fd->func_uri = new std::string(func_uri->c_str());
-
-    fd->id = id;
 
     return fd;
 }

@@ -14,7 +14,7 @@ class PPInsertTo : public PPUpdate
 {
 private:
     PPOpIn child1, child2;
-    dynamic_context *cxt1, *cxt2;
+    dynamic_context *cxt;
 
     virtual void do_open();
     virtual void do_close();
@@ -23,9 +23,8 @@ private:
 
 public:
     PPInsertTo(PPOpIn _child1_, 
-               dynamic_context *_cxt1_,
                PPOpIn _child2_,
-               dynamic_context *_cxt2_);
+               dynamic_context *_cxt_);
     ~PPInsertTo();
 };
 

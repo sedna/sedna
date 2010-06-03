@@ -1389,7 +1389,7 @@ namespace sedna
     {
         std::string int_name = CREATE_INTNAME(*n.uri, *n.local);
         unsigned int arity = (n.params) ? n.params->size() : 0;
-        XQFunction xqf;
+        XQFunction *xqf;
         childOffer off_this, off_params;
         bool standFunc = (*n.int_name != "");
         ASTNode *ddo = NULL;
@@ -1404,6 +1404,13 @@ namespace sedna
         else
         {
             xqf = getFunctionInfo(int_name);
+
+            // we're using this function
+            xqf->is_used = true;
+
+            if (xqf->mod)
+                xqf->mod->set_module_as_needed();
+
         }
 
         if (n.params)
@@ -1416,18 +1423,18 @@ namespace sedna
             {
                 if (i < sizeof(param_mask))
                 {
-                    req.distinctOnly = ((xqf.mask & (0x1 << i)) != 0);
+                    req.distinctOnly = ((xqf->mask & (0x1 << i)) != 0);
                 }
                 else if (standFunc)
                 {
-                    req.distinctOnly = (xqf.mask == maxParamMask);
+                    req.distinctOnly = (xqf->mask == maxParamMask);
                 }
                 else
                 {
                     xqExprInfo exi;
 
                     setParamMode();
-                    xqf.decl->params->at(i)->accept(*this);
+                    (*xqf->decl->params)[i]->accept(*this);
                     unsetParamMode();
 
                     exi = bound_vars.back().exp_info;
@@ -1437,7 +1444,7 @@ namespace sedna
                 }
 
                 setParentRequest(req);
-                n.params->at(i)->accept(*this);
+                (*n.params)[i]->accept(*this);
             }
         }
 
@@ -1448,10 +1455,10 @@ namespace sedna
             std::vector<xqExprInfo> params(arity);
             childOffer off;
 
-            for (int i = arity - 1; i >= 0; i--)
+            for (unsigned i = 0; i < arity; i++)
             {
                 off = getOffer();
-                params[i] = off.exi;
+                params[arity - i - 1] = off.exi;
                 off_this.usedVars.insert(off.usedVars.begin(), off.usedVars.end());
 
                 if (off.use_last)
@@ -1461,7 +1468,7 @@ namespace sedna
             }
 
             // call merger to analyse result
-            off_this.exi = xqf.merger(params);
+            off_this.exi = xqf->merger(params);
 
             // for index-scan functions we need custom ddo
             if (*n.int_name == "!fn!index-scan" || *n.int_name == "!fn!index-scan-between" || *n.int_name == "!fn!ftindex-scan" ||
@@ -1509,13 +1516,13 @@ namespace sedna
         else
         {
             off_params = mergeOffers(arity);
-            off_this.exi = xqf.exp_info;
+            off_this.exi = xqf->exp_info;
             off_this.usedVars = off_params.usedVars;
             off_this.use_last = off_params.use_last;
             off_this.use_position = off_params.use_position;
         }
 
-        if (!getParentRequest().calledOnce && xqf.toCache) // consider to cache
+        if (!getParentRequest().calledOnce && xqf->toCache) // consider to cache
         {
             cacheTheNode(&n, off_this);
 
@@ -1552,7 +1559,7 @@ namespace sedna
             for (unsigned int i = 0; i < arity; i++)
             {
                 // we don't need parent requests for param-mode
-                n.params->at(i)->accept(*this);
+                (*n.params)[i]->accept(*this);
             }
             unsetParamMode();
         }
@@ -1566,7 +1573,7 @@ namespace sedna
         // body can contain recursive references
         // so we should set pre-offer based strictly on type analysis
         XQVariable v = bound_vars.back();
-        funcCache[name].exp_info = v.exp_info;
+        funcCache[name]->exp_info = v.exp_info;
         bound_vars.pop_back();
 
         // then optimize body
@@ -1586,7 +1593,7 @@ namespace sedna
         // for user-defined functions, for which type says node-sequence, use body analysis instead
         if (n.body && !v.exp_info.isMax1 && (v.isNodes || boff.exi.isMax1))
         {
-            funcCache[name].exp_info = boff.exi;
+            funcCache[name]->exp_info = boff.exi;
         }
 
         // get rid of params
@@ -2513,9 +2520,9 @@ namespace sedna
             bool found = false;
 
             // first, we should look in bound variables
-            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            for (size_t i = 0; i < bound_vars.size(); i++)
             {
-                const XQVariable &var = bound_vars[i];
+                const XQVariable &var = bound_vars[bound_vars.size() - i - 1];
 
                 if (var.int_name == name)
                 {
@@ -2528,7 +2535,12 @@ namespace sedna
             // if we haven't found this var in bound-vars then check module and libmodule vars
             if (!found)
             {
-                ivar = getVariableInfo(name).exp_info;
+                XQVariable *xqv = getVariableInfo(name);
+
+                xqv->is_used = true;
+                xqv->mod->set_module_as_needed();
+
+                ivar = xqv->exp_info;
             }
 
             off.exi = ivar;
@@ -2571,7 +2583,14 @@ namespace sedna
         // since in some sense this tmp-nodes are permanent (same on each var-ref)
         var.exp_info.useConstructors = false;
 
-        varCache[var.int_name] = var;
+        XQVariable *mod_var;
+
+        mod->getVariableInfo(var.int_name, &mod_var);
+
+        mod_var->exp_info = var.exp_info;
+        mod_var->isNodes = var.isNodes;
+
+        varCache[var.int_name] = mod_var;
     }
 
     void LReturn::visit(ASTVersionDecl &n)
@@ -2775,10 +2794,9 @@ namespace sedna
         off.isCached = true;
     }
 
-    XQVariable LReturn::getVariableInfo(const std::string &name)
+    XQVariable *LReturn::getVariableInfo(const std::string &name)
     {
-        varInfo::iterator it;
-
+        varInfo::const_iterator it;
 
         // first,look in cache
         it = varCache.find(name);
@@ -2787,21 +2805,26 @@ namespace sedna
             return it->second;
 
         // then, try to process it as a local one
-        ASTVarDecl *vd = mod->getVariableInfo(name);
-        if (vd)
+        XQVariable *mv;
+
+        if (mod->getVariableInfo(name, &mv))
         {
             bool oldModeOrdered = isModeOrdered;
 
+            /*
+             * global var is evaluated in the context of the module, but not in
+             * the context of the current subexpression
+             */
             isModeOrdered = mod->getOrderedMode();
-            vd->accept(*this);
+            mv->var->accept(*this);
             isModeOrdered = oldModeOrdered;
 
             // now, variable info cache is updated
-            return varCache[name];
+            return mv;
         }
 
         // else, the variable is defined in some of the library modules
-        XQVariable xqv = drv->getLReturnVariableInfo(name);
+        XQVariable *xqv = drv->getLReturnVariableInfo(name);
 
         // since we've obtained this info from driver we should locally cache it
         varCache[name] = xqv;
@@ -2809,10 +2832,10 @@ namespace sedna
         return xqv;
     }
 
-    XQFunction LReturn::getFunctionInfo(const std::string &name)
+    XQFunction *LReturn::getFunctionInfo(const std::string &name)
     {
-        XQFunction xqf;
-        funcInfo::iterator it;
+        XQFunction *xqf;
+        funcInfo::const_iterator it;
 
         // first,look in cache
         it = funcCache.find(name);
@@ -2821,17 +2844,21 @@ namespace sedna
             return it->second;
 
         // then, try to process it as a local one
-        if (mod->getFunctionInfo(name, xqf))
+        if (mod->getFunctionInfo(name, &xqf))
         {
             bool oldModeOrdered = isModeOrdered;
 
+            /*
+             * function is evaluated in the context of the module, but not in
+             * the context of the current subexpression
+             */
             isModeOrdered = mod->getOrderedMode();
             funcCache[name] = xqf;
-            xqf.decl->accept(*this);
+            xqf->decl->accept(*this);
             isModeOrdered = oldModeOrdered;
 
             // now, function info cache is updated
-            return funcCache[name];
+            return xqf;
         }
 
         // else, the function is defined in some of the library modules

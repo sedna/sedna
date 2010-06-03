@@ -109,7 +109,6 @@ struct inserting_node
 struct trigger_action_cell
 {
     char* statement;
-    bool is_query;
     trigger_action_cell* next;
 };
 

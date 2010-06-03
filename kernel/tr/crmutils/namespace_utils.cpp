@@ -104,5 +104,5 @@ xmlns_ptr generate_pref(int ctr,const char* uri,dynamic_context *cxt)
     char x[12] = "XXX";
     if (ctr!=0)
         sprintf(x+3, "%d",ctr );
-    return cxt->st_cxt->get_ns_pair(x,uri);
+    return xmlns_touch(x,uri);
 }

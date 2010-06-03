@@ -81,7 +81,7 @@ void PPFnCompare::do_next(tuple &t)
     {
         CollationHandler* handler = is_codepoint_equal ? 
                                         charset_handler->get_unicode_codepoint_collation() : 
-                                        cxt->st_cxt->get_default_collation();
+                                        cxt->get_static_context()->get_default_collation();
 
         if (collation_child.op)
         {
@@ -98,7 +98,7 @@ void PPFnCompare::do_next(tuple &t)
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:compare(). Argument contains more than one item");
             
             col = tuple_cell::make_sure_light_atomic(col);
-            int res = cxt->st_cxt->get_collation(col.get_str_mem(), &handler);
+            int res = cxt->get_static_context()->get_collation(col.get_str_mem(), &handler);
             if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:compare().").c_str());
 
         }

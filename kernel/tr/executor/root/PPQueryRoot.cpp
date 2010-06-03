@@ -32,36 +32,27 @@ PPQueryRoot::~PPQueryRoot()
     cxt = NULL;
 }
 
-void PPQueryRoot::detachChild(PPOpIn *poi, dynamic_context **dc)
-{
-    *poi = child;
-    child.op = NULL;
-
-    *dc = cxt;
-    cxt = NULL;
-}
-
 void PPQueryRoot::do_open()
 {
     local_lock_mrg->lock(lm_s);
     first = true;
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     child.op->open();
 
     if (print_mode == sxml)
     {
-        dynamic_context::add_char_mapping("<","<",-1);
-        dynamic_context::add_char_mapping(">",">",-1);
-        dynamic_context::add_char_mapping("&","&",-1);
-        dynamic_context::add_char_mapping("\"","\\\"",-1);
-        dynamic_context::add_char_mapping("\\","\\\\",-1);
+        cxt->add_char_mapping("<","<",-1);
+        cxt->add_char_mapping(">",">",-1);
+        cxt->add_char_mapping("&","&",-1);
+        cxt->add_char_mapping("\"","\\\"",-1);
+        cxt->add_char_mapping("\\","\\\\",-1);
     }
 }
 
 void PPQueryRoot::do_close()
 {
     child.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPQueryRoot::do_accept(PPVisitor &v)
@@ -162,6 +153,9 @@ bool PPQueryRoot::do_next()
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
 
+    /* Set serialization options for client */
+    tr_globals::client->set_serialization_params(cxt->get_static_context()->get_serialization_params());
+
     /* Clients which based on protocol 4 should support serialization */
     if(tr_globals::client->supports_serialization())
     {
@@ -171,7 +165,7 @@ bool PPQueryRoot::do_next()
     }
     else
     {
-        switch (cxt->st_cxt->get_output_indent())
+        switch (cxt->get_static_context()->get_output_indent())
         {
             case se_output_indent_yes: print_tuple(data, *output_stream, cxt, print_mode, first, true);  break;
             case se_output_indent_no : print_tuple(data, *output_stream, cxt, print_mode, first, false); break;
@@ -188,4 +182,102 @@ bool PPQueryRoot::do_next()
 void PPQueryRoot::do_execute()
 {
     while (do_next());
+}
+
+/*
+ * PPSubQuery
+ */
+
+PPSubQuery::PPSubQuery(dynamic_context *_cxt_,
+                       PPOpIn _child_) :       PPQueryEssence("PPSubQuery"),
+                                               child(_child_),
+                                               data(_child_.ts),
+                                               cxt(_cxt_)
+{
+}
+
+PPSubQuery::~PPSubQuery()
+{
+    delete child.op;
+    child.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
+}
+
+void PPSubQuery::do_open()
+{
+    /*
+     * we should proobably save the existent lock mode here since subquery
+     * could be run in the middle of a query
+     */
+    lmode = local_lock_mrg->get_cur_lock_mode();
+    local_lock_mrg->lock(lm_s);
+    cxt->global_variables_open();
+    child.op->open();
+}
+
+void PPSubQuery::do_close()
+{
+    child.op->close();
+    cxt->global_variables_close();
+    local_lock_mrg->lock(lmode);
+}
+
+void PPSubQuery::do_accept(PPVisitor &v)
+{
+    v.visit (this);
+    v.push  (this);
+    child.op->accept(v);
+    v.pop();
+}
+
+bool PPSubQuery::next(tuple &t)
+{
+    if (executor_globals::profiler_mode)
+    {
+        U_ASSERT(info.profile.get() != NULL);
+        info.profile->calls++;
+        u_ftime(&current1);
+    }
+
+    if (1 == tr_globals::debug_mode)
+    {
+        U_ASSERT(info.profile.get() != NULL);
+        if (!executor_globals::profiler_mode) info.profile->calls++;
+        executor_globals::pp_stack.push_back(info);
+    }
+
+    bool result = PPSubQuery::do_next();
+
+    if (1 == tr_globals::debug_mode)
+        executor_globals::pp_stack.pop_back();
+
+    if (executor_globals::profiler_mode)
+    {
+        u_ftime(&current2);
+        info.profile->time = current2 - current1;
+    }
+
+    t = data;
+
+    return result;
+}
+
+bool PPSubQuery::do_next()
+{
+    child.op->next(data);
+
+    if (data.is_eos())
+        return false;
+
+    if (data.cells_number != 1)
+        throw XQUERY_EXCEPTION2(SE1003, "Result of a subquery contains nested sequences");
+
+    return true;
+}
+
+void PPSubQuery::do_execute()
+{
+    U_ASSERT(false);
 }

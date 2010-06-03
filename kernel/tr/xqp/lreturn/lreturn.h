@@ -78,8 +78,8 @@ namespace sedna
 
         std::vector<childOffer> offers; // offers from children go in this sequence
 
-        typedef std::map<std::string, XQFunction> funcInfo;
-        typedef std::map<std::string, XQVariable> varInfo;
+        typedef std::map<std::string, XQFunction *> funcInfo;
+        typedef std::map<std::string, XQVariable *> varInfo;
 
         funcInfo funcCache; // cache containing info about processed functions
         varInfo varCache; // cache containg info about processed global and lib variables
@@ -125,8 +125,8 @@ namespace sedna
         virtual void addToPath(ASTNode *nod);
         virtual void removeFromPath(ASTNode *nod);
 
-        XQFunction getFunctionInfo(const std::string &name);
-        XQVariable getVariableInfo(const std::string &name);
+        XQFunction *getFunctionInfo(const std::string &name);
+        XQVariable *getVariableInfo(const std::string &name);
 
         ASTNode *checkIfPosConjunct(const ASTNode *n);
 

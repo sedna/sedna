@@ -46,7 +46,7 @@ class PPDropDocumentInCollection : public PPUpdate
 {
 private:
     PPOpIn document, collection;
-    dynamic_context *cxt1, *cxt2;
+    dynamic_context *cxt;
 
     virtual void do_open();
     virtual void do_close();
@@ -56,9 +56,8 @@ private:
 public:
 
     PPDropDocumentInCollection(PPOpIn _document_,
-                               dynamic_context *_cxt1_,
                                PPOpIn _collection_,
-                               dynamic_context *_cxt2_);
+                               dynamic_context *_cxt_);
     ~PPDropDocumentInCollection();
 };
 

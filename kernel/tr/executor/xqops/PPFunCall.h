@@ -11,10 +11,6 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
-//#define STRICT_FUNS
-//actually, the max size of sequence when fun is called in strict mode is STRICT_FUNS_BOUND - 1
-#define STRICT_FUNS_BOUND	5
-
 /* Function conversion rules */
 class fun_conv_rules
 {
@@ -50,10 +46,6 @@ private:
     bool seq_filled;
 
 public:
-#ifdef STRICT_FUNS
-    void init();
-#endif
-
     bool is_filled() { return seq_filled; }
     sequence *get_sequence() { return s; }
     void reopen();
@@ -83,12 +75,10 @@ protected:
     PPIterator *body;
     fun_conv_rules *body_fcr;
     fun_arg** args;
-    int args_num;
-    dynamic_context *new_cxt;
-#ifdef STRICT_FUNS
-    sequence* s;
-    int spos;
-#endif
+    unsigned args_num;
+
+    variable_context *var_cxt;
+
     bool need_reopen;
     bool is_body_opened;
 

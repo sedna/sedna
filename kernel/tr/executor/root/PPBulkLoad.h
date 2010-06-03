@@ -14,7 +14,7 @@
 class PPBulkLoad : public PPUpdate
 {
 private:
-    dynamic_context *cxt1, *cxt2, *cxt3;
+    dynamic_context *cxt;
     PPOpIn filename, document, collection;
 
     virtual void do_open();
@@ -24,11 +24,9 @@ private:
 
 public:
     PPBulkLoad(PPOpIn _filename_,
-               dynamic_context *_cxt1_,
                PPOpIn _document_,
-               dynamic_context *_cxt2_,
                PPOpIn _collection_,
-               dynamic_context *_cxt3_);
+               dynamic_context *_cxt_);
     ~PPBulkLoad();
 };
 

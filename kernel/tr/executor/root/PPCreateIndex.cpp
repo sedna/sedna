@@ -44,7 +44,7 @@ void PPCreateIndex::do_open()
 {
     /* descriptive schema of the document/collection changes */
     local_lock_mrg->lock(lm_x); 
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     index_name.op->open();
     root.open();
 }
@@ -53,7 +53,7 @@ void PPCreateIndex::do_close()
 {
     index_name.op->close();
     root.close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPCreateIndex::do_accept(PPVisitor &v)
@@ -89,4 +89,3 @@ void PPCreateIndex::do_execute()
                  db_ent->name,
                  (db_ent->type == dbe_document));
 }
-

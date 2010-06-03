@@ -87,7 +87,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
     bool is_qep_opened = false, is_qep_built = false;
     typedef pair <counted_ptr<db_entity>, struct dbe_properties> authPair;
     auth_map::iterator mapIter;
-    qep_subtree *aqtree = NULL;
+    PPSubQuery *aqtree = NULL;
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     mapIter = amap.find(dbe);
@@ -147,14 +147,14 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 
             tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
 
-            aqtree = build_subqep(auth_xquery.c_str(), false);
+            aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(auth_xquery.c_str(), TL_XQuery));
             is_qep_built = true;
 
-            aqtree->tree.op->open();
+            aqtree->open();
             is_qep_opened = true;
 
             tuple t = tuple(1);
-            aqtree->tree.op->next(t);
+            aqtree->next(t);
 
             if (!t.cells[0].is_light_atomic())
                 throw USER_EXCEPTION2(SE1003, "Failed while authorization checking");
@@ -164,14 +164,14 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 
             int update_privileges = t.cells[0].get_xs_integer();
 
-            aqtree->tree.op->next(t);
+            aqtree->next(t);
             if(!t.is_eos())
                 throw USER_EXCEPTION2(SE1003, "Failed while authorization checking");
 
-            aqtree->tree.op->close();
+            aqtree->close();
             is_qep_opened = false;
 
-            delete_qep(aqtree);
+            delete aqtree;
             is_qep_built = false;
 
             tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -187,9 +187,9 @@ void auth_for_query(counted_ptr<db_entity> dbe)
         catch(SednaUserException)
         {
             if(is_qep_opened)
-                aqtree->tree.op->close();
+                aqtree->close();
             if(is_qep_built)
-                delete_qep(aqtree);
+                delete aqtree;
 
             tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
 
@@ -204,7 +204,7 @@ void auth_for_load_module(const char* module_name)
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -257,23 +257,23 @@ void auth_for_load_module(const char* module_name)
         find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
         find_replace_str(&rc_xquery, "%user%", tr_globals::login);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new module name
-        qep_tree = build_qep(update_load_module_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_load_module_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -284,7 +284,7 @@ void auth_for_load_module(const char* module_name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -294,13 +294,13 @@ void auth_for_load_module(const char* module_name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -315,7 +315,7 @@ void auth_for_drop_module(const char* mod_name)
     if (!tr_globals::authorization) return;
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qepsubtree_opened  = false;
     bool is_qepsubtree_built   = false;
     bool output_enabled        = false;
@@ -346,19 +346,19 @@ void auth_for_drop_module(const char* mod_name)
         find_replace_str(&md_xquery, "%user%", tr_globals::login);
         find_replace_str(&md_xquery, "%name_obj%", mod_name);
 
-        aqtree = build_subqep(md_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(md_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -369,9 +369,9 @@ void auth_for_drop_module(const char* mod_name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -387,7 +387,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -427,19 +427,19 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
         find_replace_str(&rc_xquery, "%user%", tr_globals::login);
         find_replace_str(&rc_xquery, "%old_name_obj%", old_name);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new collection name
@@ -448,7 +448,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
         find_replace_str(&update_rc_xquery, "%old_name_obj%", old_name);
         find_replace_str(&update_rc_xquery, "%new_name_obj%", new_name);
 
-        qep_tree = build_qep(update_rc_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_rc_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -459,7 +459,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -469,13 +469,13 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -635,7 +635,7 @@ void auth_for_create_document(const char* doc_name)
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -676,19 +676,19 @@ void auth_for_create_document(const char* doc_name)
         find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
         find_replace_str(&rc_xquery, "%user%", tr_globals::login);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new document
@@ -697,7 +697,7 @@ void auth_for_create_document(const char* doc_name)
         find_replace_str(&update_xquery, "%user%", tr_globals::login);
         find_replace_str(&update_xquery, "%name_obj%", doc_name);
 
-        qep_tree = build_qep(update_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -708,7 +708,7 @@ void auth_for_create_document(const char* doc_name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -718,13 +718,13 @@ void auth_for_create_document(const char* doc_name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -740,7 +740,7 @@ void auth_for_load_document(const char* doc_name)
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -781,19 +781,19 @@ void auth_for_load_document(const char* doc_name)
         find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
         find_replace_str(&rc_xquery, "%user%", tr_globals::login);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new document
@@ -802,7 +802,7 @@ void auth_for_load_document(const char* doc_name)
         find_replace_str(&update_xquery, "%user%", tr_globals::login);
         find_replace_str(&update_xquery, "%name_obj%", doc_name);
 
-        qep_tree = build_qep(update_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -813,7 +813,7 @@ void auth_for_load_document(const char* doc_name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -823,13 +823,13 @@ void auth_for_load_document(const char* doc_name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -845,7 +845,7 @@ void auth_for_create_collection(const char* coll_name)
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -886,19 +886,19 @@ void auth_for_create_collection(const char* coll_name)
         find_replace_str(&rc_xquery, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
         find_replace_str(&rc_xquery, "%user%", tr_globals::login);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new collection
@@ -907,7 +907,7 @@ void auth_for_create_collection(const char* coll_name)
         find_replace_str(&update_xquery, "%user%", tr_globals::login);
         find_replace_str(&update_xquery, "%name_obj%", coll_name);
 
-        qep_tree = build_qep(update_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -918,7 +918,7 @@ void auth_for_create_collection(const char* coll_name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -928,13 +928,13 @@ void auth_for_create_collection(const char* coll_name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -949,7 +949,7 @@ void auth_for_create_document_collection(const char* doc_name, const char *coll_
     if (!tr_globals::authorization) return;
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qepsubtree_opened  = false;
     bool is_qepsubtree_built   = false;
     bool output_enabled        = false;
@@ -980,19 +980,19 @@ void auth_for_create_document_collection(const char* doc_name, const char *coll_
         find_replace_str(&md_xquery, "%user%", tr_globals::login);
         find_replace_str(&md_xquery, "%name_obj%", coll_name);
 
-        aqtree = build_subqep(md_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(md_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1003,9 +1003,9 @@ void auth_for_create_document_collection(const char* doc_name, const char *coll_
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1020,7 +1020,7 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
     if (!tr_globals::authorization) return;
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qepsubtree_opened  = false;
     bool is_qepsubtree_built   = false;
     bool output_enabled        = false;
@@ -1051,19 +1051,19 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
         find_replace_str(&md_xquery, "%user%", tr_globals::login);
         find_replace_str(&md_xquery, "%name_obj%", coll_name);
 
-        aqtree = build_subqep(md_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(md_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1074,9 +1074,9 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1092,7 +1092,7 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1137,19 +1137,19 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
         find_replace_str(&rc_xquery, "%type_obj%", (is_collection) ? "collection" : "document");
         find_replace_str(&rc_xquery, "%name_obj%", obj_name);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new index
@@ -1158,7 +1158,7 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
         find_replace_str(&update_xquery, "%user%", tr_globals::login);
         find_replace_str(&update_xquery, "%name_obj%", ind_name);
 
-        qep_tree = build_qep(update_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1169,7 +1169,7 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1179,13 +1179,13 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1202,7 +1202,7 @@ void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1247,19 +1247,19 @@ void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is
         find_replace_str(&rc_xquery, "%type_obj%", (is_collection) ? "collection" : "document");
         find_replace_str(&rc_xquery, "%name_obj%", obj_name);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new index
@@ -1268,7 +1268,7 @@ void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is
         find_replace_str(&update_xquery, "%user%", tr_globals::login);
         find_replace_str(&update_xquery, "%name_obj%", ind_name);
 
-        qep_tree = build_qep(update_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1279,7 +1279,7 @@ void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1289,13 +1289,13 @@ void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1312,7 +1312,7 @@ void auth_for_create_trigger(const char *trg_name)
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1354,19 +1354,19 @@ void auth_for_create_trigger(const char *trg_name)
         find_replace_str(&rc_xquery, "%user%", tr_globals::login);
         find_replace_str(&rc_xquery, "%name_obj%", trg_name);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update db_security_data for the new trigger
@@ -1375,7 +1375,7 @@ void auth_for_create_trigger(const char *trg_name)
         find_replace_str(&update_xquery, "%user%", tr_globals::login);
         find_replace_str(&update_xquery, "%name_obj%", trg_name);
 
-        qep_tree = build_qep(update_xquery.c_str(), false);
+        qep_tree = build_subquery_qep(update_xquery.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1386,7 +1386,7 @@ void auth_for_create_trigger(const char *trg_name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1396,13 +1396,13 @@ void auth_for_create_trigger(const char *trg_name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1418,7 +1418,7 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1456,19 +1456,19 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
         find_replace_str(&rc_xquery, "%type_obj%", obj_type);
         find_replace_str(&rc_xquery, "%name_obj%", obj_name);
 
-        aqtree = build_subqep(rc_xquery.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(rc_xquery.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
         tuple t = tuple(1);
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         if (!just_check)
@@ -1479,7 +1479,7 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
             find_replace_str(&update_xquery, "%type_obj%", obj_type);
             find_replace_str(&update_xquery, "%name_obj%", obj_name);
 
-            qep_tree = build_qep(update_xquery.c_str(), false);
+            qep_tree = build_subquery_qep(update_xquery.c_str(), TL_XQuery);
             is_qep_built = true;
 
             qep_tree->open();
@@ -1490,7 +1490,7 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
             qep_tree->close();
             is_qep_opened = false;
 
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
             is_qep_built = false;
         }
 
@@ -1501,13 +1501,13 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1520,7 +1520,7 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
 void auth_for_create_user(const char* name, const char* passwd)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1582,37 +1582,37 @@ void auth_for_create_user(const char* name, const char* passwd)
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // second subquery
-        aqtree = build_subqep(q2.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q2.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q3.c_str(), false);
+        qep_tree = build_subquery_qep(q3.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1623,7 +1623,7 @@ void auth_for_create_user(const char* name, const char* passwd)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1634,13 +1634,13 @@ void auth_for_create_user(const char* name, const char* passwd)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1653,7 +1653,7 @@ void auth_for_create_user(const char* name, const char* passwd)
 void auth_for_drop_user(const char* name)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1686,22 +1686,22 @@ void auth_for_drop_user(const char* name)
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1712,7 +1712,7 @@ void auth_for_drop_user(const char* name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1723,13 +1723,13 @@ void auth_for_drop_user(const char* name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1742,7 +1742,7 @@ void auth_for_drop_user(const char* name)
 void auth_for_alter_user(const char* name, const char* passwd)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1779,22 +1779,22 @@ void auth_for_alter_user(const char* name, const char* passwd)
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1805,7 +1805,7 @@ void auth_for_alter_user(const char* name, const char* passwd)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1816,13 +1816,13 @@ void auth_for_alter_user(const char* name, const char* passwd)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1835,7 +1835,7 @@ void auth_for_alter_user(const char* name, const char* passwd)
 void auth_for_create_role(const char* name)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1875,22 +1875,22 @@ void auth_for_create_role(const char* name)
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1901,7 +1901,7 @@ void auth_for_create_role(const char* name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -1912,13 +1912,13 @@ void auth_for_create_role(const char* name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -1931,7 +1931,7 @@ void auth_for_create_role(const char* name)
 void auth_for_drop_role(const char* name)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1965,22 +1965,22 @@ void auth_for_drop_role(const char* name)
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -1991,7 +1991,7 @@ void auth_for_drop_role(const char* name)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -2002,13 +2002,13 @@ void auth_for_drop_role(const char* name)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -2021,7 +2021,7 @@ void auth_for_drop_role(const char* name)
 void auth_for_grant_role(const char* name, const char *grantee)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -2080,22 +2080,22 @@ void auth_for_grant_role(const char* name, const char *grantee)
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -2106,11 +2106,11 @@ void auth_for_grant_role(const char* name, const char *grantee)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         // second update query
-        qep_tree = build_qep(q3.c_str(), false);
+        qep_tree = build_subquery_qep(q3.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -2121,7 +2121,7 @@ void auth_for_grant_role(const char* name, const char *grantee)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -2132,13 +2132,13 @@ void auth_for_grant_role(const char* name, const char *grantee)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -2151,7 +2151,7 @@ void auth_for_grant_role(const char* name, const char *grantee)
 void auth_for_grant_privilege(const char* name, const char *obj_name, const char *obj_type, const char *grantee)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -2230,22 +2230,22 @@ void auth_for_grant_privilege(const char* name, const char *obj_name, const char
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -2256,7 +2256,7 @@ void auth_for_grant_privilege(const char* name, const char *obj_name, const char
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -2267,13 +2267,13 @@ void auth_for_grant_privilege(const char* name, const char *obj_name, const char
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -2286,7 +2286,7 @@ void auth_for_grant_privilege(const char* name, const char *obj_name, const char
 void auth_for_revoke_privilege(const char* name, const char *obj_name, const char *obj_type, const char *grantee)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -2360,22 +2360,22 @@ void auth_for_revoke_privilege(const char* name, const char *obj_name, const cha
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -2386,7 +2386,7 @@ void auth_for_revoke_privilege(const char* name, const char *obj_name, const cha
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -2397,13 +2397,13 @@ void auth_for_revoke_privilege(const char* name, const char *obj_name, const cha
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 
@@ -2416,7 +2416,7 @@ void auth_for_revoke_privilege(const char* name, const char *obj_name, const cha
 void auth_for_revoke_role(const char* name, const char *grantee)
 {
     PPQueryEssence* qep_tree   = NULL;
-    qep_subtree *aqtree        = NULL;
+    PPSubQuery *aqtree        = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -2457,22 +2457,22 @@ void auth_for_revoke_role(const char* name, const char *grantee)
         output_enabled = tr_globals::client->disable_output();
 
         // first subquery
-        aqtree = build_subqep(q1.c_str(), false);
+        aqtree = dynamic_cast<PPSubQuery *>(build_subquery_qep(q1.c_str(), TL_XQuery));
         is_qepsubtree_built = true;
 
-        aqtree->tree.op->open();
+        aqtree->open();
         is_qepsubtree_opened = true;
 
-        aqtree->tree.op->next(t);
+        aqtree->next(t);
 
-        aqtree->tree.op->close();
+        aqtree->close();
         is_qepsubtree_opened = false;
 
-        delete_qep(aqtree);
+        delete aqtree;
         is_qepsubtree_built = false;
 
         // update query
-        qep_tree = build_qep(q2.c_str(), false);
+        qep_tree = build_subquery_qep(q2.c_str(), TL_XQuery);
         is_qep_built = true;
 
         qep_tree->open();
@@ -2483,7 +2483,7 @@ void auth_for_revoke_role(const char* name, const char *grantee)
         qep_tree->close();
         is_qep_opened = false;
 
-        delete_qep_unmanaged(qep_tree);
+        delete qep_tree;
         is_qep_built = false;
 
         tr_globals::internal_auth_switch = DEPLOY_AUTH_CHECK;
@@ -2494,13 +2494,13 @@ void auth_for_revoke_role(const char* name, const char *grantee)
     catch(SednaUserException)
     {
         if(is_qepsubtree_opened)
-            aqtree->tree.op->close();
+            aqtree->close();
         if(is_qepsubtree_built)
-            delete_qep(aqtree);
+            delete aqtree;
         if(is_qep_opened)
             qep_tree->close();
         if(is_qep_built)
-            delete_qep_unmanaged(qep_tree);
+            delete qep_tree;
         if(output_enabled)
             tr_globals::client->enable_output();
 

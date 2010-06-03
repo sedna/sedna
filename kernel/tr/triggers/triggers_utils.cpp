@@ -97,18 +97,10 @@ void clear_built_trigger_actions_map()
     {
         for(vecIter = mapIter->second.begin(); vecIter != mapIter->second.end(); vecIter++)
         {
-            if(vecIter->action_qep_tree!=NULL)
-            {
-                vecIter->action_qep_tree->close();
-                delete_qep_unmanaged(vecIter->action_qep_tree);
-            }
-            else
-            {
-                vecIter->action_qep_subtree->tree.op->close();
-                delete_qep(vecIter->action_qep_subtree);
-            }
+            delete vecIter->action_qep_tree;
         }
     }
+
     built_trigger_actions.clear();
 }
 

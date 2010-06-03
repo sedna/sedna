@@ -46,7 +46,8 @@ void PPVarDecl::do_open ()
     child.op->open();
     seq_filled = false;
     first_time = true;
-    cxt->glb_var_cxt.producers[v_dsc].op = this;
+
+    U_ASSERT(cxt->get_global_var_producer(v_dsc).op == this);
 }
 
 void PPVarDecl::do_reopen()
@@ -81,10 +82,10 @@ void PPVarDecl::do_accept(PPVisitor &v)
 
 var_c_id PPVarDecl::do_register_consumer(var_dsc dsc)
 {
-    global_producer &p = cxt->glb_var_cxt.producers[dsc];
+    global_producer &p = cxt->get_global_var_producer(dsc);
     if (p.fel.size() != 0)
     {
-        int i = p.fel.back();
+        unsigned i = p.fel.back();
         p.fel.pop_back();
         p.cvc[i] = 0;
         return i;
@@ -98,7 +99,7 @@ var_c_id PPVarDecl::do_register_consumer(var_dsc dsc)
 
 void PPVarDecl::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    global_producer &p = cxt->glb_var_cxt.producers[dsc];
+    global_producer &p = cxt->get_global_var_producer(dsc);
     complex_var_consumption &cvc = p.cvc;
 
     if (first_time && need_to_check_type)
@@ -140,10 +141,10 @@ void PPVarDecl::do_next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPVarDecl::do_reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->glb_var_cxt.producers[dsc].cvc[id] = 0;
+    cxt->get_global_var_producer(dsc).cvc[id] = 0;
 }
 
 void PPVarDecl::do_close(var_dsc dsc, var_c_id id)
 {
-    cxt->glb_var_cxt.producers[dsc].fel.push_back(id);
+    cxt->get_global_var_producer(dsc).fel.push_back(id);
 }

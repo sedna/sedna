@@ -16,26 +16,12 @@ public:
     ASTNode *type; // NULL if no type is specified; ASTTypeSeq
     ASTNode *expr; // NULL means that variable is external
 
-    // cached by lr2por
-    int id; // id for this variable to use for consumers
-
 public:
     ASTVarDecl(const ASTNodeCommonData &loc, ASTNode *vard, ASTNode *var_type = NULL, ASTNode *var_expr = NULL) : ASTNode(loc), var(vard), type(var_type), expr(var_expr)
     {
-        id = -1;
     }
 
     ~ASTVarDecl();
-
-    int getId() const
-    {
-        return id;
-    }
-
-    void setId(int id_)
-    {
-        id = id_;
-    }
 
     void accept(ASTVisitor &v);
     ASTNode *dup();

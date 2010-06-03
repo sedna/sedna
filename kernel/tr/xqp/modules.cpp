@@ -6,12 +6,13 @@
 #include "tr/xqp/XQuerytoLR.h"
 #include "tr/auth/auc.h"
 #include <string>
+#include "tr/executor/root/PPQueryRoot.h"
 
 char *get_module(const char *module_uri)
 {
     char *res = NULL;
     size_t size = 0;
-    qep_subtree *tree = NULL;
+    PPSubQuery *tree = NULL;
     bool tree_built = false;
     bool tree_opened = false;
     bool mem_alloced = false;
@@ -28,21 +29,29 @@ char *get_module(const char *module_uri)
 
     try
     {
-        tree = build_subqep(module_xquery.c_str(), false);
+        tree = dynamic_cast<PPSubQuery *>(build_subquery_qep(module_xquery.c_str(), TL_XQuery));
+        U_ASSERT(tree != NULL);
         tree_built = true;
 
         tuple_cell tc;
         tuple t = tuple(1);
 
-        tree->tree.op->open();
+        tree->open();
         tree_opened = true;
 
-        // execute
-        tree->tree.op->next(t);
+        /*
+         * get data
+         *
+         * for module we shoul always obtain something since we throw an exception otherwise
+         */
+        if (!tree->next(t))
+            throw USER_EXCEPTION2(SE1003, "Error in get_module function");
+
         if (!t.cells[0].is_atomic() || t.cells[0].get_atomic_type() != xs_string)
             throw USER_EXCEPTION2(SE1003, "Error in get_module function");
 
         U_ASSERT(t.cells[0].get_strlen() < SIZE_MAX);
+
         size = (size_t)(t.cells[0].get_strlen());
         res = (char*)malloc(size + 1);
         if (!res)
@@ -50,22 +59,21 @@ char *get_module(const char *module_uri)
         mem_alloced = true;
         t.cells[0].copy_string(res);
 
-        tree->tree.op->next(t);
-        if (!t.is_eos())
+        if (tree->next(t))
             throw USER_EXCEPTION2(SE1003, "Error in get_module function");
 
         // close qep tree
-        tree->tree.op->close();
+        tree->close();
 
-        delete_qep(tree);
+        delete tree;
         tree = NULL;
 
     }
     catch (SednaUserException)
     {
         if (mem_alloced) free(res);
-        if (tree_opened) tree->tree.op->close();
-        if (tree_built)  delete_qep(tree);
+        if (tree_opened) tree->close();
+        if (tree_built)  delete tree;
 
         res = (char*)malloc(sizeof(char) * 3);
         strcpy(res, "#f");
@@ -85,9 +93,9 @@ std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string 
     {
         plain_batch_text = "";
 
-        while(!feof(cf_vec[i].f))
+        while (!feof(cf_vec[i].f))
         {
-            size_t len= fread(buf, sizeof(char), sizeof(buf), cf_vec[i].f);
+            size_t len = fread(buf, sizeof(char), sizeof(buf), cf_vec[i].f);
 
             plain_batch_text.append(buf, len);
         }

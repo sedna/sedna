@@ -47,11 +47,11 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
         if(!nfo.normalized) throw XQUERY_EXCEPTION2(SE1003, "Base URI is not properly normalized");
 
         /* If URI is relative and static base uri is defined we should perform resolving. */
-        if(is_relative && cxt->st_cxt->get_base_uri())
+        if(is_relative && cxt->get_static_context()->get_base_uri())
         {
              stmt_str_buf result(1);
              tc = tuple_cell::make_sure_light_atomic(tc);
-             if(!Uri::resolve(tc.get_str_mem(), cxt->st_cxt->get_base_uri(), result))
+             if(!Uri::resolve(tc.get_str_mem(), cxt->get_static_context()->get_base_uri(), result))
                  return cast_primitive_to_xs_anyURI(tc);
              return tuple_cell::atomic(xs_anyURI, result.get_str());
         }
@@ -60,8 +60,8 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
     }
 
     /* xml_base_node == NULL here */
-    if (IS_TMP_BLOCK(node) && cxt->st_cxt->get_base_uri())
-        return tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->get_base_uri());
+    if (IS_TMP_BLOCK(node) && cxt->get_static_context()->get_base_uri())
+        return tuple_cell::atomic_deep(xs_anyURI, cxt->get_static_context()->get_base_uri());
 
     return tuple_cell::eos();
 }

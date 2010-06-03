@@ -20,13 +20,13 @@ usage () {
         cmd=echo
     fi
 
-    $cmd "usage: `basename $0` [--help] [--nm] [--ecl]"
+    $cmd "usage: `basename $0` [--help] [--nmake] [--eclipse]"
     $cmd "       [--cmake=<path>] <path-to-build-sedna>"
     $cmd ""
     $cmd "       Options:"
     $cmd "           --help -- this help message"
-    $cmd "           --nm   -- builds NMake Makefiles"
-    $cmd "           --ecl  -- builds Eclipse CDT4 Project"
+    $cmd "           --nmake   -- builds NMake Makefiles"
+    $cmd "           --eclipse  -- builds Eclipse CDT4 Project"
     $cmd "           --cmake=<path>  -- use specified cmake binary"
 
     if [ "$1" == "error" ]; then
@@ -59,10 +59,10 @@ while [ $# -gt 0 ]; do
             fi
             ;;
         # support '-nm' as legacy
-        --nm|-nm)
+        --nmake|-nm)
             CMAKE_GENERATOR="NMake Makefiles"
                 ;;
-        --ecl)
+        --eclipse)
             CMAKE_GENERATOR="Eclipse CDT4 - Unix Makefiles"
                 ;;
         --help)

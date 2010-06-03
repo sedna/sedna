@@ -34,14 +34,14 @@ void PPDropDocument::do_open()
 {
     local_lock_mrg->lock(lm_x);
 
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     name.op->open();
 }
 
 void PPDropDocument::do_close()
 {
     name.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPDropDocument::do_accept(PPVisitor &v)
@@ -94,7 +94,7 @@ PPDropCollection::~PPDropCollection()
 
 void PPDropCollection::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     name.op->open();
 
     local_lock_mrg->lock(lm_x);
@@ -103,7 +103,7 @@ void PPDropCollection::do_open()
 void PPDropCollection::do_close()
 {
     name.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPDropCollection::do_accept(PPVisitor &v)
@@ -139,13 +139,11 @@ void PPDropCollection::do_execute()
 /// PPDropDocumentInCollection
 ///////////////////////////////////////////////////////////////////////////////
 PPDropDocumentInCollection::PPDropDocumentInCollection(PPOpIn _document_,
-                                                       dynamic_context *_cxt1_,
                                                        PPOpIn _collection_,
-                                                       dynamic_context *_cxt2_) : PPUpdate("PPDropDocumentInCollection"),
+                                                       dynamic_context *_cxt_) : PPUpdate("PPDropDocumentInCollection"),
                                                                                   document(_document_),
                                                                                   collection(_collection_),
-                                                                                  cxt1(_cxt1_),
-                                                                                  cxt2(_cxt2_)
+                                                                                  cxt(_cxt_)
 {
 }
 
@@ -157,15 +155,13 @@ PPDropDocumentInCollection::~PPDropDocumentInCollection()
     delete collection.op;
     collection.op = NULL;
 
-    delete cxt1;
-    cxt1 = NULL;
-    delete cxt2;
-    cxt2 = NULL;
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPDropDocumentInCollection::do_open()
 {
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     document.op->open();
     collection.op->open();
 
@@ -176,7 +172,7 @@ void PPDropDocumentInCollection::do_close()
 {
     document.op->close();
     collection.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPDropDocumentInCollection::do_accept(PPVisitor &v)

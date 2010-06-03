@@ -49,15 +49,15 @@ void PPFnDateTimeFuncNoParam::do_next (tuple &t)
     {
         first_time = false;
 
-        if (!dynamic_context::datetime_initialized)
-            dynamic_context::set_datetime();
+        if (!cxt->is_datetime_inited())
+            cxt->set_datetime();
 
         switch (dateTimeFunc)
         {
-        case currentDateTime:   t.copy(tuple_cell::atomic(dynamic_context::current_datetime.getPackedDateTime(), xs_dateTime)); break;
-        case currentDate:       t.copy(tuple_cell::atomic(dynamic_context::current_date.getPackedDateTime(), xs_date)); break;
-        case currentTime:       t.copy(tuple_cell::atomic(dynamic_context::current_time.getPackedDateTime(), xs_time)); break;
-        case implicitTimezone:  t.copy(tuple_cell::atomic(dynamic_context::implicit_timezone.getPackedDuration(), xs_dayTimeDuration)); break;
+        case currentDateTime:   t.copy(tuple_cell::atomic(cxt->get_datetime().getPackedDateTime(), xs_dateTime)); break;
+        case currentDate:       t.copy(tuple_cell::atomic(cxt->get_date().getPackedDateTime(), xs_date)); break;
+        case currentTime:       t.copy(tuple_cell::atomic(cxt->get_time().getPackedDateTime(), xs_time)); break;
+        case implicitTimezone:  t.copy(tuple_cell::atomic(cxt->get_timezone().getPackedDuration(), xs_dayTimeDuration)); break;
         default:                throw XQUERY_EXCEPTION2(SE1003, "Impossible parameterless date/time function");        
         }
     }
@@ -280,8 +280,8 @@ void PPFnDateTimeFunc::do_next (tuple &t)
             case adjustDateToTimezone:
             case adjustTimeToTimezone:
                 // extract implicit timezone from static context and use it to adjust the datetime
-                if (!dynamic_context::datetime_initialized)
-                    dynamic_context::set_datetime();
+                if (!cxt->is_datetime_inited())
+                    cxt->set_datetime();
 
                 if (tc_type != xs_date &&
                     tc_type != xs_dateTime &&
@@ -289,7 +289,7 @@ void PPFnDateTimeFunc::do_next (tuple &t)
                     throw XQUERY_EXCEPTION2(XPTY0004, (string("Invalid type passed to ") + dateTimeFunc2string(dateTimeFunc) + string(" function")).c_str());
 
                 t.copy(tuple_cell::atomic(adjustToTimezone(XMLDateTime(tc.get_xs_dateTime(), tc_type),
-                    dynamic_context::implicit_timezone).getPackedDateTime(), tc_type));
+                    cxt->get_timezone()).getPackedDateTime(), tc_type));
                 break;
             default: throw XQUERY_EXCEPTION2(SE1003, "Impossible date/time function");
             }

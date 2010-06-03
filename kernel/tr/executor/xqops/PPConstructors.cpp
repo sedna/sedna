@@ -379,11 +379,11 @@ void PPElementConstructor::do_next (tuple &t)
                 str_counted_ptr c_ptr(prefix);
                 if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0096);
                 if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
-                ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
+                ns = cxt->get_xmlns_by_prefix(prefix);
             }
             else
             {
-                ns = cxt->st_cxt->get_xmlns_by_prefix("");
+                ns = cxt->get_xmlns_by_prefix("");
             }
         }
         /*
@@ -403,15 +403,15 @@ void PPElementConstructor::do_next (tuple &t)
         xptr new_element;
         if (parind == XNULL || deep_copy)
         {
-            new_element = insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
+            new_element = insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
             last_elem   = get_last_mo_inderection();
         }
         else
         {
             if (leftind!=XNULL)
-                new_element = insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
+                new_element = insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
             else
-                new_element = insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->st_cxt->get_construction_mode())?xs_anyType:xs_untyped,ns);
+                new_element = insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
             conscnt++;
         }
         int cnt = conscnt;
@@ -492,6 +492,7 @@ void PPElementConstructor::do_next (tuple &t)
                     }
                 }
                 
+                // Check if we've already inserted the node to this node as a context
                 if (conscnt > cnt)
                 {
                     left = getIndirectionSafeCP(node);
@@ -501,13 +502,13 @@ void PPElementConstructor::do_next (tuple &t)
                 else
                 {
                     if (typ == document) {
-                        xptr res = copy_node_content(indir, node, left, NULL, cxt->st_cxt->get_construction_mode());
+                        xptr res = copy_node_content(indir, node, left, NULL, cxt->get_static_context()->get_construction_mode());
                         if (res != XNULL) {
                             left = res;
                             cont_leftind = left;
                         }
                     } else {
-                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->st_cxt->get_construction_mode());
+                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->get_static_context()->get_construction_mode());
                         cont_leftind = left;
                     }
                 }
@@ -524,7 +525,7 @@ void PPElementConstructor::do_next (tuple &t)
         vector<xmlns_ptr>::iterator it=ns_list.begin();
         while (it != ns_list.end())
         {
-            cxt->st_cxt->remove_from_context(*it);
+            cxt->remove_from_context(*it);
             it++;
         }
 
@@ -691,7 +692,7 @@ void PPAttributeConstructor::do_next (tuple &t)
                 if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
                 /* Default namespace is not applied to the attributes */
                 if(my_strcmp(prefix, "") != 0)
-                    ns = cxt->st_cxt->get_xmlns_by_prefix(prefix);
+                    ns = cxt->get_xmlns_by_prefix(prefix);
             }
         }
         /*
@@ -859,7 +860,7 @@ void PPNamespaceConstructor::do_next (tuple &t)
             uri = (char*)executor_globals::tmp_op_str_buf.c_str();
         }
 
-        xmlns_ptr ns = cxt->st_cxt->add_to_context(prefix,uri);
+        xmlns_ptr ns = cxt->add_to_context(prefix,uri);
         xptr new_namespace = insert_namespace(XNULL,XNULL,get_virtual_root(),ns);
 
         t.copy(tuple_cell::node(new_namespace));
@@ -1360,7 +1361,7 @@ void PPDocumentConstructor::do_next (tuple &t)
         int cnt=conscnt;
         int oldcnt=conscnt;
         xptr new_doc = insert_document("tmp",false);
-        cxt->st_cxt->add_temporary_doc_node(new_doc);
+        cxt->add_temporary_doc_node(new_doc);
         xptr indir=((n_dsc*)XADDR(new_doc))->indir;
         cont_parind=indir;
         cont_leftind=XNULL;
@@ -1407,11 +1408,11 @@ void PPDocumentConstructor::do_next (tuple &t)
                     cnt   = conscnt;
                 } else {
                     if (typ == document) {
-                        xptr res = copy_node_content(indir, node, lefti, NULL, cxt->st_cxt->get_construction_mode());
+                        xptr res = copy_node_content(indir, node, lefti, NULL, cxt->get_static_context()->get_construction_mode());
                         if (res != XNULL) lefti = res;
                         else continue;
                     } else {
-                        lefti = deep_copy_node_ii(lefti, XNULL, indir, node, NULL, cxt->st_cxt->get_construction_mode());
+                        lefti = deep_copy_node_ii(lefti, XNULL, indir, node, NULL, cxt->get_static_context()->get_construction_mode());
                     }
                 }
                 cont_leftind = lefti;

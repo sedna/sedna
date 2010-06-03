@@ -15,7 +15,6 @@
 
 struct built_trigger_action{
     PPQueryEssence* action_qep_tree;
-    qep_subtree*    action_qep_subtree;
     qep_parameters_vec parameters;
 };
 

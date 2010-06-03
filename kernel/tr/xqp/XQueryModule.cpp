@@ -15,7 +15,8 @@ namespace sedna
         qep = NULL;
         drv = driver;
         lr = NULL;
-        qep_sx = NULL;
+        dyn_cxt = NULL;
+        is_used = false;
 
         isExplainOn = false;
         isProfileOn = false;
@@ -36,7 +37,8 @@ namespace sedna
         qep = NULL;
         drv = driver;
         lr = NULL;
-        qep_sx = NULL;
+        dyn_cxt = NULL;
+        is_used = false;
 
         isExplainOn = false;
         isProfileOn = false;
@@ -56,6 +58,15 @@ namespace sedna
         delete ast;
         delete module_uri;
         delete lr;
+
+        for (XQVariablesInfo::iterator it = vars.begin(); it != vars.end(); it++)
+            delete it->second;
+
+        for (XQFunctionInfo::iterator it = funcs.begin(); it != funcs.end(); it++)
+            delete it->second;
+
+        for (XQFunctionInfo::iterator it = unres_funcs.begin(); it != unres_funcs.end(); it++)
+            delete it->second;
     }
 
     void XQueryModule::doLReturnAnalysis()
@@ -81,7 +92,7 @@ namespace sedna
 #endif
     }
 
-    void XQueryModule::doPostSemanticAnalysis(const XQVariablesInfo &libVars, bool check_cycles)
+    void XQueryModule::doPostSemanticAnalysis(XQVariablesInfo &libVars, bool check_cycles)
     {
         // first, we should check all unresolved vars again
         XQStringHash::const_iterator it;
@@ -98,19 +109,28 @@ namespace sedna
 
             // we should check only library variables since it is the only case variable reference can be unresolved
             if (imported.find(*var->uri) != imported.end())
+            {
                 if (libVars.find(it->first) == libVars.end())
+                {
                     drv->error(var->getLocation(), XPST0008, it->first);
+                }
+            }
         }
         unres_vars.clear(); // we've emitted all errors already
 
         // second, we should try to resolve all remaining functions
         for (itf = unres_funcs.begin(); itf != unres_funcs.end(); itf++)
         {
-            name = CREATE_INTNAME(itf->second.uri, itf->second.local);
+            name = CREATE_INTNAME(itf->second->uri, itf->second->local);
 
             // check prolog
-            if (!Sema::findFunction(name, itf->second.min_arg, this, drv))
-                drv->error(*itf->second.loc, XPST0017, std::string("unknown function ") + name + "/" + int2string(itf->second.min_arg));
+            XQFunction *xqf = Sema::findFunction(name, itf->second->min_arg, this, drv);
+            if (!xqf)
+            {
+                drv->error(*itf->second->loc, XPST0017, std::string("unknown function ") + name + "/" + int2string(itf->second->min_arg));
+            }
+
+            delete itf->second;
         }
         unres_funcs.clear(); // we've emitted all errors already
 
@@ -231,114 +251,76 @@ namespace sedna
         return ast;
     }
 
-    bool XQueryModule::getFunctionInfo(const std::string &name, XQFunction &xqf) const
+    bool XQueryModule::getFunctionInfo(const std::string &name, XQFunction **xqf)
     {
         XQFunctionInfo::const_iterator it = funcs.find(name);
 
         if (it == funcs.end())
             return false;
 
-        xqf = it->second;
-        return true;
-    }
-
-    ASTVarDecl *XQueryModule::getVariableInfo(const std::string &name) const
-    {
-        XQVariablesInfo::const_iterator it = vars.find(name);
-
-        if (it == vars.end())
-            return NULL;
-
-        return it->second;
-    }
-
-    bool XQueryModule::getLReturnFunctionInfo(const std::string &name, XQFunction &xqf)
-    {
-        XQFunctionInfo::const_iterator it = funcs.find(name);
-
-        if (it == funcs.end())
-            return false;
-
-        // create new lreturn visitor to process variables/functions
-        if (!lr)
-            lr = new LReturn(this->drv, this);
-
-        xqf = lr->getFunctionInfo(name);
+        if (xqf)
+            *xqf = it->second;
 
         return true;
     }
 
-    bool XQueryModule::getLReturnVariableInfo(const std::string &name, XQVariable &xqv)
+    bool XQueryModule::getVariableInfo(const std::string &name, XQVariable **xqv)
     {
         XQVariablesInfo::const_iterator it = vars.find(name);
 
         if (it == vars.end())
             return false;
 
-        // create new lreturn visitor to process variables/functions
-        if (!lr)
-            lr = new LReturn(this->drv, this);
-
-        xqv = lr->getVariableInfo(name);
+        if (xqv)
+            *xqv = it->second;
 
         return true;
     }
 
-    PPQueryEssence *XQueryModule::getQEP()
+    void XQueryModule::getLReturnFunctionInfo(const std::string &name, XQFunction **xqf)
     {
-        size_t mod_num, libvar_num, libfun_num;
-        size_t var_num, fun_num;
-        static_context *st_cxt;
+        U_ASSERT(funcs.find(name) != funcs.end());
+
+        // create new lreturn visitor to process variables/functions
+        if (!lr)
+            lr = new LReturn(this->drv, this);
+
+        *xqf = lr->getFunctionInfo(name);
+    }
+
+    void XQueryModule::getLReturnVariableInfo(const std::string &name, XQVariable **xqv)
+    {
+        U_ASSERT(vars.find(name) != vars.end());
+
+        // create new lreturn visitor to process variables/functions
+        if (!lr)
+            lr = new LReturn(this->drv, this);
+
+        *xqv = lr->getVariableInfo(name);
+    }
+
+    PPQueryEssence *XQueryModule::getQEP(bool is_subquery)
+    {
         lr2por *l2p;
 
-        if (imported.size())
-            mod_num = drv->getLibModCount();
-        else
-            mod_num = 0;
+        // create module contexts
+        dyn_cxt = new dynamic_context(new static_context());
 
-        libvar_num = drv->getVarCount();
-        libfun_num = drv->getFuncCount();
-        var_num = vars.size();
-        fun_num = funcs.size();
+        // this will resolve ids for all imported functions and vars
+        drv->porLibModules(dyn_cxt);
 
-        // enumerate local vars and funcs
-        XQVariablesInfo::iterator vit;
+        // this will resolve ids for our funcs and vars
+        enumerate_vars_funcs();
 
-        for (vit = vars.begin(); vit != vars.end(); vit++)
-            vit->second->setId(drv->getNewGlobVarId());
-
-        XQFunctionInfo::iterator fit;
-
-        for (fit = funcs.begin(); fit != funcs.end(); fit++)
-        {
-            if (!fit->second.decl->body) // external function
-            {
-                fit->second.decl->setId(-1);
-            }
-            else
-            {
-                fit->second.decl->setId(drv->getNewGlobFunId());
-            }
-        }
-
-        if (!qep_sx) // we haven't told about some specific static context
-            dynamic_context::static_set(libfun_num + fun_num, libvar_num + var_num, mod_num + 1);
-
-        if (mod_num)
-            drv->porLibModules();
-
-        // create our own context
-        if (!qep_sx) // we haven't told about some specific static context
-            st_cxt = dynamic_context::create_static_context();
-        else
-            st_cxt = qep_sx;
-
-        l2p = new lr2por(this->drv, this, st_cxt);
+        l2p = new lr2por(this->drv, this, dyn_cxt, is_subquery);
 
         ast->accept(*l2p);
 
         delete ast;
         ast = NULL;
+
+        // finalize producers
+        dyn_cxt->set_producers();
 
         qep = l2p->getResult();
 
@@ -347,29 +329,37 @@ namespace sedna
         return qep;
     }
 
+    void XQueryModule::enumerate_vars_funcs()
+    {
+        for (XQVariablesInfo::iterator it = vars.begin(); it != vars.end(); it++)
+        {
+            if (it->second->is_used)
+            {
+                it->second->id.first = dyn_cxt;
+                it->second->id.second = dyn_cxt->get_new_global_var_id();
+            }
+        }
+
+        for (XQFunctionInfo::iterator it = funcs.begin(); it != funcs.end(); it++)
+        {
+            if (it->second->is_used)
+            {
+                it->second->id.first = dyn_cxt;
+                it->second->id.second = dyn_cxt->get_new_func_id();
+            }
+        }
+    }
+
     void XQueryModule::porLibModule()
     {
         U_ASSERT(module_uri != NULL);
 
         lr2por *l2p;
-        static_context *st_cxt;
 
-        st_cxt = dynamic_context::create_static_context();
-        l2p = new lr2por(this->drv, this, st_cxt);
-
+        l2p = new lr2por(this->drv, this, dyn_cxt, false);
         ast->accept(*l2p);
 
-        // we don't need any result from l2p for library modules since static_context will be populated with global vars/funcs
+        // we don't need any result from l2p for library modules since static/dynamic contexts will be populated with global vars/funcs
         delete l2p;
-    }
-
-    void XQueryModule::addToUnresolvedPor(const std::string &name, PPGlobalVariable *var)
-    {
-        unresPorVars.insert(unresPorVarInfo(name, var));
-    }
-
-    void XQueryModule::setStaticContextForQEP(static_context *sx)
-    {
-        qep_sx = sx;
     }
 }

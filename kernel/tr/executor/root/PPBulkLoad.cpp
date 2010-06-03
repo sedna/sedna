@@ -14,14 +14,10 @@
 #include "tr/auth/auc.h"
 
 PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
-                       dynamic_context *_cxt1_,
                        PPOpIn _document_,
-                       dynamic_context *_cxt2_,
                        PPOpIn _collection_,
-                       dynamic_context *_cxt3_) : PPUpdate("PPBulkLoad"),
-                                                  cxt1(_cxt1_),
-                                                  cxt2(_cxt2_),
-                                                  cxt3(_cxt3_),
+                       dynamic_context *_cxt_) : PPUpdate("PPBulkLoad"),
+                                                  cxt(_cxt_),
                                                   filename(_filename_),
                                                   document(_document_),
                                                   collection(_collection_)
@@ -42,19 +38,15 @@ PPBulkLoad::~PPBulkLoad()
         collection.op = NULL;
     }
 
-    delete cxt1;
-    cxt1 = NULL;
-    delete cxt2;
-    cxt2 = NULL;
-    delete cxt3;
-    cxt3 = NULL;
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPBulkLoad::do_open()
 {
     local_lock_mrg->lock(lm_x);
 
-    dynamic_context::global_variables_open();
+    cxt->global_variables_open();
     filename.op->open();
     document.op->open();
     if (collection.op) collection.op->open();
@@ -65,7 +57,7 @@ void PPBulkLoad::do_close()
     filename.op->close();
     document.op->close();
     if (collection.op) collection.op->close();
-    dynamic_context::global_variables_close();
+    cxt->global_variables_close();
 }
 
 void PPBulkLoad::do_accept(PPVisitor &v)
@@ -134,7 +126,7 @@ void PPBulkLoad::do_execute()
     }
     */
 
-    bool boundary_space_strip = (cxt1->st_cxt->get_boundary_space() == xq_boundary_space_strip);
+    bool boundary_space_strip = (cxt->get_static_context()->get_boundary_space() == xq_boundary_space_strip);
 
     try {
    	    if (collection.op == NULL)
@@ -189,6 +181,3 @@ void PPBulkLoad::do_execute()
 
     tr_globals::client->close_file_from_client(cf_vec[0]);
 }
-
-
-

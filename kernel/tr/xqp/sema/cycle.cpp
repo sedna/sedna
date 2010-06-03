@@ -819,7 +819,10 @@ namespace sedna
         // then, check prolog (for main modules only; for library module all vars are in libVars)
         if (mod_chain.empty() && mod->vars.find(name) != mod->vars.end())
         {
-            mod->vars[name]->accept(*this); // check corresponding declaration
+            XQVariable *xqv;
+            mod->getVariableInfo(name, &xqv);
+
+            xqv->var->accept(*this); // check corresponding declaration
             return;
         }
 
@@ -836,7 +839,7 @@ namespace sedna
                     mod_chain.push_back(*n.uri);
                 }
 
-                drv->libVars[name]->accept(*this);
+                drv->libVars[name]->var->accept(*this);
 
                 if (extern_import)
                 {
