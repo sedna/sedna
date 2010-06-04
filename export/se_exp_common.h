@@ -1,3 +1,7 @@
+/*
+ * File:  se_exp_common.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #ifndef _SE_EXP_COMMON_H
 #define _SE_EXP_COMMON_H
@@ -5,12 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "libsedna.h"
+#include <inttypes.h>
+
 
 #ifndef _WIN32
- // for linux file system
 #define SE_EXP_PATH_SEP '/'
 #else
- // for windows file system
 #define SE_EXP_PATH_SEP '\\'
 #endif
 
@@ -100,5 +104,3 @@ int getSednaErrorStatus(const char *errorMessage);
 
 
 #endif /* _SE_EXP_COMMON_H */
-
-

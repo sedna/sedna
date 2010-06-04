@@ -1,3 +1,8 @@
+/*
+ * File:  se_exp_common.c
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "se_exp_common.h"
 #include "se_exp.h"
 #include <string.h>

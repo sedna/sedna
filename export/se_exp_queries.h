@@ -1,3 +1,9 @@
+/*
+ * File:  se_exp_queries.c
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
 #ifndef _SE_EXP_QUERIES_H
 #define _SE_EXP_QUERIES_H
 
@@ -12,4 +18,4 @@ extern const char check_ft_enabled_query[];
 extern const char check_sec_enabled_query[];
 
 
-#endif
+#endif /* _SE_EXP_QUERIES_H */

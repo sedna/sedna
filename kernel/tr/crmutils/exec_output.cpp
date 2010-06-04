@@ -78,6 +78,7 @@ se_ostream& endl(se_ostream& s)
 /// se_ostream
 ///////////////////////////////////////////////////////////////////////////////
 
+#if defined(_MSC_VER) || !defined(SEDNA_X64)
 se_ostream& se_ostream::operator<<(int64_t n)
 {
     char z[20];
@@ -95,6 +96,7 @@ se_ostream& se_ostream::operator<<(int64_t n)
         *this << (int)z[i];
     return *this;
 }
+#endif
 
 se_ostream& se_ostream::writextext(const char *s, int n)
 {

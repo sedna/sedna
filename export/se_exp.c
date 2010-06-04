@@ -1,3 +1,8 @@
+/*
+ * File:  se_exp.c
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "se_exp.h"
 #include "se_exp_common.h"
 #include "se_exp_import.h"
@@ -5,7 +10,6 @@
 #include "se_exp_cl.h"
 #include "common/u/uutils.h"
 #include "common/version.h"
-
 
 
 void print_usage() {

@@ -206,10 +206,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#ifndef __cygwin__
-#include <ucontext.h>
-#endif
-
 #include <setjmp.h>
 #include <fcntl.h>
 #include <math.h>

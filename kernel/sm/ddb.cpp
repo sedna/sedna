@@ -53,12 +53,13 @@ int main(int argc, char** argv)
     USOCKET sock;
     program_name_argv_0 = argv[0];
     pping_client *ppc = NULL;
-    int db_id;
+    int db_id = -1;
     msg_struct msg;
     char errmsg[1000];
     SednaUserException e = USER_EXCEPTION(SE4400);
 
-    /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
+    /* 
+     * Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
      * so we must block SIGPIPE with sigignore.
      */
 #if defined(SunOS)
@@ -73,7 +74,8 @@ int main(int argc, char** argv)
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
    
-        int arg_scan_ret_val = 0; /* 1 - parsed successful, 0 - there was errors */
+        /* 1 - parsed successful, 0 - there was errors */
+        int arg_scan_ret_val = 0;
         arg_scan_ret_val = arg_scanargv(argc, argv, ddb_argtable, narg, NULL, errmsg, NULL);
 
         if ( ddb_help1 == 1 || ddb_help2 == 1 ) {

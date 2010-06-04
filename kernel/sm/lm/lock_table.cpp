@@ -29,8 +29,11 @@ void print_resource_id(std::string r_id)
  lock_request class implementation
  ******************************************************************************/
 
-lock_request::lock_request(transaction_id tr_id, session_id s_id,
-        lock_head* l_h, lock_mode m, lock_class c)
+lock_request::lock_request(transaction_id tr_id,
+                           session_id s_id,
+                           lock_head* l_h,
+                           lock_mode m,
+                           lock_class c)
 {
     queue = NULL;
     status = LOCK_GRANTED;
@@ -67,7 +70,7 @@ lock_request::lock_request(transaction_id tr_id, session_id s_id,
     {
         tran = tr_l_h->tran;
 
-        lock_request* r, *last;
+        lock_request *r, *last=NULL;
 
         for (r = tr_l_h->tran->locks; r != NULL; r = r->tran_next)
         {
@@ -192,7 +195,7 @@ lock_reply lock_table::lock(transaction_id tr_id, session_id s_id,
 {
     lock_reply ret_code;
     lock_head * lock;
-    lock_request *request, *last, *convert_request;
+    lock_request *request, *last=NULL, *convert_request;
     transaction_id me = tr_id;
 
     down_sem(sync);
