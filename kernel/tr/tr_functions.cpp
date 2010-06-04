@@ -1,7 +1,8 @@
 /*
-* File:  tr_functions.cpp
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  tr_functions.cpp
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ */
 #include <sstream>
 
 #include "common/sedna.h"
@@ -155,38 +156,30 @@ void set_session_finished()
 
 qepNextAnswer execute(PPQueryEssence* qep_tree)
 {
-    OS_exceptions_handler::enter_stack_overflow_critical_section();
-
     try {
         qep_tree->execute();
     } catch (SednaUserException &e) {
-        OS_exceptions_handler::leave_stack_overflow_critical_section();
         if (1 == tr_globals::debug_mode) 
             print_pp_stack(tr_globals::client->get_debug_ostream());
         if (e.get_code() == SE2041) return se_result_is_cut_off;
         throw;
     }
 
-    OS_exceptions_handler::leave_stack_overflow_critical_section();
     return se_no_next_item;
 }
 
 qepNextAnswer next(PPQueryEssence* qep_tree)
 {
     bool res;
-    OS_exceptions_handler::enter_stack_overflow_critical_section();
 
     try {
         res = ((PPQueryRoot*)qep_tree)->next();
     } catch (SednaUserException &e) {
-        OS_exceptions_handler::leave_stack_overflow_critical_section();
         if (1 == tr_globals::debug_mode) 
             print_pp_stack(tr_globals::client->get_debug_ostream());
         if (e.get_code() == SE2041) return se_result_is_cut_off;
         throw;
     }
-
-    OS_exceptions_handler::leave_stack_overflow_critical_section();
 
     return (res) ? se_next_item_exists : se_no_next_item;
 }

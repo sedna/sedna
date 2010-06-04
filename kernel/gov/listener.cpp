@@ -400,7 +400,7 @@ int sess_registering(USOCKET s, char* msg_buf)
 
     if( db_name_len_net > SE_MAX_DB_NAME_LENGTH || 
         db_name_len_net < 0 ||
-        db_name_len_net > SIZE_MAX) throw USER_EXCEPTION(SE3015);
+        (uint32_t)db_name_len_net > SIZE_MAX) throw USER_EXCEPTION(SE3015);
     /* 
     * Here we quite sure that size_t is enough to store
     * database name length.
@@ -503,7 +503,7 @@ int sm_registering(USOCKET s, char* msg_buf)
 
     if( db_name_len_net > SE_MAX_DB_NAME_LENGTH || 
         db_name_len_net < 0 ||
-        db_name_len_net > SIZE_MAX) throw USER_EXCEPTION(SE3015);
+        (uint32_t)db_name_len_net > SIZE_MAX) throw USER_EXCEPTION(SE3015);
     /* 
     * Here we quite sure that size_t is enough to store
     * database name length.

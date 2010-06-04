@@ -1,3 +1,8 @@
+/*
+ * File:  se_exp_import.c
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
 #include "se_exp.h"
@@ -204,7 +209,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 			if (*doc_name==';') doc_name++;
 			while (*doc_name==' ') doc_name++;
 			/* end */
-			sprintf(strbuf,"%s%d.xml",path,i+1);
+			sprintf(strbuf,"%s%"PRIuMAX".xml",path,(uintmax_t)i+1);
 			FTRACE((log," %s...",doc_name));
 			if (execute_query(&conn, blq.buf[i], NULL, log) != SE_EXP_SUCCEED)
 				goto imp_error;

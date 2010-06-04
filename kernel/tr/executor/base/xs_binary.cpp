@@ -187,8 +187,8 @@ static inline void check_constraints_for_xs_base64Binary(Iterator &start, const 
 {
     (*valid) = false;
 
-    unsigned char value;
-    unsigned char last_saved_char;
+    unsigned char value = 0;
+    unsigned char last_saved_char = 0;
     int counter = 0;
     int type_of_tail = 0;
     bool tail_reached = false;
@@ -258,8 +258,8 @@ static inline void base64_to_hex(Iterator &start, const Iterator &end, stmt_str_
 {
     bool evenness_flag = false;
 
-    unsigned char value;
-    unsigned char previous;
+    unsigned char value = 0;
+    unsigned char previous = 0;
 
     while(start < end && *start != '=')
     {
@@ -305,8 +305,8 @@ static inline void hex_to_base64(Iterator &start, const Iterator &end, stmt_str_
 {
     int evenness_flag = 0;
 
-    unsigned char value;
-    unsigned char previous;
+    unsigned char value = 0;
+    unsigned char previous = 0;
 
     int counter = 0;
 

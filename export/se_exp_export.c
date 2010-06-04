@@ -1,10 +1,12 @@
+/*
+ * File:  se_exp_export.c
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
 #include "se_exp.h"
-
-
-
-
 
 
 // function exports data from database to the specified directory
@@ -61,32 +63,32 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	if ((export_status = fill_qbuf(&conn,&exp_docs, exp_docs_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
-	FTRACE((log,"...done (%d statements)\n", exp_docs.d_size));
+	FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)exp_docs.d_size));
 
 	FTRACE((log,"Constructing load documents script"));
 	if ((export_status = fill_qbuf(&conn,&load_docs, load_docs_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
-	FTRACE((log,"...done (%d statements)\n", load_docs.d_size));
+	FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)load_docs.d_size));
 
 	FTRACE((log,"Constructing create collections script"));
 	if ((export_status = fill_qbuf(&conn,&create_colls, create_colls_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
-	FTRACE((log,"...done (%d statements)\n", create_colls.d_size));
+	FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)create_colls.d_size));
 
 	FTRACE((log,"Constructing create indexes script"));
 	if ((export_status = fill_qbuf(&conn,&create_indexes, create_indexes_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
-	FTRACE((log,"...done (%d statements)\n", create_indexes.d_size));
+	FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)create_indexes.d_size));
 
 	if (ft_search_feature == SEDNA_FEATURE_ENABLED) {
 		FTRACE((log,"Constructing create full-text search indexes script"));
 		if ((export_status = fill_qbuf(&conn,&create_ftindexes, create_ftindexes_query, log))!=SE_EXP_SUCCEED) {
 			goto exp_error;
 		}
-		FTRACE((log,"...done (%d statements)\n", create_ftindexes.d_size));
+		FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)create_ftindexes.d_size));
 	}
 
 	if (security_feature == SEDNA_FEATURE_ENABLED) {
@@ -94,7 +96,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 		if ((export_status = fill_qbuf(&conn,&create_sec, create_sec_query, log))!=SE_EXP_SUCCEED) {
 			goto exp_error;
 		}
-		FTRACE((log,"...done (%d statements)\n", create_sec.d_size));
+		FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)create_sec.d_size));
 	}
 
 
@@ -105,8 +107,8 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 		if (*doc_name==';') doc_name++;
 		while (*doc_name==' ') doc_name++;
 		/* end */
-		FTRACE((log,"Exporting document %d of %d [%s]...",(i+1),exp_docs.d_size,doc_name));
-		sprintf(strbuf,"%s%d.xml",path,(i+1));
+		FTRACE((log,"Exporting document %"PRIuMAX" of %"PRIuMAX" [%s]...",(uintmax_t)(i+1),(uintmax_t)exp_docs.d_size,doc_name));
+		sprintf(strbuf,"%s%"PRIuMAX".xml",path,(uintmax_t)(i+1));
 		if ((f=fopen(strbuf,"wb"))==NULL) {
 			ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
 			export_status = SE_EXP_FATAL_ERROR;

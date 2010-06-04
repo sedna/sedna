@@ -1,4 +1,12 @@
+/*
+ * File:  se_exp_cl.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "common/argtable.h"
+
+#ifndef __SE_EXP_CL_H
+#define __SE_EXP_CL_H
 
 #define ARG_SIZE 1000
 #define SOCKET_PORT_DIGITS_NUM 20
@@ -37,3 +45,5 @@ arg_rec exp_argtable[] =
 	{NULL,              " path",     arg_str,   path,                       "-",         "\t\t\t  path with exported/imported data"}
 
 };
+
+#endif /* __SE_EXP_CL_H */
