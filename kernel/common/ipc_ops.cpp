@@ -19,7 +19,7 @@
 
 
 static std::string elem_content;
-char* SEDNA_DATA;
+char* SEDNA_DATA = NULL;
 void* sedna_gov_shm_ptr = NULL;
 static UShMem gov_shm_service_dsc;
 
