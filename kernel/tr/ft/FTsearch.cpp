@@ -9,16 +9,11 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/tr_globals.h"
 
-using namespace dtSearch;
-
-
 #define DTSEARCH_THREAD_STACK_SIZE (1000*1024)
 
 /////////////////////////////////////////////////////////////
 //
 //  DSearchJob
-
-
 
 
 class GenericDataSource {
@@ -33,6 +28,7 @@ class GenericDataSource {
         static GenericDataSource *safeCast(void *pData);
         void makeInterface(dtsInputStream& dest);
    };
+
 
 //
 //  A TextInputStream is a "document" to be indexed.
@@ -84,7 +80,7 @@ int GenericDataSource::rewindCB(void *pData)
     if (s)
         return s->rewind();
     else
-        return FAIL;
+        return -1;
 }
 
 int GenericDataSource::getNextDocCB(void *pData, dtsInputStream& dest)
@@ -92,7 +88,7 @@ int GenericDataSource::getNextDocCB(void *pData, dtsInputStream& dest)
     if (s)
         return s->getNextDoc(dest);
     else
-        return FAIL;
+        return -1;
 }
 
 GenericDataSource *GenericDataSource::safeCast(void *pData)
@@ -168,7 +164,7 @@ long SednaTextInputStream::readCBmem(void *pData, void *dest, long bytes)
     if (s)
         return s->read_mem(dest, bytes);
     else
-        return FAIL;
+        return -1;
 }
 
 void SednaTextInputStream::seekCBmem(void *pData, long where)
@@ -182,7 +178,7 @@ long SednaTextInputStream::readCBestr(void *pData, void *dest, long bytes)
     if (s)
         return s->read_estr(dest, bytes);
     else
-        return FAIL;
+        return -1;
 }
 
 void SednaTextInputStream::seekCBestr(void *pData, long where)
@@ -296,7 +292,7 @@ int SednaDataSource::getNextDoc(dtsInputStream& dest)
     s->makeInterface(dest);
      */
 	xptr node=get_next_doc();
-	if (node==XNULL) return FAIL;
+	if (node==XNULL) return -1;
 	CHECKP(node);
 	recordToFilename(fileInfo.filename,((n_dsc*)XADDR(node))->indir);
 //	fileInfo.size = strlen(f);
@@ -304,14 +300,27 @@ int SednaDataSource::getNextDoc(dtsInputStream& dest)
     fileInfo.modified.month = 1;
     fileInfo.modified.day = 1;
     tis->makeInterface(dest,node);
-	return SUCCESS;
+	return 0;
 }
 
 int SednaDataSource::rewind()
 {   //pos = 0;
     //if (pos) seq->op->reopen();
-	return SUCCESS;
+	return 0;
 }
+
+int SednaDataSource::getNextDocCB(void *pData, dtsInputStream& dest)
+{
+	SednaDataSource *ds = (SednaDataSource*)pData;
+	return ds->getNextDoc(dest);
+}
+int SednaDataSource::rewindCB(void *pData)
+{
+	SednaDataSource *ds = (SednaDataSource*)pData;
+	return ds->rewind();
+}
+
+
 CreationSednaDataSource::CreationSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,std::vector<xptr>* _first_nodes_):SednaDataSource(_cm_,_custom_tree_),first_nodes(_first_nodes_),tmp(XNULL)
 {
 	it=first_nodes->begin();
@@ -336,7 +345,7 @@ int CreationSednaDataSource::rewind()
 {
 	it=first_nodes->begin();
 	tmp=XNULL;
-	return SUCCESS;
+	return 0;
 }
 UpdateSednaDataSource::UpdateSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,xptr_sequence * _seq_):SednaDataSource(_cm_,_custom_tree_),seq(_seq_)
 {
@@ -355,7 +364,7 @@ xptr UpdateSednaDataSource::get_next_doc()
 int UpdateSednaDataSource::rewind()
 {
 	it=seq->begin();
-	return SUCCESS;
+	return 0;
 }
 OperationSednaDataSource::OperationSednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,PPOpIn* _op_):SednaDataSource(_cm_,_custom_tree_),op(_op_),t(1)
 {
@@ -376,33 +385,97 @@ xptr OperationSednaDataSource::get_next_doc()
 int OperationSednaDataSource::rewind()
 {
 	op->op->reopen();
-	return SUCCESS;
+	return 0;
 }
-void SednaSearchJob::OnError(long errorCode, const char *msg)
+/*
+/*void SednaSearchJob::reopen()
 {
-}
-void SednaSearchJob::OnFound(long totalFiles,
-                 long totalHits, const char *name, long hitsInFile, dtsSearchResultsItem& item)
-{
-	DSearchJob::OnFound(totalFiles, totalHits, name, hitsInFile, item);
-	DSearchJob::VetoThisItem();
-	res = SednaDataSource::filenameToRecord(name);
-	if (hilight)
-	{
-		xptr ptr = SednaDataSource::filenameToRecord(name);
-		hl->convert_node(ptr,item.hits,item.hitCount);
-	}
-	UUnnamedSemaphoreUp(&sem1, __sys_call_error);
-	this->thread_up_semaphore_on_exception = false;
-	UUnnamedSemaphoreDown(&sem2, __sys_call_error);
-	this->thread_up_semaphore_on_exception = true;
-}
-SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_),
-																																							thread_exception(NULL), thread_up_semaphore_on_exception(true)
-{
-	AttachDataSource(se_new OperationSednaDataSource(_cm_,_custom_tree_,_seq_),true);
+	seq->op->reopen();
 	dtth=NULL;
-	this->SuppressMessagePump();
+}*/ /*
+SednaSearchJob::~SednaSearchJob()
+{
+	if (dtth != NULL)
+		this->stop_thread(false);
+}
+void SednaSearchJob::OnSearchingIndex(const char * indexPath)
+{
+	//std::cout<<"Searching: "<<indexPath;
+}
+*/
+
+SednaSearchJobBase::~SednaSearchJobBase()
+{
+	if (this->indexesToSearch)
+		free(this->indexesToSearch);
+	if (this->request)
+		free(this->request);
+	if (this->file_cond)
+		free(this->file_cond);
+}
+
+void SednaSearchJobBase::set_index(ft_index_cell_object* ft_idx)
+{
+#ifdef _WIN32
+	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
+		+ std::string(tr_globals::db_name) + std::string("_files\\dtsearch\\");
+#else
+	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
+		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
+#endif
+	std::string index_path = index_path1 + std::string(ft_idx->index_title);
+
+	if (this->indexesToSearch)
+		free(this->indexesToSearch);
+	this->indexesToSearch = (char*)malloc(index_path.length() + 2);
+	strcpy(this->indexesToSearch, index_path.c_str());
+	this->indexesToSearch[index_path.length() + 1] = 0;
+
+	dts_job.indexesToSearch = this->indexesToSearch;
+	dts_job.action.searchIndexes = true;
+
+	//FIXME: choose where it's better to do this - here or in constructor
+	//if (hilight)
+	//	hl=se_new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
+}
+
+void SednaSearchJobBase::set_request(tuple_cell& request)
+{
+	op_str_buf buf(request);
+
+	if (this->request)
+		free(this->request);
+	this->request = (char*)malloc((size_t)buf.get_size() + 1);
+	strcpy(this->request, buf.c_str()); //FIXME: c_str call may be replaced with copy_to_buf (currently not implemented)
+
+	this->dts_job.request2 = this->request;
+}
+
+void SednaSearchJobBase::set_file_cond_for_node(tuple_cell& node)
+{
+	char buf[64];
+
+	CHECKP(node.get_node());
+	SednaDataSource::recordToFilename(buf,((n_dsc*)XADDR(node.get_node()))->indir);
+	std::string fc = std::string("xfilter(name \"") + buf + "\")";
+	int len = fc.length();
+	if (this->file_cond)
+		free(this->file_cond);
+	this->file_cond = (char*)malloc(len + 1);
+	memcpy(this->file_cond, fc.c_str(), len+1);
+
+	dts_job.fileConditions2 = this->file_cond;
+}
+
+
+SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_),
+thread_exception(NULL), thread_up_semaphore_on_exception(true), data_source(NULL), res(XNULL), SednaSearchJobBase()
+{
+	this->data_source = se_new OperationSednaDataSource(_cm_,_custom_tree_,_seq_);
+	dts_job.dataSourceToSearch = this->data_source->getInterface();
+	dts_job.action.searchFiles = true;
+
+	dtth=NULL;
 	if (hilight)
 	{
 		if (_cm_ == ft_xml_hl)
@@ -412,47 +485,95 @@ SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t
 	}
 }
 SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hilight(_hilight_),hl_fragment(_hl_fragment_),
-													thread_exception(NULL), thread_up_semaphore_on_exception(true)
+													thread_exception(NULL), thread_up_semaphore_on_exception(true), data_source(NULL), res(XNULL), SednaSearchJobBase()
 
 {
 	dtth=NULL;
-	this->SuppressMessagePump();
 	if (hilight)
 	{
 		//FIMXE: check cm?
 		hl=se_new SednaConvertJob(ft_xml_ne,NULL, hl_fragment);
 	}
 }
+
+SednaSearchJob::~SednaSearchJob()
+{
+	if (this->data_source)
+		delete this->data_source;
+}
+
 void SednaSearchJob::set_dtsSearchAnyWords(bool v)
 {
-	this->SetSearchFlag(dtsSearchAnyWords, v ? 1 : 0);
+	if (v)
+		dts_job.searchFlags2 |= dtsSearchAnyWords;
+    else
+        dts_job.searchFlags2 &= (~dtsSearchAnyWords);
+
+    dts_job.searchFlags = (short)(dts_job.searchFlags2 & 0xffff);
 }
+
 void SednaSearchJob::set_dtsSearchAllWords(bool v)
 {
-	this->SetSearchFlag(dtsSearchAllWords, v ? 1 : 0);
+	if (v)
+		dts_job.searchFlags2 |= dtsSearchAllWords;
+    else
+        dts_job.searchFlags2 &= (~dtsSearchAllWords);
+
+    dts_job.searchFlags = (short)(dts_job.searchFlags2 & 0xffff);
 }
 
-void SednaSearchJob::set_request(tuple_cell& request)
+int SednaSearchJob::reportCB(void *pReportData, dtsMessage& message)
 {
-	this->Request.setU8(op_str_buf(request).c_str());
+	SednaSearchJob *ssj = (SednaSearchJob*)pReportData;
+	switch (message.command)
+	{
+	case dtsnSearchFound:
+		{
+		long hitsInFile = (long)message.paramA;
+		const char *name = message.strParam;
+		dtsSearchResultsItem *item = (dtsSearchResultsItem*)message.paramB;
+
+		ssj->res = SednaDataSource::filenameToRecord(name);
+		if (ssj->hilight)
+		{
+			xptr ptr = SednaDataSource::filenameToRecord(name);
+			ssj->hl->convert_node(ptr,item->hits,item->hitCount);
+		}
+
+		UUnnamedSemaphoreUp(&ssj->sem1, __sys_call_error);
+		ssj->thread_up_semaphore_on_exception = false;
+		UUnnamedSemaphoreDown(&ssj->sem2, __sys_call_error);
+		ssj->thread_up_semaphore_on_exception = true;
+
+		message.result = dtsVetoSearchResultsItem;
+		break;
+		}
+	default:
+		break;
+	}
+	if (ssj->cancel_job)
+		return dtsAbortImmediate;
+	return dtsContinue;
 }
-void SednaSearchJob::set_file_cond_for_node(tuple_cell& node)
+
+void SednaSearchJob::execute()
 {
-	char buf[64];
+	short fail_flag;
 
-	//SednaDataSource::recordToFilename(buf, node.get_node());
-	CHECKP(node.get_node());
-	SednaDataSource::recordToFilename(buf,((n_dsc*)XADDR(node.get_node()))->indir);
-	std::string fc = std::string("xfilter(name \"") + buf + "\")";
+	dts_job.pReportCallBack = &SednaSearchJob::reportCB;
+	dts_job.pReportData = this;
+	this->cancel_job = false;
 
-	this->FileConditions.setU8(fc.c_str());
+	dtssDoSearchJob(dts_job, fail_flag);
+
+	//FIXME: check failflag
 }
 
 void SednaSearchJob::stop_thread(bool ignore_errors)
 {
 	if (dtth != NULL)
 	{
-		this->CancelImmediate();
+		this->cancel_job = true;
 		if (UUnnamedSemaphoreUp(&sem2, __sys_call_error) != 0)
 			throw USER_EXCEPTION(SE4014);
 
@@ -469,6 +590,53 @@ void SednaSearchJob::stop_thread(bool ignore_errors)
 		;//throw USER_EXCEPTION(SE4013);
 
 }
+
+#ifdef WIN32
+DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
+#else
+void *SednaSearchJob::ThreadFunc( void* lpParam )
+#endif
+{
+	try
+	{
+		//if (((SednaSearchJob*)lpParam)->hilight)
+		{
+			//FIXME
+			dtsOptions opts;
+			short result;
+			dtssGetOptions(opts, result);
+			((SednaSearchJob*)lpParam)->save_field_flags = opts.fieldFlags;
+			//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
+			opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+			std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
+			                        + std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
+
+			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
+
+			dtssSetOptions(opts, result);
+		}
+		((SednaSearchJob*)lpParam)->execute();
+		/*
+		if (((SednaSearchJob*)lpParam)->GetErrorCount()>0)
+		{
+			const dtsErrorInfo * ptr= ((SednaSearchJob*)lpParam)->GetErrors();
+			//for (int i=0;i<ptr->getCount();i++)
+			//	std::cout<<ptr->getMessage(i);
+		}*/
+
+		((SednaSearchJob*)lpParam)->res = XNULL;
+		UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
+	}
+	catch (SednaUserException e)
+	{
+		((SednaSearchJob*)lpParam)->res = XNULL;
+		if (((SednaSearchJob*)lpParam)->thread_up_semaphore_on_exception)
+			UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
+		((SednaSearchJob*)lpParam)->thread_exception = se_new SednaUserException(e);
+	}
+	return 0;
+}
+
 void SednaSearchJob::get_next_result(tuple &t)
 {
 	if (dtth==NULL)
@@ -536,83 +704,7 @@ void SednaSearchJob::get_next_result(tuple &t)
 			t.copy(tuple_cell::node(res));
 		else
 			t.copy(hl->result.content());
-
 	}
-}
-void SednaSearchJob::set_index(ft_index_cell_object* ft_idx)
-{
-#ifdef _WIN32
-	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
-		+ std::string(tr_globals::db_name) + std::string("_files\\dtsearch\\");
-#else
-	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
-#endif
-	std::string index_path = index_path1 + std::string(ft_idx->index_title);
-	this->AddIndexToSearch(index_path.c_str());
-	//FIXME: choose where it's better to do this - here or in constructor
-	//if (hilight)
-	//	hl=se_new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
-
-}
-
-void SednaSearchJob::reopen()
-{
-	seq->op->reopen();
-	dtth=NULL;
-}
-SednaSearchJob::~SednaSearchJob()
-{
-	if (dtth != NULL)
-		this->stop_thread(false);
-}
-#ifdef WIN32
-DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
-#else
-void *SednaSearchJob::ThreadFunc( void* lpParam )
-#endif
-{
-	try
-	{
-		//if (((SednaSearchJob*)lpParam)->hilight)
-		{
-			//FIXME
-			dtsOptions opts;
-			short result;
-			dtssGetOptions(opts, result);
-			((SednaSearchJob*)lpParam)->save_field_flags = opts.fieldFlags;
-			//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
-			opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
-			std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
-			                        + std::string(tr_globals::db_name) + std::string("_files/dtsearch/stemming.dat");
-
-			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
-
-			dtssSetOptions(opts, result);
-		}
-		((SednaSearchJob*)lpParam)->Execute();
-		if (((SednaSearchJob*)lpParam)->GetErrorCount()>0)
-		{
-			const dtsErrorInfo * ptr= ((SednaSearchJob*)lpParam)->GetErrors();
-			/*for (int i=0;i<ptr->getCount();i++)
-				std::cout<<ptr->getMessage(i);*/
-		}
-
-		((SednaSearchJob*)lpParam)->res = XNULL;
-		UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
-	}
-	catch (SednaUserException e)
-	{
-		((SednaSearchJob*)lpParam)->res = XNULL;
-		if (((SednaSearchJob*)lpParam)->thread_up_semaphore_on_exception)
-			UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
-		((SednaSearchJob*)lpParam)->thread_exception = se_new SednaUserException(e);
-	}
-	return 0;
-}
-void SednaSearchJob::OnSearchingIndex(const char * indexPath)
-{
-	//std::cout<<"Searching: "<<indexPath;
 }
 
 
@@ -1099,21 +1191,10 @@ void SednaConvertJob::OnOutput(const char * txt, int length)
 // SednaSearchJob2
 /////////////////////
 
-SednaSearchJob2::SednaSearchJob2() : dts_job(), request(NULL), field_weights(NULL), indexesToSearch(NULL), dts_results(NULL), res_id(-1)
+SednaSearchJob2::SednaSearchJob2() : field_weights(NULL), dts_results(NULL), res_id(-1), SednaSearchJobBase()
 {
 }
 
-void SednaSearchJob2::set_request(tuple_cell& request)
-{
-	op_str_buf buf(request);
-
-	if (this->request)
-		free(this->request);
-	this->request = (char*)malloc((size_t)buf.get_size() + 1);
-	strcpy(this->request, buf.c_str()); //FIXME: c_str call may be replaced with copy_to_buf (currently not implemented)
-
-	this->dts_job.request2 = this->request;
-}
 void SednaSearchJob2::set_field_weights(tuple_cell& fw)
 {
 	op_str_buf buf(fw);
@@ -1179,46 +1260,20 @@ void SednaSearchJob2::get_next_result(tuple &t)
 	}
 }
 
-void SednaSearchJob2::set_index(ft_index_cell_object* ft_idx)
-{
-#ifdef _WIN32
-	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
-		+ std::string(tr_globals::db_name) + std::string("_files\\dtsearch\\");
-#else
-	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
-		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
-#endif
-	std::string index_path = index_path1 + std::string(ft_idx->index_title);
-
-	if (this->indexesToSearch)
-		free(this->indexesToSearch);
-	this->indexesToSearch = (char*)malloc(index_path.length() + 2);
-	strcpy(this->indexesToSearch, index_path.c_str());
-	this->indexesToSearch[index_path.length() + 1] = 0;
-
-	dts_job.indexesToSearch = this->indexesToSearch;
-	dts_job.action.searchIndexes = true;
-}
-
 void SednaSearchJob2::set_max_results(long max_results)
 {
 	dts_job.maxFilesToRetrieve2 = max_results;
 }
 
-
-void SednaSearchJob2::reopen()
+/*void SednaSearchJob2::reopen()
 {
 	//TODO: check what is this function supposed to do
-}
+}*/
 
 SednaSearchJob2::~SednaSearchJob2()
 {
-	if (this->request)
-		free(this->request);
 	if (this->field_weights)
 		free(this->field_weights);
-	if (this->indexesToSearch)
-		free(this->indexesToSearch);
 	if (this->dts_results)
 		delete this->dts_results;
 }

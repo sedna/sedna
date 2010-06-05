@@ -12,7 +12,6 @@
 #include "tr/log/log.h"
 #include "tr/cat/catenum.h"
 #include "tr/crmutils/node_utils.h"
-//using namespace dtSearch;
 
 #ifndef _WIN32
 #include <sys/types.h>
@@ -72,16 +71,20 @@ void ftlog_file::close_and_delete_file(const char *index_name)
 		throw USER_EXCEPTION(SE4041);
 }
 
-SednaIndexJob::SednaIndexJob(ft_index_cell_object* _ft_idx_, bool no_log) : ft_idx(_ft_idx_)
+SednaIndexJob::SednaIndexJob(ft_index_cell_object* _ft_idx_, bool no_log) : ft_idx(_ft_idx_), ds(NULL)
 {
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
 		+ std::string(tr_globals::db_name) + std::string("_files/dtsearch/");
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	uMkDir(index_path1.c_str(),NULL, __sys_call_error);
 	uMkDir(index_path.c_str(),NULL, __sys_call_error);
-	this->IndexPath.set(index_path.c_str());
 
-	this->SuppressMessagePump();
+	dtind_job.clear();
+	dtind_job.createFlags.relativePaths = true;
+	dtind_job.allowConcurrentAccess = true;
+
+	strncpy(dtind_job.indexPath, index_path.c_str(), sizeof(dtind_job.indexPath));
+
 	//Create file with trid if already exists abort
 	if (isRecovery || no_log)
 		log_file = NULL;
@@ -107,30 +110,49 @@ SednaIndexJob::SednaIndexJob(ft_index_cell_object* _ft_idx_, bool no_log) : ft_i
 	strcpy(opts.noiseWordFile, noisewords_file.c_str());
 	dtssSetOptions(opts, result);
 }
+SednaIndexJob::~SednaIndexJob()
+{
+	if (ds)
+		delete ds;
+}
 void SednaIndexJob::set_index_name(tuple_cell& request)
 {
-	this->IndexName.set(op_str_buf(request).c_str());
+	//FIXME: use copy_to_buf in op_str_buf when available
+	op_str_buf buf(request);
+	strncpy(dtind_job.indexName, buf.c_str(), sizeof(dtind_job.indexName));
+}
+void SednaIndexJob::execute()
+{
+	if (!ds)
+        dtind_job.dataSourceToIndex = 0;
+    else
+        dtind_job.dataSourceToIndex = ds->getInterface();
+
+    short result;
+    dtssDoIndexJob(dtind_job, result);
+
 }
 void SednaIndexJob::create_index(std::vector<xptr> *first_nodes)
 {
-	this->SetActionAdd();
-	this->SetActionCreate();
-	AttachDataSource(se_new CreationSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, first_nodes), true);
+	dtind_job.action.add = 1;
+	dtind_job.action.create = 1;
+
+	if (ds)
+		delete ds;
+	ds = se_new CreationSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, first_nodes);
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_CREATE_BEGIN);
 		log_file->flush();
 	}
-	this->Execute();
+
+	this->execute();
+
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_CREATE_END);
 		log_file->flush();
 	}
-}
-void SednaIndexJob::OnError(long a, const char * b, const char * c, const char *d)
-{
-	//d_printf2("error %s\n", c);
 }
 int SednaIndexJob::clear_index(const char *index_name)
 {
@@ -160,16 +182,18 @@ void SednaIndexJob::clear_index()
 }
 void SednaIndexJob::update_index(xptr_sequence* upserted)
 {
-	this->SetActionAdd();
-	this->SetIndexingFlags(dtsAlwaysAdd);
-	AttachDataSource(se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted), true);
+	dtind_job.action.add = 1;
+	dtind_job.indexingFlags = dtsAlwaysAdd;
+	if (ds)
+		delete ds;
+	ds = se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted);
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_UPDATE_START);
 		log_file->write_xptr_sequence(upserted);
 		log_file->flush();
 	}
-	this->Execute();
+	this->execute();
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_UPDATE_END);
@@ -178,16 +202,18 @@ void SednaIndexJob::update_index(xptr_sequence* upserted)
 }
 void SednaIndexJob::insert_into_index(xptr_sequence* upserted)
 {
-	this->SetActionAdd();
-	this->SetIndexingFlags(dtsAlwaysAdd);
-	AttachDataSource(se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted), true);
+	dtind_job.action.add = 1;
+	dtind_job.indexingFlags = dtsAlwaysAdd;
+	if (ds)
+		delete ds;
+	ds = se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted);
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_INSERT_START);
 		log_file->write_xptr_sequence(upserted);
 		log_file->flush();
 	}
-	this->Execute();
+	this->execute();
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_INSERT_END);
@@ -216,15 +242,18 @@ void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 		it++;
 	}
 	uCloseFile(f, __sys_call_error);
-	this->ToRemoveListName.setU8(list_path.c_str());
-	this->SetActionRemoveListed(true);
+
+	strncpy(dtind_job.toRemoveList, list_path.c_str(), sizeof(dtind_job.toRemoveList));
+
+	dtind_job.action.remove = 1;
+
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_DELETE_START);
 		log_file->write_xptr_sequence(deleted);
 		log_file->flush();
 	}
-	this->Execute();
+	this->execute();
 	uDeleteFile(list_path.c_str(), __sys_call_error);
 	if (log_file != NULL)
 	{

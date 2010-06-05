@@ -156,11 +156,11 @@ private:
 	}
 };
 
-class SednaIndexJob : public dtSearch::DIndexJob {
+class SednaIndexJob {
      public:
-           
            //SednaIndexJob(PPOpIn* _seq_);
 		   SednaIndexJob(ft_index_cell_object * _ft_idx_, bool no_log = false);
+		   ~SednaIndexJob();
 		   void set_index_name(tuple_cell& request);
 		   void create_index(std::vector<xptr> *first_nodes);
 		   static int clear_index(const char *index_name);
@@ -168,7 +168,6 @@ class SednaIndexJob : public dtSearch::DIndexJob {
 		   void update_index(xptr_sequence* upserted);
 		   void insert_into_index(xptr_sequence* upserted);
 		   void delete_from_index(xptr_sequence* deleted);
-		   virtual void OnError(long, const char *, const char *, const char *);
 
 		   ftlog_file *log_file;
 		   static std::map<std::string, ftlog_file*> log_files_map;
@@ -180,6 +179,11 @@ class SednaIndexJob : public dtSearch::DIndexJob {
 		   static void recover_db(trn_cell_analysis_redo *redo_list, bool is_hb);
 
 	  private:
+		  SednaDataSource *ds;
+		  dtsIndexJob dtind_job;
+
+		  void execute();
+
 		  PPOpIn* seq;
 		  const ft_index_cell_object *ft_idx;
 		  static void rollback_index(ftlog_file *log_file, const char *index_name);
