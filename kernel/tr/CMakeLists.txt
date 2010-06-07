@@ -9,9 +9,7 @@ endif (ENABLE_FTSEARCH)
 # dtsearch-specific headers and sources
 if (ENABLE_DTSEARCH)
     file(GLOB dt_headers ${DTSEARCH_INCLUDES}/dtsearch/include/*.h)
-    set(dt_sources ${DTSEARCH_COMMON}/dtsviewr.cpp ${DTSEARCH_COMMON}/dstring.cpp
-                   ${DTSEARCH_COMMON}/dfile.cpp ${DTSEARCH_COMMON}/dinputstream.cpp
-                   ${DTSEARCH_COMMON}/dtsfc.cpp ${DTSEARCH_COMMON}/dtsearch.cpp)
+    set(dt_sources ${DTSEARCH_COMMON}/dtsviewr.cpp ${DTSEARCH_COMMON}/dtsearch.cpp)
 
     source_group("dts" FILES ${dt_sources} ${dt_headers})
 endif (ENABLE_DTSEARCH)

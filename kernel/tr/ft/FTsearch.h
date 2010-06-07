@@ -258,7 +258,7 @@ private:
 public:
 	SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);
 	SednaSearchJob(bool _hilight_=false, bool _hl_fragment_=false);
-	SednaSearchJob::~SednaSearchJob();
+	~SednaSearchJob();
 
     void set_dtsSearchAnyWords(bool v);
     void set_dtsSearchAllWords(bool v);
