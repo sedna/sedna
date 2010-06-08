@@ -85,11 +85,6 @@ if (MSVC)
     set_target_properties(se_trn PROPERTIES LINK_FLAGS "${trn_msvc_linker_flags}" LINK_FLAGS_DEBUG "/STACK:25000000")
 endif (MSVC)
 
-# resolve dtsearch library issues on Windows -- use symbols from Nafxcw[d] by default
-if ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows" AND ENABLE_DTSEARCH)
-    target_link_libraries(se_trn debug Nafxcwd.lib optimized Nafxcw.lib)
-endif ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows" AND ENABLE_DTSEARCH)
-
 # put in build/bin
 FinalizeBinaries(se_trn)
 
