@@ -3,7 +3,7 @@ add_subdirectory(pcre)
 
 # expat "external" library
 # we use internal cached variables to determine directories for -I and -L: 1) look for cache 2) then try to describe builduing expat from scratch
-set(EXPAT_VER "1.95.8")
+set(EXPAT_VER "2.0.1")
 
 message(STATUS "Configuring custom expat, version: ${EXPAT_VER}, platform: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 
@@ -27,12 +27,12 @@ set(CUSTOM_EXPAT_DIR ${EXPAT_TAR_DIR}/lib CACHE INTERNAL "Internal expat full pa
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_library(expat STATIC ${expat_files_src})
-    set_property(TARGET expat PROPERTY COMPILE_DEFINITIONS _MBCS _LIB COMPILED_FROM_DSP)
+    set_property(TARGET expat PROPERTY COMPILE_DEFINITIONS _MBCS _LIB COMPILED_FROM_DSP XML_LARGE_SIZE)
     add_custom_target(custom_expat DEPENDS expat)
 else (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # on unix/linux we just use configure+make
     add_custom_command(OUTPUT ${expat_files_lib}
-                       COMMAND /bin/sh configure --enable-shared=no --prefix=${EXPAT_TAR_DIR}
+                       COMMAND /bin/sh configure --enable-shared=no --prefix=${EXPAT_TAR_DIR} CPPFLAGS=-DXML_LARGE_SIZE
                        COMMAND make install
                        DEPENDS ${expat_files_src}
                        WORKING_DIRECTORY ${EXPAT_TAR_DIR}
