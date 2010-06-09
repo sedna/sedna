@@ -3,6 +3,10 @@ add_definitions(-D__STDC_CONSTANT_MACROS)
 add_definitions(-D__STDC_FORMAT_MACROS)
 add_definitions(-D__STDC_LIMIT_MACROS)
 
+# enable 64-bit integer support for line and column
+# numbers and the over-all byte index for Expat
+add_definitions(-DXML_LARGE_SIZE)
+
 # lfs extensions to glibc
 if (UNIX)
     add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64)

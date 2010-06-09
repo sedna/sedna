@@ -501,7 +501,7 @@ public:
     {
         CHECKP(node);
         size_t size = (size_t) getTextSize(PI_DSC(node));
-        size_t target_size = PI_DSC(node)->target;
+        shft target_size = PI_DSC(node)->target;
         if (size == 0 || target_size == size) return EMPTY_STRING_TC;
         ++target_size;
         U_ASSERT(size < PSTRMAXSIZE);
