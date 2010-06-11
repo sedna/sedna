@@ -17,8 +17,8 @@ private:
 	static const int onesz = 50*1024*1024; //TODO
 	int pind;
 	void *ptrs[maxp];
-	unsigned int cursize;
-	unsigned int left;
+	size_t cursize;
+	size_t left;
 public:
 	typedef char* ptr_t;
 
