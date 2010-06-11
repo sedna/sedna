@@ -45,10 +45,10 @@ class char_iterator : public std::iterator<std::bidirectional_iterator_tag,char>
 		//number of chars left to the end of the string
 		char* begin;
 		int size;
-		int shift;
+		ptrdiff_t shift;
     public:
         typedef int off_t;
-		char_iterator(char* _begin_, int _size_,int _shift_) :
+		char_iterator(char* _begin_, int _size_,ptrdiff_t _shift_) :
 			begin(_begin_) ,size(_size_) ,shift(_shift_)
        	{
 
@@ -88,8 +88,8 @@ class char_iterator : public std::iterator<std::bidirectional_iterator_tag,char>
 #endif
 			shift--; return char_iterator(begin,size,shift+1);
 		}
-		inline int operator -(const char_iterator it) const { return begin+shift-(it.begin+it.shift);}
-		inline char_iterator& operator +=(int x) { 
+		inline ptrdiff_t operator -(const char_iterator it) const { return begin+shift-(it.begin+it.shift);}
+		inline char_iterator& operator +=(ptrdiff_t x) { 
 			shift += x; 
 #ifdef ITERATOR_CHECK_BOUNDS
 			if (shift > size)
@@ -97,7 +97,7 @@ class char_iterator : public std::iterator<std::bidirectional_iterator_tag,char>
 #endif
 			return *this; 
 		} 
-		inline char_iterator& operator -=(int x) {
+		inline char_iterator& operator -=(ptrdiff_t x) {
 			shift -= x;
 #ifdef ITERATOR_CHECK_BOUNDS
 			if (shift < 0)
