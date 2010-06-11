@@ -343,12 +343,12 @@ void PPExplainVisitor::visit(PPPred1* op)
 
     /* Insert conjuncts details */
     left_inside = XNULL;
-    unsigned int conj_num = op->get_conjuncts_number();
+    arr_of_comp_cond::size_type conj_num = op->get_conjuncts_number();
     if(conj_num > 0)
     {
         left_inside = insertElementHelper("conjuncts", XNULL, left);
         xptr conj_left = XNULL;
-        for (unsigned int i = 0; i < conj_num; i++) {
+        for (arr_of_comp_cond::size_type i = 0; i < conj_num; i++) {
             conj_left = insertElementHelper("conjunct", conj_left, left_inside);
             insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
         }
@@ -371,12 +371,12 @@ void PPExplainVisitor::visit(PPPred2* op)
 
     /* Insert conjuncts details */
     left_inside = XNULL;
-    unsigned int conj_num = op->get_conjuncts_number();
+    arr_of_comp_cond::size_type conj_num = op->get_conjuncts_number();
     if(conj_num > 0)
     {
         left_inside = insertElementHelper("conjuncts", XNULL, left);
         xptr conj_left = XNULL;
-        for (unsigned int i = 0; i < conj_num; i++) {
+        for (arr_of_comp_cond::size_type i = 0; i < conj_num; i++) {
             conj_left = insertElementHelper("conjunct", conj_left, left_inside);
             insertAttributeHelper("comparison", XNULL, conj_left, operation_compare_condition2string(op->get_conjunt_comparison_type(i)));
         }

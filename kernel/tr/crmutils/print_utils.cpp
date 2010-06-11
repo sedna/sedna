@@ -1,7 +1,8 @@
 /*
-* File:  print_utils.cpp
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  print_utils.cpp
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ */
 
 #include "common/sedna.h"
 
