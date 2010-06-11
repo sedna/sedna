@@ -1,13 +1,14 @@
 /*
  * File: simplestream.h
- * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2009 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #ifndef SIMPLE_STREAM
 #define SIMPLE_STREAM
 
-typedef int32_t se_off_t;
-typedef int32_t se_size_t;
+typedef ptrdiff_t se_off_t;
+typedef size_t se_size_t;
 
 #define SSTREAM_SAVED_LENGTH ((se_size_t) -1)
 
@@ -15,7 +16,7 @@ class se_simplestream {
 protected:
     se_size_t m_capacity;
     se_size_t m_length;
-    se_off_t  m_position;
+    se_size_t m_position;
     se_size_t m_save_str_len;
     void * m_content;
 
@@ -145,7 +146,7 @@ public:
     };
 
     inline void seek(se_off_t d) { m_position += d; };
-    inline void absseek(se_off_t d) { m_position = d; };
+    inline void absseek(se_size_t d) { m_position = d; };
 
     inline void set_length(se_size_t new_length) { if (new_length > m_capacity) { grow(new_length); }; m_length = new_length; };
     inline se_size_t get_length() const { return m_length; };
@@ -154,4 +155,4 @@ public:
     inline se_size_t get_capacity() const { return m_capacity; };
 };
 
-#endif // SIMPLE_STREAM
+#endif /* SIMPLE_STREAM */

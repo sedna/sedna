@@ -1,3 +1,9 @@
+/*
+ * File:  str_matcher.cpp
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ */
+
 #include "tr/crmutils/str_matcher.h"
 #include <stdio.h>
 #include <stdlib.h>

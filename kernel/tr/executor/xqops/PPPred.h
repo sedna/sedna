@@ -213,8 +213,8 @@ public:
     virtual ~PPPred1();
 
     inline bool is_once()                         { return once; }
-    inline unsigned int get_conjuncts_number()    { return conjuncts.size(); }
-    inline operation_compare_condition get_conjunt_comparison_type(unsigned int i)
+    inline arr_of_comp_cond::size_type get_conjuncts_number()    { return conjuncts.size(); }
+    inline operation_compare_condition get_conjunt_comparison_type(arr_of_comp_cond::size_type i)
     {
         U_ASSERT(i >= 0 && i < conjuncts.size());
         return conditions.at(i);
@@ -309,8 +309,8 @@ public:
     virtual ~PPPred2();
     
     inline bool is_once()                          { return once; }
-    inline unsigned int  get_conjuncts_number()    { return conjuncts.size(); }
-    inline operation_compare_condition get_conjunt_comparison_type(unsigned int i)
+    inline arr_of_comp_cond::size_type get_conjuncts_number()    { return conjuncts.size(); }
+    inline operation_compare_condition get_conjunt_comparison_type(arr_of_comp_cond::size_type i)
     {
         U_ASSERT(i >= 0 && i < conjuncts.size());
         return conditions.at(i);

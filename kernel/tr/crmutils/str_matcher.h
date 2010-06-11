@@ -1,6 +1,7 @@
 /*
  * File:  str_matcher.h
- * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 

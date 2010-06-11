@@ -1,14 +1,16 @@
 /*
  * File:  crmbase.h
- * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2009 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #ifndef _CRMBASE_H
 #define _CRMBASE_H
 
-/* This file should contain enums, structs, etc, which
-   are used within kernel/tr. Was created with intention
-   to not include crmutils.h and exec_output.h in headers.
+/*
+ * This file should contain enums, structs, etc, which
+ * are used within kernel/tr. Was created with intention
+ * to not include crmutils.h and exec_output.h in headers.
  */
 
 #include "common/sedna.h"
