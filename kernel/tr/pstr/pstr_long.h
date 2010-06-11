@@ -109,7 +109,7 @@ public:
 		const xptr _start_ = (PSTR_LONG_LAST_BLK_FTR(last_blk))->start;
 		blk = BLOCKXPTR(_start_);
 		cursor = (PSTR_LONG_LAST_BLK_FTR(last_blk))->cursor;
-		ofs = (char*)XADDR(_start_) - (char*)XADDR(blk);
+		ofs = (unsigned int)((char*)XADDR(_start_) - (char*)XADDR(blk));
 		m_start = _start_;//FIXME
 	}
 
@@ -242,7 +242,7 @@ public:
 		//no error checks here, TODO - add some assertions
 		//we don't care if we go before the start of string too far
 		m_pos -= x;
-		while (((pstr_long_off_t)ofs) < x + PSTR_LONG_BLK_HDR_SIZE) //ofs - x < PSTR_LONG_BLK_HDR_SIZE
+		while (((pstr_long_off_t)ofs) < x + (pstr_long_off_t)PSTR_LONG_BLK_HDR_SIZE) //ofs - x < PSTR_LONG_BLK_HDR_SIZE
 		{
 			CHECKP(blk);
 			if (PSTR_LONG_BLK_HDR(blk)->prev_blk != XNULL)
