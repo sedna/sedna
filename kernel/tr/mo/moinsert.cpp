@@ -20,8 +20,7 @@
 
 #include "common/errdbg/event_log.h"
 
-#define CHECK_CONSTRAINT(c) U_ASSERT(c)
-//#define CHECK_CONSTRAINT(c) if (!(c)) { throw SYSTEM_EXCEPTION("Bad parameters"); }
+#define CHECK_CONSTRAINT(c) if (!(c)) { throw SYSTEM_EXCEPTION("Bad parameters in microoperation"); }
 
 xptr last_inserted_node_indirection = XNULL;
 
@@ -381,7 +380,7 @@ xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent, const char* value,
     return node_info.node_xptr;
 }
 
-xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, int tsize, const char* data, strsize_t dsize) {
+xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, size_t tsize, const char* data, size_t dsize) {
     strsize_t full_size = tsize + 1 + dsize;
     char * value = (char *) malloc(full_size);
     node_info_t node_info = {left_sib, right_sib, parent, pr_ins};

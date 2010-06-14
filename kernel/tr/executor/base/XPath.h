@@ -71,19 +71,19 @@ struct NodeTest
 struct NodeTestOr
 {
     NodeTest *nt;  // NodeTest array
-    int s;         // size
+    size_t size;   // size
 
     std::string to_string() const;
     void print_to_lr(std::ostream& str);
 };
 
 
-typedef std::vector<int> PathExprDistr;
+typedef std::vector<size_t> PathExprDistr;
 
 struct PathExpr
 {
     NodeTestOr *nto;  // NodeTestOr array
-    int s;            // size
+    size_t size;      // size
 
     std::string to_string() const;
     void print_to_lr(std::ostream& str);

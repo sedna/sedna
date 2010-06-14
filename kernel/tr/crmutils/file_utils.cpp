@@ -1,12 +1,13 @@
 /*
  * File:  file_utils.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
-
-#include "common/sedna.h"
 
 #include <math.h>
 #include <map>
+
+#include "common/sedna.h"
 
 #include "tr/crmutils/crmutils.h"
 #include "tr/structures/metadata.h"
@@ -21,8 +22,14 @@
 #include "tr/updates/updates.h"
 #endif
 
-#define BUFFSIZE        8192
-#define SEPARATOR '>'
+/* 
+ * We parse document part by part through this buffer. Since Expat
+ * methods use 'int' instead of size_t we have to cast in some places.
+ * The only guarantee for us is the size of this buffer is not 
+ * greater than INT_MAX.
+ */
+#define BUFFSIZE     8192
+#define SEPARATOR    '>'
 
 static char Buff[BUFFSIZE];
 static int mark;
@@ -38,7 +45,7 @@ static char* wptail;
 static int wptailsize;
 static int maxwpsize=0;
 static char* nodenames;
-static int maxnm=0;
+static size_t maxnm=0;
 static int nodescnt=0;
 static int curcnt=0;
 static int curproc=0;
@@ -86,26 +93,26 @@ static void separateName(const char* triplet,
 {
     const char* sec=NULL;
     const char* third=NULL;
-    int sepcnt=0;
-    for (unsigned int i=0; i < strlen(triplet); i++)
+    int sepcnt = 0;
+    for (size_t i=0; i < strlen(triplet); i++)
     {
-        if (triplet[i]==SEPARATOR)
+        if (triplet[i] == SEPARATOR)
         {
-            if (sepcnt==0)
-                sec=triplet+i+1;
+            if (sepcnt == 0)
+                sec = triplet + i + 1;
             else
-                third=triplet+i+1;
+                third = triplet + i + 1;
             sepcnt++;
         }
     }
     if (sepcnt)
     {
-        int tripsize = strlen(triplet)+1;
+        size_t tripsize = strlen(triplet)+1;
         if (tripsize > maxnm)
         {
             if (maxnm != 0) delete [] nodenames;
             maxnm = tripsize;
-            nodenames = se_new char[tripsize];
+            nodenames = new char[tripsize];
         }
         memcpy(nodenames, triplet, tripsize);
         uri = nodenames;
@@ -599,7 +606,13 @@ static void parse_load(FILE* f, se_ostream &ostr)
     XML_SetUserData (p, &ostr);
 
     cdata_mode=false;
-    len = fread(Buff, 1, BUFFSIZE, f);
+    
+    /* 
+     * We have to cast since Expat uses 'int' instead of size_t,
+     * it's safe since BUFFSIZE < INT_MAX 
+     */
+    len = (int)fread(Buff, 1, BUFFSIZE, f);
+    
     if (ferror(f))
     {
         XML_ParserFree(p);
@@ -610,7 +623,11 @@ static void parse_load(FILE* f, se_ostream &ostr)
     {
         if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
         {
-            len = fread(Buff, 1, BUFFSIZE, f);
+            /* 
+             * We have to cast since Expat uses 'int' instead of size_t,
+             * it's safe since BUFFSIZE < INT_MAX 
+             */
+            len = (int)fread(Buff, 1, BUFFSIZE, f);
             if (ferror(f))
             {
                 XML_ParserFree(p);
@@ -660,7 +677,11 @@ static void parse_schema(FILE* f)
     XML_SetProcessingInstructionHandler(p, sc_pi);
     XML_SetCharacterDataHandler(p, sc_data);
     cdata_mode=false;
-    len = fread(Buff, 1, BUFFSIZE, f);
+    /* 
+     * We have to cast since Expat uses 'int' instead of size_t,
+     * it's safe since BUFFSIZE < INT_MAX 
+     */
+    len = (int)fread(Buff, 1, BUFFSIZE, f);
     if (ferror(f))
     {
         XML_ParserFree(p);
@@ -671,7 +692,11 @@ static void parse_schema(FILE* f)
     {
         if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
         {
-            len = fread(Buff, 1, BUFFSIZE, f);
+            /* 
+             * We have to cast since Expat uses 'int' instead of size_t,
+             * it's safe since BUFFSIZE < INT_MAX 
+             */
+            len = (int)fread(Buff, 1, BUFFSIZE, f);
             if (ferror(f))
             {
                 XML_ParserFree(p);

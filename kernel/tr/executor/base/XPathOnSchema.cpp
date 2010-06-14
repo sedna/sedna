@@ -718,13 +718,13 @@ t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const 
 {
     t_scmnodes_const n1 = nodes, n2;
 
-    for (int p = 0; p < pe.s; p++)
+    for (size_t p = 0; p < pe.size; p++)
     {
         if (n1.size() == 0) return n1;
         const NodeTestOr &nto = pe.nto[p];
 
-        for (unsigned int i = 0; i != n1.size(); i++)
-            for (int j = 0; j != nto.s; j++)
+        for (size_t i = 0; i != n1.size(); i++)
+            for (size_t j = 0; j != nto.size; j++)
             {
                 t_scmnodes_const tmp;
                 tmp = execute_node_test(n1.at(i), nto.nt[j], extended_nodes, extender_nodes);
@@ -747,10 +747,10 @@ t_scmnodes_const execute_abs_path_expr(schema_node_cptr root, const PathExpr *pa
     scmnodes = execute_abs_path_expr_rec(scmnodes, *path_expr, extended_nodes, extender_nodes);
 
     // Eliminate duplicates
-    int ar_size = scmnodes.size();
-    schema_node_xptr * ar_scmnodes = se_new schema_node_xptr[ar_size];
+    size_t ar_size = scmnodes.size();
+    schema_node_xptr * ar_scmnodes = new schema_node_xptr[ar_size];
 
-    int i = 0;
+    size_t i = 0;
     t_scmnodes_const::iterator snit;
     for (snit = scmnodes.begin(), i = 0; snit != scmnodes.end(); snit++, i++)
         ar_scmnodes[i] = *snit;

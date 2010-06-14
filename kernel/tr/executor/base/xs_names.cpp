@@ -373,14 +373,14 @@ bool check_constraints_for_xs_Name(const char* s)
     return res;
 }
 
-bool check_constraints_for_xs_Name(const char* s, int n)
+bool check_constraints_for_xs_Name(const char* s, size_t n)
 {
     bool res = false;
     check_constraints_for_name_type<const char*> (s, s + n, &res, true, true);
     return res;
 }
 
-bool check_constraints_for_xs_NCName(const char* s, int n)
+bool check_constraints_for_xs_NCName(const char* s, size_t n)
 {
     bool res = false;
     check_constraints_for_name_type<const char*> (s, s + n, &res, true, false);
