@@ -48,17 +48,17 @@ PathExprMemoryManager * pe_catalog_aspace = &pe_catalog_memory_manager;
 void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm)
 {
     PathExpr *path = (PathExpr*)mm->alloc(sizeof(PathExpr));
-    path->s = distr.size();
-    if (path->s == 0) path->nto = NULL;
+    path->size = distr.size();
+    if (path->size == 0) path->nto = NULL;
     else
     {
-        path->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * path->s);
+        path->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * path->size);
 
-        for (int i = 0; i < path->s; i++)
+        for (size_t i = 0; i < path->size; i++)
         {
             NodeTestOr &nto = path->nto[i];
-            nto.s = distr[i];
-            nto.nt = (NodeTest*)mm->alloc(sizeof(NodeTest) * nto.s);
+            nto.size = distr[i];
+            nto.nt = (NodeTest*)mm->alloc(sizeof(NodeTest) * nto.size);
         }
     }
 
@@ -67,10 +67,10 @@ void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm)
 
 void delete_PathExpr(PathExpr *path)
 {
-    for (int i = 0; i < path->s; i++)
+    for (size_t i = 0; i < path->size; i++)
     {
         NodeTestOr &nto = path->nto[i];
-        for (int j = 0; j < nto.s; j++)
+        for (size_t j = 0; j < nto.size; j++)
         {
             NodeTest &nt = nto.nt[j];
 
@@ -266,16 +266,16 @@ void NodeTest::print_to_lr(std::ostream& str)
 std::string NodeTestOr::to_string() const
 {
     string res ;
-    if (s == 1)
+    if (size == 1)
     {
         res += nt[0].to_string();
     }
     else
     {
-        int i = 0;
+        size_t i = 0;
         res += "(";
         res += nt[0].to_string();
-        for (i = 1; i < s; i++)
+        for (i = 1; i < size; i++)
         {
             res += " | ";
             res += nt[i].to_string();
@@ -288,9 +288,9 @@ std::string NodeTestOr::to_string() const
 void NodeTestOr::print_to_lr(std::ostream& str)
 {
     str << "(";
-    int i = 0;
+    size_t i = 0;
     nt[0].print_to_lr(str);
-    for (i = 1; i < s; i++)
+    for (i = 1; i < size; i++)
     {
         str << " ";
         nt[i].print_to_lr(str);
@@ -301,11 +301,11 @@ void NodeTestOr::print_to_lr(std::ostream& str)
 std::string PathExpr::to_string() const
 {
     string res;
-    int i = 0;
-    if (s > 0)
+    size_t i = 0;
+    if (size > 0)
     {
         res += nto[0].to_string();
-        for (i = 1; i < s; i++)
+        for (i = 1; i < size; i++)
         {
             res += "/";
             res += nto[i].to_string();
@@ -317,11 +317,11 @@ std::string PathExpr::to_string() const
 void PathExpr::print_to_lr(std::ostream& str)
 {
     str << "(";
-    if (s > 0)
+    if (size > 0)
     {
-        int i = 0;
+        size_t i = 0;
         nto[0].print_to_lr(str);
-        for (i = 1; i < s; i++)
+        for (i = 1; i < size; i++)
         {
             str << " ";
             nto[i].print_to_lr(str);
@@ -469,7 +469,7 @@ void set_node_test_parameters(scheme_list *lst,
 
 PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, PathExprMemoryManager * mm)
 {
-    unsigned int i = 0, j = 0;
+    size_t i = 0, j = 0;
     PathExprDistr distr(path_lst->size(), 0);
 
     for (i = 0; i < path_lst->size(); i++)
@@ -525,7 +525,7 @@ PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
 
     PathExpr *path_expr = (PathExpr*)mm->alloc(sizeof(PathExpr));
     path_expr->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * scm_nodes.size());
-    path_expr->s = scm_nodes.size();
+    path_expr->size = scm_nodes.size();
 
     unsigned int i = 0;
     schema_node_cptr parent = from;
@@ -534,7 +534,7 @@ PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
         cur = scm_nodes[scm_nodes.size() - i - 1];
 
         path_expr->nto[i].nt = (NodeTest*)mm->alloc(sizeof(NodeTest));
-        path_expr->nto[i].s = 1;
+        path_expr->nto[i].size = 1;
 
         if (cur->type == attribute)
             path_expr->nto[i].nt->axis = axis_attribute;
@@ -545,7 +545,6 @@ PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
         {
             case element      : {
                                     path_expr->nto[i].nt->type = node_test_qname;
-                                    // FIXME:
                                     path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, mm->alloc);
                                     path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->get_xmlns()->uri, mm->alloc);
                                     break;

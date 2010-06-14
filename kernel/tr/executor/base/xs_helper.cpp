@@ -42,7 +42,7 @@ char *_get_pointer_to_c_str(const tuple_cell &c)
 
 static void _strip_c_str(const char* t, const char** start, const char** end)
 {
-    int len = strlen(t);
+    size_t len = strlen(t);
     *start = t;
     *end = t + len - 1;
 
@@ -266,7 +266,7 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
                                     {
                                         s[0] = '\"';
                                         get_xs_dateTime_lexical_representation(s + 1, XMLDateTime(c.get_xs_dateTime(), c.get_atomic_type()));
-                                        int len = strlen(s);
+                                        size_t len = strlen(s);
                                         s[len] = '\"';
                                         s[len + 1] = '\0';
                                     }
@@ -279,7 +279,7 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
                                     {
                                         s[0] = '\"';
                                         get_xs_dateTime_lexical_representation(s + 1, XMLDateTime(c.get_xs_duration(), c.get_atomic_type()));
-                                        int len = strlen(s);
+                                        size_t len = strlen(s);
                                         s[len] = '\"';
                                         s[len + 1] = '\0';
                                     }

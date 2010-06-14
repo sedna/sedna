@@ -18,7 +18,7 @@
 
 #include "pcre/pcre.h"
 
-typedef std::stack<int> stack_of_int;
+typedef std::stack<size_t> stack_of_positions;
 
 enum remover_state {BEGIN, SLASH, DOT, DOUBLE_DOT, SLASH_DOT, SLASH_DOUBLE_DOT, SYMBOL};
 
@@ -383,14 +383,14 @@ bool Uri::is_relative(const tuple_cell *in_tc, Uri::Information *nfo)
 
 char* remove_dot_segments(const char* path)
 {
-    stack_of_int positions;
-    int source_length = strlen(path);
-    char* output_buffer = se_new char[source_length + 1];
-    int output_position = 0;
+    stack_of_positions positions;
+    size_t source_length = strlen(path);
+    char* output_buffer = new char[source_length + 1];
+    size_t output_position = 0;
 
     remover_state state = BEGIN;
 
-    for(int i = 0; i < source_length; i++)
+    for(size_t i = 0; i < source_length; i++)
     {
         char lexem = path[i];
         switch(state)
@@ -494,7 +494,7 @@ char* remove_dot_segments(const char* path)
     char* result;
     if(output_position)
     {
-        result = se_new char[output_position + 1];
+        result = new char[output_position + 1];
         strcpy(result, output_buffer);
     }
     else result = NULL;
@@ -664,7 +664,7 @@ void Uri::recompose(stmt_str_buf &dest) const
 Uri Uri::parse(const char* uri)
 {
     PcrePattern re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?$", PCRE_UTF8 | PCRE_NO_UTF8_CHECK);
-    int uri_len = strlen(uri); 
+    size_t uri_len = strlen(uri); 
     PcreMatcher<const char*> matcher(re);
     Uri res;
 
@@ -689,7 +689,7 @@ Uri Uri::parse(const char* uri)
         {
             const char* s = matcher.start(i);
             const char* e = matcher.end(i);
-            int group_len = e - s; 
+            size_t group_len = e - s; 
             if( !group_len ) continue;
 
             switch(i)

@@ -42,8 +42,8 @@ bool check_constraints_for_xs_NCName  (const tuple_cell *tc);
 ////////////////////////////////////////////////////////////////
 bool        check_constraints_for_xs_NMTOKEN (const char* s);
 bool        check_constraints_for_xs_Name    (const char* s);
-bool        check_constraints_for_xs_Name    (const char* s, int n);
-bool        check_constraints_for_xs_NCName  (const char* s, int n);
+bool        check_constraints_for_xs_Name    (const char* s, size_t n);
+bool        check_constraints_for_xs_NCName  (const char* s, size_t n);
 inline bool check_constraints_for_xs_NCName  (const char* s)
 {
     return check_constraints_for_xs_NCName(s, strlen(s));

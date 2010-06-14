@@ -50,12 +50,12 @@ class appender
 {
 private:
     char *s;
-    int p;
+    size_t p;
 public:
     appender(char *_s_) : s(_s_), p(0) { s[0] = '\0'; }
     void append(const char *str)
     {
-        int len = strlen(str);
+        size_t len = strlen(str);
         memcpy(s + p, str, len);
         s[p += len] = '\0';
     }

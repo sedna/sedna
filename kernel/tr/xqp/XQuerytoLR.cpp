@@ -16,7 +16,7 @@ EXTERN_DECLARE_TIME_VARS
 
 static std::string encoding_processing(const char *query)
 {
-    unsigned int query_len = strlen(query);
+    size_t query_len = strlen(query);
 
     // check for UTF-8 BOM and get rid of it
     if (query_len > 2 &&
@@ -28,7 +28,7 @@ static std::string encoding_processing(const char *query)
         query_len -= 3;
     }
 
-    if (utf8_valid(query, query_len) >= 0)
+    if (utf8_valid(query, query_len) != NULL)
         throw USER_EXCEPTION(SE4082);
 
     return std::string(query, query_len);

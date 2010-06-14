@@ -398,7 +398,7 @@ public:
 int utf8_parse_char(const char *str, int *byte_len = NULL);
 const char *utf8_encode_char(int c);
 
-int utf8_valid(const char *string, int length);
+char* utf8_valid(const char *string, size_t length);
 
 
 

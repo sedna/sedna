@@ -641,7 +641,7 @@ namespace sedna
 
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         // set context
@@ -704,7 +704,7 @@ namespace sedna
 
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         n.by_path->accept(*this);
@@ -718,7 +718,7 @@ namespace sedna
         byp = pa->getPathExpr();
         delete pa; // we don't need it anymore (note that this won't destroy on_path)
 
-        if (!byp || byp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!byp || byp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             byp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
         n.type->accept(*this);
@@ -834,13 +834,13 @@ namespace sedna
             peroot.set_name(comp_name);
         }
 
-        if (!onp || onp->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+        if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
             onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
 
         scheme_list *action = new scheme_list(n.do_exprs->size() * 2);
 
-        for (unsigned int i = 0; i < n.do_exprs->size(); i++)
+        for (size_t i = 0; i < n.do_exprs->size(); i++)
         {
             ASTQuery *st_query = dynamic_cast<ASTQuery *>(n.do_exprs->at(i));
             bool is_query = (st_query->type == ASTQuery::QUERY);
@@ -873,7 +873,7 @@ namespace sedna
             ip = pa->getPathExpr();
             delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-            if (!ip || ip->s == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+            if (!ip || ip->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
                 ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
 
             inserting_node innode(n.leaf_name->c_str(), n.leaf_type == 0 ? element : attribute);

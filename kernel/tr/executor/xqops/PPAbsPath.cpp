@@ -245,7 +245,7 @@ void PPAbsPath::do_accept(PPVisitor &v)
 // true, if PPAbsPath is just wrapping over fn:document/fn:collection call
 bool PPAbsPath::isDocCollFunCall() const
 {
-    return (path_expr->s == 0);
+    return (path_expr->size == 0);
 }
 
 void PPAbsPath::setPathExpr(PathExpr *pe)

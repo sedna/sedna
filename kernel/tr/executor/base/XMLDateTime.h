@@ -1,18 +1,8 @@
 /*
- * Copyright 2001,2004 The Apache Software Foundation.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* File:  XMLDateTime.h
+* Copyright (C) 2010 ISP RAS
+* The Institute for System Programming of the Russian Academy of Sciences
+*/
 
 #ifndef XML_DATETIME_H
 #define XML_DATETIME_H
@@ -26,16 +16,16 @@ typedef int64_t bigint;
 
 typedef struct 
 {
-  int year;
-  unsigned int day:9;
-  unsigned int month:4;
-  unsigned int hour:5;
-  unsigned int minute:6;
-  unsigned int second:6;
-  unsigned int mili:18;
-  unsigned int utc:4;
-  unsigned int tz_hh:4;
-  unsigned int tz_mm:6;
+    int year;
+    unsigned int day:9;
+    unsigned int month:4;
+    unsigned int hour:5;
+    unsigned int minute:6;
+    unsigned int second:6;
+    unsigned int mili:18;
+    unsigned int utc:4;
+    unsigned int tz_hh:4;
+    unsigned int tz_mm:6;
 } xs_packed_datetime;
 
 /*
@@ -46,14 +36,14 @@ typedef struct
 
 typedef struct 
 {
-  unsigned int years;
-  unsigned int days;
-  unsigned int neg:1;
-  unsigned int months:4;
-  unsigned int hours:5;
-  unsigned int minutes:6;
-  unsigned int seconds:6;
-  unsigned int milis:10;
+    unsigned int years;
+    unsigned int days;
+    unsigned int neg:1;
+    unsigned int months:4;
+    unsigned int hours:5;
+    unsigned int minutes:6;
+    unsigned int seconds:6;
+    unsigned int milis:10;
 } xs_packed_duration;
 
 /*
@@ -66,20 +56,20 @@ class XMLDateTime
 {
 public:
 
-	enum valueIndex
+    enum valueIndex
     {
-	Type       = 0,
+        Type       = 0,
         CentYear   ,
         Month      ,
         Day        ,
         Hour       ,
         Minute     ,
         Second     ,
-	MiliSecond ,
+        MiliSecond ,
         utc        ,
-	tz_hh	   ,
-	tz_mm	   ,
-	TOTAL_FIELDS
+        tz_hh	   ,
+        tz_mm	   ,
+        TOTAL_FIELDS
     };
 
 
@@ -134,7 +124,7 @@ public:
     // -----------------------------------------------------------------------
 
     void                  parseDateTime(const char* buf);           //DateTime
-                                                                                       
+
     void                  parseDate(const char* buf);               //Date
 
     void                  parseTime(const char* buf);               //Time
@@ -177,9 +167,11 @@ public:
     void normalizeDateTimeWeak();
     void normalizeDuration();
 
-    bool isDuration(){ return (getValue(Type) == xs_duration || getValue(Type) == xs_dayTimeDuration || getValue(Type) == xs_yearMonthDuration); }
+    bool isDuration(){ return (getValue(Type) == xs_duration ||
+                               getValue(Type) == xs_dayTimeDuration ||
+                               getValue(Type) == xs_yearMonthDuration);}
     static int compare(const XMLDateTime& d1, const XMLDateTime& d2);
-   //------------------------------------------------------------------------
+    //------------------------------------------------------------------------
     // Gets a string representation of a dateTime or duration
     //------------------------------------------------------------------------
     void get_string_value(char* outputBuffer) const;
@@ -194,39 +186,39 @@ public:
     // Getter and setter functions
     //------------------------------------------------------------------------
 
-	int getValue(int valueIndex) const
-	{
-		return fields[ valueIndex ];
-	}
+    int getValue(int valueIndex) const
+    {
+        return fields[ valueIndex ];
+    }
 
-	void setValue(int valueIndex, int newValue )
-	{
-		fields[valueIndex] = newValue;
-	}
+    void setValue(int valueIndex, int newValue)
+    {
+        fields[valueIndex] = newValue;
+    }
 
 private:
 
     // -----------------------------------------------------------------------
     // Comparison
     // -----------------------------------------------------------------------
-    static void           addDuration(XMLDateTime*             pDuration
-                                    , const XMLDateTime* const pBaseDate
-                                    , int                      index);
+    static void    addDuration(XMLDateTime* pDuration,
+                                      const XMLDateTime* const pBaseDate,
+                                      int index);
 
     // -----------------------------------------------------------------------
     // helper
     // -----------------------------------------------------------------------
 
-    inline  void          reset();
+    inline  void    reset();
 
-    inline  void          assertBuffer()               const;
+    inline  void    assertBuffer() const;
 
-    inline  void          copy(const XMLDateTime&);
+    inline  void    copy(const XMLDateTime&);
 
     // allow multiple parsing
-    inline  void          initParser();
+    inline  void    initParser();
 
-    inline  bool          isNormalized()               const;
+    inline  bool    isNormalized() const;
 
     //------------------------------------------------------------------------
     // Accessor functions
@@ -237,51 +229,57 @@ private:
     // scaners
     // -----------------------------------------------------------------------
 
-    void                  getDate(const char* fBuffer, int& fStart, int& fEnd); 
+    void     getDate(const char* fBuffer, size_t& fStart, size_t& fEnd); 
 
-    void                  getTime(const char* fBuffer, int& fStart, int& fEnd);
+    void     getTime(const char* fBuffer, size_t& fStart, size_t& fEnd);
 
-    void                  getYearMonth(const char* fBuffer, int& fStart, int& fEnd);
+    void     getYearMonth(const char* fBuffer, size_t& fStart, size_t& fEnd);
 
-    void                  getTimeZone(const char* fBuffer, const int& fStart, int& end);
+    void     getTimeZone(const char* fBuffer, const size_t& fStart, size_t& end);
 
-    void                  parseTimeZone(const char* fBuffer, int& fStart, int& fEnd);
+    void     parseTimeZone(const char* fBuffer, size_t& fStart, size_t& fEnd);
 
     // -----------------------------------------------------------------------
     // locator and converter
     // -----------------------------------------------------------------------
 
-    int                   findUTCSign(const char* fBuffer, const int fStart, const int fEnd);
+    char*    findUTCSign(const char* fBuffer,
+                         const size_t fStart,
+                         const size_t fEnd,
+                         size_t& pos);
 
-    int                   indexOf(const char* fBuffer, 
-                                  const int start, 
-                                  const int end, 
-                                  const char ch) const;
+    char*    indexOf(const char* fBuffer, 
+                     const size_t start, 
+                     const size_t end, 
+                     const char ch,
+                     size_t& pos) const;
 
-    int 		          indexOf(const char* array, const char ch) const;
+    char*    indexOf(const char* array,
+                     const char ch,
+                     size_t& pos) const;
 
-    int                   parseInt(const char *fBuffer, 
-                                   const int start, 
-                                   const int end) const;
+    int      parseInt(const char *fBuffer, 
+                      const size_t start, 
+                      const size_t end) const;
 
-    int                   parseIntYear(const char* fBuffer, 
-                                       const int start, 
-                                       const int end) const;
+    int      parseIntYear(const char* fBuffer, 
+                          const size_t start, 
+                          const size_t end) const;
 
-    double                parseMiliSecond(const char* fBuffer, 
-                                          const int start, 
-                                          const int end) const;
+    double   parseMiliSecond(const char* fBuffer, 
+                             const size_t start, 
+                             const size_t end) const;
 
     // -----------------------------------------------------------------------
     // validator and normalizer
     // -----------------------------------------------------------------------
 
-    void                  validateDateTime()          const;
+    void     validateDateTime()          const;
 
 
-    void                  fillString(char*& ptr, int value, int expLen) const;
-    void                  fillMilisString(char*& ptr, int value, int expLen) const;
-    int                   fillYearString(char*& ptr, int value) const;
+    void     fillString(char*& ptr, int value, size_t expLen) const;
+    void     fillMilisString(char*& ptr, int value, size_t expLen) const;
+    void     fillYearString(char*& ptr, int value) const;
 };
 
 inline void XMLDateTime::reset()
@@ -295,40 +293,40 @@ inline bool XMLDateTime::isNormalized() const
     return ( getValue(utc) == UTC_STD ? true : false );
 }
 
-    //---------------------------------------------------------------------------
-    // Arithmetic Functions on Durations and DateTimes
-    //---------------------------------------------------------------------------
-    XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2);
-    XMLDateTime subtractDurations(const XMLDateTime& d1, const XMLDateTime& d2);
-    XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& d);
-    XMLDateTime subtractDurationFromDateTime(const XMLDateTime& dt, const XMLDateTime& d);
-    XMLDateTime subtractDateTimes(const XMLDateTime& dt1, const XMLDateTime& dt2); 
-    XMLDateTime multiplyDuration(const XMLDateTime& d1, double v); 
-    XMLDateTime divideDuration(const XMLDateTime& d1, double v); 
-    xs_decimal_t divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2); 
+//---------------------------------------------------------------------------
+// Arithmetic Functions on Durations and DateTimes
+//---------------------------------------------------------------------------
+XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2);
+XMLDateTime subtractDurations(const XMLDateTime& d1, const XMLDateTime& d2);
+XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& d);
+XMLDateTime subtractDurationFromDateTime(const XMLDateTime& dt, const XMLDateTime& d);
+XMLDateTime subtractDateTimes(const XMLDateTime& dt1, const XMLDateTime& dt2); 
+XMLDateTime multiplyDuration(const XMLDateTime& d1, double v); 
+XMLDateTime divideDuration(const XMLDateTime& d1, double v); 
+xs_decimal_t divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2); 
 
-    // -----------------------------------------------------------------------
-    // Comparisons
-    // -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// Comparisons
+// -----------------------------------------------------------------------
 
-    inline bool xs_dateTime_equal(const XMLDateTime& d1, const XMLDateTime& d2)
-    {return XMLDateTime::compare(d1,d2)==0;}
-    inline bool xs_dateTime_not_equal(const XMLDateTime& d1, const XMLDateTime& d2)
-    {return !XMLDateTime::compare(d1,d2);}
-    inline bool xs_dateTime_less_than(const XMLDateTime& d1, const XMLDateTime& d2)
-    {return XMLDateTime::compare(d1,d2)<0;}
-    inline bool xs_dateTime_less_equal(const XMLDateTime& d1, const XMLDateTime& d2)
-    {return XMLDateTime::compare(d1,d2)<=0;}
-    inline bool xs_dateTime_greater_than(const XMLDateTime& d1, const XMLDateTime& d2)
-    {return XMLDateTime::compare(d1,d2)>0;}
-    inline bool xs_dateTime_greater_equal(const XMLDateTime& d1, const XMLDateTime& d2)
-    {return XMLDateTime::compare(d1,d2)>=0;}
+inline bool xs_dateTime_equal(const XMLDateTime& d1, const XMLDateTime& d2)
+{return XMLDateTime::compare(d1,d2)==0;}
+inline bool xs_dateTime_not_equal(const XMLDateTime& d1, const XMLDateTime& d2)
+{return !XMLDateTime::compare(d1,d2);}
+inline bool xs_dateTime_less_than(const XMLDateTime& d1, const XMLDateTime& d2)
+{return XMLDateTime::compare(d1,d2)<0;}
+inline bool xs_dateTime_less_equal(const XMLDateTime& d1, const XMLDateTime& d2)
+{return XMLDateTime::compare(d1,d2)<=0;}
+inline bool xs_dateTime_greater_than(const XMLDateTime& d1, const XMLDateTime& d2)
+{return XMLDateTime::compare(d1,d2)>0;}
+inline bool xs_dateTime_greater_equal(const XMLDateTime& d1, const XMLDateTime& d2)
+{return XMLDateTime::compare(d1,d2)>=0;}
 
-    //--------------------------------------------------------------------------
-    // Adjustment functions
-    //--------------------------------------------------------------------------
-    XMLDateTime adjustToTimezone(const XMLDateTime& d);
-    XMLDateTime adjustToTimezone(const XMLDateTime& d, const XMLDateTime& tz);
-    XMLDateTime fnDateTime(const XMLDateTime& dt, const XMLDateTime& t);
+//--------------------------------------------------------------------------
+// Adjustment functions
+//--------------------------------------------------------------------------
+XMLDateTime adjustToTimezone(const XMLDateTime& d);
+XMLDateTime adjustToTimezone(const XMLDateTime& d, const XMLDateTime& tz);
+XMLDateTime fnDateTime(const XMLDateTime& dt, const XMLDateTime& t);
 
-#endif
+#endif /* XML_DATETIME_H */

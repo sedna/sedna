@@ -116,7 +116,7 @@ char *xs_QName_create(xmlns_ptr xmlns,
 {
     U_ASSERT(local_part);
 
-    int lp_size = strlen(local_part);
+    size_t lp_size = strlen(local_part);
     char *qname = (char*)alloc_func(lp_size + 2 * sizeof(xmlns_ptr) + 1);
     strcpy(qname + 2 * sizeof(xmlns_ptr), local_part);
 

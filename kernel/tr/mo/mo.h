@@ -25,7 +25,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* na
 xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent, xmlns_ptr ns);
 xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const char* value, strsize_t size);
 xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent, const char* value, strsize_t size);
-xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, int tsize, const char* data, strsize_t dsize);
+xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, size_t tsize, const char* data, size_t dsize);
 xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name, const char * collection_name);
 
 extern xptr last_inserted_node_indirection;

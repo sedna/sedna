@@ -54,7 +54,7 @@ int arg_convertbool(const char *str)
   Handles str==NULL safely.
   **************************************************************/
   char buff[ARGSTRLEN];
-  int i,n;
+  size_t i,n;
 
   /*-- handle NULL str */
   if (str==NULL)
@@ -325,7 +325,7 @@ restart:
   p = strstr(str,tag);
   if (p)
     {
-    int n = strlen(tag);
+    size_t n = strlen(tag);
     if (p!=str && !isspace(p[-1]))
     {
         str = p+1;
@@ -363,7 +363,7 @@ char* arg_extract_value(char* str, arg_rec* argrec)
 
 
 static
-void arg_sprint_marker(int i, int n, char *ErrMark)
+void arg_sprint_marker(size_t i, size_t n, char *ErrMark)
   {
   /************************************************************
   Writes i leading spaces, followed by n carets '^' into *ErrMark.
@@ -453,7 +453,7 @@ int arg_extract_tagged_args(char* cmdline, arg_rec* argtable, int n,
         if (ErrMsg)
             sprintf(ErrMsg,"invalid argument: %s%s", argtag,argname);
         if (ErrMark)
-           arg_sprint_marker((int)(p-cmdline),1,ErrMark);
+           arg_sprint_marker((size_t)(p-cmdline),1,ErrMark);
         return 0;
         }
 
@@ -465,8 +465,8 @@ int arg_extract_tagged_args(char* cmdline, arg_rec* argtable, int n,
            sprintf(ErrMsg,"repeat tag");
         if (ErrMark)
            {
-           int taglen = strlen(argtable[i].tagstr);
-           arg_sprint_marker((int)(p-cmdline-taglen),taglen,ErrMark);
+           size_t taglen = strlen(argtable[i].tagstr);
+           arg_sprint_marker((size_t)(p-cmdline-taglen),taglen,ErrMark);
            }
         return 0;
         }
@@ -540,7 +540,7 @@ int arg_extract_untagged_args(char* cmdline, arg_rec* argtable, int n, char* Err
               sprintf(ErrMsg,"%s argument expected", argname);
            if (ErrMark)
               {
-              int m = strspn(cmdline,whitespace);
+              size_t m = strspn(cmdline,whitespace);
               arg_sprint_marker(m,1,ErrMark);
               }
            return 0;
@@ -565,8 +565,8 @@ int arg_extract_untagged_args(char* cmdline, arg_rec* argtable, int n, char* Err
         sprintf(ErrMsg,"invalid %s argument", argname);
      if (ErrMark)
         {
-        int m = strspn(cmdline,whitespace);
-        int n = strcspn(cmdline+m,whitespace);
+        size_t m = strspn(cmdline,whitespace);
+        size_t n = strcspn(cmdline+m,whitespace);
         arg_sprint_marker(m,n,ErrMark);
         }
      return 0;
@@ -842,8 +842,8 @@ int (arg_scanargv)(int argc,          /**< number of entries in 'argv'. */
          sprintf(ErrMsg,"unexpected argument: %.*s", strcspn(p, " \n\t"),p);
      if (ErrMark)
         {
-        int n = strcspn(p,whitespace);
-        arg_sprint_marker((int)(p-cmdline),n,ErrMark);
+        size_t n = strcspn(p,whitespace);
+        arg_sprint_marker((size_t)(p-cmdline),n,ErrMark);
         }
      return 0;
      }
@@ -888,8 +888,8 @@ int (arg_scanargv_10)(int argc, char **argv, arg_rec *argtable, int n,
         sprintf(ErrMsg,"unexpected argument");
      if (ErrMark)
         {
-        int n = strcspn(p,whitespace);
-        arg_sprint_marker((int)(p-cmdline),n,ErrMark);
+        size_t n = strcspn(p,whitespace);
+        arg_sprint_marker((size_t)(p-cmdline),n,ErrMark);
         }
      return 0;
      }
