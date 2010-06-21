@@ -233,8 +233,10 @@ void PPFunCall::do_next(tuple &t)
         /*
          * here we need to create new variable context for our execution
          * since all variable ids start from 0
+         *
+         * note, that there also be zero-length context in dyn_cxt
          */
-        var_cxt = new variable_context();
+        var_cxt = fn_id.first->get_current_var_context();
         var_cxt->setProducers(fd.vars_total);
 
         // set producers for arguments
@@ -246,10 +248,14 @@ void PPFunCall::do_next(tuple &t)
             var_cxt->producers[i].tuple_pos = 0;
         }
 
-        // this sets proper copy-context
-        fn_id.first->add_var_func_context(var_cxt);
-
         body = fd.op->copy(fn_id.first);
+
+        /*
+         * after copying the body, reset variable context -- this will create
+         * new variable context for future copiers
+         */
+        fn_id.first->reset_local_vars();
+
         body->open();
         is_body_opened = true;
 

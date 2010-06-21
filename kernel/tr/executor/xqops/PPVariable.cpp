@@ -51,8 +51,6 @@ PPIterator* PPVariable::do_copy(dynamic_context *_cxt_)
 {
     PPVariable *res = se_new PPVariable(_cxt_, info, dsc);
 
-    res->var_cxt = _cxt_->get_copy_var_context();
-
     return res;
 }
 

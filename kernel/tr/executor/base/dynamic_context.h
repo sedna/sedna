@@ -84,7 +84,7 @@ struct producer
 // variable context
 struct variable_context
 {
-    unsigned size;          // size of context (number of producers in array)
+    size_t size;          // size of context (number of producers in array)
     producer *producers;    // array of producers
 
     variable_context() : size(0), producers(NULL) {}
@@ -182,7 +182,6 @@ private:
     var_dsc curr_gvar_dsc;  // global variable context counter
     unsigned curr_func_id;  // function context counter
 
-    variable_context var_cxt;  // variable context for all local vars
     global_variable_context glb_var_cxt; // global variables
     function_context funct_cxt; // functions
 
@@ -192,14 +191,13 @@ private:
     std::vector<dynamic_context *> child_cxts;
 
     /*
-     * variable contexts for functions
-     * each time a body is cloned, new context is created
-     *
-     * to properly clone a body dynamic_context must create CURRENT
-     * variable context. otherwise producers-consumers will be messed up
+     * variable contexts:
+     *     1) each time a body is cloned, new context is created
+     *     2) for each global variable new context is created
+     *     3) for query body new context is created
      */
-    std::vector<variable_context *> var_func_cxts;
-    variable_context *current_copy_var_cxt;
+    std::vector<variable_context *> var_cxts;
+    variable_context *current_var_cxt;
 
     static_context *st_cxt;  // corresponding static context
     var_map_id_name var_map; // some debug-explain info
@@ -220,24 +218,20 @@ private:
 public:
 
     dynamic_context(static_context *_st_cxt_);
-
-    // used to properly set producers when qep tree is already built
-    // NOTE: it should not be called after producers were open
-    void set_producers()
-    {
-        var_cxt.setProducers(curr_var_dsc);
-    }
-
     ~dynamic_context();
 
     /*
-     * This function resets local variables id back to 0
-     * Usefult since we want every function to receive ids for its local
-     * variables starting from 0
+     * This function creates new variable context for local vars
+     * See var_cxts comment on when we need them
      */
-    inline void reset_local_var_counter()
+    void reset_local_vars();
+
+    // used to properly set producers when qep tree is already built
+    // NOTE: it should not be called after producers were open
+    inline void set_producers()
     {
-        curr_var_dsc = 0;
+        current_var_cxt->setProducers(curr_var_dsc);
+        reset_local_vars();
     }
 
     inline const var_map_id_name &get_var_map() const
@@ -307,31 +301,21 @@ public:
         return funct_cxt.fun_decls.at(id);
     }
 
-    inline producer &get_var_producer(var_dsc id, variable_context *var_cxt_custom = NULL)
+    inline producer &get_var_producer(var_dsc id, variable_context *var_cxt)
     {
-        U_ASSERT(var_cxt_custom == NULL || var_cxt_custom == &var_cxt ||
-                std::find(var_func_cxts.begin(), var_func_cxts.end(), var_cxt_custom) != var_func_cxts.end());
+        U_ASSERT(std::find(var_cxts.begin(), var_cxts.end(), var_cxt) != var_cxts.end());
 
-        if (var_cxt_custom)
-            return var_cxt_custom->producers[id];
-        else
-            return var_cxt.producers[id];
+        return var_cxt->producers[id];
     }
 
-    inline variable_context *get_copy_var_context()
+    inline variable_context *get_current_var_context()
     {
-        return current_copy_var_cxt;
+        return current_var_cxt;
     }
 
     inline global_producer &get_global_var_producer(var_dsc id)
     {
         return glb_var_cxt.producers[id];
-    }
-
-    inline void add_var_func_context(variable_context *var_cxt)
-    {
-        var_func_cxts.push_back(var_cxt);
-        current_copy_var_cxt = var_cxt;
     }
 
     void inline add_temporary_doc_node(xptr n)

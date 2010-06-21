@@ -329,7 +329,7 @@ public:
                                     __current_physop_backup(NULL) 
     {
         info.name = _name_;
-        var_cxt = cxt->get_copy_var_context();
+        var_cxt = cxt->get_current_var_context();
     }
 
     virtual ~PPIterator()  {}

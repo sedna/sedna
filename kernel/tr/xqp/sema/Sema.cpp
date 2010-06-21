@@ -950,7 +950,7 @@ namespace sedna
         func->loc = n.getLocationAddr();
         func->mod_uri = (mod->module_uri) ? *mod->module_uri : "";
         func->merger = NULL;
-        func->id = function_id(NULL, INVALID_VAR_DSC); // ASTFuncDecl in lr2por will probably change it to something more meaningful
+        func->id = function_id((dynamic_context *)NULL, INVALID_VAR_DSC); // ASTFuncDecl in lr2por will probably change it to something more meaningful
         func->mod = mod;
         func->is_used = false;
 

@@ -301,6 +301,8 @@ namespace sedna
 
     PPQueryEssence *XQueryModule::getQEP(bool is_subquery)
     {
+        U_ASSERT(module_uri == NULL);
+
         lr2por *l2p;
 
         // create module contexts
@@ -318,9 +320,6 @@ namespace sedna
 
         delete ast;
         ast = NULL;
-
-        // finalize producers
-        dyn_cxt->set_producers();
 
         qep = l2p->getResult();
 

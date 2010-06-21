@@ -86,7 +86,6 @@ PPIterator* PPCast::do_copy(dynamic_context *_cxt_)
 {
     PPCast *res = se_new PPCast(_cxt_, info, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
 
     return res;
 }
@@ -175,7 +174,6 @@ PPIterator* PPCastable::do_copy(dynamic_context *_cxt_)
 {
     PPCastable *res = se_new PPCastable(_cxt_, info, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
 
     return res;
 }
@@ -255,7 +253,6 @@ PPIterator* PPInstanceOf::do_copy(dynamic_context *_cxt_)
 {
     PPInstanceOf *res = se_new PPInstanceOf(_cxt_, info, child, st);
     res->child.op = child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
 
     return res;
 }
@@ -350,7 +347,6 @@ PPIterator* PPTreat::do_copy(dynamic_context *_cxt_)
 {
     PPTreat *res = se_new PPTreat(_cxt_, info, child, st);
     res->child.op = child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
 
     return res;
 }
@@ -507,7 +503,6 @@ PPIterator* PPTypeswitch::do_copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->default_child.op = default_child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
 
     return res;
 }

@@ -749,7 +749,6 @@ PPIterator* PPPred1::do_copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
     return res;
 }
 
@@ -1059,7 +1058,6 @@ PPIterator* PPPred2::do_copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
     return res;
 }
 

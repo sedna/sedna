@@ -78,7 +78,7 @@ function_context::~function_context()
 
 dynamic_context::dynamic_context(static_context *_st_cxt_) : st_cxt(_st_cxt_)
 {
-    current_copy_var_cxt = &var_cxt;
+    current_var_cxt = NULL;
 
     st_cxt->get_serialization_params()->stm.add_str(">","&gt;");
     st_cxt->get_serialization_params()->stm.add_str("<","&lt;");
@@ -107,9 +107,21 @@ dynamic_context::~dynamic_context()
         ++cit;
     }
 
-    // destroy function copy-varcontexts
-    for (size_t i = 0; i < var_func_cxts.size(); i++)
-        delete var_func_cxts[i];
+    // destroy all variable contexts
+    for (size_t i = 0; i < var_cxts.size(); i++)
+        delete var_cxts[i];
+}
+
+void dynamic_context::reset_local_vars()
+{
+    // reuse current context if we haven't used it
+    if (!current_var_cxt || current_var_cxt->size != 0)
+    {
+        current_var_cxt = new variable_context();
+        var_cxts.push_back(current_var_cxt);
+    }
+
+    curr_var_dsc = 0;
 }
 
 void dynamic_context::global_variables_open()
