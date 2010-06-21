@@ -133,7 +133,6 @@ PPIterator* PPLast::do_copy(dynamic_context *_cxt_)
 {
     PPLast *res = se_new PPLast(_cxt_, info, last_dsc, child);
     res->child.op = child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
     return res;
 }
 

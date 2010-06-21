@@ -58,7 +58,7 @@ namespace sedna
             exp_info.isOrdered = true;
             exp_info.isMax1 = true;
 
-            id = global_var_dsc(NULL, INVALID_VAR_DSC);
+            id = global_var_dsc((dynamic_context *)NULL, INVALID_VAR_DSC);
             is_used = false;
         }
 
@@ -67,7 +67,7 @@ namespace sedna
             int_name = "$%dummy";
             mod = NULL;
             var = NULL;
-            id = global_var_dsc(NULL, INVALID_VAR_DSC);
+            id = global_var_dsc((dynamic_context *)NULL, INVALID_VAR_DSC);
             is_used = false;
         }
     };

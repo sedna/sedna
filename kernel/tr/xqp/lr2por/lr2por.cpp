@@ -1890,7 +1890,7 @@ namespace sedna
             return;
 
         // zero var-num since all functions use their own variable contexts
-        dyn_cxt->reset_local_var_counter();
+        dyn_cxt->reset_local_vars();
 
         // id was obtained earlier
         id = xqf->id.second;
@@ -2697,7 +2697,8 @@ namespace sedna
 
     void lr2por::visit(ASTQuery &n)
     {
-        dyn_cxt->reset_local_var_counter();
+        // local variable context for the body
+        dyn_cxt->reset_local_vars();
 
         // if we deserealize trigger statement then bind special vars
         if (n.is_trigger)
@@ -2719,10 +2720,12 @@ namespace sedna
                 qep = new PPQueryRoot(dyn_cxt, off.opin);
         }
 
+        // finalize producers
+        dyn_cxt->set_producers();
+
         if (mod->turnedExplain()) // explain feature
         {
             dynamic_context *old_dyn_cxt = dyn_cxt;
-            old_dyn_cxt->set_producers();
 
             // first, we need new dynamic context since we will use two root operations
             dyn_cxt = new dynamic_context(new static_context());
@@ -2735,7 +2738,6 @@ namespace sedna
         else if (mod->turnedProfile()) // profile feature
         {
             dynamic_context *old_dyn_cxt = dyn_cxt;
-            old_dyn_cxt->set_producers();
 
             // first, we need new dynamic context since we will use two root operations
             dyn_cxt = new dynamic_context(new static_context());
@@ -3194,6 +3196,9 @@ namespace sedna
         if (!xqv->is_used)
             return;
 
+        // create new variable context for global variable
+        dyn_cxt->reset_local_vars();
+
         // analyze the type
         if (n.type)
         {
@@ -3223,6 +3228,7 @@ namespace sedna
         var_prod.var_name_uri = *(var_info->uri);
 
         dyn_cxt->add_global_var(var_prod, id);
+        dyn_cxt->set_producers();
     }
 
     void lr2por::visit(ASTVersionDecl &n)

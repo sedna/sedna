@@ -118,7 +118,6 @@ PPIterator* PPLet::do_copy(dynamic_context *_cxt_)
                                     : se_new PPLet(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
 
     return res;
 }

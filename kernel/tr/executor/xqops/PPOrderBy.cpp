@@ -262,7 +262,6 @@ PPIterator* PPOrderBy::do_copy(dynamic_context *_cxt_)
                                       data_size);
 
     res->child.op = child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
     return res;
 }
 
@@ -928,8 +927,6 @@ PPIterator* PPSTuple::do_copy(dynamic_context *_cxt_)
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
 
-    res->var_cxt = _cxt_->get_copy_var_context();
-
     return res;
 }
 
@@ -1026,7 +1023,6 @@ PPIterator* PPSLet::do_copy(dynamic_context *_cxt_)
     PPSLet *res = se_new PPSLet(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
-    res->var_cxt = _cxt_->get_copy_var_context();
     return res;
 }
 
