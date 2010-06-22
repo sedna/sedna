@@ -210,7 +210,7 @@ typedef struct heapframe {
 ***************************************************************************/
 
 
-template <typename CharIterator>
+template <typename CharIterator, typename iter_off_t>
 class PcreMatcherBase
 {
 private:
@@ -265,15 +265,15 @@ private:
 		struct heapframe *thisframe;  /* Used only when compiling for no recursion */
 	} match_data;
 
-	BOOL match_ref(int offset, register CharIterator eptr, int length, match_data *md,
+	BOOL match_ref(int offset, register CharIterator eptr, iter_off_t length, match_data *md,
 			unsigned long int ims);
 	int match(REGISTER CharIterator eptr, REGISTER const uschar *ecode,
 			int offset_top, match_data *md, unsigned long int ims, eptrblock *eptrb,
 			int flags);
 
 #ifdef SUPPORT_UTF8
-	inline static int valid_utf8(const CharIterator &string, int length);
-	inline static int memcmp(CharIterator s1, const uschar *s2, size_t length) {
+	inline static iter_off_t valid_utf8(const CharIterator &string, iter_off_t length);
+	inline static int memcmp(CharIterator s1, const uschar *s2, iter_off_t length) {
 		while (length > 0 && *s1 == *s2) {
 			s1++;
 			s2++;
@@ -318,7 +318,7 @@ without modification. */
 		int          callout_number;    /* Number compiled into pattern */
 		CharIterator *offset_vector;    /* The offset vector */
 		CharIterator subject;           /* The subject being matched */
-		int          subject_length;    /* The length of the subject */
+		iter_off_t   subject_length;    /* The length of the subject */
 		CharIterator start_match;       /* Offset to start of this match attempt */
 		CharIterator current_position;  /* Where we currently are in the subject */
 		int          capture_top;       /* Max current capture */
@@ -504,7 +504,7 @@ static int
 ord2utf8(int cvalue, uschar *buffer)
 {
 register int i, j;
-for (i = 0; i < sizeof(utf8_table1)/sizeof(int); i++)
+for (i = 0; i < (int)(sizeof(utf8_table1)/sizeof(int)); i++)
   if (cvalue <= utf8_table1[i]) break;
 buffer += i;
 for (j = i; j > 0; j--)
@@ -538,9 +538,9 @@ Returns:       < 0    if the string is a valid UTF-8 string
                >= 0   otherwise; the value is the offset of the bad byte
 */
 
-template <typename CharIterator>
-int
-PcreMatcherBase<CharIterator>::valid_utf8(const CharIterator &string, int length)
+template <typename CharIterator, typename iter_off_t>
+ iter_off_t
+PcreMatcherBase<CharIterator, iter_off_t>::valid_utf8(const CharIterator &string, iter_off_t length)
 {
 register CharIterator p;
 
@@ -703,9 +703,9 @@ Arguments:
 Returns:      TRUE if matched
 */
 
-template <typename CharIterator>
+template <typename CharIterator, typename iter_off_t>
 BOOL
-PcreMatcherBase<CharIterator>::match_ref(int offset, register CharIterator eptr, int length, match_data *md,
+PcreMatcherBase<CharIterator, iter_off_t>::match_ref(int offset, register CharIterator eptr, iter_off_t length, match_data *md,
   unsigned long int ims)
 {
 CharIterator p = md->offset_vector[offset];
@@ -781,9 +781,9 @@ Returns:       MATCH_MATCH if matched            )  these values are >= 0
                  (e.g. stopped by recursion limit)
 */
 
-template <typename CharIterator>
+template <typename CharIterator, typename iter_off_t>
 int
-PcreMatcherBase<CharIterator>::match(REGISTER CharIterator eptr, REGISTER const uschar *ecode,
+PcreMatcherBase<CharIterator, iter_off_t>::match(REGISTER CharIterator eptr, REGISTER const uschar *ecode,
   int offset_top, match_data *md, unsigned long int ims, eptrblock *eptrb,
   int flags)
 {
@@ -794,6 +794,8 @@ because they are used a lot in loops. */
 register int rrc;    /* Returns from recursive calls */
 register int i;      /* Used for loops not involving calls to RMATCH() */
 register int c;      /* Character values not kept over RMATCH() calls */
+//FIXME: c stores chars and offsets which may not fit into int, if type of c is changed to something other than int
+//       3 move FIXMEs below need to be changed
 
 /* When recursion is not being used, all "local" variables that have to be
 preserved over calls to RMATCH() are part of a "frame" which is obtained from
@@ -913,7 +915,7 @@ int *prop_test_variable;
 #endif
 
 int ctype;
-int length;
+iter_off_t length;
 int max;
 int min;
 int number;
@@ -3403,8 +3405,8 @@ for (;;)
               }
             else
               {
-              c = max - min;
-              if (c > md->end_subject - eptr) c = md->end_subject - eptr;
+              c = max - min; //FIXME
+              if (c > md->end_subject - eptr) c = (int)(md->end_subject - eptr);
               eptr += c;
               }
             }
@@ -3413,8 +3415,8 @@ for (;;)
           /* The byte case is the same as non-UTF8 */
 
           case OP_ANYBYTE:
-          c = max - min;
-          if (c > md->end_subject - eptr) c = md->end_subject - eptr;
+          c = max - min; //FIXME
+          if (c > md->end_subject - eptr) c = (int)(md->end_subject - eptr);
           eptr += c;
           break;
 
@@ -3519,8 +3521,8 @@ for (;;)
           /* For DOTALL case, fall through and treat as \C */
 
           case OP_ANYBYTE:
-          c = max - min;
-          if (c > md->end_subject - eptr) c = md->end_subject - eptr;
+          c = max - min; //FIXME
+          if (c > md->end_subject - eptr) c = (int)(md->end_subject - eptr);
           eptr += c;
           break;
 
@@ -3701,12 +3703,12 @@ Returns:          > 0 => success; value is the number of elements filled in
                  < -1 => some kind of unexpected problem
 */
 
-template <typename CharIterator>
-int PcreMatcherBase<CharIterator>::exec(const pcre_extra *extra_data,
+template <typename CharIterator, typename iter_off_t>
+int PcreMatcherBase<CharIterator, iter_off_t>::exec(const pcre_extra *extra_data,
   const CharIterator &subject_start, const CharIterator &subject_end, CharIterator start_offset, int options, CharIterator *offsets,
   int offsetcount)
 {
-int length = subject_end - subject_start;
+iter_off_t length = subject_end - subject_start;
 int rc, resetcount, ocount;
 int first_byte = -1;
 int req_byte = -1;
@@ -4139,9 +4141,9 @@ Returns:      the number of the named parentheses, or a negative number
                 (PCRE_ERROR_NOSUBSTRING) if not found
 */
 
-template <typename CharIterator>
+template <typename CharIterator, typename iter_off_t>
 int
-PcreMatcherBase<CharIterator>::get_stringnumber(const char *stringname)
+PcreMatcherBase<CharIterator, iter_off_t>::get_stringnumber(const char *stringname)
 {
 int rc;
 int entrysize;

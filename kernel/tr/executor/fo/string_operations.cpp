@@ -16,7 +16,7 @@
  * EQUALITY AND COMPARISON OF STRINGS: BEGIN
  ******************************************************************************/
 
-inline int fn_compare_pstr_long_vs_pstr_long(xptr str1, int str1len, xptr str2, int str2len, CollationHandler* handler)
+inline int fn_compare_pstr_long_vs_pstr_long(xptr str1, strsize_t str1len, xptr str2, strsize_t str2len, CollationHandler* handler)
 {
     pstr_long_cursor cur1(str1);
     pstr_long_cursor cur2(str2);
@@ -24,7 +24,7 @@ inline int fn_compare_pstr_long_vs_pstr_long(xptr str1, int str1len, xptr str2, 
     return handler->compare(&cur1, &cur2);
 }
 
-inline int fn_compare_pstr_long_vs_estr_pstr_short(xptr str1, int str1len, xptr str2, int str2len, CollationHandler* handler)
+inline int fn_compare_pstr_long_vs_estr_pstr_short(xptr str1, strsize_t str1len, xptr str2, strsize_t str2len, CollationHandler* handler)
 {
     pstr_long_cursor cur1(str1);
     estr_cursor cur2(str2, str2len);
@@ -32,14 +32,14 @@ inline int fn_compare_pstr_long_vs_estr_pstr_short(xptr str1, int str1len, xptr 
     return handler->compare(&cur1, &cur2);
 }
 
-inline int fn_compare_pstr_long_vs_mstr(xptr str1, int str1len, const char* str2, CollationHandler* handler)
+inline int fn_compare_pstr_long_vs_mstr(xptr str1, strsize_t str1len, const char* str2, CollationHandler* handler)
 {
     pstr_long_cursor cur(str1);
 
     return handler->compare(&cur, str2);
 }
 
-inline int fn_compare_estr_pstr_short_vs_estr_pstr_short(xptr str1, int str1len, xptr str2, int str2len, CollationHandler* handler)
+inline int fn_compare_estr_pstr_short_vs_estr_pstr_short(xptr str1, strsize_t str1len, xptr str2, strsize_t str2len, CollationHandler* handler)
 {
     estr_cursor cur1(str1, str1len);
     estr_cursor cur2(str2, str2len);
@@ -47,7 +47,7 @@ inline int fn_compare_estr_pstr_short_vs_estr_pstr_short(xptr str1, int str1len,
     return handler->compare(&cur1, &cur2);
 }
 
-inline int fn_compare_mstr_vs_estr_pstr_short(const char* str1, xptr str2, int str2len, CollationHandler* handler)
+inline int fn_compare_mstr_vs_estr_pstr_short(const char* str1, xptr str2, strsize_t str2len, CollationHandler* handler)
 {
     estr_cursor cur2(str2, str2len);
     

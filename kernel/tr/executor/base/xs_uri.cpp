@@ -665,7 +665,7 @@ Uri Uri::parse(const char* uri)
 {
     PcrePattern re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?$", PCRE_UTF8 | PCRE_NO_UTF8_CHECK);
     size_t uri_len = strlen(uri); 
-    PcreMatcher<const char*> matcher(re);
+    PcreMatcher<const char*,ptrdiff_t> matcher(re);
     Uri res;
 
     if (matcher.matches(uri, uri + uri_len, uri, PCRE_NO_UTF8_CHECK))

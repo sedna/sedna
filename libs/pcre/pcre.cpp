@@ -393,15 +393,16 @@ if (byteflip(re->magic_number, sizeof(re->magic_number)) != MAGIC_NUMBER)
 *internal_re = *re;           /* To copy other fields */
 internal_re->size = byteflip(re->size, sizeof(re->size));
 internal_re->options = byteflip(re->options, sizeof(re->options));
-internal_re->top_bracket = byteflip(re->top_bracket, sizeof(re->top_bracket));
-internal_re->top_backref = byteflip(re->top_backref, sizeof(re->top_backref));
-internal_re->first_byte = byteflip(re->first_byte, sizeof(re->first_byte));
-internal_re->req_byte = byteflip(re->req_byte, sizeof(re->req_byte));
-internal_re->name_table_offset = byteflip(re->name_table_offset,
+//FIXME: assumes these have type pcre_uint16 to get rid of warnings
+internal_re->top_bracket = (pcre_uint16)byteflip(re->top_bracket, sizeof(re->top_bracket));
+internal_re->top_backref = (pcre_uint16)byteflip(re->top_backref, sizeof(re->top_backref));
+internal_re->first_byte = (pcre_uint16)byteflip(re->first_byte, sizeof(re->first_byte));
+internal_re->req_byte = (pcre_uint16)byteflip(re->req_byte, sizeof(re->req_byte));
+internal_re->name_table_offset = (pcre_uint16)byteflip(re->name_table_offset,
   sizeof(re->name_table_offset));
-internal_re->name_entry_size = byteflip(re->name_entry_size,
+internal_re->name_entry_size = (pcre_uint16)byteflip(re->name_entry_size,
   sizeof(re->name_entry_size));
-internal_re->name_count = byteflip(re->name_count, sizeof(re->name_count));
+internal_re->name_count = (pcre_uint16)byteflip(re->name_count, sizeof(re->name_count));
 
 if (study != NULL)
   {
@@ -4147,7 +4148,7 @@ pcre_compile(const char *pattern, int options, const char **errorptr,
 {
 real_pcre *re;
 int length = 1 + LINK_SIZE;      /* For initial BRA plus length */
-int runlength;
+//int runlength;
 int c, firstbyte, reqbyte;
 int bracount = 0;
 int branch_extra = 0;
@@ -4190,7 +4191,7 @@ if (erroroffset == NULL)
 #ifdef SUPPORT_UTF8
 utf8 = (options & PCRE_UTF8) != 0;
 if (utf8 && (options & PCRE_NO_UTF8_CHECK) == 0 &&
-	(*erroroffset = PcreMatcherBase<uschar *>::valid_utf8((uschar *)pattern, -1)) >= 0)
+	(*erroroffset = PcreMatcherBase<uschar *, ptrdiff_t>::valid_utf8((uschar *)pattern, -1)) >= 0)
   {
   *errorptr = ERR44;
   return NULL;

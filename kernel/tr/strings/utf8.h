@@ -29,7 +29,7 @@ private:
     CollationHandler_utf8 m_ch;
 public:
     CharsetHandler_utf8() : CharsetHandler(&m_ch) {}
-	virtual int length (tuple_cell *tc);
+	virtual str_off_t length (tuple_cell *tc);
 	virtual void transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str);
 	virtual CharCounter* new_char_counter();
 	virtual void free_char_counter(CharCounter *);

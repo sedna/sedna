@@ -166,7 +166,7 @@ void estr::copy_text_estr(xptr dest, xptr src, str_off_t count)
 
     CHECKP(src);
     int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (uintptr_t)XADDR(src);
-    int real_count = s_min(dest_spc_blk, s_min(src_spc_blk, count));
+    int real_count = (int)s_min(dest_spc_blk, s_min(src_spc_blk, count));
 
     memcpy(executor_globals::e_string_buf, XADDR(src), real_count);
     CHECKP(dest);
@@ -272,7 +272,7 @@ int estr_cursor::copy_blk(char *buf)
     int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
     if (len >= m_count)
     {
-        len = m_count;
+        len = (int)m_count;
         memcpy(buf, XADDR(m_str), len);
         m_str = m_str + len;
     }
@@ -293,7 +293,7 @@ int estr_cursor::get_blk(char **ptr)
     int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
     if (len >= m_count)
     {
-        len = m_count;
+        len = (int)m_count;
         *ptr = (char*)(XADDR(m_str));
         m_str = m_str + len;
     }
@@ -314,7 +314,7 @@ void estr_feed(string_consumer_fn fn, void *p, xptr src, str_off_t count) // or 
 		CHECKP(src);
 
 		int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (uintptr_t)(XADDR(src));
-		int real_count = s_min(src_spc_blk, count);
+		int real_count = (int)s_min(src_spc_blk, count);
 
 		fn((char*)XADDR(src), real_count, p);
 
@@ -333,7 +333,7 @@ void estr_copy_to_buffer(char *dest, xptr src, str_off_t count)
 		CHECKP(src);
 
 		int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (uintptr_t)(XADDR(src));
-		int real_count = s_min(src_spc_blk, count);
+		int real_count = (int)s_min(src_spc_blk, count);
 
 		memcpy(dest, XADDR(src), real_count);
 		dest += real_count;

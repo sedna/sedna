@@ -157,11 +157,12 @@ void str_buf_base::append(const tuple_cell &tc)
 		}
 		else
 		{
-			const int add_len = tc.get_strlen_vmm();
-			const int new_len = m_len + add_len;
+			const str_off_t add_len = tc.get_strlen_vmm();
+			const str_off_t new_len = m_len + add_len;
 
 			if (new_len < T_STR_MEMBUF_SIZE || mem_only())
 			{
+				U_ASSERT(new_len < SIZE_MAX);
 				if (m_buf_size == 0)
 				{
 					m_buf_size = T_STR_MEMBUF_SIZE;
@@ -177,7 +178,7 @@ void str_buf_base::append(const tuple_cell &tc)
 					
 					old_buf = m_buf;
 					m_buf = se_new char[m_buf_size];
-					memcpy(m_buf, old_buf, m_len+1);
+					memcpy(m_buf, old_buf, (size_t)(m_len+1));
 					delete[] old_buf;
 				}
 				move_to_mem_buf();
@@ -204,7 +205,7 @@ void str_buf_base::append(const tuple_cell &tc)
 
 void str_buf_base::append(const char *str, int add_len)
 {
-	const int new_len = m_len + add_len;
+	const str_off_t new_len = m_len + add_len;
 	if (new_len < T_STR_MEMBUF_SIZE || mem_only())
 	{
 		if (m_buf_size == 0)

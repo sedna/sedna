@@ -35,7 +35,7 @@ private:
 	char* cur_p;
 
 	//number of chars left to the end of the string
-	int chars_left;
+	strsize_t chars_left;
 
 	//the string being iterated over
     xptr s;
@@ -63,7 +63,7 @@ public:
 	}
 	estr_iterator& operator -=(off_t x) { while (x-- > 0) --(*this); return *this; }
 
-	int operator -(const estr_iterator &it) const { return it.chars_left - chars_left; }
+	str_off_t operator -(const estr_iterator &it) const { return it.chars_left - chars_left; }
     
 };
 

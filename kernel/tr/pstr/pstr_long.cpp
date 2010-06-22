@@ -1359,7 +1359,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	const int part1 = (int)(part12 - (blk_count * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE)));
 
 	//FIXME: make sure blk_count fits into int
-	int new_blk_count = blk_count + 1;
+	int new_blk_count = (int)(blk_count + 1);
 	int next_bls = 0;
 	const int fblb_avail = intl_ftr.first_blb_gap_size;
 	if (new_blk_count > fblb_avail && intl_ftr.block_list_map_size > 0)
