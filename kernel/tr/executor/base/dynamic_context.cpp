@@ -158,6 +158,7 @@ void dynamic_context::set_datetime()
 xmlns_ptr dynamic_context::get_xmlns_by_prefix(const char *prefix)
 {
     U_ASSERT(prefix);
+    xmlns_ptr res;
 
     if (!strlen(prefix))
     {
@@ -169,6 +170,8 @@ xmlns_ptr dynamic_context::get_xmlns_by_prefix(const char *prefix)
 
         if (it != insc_ns.end() && it->second.size() > 0)
             return it->second.back();
+        else if ((res = st_cxt->get_predef_nsp(prefix)) != NULL_XMLNS)
+            return res;
         else
             throw XQUERY_EXCEPTION(XQDY0074);
     }

@@ -235,6 +235,8 @@ public:
     {
         return (predefined_ns.find(ns) != predefined_ns.end());
     }
+
+    xmlns_ptr get_predef_nsp(const char *prefix);
 };
 
 #endif /* _STATIC_CONTEXT_H */

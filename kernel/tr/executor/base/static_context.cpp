@@ -12,8 +12,8 @@ CollationManager static_context::collation_manager;
 
 struct predef_nsp
 {
-    const char *uri;
     const char *prefix;
+    const char *uri;
 };
 
 static predef_nsp predef_nsps[] =
@@ -219,4 +219,22 @@ int static_context::get_collation(const char *uri, /* out */ CollationHandler** 
     *handler = collation_manager.get_collation_handler(normalized_value);
     if (!*handler) return COLLATION_MISS;
     return 0;
+}
+
+xmlns_ptr static_context::get_predef_nsp(const char *prefix)
+{
+    predef_nsp *tmp = &predef_nsps[0];
+
+    while (tmp->prefix != NULL)
+    {
+        if (!strcmp(tmp->prefix, prefix))
+            break;
+
+        tmp++;
+    }
+
+    if (tmp->uri) // found
+        return xmlns_touch(tmp->prefix, tmp->uri);
+
+    return NULL_XMLNS;
 }
