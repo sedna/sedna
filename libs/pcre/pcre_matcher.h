@@ -6,8 +6,8 @@
 #include "pcre_pattern.h"
 #include "pcre_matcher_base.h"
 
-template <typename CharIterator>
-class PcreMatcher : private PcreMatcherBase<CharIterator>
+template <typename CharIterator, typename iter_off_t>
+class PcreMatcher : private PcreMatcherBase<CharIterator, iter_off_t>
 {
 private:
 	int					m_capturecount;
@@ -45,9 +45,9 @@ private:
 	void load_re(const pcre * re) {
 		free_offsets();
 		free_re_data();
-		PcreMatcherBase<CharIterator>::set_re(re);
+		PcreMatcherBase<CharIterator,iter_off_t>::set_re(re);
 
-		int rc = pcre_fullinfo(PcreMatcherBase<CharIterator>::m_re, m_re_extra, PCRE_INFO_CAPTURECOUNT, &m_capturecount);
+		int rc = pcre_fullinfo(PcreMatcherBase<CharIterator,iter_off_t>::m_re, m_re_extra, PCRE_INFO_CAPTURECOUNT, &m_capturecount);
 		if (rc == 0)
 			m_ofscount = (m_capturecount+2)*3; //XXX - +2 probably should be +1
 		else
@@ -72,7 +72,7 @@ private:
 				++fmt_start;
 				if (num < 0 || num > 9)
 					throw PcreBadFormatException();
-				if (num >= m_groups ||m_offsets[num<<1] == PcreMatcherBase<CharIterator>::InvalidOffset)
+				if (num >= m_groups ||m_offsets[num<<1] == PcreMatcherBase<CharIterator, iter_off_t>::InvalidOffset)
 					continue; //invalid substrings are substituted by zero-length strings
 
 				CharIterator sub_start = m_offsets[(num<<1)];
@@ -111,7 +111,7 @@ private:
 	}
 public:
 
-	PcreMatcher(const PcrePattern &re) : PcreMatcherBase<CharIterator>() {
+	PcreMatcher(const PcrePattern &re) : PcreMatcherBase<CharIterator,iter_off_t>() {
 		init();
 		load_re(re.m_re);
 	}

@@ -25,15 +25,15 @@
 //////////////////////////////////////////////////////////////////////////
 
 
-int CharsetHandler_utf8::length (tuple_cell *tc)
+str_off_t CharsetHandler_utf8::length (tuple_cell *tc)
 {
 	switch (tc->get_type())
 	{
 	case tc_heavy_atomic_estr:
 	case tc_heavy_atomic_pstr_short:
 	{
-		int len = 0;
-		int bytes_left = tc->get_strlen_vmm();
+		str_off_t len = 0;
+		str_off_t bytes_left = tc->get_strlen_vmm();
 
 		xptr cur_block_xptr;
 		unsigned char *p;
@@ -164,7 +164,9 @@ static inline void utf8_translate_proc(const Iterator &start, const Iterator &en
 
 void CharsetHandler_utf8::transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str)
 {
-	int map_len = length(map_str);
+	const str_off_t _map_len = length(map_str);
+	U_ASSERT(_map_len >= 0 && _map_len < INT_MAX);
+	int map_len = (int)_map_len;
 	mapent *map_arr = NULL;
 	//TODO - assert map_str & trans_str are light atomic
 	char_iterator_utf8 map_it(map_str->get_str_mem(), map_str->get_strlen_mem(), 0);
@@ -426,7 +428,7 @@ static inline void utf8_replace(const Iterator &start, const Iterator &end, tupl
 {
 	int match_flags = PCRE_NO_UTF8_CHECK;
 
-	PcreMatcher<Iterator> matcher(re);
+	PcreMatcher<Iterator, typename Iterator::off_t> matcher(re);
 	stmt_str_buf out_it;
 
 	matcher.replaceAll(out_it, start, end, start, t3->get_str_mem(), match_flags);
@@ -464,7 +466,7 @@ template<class Iterator>
 static inline void utf8_matches (const Iterator &start, const Iterator &end, tuple &t, const PcrePattern &re, tuple_cell *t3)
 {
 	int match_flags = PCRE_NO_UTF8_CHECK;
-	PcreMatcher<Iterator> matcher(re);
+	PcreMatcher<Iterator, typename Iterator::off_t> matcher(re);
 
 	t.copy(tuple_cell::atomic(matcher.matches(start, end, start, match_flags)));
 }
@@ -504,8 +506,8 @@ public:
                                                                                                                    re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3))
 
 	{
-		PcreMatcher<const char *>m(re);
-		const char * x = "";
+		PcreMatcher<const unsigned char *, ptrdiff_t>m(re);
+		const unsigned char * x = (const unsigned char *)"";
 		if (m.matches(x, x+1, x, PCRE_NO_UTF8_CHECK))
 			throw USER_EXCEPTION(FORX0003);
 	}
@@ -527,7 +529,7 @@ void utf8_tokenize_result<Iterator>::get_next_result(tuple& t)
 	}
 
 	int match_flags = PCRE_NO_UTF8_CHECK;
-	PcreMatcher<Iterator> matcher(re);
+	PcreMatcher<Iterator, typename Iterator::off_t> matcher(re);
 
 	Iterator ms, me;
 	if (matcher.matches(start, end, pos, match_flags))
@@ -582,7 +584,7 @@ template<class Iterator>
 static inline void utf8_matches_bool (const Iterator &start, const Iterator &end, const PcrePattern &re, bool *res)
 {
 	int match_flags = PCRE_NO_UTF8_CHECK;
-	PcreMatcher<Iterator> matcher(re);
+	PcreMatcher<Iterator, typename Iterator::off_t> matcher(re);
 
 	*res = matcher.matches(start, end, start, match_flags);
 }
@@ -590,9 +592,9 @@ static inline void utf8_matches_bool (const Iterator &start, const Iterator &end
 static inline void utf8_matches_bool_c (const char *str, const PcrePattern &re, bool *res)
 {
 	int match_flags = PCRE_NO_UTF8_CHECK;
-	PcreMatcher<const char*> matcher(re);
+	PcreMatcher<const unsigned char*, ptrdiff_t> matcher(re);
 
-	*res = matcher.matches(str, str+strlen(str), str, match_flags);
+	*res = matcher.matches((const unsigned char*)str, (const unsigned char*)str+strlen(str), (const unsigned char*)str, match_flags);
 }
 
 bool CharsetHandler_utf8::matches (const tuple_cell *tc, const char *regex)
@@ -773,7 +775,8 @@ bool CollationHandler_utf8::starts_with(const tuple_cell *tc, const tuple_cell *
 {
     tuple_cell pref = tuple_cell::make_sure_light_atomic(*prefix);
 
-    str_off_t pref_len = pref.get_strlen();
+	//ptrdiff_t is ok since we use make_sure_light_atomic
+	ptrdiff_t pref_len = (ptrdiff_t)pref.get_strlen();
 
     if(tc->get_strlen() < pref_len) return false;
 
@@ -919,7 +922,7 @@ utf8_valid(const char *string, size_t length)
 
 	for (p = string; length-- > 0; ++p)
 	{
-		register int ab;
+		register unsigned int ab;
 		register int c = (unsigned char)*p;
 		if (c < 128) continue;
 		if ((c & 0xc0) != 0xc0) return (char*)p;

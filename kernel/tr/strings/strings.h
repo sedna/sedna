@@ -111,7 +111,7 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 	{ \
 	case tc_light_atomic_var_size: \
 	case tc_light_atomic_fix_size: {\
-		char *__str = tcell_ptr->get_str_mem(); \
+		unsigned char *__str = (unsigned char *)tcell_ptr->get_str_mem(); \
 		str_off_t __len = tcell_ptr->get_strlen_mem(); \
 		char_iterator __start1(__str, (int)__len, 0); \
 		char_iterator __end1(__str, (int)__len, (int)__len); \
@@ -379,7 +379,7 @@ protected:
     CharsetHandler(CollationHandler *ucp_collation_handler) : m_ucp_collation_handler(ucp_collation_handler) {}
 public:
 	//FIXME: length souldn't be int
-	virtual int length (tuple_cell *tc) = 0;
+	virtual str_off_t length (tuple_cell *tc) = 0;
 	virtual void transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str) = 0;
 	virtual CharCounter* new_char_counter() = 0;
 	virtual void free_char_counter(CharCounter *) = 0;

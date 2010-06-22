@@ -13,7 +13,7 @@
 
 //#define ITERATOR_CHECK_BOUNDS
 
-class char_iterator : public std::iterator<std::bidirectional_iterator_tag,char> 
+class char_iterator : public std::iterator<std::bidirectional_iterator_tag,unsigned char> 
     {
     private:
     	
@@ -43,12 +43,12 @@ class char_iterator : public std::iterator<std::bidirectional_iterator_tag,char>
 			return ((uintptr_t)(it1.begin+it1.shift)<=(uintptr_t)(it2.begin+it2.shift));
 		}
 		//number of chars left to the end of the string
-		char* begin;
+		unsigned char* begin;
 		int size;
 		ptrdiff_t shift;
     public:
         typedef int off_t;
-		char_iterator(char* _begin_, int _size_,ptrdiff_t _shift_) :
+		char_iterator(unsigned char* _begin_, int _size_,ptrdiff_t _shift_) :
 			begin(_begin_) ,size(_size_) ,shift(_shift_)
        	{
 
