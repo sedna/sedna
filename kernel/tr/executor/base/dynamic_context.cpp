@@ -112,6 +112,9 @@ dynamic_context::~dynamic_context()
     // destroy all variable contexts
     for (size_t i = 0; i < var_cxts.size(); i++)
         delete var_cxts[i];
+
+    // destroy static context
+    delete st_cxt;
 }
 
 void dynamic_context::reset_local_vars()
