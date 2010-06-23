@@ -54,9 +54,6 @@ namespace executor_globals
     extern TLS_VAR_DECL 
     PPIterator* __current_physop;
 
-    extern TLS_VAR_DECL
-    volatile bool is_timer_fired;
-
     /* In this mode each operation collects execution time,
      * i/o statistics, etc to be used in query profiler statement.
      */
@@ -111,10 +108,6 @@ namespace executor_globals
 /* Must be called after delete qep_tree in trn! */
 #define RESET_CURRENT_PP         executor_globals::__current_physop = NULL; \
                                  executor_globals::current_stack_depth = 0;
-
-/* Check in executor if timer is fired */
-#define CHECK_TIMER_FLAG         if (executor_globals::is_timer_fired) \
-                                     throw USER_EXCEPTION(SE4620);
 
 
 /*******************************************************************************

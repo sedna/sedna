@@ -492,10 +492,11 @@ tuple_cell dm_document_uri(xptr node)
     {
         case document       : {
                                   d_dsc *d = D_DSC(node);
-                                  int size = getTextSize(d);
+                                  /* Document name and URI could not be greater than PSTRMAXSIZE */
+                                  size_t size = (size_t)getTextSize(d);
                                   if (size == 0) return tuple_cell::eos();
                                   xptr data = getTextPtr(d);
-                                  char *t = se_new char[size + 1];
+                                  char *t = new char[size + 1];
                                   t[size] = '\0';
                                   estr_copy_to_buffer(t, data, size);
                                   return tuple_cell::atomic(xs_anyURI, t);

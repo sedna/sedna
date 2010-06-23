@@ -7279,7 +7279,7 @@ zfwrite_c(
 	if (ldiv * outsize < log10rad * sa)
 	{
 		free((void*)out);
-		if (!(out = (verylong)calloc((size_t)(outsize = (log10rad * sa) / ldiv + 2), (size_t)SIZEOFLONG))) {
+		if (!(out = (verylong)calloc((size_t)(outsize = (long)((log10rad * sa) / ldiv + 2)), (size_t)SIZEOFLONG))) {
 			zhalt("allocation failure in zfwrite_c");
 			return (0);
 		}
@@ -7843,7 +7843,7 @@ zswrite(
 	if (ldiv * outsize < log10rad * sa)
 	{
 		free((void*)out);
-		if (!(out = (verylong)calloc((size_t)(outsize = (log10rad * sa) / ldiv + 2), (size_t)SIZEOFLONG))) {
+		if (!(out = (verylong)calloc((size_t)(outsize = (long)((log10rad * sa) / ldiv + 2)), (size_t)SIZEOFLONG))) {
 			zhalt("allocation failure in zswrite");
 			return (0);
 		}
@@ -8078,8 +8078,10 @@ zbfread(
         string[1] = (len>>CHARL)&((1<<CHARL)-1);
         string[2] = (len>>(2*CHARL))&((1<<CHARL)-1);
         string[3] = (len>>(3*CHARL))&((1<<CHARL)-1);
-	if (len < 0) len = -len;
-	if (fread((void*)&(string[4]), 1, (size_t)len, fn) < len) {
+	
+    if (len < 0) len = -len;
+	/* len >=0. It's safe to (unsigned int) it here. */
+    if (fread((void*)&(string[4]), 1, (size_t)len, fn) < (unsigned int)len) {
 		free(string);
 		return (0);
 	}

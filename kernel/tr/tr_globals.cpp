@@ -1,7 +1,8 @@
 /*
-* File:  tr_globals.cpp
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  tr_globals.cpp
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ */
 
 #include <string>
 
@@ -56,6 +57,13 @@ namespace tr_globals
     int internal_auth_switch = DEPLOY_AUTH_CHECK;
 
     USemaphore wait_sem;
+
+    /* 
+     * Used to interrupt execution due to timeout. 
+     * Pping manages state of this variable.
+     */
+    TLS_VAR_DECL
+    volatile bool is_timer_fired = false;
 }
 
 static const size_t narg = 13;

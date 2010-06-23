@@ -72,9 +72,23 @@ bool is_first_start_of_gov(int ping_port)
 void log_out_system_information()
 {
     U_UTSNAME buf;
+#ifdef SEDNA_X64
+    const char* proc = "64bit";
+#else
+    const char* proc = "32bit";
+#endif
+
+#ifdef _ppc_
+    const char* arch = " PPC";
+#else
+    const char* arch = "";
+#endif
+
+    elog(EL_INFO, ("SEDNA version is %s.%s (%s %s%s)", SEDNA_VERSION, SEDNA_BUILD, proc, ACTIVE_CONFIGURATION, arch));
     if(uUname(&buf, __sys_call_error))
         elog(EL_WARN, ("Can't get system information!"));
     else
+
 #ifdef _WIN32
         elog(EL_INFO, ("System: %s %s (%s) %s", buf.sysname, buf.release, buf.version, buf.machine));
 #else

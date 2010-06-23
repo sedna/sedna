@@ -1,7 +1,7 @@
 /*
-* File:  other_updates.cpp
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  other_updates.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #include "common/sedna.h"
 

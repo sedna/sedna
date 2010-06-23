@@ -11,8 +11,6 @@
 
 #ifdef _WIN32
 
-typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
-
 typedef struct {
     char sysname[128];
     char release[128];

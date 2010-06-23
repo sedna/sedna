@@ -1,7 +1,8 @@
 /*
-* File:  updates.cpp
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  updates.cpp
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ */
 
 #include "common/sedna.h"
 
@@ -200,6 +201,9 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
     xptr node_indir;
     schema_node_cptr scmnode;
     xmlscm_type scm_type;
+
+    /* Rollback transaction if timeout value's been exceeded */
+    CHECK_TIMER_FLAG
 
 #ifdef SE_ENABLE_FTSEARCH
     if (!depth) init_ft_sequences(left,right,parent);

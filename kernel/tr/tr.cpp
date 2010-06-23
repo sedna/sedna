@@ -158,8 +158,8 @@ int TRmain(int argc, char *argv[])
         }
 
         tr_globals::ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number,
-            run_recovery ? EL_RCV : EL_TRN,
-            run_recovery ? NULL : &executor_globals::is_timer_fired);
+                                           run_recovery ? EL_RCV : EL_TRN,
+                                           run_recovery ? NULL : &tr_globals::is_timer_fired);
         tr_globals::ppc->startup(e);
 
         event_logger_init((run_recovery) ? EL_RCV : EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);

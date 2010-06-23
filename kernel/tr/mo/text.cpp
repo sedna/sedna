@@ -100,7 +100,9 @@ void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type
                 WRITEP(node_xptr);
             }
 
-            memcpy(node->data.st, buffer, size);
+            /* size <= max_indsc_text_size << SIZE_MAX.
+             * It's safe to (size_t) it. */
+            memcpy(node->data.st, buffer, (size_t) size);
         }
 
         node->ss = (int8_t) size;
@@ -154,10 +156,12 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const void
                 pstr_long_append_tail(node_xptr, tmp_buffer, curr_size, text_mem);
             }
         } else {
+            /* Both curr_size and size <= PSTRMAXSIZE << SIZE_MAX here. 
+             * So it's safe to (size_t) them. */
             char * buffer = tmp_text_buffer;
             if (position == ip_tail) {
                 CHECKP(data);
-                memcpy(buffer, XADDR(data), curr_size);
+                memcpy(buffer, XADDR(data), (size_t) curr_size);
                 copyTextToBuffer(buffer + (size_t) curr_size, text, (size_t) size, ttype);
             } else {
                 copyTextToBuffer(buffer, text, (size_t) size, ttype);
