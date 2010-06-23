@@ -37,7 +37,7 @@ static_context::static_context()
     /* Initialize predefined namespaces */
     while (tmp->prefix != NULL)
     {
-        predefined_ns.insert(xmlns_touch(tmp->uri,tmp->prefix));
+        predefined_ns.insert(xmlns_touch(tmp->prefix, tmp->uri));
         tmp++;
     }
 

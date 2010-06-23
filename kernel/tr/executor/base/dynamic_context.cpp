@@ -89,6 +89,8 @@ dynamic_context::dynamic_context(static_context *_st_cxt_) : st_cxt(_st_cxt_)
     insc_ns["xml"].push_back(xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace"));
 
     curr_var_dsc = curr_gvar_dsc = curr_func_id = 0;
+
+    datetime_initialized = false;
 }
 
 dynamic_context::~dynamic_context()

@@ -1,6 +1,6 @@
 /*
- * File:  lr2por.cpp
- * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File:  l2pFuncs.cpp
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include "l2pFuncs.h"
