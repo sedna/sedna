@@ -20,12 +20,6 @@ namespace executor_globals
     TLS_VAR_DECL
     PPIterator* __current_physop = NULL;
 
-    /* Used to interrupt execution due to timeout. 
-     * Pping manages state of this variable.
-     */
-    TLS_VAR_DECL
-    volatile bool is_timer_fired = false;
-
     /* If turned on each operation collects various profile statistics */
     TLS_VAR_DECL
     volatile bool profiler_mode = false;

@@ -1,6 +1,7 @@
 /*
- * File:  tr_globals.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File:  tr_globals.h 
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 
@@ -54,12 +55,31 @@ namespace tr_globals
 
     extern int internal_auth_switch;
     
-    /* waiting semaphore for tarnsaction. In some cases transaction may be asked to wait by sm after 
-     * an SSMMSG call. This is the semaphore to do the waiting. SM will up it when it's possible for 
-     * transaction to continue
+    /*
+     * Waiting semaphore for tarnsaction. In some cases transaction may be
+     * asked to wait by sm after an SSMMSG call. This is the semaphore to do
+     * the waiting. SM will up it when it's possible for  transaction to
+     * continue.
      */
     extern USemaphore wait_sem;
+
+    /*
+     * Signals that there is timeout. Pointer to this flag is passed to the
+     * pping client which counts time and sets this flag when counter greater
+     * than tr_globals::query_timeout. Executor and some other tr operations
+     * use this flag through CHECK_TIMER_FLAG macro to ROLLBACK current
+     * transaction.
+     */
+    extern TLS_VAR_DECL
+    volatile bool is_timer_fired;
 }
+
+/* 
+ * Check in time is out.
+ * See tr_globals::is_timer_fired for the description.
+ */
+#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) \
+                                     throw USER_EXCEPTION(SE4620);
 
 
 #endif /* _TR_GLOBALS_H */

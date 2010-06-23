@@ -228,7 +228,6 @@ int main(int argc, char** argv)
       if (event_logger_start_daemon(el_convert_log_level(cfg.gov_vars.el_level), SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
           throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
-      elog(EL_INFO, ("SEDNA version is %s.%s", SEDNA_VERSION, SEDNA_BUILD));
       log_out_system_information();
 
       create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);

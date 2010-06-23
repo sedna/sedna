@@ -1,20 +1,32 @@
 /*
  * File:  usystem.c
- * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2008 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #include "common/u/usystem.h"
 #include "common/errdbg/d_printf.h"
 
-/* returns 0 if succeeded
-   returns 1 if failed */
+/* Some definitions we need on Windows */
+#ifdef _WIN32
+typedef void (WINAPI *LPFN_GETNATIVESYSTEMINFO) (LPSYSTEM_INFO);
+#endif
+
+/* 
+ * Collects system information into U_UTSNAME structure, including:
+ * OS type, OS version, architecture type - x86, x64, etc.
+ *     returns 0 if succeeded
+ *     returns 1 if failed 
+ */
 int uUname(U_UTSNAME* s, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    BOOL res, bIsWow64 = FALSE;
+    BOOL res;
     OSVERSIONINFOEX osvi;
-    LPFN_ISWOW64PROCESS fnIsWow64Process;
+    SYSTEM_INFO si;
+    LPFN_GETNATIVESYSTEMINFO fnGetNativeSystemInfo;
  
+    ZeroMemory(&si, sizeof(SYSTEM_INFO));
     ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
 
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
@@ -29,18 +41,22 @@ int uUname(U_UTSNAME* s, sys_call_error_fun fun)
     sprintf(s->release, "%lu.%lu.%lu", osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
     sprintf(s->version, "SP%u.%u", osvi.wServicePackMajor, osvi.wServicePackMinor);
     
-    fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandle("kernel32"),"IsWow64Process");
- 
-    if (NULL != fnIsWow64Process)
-    {
-        if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
-        {
-            sys_call_error("IsWow64Process");
-            return 1;
-        }
-    }
+    fnGetNativeSystemInfo = (LPFN_GETNATIVESYSTEMINFO)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetNativeSystemInfo");
 
-    sprintf(s->machine, bIsWow64 ? "x64" : "x86");
+    /* Call GetNativeSystemInfo if supported or GetSystemInfo otherwise. */
+    if(NULL != fnGetNativeSystemInfo)
+        fnGetNativeSystemInfo(&si);
+    else
+        GetSystemInfo(&si);
+        
+    if(si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64)
+        sprintf(s->machine, "IA64");
+    else if(si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+        sprintf(s->machine, "x64");
+    else if(si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+        sprintf(s->machine, "x86");
+    else 
+        sprintf(s->machine, "UNKNOWN");
 
     return 0;
 #else
@@ -54,4 +70,3 @@ int uUname(U_UTSNAME* s, sys_call_error_fun fun)
     return 0;
 #endif
 }
-

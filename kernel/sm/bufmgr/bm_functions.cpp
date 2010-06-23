@@ -40,7 +40,7 @@ void _bm_set_working_set_size()
           );
     if (res != 0)
 
-    elog(EL_WARN, ("Can't get working set size. Possibly, there are no admin rights."));
+    elog(EL_WARN, ("Can't get working set size. Possibly, there are not enough privileges."));
 
     res = uSetCurProcessWorkingSetSize(
                         working_set_size,			// minimum working set size
@@ -50,7 +50,7 @@ void _bm_set_working_set_size()
 
     if (res != 0)
 
-    elog(EL_WARN, ("Can't set working set size. Possibly, there are no admin rights."));
+    elog(EL_WARN, ("Can't set working set size. Possibly, there are not enough privileges."));
 }
 
 void _bm_restore_working_set_size()
@@ -64,7 +64,7 @@ void _bm_restore_working_set_size()
 
     if (res != 0)
 
-    elog(EL_WARN, ("Can't restore working set size. Possibly, there are no admin rights."));
+    elog(EL_WARN, ("Can't restore working set size. Possibly, there are not enough privileges."));
 }
 
 #ifndef _WIN32
@@ -116,11 +116,7 @@ static inline void _bm_guarantee_buffer_pool(void* addr, int size)
 
 void _bm_init_buffer_pool()
 {
-#ifndef REQUIRE_ROOT
-    int is_root = uIsAdmin(__sys_call_error);
-    if (is_root)
-#endif
-        _bm_set_working_set_size();
+    _bm_set_working_set_size();
 
     file_mapping = uCreateFileMapping(U_INVALID_FD, sm_globals::bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
@@ -138,7 +134,7 @@ void _bm_init_buffer_pool()
             elog(EL_WARN, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
             _bm_guarantee_buffer_pool(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE);
 #else
-            elog(EL_WARN, ("Can't lock memory. There are no admin rights."));
+            elog(EL_WARN, ("Can't lock memory. Process does not have enouth privileges."));
 #endif
             lock_memory = 0;
         }
@@ -168,11 +164,7 @@ void _bm_release_buffer_pool()
     if (uReleaseFileMapping(file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
-#ifndef REQUIRE_ROOT
-    int is_root = uIsAdmin(__sys_call_error);
-    if (is_root)
-#endif
-        _bm_restore_working_set_size();
+    _bm_restore_working_set_size();
 }
 
 void bm_startup()

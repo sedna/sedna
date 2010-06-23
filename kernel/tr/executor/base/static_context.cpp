@@ -106,7 +106,7 @@ void static_context::set_base_uri(const char* _base_uri_)
         collapse_string_normalization(_base_uri_, result);
         tuple_cell tc = result.get_tuple_cell();
         tc = tuple_cell::make_sure_light_atomic(tc);
-        base_uri = new char[tc.get_strlen() + 1];
+        base_uri = new char[tc.get_strlen_mem() + 1];
         strcpy(base_uri, tc.get_str_mem());
     }
     else

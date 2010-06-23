@@ -158,11 +158,11 @@ void PPExplain::do_next (tuple &t)
         }
 
         /* Insert physical plan for each global variable */
-        for(int i = 0; i < cxt->get_global_vars_number(); i++)
+        for(unsigned int i = 0; i < cxt->get_global_vars_number(); i++)
         {
             const global_producer& gp = cxt->get_global_var_producer(i);
             tmp = insert_element_i(tmp,XNULL,left,"variable",xs_untyped,explain_ns);
-            u_itoa(i,buf,10);
+            u_ui64toa(i,buf,10);
             xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
             attr_left = insert_attribute_i(attr_left,XNULL,tmp,"variable-name",xs_untypedAtomic, gp.var_name.c_str(), gp.var_name.length(), NULL_XMLNS);
             PPExplainVisitor visitor(cxt, tmp, cxt->get_var_map(), profiler_mode);
@@ -170,11 +170,11 @@ void PPExplain::do_next (tuple &t)
         }
         
         /* Insert physical plan for each function */
-        for(int i = 0; i < cxt->get_global_funcs_number(); i++)
+        for(unsigned int i = 0; i < cxt->get_global_funcs_number(); i++)
         {
             const function_declaration& fd = cxt->get_func_decl(i);
             tmp = insert_element_i(tmp,XNULL,left,"function",xs_untyped,explain_ns);
-            u_itoa(i,buf,10);
+            u_ui64toa(i,buf,10);
             xptr attr_left = insert_attribute_i(XNULL,XNULL,tmp,"id",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
             attr_left = insert_attribute_i(attr_left,XNULL,tmp,"function-name",xs_untypedAtomic, fd.func_name.c_str(), fd.func_name.length(), NULL_XMLNS);
             std::string ret_type = fd.ret_st.to_str();
@@ -185,10 +185,10 @@ void PPExplain::do_next (tuple &t)
 
             xptr args = insert_element_i(XNULL,XNULL,tmp,"arguments",xs_untyped,explain_ns);
             xptr args_left = XNULL;
-            for (int j = 0; j < fd.num; j++)
+            for (unsigned int j = 0; j < fd.num; j++)
             {
                 args_left = insert_element_i(args_left,XNULL,args,"argument",xs_untyped,explain_ns);
-                u_itoa(j,buf,10);
+                u_ui64toa(j,buf,10);
                 xptr attr_left = insert_attribute_i(XNULL,XNULL,args_left,"descriptor",xs_untypedAtomic, buf, strlen(buf), NULL_XMLNS);
                 std::string type = fd.args[j].to_str();
                 insert_attribute_i(attr_left,XNULL,args_left,"type",xs_untypedAtomic, type.c_str(), type.length(), NULL_XMLNS);
