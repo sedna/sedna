@@ -47,6 +47,9 @@ void PPQueryRoot::do_open()
         cxt->add_char_mapping("\"","\\\"",-1);
         cxt->add_char_mapping("\\","\\\\",-1);
     }
+
+    /* Set serialization options for client */
+    tr_globals::client->set_serialization_params(cxt->get_static_context()->get_serialization_params());
 }
 
 void PPQueryRoot::do_close()
@@ -152,9 +155,6 @@ bool PPQueryRoot::do_next()
     }
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
-
-    /* Set serialization options for client */
-    tr_globals::client->set_serialization_params(cxt->get_static_context()->get_serialization_params());
 
     /* Clients which based on protocol 4 should support serialization */
     if(tr_globals::client->supports_serialization())
