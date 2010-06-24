@@ -47,7 +47,7 @@ int uOpenShMem(UShMem *id, global_name name, size_t size, sys_call_error_fun fun
 
 int uReleaseShMem(UShMem id, global_name name, sys_call_error_fun fun)
 {
-    UMMap mmap = {}; /* nullifies to_file */
+    UMMap mmap = {0}; /* nullifies to_file */
     int res;
 
     mmap.map = id.id;
@@ -59,7 +59,7 @@ int uReleaseShMem(UShMem id, global_name name, sys_call_error_fun fun)
 
 int uCloseShMem(UShMem id, sys_call_error_fun fun)
 {
-    UMMap mmap = {}; /* nullifies to_file */
+    UMMap mmap = {0}; /* nullifies to_file */
     int res;
 
     mmap.map = id.id;
@@ -71,7 +71,7 @@ int uCloseShMem(UShMem id, sys_call_error_fun fun)
 
 void* uAttachShMem(UShMem id, void *ptr, size_t size, sys_call_error_fun fun)
 {
-    UMMap mmap = {}; /* nullifies to_file */
+    UMMap mmap = {0}; /* nullifies to_file */
     void *res;
 
     mmap.map = id.id;
@@ -83,7 +83,7 @@ void* uAttachShMem(UShMem id, void *ptr, size_t size, sys_call_error_fun fun)
 
 int uDettachShMem(UShMem id, void * ptr, sys_call_error_fun fun)
 {
-    UMMap mmap = {}; /* nullifies to_file */
+    UMMap mmap = {0}; /* nullifies to_file */
     int res;
 
     mmap.map = id.id;

@@ -15,6 +15,7 @@
 #define U_INVALID_FILEMAPPING(m)			((m).map == NULL)
 
 typedef struct {
+    size_t size;
 	HANDLE map;
     UFile fd;
 } UMMap;

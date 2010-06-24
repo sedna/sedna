@@ -12,8 +12,8 @@
 #ifdef _WIN32
 
 typedef struct {
-    HANDLE id;
     size_t size;
+    HANDLE id;
 } UShMem;
 
 #else

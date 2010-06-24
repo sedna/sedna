@@ -17,7 +17,7 @@ UMMap uCreateFileMapping(UFile fd, size_t size, const char* name, USECURITY_ATTR
     DWORD size_high, size_low;
 
 #ifdef _WIN64
-    size_high = size >> 32;
+    size_high = (DWORD)(size >> 32);
 #else
     size_high = 0;
 #endif
@@ -118,7 +118,6 @@ UMMap uOpenFileMapping(UFile fd, size_t size, const char *name, sys_call_error_f
 
 int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
 {
-	char buf[128];
 	const char *uName = NULL;
 #ifdef _WIN32
     if( CloseHandle(m.map) == 0)
@@ -128,6 +127,7 @@ int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
     }
     else return 0;
 #else
+	char buf[128];
 	uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
     if (uName)
     {
@@ -180,7 +180,7 @@ void *uMapViewOfFile(UMMap m, void *addr, size_t size, uint64_t offs, sys_call_e
     void *ret_val;
     DWORD off_high, off_low;
 
-    off_high = offs >> 32;
+    off_high = (DWORD)(offs >> 32);
     off_low = (DWORD)offs;
 
     if ((ret_val = MapViewOfFileEx(m.map, FILE_MAP_ALL_ACCESS, off_high, off_low, size, addr)) == NULL)
