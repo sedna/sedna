@@ -52,7 +52,7 @@ void info_table::release()
     if ( 0 != uDettachShMem(gov_shm_service_dsc, gov_shared_mem, __sys_call_error))
         throw USER_EXCEPTION2(SE4024, "GOVERNOR_SHARED_MEMORY_NAME");
 
-    if ( 0 != uReleaseShMem(gov_shm_service_dsc, __sys_call_error))
+    if ( 0 != uReleaseShMem(gov_shm_service_dsc, GOVERNOR_SHARED_MEMORY_NAME, __sys_call_error))
         throw USER_EXCEPTION2(SE4020, "GOVERNOR_SHARED_MEMORY_NAME");
 }
 

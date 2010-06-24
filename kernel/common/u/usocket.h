@@ -51,11 +51,11 @@ extern "C"
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-    int ubind_tcp(USOCKET s, int port, sys_call_error_fun fun);
+    int ubind_tcp(USOCKET s, unsigned short port, sys_call_error_fun fun);
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-    int uconnect_tcp(USOCKET s, int port, const char *hostname, sys_call_error_fun fun);
+    int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_error_fun fun);
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
@@ -75,11 +75,11 @@ extern "C"
 /* return value indicates number of bytes received
    returns zero if connection was gracefully closed
    returns U_SOCKET_ERROR in the case of error */
-    int urecv(USOCKET s, char *buf, int len, sys_call_error_fun fun);
+    int urecv(USOCKET s, char *buf, size_t len, sys_call_error_fun fun);
 
 /* return value indicates number of bytes send  
    returns U_SOCKET_ERROR in the case of error  */
-    int usend(USOCKET s, const char *buf, int len, sys_call_error_fun fun);
+    int usend(USOCKET s, const char *buf, size_t len, sys_call_error_fun fun);
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */

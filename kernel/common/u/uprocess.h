@@ -37,8 +37,8 @@ int uSetEnvironmentVariable(const char* name, const char* value, char** buffer, 
 int uGetEnvironmentVariable(const char* name, char* buf, uint32_t size, sys_call_error_fun fun);
 
 /* return value 0 indicates success */
-int uGetCurProcessWorkingSetSize(usize_t *MinWorkingSetSize, usize_t *MaxWorkingSetSize, sys_call_error_fun fun);
-int uSetCurProcessWorkingSetSize(usize_t MinWorkingSetSize, usize_t MaxWorkingSetSize, sys_call_error_fun fun);
+int uGetCurProcessWorkingSetSize(size_t *MinWorkingSetSize, size_t *MaxWorkingSetSize, sys_call_error_fun fun);
+int uSetCurProcessWorkingSetSize(size_t MinWorkingSetSize, size_t MaxWorkingSetSize, sys_call_error_fun fun);
 
 /* return value 0 indicates success */
 int uCreateProcess(

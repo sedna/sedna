@@ -93,7 +93,7 @@ SSMMsg::SSMMsg(mode _m_,
     millisec = _millisec_;
 
     thread_handles = NULL;
-    sh_mem = 0;
+    sh_mem = {};
     sems = 0;
 
 
@@ -212,7 +212,7 @@ int SSMMsg::shutdown()
 
     if (m == Server)
     {
-        if (0 != uReleaseShMem(sh_mem, __sys_call_error))
+        if (0 != uReleaseShMem(sh_mem, g_name_shmem, __sys_call_error))
         {
             d_printf1("uReleaseShMem failed\n");
             return 1;
@@ -449,7 +449,7 @@ void SSMMsg::ipc_cleanup(global_name name)
 	InitSSMMsgNames(&names, name, buf, sizeof buf);
 	if (uOpenShMem(&memory, names.memory, 8192, __sys_call_error) == 0)
 	{
-		uReleaseShMem(memory, __sys_call_error);
+		uReleaseShMem(memory, names.memory, __sys_call_error);
 	}	
 	if (USemaphoreArrOpen(&sems, 9, names.sems, __sys_call_error) == 0)
 	{

@@ -53,13 +53,13 @@ int USemaphoreUp(USemaphore sem, sys_call_error_fun fun);
 
 
 // sa - Security Attributes for the new semaphores
-int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
-int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_error_fun fun);
-int USemaphoreArrRelease(USemaphoreArr sem, int size, sys_call_error_fun fun);
-int USemaphoreArrClose(USemaphoreArr sem, int size, sys_call_error_fun fun);
-int USemaphoreArrDown(USemaphoreArr sem, int i, sys_call_error_fun fun);
-int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec, sys_call_error_fun fun);
-int USemaphoreArrUp(USemaphoreArr sem, int i, sys_call_error_fun fun);
+int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
+int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name name, sys_call_error_fun fun);
+int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fun);
+int USemaphoreArrClose(USemaphoreArr sem, unsigned size, sys_call_error_fun fun);
+int USemaphoreArrDown(USemaphoreArr sem, unsigned i, sys_call_error_fun fun);
+int USemaphoreArrDownTimeout(USemaphoreArr sem, unsigned i, unsigned int millisec, sys_call_error_fun fun);
+int USemaphoreArrUp(USemaphoreArr sem, unsigned i, sys_call_error_fun fun);
 
 
 

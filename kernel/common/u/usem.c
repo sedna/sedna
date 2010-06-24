@@ -308,10 +308,10 @@ int USemaphoreUp(USemaphore sem, sys_call_error_fun fun)
 
 #define SIZE_OF_BUF_FOR_ADJUSTED_NAME 128
 
-int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
+int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #ifdef _WIN32
 {
-    int i = 0;
+    unsigned i = 0;
     char buf[128];
 	const char *wName = NULL;
     size_t name_len = 0;
@@ -328,7 +328,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 
     for (i = 0; i < size; i++)
     {
-		sprintf(buf+name_len,":%d",i);
+		sprintf(buf+name_len,":%u",i);
 
         (*sem)[i] = CreateSemaphore(sa,
                                     init_values[i],
@@ -362,13 +362,13 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 	    ushort *array;
 	} semctl_arg;
 	key_t key = IPC_PRIVATE;
-    int i = 0;
+    unsigned i = 0;
 
 	key = USys5IPCKeyFromGlobalName(name);
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
     if (sa) sem_access_mode = *sa;
-    *sem = semget(key, size, IPC_CREAT | IPC_EXCL | sem_access_mode);
+    *sem = semget(key, (int)size, IPC_CREAT | IPC_EXCL | sem_access_mode);
 
     if (*sem < 0)
     {
@@ -393,10 +393,10 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 }
 #endif
 
-int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_error_fun fun)
+int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name name, sys_call_error_fun fun)
 #ifdef _WIN32
 {
-    int i = 0;
+    unsigned i = 0;
     char buf[128];
     size_t name_len = 0;
 	const char *wName = NULL;
@@ -408,7 +408,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_e
 
     for (i = 0; i < size; i++)
     {
-		sprintf(buf+name_len,":%d",i);
+		sprintf(buf+name_len,":%u",i);
 
         (*sem)[i] = OpenSemaphore(SEMAPHORE_ALL_ACCESS, 
                                   FALSE, 
@@ -429,7 +429,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_e
 	key_t key = IPC_PRIVATE;
 	key = USys5IPCKeyFromGlobalName(name);
 
-    *sem = semget(key, size, 0);
+    *sem = semget(key, (int)size, 0);
 
     if (*sem < 0)
     {
@@ -442,10 +442,10 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_e
 #endif
 
 
-int USemaphoreArrRelease(USemaphoreArr sem, int size, sys_call_error_fun fun)
+int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fun)
 #ifdef _WIN32
 {
-    int i = 0;
+    unsigned i = 0;
     BOOL res;
 
     for (i = 0; i < size; i++)
@@ -491,10 +491,10 @@ int USemaphoreArrRelease(USemaphoreArr sem, int size, sys_call_error_fun fun)
 #endif
 
 
-int USemaphoreArrClose(USemaphoreArr sem, int size, sys_call_error_fun fun)
+int USemaphoreArrClose(USemaphoreArr sem, unsigned size, sys_call_error_fun fun)
 #ifdef _WIN32
 {
-    int i = 0;
+    unsigned i = 0;
     BOOL res;
 
     for (i = 0; i < size; i++)
@@ -518,7 +518,7 @@ int USemaphoreArrClose(USemaphoreArr sem, int size, sys_call_error_fun fun)
 }
 #endif
 
-int USemaphoreArrDown(USemaphoreArr sem, int i, sys_call_error_fun fun)
+int USemaphoreArrDown(USemaphoreArr sem, unsigned i, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res;
@@ -545,8 +545,7 @@ int USemaphoreArrDown(USemaphoreArr sem, int i, sys_call_error_fun fun)
 
     while (true)
     {
-	int attempt = 0;
-	res = semop(sem, op_op, 1);
+        res = semop(sem, op_op, 1);
 	
         if (res == 0) return 0;
         else if (errno == EINTR) continue;
@@ -560,7 +559,7 @@ int USemaphoreArrDown(USemaphoreArr sem, int i, sys_call_error_fun fun)
 #endif
 
 
-int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec, sys_call_error_fun fun)
+int USemaphoreArrDownTimeout(USemaphoreArr sem, unsigned i, unsigned int millisec, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res;
@@ -588,30 +587,43 @@ int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec, sy
     op_op[0].sem_op = -1;
     op_op[0].sem_flg = IPC_NOWAIT;
 
-        
-    for(; count < (millisec/1000); count++)
+    do
     {    
-    	res = semop(sem, op_op, 1);
-	
-    	if (res == 0) return 0; 
+        res = semop(sem, op_op, 1);
+
+        if (res == 0)
+        {
+            return 0;
+        }
         else if (errno == EAGAIN)
         {
-            sleep(1);
+            if (millisec >= 1000)
+            {
+                sleep(1);
+                millisec -= 1000;
+            }
+            else
+            {
+                /* we should do something here instead of break;
+                 * for example:
+                 *
+                 * nanosleep(...);
+                 */
+                millisec = 0;
+            }
         }
         else 
         {
             sys_call_error("semop");
             return 1;
         }
-
-    	//else sleep(1);
-    }
+    } while (millisec);
 
     return 2;
 } 
 #endif
 
-int USemaphoreArrUp(USemaphoreArr sem, int i, sys_call_error_fun fun)
+int USemaphoreArrUp(USemaphoreArr sem, unsigned i, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res;

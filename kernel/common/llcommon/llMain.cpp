@@ -336,7 +336,7 @@ int llRelease()
 	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
-	if (uReleaseShMem(SharedMem, __sys_call_error) != 0)
+	if (uReleaseShMem(SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot release shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (USemaphoreRelease(SyncSem, __sys_call_error) != 0)

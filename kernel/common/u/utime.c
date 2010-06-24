@@ -48,6 +48,7 @@ utm getLocalTime()
     retval.utm_yday = tm_ptr->tm_yday;
     retval.utm_isdst = tm_ptr->tm_isdst;
 
+    // TODO: make it via config.h
 #if defined(__cygwin__) || defined(SunOS) 
     retval.utm_zone = 0;
     retval.utm_gmtoff = 0;

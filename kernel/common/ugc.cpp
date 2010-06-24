@@ -31,7 +31,7 @@
 
 #define SHAREDMEM_CLEANUP(name, size)			if (uOpenShMem(&shm, name, 0, __sys_call_error) == 0)					\
                                                 {																			\
-                                                    uReleaseShMem(shm, __sys_call_error);									\
+                                                    uReleaseShMem(shm, name, __sys_call_error);									\
                                                     d_printf1("Shared memory cleanup: "#name"\n");							\
                                                  }
 
@@ -39,12 +39,6 @@
                                                 {																			\
                                                     USemaphoreRelease(sem, __sys_call_error);								\
                                                     d_printf1("Semaphore cleanup    : "#name2"\n");							\
-                                                }
-
-#define SHAREDMEM_CLEANUP2(name, name2, size)	if (uOpenShMem(&shm, name, 0, __sys_call_error) == 0)					\
-                                                {																			\
-                                                    uReleaseShMem(shm, __sys_call_error);									\
-                                                    d_printf1("Shared memory cleanup: "#name2"\n");							\
                                                 }
 
 #define FILE_MAPPING_CLEANUP(name)				if (!U_INVALID_FILEMAPPING(map = uOpenFileMapping(U_INVALID_FD, 0, name, __sys_call_error)))	\

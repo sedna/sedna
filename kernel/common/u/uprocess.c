@@ -47,8 +47,8 @@ int uSetEnvironmentVariable(const char* name, const char* value, char** buffer, 
     }
     return 0;
 #else
-    int name_len  = strlen(name);
-    int value_len = strlen(value);
+    size_t name_len  = strlen(name);
+    size_t value_len = strlen(value);
 
     /* This string will become the part 
      * of the environment, so we must not delete it there.
@@ -101,13 +101,13 @@ int uGetEnvironmentVariable(const char* name, char* buf, uint32_t size, sys_call
       sys_call_error("getenv");
       return 1;
     }
-    if ((int)strlen(res) > size - 1) return 1;
+    if ((uint32_t)strlen(res) > size - 1) return 1;
     strcpy(buf, res);
     return 0;
 #endif
 }
 
-int uGetCurProcessWorkingSetSize(usize_t *MinWorkingSetSize, usize_t *MaxWorkingSetSize, sys_call_error_fun fun)
+int uGetCurProcessWorkingSetSize(size_t *MinWorkingSetSize, size_t *MaxWorkingSetSize, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = GetProcessWorkingSetSize(
@@ -127,7 +127,7 @@ int uGetCurProcessWorkingSetSize(usize_t *MinWorkingSetSize, usize_t *MaxWorking
 #endif
 }
 
-int uSetCurProcessWorkingSetSize(usize_t MinWorkingSetSize, usize_t MaxWorkingSetSize, sys_call_error_fun fun)
+int uSetCurProcessWorkingSetSize(size_t MinWorkingSetSize, size_t MaxWorkingSetSize, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = SetProcessWorkingSetSize(
@@ -574,7 +574,8 @@ int uNonBlockingWaitForChildProcess(UPID pid)
 /* Return the absolute name of the program named NAME.  This function
    searches the directories in the PATH environment variable if PROG
    has no directory components. */
-int find_executable(const char *name, char *buf, int size)
+static
+int find_executable(const char *name, char *buf, size_t size)
 {
     char *search;
     char *p;

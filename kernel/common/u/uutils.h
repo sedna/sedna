@@ -40,8 +40,8 @@ extern "C"
 #define _snprintf snprintf
 #endif
 
-    void int2net_int(int32_t i, char *buf);
-    void net_int2int(int32_t *i, const char *buf);
+    void int2net_int(uint32_t i, char *buf);
+    void net_int2int(uint32_t *i, const char *buf);
 
     /* buf length must not be less than 20 */
     char *int2c_str(int value, char *buf);

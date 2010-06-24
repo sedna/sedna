@@ -169,7 +169,7 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 	{
 		if (msg->length < 11 || msg->body[5] != 0) return -1;
 
-		int32_t len;
+		uint32_t len;
 		net_int2int(&len, &(msg->body[6]));
 
 		if (hbRetrieveAndCheckDbName(sock, &(msg->body[10]), len) != 0)
@@ -186,7 +186,7 @@ int hbProcessStartRequest(USOCKET sock, msg_struct *msg)
 	smmsg.data.hb_struct.state = req;
 	smmsg.data.hb_struct.is_checkp = (*status == HB_WAIT) ? false : (msg->body[0] != 0);
 
-	net_int2int((int32_t *)(&incr_req), &(msg->body[1]));
+	net_int2int((uint32_t *)(&incr_req), &(msg->body[1]));
 	smmsg.data.hb_struct.incr_state = incr_req;
 
 	hbSendMsgToSm(&smmsg);
@@ -244,7 +244,7 @@ int hbProcessLogArchRequest(msg_struct *msg)
 		return -1;
 	}
 
-	net_int2int((int32_t *)(&incr_req), &(msg->body[1]));
+	net_int2int((uint32_t *)(&incr_req), &(msg->body[1]));
 
 	int res = RetrieveAllFileNames(incr_req == HB_ADD_INCR);
 
