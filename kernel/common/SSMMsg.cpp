@@ -93,7 +93,6 @@ SSMMsg::SSMMsg(mode _m_,
     millisec = _millisec_;
 
     thread_handles = NULL;
-    sh_mem = {};
     sems = 0;
 
 
