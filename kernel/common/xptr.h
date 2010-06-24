@@ -92,36 +92,38 @@ struct xptr
         offs = offs_;
     }
 
-    // TODO: check for overflow
+    /*
+     * Smart inc and dec functions, which can go between layers. Should be
+     * used instead of overloaded operators.
+     */
+    void inc_offset(unsigned n);
+    void dec_offset(unsigned n);
+
+    /*
+     * CAVEAT: since we're using -n here INT_MIN shouldn't work,
+     *         maybe others, but on all known platforms only that value.
+     *         We could use something like dec_offset(INT_MAX), dec_offset(1)
+     *         for this, but it's not 100% portable
+     */
     xptr &operator +=(int n)
     {
-        U_ASSERT(offs + n >= 0);
-
-        offs += n;
-
-        if (offs >= LAYER_ADDRESS_SPACE_SIZE)
-        {
-            layer++;
-            offs -= LAYER_ADDRESS_SPACE_SIZE;
-        }
+        if (n >= 0)
+            this->inc_offset((unsigned)n);
+        else
+            this->dec_offset((unsigned)-n);
 
         return *this;
     }
 
-    // TODO: check for overflow
+    /*
+     * Same CAVEAT as above applies here too
+     */
     xptr &operator -=(int n)
     {
-        if (offs - n < 0)
-        {
-            U_ASSERT(layer > 1);
-            layer--;
-            offs = LAYER_ADDRESS_SPACE_SIZE - n;
-        }
+        if (n >= 0)
+            this->dec_offset((unsigned)n);
         else
-        {
-            U_ASSERT(offs - n < LAYER_ADDRESS_SPACE_SIZE);
-            offs -= n;
-        }
+            this->inc_offset((unsigned)-n);
 
         return *this;
     }

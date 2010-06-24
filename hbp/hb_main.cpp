@@ -34,7 +34,7 @@
 static void hbSendMsgAndRcvResponse(USOCKET hbSock, msg_struct *msg)
 {
     std::string err_msg;
-    int len;
+    uint32_t len;
 
     if (sp_send_msg(hbSock, msg) != 0)
     {
@@ -63,7 +63,7 @@ static int hbRetrieveFileName(msg_struct *msg, char *file_name)
 {
 	if (msg->length <= 5 || msg->body[0] != 0)  return -1;
 
-	int len;
+	uint32_t len;
 
 	net_int2int(&len, &(msg->body[1]));
 

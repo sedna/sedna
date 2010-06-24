@@ -394,7 +394,7 @@ int sess_registering(USOCKET s, char* msg_buf)
     bool special_mode;
     
     /* Read database name length */
-    int32_t db_name_len_net;
+    uint32_t db_name_len_net;
     net_int2int(&db_name_len_net, msg_buf + off);
     off += sizeof(int32_t);
 
@@ -497,7 +497,7 @@ int sm_registering(USOCKET s, char* msg_buf)
     int res, res2;
 
     /* Read database name length */
-    int32_t db_name_len_net;
+    uint32_t db_name_len_net;
     net_int2int(&db_name_len_net, msg_buf + off);
     off += sizeof(int32_t);
 

@@ -65,14 +65,14 @@ static void parse_and_print_rc(const msg_struct* msg, bool sm_list)
         {
             rc_vector rc;
             size_t offset = 1;
-            int db_number;
+            uint32_t db_number;
 
             net_int2int(&db_number, msg->body + offset);
             offset += sizeof(int);
 
             for(int i = 0; i < db_number; i++)
             {
-                int sessions_number;
+                uint32_t sessions_number;
                 net_int2int(&sessions_number, msg->body + offset);
                 offset += sizeof(int);
 

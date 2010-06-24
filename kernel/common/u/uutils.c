@@ -95,15 +95,15 @@ int _vsnprintf(char *str, size_t size, const char *format, va_list ap)
 
 #endif /* _WIN32 */
 
-void int2net_int(int32_t i, char *buf)
+void int2net_int(uint32_t i, char *buf)
 {
     i = htonl(i);
-    memcpy(buf, (void*)&i, sizeof(int32_t));
+    memcpy(buf, (void*)&i, sizeof(uint32_t));
 }
 
-void net_int2int(int32_t* i, const char *buf)
+void net_int2int(uint32_t* i, const char *buf)
 {
-    memcpy((void*)i, buf, sizeof(int32_t));
+    memcpy((void*)i, buf, sizeof(uint32_t));
     *i = ntohl(*i);
 }
 

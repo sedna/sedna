@@ -199,6 +199,7 @@ void uExitThread(unsigned rc, sys_call_error_fun fun)
 #ifdef _WIN32
 	ExitThread(rc);
 #else
+	// safe to do double-cast here since we always interpret rc as return-code
     pthread_exit((void*)(uintptr_t)rc);
 #endif
 }

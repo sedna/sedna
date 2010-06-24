@@ -237,13 +237,13 @@ void bm_shutdown()
 
     p_sm_callback_data = NULL;
 
-    if (uReleaseShMem(p_sm_callback_file_mapping, __sys_call_error) != 0)
+    if (uReleaseShMem(p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
     if (uDettachShMem(lru_global_stamp_file_mapping, lru_global_stamp_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-    if (uReleaseShMem(lru_global_stamp_file_mapping, __sys_call_error) != 0)
+    if (uReleaseShMem(lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 #endif
     d_printf1("Release shared memory: complete\n");

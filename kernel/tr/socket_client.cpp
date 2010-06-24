@@ -167,7 +167,7 @@ void socket_client::read_msg(msg_struct *msg)
 
 char* socket_client::get_query_string(msg_struct *msg)
 {
-    int32_t query_portion_length;
+    uint32_t query_portion_length;
     int res, query_size = 0;
     bool query_too_large = false;
     int malloced_size = SE_SOCKET_MSG_BUF_SIZE*5;
@@ -431,7 +431,7 @@ void socket_client::get_session_parameters()
     }
 
     buf_position += 3;
-    int32_t length;
+    uint32_t length;
     net_int2int(&length, sp_msg.body+buf_position);
 
     buf_position += sizeof(int32_t);
@@ -507,8 +507,8 @@ void socket_client::get_session_parameters()
 void socket_client::set_session_options(msg_struct *msg)
 {
     int pos = 0;
-    int option_len;
-    int option;
+    uint32_t option_len;
+    uint32_t option;
     
     if (p_ver.major_version < 3) throw USER_EXCEPTION(SE3009);
 
@@ -534,7 +534,7 @@ void socket_client::set_session_options(msg_struct *msg)
             break;
         case SEDNA_QUERY_EXEC_TIMEOUT:
             {
-                int value;
+                uint32_t value;
                 net_int2int(&value, msg->body+pos);
                 if(value < 0) 
                     throw USER_EXCEPTION2(SE4617, "query execution timeout must be greater than or equal to zero.");
@@ -543,7 +543,7 @@ void socket_client::set_session_options(msg_struct *msg)
             }
         case SEDNA_MAX_RESULT_SIZE:
             {
-                int value;
+                uint32_t value;
                 net_int2int(&value, msg->body+pos);
                 if(value < 0)
                     throw USER_EXCEPTION2(SE4617, "limit on query result size must be greater than or equal to zero.");
@@ -553,7 +553,7 @@ void socket_client::set_session_options(msg_struct *msg)
             }
         case SEDNA_LOG_AMMOUNT:
             {
-                int value;
+                uint32_t value;
                 net_int2int(&value, msg->body+pos);
                 if (SEDNA_LOG_LESS != value && SEDNA_LOG_FULL != value)
                     throw USER_EXCEPTION2(SE4617, "unknown log-less mode");

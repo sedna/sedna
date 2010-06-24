@@ -1,1 +1,1 @@
-set(u_SRC u.c uevent.c ugnames.cpp uhdd.c ummap.cpp umutex.c upipe.cpp uprocess.c usecurity.c usem.c ushm.c usocket.c usystem.c uthread.c utime.c uutils.c)
+set(u_SRC u.c uevent.c ugnames.cpp uhdd.c ushm.c ummap.c umutex.c uprocess.c usecurity.c usem.c usocket.c usystem.c uthread.c utime.c uutils.c)

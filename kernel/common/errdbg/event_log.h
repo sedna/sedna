@@ -170,7 +170,7 @@ int event_log_long_write_to_stderr(const char *short_str, const char *long_str);
  * 
  */
 int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems_name);
-int event_logger_shutdown_daemon();
+int event_logger_shutdown_daemon(global_name shm_name);
 
 /*
  * Init/release event log 

@@ -725,7 +725,7 @@ int lfsRelease()
 		return -1;
 	}
 
-	if (uReleaseShMem(ShDsc, __sys_call_error) != 0)
+	if (uReleaseShMem(ShDsc, SEDNA_LFS_SHARED_MEM_NAME, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot release shared memory");
 		return -1;

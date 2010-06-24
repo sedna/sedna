@@ -96,35 +96,15 @@ USOCKET usocket(int af, int type, int protocol, sys_call_error_fun fun)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int ubind_tcp(USOCKET s, int port, sys_call_error_fun fun)
+int ubind_tcp(USOCKET s, unsigned short port, sys_call_error_fun fun)
 {
-#ifdef _WIN32
     struct hostent *hp;
     struct sockaddr_in ownaddr;
 
-    if ((hp = gethostbyname("0.0.0.0")) == NULL)
-    {
-        sys_call_error("gethostbyname");
-        return U_SOCKET_ERROR;
-    }
-
-    memset(&ownaddr, 0, sizeof ownaddr);
-    ownaddr.sin_family = AF_INET;
-    ownaddr.sin_port = htons(port);
-    memcpy(&ownaddr.sin_addr, hp->h_addr, hp->h_length);
-
-    if (bind(s, (struct sockaddr *) &ownaddr, sizeof ownaddr) != 0)
-    {
-        sys_call_error("bind");
-        return U_SOCKET_ERROR;
-    }
-    return 0;
-#else
-    struct hostent *hp;
-    struct sockaddr_in ownaddr;
-
+#ifndef _WIN32
     int t_reuse = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &t_reuse, sizeof(int));
+#endif
 
     if ((hp = gethostbyname("0.0.0.0")) == NULL)
     {
@@ -143,35 +123,12 @@ int ubind_tcp(USOCKET s, int port, sys_call_error_fun fun)
         return U_SOCKET_ERROR;
     }
     return 0;
-#endif
 }
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int uconnect_tcp(USOCKET s, int port, const char *hostname, sys_call_error_fun fun)
+int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_error_fun fun)
 {
-#ifdef _WIN32
-    struct hostent *hp;
-    struct sockaddr_in ownaddr;
-
-    if ((hp = gethostbyname(hostname)) == NULL)
-    {
-        sys_call_error("gethostbyname");
-        return U_SOCKET_ERROR;
-    }
-
-    memset(&ownaddr, 0, sizeof ownaddr);
-    ownaddr.sin_family = AF_INET;
-    ownaddr.sin_port = htons(port);
-    memcpy(&ownaddr.sin_addr, hp->h_addr, hp->h_length);
-
-    if (connect(s, (struct sockaddr *) &ownaddr, sizeof ownaddr) != 0)
-    {
-       sys_call_error("connect");
-       return U_SOCKET_ERROR;
-    }
-    return 0;
-#else
     struct hostent *hp;
     struct sockaddr_in ownaddr;
 
@@ -193,7 +150,6 @@ int uconnect_tcp(USOCKET s, int port, const char *hostname, sys_call_error_fun f
         return U_SOCKET_ERROR;
     }
     return 0;
-#endif
 }
 
 /* returns zero if succeeded
@@ -202,13 +158,11 @@ int usetsockopt(USOCKET s, int level, int optname, const void* optval, unsigned 
 {
 #ifdef _WIN32
     int res = setsockopt(s, level, optname, (const char*)optval, optlen);
-    if (res == U_SOCKET_ERROR) sys_call_error("setsockopt");
-    return res;
 #else
     int res = setsockopt(s, level, optname, optval, optlen);
+#endif
     if (res == U_SOCKET_ERROR) sys_call_error("setsockopt");
     return res;
-#endif
 }
 
 /* returns zero if succeeded
@@ -217,51 +171,34 @@ int ugetsockopt(USOCKET s, int level, int optname, void* optval, unsigned int op
 {
 #ifdef _WIN32
     int res = getsockopt(s, level, optname, (char*)optval, &optlen);
-    if (res == U_SOCKET_ERROR) sys_call_error("getsockopt");
-    return res;
 #else
     int res = getsockopt(s, level, optname, optval, &optlen);
+#endif
     if (res == U_SOCKET_ERROR) sys_call_error("getsockopt");
     return res;
-#endif
 }
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
 int ulisten(USOCKET s, int backlog, sys_call_error_fun fun)
 {
-#ifdef _WIN32
     int res = listen(s, backlog);
     if (res == U_SOCKET_ERROR) sys_call_error("listen");
     return res;
-#else
-    int res = listen(s, backlog);
-    if (res == U_SOCKET_ERROR) sys_call_error("listen");
-    return res;
-#endif
 }
 
 /* returns U_INVALID_SOCKET if failed */
 USOCKET uaccept(USOCKET s, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    struct sockaddr_in commonaddr;
     int commonlen;
-    USOCKET socknew;
-    memset(&commonaddr, 0, sizeof commonaddr);
-    commonlen = sizeof commonaddr;
-    socknew = accept(s, (struct sockaddr *) &commonaddr, &commonlen);
-    if (socknew == INVALID_SOCKET)
-    {
-        sys_call_error("accept");
-        return U_INVALID_SOCKET;
-    }
-    return socknew;
 #else
+    unsigned int commonlen;
+#endif
     int res = 0, param = 1; 
     struct sockaddr_in commonaddr;
-    unsigned int commonlen;
     USOCKET socknew;
+
     memset(&commonaddr, 0, sizeof commonaddr);
     commonlen = sizeof commonaddr;
     socknew = accept(s, (struct sockaddr *) &commonaddr, &commonlen);
@@ -280,16 +217,15 @@ USOCKET uaccept(USOCKET s, sys_call_error_fun fun)
     } 
 #endif /* DARWIN */
     return socknew;
-#endif
 }
 
 /* return value indicates number of bytes received
    returns zero if connection was gracefully closed
    returns U_SOCKET_ERROR in the case of error */
-int urecv(USOCKET s, char *buf, int len, sys_call_error_fun fun)
+int urecv(USOCKET s, char *buf, size_t len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    int res_len = recv(s, buf, len, 0);
+    int res_len = recv(s, buf, (int)len, 0);
     if (res_len == U_SOCKET_ERROR) sys_call_error("recv");
     return res_len;
 #else
@@ -315,11 +251,11 @@ int urecv(USOCKET s, char *buf, int len, sys_call_error_fun fun)
 
 /* return value indicates number of bytes send  
    returns U_SOCKET_ERROR in the case of error  */
-int usend(USOCKET s, const char *buf, int len, sys_call_error_fun fun)
+int usend(USOCKET s, const char *buf, size_t len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res_len;
-    res_len = send(s, buf, len, 0);
+    res_len = send(s, buf, (int)len, 0);
     if (res_len == U_SOCKET_ERROR)
     {
         sys_call_error("send");
@@ -353,13 +289,11 @@ int uclose_socket(USOCKET s, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = closesocket(s);
-    if (res == U_SOCKET_ERROR) sys_call_error("closesocket");
-    return res;
 #else
     int res = close(s);
-    if (res == U_SOCKET_ERROR) sys_call_error("close"); 
-    return res;
 #endif
+    if (res == U_SOCKET_ERROR) sys_call_error("closesocket");
+    return res;
 }
 
 /* returns zero if succeeded
@@ -374,8 +308,6 @@ int ushutdown_close_socket(USOCKET s, sys_call_error_fun fun)
        return U_SOCKET_ERROR;
     }
     res = closesocket(s);
-    if (res == U_SOCKET_ERROR) sys_call_error("closesocket");  
-    return res;
 #else
     int res = shutdown(s, SHUT_RDWR);
     if (res != 0)
@@ -387,9 +319,9 @@ int ushutdown_close_socket(USOCKET s, sys_call_error_fun fun)
        }
     }
     res = close(s);
-    if (res == U_SOCKET_ERROR) sys_call_error("close"); 
-    return res;
 #endif
+    if (res == U_SOCKET_ERROR) sys_call_error("closesocket");
+    return res;
 }
 
 /* returns zero if succeeded

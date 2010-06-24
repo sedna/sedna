@@ -273,7 +273,7 @@ int main(int argc, char** argv)
       release_global_memory_mapping();
 
       elog(EL_LOG, ("SEDNA event log is down"));
-      event_logger_shutdown_daemon();
+      event_logger_shutdown_daemon(SE_EVENT_LOG_SHARED_MEMORY_NAME);
 
 
       fprintf(res_os, "GOVERNOR has been shut down successfully\n");

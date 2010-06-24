@@ -289,7 +289,7 @@ lsize_t determine_layer_size(int db_id, const gov_header_struct& cfg)
     // dettach/destroy the mapping
     if (uDettachShMem(p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-    if (uReleaseShMem(p_cdb_callback_file_mapping, __sys_call_error) != 0)
+    if (uReleaseShMem(p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
     if (layer_size < VMM_REGION_MIN_SIZE)

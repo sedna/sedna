@@ -707,7 +707,7 @@ int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems
     return 0;
 }
 
-int event_logger_shutdown_daemon()
+int event_logger_shutdown_daemon(global_name shm_name)
 {
     if (event_log_initialized)
     {
@@ -733,7 +733,7 @@ int event_logger_shutdown_daemon()
 
         el_msg = NULL;
 
-        if (uReleaseShMem(el_shmem, __sys_call_error) != 0)
+        if (uReleaseShMem(el_shmem, shm_name, __sys_call_error) != 0)
             return 5;
 
         /* Release file descriptor */
