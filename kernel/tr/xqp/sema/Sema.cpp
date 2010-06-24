@@ -870,7 +870,8 @@ namespace sedna
                 if (mod->module_uri && !is_postload && *n.uri != *mod->module_uri && mod->imported.find(*n.uri) != mod->imported.end())
                     return;
 
-                if (mod->unres_funcs.find(name) == mod->unres_funcs.end())
+                std::string name_wa = name + "/" + int2string(arity);
+                if (mod->unres_funcs.find(name_wa) == mod->unres_funcs.end())
                 {
                     XQFunction *fun = new XQFunction();
 
@@ -882,7 +883,7 @@ namespace sedna
                     fun->loc = n.getLocationAddr();
                     fun->mod_uri = (mod->module_uri) ? *mod->module_uri : "";
 
-                    mod->unres_funcs[name + "/" + int2string(arity)] = fun;
+                    mod->unres_funcs[name_wa] = fun;
                 }
 
                 n.int_name = new std::string("");
@@ -962,6 +963,8 @@ namespace sedna
             drv->error(n.getLocation(), XQST0034,
                 std::string("function '") + *n.func_uri + ((n.func_uri->size() == 0) ? "" : ":") +
                         *n.local + "(" + int2string(func->min_arg) + ")' has been already declared");
+
+            delete func;
 
             return;
         }
