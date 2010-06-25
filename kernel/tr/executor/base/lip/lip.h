@@ -2510,6 +2510,7 @@ long zispower( verylong a, verylong *f);
         * possible error message:
         *   allocation failure in zfwrite      (a too large to print)
         *   reallocation failure in zfwrite    (a too large to print)
+        *   delimeter too long                 (str1 or str2 too large)
         * result undefined if error occurs
         \******************************************************************/
 

@@ -95,16 +95,18 @@ parse_cdb_command_line(int argc, char** argv)
 void
 setup_cdb_globals(gov_config_struct* cfg)
 {
-
    if (log_file_size <= 0)
 	   throw USER_EXCEPTION2(SE4601, "'log_file_size' parameter is incorrect (must be >0)");
-
    if (sm_globals::upd_crt < 0 || sm_globals::upd_crt > 1)
 	   throw USER_EXCEPTION2(SE4601, "'upd-crt' parameter is incorrect (must be in [0;1])");
-
    if (sm_globals::max_log_files < 1)
 	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
-
+   if (sm_globals::bufs_num < 1)
+	   throw USER_EXCEPTION2(SE4601, "'bufs-num' parameter is incorrect (must be >= 1)");
+   if (sm_globals::max_trs_num < 1)
+	   throw USER_EXCEPTION2(SE4601, "'max-trs-num' parameter is incorrect (must be >= 1)");
+   if (sm_globals::max_log_files < 1)
+	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
    if (cdb_globals::layer_size != 0 && (cdb_globals::layer_size < 0 || (lsize_t)cdb_globals::layer_size * 1024 * 1024 < VMM_REGION_MIN_SIZE))
        throw USER_EXCEPTION2(SE4601, "'layer_size' parameter is incorrect (must be >=64Mb)");
 
