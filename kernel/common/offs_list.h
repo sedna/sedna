@@ -22,15 +22,15 @@ template <unsigned middle_significan_bits, unsigned right_zero_bits>
 class offs_list
 {
 public:
-    typedef size_t value_type;
+    typedef size_t list_value_type;
 
 private:
 
     template <typename _Val>
-    class offs_hash : public se_hash<value_type, _Val, middle_significan_bits, right_zero_bits>
+    class offs_hash : public se_hash<list_value_type, _Val, middle_significan_bits, right_zero_bits>
     {
     protected:
-        virtual typename se_hash<value_type, _Val, middle_significan_bits, right_zero_bits>::mask_type get_hashkey(const value_type &key)
+        virtual typename se_hash<list_value_type, _Val, middle_significan_bits, right_zero_bits>::mask_type get_hashkey(const list_value_type &key)
         {
             return key;
         }
@@ -38,7 +38,7 @@ private:
 
     struct elem
     {
-        value_type val;
+        list_value_type val;
         elem *next;
         elem *pred;
     };
@@ -69,7 +69,7 @@ private:
         bool operator!=(const se_list_it &x) { return !operator==(x); }
     
         se_list_it &operator++() { if (p) p = p->next; return *this; }
-        const value_type &operator*() { return p->val; }
+        const list_value_type &operator*() { return p->val; }
     };
 
 
@@ -105,7 +105,7 @@ public:
 
     // functions return 0 if all OK
 
-    int  push (const value_type &val)
+    int  push (const list_value_type &val)
     {
         elem *tmp = new elem;
         tmp->val = val;
@@ -128,7 +128,7 @@ public:
         return 0;
     }
 
-    int  pop (value_type *val /* out */)
+    int  pop (list_value_type *val /* out */)
     {
         if (last == NULL) return 1;
 
@@ -150,12 +150,12 @@ public:
 
         return 0;
     }
-    int  find (const value_type &val)
+    int  find (const list_value_type &val)
     {
         return tbl.find(val, NULL);
     }
 
-    int  find_remove(const value_type &val)
+    int  find_remove(const list_value_type &val)
     {
         elem *tmp = NULL;
 
