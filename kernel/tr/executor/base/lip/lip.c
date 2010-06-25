@@ -7240,11 +7240,20 @@ zfwrite_c(
 	long sa;
 	long result;
 	long zeros;
-	long strlen1 = strlen(str1);
-	long strlen2 = strlen(str2);
-	extern double log();
+	long strlen1;
+	long strlen2;
+    extern double log();
 
-	if (log10rad < 0)
+    if(strlen(str1) > 127 || strlen(str2) > 127)
+    {
+        zhalt("delimeter too long");
+        return (0);
+    }
+	
+    strlen1 = (long)strlen(str1);
+    strlen2 = (long)strlen(str2);
+
+    if (log10rad < 0)
 		log10rad = log((double)RADIX) / log((double)10);
 
 	if (ALLOCATE && !a)

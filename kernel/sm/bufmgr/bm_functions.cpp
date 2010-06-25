@@ -30,41 +30,43 @@ static bool is_recovery_mode = false;
 
 void _bm_set_working_set_size()
 {
-    int working_set_size = sm_globals::bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
+    if ( (unsigned)sm_globals::bufs_num >= (SIZE_MAX - EBS_WORKING_SET_SIZE)/PAGE_SIZE) {
+        elog(EL_WARN, ("Can't set working set size. Too big bufs-num value is provided."));
+        return;
+    }
+
+    size_t working_set_size = (size_t)(sm_globals::bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE);
     int res = 0;
 
     res = uGetCurProcessWorkingSetSize(
-                        &MinimumWorkingSetSize_orig,// minimum working set size
-                        &MaximumWorkingSetSize_orig,// maximum working set size
-                        __sys_call_error
-          );
+                        &MinimumWorkingSetSize_orig,
+                        &MaximumWorkingSetSize_orig,
+                        __sys_call_error);
     if (res != 0)
-
-    elog(EL_WARN, ("Can't get working set size. Possibly, there are not enough privileges."));
+        elog(EL_WARN, ("Can't get working set size. Possibly, there are not enough privileges."));
 
     res = uSetCurProcessWorkingSetSize(
-                        working_set_size,			// minimum working set size
-                        working_set_size,			// maximum working set size
-                        __sys_call_error
-          );
+                        working_set_size,
+                        working_set_size,
+                        __sys_call_error);
 
     if (res != 0)
-
-    elog(EL_WARN, ("Can't set working set size. Possibly, there are not enough privileges."));
+        elog(EL_WARN, ("Can't set working set size. Possibly, there are not enough privileges."));
 }
 
 void _bm_restore_working_set_size()
 {
+    if(MaximumWorkingSetSize_orig == 0 && MinimumWorkingSetSize_orig == 0)
+        return;
+
     int res = 0;
     res = uSetCurProcessWorkingSetSize(
-                        MinimumWorkingSetSize_orig,// minimum working set size
-                        MaximumWorkingSetSize_orig,// maximum working set size
-                        __sys_call_error
-          );
+                        MinimumWorkingSetSize_orig,
+                        MaximumWorkingSetSize_orig,
+                        __sys_call_error);
 
     if (res != 0)
-
-    elog(EL_WARN, ("Can't restore working set size. Possibly, there are not enough privileges."));
+        elog(EL_WARN, ("Can't restore working set size. Possibly, there are not enough privileges."));
 }
 
 #ifndef _WIN32
@@ -118,17 +120,22 @@ void _bm_init_buffer_pool()
 {
     _bm_set_working_set_size();
 
-    file_mapping = uCreateFileMapping(U_INVALID_FD, sm_globals::bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
+    if ( (unsigned)sm_globals::bufs_num >= SIZE_MAX / PAGE_SIZE)
+        throw USER_EXCEPTION2(SE1015, "Too big buffers number value.");
+    
+    size_t buffer_size = (size_t)((unsigned)sm_globals::bufs_num * PAGE_SIZE);
+    
+    file_mapping = uCreateFileMapping(U_INVALID_FD, buffer_size , CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
         throw USER_EXCEPTION(SE1015);
 
-    buf_mem_addr = uMapViewOfFile(file_mapping, NULL, sm_globals::bufs_num * PAGE_SIZE, 0, __sys_call_error);
+    buf_mem_addr = uMapViewOfFile(file_mapping, NULL, buffer_size, 0, __sys_call_error);
     if (buf_mem_addr == NULL)
-        throw USER_EXCEPTION2(SE1015, "Cannot map view of file");
+        throw USER_EXCEPTION2(SE1015, "Cannot map view of file.");
 
     if (lock_memory)
     {
-        if (uMemLock(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+        if (uMemLock(buf_mem_addr, buffer_size, __sys_call_error) == -1)
         {
 #ifndef _WIN32
             elog(EL_WARN, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
@@ -150,13 +157,15 @@ void _bm_release_buffer_pool()
     used_mem.clear();
     blocked_mem.clear();
 
+    size_t buffer_size = (size_t)((unsigned)sm_globals::bufs_num * PAGE_SIZE);
+    
     if (lock_memory)
     {
-        if (uMemUnlock(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+        if (uMemUnlock(buf_mem_addr, buffer_size, __sys_call_error) == -1)
             throw USER_ENV_EXCEPTION("Cannot release system structures", false);
     }
 
-    if (uUnmapViewOfFile(file_mapping, buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+    if (uUnmapViewOfFile(file_mapping, buf_mem_addr, buffer_size, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
     buf_mem_addr = NULL;

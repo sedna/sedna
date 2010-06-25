@@ -214,7 +214,10 @@ static void parse_config_file(gov_header_struct* cfg, std::string& cfg_text)
     XML_SetCharacterDataHandler (parser, characterData_gov_cfg);
     XML_SetUserData (parser, cfg);
 
-    int parse_res = XML_Parse (parser, cfg_text.c_str(), cfg_text.length(), 1);
+    if(cfg_text.length() > INT_MAX)
+        throw USER_EXCEPTION2(SE4201,  "Too long sednaconf.xml file");
+
+    int parse_res = XML_Parse (parser, cfg_text.c_str(), (int)cfg_text.length(), 1);
 
     if(parse_res == XML_STATUS_ERROR)
         throw USER_EXCEPTION2(SE4201,  "sednaconf.xml");
