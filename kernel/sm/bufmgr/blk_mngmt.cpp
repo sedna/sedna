@@ -655,8 +655,8 @@ void delete_data_block(const xptr &p)
 	int res = 0;
 	ramoffs offs;
 		
-	res = buffer_table.find_remove(p, offs);
-	if (res == 0) 
+	res = buffer_table.find_remove(p, &offs);
+	if (res == 0)
 	{
 		used_mem.find_remove(offs);
 		free_mem.push(offs);
@@ -686,7 +686,7 @@ void delete_tmp_block(const xptr &p, tr_info *info)
 	int res = 0;
 	ramoffs offs;
 		
-	res = buffer_table.find_remove(p, offs);
+	res = buffer_table.find_remove(p, &offs);
 	if (res == 0) 
 	{
         /// callback to trn to unmap block

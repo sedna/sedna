@@ -777,15 +777,15 @@ static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
     ramoffs old_offs, dummy; // for buffer_table methods
 
     assert((*phys_xptrs)[oldVerBufferId] == WuExternaliseXptr(xptr));
-    assert(!buffer_table.find(WuExternaliseXptr(xptr), dummy) && dummy == RamoffsFromBufferId(oldVerBufferId));
+    assert(!buffer_table.find(WuExternaliseXptr(xptr), &dummy) && dummy == RamoffsFromBufferId(oldVerBufferId));
 
     // first, we change flush-xptr to make buffer flush on new location
     (*phys_xptrs)[oldVerBufferId] = WuExternaliseXptr(lxptr);
 
     // the we must alter buffer_table since it contains phys_xptr --> buf_offset map
-    if (!buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId), old_offs)) // lxptr and xptr in buffers
+    if (!buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId), &old_offs)) // lxptr and xptr in buffers
     {
-        buffer_table.replace(WuExternaliseXptr(xptr), old_offs, dummy);
+        buffer_table.replace(WuExternaliseXptr(xptr), old_offs, &dummy);
         
         wulog(("WULOG: Rollback: cancelling creation of a new version: version header for returned LC-version..."));
         wulogheader(oldVerBufferId);
@@ -1098,8 +1098,8 @@ static int FixFlushXptrs(int oldVerBufferId, int newVerBufferId, XPTR newBlock, 
     (*phys_xptrs)[oldVerBufferId] = WuExternaliseXptr(newBlock);
 
     // the we must alter buffer_table since it contains phys_xptr --> buf_offset map
-    buffer_table.replace(WuExternaliseXptr(newBlock), RamoffsFromBufferId(oldVerBufferId), dummy);
-    buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(newVerBufferId), dummy);
+    buffer_table.replace(WuExternaliseXptr(newBlock), RamoffsFromBufferId(oldVerBufferId), &dummy);
+    buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(newVerBufferId), &dummy);
 
     return 1;
 }

@@ -265,7 +265,7 @@ bool unmap_block_in_trs(session_id sid, const xptr &p, bool use_layer)
 xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
 {
     int res = 0;
-    res = free_mem.pop(*offs);
+    res = free_mem.pop(offs);
     if (res == 0) return XNULL; // we have found the free block in the list of free blocks
 
     // there is no free buffer, so we should free one
@@ -283,7 +283,7 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
         if (used_mem.find_remove(*offs) != 0)
             throw SYSTEM_EXCEPTION("Error in LRU algorithm");
 #else
-        res = used_mem.pop(*offs);
+        res = used_mem.pop(offs);
         if (res != 0) throw SYSTEM_EXCEPTION("There is absolutely no buffer memory");
 #endif
 		bool approved = false;
@@ -332,7 +332,7 @@ bool find_block_in_buffers(const xptr &p,
 {
 	int res = 0;
 	
-	res = buffer_table.find(p, *offs);
+	res = buffer_table.find(p, offs);
 	return (res == 0); // we have found the block in memory?
 }
 
@@ -479,7 +479,7 @@ void dump_bufmgr_state()
 		{
 			/* skip - it's free buf */ 
 		}
-		else if (0==buffer_table.find(physXptr, offs)) 
+		else if (0==buffer_table.find(physXptr, &offs))
 		{
 			if (offs!=i*PAGE_SIZE)
 			{

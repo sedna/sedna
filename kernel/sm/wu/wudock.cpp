@@ -65,7 +65,7 @@ void WuLogHeader(int bufferId)
     wulog(("Version header for version: lxptr = %"PRI_XPTR", physXptr = %"PRI_XPTR", bufferId = %d", header->xptr[0], 
             WuInternaliseXptr((*phys_xptrs)[bufferId]), bufferId));
     
-    buffer_table.find((*phys_xptrs)[bufferId], rof);
+    buffer_table.find((*phys_xptrs)[bufferId], &rof);
     wulog(("Buffer table for physXptr = %"PRI_XPTR" says bufferId = %d", WuInternaliseXptr((*phys_xptrs)[bufferId]), 
             BufferIdFromRamoffs(rof))); 
     
