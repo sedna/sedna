@@ -123,7 +123,7 @@ void _bm_init_buffer_pool()
     if ( (unsigned)sm_globals::bufs_num >= SIZE_MAX / PAGE_SIZE)
         throw USER_EXCEPTION2(SE1015, "Too big buffers number value.");
     
-    size_t buffer_size = (size_t)((unsigned)sm_globals::bufs_num * PAGE_SIZE);
+    size_t buffer_size = (size_t)sm_globals::bufs_num * PAGE_SIZE;
     
     file_mapping = uCreateFileMapping(U_INVALID_FD, buffer_size , CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
@@ -459,12 +459,12 @@ void bm_delete_block(session_id sid,
     int res = 0;
     ramoffs offs;
 
-    res = buffer_table.find_remove(p, offs);
+    res = buffer_table.find_remove(p, &offs);
     if (res == 0)
     {
         used_mem.find_remove(offs);
         free_mem.push(offs);
-	phys_xptrs->at(offs/PAGE_SIZE)=xptr();
+        phys_xptrs->at(offs/PAGE_SIZE)=xptr();
     }
 
     if (IS_DATA_BLOCK(p))
@@ -513,7 +513,7 @@ void bm_exit_exclusive_mode(session_id sid)
     xmode_sid = -1;
 
     ramoffs offs = 0;
-    while (blocked_mem.pop(offs) == 0) used_mem.push(offs);
+    while (blocked_mem.pop(&offs) == 0) used_mem.push(offs);
 }
 
 void bm_memlock_block(session_id sid, xptr p)
@@ -523,7 +523,7 @@ void bm_memlock_block(session_id sid, xptr p)
     int res = 0;
     ramoffs offs = 0;
 
-    res = buffer_table.find(p, offs);
+    res = buffer_table.find(p, &offs);
     if (res == 0)
     { // we have found the block in memory
         res = blocked_mem.find(offs);
@@ -550,7 +550,7 @@ void bm_memunlock_block(session_id sid, xptr p)
     int res = 0;
     ramoffs offs = 0;
 
-    res = buffer_table.find(p, offs);
+    res = buffer_table.find(p, &offs);
     if (res == 0)
     {
         res = blocked_mem.find_remove(offs);

@@ -10,7 +10,7 @@
 #include "common/sedna.h"
 #include <map>
 #include "common/XptrHash.h"
-#include "common/IntList.h"
+#include "common/offs_list.h"
 #include "common/u/usem.h"
 #include "common/u/uhdd.h"
 #include "common/u/ushm.h"
@@ -53,7 +53,7 @@ typedef XptrHash<ramoffs, 16, 16> t_buffer_table;
 extern t_buffer_table buffer_table;
 
 // Hashed list of buffers offsets
-typedef IntList<16, 16> t_ramoffs_list;
+typedef offs_list<16, 16> t_ramoffs_list;
 
 // Lists of blocks
 extern t_ramoffs_list free_mem;

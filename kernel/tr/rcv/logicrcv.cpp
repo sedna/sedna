@@ -118,9 +118,9 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
     {
 	  if (!isUNDO)
 	  {
-           indir_map.find(left, left);
-           indir_map.find(right, right);
-           indir_map.find(parent, parent);
+           indir_map.find(left, &left);
+           indir_map.find(right, &right);
+           indir_map.find(parent, &parent);
 	  }
 	  else
 	       indirectionSetRollbackRecord(self);
@@ -141,7 +141,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
     {
 	  if (!isUNDO)
 	  {
-	  	  indir_map.find_remove(self, self);
+	  	  indir_map.find_remove(self, &self);
 	  }
 
       delete_node(removeIndirection(self));
@@ -186,9 +186,9 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-            indir_map.find(left, left);
-            indir_map.find(right, right);
-            indir_map.find(parent, parent);
+            indir_map.find(left, &left);
+            indir_map.find(right, &right);
+            indir_map.find(parent, &parent);
 	   }
 	   else
 	        indirectionSetRollbackRecord(self);
@@ -211,7 +211,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-	   		indir_map.find_remove(self, self);
+	   		indir_map.find_remove(self, &self);
 	   }
 
        delete_node(removeIndirection(self));
@@ -247,9 +247,9 @@ static void llRcvText(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-            indir_map.find(left, left);
-            indir_map.find(right, right);
-            indir_map.find(parent, parent);
+            indir_map.find(left, &left);
+            indir_map.find(right, &right);
+            indir_map.find(parent, &parent);
 	   }
 	   else
           indirectionSetRollbackRecord(self);
@@ -267,7 +267,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-	   		indir_map.find_remove(self, self);
+	   		indir_map.find_remove(self, &self);
 	   }
 
        delete_node(removeIndirection(self));
@@ -298,7 +298,7 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-		   indir_map.find(self, self);
+		   indir_map.find(self, &self);
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
@@ -310,7 +310,7 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-	   		indir_map.find(self, self);
+	   		indir_map.find(self, &self);
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
@@ -423,9 +423,9 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-            indir_map.find(left, left);
-            indir_map.find(right, right);
-            indir_map.find(parent, parent);
+            indir_map.find(left, &left);
+            indir_map.find(right, &right);
+            indir_map.find(parent, &parent);
 	   }
 	   else
 	       indirectionSetRollbackRecord(self);
@@ -443,7 +443,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-	   		indir_map.find_remove(self, self);
+	   		indir_map.find_remove(self, &self);
 	   }
 
        delete_node(removeIndirection(self));
@@ -482,9 +482,9 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-            indir_map.find(left, left);
-            indir_map.find(right, right);
-            indir_map.find(parent, parent);
+            indir_map.find(left, &left);
+            indir_map.find(right, &right);
+            indir_map.find(parent, &parent);
 	   }
 	   else
 	       indirectionSetRollbackRecord(self);
@@ -504,7 +504,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-	   		indir_map.find_remove(self, self);
+	   		indir_map.find_remove(self, &self);
 	   }
 
        delete_node(removeIndirection(self));
@@ -563,9 +563,9 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-            indir_map.find(left, left);
-            indir_map.find(right, right);
-            indir_map.find(parent, parent);
+            indir_map.find(left, &left);
+            indir_map.find(right, &right);
+            indir_map.find(parent, &parent);
 	   }
 	   else
 	       indirectionSetRollbackRecord(self);
@@ -585,7 +585,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
      {
 	   if (!isUNDO)
 	   {
-	   		indir_map.find_remove(self, self);
+	   		indir_map.find_remove(self, &self);
 	   }
 
        delete_node(removeIndirection(self));

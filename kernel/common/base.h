@@ -22,8 +22,8 @@
 // buffer memory offset; this type is used for addressing buffers in buffer
 // memory area by defining offset of buffer from the beginning of the shared
 // memory
-typedef int ramoffs;
-#define RAMOFFS_OUT_OFF_BOUNDS                          INT_MAX
+typedef size_t ramoffs;
+#define RAMOFFS_OUT_OFF_BOUNDS SIZE_MAX
 
 //typedef __int64 LSN;
 //typedef long LSN;
