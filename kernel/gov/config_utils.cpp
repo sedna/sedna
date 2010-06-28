@@ -111,7 +111,10 @@ static void parse_sm_config_file(gov_db_struct* db_cfg, std::string cfg_text)
 
   d_printf2("cfg_text=%s\n", cfg_text.c_str());
 
-  int parse_res = XML_Parse (parser, cfg_text.c_str(), cfg_text.length(), 1);
+  if(cfg_text.length() >= INT_MAX)
+    throw USER_EXCEPTION2(SE4201,  "too long database config file");
+
+  int parse_res = XML_Parse (parser, cfg_text.c_str(), (int)cfg_text.length(), 1);
 
   if(parse_res == XML_STATUS_ERROR)
     throw USER_EXCEPTION2(SE4201,  "database config file");

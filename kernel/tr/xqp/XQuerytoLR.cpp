@@ -44,7 +44,7 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
     try
     {
         // check for BOM and valid UTF-8; batch is a copy
-        for (unsigned int i = 0; i < batch.size(); i++)
+        for (size_t i = 0; i < batch.size(); i++)
             batch_utf.push_back(encoding_processing(batch[i].c_str()));
 
         switch (type)
@@ -54,7 +54,7 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
                 GET_TIME(&t1_parser);
 
                 // parse query and create ast-tree; any errors will be thrown as exceptions
-                for (unsigned int i = 0; i < batch_utf.size(); i++)
+                for (size_t i = 0; i < batch_utf.size(); i++)
                     drv->parse(batch_utf[i].c_str());
 
                 // do semantic analysis; any errors will be thrown as exceptions
@@ -73,7 +73,7 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
 
             case TL_ASTInitial:
                 // parse query and create ast-tree; any errors will be thrown as exceptions
-                for (unsigned int i = 0; i < batch_utf.size(); i++)
+                for (size_t i = 0; i < batch_utf.size(); i++)
                     drv->parseAST(batch_utf[i].c_str());
 
                 // do semantic analysis; any errors will be thrown as exceptions
@@ -89,7 +89,7 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
 
             case TL_ASTQEPReady:
                 // parse query and create ast-tree; any errors will be thrown as exceptions
-                for (unsigned int i = 0; i < batch_utf.size(); i++)
+                for (size_t i = 0; i < batch_utf.size(); i++)
                     drv->parseAST(batch_utf[i].c_str());
 
                 // don't need to run any analysis here sine it's QEP-ready

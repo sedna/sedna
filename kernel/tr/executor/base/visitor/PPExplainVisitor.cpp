@@ -25,10 +25,10 @@ static inline string
 arr_of_var_dsc2string(const arr_of_var_dsc& var_dscs)
 {
     string variables;
-    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    for (size_t i = 0; i < var_dscs.size(); i++)
     {
         variables += int2string(var_dscs.at(i));
-        if(i != var_dscs.size() -1) variables += ", ";
+        if(i != var_dscs.size() - 1) variables += ", ";
     }
     return variables;
 }

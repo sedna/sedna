@@ -110,9 +110,9 @@ namespace sedna
             bool found_cont = false;
 
             // try to find context
-            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            for (size_t i = bound_vars.size(); i >= 1; i--)
             {
-                if (bound_vars[i].int_name == "$%v")
+                if (bound_vars[i-1].int_name == "$%v")
                 {
                     found_cont = true;
                     break;
@@ -729,9 +729,9 @@ namespace sedna
         }
         else // context expression
         {
-            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            for (size_t i = bound_vars.size(); i >= 1; i--)
             {
-                if (bound_vars[i].int_name == "$%v")
+                if (bound_vars[i-1].int_name == "$%v")
                 {
                     found = true;
                     break;
@@ -991,7 +991,7 @@ namespace sedna
         {
             setParamMode();
 
-            for (unsigned int i = 0; i < n.params->size(); i++)
+            for (size_t i = 0; i < n.params->size(); i++)
                 (*n.params)[i]->accept(*this);
 
             // check for duplicate params
@@ -2066,9 +2066,10 @@ namespace sedna
         }
 
         // if we've got prefix we should resolve it using first in-scope namespaces
-        for (int i = elemNsps.size() - 1; i >= 0; i--)
-            if (elemNsps[i].first.find(pref) != elemNsps[i].first.end())
-                return elemNsps[i].first[pref].first.c_str();
+        for (size_t i = elemNsps.size(); i >= 1; i--)
+            if (elemNsps[i-1].first.find(pref) != elemNsps[i-1].first.end())
+                return elemNsps[i-1].first[pref].first.c_str();
+
 
         // and then default ones
         it = mod->nsBinds.find(pref); // find namespace

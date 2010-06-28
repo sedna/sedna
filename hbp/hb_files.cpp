@@ -197,17 +197,18 @@ int hbCopyFile(char *file_path)
 // makes cleanup of hot-backup files in case of failure
 void hbMakeCleanup()
 {
-	for (size_t i = hbCreatedFiles.size() - 1; i >= 0; i--)
-	{
-		if (hbCreatedFiles[i].second) // this is a directory
-		{
-	        if (uDelDir(hbCreatedFiles[i].first.c_str(), __sys_call_error) == 0)
-    	   		throw USER_EXCEPTION2(SE4041, hbCreatedFiles[i].first.c_str());
-    	}
-    	else // this is a file
-		{
-	        if (uDeleteFile(hbCreatedFiles[i].first.c_str(), __sys_call_error) == 0)
-    	   		throw USER_EXCEPTION2(SE4041, hbCreatedFiles[i].first.c_str());
-    	}
-	}
+    for(size_t i = hbCreatedFiles.size(); i >= 1; i--)
+    {
+        size_t idx = i - 1;
+        if (hbCreatedFiles[idx].second) // this is a directory
+        {
+            if (uDelDir(hbCreatedFiles[idx].first.c_str(), __sys_call_error) == 0)
+                throw USER_EXCEPTION2(SE4041, hbCreatedFiles[idx].first.c_str());
+        }
+        else // this is a file
+        {
+            if (uDeleteFile(hbCreatedFiles[idx].first.c_str(), __sys_call_error) == 0)
+                throw USER_EXCEPTION2(SE4041, hbCreatedFiles[idx].first.c_str());
+        }
+    }
 }

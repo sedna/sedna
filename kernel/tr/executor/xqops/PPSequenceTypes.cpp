@@ -389,7 +389,7 @@ PPTypeswitch::~PPTypeswitch()
     delete source_child.op;
     source_child.op = NULL;
     
-    for(unsigned int i = 0; i < cases.size(); i++)
+    for(size_t i = 0; i < cases.size(); i++)
     {
         delete (cases[i].op);
         cases[i].op = NULL;
@@ -410,7 +410,7 @@ void PPTypeswitch::do_open ()
     need_reopen = false;
     effective_case = NULL;
     
-    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    for (size_t i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_complex;
@@ -419,7 +419,7 @@ void PPTypeswitch::do_open ()
         p.tuple_pos = i;
     }
     
-    for(unsigned int i = 0; i < cases.size(); i++)
+    for(size_t i = 0; i < cases.size(); i++)
         (cases[i].op) -> open();
     
     default_child.op->open();
@@ -446,7 +446,7 @@ void PPTypeswitch::do_close()
 {
     source_child.op->close();   
 
-    for(unsigned int i = 0; i < cases.size(); i++)
+    for(size_t i = 0; i < cases.size(); i++)
         (cases[i].op) -> close();
      
     default_child.op->close();
@@ -469,7 +469,7 @@ void PPTypeswitch::do_next(tuple &t)
         eos_reached = false;
 
         effective_case = &default_child;
-        for(unsigned int i = 0; i < cases.size(); i++)
+        for(size_t i = 0; i < cases.size(); i++)
         {
             if(type_matches(source_child, s, t, eos_reached, types[i]))
             {
@@ -498,7 +498,7 @@ PPIterator* PPTypeswitch::do_copy(dynamic_context *_cxt_)
                                          cases, 
                                          default_child);
     
-    for (unsigned int i = 0; i < cases.size(); i++)
+    for (size_t i = 0; i < cases.size(); i++)
         res->cases[i].op = cases[i].op->copy(_cxt_);
     
     res->source_child.op = source_child.op->copy(_cxt_);
@@ -512,7 +512,7 @@ void PPTypeswitch::do_accept(PPVisitor &v)
     v.visit (this);
     v.push  (this);
     source_child.op->accept(v);
-    for (unsigned int i = 0; i < cases.size(); i++)
+    for (size_t i = 0; i < cases.size(); i++)
         cases[i].op->accept(v);
     default_child.op->accept(v);
     v.pop();
@@ -573,9 +573,9 @@ void PPTypeswitch::do_close(var_dsc dsc, var_c_id id)
 
 inline void PPTypeswitch::reinit_consumer_table()
 {
-    for (unsigned int i = 0; i < var_dscs.size(); i++)
+    for (size_t i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
-        for (unsigned int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
+        for (size_t j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }

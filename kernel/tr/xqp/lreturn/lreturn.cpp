@@ -1295,9 +1295,10 @@ namespace sedna
 
         bool resIsMax1 = true; // we iterate several times over "return"?
 
-        for (int i = n.fls->size() - 1; i >= 0; i--)
+        for (size_t i = n.fls->size(); i >= 1; i--)
         {
-            const ASTFor *f = dynamic_cast<const ASTFor *>(n.fls->at(i));
+            size_t idx = i - 1;
+            const ASTFor *f = dynamic_cast<const ASTFor *>(n.fls->at(idx));
 
             off = getOffer();
 
@@ -1318,9 +1319,9 @@ namespace sedna
 
             // consider to cache for-let based on information from off_this
             // (since it accumulates lower and current for-lets, where, order-by and return by now)
-            if (i > 0)
+            if (idx > 0)
             {
-                cacheTheNode(n.fls->at(i), off_this);
+                cacheTheNode(n.fls->at(idx), off_this);
             }
         }
 

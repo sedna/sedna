@@ -168,9 +168,10 @@ void socket_client::read_msg(msg_struct *msg)
 char* socket_client::get_query_string(msg_struct *msg)
 {
     uint32_t query_portion_length;
-    int res, query_size = 0;
+    int res;
+    size_t query_size = 0;
     bool query_too_large = false;
-    int malloced_size = SE_SOCKET_MSG_BUF_SIZE*5;
+    size_t malloced_size = SE_SOCKET_MSG_BUF_SIZE*5;
 
     if(long_query_stream != NULL)
    	{
@@ -295,7 +296,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                     else if (sp_msg.instruction == se_BulkLoadPortion)// BulkLoadPortion message
                     {
                         got = uWriteFile(fs.f, sp_msg.body+5, sp_msg.length-5, &written, __sys_call_error);
-                        if ((got == 0)||(written!=sp_msg.length-5)) 
+                        if ( 0 == got || sp_msg.length-5 != written ) 
                             throw USER_EXCEPTION(SE4045); 
                     }
                     else 
