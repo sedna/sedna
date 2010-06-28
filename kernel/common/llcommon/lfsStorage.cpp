@@ -427,7 +427,7 @@ static int _lfsInitSync(int BufSize)
 	}
 
 	// init lfs shared memory pointer
-	lfsInfo = (lfsInfo_t *)uAttachShMem(ShDsc, NULL, sizeof(lfsInfo_t) + BufSize, __sys_call_error);
+	lfsInfo = (lfsInfo_t *)uAttachShMem(&ShDsc, NULL, 0, __sys_call_error);
 
 	if (lfsInfo == NULL)
 	{
@@ -719,13 +719,13 @@ int lfsRelease()
 	if (_lfsCloseAllCachedFiles() != 0)
 		return -1;
 
-	if (uDettachShMem(ShDsc, lfsInfo, __sys_call_error) != 0)
+	if (uDettachShMem(&ShDsc, lfsInfo, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot detach shared memory");
 		return -1;
 	}
 
-	if (uReleaseShMem(ShDsc, SEDNA_LFS_SHARED_MEM_NAME, __sys_call_error) != 0)
+	if (uReleaseShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot release shared memory");
 		return -1;
@@ -743,8 +743,6 @@ int lfsRelease()
 // connect to existing lfs
 int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int ReadBufferSize)
 {
-	int BufSize;
-
 	// copy file path, prefix and extension
 	ChainPath = cDataPath;
 	ChainPath.append("/");
@@ -763,42 +761,14 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 	}
 
 	// create shared memory
-	if (uOpenShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, sizeof(lfsInfo_t), __sys_call_error) != 0)
-	{
-		LFS_ERROR("lfs error: cannot open shared memory");
-		return -1;
-	}
-	// init lfs shared memory pointer
-	lfsInfo = (lfsInfo_t *)uAttachShMem(ShDsc, NULL, sizeof(lfsInfo_t), __sys_call_error);
-	if (lfsInfo == NULL)
-	{
-		LFS_ERROR("lfs error: cannot attach shared memory");
-		return -1;
-	}
-
-	BufSize = lfsInfo->BufSize;
-
-	if (uDettachShMem(ShDsc, lfsInfo, __sys_call_error) != 0)
-	{
-		LFS_ERROR("lfs error: cannot detach shared memory");
-		return -1;
-	}
-
-	if (uCloseShMem(ShDsc, __sys_call_error) != 0)
-	{
-		LFS_ERROR("lfs error: cannot close shared memory");
-		return -1;
-	}
-
-	// reattach shared memory with a new size
-	if (uOpenShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, sizeof(lfsInfo_t) + BufSize, __sys_call_error) != 0)
+	if (uOpenShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot open shared memory");
 		return -1;
 	}
 
 	// init lfs shared memory pointer
-	lfsInfo = (lfsInfo_t *)uAttachShMem(ShDsc, NULL, sizeof(lfsInfo_t) + BufSize, __sys_call_error);
+	lfsInfo = (lfsInfo_t *)uAttachShMem(&ShDsc, NULL, 0, __sys_call_error);
 	if (lfsInfo == NULL)
 	{
 		LFS_ERROR("lfs error: cannot attach shared memory");
@@ -838,13 +808,13 @@ int lfsDisconnect()
 		return -1;
 	}
 
-	if (uDettachShMem(ShDsc, lfsInfo, __sys_call_error) != 0)
+	if (uDettachShMem(&ShDsc, lfsInfo, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot detach shared memory");
 		return -1;
 	}
 
-	if (uCloseShMem(ShDsc, __sys_call_error) != 0)
+	if (uCloseShMem(&ShDsc, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot close shared memory");
 		return -1;

@@ -35,9 +35,9 @@ void info_table::init(gov_config_struct* cfg)
         throw USER_EXCEPTION2(SE4016, "GOVERNOR_SHARED_MEMORY_NAME");
 
 
-    gov_shared_mem = uAttachShMem(gov_shm_service_dsc,
+    gov_shared_mem = uAttachShMem(&gov_shm_service_dsc,
         NULL,
-        sizeof(gov_config_struct),
+        0,
         __sys_call_error);
 
     if (gov_shared_mem == NULL)
@@ -46,13 +46,12 @@ void info_table::init(gov_config_struct* cfg)
     memcpy(gov_shared_mem, cfg, sizeof(gov_config_struct));
 }
 
-
 void info_table::release()
 {
-    if ( 0 != uDettachShMem(gov_shm_service_dsc, gov_shared_mem, __sys_call_error))
+    if ( 0 != uDettachShMem(&gov_shm_service_dsc, gov_shared_mem, __sys_call_error))
         throw USER_EXCEPTION2(SE4024, "GOVERNOR_SHARED_MEMORY_NAME");
 
-    if ( 0 != uReleaseShMem(gov_shm_service_dsc, GOVERNOR_SHARED_MEMORY_NAME, __sys_call_error))
+    if ( 0 != uReleaseShMem(&gov_shm_service_dsc, GOVERNOR_SHARED_MEMORY_NAME, __sys_call_error))
         throw USER_EXCEPTION2(SE4020, "GOVERNOR_SHARED_MEMORY_NAME");
 }
 

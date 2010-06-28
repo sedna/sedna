@@ -29,9 +29,9 @@
                                                     d_printf1("Semaphore cleanup    : "#name"\n");							\
                                                 }
 
-#define SHAREDMEM_CLEANUP(name, size)			if (uOpenShMem(&shm, name, 0, __sys_call_error) == 0)					\
+#define SHAREDMEM_CLEANUP(name)			        if (uOpenShMem(&shm, name, __sys_call_error) == 0)					        \
                                                 {																			\
-                                                    uReleaseShMem(shm, name, __sys_call_error);									\
+                                                    uReleaseShMem(&shm, name, __sys_call_error);									\
                                                     d_printf1("Shared memory cleanup: "#name"\n");							\
                                                  }
 
@@ -64,10 +64,10 @@ void gov_ugc(bool background_off_from_background_on, int os_primitives_bound)
     SEMAPHORE_CLEANUP(CHARISMA_GOVERNOR_IS_READY);
 
     SEMAPHORE_CLEANUP(SE_EVENT_LOG_SEMAPHORES_NAME);
-    SHAREDMEM_CLEANUP(SE_EVENT_LOG_SHARED_MEMORY_NAME, sizeof(event_log_msg));
+    SHAREDMEM_CLEANUP(SE_EVENT_LOG_SHARED_MEMORY_NAME);
 
-    SHAREDMEM_CLEANUP(GOVERNOR_SHARED_MEMORY_NAME, sizeof(gov_config_struct));
-    FILE_MAPPING_CLEANUP(SEDNA_GLOBAL_MEMORY_MAPPING);
+    SHAREDMEM_CLEANUP(GOVERNOR_SHARED_MEMORY_NAME);
+    SHAREDMEM_CLEANUP(SEDNA_GLOBAL_MEMORY_MAPPING);
 
     /// releasing semaphores depending on sessions
     for (int i = 0; i < MAX_SESSIONS_NUMBER; i++)
@@ -109,9 +109,9 @@ void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives
 #ifdef SE_ENABLE_TRIGGERS
     //SEMAPHORE_CLEANUP(TRIGGER_SEMAPHORE_STR);
 #endif
-    SHAREDMEM_CLEANUP(CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, 8);
-    SHAREDMEM_CLEANUP(CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, 0/*CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE*/);
-    SHAREDMEM_CLEANUP(SEDNA_LFS_SHARED_MEM_NAME, 0);
+    SHAREDMEM_CLEANUP(CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME);
+    SHAREDMEM_CLEANUP(CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME);
+    SHAREDMEM_CLEANUP(SEDNA_LFS_SHARED_MEM_NAME);
     //SEMAPHORE_CLEANUP(CHARISMA_CHECKPOINT_SEM);
     SEMAPHORE_CLEANUP(SEDNA_TRNS_FINISHED);
     SEMAPHORE_CLEANUP(CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME);
@@ -123,13 +123,13 @@ void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives
 	EVENT_CLEANUP(SNAPSHOT_CHECKPOINT_EVENT);
 	EVENT_CLEANUP(TRY_ADVANCE_SNAPSHOT_EVENT);
 
-    SHAREDMEM_CLEANUP(CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, 8);
+    SHAREDMEM_CLEANUP(CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME);
     //SEMAPHORE_CLEANUP(CHARISMA_SM_SMSD_ID);
     SEMAPHORE_CLEANUP(CHARISMA_SM_IS_READY);
 
 	SSMMsg::ipc_cleanup(CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024));
 
-    FILE_MAPPING_CLEANUP(CHARISMA_BUFFER_SHARED_MEMORY_NAME);
+	SHAREDMEM_CLEANUP(CHARISMA_BUFFER_SHARED_MEMORY_NAME);
 
 
     d_printf1("CLEANUP completed\n\n");

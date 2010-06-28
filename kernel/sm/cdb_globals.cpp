@@ -254,7 +254,7 @@ lsize_t determine_layer_size(int db_id, const gov_header_struct& cfg)
     // So, we should create and attach it
     if (uCreateShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(lsize_t), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-    p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof(lsize_t), __sys_call_error);
+    p_cdb_callback_data = (lsize_t *)uAttachShMem(&p_cdb_callback_file_mapping, NULL, 0, __sys_call_error);
     if (p_cdb_callback_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
@@ -289,9 +289,9 @@ lsize_t determine_layer_size(int db_id, const gov_header_struct& cfg)
     layer_size = *p_cdb_callback_data;
 
     // dettach/destroy the mapping
-    if (uDettachShMem(p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
+    if (uDettachShMem(&p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-    if (uReleaseShMem(p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
+    if (uReleaseShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
     if (layer_size < VMM_REGION_MIN_SIZE)

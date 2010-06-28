@@ -1,6 +1,12 @@
 /*
- * File:  ummap.h
+ * File:  ummap.h -- File Mapping Interface
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File mapping interface. This interface implements file-mapping with _real_ files.
+ * If you need to work with shared memory use interface provided by ushm.h instead.
+ *
+ * On Windows, it is possible to pass INVALID_HANDLE as an fd to create shared
+ * memory mappings. This is not recommended and may be subject to further changes.
+ *
  */
 
 
@@ -26,10 +32,12 @@ typedef struct {
 
 #define U_INVALID_FILEMAPPING(m)			((m).map == -1)
 
+/* map: id of real file
+ * size: size of mapping
+ */
 typedef struct {
-	int map;
+	UFile fd;
     size_t size;
-    int to_file;
 } UMMap;
 
 #endif
@@ -38,25 +46,42 @@ typedef struct {
 extern "C" {
 #endif
 
-// check the result by U_INVALID_FILEMAPPING macros
-// pass U_INVALID_FD as fd if you want to create object in swap file
-UMMap uCreateFileMapping(UFile fd, size_t size, const char* name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
-UMMap uOpenFileMapping(UFile fd, size_t size, const char *name, sys_call_error_fun fun);
 /*
-UMMap uCreateFileMapping(const char* file_name, UShareMode share, UFlag attr, global_name g_name);
-UMMap uOpenFileMapping(const char* file_name, UShareMode share, UFlag attr, global_name g_name);
-*/
-// returns -1 in case of error
+ * These functions create-open file mappings. Parameters are self-evident.
+ *   name -- global name of the object. Should be Sedna global name.
+ *
+ * Returns:
+ *     UMMap structure,which you should check with U_INVALID_FILEMAPPING macros.
+ */
+UMMap uCreateFileMapping(UFile fd, size_t size, const char* name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
+UMMap uOpenFileMapping(UFile fd, const char *name, sys_call_error_fun fun);
+
+/*
+ * Close-release file mappings. Parameters are self-evident.
+ *
+ * Returns:
+ *     0 -- all ok
+ *    -1 -- system error
+ */
 int   uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun);
 int   uCloseFileMapping(UMMap m, sys_call_error_fun fun);
 
-// returns 0 in case of error
+/*
+ * map-unmam-flush views of file. Parameters are self-evident.
+ * Returns:
+ *     0 -- all ok
+ *    -1 -- system error (except map returns NULL)
+ */
 void *uMapViewOfFile(UMMap m, void *addr, size_t size, uint64_t offs, sys_call_error_fun fun);
-
-// returns -1 in case of error
 int uUnmapViewOfFile(UMMap m, void *addr, size_t size, sys_call_error_fun fun);
 int uFlushViewOfFile(UMMap m, void *addr, size_t size, sys_call_error_fun fun);
 
+/*
+ * Lock-unlock virtual memory.
+ * Returns:
+ *     0 -- all ok
+ *    -1 -- system error (non-fatal)
+ */
 int uMemLock(void *addr, size_t size, sys_call_error_fun fun);
 int uMemUnlock(void *addr, size_t size, sys_call_error_fun fun);
 
@@ -64,5 +89,4 @@ int uMemUnlock(void *addr, size_t size, sys_call_error_fun fun);
 }
 #endif
 
-#endif
-
+#endif /* _UMMAP_H */

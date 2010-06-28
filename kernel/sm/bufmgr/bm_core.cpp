@@ -51,7 +51,7 @@ t_ramoffs_list blocked_mem;
 ramoffs buffer_on_stake = -1;
 
 // File mappings
-UMMap  file_mapping;
+UShMem  file_mapping;
 UShMem p_sm_callback_file_mapping;
 
 #ifdef LRU

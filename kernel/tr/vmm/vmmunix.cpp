@@ -12,9 +12,9 @@
 
 const static int map_to_unix[4] = {PROT_NONE, PROT_READ, PROT_READ | PROT_WRITE, PROT_WRITE};
 
-int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection_t p)
+int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protection_t p)
 {
-    int m = mapping->map;
+    int m = mapping->id;
 
 #ifndef VMM_DEBUG_CHECKP
 #ifndef VMM_LINUX_DEBUG_CHECKP
@@ -22,11 +22,11 @@ int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 #endif /* VMM_DEBUG_CHECKP */
 
-    addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m, offs);
+    addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m, (off_t)offs);
 
     if (addr == MAP_FAILED) {
         d_perror("mmap failed");
-        d_printf2("Addr = 0x%x\n", (uintptr_t)(addr));
+        d_printf2("Addr = 0x%"PRIXPTR"\n", (uintptr_t)(addr));
         return -1;
     }
 

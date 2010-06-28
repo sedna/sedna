@@ -69,71 +69,6 @@ void _bm_restore_working_set_size()
         elog(EL_WARN, ("Can't restore working set size. Possibly, there are not enough privileges."));
 }
 
-#ifndef _WIN32
-static sigjmp_buf jmpbuf;
-static volatile sig_atomic_t canjump;
-
-void _bm_sigbus_handler(int signo)
-{
-    if(canjump == 0) return;
-	canjump = 0;
-	siglongjmp(jmpbuf, 1);
-}
-
-
-/*
- * Why do we need this?
- *
- * Since Linux and possibly other OSs do shared memory overcommitment,
- * shm_open + ftruncate + mmap chain alone doesn't guarantee shared memory
- * segment of the requested size. In case we don't have enough memory, for
- * example, we'll receive SIGBUS on memory access. Here, we try to mark dirty
- * every page in the buffer pool enforcing OS to allocate the entire segment.
- * In this case we won't get SIGBUS on memory access.
- *
- * Another possible solution is to write() to shared-memory file before mmap,
- * but that would be much less effective on large segments, since we'd
- * essentially be enforced to write on every memory page belonging to the segment.
- *
- * TODO: maybe move the entire logic with sighandler/longjmp to uMapViewOfFile,
- * since there could be problems with other allocated segments.
- */
-static inline void _bm_guarantee_buffer_pool(void* addr, size_t size)
-{
-    // TODO: get rid of this since most systems define it as deprecated
-    int page_size = getpagesize();
-
-    size_t total_pages = size / page_size;
-    if (size % page_size != 0) total_pages++;
-
-    unsigned char* buf_mem = (unsigned char*) addr;
-
-    struct sigaction sigbus_act, sig_backup;
-    memset(&sigbus_act, '\0', sizeof(struct sigaction));
-    memset(&sig_backup, '\0', sizeof(struct sigaction));
-    sigbus_act.sa_handler = _bm_sigbus_handler;
-
-    if(sigaction(SIGBUS, &sigbus_act, &sig_backup) == -1)
-        USER_EXCEPTION2(SE1033, "Can't set SIGBUS handler to preallocate buffer pool.");
-
-    if(sigsetjmp(jmpbuf, 1) != 0)
-#if defined(LINUX)
-        throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources. Try to remount /dev/shm with a greater size.");
-#else
-        throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources.");
-#endif
-    else
-    {
-        canjump = 1;
-        for (size_t i = 0; i < total_pages; i++)
-            memset(buf_mem + i * page_size, '\0', sizeof(unsigned char));
-    }
-
-    if(sigaction(SIGBUS, &sig_backup, NULL) == -1)
-        USER_EXCEPTION2(SE1033, "Can't restore SIGBUS handler in buffer pool preallocation.");
-}
-#endif /* _WIN32 */
-
 void _bm_init_buffer_pool()
 {
     _bm_set_working_set_size();
@@ -143,11 +78,15 @@ void _bm_init_buffer_pool()
     
     size_t buffer_size = (size_t)sm_globals::bufs_num * PAGE_SIZE;
     
-    file_mapping = uCreateFileMapping(U_INVALID_FD, buffer_size , CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
-    if (U_INVALID_FILEMAPPING(file_mapping))
+    if (uCreateShMem(&file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME,  buffer_size , NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION(SE1015);
 
-    buf_mem_addr = uMapViewOfFile(file_mapping, NULL, buffer_size, 0, __sys_call_error);
+#ifndef _WIN32
+    /* we don't want any guarantees for now, we'll manually call the service later */
+    file_mapping.to_guarantee = 0;
+#endif
+
+    buf_mem_addr = uAttachShMem(&file_mapping, NULL, 0,  __sys_call_error);
     if (buf_mem_addr == NULL)
         throw USER_EXCEPTION2(SE1015, "Cannot map view of file.");
 
@@ -157,7 +96,9 @@ void _bm_init_buffer_pool()
         {
 #ifndef _WIN32
             elog(EL_WARN, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
-            _bm_guarantee_buffer_pool(buf_mem_addr, buffer_size);
+            /* we want to guarantee all the buffer pool though */
+            if (uGuaranteeSharedMemory(buf_mem_addr, buffer_size, __sys_call_error))
+                throw USER_EXCEPTION(SE1015);
 #else
             elog(EL_WARN, ("Can't lock memory. Process does not have enouth privileges."));
 #endif
@@ -184,12 +125,12 @@ void _bm_release_buffer_pool()
             throw USER_ENV_EXCEPTION("Cannot release system structures", false);
     }
 
-    if (uUnmapViewOfFile(file_mapping, buf_mem_addr, buffer_size, __sys_call_error) == -1)
+    if (uDettachShMem(&file_mapping, buf_mem_addr, __sys_call_error) != 0)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
     buf_mem_addr = NULL;
 
-    if (uReleaseFileMapping(file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) == -1)
+    if (uReleaseShMem(&file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
     _bm_restore_working_set_size();
@@ -229,14 +170,14 @@ void bm_startup()
     if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-    p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error);
+    p_sm_callback_data = uAttachShMem(&p_sm_callback_file_mapping, NULL, 0, __sys_call_error);
     if (p_sm_callback_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
     if (uCreateShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-    lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp), __sys_call_error);
+    lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, 0, __sys_call_error);
     if (lru_global_stamp_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
     *lru_global_stamp_data = 0;
@@ -260,18 +201,18 @@ void bm_shutdown()
     flush_master_block();
     d_printf1("Flush master block: complete\n");
 
-    if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
+    if (uDettachShMem(&p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
     p_sm_callback_data = NULL;
 
-    if (uReleaseShMem(p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
+    if (uReleaseShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
-    if (uDettachShMem(lru_global_stamp_file_mapping, lru_global_stamp_data, __sys_call_error) != 0)
+    if (uDettachShMem(&lru_global_stamp_file_mapping, lru_global_stamp_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-    if (uReleaseShMem(lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, __sys_call_error) != 0)
+    if (uReleaseShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 #endif
     d_printf1("Release shared memory: complete\n");
@@ -548,7 +489,7 @@ void bm_memlock_block(session_id sid, xptr p)
         res = blocked_mem.find(offs);
         if (res == 0) return; // block already blocked
 
-        if (blocked_mem.size() >= sm_globals::bufs_num - sm_globals::max_trs_num)
+        if (blocked_mem.size() >= (unsigned)sm_globals::bufs_num - sm_globals::max_trs_num)
             throw USER_EXCEPTION(SE1020);
     }
     else throw USER_EXCEPTION(SE1021);

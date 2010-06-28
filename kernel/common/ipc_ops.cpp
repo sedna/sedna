@@ -35,14 +35,13 @@ open_gov_shm()
     {
         if (0 != uOpenShMem(&gov_shm_service_dsc,
             GOVERNOR_SHARED_MEMORY_NAME,
-            sizeof(gov_config_struct),
             __sys_call_error))
             throw USER_EXCEPTION2(SE4400, "Can't open governor shared memory");   /// SEDNA server is not running
 
 
-        sedna_gov_shm_ptr = uAttachShMem(gov_shm_service_dsc,
+        sedna_gov_shm_ptr = uAttachShMem(&gov_shm_service_dsc,
             NULL,
-            sizeof(gov_config_struct),
+            0,
             __sys_call_error);
 
         if (NULL == sedna_gov_shm_ptr)
@@ -56,10 +55,10 @@ close_gov_shm()
 {
     if ( NULL != sedna_gov_shm_ptr )
     {
-        if ( 0 != uDettachShMem(gov_shm_service_dsc, sedna_gov_shm_ptr, __sys_call_error))
+        if ( 0 != uDettachShMem(&gov_shm_service_dsc, sedna_gov_shm_ptr, __sys_call_error))
             return -1;
 
-        if ( 0 != uCloseShMem(gov_shm_service_dsc, __sys_call_error))
+        if ( 0 != uCloseShMem(&gov_shm_service_dsc, __sys_call_error))
             return -1;
     }
 

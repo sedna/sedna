@@ -64,7 +64,7 @@ extern t_ramoffs_list blocked_mem;
 extern ramoffs buffer_on_stake;
 
 // File mappings
-extern UMMap  file_mapping;
+extern UShMem  file_mapping;
 extern UShMem p_sm_callback_file_mapping;
 
 #ifdef LRU

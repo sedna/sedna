@@ -27,7 +27,7 @@
 static bool vmm_session_initialized = false;
 static bool vmm_transaction_initialized = false;
 
-static UMMap file_mapping;
+static UShMem file_mapping;
 
 /* Active page */
 xptr vmm_cur_xptr;
@@ -190,7 +190,7 @@ void vmm_preliminary_call(lsize_t layer_size)
             throw USER_EXCEPTION(SE1031);
     }
 
-    elog(EL_INFO,  ("preliminary call: layer address space start addr = 0x%x", LAYER_ADDRESS_SPACE_START_ADDR));
+    elog(EL_INFO,  ("preliminary call: layer address space start addr = 0x%"PRIXPTR, LAYER_ADDRESS_SPACE_START_ADDR_INT));
     elog(EL_INFO,  ("preliminary call: layer address space size = 0x%x", LAYER_ADDRESS_SPACE_SIZE));
 }
 
@@ -353,10 +353,10 @@ void read_write_cdb_layer_size(lsize_t *data, bool write)
     UShMem p_cdb_callback_file_mapping;
     lsize_t *p_cdb_callback_data;
 
-    if (uOpenShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(lsize_t), __sys_call_error) != 0)
+    if (uOpenShMem(&p_cdb_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4021, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-    p_cdb_callback_data = (lsize_t *)uAttachShMem(p_cdb_callback_file_mapping, NULL, sizeof(lsize_t), __sys_call_error);
+    p_cdb_callback_data = (lsize_t *)uAttachShMem(&p_cdb_callback_file_mapping, NULL, 0, __sys_call_error);
     if (p_cdb_callback_data == NULL)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
@@ -365,10 +365,10 @@ void read_write_cdb_layer_size(lsize_t *data, bool write)
     else
         *data = *p_cdb_callback_data;
 
-    if (uDettachShMem(p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
+    if (uDettachShMem(&p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-    if (uCloseShMem(p_cdb_callback_file_mapping, __sys_call_error) != 0)
+    if (uCloseShMem(&p_cdb_callback_file_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4022, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 }
 /*
@@ -598,8 +598,7 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
         vmm_preliminary_call(msg.data.reg.layer_size);
 
         /* Open buffer memory */
-        file_mapping = uOpenFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error);
-        if (U_INVALID_FILEMAPPING(file_mapping))
+        if (uOpenShMem(&file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE1037);
 
         char buf[100];
@@ -611,10 +610,10 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
             SM_TO_VMM_CALLBACK_SEM2_BASE_STR(tr_globals::sid, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
-        if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), __sys_call_error) != 0)
+        if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4021, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-        p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error);
+        p_sm_callback_data = uAttachShMem(&p_sm_callback_file_mapping, NULL, 0, __sys_call_error);
         if (p_sm_callback_data == NULL)
             throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
@@ -686,13 +685,13 @@ void vmm_on_session_end()
         if (uCloseThreadHandle(vmm_thread_handle, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4063, "VMM thread");
 
-        if (uCloseFileMapping(file_mapping, __sys_call_error) == -1)
+        if (uCloseShMem(&file_mapping, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE1038);
 
-        if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
+        if (uDettachShMem(&p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-        if (uCloseShMem(p_sm_callback_file_mapping, __sys_call_error) != 0)
+        if (uCloseShMem(&p_sm_callback_file_mapping, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4022, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
         USemaphoreClose(sm_to_vmm_callback_sem1, __sys_call_error);

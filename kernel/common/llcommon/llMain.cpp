@@ -266,7 +266,7 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 		LL_ERROR("internal ll error: cannot create shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
     //init shared memory pointer
-	if ((llInfo = (llGlobalInfo *)uAttachShMem(SharedMem, NULL, sizeof(llGlobalInfo), __sys_call_error)) == NULL)
+	if ((llInfo = (llGlobalInfo *)uAttachShMem(&SharedMem, NULL, 0, __sys_call_error)) == NULL)
 		LL_ERROR("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
     //init header of shared memory
@@ -333,10 +333,10 @@ int llRelease()
 
 	lfsWriteHeader(&file_head, sizeof(llFileHead));
 
-	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
+	if (uDettachShMem(&SharedMem, llInfo, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
-	if (uReleaseShMem(SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, __sys_call_error) != 0)
+	if (uReleaseShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot release shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (USemaphoreRelease(SyncSem, __sys_call_error) != 0)
@@ -371,10 +371,10 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
     if (UEventOpen(&CheckpointEvent, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot open event: SNAPSHOT_CHECKPOINT_EVENT");
 
-	if (uOpenShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, sizeof(llGlobalInfo), __sys_call_error) != 0)
+	if (uOpenShMem(&SharedMem, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot open shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
-	if ((llInfo = (llGlobalInfo *)uAttachShMem(SharedMem, NULL, sizeof(llGlobalInfo), __sys_call_error)) == NULL)
+	if ((llInfo = (llGlobalInfo *)uAttachShMem(&SharedMem, NULL, 0, __sys_call_error)) == NULL)
 		LL_ERROR("internal ll error: cannot attach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	ReadBuf = malloc(LL_READBUF_SIZE);
@@ -390,10 +390,10 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
 // Closes logical log (pair-function for open).
 int llClose()
 {
-	if (uDettachShMem(SharedMem, llInfo, __sys_call_error) != 0)
+	if (uDettachShMem(&SharedMem, llInfo, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot dettach shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
-	if (uCloseShMem(SharedMem, __sys_call_error) != 0)
+	if (uCloseShMem(&SharedMem, __sys_call_error) != 0)
 		LL_ERROR("internal ll error: cannot close shared memory: CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
 	if (USemaphoreClose(SyncSem, __sys_call_error) != 0)
