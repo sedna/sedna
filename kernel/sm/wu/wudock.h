@@ -34,12 +34,13 @@ void WuLogHeader(int bufferId);
 inline int BufferIdFromRamoffs(ramoffs ofs)
 {
     assert(ofs % PAGE_SIZE == 0);
-    return ofs / PAGE_SIZE;
+    /* explicit cast is safe here since bufs number is int everywhere on se_sm */
+    return (int)(ofs / PAGE_SIZE);
 }
 
 inline ramoffs RamoffsFromBufferId(int id)
 {
-    return id * PAGE_SIZE;
+    return (ramoffs)id * PAGE_SIZE;
 }
 
 #define WU_CATCH_EXCEPTIONS() \

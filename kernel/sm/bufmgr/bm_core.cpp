@@ -374,7 +374,7 @@ xptr put_block_to_buffer(session_id sid,
 //d_printf1("put 5\n");
 
 	// store information about physical xptr
-	int ind = (*offs) / PAGE_SIZE;
+	size_t ind = (*offs) / PAGE_SIZE;
 	(*phys_xptrs)[ind] = p;
 
     return swapped;
@@ -383,7 +383,7 @@ xptr put_block_to_buffer(session_id sid,
 void flush_buffer(ramoffs offs)
 {
 	vmm_sm_blk_hdr *blk = NULL;
-	int ind = offs / PAGE_SIZE;
+	size_t ind = offs / PAGE_SIZE;
 	xptr physXptr;
 
     blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
