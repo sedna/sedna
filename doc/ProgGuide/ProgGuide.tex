@@ -193,7 +193,7 @@ If the transaction has not been rollback successfully the \verb!rollback! method
 throws \verb!DriverException!.
 
 The Java API does not provide auto-commit mode for transactions. That is, every
-transaction must be explicitly started (by means of \verb!begin!) and commited
+transaction must be explicitly started (by means of \verb!begin!) and committed
 (by means of \verb!commit!). If session is closed (by means of \verb!close!)
 before a transaction committed, server does rollback for that transaction, and
 \verb!close! throws \verb!DriverException!.
@@ -437,7 +437,7 @@ Before running the example make sure that the Sedna DBMS is installed and do the
 following steps:
 
 \begin{enumerate}
-\item Start Sedna by runing the following command:
+\item Start Sedna by running the following command:
 \begin{verbatim}
 se_gov
 \end{verbatim}
@@ -513,7 +513,7 @@ option. Use it if you compile your project with /MD[d] option.
 C API provides set of functions for sessions and transactions management, query
 and update statements execution, etc. If the function fails it returns negative
 value. In this case application can obtain the error message and code which help
-to understand the reason of the error occured.
+to understand the reason of the error occurred.
 
 To get the last error message use \verb!SEgetLastErrorMsg! function:
 
@@ -618,7 +618,7 @@ an application can have several sessions open at one time.
 
 When an application finished it's work with the database, it must close the
 session. \verb!SEclose! finishes the session and closes the connection to the
-server. \verb!SEclose! also frees resourses that were equipped by the call to
+server. \verb!SEclose! also frees resources that were equipped by the call to
 \verb!SEconnect! function, that is for every successful call to \verb!SEconnect!
 there must be a call to \verb!SEclose! in the client program. You must call
 \verb!SEclose! both when application finishes its work with the database, and
@@ -645,7 +645,7 @@ associated with a session to be closed.
 If the function succeeds, the return value is positive:
 
 \begin{citemize}
-\item\verb!SEDNA_SESSION_CLOSED! - session closed succeffully.
+\item\verb!SEDNA_SESSION_CLOSED! - session closed successfully.
 \end{citemize}
 
 \noindent
@@ -679,7 +679,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn,
 \begin{citemize}
 \item\verb!conn! - a pointer to an instance of the SednaConnection type,
 associated with a session to be closed.
-\item\verb!attr! - an attribute to set (one of the predifined Sedna connection
+\item\verb!attr! - an attribute to set (one of the predefined Sedna connection
 attributes listed below).
 \item\verb!attrValue! - a pointer to the value to be associated with the
 attribute.
@@ -794,7 +794,7 @@ as long as needed.
 \item\verb!SEDNA_ATTR_MAX_RESULT_SIZE! connection attribute allows to set the
 limit on query result size. If this attribute is set, the server will cut the
 result data if its size exceeds the specified limit. By default, result data
-that is passed from server in reponse to user query can be of unlimited size.
+that is passed from server in response to user query can be of unlimited size.
 
 \begin{tabular}{|l|l|}
 \hline
@@ -804,7 +804,7 @@ that is passed from server in reponse to user query can be of unlimited size.
 \hline
 \end{tabular}
 
-\item\verb!SEDNA_LOG_AMMOUNT! connection attribute changes the mode of logical
+\item\verb!SEDNA_LOG_AMOUNT! connection attribute changes the mode of logical
 logging of the next transactions. Transaction can be set to run in full log mode
 (\verb!SEDNA_LOG_FULL!) or reduced log mode (\verb!SEDNA_LOG_LESS!). The latter
 means transaction will be writing much less log info during bulk loads. However
@@ -1492,7 +1492,7 @@ Before running the example make sure that the Sedna DBMS is installed and do the
 following steps:
 
 \begin{enumerate}
-\item Start Sedna by runing the following command:
+\item Start Sedna by running the following command:
 \begin{verbatim}
 se_gov
 \end{verbatim}
@@ -1554,7 +1554,7 @@ functions to manage connections:
 \end{verbatim}
 
 Establishes a connection between the client application and the Sedna DBMS.
-Returns a 'connection' object which incapsulate information about the
+Returns a 'connection' object which encapsulate information about the
 connection.
 The arguments are strings that denote connection parameters:
 
@@ -1566,7 +1566,7 @@ the value of this parameter.
 are to establish a separate connection for each database you would like to work
 with.
 \item \texttt{user} is your user name for the session. You can use
-\texttt{"SYSTEM"} for the value of this paramter.
+\texttt{"SYSTEM"} for the value of this parameter.
 \item \texttt{password} is your password for the session. You can use the
 \texttt{"MANAGER"} value of this parameter.
 \end{citemize}
@@ -1614,7 +1614,7 @@ To end your running transaction, you are provided with the following function:
 \end{verbatim}
 
 If \texttt{action} is \texttt{'COMMIT} the transaction in the given connection
-will be commited, if \texttt{'ROLLBACK} is given, the transaction will be rolled
+will be committed, if \texttt{'ROLLBACK} is given, the transaction will be rolled
 back.
 
 
@@ -1850,7 +1850,7 @@ Before running the example make sure that the Sedna DBMS is installed and do the
 following steps:
 
 \begin{enumerate}
-\item Start Sedna by runing the following command in a command line:
+\item Start Sedna by running the following command in a command line:
 \begin{verbatim}
 se_gov
 \end{verbatim}
@@ -1918,7 +1918,7 @@ features:
 \item \verb!fn:normalize-unicode! function is not conformant (it always returns
 the same string or raises exception);
 \item External variables are not supported. However they are supported by XQJ
-driver by Charles Foster (see donwload page);
+driver by Charles Foster (see download page);
 \item Regular expressions (e.g. \verb!fn:matches()! use them) are based on
 PCRE~\cite{lib:pcre-lib} syntax which differs from the one defined in W3C
 specifications.
@@ -2042,7 +2042,7 @@ index-scan("people", "London", "EQ")/name
 
 Please read section \ref{sec:managing-ft-indices} before reading this section.
 
-In the current version of Sedna, query executor does not use full-text indecies
+In the current version of Sedna, query executor does not use full-text indices
 automatically. Use the following functions to enforce executor to employ
 indices.
 
@@ -2071,7 +2071,7 @@ The \verb!ftscan! function returns those items of the input sequence \verb!$seq!
 which satisfy the query \verb!$query!. The function does not use indices and can
 be applied to any sequence of nodes, even those that are not indexed. The query
 \verb!$query! is evaluated over the text representation constructed according to
-the \verb!$type! and \verb!$customization_rules! paramters. The values of the
+the \verb!$type! and \verb!$customization_rules! parameters. The values of the
 parameters are the same as those used when a full-text index is created (see
 section \ref{sec:managing-ft-indices} for details).
 
@@ -2100,11 +2100,11 @@ ftscan(doc("foo")/library//article,
 \subsubsection{SQL Connection}
 
 SQL Connection allows access to relational databases from XQuery using SQL. The
-resulting ralations are represented on-the-fly as sequenses of XML-elements
+resulting relations are represented on-the-fly as sequences of XML-elements
 representing rows. These elements have sub-elements corresponding with the
 columns returned by the SQL query and thus can be easy processed in XQuery. All
 functions dealing with access to SQL data are located in the namespace
-\verb!http://modis.ispras.ru/Sedna/SQL! which is refered as \verb!sql! in the
+\verb!http://modis.ispras.ru/Sedna/SQL! which is referred as \verb!sql! in the
 following function declarations and examples.
 
 
@@ -2145,7 +2145,7 @@ driver options following it. Driver options must be in the following form:
 \begin{verbatim}
 <option>=<value>{;<option>=<value>}
 \end{verbatim}
-List of available options depens on the ODBC driver used. One of the common
+List of available options depends on the ODBC driver used. One of the common
 options is ``Port'' which is used to specify the port on which the database
 server is configured to listen. For example:
 \small{\begin{verbatim}
@@ -2164,7 +2164,7 @@ which enables manual commit mode if its value is \verb!on!.
 
 To disconnect from the database, you can use the following function:
 \begin{verbatim}
-function sql:close($connecton as xs:integer) as element()?
+function sql:close($connection as xs:integer) as element()?
 \end{verbatim}
 It closes database connection associated with connection handle
 \verb!$connection!. A Sedna error is raised if operation cannot be completed.
@@ -2273,7 +2273,7 @@ function sql:prepare($connection as xs:integer,
 \end{verbatim}}
 \noindent
 these functions prepare a SQL statement for later execution and returns a
-prepated statement handle which can be used in the \verb!sql:execute! and
+prepared statement handle which can be used in the \verb!sql:execute! and
 \verb!sql:exec-update! functions. A Sedna error is raised on an erroneous
 statement.
 
@@ -2305,7 +2305,7 @@ The \verb!sql:execute! function have the following arguments:
 \verb!$sql:prepare!;
 \item\verb!$param1, ...! are parameters for parametrized
 statements. The number of parameters specified must exactly match the number
-of parameters of the prepared statement. NULL values are represended as empty
+of parameters of the prepared statement. NULL values are represented as empty
 sequences \verb!()!.
 \end{citemize}
 
@@ -2318,14 +2318,14 @@ function sql:exec-update($prepared-statement as xs:integer,
 This function is similar to \verb!sql:execute!, but returns the number of rows
 affected by an update query (instead of an empty sequence returned by
 \verb!sql:execute! for update-queries). Function arguments are the same as for
-\verb!sql:execute!. The behaivor of this function is undefined for non-update
+\verb!sql:execute!. The behavior of this function is undefined for non-update
 queries.
 
 
 \subsubsection*{Transactions}
 
 The default commit mode of connection is auto-commit, meaning that all updates
-will be commited automatically. If this is not desired behaviour, you can pass
+will be committed automatically. If this is not desired behaviour, you can pass
 manual-commit option to \verb!sql:connect! when you create a connection handle.
 
 In manual commit mode you can specify when updates will be committed or rolled
@@ -2357,7 +2357,7 @@ There are two functions for specifying transaction boundaries -
 automatically by queries, these functions only close them):
 
 \begin{verbatim}
-function sql:commit($connecton as xs:integer) as element()?
+function sql:commit($connection as xs:integer) as element()?
 \end{verbatim}
 
 \verb!sql:commit! function commits all changes made during the last transaction
@@ -2370,7 +2370,7 @@ transaction in the database connection specified by the connection handle
 cannot be completed.
 
 \begin{verbatim}
-function sql:rollback($connecton as xs:integer) as element()?
+function sql:rollback($connection as xs:integer) as element()?
 \end{verbatim}
 
 
@@ -2410,7 +2410,7 @@ External functions must be written in C/C++. To implement a new XQuery function
 use an external function, first it initializes this function by calling
 \verb!func_init!, after that it will call \verb!func! to compute results as many
 times as needed. When some external function is not needed anymore, executor
-calls \verb!func_deinit! (which probaly will free any memory allocated by
+calls \verb!func_deinit! (which probably will free any memory allocated by
 \verb!func_init!). Each one of the three functions receives an
 \verb!SEDNA_EF_INIT!\footnote{All needed types and constants are defined in the
 sedna\_ef.h file, located in the include directory of the Sedna distribution.
@@ -2614,7 +2614,7 @@ The update language is based on the XQuery update proposal by Patrick Lehti
 
 \begin{note}
 The result of each update statement, shouldn't break the well-formedness and
-validness of XML entitites, stored in the database. Otherwise, an error is
+validness of XML entities, stored in the database. Otherwise, an error is
 raised.
 \end{note}
 
@@ -2669,7 +2669,7 @@ greater then 180:
 \begin{verbatim}
 UPDATE
 insert <warning>High Blood Pressure!</warning>
-preceeding doc("hospital")//blood_pressure[systolic>180]
+preceding doc("hospital")//blood_pressure[systolic>180]
 \end{verbatim}
 
 
@@ -2681,8 +2681,8 @@ contains a subexpression, that returns the nodes to be deleted.
 UPDATE
 delete Expr
 \end{verbatim}
-\verb!Expr! identifies the nodes to be removed from the datatbase. Note, that
-nodes are removed from the database with all their descandants.
+\verb!Expr! identifies the nodes to be removed from the database. Note, that
+nodes are removed from the database with all their descendants.
 
 Error is raised if one of the following conditions is met:
 \begin{itemize}
@@ -2710,7 +2710,7 @@ nodes in the database.
 UPDATE
 delete_undeep Expr
 \end{verbatim}
-\verb!Expr! identifies the nodes to be removed from the datatbase.
+\verb!Expr! identifies the nodes to be removed from the database.
 
 Error is raised if one of the following conditions is met:
 \begin{itemize}
@@ -2862,11 +2862,11 @@ can use the functionality provided by your operation system. Java and Scheme
 APIs provide additional wrappers for bulk load from stream, such that the input
 stream can be specified by an additional argument of a function call.
 
-By default, Sedna removes boundary whitespaces according to the boundary-space
-policy defined in \cite{paper:query-language}. To control boundary whitespaces
+By default, Sedna removes boundary whitespace according to the boundary-space
+policy defined in \cite{paper:query-language}. To control boundary whitespace
 processing, use \verb!boundary-space declaration! \cite{paper:query-language} in
 the prolog of the \verb!LOAD! statement. The following example illustrates a
-boundary-space declaration that instructs Sedna to preserve whitespaces while
+boundary-space declaration that instructs Sedna to preserve whitespace while
 loading \verb!auction.xml! document:
 
 \begin{verbatim}
@@ -3795,7 +3795,7 @@ local:fact(10)
 
 \small{
 \begin{verbatim}
-<plolog xmlns="http://www.modis.ispras.ru/sedna">
+<prolog xmlns="http://www.modis.ispras.ru/sedna">
   <function id="0" function-name="local:fact" type="xs:integer">
     <arguments>
       <argument descriptor="0" type="xs:integer"/>
@@ -3844,7 +3844,7 @@ local:fact(10)
     
     </operation>
   </function>
-</plolog>
+</prolog>
 
 <query xmlns="http://www.modis.ispras.ru/sedna">
   <operation name="PPQueryRoot">
