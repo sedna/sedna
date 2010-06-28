@@ -4,8 +4,8 @@
  */
 
 
-#ifndef _SELIST_H
-#define _SELIST_H
+#ifndef _OFFSLIST_H
+#define _OFFSLIST_H
 
 #include "common/sedna.h"
 #include "common/se_hash.h"
@@ -26,16 +26,6 @@ public:
 
 private:
 
-    template <typename _Val>
-    class offs_hash : public se_hash<list_value_type, _Val, middle_significan_bits, right_zero_bits>
-    {
-    protected:
-        virtual typename se_hash<list_value_type, _Val, middle_significan_bits, right_zero_bits>::mask_type get_hashkey(const list_value_type &key)
-        {
-            return key;
-        }
-    };
-
     struct elem
     {
         list_value_type val;
@@ -43,12 +33,21 @@ private:
         elem *pred;
     };
 
+    class offs_hash : public se_hash<list_value_type, elem *, middle_significan_bits, right_zero_bits>
+    {
+    protected:
+        virtual typename se_hash<list_value_type, elem *, middle_significan_bits, right_zero_bits>::mask_type get_hashkey(const list_value_type &key)
+        {
+            return key;
+        }
+    };
+
     elem *start;
     elem *last;
     size_t num;
 
     // hash is used to facilitate fast find on the list
-    offs_hash<elem *> tbl;
+    offs_hash tbl;
 
     class se_list_it
     {
@@ -210,4 +209,4 @@ public:
     iterator end() { return se_list_it::end(this); }
 };
 
-#endif /* _SELIST_H */
+#endif /* _OFFSLIST_H */

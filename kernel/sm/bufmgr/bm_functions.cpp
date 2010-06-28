@@ -35,7 +35,7 @@ void _bm_set_working_set_size()
         return;
     }
 
-    size_t working_set_size = (size_t)(sm_globals::bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE);
+    size_t working_set_size = (size_t)sm_globals::bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
     int res = 0;
 
     res = uGetCurProcessWorkingSetSize(
@@ -81,11 +81,29 @@ void _bm_sigbus_handler(int signo)
 }
 
 
-static inline void _bm_guarantee_buffer_pool(void* addr, int size)
+/*
+ * Why do we need this?
+ *
+ * Since Linux and possibly other OSs do shared memory overcommitment,
+ * shm_open + ftruncate + mmap chain alone doesn't guarantee shared memory
+ * segment of the requested size. In case we don't have enough memory, for
+ * example, we'll receive SIGBUS on memory access. Here, we try to mark dirty
+ * every page in the buffer pool enforcing OS to allocate the entire segment.
+ * In this case we won't get SIGBUS on memory access.
+ *
+ * Another possible solution is to write() to shared-memory file before mmap,
+ * but that would be much less effective on large segments, since we'd
+ * essentially be enforced to write on every memory page belonging to the segment.
+ *
+ * TODO: maybe move the entire logic with sighandler/longjmp to uMapViewOfFile,
+ * since there could be problems with other allocated segments.
+ */
+static inline void _bm_guarantee_buffer_pool(void* addr, size_t size)
 {
+    // TODO: get rid of this since most systems define it as deprecated
     int page_size = getpagesize();
 
-    int total_pages = size / page_size;
+    size_t total_pages = size / page_size;
     if (size % page_size != 0) total_pages++;
 
     unsigned char* buf_mem = (unsigned char*) addr;
@@ -107,7 +125,7 @@ static inline void _bm_guarantee_buffer_pool(void* addr, int size)
     else
     {
         canjump = 1;
-        for(int i = 0; i < total_pages; i++)
+        for (size_t i = 0; i < total_pages; i++)
             memset(buf_mem + i * page_size, '\0', sizeof(unsigned char));
     }
 
@@ -139,7 +157,7 @@ void _bm_init_buffer_pool()
         {
 #ifndef _WIN32
             elog(EL_WARN, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
-            _bm_guarantee_buffer_pool(buf_mem_addr, sm_globals::bufs_num * PAGE_SIZE);
+            _bm_guarantee_buffer_pool(buf_mem_addr, buffer_size);
 #else
             elog(EL_WARN, ("Can't lock memory. Process does not have enouth privileges."));
 #endif
@@ -147,7 +165,8 @@ void _bm_init_buffer_pool()
         }
     }
 
-    for (int i = 0; i < sm_globals::bufs_num; i++) free_mem.push(i * PAGE_SIZE);
+    for (int i = 0; i < sm_globals::bufs_num; i++)
+        free_mem.push((size_t)i * PAGE_SIZE);
 }
 
 void _bm_release_buffer_pool()
@@ -157,7 +176,7 @@ void _bm_release_buffer_pool()
     used_mem.clear();
     blocked_mem.clear();
 
-    size_t buffer_size = (size_t)((unsigned)sm_globals::bufs_num * PAGE_SIZE);
+    size_t buffer_size = (size_t)sm_globals::bufs_num * PAGE_SIZE;
     
     if (lock_memory)
     {
