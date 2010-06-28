@@ -36,9 +36,11 @@ private:
     class offs_hash : public se_hash<list_value_type, elem *, middle_significan_bits, right_zero_bits>
     {
     protected:
-        virtual typename se_hash<list_value_type, elem *, middle_significan_bits, right_zero_bits>::mask_type get_hashkey(const list_value_type &key)
+        typedef typename se_hash<list_value_type, elem *, middle_significan_bits, right_zero_bits>::mask_type mask_type;
+        virtual mask_type get_hashkey(const list_value_type &key)
         {
-            return key;
+            /* safe cast here according to the nature of se_hash */
+            return (mask_type)key;
         }
     };
 
