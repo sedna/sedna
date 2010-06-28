@@ -7458,7 +7458,7 @@ zhfwrite(
 	)
 {
 	static char *b = 0;
-	static bl = 0;
+	static int bl = 0;
 	STATIC verylong aa = 0;
 	register long i;
 	register long cnt = 0;
@@ -7919,7 +7919,7 @@ ztobitstring(
 	int len_a;
 
 	if (!a) {
-	    bitstring = (char *) malloc( 5 );
+	    bitstring = (unsigned char *) malloc( 5 );
 	    bitstring[0] = 1;
 	    bitstring[1] = 0;
 	    bitstring[2] = 0;
@@ -7930,7 +7930,7 @@ ztobitstring(
 
 	/*  len_bitstring  is the number of bytes to represent the verylong */
 	len_bitstring = (z2log(a)-1)/CHARL + 1;
-	bitstring = (char *) malloc( 4 + len_bitstring );
+	bitstring = (unsigned char *) malloc( 4 + len_bitstring );
 	len_a = a[0];
 	if (len_a < 0) {
 		len_bitstring = -len_bitstring;
@@ -11113,7 +11113,7 @@ stage2:
 	l=a[0];
 
 	for (; p>1; p--) {
-		register e;
+		register int e;
 
 		/* make sure p is not a power */
 		if (p > 3) {

@@ -45,7 +45,7 @@ namespace sedna
 
         if (n.preds)
         {
-            for (unsigned int i = 0; i < n.preds->size(); i++)
+            for (size_t i = 0; i < n.preds->size(); i++)
                 (*n.preds)[i]->accept(*this);
         }
     }
@@ -290,7 +290,7 @@ namespace sedna
 
         if (n.preds)
         {
-            for (unsigned int i = 0; i < n.preds->size(); i++)
+            for (size_t i = 0; i < n.preds->size(); i++)
                 (*n.preds)[i]->accept(*this);
         }
     }
@@ -371,11 +371,12 @@ namespace sedna
             std::string mod_uri = mod_chain.back();
             std::string err;
 
-            for (int i = mod_chain.size() - 2; i >= 0; i--)
+            for (size_t i = mod_chain.size() - 1; i >= 1; i--)
             {
-                if (mod_chain[i] == mod_uri)
+                size_t idx = i - 1;
+                if (mod_chain[idx] == mod_uri)
                 {
-                    for (unsigned int j = i; j < mod_chain.size() - 1; j++)
+                    for (size_t j = idx; j < mod_chain.size() - 1; j++)
                     {
                         err.append(mod_chain[j]);
                         err.append(" => ");
@@ -393,8 +394,8 @@ namespace sedna
             return;
 
         // check chain
-        for (int i = chain.size() - 1; i >= 0; i--)
-            if (chain[i] == name) // we don't want to cycle on recursive fun-calls
+        for (size_t i = chain.size(); i >= 1; i--)
+            if (chain[i-1] == name) // we don't want to cycle on recursive fun-calls
                 return;
 
         // set bound parameters
@@ -402,7 +403,7 @@ namespace sedna
         {
             setParamMode();
 
-            for (unsigned int i = 0; i < n.params->size(); i++)
+            for (size_t i = 0; i < n.params->size(); i++)
                 (*n.params)[i]->accept(*this);
 
             params_count = param_count;
@@ -688,7 +689,7 @@ namespace sedna
 
     void Cycle::visit(ASTSeq &n)
     {
-        for (unsigned int i = 0; i < n.exprs->size(); i++)
+        for (size_t i = 0; i < n.exprs->size(); i++)
             (*n.exprs)[i]->accept(*this);
     }
 
@@ -805,9 +806,9 @@ namespace sedna
         // first, check if variable is bound
         if (bound_vars.size() > 0)
         {
-            for (int i = bound_vars.size() - 1; i >= 0; i--)
+            for (size_t i = bound_vars.size(); i >= 1; i--)
             {
-                if (bound_vars[i].int_name == name)
+                if (bound_vars[i-1].int_name == name)
                     return;
             }
         }
@@ -865,11 +866,12 @@ namespace sedna
         {
             std::string mod_uri = mod_chain.back();
 
-            for (int i = mod_chain.size() - 2; i >= 0; i--)
+            for (size_t i = mod_chain.size() - 1; i >= 1; i--)
             {
-                if (mod_chain[i] == mod_uri)
+                size_t idx = i - 1;
+                if (mod_chain[idx] == mod_uri)
                 {
-                    for (unsigned int j = i; j < mod_chain.size() - 1; j++)
+                    for (size_t j = idx; j < mod_chain.size() - 1; j++)
                     {
                         err.append(mod_chain[j]);
                         err.append(" => ");
@@ -885,11 +887,12 @@ namespace sedna
         }
 
         // then, check if we've got a variable cycle
-        for (int i = chain.size() - 1; i >= 0; i--)
+        for (size_t i = chain.size(); i >= 1; i--)
         {
-            if (chain[i] == name)
+            size_t idx = i - 1;
+            if (chain[idx] == name)
             {
-                for (unsigned int j = i; j < chain.size(); j++)
+                for (size_t j = idx; j < chain.size(); j++)
                 {
                     err.append(chain[j]);
                     err.append(" => ");

@@ -70,7 +70,7 @@ static void parse_and_print_rc(const msg_struct* msg, bool sm_list)
             net_int2int(&db_number, msg->body + offset);
             offset += sizeof(int);
 
-            for(int i = 0; i < db_number; i++)
+            for(uint32_t i = 0; i < db_number; i++)
             {
                 uint32_t sessions_number;
                 net_int2int(&sessions_number, msg->body + offset);
