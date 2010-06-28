@@ -469,7 +469,7 @@ for database users and privileges). By default database is created with
 database creation and cannot be changed later for the database.
 
 The last parameter \verb!db_name! is the name of the database to be created.
-Database name may contain latin letters, numbers. Also the following special
+Database name may contain Latin letters, numbers. Also the following special
 symbols are allowed \verb!#%&()[]{},.-_=@^`~! (double quote (quote on Windows)
 database name parameter to create a database with the name which contains
 special symbols). There cannot be two databases with the same name.
@@ -502,7 +502,7 @@ The configuration file is an XML document, which satisfies the following DTD:
 <!ELEMENT max_trs_num (#PCDATA)>
 <!ELEMENT max_log_files (#PCDATA)>
 <!ELEMENT upd_crt (#PCDATA)>
-<?ELEMENT tmp_file_initial_size (#PCDATA)>
+<!ELEMENT tmp_file_initial_size (#PCDATA)>
 \end{verbatim}}
 
 The root of this XML document is the \verb!db! element, which contains
@@ -775,7 +775,7 @@ meta-commands are taken from the input file specified by the \verb!-file!
 option. By default, \verb!se_term! session is run in the \emph{autocommit mode},
 that is, each statement is run in a separate transaction. To switch to a
 \emph{manual-commit mode} use \verb!unset! meta-command (\verb!se_term!
-meta-comands are described below in this section). If the statement executed
+meta-commands are described below in this section). If the statement executed
 successfully, the results are displayed on the screen.
 
 \verb!se_term! returns 0 to the shell if it finished normally, 1 if a fatal
@@ -784,7 +784,7 @@ the Sedna server went bad and the session is not interactive, and 3 if a
 statement or a command failed and the variable \verb!ON_ERROR_STOP! was set
 (\verb!se_term! internal variables are described below in this section).
 
-Meta-commands are commands for \verb!se_term! that proccessed by the
+Meta-commands are commands for \verb!se_term! that processed by the
 \verb!se_term! itself. A meta-command begins with a backslash and that differs
 it from the query/update statements. Thus, the format of \verb!se_term!
 meta-command is the backslash, followed immediately by a command, with no
@@ -804,7 +804,7 @@ ampersand at the end. \verb!se_term! takes in the following meta-commands:
 \verb!set! and \verb!unset! meta-commands are used for managing \verb!se_term!
 internal variables. Notice, that there are aliases for some commands. So you can
 write \verb!\ac! instead of \verb!\set AUTOCOMMIT!. There are following
-\verb!se_term! internal varibales:
+\verb!se_term! internal variables:
 
 \verb!AUTOCOMMIT (\ac for set, \nac for unset)! - when set, autocommit mode is
 on. When unset manual-commit mode is on. \verb!AUTOCOMMIT! is set by default.
@@ -839,7 +839,7 @@ any timeout set (query is executed as long as needed).
 \subsection{Backup and Restore}
 
 As any database system that contains valuable data, Sedna databases should be
-backed up regularly. In this section we present different aproaches to back up
+backed up regularly. In this section we present different approaches to back up
 Sedna data and the process of migration between different Sedna releases.
 
 \subsubsection{Export/Import Utility}
@@ -1537,7 +1537,7 @@ CREATE ROLE "role-name"
 \end{verbatim}
 
 This statement creates role with name \emph{role-name}. When created role does
-not contain any privileges. It is not recommeded to created a role with a name
+not contain any privileges. It is not recommended to created a role with a name
 of an existing user (in this case privileges will be granted both to this user
 and to this role).
 
@@ -1607,8 +1607,8 @@ allows \emph{Alice} to perform bulk load into the database.
 
 To grant a role you must be allowed to grant every privilege of the role: to be
 owner of every database object of privileges of the role, or to be DBA user. To
-grant a role to another role means grantee will add grantor's priveleges to its
-own set of priveleges. To grant a role to one or more users or roles use:
+grant a role to another role means grantee will add grantor's privileges to its
+own set of privileges. To grant a role to one or more users or roles use:
 
 \begin{verbatim}
 GRANT "role-name"
@@ -1661,7 +1661,7 @@ or roles cannot be granted to "DBA" role.
 
 A DBA user can grant "DBA" role to another user, thus making that user also a
 DBA user. This is not recommended, as multiple powerful users of a database can
-lead to hard database administration, and can cause unsecure usage of the
+lead to hard database administration, and can cause insecure usage of the
 database and database objects.
 
 

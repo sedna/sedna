@@ -31,7 +31,7 @@
 #define SEDNA_QUERY_EXEC_TIMEOUT                           4
 #define SEDNA_MAX_RESULT_SIZE                              5
 
-#define SEDNA_LOG_AMMOUNT                                  6
+#define SEDNA_LOG_AMOUNT                                   6
 #define SEDNA_LOG_LESS                                     7
 #define SEDNA_LOG_FULL                                     8
 

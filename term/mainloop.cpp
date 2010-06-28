@@ -517,7 +517,7 @@ int process_command(char* buffer)
         else if (strncmp(buffer+4, "LOG_LESS_MODE", 13) == 0)
         {
             int value = SEDNA_LOG_LESS;
-            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMOUNT, (void*)&value, sizeof(int));
             if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
             {
                 fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
@@ -598,7 +598,7 @@ int process_command(char* buffer)
         else if (strncmp(buffer+6, "LOG_LESS_MODE", 13) == 0)
         {
             int value = SEDNA_LOG_FULL;
-            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMOUNT, (void*)&value, sizeof(int));
             if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
             {
                 fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));

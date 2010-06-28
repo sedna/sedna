@@ -91,7 +91,7 @@ void PPExplain::do_next (tuple &t)
         }
 
         /* Fill information about prolog */
-        left = insert_element_i(left,XNULL,root,"plolog",xs_untyped,explain_ns);
+        left = insert_element_i(left,XNULL,root,"prolog",xs_untyped,explain_ns);
 
         xptr tmp = XNULL;
         /* Insert boundary space declaration */

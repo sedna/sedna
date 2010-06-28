@@ -1849,7 +1849,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             }
             conn->query_timeout = *value;
 
-        case SEDNA_ATTR_LOG_AMMOUNT:
+        case SEDNA_ATTR_LOG_AMOUNT:
             value = (int*) attrValue;
             if ((*value != SEDNA_LOG_LESS) && (*value != SEDNA_LOG_FULL))
             {
@@ -1865,7 +1865,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             }
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
             conn->msg.length = 13;
-            int2net_int(SEDNA_LOG_AMMOUNT, conn->msg.body); //option type
+            int2net_int(SEDNA_LOG_AMOUNT, conn->msg.body); //option type
             conn->msg.body[4] = 0;
             int2net_int(4, conn->msg.body + 5); //length of value - here sizeof int = 4
             int2net_int(*value, conn->msg.body + 9); //value of attribute - here int

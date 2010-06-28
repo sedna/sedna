@@ -130,7 +130,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
     SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,(int)strlen(path));
 
     value = SEDNA_LOG_LESS;
-    SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMMOUNT, (void*)&value, sizeof(int));
+    SEsetConnectionAttr(&conn, SEDNA_ATTR_LOG_AMOUNT, (void*)&value, sizeof(int));
 
     FTRACE((log,"Determining features to export..."));
 	ft_search_feature = check_sedna_feature(&conn, check_ft_enabled_query, log);

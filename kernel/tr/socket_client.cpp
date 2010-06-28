@@ -551,7 +551,7 @@ void socket_client::set_session_options(msg_struct *msg)
                 out_s->set_max_result_size_to_pass(max_result_size_to_pass);
                 break;
             }
-        case SEDNA_LOG_AMMOUNT:
+        case SEDNA_LOG_AMOUNT:
             {
                 uint32_t value;
                 net_int2int(&value, msg->body+pos);
