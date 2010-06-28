@@ -8,7 +8,7 @@
 #define _GMM_H
 
 
-#include "common/u/ummap.h"
+#include "common/u/ushm.h"
 #include "common/xptr.h"
 
 
@@ -20,6 +20,6 @@ void open_global_memory_mapping(int err_code);
 
 void close_global_memory_mapping();
 
-UMMap get_global_memory_mapping();
+UShMem get_global_memory_mapping();
 
 #endif

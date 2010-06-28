@@ -13,15 +13,14 @@
 #include "common/u/uprocess.h"
 
 static void *global_memory;
-UMMap global_memory_mapping;
+UShMem global_memory_mapping;
 
 void create_global_memory_mapping(int os_primitives_id_min_bound)
 {
-    global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL, __sys_call_error);
-    if (U_INVALID_FILEMAPPING(global_memory_mapping))
+    if (uCreateShMem(&global_memory_mapping, SEDNA_GLOBAL_MEMORY_MAPPING, PAGE_SIZE, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION(SE4074);
 
-    global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
+    global_memory = uAttachShMem(&global_memory_mapping, NULL, 0, __sys_call_error);
     if (global_memory == NULL)
         throw USER_EXCEPTION(SE4078);
 
@@ -31,27 +30,26 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
 
 void release_global_memory_mapping()
 {
-    if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE, __sys_call_error) == -1)
+    if (uDettachShMem(&global_memory_mapping, global_memory, __sys_call_error) != 0)
         throw USER_EXCEPTION(SE4079);
 
-    if (uReleaseFileMapping(global_memory_mapping, SEDNA_GLOBAL_MEMORY_MAPPING, __sys_call_error) == -1)
+    if (uReleaseShMem(&global_memory_mapping, SEDNA_GLOBAL_MEMORY_MAPPING, __sys_call_error) != 0)
         throw USER_EXCEPTION(SE4076);
 }
 
 void open_global_memory_mapping(int err_code)
 {
-    global_memory_mapping = uOpenFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, __sys_call_error);
-    if (U_INVALID_FILEMAPPING(global_memory_mapping))
+    if (uOpenShMem(&global_memory_mapping, SEDNA_GLOBAL_MEMORY_MAPPING, __sys_call_error) != 0)
         throw USER_EXCEPTION(err_code);
 }
 
 void close_global_memory_mapping()
 {
-    if (uCloseFileMapping(global_memory_mapping, __sys_call_error) == -1)
+    if (uCloseShMem(&global_memory_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION(SE4077);
 }
 
-UMMap get_global_memory_mapping()
+UShMem get_global_memory_mapping()
 {
     return global_memory_mapping;
 }

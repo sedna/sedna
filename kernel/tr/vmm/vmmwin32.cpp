@@ -14,9 +14,9 @@
 
 const static int map_to_win[4] = {FILE_MAP_READ, FILE_MAP_READ, FILE_MAP_ALL_ACCESS, FILE_MAP_ALL_ACCESS};
 
-int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection_t p)
+int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protection_t p)
 {
-    HANDLE m = mapping->map;
+    HANDLE m = mapping->id;
 
 #ifndef VMM_DEBUG_CHECKP
     p = access_readwrite;
@@ -42,7 +42,7 @@ int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection
 
     if (addr == NULL) {
         d_printf1("MapViewOfFileEx failed\n");
-        d_printf3("Error %d; addr = 0x%x\n", GetLastError(), (int)(addr));
+        d_printf3("Error %d; addr = 0x%"PRIXPTR"\n", GetLastError(), (uintptr_t)(addr));
 
         return -1;
     }

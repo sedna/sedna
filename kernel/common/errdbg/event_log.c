@@ -679,7 +679,7 @@ int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems
     if (uCreateShMem(&el_shmem, shm_name, sizeof(event_log_msg), NULL, __sys_call_error) != 0)
         return 1;
 
-    el_msg = (event_log_msg*)uAttachShMem(el_shmem, NULL, sizeof(event_log_msg), __sys_call_error);
+    el_msg = (event_log_msg*)uAttachShMem(&el_shmem, NULL, 0, __sys_call_error);
     if (el_msg == NULL)
         return 2;
 
@@ -728,12 +728,12 @@ int event_logger_shutdown_daemon(global_name shm_name)
             return 3;
 
         /* release shared memory */
-        if (uDettachShMem(el_shmem, el_msg, __sys_call_error) != 0)
+        if (uDettachShMem(&el_shmem, el_msg, __sys_call_error) != 0)
             return 4;
 
         el_msg = NULL;
 
-        if (uReleaseShMem(el_shmem, shm_name, __sys_call_error) != 0)
+        if (uReleaseShMem(&el_shmem, shm_name, __sys_call_error) != 0)
             return 5;
 
         /* Release file descriptor */
@@ -750,10 +750,10 @@ int event_logger_shutdown_daemon(global_name shm_name)
 int event_logger_init(int component, const char* component_detail, global_name shm_name, global_name sems_name)
 {
     /* open shared memory */
-    if (uOpenShMem(&el_shmem, shm_name, sizeof(event_log_msg), __sys_call_error) != 0)
+    if (uOpenShMem(&el_shmem, shm_name, __sys_call_error) != 0)
         return 1;
 
-    el_msg = (event_log_msg*)uAttachShMem(el_shmem, NULL, sizeof(event_log_msg), __sys_call_error);
+    el_msg = (event_log_msg*)uAttachShMem(&el_shmem, NULL, 0, __sys_call_error);
     if (el_msg == NULL)
         return 2;
 
@@ -785,12 +785,12 @@ int event_logger_release()
             return 1;
 
         /* close shared memory */
-        if (uDettachShMem(el_shmem, el_msg, __sys_call_error) != 0)
+        if (uDettachShMem(&el_shmem, el_msg, __sys_call_error) != 0)
             return 2;
 
         el_msg = NULL;
 
-        if (uCloseShMem(el_shmem, __sys_call_error) != 0)
+        if (uCloseShMem(&el_shmem, __sys_call_error) != 0)
             return 3;
     }
 

@@ -13,7 +13,7 @@
 
 #include "tr/vmm/vmm.h"
 
-extern UMMap global_memory_mapping;
+extern UShMem global_memory_mapping;
 
 /* Is any block mapped on position */
 inline static bool _vmm_is_address_busy(void * p) {
@@ -27,7 +27,7 @@ enum vmm_map_protection_t {
     access_writeonly = 3
 };
 
-int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection_t p);
+int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protection_t p);
 int _uvmm_unmap(void *addr);
 int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size, bool log, FILE * logfile);
 

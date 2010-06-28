@@ -117,7 +117,7 @@ int SSMMsg::init()
             return 1;
         }
 
-        shar_mem = uAttachShMem(sh_mem, NULL, shared_memory_size, __sys_call_error);
+        shar_mem = uAttachShMem(&sh_mem, NULL, 0, __sys_call_error);
         if (shar_mem == NULL)
         {
             d_printf1("uAttachShMem failed\n");
@@ -165,13 +165,13 @@ int SSMMsg::init()
     {
         //d_printf1("!!!!!!!!!!! Client initialization !!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-        if (0 != uOpenShMem(&sh_mem, g_name_shmem, shared_memory_size, __sys_call_error))
+        if (0 != uOpenShMem(&sh_mem, g_name_shmem, __sys_call_error))
         {
             d_printf1("uOpenShMem failed\n");
             return 1;
         }
 
-        shar_mem = uAttachShMem(sh_mem, NULL, shared_memory_size, __sys_call_error);
+        shar_mem = uAttachShMem(&sh_mem, NULL, 0, __sys_call_error);
         if (shar_mem == NULL)
         {
             d_printf1("uAttachShMem failed\n");
@@ -203,7 +203,7 @@ int SSMMsg::init()
 
 int SSMMsg::shutdown()
 {
-    if (0 != uDettachShMem(sh_mem, shar_mem, __sys_call_error))
+    if (0 != uDettachShMem(&sh_mem, shar_mem, __sys_call_error))
     {
         d_printf1("uDettachShMem failed\n");
         return 1;
@@ -211,7 +211,7 @@ int SSMMsg::shutdown()
 
     if (m == Server)
     {
-        if (0 != uReleaseShMem(sh_mem, g_name_shmem, __sys_call_error))
+        if (0 != uReleaseShMem(&sh_mem, g_name_shmem, __sys_call_error))
         {
             d_printf1("uReleaseShMem failed\n");
             return 1;
@@ -225,7 +225,7 @@ int SSMMsg::shutdown()
     }
     else if (m == Client)
     {
-        if (0 != uCloseShMem(sh_mem, __sys_call_error))
+        if (0 != uCloseShMem(&sh_mem, __sys_call_error))
         {
             d_printf1("uCloseShMem failed\n");
             return 1;
@@ -446,9 +446,9 @@ void SSMMsg::ipc_cleanup(global_name name)
 	char buf[256];
 
 	InitSSMMsgNames(&names, name, buf, sizeof buf);
-	if (uOpenShMem(&memory, names.memory, 8192, __sys_call_error) == 0)
+	if (uOpenShMem(&memory, names.memory,  __sys_call_error) == 0)
 	{
-		uReleaseShMem(memory, names.memory, __sys_call_error);
+		uReleaseShMem(&memory, names.memory, __sys_call_error);
 	}	
 	if (USemaphoreArrOpen(&sems, 9, names.sems, __sys_call_error) == 0)
 	{
