@@ -22,8 +22,8 @@
 ********************************************************************************
 *******************************************************************************/
 
-#define MASTER_BLOCK_SIZE          (uint32_t)4096
-#define VMM_SM_BLK_HDR_MAX_SIZE    (uint32_t)4096
+#define MASTER_BLOCK_SIZE          4096U
+#define VMM_SM_BLK_HDR_MAX_SIZE    4096U
 
 /*
  * NOTE: xptr layers start with 1, but data-file layers start with 0
