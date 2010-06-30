@@ -95,12 +95,14 @@
 
 int WuIsAppError(int error);
 
-void WuSetLastError(int error);
-
-void WuSetLastError2(const char *file, int line, const char *function, int error);
+void WuSetLastError2(const char *file, int line, const char *function, int error, bool sleep);
 
 #define WuSetLastErrorMacro(error)\
-	WuSetLastError2(__FILE__,__LINE__,__FUNCTION__,error)
+	WuSetLastError2(__FILE__,__LINE__,__FUNCTION__,error,true)
+
+#define WuSetLastErrorMacroNonFatal(error)\
+    WuSetLastError2(__FILE__,__LINE__,__FUNCTION__,error,false)
+    
 
 int WuGetLastError();
 
