@@ -1544,6 +1544,14 @@ and to this role).
 It is not allowed to use "DBA" and "PUBLIC" for naming roles as they are
 reserved by the system.
 
+To destroy a role, use \verb!DROP ROLE!:
+
+\begin{verbatim}
+DROP ROLE "role-name"
+\end{verbatim}
+
+Role is automatically revoked from any user it was granted to. 
+
 
 %===============================================================================
 %                    Authorization: Granting Privileges

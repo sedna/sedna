@@ -1,6 +1,7 @@
 /*
  * File:  PPExplainVisitor.cpp
- * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2009 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #include <iostream>

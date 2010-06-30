@@ -22,11 +22,20 @@ int _uvmm_map(void *addr, ramoffs offs, UMMap * mapping, enum vmm_map_protection
     p = access_readwrite;
 #endif /* VMM_DEBUG_CHECKP */
 
+    DWORD size_high, size_low;
+
+#ifdef _WIN64
+    size_high = (DWORD)(offs >> 32);
+#else
+    size_high = 0;
+#endif
+    size_low = (DWORD)offs;
+
     addr = MapViewOfFileEx(
         m,                      // handle to file-mapping object
         map_to_win[p],          // access mode
-        0,                      // high-order DWORD of offset
-        offs,                   // low-order DWORD of offset
+        size_high,              // high-order DWORD of offset
+        size_low,               // low-order DWORD of offset
         PAGE_SIZE,              // number of bytes to map
         addr                    // starting address
     );
