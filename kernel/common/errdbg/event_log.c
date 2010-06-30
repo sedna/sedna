@@ -344,7 +344,7 @@ event_log_init_file:
             sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-%02d-%03d",
                     newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
                     newtime->tm_hour, newtime->tm_min, newtime->tm_sec, ++counter);
-
+            if(999 == counter) counter = 0;
             strcpy(buf2, SEDNA_DATA);
 #ifdef _WIN32
             strcat(buf2, "\\data\\");

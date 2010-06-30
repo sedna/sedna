@@ -177,7 +177,10 @@ MainLoop(FILE *source)
        fflush(stderr);
 	   return 1;
     }
-	/* if we read query from file, set session directory to the one file is located in */
+	/*
+     * If we are going to query from file,
+     * set session directory to the one file is located in.
+     */
     if (strcmp(filename,"???") != 0)
     {
         char file_abs_path[U_MAX_PATH+1];
@@ -287,8 +290,8 @@ MainLoop(FILE *source)
 	    			}
 					term_output1("Ok\n");
 				}
-				quit_term();
 			}
+            quit_term();
 			goto OUT_OF_CYCLE;
             break;
 

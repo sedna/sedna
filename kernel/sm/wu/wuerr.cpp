@@ -102,12 +102,7 @@ int WuIsAppError(int error)
 	return error>=WUERR_FIRST_ERR && error<(int)(WUERR_FIRST_ERR+appErrorsNum);
 }
 
-void WuSetLastError(int error)
-{
-	WuSetLastError2(NULL,-1,NULL,error);
-}
-
-void WuSetLastError2(const char *file, int line, const char *function, int error)
+void WuSetLastError2(const char *file, int line, const char *function, int error, bool fatal)
 {
 #ifdef _WIN32
 	SetLastError((DWORD)error);
@@ -120,6 +115,8 @@ void WuSetLastError2(const char *file, int line, const char *function, int error
 	errorProperties.function = function;
 	errorProperties.description = WuIsAppError(error) ? appErrorsDescription[error-WUERR_FIRST_ERR] : NULL;
 	errorProperties.code = 0;
+
+    U_ASSERT(!fatal);
 }
 
 int WuGetLastError()
@@ -220,7 +217,7 @@ void WuSetLastExceptionObject(const SednaException &e)
 	}
 	catch (ANY_SE_EXCEPTION) {}
 
-	WuSetLastError2(cFile,line,cFunction,error);
+	WuSetLastError2(cFile,line,cFunction,error,false);
 	errorProperties.description = cDescription;
 	errorProperties.code = code;
 }
