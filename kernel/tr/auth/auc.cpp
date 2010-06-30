@@ -1418,7 +1418,7 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
     if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     PPQueryEssence* qep_tree   = NULL;
-    PPSubQuery *aqtree        = NULL;
+    PPSubQuery *aqtree         = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1653,7 +1653,7 @@ void auth_for_create_user(const char* name, const char* passwd)
 void auth_for_drop_user(const char* name)
 {
     PPQueryEssence* qep_tree   = NULL;
-    PPSubQuery *aqtree        = NULL;
+    PPSubQuery *aqtree         = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1931,7 +1931,7 @@ void auth_for_create_role(const char* name)
 void auth_for_drop_role(const char* name)
 {
     PPQueryEssence* qep_tree   = NULL;
-    PPSubQuery *aqtree        = NULL;
+    PPSubQuery *aqtree         = NULL;
     bool is_qep_opened         = false;
     bool is_qep_built          = false;
     bool is_qepsubtree_opened  = false;
@@ -1948,7 +1948,7 @@ void auth_for_drop_role(const char* name)
             else\
                 fn:error(fn:QName('http://www.modis.ispras.ru/sedna', 'SE3077'), 'Not allowed to drop this role')";
 
-    std::string q2 = "update delete doc('%db_sec_doc%')/db_security_data/roles/role[role_name = '%role%']";
+    std::string q2 = "update delete doc('%db_sec_doc%')/db_security_data//role[role_name = '%role%']";
 
     find_replace_str(&q1, "%db_sec_doc%", SECURITY_METADATA_DOCUMENT);
     find_replace_str(&q1, "%user%", tr_globals::login);
