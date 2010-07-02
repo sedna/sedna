@@ -75,7 +75,7 @@ void delete_document(const char *document_name)
     xptr blk = document->snode->bblk;
     U_ASSERT(blk != XNULL); // Document MUST have exactly one document node, so blk is not null
     CHECKP(blk);
-    delete_doc_node(GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk)), document_name, NULL);
+    delete_doc_node(getFirstBlockNode(blk), document_name, NULL);
     document->drop();
     up_concurrent_micro_ops_number();
 };
@@ -92,10 +92,10 @@ void delete_collection(const char *collection_name)
     bt_cursor cursor = bt_find_gt(((col_schema_node_xptr)collection->snode)->metadata, key);
     if (!cursor.is_null()) do {
         xptr indir = cursor.bt_next_obj();
-        xptr node  = removeIndirection(indir);
+        xptr node  = indirectionDereferenceCP(indir);
         if (node != XNULL) {
             CHECKP(node);
-            xptr ind = ((n_dsc*)XADDR(node))->indir;
+            xptr ind = nodeGetIndirection(node);
             delete_doc_node(node, (const char*) cursor.get_key().data(), collection_name);
             up_concurrent_micro_ops_number();
         }
@@ -122,8 +122,8 @@ void delete_document_from_collection(const char *collection_name, const char *do
     CHECKP(node);
 
     // TOREVIEW: Changing eblk
-    if ((GETBLOCKBYNODE(node))->count == 1 && col_node->eblk == BLOCKXPTR(node))
-          col_node.modify()->eblk = (GETBLOCKBYNODE(node))->pblk;
+    if ((internal::getBlockHeader(node))->count == 1 && col_node->eblk == block_xptr(node))
+          col_node.modify()->eblk = (internal::getBlockHeader(node))->pblk;
 
     delete_doc_node(node, document_name, collection_name);
     up_concurrent_micro_ops_number();
@@ -204,7 +204,7 @@ xptr insert_document_into_collection(const char *collection_name, const char *ur
     ((col_schema_node_xptr)collection->snode)->insert_document(name, node_indir);
 
     up_concurrent_micro_ops_number();
-    return removeIndirection(node_indir);
+    return indirectionDereferenceCP(node_indir);
 }
 
 col_schema_node_xptr find_collection(const char *collection_name) {

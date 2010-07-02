@@ -174,11 +174,6 @@ void PPExplainVisitor::visit(PPDmTypedValue* op)
     insertOperationElement("PPDmTypedValue", left, parent, op);
 }
 
-void PPExplainVisitor::visit(PPDmNodeKind* op)
-{
-    insertOperationElement("PPDmNodeKind", left, parent, op);
-}
-
 void PPExplainVisitor::visit(PPFnNodeName* op)
 {
     insertOperationElement("PPFnNodeName", left, parent, op);

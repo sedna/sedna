@@ -12,7 +12,7 @@
 	IS_POWER_OF_2(NUMBER)		- whether a number is power of 2 and > 0
 	PTR_DISTANCE(PTRBEGIN, PTREND)	- the length of [PTRBEGIN, PTREND] range, in bytes
 	ALIGN_PTR(PTR, ALIGNMENT)	- syn. for RALIGN_PTR(...)
-	RALIGN_PTR(PTR, ALIGNMENT)	- make pointer aligned by moving it towards higher addresses 
+	RALIGN_PTR(PTR, ALIGNMENT)	- make pointer aligned by moving it towards higher addresses
 	LALIGN_PTR(PTR, ALIGNMENT)	- make pointer aligned by moving it towards lower addresses
 	OFFSET_PTR(PTR, DISTANCE)	- offset pointer by given distance in bytes
 	ROUND_SIZE_UP(SIZE, K)		- round size up
@@ -21,7 +21,7 @@
 	Note: ALIGN_* and ROUND_* macros are defined with % (integer remainder) hence
 	the alignment is not required to be power of 2. Any sane compiler will replace
 	% with bitwize operators when alignment is power of 2 (the most common scenario).
-*/ 
+*/
 
 #include <stddef.h>
 #include <stdint.h>
@@ -63,5 +63,16 @@
 
 #define ROUND_SIZE_DOWN(SIZE, K) \
 	((size_t)(SIZE)-(size_t)(SIZE)%(K))
+
+inline
+int strcmpex(const char* c1, const char* c2)
+{
+  if (c1==NULL && c2==NULL) return 0;
+  if (c1==NULL || c2==NULL) return (c1==NULL) ? -1 : 1;
+  int res = strcmp(c1,c2); /// strcmp doesn't guarantee that return value either -1, 1 or 0!
+  if (res < 0) return -1;
+  if (res > 0) return 1;
+  return res;
+}
 
 #endif

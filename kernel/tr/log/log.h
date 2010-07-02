@@ -12,17 +12,16 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-#include "tr/structures/nodes.h"
 #include "tr/mo/mo.h"
 #include "tr/log/logiclog.h"
-#include "tr/executor/base/PPBase.h"
 
 #ifdef SE_ENABLE_FTSEARCH
-#include "tr/ft/ft_index_data.h"
+#include "tr/ft/ft_types.h"
 #endif
 
 #ifdef SE_ENABLE_TRIGGERS
-#include "tr/triggers/triggers_data.h"
+#include "tr/triggers/trigger_types.h"
+#include "tr/executor/base/XPath.h"
 #endif
 
 /* Logical journal records */
@@ -69,14 +68,14 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, unsigned custom_tree_size);
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted); 
+void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted);
 #endif
 void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,unsigned total_size,shft target_size,bool inserted);
 void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,unsigned data_size,bool inserted);
 void hl_logical_log_document(const xptr &self,const  char* name,const  char* collection,bool inserted);
 void hl_logical_log_collection(const  char* name,bool inserted);
 void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted);
-void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted); 
+void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted);
 void hl_logical_log_commit(transaction_id);
 void hl_logical_log_rollback(transaction_id);
 

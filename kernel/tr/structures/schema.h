@@ -7,78 +7,23 @@
 #ifndef _SCHEMA_H
 #define _SCHEMA_H
 
+#include <vector>
+#include <set>
+
 #include "common/sedna.h"
+#include "common/base.h"
+
 #include "common/errdbg/d_printf.h"
 
-#include "tr/tr_base.h"
-#include "tr/structures/nodes.h"
+#include "tr/structures/nodetypes.h"
+#include "tr/structures/descriptor.h"
+#include "tr/structures/xmlns.h"
+#include "tr/strings/strings_base.h"
 #include "tr/cat/catalog.h"
 #include "tr/cat/catptr.h"
 #include "tr/cat/catstructures.h"
 
 #define ISINDEXSUPPORTED(schema) schema->index_object!=NULL
-
-#define MAX_ELEMENT_CHILDREN ((int) ((PAGE_SIZE \
- /* block header    */    - sizeof(node_blk_hdr) \
- /* indirection rec */    - sizeof(xptr) \
- /* node header     */    - sizeof(e_dsc) \
-        ) / sizeof(xptr)))
-
-#define MAX_DOCUMENT_CHILDREN ((int) ((PAGE_SIZE \
- /* block header    */    - sizeof(node_blk_hdr) \
- /* indirection rec */    - sizeof(xptr) \
- /* node header     */    - sizeof(d_dsc) \
-        ) / sizeof(xptr)))
-
-
-/******************************
- * Namespace handling routines
- */
-
-struct xmlns_local_object {
-public:
-    char* prefix; /* persistent string */
-    char* uri; /* persistent string */
-};
-
-struct xmlns_indb_object : public catalog_object {
-    char* prefix; /* persistent string */
-    char* uri; /* persistent string */
-
-    xptr root; /* where to save this object in catalog */
-    xmlns_ptr_pers next_xmlns; /* xmlns list */
-
-/* Common catalog object interface */
-
-    static const int magic = 0x008;
-    int get_magic() { return magic; };
-    void serialize_data(se_simplestream &stream);
-    void deserialize_data(se_simplestream &stream);
-    void drop();
-
-    inline xmlns_indb_object() :
-        prefix(NULL), uri(NULL), root(XNULL), next_xmlns(XNULL) {};
-    inline xmlns_indb_object(const char* _prefix, const char* _uri, const xptr _root, const xmlns_ptr_pers _next_xmlns) :
-        prefix(NULL), uri(NULL), root(_root), next_xmlns(_next_xmlns) {
-        prefix = cat_strcpy(this, _prefix);
-        uri = cat_strcpy(this, _uri);
-    };
-    static catalog_object_header * create(const char* prefix, const char* uri, const xptr root, const xmlns_ptr_pers next_xmlns);
-};
-
-
-typedef xmlns_local_object * xmlns_ptr;
-
-#define NULL_XMLNS NULL
-
-void free_xmlns_hash();
-
-xmlns_ptr xmlns_touch(const char * prefix, const char * uri);
-
-inline xmlns_ptr xmlns_touch(xmlns_ptr_pers xmlns) {
-    catalog_cptr_template<xmlns_indb_object> a = xmlns;
-    return xmlns_touch(a->prefix, a->uri);
-}
 
 struct index_ref {
     index_cell_xptr index;
@@ -106,7 +51,11 @@ struct sc_ref {
     inline sc_ref() : name(NULL), xmlns_pers(XNULL), xmlns_local(NULL) {};
 
     inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) {
-        return (my_strcmp(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
+        return (strcmpex(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
+    }
+
+    inline bool same_node_fair(const char * uri, const char * name, t_item type) {
+        return (strcmpex(this->name, name) == 0 && this->type == type && (same_xmlns_uri(this->get_xmlns(), uri) == 0));
     }
 };
 
@@ -196,9 +145,14 @@ public:
     schema_node_object(const doc_schema_node_xptr _root, xmlns_ptr _xmlns, const char * _name, t_item _type, bool _persistent);
     ~schema_node_object();
 
+
+    const char * get_name () const {
+        return name;
+    }
+
     /* Schema node comparition */
     inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) {
-        return (my_strcmp(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
+        return (strcmpex(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
     }
 
     /* Create new schema node */
@@ -240,6 +194,10 @@ public:
         t_item          type
     ) const;
 
+    int find_child(const xptr schema_node) const;
+
+    int find_child_fair (const char * uri, const char * name, t_item type) const;
+
     inline int get_node_position_in_parent() const {
         return (parent == XNULL) ? -1 : parent->find_first_child(get_xmlns(), name, type);
     };
@@ -253,7 +211,7 @@ public:
     inline static bool has_children(t_item type) { return (type == element || type == document || type == virtual_root); }
     inline bool has_children() { return has_children(this->type); }
 
-    inline static bool has_text(t_item type) { return (type == comment || type == text || type == attribute || type == pr_ins || type == cdata || type == document); }
+    inline static bool has_text(t_item type) { return internal::isTextType(type); }
     inline bool has_text() { return has_text(this->type); }
 //    inline char * get_child_name(int i) { return children.get(i)->name; };
 };
@@ -333,13 +291,17 @@ typedef bool (*comp_schema)(schema_node_cptr scm,const char* uri,const char* nam
 /* returns the name of atomic type */
 // char* convertTypeToName(xmlscm_type i);
 
-/* returns the type of the scheme node */
-#define GETTYPE(scm_node) scm_node->type
-/* returns the name of the scheme node */
-#define GETNAME(scm_node) scm_node->name
-/* updates pointer to the first block with the descriptors that correspond to schema node */
-#define UPDATEFIRSTBLOCKPOINTER(scm_node, block) scm_node->bblk=block
-/* returns pointer to the first block with the descriptors that correspond to schema node */
-#define GETFIRSTBLOCKPOINTER(scm_node) scm_node->bblk
+/*comparison function for schema nodes*/
+bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+bool comp_uri_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+
+void getSchemeChildren(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result);
+void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun, std::vector<schema_node_xptr> &result);
+void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result);
+
+/* checks if the node is the descendant of one of the nodes in the vector */
+bool hasAncestorInSet(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set );
 
 #endif

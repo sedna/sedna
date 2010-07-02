@@ -9,8 +9,7 @@
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/btpage.h"
 #include "tr/vmm/vmm.h"
-#include "tr/structures/nodes.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/structures/nodeoperations.h"
 
 void bt_page_markup(char* pg, xmlscm_type t) {
 //	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
@@ -39,7 +38,7 @@ void bt_page_consistency(char* pg, bt_key* key) {
 
 
 #define CHECK_ASSERTION(p) if (!(p)) throw USER_EXCEPTION2(SE1008, "Index consistency check failed");
-	
+
 /* check page consistency (adult) */
 
 template<typename object>
@@ -54,12 +53,12 @@ void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 	if (!leftmost) {
 		CHECK_ASSERTION(BT_KEY_TYPE(p) == k->get_type());
 	}
-	
+
 	// check if keys are in right order
 	for (int i = 0; i < BT_KEY_NUM(p); i++) {
   	   // check if all key pointers are at least in the heap
 		if (BT_VARIABLE_KEY_TYPE(p)) {
-			btree_key_hdr * v = BT_KEY_ITEM_AT(p, i); 
+			btree_key_hdr * v = BT_KEY_ITEM_AT(p, i);
 			CHECK_ASSERTION((v->k_shft >= BT_HEAP(p)) && (v->k_shft + v->k_size <= BT_PAGE_SIZE));
 		}
 		ck.setnew(p, i);
@@ -74,7 +73,7 @@ void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 	if (BT_IS_LEAF(p)) {
 		// check the existance of objects
 		for (int i = 0; i < BT_KEY_NUM(p); i++) {
-			btree_chnk_hdr * v = BT_CHNK_ITEM_AT(p, i); 
+			btree_chnk_hdr * v = BT_CHNK_ITEM_AT(p, i);
 			xptr* pt = (xptr *) (p + v->c_shft);
 			CHECK_ASSERTION((v->c_shft >= BT_HEAP(p)) && (v->c_shft + v->c_size <= BT_PAGE_SIZE));
 			xptr save = XNULL;
@@ -83,16 +82,15 @@ void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 				CHECK_ASSERTION(bt_cmp_obj_tmpl<object>(pt[j], save) > 0);
 				save = pt[j];
 				CHECK_ASSERTION(XADDR(pt[j]) != NULL);
-				xptr a = removeIndirection(pt[j]);
+				xptr a = indirectionDereferenceCP(pt[j]);
 				CHECK_ASSERTION(a != XNULL);
 				CHECKP(a);
-				CHECK_ASSERTION((GETBLOCKBYNODE(a))->snode != XNULL);
 				CHECKP(pg);
 			}
 		}
 	} else {
 		for (int i = 0; i < BT_KEY_NUM(p); i++) {
-			xptr pt = *((xptr *) BT_BIGPTR_TAB_AT(p, i)); 
+			xptr pt = *((xptr *) BT_BIGPTR_TAB_AT(p, i));
 			char * ptr = (char *) XADDR(pt);
 			CHECK_ASSERTION((((uintptr_t) ptr) & PAGE_REVERSE_BIT_MASK) == 0);
 		}
@@ -120,7 +118,7 @@ void bt_check_bsubtree_tmpl(xptr pg, bt_key* left_key, bool leftmost)
 		for (int i = 0; i < BT_KEY_NUM(p); i++) {
 			nk.setnew(p, i);
 			if (cpage != XNULL) CHECK_ASSERTION(ck < nk);
-			cpage = *((xptr *) BT_BIGPTR_TAB_AT(p, i)); 
+			cpage = *((xptr *) BT_BIGPTR_TAB_AT(p, i));
 			ck = nk;
 			bt_check_bsubtree_tmpl<object>(cpage, &ck, false);
 			CHECKP(pg);
@@ -129,7 +127,7 @@ void bt_check_bsubtree_tmpl(xptr pg, bt_key* left_key, bool leftmost)
 }
 
 template<typename object>
-void bt_check_btree_tmpl(xptr pg) 
+void bt_check_btree_tmpl(xptr pg)
 {
 	bt_key k;
 	bt_check_bsubtree_tmpl<object>(pg, &k, true);

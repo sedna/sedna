@@ -9,6 +9,7 @@
 #include "common/sedna.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/PPUtils.h"
+
 #define DESC_CONSIST
 #define PSTR_CONSIST
 ///////////////////////////////////////////////////////////////////////////////
@@ -19,13 +20,10 @@
 class PPTest : public PPIterator
 {
 protected:
-    typedef void (PPTest::*t_test_fun)(xptr node);
+    typedef void (*t_test_fun)(xptr node);
     PPOpIn seq;
-	
+
     t_test_fun test_fun;
-	void checkTreeConsistency(xptr node);
-	/*bool checkFT(xptr node);
-	int checkFT(PPOpIn _seq_);*/
 
 private:
     virtual void do_open   ();
@@ -33,10 +31,12 @@ private:
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
+
 public:
+    static void checkTreeConsistency(xptr node);
+
     PPTest(dynamic_context *_cxt_,
            operation_info _info_,
            PPOpIn _seq_);

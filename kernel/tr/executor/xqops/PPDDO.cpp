@@ -34,7 +34,7 @@ PPDDO::~PPDDO()
 void PPDDO::do_open ()
 {
     s = se_new sorted_sequence(compare_less, get_size, serialize,
-                               serialize_2_blks, deserialize, 
+                               serialize_2_blks, deserialize,
                                deserialize_2_blks, NULL);
     child.op->open();
     pos = 0;
@@ -64,7 +64,7 @@ void PPDDO::do_next (tuple &t)
     if(atomic_mode) {
         child.op->next(t);
         if(!t.is_eos()) {
-            tuple_cell tc = child.get(t); 
+            tuple_cell tc = child.get(t);
             if (tc.is_node())
                 throw XQUERY_EXCEPTION2(SE1003, "Atomic or node sequence is expected. Sequence checker missed?");
         }
@@ -138,8 +138,8 @@ void PPDDO::do_accept(PPVisitor &v)
 
 
 
-/* 
- * Returns size of the nid which was serialized 
+/*
+ * Returns size of the nid which was serialized
  */
 int PPDDO::get_size_ser(xptr& v1)
 {
@@ -157,10 +157,10 @@ int PPDDO::get_size_ser(xptr& v1)
     }
     else
     {
-        return *((shft*)XADDR(ptr));		
+        return *((shft*)XADDR(ptr));
     }
 }
-/* 
+/*
  * Returns ptr to the nid serialized:
  * Either ptr to PSTRDEREF (if sz + sizeof(xptr) + sizeof(shft) > DATA_BLK_SIZE
  * or sorted sequence data block.
@@ -169,7 +169,7 @@ xptr PPDDO::get_ptr_ser(xptr& v1, int sz)
 {
     CHECKP(v1);
     xptr ptr = (GET_FREE_SPACE(v1) <= sizeof(xptr)+sizeof(shft)) ?
-        ((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+(sizeof(seq_blk_hdr)+sizeof(xptr)+sizeof(shft)-GET_FREE_SPACE(v1)) : 
+        ((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+(sizeof(seq_blk_hdr)+sizeof(xptr)+sizeof(shft)-GET_FREE_SPACE(v1)) :
         v1+(sizeof(xptr)+sizeof(shft));
     bool nc = (sz + sizeof(xptr) + sizeof(shft))>DATA_BLK_SIZE;
     if (nc)
@@ -186,7 +186,7 @@ xptr PPDDO::get_ptr_ser(xptr& v1, int sz)
         }
         else
         {
-            return *((xptr*)XADDR(ptr));		
+            return *((xptr*)XADDR(ptr));
         }
     }
     else
@@ -200,7 +200,7 @@ void PPDDO::copy_data_ser_to_buffer(xptr v1, shft shift, int sz)
     if (sz > GET_FREE_SPACE(v1))
     {
         U_ASSERT( sz + sizeof(xptr) + sizeof(shft) <= DATA_BLK_SIZE );
-        
+
         copy_to_buffer(v1, shift, GET_FREE_SPACE(v1));
         xptr nblk = ((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
         CHECKP(nblk);
@@ -209,7 +209,7 @@ void PPDDO::copy_data_ser_to_buffer(xptr v1, shft shift, int sz)
     else
     {
         copy_to_buffer(v1, shift, sz);
-    }	
+    }
 }
 
 
@@ -221,7 +221,7 @@ int PPDDO::compare_less (xptr v1s, xptr v2s, const void* Udata)
     int s2s = get_size_ser(v2s);
     int s1, s2, modifier;
     xptr v1, v2;
-    
+
     if (s1s <= s2s) {
         modifier = 1;
         s1 = s1s; s2 = s2s; v1 = v1s; v2 = v2s;
@@ -230,20 +230,20 @@ int PPDDO::compare_less (xptr v1s, xptr v2s, const void* Udata)
         modifier = -1;
         s1 = s2s; s2 = s1s; v1 = v2s; v2 = v1s;
     }
-    
+
     /* We always have s1 <= s2. Copy smaller value to the buffer ... */
     copy_data_ser_to_buffer(get_ptr_ser(v1, s1), s1);
     xptr data = get_ptr_ser(v2, s2);
     int s2_p1 = MIN(GET_FREE_SPACE(data), s2);
     CHECKP(data);
     int res = sign(memcmp(temp_buffer, XADDR(data), MIN(s1,s2_p1)));
-    
+
     /* Common prefix is different or nids are equal */
     if (res || (s1 == s2 && s2_p1 == s2)) return modifier * res;
-    
+
     /* s1 <= s2_p1 <= s2 and s1 == s2_p1.substring(0, s1) */
     if (s1 <= s2_p1) return -1 * modifier;
-    
+
     /* s2_p1 < s1 && s1 <= s2 */
     data = ((seq_blk_hdr*)XADDR(BLOCKXPTR(v2)))->nblk + sizeof(seq_blk_hdr);
     CHECKP(data);
@@ -256,13 +256,12 @@ int PPDDO::get_size (tuple& t, const void * Udata)
 {
     xptr node = t.cells[0].get_node();
     CHECKP(node);
-    shft sz = ((n_dsc*)XADDR(node))->nid.size;
-    if (!sz) sz = *(shft*)(((n_dsc*)XADDR(node))->nid.prefix+sizeof(xptr));
-    
+    shft sz = nid_get_size((t_nid *) XADDR(nodeGetNIDPtr(node)));
+
     U_ASSERT(sz <= PSTRMAXSIZE);
-    
+
     sz += (sizeof(xptr) + sizeof(shft));
-    return (sz > DATA_BLK_SIZE) ? 2*sizeof(xptr)+sizeof(shft) : sz;	
+    return (sz > DATA_BLK_SIZE) ? 2*sizeof(xptr)+sizeof(shft) : sz;
 }
 
 void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
@@ -271,28 +270,24 @@ void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 
     xptr node=t.cells[0].get_node();
     CHECKP(node);
-    shft sz = ((n_dsc*)XADDR(node))->nid.size;
-    xptr addr = (sz) ? ADDR2XPTR(((n_dsc*)XADDR(node))->nid.prefix) : 
-                       *(xptr*)(((n_dsc*)XADDR(node))->nid.prefix);
-    if (!sz)
-    {
-        sz = *(shft*)(((n_dsc*)XADDR(node))->nid.prefix + sizeof(xptr));
-        CHECKP(addr);
-        addr = PSTRDEREF(addr);
-    }
+
+    shft sz;
+    xptr addr;
+
+    nid_parse(nodeGetNIDPtr(node), &addr, &sz);
 
     CHECKP(v1);
     VMM_SIGNAL_MODIFICATION(v1);
-    *((xptr*)XADDR(v1)) = node;	
+    *((xptr*)XADDR(v1)) = node;
     *((shft*)((char*)XADDR(v1) + sizeof(xptr))) = sz;
 
     /*
-     * Seems that this case is impossible now since 
+     * Seems that this case is impossible now since
      * PSTRMAXSIZE + sizeof(xptr) + sizeof(shft) < DATA_BLK_SIZE and
      * MAX_NIDE_SIZE (i.e. sz value) <= PSTRMAXSIZE
      */
     if ((sz + (sizeof(xptr) + sizeof(shft))) > DATA_BLK_SIZE)
-    {		
+    {
         *((xptr*)((char*)XADDR(v1) + sizeof(xptr) + sizeof(shft))) = addr;
     }
     else
@@ -306,32 +301,28 @@ void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void 
 {
     xptr node=t.cells[0].get_node();
     CHECKP(node);
-    shft sz = ((n_dsc*)XADDR(node))->nid.size;
-    xptr addr = (sz) ? ADDR2XPTR(((n_dsc*)XADDR(node))->nid.prefix) : 
-                       *(xptr*)(((n_dsc*)XADDR(node))->nid.prefix);
-    if (!sz)
-    {
-        sz = *(shft*)(((n_dsc*)XADDR(node))->nid.prefix+sizeof(xptr));	
-        CHECKP(addr);
-        addr = PSTRDEREF(addr);
-    }
+
+    shft sz;
+    xptr addr;
+
+    nid_parse(nodeGetNIDPtr(node), &addr, &sz);
 
     copy_to_buffer(&node,sizeof(xptr));
-    copy_to_buffer(&sz,sizeof(xptr),sizeof(shft));	
-    
+    copy_to_buffer(&sz,sizeof(xptr),sizeof(shft));
+
     /*
-     * Seems that this case is impossible now since 
+     * Seems that this case is impossible now since
      * PSTRMAXSIZE + sizeof(xptr) + sizeof(shft) < DATA_BLK_SIZE and
      * MAX_NIDE_SIZE (i.e. sz value) <= PSTRMAXSIZE
      */
     if ((sz + (sizeof(xptr) + sizeof(shft))) > DATA_BLK_SIZE)
-    {		
+    {
         copy_to_buffer(&addr,sizeof(xptr)+sizeof(shft),sizeof(xptr));
         copy_from_buffer(v1,0,size1);
         copy_from_buffer(v2,size1,2*sizeof(xptr)+sizeof(shft)-size1);
     }
     else
-    {			
+    {
         copy_to_buffer(addr,sizeof(xptr)+sizeof(shft),sz);
         copy_from_buffer(v1, 0,size1);
         copy_from_buffer(v2,size1,sz+sizeof(xptr)+sizeof(shft)-size1);
@@ -345,12 +336,12 @@ void PPDDO::deserialize (tuple& t,xptr& v1, const void * Udata)
     {
         copy_to_buffer(v1,GET_FREE_SPACE(v1));
         xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
-        copy_to_buffer(v2+sizeof(seq_blk_hdr),GET_FREE_SPACE(v1),sizeof(xptr)-GET_FREE_SPACE(v1));		
+        copy_to_buffer(v2+sizeof(seq_blk_hdr),GET_FREE_SPACE(v1),sizeof(xptr)-GET_FREE_SPACE(v1));
         t.copy(tuple_cell::node(*((xptr*)temp_buffer)));
     }
     else
     {
-        CHECKP(v1);		
+        CHECKP(v1);
         t.copy(tuple_cell::node(*((xptr*)XADDR(v1))));
     }
 }
@@ -375,7 +366,7 @@ void PPDDO::copy_to_buffer(const void* addr, shft size)
         }
         temp_buffer = se_new char[size];
         buf_lgth = size;
-    }	
+    }
     memcpy(temp_buffer, addr, size);
 }
 
@@ -396,7 +387,7 @@ void PPDDO::copy_to_buffer(const void* addr, shft shift,shft size)
             memcpy(buf,temp_buffer,shift);
             delete [] temp_buffer;
             temp_buffer=buf;
-        }		
+        }
         else
             temp_buffer=se_new char[size+shift];
         buf_lgth=size+shift;

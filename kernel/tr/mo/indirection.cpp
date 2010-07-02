@@ -4,15 +4,17 @@
  */
 
 #include "tr/mo/indirection.h"
-#include "tr/crmutils/node_utils.h"
-#include "tr/structures/nodes.h"
 #include "tr/mo/microoperations.h"
 #include "tr/mo/blocks.h"
 #include "tr/mo/modebug.h"
 
+#include "tr/mo/nodemoutils.h"
+
 static enum rollback_mode_t rollback_mode = rbm_normal;
 static xptr rollback_record = XNULL;
 static xptr last_indir = XNULL;
+
+using namespace internal;
 
 void indirectionChainDeleteBlock(xptr block_xptr)
 {
@@ -109,14 +111,16 @@ xptr indirectionTableAddRecord(xptr target)
             precord = (shft *) getBlockPointer(irecord, p);
         }
     } else {
+        xptr indirectionp;
         CHECKP(target);
         if (target_block->free_first_indir != 0) {
-            indirection_block = target_block;
+            indirectionp = target;
         } else {
-            indirection_block = getBlockHeaderCP(target_block->snode->bblk_indir);
+            indirectionp = schema_node_cptr(target_block->snode)->bblk_indir;
         }
+        indirection_block = getBlockHeader(checkp(indirectionp));
         U_ASSERT(indirection_block->free_first_indir != 0);
-        irecord = addr2xptr(GET_DSC(indirection_block, indirection_block->free_first_indir));
+        irecord = block_offset(indirectionp, indirection_block->free_first_indir);
 
         CHECKP(irecord);
         precord = &(indirection_block->free_first_indir);

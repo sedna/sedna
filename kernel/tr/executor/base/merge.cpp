@@ -6,7 +6,9 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/merge.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/nid/numb_scheme.h"
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
 #include "common/utils.h"
 
 int doc_order_merge_cmp(const void *e1, const void *e2)
@@ -32,13 +34,13 @@ xptr RelChildAxisMerge::init(const xptr& parent, const char* uri, const char* na
     }
 
     xptr p = XNULL;
-    size = getChildrenXptr(parent, uri, name, type, cfun, p, merged_seq_arr);
+    size = collectChildren(parent, uri, name, type, cfun, p, merged_seq_arr);
     if (size > 1)
     {
         qsort(merged_seq_arr, size, sizeof(xptr), doc_order_merge_cmp);
 
         p = merged_seq_arr[0];
-        merged_seq_arr[0] = getNextSiblingOfSameSortXptr(p);
+        merged_seq_arr[0] = getRightSiblingOfSameSort(p);
     }
 
     return p;
@@ -52,10 +54,10 @@ xptr RelChildAxisMerge::next(const xptr &p)
         elim_disturb(merged_seq_arr, size, sizeof(xptr), doc_order_merge_cmp);
 		p = merged_seq_arr[0];
 		if (p != XNULL)
-			merged_seq_arr[0] = getNextSiblingOfSameSortXptr(p);
+			merged_seq_arr[0] = getRightSiblingOfSameSort(p);
         return p;
     }
-    else return getNextSiblingOfSameSortXptr(p);
+    else return getRightSiblingOfSameSort(p);
 }
 
 
@@ -70,7 +72,7 @@ xptr RelAttrAxisMerge::init(const xptr& parent, const char* uri, const char* nam
     }
 
     xptr p = XNULL;
-    size = getChildrenXptr(parent, uri, name, type, cfun, p, merged_seq_arr);
+    size = collectChildren(parent, uri, name, type, cfun, p, merged_seq_arr);
     if (size > 1)
     {
         qsort(merged_seq_arr, size, sizeof(xptr), doc_order_merge_cmp);

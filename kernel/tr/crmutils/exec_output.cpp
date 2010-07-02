@@ -30,7 +30,7 @@ node_type2se_item_class(t_item t, bool is_atomic) {
         switch(t)
         {
             case element:                      return se_element;
-            case text: case cdata:             return se_text;
+            case text:                         return se_text;
             case attribute:                    return se_attribute;
             case xml_namespace:                return se_namespace;
             case document: case virtual_root:  return se_document;

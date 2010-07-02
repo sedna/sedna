@@ -9,7 +9,6 @@
 #include "tr/idx/btree/btpage.h"
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/buff.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/vmm/vmm.h"
 
 
@@ -22,7 +21,7 @@ char insert_buf[BT_PAGE_SIZE];
 /* splitting function makes the splitting of page pg in the following manner:
    1) The split key is located. All keys < it will be transfered to the left page,
       all keys >= to the right page (rpg).
-	  Note that pretender_idx identifies location where the caller function wishes to 
+	  Note that pretender_idx identifies location where the caller function wishes to
 	  insert new structures (that may be key with object or single object). In both
 	  cases the size claimed by the caller function is passed in pretender_size parameter.
 	  pretender_size and pretender_idx are accounted when calculating dividing key.
@@ -30,10 +29,10 @@ char insert_buf[BT_PAGE_SIZE];
       data (big_ptrs for non-leaf pages; chunk table slots and chunks of objects
 	  for leaf pages) between pg and rpg pages, using buffering techniques exploiting
 	  internal static buffers (see functions in buff.cpp module)
-   3) the function clears out in which of two pages the pretender is to be created, 
+   3) the function clears out in which of two pages the pretender is to be created,
       modifies the pretender_idx correspondingly if required and returns xptr of
 	  pretender's page
-      Note: in utmost case if in the page to be splitted there is only one key, this 
+      Note: in utmost case if in the page to be splitted there is only one key, this
 	  situation is treated as well: one of the pages becomes empty, while all the data
 	  in original page settle in another page.
  */
@@ -54,7 +53,7 @@ xptr bt_page_split_tmpl(char* pg, const xptr &rpg, shft & pretender_idx, shft pr
 
 	if ((key_num == 1)  && (pretender_idx == key_num)) {
 		split_idx = 1;
-	} 
+	}
 	else if ((next_for_rpg == XNULL) && (pretender_idx == key_num))
     {
 		split_idx = key_num - 1;
@@ -171,7 +170,7 @@ xptr bt_page_split_tmpl(char* pg, const xptr &rpg, shft & pretender_idx, shft pr
 		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
 	}
 
-    /* clear out in which block pretender will reside and adjust new index of pretender in that page 
+    /* clear out in which block pretender will reside and adjust new index of pretender in that page
 		if we insert only object, we must return the page, that actually contains the pretender key!
 	*/
 
@@ -190,7 +189,7 @@ xptr bt_page_split_tmpl(char* pg, const xptr &rpg, shft & pretender_idx, shft pr
     }
 }
 
-/* Locate split key - the first key in order from left to right in key table such that the joint memory volume 
+/* Locate split key - the first key in order from left to right in key table such that the joint memory volume
    occupied by all keys together with their load data, that are less than split key, overpass the half of
    page total available payload space (BT_PAGE_PAYLOAD). When calculating the virtual "pretender" is also
    accounted via it's claimed position and size;
@@ -205,7 +204,7 @@ shft bt_find_split_key_tmpl(char* pg, const shft pretender_idx, shft pretender_s
     shft    key_size = BT_KEY_SIZE(pg);
     shft    volume = 0;					/* accumulates the total volume occupied by keys together with load */
     shft    border_volume = BT_PAGE_PAYLOAD / 2;
-	
+
     for (int i = 0; i < key_num; i++)
     {
         /* account pretender */
@@ -227,15 +226,15 @@ shft bt_find_split_key_tmpl(char* pg, const shft pretender_idx, shft pretender_s
             volume += 2*sizeof(shft);
             volume += *(((shft*)BT_KEY_TAB_AT(pg, i))+1);
         }
-		
+
         /* account load data volume */
         if (is_leaf_page)
         {
             volume += 2 * sizeof(shft);
             volume += (*(((shft*)BT_CHNK_TAB_AT(pg, i)) + 1)) * sizeof(object);
-        } else 
+        } else
             volume+=sizeof(xptr);
-		
+
         if (volume > border_volume)
         {
 			/* if the key that passed the half overloaded the page, take it's predecessor,
@@ -248,7 +247,7 @@ shft bt_find_split_key_tmpl(char* pg, const shft pretender_idx, shft pretender_s
     throw USER_EXCEPTION2(SE1008, "The overall volume of keys with loads in page is beneaf half of BT_PAGE_PAYLOAD");
 }
 
-/* for given leaf page insert a given pair (key, obj); 
+/* for given leaf page insert a given pair (key, obj);
    create_new_key flag indicates if target key exists in this page;
    in case the key exists, key_idx points to that key in key table and object is to be added
    to the chunk of that existing key into obj_idx position;
@@ -263,7 +262,7 @@ shft bt_find_split_key_tmpl(char* pg, const shft pretender_idx, shft pretender_s
  */
 void get_clust_head (xptr & pg)
 {
-	
+
 	char* blk=(char*)XADDR(pg);
 	CHECKP(pg);
 	while (true)
@@ -278,13 +277,13 @@ void get_clust_head (xptr & pg)
 		if (!BT_IS_CLUS(blk))
 			throw USER_EXCEPTION2(SE1008, "Cluster error");
 
-	}  
+	}
 	return;
 }
 
 void bt_cluster_head (xptr & pg)
 {
-	
+
 	char* blk=(char*)XADDR(pg);
 	CHECKP(pg);
 	while (true)
@@ -299,12 +298,12 @@ void bt_cluster_head (xptr & pg)
 		if (!BT_IS_CLUS(blk))
 			throw USER_EXCEPTION2(SE1008, "Cluster error");
 
-	}  
+	}
 	return;
 }
 
 template<typename object>
-xptr bt_nleaf_insert_tmpl(xptr &root, const bt_key &new_key, xptr new_big_ptr, bt_path &path) 
+xptr bt_nleaf_insert_tmpl(xptr &root, const bt_key &new_key, xptr new_big_ptr, bt_path &path)
 {
 	bt_path_item pi = path.back();
 	path.pop_back();
@@ -315,21 +314,21 @@ xptr bt_nleaf_insert_tmpl(xptr &root, const bt_key &new_key, xptr new_big_ptr, b
 template<typename object>
 xptr bt_internal_insert_tmpl(
 	xptr &root,            // root page (may be changed after insertion)
-	char* pg,              // the page to insert into 
+	char* pg,              // the page to insert into
 	shft key_idx,          // key index in the page to insert into
 	bool create_new_key,   // do we create new key
 	const bt_key &new_key, // the key to insert
 	const object &obj,     // the object to insert (if inserting object)
 	shft obj_idx,          // object index to insert
 	bt_path &path,         // path to the page to insert into
-	bool with_bt,          // 
+	bool with_bt,          //
 	xptr new_big_ptr       // the page pointer to insert (if inserting subtree)
 )
 {
 	bt_key key(new_key);
 	shft total_key_size;
 	shft key_with_load;
-	bool insert_further = true; 
+	bool insert_further = true;
 	xptr pg_xptr = ADDR2XPTR(pg);
 	xptr key_pg_xptr;
     xptr rpg;
@@ -369,7 +368,7 @@ xptr bt_internal_insert_tmpl(
 				insert_further = true;
 			} else {
 				key_pg_xptr = pg_xptr;
-			}	
+			}
 			CHECKP(key_pg_xptr);
 
 			U_ASSERT(bt_page_fit((char*)XADDR(key_pg_xptr), key_with_load));
@@ -390,7 +389,7 @@ xptr bt_internal_insert_tmpl(
 					return rpg;
 				#else
 					throw USER_EXCEPTION2(SE1008, "Not enough space to insert new key/object into page (clusterization prohibited)");
-				#endif	
+				#endif
 				}
 				/* not cluster case - page splitting */
 				key_pg_xptr = bt_page_split_tmpl<object>(pg, rpg, key_idx, sizeof(object), false);
@@ -455,7 +454,7 @@ xptr bt_internal_insert_tmpl(
 	return root;
 }
 
-/* attach new (rpg) page next to pg as cluster page. If the original pg page is not cluster yet, 
+/* attach new (rpg) page next to pg as cluster page. If the original pg page is not cluster yet,
    mark it as cluster, i.e. form the cluster. The new page is initially unformatted. Insert object
    into new page
  */
@@ -483,7 +482,7 @@ void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object
         (*BT_IS_CLUS_HEAD_PTR(pg)) = true;
         (*BT_IS_CLUS_PTR(tmp_rpg)) = true;
         (*BT_IS_CLUS_TAIL_PTR(tmp_rpg)) = true;
-    } 
+    }
 
     next_for_rpg = BT_NEXT(pg);
 	(*BT_NEXT_PTR(pg)) = rpg;
@@ -522,13 +521,13 @@ void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object
 			- split_idx * sizeof(object);
 
 		memcpy(
-			tmp_rpg + BT_CHNK_ITEM_AT(tmp_rpg, 0)->c_shft, 
-			pg + c.c_shft + split_idx * sizeof(object), 
+			tmp_rpg + BT_CHNK_ITEM_AT(tmp_rpg, 0)->c_shft,
+			pg + c.c_shft + split_idx * sizeof(object),
 			(c.c_size - split_idx) * sizeof(object));
 
 		memmove(
-			pg + BT_CHNK_ITEM_AT(pg, 0)->c_shft, 
-			pg + c.c_shft, 
+			pg + BT_CHNK_ITEM_AT(pg, 0)->c_shft,
+			pg + c.c_shft,
 			split_idx * sizeof(object));
 
 		// When we are sure, the key is at the end of block, it's just easier to work with it.
@@ -536,7 +535,7 @@ void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object
 		if (BT_VARIABLE_KEY_TYPE(pg)) {
 			BT_KEY_ITEM_AT(pg, 0)->k_shft = BT_PAGE_SIZE - BT_KEY_ITEM_AT(pg, 0)->k_size;
 			memmove(
-				tmp_rpg + BT_KEY_ITEM_AT(tmp_rpg, 0)->k_shft, 
+				tmp_rpg + BT_KEY_ITEM_AT(tmp_rpg, 0)->k_shft,
 				pg + BT_KEY_ITEM_AT(pg, 0)->k_shft,
 				BT_KEY_ITEM_AT(pg, 0)->k_size);
 		}
@@ -564,7 +563,7 @@ void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object
 		VMM_SIGNAL_MODIFICATION(next_for_rpg);
 		/* right <- */
 		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
-		
+
 	}
 
 	CHECKP(rpg);
@@ -582,7 +581,7 @@ template<typename object>
 void bt_leaf_do_insert_key_tmpl(char* pg, shft key_idx, const bt_key& key, const object &obj)
 {
 	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
-	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0;
 	shft	key_size = (var_key_size ? sizeof(btree_key_hdr) : BT_KEY_SIZE(pg));
 	char *	chnk_pos = BT_CHNK_TAB_AT(pg, key_idx);
 	shft	chnk_size = sizeof(btree_chnk_hdr);
@@ -627,7 +626,7 @@ void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xpt
 	U_ASSERT(key_idx <= BT_KEY_NUM(pg));
 
 	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
-	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0;
 	shft	key_size = (var_key_size ? 2 * sizeof(shft) : BT_KEY_SIZE(pg));
 	char *	ptr_pos = BT_BIGPTR_TAB_AT(pg, key_idx);
 	shft	ptr_size = sizeof(xptr);
@@ -686,7 +685,7 @@ void bt_do_insert_obj_tmpl(char* pg, shft key_idx, const object &obj, shft obj_i
 
 	if (BT_KEY_SIZE(pg) == 0) {										// in case of variable key length, update key pointers
 		for (int i = 0; i < BT_KEY_NUM(pg); i++) {
-			if (BT_KEY_ITEM_AT(pg, i)->k_shft < chnk_shift) 
+			if (BT_KEY_ITEM_AT(pg, i)->k_shft < chnk_shift)
 				{ BT_KEY_ITEM_AT(pg, i)->k_shft -= sizeof(object); }
 		}
 	}

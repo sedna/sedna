@@ -8,7 +8,6 @@
 
 #include "tr/updates/updates.h"
 #include "tr/mo/mo.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/nid/numb_scheme.h"
 #include "tr/executor/xqops/PPConstructors.h"
@@ -17,6 +16,9 @@
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"
 #endif
+
+#include "tr/structures/nodeutils.h"
+#include "tr/structures/textcptr.h"
 
 #define IGNORE_UPDATE_ERRORS
 
@@ -90,7 +92,7 @@ void update_insert_sequence(xptr node,schema_node_cptr icell)
     cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list->first;
     if (obj == NULL) return;
     CHECKP(node);
-    xptr ind=((n_dsc*)XADDR(node))->indir;
+    xptr ind=nodeGetIndirection(node);
     while (obj!=NULL)
     {
         update_insert_sequence(ind,ft_index_cell_cptr(obj->object));
@@ -104,7 +106,7 @@ void update_update_sequence(xptr node,schema_node_cptr icell)
     cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list->first;
     if (obj==NULL) return;
     CHECKP(node);
-    xptr ind=((n_dsc*)XADDR(node))->indir;
+    xptr ind=nodeGetIndirection(node);
     while (obj!=NULL)
     {
         update_update_sequence(ind,ft_index_cell_cptr(obj->object));
@@ -118,7 +120,7 @@ void update_delete_sequence(xptr node,schema_node_cptr icell)
     cat_list<ft_index_cell_xptr>::item* obj=icell->ft_index_list->first;
     if (obj==NULL) return;
     CHECKP(node);
-    xptr ind=((n_dsc*)XADDR(node))->indir;
+    xptr ind=nodeGetIndirection(node);
     while (obj!=NULL)
     {
         update_delete_sequence(ind,ft_index_cell_cptr(obj->object));
@@ -136,13 +138,13 @@ void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent)
     {
         tmp=parent;
         CHECKP(parent);
-        scn=(GETBLOCKBYNODE(parent))->snode;
+        scn = getSchemaNode(parent);
     }
     else
     {
         tmp=(left==XNULL)?right:left;
         CHECKP(tmp);
-        scn=(GETBLOCKBYNODE(tmp))->snode->parent;
+        scn = getSchemaNode(tmp)->parent;
     }
 
     if (scn->root == scn.ptr() || scn->root->full_ft_index_list->empty()) return;
@@ -158,7 +160,7 @@ void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent)
                 update_update_sequence(tmp,ft_index_cell_cptr(obj->object));
                 obj=obj->next;
             }
-            tmp=removeIndirection(tmp);
+            tmp=indirectionDereferenceCP(tmp);
         }
         scn=scn->parent;
     }
@@ -167,7 +169,7 @@ void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent)
 
 xptr copy_node_content(xptr new_node_i, xptr node, xptr left_node_i, upd_ns_map** nsupdmap, bool save_types, unsigned short depth) {
     xptr left_node = XNULL;
-    xptr childi = getIndirectionSafeCP(getFirstByOrderChildCP(node));
+    xptr childi = getIndirectionSafeCP(getFirstChild(checkp(node)));
 
     while (childi != XNULL) {
         left_node = deep_copy_node_i(left_node_i, XNULL, new_node_i, indirectionDereferenceCP(childi), nsupdmap, save_types, depth + 1);
@@ -178,7 +180,7 @@ xptr copy_node_content(xptr new_node_i, xptr node, xptr left_node_i, upd_ns_map*
             left_node_i = getIndirectionSafeCP(left_node);
         }
 
-        childi = getRightSiblingIndirectionCP(indirectionDereferenceCP(childi));
+        childi = nodeiGetRightSiblingIndirection(childi);
     }
 
     return left_node_i;
@@ -212,10 +214,10 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
     if (parent == XNULL) {
         if (left != XNULL) {
             CHECKP(left);
-            parent = removeIndirection(((n_dsc*) XADDR(left))->pdsc);
+            parent = nodeGetParent(left);
         } else {
             CHECKP(right);
-            parent = removeIndirection(((n_dsc*) XADDR(right))->pdsc);
+            parent = nodeGetParent(right);
         }
     }
 
@@ -229,7 +231,7 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
 #endif
 
     node_indir = getIndirectionSafeCP(node);
-    scmnode = getBlockHeaderCP(node)->snode;
+    scmnode = getSchemaNode(node);
 
     switch (scmnode->type) {
         case element: {
@@ -240,7 +242,7 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                 swizzleNamespace(ns, *nsupdmap);
             }
 
-            scm_type = (save_types) ? E_DSC(node)->type : xs_untyped;
+            scm_type = (save_types) ? getScmType(node) : xs_untyped;
             result = insert_element(left, right, parent, scmnode->name, scm_type, ns);
             result_indir = get_last_mo_inderection();
 
@@ -252,21 +254,13 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                       break;
 
         case text: {
-            if (isTextEmpty(T_DSC(node))) {
+            if (CommonTextNode(node).isEmpty()) {
                 throw SYSTEM_EXCEPTION("BAD DATA!!!");
             } else {
-                xptr data = getTextPtr(T_DSC(node));
-                CHECKP(node);
-                result = insert_text(left, right, parent, &data, getTextSize(T_DSC(node)), text_doc);
+                result = insert_text(left, right, parent, text_source_node(node));
             }
                    }
                    break;
-
-        case cdata: {
-            text_cptr buf(node);
-            result = insert_cdata(left, right, parent, buf.get(), buf.getSize());
-                    }
-                    break;
 
         case comment: {
             text_cptr buf(node);
@@ -275,7 +269,7 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                       break;
 
         case pr_ins: {
-            size_t tsize = PI_DSC(node)->target;
+            size_t tsize = PINode(node).getPITargetSize();
             text_cptr buf(node);
             result = insert_pi(left, right, parent, buf.get(), tsize, buf.get() + tsize + 1, buf.getSize() - tsize - 1);
                      }
@@ -290,13 +284,13 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
             }
 
             CHECKP(node);
-            scm_type = (save_types) ? A_DSC(node)->type : xs_untypedAtomic;
+            scm_type = (save_types) ? AttributeNode(node).getType() : xs_untypedAtomic;
             result = insert_attribute(left, right, parent, scmnode->name, scm_type, buf.get(), buf.getSize(), ns);
                         }
                         break;
 
         case xml_namespace: {
-            xmlns_ptr ns = xmlns_touch(NS_DSC(node)->ns);
+            xmlns_ptr ns = NSNode(node).getNamespaceLocal();
             if (nsupdmap != NULL && ns != NULL_XMLNS) {
                 swizzleNamespace(ns, *nsupdmap);
             }
@@ -311,11 +305,11 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
     CHECKP(result);
 
 #ifdef SE_ENABLE_FTSEARCH
-    update_insert_sequence(result, schema_node_cptr((GETBLOCKBYNODE(result))->snode));
+    update_insert_sequence(result, getSchemaNode(result));
 #endif
 
 #ifdef SE_ENABLE_TRIGGERS
-    if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+    if (parent==XNULL) parent= nodeGetParentIndirection(left);
     apply_per_node_triggers(result, XNULL, parent, XNULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 

@@ -7,7 +7,7 @@
 
 #include "tr/executor/root/PPBulkLoad.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/crmutils/crmutils.h"
+#include "tr/updates/updates.h"
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"

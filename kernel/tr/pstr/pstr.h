@@ -7,6 +7,7 @@
 #define _PSTR_H
 
 #include "common/sedna.h"
+#include "common/xptr.h"
 
 extern const shft	PSTRMAXSIZE;
 
@@ -19,8 +20,13 @@ void	pstr_read_from_node(xptr node, char* s);
 void	pstr_read(xptr ps, int ps_size, char* the_s);
 bool	pstr_fit_into_blk(xptr blk, shft s_size);
 /* dereference indirect xptr pointer to persistent string; returns direct xptr */
-//#define	PSTRDEREF(p)	ADDR2XPTR((char*)XADDR(BLOCKXPTR(p)) + *(shft*)XADDR(p)) 
+//#define	PSTRDEREF(p)	ADDR2XPTR((char*)XADDR(BLOCKXPTR(p)) + *(shft*)XADDR(p))
 #define	PSTRDEREF(p)	(BLOCKXPTR(p) + *(shft*)XADDR(p))
+
+inline
+xptr pstrderef(const xptr p) {
+    return (BLOCKXPTR(p) + *(shft*)XADDR(p));
+}
 
 
 /* internal functions */

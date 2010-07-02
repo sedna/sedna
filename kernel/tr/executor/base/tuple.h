@@ -16,8 +16,7 @@
 #include "tr/executor/base/XMLDateTime.h"
 #include "tr/pstr/pstr.h"
 
-#include "tr/structures/nodes.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/structures/nodeinterface.h"
 #include "tr/mo/indirection.h"
 
 class sequence;
@@ -26,9 +25,7 @@ class sequence;
 typedef std::pair<int, int>			int_pair;
 typedef std::vector<int_pair>		arr_of_int_pairs;
 
-
 typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
-
 
 /// Used in fn:concat to determine which type of sting to create as result.
 /// Possibly, additional review is needed how we manage in-memory strings.
@@ -231,25 +228,26 @@ public:
     /* safenode type means that node is stored with indirection always */
     bool is_safenode()     const { return (t & TC_TYPE_MASK) == TC_SAFENODE; }
     /* node type means that node is stored with indirection only for temporary nodes */
-    bool is_node()         const { return (t & TC_TYPE_MASK) == TC_TMPSAFENODE; }
+    bool is_smartnode()    const { return (t & TC_TYPE_MASK) == TC_TMPSAFENODE; }
     /* unsafenode type means that node xptr is stored directly (equals xptr type) */
-    bool is_unsafenode()  const { return (t & TC_TYPE_MASK) == TC_UNSAFENODE; }
+    bool is_unsafenode()   const { return (t & TC_TYPE_MASK) == TC_UNSAFENODE; }
 
-    bool is_anynode()     const { return (t & TC_TYPE_MASK) && (t & TC_SUBTYPE_MASK); }
+    bool is_node()         const { return (t & TC_TYPE_MASK) && (t & TC_SUBTYPE_MASK); }
 
     uint32_t           get_type()        const { return t & TC_TYPE_MASK; }
     xmlscm_type        get_atomic_type() const { return t & TC_XTYPE_MASK; }
 
     xptr               get_xptr()        const { return *(xptr*)(&data); }
-    xptr               get_node()        const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
+    xptr               get_smartnode()   const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
     xptr               get_safenode()    const { return indirectionDereferenceCP(get_xptr()); }
     xptr               get_unsafenode()  const { return get_xptr(); }
 
-    xptr               get_node_smart()  const {
+    xptr               get_node()        const {
       switch (t & TC_TYPE_MASK) {
         case TC_SAFENODE : return get_safenode();
-        case TC_TMPSAFENODE : return get_node();
+        case TC_TMPSAFENODE : return get_smartnode();
         case TC_UNSAFENODE : return get_unsafenode();
+        default: return XNULL;
       }
     }
 
@@ -410,10 +408,16 @@ public:
         return tuple_cell(tc_safenode, getIndirectionSafeCP(_p_));
     }
 
+
     static tuple_cell node(const xptr &_p_)
     {
         U_ASSERT(_p_ != XNULL);
         return tuple_cell(tc_node, isTmpBlock(_p_) ? getIndirectionSafeCP(_p_) : _p_);
+    }
+
+    static tuple_cell node(const Node &node)
+    {
+        return tuple_cell::node(node.getPtr());
     }
 
     static tuple_cell node_indir(const xptr &_p_)
@@ -488,24 +492,17 @@ public:
         return tuple_cell(tc_heavy_atomic_estr, _xtype_, _p_, _size_);
     }
 
-    inline static tuple_cell atomic_text(xptr node)
+    static tuple_cell atomic_text(CommonTextNode node)
     {
-        CHECKP(node);
-        if (isTextEmpty(T_DSC(node))) return EMPTY_STRING_TC;
-        size_t size = (size_t) getTextSize(T_DSC(node));
-        xptr p = getTextPtr(T_DSC(node));
-        return tuple_cell::atomic_pstr(xs_string, size, p);
+        if (node.isEmpty()) return EMPTY_STRING_TC;
+        return tuple_cell::atomic_pstr(xs_string, (size_t) node.getTextSize(), node.getTextPointer());
     }
 
-    inline static tuple_cell atomic_pi(xptr node)
+    static tuple_cell atomic_pi(PINode node)
     {
-        CHECKP(node);
-        size_t size = (size_t) getTextSize(PI_DSC(node));
-        shft target_size = PI_DSC(node)->target;
-        if (size == 0 || target_size == size) return EMPTY_STRING_TC;
-        ++target_size;
-        U_ASSERT(size < PSTRMAXSIZE);
-        return tuple_cell::atomic_pstr(xs_string, size - target_size, getTextPtr(T_DSC(node)) + target_size);
+        node.checkp();
+        if (node.isEmptyPI()) return EMPTY_STRING_TC;
+        return tuple_cell::atomic_pstr(xs_string, node.getPIDataSize(), node.getPIData());
     }
 
     static tuple_cell atomic_se_separator()

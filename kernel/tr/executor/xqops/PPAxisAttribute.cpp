@@ -6,12 +6,13 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisAttribute.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 
+#include "tr/structures/nodeutils.h"
+
 PPAxisAttribute::PPAxisAttribute(dynamic_context *_cxt_,
-                                 operation_info _info_, 
+                                 operation_info _info_,
                                  PPOpIn _child_,
                                  NodeTestType _nt_type_,
                                  NodeTestData _nt_data_) : PPIterator(_cxt_, _info_, "PPAxisAttribute"),
@@ -21,7 +22,7 @@ PPAxisAttribute::PPAxisAttribute(dynamic_context *_cxt_,
 {
     NodeTestType type = nt_type;
 
-    if (type == node_test_attribute) 
+    if (type == node_test_attribute)
         type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
 
     switch (type)
@@ -127,11 +128,11 @@ void PPAxisAttribute::next_node(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getFirstByOrderAttributeChild(child.get(t).get_node());
+        cur = getFirstAttributeChild(child.get(t).get_node());
     }
 
     t.copy(tuple_cell::node(cur));
-    cur = getNextByOrderAttribute(cur);
+    cur = getNextAttribute(cur);
 }
 
 void PPAxisAttribute::next_qname(tuple &t)
@@ -163,11 +164,11 @@ void PPAxisAttribute::next_wildcard_star(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getFirstByOrderAttributeChild(child.get(t).get_node());
+        cur = getFirstAttributeChild(child.get(t).get_node());
     }
 
     t.copy(tuple_cell::node(cur));
-    cur = getNextByOrderAttribute(cur);
+    cur = getNextAttribute(cur);
 }
 
 void PPAxisAttribute::next_wildcard_ncname_star(tuple &t)

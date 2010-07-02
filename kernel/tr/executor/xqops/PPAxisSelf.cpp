@@ -6,10 +6,12 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisSelf.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/merge.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
 
 PPAxisSelf::PPAxisSelf(dynamic_context *_cxt_,
                        operation_info _info_,
@@ -77,19 +79,17 @@ void PPAxisSelf::do_next (tuple &t)
             if (node!=XNULL)
             {
                 CHECKP(node);
-                t_item type=GETSCHEMENODEX(node)->type;
+                t_item type=getNodeType(node);
                 if (type!=pr_ins) continue;
                 else
                 {
                     if (!nt_data.ncname_local) return;
                     else
                     {
-                        pi_dsc* desc=(pi_dsc*)XADDR(node);
-                        size_t tsize=desc->target;
-                        if (tsize==strlen(nt_data.ncname_local)) {
-                            char* data= (char*)XADDR(getTextPtr(desc));
-                            if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
-                            else continue;
+                        if (PINode(node).compareTarget(nt_data.ncname_local) == 0) {
+                            return;
+                        } else {
+                            continue;
                         }
                     }
                 }
@@ -108,7 +108,7 @@ void PPAxisSelf::do_next (tuple &t)
             if (node!=XNULL)
             {
                 CHECKP(node);
-                t_item type=GETSCHEMENODEX(node)->type;
+                t_item type=getNodeType(node);
                 switch (type)
                 {
                 case text						:
@@ -144,7 +144,7 @@ void PPAxisSelf::do_next (tuple &t)
             if (node != XNULL)
             {
                 CHECKP(node);
-                schema_node_cptr scm = GETSCHEMENODEX(node);
+                schema_node_cptr scm = getSchemaNode(node);
                 t_item type=scm->type;
                 if (type != element) continue;
                 comp_schema fun;
@@ -180,7 +180,7 @@ void PPAxisSelf::do_next (tuple &t)
             if (node!=XNULL)
             {
                 CHECKP(node);
-                schema_node_cptr scm = GETSCHEMENODEX(node);
+                schema_node_cptr scm = getSchemaNode(node);
                 t_item type = scm->type;
 
                 if (type != attribute) continue;
@@ -200,7 +200,7 @@ void PPAxisSelf::do_next (tuple &t)
             if (node != XNULL)
             {
                 CHECKP(node);
-                schema_node_cptr scm = GETSCHEMENODEX(node);
+                schema_node_cptr scm = getSchemaNode(node);
                 t_item type = scm->type;
 
                 if (type != document) continue;

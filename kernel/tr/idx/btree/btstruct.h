@@ -8,7 +8,7 @@
 
 #include "common/sedna.h"
 
-#include "tr/structures/nodes.h"
+#include "tr/structures/nodetypes.h"
 #include "tr/idx/btree/btpage.h"
 #include "tr/executor/base/XMLDateTime.h"
 
@@ -61,8 +61,8 @@ public: static inline int get() { return 0; }
 };
 template<> class null_object<doc_serial_header>
 {
-public: static inline doc_serial_header get() 
-		{ return doc_serial_header(0,XNULL); 
+public: static inline doc_serial_header get()
+		{ return doc_serial_header(0,XNULL);
 		}
 };
 template<> class null_object<ft_idx_btree_element>
@@ -99,11 +99,11 @@ private:
     } v;
     xmlscm_type type;
 
-    void free() 
-    { 
-        if (type == xs_string) 
-            delete [] v.s_v; 
-        v.s_v = NULL; 
+    void free()
+    {
+        if (type == xs_string)
+            delete [] v.s_v;
+        v.s_v = NULL;
     }	/* free allocated dynamic memory */
 
     void init(const bt_key& k);
@@ -159,7 +159,7 @@ bool operator>=(const bt_key& k1, const bt_key& k2);
 bool operator< (const bt_key& k1, const bt_key& k2);
 bool operator<=(const bt_key& k1, const bt_key& k2);
 
-/* cursor over the objects/keys (in general may span a number of pages following next keys or 
+/* cursor over the objects/keys (in general may span a number of pages following next keys or
    following next object - page cluster case)
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    Note: when traversing over objects that occupy a number of pages inside cluster, in each page of the
@@ -183,7 +183,7 @@ public:
     bt_cursor_tmpl();
     bt_cursor_tmpl(char* pg, shft key_idx);
     object  bt_next_obj();/* obtain next object - begining from 0-th */
-	void  bt_set_next_obj(object obj);	
+	void  bt_set_next_obj(object obj);
     bool    bt_next_key();	/* focus on next key; note that initially cursor is already focused
 							   at the 0-th key. Returns the key that was previously in the focus */
     bool    is_null() const;/* if there are keys belonging to this cursor */

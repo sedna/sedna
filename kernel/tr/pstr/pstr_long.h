@@ -62,15 +62,15 @@ struct pstr_long_block_list_map_entry
 };
 #define PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE sizeof(struct pstr_long_block_list_map_entry)
 
-xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
-xptr pstr_long_create_str2(bool persistent, const void *data, pstr_long_off_t size, text_type ttype);
+xptr pstr_long_create_str(xptr desc, const text_source_t src);
+xptr pstr_long_create_str2(bool persistent, const text_source_t src);
 void pstr_long_delete_str(xptr desc);
 void pstr_long_delete_str2(const xptr str_ptr);
-void pstr_long_append_tail(const xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
+void pstr_long_append_tail(const xptr desc, const text_source_t src);
 void pstr_long_append_tail(const xptr dst_desc, const xptr src_desc);
 void pstr_long_truncate(xptr desc, pstr_long_off_t size);
 
-void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, text_type ttype);
+void pstr_long_append_head(xptr desc, const text_source_t src);
 void pstr_long_delete_head(xptr desc, pstr_long_off_t size);
 
 void pstr_long_write(xptr desc,se_ostream& crmout);

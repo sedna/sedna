@@ -17,7 +17,7 @@
 
 /* typedef int64_t n_scheme; */
 struct t_nid {
-    unsigned char prefix[11];  /* actually union; if the size of string is above MAXINTERNALPREFIX 
+    unsigned char prefix[11];  /* actually union; if the size of string is above MAXINTERNALPREFIX
                                   keeps xptr to string (first 8 bytes) and size of nid (2 last bytes) */
     unsigned char size;        /* keeps the size of string if it is above MAXINTERNALPREFIX, 0 otherwise */
 };
@@ -28,6 +28,24 @@ typedef struct t_nid t_nid;
 extern int nid_block_count;
 extern t_nid NIDNULL;
 extern std::pair<int,int>* sizehnt;
+
+inline
+shft nid_get_size(const t_nid * nid) {
+    const unsigned char size = nid->size;
+
+    if (size == 0) {
+        return *(shft*) ((nid->prefix) + sizeof(xptr));
+    } else {
+        return size;
+    }
+}
+
+bool nid_parse(const xptr nid, xptr * prefix, shft * size);
+
+inline
+bool nid_is_external(const t_nid * nid) {
+    return (nid->size == 0);
+}
 
 
 /* set static parameter of alphabet division proportion */
@@ -84,9 +102,9 @@ void    	nid_print(xptr node, std::ostream& c);
 void		nid_print(xptr node);
 
 /*
- * All temporary blocks are deleted on the end of the kernel statement 
- * including TMPNIDBLK. So it must be nulled when the last temporary 
- * schema node is deleted. 
+ * All temporary blocks are deleted on the end of the kernel statement
+ * including TMPNIDBLK. So it must be nulled when the last temporary
+ * schema node is deleted.
  */
 void    	nid_on_kernel_statement_end();
 

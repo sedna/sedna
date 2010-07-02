@@ -10,7 +10,6 @@
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/buff.h"
 #include "tr/idx/btree/btree.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/vmm/vmm.h"
 
 /* temporary buffer used for performing page delete operations */
@@ -32,7 +31,7 @@ void bt_get_leftmost_key(char * pg, bt_key &key) {
 }
 
 
-bool bt_pages_mergable(xptr p1, xptr p2, int additional_space) 
+bool bt_pages_mergable(xptr p1, xptr p2, int additional_space)
 {
 	CHECKP(p1);
 	int s1 = BT_PFS((char *) XADDR(p1));
@@ -49,7 +48,7 @@ bool bt_pages_mergable(xptr p1, xptr p2, int additional_space)
  * Works only if pr is not cluster, etc.
  */
 
-bool bt_merge_pages(xptr pl, xptr pr) 
+bool bt_merge_pages(xptr pl, xptr pr)
 {
 // in tmp : lkey-rkey-lchnk-rchnk   :   rheap-lheap
 
@@ -72,13 +71,13 @@ bool bt_merge_pages(xptr pl, xptr pr)
 	shft  rkey_len	  = BT_KEY_TAB_AT(tmp_pg, BT_KEY_NUM(tmp_pg)) - BT_KEY_TAB(tmp_pg);
 
 	char* ldata_place = rkey_place + rkey_len;
-	shft  ldata_len	  = 
+	shft  ldata_len	  =
 		 is_leaf ?
 		(BT_CHNK_TAB_AT(p, BT_KEY_NUM(p)) - BT_CHNK_TAB(p)) :
 		(BT_BIGPTR_TAB_AT(p, BT_KEY_NUM(p)) - BT_BIGPTR_TAB(p));
 
 	char* rdata_place = ldata_place + ldata_len;
-	shft  rdata_len	  = 
+	shft  rdata_len	  =
 		 is_leaf ?
 		(BT_CHNK_TAB_AT(tmp_pg, BT_KEY_NUM(tmp_pg)) - BT_CHNK_TAB(tmp_pg)) :
 		(BT_BIGPTR_TAB_AT(tmp_pg, BT_KEY_NUM(tmp_pg)) - BT_BIGPTR_TAB(tmp_pg));
@@ -111,7 +110,6 @@ bool bt_merge_pages(xptr pl, xptr pr)
 
 	BT_NEXT(p) = BT_NEXT(tmp_pg);
 
-
 	if (next_page != XNULL) {
 		WRITEP(next_page);
 		BT_PREV((char *)XADDR(next_page)) = BT_PREV(tmp_pg);
@@ -122,7 +120,7 @@ bool bt_merge_pages(xptr pl, xptr pr)
 
 
 template<typename object>
-xptr bt_try_squeeze_cluster_tmpl(xptr leaf) 
+xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 {
 	CHECKP(leaf);
 	char * pg = (char *) XADDR(leaf);
@@ -142,7 +140,7 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 			CHECKP(leaf);
 			mpg = BT_NEXT(pg);
 			rotation = false;
-		}		
+		}
 	}
 
 	if (mpg != XNULL) {
@@ -171,8 +169,8 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 
 
 		U_ASSERT(
-			(*(object *)(p + BT_CHNK_ITEM_SHIFT(p, 0) + (BT_CHNK_ITEM_SIZE(p, 0) - 1) * sizeof(object))) 
-			  < 
+			(*(object *)(p + BT_CHNK_ITEM_SHIFT(p, 0) + (BT_CHNK_ITEM_SIZE(p, 0) - 1) * sizeof(object)))
+			  <
 			(*(object *)(tmp_pg + BT_CHNK_ITEM_SHIFT(tmp_pg, 0)))
 		);
 
@@ -180,7 +178,7 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 		next_page = BT_NEXT(tmp_pg);
 		heap_modification_point = BT_CHNK_ITEM_SHIFT(tmp_pg, 0);
 		heap_insertion_size = BT_CHNK_ITEM_SIZE(p, 0) * sizeof(object);
-		
+
 		memmove(
 			tmp_pg + BT_HEAP(tmp_pg) - heap_insertion_size,
 			tmp_pg + BT_HEAP(tmp_pg),
@@ -245,7 +243,7 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 	to write.
 */
 
-bool bt_try_merge_pages(xptr pr) 
+bool bt_try_merge_pages(xptr pr)
 {
 	CHECKP(pr);
 	if (BT_IS_CLUS((char*) XADDR(pr))) { return false; }
@@ -324,7 +322,7 @@ bool bt_recoursive_delete_tmpl(const bt_key& key, bt_path &path_fore, shft obj_i
 			path_fore.front().pg = bt_try_squeeze_cluster_tmpl<object>(ptr);
 			CHECKP(path_fore.front().pg);
 		}
-		return true; 
+		return true;
 	}
 
 	bool has_key;
@@ -410,7 +408,7 @@ bool bt_recoursive_delete_tmpl(const bt_key& key, bt_path &path_fore, shft obj_i
 }
 
 template<typename object>
-bool bt_internal_delete_tmpl(xptr &root, const bt_key& key, shft obj_idx, bt_path &path) 
+bool bt_internal_delete_tmpl(xptr &root, const bt_key& key, shft obj_idx, bt_path &path)
 {
 	break_data bd;
 
@@ -434,7 +432,7 @@ bool bt_internal_delete_tmpl(xptr &root, const bt_key& key, shft obj_idx, bt_pat
 		bt_nleaf_insert_tmpl<object>(root, bd.key, bd.pg, split_path);
 	}
 
-	CHECKP(root); 
+	CHECKP(root);
 	char * pg = (char*) XADDR(root);
 	if ((BT_KEY_NUM(pg) == 0) && (BT_LMP(pg) != XNULL)) {
 		xptr new_root = BT_LMP(pg);
@@ -469,7 +467,7 @@ bool bt_internal_delete_tmpl(xptr &root, const bt_key& key, shft obj_idx, bt_pat
 */
 
 template<typename object>
-void bt_delete_obj_tmpl(char* pg, shft key_idx, shft obj_idx) 
+void bt_delete_obj_tmpl(char* pg, shft key_idx, shft obj_idx)
 {
 // This function works properly in assumption that CHUNK_ITEM_SIZE >= 2
 
@@ -489,7 +487,7 @@ void bt_delete_obj_tmpl(char* pg, shft key_idx, shft obj_idx)
 
 	if (BT_KEY_SIZE(pg) == 0) {										// in case of variable key length, update key pointers
 		for (int i = 0; i < BT_KEY_NUM(pg); i++) {
-			if (BT_KEY_ITEM_AT(pg, i)->k_shft < obj_shift) 
+			if (BT_KEY_ITEM_AT(pg, i)->k_shft < obj_shift)
 				{ BT_KEY_ITEM_AT(pg, i)->k_shft += sizeof(object); }
 		}
 	}
@@ -505,7 +503,7 @@ void bt_delete_obj_tmpl(char* pg, shft key_idx, shft obj_idx)
 }
 
 template<typename object>
-void bt_leaf_delete_key_tmpl(char* pg, shft key_idx) 
+void bt_leaf_delete_key_tmpl(char* pg, shft key_idx)
 {
 // This function works properly in assumption that CHUNK_ITEM_SIZE = 1 !!!
 	U_ASSERT(BT_CHNK_ITEM_SIZE(pg, key_idx) == 1);
@@ -514,14 +512,14 @@ void bt_leaf_delete_key_tmpl(char* pg, shft key_idx)
 	shft	heap_shift = BT_HEAP(pg);
 	shft	obj_shift = BT_CHNK_ITEM_SHIFT(pg, key_idx);
 	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
-	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0;
 	shft	key_size = (var_key_size ? 2 * sizeof(shft) : BT_KEY_SIZE(pg));
 	shft	actkey_shift = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_shft : 0);
 	shft	actkey_size = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_size : 0);
 	char *	chnk_pos = BT_CHNK_TAB_AT(pg, key_idx);
 	shft	chnk_size = sizeof(btree_chnk_hdr);
 	char *	last = BT_CHNK_TAB_AT(pg, BT_KEY_NUM(pg));
-	
+
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 
 	shft	len = (chnk_pos - key_pos) - key_size;
@@ -556,12 +554,12 @@ void bt_leaf_delete_key_tmpl(char* pg, shft key_idx)
 }
 
 
-void bt_nleaf_delete_key(char* pg, shft key_idx) 
+void bt_nleaf_delete_key(char* pg, shft key_idx)
 {
 
 	shft	heap_shift = BT_HEAP(pg);
 	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
-	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0;
 	shft	key_size = (var_key_size ? 2 * sizeof(shft) : BT_KEY_SIZE(pg));
 	shft	actkey_shift = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_shft : 0);
 	shft	actkey_size = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_size : 0);

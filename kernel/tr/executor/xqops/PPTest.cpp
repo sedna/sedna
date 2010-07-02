@@ -14,6 +14,9 @@
 #include "tr/strings/strings.h"
 #include "tr/pstr/pstr.h"
 
+#include "tr/structures/nodeutils.h"
+#include "tr/mo/nodemoutils.h"
+
 using namespace std;
 //#include <atlstr.h>
 //#define USE_DTSEARCH_NAMESPACE
@@ -75,7 +78,7 @@ void PPTest::do_next (tuple &t)
 	strg<< "checking the node: xptr=(" << node.layer<< ",0x"<< hex << node.getOffs() <<")\n";
 	try
 	{
-		(this->*test_fun)(node);
+		test_fun(node);
 		strg<<"true";
 
 	}
@@ -179,20 +182,10 @@ PPIterator* PPTest::do_copy(dynamic_context *_cxt_)
 	res->seq.op = seq.op->copy(_cxt_);
 	return res;
 }
-xptr get_root (xptr node)
-{
-	CHECKP(node);
-	xptr tmp=node;
-	while (true)
-	{
-            CHECKP(tmp);
-            if (((n_dsc*)XADDR(tmp))->pdsc==XNULL) return tmp;
-            tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
-	}
-}
+
 bool is_same_root(xptr x, xptr y)
 {
-	return get_root(x)==get_root(y);
+	return getRootNode(x)==getRootNode(y);
 }
 /*
 bool PPTest::checkFT(xptr node)
@@ -234,70 +227,69 @@ int PPTest::checkFT(PPOpIn _seq_)
 	delete results;
 	return res;
 }*/
+
+using namespace internal;
+
 void PPTest::checkTreeConsistency(xptr node)
 {
 	CHECKP(node);
-	n_dsc* node_d=(n_dsc*)XADDR(node);
-	t_nid nd=node_d->nid;
-	schema_node_cptr scn=(GETBLOCKBYNODE(node))->snode;
-	node_blk_hdr* n_blk=GETBLOCKBYNODE(node);
+	t_nid nd = Node(node).getNID();
+	schema_node_cptr scn=getSchemaNode(node);
 #ifdef DESC_CONSIST
-	if (node_d->desc_prev!=0)
-	{
-		n_dsc* pr_n=(n_dsc*)((char*)n_blk + node_d->desc_prev );
-		if (pr_n->desc_next!=CALCSHIFT(node_d,n_blk) || pr_n==node_d)
+	xptr dprev = nodeGetPrev(node);
+	if (dprev != XNULL) {
+		if (nodeGetNext(dprev) != node) {
 			throw XQUERY_EXCEPTION(SE2030);
+		}
 	}
-	if (node_d->desc_next!=0)
-	{
-		n_dsc* pr_n=(n_dsc*)((char*)n_blk + node_d->desc_next );
-		if (pr_n->desc_prev!=CALCSHIFT(node_d,n_blk) || pr_n==node_d)
-			throw XQUERY_EXCEPTION(SE2030);
-	}
-
+    xptr dnext = nodeGetNext(node);
+    if (dnext != XNULL) {
+        if (nodeGetPrev(dnext) != node) {
+            throw XQUERY_EXCEPTION(SE2030);
+        }
+    }
 	//1. indirection test
-	xptr indir=node_d->indir;
-	if (removeIndirection(indir)!=node)
+	xptr indir = getIndirectionSafeCP(node);
+	if (indirectionDereferenceCP(indir)!=node)
 		throw XQUERY_EXCEPTION(SE2030);
 	//2. parent test
 	CHECKP(node);
-	xptr par_indir=node_d->pdsc;
+	xptr par_indir = nodeGetParentIndirection(node);
 	xptr parent;
-	n_dsc* prev_dsc=getPreviousDescriptorOfSameSort(node_d);
-	xptr prev_x=(prev_dsc==NULL)?XNULL:ADDR2XPTR(prev_dsc);
-    if (par_indir!=XNULL)
+	xptr prev = getPreviousDescriptorOfSameSort(node);
+    if (par_indir != XNULL)
 	{
-		parent=removeIndirection(par_indir);
+		parent=indirectionDereferenceCP(par_indir);
 		if (!nid_ancestor(parent,node))
 			throw XQUERY_EXCEPTION(SE2025);
-		if(prev_x != XNULL) CHECKP(prev_x);
-		if (prev_dsc==NULL|| prev_dsc->pdsc!=par_indir)
+		if(prev != XNULL) CHECKP(prev);
+		if (prev == XNULL || nodeGetParentIndirection(prev) != par_indir)
 		{
 			CHECKP(parent);
-			xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->get_xmlns());
-			if (ptr==NULL || *ptr!=node)
+			xptr ptr = getFirstChildBySchema(parent, scn);
+			if (ptr == XNULL || ptr != node)
 				throw XQUERY_EXCEPTION(SE2026);
 		}
 	}
 	//3. left siblings + nid comparison
 	CHECKP(node);
-	xptr left=node_d->ldsc;
+	xptr left = nodeGetLeftSibling(node);
 	if (left!=XNULL)
 	{
 		CHECKP(left);
-		if (((n_dsc*)XADDR(left))->rdsc!=node)
+		if (nodeGetRightSibling(left)!=node)
 			throw XQUERY_EXCEPTION(SE2027);
 		if (nid_cmp(left,node)>=0)
 			throw XQUERY_EXCEPTION(SE2028);
 	}
 	//4. descriptor's order
-	if (prev_x!=XNULL && scn->type!=document)
+	if (prev != XNULL && scn->type != document)
 	{
-		bool lt=nid_cmp(prev_x,node)<0;
-		CHECKP(prev_x);
-		if (!lt || getNextDescriptorOfSameSort(prev_dsc)!=node_d   )
+		bool lt=nid_cmp(prev,node)<0;
+		CHECKP(prev);
+		if (!lt || getNextDescriptorOfSameSort(prev) != node)
 		{
-			if (is_same_root(prev_x,node))
+			if (is_same_root(prev, node))
 				throw XQUERY_EXCEPTION(SE2029);
 		}
 	}
@@ -309,19 +301,19 @@ void PPTest::checkTreeConsistency(xptr node)
 			check_blk_consistency(*((xptr*)nd.prefix));
 	//5.2 nid pstr consistency
 	CHECKP(node);
-	if ( scn->textcnt && isPstr((t_dsc*)node_d) && is_last_shft_in_blk(((t_dsc*)node_d)->data.lsp.p)) {
+	if (scn->textcnt > 0 && CommonTextNode(node).isPstr()) {
 		CHECKP(node);
-		check_blk_consistency(((t_dsc*)node_d)->data.lsp.p);
+		check_blk_consistency(CommonTextNode(node).getTextPointer());
 	}
 #endif
 	//recursive walkthrough
 	CHECKP(node);
-	xptr child=giveFirstByOrderChild(node,CHILDCOUNT(node));
+	xptr child=getFirstChild(node);
 	while (child!=XNULL)
 	{
 		checkTreeConsistency(child);
 		CHECKP(child);
-		child=((n_dsc*)XADDR(child))->rdsc;
+		child=nodeGetRightSibling(child);
 	}
 }
 

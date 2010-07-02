@@ -11,12 +11,12 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/executor/base/merge.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/vmm/vmm.h"
 #include "tr/structures/metadata.h"
-#include "tr/crmutils/node_utils.h"
+
+#include "tr/structures/nodeutils.h"
 
 
 /**
@@ -78,9 +78,9 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 {
 }
 
-PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
-                     operation_info _info_, 
-                     PathExpr *_path_expr_, 
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
+                     operation_info _info_,
+                     PathExpr *_path_expr_,
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_,
                      schema_node_xptr _root_) : PPIterator(_cxt_, _info_, "PPAbsPath"),
@@ -164,7 +164,7 @@ void PPAbsPath::do_next(tuple &t)
     else
     {
         t.copy(tuple_cell::node(res));
-        merged_seq_arr[0] = getNextDescriptorOfSameSortXptr(res);
+        merged_seq_arr[0] = getNextDescriptorOfSameSort(res);
     }
 }
 
@@ -227,7 +227,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
         else
         {
             CHECKP(first_blk);
-            merged_seq_arr[i] = GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(first_blk));
+            merged_seq_arr[i] = getFirstBlockNode(first_blk);
         }
     }
 

@@ -8,11 +8,10 @@
 
 #include "common/sedna.h"
 
-#include "tr/structures/nodes.h"
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/btpage.h"
 
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    Btree interface functions. In all functions 'root' parameter is btree actual root page.
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -39,7 +38,7 @@ void			bt_delete_tmpl(xptr &root, const bt_key &key);						/* delete key with al
 void           bt_drop_page(const btree_blk_hdr * pg);
 
 
-//wrapper for btree with object=xptr 
+//wrapper for btree with object=xptr
 typedef bt_cursor_tmpl<xptr> bt_cursor;
 
 inline bt_cursor bt_find   (const xptr &root, const bt_key& key)

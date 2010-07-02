@@ -9,7 +9,8 @@
 #include "tr/structures/schema.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/xs_names.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/structures/nodeinterface.h"
+#include "tr/executor/base/dm_accessors.h"
 
 ///
 /// XML Schema Part 2 NCName Functions
@@ -220,7 +221,7 @@ char *xs_QName_create(const char* prefix_and_local,
         throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
 
     std::vector<xmlns_ptr> xmlns;
-    get_in_scope_namespaces(elem_node, xmlns, cxt);
+    se_get_in_scope_namespaces(elem_node, xmlns, cxt);
     const char *tgt_prefix = NULL;
 
     for (size_t i = 0; i < xmlns.size(); i++)
@@ -307,9 +308,9 @@ void xs_QName_print_to_lr(const char* prefix,
 
 bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
 {
-    xmlns_ptr node_ns = GETSCHEMENODE(XADDR(node))->get_xmlns();
+    xmlns_ptr node_ns = getSchemaNode(node)->get_xmlns();
     char* node_uri = (node_ns != NULL) ? node_ns->uri : NULL;
-    const char *node_local = GETSCHEMENODE(XADDR(node))->name;
+    const char * node_local = getSchemaNode(node)->get_name();
 
     return _xs_QName_not_equal(node_uri, node_local, uri, local);
 }

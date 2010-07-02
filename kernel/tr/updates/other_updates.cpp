@@ -13,6 +13,9 @@
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"
 #endif
+
+#include "tr/structures/textcptr.h"
+
 // Rename operation
 void rename(PPOpIn arg,const char* name)
 {
@@ -28,7 +31,7 @@ void rename(PPOpIn arg,const char* name)
             CHECKP(node);
             if (is_node_persistent(node)&& (is_node_element(node)||is_node_attribute(node)) )
             {
-                //xptr indir=((n_dsc*)XADDR(node))->indir;
+                //xptr indir=nodeGetIndirection(node);
                 argseq.add(node);
             }
 #ifndef IGNORE_UPDATE_ERRORS
@@ -60,7 +63,7 @@ void rename(PPOpIn arg,const char* name)
     {
         xptr node=*it;
         CHECKP(node);
-        xptr indir=((n_dsc*)XADDR(node))->indir;
+        xptr indir=nodeGetIndirection(node);
         argseq.set(indir,it);
         ++it;
     }
@@ -68,12 +71,11 @@ void rename(PPOpIn arg,const char* name)
     do {
         --it;
         xptr indir=*it;
-        xptr node=removeIndirection(indir);
+        xptr node=indirectionDereferenceCP(indir);
         CHECKP(node);
-        t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
-        n_dsc* desc=(n_dsc*)XADDR(node);
+        t_item type= getNodeType(node);
         xptr left=node;
-        xptr parent=removeIndirection(desc->pdsc);
+        xptr parent= nodeGetParent(node);
         CHECKP(node);
 #ifdef SE_ENABLE_TRIGGERS
         // add here triggers on RENAME !!!
@@ -89,7 +91,7 @@ void rename(PPOpIn arg,const char* name)
                 //1. insert
                 text_cptr buf(node);
                 CHECKP(node);
-                res = insert_attribute(left, XNULL, parent, name, (A_DSC(node))->type, buf.get(), buf.getSize(), NULL_XMLNS);
+                res = insert_attribute(left, XNULL, parent, name, AttributeNode(node).getType(), buf.get(), buf.getSize(), NULL_XMLNS);
                 //2. delete
                 delete_node(indirectionDereferenceCP(indir));
                 break;
@@ -97,7 +99,7 @@ void rename(PPOpIn arg,const char* name)
         case element:
             {
                 //1.INSERT
-                res=insert_element(left, XNULL, parent,name,((e_dsc*)desc)->type,NULL_XMLNS);
+                res=insert_element(left, XNULL, parent, name, ElementNode(node).getType(), NULL_XMLNS);
                 copy_node_content(get_last_mo_inderection(), indirectionDereferenceCP(indir), XNULL, NULL, true);
                 //2.DELETE
                 delete_node(indirectionDereferenceCP(indir));

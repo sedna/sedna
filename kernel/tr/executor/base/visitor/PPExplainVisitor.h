@@ -25,8 +25,8 @@ private:
     xptr parent, left, left_inside;
     /* Var_dsc -> name map */
     var_map_id_name var_names;
-    /* 
-     * Turns on profile mode. In this mode visitor additionally 
+    /*
+     * Turns on profile mode. In this mode visitor additionally
      * collects various profile statistics from physical operations.
      */
     bool profiler_mode;
@@ -34,15 +34,15 @@ private:
     std::stack<xptr_pair> pointers;
 
     void push();
-    void insertOperationElement(const char* name, 
-                                xptr& left, 
-                                const xptr& parent, 
+    void insertOperationElement(const char* name,
+                                xptr& left,
+                                const xptr& parent,
                                 const PPIterator* op = NULL,
                                 const PPQueryEssence* qep = NULL);
 
 public:
-    PPExplainVisitor(dynamic_context* _cxt_, 
-                     xptr root, 
+    PPExplainVisitor(dynamic_context* _cxt_,
+                     xptr root,
                      var_map_id_name _var_names_,
                      bool _profiler_mode_ = false);
 
@@ -52,10 +52,9 @@ public:
     virtual void push(CalcOp* op)           { push(); }
     virtual void push(PPQueryEssence* op)   { push(); }
     virtual void pop();
-    
+
     virtual void visit(PPDmStringValue* op);
     virtual void visit(PPDmTypedValue* op);
-    virtual void visit(PPDmNodeKind* op);
     virtual void visit(PPFnNodeName* op);
     virtual void visit(PPFnNilled* op);
     virtual void visit(PPFnString* op);
@@ -149,12 +148,12 @@ public:
 #ifdef SE_ENABLE_DTSEARCH
     virtual void visit(PPFtHighlight* op);
     virtual void visit(PPFtScan* op);
-#endif 
+#endif
 #ifdef SE_ENABLE_FTSEARCH
     virtual void visit(PPFtIndexScan* op);
     virtual void visit(PPFtIndexScan2* op);
 #endif
-                                                       
+
     virtual void visit(PPFunCall* op);
     virtual void visit(PPGeneralComparison* op);
     virtual void visit(PPLMGeneralComparison* op);
@@ -195,7 +194,7 @@ public:
     virtual void visit(PPFnSQLClose* op);
     virtual void visit(PPFnSQLCommit* op);
     virtual void visit(PPFnSQLRollback* op);
-#endif /* SQL_CONNECTION */   
+#endif /* SQL_CONNECTION */
 
     virtual void visit(PPFnConcat* op);
     virtual void visit(PPFnStringJoin* op);
@@ -221,7 +220,7 @@ public:
     virtual void visit(PPCreateFtIndex* op);
     virtual void visit(PPDropFtIndex* op);
 #endif
-    
+
     virtual void visit(PPCreateIndex* op);
     virtual void visit(PPCreateDocument* op);
     virtual void visit(PPCreateCollection* op);

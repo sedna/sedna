@@ -13,18 +13,23 @@
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"
 #include "tr/strings/strings_base.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/pstr/pstr.h"
 
 #include <streambuf>
 #include <sstream>
+
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
+#include "tr/structures/nodeinterface.h"
+
+using namespace internal;
 
 enum consistency_error_t consistency_error = ce_none;
 
 #define CHECK_INVARIANT(predicate, error) if (!(predicate)) { consistency_error = error; U_ASSERT(false); return false; }
 
 inline bool checkNodeOuterPointers(xptr node_ptr) {
-    n_dsc * node = (n_dsc *) XADDR(node_ptr);
+    node_base_t * node = (node_base_t *) XADDR(node_ptr);
     xptr test_ptr;
 
     CHECKP(node_ptr);
@@ -32,17 +37,15 @@ inline bool checkNodeOuterPointers(xptr node_ptr) {
     CHECKP(test_ptr);
     CHECK_INVARIANT(*(xptr*) XADDR(test_ptr) == node_ptr, ce_indirection);
 
-    if (getNodeTypeCP(node_ptr) == text) {
-        t_dsc * t = (t_dsc *) XADDR(node_ptr);
-        CHECK_INVARIANT(getTextSize(t) != 0, ce_snode);
-        CHECK_INVARIANT(!isPstrLong(t) || t->data.lsp.p == block_xptr(t->data.lsp.p), ce_snode);
+    if (getNodeType(checkp(node_ptr)) == text) {
+        CHECK_INVARIANT(!TextNode(node_ptr).isEmpty(), ce_snode);
     }
 
     CHECKP(node_ptr);
     test_ptr = node->ldsc;
     if (test_ptr != XNULL) {
         CHECKP(test_ptr);
-        CHECK_INVARIANT(((n_dsc*) XADDR(test_ptr))->rdsc == node_ptr, ce_left_pointer);
+        CHECK_INVARIANT(((node_base_t*) XADDR(test_ptr))->rdsc == node_ptr, ce_left_pointer);
         CHECK_INVARIANT(nid_cmp_effective(test_ptr, node_ptr) == -1, ce_nid);
     }
 
@@ -50,26 +53,26 @@ inline bool checkNodeOuterPointers(xptr node_ptr) {
     test_ptr = node->rdsc;
     if (test_ptr != XNULL) {
         CHECKP(test_ptr);
-        CHECK_INVARIANT(((n_dsc*) XADDR(test_ptr))->ldsc == node_ptr, ce_right_pointer);
+        CHECK_INVARIANT(((node_base_t*) XADDR(test_ptr))->ldsc == node_ptr, ce_right_pointer);
         CHECK_INVARIANT(nid_cmp_effective(test_ptr, node_ptr) == 1, ce_nid);
     }
 
     CHECKP(node_ptr);
-    test_ptr = getParent(node_ptr);
+    test_ptr = nodeGetParent(node_ptr);
     if (test_ptr != XNULL) {
-        xptr lptr = getPreviousDescriptorOfSameSortXptr(node_ptr);
+        xptr lptr = getPreviousDescriptorOfSameSort(node_ptr);
         xptr lparent = XNULL;
         if (lptr != XNULL) {
-            lparent = getParentCP(lptr);
+            lparent = nodeGetParent(checkp(lptr));
         }
         CHECK_INVARIANT(nid_cmp_effective(test_ptr, node_ptr) == -2, ce_nid);
 
         if (test_ptr != lparent) {
-            int child_no = getBlockHeaderCP(node_ptr)->snode->get_node_position_in_parent();
+            int child_no = getSchemaNode(checkp(node_ptr))->get_node_position_in_parent();
             xptr * list;
             int child_num;
             CHECKP(test_ptr);
-            getChildList(test_ptr, list, child_num);
+            child_num = getChildList(test_ptr, list);
             CHECK_INVARIANT(child_num > child_no && list[child_no] == node_ptr, ce_child_in_parent);
         }
     }
@@ -98,7 +101,7 @@ bool checkBlockPointers(xptr block_ptr)
     xptr pblk = block->pblk;
     xptr nblk = block->nblk;
 
-    CHECK_INVARIANT((pblk == XNULL && block->snode->bblk == block_ptr) || getBlockHeaderCP(pblk)->nblk == block_ptr, ce_block_chain);
+    CHECK_INVARIANT((pblk == XNULL && getSchemaNode(block_ptr)->bblk == block_ptr) || getBlockHeaderCP(pblk)->nblk == block_ptr, ce_block_chain);
     CHECK_INVARIANT(nblk == XNULL || getBlockHeaderCP(nblk)->pblk == block_ptr, ce_block_chain);
 
     return true;
@@ -108,7 +111,7 @@ bool checkBlockPointers(xptr block_ptr)
 
 bool checkBlock(xptr block_ptr)
 {
-    n_dsc * lnode, * rnode;
+    node_base_t * lnode, * rnode;
     node_blk_hdr block;
     xptr * indir, * endpoint;
 
@@ -117,13 +120,13 @@ bool checkBlock(xptr block_ptr)
     if (block.count + block.indir_count == 0) { return true; }
 
     lnode = NULL;
-    rnode = getDescriptor(block_ptr, block.desc_first);
+    rnode = getDsc(block_ptr, block.desc_first);
 
     while (rnode != NULL) {
         CHECKP(block_ptr);
         xptr rnode_xptr = addr2xptr(rnode);
 
-        CHECK_INVARIANT(getDescriptor(block_ptr, rnode->desc_prev) == lnode, ce_inblock_pointer);
+        CHECK_INVARIANT(getDsc(block_ptr, rnode->desc_prev) == lnode, ce_inblock_pointer);
 
         if (lnode != NULL) {
             CHECK_INVARIANT(nid_cmp_effective(addr2xptr(lnode), rnode_xptr) == -1, ce_nid);
@@ -133,7 +136,7 @@ bool checkBlock(xptr block_ptr)
 
         CHECKP(block_ptr);
         lnode = rnode;
-        rnode = getDescriptor(block_ptr, lnode->desc_next);
+        rnode = getDsc(block_ptr, lnode->desc_next);
     }
 
     indir = (xptr *) getBlockPointer(block_ptr, getBlockHeaderCP(block_ptr)->free_first_indir);

@@ -9,39 +9,6 @@
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPAccessors.h"
 
-
-///////////////////////////////////////////////////////////////////////////////
-/// PPDmNodeKind
-///////////////////////////////////////////////////////////////////////////////
-class PPDmNodeKind : public PPIterator
-{
-protected:
-    PPOpIn child;
-    bool first_time;
-
-private:
-    virtual void do_open   ();
-    virtual void do_reopen ();
-    virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
-    virtual void do_accept (PPVisitor &v);
-    
-    virtual PPIterator* do_copy(dynamic_context *_cxt_);
-
-public:    
-    PPDmNodeKind(dynamic_context *_cxt_,
-                 operation_info _info_,
-                 PPOpIn _child_);
-    virtual ~PPDmNodeKind();
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// PPFnNodeKind
-///////////////////////////////////////////////////////////////////////////////
-typedef PPDmNodeKind PPFnNodeKind;
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnNodeName
 ///////////////////////////////////////////////////////////////////////////////
@@ -57,10 +24,10 @@ private:
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnNodeName(dynamic_context *_cxt_,
                  operation_info _info_,
                  PPOpIn _child_);
@@ -80,12 +47,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnNilled(dynamic_context *_cxt_,
                operation_info _info_,
                PPOpIn _child_);
@@ -106,12 +73,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnString(dynamic_context *_cxt_,
                operation_info _info_,
                PPOpIn _child_);
@@ -131,12 +98,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnData(dynamic_context *_cxt_,
              operation_info _info_,
              PPOpIn _child_);
@@ -156,12 +123,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnBaseURI(dynamic_context *_cxt_,
                 operation_info _info_,
                 PPOpIn _child_);
@@ -181,12 +148,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnDocumentURI(dynamic_context *_cxt_,
                     operation_info _info_,
                     PPOpIn _child_);
@@ -206,12 +173,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnStaticBaseUri(dynamic_context *_cxt_, operation_info _info_);
     virtual ~PPFnStaticBaseUri();
 };
@@ -229,12 +196,12 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (tuple &t) ;
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
-public:    
+public:
     PPFnDefaultCollation(dynamic_context *_cxt_, operation_info _info_);
     virtual ~PPFnDefaultCollation();
 };

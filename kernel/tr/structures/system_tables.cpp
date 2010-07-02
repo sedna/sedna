@@ -18,6 +18,8 @@
 #include "tr/locks/locks.h"
 #include "tr/idx/index_data.h"
 
+#include "tr/structures/nodeutils.h"
+
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
 #endif /* SE_ENABLE_TRIGGERS */
@@ -136,7 +138,7 @@ get_schema(xptr node, const char* title)
     {
         mdc = it.get_object();
 
-        if (title == NULL || my_strcmp(title, mdc->name)==0)
+        if (title == NULL || strcmpex(title, mdc->name)==0)
         {
             left = insert_element_i(left, /* possibly XNULL */
                                     XNULL,
@@ -191,7 +193,7 @@ get_modules(xptr node,const char* /* title */)
 
     /* Just like in PPAbsPath, we take first not empty block, then
      * take first document node descripor and follow all of them via
-     * getNextDescriptorOfSameSortXptr.
+     * getNextDescriptorOfSameSort.
      */
     xptr d_left = XNULL;
     xptr first_blk = getNonemptyBlockLookFore(scn->bblk);
@@ -199,7 +201,7 @@ get_modules(xptr node,const char* /* title */)
     if (first_blk != XNULL)
     {
         CHECKP(first_blk);
-        xptr cur = GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(first_blk));
+        xptr cur = getFirstBlockNode(first_blk);
         while(cur != XNULL) {
             /* Get name (URI) of the document */
             tuple_cell tc = dm_document_uri(cur);
@@ -212,7 +214,7 @@ get_modules(xptr node,const char* /* title */)
             }
 
             /* Follow to the next document */
-            cur = getNextDescriptorOfSameSortXptr(cur);
+            cur = getNextDescriptorOfSameSort(cur);
         }
     }
 }
@@ -234,7 +236,7 @@ get_errors(xptr node,const char* /* title */)
 
         insert_attribute_i(XNULL,XNULL,left,"code",xs_untypedAtomic,user_error_code_entries[i].code,strlen(user_error_code_entries[i].code),NULL_XMLNS);
         insert_attribute_i(XNULL,XNULL,left,"roll_back",xs_untypedAtomic,(user_error_code_entries[i].act==ueca_ROLLBACK_TRN)?"y":"n",1,NULL_XMLNS);
-        insert_text_i(XNULL,XNULL,left,user_error_code_entries[i].descr, strlen(user_error_code_entries[i].descr));
+        insert_text_i(XNULL,XNULL,left, text_source_cstr(user_error_code_entries[i].descr));
     }
 }
 
@@ -540,19 +542,19 @@ document_type get_document_type(const char* title, db_entity_type type)
 
     if(type == dbe_document)
     {
-        if(!my_strcmp(title, "$documents"))       return DT_DOCUMENTS;
-        if(!my_strcmp(title, "$collections"))     return DT_COLLECTIONS;
-        if(!my_strcmp(title, "$schema"))          return DT_SCHEMA;
-        if(!my_strcmp(title, "$indexes"))         return DT_INDEXES;
-        if(!my_strcmp(title, "$version"))         return DT_VERSION;
+        if(!strcmpex(title, "$documents"))       return DT_DOCUMENTS;
+        if(!strcmpex(title, "$collections"))     return DT_COLLECTIONS;
+        if(!strcmpex(title, "$schema"))          return DT_SCHEMA;
+        if(!strcmpex(title, "$indexes"))         return DT_INDEXES;
+        if(!strcmpex(title, "$version"))         return DT_VERSION;
 #ifdef SE_ENABLE_FTSEARCH
-        if(!my_strcmp(title, "$ftindexes"))       return DT_FTINDEXES;
+        if(!strcmpex(title, "$ftindexes"))       return DT_FTINDEXES;
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-        if(!my_strcmp(title, "$triggers"))        return DT_TRIGGERS;
+        if(!strcmpex(title, "$triggers"))        return DT_TRIGGERS;
 #endif
-        if(!my_strcmp(title, "$errors"))          return DT_ERRORS;
-        if(!my_strcmp(title, "$modules"))         return DT_MODULES;
+        if(!strcmpex(title, "$errors"))          return DT_ERRORS;
+        if(!strcmpex(title, "$modules"))         return DT_MODULES;
         if(strstr(title, "$collection_")==title)  return DT_COLLECTION_;
         if(strstr(title, "$document_")==title)    return DT_DOCUMENT_;
         if(strstr(title, "$schema_")==title)      return DT_SCHEMA_;

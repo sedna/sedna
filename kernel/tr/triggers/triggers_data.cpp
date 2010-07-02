@@ -11,7 +11,6 @@
 #include "tr/triggers/triggers_data.h"
 #include "tr/triggers/triggers_utils.h"
 #include "common/errdbg/exceptions.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/log/log.h"
@@ -19,6 +18,8 @@
 #include "tr/xqp/XQuerytoLR.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/cat/catstore.h"
+
+#include "tr/structures/nodeutils.h"
 
 //using namespace std;
 

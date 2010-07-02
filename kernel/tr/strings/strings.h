@@ -13,7 +13,7 @@ There are several types of strings in sedna, listred below:
    pstr      - persistent strings in db, length <= PSTRMAXSIZE
    pstr_long - persistent strings in db, length > PSTRMAXSIZE
    char *    - C strings in the heap
-   
+
 A string in tuple_cell may of any of these types.
 
 
@@ -22,7 +22,7 @@ Methods of reading strings:
 
 1. Cursors
     Cursors allow to traverse a string from the start block by block. Cursors
-  exist for pstr_long and estr strings (other string types are not split to 
+  exist for pstr_long and estr strings (other string types are not split to
   blocks). These cursors are called pstr_long_cursor and estr_cursor
   respectivly and have a common ancesor class str_cursor which defines a basic
   set of operations any string cursor should support.
@@ -33,7 +33,7 @@ Methods of reading strings:
     Cursors are byte-oriented. Data in string parts depends on encoding and
   a character may be split into several separate string parts for multibyte
   encodings.
-  
+
 2. Feeding a string
     Feeding a string is analogous to using a cursor. String is traversed by
   portions from the start till the string end. For each portion a callback
@@ -45,7 +45,7 @@ Methods of reading strings:
     Feed functions are byte-oriented. Data in string parts depends on encoding and
   a character may be split into several separate string parts for multibyte
   encodings.
-    
+
 3. Bidirectional byte iterators
     For each string type there is an iterator class, which has interface
   similar to STL iterators:
@@ -75,8 +75,8 @@ Methods of reading strings:
   happens an -1 is returned.
     CharsetHandler has a function which returns unicode_cp_iterator for any
     tuple_cell (get_unicode_cp_iterator).
-    
-    
+
+
 Writing strings:
 
   Temporary strings may be created using op_str_buf and stmt_str_buf by
@@ -89,7 +89,7 @@ other instances of stmt_str_buf exist when these functions are called.
   Strings created by stmt_str_buf are valid until the end of the statement.
   Strings created by op_str_buf are valid until construction of another string
 by this class has begun (i.e. until op_str_buf::clear() is called)
-  
+
 
 **/
 
@@ -163,7 +163,7 @@ public:
 	}
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
 	/// (same as copy_blk, but without copy)
-	/// returns the length of the string part 
+	/// returns the length of the string part
 	/// or 0 if end of string reached (*ptr is not modified in this case)
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP
@@ -193,7 +193,7 @@ private:
 	text_type m_ttype;
 	static const int f_text_in_buf = 1;
 	static const int f_text_in_estr_buf = 2;
-	//string must be in estr buf, f_text_in_estr_buf flag is NOT cleared 
+	//string must be in estr buf, f_text_in_estr_buf flag is NOT cleared
 	void clear_estr_buf() { m_estr.truncate(m_ptr); m_ptr = XNULL; }
 	void move_to_mem_buf();
 	void move_to_estr();
@@ -304,9 +304,9 @@ public:
 	stmt_str_buf_impl(const char *str) : str_buf_base() { append(str); }
 	void set(const tuple_cell &tc) { clear(); append(tc); }
 	void set(const char *str) { clear(); append(str); }
-	
+
 	tuple_cell get_tuple_cell() { return str_buf_base::get_tuple_cell(); }
-	
+
 	stmt_str_buf_impl(const stmt_str_buf_impl&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf_impl is not implemented"); }
     stmt_str_buf_impl& operator=(const stmt_str_buf_impl&) { throw USER_EXCEPTION2(SE1003, "Assign operator for stmt_str_buf_impl is not implemented"); }
 };
@@ -336,7 +336,7 @@ public:
 	stmt_str_buf(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf is not implemented"); }
     stmt_str_buf& operator=(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for stmt_str_buf is not implemented"); }
 
-	stmt_str_buf& operator<<(const char *s)	{ this->append(s); 
+	stmt_str_buf& operator<<(const char *s)	{ this->append(s);
                                                           return *this; }
     stmt_str_buf& operator<<(char c)		{ this->append(&c, 1); return *this; }
 	stmt_str_buf& operator++() { return *this; }
@@ -409,7 +409,7 @@ public:
 	virtual int compare(str_cursor *a, str_cursor *b) = 0;
 	virtual int compare(str_cursor *a, const char *b) = 0;
 	virtual int compare(const char *a, const char *b) = 0;
-	
+
 	// returns 'true' <-> given tuple_cell starts with 'prefix'
 	virtual bool starts_with(const tuple_cell *tc, const tuple_cell *prefix) = 0;
 	// returns 'true' <-> given tuple_cell ends with 'suffix'
@@ -430,6 +430,50 @@ void print_tuple_cell_dummy(se_ostream& crmout,const tuple_cell& tc);
 inline void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 {
     feed_tuple_cell(writextext_cb, &crmout, tc);
+}
+
+inline static
+struct text_source_t text_source_mem(const char * mem, size_t size) {
+    struct text_source_t result = {text_mem};
+    result.size = size;
+    result.u.cstr = mem;
+
+    return result;
+}
+
+inline static
+struct text_source_t text_source_cstr(const char * str) {
+    struct text_source_t result = {text_mem};
+    result.size = strlen(str);
+    result.u.cstr = str;
+
+    return result;
+}
+
+static inline
+struct text_source_t text_source_node(const xptr node) {
+    const CommonTextNode ctn(node);
+    struct text_source_t result = {text_doc};
+
+    result.size = ctn.getTextSize();
+    result.u.data = ctn.getTextPointerCP();
+    return result;
+};
+
+struct text_source_t text_source_pstr(const xptr text);
+
+inline static
+struct text_source_t text_source_strbuf(str_buf_base * buf) {
+    struct text_source_t result = {};
+    result.type = buf->get_type();
+    result.size = buf->get_size();
+    if (result.type == text_mem) {
+        result.u.cstr = (const char *) buf->get_ptr_to_text();
+    } else {
+        memcpy(&(result.u.data), buf->get_ptr_to_text(), sizeof(xptr));
+    }
+
+    return result;
 }
 
 #endif /*_STRINGS_H */

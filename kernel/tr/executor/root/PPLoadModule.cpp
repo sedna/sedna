@@ -214,7 +214,7 @@ void PPLoadModule::do_execute()
 
         elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL_XMLNS);
 
-        insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
+        insert_text(XNULL, XNULL, elem_ptr, text_source_mem(module_pc_text.c_str(), module_pc_text.size()));
 
         auth_for_load_module(module_name.c_str());
     } catch (ANY_SE_EXCEPTION) {

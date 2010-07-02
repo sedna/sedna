@@ -7,6 +7,7 @@
 #define _STRINGS_BASE_H
 
 #include "common/sedna.h"
+#include "common/xptr.h"
 
 typedef int64_t str_off_t;
 typedef int64_t strsize_t;
@@ -15,6 +16,15 @@ enum text_type {
 	text_mem,
 	text_doc,
 	text_estr
+};
+
+struct text_source_t {
+    text_type type;
+    union {
+        xptr data;
+        const char * cstr;
+    } u;
+    strsize_t size;
 };
 
 typedef void (*string_consumer_fn)(const char *str, int len, void *p);
@@ -28,7 +38,7 @@ public:
     virtual int copy_blk(char *buf) = 0;
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
 	/// (same as copy_blk, but without copy)
-	/// returns the length of the string part 
+	/// returns the length of the string part
 	/// or 0 if end of string reached (*ptr is not modified in this case)
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP

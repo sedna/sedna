@@ -10,9 +10,10 @@
 #include "tr/executor/fo/comparison_operations.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+
+#include "tr/structures/nodeutils.h"
 
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                              operation_info _info_,
@@ -35,9 +36,9 @@ PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
 bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
 {
 	CHECKP(node1);
-	schema_node_cptr scm1=GETSCHEMENODEX(node1);
+	schema_node_cptr scm1=getSchemaNode(node1);
 	CHECKP(node2);
-	schema_node_cptr scm2=GETSCHEMENODEX(node2);
+	schema_node_cptr scm2=getSchemaNode(node2);
 	if (scm1->type!=scm2->type)
 		return false;
 	switch(scm1->type)
@@ -46,20 +47,20 @@ bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
         case document: return are_documents_deep_equal(node1,node2);
         case attribute: return are_attributes_equal(node1,node2,scm1,scm2);
         case comment:case text: return are_text_nodes_equal(node1,node2);
-        case pr_ins: return are_pi_equal(node1,node2);	 
+        case pr_ins: return are_pi_equal(node1,node2);
         default: return false;
 	}
 }
 
 static inline bool compare_full_schema_names(schema_node_cptr scm1, schema_node_cptr scm2)
 {
-    if ( my_strcmp(scm2->name,scm1->name) == 0 && 
+    if ( strcmpex(scm2->name,scm1->name) == 0 &&
 		((scm1->get_xmlns()) == (scm2->get_xmlns()) ||
-		(scm1->get_xmlns() != NULL && 
-         scm2->get_xmlns() != NULL && 
-         my_strcmp(scm2->get_xmlns()->uri, scm1->get_xmlns()->uri)==0)))
+		(scm1->get_xmlns() != NULL &&
+         scm2->get_xmlns() != NULL &&
+         strcmpex(scm2->get_xmlns()->uri, scm1->get_xmlns()->uri)==0)))
         return true;
-	else 
+	else
 		return false;
 }
 
@@ -67,27 +68,27 @@ bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node_
 {
 	//1. Compare names
 	if(!compare_full_schema_names(scm1, scm2)) return false;
-			
+
 	//2. Compare attributes
-	xptr at1=getFirstByOrderAttributeChild(node1);
+	xptr at1=getFirstAttributeChild(node1);
 	int at_cnt=0;
 	while (at1!=XNULL)
 	{
-		schema_node_cptr ats=GETSCHEMENODEX(at1);
+		schema_node_cptr ats=getSchemaNode(at1);
 		CHECKP(node2);
-		xptr nd=isAttributePointerSet((n_dsc*)XADDR(node2),ats->name,(ats->get_xmlns()==NULL)?NULL:ats->get_xmlns()->uri);
+		xptr nd = findAttribute(node2, ats->name, ats->get_xmlns());
 		if (nd==XNULL)return false;
 		CHECKP(nd);
-		if (!are_attributes_equal(at1,nd,ats,GETSCHEMENODEX(nd))) return false;
+		if (!are_attributes_equal(at1,nd,ats,getSchemaNode(nd))) return false;
 		at_cnt++;
-		at1=getNextByOrderAttribute(at1);
+		at1=getNextAttribute(at1);
 	}
-	at1=getFirstByOrderAttributeChild(node2);
+	at1=getFirstAttributeChild(node2);
 	int at_cnt2=0;
 	while (at1!=XNULL)
 	{
 		at_cnt2++;
-		at1=getNextByOrderAttribute(at1);
+		at1=getNextAttribute(at1);
 	}
 	if (at_cnt!=at_cnt2)return false;
 	return are_documents_deep_equal(node1,node2);
@@ -95,35 +96,35 @@ bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node_
 
 bool PPFnDeepEqual::are_documents_deep_equal(xptr& node1,xptr& node2)
 {
-	xptr c1 = getFirstByOrderChildNode(node1);
-	xptr c2 = getFirstByOrderChildNode(node2);
+	xptr c1 = getFirstChildNode(node1);
+	xptr c2 = getFirstChildNode(node2);
 	schema_node_cptr scm = XNULL;
 
 	while (true)
-	{		
-		while (c1 != XNULL) 
-		{ 
+	{
+		while (c1 != XNULL)
+		{
 			CHECKP(c1);
-	        scm = GETSCHEMENODEX(c1);
-		    if(scm->type == pr_ins || scm->type == comment) c1 = ((n_dsc*)XADDR(c1))->rdsc;
-			else break; 
+	        scm = getSchemaNode(c1);
+		    if(scm->type == pr_ins || scm->type == comment) c1 = nodeGetRightSibling(c1);
+			else break;
 		}
-		
-		while (c2 != XNULL) 
-		{ 
+
+		while (c2 != XNULL)
+		{
 			CHECKP(c2);
-			scm = GETSCHEMENODEX(c2);
-		    if(scm->type == pr_ins || scm->type == comment) c2 = ((n_dsc*)XADDR(c2))->rdsc;
-			else break; 
+			scm = getSchemaNode(c2);
+		    if(scm->type == pr_ins || scm->type == comment) c2 = nodeGetRightSibling(c2);
+			else break;
 		}
-		
+
 		if(c1 == XNULL || c2 == XNULL) 	  return c1 == c2;
 		if (!are_nodes_deep_equal(c1,c2)) return false;
-		
+
 		CHECKP(c1);
-		c1 = ((n_dsc*)XADDR(c1))->rdsc;
+		c1 = nodeGetRightSibling(c1);
 		CHECKP(c2);
-		c2 = ((n_dsc*)XADDR(c2))->rdsc; 
+		c2 = nodeGetRightSibling(c2);
 	}
 }
 
@@ -140,7 +141,7 @@ bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 {
 	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1));
 	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2));
-	if (op_eq(n1,n2,handler).get_xs_boolean())	
+	if (op_eq(n1,n2,handler).get_xs_boolean())
 		return true;
 	else
 		return false;
@@ -150,10 +151,10 @@ bool PPFnDeepEqual::are_pi_equal(xptr& node1,xptr& node2)
 {
 	char* n1=dm_node_name(node1).get_str_mem();
 	char* n2=dm_node_name(node2).get_str_mem();
-	if (my_strcmp(n1,n2)==0)	
+	if (strcmpex(n1,n2)==0)
 		return are_text_nodes_equal(node1,node2);
 	else
-		return false;	
+		return false;
 }
 
 PPFnDeepEqual::~PPFnDeepEqual()
@@ -208,21 +209,21 @@ void PPFnDeepEqual::do_next (tuple &t)
 		if (collation.op)
         {
             collation.op->next(t);
-            if(t.is_eos()) 
+            if(t.is_eos())
 				throw XQUERY_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:deep-equal." );
 
             tuple_cell col = atomize(collation.get(t));
-            if (!is_string_type(col.get_atomic_type())) 
+            if (!is_string_type(col.get_atomic_type()))
                 throw XQUERY_EXCEPTION2(XPTY0004, "Wrong type of the third argument value in fn:deep-equal (xs_string/derived/promotable is expected).");
 
             collation.op->next(t);
-            if (!t.is_eos()) 
+            if (!t.is_eos())
 				throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arity of the third argument in fn:deep-equal. Argument contains more than one item." );
-            
+
             col = tuple_cell::make_sure_light_atomic(col);
 
             int res = cxt->get_static_context()->get_collation(col.get_str_mem(), &handler);
-            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:deep-equal.").c_str()); 
+            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:deep-equal.").c_str());
         }
 
 		if (!eos_reached1) child1.op->reopen();
@@ -292,7 +293,7 @@ void PPFnDeepEqual::do_next (tuple &t)
 			return;
 		}
     }
-    else 
+    else
     {
         handler=NULL;
         t.set_eos();
@@ -301,16 +302,16 @@ void PPFnDeepEqual::do_next (tuple &t)
 
 PPIterator* PPFnDeepEqual::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDeepEqual *res = collation.op ? 
-		                 se_new PPFnDeepEqual(_cxt_, info, child1, child2, collation) : 
+    PPFnDeepEqual *res = collation.op ?
+		                 se_new PPFnDeepEqual(_cxt_, info, child1, child2, collation) :
 	                     se_new PPFnDeepEqual(_cxt_, info, child1, child2);
-    
+
 	res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-    
-	if(collation.op) 
+
+	if(collation.op)
 		res->collation.op = collation.op->copy(_cxt_);
-	
+
     return res;
 }
 
@@ -320,7 +321,7 @@ void PPFnDeepEqual::do_accept(PPVisitor &v)
     v.push  (this);
     child1.op->accept(v);
     child2.op->accept(v);
-    if(collation.op) 
+    if(collation.op)
         collation.op->accept(v);
     v.pop();
 }

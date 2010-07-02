@@ -10,6 +10,7 @@
 #include "tr/mo/microsurgery.h"
 #include "tr/mo/indirection.h"
 #include "tr/mo/blocks.h"
+#include "tr/mo/nodemoutils.h"
 
 inline static void createNID(xptr left_sibling, xptr right_sibling, xptr parent, xptr node)
 {
@@ -31,13 +32,14 @@ inline static void createNID(xptr left_sibling, xptr right_sibling, xptr parent,
 }
 
 
-inline static void init_node(n_dsc* node, t_item ntype, xmlscm_type type) {
+inline static
+void init_node(node_base_t* node, t_item ntype, xmlscm_type type) {
     switch (ntype) {
     case(element) :
-        ((e_dsc *) node)->type = type;
+        ((element_node *) node)->type = type;
         break;
     case(attribute) :
-        ((a_dsc *) node)->type = type;
+        ((attribute_node *) node)->type = type;
         break;
     default:
         break;
@@ -49,9 +51,9 @@ xptr scanForChild(xptr p, int child_pos) {
     xptr child;
 
     while (p != XNULL) {
-        child = getNodeChildSafe(p, child_pos);
+        child = getChildAt(p, child_pos);
         if (child != XNULL) { return child; }
-        p = Iterator::nextNodeCP(p);
+        p = Iterator::nextNode(p);
     }
 
     return XNULL;
@@ -67,7 +69,7 @@ static void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_bro
     right_brother = XNULL;
 
     U_ASSERT(child_pos != -1);
-    child = getNodeChildSafe(node_info->parent, child_pos);
+    child = getChildAt(node_info->parent, child_pos);
 
     if (child != XNULL) {
 /* Brother is in the given parent. Now we have to find it */
@@ -76,8 +78,8 @@ static void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_bro
             do {
                 if (nid_cmp_effective(node_info->left_sibling, child) < 0) { break; }
                 prev_child = child;
-                child = getNextDescriptorOfSameSortXptr(child);
-            } while (child != XNULL && getParentIndirection(child) == node_info->parent_indir);
+                child = getNextDescriptorOfSameSort(child);
+            } while (child != XNULL && nodeGetParentIndirection(child) == node_info->parent_indir);
 
             if (prev_child == XNULL) {
                 right_brother = child;
@@ -93,8 +95,8 @@ static void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_bro
                 right_condition_flag = nid_cmp_effective(node_info->right_sibling, child) < 0;
                 if (right_condition_flag) { break; }
                 prev_child = child;
-                child = getNextDescriptorOfSameSortXptr(child);
-            } while (child != XNULL && getParentIndirection(child) == node_info->parent_indir);
+                child = getNextDescriptorOfSameSort(child);
+            } while (child != XNULL && nodeGetParentIndirection(child) == node_info->parent_indir);
 
             if (right_condition_flag) {
                 right_brother = child;
@@ -118,11 +120,11 @@ static void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_bro
         if (child != XNULL) {
             /* Child found to the left of the given parent node, so we need to find the rightmost node of this kind that belong to this parent */
             CHECKP(child);
-            xptr left_parent = getParentIndirection(child);
+            xptr left_parent = nodeGetParentIndirection(child);
             do {
                 left_brother = child;
-                child = getNextDescriptorOfSameSortXptr(child);
-            } while (nullsafe_CHECKP(child) && (getParentIndirection(child) == left_parent));
+                child = getNextDescriptorOfSameSort(child);
+            } while (nullsafe_CHECKP(child) && (nodeGetParentIndirection(child) == left_parent));
             molog(("MOLOG left brother found hardly : 0x%llx", left_brother.to_logical_int()));
         }
     }
@@ -133,7 +135,7 @@ static void findNodeBrother(const node_info_t* node_info, /*out*/ xptr &left_bro
 
 inline xptr doInsertNodeCP(xptr block, shft left, node_info_t* node_info)
 {
-    n_dsc * new_node;
+    node_base_t * new_node;
 
     WRITEP(block);
 
@@ -187,8 +189,9 @@ xptr insertNodeWithLeftBrother(xptr left_brother, node_info_t* node_info)
     U_ASSERT(left_brother != XNULL);
 
     block = block_xptr(left_brother);
-    copyBlockHeaderCP(&block_header, block);
-//    U_ASSERT(getParentIndirection(left_sibling) == node_info->parent_indir);
+    CHECKP(block);
+    memcpy(&block_header, XADDR(block), sizeof(node_blk_hdr));
+//    U_ASSERT(nodeGetParentIndirection(left_sibling) == node_info->parent_indir);
 
     /* The case, when block is full */
     if (block_header.free_first == 0) {
@@ -232,8 +235,9 @@ xptr insertNodeWithRightBrother(xptr right_brother, node_info_t* node_info)
     U_ASSERT(right_brother != XNULL);
 
     block = block_xptr(right_brother);
-    copyBlockHeaderCP(&block_header, block);
-//    U_ASSERT(getParentIndirection(right_sibling) == node_info->parent_indir);
+    CHECKP(block);
+    memcpy(&block_header, XADDR(block), sizeof(node_blk_hdr));
+//    U_ASSERT(nodeGetParentIndirection(right_sibling) == node_info->parent_indir);
 
     /* The case, when block is full */
     if (block_header.free_first == 0) {
@@ -257,17 +261,17 @@ xptr insertNodeWithRightBrother(xptr right_brother, node_info_t* node_info)
             fixSiblingPointers(node_info, evil_block);
             block = block_xptr(right_brother);
             CHECKP(block);
-            left_brother = ((n_dsc*) XADDR(right_brother))->desc_prev;
+            left_brother = ((node_base_t*) XADDR(right_brother))->desc_prev;
         }
     } else {
         CHECKP(block);
-        left_brother = ((n_dsc*) XADDR(right_brother))->desc_prev;
+        left_brother = ((node_base_t*) XADDR(right_brother))->desc_prev;
     }
 
     CHECKP(right_brother);
-    if (getParentIndirection(right_brother) == node_info->parent_indir) {
-        left_brother_xptr = getPreviousDescriptorOfSameSortXptr(right_brother);
-        if (!nullsafe_CHECKP(left_brother_xptr) || (getParentIndirection(left_brother_xptr) != node_info->parent_indir)) {
+    if (nodeGetParentIndirection(right_brother) == node_info->parent_indir) {
+        left_brother_xptr = getPreviousDescriptorOfSameSort(right_brother);
+        if (!nullsafe_CHECKP(left_brother_xptr) || (nodeGetParentIndirection(left_brother_xptr) != node_info->parent_indir)) {
             node_info->child_in_parent_xptr = findNodeInParentCP(right_brother);
         }
     }
@@ -318,16 +322,16 @@ xptr insertNodeGeneral(node_info_t * node_info)
             U_ASSERT(right_brother != XNULL);
             node_xptr = insertNodeWithRightBrother(right_brother, node_info);
         }
-        left_brother = getPreviousDescriptorOfSameSortXptr(node_xptr);
+        left_brother = getPreviousDescriptorOfSameSort(node_xptr);
     }
 
     /* Update child pointer in parent */
     CHECKP(node_info->parent);
     int pos = parent_snode->find_first_child(node_info->ns, node_info->name, node_info->node_type);
-    if (pos >= getChildCountSP(node_info->parent)) {
+    if (pos >= getChildCount(node_info->parent)) {
         widenDescriptor(node_info->parent, pos, node_xptr);
         node_info->parent = indirectionDereferenceCP(node_info->parent_indir);
-    } else if (!nullsafe_CHECKP(left_brother) || getParentIndirection(left_brother) != node_info->parent_indir) {
+    } else if (!nullsafe_CHECKP(left_brother) || nodeGetParentIndirection(left_brother) != node_info->parent_indir) {
         setNodeChild(node_info->parent, pos, node_xptr);
     }
 

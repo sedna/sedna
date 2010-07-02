@@ -19,7 +19,7 @@
 #include "tr/rcv/rcv_test_tr.h"
 #include "tr/vmm/vmmtrace.h"
 
-//#define VMM_LINUX_DEBUG_CHECKP
+#define VMM_LINUX_DEBUG_CHECKP
 // #define VMM_DEBUG_CHECKP
 
 namespace tr_globals {
@@ -126,6 +126,12 @@ extern xptr vmm_checkp_xptr;
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 
 #define WRITEP(x) CHECKP(x); VMM_SIGNAL_MODIFICATION(x);
+
+inline
+xptr checkp(const xptr a) { CHECKP(a); return a; }
+
+inline
+void * checkpxaddr(const xptr a) { CHECKP(a); return XADDR(a); }
 
 void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat);
 

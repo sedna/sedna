@@ -143,6 +143,11 @@ inline xptr cxptr(t_layer l, lsize_t a) {
     return p;
 }
 
+inline
+void * xaddr(const xptr p) {
+    return XADDR(p);
+}
+
 inline xptr operator+(const xptr &p, int n)
 {
     xptr new_p(p);
@@ -187,7 +192,7 @@ inline bool operator<(const xptr &p1, const xptr &p2)
     return p1.layer != p2.layer ? p1.layer < p2.layer : p1.getOffs() < p2.getOffs();
 }
 
-inline xptr block_xptr(const xptr &p)
+inline xptr block_xptr(const xptr p)
 {
     return cxptr(p.layer, (p.getOffs()) & PAGE_BIT_MASK);
 }
@@ -198,6 +203,12 @@ inline xptr addr2xptr(const void * p)
              (((uintptr_t) p ) & PAGE_BIT_MASK));
     return cxptr(* (t_layer*) (((uintptr_t) p) & PAGE_BIT_MASK), (lsize_t)(((uintptr_t)p) - LAYER_ADDRESS_SPACE_START_ADDR_INT));
 }
+
+inline
+xptr block_offset(const xptr block, shft d) {
+    return block_xptr(block) + d;
+}
+
 
 // TODO: check for legacy logic: (<any layer>, NULL) >= (any xptr)
 inline int xptr_compare(const xptr& p1, const xptr& p2)

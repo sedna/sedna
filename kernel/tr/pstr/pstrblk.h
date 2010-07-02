@@ -8,7 +8,6 @@
 
 #include "common/sedna.h"
 #include "common/sm_vmm_data.h"
-#include "tr/structures/nodes.h"
 
 #define	HHMAXSIZE	124
 struct hh_slot {

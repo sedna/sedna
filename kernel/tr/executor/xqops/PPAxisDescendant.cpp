@@ -6,10 +6,12 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisDescendant.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/merge.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+
+#include "tr/structures/schema.h"
+#include "tr/structures/nodeutils.h"
 
 using namespace std;
 
@@ -148,7 +150,7 @@ void PPAxisDescendant::next_node(tuple &t)
         if (cur!=XNULL)
         {
             CHECKP(cur);
-            if(!self) cur = getFirstByOrderChildNode(cur);
+            if(!self) cur = getFirstChildNode(cur);
         }
     }
 
@@ -156,7 +158,7 @@ void PPAxisDescendant::next_node(tuple &t)
     t.copy(tuple_cell::node(cur));
 
     CHECKP(cur);
-    xptr tmp = getFirstByOrderChildNode(cur);
+    xptr tmp = getFirstChildNode(cur);
 
     if (tmp!=XNULL)
     {
@@ -165,7 +167,7 @@ void PPAxisDescendant::next_node(tuple &t)
     }
     while (!self || descstack.size()>1)
     {
-        tmp = GETRIGHTPOINTER(cur);
+        tmp = nodeGetRightSibling(cur);
         if (tmp!=XNULL)
         {
             cur=tmp;
@@ -198,7 +200,7 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
         if (tmp!=XNULL)
         {
             CHECKP(tmp);
-            schema_node_xptr scm=(GETBLOCKBYNODE(tmp))->snode;
+            schema_node_xptr scm = getSchemaPointer(tmp);
             if (desc_sch.find(scm)==desc_sch.end())
             {
                 vector<schema_node_xptr> vscm;
@@ -212,10 +214,10 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
             else
                 curvect=&desc_sch[scm];
             std::vector<schema_node_xptr>::iterator it=curvect->begin();
-            if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge(getNextDescriptorOfSameSortXptr,true);
+            if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge(getNextDescriptorOfSameSort,true);
             while (it!=curvect->end())
             {
-                cur=getFirstDescandantByScheme(tmp,*it);
+                cur=getFirstDescandantBySchema(tmp,*it);
                 if (cur!=XNULL) merge_tree->addChannel(cur);
                 it++;
             }
@@ -265,15 +267,8 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
             next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
             if (t.is_eos()) return;
             xptr tmp=child.get(t).get_node();
-            if (tmp!=XNULL)
-            {
-                CHECKP(tmp);
-                pi_dsc* desc=(pi_dsc*)XADDR(tmp);
-                size_t tsize=desc->target;
-                if (tsize==strlen(nt_data.ncname_local)) {
-                    char* data = (char*) XADDR(getTextPtr(desc));
-                    if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
-                }
+            if (tmp!=XNULL) {
+                if (PINode(tmp).checkp().compareTarget(nt_data.ncname_local) == 0) { return; }
             }
         }
     }
@@ -292,14 +287,15 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
         if (cur!=XNULL)
         {
             CHECKP(cur);
-            if(!self || (GETBLOCKBYNODE(cur))->snode->type!=element)
-                cur=getFirstByOrderElementChild(cur);
+            if(!self || getNodeType(cur) != element) {
+                cur=getFirstElementChild(cur);
+            }
         }
     }
     CHECKP(cur);
     descstack.push_back(cur);
     t.copy(tuple_cell::node(cur));
-    xptr tmp = getFirstByOrderElementChild(cur);
+    xptr tmp = getFirstElementChild(cur);
     if (tmp!=XNULL)
     {
         cur=tmp;
@@ -308,13 +304,12 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
     while (!self || descstack.size()>1)
     {
         CHECKP(cur);
-        tmp = GETRIGHTPOINTER(cur);
+        tmp = nodeGetRightSibling(cur);
         if (tmp!=XNULL)
         {
             CHECKP(tmp);
-            while ((GETBLOCKBYNODE(tmp))->snode->type != element)
-            {
-                tmp = GETRIGHTPOINTER(tmp);
+            while (getNodeType(tmp) != element) {
+                tmp = nodeGetRightSibling(tmp);
 
                 if (tmp == XNULL)
                 {
@@ -362,7 +357,7 @@ void PPAxisDescendant::next_document(tuple &t)
             if (node != XNULL)
             {
                 CHECKP(node);
-                schema_node_cptr scm = GETSCHEMENODEX(node);
+                schema_node_cptr scm = getSchemaNode(node);
                 t_item type = scm->type;
 
                 if (type != document) continue;
@@ -403,7 +398,7 @@ void PPAxisDescendant::next_attribute(tuple &t)
             if (node!=XNULL)
             {
                 CHECKP(node);
-                schema_node_cptr scm = GETSCHEMENODEX(node);
+                schema_node_cptr scm = getSchemaNode(node);
                 t_item type = scm->type;
 
                 if (type != attribute) continue;
@@ -524,7 +519,7 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
         if (cur!=XNULL)
         {
             CHECKP(cur);
-            xptr tmp=getFirstByOrderAttributeChild(cur);
+            xptr tmp=getFirstAttributeChild(cur);
             descstack.push_back(cur);
             if (tmp!=XNULL)
                 cur=tmp;
@@ -535,22 +530,22 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
     }
     t.copy(tuple_cell::node(cur));
     CHECKP(cur);
-    cur=GETRIGHTPOINTER(cur);
+    cur=nodeGetRightSibling(cur);
     if (cur!=XNULL)
     {
         CHECKP(cur);
-        if ((GETBLOCKBYNODE(cur))->snode->type==attribute) return;
+        if (getNodeType(cur) == attribute) return;
     }
     cur=getFirstAttributeDescendantAndFillPath(descstack);
     while(cur==XNULL)
     {
         xptr node=descstack[descstack.size()-1];
         descstack.pop_back();
-        node=getNextByOrderElement(node);
+        node=getNextElement(node);
         if (/*node==XNULL && */descstack.size()==0) return;
         if (node!=XNULL)
         {
-            cur=getFirstByOrderAttributeChild(node);
+            cur=getFirstAttributeChild(node);
             descstack.push_back(node);
             if (cur==XNULL)
                 cur=getFirstAttributeDescendantAndFillPath(descstack);

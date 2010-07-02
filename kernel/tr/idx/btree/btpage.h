@@ -7,10 +7,10 @@
 #define _BTPAGE_H
 
 #include "common/sedna.h"
-
-#include "tr/structures/nodes.h"
 #include "common/xptr.h"
 #include "common/sm_vmm_data.h"
+
+#include "tr/structures/nodetypes.h"
 
 struct btree_blk_hdr
 {
@@ -33,13 +33,13 @@ struct btree_blk_hdr
     shft heap;
 };
 
-struct btree_chnk_hdr 
+struct btree_chnk_hdr
 {
 	shft	c_shft;
 	shft	c_size;
 };
 
-struct btree_key_hdr 
+struct btree_key_hdr
 {
 	shft	k_shft;
 	shft	k_size;
@@ -62,7 +62,7 @@ struct btree_key_hdr
 
 	xptr				parent page - pointer to the parent page
 
-	xptr				leftmost pointer - pointer to the page of keys less than all keys in 
+	xptr				leftmost pointer - pointer to the page of keys less than all keys in
 						current page (used in non-leaf pages)
 
 	bool				leaf/non-leaf page
@@ -83,14 +83,14 @@ struct btree_key_hdr
 
 	shft				number of keys in the page
 
-	shft				heap boundary (the boundary of heap area keeping key contents and object chunks 
+	shft				heap boundary (the boundary of heap area keeping key contents and object chunks
 						growing in right-to-left direction from page tail)
-	
+
 	For non-leaf nodes:
 	====================
 	The page consists of key table ordered by key value, followed directly by big_ptr table of size equal to key
 	table size, entries of which correspond to keys in the key table.The key table and
-	big_ptr table dynamically grow in left-to-right direction from the page header.The rest of the page 
+	big_ptr table dynamically grow in left-to-right direction from the page header.The rest of the page
 	(heap) is dynamically filled with key contents (in right-to-left-direction from page tail) - for
 	variable-size keys case.
 	Key table:
@@ -104,15 +104,15 @@ struct btree_key_hdr
 	~~~~~~~~~~~~~
 	Consists of {big_ptr} elements, where:
 	xptr	'big_ptr' - pointer to the page with keys above or equal corresponding key in key table.
-	
+
 
 	For leaf nodes:
 	===================
-	Similar to non-leaf page, the page consists of key table ordered by key value, (note that big_ptr table is 
+	Similar to non-leaf page, the page consists of key table ordered by key value, (note that big_ptr table is
 	absent) followed
 	by object chunk table. Key table is organized similar to non-leaf pages (see above).
-	The key table and object chunk table grow dynamically in left-to-right direction from 
-	the page header. The rest of the page (heap) is dynamically filled with key contents and chunks of 
+	The key table and object chunk table grow dynamically in left-to-right direction from
+	the page header. The rest of the page (heap) is dynamically filled with key contents and chunks of
 	objects (in right-to-left-direction from page tail)
 	Chunk table:
 	~~~~~~~~~~~
@@ -127,10 +127,10 @@ struct btree_key_hdr
 	* We assume
 	the sequence of objects with common key value may propogate to a number of consequtive leaf pages.
 	Still, as the page is rather big (typically 64K) and the size of object is small, we consider this
-	situation to be non-frequent. This case is identified as cluster of pages, such pages are marked 
+	situation to be non-frequent. This case is identified as cluster of pages, such pages are marked
 	with flags inside the page. Thus, when performing
-	search for all objects with given key value or searching some concrete object, in general we must 
-	traverse a sequence of consequtive pages. 
+	search for all objects with given key value or searching some concrete object, in general we must
+	traverse a sequence of consequtive pages.
 
  */
 
@@ -159,7 +159,7 @@ inline	bool	BT_VARIABLE_KEY_TYPE(xmlscm_type t)
 											switch (t) {
 												case xs_string:
 													return true;
-													break;     
+													break;
 												case xs_date:
 												case xs_time:
 												case xs_dateTime:
@@ -262,8 +262,8 @@ inline	btree_key_hdr *	BT_KEY_ITEM_AT(char* pg, shft i) {
 /* head of big_ptr table */
 inline	char*	BT_BIGPTR_TAB(char* p)		{ return BT_KEY_TAB_AT(p, BT_KEY_NUM(p)); }
 
-/* return pointer to the i-th element of big_ptr table (counted from 0) */ 
-inline	char*	BT_BIGPTR_TAB_AT(char* p, shft i)	
+/* return pointer to the i-th element of big_ptr table (counted from 0) */
+inline	char*	BT_BIGPTR_TAB_AT(char* p, shft i)
 											{return (BT_BIGPTR_TAB(p) + i*sizeof(xptr));}
 
 /* head of chunk table. Same as BIG_PTR_TAB functions due to the fact that
@@ -272,7 +272,7 @@ inline	char*	BT_BIGPTR_TAB_AT(char* p, shft i)
 inline	char*	BT_CHNK_TAB(char* p)		{ return BT_BIGPTR_TAB(p);}
 
 /* return pointer to the i-th element of chunk table (counted from 0) */
-inline	char*	BT_CHNK_TAB_AT(char* p, shft i)			
+inline	char*	BT_CHNK_TAB_AT(char* p, shft i)
 											{return (BT_CHNK_TAB(p) + i*2*sizeof(shft));}
 
 /* the same as previous, but return value is casted to (btree_chnk_hdr *) */
@@ -281,20 +281,20 @@ inline	btree_chnk_hdr *	BT_CHNK_ITEM_AT(char* p, shft i)
 
 
 /* return shift field of the i-th element of chunk table */
-inline	shft	BT_CHNK_ITEM_SHIFT(char* p, shft i)			
+inline	shft	BT_CHNK_ITEM_SHIFT(char* p, shft i)
 											{return (BT_CHNK_ITEM_AT(p, i)->c_shft);}
 
 /* return size field of the i-th element of chunk table */
-inline	shft	BT_CHNK_ITEM_SIZE(char* p, shft i)			
+inline	shft	BT_CHNK_ITEM_SIZE(char* p, shft i)
 											{return (BT_CHNK_ITEM_AT(p, i)->c_size);}
 
 /* current amount of page free space */
 inline	shft	BT_PFS(char* p)				{
 											if (BT_IS_LEAF(p))
-												return (shft)(p + BT_HEAP(p) - 
+												return (shft)(p + BT_HEAP(p) -
 														BT_CHNK_TAB_AT(p, BT_KEY_NUM(p)));
 											else
-												return (shft)(p + BT_HEAP(p) - 
+												return (shft)(p + BT_HEAP(p) -
 														BT_BIGPTR_TAB_AT(p, BT_KEY_NUM(p)));
 											}
 #endif

@@ -133,9 +133,9 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 
       xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
 
-      insert_element(removeIndirection(left),
-                     removeIndirection(right),
-                     removeIndirection(parent),
+      insert_element(indirectionDereferenceCP(left),
+                     indirectionDereferenceCP(right),
+                     indirectionDereferenceCP(parent),
                      name,
                      type,
                      ns);
@@ -150,7 +150,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	  	  indir_map.find_remove(self, &self);
 	  }
 
-      delete_node(removeIndirection(self));
+      delete_node(indirectionDereferenceCP(self));
     }
 }
 
@@ -201,9 +201,9 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
 
        xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
 
-       insert_attribute(removeIndirection(left),
-                        removeIndirection(right),
-                        removeIndirection(parent),
+       insert_attribute(indirectionDereferenceCP(left),
+                        indirectionDereferenceCP(right),
+                        indirectionDereferenceCP(parent),
                         name,
                         type,
                         value,
@@ -220,7 +220,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(removeIndirection(self));
+       delete_node(indirectionDereferenceCP(self));
      }
 }
 
@@ -260,11 +260,10 @@ static void llRcvText(LSN curr_lsn, void *Rec)
 	   else
           indirectionSetRollbackRecord(self);
 
-       insert_text(removeIndirection(left),
-                   removeIndirection(right),
-                   removeIndirection(parent),
-                   value,
-                   value_size);
+       insert_text(indirectionDereferenceCP(left),
+                   indirectionDereferenceCP(right),
+                   indirectionDereferenceCP(parent),
+                   text_source_mem(value, value_size));
 
        xptr self_res = indirectionGetLastRecord();
        if (self_res != self) indir_map.insert(self, self_res);
@@ -276,7 +275,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(removeIndirection(self));
+       delete_node(indirectionDereferenceCP(self));
      }
 }
 
@@ -308,9 +307,9 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
-           insertTextValue(ip_tail, removeIndirection(self), value, value_size, text_mem);
+           insertTextValue(ip_tail, indirectionDereferenceCP(self), text_source_mem(value, value_size));
        else
-           insertTextValue(ip_head, removeIndirection(self), value, value_size, text_mem);
+           insertTextValue(ip_head, indirectionDereferenceCP(self), text_source_mem(value, value_size));
      }
      else
      {
@@ -320,9 +319,9 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
-          deleteTextValue(ip_tail, removeIndirection(self), value_size);
+          deleteTextValue(ip_tail, indirectionDereferenceCP(self), value_size);
        else
-          deleteTextValue(ip_head, removeIndirection(self), value_size);
+          deleteTextValue(ip_head, indirectionDereferenceCP(self), value_size);
      }
 }
 
@@ -436,9 +435,9 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
 	   else
 	       indirectionSetRollbackRecord(self);
 
-       insert_comment(removeIndirection(left),
-                      removeIndirection(right),
-                      removeIndirection(parent),
+       insert_comment(indirectionDereferenceCP(left),
+                      indirectionDereferenceCP(right),
+                      indirectionDereferenceCP(parent),
                       value,
                       value_size);
 
@@ -452,7 +451,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(removeIndirection(self));
+       delete_node(indirectionDereferenceCP(self));
      }
 }
 
@@ -495,9 +494,9 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
 	   else
 	       indirectionSetRollbackRecord(self);
 
-       insert_pi(removeIndirection(left),
-                 removeIndirection(right),
-                 removeIndirection(parent),
+       insert_pi(indirectionDereferenceCP(left),
+                 indirectionDereferenceCP(right),
+                 indirectionDereferenceCP(parent),
                  value,
                  target_size,
                  value + target_size,
@@ -513,7 +512,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(removeIndirection(self));
+       delete_node(indirectionDereferenceCP(self));
      }
 }
 
@@ -579,9 +578,9 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
        xmlns_ptr ns = llGetNamespaceFromRecord(prefix, uri);
        U_ASSERT(ns != NULL_XMLNS);
 
-       insert_namespace(removeIndirection(left),
-                        removeIndirection(right),
-                        removeIndirection(parent),
+       insert_namespace(indirectionDereferenceCP(left),
+                        indirectionDereferenceCP(right),
+                        indirectionDereferenceCP(parent),
                         ns);
 
        xptr self_res = indirectionGetLastRecord();
@@ -594,7 +593,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(removeIndirection(self));
+       delete_node(indirectionDereferenceCP(self));
      }
 }
 
@@ -961,9 +960,9 @@ void rcvRecoverFtIndexes()
 
     for (it = indir_map.begin(); it != indir_map.end(); ++it)
     {
-        new_x = removeIndirection(*it);
+        new_x = indirectionDereferenceCP(*it);
         CHECKP(new_x);
-        scm = (GETBLOCKBYNODE(new_x))->snode;
+        scm = getSchemaNode(new_x);
         sft = scm->ft_index_list->first;
 
         while (sft != NULL)

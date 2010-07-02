@@ -6,7 +6,6 @@
 #include "common/errdbg/d_printf.h"
 #include "tr/ft/ft_index.h"
 #include "tr/idx/btree/btree.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/crmutils/crmutils.h"
 #include "expat.h"
 #include "tr/ft/ft_cache.h"
@@ -15,7 +14,7 @@
 #include "tr/strings/utf8.h"
 
 
-//TODO: remove this 
+//TODO: remove this
 //neeeded for pcre includes
 #define PCRE_STATIC
 #define SUPPORT_UTF8

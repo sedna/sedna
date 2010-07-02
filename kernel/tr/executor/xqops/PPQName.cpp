@@ -6,10 +6,8 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPQName.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,7 +63,7 @@ void PPFnResolveQName::do_next(tuple &t)
         first_time = false;
         tuple_cell qname_tc = atomize(child_qname.get(t));
 
-        if (!is_string_type(qname_tc.get_atomic_type())) 
+        if (!is_string_type(qname_tc.get_atomic_type()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
 
         child_qname.op->next(t);
@@ -85,16 +83,16 @@ void PPFnResolveQName::do_next(tuple &t)
         xptr node = child_elem.get(t).get_node();
 
         child_elem.op->next(t);
-        if (!(t.is_eos())) 
+        if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
         CHECKP(node);
-        if (GETSCHEMENODE(XADDR(node))->type != element)
+        if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
 
         char *qname = xs_QName_create(qname_tc.get_str_mem(),
-                                      node, 
+                                      node,
                                       tuple_char_alloc,
                                       cxt);
 
@@ -178,7 +176,7 @@ void PPFnQName::do_next(tuple &t)
         child_uri.op->next(t);
         if (!t.is_eos())
         {
-            if (!(child_uri.get(t).is_atomic()) || child_uri.get(t).get_atomic_type() != xs_string) 
+            if (!(child_uri.get(t).is_atomic()) || child_uri.get(t).get_atomic_type() != xs_string)
                 throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
             uri_tc = tuple_cell::make_sure_light_atomic(child_uri.get(t));
@@ -192,7 +190,7 @@ void PPFnQName::do_next(tuple &t)
         if (t.is_eos())
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
-        if (!(child_qname.get(t).is_atomic()) || child_qname.get(t).get_atomic_type() != xs_string) 
+        if (!(child_qname.get(t).is_atomic()) || child_qname.get(t).get_atomic_type() != xs_string)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
         qname_tc = tuple_cell::make_sure_light_atomic(child_qname.get(t));
@@ -201,7 +199,7 @@ void PPFnQName::do_next(tuple &t)
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
         char *qname = xs_QName_create(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(),
-                                      qname_tc.get_str_mem(), 
+                                      qname_tc.get_str_mem(),
                                       tuple_char_alloc,
                                       cxt);
 
@@ -279,7 +277,7 @@ void PPFnPrefixFromQName::do_next (tuple &t)
         if (t.is_eos())
             return;
 
-        if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
+        if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
 
         tuple_cell tc = child.get(t);
@@ -287,7 +285,7 @@ void PPFnPrefixFromQName::do_next (tuple &t)
         U_ASSERT(tc.is_light_atomic());
 
         child.op->next(t);
-        if (!(t.is_eos())) 
+        if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
 
         const char *prefix = xs_QName_get_prefix(tc.get_str_mem());
@@ -369,7 +367,7 @@ void PPFnLocalNameFromQName::do_next (tuple &t)
         if (t.is_eos())
             return;
 
-        if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
+        if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
 
         tuple_cell tc = child.get(t);
@@ -377,7 +375,7 @@ void PPFnLocalNameFromQName::do_next (tuple &t)
         U_ASSERT(tc.is_light_atomic());
 
         child.op->next(t);
-        if (!(t.is_eos())) 
+        if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
 
         const char *local_name = xs_QName_get_local_name(tc.get_str_mem());
@@ -453,7 +451,7 @@ void PPFnNamespaceUriFromQName::do_next (tuple &t)
         if (t.is_eos())
             return;
 
-        if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
+        if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
 
         tuple_cell tc = child.get(t);
@@ -461,7 +459,7 @@ void PPFnNamespaceUriFromQName::do_next (tuple &t)
         U_ASSERT(tc.is_light_atomic());
 
         child.op->next(t);
-        if (!(t.is_eos())) 
+        if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
 
         const char *uri = xs_QName_get_uri(tc.get_str_mem());
@@ -543,7 +541,7 @@ void PPFnNamespaceUriForPrefix::do_next(tuple &t)
         child_prefix.op->next(t);
         if (!t.is_eos())
         {
-            if (!(child_prefix.get(t).is_atomic()) || child_prefix.get(t).get_atomic_type() != xs_string) 
+            if (!(child_prefix.get(t).is_atomic()) || child_prefix.get(t).get_atomic_type() != xs_string)
                 throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
             prefix_tc = tuple_cell::make_sure_light_atomic(child_prefix.get(t));
@@ -561,19 +559,19 @@ void PPFnNamespaceUriForPrefix::do_next(tuple &t)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
         child_element.op->next(t);
-        if (!(t.is_eos())) 
+        if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
         xptr node = child_element.get(t).get_node();
 
         CHECKP(node);
-        if (GETSCHEMENODE(XADDR(node))->type != element)
+        if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
 
 
         std::vector<xmlns_ptr> xmlns;
-        get_in_scope_namespaces(node, xmlns, cxt);
+        se_get_in_scope_namespaces(node, xmlns, cxt);
 
         for (unsigned int i = 0; i < xmlns.size(); ++i)
         {
@@ -662,15 +660,15 @@ void PPFnInScopePrefixes::do_next (tuple &t)
         xptr node = child.get(t).get_node();
 
         child.op->next(t);
-        if (!(t.is_eos())) 
+        if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
         CHECKP(node);
-        if (GETSCHEMENODE(XADDR(node))->type != element)
+        if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
 
-        get_in_scope_namespaces(node, xmlns, cxt);
+        se_get_in_scope_namespaces(node, xmlns, cxt);
         pos = 0;
     }
 

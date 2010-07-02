@@ -122,7 +122,6 @@ namespace sedna
         {"", "namespace-uri-for-prefix",  2,  2, 0xFF, "!fn!namespace-uri-for-prefix", false, &resultOne, &l2pFnNamespaceUriForPrefix},
         {"", "namespace-uri-from-QName",  1,  1, 0xFF, "!fn!namespace-uri-from-QName", false, &resultOne, &l2pFnNamespaceUriFromQName},
         {"", "nilled", 1, 1, 0xFF, "!fn!nilled", false, &resultOne, &l2pFnNilled},
-        {"", "node-kind",  1,  1, 0xFF, "!fn!node-kind", false, &resultOne, &l2pFnNodeKind},
         {"", "node-name", 1, 1, 0xFF, "!fn!node-name", false, &resultOne, &l2pFnNodeName},
         {"", "normalize-space",  0,  1, 0xFF, "!fn!normalize-space", false, &resultOne, &l2pFnNormalizeSpace},
         {"", "normalize-unicode",  1,  2, 0xFF, "!fn!normalize-unicode", false, &resultOne, &l2pFnNormalizeUnicode},

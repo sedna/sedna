@@ -7,7 +7,8 @@
 #define _UTL_H
 
 #include "common/sedna.h"
-#include "tr/structures/nodes.h"
+#include "common/base.h"
+#include "tr/structures/nodeutils.h"
 
 /* types of items */
 #define	ITEM_BAD	0

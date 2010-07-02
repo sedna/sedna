@@ -15,6 +15,8 @@
 
 #include "common/sedna.h"
 
+#include "tr/structures/xmlns.h"
+
 #include "tr/executor/base/SequenceType.h"
 #include "tr/executor/base/static_context.h"
 
@@ -370,6 +372,11 @@ public:
     inline void    remove_from_context(xmlns_ptr ns)
     {
         remove_from_context(ns->prefix);
+    }
+
+    inline
+    const inscmap * get_inscope_namespaces() const {
+        return &(this->insc_ns);
     }
 
     /* Returns current default namespaces or NULL_XMLNS if there's no one */
