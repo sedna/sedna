@@ -11,7 +11,7 @@
 #include "tr/cat/catalog.h"
 #include "tr/cat/catmem.h"
 #include "common/u/usem.h"
-#include "tr/structures/nodes.h"
+#include "tr/structures/nodetypes.h"
 #include "tr/executor/base/XPathOnSchema.h"
 
 struct PathExpr;

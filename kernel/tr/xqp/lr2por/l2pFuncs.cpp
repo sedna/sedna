@@ -902,15 +902,6 @@ PPOpIn l2pFnNilled(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_P
     return res;
 }
 
-PPOpIn l2pFnNodeKind(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
-{
-    PPOpIn res;
-
-    res = PPOpIn(new PPDmNodeKind(dyn_cxt, opi, params[0]), 1);
-
-    return res;
-}
-
 PPOpIn l2pFnNodeName(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
     PPOpIn res;

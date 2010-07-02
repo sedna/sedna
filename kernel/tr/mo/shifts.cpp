@@ -10,13 +10,14 @@
 
 #include "tr/mo/microoperations.h"
 #include "tr/mo/microsurgery.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/mo/modebug.h"
+
+#include "tr/mo/nodemoutils.h"
 
 inline xptr shiftNodeToBlockInt(xptr source_block_xptr, xptr dest_block_xptr, xptr source_node_xptr, shft dest_left_node)
 {
     xptr child_in_parent_xptr;
-    n_dsc * dest_node;
+    node_base_t * dest_node;
     node_buffer * tmp_node;
     xptr dest_node_xptr;
 
@@ -25,7 +26,7 @@ inline xptr shiftNodeToBlockInt(xptr source_block_xptr, xptr dest_block_xptr, xp
 
 /* Delete descriptor from source block */
     tmp_node = nodeBufferCopyCP(source_node_xptr);
-    nodeListDeleteCP(source_block_xptr, (n_dsc *) XADDR(source_node_xptr));
+    nodeListDeleteCP(source_block_xptr, (node_base_t *) XADDR(source_node_xptr));
 
 /* Add descriptor to destination block */
     CHECKP(dest_block_xptr);
@@ -83,30 +84,26 @@ inline void setPointerMappingRecord(xptr_mapping * mr, xptr ptr, xptr from, size
     }
 }
 
-#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
-#pragma GCC diagnostic ignored "-Winvalid-offsetof"
-#endif /* GNUC */
-
 xptr_mapping * addNodeToPFL(xptr_mapping * pointer_to_fix, xptr node_xptr, int child_pos)
 {
     CHECKP(node_xptr);
 
-    n_dsc * node = (n_dsc *) XADDR(node_xptr);
+    node_base_t * node = (node_base_t *) XADDR(node_xptr);
     xptr rdsc = node->rdsc;
     xptr ldsc = node->ldsc;
 
     setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_INDIR, node->indir, node_xptr, 0, xptr_mapping::mf_indirection_pointer);
 
     if (same_block(rdsc, node_xptr)) {
-        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_RDSC, getIndirectionSafeCP(rdsc), node_xptr, offsetof(n_dsc, ldsc), xptr_mapping::mf_indirection);
+        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_RDSC, getIndirectionSafeCP(rdsc), node_xptr, offsetof(node_base_t, ldsc), xptr_mapping::mf_indirection);
     } else {
-        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_RDSC, rdsc, node_xptr, offsetof(n_dsc, ldsc), xptr_mapping::mf_none);
+        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_RDSC, rdsc, node_xptr, offsetof(node_base_t, ldsc), xptr_mapping::mf_none);
     }
 
     if (same_block(ldsc, node_xptr)) {
-        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_LDSC, getIndirectionSafeCP(ldsc), node_xptr, offsetof(n_dsc, rdsc), xptr_mapping::mf_indirection);
+        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_LDSC, getIndirectionSafeCP(ldsc), node_xptr, offsetof(node_base_t, rdsc), xptr_mapping::mf_indirection);
     } else {
-        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_LDSC, ldsc, node_xptr, offsetof(n_dsc, rdsc), xptr_mapping::mf_none);
+        setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_LDSC, ldsc, node_xptr, offsetof(node_base_t, rdsc), xptr_mapping::mf_none);
     }
 
     setPointerMappingRecord(pointer_to_fix + FIX_OFFSET_PDSC, findNodeInParentCP(node_xptr, child_pos), node_xptr, 0, xptr_mapping::mf_child_in_parent);
@@ -182,11 +179,11 @@ void shiftManyNodesCopy(struct shift_node_structure_t * shift_info, xptr source_
 {
     node_blk_hdr * source_block;
     xptr_mapping * pfl_it; /* pointer fix list */
-    n_dsc * node;
+    node_base_t * node;
     int pos_in_parent;
     int node_count = shift_info->node_count;
 
-    off_t it_field = (direction == shd_end) ? offsetof(n_dsc, desc_prev) : offsetof(n_dsc, desc_next);
+    off_t it_field = (direction == shd_end) ? offsetof(node_base_t, desc_prev) : offsetof(node_base_t, desc_next);
     off_t init_field = (direction == shd_end) ? offsetof(node_blk_hdr, desc_last) : offsetof(node_blk_hdr, desc_first);
 
     CHECKP(source_block_xptr);
@@ -195,24 +192,24 @@ void shiftManyNodesCopy(struct shift_node_structure_t * shift_info, xptr source_
     source_block = getBlockHeader(source_block_xptr);
     shift_info->buffer = nodeBufferAlloc(source_block->dsc_size, node_count);
     pfl_it = shift_info->pfl = (xptr_mapping *) malloc(node_count * 4 * sizeof(xptr_mapping));
-    pos_in_parent = source_block->snode->get_node_position_in_parent();
+    pos_in_parent = schema_node_cptr(source_block->snode)->get_node_position_in_parent();
 
     /* Fill fix pointer list. We MUST do it before any nodes are deleted from the block
         (because left or right siblings may lay in this block). */
 
-    node = getDescriptor(source_block, getfieldat(shft, source_block, init_field));
+    node = getDsc((char *) source_block, getfieldat(shft, source_block, init_field));
     for (int i = 0; i < node_count; i++) {
         U_ASSERT(node != NULL);
         pfl_it = addNodeToPFL(pfl_it, ADDR2XPTR(node), pos_in_parent);
         CHECKP(source_block_xptr);
-        node = getDescriptor(source_block, getfieldat(shft, node, it_field));
+        node = getDsc((char*) source_block, getfieldat(shft, node, it_field));
     }
 
     /* Cut nodes to buffer */
     CHECKP(source_block_xptr);
-    node = getDescriptor(source_block, getfieldat(shft, source_block, init_field));
+    node = getDsc((char*) source_block, getfieldat(shft, source_block, init_field));
     for (int i = 0; i < node_count; i++) {
-        n_dsc * prev_node = getDescriptor(source_block, getfieldat(shft, node, it_field));
+        node_base_t * prev_node = getDsc((char *) source_block, getfieldat(shft, node, it_field));
         nodeBufferAddCP(shift_info->buffer, ADDR2XPTR(node));
         nodeListDeleteCP(source_block_xptr, node);
         node = prev_node;
@@ -236,7 +233,7 @@ void widenBlockDescriptor(xptr block_ptr, shft new_dsc_size, int irecord_count)
 
     CHECKP(block_ptr);
     source_block->dsc_size = new_dsc_size;
-    source_block->clear();
+    clearNodeBlock(block_ptr);
 
     shiftManyNodesPaste(&shift_info, block_ptr, 0);
 
@@ -292,7 +289,7 @@ xptr shiftOneNodeToNextBlock(xptr source_block_xptr)
     CHECKP(source_block_xptr);
     dest_block_xptr = source_block->nblk;
     U_ASSERT(dest_block_xptr != XNULL);
-    source_node_xptr = ADDR2XPTR(source_block->getLastNode());
+    source_node_xptr = getLastBlockNode(source_block_xptr);
 
 /* Shift node */
     return shiftNodeToBlockInt(source_block_xptr, dest_block_xptr, source_node_xptr, 0);
@@ -310,7 +307,7 @@ xptr shiftOneNodeToPreviousBlock(xptr source_block_xptr)
     CHECKP(source_block_xptr);
     dest_block_xptr = source_block->pblk;
     U_ASSERT(dest_block_xptr != XNULL);
-    source_node_xptr = ADDR2XPTR(source_block->getFirstNode());
+    source_node_xptr = getFirstBlockNode(source_block_xptr);
 
 /* Shift node */
     return shiftNodeToBlockInt(source_block_xptr, dest_block_xptr, source_node_xptr, LAST_NODE);

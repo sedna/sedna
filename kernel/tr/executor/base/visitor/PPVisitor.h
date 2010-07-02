@@ -23,7 +23,6 @@ public:
     /* Accessor function and operations */
     virtual void visit(PPDmStringValue* op)              = 0;
     virtual void visit(PPDmTypedValue* op)               = 0;
-    virtual void visit(PPDmNodeKind* op)                 = 0;
     virtual void visit(PPFnNodeName* op)                 = 0;
     virtual void visit(PPFnNilled* op)                   = 0;
     virtual void visit(PPFnString* op)                   = 0;
@@ -32,12 +31,12 @@ public:
     virtual void visit(PPFnDocumentURI* op)              = 0;
     virtual void visit(PPFnStaticBaseUri* op)            = 0;
     virtual void visit(PPFnDefaultCollation* op)         = 0;
-    
+
     /* Aggregate functions */
     virtual void visit(PPFnCount* op)                    = 0;
     virtual void visit(PPFnMaxMin* op)                   = 0;
     virtual void visit(PPFnSumAvg* op)                   = 0;
-                                                       
+
     /* XPath expressions */
     virtual void visit(PPAbsPath* op)                    = 0;
     virtual void visit(PPAxisAncestor* op)               = 0;
@@ -141,7 +140,7 @@ public:
     virtual void visit(PPFtIndexScan* op)                = 0;
     virtual void visit(PPFtIndexScan2* op)               = 0;
 #endif
-                                                       
+
     /* Function call */
     virtual void visit(PPFunCall* op)                    = 0;
 
@@ -151,7 +150,7 @@ public:
     virtual void visit(PPNEQGeneralComparison* op)       = 0;
     virtual void visit(PPEQLGeneralComparison* op)       = 0;
     virtual void visit(PPNodeComparison* op)             = 0;
-                                                       
+
     /* Conditional expressions */
     virtual void visit(PPIf* op)                         = 0;
 
@@ -200,7 +199,7 @@ public:
     virtual void visit(PPFnSQLClose* op)                 = 0;
     virtual void visit(PPFnSQLCommit* op)                = 0;
     virtual void visit(PPFnSQLRollback* op)              = 0;
-#endif    
+#endif
 
     /* String functions */
     virtual void visit(PPFnConcat* op)                   = 0;
@@ -221,7 +220,7 @@ public:
     /* URI functions */
     virtual void visit(PPFnUriEncoding* op)              = 0;
     virtual void visit(PPFnResolveUri* op)               = 0;
-    
+
    /* Root operations */
     virtual void visit(PPQueryRoot* op)                  = 0;
     virtual void visit(PPSubQuery* op)                   = 0;
@@ -243,7 +242,7 @@ public:
     virtual void visit(PPCreateFtIndex* op)              = 0;
     virtual void visit(PPDropFtIndex* op)                = 0;
 #endif
-    
+
     virtual void visit(PPDropIndex* op)                  = 0;
     virtual void visit(PPDropDocument* op)               = 0;
     virtual void visit(PPDropCollection* op)             = 0;

@@ -26,20 +26,6 @@ LocalLockMgr *local_lock_mrg;
 
 bool is_init_lock_mgr = false;
 
-void lockWrite(node_blk_hdr* block)
-{
-    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(block));
-}
-
-void lockWriteXptr(xptr block)
-{
-    VMM_SIGNAL_MODIFICATION(block);
-}
-
-void lockRead(node_blk_hdr* block)
-{
-}
-
 void init_local_lock_mgr(SSMMsg* _sm_server_)
 {
     local_lock_mrg = se_new LocalLockMgr();
@@ -171,7 +157,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
 {
     if (tr_ro_mode && mode == lm_x) // cannot acquire eXclusive locks in RO-mode
         throw USER_EXCEPTION(SE4706);
-  
+
     if (tr_ro_mode)
         return; // we don't need any locks for ro-transaction
 
@@ -187,7 +173,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
         msg.data.data[0] = ((mode == lm_s) ? 'r' : 'w'); //'r' intention read; 'w' intention write
 
     msg.data.data[1] = getCharFromResource(kind);
- 
+
     strcpy((msg.data.data) + 2, name);
 
     //d_printf2("lock msg=%s\n", msg.data.data);
@@ -197,7 +183,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
         throw USER_EXCEPTION(SE3034);
 
     d_printf1("OK\n");
- 
+
 #ifdef SE_LOCK_TRACK
     if (intention_mode == false)
     {
@@ -208,7 +194,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
         elog(EL_LOG, ("[LTRK] Resource '%s' (%c) has been locked with intention mode=%s.", name, msg.data.data[1], ((mode == 1) ? "is" : "ix")));
     }
 #endif /* SE_LOCK_TRACK */
-      
+
     switch (msg.data.data[0])
     {
         case '0':
@@ -235,7 +221,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
             break;
         }
     }
-} 
+}
 
 void LocalLockMgr::release()
 {
@@ -266,7 +252,7 @@ void LocalLockMgr::release_resource(const char* name, resource_kind kind)
     msg.trid = tr_globals::trid;
 
     msg.data.data[1] = getCharFromResource(kind);
- 
+
     strcpy((msg.data.data) + 2, name);
 
     if (sm_server->send_msg(&msg) != 0)

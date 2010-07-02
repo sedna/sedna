@@ -6,6 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/updates/updates.h"
+
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/mo/mo.h"
 #include "tr/auth/auc.h"
@@ -71,8 +72,8 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
             CHECKP(node);
             if (!(is_node_document(node) || (is_node_attribute(node) && (prev_item!=attribute && prev_item!=xml_namespace))))
             {
-                prev_item=GETTYPE(GETSCHEMENODEX(node));
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                prev_item=getNodeType(node);
+                xptr indir=nodeGetIndirection(node);
                 if (is_node_persistent(node))
                 {
                     tuple tup(2);
@@ -113,13 +114,13 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
         case 0:
             {
                 xptr node=copy_to_temp((*it3).cells[0].get_node());
-                //arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                //arg2seq[(*it3).cells[1].get_xs_integer()]=nodeGetIndirection(node);
+                xptr indir=nodeGetIndirection(node);
                 arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
                 ++it3;
                 //xptr nd=*it1;
                 //CHECKP(nd);
-                //arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+                //arg1seq.set(nodeGetIndirection(nd),it1);
 
                 //++it1;
             }
@@ -128,7 +129,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
             {
                 xptr nd=*it1;
                 CHECKP(nd);
-                xptr indir=((n_dsc*)XADDR(nd))->indir;
+                xptr indir=nodeGetIndirection(nd);
                 arg1seq.set(indir,it1);
                 ++it1;
             }
@@ -138,7 +139,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
             {
                 xptr nd=*it1;
                 CHECKP(nd);
-                xptr indir=((n_dsc*)XADDR(nd))->indir;
+                xptr indir=nodeGetIndirection(nd);
                 arg1seq.set(indir,it1);
                 ++it1;
             }
@@ -149,7 +150,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
         case -2:
             {
                 xptr node=copy_to_temp((*it3).cells[0].get_node());
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                xptr indir=nodeGetIndirection(node);
                 arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
                 ++it3;
             }
@@ -161,7 +162,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
     {
         xptr nd=*it1;
         CHECKP(nd);
-        xptr indir=((n_dsc*)XADDR(nd))->indir;
+        xptr indir=nodeGetIndirection(nd);
         arg1seq.set(indir,it1);
         ++it1;
     }
@@ -182,12 +183,12 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
         it2=arg2seq.begin();
         node_child=*it2;
         //Check of the following is right
-        xptr tmp=removeIndirection(node_par);
+        xptr tmp=indirectionDereferenceCP(node_par);
         xptr right=tmp;
         //mark= is_node_persistent(node_child);
-        node_child=removeIndirection(node_child);
+        node_child=indirectionDereferenceCP(node_child);
         CHECKP(tmp);
-        tmp=GETLEFTPOINTER(tmp);
+        tmp=nodeGetLeftSibling(tmp);
         xptr child=tmp;
         if (tmp!=XNULL)
         {
@@ -199,7 +200,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
             {
                 CHECKP(tmp);
                 mark= is_node_attribute(tmp);
-                xptr rght=GETRIGHTPOINTER(tmp);
+                xptr rght=nodeGetRightSibling(tmp);
                 if (rght!=XNULL)
                 {
                     CHECKP(rght);
@@ -210,7 +211,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
                     CHECKP(tmp);
                     mark= is_node_attribute(tmp);
                     xptr last=*(arg2seq.end()-1);
-                    last=removeIndirection(last);
+                    last=indirectionDereferenceCP(last);
                     CHECKP(last);
                     mark=mark && is_node_attribute(last);
                     if (!mark)
@@ -226,7 +227,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
         do
         {
             node_child=*it2;
-            node_child=removeIndirection(node_child);
+            node_child=indirectionDereferenceCP(node_child);
             mark= is_node_persistent(node_child);
             CHECKP(node_child);
             if (child==XNULL) {
@@ -275,7 +276,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
             CHECKP(node);
             if (is_node_persistent(node)&& !is_node_document(node) )
             {
-                //xptr indir=((n_dsc*)XADDR(node))->indir;
+                //xptr indir=nodeGetIndirection(node);
                 arg1seq.add(node);
             }
 #ifndef IGNORE_UPDATE_ERRORS
@@ -310,8 +311,8 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
             CHECKP(node);
             if (!(is_node_document(node)|| (is_node_attribute(node) && prev_item!=attribute)))
             {
-                prev_item=GETTYPE(GETSCHEMENODEX(node));
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                prev_item=getNodeType(node);
+                xptr indir=nodeGetIndirection(node);
                 if (is_node_persistent(node))
                 {
                     tuple tup(2);
@@ -351,13 +352,13 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
         case 0:
             {
                 xptr node=copy_to_temp((*it3).cells[0].get_node());
-                //arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                //arg2seq[(*it3).cells[1].get_xs_integer()]=nodeGetIndirection(node);
+                xptr indir=nodeGetIndirection(node);
                 arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
                 ++it3;
                 //xptr nd=*it1;
                 //CHECKP(nd);
-                //arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+                //arg1seq.set(nodeGetIndirection(nd),it1);
 
                 //++it1;
             }
@@ -366,7 +367,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
             {
                 xptr nd=*it1;
                 CHECKP(nd);
-                xptr indir=((n_dsc*)XADDR(nd))->indir;
+                xptr indir=nodeGetIndirection(nd);
                 arg1seq.set(indir,it1);
                 ++it1;
             }
@@ -376,7 +377,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
             {
                 xptr nd=*it1;
                 CHECKP(nd);
-                xptr indir=((n_dsc*)XADDR(nd))->indir;
+                xptr indir=nodeGetIndirection(nd);
                 arg1seq.set(indir,it1);
                 ++it1;
             }
@@ -387,7 +388,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
         case -2:
             {
                 xptr node=copy_to_temp((*it3).cells[0].get_node());
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                xptr indir=nodeGetIndirection(node);
                 arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
                 ++it3;
             }
@@ -399,7 +400,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
     {
         xptr nd=*it1;
         CHECKP(nd);
-        xptr indir=((n_dsc*)XADDR(nd))->indir;
+        xptr indir=nodeGetIndirection(nd);
         arg1seq.set(indir,it1);
         ++it1;
     }
@@ -420,10 +421,10 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
         it2=arg2seq.begin();
         node_child=*it2;
         //Check of the following is right
-        xptr tmp=removeIndirection(node_par);
+        xptr tmp=indirectionDereferenceCP(node_par);
         xptr child=tmp;
         //	mark= is_node_persistent(node_child);
-        node_child=removeIndirection(node_child);
+        node_child=indirectionDereferenceCP(node_child);
         CHECKP(tmp);
         mark=!is_node_attribute(tmp);
         CHECKP(node_child);
@@ -432,7 +433,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
         {
             CHECKP(tmp);
             mark= is_node_attribute(tmp);
-            xptr rght=GETRIGHTPOINTER(tmp);
+            xptr rght=nodeGetRightSibling(tmp);
             if (rght!=XNULL)
             {
                 CHECKP(rght);
@@ -443,7 +444,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
                 CHECKP(tmp);
                 mark= is_node_attribute(tmp);
                 xptr last=*(arg2seq.end()-1);
-                last=removeIndirection(last);
+                last=indirectionDereferenceCP(last);
                 CHECKP(last);
                 mark=mark && is_node_attribute(last);
                 if (!mark)
@@ -458,7 +459,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
         do
         {
             node_child=*it2;
-            node_child=removeIndirection(node_child);
+            node_child=indirectionDereferenceCP(node_child);
             mark= is_node_persistent(node_child);
 
             CHECKP(node_child);
@@ -510,7 +511,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
             {
                 /*if (ch_auth)
                 auth_for_update( node, INSERT_STATEMENT);*/
-                //xptr indir=((n_dsc*)XADDR(node))->indir;
+                //xptr indir=nodeGetIndirection(node);
                 arg1seq.add(node);
 
             }
@@ -547,8 +548,8 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
             CHECKP(node);
             if (!(is_node_document(node)||( is_node_attribute(node) && prev_item!=attribute)))
             {
-                prev_item=GETTYPE(GETSCHEMENODEX(node));
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                prev_item=getNodeType(node);
+                xptr indir=nodeGetIndirection(node);
                 if (is_node_persistent(node))
                 {
                     tuple tup(2);
@@ -594,13 +595,13 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
         case 0:
             {
                 xptr node=copy_to_temp((*it3).cells[0].get_node());
-                //arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                //arg2seq[(*it3).cells[1].get_xs_integer()]=nodeGetIndirection(node);
+                xptr indir=nodeGetIndirection(node);
                 arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
                 ++it3;
                 //xptr nd=*it1;
                 //CHECKP(nd);
-                //arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+                //arg1seq.set(nodeGetIndirection(nd),it1);
 
                 //++it1;
             }
@@ -609,7 +610,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
             {
                 xptr nd=*it1;
                 CHECKP(nd);
-                xptr indir=((n_dsc*)XADDR(nd))->indir;
+                xptr indir=nodeGetIndirection(nd);
                 arg1seq.set(indir,it1);
                 ++it1;
             }
@@ -619,7 +620,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
             {
                 xptr nd=*it1;
                 CHECKP(nd);
-                xptr indir=((n_dsc*)XADDR(nd))->indir;
+                xptr indir=nodeGetIndirection(nd);
                 arg1seq.set(indir,it1);
                 ++it1;
             }
@@ -630,7 +631,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
         case -2:
             {
                 xptr node=copy_to_temp((*it3).cells[0].get_node());
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                xptr indir=nodeGetIndirection(node);
                 arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
                 ++it3;
             }
@@ -642,7 +643,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
     {
         xptr nd=*it1;
         CHECKP(nd);
-        xptr indir=((n_dsc*)XADDR(nd))->indir;
+        xptr indir=nodeGetIndirection(nd);
         arg1seq.set(indir,it1);
         ++it1;
     }
@@ -667,7 +668,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
         {
             node_child=*it2;
             mark= is_node_persistent(node_child);
-            node_child=removeIndirection(node_child);
+            node_child=indirectionDereferenceCP(node_child);
             CHECKP(node_child);
             if (prev_item==xml_namespace && ! is_node_xml_namespace(node_child))
             {
@@ -681,7 +682,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
                     prev_item=element;
                 }
 
-                prev_child = deep_copy_node(prev_child, XNULL, removeIndirection(node_par), node_child, mark ? NULL : &ins_swiz, true);
+                prev_child = deep_copy_node(prev_child, XNULL, indirectionDereferenceCP(node_par), node_child, mark ? NULL : &ins_swiz, true);
 
                 // inner cycle on second sequence
                 it2++;

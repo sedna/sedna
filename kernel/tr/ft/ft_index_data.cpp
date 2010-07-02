@@ -8,7 +8,6 @@
 
 #include "tr/ft/ft_index_data.h"
 #include "common/xptr.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"
 #ifdef SE_ENABLE_DTSEARCH
@@ -23,6 +22,8 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/idx/btree/btree.h"
 #include "tr/cat/catstore.h"
+
+#include "tr/structures/nodeutils.h"
 
 
 using namespace std;
@@ -235,7 +236,7 @@ ft_index_cell_xptr create_ft_index(
             if (blk!=XNULL)
             {
                 CHECKP(blk);
-                start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk))));
+                start_nodes.push_back(getFirstBlockNode(blk));
             }
         }
     }
@@ -272,14 +273,14 @@ ft_index_cell_xptr create_ft_index(
 				while (tmp != XNULL)
 				{
 					CHECKP(tmp);
-					xptr tmp_indir = ((n_dsc*)XADDR(tmp))->indir;
+					xptr tmp_indir = nodeGetIndirection(tmp);
 					//TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
 					in_buf.clear();
 					//print_node_to_buffer(tmp, in_buf, idc->ftype, idc->custom_tree);
 					idc->serial_put(tmp, tmp_indir, in_buf);
 					ft_index_update(ft_insert, tmp_indir, &in_buf, &idc->fts_data, ftc_idx);
 
-					tmp=getNextDescriptorOfSameSortXptr(tmp);
+					tmp=getNextDescriptorOfSameSort(tmp);
 				}
 			}
 
@@ -352,7 +353,7 @@ static void ft_update_seq(xptr_sequence *seq, ft_index_cell_object *idc, ftc_ind
 	while (it!=seq->end())
 	{
 		xptr node_indir = *it++;
-		xptr node = removeIndirection(node_indir);
+		xptr node = indirectionDereferenceCP(node_indir);
 		if (node != XNULL) //FIXME can it be null?
 		{
 		    //TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
@@ -429,7 +430,7 @@ xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 	}
 	else
 	{
-		xptr pstr = pstr_long_create_str2(true, tbuf.get_ptr_to_text(), tbuf.get_size(), tbuf.get_type());
+		xptr pstr = pstr_long_create_str2(true, text_source_strbuf(&tbuf));
 		return pstr;
 	}
 	U_ASSERT(false);

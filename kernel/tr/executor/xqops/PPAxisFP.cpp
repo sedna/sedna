@@ -6,9 +6,12 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisFP.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+
+#include "tr/structures/schema.h"
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
 
 PPAxisFP::PPAxisFP(dynamic_context *_cxt_,
                    operation_info _info_,
@@ -94,16 +97,9 @@ void PPAxisFP::next_processing_instruction(tuple &t)
         {
             next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
             if (t.is_eos()) return;
-            xptr tmp=child.get(t).get_node();
-            if (tmp!=XNULL)
-            {
-                CHECKP(tmp);
-                pi_dsc* desc=(pi_dsc*)XADDR(tmp);
-                size_t tsize=desc->target;
-                if (tsize == strlen(nt_data.ncname_local)) {
-                    char* data= (char*)XADDR(getTextPtr(desc));
-                    if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
-                }
+            PINode tmp=child.get(t).get_node();
+            if (!tmp.isNull() && (tmp.checkp().compareTarget(nt_data.ncname_local) == 0)) {
+                return;
             }
         }
 }
@@ -162,7 +158,7 @@ void PPAxisFP::next_wildcard_star(tuple &t)
             cur = getNextNDNode(base);
             while (true)
             {
-                if (cur==XNULL || is_element(cur))
+                if (cur==XNULL || getNodeType(checkp(cur))==element)
                     break;
                 else
                     cur = getNextDONode(cur);
@@ -174,7 +170,7 @@ void PPAxisFP::next_wildcard_star(tuple &t)
             cur=getPreviousDONode(base);
             while (true)
             {
-                if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2))
+                if (cur==XNULL || (getNodeType(checkp(cur))==element && nid_cmp_effective(cur, base)!=-2))
                     break;
                 else
                     cur = getPreviousDONode(cur);
@@ -187,7 +183,7 @@ void PPAxisFP::next_wildcard_star(tuple &t)
         cur = getNextDONode(cur);
         while (true)
         {
-            if (cur==XNULL || is_element(cur))
+            if (cur==XNULL || getNodeType(checkp(cur))==element)
                 break;
             else
                 cur = getNextDONode(cur);
@@ -198,7 +194,7 @@ void PPAxisFP::next_wildcard_star(tuple &t)
         cur=getPreviousDONode(cur);
         while (true)
         {
-            if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2))
+            if (cur==XNULL || (getNodeType(checkp(cur))==element && nid_cmp_effective(cur, base)!=-2))
                 break;
             else
                 cur = getPreviousDONode(cur);
@@ -216,7 +212,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         base = child.get(t).get_node();
-        is_col=is_node_in_collection(base);
+        is_col= Node(base).isNodeInCollection();
         if (is_col)
         {
             if (following)
@@ -224,7 +220,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
                 cur = getNextNDNode(base);
                 while (true)
                 {
-                    if (cur==XNULL || cfun(GETSCHEMENODEX(cur),uri,name,type))
+                    if (cur==XNULL || cfun(getSchemaNode(cur),uri,name,type))
                         break;
                     else
                         cur = getNextDONode(cur);
@@ -235,7 +231,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
                 base=getPreviousDONode(cur);
                 while (true)
                 {
-                    if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2))
+                    if (cur==XNULL || (cfun(getSchemaNode(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2))
                         break;
                     else
                         cur = getPreviousDONode(cur);
@@ -245,7 +241,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
         else
         {
             CHECKP(base);
-            schema_node_xptr scm=(GETSCHEMENODEX(base))->root;
+            schema_node_xptr scm=(getSchemaNode(base))->root;
             if (desc_sch.find(scm)==desc_sch.end())
             {
                 std::vector<schema_node_xptr> vscm;
@@ -254,7 +250,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
             }
             std::vector<schema_node_xptr>* cv=&desc_sch[scm];
             std::vector<schema_node_xptr>::iterator it=cv->begin();
-            if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
+            if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSort:getPreviousDescriptorOfSameSort,following);
             while (it!=cv->end())
             {
                 xptr tmp=(following)?getNextNDNode(base,*it):getPreviousNANode(base,*it);
@@ -273,7 +269,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
             cur = getNextDONode(cur);
             while (true)
             {
-                if (cur==XNULL || cfun(GETSCHEMENODEX(cur),uri,name,type))
+                if (cur==XNULL || cfun(getSchemaNode(cur),uri,name,type))
                     break;
                 else
                     cur = getNextDONode(cur);
@@ -284,7 +280,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
             cur=getPreviousDONode(cur);
             while (true)
             {
-                if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2))
+                if (cur==XNULL || (cfun(getSchemaNode(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2))
                     break;
                 else
                     cur = getPreviousDONode(cur);

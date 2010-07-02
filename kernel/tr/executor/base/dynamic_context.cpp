@@ -105,7 +105,7 @@ dynamic_context::~dynamic_context()
     {
         xptr nd = *cit;
         CHECKP(nd);
-        GETSCHEMENODEX(nd)->drop();
+        getSchemaNode(nd)->drop();
         ++cit;
     }
 

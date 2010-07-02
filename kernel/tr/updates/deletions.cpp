@@ -27,7 +27,7 @@ void delete_undeep(PPOpIn arg)
             CHECKP(node);
             if (is_node_persistent(node)&& !is_node_document(node))
             {
-                //xptr indir=((n_dsc*)XADDR(node))->indir;
+                //xptr indir=nodeGetIndirection(node);
                 argseq.add(node);
             }
 #ifndef IGNORE_UPDATE_ERRORS
@@ -56,7 +56,7 @@ void delete_undeep(PPOpIn arg)
     {
         node=*it;
         CHECKP(node);
-        xptr indir=((n_dsc*)XADDR(node))->indir;
+        xptr indir=nodeGetIndirection(node);
         argseq.set(indir,it);
         it++;
     }
@@ -75,7 +75,7 @@ void delete_undeep(PPOpIn arg)
         xptr node=indirectionDereferenceCP(*it);
         CHECKP(node);
         {
-            t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
+            t_item type=getNodeType(node);
             switch(type)
             {
             case attribute: case text: case comment: case pr_ins:
@@ -86,7 +86,7 @@ void delete_undeep(PPOpIn arg)
             case element:
                 {
                     //1.INSERT
-                    copy_node_content(getParentIndirection(node), node, getIndirectionSafeCP(node), NULL, true);
+                    copy_node_content(nodeGetParentIndirection(node), node, getIndirectionSafeCP(node), NULL, true);
                     //2.DELETE
                     delete_node(indirectionDereferenceCP(*it));
                 }

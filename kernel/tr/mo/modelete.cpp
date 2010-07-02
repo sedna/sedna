@@ -10,11 +10,11 @@
 
 #include "tr/mo/microoperations.h"
 #include "tr/mo/indirection.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/mo/microsurgery.h"
+#include "tr/mo/indexupdate.h"
 
 #include "tr/log/log.h"
-#include "tr/mo/indexupdate.h"
+#include "tr/strings/strings.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers.h"
@@ -22,35 +22,31 @@
 
 #include "tr/updates/updates.h"
 
+using namespace internal;
 
 void readNodeInfo(xptr node_xptr, node_info_t * node_info)
 {
-    n_dsc n_node;
+    node_base_t n_node;
 
     CHECKP(node_xptr);
-    memcpy(&n_node, XADDR(node_xptr), sizeof(n_dsc));
+    memcpy(&n_node, XADDR(node_xptr), sizeof(node_base_t));
 
     node_info->node_xptr = node_xptr;
     node_info->snode = getBlockHeader(node_xptr)->snode;
     node_info->node_type = node_info->snode->type;
-
-    if (node_info->node_type == element) {
-        node_info->scm_type = ((e_dsc *) XADDR(node_xptr))->type;
-    } else if (node_info->node_type == attribute) {
-        node_info->scm_type = ((a_dsc *) XADDR(node_xptr))->type;
-    }
+    node_info->scm_type = getScmType(node_xptr);
 
     if (node_info->node_type == element || node_info->node_type == attribute) {
         node_info->ns = node_info->snode->get_xmlns();
     } else if (node_info->node_type == xml_namespace) {
-        node_info->ns = xmlns_touch(((ns_dsc*) XADDR(node_xptr))->ns);
+        node_info->ns = NSNode(node_xptr).getNamespaceLocal();
     } else if (node_info->node_type == pr_ins) {
-        node_info->pi_target_size = ((pi_dsc*) XADDR(node_xptr))->target;
+        node_info->pi_target_size = PINode(node_xptr).getPITargetSize();
     }
 
     if (node_info->snode->has_text()) {
-        node_info->text_size = getTextSize(T_DSC(node_xptr));
-        node_info->text_data = getTextPtr(T_DSC(node_xptr));
+        node_info->text_size = CommonTextNode(node_xptr).getTextSize();
+        node_info->text_data = CommonTextNode(node_xptr).getTextPointer();
     } else {
         node_info->text_size = 0;
     }
@@ -147,47 +143,48 @@ void mergeSiblingTextNodes(xptr left, xptr right)
     left = indirectionDereferenceCP(left);
     right = indirectionDereferenceCP(right);
 
-    if (getBlockHeaderCP(left)->snode->type == text && getBlockHeaderCP(right)->snode->type == text) {
-        t_dsc left_dsc, right_dsc;
+    if (getNodeType(checkp(left)) == text && getNodeType(checkp(right)) == text) {
+        node_text_t left_dsc, right_dsc;
         CHECKP(left);
-        memcpy(&left_dsc, XADDR(left), sizeof(t_dsc));
+        memcpy(&left_dsc, getTextFromAnyNode(left), sizeof(node_text_t));
         CHECKP(right);
-        memcpy(&right_dsc, XADDR(right), sizeof(t_dsc));
+        memcpy(&right_dsc, getTextFromAnyNode(right), sizeof(node_text_t));
 
-        if (right_dsc.ss >= 0) {
-            U_ASSERT(right_dsc.ss > 0);
+        if (right_dsc.size <= maxDescriptorTextSize) {
+            U_ASSERT(right_dsc.size > 0);
             microoperation_begin(left);
-            insertTextValue(ip_tail, left, right_dsc.data.st, right_dsc.ss, text_mem);
-            hl_logical_log_text_edit(left, right_dsc.ss, false, true);
+
+            insertTextValue(ip_tail, left, text_source_mem(right_dsc.data, right_dsc.size));
+            hl_logical_log_text_edit(left, right_dsc.size, false, true);
             microoperation_end(left);
 
             delete_node(right, NULL, true);
-        } else if (right_dsc.ss == TEXT_IN_PSTR) {
+        } else if (right_dsc.size <= PSTRMAXSIZE) {
             microoperation_begin(left);
-            insertTextValue(ip_tail, left, &right_dsc.data.lsp.p, right_dsc.data.lsp.size, text_doc);
-            hl_logical_log_text_edit(left, right_dsc.data.lsp.size, false, true);
+            insertTextValue(ip_tail, left, text_source_node(right));
+            hl_logical_log_text_edit(left, right_dsc.size, false, true);
             microoperation_end(left);
 
             delete_node(right, NULL, true);
-        } else if (left_dsc.ss >= 0) {
-            U_ASSERT(left_dsc.ss > 0);
+        } else if (left_dsc.size <= maxDescriptorTextSize) {
+            U_ASSERT(left_dsc.size > 0);
             microoperation_begin(right);
-            insertTextValue(ip_head, right, left_dsc.data.st, left_dsc.ss, text_mem);
-            hl_logical_log_text_edit(right, left_dsc.ss, true, true);
+            insertTextValue(ip_head, right, text_source_mem(left_dsc.data, left_dsc.size));
+            hl_logical_log_text_edit(right, left_dsc.size, true, true);
             microoperation_end(right);
 
             delete_node(left, NULL, true);
-        } else if (left_dsc.ss == TEXT_IN_PSTR) {
+        } else if (left_dsc.size <= PSTRMAXSIZE) {
             microoperation_begin(right);
-            insertTextValue(ip_head, right, &left_dsc.data.lsp.p, left_dsc.data.lsp.size, text_doc);
-            hl_logical_log_text_edit(right, left_dsc.data.lsp.size, true, true);
+            insertTextValue(ip_head, right, text_source_node(left));
+            hl_logical_log_text_edit(right, left_dsc.size, true, true);
             microoperation_end(right);
 
             delete_node(left, NULL, true);
         } else {
             microoperation_begin(left);
             pstr_long_append_tail(left, right);
-            hl_logical_log_text_edit(left, getTextSize(&right_dsc), false, true);
+            hl_logical_log_text_edit(left, CommonTextNode(right).getTextSize(), false, true);
             microoperation_end(left);
 
             delete_node(right, NULL, true);
@@ -207,7 +204,7 @@ bool delete_node(xptr node_xptr, const doc_info_t * doc_info, bool no_index_upda
     }
 
     CHECKP(node_xptr);
-    node_info.parent_indir = getParentIndirection(node_xptr);
+    node_info.parent_indir = nodeGetParentIndirection(node_xptr);
 
 #ifdef SE_ENABLE_TRIGGERS
     if(apply_per_node_triggers(XNULL, node_xptr, indirectionDereferenceCP(node_info.parent_indir), node_info.snode.ptr(), TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) == XNULL)
@@ -219,9 +216,9 @@ bool delete_node(xptr node_xptr, const doc_info_t * doc_info, bool no_index_upda
     /* Delete node children */
 
     if (node_info.snode->has_children()) {
-        xptr l, n = getLastByOrderChildNode(node_xptr);
+        xptr l, n = getLastChild(node_xptr);
         while (n != XNULL) {
-            l = getLeftSiblingCP(n);
+            l = nodeGetLeftSibling(checkp(n));
             if (!delete_node(n)) { children_not_deleted = true; };
             n = l;
         }

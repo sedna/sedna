@@ -5,205 +5,192 @@
 
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/fo/casting_operations.h"
-#include "tr/strings/e_string.h"
-#include "tr/executor/base/PPUtils.h"
-#include "tr/pstr/pstr.h"
-#include "common/errdbg/d_printf.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/structures/nodeinterface.h"
+#include "tr/structures/nodeutils.h"
+#include "tr/structures/xmlns.h"
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/xsd.h"
 
-tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
+inline static
+xptr dm_base_uri_attribute(Node node, dynamic_context *context)
 {
-    CHECKP(node);
+    return getNodeAttribute(node.getPtr(), "base", context->get_static_context()->get_predef_nsp("xml"));
+}
 
-    t_item node_type = GETSCHEMENODE(XADDR(node))->type;
-    if (node_type == xml_namespace)
+inline static
+tuple_cell get_context_base_uri(dynamic_context *context) {
+    const char * context_uri = context->get_static_context()->get_base_uri();
+    if (context_uri != NULL) {
+        return tuple_cell::atomic_deep(xs_anyURI, context_uri);
+    } else {
         return tuple_cell::eos();
-
-    if (node_type == attribute || node_type == pr_ins || node_type == comment || node_type == text)
-    {
-        xptr parent = GETPARENTPOINTER(node);
-        if (parent == XNULL)
-            return tuple_cell::eos();
-
-        CHECKP(parent);
-        node = *((xptr*)XADDR(parent));
-
-        CHECKP(node);
-        if (GETSCHEMENODE(XADDR(node))->type != document || GETSCHEMENODE(XADDR(node))->type != element)
-            return tuple_cell::eos();
     }
+}
 
-    xptr xml_base_node = getBaseUri(node);
+static
+tuple_cell get_base_uri_deep(Node node, dynamic_context *context)
+{
+    xptr xml_base = XNULL;
 
-    if (xml_base_node != XNULL)
-    {
-        tuple_cell tc = dm_string_value(xml_base_node);
-        Uri::Information nfo;
-        bool is_relative = Uri::is_relative(&tc, &nfo);
+    while (!node.isNull()) {
+        xml_base = dm_base_uri_attribute(node.getPtr(), context);
 
-        /* I suppose base usi must be stored in normalized form. */
-        if(!nfo.normalized) throw XQUERY_EXCEPTION2(SE1003, "Base URI is not properly normalized");
+        if (xml_base != XNULL) {
+            tuple_cell result = dm_string_value(xml_base);
+            Uri::Information nfo;
+            bool is_relative = Uri::is_relative(&result, &nfo);
 
-        /* If URI is relative and static base uri is defined we should perform resolving. */
-        if(is_relative && cxt->get_static_context()->get_base_uri())
-        {
-             stmt_str_buf result(1);
-             tc = tuple_cell::make_sure_light_atomic(tc);
-             if(!Uri::resolve(tc.get_str_mem(), cxt->get_static_context()->get_base_uri(), result))
-                 return cast_primitive_to_xs_anyURI(tc);
-             return tuple_cell::atomic(xs_anyURI, result.get_str());
+            /* I suppose base URI must be stored in normalized form. */
+            if(!nfo.normalized) throw XQUERY_EXCEPTION2(SE1003, "Base URI is not properly normalized");
+
+            if (is_relative) {
+                 tuple_cell base_uri = dm_base_uri(node.getParent(), context);
+
+                 if (!base_uri.is_eos()) {
+                     stmt_str_buf resolved_uri(1);
+                     base_uri = tuple_cell::make_sure_light_atomic(base_uri);
+                     result = tuple_cell::make_sure_light_atomic(result);
+                     if (Uri::resolve(result.get_str_mem(), base_uri.get_str_mem(), resolved_uri)) {
+                         result = tuple_cell::atomic_deep(xs_anyURI, resolved_uri.get_str());;
+                     }
+                 }
+            }
+
+            return cast_primitive_to_xs_anyURI(result);
         }
-        else
-            return cast_primitive_to_xs_anyURI(tc);
+
+        node = node.getParent();
     }
 
-    /* xml_base_node == NULL here */
-    if (IS_TMP_BLOCK(node) && cxt->get_static_context()->get_base_uri())
-        return tuple_cell::atomic_deep(xs_anyURI, cxt->get_static_context()->get_base_uri());
+    return get_context_base_uri(context);
+}
+
+tuple_cell dm_base_uri(Node node, dynamic_context *context)
+{
+    U_ASSERT(!node.isNull());
+    node.checkp();
+
+    /* Works as defined in http://www.w3.org/TR/xpath-datamodel/#acc-summ-base-uri */
+    switch (node.getNodeType()) {
+        case document :
+        case element :
+            return get_base_uri_deep(node, context);
+        case virtual_root :
+            return get_context_base_uri(context);
+        case attribute :
+        case comment :
+        case text :
+            if (node.hasParent()) {
+                return dm_base_uri(node.getParent(), context);
+            }
+            break;
+        case pr_ins :
+            /* Empty, as defined in http://www.w3.org/TR/xquery/#id-computed-pis */
+        case xml_namespace :
+            break;
+        default : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:base-uri");
+    }
 
     return tuple_cell::eos();
 }
 
-tuple_cell dm_node_name(xptr node)
+static
+tuple_cell get_pi_name(PINode pi)
 {
-    CHECKP(node);
+    size_t target_size = pi.getPITargetSize();
+    char * t = se_new char[target_size + 1];
+    tuple_cell qname = tuple_cell::atomic(xs_string, t);
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : return tuple_cell::eos();
-        case element        :
-        case attribute      : {
-                                  xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
-                                  const char *n = GETSCHEMENODE(XADDR(node))->name;
-                                  char *qname = xs_QName_create(xmlns, n, tuple_char_alloc);
-                                  return tuple_cell::atomic(xs_QName, qname);
-                              }
-        case xml_namespace  : {
-                                  ns_dsc *ns = NS_DSC(node);
-                                  if (ns->ns->prefix)
-                                  {
-                                      char *qname = xs_QName_create(NULL_XMLNS, ns->ns->prefix, tuple_char_alloc);
-                                      return tuple_cell::atomic(xs_QName, qname);
-                                  }
-                                  else
-                                      return tuple_cell::eos();
-                              }
-        case pr_ins         : {
-                                  pi_dsc *pi = PI_DSC(node);
-                                  shft target = pi->target;
-                                  xptr data = getTextPtr(pi);
+    t[target_size] = '\0';
+    pi.copyToBuffer(t, 0, target_size);
 
-                                  char *qname;
+    return qname;
+}
 
-                                  CHECKP(node);
-                                  if (isPstr(pi)) {
-                                      CHECKP(data);
-                                      char *t = se_new char[target + 1];
-                                      t[target] = '\0';
-                                      estr_copy_to_buffer(t, data, target);
-                                      qname = xs_QName_create(NULL_XMLNS, t, tuple_char_alloc);
-                                      delete [] t;
-                                  } else {
-                                      qname = xs_QName_create(NULL_XMLNS, (char *) XADDR(data), tuple_char_alloc);
-                                  }
+tuple_cell dm_node_name(Node node)
+{
+    node.checkp();
 
-                                  return tuple_cell::atomic(xs_QName, qname);
-                              }
-        case comment        : return tuple_cell::eos();
-        case text           : return tuple_cell::eos();
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
+    switch (node.getNodeType()) {
+        case comment :
+        case text :
+        case document :
+            return tuple_cell::eos();
+        case element :
+        case attribute : {
+            schema_node_cptr snode = node.getSchemaNode();
+            return tuple_cell::atomic(xs_QName,
+                  xs_QName_create(snode->get_xmlns(), snode->get_name(), tuple_char_alloc));
+        }
+        case xml_namespace : {
+            xmlns_ptr ns = NSNode(node).getNamespaceLocal();
+            if (ns->prefix != NULL) {
+                return tuple_cell::atomic(xs_QName, xs_QName_create(NULL_XMLNS, ns->prefix, tuple_char_alloc));
+            } else {
+                return tuple_cell::eos();
+            }
+        }
+        case pr_ins :
+            return tuple_cell::atomic(xs_QName, xs_QName_create(NULL_XMLNS, get_pi_name(node).get_str_mem(), tuple_char_alloc));
+        default : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
     }
 }
 
-tuple_cell se_node_local_name(xptr node)
+tuple_cell se_node_local_name(Node node)
 {
-    CHECKP(node);
+    node.checkp();
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : return tuple_cell::eos();
-        case element        :
-        case attribute      : {
-                                  const char *local_name = GETSCHEMENODE(XADDR(node))->name;
-                                  return tuple_cell::atomic_deep(xs_NCName, local_name);
-                              }
-        case xml_namespace  : {
-                                  ns_dsc *ns = NS_DSC(node);
-                                  if (ns->ns->prefix)
-                                  {
-                                      return tuple_cell::atomic_deep(xs_NCName, ns->ns->prefix);
-                                  }
-                                  else
-                                      return tuple_cell::eos();
-                              }
-        case pr_ins         : {
-                                  pi_dsc *pi = PI_DSC(node);
-                                  shft target = pi->target;
-                                  xptr data = getTextPtr(pi);
-
-                                  char *t = se_new char[target + 1];
-                                  t[target] = '\0';
-
-                                  CHECKP(node);
-
-                                  if (isPstr(pi)) {
-                                      estr_copy_to_buffer(t, data, target);
-                                  } else {
-                                      memcpy(t, (char *) XADDR(data), target);
-                                  }
-
-                                  return tuple_cell::atomic(xs_NCName, t);
-                              }
-        case comment        : return tuple_cell::eos();
-        case text           : return tuple_cell::eos();
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to se_node_local_name");
+    switch (node.getNodeType()) {
+        case comment :
+        case text :
+        case document :
+            return tuple_cell::eos();
+        case element :
+        case attribute :
+            return tuple_cell::atomic_deep(xs_NCName, node.getSchemaNode()->get_name());
+        case xml_namespace : {
+            xmlns_ptr ns = NSNode(node).getNamespaceLocal();
+            if (ns->prefix != NULL) {
+                return tuple_cell::atomic_deep(xs_NCName, ns->prefix);
+            } else {
+                return tuple_cell::eos();
+            }
+        }
+        case pr_ins :
+            return tuple_cell::atomic(xs_NCName, get_pi_name(node).get_str_mem());
+        default : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to se_node_local_name");
     }
 }
 
-tuple_cell se_node_namespace_uri(xptr node)
-{
-    CHECKP(node);
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : return tuple_cell::eos();
-        case element        :
-        case attribute      : {
-                                  xmlns_ptr xmlns = GETSCHEMENODE(XADDR(node))->get_xmlns();
-                                  if (xmlns != NULL_XMLNS) {
-                                    U_ASSERT(xmlns->uri);
-                                    return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
-                                  }
-                                  return tuple_cell::eos();
-                              }
-        case xml_namespace  :
-        case pr_ins         :
-        case comment        :
-        case text           : return tuple_cell::eos();
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
+tuple_cell se_node_namespace_uri(Node node)
+{
+    node.checkp();
+
+    switch (node.getNodeType()) {
+        case xml_namespace :
+        case pr_ins :
+        case comment :
+        case text :
+        case document :
+            return tuple_cell::eos();
+        case element :
+        case attribute : {
+            xmlns_ptr xmlns = node.getSchemaNode()->get_xmlns();
+            if (xmlns != NULL_XMLNS) {
+                U_ASSERT(xmlns->uri != NULL);
+                return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
+            } else {
+                return tuple_cell::eos();
+            }
+        }
+        default : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
     }
 }
 
-xptr get_parent_node(xptr node)
+tuple_cell dm_parent(Node node)
 {
-    CHECKP(node);
-
-    xptr p = GETPARENTPOINTER(node);
-
-    if (p == XNULL) return p;
-    else
-    {
-        CHECKP(p);
-        return *(xptr*)XADDR(p);
-    }
-}
-
-tuple_cell dm_parent(xptr node)
-{
-    xptr p = get_parent_node(node);
-    return (p == XNULL) ? tuple_cell::eos() : tuple_cell::node(p);
+    return node.hasParent() ? tuple_cell::node(node.getParent()) : tuple_cell::eos();
 }
 
 /*******************************************************************************
@@ -237,57 +224,55 @@ struct dm_string_value_result
     }
 };
 
-static dm_string_value_result dsvr;
+static
+dm_string_value_result dsvr;
 
-void dm_string_value_traverse(xptr node)
+inline static
+void dm_string_value_traverse(Node node)
 {
-    CHECKP(node);
-    xmlscm_type node_type = GETSCHEMENODE(XADDR(node))->type;
+    node.checkp();
 
-    switch (node_type)
-    {
-        case document:
-        case element:   {
-                            xptr p = first_child(node);
+    switch (node.getNodeType()) {
+        case document :
+        case element : {
+            xptr p = getFirstChild(node.getPtr());
 
-                            while (p != XNULL)
-                            {
-                                dm_string_value_traverse(p);
+            while (p != XNULL) {
+                dm_string_value_traverse(p);
 
-                                CHECKP(p);
-                                p = GETRIGHTPOINTER(p);
-                            }
+                CHECKP(p);
+                p = nodeGetRightSibling(p);
+            }
+            return;
+        }
+        case text: {
+            TextNode text(node);
+            strsize_t size = text.getTextSize();
+            xptr data = text.getTextPointer();
 
-                            return;
-                        }
-        case text:      {
-                            strsize_t size = getTextSize(T_DSC(node));
-                            xptr data = getTextPtr(T_DSC(node));
-
-                            switch (dsvr.type)
-                            {
-                                case dsvrt_empty    : dsvr.type = dsvrt_pstr_both;
-                                                      dsvr.p = data;
-                                                      dsvr.size = size;
-                                                      break;
-                                case dsvrt_pstr_both: dsvr.type = dsvrt_e_str;
-                                                      dsvr.buf.append_pstr(dsvr.p, dsvr.size);
-                                                      dsvr.buf.append_pstr(data, size);
-                                                      break;
-                                case dsvrt_e_str    : dsvr.buf.append_pstr(data, size);
-                                                      break;
-                                default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of dsvr passed to dm_string_value_traverse");
-                            }
-
-                         }
+            switch (dsvr.type) {
+                case dsvrt_empty    : dsvr.type = dsvrt_pstr_both;
+                                      dsvr.p = data;
+                                      dsvr.size = size;
+                                      break;
+                case dsvrt_pstr_both: dsvr.type = dsvrt_e_str;
+                                      dsvr.buf.append_pstr(dsvr.p, dsvr.size);
+                                      dsvr.buf.append_pstr(data, size);
+                                      break;
+                case dsvrt_e_str    : dsvr.buf.append_pstr(data, size);
+                                      break;
+                default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of dsvr passed to dm_string_value_traverse");
+            }
+        }
+        default: break;
     }
 }
 
-inline tuple_cell dm_string_value_call_traverse(xptr node)
+inline static
+tuple_cell dm_string_value_call_traverse(Node node)
 {
-    // it is assumed that CHECKP is already called on node
     dsvr.init();
-    dm_string_value_traverse(node);
+    dm_string_value_traverse(node.getPtr());
     switch (dsvr.type)
     {
         case dsvrt_empty    : return EMPTY_STRING_TC;
@@ -297,18 +282,18 @@ inline tuple_cell dm_string_value_call_traverse(xptr node)
     }
 }
 
-tuple_cell dm_string_value(xptr node)
+tuple_cell dm_string_value(Node node)
 {
-    CHECKP(node);
+    node.checkp();
 
-    switch (GETSCHEMENODE(XADDR(node))->type) {
+    switch (node.getNodeType()) {
         case element: {
-            xmlscm_type type = E_DSC(node)->type;
+            xmlscm_type type = ElementNode(node).getType();
 
             if (type == xs_untyped || type == xs_anyType) {
                 return dm_string_value_call_traverse(node);
             } else {
-                xptr p = first_child(node);
+                xptr p = getFirstChild(node.getPtr());
                 if (p == XNULL)
                     return EMPTY_STRING_TC;
                 else
@@ -321,13 +306,13 @@ tuple_cell dm_string_value(xptr node)
         case text:
         case comment:
         case attribute: {
-            return tuple_cell::atomic_text(node);
+            return tuple_cell::atomic_text(CommonTextNode(node));
         }
         case xml_namespace: {
-            return tuple_cell::atomic_deep(xs_string, NS_DSC(node)->ns->uri);
+            return tuple_cell::atomic_deep(xs_string, NSNode(node).getNamespaceLocal()->uri);
         }
         case pr_ins: {
-            return tuple_cell::atomic_pi(node);
+            return tuple_cell::atomic_pi(PINode(node));
         }
         default:
             throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:string-value");
@@ -342,37 +327,39 @@ tuple_cell dm_string_value(xptr node)
  * is untypedAtomic. Typed value of a attribute node is the same
  * as node has.
  ******************************************************************************/
-tuple_cell dm_typed_value(xptr node)
+tuple_cell dm_typed_value(Node node)
 {
-    CHECKP(node);
+    node.checkp();
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : return cast(dm_string_value(node), xs_untypedAtomic);
-        case element        : {
-                                  xmlscm_type type = E_DSC(node)->type;
-                                  if (type == xs_untyped || type == xs_anyType)
-                                  {
-                                      tuple_cell res = dm_string_value(node);
-                                      res.set_xtype(xs_untypedAtomic);
-                                      return res;
-                                  }
-                                  else
-                                      return cast(dm_string_value(node), type);
-                              }
-        case attribute      : {
-                                  xmlscm_type type = A_DSC(node)->type;
-                                  return cast(dm_string_value(node), type);
-                              }
-        case xml_namespace  : return dm_string_value(node);
-        case pr_ins         : return dm_string_value(node);
-        case comment        : return dm_string_value(node);
-        case text           : {
-                                  tuple_cell res = dm_string_value(node);
-                                  res.set_xtype(xs_untypedAtomic);
-                                  return res;
-                              }
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:typed-value");
+    switch (node.getNodeType()) {
+        case document :
+            return cast(dm_string_value(node), xs_untypedAtomic);
+        case element : {
+            xmlscm_type type = ElementNode(node).getType();
+
+            if (type == xs_untyped || type == xs_anyType) {
+                tuple_cell res = dm_string_value(node);
+                res.set_xtype(xs_untypedAtomic);
+                return res;
+            } else {
+                return cast(dm_string_value(node), type);
+            }
+        }
+        case attribute : {
+            xmlscm_type type = AttributeNode(node).getType();
+            return cast(dm_string_value(node), type);
+        }
+        case xml_namespace  :
+        case pr_ins :
+        case comment :
+            return dm_string_value(node);
+        case text : {
+            tuple_cell res = dm_string_value(node);
+            res.set_xtype(xs_untypedAtomic);
+            return res;
+        }
+        default :
+            throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:typed-value");
     }
 }
 
@@ -449,79 +436,203 @@ const char* xmlscm_type2c_str(xmlscm_type type)
         default                     : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type");
     }
 }
-/*
-tuple_cell dm_type_name(xptr node)
-{
-    CHECKP(node);
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : return tuple_cell::eos();
-        case element        : return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(E_DSC(node)->type));
-        case attribute      : return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(A_DSC(node)->type));
-        case xml_namespace  : return tuple_cell::eos();
-        case pr_ins         : return tuple_cell::eos();
-        case comment        : return tuple_cell::eos();
-        case text           : return tuple_cell::atomic_xs_QName_deep("xs", "untypedAtomic");
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:type-name");
-    }
-}
-*/
-tuple_cell dm_nilled(xptr node)
+tuple_cell dm_nilled(Node node)
 {
-    CHECKP(node);
+    node.checkp();
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : return tuple_cell::eos();
-        case element        : return tuple_cell::atomic(false);
-        case attribute      : return tuple_cell::eos();
-        case xml_namespace  : return tuple_cell::eos();
-        case pr_ins         : return tuple_cell::eos();
-        case comment        : return tuple_cell::eos();
-        case text           : return tuple_cell::eos();
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:nilled");
+    switch (node.getNodeType()) {
+        case document :
+        case attribute :
+        case xml_namespace :
+        case pr_ins :
+        case comment :
+        case text :
+            return tuple_cell::eos();
+        case element :
+            return tuple_cell::atomic(false);
+        default :
+            throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:nilled");
     }
 }
 
-tuple_cell dm_document_uri(xptr node)
+tuple_cell dm_document_uri(Node node)
+{
+    node.checkp();
+
+    switch (node.getNodeType()) {
+        case element :
+        case attribute :
+        case xml_namespace :
+        case pr_ins :
+        case comment :
+        case text :
+            return tuple_cell::eos();
+        case document : {
+            CommonTextNode doc = node;
+            U_ASSERT(!doc.isPstrLong());
+            strsize_t size = doc.getTextSize();
+            if (size == 0) {
+                return tuple_cell::eos();
+            } else {
+                char *t = se_new char[size + 1];
+                t[size] = '\0';
+                doc.copyToBuffer(t, 0, size);
+                return tuple_cell::atomic(xs_anyURI, t);
+            }
+        }
+        default :
+            throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:document-uri");
+    }
+}
+
+typedef std::map<std::string,xmlns_ptr> nms_map;
+void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynamic_context *cxt)
+{
+    nms_map mp;
+    nms_map::iterator it;
+
+    const inscmap * dcins = cxt->get_inscope_namespaces();
+
+    // TODO: HACK below!!!
+    inscmap::const_iterator dci = dcins->begin();
+    for (;dci != dcins->end(); dci++) {
+        if (dci->second.size() > 0) {
+            mp[dci->first] = dci->second.at(0);
+        }
+    }
+
+    while (node.getNodeType() != virtual_root) {
+        node.checkp();
+        schema_node_cptr scm = node.getSchemaNode();
+
+        //1. namespace nodes
+        xptr ns = getFirstChildByType(node.getPtr(), xml_namespace);
+
+        while (ns != XNULL) {
+            CHECKP(ns);
+            xmlns_ptr nsp = NSNode(ns).getNamespaceLocal();
+            const char* pref=nsp->prefix;
+            if ((it=mp.find(pref))==mp.end())
+                mp[pref]=nsp;
+            ns = getNextSiblingOfSameSort(ns);
+        }
+
+        //2. self namespace
+        if (scm->get_xmlns() != NULL_XMLNS) {
+            const char* pref=scm->get_xmlns()->prefix;
+            if ((it=mp.find(pref))==mp.end())
+            {
+                mp[pref]=scm->get_xmlns();
+            }
+        }
+
+        //3. attributes
+        xptr attr=getFirstChildByType(node.getPtr(), attribute);
+        //3.1 filling set
+        std::set<xmlns_ptr> atns;
+        while (attr!=XNULL)
+        {
+            CHECKP(attr);
+            schema_node_cptr sca = getSchemaNode(attr);
+            if (sca->get_xmlns()!=NULL)
+                atns.insert(sca->get_xmlns());
+            attr = getNextAttribute(attr);
+        }
+
+        //3.2 copying to map
+        int ctr = 0;
+        std::set<xmlns_ptr>::iterator sit = atns.begin();
+        while(sit != atns.end())
+        {
+            const char* pref = (*sit)->prefix;
+            if ((it=mp.find(pref))!=mp.end())
+            {
+                if (it->second!=*sit)
+                {
+                    xmlns_ptr new_ns=generate_prefix(ctr++,(*sit)->uri,cxt);
+                    mp[new_ns->prefix]=new_ns;
+                }
+            }
+            else
+            {
+                mp[pref]=(*sit);
+            }
+            ++sit;
+        }
+
+        node.checkp();
+        if (!node.hasParent()) {
+            break;
+        }
+
+        node = node.getParent();
+    }
+
+    it = mp.begin();
+    while (it!=mp.end())
+    {
+        result.push_back(it->second);
+        ++it;
+    }
+}
+
+tuple_cell se_node_local_name(xptr node)
 {
     CHECKP(node);
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case document       : {
-                                  d_dsc *d = D_DSC(node);
-                                  /* Document name and URI could not be greater than PSTRMAXSIZE */
-                                  size_t size = (size_t)getTextSize(d);
-                                  if (size == 0) return tuple_cell::eos();
-                                  xptr data = getTextPtr(d);
-                                  char *t = new char[size + 1];
-                                  t[size] = '\0';
-                                  estr_copy_to_buffer(t, data, size);
-                                  return tuple_cell::atomic(xs_anyURI, t);
+    switch (getNodeType(node)) {
+        case comment        :
+        case text           :
+        case document       : return tuple_cell::eos();
+
+        case element        :
+        case attribute      : return tuple_cell::atomic_deep(xs_NCName, getSchemaNode(node)->get_name());
+
+        case xml_namespace  : {
+                                  const NSNode nsn(node);
+
+                                  if (nsn.isNullPrefix()) {
+                                      return tuple_cell::eos();
+                                  } else {
+                                      return tuple_cell::atomic_deep(xs_NCName, nsn.getNamespaceLocal()->prefix);
+                                  }
                               }
-        case element        : return tuple_cell::eos();
-        case attribute      : return tuple_cell::eos();
-        case xml_namespace  : return tuple_cell::eos();
-        case pr_ins         : return tuple_cell::eos();
-        case comment        : return tuple_cell::eos();
-        case text           : return tuple_cell::eos();
-        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:nilled");
+
+        case pr_ins         : {
+                                  const PINode pin(node);
+                                  const size_t target = pin.getPITargetSize();
+                                  char * t = se_new char[target + 1];
+                                  t[target] = '\0';
+                                  pin.copyToBuffer(t, 0, target);
+                                  return tuple_cell::atomic(xs_NCName, t);
+                              }
+
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to se_node_local_name");
     }
 }
 
-dm_node_kind_type dm_node_kind(xptr node)
+tuple_cell se_node_namespace_uri(xptr node)
 {
     CHECKP(node);
 
-    switch (GETSCHEMENODE(XADDR(node))->type)
-    {
-        case element    : return nk_element;
-        case text       : return nk_text;
-        case attribute  : return nk_attribute;
-        case document   : return nk_document;
-        default         : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-kind");
+    switch (getNodeType(node)) {
+        case xml_namespace  :
+        case pr_ins         :
+        case comment        :
+        case text           :
+        case document       : return tuple_cell::eos();
+
+        case element        :
+        case attribute      : {
+                                  xmlns_ptr xmlns = getSchemaNode(node)->get_xmlns();
+                                  if (xmlns != NULL_XMLNS) {
+                                      U_ASSERT(xmlns->uri);
+                                      return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
+                                  }
+                                  return tuple_cell::eos();
+                              }
+        default             : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
     }
 }
 

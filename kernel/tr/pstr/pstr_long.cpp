@@ -9,7 +9,7 @@
 #include "tr/strings/strings.h"
 #include "tr/strings/e_string.h"
 #include "tr/pstr/pstr_long.h"
-#include "tr/structures/nodes.h"
+#include "tr/structures/nodeutils.h"
 #include "tr/pstr/pstr.h"
 #include "common/errdbg/d_printf.h"
 
@@ -32,6 +32,34 @@ static xptr				intl_last_block_list_block;
 static xptr				intl_first_blb;
 
 static pstr_long_last_blk_ftr	intl_ftr;
+
+inline static
+void setNodePstrLongData(xptr node, xptr textptr)
+{
+    WRITEP(node);
+    internal::node_text_t * nodetext = getTextFromAnyNode(node);
+    memcpy(nodetext->data, &textptr, sizeof(xptr));
+    nodetext->size = internal::textInPstrLong;
+}
+
+inline static
+xptr getNodePstrLongData(xptr node)
+{
+    xptr result;
+    CHECKP(node);
+    internal::node_text_t * nodetext = getTextFromAnyNode(node);
+    U_ASSERT(nodetext->size == internal::textInPstrLong);
+    memcpy(&result, nodetext->data, sizeof(xptr));
+    return result;
+}
+
+inline static
+void clearPstrLong(xptr node)
+{
+    WRITEP(node);
+    getTextFromAnyNode(node)->size = 0;
+}
+
 
 #ifndef MIN
 #define MIN(a,b)		((a) < (b) ? (a) : (b))
@@ -315,34 +343,34 @@ static xptr pstr_long_create_str2(bool persistent, const char *data, pstr_long_o
 }
 
 static xptr pstr_long_append_tail_estr2(const xptr str_ptr,const xptr data, pstr_long_off_t size);
-static xptr pstr_long_append_tail2(const xptr str_ptr,const void *data, pstr_long_off_t size, text_type ttype);
-xptr pstr_long_create_str2(bool persistent, const void *data, pstr_long_off_t size, text_type ttype)
+static xptr pstr_long_append_tail2(const xptr str_ptr, const text_source_t src);
+xptr pstr_long_create_str2(bool persistent, const text_source_t src)
 {
 	xptr str_ptr;
-	switch (ttype)
+	switch (src.type)
 	{
 	case text_mem:
-		str_ptr = pstr_long_create_str2(persistent, (char*)data, size);
+		str_ptr = pstr_long_create_str2(persistent, src.u.cstr, src.size);
 		return str_ptr;
 	case text_doc:
-		if (size <= PSTRMAXSIZE)
+		if (src.size <= PSTRMAXSIZE)
 		{
-			char *tmp = (char*)malloc((size_t)size); //FIXME? sb
-			const xptr ptr=*(xptr*)data;
+			char *tmp = (char*) malloc((size_t) src.size); //FIXME? sb
+			const xptr ptr= src.u.data;
 			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), (size_t)size);
-			const xptr res = pstr_long_create_str2(persistent, tmp, size);
+			memcpy(tmp, (char*) XADDR(ptr), (size_t)src.size);
+			const xptr res = pstr_long_create_str2(persistent, tmp, src.size);
 			free(tmp);
 			return res;
 		}
 		else
 		{
 			str_ptr = pstr_long_create_str2(persistent, "", 0);
-			return pstr_long_append_tail2(str_ptr, data, size, ttype);;
+			return pstr_long_append_tail2(str_ptr, src);
 		}
 	case text_estr:
 		str_ptr = pstr_long_create_str2(persistent, "", 0);
-		str_ptr = pstr_long_append_tail_estr2(str_ptr, *(xptr*)data, size);
+		str_ptr = pstr_long_append_tail_estr2(str_ptr, src.u.data, src.size);
 
 		return str_ptr;
 	}
@@ -350,15 +378,12 @@ xptr pstr_long_create_str2(bool persistent, const void *data, pstr_long_off_t si
 	U_ASSERT(false);
 	return XNULL;
 }
-xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype)
+
+
+xptr pstr_long_create_str(xptr desc, const text_source_t src)
 {
-	xptr str_ptr = pstr_long_create_str2(IS_DATA_BLOCK(desc), data, size, ttype);
-
-	WRITEP(desc);
-	T_DSC(desc)->data.lsp.size = size;
-	T_DSC(desc)->data.lsp.p = str_ptr;
-	T_DSC(desc)->ss = TEXT_IN_PSTR_LONG;
-
+	xptr str_ptr = pstr_long_create_str2(IS_DATA_BLOCK(desc), src);
+	setNodePstrLongData(desc, str_ptr);
 	return str_ptr;
 }
 
@@ -452,9 +477,8 @@ void pstr_long_delete_str2(const xptr str_ptr)
 }
 void pstr_long_delete_str(xptr desc)
 {
-    WRITEP(desc);
-    xptr intl_last_blk = T_DSC(desc)->data.lsp.p;
-    T_DSC(desc)->ss = 0;
+    xptr intl_last_blk = getNodePstrLongData(desc);
+    clearPstrLong(desc);
 
     pstr_long_delete_str2(intl_last_blk);
 }
@@ -620,13 +644,9 @@ static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, str_
 //TODO: remove and use pstr_long_append_tail_mem2
 static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_long_off_t size0)
 {
-	CHECKP(desc);
-	xptr str_ptr = ((struct t_dsc *)XADDR(desc))->data.lsp.p;
-
+	xptr str_ptr = getNodePstrLongData(desc);
 	str_ptr = pstr_long_append_tail_mem2(str_ptr, data, size0);
-    WRITEP(desc);
-    T_DSC(desc)->data.lsp.size += size0;
-    T_DSC(desc)->data.lsp.p = str_ptr;
+	setNodePstrLongData(desc, str_ptr);
 }
 
 
@@ -643,13 +663,9 @@ static xptr pstr_long_append_tail_estr2(const xptr str_ptr,const xptr data, pstr
 }
 static void pstr_long_append_tail_estr(const xptr desc,const xptr data, pstr_long_off_t size)
 {
-	CHECKP(desc);
-	xptr str_ptr = ((struct t_dsc *)XADDR(desc))->data.lsp.p;
-
+    xptr str_ptr = getNodePstrLongData(desc);
 	str_ptr = pstr_long_append_tail_estr2(str_ptr, data, size);
-    WRITEP(desc);
-    T_DSC(desc)->data.lsp.size += size;
-    T_DSC(desc)->data.lsp.p = str_ptr;
+    setNodePstrLongData(desc, str_ptr);
 }
 
 ///////////////////////
@@ -910,59 +926,53 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src_desc)
 {
 	U_ASSERT(dst_desc != src_desc);
 	CHECKP(src_desc);
-	U_ASSERT(isPstrLong(T_DSC(src_desc)));
-	xptr src_ptr = T_DSC(src_desc)->data.lsp.p;
-	pstr_long_off_t src_size = T_DSC(src_desc)->data.lsp.size;
-	CHECKP(dst_desc);
-	xptr dst_ptr = T_DSC(dst_desc)->data.lsp.p;
+	U_ASSERT(CommonTextNode(src_desc).isPstrLong());
+	xptr src_ptr = getNodePstrLongData(src_desc);
+	pstr_long_off_t src_size = pstr_long_bytelength2(src_ptr);
+	xptr dst_ptr = getNodePstrLongData(dst_desc);
 
 	dst_ptr = pstr_long_append_tail2(dst_ptr, src_ptr, src_size);
 
-	WRITEP(dst_desc);
-	T_DSC(dst_desc)->data.lsp.size += src_size;
-	T_DSC(dst_desc)->data.lsp.p = dst_ptr;
+	setNodePstrLongData(dst_desc, dst_ptr);
+//	T_DSC(dst_desc)->data.lsp.size += src_size;
 }
 
 //pre: size is actual string size for pstr_long strings
 //FIXME: make pre cond - size <= actual stirng size for pstr_long strings
-static xptr pstr_long_append_tail2(xptr str_ptr,const void *data, pstr_long_off_t size, text_type ttype)
+static xptr pstr_long_append_tail2(xptr str_ptr, const text_source_t src)
 {
-	switch (ttype)
+	switch (src.type)
 	{
 	case text_mem:
-		return pstr_long_append_tail_mem2(str_ptr, (char*)data, size);
+		return pstr_long_append_tail_mem2(str_ptr, src.u.cstr, src.size);
 	case text_doc:
-		if (size <= PSTRMAXSIZE)
+		if (src.size <= PSTRMAXSIZE)
 		{
-			char *tmp = (char*)malloc((size_t)size); //FIXME? sb
-			const xptr ptr=*(xptr*)data;
+	        const xptr ptr= src.u.data;
+			char *tmp = (char*)malloc((size_t)src.size); //FIXME? sb
 			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), (size_t)size);
-			str_ptr = pstr_long_append_tail_mem2(str_ptr, tmp, size);
+			memcpy(tmp, (char*)XADDR(ptr), (size_t)src.size);
+			str_ptr = pstr_long_append_tail_mem2(str_ptr, tmp, src.size);
 			free(tmp);
 			return str_ptr;
 		}
 		else
 		{
-			const xptr ptr=*(xptr*)data;
-			return pstr_long_append_tail2(str_ptr, ptr, size);
+	        const xptr ptr= src.u.data;
+			return pstr_long_append_tail2(str_ptr, ptr, src.size);
 		}
 	case text_estr:
-		return pstr_long_append_tail_estr2(str_ptr, *(xptr*)data, size);
+		return pstr_long_append_tail_estr2(str_ptr, src.u.data, src.size);
 	}
 	U_ASSERT(false);
 	return XNULL;
 }
 
-void pstr_long_append_tail(const xptr desc,const void *data, pstr_long_off_t size, text_type ttype)
+void pstr_long_append_tail(const xptr desc, const text_source_t src)
 {
-	CHECKP(desc);
-	xptr str_ptr = ((struct t_dsc *)XADDR(desc))->data.lsp.p;
-
-	str_ptr = pstr_long_append_tail2(str_ptr, data, size, ttype);
-    WRITEP(desc);
-    T_DSC(desc)->data.lsp.size += size;
-    T_DSC(desc)->data.lsp.p = str_ptr;
+	xptr str_ptr = getNodePstrLongData(desc);
+	str_ptr = pstr_long_append_tail2(str_ptr, src);
+	setNodePstrLongData(desc, str_ptr);
 }
 
 ///
@@ -1071,8 +1081,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 	U_TRACE(("dest.addr=%p, size=%ld\n", desc.addr, size));
 	U_ASSERT(size >= 0);
 	CHECKP(desc);
-	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data.lsp.p;
-	pstr_long_off_t trunc_ofs = ((struct t_dsc *)XADDR(desc))->data.lsp.size - size;
+	intl_last_blk = getNodePstrLongData(desc);
+	pstr_long_off_t trunc_ofs = pstr_long_bytelength2(intl_last_blk) - size;
 	U_ASSERT(trunc_ofs > 0);
 
 	CHECKP(intl_last_blk);
@@ -1155,9 +1165,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				memcpy((char*)XADDR(intl_last_blk) + map_start, intl_last_map_entry, mapsize);
 				memcpy(ftr, &intl_ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
 
-	            WRITEP(desc);
-	            T_DSC(desc)->data.lsp.size -= size;
-	            T_DSC(desc)->data.lsp.p = intl_last_blk;
+	            setNodePstrLongData(desc, intl_last_blk);
+//	            T_DSC(desc)->data.lsp.size -= size;
 
 				charset_handler->free_char_counter(intl_char_counter);
 
@@ -1184,8 +1193,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 					ftr->first_blk_char_count -= cnt;
 				}
 
-	            WRITEP(desc);
-	            T_DSC(desc)->data.lsp.size -= size;
+//	            WRITEP(desc);
+//	            T_DSC(desc)->data.lsp.size -= size;
 
 				charset_handler->free_char_counter(intl_char_counter);
 
@@ -1209,8 +1218,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				ftr->first_blk_char_count -= cnt;
 			}
 
-            WRITEP(desc);
-            T_DSC(desc)->data.lsp.size -= size;
+//            WRITEP(desc);
+//            T_DSC(desc)->data.lsp.size -= size;
 
 			charset_handler->free_char_counter(intl_char_counter);
 
@@ -1302,10 +1311,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 	intl_finalize_str(IS_DATA_BLOCK(desc), true);
 	charset_handler->free_char_counter(intl_char_counter);
 
-    WRITEP(desc);
-    U_ASSERT(isPstrLong(T_DSC(desc)));
-    T_DSC(desc)->data.lsp.size -= size;
-    T_DSC(desc)->data.lsp.p = intl_last_blk;
+    setNodePstrLongData(desc, intl_last_blk);
+//    T_DSC(desc)->data.lsp.size -= size;
 }
 
 
@@ -1318,7 +1325,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 	pstr_long_off_t size = size0;
 	CHECKP(desc);
-	intl_last_blk = T_DSC(desc)->data.lsp.p;
+	intl_last_blk = getNodePstrLongData(desc);
 
 	CHECKP(intl_last_blk);
 	struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
@@ -1342,13 +1349,13 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 		CHECKP(first_blk);
 		VMM_SIGNAL_MODIFICATION(first_blk);
-		
+
 		U_ASSERT(BLOCKXPTR(intl_ftr.start) == first_blk); // we changed ftr->start
 		memcpy(XADDR(intl_ftr.start), data, (size_t)size);
 
-	    WRITEP(desc);
-	    U_ASSERT(isPstrLong(T_DSC(desc)));
-	    T_DSC(desc)->data.lsp.size += size;
+//	    WRITEP(desc);
+//	    U_ASSERT(isPstrLong(T_DSC(desc)));
+//	    T_DSC(desc)->data.lsp.size += size;
 
 		charset_handler->free_char_counter(intl_char_counter);
 		return;
@@ -1557,10 +1564,8 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		intl_ftr.block_list_size = real_bls;
 		intl_finalize_str(IS_DATA_BLOCK(desc), true);
 
-        WRITEP(desc);
-        U_ASSERT(isPstrLong(T_DSC(desc)));
-        T_DSC(desc)->data.lsp.size += size0;
-        T_DSC(desc)->data.lsp.p = intl_last_blk;
+        setNodePstrLongData(desc, intl_last_blk);
+//        T_DSC(desc)->data.lsp.size += size0;
 
 		charset_handler->free_char_counter(intl_char_counter);
 		return;
@@ -1571,36 +1576,36 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 	memcpy(ftr, &intl_ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
 
-    WRITEP(desc);
-    T_DSC(desc)->data.lsp.size += size0;
+//    WRITEP(desc);
+//    T_DSC(desc)->data.lsp.size += size0;
 
 	charset_handler->free_char_counter(intl_char_counter);
 }
 
-void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, text_type ttype)
+void pstr_long_append_head(xptr desc, const text_source_t src)
 {
-	switch (ttype)
+	switch (src.type)
 	{
 	case text_mem:
-		pstr_long_append_head(desc, (char*)data, size);
+		pstr_long_append_head(desc, src.u.cstr, src.size);
 		return;
 	case text_estr:
 		{
 			//FIXME!!!!!
-			char *tmp = (char*)malloc(size); //FIXME? sb
-			estr_copy_to_buffer(tmp, *(xptr*)data, size);
-			pstr_long_append_head(desc, tmp, size);
+			char *tmp = (char*)malloc(src.size); //FIXME? sb
+			estr_copy_to_buffer(tmp, src.u.data, src.size);
+			pstr_long_append_head(desc, tmp, src.size);
 			free(tmp);
 			return;
 		}
 	case text_doc:
-		if (size <= PSTRMAXSIZE)
+		if (src.size <= PSTRMAXSIZE)
 		{
-			char *tmp = (char*)malloc((size_t)size); //FIXME? sb
-			const xptr ptr=*(xptr*)data;
+			char *tmp = (char*)malloc((size_t)src.size); //FIXME? sb
+			const xptr ptr = src.u.data;
 			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), (size_t)size);
-			pstr_long_append_head(desc, tmp, size);
+			memcpy(tmp, (char*)XADDR(ptr), (size_t) src.size);
+			pstr_long_append_head(desc, tmp, src.size);
 			free(tmp);
 			return;
 		}
@@ -1608,7 +1613,7 @@ void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, tex
 		{
 			//TODO!!! - test it
 			char *tmp = (char*)malloc(PAGE_SIZE); //FIXME? sb
-			const xptr ptr=*(xptr*)data;
+			const xptr ptr = src.u.data;
 			pstr_long_cursor cur(ptr, true);
 			char *strptr;
 			int len;
@@ -1629,8 +1634,8 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 	U_TRACE(("desc.addr=%p, size=%ld\n", desc.addr, size));
 	U_ASSERT(size >= 0);
 	CHECKP(desc);
-	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data.lsp.p;
-	U_ASSERT(size <= ((struct t_dsc *)XADDR(desc))->data.lsp.size);
+	intl_last_blk = getNodePstrLongData(desc);
+	U_ASSERT(size <= pstr_long_bytelength2(desc));
 
 	CHECKP(intl_last_blk);
 	struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
@@ -1660,13 +1665,12 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 		intl_ftr.first_blk_char_count -= intl_char_counter->count_chars((char*)XADDR(intl_ftr.start), size);
 		intl_ftr.start = trunc_from;
 
-		CHECKP(intl_last_blk);
-		VMM_SIGNAL_MODIFICATION(intl_last_blk);
+		WRITEP(intl_last_blk);
 		ftr->start = intl_ftr.start;
 		ftr->first_blk_char_count = intl_ftr.first_blk_char_count;
 
-	    WRITEP(desc);
-	    T_DSC(desc)->data.lsp.size -= size;
+//	    WRITEP(desc);
+//	    T_DSC(desc)->data.lsp.size -= size;
 
 		charset_handler->free_char_counter(intl_char_counter);
 		return;
@@ -1815,10 +1819,8 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 	VMM_SIGNAL_MODIFICATION(intl_last_blk);
 	intl_finalize_str(IS_DATA_BLOCK(desc), true);
 
-    WRITEP(desc);
-    U_ASSERT(isPstrLong(T_DSC(desc)));
-    T_DSC(desc)->data.lsp.size -= size;
-    T_DSC(desc)->data.lsp.p = intl_last_blk;
+    setNodePstrLongData(desc, intl_last_blk);
+//    T_DSC(desc)->data.lsp.size -= size;
 
 	charset_handler->free_char_counter(intl_char_counter);
 }
@@ -1858,8 +1860,7 @@ void pstr_long_feed2(xptr str,	string_consumer_fn fn, void *p)
 }
 void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p)
 {
-	CHECKP(desc);
-	pstr_long_feed2(((struct t_dsc *)XADDR(desc))->data.lsp.p, fn, p);
+	pstr_long_feed2(getNodePstrLongData(checkp(desc)), fn, p);
 }
 
 void pstr_long_copy_to_buffer2(char *buf, const xptr &str_ptr, pstr_long_off_t size)
@@ -1881,8 +1882,8 @@ void pstr_long_copy_to_buffer2(char *buf, const xptr &str_ptr, pstr_long_off_t s
 
 void pstr_long_copy_to_buffer(char *buf, xptr desc)
 {
-	CHECKP(desc);
-	pstr_long_copy_to_buffer2(buf, ((struct t_dsc *)XADDR(desc))->data.lsp.p, ((struct t_dsc *)XADDR(desc))->data.lsp.size);
+	xptr pstr_blk = getNodePstrLongData(checkp(desc));
+	pstr_long_copy_to_buffer2(buf, pstr_blk, pstr_long_bytelength2(pstr_blk));
 }
 
 pstr_long_off_t pstr_long_length(const xptr data)
@@ -1912,6 +1913,83 @@ pstr_long_off_t pstr_long_length(const xptr data)
 
 	return cnt;
 }
+
+pstr_long_off_t pstr_long_bytelength2(const xptr data)
+{
+        //TODO: there's no need to copy anything since we work with only one block
+        intl_last_blk = data;
+
+        CHECKP(intl_last_blk);
+        struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
+        memcpy(&intl_ftr, ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
+
+        //two cases when the whole string is in the first block (and we can't assuse it's filled upto its end)
+        if (same_block(intl_ftr.start, intl_last_blk))
+        {
+                U_ASSERT(intl_ftr.cursor > 0);
+                U_ASSERT(intl_ftr.cursor >= ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start))) );
+                return intl_ftr.cursor - ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start)));
+        }
+        if (same_block(intl_ftr.start, ((struct pstr_long_blk_hdr *)XADDR(intl_last_blk))->prev_blk) && intl_ftr.cursor < 0)
+        {
+                return -intl_ftr.cursor - ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start)));
+        }
+
+        intl_copy_map_to_buf();
+        const int bls = intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
+        const int mapsize = intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE;
+        intl_last_block_list_entry = (struct pstr_long_block_list_entry*)(intl_block_list_end_addr() - bls);
+        memcpy(intl_last_block_list_entry,
+                intl_last_blk_last_ble_addr(mapsize, bls),
+                bls);
+
+        pstr_long_off_t cur = 0;
+        bool first_me = true;
+        pstr_long_off_t sz;
+
+        pstr_long_block_list_map_entry *mapent = intl_map_end();
+        sz = PAGE_SIZE - ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start)));
+        cur += sz;
+
+        //FIXME: this loop may be 'unrolled' to run in constant time
+        while (mapent > intl_last_map_entry)
+        {
+                mapent--; //FIXME!!!!
+                sz = 0;
+                int gap = 0;
+                if (first_me)
+                {
+                        gap = intl_ftr.first_blb_gap_size;
+                        first_me = false;
+                }
+                int bll = PSTR_LONG_FULL_BLOCK_LIST_SIZE;
+                if (mapent == intl_last_map_entry)
+                        bll = intl_ftr.pred_blb_size;
+
+                sz = bll - gap;
+                sz *= (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
+
+                cur += sz;
+        }
+
+        const pstr_long_off_t skip_fb = intl_ftr.block_list_size;
+        sz = skip_fb * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
+        cur += sz;
+
+        if (intl_ftr.cursor >= 0)
+        {
+                U_ASSERT(intl_ftr.cursor >= PSTR_LONG_BLK_HDR_SIZE);
+                cur += intl_ftr.cursor-PSTR_LONG_BLK_HDR_SIZE;
+        }
+        else
+        {
+                cur += -PSTR_LONG_BLK_HDR_SIZE-intl_ftr.cursor;
+                cur -= PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE;
+        }
+        return cur;
+}
+
+
 
 pstr_long_off_t pstr_long_bytelength2(const xptr data)
 {

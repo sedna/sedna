@@ -80,7 +80,6 @@ PPOpIn l2pFnNamespaceUri(dynamic_context *dyn_cxt, const operation_info &opi, ar
 PPOpIn l2pFnNamespaceUriForPrefix(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnNamespaceUriFromQName(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnNilled(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
-PPOpIn l2pFnNodeKind(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnNodeName(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnNormalizeSpace(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnNormalizeUnicode(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);

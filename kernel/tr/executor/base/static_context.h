@@ -6,7 +6,11 @@
 #ifndef _STATIC_CONTEXT_H
 #define _STATIC_CONTEXT_H
 
+#include <vector>
+#include <set>
+
 #include "tr/strings/utf8.h"
+#include "tr/structures/xmlns.h"
 #include "tr/crmutils/serialization.h"
 
 /// query prolog enumerations

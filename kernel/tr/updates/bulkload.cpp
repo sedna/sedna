@@ -12,20 +12,18 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/structures/metadata.h"
 #include "expat.h"
-#include "tr/structures/nodes.h"
 #include "common/xptr.h"
 #include "tr/mo/mo.h"
-#include "tr/crmutils/node_utils.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
 #include "tr/updates/updates.h"
 #endif
 
-/* 
+/*
  * We parse document part by part through this buffer. Since Expat
  * methods use 'int' instead of size_t we have to cast in some places.
- * The only guarantee for us is the size of this buffer is not 
+ * The only guarantee for us is the size of this buffer is not
  * greater than INT_MAX.
  */
 #define BUFFSIZE     8192
@@ -49,7 +47,6 @@ static size_t maxnm=0;
 static int nodescnt=0;
 static int curcnt=0;
 static int curproc=0;
-static bool cdata_mode=false;
 static bool is_coll=false;
 
 typedef std::pair<int,int> stat_pair;
@@ -167,24 +164,21 @@ static void processWP(const char** s, int& len)
         {
             xptr new_node;
             if (mark)
-                new_node=insert_text(XNULL,XNULL,parent,wptail,wptailsize,text_mem);
+                new_node=insert_text(XNULL, XNULL, parent, text_source_mem(wptail, wptailsize));
             else
             {
-                new_node=insert_text(left,XNULL,XNULL,wptail,wptailsize,text_mem);
+                new_node=insert_text(left, XNULL, XNULL, text_source_mem(wptail, wptailsize));
             }
             CHECKP(new_node);
-            (GETBLOCKBYNODE(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
+            getSchemaNode(new_node).modify()->lastnode_ind=nodeGetIndirection(new_node);
 #ifdef SE_ENABLE_FTSEARCH
             if (is_coll)
-                update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode));
+                update_insert_sequence(new_node,getSchemaNode(new_node));
 #endif
             mark=0;
             left=new_node;
             CHECKP(left);
-            xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
-            CHECKP(par_ind);
-            parent=*((xptr*)XADDR(par_ind));
-                    //left=insert_text(left,XNULL,XNULL,wptail,wptailsize);
+            parent = nodeGetParent(left);
         }
         wptailsize=0;
     }
@@ -239,14 +233,14 @@ static void start(void *s, const char *el, const char **attr)
         mark = 1;
     }
     CHECKP(new_node);
-    (GETBLOCKBYNODE(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
+    getSchemaNode(new_node).modify()->lastnode_ind=nodeGetIndirection(new_node);
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node, schema_node_cptr((GETBLOCKBYNODE(new_node))->snode));
+        update_insert_sequence(new_node, schema_node_cptr(getSchemaNode(new_node)));
     CHECKP(new_node);
 #endif
-    xptr par_ind=((n_dsc*)XADDR(new_node))->indir;
-    stat_pair* pr=&max_fo[(GETBLOCKBYNODE(new_node))->snode];
+    xptr par_ind=nodeGetIndirection(new_node);
+    stat_pair* pr=&max_fo[getSchemaPointer(new_node)];
     curp.push_back(pr);
     sizehnt= pr;
     parent=new_node;
@@ -276,7 +270,7 @@ static void start(void *s, const char *el, const char **attr)
         att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xs_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
 #ifdef SE_ENABLE_FTSEARCH
         if (is_coll)
-            update_insert_sequence(att,schema_node_cptr((getBlockHeaderCP(att))->snode));
+            update_insert_sequence(att, schema_node_cptr(getSchemaNode(att)));
 #endif
     }
 
@@ -284,7 +278,7 @@ static void start(void *s, const char *el, const char **attr)
     {
         left=att;
         mark=0;
-        parent=removeIndirection(par_ind);
+        parent=indirectionDereferenceCP(par_ind);
     }
     curcnt++;
     if ((curcnt*100.)/nodescnt>curproc)
@@ -301,9 +295,7 @@ static void end(void *s, const char *el)
   clear_text();
   left=parent;
   CHECKP(left);
-  xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
-  CHECKP(par_ind);
-  parent=*((xptr*)XADDR(par_ind));
+  parent = nodeGetParent(left);
   mark=0;
   curp.pop_back();
   sizehnt=curp.back();
@@ -313,25 +305,6 @@ static void end(void *s, const char *el)
 
 static void data(void *userData, const char *s, int len)
 {
-    if (cdata_mode)
-    {
-        if (wptailsize+len>maxwpsize)
-        {
-            char* z=se_new char[wptailsize+len];
-            if (wptailsize>0) memcpy(z,wptail,wptailsize);
-            memcpy(z+wptailsize,s,len);
-            wptailsize+=len;
-            maxwpsize=wptailsize;
-            delete [] wptail;
-            wptail=z;
-        }
-        else
-        {
-            memcpy(wptail+wptailsize,s,len);
-            wptailsize+=len;
-        }
-        return;
-    }
     if (wpstrip)
     {
         processWP(&s,len);
@@ -340,30 +313,21 @@ static void data(void *userData, const char *s, int len)
     text_inserted=true;
     xptr new_node;
     if (mark)
-        new_node=insert_text(XNULL,XNULL,parent,s,len,text_mem);
+        new_node=insert_text(XNULL, XNULL, parent, text_source_mem(s, len));
     else
     {
-        new_node=insert_text(left,XNULL,XNULL,s,len,text_mem);
+        new_node=insert_text(left, XNULL, XNULL, text_source_mem(s, len));
     }
     CHECKP(new_node);
-    (getBlockHeader(new_node))->snode.modify()->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
+    getSchemaNode(new_node).modify()->lastnode_ind=nodeGetIndirection(new_node);
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((GETBLOCKBYNODE(new_node))->snode));
+        update_insert_sequence(new_node, getSchemaNode(new_node));
 #endif
     mark=0;
     left=new_node;
     CHECKP(left);
-    xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
-    CHECKP(par_ind);
-
-#ifdef _MYDEBUG1
-    if ((*((xptr*)XADDR(par_ind))).layer>0)
-        {
-            crm_dbg<<"Error";
-        }
-#endif
-    parent=*((xptr*)XADDR(par_ind));
+    parent= nodeGetParent(left);
 }
 
 
@@ -432,7 +396,7 @@ static void sc_data(void *userData, const char *s, int len)
 {
     if (!text_inserted)
     {
-        if (cdata_mode||(wpstrip && isWP(s,len))) return;
+        if (wpstrip && isWP(s,len)) return;
         schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,text);
         if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,text);
         curr_fo.back()++;
@@ -504,59 +468,14 @@ static void dt_comment (void *userData, const char *data)
         new_node=insert_comment(left,XNULL,XNULL,data,strlen(data));
     }
 #ifdef SE_ENABLE_FTSEARCH
-    if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((getBlockHeaderCP(new_node))->snode));
-#endif
-    mark=0;
-    left=new_node;
-    CHECKP(left);
-    xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
-    parent=removeIndirection(par_ind);
-}
-
-
-static void sc_cdata_start (void *userData)
-{
-    schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,cdata);
-    if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,cdata);
-    curr_fo.back()++;
-    cdata_mode=true;
-}
-
-
-static void sc_cdata_end (void *userData)
-{
-    cdata_mode=false;
-}
-
-
-static void dt_cdata_start (void *userData)
-{
-    cdata_mode=true;
-    clear_text();
-}
-
-
-static void dt_cdata_end (void *userData)
-{
-    xptr new_node;
-    cdata_mode=false;
-    if (mark)
-        new_node=insert_cdata(XNULL,XNULL,parent,wptail,wptailsize);
-    else
-    {
-        new_node=insert_cdata(left,XNULL,XNULL,wptail,wptailsize);
+    if (is_coll) {
+        update_insert_sequence(new_node,getSchemaNode(new_node));
     }
-#ifdef SE_ENABLE_FTSEARCH
-    if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((getBlockHeaderCP(new_node))->snode));
 #endif
     mark=0;
     left=new_node;
     CHECKP(left);
-    xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
-    parent=removeIndirection(par_ind);
-    clear_text();
+    parent=nodeGetParent(left);
 }
 
 
@@ -581,13 +500,13 @@ static void dt_pi (void *userData, const char *target, const char *data)
     }
 #ifdef SE_ENABLE_FTSEARCH
     if (is_coll)
-        update_insert_sequence(new_node,schema_node_cptr((getBlockHeaderCP(new_node))->snode));
+        update_insert_sequence(new_node,getSchemaNode(new_node));
 #endif
     mark=0;
     left=new_node;
     CHECKP(left);
-    xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
-    parent=removeIndirection(par_ind);
+    xptr par_ind= nodeGetParentIndirection(left);
+    parent=indirectionDereferenceCP(par_ind);
 }
 
 
@@ -605,14 +524,12 @@ static void parse_load(FILE* f, se_ostream &ostr)
     XML_SetCharacterDataHandler(p, data);
     XML_SetUserData (p, &ostr);
 
-    cdata_mode=false;
-    
-    /* 
+    /*
      * We have to cast since Expat uses 'int' instead of size_t,
-     * it's safe since BUFFSIZE < INT_MAX 
+     * it's safe since BUFFSIZE < INT_MAX
      */
     len = (int)fread(Buff, 1, BUFFSIZE, f);
-    
+
     if (ferror(f))
     {
         XML_ParserFree(p);
@@ -623,9 +540,9 @@ static void parse_load(FILE* f, se_ostream &ostr)
     {
         if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
         {
-            /* 
+            /*
              * We have to cast since Expat uses 'int' instead of size_t,
-             * it's safe since BUFFSIZE < INT_MAX 
+             * it's safe since BUFFSIZE < INT_MAX
              */
             len = (int)fread(Buff, 1, BUFFSIZE, f);
             if (ferror(f))
@@ -676,10 +593,9 @@ static void parse_schema(FILE* f)
     XML_SetCommentHandler(p, sc_comment);
     XML_SetProcessingInstructionHandler(p, sc_pi);
     XML_SetCharacterDataHandler(p, sc_data);
-    cdata_mode=false;
-    /* 
+    /*
      * We have to cast since Expat uses 'int' instead of size_t,
-     * it's safe since BUFFSIZE < INT_MAX 
+     * it's safe since BUFFSIZE < INT_MAX
      */
     len = (int)fread(Buff, 1, BUFFSIZE, f);
     if (ferror(f))
@@ -692,9 +608,9 @@ static void parse_schema(FILE* f)
     {
         if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
         {
-            /* 
+            /*
              * We have to cast since Expat uses 'int' instead of size_t,
-             * it's safe since BUFFSIZE < INT_MAX 
+             * it's safe since BUFFSIZE < INT_MAX
              */
             len = (int)fread(Buff, 1, BUFFSIZE, f);
             if (ferror(f))
@@ -756,13 +672,13 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped, bool pri
     parent=docnode;
     left=XNULL;
     mark=1;
-    sc_parent=(getBlockHeaderCP(docnode))->snode;
+    sc_parent = getSchemaPointer(docnode);
 
     try
     {
         parse_schema(f);
         fseek (f, 0, SEEK_SET);
-        docnode = ((n_dsc*) XADDR(docnode))->indir;
+        docnode = nodeGetIndirection(docnode);
         parse_load(f, ostr);
 
         if (print_p)
@@ -802,7 +718,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
     left=XNULL;
     mark=1;
     CHECKP(docnode);
-    sc_parent=(GETBLOCKBYNODE(docnode))->snode;
+    sc_parent = getSchemaNode(docnode).ptr();
 #ifdef SE_ENABLE_FTSEARCH
     update_insert_sequence(docnode, schema_node_cptr(sc_parent));
 #endif
@@ -810,7 +726,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
     {
         parse_schema(f);
         fseek(f, 0, SEEK_SET);
-        docnode = ((n_dsc*) XADDR(docnode))->indir;
+        docnode = nodeGetIndirection(docnode);
         parse_load (f, ostr);
 
         if (print_p)
@@ -840,4 +756,3 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
 #endif
     return docnode;
 }
-

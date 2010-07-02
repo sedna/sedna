@@ -11,7 +11,10 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/sequence.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/crmutils/node_utils.h"
+
+#include "tr/structures/nodeinterface.h"
+#include "tr/structures/nodeutils.h"
+#include "tr/structures/textnodes.h"
 
 
 using namespace std;
@@ -104,11 +107,11 @@ inline bool _check_st_elem_data(const xptr &p, const st_item_type& it)
     {
         case st_tne_nothing : break;
         case st_tne_optional: {
-                                  xmlscm_type type = E_DSC(p)->type;
+                                  xmlscm_type type = ElementNode(p).getType();
                                   return is_same_or_derived(type, it.info.ea.type_name);
                               }
         case st_tne_present : { // because dm:nilled always returns false we do not check it here
-                                  xmlscm_type type = E_DSC(p)->type;
+                                  xmlscm_type type = ElementNode(p).getType();
                                   return is_same_or_derived(type, it.info.ea.type_name);
                               }
         default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
@@ -134,11 +137,11 @@ inline bool _check_st_attr_data(const xptr &p, const st_item_type& it)
     {
         case st_tne_nothing : break;
         case st_tne_optional: {
-                                  xmlscm_type type = A_DSC(p)->type;
+                                  xmlscm_type type = AttributeNode(p).getType();
                                   return is_same_or_derived(type, it.info.ea.type_name);
                               }
         case st_tne_present : { // because dm:nilled always returns false we do not check it here
-                                  xmlscm_type type = A_DSC(p)->type;
+                                  xmlscm_type type = AttributeNode(p).getType();
                                   return is_same_or_derived(type, it.info.ea.type_name);
                               }
         default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
@@ -162,7 +165,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 
                 CHECKP(p);
 
-                return (GETSCHEMENODEX(p)->type == document);
+                return (getNodeType(p) == document);
             }
 
         case st_document_element:
@@ -171,11 +174,10 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                 xptr p = tc.get_node();
 
                 CHECKP(p);
-                if (GETSCHEMENODEX(p)->type != document) return false;
+                if (getNodeType(p) != document) return false;
 
-
-                p = getFirstByOrderElementChild(p);
-                if (p == XNULL || getNextByOrderElement(p) != XNULL) return false;
+                p = getFirstChildByType(p, element);
+                if (p == XNULL || getNextByType(p, element) != XNULL) return false;
 
                 CHECKP(p);
                 return _check_st_elem_data(p, it);
@@ -187,7 +189,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                 xptr p = tc.get_node();
 
                 CHECKP(p);
-                if (GETSCHEMENODEX(p)->type != element) return false;
+                if (getNodeType(p) != element) return false;
 
                 return _check_st_elem_data(p, it);
             }
@@ -198,7 +200,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                 xptr p = tc.get_node();
 
                 CHECKP(p);
-                if (GETSCHEMENODEX(p)->type != attribute) return false;
+                if (getNodeType(p) != attribute) return false;
 
                 return _check_st_attr_data(p, it);
             }
@@ -210,13 +212,10 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 
                 CHECKP(p);
 
-                if (GETSCHEMENODEX(p)->type != pr_ins) return false;
+                if (getNodeType(p) != pr_ins) return false;
                 if (!it.info.ncname) return true;
 
-                pi_dsc *pi = PI_DSC(p);
-                shft target = pi->target;
-                xptr data = getTextPtr(pi);
-                bool res = (strncmp((char*)XADDR(data), it.info.ncname, target) == 0);
+                bool res = (PINode(p).compareTarget(it.info.ncname) == 0);
                 return res;
             }
 
@@ -227,7 +226,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 
                 CHECKP(p);
 
-                return (GETSCHEMENODEX(p)->type == comment);
+                return (getNodeType(p) == comment);
             }
 
         case st_text:
@@ -237,7 +236,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 
                 CHECKP(p);
 
-                return (GETSCHEMENODEX(p)->type == text);
+                return (getNodeType(p) == text);
             }
 
         case st_node:
@@ -310,34 +309,32 @@ bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached,
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-static inline string elem_name_and_type2string(const xptr& p)
+static inline
+string __type2string(const Node p, xmlscm_type scmtype)
 {
     string res;
 
-    xmlns_ptr node_ns  = GETSCHEMENODE(XADDR(p))->get_xmlns();
-    char* node_uri   = (node_ns != NULL) ? node_ns->uri : NULL;
-    char *node_local = GETSCHEMENODE(XADDR(p))->name;
+    xmlns_ptr node_ns = p.getSchemaNode()->get_xmlns();
+    const char * node_uri   = (node_ns != NULL) ? node_ns->uri : NULL;
+    const char * node_local = p.getSchemaNode()->get_name();
     if (node_uri != NULL) {res += node_uri; res += ":";}
     if (node_local != NULL) res += node_local;
     else res += "*";
-    res += ", "; res += xmlscm_type2c_str(E_DSC(p)->type);
+    res += ", "; res += xmlscm_type2c_str(scmtype);
 
     return res;
 }
 
-static inline string attr_name_and_type2string(const xptr& p)
+static inline
+string elem_name_and_type2string(const xptr& p)
 {
-    string res;
+    return __type2string(p, ElementNode(p).getType());
+}
 
-    xmlns_ptr node_ns  = GETSCHEMENODE(XADDR(p))->get_xmlns();
-    char* node_uri   = (node_ns != NULL) ? node_ns->uri : NULL;
-    char *node_local = GETSCHEMENODE(XADDR(p))->name;
-    if (node_uri != NULL) {res += node_uri; res += ":";}
-    if (node_local != NULL) res += node_local;
-    else res += "*";
-    res += ", "; res += xmlscm_type2c_str(A_DSC(p)->type);
-
-    return res;
+static inline
+string attr_name_and_type2string(const xptr& p)
+{
+    return __type2string(p, AttributeNode(p).getType());
 }
 
 
@@ -347,14 +344,13 @@ string node_type2string(const xptr& node)
 
     CHECKP(node);
 
-    switch(GETSCHEMENODEX(node)->type)
-    {
+    switch(getNodeType(node)) {
         case document:
         {
             res = "document-node(";
 
-            xptr p = getFirstByOrderElementChild(node);
-            if (p != XNULL && getNextByOrderElement(p) == XNULL)
+            xptr p = getFirstChildByType(node, element);
+            if (p != XNULL && getNextByType(p, element) == XNULL)
                 res += " element(" + elem_name_and_type2string(p) + ") ";
 
             res += ")";
@@ -366,12 +362,8 @@ string node_type2string(const xptr& node)
         case comment:       res = "comment()"; break;
         case pr_ins:
         {
-            res = "process-instruction(";
-            pi_dsc *pi = PI_DSC(node);
-            shft target = pi->target;
-            xptr data = getTextPtr(pi);
-            res = res.append((char*)XADDR(data), target);
-            res += ")";  break;
+            res = "process-instruction(" + TextNodeHelper(node).getPITarget() + ")";
+            break;
         }
         default:            res = "item()";
     }
@@ -383,17 +375,17 @@ string node_type2string(const xptr& node)
  * Covers B.1 Type Promotion section of the XQuery 1.0 spec.
  * tc contains result tuple_cell after promotion
  */
-void type_promotion(tuple_cell &tc, xmlscm_type type) 
+void type_promotion(tuple_cell &tc, xmlscm_type type)
 {
-    if (!tc.is_atomic()) 
+    if (!tc.is_atomic())
         throw XQUERY_EXCEPTION2(SE1003, "Type promotion is called on a none atomic value");
 
     xmlscm_type stype = tc.get_atomic_type();
 
-    /* Numeric type promotion: 
+    /* Numeric type promotion:
      *
-     * A value of type xs:float (or any type derived by restriction from 
-     * xs:float) can be promoted to the type xs:double. The result is the 
+     * A value of type xs:float (or any type derived by restriction from
+     * xs:float) can be promoted to the type xs:double. The result is the
      * xs:double value that is the same as the original value.
      */
     if (stype == xs_float && type == xs_double)
@@ -403,7 +395,7 @@ void type_promotion(tuple_cell &tc, xmlscm_type type)
     }
 
     /*
-     * A value of type xs:decimal (or any type derived by restriction from 
+     * A value of type xs:decimal (or any type derived by restriction from
      * xs:decimal) can be promoted to either of the types xs:float or xs:double.
      * The result of this promotion is created by casting the original value to
      * the required type. This kind of promotion may cause loss of precision.
@@ -414,8 +406,8 @@ void type_promotion(tuple_cell &tc, xmlscm_type type)
         tc = cast(tc, type);
         return;
     }
-    
-    /* URI type promotion 
+
+    /* URI type promotion
      *
      * A value of type xs:anyURI (or any type derived by restriction from
      * xs:anyURI) can be promoted to the type xs:string. The result of this

@@ -8,13 +8,13 @@
 #define XML_DATETIME_H
 
 #include "common/sedna.h"
-#include "tr/structures/nodes.h"
 #include "common/u/utime.h"
 #include "xs_decimal_t.h"
+#include "tr/structures/nodetypes.h"
 
 typedef int64_t bigint;
 
-typedef struct 
+typedef struct
 {
     int year;
     unsigned int day:9;
@@ -34,7 +34,7 @@ typedef struct
 #endif
 */
 
-typedef struct 
+typedef struct
 {
     unsigned int years;
     unsigned int days;
@@ -76,7 +76,7 @@ public:
     int fields[TOTAL_FIELDS];
 
     static const int EQUAL = 0;
-    static const int LESS_THAN = -1;    
+    static const int LESS_THAN = -1;
     static const int GREATER_THAN = 1;
 
     enum utcType
@@ -229,7 +229,7 @@ private:
     // scaners
     // -----------------------------------------------------------------------
 
-    void     getDate(const char* fBuffer, size_t& fStart, size_t& fEnd); 
+    void     getDate(const char* fBuffer, size_t& fStart, size_t& fEnd);
 
     void     getTime(const char* fBuffer, size_t& fStart, size_t& fEnd);
 
@@ -248,9 +248,9 @@ private:
                          const size_t fEnd,
                          size_t& pos);
 
-    char*    indexOf(const char* fBuffer, 
-                     const size_t start, 
-                     const size_t end, 
+    char*    indexOf(const char* fBuffer,
+                     const size_t start,
+                     const size_t end,
                      const char ch,
                      size_t& pos) const;
 
@@ -258,16 +258,16 @@ private:
                      const char ch,
                      size_t& pos) const;
 
-    int      parseInt(const char *fBuffer, 
-                      const size_t start, 
+    int      parseInt(const char *fBuffer,
+                      const size_t start,
                       const size_t end) const;
 
-    int      parseIntYear(const char* fBuffer, 
-                          const size_t start, 
+    int      parseIntYear(const char* fBuffer,
+                          const size_t start,
                           const size_t end) const;
 
-    double   parseMiliSecond(const char* fBuffer, 
-                             const size_t start, 
+    double   parseMiliSecond(const char* fBuffer,
+                             const size_t start,
                              const size_t end) const;
 
     // -----------------------------------------------------------------------
@@ -300,10 +300,10 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2);
 XMLDateTime subtractDurations(const XMLDateTime& d1, const XMLDateTime& d2);
 XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& d);
 XMLDateTime subtractDurationFromDateTime(const XMLDateTime& dt, const XMLDateTime& d);
-XMLDateTime subtractDateTimes(const XMLDateTime& dt1, const XMLDateTime& dt2); 
-XMLDateTime multiplyDuration(const XMLDateTime& d1, double v); 
-XMLDateTime divideDuration(const XMLDateTime& d1, double v); 
-xs_decimal_t divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2); 
+XMLDateTime subtractDateTimes(const XMLDateTime& dt1, const XMLDateTime& dt2);
+XMLDateTime multiplyDuration(const XMLDateTime& d1, double v);
+XMLDateTime divideDuration(const XMLDateTime& d1, double v);
+xs_decimal_t divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2);
 
 // -----------------------------------------------------------------------
 // Comparisons

@@ -9,8 +9,7 @@
 #include "tr/executor/base/sequence.h"
 #include "tr/executor/base/seq_common.h"
 #include "tr/strings/e_string.h"
-#include "tr/crmutils/node_utils.h"
-
+#include "tr/structures/nodeoperations.h"
 
 //////////////////////////////////////////////////////////////////////////////
 /// sequence

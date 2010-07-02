@@ -6,11 +6,18 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisParent.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/merge.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+
+#include "tr/structures/nodeoperations.h"
+
+/* Temporary hole plug */
+inline static
+xptr get_parent_node(const xptr node) {
+    return nodeGetParent(checkp(node));
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -18,9 +25,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
 PPAxisParent::PPAxisParent(dynamic_context *_cxt_,
-                           operation_info _info_, 
+                           operation_info _info_,
                            PPOpIn _child_,
                            NodeTestType _nt_type_,
                            NodeTestData _nt_data_) : PPIterator(_cxt_, _info_, "PPAxisParent"),
@@ -29,8 +35,8 @@ PPAxisParent::PPAxisParent(dynamic_context *_cxt_,
                            nt_data(_nt_data_)
 {
     NodeTestType type = nt_type;
-    
-    if (type == node_test_element) 
+
+    if (type == node_test_element)
         type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
 
     switch (type)
@@ -136,7 +142,7 @@ void PPAxisParent::next_node(tuple &t)
         if (cur!=XNULL)
         {
             CHECKP(cur);
-            if (GETSCHEMENODEX(cur)->type==virtual_root)
+            if (getNodeType(cur) == virtual_root)
                 cur=XNULL;
         }
     }
@@ -158,9 +164,9 @@ void PPAxisParent::next_qname(tuple &t)
         cur = get_parent_node(cur);
         if (cur==XNULL) continue;
         CHECKP(cur);
-        if (!comp_qname_type(GETSCHEMENODEX(cur),
+        if (!comp_qname_type(getSchemaNode(cur),
             nt_data.uri,
-            nt_data.ncname_local, 
+            nt_data.ncname_local,
             element))
             cur = XNULL;
     }
@@ -182,9 +188,9 @@ void PPAxisParent::next_wildcard_star(tuple &t)
         cur = get_parent_node(cur);
         if (cur==XNULL) continue;
         CHECKP(cur);
-        if (!comp_type(GETSCHEMENODEX(cur), 
+        if (!comp_type(getSchemaNode(cur),
             NULL,
-            NULL, 
+            NULL,
             element)) cur = XNULL;
     }
 
@@ -207,9 +213,9 @@ void PPAxisParent::next_wildcard_ncname_star(tuple &t)
         if (cur==XNULL) continue;
         CHECKP(cur);
         if (!
-            comp_uri_type(GETSCHEMENODEX(cur),
+            comp_uri_type(getSchemaNode(cur),
             nt_data.uri,
-            NULL, 
+            NULL,
             element))
             cur = XNULL;
     }
@@ -233,7 +239,7 @@ void PPAxisParent::next_wildcard_star_ncname(tuple &t)
         if (cur==XNULL) continue;
         CHECKP(cur);
         if (!
-            comp_local_type(GETSCHEMENODEX(cur),
+            comp_local_type(getSchemaNode(cur),
             NULL,
             nt_data.ncname_local,
             element))
@@ -258,12 +264,12 @@ void PPAxisParent::next_document(tuple &t)
 
         if (cur == XNULL) continue;
         CHECKP(cur);
-        
-        if(GETSCHEMENODEX(cur)->type != document) 
+
+        if(getNodeType(cur) != document)
         {
             cur = XNULL;
         }
-        else if(nt_data.ncname_local != NULL) 
+        else if(nt_data.ncname_local != NULL)
         {
             RelChildAxisMerge merge;
             xptr desc = merge.init(cur,

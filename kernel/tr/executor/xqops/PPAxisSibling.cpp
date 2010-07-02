@@ -6,9 +6,12 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisSibling.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
+
 
 PPAxisSibling::PPAxisSibling(dynamic_context *_cxt_,
                              operation_info _info_,
@@ -93,15 +96,8 @@ void PPAxisSibling::next_processing_instruction(tuple &t)
             next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
             if (t.is_eos()) return;
             xptr tmp=child.get(t).get_node();
-            if (tmp!=XNULL)
-            {
-                CHECKP(tmp);
-                pi_dsc* desc=(pi_dsc*)XADDR(tmp);
-                size_t tsize=desc->target;
-                if (tsize==strlen(nt_data.ncname_local)) {
-                    char* data= (char*)XADDR(getTextPtr(desc));
-                    if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
-                }
+            if (tmp!=XNULL) {
+                if (PINode(tmp).compareTarget(nt_data.ncname_local) == 0) return;
             }
         }
 }
@@ -125,30 +121,30 @@ void PPAxisSibling::next_node(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
         xptr tmp=child.get(t).get_node();
         CHECKP(tmp);
-        if (is_node_attribute(tmp)||GETSCHEMENODEX(tmp)->parent->type==virtual_root)continue;
+        if (is_attribute(tmp)||getSchemaNode(tmp)->parent->type==virtual_root)continue;
         if (following)
-            cur = ((n_dsc*)XADDR(tmp))->rdsc;
+            cur = nodeGetRightSibling(tmp);
         else
         {
-            cur = ((n_dsc*)XADDR(tmp))->ldsc;
+            cur = nodeGetLeftSibling(tmp);
             if (cur!=XNULL)
             {
                 CHECKP(cur);
-                if (!is_node_child(cur)) cur=XNULL;
+                if (!Node(cur).isNodeChild()) cur=XNULL;
             }
         }
     }
     t.copy(tuple_cell::node(cur));
     CHECKP(cur);
     if (following)
-        cur = ((n_dsc*)XADDR(cur))->rdsc;
+        cur = nodeGetRightSibling(cur);
     else
     {
-        cur=((n_dsc*)XADDR(cur))->ldsc;
+        cur=nodeGetLeftSibling(cur);
         if (cur!=XNULL)
         {
             CHECKP(cur);
-            if (!is_node_child(cur)) cur=XNULL;
+            if (!Node(cur).isNodeChild()) cur=XNULL;
         }
     }
 }
@@ -169,10 +165,10 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
 
         xptr tmp=child.get(t).get_node();
         CHECKP(tmp);
-        if (is_node_attribute(tmp)||GETSCHEMENODEX(tmp)->parent->type==virtual_root)continue;
+        if (is_attribute(tmp)||getSchemaNode(tmp)->parent->type==virtual_root)continue;
         if (following)
         {
-            cur=((n_dsc*)XADDR(tmp))->rdsc;
+            cur=nodeGetRightSibling(tmp);
 
             while (true)
             {
@@ -181,12 +177,12 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
                 if (is_element(cur))
                     break;
                 else
-                    cur=((n_dsc*)XADDR(cur))->rdsc;
+                    cur=nodeGetRightSibling(cur);
             }
         }
         else
         {
-            cur=((n_dsc*)XADDR(tmp))->ldsc;
+            cur=nodeGetLeftSibling(tmp);
             while (true)
             {
                 if (cur==XNULL) break;
@@ -195,13 +191,13 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
                     break;
                 else
                 {
-                    if (!is_node_child(cur))
+                    if (!Node(cur).isNodeChild())
                     {
                         cur=XNULL;
                         break;
                     }
                     else
-                        cur=((n_dsc*)XADDR(cur))->ldsc;
+                        cur=nodeGetLeftSibling(cur);
                 }
             }
         }
@@ -210,7 +206,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
     t.copy(tuple_cell::node(cur));
     if (following)
     {
-        cur=((n_dsc*)XADDR(cur))->rdsc;
+        cur=nodeGetRightSibling(cur);
         while (true)
         {
             if (cur==XNULL) break;
@@ -218,12 +214,12 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
             if (is_element(cur))
                 break;
             else
-                cur=((n_dsc*)XADDR(cur))->rdsc;
+                cur=nodeGetRightSibling(cur);
         }
     }
     else
     {
-        cur=((n_dsc*)XADDR(cur))->ldsc;
+        cur=nodeGetLeftSibling(cur);
         while (true)
         {
             if (cur==XNULL) break;
@@ -232,14 +228,14 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
                 break;
             else
             {
-                if (!is_node_child(cur))
+                if (!Node(cur).isNodeChild())
                 {
                     cur=XNULL;
                     break;
                 }
                 else {
                     CHECKP(cur);
-                    cur=((n_dsc*)XADDR(cur))->ldsc;
+                    cur=nodeGetLeftSibling(cur);
                 }
             }
         }
@@ -267,7 +263,7 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
 
         cur = child.get(t).get_node();
         CHECKP(cur);
-        schema_node_xptr scm=(GETSCHEMENODEX(cur))->parent;
+        schema_node_xptr scm=getSchemaNode(cur)->parent;
         if (scm->type==virtual_root)
         {
             cur=XNULL;
@@ -277,14 +273,14 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
         {
             std::vector<schema_node_xptr> vscm;
             desc_sch[scm]=vscm;
-            getSchemeChilds(scm,uri,name, type, cfun,desc_sch[scm]);
+            getSchemeChildren(scm,uri,name, type, cfun,desc_sch[scm]);
         }
         std::vector<schema_node_xptr>* cv=&desc_sch[scm];
         std::vector<schema_node_xptr>::iterator it=cv->begin();
-        if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
+        if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSort:getPreviousDescriptorOfSameSort,following);
         while (it!=cv->end())
         {
-            xptr tmp=(following)?getNextSiblingNode(cur,*it):getPreviousSiblingNode(cur,*it);
+            xptr tmp=(following)?getRightSiblingBySchema(cur,*it):getLeftSiblingBySchema(cur,*it);
             if (tmp!=XNULL)
             {
                 CHECKP(tmp);
@@ -296,12 +292,12 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
     }
     t.copy(tuple_cell::node(cur));
     CHECKP(cur);
-    xptr ind=((n_dsc*)XADDR(cur))->pdsc;
+    xptr ind=nodeGetParentIndirection(cur);
     xptr tmp=merge_tree->getNextNode();
     if (tmp!=XNULL)
     {
         CHECKP(tmp);
-        if (ind==((n_dsc*)XADDR(tmp))->pdsc)
+        if (ind==nodeGetParentIndirection(tmp))
             cur=tmp;
         else
         {

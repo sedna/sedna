@@ -10,7 +10,6 @@
 #include "tr/idx/indexes.h"
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/dm_accessors.h"
@@ -19,6 +18,8 @@
 #include "tr/executor/fo/op_map.h"
 #include "tr/strings/utf8.h"
 
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
 
 using namespace std;
 
@@ -132,7 +133,7 @@ index_cell_xptr create_index (PathExpr *object_path,
 			blk = getNonemptyBlockLookFore(skey[j]->bblk);
 			if (blk != XNULL)
 			{
-				xptr node_key = GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)));
+				xptr node_key = getFirstBlockNode(blk);
 				//VII. For every descriptor node_key that corresponds to sn_key.
 				while (node_key != XNULL)
 				{
@@ -146,7 +147,7 @@ index_cell_xptr create_index (PathExpr *object_path,
 						//X. Find descriptor object that corresponds to sn_obj
                         //   schema node and is an ancestor to node_key
 						CHECKP(node_key);
-						xptr obj_indir = getAncestorIndirectionByScheme((n_dsc*)XADDR(node_key), skey[j], sobj[i]);
+						xptr obj_indir = getAncestorIndirectionByScheme(node_key, skey[j], sobj[i]);
 
 
 						//XI. Create tuple with key and xptr to value object
@@ -164,7 +165,7 @@ index_cell_xptr create_index (PathExpr *object_path,
 						idc->err_cntr++;
                     }
 
-					node_key = getNextDescriptorOfSameSortXptr(node_key);
+					node_key = getNextDescriptorOfSameSort(node_key);
 				}
 			}
 		}

@@ -8,13 +8,52 @@
 
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/base/PPBase.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/dm_accessors.h"
 #include "common/errdbg/d_printf.h"
 
+#include "tr/structures/nodetypes.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Some usefull static helpers
 ///////////////////////////////////////////////////////////////////////////////
+
+typedef bool (*node_type_restriction)(t_item);
+
+inline static
+bool is_text(t_item t)
+{
+    return t == text;
+}
+
+inline static
+bool is_pi(t_item t)
+{
+    return t == pr_ins;
+}
+
+inline static
+bool is_node(t_item t)
+{
+    return (   t == element
+            || t == text
+            || t == attribute
+            || t == document
+            || t == xml_namespace
+            || t == comment
+            || t == pr_ins);
+}
+
+inline static
+bool is_comment(t_item t)
+{
+    return t == comment;
+}
+
+inline static
+bool is_document(t_item t)
+{
+    return t == document;
+}
 
 static inline int compare_schema_node(const void *e1, const void *e2)
 {

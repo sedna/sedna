@@ -3,16 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sedna.h"
-
 #include "tr/structures/schema.h"
-#include "tr/structures/nodes.h"
+
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/btree.h"
 #include "tr/idx/index_data.h"
 #include "tr/vmm/vmm.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/structures/nodeoperations.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
 #endif
@@ -24,136 +22,6 @@
 
 #define CAT_FOR_EACH(T, i, list) for (cat_list<T>::item * i = list->first; i != NULL; i = i->next)
 
-/*
-xptr xmlns_hint = XNULL;
-
-char * xmlns_alloc_concat(const char * prefix, const char * uri)
-{
-    size_t n1, n2, nn;
-    char * fullid;
-
-    n1 = (prefix == NULL) ? 0 : strlen(prefix);
-    n2 = (uri == NULL) ? 0 : strlen(uri);
-    nn = n1 + n2 + 2;
-    fullid = (char *) cat_malloc_context(CATALOG_COMMON_CONTEXT, nn);
-    if (n1 > 0) memcpy(fullid, prefix, n1);
-    fullid[n1] = '=';
-    if (n2 > 0) memcpy(fullid + n1 + 1, uri, n2);
-    fullid[n1+n2+1] = '\0';
-
-    return fullid;
-}
-*/
-
-
-#define XMLNS_HASH_SIZE 32
-
-struct xmlns_hash_object {
-    struct xmlns_local_object object;
-    struct xmlns_hash_object *next;
-};
-
-struct xmlns_hash_object * xmlns_hash[XMLNS_HASH_SIZE];
-
-inline int str_hash(const char * a) {
-    if (a == NULL) return 0;
-    unsigned int i = 0;
-    while (*a != '\0') { i += (* (uint8_t *) a) * 7; a++; }
-    return i % XMLNS_HASH_SIZE;
-};
-
-inline int mystrcmp(const char * str1, const char * str2)
-{
-    if ((str1 == NULL) && (str2 == NULL)) return 0;
-    if ((str1 == NULL) || (str2 == NULL)) return (((ptrdiff_t) str1) - ((ptrdiff_t) str2));
-
-    return strcmp(str1, str2);
-}
-
-xmlns_ptr xmlns_touch(const char * prefix, const char * uri)
-{
-    if ((prefix == NULL) && (uri == NULL)) return NULL_XMLNS;
-
-    int original_hash = str_hash(prefix);
-    struct xmlns_hash_object * i = xmlns_hash[original_hash];
-
-    while (i != NULL) {
-        if ((mystrcmp(i->object.prefix, prefix) == 0) && (mystrcmp(i->object.uri, uri) == 0)) {
-            return &(i->object);
-        }
-        i = i->next;
-    }
-
-    i = (struct xmlns_hash_object *) cat_malloc_context(CATALOG_COMMON_CONTEXT, sizeof(struct xmlns_hash_object));
-    i->object.prefix = cat_strcpy(i, prefix);
-    i->object.uri = cat_strcpy(i, uri);
-    i->next = xmlns_hash[original_hash];
-    xmlns_hash[original_hash] = i;
-
-    return &(i->object);
-}
-
-
-void free_xmlns_hash()
-{
-    for (unsigned k = 0; k < XMLNS_HASH_SIZE; k++)
-        xmlns_hash[k] = NULL;
-}
-
-/*
-xmlns_ptr xmlns_touch(const char * prefix, const char * uri)
-{
-    xmlns_ptr res;
-
-    if ((prefix == NULL) && (uri == NULL)) return XNULL;
-
-    res = xml_ns_find(prefix, uri);
-
-    if (res == XNULL) {
-        res = (xml_ns_object::create(prefix, uri))->p;
-        xmlns_hint = res;
-    };
-
-    return res;
-};
-*/
-
-catalog_object_header * xmlns_indb_object::create(const char* prefix, const char* uri, const xptr root, const xmlns_ptr_pers next_xmlns)
-{
-    CatalogMemoryContext *context = (root != XNULL) ? CATALOG_PERSISTENT_CONTEXT : CATALOG_TEMPORARY_CONTEXT;
-
-    xmlns_indb_object * a = new (cat_malloc_context(context, sizeof(xmlns_indb_object)))
-      xmlns_indb_object(prefix, uri, root, next_xmlns);
-
-    return catalog_create_object(a, (root != XNULL));
-}
-
-
-void xmlns_indb_object::serialize_data(se_simplestream &stream)
-{
-    cs_set_hint(root);
-
-    stream.write(&next_xmlns, sizeof(xmlns_ptr_pers));
-    stream.write_string(prefix);
-    stream.write_string(uri);
-}
-
-void xmlns_indb_object::deserialize_data(se_simplestream &stream)
-{
-    root = p_object; /* actually there is no need in root now */
-
-    stream.read(&next_xmlns, sizeof(xmlns_ptr_pers));
-    prefix = (char *) cat_malloc(this, stream.read_string_len());
-    stream.read_string(SSTREAM_SAVED_LENGTH, prefix);
-    uri = (char *) cat_malloc(this, stream.read_string_len());
-    stream.read_string(SSTREAM_SAVED_LENGTH, uri);
-}
-
-void xmlns_indb_object::drop()
-{
-    cs_free(p_object);
-    catalog_delete_object(this);
-}
 
 /**************************************
  *  Common schema node
@@ -388,7 +256,7 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
     if (!this->index_list->empty() && type==element)
         throw USER_EXCEPTION(SE2032); // Trying to create mixed content in the element whose value is used as key
 
-     if ((this->children->count() + 1) > ((this->type == element) ? MAX_ELEMENT_CHILDREN : MAX_DOCUMENT_CHILDREN))
+     if ((this->children->count() + 1) > internal::maxElementChildCount)
         throw USER_EXCEPTION(SE2040); // Too many childs by schema
 
     schema_node_cptr new_node(schema_node_object::create(this->root, xmlns, name, type, this->persistent));
@@ -416,12 +284,37 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
     return ((schema_node_xptr) new_node.ptr());
 };
 
+int schema_node_object::find_child(const xptr schema_node) const
+{
+    int c = 0;
+
+    for (cat_list<sc_ref>::item * i = this->children->first; i != NULL; i = i->next) {
+        if (i->object.snode == schema_node) return c;
+        c++;
+    }
+
+    return -1;
+}
+
+
 int schema_node_object::find_first_child (const xmlns_ptr xmlns, const char * name, t_item type) const
 {
     int c = 0;
 
     for (cat_list<sc_ref>::item * i = this->children->first; i != NULL; i = i->next) {
         if (i->object.same_node(xmlns, name, type)) return c;
+        c++;
+    }
+
+    return -1;
+};
+
+int schema_node_object::find_child_fair (const char * uri, const char * name, t_item type) const
+{
+    int c = 0;
+
+    for (cat_list<sc_ref>::item * i = this->children->first; i != NULL; i = i->next) {
+        if (i->object.same_node_fair(uri, name, type)) return c;
         c++;
     }
 
@@ -690,7 +583,7 @@ xmlns_ptr_pers doc_schema_node_object::xmlns_register(xmlns_ptr xmlns)
     xmlns_ptr_pers i = this->xmlns_list;
 
     while ((i != XNULL) &&
-        !((mystrcmp(xmlns->uri, i->uri) == 0) && (mystrcmp(xmlns->prefix, i->prefix) == 0))) {
+        !((strcmpex(xmlns->uri, i->uri) == 0) && (strcmpex(xmlns->prefix, i->prefix) == 0))) {
         i = i->next_xmlns;
     }
 
@@ -746,7 +639,7 @@ xptr col_schema_node_object::find_document(const char * doc_name)
 {
     bt_key key;
     key.setnew(doc_name);
-    return removeIndirection(bt_find(metadata, key).bt_next_obj());
+    return indirectionDereferenceCP(bt_find(metadata, key).bt_next_obj());
 };
 
 void col_schema_node_object::delete_document(const char * doc_name)
@@ -775,7 +668,67 @@ void col_schema_node_object::drop()
     doc_schema_node_object::drop();
 }
 
-/* returns the name of atomic type
-char* convertTypeToName(xmlscm_type i)
-{return "";}
-*/
+
+/*comparison function for schema nodes*/
+bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
+{
+    return scm->type==type;
+}
+
+bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
+{
+    return (scm->type==type && strcmpex(scm->name,name)==0 &&
+       ( (uri==NULL && scm->get_xmlns()==NULL) ||
+         (scm->get_xmlns()!=NULL && strcmpex(scm->get_xmlns()->uri,uri)==0) )) ;
+}
+
+bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
+{
+    return (scm->type==type && strcmpex(scm->name,name)==0 );
+}
+
+bool comp_uri_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
+{
+    return (scm->type==type && ((uri==NULL && scm->get_xmlns()==NULL) ||
+     (scm->get_xmlns()!=NULL && strcmpex(scm->get_xmlns()->uri,uri)==0))) ;
+}
+
+void getSchemeChildren(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
+{
+    sc_ref_item* sc=scm->children->first;
+    while (sc!=NULL)
+    {
+        if (cfun(sc->object.snode,uri,name,type)) result.push_back(sc->object.snode);
+        sc=sc->next;
+    }
+}
+void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun, std::vector<schema_node_xptr> &result)
+{
+    //if (scm->type==type && strcmpex(scm->name,name)==0 &&((uri==NULL && scm->get_xmlns()==NULL) || (scm->get_xmlns()!=NULL && strcmpex(scm->get_xmlns()->uri,uri)==0 )))
+    if (cfun(scm,uri,name,type))
+        result.push_back(scm.ptr());
+    getSchemeDescendants(scm,uri,name,type,cfun,result);
+
+}
+
+void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
+{
+    sc_ref_item* sc=scm->children->first;
+    while (sc!=NULL)
+    {
+//      if (strcmpex(name,sc->object.name)==0 && sc->object.type==type &&((uri==NULL && sc->get_xmlns()==NULL) || (sc->get_xmlns()!=NULL && strcmpex(sc->get_xmlns()->uri,uri)==0 ))) result.push_back(sc->object.snode);
+        if (cfun(sc->object.snode,uri,name,type)) result.push_back(sc->object.snode);
+        getSchemeDescendants(sc->object.snode,uri,name,type,cfun,result);
+        sc=sc->next;
+    }
+}
+
+bool hasAncestorInSet(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set )
+{
+    while((scm_node->type != document) && (scm_node.found())) {
+        if(scm_nodes_set->find(scm_node.ptr()) != scm_nodes_set->end()) return true;
+        scm_node = scm_node->parent;
+    }
+
+    return false;
+}

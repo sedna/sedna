@@ -5,11 +5,16 @@
 
 #include <set>
 
+#include "tr/structures/nodeblocks.h"
+#include "tr/structures/nodeoperations.h"
+
 #include "tr/mo/blocks.h"
 #include "tr/mo/boundaries.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/mo/indirection.h"
+#include "tr/mo/nodemoutils.h"
 #include "tr/mo/modebug.h"
+
+using namespace internal;
 
 typedef std::set<xptr> xptrset;
 static xptrset * blocks_to_delete;
@@ -97,10 +102,12 @@ xptr createBlock(schema_node_cptr schema_node, xptr prev_block_xptr, const xptr 
         desc_size += child_count_hint * sizeof(xptr);
     }
 
-    block = node_blk_hdr::init(getBlockHeader(block_xptr), desc_size);
+    initNodeBlock(block_xptr, desc_size);
+    block = getBlockHeader(block_xptr);
     block->snode = schema_node.ptr();
     block->pblk = prev_block_xptr;
     block->nblk = next_block_xptr;
+    block->node_type = schema_node->type;
 
     schema_node.modify();
     schema_node->blockcnt++;
@@ -193,7 +200,7 @@ void updateBlockChains(xptr node_src, xptr node_sink, enum update_hint_t update_
 
     if (update_hint == up_insert) { return; }
 
-    blk = getBlockHeaderCP(node_src);
+    blk = getBlockHeader(checkp(node_src));
     if (blk->count == 0 && blk->indir_count == 0) {
         deleteBlockVirtually(node_src);
     }
@@ -201,7 +208,7 @@ void updateBlockChains(xptr node_src, xptr node_sink, enum update_hint_t update_
     if (update_hint == up_move) { return; }
     if (same_block(node_src, node_sink)) { return; }
 
-    blk = getBlockHeaderCP(node_sink);
+    blk = getBlockHeader(checkp(node_sink));
     if (blk->count == 0 && blk->indir_count == 0) {
         deleteBlockVirtually(node_sink);
     }

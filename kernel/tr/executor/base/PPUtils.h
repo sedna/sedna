@@ -10,17 +10,8 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/structures/system_tables.h"
-
-
-inline xptr first_child(xptr node)
-{
-    CHECKP(node);
-    return giveFirstByOrderChild(node, CHILDCOUNT(node));
-}
-
 
 tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype);
 
@@ -60,13 +51,13 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 inline tuple_cell predicate_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
 {
 	U_ASSERT(pos > 0);
-	return predicate_and_effective_boolean_value(child, t, eos_reached, pos);		
+	return predicate_and_effective_boolean_value(child, t, eos_reached, pos);
 }
 
 
 inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached)
 {
-	return predicate_and_effective_boolean_value(child, t, eos_reached, 0);		
+	return predicate_and_effective_boolean_value(child, t, eos_reached, 0);
 }
 
 
@@ -77,7 +68,7 @@ inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &e
 
 xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details);
 
-tuple_cell get_name_from_PPOpIn(const PPOpIn& name, 
+tuple_cell get_name_from_PPOpIn(const PPOpIn& name,
                                 const char* obj_name,
                                 const char* op_name,
                                 bool eos_allowed = false,

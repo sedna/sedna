@@ -46,11 +46,11 @@ void PPExplain::do_close()
     if(profiler_mode) qep_tree->close();
 }
 
-static inline xptr 
-insertPrologDeclaration(const char* name, 
-                        const char* value, 
-                        const xptr& left, 
-                        const xptr& parent, 
+static inline xptr
+insertPrologDeclaration(const char* name,
+                        const char* value,
+                        const xptr& left,
+                        const xptr& parent,
                         const xmlns_ptr& ns)
 {
     xptr tmp = insert_element_i(left,XNULL,parent,"declaration",xs_untyped,ns);
@@ -60,7 +60,7 @@ insertPrologDeclaration(const char* name,
 
 void PPExplain::do_next (tuple &t)
 {
-    if(first_time) 
+    if(first_time)
     {
         first_time = false;
         char buf[20];
@@ -77,7 +77,7 @@ void PPExplain::do_next (tuple &t)
             u_ftime(&stop);
             pi_total.time = stop - start;
         }
-        
+
         xmlns_ptr explain_ns = cxt->add_to_context("", SEDNA_NAMESPACE_URI);
         xptr root = insert_doc_node(scm, "$explain", NULL);
         xptr left = XNULL;
@@ -87,7 +87,7 @@ void PPExplain::do_next (tuple &t)
             left = insert_element_i(XNULL,XNULL,root,"profile",xs_untyped,explain_ns);
             xptr tmp = insert_element_i(XNULL,XNULL,left,"total-time",xs_untyped,explain_ns);
             string time = to_string(pi_total.time);
-            insert_text_i(XNULL, XNULL, tmp, time.c_str(), time.length());
+            insert_text_i(XNULL, XNULL, tmp, text_source_mem(time.c_str(), time.length()));
         }
 
         /* Fill information about prolog */
@@ -96,7 +96,7 @@ void PPExplain::do_next (tuple &t)
         xptr tmp = XNULL;
         /* Insert boundary space declaration */
         if(cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_BOUNDARY_SPACE))
-            tmp = insertPrologDeclaration("boundary-space", 
+            tmp = insertPrologDeclaration("boundary-space",
                                           cxt->get_static_context()->get_boundary_space() == xq_boundary_space_strip ? "strip" : "preserve",
                                           tmp, left, explain_ns);
         /* Insert default collation uri declaration */
@@ -111,32 +111,32 @@ void PPExplain::do_next (tuple &t)
                                           tmp, left, explain_ns);
         /* Insert construction declaration */
         if(cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_CONSTRUCTION))
-            tmp = insertPrologDeclaration("construction", 
+            tmp = insertPrologDeclaration("construction",
                                           cxt->get_static_context()->get_construction_mode() ? "preserve" : "strip",
                                           tmp, left, explain_ns);
         /* Insert ordering mode declaration */
         if(cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_ORDERING_MODE))
-            tmp = insertPrologDeclaration("ordering-mode", 
+            tmp = insertPrologDeclaration("ordering-mode",
                                           cxt->get_static_context()->get_ordering_mode() == xq_ordering_mode_ordered ? "ordered" : "unordered",
                                           tmp, left, explain_ns);
         /* Insert empty order declaration */
         if(cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_EMPTY_ORDER))
-            tmp = insertPrologDeclaration("empty-order", 
+            tmp = insertPrologDeclaration("empty-order",
                                           cxt->get_static_context()->get_empty_order() == xq_empty_order_greatest ? "greatest" : "least",
                                           tmp, left, explain_ns);
         /* Insert copy-namespaces declaration (preserve) */
         if(cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_NAMESPACE_PRESERVE))
-            tmp = insertPrologDeclaration("copy-namespaces", 
+            tmp = insertPrologDeclaration("copy-namespaces",
                                           cxt->get_static_context()->is_namespace_preserve() ? "preserve" : "no-preserve",
                                           tmp, left, explain_ns);
         /* Insert copy-namespaces declaration (preserve) */
         if(cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_NAMESPACE_INHERIT))
-            tmp = insertPrologDeclaration("copy-namespaces", 
+            tmp = insertPrologDeclaration("copy-namespaces",
                                           cxt->get_static_context()->is_namespace_inherit() ? "inherit" : "no-inherit",
                                           tmp, left, explain_ns);
         /* Insert output indent option declaration */
         if(cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_OUTPUT_INDENT))
-            tmp = insertPrologDeclaration("indent", 
+            tmp = insertPrologDeclaration("indent",
                                           cxt->get_static_context()->get_output_indent() == se_output_indent_yes ? "yes" : "no",
                                           tmp, left, explain_ns);
 
@@ -149,7 +149,7 @@ void PPExplain::do_next (tuple &t)
             xptr aleft = insert_attribute_i(XNULL,XNULL,tmp,"prefix",xs_untypedAtomic, (*it)->prefix, strlen((*it)->prefix), NULL_XMLNS);
             insert_attribute_i(aleft,XNULL,tmp,"uri",xs_untypedAtomic, (*it)->uri, strlen((*it)->uri), NULL_XMLNS);
         }
-        
+
         /* Insert default element namespace declaration */
         if(defnsptr != NULL_XMLNS)
         {
@@ -168,7 +168,7 @@ void PPExplain::do_next (tuple &t)
             PPExplainVisitor visitor(cxt, tmp, cxt->get_var_map(), profiler_mode);
             gp.op->accept(visitor);
         }
-        
+
         /* Insert physical plan for each function */
         for(unsigned int i = 0; i < cxt->get_global_funcs_number(); i++)
         {
@@ -179,7 +179,7 @@ void PPExplain::do_next (tuple &t)
             attr_left = insert_attribute_i(attr_left,XNULL,tmp,"function-name",xs_untypedAtomic, fd.func_name.c_str(), fd.func_name.length(), NULL_XMLNS);
             std::string ret_type = fd.ret_st.to_str();
             insert_attribute_i(attr_left,XNULL,tmp,"type",xs_untypedAtomic, ret_type.c_str(), ret_type.length(), NULL_XMLNS);
-                        
+
             PPExplainVisitor visitor(cxt, tmp, fd.var_map, profiler_mode);
             fd.op->accept(visitor);
 
@@ -194,14 +194,14 @@ void PPExplain::do_next (tuple &t)
                 insert_attribute_i(attr_left,XNULL,args_left,"type",xs_untypedAtomic, type.c_str(), type.length(), NULL_XMLNS);
             }
         }
-       
-        
+
+
         /* Fill information about query body */
         left = insert_element_i(left,XNULL,root,"query",xs_untyped,explain_ns);
 
         PPExplainVisitor visitor(cxt, left, cxt->get_var_map(), profiler_mode);
         qep_tree->accept(visitor);
-        
+
         t.copy(tuple_cell::node_indir(root));
     }
     else

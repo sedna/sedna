@@ -10,7 +10,6 @@
 
 #include "tr/idx/index_data.h"
 #include "common/xptr.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/idx/btree/btree.h"
@@ -166,7 +165,7 @@ void index_cell_object::put_to_index(xptr key_node, xptr object_indir)
 
     try {
         tuple_cell tc = dm_typed_value(key_node);
-        if (!((getNodeTypeCP(key_node) == element) && (tc.get_strlen() == 0))) {
+        if (!((getNodeType(checkp(key_node)) == element) && (tc.get_strlen() == 0))) {
             tc = cast(tc, keytype);
             bt_insert(bt_root, tuple_cell2bt_key(tc, key), object_indir);
             if (bt_root != btree_root) { ((index_cell_object *) (this->modify_self()))->btree_root = bt_root; }
@@ -184,7 +183,7 @@ void index_cell_object::delete_from_index(xptr key_node, xptr object_indir)
 
     try {
         tuple_cell tc = dm_typed_value(key_node);
-        if (!((getNodeTypeCP(key_node) == element) && (tc.get_strlen() == 0))) {
+        if (!((getNodeType(checkp(key_node)) == element) && (tc.get_strlen() == 0))) {
             tc = cast(tc, keytype);
             bt_delete(bt_root, tuple_cell2bt_key(tc, key), object_indir);
             if (bt_root != btree_root) { ((index_cell_object *) (this->modify_self()))->btree_root = bt_root; }

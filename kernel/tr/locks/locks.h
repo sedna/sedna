@@ -9,15 +9,9 @@
 #include "common/sedna.h"
 #include <list>
 
-#include "tr/structures/nodes.h"
 #include "common/lm_base.h"
 #include "common/u/usem.h"
 #include "common/SSMMsg.h"
-
-
-void lockWrite(node_blk_hdr* block);
-void lockRead(node_blk_hdr* block);
-void lockWriteXptr(xptr block);
 
 
 void init_local_lock_mgr(SSMMsg* _sm_server_);
@@ -51,7 +45,7 @@ public:
     void lock(lock_mode _mode_) {mode = _mode_;};
     void ro_mode(bool flag) {tr_ro_mode = flag;};
     lock_mode get_cur_lock_mode() {return mode;};
-    
+
     //void lock(const char* name, resource_kind kind, lock_mode mode) throw (LockMgrException);
     //void release(const char* name, resource_kind kind) throw (LockMgrException);
     void release();

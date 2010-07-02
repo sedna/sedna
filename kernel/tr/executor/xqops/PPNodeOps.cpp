@@ -420,7 +420,7 @@ void PPFnRoot::do_next (tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:root is not a node");
 
-        tuple_cell tc = tuple_cell::node(getRoot(child.get(t).get_node()));
+        tuple_cell tc = tuple_cell::node(getRootNode(child.get(t).get_node()));
 
         child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:root is not a node");

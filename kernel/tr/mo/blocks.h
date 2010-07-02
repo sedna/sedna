@@ -15,9 +15,9 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
+#include "tr/vmm/vmm.h"
 #include "tr/tr_base.h"
 #include "tr/structures/schema.h"
-#include "tr/vmm/vmm.h"
 #include "tr/strings/strings_base.h"
 
 /** Transaction finalization routine, that actually deletes all virtually deleted blocks.

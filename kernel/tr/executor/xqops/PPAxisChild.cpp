@@ -6,11 +6,11 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisChild.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/xs_names.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 
+#include "tr/structures/nodeutils.h"
 
 PPAxisChild::PPAxisChild(dynamic_context *_cxt_,
                          operation_info _info_,
@@ -80,13 +80,7 @@ static inline bool
 pi_node_name_equals(const xptr& node, const char* local)
 {
     CHECKP(node);
-    pi_dsc* desc = (pi_dsc*)XADDR(node);
-    size_t tsize = desc->target;
-	if (tsize == strlen(local)) {
-		if (strcmp(local, std::string((char *) XADDR(getTextPtr(desc)), tsize).c_str()) == 0)
-            return true;
-    }
-    return false;
+    return PINode(node).compareTarget(local) == 0;
 }
 
 void PPAxisChild::next_processing_instruction(tuple &t)
@@ -98,19 +92,19 @@ void PPAxisChild::next_processing_instruction(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getChildPointerXptr(child.get(t).get_node(), NULL, pr_ins, NULL_XMLNS);
+        cur = getFirstChildByType(child.get(t).get_node(), pr_ins);
 
         while (cur!=XNULL && nt_data.ncname_local)
         {
             if (pi_node_name_equals(cur, nt_data.ncname_local))
                 break;
             else
-                cur=getNextSiblingOfSameSortXptr(cur);
+                cur=getNextSiblingOfSameSort(cur);
         }
     }
 
     t.copy(tuple_cell::node(cur));
-    cur = getNextSiblingOfSameSortXptr(cur);
+    cur = getNextSiblingOfSameSort(cur);
 
     while (cur!=XNULL)
     {
@@ -119,7 +113,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
             if (pi_node_name_equals(cur, nt_data.ncname_local)) return;
 		}
         else return;
-         cur = getNextSiblingOfSameSortXptr(cur);
+         cur = getNextSiblingOfSameSort(cur);
     }
 }
 
@@ -132,11 +126,11 @@ void PPAxisChild::next_comment(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getChildPointerXptr(child.get(t).get_node(), NULL, comment, NULL_XMLNS);
+        cur = getFirstChildByType(child.get(t).get_node(), comment);
     }
 
     t.copy(tuple_cell::node(cur));
-    cur = getNextSiblingOfSameSortXptr(cur);
+    cur = getNextSiblingOfSameSort(cur);
 }
 
 void PPAxisChild::next_text(tuple &t)
@@ -148,11 +142,11 @@ void PPAxisChild::next_text(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getChildPointerXptr(child.get(t).get_node(), NULL, text, NULL_XMLNS);
+        cur = getFirstChildByType(child.get(t).get_node(), text);
     }
 
     t.copy(tuple_cell::node(cur));
-    cur = getNextSiblingOfSameSortXptr(cur);
+    cur = getNextSiblingOfSameSort(cur);
 }
 
 void PPAxisChild::next_node(tuple &t)
@@ -164,11 +158,11 @@ void PPAxisChild::next_node(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getIndirectionSafeCP(getFirstByOrderNoneAttributeChild(child.get(t).get_node()));
+        cur = getIndirectionSafeCP(getFirstNonAttributeChild(child.get(t).get_node()));
     }
 
     t.copy(tuple_cell::node_indir(cur));
-    cur = getIndirectionSafeCP(getNextByOrderNoneAttribute(indirectionDereferenceCP(cur)));
+    cur = getIndirectionSafeCP(getNextNonAttribute(indirectionDereferenceCP(cur)));
 }
 
 
@@ -201,11 +195,11 @@ void PPAxisChild::next_wildcard_star(tuple &t)
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
-        cur = getFirstByOrderElementChild(child.get(t).get_node());
+        cur = getFirstElementChild(child.get(t).get_node());
     }
 
     t.copy(tuple_cell::node(cur));
-    cur = getNextByOrderElement(cur);
+    cur = getNextElement(cur);
 }
 
 void PPAxisChild::next_wildcard_ncname_star(tuple &t)

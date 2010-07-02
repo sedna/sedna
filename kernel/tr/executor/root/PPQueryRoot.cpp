@@ -74,23 +74,23 @@ bool PPQueryRoot::next()
         info.profile->calls++;
         u_ftime(&current1);
     }
-    if(1 == tr_globals::debug_mode) 
+    if(1 == tr_globals::debug_mode)
     {
         U_ASSERT(info.profile.get() != NULL);
         if(!executor_globals::profiler_mode) info.profile->calls++;
         executor_globals::pp_stack.push_back(info);
     }
-    
+
     bool result = PPQueryRoot::do_next();
-    
-    if(1 == tr_globals::debug_mode) 
+
+    if(1 == tr_globals::debug_mode)
         executor_globals::pp_stack.pop_back();
     if(executor_globals::profiler_mode)
     {
         u_ftime(&current2);
         info.profile->time = current2 - current1;
     }
-    
+
     return result;
 }
 
@@ -110,7 +110,7 @@ bool PPQueryRoot::do_next()
     bool is_node;
     str_counted_ptr uri;   /* for document and attribute nodes */
 
-    
+
     if(first)
     {
         /* Can't initialize these variables in open() since PPExplain
@@ -125,14 +125,10 @@ bool PPQueryRoot::do_next()
         /* Determine node type */
         xptr node = tc.get_node();
         CHECKP(node);
-        nt = GETTYPE(GETSCHEMENODEX(node));
+        nt = getNodeType(node);
+        st = getScmType(node);
 
-        if(nt == element) {
-            st = ((e_dsc*)XADDR(node))->type;
-        }
-        else if (nt == attribute)  {
-            st = ((a_dsc*)XADDR(node))->type;
-
+        if (nt == attribute)  {
             /* Retrieve attribute namespace to return it to the client */
             tuple_cell tc = se_node_namespace_uri(node);
             if ( !tc.is_eos() ) {

@@ -3,60 +3,63 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "tr/mo/microoperations.h"
+#include "tr/mo/mo.h"
 
+#include "tr/mo/microoperations.h"
 #include "tr/mo/microsurgery.h"
 #include "tr/mo/indexupdate.h"
 
-#include "tr/crmutils/node_utils.h"
 #include "tr/pstr/pstr.h"
 #include "tr/pstr/pstr_long.h"
+#include "tr/strings/strings.h"
 #include "tr/strings/e_string.h"
+
+#include "tr/mo/nodemoutils.h"
+#include "tr/structures/nodeinterface.h"
 
 static char tmp_text_buffer[PAGE_SIZE];
 
-inline xptr findNearestTextContainerCP(xptr node_xptr)
+using namespace internal;
+
+inline xptr findNearestTextContainerCP(xptr anode)
 {
-    t_dsc * node;
-
-    CHECKP(node_xptr);
-    node = (t_dsc*) XADDR(node_xptr);
+    CommonTextNode node = anode;
+    node.checkp();
     do {
-        node = (t_dsc*) getPreviousDescriptorOfSameSort(node);
-    } while (node != NULL && !isPstr(node));
+        node = getPreviousDescriptorOfSameSort(node.getPtr());
+    } while (!node.isNull() && !node.isPstr());
 
-    if (node != NULL) {
-        return block_xptr(node->data.lsp.p);
+    if (!node.isNull()) {
+        return block_xptr(node.getPstrPtr());
     }
 
-    CHECKP(node_xptr);
-    node = (t_dsc*) XADDR(node_xptr);
+    node = anode;
+    node.checkp();
     do {
-        node = (t_dsc*) getNextDescriptorOfSameSort(node);
-    } while (node != NULL && !isPstr(node));
+        node = getNextDescriptorOfSameSort(node.getPtr());
+    } while (!node.isNull() && !node.isPstr());
 
-    return (node == NULL) ? pstr_create_blk(IS_DATA_BLOCK(node_xptr)) : block_xptr(node->data.lsp.p);
+    return node.isNull() ? pstr_create_blk(IS_DATA_BLOCK(anode)) : block_xptr(node.getPstrPtr());
 }
 
-
-char * copyTextToBuffer(char * buffer, const void* text, strsize_t size, text_type ttype)
+static
+char * copyTextToBuffer(char * buffer, const text_source_t &src)
 {
-    switch (ttype) {
+    switch (src.type) {
       case text_mem : {
-        U_ASSERT(size <= PSTRMAXSIZE);
-        memcpy(buffer, text, (size_t) size);
+        U_ASSERT(src.size <= PSTRMAXSIZE);
+        memcpy(buffer, src.u.cstr, (size_t) src.size);
       }
         break;
       case text_doc : {
-        xptr ptr;
-        ptr = * (xptr*) text;
+        xptr ptr = src.u.data;
         CHECKP(ptr);
-        U_ASSERT(size <= PSTRMAXSIZE);
-        memcpy(buffer, (char*) XADDR(ptr), (size_t) size);
+        U_ASSERT(src.size <= PSTRMAXSIZE);
+        memcpy(buffer, (char*) XADDR(ptr), (size_t) src.size);
       }
         break;
       case text_estr : {
-        estr_copy_to_buffer(buffer, *(xptr*) text, size);
+        estr_copy_to_buffer(buffer, src.u.data, src.size);
       }
         break;
     }
@@ -65,115 +68,118 @@ char * copyTextToBuffer(char * buffer, const void* text, strsize_t size, text_ty
 }
 
 
-inline xptr pstr_allocate_u(xptr text_block, xptr node, const void * s, strsize_t size, text_type ttype)
+inline static
+xptr pstr_allocate_u(xptr text_block, xptr node, const text_source_t &src)
 {
     xptr result;
 
-    U_ASSERT(size <= PSTRMAXSIZE);
-    if (ttype==text_mem) {
-        result = pstr_allocate(text_block, node, (char *) s, (size_t) size);
+    U_ASSERT(src.size <= PSTRMAXSIZE);
+    if (src.type == text_mem) {
+        result = pstr_allocate(text_block, node, src.u.cstr, (size_t) src.size);
     } else {
-        copyTextToBuffer(tmp_text_buffer, s, (size_t) size, ttype);
-        result = pstr_allocate(text_block, node, tmp_text_buffer, (size_t) size);
+        copyTextToBuffer(tmp_text_buffer, src);
+        result = pstr_allocate(text_block, node, tmp_text_buffer, (size_t) src.size);
     }
 
     return result;
 }
 
-void insertTextValue(xptr node_xptr, const void* text, strsize_t size, text_type ttype)
+void insertTextValue(xptr node_xptr, const text_source_t source)
 {
-    t_dsc* node= (t_dsc*) XADDR(node_xptr);
+    node_text_t * text_node = getTextFromAnyNode(node_xptr);
 
-    if (size > STRMAXSIZE) {
-        throw USER_EXCEPTION(SE2037);
-    } else if (size <= max_indsc_text_size) {
+    if (source.size > STRMAXSIZE) {
+            throw USER_EXCEPTION(SE2037);
+    } else if (source.size == 0) {
         WRITEP(node_xptr);
+        text_node->size = emptyText;
+    } else if (source.size <= maxDescriptorTextSize) {
+        char * buffer;
 
-        if (size > 0) {
-            char * buffer;
-
-            if (ttype==text_mem) {
-                buffer = (char *) text;
-            } else {
-                buffer = tmp_text_buffer;
-                copyTextToBuffer(buffer, text, (size_t) size, ttype);
-                WRITEP(node_xptr);
-            }
-
-            /* size <= max_indsc_text_size << SIZE_MAX.
-             * It's safe to (size_t) it. */
-            memcpy(node->data.st, buffer, (size_t) size);
+        if (source.type == text_mem) {
+            buffer = (char *) source.u.cstr;
+        } else {
+            buffer = tmp_text_buffer;
+            copyTextToBuffer(buffer, source);
         }
 
-        node->ss = (int8_t) size;
-    } else if (size > PSTRMAXSIZE) {
-        pstr_long_create_str(node_xptr, text, size, ttype);
+        WRITEP(node_xptr);
+        memcpy(text_node->data, buffer, (size_t) source.size);
+        text_node->size = (uint16_t) source.size;
+    } else if (source.size <= PSTRMAXSIZE) {
+        pstr_allocate_u(findNearestTextContainerCP(node_xptr), node_xptr, source);
     } else {
-        pstr_allocate_u(findNearestTextContainerCP(node_xptr), node_xptr, text, size, ttype);
+        pstr_long_create_str(node_xptr, source);
     }
 }
 
-void insertTextValue(enum insert_position_t position, xptr node_xptr, const void* text, strsize_t size, text_type ttype)
+void insertTextValue(enum insert_position_t position, xptr node_xptr, const text_source_t source)
 {
-    t_dsc* node= (t_dsc*) XADDR(node_xptr);
-    strsize_t curr_size;
+    node_text_t * text_node = getTextFromAnyNode(node_xptr);
+    CommonTextNode nodeobject = node_xptr;
+    const strsize_t curr_size = nodeobject.getTextSize();
+    const strsize_t new_size = curr_size + source.size;
 
-    CHECKP(node_xptr);
-    curr_size = getTextSize(node);
-    if ((curr_size + size) > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
-
-    if (isPstrLong(node)) {
+    if (new_size > STRMAXSIZE) {
+        throw USER_EXCEPTION(SE2037);
+    } else if (new_size == 0) {
+        return ;
+    } if (nodeobject.isPstrLong()) {
         if (position == ip_tail) {
-            pstr_long_append_tail(node_xptr, text, size, ttype);
+            pstr_long_append_tail(node_xptr, source);
         } else {
-            pstr_long_append_head(node_xptr, text, size, ttype);
+            pstr_long_append_head(node_xptr, source);
         }
     } else {
-        CHECKP(node_xptr);
-        xptr data = getTextPtr(node);
+        xptr data = nodeobject.getTextPointerCP();
 
-        if ((curr_size + size) > PSTRMAXSIZE) {
-            U_ASSERT((ttype != text_doc) || (* (xptr *) text) != data);
-            char * tmp_buffer = tmp_text_buffer;
-            copyTextToBuffer(tmp_buffer, (char*) XADDR(data), curr_size, text_mem);
-            pstr_deallocate(node_xptr);
+        U_ASSERT(curr_size <= PSTRMAXSIZE);
+        U_ASSERT((source.type != text_doc) || source.u.data != data);
+
+        CHECKP(data)
+        memcpy(tmp_text_buffer, (char *) XADDR(data), (size_t) curr_size);
+
+        if (new_size > PSTRMAXSIZE) {
+            if (nodeobject.isPstr()) {
+                pstr_deallocate(node_xptr);
+            }
 
             if (position == ip_tail) {
-                pstr_long_create_str(node_xptr, tmp_buffer, curr_size, text_mem);
-                if ((ttype == text_doc) && * (xptr *) text == data) {
+                pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
+                if ((source.type == text_doc) && source.u.data != nodeobject.getTextPointerCP()) {
                     /* FIXME: Dirty hack! We need to fix updates to get rid of this */
-                    pstr_long_append_tail(node_xptr, tmp_buffer, curr_size, text_mem);
+                    pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
                 } else {
-                    pstr_long_append_tail(node_xptr, text, size, ttype);
+                    pstr_long_append_tail(node_xptr, source);
                 }
             } else {
-                if ((ttype == text_doc) && * (xptr *) text == data) {
+                if ((source.type == text_doc) && source.u.data != nodeobject.getTextPointerCP()) {
                     /* FIXME: Dirty hack! We need to fix updates to get rid of this */
-                    pstr_long_create_str(node_xptr, tmp_buffer, curr_size, text_mem);
+                    pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
                 } else {
-                    pstr_long_create_str(node_xptr, text, size, ttype);
+                    pstr_long_create_str(node_xptr, source);
                 }
-                pstr_long_append_tail(node_xptr, tmp_buffer, curr_size, text_mem);
+                pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
             }
         } else {
-            /* Both curr_size and size <= PSTRMAXSIZE << SIZE_MAX here. 
-             * So it's safe to (size_t) them. */
-            char * buffer = tmp_text_buffer;
+            CHECKP(node_xptr);
             if (position == ip_tail) {
-                CHECKP(data);
-                memcpy(buffer, XADDR(data), (size_t) curr_size);
-                copyTextToBuffer(buffer + (size_t) curr_size, text, (size_t) size, ttype);
+                copyTextToBuffer(tmp_text_buffer + curr_size, source);
             } else {
-                copyTextToBuffer(buffer, text, (size_t) size, ttype);
-                CHECKP(data);
-                memcpy(buffer + (size_t) size, XADDR(data), (size_t) curr_size);
+                memmove(tmp_text_buffer + source.size, tmp_text_buffer, source.size);
+                copyTextToBuffer(tmp_text_buffer, source);
             }
 
-            CHECKP(node_xptr);
-            if (isPstr(node)) {
-                pstr_modify(node_xptr, buffer, (size_t) (size + curr_size));
+            if (new_size > maxDescriptorTextSize) {
+                if (nodeobject.isPstr()) {
+                    pstr_modify(node_xptr, tmp_text_buffer, (size_t) new_size);
+                } else {
+                    pstr_allocate(findNearestTextContainerCP(node_xptr), node_xptr, tmp_text_buffer, (size_t) new_size);
+                }
             } else {
-                pstr_allocate(findNearestTextContainerCP(node_xptr), node_xptr, buffer, (size_t) (size + curr_size));
+                WRITEP(node_xptr);
+                text_node->size = (uint16_t) new_size;
+                memcpy(text_node->data, tmp_text_buffer, (size_t) new_size);
             }
         }
     }
@@ -183,30 +189,31 @@ inline void convertLongtextToText(xptr node_xptr, size_t size)
 {
     pstr_long_copy_to_buffer(tmp_text_buffer, node_xptr);
     pstr_long_delete_str(node_xptr);
-    insertTextValue(node_xptr, tmp_text_buffer, size);
+    insertTextValue(node_xptr, text_source_mem(tmp_text_buffer, size));
 }
 
 void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t size)
 {
     CHECKP(node_xptr);
-    t_dsc * node = (t_dsc *) XADDR(node_xptr);
-    strsize_t cur_size = getTextSize(node);
+    node_text_t * text_node = getTextFromAnyNode(node_xptr);
+    CommonTextNode nodeobject = node_xptr;
+    const strsize_t curr_size = nodeobject.getTextSize();
 
-    if (cur_size <= size)
+    if (curr_size <= size)
         throw SYSTEM_EXCEPTION("wrong recovery of text node");
 
     CHECKP(node_xptr);
 
-    if (node->ss >= 0) {
+    if (text_node->size <= maxDescriptorTextSize) {
         VMM_SIGNAL_MODIFICATION(node_xptr);
 
-        node->ss -= (int8_t) size;
+        text_node->size -= (uint16_t) size;
         if (position == ip_head) {
-            memmove(node->data.st, node->data.st + (int8_t) size, node->ss);
+            memmove(text_node->data, text_node->data + (ptrdiff_t) size, text_node->size);
         }
-    } else if (isPstr(node)) {
-        size_t new_size = (size_t) (cur_size - size);
-        xptr data_ptr = getTextPtr(node);
+    } else if (nodeobject.isPstr()) {
+        size_t new_size = (size_t) (curr_size - size);
+        xptr data_ptr = nodeobject.getTextPointerCP();
 
         CHECKP(data_ptr);
         if (position == ip_tail) {
@@ -218,7 +225,7 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
         pstr_modify(node_xptr, tmp_text_buffer, new_size);
     } else {
         CHECKP(node_xptr);
-        U_ASSERT(isPstrLong(node));
+        U_ASSERT(nodeobject.isPstrLong());
 
         if (position == ip_tail) {
             pstr_long_truncate(node_xptr, size);
@@ -226,8 +233,8 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
             pstr_long_delete_head(node_xptr, size);
         }
 
-        if ((cur_size - size) <= PSTRMAXSIZE) {
-            convertLongtextToText(node_xptr, (size_t) (cur_size - size));
+        if ((curr_size - size) <= PSTRMAXSIZE) {
+            convertLongtextToText(node_xptr, (size_t) (curr_size - size));
         }
     }
 }
@@ -235,14 +242,15 @@ void deleteTextValue(enum insert_position_t position, xptr node_xptr, strsize_t 
 void deleteTextValue(xptr node_xptr)
 {
     CHECKP(node_xptr);
+    CommonTextNode nodeobject = node_xptr;
 
-    if (isPstrLong(T_DSC(node_xptr))) {
+    if (nodeobject.isPstrLong()) {
         pstr_long_delete_str(node_xptr);
-    } else if (isPstr(T_DSC(node_xptr))) {
+    } else if (nodeobject.isPstr()) {
         pstr_deallocate(node_xptr);
     } else {
         WRITEP(node_xptr);
-        T_DSC(node_xptr)->ss = 0;
+        getTextFromAnyNode(node_xptr)->size = 0;
     }
 }
 

@@ -61,7 +61,7 @@ void getSednaAuthMetadataPath(char* path)
 #ifdef _WIN32
     string pstring = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
     strcpy(path, pstring.c_str());
-    
+
     size_t i=0;
     while(i<=pstring.length())
     {
@@ -226,7 +226,7 @@ void auth_for_load_module(const char* module_name)
             else \
                 error(QName('http://www.modis.ispras.ru/sedna','SE3072'), 'User does not have LOAD-MODULE privilege on database')";
 
-    
+
     std::string update_load_module_xquery =
         "declare ordering unordered;\
          \
@@ -569,13 +569,10 @@ void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
     {
         while (it!=(*seq).end())
         {
-            if(!direct)
-                node= removeIndirection(*it);
-            else
-                node = *it;
+            node = *it;
+            if (!direct) { node = indirectionDereferenceCP(node); }
 
-            CHECKP(node);
-            schema_node_xptr sn        = ((node_blk_hdr*)GETBLOCKBYNODE(node)) -> snode -> root;
+            schema_node_xptr sn = getSchemaNode(checkp(node))->root;
             schema_node_xptr dbe_root  = XNULL;
 
             mIter = amap.begin();

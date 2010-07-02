@@ -207,7 +207,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
     dest.filename = fileInfo->filename;
 	dest.typeId = it_XML;
 	CHECKP(node);
-	if (GETTYPE(GETSCHEMENODEX(node)) != document && GETTYPE(GETSCHEMENODEX(node)) != virtual_root)
+	if (getNodeType(node) != document && getNodeType(node) != virtual_root)
 	{
 		in_buf.append("<");
 		in_buf.append("?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\"");
@@ -260,7 +260,7 @@ xptr SednaDataSource::filenameToRecord(const char *dest)
 		t++;
 	}
 	sscanf(fn, "%d-0x%x.xml", &layer, &addr);
-	return removeIndirection(cxptr(layer, addr));
+	return indirectionDereferenceCP(cxptr(layer, addr));
 }
 
 int SednaDataSource::getNextDoc(dtsInputStream& dest)
@@ -294,7 +294,7 @@ int SednaDataSource::getNextDoc(dtsInputStream& dest)
 	xptr node=get_next_doc();
 	if (node==XNULL) return -1;
 	CHECKP(node);
-	recordToFilename(fileInfo.filename,((n_dsc*)XADDR(node))->indir);
+	recordToFilename(fileInfo.filename,nodeGetIndirection(node));
 //	fileInfo.size = strlen(f);
     fileInfo.modified.year = 1996;
     fileInfo.modified.month = 1;
@@ -333,7 +333,7 @@ xptr CreationSednaDataSource::get_next_doc()
 			tmp=*it;
 		return tmp;
 	}
-	tmp=getNextDescriptorOfSameSortXptr(tmp);
+	tmp=getNextDescriptorOfSameSort(tmp);
 	if (tmp==XNULL)
 	{
 		if (++it==first_nodes->end())return XNULL;
@@ -355,7 +355,7 @@ xptr UpdateSednaDataSource::get_next_doc()
 {
 	while (it!=seq->end())
 	{
-		xptr ptr = removeIndirection(*it++);
+		xptr ptr = indirectionDereferenceCP(*it++);
 		if (ptr != XNULL)
 			return ptr;
 	}

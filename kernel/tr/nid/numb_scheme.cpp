@@ -7,7 +7,6 @@
 #include "common/sedna.h"
 
 #include "tr/structures/schema.h"
-#include "tr/structures/nodes.h"
 #include "tr/vmm/vmm.h"
 #include "tr/crmutils/crmutils.h"
 #include "tr/pstr/pstr.h"
@@ -39,29 +38,47 @@ nid_set_proportion(fnumber p) {
 
 bool
 NID_CONSISTENT(t_prefix &a) {
-	return 
+	return
 		(a.prefix[a.size-1] != ALPHABET_SIZE);
 }
 
-/*	
+/*
  * Get nid of node descriptor "dsc" uploading native block of this descriptor
  */
 t_nid
 nid_get_nid(xptr node) {
 	t_nid	result;
-	n_dsc*	dsc;
+	internal::node_base_t*	dsc;
 
     CHECKP(node);
 	/* dsc now points to descriptor inside in-memory block */
-	dsc = (n_dsc*)XADDR(node);
+	dsc = (internal::node_base_t*)XADDR(node);
 	result = dsc->nid;
 	return result;
 }
 
+bool nid_parse(const xptr nid, xptr * prefix, shft * size) {
+    CHECKP(nid);
+
+    const t_nid * tnid = (t_nid *) XADDR(nid);
+    const unsigned char sz = tnid->size;
+
+    if (sz == 0) {
+        *size = *(shft*) ((tnid->prefix) + sizeof(xptr));
+        *prefix = pstrderef(checkp(*(xptr*) (tnid->prefix)));
+        return true;
+    } else {
+        *prefix = nid;
+        *size = sz;
+        return false;
+    }
+}
+
+
 /*
  * Locate the block where to create prefix of size p_size
  */
-static xptr 
+static xptr
 nid_get_blk(shft p_size, bool persistent) {
 	/*--------------------------------------------------------
 	>>> this is the case when block is determined by neighbouring node
@@ -73,7 +90,7 @@ nid_get_blk(shft p_size, bool persistent) {
 			result = pstr_create_blk();
 	} else
 		result = pstr_create_blk();
-	
+
 	--------------------------------------------------------*/
 
 	if (persistent) {
@@ -97,7 +114,7 @@ nid_get_blk(shft p_size, bool persistent) {
 	}
 }
 
-/* 
+/*
 	initialize the node descriptor with given nid (prefix, dc)
 	blk is the block where to store prefix string
  */
@@ -106,26 +123,26 @@ void nid_assign_pers_data(xptr node,char* data,int size)
 		xptr blk = nid_get_blk(size, true);
 		xptr tmp = pstr_do_allocate(blk, data, size);
 		CHECKP(node);
-		n_dsc* dsc=(n_dsc*)XADDR(node);
+		internal::node_base_t* dsc=(internal::node_base_t*)XADDR(node);
 		VMM_SIGNAL_MODIFICATION(node);
 		memcpy(dsc->nid.prefix, (char*)&tmp, sizeof(xptr));
 		*(shft*)(dsc->nid.prefix + sizeof(xptr)) = size;
 		dsc->nid.size = 0;
 }
 void	nid_assign(xptr node, t_prefix p) {
-	n_dsc*	dsc;
+	internal::node_base_t*	dsc;
 	xptr	tmp;
 	xptr	blk;
-	dsc = (n_dsc*)XADDR(node);
+	dsc = (internal::node_base_t*)XADDR(node);
 	CHECKP(node);
-	if (p.size <= MAXINTERNALPREFIX) 
+	if (p.size <= MAXINTERNALPREFIX)
 	{
-		
+
 		VMM_SIGNAL_MODIFICATION(node);
 		memcpy(dsc->nid.prefix, p.prefix, p.size);
 		dsc->nid.size=(unsigned char)p.size;
 	}
-	else 
+	else
 	{
 		if (p.size > PSTRMAXSIZE)
 		{
@@ -134,7 +151,7 @@ void	nid_assign(xptr node, t_prefix p) {
             moSetUserException(SE2023);
 		}
 		if (IS_DATA_BLOCK(node)) {
-			nid_holder=(GETBLOCKBYNODE(node))->snode->root;
+			nid_holder=getSchemaNode(node)->root;
             U_ASSERT(nid_holder != XNULL);
         }
 		blk = nid_get_blk(p.size, IS_DATA_BLOCK(node));
@@ -150,11 +167,11 @@ void	nid_assign(xptr node, t_prefix p) {
 		*(shft*)(dsc->nid.prefix + sizeof(xptr)) = p.size;
 		dsc->nid.size = 0;
 		//statistics
-		(GETBLOCKBYNODE(node))->snode.modify()->extnids+=p.size;
-		if (IS_DATA_BLOCK(node)) 
+		getSchemaNode(node).modify()->extnids+=p.size;
+		if (IS_DATA_BLOCK(node))
 			nid_holder.modify()->total_ext_nids+=p.size;
 
-	}	
+	}
 }
 
 /*
@@ -164,18 +181,18 @@ t_prefix
 nid_get_prefix(xptr node) {
 	CHECKP(node);
 	/* dsc now points to descriptor inside in-memory block */
-	t_nid* the_nid = &((n_dsc*)XADDR(node))->nid;
-	
+	t_nid* the_nid = &((internal::node_base_t*)XADDR(node))->nid;
+
 	t_prefix	result;
 	result.prefix =(unsigned char*)nid_alloc();
 	result.size = (the_nid->size==0)?*(shft*)(the_nid->prefix+sizeof(xptr)):the_nid->size;
-	if (the_nid->size==0) {	
+	if (the_nid->size==0) {
 		xptr	prefixp	= *(xptr*)the_nid->prefix;
 		/*--------------------------------------------------------
 		>>> this is the debug case when prefix is allocated just in memory
 		memcpy (result, (char*)XADDR(prefixp), prefix_size);
 		delete[] (char*)XADDR(prefixp);
-		return result; 
+		return result;
 		--------------------------------------------------------*/
 		pstr_read(prefixp, result.size, (char*)result.prefix);
 	} else
@@ -188,13 +205,13 @@ nid_get_prefix(t_nid the_nid) {
 	t_prefix	result;
 	result.prefix =(unsigned char*)nid_alloc();
 	result.size = (the_nid.size==0)?*(shft*)(the_nid.prefix+sizeof(xptr)):the_nid.size;
-	if (the_nid.size==0) {	
+	if (the_nid.size==0) {
 		xptr	prefixp	= *(xptr*)the_nid.prefix;
 		/*--------------------------------------------------------
 		>>> this is the debug case when prefix is allocated just in memory
 		memcpy (result, (char*)XADDR(prefixp), prefix_size);
 		delete[] (char*)XADDR(prefixp);
-		return result; 
+		return result;
 		--------------------------------------------------------*/
 		pstr_read(prefixp, result.size, (char*)result.prefix);
 	} else
@@ -213,16 +230,16 @@ int	nid_cmp_effective(xptr node1, xptr node2) {
 	unsigned char* ptr1 = p1.prefix;
 	shft size1 = p1.size;
 	CHECKP(node2);
-	t_nid* nd = &((n_dsc*)XADDR(node2))->nid;
+	t_nid* nd = &((internal::node_base_t*)XADDR(node2))->nid;
 	shft size2 = nd->size;
 	unsigned char* ptr2=nd->prefix;
 	if (size2 == 0)
-	{	
+	{
 		xptr ps	= *(xptr*)ptr2;
 		size2=*(shft*)(nd->prefix+sizeof(xptr));
 		CHECKP(ps);
 		ptr2=(unsigned char*)XADDR(BLOCKXPTR(ps)) + *(shft*)XADDR(ps);
-	} 
+	}
 
 	int result = sign(memcmp(ptr1,ptr2,min(size1,size2))); /// There is no guarantee that memcmp returns 1, -1, 0!
 	if (!result)
@@ -282,14 +299,14 @@ bool nid_ancestor(xptr node1, xptr node2) {
 	p1 = nid_get_prefix(nid1);
 	p2 = nid_get_prefix(nid2);
 
-	
-	if ( p2.prefix[size1]!=ALPHABET_SIZE &&lex_ispref(p1, p2))		
+
+	if ( p2.prefix[size1]!=ALPHABET_SIZE &&lex_ispref(p1, p2))
 			result = true;
 
 	/* nid memory free */
 	nid_free(p1.prefix);
 	nid_free(p2.prefix);
-	
+
 	return result;
 }
 
@@ -315,7 +332,7 @@ void decrementNID(t_prefix &lp,int size)
 	}
 	else
 	{
-		if (lp.size-size>1) 
+		if (lp.size-size>1)
 		{
 			while (true)
 			{
@@ -366,7 +383,7 @@ void incrementNID_between(t_prefix &lp, int size)
 	{
 		int pos=lp.size-1;
 		while (pos>size)
-		{ 
+		{
 			lp.prefix[pos]=1;
 			pos--;
 			if (lp.prefix[pos]!=ALPHABET_SIZE)
@@ -384,7 +401,7 @@ void incrementNID_between(t_prefix &lp, int size)
 		}
 		lp.prefix[lp.size]=DEF_LETTER;
 		lp.prefix[lp.size+1]=1;
-		lp.size+=2;	
+		lp.size+=2;
 	}
 }
 
@@ -406,7 +423,7 @@ void incrementNID(t_prefix &lp, int size)
 	{
 		int pos=lp.size-1;
 		while (pos>size)
-		{ 
+		{
 			lp.prefix[pos]=1;
 			if (lp.prefix[pos-1]!=ALPHABET_SIZE)
 			{
@@ -426,8 +443,8 @@ void incrementNID(t_prefix &lp, int size)
 			}
 			lp.prefix[lp.size]=DEF_LETTER;
 			lp.prefix[lp.size+1]=1;
-//			lp.size+=1;	
-			lp.size+=2;	
+//			lp.size+=1;
+			lp.size+=2;
 		}
 	}
 }
@@ -448,7 +465,7 @@ t_prefix* betweenNID(t_prefix & lp,t_prefix & rp)
 				lp.size=pos+1;
 				return &lp;
 			}
-			else			
+			else
 				if (!difsmall) difsmall=pos;
 		}
 		pos++;
@@ -535,7 +552,7 @@ void	nid_create_right(xptr left, xptr parent, xptr result) {
 	nid_free(lp.prefix);
 };
 
-/*  generate nid for new outmost left sibling 
+/*  generate nid for new outmost left sibling
 	use PROPORTION var to break alphabet
 */
 void	nid_create_left(xptr right, xptr parent, xptr result) {
@@ -555,7 +572,7 @@ void	nid_create_left(xptr right, xptr parent, xptr result) {
 /* generate nid for the first child of parent argument
    use PROPORTION var to break alphabet
  */
-void	nid_create_child(xptr parent, xptr result) 
+void	nid_create_child(xptr parent, xptr result)
 {
 	t_nid pnid = nid_get_nid(parent);
 	t_prefix pp = nid_get_prefix(pnid);
@@ -578,19 +595,19 @@ void	nid_create_child(xptr parent, xptr result)
 	/* memory free */
 	nid_free(pp.prefix);
 }
-/* We use bitmap matrix in the "persistent_db_data" region to account prefixes allocated 
+/* We use bitmap matrix in the "persistent_db_data" region to account prefixes allocated
    for root document nodes as described below:
    For the alphabet of size ALPHABET_SIZE we have the following sequence of symbols in
    the alphabet {1,2, ..., ALPHABET_SIZE-1}. Initially we let the pool of free prefixes to
-   be {1,2, ..., ALPHABET_SIZE-2}. Note that the ALPHABET_SIZE-1 prefix is reserved for 
+   be {1,2, ..., ALPHABET_SIZE-2}. Note that the ALPHABET_SIZE-1 prefix is reserved for
    future extension of the pool. Then initial pool of free prefixes includes one-symbol
-   prefixes and occupies ALPHABET_SIZE-1/8(bits in byte) + 1 bytes, that is alligned to the 
+   prefixes and occupies ALPHABET_SIZE-1/8(bits in byte) + 1 bytes, that is alligned to the
    byte boundary (i.e. the last byte can be partially filled). Each bit in the bitmap encodes
    allocation status of corresponding prefix of the sequence {1,2, ..., ALPHABET_SIZE-2}.
    The bit is "1" if the prefix is free and "0" otherwise. When no more prefixes remain in
    the initial pool, it is being extended to the double size. The following sequence
    of prefixes is appended to initial one:
-   {1(ALPHABET_SIZE-1), 2(ALPHABET_SIZE-1), ..., ALPHABET_SIZE-1(ALPHABET_SIZE-1)} via double 
+   {1(ALPHABET_SIZE-1), 2(ALPHABET_SIZE-1), ..., ALPHABET_SIZE-1(ALPHABET_SIZE-1)} via double
    extension of bitmap. The subsequent extentions are carried out similarly.
 */
 
@@ -654,9 +671,9 @@ void updateEP_nid(int * last_nid_size, uchar * last_nid)
 }
 
 /* generate nid for the root nodes */
-void nid_create_root(xptr result, bool persistent) 
+void nid_create_root(xptr result, bool persistent)
 {
-    n_dsc* dsc = (n_dsc*)XADDR(result);
+    internal::node_base_t* dsc = (internal::node_base_t*)XADDR(result);
     VMM_SIGNAL_MODIFICATION(result);
 
     if (persistent) {
@@ -673,26 +690,26 @@ void nid_create_root(xptr result, bool persistent)
     }
 }
 
-/* 
+/*
 	free the nid; if it is a doc root, account it in root bitmap
  */
 /* debug */
 /*t_prefix tp;*/
 void	nid_delete(xptr node) {
     CHECKP(node);
-	bool	vroot = (GETBLOCKBYNODE(node))->snode->type == virtual_root;
+	bool	vroot = getNodeType(node) == virtual_root;
 
 	t_nid	the_nid = nid_get_nid(node);
 
 	/* free the pstr contents */
-	if (the_nid.size==0 /*CHANGED BY LEON*/) 
+	if (the_nid.size==0 /*CHANGED BY LEON*/)
 	{
 		//statistics
 		shft nids=(*(shft*)(the_nid.prefix+sizeof(xptr)));
-		schema_node_cptr scm=(GETBLOCKBYNODE(node))->snode;
+		schema_node_cptr scm=getSchemaNode(node);
         scm.modify();
 		scm->extnids-=nids;
-		if (IS_DATA_BLOCK(node)) 
+		if (IS_DATA_BLOCK(node))
 			scm->root.modify()->total_ext_nids-=nids;
 		xptr	blk = BLOCKXPTR((*(xptr*)the_nid.prefix));
 		if (
@@ -707,12 +724,12 @@ void	nid_delete(xptr node) {
 	}
 }
 
-void    	nid_on_kernel_statement_end() 
+void    	nid_on_kernel_statement_end()
 {
     TMPNIDBLK = XNULL;
 }
 
-/* 
+/*
 	wrapper upon nid generation functions depending on value of "p"
  */
 t_prefix nid_generate(t_prefix p1, t_prefix p2, fnumber p) {

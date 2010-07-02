@@ -10,109 +10,6 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// PPDmNodeKind
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-PPDmNodeKind::PPDmNodeKind(dynamic_context *_cxt_,
-                           operation_info _info_,
-                           PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPDmNodeKind"),
-                                             child(_child_)
-{
-}
-
-PPDmNodeKind::~PPDmNodeKind()
-{
-    delete child.op;
-    child.op = NULL;
-}
-
-void PPDmNodeKind::do_open ()
-{
-    child.op->open();
-    first_time = true;
-}
-
-void PPDmNodeKind::do_reopen()
-{
-    child.op->reopen();
-    first_time = true;
-}
-
-void PPDmNodeKind::do_close()
-{
-    child.op->close();
-}
-
-void PPDmNodeKind::do_next (tuple &t)
-{
-    if (first_time)
-    {
-        first_time = false;
-
-        child.op->next(t);
-
-        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
-        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
-
-        dm_node_kind_type res = dm_node_kind(child.get(t).get_node());
-
-        child.op->next(t);
-        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
-
-        switch (res)
-        {
-        case nk_document				: 
-             t.copy(tuple_cell::atomic_deep(xs_string, "document"));
-             break;
-        case nk_element					: 
-             t.copy(tuple_cell::atomic_deep(xs_string, "element"));
-             break;
-        case nk_attribute				: 
-             t.copy(tuple_cell::atomic_deep(xs_string, "attribute"));
-             break;
-        case nk_text					:
-             t.copy(tuple_cell::atomic_deep(xs_string, "text"));
-             break;
-        case nk_namespace				:
-             t.copy(tuple_cell::atomic_deep(xs_string, "namespace"));
-             break;
-        case nk_processing_instruction	:
-             t.copy(tuple_cell::atomic_deep(xs_string, "processing-instruction"));
-             break;
-        case nk_comment					:
-             t.copy(tuple_cell::atomic_deep(xs_string, "comment"));
-             break;
-        default							: 
-             throw USER_EXCEPTION2(SE1003, "Unexpected value in fn:node-kind");
-        }
-    }
-    else
-    {
-        first_time = true;
-        t.set_eos();
-    }
-}
-
-PPIterator* PPDmNodeKind::do_copy(dynamic_context *_cxt_)
-{
-    PPDmNodeKind *res = se_new PPDmNodeKind(_cxt_, info, child);
-    res->child.op = child.op->copy(_cxt_);
-    return res;
-}
-
-void PPDmNodeKind::do_accept(PPVisitor &v)
-{
-    v.visit (this);
-    v.push  (this);
-    child.op->accept(v);
-    v.pop();
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnNodeName
@@ -165,7 +62,7 @@ void PPFnNodeName::do_next (tuple &t)
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
 
         if (tc.is_eos()) t.set_eos();
-		else 
+		else
 		{
 			t.copy(tc);
 			first_time = false;
@@ -244,7 +141,7 @@ void PPFnNilled::do_next (tuple &t)
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
 
         if (tc.is_eos()) t.set_eos();
-		else 
+		else
 		{
 			t.copy(tc);
 			first_time = false;
@@ -324,7 +221,7 @@ void PPFnString::do_next (tuple &t)
         }
 
         tuple_cell tc;
-        if ((child.get(t).is_node())) 
+        if ((child.get(t).is_node()))
             tc = dm_string_value(child.get(t).get_node());
         else
             tc = cast(child.get(t), xs_string);
@@ -467,7 +364,7 @@ void PPFnBaseURI::do_next (tuple &t)
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
 
         if (tc.is_eos()) t.set_eos();
-		else 
+		else
 		{
 			t.copy(tc);
 			first_time = false;
@@ -591,7 +488,7 @@ void PPFnDocumentURI::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnStaticBaseUri::PPFnStaticBaseUri(dynamic_context *_cxt_, 
+PPFnStaticBaseUri::PPFnStaticBaseUri(dynamic_context *_cxt_,
                                      operation_info _info_) : PPIterator(_cxt_, _info_, "PPFnStaticBaseUri")
 {
 }
@@ -606,25 +503,25 @@ void PPFnStaticBaseUri::do_close()        { }
 
 void PPFnStaticBaseUri::do_next (tuple &t)
 {
-        
+
     if(first_time)
     {
-        first_time = false;    
+        first_time = false;
 
         if (cxt->get_static_context()->get_base_uri() == NULL)
         {
-            /* 
-             * Base URI is undefined in the static context. 
-             * Note also that Sedna does not allow relative URIs to be used in prolog. 
+            /*
+             * Base URI is undefined in the static context.
+             * Note also that Sedna does not allow relative URIs to be used in prolog.
              * In this case base URI property is considered undefined.
              */
             t.set_eos();
             first_time = true;
         }
-        else 
+        else
             t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->get_static_context()->get_base_uri()) );
     }
-    else 
+    else
     {
         t.set_eos();
         first_time = true;
@@ -666,14 +563,14 @@ void PPFnDefaultCollation::do_next (tuple &t)
 {
     if(first_time)
     {
-        first_time = false;    
+        first_time = false;
 
         if ( cxt->get_static_context()->get_default_collation_uri() == NULL )
             throw USER_EXCEPTION2(SE1003, "Default collation property could not be undefined in PPFnDefaultCollation.");
-        else 
+        else
             t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->get_static_context()->get_default_collation_uri()) );
     }
-    else 
+    else
     {
         t.set_eos();
         first_time = true;

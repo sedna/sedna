@@ -16,11 +16,11 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-#include "tr/crmutils/node_utils.h"
-#include "tr/structures/nodes.h"
 #include "tr/structures/schema.h"
 #include "tr/mo/indirection.h"
 #include "tr/mo/blocks.h"
+
+using namespace internal;
 
 /* Methods, that does not change current pointer are suffixed with SP */
 /* Methods, that call CHECKP ONCE (!) with their only xptr parameter are suffixed with CP */
@@ -30,15 +30,15 @@
 struct node_buffer;
 
 
-void fixPointersOnDelete(xptr block_xptr, n_dsc * node);
+void fixPointersOnDelete(xptr block_xptr, node_base_t * node);
 
 /** Delete node from block node list. */
-void nodeListDeleteCP(xptr block_xptr, n_dsc * node);
+void nodeListDeleteCP(xptr block_xptr, node_base_t * node);
 
 /*
 inline void nodeListDeleteCP(xptr node_xptr)
 {
-    nodeListDeleteCP(block_xptr(node_xptr), (n_dsc *) XADDR(node_xptr));
+    nodeListDeleteCP(block_xptr(node_xptr), (node_base_t *) XADDR(node_xptr));
 }
 */
 
@@ -47,7 +47,7 @@ inline void nodeDeleteCP(xptr node_ptr)
     CHECKP(node_ptr);
 
     xptr block_ptr = block_xptr(node_ptr);
-    n_dsc * node = (n_dsc *) XADDR(node_ptr);
+    node_base_t * node = (node_base_t *) XADDR(node_ptr);
     xptr indir = node->indir;
 
     fixPointersOnDelete(block_ptr, node);
@@ -68,7 +68,7 @@ inline void nodeDeleteCP(xptr node_ptr)
   * \warning Function does not check for the opposite situation. New block descriptor size MUST be greater or equal to the source desriptor size.
   * \param node_buffer_pos Tells the position of source node in the \param src buffer.
   */
-n_dsc * nodeListInsertCP(xptr block_xptr, shft left_node, node_buffer * src = NULL, int node_buffer_pos = 0);
+node_base_t * nodeListInsertCP(xptr block_xptr, shft left_node, node_buffer * src = NULL, int node_buffer_pos = 0);
 
 /** Updates left sibling, right sibling and indirection links.
   * Also update the child link to then node in node's parent, if given.
@@ -117,18 +117,6 @@ inline bool nullsafe_CHECKP(xptr p)
     return false;
 }
 
-inline void setNodeChild(const xptr node_xptr, int child_index, xptr child)
-{
-    int n;
-    xptr * child_list;
-
-    CHECKP(node_xptr);
-    getChildList(node_xptr, child_list, n);
-    U_ASSERT(n > child_index);
-    VMM_SIGNAL_MODIFICATION(node_xptr);
-    child_list[child_index] = child;
-}
-
 inline int getPageDescriptorCapacitySP(xptr block_xptr)
 {
     return (PAGE_SIZE - sizeof(node_blk_hdr)) / (getBlockHeader(block_xptr)->dsc_size + sizeof(xptr));
@@ -141,7 +129,6 @@ inline int getPageDescriptorCapacitySP(node_blk_hdr * block)
 
 //#define GET_EFFECTIVE_PAGE_SIZE(p)
 
-
 inline char * nodeBufferGetNode(node_buffer * b, int pos)
 {
     U_ASSERT(b->count > pos);
@@ -152,9 +139,8 @@ inline xptr createIndirectionForNewNodeCP(xptr node)
 {
     xptr node_indirection;
     node_indirection = indirectionTableAddRecord(node);
-    CHECKP(node);
-    VMM_SIGNAL_MODIFICATION(node);
-    ((n_dsc *) XADDR(node))->indir = node_indirection;
+    WRITEP(node);
+    ((node_base_t *) XADDR(node))->indir = node_indirection;
     return node_indirection;
 }
 
@@ -196,36 +182,6 @@ inline node_buffer * nodeBufferCopyCP(xptr source)
     return result;
 }
 
-inline xptr findNodeInParentCP(const xptr &node_xptr, int hint_child)
-{
-    n_dsc * node = (n_dsc *) XADDR(node_xptr);
-
-    CHECKP(node_xptr);
-
-    if (node->pdsc == XNULL) {
-        return XNULL;
-    } else if ((node->desc_prev != 0) && (getDescriptor(node_xptr, node->desc_prev)->pdsc == node->pdsc)) {
-        return XNULL;
-    } else {
-        xptr parent = indirectionDereferenceCP(node->pdsc);
-        xptr * childx;
-        int childcount;
-
-        CHECKP(parent);
-        getChildList(parent, childx, childcount);
-
-        if (hint_child == -1) {
-            while ((childcount > 0) && (*childx != node_xptr)) {
-                childcount--;
-                childx++;
-            }
-
-            return (childcount == 0) ? XNULL : ADDR2XPTR(childx);
-        } else {
-            return ((childcount > hint_child) && (childx[hint_child] == node_xptr)) ? addr2xptr(childx + hint_child) : XNULL;
-        }
-    }
-}
-
+xptr findNodeInParentCP(const xptr &node_xptr, int hint_child);
 
 #endif /* _MICROSURGERY_H */

@@ -11,7 +11,6 @@
 #include "tr/structures/metadata.h"
 #include "tr/structures/schema.h"
 #include "tr/idx/index_data.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/pstr/pstr.h"
 #include "tr/pstr/pstr_long.h"
 #include "tr/strings/e_string.h"
@@ -20,6 +19,9 @@
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/btree.h"
 #include "tr/cat/catenum.h"
+
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
 
 using namespace tr_globals;
 
@@ -101,11 +103,11 @@ static
 void print_text(xptr txt, se_ostream& crmout, t_print ptype, t_item xq_type)
 {
     CHECKP(txt);
-    strsize_t size = getTextSize(T_DSC(txt));
+    strsize_t size = CommonTextNode(txt).getTextSize();
 
     if (size<=PSTRMAXSIZE) {
         char * data;
-        xptr data_p = getTextPtr(T_DSC(txt));
+        xptr data_p = CommonTextNode(txt).getTextPointerCP();
 
         if (data_p == XNULL) {
             data = NULL;
@@ -154,31 +156,31 @@ print_node_internal(xptr node,
 {
     CHECK_TIMER_FLAG;
 
-    switch(GETTYPE(GETSCHEMENODEX(node)))
+    switch(getNodeType(node))
     {
 
     case document: case virtual_root:
         {
             if (IS_DATA_BLOCK(node))
                 crmout <<((ptype==xml)? "<?xml version=\"1.0\" standalone=\"yes\"":"(*TOP*");
-            xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(d_dsc)));
+            xptr child=getFirstChild(node);
             if(child==XNULL)
             {
                 if (IS_DATA_BLOCK(node)) crmout << ((ptype==xml)? "?>": ")");
                 return;
             }
             else CHECKP(child);
-            if (GETTYPE(GETSCHEMENODEX(child))==attribute)
+            if (getNodeType(child)==attribute)
             {
                 if (ptype==sxml)  crmout << "(@";
                 do
                 {
                     print_node_internal(child,crmout,wi,0,ptype,cxt);
-                    child=((n_dsc*)XADDR(child))->rdsc;
+                    child=nodeGetRightSibling(child);
                     if (child==XNULL) break;
                     CHECKP(child);
                 }
-                while (GETTYPE(GETSCHEMENODEX(child))==attribute);
+                while (getNodeType(child)==attribute);
                 if (ptype==sxml)  crmout << ")";
             }
 
@@ -192,7 +194,7 @@ print_node_internal(xptr node,
                 CHECKP(child);
                 print_node_internal(child,crmout,wi,0,ptype,cxt);
                 CHECKP(child);
-                child=((n_dsc*)XADDR(child))->rdsc;
+                child=nodeGetRightSibling(child);
                 if(child != XNULL && wi) crmout << "\n";
             }
             if (ptype==sxml)  crmout << ")";
@@ -210,12 +212,11 @@ print_node_internal(xptr node,
             bool lit=false;
             bool def_inset=false;
             crmout <<((ptype==xml)? "<": "(");
-            schema_node_cptr scn=GETSCHEMENODEX(node);
+            schema_node_cptr scn=getSchemaNode(node);
             xptr first_ns=XNULL;
             std::vector<ns_pair> *att_ns=NULL;
             std::vector<std::string> *pref_ns=NULL;
 
-            char* name=GETNAME(scn);
             xmlns_ptr nsptr = scn->get_xmlns();
 
             if (nsptr != NULL_XMLNS)
@@ -225,8 +226,8 @@ print_node_internal(xptr node,
                     crmout << nsptr->prefix << ":";
             }
 
-            crmout << name;
-            xptr child = giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
+            crmout << scn->get_name();
+            xptr child = getFirstChild(node);
 
             if(child == XNULL)
             {
@@ -243,16 +244,16 @@ print_node_internal(xptr node,
                 CHECKP(child);
 
             //namespaces print and add
-            while (GETTYPE(GETSCHEMENODEX(child)) == xml_namespace)
+            while (getNodeType(child) == xml_namespace)
             {
                 if (first_ns == XNULL) first_ns = child;
 
-                ns_pair str = pref_to_str(xmlns_touch(((ns_dsc*)XADDR(child))->ns));
+                ns_pair str = pref_to_str(NSNode(child).getNamespaceLocal());
                 nspt_map::iterator it_map = xm_nsp.find(str);
 
                 if (it_map == xm_nsp.end())
                 {
-                    xmlns_ptr sns = xmlns_touch(((ns_dsc*)XADDR(child))->ns);
+                    xmlns_ptr sns = NSNode(child).getNamespaceLocal();
                     xm_nsp[str] = sns;
                     if (!att_ns)
                         att_ns= se_new std::vector<ns_pair> ;
@@ -275,7 +276,7 @@ print_node_internal(xptr node,
                 }
                 print_node_internal(child,crmout,wi,0,ptype,cxt);
                 CHECKP(child);
-                child=((n_dsc*)XADDR(child))->rdsc;
+                child=nodeGetRightSibling(child);
                 if (child==XNULL) break;
                 CHECKP(child);
             }
@@ -326,7 +327,7 @@ print_node_internal(xptr node,
 
             //namespaces for attributes
             CHECKP(node);
-            ptr = (xptr*)((char*)XADDR(node)+sizeof(e_dsc));
+            getChildList(node, ptr);
             sch = scn->children->first;
             while (sch!=NULL)
             {
@@ -335,7 +336,7 @@ print_node_internal(xptr node,
                     xm_nsp.find(pref_to_str(sch->object.get_xmlns())) == xm_nsp.end() &&
                     *(ptr+cnt) != XNULL )
                 {
-                    if (my_strcmp(sch->object.get_xmlns()->prefix,"xml") != 0)
+                    if (strcmpex(sch->object.get_xmlns()->prefix,"xml") != 0)
                     {
                         ns_pair str=pref_to_str(sch->object.get_xmlns());
                         xmlns_ptr xmn = NULL_XMLNS;
@@ -348,7 +349,7 @@ print_node_internal(xptr node,
                         }
                         else
                         {
-                            xmn=generate_pref(ctr++,sch->object.get_xmlns()->uri,cxt);
+                            xmn = generate_prefix(ctr++,sch->object.get_xmlns()->uri,cxt);
                         }
                         xm_nsp[str]=xmn;
                         if (!att_ns)
@@ -372,17 +373,17 @@ print_node_internal(xptr node,
             }
             //attributes
             CHECKP(child);
-            if (GETTYPE(GETSCHEMENODEX(child))==attribute)
+            if (getNodeType(child)==attribute)
             {
                 if (ptype==sxml)  crmout << "(@";
                 do
                 {
                     print_node_internal(child,crmout,wi,indent+1,ptype,cxt);
                     CHECKP(child);
-                    child=((n_dsc*)XADDR(child))->rdsc;
+                    child=nodeGetRightSibling(child);
                     if (child==XNULL)  break;
                     CHECKP(child);
-                } while (GETTYPE(GETSCHEMENODEX(child))==attribute);
+                } while (getNodeType(child)==attribute);
                 if (ptype==sxml )  crmout << ")";
             }
 
@@ -398,7 +399,7 @@ print_node_internal(xptr node,
             while (child!=XNULL)
             {
                 CHECKP(child);
-                bool cit=(GETSCHEMENODEX(child)->type==text);
+                bool cit=(getNodeType(child)==text);
                 if (cit)
                     curwi=false;
                 else
@@ -408,7 +409,7 @@ print_node_internal(xptr node,
                 print_node_internal(child,crmout,curwi,indent+1,ptype,cxt);
 
                 CHECKP(child);
-                child=((n_dsc*)XADDR(child))->rdsc;
+                child=nodeGetRightSibling(child);
                 lit=cit;
             }
             if(curwi||(wi && !lit))
@@ -421,7 +422,7 @@ print_node_internal(xptr node,
                 crmout << "</";
                 if (scn->get_xmlns() != NULL && strcmp(nsptr->prefix, "") != 0)
                     crmout<<scn->get_xmlns()->prefix<<":";
-                crmout<< name <<">";
+                crmout<< scn->get_name() <<">";
             }
             else
                 crmout <<")";
@@ -454,13 +455,13 @@ nsfree:
         }
     case xml_namespace:
         {
-            print_namespace(xmlns_touch(((ns_dsc*)XADDR(node))->ns),crmout,ptype);
+            print_namespace(NSNode(node).getNamespaceLocal(),crmout,ptype);
             break;
         }
 
     case attribute:
         {
-            schema_node_cptr scn=GETSCHEMENODEX(node);
+            schema_node_cptr scn=getSchemaNode(node);
             if (ptype==xml )
             {
 
@@ -498,18 +499,6 @@ nsfree:
             crmout<< "<!--";
             print_text(node,crmout,ptype,comment);
             crmout<< "-->";
-            break;
-        }
-    case cdata:
-        {
-            if(wi)
-            {
-                crmout<< "\n";
-                print_indent(crmout,indent) ;
-            }
-            crmout<< "<![CDATA[";
-            print_text(node,crmout,ptype,cdata);
-            crmout<< "]]>";
             break;
         }
     case pr_ins:
@@ -665,7 +654,7 @@ static void tbuf_write_cb(void *param, const char *str, int len)
 static void print_text(xptr txt, op_str_buf& tbuf, t_item xq_type, bool escapes = true)
 {
     CHECKP(txt);
-    if (isTextEmpty(T_DSC(txt))) { return; }
+    if (CommonTextNode(txt).isEmpty()) { return; }
     tuple_cell tc=tuple_cell::atomic_text(txt);
     if (!escapes)
     {
@@ -701,7 +690,7 @@ static void print_text(xptr txt, op_str_buf& tbuf, t_item xq_type, bool escapes 
 void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custom_tree_t * custom_tree, const char *opentag, const char *closetag)
 {
 	CHECKP(node);
-    switch(GETTYPE(GETSCHEMENODEX(node)))
+    switch(getNodeType(node))
     {
     case document: case virtual_root:
         {
@@ -712,19 +701,19 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             case ft_customized_value: case ft_delimited_value: tbuf<<" ";break;
             }
             CHECKP(node);
-            xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(d_dsc)));
+            xptr child=getFirstChild(node);
             if(child==XNULL)
             {
                 if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<"?"<<closetag;
                 return;
             }
             else CHECKP(child);
-            while (GETTYPE(GETSCHEMENODEX(child))==attribute)
+            while (getNodeType(child)==attribute)
             {
 
                 if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
                 CHECKP(child);
-                child=((n_dsc*)XADDR(child))->rdsc;
+                child=nodeGetRightSibling(child);
                 if (child==XNULL) break;
                 CHECKP(child);
             }
@@ -734,13 +723,13 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
                 CHECKP(child);
                 print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
                 CHECKP(child);
-                child=((n_dsc*)XADDR(child))->rdsc;
+                child=nodeGetRightSibling(child);
             }
             break;
         }
     case element:
         {
-            schema_node_cptr scn=GETSCHEMENODEX(node);
+            schema_node_cptr scn=getSchemaNode(node);
             if (custom_tree!=NULL)
             {
                 ft_custom_tree_t::sedna_rbtree_entry* scget= custom_tree->get(scn->name,scn->get_xmlns());
@@ -758,13 +747,12 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
                     throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print element node");
             }
             //std::vector<std::string> *att_ns=NULL;
-            char* name=GETNAME(scn);
             if (scn->get_xmlns()!=NULL_XMLNS && scn->get_xmlns()->prefix!=NULL && *(scn->get_xmlns()->prefix))
                 if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<scn->get_xmlns()->prefix<<":";
-            if (type==ft_xml || type==ft_xml_ne) tbuf<<name;
+            if (type==ft_xml || type==ft_xml_ne) tbuf<<scn->get_name();
             if (type==ft_xml_hl) tbuf<<"a";
             CHECKP(node);
-            xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
+            xptr child=getFirstChild(node);
             if(child==XNULL)
             {
                 if (type==ft_xml || type==ft_xml_ne) tbuf<<"/"<<closetag;
@@ -773,11 +761,11 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             }
             else
                 CHECKP(child);
-            while (GETTYPE(GETSCHEMENODEX(child))==attribute)
+            while (getNodeType(child)==attribute)
             {
                 if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
                 CHECKP(child);
-                child=((n_dsc*)XADDR(child))->rdsc;
+                child=nodeGetRightSibling(child);
                 if (child==XNULL)  break;
                 CHECKP(child);
             }
@@ -797,10 +785,10 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             while (child!=XNULL)
             {
                 CHECKP(child);
-                cit=(GETSCHEMENODEX(child)->type==element);
+                cit=(getNodeType(child)==element);
                 print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
                 CHECKP(child);
-                child=((n_dsc*)XADDR(child))->rdsc;
+                child=nodeGetRightSibling(child);
             }
             if (type==ft_xml || type==ft_xml_ne) tbuf<<opentag<<"/";
             else
@@ -809,18 +797,18 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
                     if (type==ft_delimited_value && !cit) tbuf<<" ";
             if (scn->get_xmlns()!=NULL_XMLNS && scn->get_xmlns()->prefix!=NULL && *(scn->get_xmlns()->prefix))
                 if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<<scn->get_xmlns()->prefix<<":";
-            if (type==ft_xml || type==ft_xml_ne) tbuf<<name<<closetag;
+            if (type==ft_xml || type==ft_xml_ne) tbuf<<scn->get_name()<<closetag;
             if (type==ft_xml_hl) tbuf<<"a"<<closetag<<" ";
             break;
         }
     case xml_namespace:
         {
-            print_name_space(xmlns_touch(((ns_dsc*)XADDR(node))->ns),tbuf,type);
+            print_name_space(NSNode(node).getNamespaceLocal(), tbuf, type);
             break;
         }
     case attribute:
         {
-            schema_node_cptr scn=GETSCHEMENODEX(node);
+            schema_node_cptr scn=getSchemaNode(node);
             switch (type)
             {
             case ft_xml:
@@ -863,21 +851,6 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,ft_custo
             if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<< "--" << closetag;
             break;
         }
-    case cdata:
-        {
-            switch (type)
-            {
-            case ft_xml:case ft_xml_ne:case ft_xml_hl: tbuf<< opentag<<"![CDATA["; break;
-            case ft_string_value:break;
-            case ft_delimited_value:tbuf<<" ";break;
-            default:
-                throw USER_EXCEPTION2(SE1003, "Unexpected full text index type in print cdata node");
-            }
-            CHECKP(node);
-            print_text(node,tbuf,cdata,type!=ft_xml_ne);
-            if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<< "]]"<<closetag;
-            break;
-        }
     case pr_ins:
         {
             switch (type)
@@ -906,21 +879,21 @@ void print_pp_stack(se_ostream* dostr)
     const char* indent = "  ";
     std::ostringstream message;
     message << "<stack xmlns='" << SEDNA_NAMESPACE_URI << "'>" << std::endl;
-    
+
     while(!executor_globals::pp_stack.empty()) {
         const operation_info& oi = executor_globals::pp_stack.back();
         executor_globals::pp_stack.pop_back();
         message << indent << "<operation name='" << oi.name;
-        if(oi.query_line != 0) 
+        if(oi.query_line != 0)
             message << "' line='" << oi.query_line;
-        if(oi.query_col != 0) 
+        if(oi.query_col != 0)
             message << "' column='" << oi.query_col;
         message << "' calls='" << oi.profile->calls;
         message << "'/>" << std::endl;
     }
 
     message << "</stack>" << std::endl;
-    
+
     dostr->set_debug_info_type(se_QueryDebug);
     (*dostr) << message.str().c_str();
     dostr->flush();

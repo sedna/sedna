@@ -651,8 +651,8 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 		return;
 	}
 
-	xptr elem = insert_element(removeIndirection(last_elem), XNULL, virt_root, "tuple", xs_untyped, NULL);
-	xptr indir=((n_dsc*)XADDR(elem))->indir;
+	xptr elem = insert_element(indirectionDereferenceCP(last_elem), XNULL, virt_root, "tuple", xs_untyped, NULL);
+	xptr indir=nodeGetIndirection(elem);
 	xptr left = XNULL;
 	last_elem = indir;
 
@@ -716,9 +716,9 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 		// thus we don't need to do anything else here
 	}
 
-	//last_elem = removeIndirection(indir);
+	//last_elem = indirectionDereferenceCP(indir);
 
-	t.copy(tuple_cell::node(removeIndirection(last_elem)));
+	t.copy(tuple_cell::node(indirectionDereferenceCP(last_elem)));
 }
 
 int  SQLODBCExecutor::update_row_count()

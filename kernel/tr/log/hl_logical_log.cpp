@@ -21,6 +21,8 @@
 #include "tr/mo/indirection.h"
 #include "tr/mo/boundaries.h"
 
+#include "tr/structures/nodeinterface.h"
+
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTindex.h"
 #endif
@@ -316,8 +318,8 @@ void hl_logical_log_text_edit(const xptr &self,unsigned data_size,bool begin,boo
 	ASSERT(inserted);
 	xptr desc = indirectionDereferenceCP(self);
 	CHECKP(desc);
-    strsize_t str_len = getTextSize((t_dsc*)XADDR(desc));
-	xptr str_ptr = getTextPtr((t_dsc*)XADDR(desc));
+    strsize_t str_len = CommonTextNode(desc).getTextSize();
+	xptr str_ptr = CommonTextNode(desc).getTextPointer();
 
 	/* "small" string -- within block */
 	if (str_len <= PSTRMAXSIZE)

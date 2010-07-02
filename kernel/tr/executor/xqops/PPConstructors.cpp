@@ -23,6 +23,9 @@
 #include "tr/mo/blocks.h"
 #include "tr/mo/microoperations.h"
 
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,7 +34,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static inline 
+static inline
 tuple_cell getQnameParameter(PPOpIn qname)
 {
     tuple name(qname.ts);
@@ -131,29 +134,29 @@ static inline bool
 isNameValid(const char* name, const char* prefix, const char* uri, bool check_name = true)
 {
     /* It has no namespace prefix and its local name is xmlns */
-    if(check_name && (prefix == NULL || strcmp(prefix,"") == 0) && my_strcmp(name,"xmlns") == 0) return false;
+    if(check_name && (prefix == NULL || strcmp(prefix,"") == 0) && strcmpex(name,"xmlns") == 0) return false;
 
     if(!prefix && !uri) return true;
 
     /* Its namespace prefix is xmlns. */
-    if(my_strcmp(prefix, "xmlns") == 0) return false;
+    if(strcmpex(prefix, "xmlns") == 0) return false;
     /* Its namespace URI is xmlns URI. */
-    if(my_strcmp(uri, "http://www.w3.org/2000/xmlns/") == 0) return false;
+    if(strcmpex(uri, "http://www.w3.org/2000/xmlns/") == 0) return false;
     /* Its namespace prefix is xml and its namespace URI is not xml namespace */
-    if(my_strcmp(prefix, "xml") == 0 &&
-       !(uri == NULL || my_strcmp(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
+    if(strcmpex(prefix, "xml") == 0 &&
+       !(uri == NULL || strcmpex(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
     /* Its namespace prefix is other than xml and its namespace URI is xml namespace */
-    if(prefix != NULL && strcmp(prefix, "xml") != 0 && (uri == NULL || my_strcmp(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
+    if(prefix != NULL && strcmp(prefix, "xml") != 0 && (uri == NULL || strcmpex(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
     return true;
 }
 
-/* 
- * Helper for element and docuemnt constructors to insert sequence 
+/*
+ * Helper for element and docuemnt constructors to insert sequence
  * of atomic values. Returns true if node was actually inserted.
  * In this case left pointer is changed to the last inserted indirection.
  * In any case at_vals sequence is cleared.
  */
-static inline bool 
+static inline bool
 process_atomic_values(xptr& left,
                       const xptr& parent,
                       sequence& at_vals)
@@ -177,9 +180,7 @@ process_atomic_values(xptr& left,
             insert_text(indirectionDereferenceCP(left),
                         XNULL,
                         indirectionDereferenceCP(parent),
-                        executor_globals::tmp_op_str_buf.get_ptr_to_text(),
-                        executor_globals::tmp_op_str_buf.get_size(),
-                        executor_globals::tmp_op_str_buf.get_type());
+                        text_source_strbuf(&(executor_globals::tmp_op_str_buf)));
             left = get_last_mo_inderection();
             return true;
         }
@@ -197,7 +198,7 @@ process_atomic_values(xptr& left,
 
 
 /*
- * Global state shared between all constructors and some classes 
+ * Global state shared between all constructors and some classes
  * which are also inherited from PPConstructor
  */
 schema_node_cptr PPConstructor::root_schema = XNULL;
@@ -209,7 +210,7 @@ int PPConstructor::conscnt                  = 0;
 
 void PPConstructor::checkInitial()
 {
-    if (!root_schema.found()) 
+    if (!root_schema.found())
     {
         node_info_t node_info = {XNULL, XNULL, XNULL, virtual_root};
         root_schema = doc_schema_node_object::create_virtual_root()->p;
@@ -221,10 +222,10 @@ void PPConstructor::checkInitial()
         cont_leftind=XNULL;
         conscnt=0;
         last_elem=XNULL;
-    } 
+    }
 }
 
-/* 
+/*
  * Clears global state of constructors.
  * It's called in kernel statement end in trn.
  */
@@ -349,7 +350,7 @@ void PPElementConstructor::do_next (tuple &t)
                 tuple_cell tc=cont.cells[0];
                 xptr node=tc.get_node();
                 CHECKP(node);
-                t_item typ=GETTYPE(GETSCHEMENODE(XADDR(node)));
+                t_item typ=getNodeType(node);
                 if(typ!=xml_namespace)
                     break;
                 content.op->next(cont);
@@ -387,11 +388,11 @@ void PPElementConstructor::do_next (tuple &t)
             }
         }
         /*
-         * The attribute value in a default namespace declaration MAY be empty. 
+         * The attribute value in a default namespace declaration MAY be empty.
          * This has the same effect, within the scope of the declaration, of there being no default namespace
          */
         if(is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
-        
+
         /* Check constraints on full name */
         if(!isNameValid(name,
                         ns == NULL_XMLNS ? NULL : ns->prefix,
@@ -403,15 +404,15 @@ void PPElementConstructor::do_next (tuple &t)
         xptr new_element;
         if (parind == XNULL || deep_copy)
         {
-            new_element = insert_element(removeIndirection(last_elem),XNULL,get_virtual_root(),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
+            new_element = insert_element(indirectionDereferenceCP(last_elem),XNULL,get_virtual_root(),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
             last_elem   = get_last_mo_inderection();
         }
         else
         {
             if (leftind!=XNULL)
-                new_element = insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
+                new_element = insert_element(indirectionDereferenceCP(leftind),XNULL,XNULL,name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
             else
-                new_element = insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
+                new_element = insert_element(XNULL,XNULL,indirectionDereferenceCP(parind),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
             conscnt++;
         }
         int cnt = conscnt;
@@ -428,7 +429,7 @@ void PPElementConstructor::do_next (tuple &t)
         tuple* cont_ptr = NULL;
         unsigned int ss_size = start_seq.size();
         unsigned int ss_it = 0;
-        
+
         while (true)
         {
             /* Get next content sequence tuple cell */
@@ -459,17 +460,17 @@ void PPElementConstructor::do_next (tuple &t)
 
                 xptr node = tc.get_node();
                 CHECKP(node);
-                t_item typ = GETTYPE(GETSCHEMENODE(XADDR(node)));
+                t_item typ = getNodeType(node);
 
                 switch (typ)
                 {
                 case virtual_root: throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the element constructor content sequence");
-                case xml_namespace: 
+                case xml_namespace:
                     {
-                        xmlns_ptr nsptr = xmlns_touch(((ns_dsc*)XADDR(node))->ns);
+                        xmlns_ptr nsptr = NSNode(node).getNamespaceLocal();
                         ns_list.push_back(nsptr);
                         if(is_empty_default_ns_declaration(nsptr)) continue;
-                        break;     
+                        break;
                     }
                 case comment:
                 case pr_ins:
@@ -479,10 +480,9 @@ void PPElementConstructor::do_next (tuple &t)
                         mark_attr = false;
                         break;
                     }
-                case cdata:
                 case text:
                     {
-                        if (isTextEmpty(T_DSC(node))) continue; 
+                        if (CommonTextNode(node).isEmpty()) continue;
                         mark_attr = false;
                         break;
                     }
@@ -491,7 +491,7 @@ void PPElementConstructor::do_next (tuple &t)
                         if (!mark_attr) throw XQUERY_EXCEPTION(XQTY0024);
                     }
                 }
-                
+
                 // Check if we've already inserted the node to this node as a context
                 if (conscnt > cnt)
                 {
@@ -514,7 +514,7 @@ void PPElementConstructor::do_next (tuple &t)
                 }
             }
         }
-        
+
         /* Process remained atomic values */
         process_atomic_values(left, indir, at_vals);
 
@@ -691,12 +691,12 @@ void PPAttributeConstructor::do_next (tuple &t)
                 if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0044);
                 if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
                 /* Default namespace is not applied to the attributes */
-                if(my_strcmp(prefix, "") != 0)
+                if(strcmpex(prefix, "") != 0)
                     ns = cxt->get_xmlns_by_prefix(prefix);
             }
         }
         /*
-         * The attribute value in a default namespace declaration MAY be empty. 
+         * The attribute value in a default namespace declaration MAY be empty.
          * This has the same effect, within the scope of the declaration, of there being no default namespace
          */
         if(is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
@@ -726,24 +726,24 @@ void PPAttributeConstructor::do_next (tuple &t)
         {
             if (cont_leftind!=XNULL)
             {
-                xptr left_sib=removeIndirection(cont_leftind);
+                xptr left_sib=indirectionDereferenceCP(cont_leftind);
                 CHECKP(left_sib);
-                schema_node_cptr ss=GETSCHEMENODE(XADDR(left_sib));
-                t_item typ=GETTYPE(ss);
-                if (typ!=attribute && typ!=xml_namespace)
+                schema_node_cptr ss = getSchemaNode(left_sib);
+                t_item typ = ss->type;
+                if (typ != attribute && typ != xml_namespace)
                 {
-                    if (GETTYPE(ss->parent)!=document)
+                    if (ss->parent->type != document)
                         throw XQUERY_EXCEPTION(XQTY0024);
                     else
                         throw XQUERY_EXCEPTION(XPTY0004);
                 }
 
-                new_attribute= insert_attribute(removeIndirection(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
+                new_attribute= insert_attribute(indirectionDereferenceCP(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
             }
             else
-                new_attribute= insert_attribute(XNULL,XNULL,removeIndirection(cont_parind),name,xs_untypedAtomic,value,size,ns);
+                new_attribute= insert_attribute(XNULL,XNULL,indirectionDereferenceCP(cont_parind),name,xs_untypedAtomic,value,size,ns);
             conscnt++;
-            cont_leftind=((n_dsc*)XADDR(new_attribute))->indir;
+            cont_leftind=nodeGetIndirection(new_attribute);
         }
 
         /* Result */
@@ -965,9 +965,9 @@ void PPCommentConstructor::do_next (tuple &t)
         else
         {
             if (cont_leftind!=XNULL)
-                newcomm= insert_comment(removeIndirection(cont_leftind),XNULL,XNULL,value,size);
+                newcomm= insert_comment(indirectionDereferenceCP(cont_leftind),XNULL,XNULL,value,size);
             else
-                newcomm= insert_comment(XNULL,XNULL,removeIndirection(cont_parind),value,size);
+                newcomm= insert_comment(XNULL,XNULL,indirectionDereferenceCP(cont_parind),value,size);
             conscnt++;
             cont_leftind=get_last_mo_inderection();
         }
@@ -1108,7 +1108,7 @@ void PPPIConstructor::do_next (tuple &t)
             res1 = getQnameParameter(qname);
             name = res1.get_str_mem();
         }
-        
+
         if (!res1.is_eos() && res1.get_atomic_type() == xs_QName)
         {
             const char* prefix = (char*)xs_QName_get_prefix(name);
@@ -1127,7 +1127,7 @@ void PPPIConstructor::do_next (tuple &t)
             if (!check_constraints_for_xs_NCName(name))
                 throw XQUERY_EXCEPTION(XQDY0041);
         }
-        
+
         if(charset_handler->matches(name, "^(?i:xml)$"))
             throw XQUERY_EXCEPTION(XQDY0064);
 
@@ -1162,13 +1162,13 @@ void PPPIConstructor::do_next (tuple &t)
         else
         {
             if (cont_leftind!=XNULL)
-                new_pi = insert_pi(removeIndirection(cont_leftind),XNULL,XNULL,name,strlen(name),value,size);
+                new_pi = insert_pi(indirectionDereferenceCP(cont_leftind),XNULL,XNULL,name,strlen(name),value,size);
             else
-                new_pi = insert_pi(XNULL,XNULL,removeIndirection(cont_parind),name,strlen(name),value,size);
+                new_pi = insert_pi(XNULL,XNULL,indirectionDereferenceCP(cont_parind),name,strlen(name),value,size);
             conscnt++;
             cont_leftind = get_last_mo_inderection();
         }
- 
+
         /* Result */
         t.copy(tuple_cell::node(new_pi));
     }
@@ -1258,31 +1258,28 @@ void PPTextConstructor::do_next (tuple &t)
     if (first_time)
     {
         first_time = false;
-        const char* value=at_value;
-        strsize_t size=0;
+        text_source_t text_source;
         tuple_cell res;
-        if (value==NULL)
+        if (at_value == NULL)
         {
             if (getStringParameter(content))
             {
                 t.set_eos();
                 return;
             }
-            value=(char*)executor_globals::tmp_op_str_buf.c_str();
-
-            size=executor_globals::tmp_op_str_buf.get_size();
+            text_source = text_source_strbuf(&(executor_globals::tmp_op_str_buf));
+        } else {
+            text_source = text_source_mem(at_value, strlen(at_value));
         }
-        else
-            size=strlen(value);
         xptr newcomm;
-        if (cont_parind==XNULL || deep_copy || size==0)
-            newcomm= insert_text(XNULL,XNULL,get_virtual_root(),value,size);
+        if (cont_parind==XNULL || deep_copy || text_source.size == 0)
+            newcomm = insert_text(XNULL, XNULL, get_virtual_root(), text_source);
         else
         {
             if (cont_leftind!=XNULL)
-                newcomm= insert_text(removeIndirection(cont_leftind),XNULL,XNULL,value,size);
+                newcomm = insert_text(indirectionDereferenceCP(cont_leftind),XNULL,XNULL, text_source);
             else
-                newcomm= insert_text(XNULL,XNULL,removeIndirection(cont_parind),value,size);
+                newcomm = insert_text(XNULL,XNULL,indirectionDereferenceCP(cont_parind), text_source);
             conscnt++;
             cont_leftind=get_last_mo_inderection();
         }
@@ -1362,7 +1359,7 @@ void PPDocumentConstructor::do_next (tuple &t)
         int oldcnt=conscnt;
         xptr new_doc = insert_document("tmp",false);
         cxt->add_temporary_doc_node(new_doc);
-        xptr indir=((n_dsc*)XADDR(new_doc))->indir;
+        xptr indir=nodeGetIndirection(new_doc);
         cont_parind=indir;
         cont_leftind=XNULL;
         sequence at_vals(1);
@@ -1381,11 +1378,11 @@ void PPDocumentConstructor::do_next (tuple &t)
             else
             {
                 process_atomic_values(lefti, indir, at_vals);
-                
+
                 xptr node=tc.get_node();
                 CHECKP(node);
-                t_item typ = GETTYPE(GETSCHEMENODE(XADDR(node)));
-                
+                t_item typ = getNodeType(node);
+
                 switch (typ)
                 {
                   case document:
@@ -1393,9 +1390,8 @@ void PPDocumentConstructor::do_next (tuple &t)
                   case pr_ins:
                   case comment: break;
                   case text:
-                  case cdata:
                     {
-                        if (isTextEmpty(T_DSC(node))) continue;
+                        if (CommonTextNode(node).isEmpty()) continue;
                         break;
                     }
                   case attribute:     throw XQUERY_EXCEPTION2(XPTY0004, "Attribute node in the document constructor content sequence");

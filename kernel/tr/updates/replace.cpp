@@ -15,6 +15,9 @@
 #include "tr/triggers/triggers.h"
 #endif
 
+#include "tr/structures/nodeutils.h"
+#include "tr/structures/textcptr.h"
+
 void replace(PPOpIn arg)
 {
     xptr node, parent, tmp_node, old_node, node_child, del_node, attr_node;
@@ -31,7 +34,7 @@ void replace(PPOpIn arg)
     upd_ns_map* ins_swiz = NULL;
     bool is_node_updated = true;
 
-    /* 
+    /*
      * Fill up sequences with nodes to update and update with,
      * child (arg) returns the following sequence of items:
      * 1. node to be replaced (1)
@@ -53,8 +56,8 @@ void replace(PPOpIn arg)
              */
             if ((!is_node_updated || is_node_persistent(node)) && !is_node_document(node))
             {
-                xptr indir=((n_dsc*)XADDR(node))->indir;
-                
+                xptr indir=nodeGetIndirection(node);
+
                 if (is_node_updated)
                 {
                     /* Case (1) - fill up sequence with nodes to be replaced */
@@ -122,7 +125,7 @@ void replace(PPOpIn arg)
         case 0: case -2:
             {
                 node = copy_to_temp((*it3).cells[0].get_node());
-                xptr indir=((n_dsc*)XADDR(node))->indir;
+                xptr indir=nodeGetIndirection(node);
                 arg2seq.set(indir,(*it3).cells[1].get_xs_integer());
                 ++it3;
             }
@@ -151,7 +154,7 @@ void replace(PPOpIn arg)
         tuple tup(2);
         /* arg3seq will contain pairs: node -> int, namely
         * node to be replaced -> place in sequence of nodes to replace with */
-        tup.copy(tuple_cell::node(removeIndirection(*it)),tuple_cell((int64_t)ctr));
+        tup.copy(tuple_cell::node(indirectionDereferenceCP(*it)),tuple_cell((int64_t)ctr));
         arg3seq.add(tup);
         /* XNULL separates nodes in arg2seq (nodes replace with) per each
         * node in arg1seq (nodes to be replaced) */
@@ -187,16 +190,16 @@ void replace(PPOpIn arg)
         int pos=(*it3).cells[1].get_xs_integer();
         sit=arg2seq.begin()+pos;
         CHECKP(node);
-        xptr leftn=((n_dsc*)XADDR(old_node))->ldsc;
-        xptr rightn=((n_dsc*)XADDR(old_node))->rdsc;
-        xptr par_ind=((n_dsc*)XADDR(old_node))->pdsc;
+        xptr leftn=nodeGetLeftSibling(old_node);
+        xptr rightn=nodeGetRightSibling(old_node);
+        xptr par_ind= nodeGetParentIndirection(old_node);
         bool a_m=is_node_attribute(node);
         bool d_m=a_m||is_node_text(node);
 
 #ifdef SE_ENABLE_TRIGGERS
         CHECKP(old_node);
-        scm_node = GETSCHEMENODEX(old_node);
-        parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
+        scm_node = getSchemaPointer(old_node);
+        parent=  nodeGetParent(old_node);
         CHECKP(old_node);
         tmp_node = prepare_old_node(old_node, scm_node, TRIGGER_REPLACE_EVENT);
 
@@ -205,8 +208,8 @@ void replace(PPOpIn arg)
         while(*tr_it!=XNULL)
         {
             node_child=*tr_it;
-            parent=removeIndirection(par_ind);
-            if(apply_per_node_triggers(removeIndirection(node_child), old_node, parent, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) == XNULL)
+            parent=indirectionDereferenceCP(par_ind);
+            if(apply_per_node_triggers(indirectionDereferenceCP(node_child), old_node, parent, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) == XNULL)
                 goto next_replacement;
             tr_it++;
         }
@@ -221,10 +224,10 @@ void replace(PPOpIn arg)
         while(*sit != XNULL)
         {
             node_child = *sit;
-            if (is_node_attribute(removeIndirection(node_child)))
+            if (is_node_attribute(indirectionDereferenceCP(node_child)))
             {
-                parent = removeIndirection(par_ind);
-                attr_node=deep_copy_node(XNULL, XNULL, parent, removeIndirection(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
+                parent = indirectionDereferenceCP(par_ind);
+                attr_node=deep_copy_node(XNULL, XNULL, parent, indirectionDereferenceCP(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
 #ifdef SE_ENABLE_TRIGGERS
                 apply_per_node_triggers(attr_node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
@@ -234,9 +237,10 @@ void replace(PPOpIn arg)
         //2. finding place of insertion
         if (a_m)
         {
-            node=getFirstByOrderChildNode(removeIndirection(par_ind));
+            node= getFirstChildNode(indirectionDereferenceCP(par_ind));
             if (node!=XNULL)
             {
+                CHECKP(node);
                 if (is_node_element(node))
                 {
                     rightn=node;
@@ -263,12 +267,12 @@ void replace(PPOpIn arg)
         while(*sit != XNULL)
         {
             node_child = *sit;
-            if (!is_node_attribute(removeIndirection(node_child)))
+            if (!is_node_attribute(indirectionDereferenceCP(node_child)))
             {
-                parent = removeIndirection(par_ind);
-                node = deep_copy_node(node, rightn, parent, removeIndirection(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
+                parent = indirectionDereferenceCP(par_ind);
+                node = deep_copy_node(node, rightn, parent, indirectionDereferenceCP(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
 #ifdef SE_ENABLE_TRIGGERS
-                apply_per_node_triggers(node, tmp_node, removeIndirection(par_ind), scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+                apply_per_node_triggers(node, tmp_node, indirectionDereferenceCP(par_ind), scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
             }
             sit++;

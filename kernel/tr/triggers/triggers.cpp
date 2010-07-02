@@ -7,7 +7,6 @@
 
 #include "tr/xqp/XQuerytoLR.h"
 #include "tr/triggers/triggers.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/tr_globals.h"
 #include "tr/auth/auc.h"
 #include "tr/updates/updates.h"
@@ -15,6 +14,7 @@
 #include "tr/log/log.h"
 #include "tr/locks/locks.h"
 #include "tr/crmutils/exec_output.h"
+#include "tr/structures/nodeutils.h"
 
 static t_triggers_set after_statement_triggers;
 
@@ -24,10 +24,10 @@ xptr triggers_test(xptr new_var, xptr where_var, const char* name, t_item node_t
 {
     if(name==NULL)
     {
-        name=GETNAME(GETSCHEMENODEX(new_var));
+        name=getSchemaNode(new_var)->get_name();
 		CHECKP(where_var);
-        name=GETNAME(GETSCHEMENODEX(new_var));
-		node_type = GETTYPE(GETSCHEMENODEX(new_var));
+        name=getSchemaNode(new_var)->get_name();
+		node_type = getNodeType(new_var);
     }
 	return new_var;
 }
@@ -47,8 +47,8 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
     if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
 
     CHECKP(new_var);
-    const char* name=GETNAME(GETSCHEMENODEX(new_var));
-    t_item node_type = GETTYPE(GETSCHEMENODEX(new_var));
+    const char* name=getSchemaNode(new_var)->get_name();
+    t_item node_type = getNodeType(new_var);
 
     //if the node is not element or attribute - return
    	if((node_type!=element)&&(node_type!=attribute))
@@ -58,7 +58,7 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
     schema_node_cptr scm_parent_node = XNULL;
 
     CHECKP(where_var);
-    scm_parent_node=GETSCHEMENODEX(where_var);
+    scm_parent_node=getSchemaNode(where_var);
 
     trigger_cell_cptr trc = XNULL;
     while(true)
@@ -73,10 +73,10 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
         new_var=trc->execute_trigger_action(new_var, XNULL, where_var);
 		if(new_var == XNULL)
 			return new_var;
-		node_type = GETTYPE(GETSCHEMENODEX(new_var));
+		node_type = getNodeType(new_var);
 		if((node_type!=element)&&(node_type!=attribute))
 			return new_var;
-        name=GETNAME(GETSCHEMENODEX(new_var));
+        name=getSchemaNode(new_var)->get_name();
         treated_triggers.insert(trc.ptr());
     }
 }
@@ -91,9 +91,9 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var, schema_node_cptr 
     if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
 
     CHECKP(new_var);
-	scm_node = GETSCHEMENODEX(new_var);
+	scm_node = getSchemaNode(new_var);
     //if the node is not element or attribute - return
-    t_item node_type = GETTYPE(scm_node);
+    t_item node_type = getNodeType(new_var);
     if((node_type!=element)&&(node_type!=attribute))
         return;
 
@@ -116,7 +116,7 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
 {
    	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return node;
 
-    schema_node_cptr scm_node = GETSCHEMENODEX(node);
+    schema_node_cptr scm_node = getSchemaNode(node);
     node_triggers_map attribute_fired_triggers;
     node_triggers_map element_fired_triggers;
     typedef std::pair< schema_node_xptr, std::vector<trigger_cell_xptr> > mapPair;
@@ -126,7 +126,7 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
     node_triggers_map::iterator mapIter;
     trigger_cell_cptr trc = XNULL;
     mapIter = fired_triggers->find(scm_node.ptr());
-    xptr parent=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
+    xptr parent=nodeGetParent(node);
     if( mapIter != fired_triggers->end())
         for(std::vector<trigger_cell_xptr>::size_type i=0; i< mapIter->second.size(); i++)
         {
@@ -135,7 +135,7 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
         }
 
     // if the node is attribute - it has no children to process
-    if (GETTYPE(scm_node) == attribute) return node;
+    if (scm_node->type == attribute) return node;
 
     /*2. Find all fired triggers for all the children of the node (attribute_fired_triggers and element_fired_triggers)*/
     sc_ref_item* scm_child = scm_node->children->first;
@@ -161,19 +161,19 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
         scm_child=scm_child->next;
     }
     /*Call this function on all children recursively*/
-    xptr attr_child = getFirstByOrderAttributeChild(node);
+    xptr attr_child = getFirstAttributeChild(node);
     while(attr_child!=XNULL)
     {
         if(apply_before_delete_triggers_on_subtree(attr_child, &attribute_fired_triggers) ==XNULL)
             return XNULL;
-        attr_child = getNextByOrderAttribute(attr_child);
+        attr_child = getNextAttribute(attr_child);
     }
-    xptr elem_child = getFirstByOrderElementChild(node);
+    xptr elem_child = getFirstElementChild(node);
     while(elem_child!=XNULL)
     {
         if(apply_before_delete_triggers_on_subtree(elem_child, &element_fired_triggers) == XNULL)
             return XNULL;
-        elem_child = getNextByOrderElement(elem_child);
+        elem_child = getNextElement(elem_child);
     }
     return node;
 }
@@ -184,7 +184,7 @@ xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr
 
    	if (IS_TMP_BLOCK(old_var)) return old_var;
 
-	if ((GETTYPE(scm_node) != element) && (GETTYPE(scm_node) != attribute)) return old_var;
+	if ((scm_node->type != element) && (scm_node->type != attribute)) return old_var;
 
    	t_triggers_set treated_triggers;
     trigger_cell_cptr trc = XNULL;
@@ -214,7 +214,7 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node_cptr 
     CHECKP(old_var);
 
     //if the node is not element or attribute - return
-    t_item node_type = GETTYPE(GETSCHEMENODEX(old_var));
+    t_item node_type = getNodeType(old_var);
     if((node_type!=element)&&(node_type!=attribute))
         return;
 
@@ -237,7 +237,7 @@ xptr apply_before_replace_triggers(xptr new_node, xptr old_node, schema_node_cpt
    	if (tr_globals::internal_auth_switch == BLOCK_AUTH_CHECK) return old_node;
 
 	CHECKP(old_node);
-    xptr parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
+    xptr parent= nodeGetParent(old_node);
 
    	t_triggers_set treated_triggers;
     trigger_cell_cptr trc = XNULL;
@@ -265,7 +265,7 @@ void apply_after_replace_triggers(xptr new_node, xptr old_node, xptr where_var, 
     CHECKP(old_node);
 
     //if the node is not element or attribute - return
-    t_item node_type = GETTYPE(scm_node);
+    t_item node_type = scm_node->type;
     if((node_type!=element)&&(node_type!=attribute))
         return;
 
@@ -306,9 +306,9 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
         if(target_seq_direct)
             node = *it1;
         else
-            node = removeIndirection(*it1);
+            node = indirectionDereferenceCP(*it1);
 		CHECKP(node);
-        extended_nodes.insert(GETSCHEMENODEX(node));
+        extended_nodes.insert(getSchemaPointer(node));
         it1++;
     }
 
@@ -318,9 +318,9 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
         if(upd_seq_direct)
             node = *it2;
         else
-            node = removeIndirection(*it2);
+            node = indirectionDereferenceCP(*it2);
 		CHECKP(node);
-        extender_nodes.insert(GETSCHEMENODEX(node));
+        extender_nodes.insert(getSchemaPointer(node));
         it2++;
     }
 
@@ -333,11 +333,11 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
             trigger_cell_cptr trc = *trigers_iter;
 
 	   	    matched_nodes = execute_abs_path_expr((const schema_node_xptr)(statement_triggers_iter->first), trc->trigger_path, &extended_nodes, &extender_nodes);
-            for(std::vector<schema_node_xptr>::size_type i=0;i<matched_nodes.size(); i++)
-        	    if(is_scmnode_has_ancestor_or_self((schema_node_xptr)(matched_nodes.at(i)),&extender_nodes))
+            for(std::vector<schema_node_xptr>::size_type i=0; i < matched_nodes.size(); i++)
+		    if(hasAncestorInSet((schema_node_xptr)(matched_nodes.at(i)),&extender_nodes))
             	    //4. check if extender nodes has data of the type schema_node
                     for(it2=upd_seq->begin(); it2!=upd_seq->end(); it2++)
-                       	if(getFirstDescandantByScheme(removeIndirection(*it2), (schema_node_xptr)(matched_nodes.at(i)))!=XNULL)
+			if(getFirstDescandantBySchema(indirectionDereferenceCP(*it2), (schema_node_xptr)(matched_nodes.at(i)))!=XNULL)
                         {
                             trc->execute_trigger_action(XNULL, XNULL, XNULL);
                             break;
@@ -370,9 +370,9 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
         if(target_seq_direct)
             node = *it1;
         else
-            node = removeIndirection(*it1);
+            node = indirectionDereferenceCP(*it1);
 		CHECKP(node);
-        scn = GETSCHEMENODEX(*it1);
+        scn = getSchemaNode(*it1);
         if(docs_statement_triggers.find(scn->root)!=docs_statement_triggers.end())
         {
             scm_nodes_iter=scm_nodes_map.find(scn.ptr());
@@ -402,7 +402,7 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
             for(xptr_iter=scm_nodes_iter->second.begin();xptr_iter!=scm_nodes_iter->second.end();xptr_iter++)
             {
                 //check if there is data corresponding to the schema node - if there is execute triggers
-                if(getFirstDescandantByScheme(*xptr_iter, statement_triggers_iter->first)!=XNULL)
+                if(getFirstDescandantBySchema(*xptr_iter, statement_triggers_iter->first)!=XNULL)
                 {
                     for(set_triggers_iter=statement_triggers_iter->second.begin();set_triggers_iter!=statement_triggers_iter->second.end();set_triggers_iter++)
 					{
@@ -438,9 +438,9 @@ void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq,
    	it1=target_seq->begin();
     while(it1!=target_seq->end())
     {
-		xptr p=removeIndirection(*it1);
+		xptr p=indirectionDereferenceCP(*it1);
 		CHECKP(p);
-        schema_node_cptr scn=GETSCHEMENODEX(p);
+        schema_node_cptr scn=getSchemaNode(p);
         scmnodes.insert(scn.ptr());
         it1++;
     }

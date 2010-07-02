@@ -10,15 +10,15 @@
 
 #include "common/sedna.h"
 
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPBase.h"
 
 typedef std::map<std::string,xmlns_ptr> nms_map;
 void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dynamic_context *cxt)
-{   
+{
+/*
     nms_map mp;
     CHECKP(node);
-    schema_node_cptr scm=GETSCHEMENODEX(node);
+    schema_node_cptr scm=getSchemaNode(node);
     nms_map::iterator it;
     while (scm->type != virtual_root)
     {
@@ -43,17 +43,17 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
             }
         }
         //3. attributes
-        xptr attr=getFirstByOrderAttributeChild(node);
+        xptr attr=getFirstAttributeChild(node);
         if (attr!=XNULL)
             CHECKP(attr);
         //3.1 filling set
         std::set<xmlns_ptr> atns;
         while (attr!=XNULL)
-        {       
-            schema_node_cptr sca = GETSCHEMENODEX(attr);
+        {
+            schema_node_cptr sca = getSchemaNode(attr);
             if (sca->get_xmlns()!=NULL)
                 atns.insert(sca->get_xmlns());
-            attr=getNextByOrderAttribute(attr);
+            attr=getNextAttribute(attr);
         }
         //3.2 copying to map
         int ctr = 0;
@@ -77,11 +77,11 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
         }
         CHECKP(node);
         if ((GETPARENTPOINTER(node)) == XNULL) break;
-        node = removeIndirection(GETPARENTPOINTER(node));
+        node = indirectionDereferenceCP(GETPARENTPOINTER(node));
         CHECKP(node);
-        scm=GETSCHEMENODEX(node);
+        scm=getSchemaNode(node);
     }
-    
+
     it = mp.begin();
     while (it!=mp.end())
     {
@@ -89,6 +89,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xmlns_ptr> &result,dyna
         ++it;
     }
     result.push_back(xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace"));
+*/
 }
 
 void get_in_scope_namespaces_broad(xptr node,std::vector<xmlns_ptr> &result)
@@ -97,12 +98,4 @@ void get_in_scope_namespaces_broad(xptr node,std::vector<xmlns_ptr> &result)
 
 void get_namespaces_for_inherit(xptr node,std::vector<xmlns_ptr> &result)
 {
-}
-
-xmlns_ptr generate_pref(int ctr,const char* uri,dynamic_context *cxt)
-{
-    char x[12] = "XXX";
-    if (ctr!=0)
-        sprintf(x+3, "%d",ctr );
-    return xmlns_touch(x,uri);
 }

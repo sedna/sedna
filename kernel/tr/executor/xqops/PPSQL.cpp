@@ -85,7 +85,7 @@ bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)
         opt_name = NULL;
         opt_value = NULL;
         //FIXME - CHECKP(node)???
-        node = getFirstByOrderAttributeChild(node);
+        node = getFirstAttributeChild(node);
         while (node != XNULL)
         {
             char *atr_name;
@@ -104,7 +104,7 @@ bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)
                 return false;
             }
 
-            node = getNextByOrderAttribute(node);
+            node = getNextAttribute(node);
         }
 
         if (!opt_name)

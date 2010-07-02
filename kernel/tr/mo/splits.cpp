@@ -6,6 +6,7 @@
 #include "tr/mo/microoperations.h"
 #include "tr/mo/microsurgery.h"
 #include "tr/mo/blocks.h"
+#include "tr/mo/nodemoutils.h"
 
 #include "common/bit_set.h"
 
@@ -96,7 +97,7 @@ xptr widenDescriptor(xptr node_xptr, int pos, xptr set_value)
 {
     xptr node_indir = getIndirectionSafeCP(node_xptr);
     node_blk_hdr * block = getBlockHeaderCP(node_xptr);
-    int required_dsc_size = size_of_node(block) + (pos + 1) * sizeof(xptr);
+    int required_dsc_size = size_of_node(block->node_type) + (pos + 1) * sizeof(xptr);
     int node_position = 0;
     int nodes_to_move;
     xptr dest_block;
@@ -109,9 +110,9 @@ xptr widenDescriptor(xptr node_xptr, int pos, xptr set_value)
     }
 
     if (!widened) {
-        for (n_dsc * node_it = getDescriptor(block_xptr(node_xptr), block->desc_first);
+        for (node_base_t * node_it = getDsc((char *) xaddr(block_xptr(node_xptr)), block->desc_first);
           (void *) node_it != XADDR(node_xptr);
-          node_it = getDescriptor(block_xptr(node_xptr), node_it->desc_next)) {
+          node_it = getDsc((char *) xaddr(block_xptr(node_xptr)), node_it->desc_next)) {
             U_ASSERT(node_it != NULL);
             node_position++;
         }

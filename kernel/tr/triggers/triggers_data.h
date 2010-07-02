@@ -17,28 +17,9 @@
 #include "tr/executor/xqops/PPXptr.h"
 #include "tr/cat/simplestream.h"
 
+#include "tr/triggers/trigger_types.h"
+
 extern bool isTriggersOn;
-
-
-
-enum trigger_event
-{
-    TRIGGER_INSERT_EVENT,
-    TRIGGER_DELETE_EVENT,
-    TRIGGER_REPLACE_EVENT
-};
-enum trigger_time
-{
-    TRIGGER_BEFORE,
-    TRIGGER_AFTER
-};
-enum trigger_granularity
-{
-    TRIGGER_FOR_EACH_NODE,
-    TRIGGER_FOR_EACH_STATEMENT
-};
-
-
 
 inline const char*
 trigger_event2string(trigger_event te)
@@ -71,46 +52,6 @@ trigger_granularity2string(trigger_granularity te)
     default: throw USER_EXCEPTION2(SE1003, "Imossible case in trigger granularity to string conversion");
     }
 }
-
-
-
-struct inserting_node
-{
-    char* name;
-    t_item type;
-
-    inserting_node(): name(NULL), type(element) {}
-    inserting_node(const char* _name_,
-                   t_item _type_) {
-        name = (char*)malloc(strlen(_name_) + 1);
-        strcpy(name, _name_);
-        type = _type_;
-    }
-
-    inline void release() {
-        if(name != NULL) {
-            free(name);
-            name = NULL;
-        }
-    }
-    inline std::string to_string() const {
-        std::string res("");
-        if(name!=NULL)
-        {
-            if(type == attribute) res += "@";
-            res += name;
-        }
-        return res;
-    }
-};
-
-
-
-struct trigger_action_cell
-{
-    char* statement;
-    trigger_action_cell* next;
-};
 
 extern trigger_action_cell *rcv_tac; // for recovery purposes
 typedef std::vector<PPXptr*> qep_parameters_vec;

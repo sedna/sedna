@@ -1,1 +1,1 @@
-set(updates_SRC deletions.cpp insertions.cpp updates.cpp replace.cpp other_updates.cpp)
+set(updates_SRC deletions.cpp insertions.cpp updates.cpp replace.cpp other_updates.cpp bulkload.cpp)

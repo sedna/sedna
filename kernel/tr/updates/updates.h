@@ -9,12 +9,15 @@
 #include <map>
 
 #include "common/sedna.h"
-
 #include "common/xptr.h"
+
+#include "tr/crmutils/crmbase.h"
 #include "tr/vmm/vmm.h"
-#include "tr/structures/nodes.h"
-#include "tr/structures/schema.h"
 #include "tr/executor/base/PPBase.h"
+
+#include "tr/structures/schema.h"
+#include "tr/structures/xmlns.h"
+
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
 #include "tr/cat/catptr.h"
@@ -81,12 +84,12 @@ bool inline is_node_persistent (xptr node)
 //checks whether the node is  element
 bool inline is_node_element (xptr node)
 {
-    return (GETSCHEMENODEX(node)->type==element);
+    return (getNodeType(node)==element);
 }
 //checks whether the node is  text
 bool inline is_node_text (xptr node)
 {
-    return (GETSCHEMENODEX(node)->type==text);
+    return (getNodeType(node)==text);
 }
 //checks whether the  nodes are from different storage
 bool inline is_different_storage (xptr node1,xptr node2)
@@ -96,7 +99,13 @@ bool inline is_different_storage (xptr node1,xptr node2)
 //checks whether the node is  element
 bool inline is_node_document (xptr node)
 {
-    return (GETSCHEMENODEX(node)->type==document);
+    return (getNodeType(node)==document);
+}
+
+//checks whether the node is  element
+bool inline is_node_attribute (xptr node)
+{
+    return (getNodeType(node)==attribute);
 }
 
 
@@ -105,11 +114,11 @@ bool inline is_node_document (xptr node)
 
 bool inline is_node_xml_namespace (xptr node)
 {
- return (GETSCHEMENODEX(node)->type==xml_namespace);
+ return (getNodeType(node)==xml_namespace);
 }
 t_item inline get_node_type (xptr node)
 {
- return (GETSCHEMENODEX(node)->type);
+ return (getNodeType(node));
 }
 
 
@@ -127,6 +136,16 @@ void update_delete_sequence(xptr node,schema_node_cptr icell);
 
 void init_ft_sequences (const xptr& left, const xptr& right, const xptr& parent);
 #endif
+
+/* Bulk load */
+
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,
+              bool stripped,
+              bool print_progress);
+
+xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,
+              const char * collection, bool stripped,
+              bool print_progress);
 
 #endif
 

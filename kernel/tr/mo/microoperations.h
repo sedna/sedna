@@ -27,6 +27,7 @@
 
 #include "tr/mo/modebug.h"
 
+#include "tr/mo/nodemoutils.h"
 
 struct node_info_t
 {
@@ -52,7 +53,7 @@ struct node_info_t
 
     strsize_t text_size;
     xptr text_data;
-    shft pi_target_size;
+    size_t pi_target_size;
 };
 
 xptr splitBlock(xptr node_xptr);
@@ -83,8 +84,8 @@ enum insert_position_t
     ip_head, ip_tail
 };
 
-void insertTextValue(xptr node, const void* text, strsize_t size, text_type ttype = text_mem);
-void insertTextValue(enum insert_position_t position, xptr node, const void* text, strsize_t size, text_type ttype);
+void insertTextValue(xptr node, const text_source_t source);
+void insertTextValue(enum insert_position_t position, xptr node, const text_source_t source);
 
 void deleteTextValue(xptr node_xptr);
 void deleteTextValue(enum insert_position_t position, xptr node, strsize_t size);

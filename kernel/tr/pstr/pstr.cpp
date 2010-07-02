@@ -14,9 +14,11 @@
 #include "tr/pstr/utl.h"
 #include "tr/pstr/hh.h"
 #include "tr/vmm/vmm.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
+
+#include "tr/structures/descriptor.h"
+#include "tr/structures/nodeutils.h"
 
 using namespace std;
 
@@ -108,6 +110,42 @@ void pstr_print_blk(xptr blk) {
     */
 }
 
+inline static
+void setNodePstrData(xptr node, xptr textptr, strsize_t textsize)
+{
+    WRITEP(node);
+    internal::node_text_t * nodetext = getTextFromAnyNode(node);
+    U_ASSERT(textsize <= PSTRMAXSIZE);
+    U_ASSERT(textsize > internal::maxDescriptorTextSize);
+    memcpy(nodetext->data, &textptr, sizeof(xptr));
+    nodetext->size = (uint16_t) textsize;
+}
+
+inline static
+void getNodePstrData(xptr node, xptr &textptr, size_t &textsize)
+{
+    CHECKP(node);
+    internal::node_text_t * nodetext = getTextFromAnyNode(node);
+    textsize = nodetext->size;
+    U_ASSERT(textsize <= PSTRMAXSIZE);
+    U_ASSERT(textsize > internal::maxDescriptorTextSize);
+    memcpy(&textptr, nodetext->data, sizeof(xptr));
+}
+
+inline static
+void clearPstr(xptr node)
+{
+    WRITEP(node);
+    getTextFromAnyNode(node)->size = 0;
+}
+
+inline static
+bool isPstr(xptr node)
+{
+    uint16_t size = getTextFromAnyNode(node)->size;
+    return (size <= PSTRMAXSIZE) && (size > internal::maxDescriptorTextSize);
+}
+
 xptr pstr_allocate(xptr blk, xptr node, const char* s, int s_size) {
 
     xptr result = pstr_do_allocate(blk, s, s_size);
@@ -115,15 +153,8 @@ xptr pstr_allocate(xptr blk, xptr node, const char* s, int s_size) {
     if (result == XNULL) {
         result = pstr_migrate(blk, node, s, s_size);
     }
-#ifndef PSTR_NO_CHECKP
-    CHECKP(node);
-#endif
-    VMM_SIGNAL_MODIFICATION(node);
 
-
-    T_DSC(node)->data.lsp.p = result;
-    T_DSC(node)->data.lsp.size = s_size;
-    T_DSC(node)->ss = TEXT_IN_PSTR;
+    setNodePstrData(node, result, s_size);
 
     return result;
 }
@@ -258,9 +289,10 @@ xptr	pstr_modify(xptr node, char* s, int s_size) {
 #endif
     xptr result;
 
-    U_ASSERT(isPstr(T_DSC(node)));
-    xptr data = T_DSC(node)->data.lsp.p;
-    size_t size = (size_t) T_DSC(node)->data.lsp.size;
+    xptr data;
+    size_t size;
+
+    getNodePstrData(node, data, size);
 
     pstr_do_deallocate(BLOCKXPTR(data), data, size, false);
     result = pstr_allocate(BLOCKXPTR(data), node, s, s_size);
@@ -272,18 +304,15 @@ void pstr_deallocate(xptr node) {
     CHECKP(node);
 #endif
 
-    U_ASSERT(isPstr(T_DSC(node)));
-    xptr data = T_DSC(node)->data.lsp.p;
-    size_t size = (size_t) T_DSC(node)->data.lsp.size;
+    xptr data;
+    size_t size;
+
+    getNodePstrData(node, data, size);
 
     pstr_do_deallocate(BLOCKXPTR(data), data, size, true);
 
     /* Update descriptor */
-#ifndef PSTR_NO_CHECKP
-    CHECKP(node);
-#endif
-    VMM_SIGNAL_MODIFICATION(node);
-    T_DSC(node)->ss = 0;
+    clearPstr(node);
 }
 
 bool pstr_do_deallocate(xptr blk, xptr ps, int s_size, bool drop_empty_block)
@@ -546,7 +575,7 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
     xptr	next_node = getLeftmostDescriptorWithPstrInThisBlock(blk, node);
     xptr	result=XNULL;
     char	next_s[PSTRMAXSIZE];
-    int		next_s_size=0;
+    size_t	next_s_size=0;
     xptr	next_s_xptr=XNULL;
     xptr	new_blk=XNULL;
     xptr	tmp;
@@ -564,9 +593,9 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
     /* run through descriptors from lbd to rbd, distributing their string contents into
     new pstr blocks */
     do {
-        /* omit getNextDescriptorOfSameSortXptr() call for the lbd node */
+        /* omit getNextDescriptorOfSameSort() call for the lbd node */
         if (!first_iteration)
-            next_node = getNextDescriptorOfSameSortXptr(next_node);
+            next_node = getNextDescriptorOfSameSort(next_node);
         else
             first_iteration=false;
 
@@ -574,7 +603,7 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
 
         CHECKP(next_node);
         /* skip descriptors without pstr data except "node" descriptor */
-        if ((next_node != node) && !isPstr(T_DSC(next_node))) { continue; }
+        if ((next_node != node) && !isPstr(next_node)) { continue; }
 
         VMM_SIGNAL_MODIFICATION(next_node);
 
@@ -595,12 +624,9 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         if (new_blk == XNULL)
             new_blk = pstr_create_blk(is_data_block);
 
-        CHECKP(next_node);
-
         /* read next_node string contents and deallocate them from old block */
-        U_ASSERT(isPstr(T_DSC(next_node)));
-        next_s_size = T_DSC(next_node)->data.lsp.size;
-        next_s_xptr =  T_DSC(next_node)->data.lsp.p;
+
+        getNodePstrData(next_node, next_s_xptr, next_s_size);
         pstr_read_from_node(next_node,  next_s);
         pstr_do_deallocate(blk, next_s_xptr, next_s_size, false);
 
@@ -608,8 +634,7 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
         if (tmp == XNULL)
             throw SYSTEM_EXCEPTION("[pstr_migrate()] existing pstr from old block didn't fit into new block");
 
-        WRITEP(next_node);
-        ((t_dsc*)XADDR(next_node))->data.lsp.p = tmp;
+        setNodePstrData(next_node, tmp, next_s_size);
     } while (next_node != rbd);
 
     /* never should come here */
@@ -618,9 +643,9 @@ xptr pstr_migrate(xptr blk, xptr node, const char* s, int s_size) {
 
 /* read contents (pstr) of the text node */
 void pstr_read_from_node(xptr node, char* the_s) {
-    U_ASSERT(isPstr(T_DSC(node)));
-    size_t ps_size = (size_t) getTextSize(T_DSC(node));
-    xptr ps = getTextPtr(T_DSC(node));
+    U_ASSERT(isPstr(node));
+    size_t ps_size = (size_t) nodeGetTextSize(getTextFromAnyNode(node));
+    xptr ps = nodeGetTextPointer(getTextFromAnyNode(node));
     if (ps == XNULL)
         throw SYSTEM_EXCEPTION("[pstr_read_from_node()] the target node has XNULL pointer to it's pstr content");
     CHECKP(ps);

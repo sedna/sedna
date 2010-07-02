@@ -8,9 +8,8 @@
 #define _MERGE_H
 
 #include "common/sedna.h"
-
 #include "common/xptr.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/structures/schema.h"
 
 int doc_order_merge_cmp(const void *e1, const void *e2);
 
@@ -22,12 +21,12 @@ private:
 
 public:
     RelChildAxisMerge() : merged_seq_arr(NULL), size(0) {}
-    ~RelChildAxisMerge() 
-    {   
-        if (merged_seq_arr) 
+    ~RelChildAxisMerge()
+    {
+        if (merged_seq_arr)
         {
-            delete [] merged_seq_arr; 
-            merged_seq_arr = NULL; 
+            delete [] merged_seq_arr;
+            merged_seq_arr = NULL;
         }
     }
 
@@ -45,12 +44,12 @@ private:
 
 public:
     RelAttrAxisMerge() : merged_seq_arr(NULL), size(0) {}
-    ~RelAttrAxisMerge() 
-    {   
-        if (merged_seq_arr) 
+    ~RelAttrAxisMerge()
+    {
+        if (merged_seq_arr)
         {
-            delete [] merged_seq_arr; 
-            merged_seq_arr = NULL; 
+            delete [] merged_seq_arr;
+            merged_seq_arr = NULL;
         }
     }
 

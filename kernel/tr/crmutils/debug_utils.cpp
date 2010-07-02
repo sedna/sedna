@@ -14,9 +14,14 @@
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstrblk.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/structures/metadata.h"
 #include "tr/mo/mo.h"
+
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
+#include "tr/structures/nodeinterface.h"
+
+using namespace internal;
 
 /* predefined debug & error output stream */
 se_stdlib_ostream crm_dbg(std::cerr);
@@ -46,7 +51,7 @@ insertStatisticsInteger(xptr neighbour,const char* title, char* buf,int64_t coun
 {
     xptr left=insert_element_i(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
     u_i64toa(count,buf,10);
-    insert_text_i(XNULL,XNULL,left,buf,strlen(buf));
+    insert_text_i(XNULL, XNULL, left, text_source_cstr(buf));
     return left;
 }
 
@@ -55,7 +60,7 @@ insertStatisticsDouble(xptr neighbour,const char* title, char* buf,double count)
 {
     xptr left=insert_element_i(neighbour,XNULL,XNULL,title,xs_untyped,NULL_XMLNS);
     u_gcvt(count,10,buf);
-    insert_text_i(XNULL,XNULL,left,buf,strlen(buf));
+    insert_text_i(XNULL, XNULL, left, text_source_cstr(buf));
     return left;
 }
 
@@ -84,7 +89,7 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
             //size count
             CHECKP(node);
             //scheme cnt
-            schema_node_xptr sc =(GETBLOCKBYNODE(node))->snode;
+            schema_node_xptr sc = getSchemaPointer(node);
             std::map<schema_node_xptr,int>::iterator cit=ncnt.find(sc);
             if (cit!=ncnt.end())
             {
@@ -92,7 +97,7 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
             }
             else
                 ncnt[sc]=1;
-            t_nid& nd=((n_dsc*)XADDR(node))->nid;
+            t_nid& nd= *(t_nid*) XADDR(nodeGetNIDPtr(node));
             int sz=(nd.size>0)?nd.size:*((shft*)(nd.prefix+sizeof(xptr)));
             if (nidsz.find(sz)==nidsz.end())
                 nidsz[sz]=1;
@@ -102,19 +107,19 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
             if (sc->has_text())
             {
                 strcnt++;
-                unsigned int strz = getTextSize((t_dsc*)XADDR(node));
+                unsigned int strz = CommonTextNode(node).getTextSize();
                 if (strsz.find(strz)==strsz.end())
                     strsz[strz]=1;
                 else
                     strsz[strz]++;
             }
             //next node
-            xptr tmp= giveFirstByOrderChild(node,CHILDCOUNT(node));
+            xptr tmp= getFirstChild(node);
             while (tmp==XNULL /*&& GETPARENTPOINTER(node)!=XNULL*/)
             {
                 if (fo.back()>maxfo) maxfo=fo.back();
                 midfo+=fo.back();
-                schema_node_xptr scm =(GETBLOCKBYNODE(node))->snode;
+                schema_node_xptr scm =getSchemaPointer(node);
                 std::map<schema_node_xptr,int>::iterator it=xsfo.find(scm);
                 if (it!=xsfo.end())
                 {
@@ -123,11 +128,11 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
                 else
                     xsfo[scm]=fo.back();
                 fo.pop_back();
-                tmp=GETRIGHTPOINTER(node);
+                tmp = nodeGetRightSibling(node);
                 if (tmp==XNULL)
                 {
-                    if (GETPARENTPOINTER(node)==XNULL)break;
-                    node=removeIndirection(GETPARENTPOINTER(node));
+                    if (nodeGetParentIndirection(node)==XNULL)break;
+                    node=nodeGetParent(node);
                     CHECKP(node);
                 }
             }
@@ -138,7 +143,7 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
                 fo.push_back(0);
             }
         }
-        root=getNextDescriptorOfSameSortXptr(root);
+        root = getNextDescriptorOfSameSort(root);
     }
 
     xptr parent=insert_element_i(node,XNULL,XNULL,"NID",xs_untyped,NULL_XMLNS);
@@ -222,6 +227,8 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
     strsz.clear();
 }
 
+using namespace internal;
+
 static void
 getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
 {
@@ -234,8 +241,8 @@ getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
     while (block!=XNULL)
     {
         CHECKP(block);
-        node_blk_hdr* blk=GETBLOCKBYNODE(block);
-        d_in->block_fill+=blk->count*blk->dsc_size;
+        node_blk_hdr * blk = getBlockHeader(block);
+        d_in->block_fill+=  blk->count*blk->dsc_size;
         d_in->block_count++;
         d_in->node_count+=blk->count;
         if (blk->nblk!=XNULL)
@@ -244,21 +251,14 @@ getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
             d_in->inner_block_count++;
         }
 
-        n_dsc* node= (n_dsc*)((char*)blk+blk->desc_first);
-        while (node!=NULL)
-        {
-            if (node->nid.size==0)
+        xptr node = getFirstBlockNode(block);
+        while (node != XNULL) {
+            d_in->ext_nid_count += nid_get_size(nodeGetNIDP(node));
+            if (getNodeType(node) != element && getNodeType(node) != xml_namespace)
             {
-                d_in->ext_nid_count += *(shft*)(node->nid.prefix+sizeof(xptr));
+                d_in->str_size += CommonTextNode(node).getTextSize();
             }
-            if (blk->snode->type!=element && blk->snode->type!=xml_namespace)
-            {
-                d_in->str_size += getTextSize((t_dsc*)node);
-            }
-            if (node->desc_next!=0)
-                node = (n_dsc*)((char*)blk+node->desc_next);
-            else
-                node=NULL;
+            node = nodeGetNext(node);
         }
         block=blk->nblk;
     }
@@ -290,7 +290,7 @@ void getDebugInfo(schema_node_cptr snode, xptr& node)
 
     xptr left=insert_element_i(XNULL,XNULL,node,"total_schema_nodes",xs_untyped,NULL_XMLNS);
     u_itoa(d_in.schema_count,buf,10);
-    insert_text_i(XNULL,XNULL,left,buf,strlen(buf));
+    insert_text_i(XNULL,XNULL,left, text_source_cstr(buf));
 
     left=insertStatisticsInteger(left,"total_schema_text_nodes",buf,d_in.schema_str_count);
     left=insertStatisticsInteger(left,"schema_depth",buf,d_in.mdpth);
@@ -308,59 +308,7 @@ void getDebugInfo(schema_node_cptr snode, xptr& node)
     if (snode->bblk!=XNULL)
     {
         CHECKP(snode->bblk);
-        insertNidAndStringsStatistics(GETBLOCKFIRSTDESCRIPTORABSOLUTE((XADDR(snode->bblk))), left);
+        insertNidAndStringsStatistics(getFirstBlockNode(snode->bblk), left);
     }
 }
 
-void checkTreeConsistency(xptr node,se_ostream& crmout)
-{
-    CHECKP(node);
-    n_dsc* node_d=(n_dsc*)XADDR(node);
-    t_nid nd=node_d->nid;
-    schema_node_cptr scn=(GETBLOCKBYNODE(node))->snode;
-    //1. indirection test
-    xptr indir=node_d->indir;
-    if (removeIndirection(indir)!=node)
-        error_msg("Indirection table error",crmout);
-    //2. parent test
-    CHECKP(node);
-    xptr par_indir=node_d->pdsc;
-    xptr parent;
-    n_dsc* prev_dsc=getPreviousDescriptorOfSameSort(node_d);
-    xptr prev_x=(prev_dsc==NULL)?XNULL:ADDR2XPTR(prev_dsc);
-    if (par_indir!=XNULL &&(prev_dsc==NULL|| prev_dsc->pdsc!=par_indir))
-    {
-        parent=removeIndirection(par_indir);
-        CHECKP(parent);
-        xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->get_xmlns());
-        if (ptr==NULL || *ptr!=node)
-            error_msg("First child pointer",crmout);
-    }
-    //3. left siblings + nid comparison
-    CHECKP(node);
-    xptr left=node_d->ldsc;
-    if (left!=XNULL)
-    {
-        CHECKP(left);
-        if (((n_dsc*)XADDR(left))->rdsc!=node)
-            error_msg("sibling pointer errors",crmout);
-        if (nid_cmp(left,node)>=0)
-            error_msg("nid comparison error",crmout);
-    }
-    //4. descriptor's order
-    if (prev_x!=XNULL)
-    {
-        CHECKP(prev_x);
-        if (getNextDescriptorOfSameSort(prev_dsc)!=node_d)
-            error_msg("wrong descriptors", crmout);
-    }
-    //recursive walkthrough
-    CHECKP(node);
-    xptr child=giveFirstByOrderChild(node,CHILDCOUNT(node));
-    while (child!=XNULL)
-    {
-        checkTreeConsistency(child,crmout);
-        CHECKP(child);
-        child=((n_dsc*)XADDR(child))->rdsc;
-    }
-}

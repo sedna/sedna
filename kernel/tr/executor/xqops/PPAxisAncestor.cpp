@@ -6,17 +6,26 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPAxisAncestor.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/merge.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 
+#include "tr/structures/schema.h"
+#include "tr/structures/nodeoperations.h"
+#include "tr/structures/nodeutils.h"
+
+/* Temporary hole plug */
+inline static
+xptr get_parent_node(const xptr node) {
+    return nodeGetParent(checkp(node));
+}
+
 void PPAxisAncestor::init_function()
 {
     NodeTestType type = nt_type;
-    
-	if (type == node_test_element) 
+
+	if (type == node_test_element)
         type = (nt_data.ncname_local == NULL ? node_test_wildcard_star : node_test_qname);
 
     switch (type)
@@ -35,7 +44,7 @@ void PPAxisAncestor::init_function()
     }
 }
 PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_,
-                               operation_info _info_, 
+                               operation_info _info_,
                                PPOpIn _child_,
                                NodeTestType _nt_type_,
                                NodeTestData _nt_data_) : PPIterator(_cxt_, _info_, "PPAxisAncestor"),
@@ -43,11 +52,11 @@ PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_,
                                                          nt_type(_nt_type_),
                                                          nt_data(_nt_data_)
 {
-	self=false; 
+	self=false;
 	init_function();
 }
 PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_,
-                               operation_info _info_, 
+                               operation_info _info_,
                                PPOpIn _child_,
                                NodeTestType _nt_type_,
                                NodeTestData _nt_data_,
@@ -61,10 +70,10 @@ PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_,
 }
 
 PPAxisAncestorOrSelf::PPAxisAncestorOrSelf(dynamic_context *_cxt_,
-                                           operation_info _info_, 
+                                           operation_info _info_,
                                            PPOpIn _child_,
                                            NodeTestType _nt_type_,
-                                           NodeTestData _nt_data_) : 
+                                           NodeTestData _nt_data_) :
     PPAxisAncestor(_cxt_, _info_, _child_, _nt_type_, _nt_data_, true)
 {
 }
@@ -161,23 +170,18 @@ void PPAxisAncestor::next_node(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
-		if (!self) cur = get_parent_node(cur);
-		if (cur!=XNULL)
-		{
-			CHECKP(cur);
-			if (GETSCHEMENODEX(cur)->type==virtual_root)
-				cur=XNULL;
+
+		if (!self) {
+		    cur = getActualParentNode(cur);
+		} else if (cur != XNULL) {
+            CHECKP(cur);
+            if (getNodeType(cur) == virtual_root)
+                cur=XNULL;
 		}
     }
-	
+
     t.copy(tuple_cell::node(cur));
-    cur = get_parent_node(cur);
-	if (cur!=XNULL)
-	{
-		CHECKP(cur);
-		if (GETSCHEMENODEX(cur)->type==virtual_root)
-			cur=XNULL;
-	}
+    cur = getActualParentNode(cur);
 }
 
 void PPAxisAncestor::next_qname(tuple &t)
@@ -190,13 +194,13 @@ void PPAxisAncestor::next_qname(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
-        if (!self) cur = get_parent_node(cur);		
+        if (!self) cur = get_parent_node(cur);
         while (cur!=XNULL)
 		{
 			CHECKP(cur);
-			if (comp_qname_type(GETSCHEMENODEX(cur),
+			if (comp_qname_type(getSchemaNode(cur),
                                 nt_data.uri,
-                                nt_data.ncname_local, 
+                                nt_data.ncname_local,
                                 element))
                 break;
 			cur = get_parent_node(cur);
@@ -206,10 +210,10 @@ void PPAxisAncestor::next_qname(tuple &t)
 	cur = get_parent_node(cur);
 	while (cur!=XNULL)
 	{
-		CHECKP(cur);		
-		if (comp_qname_type(GETSCHEMENODEX(cur),
+		CHECKP(cur);
+		if (comp_qname_type(getSchemaNode(cur),
                               nt_data.uri,
-                              nt_data.ncname_local, 
+                              nt_data.ncname_local,
                               element)) return;
 		cur = get_parent_node(cur);
 	}
@@ -225,27 +229,27 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
-		if (!self) cur = get_parent_node(cur);		
+		if (!self) cur = get_parent_node(cur);
 		while (cur!=XNULL)
 		{
 			CHECKP(cur);
-			if (comp_type(GETSCHEMENODEX(cur), 
+			if (comp_type(getSchemaNode(cur),
                         NULL,
-                        NULL, 
+                        NULL,
                         element))
 							  break;
 			cur = get_parent_node(cur);
-		}        
+		}
     }
 
     t.copy(tuple_cell::node(cur));
 	cur = get_parent_node(cur);
     while (cur!=XNULL)
 	{
-		CHECKP(cur);		
-		if ( comp_type(GETSCHEMENODEX(cur), 
+		CHECKP(cur);
+		if ( comp_type(getSchemaNode(cur),
                         NULL,
-                        NULL, 
+                        NULL,
                         element)) return;
 		cur = get_parent_node(cur);
 	}
@@ -262,26 +266,26 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
-		
+
         while (cur!=XNULL)
 		{
 			CHECKP(cur);
-			if (comp_type(GETSCHEMENODEX(cur), 
+			if (comp_type(getSchemaNode(cur),
                         nt_data.uri,
-                        NULL, 
+                        NULL,
                         element)) break;
 			cur = get_parent_node(cur);
-		}     
+		}
     }
 
     t.copy(tuple_cell::node(cur));
 	cur = get_parent_node(cur);
     while (cur!=XNULL)
 	{
-		CHECKP(cur);		
-		if (comp_type(GETSCHEMENODEX(cur), 
+		CHECKP(cur);
+		if (comp_type(getSchemaNode(cur),
                         nt_data.uri,
-                        NULL, 
+                        NULL,
                         element)) return;
 		cur = get_parent_node(cur);
 	}
@@ -297,26 +301,26 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
-        if (!self) cur = get_parent_node(cur);        
+        if (!self) cur = get_parent_node(cur);
 		while (cur!=XNULL)
 		{
 			CHECKP(cur);
-			if (comp_local_type(GETSCHEMENODEX(cur),
+			if (comp_local_type(getSchemaNode(cur),
                               NULL,
-                              nt_data.ncname_local, 
+                              nt_data.ncname_local,
                               element)) break;
 			cur = get_parent_node(cur);
-		}             
+		}
     }
 
     t.copy(tuple_cell::node(cur));
 	cur = get_parent_node(cur);
     while (true)
 	{
-		CHECKP(cur);		
-		if (comp_local_type(GETSCHEMENODEX(cur),
+		CHECKP(cur);
+		if (comp_local_type(getSchemaNode(cur),
                               NULL,
-                              nt_data.ncname_local, 
+                              nt_data.ncname_local,
                               element)) return;
 		cur = get_parent_node(cur);
 	}
@@ -329,19 +333,19 @@ void PPAxisAncestor::next_attribute(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
-        if(self) 
+        if(self)
         {
             /* Works just like self::attribute() in this case! */
             xptr node = child.get(t).get_node();
             if (node!=XNULL)
             {
                 CHECKP(node);
-                schema_node_cptr scm = GETSCHEMENODEX(node);
+                schema_node_cptr scm = getSchemaNode(node);
                 t_item type = scm->type;
 
                 if (type != attribute) continue;
 
-                if (nt_data.ncname_local == NULL || 
+                if (nt_data.ncname_local == NULL ||
                     comp_qname_type(scm, nt_data.uri, nt_data.ncname_local, attribute)) return;
             }
         }
@@ -355,19 +359,19 @@ void PPAxisAncestor::next_document(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
-        
+
         xptr node = child.get(t).get_node();
-        cur = getRoot(node);
+        cur = getRootNode(node);
 
         U_ASSERT(cur != XNULL);
         CHECKP(cur);
-        
-        if(GETSCHEMENODEX(cur)->type != document ||
-           (!self && cur == node)) 
+
+        if(getNodeType(cur) != document ||
+           (!self && cur == node))
         {
             cur = XNULL;
         }
-        else if(nt_data.ncname_local != NULL) 
+        else if(nt_data.ncname_local != NULL)
         {
             RelChildAxisMerge merge;
             xptr desc = merge.init(cur,
@@ -379,7 +383,7 @@ void PPAxisAncestor::next_document(tuple &t)
             if(desc == XNULL || merge.next(desc) != XNULL) cur = XNULL;
         }
     }
-    
+
     t.copy(tuple_cell::node(cur));
     cur = XNULL;
 }

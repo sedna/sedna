@@ -138,7 +138,7 @@ int TRmain(int argc, char *argv[])
         socket_port     = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
         SEDNA_DATA      = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
         max_stack_depth = GOV_HEADER_GLOBAL_PTR -> pp_stack_depth;
-        
+
         /* check if database exists */
         int db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
 

@@ -5,12 +5,13 @@
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstr.h"
 #include "tr/idx/btree/btree.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/structures/metadata.h"
 #include "tr/idx/index_data.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/tr_globals.h"
 #include "tr/idx/btree/btintern.h"
+
+#include "tr/executor/xqops/PPTest.h"
 
 #include <map>
 
@@ -25,8 +26,11 @@ xptr get_root (xptr node)
     xptr tmp=node;
     while (true)
     {
-      if (((n_dsc*)XADDR(tmp))->pdsc==XNULL) return tmp;
-      tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
+        xptr parent = nodeGetParent(tmp);
+        if (parent == XNULL) {
+            return tmp;
+        }
+        tmp = parent;
     }
 }
 
@@ -36,88 +40,6 @@ bool is_same_root(xptr x, xptr y)
     return get_root(x)==get_root(y);
 }
 
-static
-void checkTreeConsistency(xptr node)
-{
-    CHECKP(node);
-
-//    check_indirection_consistency(node, false);
-
-    n_dsc* node_d=(n_dsc*)XADDR(node);
-    t_nid nd=node_d->nid;
-    schema_node_cptr  scn=(GETBLOCKBYNODE(node))->snode;
-#ifdef DESC_CONSIST
-    //1. indirection test
-    xptr indir=node_d->indir;
-    if (removeIndirection(indir)!=node)
-        throw XQUERY_EXCEPTION(SE2030);
-    //2. parent test
-    CHECKP(node);
-    xptr par_indir=node_d->pdsc;
-    xptr parent;
-    n_dsc* prev_dsc=getPreviousDescriptorOfSameSort(node_d);
-    xptr prev_x=(prev_dsc==NULL)?XNULL:ADDR2XPTR(prev_dsc);
-    if (par_indir!=XNULL)
-    {
-        parent=removeIndirection(par_indir);
-        if (!nid_ancestor(parent,node))
-            throw XQUERY_EXCEPTION(SE2025);
-        if (prev_dsc==NULL|| prev_dsc->pdsc!=par_indir)
-        {
-            CHECKP(parent);
-            xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->get_xmlns());
-            if (ptr==NULL || *ptr!=node)
-                throw XQUERY_EXCEPTION(SE2026);
-        }
-    }
-    //3. left siblings + nid comparison
-    CHECKP(node);
-    xptr left=node_d->ldsc;
-    if (left!=XNULL)
-    {
-        CHECKP(left);
-        if (((n_dsc*)XADDR(left))->rdsc!=node)
-            throw XQUERY_EXCEPTION(SE2027);
-        if (nid_cmp(left,node)>=0)
-            throw XQUERY_EXCEPTION(SE2028);
-    }
-    //4. descriptor's order
-    if (prev_x != XNULL && scn->type!=document)
-    {
-        bool lt=nid_cmp(prev_x,node)<0;
-        CHECKP(prev_x);
-        if (!lt || getNextDescriptorOfSameSort(prev_dsc)!=node_d   )
-        {
-            if (is_same_root(prev_x,node))
-                throw XQUERY_EXCEPTION(SE2029);
-        }
-    }
-#endif
-#ifdef PSTR_CONSIST
-    //5.1 nid pstr consistency
-    CHECKP(node);
-    if (nd.size==0&& is_last_shft_in_blk(*((xptr*)nd.prefix)))
-            check_blk_consistency(*((xptr*)nd.prefix));
-    //5.2 nid pstr consistency
-    CHECKP(node);
-    if (scn->textcnt && isPstr((t_dsc*)node_d) && is_last_shft_in_blk(((t_dsc*)node_d)->data.lsp.p))
-    {
-        CHECKP(node);
-        check_blk_consistency(((t_dsc*)node_d)->data.lsp.p);
-    }
-#endif
-    //recursive walkthrough
-    CHECKP(node);
-    xptr child=giveFirstByOrderChild(node,CHILDCOUNT(node));
-    while (child!=XNULL)
-    {
-        checkTreeConsistency(child);
-        CHECKP(child);
-        child=((n_dsc*)XADDR(child))->rdsc;
-    }
-}
-// end of hunk from PPTest.cpp
-
 static FILE *logfile = NULL;
 static bool isRcvOK = true;
 
@@ -125,7 +47,7 @@ void test_document(char *name, xptr doc_dsc, bool is_throw)
 {
     try
     {
-       checkTreeConsistency(doc_dsc);
+       PPTest::checkTreeConsistency(doc_dsc);
        if (!is_throw) fprintf(logfile, "Checked document: %s\n", name);
     }
     catch(SednaException &e)
@@ -172,7 +94,7 @@ void test_collection(char *name, col_schema_node_cptr coll)
         key = cursor.get_key();
         try
         {
-            test_document((char*)key.data(), removeIndirection(cursor.bt_next_obj()), true);
+            test_document((char*)key.data(), indirectionDereferenceCP(cursor.bt_next_obj()), true);
             fprintf(logfile, "Checked collection: %s, document: %s\n", name, (char*)key.data());
         }
         catch(SednaException &e)
@@ -206,7 +128,7 @@ void test_db_after_rcv()
         {
             xptr blk = (mdc->snode)->bblk;
             CHECKP(blk);
-            xptr doc_dsc = GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk));
+            xptr doc_dsc = getFirstBlockNode(blk);
             test_document(mdc->name, doc_dsc, false);
             test_indexes(((doc_schema_node_xptr)mdc->snode)->full_index_list->first);
         }
