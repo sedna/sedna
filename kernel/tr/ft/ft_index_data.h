@@ -100,6 +100,7 @@ struct doc_parser
 };
 
 void delete_ft_custom_tree(ft_custom_tree_t * custom_tree);
+void delete_cust_rules_vector(ft_index_template_t* &v);
 
 struct ft_index_cell_object : public catalog_object
 {

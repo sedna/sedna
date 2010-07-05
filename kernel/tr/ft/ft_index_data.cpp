@@ -56,6 +56,16 @@ void delete_ft_custom_tree (ft_custom_tree_t * custom_tree)
     }
     ft_custom_tree_t::sset_free(custom_tree);
 }
+void delete_cust_rules_vector(ft_index_template_t* &v)
+{
+	ft_index_template_t::iterator it;
+	for (it = v->begin(); it < v->end(); it++)
+	{
+		delete [] it->first.second;
+	}
+	delete v;
+	v = NULL;
+}
 
 
 void ft_index_cell_object::serialize_data(se_simplestream &stream)

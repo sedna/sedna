@@ -476,8 +476,85 @@ static void custom_put_str(const char *str, char *cust_buf, unsigned int *cust_s
         len = strlen(str);
         U_ASSERT(*cust_size + len + 1 <= sizeof(executor_globals::e_string_buf));
         memcpy(cust_buf + *cust_size, str, len + 1);
-        cust_size += (len + 1);
+        *cust_size += (len + 1);
     }
+}
+void ft_serialize_cust_tree(char *cust_buf, unsigned int *cust_size, ft_custom_tree_t *custom_tree)
+{
+	ft_custom_tree_t::sedna_rbtree_entry *tmp;
+	tmp = custom_tree->rb_minimum(custom_tree->root);
+
+	while (tmp != NULL)
+	{
+		U_ASSERT(*cust_size + sizeof(ft_index_type) <= sizeof(executor_globals::e_string_buf));
+		memcpy(cust_buf + *cust_size, &tmp->obj->cm, sizeof(ft_index_type));
+		*cust_size += sizeof(ft_index_type);
+
+		if (tmp->obj->get_xmlns() == NULL)
+		{
+            custom_put_str(NULL, cust_buf, cust_size);
+            custom_put_str(NULL, cust_buf, cust_size);
+        }
+		else
+		{
+            custom_put_str(tmp->obj->get_xmlns()->uri, cust_buf, cust_size);
+            custom_put_str(tmp->obj->get_xmlns()->prefix, cust_buf, cust_size);
+        }
+        custom_put_str(tmp->obj->local, cust_buf, cust_size);
+
+		tmp = custom_tree->rb_successor(tmp);
+	}
+}
+ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, int custom_tree_size)
+{
+	ft_index_template_t *res;
+	const char *p = custom_tree_buf;
+
+	if (custom_tree_size == 0)
+		return NULL;
+
+	res = se_new ft_index_template_t();
+	while (p - custom_tree_buf < custom_tree_size)
+	{
+		ft_index_type ind_type;
+		const char *ns_uri, *ns_pref, *name;
+		U_ASSERT(p + sizeof(ft_index_type) - custom_tree_buf < custom_tree_size);
+		memcpy(&ind_type, p, sizeof(ind_type));
+		p += sizeof(ft_index_type);
+		ns_uri = p;
+		while (*p)
+		{
+			++p;
+			U_ASSERT(p - custom_tree_buf < custom_tree_size);
+		}
+		++p;
+		ns_pref = p;
+		while (*p)
+		{
+			++p;
+			U_ASSERT(p - custom_tree_buf < custom_tree_size);
+		}
+		++p;
+		name = p;
+		while (*p)
+		{
+			++p;
+			U_ASSERT(p - custom_tree_buf < custom_tree_size);
+		}
+		++p;
+
+		xmlns_ptr ns=NULL_XMLNS;
+		if (*ns_pref)
+		{
+			ns = xmlns_touch(ns_pref, ns_uri);
+		}
+		char* qname = se_new char[strlen(name)+1];
+		strcpy(qname, name);
+		std::pair<xmlns_ptr, char*> tag(ns, qname);
+
+		res->push_back(ft_index_pair_t(tag, ind_type));
+	}
+	return res;
 }
 
 void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name,bool is_doc,ft_custom_tree_t * custom_tree,bool inserted)
@@ -488,44 +565,15 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
 	PathExpr2lr(object_path, obj_str);
 
-	unsigned int custom_tree_count = 0;
 	unsigned int custom_tree_size = 0;
 	char *custom_tree_buf = executor_globals::e_string_buf;
 
 	if (custom_tree != NULL)
 	{
-		ft_custom_tree_t::sedna_rbtree_entry *tmp;
-		tmp = custom_tree->rb_minimum(custom_tree->root);
-
-		while (tmp != NULL)
-		{
-			custom_tree_count++;
-
-			U_ASSERT(custom_tree_size + sizeof(ft_index_type) <= sizeof(executor_globals::e_string_buf));
-			memcpy(custom_tree_buf + custom_tree_size, &tmp->obj->cm, sizeof(ft_index_type));
-			custom_tree_size += sizeof(ft_index_type);
-
-			if (tmp->obj->get_xmlns() == NULL)
-			{
-                custom_put_str(NULL, custom_tree_buf, &custom_tree_size);
-                custom_put_str(NULL, custom_tree_buf, &custom_tree_size);
-            }
-			else
-			{
-                custom_put_str(tmp->obj->get_xmlns()->uri, custom_tree_buf, &custom_tree_size);
-                custom_put_str(tmp->obj->get_xmlns()->prefix, custom_tree_buf, &custom_tree_size);
-            }
-            custom_put_str(tmp->obj->local, custom_tree_buf, &custom_tree_size);
-
-			tmp = custom_tree->rb_successor(tmp);
-		}
+		ft_serialize_cust_tree(custom_tree_buf, &custom_tree_size, custom_tree);
 	}
 
     llLogFtIndex(tr_globals::trid, obj_str.str().c_str(), itconst, index_title, doc_name, is_doc, custom_tree_buf, custom_tree_size, inserted);
-}
-ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, int custom_tree_size)
-{
-	return NULL;
 }
 #endif
 
