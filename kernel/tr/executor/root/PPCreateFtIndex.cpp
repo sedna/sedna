@@ -91,19 +91,6 @@ ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context 
 	return res;
 }
 
-void delete_cust_rules_vector(ft_index_template_t* &v)
-{
-	ft_index_template_t::iterator it;
-	for (it = v->begin(); it < v->end(); it++)
-	{
-		delete [] it->first.second;
-	}
-	delete v;
-	v = NULL;
-}
-
-
-
 
 
 PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,

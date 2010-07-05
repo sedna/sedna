@@ -683,28 +683,38 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
            doc_schema_node_cptr doc_node = find_document(doc_name);
 
            if (doc_node->type == document || doc_node->type == virtual_root)
+		   {
+		      ft_index_template_t* cust_tree = ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size);
               create_ft_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
                             (ft_index_type)itconst,
                             (doc_schema_node_xptr)doc_node.ptr(),
                             ind_name,
                             doc_name,
                             true,
-                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
+                            cust_tree,
 							true, ft_ind_dtsearch);
+			  if (cust_tree)
+				  delete_cust_rules_vector(cust_tree);
+		   }
            else throw SYSTEM_EXCEPTION("Can't create index for document");
         }
         else
         {
            col_schema_node_cptr col_node = find_collection(doc_name);
            if (col_node->type == document || col_node->type == virtual_root)
+		   {
+			  ft_index_template_t* cust_tree = ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size);
               create_ft_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
                             (ft_index_type)itconst,
                             (doc_schema_node_xptr)col_node.ptr(),
                             ind_name,
                             doc_name,
                             false,
-                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
+                            cust_tree,
 							true, ft_ind_dtsearch);
+			  if (cust_tree)
+				  delete_cust_rules_vector(cust_tree);
+		   }
            else throw SYSTEM_EXCEPTION("Can't create index for collection");
 
         }
