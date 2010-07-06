@@ -12,65 +12,203 @@
 #include "common/base.h"
 #include "common/xptr.h"
 #include "common/lfsGlobals.h"
+#include "common/llcommon/llMain.h"
 #include "tr/tr_base.h"
 
-// Record element
-void llLogElement(transaction_id trid, const xptr *self, const xptr *left, const xptr *right, 
-    			  const xptr *parent, const char* name, const char* uri, const char* prefix, xmlscm_type type, bool inserted);
-
-// Record attribute
-void llLogAttribute(transaction_id trid, const xptr *self, const xptr *left, const xptr *right, const xptr *parent,
-						const char* name, xmlscm_type type, const char* value, int value_size, const char* uri,
-						const char* prefix, bool inserted);
-
-
-// Text log record
-void llLogText(transaction_id trid, const xptr *self, const xptr *left, const xptr *right, const xptr *parent,
-				const char* value, int value_size, bool inserted);
-
-// Text edit log record
-void llLogTextEdit(transaction_id trid, const xptr *self, const char* value, int data_size, bool begin, 
-						bool inserted);
-
-// Document log record
-void llLogDocument(transaction_id trid, const xptr *self, const char *name, const char *collection, bool inserted);
-
-// PI log record
-void llLogPI(transaction_id trid, const xptr *self, const xptr *left, const xptr *right, const xptr *parent,
-				const char* value, int total_size, shft target_size, bool inserted);
-
-// Comment log record
-void llLogComment(transaction_id trid, const xptr *self, const xptr *left, const xptr *right, const xptr *parent, 
-					const char *value, int value_size, bool inserted);
-
-// Collection log record
-void llLogCollection(transaction_id trid, const char* name, bool inserted);
-
-// Namespace log record
-void llLogNS(transaction_id trid, const xptr *self, const xptr *left, const xptr *right, const xptr *parent,
-				const char *uri, const char *prefix, bool inserted);
-
-// Index log record
-void llLogIndex(transaction_id trid, const char *object_path, const char *key_path, xmlscm_type key_type, 
-					const char *index_title, const char *doc_name, bool is_doc, bool inserted);
-
-// Full-text index log record
-void llLogFtIndex(transaction_id trid, const char *object_path, int itconst, const char *index_title, 
-					const char *doc_name, bool is_doc, char *custom_tree_buf, int custom_tree_size, bool inserted);
-
-// Trigger log record
-void llLogTrigger(transaction_id trid, int tr_time, int tr_event, const char *trigger_path, int tr_gran,
-						char *tr_action_buf, int tr_action_size, const char *in_name, int in_type, 
-						const char *path_to_parent, const char *trigger_title, const char *doc_name, 
-						bool is_doc, bool inserted);
-
-// Rename collection record
-void llLogRenameCollection(transaction_id trid, const char* old_name, const char* new_name);
+/*
+ * General record function with sanity checks.
+ *
+ * trid -- transaction id
+ * op -- operation code
+ * num -- number of fields
+ *
+ * Then, num * 2 variable arguments follow in this format:
+ *    field -- void * -- buffer pointer
+ *    field_len -- size_t -- length of the field
+ *
+ * In case of error throws exceptions:
+ *    SE4156 -- logical log buffer too small
+ *    SYSTEM -- not enough memory to hold temporary record
+ *
+ * NOTE: since we use variable arguments here, compiler cannot check types of
+ *       arguments following 'num'. If you use this function you MUST be sure
+ *       that you give (void *, size_t) pairs in every call to this function.
+ */
+void llLogGeneral(transaction_id trid, llOperations op, unsigned num, ...);
 
 // Commit log record
 void llLogCommit(transaction_id trid);
 
 // Rollback log record
 void llLogRollback(transaction_id trid);
+
+
+/*******************************************
+ * Here follows logical log record formats.*
+ *******************************************/
+
+/*
+ * element record body format:
+ * op_type(1 byte),
+ * trid (2byte)
+ * name ('\0' terminated string)
+ * uri ('\0' terminated string)
+ * prefix ('\0' terminated prefix)
+ * xmlscm_type (2byte)
+ * self-xptr(8byte)
+ * left-xptr(8byte)
+ * right-xptr(8byte)
+ * parent-xptr(8byte)
+ */
+
+/*
+ * attribute record body format:
+ * op-type (1byte)
+ * trid (2byte)
+ * name ('\0' terminated string)
+ * uri ('\0' terminated string)
+ * prefix ('\0' terminated string)
+ * value_size (4 bytes)
+ * value (without '\0')
+ * xmlscm_type (2byte)
+ * self-xptr(8byte)
+ * left-xptr(8byte)
+ * right-xptr(8byte)
+ * parent-xptr(8byte)
+ */
+
+/*
+ * text log record format:
+ * op (1byte)
+ * trid (2byte)
+ * value_size (4bytes)
+ * value (without '\0')
+ * self-xptr(8byte)
+ * left-xptr(8byte)
+ * right-xptr(8byte)
+ * parent-xptr(8byte)
+ */
+
+/*
+ * text_edit log record format:
+ * op (1byte)
+ * trid (2byte)
+ * data_size (4bytes)
+ * value (without '\0')
+ * self-xptr(8byte)
+ */
+
+/*
+ * document log record format:
+ * op (1byte)
+ * trid (2 bytes)
+ * name ('\0' terminated string)
+ * collection ('\0' terminated string)
+ * self (xptr)
+ */
+
+/*
+ * pi log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ * total_size (4 bytes)
+ * target_size (2 bytes)
+ * value (without '\0')
+ * self-xptr(8byte)
+ * left-xptr(8byte)
+ * right-xptr(8byte)
+ * parent-xptr(8byte)
+ */
+
+/*
+ * comment log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ * value_size (4 bytes)
+ * value (without '\0')
+ * self-xptr(8byte)
+ * left-xptr(8byte)
+ * right-xptr(8byte)
+ * parent-xptr(8byte)
+ */
+
+/*
+ *rename collection log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ * old_name ('\0' terminated string)
+ * new_name ('\0' terminated string)
+ */
+
+/*
+ * collection log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ * name ('\0' terminated string)
+ */
+
+/*
+ * namespace log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ * uri ('\0' terminated string)
+ * prefix ('\0' terminated string)
+ * self-xptr(8byte)
+ * left-xptr(8byte)
+ * right-xptr(8byte)
+ * parent-xptr(8byte)
+ */
+
+/*
+ * index log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ * object_path ('\0' terminated string)
+ * key_path ('\0' terminated string)
+ * key_type (2 bytes)
+ * index_title ('\0' terminated string)
+ * doc_name or collection_name ('\0' terminated string)
+ */
+
+/*
+ * Full-text index log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ * object_path ('\0' terminated string)
+ * ft_index_type (int)
+ * index_title ('\0' terminated string)
+ * doc_name ('\0' terminated string)
+ * custom_tree_size (int)
+ * custom_tree_buf (custom_tree_size bytes)
+ */
+
+/*
+ * Trigger log record format:
+ *  op (1 byte)
+ *  trid(transaction_id)
+ *  tr_time(int)
+ *  tr_event(int)
+ *  trigger_path(null-terminated string)
+ *  tr_gran(int)
+ *  tr_action_size(int)
+ *  tr_action_buf(tr_action_size bytes)
+ *  in_name(null-terminated string)
+ *  in_type(int)
+ *  path_to_parent(null-terminated string)
+ *  trigger_title(null-terminated string)
+ *  doc_name(null-terminated string)
+ */
+
+/*
+ * commit log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ */
+
+/*
+ * rollback log record format:
+ * op (1 byte)
+ * trid (transaction_id)
+ */
 
 #endif

@@ -53,14 +53,20 @@ static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
 	return llGetPrevLsnFromRecord(RecBuf);
 }
 
-/* Converts logical log namespace presentation into pointer the real object */
+/*
+ * Converts logical log namespace presentation into pointer the real object.
+ * Needed, since logical log cannot (for now) store NULL-pointers, so if we
+ * want to store an NULL string-value there we just dump empty string instead.
+ */
 static inline xmlns_ptr
 llGetNamespaceFromRecord(const char* prefix,
                          const char* uri)
 {
     U_ASSERT(prefix != NULL && uri != NULL);
-    if(strlen(prefix) == 0 && strlen(uri) == 0) return NULL_XMLNS;
-    else return xmlns_touch(prefix, uri);
+    if (strlen(prefix) == 0 && strlen(uri) == 0)
+        return NULL_XMLNS;
+    else
+        return xmlns_touch(prefix, uri);
 }
 
 static LSN llGetNextRcvRec(LSN curr_lsn, void *RecBuf)
@@ -153,7 +159,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
 {
 	 char *rec = (char *)Rec;
      const char* name, *uri, *prefix, *value;
-     int value_size;
+     unsigned value_size;
      xmlscm_type type;
      xptr self, left, right, parent;
      size_t offs;
@@ -168,8 +174,8 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
      offs += strlen(uri) + 1;
      prefix = rec + offs;
      offs += strlen(prefix) + 1;
-     memcpy(&value_size, rec + offs, sizeof(int));
-     offs += sizeof(int);
+     memcpy(&value_size, rec + offs, sizeof(unsigned));
+     offs += sizeof(unsigned);
      value = rec + offs;
      offs += value_size;
      memcpy(&type, rec + offs, sizeof(xmlscm_type));
@@ -223,7 +229,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
 {
 	 char *rec = (char *)Rec;
      const char* value;
-     int value_size;
+     unsigned value_size;
      xptr self, left, right, parent;
      size_t offs;
 	 bool isUNDO = (rollback_active != 0);
@@ -231,8 +237,8 @@ static void llRcvText(LSN curr_lsn, void *Rec)
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     memcpy(&value_size, rec + offs, sizeof(int));
-     offs += sizeof(int);
+     memcpy(&value_size, rec + offs, sizeof(unsigned));
+     offs += sizeof(unsigned);
      value = rec + offs;
      offs += value_size;
      memcpy(&self, rec + offs, sizeof(xptr));
@@ -279,7 +285,7 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
 {
 	 char *rec = (char *)Rec;
      const char* value;
-     int value_size;
+     unsigned value_size;
      xptr self;
      size_t offs;
 	 bool isUNDO = (rollback_active != 0);
@@ -287,8 +293,8 @@ static void llRcvTextEdit(LSN curr_lsn, void *Rec)
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     memcpy(&value_size, rec + offs, sizeof(int));
-     offs += sizeof(int);
+     memcpy(&value_size, rec + offs, sizeof(unsigned));
+     offs += sizeof(unsigned);
      value = rec + offs;
      offs += value_size;
      memcpy(&self, rec + offs, sizeof(xptr));
@@ -399,7 +405,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
 {
 	 char *rec = (char *)Rec;
      const char* value;
-     int value_size;
+     unsigned value_size;
      xptr self, left, right, parent;
      size_t offs;
 	 bool isUNDO = (rollback_active != 0);
@@ -407,8 +413,8 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     memcpy(&value_size, rec + offs, sizeof(int));
-     offs += sizeof(int);
+     memcpy(&value_size, rec + offs, sizeof(unsigned));
+     offs += sizeof(unsigned);
      value = rec + offs;
      offs += value_size;
      memcpy(&self, rec + offs, sizeof(xptr));
@@ -455,7 +461,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
 {
 	 char *rec = (char *)Rec;
      const char* value;
-     int total_size;
+     unsigned total_size;
      shft target_size;
      xptr self, left, right, parent;
      size_t offs;
@@ -464,8 +470,8 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
 
      offs = sizeof(char) + sizeof(transaction_id);
 
-     memcpy(&total_size, rec + offs, sizeof(int));
-     offs += sizeof(int);
+     memcpy(&total_size, rec + offs, sizeof(unsigned));
+     offs += sizeof(unsigned);
      memcpy(&target_size, rec + offs, sizeof(shft));
      offs += sizeof(shft);
      value = rec + offs;
@@ -656,8 +662,8 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
 #ifdef SE_ENABLE_DTSEARCH //TODO: add stuff for FTSEARCH
 	 char *rec = (char *)Rec;
      const char *obj_path, *ind_name, *doc_name, *custom_tree_buf;
-     int itconst;
-     int custom_tree_size;
+     ft_index_type itconst;
+     unsigned custom_tree_size;
      size_t offs;
 	 bool isUNDO = (rollback_active != 0);
 	 char op = rec[0];
@@ -666,14 +672,14 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
 
      obj_path = rec + offs;
      offs += strlen(obj_path) + 1;
-     memcpy(&itconst, rec + offs, sizeof(int));
-     offs += sizeof(int);
+     memcpy(&itconst, rec + offs, sizeof(ft_index_type));
+     offs += sizeof(ft_index_type);
      ind_name = rec + offs;
      offs += strlen(ind_name) + 1;
      doc_name = rec + offs;
      offs += strlen(doc_name) + 1;
-     memcpy(&custom_tree_size, rec + offs, sizeof(int));
-     offs += sizeof(int);
+     memcpy(&custom_tree_size, rec + offs, sizeof(unsigned));
+     offs += sizeof(unsigned);
      custom_tree_buf = rec + offs;
 
      if((isUNDO && (op == LL_DELETE_DOC_FTS_INDEX || op == LL_DELETE_COL_FTS_INDEX) ) || (!isUNDO && (op == LL_INSERT_DOC_FTS_INDEX || op == LL_INSERT_COL_FTS_INDEX)))
@@ -735,43 +741,39 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
     trigger_time tr_time;
     trigger_event tr_event;
     trigger_granularity tr_gran;
-    int tr_action_size;
+    unsigned tr_action_size;
     const char *tr_action_buf;
     inserting_node innode;
+    const char *innode_name;
+    t_item innode_type;
 	bool isUNDO = (rollback_active != 0);
 	char op = rec[0];
 
-    int tmp;
-
     size_t offs = sizeof(char) + sizeof(transaction_id);
 
-	memcpy(&tmp, rec + offs, sizeof(int));
-    offs += sizeof(int);
-    tr_time = (trigger_time)tmp;
+	memcpy(&tr_time, rec + offs, sizeof(trigger_time));
+    offs += sizeof(trigger_time);
 
-    memcpy(&tmp, rec + offs, sizeof(int));
-    offs += sizeof(int);
-    tr_event = (trigger_event)tmp;
+    memcpy(&tr_event, rec + offs, sizeof(trigger_event));
+    offs += sizeof(trigger_event);
 
     trigger_path = rec + offs;
     offs += strlen(trigger_path) + 1;
 
-    memcpy(&tmp, rec + offs, sizeof(int));
-    offs += sizeof(int);
-    tr_gran = (trigger_granularity)tmp;
+    memcpy(&tr_gran, rec + offs, sizeof(trigger_granularity));
+    offs += sizeof(trigger_granularity);
 
-    memcpy(&tr_action_size, rec + offs, sizeof(int));
-    offs += sizeof(int);
+    memcpy(&tr_action_size, rec + offs, sizeof(unsigned));
+    offs += sizeof(unsigned);
 
     tr_action_buf = rec + offs;
     offs += tr_action_size;
 
-    innode.name = rec + offs;
-    offs += strlen(innode.name) + 1;
+    innode_name = rec + offs;
+    offs += strlen(innode_name) + 1;
 
-    memcpy(&tmp, rec + offs, sizeof(int));
-    offs += sizeof(int);
-    innode.type = (t_item)tmp;
+    memcpy(&innode_type, rec + offs, sizeof(t_item));
+    offs += sizeof(t_item);
 
     path_to_parent = rec + offs;
     offs += strlen(path_to_parent) + 1;
@@ -781,8 +783,11 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
     doc_name = rec + offs;
 
+    // inserting node
+    innode = inserting_node(innode_name, innode_type);
+
     // restore trigger_action_cell sequence
-    int i = 0;
+    unsigned i = 0;
     trigger_action_cell *trac = (trigger_action_cell *)malloc(sizeof(trigger_action_cell));
     rcv_tac = trac;
 
@@ -810,7 +815,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
            if (doc_node->type == document || doc_node->type == virtual_root)
                create_trigger(tr_time, tr_event,
-               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, pe_catalog_aspace) : NULL,
+									lr2PathExpr(NULL, trigger_path, pe_catalog_aspace),
                								tr_gran,
                                             NULL,
                                             innode,
@@ -825,7 +830,7 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
            if (coll_node->type == document || coll_node->type == virtual_root)
                create_trigger(tr_time, tr_event,
-               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, pe_catalog_aspace) : NULL,
+									lr2PathExpr(NULL, trigger_path, pe_catalog_aspace),
                								tr_gran,
                                             NULL,
                                             innode,

@@ -309,4 +309,9 @@ uint64_t llLogArchive();
 // 	true - if we need checkpoint; false - otherwise;
 bool llNeedCheckpoint();
 
+/*
+ * Returns maximum allowed record size
+ */
+size_t llGetMaxRecordSize();
+
 #endif

@@ -814,3 +814,8 @@ bool llNeedCheckpoint()
 	// this call is safe because lfsGetNumberOfFiles() is thread-safe
 	return lfsGetNumberOfFiles() > LL_MAX_LOG_FILES;
 }
+
+size_t llGetMaxRecordSize()
+{
+    return LL_WRITEBUF_SIZE - sizeof(llRecordHead);
+}
