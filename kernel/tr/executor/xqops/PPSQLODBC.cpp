@@ -523,7 +523,6 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 
 void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 {
-	int id;
 	SQLRETURN rc;
 	
 	if (params.size() != param_types.size()+1)
@@ -567,21 +566,21 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 
 	rc = SQLODBCBase::fSQLExecute(hstmt);
 	if (rc == SQL_NEED_DATA) {
-		rc = SQLODBCBase::fSQLParamData(hstmt, (SQLPOINTER*)&id);
-		if (rc != SQL_NEED_DATA)
-		{
-			//TODO - if not result_ok(rc) add ODBC diag
-			throw XQUERY_EXCEPTION(SE2106);
-		}
+		SQLPOINTER data_ptr;
+		int ind;
 
-		while (rc == SQL_NEED_DATA)
+		while (true)
 		{
+			rc = SQLODBCBase::fSQLParamData(hstmt, &data_ptr);
+			ind = (int)(ptrdiff_t)data_ptr; //XXX: we convert int to pointer in SQLBindParameter and pointer to int here
+			if (rc != SQL_NEED_DATA)
+				break;
+
 			tuple_cell tmp;
-			//TODO - buf!!! wtfdtm????
-			if (id <= 0 || id >= params.size())
+			if (ind <= 0 || ind >= (int)params.size())
 				throw XQUERY_EXCEPTION(SE2106);
 
-			tmp = values[id-1];
+			tmp = values[ind-1];
 			if (tmp.is_eos())
 				rc = SQLODBCBase::fSQLPutData(hstmt, NULL, SQL_NULL_DATA);
 			else if (tmp.is_atomic())
@@ -609,8 +608,6 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 				std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
 				throw XQUERY_EXCEPTION2(SE2106, diag.c_str());
 			}
-
-			rc = SQLODBCBase::fSQLParamData(hstmt, (SQLPOINTER*)&id);
 		}
 	} 
 	//see execute_query for comments about SQL_NO_DATA
