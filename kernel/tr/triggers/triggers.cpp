@@ -692,7 +692,6 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
     xptr res_xptr = XNULL;
     PPQueryEssence* qep_tree = NULL;
 
-    bool is_qep_opened    = false;
     bool is_qep_built     = false;
     bool output_enabled   = tr_globals::client->disable_output();
 

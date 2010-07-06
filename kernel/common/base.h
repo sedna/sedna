@@ -52,10 +52,17 @@ typedef int transaction_id;
 /* shift in the block */
 typedef unsigned short int shft;
 
-#define PAGE_SIZE                               65536
+/*
+ * Our page constants.
+ *
+ * It's hard to define cross-platform constants for 32- and 64- bits architectures,
+ * since, for example, 'long' type is 32-bit on win-64. So, we're just using
+ * explicit casting to int-pointer type.
+ */
 #define PAGE_BIT_SIZE                           16
-#define PAGE_BIT_MASK                           ((uintptr_t)(UINTPTR_MAX - 0xFFFF))
-#define PAGE_REVERSE_BIT_MASK                   (uintptr_t)0xFFFF
+#define PAGE_SIZE                               (1 << PAGE_BIT_SIZE)
+#define PAGE_REVERSE_BIT_MASK                   (uintptr_t)(PAGE_SIZE-1)
+#define PAGE_BIT_MASK                           (~PAGE_REVERSE_BIT_MASK)
 
 #define VMM_REGION_SEARCH_MAX_SIZE                      ((uint32_t)0x79C00000)
 #define VMM_REGION_MIN_SIZE                             ((uint32_t)0x4000000)

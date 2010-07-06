@@ -1202,6 +1202,9 @@ sedna-err:SE4154
 sedna-err:SE4155
 
    Bad transaction identifier given
+sedna-err:SE4156
+
+   Too large record for logical log
 
 ############################################################################
 # Storage Manager errors
