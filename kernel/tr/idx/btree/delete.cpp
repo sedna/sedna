@@ -115,7 +115,7 @@ bool bt_merge_pages(xptr pl, xptr pr)
 	if (next_page != XNULL) {
 		CHECKP(next_page);
 		VMM_SIGNAL_MODIFICATION(next_page);
-		BT_PREV((char *)XADDR(next_page)) = BT_PREV(tmp_pg);
+		BT_NEXT((char *)XADDR(next_page)) = BT_PREV(tmp_pg);
 	}
 
 	return true;
@@ -287,7 +287,7 @@ void bt_delete_page(xptr pg)
 	if (prev != XNULL) {
 		CHECKP(prev)
 		VMM_SIGNAL_MODIFICATION(prev);
-		BT_PREV((char*) XADDR(prev)) = next;
+		BT_NEXT((char*) XADDR(prev)) = next;
 	}
 }
 
