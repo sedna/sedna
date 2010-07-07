@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # File:  release.sh
-# Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+# Copyright (C) 2010 ISP RAS
+# The Institute for System Programming of the Russian Academy of Sciences
 
 # This is script for making release of the Sedna system.
 # Unfortunately, it depends on the environment of MODIS group and
 # may not work in other places without modification
 
-BUILD_MACHINE=volga.ispras.ru
+BUILD_MACHINE=modis.ispras.ru
 
 
 failwith() {
@@ -15,7 +16,9 @@ failwith() {
   exit 1
 }
 
-##### SCRIPT USAGE ############################################################
+##############################################################################
+# Command line parsing
+##############################################################################
 usage() {
     echo "Usage"
     echo "    $0" " local          - build local release"
@@ -47,9 +50,11 @@ else
             usage;;
     esac
 fi
-##### SCRIPT USAGE ############################################################
 
 
+##############################################################################
+# Check environment
+##############################################################################
 lookfor() {
   save_IFS="${IFS}"
   IFS="${IFS}:"
@@ -78,82 +83,48 @@ lookfor tar
 lookfor flex
 lookfor bison
 
-export OS=`uname` || failwith "Cannot mine operating system name"
-export SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
-export BUILD_FILE=build-$SEDNA_VERSION
-export MD5_EXT=md5
 
-if test "$OS" "=" "Linux"; then
+##############################################################################
+# Adjust configuration
+##############################################################################
+SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
+BUILD_FILE=build-$SEDNA_VERSION
+MD5_EXT=md5
 
-  export BUILD_SUFFIX=linux
-  export BUILD_PLATFORM=`uname -m` || failwith "Cannot mine platform type"
-  export DISTR_EXT=sh
-  export SRC_EXT=tar.gz
-  export SQL_CONNECTION=OFF
-  MAKE_COMMAND=make
-  MD5=md5sum
-  OS_TYPE=nix
-
-elif test "$OS" "=" "Darwin"; then
-
-  export BUILD_SUFFIX=darwin
-  export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
-  export DISTR_EXT=sh
-  export SRC_EXT=tar.gz
-  export SQL_CONNECTION=OFF
-  MAKE_COMMAND=make
-  MD5=md5
-  OS_TYPE=nix
-
-elif test "$OS" "=" "FreeBSD"; then
-
-  export BUILD_SUFFIX=freebsd
-  export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
-  export DISTR_EXT=sh
-  export SRC_EXT=tar.gz
-  export SQL_CONNECTION=OFF
-  MAKE_COMMAND=make
-  MD5=md5
-  OS_TYPE=nix
-
-elif test "$OS" "=" "SunOS"; then
-
-  export BUILD_SUFFIX=sunos
-  export BUILD_PLATFORM=`uname -p` || failwith "Cannot mine platform type"
-  export DISTR_EXT=sh
-  export SRC_EXT=tar.gz
-  export SQL_CONNECTION=OFF
-  MAKE_COMMAND=make
-  MD5="digest -a md5"
-  OS_TYPE=nix
-
-else  #Windows (Cygwin)
-
-  export BUILD_SUFFIX=win
-  export BUILD_PLATFORM=""
-  export DISTR_EXT=tar.gz
-  export SRC_EXT=tar.gz
-  export SQL_CONNECTION=ON
-  MAKE_COMMAND=nmake
-  MD5=md5sum
-  OS_TYPE=win
-
+if [ ! -r ../config.sh ]; then
+    failwith "Could not find configuration file (config.sh)"
+else
+    . ../config.sh
 fi
 
 if test "$STATIC_LIBS"x = "true"x; then
   BUILD_SUFFIX=$BUILD_SUFFIX-static
 fi
 
-prepare_win_source() {
-    echo prepare_windows_source &&
-    rm -rf $FILE_BASE/libs/bin
-}
+if test "$STATIC_LIBS"x = "true"x; then
+  STATIC_SYS_LIBS=ON
+else
+  STATIC_SYS_LIBS=OFF
+fi
 
-prepare_nix_source() {
-    echo prepare_linux_source &&
-    rm -rf $FILE_BASE/libs/bin
-}
+if test "$SQL_CONNECTION"x = "true"x; then
+  SQL_CONNECTION=ON
+else
+  SQL_CONNECTION=OFF
+fi
 
+if test "$OS_TYPE"x = "nix"x; then
+    CMAKE_GENERATOR="Unix Makefiles"
+else
+    CMAKE_GENERATOR="NMake Makefiles"
+fi
+
+ENABLE_DTSEARCH=$BUILD_DTSEARCH
+
+
+##############################################################################
+# Helpers to create binaries and sources builds
+##############################################################################
 exclude_files() {
   for exclude_file in `cat $FILE_BASE/exclude_files`; do 
     rm -rf $FILE_BASE/$exclude_file || return 1
@@ -161,11 +132,8 @@ exclude_files() {
 }
 
 prepare_source() {
-    if test "$OS_TYPE" "=" "nix"; then
-	  prepare_nix_source
-    else
-	  prepare_win_source
-    fi
+    echo "Preparing sources ..."
+    rm -rf $FILE_BASE/libs/bin
     OLDDIR="`pwd`" &&
 
     cd $FILE_BASE/kernel/tr/xqp &&
@@ -182,26 +150,10 @@ prepare_post_source() {
     exclude_files
 }
 
-#script for downloading build-number-file
+
 get_build_file() {
-    # get build_file and build_state_file
-    echo "open $BUILD_MACHINE" > ftpscript.txt &&
-    echo "anonymous" >> ftpscript.txt &&
-    echo "password" >> ftpscript.txt &&
-    echo "cd build" >> ftpscript.txt &&
-    echo "get $BUILD_FILE" >> ftpscript.txt &&
-    echo "close" >> ftpscript.txt &&
-    echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
-
-    if test "$OS_TYPE" "=" "nix"; then
-        ncftp <ftpscript.txt
-    else
-        ftp -s:ftpscript.txt
-    fi || failwith "Cannot get build_file"
-
+    scp sedna@$BUILD_MACHINE:build/$BUILD_FILE . || failwith "Cannot get build file to the build machine"
     BUILD=`cat $BUILD_FILE` || failwith "Cannot read build_file"
-
-    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
     rm -f $BUILD_FILE || failwith "Cannot remove build_file"
 }
 
@@ -210,29 +162,14 @@ get_build_file() {
 #parameters: binary_file_name source_file_name
 #requirements: current directory must be $SEDNA_INSTALL
 put_results_to_build_machine() {
-	echo "open $BUILD_MACHINE" > ftpscript.txt &&
-	echo "anonymous" >> ftpscript.txt &&
-	echo "password" >> ftpscript.txt &&
-	echo "binary" >> ftpscript.txt &&
-	echo "cd build" >> ftpscript.txt &&
-	echo "put $1" >> ftpscript.txt &&
-	echo "put $2" >> ftpscript.txt &&
-	if test $# -ge 3; then echo "put $3" >> ftpscript.txt; fi &&
-	if test $# -eq 4; then echo "put $4" >> ftpscript.txt; fi &&
-	echo "close" >> ftpscript.txt &&
-	echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
-
-    if test "$OS_TYPE" "=" "nix"; then
-        ncftp <ftpscript.txt
-    else
-        ftp -s:ftpscript.txt
-    fi || failwith "Cannot upload build results to the build machine"
-
-    rm -f ftpscript.txt || failwith "Cannot remove build_file"
+    scp $1 sedna@$BUILD_MACHINE:build || failwith "Cannot put $1 to the build machine"
+    scp $2 sedna@$BUILD_MACHINE:build || failwith "Cannot put $2 to the build machine"
 }
 
 
-##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
+##############################################################################
+# Create build file and calculate file names
+##############################################################################
 get_build_file
 
 echo -n $BUILD > build || failwith "Cannot write to build file"
@@ -244,30 +181,16 @@ else
   BIN_FILE_NAME=$FILE_BASE-bin-$BUILD_SUFFIX
   SRC_FILE_NAME=$FILE_BASE-src-$BUILD_SUFFIX
 fi
-##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 
 
-##### PREPARE SOURCE RELEASE ##########################################################
+##############################################################################
+# Make and install Sedna
+##############################################################################
+
 (cd .. && cp -r sedna $FILE_BASE && prepare_source) || failwith "Failed to prepare source distribution"
-##### PREPARE SOURCE RELEASE ##########################################################
 
-##### MAKE ####################################################################
-STATIC_SYS_LIBS=OFF
-if test "$STATIC_LIBS"x = "true"x; then
-  STATIC_SYS_LIBS=ON
-fi
-ENABLE_DTSEARCH=$BUILD_DTSEARCH
-
-# configure
 mkdir -p ../$FILE_BASE.build
 pushd ../$FILE_BASE.build > /dev/null 2>&1
-
-# determine generator name
-if test "$OS_TYPE" "=" "nix"; then
-    CMAKE_GENERATOR="Unix Makefiles"
-else
-    CMAKE_GENERATOR="NMake Makefiles"
-fi
 
 cmake -G "$CMAKE_GENERATOR" -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=$SEDNA_INSTALL/sedna -D SQL_CONNECTION=$SQL_CONNECTION -D STATIC_SYS_LIBS=$STATIC_SYS_LIBS -D ENABLE_DTSEARCH=$ENABLE_DTSEARCH -D MAKE_DOC=ON -D JAVA_DRIVER=ON ../$FILE_BASE || failwith "cmake failed"
 
@@ -278,19 +201,24 @@ rm -rf ../$FILE_BASE.build
 
 (cd .. && prepare_post_source) || failwith "Failed to prepare source distribution (post-phase)"
 
-##### MAKE ####################################################################
 
-##### SOURCE RELEASE #################################################################
+##############################################################################
+# Create source build
+##############################################################################
+
 (cd .. &&
     (tar cvf - $FILE_BASE | gzip 1>$SRC_FILE_NAME.$SRC_EXT) &&
     rm -rf $FILE_BASE &&
     mv $SRC_FILE_NAME.$SRC_EXT $SEDNA_INSTALL) || failwith "Failed to create source distribution"
-##### SOURCE RELEASE #################################################################
 
-##### BINARY RELEASE #################################################################
+
+##############################################################################
+# Create binary build, calculate md5 and put builds to the $BUILD_MACHINE
+##############################################################################
+
 if test "$OS_TYPE" "=" "nix"; then 
-    cp scripts/linux-install.sh $SEDNA_INSTALL; 
-fi || failwith "Cannot copy scripts/linux-install.sh"
+    cp scripts/linux-install.sh $SEDNA_INSTALL || failwith "Cannot copy scripts/linux-install.sh"
+fi
 
 (cd $SEDNA_INSTALL &&
  (tar cvf - sedna | gzip 1>$BIN_FILE_NAME.tar.gz) || failwith "Cannot create archive of binaries"
@@ -311,4 +239,3 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
  if test "$BUILD_TYPE" "!=" "local"; then 
      put_results_to_build_machine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT $BIN_FILE_NAME.$DISTR_EXT.$MD5_EXT $SRC_FILE_NAME.$SRC_EXT.$MD5_EXT
  fi)
-##### BINARY RELEASE #################################################################
