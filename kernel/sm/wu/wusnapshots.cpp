@@ -321,7 +321,7 @@ int GetSnapshotByType2(SnSnapshot *hd,
 	}
 	else 
 	{
-		WuSetLastErrorMacroNonFatal(WUERR_NO_SNAPSHOT_WITH_THIS_TYPE);
+		WuSetLastErrorMacro(WUERR_NO_SNAPSHOT_WITH_THIS_TYPE);
 		prev=NULL;
 	}
 	*resultPtr = hd;

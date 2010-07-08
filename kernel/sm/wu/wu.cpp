@@ -185,10 +185,9 @@ int FindBlockInBuffers (XPTR xptr, int *bufferId)
 		}
 		else
 		{
-			WuSetLastErrorMacroNonFatal(WUERR_BLOCK_NOT_IN_BUFFERS);
+			WuSetLastErrorMacro(WUERR_BLOCK_NOT_IN_BUFFERS);
 		}
 	}
-
 	WU_CATCH_EXCEPTIONS()
 
 	return success;
@@ -474,7 +473,7 @@ int WuGetTimestamp(TIMESTAMP *ts)
 	assert(ts); *ts=INVALID_TIMESTAMP;
 	if (!IsValidTimestamp(timestamp))
 	{
-		WuSetLastErrorMacroNonFatal(WUERR_MAX_TIMESTAMP_VALUE_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_MAX_TIMESTAMP_VALUE_EXCEEDED);
 	}
 	else
 	{

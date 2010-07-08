@@ -1,4 +1,4 @@
-/* GENERATED FILE, DO NOT EDIT! */ 
+/* GENERATED FILE, DO NOT EDIT! */
 #if (_MSC_VER > 1000)
 #pragma once
 #endif
@@ -11,7 +11,7 @@
 
 #define WUERR_OK	0
 
-/* generic errors */ 
+/* generic errors */
 
 #define WUERR_GENERAL_ERROR                                              ( 0 + WUERR_FIRST_ERR)
 #define WUERR_BAD_PARAMS                                                 ( 1 + WUERR_FIRST_ERR)
@@ -23,7 +23,7 @@
 #define WUERR_NO_MEMORY                                                  ( 7 + WUERR_FIRST_ERR)
 #define WUERR_NOT_IMPLEMENTED                                            ( 8 + WUERR_FIRST_ERR)
 
-/* exceptions - evil! */ 
+/* exceptions - evil! */
 
 #define WUERR_UNKNOWN_EXCEPTION                                          ( 9 + WUERR_FIRST_ERR)
 #define WUERR_SEDNA_EXCEPTION                                            (10 + WUERR_FIRST_ERR)
@@ -34,7 +34,7 @@
 #define WUERR_SEDNA_USER_ENV_EXCEPTION                                   (15 + WUERR_FIRST_ERR)
 #define WUERR_SEDNA_USER_SOFT_EXCEPTION                                  (16 + WUERR_FIRST_ERR)
 
-/* state table errors */ 
+/* state table errors */
 
 #define WUERR_BAD_TICKET                                                 (17 + WUERR_FIRST_ERR)
 #define WUERR_STATE_TABLE_BAD_ROW_ID                                     (18 + WUERR_FIRST_ERR)
@@ -43,7 +43,7 @@
 #define WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED                          (21 + WUERR_FIRST_ERR)
 #define WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_WITH_DEBUG_INFO_EXCEEDED (22 + WUERR_FIRST_ERR)
 
-/* clients errors */ 
+/* clients errors */
 
 #define WUERR_BAD_CLIENT_ID                                              (23 + WUERR_FIRST_ERR)
 #define WUERR_CLIENT_ID_ALREADY_IN_USE                                   (24 + WUERR_FIRST_ERR)
@@ -56,7 +56,7 @@
 #define WUERR_UNABLE_TO_UNREGISTER_CURRENT_CLIENT                        (31 + WUERR_FIRST_ERR)
 #define WUERR_UNABLE_TO_UNREGISTER_READY_CLIENT                          (32 + WUERR_FIRST_ERR)
 
-/* snapshots errors */ 
+/* snapshots errors */
 
 #define WUERR_UNABLE_TO_DISCARD_SNAPSHOT_IN_USE                          (33 + WUERR_FIRST_ERR)
 #define WUERR_UNABLE_TO_DISCARD_SPECIAL_SNAPSHOT                         (34 + WUERR_FIRST_ERR)
@@ -72,12 +72,12 @@
 #define WUERR_NO_SNAPSHOTS_EXIST                                         (44 + WUERR_FIRST_ERR)
 #define WUERR_SNAPSHOTS_ARE_READ_ONLY                                    (45 + WUERR_FIRST_ERR)
 
-/* timestamps errors */ 
+/* timestamps errors */
 
 #define WUERR_BAD_TIMESTAMP                                              (46 + WUERR_FIRST_ERR)
 #define WUERR_MAX_TIMESTAMP_VALUE_EXCEEDED                               (47 + WUERR_FIRST_ERR)
 
-/* versions errors */ 
+/* versions errors */
 
 #define WUERR_NO_APROPRIATE_VERSION                                      (48 + WUERR_FIRST_ERR)
 #define WUERR_WORKING_VERSION_ALREADY_CREATED                            (49 + WUERR_FIRST_ERR)
@@ -86,23 +86,21 @@
 #define WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE                   (52 + WUERR_FIRST_ERR)
 #define WUERR_VERSIONS_DISABLED                                          (53 + WUERR_FIRST_ERR)
 
-/* manually added errors */ 
+/* manually added errors */
 
 #define WUERR_BLOCK_NOT_IN_BUFFERS                                       (54 + WUERR_FIRST_ERR)
 #define WUERR_UNEXPECTED_TRID_WR_A                                       (55 + WUERR_FIRST_ERR)
 
-/* no more errors */ 
+/* no more errors */
 
 int WuIsAppError(int error);
 
-void WuSetLastError2(const char *file, int line, const char *function, int error, bool sleep);
+void WuSetLastError(int error);
+
+void WuSetLastError2(const char *file, int line, const char *function, int error);
 
 #define WuSetLastErrorMacro(error)\
-	WuSetLastError2(__FILE__,__LINE__,__FUNCTION__,error,true)
-
-#define WuSetLastErrorMacroNonFatal(error)\
-    WuSetLastError2(__FILE__,__LINE__,__FUNCTION__,error,false)
-    
+	WuSetLastError2(__FILE__,__LINE__,__FUNCTION__,error)
 
 int WuGetLastError();
 
