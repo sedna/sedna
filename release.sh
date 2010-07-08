@@ -164,6 +164,8 @@ get_build_file() {
 put_results_to_build_machine() {
     scp $1 sedna@$BUILD_MACHINE:build || failwith "Cannot put $1 to the build machine"
     scp $2 sedna@$BUILD_MACHINE:build || failwith "Cannot put $2 to the build machine"
+    if test $# -ge 3; then scp $3 sedna@$BUILD_MACHINE:build || failwith "Cannot put $3 to the build machine"; fi
+    if test $# -eq 4; then scp $4 sedna@$BUILD_MACHINE:build || failwith "Cannot put $4 to the build machine"; fi
 }
 
 
