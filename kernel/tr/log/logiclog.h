@@ -15,27 +15,6 @@
 #include "common/llcommon/llMain.h"
 #include "tr/tr_base.h"
 
-/*
- * General record function with sanity checks.
- *
- * trid -- transaction id
- * op -- operation code
- * num -- number of fields
- *
- * Then, num * 2 variable arguments follow in this format:
- *    field -- void * -- buffer pointer
- *    field_len -- size_t -- length of the field
- *
- * In case of error throws exceptions:
- *    SE4156 -- logical log buffer too small
- *    SYSTEM -- not enough memory to hold temporary record
- *
- * NOTE: since we use variable arguments here, compiler cannot check types of
- *       arguments following 'num'. If you use this function you MUST be sure
- *       that you give (void *, size_t) pairs in every call to this function.
- */
-void llLogGeneral(transaction_id trid, llOperations op, unsigned num, ...);
-
 // Commit log record
 void llLogCommit(transaction_id trid);
 

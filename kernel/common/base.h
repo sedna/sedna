@@ -44,6 +44,7 @@ typedef int32_t session_id;
  * Transaction identifier
  */
 typedef int transaction_id;
+#define INVALID_TRID ((transaction_id)-1)
 
 #define MAX_RESOURCE_NAME_LENGTH                100
 #define MAX_DATABASE_NAME_LENGTH                100

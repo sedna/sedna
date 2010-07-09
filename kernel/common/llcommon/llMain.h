@@ -1,5 +1,5 @@
 /*
- * File:  lfsMain.h - Main part of logical log.
+ * File:  llMain.h - Main part of logical log.
  * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  *
  * Only the user interface is specified here. For further information refer to lfsClient.cpp file.
@@ -65,6 +65,20 @@ enum llOperations
 	LL_DEFAULT,           // bogus operation (see description of the llScanRecords)
 };
 
+/*
+ * Note on record types: TR_RECORDs will be retrieved on logical recovery phase,
+ * PHYS_RECORDs will be retrieved on physical recovery phase, GEN_RECORDs will
+ * not be automatically retrieved; if you store such records you should retrieve
+ * it yourself by the given LSN number. One example of such record is hot-backup
+ * record.
+ */
+enum llRecordType
+{
+    TR_RECORD,   /* all such records are linked together in transaction-chain */
+    PHYS_RECORD, /* these records are linked together in the physical chain */
+    GEN_RECORD,  /* stored, but not automatically retrieved */
+};
+
 enum llTransMode
 {
 	NORMAL_MODE,     // transaction is doing some usual work
@@ -114,13 +128,15 @@ int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_fil
 // Insert record in logical log. 
 // Data can be stored in memory. To guarantee write on disk, llFlush should be used.
 // Parameters:
+//     rtype - type of record
 //     RecBuf  - allocated buffer to write a record
 //     RecLen - size of a record
-//     trid - transaction identifier; "-1" means that the record does not belong to any transaction; "-2" - standalone record;
+//     trid - transaction identifier;
 // Returns: 
 //     LSN of the written record;
 //     LFS_INVALID_LSN in case of error;
-LSN llInsertRecord(const void* RecBuf, unsigned int RecLen, transaction_id trid);
+LSN llInsertRecord(llRecordType rtype, const void* RecBuf, unsigned int RecLen,
+        transaction_id trid);
 
 // Locks logical log (global ll synchronization)
 void llLock();
@@ -248,6 +264,9 @@ void *llGetRecordFromDisc(LSN *RecLsn);
 //		len - length of the record (ignored, if Rec != NULL)
 // Returns:
 //		length of the record (0 - in case of error)
+//
+// NOTE: if Rec is NULL then it returns the length record of size 'len' would
+//       have if it is being committed via llInsertRecord.
 int llGetRecordSize(void *Rec, int len);
 
 // Returns previous lsn for given record.
@@ -313,5 +332,33 @@ bool llNeedCheckpoint();
  * Returns maximum allowed record size
  */
 size_t llGetMaxRecordSize();
+
+/*
+ * General record function with sanity checks.
+ *
+ * rtype -- record type
+ * trid -- transaction id (makes sense only for TR_RECORDs)
+ * op -- operation code
+ * num -- number of fields
+ * ret_next_lsn -- see return values
+ *
+ * Returns:
+ *   LSN of the inserted record -- if ret_next_lsn is false
+ *   LSN of the next record to be inserted -- if ret_next_lsn is true
+ *
+ * Then, num * 2 variable arguments follow in this format:
+ *    field -- void * -- buffer pointer
+ *    field_len -- size_t -- length of the field
+ *
+ * In case of error throws exceptions:
+ *    SE4156 -- logical log buffer too small
+ *    SYSTEM -- not enough memory to hold temporary record
+ *
+ * NOTE: since we use variable arguments here, compiler cannot check types of
+ *       arguments following 'num'. If you use this function you MUST be sure
+ *       that you give (void *, size_t) pairs in every call to this function.
+ */
+LSN llLogGeneral(llRecordType rtype, transaction_id trid, llOperations op,
+        bool ret_next_lsn, unsigned num, ...);
 
 #endif

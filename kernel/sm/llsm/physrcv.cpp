@@ -39,7 +39,7 @@ static void llRcvCheckpoint(LSN lsn, void *RecBuf)
 {
 	char *offs;
 	int is_garbage;
-    unsigned count;
+    uint32_t count;
 	WuVersionEntry *blocks_info;
 
 	offs = (char *)RecBuf + sizeof(char) + sizeof(LSN); // skip operation code and next-chain-lsn
@@ -47,11 +47,11 @@ static void llRcvCheckpoint(LSN lsn, void *RecBuf)
 	is_garbage = *((int *)offs);
 	offs += sizeof(int);
 
-	count = *((unsigned *)offs);
-	offs += sizeof(unsigned);
+	count = *((uint32_t *)offs);
+	offs += sizeof(uint32_t);
 
 	blocks_info = (WuVersionEntry *)offs;
-	for (unsigned i = 0; i < count; i++)
+	for (uint32_t i = 0; i < count; i++)
 	{
 		if (is_garbage)
 			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), WuExternaliseXptr(blocks_info[i].xptr));
@@ -75,8 +75,8 @@ static void llRcvFreeBlock(LSN lsn, void *RecBuf)
 
 	offs = (char *)RecBuf + sizeof(char) + sizeof(LSN);
 
-	free_blk_info_size = *((int *)offs);
-	offs += sizeof(int);
+	free_blk_info_size = *((unsigned *)offs);
+	offs += sizeof(unsigned);
 
 	free_blk_info_xptr = *((xptr *)offs);
 	offs += sizeof(xptr);
@@ -141,8 +141,8 @@ static void llRcvBlock(LSN lsn, void *RecBuf)
 
 	offs = (char *)RecBuf + sizeof(char) + sizeof(LSN);
 
-	blk_info_size = *((int *)offs);
-	offs += sizeof(int);
+	blk_info_size = *((unsigned *)offs);
+	offs += sizeof(unsigned);
 
 	blk_info_xptr = *((xptr *)offs);
 	offs += sizeof(xptr);
@@ -178,7 +178,7 @@ LSN llRecoverPhysicalState()
 {
 	char *rec, *offs;
 	LSN lsn;
-	unsigned count;
+	uint32_t count;
 	void *ctrl_blk_buf;
 
 	lsn = llInfo->checkpoint_lsn;
@@ -196,8 +196,8 @@ LSN llRecoverPhysicalState()
 		throw USER_EXCEPTION(SE4153);
 
 	offs = rec + sizeof(char) + sizeof(LSN) + sizeof(int);
-	count = *((unsigned *)offs);
-	offs += sizeof(unsigned) + sizeof(WuVersionEntry) * count;
+	count = *((uint32_t *)offs);
+	offs += sizeof(uint32_t) + sizeof(WuVersionEntry) * count;
 
 	// recover master block
 	bm_rcv_master_block(offs);

@@ -91,10 +91,11 @@ void hl_logical_log_on_session_begin(std::string logical_log_path, bool rcv_acti
 
 void hl_logical_log_on_transaction_begin(bool rcv_active, bool tr_ro_mode)
 {
+    enable_log = !tr_ro_mode && !rcv_active;
+
 	//Here trid is a global variable inited before
 	if (tr_ro_mode) // we don't need log in RO-mode
 	{
-		enable_log = false;
 		tr_globals::is_need_checkpoint_on_transaction_commit = false;
 		is_ll_on_transaction_initialized = false;
 		return;
@@ -139,7 +140,6 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 		}
 	}
 
-	enable_log = true;  // log might have been disabled for RO-mode
 	is_ll_on_transaction_initialized = false;
 }
 
@@ -209,7 +209,7 @@ void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,
     size_t prefix_len = (prefix != NULL) ? strlen(prefix) + 1 : 1;
     llOperations op = (inserted) ? LL_INSERT_ELEM : LL_DELETE_ELEM;
 
-    llLogGeneral(tr_globals::trid, op, 8, name, strlen(name) + 1, uri ? uri : "",
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 8, name, strlen(name) + 1, uri ? uri : "",
             uri_len, prefix ? prefix : "", prefix_len, &type, sizeof(xmlscm_type),
             &self, sizeof(xptr), &left, sizeof(xptr),
             &right, sizeof(xptr), &parent, sizeof(xptr));
@@ -226,7 +226,7 @@ void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &righ
 	size_t prefix_len = (prefix != NULL) ? strlen(prefix) + 1 : 1;
     llOperations op = (inserted) ? LL_INSERT_ATTR : LL_DELETE_ATTR;
 
-    llLogGeneral(tr_globals::trid, op, 10, name, strlen(name) + 1, uri ? uri : "",
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 10, name, strlen(name) + 1, uri ? uri : "",
             uri_len, prefix ? prefix : "", prefix_len, &data_size, sizeof(unsigned),
             value, (size_t)data_size, &type, sizeof(xmlscm_type),
             &self, sizeof(xptr), &left, sizeof(xptr),
@@ -242,7 +242,7 @@ void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,con
 
     llOperations op = (inserted) ? LL_INSERT_TEXT : LL_DELETE_TEXT;
 
-    llLogGeneral(tr_globals::trid, op, 6, &data_size, sizeof(unsigned),
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 6, &data_size, sizeof(unsigned),
             value, (size_t)data_size, &self, sizeof(xptr), &left, sizeof(xptr),
             &right, sizeof(xptr), &parent, sizeof(xptr));
 
@@ -263,7 +263,7 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,unsigned data_
     else
         op = (inserted) ? LL_INSERT_RIGHT_TEXT: LL_DELETE_RIGHT_TEXT;
 
-    llLogGeneral(tr_globals::trid, op, 3, &data_size, sizeof(unsigned),
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 3, &data_size, sizeof(unsigned),
             value, (size_t)data_size, &self, sizeof(xptr));
 
     elog_log_trace_te(tr_globals::trid, self, begin, inserted);
@@ -367,7 +367,7 @@ void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,
 
     llOperations op = (inserted) ? LL_INSERT_COMMENT : LL_DELETE_COMMENT;
 
-    llLogGeneral(tr_globals::trid, op, 6, &data_size, sizeof(unsigned),
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 6, &data_size, sizeof(unsigned),
             value, (size_t)data_size, &self, sizeof(xptr), &left, sizeof(xptr),
             &right, sizeof(xptr), &parent, sizeof(xptr));
 
@@ -382,7 +382,7 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 	size_t coll_len = (collection != NULL) ? strlen(collection) + 1 : 1;
     llOperations op = (inserted) ? LL_INSERT_DOC : LL_DELETE_DOC;
 
-    llLogGeneral(tr_globals::trid, op, 3, name, strlen(name) + 1,
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 3, name, strlen(name) + 1,
             collection ? collection : "", coll_len, &self, sizeof(xptr));
 }
 
@@ -393,7 +393,7 @@ void hl_logical_log_rename_collection(const char *old_name, const char *new_name
 
     llOperations op = LL_RENAME_COLLECTION;
 
-    llLogGeneral(tr_globals::trid, op, 2, old_name, strlen(old_name) + 1,
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 2, old_name, strlen(old_name) + 1,
             new_name, strlen(new_name) + 1);
 }
 
@@ -404,7 +404,7 @@ void hl_logical_log_collection(const  char* name,bool inserted)
 
     llOperations op = (inserted) ? LL_INSERT_COLLECTION : LL_DELETE_COLLECTION;
 
-    llLogGeneral(tr_globals::trid, op, 1, name, strlen(name) + 1);
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 1, name, strlen(name) + 1);
 }
 
 void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted)
@@ -415,7 +415,7 @@ void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &righ
 	size_t prefix_len = (prefix != NULL) ? strlen(prefix) + 1 : 1;
     llOperations op = (inserted) ? LL_INSERT_NS : LL_DELETE_NS;
 
-    llLogGeneral(tr_globals::trid, op, 6, uri, strlen(uri) + 1,
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 6, uri, strlen(uri) + 1,
             prefix ? prefix : "", prefix_len,
             &self, sizeof(xptr), &left, sizeof(xptr),
             &right, sizeof(xptr), &parent, sizeof(xptr));
@@ -430,7 +430,7 @@ void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const
 
     llOperations op = (inserted) ? LL_INSERT_PI : LL_DELETE_PI;
 
-    llLogGeneral(tr_globals::trid, op, 7, &total_size, sizeof(unsigned),
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 7, &total_size, sizeof(unsigned),
             &target_size, sizeof(shft), value, (size_t)total_size,
             &self, sizeof(xptr), &left, sizeof(xptr),
             &right, sizeof(xptr), &parent, sizeof(xptr));
@@ -515,7 +515,7 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
     std::string obj_path_str = obj_str.str();
     std::string key_path_str = key_str.str();
 
-    llLogGeneral(tr_globals::trid, op, 5, obj_path_str.c_str(), obj_path_str.size() + 1,
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 5, obj_path_str.c_str(), obj_path_str.size() + 1,
             key_path_str.c_str(), key_path_str.size() + 1, &key_type, sizeof(xmlscm_type),
             index_title, strlen(index_title) + 1, doc_name, strlen(doc_name) + 1);
 }
@@ -640,7 +640,7 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 
     std::string obj_path_str = obj_str.str();
 
-    llLogGeneral(tr_globals::trid, op, 6, obj_path_str.c_str(), obj_path_str.size() + 1,
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 6, obj_path_str.c_str(), obj_path_str.size() + 1,
             &itconst, sizeof(ft_index_type), index_title, strlen(index_title) + 1,
             doc_name, strlen(doc_name) + 1, &custom_tree_size, sizeof(unsigned),
             custom_tree_buf, (size_t)custom_tree_size);
@@ -698,7 +698,7 @@ void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathEx
   std::string tr_path_par = path_to_par.str();
   size_t innname_len = insnode.name ? strlen(insnode.name) + 1 : 1;
 
-  llLogGeneral(tr_globals::trid, op, 11, &tr_time, sizeof(trigger_time), &tr_event, sizeof(trigger_event),
+  llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 11, &tr_time, sizeof(trigger_time), &tr_event, sizeof(trigger_event),
           tr_path_str.c_str(), tr_path_str.size() + 1, &tr_gran, sizeof(trigger_granularity),
           &tr_action_buf_size, sizeof(unsigned int), tr_action_buf, (size_t)tr_action_buf_size,
           insnode.name ? insnode.name : "", innname_len, &insnode.type, sizeof(t_item),

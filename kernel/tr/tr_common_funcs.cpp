@@ -292,6 +292,9 @@ static SSMMsg* sm_server_wu = NULL; // server to report to wu
 
 static void rollbackTransaction()
 {
+    // disable logical logging
+    hl_disable_log();
+
     // we should unmap all blocks here since sm will "fix" some offsets and xptrs on physical rollback
     // they might be not valid anymore
     // for now it is needed only for ft-indexes to see consistent state
