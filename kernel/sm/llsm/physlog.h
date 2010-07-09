@@ -21,7 +21,7 @@
 // 		phys_xptr - xptr of the free block
 //		block - pointer to the contents of block in memory
 //		size - number of bytes by block address
-void llLogFreeBlocksInfo(xptr phys_xptr, void *block, int size);
+void llLogFreeBlocksInfo(xptr phys_xptr, void *block, unsigned size);
 
 // Persistent snapshot add log record
 // Parameters:
@@ -41,7 +41,7 @@ void llLogDecrease(uint64_t old_size);
 // 		xblk - xptr of the given block
 //		block - pointer to the contents of block in memory
 //		size - number of bytes by block address
-void llLogRecordBlock(xptr xblk, void *block, int size);
+void llLogRecordBlock(xptr xblk, void *block, unsigned size);
 
 // Checkpoint record
 // Parameters:

@@ -1,5 +1,5 @@
 /*
- * File:  lfsMain.cpp - Main part of logical log.
+ * File:  llMain.cpp - Main part of logical log.
  * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  *
  * General service for logical log. Synchronization primitives are provided here, which should be used to ensure thread-safe
@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <string>
+#include <stdarg.h>
 
 #define LL_FILE_PORTION_SIZE (INT64_C(100) * (1024 * 1024))   // size of chunk of logical log
 #define LL_WRITEBUF_SIZE 1024 * 1024                          // write buffer size (for lfs)
@@ -105,7 +106,8 @@ int llCreateNew(const char *db_files_path, const char *db_name, uint64_t log_fil
 }
 
 // Insert record in logical log.
-LSN llInsertRecord(const void *RecBuf, unsigned int RecLen, transaction_id trid)
+LSN llInsertRecord(llRecordType rtype, const void *RecBuf, unsigned int RecLen,
+        transaction_id trid)
 {
 	RECOVERY_CRASH;
 	void *rec_all;
@@ -118,7 +120,7 @@ LSN llInsertRecord(const void *RecBuf, unsigned int RecLen, transaction_id trid)
 		LL_ERROR("internal ll error: cannot allocate memory");
 
 	// lsn of previous record
-	if (trid != -1 && trid != -2 && llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN)
+	if (rtype == TR_RECORD && llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN)
 		log_head.prev_lsn = llInfo->llTransInfoTable[trid].last_lsn;
 	else
 		log_head.prev_lsn = LFS_INVALID_LSN;
@@ -133,7 +135,7 @@ LSN llInsertRecord(const void *RecBuf, unsigned int RecLen, transaction_id trid)
 	free(rec_all);
 
 	// record belongs to some transaction
-	if (trid != -1 && trid != -2)
+	if (rtype == TR_RECORD)
 	{
 		llInfo->llTransInfoTable[trid].last_lsn = ret_lsn;
 
@@ -144,7 +146,7 @@ LSN llInsertRecord(const void *RecBuf, unsigned int RecLen, transaction_id trid)
 		llInfo->llTransInfoTable[trid].num_of_log_records += 1;					 // debug info
 		llInfo->llTransInfoTable[trid].last_len = RecLen + sizeof(llRecordHead); // needed for flush
     }
-    else if (trid != -2)
+    else if (rtype == PHYS_RECORD)
     {
    		llLock();
 		llInfo->last_chain_lsn = ret_lsn;   // last record in physical chain
@@ -182,34 +184,12 @@ void llUnlock()
 */
 static LSN llLogHotBackup()
 {
-	RECOVERY_CRASH;
-
-	char *tmp_rec;
-	int rec_len;
 	LSN res;
 
-	rec_len = sizeof(char) + sizeof(TIMESTAMP) + 2 * sizeof(LSN);
-	if ((tmp_rec = (char *)malloc(rec_len)) == NULL)
-		throw SYSTEM_EXCEPTION("Cannot allocate memory");
-
-	char op = LL_HBINFO;
-	int offs = 0;
-
-	//create record body
-	memcpy(tmp_rec, &op, sizeof(char));
-	offs += sizeof(char);
-
-	memcpy(tmp_rec + offs, &(llInfo->ts), sizeof(TIMESTAMP));
-	offs += sizeof(TIMESTAMP);
-
-	memcpy(tmp_rec + offs, &(llInfo->checkpoint_lsn), sizeof(LSN));
-	offs += sizeof(LSN);
-
-	memcpy(tmp_rec + offs, &(llInfo->last_chain_lsn), sizeof(LSN));
-
-	res = llInsertRecord(tmp_rec, rec_len, -2);
-
-	free(tmp_rec);
+	res = llLogGeneral(GEN_RECORD, INVALID_TRID, LL_HBINFO, false, 3,
+	        &(llInfo->ts), sizeof(TIMESTAMP),
+            &(llInfo->checkpoint_lsn), sizeof(LSN),
+            &(llInfo->last_chain_lsn), sizeof(LSN));
 
 	return res;
 }
@@ -818,4 +798,91 @@ bool llNeedCheckpoint()
 size_t llGetMaxRecordSize()
 {
     return LL_WRITEBUF_SIZE - sizeof(llRecordHead);
+}
+
+/*
+ * Mem copy with offset increment, without any checkings.
+ *
+ * offs WILL be modified, unless len == 0, of course.
+ */
+inline static void inc_mem_copy(void* dest, size_t &offs, const void* src, size_t len)
+{
+    if (len == 0) return;
+    memcpy((char*)dest + offs, src, len);
+    offs += len;
+}
+
+/*
+ * Temporary record buffer; it is expanded if needed.
+ *
+ * Initial size of intermediate record buffer is REC_BUF_INIT_SIZE bytes.
+ *
+ * NOTE: this buffer is never freed since its lifetime starts with the first
+ * record and ends with the last, which almost equals to lifetime of the process.
+ */
+#define REC_BUF_INIT_SIZE 128
+static unsigned char* rec_buf = NULL;
+static size_t rec_buf_size = 0;
+
+LSN llLogGeneral(llRecordType rtype, transaction_id trid, llOperations op,
+        bool ret_next_lsn, unsigned num, ...)
+{
+    va_list args;
+    void *field;
+    size_t max_len, field_len, rec_len = 0;
+    char cop = (char)op;
+    LSN rec_lsn;
+
+    RECOVERY_CRASH;
+
+    max_len = llGetMaxRecordSize();
+
+    U_ASSERT(max_len >= sizeof(cop) + sizeof(trid));
+
+    if (!rec_buf)
+    {
+        rec_buf = (unsigned char *)malloc(REC_BUF_INIT_SIZE);
+        if (!rec_buf)
+            LL_ERROR("logical log: not enough memory");
+
+        rec_buf_size = REC_BUF_INIT_SIZE;
+    }
+
+    inc_mem_copy(rec_buf, rec_len, &cop, sizeof(cop));
+
+    if (rtype == TR_RECORD)
+        inc_mem_copy(rec_buf, rec_len, &trid, sizeof(trid));
+
+    va_start(args, num);
+
+    for (unsigned i = 0; i < num; i++)
+    {
+        field = va_arg(args, void *);
+        field_len = va_arg(args, size_t);
+
+        if (rec_len + field_len > max_len)
+            throw USER_EXCEPTION(SE4156);
+
+        if (rec_len + field_len > rec_buf_size)
+        {
+            rec_buf_size = s_max(rec_buf_size * 2, rec_len + field_len);
+            rec_buf = (unsigned char *)realloc(rec_buf, rec_buf_size);
+
+            if (!rec_buf)
+                LL_ERROR("logical log: not enough memory");
+        }
+
+        inc_mem_copy(rec_buf, rec_len, field, field_len);
+    }
+
+    //insert record
+    if ((rec_lsn = llInsertRecord(rtype, rec_buf, rec_len, trid)) == LFS_INVALID_LSN)
+        LL_ERROR("logical log: internal transaction error");
+
+    va_end(args);
+
+    if (ret_next_lsn)
+        rec_lsn += llGetRecordSize(NULL, rec_len);
+
+    return rec_lsn;
 }
