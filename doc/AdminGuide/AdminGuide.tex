@@ -174,7 +174,7 @@ options:
   -alive-timeout timeout   session keep alive timeout
                            (default 0 - infinite timeout)
   -stack-depth depth       maximum executor stack depth
-                           (default 5000)
+                           (default 4000)
 \end{verbatim}}
 
 \verb!--help! and \verb!-help! options provide the exhaustive information about
@@ -203,7 +203,7 @@ ine overrides value (if any) defined in the \verb!sednaconf.xml! file.
 physical operations stack. Setting the parameter higher than the actual process
 stack may fit will mean that a runaway recursive function can crash an
 individual session (and server in the current architecture). The default setting
-is 5000, which is unlikely to risk crashes. However, it may be too small to
+is 4000, which is unlikely to risk crashes. However, it may be too small to
 allow execution of complex functions. Value provided via command line overrides
 value (if any) defined in the \verb!sednaconf.xml! file.
 
@@ -318,7 +318,7 @@ The \verb!session_stack_depth! defines the maximum safe depth of the session's
 physical operations stack. Setting the parameter higher than the actual process
 stack may fit will mean that a runaway recursive function can crash an
 individual session (and server in the current architecture). The default setting
-is 5000, which is unlikely to risk crashes. However, it may be too small to
+is 4000, which is unlikely to risk crashes. However, it may be too small to
 allow execution of complex functions.
 
 To tune the Sedna configuration, Administrator should edit the proper elements
