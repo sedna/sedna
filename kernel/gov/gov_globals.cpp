@@ -46,6 +46,6 @@ arg_rec gov_argtable[] =
 \n\t\t\t\t    1 - log only fatal errors\n\t\t\t\t    2 - log all errors/warnings\n\t\t\t\t    3 - system operational messages\
 \n\t\t\t\t    4 - log everything (+debug messages)"},
 {"-alive-timeout",    " timeout",  arg_int,  &gov_globals::cl_ka_timeout,    "-1",  "\t session keep alive timeout\n\t\t\t\t (default 0 - infinite timeout)"},
-{"-stack-depth",      " depth",    arg_int,  &gov_globals::cl_pp_stack_depth,"-1",  "\t\t maximum executor stack depth\n\t\t\t\t (default 5000)"}
+{"-stack-depth",      " depth",    arg_int,  &gov_globals::cl_pp_stack_depth,"-1",  "\t\t maximum executor stack depth\n\t\t\t\t (default 4000)"}
 };
 

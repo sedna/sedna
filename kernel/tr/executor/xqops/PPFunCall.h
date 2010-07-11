@@ -1,13 +1,12 @@
 /*
  * File:  PPFunCall.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
-
 
 #ifndef __PPFUNCALL_H
 #define __PPFUNCALL_H
 
-#include <string>
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
@@ -33,7 +32,6 @@ public:
         child->reopen(); num = 0; 
     }
     
-    std::string error();
     void next(tuple &t);
 };
 
@@ -108,5 +106,4 @@ public:
     inline function_id get_function_id() { return fn_id; }
 };
 
-
-#endif
+#endif /* __PPFUNCALL_H */

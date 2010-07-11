@@ -251,7 +251,7 @@ void get_sednaconf_values(gov_header_struct* cfg)
     cfg->os_primitives_id_min_bound = 1500;
     cfg->el_level = 3;
     cfg->ka_timeout = 0;
-    cfg->pp_stack_depth = 5000;
+    cfg->pp_stack_depth = 4000;
 
     strcpy(cfg->SEDNA_DATA, proc_buf);
     strcpy(sedna_cfg_file,  proc_buf);

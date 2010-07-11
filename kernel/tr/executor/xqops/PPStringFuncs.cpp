@@ -188,7 +188,6 @@ void PPFnStringJoin::do_close()
 
 void PPFnStringJoin::do_next(tuple &t)
 {
-
     if (!first_time)
     {
         first_time = true;

@@ -1,10 +1,9 @@
 /*
  * File:  PPFunCall.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
-
-#include <vector>
 #include <string>
 
 #include "common/sedna.h"
@@ -15,7 +14,22 @@
 #include "tr/executor/base/visitor/PPVisitor.h"
 
 
-using namespace std;
+////////////////////////////////////////////////////////////////////////////////
+/// Function argument check and conversion rules implementation
+////////////////////////////////////////////////////////////////////////////////
+
+static void
+type_error(const char* message,
+           int arg_num,
+           const sequence_type* st)
+{
+    std::string res;
+    if(arg_num != 0)
+        res = "Error in function call. Argument [" + int2string(arg_num) + "] does not match the required type. Expected type is [" +  st->to_str() +  "]" + message;
+    else
+        res = "Error in function call. Return value does not match the required type. Expected type is [" +  st->to_str() +  "]" + message;
+    throw XQUERY_EXCEPTION2(XPTY0004, res.c_str());
+}
 
 
 void fun_conv_rules::next(tuple &t)
@@ -29,19 +43,17 @@ void fun_conv_rules::next(tuple &t)
 
     switch (st->oi)
     {
-        case st_empty			: if (num != 0) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ".").c_str());
-                                  break;
-        case st_one				: {
-                                      if (num == 0) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", empty sequence is given.").c_str());
-                                      if (num > 1) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", more than one item is given.").c_str());
-                                      break;
-                                  }
-        case st_optional		: if (!(num == 0 || num == 1)) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", more than one item is given.").c_str());
-                                  break;
-        case st_zero_or_more	: break;
-        case st_one_or_more		: if (!(num >= 1)) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", empty sequence is given.").c_str());
-                                  break;
-        default					: throw XQUERY_EXCEPTION2(SE1003, "Unexpected case in fcr::next.");
+        case st_empty         : if (num != 0) type_error(".", arg_num, st);
+                                break;
+        case st_one           : if (num == 0) type_error(", empty sequence is given.", arg_num, st);
+                                if (num > 1) type_error(", more than one item is given.", arg_num, st);
+                                break;
+        case st_optional      : if (!(num == 0 || num == 1)) type_error(", more than one item is given.", arg_num, st);
+                                break;
+        case st_zero_or_more  : break;
+        case st_one_or_more   : if (!(num >= 1)) type_error(", empty sequence is given.", arg_num, st);
+                                break;
+        default               : throw XQUERY_EXCEPTION2(SE1003, "unexpected case in function conversion rule.");
     }
 
     if (t.is_eos()) 
@@ -68,22 +80,11 @@ void fun_conv_rules::next(tuple &t)
     }
 
     if (!type_matches_single(tc, st->type))
-        throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", given type is [" + tc.type2string() + "].").c_str());
+        type_error((", given type is [" + tc.type2string() + "].").c_str(), arg_num, st);
 
     DECREASE_STACK_DEPTH
 }
 
-string fun_conv_rules::error()
-{
-    string res;    
-
-    if(arg_num != 0)
-        res = "Error in function call. Argument [" + int2string(arg_num) + "] does not match the required type. Expected type is [" +  st->to_str() +  "]";
-    else
-        res = "Error in function call. Return value does not match the required type. Expected type is [" +  st->to_str() +  "]";
-
-    return res;
-}
 
 void fun_arg::reopen()
 {
@@ -140,8 +141,10 @@ PPFunCall::PPFunCall(dynamic_context *_cxt_,
                                             args_num(ch_arr.size()),
                                             var_cxt(NULL)
 {
-    for (unsigned i = 0; i < args_num; i++)
-        if (ch_arr[i].ts != 1) throw USER_EXCEPTION2(SE1003, "Children of PPFunCall operation have wrong tuple size");
+    for (unsigned i = 0; i < args_num; i++) {
+        if (ch_arr[i].ts != 1)
+            throw USER_EXCEPTION2(SE1003, "Children of PPFunCall operation have wrong tuple size");
+    }
 }
 
 PPFunCall::~PPFunCall()
@@ -239,7 +242,7 @@ void PPFunCall::do_next(tuple &t)
         var_cxt = fn_id.first->get_current_var_context();
         var_cxt->setProducers(fd.vars_total);
 
-        // set producers for arguments
+        /* set producers for arguments */
         for (i = 0; i < args_num; i++)
         {
             var_cxt->producers[i].type = pt_lazy_complex;
@@ -259,9 +262,9 @@ void PPFunCall::do_next(tuple &t)
         body->open();
         is_body_opened = true;
 
-        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, 0);  /// arg_num == 0 means function return value
+        /* arg_num == 0 means function return value */
+        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, 0);
     }
-
 
     if (need_reopen)
     {
