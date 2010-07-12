@@ -57,7 +57,7 @@ private:
     size_t cell_num;
 
     // basic table of cells
-    cell tbl[1 << middle_significan_bits];
+    cell *tbl;
 
     // iterator class
     class sehash_iterator
@@ -178,6 +178,8 @@ public:
         unsigned k = 32 - middle_significan_bits - right_zero_bits;
         templ = 0xFFFFFFFF << k >> k >> right_zero_bits << right_zero_bits;
 
+        tbl = new cell[1 << middle_significan_bits];
+
         for (mask_type i = 0; i < (1 << middle_significan_bits); i++)
         {
             tbl[i].next = NULL;
@@ -213,6 +215,7 @@ public:
     ~se_hash()
     {
         clear();
+        delete[] tbl;
     }
 
     // functions return 0 if all OK
