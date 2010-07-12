@@ -169,9 +169,26 @@ void vmm_preliminary_call(lsize_t layer_size)
 
     global_memory_mapping = get_global_memory_mapping();
 
-    if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR, &LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
+    if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR,
+            &LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
         throw SYSTEM_ENV_EXCEPTION("Cannot map vmm region in transaction!");
 
+    /*
+     * At this point we have reserved the whole layer on Linux, but have it
+     * freed on Windows.
+     *
+     * There is a chance that kernel will load some library between unmap
+     * and map-of-null-pages calls. So these are "solutions":
+     *
+     * On Linux we can employ mmap-over-mmap technique, which seems to be
+     * supported on most platforms.
+     *
+     * For Windows, however, it seems impossible since we cannot do MapViewOfFile
+     * over reserved memory. We could try to postpone VirtualFree until later,
+     * but we perhaps will gain nothing, since we do null-page remapping only
+     * several instructions later. Another idea is to do VirtualFree-MapViewOfFile
+     * calls with page granularity instead of the whole layer.
+     */
     U_ASSERT(LAYER_ADDRESS_SPACE_SIZE == layer_size);
 
     LAYER_ADDRESS_SPACE_START_ADDR_INT = (uintptr_t)LAYER_ADDRESS_SPACE_START_ADDR;
@@ -424,7 +441,7 @@ void vmm_determine_region(bool log)
 
     if (log) {
         if (0 == segment_size) fprintf(f_se_trn_log, "Nothing has been found\n");
-        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
+        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %u\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
         if (fclose(f_se_trn_log) != 0) printf("Can't close file se_trn_log\n");
     } else {
         if (0 == segment_size) {
@@ -434,7 +451,7 @@ void vmm_determine_region(bool log)
         }
         else
         {
-            d_printf3("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
+            d_printf3("\nvmm_determine_region:\nregion size (in pages) = %u\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
 
             if (segment_size > VMM_REGION_MAX_SIZE)
                 segment_size = VMM_REGION_MAX_SIZE;
@@ -593,7 +610,6 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
         catalog_masterblock = msg.data.reg.mptr;
         tr_globals::authentication = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHENTICATION_FLAG);
         tr_globals::authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
-        int bufs_num = msg.data.reg.num;
 
         vmm_preliminary_call(msg.data.reg.layer_size);
 

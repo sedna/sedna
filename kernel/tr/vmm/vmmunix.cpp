@@ -22,7 +22,21 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 #endif /* VMM_DEBUG_CHECKP */
 
-    addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m, (off_t)offs);
+    addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m,
+            (off_t)offs);
+
+    /*
+     * If implementation doesn't support mmap-over-mmap then try to unmap first
+     * and mmap again.
+     */
+    if (addr == MAP_FAILED && errno == EINVAL)
+    {
+        elog(EL_DBG, ("mmap-over-mmap failed on address = 0x%"PRIXPTR,
+                (uintptr_t)addr));
+        munmap(addr, PAGE_SIZE);
+        addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m,
+                (off_t)offs);
+    }
 
     if (addr == MAP_FAILED) {
         d_perror("mmap failed");
@@ -35,10 +49,12 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
 
 int _uvmm_unmap(void *addr)
 {
-    return munmap(addr, PAGE_SIZE);
+    /* do nothing since we're using mmap-over-mmap */
+    return 0;
 }
 
-int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size, bool log, FILE * logfile)
+int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size,
+        bool log, FILE * logfile)
 {
     /* additional PAGE_SIZE needed for alignment of res_addr on page boundary */
     *res_addr = mmap(0, cur + (uint32_t)PAGE_SIZE, PROT_READ, MAP_PRIVATE | U_MAP_NORESERVE | U_MAP_ANONYMOUS, -1, 0);
@@ -46,7 +62,6 @@ int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size, bo
     if (*res_addr != MAP_FAILED) {
         if (log) fprintf(logfile, "PASSED\n");
         *segment_size = cur;
-        munmap(*res_addr, cur);
         *res_addr = (void*)(((uintptr_t)*res_addr + (uint32_t)PAGE_SIZE) & PAGE_BIT_MASK);
         return 1;
     } else if(log) {

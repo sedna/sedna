@@ -55,7 +55,8 @@ int _uvmm_unmap(void *addr)
     return (UnmapViewOfFile(addr) == 0 ? -1 : 0);
 }
 
-int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size, bool log, FILE * logfile)
+int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size,
+        bool log, FILE * logfile)
 {
     *res_addr = VirtualAlloc(
         NULL,                      // system determines where to allocate the region
@@ -66,6 +67,12 @@ int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size, bo
     if (*res_addr) {
         if (log) fprintf(logfile, "PASSED\n");
         *segment_size = cur;
+        /*
+         * On Windows we have to always unmap the region since we cannot do
+         * MapViewOfFile over MEM_RESERVE memory region. Okay, this is
+         * unnecessary on vmm_determine_region since OS will do it anyway on
+         * process termination, but it doesn't hurt either.
+         */
         VirtualFree(*res_addr, 0, MEM_RELEASE);
         *res_addr = (void*)(((uintptr_t)*res_addr + (uint32_t)PAGE_SIZE) & PAGE_BIT_MASK);
         return 1;
