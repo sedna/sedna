@@ -11,7 +11,7 @@ endif (COMMAND cmake_policy)
 if (NOT CMAKE_VERSION)
     set(CMAKE_VERSION "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
     message(STATUS "CMAKE_VERSION was not defined, setting to ${CMAKE_VERSION}")
-endif (NOT CMAKE_VERSION )
+endif (NOT CMAKE_VERSION)
 message(STATUS "CMake version is -- ${CMAKE_VERSION}")
 
 # platform info
@@ -20,7 +20,7 @@ message(STATUS "Building for: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 # prohibit in-source-builds
 if (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     message(STATUS "In-source-builds are not allowed")
-    message(FATAL_ERROR "Create a separate build directory (e.g \"build\") and execute \"cmake <path_to_sedna_sources>\" from it")
+    message(FATAL_ERROR "Create a separate build directory (e.g. \"build\") and execute \"cmake <path_to_sedna_sources>\" from it")
 endif (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
 
 # set default build type if it's supported
