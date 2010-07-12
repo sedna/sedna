@@ -1913,9 +1913,85 @@ pstr_long_off_t pstr_long_length(const xptr data)
 	return cnt;
 }
 
+pstr_long_off_t pstr_long_bytelength2(const xptr data)
+{
+	//TODO: there's no need to copy anything since we work with only one block
+	intl_last_blk = data;
+
+	CHECKP(intl_last_blk);
+	struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
+	memcpy(&intl_ftr, ftr, PSTR_LONG_LAST_BLK_FTR_SIZE);
+
+	//two cases when the whole string is in the first block (and we can't assuse it's filled upto its end)
+	if (same_block(intl_ftr.start, intl_last_blk))
+	{
+		U_ASSERT(intl_ftr.cursor > 0);
+		U_ASSERT(intl_ftr.cursor >= ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start))) );
+		return intl_ftr.cursor - ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start)));
+	}
+	if (same_block(intl_ftr.start, ((struct pstr_long_blk_hdr *)XADDR(intl_last_blk))->prev_blk) && intl_ftr.cursor < 0)
+	{
+		return -intl_ftr.cursor - ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start)));
+	}
+
+	intl_copy_map_to_buf();
+	const int bls = intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
+	const int mapsize = intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE;
+	intl_last_block_list_entry = (struct pstr_long_block_list_entry*)(intl_block_list_end_addr() - bls);
+	memcpy(intl_last_block_list_entry,
+		intl_last_blk_last_ble_addr(mapsize, bls),
+		bls);
+
+	pstr_long_off_t cur = 0;
+	bool first_me = true;
+	pstr_long_off_t sz;
+
+	pstr_long_block_list_map_entry *mapent = intl_map_end();
+	sz = PAGE_SIZE - ((char*)XADDR(intl_ftr.start)-(char*)XADDR(BLOCKXPTR(intl_ftr.start)));
+	cur += sz;
+
+	//FIXME: this loop may be 'unrolled' to run in constant time
+	while (mapent > intl_last_map_entry)
+	{
+		mapent--; //FIXME!!!!
+		sz = 0;
+		int gap = 0;
+		if (first_me)
+		{
+			gap = intl_ftr.first_blb_gap_size;
+			first_me = false;
+		}
+		int bll = PSTR_LONG_FULL_BLOCK_LIST_SIZE;
+		if (mapent == intl_last_map_entry)
+			bll = intl_ftr.pred_blb_size;
+
+		sz = bll - gap;
+		sz *= (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
+
+		cur += sz;
+	}
+
+	const pstr_long_off_t skip_fb = intl_ftr.block_list_size;
+	sz = skip_fb * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
+	cur += sz;
+
+	if (intl_ftr.cursor >= 0)
+	{
+		U_ASSERT(intl_ftr.cursor >= PSTR_LONG_BLK_HDR_SIZE);
+		cur += intl_ftr.cursor-PSTR_LONG_BLK_HDR_SIZE;
+	}
+	else
+	{
+		cur += -PSTR_LONG_BLK_HDR_SIZE-intl_ftr.cursor;
+		cur -= PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE;
+	}
+	return cur;
+}
+
 #ifdef PSTR_LONG_TEST
 void pstr_long_str_info(xptr desc)
 {
+	/*
 	d_printf3("long_str: desc = 0x%08lx %08lx\n", desc.layer, desc.addr);
 	CHECKP(desc);
 	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
@@ -1931,5 +2007,43 @@ void pstr_long_str_info(xptr desc)
 	d_printf2("long_str: pred_blbs=%ld/%ld\n", ftr->pred_blb_size, PSTR_LONG_FULL_BLOCK_LIST_SIZE);
 	d_printf2("long_str: first_blk_char_count=%ld\n", ftr->first_blk_char_count);
 	d_printf2("long_str: length=%ld\n", pstr_long_length(desc));
+	*/
+}
+void pstr_long_test_bytelength2()
+{
+	//TODO: use pstr_long_append_head too
+	d_printf1("pstr_long_test_bytelength2: start\n");
+	pstr_long_off_t sz = 3;
+	static char buf[4444];
+	srand(123);
+	for (int i = 0; i < sizeof(buf); i++)
+		buf[i] = 'a' + rand()%26;
+	xptr str = pstr_long_create_str2(true, buf, 3);
+
+
+	for (int i = 0; i < 10000; i++)
+	{
+		pstr_long_off_t _sz = pstr_long_bytelength2(str);
+		if (sz != _sz)
+		{
+			d_printf3("pstr_long_test_bytelength2: err! "PRIi64" != "PRIi64"\n", sz, _sz);
+			_sz = pstr_long_bytelength2(str); //for debug
+		}
+		else
+		{
+			d_printf2("pstr_long_test_bytelength2: ok, sz=%ld\n", sz);
+		}
+		if (rand()%11 == 0 && sz < 100000000)
+		{
+			str = pstr_long_append_tail2(str, str, sz);
+			sz *= 2;
+		}
+		else
+		{
+			int len = (rand() % sizeof(buf)) + 1;
+			str = pstr_long_append_tail2(str, buf, len, text_mem);
+			sz += len;
+		}
+	}
 }
 #endif

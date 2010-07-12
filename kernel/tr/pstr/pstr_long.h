@@ -87,9 +87,11 @@ void pstr_long_copy_to_buffer(char *buf, xptr desc);
 
 
 pstr_long_off_t pstr_long_length(const xptr data);
+pstr_long_off_t pstr_long_bytelength2(const xptr data);
 
 #ifdef PSTR_LONG_TEST
 void pstr_long_str_info(xptr desc);
+void pstr_long_test_bytelength2();
 #endif
 
 //need to declare it here, because it's a friend of pstr_long_cursor
