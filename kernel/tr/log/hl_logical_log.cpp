@@ -575,32 +575,32 @@ ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, unsigned 
 		return NULL;
 
 	res = se_new ft_index_template_t();
-	while (p - custom_tree_buf < custom_tree_size)
+	while ((uintptr_t)(p - custom_tree_buf) < custom_tree_size)
 	{
 		ft_index_type ind_type;
 		const char *ns_uri, *ns_pref, *name;
-		U_ASSERT(p + sizeof(ft_index_type) - custom_tree_buf < custom_tree_size);
+		U_ASSERT((uintptr_t)(p + sizeof(ft_index_type) - custom_tree_buf) < custom_tree_size);
 		memcpy(&ind_type, p, sizeof(ind_type));
 		p += sizeof(ft_index_type);
 		ns_uri = p;
 		while (*p)
 		{
 			++p;
-			U_ASSERT(p - custom_tree_buf < custom_tree_size);
+			U_ASSERT((uintptr_t)(p - custom_tree_buf) < custom_tree_size);
 		}
 		++p;
 		ns_pref = p;
 		while (*p)
 		{
 			++p;
-			U_ASSERT(p - custom_tree_buf < custom_tree_size);
+			U_ASSERT((uintptr_t)(p - custom_tree_buf) < custom_tree_size);
 		}
 		++p;
 		name = p;
 		while (*p)
 		{
 			++p;
-			U_ASSERT(p - custom_tree_buf < custom_tree_size);
+			U_ASSERT((uintptr_t)(p - custom_tree_buf) < custom_tree_size);
 		}
 		++p;
 
