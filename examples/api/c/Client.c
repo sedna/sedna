@@ -56,7 +56,7 @@ int main()
     }
 
     // execute XQuery query	
-    res = SEexecute(&conn, "document(\"region\")/*/*"); 
+    res = SEexecute(&conn, "doc(\"region\")/*/*");
     if(res != SEDNA_QUERY_SUCCEEDED) 
     {
         printf("Query failed: \n%s\n", SEgetLastErrorMsg(&conn));

@@ -4,8 +4,8 @@
    person's income.
 :)
 
-for $p in document("auction")/site/people/person
-let $l := for $i in document("auction")/site/open_auctions/open_auction/initial
+for $p in doc("auction")/site/people/person
+let $l := for $i in doc("auction")/site/open_auctions/open_auction/initial
           where $p/profile/@income > (5000 * $i/text())
           return $i
 where  $p/profile/@income > 50000

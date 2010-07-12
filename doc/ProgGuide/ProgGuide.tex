@@ -1820,17 +1820,17 @@ API driver.
 ; Execute a statement and represent it as an SXML nodeset
 (pp
  (sedna:result->list
-  (sedna:execute-query conn "document('region')/*/*")))
+  (sedna:execute-query conn "doc('region')/*/*")))
 
 ; Update statement
 (pp
  (sedna:execute-query conn 
-                  "UPDATE delete document('region')//africa"))
+                  "UPDATE delete doc('region')//africa"))
 
 ; Querying all regions once again
 (pp
  (sedna:result->list
-  (sedna:execute-query conn "document('region')/*/*")))
+  (sedna:execute-query conn "doc('region')/*/*")))
 
 ; Commit transaction
 (sedna:end-transaction conn 'COMMIT)
@@ -3150,7 +3150,7 @@ TYPE "xml"
 The example below illustrates the use of \verb!"customized-value"! type.
 \begin{verbatim}
 CREATE FULL-TEXT INDEX "messages"
-ON document("foo")//message
+ON doc("foo")//message
 TYPE "customized-value" 
      (("b", "string-value"),
      ("a", "delimited-value"))

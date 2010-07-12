@@ -29,16 +29,16 @@
 ; Execute a statement and represent it as an SXML nodeset
 (pp
  (sedna:result->list
-  (sedna:execute-query conn "document('regions')/*/*")))
+  (sedna:execute-query conn "doc('regions')/*/*")))
 
 ; Update statement
 (pp
- (sedna:execute-query conn "UPDATE delete document('regions')//africa"))
+ (sedna:execute-query conn "UPDATE delete doc('regions')//africa"))
 
 ; Querying all regions once again
 (pp
  (sedna:result->list
-  (sedna:execute-query conn "document('regions')/*/*")))
+  (sedna:execute-query conn "doc('regions')/*/*")))
 
 ; Commit transaction
 (sedna:end-transaction conn 'COMMIT)
