@@ -8,4 +8,4 @@ insert <person id="person25">
         <phone>223-322-223-322</phone>
         <creditcard>3454 3656 2344 6767</creditcard>
        </person>
-into document("auction")/site/people
+into doc("auction")/site/people

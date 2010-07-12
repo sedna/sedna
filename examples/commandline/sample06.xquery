@@ -3,7 +3,7 @@
    their descriptions.
 :)
 
-for $i in document("auction")/site/regions/australia/item
+for $i in doc("auction")/site/regions/australia/item
 return element item {
         attribute name {$i/name/text()},
         $i/description

@@ -50,7 +50,7 @@ class Client {
 
             /* Execute query */
             System.out.println("Executing query");
-            call_res = st.execute("document('region')/*/*");
+            call_res = st.execute("doc('region')/*/*");
 
             /* If call_res is true the statement was not an update
              * and we can use SednaSerializedResult object. */
@@ -58,7 +58,7 @@ class Client {
 
             /* Execute update. */
             System.out.println("Executing update");
-            call_res = st.execute("UPDATE delete document('region')//africa");
+            call_res = st.execute("UPDATE delete doc('region')//africa");
 
             /* If call_res is false the statement was an update */
             if (!call_res) {
@@ -68,7 +68,7 @@ class Client {
 
             /* Execute query */
             System.out.println("Executing query");
-            call_res = st.execute("document('region')/*/*");
+            call_res = st.execute("doc('region')/*/*");
 
             if (call_res) printQueryResults(st);
 

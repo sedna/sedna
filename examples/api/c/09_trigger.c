@@ -47,7 +47,7 @@ int main()
     const char* create_trigger_on_delete_category = 
                                                "CREATE TRIGGER \"trigger-on-delete-category\"\n"
                                                "AFTER DELETE\n"
-                                               "ON document(\"categories\")/categories/category\n"
+                                               "ON doc(\"categories\")/categories/category\n"
                                                "FOR EACH NODE\n"
                                                "DO\n"
                                                "{\n"

@@ -3,4 +3,4 @@
 :)
 
 UPDATE
-delete document("auction")/site/people/person[name/text()="John Smith"]
+delete doc("auction")/site/people/person[name/text()="John Smith"]
