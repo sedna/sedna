@@ -85,7 +85,8 @@ lookfor bison
 
 
 ##############################################################################
-# Adjust configuration
+# Adjust configuration.
+# See sedna-tests/src/night/config.sh for example of configuration file.
 ##############################################################################
 SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
 BUILD_FILE=build-$SEDNA_VERSION
