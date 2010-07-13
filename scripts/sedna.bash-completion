@@ -3,10 +3,10 @@ _get_sedna_bases()
     local sedna_data
 
     # first, we should find data path
-    if [ -f /etc/sednaconf.xml ] && [ `cat /etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'` ]; then
+    if [ -r /etc/sednaconf.xml ] && [ `cat /etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'` ]; then
         #sednaconf.xml in /etc
         sedna_data=`cat /etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'`
-    elif [ -n "$SEDNA_HOME" ] && [ -f $SEDNA_HOME/etc/sednaconf.xml ] && [ `cat $SEDNA_HOME/etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'` ]; then
+    elif [ -n "$SEDNA_HOME" ] && [ -r $SEDNA_HOME/etc/sednaconf.xml ] && [ `cat $SEDNA_HOME/etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'` ]; then
         #sednaconf.xml in $SEDNA_HOME/etc
         sedna_data=`cat $SEDNA_HOME/etc/sednaconf.xml | tr '\n' ' ' | sed -e 's#^.*<sedna_data>\([^<]*\)</sedna_data>.*$#\1#g'`
     else
@@ -109,7 +109,7 @@ _secdb()
     cur=`_get_cword`
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help -help -version -data-file-max-size -tmp-file-max-size -data-file-ext-portion -tmp-file-ext-portion -data-file-init-size -tmp-file-init-size -bufs-num -max-trs-num \
-            -upd-crt -max-log-files -log-file-size -db-security"
+            -upd-crt -max-log-files -log-file-size -layer-size -db-security"
 
     if [[ ${prev} == -* ]] ; then
         COMPREPLY=()
