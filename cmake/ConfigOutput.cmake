@@ -9,10 +9,10 @@ macro (ConfigOutputDir ...)
     if (MSVC_IDE AND NOT ver_res EQUAL -1)
         foreach(conf ${CMAKE_CONFIGURATION_TYPES})
             string(TOUPPER ${conf} conf_u)
-            set_target_properties(${targ1} ${ARGV} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${conf_u} ${CMAKE_BINARY_DIR}/${conf}/bin)
+            set_target_properties(${ARGV} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${conf_u} ${CMAKE_BINARY_DIR}/${conf}/bin)
         endforeach(conf)
     else (MSVC_IDE AND NOT ver_res EQUAL -1)
-        set_target_properties(${targ1} ${ARGV} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+        set_target_properties(${ARGV} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     endif (MSVC_IDE AND NOT ver_res EQUAL -1)
 endmacro (ConfigOutputDir ...)
 
@@ -34,10 +34,10 @@ endmacro (ConfigOutputTree)
 #   1) sets VERSION properly
 #   2) sets binary output dir appropriately
 macro(FinalizeBinaries ...)
-    ConfigOutputDir(${targ1} ${ARGV})
+    ConfigOutputDir(${ARGV})
 
     # set version only for windows since on linux cmake makes strange links
     if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        set_target_properties(${targ1} ${ARGV} PROPERTIES VERSION ${SEDNA_BUILD_VERSION})
+        set_target_properties(${ARGV} PROPERTIES VERSION ${SEDNA_BUILD_VERSION})
     endif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endmacro(FinalizeBinaries ...)
