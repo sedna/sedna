@@ -43,17 +43,14 @@ if (JAVA_DRIVER)
     endif (EL_DEBUG)
     configure_file(src/ru/ispras/sedna/driver/Debug.java.in ${CMAKE_CURRENT_BINARY_DIR}/src/ru/ispras/sedna/driver/Debug.java @ONLY)
 
-    # set classpath
-    set(java_driver_cp "${CMAKE_CURRENT_BINARY_DIR}/src:${CMAKE_CURRENT_SOURCE_DIR}/src")
-
     # custom target for the driver
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/lib/sednadriver.jar
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/out
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/lib
-        COMMAND ${JAVA_COMPILE} -classpath ${java_driver_cp} ${JAVAC_OPTIONS} -d ${CMAKE_CURRENT_BINARY_DIR}/out ${java_driver_SRC}
-        COMMAND ${JAVA_DOC} -classpath ${java_driver_cp} -d ${CMAKE_CURRENT_BINARY_DIR}/javadoc ${java_driver_SRC}
-        COMMAND ${JAVA_ARCHIVE} cvf ${CMAKE_CURRENT_BINARY_DIR}/lib/sednadriver.jar -C ${CMAKE_CURRENT_BINARY_DIR}/out ru
+        COMMAND ${JAVA_COMPILE} ${JAVAC_OPTIONS} -d ${CMAKE_CURRENT_BINARY_DIR}/out ${java_driver_SRC}
+        COMMAND ${JAVA_DOC} -d ${CMAKE_CURRENT_BINARY_DIR}/javadoc ${java_driver_SRC}
+        COMMAND ${JAVA_ARCHIVE} cf ${CMAKE_CURRENT_BINARY_DIR}/lib/sednadriver.jar -C ${CMAKE_CURRENT_BINARY_DIR}/out ru
         DEPENDS ${java_driver_SRC}
         COMMENT "Generating Sedna Java driver and Java Docs"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
