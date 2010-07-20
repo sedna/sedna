@@ -428,6 +428,17 @@ namespace sedna
 
     void Sema::visit(ASTCreateTrg &n)
     {
+        /*
+         * Check if we've got empty prolog. For now it would be dangerous to
+         * allow it. Trigger would be created but might contain var/func refs
+         * to prolog/modules variables, which we don't support for now.
+         */
+        if (has_prolog)
+        {
+            drv->error(n.getLocation(), SE3082, NULL);
+            return;
+        }
+
         n.path->accept(*this);
 
         // add special trigger variables
@@ -1583,6 +1594,8 @@ namespace sedna
     {
         unsigned int i = 0;
         ASTOption *opt;
+
+        has_prolog = (n.decls->size() != 0);
 
         while (i < n.decls->size())
         {

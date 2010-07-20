@@ -38,6 +38,7 @@ namespace sedna
         unsigned int param_count; // number of parameters found in param_mode
         bool casting_mode; // true, if we analyze types for cast or castable
         bool att_test; // true, if name test uri should be resolved as for attribute (default namespace uri issues)
+        bool has_prolog; // true, if we've got prolog declarations
 
         typedef std::pair<nsBindType, nsPair> elNspInfo;
         std::vector<elNspInfo> elemNsps; // stack of pairs (namespaces, def.namespaces) overriden in direct elem constructor

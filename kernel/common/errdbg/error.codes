@@ -1742,4 +1742,7 @@ sedna-err:SE3081
 err:XQDY0096
 
    It is a dynamic error the node-name of a node constructed by a computed element constructor has any of the following properties: its namespace prefix is xmlns, its namespace URI is http://www.w3.org/2000/xmlns/, its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace, its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
-   
+
+sedna-err:SE3082
+
+    Prolog is prohibited in CREATE TRIGGER statements
