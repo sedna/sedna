@@ -42,11 +42,7 @@ volatile void * vmm_cur_ptr;
 /* vmm_callback thread */
 static volatile bool shutdown_vmm_thread = false;
 
-#ifdef _WIN32
-#define VMM_THREAD_STACK_SIZE       10240
-#else
 #define VMM_THREAD_STACK_SIZE       102400
-#endif
 
 static UTHANDLE vmm_thread_handle;  // handle to vmm thread
 static UTHANDLE main_thread;        // handle to main thread

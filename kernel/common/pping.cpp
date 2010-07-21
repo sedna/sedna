@@ -21,13 +21,7 @@
 #endif /* _WIN32 */
 #endif
 
-
-#ifdef _WIN32
 #define PPING_STACK_SIZE             102400
-#else
-#define PPING_STACK_SIZE             102400
-#endif
-
 
 #define PPING_KEEP_ALIVE_MSG	     'a'
 #define PPING_DISCONNECT_MSG	     'b'

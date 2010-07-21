@@ -9,7 +9,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/tr_globals.h"
 
-#define DTSEARCH_THREAD_STACK_SIZE (1000*1024)
+#define DTSEARCH_THREAD_STACK_SIZE (1024*1024)
 
 /////////////////////////////////////////////////////////////
 //

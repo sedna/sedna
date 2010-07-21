@@ -55,11 +55,7 @@ static vector<transaction_id> _ids_table_;
                   !!! Checkpoint functions
 ******************************************************************************/
 
-#ifdef _WIN32
-#define CHEKPOINT_THREAD_STACK_SIZE     10024
-#else
 #define CHEKPOINT_THREAD_STACK_SIZE     102400
-#endif
 
 // some very rough criterion for snapshot advancement
 //#define UPDATED_PART_THRESHOLD 0.25
