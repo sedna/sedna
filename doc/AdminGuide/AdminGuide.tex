@@ -822,9 +822,12 @@ are run as \verb!READ-ONLY! when set. When unset, transactions are run as
 \verb!UPDATE!-transactions. By default transactions are run as \verb!UPDATE! - 
 transactions.
 
-\verb!LOG_LESS_MODE (\ll for set, \fl for unset)! - when set, every bulkload
-will be less logged. When unset, every bulkload will be fully logged. By default
-transactions are run in full log mode. 
+\verb!LOG_LESS_MODE (\ll for set, \fl for unset)! - when set, every following
+bulkload will be less logged and checkpoint will be made on every commit. When
+unset, every following bulkload will be fully logged. By default transactions
+are run in full log mode. This option should be used with care (see details
+about \verb!SEDNA_LOG_AMOUNT! connection attribute in ``Sedna Programmer's
+guide'').
 
 \verb!QUERY_TIMEOUT=<time in seconds>! - when set, every query execution will be
 dropped on server if it lasts longer than timeout set. By default there is no

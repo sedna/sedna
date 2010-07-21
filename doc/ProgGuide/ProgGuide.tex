@@ -805,12 +805,22 @@ that is passed from server in response to user query can be of unlimited size.
 \end{tabular}
 
 \item\verb!SEDNA_LOG_AMOUNT! connection attribute changes the mode of logical
-logging of the next transactions. Transaction can be set to run in full log mode
-(\verb!SEDNA_LOG_FULL!) or reduced log mode (\verb!SEDNA_LOG_LESS!). The latter
-means transaction will be writing much less log info during bulk loads. However
-this comes with penalty of longer commits. You should not use this option for
-transactions without bulk loads since it would not have any effect. Notice that
-the current transaction, if any, will be forcefully committed. The default is
+logging for the following transactions in the same session. Transaction can be
+set to run in full log mode (\verb!SEDNA_LOG_FULL!) or reduced log mode
+(\verb!SEDNA_LOG_LESS!). The former means transaction writes much less log info
+during bulk loads. Also, when such transaction commits the checkpoint is made,
+which might greatly reduce recovery time. There is a caveat, however: such
+transaction always runs in exclusive mode, which means there can be no
+concurrent transactions. Before it starts it waits for other concurrent
+transactions to finish. In turn, all other transactions will not start until
+exlusive transaction finishes. You should use this option with care, since it
+effectively stalls any concurrent activity. The main purpose of such
+transactions is to bulk-load data. The other possible use-case includes
+transactions performing heavy update operations. Since checkpoint will be made
+when such transaction commits, it might reduce recovery time in case of database
+crash. Otherwise, you should not use this option since you will not gain
+anything. Notice also that the current transaction in the same session, if any,
+will be forcefully committed. The default value for this attribute is
 \verb!SEDNA_LOG_FULL!.
 
 \begin{tabular}{|l|l|}
@@ -2873,6 +2883,10 @@ loading \verb!auction.xml! document:
 declare boundary-space preserve;
 LOAD "auction.xml" "auction"
 \end{verbatim}
+
+Notice, that heavy bulk-loads might be greatly optimized by setting
+\verb!SEDNA_LOG_AMOUNT! connection attribute to \verb!SEDNA_LOG_LESS! (see
+Section \ref{session-option-capi} for more information).
 
 
 %===============================================================================
