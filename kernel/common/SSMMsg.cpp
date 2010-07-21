@@ -19,11 +19,7 @@ using namespace std;
 #define SSMMSG_PAGE_SIZE						4096
 #define MESSAGES_IN_QUEUE						100
 
-#ifdef _WIN32
-#define PROCESS_METHOD_THREAD_STACK_SIZE        (1024 * 10)
-#else
 #define PROCESS_METHOD_THREAD_STACK_SIZE        (1024 * 100)
-#endif
 
 #define SSMMSG_SHMEM_SUFFIX						"shmem"
 #define SSMMSG_SEMS_SUFFIX						"sems"

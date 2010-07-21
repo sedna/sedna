@@ -37,13 +37,7 @@ int event_log_truncate = 0;
 
 
 #define SE_EVENT_LOG_SEMS_NUM          4
-
-
-#ifdef _WIN32
-#define SE_EVENT_LOG_THREAD_STACK_SIZE (1024 * 10)
-#else
-#define SE_EVENT_LOG_THREAD_STACK_SIZE (1024 * 100)
-#endif
+#define SE_EVENT_LOG_THREAD_STACK_SIZE (1024 * 1024)
 
 
 #define EVENT_LOG_START_MSG_PROCESSING \
