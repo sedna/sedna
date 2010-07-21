@@ -113,9 +113,8 @@ bool bt_merge_pages(xptr pl, xptr pr)
 
 
 	if (next_page != XNULL) {
-		CHECKP(next_page);
-		VMM_SIGNAL_MODIFICATION(next_page);
-		BT_NEXT((char *)XADDR(next_page)) = BT_PREV(tmp_pg);
+		WRITEP(next_page);
+		BT_PREV((char *)XADDR(next_page)) = BT_PREV(tmp_pg);
 	}
 
 	return true;
