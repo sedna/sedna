@@ -10,7 +10,6 @@
 #include "common/llcommon/llMain.h"
 #include "sm/sm_globals.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/bufmgr/bm_rcv.h"
 #include "sm/bufmgr/blk_mngmt.h"
 #include "common/base.h"
 #include "common/xptr.h"
@@ -22,17 +21,16 @@
 
 #include <string>
 
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <sys/types.h>
-#include <dirent.h>
-#endif
-
-using namespace std;
-
 static unsigned int sector_size = 512;
 static void *ctrl_blk = NULL;
+
+static void ll_rcv_master_block(const void *p)
+{
+    memset(mb, '\0', MASTER_BLOCK_SIZE);
+    memcpy(mb, p, sizeof(bm_masterblock));
+
+    flush_master_block();
+}
 
 // Recovery functions for physical records
 static void llRcvCheckpoint(LSN lsn, void *RecBuf)
@@ -54,12 +52,16 @@ static void llRcvCheckpoint(LSN lsn, void *RecBuf)
 	for (uint32_t i = 0; i < count; i++)
 	{
 		if (is_garbage)
-			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), WuExternaliseXptr(blocks_info[i].xptr));
+			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks),
+			        WuExternaliseXptr(blocks_info[i].xptr));
 		else
 		{
-			bm_rcv_read_block(WuExternaliseXptr(blocks_info[i].xptr), ctrl_blk);
-			bm_rcv_change(WuExternaliseXptr(blocks_info[i].lxptr), ctrl_blk, PAGE_SIZE);
-			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), WuExternaliseXptr(blocks_info[i].xptr));
+		    read_block_addr(WuExternaliseXptr(blocks_info[i].xptr),
+		            ctrl_blk, PAGE_SIZE, false);
+			write_block_addr(WuExternaliseXptr(blocks_info[i].lxptr),
+			        ctrl_blk, PAGE_SIZE, false);
+			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks),
+			        WuExternaliseXptr(blocks_info[i].xptr));
 		}
 	}
 
@@ -83,8 +85,9 @@ static void llRcvFreeBlock(LSN lsn, void *RecBuf)
 
 	free_blk_info = offs;
 
-	memcpy(ctrl_blk, free_blk_info, free_blk_info_size); // we need block in sector-aligned buffer here
-	bm_rcv_change(free_blk_info_xptr, ctrl_blk, free_blk_info_size);
+	// we need block in sector-aligned buffer here
+	memcpy(ctrl_blk, free_blk_info, free_blk_info_size);
+	write_block_addr(free_blk_info_xptr, ctrl_blk, free_blk_info_size, false);
 
 	RECOVERY_CRASH;
 }
@@ -102,12 +105,15 @@ static void llRcvPersSnpAdd(LSN lsn, void *RecBuf)
 
 	blocks_info = (WuVersionEntry *)offs;
 
-	bm_rcv_read_block(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk); // read "last" block
+	// read "last" block's header to check timestamp
+	read_block_addr(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk,
+	    (sizeof(vmm_sm_blk_hdr) + sector_size - 1) & ~(sector_size - 1), false);
 
 	// we must recover block only if it was moved to "blocks_info->xptr" place
 	if (ts != ((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.creatorTs[0])
 	{
-		bm_rcv_read_block(WuExternaliseXptr(blocks_info->xptr), ctrl_blk);
+	    read_block_addr(WuExternaliseXptr(blocks_info->xptr),
+	            ctrl_blk, PAGE_SIZE, false);
 
 		U_ASSERT(
 			((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.creatorTs[0] == ts &&
@@ -115,7 +121,8 @@ static void llRcvPersSnpAdd(LSN lsn, void *RecBuf)
 			((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.xptr[0] == blocks_info->lxptr
 		);
 
-		bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
+		write_block_addr(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk,
+		        PAGE_SIZE, false);
 	}
 }
 
@@ -127,7 +134,10 @@ static void llRcvDecrease(LSN lsn, void *RecBuf)
 	offs = (char *)RecBuf + sizeof(char) + sizeof(LSN);
 
 	old_size = *((uint64_t *)offs);
-	bm_rcv_decrease(old_size);
+
+    if (uSetEndOfFile(data_file_handler, old_size, U_FILE_BEGIN,
+            __sys_call_error) == 0)
+        throw SYSTEM_ENV_EXCEPTION("Cannot decrease data file");
 }
 
 static void llRcvBlock(LSN lsn, void *RecBuf)
@@ -149,8 +159,9 @@ static void llRcvBlock(LSN lsn, void *RecBuf)
 
 	blk_info = offs;
 
-	memcpy(ctrl_blk, blk_info, blk_info_size); // we need block in sector-aligned buffer here
-	bm_rcv_change(blk_info_xptr, ctrl_blk, blk_info_size);
+	// we need block in sector-aligned buffer here
+	memcpy(ctrl_blk, blk_info, blk_info_size);
+	write_block_addr(blk_info_xptr, ctrl_blk, blk_info_size, false);
 
 	RECOVERY_CRASH;
 }
@@ -193,14 +204,14 @@ LSN llRecoverPhysicalState()
 	rec = (char *)llGetRecordFromDisc(&lsn);
 
 	if (rec[0] != LL_CHECKPOINT)
-		throw USER_EXCEPTION(SE4153);
+		throw SYSTEM_EXCEPTION("Invalid checkpoint record");
 
 	offs = rec + sizeof(char) + sizeof(LSN) + sizeof(int);
 	count = *((uint32_t *)offs);
 	offs += sizeof(uint32_t) + sizeof(WuVersionEntry) * count;
 
 	// recover master block
-	bm_rcv_master_block(offs);
+	ll_rcv_master_block(offs);
     offs += sizeof(bm_masterblock);
 
 	// recover minimal lsn for logical recovery
@@ -208,24 +219,24 @@ LSN llRecoverPhysicalState()
 
 	lsn = llInfo->last_chain_lsn;
 
+    if (uGetDiskSectorSize(&sector_size, sm_globals::db_files_path,
+            __sys_call_error) == 0)
+        throw USER_EXCEPTION(SE4051);
+
 	if ((ctrl_blk_buf = malloc(2 * PAGE_SIZE)) == NULL)
 		throw SYSTEM_EXCEPTION("Cannot allocate memory");
 	// sector alligned buffer
-	ctrl_blk = (void *)((uintptr_t)((char *)ctrl_blk_buf + sector_size - 1) & ~(uintptr_t)(sector_size - 1));
-
-	if (uGetDiskSectorSize(&sector_size, sm_globals::db_files_path, __sys_call_error) == 0)
-		throw USER_EXCEPTION(SE4051);
+	ctrl_blk = (void *)((uintptr_t)((char *)ctrl_blk_buf + sector_size - 1) &
+	        ~(uintptr_t)(sector_size - 1));
 
 	// recover physical state by scaning all physical records
-	llScanRecords(llRcvPhysRecsInfo, llRcvPhysRecsInfoLen, lsn, llRcvGetNextPhysLsn, NULL);
+	llScanRecords(llRcvPhysRecsInfo, llRcvPhysRecsInfoLen, lsn,
+	        llRcvGetNextPhysLsn, NULL);
 
 	free(ctrl_blk_buf);
 	ctrl_blk = NULL;
 
-	// recover temporary file (moved to sm since we restore .setmp even on usual start)
-	//bm_rcv_tmp_file();
-
 	// return lsn for logical recovery
-	return (llInfo->min_rcv_lsn == LFS_INVALID_LSN) ? llInfo->checkpoint_lsn : llInfo->min_rcv_lsn;
+	return (llInfo->min_rcv_lsn == LFS_INVALID_LSN) ?
+	        llInfo->checkpoint_lsn :llInfo->min_rcv_lsn;
 }
-

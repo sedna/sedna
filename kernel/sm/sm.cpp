@@ -24,7 +24,6 @@
 #include "sm/sm_functions.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/bufmgr/bm_rcv.h"
 #include "sm/trmgr.h"
 #include "sm/lm/lm_globals.h"
 #include "sm/wu/wu.h"
@@ -811,9 +810,12 @@ void recover_database_by_physical_and_logical_log(int db_id)
                 elog(EL_LOG, ("Database has been recovered by physical log successfully"));
             }
 
-            // recover tmp file
-            // we recreate it on usual start also since we want to reset its initial size
-            bm_rcv_tmp_file();
+            /*
+             * recover tmp file
+             * we recreate it on usual start also since we want always to reset
+             * its initial size
+             */
+            recreate_tmp_file();
 
             //disable checkpoints
             llDisableCheckpoints();

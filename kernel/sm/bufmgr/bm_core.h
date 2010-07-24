@@ -192,11 +192,11 @@ void flush_buffers();
 void flush_data_buffers();
 
 ////////////////////////////////////////////////////////////////////////////////
-/// PH functions
+/// Functions to work with data file
 ////////////////////////////////////////////////////////////////////////////////
-void flush_ph();
-void backup_ph();
-
+void write_block_addr(const xptr &p, const void *ptr, unsigned int size,
+        bool check);
+void read_block_addr(const xptr &p, void *buf, unsigned int size, bool check);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Helpers for debug and statistics managment
@@ -205,4 +205,3 @@ void bm_reset_io_statistics();
 void bm_log_out_io_statistics();
 
 #endif
-

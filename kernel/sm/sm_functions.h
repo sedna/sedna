@@ -30,4 +30,6 @@ void ReleaseGiantLock();
 
 void set_layer_parameters(lsize_t layer_size);
 
+void recreate_tmp_file();
+
 #endif /* _SM_FUNCTIONS_H */
