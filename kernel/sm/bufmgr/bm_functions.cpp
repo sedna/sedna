@@ -138,14 +138,29 @@ void _bm_release_buffer_pool()
 
 void bm_startup()
 {
-    // open data and tmp files
-    string data_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".sedata";
-    data_file_handler = uOpenFile(data_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
+    /*
+     * Open data and tmp files
+     *
+     * We MUST open data file with WRITE_THROUGH option since when flushing
+     * versions the order of flushing matters. One example would be flushing
+     * relocated persistent version. We absolutely MUST flush relocated version
+     * first and only then newly created version. We can guarantee it only
+     * if we use WRITE_THROUGH logic. Otherwise recovery may fail in case
+     * newly created version is flushed, but persistent is still in buffers.
+     *
+     * For tmp file defaults would be sufficient, of course.
+     */
+    string data_file_name = string(sm_globals::db_files_path) +
+            string(sm_globals::db_name) + ".sedata";
+    data_file_handler = uOpenFile(data_file_name.c_str(), U_SHARE_READ,
+            U_READ_WRITE, U_WRITE_THROUGH | U_NO_BUFFERING, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
-    string tmp_file_name = string(sm_globals::db_files_path) + string(sm_globals::db_name) + ".setmp";
-    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
+    string tmp_file_name = string(sm_globals::db_files_path) +
+            string(sm_globals::db_name) + ".setmp";
+    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ,
+            U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
 

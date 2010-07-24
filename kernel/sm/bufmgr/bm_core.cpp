@@ -149,16 +149,19 @@ void flush_master_block()
 /// Internal functions
 ////////////////////////////////////////////////////////////////////////////////
 
-void calculate_offset_and_file_handler(const xptr &p, 
+static
+void calculate_offset_and_file_handler(const xptr &p,
                                        int64_t *dsk_offs, 
-                                       UFile *file_handler)
+                                       UFile *file_handler,
+                                       bool check)
 {
     if (IS_DATA_BLOCK(p)) 
     {
         //d_printf1("calculate_offset_and_file_handler: data block\n");
         *dsk_offs = ABS_DATA_OFFSET(p) + (int64_t)PAGE_SIZE;
         
-        if (!((int64_t)PAGE_SIZE <= *dsk_offs && *dsk_offs <= mb->data_file_cur_size - (int64_t)PAGE_SIZE))
+        if (check && !((int64_t)PAGE_SIZE <= *dsk_offs &&
+                *dsk_offs <= mb->data_file_cur_size - (int64_t)PAGE_SIZE))
         {
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
@@ -168,7 +171,8 @@ void calculate_offset_and_file_handler(const xptr &p,
     {
         //d_printf1("calculate_offset_and_file_handler: tmp block\n");
         *dsk_offs = ABS_TMP_OFFSET(p);
-        if (!((int64_t)0 <= *dsk_offs && *dsk_offs <= mb->tmp_file_cur_size - (int64_t)PAGE_SIZE))
+        if (check && !((int64_t)0 <= *dsk_offs &&
+                *dsk_offs <= mb->tmp_file_cur_size - (int64_t)PAGE_SIZE))
         {
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
@@ -176,60 +180,61 @@ void calculate_offset_and_file_handler(const xptr &p,
     }
 }
 
-void read_block(const xptr &p, ramoffs offs)
+void read_block_addr(const xptr &p, void *buf, unsigned int size, bool check)
 {
-    int64_t dsk_offs = 0;
+    int64_t dsk_offs;
     UFile file_handler;
-    calculate_offset_and_file_handler(p, &dsk_offs, &file_handler);
+    unsigned int number_of_bytes_read;
+    int res;
 
-    // read block
-    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+    calculate_offset_and_file_handler(p, &dsk_offs, &file_handler, check);
+
+    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN,
+            __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
-    vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
-
-    unsigned int number_of_bytes_read = 0;
-    int res = uReadFile(file_handler, blk, PAGE_SIZE, &number_of_bytes_read, __sys_call_error);
-    if (res == 0 || number_of_bytes_read != PAGE_SIZE)
+    res = uReadFile(file_handler, buf, size, &number_of_bytes_read,
+            __sys_call_error);
+    if (res == 0 || number_of_bytes_read != size)
         throw SYSTEM_ENV_EXCEPTION("Cannot read block");
+}
+
+static void read_block(const xptr &p, ramoffs offs)
+{
+    vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr *)OFFS2ADDR(offs);
+
+    read_block_addr(p, blk, PAGE_SIZE, true);
 
     blk->roffs = offs;
     blk->is_changed = false;
     buf_io_stats.reads++;
 }
 
-
-void write_block(const xptr &p, ramoffs offs)
+void write_block_addr(const xptr &p, const void *ptr, unsigned int size,
+        bool check)
 {
-#if 0
-	/* moved to flush_buffer */ 
-	vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
-
-    blk->roffs = 0;
-    blk->is_changed = false;
-
-//    if (IS_DATA_BLOCK(p)) 
-//        ll_phys_log_flush_blk(blk, sync_phys_log);
-    if (IS_DATA_BLOCK(p)) 
-		ll_logical_log_flush_lsn(blk->lsn);
-#endif
-
-    // write block
-    int64_t dsk_offs = 0;
+    int64_t dsk_offs;
     UFile file_handler;
-    calculate_offset_and_file_handler(p, &dsk_offs, &file_handler);
+    unsigned int number_of_bytes_written;
+    int res;
 
-    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+    calculate_offset_and_file_handler(p, &dsk_offs, &file_handler, check);
+
+    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN,
+            __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
-    unsigned int number_of_bytes_written = 0;
-    int res = uWriteFile(file_handler, OFFS2ADDR(offs), PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
-    if (res == 0 || number_of_bytes_written != PAGE_SIZE)
+    res = uWriteFile(file_handler, ptr, size,
+            &number_of_bytes_written, __sys_call_error);
+    if (res == 0 || number_of_bytes_written != size)
         throw SYSTEM_ENV_EXCEPTION("Cannot write block");
-    buf_io_stats.writes++;
 }
 
-
+static void write_block(const xptr &p, ramoffs offs)
+{
+    write_block_addr(p, OFFS2ADDR(offs), PAGE_SIZE, true);
+    buf_io_stats.writes++;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Buffer functions
@@ -457,7 +462,7 @@ void flush_data_buffers()
 
 void dump_bufmgr_state()
 {
-	int bufsNum = 0, i = 0;
+	unsigned bufsNum = 0, i = 0;
 	xptr physXptr, logXptr;
 	void *ptr=NULL;
 	vmm_sm_blk_hdr *hdr=NULL;
@@ -465,7 +470,7 @@ void dump_bufmgr_state()
 	char auxInfo[2048]="";
 	char flags[16]="";
 
-	bufsNum = sm_globals::bufs_num;
+	bufsNum = (unsigned)sm_globals::bufs_num;
 
 	fprintf(stderr,"---STARTING DUMP OF BUFMGR STATE---\n");
 	for (i=0; i<bufsNum; ++i)

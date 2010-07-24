@@ -8,6 +8,7 @@
 #include "sm/sm_functions.h"
 #include "sm/sm_globals.h"
 #include "sm/bufmgr/bm_core.h"
+#include "sm/bufmgr/blk_mngmt.h"
 #include "common/u/umutex.h"
 #include "common/ipc_ops.h"
 #include "common/errdbg/exceptions.h"
@@ -116,4 +117,17 @@ void ReleaseGiantLock()
 void set_layer_parameters(lsize_t layer_size)
 {
     LAYER_ADDRESS_SPACE_SIZE = layer_size;
+}
+
+void recreate_tmp_file()
+{
+    // truncate tmp file up to zero size
+    if (uSetEndOfFile(tmp_file_handler, 0, U_FILE_BEGIN, __sys_call_error) == 0)
+        throw SYSTEM_ENV_EXCEPTION("Cannot truncate tmp file");
+
+    // update master block
+    mb->tmp_file_cur_size = 0;
+    mb->free_tmp_blocks = XNULL;
+
+    extend_tmp_file((int)MBS2PAGES(sm_globals::tmp_file_initial_size));
 }

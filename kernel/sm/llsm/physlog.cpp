@@ -10,7 +10,6 @@
 #include "sm/llsm/llhb.h"
 #include "common/sm_vmm_data.h"
 #include "sm/bufmgr/bm_core.h"
-#include "sm/bufmgr/bm_rcv.h"
 #include "sm/bufmgr/blk_mngmt.h"
 
 /*
