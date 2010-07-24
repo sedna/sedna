@@ -245,7 +245,7 @@ public:
         }
         else
         {
-            addr = (void *)offs;
+            addr = (void *)(uintptr_t)offs;
         }
 
         return addr;
