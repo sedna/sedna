@@ -1053,13 +1053,13 @@ LSN lfsAppendRecord(void *RecBuf, unsigned int RecSize)
 		if (_lfsFlushBufLSN(lfsInfo->NextLSN + lfsInfo->BufKeepBytes) != 0)
 		{
 			lfsUnlock();
-			return -1;
+			return LFS_INVALID_LSN;
 		}
 
 		if (_lfsExtend() != 0)
 		{
 			lfsUnlock();
-			return -1;
+			return LFS_INVALID_LSN;
 		}
 	}
 
@@ -1069,7 +1069,7 @@ LSN lfsAppendRecord(void *RecBuf, unsigned int RecSize)
 		if (_lfsFlushBufLSN(lfsInfo->NextLSN + lfsInfo->BufKeepBytes) != 0)
 		{
 			lfsUnlock();
-			return -1;
+			return LFS_INVALID_LSN;
 		}
 	}
 
