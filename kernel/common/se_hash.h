@@ -212,7 +212,7 @@ public:
         }
     }
 
-    ~se_hash()
+    virtual ~se_hash()
     {
         clear();
         delete[] tbl;
