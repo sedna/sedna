@@ -67,7 +67,6 @@ void find_relatives(node_info_t &node_info)
         }
     } else if (node_info.parent != XNULL) {
         CHECKP(node_info.parent);
-        int child_count = getChildCount(node_info.parent);
 
         if (node_info.node_type == attribute) {
             if (getAnyChild(node_info.parent) != XNULL) {
@@ -114,7 +113,7 @@ inline
 bool sameNodeType(xptr node, t_item type, const char* name, xmlns_ptr ns) {
     if (node == XNULL) { return false; }
     if (type == element) {
-        return getSchemaNode(checkp(node))->same_node(ns, name, type);
+        return getSchemaNode(node)->same_node(ns, name, type);
     } else {
         return getNodeType(checkp(node)) == type;
     }
@@ -184,7 +183,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
 
     check_common_constraints(left_sib, right_sib, parent);
     find_relatives(node_info);
-    parent_snode = getSchemaNode(checkp(node_info.parent));
+    parent_snode = getSchemaNode(node_info.parent);
 
     microoperation_begin(node_info.parent);
 
@@ -217,7 +216,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     }
 
 /* Update node count in schema */
-    node_info.snode = getSchemaNode(checkp(node_info.node_xptr));
+    node_info.snode = getSchemaNode(node_info.node_xptr);
     node_info.snode.modify();
     if (insert_type == ti_new_node) { node_info.snode->nodecnt++; }
     node_info.snode->textcnt += source.size;

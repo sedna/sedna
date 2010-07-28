@@ -17,6 +17,8 @@
 #include "tr/mo/nodemoutils.h"
 #include "tr/structures/nodeinterface.h"
 
+#include <string.h>
+
 static char tmp_text_buffer[PAGE_SIZE];
 
 using namespace internal;
@@ -84,6 +86,17 @@ xptr pstr_allocate_u(xptr text_block, xptr node, const text_source_t &src)
     return result;
 }
 
+/**
+ * There are three different kinds of text storage:
+ *  - Very short text (usually leq then pointer size) is stored in
+ *   the node descriptor itself.
+ *  - Less then blocksize text is stored in PSTR storage.
+ *  - Large text (more then a blocksize) is stored in PSTR_LONG
+ *
+ *  All three different types of storage are handeled with
+ *  different functions here.
+ */
+
 void insertTextValue(xptr node_xptr, const text_source_t source)
 {
     node_text_t * text_node = getTextFromAnyNode(node_xptr);
@@ -94,6 +107,7 @@ void insertTextValue(xptr node_xptr, const text_source_t source)
         WRITEP(node_xptr);
         text_node->size = emptyText;
     } else if (source.size <= maxDescriptorTextSize) {
+        /* Very short text case */
         char * buffer;
 
         if (source.type == text_mem) {
@@ -107,11 +121,15 @@ void insertTextValue(xptr node_xptr, const text_source_t source)
         memcpy(text_node->data, buffer, (size_t) source.size);
         text_node->size = (uint16_t) source.size;
     } else if (source.size <= PSTRMAXSIZE) {
+        /* PSTR text case */
         pstr_allocate_u(findNearestTextContainerCP(node_xptr), node_xptr, source);
     } else {
+        /* PSTR_LONG text case */
         pstr_long_create_str(node_xptr, source);
     }
 }
+
+/* This function can combine all types of text storage. */
 
 void insertTextValue(enum insert_position_t position, xptr node_xptr, const text_source_t source)
 {
@@ -124,7 +142,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
         throw USER_EXCEPTION(SE2037);
     } else if (new_size == 0) {
         return ;
-    } if (nodeobject.isPstrLong()) {
+    } else if (nodeobject.isPstrLong()) {
         if (position == ip_tail) {
             pstr_long_append_tail(node_xptr, source);
         } else {
@@ -132,12 +150,15 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
         }
     } else {
         xptr data = nodeobject.getTextPointerCP();
-
         U_ASSERT(curr_size <= PSTRMAXSIZE);
+        const size_t curr_size_s = (size_t) curr_size;
+
+        /* Old insertion (uncatchable at runtime) bug check when
+         * the node is inserted to itself */
         U_ASSERT((source.type != text_doc) || source.u.data != data);
 
         CHECKP(data)
-        memcpy(tmp_text_buffer, (char *) XADDR(data), (size_t) curr_size);
+        memcpy(tmp_text_buffer, (char *) XADDR(data), curr_size_s);
 
         if (new_size > PSTRMAXSIZE) {
             if (nodeobject.isPstr()) {
@@ -145,38 +166,41 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
             }
 
             if (position == ip_tail) {
-                pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
+                pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
                 if ((source.type == text_doc) && source.u.data != nodeobject.getTextPointerCP()) {
                     /* FIXME: Dirty hack! We need to fix updates to get rid of this */
-                    pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
+                    pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
                 } else {
                     pstr_long_append_tail(node_xptr, source);
                 }
             } else {
                 if ((source.type == text_doc) && source.u.data != nodeobject.getTextPointerCP()) {
                     /* FIXME: Dirty hack! We need to fix updates to get rid of this */
-                    pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
+                    pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
                 } else {
                     pstr_long_create_str(node_xptr, source);
                 }
-                pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size));
+                pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
             }
         } else {
             CHECKP(node_xptr);
             if (position == ip_tail) {
-                copyTextToBuffer(tmp_text_buffer + curr_size, source);
+                copyTextToBuffer(tmp_text_buffer + curr_size_s, source);
             } else {
-                memmove(tmp_text_buffer + source.size, tmp_text_buffer, source.size);
+                const size_t offset = (size_t) source.size;
+                memmove(tmp_text_buffer + offset, tmp_text_buffer, curr_size_s);
                 copyTextToBuffer(tmp_text_buffer, source);
             }
 
             if (new_size > maxDescriptorTextSize) {
+                /* New size still less than PSTRMAXSIZE */
                 if (nodeobject.isPstr()) {
                     pstr_modify(node_xptr, tmp_text_buffer, (size_t) new_size);
                 } else {
                     pstr_allocate(findNearestTextContainerCP(node_xptr), node_xptr, tmp_text_buffer, (size_t) new_size);
                 }
             } else {
+                /* Very short text case */
                 WRITEP(node_xptr);
                 text_node->size = (uint16_t) new_size;
                 memcpy(text_node->data, tmp_text_buffer, (size_t) new_size);

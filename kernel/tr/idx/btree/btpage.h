@@ -229,6 +229,7 @@ inline	bool	BT_VARIABLE_KEY_TYPE(char* p)
 /* heap boundary (grows in right-to-left direction from page tail) */
 #define BT_HEAP_PTR(p)						(&BT_HEAP(p))
 #define BT_HEAP(p)							(((btree_blk_hdr*)(p))->heap)
+#define BT_HEAP_SET_NULL(p)                 (((btree_blk_hdr*)(p))->heap = (shft) BT_PAGE_SIZE)
 
 /* Macros to access tables and their elements and misc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -78,7 +78,11 @@ void __vmmdcp_vmm_signal_modification(xptr p);
 inline void check_if_null_xptr(const xptr& p)
 {
     if (p == XNULL) {
+#ifdef VMM_LINUX_DEBUG_CHECKP
+        throw SYSTEM_EXCEPTION("Wrong CHECKP argument");
+#else /* ! VMM_LINUX_DEBUG_CHECKP */
         throw USER_EXCEPTION2(SE1003, "Wrong CHECKP argument");
+#endif /* VMM_LINUX_DEBUG_CHECKP */
     }
 }
 

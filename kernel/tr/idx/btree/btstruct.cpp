@@ -59,7 +59,7 @@ void bt_key::init(char* pg, shft key_idx)
 	case xs_date:
 	case xs_time:
 	case xs_dateTime: v.dt_v = *(xs_packed_datetime*) key_tab_slot; break;
-			
+
 	case xs_yearMonthDuration:
 	case xs_dayTimeDuration:	v.dur_v = *(xs_packed_duration*) key_tab_slot; break;
 
@@ -67,7 +67,7 @@ void bt_key::init(char* pg, shft key_idx)
     }
 }
 
-int bt_key::get_size() const
+size_t bt_key::get_size() const
 {
     switch (type)
     {
@@ -166,7 +166,7 @@ bool operator<=(const bt_key& k1, const bt_key& k2)
 ///////////////////////////////////////////////////////////////////////////////
 
 template<typename object>
-bt_cursor_tmpl<object>::bt_cursor_tmpl() 
+bt_cursor_tmpl<object>::bt_cursor_tmpl()
 {
     cur_page = XNULL;
     key_idx = 0;
@@ -256,7 +256,7 @@ void  bt_cursor_tmpl<object>::bt_set_next_obj(object obj)
 	VMM_SIGNAL_MODIFICATION(cur_page);
     chnk = (pg + *(shft*)BT_CHNK_TAB_AT(pg, key_idx));
     *(object*)(chnk + sizeof(object) * obj_idx)=obj;
-	
+
     obj_idx++;
     obj_count++;
    // return result;
@@ -333,7 +333,7 @@ bool bt_cursor_tmpl<object>:: bt_next_key()
 
     /* construct result key - the key cursor is currently positioned at;
        note, the target page is already in memory */
-	if (key_idx == BT_KEY_NUM(cpage) - 1) 
+	if (key_idx == BT_KEY_NUM(cpage) - 1)
     {
         cur_page = BT_NEXT(cpage);
 

@@ -55,7 +55,7 @@ struct sc_ref {
     }
 
     inline bool same_node_fair(const char * uri, const char * name, t_item type) {
-        return (strcmpex(this->name, name) == 0 && this->type == type && (same_xmlns_uri(this->get_xmlns(), uri) == 0));
+        return (strcmpex(this->name, name) == 0 && this->type == type && same_xmlns_uri(this->get_xmlns(), uri));
     }
 };
 

@@ -10,10 +10,11 @@
 
 #include "tr/structures/schema.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/crmutils/node_utils.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+
+#include "tr/structures/nodeutils.h"
 
 const char *sqlns_uri = "http://modis.ispras.ru/Sedna/SQL";
 
@@ -37,17 +38,17 @@ int SQLOptionGetBool(const char *value)
     if (!value)
         return -1;
     if (   (value[0] == '1' && value[1] == 0)
-        || ((value[0] == 'o' || value[0] == 'O') && 
+        || ((value[0] == 'o' || value[0] == 'O') &&
             (value[1] == 'n' || value[1] == 'N') && value[2] == 0)
-        || ((value[0] == 'y' || value[0] == 'Y') && 
-            (value[1] == 'e' || value[1] == 'E') && 
+        || ((value[0] == 'y' || value[0] == 'Y') &&
+            (value[1] == 'e' || value[1] == 'E') &&
             (value[2] == 's' || value[2] == 'S') && value[3] == 0))
             return 1;
     if (   (value[0] == '0' && value[1] == 0)
-        || ((value[0] == 'n' || value[0] == 'N') && 
+        || ((value[0] == 'n' || value[0] == 'N') &&
             (value[1] == 'o' || value[1] == 'O') && value[2] == 0)
-        || ((value[0] == 'o' || value[0] == 'O') && 
-            (value[1] == 'f' || value[1] == 'F') && 
+        || ((value[0] == 'o' || value[0] == 'O') &&
+            (value[1] == 'f' || value[1] == 'F') &&
             (value[2] == 'f' || value[2] == 'F') && value[3] == 0))
             return 0;
 
@@ -68,7 +69,7 @@ bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)
         xptr node = opt.get_node();
 
         CHECKP(node);
-        xmlns_ptr ns = GETSCHEMENODE(XADDR(node))->get_xmlns();
+        xmlns_ptr ns = getSchemaNode(node)->get_xmlns();
 
         if (!ns)
             return false;
@@ -76,8 +77,8 @@ bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)
             return false;
         if (strcmp(ns->uri, sqlns_uri))
             return false;
-        
-        char *elem_name = GETSCHEMENODE(XADDR(node))->name;
+
+        char *elem_name = getSchemaNode(node)->name;
         if (strcmp(elem_name, "option"))
             return false;
 
@@ -90,7 +91,7 @@ bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)
         {
             char *atr_name;
             CHECKP(node);
-            atr_name = GETSCHEMENODE(XADDR(node))->name;
+            atr_name = getSchemaNode(node)->name;
             if (!strcmp(atr_name, "name"))
                 opt_name = copy_attr_value(node);
             else if (!strcmp(atr_name, "value"))
@@ -136,7 +137,7 @@ SQLHandleManager::~SQLHandleManager()
             handles[h] = NULL;
         }
     }
-    
+
     delete sql_odbc_driver;
 }
 
@@ -161,7 +162,7 @@ bool SQLHandleManager::delete_handle(int h)
     return true;
 }
 
-int SQLHandleManager::new_connection(char *connect_str, int connect_str_len, 
+int SQLHandleManager::new_connection(char *connect_str, int connect_str_len,
                                         char *uid, int uid_len,
                                         char *pass, int pass_len, PPOpIn *options)
 {
@@ -265,7 +266,7 @@ static char *getStringParameter(PPOpIn content, const char *err_pref)
     tuple value(content.ts);
     content.op->next(value);
     sequence at_vals(1);
-    if (value.is_eos()) 
+    if (value.is_eos())
     {
 		throw USER_EXCEPTION2(XPTY0004, (std::string(err_pref) + std::string(". Argument contains zero items.")).c_str());
     }
@@ -313,7 +314,7 @@ void PPFnSQLConnect::do_next(tuple &t)
         connect_str = se_new char[connect_str_len+1];
         strncpy(connect_str, tmp, connect_str_len);
         connect_str[connect_str_len] = 0;
-        
+
 
         if (arr.size() >= 2)
         {
@@ -322,7 +323,7 @@ void PPFnSQLConnect::do_next(tuple &t)
             uid = se_new char[uid_len+1];
             strncpy(uid, tmp, uid_len);
             uid[uid_len] = 0;
-            
+
             if (arr.size() >= 3)
             {
 				tmp = getStringParameter(arr[2], "Bad 3rd argument of sql:connect");
@@ -333,7 +334,7 @@ void PPFnSQLConnect::do_next(tuple &t)
         PPOpIn *options = NULL;
         if (arr.size() >= 4)
             options = &arr[3];
-        int h = sql_handle_manager->new_connection(connect_str, connect_str_len, 
+        int h = sql_handle_manager->new_connection(connect_str, connect_str_len,
             uid, uid_len, pass, pass_len, options);
         t.copy(tuple_cell::atomic((int64_t)h));
 
@@ -374,7 +375,7 @@ void PPFnSQLConnect::do_accept(PPVisitor &v)
 PPFnSQLExecute::PPFnSQLExecute(dynamic_context *_cxt_,
                                operation_info _info_,
                                const arr_of_PPOpIn &_arr_,
-                               bool _exec_update_) : PPFnSQLBase(_cxt_, _info_), 
+                               bool _exec_update_) : PPFnSQLBase(_cxt_, _info_),
                                                      arr(_arr_),
                                                      handle(NULL),
                                                      executor(NULL),
@@ -491,7 +492,7 @@ void PPFnSQLExecute::do_next(tuple &t)
                     //TODO - options
                     executor->execute_query(query, query_len, NULL);
                 }
-                
+
                 break;
             case SQLH_PREPARED_STMT:
                 executor->execute_prepared(arr);
@@ -737,7 +738,7 @@ void PPFnSQLClose::do_next(tuple &t)
         throw XQUERY_EXCEPTION(SE2104);
 
     handle->close();
-    //TODO - free handle? would require either releasing all executors 
+    //TODO - free handle? would require either releasing all executors
     //or delaying connecton object destruction
 
     t.set_eos();

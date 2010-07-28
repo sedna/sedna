@@ -139,6 +139,7 @@ int getChildCount(const xptr node_xptr) { return internal::getNodeChildCount(int
 
 inline
 schema_node_cptr getSchemaNode(const xptr node) {
+    CHECKP(node);
     return internal::getBlockHeader(node)->snode;
 }
 

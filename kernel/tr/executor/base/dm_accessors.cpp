@@ -33,7 +33,7 @@ tuple_cell get_base_uri_deep(Node node, dynamic_context *context)
     xptr xml_base = XNULL;
 
     while (!node.isNull()) {
-        xml_base = dm_base_uri_attribute(node.getPtr(), context);
+        xml_base = dm_base_uri_attribute(node, context);
 
         if (xml_base != XNULL) {
             tuple_cell result = dm_string_value(xml_base);
@@ -44,7 +44,7 @@ tuple_cell get_base_uri_deep(Node node, dynamic_context *context)
             if(!nfo.normalized) throw XQUERY_EXCEPTION2(SE1003, "Base URI is not properly normalized");
 
             if (is_relative) {
-                 tuple_cell base_uri = dm_base_uri(node.getParent(), context);
+                 tuple_cell base_uri = dm_base_uri(node.checkp().getParent(), context);
 
                  if (!base_uri.is_eos()) {
                      stmt_str_buf resolved_uri(1);
@@ -59,7 +59,7 @@ tuple_cell get_base_uri_deep(Node node, dynamic_context *context)
             return cast_primitive_to_xs_anyURI(result);
         }
 
-        node = node.getParent();
+        node = node.checkp().getActualParent();
     }
 
     return get_context_base_uri(context);
@@ -67,7 +67,10 @@ tuple_cell get_base_uri_deep(Node node, dynamic_context *context)
 
 tuple_cell dm_base_uri(Node node, dynamic_context *context)
 {
-    U_ASSERT(!node.isNull());
+    if (node.isNull()) {
+        return get_context_base_uri(context);
+    }
+
     node.checkp();
 
     /* Works as defined in http://www.w3.org/TR/xpath-datamodel/#acc-summ-base-uri */
@@ -78,14 +81,15 @@ tuple_cell dm_base_uri(Node node, dynamic_context *context)
         case virtual_root :
             return get_context_base_uri(context);
         case attribute :
-        case comment :
-        case text :
-            if (node.hasParent()) {
-                return dm_base_uri(node.getParent(), context);
-            }
-            break;
         case pr_ins :
-            /* Empty, as defined in http://www.w3.org/TR/xquery/#id-computed-pis */
+            /* SHOULD BE Empty, as defined in http://www.w3.org/TR/xquery/#id-computed-pis */
+        case comment :
+        case text : {
+            Node parent = node.getActualParent();
+            if (!parent.isNull()) {
+                return dm_base_uri(parent, context);
+            }
+        } break;
         case xml_namespace :
             break;
         default : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:base-uri");
@@ -190,7 +194,8 @@ tuple_cell se_node_namespace_uri(Node node)
 
 tuple_cell dm_parent(Node node)
 {
-    return node.hasParent() ? tuple_cell::node(node.getParent()) : tuple_cell::eos();
+    Node parent = node.getActualParent();
+    return parent.isNull() ? tuple_cell::eos() : tuple_cell::node(parent);
 }
 
 /*******************************************************************************
@@ -492,6 +497,9 @@ void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynam
     nms_map mp;
     nms_map::iterator it;
 
+    mp["xml"] = cxt->get_xmlns_by_prefix("xml");
+
+/*
     const inscmap * dcins = cxt->get_inscope_namespaces();
 
     // TODO: HACK below!!!
@@ -501,7 +509,7 @@ void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynam
             mp[dci->first] = dci->second.at(0);
         }
     }
-
+*/
     while (node.getNodeType() != virtual_root) {
         node.checkp();
         schema_node_cptr scm = node.getSchemaNode();

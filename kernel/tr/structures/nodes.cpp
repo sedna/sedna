@@ -274,19 +274,29 @@ xptr getRightSiblingByType(const xptr node, t_item t)
 
 xptr getRightSiblingByTypeMask(const xptr node, typemask_t tmask)
 {
-    for (xptr i = nodeGetRightSibling(checkp(node)); i != XNULL; i = nodeGetRightSibling(checkp(i))) {
-        t_item nodetype = getNodeType(checkp(i));
+    CHECKP(node);
+    xptr i = node;
 
-        // Optimization : attribute or namespace nodes are requested and element node is passed,
-        // no need to scan further
+    /* Optimization : attribute or namespace nodes are always in the first nodes of the element.
+     *  If we are looking for a attribute (or ns) node and current node is not attribute (or ns)
+     *  then there will be no attribute or ns nodes further
+     */
+    t_item nodetype = getNodeType(i);
+    if (((tmask & ti_first_children) > 0) && (nodetype & ti_first_children) == 0) { return XNULL; }
 
-        if (((tmask & ~ti_first_children) == 0) && (nodetype & ti_first_children) > 0) {
-            break;
-        }
+    i = nodeGetRightSibling(i);
+
+    while (i != XNULL) {
+        CHECKP(i);
+        nodetype = getNodeType(i);
+
+        if (((tmask & ti_first_children) > 0) && (nodetype & ti_first_children) == 0) { break; }
 
         if ((nodetype & tmask) > 0) {
             return i;
         }
+
+        i = nodeGetRightSibling(i);
     }
 
     return XNULL;
@@ -566,7 +576,7 @@ xptr getLastChildBySchema(const xptr pnode, schema_node_cptr scn)
 
 xptr findAttribute(xptr node, const char* name, const char* uri)
 {
-    return getChildAt(node, getSchemaNode(checkp(node))->find_child_fair(uri, name, attribute));
+    return getChildAt(node, getSchemaNode(node)->find_child_fair(uri, name, attribute));
 }
 
 
@@ -612,10 +622,15 @@ xptr getFirstDescandantBySchema(xptr ancestor, schema_node_cptr scm)
 {
     CHECKP(ancestor);
     schema_node_cptr sc_anc = getSchemaNode(ancestor);
-    if (sc_anc == scm) return ancestor;
+
+    if (sc_anc == scm) {
+        return ancestor;
+    }
+
     vector<schema_node_xptr> path;
     schema_node_cptr tmp = scm;
 
+    /* Build schema path from given schema node to ancestor schema node */
     while (tmp.ptr() != sc_anc.ptr())
     {
         path.push_back(tmp.ptr());
@@ -625,11 +640,20 @@ xptr getFirstDescandantBySchema(xptr ancestor, schema_node_cptr scm)
 
     vector<schema_node_xptr>::reverse_iterator it = path.rbegin();
     xptr child = getFirstChildBySchema(ancestor, *it);
+
+    /* Is there is no child nodes on this path, exit */
+    if (child == XNULL) {
+        return XNULL;
+    }
+
     ++it;
 
     while (it != path.rend()) {
         xptr grchild = XNULL;
 
+        /* If we found the first child node on the step of path traversing,
+         * we should scan through all children of this type to find one, that have
+         * requested grandchild for the next step */
         while (grchild == XNULL) {
             grchild = getFirstChildBySchema(child, *it);
 
@@ -747,7 +771,7 @@ xptr getPreviousNANode(xptr node, schema_node_cptr scn)
         xptr ni = getLastBlockNode(blk);
         if (ni != XNULL) {
             lastn = ni;
-            if (nid_cmp_effective(ni, node) == 1) {
+            if (nid_cmp_effective(ni, node) != -1) {
                 break;
             }
         }
@@ -760,16 +784,15 @@ xptr getPreviousNANode(xptr node, schema_node_cptr scn)
 
     //2. finding node in block
     CHECKP(blk);
-    if (nid_cmp_effective(getLastBlockNode(blk), node) != -1) {
-        CHECKP(blk);
-        return getPreviousDescriptorOfSameSort(getFirstBlockNode(blk));
+    xptr left = getFirstBlockNode(blk);
+
+    if (nid_cmp_effective(left, node) != -1) {
+        return getPreviousDescriptorOfSameSort(left);
     }
 
-    CHECKP(blk);
     int s = 0;
-    int r = getBlockHeader(blk)->count;
+    int r = getBlockHeader(checkp(blk))->count;
 
-    xptr left = getFirstBlockNode(blk);
     xptr med;
     while (s < r-1) {
         int i = getMedianDescriptor2(s, r, left, &med);

@@ -69,10 +69,13 @@ void logicalLogDelete(node_info_t * node_info, const doc_info_t * doc_info)
     char * text_buf = NULL;
 
     if (node_info->text_size <= PSTRMAXSIZE && node_info->text_size > 0) {
-        text_buf = (char *) malloc(node_info->text_size);
+        text_buf = (char *) malloc((size_t) node_info->text_size);
         CHECKP(node_info->text_data);
         memcpy(text_buf, XADDR(node_info->text_data), (size_t) node_info->text_size);
     }
+
+    /* Latter casting to size_t is done due to the fact, that all hl_ functions work with short ( < PSTRMAXSIZE ) strings
+     * The only case, when the string is larger is processed with special log function. */
 
     switch (node_info->node_type) {
       case element :
@@ -85,14 +88,14 @@ void logicalLogDelete(node_info_t * node_info, const doc_info_t * doc_info)
       case attribute :
         hl_logical_log_attribute(
               node_info->indirection, node_info->left_sibling_indir, node_info->right_sibling_indir, node_info->parent_indir,
-              node_info->snode->name, node_info->scm_type, text_buf, node_info->text_size,
+              node_info->snode->name, node_info->scm_type, text_buf, (size_t) node_info->text_size,
               (node_info->ns != NULL_XMLNS) ? node_info->ns->uri : NULL, (node_info->ns != NULL_XMLNS) ? node_info->ns->prefix : NULL, false
             );
         break;
       case comment :
         hl_logical_log_comment(
               node_info->indirection, node_info->left_sibling_indir, node_info->right_sibling_indir, node_info->parent_indir,
-              text_buf, node_info->text_size, false
+              text_buf, (size_t) node_info->text_size, false
             );
         break;
       case text :
@@ -104,7 +107,7 @@ void logicalLogDelete(node_info_t * node_info, const doc_info_t * doc_info)
         } else {
             hl_logical_log_text(
                   node_info->indirection, node_info->left_sibling_indir, node_info->right_sibling_indir, node_info->parent_indir,
-                  text_buf, node_info->text_size, false
+                  text_buf, (size_t) node_info->text_size, false
                 );
         }
         break;
@@ -117,7 +120,7 @@ void logicalLogDelete(node_info_t * node_info, const doc_info_t * doc_info)
       case pr_ins :
         hl_logical_log_pi(
               node_info->indirection, node_info->left_sibling_indir, node_info->right_sibling_indir, node_info->parent_indir,
-              text_buf, node_info->text_size, node_info->pi_target_size, false
+              text_buf, (size_t) node_info->text_size, node_info->pi_target_size, false
             );
         break;
       case document :
