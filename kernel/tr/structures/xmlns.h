@@ -107,7 +107,7 @@ bool is_empty_default_ns_declaration(xmlns_ptr ns)
     return ns != NULL_XMLNS && strlen(ns->prefix)==0 && strlen(ns->uri)==0;
 }
 
-struct dynamic_context;
+class dynamic_context;
 
 xmlns_ptr generate_prefix(int ctr, const char* uri, dynamic_context *cxt);
 

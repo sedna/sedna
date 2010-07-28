@@ -122,7 +122,7 @@ xptr bt_page_split_tmpl(char* pg, const xptr &rpg, shft & pretender_idx, shft pr
 
 	CHECKP(pg_xptr);
 	memcpy(dst, pg, sizeof(btree_blk_hdr));
-	BT_HEAP(dst) = BT_PAGE_SIZE;
+	BT_HEAP_SET_NULL(dst);
 	BT_KEY_NUM(dst) = split_idx;
 	BT_NEXT(dst) = rpg;
 
@@ -487,7 +487,7 @@ void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object
     next_for_rpg = BT_NEXT(pg);
 	(*BT_NEXT_PTR(pg)) = rpg;
     BT_IS_CLUS_HEAD(tmp_rpg) = false;
-	BT_HEAP(tmp_rpg) = BT_PAGE_SIZE;
+	BT_HEAP_SET_NULL(tmp_rpg);
 	BT_PREV(tmp_rpg) = pg_xptr;
 
 	if (BT_IS_CLUS_TAIL(pg)) {
@@ -497,7 +497,7 @@ void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object
 	// move key from pg to tmp_rpg
 	if (BT_VARIABLE_KEY_TYPE(pg)) {
 		btree_key_hdr k = *(BT_KEY_ITEM_AT(pg, 0));
-		BT_HEAP(tmp_rpg) = BT_PAGE_SIZE - k.k_size;
+		BT_HEAP(tmp_rpg) = (shft) (BT_PAGE_SIZE - k.k_size);
 		memcpy(tmp_rpg + BT_HEAP(tmp_rpg), pg + k.k_shft, k.k_size);
 		BT_KEY_ITEM_AT(tmp_rpg, 0)->k_shft = BT_HEAP(tmp_rpg);
 	}

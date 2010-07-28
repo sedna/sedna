@@ -43,6 +43,12 @@ public:
     Node getParent() const { return Node(indirectionDereferenceCP(getBaseFromAnyNode(node)->pdsc)); };
 
     inline
+    Node getActualParent() const {
+        Node parent = getParent();
+        return parent.isNull() || parent.checkp().getNodeType() == virtual_root ? XNULL : parent;
+    };
+
+    inline
     t_nid getNID() const { return getBaseFromAnyNode(node)->nid; };
 
     inline
@@ -111,6 +117,7 @@ public:
 
     inline
     xptr getTextPointer() const {
+        CHECKP(node);
         return nodeGetTextPointer(getTextFromAnyNode(node));
     };
 
@@ -227,34 +234,36 @@ public:
 
     inline
     strsize_t getPIDataSize() const {
+        internal::pi_node * pi = (internal::pi_node *) XADDR(node);
         U_ASSERT(!isPstrLong());
-        return getTextSize() - getPITargetSize();
+
+        /* Zero-length PI has size = target, while non-zero
+         * length PI has target size = target + data + 1
+         */
+
+        if (pi->text.size < PSTRMAXSIZE && pi->separator == pi->text.size) {
+            return 0;
+        } else {
+            return getTextSize() - pi->separator - 1;
+        }
     }
 
     inline
     xptr getPIData() const {
+        internal::pi_node * pi = (internal::pi_node *) XADDR(node);
         U_ASSERT(!isPstrLong());
-        return getTextPointerCP() + getPITargetSize();
+
+        if (isEmptyPI()) {
+            return XNULL;
+        } else {
+            return getTextPointerCP() + pi->separator + 1;
+        }
     }
 
     bool isEmptyPI() const {
         return getPIDataSize() == 0;
     }
 };
-
-/*
-class NodeIteratorForeward {
-public:
-    static inline xptr nextNodeCP(xptr t) { return getNextDescriptorOfSameSort(t); }
-    static inline xptr nextNodeBlock(xptr t) { return getNonemptyBlockLookFore(t); }
-};
-
-class NodeIteratorBackward {
-public:
-    static inline xptr nextNodeCP(xptr t) { return getPreviousDescriptorOfSameSortXptr(t); }
-    static inline xptr nextNodeBlock(xptr t) { return getNonemptyBlockLookBack(t); }
-};
-*/
 
 class NodeBlockHeader {
 private:

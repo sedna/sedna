@@ -135,7 +135,9 @@ xptr getNextDONode(const xptr node);
 /* Returns the parent node if it is not a virtual root, otherwise returns XNULL */
 inline static
 xptr getActualParentNode(const xptr node) {
-    return getRootNode(node);
+    CHECKP(node);
+    const xptr parent = nodeGetParent(node);
+    return (parent == XNULL || getNodeType(parent) == virtual_root) ? XNULL : parent;
 }
 
 /*returns the previous node in document*/

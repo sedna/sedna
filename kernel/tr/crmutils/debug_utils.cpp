@@ -174,7 +174,7 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
 
     left=insert_element_i(left,XNULL,XNULL,"histogram",xs_untyped,NULL_XMLNS);
     xptr lf=XNULL;
-    int i=1;
+    unsigned int i=1;
     for (i=1;i<=max;i++)
     {
         it=nidsz.find(i);

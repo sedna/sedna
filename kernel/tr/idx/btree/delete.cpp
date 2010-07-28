@@ -34,10 +34,10 @@ void bt_get_leftmost_key(char * pg, bt_key &key) {
 bool bt_pages_mergable(xptr p1, xptr p2, int additional_space)
 {
 	CHECKP(p1);
-	int s1 = BT_PFS((char *) XADDR(p1));
+	size_t s1 = BT_PFS((char *) XADDR(p1));
 
 	CHECKP(p2);
-	int s2 = BT_PFS((char *) XADDR(p2));
+	size_t s2 = BT_PFS((char *) XADDR(p2));
 
 	return (s1 + s2 >= (BT_PAGE_PAYLOAD + additional_space + BT_LAZY_DELETE_RESERVE));
 }
@@ -90,7 +90,7 @@ bool bt_merge_pages(xptr pl, xptr pr)
 	memmove(ldata_place, BT_KEY_TAB_AT(p, BT_KEY_NUM(p)), ldata_len);
 	memcpy(rkey_place, BT_KEY_TAB(tmp_pg), rkey_len);
 
-	BT_HEAP(p) -= (BT_PAGE_SIZE - BT_HEAP(tmp_pg));
+	BT_HEAP(p) -= (shft) (BT_PAGE_SIZE - BT_HEAP(tmp_pg));
 	U_ASSERT(BT_HEAP(p) < BT_PAGE_SIZE);
 	memcpy(p + BT_HEAP(p), tmp_pg + BT_HEAP(tmp_pg), BT_PAGE_SIZE - BT_HEAP(tmp_pg));
 
@@ -507,7 +507,6 @@ void bt_leaf_delete_key_tmpl(char* pg, shft key_idx)
 {
 // This function works properly in assumption that CHUNK_ITEM_SIZE = 1 !!!
 	U_ASSERT(BT_CHNK_ITEM_SIZE(pg, key_idx) == 1);
-
 
 	shft	heap_shift = BT_HEAP(pg);
 	shft	obj_shift = BT_CHNK_ITEM_SHIFT(pg, key_idx);

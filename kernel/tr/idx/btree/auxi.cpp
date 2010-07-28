@@ -24,7 +24,7 @@ void bt_page_markup(char* pg, xmlscm_type t) {
 	(*BT_KEY_TYPE_PTR(pg))=t;
 	(*BT_KEY_SIZE_PTR(pg))=xmlscm_type_size(t);
 	(*BT_KEY_NUM_PTR(pg))=0;
-	(*BT_HEAP_PTR(pg))=BT_PAGE_SIZE;
+	BT_HEAP_SET_NULL(pg);
 };
 
 /* check page consistency */

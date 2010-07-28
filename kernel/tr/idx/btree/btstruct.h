@@ -146,7 +146,7 @@ public:
     void * data () const { return ((type == xs_string )?(void*)(v.s_v):(void*)&v); }
 
     xmlscm_type get_type() const { return type; }
-    int get_size() const;
+    size_t get_size() const;
 };
 
 

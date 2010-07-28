@@ -572,7 +572,7 @@ void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
             node = *it;
             if (!direct) { node = indirectionDereferenceCP(node); }
 
-            schema_node_xptr sn = getSchemaNode(checkp(node))->root;
+            schema_node_xptr sn = getSchemaNode(node)->root;
             schema_node_xptr dbe_root  = XNULL;
 
             mIter = amap.begin();

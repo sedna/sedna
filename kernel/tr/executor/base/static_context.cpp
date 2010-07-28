@@ -81,12 +81,13 @@ static_context::~static_context()
     }
 }
 
-void static_context::set_base_uri(const char* _base_uri_)
+void static_context::set_base_uri(const char * _base_uri_)
 {
     /* Check constraints on URILiteral. */
     bool valid;
+    const char * _base_uri = _base_uri_;
     Uri::Information nfo;
-    Uri::check_constraints(_base_uri_, &valid, &nfo);
+    Uri::check_constraints(_base_uri, &valid, &nfo);
     if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog base-uri property contains invalid URI.");
 
     /* Delete old value if any. */
@@ -97,13 +98,17 @@ void static_context::set_base_uri(const char* _base_uri_)
     }
 
     /* If provided URI is relative considering this property as undefined */
-    if(nfo.type == Uri::UT_RELATIVE) return;
+    if (nfo.type == Uri::UT_RELATIVE) {
+        stmt_str_buf resolved_uri(1);
+        Uri::resolve(_base_uri, "sedna://", resolved_uri);
+        _base_uri = resolved_uri.get_str();
+    }
 
     /* Normalize URI if needed and create new value. */
     if(!nfo.normalized)
     {
         stmt_str_buf result;
-        collapse_string_normalization(_base_uri_, result);
+        collapse_string_normalization(_base_uri, result);
         tuple_cell tc = result.get_tuple_cell();
         tc = tuple_cell::make_sure_light_atomic(tc);
         base_uri = new char[tc.get_strlen_mem() + 1];
@@ -111,8 +116,8 @@ void static_context::set_base_uri(const char* _base_uri_)
     }
     else
     {
-        base_uri = new char[strlen(_base_uri_) + 1];
-        strcpy(base_uri, _base_uri_);
+        base_uri = new char[strlen(_base_uri) + 1];
+        strcpy(base_uri, _base_uri);
     }
     set_field_flag(SC_BASE_URI);
 }
