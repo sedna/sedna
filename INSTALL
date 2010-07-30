@@ -24,9 +24,12 @@ CONTENTS
      3.3 Command Line Configuration
      3.4 Configuration with CMake-GUI
      3.5 Build and Install
-   4. Post-Installation Setup
-     4.1 FreeBSD
-     4.2 Linux
+     3.6 Build C-driver (libsedna)
+     3.7 Advanced Topics
+   4. Install from Git Repository
+   5. Post-Installation Setup
+     5.1 FreeBSD
+     5.2 Linux
 
 =============================================================================
 1. INSTALLATION FROM BINARIES
@@ -115,6 +118,9 @@ CONTENTS
         cmake .. -G"NMake Makefiles" -DCMAKE_INSTALL_PREFIX=<Install-Path>
         nmake
         nmake install
+
+   - Run 'make sedna_library' on Unix-like OS and 'nmake sedna_library' on
+     Windows if you need only Sedna library.
 
    - You may need to perform additional post installation steps depending on
      your requirements and OS you run Sedna on. Please check "Post
@@ -303,6 +309,8 @@ CONTENTS
 
 3.5 Build and Install
 
+   If you need to build only C-driver (libsedna) refer to the next section.
+
    - Note, it's recommended to install all Sedna files into one separate
      folder. For example, use -DCMAKE_INSTALL_PREFIX=/usr/local/sedna
      configuration parameter to install Sedna binaries tree into
@@ -362,11 +370,75 @@ CONTENTS
    To install Sedna into directory defined by CMAKE_INSTALL_PREFIX just
    build INSTALL project.
 
+3.6 Build C-driver (libsedna)
+
+   For some languages drivers (PHP, Python, etc) you need just libsedna
+   driver. In this case you can use target sedna_library (sedna_library
+   project in Visual Studio solution) to build only Sedna library. Run in
+   the directory specified in the initial configuration for Sedna binaries:
+
+   [Unix]
+      make sedna_library
+
+   [Windows]
+      nmake sedna_library
+
+      (or run 'Build' command on the sedna_library project if Visual Studio
+      solution is used)
+
+   Dynamic and static versions of Sedna library will be placed into:
+
+      <Sedna-Binaries-Path>/driver/c
+
+   Visual Studio places them into:
+
+      <Sedna-Binaries-Path>/<Build-Type>/driver/c
+
+   where <Build-Type> can be Release, Debug, etc.
+
+3.7 Advanced Topics
+
+   - If you want to specify your own compiler flags, set environent variables
+     CFLAGS, CXXFLAG.
+
+   - If you want to control which compiler is chosen, set CC and CXX
+     environment variables to point to C and C++ compilers.
+
+   - You can use CC and CXX variables to add global compiler flags. It's
+     quite convenient if you want to change target architecture. For example,
+     to build x64 version of Sedna on Solaris, run:
+
+        CC="gcc -m64"
+        CXX="g++ -m64"
+        export CC
+        export CXX
+
+     before the configuration step.
+
 =============================================================================
-4. POST-INSTALLATION SETUP
+4. INSTALL FROM GIT REPOSITORY
 =============================================================================
 
-4.1 FreeBSD
+   Sedna development version is available in the Git repository:
+
+      git clone git://modis.ispras.ru/sedna
+
+   To build repository version of Sedna you must install flex (>2.5.35) and
+   bison (>2.3). If you want to build documentation you'll also need TeX
+   processing environmnet which includes 'pdflatex' utility.
+
+   To build and install Sedna tree follow the same instructions as in
+   'Complete Build How-to' above. For convenience, a configuration script for
+   developers (configure.sh) is provided. It includes most frequently used
+   Sedna configuration parameters:
+
+      sedna/configure.sh
+
+=============================================================================
+5. POST-INSTALLATION SETUP
+=============================================================================
+
+5.1 FreeBSD
 
    To run Sedna under FreeBSD you may need to perform the following
    additional post-installation steps:
@@ -390,7 +462,7 @@ CONTENTS
    [3]. problem report: www.freebsd.org/cgi/query-pr.cgi?pr=123731
 
 
-4.2 Linux
+5.2 Linux
 
    By default Linux kernel doesn't allow to get as much semaphores as Sedna
    actually needs to run 50 sessions (default maximum) simultaneously.
