@@ -1,126 +1,71 @@
 
-                          Readme for Sedna 3.3
+                    Readme for Sedna XML Database
 
-      Copyright (C) 2004-2010 ISP RAS and others. All rights reserved.
-
-
-   _______________________________________________________________________
-
-                                Contents
-
-   Note
-   System Requirements
-   Installing Sedna from Source Code 
-   Installing Sedna from Precompiled Binaries
-     * Installing on Windows
-     * Installing on Unix like OS
-     * Post Installation Setup
-   Sedna Quick Start
-   Support
-
-
-   _______________________________________________________________________
-
-                                   Note
+   Copyright (C) 2004-2010 ISP RAS and others. All rights reserved.
 
    Please, read the LICENSE, before using the system. If you do not agree
    to all the terms of the LICENSE, you must not install or use Sedna.
 
 
-   _______________________________________________________________________
+=============================================================================
+CONTENTS
+=============================================================================
 
-                            System Requirements
+   1. System Requirements
+   2. Installation
+   3. Quick Start
+   4. Support
 
-   Sedna runs on the following platforms:
-   - Windows 2000 and higher
-   - Linux (kernel 2.4 and higher)
-   - Mac OS X (PPC/x68/amd64)
-   - FreeBSD
-   - Solaris (x86/amd64)
+=============================================================================
+SYSTEM REQUIREMENTS
+=============================================================================
 
+   Sedna is being tested on x86, amd64 (x64), PPC architectures and running
+   on the following platforms:
 
-   _______________________________________________________________________
+     - Windows (2000 and higher)
+     - Linux (2.4 and higher)
+     - Mac OS X
+     - FreeBSD
+     - Solaris
 
-                    Installing Sedna from Source Code 
+=============================================================================
+INSTALLATION
+=============================================================================
 
-   See file INSTALL file supplied with the source code package.
+   See INSTALL document provided with this distribution for complete guide
+   on how to install Sedna either from binaries or sources package.
 
+=============================================================================
+QUICK START
+=============================================================================
 
-   _______________________________________________________________________
+   Sedna is distributed with examples and instructions how to run them.
+   Sedna Quick Start guide is available at the "doc" subdirectory of the
+   installation path.
 
-                Installing Sedna from Precompiled Binaries
+   The Sedna distribution also contains a documentation set, which should
+   be useful. See documentation at the "doc" subdirectory of the directory
+   where Sedna is installed.
 
-
-   Windows platform:
-   =================
-
-   Sedna is distributed as a single ".tar.gz" archive. 
-
-   The installation process consists of the following steps:
-
-   1) Unzip archive to any directory (for example "c:\sedna").
-   2) (optional) Add the bin subdirectory of sedna installation to the
-      environment variable PATH (for example "c:\sedna\bin").
-
-   UNIX-like platforms:
-   ====================
-
-   Sedna is distributed as a single self-extracting script.
-   The installation process consists of running self-extracting script
-   and following its instruction.
-  
-   The operating system user that is going to run Sedna must have 
-   r-w-x permissions for the following Sedna directories:
-
-        $SEDNA_INSTALL/data
-        $SEDNA_INSTALL/cfg
-
-   To grant the necessary permisions to the user on Linux/FreeBSD/Mac OS
-   you can use the following command (suppose, <sedna-user> is the user 
-   that is going to run Sedna):
-
-        chown <sedna-user> cfg data
-
-   Post-Installation Setup:
-   ========================
-
-   See INSTALL file (Post-Installation Setup) for the details on steps 
-   which may be need to be done to run Sedna on some operational systems.
-
-   _______________________________________________________________________
-
-                             Sedna Quick Start
-
-   Sedna is distributed with examples and instructions on how to run them. 
-   See Sedna Quick Start to start working with Sedna. Sedna Programmer's 
-   Guide contains instructions on how to run example applications using 
-   Sedna API. Sedna Quick Start and Sedna Programmer's Guide are available 
-   at "doc" subdirectory of the directory where Sedna is installed.
-
-
-   _______________________________________________________________________
-
-                                 Support
+=============================================================================
+SUPPORT
+=============================================================================
 
    If you want to report a bug, please use bug tracker system at:
-   
+
        http://sourceforge.net/projects/sedna
-       
-   Please, feel free to contact us with questions, suggestions, bug reports and
+
+   Feel free to contact us with questions, suggestions, bug reports and
    comments:
 
-       modis@ispras.ru
+       https://lists.sourceforge.net/lists/listinfo/sedna-discussion
 
-   For up-to-date information and new versions of Sedna visit the Sedna 
+   For up-to-date information and new versions of Sedna visit the Sedna
    homepage:
 
        http://www.modis.ispras.ru/sedna
 
-   You can also join the Sedna mail lists at:
-
-       https://lists.sourceforge.net/lists/listinfo/sedna-discussion
-   
    Archive of the mail list you can find here:
-   
+
        http://news.gmane.org/gmane.text.xml.sedna
-   

@@ -1,351 +1,417 @@
 
-                    Sedna Installation Instructions
+                        Sedna Installation Guide
 
-   This document describes the installation of Sedna from the source
-   code distribution. See file README supplied with this package if 
-   you need to install Sedna from binaries.
-     _________________________________________________________________
+   Copyright (C) 2004-2010 ISP RAS and others. All rights reserved.
 
-                               Short Version
+   This document describes installation of the Sedna XML Database. For
+   Quick Start or support information please see README file or visit
+   our site: http://modis.ispras.ru/sedna.
 
-   In a terminal type (substitute <install-path> with the path to a directory
-   for which you have read/write permissions):
+   Please, read the LICENSE, before using the system. If you do not agree
+   to all the terms of the LICENSE, you must not install or use Sedna.
 
-        SEDNA_INSTALL=<install-path>
-        export SEDNA_INSTALL
+=============================================================================
+CONTENTS
+=============================================================================
+
+   1. Installation from Binaries
+     1.1 Windows
+     1.2 Linux, FreeBSD, Mac OS X, Solaris
+   2. Sources Quick Build How-To
+   3. Sources Complete Build How-To
+     3.1 Prerequisites
+     3.2 How to Install CMake
+     3.3 Command Line Configuration
+     3.4 Configuration with CMake-GUI
+     3.5 Build and Install
+   4. Post-Installation Setup
+     4.1 FreeBSD
+     4.2 Linux
+
+=============================================================================
+1. INSTALLATION FROM BINARIES
+=============================================================================
+
+1.1 Windows
+
+   Sedna is distributed as a single ".tar.gz" archive which contains
+   everything you need to run Sedna.
+
+   The installation process consists of the following steps:
+
+   - Extract archive (for example with 7-Zip) to any directory. Path should
+     not contain non-ASCII symbols.
+   - [Optional] Add the bin subdirectory of Sedna installation to the
+     environment variable PATH.
+   - Refer to the Sedna Quick Start ('doc' subdirectory) or to the
+     documentation at the Sedna site for the details on how to run and
+     use Sedna XML Database.
+
+1.2 Linux, FreeBSD, Mac OS X, Solaris
+
+   Sedna is distributed as a single self-extracting script.
+   The installation process consists of running self-extracting script
+   and following its instruction:
+
+       chmod +x sedna-xxx-bin-xxx.sh
+       ./sedna-xxx-bin-xxx.sh
+
+   The operating system user that is going to run Sedna must have
+   r-w-x permissions for the following Sedna directories:
+
+       $SEDNA_INSTALL/data
+       $SEDNA_INSTALL/cfg
+
+   To grant the necessary permissions to the user on Linux/FreeBSD/Mac OS
+   you can use the following command (suppose, <sedna-user> is the user
+   that is going to run Sedna):
+
+       chown <sedna-user> cfg data
+
+   You may need to perform additional post installation steps depending on
+   your requirements and OS you run Sedna on. Please check "Post
+   Installation Setup" section for further details.
+
+   Refer to the Sedna Quick Start ('doc' subdirectory) or to the
+   documentation on the Sedna site for the details on how to run and use
+   Sedna XML Database.
+
+=============================================================================
+2. QUICK BUILD HOW-TO
+=============================================================================
+
+   - Install CMake 2.4 or higher (http://cmake.org). Refer also to the
+     documentation of your OS distribution for the details on how to
+     install CMake.
+
+   - Download and extract Sedna sources distribution for your platform
+     (http://modis.ispras.ru/sedna). Here and after we suppose that
+     SEDNA_SOURCE is path of the extracted Sedna sources.
+
+   - Run the following commands to build and install Sedna.
+
+     CMAKE_INSTALL_PREFIX defines full path to the Sedna binaries
+     tree to be installed. It's recommended to install all Sedna files into
+     one separate folder.
+     For example: -DCMAKE_INSTALL_PREFIX=/usr/local/sedna
+     will install Sedna binaries tree into /usr/local/sedna. Path should
+     not contain wide non-ASCII symbols.
+
+     [On Unix]:
+        cd SEDNA_SOURCES
+        mkdir bld
+        cd bld
+        cmake .. -DCMAKE_INSTALL_PREFIX=<Install-Path>
         make
         make install
-   
-   NOTE! On FreeBSD and Solaris you should use GNU make 
-         (by default it means "gmake" command instead of "make"). 
-         
-   NOTE! You may need to perform additionall post installation steps
-         depending on your requirements and OS you run Sedna on.
-         Please check "Post Installation Setup" section for details.
-   
-   NOTE! The operating system user that is going to run Sedna must have 
-         r-w-x permissions for the following Sedna directories:
 
-            $SEDNA_INSTALL/data
-            $SEDNA_INSTALL/cfg
+   NOTE! Some platforms provide gmake command instead of make by default.
 
-         To grant the necessary permisions to the user under Linux, 
-         MacOS, FreeBSD  or Solaris you can use the following command 
-         (suppose, <sedna-user> is the user that is going to run Sedna):
+     [On Windows]:
+        <Run Visual Studio Command Prompt>
+        cd SEDNA_SOURCES
+        mkdir bld
+        cd bld
+        cmake .. -G"NMake Makefiles" -DCMAKE_INSTALL_PREFIX=<Install-Path>
+        nmake
+        nmake install
 
-            chown <sedna-user> cfg data
-     _________________________________________________________________
+   - You may need to perform additional post installation steps depending on
+     your requirements and OS you run Sedna on. Please check "Post
+     Installation Setup" section for further details.
 
-                                Long Version
+   - The operating system user that is going to run Sedna must have r-w-x
+     permissions for the following Sedna directories:
 
-   The long version is the rest of this document.
+            <Install-Path>/data
+            <Install-Path>/cfg
 
-     _________________________________________________________________
+=============================================================================
+3. COMPLETE BUILD HOW-TO
+=============================================================================
 
-                                Requirements
+3.1 Prerequisites
 
-   Sedna is expected to build and run on the following platforms:
+   Sedna is being tested on x86, amd64 (x64/x86_64) and PPC architectures.
+   It's expected to build and run on the following platforms:
 
    1. Microsoft Windows 2000 and higher
-   2. Linux with kernel version 2.4 and higher
-   3. Mac OS X (PPC or Intel platform)
-   4. FreeBSD (see also Post-Installation Setup::FreeBSD below)
-   5. Solaris (x86)
+   2. Linux 2.6
+   3. Mac OS X
+   4. FreeBSD
+   5. Solaris 10
 
-   NOTE! Sedna can be build from sources only on 32-bit platforms. However,it's
-   possible to build Sedna C driver on a 64bit system. Just run make (gmake 
-   on FreeBSD or Solaris) in SEDNA_SOURCES/driver/c folder.
+   To build Sedna from sources you need to download and extract sources
+   package for your platform from our site: http://modis.ispras.ru/sedna.
+   On Windows you can use 7-Zip to extract sources package. Here and after
+   we suppose that SEDNA_SOURCE is path of the extracted Sedna sources.
 
-   A modern POSIX-compatible platform should be able to run Sedna potentially, 
-   but some effort should be made.
+   The following software packages are required for building Sedna:
 
-   The following software packages are required for building Sedna 
-   from sources:
+     * [Required] CMake 2.4 and higher. See the section below for the details
+       on how to obtain CMake for your platform.
 
-     * A UNIX console and a set of widely known UNIX tools such as rm, mkdir,
-       m4, etc are required. They are usually present in any UNIX
-       installation. 
+     * [Required] C/C++ compiler.
+       Windows: CL version 12.00.xxxx (Visual C++ 6.0) or higher is required.
+                You can install free Express version of Visual Studio to
+                build Sedna on Windows,
+       Unix or Linux: GCC version 3.x.x or higher is required.
 
-       For the WINDOWS platform you need the Cygwin. Choose m4, make and gcc
-       in addition to the default installation. 
+     * [Optional] For building Java API driver you need Sun JDK version 1.4
+       or higher.
 
-     * GNU make is required; other make programs will *not* work. 
-       (usually 'gmake' command under Solaris and FreeBSD)
+3.2 How to Install CMake
 
-     * You need a C/C++ compiler. For the WINDOWS platform Microsoft C/C++ 
-       complier version 12.00.xxxx (Visual C++ 6.0) or higher is required.
-        
-       For Linux GCC version 3.x.x or higher is required. GCC is also required 
-       for the Windows platform for making dependencies (so it is recommended 
-       to use Cygwin package with GCC in it).
-     
-     * For building Java API driver your need Sun Microsystems JDK version 
-       1.4 or higher.
+   The latest version is available from the CMake download page:
+   http://www.cmake.org/cmake/resources/software.html.
 
-   Also check that you have sufficient disk space. You will need about 100
-   MB for the source tree during compilation and about 15 MB for the
-   installation directory. The default size database requires 
-   additionally about 400 Mb.
-     _________________________________________________________________
+   For Windows and Mac OS X just download installer from the CMake
+   download page and run it.
 
-                           Installation Procedure
+   On most platforms it's also available via package distribution
+   systems:
 
-    0. ENVIRONMENT CONFIGURATION (WINDOWS only):
+   - Debian/Ubuntu Linux:
+         sudo apt-get install cmake cmake-gui
+   - Fedora Linux:
+         sudo yum install cmake cmake-gui
+   - openSUSE Linux:
+         sudo zypper install cmake cmake-gui
+   - FreeBSD:
+         * pkg_add -r cmake
+         * using sysinstall utility
+         * using ports collection
 
-       Add vsvars32.bat call to the cygwin.bat. vsvars32.bat is intended
-       to set environment to use Microsoft tools (cl, linr, etc). It can 
-       be found at the Visual Studio installation folder.
+   Alternatively, you can build from source, a source package is also
+   available from the CMake download page.
 
-       For example the following string can be added to the cygwin.bat
-       (which is located at the Cygwin installation folder):
+3.3 Command Line Configuration
 
-...
-call "C:\Program Files\Microsoft Visual Studio 8\Common7\Tools\vsvars32.bat"
-...
-bash --login -i
+   - Ensure that compiler and CMake are in PATH:
 
-       Rename or remove GNU link. Since GNU link has the same file name
-       as MS link tool, you need to rename or remove it. GNU link binary 
-       can be found at %CYGWIN%/bin/link.exe.
+     [Hint] On Windows Run Visual Studio Command Prompt or Visual Studio
+     x64 Command Prompt if you want to build x64 binaries.
 
-       Run Cygwin. You shoul see something like:
+   - One of the nice CMake features is "out-of-source" build support, which
+     means not building in the source directory, but in dedicated build
+     directory. This keeps the source directory clean and allows for more
+     than single build tree for the same source tree (e.g. debug and release,
+     32 and 64 bit etc). We'll create subdirectory "bld" in the source
+     directory for this purpose:
 
-Setting environment for using Microsoft Visual Studio 2005 x86 tools.
+        cd SEDNA_SOURCES
+        mkdir bld
+        cd bld
 
+   - Run initial configuration:
 
-    1. CONFIGURATION
+        cmake ..
 
-       The first step of the installation procedure is to override environment
-       variables (if needed):
+     By default CMake will create make files on Unix-like platforms (Linux,
+     FreeBSD, Solaris Mac OS X) and Visual Studio x32 project on Windows.
+     If you want to use another generator use -G option. For example:
 
+        cmake .. -G "NMake Makefiles"
 
-ACTIVE_CONFIGURATION=Release
-export ACTIVE_CONFIGURATION
+     command will generate nmake makefiles on Windows which can be then
+     build with nmake command line utility.
 
+        cmake .. -G"Visual Studio 9 2008 Win64"
 
-       Default value: Release
-       Turns on the release mode. Otherwise (ACTIVE_CONFIGURATION=Debug) 
-       executables will contain debug information.
+     command will generate Visual Studio 2008 x64 project.
 
+   - [Optional] Adjust configuration parameters. To list configuration
+     parameters run:
 
-ENABLE_TRIGGERS=1
-export ENABLE_TRIGGERS
+        cmake . -LH
 
+     To list advanced configuration parameters run:
 
-       Default value: 1
-       Turns on support for triggers. Set ENABLE_TRIGGERS to 0 if you would 
-       like to turn support for triggers off.
+        cmake . -LAH
 
+     To change parameter value just run something like:
 
-EL_DEBUG=0
-export EL_DEBUG
+        cmake . -DSQL_CONNECTION=ON
 
+     Frequently used parameters include:
 
-       Default value: 0
-       Throw out all debug printings. Set EL_DEBUG to 1 if you would like
-       to get all printings.
+     * CMAKE_BUILD_TYPE - use 'Debug' value to build binaries with debug
+          information and turned off optimizations. Default valaue
+          'Release'.
 
+     * CMAKE_INSTALL_PREFIX - defines full path to the Sedna binaries tree to
+          be installed. It's recommended to install all Sedna files into one
+          separate folder.
+          For example: -DCMAKE_INSTALL_PREFIX=/usr/local/sedna will
+          install Sedna binaries tree into /usr/local/sedna. Path should not
+          contain wide non-ASCII symbols.
 
-JAVA_DRIVER=1
-export JAVA_DRIVER
+     * EL_DEBUG - Set value to 'ON' if you want to turn on all Sedna debug
+          printings.
 
+     * SQL_CONNECTION - Adds support to SQL Connections. Set value to 'ON' if
+          you want SQL Connection facility to be enabled. On Unix-like
+          systems, you may need to install ODBC development package (usually
+          unixODBC-devel) to build Sedna with SQL Connection facility
+          enabled.
 
-       Default value: 1
-       Compiles Java driver. Set JAVA_DRIVER to 0 if you do not want java 
-       driver to be compiled.
+     * STATIC_SYS_LIBS - Links Sedna executables with static system libraries.
+          Set value to 'ON' if you want to link Sedna executables with static
+          system libraries.
 
+     * ENHANCE_TERM - Possible values 'Readline', 'Libedit', 'None'. Default
+          value on Unix-like OS is 'Libedit'. On Windows - 'None', other
+          options are ignored on Windows.
 
-SQL_CONNECTION=0
-export SQL_CONNECTION
+          Libedit (or Readline) greatly increases the usability of se_term.
+          It adds all of the standard functionality of the GNU Readline
+          library to the se_term command line, such as being able to easily
+          modify, edit, and retrieve command-history information with the
+          arrow keys.
 
+          Note, you may need to install either libtermcap, libcurses or
+          libncurses package (depending on exact OS type) to build Sedna with
+          libedit support or readline support. In some cases (e.g. Debian,
+          Ubuntu) you have to install libtermcap, libcurses or libncurses
+          development package as well.
 
-       Default value: 0
-       Adds support to SQL Connections. Set SQL_CONNECTION to 1 if you 
-       want SQL Connection facility to be enabled.
+     * JAVA_DRIVER - Compiles Java driver. Set value to 'OFF' if you don't
+          need java driver. If want to build java driver make sure that
+          you have java compiler in path.
 
-       NOTE! Under UNIX-like operation systems, you may need to install ODBC
-       development package (usually unixODBC-devel) to build Sedna with SQL 
-       Connection facility enabled.
+     * ENABLE_TRIGGERS - Turns on support for triggers (default). Set value
+          to 'OFF' if you would like to turn support for triggers off.
 
+3.4 Configuration with CMake-GUI
 
-STATIC_SYS_LIBS=0
-export STATIC_SYS_LIBS
+   If you have cmake-gui installed you can choose generator and just
+   configuration with it:
 
+   - Run cmake-gui:
 
-       Default value: 0
-       Links Sedna executables with shared system libraries. Set 
-       STATIC_SYS_LIBS to 1 if you want to link Sedna executables with
-       static system libraries.
-       
-       
-ENABLE_LIBEDIT=1
-export ENABLE_LIBEDIT
+        cd SEDNA_SOURCES
+        cmake-gui .
 
-       
-       Default value: 1 (ignored on Windows)
-       Libedit greatly increases the usability of se_term. It adds 
-       all of the standard functionality of the GNU Readline library to the 
-       se_term command line, such as being able to easily modify, edit, 
-       and retrieve command-history information with the arrow keys. 
-       
-       NOTE! Under UNIX-like operation systems, you may need to install either 
-       libtermcap, libcurses or libncurses package (depending on exact OS type)
-       to build Sedna with libedit support. In some cases (e.g. Debian, Ubuntu) 
-       you have to install libtermcap, libcurses or libncurses development 
-       package as well. 
-       
-       
-SEDNA_INSTALL=<install-path>
-export SEDNA_INSTALL
+   - Set location to the source code and where to build binaries.
+   - Run Configure to perform initial configuration and select generator
+     you want to use.
+   - Adjust parameters you need. You can also set advanced parameters
+     with 'Advanced View' checkbox.
+   - Run Configure again to apply changes
+   - Run Generate to generate makefiles (or Visual Studio project) to build
+     Sedna.
 
+3.5 Build and Install
 
-       Identifies the directory where to install Sedna in case of
-       "make install" (see below).
+   - Note, it's recommended to install all Sedna files into one separate
+     folder. For example, use -DCMAKE_INSTALL_PREFIX=/usr/local/sedna
+     configuration parameter to install Sedna binaries tree into
+     /usr/local/sedna. Path should not contain wide non-ASCII symbols.
 
+   - You may need to perform additional post installation steps depending on
+     your requirements and OS you run Sedna on. Please check "Post
+     Installation Setup" section for further details.
 
-    2. BUILD
+   - The operating system user that is going to run Sedna must have r-w-x
+     permissions for the following Sedna directories:
 
-       To start the build, type
+            <Install-Path>/data
+            <Install-Path>/cfg
 
-make
+   - To build and install Sedna:
 
-       Remember to use GNU make, 'gmake' command under FreeBSD/Solaris. 
-       The build may take anywhere from 10 minutes to half an hour 
-       depending on your hardware. The last three lines displayed 
-       should be:
+   [Unix] (Linux, Mac OS, FreeBSD, Solaris, etc)
 
-===================================================================
-Make done
-===================================================================
+   On Unix-like OS just run make command in the directory selected for Sedna
+   binaries in the previous step:
 
-    3. INSTALLING THE FILES
+      make
 
-make install
+   Note, on some platforms gmake command is available by default instead.
+   In this case here and after we suppose that gmake can be used everywhere
+   make is used.
 
-       This will install files into the directory identified by 
-       $SEDNA_INSTALL that was specified in step 1. Make sure that you have 
-       appropriate permissions to write into that area. 
+   If you want to see how compiler is invoked use verbose mode:
 
-    4. SETTING UP OPERATING SYSTEM
+      make VERBOSE=1
 
-       The operating system user that is going to run Sedna must have 
-       r-w-x permissions for the following Sedna directories:
+   To install Sedna into directory defined by CMAKE_INSTALL_PREFIX run:
 
-$SEDNA_INSTALL/data
-$SEDNA_INSTALL/cfg
+      make install
 
-       To grant the necessary permisions to the user on Linux/MacOS
-       you can use the following command (suppose, <sedna-user> is the user 
-       that is going to run Sedna):
+   [Windows]
 
-chown <sedna-user> cfg data
+   The way to build Sedna depends on the generator you've chosen.
+   If 'NMake Makefiles' generator was used then just run nmake command in the
+   directory selected for Sedna binaries in the previous step:
 
-   Uninstallation: To undo the installation just delete files installed 
-   into $SEDNA_INSTALL/sedna.
+      nmake
 
-   Cleaning: After the installation you can make room by removing the
-   built files from the source tree with the command "make clean".
+   To install Sedna into directory defined by CMAKE_INSTALL_PREFIX run:
 
-     _________________________________________________________________
+      nmake install
 
-                          Post-Installation Setup
+   If 'Visual Studio XXXX' generator was used then:
 
-Environment Variables
-=====================
+   - Run Visual Studio XXXX;
+   - Open solution file (it's located in path selected for Sedna binaries in
+     the previous step).
+   - Select build type (Release, Debug, etc) you want.
+   - Run Build -> Build Solution command to build Sedna.
 
-   You may want to add $SEDNA_INSTALL/sedna/bin to the environment variable 
-   PATH. Note, that we recommend you to use absolute path. 
+   To install Sedna into directory defined by CMAKE_INSTALL_PREFIX just
+   build INSTALL project.
 
-Database Files
-==============
+=============================================================================
+4. POST-INSTALLATION SETUP
+=============================================================================
 
-   Database files will be placed by default into $SEDNA_INSTALL/sedna.
-   You may want to set up the place where database files are stored by 
-   modifying:
-   
-        $SEDNA_INSTALL/sedna/etc/sednaconf.xml.sample. 
+4.1 FreeBSD
 
-   See Sedna Administration Guide for details on how to configure Sedna.
+   To run Sedna under FreeBSD you may need to perform the following
+   additional post-installation steps:
 
-FreeBSD
-=======
-
-   To run Sedna under FreeBSD you may need to perform the following additional
-   post-installation steps:
-   
-   1. Unfortunately FreeBSD (7.0, 6.3 and earlier) has a bug [3] in System V 
-      semaphores. To run Sedna you have to rebuild [1] your kernel with 
+   1. Unfortunately FreeBSD (7.0, 6.3 and earlier) has a bug [3] in System V
+      semaphores. To run Sedna you have to rebuild [1] your kernel with
       the patch you can get at [3].
-   
-   2. Increase system IPC configuration either using "sysctl" utility [2] 
+
+   2. Increase system IPC configuration either using "sysctl" utility [2]
       or through /boot/loader.conf. Below possible values are listed:
 
         kern.ipc.semmnu=256
         kern.ipc.semmns=512
         kern.ipc.semmni=256
         kern.ipc.semmap=258
-   
-   [1]. building BSD custom kernel:  
+
+   [1]. building BSD custom kernel:
         www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html
    [2]. tuning with sysctl:
         www.freebsd.org/doc/en/books/handbook/configtuning-sysctl.html
    [3]. problem report: www.freebsd.org/cgi/query-pr.cgi?pr=123731
 
-Linux
-=====
 
-   1. If you run Sedna on Linux with amd64 architecture check that you have
-      32bit system libraries installed. For example, ia32-libs package on 
-      Ubuntu/Debian.
-   
-   2. By default Linux kernel doesn't allow to get as much semaphores as Sedna 
-      actually needs to run 50 sessions (default maximum) simultaneously.
-   
-      Extend some of the default kernel parameter settings. It is quite simple. 
-      For example, here are instructions on how to modify the kernel.sem and 
-      how to keep them set after a reboot:
+4.2 Linux
 
-        * Log on as a user with root authority
-        * Open up /etc/sysctl.conf in a text editor and add entries: 
+   By default Linux kernel doesn't allow to get as much semaphores as Sedna
+   actually needs to run 50 sessions (default maximum) simultaneously.
 
-            kernel.sem = "250 64000 32 256"
-      
-      Last number (SEMMSL) means system wide maximum of semaphore sets, 
-      first (SEMMNI) defines maximum number of semaphores per set, second 
-      defines total number of semaphores and usually must be equal 
-      SEMMSL*SEMMNI. 
+   Extend some of the default kernel parameter settings. It is quite simple.
+   For example, here are instructions on how to modify the kernel.sem and
+   how to keep them set after a reboot:
 
-      NOTE! se_gov + se_sm processes take apprx. 20 semaphore sets and 
-      each se_trn (session) process takes 3 semaphores at least.
+     * Log on as a user with root authority
+     * Open up /etc/sysctl.conf in a text editor and add entries:
 
-        * Enter the sysctl -p command to load in sysctl settings from 
-          /etc/sysctl.conf.
-        * Enter the ipcs -l to view the updated kernel parameters in sysctl.
-     _________________________________________________________________
+         kernel.sem = "250 64000 32 256"
 
-                              Getting Started
+   Last number (SEMMSL) means system wide maximum of semaphore sets,
+   first (SEMMNI) defines maximum number of semaphores per set, second
+   defines total number of semaphores and usually must be equal
+   SEMMSL*SEMMNI.
 
-   Sedna is distributed with examples and instructions how to run it.
-   See Sedna Quick Start available at "doc" subdirectory of the directory 
-   where Sedna is installed.
+   NOTE! se_gov + se_sm processes take apprx. 20 semaphore sets and
+   each se_trn (session) process takes 3 semaphores at least.
 
-     _________________________________________________________________
-
-                                 What Now?
-
-   * The Sedna distribution contains a documentation set, which should be
-     useful. See documentation at "doc" subdirectory of the directory 
-     where Sedna is installed.
-   * For support, please, feel free to contact us with questions, 
-     suggestions, bug reports and comments:
-
-        modis@ispras.ru
-
-     For up-to-date information and new versions of Sedna visit the Sedna 
-     homepage:
-
-        http://www.modis.ispras.ru/sedna
-
-     You can also join the Sedna mail lists at
-
-        https://lists.sourceforge.net/lists/listinfo/sedna-discussion
+     * Enter the sysctl -p command to load in sysctl settings from
+       /etc/sysctl.conf.
+     * Enter the ipcs -l to view the updated kernel parameters in sysctl.
