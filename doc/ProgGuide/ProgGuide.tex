@@ -1,5 +1,5 @@
 % ProgGuide.tex: Sedna Programmer's Guide
-% Copyright (C) 2010 ISP RAS 
+% Copyright (C) 2010 ISP RAS
 % The Institute for System Programming of the Russian Academy of Sciences
 
 \documentclass[a4paper,12pt]{article}
@@ -17,7 +17,7 @@
 % Switch for between PDF and other formats to generate bookmarks,
 % pretty table of contents and set document's information in PDF
 \ifpdf
-  \usepackage[colorlinks=true, linkcolor=blue, 
+  \usepackage[colorlinks=true, linkcolor=blue,
               citecolor=blue, urlcolor=blue,
               pdftex,                %%% hyper-references for pdflatex
               bookmarks=true,        %%% generate bookmarks ...
@@ -267,17 +267,17 @@ return true and the result can be obtained as described in Section
 updates or bulk load), the \verb!execute! methods return false.
 
 The results of XQuery queries to the Sedna DBMS can be represented either in XML
-or SXML~\cite{paper:sxml}. To specify the type of the result use the following 
+or SXML~\cite{paper:sxml}. To specify the type of the result use the following
 extended versions of the \verb!execute! method:
 
 \begin{verbatim}
- boolean execute(InputStream in, 
+ boolean execute(InputStream in,
                  ResultType resultType)
      throws DriverException, IOException;
 \end{verbatim}
 
 \begin{verbatim}
- boolean execute(String queryText, 
+ boolean execute(String queryText,
                  ResultType resultType)
      throws DriverException, IOException;
 \end{verbatim}
@@ -356,7 +356,7 @@ with Sedna DBMS. This application connects to the Sedna DBMS, opens a session.
 The session consists of one transaction. Application loads data from the file
 \verb!region.xml! and executes the XQuery statement. When statement is executed,
 application drop the document, commits the transaction and closes the session.
- 
+
 \small{
 \begin{verbatim}
 import ru.ispras.sedna.driver.*;
@@ -367,7 +367,7 @@ class Client {
     try {
       /* Get a connection */
       con = DatabaseManager.getConnection("localhost",
-                                          "testdb", 
+                                          "testdb",
                                           "SYSTEM",
                                           "MANAGER");
 
@@ -379,10 +379,10 @@ class Client {
 
       /* Load XML into the database */
       System.out.println("Loading data ...");
-      boolean res; 
+      boolean res;
       res = st.execute("LOAD 'C:/region.xml' 'region'");
 
-      System.out.println("Document 'region.xml' "+ 
+      System.out.println("Document 'region.xml' "+
           "has been loaded successfully");
       /* Execute query */
       System.out.println("Executing query");
@@ -395,7 +395,7 @@ class Client {
       System.out.println("Removing document ...");
       res = st.execute("DROP DOCUMENT 'region'");
 
-      System.out.println("Document 'region' " + 
+      System.out.println("Document 'region' " +
                  "has been dropped successfully");
       /* Commit current transaction */
       con.commit();
@@ -525,7 +525,7 @@ char* SEgetLastErrorMsg(SednaConnection* conn)
 \textbf{Parameters:}
 
 \begin{citemize}
-\item\verb!conn! - a pointer to an instance of the \verb!SednaConnection! type 
+\item\verb!conn! - a pointer to an instance of the \verb!SednaConnection! type
 (see \ref{c-api-connecting}, Connecting to a Database section for details on
 how to obtain a connection instance).
 \end{citemize}
@@ -541,7 +541,7 @@ int SEgetLastErrorCode(struct SednaConnection *conn)
 \textbf{Parameters:}
 
 \begin{citemize}
-\item\verb!conn! - a pointer to an instance of the \verb!SednaConnection! type 
+\item\verb!conn! - a pointer to an instance of the \verb!SednaConnection! type
 (see \ref{c-api-connecting}, Connecting to a Database section for details on
 how to obtain a connection instance).
 \end{citemize}
@@ -724,7 +724,7 @@ mode has not been overridden by setting this attribute into
 \hline
 \emph{Atrribute values} & \emph{Value size} \\
 \hline
-\verb!SEDNA_ATTR_AUTOCOMMIT_ON!, & \\ 
+\verb!SEDNA_ATTR_AUTOCOMMIT_ON!, & \\
 \verb!SEDNA_ATTR_AUTOCOMMIT_OFF! & sizeof(int) \\
 \hline
 \end{tabular}
@@ -751,7 +751,7 @@ the \verb!conn!.
 \hline
 \emph{Atrribute values} & \emph{Value size} \\
 \hline
-\verb!SEDNA_ATTR_DEBUG_ON!, & \\ 
+\verb!SEDNA_ATTR_DEBUG_ON!, & \\
 \verb!SEDNA_ATTR_DEBUG_OFF! & sizeof(int) \\
 \hline
 \end{tabular}
@@ -771,7 +771,7 @@ committed.
 \hline
 \emph{Atrribute values} & \emph{Value size} \\
 \hline
-\verb!SEDNA_READONLY_TRANSACTION!, & \\ 
+\verb!SEDNA_READONLY_TRANSACTION!, & \\
 \verb!SEDNA_UPDATE_TRANSACTION! & sizeof(int) \\
 \hline
 \end{tabular}
@@ -827,7 +827,7 @@ will be forcefully committed. The default value for this attribute is
 \hline
 \emph{Atrribute values} & \emph{Value size} \\
 \hline
-\verb!SEDNA_LOG_LESS!, & \\ 
+\verb!SEDNA_LOG_LESS!, & \\
 \verb!SEDNA_LOG_FULL! & sizeof(int) \\
 \hline
 \end{tabular}
@@ -970,7 +970,7 @@ successfully started.
 If the function fails, the return value is negative:
 
 \begin{citemize}
-\item\verb!SEDNA_BEGIN_TRANSACTION_FAILED! - failed to start a transaction. 
+\item\verb!SEDNA_BEGIN_TRANSACTION_FAILED! - failed to start a transaction.
 \item\verb!SEDNA_ERROR! - some error occurred.
 \end{citemize}
 
@@ -1157,7 +1157,7 @@ If the statement is really long, and you prefer to pass it to the Sedna directly
 from a file use \verb!SEexecuteLong! function.
 
 \begin{verbatim}
-int SEexecuteLong(SednaConnection* conn, 
+int SEexecuteLong(SednaConnection* conn,
                   const char* query_file_path)
 \end{verbatim}
 
@@ -1241,8 +1241,8 @@ result data, no result data to retrieve.
 \verb!SEgetData! function retrieves current item from the result sequence:
 
 \begin{verbatim}
-int SEgetData(SednaConnection* conn, 
-              char* buf, 
+int SEgetData(SednaConnection* conn,
+              char* buf,
               int bytes_to_read)
 \end{verbatim}
 
@@ -1302,12 +1302,12 @@ where \verb!subtype! is a type of debug information (currently only
 information.
 \end{citemize}
 
-For example the following debug handler prints out debug iformation to the 
+For example the following debug handler prints out debug iformation to the
 stdout:
 
 \small{
 \begin{verbatim}
-void my_debug_handler(enum SEdebugType subtype, 
+void my_debug_handler(enum SEdebugType subtype,
                       const char *msg) {
   printf("TRACE: ");
   printf("subtype(%d), msg: %s\n", subtype, msg);
@@ -1446,12 +1446,12 @@ int main() {
   res = SEbegin(&conn);
   if(res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED)
     return handle_error(&conn, "Transaction begin", 1);
-    
+
   /* Load file "region.xml" into the document "region" */
   res = SEexecute(&conn, "LOAD 'region.xml' 'region'");
   if(res != SEDNA_BULK_LOAD_SUCCEEDED)
     return handle_error(&conn, "Bulk load", 1);
-    
+
   /* Execute XQuery statement */
   res = SEexecute(&conn, "doc('region')/*/*");
   if(res != SEDNA_QUERY_SUCCEEDED)
@@ -1485,7 +1485,7 @@ int main() {
   res = SEclose(&conn);
   if(res != SEDNA_SESSION_CLOSED)
     return handle_error(&conn, "Close", 0);
-   
+
   return 0;
 }
 \end{verbatim}}
@@ -1595,7 +1595,7 @@ the client side and raises the exception, as discussed in subsubsection
 
 
 %===============================================================================
-%                       Scheme API: Manage Transactions 
+%                       Scheme API: Manage Transactions
 %===============================================================================
 \subsubsection{Manage Transactions}
 
@@ -1629,7 +1629,7 @@ back.
 
 
 %===============================================================================
-%                  Scheme API: Executing Queries and Updates  
+%                  Scheme API: Executing Queries and Updates
 %===============================================================================
 \subsubsection{Executing Queries and Updates}
 
@@ -1732,7 +1732,7 @@ representation for the current item in the form of XML.
 
 
 %===============================================================================
-%                     Scheme API: Bulk Load from Stream  
+%                     Scheme API: Bulk Load from Stream
 %===============================================================================
 \subsubsection{Bulk Load from Stream}
 
@@ -1764,7 +1764,7 @@ from stream is concerned. For more details on bulk load, see section
 
 
 %===============================================================================
-%             Scheme API: Higher-level Function for a Transaction  
+%             Scheme API: Higher-level Function for a Transaction
 %===============================================================================
 \subsubsection{Higher-level Function for a Transaction}
 
@@ -1784,7 +1784,7 @@ the Sedna DBMS and passes along the exception to the application.
 
 
 %===============================================================================
-%                  Scheme API: Executing Queries and Updates  
+%                  Scheme API: Executing Queries and Updates
 %===============================================================================
 \subsubsection{Error handling}
 \label{scheme-errors}
@@ -1796,7 +1796,7 @@ compiler~\cite{paper:chicken}. In the Scheme API driver, we also provide the
 SRFI-12 implementation for PLT and Gambit.
 
 %===============================================================================
-%                          Scheme API: Code Example  
+%                          Scheme API: Code Example
 %===============================================================================
 \subsubsection{Code Example}
 
@@ -1824,7 +1824,7 @@ API driver.
       (newline)
       (k #f))
     (lambda ()
-      (sedna:execute-query conn 
+      (sedna:execute-query conn
                            "LOAD 'region.xml' 'regions'")))))
 
 ; Execute a statement and represent it as an SXML nodeset
@@ -1834,7 +1834,7 @@ API driver.
 
 ; Update statement
 (pp
- (sedna:execute-query conn 
+ (sedna:execute-query conn
                   "UPDATE delete doc('region')//africa"))
 
 ; Querying all regions once again
@@ -2195,7 +2195,7 @@ let $connection :=
    sql:connect("odbc:MySQL ODBC 3.51 Driver://localhost/somedb",
                "user", "pass")
 return
-   sql:execute($connection, 
+   sql:execute($connection,
                "SELECT * FROM people WHERE first = 'Peter'");
 \end{verbatim}}
 
@@ -2262,7 +2262,7 @@ let $connection :=
    sql:connect("odbc:MySQL ODBC 3.51 Driver://localhost/somedb",
                "user", "pass")
 let $statement :=
-   sql:prepare($connection, 
+   sql:prepare($connection,
                "INSERT INTO people(first, last) VALUES (?, ?)")
 return (sql:execute($statement, "John", "Smith"),
         sql:execute($statement, "Matthew", "Barney"))
@@ -2302,7 +2302,7 @@ query execution:
 
 \begin{verbatim}
 function sql:execute($prepared-statement as xs:integer,
-                     $param1 as item()?, 
+                     $param1 as item()?,
                      ...) as element()*
 \end{verbatim}
 this function is similar to \verb!sql:execute! for direct queries and returns a
@@ -2322,7 +2322,7 @@ sequences \verb!()!.
 To execute a prepared update statement you may use \verb!exec-update! function:
 \begin{verbatim}
 function sql:exec-update($prepared-statement as xs:integer,
-                         $param1 as item()?, 
+                         $param1 as item()?,
                          ...) as xs:integer
 \end{verbatim}
 This function is similar to \verb!sql:execute!, but returns the number of rows
@@ -2347,7 +2347,7 @@ declare namespace sql="http://modis.ispras.ru/Sedna/SQL";
 let $connection :=
   sql:connect("odbc:MySQL ODBC 3.51 Driver://localhost/testdb",
               "user-name",
-              "user-password", 
+              "user-password",
               <sql:option name="manual-commit" value="1"/>)
 return
   for $person in doc("auction")/person
@@ -2756,7 +2756,7 @@ This is how the \verb!a.xml! document will look after the update:
 
 \subsubsection*{Replace Statement}
 The \verb!REPLACE! statement is used to replace nodes in an XML document in the
-following manner: 
+following manner:
 
 \begin{verbatim}
 UPDATE
@@ -2839,7 +2839,7 @@ LOAD "path_to_file" "document_name"
 The first parameter is a path to the file which contains a document to be
 loaded. The second parameter is the name for this document in the database.
 
-To load document into a collection, use the following statement: 
+To load document into a collection, use the following statement:
 \begin{verbatim}
 LOAD "path_to_file" "document_name" "collection_name"
 \end{verbatim}
@@ -2904,7 +2904,7 @@ parameters are evaluated and atomized. If the atomized value is not of
 
 
 %===============================================================================
-%           Data Definition Language: Managing Standalone Documents 
+%           Data Definition Language: Managing Standalone Documents
 %===============================================================================
 \subsubsection{Managing Standalone Documents}
 \begin{verbatim}
@@ -2921,7 +2921,7 @@ DROP DOCUMENT doc-name-expr
 The \verb!DROP! \verb!DOCUMENT! statement drops the standalone document with the
 name that is the result of \verb!doc-name-expr!.
 
-For example, next statement: 
+For example, next statement:
 \begin{verbatim}}
 CREATE DOCUMENT "report"
 \end{verbatim}
@@ -2936,7 +2936,7 @@ section.
 
 
 %===============================================================================
-%             Data Definition Language: Managing Collections 
+%             Data Definition Language: Managing Collections
 %===============================================================================
 \subsubsection{Managing Collections}
 
@@ -2975,7 +2975,7 @@ To access a single document from collection in an XQuery or XML update query,
 the \verb!document! function accepts a collection name as its second optional
 argument:
 \begin{verbatim}
-doc($doc as xs:string, 
+doc($doc as xs:string,
     $col as xs:string) as document-node()
 \end{verbatim}
 The function returns the document with the \verb!$doc! name that belongs to the
@@ -3001,7 +3001,7 @@ CREATE DOCUMENT doc-name-expr IN COLLECTION coll-name-expr
 This statement creates a new document named \verb!doc-name-expr! in a collection
 named \verb!coll-name-expr!.
 
-For example, the following statement: 
+For example, the following statement:
 \begin{verbatim}
 CREATE DOCUMENT 'mail' IN COLLECTION 'mails='
 \end{verbatim}
@@ -3038,7 +3038,7 @@ section.
 
 
 %===============================================================================
-%             Data Definition Language: Managing Value Indices 
+%             Data Definition Language: Managing Value Indices
 %===============================================================================
 \subsubsection{Managing Value Indices}
 \label{sec:managing-value-indices}
@@ -3102,7 +3102,7 @@ the XQuery index-scan functions specified in section
 
 
 %===============================================================================
-%             Data Definition Language: Managing Value Indices 
+%             Data Definition Language: Managing Value Indices
 %===============================================================================
 \subsubsection{Managing Full-Text Indices}
 \label{sec:managing-ft-indices}
@@ -3165,7 +3165,7 @@ The example below illustrates the use of \verb!"customized-value"! type.
 \begin{verbatim}
 CREATE FULL-TEXT INDEX "messages"
 ON doc("foo")//message
-TYPE "customized-value" 
+TYPE "customized-value"
      (("b", "string-value"),
      ("a", "delimited-value"))
 \end{verbatim}
@@ -3186,7 +3186,7 @@ XQuery full-text search functions specified in section \ref{sec:ft-fun}.
 
 
 %===============================================================================
-%                Data Definition Language: Managing Modules 
+%                Data Definition Language: Managing Modules
 %===============================================================================
 \subsubsection{Managing Modules}
 XQuery allows putting functions in library modules, so that they can be shared
@@ -3265,7 +3265,7 @@ the system collection named \verb!$modules! as follows
 
 
 %===============================================================================
-%                Data Definition Language: Retrieving Metadata 
+%                Data Definition Language: Retrieving Metadata
 %===============================================================================
 \subsubsection{Retrieving Metadata}
 \label{managing-metadata}
@@ -3703,7 +3703,7 @@ you should set your own debug handler as it is shown in \ref{exec-capi} section.
 \label{debug-mode}
 
 In addition to trace facility provided by standard XQuery \verb!fn:trace!
-function (see previous section, \ref{trace} ) debug mode can be turned on in 
+function (see previous section, \ref{trace} ) debug mode can be turned on in
 Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's
 Administration Guide) or in your application using corresponding Sedna API
 functions (see \ref{session-option-capi} section).
@@ -3816,37 +3816,37 @@ local:fact(10)
     </arguments>
     <operation name="PPIf" position="2:5">
 
-      <operation name="PPLMGeneralComparison" 
+      <operation name="PPLMGeneralComparison"
                  comparison="le" position="2:12">
 
-        <operation name="PPVariable" descriptor="0" 
+        <operation name="PPVariable" descriptor="0"
                    variable-name="i" position="2:9"/>
 
-        <operation name="PPConst" type="xs:integer" 
+        <operation name="PPConst" type="xs:integer"
                    value="1" position="2:15"/>
       </operation>
-      <operation name="PPConst" type="xs:integer" 
+      <operation name="PPConst" type="xs:integer"
                  value="1" position="3:10"/>
 
       <operation name="PPCalculate" position="4:10">
         <operation name="BinaryOp" operation="*">
           <operation name="LeafAtomOp">
 
-            <operation name="PPVariable" descriptor="0" 
+            <operation name="PPVariable" descriptor="0"
                        variable-name="i" position="4:10"/>
           </operation>
 
           <operation name="LeafAtomOp">
-            <operation name="PPFunCall" id="0" 
+            <operation name="PPFunCall" id="0"
                        function-name="local:fact" position="4:15">
               <operation name="PPCalculate" position="4:26">
                 <operation name="BinaryOp" operation="-">
                   <operation name="LeafAtomOp">
-                    <operation name="PPVariable" descriptor="0" 
+                    <operation name="PPVariable" descriptor="0"
                                variable-name="i" position="4:26"/>
                   </operation>
                   <operation name="LeafAtomOp">
-                    <operation name="PPConst" type="xs:integer" 
+                    <operation name="PPConst" type="xs:integer"
                                value="1" position="4:31"/>
                   </operation>
                 </operation>
@@ -3855,17 +3855,17 @@ local:fact(10)
           </operation>
         </operation>
       </operation>
-    
+
     </operation>
   </function>
 </prolog>
 
 <query xmlns="http://www.modis.ispras.ru/sedna">
   <operation name="PPQueryRoot">
-    <operation name="PPFunCall" id="0" 
+    <operation name="PPFunCall" id="0"
                function-name="local:fact" position="7:1">
 
-      <operation name="PPConst" type="xs:integer" 
+      <operation name="PPConst" type="xs:integer"
                  value="10" position="7:12"/>
 
     </operation>
@@ -3888,7 +3888,7 @@ depending on the operation type (for example, variable name for some
 
 
 %===============================================================================
-%               Debug and Profile Facilities: Profile Query 
+%               Debug and Profile Facilities: Profile Query
 %===============================================================================
 \subsubsection{Profile Query}
 \label{profile}
@@ -3921,36 +3921,36 @@ profile fn:doc('TestSources/XMarkAuction.xml')//
 \small{
 \begin{alltt}
 <operation name="PPQueryRoot" time="13.426" calls="1">
-  <operation name="PPAxisChild" step="child::element(name)" 
+  <operation name="PPAxisChild" step="child::element(name)"
                                 time="13.426" calls="2">
     <operation name="PPReturn" time="13.426" calls="2">
-      
-      \emph{<operation name="PPAbsPath" root="document(auction)" 
-                                  path="descendant-or-self::node()" 
+
+      \emph{<operation name="PPAbsPath" root="document(auction)"
+                                  path="descendant-or-self::node()"
                                   time="12.772" calls="85405"/>}
-      
+
       <operation name="PPPred1" time="0.530" calls="85405">
-        
-        <operation name="PPAxisChild" step="child::element(person)" 
+
+        <operation name="PPAxisChild" step="child::element(person)"
                                       time="0.461" calls="86168">
-          <operation name="PPVariable" descr="0" 
+          <operation name="PPVariable" descr="0"
                      time="0.380" calls="170808"/>
         </operation>
-        
-        <operation name="PPEQLGeneralComparison" 
+
+        <operation name="PPEQLGeneralComparison"
                    comparison="eq" time="0.013" calls="1528">
 
-          <operation name="PPAxisAttribute" 
-                     step="attribute::attribute(id)" 
+          <operation name="PPAxisAttribute"
+                     step="attribute::attribute(id)"
                      time="0.001" calls="1527">
 
-            <operation name="PPVariable" descr="1" 
+            <operation name="PPVariable" descr="1"
                        time="0.001" calls="1527"/>
-                       
+
           </operation>
 
-          <operation name="PPConst" 
-                     type="xs:string" value="person0" 
+          <operation name="PPConst"
+                     type="xs:string" value="person0"
                      time="0.001" calls="1527"/>
 
         </operation>
@@ -3994,16 +3994,16 @@ profile fn:doc('TestSources/XMarkAuction.xml')/
 \begin{alltt}
 <operation name="PPQueryRoot" time="0.018" calls="1">
 
-  <operation name="PPAxisChild" step="child::element(name)" 
+  <operation name="PPAxisChild" step="child::element(name)"
                                 time="0.018" calls="2">
-  
+
     <operation name="PPReturn" time="0.018" calls="2">
       <produces>
         <variable descriptor="0"/>
       </produces>
 
-      \emph{<operation name="PPAbsPath" 
-                 root="document(auction)" 
+      \emph{<operation name="PPAbsPath"
+                 root="document(auction)"
                  path="child::element(site)/child::element(people)"
                  time="0.001" calls="2"/>}
 
@@ -4011,8 +4011,8 @@ profile fn:doc('TestSources/XMarkAuction.xml')/
         <produces>
           <variable descriptor="1"/>
         </produces>
-        
-        <operation name="PPAxisChild" step="child::element(person)" 
+
+        <operation name="PPAxisChild" step="child::element(person)"
                                       time="0.001" calls="765">
 
           <operation name="PPVariable" descr="0"
@@ -4021,14 +4021,14 @@ profile fn:doc('TestSources/XMarkAuction.xml')/
 
         <operation name="PPEQLGeneralComparison"
                    comparison="eq" time="0.013" calls="1528">
-                   
-          <operation name="PPAxisAttribute" 
-                     step="attribute::attribute(id)" 
+
+          <operation name="PPAxisAttribute"
+                     step="attribute::attribute(id)"
                      time="0.005" calls="1527">
 
-            <operation name="PPVariable" descr="1" 
+            <operation name="PPVariable" descr="1"
                        time="0.003" calls="1527"/>
-                       
+
           </operation>
           <operation name="PPConst"
                      type="xs:string" value="person0"

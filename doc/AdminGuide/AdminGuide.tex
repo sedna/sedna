@@ -17,7 +17,7 @@
 % Switch for between PDF and other formats to generate bookmarks,
 % pretty table of contents and set document's information in PDF
 \ifpdf
-  \usepackage[colorlinks=true, linkcolor=blue, 
+  \usepackage[colorlinks=true, linkcolor=blue,
               citecolor=blue, urlcolor=blue,
               pdftex,                %%% hyper-references for pdflatex
               bookmarks=true,        %%% generate bookmarks ...
@@ -127,7 +127,7 @@ SEDNA_INSTALL/doc       Sedna documentation
 SEDNA_INSTALL/driver    API drivers for various programming
                         languages
 SEDNA_INSTALL/include   include files
-SEDNA_INSTALL/etc       Sedna configure sample file 
+SEDNA_INSTALL/etc       Sedna configure sample file
                         sednaconf.xml.sample
 SEDNA_INSTALL/examples  example databases and applications for
                         the Sedna APIs
@@ -231,7 +231,7 @@ options:
 
 To stop Sedna, Administrator should use the \verb!se_stop! command. This command
 stops all Sedna components including all databases, which are run. Command has
-several optional parameters. 
+several optional parameters.
 
 The usage of the \verb!se_stop! command is as follows:
 
@@ -275,9 +275,9 @@ The file is an XML document, which satisfies the following DTD:
 
 \small{
 \begin{verbatim}
-<!ELEMENT sednaconf (sedna_data, os_primitives_id_min_bound, 
+<!ELEMENT sednaconf (sedna_data, os_primitives_id_min_bound,
                      listener_port, ping_port,
-                     event_log_level, keep_alive_timeout, 
+                     event_log_level, keep_alive_timeout,
                      session_stack_depth)>
 <!ELEMENT sedna_data (#PCDATA)>
 <!ELEMENT os_primitives_id_min_bound (#PCDATA)>
@@ -362,7 +362,7 @@ options:
   -version                    display product version and exit
   -data-file-max-size Mbs     the max size of data file (in Mb),
                               infinite size by default (0)
-  -tmp-file-max-size Mbs      the max size of tmp file (in Mb), 
+  -tmp-file-max-size Mbs      the max size of tmp file (in Mb),
                               infinite size by default (0)
   -data-file-ext-portion Mbs  the data file extending portion
                               size (in Mb), default 100Mb
@@ -375,7 +375,7 @@ options:
   -bufs-num N                 the number of buffers in main memory,
                               default 1600 (64Kb per buffer)
   -max-trs-num N              the number of concurrent micro
-                              transactions over database 
+                              transactions over database
                               (default 10)
   -upd-crt N                  update criterion parameter
                               (fraction of database), default 0.25
@@ -495,7 +495,7 @@ The configuration file is an XML document, which satisfies the following DTD:
 
 \small{
 \begin{verbatim}
-<!ELEMENT db (name, bufs_num, max_trs_num, upd_crt, 
+<!ELEMENT db (name, bufs_num, max_trs_num, upd_crt,
               tmp_file_initial_size)>
 <!ELEMENT name (#PCDATA)>
 <!ELEMENT bufs_num (#PCDATA)>
@@ -675,7 +675,7 @@ enables you to open a session to one of the Sedna database, type in queries
 interactively, issue them to the database and see the query results.
 Alternatively, input can be from a file, or a single query can be passed for
 execution as a command line parameter. In addition, it provides a number of
-meta-commands. 
+meta-commands.
 
 The usage of the \verb!se_term! is as follows:
 
@@ -690,7 +690,7 @@ options:
   -file filename      file with an XQuery query
   -output filename    output file (default stdout)
   -query "query"      XQuery query to execute
-  -echo on/off        display se_term output 
+  -echo on/off        display se_term output
                       (default: on for interactive mode,
                                 off for batch mode)
   -show-time on/off   show time of the latest query execution
@@ -819,7 +819,7 @@ details.
 
 \verb!TRANSACTION_READ_ONLY! \verb!(\ro for set, \upd for unset)! - transactions
 are run as \verb!READ-ONLY! when set. When unset, transactions are run as
-\verb!UPDATE!-transactions. By default transactions are run as \verb!UPDATE! - 
+\verb!UPDATE!-transactions. By default transactions are run as \verb!UPDATE! -
 transactions.
 
 \verb!LOG_LESS_MODE (\ll for set, \fl for unset)! - when set, every following
@@ -897,7 +897,7 @@ The parameter \verb!dbname! specifies the database in Sedna to export data from.
 The \verb!path! parameter specifies the directory to store files with exported
 data.
 
-\begin{note} 
+\begin{note}
 If the directory to which \verb!path! refers contains files that have the same
 names as the files created by \verb!se_exp! they will be replaced.
 \end{note}
@@ -1035,7 +1035,7 @@ options:
   -make-dir                    create directory if it doesn't exist
   -incr-mode <increment_mode>  increment mode (start, add, stop)
   -port port-number            port number to connect to Governor
-   
+
   dbname                       the name of the database
    path                        the name of the backup directory
 \end{verbatim}}
@@ -1060,7 +1060,7 @@ backups of the same database in the same directory, the older backup will be
 lost. \verb!-time-dir! option prevents this by creating subdirectory named with
 the current date-time within \verb!path! directory. In this case the destination
 of hot backup copy will be:
-\verb!<path>/backup-<dbname>-<current date>-<current time>/!. 
+\verb!<path>/backup-<dbname>-<current date>-<current time>/!.
 It is recommended that you use the \verb!-time-dir! option or provide a
 directory free of the previous backups.
 
@@ -1082,7 +1082,7 @@ explained below.
 
 \subsubsection*{Incremental Hot Backup}
 
-Let us assume that you have made hot backup using command like this 
+Let us assume that you have made hot backup using command like this
 \verb!se_hb mydb /backup!. If later you want to make another one to be sure
 updated data will be reflected in the backup copy, you can issue the same
 command. However, if the amount of changes is small, it is desirable to copy
@@ -1093,7 +1093,7 @@ First of all, you must create a primary copy, which is essentially the copy of
 the entire database. You can do it by specifying \verb!-incr-mode start! in
 command line (for example, \verb!se_hb -incr-mode start mydb /backup!). Then,
 when you need to make subsequent hot backups of the same database, you can
-specify \verb!-incr-mode add! in command line (for example, 
+specify \verb!-incr-mode add! in command line (for example,
 \verb!se_hb -incr-mode add mydb /backup!). If the amount of changes is small,
 such backup process will take much less time.
 
@@ -1117,8 +1117,8 @@ database is created.
 \end{note}
 
 If you make new primary copy (i.e. with the \verb!-incr-mode! \verb!start!
-option specified) while database is still in incremental mode, 
-\verb!-incr-mode add! option will archive increments valid only for this last 
+option specified) while database is still in incremental mode,
+\verb!-incr-mode add! option will archive increments valid only for this last
 primary copy. It is recommended that you periodically make new primary copy with
 \verb!-incr-mode start! option. Unless, of course, the database is rarely
 updated.
@@ -1343,7 +1343,7 @@ When created with \verb!-db-security authorization! option, a database contains
 a set of database users. Those users are separate from the users managed by the
 operating system on which Sedna runs. The primary function of the Sedna
 privilege system is to authenticate a user and to associate that user with
-privileges on a database object such as \verb!DROP!, \verb!CREATE! or 
+privileges on a database object such as \verb!DROP!, \verb!CREATE! or
 \verb!QUERY!. Users own database objects (for examples, document) and can
 assign privileges on those objects to other users.
 
@@ -1553,7 +1553,7 @@ To destroy a role, use \verb!DROP ROLE!:
 DROP ROLE "role-name"
 \end{verbatim}
 
-Role is automatically revoked from any user it was granted to. 
+Role is automatically revoked from any user it was granted to.
 
 
 %===============================================================================
@@ -1590,7 +1590,7 @@ GRANT "QUERY" ON DOCUMENT "auction" TO "Alice"
 \end{verbatim}
 
 grants \verb!QUERY! privilege on document \emph{auction} to the user with name
-\emph{Alice}. She will be able to perform any XQuery queries on this document. 
+\emph{Alice}. She will be able to perform any XQuery queries on this document.
 
 The key word \verb!PUBLIC! is used when the privileges are to be granted to all
 users, including those that may be created later. \verb!PUBLIC! may be thought
@@ -1614,7 +1614,7 @@ For example, the following statement:
 GRANT "LOAD" ON DATABASE TO "Alice"
 \end{verbatim}
 
-allows \emph{Alice} to perform bulk load into the database. 
+allows \emph{Alice} to perform bulk load into the database.
 
 To grant a role you must be allowed to grant every privilege of the role: to be
 owner of every database object of privileges of the role, or to be DBA user. To
@@ -1691,7 +1691,7 @@ the identity of the client and determines whether the client application (or the
 user who runs the client application) is permitted to connect with the user name
 that was requested.
 
-When created with \verb!-db-security authorization! or 
+When created with \verb!-db-security authorization! or
 \verb!-db-security authentication! option, database will check the user password
 on session open.
 
