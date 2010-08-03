@@ -1,520 +1,338 @@
 
-                              Release Notes
+                           Sedna XML Database
+                             Release Notes
+
+=============================================================================
+Release 3.3
+Release date: 2010-04-10
+=============================================================================
+
+   New:
+
+   - XQuery execution errors details significantly improved: Sedna reports
+     the location of runtime errors with both line and column number.
+   - Query Explain Statement - shows query execution plan of the query or
+     update statement.
+   - Query Profile Statement - executes query and shows profile information
+     for each operation in the query execution plan.
+   - Sedna Client/Server Protocol version 4: each returned item now has
+     XQuery Data Model type.
+   - Metadata system document '$modules' removed. Use collection '$modules'
+     instead to get names of all modules.
+   - Bug fixes, improvements like improved internal representation,
+     completely C/C++ source code.
+
+   Important note:
+
+   Databases created with previous versions of Sedna will not work properly
+   with Sedna 3.3. Please, use Sedna import/export utility to migrate your
+   data to Sedna 3.3 (see Sedna Administration Guide, section 2.5).
+
+=============================================================================
+Release 3.2
+Release date: 2009-06-30
+=============================================================================
+
+   New:
+
+   - Sedna Terminal has been significantly improved:
+
+       * Tab-completion for commands and queries (Linux, Mac OS, Solaris).
+       * Aliases for frequently used commands (e.g. \q instead of \quit).
+         For details type \set? in terminal.
+       * There is history now in Linux, Mac OS, Solaris, which is saved in
+         terminal user's home directory.
+
+   - SEDNA_LOG_AMMOUNT option for driver and corresponding \LOG_LESS_MODE
+     for terminal. These options allow severely reduced logical log size
+     during bulk-loads at the expense of longer commits.
+   - Added new option to stop Sedna. Use "se_stop -hard" command to rollback
+     all running transactions immediately.
+   - Full Support for Solaris (x86) operating system.
+   - Keep Alive Timeout option. It specifies number of seconds session waits
+     for the next request from the same client on the same connection.
+   - Two new options to tune logical log file size (-log-file-size) and
+     count (-max-log-files). This allows more control on recovery and logical
+     log size.
+   - C API library is now provided in multiple versions under Windows:
+     static /MT, static /MD and dynamic.
+   - Event Log severity level option. In OLTP-like applications it can be
+     turned off to get better performance.
+   - se:get-property() function added. Provides a facility to retrieve in
+     run-time current values of system parameters.
+   - CDB persistent heap options removed
+   - Bug fixes, internal improvements like new flex/bison based parser, etc.
+
+   Important note:
+
+   Databases created with previous versions of Sedna will not work properly
+   with Sedna 3.2. Please, use Sedna import/export utility to migrate your
+   data to Sedna 3.2 (see Sedna Administration Guide, section 2.5).
+
+=============================================================================
+Release 3.1
+Release date: 2008-08-28
+=============================================================================
+
+   New:
+
+   - Incremental hot backup
+   - Rename collection statement
+   - Bug fixes
+
+   Important note:
+
+   Databases created with previous versions of Sedna will not work properly
+   with Sedna 3.1. Please, use Sedna import/export utility to migrate your
+   data to Sedna 3.1 (see Sedna Administration Guide, section 2.5).
+
+=============================================================================
+Release 3.0
+Release date: 2008-04-15
+=============================================================================
+
+   New:
+
+   - Improved transaction management.
+       * Now you can define a transaction as read-only. Such a transaction
+         will not conflict with any other concurrent transactions.
+       * Physical logging based recovery used in the previous versions of
+         Sedna is now replaced with a new version-based recovery.
+
+   - Support for Mac OS 10.4 and higher (PPC/Intel)
+   - Query execution timeout. Allows to set the limit on transaction
+     execution time.
+   - Bug fixes
+
+   Important note:
+
+   Databases created with previous versions of Sedna will not work properly
+   with Sedna 3.0. Please, use Sedna import/export utility to migrate your
+   data to Sedna 3.0 (see Sedna Administration Guide, section 2.5).
+
+=============================================================================
+Release 2.2
+Release date: 2007-10-23
+=============================================================================
+
+  New:
+
+   - XQuery triggers. Sedna now provides support for triggers natively based
+     on XPath/XQuery and the Sedna XML update language (see Sedna
+     Programmer's Guide for the details);
+   - Improved diagnostic of dynamic errors in XQuery/update statements
+   - Root privileges are no longer necessary to run Sedna on Linux;
+   - Bug fixes:
+     * correct Sedna shut down on Windows restart
+     * every session process now needs significantly less memory when running
+   - Comprehensive testing now covers Red Hat Enterprise Linux 5.
+
+   Important note:
+
+   Databases created with previous versions of Sedna will not work properly
+   with Sedna 2.2. Please, use Sedna import/export utility to migrate your
+   data to Sedna 2.2 (see Sedna Administration Guide, section 2.5).
+
+=============================================================================
+Release 2.1
+Release date: 2007-07-10
+=============================================================================
+
+   New:
+
+   - Further indexes optimization.
+   - Further bulk load optimization.
+   - A lot of bug fixes and small improvments.
+
+   Note:
+
+   Use export utility (see Sedna Administration Guide) to
+   convert Sedna's 2.0 (or earlier) databases into Sedna 2.1 format.
+
+=============================================================================
+Release 2.0
+Release date: 2007-04-16
+=============================================================================
+
+   New:
+
+   - XQuery support now conforms to the XQuery specification. Sedna passes
+     "XML Query Test Suite (XQTS)" by W3C and has official "almost passed"
+     status. The detailed report can be found at
+     http://www.w3.org/XML/Query/test-suite/XQTSReport.html
+   - Optional XQuery features:
+     * Support for user-defined XQuery modules. Modules are stored at server
+       side as precompiled functions
+     * Full Axis (i.e. support for all XPath axes)
+   - XQuery debug facilities:
+     * support for standard fn:trace function
+     * facility to obtain stack trace in case of dynamic error
+   - Server configuration options are extended (e.g. you can configure
+     several instances of Sedna server to be running on a computer)
+
+  New third-party contributions:
+
+  - Sedna Admin GUI by GREaT team
+    http://sednaadmin.sf.net/
+  - Python API based on DBAPI 2.0 by Steve Howe
+    http://sourceforge.net/projects/sednapy
+  - PHP API by Nikolay Zavaritsky
+    (avaliable from Sedna download page)
+
+=============================================================================
+Release 1.0
+Release date: 2006-06-16
+=============================================================================
+
+   New:
+
+   - Bug fixes.
+   - XQuery extended with support for: date, time, duration functions; all
+     XPath axes; expressions on SequenceTypes (Instance Of, Typeswitch,
+     Castable, Treat), Order By.
+   - The XQuery functions position(), last() are optimized.
+   - Recovery.
+   - Event Log.
+   - Backup and Restore Utilities.
+   - Integration with dtSearch (http://www.dtsearch.com), a commercial text
+     retrieval engine (not included in the distributive, please contact us
+     to get information on how to use Sedna with dtSearch).
+
+  OmniMark API:
+
+     We are pleased to announce that new version of OmniMark 8 now supports
+     Sedna. Please find release notes here:
+     http://www.stilo.com/products/platformv8.html. Documentation can be
+     found here: http://ftp.omnimark.com/documentation/library/63.htm .
+
+=============================================================================
+Release 0.5
+Release date: 2005-09-27
+=============================================================================
+
+   New:
+
+   - Support for transactions (rollback and concurrency control).
+   - Support for database security (users and privileges).
+   - Support for Unicode (utf8).
+   - Support for XQuery external functions implemented in C.
+     (limited to deal with sequences of atomic values only).
+   - Directory structure and file names changed according to "Filesystem
+     Hierarchy Standard" (http://www.pathname.com/fhs/pub/fhs-2.3.html).
+   - Support for the following standard XQuery functions is added:
+     fn:string, fn:string-length, fn:concat, fn:data.
+   - Update language is extended with the replace statement.
+   - Parameters of DDL statements are now computable.
+   - No limitation on the size of an XQuery query.
+   - Sedna API driver for the Gambit-C implementation of Scheme.
+   - Sedna package for Alt Linux is now availible at
+     http://altlinux.org/index.php?module=sisyphus&package=sedna
+    (the package includes the previous version 0.4) .
+   - Bug fixes.
+
+   New contributions:
+
+   - Sedna API driver for .Net (Thanks to John Wood).
+   - Sedna API driver for Python (Thanks to Anton Akkuzin).
+   - Sedna API driver for Chicken Scheme is packaged as an egg.
+     (Thanks to Felix Winkelmann)
+
+=============================================================================
+Release 0.4
+Release date: 2005-04-26
+=============================================================================
+
+   New:
+
+   - Support for value indices based on B-tree.
+   - Support for regular expressions (based on PCRE-library) for processing
+     structured textual data that are not marked up.
+   - Support for SQL connection from XQuery.
+   - Apache HTTP server module for Sedna.
+   - Terminal utility to work with Sedna interactively.
+   - Source code distributive for Linux is now independent of binary
+     libraries.
+
+=============================================================================
+Release 0.3.1
+Release date: 2005-02-25
+=============================================================================
+
+   New:
+
+   - Listener is now a part of Governor.
+   - Bug fixes.
+
+=============================================================================
+Release 0.3
+Release date: 2005-01-28
+=============================================================================
+
+   New:
+
+      - Support for Linux platform.
+      - Support for document collections (that allows effective querying over
+        a large collection of similar XML documents).
+      - XQuery support extensions: XML namespaces, user-defined XQuery
+        functions.
+      - C API for application development.
+
+=============================================================================
+Release 0.2
+Release date: 2004-06-10
+=============================================================================
+
+   New:
+      - Java API and Scheme API for application development
+      - Open and fully specified client/server protocol over sockets that
+        allows easily implementing APIs for other programming languages
+      - Many bugfixes
+      - Good performance improvement
+      - XQuery support extensions: node comparisons (<<,>>,is), fn:contains
+      - A data definition language that allows creating/droping XML
+        documents, printing the names of the documents stored in database,
+        printing descriptive schema of XML documents.
+
+   Please, notice that using the client/server protocol you can easily
+   implement APIs for your favorite programming language. We will be happy
+   to support you in doing this.
+
+=============================================================================
+Release 0.1
+Release date: 2004-04-12
+=============================================================================
+
+   Sedna is a native XML DBMS implemented from scratch in C/C++ and Scheme.
+   It is designed having the following main goals in mind:
+
+   1) support for all traditional DBMS features (such as update and query
+      languages, query optimization, fine-grain concurrency control, various
+      indexing techniques, recovery and security);
+   2) efficient support for unlimited volumes of document-centric and
+      data-centric XML documents that may have a complex and irregular
+      structure;
+   3) support for the W3C XQuery language in such a way that the system can
+      be efficiently used for solving problems from different domains such as
+      XML data querying, XML data transformations and even business logic
+      computation (in this case XQuery is regarded as a general-purpose
+      functional programming language);
+
+   The first release of Sedna 0.1 is a ready-to-use system that provides the
+   following fundamental features:
+
+   - Support for the W3C XQuery language (partial support for the latest
+     working drafts of 12 November 2003).
+   - Support for a declarative update language (it is based on the XQuery
+     update proposal by Patrick Lehti).
+   - Native XML data storage structures designed for efficient support for
+     XQuery and its data model (no underlying relational or another DBMS).
+     The XML data storage is based on descriptive schema (also called
+     DataGuide).
+   - Administration via easy-to-use command line utilities.
+   - Supplied with extensive documentation including Quick Start.
+
+   Sedna is available for free for commercial and non-commercial usage.
+
+   Have a look at our web site:  http://www.modis.ispras.ru/sedna and
+   download Sedna.
 
-     _________________________________________________________________
-
-                             Release 3.3
-
-     Release date: 2010-04-10
-     _________________________________________________________________
-
-New:
-
-- XQuery execution errors details significantly improved: Sedna reports
-  the location of runtime errors with both line and column number.
-- Query Explain Statement - shows query execution plan of the query or
-  update statement.
-- Query Profile Statement - executes query and shows profile information
-  for each operation in the query execution plan.
-- Sedna Client/Server Protocol version 4: each returned item now has 
-  XQuery Data Model type.
-- Metadata system document '$modules' removed. Use collection '$modules'
-  instead to get names of all modules.  
-- Bug fixes, improvements like improved internal representation, 
-  completely C/C++ source code.
-Important note: 
-
-Databases created with previous versions of Sedna will not work properly
-with Sedna 3.3. Please, use Sedna import/export utility to migrate your 
-data to Sedna 3.3 (see Sedna Administration Guide, section 2.5).
-
-     
-     _________________________________________________________________
-
-                             Release 3.2
-
-     Release date: 2009-06-30
-     _________________________________________________________________
-
-New:
-
-- Sedna Terminal has been significantly improved:
-
-    * Tab-completion for commands and queries (Linux, Mac OS, Solaris).
-    * Aliases for frequently used commands (e.g. \q instead of \quit). 
-      For details type \set? in terminal.
-    * There is history now in Linux, Mac OS, Solaris, which is saved in 
-      terminal user's home directory.
-
-- SEDNA_LOG_AMMOUNT option for driver and corresponding \LOG_LESS_MODE 
-  for terminal. These options allow severely reduced logical log size 
-  during bulk-loads at the expense of longer commits.
-- Added new option to stop Sedna. Use "se_stop -hard" command to rollback 
-  all running transactions immediately.
-- Full Support for Solaris (x86) operating system.
-- Keep Alive Timeout option. It specifies number of seconds session waits 
-  for the next request from the same client on the same connection.
-- Two new options to tune logical log file size (-log-file-size) and 
-  count (-max-log-files). This allows more control on recovery and logical
-  log size.
-- C API library is now provided in multiple versions under Windows: 
-  static /MT, static /MD and dynamic.
-- Event Log severity level option. In OLTP-like applications it can be 
-  turned off to get better performance.
-- se:get-property() function added. Provides a facility to retrieve in 
-  run-time current values of system parameters.
-- CDB persistent heap options removed
-- Bug fixes, internal improvements like new flex/bison based parser, etc. 
-
-Important note: 
-
-Databases created with previous versions of Sedna will not work properly
-with Sedna 3.2. Please, use Sedna import/export utility to migrate your 
-data to Sedna 3.2 (see Sedna Administration Guide, section 2.5).
-
-     
-     _________________________________________________________________
-
-                             Release 3.1
-
-     Release date: 2008-08-28
-     _________________________________________________________________
-
-New:
-
-- Incremental hot backup
-- Rename collection 
-- Bug fixes
-
-Important note: 
-
-Databases created with previous versions of Sedna will not work 
-properly with Sedna 3.1. Please, use Sedna import/export utility to migrate your 
-data to Sedna 3.1 (see Sedna Administration Guide, section 2.5).
-
-
-     _________________________________________________________________
-
-                             Release 3.0
-
-     Release date: 2008-04-15
-     _________________________________________________________________
-
-New:
-
-- Improved transaction management. 
-    * Now you can define a transaction as read-only. Such a transaction 
-      will not conflict with any other concurrent transactions.
-    * Physical logging based recovery used in the previous versions of 
-      Sedna is now replaced with a new version-based recovery. 
-
-- Support for Mac OS 10.4 and higher (PPC/Intel)
-- Query execution timeout. Allows to set the limit on transaction execution time.
-- Bug fixes
-
-Important note: 
-
-Databases created with previous versions of Sedna will not work 
-properly with Sedna 3.0. Please, use Sedna import/export utility to migrate your 
-data to Sedna 3.0 (see Sedna Administration Guide, section 2.5).
-
-
-     _________________________________________________________________
-
-                             Release 2.2
-
-     Release date: 2007-10-23
-     _________________________________________________________________
-
-New (since the previous release 2.1):
-- XQuery triggers
-  * Sedna now provides support for triggers natively based on XPath/XQuery and
-    the Sedna XML update language (see Sedna Programmer's Guide for details)
-
-- Improved diagnostic of dynamic errors in XQuery/update statements
-
-- Root privileges are no longer necessary to run Sedna on Linux;
-
-- Bug fixes:
-  * correct Sedna shut down on Windows restart
-  * every session process now needs significantly less memory when running
-
-- Comprehensive testing now covers Red Hat Enterprise Linux 5.
-
-Important note: Databases created with previous versions of Sedna will not work 
-properly with Sedna 2.2. Please, use Sedna import/export utility to migrate your 
-data to Sedna 2.2 (see Sedna Administration Guide, section 2.5).
-
-
-     _________________________________________________________________
-
-                             Release 2.1
-
-     Release date: 2007-07-10
-     _________________________________________________________________
-
-New:
-- Further indexes optimization;
-- Further bulk load optimization;
-- A lot of bug fixes and small improvments.
-
-Note: Use export utility (see Sedna Administration Guide) to
-convert Sedna's 2.0 (or earlier) databases into Sedna 2.1 format. 
-
-
-     _________________________________________________________________
-
-                             Release 2.0
-
-     Release date: 2007-04-16
-     _________________________________________________________________
-
-New:
-- XQuery support now conforms to the XQuery specification. Sedna passes 
-  "XML Query Test Suite (XQTS)" by W3C and has official "almost passed" status. 
-  The detailed report can be found at 
-  http://www.w3.org/XML/Query/test-suite/XQTSReport.html
-- Optional XQuery features:
-    * Support for user-defined XQuery modules. Modules are stored at server side
-      as precompiled functions 
-    * Full Axis (i.e. support for all XPath axes)
-- XQuery debug facilities:
-    * support for standard fn:trace function
-    * facility to obtain stack trace in case of dynamic error
-- Server configuration options are extended (e.g. you can configure several 
-  instances of Sedna server to be running on a computer)
-
-New third-party contributions:
-- Sedna Admin GUI by GREaT team
-http://sednaadmin.sf.net/
-- Python API based on DBAPI 2.0 by Steve Howe
-http://sourceforge.net/projects/sednapy
-- PHP API by Nikolay Zavaritsky
-(avaliable from Sedna download page)
-
-
-     _________________________________________________________________
-
-                             Release 1.0
-
-     Release date: 2006-06-16
-     _________________________________________________________________
-
-New:
-- Bug fixes 
-- XQuery extended with support for: date, time, duration functions; all 
-  XPath axes; expressions on SequenceTypes (Instance Of, Typeswitch, 
-  Castable, Treat), Order By
-- The XQuery functions position(), last() are optimized
-- Recovery
-- Event Log
-- Backup and Restore Utilities
-- Integration with dtSearch (http://www.dtsearch.com), a commercial text 
-  retrieval engine (not included in the distributive, please contact us 
-  to get information on how to use Sedna with dtSearch)
-
-
-     _________________________________________________________________
-
-                             OmniMark API 
-
-     Release date: 2006-01-12
-     _________________________________________________________________
-
-we are pleased to announce that new version of OmniMark 8 now supports Sedna.
-
-Please find release notes here:
-http://www.stilo.com/products/platformv8.html
-
-Documentation can be found here:
-http://ftp.omnimark.com/documentation/library/63.htm
-
-     _________________________________________________________________
-
-                             Release 0.5 
-
-     Release date: 2005-09-27
-     _________________________________________________________________
-
-New:
-- Support for transactions (rollback and concurrency control)
-- Support for database security (users and privileges)
-- Support for Unicode (utf8)
-- Support for XQuery external functions implemented in C 
-  (limited to deal with sequences of atomic values only)
-- Directory structure and file names changed according to "Filesystem 
-Hierarchy Standard" (http://www.pathname.com/fhs/pub/fhs-2.3.html).
-- Support for the following standard XQuery functions is added: 
-fn:string, fn:string-length, fn:concat, fn:data
-- Update language is extended with the replace statement
-- Parameters of DDL statements are now computable
-- No limitation on the size of an XQuery query
-- Sedna API driver for the Gambit-C implementation of Scheme
-- Sedna package for Alt Linux is now availible at 
-http://altlinux.org/index.php?module=sisyphus&package=sedna
-(the package includes the previous version 0.4) 
-- Bug fixes
-
-New contributions:
-- Sedna API driver for .Net (Thanks to John Wood)
-- Sedna API driver for Python (Thanks to Anton Akkuzin)
-- Sedna API driver for Chicken Scheme is packaged as an egg (Thanks to Felix
-Winkelmann)
-
-     _________________________________________________________________
-
-             Stable shapshot of version 0.5 being developed
-
-     Release date: 2005-05-31
-
-     _________________________________________________________________
-
-New:
-- Bug fixes
-- Directory structure and file names changed according to "Filesystem 
-Hierarchy Standard" (http://www.pathname.com/fhs/pub/fhs-2.3.html)
-
-     _________________________________________________________________
-
-                               Release 0.4
-
-     Release date: 2005-04-26
-
-     _________________________________________________________________
-
-New:
-- Support for value indices based on B-tree
-- Support for regular expressions (based on PCRE-library) for processing
-structured textual data that are not marked up
-- Support for SQL connection from XQuery
-- Apache HTTP server module for Sedna
-- Terminal utility to work with Sedna interactively
-- Source code distributive for Linux is now independent of binary libraries
-
-
-Features:
-- Available for free in open source form under Apache License 2.0
-- Native XML DBMS implemented from scratch in C/C++ and Scheme
-- Support for the W3C XQuery language (partial support for the latest
-working drafts of 4th April 2005)
-- Support for a declarative update language
-- Native XML data storage structures designed for efficient support for both
-queries and updates (no underlying relational or another DBMS). The XML data
-storage is based on descriptive schema (derived from data, also called
-DataGuide)
-- Efficient support for stand-alone XML documents with arbitrary structures
-and collections of XML documents with similar structures
-- Structural indices (based on descriptive schema) and value indices (based
-on B-tree)
-- Support for regular expressions (based on PCRE-library) for processing
-structured textual data that are not marked up
-- Support for SQL connection from XQuery
-- Java API, Scheme API and C API for application development
-- Open client/server protocol over sockets that allows implementing APIs for
-other programming languages
-- Integration with Apache HTTP server (via Apache module)
-- Administration via easy-to-use command line utilities
-- Supplied with extensive documentation including Quick Start
-- Support for Windows and Linux platforms
-
-Please, notice that using the client/server protocol you can easily
-implement APIs for your favorite programming language. We will be happy to
-support you in doing this.
-
-Sedna version 0.4, documentation, benchmarks, papers, etc. can be found at
-http://www.modis.ispras.ru/Development/sedna.htm
-
-     _________________________________________________________________
-
-                               Release 0.3.1
-
-     Release date: 2005-02-25
-
-     _________________________________________________________________
-
-New:
-- Listener is now a part of Governor
-- Bug fixes
-
-     _________________________________________________________________
-
-                               Release 0.3
-
-     Release date: 2005-01-28
-
-     _________________________________________________________________
-
-New: 
-- Support for Linux platform
-- Support for document collections (that allows effective querying over a 
-large collection of similar XML documents)
-- XQuery support extensions: XML namespaces, user-defined XQuery functions
-- C API for application development
-
-Features:
-- Available for free in open source form under Apache License 2.0
-- Native XML DBMS implemented from scratch in C/C++ and Scheme
-- Support for the W3C XQuery language (partial support for the latest
-working drafts of 29th October 2004)
-- Support for a declarative update language
-- Native XML data storage structures designed for efficient support for 
-both queries and updates (no underlying relational or another DBMS). 
-The XML data storage is based on descriptive schema (derived from data, also 
-called DataGuide)
-- Efficient support for stand-alone XML documents with arbitrary structures
-and collections of XML documents with similar structures
-- Java API, Scheme API and C API for application development
-- Open client/server protocol over sockets that allows implementing APIs 
-for other programming languages
-- A data definition language that allows creating/droping XML documents and
-collections, printing the names of the documents stored in database, printing
-the descriptive schema of XML documents.
-- Administration via easy-to-use command line utilities
-- Supplied with extensive documentation including Quick Start
-- Support for Windows and Linux platforms
-
-Please, notice that using the client/server protocol you can easily implement 
-APIs for your favorite programming language. We will be happy to support you 
-in doing this.
-
-Sedna version 0.3, documentation, benchmarks, papers, etc. can be found at 
-http://www.modis.ispras.ru/Development/sedna.htm
-
-     _________________________________________________________________
-
-                           Open Source Release 
-
-     Release date: 2004-11-18
-
-     _________________________________________________________________
-
-Sedna XML DBMS is now available in source code under Apache License 2.0. 
-You can find the source code and build of the currently developed version 0.3 
-from http://www.modis.ispras.ru/Development/sedna.htm. Please note that 
-the build is unstable and we do not recommend to use it in production projects,
-for benchmarking Sedna, etc.
-
-Going free and open source with Sedna, we aim at getting more people involved 
-in using Sedna, giving us feedback and contributing to the actual development 
-of the code and documentation. Everybody's input is welcome!
-
-Features under development are: 
-- Support for Linux
-- Document collections (that allows effective querying over a large collection 
-  of similar XML documents)
-- XQuery support extensions: user-defined XQuery functions
-- XML namespaces 
-- Database Security 
-- C API
-- Unicode
-- Regular Expression Library for XQuery
-- XQuery library for querying relational databases in SQL
-- ACID Transactions and Recovery
-
-Features:
-- Available for free in open source form
-- Native XML DBMS implemented from scratch in C/C++ and Scheme
-- Support for the W3C XQuery language (partial support for the latest
-working drafts of 29th October 2004)
-- Support for a declarative update language
-- Native XML data storage structures designed for efficient support for both 
-  queries and updates (no underlying relational or another DBMS). The XML 
-  data storage is based on descriptive schema (derived from data, 
-  also called DataGuide)
-- Efficient support for stand-alone XML documents with arbitrary structures 
-  and collections of XML documents with similar structures
-- Java API and Scheme API for application development
-- Open client/server protocol over sockets that allows implementing APIs 
-  for other programming languages
-- A data definition language that allows creating/droping XML documents and 
-  collections, printing the names of the documents stored in database, 
-  printing the descriptive schema of XML documents.
-- Administration via easy-to-use command line utilities
-- Supplied with extensive documentation including Quick Start
-
-Please, notice that using the client/server protocol you can easily implement 
-APIs for your favorite programming language. We will be happy to support you 
-in doing this.
-
-     _________________________________________________________________
-
-                               Release 0.2
-
-     Release date: 2004-06-10 
-
-     _________________________________________________________________
-
-New:
-- Java API and Scheme API for application development
-- Open and fully specified client/server protocol over sockets that allows 
-  easily implementing APIs for other programming languages
-- Many bugfixes
-- Good performance improvement
-  (see our benchmark page with versions performance comparison:
-  http://www.modis.ispras.ru/Development/Benchmarks/sedna_benchmark.htm)
-- XQuery support extensions: node comparisons (<<,>>,is), fn:contains
-- A data definition language that allows creating/droping XML documents, 
-  printing the names of the documents stored in database, printing descriptive 
-  schema of XML documents.
-
-Please, notice that using the client/server protocol you can easily
-implement APIs for your favorite programming language. We will be happy 
-to support you in doing this.
-
-Features:
-- Available for free for commercial and non-commercial usage.
-- Native XML DBMS implemented from scratch in C/C++ and Scheme
-- Support for the W3C XQuery language (partial support for the latest
-  working drafts of 12 November 2003)
-- Support for a declarative update language
-- Native XML data storage structures designed for efficient support for both 
-  queries and updates (no underlying relational or another DBMS). The XML data
-  storage is based on descriptive schema (derived from data, also called 
-  DataGuide) 
-- Java API and Scheme API for application development
-- Open client/server protocol over sockets that allows implementing APIs for 
-  other programming languages
-- Administration via easy-to-use command line utilities
-- Supplied with extensive documentation including Quick Start
-
-Sedna version 0.2, documentation, benchmarks, papers are available at
-http://www.modis.ispras.ru/Development/sedna.htm
-
-     _________________________________________________________________
-
-                               Release 0.1
-
-     Release date: 2004-04-12 
-     _________________________________________________________________
-
-
-Sedna is a native XML DBMS implemented from scratch in C/C++ and Scheme. It
-is designed having the following main goals in mind:
-1) support for all traditional DBMS features (such as update and query
-languages, query optimization, fine-grain concurrency control, various
-indexing techniques, recovery and security)
-2) efficient support for unlimited volumes of document-centric and
-data-centric XML documents that may have a complex and irregular structure
-3) support for the W3C XQuery language in such a way that the system can be
-efficiently used for solving problems from different domains such as XML
-data querying, XML data transformations and even business logic computation
-(in this case XQuery is regarded as a general-purpose functional programming
-language)
-
-The first release of Sedna v0.1 is a ready-to-use system that provides the
-following fundamental features:
-- Support for the W3C XQuery language (partial support for the latest
-  working drafts of 12 November 2003)
-- Support for a declarative update language (it is based on the XQuery
-  update proposal by Patrick Lehti)
-- Native XML data storage structures designed for efficient support for
-  XQuery and its data model
-  (no underlying relational or another DBMS). The XML data storage is based 
-  on descriptive schema (also called DataGuide)
-- Administration via easy-to-use command line utilities
-- Supplied with extensive documentation including Quick Start
-
-Sedna is available for free for commercial and non-commercial usage.
-
-Have a look at our web site
-(http://www.modis.ispras.ru/Development/sedna.htm) and download Sedna.

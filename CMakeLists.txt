@@ -286,7 +286,7 @@ endif ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
 
 install(FILES "include/sedna_ef.h" DESTINATION include)
 install(FILES "share/sedna_auth_md.xml" DESTINATION share)
-install(FILES AUTHORS COPYRIGHT HISTORY LICENSE README DESTINATION .)
+install(FILES AUTHORS COPYRIGHT HISTORY LICENSE README INSTALL DESTINATION .)
 
 # data and cfg dirtectories
 install(DIRECTORY DESTINATION data)

@@ -83,7 +83,7 @@ CONTENTS
 2. QUICK BUILD HOW-TO
 =============================================================================
 
-   - Install CMake 2.4 or higher (http://cmake.org). Refer also to the
+   - Install CMake 2.6 or higher (http://cmake.org). Refer also to the
      documentation of your OS distribution for the details on how to
      install CMake.
 
@@ -98,7 +98,7 @@ CONTENTS
      one separate folder.
      For example: -DCMAKE_INSTALL_PREFIX=/usr/local/sedna
      will install Sedna binaries tree into /usr/local/sedna. Path should
-     not contain wide non-ASCII symbols.
+     not contain non-ASCII symbols.
 
      [On Unix]:
         cd SEDNA_SOURCES
@@ -142,10 +142,10 @@ CONTENTS
    It's expected to build and run on the following platforms:
 
    1. Microsoft Windows 2000 and higher
-   2. Linux 2.6
+   2. Linux (kernel 2.6)
    3. Mac OS X
    4. FreeBSD
-   5. Solaris 10
+   5. Solaris
 
    To build Sedna from sources you need to download and extract sources
    package for your platform from our site: http://modis.ispras.ru/sedna.
@@ -250,7 +250,7 @@ CONTENTS
           separate folder.
           For example: -DCMAKE_INSTALL_PREFIX=/usr/local/sedna will
           install Sedna binaries tree into /usr/local/sedna. Path should not
-          contain wide non-ASCII symbols.
+          contain non-ASCII symbols.
 
      * EL_DEBUG - Set value to 'ON' if you want to turn on all Sedna debug
           printings.
@@ -269,17 +269,18 @@ CONTENTS
           value on Unix-like OS is 'Libedit'. On Windows - 'None', other
           options are ignored on Windows.
 
-          Libedit (or Readline) greatly increases the usability of se_term.
-          It adds all of the standard functionality of the GNU Readline
-          library to the se_term command line, such as being able to easily
-          modify, edit, and retrieve command-history information with the
-          arrow keys.
+          Libedit (or readline itself) greatly increases the usability of
+          se_term. It adds all of the standard functionality of the GNU
+          Readline library to the se_term command line, such as being able to
+          easily modify, edit, and retrieve command-history information with
+          the arrow keys.
 
           Note, you may need to install either libtermcap, libcurses or
           libncurses package (depending on exact OS type) to build Sedna with
-          libedit support or readline support. In some cases (e.g. Debian,
-          Ubuntu) you have to install libtermcap, libcurses or libncurses
-          development package as well.
+          libedit or readline support. In some cases (e.g. Debian, Ubuntu)
+          you have to install libtermcap, libcurses or libncurses development
+          package as well. Also you may need to install readline or libedit
+          development headers on some platforms.
 
      * JAVA_DRIVER - Compiles Java driver. Set value to 'OFF' if you don't
           need java driver. If want to build java driver make sure that
@@ -314,7 +315,7 @@ CONTENTS
    - Note, it's recommended to install all Sedna files into one separate
      folder. For example, use -DCMAKE_INSTALL_PREFIX=/usr/local/sedna
      configuration parameter to install Sedna binaries tree into
-     /usr/local/sedna. Path should not contain wide non-ASCII symbols.
+     /usr/local/sedna. Path should not contain non-ASCII symbols.
 
    - You may need to perform additional post installation steps depending on
      your requirements and OS you run Sedna on. Please check "Post
