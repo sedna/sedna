@@ -11,7 +11,7 @@
 #include "common/u/uhdd.h"
 #include "tr/log/log.h"
 #include "tr/cat/catenum.h"
-#include "tr/crmutils/node_utils.h"
+#include "tr/structures/nodeutils.h"
 
 #ifndef _WIN32
 #include <sys/types.h>
@@ -337,7 +337,7 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 	{
 		xptr blk= getNonemptyBlockLookFore(sobj[i]->bblk);
 		if (blk != XNULL) {
-			start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
+			start_nodes.push_back(getFirstBlockNode(blk));
 		}
 	}
 

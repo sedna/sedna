@@ -8,6 +8,7 @@
 #include "tr/ft/FTsearch.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/tr_globals.h"
+#include "tr/structures/nodeutils.h"
 
 #define DTSEARCH_THREAD_STACK_SIZE (1024*1024)
 
@@ -455,8 +456,9 @@ void SednaSearchJobBase::set_file_cond_for_node(tuple_cell& node)
 {
 	char buf[64];
 
-	CHECKP(node.get_node());
-	SednaDataSource::recordToFilename(buf,((n_dsc*)XADDR(node.get_node()))->indir);
+	Node nd = node.get_node();
+	nd.checkp();
+	SednaDataSource::recordToFilename(buf,nd.getIndirection());
 	std::string fc = std::string("xfilter(name \"") + buf + "\")";
 	int len = fc.length();
 	if (this->file_cond)
