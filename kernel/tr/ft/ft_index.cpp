@@ -120,7 +120,7 @@ static void p_end(void *state, const char *el)
 static void process_word(struct ft_parse_data *parse_data)
 {
 	parse_data->word_buf[parse_data->word_len] = 0;
-	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind, parse_data->op == ft_insert);
+	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
 }
 
 //assumes that s contains full characters (i.e. multibyte chars are not splited between calls)
@@ -173,10 +173,8 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct Ft
 	parse_data->word_ind = 0;
 	parse_data->overfl = false;
 	parse_data->cur_idx = ftc_idx;
-	if (op == ft_insert)
-		parse_data->cur_doc = ftc_add_new_doc(ftc_idx, acc);
-	else
-		parse_data->cur_doc = ftc_get_doc(ftc_idx, acc);
+	U_ASSERT(op == ft_insert);
+	parse_data->cur_doc = ftc_get_doc(ftc_idx, acc);
 	parse_data->op = op;
 
 	XML_SetUserData(p, parse_data);
@@ -210,10 +208,16 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct Ft
 	XML_ParserFree(p);
 }
 
+void ft_index_delete_doc(ftc_index_t ftc_idx, xptr acc)
+{
+	ftc_del_doc(ftc_idx, acc);
+}
+
 #include "tr/idx/indexes.h"
 
 void ft_idx_delete(struct FtsData *ft_data)
 {
-	bt_drop(ft_data->btree_root);
+	for (int i = 0; i < ft_data->npartitions; i++)
+		ft_delete_partition(&ft_data->partitions[i]);
 }
 

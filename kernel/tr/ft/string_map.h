@@ -50,7 +50,7 @@ public:
 	inline char* deref(ptr_t ptr) const { return (char*)ptr; }
 	void release()
 	{
-		for (int i = 0; i < pind; i++)
+		for (int i = 0; i <= pind; i++)
 			free(ptrs[i]);
 		pind = -1;
 		cursize = 0;

@@ -8,5 +8,71 @@
 
 void fts_create(struct FtsData *data)
 {
-	data->btree_root = bt_create(xs_string);
+	data->npartitions = 0;
+}
+
+void FtsUpdater::begin_update(struct FtsData *_fts_data)
+{
+	fts_data = _fts_data;
+	pb.create_new();
+}
+
+void FtsUpdater::end_update(struct FtsData *dest)
+{
+	ft_partition_data pdata;
+	pb.finalize(&pdata);
+
+	if (dest->npartitions == 0)
+	{
+		dest->npartitions = 1;
+		dest->partitions[0] = pdata;
+		return;
+	}
+
+	if (dest->npartitions == FTS_MAX_PARTITIONS || dest->partitions[dest->npartitions-1].sblob_size < 2*pdata.sblob_size)
+	{
+		//merge some partitions
+		int mergeto = dest->npartitions-1; //first partition that will be merged (and also the one that will be replaced with merge result)
+		int64_t cur_sz = pdata.sblob_size + dest->partitions[mergeto].sblob_size;
+		while (mergeto > 0)
+		{
+			//see if next partition is too big to be merged now
+			if (dest->partitions[mergeto-1].sblob_size > 2*cur_sz)
+				break;
+			mergeto--;
+			cur_sz += dest->partitions[mergeto].sblob_size;
+		}
+
+		//now merge partitions from mergeto to dest->npartitions and pdata to one partition
+		const int nmerge = 1+dest->npartitions-mergeto;
+		ft_partition_data *p = new ft_partition_data[nmerge];
+		for (int i = 0; i < nmerge-1; i++)
+			p[i] = dest->partitions[i+mergeto];
+		p[nmerge-1] = pdata;
+
+#ifdef EL_DEBUG
+		d_printf2("will merge %d partitions with sizes: ", nmerge);
+		for (int i = 0; i < nmerge; i++)
+			d_printf2("%dM, ", (int)(p[i].sblob_size/1024/1024));
+		d_printf1("\n");
+#endif
+
+		FtPartitionScanner s;
+		s.init(p, nmerge);
+		//FIXME: some disk space can be saved if partitions are deleted during merge
+		s.merge(&dest->partitions[mergeto], mergeto > 0);
+		dest->npartitions = mergeto+1;
+		for (int i = 0; i < nmerge; i++)
+			ft_delete_partition(&p[i]);
+		delete[] p;
+#ifdef EL_DEBUG
+		d_printf2("merge done, resulting size: %dM\n", (int)(dest->partitions[mergeto].sblob_size/1024/1024));
+#endif
+	}
+	else
+	{
+		//don't merge anything
+		dest->npartitions++;
+		dest->partitions[dest->npartitions-1] = pdata;
+	}
 }

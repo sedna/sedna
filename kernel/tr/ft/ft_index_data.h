@@ -21,12 +21,13 @@
 
 struct PathExpr;
 
+/*
 struct doc_parser
 {
 	string_consumer_fn fn;
 	void* p;
 	doc_parser(string_consumer_fn _fn,void* _p): fn(_fn),p(_p){};
-};
+};*/
 
 void delete_ft_custom_tree(ft_custom_tree_t * custom_tree);
 void delete_cust_rules_vector(ft_index_template_t* &v);
@@ -109,6 +110,7 @@ struct ft_index_cell_object : public catalog_object
 
 	void update_index(update_history *h);
 
+	/*
 	void init_serial_tree();
 	void destroy_serial_tree();
 	doc_serial_header serial_put (xptr& node, xptr& node_indir, op_str_buf& tbuf);
@@ -117,7 +119,7 @@ struct ft_index_cell_object : public catalog_object
 	void remove_from_pstr(doc_serial_header& head );
 	doc_serial_header serial_update (xptr& node, xptr& node_indir, op_str_buf& tbuf);
 
-	xptr put_buf_to_pstr(op_str_buf& tbuf);
+	xptr put_buf_to_pstr(op_str_buf& tbuf);*/
 };
 
 ft_index_cell_xptr create_ft_index(

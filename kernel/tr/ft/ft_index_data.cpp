@@ -263,7 +263,7 @@ ft_index_cell_xptr create_ft_index(
 #endif
 		case ft_ind_native:
 		{
-			idc->init_serial_tree();
+			//idc->init_serial_tree();
 
 			op_str_buf in_buf;
 
@@ -276,8 +276,8 @@ ft_index_cell_xptr create_ft_index(
 					xptr tmp_indir = nodeGetIndirection(tmp);
 					//TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
 					in_buf.clear();
-					//print_node_to_buffer(tmp, in_buf, idc->ftype, idc->custom_tree);
-					idc->serial_put(tmp, tmp_indir, in_buf);
+					print_node_to_buffer(tmp, in_buf, idc->ftype, idc->custom_tree);
+					//idc->serial_put(tmp, tmp_indir, in_buf);
 					ft_index_update(ft_insert, tmp_indir, &in_buf, &idc->fts_data, ftc_idx);
 
 					tmp=getNextDescriptorOfSameSort(tmp);
@@ -317,7 +317,7 @@ void delete_ft_index (const char *index_title, bool just_heap)
             case ft_ind_native:
                 {
                     ft_idx_delete(&idc->fts_data);
-					idc->destroy_serial_tree();
+					//idc->destroy_serial_tree();
                     break;
                 }
             default:
@@ -353,28 +353,32 @@ static void ft_update_seq(xptr_sequence *seq, ft_index_cell_object *idc, ftc_ind
 	while (it!=seq->end())
 	{
 		xptr node_indir = *it++;
-		xptr node = indirectionDereferenceCP(node_indir);
-		if (node != XNULL) //FIXME can it be null?
+
+	    //TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
+		if (op == ft_delete || op == ft_update)
 		{
-		    //TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
-			if (op == ft_delete || op == ft_update)
-			{
-				in_buf.clear();
-				idc->serial_get(node_indir).serialize_to_buf(&in_buf);
-				ft_index_update(ft_delete, node_indir, &in_buf, &idc->fts_data, ftc_idx);
-				if (op == ft_delete)
-					idc->serial_remove(node_indir);
-			}
-			if (op == ft_update || op == ft_insert)
-			{
-				in_buf.clear();
-				//print_node_to_buffer(node, in_buf, idc->ftype, idc->custom_tree);
-				if (op == ft_update)
-					idc->serial_update(node, node_indir, in_buf);
-				else //ft_insert
-					idc->serial_put(node, node_indir, in_buf);
-				ft_index_update(ft_insert, node_indir, &in_buf, &idc->fts_data, ftc_idx);
-			}
+			/*in_buf.clear();
+			idc->serial_get(node_indir).serialize_to_buf(&in_buf);
+			ft_index_update(ft_delete, node_indir, &in_buf, &idc->fts_data, ftc_idx);
+			if (op == ft_delete)
+				idc->serial_remove(node_indir);*/
+			ft_index_delete_doc(ftc_idx, node_indir);
+		}
+
+		if (op == ft_update || op == ft_insert)
+		{
+			const xptr node = indirectionDereferenceCP(node_indir);
+			U_ASSERT(node != XNULL);
+
+			in_buf.clear();
+			print_node_to_buffer(node, in_buf, idc->ftype, idc->custom_tree);
+			/*
+			if (op == ft_update)
+				idc->serial_update(node, node_indir, in_buf);
+			else //ft_insert
+				idc->serial_put(node, node_indir, in_buf);
+			*/
+			ft_index_update(ft_insert, node_indir, &in_buf, &idc->fts_data, ftc_idx);
 		}
 	}
 }
@@ -410,7 +414,7 @@ void ft_index_cell_object::update_index(update_history *h)
 	h->free_update_sequences(inserted, updated, deleted);
 }
 
-
+/*
 xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 {
 	xptr res = XNULL;
@@ -451,7 +455,8 @@ void ft_index_cell_object::remove_from_pstr(doc_serial_header& head )
 		pstr_long_delete_str2(head.ptr);
 	}
 }
-
+*/
+/*
 void ft_index_cell_object::init_serial_tree()
 {
 	//1. create b-tree
@@ -583,3 +588,4 @@ void doc_serial_header::serialize_to_buf(op_str_buf *buf)
 		buf->append(tc);
 	}
 }
+*/
