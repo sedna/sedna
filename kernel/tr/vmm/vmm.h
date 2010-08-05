@@ -19,7 +19,7 @@
 #include "tr/rcv/rcv_test_tr.h"
 #include "tr/vmm/vmmtrace.h"
 
-#define VMM_LINUX_DEBUG_CHECKP
+// #define VMM_LINUX_DEBUG_CHECKP
 // #define VMM_DEBUG_CHECKP
 
 namespace tr_globals {

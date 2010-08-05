@@ -183,7 +183,7 @@ static void unlock_mem(lock_mem_result_t *r)
 		}
 	}
 #endif
-	
+
 	delete r;
 	d_printf1_ml("unlock_mem() finished\n");
 }
@@ -208,9 +208,9 @@ static std::string getODBCDiag(SQLSMALLINT htype, SQLHANDLE handle)
 	SQLINTEGER NativeError;
 
 	while (true) {
-		rc = SQLODBCBase::fSQLGetDiagRec(htype, handle, ++i, state, 
+		rc = SQLODBCBase::fSQLGetDiagRec(htype, handle, ++i, state,
 				&NativeError, msgbuf, sizeof(msgbuf)-1, &msglen);
-		
+
 		switch (rc) {
 			case SQL_NO_DATA:
 				return str;
@@ -336,7 +336,7 @@ void SQLODBCBase::load()
 char *SQLODBCExecutor::res_buf = NULL;
 int	SQLODBCExecutor::res_buf_size = 0;
 
-SQLODBCExecutor::SQLODBCExecutor(SQLHDBC _hdbc_, SQLHSTMT _hstmt_) : hdbc(_hdbc_), 
+SQLODBCExecutor::SQLODBCExecutor(SQLHDBC _hdbc_, SQLHSTMT _hstmt_) : hdbc(_hdbc_),
 										hstmt(_hstmt_), active(false), results(NULL), results_count(0)
 {
 }
@@ -358,10 +358,10 @@ inline void SQLODBCExecutor::set_param_type(int i, SQLSMALLINT vtype, SQLSMALLIN
 	if (param_types[i-1] != vtype || colsize > 128)
 	{
 		SQLRETURN rc;
-		
+
 		rc = SQLODBCBase::fSQLBindParameter(hstmt, i, SQL_PARAM_INPUT,
 			vtype, ptype,
-			colsize, 0, (SQLPOINTER)i, 
+			colsize, 0, (SQLPOINTER)i,
 			0, &param_ind);
 
 		if (!result_ok(rc)) {
@@ -382,7 +382,7 @@ void SQLODBCExecutor::prepare(char *query, int query_len, PPOpIn *options)
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
 		throw XQUERY_EXCEPTION2(SE2105, diag.c_str());
 	}
-			
+
 	rc = SQLODBCBase::fSQLNumParams(hstmt, &cnt);
 	if (!result_ok(rc)) {
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
@@ -419,7 +419,7 @@ void SQLODBCExecutor::prepare_results()
 
 	for (SQLSMALLINT i = 0; i < num_cols; i++)
 	{
-		rc = SQLODBCBase::fSQLDescribeCol(hstmt, i+1, (SQLCHAR *)results[i].col_name, sizeof(results[i].col_name), 
+		rc = SQLODBCBase::fSQLDescribeCol(hstmt, i+1, (SQLCHAR *)results[i].col_name, sizeof(results[i].col_name),
 			&results[i].col_name_len, NULL, NULL, NULL, NULL);
 		//TODO - use datatype and size
 		//TODO - check rc
@@ -461,12 +461,12 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 {
 	tuple value(content.ts);
 	content.op->next(value);
-	if (value.is_eos()) 
+	if (value.is_eos())
 	{
 		tuple_cell result=tuple_cell::eos();
 		return result;
 	}
-	std::vector<tuple_cell> at_vals;   
+	std::vector<tuple_cell> at_vals;
 	int charsize=1;
 
 	if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPFnSQLExecute");
@@ -479,7 +479,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 			case xs_double:
 				return res;
 			default:
-				//do nothing here, 
+				//do nothing here,
 				//go to cancatenate strings part
 				;
 		}
@@ -491,7 +491,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 	else
 		charsize+=res.get_strlen_vmm()+1;
 	at_vals.push_back(res);
-	
+
 	while (!(value.is_eos()))
 	{
 		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPFnSQLExecute");
@@ -524,7 +524,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 {
 	SQLRETURN rc;
-	
+
 	if (params.size() != param_types.size()+1)
 		throw XQUERY_EXCEPTION2(SE2106, "bad parameters count");
 
@@ -609,7 +609,7 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 				throw XQUERY_EXCEPTION2(SE2106, diag.c_str());
 			}
 		}
-	} 
+	}
 	//see execute_query for comments about SQL_NO_DATA
 	if (!result_ok(rc) && rc != SQL_NO_DATA) {
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
@@ -652,7 +652,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 	}
 
 	xptr elem = insert_element(indirectionDereferenceCP(last_elem), XNULL, virt_root, "tuple", xs_untyped, NULL);
-	xptr indir=nodeGetIndirection(elem);
+	xptr indir = get_last_mo_inderection();
 	xptr left = XNULL;
 	last_elem = indir;
 
@@ -673,7 +673,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 				break; //give up
 
 			//last char in buf returned by SQLGetData is 0 (i.e. string is truncated)
-			offset = res_buf_size-1; 
+			offset = res_buf_size-1;
 
 			//increase ref_buf_size
 			int new_buf_size = res_buf_size << 1;
@@ -699,26 +699,24 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 			if (res_len >= res_buf_size)
 				res_len = res_buf_size-1;
 			res_buf[res_len] = 0;
-		
+
 			//old SQLODBCResult::get -
 			//elem = insert_element(left, XNULL, parent, (char *)col_name, xs_untyped, NULL);
 			//insert_text(XNULL, XNULL, elem, (char *)res_buf, res_len);
 			//return elem;
 
 			if (left != XNULL)
-				left = insert_attribute(left, XNULL, XNULL, (char *)results[i].col_name, xs_untypedAtomic, 
+				left = insert_attribute(left, XNULL, XNULL, (char *)results[i].col_name, xs_untypedAtomic,
 							(char *)res_buf, res_len, NULL);
 			else
-				left = insert_attribute(XNULL, XNULL, elem, (char *)results[i].col_name, xs_untypedAtomic, 
+				left = insert_attribute(XNULL, XNULL, elem, (char *)results[i].col_name, xs_untypedAtomic,
 							(char *)res_buf, res_len, NULL);
 		}
 		//if both if's failed assume that res_len == SQL_NULL_DATA
 		// thus we don't need to do anything else here
 	}
 
-	//last_elem = indirectionDereferenceCP(indir);
-
-	t.copy(tuple_cell::node(indirectionDereferenceCP(last_elem)));
+	t.copy(tuple_cell::node_indir(last_elem));
 }
 
 int  SQLODBCExecutor::update_row_count()
@@ -867,7 +865,7 @@ SQLODBCPreparedStmt::~SQLODBCPreparedStmt()
 // SQLODBCDriver
 
 extern tuple_cell dm_node_name(xptr node);
-SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_len, 
+SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_len,
 											  char *uid, int uid_len,
 											  char *pass, int pass_len, PPOpIn *options)
 {
@@ -953,7 +951,7 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 #endif
 	//FIXME! - check length
 	connection_str_buf[connection_str_len] = 0;
-	rc = SQLODBCBase::fSQLDriverConnect(hdbc, NULL, (SQLCHAR *)connection_str_buf, connection_str_len, 
+	rc = SQLODBCBase::fSQLDriverConnect(hdbc, NULL, (SQLCHAR *)connection_str_buf, connection_str_len,
 		(SQLCHAR *)connection_str_buf, sizeof(connection_str_buf), &resp_len, SQL_DRIVER_NOPROMPT);
 	unlock_mem(lmr);
 
@@ -1001,15 +999,15 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 				//TODO - set  SQL_AUTOCOMMIT_ON if !x
 				if (x)
 				{
-					rc = SQLODBCBase::fSQLSetConnectAttr(hdbc, 
-						SQL_ATTR_AUTOCOMMIT, 
-						SQL_AUTOCOMMIT_OFF, 
+					rc = SQLODBCBase::fSQLSetConnectAttr(hdbc,
+						SQL_ATTR_AUTOCOMMIT,
+						SQL_AUTOCOMMIT_OFF,
 						SQL_IS_INTEGER);
 					if (!result_ok(rc))
 					{
 						std::string diag = getODBCDiag(SQL_HANDLE_DBC, hdbc);
 						SQLODBCBase::fSQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-	
+
 						delete[] name;
 						delete[] value;
 						//TODO - make another exception type for this
