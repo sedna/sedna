@@ -10,7 +10,8 @@
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/ft/sequence_sorter.h"
 
-
+//used to update full-text indexes - db operations add updated nodes to update_history and
+//then this class returns sequences of inserted, deleted and updated nodes to be updated in the index
 class update_history
 {
 private:

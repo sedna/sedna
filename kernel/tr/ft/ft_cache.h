@@ -23,9 +23,12 @@ ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data);
 
 //returned doc may become invalid after any operation with index
 ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc);
+//get document in cache (adds document to cache if it's not there)
 ftc_doc_t ftc_get_doc(ftc_index_t idx, xptr acc);
 
-void ftc_upd_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int word_ind, bool insert, bool no_flush=false);
+//delete document from index
+void ftc_del_doc(ftc_index_t index, const xptr acc);
+void ftc_upd_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int word_ind, bool no_flush=false);
 
 void ftc_flush();
 

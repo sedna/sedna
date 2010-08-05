@@ -18,8 +18,9 @@ enum ft_index_op_t
 	ft_insert, ft_delete, ft_update
 };
 
-//op must be insert or delete
+//op must be insert
 void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct FtsData *ft_data, ftc_index_t ftc_idx);
+void ft_index_delete_doc(ftc_index_t ftc_idx, xptr acc);
 void ft_idx_delete(struct FtsData *ft_data);
 
 

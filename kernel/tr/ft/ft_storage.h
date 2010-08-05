@@ -8,76 +8,100 @@
 
 #include "common/xptr.h"
 #include "tr/idx/btree/btree.h" //FIXME: move to cpp
+#include "tr/ft/ft_partition.h"
+
+#define FTS_MAX_PARTITIONS 5
 
 struct FtsData
 {
-	xptr btree_root;
+	ft_partition_data partitions[FTS_MAX_PARTITIONS];
+	int npartitions;
 	
-	FtsData() : btree_root(XNULL) {}
+	FtsData() : npartitions(0) {}
+};
 
+class FtsUpdater
+{
+private:
+	FtsData *fts_data;
+	FtPartitionBuilder pb;
+public:
 	//updates are performed as such:
 	// 1. begin_update is called
-	// 2. update functions are called, arguments (word, acc, word_ind) must be ascending during these calls
-	// 3.end_update is called
-	void begin_update() {}
+	// 2. del_document is called for each deleted/updated node in ascending xptr order
+	// 3. update functions are called (add_word_occur, del_word_occur), arguments (word, acc, word_ind) must be ascending during these calls
+	//    acc may be one of passed to del_document, if node was updated
+	// 4. end_update is called
+	void begin_update(FtsData *_fts_data);
+	//end update and modify FtsData at pointer dest, so that it will become identical to FtsData at buffer provided in begin_update
+	void end_update(struct FtsData *dest);
+
+	void del_document(const xptr acc)
+	{
+		pb.del_doc(acc);
+	}
 	void add_word_occur(const char *word, const xptr acc, const int word_ind)
 	{
-		bt_key bkey;
-		bkey.setnew(word);
-		bt_insert_tmpl<ft_idx_btree_element>(btree_root, bkey, ft_idx_btree_element(acc, word_ind));
+		pb.add_word_occur(word, acc, word_ind+1);
 	}
+	/*
 	void del_word_occur(const char *word, const xptr acc, const int word_ind)
 	{
+		//legacy code, TODO: remove if not needed anymore
+		U_ASSERT(false);
 		bt_key bkey;
 		bkey.setnew(word);
-		bt_delete_tmpl<ft_idx_btree_element>(btree_root, bkey, ft_idx_btree_element(acc, word_ind));
-	}
-	//end update, and modify FtsData at pointer dest, so that it will become identical to *this
-	void end_update(struct FtsData *dest)
-	{
-		*dest = *this;
-	}
+		bt_delete_tmpl<ft_idx_btree_element>(fts_data->btree_root, bkey, ft_idx_btree_element(acc, word_ind));
+	}*/
 };
 
 struct FtsScanData
 {
-	bt_cursor_tmpl<ft_idx_btree_element> bcur;
-	ft_idx_btree_element ce;
+	FtPartitionScanner scanner;
+	xptr cur_acc;
+	ftp_ind_t cur_ind;
 
 	//start scan
 	void init(const struct FtsData *fts_data, const char *word)
 	{
-		bt_key bkey;
-		bkey.setnew(word);
-		bcur = bt_find_tmpl<ft_idx_btree_element>(fts_data->btree_root, bkey);
-		ce = bcur.bt_next_obj();
+		scanner.init(fts_data->partitions, fts_data->npartitions, word);
+		if (!scanner.get_next_occur(&cur_acc, &cur_ind))
+		{
+			cur_acc = XNULL;
+			cur_ind = 0;
+		}
 	}
 
 	bool at_end()
 	{
-		return ce.node == XNULL;
+		return cur_acc == XNULL;
 	}
 
 	xptr cur_node()
 	{
-		return ce.node;
+		return cur_acc;
 	}
 
 	int cur_word_ind()
 	{
-		return ce.word_ind;
+		return cur_ind-1;
 	}
 
 	//move to next occur
 	void next_occur()
 	{
-		ce = bcur.bt_next_obj();
+		if (!scanner.get_next_occur(&cur_acc, &cur_ind))
+		{
+			cur_acc = XNULL;
+			cur_ind = 0;
+		}
 	}
 
-	void skip_node(const xptr p)
+	void skip_node()
 	{
-		while (ce.node == p)
-			ce = bcur.bt_next_obj();
+		const xptr old_acc = cur_acc;
+		while (cur_acc != XNULL && old_acc == cur_acc)
+			next_occur();
 	}
 
 };
