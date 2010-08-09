@@ -72,7 +72,9 @@ xptr getIndirectionSafeCP(xptr node)
 
 inline
 xptr nodeiGetRightSiblingIndirection(const xptr nodei) {
-    return getIndirectionSafeCP(nodeGetRightSibling(indirectionDereferenceCP(nodei)));
+    const xptr node = indirectionDereferenceCP(nodei);
+    CHECKP(node);
+    return getIndirectionSafeCP(nodeGetRightSibling(node));
 }
 
 /* Very careful with this one! */
