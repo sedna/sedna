@@ -12,19 +12,18 @@
 typedef int64_t str_off_t;
 typedef int64_t strsize_t;
 
-enum text_type {
-	text_mem,
-	text_doc,
-	text_estr
-};
-
 struct text_source_t {
-    text_type type;
+    enum type_t {
+        text_mem,
+        text_pstr,
+        text_pstrlong,
+        text_estr
+    } type;
     union {
         xptr data;
         const char * cstr;
     } u;
-    strsize_t size;
+    strsize_t size; // May be not defined for pstr_long
 };
 
 typedef void (*string_consumer_fn)(const char *str, int len, void *p);
