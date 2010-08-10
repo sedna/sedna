@@ -122,7 +122,7 @@ struct sm_msg_struct
         struct {
             xptr ptr;
             xptr swapped;
-            int offs;
+            ramoffs offs;
         } swap_data;
 
         struct {
