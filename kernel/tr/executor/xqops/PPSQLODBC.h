@@ -171,7 +171,7 @@ public:
 	SQLODBCExecutor(SQLHDBC _hdbc_, SQLHSTMT _hstmt_);
 
 	static SQLODBCExecutor* create(SQLHDBC hdbc);
-	void prepare(char *query, int query_len, PPOpIn *options);
+	void prepare(const char *query, int query_len, PPOpIn *options);
 
 	virtual void execute_query (const char *query, int query_len, PPOpIn *options);
 	virtual void execute_prepared(arr_of_PPOpIn params);
@@ -194,7 +194,7 @@ public:
 
 	virtual SQLExecutor*	get_executor();
 	virtual void			release_executor(SQLExecutor *executor);
-	virtual SQLHandle*		prepare_stmt(char *query, int query_len, PPOpIn *options);
+	virtual SQLHandle*		prepare_stmt(const char *query, int query_len, PPOpIn *options);
 
 	virtual void			close();
 	virtual void			commit();
@@ -212,7 +212,7 @@ public:
 
 	virtual SQLExecutor*	get_executor();
 	virtual void			release_executor(SQLExecutor *executor);
-	virtual SQLHandle*		prepare_stmt(char *query, int query_len, PPOpIn *options);
+	virtual SQLHandle*		prepare_stmt(const char *query, int query_len, PPOpIn *options);
 
 	virtual void			close();
 	virtual void			commit();
@@ -237,9 +237,9 @@ public:
 
 	virtual const char*		prefix() const { return "odbc:"; }
 	virtual const int		prefix_len() const { return 5; }
-	virtual SQLConnection*	new_connection(char *connect_str, int connect_str_len, 
-											  char *uid, int uid_len,
-											  char *pass, int pass_len, PPOpIn *options);
+	virtual SQLConnection*	new_connection(const char *connect_str, int connect_str_len,
+											  const char *uid, int uid_len,
+											  const char *pass, int pass_len, PPOpIn *options);
 
 	virtual ~SQLODBCDriver();
 };

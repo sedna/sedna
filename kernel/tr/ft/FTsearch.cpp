@@ -123,10 +123,11 @@ SednaTextInputStream::~SednaTextInputStream()
 
 int SednaTextInputStream::read_mem(void *dest, long bytes)
 {
+	//FIXME: it's better to use data returned by fill_text_source in makeInterface, than invoke in_buf.get_size() and get_str_mem()
 	if (bytes + pos >= in_buf.get_size())
 		bytes = (long)in_buf.get_size() - pos;
     if (bytes > 0)
-		memmove(dest, (char*)in_buf.get_ptr_to_text() + pos, bytes);
+		memmove(dest, in_buf.get_str_mem() + pos, bytes);
     pos += bytes;
     return bytes;
 }
@@ -221,7 +222,9 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	pos = 0;
 	dest.size = (long)in_buf.get_size();
 	fileInfo->size=dest.size;
-	if (in_buf.get_type() == text_mem)
+	text_source_t ts;
+	in_buf.fill_text_source(&ts);
+	if (ts.type == text_source_t::text_mem)
 	{
 	    dest.read = SednaTextInputStream::readCBmem;
 		dest.seek = SednaTextInputStream::seekCBmem;
@@ -230,7 +233,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	{
 		if (estr_it != NULL)
 			delete estr_it;
-		estr_it = se_new estr_iterator(dest.size, *(xptr*)in_buf.get_ptr_to_text());
+		estr_it = se_new estr_iterator(dest.size, ts.u.data);
 	    dest.read = SednaTextInputStream::readCBestr;
 		dest.seek = SednaTextInputStream::seekCBestr;
 	}
@@ -1165,20 +1168,22 @@ const char * SednaConvertJob::closetag_str = "\xEE\xA0\x82";
 
 void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
 {
+	text_source_t ts;
 	in_buf.clear();
 	CHECKP(node);
 	print_node_to_buffer(node,in_buf,cm,custom_tree,opentag_str, closetag_str);
-	if (in_buf.get_type() == text_mem)
+	in_buf.fill_text_source(&ts);
+	if (ts.type == text_source_t::text_mem)
 	{
-		char *str_it = (char*)in_buf.get_ptr_to_text();
-		char *str_it_end = str_it + in_buf.get_size();
-		SednaStringHighlighter<char *> hl(str_it, str_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
+		const char *str_it = ts.u.cstr;
+		const char *str_it_end = str_it + ts.size;
+		SednaStringHighlighter<const char *> hl(str_it, str_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
 		hl.run();
 	}
 	else
 	{
-		estr_iterator estr_it(in_buf.get_size(), *(xptr*)in_buf.get_ptr_to_text());
-		estr_iterator estr_it_end(0, *(xptr*)in_buf.get_ptr_to_text());
+		estr_iterator estr_it(ts.size, ts.u.data);
+		estr_iterator estr_it_end(0, ts.u.data);
 		SednaStringHighlighter<estr_iterator> hl(estr_it, estr_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
 		hl.run();
 	}

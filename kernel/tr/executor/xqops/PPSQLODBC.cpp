@@ -372,7 +372,7 @@ inline void SQLODBCExecutor::set_param_type(int i, SQLSMALLINT vtype, SQLSMALLIN
 	}
 }
 
-void SQLODBCExecutor::prepare(char *query, int query_len, PPOpIn *options)
+void SQLODBCExecutor::prepare(const char *query, int query_len, PPOpIn *options)
 {
 	SQLRETURN rc;
 	SQLSMALLINT cnt;
@@ -755,7 +755,7 @@ void SQLODBCConnection::release_executor(SQLExecutor *executor)
 	delete executor;
 }
 
-SQLHandle* SQLODBCConnection::prepare_stmt(char *query, int query_len, PPOpIn *options)
+SQLHandle* SQLODBCConnection::prepare_stmt(const char *query, int query_len, PPOpIn *options)
 {
 	SQLODBCExecutor *executor;
 
@@ -834,7 +834,7 @@ void SQLODBCPreparedStmt::release_executor(SQLExecutor *executor)
 {
 	//do nothing
 }
-SQLHandle* SQLODBCPreparedStmt::prepare_stmt(char *query, int query_len, PPOpIn *options)
+SQLHandle* SQLODBCPreparedStmt::prepare_stmt(const char *query, int query_len, PPOpIn *options)
 {
 	return connection->prepare_stmt(query, query_len, options);
 }
@@ -865,17 +865,17 @@ SQLODBCPreparedStmt::~SQLODBCPreparedStmt()
 // SQLODBCDriver
 
 extern tuple_cell dm_node_name(xptr node);
-SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_len,
-											  char *uid, int uid_len,
-											  char *pass, int pass_len, PPOpIn *options)
+SQLConnection*	SQLODBCDriver::new_connection(const char *connect_str, int connect_str_len,
+											  const char *uid, int uid_len,
+											  const char *pass, int pass_len, PPOpIn *options)
 {
 	int i;
 	int connection_str_len;
-	char *driver = NULL;
+	const char *driver = NULL;
 	int	driver_len = 0;
-	char *server = NULL;
+	const char *server = NULL;
 	int server_len = 0;
-	char *db = NULL;
+	const char *db = NULL;
 	int	db_len = 0;
 	SQLRETURN rc;
 	SQLHDBC hdbc = SQL_NULL_HDBC;

@@ -38,28 +38,26 @@ void str_buf_base::move_to_mem_buf()
 	}
 	switch (m_ttype)
 	{
-	case text_mem:
+	case text_source_t::text_mem:
 		strcpy(m_buf, m_str_ptr.get());
-		m_flags |= f_text_in_buf;
-		m_ttype = text_mem;
-		return;
-	case text_estr:
+		break;
+	case text_source_t::text_estr:
 		estr_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
-		m_flags |= f_text_in_buf;
-		m_ttype = text_mem;
-		return;
-	case text_doc:
-		if (m_len < PSTRMAXSIZE)
-			estr_copy_to_buffer(m_buf, m_ptr, m_len);
-		else
-			pstr_long_copy_to_buffer2(m_buf, m_ptr, m_len);
+		break;
+	case text_source_t::text_pstr:
+		estr_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
-		m_flags |= f_text_in_buf;
-		m_ttype = text_mem;
-		return;
+		break;
+	case text_source_t::text_pstrlong:
+		pstr_long_copy_to_buffer2(m_buf, m_ptr, m_len);
+		m_buf[m_len] = 0;
+		break;
+	default:
+		throw USER_EXCEPTION2(SE1003, "Impossible case in str_buf_base::move_to_mem_buf()");
 	}
-	throw USER_EXCEPTION2(SE1003, "Impossible case in str_buf_base::move_to_mem_buf()");
+	m_flags |= f_text_in_buf;
+	m_ttype = text_source_t::text_mem;
 }
 
 //pre: text is not in estr buf
@@ -70,31 +68,35 @@ void str_buf_base::move_to_estr()
 	if (m_flags & f_text_in_buf)
 	{
 		m_ptr = m_estr.append_mstr(m_buf);
-		m_ttype = text_estr;
+		m_ttype = text_source_t::text_estr;
 		m_flags |= f_text_in_estr_buf;
 		return;
 	}
 	switch (m_ttype)
 	{
-	case text_mem:
+	case text_source_t::text_mem:
 		m_ptr = m_estr.append_mstr(m_str_ptr.get());
-		m_ttype = text_estr;
+		m_ttype = text_source_t::text_estr;
 		m_flags |= f_text_in_estr_buf;
-		return;
-	case text_estr:
+		break;
+	case text_source_t::text_estr:
 		m_ptr = m_estr.append_estr(m_ptr, m_len);
 		m_flags |= f_text_in_estr_buf;
-		return;
-	case text_doc:
-		if (m_len < PSTRMAXSIZE)
-			m_ptr = m_estr.append_estr(m_ptr, m_len);
-		else
-			m_ptr = m_estr.append_pstr_long(m_ptr);
-		m_ttype = text_estr;
+		break;
+	case text_source_t::text_pstr:
+		m_ptr = m_estr.append_estr(m_ptr, m_len);
+		m_ttype = text_source_t::text_estr;
 		m_flags |= f_text_in_estr_buf;
-		return;
+		break;
+	case text_source_t::text_pstrlong:
+		m_ptr = m_estr.append_pstr_long(m_ptr);
+		m_ttype = text_source_t::text_estr;
+		m_flags |= f_text_in_estr_buf;
+		break;
+	default:
+		throw USER_EXCEPTION2(SE1003, "Impossible case in op_str_buf::move_to_estr()");
 	}
-	throw USER_EXCEPTION2(SE1003, "Impossible case in op_str_buf::move_to_estr()");
+
 }
 
 str_cursor *str_buf_base::get_cursor() const
@@ -103,15 +105,14 @@ str_cursor *str_buf_base::get_cursor() const
 		return new str_cursor_mem(m_buf, (int)m_len); //FIXME: check m_len?
 	switch (m_ttype)
 	{
-	case text_mem:
+	case text_source_t::text_mem:
 		return new str_cursor_mem(m_str_ptr.get(), (int)m_len);//FIXME: check m_len?
-	case text_estr:
+	case text_source_t::text_estr:
 		return new estr_cursor(m_ptr, m_len);
-	case text_doc:
-		if (m_len < PSTRMAXSIZE)
-			return new estr_cursor(m_ptr, m_len);
-		else
-			return new pstr_long_cursor(m_ptr);
+	case text_source_t::text_pstr:
+		return new estr_cursor(m_ptr, m_len);
+	case text_source_t::text_pstrlong:
+		return new pstr_long_cursor(m_ptr);
 	default:
 		U_ASSERT(false);
 		return NULL;
@@ -124,7 +125,7 @@ void str_buf_base::clear()
 	if (m_flags & f_text_in_estr_buf)
 		clear_estr_buf();
 	m_flags = 0;
-	m_ttype = text_mem;
+	m_ttype = text_source_t::text_mem;
 }
 
 void str_buf_base::append(const tuple_cell &tc)
@@ -137,16 +138,22 @@ void str_buf_base::append(const tuple_cell &tc)
 			m_str_ptr = tc.get_str_ptr();
 			m_len = tc.get_strlen_mem();
 			m_flags = 0;
-			m_ttype = text_mem;
+			m_ttype = text_source_t::text_mem;
 		}
 		else
 		{
 			m_len = tc.get_strlen_vmm();
 			m_ptr = tc.get_str_vmm();
 			if (tc.get_type() == tc_heavy_atomic_estr)
-				m_ttype = text_estr;
+				m_ttype = text_source_t::text_estr;
 			else
-				m_ttype = text_doc;
+			{
+				//FIXME: mb using PSTRMAXSIZE is bad here
+				if (m_len <= PSTRMAXSIZE)
+					m_ttype = text_source_t::text_pstr;
+				else
+					m_ttype = text_source_t::text_pstrlong;
+			}
 		}
 	}
 	else
@@ -234,7 +241,7 @@ void str_buf_base::append(const char *str, int add_len)
 				clear_estr_buf();
 		}
 		m_flags = f_text_in_buf; //clear f_text_in_estr_buf
-		m_ttype = text_mem;
+		m_ttype = text_source_t::text_mem;
 		strncpy(m_buf + m_len, str, add_len);
 		m_len = new_len;
 		U_ASSERT(m_len < m_buf_size);
@@ -260,12 +267,10 @@ void str_buf_base::append(const char *str)
 	this->append(str, add_len);
 }
 	
-char * str_buf_base::c_str()
+const char * str_buf_base::c_str()
 {
-	if (m_flags & f_text_in_buf)
-		return m_buf;
-	if (m_ttype == text_mem)
-		return m_str_ptr.get();
+	if (m_flags & f_text_in_buf || m_ttype == text_source_t::text_mem)
+		return get_str_mem();
 	move_to_mem_buf();
 	return m_buf;
 }
@@ -281,7 +286,7 @@ char * str_buf_base::get_str()
 	m_flags = 0;
 	m_ptr = XNULL;
 	m_len = 0;
-	m_ttype = text_mem;
+	m_ttype = text_source_t::text_mem;
 
 	return res;
 }

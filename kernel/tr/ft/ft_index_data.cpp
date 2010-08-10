@@ -418,7 +418,7 @@ xptr ft_index_cell_object::put_buf_to_pstr(op_str_buf& tbuf)
 
 	if (sz<=PSTRMAXSIZE)
 	{
-		char* mem=tbuf.c_str();
+		const char* mem=tbuf.c_str();
 		res=pstr_do_allocate(this->pstr_sequence,mem,(int)sz);
 		if (res==XNULL)
 		{

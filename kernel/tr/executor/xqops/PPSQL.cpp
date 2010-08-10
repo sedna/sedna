@@ -162,9 +162,9 @@ bool SQLHandleManager::delete_handle(int h)
     return true;
 }
 
-int SQLHandleManager::new_connection(char *connect_str, int connect_str_len,
-                                        char *uid, int uid_len,
-                                        char *pass, int pass_len, PPOpIn *options)
+int SQLHandleManager::new_connection(const char *connect_str, int connect_str_len,
+                                        const char *uid, int uid_len,
+                                        const char *pass, int pass_len, PPOpIn *options)
 {
     if (NULL == connect_str)
         return 0;
@@ -261,7 +261,7 @@ void PPFnSQLConnect::do_close()
 }
 
 //copied from PPConstructors.cpp
-static char *getStringParameter(PPOpIn content, const char *err_pref)
+static const char *getStringParameter(PPOpIn content, const char *err_pref)
 {
     tuple value(content.ts);
     content.op->next(value);
@@ -300,13 +300,13 @@ void PPFnSQLConnect::do_next(tuple &t)
     if (first_time)
     {
         first_time = false;
-        char *tmp;
+        const char *tmp;
 
         char    *connect_str    = NULL;
         int     connect_str_len = 0;
         char    *uid            = NULL;
         int     uid_len         = 0;
-        char    *pass           = NULL;
+        const char *pass        = NULL;
         int     pass_len        = 0;
 
 		tmp = getStringParameter(arr[0], "Bad 1st argument of sql:connect");
@@ -632,7 +632,7 @@ void PPFnSQLPrepare::do_next(tuple &t)
         if (handle->type != SQLH_CONNECTION)
             throw XQUERY_EXCEPTION(SE2104);
 
-        char *query = NULL;
+        const char *query = NULL;
         int query_len = 0;
 		query		= getStringParameter(statement, "Bad $statement argument of sql:prepare");
         query_len   = strlen(query);

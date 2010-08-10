@@ -190,7 +190,7 @@ private:
 	str_off_t m_len;
 	estr m_estr;
 	str_counted_ptr m_str_ptr;
-	text_type m_ttype;
+	text_source_t::type_t m_ttype;
 	static const int f_text_in_buf = 1;
 	static const int f_text_in_estr_buf = 2;
 	//string must be in estr buf, f_text_in_estr_buf flag is NOT cleared
@@ -212,24 +212,27 @@ protected:
 			m_flags = 0;
 			m_ptr = XNULL;
 			m_len = 0;
-			m_ttype = text_mem;
+			m_ttype = text_source_t::text_mem;
 			return tc;
 		}
 		else
 		{
-			if (get_type() == text_mem)
+			if (get_type() == text_source_t::text_mem)
 			{
-				tuple_cell tc = tuple_cell::atomic_deep(xs_string, (char*)get_ptr_to_text());
+				tuple_cell tc = tuple_cell::atomic_deep(xs_string, get_str_mem());
 				clear();
 				return tc;
 			}
 			else
 			{
 				tuple_cell tc;
-				if (m_flags & f_text_in_estr_buf)
-					tc = tuple_cell::atomic_estr(xs_string, get_size(), *(xptr*)get_ptr_to_text());
+				if (m_flags & f_text_in_estr_buf || m_ttype == text_source_t::text_estr)
+					tc = tuple_cell::atomic_estr(xs_string, get_size(), m_ptr);
 				else
-					tc = tuple_cell::atomic_pstr(xs_string, get_size(), *(xptr*)get_ptr_to_text());
+				{
+					U_ASSERT(m_ttype == text_source_t::text_pstr || m_ttype == text_source_t::text_pstrlong);
+					tc = tuple_cell::atomic_pstr(xs_string, get_size(), m_ptr);
+				}
 				m_ptr = XNULL;
 				m_flags = 0;
 				clear();
@@ -239,19 +242,34 @@ protected:
 	}
 public:
 	bool mem_only() { return m_mem_only; }
-	text_type get_type() { return m_ttype; }
-	const void * get_ptr_to_text() {
+	text_source_t::type_t get_type() { return m_ttype; }
+	//return pointer of string in the memory
+	//when this function is called, string must be in the memory
+	const char *get_str_mem()
+	{
+		U_ASSERT(get_type() == text_source_t::text_mem);
 		if (m_flags & f_text_in_buf)
 			return m_buf;
 		else if (m_len == 0)
-		{
-			U_ASSERT(m_ttype == text_mem);
 			return "";
-		}
-		else if (m_ttype == text_mem)
-			return m_str_ptr.get();
 		else
-			return &m_ptr;
+			return m_str_ptr.get();
+	}
+	void fill_text_source(text_source_t *ts)
+	{
+		ts->type = get_type();
+		ts->size = m_len;
+
+		if (ts->type == text_source_t::text_mem)
+		{
+			ts->u.cstr = get_str_mem();
+			return;
+		}
+		else
+		{
+			ts->u.data = m_ptr;
+			return;
+		}
 	}
 	///gets cursor to the text stored in the buffer
 	///caller is responsible for deleting cursor with free_cursor method
@@ -266,7 +284,7 @@ public:
 	void append(const char *str, int add_len);//always copy to inner buffer
 	void append(const char *str);//always copy to inner buffer
 	void append(const tuple_cell &tc);
-	char *c_str();
+	const char *c_str();
 	char *get_str();
     static void free_str(char *str)
     {
@@ -434,7 +452,7 @@ inline void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 
 inline static
 struct text_source_t text_source_mem(const char * mem, size_t size) {
-    struct text_source_t result = {text_mem};
+    struct text_source_t result = {text_source_t::text_mem};
     result.size = size;
     result.u.cstr = mem;
 
@@ -443,7 +461,7 @@ struct text_source_t text_source_mem(const char * mem, size_t size) {
 
 inline static
 struct text_source_t text_source_cstr(const char * str) {
-    struct text_source_t result = {text_mem};
+	struct text_source_t result = {text_source_t::text_mem};
     result.size = strlen(str);
     result.u.cstr = str;
 
@@ -453,9 +471,12 @@ struct text_source_t text_source_cstr(const char * str) {
 static inline
 struct text_source_t text_source_node(const xptr node) {
     const CommonTextNode ctn(node);
-    struct text_source_t result = {text_doc};
+	struct text_source_t result = {text_source_t::text_pstr};
 
     result.size = ctn.getTextSize();
+	//FIXME
+	if (result.size > PSTRMAXSIZE)
+		result.type = text_source_t::text_pstrlong;
     result.u.data = ctn.getTextPointerCP();
     return result;
 };
@@ -465,13 +486,7 @@ struct text_source_t text_source_pstr(const xptr text);
 inline static
 struct text_source_t text_source_strbuf(str_buf_base * buf) {
     struct text_source_t result = {};
-    result.type = buf->get_type();
-    result.size = buf->get_size();
-    if (result.type == text_mem) {
-        result.u.cstr = (const char *) buf->get_ptr_to_text();
-    } else {
-        memcpy(&(result.u.data), buf->get_ptr_to_text(), sizeof(xptr));
-    }
+	buf->fill_text_source(&result);
 
     return result;
 }

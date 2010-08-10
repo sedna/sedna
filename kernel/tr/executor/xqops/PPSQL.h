@@ -29,7 +29,7 @@ public:
 
 	virtual SQLExecutor*	get_executor() = 0;
 	virtual void			release_executor(SQLExecutor *executor) = 0;
-	virtual SQLHandle*		prepare_stmt(char *query, int query_len, PPOpIn *options) = 0;
+	virtual SQLHandle*		prepare_stmt(const char *query, int query_len, PPOpIn *options) = 0;
 
 	virtual void			close() = 0;
 	virtual void			commit() = 0;
@@ -65,9 +65,9 @@ class SQLDriver
 public:
 	virtual const char*		prefix() const = 0;
 	virtual const int		prefix_len() const = 0;
-	virtual SQLConnection*	new_connection(char *connect_str, int connect_str_len, 
-											  char *uid, int uid_len,
-											  char *pass, int pass_len, PPOpIn *options) = 0;
+	virtual SQLConnection*	new_connection(const char *connect_str, int connect_str_len,
+											  const char *uid, int uid_len,
+											  const char *pass, int pass_len, PPOpIn *options) = 0;
 
 	virtual ~SQLDriver();
 };
@@ -87,9 +87,9 @@ public:
 	int		new_handle(SQLHandle *h);
 	bool	delete_handle(int h);
 
-	int		new_connection(char *connect_str, int connect_str_len, 
-									char *uid, int uid_len,
-									char *pass, int pass_len, PPOpIn *options);
+	int		new_connection(const char *connect_str, int connect_str_len,
+									const char *uid, int uid_len,
+									const char *pass, int pass_len, PPOpIn *options);
 
 	SQLHandle*	get_handle(int h);
 };

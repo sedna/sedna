@@ -349,11 +349,10 @@ xptr pstr_long_create_str2(bool persistent, const text_source_t src)
 	xptr str_ptr;
 	switch (src.type)
 	{
-	case text_mem:
+	case text_source_t::text_mem:
 		str_ptr = pstr_long_create_str2(persistent, src.u.cstr, src.size);
 		return str_ptr;
-	case text_doc:
-		if (src.size <= PSTRMAXSIZE)
+	case text_source_t::text_pstr:
 		{
 			char *tmp = (char*) malloc((size_t) src.size); //FIXME? sb
 			const xptr ptr= src.u.data;
@@ -363,12 +362,10 @@ xptr pstr_long_create_str2(bool persistent, const text_source_t src)
 			free(tmp);
 			return res;
 		}
-		else
-		{
-			str_ptr = pstr_long_create_str2(persistent, "", 0);
-			return pstr_long_append_tail2(str_ptr, src);
-		}
-	case text_estr:
+	case text_source_t::text_pstrlong:
+		str_ptr = pstr_long_create_str2(persistent, "", 0);
+		return pstr_long_append_tail2(str_ptr, src);
+	case text_source_t::text_estr:
 		str_ptr = pstr_long_create_str2(persistent, "", 0);
 		str_ptr = pstr_long_append_tail_estr2(str_ptr, src.u.data, src.size);
 
@@ -943,10 +940,9 @@ static xptr pstr_long_append_tail2(xptr str_ptr, const text_source_t src)
 {
 	switch (src.type)
 	{
-	case text_mem:
+	case text_source_t::text_mem:
 		return pstr_long_append_tail_mem2(str_ptr, src.u.cstr, src.size);
-	case text_doc:
-		if (src.size <= PSTRMAXSIZE)
+	case text_source_t::text_pstr:
 		{
 	        const xptr ptr= src.u.data;
 			char *tmp = (char*)malloc((size_t)src.size); //FIXME? sb
@@ -956,12 +952,12 @@ static xptr pstr_long_append_tail2(xptr str_ptr, const text_source_t src)
 			free(tmp);
 			return str_ptr;
 		}
-		else
+	case text_source_t::text_pstrlong:
 		{
 	        const xptr ptr= src.u.data;
 			return pstr_long_append_tail2(str_ptr, ptr, src.size);
 		}
-	case text_estr:
+	case text_source_t::text_estr:
 		return pstr_long_append_tail_estr2(str_ptr, src.u.data, src.size);
 	}
 	U_ASSERT(false);
@@ -1586,10 +1582,10 @@ void pstr_long_append_head(xptr desc, const text_source_t src)
 {
 	switch (src.type)
 	{
-	case text_mem:
+	case text_source_t::text_mem:
 		pstr_long_append_head(desc, src.u.cstr, src.size);
 		return;
-	case text_estr:
+	case text_source_t::text_estr:
 		{
 			//FIXME!!!!!
 			char *tmp = (char*)malloc(src.size); //FIXME? sb
@@ -1598,8 +1594,7 @@ void pstr_long_append_head(xptr desc, const text_source_t src)
 			free(tmp);
 			return;
 		}
-	case text_doc:
-		if (src.size <= PSTRMAXSIZE)
+	case text_source_t::text_pstr:
 		{
 			char *tmp = (char*)malloc((size_t)src.size); //FIXME? sb
 			const xptr ptr = src.u.data;
@@ -1609,7 +1604,7 @@ void pstr_long_append_head(xptr desc, const text_source_t src)
 			free(tmp);
 			return;
 		}
-		else
+	case text_source_t::text_pstrlong:
 		{
 			//TODO!!! - test it
 			char *tmp = (char*)malloc(PAGE_SIZE); //FIXME? sb
@@ -1626,7 +1621,7 @@ void pstr_long_append_head(xptr desc, const text_source_t src)
 			return;
 		}
 	}
-	//TODO - error
+	U_ASSERT(false);
 }
 
 void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
