@@ -227,7 +227,7 @@ int sm_server_handler(void *arg)
                          //d_printf1("query 23: bm_allocate_data_block\n");
                          WuAllocateDataBlockExn(msg->sid,
                                                 &(msg->data.swap_data.ptr),
-                                                (ramoffs*)(&(msg->data.swap_data.offs)),
+                                                &(msg->data.swap_data.offs),
                                                 &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
@@ -236,7 +236,7 @@ int sm_server_handler(void *arg)
                          //d_printf1("query 24: bm_allocate_tmp_block\n");
                          WuAllocateTempBlockExn(msg->sid,
                                                &(msg->data.swap_data.ptr),
-                                               (ramoffs*)(&(msg->data.swap_data.offs)),
+                                               &(msg->data.swap_data.offs),
                                                &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
@@ -252,7 +252,7 @@ int sm_server_handler(void *arg)
                          //d_printf1("query 26: bm_get_block\n");
                          WuGetBlockExn(msg->sid,
                                       msg->data.swap_data.ptr,
-                                      (ramoffs*)(&(msg->data.swap_data.offs)),
+                                      &(msg->data.swap_data.offs),
                                       &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
@@ -343,7 +343,7 @@ int sm_server_handler(void *arg)
 						 /* create version for the block */
                          WuCreateBlockVersionExn(msg->sid,
                                       msg->data.swap_data.ptr,
-                                      (ramoffs*)(&(msg->data.swap_data.offs)),
+                                      &(msg->data.swap_data.offs),
                                       &(msg->data.swap_data.swapped));
                          msg->cmd = 0;
                          break;
