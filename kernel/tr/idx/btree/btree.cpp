@@ -27,7 +27,7 @@ xptr bt_create(xmlscm_type t)
     return root;
 }
 
-void bt_drop(const xptr &root)
+void bt_drop(const xptr root)
 {
     char*   cur_pg;
     xptr    cur_xpg = root;
@@ -53,7 +53,7 @@ void bt_drop(const xptr &root)
 }
 
 template<typename object>
-bt_cursor_tmpl<object> bt_find_tmpl(const xptr &root, const bt_key &key)
+bt_cursor_tmpl<object> bt_find_tmpl(const xptr root, const bt_key &key)
 {
     bool rc;
     shft key_idx;
@@ -69,7 +69,7 @@ bt_cursor_tmpl<object> bt_find_tmpl(const xptr &root, const bt_key &key)
 
 /// !!! potential error here
 template<typename object>
-bt_cursor_tmpl<object> bt_find_ge_tmpl(const xptr &root, const bt_key &key)
+bt_cursor_tmpl<object> bt_find_ge_tmpl(const xptr root, const bt_key &key)
 {
     bool rc;
     shft key_idx;
@@ -102,7 +102,7 @@ bt_cursor_tmpl<object> bt_find_ge_tmpl(const xptr &root, const bt_key &key)
 }
 
 template<typename object>
-bt_cursor_tmpl<object> bt_find_gt_tmpl(const xptr &root, const bt_key &key)
+bt_cursor_tmpl<object> bt_find_gt_tmpl(const xptr root, const bt_key &key)
 {
     bool rc;
     shft key_idx;
@@ -149,7 +149,7 @@ bt_cursor_tmpl<object> bt_find_gt_tmpl(const xptr &root, const bt_key &key)
 }
 
 template<typename object>
-bt_cursor_tmpl<object> bt_lm_tmpl(const xptr& root)
+bt_cursor_tmpl<object> bt_lm_tmpl(const xptr root)
 {
     if (root == XNULL) return bt_cursor_tmpl<object>();
 
@@ -355,10 +355,10 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 
 
 #define MAKE_IMPLS(t) \
-	template bt_cursor_tmpl<t> bt_find_tmpl(const xptr &root, const bt_key &key); \
-	template bt_cursor_tmpl<t> bt_find_ge_tmpl(const xptr &root, const bt_key &key); \
-    template bt_cursor_tmpl<t> bt_find_gt_tmpl<t>(const xptr &root, const bt_key &key); \
-	template bt_cursor_tmpl<t> bt_lm_tmpl<t>(const xptr& root); \
+	template bt_cursor_tmpl<t> bt_find_tmpl(const xptr root, const bt_key &key); \
+	template bt_cursor_tmpl<t> bt_find_ge_tmpl(const xptr root, const bt_key &key); \
+    template bt_cursor_tmpl<t> bt_find_gt_tmpl<t>(const xptr root, const bt_key &key); \
+	template bt_cursor_tmpl<t> bt_lm_tmpl<t>(const xptr root); \
 	template void bt_insert_tmpl<t>(xptr &root, const bt_key &key, const t &obj,bool with_bt); \
 	template void bt_delete_tmpl<t>(xptr &root, const bt_key& key, const t &obj); \
 	template void bt_delete_tmpl<t>(xptr &root, const bt_key& key);
