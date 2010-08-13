@@ -48,7 +48,7 @@ MESSAGE(STATUS "Configuring custom expat - done")
 
 # libedit "external" library
 # we use internal cached variables to determine directories for -I and -L
-set(LIBEDIT_VER "20090610-3.0")
+set(LIBEDIT_VER "20100424-3.0")
 message(STATUS "Will build libedit from scratch when building the project, if needed...")
 
 set(LIBEDIT_TAR_DIR ${CMAKE_BINARY_DIR}/libs/libedit-${LIBEDIT_VER})
@@ -57,13 +57,23 @@ set(libedit_files ${LIBEDIT_TAR_DIR}/include/editline/readline.h ${LIBEDIT_TAR_D
 set(CUSTOM_LIBEDIT_INCLUDE ${LIBEDIT_TAR_DIR}/include/editline CACHE INTERNAL "Internal libedit include path")
 set(CUSTOM_LIBEDIT_LIB ${LIBEDIT_TAR_DIR}/lib CACHE INTERNAL "Internal libedit library path")
 
+if (UNIX)
+    find_program(PATCH_COMMAND patch)
+    if (NOT PATCH_COMMAND)
+        message(STATUS "Cannot find patch -- it'll not be possible to build libedit")
+    endif (NOT PATCH_COMMAND)
+endif (UNIX)
+
+
 add_custom_command(OUTPUT ${libedit_files}
-                    COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_SOURCE_DIR}/libs/libedit-${LIBEDIT_VER}.tar.gz
-                    COMMAND ${CMAKE_COMMAND} -E chdir ${LIBEDIT_TAR_DIR} sh configure --enable-shared=no --prefix=${LIBEDIT_TAR_DIR}
-                    COMMAND ${CMAKE_COMMAND} -E chdir ${LIBEDIT_TAR_DIR} make install
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                    VERBATIM
-                    )
+                   COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_SOURCE_DIR}/libs/libedit-${LIBEDIT_VER}.tar.gz
+                   COMMAND ${PATCH_COMMAND} -d ${LIBEDIT_TAR_DIR} < ${CMAKE_CURRENT_SOURCE_DIR}/01-libedit-dups.patch
+                   COMMAND ${PATCH_COMMAND} -d ${LIBEDIT_TAR_DIR} < ${CMAKE_CURRENT_SOURCE_DIR}/02-libedit-bsd.patch
+                   COMMAND ${CMAKE_COMMAND} -E chdir ${LIBEDIT_TAR_DIR} sh configure --enable-shared=no --prefix=${LIBEDIT_TAR_DIR}
+                   COMMAND ${CMAKE_COMMAND} -E chdir ${LIBEDIT_TAR_DIR} make install
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                   VERBATIM
+                  )
 
 add_custom_target(custom_libedit DEPENDS ${libedit_files})
 

@@ -393,7 +393,7 @@ CONTENTS
 
    Visual Studio places them into:
 
-      <Sedna-Binaries-Path>/<Build-Type>/driver/c
+      <Sedna-Binaries-Path>/driver/c/<Build-Type>
 
    where <Build-Type> can be Release, Debug, etc.
 

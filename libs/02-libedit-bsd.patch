@@ -1,0 +1,18 @@
+--- src/vi.c	Fri Apr 23 00:09:52 2010
++++ src/new_vi.c	Fri Aug 13 18:18:35 2010
+@@ -918,14 +918,14 @@
+  * NB: posix implies that we should enter insert mode, however
+  * this is against historical precedent...
+  */
+-#ifdef __weak_reference
++#if defined(__weak_reference) && defined(__NetBSD__)
+ extern char *get_alias_text(const char *) __weak_reference(get_alias_text);
+ #endif
+ protected el_action_t
+ /*ARGSUSED*/
+ vi_alias(EditLine *el, Int c)
+ {
+-#ifdef __weak_reference
++#if defined(__weak_reference) && defined(__NetBSD__)
+	char alias_name[3];
+	char *alias_text;
