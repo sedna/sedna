@@ -48,22 +48,18 @@ static
 char * copyTextToBuffer(char * buffer, const text_source_t &src)
 {
     switch (src.type) {
-      case text_mem : {
-        U_ASSERT(src.size <= PSTRMAXSIZE);
+      case text_source_t::text_mem : {
         memcpy(buffer, src.u.cstr, (size_t) src.size);
-      }
-        break;
-      case text_doc : {
+      } break;
+      case text_source_t::text_pstr : {
         xptr ptr = src.u.data;
         CHECKP(ptr);
-        U_ASSERT(src.size <= PSTRMAXSIZE);
         memcpy(buffer, (char*) XADDR(ptr), (size_t) src.size);
-      }
-        break;
-      case text_estr : {
+      } break;
+      case text_source_t::text_estr : {
         estr_copy_to_buffer(buffer, src.u.data, src.size);
-      }
-        break;
+      } break;
+      default : throw USER_EXCEPTION2(SE2037, "Failed to copy text (this is a Sedna bug)");
     }
 
     return buffer;
@@ -75,8 +71,7 @@ xptr pstr_allocate_u(xptr text_block, xptr node, const text_source_t &src)
 {
     xptr result;
 
-    U_ASSERT(src.size <= PSTRMAXSIZE);
-    if (src.type == text_mem) {
+    if (src.type == text_source_t::text_mem) {
         result = pstr_allocate(text_block, node, src.u.cstr, (size_t) src.size);
     } else {
         copyTextToBuffer(tmp_text_buffer, src);
@@ -100,17 +95,18 @@ xptr pstr_allocate_u(xptr text_block, xptr node, const text_source_t &src)
 void insertTextValue(xptr node_xptr, const text_source_t source)
 {
     node_text_t * text_node = getTextFromAnyNode(node_xptr);
+    const strsize_t size = tsGetActualSize(source);
 
-    if (source.size > STRMAXSIZE) {
+    if (size > STRMAXSIZE) {
             throw USER_EXCEPTION(SE2037);
-    } else if (source.size == 0) {
+    } else if (size == 0) {
         WRITEP(node_xptr);
         text_node->size = emptyText;
-    } else if (source.size <= maxDescriptorTextSize) {
+    } else if (size <= maxDescriptorTextSize) {
         /* Very short text case */
         char * buffer;
 
-        if (source.type == text_mem) {
+        if (source.type == text_source_t::text_mem) {
             buffer = (char *) source.u.cstr;
         } else {
             buffer = tmp_text_buffer;
@@ -120,7 +116,7 @@ void insertTextValue(xptr node_xptr, const text_source_t source)
         WRITEP(node_xptr);
         memcpy(text_node->data, buffer, (size_t) source.size);
         text_node->size = (uint16_t) source.size;
-    } else if (source.size <= PSTRMAXSIZE) {
+    } else if (size <= PSTRMAXSIZE) {
         /* PSTR text case */
         pstr_allocate_u(findNearestTextContainerCP(node_xptr), node_xptr, source);
     } else {
@@ -136,7 +132,8 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
     node_text_t * text_node = getTextFromAnyNode(node_xptr);
     CommonTextNode nodeobject = node_xptr;
     const strsize_t curr_size = nodeobject.getTextSize();
-    const strsize_t new_size = curr_size + source.size;
+    const strsize_t add_size = tsGetActualSize(source);
+    const strsize_t new_size = curr_size + add_size;
 
     if (new_size > STRMAXSIZE) {
         throw USER_EXCEPTION(SE2037);
@@ -155,7 +152,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
 
         /* Old insertion (uncatchable at runtime) bug check when
          * the node is inserted to itself */
-        U_ASSERT((source.type != text_doc) || source.u.data != data);
+        U_ASSERT((source.type != text_source_t::text_pstr) || source.u.data != data);
 
         CHECKP(data)
         memcpy(tmp_text_buffer, (char *) XADDR(data), curr_size_s);
@@ -167,19 +164,9 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
 
             if (position == ip_tail) {
                 pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
-                if ((source.type == text_doc) && source.u.data != nodeobject.getTextPointerCP()) {
-                    /* FIXME: Dirty hack! We need to fix updates to get rid of this */
-                    pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
-                } else {
-                    pstr_long_append_tail(node_xptr, source);
-                }
+                pstr_long_append_tail(node_xptr, source);
             } else {
-                if ((source.type == text_doc) && source.u.data != nodeobject.getTextPointerCP()) {
-                    /* FIXME: Dirty hack! We need to fix updates to get rid of this */
-                    pstr_long_create_str(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
-                } else {
-                    pstr_long_create_str(node_xptr, source);
-                }
+                pstr_long_create_str(node_xptr, source);
                 pstr_long_append_tail(node_xptr, text_source_mem(tmp_text_buffer, curr_size_s));
             }
         } else {
@@ -187,7 +174,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
             if (position == ip_tail) {
                 copyTextToBuffer(tmp_text_buffer + curr_size_s, source);
             } else {
-                const size_t offset = (size_t) source.size;
+                const size_t offset = add_size;
                 memmove(tmp_text_buffer + offset, tmp_text_buffer, curr_size_s);
                 copyTextToBuffer(tmp_text_buffer, source);
             }
