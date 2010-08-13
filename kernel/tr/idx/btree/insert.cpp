@@ -37,7 +37,7 @@ char insert_buf[BT_PAGE_SIZE];
 	  in original page settle in another page.
  */
 template<typename object>
-xptr bt_page_split_tmpl(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size, bool insert_key)
+xptr bt_page_split_tmpl(char* pg, const xptr rpg, shft & pretender_idx, shft pretender_size, bool insert_key)
 {
 	xptr    pg_xptr = ADDR2XPTR(pg);
     xptr    next_for_rpg = BT_NEXT(pg);
@@ -459,7 +459,7 @@ xptr bt_internal_insert_tmpl(
    into new page
  */
 template<typename object>
-void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr &rpg, const object &obj, shft obj_idx)
+void bt_page_clusterize_tmpl(xptr &root, char* pg, const xptr rpg, const object &obj, shft obj_idx)
 {
 	xptr        pg_xptr = ADDR2XPTR(pg);
     xptr        next_for_rpg;
@@ -621,7 +621,7 @@ void bt_leaf_do_insert_key_tmpl(char* pg, shft key_idx, const bt_key& key, const
    of non-leaf page; this function is used when new key is to be created in the page
    no check for fittness
  */
-void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xptr &big_ptr)
+void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xptr big_ptr)
 {
 	U_ASSERT(key_idx <= BT_KEY_NUM(pg));
 
