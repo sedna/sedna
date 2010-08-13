@@ -279,8 +279,10 @@ CONTENTS
           libncurses package (depending on exact OS type) to build Sedna with
           libedit or readline support. In some cases (e.g. Debian, Ubuntu)
           you have to install libtermcap, libcurses or libncurses development
-          package as well. Also you may need to install readline or libedit
-          development headers on some platforms.
+          package as well. Also you may need to install readline development
+          headers on some platforms to build with 'Readline' option.
+
+          Note, you can't use 'Readline' option with STATIC_SYS_LIBS enabled.
 
      * JAVA_DRIVER - Compiles Java driver. Set value to 'OFF' if you don't
           need java driver. If want to build java driver make sure that
