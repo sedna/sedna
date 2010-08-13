@@ -470,16 +470,17 @@ struct text_source_t text_source_cstr(const char * str) {
 
 static inline
 struct text_source_t text_source_node(const xptr node) {
-    const CommonTextNode ctn(node);
-	struct text_source_t result = {text_source_t::text_pstr};
-
-    result.size = ctn.getTextSize();
-	//FIXME
-	if (result.size > PSTRMAXSIZE)
-		result.type = text_source_t::text_pstrlong;
-    result.u.data = ctn.getTextPointerCP();
-    return result;
+    return CommonTextNode(node).getTextSource();
 };
+
+static inline
+strsize_t tsGetActualSize(struct text_source_t t) {
+    if (t.type == text_source_t::text_pstrlong) {
+        return pstr_long_bytelength2(t.u.data);
+    } else {
+        return t.size;
+    }
+}
 
 struct text_source_t text_source_pstr(const xptr text);
 

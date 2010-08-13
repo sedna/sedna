@@ -240,10 +240,10 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
                                     node_info.parent_indir, (char *) XADDR(data), size, true);
             }
         } else {
-            if (source.type == text_mem) {
+            if (source.type == text_source_t::text_mem) {
                 hl_logical_log_text_edit(node_info.indirection, source.u.cstr, (size_t) source.size, (insert_type == ti_addtext_before), true);
             } else {
-                hl_logical_log_text_edit(node_info.indirection, source.size, (insert_type == ti_addtext_before), true);
+                hl_logical_log_text_edit(node_info.indirection, tsGetActualSize(source), (insert_type == ti_addtext_before), true);
             }
         }
     } else {

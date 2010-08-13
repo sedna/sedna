@@ -11,6 +11,8 @@
 #include "tr/structures/nodeoperations.h"
 #include "tr/structures/xmlns.h"
 
+#include "tr/strings/strings_base.h"
+
 class Node {
 protected:
     xptr node;
@@ -158,6 +160,21 @@ public:
     }
 
     char * copyToBuffer(char * buffer, strsize_t position, size_t size) const;
+
+    inline
+    struct text_source_t getTextSource() {
+        struct text_source_t result = {text_source_t::text_pstr};
+
+        if (isPstrLong()) {
+            result.type = text_source_t::text_pstrlong;
+            result.size = 0;
+        } else {
+            result.size = getTextSize();
+        }
+
+        result.u.data = getTextPointerCP();
+        return result;
+    };
 
     inline
     enum internal::text_type_t getStorageType() const {
