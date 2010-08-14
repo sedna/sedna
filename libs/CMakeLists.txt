@@ -67,8 +67,8 @@ endif (UNIX)
 
 add_custom_command(OUTPUT ${libedit_files}
                    COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_SOURCE_DIR}/libs/libedit-${LIBEDIT_VER}.tar.gz
-                   COMMAND ${PATCH_COMMAND} -d ${LIBEDIT_TAR_DIR} < ${CMAKE_CURRENT_SOURCE_DIR}/01-libedit-dups.patch
-                   COMMAND ${PATCH_COMMAND} -d ${LIBEDIT_TAR_DIR} < ${CMAKE_CURRENT_SOURCE_DIR}/02-libedit-bsd.patch
+                   COMMAND ${PATCH_COMMAND} -p0 -d ${LIBEDIT_TAR_DIR} < ${CMAKE_CURRENT_SOURCE_DIR}/01-libedit-dups.patch
+                   COMMAND ${PATCH_COMMAND} -p0 -d ${LIBEDIT_TAR_DIR} < ${CMAKE_CURRENT_SOURCE_DIR}/02-libedit-bsd.patch
                    COMMAND ${CMAKE_COMMAND} -E chdir ${LIBEDIT_TAR_DIR} sh configure --enable-shared=no --prefix=${LIBEDIT_TAR_DIR}
                    COMMAND ${CMAKE_COMMAND} -E chdir ${LIBEDIT_TAR_DIR} make install
                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
