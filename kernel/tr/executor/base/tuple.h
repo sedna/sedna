@@ -26,6 +26,7 @@ typedef std::pair<int, int>			int_pair;
 typedef std::vector<int_pair>		arr_of_int_pairs;
 
 typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
+//typedef counted_ptr<protal_node> portalnode_ptr;
 
 /// Used in fn:concat to determine which type of sting to create as result.
 /// Possibly, additional review is needed how we manage in-memory strings.
@@ -42,32 +43,28 @@ typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 
 /// Possible types of tuple cell
 #define tc_eos                         (uint32_t)(0x80000000) // cell stores end of sequence
-#define tc_xptr                        (uint32_t)(0x40000000) // cell stores xptr
-#define tc_safenode                    (uint32_t)(0x43000000) // cell stores safenode
-#define tc_node                        (uint32_t)(0x42000000) // cell stores node
-#define tc_unsafenode                  (uint32_t)(0x41000000) // cell stores unsafenode
+#define tc_portal_node                 (uint32_t)(0x40000000) // cell stores virtual node or document, that is actually a sequence
 #define tc_light_atomic_fix_size       (uint32_t)(0x10000000) // cell stores light atomic value (feats in dynamic memory)
 #define tc_light_atomic_var_size       (uint32_t)(0x20000000) // cell stores light atomic value (feats in dynamic memory)
 #define tc_heavy_atomic_estr           (uint32_t)(0x04000000) // cell stores heavy atomic value in e_strings (that is stored in VMM memory)
 #define tc_heavy_atomic_pstr_short     (uint32_t)(0x08000000) // cell stores heavy atomic value in short pstrings (that is stored in VMM memory)
 #define tc_heavy_atomic_pstr_long      (uint32_t)(0x0C000000) // cell stores heavy atomic value in long pstrings (that is stored in VMM memory)
+#define tc_safenode                    (uint32_t)(0x03000000) // cell stores safenode
+#define tc_node                        (uint32_t)(0x02000000) // cell stores node
+#define tc_unsafenode                  (uint32_t)(0x01000000) // cell stores unsafenode
 
 
 /// Masks for 't' field of tuple cell
 #define TC_EOS_MASK                    (uint32_t)(0x80000000)
-#define TC_NODE_MASK                   (uint32_t)(0x40000000)
+#define TC_NODE_MASK                   (uint32_t)(0x03000000)
 #define TC_ATOMIC_MASK                 (uint32_t)(0x3C000000)
+#define TC_PORTAL_MASK                 (uint32_t)(0x40000000)
 #define TC_LIGHT_ATOMIC_MASK           (uint32_t)(0x30000000)
 #define TC_HEAVY_ATOMIC_MASK           (uint32_t)(0x0C000000)
 #define TC_LIGHT_ATOMIC_VAR_SIZE_MASK  (uint32_t)(0x20000000)
 
 #define TC_TYPE_MASK                   (uint32_t)(0xFF000000)
 #define TC_XTYPE_MASK                  (uint32_t)(0x00FFFFFF)
-#define TC_SUBTYPE_MASK                (uint32_t)(0x03000000)
-
-#define TC_UNSAFENODE                  (uint32_t)(0x41000000)
-#define TC_TMPSAFENODE                 (uint32_t)(0x42000000)
-#define TC_SAFENODE                    (uint32_t)(0x43000000)
 
 /// Tuple cell data ('data' field of tuple_cell)
 typedef struct {
@@ -102,9 +99,9 @@ bits:    X                  X               X       X                      XX
 
                                 entity in tuple cell
                                      //    \\
-          __________________________//      \\________________
-         //                 //                               \\
-        eos                xptr                             atomic
+          __________________________//      \\_________________________________________
+         //                 //                               \\                        \\
+        eos                xptr                             atomic                  portal node
                        //   ||   \\                ________//    \\________
                      safe   ||  tmp-safe          //                      \\
                           unsafe           light atomic               heavy atomic
@@ -114,19 +111,15 @@ bits:    X                  X               X       X                      XX
                                          size       size
 
 100000 -- eos
-010000 -- xptr
+010000 -- portal (virtual) node
 001000 -- light atomic of variable size
 000100 -- light atomic of fixed size
 000001 -- heavy atomic (estr)
 000010 -- heavy atomic (pstr_short)
 000011 -- heavy atomic (pstr_long)
-
-Special subtypes for "node" in 7-8 bits:
-
-01000011 -- always indirection (safe)
-01000010 -- indirection only for temporary (tmp-safe)
-01000001 -- always direct node (unsafe)
-01000000 -- "untyped" node (any xptr)
+00000011 -- node always indirection (safe)
+00000010 -- node indirection only for temporary (tmp-safe)
+00000001 -- node always direct node (unsafe)
 
 'eos' stands for END OF SEQUENCE.
 
@@ -178,6 +171,10 @@ in VMM memory.
 
 struct tuple_cell;
 
+namespace portal {
+    class VirtualNode;
+};
+
 extern tuple_cell EMPTY_STRING_TC;
 
 // allocator for xs_QName_create; 'void' to avoid changing alloc_func in every signature
@@ -206,8 +203,11 @@ private:
     }
     void release()
     {
-        if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK)
+        if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             ((str_counted_ptr*)(&data))->~str_counted_ptr();
+        } else if (this->is_portal()) {
+            delete this->get_portal();
+        }
     }
 
     void set_size(int64_t _size_) { *(int64_t*)((char*)(&data) + sizeof(xptr)) = _size_; }
@@ -220,10 +220,10 @@ public:
     bool is_atomic()       const { return (t & TC_ATOMIC_MASK) != 0; }
     bool is_light_atomic() const { return (t & TC_LIGHT_ATOMIC_MASK) != 0; }
     bool is_heavy_atomic() const { return (t & TC_HEAVY_ATOMIC_MASK) != 0; }
+    bool is_portal()       const { return (t == tc_portal_node); }
 
     /* node types */
-
-    bool is_xptr()         const { return (t & TC_NODE_MASK) != 0; }
+    bool is_node()         const { return (t & TC_NODE_MASK) != 0; }
 
     /* safenode type means that node is stored with indirection always */
     bool is_safenode()     const { return (t & TC_TYPE_MASK) == TC_SAFENODE; }
@@ -237,7 +237,9 @@ public:
     uint32_t           get_type()        const { return t & TC_TYPE_MASK; }
     xmlscm_type        get_atomic_type() const { return t & TC_XTYPE_MASK; }
 
-    xptr               get_xptr()        const { return *(xptr*)(&data); }
+    portal::VirtualNode * get_portal() const { return *(portal::VirtualNode **) (&data); }
+
+//    xptr               get_xptr()        const { return *(xptr*)(&data); }
     xptr               get_smartnode()   const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
     xptr               get_safenode()    const { return indirectionDereferenceCP(get_xptr()); }
     xptr               get_unsafenode()  const { return get_xptr(); }
