@@ -43,6 +43,39 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// PPVirtualConstructor
+///////////////////////////////////////////////////////////////////////////////
+class PPVirtualConstructor : public PPConstructor
+{
+protected:
+    PPOpIn qname;
+    PPOpIn content;
+    char* el_name;
+    bool ns_inside;
+
+private:
+    virtual void do_open   ();
+    virtual void do_reopen ();
+    virtual void do_close  ();
+    virtual void do_next   (tuple &t) ;
+    virtual void do_accept (PPVisitor &v);
+
+    virtual PPIterator* do_copy(dynamic_context *_cxt_);
+public:
+    PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
+            PPOpIn _qname_, PPOpIn _content_);
+
+    PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
+            const char* name, PPOpIn _content_);
+
+    virtual ~PPVirtualConstructor();
+
+    /* May return NULL if name is not predefined */
+    inline const char* get_name() { return el_name; }
+    inline bool is_ns_inside() { return ns_inside; }
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// PPElementConstructor
 ///////////////////////////////////////////////////////////////////////////////
 class PPElementConstructor : public PPConstructor
@@ -79,7 +112,7 @@ public:
                          bool _ns_inside);
 
     virtual ~PPElementConstructor();
-    
+
     /* May return NULL if name is not predefined */
     inline const char* get_name() { return el_name; }
     inline bool is_ns_inside() { return ns_inside; }

@@ -26,6 +26,8 @@
 #include "tr/structures/nodeoperations.h"
 #include "tr/structures/nodeutils.h"
 
+#include "tr/structures/portal.h"
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -239,6 +241,285 @@ void PPConstructor::clear_virtual_root()
         virt_root=XNULL;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPVirtualConstructor
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
+        operation_info _info_, PPOpIn _qname_, PPOpIn _content_) :
+            PPConstructor(_cxt_, _info_, _deep_copy), qname(_qname_), content(_content_)
+
+{
+    el_name=NULL;
+}
+
+PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
+        operation_info _info_, const char* name, PPOpIn _content_) :
+            PPConstructor(_cxt_, _info_, _deep_copy), content(_content_)
+{
+    el_name=se_new char[strlen(name)+1];
+    strcpy(el_name,name);
+
+}
+PPVirtualConstructor::~PPVirtualConstructor()
+{
+
+    if (el_name!=NULL) {
+        delete [] el_name;
+    } else {
+        delete qname.op;
+        qname.op = NULL;
+    }
+
+    delete content.op;
+
+    content.op = NULL;
+}
+
+void PPVirtualConstructor::do_open ()
+{
+    checkInitial();
+    if (el_name==NULL) qname.op->open();
+    content.op->open();
+    first_time = true;
+}
+
+void PPVirtualConstructor::do_reopen()
+{
+    if (el_name==NULL)  qname.op->reopen();
+    content.op->reopen();
+
+    first_time = true;
+}
+
+void PPVirtualConstructor::do_close()
+{
+    if (el_name==NULL) qname.op->close();
+    content.op->close();
+}
+
+void PPVirtualConstructor::do_next (tuple &t)
+{
+    if (first_time) {
+        first_time = false;
+        portal::VirtualElement * element = se_new portal::VirtualElement();
+
+        /* Name parameter */
+/*
+        root_schema->find_child_fair()
+        element->snode = ;
+        const char* name = el_name;
+        tuple_cell res;
+        if (NULL == name)
+        {
+            res  = getQnameParameter(qname);
+            name = res.get_str_mem();
+        }
+*/
+        /* Context save */
+        xptr parind  = cont_parind;
+        xptr leftind = cont_leftind;
+        cont_parind  = XNULL;
+        cont_leftind = XNULL;
+        int oldcnt   = conscnt;
+
+        /* Preliminaries for static context */
+        tuple cont(content.ts);
+        if (ns_inside)
+        {
+            content.op->next(cont);
+            while (true)
+            {
+                start_seq.push_back(cont);
+                if(cont.is_eos()||cont.cells[0].is_atomic()) break;
+                tuple_cell tc=cont.cells[0];
+                xptr node=tc.get_node();
+                CHECKP(node);
+                t_item typ=getNodeType(node);
+                if(typ!=xml_namespace)
+                    break;
+                content.op->next(cont);
+            }
+        }
+
+        /* Namespace search */
+        char* prefix = NULL;
+        xmlns_ptr ns = NULL_XMLNS;
+        if (!res.is_eos()&&res.get_atomic_type()==xs_QName)
+        {
+            ns   = xs_QName_get_xmlns(name);
+            name = xs_QName_get_local_name(name);
+        }
+        else
+        {
+            separateLocalAndPrefix(prefix, name);
+
+            if (!check_constraints_for_xs_NCName(name))
+            {
+                delete [] prefix;
+                throw XQUERY_EXCEPTION(XQDY0074);
+            }
+
+            if (prefix != NULL)
+            {
+                str_counted_ptr c_ptr(prefix);
+                if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0096);
+                if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
+                ns = cxt->get_xmlns_by_prefix(prefix);
+            }
+            else
+            {
+                ns = cxt->get_xmlns_by_prefix("");
+            }
+        }
+        /*
+         * The attribute value in a default namespace declaration MAY be empty.
+         * This has the same effect, within the scope of the declaration, of there being no default namespace
+         */
+        if(is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
+
+        /* Check constraints on full name */
+        if(!isNameValid(name,
+                        ns == NULL_XMLNS ? NULL : ns->prefix,
+                        ns == NULL_XMLNS ? NULL : ns->uri,
+                        false))
+            throw XQUERY_EXCEPTION(XQDY0096);
+
+        int cnt = conscnt;
+        xptr indir = getIndirectionSafeCP(new_element);
+
+        /* Context change */
+        cont_parind  = indir;
+        cont_leftind = XNULL;
+
+        /* Process content sequence */
+        xptr left = XNULL;
+        bool mark_attr = true;   // If the content sequence contains an attribute node following a node that is not an attribute node
+        tuple* cont_ptr = NULL;
+        unsigned int ss_size = start_seq.size();
+        unsigned int ss_it = 0;
+
+        sequence atomic_acc(1);
+        tuple cont(content.ts);
+        const xptr virtual_root_i = getIndirectionSafeCP(virtual_root);
+        xptr atomic_node;
+
+        while (true) {
+            content.op->next(cont);
+            if (cont.is_eos()) break;
+            tuple_cell tc = cont_ptr->cells[0];
+
+            /* Analyze and insert it */
+            if (tc.is_portal()) {
+                element->addNode(tc);
+            } else if (tc.is_atomic()) {
+                atomic_acc.add(cont);
+            } else if (tc.is_node()) {
+                /* Process atomic values */
+                atomic_node = XNULL;
+                if (process_atomic_values(&atomic_node, virtual_root_i, atomic_acc)) {
+                    element->addNode(atomic_node);
+                }
+
+                xptr node = tc.get_node();
+                t_item nodetype = getNodeType(node);
+
+                switch (nodetype) {
+                case virtual_root:
+                    throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the element constructor content sequence");
+                case xml_namespace: {
+                    xmlns_ptr nsptr = NSNode(node).getNamespaceLocal();
+                    element->addNamespace(nsptr);
+                    if (is_empty_default_ns_declaration(nsptr)) { continue; }
+                } break;
+                case comment:
+                case pr_ins:
+                case document:
+                case element:
+                    {
+                        mark_attr = false;
+                        break;
+                    }
+                case text:
+                    {
+                        if (CommonTextNode(node).isEmpty()) continue;
+                        mark_attr = false;
+                        break;
+                    }
+                case attribute:
+                    {
+                        if (!mark_attr) throw XQUERY_EXCEPTION(XQTY0024);
+                    }
+                }
+
+                // Check if we've already inserted the node to this node as a context
+                if (conscnt > cnt)
+                {
+                    left = getIndirectionSafeCP(node);
+                    cnt =conscnt;
+                    cont_leftind = left;
+                }
+                else
+                {
+                    if (typ == document) {
+                        xptr res = copy_node_content(indir, node, left, NULL, cxt->get_static_context()->get_construction_mode());
+                        if (res != XNULL) {
+                            left = res;
+                            cont_leftind = left;
+                        }
+                    } else {
+                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->get_static_context()->get_construction_mode());
+                        cont_leftind = left;
+                    }
+                }
+            }
+        }
+
+        /* Process remained atomic values */
+        process_atomic_values(left, indir, at_vals);
+
+        /* Result */
+        t.copy(tuple_cell::node_indir(indir));
+
+        /* Clear in-scope context deleteng local namespace declarations */
+        vector<xmlns_ptr>::iterator it=ns_list.begin();
+        while (it != ns_list.end())
+        {
+            cxt->remove_from_context(*it);
+            it++;
+        }
+
+        /* Restore context */
+        cont_parind  = parind;
+        cont_leftind = XNULL;
+        if (deep_copy) conscnt = oldcnt;
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPVirtualConstructor::do_copy(dynamic_context *_cxt_)
+{
+    PPVirtualConstructor *res ;
+    if (el_name!=NULL)
+        res = se_new PPVirtualConstructor(_cxt_, info, el_name, content);
+    else
+    {
+        res = se_new PPVirtualConstructor(_cxt_, info, qname, content);
+        res->qname.op = qname.op->copy(_cxt_);
+    }
+    res->content.op = content.op->copy(_cxt_);
+    return res;
+}
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
