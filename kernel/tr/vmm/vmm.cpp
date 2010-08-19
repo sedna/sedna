@@ -203,8 +203,8 @@ void vmm_preliminary_call(lsize_t layer_size)
             throw USER_EXCEPTION(SE1031);
     }
 
-    elog(EL_INFO,  ("preliminary call: layer address space start addr = 0x%"PRIXPTR, LAYER_ADDRESS_SPACE_START_ADDR_INT));
-    elog(EL_INFO,  ("preliminary call: layer address space size = 0x%x", LAYER_ADDRESS_SPACE_SIZE));
+    elog(EL_DBG,  ("preliminary call: layer address space start addr = 0x%"PRIXPTR, LAYER_ADDRESS_SPACE_START_ADDR_INT));
+    elog(EL_DBG,  ("preliminary call: layer address space size = 0x%x", LAYER_ADDRESS_SPACE_SIZE));
 }
 
 /* SM query check function */

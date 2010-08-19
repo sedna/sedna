@@ -1,7 +1,7 @@
 /*
-* File:  exec_output.h
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File:  exec_output.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 
 #ifndef _EXEC_OUTPUT_H

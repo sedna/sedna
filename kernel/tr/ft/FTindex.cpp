@@ -271,9 +271,13 @@ UFile SednaIndexJob::create_log(const char *index_name)
 	std::string log_path = log_path1 + std::string(fn_part) + std::string(index_name) + std::string(".log");
 
 	USECURITY_ATTRIBUTES *sa;
-	if(uCreateSA(&sa,U_ALL_ACCESS, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
-	UFile log_file = uCreateFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH, sa, __sys_call_error);
-	if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
+	if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0)
+        throw USER_EXCEPTION(SE3060);
+
+    UFile log_file = uCreateFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH, sa, __sys_call_error);
+
+	if(uReleaseSA(sa, __sys_call_error)!=0)
+        throw USER_EXCEPTION(SE3063);
 
 	if (log_file == U_INVALID_FD)
 		throw USER_EXCEPTION2(SE4040, "failed to create log for full-text index operations");

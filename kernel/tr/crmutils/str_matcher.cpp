@@ -271,6 +271,7 @@ struct feed_to_matcher_state
 	write_func_t write_cb;
 	void *p;
 	int pc;
+	char buf[PAGE_SIZE];
 };
 typedef struct feed_to_matcher_state feed_to_matcher_state_t;
 
@@ -278,13 +279,26 @@ static void feed_to_matcher(const char *str, int len, void *p)
 {
 	feed_to_matcher_state_t* s = (feed_to_matcher_state_t*)p;
 	if (s->write_cb != NULL || s->res_counter == 0)
-		s->res_counter += s->sm_ptr->parse(str, len, s->write_cb, s->p, s->pc);
+	{
+		if (len <= PAGE_SIZE) //data may be in blocks, don't want that
+		{
+			memcpy(s->buf, str, len);
+			s->res_counter += s->sm_ptr->parse(s->buf, len, s->write_cb, s->p, s->pc);
+		}
+		else
+			s->res_counter += s->sm_ptr->parse(str, len, s->write_cb, s->p, s->pc);
+	}
 }
 
 int StrMatcher::parse_tc(const tuple_cell *tc, write_func_t write_cb, void *p, int pc)
 {
 	feed_to_matcher_state_t s = {0, this, write_cb, p, pc};
-	feed_tuple_cell(feed_to_matcher, &s, *tc);
+        xptr failed = {1, 18023117};
+	if (tc->get_str_vmm() == failed)
+	{
+		printf("here\n");
+	}
+        feed_tuple_cell(feed_to_matcher, &s, *tc);
 	return s.res_counter;
 }
 
