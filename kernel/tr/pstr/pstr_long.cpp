@@ -1845,11 +1845,13 @@ void pstr_long_feed2(xptr str,	string_consumer_fn fn, void *p)
 	while (blk != intl_last_blk)
 	{
 		CHECKP(blk);
-		if (((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk == intl_last_blk && intl_ftr.cursor < 0)
+		xptr next_blk = ((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk;
+		if (next_blk == intl_last_blk && intl_ftr.cursor < 0)
 			fn((char*)XADDR(blk) + ofs, -ofs-intl_ftr.cursor, p);
 		else
 			fn((char*)XADDR(blk) + ofs, PAGE_SIZE-ofs, p);
-		blk = ((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk;
+
+		blk = next_blk;
 		ofs = PSTR_LONG_BLK_HDR_SIZE;
 	}
 	if (intl_ftr.cursor > 0)
