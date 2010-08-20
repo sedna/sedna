@@ -254,9 +254,11 @@ getSimpleDebugInfo(schema_node_cptr snode, debug_info* d_in)
         xptr node = getFirstBlockNode(block);
         while (node != XNULL) {
             d_in->ext_nid_count += nid_get_size(nodeGetNIDP(node));
+            CHECKP(node);
             if (getNodeType(node) != element && getNodeType(node) != xml_namespace)
             {
                 d_in->str_size += CommonTextNode(node).getTextSize();
+                CHECKP(node);
             }
             node = nodeGetNext(node);
         }
