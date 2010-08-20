@@ -1,9 +1,8 @@
 /*
- * blockheader.h
- *
- *  Created on: Jun 23, 2010
- *      Author: epsilon
+ * File:  nodeblocks.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
+
 
 #ifndef NODEBLOCKS_H_
 #define NODEBLOCKS_H_

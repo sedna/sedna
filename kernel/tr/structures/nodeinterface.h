@@ -1,9 +1,8 @@
 /*
- * nodeinterface.h
- *
- *  Created on: Jun 23, 2010
- *      Author: epsilon
+ * File:  nodeinterface.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
+
 
 #ifndef NODEINTERFACE_H_
 #define NODEINTERFACE_H_

@@ -1,9 +1,8 @@
 /*
- * textnodes.h
- *
- *  Created on: Jul 5, 2010
- *      Author: epsilon
+ * File:  textnodes.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
+
 
 #ifndef TEXTNODES_H_
 #define TEXTNODES_H_
