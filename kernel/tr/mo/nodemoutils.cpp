@@ -1,3 +1,8 @@
+/*
+ * File:  nodemoutils.cpp
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "tr/mo/nodemoutils.h"
 
 using namespace internal;

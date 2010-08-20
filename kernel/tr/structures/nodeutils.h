@@ -1,8 +1,6 @@
 /*
- * nodenavigation.h
- *
- *  Created on: Jul 2, 2010
- *      Author: epsilon
+ * File:  nodeutils.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef NODEUTILS_H_

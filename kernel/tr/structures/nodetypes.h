@@ -1,8 +1,6 @@
 /*
- * nodetypes.h
- *
- *  Created on: Jul 2, 2010
- *      Author: epsilon
+ * File:  nodetypes.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef NODETYPES_H_

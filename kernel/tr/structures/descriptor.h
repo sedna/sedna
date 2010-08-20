@@ -1,8 +1,6 @@
 /*
- * descriptor.h
- *
- *  Created on: Jun 22, 2010
- *      Author: epsilon
+ * File:  descriptor.h
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef DESCRIPTOR_H_
