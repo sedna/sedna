@@ -104,6 +104,7 @@ void print_text(xptr txt, se_ostream& crmout, t_print ptype, t_item xq_type)
 {
     CHECKP(txt);
     strsize_t size = CommonTextNode(txt).getTextSize();
+    CHECKP(txt);
 
     if (size<=PSTRMAXSIZE) {
         char * data;

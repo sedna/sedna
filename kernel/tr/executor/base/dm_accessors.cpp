@@ -254,6 +254,7 @@ void dm_string_value_traverse(Node node)
             TextNode text(node);
             strsize_t size = text.getTextSize();
             xptr data = text.getTextPointer();
+            text.checkp();
 
             switch (dsvr.type) {
                 case dsvrt_empty    : dsvr.type = dsvrt_pstr_both;
@@ -477,6 +478,7 @@ tuple_cell dm_document_uri(Node node)
             CommonTextNode doc = node;
             U_ASSERT(!doc.isPstrLong());
             strsize_t size = doc.getTextSize();
+            doc.checkp();
             if (size == 0) {
                 return tuple_cell::eos();
             } else {

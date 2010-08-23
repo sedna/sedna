@@ -114,6 +114,7 @@ insertNidAndStringsStatistics(xptr broot, xptr node)
                     strsz[strz]++;
             }
             //next node
+            CHECKP(node);
             xptr tmp= getFirstChild(node);
             while (tmp==XNULL /*&& GETPARENTPOINTER(node)!=XNULL*/)
             {

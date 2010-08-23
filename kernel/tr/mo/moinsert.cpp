@@ -228,6 +228,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
             CHECKP(node_info.node_xptr);
             node_text_t * desc = getTextFromAnyNode(node_info.node_xptr);
             size_t size = (size_t) nodeGetTextSize(desc);
+            CHECKP(node_info.node_xptr);
             bool isPstrLongS = isPstrLong(desc);
             xptr data = nodeGetTextPointer(desc);
 
