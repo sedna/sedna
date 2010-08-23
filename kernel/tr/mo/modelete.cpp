@@ -47,6 +47,7 @@ void readNodeInfo(xptr node_xptr, node_info_t * node_info)
     if (node_info->snode->has_text()) {
         node_info->text_size = CommonTextNode(node_xptr).getTextSize();
         node_info->text_data = CommonTextNode(node_xptr).getTextPointer();
+        CHECKP(node_xptr);
     } else {
         node_info->text_size = 0;
     }

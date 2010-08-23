@@ -320,6 +320,7 @@ void hl_logical_log_text_edit(const xptr &self,unsigned data_size,bool begin,boo
 	CHECKP(desc);
     strsize_t str_len = CommonTextNode(desc).getTextSize();
 	xptr str_ptr = CommonTextNode(desc).getTextPointer();
+	CHECKP(desc);
 
 	/* "small" string -- within block */
 	if (str_len <= PSTRMAXSIZE)
