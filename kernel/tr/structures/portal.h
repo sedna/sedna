@@ -2,8 +2,20 @@
 #define PORTAL_H_
 
 namespace portal {
+    class VirtualStorage {
+        VirtualElement * createElement();
+    };
+
+    void portalOnTransactionBegin();
+    void portalOnTransactionEnd(bool commit);
+
+    extern VirtualStorage * virtualNodeStorage;
+
     class VirtualNode {
         schema_node_xptr snode;
+        xptr ptr;
+    public:
+        xptr getPtr() const { return ptr; };
     };
 
     class VirtualAttribute : public VirtualNode {
@@ -11,13 +23,14 @@ namespace portal {
     };
 
     class VirtualElement : public VirtualNode {
-        typedef std::pair<int, VirtualElement> PositionedElement;
+        bool noMoreAttributes;
+        int count;
+        int * shared_counter;
 
+        typedef std::pair<int, VirtualElement *> PositionedVirtualElement;
+        std::vector<PositionedVirtualElement> vitual_nodes;
         std::vector<xmlns_ptr> namespaces;
-        std::vector<VirtualAttribute> attributes;
-        std::vector<PositionedElement> virtual_children;
         xptr_sequence portal;
-
     public:
         virtual se_ostream & print(se_ostream & crmout) const;
 

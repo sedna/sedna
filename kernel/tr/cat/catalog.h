@@ -251,6 +251,8 @@ struct catalog_object_header {
     int cptr_refcount;
     int xptr_refcount;
 
+    inline const catalog_object * get_object() const { return object; };
+
     catalog_object_header * next;
     catalog_object_header * prev;
     catalog_object_header * next_invalid;

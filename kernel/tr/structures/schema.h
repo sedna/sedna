@@ -108,6 +108,10 @@ public:
     xptr bblk; /* pointer to the first block of block chain */ /* persistent */
     xptr bblk_indir; /* beggining block with free indirection quota*/ /* persistent */
 
+    const char * get_name () const {
+        return name;
+    }
+
     inline xmlns_ptr get_xmlns() const {
         if (xmlns_pers == XNULL) { return NULL; }
         else if (xmlns_local != NULL) { return xmlns_local; }
@@ -144,11 +148,6 @@ public:
 //    inline schema_node_object(bool _persistent = true) : persistent(_persistent) {};
     schema_node_object(const doc_schema_node_xptr _root, xmlns_ptr _xmlns, const char * _name, t_item _type, bool _persistent);
     ~schema_node_object();
-
-
-    const char * get_name () const {
-        return name;
-    }
 
     /* Schema node comparition */
     inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) {
