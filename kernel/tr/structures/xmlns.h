@@ -30,6 +30,10 @@ struct xmlns_indb_object : public catalog_object {
     xptr root; /* where to save this object in catalog */
     xmlns_ptr_pers next_xmlns; /* xmlns list */
 
+    inline const char * get_uri() const { return uri; }
+    inline const char * get_prefix() const { return prefix; }
+    inline bool has_prefix() const { return prefix != NULL && strnlen(prefix, 1) > 0; }
+
 /* Common catalog object interface */
 
     static const int magic = 0x008;

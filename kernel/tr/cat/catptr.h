@@ -46,6 +46,8 @@ struct catalog_cptr_template : public catalog_cptr {
     inline T * modify() { _modify(); return (T *) obj->object; };
     inline T * operator ->() { return (T *) obj->object; };
     inline T & operator *() { return * ((T *) obj->object); };
+
+    inline const T * operator ->() const { return (const T *) obj->get_object(); };
 };
 
 
