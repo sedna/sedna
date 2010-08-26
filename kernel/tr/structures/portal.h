@@ -1,21 +1,23 @@
 #ifndef PORTAL_H_
 #define PORTAL_H_
 
+#include "common/sedna.h"
+#include "common/base.h"
+
+#include "tr/structures/schema.h"
+#include "tr/executor/base/xptr_sequence.h"
+
+#include <vector>
+
+struct tuple_cell;
+class Serializer;
+
 namespace portal {
-    class VirtualStorage {
-        VirtualElement * createElement();
-    };
-
-    void portalOnTransactionBegin();
-    void portalOnTransactionEnd(bool commit);
-
-    extern VirtualStorage * virtualNodeStorage;
-
     class VirtualNode {
+    protected:
         schema_node_xptr snode;
-        xptr ptr;
     public:
-        xptr getPtr() const { return ptr; };
+        virtual void print(Serializer * out) const = 0;
     };
 
     class VirtualAttribute : public VirtualNode {
@@ -28,16 +30,29 @@ namespace portal {
         int * shared_counter;
 
         typedef std::pair<int, VirtualElement *> PositionedVirtualElement;
+
         std::vector<PositionedVirtualElement> vitual_nodes;
         std::vector<xmlns_ptr> namespaces;
         xptr_sequence portal;
     public:
-        virtual se_ostream & print(se_ostream & crmout) const;
+        virtual void print(Serializer * out) const;
 
+        void setSchemaNode(schema_node_cptr a_snode) { snode = a_snode.ptr(); };
         void addNode(const xptr node);
-        void addNode(const tuple_cell &t);
+        void addVirtual(const tuple_cell * t);
         void addNamespace(const xmlns_ptr &ns);
     };
-}
+
+    class VirtualStorage {
+    public:
+        VirtualNode * createElement();
+        void releaseNode(VirtualNode * node);
+    };
+
+    void portalOnTransactionBegin();
+    void portalOnTransactionEnd(bool commit);
+
+    extern VirtualStorage * virtualNodeStorage;
+};
 
 #endif /* PORTAL_H_ */

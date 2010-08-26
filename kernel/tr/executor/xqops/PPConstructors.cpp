@@ -251,7 +251,7 @@ void PPConstructor::clear_virtual_root()
 
 PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
         operation_info _info_, PPOpIn _qname_, PPOpIn _content_) :
-            PPConstructor(_cxt_, _info_, _deep_copy), qname(_qname_), content(_content_)
+            PPConstructor(_cxt_, _info_, false), qname(_qname_), content(_content_)
 
 {
     el_name=NULL;
@@ -259,7 +259,7 @@ PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
 
 PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
         operation_info _info_, const char* name, PPOpIn _content_) :
-            PPConstructor(_cxt_, _info_, _deep_copy), content(_content_)
+            PPConstructor(_cxt_, _info_, false), content(_content_)
 {
     el_name=se_new char[strlen(name)+1];
     strcpy(el_name,name);
@@ -302,7 +302,7 @@ void PPVirtualConstructor::do_close()
     content.op->close();
 }
 
-char * getName(char* name, PPOpIn& qnameop, xmlns_ptr& ns, dynamic_context* cxt) {
+const char * getName(const char* name, PPOpIn& qnameop, xmlns_ptr& ns, dynamic_context* cxt) {
     char* prefix = NULL;
     tuple_cell res;
 
@@ -341,13 +341,13 @@ void PPVirtualConstructor::do_next (tuple &t)
     if (first_time) {
         first_time = false;
         std::vector<xmlns_ptr> ns_list;
-        portal::VirtualElement * curnode = portal::virtualNodeStorage->createElement();
+        portal::VirtualElement * curnode = (portal::VirtualElement *) portal::virtualNodeStorage->createElement();
         xmlns_ptr ns = NULL_XMLNS;
 
-        char * name = getName(el_name, qname, ns, cxt);
-        schema_node_cptr snode = root_schema->get_first_child(ns, name, element);
+        const char * name = getName(el_name, qname, ns, cxt);
+        schema_node_cptr snode = get_virtual_root_snode()->get_first_child(ns, name, element);
         if (!snode.found()) {
-            snode = root_schema->add_child(ns, name, element);
+            snode = get_virtual_root_snode()->add_child(ns, name, element);
         }
         curnode->setSchemaNode(snode);
 
@@ -362,7 +362,7 @@ void PPVirtualConstructor::do_next (tuple &t)
             throw XQUERY_EXCEPTION(XQDY0096);
         }
 
-        const xptr virtual_root_i = getIndirectionSafeCP(virt_root);
+        const xptr virtual_root_i = getIndirectionSafeCP(get_virtual_root());
         sequence atomic_acc(1);
         tuple cont(content.ts);
         xptr atomic_node;
@@ -374,13 +374,13 @@ void PPVirtualConstructor::do_next (tuple &t)
 
             /* Analyze and insert it */
             if (tc.is_portal()) {
-                curnode->addNode(tc);
+                curnode->addVirtual(&tc);
             } else if (tc.is_atomic()) {
-                atomic_acc.add(tc);
+                atomic_acc.add(cont);
             } else if (tc.is_node()) {
                 /* Process atomic values */
                 atomic_node = XNULL;
-                if (process_atomic_values(&atomic_node, virtual_root_i, atomic_acc)) {
+                if (process_atomic_values(atomic_node, virtual_root_i, atomic_acc)) {
                     curnode->addNode(atomic_node);
                 }
 
@@ -402,7 +402,7 @@ void PPVirtualConstructor::do_next (tuple &t)
         }
 
         atomic_node = XNULL;
-        if (process_atomic_values(&atomic_node, virtual_root_i, atomic_acc)) {
+        if (process_atomic_values(atomic_node, virtual_root_i, atomic_acc)) {
             curnode->addNode(atomic_node);
         }
 
@@ -1698,5 +1698,14 @@ void PPTextConstructor::do_accept(PPVisitor &v)
     v.visit (this);
     v.push  (this);
     if (at_value==NULL) content.op->close();
+    v.pop();
+}
+
+void PPVirtualConstructor::do_accept (PPVisitor &v)
+{
+    v.visit (this);
+    v.push  (this);
+    if (el_name==NULL) qname.op->accept(v);
+    content.op->accept(v);
     v.pop();
 }

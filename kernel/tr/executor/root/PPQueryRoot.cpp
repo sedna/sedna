@@ -10,9 +10,9 @@
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/serializer.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
-
 
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_) :       PPQueryEssence("PPQueryRoot"),
@@ -152,15 +152,35 @@ bool PPQueryRoot::do_next()
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
 
-    /* Clients which based on protocol 4 should support serialization */
+    XMLOutput * output;
+    if (print_mode == sxml) {
+//        output = new SXMLOutput(cxt, *output_stream, );
+    } else {
+        output = new StdXMLOutput(cxt, *output_stream);
+    }
+
+    if (!first && !tr_globals::client->supports_serialization()) {
+        // This is needed for backward compatibility with old ( < 4 ) versions of protocol
+        (*output_stream) << " ";
+    }
+    Serializer * serializer = new Serializer(output);
+
+    serializer->serializeTuple(&data);
+
+    delete serializer;
+    delete output;
+
+/*
+    // Clients which based on protocol 4 should support serialization
     if(tr_globals::client->supports_serialization())
     {
-        /* If client supports serialization we don't have to
-         * make indentation, space delimiting and so on */
+//         If client supports serialization we don't have to
+//         make indentation, space delimiting and so on
         print_tuple(data, *output_stream, cxt, print_mode, true, false);
     }
     else
     {
+
         switch (cxt->get_static_context()->get_output_indent())
         {
             case se_output_indent_yes: print_tuple(data, *output_stream, cxt, print_mode, first, true);  break;
@@ -168,6 +188,7 @@ bool PPQueryRoot::do_next()
             default                  : throw USER_EXCEPTION2(SE1003, "Unexpected se_output_indent");
         }
 	}
+*/
 
     if (first)
         first = false;

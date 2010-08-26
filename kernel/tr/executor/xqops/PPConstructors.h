@@ -39,6 +39,7 @@ public:
     static void clear_virtual_root();
 
     static inline xptr get_virtual_root() { return virt_root; }
+    static inline schema_node_cptr get_virtual_root_snode() { return root_schema; }
     inline bool is_deep_copy() { return deep_copy; }
 };
 
