@@ -8,6 +8,7 @@
 
 #include "common/sedna.h"
 #include "common/xptr.h"
+#include "tr/vmm/vmm.h"
 
 typedef int64_t str_off_t;
 typedef int64_t strsize_t;
@@ -33,7 +34,7 @@ extern void writextext_cb(const char *str, int len, void *p);
 class str_cursor
 {
 public:
-    /// Block oriented copy. buf must have size not less than a page size
+    /// Block oriented copy. buf must have size equal to page size
     virtual int copy_blk(char *buf) = 0;
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
 	/// (same as copy_blk, but without copy)
@@ -50,8 +51,63 @@ public:
             dst += c;
         *dst = 0;
     }
-	virtual ~str_cursor() {};
 
+	virtual ~str_cursor() {};
+};
+
+class mem_cursor : public str_cursor {
+private:
+    const char * curr;
+    size_t sizeleft;
+public:
+    mem_cursor(const char * str, size_t asize) : curr(str), sizeleft(asize) {}
+
+    virtual int copy_blk(char *buf) {
+        const size_t result = MIN(PAGE_SIZE, sizeleft);
+        if (result > 0) {
+            memcpy(buf, curr, result);
+            curr += result;
+            sizeleft -= result;
+        }
+        return (int) result;
+    }
+
+    virtual int get_blk(char **ptr) {
+        const size_t result = MIN(PAGE_SIZE, sizeleft);
+        *ptr = (char *) curr;
+        curr += result;
+        return (int) result;
+    }
+
+    virtual ~mem_cursor() {};
+};
+
+class pstr_cursor : public str_cursor {
+private:
+    xptr curr;
+    size_t sizeleft;
+public:
+    pstr_cursor(xptr str, size_t asize) : curr(str), sizeleft(asize) {}
+
+    virtual int copy_blk(char *buf) {
+        const size_t result = MIN(PAGE_SIZE, sizeleft);
+        if (result > 0) {
+            memcpy(buf, xaddr(checkp(curr)), result);
+            curr += result;
+            sizeleft -= result;
+        }
+        return (int) result;
+    }
+
+    virtual int get_blk(char **ptr) {
+        const size_t result = MIN(PAGE_SIZE, sizeleft);
+        *ptr = (char *) xaddr(checkp(curr));
+        curr += result;
+        sizeleft -= result;
+        return (int) result;
+    }
+
+    virtual ~pstr_cursor() {};
 };
 
 

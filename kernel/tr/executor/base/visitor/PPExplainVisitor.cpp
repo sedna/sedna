@@ -470,6 +470,18 @@ void PPExplainVisitor::visit(PPElementConstructor* op)
     insert_attribute_i(attr_left,XNULL,left,"namespace-inside",xs_untypedAtomic, ns_inside, strlen(ns_inside), NULL_XMLNS);
 }
 
+void PPExplainVisitor::visit(PPVirtualConstructor* op)
+{
+    insertOperationElement("PPVirtualConstructor", left, parent, op);
+    xptr attr_left = XNULL;
+    const char* name = op->get_name();
+    if(NULL != name) {
+        attr_left = insert_attribute_i(XNULL,XNULL,left,"element-name",xs_untypedAtomic, name, strlen(name), NULL_XMLNS);
+    }
+    const char* deep_copy = op->is_deep_copy() ? "true" : "false";
+    attr_left = insert_attribute_i(attr_left,XNULL,left,"deep-copy",xs_untypedAtomic, deep_copy, strlen(deep_copy), NULL_XMLNS);
+}
+
 void PPExplainVisitor::visit(PPAttributeConstructor* op)
 {
     insertOperationElement("PPAttributeConstructor", left, parent, op);

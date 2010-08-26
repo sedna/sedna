@@ -93,7 +93,7 @@ static inline int ss_deserialize_tc(tuple_cell &tc, sequence_sorter::sort_type s
 		{
 		uint64_t p;
 		memcpy(&p, buf, sizeof(p));
-		tc = tuple_cell::from_xptr(uint64_to_xptr(p));
+		tc = tuple_cell::unsafenode(uint64_to_xptr(p));
 		return sizeof(p);
 		}
 	case sequence_sorter::st_uint64:

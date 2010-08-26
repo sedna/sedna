@@ -543,8 +543,9 @@ print_tuple_internal  (const tuple &tup,     /* tuple to print */
         if (ind ) crmout<<"\n";
     for (int i=0;i<tup.cells_number;i++)
     {
-        if (tup.cells[i].is_node())
-        {
+        if (tup.cells[i].is_portal()) {
+//            tup.cells[i].get_portal()->print( );
+        } else if (tup.cells[i].is_node()) {
             (ind)? print_node_indent(tup.cells[i].get_node(),crmout,ptype,cxt):print_node(tup.cells[i].get_node(),crmout,ptype,cxt);
             is_atomic=false;
         }

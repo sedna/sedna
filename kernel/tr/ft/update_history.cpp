@@ -18,7 +18,7 @@ update_history::update_history() : ssr()
 inline void update_history::add_node(const update_type ut, const xptr node)
 {
 	tuple t(2);
-	t.cells[0] = tuple_cell::from_xptr(node);
+	t.cells[0] = tuple_cell::unsafenode(node);
 	t.cells[1] = tuple_cell::atomic((int64_t)ut);
 	this->ssr.add(t);
 }

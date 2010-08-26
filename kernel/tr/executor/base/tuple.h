@@ -19,6 +19,8 @@
 #include "tr/structures/nodeinterface.h"
 #include "tr/mo/indirection.h"
 
+#include "tr/structures/portal.h"
+
 class sequence;
 
 /// Array of int pairs
@@ -171,10 +173,6 @@ in VMM memory.
 
 struct tuple_cell;
 
-namespace portal {
-    class VirtualNode;
-};
-
 extern tuple_cell EMPTY_STRING_TC;
 
 // allocator for xs_QName_create; 'void' to avoid changing alloc_func in every signature
@@ -206,7 +204,7 @@ private:
         if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             ((str_counted_ptr*)(&data))->~str_counted_ptr();
         } else if (this->is_portal()) {
-            delete this->get_portal();
+            portal::virtualNodeStorage->releaseNode(this->get_portal());
         }
     }
 
@@ -224,31 +222,28 @@ public:
 
     /* node types */
     bool is_node()         const { return (t & TC_NODE_MASK) != 0; }
-
     /* safenode type means that node is stored with indirection always */
-    bool is_safenode()     const { return (t & TC_TYPE_MASK) == TC_SAFENODE; }
+    bool is_safenode()     const { return (t & TC_TYPE_MASK) == tc_safenode; }
     /* node type means that node is stored with indirection only for temporary nodes */
-    bool is_smartnode()    const { return (t & TC_TYPE_MASK) == TC_TMPSAFENODE; }
+    bool is_smartnode()    const { return (t & TC_TYPE_MASK) == tc_node; }
     /* unsafenode type means that node xptr is stored directly (equals xptr type) */
-    bool is_unsafenode()   const { return (t & TC_TYPE_MASK) == TC_UNSAFENODE; }
+    bool is_unsafenode()   const { return (t & TC_TYPE_MASK) == tc_unsafenode; }
 
-    bool is_node()         const { return (t & TC_TYPE_MASK) && (t & TC_SUBTYPE_MASK); }
-
-    uint32_t           get_type()        const { return t & TC_TYPE_MASK; }
-    xmlscm_type        get_atomic_type() const { return t & TC_XTYPE_MASK; }
+    uint32_t    get_type()        const { return t & TC_TYPE_MASK; }
+    xmlscm_type get_atomic_type() const { return t & TC_XTYPE_MASK; }
 
     portal::VirtualNode * get_portal() const { return *(portal::VirtualNode **) (&data); }
 
-//    xptr               get_xptr()        const { return *(xptr*)(&data); }
-    xptr               get_smartnode()   const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
-    xptr               get_safenode()    const { return indirectionDereferenceCP(get_xptr()); }
-    xptr               get_unsafenode()  const { return get_xptr(); }
+    xptr get_xptr() const { return *(xptr*)(&data); }
+    xptr get_smartnode() const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
+    xptr get_safenode() const { return indirectionDereferenceCP(get_xptr()); }
+    xptr get_unsafenode() const { return get_xptr(); }
 
-    xptr               get_node()        const {
+    xptr get_node() const {
       switch (t & TC_TYPE_MASK) {
-        case TC_SAFENODE : return get_safenode();
-        case TC_TMPSAFENODE : return get_smartnode();
-        case TC_UNSAFENODE : return get_unsafenode();
+        case tc_safenode : return get_safenode();
+        case tc_node : return get_smartnode();
+        case tc_unsafenode : return get_unsafenode();
         default: return XNULL;
       }
     }
@@ -315,6 +310,11 @@ public:
     {
         t = subtype;
         *(xptr*)(&(data)) = _p_;
+    }
+    explicit tuple_cell(const int subtype, portal::VirtualNode * portal)
+    {
+        t = subtype;
+        *(portal::VirtualNode **)(&(data)) = portal;
     }
   public :
 
@@ -400,11 +400,6 @@ public:
         return tuple_cell();
     }
 
-    static tuple_cell from_xptr(const xptr &_p_)
-    {
-        return tuple_cell(tc_xptr, _p_);
-    }
-
     static tuple_cell safenode(const xptr &_p_)
     {
         return tuple_cell(tc_safenode, getIndirectionSafeCP(_p_));
@@ -420,6 +415,11 @@ public:
     static tuple_cell node(const Node &node)
     {
         return tuple_cell::node(node.getPtr());
+    }
+
+    static tuple_cell virtualnode(portal::VirtualNode * portal)
+    {
+        return tuple_cell(tc_portal_node, portal);
     }
 
     static tuple_cell node_indir(const xptr &_p_)
@@ -548,7 +548,7 @@ public:
     void set_xptr(const xptr &_p_)
     {
         release();
-        t = tc_xptr;
+        t = tc_node;
         *(xptr*)(&data) = isTmpBlock(_p_) ? getIndirectionSafeCP(_p_) : _p_;
     }
 
