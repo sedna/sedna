@@ -1,8 +1,7 @@
 /*
- * xmlns.cpp
- *
- *  Created on: Jul 5, 2010
- *      Author: epsilon
+ * File:  xmlns.cpp
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #include "tr/structures/xmlns.h"
