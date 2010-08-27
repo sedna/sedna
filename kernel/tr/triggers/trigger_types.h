@@ -1,8 +1,7 @@
 /*
- * trigger_types.h
- *
- *  Created on: Jun 24, 2010
- *      Author: epsilon
+ * File:  trigger_types.h
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #ifndef TRIGGER_TYPES_H_
