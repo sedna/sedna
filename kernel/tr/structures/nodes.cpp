@@ -233,7 +233,7 @@ xptr __getNextBlockDescriptorOfSameSort(xptr nodex)
 
 xptr __getPreviousBlockDescriptorOfSameSort(xptr nodex)
 {
-    xptr blk = getNonemptyBlockLookFore(getBlockHeader(nodex)->pblk);
+    xptr blk = getNonemptyBlockLookBack(getBlockHeader(nodex)->pblk);
     if (blk == XNULL) return XNULL;
     return getLastBlockNode(blk);
 }
