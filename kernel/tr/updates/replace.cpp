@@ -20,7 +20,7 @@
 
 void replace(PPOpIn arg)
 {
-    xptr node, parent, tmp_node, old_node, node_child, del_node, attr_node;
+    xptr node, tmp_node, attr_node;
     schema_node_xptr scm_node;
     tuple t(arg.ts);
 
@@ -47,7 +47,7 @@ void replace(PPOpIn arg)
     {
         if (t.cells[0].is_node())
         {
-            node=t.cells[0].get_node();
+            node = t.cells[0].get_node();
             CHECKP(node);
             /*
              * In (1) case node must be persistent (is_node_updated is true)
@@ -56,7 +56,7 @@ void replace(PPOpIn arg)
              */
             if ((!is_node_updated || is_node_persistent(node)) && !is_node_document(node))
             {
-                xptr indir=nodeGetIndirection(node);
+                xptr indir = nodeGetIndirection(node);
 
                 if (is_node_updated)
                 {
@@ -112,7 +112,7 @@ void replace(PPOpIn arg)
         auth_for_update(&arg1seq, REPLACE_STATEMENT, false);
 
     /* Find all common nodes in agr3seq (nodes to replace with) and
-    * arg1seq_tmp (nodes to be replaced). Make a copy of all such nodes. */
+     * arg1seq_tmp (nodes to be replaced). Make a copy of all such nodes. */
     arg1seq_tmp.sort();
     arg3seq.sort();
     descript_sequence::iterator it3 = arg3seq.begin();
@@ -173,8 +173,8 @@ void replace(PPOpIn arg)
     descript_sequence arg4seq(2);
     do
     {
-        node=(*it3).cells[0].get_node();
-        tuple t=(*it3);
+        node = (*it3).cells[0].get_node();
+        tuple t = (*it3);
         t.cells[0].set_safenode(node);
         ++it3;
         arg4seq.add(t);
@@ -186,50 +186,51 @@ void replace(PPOpIn arg)
     do
     {
         --it3;
-        node = old_node = (*it3).cells[0].get_safenode();
-        int pos=(*it3).cells[1].get_xs_integer();
-        sit=arg2seq.begin()+pos;
+        node = (*it3).cells[0].get_safenode();
+        int pos = (*it3).cells[1].get_xs_integer();
+        sit = arg2seq.begin() + pos;
         CHECKP(node);
-        xptr leftn=nodeGetLeftSibling(old_node);
-        xptr rightn=nodeGetRightSibling(old_node);
-        xptr par_ind= nodeGetParentIndirection(old_node);
-        bool a_m=is_node_attribute(node);
-        bool d_m=a_m||is_node_text(node);
+        xptr leftn   = nodeGetLeftSibling(node);
+        xptr rightn  = nodeGetRightSibling(node);
+        xptr par_ind = nodeGetParentIndirection(node);
+        bool a_m = is_node_attribute(node);
+        bool d_m = a_m || is_node_text(node);
 
 #ifdef SE_ENABLE_TRIGGERS
-        CHECKP(old_node);
-        scm_node = getSchemaPointer(old_node);
-        parent=  nodeGetParent(old_node);
-        CHECKP(old_node);
-        tmp_node = prepare_old_node(old_node, scm_node, TRIGGER_REPLACE_EVENT);
+        scm_node = getSchemaPointer(node);
+        tmp_node = prepare_old_node(node, scm_node, TRIGGER_REPLACE_EVENT);
 
         /* Before-for-each-node triggers (cycle for all inserted nodes) */
-        xptr_sequence::iterator tr_it=sit;
-        while(*tr_it!=XNULL)
+        xptr_sequence::iterator tr_it = sit;
+        while(*tr_it != XNULL)
         {
-            node_child=*tr_it;
-            parent=indirectionDereferenceCP(par_ind);
-            if(apply_per_node_triggers(indirectionDereferenceCP(node_child), old_node, parent, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) == XNULL)
+            if(apply_per_node_triggers(indirectionDereferenceCP(*tr_it),
+                                       node,
+                                       indirectionDereferenceCP(par_ind),
+                                       scm_node,
+                                       TRIGGER_BEFORE,
+                                       TRIGGER_REPLACE_EVENT) == XNULL)
+            {
                 goto next_replacement;
+            }
             tr_it++;
         }
-#endif
+#endif /* SE_ENABLE_TRIGGERS */
 
         //pre_deletion
         if (d_m)
         {
-            delete_node(old_node);
+            delete_node(node);
         }
         //1.inserting attributes from sequence
         while(*sit != XNULL)
         {
-            node_child = *sit;
-            if (is_node_attribute(indirectionDereferenceCP(node_child)))
+            xptr node_child = indirectionDereferenceCP(*sit);
+            if (is_node_attribute(node_child))
             {
-                parent = indirectionDereferenceCP(par_ind);
-                attr_node=deep_copy_node(XNULL, XNULL, parent, indirectionDereferenceCP(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
+                attr_node = deep_copy_node(XNULL, XNULL, indirectionDereferenceCP(par_ind), node_child, is_node_persistent(node_child) ? NULL : &ins_swiz, true);
 #ifdef SE_ENABLE_TRIGGERS
-                apply_per_node_triggers(attr_node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+                apply_per_node_triggers(attr_node, tmp_node, indirectionDereferenceCP(par_ind), scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
             }
             sit++;
@@ -237,8 +238,8 @@ void replace(PPOpIn arg)
         //2. finding place of insertion
         if (a_m)
         {
-            node= getFirstChildNode(indirectionDereferenceCP(par_ind));
-            if (node!=XNULL)
+            node = getFirstChildNode(indirectionDereferenceCP(par_ind));
+            if (node != XNULL)
             {
                 CHECKP(node);
                 if (is_node_element(node))
@@ -266,11 +267,11 @@ void replace(PPOpIn arg)
         sit = arg2seq.begin() + pos;
         while(*sit != XNULL)
         {
-            node_child = *sit;
-            if (!is_node_attribute(indirectionDereferenceCP(node_child)))
+            xptr node_child = indirectionDereferenceCP(*sit);
+            CHECKP(node_child);
+            if (!is_node_attribute(node_child))
             {
-                parent = indirectionDereferenceCP(par_ind);
-                node = deep_copy_node(node, rightn, parent, indirectionDereferenceCP(node_child), is_node_persistent(node_child) ? NULL : &ins_swiz, true);
+                node = deep_copy_node(node, rightn, indirectionDereferenceCP(par_ind), node_child, is_node_persistent(node_child) ? NULL : &ins_swiz, true);
 #ifdef SE_ENABLE_TRIGGERS
                 apply_per_node_triggers(node, tmp_node, indirectionDereferenceCP(par_ind), scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
@@ -280,15 +281,14 @@ void replace(PPOpIn arg)
         //post_deletion
         if (!d_m)
         {
-            del_node = (*it3).cells[0].get_safenode();
-            CHECKP(del_node);
+            xptr del_node = (*it3).cells[0].get_safenode();
             delete_node(del_node);
         }
 next_replacement:;
     }
-    while (it3!=arg4seq.begin());
+    while (it3 != arg4seq.begin());
 
-    if (ins_swiz!=NULL)
+    if (ins_swiz != NULL)
     {
         delete ins_swiz;
     }
