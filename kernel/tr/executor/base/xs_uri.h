@@ -1,6 +1,7 @@
 /*
  * File:  xs_uri.h
- * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #ifndef _XS_URI_H
@@ -105,4 +106,4 @@ public:
 
 };
 
-#endif
+#endif /* _XS_URI_H */

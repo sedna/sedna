@@ -1,6 +1,7 @@
 /*
  * File:  xs_uri.cpp
- * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #include <stack>
@@ -11,7 +12,7 @@
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/PPBase.h"
-
+#include "tr/structures/system_tables.h"
 #define PCRE_STATIC
 #define SUPPORT_UTF8
 #define SUPPORT_UCP
@@ -284,6 +285,31 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+/// Cache is filled with predefined and already checked URIs.
+/// For now we use it only for predefined system documents like
+/// $db_security_data.
+//////////////////////////////////////////////////////////////////////
+static inline bool
+check_in_cache(const char* uri, bool *valid, Uri::Information *nfo)
+{
+    /* We check only system documents now */
+    if(uri == NULL || uri[0] != '$') return false;
+
+    if(strcmp(SECURITY_METADATA_DOCUMENT, uri) == 0 ||
+       get_document_type(uri, dbe_document) != DT_NON_SYSTEM)
+    {
+        if(nfo != NULL) {
+           nfo -> type = Uri::UT_ABSOLUTE;
+           nfo -> normalized = true;
+        }
+        if(valid != NULL) *valid = true;
+        return true;
+    }
+
+    return false;
+}
+
 
 void Uri::check_constraints(const tuple_cell *in_tc, bool *valid, Uri::Information *nfo)
 {
@@ -298,6 +324,9 @@ void Uri::check_constraints(const tuple_cell *in_tc, bool *valid, Uri::Informati
     char scheme_buf[MAX_SCHEME_NAME_SIZE + 1];
     const char* re = URI;
     
+    /* Check if URI is already cached. In this case there is nothing to do for us. */
+    if(in_tc -> is_light_atomic() && check_in_cache(in_tc -> get_str_mem(), valid, nfo)) return;
+
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(is_URI_with_scheme_and_normalized, in_tc, &is_scheme, scheme_buf, &normalized); 
 
     if(is_scheme)
@@ -331,6 +360,9 @@ void Uri::check_constraints(const char *s, bool *valid, Uri::Information *nfo)
     char scheme_buf[MAX_SCHEME_NAME_SIZE + 1];
     const char* re = URI;
     const char* str = s;  // create copy of s to save its value within is_URI_with_scheme_and_normalized!
+
+    /* Check if URI is already cached. In this case there is nothing to do for us. */
+    if(check_in_cache(s, valid, nfo)) return;
     
     is_URI_with_scheme_and_normalized<const char*> (str, str + strlen(str), &is_scheme, scheme_buf, &normalized);
     
