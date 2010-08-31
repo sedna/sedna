@@ -458,6 +458,8 @@ CONTENTS
         kern.ipc.semmni=256
         kern.ipc.semmap=258
 
+      Note: reboot your machine after changing /boot/loader.conf.
+
    [1]. building BSD custom kernel:
         www.freebsd.org/doc/en/books/handbook/kernelconfig-building.html
    [2]. tuning with sysctl:
