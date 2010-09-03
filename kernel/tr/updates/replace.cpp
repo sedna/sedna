@@ -226,6 +226,7 @@ void replace(PPOpIn arg)
         while(*sit != XNULL)
         {
             xptr node_child = indirectionDereferenceCP(*sit);
+            CHECKP(node_child);
             if (is_node_attribute(node_child))
             {
                 attr_node = deep_copy_node(XNULL, XNULL, indirectionDereferenceCP(par_ind), node_child, is_node_persistent(node_child) ? NULL : &ins_swiz, true);
