@@ -1,0 +1,24 @@
+Sedna Documentaion Build & Edit Instructions
+
+This folder contains TeX sources of the documentation for Sedna XML Database:
+
+AdminGuide            - Sedna Administration Guide
+ProgGuide             - Sedna Programmers Guide
+QuickStart            - Sedna Quick Start
+ClientServerProtocol  - Sedna Client/Server Protocol Specification
+
+PDF version of this documentation is created automatically during Sedna build
+process if pdflatex was found by CMake. pdflatex utility is included in
+almost any TeX distribution: TeTex, LiveTex, MiKTeX, etc.
+
+To create HTML version of this documentation which is available on Sedna
+official site use ../scripts/doc2html/doc2html.sh script. It requires
+tex4ht to be installed (htlatex command).
+
+If you want to edit these sources:
+
+  - don't use lines longer than 80 symbols;
+  - don't leave trailing whitespaces;
+  - if you want to add some package - \usepackage{my-mega-package} - don't
+    forget that it must be installed on every night building machine;
+  - don't be lazy - run spell checker;
