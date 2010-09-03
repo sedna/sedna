@@ -8,6 +8,7 @@ release.sh
 coverage.pl
 scripts
 doc/man
+doc/README
 libs/dtsearch
 configure.sh
 kernel/tr/xqp/release.sh
