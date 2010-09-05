@@ -177,7 +177,7 @@ int main(int argc, char **argv)
             throw USER_EXCEPTION2(SE4211, reason.c_str());
         }
 
-        fprintf(res_os, "Creating a data base (this can take a few minutes)...\n");
+        fprintf(res_os, "Creating a database (this can take a few minutes)...\n");
 
         db_id = get_next_free_db_id( GOV_CONFIG_GLOBAL_PTR );
 

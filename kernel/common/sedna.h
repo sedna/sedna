@@ -25,7 +25,7 @@
 SE_EXTERN_C char* SEDNA_DATA;
 
 /*
- * Pointer to the governor's shared memory
+ * Pointer to the governor's shared memory.
  */
 SE_EXTERN_C void* sedna_gov_shm_ptr;
 
