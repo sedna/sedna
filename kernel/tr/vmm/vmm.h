@@ -1,6 +1,10 @@
 /*
  * File:  vmm.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ *
+ * Virtual Memory Manager.
+ * Provides interface for working with persistent memory - data in blocks.
  */
 
 #ifndef _VMM_H
@@ -27,7 +31,7 @@ namespace tr_globals {
 }
 
 extern xptr vmm_cur_xptr;
-extern volatile void * vmm_cur_ptr;
+extern volatile lsize_t vmm_cur_offs;
 
 void vmm_determine_region(bool log = false);
 
@@ -91,12 +95,12 @@ inline void check_if_null_xptr(const xptr& p)
 void vmm_unmap(void *addr);
 extern xptr vmm_checkp_xptr;
 #define CHECKP(p)    {                                                                           \
-                         vmm_checkp_xptr = p;                                                    \
+                         vmm_checkp_xptr = (p);                                                  \
                          VMM_TRACE_CHECKP(vmm_checkp_xptr);                                      \
                          check_if_null_xptr(vmm_checkp_xptr);                                    \
                          if (!same_block(vmm_checkp_xptr, vmm_cur_xptr)) {                       \
-                             if (vmm_cur_ptr) vmm_unmap(ALIGN_ADDR(vmm_cur_ptr));                \
-                             vmm_cur_ptr = XADDR(vmm_checkp_xptr);                               \
+                             if (vmm_cur_offs) vmm_unmap(ALIGN_ADDR(XADDR(vmm_cur_xptr)));   \
+                             vmm_cur_offs = vmm_checkp_xptr.getOffs();                           \
                              vmm_cur_xptr = vmm_checkp_xptr;                                     \
                              if (!TEST_XPTR(vmm_checkp_xptr)) vmm_unswap_block(vmm_checkp_xptr); \
                          }                                                                       \
@@ -108,8 +112,8 @@ extern xptr vmm_checkp_xptr;
 
 #define CHECKP(p)    {                                                                           \
                          VMM_TRACE_CHECKP(p);                                                    \
-                         vmm_cur_ptr = XADDR(p);                                                 \
-                         vmm_cur_xptr = p;                                                       \
+                         vmm_cur_offs = (p).getOffs();                                           \
+                         vmm_cur_xptr = (p);                                                     \
                          if (!TEST_XPTR(p)) vmm_unswap_block(p);                                 \
                      }
 

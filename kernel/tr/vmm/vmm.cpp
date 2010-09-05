@@ -1,6 +1,10 @@
 /*
- * File:  vmm.cpp
- * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File: vmm.cpp
+ * Copyright (C) ISP RAS 2010
+ * The Institute for System Programming of the Russian Academy of Sciences
+ *
+ * Implementation of Virtual Memory Manager.
+ * Provides interface for working with persistent memory - data in blocks.
  */
 
 #include <set>
@@ -29,15 +33,25 @@ static bool vmm_transaction_initialized = false;
 
 static UShMem file_mapping;
 
-/* Active page */
+/* Active block complete address */
 xptr vmm_cur_xptr;
 
 #ifdef VMM_DEBUG_CHECKP
 xptr vmm_checkp_xptr;
 #endif /* VMM_DEBUG_CHECKP */
 
-/* Active pointer */
-volatile void * vmm_cur_ptr;
+/*
+ * Active block offset. We need it since we can't guarantee atomicity of
+ * assignment for vmm_cur_xptr variable and we don't want to use spin locks
+ * in every CHECKP. At least now ...
+ * Note, since we have to guarantee atomicity and memory barrier for this
+ * variable it's better not to use void* or something else. Type should be the
+ * same as for xptr's offset and must provide atomic assignment for supported
+ * architectures and operating systems. Now we use uint32_t since it's likely
+ * to be atomic. Anyway we also use IntelockedExchange and analogs to guarantee
+ * atomicity and memory barrier.
+ */
+volatile lsize_t vmm_cur_offs;
 
 /* vmm_callback thread */
 static volatile bool shutdown_vmm_thread = false;
@@ -76,7 +90,7 @@ inline static void __vmm_init_current_xptr()
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 
     vmm_cur_xptr = XNULL;
-    vmm_cur_ptr = NULL;
+    vmm_cur_offs = 0;
 }
 
 static void vmm_remap(void *addr, ramoffs offs, enum vmm_map_protection_t p)
@@ -106,7 +120,7 @@ void vmm_unmap(void *addr)
 
 /*
  * If you call it in the VMM_LINUX_DEBUG_CHECKP mode make sure
- * that block at vmm_cur_ptr is readable. It's not true
+ * that block at vmm_cur_offs is readable. It's not true
  * only in one case: when it's called from the vmm thread
  * when the main thread hasn't finished CHECKP yet.
  */
@@ -114,12 +128,12 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
     if (p == XNULL) return;
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
-    /* Block at the vmm_cur_ptr must be readable at least.
+    /* Block at the vmm_cur_offs must be readable at least.
      * Actually it's not true when call is made by vmm_thread,
-     * but in that case we have guarantee that vmm_cur_ptr !=
-     * XADDR(p).
+     * but in that case we have guarantee that vmm_cur_offs !=
+     * p.getOffs().
      */
-    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr)) {
+    if(p.getOffs() != ALIGN_OFFS(vmm_cur_offs)) {
         mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
     }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
@@ -131,7 +145,7 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
 #ifdef VMM_LINUX_DEBUG_CHECKP
     /* Revert protection level if it was changed.
      * Any block at except current must be non set as PROT_NONE */
-    if(XADDR(p) != ALIGN_ADDR(vmm_cur_ptr)) {
+    if(p.getOffs() != ALIGN_OFFS(vmm_cur_offs)) {
         mprotect(XADDR(p), PAGE_SIZE, PROT_NONE);
     }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
@@ -156,8 +170,6 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
  * In this case it's logical to receive it from se_sm.
  *
  * In case of any problems we should think of another solution
- *
- * A.K.
  */
 void vmm_preliminary_call(lsize_t layer_size)
 {
@@ -493,9 +505,9 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat)
 
 inline static void vmm_callback_unmap()
 {
-    /* We check only vmm_cur_ptr to be sure it is set
+    /* We check only vmm_cur_offs to be sure it is set
      * if main thread have been stopped inside CHECKP */
-    if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*) p_sm_callback_data)) {
+    if (ALIGN_OFFS(vmm_cur_offs) != (*(xptr*) p_sm_callback_data).getOffs()) {
         VMM_TRACE_CALLBACK(*(xptr*)p_sm_callback_data);
         /* Check that layer is the same and unmap it*/
         vmm_swap_unmap_conditional(*(xptr*)p_sm_callback_data);
@@ -505,7 +517,7 @@ inline static void vmm_callback_unmap()
         *(bool*)p_sm_callback_data = (*(int*)((xptr*)p_sm_callback_data + 1));
 #else
         *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1))
-            && !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
+            && !LAYERS_EQUAL(XOFFS2ADDR(vmm_cur_offs), *(xptr*)p_sm_callback_data));
 #endif /* VMM_LINUX_DEBUG_CHECKP */
     }
 }
@@ -555,7 +567,7 @@ void __vmmdcp_checkp(xptr p) {
     if (!same_block(p, vmm_cur_xptr)) {
         if (vmm_cur_xptr != XNULL) { mprotect(XADDR(vmm_cur_xptr), PAGE_SIZE, PROT_NONE); }
         vmm_cur_xptr = block_xptr(p);
-        vmm_cur_ptr = XADDR(p);
+        vmm_cur_offs = p.getOffs();
         mprotect(XADDR(vmm_cur_xptr), PAGE_SIZE, PROT_READ);
         if (!TEST_XPTR(vmm_cur_xptr)) vmm_unswap_block(vmm_cur_xptr);
     }
