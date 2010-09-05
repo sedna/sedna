@@ -153,7 +153,7 @@ pping_client::pping_client(int _port_, int _component_, const char* _host_)
 #endif
 }
 
-pping_client::pping_client(int _port_, int _component_, volatile bool* _signaled_flag_, const char* _host_)
+pping_client::pping_client(int _port_, int _component_, volatile bool* volatile _signaled_flag_, const char* _host_)
 {
 #ifdef PPING_ON
     port = _port_;

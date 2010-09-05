@@ -43,7 +43,7 @@ private:
     int counter;
     volatile int timeout;
     volatile bool  reset_flag;
-    volatile bool* signaled_flag;
+    volatile bool* volatile signaled_flag;
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     void throw_exception(SednaUserException& e, bool is_soft);
@@ -66,7 +66,7 @@ public:
 
 public:
     pping_client(int _port_, int _component_, const char* _host_ = NULL);
-    pping_client(int _port_, int _component_, volatile bool* _signaled_flag_, const char* _host_ = NULL);
+    pping_client(int _port_, int _component_, volatile bool* volatile _signaled_flag_, const char* _host_ = NULL);
     ~pping_client();
 
     void startup(SednaUserException& e);
