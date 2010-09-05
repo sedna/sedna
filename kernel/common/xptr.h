@@ -1,8 +1,11 @@
 /*
  * File:  xptr.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ *
+ * Encapsulates xptr notion which is used as pointer to any data stored in
+ * blocks in Sedna files.
  */
-
 
 #ifndef __XPTR_H
 #define __XPTR_H
@@ -18,7 +21,12 @@
 /* type for layer */
 typedef int32_t t_layer;
 
-/* type for layer size */
+/* type for layer size
+ * Note this type is used also for 'vmm_cur_offs' for which we guarantee
+ * atomicity of assignment, memory barrier, etc ...
+ * So, change it very carefully. Review logic in vmm signal handler
+ * (vmm thread on windows).
+ */
 typedef uint32_t lsize_t;
 
 /* xptr layer-specific values */
@@ -28,36 +36,32 @@ extern uintptr_t LAYER_ADDRESS_SPACE_START_ADDR_INT;
 extern uintptr_t LAYER_ADDRESS_SPACE_BOUNDARY_INT;
 extern lsize_t LAYER_ADDRESS_SPACE_SIZE;
 
-// File incapsulates xptr notion. It has been written for 32-bit architecture
-// but with the goal to be easyly ported to 64-bit architecture
-
 #define TMP_LAYER_STARTS_WITH	0x40000000
- /* catalog tmp layers go down as: -2, -3, -4, etc. depending on context chunk */
+/* catalog tmp layers go down as: -2, -3, -4, etc. depending on context chunk */
 #define TEMPORARY_CATALOG_LAYER_START     -2
 #define INVALID_LAYER			0xFFFFFFFF
 
-// user this macros when you want obtain pointer in terms of process' virtual
-// address space
-#define XADDR(p)				((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()))
+/* use this macros when you want obtain pointer in terms of process' virtual address space */
+#define XADDR(p)                ((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()))
 #define XADDR_INT(p)            (LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs())
-#define BLOCKXPTR(a)			cxptr(a.layer,((a).getOffs() & PAGE_BIT_MASK))
+#define BLOCKXPTR(a)            cxptr(a.layer,((a).getOffs() & PAGE_BIT_MASK))
 
-#define ADDR2XPTR(a)			cxptr(*(t_layer*)(((uintptr_t)(a)) & PAGE_BIT_MASK),   \
+#define ADDR2XPTR(a)            cxptr(*(t_layer*)(((uintptr_t)(a)) & PAGE_BIT_MASK),   \
                                       *(lsize_t *)((((uintptr_t)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + \
                                       (lsize_t)(((uintptr_t)(a)) & PAGE_REVERSE_BIT_MASK))
-#define TEST_XPTR(p)			(*(t_layer*)((LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()) & PAGE_BIT_MASK) == (p).layer)
-#define ALIGN_ADDR(a)			((void*)((uintptr_t)(a) & PAGE_BIT_MASK))
+#define TEST_XPTR(p)            (*(t_layer*)((LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()) & PAGE_BIT_MASK) == (p).layer)
+#define ALIGN_ADDR(a)           ((void*)((uintptr_t)(a) & PAGE_BIT_MASK))
+#define ALIGN_OFFS(a)           ((lsize_t)((lsize_t)(a) & PAGE_BIT_MASK))
+
+#define IS_TMP_BLOCK(p)         ((p).layer >= TMP_LAYER_STARTS_WITH)
+#define IS_DATA_BLOCK(p)        ((p).layer <  TMP_LAYER_STARTS_WITH)
+
+#define IS_TMP_BLOCK_LP(ptr)    (((vmm_sm_blk_hdr*)(ptr))->p.layer >= TMP_LAYER_STARTS_WITH)
+#define IS_DATA_BLOCK_LP(ptr)   (((vmm_sm_blk_hdr*)(ptr))->p.layer <  TMP_LAYER_STARTS_WITH)
+
+#define XOFFS2ADDR(p)           ((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p)))
 #define LAYERS_EQUAL(a, p)      (*(t_layer*)((uintptr_t)(a) & PAGE_BIT_MASK) == ((p).layer))
 
-
-
-#define IS_TMP_BLOCK(p)			((p).layer >= TMP_LAYER_STARTS_WITH)
-#define IS_DATA_BLOCK(p)		((p).layer <  TMP_LAYER_STARTS_WITH)
-
-#define IS_TMP_BLOCK_LP(ptr)	(((vmm_sm_blk_hdr*)(ptr))->p.layer >= TMP_LAYER_STARTS_WITH)
-#define IS_DATA_BLOCK_LP(ptr)	(((vmm_sm_blk_hdr*)(ptr))->p.layer <  TMP_LAYER_STARTS_WITH)
-
-//struct vmm_sm_blk_hdr;
 
 union uint64_lh_t { struct uint64_lh { uint32_t l; uint32_t h; } lh; uint64_t v; };
 
@@ -248,6 +252,6 @@ struct vmm_region_values
     lsize_t LAYER_ADDRESS_SPACE_SIZE;
 };
 
-#endif
+#endif /* __XPTR_H */
 
 
