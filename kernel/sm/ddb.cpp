@@ -148,7 +148,7 @@ int main(int argc, char** argv)
    
                 /* Database run? */
                 if ((msg.body)[0] == 'y')
-                   throw USER_EXCEPTION2(SE4308, "Database must be stopped firstly");
+                   throw USER_EXCEPTION2(SE4308, "Database must be stopped first before dropping it");
             }
 
             cdb_ugc(db_id, cfg.os_primitives_id_min_bound);

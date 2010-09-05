@@ -1287,7 +1287,7 @@ sedna-err:SE4308
 
 sedna-err:SE4400
 
-    SEDNA server is not running  
+    SEDNA server is not running. Did you forget to run se_gov command?
 sedna-err:SE4401
 
     Failed to run GOVERNOR in the background mode (use '-background-mode off' for detailed diagnostics)
@@ -1299,7 +1299,7 @@ sedna-err:SE4403
     Failed to set up ctrl handler for GOVERNOR
 sedna-err:SE4404
 
-    Error occured during closing LISTENER
+    Error occured during closing GOVERNOR
 sedna-err:SE4405
 
     Session can't be closed

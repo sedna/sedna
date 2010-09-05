@@ -36,7 +36,7 @@ open_gov_shm()
         if (0 != uOpenShMem(&gov_shm_service_dsc,
             GOVERNOR_SHARED_MEMORY_NAME,
             __sys_call_error))
-            throw USER_EXCEPTION2(SE4400, "Can't open governor shared memory");   /// SEDNA server is not running
+            throw USER_EXCEPTION2(SE4400, "Can't open GOVERNOR shared memory");   /// SEDNA server is not running
 
 
         sedna_gov_shm_ptr = uAttachShMem(&gov_shm_service_dsc,
@@ -45,7 +45,7 @@ open_gov_shm()
             __sys_call_error);
 
         if (NULL == sedna_gov_shm_ptr)
-            throw USER_EXCEPTION2(SE4023, "Governor shared memory");   /// Can't attach to shared memory
+            throw USER_EXCEPTION2(SE4023, "GOVERNOR shared memory");   /// Can't attach to shared memory
     }
 }
 
