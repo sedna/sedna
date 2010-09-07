@@ -17,7 +17,7 @@
 #elif (defined(__i386__) || defined(_WIN32) || defined(__ppc__))
 #define SEDNA_X32
 #else
-#error "error: cannot determine architecture!"
+#error "error: cannot determine architecture or it's not supported"
 #endif
 
 #if (defined(_WIN32) && !defined(WIN32))

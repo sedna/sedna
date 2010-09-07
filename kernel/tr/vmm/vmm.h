@@ -16,6 +16,7 @@
 #include "common/wutypes.h"
 #include "common/SSMMsg.h"
 #include "common/u/uthread.h"
+#include "common/u/uatomic.h"
 
 #include "common/sm_vmm_data.h"
 
@@ -99,7 +100,7 @@ extern xptr vmm_checkp_xptr;
                          VMM_TRACE_CHECKP(vmm_checkp_xptr);                                      \
                          check_if_null_xptr(vmm_checkp_xptr);                                    \
                          if (!same_block(vmm_checkp_xptr, vmm_cur_xptr)) {                       \
-                             if (vmm_cur_offs) vmm_unmap(ALIGN_ADDR(XADDR(vmm_cur_xptr)));   \
+                             if (vmm_cur_offs) vmm_unmap(ALIGN_ADDR(XADDR(vmm_cur_xptr)));       \
                              vmm_cur_offs = vmm_checkp_xptr.getOffs();                           \
                              vmm_cur_xptr = vmm_checkp_xptr;                                     \
                              if (!TEST_XPTR(vmm_checkp_xptr)) vmm_unswap_block(vmm_checkp_xptr); \
@@ -114,6 +115,8 @@ extern xptr vmm_checkp_xptr;
                          VMM_TRACE_CHECKP(p);                                                    \
                          vmm_cur_offs = (p).getOffs();                                           \
                          vmm_cur_xptr = (p);                                                     \
+                         /* Make sure block won't be unswapped before cur_offs assignment. */    \
+                         AO_compiler_barrier();                                                  \
                          if (!TEST_XPTR(p)) vmm_unswap_block(p);                                 \
                      }
 

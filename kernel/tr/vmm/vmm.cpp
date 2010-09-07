@@ -505,8 +505,19 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat)
 
 inline static void vmm_callback_unmap()
 {
-    /* We check only vmm_cur_offs to be sure it is set
-     * if main thread have been stopped inside CHECKP */
+    /*
+     * We check only vmm_cur_offs to be sure it is set if the main thread
+     * have been stopped inside CHECKP. On all supported architectures (x86,
+     * x86_64, ppc, ppc64) int 32 has atomic assignment for supported compilers
+     * (gcc, msvc).
+     * On Windows we'll read vmm_cur_offs in the VMM_THREAD so we need to
+     * guarantee that we read the latest value. For this we use memory barrier.
+     * On Unix like systems we use signals, so we will read vmm_cur_offs in
+     * the same with CHECKP thread. We need only atomic assignment on them.
+     */
+#if defined(_WIN32) && defined(HAVE_AO_MB_FULL)
+    AO_mb_full();
+#endif
     if (ALIGN_OFFS(vmm_cur_offs) != (*(xptr*) p_sm_callback_data).getOffs()) {
         VMM_TRACE_CALLBACK(*(xptr*)p_sm_callback_data);
         /* Check that layer is the same and unmap it*/
