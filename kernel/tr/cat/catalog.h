@@ -273,8 +273,8 @@ struct catalog_object_header {
         /* u_atomic_decrement(cptr_refcount); */
 //        if (invalid()) cat_free(this, ...);
     };
-    inline void ref() { u_atomic_increment(xptr_refcount); };
-    inline void deref() { u_atomic_decrement(xptr_refcount); };
+    inline void ref() { ++xptr_refcount; };
+    inline void deref() { --xptr_refcount; };
     inline bool isloaded() { return object != NULL; };
 };
 
