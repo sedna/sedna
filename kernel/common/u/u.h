@@ -649,6 +649,7 @@ void   __u_call_error(const char *filename, int lineno, const char *funcname, co
 
 
 void   uSleep(unsigned int secs, sys_call_error_fun fun);
+void   uSleepMicro(unsigned int tm, sys_call_error_fun fun);
 int    uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun);
 int    uMakeLowLevelDescriptorNonInheritable(FILE* f, sys_call_error_fun fun);
 

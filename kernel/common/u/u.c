@@ -17,14 +17,35 @@
 static char ustrerror_buf[256];
 
 
-void uSleep(unsigned int secs, sys_call_error_fun fun)
+/*
+ * The thread sleeps at least given time in seconds.
+ */
+void uSleep(unsigned int tm, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    Sleep(secs * 1000);
+    Sleep((DWORD) tm * 1000);
 #else
-    sleep(secs);
+    sleep(tm);
 #endif
 }
+
+/*
+ * The thread sleeps at least given time in microseconds.
+ */
+void uSleepMicro(unsigned int tm, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+    Sleep((DWORD) tm / 1000);
+#else
+    struct timeval	t;
+
+    t.tv_sec = (time_t) (tm / 1000000);
+    t.tv_usec = (suseconds_t ) (tm % 1000000);
+
+    select(0, NULL, NULL, NULL, &t);
+#endif
+}
+
 
 #if defined(DARWIN)
 int u_is_nan(double d)

@@ -141,6 +141,9 @@ void flush_master_block()
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
     buf_io_stats.writes++;
+
+    if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+        throw SYSTEM_EXCEPTION("Cannot flush buffers (master block)");
 }
 
 

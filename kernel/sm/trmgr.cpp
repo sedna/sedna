@@ -142,7 +142,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
                 for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
                 {
                     if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
-                     throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
+                        throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
                 }
                 d_printf1("All checkpoint sems acquired\n");
         
@@ -168,7 +168,11 @@ U_THREAD_PROC (checkpoint_thread, arg)
                 ObtainGiantLock(); isGiantLockObtained = true;
                 {
                     d_printf1("flushing all data buffers...\n");
+                    /* Just throw out from SM's buffers dirty pages */
                     flush_data_buffers();
+                    /* Physically flush IO buffers on disk (like fsync()) */
+                    if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+                        throw SYSTEM_EXCEPTION("Cannot flush buffers (checpoint)");
                     d_printf1("flushing all data buffers completed\n");
         
                     WuEnumerateVersionsParams params;
