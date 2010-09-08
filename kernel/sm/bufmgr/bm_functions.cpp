@@ -148,19 +148,26 @@ void bm_startup()
      * if we use WRITE_THROUGH logic. Otherwise recovery may fail in case
      * newly created version is flushed, but persistent is still in buffers.
      *
+     * For now, we're trying to refine it somehow. Consider example above. We'll
+     * do occasional fsyncs, to guarantee consistency. In this case, we can open
+     * data file without O_SYNC.
+     *
+     * TODO: we should make other strategies available. For example, choosing
+     * between O_SYNC/fsync would be nice, either on configuration or user level
+     *
      * For tmp file defaults would be sufficient, of course.
      */
     string data_file_name = string(sm_globals::db_files_path) +
             string(sm_globals::db_name) + ".sedata";
     data_file_handler = uOpenFile(data_file_name.c_str(), U_SHARE_READ,
-            U_READ_WRITE, U_WRITE_THROUGH | U_NO_BUFFERING, __sys_call_error);
+            U_READ_WRITE, 0, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
     string tmp_file_name = string(sm_globals::db_files_path) +
             string(sm_globals::db_name) + ".setmp";
     tmp_file_handler = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ,
-            U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
+            U_READ_WRITE, 0, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
 

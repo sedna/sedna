@@ -365,7 +365,7 @@ static
 int UpdateFlushingDependency(XPTR trigger, XPTR target)
 {
 	assert (flushingDependenciesHash);
-	
+
 	if (target)
 	{
 		(*flushingDependenciesHash)[trigger] = target;
@@ -435,8 +435,22 @@ static int OnFlushBuffer(XPTR xptr)
 	}
 	else
 	{
+	    /*
+         * We want to make sure we're implementing some kind of 'strict'
+         * barrier here. We want recovery version (the one flushed on
+         * dependency) to be flushed exactly at this time with respect to other
+         * blocks. So we make sure that all blocks are flushed before this
+         * version, and then guarantee flush of the version itself.
+         */
+        if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+            throw SYSTEM_EXCEPTION("Cannot flush buffers (old version)");
+
 	    wulog(("WULOG: flushed xptr = %"PRI_XPTR" on dependency from xptr = %"PRI_XPTR, target, xptr));
 		success = UpdateFlushingDependency(xptr, 0) && ImpFlushBuffer(bufferId);
+
+	    /* see comment above... */
+		if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+            throw SYSTEM_EXCEPTION("Cannot flush buffers (new version)");
 	}
 	if (success)
 	{
@@ -539,7 +553,7 @@ int PutBlockVersionToBuffer(LXPTR lxptr, int *pBufferId,
 			TIMESTAMP tsInBuf[VE_VERSIONS_COUNT + 1];
 			unsigned i=0;
 
-			/* adding deletorTs allows to catch access on deleted version */ 
+			/* adding deletorTs allows to catch access on deleted version */
 			tsInBuf[0] = restriction.deletorTs;
 			memcpy(tsInBuf+1, versionHeader->creatorTs, sizeof(TIMESTAMP)*VE_VERSIONS_COUNT);
 
@@ -786,10 +800,10 @@ static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
     if (!buffer_table.replace(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId), &old_offs)) // lxptr and xptr in buffers
     {
         buffer_table.replace(WuExternaliseXptr(xptr), old_offs, &dummy);
-        
+
         wulog(("WULOG: Rollback: cancelling creation of a new version: version header for returned LC-version..."));
         wulogheader(oldVerBufferId);
-        
+
         wulog(("WULOG: Rollback: cancelling creation of a new version: version header for discarded old version..."));
         wulogheader(BufferIdFromRamoffs(old_offs));
     }
@@ -797,7 +811,7 @@ static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
     {
         buffer_table.insert(WuExternaliseXptr(lxptr), RamoffsFromBufferId(oldVerBufferId));
         buffer_table.remove(WuExternaliseXptr(xptr));
-        
+
         wulog(("WULOG: Rollback: cancelling creation of a new version: version header for returned LC-version (discarded version isn't in buffers)..."));
         wulogheader(oldVerBufferId);
     }
@@ -836,7 +850,7 @@ int OnTransactionRollback(VeClientState *state)
                     //          we relocate xptr on lxptr, delete xptr and then someone reuse xptr --> persistent version is lost --> recovery would fail
 
                     wulog(("WULOG: Rollback: cancelling creation of a new version: lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR, i->lxptr, i->xptr));
-                    
+
                     // first, put old version in buffers
                     try
                     {
@@ -872,7 +886,7 @@ int OnTransactionRollback(VeClientState *state)
                     // ignore this record on rollback since block'll just stay untouched
                     // we need to revoke exclusive access to this buffer, though
                     wulog(("WULOG: Rollback: returned deleted block: lxptr = %"PRI_XPTR, i->lxptr));
-                    
+
                     if (ImpFindBlockInBuffers(i->lxptr, &bufferId))
                     {
                         if (!ImpRevokeExclusiveAccessToBuffer(bufferId))
@@ -883,7 +897,7 @@ int OnTransactionRollback(VeClientState *state)
                         if (WUERR_BLOCK_NOT_IN_BUFFERS != WuGetLastError())
                             success = 0;
                     }
-                    
+
                     break;
                 default:
                     WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -1078,7 +1092,7 @@ int VeAllocateBlock(LXPTR *pLxptr, int *pBufferId)
 	}
 	if (success)
 	{
-	    
+
         wulog(("WULOG: Allocated new block: lxptr = %"PRI_XPTR", ts = %"PRIx64, xptr, transactionTs));
 		*pBufferId = bufferId;
 		*pLxptr = xptr;
@@ -1109,13 +1123,13 @@ static int
 VeIsVersionPersistent(int *res, TIMESTAMP tsOut[], int idOut[], size_t outSz, TIMESTAMP persTs)
 {
     size_t i = 0;
-    
+
     // point i to persistent version
     while (i < outSz && tsOut[i] != persTs) ++i;
-    
+
     // check if we've got relocation -- persistent version equals LC one
     *res = (i < outSz && idOut[0] == idOut[i]);
-    
+
     return 1;
 }
 
@@ -1164,7 +1178,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 		/* First determine if we're relocating persistent version and only THEN filter out "damaged" versions
 		 * The order is important since we might get damaged persstent snapshot -- we don't want it filtered out
 		 * prematurely
-		 */ 
+		 */
 		else if (!VeIsVersionPersistent(&isPers, tsOutBuf, idOutBuf, outSz, persTs) ||
 		         !SnFilterOutDamaged(tsOutBuf, idOutBuf, &outSz))
 		{
@@ -1218,7 +1232,7 @@ int VeCreateBlockVersion(LXPTR lxptr, int *pBufferId)
 
 				success = 1;
 			}
-			
+
 	        wulog(("WULOG: Created new version for block: lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR, lxptr, newBlock));
 	        wulogheader(newBlockBufferId);
             wulogheader(bufferId);
@@ -1296,7 +1310,7 @@ int VeFreeBlock(LXPTR lxptr)
 				state->functionList->push_back(function);
 				success = 1;
 			}
-			
+
             wulog(("WULOG: Predeletion of block: lxptr = %"PRI_XPTR", anchorTs = %"PRIx64, lxptr, anchorTs));
 		}
 	}

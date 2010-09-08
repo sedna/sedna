@@ -1017,3 +1017,85 @@ int uFindClose(UDir dir, sys_call_error_fun fun)
     return (res == 0)? 1: 0;
 #endif
 }
+
+
+#ifndef _WIN32
+/*
+* Wrapper to fsync() that retries the call on some errors.
+* Returns the value 1 if successful; otherwise the value 0 is returned.
+*/
+static int retry_fsync(UFile fd, sys_call_error_fun fun)
+{
+    int	ret;
+    int	retry;
+    int	failures = 0;
+
+    do
+    {
+        ret = fsync(fd);
+
+        if (ret == -1 && errno == ENOLCK)
+        {
+            if (failures % 100 == 0) {
+                u_call_error("Can not obtain lock to perform fsync(). Retrying.");
+            }
+            if (failures % 10000 == 0) {
+                sys_call_error("fsync");
+                    return 0;
+            }
+
+            uSleepMicro(200000, NULL);
+            failures++;
+            retry = 1;
+        } else {
+            retry = 0;
+        }
+    } while (retry);
+
+    return 1;
+}
+#endif /* !_WIN32 */
+
+
+/*
+ * Flushes the buffers of a specified file and causes all buffered data to
+ * be written to a file. Actually uses fsync() and FlushFileBuffers().
+ * If the function succeeds, the return value is 1.
+ * If the function fails, the return value is zero (0).
+ */
+int uFlushBuffers(UFile fd, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+
+    if (FlushFileBuffers(fd) == 0)
+    {
+        sys_call_error("FlushFileBuffers");
+        return 0;
+    }
+    return 1;
+
+#elif defined(DARWIN) /* Mac OS */
+
+# ifndef F_FULLFSYNC
+    /* The following definition is from the Mac OS X 10.3 <sys/fcntl.h> */
+#  define F_FULLFSYNC 51 /* fsync + ask the drive to flush to the media */
+# elif F_FULLFSYNC != 51
+#  error "F_FULLFSYNC != 51: ABI incompatibility with Mac OS X 10.3"
+# endif
+    /*
+     * Apple has disabled fsync() for internal disk drives in OS X. That
+     * caused corruption for a user when he tested a power outage. Let us in
+     * OS X use a nonstandard flush method recommended by an Apple engineer.
+     */
+
+    if (fcntl(file, F_FULLFSYNC, NULL) == -1) {
+        /* If we are not on a file system that supports this,
+         * then fall back to a plain fsync. */
+        return retry_fsync(fd, fun);
+    }
+    return 1;
+
+#else /* Any other POSIX-like system */
+    return retry_fsync(fd, fun);
+#endif /* _WIN32 */
+}

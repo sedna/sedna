@@ -200,6 +200,14 @@ extern "C"
 
     int uFindClose(UDir dir, sys_call_error_fun fun);
 
+	/*
+	 * Flushes the buffers of a specified file and causes all buffered data to
+     * be written to a file. Actually uses fsync() and FlushFileBuffers().
+	 * If the function succeeds, the return value is 1.
+     * If the function fails, the return value is zero (0).
+	 */
+    int uFlushBuffers(UFile fd, sys_call_error_fun fun);
+
 #ifdef __cplusplus
 }
 #endif
