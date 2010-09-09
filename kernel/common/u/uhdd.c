@@ -1088,7 +1088,7 @@ int uFlushBuffers(UFile fd, sys_call_error_fun fun)
      * OS X use a nonstandard flush method recommended by an Apple engineer.
      */
 
-    if (fcntl(file, F_FULLFSYNC, NULL) == -1) {
+    if (fcntl(fd, F_FULLFSYNC, NULL) == -1) {
         /* If we are not on a file system that supports this,
          * then fall back to a plain fsync. */
         return retry_fsync(fd, fun);
