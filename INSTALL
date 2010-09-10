@@ -5,7 +5,12 @@
 
    This document describes installation of the Sedna XML Database. For
    Quick Start or support information please see README file or visit
-   our site: http://modis.ispras.ru/sedna.
+   our site:
+                     http://modis.ispras.ru/sedna
+
+   Online version of this guide you can find here:
+
+               http://modis.ispras.ru/sedna/install.html
 
    Please, read the LICENSE, before using the system. If you do not agree
    to all the terms of the LICENSE, you must not install or use Sedna.
@@ -154,7 +159,7 @@ CONTENTS
 
    The following software packages are required for building Sedna:
 
-     * [Required] CMake 2.4 and higher. See the section below for the details
+     * [Required] CMake 2.6 and higher. See the section below for the details
        on how to obtain CMake for your platform.
 
      * [Required] C/C++ compiler.
@@ -188,7 +193,7 @@ CONTENTS
          * using sysinstall utility
          * using ports collection
 
-   Alternatively, you can build from source, a source package is also
+   Alternatively, you can build CMake from sources, a source package is also
    available from the CMake download page.
 
 3.3 Command Line Configuration
@@ -293,7 +298,7 @@ CONTENTS
 
 3.4 Configuration with CMake-GUI
 
-   If you have cmake-gui installed you can choose generator and just
+   If you have cmake-gui installed you can choose generator and adjust
    configuration with it:
 
    - Run cmake-gui:
