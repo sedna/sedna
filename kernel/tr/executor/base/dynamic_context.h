@@ -11,9 +11,11 @@
 #include <list>
 #include <map>
 #include <set>
+#include <stack>
 #include <algorithm>
 
 #include "common/sedna.h"
+#include "common/counted_ptr.h"
 
 #include "tr/structures/xmlns.h"
 
@@ -216,11 +218,12 @@ private:
     XMLDateTime current_time;
     XMLDateTime implicit_timezone;
     bool datetime_initialized;
-
 public:
-
     dynamic_context(static_context *_st_cxt_);
     ~dynamic_context();
+
+    // Sequence for virtual elements
+    std::stack< counted_ptr<sequence> > tmp_sequence;
 
     /*
      * This function creates new variable context for local vars

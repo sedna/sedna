@@ -19,8 +19,6 @@
 #include "tr/structures/nodeinterface.h"
 #include "tr/mo/indirection.h"
 
-#include "tr/structures/portal.h"
-
 class sequence;
 
 /// Array of int pairs
@@ -45,7 +43,7 @@ typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 
 /// Possible types of tuple cell
 #define tc_eos                         (uint32_t)(0x80000000) // cell stores end of sequence
-#define tc_portal_node                 (uint32_t)(0x40000000) // cell stores virtual node or document, that is actually a sequence
+#define tc_portal                      (uint32_t)(0x40000000) // cell stores virtual element pointer
 #define tc_light_atomic_fix_size       (uint32_t)(0x10000000) // cell stores light atomic value (feats in dynamic memory)
 #define tc_light_atomic_var_size       (uint32_t)(0x20000000) // cell stores light atomic value (feats in dynamic memory)
 #define tc_heavy_atomic_estr           (uint32_t)(0x04000000) // cell stores heavy atomic value in e_strings (that is stored in VMM memory)
@@ -113,7 +111,6 @@ bits:    X                  X               X       X                      XX
                                          size       size
 
 100000 -- eos
-010000 -- portal (virtual) node
 001000 -- light atomic of variable size
 000100 -- light atomic of fixed size
 000001 -- heavy atomic (estr)
@@ -175,6 +172,15 @@ struct tuple_cell;
 
 extern tuple_cell EMPTY_STRING_TC;
 
+struct sequence_ptr {
+    counted_ptr<sequence> p;
+    int pos;
+
+    sequence_ptr(counted_ptr<sequence> ap, int apos) : p(ap), pos(apos) {};
+    sequence_ptr(const sequence_ptr & p) : p(p.p), pos(p.pos) { };
+    sequence_ptr& operator= (const sequence_ptr& s) { if (this != &s) { p = s.p; pos = s.pos; } return *this; }
+};
+
 // allocator for xs_QName_create; 'void' to avoid changing alloc_func in every signature
 inline void *tuple_char_alloc(size_t size)
 {
@@ -191,20 +197,24 @@ private:
     void assign(const tuple_cell& tc)
     {
         t = tc.t;
-        if (tc.t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK)
-        {
+        if (tc.t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             data.x = data.y = (int64_t)0;
             *(str_counted_ptr*)(&data) = *(str_counted_ptr*)(&(tc.data));
-        }
-        else
+        } else if (tc.get_atomic_type() == se_sequence_element) {
+            data.x = data.y = (int64_t)0;
+            *(sequence_ptr*)(&data) = *(sequence_ptr*)(&(tc.data));
+        } else {
             data = tc.data;
+        }
     }
     void release()
     {
         if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             ((str_counted_ptr*)(&data))->~str_counted_ptr();
-        } else if (this->is_portal()) {
-            portal::virtualNodeStorage->releaseNode(this->get_portal());
+            data.x = data.y = (int64_t) 0;
+        } else if (get_atomic_type() == se_sequence_element) {
+            ((sequence_ptr*)(&data))->~sequence_ptr();
+            data.x = data.y = (int64_t) 0;
         }
     }
 
@@ -218,7 +228,7 @@ public:
     bool is_atomic()       const { return (t & TC_ATOMIC_MASK) != 0; }
     bool is_light_atomic() const { return (t & TC_LIGHT_ATOMIC_MASK) != 0; }
     bool is_heavy_atomic() const { return (t & TC_HEAVY_ATOMIC_MASK) != 0; }
-    bool is_portal()       const { return (t == tc_portal_node); }
+    bool is_portal()       const { return (t & TC_PORTAL_MASK) != 0; }
 
     /* node types */
     bool is_node()         const { return (t & TC_NODE_MASK) != 0; }
@@ -232,9 +242,10 @@ public:
     uint32_t    get_type()        const { return t & TC_TYPE_MASK; }
     xmlscm_type get_atomic_type() const { return t & TC_XTYPE_MASK; }
 
-    portal::VirtualNode * get_portal() const { return *(portal::VirtualNode **) (&data); }
+    sequence_ptr get_portal() const { return *(sequence_ptr*)(&data); };
 
     xptr get_xptr() const { return *(xptr*)(&data); }
+
     xptr get_smartnode() const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
     xptr get_safenode() const { return indirectionDereferenceCP(get_xptr()); }
     xptr get_unsafenode() const { return get_xptr(); }
@@ -258,7 +269,13 @@ public:
     xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data); }
     xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data); }
 
-    sequence*          get_sequence_ptr()const { return *(sequence**         )(&data); }
+    sequence*          get_sequence_ptr()const {
+        U_ASSERT(is_light_atomic() && (t & TC_XTYPE_MASK) == se_sequence);
+        return *(sequence**)(&data);
+    }
+
+    int get_index() const { return ((sequence_ptr*)(&data))->pos; }
+
     void*              get_binary_data() const { return  (void*              )(&data); }
 
 
@@ -285,12 +302,12 @@ public:
         data.x = data.y = (uint64_t)0;
     }
     // type field constructor
-    tuple_cell(uint32_t _t_) : t(_t_)
+    explicit tuple_cell(uint32_t _t_) : t(_t_)
     {
         data.x = data.y = (uint64_t)0;
     }
     // all fields constructor
-    tuple_cell(uint32_t _t_, const tcdata &_data_) : t(_t_), data(_data_) {}
+    explicit tuple_cell(uint32_t _t_, const tcdata &_data_) : t(_t_), data(_data_) {}
     // copy constructor
     tuple_cell(const tuple_cell& tc)
     {
@@ -306,76 +323,79 @@ public:
     // for nodes
 
   private :
-    explicit tuple_cell(const int subtype, const xptr &_p_)
+    explicit tuple_cell(const int atype, const xptr &_p_)
     {
-        t = subtype;
+        t = atype;
         *(xptr*)(&(data)) = _p_;
     }
-    explicit tuple_cell(const int subtype, portal::VirtualNode * portal)
+
+    // for sequence element
+    explicit tuple_cell(const int atype, const sequence_ptr _p_)
     {
-        t = subtype;
-        *(portal::VirtualNode **)(&(data)) = portal;
+        t = atype;
+        data.x = data.y = (int64_t)0;
+        *(sequence_ptr*)(&data) = _p_;
     }
   public :
-
     // for xs:integer atomics
-    tuple_cell(int64_t _data_)
+    explicit tuple_cell(int64_t _data_)
     {
         t = tc_light_atomic_fix_size | xs_integer;
 		*(int64_t*)(&(data)) = _data_;
     }
     // for xs_decimal atomics
-    tuple_cell(xs_decimal_t _data_)
+    explicit tuple_cell(xs_decimal_t _data_)
     {
         t = tc_light_atomic_fix_size | xs_decimal;
         *(xs_decimal_t*)(&(data)) = _data_;
     }
     // for xs_float atomics
-    tuple_cell(float _data_)
+    explicit tuple_cell(float _data_)
     {
         t = tc_light_atomic_fix_size | xs_float;
         *(float*)(&(data)) = _data_;
     }
     // for xs_double atomics
-    tuple_cell(double _data_)
+    explicit tuple_cell(double _data_)
     {
         t = tc_light_atomic_fix_size | xs_double;
         *(double*)(&(data)) = _data_;
     }
     // for xs_boolean atomics
-    tuple_cell(bool _data_)
+    explicit tuple_cell(bool _data_)
     {
         t = tc_light_atomic_fix_size | xs_boolean;
         *(bool*)(&(data)) = _data_;
     }
     // for xs_date atomics
-    tuple_cell(xs_packed_datetime _data_, xmlscm_type _type_)
+    explicit tuple_cell(xs_packed_datetime _data_, xmlscm_type _type_)
     {
         t = tc_light_atomic_fix_size | _type_;
         *(xs_packed_datetime*)(&(data)) = _data_;
     }
     // for xs_duration atomics
-    tuple_cell(xs_packed_duration _data_, xmlscm_type _type_)
+    explicit tuple_cell(xs_packed_duration _data_, xmlscm_type _type_)
     {
         t = tc_light_atomic_fix_size | _type_;
         *(xs_packed_duration*)(&(data)) = _data_;
     }
     // for se_sequence atomics
-    tuple_cell(sequence* _sequence_ptr_)
+    explicit tuple_cell(sequence* _sequence_ptr_)
     {
         t = tc_light_atomic_fix_size | se_sequence;
         data.x = data.y = (int64_t)0;
         *((sequence**)(&data)) = _sequence_ptr_;
     }
     // for variable size light atomics (without deep copy)
-    tuple_cell(xmlscm_type _xtype_, char *_str_)
+    explicit tuple_cell(xmlscm_type _xtype_, char *_str_)
     {
         t = tc_light_atomic_var_size | _xtype_;
         data.x = data.y = (int64_t)0;
         *(str_counted_ptr*)(&data) = str_counted_ptr(_str_);
     }
+
     // for variable size light atomics (with deep copy)
-    tuple_cell(xmlscm_type _xtype_, const char *_str_, bool)
+    explicit tuple_cell(xmlscm_type _xtype_, const char *_str_, bool)
     {
         char *tmp = se_new char[strlen(_str_) + 1];
         strcpy(tmp, _str_);
@@ -384,7 +404,7 @@ public:
         *(str_counted_ptr*)(&data) = str_counted_ptr(tmp);
     }
     // for heavy atomics
-    tuple_cell(uint32_t _t_, xmlscm_type _xtype_, const xptr &_p_, int64_t _size_)
+    explicit tuple_cell(uint32_t _t_, xmlscm_type _xtype_, const xptr &_p_, int64_t _size_)
     {
         t = _t_ | _xtype_;
 		*(xptr*)(&(data)) = _p_;
@@ -417,11 +437,6 @@ public:
         return tuple_cell::node(node.getPtr());
     }
 
-    static tuple_cell virtualnode(portal::VirtualNode * portal)
-    {
-        return tuple_cell(tc_portal_node, portal);
-    }
-
     static tuple_cell node_indir(const xptr &_p_)
     {
         U_ASSERT(_p_ != XNULL);
@@ -436,6 +451,26 @@ public:
     static tuple_cell atomic(int64_t _data_)
     {
         return tuple_cell(_data_);
+    }
+
+    static tuple_cell atomic_portal(xptr _data_)
+    {
+        return tuple_cell(tc_portal | se_xptr, _data_);
+    }
+
+    static tuple_cell atomic_portal(counted_ptr<sequence> _sequence_, int index)
+    {
+        return tuple_cell(tc_portal | se_sequence_element, sequence_ptr(_sequence_, index));
+    }
+
+    static tuple_cell atomic_se_sequence_element(counted_ptr<sequence> _sequence_, int index)
+    {
+        return tuple_cell(tc_light_atomic_fix_size | se_sequence_element, sequence_ptr(_sequence_, index));
+    }
+
+    static tuple_cell atomic_xptr(xptr _data_)
+    {
+        return tuple_cell(tc_light_atomic_fix_size | se_xptr, _data_);
     }
 
     static tuple_cell atomic(xs_decimal_t _data_)
@@ -662,5 +697,6 @@ struct tuple
     void print() const;
 };
 
+static const tuple_cell EMPTY_TUPLE_CELL;
 
 #endif /* _TUPLE_H */

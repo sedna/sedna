@@ -101,6 +101,12 @@ bool dm_attribute_accessor_filter(t_item t) {
 #define se_separator            33
 #define se_sequence             34
 
+// Pointer to a sequence element with sequence as counted pointer
+#define se_sequence_element     35
+
+// Very special type, stands to store xptrs that are not nodes, for node link please create a new type
+#define se_xptr                 36
+
 // Types derived from xs:string
 #define xs_normalizedString     41
 #define xs_token                42

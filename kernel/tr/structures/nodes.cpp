@@ -215,15 +215,6 @@ xptr getFirstAttributeDescendantAndFillPath(std::vector<xptr> &descstack)
     return XNULL;
 }
 
-
-
-
-
-
-
-
-
-
 xptr __getNextBlockDescriptorOfSameSort(xptr nodex)
 {
     xptr blk = getNonemptyBlockLookFore(getBlockHeader(nodex)->nblk);

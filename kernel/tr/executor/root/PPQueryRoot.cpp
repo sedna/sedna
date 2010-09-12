@@ -152,23 +152,21 @@ bool PPQueryRoot::do_next()
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
 
-    XMLOutput * output;
+    Serializer * serializer;
     if (print_mode == sxml) {
 //        output = new SXMLOutput(cxt, *output_stream, );
     } else {
-        output = new StdXMLOutput(cxt, *output_stream);
+        serializer = new XMLSerializer(cxt, *output_stream);
     }
 
     if (!first && !tr_globals::client->supports_serialization()) {
         // This is needed for backward compatibility with old ( < 4 ) versions of protocol
         (*output_stream) << " ";
     }
-    Serializer * serializer = new Serializer(output);
 
     serializer->serializeTuple(&data);
 
     delete serializer;
-    delete output;
 
 /*
     // Clients which based on protocol 4 should support serialization

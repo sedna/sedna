@@ -221,14 +221,14 @@ namespace sedna
                 off_cont.exi.isDistincted = true;
                 off_cont.exi.isOrdered = false;
             }*/
-            
+
             trying_abs_path = off_cont.in_abs_path;
         }
         else
         {
             // if we've got axis without context then we use some outer context -- report this
             off_this.usedVars.insert("$%v");
-            
+
             // if we haven't got the context then ask parent if we need abs-path
             trying_abs_path = getParentRequest().start_abspath;
         }
@@ -236,7 +236,7 @@ namespace sedna
         // check if we can add this axis to abs-path
         if (trying_abs_path && !n.isSuitableForAbsPath())
             trying_abs_path = false;
-        
+
         // now we need to write our initial offer to parent
         switch (n.axis)
         {
@@ -344,7 +344,7 @@ namespace sedna
         {
             off_this.in_abs_path = false;
         }
-        
+
         // if this is the last step the we need to order(distinct) it
         if (n.isLast)
         {
@@ -914,6 +914,7 @@ namespace sedna
                 {
                     if (*nsp->name == *n.pref)
                     {
+                        n.nsp_node = nsp;
                         n.nsp_expected = true;
                         break;
                     }
@@ -1181,7 +1182,7 @@ namespace sedna
         {
             off_this.in_abs_path = false;
         }
-        
+
         // if this is the last and not the only step then we need to order(distinct) it
         if (n.isLast && n.cont)
         {
@@ -1220,7 +1221,7 @@ namespace sedna
                 off_this.exi.isDistincted = true;
             }
         }
-        
+
         // filter steps usually don't participate in abs-paths; execpt for context-expression
         setOffer(off_this);
     }

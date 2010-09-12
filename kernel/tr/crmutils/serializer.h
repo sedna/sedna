@@ -21,20 +21,29 @@ struct ElementContext {
     const std::string tagName;
     xmlns_ptr defaultNamespace;
 
-    ElementContext(xptr node);
+    ElementContext(const schema_node_cptr node);
+};
+
+struct ElementChildIterator {
+    virtual schema_node_cptr getSchemaNode() const = 0;
+    virtual void next(tuple &t) = 0;
+};
+
+struct SerializationOptions {
+    bool preserveNamespaces;
+    const char * indentSequence;
+    bool indent;
+    bool cdataSectionElements;
 };
 
 class XMLSerializer : public Serializer {
 private:
-    se_ostream &crmout;
-    bool tagStarted;
-    bool hasContent;
-    const char * finishing;
     dynamic_context * cxt;
-    std::set<xmlns_ptr> definedNamespaces;
+    se_ostream &crmout;
+    const SerializationOptions * options;
     ElementContext * elementContext;
-
-    static const char * indentSequence = "  ";
+    bool indentNext;
+    int indentLevel;
 
     void finishTag();
 public:
@@ -44,23 +53,10 @@ public:
     virtual void serialize(xptr node);
     virtual void serializeTuple(tuple * t);
 
-    void printElement(xptr node);
+    void printDocument(xptr node);
+    void printElement(ElementChildIterator * element);
     void printNamespace(xmlns_ptr ns);
-};
-
-class SXMLOutput : public XMLOutput {
-public:
-    virtual void reset();
-    virtual void tuple(const tuple_cell &tc);
-    virtual void startDocument();
-    virtual void endDocument();
-    virtual void * startElement(const schema_node_cptr kind);
-    virtual void endElement(void *);
-    virtual void attribute(const schema_node_cptr kind, const text_source_t value);
-    virtual void text(const text_source_t value , void * markup);
-    virtual void comment(const text_source_t value);
-    virtual void pi(const text_source_t value, int target_offset);
-    virtual void xmlnamespace(const xmlns_ptr ns);
+    void printAttribute(xptr node);
 };
 
 
