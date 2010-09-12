@@ -183,6 +183,7 @@ public:
             t.set_eos();
         } else {
             t.copy(tuple_cell::node(node));
+            CHECKP(node);
             node = nodeGetRightSibling(node);
         };
     };
