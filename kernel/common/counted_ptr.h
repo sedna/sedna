@@ -21,20 +21,24 @@ template <class T> struct de_free {
 template <class T, class Deallocator = de_delete<T> >
 class counted_ptr {
   private:
-    T* ptr;        // pointer to the value
-    long* count;   // shared number of owners
+    struct storage {
+        int count;   // number of owners
+        T* ptr;       // pointer to the value
+    } * item;
 
   public:
     // initialize pointer with existing pointer
     // - requires that the pointer p is a return value of new
     counted_ptr (T* p = NULL)
-     : ptr(p), count(new long(1)) {
+     : item(new storage) {
+        item->ptr = p;
+        item->count = 1;
     }
 
     // copy pointer (one more owner)
     counted_ptr (const counted_ptr<T, Deallocator>& p) throw()
-     : ptr(p.ptr), count(p.count) {
-        ++*count;
+     : item(p.item) {
+        if (item != NULL) { ++(item->count); }
     }
 
     // destructor (delete value if this was the last owner)
@@ -46,29 +50,27 @@ class counted_ptr {
     counted_ptr<T, Deallocator>& operator= (const counted_ptr<T, Deallocator>& p) throw() {
         if (this != &p) {
             dispose();
-            ptr = p.ptr;
-            count = p.count;
-            ++*count;
+            item = p.item;
+            if (item != NULL) { ++(item->count); }
         }
         return *this;
     }
 
     // access the value to which the pointer refers
-    T& operator*() const throw() { return *ptr; }
-    T* operator->() const throw() { return ptr; }
-    T& operator[](int i) const throw() { return ptr[i]; }
-    T* get() const throw() { return ptr;}
-    bool unique() const throw() {return *count == 1; }
+    T& operator*() const throw() { return *(item->ptr); }
+    T* operator->() const throw() { return item->ptr; }
+    T& operator[](int i) const throw() { return item->ptr[i]; }
+    T* get() const throw() { return item == NULL ? NULL : item->ptr; }
+    bool unique() const throw() {return item->count == 1; }
 
   private:
     void dispose() {
-        if (count != NULL && --*count == 0) {
-             delete count;
-             Deallocator::deallocate(ptr);
+        if (item && item->count == 0) {
+            if (item->ptr != NULL) { Deallocator::deallocate(item->ptr); }
+            delete item;
         }
     }
 };
-
 
 #endif // COUNTED_PTR_H
 

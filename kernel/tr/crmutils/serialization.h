@@ -16,8 +16,6 @@
 enum se_output_method  {se_output_method_xml};
 enum se_output_indent  {se_output_indent_yes, se_output_indent_no};
 
-class XMLOutput;
-
 class Serializer {
 public:
     virtual void serialize(xptr node) = 0;

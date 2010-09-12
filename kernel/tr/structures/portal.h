@@ -5,54 +5,61 @@
 #include "common/base.h"
 
 #include "tr/structures/schema.h"
-#include "tr/executor/base/xptr_sequence.h"
+#include "tr/executor/base/sequence.h"
+#include "tr/crmutils/serializer.h"
 
 #include <vector>
 
-struct tuple_cell;
-class Serializer;
-
 namespace portal {
-    class VirtualNode {
-    protected:
-        schema_node_xptr snode;
+    class SequenceReader {
+    private:
+        counted_ptr<sequence> s;
+        int pos;
     public:
-        virtual void print(Serializer * out) const = 0;
+        SequenceReader(tuple_cell t) : s(t.get_portal().p), pos(t.get_index()) { U_ASSERT(t.is_portal()); };
+        inline void next() { pos++; };
+        inline void get(tuple &t) { t.copy((*s)[pos]); };
+        inline tuple_cell getCell() { return (*s)[pos].cells[0]; };
+        inline bool sameSequence(const sequence * t) { return t == s.get(); };
     };
 
-    class VirtualAttribute : public VirtualNode {
-        text_source_t value;
+    struct VirtualElementIterator : public ElementChildIterator {
+    private:
+        xptr snode;
+        counted_ptr<SequenceReader> reader;
+    public:
+        explicit VirtualElementIterator(const tuple_cell t);
+        explicit VirtualElementIterator(const VirtualElementIterator * parent);
+
+        void do_next();
+        tuple do_get();
+
+        virtual schema_node_cptr getSchemaNode() const { return snode; };
+        virtual void next(tuple &t);
+
+        void close();
     };
 
-    class VirtualElement : public VirtualNode {
+    class VirtualElementWriter {
+    private:
         bool noMoreAttributes;
-        int count;
-        int * shared_counter;
+        bool ownsSequence;
+        int index;
+        bool opened, closed;
 
-        typedef std::pair<int, VirtualElement *> PositionedVirtualElement;
-
-        std::vector<PositionedVirtualElement> vitual_nodes;
-        std::vector<xmlns_ptr> namespaces;
-        xptr_sequence portal;
+        dynamic_context * cxt;
+        counted_ptr<sequence> seq;
     public:
-        virtual void print(Serializer * out) const;
+        VirtualElementWriter(dynamic_context * a_cxt) :
+            noMoreAttributes(false), ownsSequence(false), index(0),
+            opened(false), closed(false), cxt(a_cxt), seq(NULL) {};
 
-        void setSchemaNode(schema_node_cptr a_snode) { snode = a_snode.ptr(); };
-        void addNode(const xptr node);
-        void addVirtual(const tuple_cell * t);
-        void addNamespace(const xmlns_ptr &ns);
+        void create(const schema_node_xptr snode, const tuple_cell& parent);
+        void add(const tuple_cell& tc);
+        void close();
+
+        tuple_cell get();
     };
-
-    class VirtualStorage {
-    public:
-        VirtualNode * createElement();
-        void releaseNode(VirtualNode * node);
-    };
-
-    void portalOnTransactionBegin();
-    void portalOnTransactionEnd(bool commit);
-
-    extern VirtualStorage * virtualNodeStorage;
-};
+}
 
 #endif /* PORTAL_H_ */

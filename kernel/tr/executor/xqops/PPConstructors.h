@@ -54,6 +54,9 @@ protected:
     char* el_name;
     bool ns_inside;
 
+    // EOS by default constructor. Error if not!
+    static tuple_cell parent_element;
+
 private:
     virtual void do_open   ();
     virtual void do_reopen ();
@@ -64,10 +67,10 @@ private:
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 public:
     PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
-            PPOpIn _qname_, PPOpIn _content_);
+            PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, bool _ns_inside);
 
     PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
-            const char* name, PPOpIn _content_);
+            const char* name, PPOpIn _content_, bool _deep_copy, bool _ns_inside);
 
     virtual ~PPVirtualConstructor();
 

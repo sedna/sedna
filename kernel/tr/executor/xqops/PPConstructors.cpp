@@ -250,16 +250,16 @@ void PPConstructor::clear_virtual_root()
 
 
 PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
-        operation_info _info_, PPOpIn _qname_, PPOpIn _content_) :
-            PPConstructor(_cxt_, _info_, false), qname(_qname_), content(_content_)
+        operation_info _info_, PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, bool _ns_inside) :
+            PPConstructor(_cxt_, _info_, _deep_copy), qname(_qname_), content(_content_), ns_inside(_ns_inside)
 
 {
     el_name=NULL;
 }
 
 PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
-        operation_info _info_, const char* name, PPOpIn _content_) :
-            PPConstructor(_cxt_, _info_, false), content(_content_)
+        operation_info _info_, const char* name, PPOpIn _content_, bool _deep_copy, bool _ns_inside) :
+            PPConstructor(_cxt_, _info_, _deep_copy), content(_content_), ns_inside(_ns_inside)
 {
     el_name=se_new char[strlen(name)+1];
     strcpy(el_name,name);
@@ -333,7 +333,28 @@ const char * getName(const char* name, PPOpIn& qnameop, xmlns_ptr& ns, dynamic_c
         }
     }
 
+    /* The attribute value in a default namespace declaration MAY be empty.
+     * This has the same effect, within the scope of the declaration, of there being no default namespace
+     */
+
+    if (is_empty_default_ns_declaration(ns)) { ns = NULL_XMLNS; }
+
     return name;
+}
+
+inline static
+bool isNamespaceTuple(const tuple &t) {
+    return t.cells[0].is_node() && getNodeType(checkp(t.cells[0].get_node())) == xml_namespace;
+}
+
+tuple_cell PPVirtualConstructor::parent_element;
+
+static inline
+void atomics_to_text(portal::VirtualElementWriter &element, sequence &atomic_acc, xptr text_root_indirection) {
+    xptr atomic_node = XNULL;
+    if (process_atomic_values(atomic_node, text_root_indirection, atomic_acc)) {
+        element.add(tuple_cell::node_indir(atomic_node));
+    }
 }
 
 void PPVirtualConstructor::do_next (tuple &t)
@@ -341,80 +362,77 @@ void PPVirtualConstructor::do_next (tuple &t)
     if (first_time) {
         first_time = false;
         std::vector<xmlns_ptr> ns_list;
-        portal::VirtualElement * curnode = (portal::VirtualElement *) portal::virtualNodeStorage->createElement();
+        portal::VirtualElementWriter elementProducer(cxt);
+
         xmlns_ptr ns = NULL_XMLNS;
+        tuple cont(content.ts);
+
+        U_ASSERT(!ns_inside);
 
         const char * name = getName(el_name, qname, ns, cxt);
+
         schema_node_cptr snode = get_virtual_root_snode()->get_first_child(ns, name, element);
         if (!snode.found()) {
             snode = get_virtual_root_snode()->add_child(ns, name, element);
         }
-        curnode->setSchemaNode(snode);
-
-        /*
-         * The attribute value in a default namespace declaration MAY be empty.
-         * This has the same effect, within the scope of the declaration, of there being no default namespace
-         */
-        if (is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
+        elementProducer.create(snode.ptr(), parent_element);
 
         /* Check constraints on full name */
         if(!isNameValid(name, ns == NULL_XMLNS ? NULL : ns->prefix, ns == NULL_XMLNS ? NULL : ns->uri, false)) {
             throw XQUERY_EXCEPTION(XQDY0096);
         }
 
+        tuple_cell old_parent_element = parent_element;
+        /* TODO: There is a problem with deep_copy constructors: we can create element on
+         * next only if we are sure, that there will be no other element inserted after it, that should
+         * be inserted before it */
+//        parent_element = elementProducer.get();
+
         const xptr virtual_root_i = getIndirectionSafeCP(get_virtual_root());
         sequence atomic_acc(1);
-        tuple cont(content.ts);
         xptr atomic_node;
+        content.op->next(cont);
 
-        while (true) {
-            content.op->next(cont);
-            if (cont.is_eos()) break;
+        while (!cont.is_eos()) {
             tuple_cell tc = cont.cells[0];
 
-            /* Analyze and insert it */
-            if (tc.is_portal()) {
-                curnode->addVirtual(&tc);
-            } else if (tc.is_atomic()) {
+            if (tc.is_atomic()) {
+                /* Accumulate atomic values */
                 atomic_acc.add(cont);
-            } else if (tc.is_node()) {
-                /* Process atomic values */
-                atomic_node = XNULL;
-                if (process_atomic_values(atomic_node, virtual_root_i, atomic_acc)) {
-                    curnode->addNode(atomic_node);
+            } else {
+                /* If there are any atomic values, add them as a text node */
+                atomics_to_text(elementProducer, atomic_acc, virtual_root_i);
+
+                /* Analyze and insert it */
+                if (tc.is_node()) {
+                    /* Add node */
+                    xptr node = tc.get_node();
+                    t_item nodetype = getNodeType(node);
+                    if (nodetype == virtual_root) { throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the element constructor content sequence"); }
+                    if (nodetype == text && CommonTextNode(node).isEmpty()) { continue; }
+                    if (nodetype == xml_namespace) {
+                        ns_list.push_back(NSNode(cont.cells[0].get_node()).getNamespaceLocal());
+                    }
+    //                if (nodetype == xml_namespace) { break; }
                 }
-
-                xptr node = tc.get_node();
-                t_item nodetype = getNodeType(node);
-
-                if (nodetype == virtual_root) {
-                    throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the element constructor content sequence");
-                }
-
-                if (nodetype == xml_namespace) {
-                    ns_list.push_back(NSNode(node).getNamespaceLocal());
-//                    is_empty_default_ns_declaration()) { continue; }
-                }
-                if (nodetype == text && CommonTextNode(node).isEmpty()) { continue; }
-
-                curnode->addNode(node);
+                elementProducer.add(tc);
             }
+            content.op->next(cont);
         }
 
-        atomic_node = XNULL;
-        if (process_atomic_values(atomic_node, virtual_root_i, atomic_acc)) {
-            curnode->addNode(atomic_node);
-        }
+        /* If there are any atomic values left, add them as a text node */
+        atomics_to_text(elementProducer, atomic_acc, virtual_root_i);
 
-        t.copy(tuple_cell::virtualnode(curnode));
-
-        /* Clear in-scope context deleteng local namespace declarations */
+         /* Clear context namespaces deleting local namespace declarations */
         vector<xmlns_ptr>::iterator it = ns_list.begin();
         while (it != ns_list.end()) {
             cxt->remove_from_context(*it);
             it++;
         }
 
+        t.copy(elementProducer.get());
+        elementProducer.close();
+        parent_element = old_parent_element;
         cont_parind  = XNULL;
     } else {
         first_time = true;
@@ -426,10 +444,10 @@ PPIterator* PPVirtualConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPVirtualConstructor *res ;
     if (el_name!=NULL)
-        res = se_new PPVirtualConstructor(_cxt_, info, el_name, content);
+        res = se_new PPVirtualConstructor(_cxt_, info, el_name, content, deep_copy, ns_inside);
     else
     {
-        res = se_new PPVirtualConstructor(_cxt_, info, qname, content);
+        res = se_new PPVirtualConstructor(_cxt_, info, qname, content, deep_copy, ns_inside);
         res->qname.op = qname.op->copy(_cxt_);
     }
     res->content.op = content.op->copy(_cxt_);

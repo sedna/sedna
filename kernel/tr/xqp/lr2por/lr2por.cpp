@@ -1082,7 +1082,11 @@ namespace sedna
                            *n.local :
                            *n.pref + ":" + *n.local;
 
-        off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
+//        if (n.deep_copy) {
+//            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
+//        } else {
+            off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
+//        }
         off_this.opin.ts = 1;
 
         setOffer(off_this);
@@ -1118,7 +1122,11 @@ namespace sedna
                                *n.local :
                                *n.pref + ":" + *n.local;
 
-            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
+//            if (n.deep_copy) {
+//                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
+//            } else {
+                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
+//            }
         }
 
         off_this.opin.ts = 1;

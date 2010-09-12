@@ -8,6 +8,7 @@
 
 #include "ASTNode.h"
 class ASTVisitor;
+class ASTNsp;
 
 #include <string>
 
@@ -21,8 +22,10 @@ public:
     bool deep_copy; // element will be attached to virtual_root and copied on demand
     bool nsp_expected; // element prefix redefined with xmlns: attribute
 
+    const ASTNsp * nsp_node;
+
 public:
-    ASTElem(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *attrs_ = NULL, ASTNodesVector *cont_ = NULL) : ASTNode(loc), attrs(attrs_), cont(cont_)
+    ASTElem(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *attrs_ = NULL, ASTNodesVector *cont_ = NULL) : ASTNode(loc), attrs(attrs_), cont(cont_), nsp_node(NULL)
     {
         ASTParseQName(name, &pref, &local);
 
@@ -34,7 +37,8 @@ public:
             pref(elem_pref),
             local(elem_local),
             attrs(attrs_),
-            cont(cont_)
+            cont(cont_),
+            nsp_node(NULL)
     {
     }
 

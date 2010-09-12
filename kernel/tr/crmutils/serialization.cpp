@@ -15,53 +15,12 @@
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/xsd.h"
 #include "tr/tr_globals.h"
+#include "tr/structures/portal.h"
+
+#include <string.h>
 
 static const char * XML_docTagStart = "<?xml version=\"1.0\" standalone=\"yes\"";
 static const char * XML_docTagEnd = "?>";
-static const char * XML_elTagEnd = ">";
-
-
-StdXMLOutput::StdXMLOutput(dynamic_context * a_cxt, se_ostream &a_crmout) :
-    crmout(a_crmout), cxt(a_cxt) { }
-
-StdXMLOutput::~StdXMLOutput() { }
-
-void StdXMLOutput::reset() {
-    finishing = NULL;
-    tagStarted = false;
-}
-
-void StdXMLOutput::tuple(const tuple_cell &tc) {
-    U_ASSERT(tc.is_light_atomic());
-    if (is_fixed_size_type(tc.get_atomic_type())) {
-        get_lexical_representation_for_fixed_size_atomic(executor_globals::mem_str_buf2, tc, xml);
-        crmout.writextext(executor_globals::mem_str_buf2, strlen(executor_globals::mem_str_buf2));
-    } else if (tc.get_atomic_type() == xs_QName) {
-        const char *prefix = xs_QName_get_prefix(tc.get_str_mem());
-        if (prefix && strlen(prefix) != 0) {
-            crmout.writextext(prefix, strlen(prefix));
-            crmout.writextext(":", 1);
-        }
-        crmout.writextext((char*)xs_QName_get_local_name(tc.get_str_mem()),
-            strlen(xs_QName_get_local_name(tc.get_str_mem())));
-    } else {
-        crmout.writextext(tc.get_str_mem(), tc.get_strlen_mem());
-    }
-}
-
-void StdXMLOutput::startDocument() {
-}
-
-void StdXMLOutput::finishTag() {
-    if (tagStarted) {
-        crmout << finishing;
-        tagStarted = false;
-    }
-}
-
-void StdXMLOutput::endDocument() {
-    finishTag();
-}
 
 static std::string getTagName(const schema_node_cptr kind) {
     const xmlns_ptr ns = kind->get_xmlns();
@@ -74,24 +33,6 @@ static std::string getTagName(const schema_node_cptr kind) {
         tagName = kind->get_name();
     }
     return tagName;
-}
-
-void * StdXMLOutput::startElement(const schema_node_cptr kind) {
-    finishTag();
-    tagStack.push(getTagName(kind));
-    tagStarted = true;
-    finishing = XML_elTagEnd;
-    crmout << '<' << tagStack.top().c_str();
-}
-
-void StdXMLOutput::endElement(void * context) {
-    U_ASSERT(!tagStack.empty());
-    if (!tagStarted) {
-        crmout << "</" << tagStack.top().c_str() << '>';
-    } else {
-        crmout << "/>";
-        tagStarted = false;
-    }
 }
 
 str_cursor * getTextCursor(const text_source_t text) {
@@ -125,55 +66,38 @@ public:
     bool read() { return ((size = cursor->copy_blk(buffer)) != 0); }
 };
 
-void StdXMLOutput::attribute(const schema_node_cptr kind, const text_source_t value) {
-    crmout << " " << getTagName(kind).c_str() << "=\"";
-    TextBufferReader reader(value);
-    while (reader.read()) { crmout.writeattribute(reader.buffer, reader.size); }
-    crmout << "\"";
-}
-
-void StdXMLOutput::text(const text_source_t value , void * markup) {
-    finishTag();
-    TextBufferReader reader(value);
-    while (reader.read()) { crmout.writextext(reader.buffer, reader.size); }
-}
-
-void StdXMLOutput::comment(const text_source_t value) {
-    finishTag();
-    crmout << "<!--";
-    TextBufferReader reader(value);
-    while (reader.read()) { crmout.write(reader.buffer, reader.size); }
-    crmout << "-->";
-}
-
-void StdXMLOutput::pi(const text_source_t value, int target_offset) {
-    finishTag();
-}
-
-void StdXMLOutput::xmlnamespace(const xmlns_ptr ns) {
-    finishTag();
-}
-
-
-
-
-Serializer::Serializer(XMLOutput * a_output) : output(a_output) {
-
-};
 
 void XMLSerializer::serializeTuple(tuple * t) {
     if (t->is_eos()) {
         return;
     }
 
+    indentLevel = 0;
+    indentNext = true;
+
     for (int i=0; i < t->cells_number; i++) {
-        output->reset();
         if (t->cells[i].is_portal()) {
-            t->cells[i].get_portal()->print(this);
+            portal::VirtualElementIterator it(t->cells[i]);
+            printElement(&it);
+            it.close();
         } else if (t->cells[i].is_node()) {
             this->serialize(t->cells[i].get_node());
         } else if (t->cells[i].is_light_atomic()) {
-            output->tuple(t->cells[i]);
+            const tuple_cell tc = t->cells[i];
+            if (is_fixed_size_type(tc.get_atomic_type())) {
+                get_lexical_representation_for_fixed_size_atomic(executor_globals::mem_str_buf2, tc, xml);
+                crmout.writextext(executor_globals::mem_str_buf2, strlen(executor_globals::mem_str_buf2));
+            } else if (tc.get_atomic_type() == xs_QName) {
+                const char *prefix = xs_QName_get_prefix(tc.get_str_mem());
+                if (prefix && strlen(prefix) != 0) {
+                    crmout.writextext(prefix, strlen(prefix));
+                    crmout.writextext(":", 1);
+                }
+                crmout.writextext((char*)xs_QName_get_local_name(tc.get_str_mem()),
+                    strlen(xs_QName_get_local_name(tc.get_str_mem())));
+            } else {
+                crmout.writextext(tc.get_str_mem(), tc.get_strlen_mem());
+            }
         } else {
 //            print_tuple_cell(output->getOutBuffer(), tup.cells[i]);
         }
@@ -198,7 +122,17 @@ bool isAttribute(const xptr node) {
     return (getNodeType(node) & attribute) > 0;
 }
 
+static const SerializationOptions defaultOptions = { true, " ", true };
+
+XMLSerializer::XMLSerializer(dynamic_context * a_cxt, se_ostream &a_crmout)
+    : cxt(a_cxt), crmout(a_crmout), options(&defaultOptions), elementContext(NULL) {
+}
+
+
 void XMLSerializer::printDocument(xptr node) {
+    indentLevel = 0;
+    indentNext = true;
+
     crmout << XML_docTagStart;
 
     xptr child=getFirstChild(node);
@@ -217,7 +151,11 @@ void XMLSerializer::printDocument(xptr node) {
 
 using namespace std;
 
-ElementContext::ElementContext(xptr node) : snode(getSchemaNode(node)), tagName(getTagName(snode)), defaultNamespace(NULL_XMLNS) {}
+static void inline print_indent(se_ostream& crmout, int level, const char * indent) {
+    for (int i=0; i < level; i++) { crmout << indent; }
+}
+
+ElementContext::ElementContext(const schema_node_cptr node) : snode(node), tagName(getTagName(snode)), defaultNamespace(NULL_XMLNS) {}
 
 void XMLSerializer::printNamespace(xmlns_ptr ns) {
     crmout << "xmlns";
@@ -227,65 +165,135 @@ void XMLSerializer::printNamespace(xmlns_ptr ns) {
     crmout << "\"";
 }
 
-void XMLSerializer::printElement(xptr node) {
-    ElementContext * parentContext = this->elementContext;
-    ElementContext context(node, parentContext);
-    elementContext = &context;
-    std::vector<xmlns_ptr> localNamespaces;
-    std::map<std::string, xmlns_ptr> localNamespaceMap;
+struct SednaElementIterator : public ElementChildIterator {
+private:
+    mutable schema_node_xptr snode;
+    xptr node;
+public:
+    SednaElementIterator(const xptr parent) {
+        CHECKP(parent);
+        snode = getSchemaPointer(parent);
+        node = getFirstChild(parent);
+    };
 
+    virtual schema_node_cptr getSchemaNode() const { return snode; };
+
+    virtual void next(tuple &t) {
+        if (node == XNULL) {
+            t.set_eos();
+        } else {
+            t.copy(tuple_cell::node(node));
+            node = nodeGetRightSibling(node);
+        };
+    };
+};
+
+
+void XMLSerializer::printElement(ElementChildIterator * element) {
+    ElementContext * parentContext = this->elementContext;
+    ElementContext context(element->getSchemaNode());
+    elementContext = &context;
+    bool indented = indentNext;
+    tuple childt(1);
+
+    if (indentNext) { crmout << "\n"; print_indent(crmout, indentLevel++, this->options->indentSequence); }
     crmout << "<" << context.tagName.c_str();
+    indentNext = options->indent;
 
     /* Default namespace handling. There are two signs of the default namespace:
-     * en empty prefix xmlns node and empty prefix in schema node. We output each
+     * empty prefix xmlns node and empty prefix in schema node. We output each
      * default namespace only once */
     if (parentContext != NULL && parentContext->defaultNamespace == context.snode->get_xmlns()) {
         context.defaultNamespace = parentContext->defaultNamespace;
     } else {
         context.defaultNamespace = context.snode->get_xmlns();
         if (context.defaultNamespace != NULL_XMLNS) {
+            crmout << " ";
             printNamespace(context.defaultNamespace);
+        } else if (parentContext != NULL && parentContext->defaultNamespace != NULL_XMLNS) {
+            crmout << " ";
+            // undeclare namespace
+            printNamespace(xmlns_touch("", ""));
         }
     }
 
     U_ASSERT(context.defaultNamespace == NULL_XMLNS || !context.defaultNamespace->has_prefix());
 
-    /* Handle namespaces. Save them to globally defined and also to local list for easy deletion. */
-    xptr child=getFirstChild(node);
-    while (child != XNULL && isNamespace(child)) {
-        xmlns_ptr ns = NSNode(child).getNamespaceLocal();
-        if (definedNamespaces.find(ns) == definedNamespaces.end()) {
-            definedNamespaces.insert(ns);
-            localNamespaces.push_back(ns);
-            printNamespace(ns);
+    element->next(childt);
+
+    while (!childt.is_eos() && childt.cells[0].is_node()) {
+        xptr node = childt.cells[0].get_node();
+        if (isNamespace(node)) {
+            xmlns_ptr ns = NSNode(node).getNamespaceLocal();
+            if (ns->has_prefix()) {
+                crmout << " ";
+                printNamespace(ns);
+            }
+        } else if (isAttribute(node)) {
+            crmout << " ";
+            this->printAttribute(node);
+        } else {
+            break;
+            /* If this is not an namespace or attribute node
+             * It must be processed in the next loop */
         }
-        child = nodeGetRightSibling(checkp(child));
+        element->next(childt);
     }
 
-    while (child != XNULL && isAttribute(child)) {
-        child = nodeGetRightSibling(checkp(child));
-    }
-
-    if (child == XNULL) {
+    if (childt.is_eos()) {
         crmout << "/>";
     } else {
         crmout << ">";
 
-        while (child != XNULL) {
-            this->serialize(child);
-            child = nodeGetRightSibling(checkp(child));
+        while (!childt.is_eos()) {
+            const tuple_cell tc = childt.cells[0];
+            if (tc.is_portal()) {
+                U_ASSERT(dynamic_cast<portal::VirtualElementIterator*>(element) != NULL);
+                portal::VirtualElementIterator it(reinterpret_cast<portal::VirtualElementIterator*>(element));
+                printElement(&it);
+                it.close();
+            } else if (tc.is_node()) {
+                this->serialize(tc.get_node());
+            } else {
+                U_ASSERT(false);
+            }
+            element->next(childt);
         }
 
-        crmout << "</" << tagName.c_str() << ">";
+        if (indented && indentNext) { crmout << "\n"; print_indent(crmout, indentLevel-1, this->options->indentSequence); }
+        crmout << "</" << context.tagName.c_str() << ">";
     }
+    indentNext = options->indent;
+    if (indented) { indentLevel--; }
 
-    if (!context.localNamespaces.empty()) {
-        definedNamespaces.erase(localNamespaces.begin(), localNamespaces.end());
-    }
-
-    this->elementContext = &parentContext;
+    elementContext = parentContext;
 }
 
+void XMLSerializer::printAttribute(xptr node) {
+    TextBufferReader reader(text_source_node(node));
+    CHECKP(node);
+    crmout << getTagName(getSchemaNode(node)).c_str() << "=\"";
+    while (reader.read()) { crmout.writeattribute(reader.buffer, reader.size); }
+    crmout << "\"";
+}
+
+static char * strcdata(char * str, size_t len) {
+    int state = 0;
+    while (len > 0) {
+        switch (state) {
+        case 1: if (*str == ']') { ++state; } else { state = 0; } break;
+        case 2: if (*str == '>') { return str+1; } else if (*str != ']') { state = 0; } break;
+        case 0: default: {
+            char * tmp = (char*) memchr(str, ']', len);
+            if (tmp == NULL) { return NULL; }
+            len += (str - tmp);
+            str = tmp;
+        }
+        }
+        len--; str++;
+    }
+    return NULL;
+}
 
 void XMLSerializer::serialize(xptr node) {
     CHECK_TIMER_FLAG;
@@ -296,27 +304,48 @@ void XMLSerializer::serialize(xptr node) {
         // exception
         break;
     case document: { printDocument(node); } break;
-    case element: { printElement(node); } break;
+    case element: {
+        SednaElementIterator it(node);
+        printElement(&it);
+    } break;
     case xml_namespace: {
         printNamespace(NSNode(node).getNamespaceLocal());
     } break;
     case attribute: {
-        TextBufferReader reader(text_source_node(node));
-        crmout << getTagName(node).c_str() << "=\"";
-        while (reader.read()) { crmout.writeattribute(reader.buffer, reader.size); }
-        crmout << "\"";
+        printAttribute(node);
     } break;
     case text: {
-        output->text(text_source_node(node), NULL);
+        indentNext = false;
+        TextBufferReader reader(text_source_node(node));
+        if (options->cdataSectionElements) {
+            crmout << "<![CDATA[";
+            while (reader.read()) {
+                char * pos, * buffer = reader.buffer;
+                size_t size = reader.size;
+                while ((pos = strcdata(buffer, size)) != NULL) {
+                    ptrdiff_t passed = (pos - buffer);
+                    crmout << "]]>]]<![CDATA[<";
+                    if (passed > 3) { crmout.write(buffer, passed - 3); }
+                    buffer = pos;
+                    size -= passed;
+                }
+                if (size > 0) { crmout.write(buffer, size); }
+            }
+            crmout << "]]>";
+        } else {
+            while (reader.read()) { crmout.writextext(reader.buffer, reader.size); }
+        }
     } break;
     case comment: {
         TextBufferReader reader(text_source_node(node));
+        if (indentNext) { crmout << "\n"; }
         crmout << "<!--";
         while (reader.read()) { crmout.writextext(reader.buffer, reader.size); }
         crmout << "-->";
     } break;
     case pr_ins: {
         TextBufferReader reader(text_source_node(node));
+        if (indentNext) { crmout << "\n"; }
         crmout << "<?";
         while (reader.read()) { crmout.writextext(reader.buffer, reader.size); }
         crmout << "?>";
