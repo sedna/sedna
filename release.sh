@@ -23,7 +23,7 @@ usage() {
     echo "Usage"
     echo "    $0" " local          - build local release"
     echo "    $0" " release        - build release"
-    echo "    $0" " local-dts      - build local dtSearch release"
+    echo "    $0" " release-dts    - build dtSearch release"
     echo
     failwith "Wrong arguments"
 }
@@ -41,8 +41,8 @@ else
         release)
             BUILD_TYPE=release
             ;;
-        local-dts)
-            BUILD_TYPE=local
+        release-dts)
+            BUILD_TYPE=release
             BUILD_DTSEARCH=ON
             VERSION_SUFFIX=dt
             ;;
