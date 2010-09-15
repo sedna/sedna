@@ -18,9 +18,13 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
 {
     HANDLE m = mapping->id;
 
-#ifndef VMM_DEBUG_CHECKP
+    /*
+     * We need read access in any case.
+     * Even in debug checkp (don't mess it with linux debug checkp)
+     * we read block in CHECP(p) to test layer.
+     */
     p = access_readwrite;
-#endif /* VMM_DEBUG_CHECKP */
+
 
     DWORD size_high, size_low;
 
