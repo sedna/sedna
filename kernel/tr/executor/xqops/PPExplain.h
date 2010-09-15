@@ -11,7 +11,12 @@
 #include "tr/executor/base/PPBase.h"
 
 /* 
- * Operation caches result. It returns the same document node
+ * Operation caches result. It returns the same document node.
+ *
+ * NOTE: PPExplain operates with two contexts: cxt and data_cxt. It can do
+ * whatever it wants with cxt, since it's explain-query cxt. But it mustn't
+ * touch data_cxt since this is the query-context and it should be used only
+ * to obtain the data about the query.
  */
 class PPExplain : public PPIterator
 {
@@ -20,6 +25,7 @@ private:
     bool first_time;
     doc_schema_node_cptr scm;
     bool profiler_mode;
+    dynamic_context *data_cxt;
     
 private:
     virtual void do_open   ();
@@ -34,7 +40,9 @@ public:
     PPExplain(dynamic_context *_cxt_,
               operation_info _info_,
               PPQueryEssence* _qep_tree_,
+              dynamic_context *data_context,
               bool _profiler_mode_ = false);
+
     virtual ~PPExplain();
 };
 

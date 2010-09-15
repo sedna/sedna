@@ -2729,10 +2729,10 @@ namespace sedna
 
             // first, we need new dynamic context since we will use two root operations
             dyn_cxt = new dynamic_context(new static_context());
-            dyn_cxt->set_var_map(old_dyn_cxt->get_var_map());
 
             // then, we build PPQueryRoot->PPExplain on top of actual query
-            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep), 1);
+            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep,
+                                 old_dyn_cxt), 1);
             qep = new PPQueryRoot(dyn_cxt, expl);
         }
         else if (mod->turnedProfile()) // profile feature
@@ -2741,10 +2741,10 @@ namespace sedna
 
             // first, we need new dynamic context since we will use two root operations
             dyn_cxt = new dynamic_context(new static_context());
-            dyn_cxt->set_var_map(old_dyn_cxt->get_var_map());
 
             // then, we build PPQueryRoot->PPExplain in profile mode on top of actual query
-            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep, true), 1);
+            PPOpIn expl = PPOpIn(new PPExplain(dyn_cxt, createOperationInfo(n), qep,
+                                 old_dyn_cxt, true), 1);
             qep = new PPQueryRoot(dyn_cxt, expl);
         }
     }
