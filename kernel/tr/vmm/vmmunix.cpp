@@ -16,11 +16,16 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
 {
     int m = mapping->id;
 
-#ifndef VMM_DEBUG_CHECKP
+    /*
+     * We need read access in any case, except linux debug checkp
+     * which implements special handlers for CHECKP().
+     * Even in debug checkp (don't mess it with linux debug checkp)
+     * we read block in CHECP(p) to test layer.
+     */
+
 #ifndef VMM_LINUX_DEBUG_CHECKP
     p = access_readwrite;
 #endif /* VMM_LINUX_DEBUG_CHECKP */
-#endif /* VMM_DEBUG_CHECKP */
 
     addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m,
             (off_t)offs);
