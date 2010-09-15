@@ -246,11 +246,6 @@ public:
         var_map[vd] = vn;
     }
 
-    inline void set_var_map(const var_map_id_name &var_map_)
-    {
-        var_map = var_map_;
-    }
-
     inline static_context *get_static_context()
     {
         return st_cxt;
