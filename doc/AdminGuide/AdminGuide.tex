@@ -852,6 +852,12 @@ exporting/importing data. The idea behind the \verb!se_exp! method is to
 generate a set of XML files and XQuery scripts to restore the database in the
 same state as it was at the time of the exporting.
 
+\textbf{Important note:} current version of the \verb!se_exp! utility doesn't
+support exporting/importing triggers, documents with multiple roots and empty
+documents (empty documents nodes and document nodes with multiple root elements
+are allowed by XQuery data model but cannot be serialized as is without
+modifications).
+
 Note that \verb!se_exp! is a regular Sedna client application. This means that
 you can export data from any remote host that has access to Sedna. The
 requirement is that \verb!se_exp! should operate with special permissions. In

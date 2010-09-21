@@ -1,13 +1,46 @@
 
-                           Sedna XML Database
-                             Release Notes
+                            Sedna XML Database
+                        Changes Log & Release Notes
+
+=============================================================================
+Release 3.4
+Release date: 2010-09-24
+=============================================================================
+
+   - 64-bit native support: 64-bit binaries are now available for all
+     supported platforms.
+   - CMake cross-platform, open-source build system is now used to build
+     Sedna on all supported platforms (e.g. Visual Studio project can be
+	 generated on Windows). See INSTALL file for details on configuration
+	 and installation process.
+   - libedit support on FreeBSD: Sedna Terminal (se_term) on FreeBSD is now
+     enhanced with auto-completion, history and advanced editing facilities.
+   - Storage Manager IO optimization: significant increase of bulk load
+     speed and other IO bound updates and queries.
+   - Internal data representation optimization: database now takes less hard
+     disk space.
+   - Reduced log mode (LOG_LESS_MODE) behaviour changed: transaction enters
+     exclusive mode (there are no other concurrent transactions possible)
+	 when log-less mode is turned on. For details refer to the Programmer's
+	 Guide, C API LOG_LESS_MODE connection option description.
+   - Sedna C library naming scheme changed on Unix-like platforms. There are
+     three versions of library are available now: libsedna.so (dynamic),
+	 libsedna.a (static), libsedna_pic.a (static with PIC enabled).
+   - System document $modules returned. It can be used to list names of all
+     available modules.
+   - Linux kernel 2.4 support dropped.
+   - Bug fixes, small improvements and optimizations.
+
+   Important note:
+
+   Databases created with previous versions of Sedna will not work properly
+   with Sedna 3.4. Please, use Sedna import/export utility to migrate your
+   data to Sedna 3.4 (see Sedna Administration Guide, section 2.5).
 
 =============================================================================
 Release 3.3
 Release date: 2010-04-10
 =============================================================================
-
-   New:
 
    - XQuery execution errors details significantly improved: Sedna reports
      the location of runtime errors with both line and column number.
@@ -32,8 +65,6 @@ Release date: 2010-04-10
 Release 3.2
 Release date: 2009-06-30
 =============================================================================
-
-   New:
 
    - Sedna Terminal has been significantly improved:
 
@@ -74,8 +105,6 @@ Release 3.1
 Release date: 2008-08-28
 =============================================================================
 
-   New:
-
    - Incremental hot backup
    - Rename collection statement
    - Bug fixes
@@ -90,8 +119,6 @@ Release date: 2008-08-28
 Release 3.0
 Release date: 2008-04-15
 =============================================================================
-
-   New:
 
    - Improved transaction management.
        * Now you can define a transaction as read-only. Such a transaction
@@ -115,8 +142,6 @@ Release 2.2
 Release date: 2007-10-23
 =============================================================================
 
-  New:
-
    - XQuery triggers. Sedna now provides support for triggers natively based
      on XPath/XQuery and the Sedna XML update language (see Sedna
      Programmer's Guide for the details);
@@ -137,8 +162,6 @@ Release date: 2007-10-23
 Release 2.1
 Release date: 2007-07-10
 =============================================================================
-
-   New:
 
    - Further indexes optimization.
    - Further bulk load optimization.
@@ -184,8 +207,6 @@ Release 1.0
 Release date: 2006-06-16
 =============================================================================
 
-   New:
-
    - Bug fixes.
    - XQuery extended with support for: date, time, duration functions; all
      XPath axes; expressions on SequenceTypes (Instance Of, Typeswitch,
@@ -209,8 +230,6 @@ Release date: 2006-06-16
 Release 0.5
 Release date: 2005-09-27
 =============================================================================
-
-   New:
 
    - Support for transactions (rollback and concurrency control).
    - Support for database security (users and privileges).
@@ -242,8 +261,6 @@ Release 0.4
 Release date: 2005-04-26
 =============================================================================
 
-   New:
-
    - Support for value indices based on B-tree.
    - Support for regular expressions (based on PCRE-library) for processing
      structured textual data that are not marked up.
@@ -258,8 +275,6 @@ Release 0.3.1
 Release date: 2005-02-25
 =============================================================================
 
-   New:
-
    - Listener is now a part of Governor.
    - Bug fixes.
 
@@ -268,30 +283,27 @@ Release 0.3
 Release date: 2005-01-28
 =============================================================================
 
-   New:
-
-      - Support for Linux platform.
-      - Support for document collections (that allows effective querying over
-        a large collection of similar XML documents).
-      - XQuery support extensions: XML namespaces, user-defined XQuery
-        functions.
-      - C API for application development.
+   - Support for Linux platform.
+   - Support for document collections (that allows effective querying over
+     a large collection of similar XML documents).
+   - XQuery support extensions: XML namespaces, user-defined XQuery
+     functions.
+   - C API for application development.
 
 =============================================================================
 Release 0.2
 Release date: 2004-06-10
 =============================================================================
 
-   New:
-      - Java API and Scheme API for application development
-      - Open and fully specified client/server protocol over sockets that
-        allows easily implementing APIs for other programming languages
-      - Many bugfixes
-      - Good performance improvement
-      - XQuery support extensions: node comparisons (<<,>>,is), fn:contains
-      - A data definition language that allows creating/droping XML
-        documents, printing the names of the documents stored in database,
-        printing descriptive schema of XML documents.
+   - Java API and Scheme API for application development
+   - Open and fully specified client/server protocol over sockets that
+     allows easily implementing APIs for other programming languages
+   - Many bugfixes
+   - Good performance improvement
+   - XQuery support extensions: node comparisons (<<,>>,is), fn:contains
+   - A data definition language that allows creating/droping XML
+     documents, printing the names of the documents stored in database,
+     printing descriptive schema of XML documents.
 
    Please, notice that using the client/server protocol you can easily
    implement APIs for your favorite programming language. We will be happy
