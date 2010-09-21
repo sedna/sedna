@@ -493,8 +493,8 @@ file libsedna.h, must link with the libsedna library and provide the compiler
 with the path to the directory where \verb!"libsedna.h"!, \verb!sp_defs.h! files
 are stored.
 
-For convenience three versions of libsedna are provided on Windows operating
-system:
+For convenience three versions of \verb!libsedna! are provided on the Windows
+operating system:
 
 \begin{enumerate}
 \item\verb!libsednamt.lib! - static multi-threaded version built with /MT
@@ -502,6 +502,16 @@ option. Use it if you compile your project with /MT[d] option.
 \item\verb!libsednamd.lib! - static multi-threaded version built with /MD
 option. Use it if you compile your project with /MD[d] option.
 \item\verb!sednamt.dll! - dynamic version. \verb!sednamt.lib! is import library.
+\end{enumerate}
+
+On Unix-like operating systems the following versions of \verb!libsedna! are
+provided:
+
+\begin{enumerate}
+\item\verb!libsedna.so! - dynamic shared library.
+\item\verb!libsedna.a! - static version of the library.
+\item\verb!libsedna_pic.a! - static version of the library with PIC enabled. You
+may need it to build drivers for Sedna which are based on \verb!libsedna!.
 \end{enumerate}
 
 
