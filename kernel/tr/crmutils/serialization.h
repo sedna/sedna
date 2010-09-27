@@ -18,8 +18,7 @@ enum se_output_indent  {se_output_indent_yes, se_output_indent_no};
 
 class Serializer {
 public:
-    virtual void serialize(xptr node) = 0;
-    virtual void serializeTuple(tuple * t) = 0;
+    virtual void serialize(tuple &t) = 0;
 };
 
 struct serialization_params

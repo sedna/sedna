@@ -164,7 +164,7 @@ bool PPQueryRoot::do_next()
         (*output_stream) << " ";
     }
 
-    serializer->serializeTuple(&data);
+    serializer->serialize(data);
 
     while (!cxt->tmp_sequence.empty()) { cxt->tmp_sequence.pop(); }
 
