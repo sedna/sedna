@@ -50,13 +50,13 @@ public:
     XMLSerializer(dynamic_context * a_cxt, se_ostream &a_crmout);
     ~XMLSerializer();
 
-    virtual void serialize(xptr node);
-    virtual void serializeTuple(tuple * t);
+    virtual void serialize(tuple & t);
 
     void printDocument(xptr node);
     void printElement(ElementChildIterator * element);
     void printNamespace(xmlns_ptr ns);
     void printAttribute(xptr node);
+    void printText(xptr node);
 };
 
 

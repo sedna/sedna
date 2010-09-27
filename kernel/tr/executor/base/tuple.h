@@ -641,6 +641,12 @@ struct tuple
     tuple() : cells_number(0), cells(NULL), eos(true) {}
     tuple(int _n_) : cells_number(_n_), eos(false) { cells = se_new tuple_cell[_n_]; }
     tuple(const tuple &t);
+
+    explicit tuple(const tuple_cell tc) : cells_number(1), eos(false) {
+        cells = se_new tuple_cell[1];
+        this->copy(tc);
+    }
+
     tuple &operator=(const tuple& t);
 
     void copy(const tuple &t)

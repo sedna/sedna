@@ -15,7 +15,7 @@
 
 class Node {
 protected:
-    xptr node;
+    mutable xptr node;
 public:
     inline Node(const xptr p) : node(p) {};
     inline Node(const Node & anode) : node(anode.node) {};
@@ -23,6 +23,7 @@ public:
     inline
     xptr getPtr() const { return node; };
 
+    inline const Node & checkp() const { if (node != XNULL) { CHECKP(node); } return *this; }
     inline Node & checkp() { if (node != XNULL) { CHECKP(node); } return *this; }
 
     inline
