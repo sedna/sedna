@@ -58,8 +58,7 @@ private:
     xptr xptr_for_data();
     void copy_text_mstr(xptr dest, const char *src, int count);
     void copy_text_mstr(xptr dest, const char *src);
-    void copy_text_estr(xptr dest, xptr src, str_off_t count);
-    void copy_text_pstr_long(xptr dest, xptr src);
+    void copy_text_cursor(xptr dest, str_cursor *cur);
 
 public:
     estr() : first_blk(XNULL), last_blk(XNULL), m_blks(0), m_size(0) {}
