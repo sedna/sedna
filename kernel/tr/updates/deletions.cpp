@@ -80,7 +80,7 @@ void delete_undeep(PPOpIn arg)
             {
             case attribute: case text: case comment: case pr_ins:
                 {
-                    delete_node(node);
+                    delete_node(node, &delete_node_context);
                     break;
                 }
             case element:
@@ -88,7 +88,7 @@ void delete_undeep(PPOpIn arg)
                     //1.INSERT
                     copy_node_content(nodeGetParentIndirection(node), node, getIndirectionSafeCP(node), NULL, true);
                     //2.DELETE
-                    delete_node(indirectionDereferenceCP(*it));
+                    delete_node(indirectionDereferenceCP(*it), &delete_node_context);
                 }
             }
         }
@@ -175,7 +175,7 @@ void delete_deep(PPOpIn arg)
             if (it+1==argseq.end()) { mark=true; break;}
             ++it;
         } while ((node == *it) || nid_ancestor(node,*it));
-        delete_node(node);
+        delete_node(node, &delete_node_context);
     } while (!mark);
 #ifdef SE_ENABLE_FTSEARCH
     execute_modifications();
