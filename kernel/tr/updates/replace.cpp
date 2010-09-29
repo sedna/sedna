@@ -220,7 +220,7 @@ void replace(PPOpIn arg)
         //pre_deletion
         if (d_m)
         {
-            delete_node(node);
+            delete_node(node, &delete_node_context);
         }
         //1.inserting attributes from sequence
         while(*sit != XNULL)
@@ -283,7 +283,7 @@ void replace(PPOpIn arg)
         if (!d_m)
         {
             xptr del_node = (*it3).cells[0].get_safenode();
-            delete_node(del_node);
+            delete_node(del_node, &delete_node_context);
         }
 next_replacement:;
     }

@@ -93,7 +93,7 @@ void rename(PPOpIn arg,const char* name)
                 CHECKP(node);
                 res = insert_attribute(left, XNULL, parent, name, AttributeNode(node).getType(), buf.get(), buf.getSize(), NULL_XMLNS);
                 //2. delete
-                delete_node(indirectionDereferenceCP(indir));
+                delete_node(indirectionDereferenceCP(indir), &delete_node_context);
                 break;
             }
         case element:
@@ -102,7 +102,7 @@ void rename(PPOpIn arg,const char* name)
                 res=insert_element(left, XNULL, parent, name, ElementNode(node).getType(), NULL_XMLNS);
                 copy_node_content(get_last_mo_inderection(), indirectionDereferenceCP(indir), XNULL, NULL, true);
                 //2.DELETE
-                delete_node(indirectionDereferenceCP(indir));
+                delete_node(indirectionDereferenceCP(indir), &delete_node_context);
                 break;
             }
         }

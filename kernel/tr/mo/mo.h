@@ -68,9 +68,18 @@ inline xptr insert_attribute_i(xptr left_sib, xptr right_sib, xptr parent, const
     return get_last_mo_inderection();
 }
 
-struct doc_info_t;
+struct delete_context_t {
+    const char* doc_name;
+    const char* collection_name;
 
-bool delete_node(xptr node_xptr, const doc_info_t * doc_info = NULL, bool no_index_update = false);
+    bool document_delete;
+    bool no_index_update;
+    bool no_merge_text_nodes;
+};
+
+static const delete_context_t delete_node_context = {NULL, NULL, false, false, false};
+
+bool delete_node(xptr node_xptr, const delete_context_t * context);
 
 void delete_doc_node(xptr node, const char * doc_name, const char * collection_name);
 

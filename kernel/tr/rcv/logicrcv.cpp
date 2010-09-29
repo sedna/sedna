@@ -54,6 +54,13 @@ static LSN llGetPrevRollbackLsn(LSN curr_lsn, void *RecBuf)
 }
 
 /*
+ * Recovery context: update index on recovery, but do not merge text nodes,
+ * because text nodes merging goes as a series of separate logical log operations
+ */
+
+static const delete_context_t delete_on_recovery = {NULL, NULL, false, false, true};
+
+/*
  * Converts logical log namespace presentation into pointer the real object.
  * Needed, since logical log cannot (for now) store NULL-pointers, so if we
  * want to store an NULL string-value there we just dump empty string instead.
@@ -150,7 +157,7 @@ static void llRcvElement(LSN curr_lsn, void *Rec)
 	  	  indir_map.find_remove(self, &self);
 	  }
 
-      delete_node(indirectionDereferenceCP(self));
+      delete_node(indirectionDereferenceCP(self), &delete_on_recovery);
     }
 }
 
@@ -220,7 +227,7 @@ static void llRcvAttribute(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(indirectionDereferenceCP(self));
+       delete_node(indirectionDereferenceCP(self), &delete_on_recovery);
      }
 }
 
@@ -275,7 +282,7 @@ static void llRcvText(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(indirectionDereferenceCP(self));
+       delete_node(indirectionDereferenceCP(self), &delete_on_recovery);
      }
 }
 
@@ -451,7 +458,7 @@ static void llRcvComment(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(indirectionDereferenceCP(self));
+       delete_node(indirectionDereferenceCP(self), &delete_on_recovery);
      }
 }
 
@@ -512,7 +519,7 @@ static void llRcvPI(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(indirectionDereferenceCP(self));
+       delete_node(indirectionDereferenceCP(self), &delete_on_recovery);
      }
 }
 
@@ -593,7 +600,7 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
 	   		indir_map.find_remove(self, &self);
 	   }
 
-       delete_node(indirectionDereferenceCP(self));
+       delete_node(indirectionDereferenceCP(self), &delete_on_recovery);
      }
 }
 
