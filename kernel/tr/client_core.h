@@ -22,23 +22,17 @@ struct client_file{
     int64_t file_size;
 };
 
+class Serializer;
+
 class client_core
 {
-private:
-    serialization_params *params;
+protected:
+    Serializer * serializer;
 
 public:
     //virtual ~client_core() {}
 
-    void set_serialization_params(serialization_params *params_)
-    {
-        params = params_;
-    }
-
-    serialization_params *get_serialization_params()
-    {
-        return params;
-    }
+    Serializer * getSerializer() { return serializer; }
 
     virtual void init() = 0;
     virtual void release() = 0;

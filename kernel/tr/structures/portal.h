@@ -6,7 +6,7 @@
 
 #include "tr/structures/schema.h"
 #include "tr/executor/base/sequence.h"
-#include "tr/crmutils/serializer.h"
+#include "tr/crmutils/xmlserializer.h"
 
 #include <vector>
 
@@ -23,7 +23,7 @@ namespace portal {
         inline bool sameSequence(const sequence * t) { return t == s.get(); };
     };
 
-    struct VirtualElementIterator : public ElementChildIterator {
+    struct VirtualElementIterator : public XDMElement {
     private:
         xptr snode;
         counted_ptr<SequenceReader> reader;

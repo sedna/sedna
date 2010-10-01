@@ -116,6 +116,10 @@ se_ostream& se_ostream::writeattribute(const char *s, int n)
     return *this;
 }
 
+se_ostream& se_ostream::flush_stm()
+{
+    tr_globals::client->get_serialization_params()->stm.flush(write_func, this);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////

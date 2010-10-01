@@ -16,48 +16,4 @@
 #include <set>
 #include <vector>
 
-struct ElementContext {
-    const schema_node_cptr snode;
-    const std::string tagName;
-    xmlns_ptr defaultNamespace;
-
-    ElementContext(const schema_node_cptr node);
-};
-
-struct ElementChildIterator {
-    virtual schema_node_cptr getSchemaNode() const = 0;
-    virtual void next(tuple &t) = 0;
-};
-
-struct SerializationOptions {
-    bool preserveNamespaces;
-    const char * indentSequence;
-    bool indent;
-    bool cdataSectionElements;
-};
-
-class XMLSerializer : public Serializer {
-private:
-    dynamic_context * cxt;
-    se_ostream &crmout;
-    const SerializationOptions * options;
-    ElementContext * elementContext;
-    bool indentNext;
-    int indentLevel;
-
-    void finishTag();
-public:
-    XMLSerializer(dynamic_context * a_cxt, se_ostream &a_crmout);
-    ~XMLSerializer();
-
-    virtual void serialize(tuple & t);
-
-    void printDocument(xptr node);
-    void printElement(ElementChildIterator * element);
-    void printNamespace(xmlns_ptr ns);
-    void printAttribute(xptr node);
-    void printText(xptr node);
-};
-
-
 #endif /* SERIALIZER_H_ */

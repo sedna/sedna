@@ -19,8 +19,13 @@
 
 #include <string.h>
 
-static const char * XML_docTagStart = "<?xml version=\"1.0\" standalone=\"yes\"";
-static const char * XML_docTagEnd = "?>";
+
+
+
+
+
+
+
 
 static std::string getTagName(const schema_node_cptr kind) {
     const xmlns_ptr ns = kind->get_xmlns();
@@ -66,63 +71,25 @@ public:
     bool read() { return ((size = cursor->copy_blk(buffer)) != 0); }
 };
 
-
-void XMLSerializer::serializeTuple(tuple * t) {
-    if (t->is_eos()) {
-        return;
-    }
-
-    indentLevel = 0;
-    indentNext = true;
-
-    for (int i=0; i < t->cells_number; i++) {
-        if (t->cells[i].is_portal()) {
-            portal::VirtualElementIterator it(t->cells[i]);
-            printElement(&it);
-            it.close();
-        } else if (t->cells[i].is_node()) {
-            this->serialize(t->cells[i].get_node());
-        } else if (t->cells[i].is_light_atomic()) {
-            const tuple_cell tc = t->cells[i];
-            if (is_fixed_size_type(tc.get_atomic_type())) {
-                get_lexical_representation_for_fixed_size_atomic(executor_globals::mem_str_buf2, tc, xml);
-                crmout.writextext(executor_globals::mem_str_buf2, strlen(executor_globals::mem_str_buf2));
-            } else if (tc.get_atomic_type() == xs_QName) {
-                const char *prefix = xs_QName_get_prefix(tc.get_str_mem());
-                if (prefix && strlen(prefix) != 0) {
-                    crmout.writextext(prefix, strlen(prefix));
-                    crmout.writextext(":", 1);
-                }
-                crmout.writextext((char*)xs_QName_get_local_name(tc.get_str_mem()),
-                    strlen(xs_QName_get_local_name(tc.get_str_mem())));
-            } else {
-                crmout.writextext(tc.get_str_mem(), tc.get_strlen_mem());
-            }
-        } else {
-//            print_tuple_cell(output->getOutBuffer(), tup.cells[i]);
-        }
-    }
-}
-
 inline static
 bool isNamespaceOrAttribute(const xptr node) {
-    CHECKP(node);
+    CHECKP(node)
     return (getNodeType(node) & (attribute | xml_namespace)) > 0;
 }
 
 inline static
 bool isNamespace(const xptr node) {
-    CHECKP(node);
+    CHECKP(node)
     return (getNodeType(node) & xml_namespace) > 0;
 }
 
 inline static
 bool isAttribute(const xptr node) {
-    CHECKP(node);
+    CHECKP(node)
     return (getNodeType(node) & attribute) > 0;
 }
 
-static const SerializationOptions defaultOptions = { true, " ", true };
+//static const XMLSerializationOptions defaultOptions = { true, " ", true };
 
 XMLSerializer::XMLSerializer(dynamic_context * a_cxt, se_ostream &a_crmout)
     : cxt(a_cxt), crmout(a_crmout), options(&defaultOptions), elementContext(NULL) {
@@ -144,7 +111,8 @@ void XMLSerializer::printDocument(xptr node) {
     crmout << XML_docTagEnd;
 
     while (child != XNULL) {
-        this->serialize(tuple(tuple_cell::node(child)));
+        SednaElementIterator it(child);
+        printElement(&it);
         child = nodeGetRightSibling(checkp(child));
     }
 }
@@ -165,36 +133,15 @@ void XMLSerializer::printNamespace(xmlns_ptr ns) {
     crmout << "\"";
 }
 
-struct SednaElementIterator : public ElementChildIterator {
-private:
-    mutable schema_node_xptr snode;
-    xptr node;
-public:
-    SednaElementIterator(const xptr parent) {
-        CHECKP(parent);
-        snode = getSchemaPointer(parent);
-        node = getFirstChild(parent);
-    };
+void XMLSerializer::printElement(SerializedElementIterator * elementInterface) {
+    CHECK_TIMER_FLAG;
 
-    virtual schema_node_cptr getSchemaNode() const { return snode; };
-
-    virtual void next(tuple &t) {
-        if (node == XNULL) {
-            t.set_eos();
-        } else {
-            t.copy(tuple_cell::node(node));
-            CHECKP(node);
-            node = nodeGetRightSibling(node);
-        };
-    };
-};
-
-void XMLSerializer::printElement(ElementChildIterator * elementInterface) {
     ElementContext * parentContext = this->elementContext;
     ElementContext context(elementInterface->getSchemaNode());
     elementContext = &context;
     bool indented = indentNext;
     tuple childt(1);
+    tuple_cell * childItem = childt.cells;
 
     if (indentNext) { crmout << "\n"; print_indent(crmout, indentLevel++, this->options->indentSequence); }
     crmout << "<" << context.tagName.c_str();
@@ -221,8 +168,8 @@ void XMLSerializer::printElement(ElementChildIterator * elementInterface) {
 
     elementInterface->next(childt);
 
-    while (!childt.is_eos() && childt.cells[0].is_node()) {
-        const xptr node = childt.cells[0].get_node();
+    while (!childt.is_eos() && childItem->is_node()) {
+        const xptr node = childItem->get_node();
         if (isNamespace(node)) {
             xmlns_ptr ns = NSNode(node).getNamespaceLocal();
             if (ns->has_prefix()) {
@@ -246,7 +193,7 @@ void XMLSerializer::printElement(ElementChildIterator * elementInterface) {
         crmout << ">";
 
         while (!childt.is_eos()) {
-            const tuple_cell tc = childt.cells[0];
+            const tuple_cell tc = *childItem;
             if (tc.is_portal()) {
                 U_ASSERT(dynamic_cast<portal::VirtualElementIterator*>(elementInterface) != NULL);
                 portal::VirtualElementIterator it(reinterpret_cast<portal::VirtualElementIterator*>(elementInterface));
@@ -340,3 +287,50 @@ void XMLSerializer::printText(xptr node) {
     };
 }
 
+
+SXMLSerializer::SXMLSerializer(dynamic_context * a_cxt, se_ostream &a_crmout)
+{
+}
+
+SXMLSerializer::~SXMLSerializer()
+{
+}
+
+void SXMLSerializer::serialize(tuple & t)
+{
+}
+
+
+void SXMLSerializer::printDocument(xptr node)
+{
+    crmout << XML_docTagStart;
+
+    xptr child=getFirstChild(node);
+    while (child != XNULL && isNamespaceOrAttribute(child)) {
+        this->serialize(tuple(tuple_cell::node(child)));
+        child = nodeGetRightSibling(checkp(child));
+    }
+
+    crmout << XML_docTagEnd;
+
+    while (child != XNULL) {
+        this->serialize(tuple(tuple_cell::node(child)));
+        child = nodeGetRightSibling(checkp(child));
+    }
+}
+
+void SXMLSerializer::printElement(SerializedElementIterator * element)
+{
+}
+
+void SXMLSerializer::printNamespace(xmlns_ptr ns)
+{
+}
+
+void SXMLSerializer::printAttribute(xptr node)
+{
+}
+
+void SXMLSerializer::printText(xptr node)
+{
+}
