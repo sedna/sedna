@@ -328,7 +328,7 @@ public:
 
     void add_char_mapping(const char* str, const char* rep_str, int pc = -1)
     {
-        st_cxt->get_serialization_params()->stm.add_str(str, rep_str, pc);
+        st_cxt->get_string_matcher()->add_str(str, rep_str, pc);
     }
 
     void add_child_context(dynamic_context *cxt)

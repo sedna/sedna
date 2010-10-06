@@ -12,6 +12,7 @@
 #include "tr/strings/utf8.h"
 #include "tr/structures/xmlns.h"
 #include "tr/crmutils/serialization.h"
+#include "tr/crmutils/str_matcher.h"
 
 /// query prolog enumerations
 enum xq_boundary_space {xq_boundary_space_strip, xq_boundary_space_preserve};
@@ -77,7 +78,8 @@ private:
     std::set<xmlns_ptr>      predefined_ns;
 
     // serialization parameters: indent, method, etc.
-    serialization_params sp;
+    GlobalSerializationOptions serializationOptions;
+    StrMatcher * strMatcher;
 
     inline void set_field_flag(static_context_fields_flags flag)
     {
@@ -88,14 +90,14 @@ public:
     static_context();
     ~static_context();
 
+    inline StrMatcher * get_string_matcher()
+    {
+        return strMatcher;
+    }
+
     bool is_field_set_in_prolog(static_context_fields_flags flag)
     {
         return (prolog_set_fields & flag) != 0;
-    }
-
-    serialization_params *get_serialization_params()
-    {
-        return &sp;
     }
 
     static inline std::string get_error_description(int err_code)

@@ -25,52 +25,6 @@
 
 
 
-
-
-static std::string getTagName(const schema_node_cptr kind) {
-    const xmlns_ptr ns = kind->get_xmlns();
-    std::string tagName;
-    if (ns != NULL_XMLNS && ns->has_prefix()) {
-        char * tagNameBuffer = (char *) malloc(strlen(ns->get_prefix()) + strlen(kind->get_name()) + 2);
-        tagName = sprintf(tagNameBuffer, "%s:%s", ns->get_prefix(), kind->get_name());
-        free(tagNameBuffer);
-    } else {
-        tagName = kind->get_name();
-    }
-    return tagName;
-}
-
-str_cursor * getTextCursor(const text_source_t text) {
-    str_cursor * result = NULL;
-    switch (text.type) {
-    case text_source_t::text_mem:
-        result = new mem_cursor((char *) text.u.cstr, text.size);
-    case text_source_t::text_pstr: {
-        result = new pstr_cursor(text.u.data, text.size);
-    } break;
-    case text_source_t::text_estr: {
-        result = new pstr_long_cursor(text.u.data);
-    } break;
-    case text_source_t::text_pstrlong: {
-        result = new estr_cursor(text.u.data, text.size);
-    } break;
-    }
-    return result;
-}
-
-class TextBufferReader {
-private:
-    str_cursor * cursor;
-public:
-    char * buffer;
-    int size;
-
-    TextBufferReader(const text_source_t text) : cursor(getTextCursor(text)), buffer((char*) malloc(PAGE_SIZE)) {};
-    ~TextBufferReader() { free(cursor); free(buffer); };
-
-    bool read() { return ((size = cursor->copy_blk(buffer)) != 0); }
-};
-
 inline static
 bool isNamespaceOrAttribute(const xptr node) {
     CHECKP(node)
@@ -129,6 +83,8 @@ void XMLSerializer::printNamespace(xmlns_ptr ns) {
     crmout << "xmlns";
     if (ns->has_prefix()) { crmout << ":" << ns->get_prefix(); }
     crmout << "=\"";
+    stm->parse(s,n,write_func,this,(int)pat_attribute);
+
     crmout.writeattribute(ns->get_uri(), strlen(ns->get_uri()));
     crmout << "\"";
 }

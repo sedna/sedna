@@ -80,10 +80,11 @@ dynamic_context::dynamic_context(static_context *_st_cxt_) : st_cxt(_st_cxt_)
 {
     current_var_cxt = NULL;
 
-    st_cxt->get_serialization_params()->stm.add_str(">","&gt;");
-    st_cxt->get_serialization_params()->stm.add_str("<","&lt;");
-    st_cxt->get_serialization_params()->stm.add_str("&","&amp;");
-    st_cxt->get_serialization_params()->stm.add_str("\"","&quot;", pat_attribute);
+    st_cxt->get_string_matcher()->add_str(">","&gt;", pat_attribute | pat_element);
+    st_cxt->get_string_matcher()->add_str("<","&lt;", pat_attribute | pat_element);
+    st_cxt->get_string_matcher()->add_str("&","&amp;", pat_attribute | pat_element);
+    st_cxt->get_string_matcher()->add_str("\"","&quot;", pat_attribute);
+    st_cxt->get_string_matcher()->add_str("]]>", "]]>]]<![CDATA[<", pat_cdata);
 
     // xml is always in inscope namespaces
     insc_ns["xml"].push_back(xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace"));

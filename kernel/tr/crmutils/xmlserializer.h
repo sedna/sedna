@@ -22,6 +22,7 @@ class XDMSerializer {
     void printNode(const Node node);
     void traverseVirtualElement(XDMElement * element);
     void traverseElement(ElementNode node);
+    void traverseDocument(Node node);
 
     virtual void printAtomic(const tuple_cell &t) = 0;
     virtual void printDocument(const text_source_t docname, XDMElement * content) = 0;
@@ -53,12 +54,16 @@ class XMLSerializer : public XDMSerializer {
   protected:
     dynamic_context * cxt;
     const GlobalSerializationOptions * options;
-    StrMatcher * smt;
+    StrMatcher * stm;
     se_ostream &crmout;
 
     ElementContext * elementContext;
     bool indentNext;
     int indentLevel;
+
+    void writeAttribute();
+    void writeText();
+    void writeCDATA();
 
     virtual void printAtomic(const tuple_cell &t);
     virtual void printDocument(const char * docname, XDMElement * content);
@@ -67,7 +72,7 @@ class XMLSerializer : public XDMSerializer {
     virtual void printAttribute(schema_node_cptr snode, const text_source_t value);
     virtual void printText(t_item type, const text_source_t value);
   public:
-    XMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_smt, se_ostream &a_out);
+    XMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_stm, se_ostream &a_out);
     virtual ~XMLSerializer();
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_xml; };
@@ -81,16 +86,15 @@ class XMLSerializer : public XDMSerializer {
 
 class SXMLSerializer : public XMLSerializer {
 private:
-    void printDocument(xptr node);
-    void printElement(XMLElementIterator * element);
-    void printNamespace(xmlns_ptr ns);
-    void printAttribute(xptr node);
-    void printText(xptr node);
+    virtual void printAtomic(const tuple_cell &t);
+    virtual void printDocument(const char * docname, XDMElement * content);
+    virtual void printElement(XDMElement * element);
+    virtual void printNamespace(xmlns_ptr ns);
+    virtual void printAttribute(schema_node_cptr snode, const text_source_t value);
+    virtual void printText(t_item type, const text_source_t value);
 public:
-    SXMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_smt, se_ostream &a_out);
-    ~SXMLSerializer();
-
-    virtual void serialize(tuple & t);
+    SXMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_stm, se_ostream &a_out);
+    virtual ~SXMLSerializer();
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_sxml; };
 };
