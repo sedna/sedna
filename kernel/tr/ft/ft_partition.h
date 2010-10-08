@@ -7,6 +7,7 @@
 #define _FT_PARTITION_H
 
 #include "common/xptr.h"
+#include "tr/ft/ft_types.h"
 #include "tr/ft/sblob.h"
 
 struct ft_partition_data
@@ -18,6 +19,7 @@ struct ft_partition_data
 };
 typedef int ftp_ind_t;
 
+//FIXME: make sure it's no less than max word length in ft_index
 #define FTP_MAX_WORD_LENGTH 250
 
 class FtPartitionSblobCursor
@@ -167,6 +169,9 @@ public:
 
 	~FtPartitionScanner();
 };
+
+FtWordsScanner *ftp_init_words_scanner(const ft_partition_data *partition);
+
 
 void ft_delete_partition(const ft_partition_data *partition);
 

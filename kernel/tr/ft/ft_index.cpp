@@ -11,17 +11,8 @@
 #include "tr/ft/ft_cache.h"
 #include "tr/executor/base/sorted_sequence.h"
 #include "tr/tr_globals.h"
+#include "tr/ft/ft_norm.h"
 #include "tr/strings/utf8.h"
-
-
-//TODO: remove this
-//neeeded for pcre includes
-#define PCRE_STATIC
-#define SUPPORT_UTF8
-#define SUPPORT_UCP
-
-#include "pcre/pcre.h"
-
 
 //for expat
 #define SEPARATOR '>'
@@ -39,6 +30,7 @@ struct ft_parse_data
 	ftc_index_t cur_idx;
 	ftc_doc_t cur_doc;
 	ft_index_op_t op;
+	FtStemmer *stemmer;
 };
 
 
@@ -107,20 +99,36 @@ static inline int utf8_getch(const char **buf, int *len)
 	return r;
 }
 
+static void process_word(struct ft_parse_data *parse_data)
+{
+	if (parse_data->word_len > 0)
+	{
+		const char *word = parse_data->word_buf;
+		parse_data->word_buf[parse_data->word_len] = 0;
+
+		if (parse_data->stemmer != NULL)
+			word = parse_data->stemmer->stem_word(word, parse_data->word_len);
+
+		ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, word, parse_data->word_ind);
+
+		parse_data->word_len = 0;
+		parse_data->overfl = false;
+		parse_data->word_ind++;
+	}
+}
+
 static void p_start(void *state, const char *el, const char **attr)
 {
+	struct ft_parse_data *parse_data = (struct ft_parse_data *)state;
+	//tags should break words
+	process_word(parse_data);
+
 	//TODO
 }
 
 static void p_end(void *state, const char *el)
 {
 	//TODO
-}
-
-static void process_word(struct ft_parse_data *parse_data)
-{
-	parse_data->word_buf[parse_data->word_len] = 0;
-	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
 }
 
 //assumes that s contains full characters (i.e. multibyte chars are not splited between calls)
@@ -130,24 +138,14 @@ static void p_data(void *state, const char *s, int len)
 	int ch;
 	while ((ch=utf8_getch(&s, &len)) != UTF8_EOF)
 	{
-		int c_cl, c_type, c_case;
-		c_cl = ucp_findchar(ch, &c_type, &c_case);
-
-		if (c_cl == ucp_L || c_type == ucp_N)
+		if (ft_norm_char(&ch))
 		{
 			if (!parse_data->overfl)
 				parse_data->overfl = !CharsetHandler_utf8::utf8_putch(ch, parse_data->word_buf, &parse_data->word_len, MAX_WORD_LENGTH);
 		}
 		else
 		{
-			if (parse_data->word_len > 0)
-			{
-				process_word(parse_data);
-
-				parse_data->word_len = 0;
-				parse_data->overfl = false;
-				parse_data->word_ind++;
-			}
+			process_word(parse_data);
 		}
 	}
 }
@@ -176,6 +174,7 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct Ft
 	U_ASSERT(op == ft_insert);
 	parse_data->cur_doc = ftc_get_doc(ftc_idx, acc);
 	parse_data->op = op;
+	parse_data->stemmer = ftc_get_stemmer(ftc_idx);
 
 	XML_SetUserData(p, parse_data);
 	XML_SetReturnNSTriplet(p,XML_TRUE);
@@ -197,6 +196,7 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct Ft
 			sprintf(tmp, "in ftsearch\nline %d:\n%s\n",
 				XML_GetCurrentLineNumber(p),
 				XML_ErrorString(XML_GetErrorCode(p)));
+			text_buf->free_cursor(cur);
 			free(parse_data);
 			XML_ParserFree(p);
 			throw USER_EXCEPTION2(SE2005, tmp);

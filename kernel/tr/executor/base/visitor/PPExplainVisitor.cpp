@@ -861,6 +861,10 @@ void PPExplainVisitor::visit(PPFtIndexScan2* op)
 {
     insertOperationElement("PPFtIndexScan2", left, parent, op);
 }
+void PPExplainVisitor::visit(PPFtIndexDict* op)
+{
+    insertOperationElement("PPFtIndexDict", left, parent, op);
+}
 #endif /* SE_ENABLE_FTSEARCH */
 
 

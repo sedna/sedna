@@ -48,7 +48,8 @@ public:
 	void init(const xptr pos);
 	bool eos() { return cur_blk == XNULL; }
 
-	//read c-string, but not more than max_len bytes
+	///read c-string, but no more than max_len bytes
+	///returns number of bytes read, including the trailing '\x0' if it was read
 	size_t read_str(char *dest, size_t max_len);
 	size_t read_bytes(char *dest, size_t cnt);
 };

@@ -152,6 +152,7 @@ public:
 #ifdef SE_ENABLE_FTSEARCH
     virtual void visit(PPFtIndexScan* op);
     virtual void visit(PPFtIndexScan2* op);
+    virtual void visit(PPFtIndexDict* op);
 #endif
 
     virtual void visit(PPFunCall* op);

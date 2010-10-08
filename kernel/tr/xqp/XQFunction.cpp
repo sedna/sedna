@@ -87,6 +87,7 @@ namespace sedna
         {"", "fthighlight",  2,  3, 0xFF, "!fn!fthighlight", false, &atomicResultMany, &l2pFnFtHighlight},
         {"", "fthighlight-blocks",  2,  3, 0xFF, "!fn!fthighlight-blocks", false, &atomicResultMany, &l2pFnFtHighlightBlocks},
         {"", "ftindex-scan",  2,  3, 0xFF, "!fn!ftindex-scan", false, &resultUndefinedWoConst, &l2pFnFtIndexScan},
+        {"", "ftindex-dict",  1,  2, 0xFF, "!fn!ftindex-dict", false, &atomicResultMany, &l2pFnFtIndexDict},
         {"", "ftscan",  3,  4, 0xFE, "!fn!ftscan", false, &firstArgResult, &l2pFnFtScan},
         {"", "ftwindex-scan",  2,  4, 0xFF, "!fn!windex-scan", false, &resultUndefinedWoConst, &l2pFnFtWIndexScan},
         {"", "hours-from-dateTime",  1,  1, 0xFF, "!fn!hours-from-dateTime", false, &resultOne, &l2pFnHoursFromDateTime},

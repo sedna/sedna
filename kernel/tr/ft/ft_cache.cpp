@@ -31,10 +31,6 @@ struct ftc_word_occur
 	int ind;
 	int insert_op_ind;
 };
-struct ftc_word_data
-{
-	FTC_PTR occur_map;
-};
 struct ftc_index_data;
 void index_oom_flush(ftc_index_data *id);
 struct ftc_index_data
@@ -43,6 +39,7 @@ struct ftc_index_data
 	FTC_PTR words;
 	struct FtsData ft_data;
 	FTC_ALLOCATOR ind_alloc;
+	FtStemmer *stemmer; //TODO: add some destructor and delete it + consider sharing stemmers between indexes
 	int next_op_ind;
 #ifdef _MSC_VER
 #pragma warning( disable : 4200 )
@@ -58,6 +55,7 @@ struct ftc_index_data
 		FTC_PTR ptr = m_alloc.alloc(sizeof(ftc_index_data) + strlen(name) + 1); //TODO: check null
 		ftc_index_data *id = ((ftc_index_data*)m_alloc.deref(ptr));
 		new (&id->ind_alloc) FTC_ALLOCATOR(); //FIXME
+		id->stemmer = NULL;
 		id->reset();
 		strcpy(id->name, name);
 		id->ft_data = *ft_data; //FIXME: add some explicit copy function
@@ -282,6 +280,19 @@ ftc_doc_t ftc_get_doc(ftc_index_t idx, xptr acc)
 			throw SYSTEM_EXCEPTION("ftc_get_doc: failed to create doc");
 	}
 	return res;
+}
+
+FtStemmer *ftc_get_stemmer(ftc_index_t idx)
+{
+	ftc_index_data *id = ftc_index_data::get(idx);
+	if (id->stemmer == NULL)
+	{
+		id->stemmer = FtStemmer::get("english");
+		if (id->stemmer == NULL)
+			throw USER_EXCEPTION2(SE3022, "failed to create stemmer");
+	}
+
+	return id->stemmer;
 }
 
 #include "common/errdbg/d_printf.h"
@@ -571,4 +582,77 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 void ftc_scan_result::get_next_result(tuple &t)
 {
 	while (!this->get_next_result_step(t)) ;
+}
+
+class FtcWordsScanner : public FtWordsScanner
+{
+private:
+	FTC_WORDMAP *wm;
+	FTC_WORDMAP::pers_sset_entry *wme;
+public:
+	FtcWordsScanner(ftc_index_data *id);
+	virtual const char *cur_word();
+	virtual void next_word();
+	virtual ~FtcWordsScanner() {}
+};
+FtcWordsScanner::FtcWordsScanner(ftc_index_data *id)
+{
+	wm = FTC_WORDMAP::get_map(id->words, id->ind_alloc);
+	wme = wm->rb_minimum(FTC_WORDMAP::get_entry(wm->root, id->ind_alloc));
+}
+const char *FtcWordsScanner::cur_word()
+{
+	if (wme == NULL)
+		return NULL;
+	return wme->str;
+}
+void FtcWordsScanner::next_word()
+{
+	wme = wm->rb_successor(wme);
+}
+
+ftc_scan_words_result::ftc_scan_words_result(ftc_index_t idx) : ftc_idx(idx)
+{
+	ftc_index_data *id = ftc_index_data::get(ftc_idx);
+
+	nscanners = id->ft_data.npartitions + 1;
+	scanners = new FtWordsScanner*[nscanners];
+
+	for (int i = 0; i < id->ft_data.npartitions; i++)
+		scanners[i] = ftp_init_words_scanner(&id->ft_data.partitions[i]);
+	scanners[id->ft_data.npartitions] = new FtcWordsScanner(id);
+
+}
+
+void ftc_scan_words_result::get_next_result(tuple &t)
+{
+	const char *minw = NULL;
+	for (int i = 0; i < nscanners; i++)
+	{
+		const char *w = scanners[i]->cur_word();
+		if (w != NULL)
+		{
+			if (minw == NULL || strcmp(w, minw) < 0)
+				minw = w;
+		}
+	}
+	if (minw == NULL)
+	{
+		t.set_eos();
+		return;
+	}
+	tuple_cell tc = tuple_cell::atomic_deep(xs_string, minw);
+	minw = tc.get_str_mem();
+	t.copy(tc);
+
+	for (int i = 0; i < nscanners; i++)
+		if (scanners[i]->cur_word() != NULL && !strcmp(scanners[i]->cur_word(), minw))
+			scanners[i]->next_word();
+}
+
+ftc_scan_words_result::~ftc_scan_words_result()
+{
+	for (int i = 0; i < nscanners; i++)
+		delete scanners[i];
+	delete[] scanners;
 }
