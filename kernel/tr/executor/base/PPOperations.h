@@ -34,6 +34,7 @@
 #endif
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/executor/xqops/PPFtIndexScan.h"
+#include "tr/executor/xqops/PPFtIndexDict.h"
 #include "tr/executor/root/PPCreateFtIndex.h"
 #include "tr/executor/root/PPDropFtIndex.h"
 #endif

@@ -82,8 +82,9 @@ xptr FtPartitionSblobWriter::start_word(const char *word)
 {
 	U_ASSERT(state == st_word);
 	const int len = strlen(word);
-	U_ASSERT(len < FTP_MAX_WORD_LENGTH);
+	U_ASSERT(len <= FTP_MAX_WORD_LENGTH);
 	strncpy(cur_word, word, FTP_MAX_WORD_LENGTH);
+	cur_word[len] = '\x0';
 
 	//add ptr to the (soon to be) added word to vocabulary
 	const xptr ptr = data_writer.cur_ptr();
@@ -130,7 +131,7 @@ bool FtPartitionReader::read_word()
 		return false;
 
 	//FIXME: check that we've read the whole word
-	data_reader.read_str(cur_word, FTP_MAX_WORD_LENGTH);
+	data_reader.read_str(cur_word, FTP_MAX_WORD_LENGTH+1);
 	state = st_acc;
 	return true;
 }
@@ -519,4 +520,38 @@ void ft_delete_partition(const ft_partition_data *partition)
 	bt_drop(partition->del_list);
 	bt_drop(partition->voc_btree_root);
 	sblob_delete(partition->data);
+}
+
+class FtPartitionWordsScanner : public FtWordsScanner
+{
+private:
+	bt_cursor bt_cur;
+	bool eos;
+public:
+	FtPartitionWordsScanner(const ft_partition_data *partition);
+	virtual const char *cur_word();
+	virtual void next_word();
+	virtual ~FtPartitionWordsScanner() {}
+};
+
+FtPartitionWordsScanner::FtPartitionWordsScanner(const ft_partition_data *partition)
+{
+	bt_cur = bt_lm(partition->voc_btree_root);
+	eos = bt_cur.is_null();
+}
+const char *FtPartitionWordsScanner::cur_word()
+{
+	if (eos)
+		return NULL;
+	//FIXME: this needs at least some assert regarding key type
+	return (char*)bt_cur.get_key().data();
+}
+void FtPartitionWordsScanner::next_word()
+{
+	eos = !bt_cur.bt_next_key();
+}
+
+FtWordsScanner *ftp_init_words_scanner(const ft_partition_data *partition)
+{
+	return new FtPartitionWordsScanner(partition);
 }

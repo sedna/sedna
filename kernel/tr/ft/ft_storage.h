@@ -103,9 +103,7 @@ struct FtsScanData
 		while (cur_acc != XNULL && old_acc == cur_acc)
 			next_occur();
 	}
-
 };
-
 
 void fts_create(struct FtsData *data);
 

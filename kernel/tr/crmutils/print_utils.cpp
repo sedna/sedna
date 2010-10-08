@@ -638,9 +638,9 @@ static void make_escape_sm()
 {
     //TODO: assert escape_sm == NULL
     escape_sm = se_new StrMatcher();
-    escape_sm->add_str("&", "&amp;", ~pat_attribute);
-    escape_sm->add_str("<", "&lt;", ~pat_attribute);
-    escape_sm->add_str(">", "&gt;", ~pat_attribute);
+    escape_sm->add_str("&", "&amp;", -1);
+    escape_sm->add_str("<", "&lt;", -1);
+    escape_sm->add_str(">", "&gt;", -1);
     escape_sm->add_str("\"", "&quot;", pat_attribute);
     escape_sm->add_str("'", "&apos;", pat_attribute);
     escape_sm->add_str("\"", "\xEE\xA0\x83", pat_custom1);

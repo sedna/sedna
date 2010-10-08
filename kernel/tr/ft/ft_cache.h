@@ -10,6 +10,7 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/sorted_sequence.h"
 #include "tr/ft/ft_storage.h"
+#include "tr/ft/ft_norm.h"
 #include "tr/ft/string_map.h" //FIXME: remove (need allocator), don't use MallocAllocator
 
 #define FTC_ALLOCATOR MallocAllocator
@@ -25,6 +26,8 @@ ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data);
 ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc);
 //get document in cache (adds document to cache if it's not there)
 ftc_doc_t ftc_get_doc(ftc_index_t idx, xptr acc);
+
+FtStemmer *ftc_get_stemmer(ftc_index_t idx);
 
 //delete document from index
 void ftc_del_doc(ftc_index_t index, const xptr acc);
@@ -46,6 +49,10 @@ struct ftc_occur_data
 	FTC_PTR first;   //first occur
 	FTC_PTR cursor;  //last updated occur
 };
+struct ftc_word_data
+{
+	FTC_PTR occur_map;
+};
 
 //FIXME: fix .h files dependencies
 #include "tr/idx/btree/btree.h"
@@ -65,6 +72,19 @@ public:
 	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx) {}
 	void scan_word(const char *word);
 	void get_next_result(tuple &t);
+};
+
+class ftc_scan_words_result
+{
+private:
+	ftc_index_t ftc_idx;
+
+	int nscanners;
+	FtWordsScanner** scanners;
+public:
+	ftc_scan_words_result(ftc_index_t idx);
+	void get_next_result(tuple &t);
+	~ftc_scan_words_result();
 };
 
 

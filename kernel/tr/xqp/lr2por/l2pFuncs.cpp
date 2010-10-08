@@ -500,7 +500,7 @@ PPOpIn l2pFnFtHighlightBlocks(dynamic_context *dyn_cxt, const operation_info &op
 PPOpIn l2pFnFtIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
 #ifdef SE_ENABLE_FTSEARCH
-    if (tr_globals::is_ft_disabled)
+    if (tr_globals::is_ft_disabled) //FIXME: move this to PPFtIndexScan
         throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
     PPOpIn res;
@@ -512,6 +512,27 @@ PPOpIn l2pFnFtIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr
     else
     {
         res = PPOpIn(new PPFtIndexScan(dyn_cxt, opi, params[0], params[1]), 1);
+    }
+
+    return res;
+
+#else
+    throw USER_EXCEPTION2(SE1002, "full-text search support disabled");
+#endif
+}
+
+PPOpIn l2pFnFtIndexDict(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+#ifdef SE_ENABLE_FTSEARCH
+    PPOpIn res;
+
+    if (params.size() == 2)
+    {
+        res = PPOpIn(new PPFtIndexDict(dyn_cxt, opi, params[0], params[1]), 1);
+    }
+    else
+    {
+        res = PPOpIn(new PPFtIndexDict(dyn_cxt, opi, params[0]), 1);
     }
 
     return res;

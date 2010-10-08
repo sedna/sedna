@@ -82,4 +82,13 @@ typedef sedna_rbtree< ft_custom_cell > ft_custom_tree_t;
 typedef std::pair< std::pair<xmlns_ptr,char*>,ft_index_type> ft_index_pair_t;
 typedef std::vector< ft_index_pair_t > ft_index_template_t;
 
+class FtWordsScanner
+{
+public:
+	//return current word or NULL if no more words
+	virtual const char *cur_word() = 0;
+	virtual void next_word() = 0;
+	virtual ~FtWordsScanner() {}
+};
+
 #endif /* FT_TYPES_H_ */

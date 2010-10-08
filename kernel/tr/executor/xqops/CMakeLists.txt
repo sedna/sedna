@@ -13,7 +13,7 @@ set(xqops_SRC PPAbsPath.cpp PPAccessors.cpp PPAggrFuncs.cpp PPAxisAncestor.cpp
         PPVariable.cpp PPXptr.cpp PPExplain.cpp)
 
 if (ENABLE_FTSEARCH)
-    list(APPEND xqops_SRC PPFtIndexScan.cpp)
+    list(APPEND xqops_SRC PPFtIndexScan.cpp PPFtIndexDict.cpp)
 endif (ENABLE_FTSEARCH)
 
 if (ENABLE_DTSEARCH)
