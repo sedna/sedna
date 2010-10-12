@@ -8,18 +8,16 @@
 #include "tr/crmutils/exec_output.h"
 #include "tr/executor/base/PPBase.h"
 
-static std::string getTagName(const schema_node_cptr kind) {
-    const xmlns_ptr ns = kind->get_xmlns();
-    std::string tagName;
-    if (ns != NULL_XMLNS && ns->has_prefix()) {
-        char * tagNameBuffer = (char *) malloc(strlen(ns->get_prefix()) + strlen(kind->get_name()) + 2);
-        tagName = sprintf(tagNameBuffer, "%s:%s", ns->get_prefix(), kind->get_name());
-        free(tagNameBuffer);
-    } else {
-        tagName = kind->get_name();
-    }
-    return tagName;
-}
+#include "tr/crmutils/xdm.h"
+
+struct ElementContext {
+    const char * name;
+    const xmlns_ptr ns;
+    xmlns_ptr defaultNamespace;
+
+    ElementContext(const schema_node_cptr node);
+};
+
 
 str_cursor * getTextCursor(const text_source_t text) {
     str_cursor * result = NULL;
@@ -56,43 +54,52 @@ public:
 
 
 
-struct XMLElement : public XDMElement {
-private:
-    mutable schema_node_xptr snode;
-    xptr node;
-public:
-    XMLElement(const xptr parent) {
-        CHECKP(parent)
-        snode = getSchemaPointer(parent);
-        node = getFirstChild(parent);
-    };
 
-    virtual schema_node_cptr getSchemaNode() const { return snode; };
-
-    virtual void next(tuple &t) {
-        if (node == XNULL) {
-            t.set_eos();
-        } else {
-            t.copy(tuple_cell::node(node));
-            CHECKP(node)
-            node = nodeGetRightSibling(node);
-        };
-    };
-};
-
-XDMSerializer::printNode(const Node node)
+void XDMSerializer::printNode(const Node node)
 {
     node.checkp();
-    t_item t = node.getNodeType();
+    const t_item t = node.getNodeType();
     switch (t) {
-      case element : { XMLElement element = node.getPtr(); printElement(&element); } break;
-      case document : { XMLElement element = node.getPtr(); printDocument(text_source_node(node.getPtr()), &element); } break;
-      case attribute : { printAttribute(node.getSchemaNode(), text_source_node(node.getPtr())); } break;
-      case xml_namespace : { printNamespace(NSNode(node).getNamespaceLocal()); } break;
-      case comment : case pr_ins : case text : { printText(t, text_source_node(node.getPtr())); } break;
+      case element : {
+          SednaNode element(node.getPtr());
+          printElement(&element);
+      } break;
+      case document : {
+          SednaNode document(node.getPtr());
+          printDocument(text_source_node(node.getPtr()), &document);
+      } break;
+      case xml_namespace :
+      case attribute : {
+          SednaNode attribute(node.getPtr());
+          printAttribute(&attribute);
+      } break;
+      case comment : case pr_ins : case text : {
+          printText(t, text_source_node(node.getPtr()));
+      } break;
       default : throw USER_EXCEPTION(xxx);
     }
 }
+
+void XDMSerializer::printNode(IXDMNode * node)
+{
+    const t_item t = node->getNodeKind();
+    switch (t) {
+      case element :
+          printElement(&node); break;
+      case document :
+          printDocument(node->getValue(), &node); break;
+      case xml_namespace :
+      case attribute :
+          printAttribute(&node); break;
+      case comment :
+      case pr_ins :
+      case text :
+          printText(t, node->getValue()); break;
+      default :
+        throw USER_EXCEPTION(xxx);
+    }
+}
+
 
 
 XDMSerializer::serialize(tuple & t) {
@@ -103,7 +110,7 @@ XDMSerializer::serialize(tuple & t) {
 
         if (tc.is_portal()) {
           /* Printing portal */
-          portal::VirtualElementIterator element(tc);
+          portal::VirtualNode element(tc);
           printElement(&element);
         } else if (tc.is_node()) {
           /* Printing node */
@@ -134,32 +141,112 @@ void XMLSerializer::printAtomic(const tuple_cell &t)
 static const char * XML_docTagStart = "<?xml version=\"1.0\" standalone=\"yes\"";
 static const char * XML_docTagEnd = "?>";
 
-void XMLSerializer::printDocument(const char * docname, XDMElement * content)
+inline static
+bool isAttributeAt(IXDMNodeList * list) {
+    const IXDMNode * node = list->getNode();
+    return (node != NULL && (node->getNodeKind() & ti_first_children) != 0);
+}
+
+void XMLSerializer::printDocument(const char * docname, IXDMNode * content)
 {
     indentLevel = 0;
     indentNext = true;
     const bool printDocTags = true;
 
-    if (printDocTags) { crmout << XML_docTagStart; }
+    IXDMNodeList * children = content->getAllChildren();
 
-    xptr child=getFirstChild(node);
-    while (child != XNULL && isNamespaceOrAttribute(child)) {
-        this->serialize(tuple(tuple_cell::node(child)));
-        child = nodeGetRightSibling(checkp(child));
+    if (printDocTags) {
+        crmout << XML_docTagStart;
+
+        while (isAttributeAt(children)) {
+            printAttribute(children->getNode());
+            children->next();
+        }
+
+        crmout << XML_docTagEnd;
     }
 
-    if (printDocTags) { crmout << XML_docTagEnd; }
-
-    while (child != XNULL) {
-//        SednaElementIterator it(child);
-//        printElement(&it);
-        child = nodeGetRightSibling(checkp(child));
+    while (!children->end()) {
+        printNode(children->getNode());
+        children->next();
     }
 }
 
-void XMLSerializer::printElement(XDMElement * element)
-{
+inline static
+void print_indent(se_ostream& crmout, int level, const char * indent) {
+    for (int i=0; i < level; i++) { crmout << indent; }
+}
 
+xmlns_ptr XMLSerializer::handleDefaultNamespace(const xmlns_ptr defaultNamespace)
+{
+    /* Default namespace handling. There are two signs of the default namespace:
+     * empty prefix xmlns node and empty prefix in schema node. We output each
+     * default namespace only once */
+
+    if (defaultNamespace == elementContext->ns) {
+      elementContext->defaultNamespace = defaultNamespace;
+    } else {
+        elementContext->defaultNamespace = elementContext->ns;
+        if (defaultNamespace != NULL_XMLNS && elementContext->ns == NULL_XMLNS) {
+            return xmlns_touch("", "");
+        } else {
+            return elementContext->defaultNamespace;
+        }
+    }
+    return NULL_XMLNS;
+}
+
+
+void XMLSerializer::printElement(IXDMNode * elementInterface)
+{
+    CHECK_TIMER_FLAG;
+
+    ElementContext * parentContext = this->elementContext;
+    ElementContext context(elementInterface);
+    elementContext = &context;
+    bool indented = indentNext;
+
+    if (indentNext) { crmout << "\n"; print_indent(crmout, indentLevel++, this->options->indentSequence); }
+
+    crmout << "<";
+    elementInterface->
+
+    indentNext = options->indent;
+
+    const xmlns_ptr ns = handleDefaultNamespace(parentContext->defaultNamespace);
+    if (ns != NULL_XMLNS) { crmout << " "; printNamespace(ns); }
+
+    XDMNodeIterator * childIterator = elementInterface->getChildren();
+
+    childIterator->first();
+
+    if (childIterator->getAttribute() != NULL) do {
+        XDMAttribute * attribute = childIterator->getAttribute();
+        crmout << " ";
+        printAttribute(attribute);
+    } while (childIterator->nextAttribute());
+
+    if (childIterator->getNode() == NULL) {
+        crmout << "/>";
+    } else {
+        crmout << ">";
+
+        do {
+            printNode(childIterator->getNode());
+        } while (childIterator->next());
+
+        if (indented && indentNext) { crmout << "\n"; print_indent(crmout, indentLevel-1, this->options->indentSequence); }
+        crmout << "</";
+        if (context.ns.has_prefix()) {
+            crmout << context.ns.get_prefix() << ":";
+        }
+        crmout << context.name << ">";
+    }
+
+    indentNext = options->indent;
+    if (indented) { indentLevel--; }
+
+    elementContext = parentContext;
 }
 
 void XMLSerializer::printNamespace(xmlns_ptr ns)
@@ -172,10 +259,19 @@ void XMLSerializer::printNamespace(xmlns_ptr ns)
     crmout << "\"";
 }
 
-void XMLSerializer::printAttribute(schema_node_cptr snode, const text_source_t value)
+void XMLSerializer::printNodeName(xmlns_ptr ns, const char * nodename) {
+    if (ns != NULL_XMLNS) {
+        crmout << ns.get_prefix() << ":" << nodename;
+    } else {
+        crmout << nodename;
+    }
+}
+
+void XMLSerializer::printAttribute(XDMAttribute * attribute)
 {
-    TextBufferReader reader(value);
-    crmout << getTagName(snode).c_str() << "=\"";
+    TextBufferReader reader(attribute->getValue());
+    printNodeName(attribute->getNamespace(), attribute->getName());
+    crmout << "=\"";
     while (reader.read()) {
         stm->parse(reader.buffer, reader.size, write_func, &crmout, (int) pat_attribute);
     }
@@ -218,19 +314,53 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
     };
 }
 
-void SXMLSerializer::printText(t_item type, const text_source_t value)
+void SXMLSerializer::printAttribute(XDMAttribute * attribute)
+{
+    TextBufferReader reader(attribute->getValue());
+    printNodeName(attribute->getNamespace(), attribute->getName());
+    while (reader.read()) {
+        // For backwords compatibility reason quotes in attributes are not escaped
+        stm->parse(reader.buffer, reader.size, write_func, &crmout, (int) pat_element);
+    }
+    stm->flush(write_func, &crmout);
+}
+
+void SXMLSerializer::printElement(XDMElement * elementInterface)
 {
     CHECK_TIMER_FLAG;
 
-    if (type == text) {
-        TextBufferReader reader(value);
-        while (reader.read()) {
-            stm->parse(reader.buffer, reader.size, write_func, &crmout, pat_element);
-        }
-        stm->flush(write_func, &crmout);
-    } else {
-        XMLSerializer::printText(type, value);
-    };
+    ElementContext * parentContext = this->elementContext;
+    ElementContext context(elementInterface);
+    elementContext = &context;
+
+    crmout << "(";
+    printNodeName(context.ns, context.name);
+    indentNext = options->indent;
+
+    const xmlns_ptr ns = handleDefaultNamespace(parentContext->defaultNamespace);
+    if (ns != NULL_XMLNS) { crmout << " "; printNamespace(ns); }
+
+    XDMNodeIterator * childIterator = elementInterface->getChildren();
+
+    childIterator->first();
+
+    if (childIterator->getAttribute() != NULL) {
+        crmout << "(@";
+        do {
+            XDMAttribute * attribute = childIterator->getAttribute();
+            crmout << " ";
+            printAttribute(attribute);
+        } while (childIterator->nextAttribute());
+        crmout << ")";
+    }
+
+    if (childIterator->getNode() != NULL) do {
+        printNode(childIterator->getNode());
+    } while (childIterator->next());
+
+    crmout << ")";
+
+    elementContext = parentContext;
 }
 
 
