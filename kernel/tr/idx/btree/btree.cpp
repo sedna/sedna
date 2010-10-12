@@ -52,6 +52,27 @@ void bt_drop(const xptr root)
     } while (cur_xpg != XNULL);
 }
 
+int bt_walk_nodes(const xptr root)
+{
+    xptr cur_xpg = root;
+    int c = 0;
+
+    do {
+        CHECKP(cur_xpg);
+        xptr next_level_lmp = BT_LMP(xaddr(cur_xpg));
+
+        do {
+            cur_xpg = BT_NEXT(xaddr(cur_xpg));
+            ++c;
+        } while (cur_xpg != XNULL);
+
+        cur_xpg = next_level_lmp;
+    } while (cur_xpg != XNULL);
+
+    return c;
+}
+
+
 template<typename object>
 bt_cursor_tmpl<object> bt_find_tmpl(const xptr root, const bt_key &key)
 {

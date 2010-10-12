@@ -18,6 +18,8 @@
 xptr			bt_create(xmlscm_type t);						/* create new btree instance */
 void			bt_drop(const xptr root);						/* drop existing btree instance (free all vmm memory) */
 
+int bt_walk_nodes(const xptr root); /* Calculate used block count */
+
 template<typename object>
 bt_cursor_tmpl<object>		bt_find_tmpl   (const xptr root, const bt_key& key);/* find key */
 template<typename object>
