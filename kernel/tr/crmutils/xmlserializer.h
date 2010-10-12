@@ -12,43 +12,25 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/crmutils/str_matcher.h"
 
-class XDMElement {
-    virtual schema_node_cptr getSchemaNode() const = 0;
-    virtual void next(tuple &t) = 0;
-};
+class IXDMNode;
+
+struct dynamic_context;
+struct ElementContext;
 
 class XDMSerializer {
   protected:
     void printNode(const Node node);
-    void traverseVirtualElement(XDMElement * element);
-    void traverseElement(ElementNode node);
-    void traverseDocument(Node node);
+    void printNode(IXDMNode * node);
 
     virtual void printAtomic(const tuple_cell &t) = 0;
-    virtual void printDocument(const text_source_t docname, XDMElement * content) = 0;
-    virtual void printElement(XDMElement * element) = 0;
+    virtual void printDocument(const text_source_t docname, IXDMNode * content) = 0;
+    virtual void printElement(IXDMNode * element) = 0;
     virtual void printNamespace(xmlns_ptr ns) = 0;
-    virtual void printAttribute(schema_node_cptr snode, const text_source_t value) = 0;
+    virtual void printAttribute(IXDMNode * attribute) = 0;
     virtual void printText(t_item type, const text_source_t value) = 0;
   public:
     virtual void serialize(tuple &t);
 };
-
-
-
-
-
-
-
-struct ElementContext {
-    const schema_node_cptr snode;
-    const std::string tagName;
-    xmlns_ptr defaultNamespace;
-
-    ElementContext(const schema_node_cptr node);
-};
-
-struct dynamic_context;
 
 class XMLSerializer : public XDMSerializer {
   protected:
@@ -61,15 +43,13 @@ class XMLSerializer : public XDMSerializer {
     bool indentNext;
     int indentLevel;
 
-    void writeAttribute();
-    void writeText();
-    void writeCDATA();
+    xmlns_ptr handleDefaultNamespace(const xmlns_ptr defaultNamespace);
 
     virtual void printAtomic(const tuple_cell &t);
-    virtual void printDocument(const char * docname, XDMElement * content);
-    virtual void printElement(XDMElement * element);
+    virtual void printDocument(const char * docname, IXDMNode * content);
+    virtual void printElement(IXDMNode * element);
     virtual void printNamespace(xmlns_ptr ns);
-    virtual void printAttribute(schema_node_cptr snode, const text_source_t value);
+    virtual void printAttribute(IXDMNode * attribute);
     virtual void printText(t_item type, const text_source_t value);
   public:
     XMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_stm, se_ostream &a_out);
@@ -86,12 +66,9 @@ class XMLSerializer : public XDMSerializer {
 
 class SXMLSerializer : public XMLSerializer {
 private:
-    virtual void printAtomic(const tuple_cell &t);
-    virtual void printDocument(const char * docname, XDMElement * content);
-    virtual void printElement(XDMElement * element);
-    virtual void printNamespace(xmlns_ptr ns);
-    virtual void printAttribute(schema_node_cptr snode, const text_source_t value);
-    virtual void printText(t_item type, const text_source_t value);
+    virtual void printDocument(const char * docname, IXDMNode * content);
+    virtual void printElement(IXDMNode * element);
+    virtual void printAttribute(IXDMNode * attribute);
 public:
     SXMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_stm, se_ostream &a_out);
     virtual ~SXMLSerializer();

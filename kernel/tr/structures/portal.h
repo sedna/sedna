@@ -6,9 +6,10 @@
 
 #include "tr/structures/schema.h"
 #include "tr/executor/base/sequence.h"
-#include "tr/crmutils/xmlserializer.h"
+#include "tr/crmutils/xdm.h"
 
 #include <vector>
+#include <strings/strings.h>
 
 namespace portal {
     class SequenceReader {
@@ -23,21 +24,36 @@ namespace portal {
         inline bool sameSequence(const sequence * t) { return t == s.get(); };
     };
 
-    struct VirtualElementIterator : public XDMElement {
-    private:
-        xptr snode;
+
+    /* Virtual node can be iterated only once, so its instance is it's own iteratator */
+    class VirtualNode : public IXDMNode, public IXDMNodeList  {
+      private:
+        bool end;
+        schema_node_cptr snode;
         counted_ptr<SequenceReader> reader;
-    public:
-        explicit VirtualElementIterator(const tuple_cell t);
-        explicit VirtualElementIterator(const VirtualElementIterator * parent);
 
-        void do_next();
-        tuple do_get();
+        mutable SednaNode * nodeSedna;
+        mutable VirtualNode * nodeVirtual;
+      public:
+        explicit VirtualNode(const tuple_cell t);
+        explicit VirtualNode(const VirtualNode * parent);
+        ~VirtualNode();
 
-        virtual schema_node_cptr getSchemaNode() const { return snode; };
-        virtual void next(tuple &t);
+        void setParent(const VirtualNode * parent);
 
-        void close();
+        t_item getNodeKind() const { return element; };
+        const text_source_t getValue() const { return text_source_mem(NULL, 0); };
+        const char * getLocalName() const { return snode->get_name(); };
+        xmlns_ptr getNamespace() const { return snode->get_xmlns(); };
+
+        void printNodeName(se_ostream & out) const;
+
+        IXDMNodeList * getAllChildren() { return &this; };
+
+        bool next();
+        bool end() { return end; };
+
+        IXDMNode * getNode();
     };
 
     class VirtualElementWriter {

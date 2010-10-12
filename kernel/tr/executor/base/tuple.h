@@ -259,6 +259,7 @@ public:
       }
     }
 
+    bool is_atomic_type(xmlscm_type t) const { return is_atomic() && (t & TC_XTYPE_MASK) == t; }
 
     /// fixed size atomic values
     int64_t            get_xs_integer()  const { return *(int64_t*           )(&data); }

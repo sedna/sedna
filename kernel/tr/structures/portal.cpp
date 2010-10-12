@@ -19,15 +19,21 @@ namespace portal {
         return ((*(p.p))[p.pos]).cells[0].get_xptr();
     }
 
-    VirtualElementIterator::VirtualElementIterator(const tuple_cell tc) : reader(new SequenceReader(tc)) {
+
+    VirtualNode::SednaVirtualNode(const tuple_cell tc) : reader(new SequenceReader(tc)) {
         U_ASSERT(tc.get_atomic_type() == se_sequence_element);
         tuple t(1);
         reader->get(t);
         snode = t.cells[0].get_xptr();
     }
 
-    VirtualElementIterator::VirtualElementIterator(const VirtualElementIterator * parent) : snode(XNULL), reader(NULL) {
+    VirtualNode::SednaVirtualNode(const VirtualNode * parent) : snode(XNULL), reader(NULL) {
+        setParent(parent);
+    }
+
+    VirtualNode::setParent(const VirtualNode * parent) {
         const tuple_cell tc = parent->reader->getCell();
+        end = false;
 
         U_ASSERT(tc.is_portal());
         if (tc.get_atomic_type() == se_sequence_element) {
@@ -40,30 +46,57 @@ namespace portal {
             reader = parent->reader;
         }
         snode = reader->getCell().get_xptr();
+        next();
     }
 
-    void VirtualElementIterator::close() {
-        while (!do_get().is_eos()) { do_next(); }
-    }
-
-    void VirtualElementIterator::next(tuple &t) {
-        do_next();
-        t = do_get();
+    VirtualNode::~VirtualNode() {
+        if (nodeVirtual != NULL) { delete nodeVirtual; }
+        if (nodeSedna != NULL) { delete nodeSedna; }
     };
 
-    void VirtualElementIterator::do_next() { reader->next(); };
+    void VirtualNode::printNodeName(se_ostream & out) const {
+        U_ASSERT(snode.found());
+        const xmlns_ptr ns = snode->get_xmlns();
 
-    tuple VirtualElementIterator::do_get() {
-        tuple t(1);
-        reader->get(t);
-        const tuple_cell tc = t.cells[0];
-        if (tc.is_atomic() && tc.get_atomic_type() == se_separator) {
-            t.set_eos();
+        if (ns != NULL_XMLNS && ns->has_prefix()) {
+            out << ns->get_prefix() << ":";
+        }
+    }
+
+    IXDMNode * VirtualNode::getNode() {
+        const tuple_cell tc = reader->getCell();
+
+        if (tc.is_atomic_type(se_separator)) {
+            return NULL;
+        } else if (tc.is_portal()) {
+            if (nodeVirtual == NULL) {
+                nodeVirtual = new VirtualNode(this);
+            } else {
+                nodeVirtual->setParent(this);
+            }
+
+            return nodeVirtual;
+        } else if (tc.is_node()) {
+            if (nodeSedna == NULL) {
+                nodeSedna = new SednaNode(this);
+            } else {
+                nodeSedna->setNode(tc.get_node());
+            }
+
+            return nodeSedna;
         } else {
-            t.copy(tc);
-        };
-        return t;
-    };
+            U_ASSERT(false);
+            return NULL;
+        }
+    }
+
+    bool VirtualNode::next() {
+        if (end) { return false; }
+        reader->next();
+        end = reader->getCell().is_atomic_type(se_separator);
+        if (end) { reader->next(); }
+        return end;
+    }
 
     static inline
     tuple create_tuple(const tuple_cell tc) { tuple t(1); t.copy(tc); return t; }
