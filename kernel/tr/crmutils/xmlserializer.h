@@ -34,7 +34,6 @@ class XDMSerializer {
 
 class XMLSerializer : public XDMSerializer {
   protected:
-    dynamic_context * cxt;
     const GlobalSerializationOptions * options;
     StrMatcher * stm;
     se_ostream &crmout;
@@ -52,12 +51,12 @@ class XMLSerializer : public XDMSerializer {
     virtual void printAttribute(IXDMNode * attribute);
     virtual void printText(t_item type, const text_source_t value);
   public:
-    XMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_stm, se_ostream &a_out);
+    XMLSerializer(const GlobalSerializationOptions * a_options);
     virtual ~XMLSerializer();
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_xml; };
-    virtual bool reusable() { return true; };
     virtual void initialize() { };
+    virtual void setOutputStream(se_ostream & out) { crmout = out; };
 };
 
 /** SXML serializer outputs a tuple Scheme list form. This is still needed
@@ -70,7 +69,7 @@ private:
     virtual void printElement(IXDMNode * element);
     virtual void printAttribute(IXDMNode * attribute);
 public:
-    SXMLSerializer(dynamic_context * a_cxt, const GlobalSerializationOptions * a_options, StrMatcher * a_stm, se_ostream &a_out);
+    SXMLSerializer(const GlobalSerializationOptions * a_options);
     virtual ~SXMLSerializer();
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_sxml; };

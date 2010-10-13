@@ -52,9 +52,6 @@ static_context::static_context()
     cn_preserve = false;
     cn_inherit = false;
 
-    sp.output_indent = se_output_indent_yes;
-    sp.output_method = se_output_method_xml;
-
     /*
      * Set codepoint collation as the default one.
      * static_context::set_default_collation() is too complex to be called from constructor.

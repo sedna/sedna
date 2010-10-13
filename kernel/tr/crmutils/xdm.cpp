@@ -16,7 +16,8 @@ SednaNode::~SednaNode() {
 }
 
 t_item SednaNode::getNodeKind() const {
-    return getNodeType(checkp(node));
+    if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
+    return snode->type;
 }
 
 const char * SednaNode::getLocalName() const {
@@ -39,7 +40,7 @@ const text_source_t SednaNode::getValue() const {
 
 void SednaNode::printNodeName(se_ostream & out) const {
     if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
-    if (getNodeKind() == xml_namespace) {
+    if (snode->type == xml_namespace) {
         const xmlns_ptr ns = NSNode(checkp(node)).getNamespaceLocal();
         U_ASSERT(ns != NULL_XMLNS);
         out << "xmlns";
