@@ -16,12 +16,6 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-/* serialization type */
-enum t_print {
-	xml,
-	sxml
-};
-
 /* query result type */
 enum qepNextAnswer 
 {

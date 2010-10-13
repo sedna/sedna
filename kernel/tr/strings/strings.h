@@ -493,4 +493,36 @@ struct text_source_t text_source_strbuf(str_buf_base * buf) {
     return result;
 }
 
+str_cursor * getTextCursor(const text_source_t text) {
+    str_cursor * result = NULL;
+    switch (text.type) {
+    case text_source_t::text_mem:
+        result = new mem_cursor((char *) text.u.cstr, text.size);
+    case text_source_t::text_pstr: {
+        result = new pstr_cursor(text.u.data, text.size);
+    } break;
+    case text_source_t::text_estr: {
+        result = new pstr_long_cursor(text.u.data);
+    } break;
+    case text_source_t::text_pstrlong: {
+        result = new estr_cursor(text.u.data, text.size);
+    } break;
+    }
+    return result;
+}
+
+class TextBufferReader {
+private:
+    str_cursor * cursor;
+public:
+    char * buffer;
+    int size;
+
+    TextBufferReader(const text_source_t text) : cursor(getTextCursor(text)), buffer((char*) malloc(PAGE_SIZE)) {};
+    ~TextBufferReader() { free(cursor); free(buffer); };
+
+    bool read() { return ((size = cursor->copy_blk(buffer)) != 0); }
+};
+
+
 #endif /*_STRINGS_H */

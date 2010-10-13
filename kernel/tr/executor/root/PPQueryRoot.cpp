@@ -10,7 +10,7 @@
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/crmutils/crmutils.h"
-#include "tr/crmutils/serializer.h"
+#include "tr/crmutils/serialization.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
 
@@ -39,6 +39,7 @@ void PPQueryRoot::do_open()
     cxt->global_variables_open();
     child.op->open();
 
+/*
     if (print_mode == sxml)
     {
         cxt->add_char_mapping("<","<",-1);
@@ -47,9 +48,10 @@ void PPQueryRoot::do_open()
         cxt->add_char_mapping("\"","\\\"",-1);
         cxt->add_char_mapping("\\","\\\\",-1);
     }
+*/
 
     /* Set serialization options for client */
-    tr_globals::client->set_serialization_params(cxt->get_static_context()->get_serialization_params());
+//    tr_globals::client->get_serializer()-> (cxt->get_static_context()->get_serialization_params());
 }
 
 void PPQueryRoot::do_close()
@@ -110,18 +112,16 @@ bool PPQueryRoot::do_next()
     bool is_node;
     str_counted_ptr uri;   /* for document and attribute nodes */
 
-
-    if(first)
-    {
+//    if(first)
+//    {
         /* Can't initialize these variables in open() since PPExplain
          * turns off otput after open called.
          */
-        output_stream = tr_globals::client->get_se_ostream();
-        print_mode    = tr_globals::client->get_result_type();
-    }
+//        output_stream = tr_globals::client->get_se_ostream();
+//        print_mode    = tr_globals::client->get_result_type();
+//    }
 
-    if((is_node = tc.is_node()))
-    {
+    if((is_node = tc.is_node())) {
         /* Determine node type */
         xptr node = tc.get_node();
         CHECKP(node);
@@ -132,8 +132,9 @@ bool PPQueryRoot::do_next()
             /* Retrieve attribute namespace to return it to the client */
             tuple_cell tc = se_node_namespace_uri(node);
             if ( !tc.is_eos() ) {
-               tc = tuple_cell::make_sure_light_atomic(tc);
-               uri = tc.get_str_ptr();
+               uri = tuple_cell::make_sure_light_atomic(tc).get_str_ptr();
+            } else {
+              // BUG
             }
         }
         else if(nt == document) {
@@ -152,23 +153,23 @@ bool PPQueryRoot::do_next()
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
 
-    Serializer * serializer;
-    if (print_mode == sxml) {
-//        output = new SXMLOutput(cxt, *output_stream, );
-    } else {
-        serializer = new XMLSerializer(cxt, *output_stream);
+    Serializer * serializer = tr_globals::client->get_serializer();
+
+    if (first) {
+        serializer->initialize();
     }
 
+/*
     if (!first && !tr_globals::client->supports_serialization()) {
         // This is needed for backward compatibility with old ( < 4 ) versions of protocol
         (*output_stream) << " ";
     }
+*/
 
     serializer->serialize(data);
 
     while (!cxt->tmp_sequence.empty()) { cxt->tmp_sequence.pop(); }
 
-    delete serializer;
 
 /*
     // Clients which based on protocol 4 should support serialization
