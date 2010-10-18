@@ -80,12 +80,6 @@ dynamic_context::dynamic_context(static_context *_st_cxt_) : st_cxt(_st_cxt_)
 {
     current_var_cxt = NULL;
 
-    st_cxt->get_string_matcher()->add_str(">","&gt;", pat_attribute | pat_element);
-    st_cxt->get_string_matcher()->add_str("<","&lt;", pat_attribute | pat_element);
-    st_cxt->get_string_matcher()->add_str("&","&amp;", pat_attribute | pat_element);
-    st_cxt->get_string_matcher()->add_str("\"","&quot;", pat_attribute);
-    st_cxt->get_string_matcher()->add_str("]]>", "]]>]]<![CDATA[<", pat_cdata);
-
     // xml is always in inscope namespaces
     insc_ns["xml"].push_back(xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace"));
 
@@ -113,6 +107,11 @@ dynamic_context::~dynamic_context()
     // destroy all variable contexts
     for (size_t i = 0; i < var_cxts.size(); i++)
         delete var_cxts[i];
+
+    while (!tmp_sequence.empty()) {
+        delete tmp_sequence.top();
+        tmp_sequence.pop();
+    }
 
     // destroy static context
     delete st_cxt;

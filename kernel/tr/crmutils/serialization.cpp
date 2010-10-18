@@ -1,16 +1,16 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/crmutils/xmlserializer.h"
 
-Serializer * createSerializer(enum se_output_method method, GlobalSerializationOptions * options)
+Serializer * Serializer::createSerializer(enum se_output_method method)
 {
     switch (method) {
       case se_output_method_xml:
-        return new XMLSerializer(options);
+        return new XMLSerializer();
         break;
       case se_output_method_sxml:
-        return new SXMLSerializer(options);
+        return new SXMLSerializer();
         break;
       default:
-        throw USER_EXCEPTION(XXX);
+        throw USER_EXCEPTION(SE2301);
     }
 }

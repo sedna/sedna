@@ -143,7 +143,7 @@ void PPExplain::do_next (tuple &t)
         /* Insert output indent option declaration */
         if(data_cxt->get_static_context()->is_field_set_in_prolog(static_context::SC_OUTPUT_INDENT))
             tmp = insertPrologDeclaration("indent",
-                    data_cxt->get_static_context()->get_output_indent() == se_output_indent_yes ? "yes" : "no",
+                    data_cxt->get_static_context()->get_serialization_options()->indent ? "yes" : "no",
                                           tmp, left, explain_ns);
 
         /* Insert namespace declarations */

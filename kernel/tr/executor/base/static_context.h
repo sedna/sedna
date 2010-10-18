@@ -79,7 +79,7 @@ private:
 
     // serialization parameters: indent, method, etc.
     GlobalSerializationOptions serializationOptions;
-    StrMatcher * strMatcher;
+    StrMatcher stm;
 
     inline void set_field_flag(static_context_fields_flags flag)
     {
@@ -90,9 +90,14 @@ public:
     static_context();
     ~static_context();
 
+    inline GlobalSerializationOptions * get_serialization_options()
+    {
+        return &serializationOptions;
+    };
+
     inline StrMatcher * get_string_matcher()
     {
-        return strMatcher;
+        return &stm;
     }
 
     bool is_field_set_in_prolog(static_context_fields_flags flag)
@@ -122,13 +127,9 @@ public:
     }
 
     ///Getters and setters for different prolog options
-    inline se_output_method get_output_method()
-    {
-        return sp.output_method;
-    }
     inline void set_output_method(se_output_method om)
     {
-        sp.output_method = om;
+        serializationOptions.xquery_output_method = om;
     }
 
     inline xq_boundary_space get_boundary_space()
@@ -202,13 +203,9 @@ public:
         set_field_flag(SC_NAMESPACE_INHERIT);
     }
 
-    inline se_output_indent get_output_indent()
+    inline void set_output_indent(bool do_indent)
     {
-        return sp.output_indent;
-    }
-    inline void set_output_indent(se_output_indent oi)
-    {
-        sp.output_indent = oi;
+        serializationOptions.indent = do_indent;
         set_field_flag(SC_OUTPUT_INDENT);
     }
 

@@ -38,7 +38,7 @@ char *get_xs_integer_lexical_representation (char *s, int64_t v);
 char *get_xs_boolean_lexical_representation (char *s, bool b);
 char *get_xs_dateTime_lexical_representation(char *s, const XMLDateTime &d);
 
-char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell &c, t_print ptype);
+char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell &c);
 
 
 /////////////////////////////////////////////////////////////////////////

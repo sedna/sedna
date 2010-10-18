@@ -390,7 +390,6 @@ void PPVirtualConstructor::do_next (tuple &t)
 
         const xptr virtual_root_i = getIndirectionSafeCP(get_virtual_root());
         sequence atomic_acc(1);
-        xptr atomic_node;
         content.op->next(cont);
 
         while (!cont.is_eos()) {

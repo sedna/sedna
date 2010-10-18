@@ -27,12 +27,10 @@ class Serializer;
 class client_core
 {
 protected:
-    Serializer * serializer;
+    enum se_output_method output_method;
 
 public:
     //virtual ~client_core() {}
-
-    Serializer * getSerializer() { return serializer; }
 
     virtual void init() = 0;
     virtual void release() = 0;
@@ -77,8 +75,9 @@ public:
     /* Get or set serialization type,
      * e.g. XML, SXML, etc ... 
      */
-    virtual t_print get_result_type() = 0;
-    virtual void set_result_type(msg_struct *msg) = 0;
+    virtual void set_result_type(enum se_output_method method) { output_method = method; }
+//    virtual enum se_output_method get_result_type() { return output_method; }
+    virtual enum se_output_method get_result_type() { return output_method; }
     
     /* Should be called just before run execution of each 
      * statement. May clear some internal state (e.g. enable 

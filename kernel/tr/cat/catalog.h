@@ -345,7 +345,7 @@ struct catalog_cptr {
         }
     }
 
-    inline bool found() {
+    inline bool found() const {
 //        return (obj != NULL);
         return ((obj != NULL) && !(GET_FLAG(obj->flags, CAT_OBJECT_DELETED_FLAG))); // It is a dirty workaround. Should be reconsidered.
     }

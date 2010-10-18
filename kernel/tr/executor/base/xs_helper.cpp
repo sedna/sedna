@@ -247,7 +247,7 @@ char *get_xs_dateTime_lexical_representation(char *s, const XMLDateTime &d)
     return s;
 }
 
-char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell &c, t_print ptype)
+char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell &c)
 {
     U_ASSERT(c.is_light_atomic());
 
@@ -260,33 +260,11 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
         case xs_gMonth            :
         case xs_dateTime          :
         case xs_time              :
-        case xs_date              : if (ptype == xml)
-                                        return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_dateTime(), c.get_atomic_type()));
-                                    else
-                                    {
-                                        s[0] = '\"';
-                                        get_xs_dateTime_lexical_representation(s + 1, XMLDateTime(c.get_xs_dateTime(), c.get_atomic_type()));
-                                        size_t len = strlen(s);
-                                        s[len] = '\"';
-                                        s[len + 1] = '\0';
-                                    }
-
+        case xs_date              : return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_dateTime(), c.get_atomic_type()));
         case xs_duration          :
         case xs_yearMonthDuration :
-        case xs_dayTimeDuration   : if (ptype == xml)
-                                        return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_duration(), c.get_atomic_type()));
-                                    else
-                                    {
-                                        s[0] = '\"';
-                                        get_xs_dateTime_lexical_representation(s + 1, XMLDateTime(c.get_xs_duration(), c.get_atomic_type()));
-                                        size_t len = strlen(s);
-                                        s[len] = '\"';
-                                        s[len + 1] = '\0';
-                                    }
-        case xs_boolean           : if (ptype == xml)
-                                        return get_xs_boolean_lexical_representation(s, c.get_xs_boolean());
-                                    else
-                                        return (c.get_xs_boolean() ? strcpy(s, "#t") : strcpy(s, "#f"));
+        case xs_dayTimeDuration   : return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_duration(), c.get_atomic_type()));
+        case xs_boolean           : return get_xs_boolean_lexical_representation(s, c.get_xs_boolean());
         case xs_float             : return get_xs_float_lexical_representation(s, c.get_xs_float());
         case xs_double            : return get_xs_double_lexical_representation(s, c.get_xs_double());
         case xs_decimal           : return c.get_xs_decimal().get_c_str(s);

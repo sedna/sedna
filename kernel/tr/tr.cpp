@@ -253,7 +253,7 @@ int TRmain(int argc, char *argv[])
                                 on_user_statement_end(qep_tree, st);
 
                                 /* Adjust client for the new statement */
-                                client->set_result_type(&client_msg);
+                                client->set_result_type((enum se_output_method) (client_msg.body[0]));
                                 client->user_statement_begin();
 
                                 on_user_statement_begin(client->get_query_type(),

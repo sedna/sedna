@@ -734,6 +734,14 @@ sedna-err:SE2203
 
   External function load error
 
+############### serialization ######
+sedna-err:SE2301
+
+  Unsupported serialization method
+sedna-err:SE2302
+
+  Serialization internal error: unknown node type passed
+
 ########### concerning sockets ####################
 sedna-err:SE2999
 

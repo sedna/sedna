@@ -462,12 +462,14 @@ struct text_source_t text_source_mem(const char * mem, size_t size) {
 
 inline static
 struct text_source_t text_source_cstr(const char * str) {
-	struct text_source_t result = {text_source_t::text_mem};
+    struct text_source_t result = {text_source_t::text_mem};
     result.size = strlen(str);
     result.u.cstr = str;
 
     return result;
 }
+
+struct text_source_t text_source_tuple_cell(const tuple_cell& tc);
 
 static inline
 struct text_source_t text_source_node(const xptr node) {
@@ -483,7 +485,22 @@ strsize_t tsGetActualSize(struct text_source_t t) {
     }
 }
 
-struct text_source_t text_source_pstr(const xptr text);
+static inline
+struct text_source_t text_source_pstr(const xptr text, size_t size) {
+    struct text_source_t result = {text_source_t::text_pstr};
+    result.size = size;
+    result.u.data = text;
+
+    return result;
+}
+
+static inline
+struct text_source_t text_source_pstrlong(const xptr text) {
+    struct text_source_t result = {text_source_t::text_pstrlong};
+    result.u.data = text;
+
+    return result;
+}
 
 inline static
 struct text_source_t text_source_strbuf(str_buf_base * buf) {
@@ -493,11 +510,13 @@ struct text_source_t text_source_strbuf(str_buf_base * buf) {
     return result;
 }
 
+static
 str_cursor * getTextCursor(const text_source_t text) {
     str_cursor * result = NULL;
     switch (text.type) {
-    case text_source_t::text_mem:
+    case text_source_t::text_mem: {
         result = new mem_cursor((char *) text.u.cstr, text.size);
+    } break;
     case text_source_t::text_pstr: {
         result = new pstr_cursor(text.u.data, text.size);
     } break;

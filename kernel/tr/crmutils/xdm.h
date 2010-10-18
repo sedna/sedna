@@ -3,13 +3,12 @@
  * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef XMLSERIALIZER_H_
-#define XMLSERIALIZER_H_
+#ifndef XDM_H_
+#define XDM_H_
 
 #include <tr/structures/xmlns.h>
-#include <strings/strings_base.h>
-#include <crmutils/exec_output.h>
-
+#include <tr/strings/strings_base.h>
+#include <tr/crmutils/exec_output.h>
 
 /* This is serialization wrapper for xml nodes.
  * One can implement any node represenation, but for it to be serialized well to any output,
@@ -20,7 +19,7 @@ class IXDMNodeList;
 
 /* interface */ class IXDMNode {
   public:
-    virtual ~IXDMNode() = 0;
+    virtual ~IXDMNode() {};
 
     virtual t_item getNodeKind() const = 0;
     virtual const char * getLocalName() const = 0;
@@ -35,7 +34,7 @@ class IXDMNodeList;
 
 /* interface */ class IXDMNodeList {
   public:
-    virtual ~IXDMNodeIterator() = 0;
+    virtual ~IXDMNodeList() {};
     virtual bool next() = 0;
     virtual bool end() = 0;
     virtual IXDMNode * getNode() = 0;
@@ -54,7 +53,7 @@ class SednaNode : public IXDMNode {
     void setNode(xptr node);
 
     SednaNode(xptr a_node);
-    virtual ~SednaNode();
+    ~SednaNode();
 
     virtual t_item getNodeKind() const;
     virtual const char * getLocalName() const;
@@ -74,7 +73,7 @@ class SednaNodeList : public IXDMNodeList {
     mutable SednaNode * node;
   public:
     SednaNodeList(xptr firstChild);
-    virtual ~SednaNodeList();
+    ~SednaNodeList();
 
     virtual bool next();
     virtual bool end();
