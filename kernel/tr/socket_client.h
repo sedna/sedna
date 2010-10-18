@@ -47,7 +47,6 @@ private:
     se_ostream *dbg_s;            //debug output stream
     se_ostream *nul_s;            //null stream
     se_socketostream *out_s;      //socket output stream
-    t_print print_type;           //serialization type: xml, sxml, etc
 
     int max_result_size_to_pass;
     char* long_query_stream;
@@ -88,8 +87,6 @@ public:
     virtual bool disable_output();
     virtual void enable_output()             { stream = out_s; }
     virtual bool is_output_enabled()         { return (stream != NULL && stream == out_s); }
-    virtual void set_result_type(msg_struct *msg);
-    virtual t_print get_result_type();
     
     /* Handlers for start/finish of item printing. */
     virtual void begin_item (bool is_atomic, xmlscm_type st, t_item nt, const char* uri);

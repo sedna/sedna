@@ -1082,11 +1082,12 @@ namespace sedna
                            *n.local :
                            *n.pref + ":" + *n.local;
 
-//        if (n.deep_copy) {
-//            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
-//        } else {
+        if (virtualizableConstructors) {
             off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
-//        }
+        } else {
+            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
+        }
+
         off_this.opin.ts = 1;
 
         setOffer(off_this);
@@ -1114,7 +1115,11 @@ namespace sedna
 
         if (n.name)
         {
-            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, false);
+            if (virtualizableConstructors) {
+                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, false);
+            } else {
+                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, false);
+            }
         }
         else
         {
@@ -1122,11 +1127,11 @@ namespace sedna
                                *n.local :
                                *n.pref + ":" + *n.local;
 
-//            if (n.deep_copy) {
-//                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
-//            } else {
+            if (virtualizableConstructors) {
                 off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
-//            }
+            } else {
+                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
+            }
         }
 
         off_this.opin.ts = 1;
@@ -2249,9 +2254,12 @@ namespace sedna
                 if (it->first == "method" && it->second == "xml")
                     dyn_cxt->get_static_context()->set_output_method(se_output_method_xml);
                 else if (it->first == "indent" && it->second == "yes")
-                    dyn_cxt->get_static_context()->set_output_indent(se_output_indent_yes);
+                    dyn_cxt->get_static_context()->set_output_indent(true);
                 else if (it->first == "indent" && it->second == "no")
-                    dyn_cxt->get_static_context()->set_output_indent(se_output_indent_no);
+                    dyn_cxt->get_static_context()->set_output_indent(false);
+                else if (it->first == "cdata-section-elements") {
+                    dyn_cxt->add_cdata_section_element(it->second);
+                }
             }
         }
         else if (*n.local == "character-map")
@@ -2715,6 +2723,8 @@ namespace sedna
         // local variable context for the body
         dyn_cxt->reset_local_vars();
 
+        virtualizableConstructors = true;
+
         // if we deserealize trigger statement then bind special vars
         if (n.is_trigger)
         {
@@ -3036,6 +3046,8 @@ namespace sedna
     {
         childOffer off_where, off_what;
 
+        virtualizableConstructors = false;
+
         n.what->accept(*this);
         off_what = getOffer();
 
@@ -3087,6 +3099,8 @@ namespace sedna
         unsetParamMode();
 
         bool got_type = !(off_var.st.type.type == st_atomic_type && off_var.st.type.info.single_type == xs_anyType);
+
+        virtualizableConstructors = false;
 
         n.what->accept(*this);
         off_what = getOffer();

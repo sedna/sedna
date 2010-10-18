@@ -71,6 +71,8 @@ void command_line_client::init()
     /* Initialize commands stack */
     cl_command cmd;
 
+    output_method = se_output_method_xml;
+
     cmd.type = se_BeginTransaction;
     cmd.length = 0;
     cl_cmds.push_front(cmd);

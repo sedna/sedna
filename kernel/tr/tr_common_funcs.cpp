@@ -217,6 +217,11 @@ void on_session_end(SSMMsg* &sm_server)
     vmm_on_session_end();
     d_printf1("OK\n");
 
+    if (tr_globals::serializer != NULL) {
+        delete tr_globals::serializer;
+        tr_globals::serializer = NULL;
+    }
+
     d_printf1("Deleting SSMMsg...");
     if (is_sm_server_inited)
     {

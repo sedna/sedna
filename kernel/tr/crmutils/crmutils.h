@@ -10,6 +10,7 @@
 #include "common/xptr.h"
 #include "tr/crmutils/exec_output.h"
 #include "tr/crmutils/crmbase.h"
+#include "tr/crmutils/serialization.h"
 #include "tr/cat/catptr.h"
 #include "tr/executor/base/tuple.h"
 
@@ -25,6 +26,8 @@ extern se_stdlib_ostream crm_dbg;
 ////////////////////////////////////////////////////////////////////////////////
 /// Print utils
 ////////////////////////////////////////////////////////////////////////////////
+
+typedef enum se_output_method t_print;
 
 void
 print_tuple           (const tuple &tup,     /* tuple to print */

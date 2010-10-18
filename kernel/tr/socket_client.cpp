@@ -226,16 +226,12 @@ char* socket_client::get_query_string(msg_struct *msg)
     }
 }
 
+/*
 void
 socket_client::set_result_type(msg_struct *msg) {
-    print_type = ((*msg).body[0] == 0) ? xml : sxml;
+    print_type = (enum se_output_method) (*msg).body[0];
 }
-
-t_print
-socket_client::get_result_type() {
-    return print_type;
-}
-
+*/
 
 void 
 socket_client::get_file_from_client(std::vector<string>* filenames, 

@@ -61,10 +61,25 @@ static_context::static_context()
     default_collation_uri = new char[strlen(codepoint_collation_uri) + 1];
     strcpy(default_collation_uri, codepoint_collation_uri);
     default_collation_handler = collation_manager.get_collation_handler(codepoint_collation_uri);
+
+
+    /* Initializing output filter for all possible cases */
+    stm.add_str(">","&gt;", pat_xml_attribute | pat_xml_element | pat_sxml);
+    stm.add_str("<","&lt;", pat_xml_attribute | pat_xml_element | pat_sxml);
+    stm.add_str("&","&amp;", pat_xml_attribute | pat_xml_element | pat_sxml);
+    stm.add_str("\"","&quot;", pat_xml_attribute | pat_sxml);
+    stm.add_str("]]>", "]]>]]<![CDATA[<", pat_cdata);
+
+    /* Default serialization options */
+    serializationOptions.indent = true;
+    serializationOptions.indentSequence = "  ";
+    serializationOptions.cdataSectionElements = new std::set<std::string>();
 }
 
 static_context::~static_context()
 {
+    delete serializationOptions.cdataSectionElements;
+
     if (base_uri != NULL)
     {
         delete[] base_uri;

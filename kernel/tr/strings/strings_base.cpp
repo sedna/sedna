@@ -11,5 +11,5 @@
 
 void writextext_cb(const char *str, int len, void *p)
 {
-	((se_ostream*)p)->writextext((char*)str, len);
+	((se_ostream*)p)->write((char*)str, len);
 }

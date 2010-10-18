@@ -14,6 +14,7 @@
 
 #include "tr/tr_globals.h"
 #include "tr/auth/auc.h"
+#include "tr/crmutils/serialization.h"
 
 #define TR_ARG_MAX_LENGTH       511
 
@@ -64,6 +65,19 @@ namespace tr_globals
      */
     TLS_VAR_DECL
     volatile bool is_timer_fired = false;
+
+    Serializer * serializer = NULL;
+
+    void create_serializer(enum se_output_method method) {
+        if (serializer != NULL && !serializer->supports(method)) {
+            delete serializer;
+            serializer = NULL;
+        }
+
+        if (serializer == NULL) {
+            serializer = Serializer::createSerializer(method);
+        }
+    }
 }
 
 static const size_t narg = 13;

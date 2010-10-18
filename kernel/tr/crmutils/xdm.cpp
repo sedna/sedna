@@ -52,6 +52,7 @@ void SednaNode::printNodeName(se_ostream & out) const {
         if (ns != NULL_XMLNS && ns->has_prefix()) {
             out << ns->get_prefix() << ":";
         }
+        out << snode->get_name();
     }
 }
 
@@ -68,7 +69,7 @@ SednaNodeList::~SednaNodeList() {
 }
 
 bool SednaNodeList::end() {
-    return child != XNULL;
+    return child == XNULL;
 };
 
 bool SednaNodeList::next() {

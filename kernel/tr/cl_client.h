@@ -45,8 +45,6 @@ public:
     virtual void release();
     virtual void read_msg(msg_struct *msg);
     virtual char* get_query_string(msg_struct *msg);
-    virtual void set_result_type(msg_struct *msg) {}
-    virtual t_print get_result_type() { return xml; }
     virtual QueryType get_query_type();
     virtual void get_file_from_client(std::vector<std::string>* filenames, std::vector<client_file>* cf_vec);
     virtual void close_file_from_client(client_file &inout_fs);

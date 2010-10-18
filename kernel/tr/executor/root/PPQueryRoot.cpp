@@ -19,7 +19,6 @@ PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                                                  child(_child_),
                                                  data(_child_.ts),
                                                  cxt(_cxt_),
-                                                 print_mode(xml),
                                                  output_stream(NULL)
 {
 }
@@ -38,20 +37,6 @@ void PPQueryRoot::do_open()
     first = true;
     cxt->global_variables_open();
     child.op->open();
-
-/*
-    if (print_mode == sxml)
-    {
-        cxt->add_char_mapping("<","<",-1);
-        cxt->add_char_mapping(">",">",-1);
-        cxt->add_char_mapping("&","&",-1);
-        cxt->add_char_mapping("\"","\\\"",-1);
-        cxt->add_char_mapping("\\","\\\\",-1);
-    }
-*/
-
-    /* Set serialization options for client */
-//    tr_globals::client->get_serializer()-> (cxt->get_static_context()->get_serialization_params());
 }
 
 void PPQueryRoot::do_close()
@@ -98,6 +83,10 @@ bool PPQueryRoot::next()
 
 bool PPQueryRoot::do_next()
 {
+    if (first) {
+        tr_globals::create_serializer(tr_globals::client->get_result_type());
+    }
+
     child.op->next(data);
 
     if (data.is_eos()) return false;
@@ -112,15 +101,6 @@ bool PPQueryRoot::do_next()
     bool is_node;
     str_counted_ptr uri;   /* for document and attribute nodes */
 
-//    if(first)
-//    {
-        /* Can't initialize these variables in open() since PPExplain
-         * turns off otput after open called.
-         */
-//        output_stream = tr_globals::client->get_se_ostream();
-//        print_mode    = tr_globals::client->get_result_type();
-//    }
-
     if((is_node = tc.is_node())) {
         /* Determine node type */
         xptr node = tc.get_node();
@@ -134,7 +114,7 @@ bool PPQueryRoot::do_next()
             if ( !tc.is_eos() ) {
                uri = tuple_cell::make_sure_light_atomic(tc).get_str_ptr();
             } else {
-              // BUG
+              // BUG (or maybe not?)
             }
         }
         else if(nt == document) {
@@ -145,19 +125,12 @@ bool PPQueryRoot::do_next()
                uri = tc.get_str_ptr();
             }
         }
-    }
-    else {
+    } else {
         /* Determine atomic type */
         st = tc.get_atomic_type();
     }
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
-
-    Serializer * serializer = tr_globals::client->get_serializer();
-
-    if (first) {
-        serializer->initialize();
-    }
 
 /*
     if (!first && !tr_globals::client->supports_serialization()) {
@@ -166,33 +139,25 @@ bool PPQueryRoot::do_next()
     }
 */
 
-    serializer->serialize(data);
-
-    while (!cxt->tmp_sequence.empty()) { cxt->tmp_sequence.pop(); }
-
-
-/*
-    // Clients which based on protocol 4 should support serialization
-    if(tr_globals::client->supports_serialization())
-    {
-//         If client supports serialization we don't have to
-//         make indentation, space delimiting and so on
-        print_tuple(data, *output_stream, cxt, print_mode, true, false);
+    if (tr_globals::client->supports_serialization()) {
+        cxt->get_static_context()->get_serialization_options()->indent = false;
     }
-    else
-    {
 
-        switch (cxt->get_static_context()->get_output_indent())
-        {
-            case se_output_indent_yes: print_tuple(data, *output_stream, cxt, print_mode, first, true);  break;
-            case se_output_indent_no : print_tuple(data, *output_stream, cxt, print_mode, first, false); break;
-            default                  : throw USER_EXCEPTION2(SE1003, "Unexpected se_output_indent");
-        }
-	}
-*/
+    tr_globals::serializer->prepare(
+        tr_globals::client->get_se_ostream(),
+        cxt->get_static_context()->get_string_matcher(),
+        cxt->get_static_context()->get_serialization_options()
+      );
 
-    if (first)
+    tr_globals::serializer->serialize(data);
+
+//    data.cells[0].set_eos();
+    while (!cxt->tmp_sequence.empty()) { delete cxt->tmp_sequence.top(); cxt->tmp_sequence.pop(); }
+    // data tuple is unusable after this kind of serialization
+
+    if (first) {
         first = false;
+    }
 
     return true;
 }

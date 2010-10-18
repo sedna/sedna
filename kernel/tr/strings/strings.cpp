@@ -324,6 +324,22 @@ void print_tuple_cell_dummy(se_ostream& crmout,const tuple_cell& tc)
     feed_tuple_cell(writextext_cb, &crmout, tc);
 }
 
+struct text_source_t text_source_tuple_cell(const tuple_cell& cell) {
+    tuple_cell tc = cast(cell, xs_string);
+
+    switch (tc.get_type())
+    {
+      case tc_light_atomic_var_size:
+        return text_source_mem(tc.get_str_mem(), tc.get_strlen_mem());
+      case tc_heavy_atomic_estr:
+      case tc_heavy_atomic_pstr_short:
+        return text_source_pstr(tc.get_str_vmm(), tc.get_strlen_vmm());
+      case tc_heavy_atomic_pstr_long:
+        return text_source_pstrlong(tc.get_str_vmm());
+    }
+}
+
+
 
 CollationHandler *CollationManager::get_collation_handler(const char *uri)
 {

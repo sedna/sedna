@@ -84,7 +84,7 @@ xptr getNextAttribute(const xptr node) { return getRightSiblingByType(node, attr
 inline static
 xptr getNextElement(const xptr node) { return getRightSiblingByType(node, element); };
 inline static
-xptr getNextNode(const xptr node) { return nodeGetNext(checkp(node)); };
+xptr getNextNode(const xptr node) { return nodeGetRightSibling(checkp(node)); };
 
 inline static
 xptr getFirstAttributeChild(const xptr node) { return getFirstChildByType(node, attribute); };

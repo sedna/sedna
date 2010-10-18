@@ -56,6 +56,8 @@ namespace sedna
             }
         };
 
+        bool virtualizableConstructors;
+
         bool param_mode; // true, if we are checking function params now (ASTVar sema analysis)
         unsigned int param_count; // number of parameters found in param_mode
         bool pers_path_mode; // if true, then we the next xpath will be persistent (use only for craete indexe/ft-index/trigger, where path is already checked)
@@ -91,6 +93,7 @@ namespace sedna
 
         parentRequest parentReq; // request from parent to child
         std::vector<parentRequest> pareqs; // parent requests
+
         const parentRequest &getParentRequest() const;
         void setParentRequest(const parentRequest &preq);
 

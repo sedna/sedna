@@ -26,29 +26,39 @@ enum se_output_method {
 };
 
 struct GlobalSerializationOptions {
-  /* Global options */
-    StrMatcher * stm;
-    dynamic_context * cxt;
+  /* XQuery method */
+    enum se_output_method xquery_output_method;
 
   /* XML specific options */
     bool preserveNamespaces;
     const char * indentSequence;
     bool indent;
-    bool cdataSectionElements;
+    std::set<std::string> * cdataSectionElements;
 };
 
 class Serializer {
+  protected:
+    GlobalSerializationOptions * options;
+    StrMatcher * stm;
+    se_ostream * crmout;
   public:
-    virtual ~Serializer();
+    inline Serializer() : options(NULL), stm(NULL), crmout(NULL) {};
+    virtual ~Serializer() {};
 
     virtual void serialize(tuple &t) = 0;
 
     virtual bool supports(enum se_output_method method) = 0;
     virtual void initialize() = 0;
 
-    virtual void setOutputStream(se_ostream & out) = 0;
-};
+    inline void setOutput(se_ostream * output) { crmout = output; };
+    inline void setFilter(StrMatcher * filter) { stm = filter; };
+    inline void setOptions(GlobalSerializationOptions * aOptions) { options = aOptions; }
 
-Serializer * createSerializer(enum se_output_method method, GlobalSerializationOptions * options);
+    inline void prepare(se_ostream * output, StrMatcher * filter, GlobalSerializationOptions * aOptions) {
+        setOutput(output); setFilter(filter); setOptions(aOptions); initialize();
+    }
+
+    static Serializer * createSerializer(enum se_output_method method);
+};
 
 #endif /* SERIALIZATION_H_ */

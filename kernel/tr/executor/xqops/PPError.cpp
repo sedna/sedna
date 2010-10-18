@@ -202,6 +202,8 @@ void PPFnTrace::do_next(tuple &t)
         
         if (tc.get_strlen_mem() > 500) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Too long trace prefix is given in fn:trace function");
+
+        tr_globals::create_serializer(tr_globals::client->get_result_type());
     }
 
     value_child.op->next(t);
@@ -214,7 +216,14 @@ void PPFnTrace::do_next(tuple &t)
     {
         dostr->set_debug_info_type(se_QueryTrace);
         (*dostr) << tc.get_str_mem() << " ";
-        print_tuple(t, *dostr, cxt, xml, true, false);
+
+        tr_globals::serializer->prepare(
+            dostr,
+            cxt->get_static_context()->get_string_matcher(),
+            cxt->get_static_context()->get_serialization_options()
+          );
+
+        tr_globals::serializer->serialize(t);
         dostr->flush();
     }
 }

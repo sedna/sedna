@@ -72,6 +72,9 @@ namespace tr_globals
      */
     extern TLS_VAR_DECL
     volatile bool is_timer_fired;
+
+    extern Serializer * serializer;
+    void create_serializer(enum se_output_method method);
 }
 
 /* 

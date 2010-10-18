@@ -223,7 +223,7 @@ public:
     ~dynamic_context();
 
     // Sequence for virtual elements
-    std::stack< counted_ptr<sequence> > tmp_sequence;
+    std::stack<sequence *> tmp_sequence;
 
     /*
      * This function creates new variable context for local vars
@@ -323,12 +323,17 @@ public:
         temp_docs.push_back(n);
     }
 
+    void add_cdata_section_element(const std::string &element)
+    {
+        st_cxt->get_serialization_options()->cdataSectionElements->insert(element);
+    }
+
     void global_variables_open();
     void global_variables_close();
 
-    void add_char_mapping(const char* str, const char* rep_str, int pc = -1)
+    void add_char_mapping(const char* str, const char* rep_str)
     {
-        st_cxt->get_string_matcher()->add_str(str, rep_str, pc);
+        st_cxt->get_string_matcher()->add_str(str, rep_str, pat_charmap);
     }
 
     void add_child_context(dynamic_context *cxt)

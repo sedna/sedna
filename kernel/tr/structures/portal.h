@@ -9,26 +9,26 @@
 #include "tr/crmutils/xdm.h"
 
 #include <vector>
-#include <strings/strings.h>
+#include <tr/strings/strings.h>
 
 namespace portal {
     class SequenceReader {
     private:
-        counted_ptr<sequence> s;
+        sequence * s;
         int pos;
     public:
         SequenceReader(tuple_cell t) : s(t.get_portal().p), pos(t.get_index()) { U_ASSERT(t.is_portal()); };
         inline void next() { pos++; };
         inline void get(tuple &t) { t.copy((*s)[pos]); };
         inline tuple_cell getCell() { return (*s)[pos].cells[0]; };
-        inline bool sameSequence(const sequence * t) { return t == s.get(); };
+        inline bool sameSequence(const sequence * t) { return t == s; };
     };
 
 
     /* Virtual node can be iterated only once, so its instance is it's own iteratator */
     class VirtualNode : public IXDMNode, public IXDMNodeList  {
       private:
-        bool end;
+        bool atend;
         schema_node_cptr snode;
         counted_ptr<SequenceReader> reader;
 
@@ -48,10 +48,10 @@ namespace portal {
 
         void printNodeName(se_ostream & out) const;
 
-        IXDMNodeList * getAllChildren() { return &this; };
+        IXDMNodeList * getAllChildren() { return this; };
 
         bool next();
-        bool end() { return end; };
+        bool end() { return atend; };
 
         IXDMNode * getNode();
     };
@@ -64,11 +64,13 @@ namespace portal {
         bool opened, closed;
 
         dynamic_context * cxt;
-        counted_ptr<sequence> seq;
+        sequence* seq;
     public:
         VirtualElementWriter(dynamic_context * a_cxt) :
             noMoreAttributes(false), ownsSequence(false), index(0),
             opened(false), closed(false), cxt(a_cxt), seq(NULL) {};
+
+        ~VirtualElementWriter();
 
         void create(const schema_node_xptr snode, const tuple_cell& parent);
         void add(const tuple_cell& tc);

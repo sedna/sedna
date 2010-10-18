@@ -173,12 +173,12 @@ struct tuple_cell;
 extern tuple_cell EMPTY_STRING_TC;
 
 struct sequence_ptr {
-    counted_ptr<sequence> p;
+    sequence * p;
     int pos;
 
-    sequence_ptr(counted_ptr<sequence> ap, int apos) : p(ap), pos(apos) {};
+    sequence_ptr(sequence * ap, int apos) : p(ap), pos(apos) {};
     sequence_ptr(const sequence_ptr & p) : p(p.p), pos(p.pos) { };
-    sequence_ptr& operator= (const sequence_ptr& s) { if (this != &s) { p = s.p; pos = s.pos; } return *this; }
+//    sequence_ptr& operator= (const sequence_ptr& s) { if (this != &s) { p = s.p; pos = s.pos; } return *this; }
 };
 
 // allocator for xs_QName_create; 'void' to avoid changing alloc_func in every signature
@@ -200,9 +200,11 @@ private:
         if (tc.t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             data.x = data.y = (int64_t)0;
             *(str_counted_ptr*)(&data) = *(str_counted_ptr*)(&(tc.data));
+/*
         } else if (tc.get_atomic_type() == se_sequence_element) {
             data.x = data.y = (int64_t)0;
             *(sequence_ptr*)(&data) = *(sequence_ptr*)(&(tc.data));
+*/
         } else {
             data = tc.data;
         }
@@ -212,9 +214,11 @@ private:
         if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             ((str_counted_ptr*)(&data))->~str_counted_ptr();
             data.x = data.y = (int64_t) 0;
+/*
         } else if (get_atomic_type() == se_sequence_element) {
             ((sequence_ptr*)(&data))->~sequence_ptr();
             data.x = data.y = (int64_t) 0;
+*/
         }
     }
 
@@ -259,7 +263,7 @@ public:
       }
     }
 
-    bool is_atomic_type(xmlscm_type t) const { return is_atomic() && (t & TC_XTYPE_MASK) == t; }
+    bool is_atomic_type(xmlscm_type tt) const { return is_atomic() && (this->t & TC_XTYPE_MASK) == (uint32_t) tt; }
 
     /// fixed size atomic values
     int64_t            get_xs_integer()  const { return *(int64_t*           )(&data); }
@@ -459,12 +463,12 @@ public:
         return tuple_cell(tc_portal | se_xptr, _data_);
     }
 
-    static tuple_cell atomic_portal(counted_ptr<sequence> _sequence_, int index)
+    static tuple_cell atomic_portal(sequence * _sequence_, int index)
     {
         return tuple_cell(tc_portal | se_sequence_element, sequence_ptr(_sequence_, index));
     }
 
-    static tuple_cell atomic_se_sequence_element(counted_ptr<sequence> _sequence_, int index)
+    static tuple_cell atomic_se_sequence_element(sequence * _sequence_, int index)
     {
         return tuple_cell(tc_light_atomic_fix_size | se_sequence_element, sequence_ptr(_sequence_, index));
     }
