@@ -13,13 +13,34 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/crmutils/str_matcher.h"
 
+#include <map>
+#include <stack>
+
 struct dynamic_context;
 struct ElementContext;
 
 class XDMSerializer : public Serializer {
+  private:
+    typedef std::map<std::string, xmlns_ptr> NSPrefixMap;
+    typedef std::pair<xmlns_ptr, xmlns_ptr> NSSubsitutionPair;
+    typedef std::stack< std::pair<xmlns_ptr, xmlns_ptr> > NSNamespaceStack;
+    typedef std::map<xmlns_ptr, xmlns_ptr> NSSwizzlingMap;
+
+    NSPrefixMap nsPrefixMap;
+    NSNamespaceStack nsNamespaceStack;
+    NSSwizzlingMap nsSwizzlingMap;
+
   protected:
     void printNode(const Node node);
     void printNode(IXDMNode * node);
+
+    /*  declareNamespace appears in traversing the element subtree if element
+      has or implies any namespace declaration. If namespace is unknown or swizzeled
+      function returns true. */
+    bool declareNamespace(xmlns_ptr ns);
+
+    /* undeclareNamespaces undeclares "count" namespaces from stack */
+    void undeclareNamespaces(int count);
 
     virtual void printAtomic(const tuple_cell &t) = 0;
     virtual void printDocument(const text_source_t docname, IXDMNode * content) = 0;
@@ -36,8 +57,6 @@ class XMLSerializer : public XDMSerializer {
     ElementContext * elementContext;
     bool indentNext;
     int indentLevel;
-
-    xmlns_ptr handleDefaultNamespace(const xmlns_ptr defaultNamespace);
 
     virtual void printAtomic(const tuple_cell &t);
     virtual void printDocument(const text_source_t docname, IXDMNode * content);
@@ -59,6 +78,7 @@ class XMLSerializer : public XDMSerializer {
 
 class SXMLSerializer : public XMLSerializer {
 private:
+    virtual void printText(t_item type, const text_source_t value);
     virtual void printAtomic(const tuple_cell &t);
     virtual void printDocument(const text_source_t docname, IXDMNode * content);
     virtual void printElement(IXDMNode * element);

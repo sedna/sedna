@@ -329,6 +329,12 @@ xptr getFirstChildByType(const xptr node, t_item t)
 
 xptr getFirstChildByTypeMask(const xptr node, typemask_t tmask)
 {
+    /* If there can be only one schema child of given type, just return it.
+      Valid only until getAnyChildByTypeMask returns first child by document order */
+    if ((tmask & (ti_singleton_element)) == tmask) {
+        return getAnyChildByTypeMask(node, tmask);
+    }
+
     CHECKP(node);
     xptr * children = tmp_childlist;
     shft child_count = getChildListPersistent(node, children);

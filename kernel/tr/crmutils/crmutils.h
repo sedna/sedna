@@ -57,21 +57,5 @@ void print_pp_stack(se_ostream* dostr);
 void printSimpleDebugInfo(schema_node_cptr snode, se_ostream& crmout);
 void getDebugInfo(schema_node_cptr snode, xptr& node);
 
-
-////////////////////////////////////////////////////////////////////////////////
-/// Legacy metadata printings
-////////////////////////////////////////////////////////////////////////////////
-
-/* prints descriptive schema  of stand-alone document*/
-void print_descriptive_schema(const char * docname, se_ostream& crmout);
-/* prints descriptive schema  of collection*/
-void print_descriptive_schema_col(const char * colname, se_ostream& crmout);
-/* prints the list of documents*/
-void print_documents(se_ostream& crmout, bool ps = true);
-/* prints the list of documents in the selected collection*/
-void print_documents_in_collection(se_ostream& crmout, const char* collection);
-/* prints the list of collections*/
-void print_collections(se_ostream& crmout, bool ps = true);
-
 #endif /* _CRMUTILS_H */
 

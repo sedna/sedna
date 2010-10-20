@@ -37,6 +37,7 @@ enum { ti_first_children = attribute | xml_namespace };
 enum { ti_all = element | text | attribute | document | virtual_root | xml_namespace | comment | pr_ins };
 enum { ti_dmchildren = element | text | document | comment | pr_ins };
 enum { ti_content = element | text | comment | pr_ins };
+enum { ti_singleton_element = xml_namespace | text | comment | pr_ins };
 
 #ifdef BITWISE_NODE_TYPES
 typedef int typemask_t;

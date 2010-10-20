@@ -76,8 +76,8 @@ public:
      * e.g. XML, SXML, etc ... 
      */
     virtual void set_result_type(enum se_output_method method) { output_method = method; }
-//    virtual enum se_output_method get_result_type() { return output_method; }
     virtual enum se_output_method get_result_type() { return output_method; }
+//    virtual enum se_output_method get_result_type() { return se_output_method_sxml; }
     
     /* Should be called just before run execution of each 
      * statement. May clear some internal state (e.g. enable 

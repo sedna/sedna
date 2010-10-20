@@ -742,6 +742,11 @@ sedna-err:SE2302
 
   Serialization internal error: unknown node type passed
 
+############### others ##############
+sedna-err:SE2901
+
+  The feature is no longer supported
+
 ########### concerning sockets ####################
 sedna-err:SE2999
 

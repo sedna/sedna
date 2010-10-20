@@ -2723,7 +2723,7 @@ namespace sedna
         // local variable context for the body
         dyn_cxt->reset_local_vars();
 
-        virtualizableConstructors = true;
+        virtualizableConstructors = false;
 
         // if we deserealize trigger statement then bind special vars
         if (n.is_trigger)
