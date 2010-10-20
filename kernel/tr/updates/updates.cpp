@@ -272,31 +272,36 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
             size_t tsize = PINode(node).getPITargetSize();
             text_cptr buf(node);
             result = insert_pi(left, right, parent, buf.get(), tsize, buf.get() + tsize + 1, buf.getSize() - tsize - 1);
-                     }
-                     break;
+        }
+        break;
 
         case attribute: {
             xmlns_ptr ns = scmnode->get_xmlns();
             text_cptr buf(node);
 
             if (nsupdmap != NULL && ns != NULL_XMLNS) {
+                getFirstChildByType();
                 swizzleNamespace(ns, *nsupdmap);
-            }
+            }asdfasdgfasdg
 
             CHECKP(node);
             scm_type = (save_types) ? AttributeNode(node).getType() : xs_untypedAtomic;
             result = insert_attribute(left, right, parent, scmnode->name, scm_type, buf.get(), buf.getSize(), ns);
-                        }
-                        break;
+        }
+        break;
 
         case xml_namespace: {
             xmlns_ptr ns = NSNode(node).getNamespaceLocal();
-            if (nsupdmap != NULL && ns != NULL_XMLNS) {
-                swizzleNamespace(ns, *nsupdmap);
+
+            /* There is no need to copy default namespace alone without its node  */
+            if (ns.has_prefix() || depth > 0) {
+                if (nsupdmap != NULL && ns.has_prefix()) {
+                    swizzleNamespace(ns, *nsupdmap);
+                }
+                result = insert_namespace(left, right, parent, ns);
             }
-            result = insert_namespace(left, right, parent, ns);
-                            }
-                            break;
+        }
+        break;
 
         default:
             throw SYSTEM_EXCEPTION("Deep copy error: document node copied");

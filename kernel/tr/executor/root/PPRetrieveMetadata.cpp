@@ -60,38 +60,6 @@ void PPRetrieveMetadata::do_accept(PPVisitor &v)
 
 void PPRetrieveMetadata::do_execute()
 {
-    if (type == dbe_collection)
-    {
-        local_lock_mrg->put_lock_on_db();
-        print_collections(*tr_globals::client->get_se_ostream(), output_statistics);
-    }
-    else if (type == dbe_document)
-    {
-        if (collection.op == 0)
-        {
-            local_lock_mrg->put_lock_on_db();
-            print_documents(*tr_globals::client->get_se_ostream(), output_statistics);
-        }
-        else 
-        {
-            tuple_cell tc;
-            tuple t(1);
-
-            collection.op->next(t);
-            if (t.is_eos()) throw USER_EXCEPTION(SE1071);
-
-            tc = collection.get(t);
-            if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-                throw USER_EXCEPTION(SE1071);
-
-            collection.op->next(t);
-            if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-            tc = tuple_cell::make_sure_light_atomic(tc);
-
-            local_lock_mrg->put_lock_on_collection(tc.get_str_mem());
-            print_documents_in_collection(*tr_globals::client->get_se_ostream(), tc.get_str_mem());
-        }
-    }
-    else throw USER_EXCEPTION2(SE1003, "Wrong combination of arguments in PPRetrieveMetadata");
+    throw USER_EXCEPTION2(SE2901, "Retrieve Metadata. Please use system documents i.e. doc('$documents')");
 }
 

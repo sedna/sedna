@@ -11,14 +11,43 @@
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/xsd.h"
 
-struct ElementContext {
-    const char * name;
-    const xmlns_ptr ns;
-    xmlns_ptr defaultNamespace;
-};
-
 /* static filter, used when no user filter is passed */
 static StrMatcher plainFilter;
+
+bool XDMSerializer::declareNamespace(xmlns_ptr ns) {
+    NSPrefixMap::iterator nsi = nsPrefixMap.find(std::string(ns->get_prefix()));
+
+    if (nsi == nsPrefixMap.end()) {
+        /* We are declaring a new namespace */
+        nsNamespaceStack.push(NSSubsitutionPair(ns, NULL_XMLNS));
+        nsPrefixMap.insert(std::pair<std::string, xmlns_ptr>(std::string(ns->get_prefix()), ns));
+
+        return true;
+    } else if (nsi->second != ns) {
+        /* This prefix is already bound to a different namespace */
+        nsNamespaceStack.push(NSSubsitutionPair(ns, nsi->second));
+        nsi->second = ns;
+
+        return true;
+    }
+
+    return false;
+}
+
+void XDMSerializer::undeclareNamespaces(int count) {
+    while (count-- > 0) {
+        const NSSubsitutionPair x = nsNamespaceStack.top();
+
+        if (x.second != NULL_XMLNS) {
+            nsPrefixMap.find(std::string(x.first->get_prefix()))->second = x.second;
+        } else {
+            nsPrefixMap.erase(std::string(x.first->get_prefix()));
+        }
+
+        nsNamespaceStack.pop();
+    }
+}
+
 
 void XDMSerializer::printNode(const Node node)
 {
@@ -125,11 +154,16 @@ bool isAttributeAt(IXDMNodeList * list) {
     return (node != NULL && (node->getNodeKind() & ti_first_children) != 0);
 }
 
+inline static
+bool isNamespaceAt(IXDMNodeList * list) {
+    const IXDMNode * node = list->getNode();
+    return (node != NULL && node->getNodeKind() == xml_namespace);
+}
+
 void XMLSerializer::printDocument(const text_source_t docname, IXDMNode * content)
 {
-    indentLevel = 0;
-    indentNext = true;
-    const bool printDocTags = true;
+    // The following stands for backwards compatibility and will be removed in future
+    const bool printDocTags = (dynamic_cast<SednaNode *>(content) != NULL) && IS_DATA_BLOCK(dynamic_cast<SednaNode *>(content)->getXptr());
 
     IXDMNodeList * children = content->getAllChildren();
 
@@ -155,31 +189,18 @@ void print_indent(se_ostream * crmout, int level, const char * indent) {
     for (int i=0; i < level; i++) { (*crmout) << indent; }
 }
 
-xmlns_ptr XMLSerializer::handleDefaultNamespace(const xmlns_ptr defaultNamespace)
-{
-    /* Default namespace handling. There are two signs of the default namespace:
-     * empty prefix xmlns node and empty prefix in schema node. We output each
-     * default namespace only once */
-
-    if (defaultNamespace == elementContext->ns) {
-      elementContext->defaultNamespace = defaultNamespace;
-    } else {
-        elementContext->defaultNamespace = elementContext->ns;
-        if (defaultNamespace != NULL_XMLNS && elementContext->ns == NULL_XMLNS) {
-            return xmlns_touch("", "");
-        } else {
-            return elementContext->defaultNamespace;
-        }
-    }
-    return NULL_XMLNS;
-}
-
 void XMLSerializer::initialize()
 {
     elementContext = NULL;
     indentLevel = 0;
     indentNext = options->indent;
 }
+
+struct ElementContext {
+    const char * name;
+    const xmlns_ptr ns;
+    xmlns_ptr defaultNamespace;
+};
 
 void XMLSerializer::printElement(IXDMNode * elementInterface)
 {
@@ -189,6 +210,7 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     ElementContext context = {elementInterface->getLocalName(), elementInterface->getNamespace()};
     elementContext = &context;
     bool indented = indentNext;
+    int namespaceCount = 0;
 
     if (indentNext) { (*crmout) << "\n"; print_indent(crmout, indentLevel++, this->options->indentSequence); }
     indentNext = options->indent;
@@ -196,14 +218,25 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     (*crmout) << "<";
     elementInterface->printNodeName(*crmout);
 
-    const xmlns_ptr ns = handleDefaultNamespace(parentContext == NULL ? NULL_XMLNS : parentContext->defaultNamespace);
-    if (ns != NULL_XMLNS) { (*crmout) << " "; printNamespace(ns); }
+    /* specially handle default namespace */
+    if (context.ns != NULL_XMLNS && !context.ns.has_prefix() && declareNamespace(context.ns)) {
+        printNamespace(context.ns);
+    }
 
     IXDMNodeList * children = elementInterface->getAllChildren();
 
     while (isAttributeAt(children)) {
-        (*crmout) << " ";
-        printAttribute(children->getNode());
+        const xmlns_ptr ns = children->getNode()->getNamespace();
+
+        if (ns != NULL_XMLNS && declareNamespace(ns)) {
+            (*crmout) << " ";
+            printNamespace(context.ns);
+        }
+
+        if (children->getNode()->getNodeKind() == attribute) {
+            (*crmout) << " ";
+            printAttribute(children->getNode());
+        }
         children->next();
     }
 
@@ -292,42 +325,30 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
     };
 }
 
-/*
-void XMLSerializer::printText(t_item type, const text_source_t value)
+void SXMLSerializer::printText(t_item type, const text_source_t value)
 {
     CHECK_TIMER_FLAG;
 
     TextBufferReader reader(value);
 
     if (type == text) {
-        indentNext = false;
-        if (elementContext != NULL && set_contains_string(options->cdataSectionElements, elementContext->name)) {
-            (*crmout) << "<![CDATA[";
-            // StringMatcher must substitute "]]>" with "]]>]]<![CDATA[<"
-            while (reader.read()) {
-                stm->parse(reader.buffer, reader.size, write_func, crmout, pat_cdata);
-            }
-            stm->flush(write_func, crmout);
-            (*crmout) << "]]>";
-        } else {
-            while (reader.read()) {
-                stm->parse(reader.buffer, reader.size, write_func, crmout, pat_xml_element);
-            }
-            stm->flush(write_func, crmout);
+        (*crmout) << " \"";
+        while (reader.read()) {
+            stm->parse(reader.buffer, reader.size, write_func, crmout, pat_xml_element);
         }
+        stm->flush(write_func, crmout);
+        (*crmout) << "\"";
     } else {
         U_ASSERT(type == comment || type == pr_ins);
 
-        if (indentNext) { (*crmout) << "\n"; }
-        if (type == comment) { (*crmout) << "<!--"; } else { (*crmout) << "<?"; };
+        if (type == comment) { (*crmout) << "(*COMMENT* "; } else { (*crmout) << "(*PI*"; };
         while (reader.read()) {
             stm->parse(reader.buffer, reader.size, write_func, crmout, pat_xml_attribute);
         }
         stm->flush(write_func, crmout);
-        if (type == comment) { (*crmout) << "-->"; } else { (*crmout) << "?>"; }
+        if (type == comment) { (*crmout) << ")"; } else { (*crmout) << ")"; }
     };
 }
-*/
 
 void SXMLSerializer::printDocument(const text_source_t docname, IXDMNode * content)
 {
@@ -360,7 +381,7 @@ void SXMLSerializer::printDocument(const text_source_t docname, IXDMNode * conte
 
 void SXMLSerializer::printAtomic(const tuple_cell &t)
 {
-    (*crmout) << "(";
+    (*crmout) << " (";
     if (t.is_atomic_type(xs_boolean)) {
         (*crmout) << (t.get_xs_boolean() ? "#t" : "#f");
     } else {
@@ -374,7 +395,7 @@ void SXMLSerializer::printAtomic(const tuple_cell &t)
 void SXMLSerializer::printAttribute(IXDMNode * attribute)
 {
     TextBufferReader reader(attribute->getValue());
-    (*crmout) << "(";
+    (*crmout) << " (";
     attribute->printNodeName(*crmout);
     (*crmout) << " ";
     while (reader.read()) {
@@ -393,17 +414,20 @@ void SXMLSerializer::printElement(IXDMNode * elementInterface)
     ElementContext context = {elementInterface->getLocalName(), elementInterface->getNamespace()};
     elementContext = &context;
 
-    (*crmout) << "(";
-    elementInterface->printNodeName(*crmout);
-    (*crmout) << " ";
+    bool hasAttributes = false;
 
-    const xmlns_ptr ns = handleDefaultNamespace(parentContext == NULL ? NULL_XMLNS : parentContext->defaultNamespace);
-    if (ns != NULL_XMLNS) { (*crmout) << " "; printNamespace(ns); }
+    (*crmout) << " (";
+    elementInterface->printNodeName(*crmout);
+
+    /* specially handle default namespace */
+    if (context.ns != NULL_XMLNS && !context.ns.has_prefix() && declareNamespace(context.ns)) {
+        printNamespace(context.ns);
+    }
 
     IXDMNodeList * children = elementInterface->getAllChildren();
 
     if (isAttributeAt(children)) {
-        (*crmout) << "(@ ";
+        (*crmout) << " (@ ";
         while (isAttributeAt(children)) {
             (*crmout) << " ";
             printAttribute(children->getNode());

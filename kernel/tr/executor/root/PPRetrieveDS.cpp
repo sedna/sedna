@@ -55,40 +55,6 @@ void PPRetrieveDS::do_accept(PPVisitor &v)
 
 void PPRetrieveDS::do_execute()
 {
-    tuple_cell tc;
-    tuple t(1);
-    name.op->next(t);
-    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
-
-    tc = name.get(t);
-    if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION(SE1071);
-
-    name.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        
-    tc = tuple_cell::make_sure_light_atomic(tc);
-
-
-    counted_ptr<db_entity> db_ent(se_new db_entity);
-
-    if (type == dbe_document)
-    { 
-    	db_ent->name = se_new char[tc.get_strlen_mem() + 1];
-    	strcpy(db_ent->name, tc.get_str_mem());
-    	db_ent->type = dbe_document;
-        auth_for_query(db_ent);
-        local_lock_mrg->put_lock_on_document(tc.get_str_mem());
-        print_descriptive_schema(tc.get_str_mem(), *tr_globals::client->get_se_ostream());
-    }
-    else
-    { 
-    	db_ent->name = se_new char[tc.get_strlen_mem() + 1];
-    	strcpy(db_ent->name, tc.get_str_mem());
-    	db_ent->type = dbe_collection;
-        auth_for_query(db_ent);
-        local_lock_mrg->put_lock_on_collection(tc.get_str_mem());
-        print_descriptive_schema_col(tc.get_str_mem(), *tr_globals::client->get_se_ostream());
-    }
+    throw USER_EXCEPTION2(SE2901, "Retrieve Document Schema. Please use system documents i.e. doc('$schema_[docname]')");
 }
 

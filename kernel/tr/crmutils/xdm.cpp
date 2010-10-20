@@ -27,7 +27,11 @@ const char * SednaNode::getLocalName() const {
 
 xmlns_ptr SednaNode::getNamespace() const {
     if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
-    return snode->get_xmlns();
+    if (snode->type == xml_namespace) {
+        return NSNode(node).getNamespaceLocal();
+    } else {
+        return snode->get_xmlns();
+    }
 }
 
 const text_source_t SednaNode::getValue() const {
