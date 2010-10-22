@@ -383,6 +383,13 @@ unicode_cp_iterator *CharsetHandler_utf8::get_unicode_cp_iterator(const tuple_ce
 	return res;
 }
 
+unicode_cp_iterator *CharsetHandler_utf8::get_unicode_cp_iterator(const char *str)
+{
+	unicode_cp_iterator *res;
+	utf8_get_unicode_cp_iterator((const unsigned char *)str, (const unsigned char *)str+strlen(str), &res);
+	return res;
+}
+
 
 static int get_pcre_flags(tuple_cell *t)
 {

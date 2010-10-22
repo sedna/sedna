@@ -40,6 +40,7 @@ struct ftc_index_data
 	struct FtsData ft_data;
 	FTC_ALLOCATOR ind_alloc;
 	FtStemmer *stemmer; //TODO: add some destructor and delete it + consider sharing stemmers between indexes
+	bool has_stemmer; //flag to avoid searching for stemmer more than once
 	int next_op_ind;
 #ifdef _MSC_VER
 #pragma warning( disable : 4200 )
@@ -56,6 +57,7 @@ struct ftc_index_data
 		ftc_index_data *id = ((ftc_index_data*)m_alloc.deref(ptr));
 		new (&id->ind_alloc) FTC_ALLOCATOR(); //FIXME
 		id->stemmer = NULL;
+		id->has_stemmer = false;
 		id->reset();
 		strcpy(id->name, name);
 		id->ft_data = *ft_data; //FIXME: add some explicit copy function
@@ -285,11 +287,19 @@ ftc_doc_t ftc_get_doc(ftc_index_t idx, xptr acc)
 FtStemmer *ftc_get_stemmer(ftc_index_t idx)
 {
 	ftc_index_data *id = ftc_index_data::get(idx);
-	if (id->stemmer == NULL)
+
+	if (id->stemmer == NULL && !id->has_stemmer)
 	{
-		id->stemmer = FtStemmer::get("english");
-		if (id->stemmer == NULL)
-			throw USER_EXCEPTION2(SE3022, "failed to create stemmer");
+		ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
+
+		if (idc->stemming != NULL && idc->stemming[0] != '\x0')
+		{
+			id->stemmer = FtStemmer::get(idc->stemming);
+			if (id->stemmer == NULL)
+				throw USER_EXCEPTION2(SE3022, "failed to create stemmer");
+		}
+
+		id->has_stemmer = true;
 	}
 
 	return id->stemmer;

@@ -58,6 +58,12 @@ public:
 		ucpi = charset_handler->get_unicode_cp_iterator(tc);
 	}
 
+	void set_str(const char *str)
+	{
+		reset();
+		ucpi = charset_handler->get_unicode_cp_iterator(str);
+	}
+
 	~OptionsParser()
 	{
 		reset();
@@ -101,6 +107,8 @@ public:
 	{
 		return opt_name_buf;
 	}
+
+	//option value for current option, empty string if there is none
 	const char *opt_value()
 	{
 		return opt_value_buf;
@@ -118,6 +126,17 @@ public:
 			)
 			return false;
 		return true;
+	}
+
+	//append comma and an option with value to op_str_buf
+	static void append_option(op_str_buf *buf, const char *name, const char *value)
+	{
+		//FIXME: escape some chars
+		if (buf->get_size() > 0)
+			buf->append(",");
+		buf->append(name);
+		buf->append("=");
+		buf->append(value);
 	}
 };
 

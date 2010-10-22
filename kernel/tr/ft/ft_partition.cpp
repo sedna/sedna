@@ -196,7 +196,7 @@ void FtPartitionBuilder::create_new()
 void FtPartitionBuilder::finalize(ft_partition_data *partition)
 {
 	sblob_writer.finalize();
-	p_data.sblob_size = sblob_writer.bytes_written();
+	p_data.sblob_blocks = sblob_writer.block_count();
 	*partition = p_data;
 }
 

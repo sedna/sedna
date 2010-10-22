@@ -621,7 +621,7 @@ ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, unsigned 
 	return res;
 }
 
-void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name,bool is_doc,ft_custom_tree_t * custom_tree,bool inserted)
+void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name,const char* options,bool is_doc,ft_custom_tree_t * custom_tree,bool inserted)
 {
     if (!enable_log) return;
     number_of_records++;
@@ -645,7 +645,7 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 
     llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 6, obj_path_str.c_str(), obj_path_str.size() + 1,
             &itconst, sizeof(ft_index_type), index_title, strlen(index_title) + 1,
-            doc_name, strlen(doc_name) + 1, &custom_tree_size, sizeof(unsigned),
+            doc_name, strlen(doc_name) + 1, options, strlen(options) + 1, &custom_tree_size, sizeof(unsigned),
             custom_tree_buf, (size_t)custom_tree_size);
 }
 #endif

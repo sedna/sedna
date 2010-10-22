@@ -597,7 +597,7 @@ namespace sedna
         if (tr_globals::is_ft_disabled)
             drv->error(SE1002, "full-text search support is disabled in RO-mode");
 
-        childOffer off_name, off_path;
+        childOffer off_name, off_path, off_options;
         PPAbsPath *pa;
         PathExpr *onp;
         counted_ptr<db_entity> dbe;
@@ -610,6 +610,12 @@ namespace sedna
         n.path->accept(*this);
         off_path = getOffer();
         pers_path_mode = false;
+
+		if (n.options != NULL)
+		{
+			n.options->accept(*this);
+			off_options = getOffer();
+		}
 
         // path will definitely be PPAbsPath
         pa = dynamic_cast<PPAbsPath *>(off_path.opin.op);
@@ -642,11 +648,12 @@ namespace sedna
             n.cust_expr->accept(*this);
             off_cust = getOffer();
 
-            qep = new PPCreateFtIndex(onp, n.type->c_str(), peroot, off_name.opin, off_cust.opin, dyn_cxt);
+			qep = new PPCreateFtIndex(onp, n.type->c_str(), peroot, off_name.opin, off_options.opin, off_cust.opin, dyn_cxt);
         }
         else
         {
-            qep = new PPCreateFtIndex(onp, n.type->c_str(), peroot, off_name.opin, dyn_cxt);
+			childOffer off_cust;
+            qep = new PPCreateFtIndex(onp, n.type->c_str(), peroot, off_name.opin, off_options.opin, off_cust.opin, dyn_cxt);
         }
 #else
         drv->error(SE1002, "full-text search support is disabled");

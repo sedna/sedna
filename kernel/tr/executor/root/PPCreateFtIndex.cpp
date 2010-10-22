@@ -97,41 +97,16 @@ PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
                                  const char *_index_type_,
                                  PathExprRoot _root_,
                                  PPOpIn _index_name_,
+                                 PPOpIn _options_,
                                  PPOpIn _cust_rules_,
                                  dynamic_context *_cxt_) : PPUpdate("PPCreateFtIndex"),
                                                            object_path(_object_path_),
                                                            cust_rules(_cust_rules_),
                                                            root(_root_),
                                                            index_name(_index_name_),
+                                                           options(_options_),
                                                            cxt(_cxt_)
 {
-	if (_index_type_[0] == '!')
-	{
-		this->index_impl = ft_ind_native;
-		_index_type_ = _index_type_ + 1;
-	}
-	else
-		this->index_impl = ft_ind_dtsearch;
-	index_type = str2ft_index_type(_index_type_);
-}
-
-PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
-                                 const char *_index_type_,
-                                 PathExprRoot _root_,
-                                 PPOpIn _index_name_,
-                                 dynamic_context *_cxt_) : PPUpdate("PPCreateFtIndex"),
-                                                           object_path(_object_path_),
-                                                           root(_root_),
-                                                           index_name(_index_name_),
-                                                           cxt(_cxt_)
-{
-	if (_index_type_[0] == '!')
-	{
-		this->index_impl = ft_ind_native;
-		_index_type_ = _index_type_ + 1;
-	}
-	else
-		this->index_impl = ft_ind_dtsearch;
 	index_type = str2ft_index_type(_index_type_);
 }
 
@@ -139,6 +114,11 @@ PPCreateFtIndex::~PPCreateFtIndex()
 {
     delete index_name.op;
     index_name.op = NULL;
+	if (options.op)
+	{
+		delete options.op;
+		options.op = NULL;
+	}
     if (cust_rules.op)
     {
         delete cust_rules.op;
@@ -185,6 +165,14 @@ void PPCreateFtIndex::do_execute()
 {
     /* Determine index name */
     tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create full-text index");
+	tuple_cell options_tc;
+	const char *options_str = NULL;
+	if (options.op != NULL)
+	{
+		//FIXME: options is not a name, but besides wrong error messages get_name_from_PPOpIn is fine
+		options_tc = get_name_from_PPOpIn(options, "options", "create full-text index");
+		options_str = options_tc.get_str_mem();
+	}
 
     /* Determine document or collection name to create index on */
     counted_ptr<db_entity> db_ent = root.get_entity("index", "create full-text index"); 
@@ -210,7 +198,7 @@ void PPCreateFtIndex::do_execute()
 				(db_ent->type == dbe_document),
 				cust_rules_vec,
 				false,
-				index_impl);
+				options_str);
 
 	if (cust_rules_vec)
 		delete_cust_rules_vector(cust_rules_vec);

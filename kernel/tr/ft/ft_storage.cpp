@@ -29,18 +29,18 @@ void FtsUpdater::end_update(struct FtsData *dest)
 		return;
 	}
 
-	if (dest->npartitions == FTS_MAX_PARTITIONS || dest->partitions[dest->npartitions-1].sblob_size < 2*pdata.sblob_size)
+	if (dest->npartitions == FTS_MAX_PARTITIONS || dest->partitions[dest->npartitions-1].sblob_blocks < 2*pdata.sblob_blocks)
 	{
 		//merge some partitions
 		int mergeto = dest->npartitions-1; //first partition that will be merged (and also the one that will be replaced with merge result)
-		int64_t cur_sz = pdata.sblob_size + dest->partitions[mergeto].sblob_size;
+		int64_t cur_sz = pdata.sblob_blocks + dest->partitions[mergeto].sblob_blocks;
 		while (mergeto > 0)
 		{
 			//see if next partition is too big to be merged now
-			if (dest->partitions[mergeto-1].sblob_size > 2*cur_sz)
+			if (dest->partitions[mergeto-1].sblob_blocks > 2*cur_sz)
 				break;
 			mergeto--;
-			cur_sz += dest->partitions[mergeto].sblob_size;
+			cur_sz += dest->partitions[mergeto].sblob_blocks;
 		}
 
 		//now merge partitions from mergeto to dest->npartitions and pdata to one partition
@@ -53,7 +53,7 @@ void FtsUpdater::end_update(struct FtsData *dest)
 #ifdef EL_DEBUG
 		d_printf2("will merge %d partitions with sizes: ", nmerge);
 		for (int i = 0; i < nmerge; i++)
-			d_printf2("%dM, ", (int)(p[i].sblob_size/1024/1024));
+			d_printf2("%d, ", (int)(p[i].sblob_blocks));
 		d_printf1("\n");
 #endif
 
@@ -66,7 +66,7 @@ void FtsUpdater::end_update(struct FtsData *dest)
 			ft_delete_partition(&p[i]);
 		delete[] p;
 #ifdef EL_DEBUG
-		d_printf2("merge done, resulting size: %dM\n", (int)(dest->partitions[mergeto].sblob_size/1024/1024));
+		d_printf2("merge done, resulting size: %d\n", (int)(dest->partitions[mergeto].sblob_blocks));
 #endif
 	}
 	else

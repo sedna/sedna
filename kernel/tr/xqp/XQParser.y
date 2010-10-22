@@ -221,6 +221,7 @@ namespace sedna
 %token <isUpper> TO_ "TO"
 %token <isUpper> TRIGGER "trigger"
 %token <isUpper> TYPE "type"
+%token <isUpper> OPTIONS "options"
 %token <isUpper> UPDATE "update"
 %token <isUpper> USER "user"
 %token <isUpper> WITH "with"
@@ -3204,6 +3205,7 @@ funcName:
     |    TO_ { $$ = new std::string("TO"); }
     |    TRIGGER { $$ = new std::string(($1 != 0) ? "TRIGGER" : "trigger"); }
     |    TYPE { $$ = new std::string(($1 != 0) ? "TYPE" : "type"); }
+    |    OPTIONS { $$ = new std::string(($1 != 0) ? "OPTIONS" : "options"); }
     |    UPDATE { $$ = new std::string(($1 != 0) ? "UPDATE" : "update"); }
     |    USER { $$ = new std::string(($1 != 0) ? "USER" : "user"); }
     |    WITH { $$ = new std::string(($1 != 0) ? "WITH" : "with"); }
@@ -3240,6 +3242,10 @@ createExpr:
     |   CREATE FULLTEXT INDEX exprSingle ON pathExpr TYPE StringLiteral
         {
             $$ = new ASTCreateFtIndex(@$, $4, $6, $8);
+        }
+    |   CREATE FULLTEXT INDEX exprSingle ON pathExpr TYPE StringLiteral WITH OPTIONS exprSingle
+        {
+            $$ = new ASTCreateFtIndex(@$, $4, $6, $8, NULL, $11);
         }
     |   CREATE FULLTEXT INDEX exprSingle ON pathExpr TYPE StringLiteral expr
         {
