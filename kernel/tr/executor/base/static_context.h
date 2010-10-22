@@ -79,7 +79,6 @@ private:
 
     // serialization parameters: indent, method, etc.
     GlobalSerializationOptions serializationOptions;
-    StrMatcher stm;
 
     inline void set_field_flag(static_context_fields_flags flag)
     {

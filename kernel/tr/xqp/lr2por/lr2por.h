@@ -117,6 +117,7 @@ namespace sedna
             dyn_cxt = dyn_cxt_;
             qep = NULL;
             var_op_num = -1;
+            virtualizableConstructors = false;
 
             is_subquery = is_subquery_;
         }

@@ -18,6 +18,17 @@
 
 struct dynamic_context;
 struct ElementContext;
+class StrMatcher;
+
+enum pat_class
+{
+    pat_attribute = 1,
+    pat_element = 2,
+    pat_cdata = 4,
+    pat_text = 8,
+    pat_charmap = 64
+};
+
 
 class XDMSerializer : public Serializer {
   private:
@@ -29,8 +40,9 @@ class XDMSerializer : public Serializer {
     NSPrefixMap nsPrefixMap;
     NSNamespaceStack nsNamespaceStack;
     NSSwizzlingMap nsSwizzlingMap;
-
   protected:
+    bool separatorNeeded;
+
     void printNode(const Node node);
     void printNode(IXDMNode * node);
 
@@ -49,14 +61,19 @@ class XDMSerializer : public Serializer {
     virtual void printAttribute(IXDMNode * attribute) = 0;
     virtual void printText(t_item type, const text_source_t value) = 0;
   public:
+    XDMSerializer();
+
     virtual void serialize(tuple &t);
 };
 
 class XMLSerializer : public XDMSerializer {
-  protected:
-    ElementContext * elementContext;
+  private:
     bool indentNext;
     int indentLevel;
+    int useCharmapFlag;
+  protected:
+    ElementContext * elementContext;
+    StrMatcher stringFilter;
 
     virtual void printAtomic(const tuple_cell &t);
     virtual void printDocument(const text_source_t docname, IXDMNode * content);
@@ -65,8 +82,8 @@ class XMLSerializer : public XDMSerializer {
     virtual void printAttribute(IXDMNode * attribute);
     virtual void printText(t_item type, const text_source_t value);
   public:
-    inline XMLSerializer() {};
-    ~XMLSerializer() {};
+    XMLSerializer();
+    ~XMLSerializer();
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_xml; };
     virtual void initialize();
@@ -84,8 +101,8 @@ private:
     virtual void printElement(IXDMNode * element);
     virtual void printAttribute(IXDMNode * attribute);
 public:
-    inline SXMLSerializer() {};
-    ~SXMLSerializer() {};
+    SXMLSerializer();
+    ~SXMLSerializer();
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_sxml; };
 };

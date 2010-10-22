@@ -106,6 +106,7 @@ std::vector<T> vector_concat(const std::vector<T>& v1, const std::vector<T> &v2)
     return res;
 }
 
+inline static bool implies(bool a, bool b) { return !a || b; }
 
 /* function is used for eliminating disturbance from sorted array*/
 /* parameters are like parameters for qsort*/

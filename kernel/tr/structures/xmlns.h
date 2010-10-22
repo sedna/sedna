@@ -113,6 +113,7 @@ bool is_empty_default_ns_declaration(xmlns_ptr ns)
 class dynamic_context;
 
 xmlns_ptr generate_prefix(int ctr, const char* uri, dynamic_context *cxt);
+xmlns_ptr generate_prefix(const char * prefix, const char * uri);
 
 
 #endif /* XMLNS_H_ */

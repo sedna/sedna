@@ -21,7 +21,6 @@ private:
     tuple data;
     dynamic_context *cxt;
     bool first;
-    se_ostream* output_stream;
 
     virtual void do_open();
     virtual void do_close();

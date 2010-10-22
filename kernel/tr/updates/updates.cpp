@@ -5,6 +5,7 @@
  */
 
 #include "common/sedna.h"
+#include "common/utils.h"
 
 #include "tr/updates/updates.h"
 #include "tr/mo/mo.h"
@@ -186,7 +187,7 @@ xptr copy_node_content(xptr new_node_i, xptr node, xptr left_node_i, upd_ns_map*
     return left_node_i;
 }
 
-void swizzleNamespace (xmlns_ptr & ns, upd_ns_map*& updmap)
+void replaceNamespace(xmlns_ptr & ns, upd_ns_map*& updmap)
 {
     if (updmap == NULL) updmap = se_new upd_ns_map;
     upd_ns_map::const_iterator it = updmap->find(ns);
@@ -195,6 +196,25 @@ void swizzleNamespace (xmlns_ptr & ns, upd_ns_map*& updmap)
     } else {
         ns = it->second;
     }
+}
+
+xmlns_ptr swizzle_namespace(xptr node, xmlns_ptr new_ns) {
+    NSNode ns = getFirstChildByType(node, xml_namespace);
+    while (!ns.isNull()) {
+        ns.checkp();
+        const xmlns_ptr cns = ns.getNamespaceLocal();
+
+        if (cns->get_prefix() == new_ns->get_prefix()) {
+            if (cns == new_ns) {
+                return NULL_XMLNS;
+            } else {
+                return swizzle_namespace(node, generate_prefix(cns->get_prefix(), cns->get_uri()));
+            }
+        }
+        ns = ns.getNext();
+    }
+
+    return new_ns;
 }
 
 xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** nsupdmap, bool save_types, unsigned short depth)
@@ -239,7 +259,7 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
             xmlns_ptr ns = scmnode->get_xmlns();
 
             if (nsupdmap != NULL && ns != NULL_XMLNS) {
-                swizzleNamespace(ns, *nsupdmap);
+                replaceNamespace(ns, *nsupdmap);
             }
 
             scm_type = (save_types) ? getScmType(node) : xs_untyped;
@@ -280,9 +300,16 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
             text_cptr buf(node);
 
             if (nsupdmap != NULL && ns != NULL_XMLNS) {
-                getFirstChildByType();
-                swizzleNamespace(ns, *nsupdmap);
-            }asdfasdgfasdg
+                replaceNamespace(ns, *nsupdmap);
+            };
+
+            if (depth == 0 && ns != NULL_XMLNS) {
+                const xmlns_ptr new_ns = swizzle_namespace(parent, ns);
+                if (new_ns != NULL_XMLNS) {
+                    insert_namespace(left, right, parent, new_ns);
+                    ns = new_ns;
+                }
+            }
 
             CHECKP(node);
             scm_type = (save_types) ? AttributeNode(node).getType() : xs_untypedAtomic;
@@ -293,12 +320,23 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
         case xml_namespace: {
             xmlns_ptr ns = NSNode(node).getNamespaceLocal();
 
-            /* There is no need to copy default namespace alone without its node  */
-            if (ns.has_prefix() || depth > 0) {
-                if (nsupdmap != NULL && ns.has_prefix()) {
-                    swizzleNamespace(ns, *nsupdmap);
+            /* That is bad to copy default namespace alone without its node  */
+            if (ns->has_prefix() || depth > 0) {
+                if (nsupdmap != NULL && ns->has_prefix()) {
+                    replaceNamespace(ns, *nsupdmap);
                 }
+
+                if (depth == 0) {
+                    const xmlns_ptr new_ns = swizzle_namespace(parent, ns);
+                    if (new_ns != NULL_XMLNS) {
+                        if (nsupdmap != NULL) { (**nsupdmap)[ns] = new_ns; }
+                        ns = new_ns;
+                    }
+                }
+
                 result = insert_namespace(left, right, parent, ns);
+            } else {
+                return left;
             }
         }
         break;
