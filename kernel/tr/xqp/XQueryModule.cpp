@@ -341,7 +341,7 @@ namespace sedna
 
         for (XQFunctionInfo::iterator it = funcs.begin(); it != funcs.end(); it++)
         {
-            if (it->second->is_used)
+            if (it->second->is_used && !it->second->is_external())
             {
                 it->second->id.first = dyn_cxt;
                 it->second->id.second = dyn_cxt->get_new_func_id();
