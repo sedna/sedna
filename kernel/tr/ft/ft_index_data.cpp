@@ -22,7 +22,8 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/idx/btree/btree.h"
 #include "tr/cat/catstore.h"
-
+#include "common/u/uutils.h"
+#include "tr/strings/opt_parser.h"
 #include "tr/structures/nodeutils.h"
 
 
@@ -77,7 +78,8 @@ void ft_index_cell_object::serialize_data(se_simplestream &stream)
 
     stream.write_string(index_title);
     stream.write(&ftype, sizeof(ft_index_type));
-    stream.write(&impl, sizeof(ft_index_type));
+    stream.write(&impl, sizeof(ft_index_impl));
+	stream.write_string(stemming);
     stream.write(&fts_data, sizeof(struct FtsData));
 
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
@@ -123,6 +125,8 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     stream.read_string(SSTREAM_SAVED_LENGTH, index_title);
     stream.read(&ftype, sizeof(ft_index_type));
     stream.read(&impl, sizeof(ft_index_type));
+	stemming = (char *) cat_malloc(this, stream.read_string_len());
+	stream.read_string(SSTREAM_SAVED_LENGTH, stemming);
     stream.read(&fts_data, sizeof(struct FtsData));
 
     if ((len = stream.read_string_len()) != 0)
@@ -184,7 +188,7 @@ ft_index_cell_xptr create_ft_index(
         PathExpr *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
-        ft_index_template_t* _templ, bool just_heap, ft_index_impl _impl
+        ft_index_template_t* _templ, bool just_heap, const char *options
     )
 {
    // I. Create and fill new index cell
@@ -194,7 +198,7 @@ ft_index_cell_xptr create_ft_index(
     }
 
     down_concurrent_micro_ops_number();
-    ft_index_cell_cptr idc(ft_index_cell_object::create(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, _impl));
+    ft_index_cell_cptr idc(ft_index_cell_object::create(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, options));
     _schemaroot.modify()->full_ft_index_list->add(idc.ptr());
 
     if (_it == ft_customized_value && _templ != NULL)
@@ -211,13 +215,13 @@ ft_index_cell_xptr create_ft_index(
     // only needed for ft_ind_native impl
 
     ftc_index_t ftc_idx;
-    if (_impl == ft_ind_native)
+	if (idc->impl == ft_ind_native)
     {
 		fts_create(&idc->fts_data);
         ftc_idx = ftc_get_index(_index_title, &idc->fts_data);
     }
 
-    hl_logical_log_ft_index(_object_path, _it, _index_title, _doc_name, _is_doc, idc->custom_tree, true);
+	hl_logical_log_ft_index(_object_path, _it, _index_title, _doc_name, options ? options:"", _is_doc, idc->custom_tree, true);
 
     // ALGORITHM: indexing data
     //II. Execute abs path (object_path) on the desriptive schema
@@ -246,7 +250,7 @@ ft_index_cell_xptr create_ft_index(
     if (!just_heap) // moved here because ph ft_index info must be recovered fully (AK)
     {
         // ft_index recovery should take the responsibility here
-		switch (_impl)
+		switch (idc->impl)
 		{
 #ifdef SE_ENABLE_DTSEARCH
 		case ft_ind_dtsearch:
@@ -299,8 +303,10 @@ void delete_ft_index (const char *index_title, bool just_heap)
     ft_index_cell_cptr idc(index_title, true);
 
     if (idc.found()) {
+		op_str_buf options_buf;
         down_concurrent_micro_ops_number();
-        hl_logical_log_ft_index(idc->object, idc->ftype, idc->index_title, idc->doc_name, idc->is_doc, idc->custom_tree, false);
+		idc->write_options_str(&options_buf);
+		hl_logical_log_ft_index(idc->object, idc->ftype, idc->index_title, idc->doc_name, options_buf.c_str(), idc->is_doc, idc->custom_tree, false);
 
         if (!just_heap) //FIXME: mb move out of down_concurrent_micro_ops_number() block
         {
@@ -379,6 +385,127 @@ static void ft_update_seq(xptr_sequence *seq, ft_index_cell_object *idc, ftc_ind
 				idc->serial_put(node, node_indir, in_buf);
 			*/
 			ft_index_update(ft_insert, node_indir, &in_buf, &idc->fts_data, ftc_idx);
+		}
+	}
+}
+
+const char * ft_index_cell_object::impl_str()
+{
+	switch (this->impl)
+	{
+	case ft_ind_dtsearch:
+		return "dtsearch";
+	case ft_ind_native:
+		return "native";
+	default:
+		return "unknown";
+	}
+}
+void ft_index_cell_object::parse_options(const char * options)
+{
+	OptionsParser op;
+	op.set_str(options);
+
+	while (op.next_opt())
+	{
+		if (!strcmp(op.opt_name(), "native"))
+		{
+			if (op.opt_value()[0] || impl != ft_ind_undefined)
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+			impl = ft_ind_native;
+		}
+		else if (!strcmp(op.opt_name(), "dtsearch"))
+		{
+			if (op.opt_value()[0] || impl != ft_ind_undefined)
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+			impl = ft_ind_dtsearch;
+		}
+		else if (!strcmp(op.opt_name(), "type"))
+		{
+			if (impl != ft_ind_undefined)
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+			if (!strcmp(op.opt_value(), "native"))
+			{
+				impl = ft_ind_native;
+			}
+			else if (!strcmp(op.opt_value(), "dtsearch"))
+			{
+				impl = ft_ind_dtsearch;
+			}
+			else
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+		}
+		else if (!strcmp(op.opt_name(), "stemming"))
+		{
+			if (stemming != NULL)
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+			stemming = cat_strcpy(this, op.opt_value());
+		}
+	}
+}
+
+void ft_index_cell_object::write_options_str(op_str_buf *buf)
+{
+	buf->append("type=");
+	buf->append(impl_str());
+	if (stemming != NULL && stemming[0] != '\x0')
+		OptionsParser::append_option(buf, "stemming", stemming);
+}
+
+void ft_index_cell_object::serialize_info(xptr left_sib, xptr parent)
+{
+	char sbuf[64];
+	switch (this->impl)
+	{
+	case ft_ind_native:
+		{
+        if (left_sib == XNULL)
+            left_sib = insert_element_i(XNULL,XNULL,parent,"partitions",xs_untyped,NULL_XMLNS);
+        else
+            left_sib = insert_element_i(left_sib,XNULL,XNULL,"partitions",xs_untyped,NULL_XMLNS);
+
+		u_itoa(this->fts_data.npartitions, sbuf, 10);
+		xptr node = insert_attribute_i(XNULL,XNULL,left_sib,"count",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+		xptr left_p = XNULL;
+		int64_t total_sblob_blocks = 0;
+		int64_t total_voc_blocks = 0;
+		int64_t total_dellist_blocks = 0;
+		for (int i = 0; i < this->fts_data.npartitions; i++)
+		{
+			if (left_p == XNULL)
+				left_p = insert_element_i(XNULL,XNULL,left_sib,"partition",xs_untyped,NULL_XMLNS);
+			else
+				left_p = insert_element_i(left_p,XNULL,XNULL,"partition",xs_untyped,NULL_XMLNS);
+
+			u_itoa(i, sbuf, 10);
+			node = insert_attribute_i(XNULL,XNULL,left_p,"ind",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+			u_itoa(this->fts_data.partitions[i].sblob_blocks, sbuf, 10);
+			node = insert_attribute_i(node,XNULL,XNULL,"sblob_blocks",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+			const int voc_blocks = bt_walk_nodes(this->fts_data.partitions[i].voc_btree_root);
+			u_itoa(voc_blocks, sbuf, 10);
+			node = insert_attribute_i(node,XNULL,XNULL,"voc_blocks",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+			const int dellist_blocks = bt_walk_nodes(this->fts_data.partitions[i].del_list);
+			u_itoa(dellist_blocks, sbuf, 10);
+			node = insert_attribute_i(node,XNULL,XNULL,"del_list_blocks",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+
+			total_sblob_blocks += this->fts_data.partitions[i].sblob_blocks;
+			total_voc_blocks += voc_blocks;
+			total_dellist_blocks += dellist_blocks;
+		}
+		if (left_p == XNULL)
+			left_p = insert_element_i(XNULL,XNULL,left_sib,"total",xs_untyped,NULL_XMLNS);
+		else
+			left_p = insert_element_i(left_p,XNULL,XNULL,"total",xs_untyped,NULL_XMLNS);
+		u_i64toa(total_sblob_blocks+total_voc_blocks+total_dellist_blocks, sbuf, 10);
+		node = insert_attribute_i(XNULL,XNULL,left_p,"blocks",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+		u_i64toa(total_sblob_blocks, sbuf, 10);
+		node = insert_attribute_i(XNULL,XNULL,left_p,"sblob_blocks",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+		u_i64toa(total_voc_blocks, sbuf, 10);
+		node = insert_attribute_i(XNULL,XNULL,left_p,"voc_blocks",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+		u_i64toa(total_dellist_blocks, sbuf, 10);
+		node = insert_attribute_i(XNULL,XNULL,left_p,"del_list_blocks",xs_untypedAtomic,sbuf,strlen(sbuf),NULL_XMLNS);
+
+		return;
 		}
 	}
 }

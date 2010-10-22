@@ -26,7 +26,8 @@ enum ft_index_type
 enum ft_index_impl
 {
     ft_ind_dtsearch,
-    ft_ind_native
+    ft_ind_native,
+	ft_ind_undefined
 };
 
 struct ft_custom_cell

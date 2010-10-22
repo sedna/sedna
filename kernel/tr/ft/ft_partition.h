@@ -15,7 +15,7 @@ struct ft_partition_data
 	xptr voc_btree_root;
 	xptr data;
 	xptr del_list;
-	int64_t sblob_size;
+	int sblob_blocks;
 };
 typedef int ftp_ind_t;
 
@@ -42,6 +42,7 @@ public:
 	xptr create_new();
 	void finalize() { set_st_word(); data_writer.flush(); }
 	int64_t bytes_written() { return data_writer.bytes_written(); }
+	int block_count()       { return data_writer.block_count(); }
 
 	//reset state to st_word by closing accesor and word index list if needed
 	void set_st_word();

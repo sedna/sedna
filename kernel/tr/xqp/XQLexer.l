@@ -454,6 +454,8 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 "USER" { yylval->isUpper = 1; return token::USER; }
 "with" { return token::WITH; }
 "WITH" { yylval->isUpper = 1; return token::WITH; }
+"options" { return token::OPTIONS; }
+"OPTIONS" { yylval->isUpper = 1; return token::OPTIONS; }
 
 
     /* element, attribute and processing-instruction are ambiguous in LALR(1)-sense since we need 2-token lookahead ('attribute or 2' is synt. valid)

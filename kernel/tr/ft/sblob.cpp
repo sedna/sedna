@@ -30,10 +30,13 @@ void SblobWriter::alloc_new_blk()
 	last_block = new_blk;
 	U_ASSERT(PAGE_SIZE - new_blk_hdr->cursor == max_data_in_block);
 	last_block_avail = max_data_in_block;
+
+	nblocks++;
 }
 
 xptr SblobWriter::create_new()
 {
+	nblocks = 0;
 	alloc_new_blk();
 	nbytes_written = 0;
 	return cur_ptr();

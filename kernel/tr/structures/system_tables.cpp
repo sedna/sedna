@@ -360,6 +360,7 @@ get_ftindexes (xptr node,const char* /* title */)
             left = insert_element_i(left,XNULL,XNULL,"ftindex",xs_untyped,NULL_XMLNS);
 
         xptr node= insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,ic->index_title,strlen(ic->index_title),NULL_XMLNS);
+		node     = insert_attribute_i(node,XNULL,XNULL,"index_type",xs_untypedAtomic,ic->impl_str(),strlen(ic->impl_str()),NULL_XMLNS);
         node     = insert_attribute_i(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",(ic->is_doc)?8:10,NULL_XMLNS);
         node     = insert_attribute_i(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,strlen(ic->doc_name),NULL_XMLNS);
 
@@ -369,10 +370,15 @@ get_ftindexes (xptr node,const char* /* title */)
         std::string str  = ic->object->to_string();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
 
+		op_str_buf tbuf;
+		ic->write_options_str(&tbuf);
+		if (tbuf.get_size() > 0)
+			node = insert_attribute_i(node,XNULL,XNULL,"options",xs_untypedAtomic,tbuf.c_str(),tbuf.get_size(),NULL_XMLNS);
+
+		xptr cleft = XNULL;
         if (ic->ftype == ft_customized_value && ic->custom_tree != NULL)
         {
             ft_custom_tree_t::sedna_rbtree_entry* cdc=ic->custom_tree->rb_minimum(ic->custom_tree->root);
-            xptr cleft = XNULL;
             while (cdc!=NULL)
             {
                 ft_custom_cell* cc=cdc->obj;
@@ -396,6 +402,8 @@ get_ftindexes (xptr node,const char* /* title */)
                 cdc=ic->custom_tree->rb_successor(cdc);
             }
         }
+
+		ic->serialize_info(cleft, left);
     }
 }
 #endif /* SE_ENABLE_FTSEARCH */

@@ -64,7 +64,7 @@ void hl_logical_log_text_edit(const xptr &self,unsigned data_size,bool begin,boo
 void hl_logical_log_text_edit(const xptr &self,const  char* value,unsigned data_size,bool begin,bool inserted);
 
 #ifdef SE_ENABLE_FTSEARCH
-void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name,bool is_doc, ft_custom_tree_t * custom_tree,bool inserted);
+void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name, const char* options, bool is_doc, ft_custom_tree_t * custom_tree,bool inserted);
 ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, unsigned custom_tree_size);
 #endif
 #ifdef SE_ENABLE_TRIGGERS

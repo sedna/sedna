@@ -406,6 +406,7 @@ public:
     virtual tuple_cell substring(const tuple_cell *tc, int64_t start_pos, int64_t length) = 0;
 	//returns pointer to unicode_cp_iterator, it must then be released using delete operator.
 	virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc) = 0;
+	virtual unicode_cp_iterator *get_unicode_cp_iterator(const char * tc) = 0;
 
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;

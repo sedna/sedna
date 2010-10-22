@@ -22,10 +22,10 @@ private:
 
     PathExpr *object_path;
 	ft_index_type index_type;
-	ft_index_impl index_impl;
 	PPOpIn cust_rules;
     PathExprRoot root;    
     PPOpIn index_name;
+    PPOpIn options;
     dynamic_context *cxt;
     
     virtual void do_open();
@@ -39,15 +39,10 @@ public:
                     const char* _index_type_,
                     PathExprRoot _root_,
                     PPOpIn _index_name_,
+					PPOpIn _options_,
                     PPOpIn _cust_rules_,
                     dynamic_context *_cxt_);
  
-    PPCreateFtIndex(PathExpr *_object_path_,
-                    const char *_index_type_,
-                    PathExprRoot _root_,
-                    PPOpIn _index_name_,
-                    dynamic_context *_cxt_);
-
     ~PPCreateFtIndex();
     
     inline ft_index_type get_index_type() const { return index_type; }

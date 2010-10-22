@@ -51,6 +51,7 @@ struct ft_index_cell_object : public catalog_object
     bool is_doc;
     ft_index_type ftype;
     ft_index_impl impl;
+	char * stemming;
     struct FtsData fts_data;
 
     xptr serial_root;
@@ -68,7 +69,7 @@ struct ft_index_cell_object : public catalog_object
         PathExpr *_object_path, ft_index_type _it,
         const doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
-	ft_index_impl _impl = ft_ind_dtsearch
+		const char * options
       ) :
         schemaroot(_schemaroot),
         index_title(NULL),
@@ -76,7 +77,8 @@ struct ft_index_cell_object : public catalog_object
         doc_name(NULL),
         is_doc(_is_doc),
         ftype(_it),
-        impl(_impl),
+        impl(ft_ind_undefined),
+		stemming(NULL),
         fts_data(),
         serial_root(XNULL),
         pstr_sequence(XNULL),
@@ -84,6 +86,10 @@ struct ft_index_cell_object : public catalog_object
     {
         index_title = cat_strcpy(this, _index_title);
         doc_name = cat_strcpy(this, _doc_name);
+		if (options)
+			parse_options(options);
+		else
+			impl = ft_ind_dtsearch;
     };
 
     ~ft_index_cell_object() {
@@ -94,12 +100,12 @@ struct ft_index_cell_object : public catalog_object
         PathExpr *_object_path, ft_index_type _it,
         const doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
-        ft_index_impl _impl = ft_ind_dtsearch
+        const char * options
       )
     {
         ft_index_cell_object * obj =
           new(cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, sizeof(ft_index_cell_object)))
-          ft_index_cell_object(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, _impl);
+          ft_index_cell_object(_object_path, _it, _schemaroot, _index_title, _doc_name, _is_doc, options);
 
         catalog_object_header * header = catalog_create_object(obj);
         catalog_set_name(catobj_ft_indicies, _index_title, header);
@@ -108,6 +114,10 @@ struct ft_index_cell_object : public catalog_object
         return header;
     };
 
+	const char *impl_str();
+	void parse_options(const char * options);
+	void write_options_str(op_str_buf *buf);
+	void serialize_info(xptr left_sib, xptr parent);
 	void update_index(update_history *h);
 
 	/*
@@ -126,7 +136,7 @@ ft_index_cell_xptr create_ft_index(
         PathExpr *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
-        ft_index_template_t* _templ, bool just_heap, ft_index_impl _impl
+        ft_index_template_t* _templ, bool just_heap, const char * options
     );
 
 void delete_ft_index (const char *index_title, bool just_heap=false);

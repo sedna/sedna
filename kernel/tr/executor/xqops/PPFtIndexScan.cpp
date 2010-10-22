@@ -144,7 +144,12 @@ void PPFtIndexScan::do_next(tuple &t)
 			throw XQUERY_EXCEPTION(SE1071);
 
 		ftc_index_t ftc_idx;
-		ft_index_cell_cptr ft_idx = find_ft_index(op_str_buf(tc).c_str(), &ftc_idx); //FIXME: op_str_buf may be destroyed too soon
+		op_str_buf tmp_buf(tc);
+		const char *index_title = tmp_buf.c_str();
+		//TODO: set lock mode
+		get_schema_node(find_db_entity_for_object(catobj_ft_indicies, index_title),
+						"Unknown database entity for full-text index");
+		ft_index_cell_cptr ft_idx = find_ft_index(index_title, &ftc_idx);
 		if (!ft_idx.found())
 			throw USER_EXCEPTION(SE1061);
 		idx_name.op->next(t);

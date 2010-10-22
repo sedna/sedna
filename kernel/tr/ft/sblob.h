@@ -25,16 +25,19 @@ private:
 	int last_block_avail;       //space (in bytes) available in last_block
 	char buf[PAGE_SIZE];
 	int buf_pos;                //buf_pos must be <= last_block_avail
+
 	int64_t nbytes_written;
+	int	nblocks;
 
 	static const int max_data_in_block = (PAGE_SIZE - sizeof(struct sblob_blk_hdr));
 	void alloc_new_blk();
 public:
-	SblobWriter() : last_block(XNULL), buf_pos(0), last_block_avail(0), nbytes_written(0) {}
+	SblobWriter() : last_block(XNULL), last_block_avail(0), buf_pos(0), nbytes_written(0), nblocks(0) {}
 	xptr create_new();
 	void flush();
 	void write(const char *data, int len);
 	const int64_t bytes_written() { return nbytes_written; }
+	const int block_count() { return nblocks; }
 	xptr cur_ptr();
 };
 

@@ -665,9 +665,9 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
 // Recover full-text index
 static void llRcvFtIndex(LSN curr_lsn, void *Rec)
 {
-#ifdef SE_ENABLE_DTSEARCH //TODO: add stuff for FTSEARCH
+#ifdef SE_ENABLE_FTSEARCH
 	 char *rec = (char *)Rec;
-     const char *obj_path, *ind_name, *doc_name, *custom_tree_buf;
+     const char *obj_path, *ind_name, *doc_name, *options, *custom_tree_buf;
      ft_index_type itconst;
      unsigned custom_tree_size;
      size_t offs;
@@ -684,6 +684,8 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
      offs += strlen(ind_name) + 1;
      doc_name = rec + offs;
      offs += strlen(doc_name) + 1;
+	 options = rec + offs;
+	 offs += strlen(options) + 1;
      memcpy(&custom_tree_size, rec + offs, sizeof(unsigned));
      offs += sizeof(unsigned);
      custom_tree_buf = rec + offs;
@@ -704,7 +706,8 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
                             doc_name,
                             true,
                             cust_tree,
-							true, ft_ind_dtsearch);
+							true,
+							options);
 			  if (cust_tree)
 				  delete_cust_rules_vector(cust_tree);
 		   }
@@ -723,7 +726,8 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
                             doc_name,
                             false,
                             cust_tree,
-							true, ft_ind_dtsearch);
+							true,
+							options);
 			  if (cust_tree)
 				  delete_cust_rules_vector(cust_tree);
 		   }

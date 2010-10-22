@@ -280,6 +280,7 @@ void IntVisitor::visit(ASTCreateFtIndex &n)
     dumpASTNode(n.path);
     DUMP_STR(*n.type);
     dumpASTNode(n.cust_expr);
+	dumpASTNode(n.options);
     int_str.append(")");
 }
 
