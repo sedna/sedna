@@ -18,8 +18,7 @@ PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_) :       PPQueryEssence("PPQueryRoot"),
                                                  child(_child_),
                                                  data(_child_.ts),
-                                                 cxt(_cxt_),
-                                                 output_stream(NULL)
+                                                 cxt(_cxt_)
 {
 }
 
@@ -132,15 +131,12 @@ bool PPQueryRoot::do_next()
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
 
-/*
-    if (!first && !tr_globals::client->supports_serialization()) {
-        // This is needed for backward compatibility with old ( < 4 ) versions of protocol
-        (*output_stream) << " ";
-    }
-*/
-
     if (tr_globals::client->supports_serialization()) {
         cxt->get_static_context()->get_serialization_options()->indent = false;
+        cxt->get_static_context()->get_serialization_options()->separateTuples = false;
+    } else if (!first) {
+        (* tr_globals::client->get_se_ostream()) << "\n"; // separate tuples!
+        // This is needed for backward compatibility with old ( < 4 ) versions of protocol
     }
 
     tr_globals::serializer->prepare(

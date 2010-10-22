@@ -723,7 +723,8 @@ void PPElementConstructor::do_next (tuple &t)
                             cont_leftind = left;
                         }
                     } else {
-                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->get_static_context()->get_construction_mode());
+                        /* depth 1 means, that this is not an update operation copying */
+                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->get_static_context()->get_construction_mode(), 1);
                         cont_leftind = left;
                     }
                 }
@@ -755,6 +756,9 @@ void PPElementConstructor::do_next (tuple &t)
         t.set_eos();
     }
 }
+
+
+
 
 PPIterator* PPElementConstructor::do_copy(dynamic_context *_cxt_)
 {
@@ -1075,8 +1079,14 @@ void PPNamespaceConstructor::do_next (tuple &t)
             uri = (char*)executor_globals::tmp_op_str_buf.c_str();
         }
 
+        xptr new_namespace;
         xmlns_ptr ns = cxt->add_to_context(prefix,uri);
-        xptr new_namespace = insert_namespace(XNULL,XNULL,get_virtual_root(),ns);
+        if (cont_parind != XNULL) {
+            new_namespace = insert_namespace(XNULL, XNULL, indirectionDereferenceCP(cont_parind), ns);
+            ++conscnt;
+        } else {
+            new_namespace = insert_namespace(XNULL, XNULL, get_virtual_root(), ns);
+        }
 
         t.copy(tuple_cell::node(new_namespace));
     }

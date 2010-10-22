@@ -11,16 +11,6 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/strings/strings_base.h"
 
-enum pat_class
-{
-    pat_xml_attribute = 1,
-    pat_xml_element = 2,
-    pat_custom1 = 4,
-    pat_cdata = 8,
-    pat_sxml = 16,
-    pat_charmap = 32
-};
-
 struct trie_node
 {
     /* 

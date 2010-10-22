@@ -99,6 +99,20 @@ void xmlns_indb_object::drop()
     catalog_delete_object(this);
 }
 
+xmlns_ptr generate_prefix(const char * prefix, const char * uri)
+{
+    size_t len = strlen(prefix);
+    char * x = (char *) malloc(len + 3 + 1);
+    xmlns_ptr result;
+
+    memcpy(x, prefix, len);
+    memcpy(x + len, "-se\0", 4);
+
+    result = xmlns_touch(x, uri);
+    free(x);
+    return result;
+}
+
 xmlns_ptr generate_prefix(int ctr,const char* uri,dynamic_context *cxt)
 {
     char x[12] = "XXX";

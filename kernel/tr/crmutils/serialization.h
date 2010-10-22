@@ -11,13 +11,8 @@
 
 #include "tr/executor/base/tuple.h"
 
-
-/*
-enum se_output_method  {se_output_method_xml};
-enum se_output_indent  {se_output_indent_yes, se_output_indent_no};
-*/
-
-class StrMatcher;
+#include <set>
+#include <map>
 
 enum se_output_method {
     se_output_method_xml  = 0,
@@ -31,18 +26,25 @@ struct GlobalSerializationOptions {
 
   /* XML specific options */
     bool preserveNamespaces;
+    bool useCharmap;
     const char * indentSequence;
     bool indent;
-    std::set<std::string> * cdataSectionElements;
+
+    typedef std::set<std::string> NameSet;
+    NameSet cdataSectionElements;
+
+    typedef std::set< std::pair<std::string, std::string> > Stringmap;
+    Stringmap charmap;
+
+    bool separateTuples;
 };
 
 class Serializer {
   protected:
     GlobalSerializationOptions * options;
-    StrMatcher * stm;
     se_ostream * crmout;
   public:
-    inline Serializer() : options(NULL), stm(NULL), crmout(NULL) {};
+    inline Serializer() : options(NULL), crmout(NULL) {};
     virtual ~Serializer() {};
 
     virtual void serialize(tuple &t) = 0;
@@ -51,11 +53,10 @@ class Serializer {
     virtual void initialize() = 0;
 
     inline void setOutput(se_ostream * output) { crmout = output; };
-    inline void setFilter(StrMatcher * filter) { stm = filter; };
     inline void setOptions(GlobalSerializationOptions * aOptions) { options = aOptions; }
 
-    inline void prepare(se_ostream * output, StrMatcher * filter, GlobalSerializationOptions * aOptions) {
-        setOutput(output); setFilter(filter); setOptions(aOptions); initialize();
+    inline void prepare(se_ostream * output, GlobalSerializationOptions * aOptions) {
+        setOutput(output); setOptions(aOptions); initialize();
     }
 
     static Serializer * createSerializer(enum se_output_method method);
