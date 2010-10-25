@@ -62,6 +62,7 @@ int bt_walk_nodes(const xptr root)
         xptr next_level_lmp = BT_LMP(xaddr(cur_xpg));
 
         do {
+			CHECKP(cur_xpg);
             cur_xpg = BT_NEXT(xaddr(cur_xpg));
             ++c;
         } while (cur_xpg != XNULL);
