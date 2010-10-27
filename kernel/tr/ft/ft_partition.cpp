@@ -6,12 +6,17 @@
 #include "tr/ft/ft_partition.h"
 #include "tr/idx/btree/btree.h"
 
+#define FT_XPTR_TO_UINT(x) (x.to_logical_int())
+#define FT_UINT_TO_XPTR(x) (logical_int_to_xptr(x))
+//#define FT_XPTR_TO_UINT(x) (x.to_uint64())
+//#define FT_UINT_TO_XPTR(x) (uint64_to_xptr(x))
+
 xptr FtPartitionSblobWriter::create_new()
 {
 	const xptr data = data_writer.create_new();
 
 	cur_word[0] = '\x0';
-	cur_acc = XNULL;
+	cur_acc_i = 0;
 	state = st_word;
 
 	return data;
@@ -34,48 +39,46 @@ void FtPartitionSblobWriter::set_st_word()
 		U_ASSERT(false);
 	}
 }
-void FtPartitionSblobWriter::write_acc(const xptr acc)
-{
-	data_writer.write((const char *)&acc, sizeof(acc));
-}
-void FtPartitionSblobWriter::start_acc(const xptr acc)
+void FtPartitionSblobWriter::start_acc_i(const uint64_t acc_i)
 {
 	U_ASSERT(state == st_acc);
-	write_acc(acc);
-	cur_acc = acc;
+	U_ASSERT(acc_i > this->cur_acc_i);
+	data_writer.write_uint(acc_i - this->cur_acc_i);
+	cur_acc_i = acc_i;
+	cur_ind = 0;
 	state = st_ind;
 }
 void FtPartitionSblobWriter::end_acc()
 {
-	const xptr xnull = XNULL;
 	U_ASSERT(state == st_acc);
-	data_writer.write((const char *)&xnull, sizeof(xnull));
+	data_writer.write_uint(0);
 	state = st_word;
 	cur_word[0] = '\x0';
 }
 
-void FtPartitionSblobWriter::set_acc(const xptr acc)
+void FtPartitionSblobWriter::set_acc_i(const uint64_t acc_i)
 {
 	U_ASSERT(state >= st_acc);
-	if (state == st_acc || cur_acc != acc)
+	if (state == st_acc || cur_acc_i != acc_i)
 	{
 		if (state == st_ind)
 			end_ind();
 		U_ASSERT(state == st_acc);
-		start_acc(acc);
+		start_acc_i(acc_i);
 	}
 }
 
 void FtPartitionSblobWriter::write_ind(const ftp_ind_t ind)
 {
-	data_writer.write((const char *)&ind, sizeof(ind));
+	U_ASSERT(ind > cur_ind);
+	data_writer.write_uint(ind - cur_ind);
+	cur_ind = ind;
 }
 void FtPartitionSblobWriter::end_ind()
 {
 	U_ASSERT(state == st_ind);
-	write_ind(0);
+	data_writer.write_uint(0);
 	state = st_acc;
-	cur_acc = XNULL;
 }
 
 xptr FtPartitionSblobWriter::start_word(const char *word)
@@ -91,7 +94,7 @@ xptr FtPartitionSblobWriter::start_word(const char *word)
 
 	data_writer.write(cur_word, len+1);
 	state = st_acc;
-	cur_acc = XNULL;
+	cur_acc_i = 0; //FIXME: make sure FT_XPTR_TO_UINT(XNULL) == 0
 
 	return ptr;
 }
@@ -133,14 +136,14 @@ bool FtPartitionReader::read_word()
 	//FIXME: check that we've read the whole word
 	data_reader.read_str(cur_word, FTP_MAX_WORD_LENGTH+1);
 	state = st_acc;
+	cur_acc_i = 0;
 	return true;
 }
 bool FtPartitionReader::read_acc()
 {
 	U_ASSERT(state == st_acc);
-	size_t r = data_reader.read_bytes((char*)&cur_acc, sizeof(cur_acc));
-	U_ASSERT(r == sizeof(cur_acc));
-	if (cur_acc == XNULL)
+	uint64_t acc_delta = data_reader.read_uint();
+	if (acc_delta == 0)
 	{
 		state = st_word;
 		return false;
@@ -148,21 +151,26 @@ bool FtPartitionReader::read_acc()
 	else
 	{
 		state = st_ind;
+		cur_acc_i = cur_acc_i + acc_delta;
+		cur_ind = 0;
 		return true;
 	}
 }
 bool FtPartitionReader::read_ind()
 {
 	U_ASSERT(state == st_ind);
-	size_t r = data_reader.read_bytes((char*)&cur_ind, sizeof(cur_ind));
-	U_ASSERT(r == sizeof(cur_ind));
-	if (cur_ind == 0)
+	uint64_t ind_d = data_reader.read_uint();
+
+	if (ind_d == 0)
 	{
 		state = st_acc;
 		return false;
 	}
 	else
+	{
+		cur_ind += ind_d;
 		return true;
+	}
 }
 void FtPartitionReader::skip_inds()
 {
@@ -171,10 +179,10 @@ void FtPartitionReader::skip_inds()
 		read_ind();
 }
 
-bool FtPartitionReader::acc_in_del_list(const xptr acc)
+bool FtPartitionReader::acci_in_del_list(const uint64_t acc_i)
 {
 	bt_key bkey;
-	bkey.setnew((int64_t)acc.to_uint64());
+	bkey.setnew((int64_t)acc_i);
 	bt_cursor cur = bt_find(del_list, bkey);
 
 	xptr p = cur.bt_next_obj();
@@ -213,7 +221,7 @@ void FtPartitionBuilder::start_word(const char *word)
 void FtPartitionBuilder::del_doc(const xptr acc)
 {
 	bt_key key;
-	key.setnew((int64_t)acc.to_uint64());
+	key.setnew((int64_t)FT_XPTR_TO_UINT(acc));
 	bt_insert_tmpl<xptr>(p_data.del_list, key, acc);
 }
 
@@ -228,7 +236,7 @@ void FtPartitionBuilder::set_word(const char *word)
 
 void FtPartitionBuilder::set_acc(const xptr acc)
 {
-	sblob_writer.set_acc(acc);
+	sblob_writer.set_acc_i(FT_XPTR_TO_UINT(acc));
 }
 
 void FtPartitionBuilder::add_ind(const ftp_ind_t ind)
@@ -242,7 +250,7 @@ void FtPartitionBuilder::add_word_occur(const char *word, const xptr acc, const 
 {
 	set_word(word);
 	set_acc(acc);
-	U_ASSERT(sblob_writer.state == FtPartitionSblobCursor::st_ind && sblob_writer.cur_acc == acc);
+	U_ASSERT(sblob_writer.state == FtPartitionSblobCursor::st_ind && sblob_writer.cur_acc_i == FT_XPTR_TO_UINT(acc));
 	add_ind(word_ind);
 }
 
@@ -274,7 +282,7 @@ void FtPartitionScanner::find_smallest_acc()
 {
 	int mina = -1;
 	for (int i = 0; i < n; i++)
-		if (readers[i].flag_curw() && (mina == -1 || readers[i].cur_acc.to_uint64() < readers[mina].cur_acc.to_uint64()))
+		if (readers[i].flag_curw() && (mina == -1 || readers[i].cur_acc_i < readers[mina].cur_acc_i))
 			mina = i;
 
 	ncura = 0;
@@ -285,7 +293,7 @@ void FtPartitionScanner::find_smallest_acc()
 		return;
 
 	for (int i = 0; i < n; i++)
-		if (readers[i].flag_curw() && readers[i].cur_acc == readers[mina].cur_acc)
+		if (readers[i].flag_curw() && readers[i].cur_acc_i == readers[mina].cur_acc_i)
 		{
 			readers[i].flag_cura_set();
 			ncura++;
@@ -315,7 +323,7 @@ ftp_ind_t FtPartitionScanner::extract_min_ind()
 bool FtPartitionScanner::acc_is_valid(int i)
 {
 	for (int j = i+1; j < n; j++)
-		if (readers[j].acc_in_del_list(readers[i].cur_acc))
+		if (readers[j].acci_in_del_list(readers[i].cur_acc_i))
 			return false;
 	return true;
 }
@@ -429,7 +437,7 @@ void FtPartitionScanner::merge(ft_partition_data *dest_partition, bool merge_del
 		{
 			xptr minacc = XNULL;
 			for (int i = 0; i < n; i++)
-				if (p[i].val != XNULL && (minacc == XNULL || p[i].val.to_uint64() < minacc.to_uint64()))
+				if (p[i].val != XNULL && (minacc == XNULL || FT_XPTR_TO_UINT(p[i].val) < FT_XPTR_TO_UINT(minacc)))
 					minacc = p[i].val;
 
 			if (minacc == XNULL)
@@ -477,7 +485,7 @@ void FtPartitionScanner::merge(ft_partition_data *dest_partition, bool merge_del
 			while (mina < n && !readers[mina].flag_cura())
 				mina++;
 			U_ASSERT(mina < n);
-			b.set_acc(readers[mina].cur_acc);
+			b.set_acc(FT_UINT_TO_XPTR(readers[mina].cur_acc_i));
 
 			while (ncura > 0)
 				b.add_ind(extract_min_ind());
@@ -500,7 +508,7 @@ bool FtPartitionScanner::get_next_occur(xptr *acc, ftp_ind_t *ind)
 	while (mina < n && !readers[mina].flag_cura())
 		mina++;
 	U_ASSERT(mina < n);
-	*acc = readers[mina].cur_acc;
+	*acc = FT_UINT_TO_XPTR(readers[mina].cur_acc_i);
 	*ind = extract_min_ind();
 	return true;
 }

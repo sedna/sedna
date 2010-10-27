@@ -81,6 +81,16 @@ struct xptr
 #endif
         return v.v;
     };
+    /* XXX: Careful! This should be changed if lsize_t becomes > 32bit */
+    inline void from_logical_int(uint64_t x) const {
+        union uint64_lh_t *v = (uint64_lh_t *) &x;
+#ifndef BIG_ENDIAN_ORDER
+        uint32_t tmp = v->lh.l;
+        v->lh.l = v->lh.h;
+        v->lh.h = tmp;
+#endif
+		(* (uint64_t *) this) = v->v;
+    };
 
     inline uint64_t to_uint64() const { return * (uint64_t *) this; };
     inline void from_uint64(const uint64_t x) { (* (uint64_t *) this) = x; };
@@ -141,6 +151,13 @@ inline xptr uint64_to_xptr(const uint64_t x) {
     p.from_uint64(x);
     return p;
 };
+
+inline xptr logical_int_to_xptr(const uint64_t x) {
+	xptr p;
+	p.from_logical_int(x);
+	return p;
+};
+
 
 inline xptr cxptr(t_layer l, lsize_t a) {
     xptr p = {l, a};

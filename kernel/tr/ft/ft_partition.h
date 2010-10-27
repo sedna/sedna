@@ -31,7 +31,8 @@ public:
 		st_ind   //ind list may be started here
 	} state;
 	char cur_word[FTP_MAX_WORD_LENGTH+1];
-	xptr cur_acc;
+	uint64_t cur_acc_i;
+	ftp_ind_t cur_ind;
 };
 
 class FtPartitionSblobWriter : public FtPartitionSblobCursor
@@ -47,12 +48,11 @@ public:
 	//reset state to st_word by closing accesor and word index list if needed
 	void set_st_word();
 	//append xptr to the list of accesors
-	void write_acc(const xptr acc);
-	void start_acc(const xptr acc);
+	void start_acc_i(const uint64_t acc_i);
 	//end a list of accesors
 	void end_acc();
 	//make sure that we're in in the index list of acc, must be inside some word data (i.e. state >= st_acc)
-	void set_acc(const xptr acc);
+	void set_acc_i(const uint64_t acc_i);
 	//append an index to the list of word indexes
 	void write_ind(const ftp_ind_t ind);
 	//end list of word indexes
@@ -69,8 +69,7 @@ private:
 	bool fl_eos;
 public:
 	xptr del_list;
-	ftp_ind_t cur_ind;
-	FtPartitionReader() : cur_ind(0) {}
+	FtPartitionReader() {}
 
 	void init(const ft_partition_data *partition);
 	void init(const ft_partition_data *partition, const char *word);
@@ -87,7 +86,7 @@ public:
 	//state must be st_ind; skips all indexes for current acc; state becomes st_acc
 	void skip_inds();
 
-	bool acc_in_del_list(const xptr acc);
+	bool acci_in_del_list(const uint64_t acc_i);
 
 	//flags used by scanner
 	bool flag_curw() {return fl_curw; }
