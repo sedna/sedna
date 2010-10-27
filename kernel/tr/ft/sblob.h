@@ -36,6 +36,7 @@ public:
 	xptr create_new();
 	void flush();
 	void write(const char *data, int len);
+	void write_uint(uint64_t val);
 	const int64_t bytes_written() { return nbytes_written; }
 	const int block_count() { return nblocks; }
 	xptr cur_ptr();
@@ -55,8 +56,14 @@ public:
 	///returns number of bytes read, including the trailing '\x0' if it was read
 	size_t read_str(char *dest, size_t max_len);
 	size_t read_bytes(char *dest, size_t cnt);
+	uint64_t read_uint();
 };
 
 void sblob_delete(xptr ptr);
+
+#ifdef _DEBUG
+//unit test for sblob, throws exception if something is wrong
+void sblob_test();
+#endif
 
 #endif
