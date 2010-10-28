@@ -81,7 +81,7 @@ struct ftc_index_data
 			return ptr;
 		ftc_doc_data * doc = (ftc_doc_data*)ind_alloc.deref(ptr);
 		doc->acc = acc;
-		sprintf(doc->str_id, "%020" PRIx64, *(uint64_t*)&acc);
+		sprintf(doc->str_id, "%020" PRIx64, FT_XPTR_TO_UINT(acc));
 		doc->delete_op_ind = 0;
 
 		FTC_DOCMAP *dm = FTC_DOCMAP::get_map(docs, ind_alloc);
@@ -96,7 +96,7 @@ struct ftc_index_data
 	{
 		//FIXME!
 		char str_id[25];
-		sprintf(str_id, "%020" PRIx64, *(uint64_t*)&acc);
+		sprintf(str_id, "%020" PRIx64, FT_XPTR_TO_UINT(acc));
 		FTC_DOCMAP *dm = FTC_DOCMAP::get_map(docs, ind_alloc);
 		FTC_PTR *pptr = dm->find(str_id);
 		if (pptr != NULL)

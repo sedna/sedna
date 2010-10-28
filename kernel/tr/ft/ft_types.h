@@ -9,9 +9,14 @@
 #include <vector>
 
 #include "common/sedna.h"
-
+#include "common/xptr.h"
 #include "tr/structures/rbtree.h"
 #include "tr/structures/schema.h"
+
+#define FT_XPTR_TO_UINT(x) (x.to_logical_int())
+#define FT_UINT_TO_XPTR(x) (logical_int_to_xptr(x))
+//#define FT_XPTR_TO_UINT(x) (x.to_uint64())
+//#define FT_UINT_TO_XPTR(x) (uint64_to_xptr(x))
 
 enum ft_index_type
 {
