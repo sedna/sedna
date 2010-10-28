@@ -6,11 +6,6 @@
 #include "tr/ft/ft_partition.h"
 #include "tr/idx/btree/btree.h"
 
-#define FT_XPTR_TO_UINT(x) (x.to_logical_int())
-#define FT_UINT_TO_XPTR(x) (logical_int_to_xptr(x))
-//#define FT_XPTR_TO_UINT(x) (x.to_uint64())
-//#define FT_UINT_TO_XPTR(x) (uint64_to_xptr(x))
-
 xptr FtPartitionSblobWriter::create_new()
 {
 	const xptr data = data_writer.create_new();
