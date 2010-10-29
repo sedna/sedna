@@ -376,7 +376,7 @@ void sblob_test()
 		x++;
 	}
 
-	uint64_t arr[] = {0x123456789abcdef1, 0x3123123123123123, 0xabcdabcdabcdabcd};
+	uint64_t arr[] = {0x123456789abcdef1LL, 0x3123123123123123LL, 0xabcdabcdabcdabcdLL};
 	for (int i = 0; i < sizeof(arr)/sizeof(uint64_t); i++)
 	{
 		x = arr[i];
