@@ -62,4 +62,7 @@ class Serializer {
     static Serializer * createSerializer(enum se_output_method method);
 };
 
+/* Legarcy */
+void print_pp_stack(se_ostream* dostr);
+
 #endif /* SERIALIZATION_H_ */

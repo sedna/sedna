@@ -1,3 +1,8 @@
+/*
+ * File: xmlserializer.cpp
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "common/base.h"
 #include "common/sedna.h"
 
@@ -12,7 +17,7 @@
 #include "tr/executor/base/xsd.h"
 
 inline static
-void filterText(const StrMatcher &stm, const se_ostream * crmout, int sclass, const TextBufferReader &reader)
+void filterText(StrMatcher &stm, se_ostream * crmout, int sclass, TextBufferReader &reader)
 {
     while (reader.read()) {
         stm.parse(reader.buffer, reader.size, write_func, crmout, sclass);
@@ -22,6 +27,8 @@ void filterText(const StrMatcher &stm, const se_ostream * crmout, int sclass, co
 
 static const char * XML_docTagStart = "<?xml version=\"1.0\" standalone=\"yes\"";
 static const char * XML_docTagEnd = "?>";
+static const char * XML_openTag = "<";
+static const char * XML_closeTag = ">";
 
 inline static
 bool isAttributeAt(IXDMNodeList * list) {
@@ -154,7 +161,7 @@ void XDMSerializer::serialize(tuple & t) {
     if (t.is_eos()) { return; }
 
     for (int i = 0; i < t.cells_number; i++) {
-        if (options->separateTuples && i > 0) { (*crmout) << " "; }
+        if (separatorNeeded && i > 0) { (*crmout) << " "; }
         const tuple_cell tc = t.cells[i];
 
         if (tc.is_portal()) {
@@ -182,7 +189,8 @@ void XMLSerializer::printAtomic(const tuple_cell &t)
         stringFilter.parse(local_name, strlen(local_name), write_func, crmout, pat_element);
         stringFilter.flush(write_func, crmout);
     } else {
-        filterText(stringFilter, crmout, pat_element | useCharmapFlag, TextBufferReader(get_tuple_text(t)));
+        TextBufferReader reader(getTupleText(t));
+        filterText(stringFilter, crmout, pat_element | useCharmapFlag, reader);
     }
 }
 
@@ -194,14 +202,14 @@ void XMLSerializer::printDocument(const text_source_t docname, IXDMNode * conten
     IXDMNodeList * children = content->getAllChildren();
 
     if (printDocTags) {
-        (*crmout) << XML_docTagStart;
+        (*crmout) << docPISeqOpen;
 
         while (isAttributeAt(children)) {
             printAttribute(children->getNode());
             children->next();
         }
 
-        (*crmout) << XML_docTagEnd;
+        (*crmout) << docPISeqClose;
     }
 
     while (!children->end()) {
@@ -212,10 +220,17 @@ void XMLSerializer::printDocument(const text_source_t docname, IXDMNode * conten
 
 void XMLSerializer::initialize()
 {
+    docPISeqOpen = XML_docTagStart;
+    docPISeqClose = XML_docTagEnd;
+    openTagSeq = XML_openTag;
+    closeTagSeq = XML_closeTag;
+
     elementContext = NULL;
     indentLevel = 0;
-    indentNext = options->indent;
-    separatorNeeded = false;
+    indentElements = options->indent;
+    indentNext = indentElements;
+    separatorNeeded = options->separateTuples;
+    indentSequence = options->indentSequence;
     useCharmapFlag = (int) (options->useCharmap ? pat_charmap : 0);
 
     // FIXME: we should reinitialize StrMatcher here
@@ -224,6 +239,12 @@ void XMLSerializer::initialize()
         stringFilter.add_str(it->first.c_str(), it->second.c_str(), pat_charmap);
     }
 }
+
+void XMLSerializer::printElementName(IXDMNode* element)
+{
+    element->printNodeName(*crmout);
+}
+
 
 void XMLSerializer::printElement(IXDMNode * elementInterface)
 {
@@ -238,14 +259,19 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     if (indentNext) {
         if (indentLevel > 0) {
             (*crmout) << "\n";
-            print_indent(crmout, indentLevel, this->options->indentSequence);
+            printIndent(crmout, indentLevel, indentSequence);
         }
         ++indentLevel;
     }
-    indentNext = options->indent;
+    indentNext = indentElements;
 
-    (*crmout) << "<";
+#ifndef SE_ENABLE_DTSEARCH
     elementInterface->printNodeName(*crmout);
+#else /* SE_ENABLE_DTSEARCH */
+    printElementName(*crmout);
+#endif /* SE_ENABLE_DTSEARCH */
+
+    (*crmout) << openTagSeq;
 
     if (context.ns != NULL_XMLNS && declareNamespace(context.ns)) {
         (*crmout) << " ";
@@ -272,22 +298,26 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     }
 
     if (children->end()) {
-        (*crmout) << "/>";
+        (*crmout) << "/" << closeTagSeq;
     } else {
-        (*crmout) << ">";
+        (*crmout) << closeTagSeq;
 
         do {
             printNode(children->getNode());
         } while (children->next());
 
-        if (indented && indentNext) { (*crmout) << "\n"; print_indent(crmout, indentLevel-1, this->options->indentSequence); }
+        if (indented && indentNext) { (*crmout) << "\n"; printIndent(crmout, indentLevel-1, indentSequence); }
 
-        (*crmout) << "</";
+        (*crmout) << openTagSeq << "/";
+#ifndef SE_ENABLE_DTSEARCH
         elementInterface->printNodeName(*crmout);
-        (*crmout) << ">";
+#else /* SE_ENABLE_DTSEARCH */
+        printElementName(*crmout);
+#endif /* SE_ENABLE_DTSEARCH */
+        (*crmout) << openTagSeq;
     }
 
-    indentNext = options->indent;
+    indentNext = indentElements;
     if (indented) { indentLevel--; }
 
     undeclareNamespaces(namespaceCount);
@@ -308,7 +338,8 @@ void XMLSerializer::printAttribute(IXDMNode * attribute)
 {
     attribute->printNodeName(*crmout);
     (*crmout) << "=\"";
-    filterText(stringFilter, crmout, pat_attribute | useCharmapFlag, TextBufferReader(attribute->getValue()));
+    TextBufferReader reader(attribute->getValue());
+    filterText(stringFilter, crmout, pat_attribute | useCharmapFlag, reader);
     (*crmout) << "\"";
 }
 
@@ -320,7 +351,7 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
 
     if (type == text) {
         indentNext = false;
-        if (elementContext != NULL && setContainsString(&(options->cdataSectionElements), elementContext->name)) {
+        if (elementContext != NULL && options != NULL && setContainsString(&(options->cdataSectionElements), elementContext->name)) {
             (*crmout) << "<![CDATA[";
             // StringMatcher must substitute "]]>" with "]]>]]<![CDATA[<"
             filterText(stringFilter, crmout, pat_cdata, reader);
@@ -332,9 +363,9 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
         U_ASSERT(type == comment || type == pr_ins);
 
         if (indentNext) { (*crmout) << "\n"; }
-        if (type == comment) { (*crmout) << "<!--"; } else { (*crmout) << "<?"; };
+        if (type == comment) { (*crmout) << openTagSeq << "!--"; } else { (*crmout) << openTagSeq << "?"; };
         filterText(stringFilter, crmout, useCharmapFlag, reader);
-        if (type == comment) { (*crmout) << "-->"; } else { (*crmout) << "?>"; }
+        if (type == comment) { (*crmout) << "--" << closeTagSeq; } else { (*crmout) << "?" << closeTagSeq; }
     };
 }
 
@@ -359,8 +390,6 @@ void SXMLSerializer::printText(t_item type, const text_source_t value)
 
 void SXMLSerializer::printDocument(const text_source_t docname, IXDMNode * content)
 {
-    indentLevel = 0;
-    indentNext = true;
     const bool printDocTags = true;
 
     IXDMNodeList * children = content->getAllChildren();
@@ -441,30 +470,19 @@ void SXMLSerializer::printElement(IXDMNode * elementInterface)
     elementContext = parentContext;
 }
 
-
-XMLSerializer::XMLSerializer() {
-    /* To be sure, that we initializing an instance of XMLSerializer */
-    if (dynamic_cast<XMLSerializer>(this) != NULL) {
-        stringFilter.add_str(">","&gt;", pat_attribute | pat_element);
-        stringFilter.add_str("<","&lt;", pat_attribute | pat_element);
-        stringFilter.add_str("&","&amp;", pat_attribute | pat_element);
-        stringFilter.add_str("\"","&quot;", pat_attribute);
-        stringFilter.add_str("]]>", "]]>]]<![CDATA[<", pat_cdata);
-    }
+XMLSerializer::XMLSerializer() : docPISeqOpen(XML_docTagStart), docPISeqClose( XML_docTagEnd), openTagSeq(XML_openTag), closeTagSeq(XML_closeTag)
+{
+    stringFilter.add_str(">","&gt;", pat_attribute | pat_element);
+    stringFilter.add_str("<","&lt;", pat_attribute | pat_element);
+    stringFilter.add_str("&","&amp;", pat_attribute | pat_element);
+    stringFilter.add_str("\"","&quot;", pat_attribute);
+    stringFilter.add_str("]]>", "]]>]]<![CDATA[<", pat_cdata);
 }
 
-XMLSerializer::~XMLSerializer() {
+SXMLSerializer::SXMLSerializer() :
+    XMLSerializer(0) /* Call for dummy constructor of parent class */
+{
+    stringFilter.add_str("\"","\\\"", pat_text);
+    stringFilter.add_str("(","\\(", ~pat_text);
+    stringFilter.add_str(")","\\)", ~pat_text);
 }
-
-SXMLSerializer::SXMLSerializer() {
-    /* To be sure, that we initializing an instance of XMLSerializer */
-    if (dynamic_cast<SXMLSerializer>(this) != NULL) {
-        stringFilter.add_str("\"","\\\"", pat_text);
-        stringFilter.add_str("(","\\(", ~pat_text);
-        stringFilter.add_str(")","\\)", ~pat_text);
-    }
-}
-
-SXMLSerializer::~SXMLSerializer() {
-}
-

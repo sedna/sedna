@@ -315,6 +315,21 @@ bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
     return _xs_QName_not_equal(node_uri, node_local, uri, local);
 }
 
+void separateLocalAndPrefix(char*& prefix, const char* &qname)
+{
+    const char * sep = strchr(qname, ':');
+    if (sep == NULL) {
+        prefix = NULL;
+    } else {
+        size_t len = sep - qname;
+        prefix = se_new char[len+1];
+        memcpy(prefix, qname, len);
+        prefix[len] = '\0';
+        qname = sep+1;
+    }
+}
+
+/* Example of how no one should implement previous function
 void separateLocalAndPrefix(char*& prefix, const char*& qname)
 {
     for (unsigned int i=0; i<strlen(qname); i++)
@@ -329,3 +344,4 @@ void separateLocalAndPrefix(char*& prefix, const char*& qname)
         }
     }
 }
+*/

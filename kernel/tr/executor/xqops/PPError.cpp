@@ -218,9 +218,7 @@ void PPFnTrace::do_next(tuple &t)
         (*dostr) << tc.get_str_mem() << " ";
 
         tr_globals::serializer->prepare(
-            dostr,
-            cxt->get_static_context()->get_string_matcher(),
-            cxt->get_static_context()->get_serialization_options()
+            dostr, cxt->get_static_context()->get_serialization_options()
           );
 
         tr_globals::serializer->serialize(t);

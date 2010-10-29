@@ -45,8 +45,8 @@ class SednaNodeList;
 class SednaNode : public IXDMNode {
   private:
     xptr node;
-    mutable schema_node_cptr snode;
 
+    mutable schema_node_cptr snode;
     mutable SednaNodeList * childList;
   public:
     xptr getXptr() const;

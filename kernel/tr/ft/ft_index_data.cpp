@@ -25,6 +25,7 @@
 #include "common/u/uutils.h"
 #include "tr/strings/opt_parser.h"
 #include "tr/structures/nodeutils.h"
+#include "tr/crmutils/ftserializer.h"
 
 
 using namespace std;
@@ -630,7 +631,7 @@ doc_serial_header ft_index_cell_object::serial_put (xptr& node, xptr &node_indir
 {
 
 	//1. serialize node to buf and fill serial header
-	print_node_to_buffer(node,tbuf,this->ftype,this->custom_tree);
+	FTSerializer::getSharedInstance()->printNodeToBuffer(node, tbuf, this->ftype, this->custom_tree);
 	//2. put buf to pstr
 	doc_serial_header dsh(tbuf.get_size(),put_buf_to_pstr(tbuf));
 	//3. put header to b-tree

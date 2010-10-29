@@ -75,6 +75,14 @@ inline xptr deep_copy_node_t(xptr left_ind, xptr right_ind, xptr parent_ind, xpt
     return result;
 }
 
+/** Internal function, also used in constructors
+  * It generates a new namespace prefix, if given is already bound to another URI
+  * in given parent node. The case of default namespace is specially handled.
+  * new_ns MUST NOT be NULL_XMLNS
+  * Returns new namespace if one is swizzeled, and NULL_XMLNS if not.
+  */
+xmlns_ptr swizzle_namespace(xptr node, xmlns_ptr new_ns);
+
 //node tests
 
 bool inline is_node_persistent (xptr node)

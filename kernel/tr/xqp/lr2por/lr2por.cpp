@@ -2266,7 +2266,7 @@ namespace sedna
         {
             for (it = n.options->begin(); it != n.options->end(); it++)
             {
-                dyn_cxt->add_char_mapping(it->first.c_str(), it->second.c_str());
+                dyn_cxt->add_char_mapping(it->first, it->second);
             }
         }
     }

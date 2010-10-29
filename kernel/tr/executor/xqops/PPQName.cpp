@@ -198,10 +198,8 @@ void PPFnQName::do_next(tuple &t)
         child_qname.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
-        char *qname = xs_QName_create(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(),
-                                      qname_tc.get_str_mem(),
-                                      tuple_char_alloc,
-                                      cxt);
+        char * qname = xs_QName_create(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(),
+                                        qname_tc.get_str_mem(), tuple_char_alloc, cxt);
 
         t.copy(tuple_cell::atomic(xs_QName, qname));
     }

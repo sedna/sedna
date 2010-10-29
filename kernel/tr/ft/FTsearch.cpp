@@ -9,6 +9,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/tr_globals.h"
 #include "tr/structures/nodeutils.h"
+#include "tr/crmutils/ftserializer.h"
 
 #define DTSEARCH_THREAD_STACK_SIZE (1024*1024)
 
@@ -209,13 +210,8 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
     dest.filename = fileInfo->filename;
 	dest.typeId = it_XML;
 	CHECKP(node);
-	if (getNodeType(node) != document && getNodeType(node) != virtual_root)
-	{
-		in_buf.append("<");
-		in_buf.append("?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\"");
-		in_buf.append(">");
-	}
-	print_node_to_buffer(node,in_buf,cm,custom_tree);
+	in_buf.append("<?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\">");
+	FTSerializer::getSharedInstance()->printNodeToBuffer(node, in_buf, cm, custom_tree);
 	/*FILE *f = fopen("last_dts_file", "wb");
 	fwrite(in_buf.c_str(), 1, in_buf.get_size(), f);
 	fclose(f);*/
@@ -1171,7 +1167,7 @@ void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
 	text_source_t ts;
 	in_buf.clear();
 	CHECKP(node);
-	print_node_to_buffer(node,in_buf,cm,custom_tree,opentag_str, closetag_str);
+	FTSerializer::getSharedInstance()->printNodeToBuffer(node, in_buf, cm, custom_tree, opentag_str, closetag_str);
 	in_buf.fill_text_source(&ts);
 	if (ts.type == text_source_t::text_mem)
 	{

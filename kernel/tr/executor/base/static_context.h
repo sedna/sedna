@@ -94,11 +94,6 @@ public:
         return &serializationOptions;
     };
 
-    inline StrMatcher * get_string_matcher()
-    {
-        return &stm;
-    }
-
     bool is_field_set_in_prolog(static_context_fields_flags flag)
     {
         return (prolog_set_fields & flag) != 0;

@@ -325,15 +325,17 @@ public:
 
     void add_cdata_section_element(const std::string &element)
     {
-        st_cxt->get_serialization_options()->cdataSectionElements->insert(element);
+        st_cxt->get_serialization_options()
+          ->cdataSectionElements.insert(element);
     }
 
     void global_variables_open();
     void global_variables_close();
 
-    void add_char_mapping(const char* str, const char* rep_str)
+    void add_char_mapping(const std::string& from, const std::string& to)
     {
-        st_cxt->get_string_matcher()->add_str(str, rep_str, pat_charmap);
+        st_cxt->get_serialization_options()
+          ->charmap.insert(std::pair<std::string, std::string>(from, to));
     }
 
     void add_child_context(dynamic_context *cxt)

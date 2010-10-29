@@ -199,7 +199,25 @@ void replaceNamespace(xmlns_ptr & ns, upd_ns_map*& updmap)
 }
 
 xmlns_ptr swizzle_namespace(xptr node, xmlns_ptr new_ns) {
+    U_ASSERT(new_ns != NULL_XMLNS);
+
     NSNode ns = getFirstChildByType(node, xml_namespace);
+
+    if (new_ns->is_reserved_prefix()) {
+        return NULL_XMLNS;
+    }
+
+    /* If attribute has default namespace and it differs from the
+      namespace of parent node, replace it anyway */
+    if (!new_ns->has_prefix()) {
+        const xmlns_ptr cns = getSchemaNode(node)->get_xmlns();
+        if (cns != new_ns) {
+            return swizzle_namespace(node, generate_prefix("new", new_ns->get_uri()));
+        } else {
+            return NULL_XMLNS;
+        }
+    }
+
     while (!ns.isNull()) {
         ns.checkp();
         const xmlns_ptr cns = ns.getNamespaceLocal();
@@ -208,7 +226,7 @@ xmlns_ptr swizzle_namespace(xptr node, xmlns_ptr new_ns) {
             if (cns == new_ns) {
                 return NULL_XMLNS;
             } else {
-                return swizzle_namespace(node, generate_prefix(cns->get_prefix(), cns->get_uri()));
+                return swizzle_namespace(node, generate_prefix(new_ns->get_prefix(), new_ns->get_uri()));
             }
         }
         ns = ns.getNext();

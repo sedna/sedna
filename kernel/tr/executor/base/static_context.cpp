@@ -65,14 +65,11 @@ static_context::static_context()
     /* Default serialization options */
     serializationOptions.indent = true;
     serializationOptions.indentSequence = "  ";
-    serializationOptions.cdataSectionElements = new std::set<std::string>();
     serializationOptions.separateTuples = true;
 }
 
 static_context::~static_context()
 {
-    delete serializationOptions.cdataSectionElements;
-
     if (base_uri != NULL)
     {
         delete[] base_uri;
