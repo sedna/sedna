@@ -25,6 +25,7 @@ public:
     inline const char * get_uri() const { return uri; }
     inline const char * get_prefix() const { return prefix; }
     inline bool has_prefix() const { return prefix != NULL && strnlen(prefix, 1) > 0; }
+    inline bool is_reserved_prefix() const { return prefix != NULL && (strcmp(prefix, "xml") == 0); }
 };
 
 struct xmlns_indb_object : public catalog_object {

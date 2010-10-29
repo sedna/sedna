@@ -957,6 +957,15 @@ void PPAttributeConstructor::do_next (tuple &t)
                         throw XQUERY_EXCEPTION(XPTY0004);
                 }
 
+                if (ns != NULL_XMLNS) {
+                    const xptr parent = indirectionDereferenceCP(cont_parind);
+                    const xmlns_ptr new_ns = swizzle_namespace(parent, ns);
+                    if (new_ns != NULL_XMLNS) {
+                        insert_namespace(XNULL, XNULL, parent, new_ns);
+                        ns = new_ns;
+                    }
+                }
+
                 new_attribute= insert_attribute(indirectionDereferenceCP(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
             }
             else

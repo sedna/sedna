@@ -131,20 +131,17 @@ bool PPQueryRoot::do_next()
 
     tr_globals::client->begin_item(!is_node, st, nt, uri.get());
 
+    GlobalSerializationOptions * options = cxt->get_static_context()->get_serialization_options();
+
     if (tr_globals::client->supports_serialization()) {
-        cxt->get_static_context()->get_serialization_options()->indent = false;
-        cxt->get_static_context()->get_serialization_options()->separateTuples = false;
-    } else if (!first) {
+        options->indent = false;
+        options->separateTuples = false;
+    } else if (!first && options->indent) {
         (* tr_globals::client->get_se_ostream()) << "\n"; // separate tuples!
         // This is needed for backward compatibility with old ( < 4 ) versions of protocol
     }
 
-    tr_globals::serializer->prepare(
-        tr_globals::client->get_se_ostream(),
-        cxt->get_static_context()->get_string_matcher(),
-        cxt->get_static_context()->get_serialization_options()
-      );
-
+    tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
     tr_globals::serializer->serialize(data);
 
 //    data.cells[0].set_eos();

@@ -14,7 +14,6 @@
 #include "tr/executor/base/xsd.h"
 #include "tr/auth/auc.h"
 
-
 ft_index_type str2ft_index_type(const char *str)
 {
 	if (!strcmp(str, "xml"))

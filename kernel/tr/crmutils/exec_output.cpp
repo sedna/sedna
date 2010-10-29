@@ -98,35 +98,6 @@ se_ostream& se_ostream::operator<<(int64_t n)
 }
 #endif
 
-se_ostream& se_ostream::writextext(const char *s, int n)
-{
-/*
-    serialization_params *sp = tr_globals::client->get_serialization_params();
-    U_ASSERT(sp);
-
-    sp->stm.parse(s,n,write_func,this,(int)pat_element);
-*/
-    return *this;
-}
-
-se_ostream& se_ostream::writeattribute(const char *s, int n)
-{
-/*
-    serialization_params *sp = tr_globals::client->get_serialization_params();
-    U_ASSERT(sp);
-
-    sp->stm.parse(s,n,write_func,this,(int)pat_attribute);
-*/
-    return *this;
-}
-
-/*
-se_ostream& se_ostream::flush_stm()
-{
-    tr_globals::client->get_serialization_params()->stm.flush(write_func, this);
-}
-*/
-
 ///////////////////////////////////////////////////////////////////////////////
 /// se_socketostream_base
 ///////////////////////////////////////////////////////////////////////////////

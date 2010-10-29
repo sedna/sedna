@@ -43,9 +43,6 @@ class XDMSerializer : public Serializer {
   protected:
     bool separatorNeeded;
 
-    void printNode(const Node node);
-    void printNode(IXDMNode * node);
-
     /*  declareNamespace appears in traversing the element subtree if element
       has or implies any namespace declaration. If namespace is unknown or swizzeled
       function returns true. */
@@ -53,6 +50,9 @@ class XDMSerializer : public Serializer {
 
     /* undeclareNamespaces undeclares "count" namespaces from stack */
     void undeclareNamespaces(int count);
+  public:
+    void printNode(const Node node);
+    void printNode(IXDMNode * node);
 
     virtual void printAtomic(const tuple_cell &t) = 0;
     virtual void printDocument(const text_source_t docname, IXDMNode * content) = 0;
@@ -60,20 +60,34 @@ class XDMSerializer : public Serializer {
     virtual void printNamespace(xmlns_ptr ns) = 0;
     virtual void printAttribute(IXDMNode * attribute) = 0;
     virtual void printText(t_item type, const text_source_t value) = 0;
-  public:
+
     XDMSerializer();
 
     virtual void serialize(tuple &t);
 };
 
 class XMLSerializer : public XDMSerializer {
-  private:
+  protected:
     bool indentNext;
     int indentLevel;
+    bool indentElements;
     int useCharmapFlag;
-  protected:
+    const char* indentSequence;
+
+    const char * docPISeqOpen;
+    const char * docPISeqClose;
+    const char * openTagSeq;
+    const char * closeTagSeq;
+
     ElementContext * elementContext;
     StrMatcher stringFilter;
+
+    /* Dummy constructor, used only by heir classes */
+    inline XMLSerializer(int dummy) {};
+  public:
+    /* Default constructor, it do implements some stuff, i.e. stringFilter initialization */
+    XMLSerializer();
+    inline ~XMLSerializer() {};
 
     virtual void printAtomic(const tuple_cell &t);
     virtual void printDocument(const text_source_t docname, IXDMNode * content);
@@ -81,9 +95,7 @@ class XMLSerializer : public XDMSerializer {
     virtual void printNamespace(xmlns_ptr ns);
     virtual void printAttribute(IXDMNode * attribute);
     virtual void printText(t_item type, const text_source_t value);
-  public:
-    XMLSerializer();
-    ~XMLSerializer();
+    virtual void printElementName(IXDMNode * element);
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_xml; };
     virtual void initialize();
@@ -94,18 +106,20 @@ class XMLSerializer : public XDMSerializer {
  */
 
 class SXMLSerializer : public XMLSerializer {
-private:
+  protected:
+    /* Dummy constructor, used only by heir classes */
+    inline SXMLSerializer(int dummy) {};
+  public:
+    SXMLSerializer();
+    inline ~SXMLSerializer() {};
+
     virtual void printText(t_item type, const text_source_t value);
     virtual void printAtomic(const tuple_cell &t);
     virtual void printDocument(const text_source_t docname, IXDMNode * content);
     virtual void printElement(IXDMNode * element);
     virtual void printAttribute(IXDMNode * attribute);
-public:
-    SXMLSerializer();
-    ~SXMLSerializer();
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_sxml; };
 };
-
 
 #endif /* XMLSERIALIZER_H_ */
