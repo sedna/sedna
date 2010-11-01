@@ -32,8 +32,10 @@ class FTSerializer : public XMLSerializer {
     ~FTSerializer();
 
     static FTSerializer * getSharedInstance();
+    static void initSharedInstance();
+    static void disposeSharedInstance();
 
-    void printNodeToBuffer(xptr node, op_str_buf * outbuf, ft_index_type ast, const char * aOpenTag = "<", const char * aCloseTag = ">");
+    void printNodeToBuffer(xptr node, op_str_buf * outbuf, ft_index_type ast, ft_custom_tree_t * a_custom_tree, const char * aOpenTag = "<", const char * aCloseTag = ">");
 
     virtual void printDocument(const text_source_t docname, IXDMNode * content);
     virtual void printText(t_item type, const text_source_t value);

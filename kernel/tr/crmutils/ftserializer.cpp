@@ -70,12 +70,15 @@ class OutputStreamWriter : public se_ostream
 
 static const char * FTXML_docTagStart = "?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\"";
 
-static FTSerializer sharedSerizlier;
+static FTSerializer * sharedSerizlier;
 
-FTSerializer* FTSerializer::getSharedInstance() { return &sharedSerizlier; }
+FTSerializer* FTSerializer::getSharedInstance() { return sharedSerizlier; }
+void FTSerializer::initSharedInstance() { sharedSerizlier = new FTSerializer(); }
+void FTSerializer::disposeSharedInstance() { delete sharedSerizlier; }
 
-void FTSerializer::printNodeToBuffer(xptr node, op_str_buf* outbuf, ft_index_type ast, const char* aOpenTag, const char* aCloseTag)
+void FTSerializer::printNodeToBuffer(xptr node, op_str_buf* outbuf, ft_index_type ast, ft_custom_tree_t* a_custom_tree, const char* aOpenTag, const char* aCloseTag)
 {
+    custom_tree = a_custom_tree;
     setOpenTag(aOpenTag);
     setCloseTag(aCloseTag);
     setSerializationType(ast);

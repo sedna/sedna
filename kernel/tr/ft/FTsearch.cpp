@@ -211,7 +211,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	dest.typeId = it_XML;
 	CHECKP(node);
 	in_buf.append("<?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\">");
-	FTSerializer::getSharedInstance()->printNodeToBuffer(node, in_buf, cm, custom_tree);
+	FTSerializer::getSharedInstance()->printNodeToBuffer(node, &in_buf, cm, custom_tree);
 	/*FILE *f = fopen("last_dts_file", "wb");
 	fwrite(in_buf.c_str(), 1, in_buf.get_size(), f);
 	fclose(f);*/
@@ -1167,7 +1167,7 @@ void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
 	text_source_t ts;
 	in_buf.clear();
 	CHECKP(node);
-	FTSerializer::getSharedInstance()->printNodeToBuffer(node, in_buf, cm, custom_tree, opentag_str, closetag_str);
+	FTSerializer::getSharedInstance()->printNodeToBuffer(node, &in_buf, cm, custom_tree, opentag_str, closetag_str);
 	in_buf.fill_text_source(&ts);
 	if (ts.type == text_source_t::text_mem)
 	{

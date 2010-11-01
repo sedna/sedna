@@ -265,13 +265,13 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     }
     indentNext = indentElements;
 
+    (*crmout) << openTagSeq;
+
 #ifndef SE_ENABLE_DTSEARCH
     elementInterface->printNodeName(*crmout);
 #else /* SE_ENABLE_DTSEARCH */
-    printElementName(*crmout);
+    printElementName(elementInterface);
 #endif /* SE_ENABLE_DTSEARCH */
-
-    (*crmout) << openTagSeq;
 
     if (context.ns != NULL_XMLNS && declareNamespace(context.ns)) {
         (*crmout) << " ";
@@ -312,9 +312,9 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
 #ifndef SE_ENABLE_DTSEARCH
         elementInterface->printNodeName(*crmout);
 #else /* SE_ENABLE_DTSEARCH */
-        printElementName(*crmout);
+        printElementName(elementInterface);
 #endif /* SE_ENABLE_DTSEARCH */
-        (*crmout) << openTagSeq;
+        (*crmout) << closeTagSeq;
     }
 
     indentNext = indentElements;
