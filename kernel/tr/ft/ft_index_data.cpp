@@ -38,11 +38,13 @@ static bool ft_index_initialized = false;
 void ft_index_on_session_begin()
 {
     ft_index_initialized = true;
+    FTSerializer::initSharedInstance();
 }
 
 void ft_index_on_session_end()
 {
     if (!ft_index_initialized) return;
+    FTSerializer::disposeSharedInstance();
     ft_index_initialized = false;
 }
 
@@ -281,7 +283,7 @@ ft_index_cell_xptr create_ft_index(
 					xptr tmp_indir = nodeGetIndirection(tmp);
 					//TODO: see whether rewriting this to serialize directly to text parser (expat?), without writing to buffer first is better.
 					in_buf.clear();
-					print_node_to_buffer(tmp, in_buf, idc->ftype, idc->custom_tree);
+					FTSerializer::getSharedInstance()->printNodeToBuffer(tmp, &in_buf, idc->ftype, idc->custom_tree);
 					//idc->serial_put(tmp, tmp_indir, in_buf);
 					ft_index_update(ft_insert, tmp_indir, &in_buf, &idc->fts_data, ftc_idx);
 
@@ -378,7 +380,7 @@ static void ft_update_seq(xptr_sequence *seq, ft_index_cell_object *idc, ftc_ind
 			U_ASSERT(node != XNULL);
 
 			in_buf.clear();
-			print_node_to_buffer(node, in_buf, idc->ftype, idc->custom_tree);
+			FTSerializer::getSharedInstance()->printNodeToBuffer(node, &in_buf, idc->ftype, idc->custom_tree);
 			/*
 			if (op == ft_update)
 				idc->serial_update(node, node_indir, in_buf);
