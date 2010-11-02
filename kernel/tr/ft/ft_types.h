@@ -21,7 +21,6 @@
 enum ft_index_type
 {
     ft_xml,
-    ft_xml_ne, // OBSOLETE!
     ft_xml_hl,
     ft_string_value,
     ft_delimited_value,
