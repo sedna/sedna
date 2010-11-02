@@ -66,6 +66,7 @@ static_context::static_context()
     serializationOptions.indent = true;
     serializationOptions.indentSequence = "  ";
     serializationOptions.separateTuples = true;
+    serializationOptions.useCharmap = true;
 }
 
 static_context::~static_context()

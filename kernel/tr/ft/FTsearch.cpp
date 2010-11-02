@@ -480,11 +480,12 @@ thread_exception(NULL), thread_up_semaphore_on_exception(true), data_source(NULL
 	if (hilight)
 	{
 		if (_cm_ == ft_xml_hl)
-			hl=se_new SednaConvertJob(ft_xml_ne,_custom_tree_, hl_fragment);
+			hl=se_new SednaConvertJob(ft_xml, _custom_tree_, hl_fragment);
 		else
 			hl=se_new SednaConvertJob(_cm_,_custom_tree_, hl_fragment);
 	}
 }
+
 SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hilight(_hilight_),hl_fragment(_hl_fragment_),
 													thread_exception(NULL), thread_up_semaphore_on_exception(true), data_source(NULL), res(XNULL), SednaSearchJobBase()
 
@@ -493,7 +494,7 @@ SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hil
 	if (hilight)
 	{
 		//FIMXE: check cm?
-		hl=se_new SednaConvertJob(ft_xml_ne,NULL, hl_fragment);
+		hl=se_new SednaConvertJob(ft_xml, NULL, hl_fragment);
 	}
 }
 
