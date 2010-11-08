@@ -90,7 +90,7 @@ public:
     pstr_cursor(xptr str, size_t asize) : curr(str), sizeleft(asize) {}
 
     virtual int copy_blk(char *buf) {
-        const size_t result = MIN(PAGE_SIZE, sizeleft);
+        const int result = (int) MIN(PAGE_SIZE, sizeleft);
         if (result > 0) {
             memcpy(buf, xaddr(checkp(curr)), result);
             curr += result;
@@ -100,7 +100,7 @@ public:
     }
 
     virtual int get_blk(char **ptr) {
-        const size_t result = MIN(PAGE_SIZE, sizeleft);
+        const int result = (int) MIN(PAGE_SIZE, sizeleft);
         *ptr = (char *) xaddr(checkp(curr));
         curr += result;
         sizeleft -= result;

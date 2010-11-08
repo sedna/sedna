@@ -198,8 +198,16 @@ void replaceNamespace(xmlns_ptr & ns, upd_ns_map*& updmap)
     }
 }
 
+/*
+  Creates and returns new namespace if {new_ns} is ambigious
+  in context of namespaces of {node}.
+*/
 xmlns_ptr swizzle_namespace(xptr node, xmlns_ptr new_ns) {
-    U_ASSERT(new_ns != NULL_XMLNS);
+/*
+    if (new_ns == NULL_XMLNS && getSchemaNode(node)->get_xmlns() != NULL_XMLNS) {
+          return swizzle_namespace(node, generate_prefix("new", new_ns->get_uri()));
+    }
+*/
 
     NSNode ns = getFirstChildByType(node, xml_namespace);
 

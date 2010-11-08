@@ -15,6 +15,8 @@
 #include "tr/crmutils/xdm.h"
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/xsd.h"
+#include "tr/crmutils/xdm.h"
+#include "tr/structures/xmlns.h"
 
 inline static
 void filterText(StrMatcher &stm, se_ostream * crmout, int sclass, TextBufferReader &reader)
@@ -64,8 +66,7 @@ struct text_source_t getTupleText(const tuple_cell &t) {
 
 struct ElementContext {
     const char * name;
-    const xmlns_ptr ns;
-    xmlns_ptr defaultNamespace;
+    xmlns_ptr ns;
 };
 
 
@@ -94,6 +95,17 @@ bool XDMSerializer::declareNamespace(xmlns_ptr ns) {
 
     return false;
 }
+
+xmlns_ptr XDMSerializer::getDefaultNamespace() {
+    NSPrefixMap::iterator nsi = nsPrefixMap.find("");
+
+    if (nsi == nsPrefixMap.end() || nsi->second == NULL_XMLNS || strnlen(nsi->second->get_uri(), 1) == 0) {
+        return NULL_XMLNS;
+    } else {
+        return nsi->second;
+    }
+}
+
 
 void XDMSerializer::undeclareNamespaces(int count) {
     while (count-- > 0) {
@@ -273,10 +285,16 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     printElementName(elementInterface);
 #endif /* SE_ENABLE_DTSEARCH */
 
-    if (context.ns != NULL_XMLNS && declareNamespace(context.ns)) {
-        (*crmout) << " ";
-        printNamespace(context.ns);
-        ++namespaceCount;
+    /* If null namespace implies non-null defualt namespace then */
+    if (context.ns != NULL_XMLNS || getDefaultNamespace() != NULL_XMLNS) {
+      /* Fix of bad update policy, where default namespace is not added with element */
+        if (context.ns == NULL_XMLNS) { context.ns = xmlns_touch("", ""); }
+
+        if (declareNamespace(context.ns)) {
+            (*crmout) << " ";
+            printNamespace(context.ns);
+            ++namespaceCount;
+        }
     }
 
     IXDMNodeList * children = elementInterface->getAllChildren();
