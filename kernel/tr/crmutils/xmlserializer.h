@@ -48,6 +48,9 @@ class XDMSerializer : public Serializer {
       function returns true. */
     bool declareNamespace(xmlns_ptr ns);
 
+    /* returns default namespace */
+    xmlns_ptr getDefaultNamespace();
+
     /* undeclareNamespaces undeclares "count" namespaces from stack */
     void undeclareNamespaces(int count);
   public:

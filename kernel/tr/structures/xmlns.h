@@ -56,7 +56,7 @@ struct xmlns_indb_object : public catalog_object {
 
 typedef xmlns_local_object * xmlns_ptr;
 
-#define NULL_XMLNS NULL
+static const xmlns_ptr NULL_XMLNS = (xmlns_ptr) NULL;
 
 void free_xmlns_hash();
 
