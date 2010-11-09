@@ -34,6 +34,7 @@ command_line_client::command_line_client(int argc, char** argv)
     out_s = NULL;
     recreate_debug_stream = true;
     statements_ready = false;
+    output_method = se_output_method_xml;
 
     /* Load metadata transaction */
     if (tr_globals::first_transaction)
