@@ -50,6 +50,7 @@ socket_client::socket_client()
     max_result_size_to_pass = 0; //can be sent as a session option; 0 - pass whole result
     long_query_stream = NULL;
     recreate_debug_stream = true;
+    output_method = se_output_method_xml;
 }
 
 void socket_client::init()
