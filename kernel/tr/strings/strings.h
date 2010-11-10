@@ -486,8 +486,17 @@ strsize_t tsGetActualSize(struct text_source_t t) {
 }
 
 static inline
-struct text_source_t text_source_pstr(const xptr text, size_t size) {
+struct text_source_t text_source_pstr(const xptr text, strsize_t size) {
     struct text_source_t result = {text_source_t::text_pstr};
+    result.size = size;
+    result.u.data = text;
+
+    return result;
+}
+
+static inline
+struct text_source_t text_source_estr(const xptr text, strsize_t size) {
+    struct text_source_t result = {text_source_t::text_estr};
     result.size = size;
     result.u.data = text;
 
@@ -521,10 +530,10 @@ str_cursor * getTextCursor(const text_source_t text) {
         result = new pstr_cursor(text.u.data, text.size);
     } break;
     case text_source_t::text_estr: {
-        result = new pstr_long_cursor(text.u.data);
+        result = new estr_cursor(text.u.data, text.size);
     } break;
     case text_source_t::text_pstrlong: {
-        result = new estr_cursor(text.u.data, text.size);
+        result = new pstr_long_cursor(text.u.data);
     } break;
     }
     return result;
