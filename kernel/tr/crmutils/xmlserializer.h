@@ -16,7 +16,6 @@
 #include <map>
 #include <stack>
 
-struct dynamic_context;
 struct ElementContext;
 class StrMatcher;
 

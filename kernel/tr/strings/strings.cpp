@@ -317,6 +317,8 @@ struct text_source_t text_source_tuple_cell(const tuple_cell& cell) {
         return text_source_pstr(tc.get_str_vmm(), (strsize_t) tc.get_strlen_vmm());
       case tc_heavy_atomic_pstr_long:
         return text_source_pstrlong(tc.get_str_vmm());
+      default :
+        return NULL_TEXT;
     }
 }
 

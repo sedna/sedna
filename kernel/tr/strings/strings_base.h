@@ -27,6 +27,8 @@ struct text_source_t {
     strsize_t size; // May be not defined for pstr_long
 };
 
+static const text_source_t NULL_TEXT = {text_source_t::text_mem};
+
 typedef void (*string_consumer_fn)(const char *str, int len, void *p);
 extern void writextext_cb(const char *str, int len, void *p);
 
