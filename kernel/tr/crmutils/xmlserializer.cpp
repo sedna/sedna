@@ -190,7 +190,7 @@ void XDMSerializer::serialize(tuple & t) {
 
 void XMLSerializer::printAtomic(const tuple_cell &t)
 {
-    if (t.is_atomic_type(xs_QName)) {
+     if (t.is_atomic_type(xs_QName)) {
         const char * prefix = xs_QName_get_prefix(t.get_str_mem());
         const char * local_name = xs_QName_get_local_name(t.get_str_mem());
 
@@ -435,15 +435,16 @@ void SXMLSerializer::printDocument(const text_source_t docname, IXDMNode * conte
 
 void SXMLSerializer::printAtomic(const tuple_cell &t)
 {
-    (*crmout) << " (";
+//    (*crmout) << " (";
     if (t.is_atomic_type(xs_boolean)) {
         (*crmout) << (t.get_xs_boolean() ? "#t" : "#f");
     } else {
-        (*crmout) << "\"";
+        const bool quoted = !is_fixed_size_type(t.get_atomic_type());
+        if (quoted) { (*crmout) << "\""; }
         XMLSerializer::printAtomic(t);
-        (*crmout) << "\"";
+        if (quoted) { (*crmout) << "\""; }
     }
-    (*crmout) << ")";
+//    (*crmout) << ")";
 }
 
 void SXMLSerializer::printAttribute(IXDMNode * attribute)
