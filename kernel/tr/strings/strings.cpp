@@ -99,26 +99,6 @@ void str_buf_base::move_to_estr()
 
 }
 
-str_cursor *str_buf_base::get_cursor() const
-{
-	if (m_flags & f_text_in_buf)
-		return new str_cursor_mem(m_buf, (int)m_len); //FIXME: check m_len?
-	switch (m_ttype)
-	{
-	case text_source_t::text_mem:
-		return new str_cursor_mem(m_str_ptr.get(), (int)m_len);//FIXME: check m_len?
-	case text_source_t::text_estr:
-		return new estr_cursor(m_ptr, m_len);
-	case text_source_t::text_pstr:
-		return new estr_cursor(m_ptr, m_len);
-	case text_source_t::text_pstrlong:
-		return new pstr_long_cursor(m_ptr);
-	default:
-		U_ASSERT(false);
-		return NULL;
-	}
-}
-
 void str_buf_base::clear()
 {
 	m_len = 0;
