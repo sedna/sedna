@@ -143,16 +143,16 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(func, tcell_ptr, p1, p2, p3)     STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1, p2, p3))
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(func, tcell_ptr, p1, p2, p3, p4) STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1, p2, p3, p4))
 
-class str_cursor_mem : public str_cursor
+class memstr_cursor : public str_cursor
 {
 private:
 	char *m_buf;
-	int m_bytes_left; //FIMXE: int
+	size_t m_bytes_left; //FIMXE: int
 public:
-	str_cursor_mem(char *buf, int size) : m_buf(buf), m_bytes_left(size) {}
+	memstr_cursor(char *buf, size_t size) : m_buf(buf), m_bytes_left(size) {}
     /// Block oriented copy. buf must have size not less than a page size
 	virtual int copy_blk(char *buf) {
-		const int size = s_min(m_bytes_left, PAGE_SIZE);
+		const size_t size = s_min(m_bytes_left, PAGE_SIZE);
 		if (size > 0)
 		{
 			memcpy(buf, m_buf, size);
@@ -168,7 +168,7 @@ public:
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP
 	virtual int get_blk(char **ptr) {
-		const int size = s_min(m_bytes_left, PAGE_SIZE);
+		const size_t size = s_min(m_bytes_left, PAGE_SIZE);
 		if (size > 0)
 		{
 			*ptr = m_buf;
@@ -178,6 +178,8 @@ public:
 		return size;
 	}
 };
+
+static str_cursor * get_text_cursor(const text_source_t text);
 
 class str_buf_base
 {
@@ -242,10 +244,10 @@ protected:
 	}
 public:
 	bool mem_only() { return m_mem_only; }
-	text_source_t::type_t get_type() { return m_ttype; }
+	text_source_t::type_t get_type() const { return m_ttype; }
 	//return pointer of string in the memory
 	//when this function is called, string must be in the memory
-	const char *get_str_mem()
+	const char *get_str_mem() const
 	{
 		U_ASSERT(get_type() == text_source_t::text_mem);
 		if (m_flags & f_text_in_buf)
@@ -255,7 +257,8 @@ public:
 		else
 			return m_str_ptr.get();
 	}
-	void fill_text_source(text_source_t *ts)
+
+	void fill_text_source(text_source_t *ts) const
 	{
 		ts->type = get_type();
 		ts->size = m_len;
@@ -271,10 +274,17 @@ public:
 			return;
 		}
 	}
+
 	///gets cursor to the text stored in the buffer
 	///caller is responsible for deleting cursor with free_cursor method
 	///buffer can't be modified until cursor is freed
-	str_cursor *get_cursor() const;
+
+	inline str_cursor *get_cursor() const {
+        text_source_t ts;
+        this->fill_text_source(&ts);
+        return get_text_cursor(ts);
+    }
+
 	const void free_cursor(str_cursor *cur) {
 		delete cur;
 	}
@@ -519,12 +529,12 @@ struct text_source_t text_source_strbuf(str_buf_base * buf) {
     return result;
 }
 
-static
-str_cursor * getTextCursor(const text_source_t text) {
+inline static
+str_cursor * get_text_cursor(const text_source_t text) {
     str_cursor * result = NULL;
     switch (text.type) {
     case text_source_t::text_mem: {
-        result = new mem_cursor((char *) text.u.cstr, text.size);
+        result = new memstr_cursor((char *) text.u.cstr, (size_t) text.size);
     } break;
     case text_source_t::text_pstr: {
         result = new pstr_cursor(text.u.data, text.size);
@@ -546,7 +556,7 @@ public:
     char * buffer;
     int size;
 
-    TextBufferReader(const text_source_t text) : cursor(getTextCursor(text)), buffer((char*) malloc(PAGE_SIZE)) {};
+    TextBufferReader(const text_source_t text) : cursor(get_text_cursor(text)), buffer((char*) malloc(PAGE_SIZE)) {};
     ~TextBufferReader() { free(cursor); free(buffer); };
 
     bool read() { return ((size = cursor->copy_blk(buffer)) != 0); }

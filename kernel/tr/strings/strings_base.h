@@ -55,60 +55,9 @@ public:
 	virtual ~str_cursor() {};
 };
 
-class mem_cursor : public str_cursor {
-private:
-    const char * curr;
-    size_t sizeleft;
-public:
-    mem_cursor(const char * str, size_t asize) : curr(str), sizeleft(asize) {}
+/* This means that although pstr and estr are differens type of strings
+* they can be accessed via estr_cursor. */
 
-    virtual int copy_blk(char *buf) {
-        const size_t result = MIN(PAGE_SIZE, sizeleft);
-        if (result > 0) {
-            memcpy(buf, curr, result);
-            curr += result;
-            sizeleft -= result;
-        }
-        return (int) result;
-    }
-
-    virtual int get_blk(char **ptr) {
-        const size_t result = MIN(PAGE_SIZE, sizeleft);
-        *ptr = (char *) curr;
-        curr += result;
-        return (int) result;
-    }
-
-    virtual ~mem_cursor() {};
-};
-
-class pstr_cursor : public str_cursor {
-private:
-    xptr curr;
-    size_t sizeleft;
-public:
-    pstr_cursor(xptr str, size_t asize) : curr(str), sizeleft(asize) {}
-
-    virtual int copy_blk(char *buf) {
-        const int result = (int) MIN(PAGE_SIZE, sizeleft);
-        if (result > 0) {
-            memcpy(buf, xaddr(checkp(curr)), result);
-            curr += result;
-            sizeleft -= result;
-        }
-        return (int) result;
-    }
-
-    virtual int get_blk(char **ptr) {
-        const int result = (int) MIN(PAGE_SIZE, sizeleft);
-        *ptr = (char *) xaddr(checkp(curr));
-        curr += result;
-        sizeleft -= result;
-        return (int) result;
-    }
-
-    virtual ~pstr_cursor() {};
-};
-
+#define pstr_cursor estr_cursor
 
 #endif //_STRINGS_BASE_H
