@@ -99,7 +99,7 @@ bool XDMSerializer::declareNamespace(xmlns_ptr ns) {
 xmlns_ptr XDMSerializer::getDefaultNamespace() {
     NSPrefixMap::iterator nsi = nsPrefixMap.find("");
 
-    if (nsi == nsPrefixMap.end() || nsi->second == NULL_XMLNS || strnlen(nsi->second->get_uri(), 1) == 0) {
+    if (nsi == nsPrefixMap.end() || nsi->second == NULL_XMLNS || nsi->second->empty_uri()) {
         return NULL_XMLNS;
     } else {
         return nsi->second;

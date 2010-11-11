@@ -200,11 +200,6 @@ private:
         if (tc.t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             data.x = data.y = (int64_t)0;
             *(str_counted_ptr*)(&data) = *(str_counted_ptr*)(&(tc.data));
-/*
-        } else if (tc.get_atomic_type() == se_sequence_element) {
-            data.x = data.y = (int64_t)0;
-            *(sequence_ptr*)(&data) = *(sequence_ptr*)(&(tc.data));
-*/
         } else {
             data = tc.data;
         }
@@ -214,11 +209,6 @@ private:
         if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
             ((str_counted_ptr*)(&data))->~str_counted_ptr();
             data.x = data.y = (int64_t) 0;
-/*
-        } else if (get_atomic_type() == se_sequence_element) {
-            ((sequence_ptr*)(&data))->~sequence_ptr();
-            data.x = data.y = (int64_t) 0;
-*/
         }
     }
 

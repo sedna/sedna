@@ -24,7 +24,8 @@ public:
 
     inline const char * get_uri() const { return uri; }
     inline const char * get_prefix() const { return prefix; }
-    inline bool has_prefix() const { return prefix != NULL && strnlen(prefix, 1) > 0; }
+    inline bool has_prefix() const { return prefix != NULL && prefix[0] != '\0'; }
+    inline bool empty_uri() const { return uri == NULL || uri[0] == '\0'; }
     inline bool is_reserved_prefix() const { return prefix != NULL && (strcmp(prefix, "xml") == 0); }
 };
 

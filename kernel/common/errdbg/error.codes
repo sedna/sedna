@@ -734,19 +734,6 @@ sedna-err:SE2203
 
   External function load error
 
-############### serialization ######
-sedna-err:SE2301
-
-  Unsupported serialization method
-sedna-err:SE2302
-
-  Serialization internal error: unknown node type passed
-
-############### others ##############
-sedna-err:SE2901
-
-  The feature is no longer supported
-
 ########### concerning sockets ####################
 sedna-err:SE2999
 
@@ -1759,3 +1746,14 @@ err:XQDY0096
 sedna-err:SE3082
 
     Prolog is prohibited in CREATE TRIGGER statements
+
+sedna-err:SE2301
+
+  Unsupported serialization method
+sedna-err:SE2302
+
+  Serialization internal error: unknown node type passed
+
+sedna-err:SE2901
+
+  The feature is no longer supported
