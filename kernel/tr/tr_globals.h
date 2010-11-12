@@ -11,6 +11,7 @@
 #include "common/sedna.h"
 #include "common/base.h"
 #include "common/pping.h"
+
 #include "tr/client_core.h"
 #include "tr/tr_base.h"
 
@@ -20,6 +21,12 @@ void parse_trn_command_line(int argc, char** argv);
 
 namespace tr_globals
 {
+    /*
+     * Buffer for e_strs (used for various intermediate operations with e_strs
+     * instead of allocating dynamic memory by se_new operator)
+     */
+    extern char e_string_buf[PAGE_SIZE];
+
     extern int run_rewriter;
     extern int show_time;
     extern int socket_port;
@@ -29,7 +36,7 @@ namespace tr_globals
     extern int authorization;
     extern int query_timeout;
     extern int max_stack_depth;
-    
+
     /* Special transactions */
     extern bool run_recovery;
     extern bool first_transaction;

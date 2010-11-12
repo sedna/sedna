@@ -11,7 +11,6 @@
 
 #include "tr/executor/root/PPLoadModule.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/crmutils/crmutils.h"
 #include "tr/tr_globals.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"

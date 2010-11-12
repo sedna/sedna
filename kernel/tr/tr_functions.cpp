@@ -25,7 +25,8 @@
 #include "tr/xqp/XQuerytoLR.h"
 #include "tr/executor/root/PPQueryRoot.h"
 #include "tr/nid/numb_scheme.h"
-#include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/debug_utils.h"
+#include "tr/crmutils/serialization.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"

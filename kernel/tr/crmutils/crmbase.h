@@ -7,12 +7,6 @@
 #ifndef _CRMBASE_H
 #define _CRMBASE_H
 
-/*
- * This file should contain enums, structs, etc, which
- * are used within kernel/tr. Was created with intention
- * to not include crmutils.h and exec_output.h in headers.
- */
-
 #include "common/sedna.h"
 #include "common/xptr.h"
 

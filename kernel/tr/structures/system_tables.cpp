@@ -12,12 +12,11 @@
 #include "tr/structures/metadata.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/crmutils/crmutils.h"
 #include "tr/mo/mo.h"
 #include "tr/cat/catenum.h"
 #include "tr/locks/locks.h"
 #include "tr/idx/index_data.h"
-
+#include "tr/crmutils/debug_utils.h"
 #include "tr/structures/nodeutils.h"
 
 #ifdef SE_ENABLE_TRIGGERS

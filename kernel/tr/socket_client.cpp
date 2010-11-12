@@ -293,7 +293,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                     else if (sp_msg.instruction == se_BulkLoadPortion)// BulkLoadPortion message
                     {
                         got = uWriteFile(fs.f, sp_msg.body+5, sp_msg.length-5, &written, __sys_call_error);
-                        if ( 0 == got || sp_msg.length-5 != written ) 
+                        if ( 0 == got || (unsigned int) (sp_msg.length-5) != written )
                             throw USER_EXCEPTION(SE4045); 
                     }
                     else 

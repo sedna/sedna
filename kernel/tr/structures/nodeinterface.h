@@ -69,7 +69,7 @@ public:
 
     /* Legacy: has a bad name */
     inline
-    bool isNodeChild() const { CHECKP(node); t_item t = getNodeType(); return t != attribute || t != xml_namespace; }
+    bool isNodeChild() const { CHECKP(node); t_item t = getNodeType(); return (t & ti_first_children) == 0; }
 
     inline
     bool isNodeInCollection() const { CHECKP(node); return getSchemaNode()->root->nodecnt > 1; }

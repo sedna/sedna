@@ -6,10 +6,10 @@
 
 #include <math.h>
 #include <map>
+#include <ostream>
 
 #include "common/sedna.h"
 
-#include "tr/crmutils/crmutils.h"
 #include "tr/structures/metadata.h"
 #include "expat.h"
 #include "common/xptr.h"
@@ -284,7 +284,7 @@ static void start(void *s, const char *el, const char **attr)
     if ((curcnt*100.)/nodescnt>curproc)
     {
      if(print_p)
-      *(se_ostream*)s << curproc <<"%"<<endl;
+      *(se_ostream*)s << curproc << "%" << '\n';
      curproc++;
     }
 }
@@ -682,7 +682,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped, bool pri
         parse_load(f, ostr);
 
         if (print_p)
-            ostr <<"100%" << endl;
+            ostr << "100%" << '\n';
 
         nodescnt=0;
         curcnt=0;
@@ -730,7 +730,7 @@ xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection
         parse_load (f, ostr);
 
         if (print_p)
-            ostr <<"100%" << endl;
+            ostr << "100%" << '\n';
 
         nodescnt=0;
         curcnt=0;

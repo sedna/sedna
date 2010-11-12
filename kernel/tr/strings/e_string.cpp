@@ -166,7 +166,7 @@ void estr::copy_text_cursor(xptr dest, str_cursor *cur)
 
     CHECKP(dest);
     int dest_spc_blk = E_STR_BLK_FREE_SPACE(dest_blk);
-    int src_spc_blk = cur->copy_blk(executor_globals::e_string_buf);
+    int src_spc_blk = cur->copy_blk(tr_globals::e_string_buf);
     int copied_count = 0;
 
     while (src_spc_blk > 0)
@@ -183,7 +183,7 @@ void estr::copy_text_cursor(xptr dest, str_cursor *cur)
         const int real_count = s_min(dest_spc_blk, src_spc_blk - copied_count);
         CHECKP(dest);
         VMM_SIGNAL_MODIFICATION(dest);
-        memcpy(dest_addr, executor_globals::e_string_buf + copied_count, real_count);
+        memcpy(dest_addr, tr_globals::e_string_buf + copied_count, real_count);
         m_size += real_count;
         dest_spc_blk -= real_count;
         copied_count += real_count;
@@ -192,7 +192,7 @@ void estr::copy_text_cursor(xptr dest, str_cursor *cur)
 
         if (copied_count == src_spc_blk)
         {
-            src_spc_blk = cur->copy_blk(executor_globals::e_string_buf);
+            src_spc_blk = cur->copy_blk(tr_globals::e_string_buf);
             copied_count = 0;
         }
     }

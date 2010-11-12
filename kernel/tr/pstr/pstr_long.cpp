@@ -4,15 +4,16 @@
  */
 
 #include "common/sedna.h"
+#include "common/errdbg/d_printf.h"
+
 #include "tr/vmm/vmm.h"
-#include "tr/log/log.h"
 #include "tr/strings/strings.h"
 #include "tr/strings/e_string.h"
 #include "tr/pstr/pstr_long.h"
-#include "tr/structures/nodeutils.h"
 #include "tr/pstr/pstr.h"
-#include "common/errdbg/d_printf.h"
-
+#include "tr/structures/nodeutils.h"
+#include "tr/tr_base.h"
+#include "tr/tr_globals.h"
 
 #if 1
 #define DBGBLOCKS_PRITNF(x)
@@ -107,7 +108,7 @@ static inline void intl_alloc_string_block(bool persistent, const bool plog)
 
 static inline char *intl_block_list_end_addr()
 {
-	return ((char *)executor_globals::e_string_buf + sizeof(executor_globals::e_string_buf));
+	return ((char *)tr_globals::e_string_buf + sizeof(tr_globals::e_string_buf));
 }
 
 static inline struct pstr_long_block_list_entry  *intl_block_list_end()

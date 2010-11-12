@@ -6,7 +6,6 @@
 #include "common/errdbg/d_printf.h"
 #include "tr/ft/ft_index.h"
 #include "tr/idx/btree/btree.h"
-#include "tr/crmutils/crmutils.h"
 #include "expat.h"
 #include "tr/ft/ft_cache.h"
 #include "tr/executor/base/sorted_sequence.h"

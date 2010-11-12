@@ -22,6 +22,8 @@ using namespace tr_globals;
 
 namespace tr_globals
 {
+    char e_string_buf[PAGE_SIZE];
+
     int run_rewriter      = 1;
     int show_time         = 0;
     int print_intermed    = 0;

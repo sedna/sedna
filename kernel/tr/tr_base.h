@@ -50,7 +50,5 @@ struct db_entity
     }
 };
 
-
-
 #endif /* _TR_BASE_H */
 

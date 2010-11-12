@@ -6,10 +6,9 @@
 
 #include "common/sedna.h"
 #include "tr/executor/xqops/PPError.h"
-#include "tr/crmutils/crmutils.h"
 #include "tr/tr_globals.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-
+#include "tr/crmutils/serialization.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error

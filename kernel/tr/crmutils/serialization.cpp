@@ -5,6 +5,8 @@
 
 #include "tr/crmutils/serialization.h"
 #include "tr/crmutils/xmlserializer.h"
+#include "tr/crmutils/global_options.h"
+
 #include "tr/executor/base/PPBase.h"
 
 void print_pp_stack(se_ostream* dostr)

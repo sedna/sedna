@@ -10,6 +10,7 @@
 #include "common/sedna.h"
 
 #include "tr/crmutils/xdm.h"
+#include "tr/crmutils/global_options.h"
 #include "tr/crmutils/serialization.h"
 #include "tr/crmutils/str_matcher.h"
 
