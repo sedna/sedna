@@ -3,7 +3,6 @@
 
 #include "tr/xqp/ast/ASTNode.h"
 #include "tr/executor/por2qep/scheme_tree.h"
-#include "tr/xqp/ast/AST.h"
 
 typedef ASTNode *(*createNode_fun)(scheme_list &sl);
 

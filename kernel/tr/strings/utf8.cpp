@@ -652,7 +652,7 @@ int CollationHandler_utf8::compare(str_cursor *cur1, str_cursor *cur2)
     char *str1_ptr = NULL, *str2_ptr = NULL;
     int cmp_res = 0;
 
-    str2_ptr = executor_globals::e_string_buf;
+    str2_ptr = tr_globals::e_string_buf;
     int str2_part_len = cur2->copy_blk(str2_ptr);
     int str1_part_len = cur1->get_blk(&str1_ptr);
 	xptr str1xptr = str1_ptr == NULL ? XNULL : addr2xptr(str1_ptr);
@@ -676,7 +676,7 @@ int CollationHandler_utf8::compare(str_cursor *cur1, str_cursor *cur2)
 
 		if (str1_part_len == 0 && str2_part_len == 0)
 		{
-            str2_ptr = executor_globals::e_string_buf;
+            str2_ptr = tr_globals::e_string_buf;
             str2_part_len = cur2->copy_blk(str2_ptr);
 			str1_part_len = cur1->get_blk(&str1_ptr);
 			str1xptr = ADDR2XPTR(str1_ptr);
@@ -690,7 +690,7 @@ int CollationHandler_utf8::compare(str_cursor *cur1, str_cursor *cur2)
 		}
 		if (str2_part_len == 0)
 		{
-            str2_ptr = executor_globals::e_string_buf;
+            str2_ptr = tr_globals::e_string_buf;
             str2_part_len = cur2->copy_blk(str2_ptr);
 			CHECKP(str1xptr);
 			continue;

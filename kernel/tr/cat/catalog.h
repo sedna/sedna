@@ -15,6 +15,7 @@
 
 #include "tr/cat/simplestream.h"
 #include "tr/cat/catmem.h"
+
 #include "tr/tr_base.h"
 
 /** Catalog objects are heap-stored structures, that may be saved in the physical block memory.

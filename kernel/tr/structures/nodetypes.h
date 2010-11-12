@@ -6,6 +6,8 @@
 #ifndef NODETYPES_H_
 #define NODETYPES_H_
 
+#include "common/base.h"
+
 /*
  * Possible atomic types
  */

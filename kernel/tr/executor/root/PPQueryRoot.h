@@ -12,7 +12,6 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/crmutils/crmbase.h"
 #include "common/lm_base.h"
-#include "tr/crmutils/serialization.h"
 
 class PPQueryRoot : public PPQueryEssence
 {

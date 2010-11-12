@@ -11,7 +11,7 @@
 
 #include "tr/strings/utf8.h"
 #include "tr/structures/xmlns.h"
-#include "tr/crmutils/serialization.h"
+#include "tr/crmutils/global_options.h"
 #include "tr/crmutils/str_matcher.h"
 
 /// query prolog enumerations

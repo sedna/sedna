@@ -9,7 +9,6 @@
 #include "tr/executor/root/PPQueryRoot.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/crmutils/crmutils.h"
 #include "tr/crmutils/serialization.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"

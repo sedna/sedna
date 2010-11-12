@@ -8,7 +8,6 @@
 #include "tr/pstr/hh.h"
 /* for debug */
 #include "tr/pstr/pstr.h"
-#include "tr/log/log.h"
 #include <iostream>
 
 /* note: numeration of holes starts from index 1 in "hh_" functions */
@@ -16,6 +15,7 @@
 #define HH_LEFT(i)		(2*i)
 #define HH_RIGHT(i)		(2*i + 1)
 /* returns pointer to i-th slot, i must be > 0 */
+
 inline hh_slot* HH_SLOT(xptr p, int i) {
 		return (hh_slot*)((char*)XADDR(p) + sizeof(struct vmm_sm_blk_hdr) + 6*sizeof(shft) + (i-1)*sizeof(hh_slot));
 }

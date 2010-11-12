@@ -9,7 +9,6 @@
 #include "common/xptr.h"
 #include "tr/mo/mo.h"
 #include "tr/log/log.h"
-#include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/idx/indexes.h"
 #include "tr/executor/base/xs_uri.h"

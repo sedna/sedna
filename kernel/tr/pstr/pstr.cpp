@@ -6,16 +6,14 @@
 #include <iostream>
 
 #include "common/sedna.h"
-
 #include "common/sm_vmm_data.h"
 #include "common/errdbg/d_printf.h"
+
 #include "tr/pstr/pstrblk.h"
 #include "tr/pstr/pstr.h"
 #include "tr/pstr/utl.h"
 #include "tr/pstr/hh.h"
 #include "tr/vmm/vmm.h"
-#include "tr/locks/locks.h"
-#include "tr/log/log.h"
 
 #include "tr/structures/descriptor.h"
 #include "tr/structures/nodeutils.h"

@@ -8,8 +8,9 @@
 #ifndef _STR_MATCHER_H
 #define _STR_MATCHER_H
 
-#include "tr/executor/base/tuple.h"
 #include "tr/strings/strings_base.h"
+
+struct tuple_cell;
 
 struct trie_node
 {
@@ -29,6 +30,7 @@ struct trie_node
 	unsigned char ch;
 	struct trie_node *next[256];
 };
+
 typedef struct trie_node trie_node_t;
 
 typedef void (*write_func_t)(void *param, const char *str, int len);

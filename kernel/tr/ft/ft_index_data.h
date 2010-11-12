@@ -17,6 +17,7 @@
 #include "tr/ft/ft_storage.h"
 #include "tr/ft/update_history.h"
 
+#include "tr/cat/catptr.h"
 #include "tr/cat/catmem.h"
 
 struct PathExpr;

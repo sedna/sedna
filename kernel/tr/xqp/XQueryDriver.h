@@ -15,7 +15,6 @@
 #include "XQueryParser.h"
 #include "XQueryModule.h"
 #include "XQFunction.h"
-#include "tr/executor/base/PPBase.h"
 
 namespace sedna
 {

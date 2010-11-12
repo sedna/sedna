@@ -10,34 +10,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/tuple.h"
-
-#include <set>
-#include <map>
-
-enum se_output_method {
-    se_output_method_xml  = 0,
-    se_output_method_sxml = 1,
-    se_output_method_json = 0x10
-};
-
-struct GlobalSerializationOptions {
-  /* XQuery method */
-    enum se_output_method xquery_output_method;
-
-  /* XML specific options */
-    bool preserveNamespaces;
-    bool useCharmap;
-    const char * indentSequence;
-    bool indent;
-
-    typedef std::set<std::string> NameSet;
-    NameSet cdataSectionElements;
-
-    typedef std::set< std::pair<std::string, std::string> > Stringmap;
-    Stringmap charmap;
-
-    bool separateTuples;
-};
+#include "tr/crmutils/global_options.h"
 
 class Serializer {
   protected:
@@ -62,7 +35,7 @@ class Serializer {
     static Serializer * createSerializer(enum se_output_method method);
 };
 
-/* Legarcy */
+/* Print physical operations stack in debug mode */
 void print_pp_stack(se_ostream* dostr);
 
 #endif /* SERIALIZATION_H_ */

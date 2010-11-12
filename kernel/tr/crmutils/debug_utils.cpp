@@ -9,22 +9,16 @@
 #include "common/sedna.h"
 #include "common/u/uutils.h"
 
-#include "tr/crmutils/crmutils.h"
-#include "tr/crmutils/crminternals.h"
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstrblk.h"
 #include "tr/structures/metadata.h"
 #include "tr/mo/mo.h"
 
-#include "tr/structures/nodeoperations.h"
 #include "tr/structures/nodeutils.h"
 #include "tr/structures/nodeinterface.h"
 
 using namespace internal;
-
-/* predefined debug & error output stream */
-se_stdlib_ostream crm_dbg(std::cerr);
 
 /* some statistics counters */
 struct debug_info

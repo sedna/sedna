@@ -8,7 +8,6 @@
 
 #include "tr/executor/root/PPRetrieveMetadata.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
 

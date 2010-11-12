@@ -1,3 +1,4 @@
+
 /*
 * File:  tr_common_funcs.cpp
 * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
@@ -9,24 +10,25 @@
 #include "common/sedna.h"
 #include "common/base.h"
 #include "common/ipc_ops.h"
+#include "common/llcommon/llMain.h"
 
 #include "tr/tr_globals.h"
-#include "tr/locks/locks.h"
+#include "tr/tr_common_funcs.h"
 #include "tr/auth/auc.h"
+#include "tr/locks/locks.h"
 #include "tr/log/log.h"
 #include "tr/idx/index_data.h"
 #include "tr/executor/base/XPath.h"
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"
-#include "tr/tr_common_funcs.h"
 #include "tr/cat/catalog.h"
-#include "tr/crmutils/crmutils.h"
 #include "tr/triggers/triggers_data.h"
 #include "tr/mo/boundaries.h"
-#include "common/llcommon/llMain.h"
+#include "tr/crmutils/serialization.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
+#include "tr/ft/ft_index_data.h"
 #endif
 
 #ifdef SE_ENABLE_DTSEARCH

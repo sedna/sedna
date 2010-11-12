@@ -6,9 +6,11 @@
 #ifndef _AST_VISITOR_H_
 #define _AST_VISITOR_H_
 
-#include "tr/xqp/XQueryDriver.h"
-#include "tr/xqp/XQueryModule.h"
 #include "tr/xqp/ast/AST.h"
+
+namespace sedna {
+    class XQueryDriver;
+}
 
 class ASTVisitor
 {
