@@ -17,38 +17,6 @@
 //typedef xptr object;
 //#define NULL_OBJECT	XNULL
 
-//FIXME
-#include "tr/strings/strings_base.h"
-#include "tr/strings/strings.h"
-struct doc_serial_header
-{
-	str_off_t length;
-	xptr ptr;
-	doc_serial_header(str_off_t _length, xptr _ptr):length(_length),ptr(_ptr){}
-	doc_serial_header():length(0),ptr(XNULL){}
-	static void parse(const char* data, int size, void* p);
-	void serialize(string_consumer_fn fn, void *p);
-	void serialize_to_buf(op_str_buf *buf);
-};
-inline bool operator<(const doc_serial_header &p1, const doc_serial_header &p2)
-{
-    return (p1.ptr != p2.ptr ? p1.ptr < p2.ptr : (uint32_t)(p1.length) < (uint32_t)(p2.length));
-}
-
-struct ft_idx_btree_element
-{
-	xptr node;
-	int word_ind;
-	ft_idx_btree_element() : node(XNULL), word_ind(0) {}
-	ft_idx_btree_element(xptr _node, int _word_ind) : node(_node), word_ind(_word_ind) {}
-};
-inline bool operator<(const ft_idx_btree_element &p1, const ft_idx_btree_element &p2)
-{
-    return (p1.node != p2.node ? p1.node < p2.node : (uint32_t)(p1.word_ind) < (uint32_t)(p2.word_ind));
-}
-
-
-
 template<typename object> class null_object {};
 
 template<> class null_object<xptr>
@@ -59,22 +27,8 @@ template<> class null_object<int>
 {
 public: static inline int get() { return 0; }
 };
-template<> class null_object<doc_serial_header>
-{
-public: static inline doc_serial_header get()
-		{ return doc_serial_header(0,XNULL);
-		}
-};
-template<> class null_object<ft_idx_btree_element>
-{
-public: static inline ft_idx_btree_element get()
-		{
-			return ft_idx_btree_element(XNULL, 0);
-		}
-};
 //this is useable only if object type is defined
 #define NULL_OBJECT null_object<object>::get()
-
 
 
 struct bt_path_item {
