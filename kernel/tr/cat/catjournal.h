@@ -31,7 +31,7 @@ struct catalog_master_record {
     catalog_name_trees masterdata;
 
     int last_nid_size;
-    uchar last_nid[MAX_ROOT_NID_SIZE];
+    uint8_t last_nid[MAX_ROOT_NID_SIZE];
 };
 
 struct catalog_journal_record {

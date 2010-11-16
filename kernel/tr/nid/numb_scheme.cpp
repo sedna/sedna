@@ -627,7 +627,7 @@ void	nid_create_child(xptr parent, xptr result)
 
 
 
-void updateEP_nid(int * last_nid_size, uchar * last_nid)
+void updateEP_nid(int * last_nid_size, uint8_t * last_nid)
 {
     if (*last_nid_size==255) {
 //        throw MAX_ROOT_NID

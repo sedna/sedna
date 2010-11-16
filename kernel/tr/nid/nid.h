@@ -21,9 +21,6 @@
 #define DEF_LETTER 25
 
 
-
-typedef unsigned char uchar;
-
 /* fraction number x/y */
 struct fnumber {
 private:

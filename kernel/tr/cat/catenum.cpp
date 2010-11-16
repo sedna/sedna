@@ -1,5 +1,6 @@
 #include <string>
 #include <map>
+#include "tr/vmm/vmm.h"
 #include "tr/cat/catenum.h"
 #include "tr/cat/catjournal.h"
 
