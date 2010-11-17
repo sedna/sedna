@@ -170,9 +170,6 @@ U_THREAD_PROC (checkpoint_thread, arg)
                     d_printf1("flushing all data buffers...\n");
                     /* Just throw out from SM's buffers dirty pages */
                     flush_data_buffers();
-                    /* Physically flush IO buffers on disk (like fsync()) */
-                    if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
-                        throw SYSTEM_EXCEPTION("Cannot flush buffers (checpoint)");
                     d_printf1("flushing all data buffers completed\n");
         
                     WuEnumerateVersionsParams params;

@@ -327,7 +327,7 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
         //if (it == trs.end()) break; // successfully approved
     }
 
-    flush_buffer(*offs);
+    flush_buffer(*offs, false);
 	buffer_table.remove((*phys_xptrs)[*offs/PAGE_SIZE]);
 	
 	(*phys_xptrs)[*offs/PAGE_SIZE]=XNULL;
@@ -388,7 +388,7 @@ xptr put_block_to_buffer(session_id sid,
     return swapped;
 }
 
-void flush_buffer(ramoffs offs)
+void flush_buffer(ramoffs offs, bool sync)
 {
 	vmm_sm_blk_hdr *blk = NULL;
 	size_t ind = offs / PAGE_SIZE;
@@ -404,7 +404,17 @@ void flush_buffer(ramoffs offs)
 			llFlushLsn(blk->lsn);
 		}
 		WuOnFlushBufferExn(physXptr);
+
+		// sync barrier
+		if (sync && uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+			throw SYSTEM_EXCEPTION("Cannot sync-flush buffer");
+
         write_block(physXptr, offs);
+
+		// sync barrier
+		if (sync && uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+			throw SYSTEM_EXCEPTION("Cannot sync-flush buffer");
+
 		blk->is_changed = false;
 		/*	TODO: it will introduce bugs if flushed a buffer which a transaction is modifying now,
 			anyway it will lead to unpredictable results even w/o is_changed issue */ 
@@ -425,7 +435,7 @@ void flush_buffers()
         //d_printf2("record 		(offs = %d) xptr = ", (ramoffs)(*it));
         blk->p.print();
 
-		flush_buffer((ramoffs)(*it));
+		flush_buffer((ramoffs)(*it), false);
     }
 
     d_printf1("Flush buffers: complete\n");
@@ -447,9 +457,14 @@ void flush_data_buffers()
 
         if (IS_DATA_BLOCK(blk->p))
         {
-			flush_buffer((ramoffs)(*it));
+		// here we flush them without sync, but look below
+			flush_buffer((ramoffs)(*it), false);
         }
     }
+
+    // sync barrier
+    if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+        throw SYSTEM_EXCEPTION("Cannot sync-flush buffers (checkpoint)");
 
     d_printf1("Flush data buffers: complete\n");
 }
