@@ -166,10 +166,10 @@ static int ImpMarkBufferDirty(int bufferId)
 	return setup.markBufferDirty(bufferId);
 }
 
-static int ImpFlushBuffer(int bufferId)
+static int ImpFlushBuffer(int bufferId, bool sync)
 {
 	assert (setup.flushBuffer);
-	return setup.flushBuffer(bufferId);
+	return setup.flushBuffer(bufferId, sync);
 }
 
 static int ImpAllocateBlockAndCopyData(XPTR *xptr, int *bufferId, int srcBuf)
@@ -430,8 +430,14 @@ static int OnFlushBuffer(XPTR xptr)
 	}
 	else if (!ImpFindBlockInBuffers(target, &bufferId))
 	{
-		/* the block to be flushed ahead of the current one not in buffers? fine for us */
-		success = (WuGetLastError() == WUERR_BLOCK_NOT_IN_BUFFERS);
+		/*
+		 * the block to be flushed ahead of the current one not in buffers?
+		 * fine for us. But we need to get rid of flush-dependency, since it's
+		 * essentially has been fulfilled.
+		 */
+	    wulog(("WULOG: dependency xptr = %"PRI_XPTR" from xptr = %"PRI_XPTR" isn't in buffers", target, xptr));
+		success = (WuGetLastError() == WUERR_BLOCK_NOT_IN_BUFFERS) &&
+			UpdateFlushingDependency(xptr, 0);
 	}
 	else
 	{
@@ -442,15 +448,8 @@ static int OnFlushBuffer(XPTR xptr)
          * blocks. So we make sure that all blocks are flushed before this
          * version, and then guarantee flush of the version itself.
          */
-        if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
-            throw SYSTEM_EXCEPTION("Cannot flush buffers (old version)");
-
 	    wulog(("WULOG: flushed xptr = %"PRI_XPTR" on dependency from xptr = %"PRI_XPTR, target, xptr));
-		success = UpdateFlushingDependency(xptr, 0) && ImpFlushBuffer(bufferId);
-
-	    /* see comment above... */
-		if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
-            throw SYSTEM_EXCEPTION("Cannot flush buffers (new version)");
+		success = UpdateFlushingDependency(xptr, 0) && ImpFlushBuffer(bufferId, true);
 	}
 	if (success)
 	{
@@ -801,6 +800,18 @@ static int FixFlushXptr(int oldVerBufferId, XPTR xptr, XPTR lxptr)
     {
         buffer_table.replace(WuExternaliseXptr(xptr), old_offs, &dummy);
 
+        /*
+         * In fact, we don't need to do this since this version will be
+         * discarded shortly after that. But it messes our logs and makes me
+         * really uncomfortable...
+         *
+         * Actually, if we didn't change physXptr here, we should be careful
+         * because of flushing dependency here,
+         * since we have two blocks with the same physXptr, but this should
+         * be fixed by nullifying dependency later (see rollback code).
+         */
+        (*phys_xptrs)[BufferIdFromRamoffs(old_offs)] = WuExternaliseXptr(xptr);
+
         wulog(("WULOG: Rollback: cancelling creation of a new version: version header for returned LC-version..."));
         wulogheader(oldVerBufferId);
 
@@ -863,19 +874,76 @@ int OnTransactionRollback(VeClientState *state)
                     if (!success) break;
 
                     // old version is now in buffers: move it to a new physical xpt == lxptr
-                    if (!FixFlushXptr(bufferId, i->xptr, i->lxptr) ||
-                        !ImpMarkBufferDirty(bufferId))
+                    if (!FixFlushXptr(bufferId, i->xptr, i->lxptr))
                     {
                         success = 0;
                         break;
                     }
 
-                    // if we had replaced persistent version, make persistent version flush to avoid relocating it on recovery
-                    // this will guarantee that the situation described in the header of the case will be impossible
-                    if (i->type == VE_FUNCTION_CREATE_VERSION_PERS && !ImpFlushBuffer(bufferId))
+                    /*
+                     * if we had replaced persistent version, make persistent
+                     * version flush to avoid relocating it on recovery
+                     * this will guarantee that the situation described in the
+                     * header of the case will be impossible
+                     *
+                     * also, we want to nullify flushing dependency since there
+                     * is no meaning in flushing 'xptr' --> it'll be deleted in
+                     * a moment.
+                     */
+                    if (i->type == VE_FUNCTION_CREATE_VERSION_PERS)
                     {
-                        success = 0;
-                        break;
+			XPTR target;
+			if (!LookupFlushingDependency(i->lxptr, &target))
+			{
+				success = 0;
+				break;
+			}
+
+			/*
+			 * If we still have live dependency, that means the
+			 * relocated persistent version is still sitting
+			 * at lxptr address, which is fine. So, we don't need
+			 * to flush it.
+			 */
+			if (target)
+			{
+				// delete dependency
+				if (!UpdateFlushingDependency(i->lxptr, 0))
+				{
+					success = 0;
+					break;
+				}
+			}
+			else
+			{
+				/*
+				 * otherwise, we must flush it in sync-mode to
+				 * be able to recover later, since its current
+				 * physical block will be deleted momentarily.
+				 */
+				if (!ImpMarkBufferDirty(bufferId) ||
+						!ImpFlushBuffer(bufferId, true))
+				{
+					success = 0;
+					break;
+				}
+			}
+                    }
+                    else
+                    {
+			/*
+			 * here, we don't care of the exact time of
+			 * flushing of a non-persistent new version.
+			 * we relocate it and make it dirty.
+			 *
+			 * persistent version is still safe and sound in its
+			 * current place.
+			 */
+			if (!ImpMarkBufferDirty(bufferId))
+			{
+				success = 0;
+				break;
+			}
                     }
 
                     // delete old version

@@ -209,7 +209,7 @@ int MarkBufferDirty(int bufferId)
 }
 
 static
-int FlushBuffer(int bufferId)
+int FlushBuffer(int bufferId, bool sync)
 {
 	ramoffs offs = 0;
 	int success = 0;
@@ -217,7 +217,7 @@ int FlushBuffer(int bufferId)
 	try
 	{
 		offs = RamoffsFromBufferId(bufferId);
-		flush_buffer(offs);
+		flush_buffer(offs, sync);
 		success = 1;
 	}
 	WU_CATCH_EXCEPTIONS()

@@ -187,7 +187,12 @@ xptr put_block_to_buffer(session_id sid,
 bool find_block_in_buffers(const xptr &p,
 						   ramoffs *offs);
 
-void flush_buffer(ramoffs offs); // this function flushes block with a given offset from the buffer
+/*
+ * this function flushes block with a given offset from the buffer
+ * if 'sync' is true there will be a sync barrier, which guarantees (hopefully)
+ * that the block is flushed on disk right now, without reordering.
+ */
+void flush_buffer(ramoffs offs, bool sync);
 void flush_buffers();
 void flush_data_buffers();
 
