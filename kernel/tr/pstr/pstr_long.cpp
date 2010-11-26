@@ -690,7 +690,7 @@ pstr_long_cursor::pstr_long_cursor(const xptr &_ptr_, int end_indicator)
 
 
 ///pre: data_buf size >= PAGE_SIZE
-int  pstr_long_cursor::copy_blk(char *data_buf)
+size_t pstr_long_cursor::copy_blk(char *data_buf)
 {
 	if (blk == XNULL)
 		return 0;
@@ -727,7 +727,7 @@ int  pstr_long_cursor::copy_blk(char *data_buf)
 	}
 }
 
-int  pstr_long_cursor::get_blk(char **ptr)
+size_t pstr_long_cursor::get_blk(char **ptr)
 {
 	//FIXME!!! blk shouldn't be XNULL
 	if (blk == XNULL)

@@ -414,4 +414,68 @@ public:
 	CollationHandler *get_default_collation_handler();
 };
 
+#define UTF8_EOF -1
+
+//read char from buffer *buf, *buf and *len are changed accordingly
+//does not work if buf contains incomplete chars
+inline int utf8_getch(const char **buf, int *len)
+{
+	unsigned char ch = *(unsigned char *)*buf;
+	int r;
+
+	if (*len < 1)
+		return UTF8_EOF;
+
+	//FIXME - check len
+
+	++(*buf);
+	if (ch < 128)
+	{
+			r = ch;
+			*len -= 1;
+	}
+	else if (ch < 224) //FIXME: ch mustbe >= 192
+	{
+		r = ch - 192; r <<= 6;
+		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
+		*len -= 2;
+	}
+	else if (ch < 240)
+	{
+		r = ch - 224; r <<= 6;
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
+		*len -= 3;
+	}
+	else if (ch < 248)
+	{
+		r = ch - 240; r <<= 6;
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
+		*len -= 4;
+	}
+	else if (ch < 252)
+	{
+		r = ch - 248; r <<= 6;
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
+		*len -= 5;
+	}
+	else // ch mustbe < 254
+	{
+		r = ch - 252; r <<= 6;
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
+		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
+		*len -= 6;
+	}
+	return r;
+}
+
+
 #endif

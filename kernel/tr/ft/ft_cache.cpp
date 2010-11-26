@@ -469,7 +469,7 @@ static inline bool scan_occurs(ftc_index_data *id, ftc_word_occur *cur_occur, ft
 }
 
 //try to get next result, returns true if successful, false if this functions needs to be called again
-bool ftc_scan_result::get_next_result_step(tuple &t)
+bool ftc_scan_result::get_next_result_step(uint64_t *res)
 {
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
 	if (ome == NULL)
@@ -479,7 +479,7 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 		{
 			if (fts_sd.at_end())
 			{
-				t.set_eos();
+				*res = FT_UINT_NULL;
 				return true;
 			}
 			xptr p = fts_sd.cur_node();
@@ -494,7 +494,7 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 					continue;
 			}
 
-			t.copy(tuple_cell::node(indirectionDereferenceCP(p)));
+			*res = FT_XPTR_TO_UINT(p);
 			return true;
 		}
 	}
@@ -508,7 +508,7 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 			ftc_word_occur *cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
 			if (scan_occurs(id, cur_occur, doc_data))
 			{
-				t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+				*res = FT_XPTR_TO_UINT(doc_data->acc);
 				ome = om->rb_successor(ome);
 				return true;
 			}
@@ -532,7 +532,7 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 				//check that there is at least one occur in cache that hasn't been deleted
 				if (scan_occurs(id, cur_occur, doc_data))
 				{
-					t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+					*res = FT_XPTR_TO_UINT(doc_data->acc);
 					ome = om->rb_successor(ome);
 					return true;
 				}
@@ -545,7 +545,7 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 			else
 			{
 				//node in fts_sd wasn't deleted
-				t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+				*res = FT_XPTR_TO_UINT(doc_data->acc);
 				fts_sd.skip_node();
 				ome = om->rb_successor(ome);
 				return true;
@@ -565,7 +565,7 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 					return false;
 			}
 
-			t.copy(tuple_cell::node(indirectionDereferenceCP(p)));
+			*res = FT_XPTR_TO_UINT(p);
 			return true;
 		}
 		else //(fts_sd.cur_node() > doc_data->acc)
@@ -574,7 +574,7 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 			ftc_word_occur *cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
 			if (scan_occurs(id, cur_occur, doc_data))
 			{
-				t.copy(tuple_cell::node(indirectionDereferenceCP(doc_data->acc)));
+				*res = FT_XPTR_TO_UINT(doc_data->acc);
 				ome = om->rb_successor(ome);
 				return true;
 			}
@@ -589,9 +589,9 @@ bool ftc_scan_result::get_next_result_step(tuple &t)
 	U_ASSERT(false);
 }
 
-void ftc_scan_result::get_next_result(tuple &t)
+void ftc_scan_result::get_next_result(uint64_t *res)
 {
-	while (!this->get_next_result_step(t)) ;
+	while (!this->get_next_result_step(res)) ;
 }
 
 class FtcWordsScanner : public FtWordsScanner

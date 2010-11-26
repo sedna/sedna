@@ -211,15 +211,15 @@ int estr::blks_to_allocate(int str_len)
 /// e_str_cursor class implementation
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-int estr_cursor::copy_blk(char *buf)
+size_t estr_cursor::copy_blk(char *buf)
 {
     if (!m_count) return 0;
 
     CHECKP(m_str);
-    int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
+    size_t len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
     if (len >= m_count)
     {
-        len = (int)m_count;
+        len = (size_t)m_count;
         memcpy(buf, XADDR(m_str), len);
         m_str = m_str + len;
     }
@@ -232,15 +232,15 @@ int estr_cursor::copy_blk(char *buf)
     return len;
 }
 
-int estr_cursor::get_blk(char **ptr)
+size_t estr_cursor::get_blk(char **ptr)
 {
     if (!m_count) return 0;
 
     CHECKP(m_str);
-    int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
+    size_t len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
     if (len >= m_count)
     {
-        len = (int)m_count;
+        len = (size_t)m_count;
         *ptr = (char*)(XADDR(m_str));
         m_str = m_str + len;
     }

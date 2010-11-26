@@ -147,11 +147,11 @@ class memstr_cursor : public str_cursor
 {
 private:
 	char *m_buf;
-	size_t m_bytes_left; //FIMXE: int
+	size_t m_bytes_left;
 public:
 	memstr_cursor(char *buf, size_t size) : m_buf(buf), m_bytes_left(size) {}
     /// Block oriented copy. buf must have size not less than a page size
-	virtual int copy_blk(char *buf) {
+	virtual size_t copy_blk(char *buf) {
 		const size_t size = s_min(m_bytes_left, PAGE_SIZE);
 		if (size > 0)
 		{
@@ -167,7 +167,7 @@ public:
 	/// or 0 if end of string reached (*ptr is not modified in this case)
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP
-	virtual int get_blk(char **ptr) {
+	virtual size_t get_blk(char **ptr) {
 		const size_t size = s_min(m_bytes_left, PAGE_SIZE);
 		if (size > 0)
 		{
