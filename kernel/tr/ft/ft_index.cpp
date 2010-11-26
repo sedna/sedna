@@ -16,13 +16,9 @@
 //for expat
 #define SEPARATOR '>'
 
-//this length is in bytes, not characters
-//words with length more than this are truncated
-#define MAX_WORD_LENGTH 150
-
 struct ft_parse_data
 {
-	char word_buf[MAX_WORD_LENGTH+1]; //+1 is because ftc_add_word wants a null terminated string
+	char word_buf[FT_MAX_WORD_LENGTH+1]; //+1 is because ftc_add_word wants a null terminated string
 	int word_len;
 	int word_ind;
 	bool overfl; //next char of current word could not fit into word_buf
@@ -31,72 +27,6 @@ struct ft_parse_data
 	ft_index_op_t op;
 	FtStemmer *stemmer;
 };
-
-
-//TODO!!!: move these funcs & defines to strings
-
-#define UTF8_EOF -1
-
-//read char from buffer *buf, *buf and *len are changed accordingly
-//does not work if buf contains incomplete chars
-static inline int utf8_getch(const char **buf, int *len)
-{
-	unsigned char ch = *(unsigned char *)*buf;
-	int r;
-
-	if (*len < 1)
-		return UTF8_EOF;
-
-	//FIXME - check len
-
-	++(*buf);
-	if (ch < 128)
-	{
-			r = ch;
-			*len -= 1;
-	}
-	else if (ch < 224) //FIXME: ch mustbe >= 192
-	{
-		r = ch - 192; r <<= 6;
-		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
-		*len -= 2;
-	}
-	else if (ch < 240)
-	{
-		r = ch - 224; r <<= 6;
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
-		*len -= 3;
-	}
-	else if (ch < 248)
-	{
-		r = ch - 240; r <<= 6;
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
-		*len -= 4;
-	}
-	else if (ch < 252)
-	{
-		r = ch - 248; r <<= 6;
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
-		*len -= 5;
-	}
-	else // ch mustbe < 254
-	{
-		r = ch - 252; r <<= 6;
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; r <<= 6; ++(*buf);
-		ch = *(unsigned char *)*buf; r += ch - 128; ++(*buf);
-		*len -= 6;
-	}
-	return r;
-}
 
 static void process_word(struct ft_parse_data *parse_data)
 {
@@ -140,7 +70,7 @@ static void p_data(void *state, const char *s, int len)
 		if (ft_norm_char(&ch))
 		{
 			if (!parse_data->overfl)
-				parse_data->overfl = !CharsetHandler_utf8::utf8_putch(ch, parse_data->word_buf, &parse_data->word_len, MAX_WORD_LENGTH);
+				parse_data->overfl = !CharsetHandler_utf8::utf8_putch(ch, parse_data->word_buf, &parse_data->word_len, FT_MAX_WORD_LENGTH);
 		}
 		else
 		{

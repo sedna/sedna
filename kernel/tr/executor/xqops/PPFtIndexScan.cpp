@@ -21,7 +21,7 @@ PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
 #ifdef SE_ENABLE_DTSEARCH
                                                sj(NULL),
 #endif
-                                               ftc_res(NULL)
+                                               ftq(NULL)
 {
 	options.op = NULL;
 }
@@ -36,7 +36,7 @@ PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
 #ifdef SE_ENABLE_DTSEARCH
                                                  sj(NULL),
 #endif
-                                                 ftc_res(NULL)
+                                                 ftq(NULL)
 {
 }
 
@@ -65,10 +65,10 @@ PPFtIndexScan::~PPFtIndexScan()
 		sj = NULL;
 	}
 #endif
-	if (ftc_res)
+	if (ftq)
 	{
-		delete ftc_res;
-		ftc_res = NULL;
+		delete ftq;
+		ftq = NULL;
 	}
 }
 
@@ -96,10 +96,10 @@ void PPFtIndexScan::do_reopen()
 		sj = NULL;
 	}
 #endif
-	if (ftc_res)
+	if (ftq != NULL)
 	{
-		delete ftc_res;
-		ftc_res = NULL;
+		delete ftq;
+		ftq = NULL;
 	}
 
     first_time = true;
@@ -118,10 +118,10 @@ void PPFtIndexScan::do_close()
 		sj = NULL;
 	}
 #endif
-	if (ftc_res != NULL)
+	if (ftq != NULL)
 	{
-		delete ftc_res;
-		ftc_res = NULL;
+		delete ftq;
+		ftq = NULL;
 	}
 	
 }
@@ -203,9 +203,13 @@ void PPFtIndexScan::do_next(tuple &t)
 			break;
 #endif
 		case ft_ind_native:
-			ftc_res = se_new ftc_scan_result(ftc_idx);
-			ftc_res->scan_word(op_str_buf(tc).c_str()); //FIXME: op_str_buf may be destroyed too soon, pass char* to SednaSearchJob too
+			{
+			ftq = new FtQueryProcessor(ftc_idx);
+			str_cursor *query_cur = get_text_cursor(text_source_tuple_cell(tc));
+			ftq->set_query(query_cur);
+			delete query_cur;
 			break;
+			}
 		default:
 			throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation");
 		}
@@ -231,20 +235,20 @@ void PPFtIndexScan::do_next(tuple &t)
 	}
 	else
 	{
-		ftc_res->get_next_result(t);
+		ftq->get_next_result(t);
 		if (t.is_eos())
 		{
-			delete ftc_res;
-			ftc_res = NULL;
+			delete ftq;
+			ftq = NULL;
 			first_time = true;
 		}
 	}
 #else
-	ftc_res->get_next_result(t);
+	ftq->get_next_result(t);
 	if (t.is_eos())
 	{
-		delete ftc_res;
-		ftc_res = NULL;
+		delete ftq;
+		ftq = NULL;
 		first_time = true;
 	}
 #endif

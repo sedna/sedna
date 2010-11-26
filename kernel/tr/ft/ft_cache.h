@@ -67,11 +67,11 @@ private:
 
 	struct FtsScanData fts_sd;
 
-	inline bool get_next_result_step(tuple &t);
+	inline bool get_next_result_step(uint64_t *res);
 public:
 	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx) {}
 	void scan_word(const char *word);
-	void get_next_result(tuple &t);
+	void get_next_result(uint64_t *res);
 };
 
 class ftc_scan_words_result

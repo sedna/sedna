@@ -11,6 +11,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/ft/ft_index_data.h"
 #include "tr/ft/ft_cache.h"
+#include "tr/ft/query/ft_query.h"
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
 #endif
@@ -27,7 +28,7 @@ protected:
 #ifdef SE_ENABLE_DTSEARCH
 	SednaSearchJob *sj;
 #endif
-	ftc_scan_result *ftc_res;
+	FtQueryProcessor *ftq;
 
 private:   
     virtual void do_open   ();

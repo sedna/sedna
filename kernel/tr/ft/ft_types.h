@@ -17,6 +17,11 @@
 #define FT_UINT_TO_XPTR(x) (logical_int_to_xptr(x))
 //#define FT_XPTR_TO_UINT(x) (x.to_uint64())
 //#define FT_UINT_TO_XPTR(x) (uint64_to_xptr(x))
+#define FT_UINT_NULL (FT_XPTR_TO_UINT(XNULL))
+
+//this length is in bytes, not characters
+//words with length more than this are truncated
+#define FT_MAX_WORD_LENGTH 150
 
 enum ft_index_type
 {

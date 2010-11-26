@@ -127,12 +127,12 @@ public:
 
     // block oriented copy. buf must have size not less than a page size
 	// returns number of bytes copied, 0 if end of string reached.
-    virtual int copy_blk(char *buf);
+    virtual size_t copy_blk(char *buf);
 	// get's a pointer to string part in the current block and moves cursor to the next block
 	// (same as copy_blk, but without copy)
 	// returns the length of the string part
 	//     or 0 if end of string reached (*ptr is not modified in this case)
-	virtual int get_blk(char **ptr);
+	virtual size_t get_blk(char **ptr);
 
 
 	// like get_blk, but gets data from the first byte in the current block till

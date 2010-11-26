@@ -135,14 +135,14 @@ private:
 public:
     estr_cursor(const xptr& str, str_off_t count) : m_str(str), m_count(count) {}
     /// Block oriented copy. buf must have size not less than a page size
-    virtual int copy_blk(char *buf);
+    virtual size_t copy_blk(char *buf);
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
 	/// (same as copy_blk, but without copy)
 	/// returns the length of the string part
 	/// or 0 if end of string reached (*ptr is not modified in this case)
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP
-	virtual int get_blk(char **ptr);
+	virtual size_t get_blk(char **ptr);
 };
 
 
