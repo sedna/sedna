@@ -111,6 +111,7 @@ void command_line_client::release()
 
 void command_line_client::read_msg(msg_struct *msg)
 {
+	msg->body[0] = se_output_method_xml;
     if (is_stop_session())//session closed forcedly by se_stop utility
     {
         clear_stack_for_stop_signal();
