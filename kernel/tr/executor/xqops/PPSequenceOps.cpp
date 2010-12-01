@@ -296,7 +296,7 @@ PPFnDistinctValues::~PPFnDistinctValues()
 
 void PPFnDistinctValues::do_open ()
 {
-    s = se_new sequence(1);
+    s = se_new sorted_sequence(compare, get_size, serialize, serialize_2_blks, deserialize, deserialize_2_blks, NULL);
     child.op->open();
     if (collation_child.op)
         collation_child.op->open();
@@ -327,7 +327,7 @@ void PPFnDistinctValues::do_close()
     handler = NULL;
 }
 
-void PPFnDistinctValues::do_next(tuple &t)
+/*void PPFnDistinctValues::do_next(tuple &t)
 {
     if (!handler) // the same as 'first_time'
     {
@@ -357,7 +357,6 @@ void PPFnDistinctValues::do_next(tuple &t)
 
     while (true)
     {
-        int pos = 0;
         child.op->next(t);
 
         if (t.is_eos())
@@ -380,7 +379,7 @@ void PPFnDistinctValues::do_next(tuple &t)
             }
         }
 
-        for (pos = 0; pos < s->size(); ++pos)
+        for (int pos = 0; pos < s->size(); ++pos)
         {
             s->get(t, pos);
             try {
@@ -397,6 +396,81 @@ void PPFnDistinctValues::do_next(tuple &t)
         t.copy(tc);
         s->add(t);
         return;
+    }
+}*/
+
+void PPFnDistinctValues::do_next(tuple &t)
+{
+    if (!handler) // the same as 'first_time'
+    {
+        handler = charset_handler->get_unicode_codepoint_collation();
+
+        if (collation_child.op)
+        {
+            collation_child.op->next(t);
+            if(t.is_eos())
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:distinct-values()");
+
+            tuple_cell col = atomize(collation_child.get(t));
+            if (!is_string_type(col.get_atomic_type()))
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:distinct-values() (xs_string/derived/promotable is expected)");
+
+            collation_child.op->next(t);
+            if (!t.is_eos())
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:distinct-values(). Argument contains more than one item");
+
+            col = tuple_cell::make_sure_light_atomic(col);
+
+            int res = cxt->get_static_context()->get_collation(col.get_str_mem(), &handler);
+            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:distinct-values().").c_str());
+
+        }
+
+        //Accumulate elements and sort them
+        child.op->next(t);
+        while (!t.is_eos())
+	{
+	    tuple_cell tc = atomize(child.get(t));
+	    t.copy(tc);
+	    if ((tc.get_atomic_type() == xs_float  && u_is_nan((double)(tc.get_xs_float()))) ||
+		(tc.get_atomic_type() == xs_double && u_is_nan(tc.get_xs_double())))
+	    {
+		if (!has_NaN)
+		{
+		    has_NaN = true;
+		    s->add(t);
+		}
+	    }
+	    else {
+		s->add(t);
+	    }
+	    child.op->next(t);
+	}
+	s->lazy_sort();
+	first_element = true;
+    }
+
+    s->next(t);
+    if (first_element)
+    {
+	ret_val = t.cells[0];
+	first_element = false;
+	return;
+    }
+    while (!t.is_eos() && !compare_tc(t.cells[0], ret_val))
+    {
+	s->next(t);
+    }
+
+    if (t.is_eos())
+    {
+	s->clear();
+	handler = NULL;
+	has_NaN = false;
+    }
+    else
+    {
+	ret_val = t.cells[0];
     }
 }
 
@@ -419,6 +493,93 @@ void PPFnDistinctValues::do_accept(PPVisitor &v)
     v.pop();
 }
 
+inline void restore_serialized_xptr(const xptr &serialized, tuple_cell &result)
+{
+    CHECKP(serialized);
+    int size1 = GET_FREE_SPACE(serialized);
+    if(size1 < sizeof(tuple_cell))
+    {
+        memcpy(&result, XADDR(serialized), size1);
+        xptr data = ((seq_blk_hdr*)XADDR(BLOCKXPTR(serialized)))->nblk + sizeof(seq_blk_hdr);
+        CHECKP(data);
+        memcpy(((char*)&result) + size1, XADDR(data), sizeof(tuple_cell) - size1);
+    }
+    else
+    {
+	memcpy(&result, XADDR(serialized), sizeof(tuple_cell));
+    }
+}
+
+int PPFnDistinctValues::compare_tc(tuple_cell tc1, tuple_cell tc2)
+{
+    try {
+	tuple_cell comp_res = op_eq(tc1, tc2, charset_handler->get_unicode_codepoint_collation());
+	if (comp_res.get_xs_boolean())
+	{
+	    return 0;
+	}
+	else
+	{
+	    comp_res = op_gt(tc1, tc2, charset_handler->get_unicode_codepoint_collation());
+	    return (comp_res.get_xs_boolean()) ? 1 : -1;
+	}
+    } catch (SednaUserException) {
+	return tc1.get_atomic_type() - tc2.get_atomic_type();
+    }
+}
+
+int PPFnDistinctValues::compare(xptr v1, xptr v2, const void* Udata)
+{
+    CHECK_TIMER_FLAG;
+    tuple_cell tc1, tc2;
+    restore_serialized_xptr(v1, tc1);
+    restore_serialized_xptr(v2, tc2);
+
+    return compare_tc(tc1, tc2);
+}
+
+int PPFnDistinctValues::get_size(tuple& t, const void* Udata)
+{
+    return sizeof(tuple_cell);
+}
+
+void PPFnDistinctValues::serialize (tuple& t, xptr v1, const void *Udata)
+{
+    CHECK_TIMER_FLAG;
+    WRITEP(v1);
+
+    tuple_cell tc = t.cells[0];
+    memcpy(XADDR(v1), &tc, sizeof(tuple_cell));
+}
+
+void PPFnDistinctValues::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
+{
+    tuple_cell tc = t.cells[0];
+    WRITEP(v1);
+    memcpy(XADDR(v1), &tc, size1);
+    WRITEP(v2);
+    memcpy(XADDR(v2), ((char*)&tc) + size1, sizeof(tuple_cell) - size1);
+}
+
+void PPFnDistinctValues::deserialize(tuple& t, xptr& v1, const void *Udata)
+{
+    CHECK_TIMER_FLAG;
+    CHECKP(v1);
+
+    tuple_cell tc;
+    memcpy(&tc, XADDR(v1), sizeof(tuple_cell));
+    t.copy(tc);
+}
+
+void PPFnDistinctValues::deserialize_2_blks(tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
+{
+    tuple_cell tc;
+    CHECKP(v1);
+    memcpy(&tc, XADDR(v1), size1);
+    CHECKP(v2);
+    memcpy(((char*)&tc) + size1, XADDR(v2), sizeof(tuple_cell) - size1);
+    t.copy(tc);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
