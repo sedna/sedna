@@ -95,36 +95,6 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDistinctValues
 ///////////////////////////////////////////////////////////////////////////////
-/*class PPFnDistinctValues : public PPIterator
-{
-protected:
-    PPOpIn child;
-    PPOpIn collation_child;
-    sequence *s;
-    sorted_sequence *ss;
-    CollationHandler* handler;
-    bool has_NaN;
-
-private:
-    virtual void do_open   ();
-    virtual void do_reopen ();
-    virtual void do_close  ();
-    virtual void do_next   (tuple &t);
-    virtual void do_accept (PPVisitor &v);
-    
-    virtual PPIterator* do_copy(dynamic_context *_cxt_);
-    
-public:
-    PPFnDistinctValues(dynamic_context *_cxt_,
-                       operation_info _info_,
-                       PPOpIn _child_);
-
-    PPFnDistinctValues(dynamic_context *_cxt_,
-                       operation_info _info_,
-                       PPOpIn _child_,
-                       PPOpIn _collation_child_);
-    virtual ~PPFnDistinctValues();
-};*/
 
 class PPFnDistinctValues : public PPIterator
 {
@@ -138,6 +108,8 @@ protected:
     bool first_element;
 
 private:
+    void make_heavy_atomic(tuple &t);
+
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
@@ -145,6 +117,8 @@ private:
     virtual void do_accept (PPVisitor &v);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
+
+    estr txt_data;
 
     static int compare_tc(tuple_cell tc1, tuple_cell tc2);
 

@@ -327,77 +327,14 @@ void PPFnDistinctValues::do_close()
     handler = NULL;
 }
 
-/*void PPFnDistinctValues::do_next(tuple &t)
+inline void PPFnDistinctValues::make_heavy_atomic(tuple &t)
 {
-    if (!handler) // the same as 'first_time'
-    {
-        handler = charset_handler->get_unicode_codepoint_collation();
-
-        if (collation_child.op)
-        {
-            collation_child.op->next(t);
-            if(t.is_eos()) 
-                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:distinct-values()");
-
-            tuple_cell col = atomize(collation_child.get(t));
-            if (!is_string_type(col.get_atomic_type())) 
-                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:distinct-values() (xs_string/derived/promotable is expected)");
-
-            collation_child.op->next(t);
-            if (!t.is_eos()) 
-                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:distinct-values(). Argument contains more than one item");
-            
-            col = tuple_cell::make_sure_light_atomic(col);
-
-            int res = cxt->get_static_context()->get_collation(col.get_str_mem(), &handler);
-            if(res != 0) throw XQUERY_EXCEPTION2(FOCH0002, (static_context::get_error_description(res) + " in fn:distinct-values().").c_str()); 
-
-        }
+    if (t.cells[0].get_type() == tc_light_atomic_var_size) {
+	xptr txt_ptr = txt_data.append(t.cells[0]);
+	tuple_cell tc = tuple_cell::atomic_estr(t.cells[0].get_atomic_type(), t.cells[0].get_strlen(), txt_ptr);
+	t.cells[0] = tc;
     }
-
-    while (true)
-    {
-        child.op->next(t);
-
-        if (t.is_eos())
-        {
-            s->clear();
-            handler = NULL;
-            has_NaN = false;
-            return;
-        }
-
-        tuple_cell tc = atomize(child.get(t));
-        if ((tc.get_atomic_type() == xs_float  && u_is_nan((double)(tc.get_xs_float()))) || 
-            (tc.get_atomic_type() == xs_double && u_is_nan(tc.get_xs_double())))
-        {
-            if (has_NaN) continue;
-            else
-            {
-                has_NaN = true;
-                goto store_item_and_return;
-            }
-        }
-
-        for (int pos = 0; pos < s->size(); ++pos)
-        {
-            s->get(t, pos);
-            try {
-                tuple_cell comp_res = op_eq(tc, t.cells[0], handler);
-                if (comp_res.get_xs_boolean()) break;
-            } catch (SednaUserException) {
-                // continue cycle
-            }
-        }
-
-        if (pos != s->size()) continue;
-
-    store_item_and_return:
-        t.copy(tc);
-        s->add(t);
-        return;
-    }
-}*/
+}
 
 void PPFnDistinctValues::do_next(tuple &t)
 {
@@ -442,6 +379,8 @@ void PPFnDistinctValues::do_next(tuple &t)
 		}
 	    }
 	    else {
+		//if type is light_atomic_var_size then converting it to atomic_estr
+		make_heavy_atomic(t);
 		s->add(t);
 	    }
 	    child.op->next(t);
@@ -510,7 +449,7 @@ inline void restore_serialized_xptr(const xptr &serialized, tuple_cell &result)
     }
 }
 
-int PPFnDistinctValues::compare_tc(tuple_cell tc1, tuple_cell tc2)
+inline int PPFnDistinctValues::compare_tc(tuple_cell tc1, tuple_cell tc2)
 {
     try {
 	tuple_cell comp_res = op_eq(tc1, tc2, charset_handler->get_unicode_codepoint_collation());
@@ -547,7 +486,6 @@ void PPFnDistinctValues::serialize (tuple& t, xptr v1, const void *Udata)
 {
     CHECK_TIMER_FLAG;
     WRITEP(v1);
-
     tuple_cell tc = t.cells[0];
     memcpy(XADDR(v1), &tc, sizeof(tuple_cell));
 }
