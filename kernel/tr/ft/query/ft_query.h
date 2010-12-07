@@ -25,9 +25,16 @@ private:
 public:
 	char term_buf[FT_MAX_WORD_LENGTH+1];
 	FtQueryTerm(ftc_index_t idx) : ftc_idx(idx), ftc_scan(idx) {}
+	virtual ~FtQueryTerm();
+
 	virtual void open();
 	virtual uint64_t get_next_result();
-	virtual ~FtQueryTerm();
+
+	//get next word occur, if initial *acc != FT_UINT_NULL, resulting *acc >= initial *acc
+	//if resulting *acc == initial *acc, resulting *word_ind >= *initial word_ind
+	//if no more acceptable results - resulting *acc is set to FT_UINT_NULL
+	//if get_next_occur is used then get_next_result can't be used and vice versa
+	void get_next_occur(ft_uint_t *acc, int *word_ind);
 };
 class FtQueryAnd : public FtQuery
 {
@@ -38,11 +45,28 @@ private:
 	uint64_t *op_results;
 public:
 	FtQueryAnd(ftc_index_t idx, int nops);
+	virtual ~FtQueryAnd();
+
 	void set_operand(int op_idx, FtQuery *op);
 
 	virtual void open();
 	virtual uint64_t get_next_result();
-	virtual ~FtQueryAnd();
+};
+class FtQueryPhrase : public FtQuery
+{
+private:
+	int nops;
+	FtQueryTerm **term_ops;
+	uint64_t *op_results;
+	int *op_word_inds;
+public:
+	FtQueryPhrase(int _nops);
+	virtual ~FtQueryPhrase();
+
+	void set_term(int op_idx, FtQueryTerm *t);
+
+	virtual void open();
+	virtual uint64_t get_next_result();
 };
 
 class FtQueryProcessor

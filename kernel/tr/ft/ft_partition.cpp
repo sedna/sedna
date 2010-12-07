@@ -490,7 +490,7 @@ void FtPartitionScanner::merge(ft_partition_data *dest_partition, bool merge_del
 	b.finalize(dest_partition);
 }
 
-bool FtPartitionScanner::get_next_occur(xptr *acc, ftp_ind_t *ind)
+bool FtPartitionScanner::get_next_occur(ft_uint_t *acc_i, ftp_ind_t *ind)
 {
 	if (ncurw < 1)
 		return false;
@@ -503,7 +503,7 @@ bool FtPartitionScanner::get_next_occur(xptr *acc, ftp_ind_t *ind)
 	while (mina < n && !readers[mina].flag_cura())
 		mina++;
 	U_ASSERT(mina < n);
-	*acc = FT_UINT_TO_XPTR(readers[mina].cur_acc_i);
+	*acc_i = readers[mina].cur_acc_i;
 	*ind = extract_min_ind();
 	return true;
 }

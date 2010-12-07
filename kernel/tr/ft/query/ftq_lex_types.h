@@ -12,6 +12,8 @@ struct ftq_token
 	{
 		END = 0,
 		WORD = 258,
+		QUOT,
+		APOS,
 		_ERROR_,
 	};
 };
