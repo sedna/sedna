@@ -57,21 +57,49 @@ struct ftc_word_data
 //FIXME: fix .h files dependencies
 #include "tr/idx/btree/btree.h"
 
-class ftc_scan_result
+
+struct ftc_word_occur;
+class FtCacheScanner : public FtScanner
 {
 private:
 	ftc_index_t ftc_idx;
 
 	FTC_OCCURMAP *om;
 	FTC_OCCURMAP::pers_sset_entry *ome;
+	ftc_word_occur *cur_occur;
+
+	//scan for the next occur, returns true if ome was changed
+	//pre: ome != NULL (cur_occur may be NULL)
+	//post: FtScanner::cur_acc_i updated accordingly
+	bool scan_occurs();
+public:
+	FtCacheScanner(ftc_index_t idx) : ftc_idx(idx) {}
+	void init_word(const char *word);
+
+	int cur_word_ind();
+	void next_occur();
+	void skip_acc();
+	bool acci_deleted(ft_uint_t acc_i);
+};
+
+//TODO: remove this class
+class ftc_scan_result
+{
+private:
+	ftc_index_t ftc_idx;
 
 	struct FtsScanData fts_sd;
+	FtCacheScanner ftc_s;
 
 	inline bool get_next_result_step(uint64_t *res);
+	inline bool get_next_occur_step(ft_uint_t *acc, int *word_ind);
 public:
-	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx) {}
+	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx), ftc_s(idx) {}
 	void scan_word(const char *word);
 	void get_next_result(uint64_t *res);
+
+	//see FtQueryTerm::get_next_occur description
+	void get_next_occur(ft_uint_t *acc_i, int *word_ind);
 };
 
 class ftc_scan_words_result
@@ -86,6 +114,5 @@ public:
 	void get_next_result(tuple &t);
 	~ftc_scan_words_result();
 };
-
 
 #endif

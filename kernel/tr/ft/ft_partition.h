@@ -162,7 +162,7 @@ public:
 
 	//read next posting for current word
 	//if there's no more data for current word, returns false
-	bool get_next_occur(xptr *acc, ftp_ind_t *ind);
+	bool get_next_occur(ft_uint_t *acc_i, ftp_ind_t *ind);
 	//similar to get_next_occur but always moves to next acc (and returns false if there's no new acc-s for current word)
 	bool get_next_acc(xptr *acc, ftp_ind_t *ind);
 

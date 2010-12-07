@@ -13,6 +13,7 @@
 #include "tr/structures/rbtree.h"
 #include "tr/structures/schema.h"
 
+typedef uint64_t ft_uint_t;
 #define FT_XPTR_TO_UINT(x) (x.to_logical_int())
 #define FT_UINT_TO_XPTR(x) (logical_int_to_xptr(x))
 //#define FT_XPTR_TO_UINT(x) (x.to_uint64())
@@ -99,6 +100,19 @@ public:
 	virtual const char *cur_word() = 0;
 	virtual void next_word() = 0;
 	virtual ~FtWordsScanner() {}
+};
+
+class FtScanner
+{
+protected:
+	ft_uint_t cur_acc_i;
+public:
+	ft_uint_t get_cur_acc_i() const {
+		return cur_acc_i;
+	}
+	bool at_end() const {
+		return (cur_acc_i == FT_UINT_NULL);
+	}
 };
 
 #endif /* FT_TYPES_H_ */

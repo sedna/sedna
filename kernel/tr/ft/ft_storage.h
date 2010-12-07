@@ -9,6 +9,7 @@
 #include "common/xptr.h"
 #include "tr/idx/btree/btree.h" //FIXME: move to cpp
 #include "tr/ft/ft_partition.h"
+#include "tr/ft/ft_types.h"
 
 #define FTS_MAX_PARTITIONS 5
 
@@ -58,28 +59,28 @@ public:
 struct FtsScanData
 {
 	FtPartitionScanner scanner;
-	xptr cur_acc;
+	ft_uint_t cur_acc_i;
 	ftp_ind_t cur_ind;
 
 	//start scan
 	void init(const struct FtsData *fts_data, const char *word)
 	{
 		scanner.init(fts_data->partitions, fts_data->npartitions, word);
-		if (!scanner.get_next_occur(&cur_acc, &cur_ind))
+		if (!scanner.get_next_occur(&cur_acc_i, &cur_ind))
 		{
-			cur_acc = XNULL;
+			cur_acc_i = FT_UINT_NULL;
 			cur_ind = 0;
 		}
 	}
 
 	bool at_end()
 	{
-		return cur_acc == XNULL;
+		return cur_acc_i == FT_UINT_NULL;
 	}
 
-	xptr cur_node()
+	ft_uint_t get_cur_acc_i()
 	{
-		return cur_acc;
+		return cur_acc_i;
 	}
 
 	int cur_word_ind()
@@ -90,17 +91,17 @@ struct FtsScanData
 	//move to next occur
 	void next_occur()
 	{
-		if (!scanner.get_next_occur(&cur_acc, &cur_ind))
+		if (!scanner.get_next_occur(&cur_acc_i, &cur_ind))
 		{
-			cur_acc = XNULL;
+			cur_acc_i = FT_UINT_NULL;
 			cur_ind = 0;
 		}
 	}
 
 	void skip_node()
 	{
-		const xptr old_acc = cur_acc;
-		while (cur_acc != XNULL && old_acc == cur_acc)
+		const ft_uint_t old_acc_i = cur_acc_i;
+		while (cur_acc_i != FT_UINT_NULL && old_acc_i == cur_acc_i)
 			next_occur();
 	}
 };

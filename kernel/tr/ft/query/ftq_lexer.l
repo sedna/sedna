@@ -41,5 +41,7 @@ WS [ \t\n\r]+
 
 {Word}   { return ftq_token::WORD; }
 {WS}+    { /* skip */ }
+"\""     { return ftq_token::QUOT; }
+"'"      { return ftq_token::APOS; }
 
 .|\n     { return ftq_token::_ERROR_; }
