@@ -1,6 +1,7 @@
 /*
  * File:  sp.c
- * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 
@@ -8,9 +9,11 @@
 #include "common/errdbg/d_printf.h"
 #include "common/u/uutils.h"
 
-/* returns zero - if succeeded;                        
-   returns 1 - if Message length exceeds available size
-   returns U_SOCKET_ERROR if error */
+/*
+ * returns zero - if succeeded;
+ * returns 1 - if Message length exceeds available size
+ * returns U_SOCKET_ERROR if error
+ */
 int sp_recv_msg(USOCKET s, struct msg_struct *msg)
 {
     int rc = 0, got = 0;
@@ -74,20 +77,35 @@ int sp_send_msg(USOCKET s, const struct msg_struct *msg)
     return 0;
 }
 
-/*  sends error message to client. 
-    Error message contains message instruction, message length, error code, error info.
-    returns zero if succeeded, U_SOCKET_ERROR if failed */
+/*
+ * Send error message to the socket client.
+ * Error message contains message instruction, message length, error code, error info.
+ * Error info is truncated if it's too long to be sent within one client-server message.
+ * Returns zero if succeeded, U_SOCKET_ERROR if failed
+ */
 int sp_error_message_handler(USOCKET s, int error_ins, int error_code, const char *error_info)
 {
     struct msg_struct server_msg;
-    int err_length = (int)strlen(error_info);
+    size_t err_length = strlen(error_info);
 
     server_msg.instruction = error_ins;
-    server_msg.length = err_length + 5 + 4;
-    *(sp_int32*)server_msg.body = htonl(error_code);  /* this is error code */
+
+    *(sp_int32*)server_msg.body = htonl(error_code);        /* this is error code */
     server_msg.body[4] = 0;
-    *(sp_int32*)(server_msg.body + 5) = htonl(err_length);  /* this is error_info length */
-    memcpy(server_msg.body + 9, error_info, err_length);
+
+    if(err_length > sizeof(server_msg.body) - 9)
+    {
+        *(sp_int32*)(server_msg.body + 5) = htonl((uint32_t)(sizeof(server_msg.body) - 9));
+        memcpy(server_msg.body + 9, error_info, sizeof(server_msg.body) - 9 - 3);
+        memcpy(server_msg.body + sizeof(server_msg.body) - 3, "...", 3);
+        server_msg.length = sizeof(server_msg.body);
+    }
+    else
+    {
+        *(sp_int32*)(server_msg.body + 5) = htonl((uint32_t)err_length);
+        memcpy(server_msg.body + 9, error_info, err_length);
+        server_msg.length = err_length + 5 + 4;
+    }
 
     return sp_send_msg(s, &server_msg);
 }
