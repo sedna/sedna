@@ -35,7 +35,7 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
 #endif
     size_low = (DWORD)offs;
 
-    addr = MapViewOfFileEx(
+    void* res = MapViewOfFileEx(
         m,                      // handle to file-mapping object
         map_to_win[p],          // access mode
         size_high,              // high-order DWORD of offset
@@ -44,10 +44,10 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
         addr                    // starting address
     );
 
-    if (addr == NULL) {
+    if (res == NULL) {
+        elog(EL_DBG, ("MapViewOfFileEx failed, address = 0x%"PRIXPTR, (uintptr_t)addr));
         d_printf1("MapViewOfFileEx failed\n");
         d_printf3("Error %d; addr = 0x%"PRIXPTR"\n", GetLastError(), (uintptr_t)(addr));
-
         return -1;
     }
 

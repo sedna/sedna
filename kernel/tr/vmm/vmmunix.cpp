@@ -27,24 +27,24 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
     p = access_readwrite;
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 
-    addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m,
-            (off_t)offs);
+    void* res = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED,
+	                 m, (off_t)offs);
 
     /*
      * If implementation doesn't support mmap-over-mmap then try to unmap first
      * and mmap again.
      */
-    if (addr == MAP_FAILED && errno == EINVAL)
-    {
+    if (res == MAP_FAILED && errno == EINVAL) {
         elog(EL_DBG, ("mmap-over-mmap failed on address = 0x%"PRIXPTR,
-                (uintptr_t)addr));
+		              (uintptr_t)addr));
         munmap(addr, PAGE_SIZE);
-        addr = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m,
+        res = mmap(addr, PAGE_SIZE, map_to_unix[p], MAP_SHARED | MAP_FIXED, m,
                 (off_t)offs);
     }
 
-    if (addr == MAP_FAILED) {
-        d_perror("mmap failed");
+    if (res == MAP_FAILED) {
+        elog(EL_DBG, ("mmap failed on address = 0x%"PRIXPTR, (uintptr_t)addr));
+		d_perror("mmap failed");
         d_printf2("Addr = 0x%"PRIXPTR"\n", (uintptr_t)(addr));
         return -1;
     }
