@@ -41,6 +41,7 @@ static inline int ss_get_tc_serialized_size(sequence_sorter::sort_type st)
 	case sequence_sorter::st_xptr:
 		return sizeof(uint64_t);
 	case sequence_sorter::st_uint64:
+	case sequence_sorter::st_uint64_desc:
 	case sequence_sorter::st_pos:
 		return sizeof(uint64_t);
 	default:
@@ -64,19 +65,25 @@ static inline int ss_serialize_tc(tuple_cell &tc, sequence_sorter::sort_type st,
 {
 	switch (st)
 	{
-	case sequence_sorter::st_xptr:
+	case (sequence_sorter::st_xptr):
 		{
 		const uint64_t p = tc.get_xptr().to_uint64();
 		memcpy(buf, &p, sizeof(p));
 		return sizeof(p);
 		}
-	case sequence_sorter::st_uint64:
+	case (sequence_sorter::st_uint64):
 		{
 		uint64_t x = (uint64_t)tc.get_xs_integer();
 		put_xuint(buf, x);
 		return sizeof(x);
 		}
-	case sequence_sorter::st_pos:
+	case (sequence_sorter::st_uint64_desc):
+		{
+		uint64_t x = (uint64_t)tc.get_xs_integer();
+		put_xuint(buf, ~x);
+		return sizeof(x);
+		}
+	case (sequence_sorter::st_pos):
 		put_xuint(buf, (uint64_t)data->pos);
 		return sizeof(uint64_t);
 	default:
@@ -89,15 +96,15 @@ static inline int ss_deserialize_tc(tuple_cell &tc, sequence_sorter::sort_type s
 {
 	switch (st)
 	{
-	case sequence_sorter::st_xptr:
+	case (sequence_sorter::st_xptr):
 		{
 		uint64_t p;
 		memcpy(&p, buf, sizeof(p));
 		tc = tuple_cell::unsafenode(uint64_to_xptr(p));
 		return sizeof(p);
 		}
-	case sequence_sorter::st_uint64:
-	case sequence_sorter::st_pos:
+	case (sequence_sorter::st_uint64):
+	case (sequence_sorter::st_pos):
 		{
 		uint64_t x;
 #ifdef BIG_ENDIAN_ORDER
@@ -106,6 +113,19 @@ static inline int ss_deserialize_tc(tuple_cell &tc, sequence_sorter::sort_type s
 		for (int i = 0; i < sizeof(x); i++)
 			((char*)&x)[i] = buf[sizeof(x)-1-i];
 #endif
+		tc = tuple_cell::atomic((int64_t)x);
+		return sizeof(x);
+		}
+	case (sequence_sorter::st_uint64_desc):
+		{
+		uint64_t x;
+#ifdef BIG_ENDIAN_ORDER
+		memcpy(&x, buf, sizeof(x));
+#else
+		for (int i = 0; i < sizeof(x); i++)
+			((char*)&x)[i] = buf[sizeof(x)-1-i];
+#endif
+		x = ~x;
 		tc = tuple_cell::atomic((int64_t)x);
 		return sizeof(x);
 		}
@@ -190,7 +210,10 @@ sequence_sorter::sequence_sorter() : ss(NULL)
 sequence_sorter::~sequence_sorter()
 {
 	if (data.buf)
+	{
 		free(data.buf);
+		data.buf = NULL;
+	}
 }
 sorted_sequence *sequence_sorter::create_sorted_sequence(int n, const sort_type *sort_types, const int *sort_inds)
 {

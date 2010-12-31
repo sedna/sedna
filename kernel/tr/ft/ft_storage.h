@@ -17,8 +17,10 @@ struct FtsData
 {
 	ft_partition_data partitions[FTS_MAX_PARTITIONS];
 	int npartitions;
+	int naccs;
+	xptr doc_stats;
 	
-	FtsData() : npartitions(0) {}
+	FtsData() : npartitions(0), naccs(0), doc_stats(XNULL) {}
 };
 
 class FtsUpdater
@@ -29,7 +31,7 @@ private:
 public:
 	//updates are performed as such:
 	// 1. begin_update is called
-	// 2. del_document is called for each deleted/updated node in ascending xptr order
+	// 2. del_document/add_document is called for each deleted/updated/inserted node in ascending xptr order
 	// 3. update functions are called (add_word_occur, del_word_occur), arguments (word, acc, word_ind) must be ascending during these calls
 	//    acc may be one of passed to del_document, if node was updated
 	// 4. end_update is called
@@ -40,6 +42,31 @@ public:
 	void del_document(const xptr acc)
 	{
 		pb.del_doc(acc);
+
+		bt_key bkey;
+		bkey.setnew((int64_t)FT_XPTR_TO_UINT(acc));
+
+		bt_cursor_tmpl<uint64_t> cur = bt_find_tmpl<uint64_t>(fts_data->doc_stats, bkey);
+		if (cur.bt_next_obj() != null_object<uint64_t>::get())
+		{
+			bt_delete_tmpl<uint64_t>(fts_data->doc_stats, bkey);
+			fts_data->naccs--;
+		}
+	}
+	void add_document(const xptr acc, int doc_len)
+	{
+		bt_key bkey;
+		bkey.setnew((int64_t)FT_XPTR_TO_UINT(acc));
+
+		bt_cursor_tmpl<uint64_t> cur = bt_find_tmpl<uint64_t>(fts_data->doc_stats, bkey);
+		if (cur.bt_next_obj() != null_object<uint64_t>::get())
+		{
+			bt_delete_tmpl<uint64_t>(fts_data->doc_stats, bkey);
+			fts_data->naccs--;
+		}
+		U_ASSERT(doc_len > 0);
+		bt_insert_tmpl<uint64_t>(fts_data->doc_stats, bkey, (uint64_t)doc_len);
+		fts_data->naccs++;
 	}
 	void add_word_occur(const char *word, const xptr acc, const int word_ind)
 	{
@@ -59,6 +86,7 @@ public:
 struct FtsScanData
 {
 	FtPartitionScanner scanner;
+	xptr doc_stats;
 	ft_uint_t cur_acc_i;
 	ftp_ind_t cur_ind;
 
@@ -66,6 +94,7 @@ struct FtsScanData
 	void init(const struct FtsData *fts_data, const char *word)
 	{
 		scanner.init(fts_data->partitions, fts_data->npartitions, word);
+		doc_stats = fts_data->doc_stats;
 		if (!scanner.get_next_occur(&cur_acc_i, &cur_ind))
 		{
 			cur_acc_i = FT_UINT_NULL;
@@ -98,11 +127,26 @@ struct FtsScanData
 		}
 	}
 
-	void skip_node()
+	//returns number of skipped occurs
+	int skip_node()
 	{
 		const ft_uint_t old_acc_i = cur_acc_i;
+		int noccurs = 0;
 		while (cur_acc_i != FT_UINT_NULL && old_acc_i == cur_acc_i)
+		{
 			next_occur();
+			noccurs++;
+		}
+		return noccurs;
+	}
+
+	uint64_t get_doc_len(ft_uint_t acc_i)
+	{
+		bt_key bkey;
+		bkey.setnew((int64_t)acc_i);
+
+		bt_cursor_tmpl<uint64_t> cur = bt_find_tmpl<uint64_t>(doc_stats, bkey);
+		return cur.bt_next_obj(); //FIXME: depends on the fact that null object for uint64_t is 0 (in btstruct.h)
 	}
 };
 

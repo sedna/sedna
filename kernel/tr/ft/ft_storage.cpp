@@ -14,6 +14,10 @@ void fts_create(struct FtsData *data)
 void FtsUpdater::begin_update(struct FtsData *_fts_data)
 {
 	fts_data = _fts_data;
+	if (fts_data->doc_stats == XNULL)
+	{
+		fts_data->doc_stats = bt_create(xs_integer);
+	}
 	pb.create_new();
 }
 

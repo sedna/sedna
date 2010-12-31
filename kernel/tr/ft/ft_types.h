@@ -24,6 +24,8 @@ typedef uint64_t ft_uint_t;
 //words with length more than this are truncated
 #define FT_MAX_WORD_LENGTH 150
 
+typedef float ft_float;
+
 enum ft_index_type
 {
     ft_xml,
