@@ -21,6 +21,7 @@ struct ft_parse_data
 	char word_buf[FT_MAX_WORD_LENGTH+1]; //+1 is because ftc_add_word wants a null terminated string
 	int word_len;
 	int word_ind;
+	int word_count;
 	bool overfl; //next char of current word could not fit into word_buf
 	ftc_index_t cur_idx;
 	ftc_doc_t cur_doc;
@@ -43,6 +44,7 @@ static void process_word(struct ft_parse_data *parse_data)
 		parse_data->word_len = 0;
 		parse_data->overfl = false;
 		parse_data->word_ind++;
+		parse_data->word_count++;
 	}
 }
 
@@ -98,6 +100,7 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct Ft
 	struct ft_parse_data *parse_data = (struct ft_parse_data *)malloc(sizeof(struct ft_parse_data));
 	parse_data->word_len = 0;
 	parse_data->word_ind = 0;
+	parse_data->word_count = 0;
 	parse_data->overfl = false;
 	parse_data->cur_idx = ftc_idx;
 	U_ASSERT(op == ft_insert);
@@ -133,6 +136,8 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct Ft
 	} while (len > 0);
 	text_buf->free_cursor(cur);
 
+	ftc_finalize_doc(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_count);
+
 	free(parse_data);
 	XML_ParserFree(p);
 }
@@ -148,5 +153,8 @@ void ft_idx_delete(struct FtsData *ft_data)
 {
 	for (int i = 0; i < ft_data->npartitions; i++)
 		ft_delete_partition(&ft_data->partitions[i]);
+	//XXX: move to ftstorage
+	if (ft_data->doc_stats != XNULL)
+		bt_drop(ft_data->doc_stats);
 }
 

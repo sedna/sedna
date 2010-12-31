@@ -23,6 +23,8 @@ struct ftc_doc_data
 	xptr acc;
 	char str_id[24];
 	int delete_op_ind;
+	int add_done_op_ind;
+	int doc_len;
 };
 struct ftc_word_occur
 {
@@ -38,6 +40,7 @@ struct ftc_index_data
 	FTC_PTR docs;
 	FTC_PTR words;
 	struct FtsData ft_data;
+	int naccs;
 	FTC_ALLOCATOR ind_alloc;
 	FtStemmer *stemmer; //TODO: add some destructor and delete it + consider sharing stemmers between indexes
 	bool has_stemmer; //flag to avoid searching for stemmer more than once
@@ -68,6 +71,7 @@ struct ftc_index_data
 		docs = FTC_DOCMAP::init(&ind_alloc); //TODO: check null!
 		words = FTC_WORDMAP::init(&ind_alloc); //TODO: check null!
 		next_op_ind = 1;
+		naccs = 0;
 	}
 	static inline ftc_index_data *get(ftc_index_t idx)
 	{
@@ -83,6 +87,8 @@ struct ftc_index_data
 		doc->acc = acc;
 		sprintf(doc->str_id, "%020" PRIx64, FT_XPTR_TO_UINT(acc));
 		doc->delete_op_ind = 0;
+		doc->add_done_op_ind = 0;
+		doc->doc_len = 0;
 
 		FTC_DOCMAP *dm = FTC_DOCMAP::get_map(docs, ind_alloc);
 		FTC_DOCMAP::pers_sset_entry *e = dm->put(doc->str_id, ptr);
@@ -325,6 +331,8 @@ void flush_index(ftc_index_data *id)
 			ftc_doc_data *doc_data = id->get_doc_data(dme->obj);
 			if (doc_data->delete_op_ind > 0)
 				updater.del_document(doc_data->acc);
+			if (doc_data->add_done_op_ind > doc_data->delete_op_ind && doc_data->doc_len > 0)
+				updater.add_document(doc_data->acc, doc_data->doc_len);
 			dme = dm->rb_successor(dme);
 		}
 	}
@@ -395,6 +403,7 @@ void ftc_del_doc(ftc_index_t index, const xptr acc)
 	ftc_index_data *id = ftc_index_data::get(index);
 	ftc_doc_data *dd = id->get_doc_data(ft_doc);
 	dd->delete_op_ind = id->next_op_ind;
+	id->naccs--;
 	id->next_op_ind++;
 }
 
@@ -432,6 +441,16 @@ void ftc_upd_word(ftc_index_t index, ftc_doc_t &ft_doc, const char *word, int wo
 		if (!ftc_upd_word_try(id, ft_doc, word, word_ind))
 			throw SYSTEM_EXCEPTION("ftc: add_occur failed");
 	}
+}
+
+void ftc_finalize_doc(ftc_index_t index, ftc_doc_t ft_doc, int doc_len)
+{
+	ftc_index_data *id = ftc_index_data::get(index);
+	ftc_doc_data *dd = id->get_doc_data(ft_doc);
+	dd->add_done_op_ind = id->next_op_ind;
+	dd->doc_len = doc_len;
+	id->naccs++;
+	id->next_op_ind++;
 }
 
 bool FtCacheScanner::scan_occurs()
@@ -497,20 +516,31 @@ void FtCacheScanner::next_occur()
 	scan_occurs();
 }
 
-void FtCacheScanner::skip_acc()
+int FtCacheScanner::skip_acc()
 {
 	if (ome == NULL)
-		return;
+		return 0;
+	ftc_index_data *id = ftc_index_data::get(ftc_idx);
+	ftc_doc_data *doc_data = id->get_doc_data(ome->obj.doc);
+
+	int noccurs = 0;
+	while (cur_occur != NULL)
+	{
+		if (cur_occur->insert_op_ind > doc_data->delete_op_ind)
+			noccurs++;
+		cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(cur_occur->next);
+	}
+
 	ome = om->rb_successor(ome);
 	if (ome == NULL)
 	{
 		this->cur_acc_i = FT_UINT_NULL;
 		cur_occur = NULL;
-		return;
+		return noccurs;
 	}
-	ftc_index_data *id = ftc_index_data::get(ftc_idx);
 	cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
 	scan_occurs();
+	return noccurs;
 }
 
 bool FtCacheScanner::acci_deleted(uint64_t acc_i)
@@ -526,6 +556,20 @@ bool FtCacheScanner::acci_deleted(uint64_t acc_i)
 	return false;
 }
 
+uint64_t FtCacheScanner::get_doc_len(ft_uint_t acc_i)
+{
+	ftc_index_data *id = ftc_index_data::get(ftc_idx);
+	ftc_doc_t doc = id->find_doc(FT_UINT_TO_XPTR(acc_i)); //FIXME
+	if (!id->doc_is_null(doc))
+	{
+		ftc_doc_data *doc_data = id->get_doc_data(doc);
+		if (doc_data->add_done_op_ind > doc_data->delete_op_ind)
+			return doc_data->doc_len;
+		return 0;
+	}
+	return 0;
+}
+
 void ftc_scan_result::scan_word(const char *word)
 {
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
@@ -535,7 +579,7 @@ void ftc_scan_result::scan_word(const char *word)
 }
 
 //try to get next result, returns true if successful, false if this functions needs to be called again
-bool ftc_scan_result::get_next_result_step(ft_uint_t *res)
+bool ftc_scan_result::get_next_result_step(ft_uint_t *res, int *noccurs)
 {
 	if (ftc_s.at_end())
 	{
@@ -548,7 +592,7 @@ bool ftc_scan_result::get_next_result_step(ft_uint_t *res)
 				return true;
 			}
 			ft_uint_t a_i = fts_sd.get_cur_acc_i();
-			fts_sd.skip_node();
+			*noccurs = fts_sd.skip_node();
 
 			//check if document was deleted
 			if (ftc_s.acci_deleted(a_i))
@@ -563,22 +607,25 @@ bool ftc_scan_result::get_next_result_step(ft_uint_t *res)
 		if (fts_sd.at_end())
 		{
 			*res = ftc_s.get_cur_acc_i();
-			ftc_s.skip_acc();
+			*noccurs = ftc_s.skip_acc();
 			return true;
 		}
 		//fts_sd has some nodes
 		if (fts_sd.get_cur_acc_i() == ftc_s.get_cur_acc_i())
 		{
-			//acc in fts_sd may be deleted but it's not important here
+			//acc in fts_sd may be deleted but it affect only noccurs
 			*res = ftc_s.get_cur_acc_i();
-			fts_sd.skip_node();
-			ftc_s.skip_acc();
+			*noccurs = ftc_s.skip_acc();
+			if (ftc_s.acci_deleted(fts_sd.get_cur_acc_i()))
+				fts_sd.skip_node();
+			else
+				*noccurs += fts_sd.skip_node();
 			return true;
 		}
 		else if (fts_sd.get_cur_acc_i() < ftc_s.get_cur_acc_i())
 		{
 			ft_uint_t a_i = fts_sd.get_cur_acc_i();
-			fts_sd.skip_node();
+			*noccurs = fts_sd.skip_node();
 
 			//check if document was deleted
 			if (ftc_s.acci_deleted(a_i))
@@ -590,16 +637,16 @@ bool ftc_scan_result::get_next_result_step(ft_uint_t *res)
 		else //(fts_sd.get_cur_acc_i() > ftc_s.cur_acc_i())
 		{
 			*res = ftc_s.get_cur_acc_i();
-			ftc_s.skip_acc();
+			*noccurs = ftc_s.skip_acc();
 			return true;
 		}
 	}
 	U_ASSERT(false);
 }
 
-void ftc_scan_result::get_next_result(uint64_t *res)
+void ftc_scan_result::get_next_result(uint64_t *res, int *noccurs)
 {
-	while (!this->get_next_result_step(res)) ;
+	while (!this->get_next_result_step(res, noccurs)) ;
 }
 bool ftc_scan_result::get_next_occur_step(ft_uint_t *acc_i, int *word_ind)
 {
@@ -708,6 +755,20 @@ void ftc_scan_result::get_next_occur(ft_uint_t *acc_i, int *word_ind)
 			ftc_s.next_occur();
 	}
 	while (!this->get_next_occur_step(acc_i, word_ind)) ;
+}
+
+uint64_t ftc_scan_result::get_doc_len(ft_uint_t acc_i)
+{
+	uint64_t r = ftc_s.get_doc_len(acc_i);
+	if (r > 0)
+		return r;
+	return fts_sd.get_doc_len(acc_i);
+}
+
+int ftc_get_doc_count(ftc_index_t idx)
+{
+	ftc_index_data *id = ftc_index_data::get(idx);
+	return id->ft_data.naccs + id->naccs; //FIXME: may be wrong, but should be close enough
 }
 
 class FtcWordsScanner : public FtWordsScanner

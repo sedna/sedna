@@ -13,7 +13,7 @@ class sequence_sorter
 public:
 	//currenly all types have fixed serialized size and serializations can be compared byte-wise
 	//if this changes most of the functions passed to sorted_sequence must be changed
-	enum sort_type { st_xptr, st_uint64, st_pos };
+	enum sort_type { st_xptr, st_uint64, st_uint64_desc, st_pos };
 
 	struct ss_data
 	{

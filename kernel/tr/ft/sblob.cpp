@@ -13,7 +13,10 @@ void SblobWriter::alloc_new_blk()
 	U_ASSERT(last_block_avail == 0);
 
 	xptr new_blk;
-	vmm_alloc_data_block(&new_blk);
+	if (pers)
+		vmm_alloc_data_block(&new_blk);
+	else
+		vmm_alloc_tmp_block(&new_blk);
 	if (last_block != XNULL)
 	{
 		sblob_blk_hdr * const hdr = (sblob_blk_hdr *)XADDR(last_block);
