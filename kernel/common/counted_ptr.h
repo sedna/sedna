@@ -18,6 +18,39 @@ template <class T> struct de_free {
     inline static void deallocate(T * p) { free(p); }
 };
 
+/*
+  Scoped ptr is only appliable to non-array objects, created with new statement
+  Notice, that the best way to delete an object stored in this cursor is to NULL or call clear method
+*/
+
+template <typename T>
+class scoped_ptr {
+  private:
+    T * p;
+  public:
+    T& operator*() const throw() { return *p; }
+    T* operator->() const throw() { return p; }
+
+    scoped_ptr(T * _p = NULL) : p(_p) {}
+
+    /* Recall: delete operator have no effect on NULL anyway, so this is safe. */
+    ~scoped_ptr() { delete p; }
+
+    // Scoped pointer MUST NOT be neither copied nor assigned to any other scoped pointer!
+    // scoped_ptr (const scoped_ptr<T> &ptr) throw() { U_ASSERT(false); }
+
+    void clear() { delete p; p = NULL; };
+    bool isnull() const { return NULL == p; };
+
+    /* This implementation of scoped pointer does DELETE old object on assignment  */
+    scoped_ptr<T>& operator= (T* ptr) throw() {
+        U_ASSERT(p != ptr);
+        delete p;
+        p = ptr;
+        return *this;
+    }
+};
+
 template <class T, class Deallocator = de_delete<T> >
 class counted_ptr {
   private:

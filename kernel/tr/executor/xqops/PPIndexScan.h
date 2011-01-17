@@ -12,21 +12,22 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "tr/idx/index_data.h"
-#include "tr/idx/btree/btree.h"
+#include "tr/idx/indeximpl.h"
 #include "tr/executor/base/XPathOnSchema.h"
 
 enum index_scan_condition
 {
-    isc_eq,
-    isc_lt,
-    isc_le,
-    isc_gt,
-    isc_ge,
-    isc_gt_lt,
-    isc_gt_le,
-    isc_ge_lt,
-    isc_ge_le
+    isc_eq = 0,
+    isc_lt = 1,
+    isc_le = 2,
+    isc_left_right = 9, // DUMMY, used in comparison
+    isc_gt = 4,
+    isc_ge = 5,
+    isc_greater_beetween = 9, // DUMMY, used in comparison
+    isc_gt_lt = 10,
+    isc_gt_le = 11,
+    isc_ge_lt = 12,
+    isc_ge_le = 13
 };
 
 inline const char* 
@@ -52,14 +53,17 @@ class PPIndexScan : public PPIterator
 protected:
     typedef void (PPIndexScan::*t_next_fun)(tuple &t);
 
-	tuple_cell tc, tc2;
     PPOpIn index_name, child, child2;
     index_scan_condition isc;
 
-    xptr btree;
+    tuple_cell left_bound, right_bound;
+    bool left_bound_exclusive, right_bound_exclusive;
+
     xmlscm_type idx_type;
-    bt_cursor cursor;
-    bt_key key, key2;
+
+    scoped_ptr<idx::KeyValueIterator> cursor;
+    idx::KeyValueMultimap * index;
+
     xptr res;
     t_next_fun next_fun;
     bool first_time;
@@ -73,12 +77,12 @@ protected:
     void initialize   ();
 
 private:
+    CollationHandler* collation;
+
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) {
-        (this->*next_fun)(t);
-    }
+    virtual void do_next   (tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);

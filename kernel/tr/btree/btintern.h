@@ -7,7 +7,12 @@
 #define _BTINTERN_H
 
 #include "common/sedna.h"
-#include "tr/idx/btree/btstruct.h"
+#include "tr/vmm/vmm.h"
+
+#include "tr/btree/btree.h"
+#include "tr/btree/btstruct.h"
+#include "tr/btree/btpage.h"
+#include "tr/btree/buff.h"
 
 /** internal btree implementation fucntions */
 

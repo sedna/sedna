@@ -1180,7 +1180,6 @@ sedna-err:SE4083
 
     Can't read directory
 
-
 ###########################################################################
 #  Logical log errors
 ###########################################################################
@@ -1757,3 +1756,7 @@ sedna-err:SE2302
 sedna-err:SE2901
 
   The feature is no longer supported
+
+sedna-err:SE4084
+
+  Unsupported index type

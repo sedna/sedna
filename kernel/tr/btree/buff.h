@@ -7,13 +7,13 @@
 #define _BUFF_H
 
 #include "common/sedna.h"
-
 #include "common/base.h"
-#include "tr/idx/btree/btpage.h"
-#include "tr/idx/btree/btstruct.h"
+
+#include "tr/btree/btpage.h"
+#include "tr/btree/btstruct.h"
 
 /* functions used for temporary partial buffering of btree page contents in internal buffers
-   in format equivalent to btree page format, with subsequent copying buffers into acutal 
+   in format equivalent to btree page format, with subsequent copying buffers into acutal
    btree pages. The buffers used are static regions sequentially reused. Is used for btree pages
    splitting
  */

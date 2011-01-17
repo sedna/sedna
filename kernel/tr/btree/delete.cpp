@@ -5,12 +5,9 @@
 
 #include "common/sedna.h"
 
-#include "tr/idx/btree/btpage.h"
-#include "tr/idx/btree/btintern.h"
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/buff.h"
-#include "tr/idx/btree/btree.h"
 #include "tr/vmm/vmm.h"
+
+#include "tr/btree/btintern.h"
 
 /* temporary buffer used for performing page delete operations */
 char delete_buf[BT_PAGE_SIZE];
@@ -225,7 +222,7 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 		}
 
 		return lpg;
- 	} else {
+	} else {
 		return leaf;
         /// TODO: May be balancing is needed here ...
 	}
@@ -622,4 +619,4 @@ bool bt_nleaf_subst_key(char* pg, shft key_idx, bt_key key)
 #define MAKE_IMPLS(t) \
 	template bool bt_internal_delete_tmpl<t>(xptr &root, const bt_key& key, shft obj_idx, bt_path &path); \
     template void bt_leaf_delete_key_tmpl<t>(char* pg, shft key_idx);
-#include "tr/idx/btree/make_impl.h"
+#include "tr/btree/make_impl.h"

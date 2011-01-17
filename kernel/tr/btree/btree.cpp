@@ -5,12 +5,13 @@
 
 #include "common/sedna.h"
 
-#include "tr/idx/btree/btree.h"
-#include "tr/idx/btree/btintern.h"
-#include "tr/idx/btree/btpage.h"
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/buff.h"
 #include "tr/vmm/vmm.h"
+
+#include "tr/btree/btree.h"
+#include "tr/btree/btintern.h"
+#include "tr/btree/btpage.h"
+#include "tr/btree/btstruct.h"
+#include "tr/btree/buff.h"
 
 /* variables for debug */
 //shft	BTREE_HEIGHT=1;
@@ -384,4 +385,4 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 	template void bt_insert_tmpl<t>(xptr &root, const bt_key &key, const t &obj,bool with_bt); \
 	template void bt_delete_tmpl<t>(xptr &root, const bt_key& key, const t &obj); \
 	template void bt_delete_tmpl<t>(xptr &root, const bt_key& key);
-#include "tr/idx/btree/make_impl.h"
+#include "tr/btree/make_impl.h"

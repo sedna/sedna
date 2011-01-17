@@ -5,11 +5,11 @@
 
 #include "common/sedna.h"
 
-#include "tr/idx/btree/btintern.h"
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/btpage.h"
 #include "tr/vmm/vmm.h"
-#include "tr/structures/nodeoperations.h"
+
+#include "tr/btree/btintern.h"
+#include "tr/btree/btstruct.h"
+#include "tr/btree/btpage.h"
 
 void bt_page_markup(char* pg, xmlscm_type t) {
 //	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
@@ -56,7 +56,7 @@ void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 
 	// check if keys are in right order
 	for (int i = 0; i < BT_KEY_NUM(p); i++) {
-  	   // check if all key pointers are at least in the heap
+	   // check if all key pointers are at least in the heap
 		if (BT_VARIABLE_KEY_TYPE(p)) {
 			btree_key_hdr * v = BT_KEY_ITEM_AT(p, i);
 			CHECK_ASSERTION((v->k_shft >= BT_HEAP(p)) && (v->k_shft + v->k_size <= BT_PAGE_SIZE));
@@ -82,9 +82,6 @@ void bt_check_page_consistency_tmpl(xptr pg, bt_key* k, bool leftmost)
 				CHECK_ASSERTION(bt_cmp_obj_tmpl<object>(pt[j], save) > 0);
 				save = pt[j];
 				CHECK_ASSERTION(XADDR(pt[j]) != NULL);
-				xptr a = indirectionDereferenceCP(pt[j]);
-				CHECK_ASSERTION(a != XNULL);
-				CHECKP(a);
 				CHECKP(pg);
 			}
 		}
@@ -137,4 +134,3 @@ void  bt_check_btree(xptr btree)
 {
     bt_check_btree_tmpl<xptr>(btree);
 }
-

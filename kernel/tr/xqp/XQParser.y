@@ -224,6 +224,7 @@ namespace sedna
 %token <isUpper> OPTIONS "options"
 %token <isUpper> UPDATE "update"
 %token <isUpper> USER "user"
+%token <isUpper> USING "using"
 %token <isUpper> WITH "with"
 
 %token <littext> IntegerLiteral "Integer Literal"
@@ -3208,6 +3209,7 @@ funcName:
     |    OPTIONS { $$ = new std::string(($1 != 0) ? "OPTIONS" : "options"); }
     |    UPDATE { $$ = new std::string(($1 != 0) ? "UPDATE" : "update"); }
     |    USER { $$ = new std::string(($1 != 0) ? "USER" : "user"); }
+    |    USING { $$ = new std::string(($1 != 0) ? "USING" : "using"); }
     |    WITH { $$ = new std::string(($1 != 0) ? "WITH" : "with"); }
     ;
 
@@ -3237,7 +3239,11 @@ createExpr:
         }
     |   CREATE INDEX exprSingle ON pathExpr _BY_ pathExpr _AS_ singleType
         {
-            $$ = new ASTCreateIndex(@$, $3, $5, $7, static_cast<ASTTypeSingle *>($9));
+            $$ = new ASTCreateIndex(@$, $3, $5, $7, static_cast<ASTTypeSingle *>($9), new std::string("btree"));
+        }
+    |   CREATE INDEX exprSingle ON pathExpr _BY_ pathExpr _AS_ singleType USING StringLiteral
+        {
+            $$ = new ASTCreateIndex(@$, $3, $5, $7, static_cast<ASTTypeSingle *>($9), $11);
         }
     |   CREATE FULLTEXT INDEX exprSingle ON pathExpr TYPE StringLiteral
         {
@@ -3370,6 +3376,9 @@ createExpr:
     |   CREATE INDEX exprSingle ON error _BY_ pathExpr _AS_ singleType { delete $3; delete $7; delete $9; $$ = new ASTError(@$); }
     |   CREATE INDEX error _BY_ pathExpr _AS_ singleType { delete $5; delete $7; $$ = new ASTError(@$); }
     |   CREATE INDEX exprSingle ON pathExpr _BY_ error _AS_ singleType { delete $3; delete $5; delete $9; $$ = new ASTError(@$); }
+    |   CREATE INDEX error ON pathExpr _BY_ pathExpr _AS_ singleType USING StringLiteral { delete $5; delete $7; delete $9; delete $11; $$ = new ASTError(@$); }
+    |   CREATE INDEX exprSingle ON error _BY_ pathExpr _AS_ singleType USING StringLiteral { delete $3; delete $7; delete $9; delete $11; $$ = new ASTError(@$); }
+    |   CREATE INDEX exprSingle ON pathExpr _BY_ error _AS_ singleType USING StringLiteral { delete $3; delete $5; delete $9; delete $11; $$ = new ASTError(@$); }
     |   CREATE FULLTEXT INDEX error ON pathExpr TYPE StringLiteral { delete $6; delete $8; $$ = new ASTError(@$); }
     |   CREATE FULLTEXT INDEX exprSingle ON error TYPE StringLiteral { delete $4; delete $8; $$ = new ASTError(@$); }
     |   CREATE TRIGGER StringLiteral baTrigMod idrTrigMod ON error _FOR_ EACH nsTrigMod DO LBRACE triggerDoStmts RBRACE

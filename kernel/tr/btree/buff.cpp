@@ -4,7 +4,7 @@
  */
 
 #include "common/sedna.h"
-#include "tr/idx/btree/buff.h"
+#include "tr/btree/buff.h"
 
 char	buf1[BT_PAGE_SIZE];
 char	buf2[BT_PAGE_SIZE];

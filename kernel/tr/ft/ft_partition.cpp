@@ -4,7 +4,7 @@
  */
 
 #include "tr/ft/ft_partition.h"
-#include "tr/idx/btree/btree.h"
+#include "tr/btree/btree.h"
 
 xptr FtPartitionSblobWriter::create_new()
 {

@@ -4,8 +4,9 @@
  */
 
 #include "common/sedna.h"
-#include "tr/idx/btree/btstruct.h"
 #include "common/counted_ptr.h"
+
+#include "tr/btree/btstruct.h"
 #include "tr/executor/base/XMLDateTime.h"
 #include "tr/tr_globals.h"
 
@@ -18,23 +19,23 @@ int bt_cmp_key(const bt_key& k1, const bt_key& k2)
 
     switch (k1.type)
     {
-        case xs_integer	: 
+        case xs_integer	:
         {
             if(k1.v.i_v == k2.v.i_v) return 0;
             return (k1.v.i_v > k2.v.i_v ? 1 : -1);
         }
-        case xs_float	: 
+        case xs_float	:
         {
             if(k1.v.f_v == k2.v.f_v) return 0;
             return (k1.v.f_v > k2.v.f_v ? 1 : -1);
         }
-        case xs_double	: 
+        case xs_double	:
         {
             if(k1.v.d_v == k2.v.d_v) return 0;
             return (k1.v.d_v > k2.v.d_v ? 1 : -1);
         }
         case xs_string	: return sign(strcmp(k1.v.s_v, k2.v.s_v));
-        case xs_date    : 
+        case xs_date    :
         case xs_dateTime:
         case xs_time    :
                           return XMLDateTime::compare( XMLDateTime(k1.v.dt_v, k1.type), XMLDateTime(k2.v.dt_v, k2.type));
@@ -52,7 +53,7 @@ int bt_cmp_obj_tmpl(const object &o1, const object &o2) {
 	if (o2 < o1) return 1;
 	if (o1 < o2) return -1;
 	return 0;
-	
+
 /*
 	int	i=0;
 	unsigned char* c1 = (unsigned char*)&o1;
@@ -78,23 +79,23 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
     /* assume we have correct page, conformant with key k2 */
     switch (k2.type)
     {
-        case xs_integer	: 
+        case xs_integer	:
         {
             int64_t k1 = *(int64_t*)tab_el;
             if(k1 == k2.v.i_v) return 0;
             return (k1 > k2.v.i_v ? 1 : -1);
         }
-        case xs_float	: 
+        case xs_float	:
         {
             float k1 = *(float*)tab_el;
             if(k1 == k2.v.f_v) return 0;
-            return (k1 > k2.v.f_v ? 1 : -1);  
+            return (k1 > k2.v.f_v ? 1 : -1);
         }
-        case xs_double	: 
+        case xs_double	:
         {
             double k1 = *(double*)tab_el;
             if(k1 == k2.v.d_v) return 0;
-            return (k1 > k2.v.d_v ? 1 : -1);  
+            return (k1 > k2.v.d_v ? 1 : -1);
         }
         case xs_string	: {
                               char *head = pg + *(shft*)tab_el;
@@ -107,7 +108,7 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
                           }
         case xs_date:
         case xs_dateTime:
-        case xs_time: 	
+        case xs_time:
                           return XMLDateTime::compare( XMLDateTime(*(xs_packed_datetime*)tab_el, k2.type), XMLDateTime(k2.v.dt_v, k2.type));
         case xs_yearMonthDuration:
         case xs_dayTimeDuration:
@@ -119,4 +120,5 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
 
 
 #define MAKE_IMPLS(t) template int bt_cmp_obj_tmpl<t>(const t &o1, const t &o2);
-#include "tr/idx/btree/make_impl.h"
+
+#include "tr/btree/make_impl.h"

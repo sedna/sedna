@@ -34,6 +34,9 @@ namespace tr_globals {
 extern xptr vmm_cur_xptr;
 extern volatile lsize_t vmm_cur_offs;
 
+void vmm_init_block_counter();
+uint64_t vmm_get_block_counter();
+
 void vmm_determine_region(bool log = false);
 
 void vmm_preliminary_call(lsize_t layer_size);

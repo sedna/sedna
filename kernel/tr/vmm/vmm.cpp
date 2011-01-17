@@ -470,9 +470,22 @@ void vmm_determine_region(bool log)
     }
 }
 
+static uint64_t block_counter = 0;
+
+void vmm_init_block_counter()
+{
+    block_counter = 0;
+}
+
+uint64_t vmm_get_block_counter() {
+    return block_counter;
+}
+
+
 void vmm_alloc_data_block(xptr *p)
 {
     vmm_request_alloc_block(p, true);
+    ++block_counter;
 }
 
 void vmm_alloc_tmp_block(xptr *p)

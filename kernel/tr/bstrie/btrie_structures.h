@@ -6,6 +6,8 @@
 #ifndef _BTRIE_STRUCTURES_H
 #define _BTRIE_STRUCTURES_H
 
+#include "btrie_unify.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -36,18 +38,17 @@ struct state_descriptor {
 /* State flags  */
 
 enum state_meta_t {
-    STATE_LONG_JUMP      = 0x0001,
-    STATE_FINAL          = 0x0002,
-    STATE_HAS_EDGES      = 0x0004,
-    STATE_NO_PREFIX      = 0x0008,
-    STATE_SHORT_PREFIX   = 0x0010,
-    STATE_NO_OBJECT      = 0x0020,
-    STATE_EDGE_TREE      = 0x0040,
-    STATE_FIXED_OBJECT   = 0x0080
+    STATE_LONG_JUMP    = 0x0001,
+    STATE_FINAL        = 0x0002,
+    STATE_HAS_EDGES    = 0x0004,
+    STATE_NO_PREFIX    = 0x0008,
+    STATE_SHORT_PREFIX = 0x0010,
+    STATE_NO_OBJECT    = 0x0020,
+    STATE_EDGE_TREE    = 0x0040,
+    STATE_SPLIT_POINT  = 0x0080
 };
 
 #define IS_FINAL_STATE(p) (((p).dsc.flags & STATE_FINAL) > 0)
-
 
 /********************************************************************
     Structure to pack key and object info
@@ -84,6 +85,11 @@ struct st_tmp_trie {
     char * buf;
     sptr_t len;
     sptr_t offset;
+
+    char * buf2;
+    sptr_t len2;
+
+    xptr_t * buf2ptr;
 };
 
 struct st_page_split_subrecord {
@@ -144,14 +150,38 @@ struct st_static_page_data {
 };
 
 struct st_static_state_data {
-    struct st_static_page_data * page;
-
-    xptr_t p;
+    int from_here;
     bool is_root;
-//    sptr_t prefix_len;
-//    char * prefix;
-//    uint8_t edge_count;
-//    uint8_t long_edge_count;
+    bool is_split_point;
+    struct st_static_page_data * page;
+    xptr_t p;
+};
+
+struct btrie_enum_stack_frame {
+    xptr_t p;
+    int current_edge;
+    int edge_count;
+    int key_len;
+};
+
+struct btrie_enum {
+    char * key;
+    size_t key_len;
+    size_t key_cap;
+
+    struct btrie_enum_stack_frame * stack;
+    int stack_len;
+    int stack_cap;
+
+    bool finished;
+};
+
+
+
+struct trie_segment_t {
+    sptr_t id;
+    sptr_t len;
+    sptr_t p;
 };
 
 #endif /* _BTRIE_STRUCTURES_H */

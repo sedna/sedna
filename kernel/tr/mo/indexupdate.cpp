@@ -4,7 +4,7 @@
  */
 
 #include "tr/mo/indexupdate.h"
-#include "tr/idx/index_data.h"
+#include "tr/idx/indecies.h"
 #include "tr/structures/schema.h"
 
 #include "tr/structures/nodeutils.h"

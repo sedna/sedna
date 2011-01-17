@@ -534,8 +534,6 @@ void socket_client::set_session_options(msg_struct *msg)
             {
                 uint32_t value;
                 net_int2int(&value, msg->body+pos);
-                if(value < 0) 
-                    throw USER_EXCEPTION2(SE4617, "query execution timeout must be greater than or equal to zero.");
                 tr_globals::query_timeout = value;
                 break;
             }
@@ -543,8 +541,6 @@ void socket_client::set_session_options(msg_struct *msg)
             {
                 uint32_t value;
                 net_int2int(&value, msg->body+pos);
-                if(value < 0)
-                    throw USER_EXCEPTION2(SE4617, "limit on query result size must be greater than or equal to zero.");
                 max_result_size_to_pass = value;
                 out_s->set_max_result_size_to_pass(max_result_size_to_pass);
                 break;

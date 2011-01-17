@@ -216,7 +216,7 @@ public:
     inline arr_of_comp_cond::size_type get_conjuncts_number()    { return conjuncts.size(); }
     inline operation_compare_condition get_conjunt_comparison_type(arr_of_comp_cond::size_type i)
     {
-        U_ASSERT(i >= 0 && i < conjuncts.size());
+        U_ASSERT(i < conjuncts.size());
         return conditions.at(i);
     }
     /* Returns -1 if position var is not used */
@@ -312,7 +312,7 @@ public:
     inline arr_of_comp_cond::size_type get_conjuncts_number()    { return conjuncts.size(); }
     inline operation_compare_condition get_conjunt_comparison_type(arr_of_comp_cond::size_type i)
     {
-        U_ASSERT(i >= 0 && i < conjuncts.size());
+        U_ASSERT(i < conjuncts.size());
         return conditions.at(i);
     }
     /* Returns -1 if position var is not used */

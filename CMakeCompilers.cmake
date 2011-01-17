@@ -50,7 +50,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     endif (SE_ENABLE_GCOV)
 
     # set warning level
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused -Wno-missing-field-initializers -Wno-deprecated")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused -Wno-uninitialized")
 
 endif(CMAKE_COMPILER_IS_GNUCXX)

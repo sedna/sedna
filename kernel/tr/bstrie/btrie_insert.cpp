@@ -6,21 +6,108 @@
 #include "btrie_internal.h"
 #include "btrie_readstate.h"
 
+
+inline
+static void fix_state_pointers(struct state_descriptor * state, const char * offset_point, int offset) {
+    int maxi = -1;
+    int maxv = -1;
+    char * base = state->p + state->len;
+
+    if (state->p == offset_point) {
+        return;
+    }
+
+    for (int i = 0; i < state->edge_count; i++) {
+        if (state->pointers[i] == NO_EDGE) { continue; }
+        if (base + state->pointers[i] - offset_point <= 0) {
+            if (maxv < state->pointers[i]) {
+                maxi = i;
+                maxv = state->pointers[i];
+            }
+        } else {
+            state->pointers[i] += offset;
+        }
+    }
+
+    if (maxi != -1) {
+        read_state(base + maxv, state);
+        fix_state_pointers(state, offset_point, offset);
+    }
+}
+
+
+inline
+static void fix_trie_pointers(struct st_page_header * pghdr, const char * offset_point, int offset) {
+    struct state_descriptor state;
+    int maxi = -1;
+    int maxv = -1;
+    char * p;
+
+    for (int i = 0; i < pghdr->trie_count; i++) {
+        char * p = (char *) XADDR(pghdr->page) + pghdr->trie_offset + pghdr->tries[i];
+        read_state(p, &state);
+        if (p - offset_point > 0) {
+            pghdr->tries[i] += offset;
+        } else {
+            if (maxv < pghdr->tries[i]) {
+                maxi = i;
+                maxv = pghdr->tries[i];
+            }
+        }
+    }
+
+    if (maxi >= 0) {
+        p = (char *) XADDR(pghdr->page) + pghdr->trie_offset + maxv;
+        read_state(p, &state);
+        fix_state_pointers(&state, offset_point, offset);
+    }
+}
+
 /** Write the state to the buffer and offset buffer as precalculated
   * @return the linear amount of octets, by which trie is increased
   */
-int st_new_state_write(struct st_tmp_trie * new_state, char * state, sptr_t state_len, char * data_end) {
+int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_state, char * state, sptr_t state_len) {
     int offset = new_state->len - state_len;
+    char * data_end = (char *) XADDR(pghdr->page) + pghdr->data_end;
 
-    if (offset != 0) {
+    if (new_state->buf2 != NULL) {
+        struct st_page_header newpg;
+
+        st_markup_page(&newpg, 1, true);
+        memcpy((char *) XADDR(newpg.page) + newpg.trie_offset, new_state->buf2, new_state->len2);
+        newpg.data_end = newpg.trie_offset + new_state->len2;
+        * (new_state->buf2ptr) = newpg.page + ((char *) newpg.tries - (char *) XADDR(newpg.page));
+        st_write_page_header(&newpg);
+    }
+
+    WRITE_PAGE(pghdr->page);
+
+    if (offset != 0 && ((state + state_len) != data_end)) {
         memmove_ABd(state + state_len, data_end, offset);
     }
 
     memcpy(state, new_state->buf, new_state->len);
 
+    pghdr->data_end += offset;
+    fix_trie_pointers(pghdr, state, offset);
+    st_write_page_header(pghdr);
+    st_new_state_free(new_state);
+
     return offset;
 }
 
+
+inline
+static size_t  write_lj(char * p, xptr_t ** x)
+{
+    flags_t meta = STATE_LONG_JUMP;
+    char * s = p;
+
+    CAST_AND_WRITE(s, meta);
+    *x = (xptr_t *) s;
+
+    return (sizeof(meta) + sizeof(xptr_t));
+}
 
 inline
 static size_t write_state(char * p, struct state_descriptor * d)
@@ -52,7 +139,7 @@ static size_t write_state(char * p, struct state_descriptor * d)
     }
 
     if (d->object_len > 0) {
-        sptr_t ps = (sptr_t) d->object_len;
+        uint16_t ps = (uint16_t) d->object_len;
         CAST_AND_WRITE(s, ps);
     }
 
@@ -103,7 +190,8 @@ static struct state_descriptor * fill_state(
     char * object,
     size_t object_len,
     uint8_t edge_count,
-    bool is_final)
+    bool is_final,
+    bool is_split)
 {
     dsc->edge_count = edge_count;
     dsc->prefix = prefix;
@@ -111,16 +199,13 @@ static struct state_descriptor * fill_state(
 
     dsc->object = NULL;
     dsc->object_len = 0;
-    dsc->flags = 0;
+    dsc->flags = (is_final ? STATE_FINAL : 0) | (is_split ? STATE_SPLIT_POINT : 0);
 
-    if (is_final) {
-      dsc->flags = STATE_FINAL;
-      if (object != NULL) {
-          dsc->object = object;
-          dsc->object_len = object_len;
-      } else {
-          dsc->flags |= STATE_NO_OBJECT;
-      }
+    if (object != NULL) {
+        dsc->object = object;
+        dsc->object_len = object_len;
+    } else {
+        dsc->flags |= STATE_NO_OBJECT;
     }
     dsc->edges = NULL;
 
@@ -129,7 +214,8 @@ static struct state_descriptor * fill_state(
 
 
 
-char tmp_buffer[3*MAX_STATE_SIZE];
+char tmp_buffer[2*MAX_STATE_SIZE];
+char tmp_buffer_2[MAX_STATE_SIZE];
 
 struct st_tmp_trie * st_state_delete_prepare(char * state)
 {
@@ -153,17 +239,17 @@ struct st_tmp_trie * st_state_delete_prepare(char * state)
 }
 
 /** Break the given <state> into new ones (two or three). If state is null, create it.
-  * This function only returns INFORMATION about new state, not modifing anything.
   */
-struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_pos,
-        struct st_key_object_pair * key_object_pair)
+void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_pos, int key_pos,
+        struct st_key_object_pair * key_object_pair, bool split_state)
 {
     int key_len = key_object_pair->key_length - key_pos;
     int prefix_len;
     struct state_descriptor state_dsc;
     struct state_descriptor new_state;
     char * buf =  tmp_buffer;
-    struct st_tmp_trie * result = (struct st_tmp_trie *) malloc(sizeof(struct st_tmp_trie));
+
+    result->buf2 = NULL;
 
 /* There are five cases in this function */
 
@@ -172,10 +258,13 @@ struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_
     if (state == NULL) {
 /*  - case 1 : there are no states yet on given page, so create new one */
         fill_state(&new_state, key_object_pair->key, key_object_pair->key_length,
-            key_object_pair->object, key_object_pair->object_size, 0, key_object_pair->is_final);
+            key_object_pair->object, key_object_pair->object_size, 0, key_object_pair->is_final, false);
         write_state(buf, &new_state);
         buf += new_state.len;
     }  else {
+        struct state_descriptor key_state;
+        int offset;
+
         read_state(state, &state_dsc);
         prefix_len = state_dsc.prefix_len - prefix_pos;
 
@@ -185,14 +274,12 @@ struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_
             if (key_len > 0) {
                 DEBUG_INFO("case 5 (P=(K-E) split)");
 
-                struct state_descriptor key_state;
-
 /*  - case 5 : (the most common one) the goal key and the prefix share common part, but there are parts of both left
                create new state as the parent of the given one, containing the common part of prefix
                create new state as the sibling to the given one */
 
                 /* Here goes the parent state with strictly two children and no object */
-                fill_state(&par_state, state_dsc.prefix, prefix_pos, NULL, 0, 2, false);
+                fill_state(&par_state, state_dsc.prefix, prefix_pos, NULL, 0, 2, false, split_state);
                 write_state(buf, &par_state);
                 buf += par_state.len;
 
@@ -201,11 +288,20 @@ struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_
 
                 /* The goal FINAL state with no outgoing edges */
                 fill_state(&key_state, key_object_pair->key + key_pos + 1, key_len - 1,
-                    key_object_pair->object, key_object_pair->object_size, 0, key_object_pair->is_final);
-                write_state(buf, &key_state);
-                buf += key_state.len;
+                    key_object_pair->object, key_object_pair->object_size, 0, key_object_pair->is_final, false);
 
-                add_edge(&par_state, state_dsc.prefix[prefix_pos], (uint16_t) key_state.len);
+                if (split_state) {
+                    result->buf2 = tmp_buffer_2;
+                    offset = write_lj(buf, &(result->buf2ptr));
+                    write_state(result->buf2, &key_state);
+                    result->len2 = key_state.len;
+                } else {
+                    write_state(buf, &key_state);
+                    offset = key_state.len;
+                }
+                buf += offset;
+
+                add_edge(&par_state, state_dsc.prefix[prefix_pos], (uint16_t) offset);
             } else {
                 DEBUG_INFO("case 3 (PK-E split)");
 
@@ -214,7 +310,7 @@ struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_
 
                 /* Here goes the parent state which is the goal one with one outgoing edge */
                 fill_state(&par_state, state_dsc.prefix, prefix_pos,
-                    key_object_pair->object, key_object_pair->object_size, 1, key_object_pair->is_final);
+                    key_object_pair->object, key_object_pair->object_size, 1, key_object_pair->is_final, split_state);
                 write_state(buf, &par_state);
                 buf += par_state.len;
 
@@ -231,7 +327,6 @@ struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_
             DEBUG_INFO("case 4  (K-E split)");
 
             char new_key;
-            struct state_descriptor key_state;
 
 /*  - case 4 : the goal key breaks at the end of the prefix, but there is a part of it left
                create new state as a child of the given one */
@@ -245,14 +340,23 @@ struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_
             add_edge(&new_state, new_key, 0);
 
             fill_state(&key_state, key_object_pair->key + key_pos + 1, key_len - 1,
-                key_object_pair->object, key_object_pair->object_size, 0, key_object_pair->is_final);
-            write_state(buf, &key_state);
-            buf += key_state.len;
+                key_object_pair->object, key_object_pair->object_size, 0, key_object_pair->is_final, false);
+
+            if (split_state) {
+                result->buf2 = tmp_buffer_2;
+                offset = write_lj(buf, &(result->buf2ptr));
+                write_state(result->buf2, &key_state);
+                result->len2 = key_state.len;
+            } else {
+                write_state(buf, &key_state);
+                offset = key_state.len;
+            }
+            buf += offset;
 
             for (int i = 0; i < new_state.edge_count; i++) {
                 if (new_state.pointers[i] == NO_EDGE) { continue; }
                 if (new_state.edges[i] != new_key) {
-                    new_state.pointers[i] += key_state.len;
+                    new_state.pointers[i] += offset;
                 }
             }
         } else {
@@ -282,13 +386,10 @@ struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_
     result->buf = tmp_buffer;
     result->len = (buf - tmp_buffer);
     result->offset = 0;
-
-    return result;
 }
 
 
 /** Free state insertion info */
 void st_new_state_free(struct st_tmp_trie * state)
 {
-    free(state);
 }

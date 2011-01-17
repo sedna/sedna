@@ -12,7 +12,7 @@
 
 #include "tr/structures/schema.h"
 #include "tr/structures/metadata.h"
-#include "tr/idx/index_data.h"
+#include "tr/idx/indecies.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"

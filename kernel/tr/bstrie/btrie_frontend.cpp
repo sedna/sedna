@@ -2,10 +2,11 @@
 * BTrie frontend implementation
 * Copyright (c) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 */
-#include "btrie_internal.h"
-#include "btrie_readstate.h"
 
 #include "btrie.h"
+#include "btrie_internal.h"
+#include "btrie_readstate.h"
+#include "btrie_traverse.h"
 
 int btrie_last_error;
 
@@ -54,62 +55,6 @@ btrie_record_t btrie_find(const btrie_t tree, const char * key, size_t key_lengt
     return result;
 }
 
-inline
-static void fix_state_pointers(struct state_descriptor * state, const char * offset_point, int offset) {
-    int maxi = -1;
-    int maxv = -1;
-    char * base = state->p + state->len;
-
-    if (state->p == offset_point) {
-        return;
-    }
-
-    for (int i = 0; i < state->edge_count; i++) {
-        if (state->pointers[i] == NO_EDGE) { continue; }
-        if (base + state->pointers[i] - offset_point <= 0) {
-            if (maxv < state->pointers[i]) {
-                maxi = i;
-                maxv = state->pointers[i];
-            }
-        } else {
-            state->pointers[i] += offset;
-        }
-    }
-
-    if (maxi != -1) {
-        read_state(base + maxv, state);
-        fix_state_pointers(state, offset_point, offset);
-    }
-}
-
-
-inline
-static void fix_trie_pointers(struct st_page_header * pghdr, const char * offset_point, int offset) {
-    struct state_descriptor state;
-    int maxi = -1;
-    int maxv = -1;
-    char * p;
-
-    for (int i = 0; i < pghdr->trie_count; i++) {
-        char * p = (char *) XADDR(pghdr->page) + pghdr->trie_offset + pghdr->tries[i];
-        read_state(p, &state);
-        if (p - offset_point > 0) {
-            pghdr->tries[i] += offset;
-        } else {
-            if (maxv < pghdr->tries[i]) {
-                maxi = i;
-                maxv = pghdr->tries[i];
-            }
-        }
-    }
-
-    if (maxi >= 0) {
-        p = (char *) XADDR(pghdr->page) + pghdr->trie_offset + maxv;
-        read_state(p, &state);
-        fix_state_pointers(&state, offset_point, offset);
-    }
-}
-
 #include <stdio.h>
 
 btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, const char * obj, size_t obj_length, bool replace)
@@ -118,7 +63,7 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
     struct st_path * states;
     btrie_record_t result = XNULL;
     struct st_page_header pghdr;
-    struct st_tmp_trie * state = NULL;
+    struct st_tmp_trie newstate = {};
 
     btrie_last_error = ST_ERROR_NO_ERROR;
 
@@ -128,11 +73,9 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
 
         st_markup_page(&pghdr, 1, true);
         tree->root_page = pghdr.page;
-        state = st_new_state_prepare(NULL, 0, 0, &key_object_pair);
-        st_new_state_write(state, (char *) XADDR(pghdr.page) + pghdr.trie_offset, state->len, 0);
-        pghdr.data_end = pghdr.trie_offset + state->len;
-        st_write_page_header(&pghdr);
-        st_new_state_free(state);
+        st_new_state_prepare(&newstate, NULL, 0, 0, &key_object_pair, false);
+        pghdr.data_end = pghdr.trie_offset;
+        st_new_state_write(&pghdr, &newstate, (char *) XADDR(pghdr.page) + pghdr.trie_offset, 0);
     } else {
         states = st_find_state_path(tree, key, key_length);
 
@@ -142,27 +85,24 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
             btrie_last_error = ST_ERROR_UNKNOWN;
         } else {
             sptr_t state_offset;
-            sptr_t offset;
             struct state_descriptor dsc;
             xptr_t pg = states->last_state->page->page;
 
             st_read_page_header(pg, &pghdr);
             read_state((char *) XADDR(states->last_state->p), &dsc);
             state_offset = dsc.p - (char *) XADDR(pg);
-            state = st_new_state_prepare(dsc.p, states->prefix_break_position, states->key_break_position, &key_object_pair);
 
-            if (state->len >= states->last_state->page->free_space) {
-                // FIXME : root page bug
-                pg = st_split(*tree, states, states->page_count - 1, &state_offset);
+            st_new_state_prepare(&newstate, dsc.p, states->prefix_break_position, states->key_break_position, &key_object_pair, (dsc.flags & STATE_SPLIT_POINT) > 0);
+
+            if (newstate.len >= states->last_state->page->free_space) {
+                pg = st_split(*tree, states, states->page_count - 1);
+                st_sp_free(states);
+                return btrie_insert(tree, key, key_length, obj, obj_length, replace);
+            } else {
+                WRITE_PAGE(pg);
+                st_read_page_header(pg, &pghdr);
+                st_new_state_write(&pghdr, &newstate, (char *) XADDR(pg) + state_offset, dsc.len);
             }
-
-            WRITE_PAGE(pg);
-            st_read_page_header(pg, &pghdr);
-            offset = st_new_state_write(state, (char *) XADDR(pg) + state_offset, dsc.len, (char *) XADDR(pg) + pghdr.data_end);
-            pghdr.data_end += offset;
-            fix_trie_pointers(&pghdr, (char *) XADDR(pg) + state_offset, offset);
-            st_write_page_header(&pghdr);
-            st_new_state_free(state);
         }
 
         st_sp_free(states);
@@ -190,7 +130,6 @@ bool btrie_delete(btrie_t tree, const char * key, size_t key_length)
     }
 
     if (states->key_found) {
-        sptr_t offset;
         struct state_descriptor dsc;
         struct st_tmp_trie * state;
         struct st_page_header pghdr;
@@ -201,11 +140,7 @@ bool btrie_delete(btrie_t tree, const char * key, size_t key_length)
         read_state((char *) XADDR(states->last_state->p), &dsc);
         state = st_state_delete_prepare(dsc.p);
         WRITE_PAGE(pg);
-        offset = st_new_state_write(state, dsc.p, dsc.len, (char *) XADDR(pg) + pghdr.data_end);
-        pghdr.data_end += offset;
-        fix_trie_pointers(&pghdr, dsc.p, offset);
-        st_write_page_header(&pghdr);
-        st_new_state_free(state);
+        st_new_state_write(&pghdr, state, dsc.p, dsc.len);
 
         result = true;
     } else {
@@ -216,21 +151,70 @@ bool btrie_delete(btrie_t tree, const char * key, size_t key_length)
     return result;
 }
 
-size_t btrie_get_object(const btrie_record_t p, char * object)
+size_t btrie_get_object(const btrie_record_t p, char * object, size_t object_size)
 {
     struct state_descriptor dsc;
 
     READ_PAGE(p);
     read_state((char *) XADDR(p), &dsc);
 
-    if (object != NULL) {
+    if (object != NULL && object_size >= dsc.object_len) {
         memcpy(object, dsc.object, dsc.object_len);
     }
 
     return dsc.object_len;
 }
 
+bool btrie_replace_object(const btrie_record_t p, const char * object)
+{
+    struct state_descriptor dsc;
 
+    WRITE_PAGE(p);
+    read_state((char *) XADDR(p), &dsc);
+    memcpy(dsc.object, object, dsc.object_len);
+
+    return dsc.object_len;
+}
+
+
+btrie_enum_t btrie_find_prefix(const btrie_t tree, const char * key, size_t key_length, bool * first_key_equal) {
+    struct st_path * states;
+    struct state_descriptor dsc;
+
+    if (tree->root_page == XNULL) {
+        btrie_last_error = ST_ERROR_NOT_FOUND;
+        return NULL;
+    }
+
+    states = st_find_state_path(tree, key, key_length);
+
+    if (states == NULL) {
+        btrie_last_error = ST_ERROR_NOT_FOUND;
+        return NULL;
+    }
+
+    if (first_key_equal != NULL) {
+        *first_key_equal = states->key_found;
+    }
+
+    return bt_enum_create(states);
+}
+
+btrie_record_t btrie_get_state(btrie_enum_t cursor) {
+    return cursor->stack[cursor->stack_len-1].p;
+}
+
+char * btrie_get_key(btrie_enum_t cursor) {
+    return cursor->key;
+}
+
+size_t btrie_get_key_len(btrie_enum_t cursor) {
+    return cursor->key_len;
+}
+
+bool btrie_is_EOT(btrie_enum_t cursor) {
+    return cursor->finished;
+}
 
 #if EL_DEBUG == 1
 

@@ -19,7 +19,7 @@
 #include "tr/executor/fo/casting_operations.h"
 //#include "indexes.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/idx/btree/btree.h"
+#include "tr/btree/btree.h"
 #include "tr/cat/catstore.h"
 #include "common/u/uutils.h"
 #include "tr/strings/opt_parser.h"
