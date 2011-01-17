@@ -6,9 +6,9 @@
 #include "tr/structures/schema.h"
 
 #include "tr/executor/base/XPathOnSchema.h"
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/btree.h"
-#include "tr/idx/index_data.h"
+#include "tr/btree/btstruct.h"
+#include "tr/btree/btree.h"
+#include "tr/idx/indecies.h"
 #include "tr/vmm/vmm.h"
 #include "tr/structures/nodeoperations.h"
 #ifdef SE_ENABLE_FTSEARCH
@@ -266,7 +266,7 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
 
     if (new_node->persistent) {
         CAT_FOR_EACH(index_cell_xptr, i, this->root->full_index_list) {
-            i->object->new_node_available(new_node);
+            i->object->on_schema_node_created(new_node);
         }
 
         #ifdef SE_ENABLE_FTSEARCH
@@ -557,7 +557,7 @@ void doc_schema_node_object::drop()
 {
     _doc_drop_mode = true;
 
-    CAT_FOR_EACH(index_cell_xptr, i, this->root->full_index_list) { local_lock_mrg->put_lock_on_index(i->object->index_title); }
+    CAT_FOR_EACH(index_cell_xptr, i, this->root->full_index_list) { local_lock_mrg->put_lock_on_index(i->object->get_title()); }
     CAT_FOR_EACH(index_cell_xptr, i, this->root->full_index_list) { i->object->drop(); }
 
     #ifdef SE_ENABLE_FTSEARCH

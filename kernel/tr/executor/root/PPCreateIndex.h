@@ -22,6 +22,7 @@ private:
     PathExpr *key_path;
     xmlscm_type key_type;
     dynamic_context *cxt;
+    std::string tree_type;
 
     virtual void do_open();
     virtual void do_close();
@@ -35,11 +36,13 @@ public:
                   PathExpr *_object_path_,
                   PathExpr *_key_path_,
                   xmlscm_type _key_type_,
-                  dynamic_context *_cxt_);
+                  dynamic_context *_cxt_,
+                  const char * _tree_type_);
 
     ~PPCreateIndex();
     
     inline xmlscm_type get_index_type() const { return key_type; }
+    inline std::string get_idxtree_type() const { return tree_type; }
     inline const PathExpr* get_object_path() const { return object_path; }
     inline const PathExpr* get_key_path() const { return key_path; }
     inline const PathExprRoot& get_path_root() const { return root; }

@@ -15,7 +15,6 @@
 #include "btrie_misc.h"
 #include "btrie_structures.h"
 
-
 enum {
     st_trie_list_offset = ST_PAGE_HEADER_OFFSET + sizeof(uint16_t) + sizeof(sptr_t)
 };
@@ -35,18 +34,18 @@ struct st_path * st_find_state_path(const struct btrie * tree, const char * key,
 void st_sp_free(struct st_path * state_path);
 
 /** Page split */
-xptr_t st_split(struct btrie tree, struct st_path * sp, int cpage, sptr_t * savestate);
+xptr_t st_split(struct btrie tree, struct st_path * sp, int cpage);
 
 struct st_tmp_trie * st_state_delete_prepare(char * state);
 
 /** Break the given <state> into new ones (two or three). If state is null, create it.
   * This function only returns INFORMATION about new state, not modifing anything.
   */
-struct st_tmp_trie * st_new_state_prepare(char * state, int prefix_pos, int key_pos,
-        struct st_key_object_pair * key_object_pair);
+void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_pos, int key_pos,
+        struct st_key_object_pair * key_object_pair, bool split_state);
 
 /** Write the state to the buffer and offset buffer as precalculated */
-int st_new_state_write(struct st_tmp_trie * new_state, char * state, sptr_t state_len, char * data_end);
+int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_state, char * state, sptr_t state_len);
 
 /** Free state insertion info */
 void st_new_state_free(struct st_tmp_trie * state);

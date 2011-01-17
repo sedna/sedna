@@ -293,6 +293,7 @@ void IntVisitor::visit(ASTCreateIndex &n)
     dumpASTNode(n.on_path);
     dumpASTNode(n.by_path);
     dumpASTNode(n.type);
+    DUMP_STR(*n.tree_type);
     int_str.append(")");
 }
 

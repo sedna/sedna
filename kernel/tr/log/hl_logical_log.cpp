@@ -20,6 +20,7 @@
 #include "tr/rcv/rcv_funcs.h"
 #include "tr/mo/indirection.h"
 #include "tr/mo/boundaries.h"
+#include "tr/structures/metadata.h"
 
 #include "tr/structures/nodeinterface.h"
 
@@ -498,7 +499,7 @@ void hl_disable_log()
 	enable_log = false;
 }
 
-void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted)
+void hl_logical_log_index(index_descriptor_t *dsc, bool inserted)
 {
     if (!enable_log) return;
     number_of_records++;
@@ -506,11 +507,11 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
     std::ostringstream obj_str(std::ios::out | std::ios::binary);
     std::ostringstream key_str(std::ios::out | std::ios::binary);
 
-    PathExpr2lr(object_path, obj_str);
-    PathExpr2lr(key_path, key_str);
+    PathExpr2lr(dsc->object, obj_str);
+    PathExpr2lr(dsc->key, key_str);
 
     llOperations op;
-    if (is_doc)
+    if (dsc->owner->is_document())
         op = inserted ? LL_INSERT_DOC_INDEX : LL_DELETE_DOC_INDEX;
     else
         op = inserted ? LL_INSERT_COL_INDEX : LL_DELETE_COL_INDEX;
@@ -518,9 +519,12 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
     std::string obj_path_str = obj_str.str();
     std::string key_path_str = key_str.str();
 
+    const char * doc_name = dsc->owner->get_name();
+    // First character in doc_name stands for metadata cell type
+
     llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 5, obj_path_str.c_str(), obj_path_str.size() + 1,
-            key_path_str.c_str(), key_path_str.size() + 1, &key_type, sizeof(xmlscm_type),
-            index_title, strlen(index_title) + 1, doc_name, strlen(doc_name) + 1);
+            key_path_str.c_str(), key_path_str.size() + 1, &dsc->keytype, sizeof(xmlscm_type),
+            dsc->index_title, strlen(dsc->index_title) + 1, doc_name, strlen(doc_name));
 }
 
 #ifdef SE_ENABLE_FTSEARCH

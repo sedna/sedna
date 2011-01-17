@@ -18,8 +18,8 @@
 
 #include "tr/vmm/vmm.h"
 #include "tr/tr_globals.h"
-#include "tr/idx/btree/btree.h"
-#include "tr/idx/btree/btstruct.h"
+#include "tr/btree/btree.h"
+#include "tr/btree/btstruct.h"
 #include "tr/cat/simplestream.h"
 
 #include "tr/cat/catjournal.h"
@@ -630,7 +630,7 @@ inline char * catalog_htable_find_name(const char * name)
 
     size_t object_len = btrie_get_object(obj, NULL);
     char * result = new char[object_len];
-    btrie_get_object(obj, result);
+    btrie_get_object(obj, result, object_len);
 
     lock.Release();
     mtrn.end();

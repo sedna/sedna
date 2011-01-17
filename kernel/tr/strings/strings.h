@@ -285,7 +285,7 @@ public:
         return get_text_cursor(ts);
     }
 
-	const void free_cursor(str_cursor *cur) {
+	void free_cursor(str_cursor *cur) const {
 		delete cur;
 	}
 	str_off_t get_size() { return m_len; } //FIXME (don't use int type)
@@ -310,14 +310,14 @@ public:
 class op_str_buf : public str_buf_base
 {
 public:
-	op_str_buf() : str_buf_base() {}
-	op_str_buf(const tuple_cell &tc) : str_buf_base() { append(tc); }
-	op_str_buf(const char *str) : str_buf_base() { append(str); }
+    op_str_buf() : str_buf_base() {}
+    op_str_buf(const tuple_cell &tc) : str_buf_base() { append(tc); }
+    op_str_buf(const char *str) : str_buf_base() { append(str); }
 
-	void set(const tuple_cell &tc) { clear(); append(tc); }
-	void set(const char *str) { clear(); append(str); }
+    void set(const tuple_cell &tc) { clear(); append(tc); }
+    void set(const char *str) { clear(); append(str); }
 
-	op_str_buf(const op_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for op_str_buf is not implemented"); }
+//  op_str_buf(const op_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for op_str_buf is not implemented"); }
     op_str_buf& operator=(const op_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for op_str_buf is not implemented"); }
 };
 
@@ -326,16 +326,16 @@ public:
 class stmt_str_buf_impl: public str_buf_base
 {
 public:
-	stmt_str_buf_impl() : str_buf_base() {}
-	stmt_str_buf_impl(int mem_only) : str_buf_base(true) {}
-	stmt_str_buf_impl(const tuple_cell &tc) : str_buf_base() { append(tc); }
-	stmt_str_buf_impl(const char *str) : str_buf_base() { append(str); }
-	void set(const tuple_cell &tc) { clear(); append(tc); }
-	void set(const char *str) { clear(); append(str); }
+    stmt_str_buf_impl() : str_buf_base() {}
+    stmt_str_buf_impl(int mem_only) : str_buf_base(true) {}
+    stmt_str_buf_impl(const tuple_cell &tc) : str_buf_base() { append(tc); }
+    stmt_str_buf_impl(const char *str) : str_buf_base() { append(str); }
+    void set(const tuple_cell &tc) { clear(); append(tc); }
+    void set(const char *str) { clear(); append(str); }
 
-	tuple_cell get_tuple_cell() { return str_buf_base::get_tuple_cell(); }
+    tuple_cell get_tuple_cell() { return str_buf_base::get_tuple_cell(); }
 
-	stmt_str_buf_impl(const stmt_str_buf_impl&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf_impl is not implemented"); }
+//  stmt_str_buf_impl(const stmt_str_buf_impl&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf_impl is not implemented"); }
     stmt_str_buf_impl& operator=(const stmt_str_buf_impl&) { throw USER_EXCEPTION2(SE1003, "Assign operator for stmt_str_buf_impl is not implemented"); }
 };
 

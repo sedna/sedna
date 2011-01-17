@@ -36,7 +36,7 @@
 
 #include "common/tr_debug.h"
 #include "tr/executor/base/XPath.h"
-#include "tr/idx/indexes.h"
+#include "tr/idx/indecies.h"
 
 #include <assert.h>
 
@@ -607,59 +607,40 @@ static void llRcvNS(LSN curr_lsn, void *Rec)
 // Recover index
 static void llRcvIndex(LSN curr_lsn, void *Rec)
 {
-	 char *rec = (char *)Rec;
-     const char *obj_path, *key_path, *ind_name, *doc_name;
-     xmlscm_type key_type;
-     size_t offs;
-	 bool isUNDO = (rollback_active != 0);
-	 char op = rec[0];
+    char *rec = (char *)Rec;
+    const char *obj_path, *key_path, *ind_name, *doc_name;
+    xmlscm_type key_type;
+    size_t offs;
+    bool isUNDO = (rollback_active != 0);
+    char op = rec[0];
 
-     offs = sizeof(char) + sizeof(transaction_id);
+    offs = sizeof(char) + sizeof(transaction_id);
 
-     obj_path = rec + offs;
-     offs += strlen(obj_path) + 1;
-     key_path = rec + offs;
-     offs += strlen(key_path) + 1;
-     memcpy(&key_type, rec + offs, sizeof(xmlscm_type));
-     offs += sizeof(xmlscm_type);
-     ind_name = rec + offs;
-     offs += strlen(ind_name) + 1;
-     doc_name = rec + offs;
+    obj_path = rec + offs;
+    offs += strlen(obj_path) + 1;
+    key_path = rec + offs;
+    offs += strlen(key_path) + 1;
+    memcpy(&key_type, rec + offs, sizeof(xmlscm_type));
+    offs += sizeof(xmlscm_type);
+    ind_name = rec + offs;
+    offs += strlen(ind_name) + 1;
+    doc_name = rec + offs;
 
-     if ((isUNDO && (op == LL_DELETE_DOC_INDEX || op == LL_DELETE_COL_INDEX)) || (!isUNDO && (op == LL_INSERT_DOC_INDEX || op == LL_INSERT_COL_INDEX)))
-     {
-        if (op == LL_DELETE_DOC_INDEX || op == LL_INSERT_DOC_INDEX)
-        {
-           doc_schema_node_cptr doc_node = find_document(doc_name);
-           if (doc_node->type == document || doc_node->type == virtual_root)
-              create_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
-                            lr2PathExpr(NULL, key_path, pe_catalog_aspace),
-                            key_type,
-                            doc_node,
-                            ind_name,
-                            doc_name,
-                            true);
-           else throw SYSTEM_EXCEPTION("Can't create index for document");
-        }
-        else
-        {
-           col_schema_node_cptr col_node = find_collection(doc_name);
-           if (col_node->type == document || col_node->type == virtual_root)
-               create_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
-                             lr2PathExpr(NULL, key_path, pe_catalog_aspace),
-                             key_type,
-                             col_node.ptr(),
-                             ind_name,
-                             doc_name,
-                             false);
-           else throw SYSTEM_EXCEPTION("Can't create index for collection");
+    if ((isUNDO && (op == LL_DELETE_DOC_INDEX || op == LL_DELETE_COL_INDEX)) || (!isUNDO && (op == LL_INSERT_DOC_INDEX || op == LL_INSERT_COL_INDEX)))
+    {
+        index_descriptor_t dsc;
 
-        }
-     }
-     else
-     {
-          delete_index(ind_name);
-     }
+        dsc.backend_type = index_btree;
+        dsc.key = lr2PathExpr(NULL, key_path, pe_catalog_aspace);
+        dsc.keytype = key_type;
+        dsc.object = lr2PathExpr(NULL, obj_path, pe_catalog_aspace);
+        dsc.index_title = ind_name;
+        dsc.owner = catalog_find_name(catobj_metadata, doc_name)->p;
+
+        create_index(&dsc);
+    } else {
+        drop_index(ind_name);
+    }
 }
 
 // Recover full-text index

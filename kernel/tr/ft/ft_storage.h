@@ -7,7 +7,7 @@
 #define _FT_STORAGE_H
 
 #include "common/xptr.h"
-#include "tr/idx/btree/btree.h" //FIXME: move to cpp
+#include "tr/btree/btree.h" //FIXME: move to cpp
 #include "tr/ft/ft_partition.h"
 #include "tr/ft/ft_types.h"
 

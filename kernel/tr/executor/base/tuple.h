@@ -224,6 +224,8 @@ public:
     bool is_heavy_atomic() const { return (t & TC_HEAVY_ATOMIC_MASK) != 0; }
     bool is_portal()       const { return (t & TC_PORTAL_MASK) != 0; }
 
+    bool is_fixed_size_atomic() const { return is_fixed_size_type(get_atomic_type()); };
+
     /* node types */
     bool is_node()         const { return (t & TC_NODE_MASK) != 0; }
     /* safenode type means that node is stored with indirection always */
@@ -241,6 +243,7 @@ public:
     xptr get_xptr() const { return *(xptr*)(&data); }
 
     xptr get_smartnode() const { xptr a = get_xptr(); return isTmpBlock(a) ? indirectionDereferenceCP(a) : a; }
+    xptr get_smartnode_indir() const { xptr a = get_xptr(); return isTmpBlock(a) ? a : getIndirectionSafeCP(checkp(a)); }
     xptr get_safenode() const { return indirectionDereferenceCP(get_xptr()); }
     xptr get_unsafenode() const { return get_xptr(); }
 
@@ -253,7 +256,18 @@ public:
       }
     }
 
+    xptr get_node_inderection() const {
+      switch (t & TC_TYPE_MASK) {
+        case tc_safenode : return get_xptr();
+        case tc_node : return get_smartnode_indir();
+        case tc_unsafenode : return getIndirectionSafeCP(checkp(get_xptr()));
+        default: return XNULL;
+      }
+    }
+
     bool is_atomic_type(xmlscm_type tt) const { return is_atomic() && (this->t & TC_XTYPE_MASK) == (uint32_t) tt; }
+
+    bool is_boolean_true() const { return is_atomic_type(xs_boolean) && get_xs_boolean(); };
 
     /// fixed size atomic values
     int64_t            get_xs_integer()  const { return *(int64_t*           )(&data); }
@@ -270,9 +284,7 @@ public:
     }
 
     int get_index() const { return ((sequence_ptr*)(&data))->pos; }
-
-    void*              get_binary_data() const { return  (void*              )(&data); }
-
+    void* get_binary_data() const { return  (void*              )(&data); }
 
     /// variable size atomic values
     char*              get_str_mem()     const { return ((str_counted_ptr*)(&data))->get(); }
@@ -420,6 +432,10 @@ public:
         return tuple_cell(tc_safenode, getIndirectionSafeCP(_p_));
     }
 
+    static tuple_cell safenode_indir(const xptr &_p_)
+    {
+        return tuple_cell(tc_safenode, _p_);
+    }
 
     static tuple_cell node(const xptr &_p_)
     {

@@ -39,8 +39,8 @@ public:
 	void flush();
 	void write(const char *data, int len);
 	void write_uint(uint64_t val);
-	const int64_t bytes_written() { return nbytes_written; }
-	const int block_count() { return nblocks; }
+	int64_t bytes_written() const { return nbytes_written; }
+	int block_count() const { return nblocks; }
 	xptr cur_ptr();
 };
 

@@ -8,8 +8,8 @@
 
 #include "common/sedna.h"
 
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/btpage.h"
+#include "tr/btree/btstruct.h"
+#include "tr/btree/btpage.h"
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    Btree interface functions. In all functions 'root' parameter is btree actual root page.
@@ -79,4 +79,3 @@ inline void			bt_delete(xptr &root, const bt_key &key)
 
 
 #endif
-

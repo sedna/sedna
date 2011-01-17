@@ -4,12 +4,12 @@
 #include "tr/mo/indirection.h"
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstr.h"
-#include "tr/idx/btree/btree.h"
+#include "tr/btree/btree.h"
 #include "tr/structures/metadata.h"
-#include "tr/idx/index_data.h"
+#include "tr/idx/indecies.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/tr_globals.h"
-#include "tr/idx/btree/btintern.h"
+#include "tr/btree/btintern.h"
 
 #include "tr/executor/xqops/PPTest.h"
 
@@ -43,7 +43,8 @@ bool is_same_root(xptr x, xptr y)
 static FILE *logfile = NULL;
 static bool isRcvOK = true;
 
-void test_document(char *name, xptr doc_dsc, bool is_throw)
+static
+void test_document(const char *name, xptr doc_dsc, bool is_throw)
 {
     try
     {
@@ -59,17 +60,18 @@ void test_document(char *name, xptr doc_dsc, bool is_throw)
     }
 }
 
+static
 void test_indexes(cat_list<index_cell_xptr>::item* sc_idx)
 {
     cat_list<index_cell_xptr>::item* p = sc_idx;
-
+/*
     while (p != NULL)
     {
         try
         {
-            bt_check_btree(p->object->btree_root);
+//            bt_check_btree(p->object->btree_root);
                 fprintf(logfile, "Checked index: %s\n", p->object->index_title);
-            }
+        }
         catch (SednaException &e)
         {
                 elog(EL_ERROR, ("Recovery failed on index: %s, error: %s\n", p->object->index_title, e.what()));
@@ -79,9 +81,11 @@ void test_indexes(cat_list<index_cell_xptr>::item* sc_idx)
 
         p = p->next;
     }
+*/
 }
 
-void test_collection(char *name, col_schema_node_cptr coll)
+static
+void test_collection(const char *name, col_schema_node_cptr coll)
 {
     bt_key key;
     key.setnew(" ");
@@ -122,15 +126,15 @@ void test_db_after_rcv()
     {
         mdc = cursor.bt_next_obj();
 
-        if (!mdc->is_doc)
-            test_collection(mdc->name, mdc->snode);
+        if (!mdc->is_document())
+            test_collection(mdc->get_name(), mdc->get_schema_node());
         else
         {
-            xptr blk = (mdc->snode)->bblk;
+            xptr blk = mdc->get_schema_node()->bblk;
             CHECKP(blk);
             xptr doc_dsc = getFirstBlockNode(blk);
-            test_document(mdc->name, doc_dsc, false);
-            test_indexes(((doc_schema_node_xptr)mdc->snode)->full_index_list->first);
+            test_document(mdc->get_name(), doc_dsc, false);
+            test_indexes(doc_schema_node_cptr(mdc->get_schema_node())->full_index_list->first);
         }
     }
     while(cursor.bt_next_key());

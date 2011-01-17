@@ -83,8 +83,8 @@ public:
 #pragma warning( default : 4200 )
 #endif
 		
-		inline const char *get_str() { return (this->str);}
-		inline const str_len_t get_str_len() { return (this->str_len);}
+		inline const char *get_str() const { return (this->str);}
+		inline str_len_t get_str_len() const { return (this->str_len);}
 		
 		inline typename AllocatorT::ptr_t left_ptr() {return (this->s_left);}
 		inline typename AllocatorT::ptr_t right_ptr() {return (this->s_right);}

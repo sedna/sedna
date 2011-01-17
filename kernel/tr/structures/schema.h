@@ -246,6 +246,9 @@ struct doc_schema_node_object: public schema_node_object
 
     xmlns_ptr_pers xmlns_register(xmlns_ptr xmlns);
 
+    /* Tells if it is document or collection */
+    inline bool is_document() { return get_magic() == doc_schema_node_object::magic; }
+
     /* Create new doc node */
     static catalog_object_header * create(bool persistent);
 

@@ -717,7 +717,7 @@ namespace sedna
             peroot.set_name(comp_name);
         }
 
-        qep = new PPCreateIndex(off_name.opin, peroot, onp, byp, xtype, dyn_cxt);
+        qep = new PPCreateIndex(off_name.opin, peroot, onp, byp, xtype, dyn_cxt, n.tree_type->c_str());
     }
 
     void lr2por::visit(ASTCreateRole &n)

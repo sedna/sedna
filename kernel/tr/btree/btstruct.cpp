@@ -5,9 +5,10 @@
 
 #include "common/sedna.h"
 
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/btintern.h"
 #include "tr/vmm/vmm.h"
+
+#include "tr/btree/btstruct.h"
+#include "tr/btree/btintern.h"
 
 btree_blk_hdr a;
 
@@ -363,10 +364,11 @@ bool bt_cursor_tmpl<object>::is_null() const
 
 
 #define MAKE_IMPLS(t) \
-	template bt_cursor_tmpl<t>::bt_cursor_tmpl(); \
-	template bt_cursor_tmpl<t>::bt_cursor_tmpl(char* pg, shft the_key_idx); \
-	template t bt_cursor_tmpl<t>::bt_next_obj(); \
-	template bool bt_cursor_tmpl<t>::bt_next_key(); \
+    template bt_cursor_tmpl<t>::bt_cursor_tmpl(); \
+    template bt_cursor_tmpl<t>::bt_cursor_tmpl(char* pg, shft the_key_idx); \
+    template t bt_cursor_tmpl<t>::bt_next_obj(); \
+    template bool bt_cursor_tmpl<t>::bt_next_key(); \
     template bool bt_cursor_tmpl<t>::is_null() const; \
-	template void bt_cursor_tmpl<t>::bt_set_next_obj(t obj);
-#include "tr/idx/btree/make_impl.h"
+    template void bt_cursor_tmpl<t>::bt_set_next_obj(t obj);
+
+#include "tr/btree/make_impl.h"

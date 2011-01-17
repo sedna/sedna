@@ -9,7 +9,7 @@
 #include "common/sedna.h"
 
 #include "tr/structures/nodetypes.h"
-#include "tr/idx/btree/btpage.h"
+#include "tr/btree/btpage.h"
 #include "tr/executor/base/XMLDateTime.h"
 
 #include <list>
@@ -36,11 +36,11 @@ public: static inline int get() { return 0; }
 
 
 struct bt_path_item {
-	xptr	pg;
-	int		idx;
+    xptr pg;
+    int idx;
 
-	bt_path_item() : pg(XNULL), idx(0) {}
-	bt_path_item(const xptr apg, const int aidx) : pg(apg), idx(aidx) {}
+    bt_path_item() : pg(XNULL), idx(0) {}
+    bt_path_item(const xptr apg, const int aidx) : pg(apg), idx(aidx) {}
 };
 
 typedef std::list<bt_path_item> bt_path;
@@ -52,8 +52,8 @@ private:
         float  f_v;
         double d_v;
         char*  s_v;
-	xs_packed_duration dur_v;
-	xs_packed_datetime dt_v;
+        xs_packed_duration dur_v;
+        xs_packed_datetime dt_v;
     } v;
     xmlscm_type type;
 
@@ -100,6 +100,13 @@ public:
     void setnew(const char* nv);
     void setnew_dateTime(const xs_packed_datetime& dt, xmlscm_type t);
     void setnew_duration(const xs_packed_duration& dur, xmlscm_type t);
+
+    int64_t get_int() const { U_ASSERT(type == xs_integer); return v.i_v; };
+    float get_float() const { U_ASSERT(type == xs_float); return v.f_v; };
+    double get_double() const { U_ASSERT(type == xs_double); return v.d_v; };
+    char * get_string() const { U_ASSERT(type == xs_string); return v.s_v; };
+    xs_packed_datetime get_datetime() const { return v.dt_v; };
+    xs_packed_duration get_duration() const { return v.dur_v; };
 
     void * data () const { return ((type == xs_string )?(void*)(v.s_v):(void*)&v); }
 

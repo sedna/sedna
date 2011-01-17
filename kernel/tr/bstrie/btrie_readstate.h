@@ -6,21 +6,20 @@
 #ifndef _BTRIE_READSTATE_H
 #define _BTRIE_READSTATE_H
 
-#include "btrie_misc.h"
-#include "btrie_structures.h"
+#include "btrie_internal.h"
 
 /***********************************************************************
   This function is very time critical, so it is inlined in header file
   It reads state descriptor from byte sequence
 */
 
-inline 
+inline
 static char * read_state(const char * p, struct state_descriptor * d)
 {
     flags_t meta;
     uint8_t prefix_len;
     uint8_t edge_count;
-    sptr_t object_len;
+    uint16_t object_len;
     char * s = (char *) p;
 
     d->p = (char *) p;
@@ -71,6 +70,19 @@ static char * read_state(const char * p, struct state_descriptor * d)
     d->len = (s - p);
 
     return s;
+}
+
+inline
+static xptr_t st_remove_indirection(xptr_t p) {
+    struct st_page_header page_header;
+    sptr_t a;
+    char * v;
+
+    st_read_page_header(p, &page_header);
+    v = (char *) XADDR(p);
+    CAST_AND_READ(a, v);
+
+    return page_header.page + page_header.trie_offset + a;
 }
 
 #endif /* _BTRIE_READSTATE_H */

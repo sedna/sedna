@@ -17,7 +17,7 @@
 #include "tr/auth/auc.h"
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
-#include "tr/idx/index_data.h"
+#include "tr/idx/index_types.h"
 #include "tr/executor/base/XPath.h"
 #include "tr/structures/metadata.h"
 #include "tr/rcv/rcv_funcs.h"
@@ -72,6 +72,8 @@ static transaction_id
 get_transaction_id(SSMMsg* sm_server)
 {
     sm_msg_struct msg;
+
+    msg.trid = -1;
 
     for (;;)
     {

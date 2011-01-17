@@ -18,11 +18,22 @@
 #include "tr/cat/catmem.h"
 
 struct metadata_cell_object : public catalog_object {
-/* Fields */
+    friend xptr insert_document(const char *uri, bool persistent);
+    friend col_schema_node_xptr insert_collection(const char *collection_name);
 
+    friend void delete_document(const char *document_name);
+    friend void delete_collection(const char *collection_name);
+
+    friend void rename_collection(const char *old_collection_name, const char *new_collection_name);
+  private:
+/* Fields */
     char* name; /* persistent string */
     schema_node_xptr snode; /* persistent */
     bool is_doc; /* persistent */
+  public:
+    const char * get_name() const { return name; };
+    schema_node_xptr get_schema_node() const { return snode; };
+    bool is_document() const { return is_doc; };
 
 /* Common catalog object interface */
 

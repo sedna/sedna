@@ -6,8 +6,8 @@
 #ifndef CATENUM_H
 #define CATENUM_H
 
-#include "tr/idx/btree/btree.h"
-#include "tr/idx/btree/btstruct.h"
+#include "tr/btree/btree.h"
+#include "tr/btree/btstruct.h"
 #include "tr/structures/rbtree.h"
 #include "tr/cat/catalog.h"
 #include "tr/cat/catmem.h"

@@ -10,7 +10,7 @@
 #include "tr/mo/mo.h"
 #include "tr/log/log.h"
 #include "tr/locks/locks.h"
-#include "tr/idx/indexes.h"
+#include "tr/idx/indecies.h"
 #include "tr/executor/base/xs_uri.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
@@ -68,10 +68,10 @@ void metadata_cell_object::drop()
 void delete_document(const char *document_name)
 {
     metadata_cptr document(document_name, true);
-    if (!document.found() || (document->snode->get_magic() != doc_schema_node_object::magic))
+    if (!document.found() || !document->is_document())
       { throw USER_EXCEPTION2(SE2006, document_name); }
 
-    xptr blk = document->snode->bblk;
+    xptr blk = document->get_schema_node()->bblk;
     U_ASSERT(blk != XNULL); // Document MUST have exactly one document node, so blk is not null
     CHECKP(blk);
     delete_doc_node(getFirstBlockNode(blk), document_name, NULL);
@@ -88,7 +88,7 @@ void delete_collection(const char *collection_name)
     bt_key key;
     key.setnew(" ");
 
-    bt_cursor cursor = bt_find_gt(((col_schema_node_xptr)collection->snode)->metadata, key);
+    bt_cursor cursor = bt_find_gt(col_schema_node_cptr(collection->get_schema_node())->metadata, key);
     if (!cursor.is_null()) do {
         xptr indir = cursor.bt_next_obj();
         xptr node  = indirectionDereferenceCP(indir);
@@ -112,9 +112,12 @@ void delete_document_from_collection(const char *collection_name, const char *do
 {
     metadata_cptr collection(collection_name, true);
     if (!collection.found()) throw USER_EXCEPTION2(SE2003, collection_name);
-    col_schema_node_cptr col_node = collection->snode;
+    col_schema_node_cptr col_node = collection->get_schema_node();
     xptr node = col_node->find_document(document_name);
-    if (node == XNULL)       throw USER_EXCEPTION2(SE2006,document_name);
+
+    if (node == XNULL) {
+        throw USER_EXCEPTION2(SE2006,document_name);
+    }
 
     col_node->delete_document(document_name);
 
@@ -197,10 +200,10 @@ xptr insert_document_into_collection(const char *collection_name, const char *ur
 
     down_concurrent_micro_ops_number();
 
-    col_schema_node_cptr scm = collection->snode;
+    col_schema_node_cptr scm = collection->get_schema_node();
     xptr node_indir;
-    node_indir = insert_doc_node(collection->snode, name, collection_name);
-    ((col_schema_node_xptr)collection->snode)->insert_document(name, node_indir);
+    node_indir = insert_doc_node(collection->get_schema_node(), name, collection_name);
+    col_schema_node_cptr(collection->get_schema_node())->insert_document(name, node_indir);
 
     up_concurrent_micro_ops_number();
     return indirectionDereferenceCP(node_indir);
@@ -208,25 +211,31 @@ xptr insert_document_into_collection(const char *collection_name, const char *ur
 
 col_schema_node_xptr find_collection(const char *collection_name) {
     metadata_cptr mdc(collection_name, false);
-    if (mdc.found() && (mdc->snode->get_magic() == col_schema_node_object::magic)) return mdc->snode;
+
+    if (mdc.found() && !mdc->is_document()) {
+        return mdc->get_schema_node();
+    }
     else return XNULL;
 }
 
 doc_schema_node_xptr find_document(const char *document_name) {
     metadata_cptr mdc(document_name, false);
-    if (mdc.found() && (mdc->snode->get_magic() == doc_schema_node_object::magic)) return mdc->snode;
+
+    if (mdc.found() && mdc->is_document()) {
+        return mdc->get_schema_node();
+    }
     else return XNULL;
 }
 
 xptr find_document_in_collection(const char *collection_name, const char *document_name)
 {
-    metadata_cptr mdc(collection_name, false);
-    schema_node_object * snd;
-    if (!mdc.found()) { return XNULL; }
-    snd = &(*(schema_node_cptr(mdc->snode)));
-    if ((dynamic_cast<col_schema_node_object *> (snd)) == NULL) { return XNULL; }
-    xptr res = (dynamic_cast<col_schema_node_object *> (snd))->find_document(document_name);
-    return res;
+    metadata_cptr collection(collection_name, false);
+
+    if (!collection.found() || collection->is_document()) {
+        return XNULL;
+    } else {
+        return col_schema_node_cptr(collection->get_schema_node())->find_document(document_name);
+    }
 }
 
 void rename_collection(const char *old_collection_name, const char *new_collection_name)
@@ -248,7 +257,7 @@ void rename_collection(const char *old_collection_name, const char *new_collecti
     collection.modify();
     catalog_delete_name(catobj_metadata, collection->name);
     collection->name = cat_strcpy(collection->name, new_collection_name);
-    catalog_set_name(catobj_metadata, collection->name, collection.obj);
+    catalog_set_name(catobj_metadata, collection->get_name(), collection.obj);
 
     hl_logical_log_rename_collection(old_collection_name, new_collection_name);
     up_concurrent_micro_ops_number();

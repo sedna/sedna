@@ -14,6 +14,16 @@ static btrie_record_t sbtrie_find_str(const xptr tree, const char * key) {
 }
 
 inline
+static xptr sbtrie_insert(xptr tree, const char * key, size_t key_len, const char * obj, size_t obj_length, bool replace) {
+    btrie_t btrie = btrie_open(tree);
+	xptr result;
+	btrie_insert(btrie, key, key_len, obj, obj_length, replace);
+    result = btrie_get_root(btrie);
+    btrie_close(btrie);
+    return result;
+}
+
+inline
 static xptr sbtrie_insert_str(xptr tree, const char * key, const char * obj, size_t obj_length, bool replace) {
     btrie_t btrie = btrie_open(tree);
 	xptr result;

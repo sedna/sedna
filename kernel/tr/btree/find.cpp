@@ -5,10 +5,7 @@
 
 #include "common/sedna.h"
 
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/btpage.h"
-#include "tr/idx/btree/btintern.h"
-#include "tr/vmm/vmm.h"
+#include "tr/btree/btintern.h"
 
 /* All of the following search functions return boolean value indicating success or failure
    to find specified item. The updateable key_idx/obj_idx parameter in all functions is set
@@ -21,12 +18,12 @@
    Note also that BT_LEFTMOST value equals 0 and thus in some places is directly treated as index.
 */
 
-/* 
+/*
    Find key inside the given leaf page/cluster.
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    Clusters are the blocks of consequitive leaf pages, which have head page, tail page and zero or more
    intermediate pages. Non-tail pages of clusters by definition keep single key, which is called 'cluster
-   key' and objects sticking to that key. At that if the cluster has a head page and a number of 
+   key' and objects sticking to that key. At that if the cluster has a head page and a number of
    intermediate pages, all of them store objects sticking to the cluster key. Only tail page may store
    keys other than cluster key, which follow the cluster key
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,12 +76,12 @@ CHECKP(xpg);
 			}
 		}
 		/* pg is cluster tail page, in general this is not initial page */
-		bool rcbool = bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);			
+		bool rcbool = bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);
 		if (key_idx == BT_LEFTMOST)
 			/* search in the cluster tail page of the cluster can not result in BT_LEFTMOST */
             throw USER_EXCEPTION2(SE1008, "Search in cluster tail page resulted in BT_LEFTMOST key_idx");
 		return rcbool;
-	} else 
+	} else
 		return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);
 #else
 	return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);
@@ -108,7 +105,7 @@ CHECKP(next_pg_xptr);
 	return next_pg;
 }
 
-/* Find given object among objects of given key (key_idx), starting from given page, following 
+/* Find given object among objects of given key (key_idx), starting from given page, following
    adjacent pages in cluster case, while the 'pg' argument dynamically focuses to next searched page.
    In case of cluster the initial 'pg' argument must address head cluster page.
  */
@@ -163,7 +160,7 @@ bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx, bt_path *path, bool wit
 	bt_path_item pi(xpg, 0);
 
 	/* pg - currently processed page */
-	if (!BT_IS_LEAF(pg)) {	
+	if (!BT_IS_LEAF(pg)) {
 		if (bt_nleaf_find_key(pg, key, key_idx, with_bt)) {
 			xpg = *(xptr*)BT_BIGPTR_TAB_AT(pg, key_idx);
 			pi.idx = key_idx;
@@ -180,7 +177,7 @@ bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx, bt_path *path, bool wit
 			xpg = *(xptr*)BT_BIGPTR_TAB_AT(pg, key_idx - 1);
 			pi.idx = key_idx - 1;
 		}
-	
+
 		if (path != NULL) path->push_back(pi);
 
 		return bt_find_key(xpg, key, key_idx, path, with_bt);
@@ -191,4 +188,4 @@ bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx, bt_path *path, bool wit
 
 
 #define MAKE_IMPLS(t) template bool bt_leaf_find_obj_tmpl<t>(xptr &xpg, t obj, shft key_idx, shft &obj_idx);
-#include "tr/idx/btree/make_impl.h"
+#include "tr/btree/make_impl.h"

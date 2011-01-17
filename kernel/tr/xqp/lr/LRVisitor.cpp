@@ -435,6 +435,7 @@ void LRVisitor::visit(ASTCreateIndex &n)
     n.on_path->accept(*this);
     n.by_path->accept(*this);
     n.type->accept(*this);
+    LR_STR(*n.tree_type);
 
     lr_str.append(") ");
 }

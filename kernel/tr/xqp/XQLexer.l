@@ -452,6 +452,8 @@ ElemContentChar [\x09\x0D\x0A\x20-\xFF]{-}[{}<&]
 "UPDATE" { yylval->isUpper = 1; return token::UPDATE; }
 "user" { return token::USER; }
 "USER" { yylval->isUpper = 1; return token::USER; }
+"using" {return token::USING; }
+"USING" { yylval->isUpper = 1; return token::USING; }
 "with" { return token::WITH; }
 "WITH" { yylval->isUpper = 1; return token::WITH; }
 "options" { return token::OPTIONS; }

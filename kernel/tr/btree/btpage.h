@@ -299,5 +299,3 @@ inline	shft	BT_PFS(char* p)				{
 														BT_BIGPTR_TAB_AT(p, BT_KEY_NUM(p)));
 											}
 #endif
-
-

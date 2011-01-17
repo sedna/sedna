@@ -5,7 +5,7 @@
 
 #include "common/errdbg/d_printf.h"
 #include "tr/ft/ft_index.h"
-#include "tr/idx/btree/btree.h"
+#include "tr/btree/btree.h"
 #include "expat.h"
 #include "tr/ft/ft_cache.h"
 #include "tr/executor/base/sorted_sequence.h"
@@ -146,8 +146,6 @@ void ft_index_delete_doc(ftc_index_t ftc_idx, xptr acc)
 {
 	ftc_del_doc(ftc_idx, acc);
 }
-
-#include "tr/idx/indexes.h"
 
 void ft_idx_delete(struct FtsData *ft_data)
 {

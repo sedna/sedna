@@ -51,7 +51,7 @@ struct st_page_header * st_markup_page(struct st_page_header * new_page_header, 
     char * c;
 
     if (create_page) {
-        allocate_page(&(new_page_header->page));
+        NEW_PAGE(new_page_header->page);
     }
 
     WRITE_PAGE(new_page_header->page);
@@ -66,10 +66,8 @@ struct st_page_header * st_markup_page(struct st_page_header * new_page_header, 
     new_page_header->trie_count = trie_count;
     new_page_header->tries = (sptr_t *) c;
 
-	size_t tries_hlen = trie_count * sizeof(sptr_t);
-	memset(new_page_header->tries, 0, tries_hlen);
-    c += tries_hlen;
-
+    memset(c, 0, trie_count * sizeof(sptr_t));
+    c += trie_count * sizeof(sptr_t);
     new_page_header->trie_offset = c - ((char *) XADDR(new_page_header->page));
     new_page_header->data_end = new_page_header->trie_offset + all_trie_len;
     new_page_header->free_space = PAGE_SIZE - new_page_header->data_end;

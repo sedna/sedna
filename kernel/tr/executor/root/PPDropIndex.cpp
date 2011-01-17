@@ -8,7 +8,7 @@
 #include "tr/executor/root/PPDropIndex.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/idx/indexes.h"
+#include "tr/idx/indecies.h"
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 
@@ -57,6 +57,6 @@ void PPDropIndex::do_execute()
                     "Unknown database entity passed to drop index");
     local_lock_mrg->put_lock_on_index(tc.get_str_mem());
     auth_for_drop_object(tc.get_str_mem(), "index", false);
-    delete_index(tc.get_str_mem());
+    drop_index(tc.get_str_mem());
 }
 

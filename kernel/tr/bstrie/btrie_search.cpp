@@ -81,17 +81,10 @@ static struct st_path * st_sp_done(struct st_path * sp)
 
 void st_sp_free(struct st_path * state_path)
 {
-/*
-    for (int i = 0; i < state_path->state_count; i++) {
-        free(state_path->states[i].prefix);
-    }
-*/
-
     free(state_path->states);
     free(state_path->pages);
     free(state_path);
 }
-
 
 inline
 static xptr_t st_get_long_jump(char * p) {
@@ -106,21 +99,78 @@ static xptr_t st_get_long_jump(char * p) {
     }
 }
 
+/*
 inline
-static xptr_t st_remove_indirection(xptr_t p) {
-    struct st_page_header page_header;
-    sptr_t a;
-    char * v;
+static void btrie_push_stack(char s, struct state_descriptor * dsc, xptr_t p, int id, struct btrie_enum * cursor) {
+    struct btrie_enum_stack_frame * stack_frame = cursor->stack + cursor->stack_len;
 
-    st_read_page_header(p, &page_header);
-    v = (char *) XADDR(p);
-    CAST_AND_READ(a, v);
+    stack_frame->p = p;
+    stack_frame->trie_no = id;
 
-    return page_header.page + page_header.trie_offset + a;
+    cursor->key[cursor->key_len] = s;
+    memcpy(cursor->key + cursor->key_len + 1, dsc->prefix, dsc->prefix_len);
+    cursor->key_len += dsc->prefix_len + 1;
+    cursor->key[cursor->key_len] = '\0';
+
+    stack_frame->key_len = cursor->key_len;
+
+    cursor->stack_len++;
+};
+
+inline
+static int btrie_pop_stack(struct btrie_enum * cursor) {
+    cursor->stack_len--;
+
+    if (cursor->stack_len == 0) {
+        return -1;
+    }
+
+    struct btrie_enum_stack_frame * stack_frame = cursor->stack + cursor->stack_len - 1;
+
+    cursor->key_len = stack_frame->key_len;
+    cursor->key[cursor->key_len] = '\0';
+
+    return stack_frame->trie_no;
 }
 
+bool btrie_next(struct btrie_enum * cursor) {
+    state_descriptor dsc;
+    int id;
+    xptr_t p;
+
+    do {
+        struct btrie_enum_stack_frame * stack_frame = cursor->stack + cursor->stack_len - 1;
+        p = stack_frame->p;
+        id = ++(stack_frame->trie_no);
+        READ_PAGE(p);
+        read_state((char *) XADDR(p), &dsc);
+        if (dsc.edge_count > id) {
+            state_descriptor ndsc;
+            char s = dsc.edges[id];
+            int d = dsc.len + dsc.pointers[id];
+            p += d;
+            read_state((char *) XADDR(p), &ndsc);
+            if ((ndsc.flags & STATE_LONG_JUMP) > 0) {
+                p = st_remove_indirection(ndsc.long_jump);
+                READ_PAGE(p);
+                read_state((char *) XADDR(p), &ndsc);
+            }
+            btrie_push_stack(s, &ndsc, p, -1, cursor);
+
+            if ((ndsc.flags & STATE_FINAL) > 0) {
+                return true;
+            }
+        } else {
+            btrie_pop_stack(cursor);
+        }
+    } while (cursor->stack_len > 0);
+
+    return false;
+}
+*/
+
 inline
-static int find_state_edge(char k, struct state_descriptor * d) {
+static int find_state_edge(char k, struct state_descriptor * d, int * result) {
     if ((d->flags & STATE_HAS_EDGES) == 0) { return -1; }
 
     int i;
@@ -131,12 +181,13 @@ static int find_state_edge(char k, struct state_descriptor * d) {
     i = bisearch_char(k, d->edges, d->edge_count);
     if ((i < 0) || (i >= d->edge_count) || (d->edges[i] != k)) { return -1; }
 
+    *result = i;
     sptr_t a = d->pointers[i];
     if (a == NO_EDGE) { return -1; }
     return a;
 }
 
-static char * st_find_next_state(char * p, char ** k, size_t * klen, struct st_state_ext * state, int * prefix_break_position)
+static char * st_find_next_state(char * p, char ** k, size_t * klen, struct st_state_ext * state, int * prefix_break_position, int * move_index)
 {
     char * s;
     char * prefix;
@@ -159,7 +210,7 @@ static char * st_find_next_state(char * p, char ** k, size_t * klen, struct st_s
     s = state->dsc.p + state->dsc.len;
 
     if ((i == state->dsc.prefix_len) && (klen > 0)) {
-        int offset = find_state_edge(**k, &(state->dsc));
+        int offset = find_state_edge(**k, &(state->dsc), move_index);
         if (offset == -1) {
             return NULL;
         } else {
@@ -199,8 +250,10 @@ struct st_path * st_find_state_path(const struct btrie * tree, const char * key,
 
     while (current_state_ptr != XNULL) {
         current_state.ptr = current_state_ptr;
-        next_state_ptr = st_find_next_state((char *) XADDR(current_state_ptr), &c, &clen, &current_state, &prefix_break_position);
+        int next_edge_index = -1;
+        next_state_ptr = st_find_next_state((char *) XADDR(current_state_ptr), &c, &clen, &current_state, &prefix_break_position, &next_edge_index);
         st_sp_add(result, &current_state, &page_header);
+        result->states[result->state_count-1].from_here = next_edge_index;
 
         if (next_state_ptr == NULL) {
             result->prefix_break_position = prefix_break_position;

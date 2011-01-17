@@ -7,11 +7,11 @@
 
 #include "tr/executor/xqops/PPIndexScan.h"
 #include "tr/locks/locks.h"
-#include "tr/idx/indexes.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "tr/idx/indecies.h"
 
 
 PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
@@ -25,6 +25,7 @@ PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
                                                        child2(_child2_),
                                                        isc(_isc_)
 {
+    collation = cxt->get_static_context()->get_default_collation();
 }
 
 PPIndexScan::~PPIndexScan()
@@ -48,18 +49,21 @@ PPIndexScan::~PPIndexScan()
 
 void PPIndexScan::do_open ()
 {
+    right_bound_exclusive = false;
+    left_bound_exclusive = false;
+
     switch (isc)
     {
-        case isc_eq		: next_fun = &PPIndexScan::next_eq; break;
-        case isc_lt		:
-        case isc_le		: next_fun = &PPIndexScan::next_lt_le; break;
-        case isc_gt		:
-        case isc_ge		: next_fun = &PPIndexScan::next_gt_ge; break;
-        case isc_gt_lt	:
-        case isc_gt_le	:
-        case isc_ge_lt	:
-        case isc_ge_le	: next_fun = &PPIndexScan::next_between; break;
-        default			: throw USER_EXCEPTION2(SE1003, "Unexpected index scan condition (internal error, please report a bug)");
+        case isc_eq     : next_fun = &PPIndexScan::next_eq; break;
+        case isc_lt     : right_bound_exclusive = true;
+        case isc_le     : next_fun = &PPIndexScan::next_lt_le; break;
+        case isc_gt     : left_bound_exclusive = true;
+        case isc_ge     : next_fun = &PPIndexScan::next_eq; break;
+        case isc_gt_lt  :
+        case isc_gt_le  : right_bound_exclusive = true;
+        case isc_ge_lt  : if (isc != isc_gt_le) { left_bound_exclusive = true; }
+        case isc_ge_le  : next_fun = &PPIndexScan::next_between; break;
+        default         : throw USER_EXCEPTION2(SE1003, "Unexpected index scan condition (internal error, please report a bug)");
     }
 
     if (index_name.op) index_name.op->open();
@@ -99,7 +103,7 @@ void PPIndexScan::do_close()
                                     res = *(xptr*)(XADDR(res));
 
 
-void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_type idx_type)
+void get_casted_value(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_type idx_type)
 {
     if (child.op)
     {
@@ -120,141 +124,138 @@ void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_typ
 
 void PPIndexScan::initialize()
 {
-	U_ASSERT(first_time);
-	
-    tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "index scan");
-    char * index_name_string = tc.get_str_mem();
-	
+    U_ASSERT(first_time);
+
+    tuple_cell tc_name = get_name_from_PPOpIn(index_name, "index", "index scan");
+
     // Put lock on documents under index scan and check security for document
-    get_schema_node(find_db_entity_for_object(catobj_indicies, index_name_string), "Unknown entity passed to index scan");
+    get_schema_node(find_db_entity_for_object(catobj_indicies, tc_name.get_str_mem()), "Unknown entity passed to index scan");
 
     // we don't need to check auth privilege for using index, because
     // read access to index is allowed to everyone
 
-    // Find B-Tree root
-    btree = find_btree(index_name_string);
-    if (btree == XNULL) throw XQUERY_EXCEPTION2(SE1061, index_name_string);
+    index_cell_cptr idc(tc_name.get_str_mem());
+    if (!idc.found()) {
+        throw XQUERY_EXCEPTION2(SE1061, tc_name.get_str_mem());
+    }
 
-    idx_type = get_index_xmlscm_type(index_name_string);
-    if (idx_type == -1) throw XQUERY_EXCEPTION2(SE1061, index_name_string);
+    index = idc->get_backend();
+    idx_type = idc->get_keytype();
+}
+
+void PPIndexScan::do_next(tuple& t)
+{
+    (this->*next_fun)(t);
 }
 
 
 void PPIndexScan::next_eq(tuple &t)
 {
-    if (first_time)
-    {
-		initialize();
-		
-        obtain_tuple_cell(tc, child, idx_type);
+    if (first_time) {
+        tuple_cell current_key;
+        bool key_equal;
 
-        tuple_cell2bt_key(tc, key);
-        cursor = bt_find(btree, key);
+        initialize();
+
+        get_casted_value(left_bound, child, idx_type);
+        cursor = index->find(left_bound);
+        U_ASSERT(!cursor.isnull());
+
+        current_key = cursor->getKey();
+
+        key_equal = op_eq(current_key, left_bound, collation).is_boolean_true();
+
+        if ((isc != isc_eq) && left_bound_exclusive && key_equal) {
+            cursor->nextKey();
+        }
+
+        if (current_key.is_eos() || ((isc == isc_eq) && !key_equal)) {
+            t.set_eos();
+            return;
+        }
 
         first_time = false;
     }
 
-    res = cursor.bt_next_obj();
+    t.copy(cursor->getValue());
 
-    if (res == XNULL) SET_EOS_AND_EXIT
-
-    DEREF_AND_SET
+    if (t.is_eos()) {
+        first_time = true;
+        cursor.clear();
+    } else if (isc == isc_eq) {
+        cursor->nextValue();
+    } else {
+        cursor->nextPair();
+    }
 }
 
 void PPIndexScan::next_lt_le(tuple &t)
 {
-    if (first_time)
-    {
-		initialize();
-		
-        obtain_tuple_cell(tc, child, idx_type);
+    bool is_left_bound = false;
+    tuple_cell current_key;
 
-        tuple_cell2bt_key(tc, key);
-        cursor = bt_lm(btree);
+    if (first_time) {
+        initialize();
 
-        //if (!cursor.bt_next_key()) SET_EOS_AND_EXIT
-
-        if (!(isc == isc_lt ? cursor.get_key() <  key
-                            : cursor.get_key() <= key)) SET_EOS_AND_EXIT
-        else first_time = false;
-    }
-
-    while (true)
-    {
-        res = cursor.bt_next_obj();
-        if (res != XNULL) break;
-
-        if (cursor.bt_next_key())
-            if (isc == isc_lt ? cursor.get_key() <  key
-                              : cursor.get_key() <= key) continue;
+        get_casted_value(right_bound, child, idx_type);
+        cursor = index->begin();
+        U_ASSERT(!cursor.isnull());
         
-        SET_EOS_AND_EXIT
-    }
-
-    DEREF_AND_SET
-}
-
-void PPIndexScan::next_gt_ge(tuple &t)
-{
-    if (first_time)
-    {
-		initialize();
-
-		obtain_tuple_cell(tc, child, idx_type);
-
-        tuple_cell2bt_key(tc, key);
-        cursor = isc == isc_gt ? bt_find_gt(btree, key)
-                               : bt_find_ge(btree, key);
-
         first_time = false;
     }
 
-    while (true)
-    {
-        res = cursor.bt_next_obj();
-        if (res != XNULL) break;
+    current_key = cursor->getKey();
 
-        if (!cursor.bt_next_key()) SET_EOS_AND_EXIT
+    if (current_key.is_eos() || !(right_bound_exclusive ?
+          op_lt(current_key, right_bound, collation).is_boolean_true() :
+          op_le(current_key, right_bound, collation).is_boolean_true())) {
+        t.set_eos();
+        first_time = true;
+        cursor.clear();
+    } else {
+        t.copy(cursor->getValue());
+        cursor->nextPair();
     }
-
-    DEREF_AND_SET
 }
 
 void PPIndexScan::next_between(tuple &t)
 {
-    if (first_time)
-    {
-		initialize();
+    tuple_cell current_key;
+    if (first_time) {
+        bool key_equal;
 
-		obtain_tuple_cell(tc, child, idx_type);
-        obtain_tuple_cell(tc2, child2, idx_type);
+        initialize();
 
-        tuple_cell2bt_key(tc, key);
-        tuple_cell2bt_key(tc2, key2);
-        cursor = (isc == isc_gt_lt || isc == isc_gt_le) ? bt_find_gt(btree, key)
-                                                        : bt_find_ge(btree, key);
+        get_casted_value(left_bound, child, idx_type);
+        cursor = index->find(left_bound);
+        U_ASSERT(!cursor.isnull());
 
-        if (cursor.is_null()) SET_EOS_AND_EXIT
+        current_key = cursor->getKey();
 
-        if (!((isc == isc_gt_lt || isc == isc_ge_lt) ? cursor.get_key() <  key2
-                                                     : cursor.get_key() <= key2)) SET_EOS_AND_EXIT
+        if (left_bound_exclusive && op_eq(current_key, left_bound, collation).is_boolean_true()) {
+            cursor->nextKey();
+        }
+
+        if (current_key.is_eos()) {
+            t.set_eos();
+            return;
+        }
 
         first_time = false;
     }
 
-    while (true)
-    {
-        res = cursor.bt_next_obj();
-        if (res != XNULL) break;
+    current_key = cursor->getKey();
 
-        if (cursor.bt_next_key())
-            if ((isc == isc_gt_lt || isc == isc_ge_lt) ? cursor.get_key() <  key2
-                                                       : cursor.get_key() <= key2) continue;
-        
-        SET_EOS_AND_EXIT
+    if (current_key.is_eos() || !(right_bound_exclusive ?
+          op_lt(current_key, right_bound, collation).is_boolean_true() :
+          op_le(current_key, right_bound, collation).is_boolean_true())) {
+        t.set_eos();
+        first_time = true;
+        cursor.clear();
+    } else {
+        t.copy(current_key);
+        cursor->nextPair();
     }
-
-    DEREF_AND_SET
 }
 
 PPIterator* PPIndexScan::do_copy(dynamic_context *_cxt_)

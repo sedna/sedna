@@ -56,7 +56,7 @@ struct ftc_word_data
 };
 
 //FIXME: fix .h files dependencies
-#include "tr/idx/btree/btree.h"
+#include "tr/btree/btree.h"
 
 
 struct ftc_word_occur;

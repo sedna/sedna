@@ -15,7 +15,7 @@
 #include "tr/mo/mo.h"
 #include "tr/cat/catenum.h"
 #include "tr/locks/locks.h"
-#include "tr/idx/index_data.h"
+#include "tr/idx/indecies.h"
 #include "tr/crmutils/debug_utils.h"
 #include "tr/structures/nodeutils.h"
 
@@ -137,16 +137,16 @@ get_schema(xptr node, const char* title)
     {
         mdc = it.get_object();
 
-        if (title == NULL || strcmpex(title, mdc->name)==0)
+        if (title == NULL || strcmpex(title, mdc->get_name())==0)
         {
             left = insert_element_i(left, /* possibly XNULL */
                                     XNULL,
                                     (XNULL  == left) ? parent     : XNULL,
-                                    (mdc->is_doc)    ? "document" : "collection",
+                                    (mdc->is_document()) ? "document" : "collection",
                                     xs_untyped,
                                     NULL_XMLNS);
-            xptr cd = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic, mdc->name, strlen(mdc->name), NULL_XMLNS);
-            fill_schema(mdc->snode, left, cd);
+            xptr cd = insert_attribute_i(XNULL, XNULL, left, "name", xs_untypedAtomic, mdc->get_name(), strlen(mdc->get_name()), NULL_XMLNS);
+            fill_schema(mdc->get_schema_node(), left, cd);
         }
     }
 }
@@ -254,6 +254,8 @@ get_indexes (xptr node,const char* /* title */)
     while (it.next())
     {
         ic = it.get_object();
+        index_descriptor_t dsc;
+        ic->get_index_descriptor(&dsc);
 
         if (left==XNULL)
         {
@@ -262,16 +264,16 @@ get_indexes (xptr node,const char* /* title */)
         else
             left=insert_element_i(left,XNULL,XNULL,"index",xs_untyped,NULL_XMLNS);
 
-        xptr node = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,ic->index_title,strlen(ic->index_title),NULL_XMLNS);
-        node      = insert_attribute_i(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",(ic->is_doc)?8:10,NULL_XMLNS);
-        node      = insert_attribute_i(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,strlen(ic->doc_name),NULL_XMLNS);
+        xptr node = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,dsc.index_title,strlen(dsc.index_title),NULL_XMLNS);
+//        node      = insert_attribute_i(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",(ic->is_doc)?8:10,NULL_XMLNS);
+//        node      = insert_attribute_i(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,strlen(ic->doc_name),NULL_XMLNS);
 
-        print_type_name(ic->keytype,buf);
+        print_type_name(dsc.keytype, buf);
         node=insert_attribute_i(node,XNULL,XNULL,"as_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
-        std::string str = ic->object->to_string();
+        std::string str = dsc.object->to_string();
         node=insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(), str.length(),NULL_XMLNS);
-        str = ic->key->to_string();
+        str = dsc.key->to_string();
         node=insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     }
 }
@@ -424,16 +426,16 @@ get_documents (xptr node,const char* /* title */)
 
         if (left==XNULL)
         {
-            left=insert_element_i(XNULL,XNULL,parent,(mdc->is_doc)?"document":"collection",xs_untyped,NULL_XMLNS);
+            left=insert_element_i(XNULL,XNULL,parent,(mdc->is_document())?"document":"collection",xs_untyped,NULL_XMLNS);
         }
         else
-            left=insert_element_i(left,XNULL,XNULL,(mdc->is_doc)?"document":"collection",xs_untyped,NULL_XMLNS);
+            left=insert_element_i(left,XNULL,XNULL,(mdc->is_document())?"document":"collection",xs_untyped,NULL_XMLNS);
 
-        insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,mdc->name,strlen(mdc->name),NULL_XMLNS);
+        insert_attribute_i(XNULL, XNULL, left, "name", xs_untypedAtomic, mdc->get_name(), strlen(mdc->get_name()), NULL_XMLNS);
 
-        if (!mdc->is_doc)
+        if (!mdc->is_document())
         {
-            col_schema_node_cptr coll = mdc->snode;
+            col_schema_node_cptr coll = mdc->get_schema_node();
             xptr d_left = XNULL;
             bt_key key;
             bt_cursor cursor = bt_lm(coll->metadata);
@@ -465,8 +467,7 @@ get_collections(xptr node,const char* /* title */)
     {
         mdc = it.get_object();
 
-        if (!mdc->is_doc)
-        {
+        if (!mdc->is_document()) {
             if (left==XNULL)
             {
                 left=insert_element_i(XNULL,XNULL,parent,"collection",xs_untyped,NULL_XMLNS);
@@ -474,7 +475,7 @@ get_collections(xptr node,const char* /* title */)
             else
                 left=insert_element_i(left,XNULL,XNULL,"collection",xs_untyped,NULL_XMLNS);
 
-            insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,mdc->name,strlen(mdc->name),NULL_XMLNS);
+            insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,mdc->get_name(),strlen(mdc->get_name()),NULL_XMLNS);
         }
     }
 }

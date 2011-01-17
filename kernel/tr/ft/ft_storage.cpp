@@ -4,7 +4,7 @@
  */
 
 #include "tr/ft/ft_storage.h"
-#include "tr/idx/btree/btree.h"
+#include "tr/btree/btree.h"
 
 void fts_create(struct FtsData *data)
 {

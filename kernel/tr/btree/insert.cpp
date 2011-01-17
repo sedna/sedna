@@ -5,11 +5,7 @@
 
 #include "common/sedna.h"
 
-#include "tr/idx/btree/btintern.h"
-#include "tr/idx/btree/btpage.h"
-#include "tr/idx/btree/btstruct.h"
-#include "tr/idx/btree/buff.h"
-#include "tr/vmm/vmm.h"
+#include "tr/btree/btintern.h"
 
 
 /* temporary buffer used for performing page insert operations */
@@ -741,5 +737,4 @@ bool bt_page_fit(char* pg, shft size)
     template xptr bt_internal_insert_tmpl<t>(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &new_key, const t &obj, shft obj_idx, bt_path &path, bool with_bt, xptr new_big_ptr); \
 	template xptr bt_nleaf_insert_tmpl<t>(xptr &root, const bt_key &new_key, xptr new_big_ptr, bt_path &path);
 
-#include "tr/idx/btree/make_impl.h"
-
+#include "tr/btree/make_impl.h"
