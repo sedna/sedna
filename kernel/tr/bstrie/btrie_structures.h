@@ -86,8 +86,11 @@ struct st_tmp_trie {
     sptr_t len;
     sptr_t offset;
 
+  /* These fields are for the part that goes to the child block */
     char * buf2;
     sptr_t len2;
+    xptr_t old_state;
+    int hint_edge;
 
     xptr_t * buf2ptr;
 };

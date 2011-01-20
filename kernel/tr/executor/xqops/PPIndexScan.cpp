@@ -13,6 +13,7 @@
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/idx/indecies.h"
 
+#include "tr/bstrie/sednabtrie.h"
 
 PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
                          operation_info _info_,
@@ -140,6 +141,7 @@ void PPIndexScan::initialize()
     }
 
     index = idc->get_backend();
+    btrie_collect_stat(index->getEntryPoint());
     idx_type = idc->get_keytype();
 }
 

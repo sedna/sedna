@@ -4,6 +4,8 @@
 #include <string.h>
 #include "btrie.h"
 
+void btrie_collect_stat(xptr entry_point);
+
 inline
 static btrie_record_t sbtrie_find_str(const xptr tree, const char * key) {
     btrie_t btrie = btrie_open(tree);

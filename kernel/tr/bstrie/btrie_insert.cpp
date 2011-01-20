@@ -70,14 +70,9 @@ int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_s
     int offset = new_state->len - state_len;
     char * data_end = (char *) XADDR(pghdr->page) + pghdr->data_end;
 
+    /* Splitted part (goes to another block). Block is selected beetween existent ones by choosing the least loaded */
     if (new_state->buf2 != NULL) {
-        struct st_page_header newpg;
-
-        st_markup_page(&newpg, 1, true);
-        memcpy((char *) XADDR(newpg.page) + newpg.trie_offset, new_state->buf2, new_state->len2);
-        newpg.data_end = newpg.trie_offset + new_state->len2;
-        * (new_state->buf2ptr) = newpg.page + ((char *) newpg.tries - (char *) XADDR(newpg.page));
-        st_write_page_header(&newpg);
+        * (new_state->buf2ptr) = st_write_split_state(new_state);
     }
 
     WRITE_PAGE(pghdr->page);
@@ -241,7 +236,9 @@ struct st_tmp_trie * st_state_delete_prepare(char * state)
 /** Break the given <state> into new ones (two or three). If state is null, create it.
   */
 void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_pos, int key_pos,
-        struct st_key_object_pair * key_object_pair, bool split_state)
+        struct st_key_object_pair * key_object_pair,
+        bool split_state  /* this means we are in pure header page, and newly created node must as far as possible be located in child block */
+     )
 {
     int key_len = key_object_pair->key_length - key_pos;
     int prefix_len;
@@ -295,6 +292,7 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
                     offset = write_lj(buf, &(result->buf2ptr));
                     write_state(result->buf2, &key_state);
                     result->len2 = key_state.len;
+                    result->hint_edge = prefix_pos-1;
                 } else {
                     write_state(buf, &key_state);
                     offset = key_state.len;
@@ -357,6 +355,8 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
                 if (new_state.pointers[i] == NO_EDGE) { continue; }
                 if (new_state.edges[i] != new_key) {
                     new_state.pointers[i] += offset;
+                } else if (split_state) {
+                    result->hint_edge = i-1;
                 }
             }
         } else {

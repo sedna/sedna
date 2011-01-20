@@ -33,6 +33,8 @@ struct st_path * st_find_state_path(const struct btrie * tree, const char * key,
 
 void st_sp_free(struct st_path * state_path);
 
+xptr_t st_write_split_state(struct st_tmp_trie * new_state);
+
 /** Page split */
 xptr_t st_split(struct btrie tree, struct st_path * sp, int cpage);
 
@@ -54,6 +56,8 @@ void st_new_state_free(struct st_tmp_trie * state);
 void __debug_walkthrough_branch(char * buffer, char * prefix_append, char * state);
 
 
+#include <stdio.h>
 
+extern FILE * __bt_debug;
 
 #endif /* _BTRIE_INTERNAL_H */
