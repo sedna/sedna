@@ -10,10 +10,13 @@
 
 int btrie_last_error;
 
+#include <stdio.h>
+
 btrie_t btrie_open(const xptr_t root)
 {
     btrie_t result = (btrie_t) malloc(sizeof(struct btrie));
     result->root_page = (xptr_t) root;
+    __bt_debug = fopen("/tmp/bt.debug", "at");
     return result;
 }
 
@@ -24,6 +27,7 @@ xptr_t btrie_get_root(btrie_t bt)
 
 void btrie_close(btrie_t bt)
 {
+    fclose(__bt_debug);
     free(bt);
 }
 
@@ -100,6 +104,7 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
                 return btrie_insert(tree, key, key_length, obj, obj_length, replace);
             } else {
                 WRITE_PAGE(pg);
+                newstate.old_state = states->last_state->p;
                 st_read_page_header(pg, &pghdr);
                 st_new_state_write(&pghdr, &newstate, (char *) XADDR(pg) + state_offset, dsc.len);
             }

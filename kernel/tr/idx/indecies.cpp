@@ -435,9 +435,9 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     ss->lazy_sort();
 
     idx::KeyValueMultimap * index_backend = idc->get_backend();
-    index_backend->setSortedInsertionHint(true);
+    index_backend->setSortedInsertionHint(false);
 
-   vmm_init_block_counter();
+    vmm_init_block_counter();
 
     while (true)
     {

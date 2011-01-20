@@ -65,9 +65,9 @@ typedef unsigned short int shft;
 #define PAGE_REVERSE_BIT_MASK                   (uintptr_t)(PAGE_SIZE-1)
 #define PAGE_BIT_MASK                           (~PAGE_REVERSE_BIT_MASK)
 
-#define VMM_REGION_SEARCH_MAX_SIZE                      ((uint32_t)0x79C00000)
+/* For those, who look for: VMM_REGION_* is now in vmm.cpp */
+
 #define VMM_REGION_MIN_SIZE                             ((uint32_t)0x4000000)
-#define VMM_REGION_MAX_SIZE                             ((uint32_t)0x40000000)
 
 #define TR_AUTHENTICATION_FLAG 1
 #define TR_AUTHORIZATION_FLAG  2

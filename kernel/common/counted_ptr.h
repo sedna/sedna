@@ -98,9 +98,12 @@ class counted_ptr {
 
   private:
     void dispose() {
-        if (item && item->count == 0) {
-            if (item->ptr != NULL) { Deallocator::deallocate(item->ptr); }
-            delete item;
+        if (item != NULL) {
+            --(item->count);
+            if (item->count == 0) {
+                if (item->ptr != NULL) { Deallocator::deallocate(item->ptr); }
+                delete item;
+            }
         }
     }
 };
