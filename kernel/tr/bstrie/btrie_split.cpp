@@ -279,6 +279,18 @@ sptr_t find_parent_state(struct st_path * path, xptr_t page, xptr_t * parent_sta
     return 0;
 }
 
+
+void st_split_page (xptr_t page);
+
+void st_shake_off_trie (xptr_t page, int trie);
+
+void st_insert_state (xptr_t page, int trie, struct trie_segment_t state);
+
+void st_promote_root (xptr_t page, int trie, xptr_t parent_page, int parent_trie);
+
+
+
+
 extern
 void btrie_collect_stat(xptr entry_point);
 
