@@ -19,7 +19,7 @@ void llLogicalRecover();
 // 		trid - transaction identifier
 void llLogRollbackTrn(transaction_id trid);
 
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 // this function performs remapping on ft-indexes (needed since we use redo-remapping)
 void rcvRecoverFtIndexes();
 #endif

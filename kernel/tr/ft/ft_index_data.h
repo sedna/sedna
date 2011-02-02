@@ -133,11 +133,12 @@ struct ft_index_cell_object : public catalog_object
 	xptr put_buf_to_pstr(op_str_buf& tbuf);*/
 };
 
+//if rcv is true - dtSearch indexes are created in heap(catalog) only.
 ft_index_cell_xptr create_ft_index(
         PathExpr *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
-        ft_index_template_t* _templ, bool just_heap, const char * options
+        ft_index_template_t* _templ, bool rcv, const char * options
     );
 
 void delete_ft_index (const char *index_title, bool just_heap=false);

@@ -190,7 +190,7 @@ ft_index_cell_xptr create_ft_index(
         PathExpr *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
-        ft_index_template_t* _templ, bool just_heap, const char *options
+        ft_index_template_t* _templ, bool rcv, const char *options
     )
 {
    // I. Create and fill new index cell
@@ -236,7 +236,7 @@ ft_index_cell_xptr create_ft_index(
         xptr blk;
         sobj[i].modify()->ft_index_list->add(idc.ptr()); // just_heap modified because this must be recovered (AK)
         RECOVERY_CRASH;
-        if (!just_heap)
+		if (!rcv || idc->impl != ft_ind_dtsearch)
         {
             blk = getNonemptyBlockLookFore(sobj[i]->bblk);
             if (blk!=XNULL)
@@ -249,7 +249,7 @@ ft_index_cell_xptr create_ft_index(
 
     up_concurrent_micro_ops_number();
 
-    if (!just_heap) // moved here because ph ft_index info must be recovered fully (AK)
+    if (!rcv || idc->impl != ft_ind_dtsearch) // moved here because ph ft_index info must be recovered fully (AK)
     {
         // ft_index recovery should take the responsibility here
 		switch (idc->impl)

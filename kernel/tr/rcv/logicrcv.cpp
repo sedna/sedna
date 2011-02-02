@@ -941,7 +941,7 @@ void llLogicalRecover()
 	llDestroyRedoList(rcv_list);
 }
 
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_DTSEARCH
 // this function performs remapping on ft-indexes (needed since we use redo-remapping)
 void rcvRecoverFtIndexes()
 {
@@ -963,8 +963,12 @@ void rcvRecoverFtIndexes()
 
         while (sft != NULL)
         {
-            update_insert_sequence(*it, ft_index_cell_cptr(sft->object));
-            update_delete_sequence(it.getKey(), ft_index_cell_cptr(sft->object));
+			if (sft->object.get_object()->impl == ft_ind_dtsearch)
+			{
+				//FIXME: this may fail if 2 different nodes exchange xptr's
+				update_insert_sequence(*it, ft_index_cell_cptr(sft->object));
+				update_delete_sequence(it.getKey(), ft_index_cell_cptr(sft->object));
+			}
             sft = sft->next;
         }
     }
