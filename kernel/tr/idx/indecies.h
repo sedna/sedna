@@ -68,7 +68,7 @@ struct index_cell_object : public catalog_object {
     void delete_from_index(xptr key_node, xptr object_indir);
 
     inline
-    index_cell_object() {};
+    index_cell_object() : backend(NULL) {};
 
     index_cell_object(index_descriptor_t * index_dsc);
 
