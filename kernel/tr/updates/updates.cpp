@@ -40,6 +40,7 @@ void clear_ft_sequences()
 }
 void execute_modifications()
 {
+	//XXX: what indirectionGetRollbackMode() returns when called from rcvRecoverFtIndexes?
     if (indirectionGetRollbackMode()) return;
     std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.begin();
     while (it!=ft_updates.end())

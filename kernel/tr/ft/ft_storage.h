@@ -28,6 +28,19 @@ class FtsUpdater
 private:
 	FtsData *fts_data;
 	FtPartitionBuilder pb;
+	bool empty;
+	void before_upd()
+	{
+		if (empty)
+		{
+			empty = false;
+			if (fts_data->doc_stats == XNULL)
+			{
+				fts_data->doc_stats = bt_create(xs_integer);
+			}
+			pb.create_new();
+		}
+	}
 public:
 	//updates are performed as such:
 	// 1. begin_update is called
@@ -41,6 +54,7 @@ public:
 
 	void del_document(const xptr acc)
 	{
+		before_upd();
 		pb.del_doc(acc);
 
 		bt_key bkey;
@@ -55,6 +69,7 @@ public:
 	}
 	void add_document(const xptr acc, int doc_len)
 	{
+		before_upd();
 		bt_key bkey;
 		bkey.setnew((int64_t)FT_XPTR_TO_UINT(acc));
 
@@ -70,6 +85,7 @@ public:
 	}
 	void add_word_occur(const char *word, const xptr acc, const int word_ind)
 	{
+		before_upd();
 		pb.add_word_occur(word, acc, word_ind+1);
 	}
 	/*

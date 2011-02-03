@@ -33,15 +33,21 @@
 %}
 
     /* we don't care that some non-ascii chars aren't letters here, since all special characters (incl. whitespace) are ascii for now */
-WordChar [a-zA-Z_\x80-\xFF]
+WordChar [0-9a-zA-Z_\x80-\xFF]
 Word {WordChar}+
 WS [ \t\n\r]+
+Number [0-9]+
 
 %%
 
-{Word}   { return ftq_token::WORD; }
-{WS}+    { /* skip */ }
-"\""     { return ftq_token::QUOT; }
-"'"      { return ftq_token::APOS; }
+"CONTAINS" { return ftq_token::CONTAINS; }
+"\""       { return ftq_token::QUOT; }
+"'"        { return ftq_token::APOS; }
+":"        { return ftq_token::COLON; }
+"("        { return ftq_token::BR_OPEN; }
+")"        { return ftq_token::BR_CLOSE; }
+{Number}   { return ftq_token::NUMBER; }
+{Word}     { return ftq_token::WORD; }
+{WS}+      { /* skip */ }
 
-.|\n     { return ftq_token::_ERROR_; }
+.|\n       { return ftq_token::_ERROR_; }

@@ -58,6 +58,111 @@ void FtQueryTerm::get_next_occur(ft_uint_t *acc, int *word_ind)
 	ftc_scan.get_next_occur(acc, word_ind);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+FtQueryTermInElement::~FtQueryTermInElement()
+{
+}
+
+void FtQueryTermInElement::do_open()
+{
+	this->score_count = 1;
+	ftc_scan.scan_word(term_buf);
+	ftc_scan_opentag.scan_word(opentag_buf);
+	ftc_scan_closetag.scan_word(closetag_buf);
+}
+void FtQueryTermInElement::init(ft_float *_scores)
+{
+	this->scores = _scores;
+
+	opentag_acc_i = FT_UINT_NULL;
+	opentag_ind = 0;
+	ftc_scan_opentag.get_next_occur(&opentag_acc_i, &opentag_ind);
+
+	closetag_acc_i = opentag_acc_i;
+	closetag_ind = opentag_ind;
+	ftc_scan_closetag.get_next_occur(&closetag_acc_i, &closetag_ind);
+
+	U_ASSERT(closetag_acc_i == opentag_acc_i); //FIXME: all tags must be closed now
+
+	next_acc_i = FT_UINT_NULL; //needed for get_next_result()
+}
+uint64_t FtQueryTermInElement::get_next_result()
+{
+	if (next_acc_i == FT_UINT_NULL)
+		this->get_next_occur(&next_acc_i, &next_ind);
+	if (next_acc_i == FT_UINT_NULL)
+		return FT_UINT_NULL;
+
+	ft_uint_t res = next_acc_i;
+	int noccurs = 0;
+	while (next_acc_i == res)
+	{
+		noccurs++;
+		this->get_next_occur(&next_acc_i, &next_ind);
+	}
+
+	this->scores[0] = sqrtf(noccurs) * doc_length_norm(ftc_scan.get_doc_len(res));
+	this->doc_freq++;
+
+	return res;
+}
+void FtQueryTermInElement::close()
+{
+	//count remaining terms to update doc_freq for scoring
+	while (this->get_next_result() != FT_UINT_NULL) ;
+}
+ft_float FtQueryTermInElement::ft_get_score(ft_float *scores)
+{
+	int naccs = ftc_get_doc_count(ftc_scan.get_ftc_idx());
+	ft_float idf = 1+logf(naccs / (this->doc_freq + 1));
+	ft_float tf_and_doc_norm = scores[0];
+	return tf_and_doc_norm * idf * idf;
+}
+void FtQueryTermInElement::get_next_occur(ft_uint_t *acc, int *word_ind)
+{
+	if (opentag_acc_i == FT_UINT_NULL)
+	{
+		*acc = FT_UINT_NULL;
+		return;
+	}
+	ftc_scan.get_next_occur(acc, word_ind);
+
+	while (true)
+	{
+		if (*acc == FT_UINT_NULL)
+			return;
+
+		//FIXME: assumes (opentag_acc_i == closetag_acc_i)
+		if (*acc == opentag_acc_i && *word_ind >= opentag_ind && *word_ind < closetag_ind)
+			return;
+
+		if (*acc < opentag_acc_i || (*acc == opentag_acc_i && *word_ind < opentag_ind))
+		{
+			*acc = opentag_acc_i;
+			*word_ind = opentag_ind;
+			ftc_scan.get_next_occur(acc, word_ind);
+
+			continue;
+		}
+
+		U_ASSERT(*acc > closetag_acc_i || (*acc == closetag_acc_i && *word_ind >= closetag_ind));
+
+		ftc_scan_opentag.get_next_occur(&opentag_acc_i, &opentag_ind);
+		closetag_acc_i = opentag_acc_i;
+		closetag_ind = opentag_ind;
+		ftc_scan_closetag.get_next_occur(&closetag_acc_i, &closetag_ind);
+
+		U_ASSERT(closetag_acc_i == opentag_acc_i); //FIXME: all tags must be closed now
+		if (opentag_acc_i == FT_UINT_NULL)
+		{
+			*acc = FT_UINT_NULL;
+			return;
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 
 FtQueryAnd::FtQueryAnd(ftc_index_t idx, int _nops) : ftc_idx(idx), nops(_nops)
 {
@@ -159,7 +264,7 @@ ft_float FtQueryAnd::ft_get_score(ft_float *scores)
 FtQueryPhrase::FtQueryPhrase(int _nops) : nops(_nops)
 {
 	U_ASSERT(nops > 1);
-	term_ops = (FtQueryTerm **)malloc(nops * sizeof(FtQueryTerm*));
+	term_ops = (FtQueryTermBase **)malloc(nops * sizeof(FtQueryTermBase*));
 	op_results = (uint64_t *)malloc(nops * sizeof(uint64_t));
 	op_word_inds = (int *)malloc(nops * sizeof(int));
 }
@@ -167,9 +272,11 @@ FtQueryPhrase::~FtQueryPhrase()
 {
 	for (int i = 0; i < nops; i++)
 		delete term_ops[i];
-	delete term_ops;
+	free(term_ops);
+	free(op_results);
+	free(op_word_inds);
 }
-void FtQueryPhrase::set_term(int op_idx, FtQueryTerm *t)
+void FtQueryPhrase::set_term(int op_idx, FtQueryTermBase *t)
 {
 	term_ops[op_idx] = t;
 }

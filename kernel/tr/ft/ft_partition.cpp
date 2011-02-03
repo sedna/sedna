@@ -255,11 +255,11 @@ bool FtPartitionScanner::find_smallest_word()
 	for (int i = 0; i < n; i++)
 		if (!readers[i].flag_eos() && (minw == -1 || strncmp(readers[i].cur_word, readers[minw].cur_word, FTP_MAX_WORD_LENGTH) < 0))
 			minw = i;
+	ncurw = 0;
 	if (minw == -1)
 		return false;
 
 	//init curw flags and ncurw
-	ncurw = 0;
 	for (int i = 0; i < n; i++)
 	{
 		if (!readers[i].flag_eos() && !strncmp(readers[i].cur_word, readers[minw].cur_word, FTP_MAX_WORD_LENGTH))

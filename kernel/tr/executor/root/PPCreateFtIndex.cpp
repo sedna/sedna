@@ -134,7 +134,9 @@ void PPCreateFtIndex::do_open()
 {
     cxt->global_variables_open();
     index_name.op->open();
-	if (cust_rules.op)
+	if (options.op != NULL)
+		options.op->open();
+	if (cust_rules.op != NULL)
 		cust_rules.op->open();
     root.open();
 }
@@ -142,6 +144,8 @@ void PPCreateFtIndex::do_open()
 void PPCreateFtIndex::do_close()
 {
     index_name.op->close();
+	if (options.op != NULL)
+		options.op->close();
 	if (cust_rules.op)
 		cust_rules.op->close();
     root.close();
@@ -155,7 +159,9 @@ void PPCreateFtIndex::do_accept(PPVisitor &v)
     index_name.op->accept(v);
     if(root.get_operation().op != NULL)
         root.get_operation().op->accept(v);
-    if (cust_rules.op)
+    if (options.op != NULL)
+		options.op->accept(v);
+    if (cust_rules.op != NULL)
 		cust_rules.op->accept(v);
     v.pop();
 }

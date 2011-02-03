@@ -24,6 +24,16 @@ typedef uint64_t ft_uint_t;
 //words with length more than this are truncated
 #define FT_MAX_WORD_LENGTH 150
 
+/*
+  types of words in the index:
+    word    - some word, index is the number of this word
+	tag*    - opening tag, index is the index of the word that is (or could be) right after this tag
+	tag/    - closing tag, index is the index of the word that is (or could be) right after this tag
+ */
+#define FT_TAG_OPEN_MARKER     '*'
+#define FT_TAG_CLOSE_MARKER    '/'
+
+
 typedef float ft_float;
 
 enum ft_index_type

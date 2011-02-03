@@ -54,12 +54,30 @@ static void p_start(void *state, const char *el, const char **attr)
 	//tags should break words
 	process_word(parse_data);
 
-	//TODO
+	U_ASSERT(parse_data->word_len == 0);
+	size_t len = strlen(el);
+	if (len > FT_MAX_WORD_LENGTH-1)
+		len = FT_MAX_WORD_LENGTH-1;
+	memcpy(parse_data->word_buf, el, len);
+	parse_data->word_buf[len] = FT_TAG_OPEN_MARKER;
+	parse_data->word_buf[len+1] = '\x0';
+	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
 }
 
 static void p_end(void *state, const char *el)
 {
-	//TODO
+	struct ft_parse_data *parse_data = (struct ft_parse_data *)state;
+	//tags should break words
+	process_word(parse_data);
+
+	U_ASSERT(parse_data->word_len == 0);
+	size_t len = strlen(el);
+	if (len > FT_MAX_WORD_LENGTH-1)
+		len = FT_MAX_WORD_LENGTH-1;
+	memcpy(parse_data->word_buf, el, len);
+	parse_data->word_buf[len] = FT_TAG_CLOSE_MARKER;
+	parse_data->word_buf[len+1] = '\x0';
+	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
 }
 
 //assumes that s contains full characters (i.e. multibyte chars are not splited between calls)
@@ -85,7 +103,8 @@ static void p_finish(void *state)
 {
 	struct ft_parse_data *parse_data = (struct ft_parse_data *)state;
 
-	//TODO: add last word
+	//it's actually impossible now, because we always index one node, so data should end with a close tag
+	process_word(parse_data);
 }
 
 
@@ -93,7 +112,8 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct Ft
 {
 	U_ASSERT(op == ft_insert || op == ft_delete);
 	//TODO: reuse parser&parse_data for parsing multiple documents (or don't use expat and reuse parse_data)
-	XML_Parser p = XML_ParserCreateNS(NULL, SEPARATOR);
+	//XML_Parser p = XML_ParserCreateNS(NULL, SEPARATOR);
+	XML_Parser p = XML_ParserCreate(NULL);
 	//FIXME: check exception & rollback
 	if (!p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser\n",true);
 
