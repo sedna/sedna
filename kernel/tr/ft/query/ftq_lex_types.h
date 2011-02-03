@@ -12,8 +12,13 @@ struct ftq_token
 	{
 		END = 0,
 		WORD = 258,
+		NUMBER,
 		QUOT,
 		APOS,
+		CONTAINS,
+		COLON,
+		BR_OPEN,
+		BR_CLOSE,
 		_ERROR_,
 	};
 };

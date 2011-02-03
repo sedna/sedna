@@ -8,23 +8,117 @@
 #include "tr/ft/query/ftq_lexer.h"
 #include "tr/strings/utf8.h"
 #include "tr/ft/ft_norm.h"
+#include "common/counted_ptr.h"
 
 #include <vector>
+#include <deque>
+
+class Token
+{
+public:
+	ftq_token_type type;
+	char *text;
+	int leng;
+
+	~Token()
+	{
+		delete[] text;
+	}
+};
+
+typedef counted_ptr<Token> token_ptr;
+
+class Scanner
+{
+private:
+	yyscan_t yyscanner;
+	std::deque<token_ptr> tokens;
+public:
+	Scanner() : tokens() {}
+
+	void init(str_cursor_reader *reader)
+	{
+		ftq_lex_init_extra(reader, &this->yyscanner);
+	}
+	void destroy()
+	{
+		ftq_lex_destroy(this->yyscanner);
+	}
+
+	void get_next()
+	{
+		Token *tok = new Token();
+
+		tok->type = (ftq_token_type)ftq_lex(this->yyscanner);
+		tok->leng = ftq_get_leng(this->yyscanner);
+		tok->text = new char[tok->leng+1];
+		memcpy(tok->text, ftq_get_text(this->yyscanner), tok->leng);
+		tok->text[tok->leng] = '\x0';
+
+		tokens.push_back(token_ptr(tok));
+	}
+
+	token_ptr peek()
+	{
+		if (tokens.size() < 1)
+			get_next();
+		return tokens.front();
+	}
+	token_ptr peekn(int ind)
+	{
+		while (tokens.size() < ind+1)
+			get_next();
+		return tokens[ind];
+	}
+
+	token_ptr next()
+	{
+		if (tokens.size() < 1)
+			get_next();
+		token_ptr tok = tokens.front();
+		tokens.pop_front();
+		return tok;
+	}
+};
 
 struct ft_parser_state
 {
-	yyscan_t scanner;
+	Scanner scanner;
+
 	ftc_index_t ftc_idx;
 	FtStemmer *stemmer;
 };
 
+FtQueryTermBase *create_term(ftc_index_t idx, const char *in_tag)
+{
+	if (in_tag == NULL)
+		return new FtQueryTerm(idx);
+
+	FtQueryTermInElement *q = new FtQueryTermInElement(idx);
+
+	int in_tag_len = strlen(in_tag);
+	if (in_tag_len >= FT_MAX_WORD_LENGTH)
+		in_tag_len = FT_MAX_WORD_LENGTH-1;
+
+	memcpy(q->opentag_buf, in_tag, in_tag_len);
+	q->opentag_buf[in_tag_len] = FT_TAG_OPEN_MARKER;
+	q->opentag_buf[in_tag_len+1] = '\x0';
+
+	memcpy(q->closetag_buf, in_tag, in_tag_len);
+	q->closetag_buf[in_tag_len] = FT_TAG_CLOSE_MARKER;
+	q->closetag_buf[in_tag_len+1] = '\x0';
+
+	return q;
+}
+
+
 //parse a WORD token from lexer into a set FtQueryTerm-s and append them to a vector
 template <typename T>
-static void ft_parse_term(struct ft_parser_state *ps, const char *tok_text, int tok_leng, std::vector<T*> *vec)
+static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector<T*> *vec, const char *in_tag)
 {
-	FtQueryTerm *q = new FtQueryTerm(ps->ftc_idx);
-	const char *p = tok_text;
-	int len = tok_leng, word_len = 0;
+	FtQueryTermBase *q = create_term(ps->ftc_idx, in_tag);
+	const char *p = tok->text;
+	int len = tok->leng, word_len = 0;
 	bool overfl = false;
 	int ch;
 	while (true)
@@ -51,7 +145,9 @@ static void ft_parse_term(struct ft_parser_state *ps, const char *tok_text, int 
 				if (ch == UTF8_EOF)
 					q = NULL;
 				else
-					q = new FtQueryTerm(ps->ftc_idx);
+					q = create_term(ps->ftc_idx, in_tag);
+				word_len = 0;
+				overfl = false;
 			}
 		}
 		if (ch == UTF8_EOF)
@@ -62,17 +158,19 @@ static void ft_parse_term(struct ft_parser_state *ps, const char *tok_text, int 
 		delete q;
 }
 
-FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok)
+FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, const char *in_tag)
 {
-	std::vector<FtQueryTerm *> terms;
+	std::vector<FtQueryTermBase *> terms;
 	while (true)
 	{
-		ftq_token_type tok = (ftq_token_type)ftq_lex(ps->scanner);
-		char *tok_text = ftq_get_text(ps->scanner);
-		int tok_leng = ftq_get_leng(ps->scanner);
+		token_ptr tok = ps->scanner.next();
+
+
+		if (tok->type == ftq_token::WORD || tok->type == ftq_token::NUMBER)
+			ft_parse_term(ps, tok, &terms, in_tag);
 
 		//we allow pharase to end abruptly
-		if (tok == start_tok || tok == ftq_token::END)
+		if (tok->type == start_tok || tok->type == ftq_token::END)
 		{
 			if (terms.size() == 0)
 				return NULL;
@@ -84,44 +182,63 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok)
 				q->set_term(i, terms[i]);
 			return q;
 		}
-		if (tok != ftq_token::WORD)
+		if (tok->type != ftq_token::WORD && tok->type != ftq_token::NUMBER)
 			throw USER_EXCEPTION2(SE3022, "unexpected token in query");
-
-		ft_parse_term(ps, tok_text, tok_leng, &terms);
 	}
 }
 
-FtQuery *ft_parse_query(str_cursor *cur, ftc_index_t idx)
+FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok);
+FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag)
 {
-	ft_parser_state ps;
-	str_cursor_reader reader(cur);
-	std::vector<FtQuery *> ops;
-	ps.ftc_idx = idx;
-	ps.stemmer = ftc_get_stemmer(idx);
-	ftq_token_type tok;
-
-	ftq_lex_init_extra(&reader, &ps.scanner);
-
-	while ( (tok = (ftq_token_type)ftq_lex(ps.scanner)) != ftq_token::END)
+	token_ptr tok = ps->scanner.peek();
+	if (tok->type == ftq_token::QUOT || tok->type == ftq_token::APOS)
 	{
-		char *tok_text = ftq_get_text(ps.scanner);
-		int tok_leng = ftq_get_leng(ps.scanner);
-
-		if (tok == ftq_token::QUOT || tok == ftq_token::APOS)
-		{
-			FtQuery *q = ft_parse_phrase(&ps, tok);
-			if (q != NULL)
-				ops.push_back(q);
-			continue;
-		}
-
-		if (tok != ftq_token::WORD)
-			throw USER_EXCEPTION2(SE3022, "unexpected token in query");
-
-		ft_parse_term(&ps, tok_text, tok_leng, &ops);
+		ps->scanner.next();
+		FtQuery *q = ft_parse_phrase(ps, tok->type, in_tag);
+		return q;
 	}
 
-	ftq_lex_destroy(ps.scanner);
+	if (tok->type == ftq_token::WORD || tok->type == ftq_token::NUMBER)
+	{
+		if (ps->scanner.peekn(1)->type == ftq_token::CONTAINS)
+		{
+			token_ptr tag = tok;
+			ps->scanner.next(); //tag
+			tok = ps->scanner.next(); //contains
+			return ft_parse_query_single(ps, tag->text);
+		}
+		else
+			return ft_parse_phrase(ps, tok->type, in_tag);
+	}
+
+	if (tok->type == ftq_token::BR_OPEN)
+	{
+		ps->scanner.next();
+		FtQuery *q = ft_parse_query_and(ps, in_tag, ftq_token::BR_CLOSE);
+		tok = ps->scanner.peek();
+		if (tok->type == ftq_token::BR_CLOSE)
+			ps->scanner.next();
+		return q;
+	}
+
+	throw USER_EXCEPTION2(SE3022, "unexpected token in query");
+}
+
+FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok)
+{
+	std::vector<FtQuery *> ops;
+	token_ptr tok;
+
+	while (true)
+	{
+		token_ptr tok = ps->scanner.peek();
+		if (tok->type == ftq_token::END || tok->type == end_tok)
+			break;
+
+		FtQuery *q = ft_parse_query_single(ps, in_tag);
+		if (q != NULL)
+			ops.push_back(q);
+	}
 
 	if (ops.size() == 0)
 		throw USER_EXCEPTION2(SE3022, "empty query");
@@ -129,9 +246,25 @@ FtQuery *ft_parse_query(str_cursor *cur, ftc_index_t idx)
 		return ops[0];
 	else
 	{
-		FtQueryAnd *q = new FtQueryAnd(idx, ops.size());
+		FtQueryAnd *q = new FtQueryAnd(ps->ftc_idx, ops.size());
 		for (int i = 0; i < ops.size(); i++)
 			q->set_operand(i, ops[i]);
 		return q;
 	}
+}
+
+FtQuery *ft_parse_query(str_cursor *cur, ftc_index_t idx)
+{
+	ft_parser_state ps;
+	str_cursor_reader reader(cur);
+	ps.ftc_idx = idx;
+	ps.stemmer = ftc_get_stemmer(idx);
+
+	ps.scanner.init(&reader);
+
+	FtQuery *q = ft_parse_query_and(&ps, NULL, ftq_token::END);
+
+	ps.scanner.destroy();
+
+	return q;
 }
