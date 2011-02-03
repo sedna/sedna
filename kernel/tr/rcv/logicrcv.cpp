@@ -610,6 +610,7 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
     char *rec = (char *)Rec;
     const char *obj_path, *key_path, *ind_name, *doc_name;
     xmlscm_type key_type;
+    index_backend_t index_backend;
     size_t offs;
     bool isUNDO = (rollback_active != 0);
     char op = rec[0];
@@ -620,22 +621,25 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
     offs += strlen(obj_path) + 1;
     key_path = rec + offs;
     offs += strlen(key_path) + 1;
-    memcpy(&key_type, rec + offs, sizeof(xmlscm_type));
-    offs += sizeof(xmlscm_type);
+    memcpy(&key_type, rec + offs, sizeof(key_type));
+    offs += sizeof(key_type);
     ind_name = rec + offs;
     offs += strlen(ind_name) + 1;
     doc_name = rec + offs;
+    offs += strlen(doc_name) + 1;
+    memcpy(&index_backend, rec + offs, sizeof(index_backend));
+    offs += sizeof(index_backend);
 
     if ((isUNDO && (op == LL_DELETE_DOC_INDEX || op == LL_DELETE_COL_INDEX)) || (!isUNDO && (op == LL_INSERT_DOC_INDEX || op == LL_INSERT_COL_INDEX)))
     {
         index_descriptor_t dsc;
 
-        dsc.backend_type = index_btree;
+        dsc.backend_type = index_backend;
         dsc.key = lr2PathExpr(NULL, key_path, pe_catalog_aspace);
         dsc.keytype = key_type;
         dsc.object = lr2PathExpr(NULL, obj_path, pe_catalog_aspace);
         dsc.index_title = ind_name;
-        dsc.owner = catalog_find_name(catobj_metadata, doc_name)->p;
+        dsc.owner = catalog_find_name(catobj_metadata, doc_name)->p; // TODO: Check for safety
 
         create_index(&dsc);
     } else {
