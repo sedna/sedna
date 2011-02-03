@@ -31,6 +31,10 @@ using namespace std;
 
 static bool index_initialized = false;
 
+#ifdef _WIN32
+#define strcasecmp lstrcmpiA
+#endif /* _WIN32 */
+
 index_backend_t str2index_type(const char *str)
 {
     if (0 == strcasecmp(str, "btree")) {
