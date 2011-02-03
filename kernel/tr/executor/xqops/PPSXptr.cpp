@@ -135,7 +135,7 @@ static inline void restore_serialized_xptr(const xptr &serialized, xptr &result)
 {
     CHECKP(serialized);
     int size1 = GET_FREE_SPACE(serialized);
-    if(size1 < sizeof(xptr))
+    if(size1 < (int) sizeof(xptr))
     {
         memcpy( &result, XADDR(serialized), size1);
         xptr data = ((seq_blk_hdr*)XADDR(BLOCKXPTR(serialized)))->nblk + sizeof(seq_blk_hdr);
