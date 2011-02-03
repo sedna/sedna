@@ -1,3 +1,7 @@
+/*
+ * BTrie Sedna specialization
+ * Copyright (c) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #include "btrie_internal.h"
 #include "btrie_readstate.h"
@@ -87,8 +91,6 @@ void btrie_collect_page_stats(xptr page, xptrset * pagesToSee, FILE * f) {
 //        fprintf(f, "\n");
     };
 };
-
-FILE * __bt_debug;
 
 static int n = 0;
 

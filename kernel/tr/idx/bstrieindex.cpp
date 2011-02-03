@@ -1,3 +1,9 @@
+/*
+ * File:  bstrieindex.cpp
+ * BSTrie index backend
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "tr/idx/bstrieindex.h"
 #include "tr/executor/fo/op_map.h"
 
@@ -102,11 +108,12 @@ bool BSTrieMultimap::insertPair(tuple_cell key, tuple_cell value)
     btrie_record_t item = btrie_find(trie, key_buf.get_buf(), key_buf.get_size());
 
     if (item == BTRNULL) {
-        btrie_insert(trie, key_buf.get_buf(), key_buf.get_size(), (char *) &counter, sizeof(counter), true);
+//        btrie_insert(trie, key_buf.get_buf(), key_buf.get_size(), (char *) &counter, sizeof(counter), true);
+        btrie_insert(trie, key_buf.get_buf(), key_buf.get_size(), NULL, 0, true);
     } else {
-        btrie_get_object(item, (char *) &counter, sizeof(counter));
-        ++counter;
-        btrie_replace_object(item, (char *) &counter);
+//        btrie_get_object(item, (char *) &counter, sizeof(counter));
+//        ++counter;
+//        btrie_replace_object(item, (char *) &counter);
     }
 
     return true;
@@ -125,9 +132,9 @@ bool BSTrieMultimap::deletePair(tuple_cell key, tuple_cell value)
         btrie_get_object(item, (char *) &counter, sizeof(counter));
         --counter;
         if (counter == 0) {
-            btrie_delete(trie, key_buf.get_buf(), key_buf.get_size());
+//            btrie_delete(trie, key_buf.get_buf(), key_buf.get_size());
         } else {
-            btrie_replace_object(item, (char *) &counter);
+//            btrie_replace_object(item, (char *) &counter);
         }
     }
 

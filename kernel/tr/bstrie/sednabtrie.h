@@ -1,3 +1,8 @@
+/*
+ * BTrie Sedna specialization
+ * Copyright (c) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef SEDNABTRIE_H
 #define SEDNABTRIE_H
 

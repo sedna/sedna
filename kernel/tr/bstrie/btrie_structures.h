@@ -82,16 +82,21 @@ struct st_page_header {
 */
 
 struct st_tmp_trie {
+    /* Old state info */
+    sptr_t state;
+    sptr_t state_len;
+
+    /* New state info */
     char * buf;
     sptr_t len;
-    sptr_t offset;
+//    int offset;
 
+  /* New external page info */
   /* These fields are for the part that goes to the child block */
     char * buf2;
     sptr_t len2;
     xptr_t old_state;
     int hint_edge;
-
     xptr_t * buf2ptr;
 };
 
@@ -185,6 +190,7 @@ struct trie_segment_t {
     sptr_t id;
     sptr_t len;
     sptr_t p;
+    sptr_t parent_offset;
 };
 
 #endif /* _BTRIE_STRUCTURES_H */

@@ -61,8 +61,8 @@ void PPIndexScan::do_open ()
         case isc_gt     : left_bound_exclusive = true;
         case isc_ge     : next_fun = &PPIndexScan::next_eq; break;
         case isc_gt_lt  :
-        case isc_gt_le  : right_bound_exclusive = true;
-        case isc_ge_lt  : if (isc != isc_gt_le) { left_bound_exclusive = true; }
+        case isc_gt_le  : left_bound_exclusive = true;
+        case isc_ge_lt  : if (isc != isc_gt_le) { right_bound_exclusive = true; }
         case isc_ge_le  : next_fun = &PPIndexScan::next_between; break;
         default         : throw USER_EXCEPTION2(SE1003, "Unexpected index scan condition (internal error, please report a bug)");
     }
@@ -141,7 +141,6 @@ void PPIndexScan::initialize()
     }
 
     index = idc->get_backend();
-    btrie_collect_stat(index->getEntryPoint());
     idx_type = idc->get_keytype();
 }
 
@@ -149,7 +148,6 @@ void PPIndexScan::do_next(tuple& t)
 {
     (this->*next_fun)(t);
 }
-
 
 void PPIndexScan::next_eq(tuple &t)
 {
@@ -229,6 +227,8 @@ void PPIndexScan::next_between(tuple &t)
         initialize();
 
         get_casted_value(left_bound, child, idx_type);
+        get_casted_value(right_bound, child2, idx_type);
+
         cursor = index->find(left_bound);
         U_ASSERT(!cursor.isnull());
 
@@ -255,7 +255,7 @@ void PPIndexScan::next_between(tuple &t)
         first_time = true;
         cursor.clear();
     } else {
-        t.copy(current_key);
+        t.copy(cursor->getValue());
         cursor->nextPair();
     }
 }
