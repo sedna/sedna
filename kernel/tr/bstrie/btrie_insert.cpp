@@ -66,16 +66,19 @@ static void fix_trie_pointers(struct st_page_header * pghdr, const char * offset
 /** Write the state to the buffer and offset buffer as precalculated
   * @return the linear amount of octets, by which trie is increased
   */
-int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_state, char * state, sptr_t state_len) {
-    int offset = new_state->len - state_len;
-    char * data_end = (char *) XADDR(pghdr->page) + pghdr->data_end;
-
+int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_state) {
     /* Splitted part (goes to another block). Block is selected beetween existent ones by choosing the least loaded */
+
     if (new_state->buf2 != NULL) {
         * (new_state->buf2ptr) = st_write_split_state(new_state);
     }
 
     WRITE_PAGE(pghdr->page);
+
+    char * state = (char *) XADDR(pghdr->page) + pghdr->trie_offset + new_state->state;
+    int state_len = new_state->state_len;
+    int offset = new_state->len - new_state->state_len;
+    char * data_end = (char *) XADDR(pghdr->page) + pghdr->data_end;
 
     if (offset != 0 && ((state + state_len) != data_end)) {
         memmove_ABd(state + state_len, data_end, offset);
@@ -83,9 +86,12 @@ int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_s
 
     memcpy(state, new_state->buf, new_state->len);
 
-    pghdr->data_end += offset;
-    fix_trie_pointers(pghdr, state, offset);
-    st_write_page_header(pghdr);
+    if (offset != 0) {
+        pghdr->data_end += offset;
+        fix_trie_pointers(pghdr, state, offset);
+        st_write_page_header(pghdr);
+    }
+
     st_new_state_free(new_state);
 
     return offset;
@@ -216,19 +222,18 @@ struct st_tmp_trie * st_state_delete_prepare(char * state)
 {
     struct state_descriptor state_dsc;
     struct st_tmp_trie * result = (struct st_tmp_trie *) malloc(sizeof(struct st_tmp_trie));
-    char * buf =  tmp_buffer;
 
     read_state(state, &state_dsc);
 
     state_dsc.object_len = 0;
     state_dsc.object = NULL;
     state_dsc.flags &= ~STATE_FINAL;
-    write_state(buf, &state_dsc);
-    buf += state_dsc.len;
+    state_dsc.flags |= STATE_NO_OBJECT;
+    write_state(tmp_buffer, &state_dsc);
 
+    result->buf2 = NULL;
     result->buf = tmp_buffer;
-    result->len = (buf - tmp_buffer);
-    result->offset = 0;
+    result->len = state_dsc.len;
 
     return result;
 }
@@ -385,7 +390,6 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
 
     result->buf = tmp_buffer;
     result->len = (buf - tmp_buffer);
-    result->offset = 0;
 }
 
 

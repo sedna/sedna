@@ -29,8 +29,7 @@
 #include "tr/cat/catvars.h"
 
 #define VMM_REGION_SEARCH_MAX_SIZE                      ((uint32_t)0x79C00000)
-#define VMM_REGION_MAX_SIZE                             VMM_REGION_MIN_SIZE
-//#define VMM_REGION_MAX_SIZE                             ((uint32_t)0x40000000)
+#define VMM_REGION_MAX_SIZE                             ((uint32_t)0x40000000)
 
 static bool vmm_session_initialized = false;
 static bool vmm_transaction_initialized = false;

@@ -7,16 +7,14 @@
 #include "btrie_internal.h"
 #include "btrie_readstate.h"
 #include "btrie_traverse.h"
+#include "btrie_utils.h"
 
 int btrie_last_error;
-
-#include <stdio.h>
 
 btrie_t btrie_open(const xptr_t root)
 {
     btrie_t result = (btrie_t) malloc(sizeof(struct btrie));
     result->root_page = (xptr_t) root;
-    __bt_debug = fopen("/tmp/bt.debug", "at");
     return result;
 }
 
@@ -27,7 +25,6 @@ xptr_t btrie_get_root(btrie_t bt)
 
 void btrie_close(btrie_t bt)
 {
-    fclose(__bt_debug);
     free(bt);
 }
 
@@ -59,8 +56,6 @@ btrie_record_t btrie_find(const btrie_t tree, const char * key, size_t key_lengt
     return result;
 }
 
-#include <stdio.h>
-
 btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, const char * obj, size_t obj_length, bool replace)
 {
     struct st_key_object_pair key_object_pair = {(char *) key, key_length, (char *) obj, obj_length, true};
@@ -79,7 +74,9 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
         tree->root_page = pghdr.page;
         st_new_state_prepare(&newstate, NULL, 0, 0, &key_object_pair, false);
         pghdr.data_end = pghdr.trie_offset;
-        st_new_state_write(&pghdr, &newstate, (char *) XADDR(pghdr.page) + pghdr.trie_offset, 0);
+        newstate.state = 0;
+        newstate.state_len = 0;
+        st_new_state_write(&pghdr, &newstate);
     } else {
         states = st_find_state_path(tree, key, key_length);
 
@@ -106,7 +103,11 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
                 WRITE_PAGE(pg);
                 newstate.old_state = states->last_state->p;
                 st_read_page_header(pg, &pghdr);
-                st_new_state_write(&pghdr, &newstate, (char *) XADDR(pg) + state_offset, dsc.len);
+
+                newstate.state = state_offset - pghdr.trie_offset;
+                newstate.state_len = dsc.len;
+
+                st_new_state_write(&pghdr, &newstate);
             }
         }
 
@@ -144,8 +145,13 @@ bool btrie_delete(btrie_t tree, const char * key, size_t key_length)
         st_read_page_header(pg, &pghdr);
         read_state((char *) XADDR(states->last_state->p), &dsc);
         state = st_state_delete_prepare(dsc.p);
+
         WRITE_PAGE(pg);
-        st_new_state_write(&pghdr, state, dsc.p, dsc.len);
+
+        state->state = dsc.p - get_root_state(&pghdr);
+        state->state_len = dsc.len;
+
+        st_new_state_write(&pghdr, state);
 
         result = true;
     } else {
@@ -235,7 +241,6 @@ void __debug_walkthrough(btrie_t tree) {
 }
 
 #include <stdio.h>
-#include "btrie_readstate.h"
 
 static char prefixbuf[250];
 

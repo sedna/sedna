@@ -47,17 +47,12 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
         struct st_key_object_pair * key_object_pair, bool split_state);
 
 /** Write the state to the buffer and offset buffer as precalculated */
-int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_state, char * state, sptr_t state_len);
+int st_new_state_write(struct st_page_header * pghdr, struct st_tmp_trie * new_state);
 
 /** Free state insertion info */
 void st_new_state_free(struct st_tmp_trie * state);
 
 
 void __debug_walkthrough_branch(char * buffer, char * prefix_append, char * state);
-
-
-#include <stdio.h>
-
-extern FILE * __bt_debug;
 
 #endif /* _BTRIE_INTERNAL_H */

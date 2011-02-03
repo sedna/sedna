@@ -37,7 +37,7 @@ inline bool is_zero(float x) { return (x >= 0 ? x : -x) < DOUBLE_ZERO; }
 
 inline tuple_cell atomize(const tuple_cell& t)
 {
-    return t.get_type() == tc_node ? dm_typed_value(t.get_node()) : t;
+    return t.is_node() ? dm_typed_value(t.get_node()) : t;
 }
 
 tuple_cell effective_boolean_value(const tuple_cell &t);

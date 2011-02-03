@@ -1,3 +1,9 @@
+/*
+ * File:  btreeindex.h
+ * BTree index backend
+ * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "tr/idx/btreeindex.h"
 
 using namespace idx;
@@ -45,7 +51,8 @@ tuple_cell bt_key2tuple_cell(const bt_key& key)
 bool BTreeMultimap::insertPair(tuple_cell key, tuple_cell value)
 {
     bt_key btkey;
-    bt_insert(this->btree_root, tuple_cell2bt_key(key, btkey), value.get_node_inderection(), !sortedInsertionHint);
+//    bt_insert(this->btree_root, tuple_cell2bt_key(key, btkey), value.get_node_inderection(), !sortedInsertionHint);
+    bt_insert(this->btree_root, tuple_cell2bt_key(key, btkey), value.get_node_inderection(), true);
     return true;
 }
 
@@ -98,8 +105,9 @@ KeyValueIterator* BTreeMultimap::find(tuple_cell key)
 
 KeyValueIterator* BTreeMultimap::begin()
 {
-    U_ASSERT(false); // Unimplemented yet;
-    return NULL;
+    bt_key k;
+    BTreeIterator * result = new BTreeIterator(bt_lm(btree_root));
+    return result;
 }
 
 KeyValueIterator* BTreeMultimap::end()
@@ -140,7 +148,14 @@ bool BTreeIterator::nextPair()
     if (XNULL != (tmp_value = cursor.bt_next_obj())) {
         return true;
     } else {
-        return cursor.bt_next_key();
+        bool result = cursor.bt_next_key();
+        if (result) {
+            tmp_key = bt_key2tuple_cell(cursor.get_key());
+            tmp_value = cursor.bt_next_obj();
+        } else {
+            tmp_key.set_eos();
+        }
+        return result;
     }
 }
 
