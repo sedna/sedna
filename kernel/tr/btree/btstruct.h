@@ -29,7 +29,7 @@ public: static inline int get() { return 0; }
 };
 template<> class null_object<uint64_t>
 {
-public: static inline int get() { return 0; }
+public: static inline uint64_t get() { return 0; }
 };
 //this is useable only if object type is defined
 #define NULL_OBJECT null_object<object>::get()

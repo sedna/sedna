@@ -88,15 +88,6 @@ public:
 		before_upd();
 		pb.add_word_occur(word, acc, word_ind+1);
 	}
-	/*
-	void del_word_occur(const char *word, const xptr acc, const int word_ind)
-	{
-		//legacy code, TODO: remove if not needed anymore
-		U_ASSERT(false);
-		bt_key bkey;
-		bkey.setnew(word);
-		bt_delete_tmpl<ft_idx_btree_element>(fts_data->btree_root, bkey, ft_idx_btree_element(acc, word_ind));
-	}*/
 };
 
 struct FtsScanData
