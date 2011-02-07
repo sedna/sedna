@@ -34,6 +34,11 @@ endif(MSVC)
 
 # GNU compiler
 if (CMAKE_COMPILER_IS_GNUCXX)
+    exec_program(${CMAKE_CXX_COMPILER} ARGS --version OUTPUT_VARIABLE _GCC_COMPILER_VERSION)
+    string(REGEX REPLACE ".* ([0-9])\\.([0-9])\\.[0-9] .*" "\\1\\2"
+                   _GCC_COMPILER_VERSION ${_GCC_COMPILER_VERSION})
+    message("-- GCC version -- ${_GCC_COMPILER_VERSION}")
+
     # first, add "-ggdb -g3" flag to generate more debug info
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -ggdb")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g3 -ggdb")
@@ -50,7 +55,11 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     endif (SE_ENABLE_GCOV)
 
     # set warning level
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused -Wno-missing-field-initializers -Wno-deprecated")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused -Wno-deprecated")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused -Wno-uninitialized")
+
+    if (_GCC_COMPILER_VERSION STRGREATER "40")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wno-missing-field-initializers")
+    endif (_GCC_COMPILER_VERSION STRGREATER "40")
 
 endif(CMAKE_COMPILER_IS_GNUCXX)
