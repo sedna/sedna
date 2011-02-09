@@ -604,21 +604,21 @@ static tuple_cell get_tc(void* buf, xmlscm_type type, shft size)
 {
     switch (type)
     {
-        case xs_float                : {float value = *((float*)buf); return tuple_cell::tuple_cell(value); }
-        case xs_double               : {double value = *((double*)buf); return tuple_cell::tuple_cell(value); }
-        case xs_integer              : {int64_t value = *((int64_t*)buf); return tuple_cell::tuple_cell(value); }
+        case xs_float                : {float value = *((float*)buf); return tuple_cell(value); }
+        case xs_double               : {double value = *((double*)buf); return tuple_cell(value); }
+        case xs_integer              : {int64_t value = *((int64_t*)buf); return tuple_cell(value); }
         case xs_string               :
         {
             char* str = se_new char[size+1];
             memcpy(str, (char*)buf, size);
             str[size]='\0';
-            return tuple_cell::tuple_cell(xs_string, str);
+            return tuple_cell(xs_string, str);
         }
         case xs_time                 :
         case xs_date                 :
-        case xs_dateTime             : {xs_packed_datetime value = *((xs_packed_datetime*)buf); return tuple_cell::tuple_cell(value, type);}
+        case xs_dateTime             : {xs_packed_datetime value = *((xs_packed_datetime*)buf); return tuple_cell(value, type);}
         case xs_yearMonthDuration    :
-        case xs_dayTimeDuration      : {xs_packed_duration value = *((xs_packed_duration*)buf); return tuple_cell::tuple_cell(value, type);}
+        case xs_dayTimeDuration      : {xs_packed_duration value = *((xs_packed_duration*)buf); return tuple_cell(value, type);}
         default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
     }
 }
